@@ -153,6 +153,7 @@ def main(argv=None) -> int:
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=a.timeout)
 
     arms = {"off": [], "on": []}
+    gate_errors = 0
     for u in users:
         for s in u.get("sessions", [])[: a.sessions]:
             gold = _gold_facts(s)
@@ -166,8 +167,16 @@ def main(argv=None) -> int:
                 continue
             arms["off"].append(_prf(extracted, gold, a.match_thr))
             if not a.no_gate:
-                admitted = [f for f in extracted
-                            if fact_grounding_score(llm, src, f) >= a.gate_thr]
+                # A transient LLM timeout on ONE gate call must not kill a
+                # multi-hour run (it did, 2026-07-04: LLMError 120s ~35min in).
+                # Fail-safe per fact: an unscorable fact is NOT admitted.
+                admitted = []
+                for f in extracted:
+                    try:
+                        if fact_grounding_score(llm, src, f) >= a.gate_thr:
+                            admitted.append(f)
+                    except Exception:  # noqa: BLE001
+                        gate_errors += 1
                 arms["on"].append(_prf(admitted, gold, a.match_thr))
 
     def agg(rows):
@@ -182,7 +191,7 @@ def main(argv=None) -> int:
     res = {"users": len(users), "match_thr": a.match_thr, "gate_thr": a.gate_thr,
            # A/B self-proving: the variant actually used by THIS process
            "prompt_variant": a.prompt, "max_out_tokens": a.max_out_tokens,
-           "no_gate": bool(a.no_gate),
+           "no_gate": bool(a.no_gate), "gate_errors": gate_errors,
            "off": agg(arms["off"]), "on": agg(arms["on"])}
     print(json.dumps(res, indent=2))
     if a.out:
