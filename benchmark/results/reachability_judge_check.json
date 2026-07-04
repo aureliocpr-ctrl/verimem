@@ -1,0 +1,128 @@
+{
+  "dump": "C:/Users/aurel/AppData/Local/Temp/claude/C--Users-aurel-Desktop-ProgettiAI/67a0a5f0-cd53-45ef-9e94-351aaa024deb/scratchpad/updating_dump.json",
+  "match_thr": 0.94,
+  "n_unreachable_at_thr": 324,
+  "n_items": 726,
+  "unreachable_share": 0.4463,
+  "sampled": 25,
+  "judged": 25,
+  "errors": 0,
+  "judge_found": 10,
+  "judge_none": 15,
+  "judge_found_rate": 0.4,
+  "corrected_reachable_at10_estimate": 0.7322,
+  "wall_s": 212.1,
+  "records": [
+    {
+      "gt": "Johnson Joseph's job title is Hospitality Consultant",
+      "verdict": 10,
+      "candidate": "Johnson Joseph is transitioning from an Entrepreneurial Leader at Albi B&B to a Hospitality Consultant to leverage his experience while accommodating his health needs."
+    },
+    {
+      "gt": "Books I like to read: Biographies",
+      "verdict": 10,
+      "candidate": "Sarah Garcia attended a motivational seminar that inspired her to focus on biographies emphasizing resilience and triumph."
+    },
+    {
+      "gt": "Donald Brown's dislike for competitive team sports because the pressure to win detracts from the fun.",
+      "verdict": 7,
+      "candidate": "Donald Brown Sports I dislike Competitive team sports reason: I dislike competitive team sports because the pressure to win detracts from the fun."
+    },
+    {
+      "gt": "Movies I dislike: Horror films because they can be disturbing and detract from the positive mindset I strive to maintain.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "I enjoy herbal teas for their calming properties and health benefits, which support my overall well-being.",
+      "verdict": 2,
+      "candidate": "Martin Mark Beverages I like to drink Herbal teas reason: I enjoy herbal teas for their calming properties and health benefits, which support my overall well-being."
+    },
+    {
+      "gt": "Sarah Garcia focused on building strategic partnerships with local organizations on Jan 10, 2028.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Donald Brown is motivated to pursue new ventures that continue to impact lives positively.",
+      "verdict": 1,
+      "candidate": "Donald Brown expressed a desire to continue his mission of impacting individuals with disabilities through new ventures, potentially through consulting or mentoring roles."
+    },
+    {
+      "gt": "Johnson Joseph's job title is Entrepreneur and Expansion Leader",
+      "verdict": 1,
+      "candidate": "Johnson Joseph's job title changed from Part-time Manager to Entrepreneur and Expansion Leader at Albi B&B."
+    },
+    {
+      "gt": "Sarah Garcia shared anecdotes about past experiences that informed her approach to partnerships.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Espresso gives me the energy boost I need when working on demanding projects and tight deadlines.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Sarah Garcia works in the non-profit industry",
+      "verdict": 2,
+      "candidate": "Sarah Garcia's career_status updated industry from \"social impact\" to \"non-profit\""
+    },
+    {
+      "gt": "Martin Mark Beverages I dislike: Sugary sodas reason: I avoid sugary sodas due to their high sugar content and lack of nutritional value, which goes against my health-conscious approach.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Pets I like: Parrots reason: I enjoy parrots because they are intelligent and can be taught to mimic speech, which makes interactions fun and engaging.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Donald felt proud of his career progression from EmpowerTech Foundation to permanent retirement, aligning with his humanitarian goals.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Sarah's proactive approach to balancing career ambitions with personal well-being is a key aspect of her lifestyle.",
+      "verdict": 5,
+      "candidate": "Sarah Garcia is exploring ways to incorporate mindfulness practices and structured rest periods into her daily schedule to maintain mental health stability while advancing her career."
+    },
+    {
+      "gt": "I find snakes unsettling because their movements are unpredictable and they remind me of danger.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Martin Mark expressed his commitment to improving healthcare access while maintaining personal health.",
+      "verdict": 3,
+      "candidate": "Martin Mark's motivation for career change is driven by his desire for personal well-being and improving healthcare access for underserved communities."
+    },
+    {
+      "gt": "Sarah Garcia Books I like to read: Adventure novels have always been a favorite of mine because they take me to thrilling new worlds and spark my imagination.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Johnson Joseph's exploratory motivation led him to consider new ways to leverage relationships for future growth.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Johnson Joseph's situation_reason is The demands of balancing work and new personal projects have increased my stress levels, prompting me to adopt stress management techniques.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Pets I like: Parrots reason: I enjoy parrots because they are intelligent and can be taught to mimic speech, which makes interactions fun and engaging.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "I love cats because they are independent and their presence is calming, which complements my creative environment.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Johnson Joseph's monthly income is 7000 yuan",
+      "verdict": 1,
+      "candidate": "Johnson Joseph's career_status updated monthly_income from \"$3000\" to \"$7000\""
+    },
+    {
+      "gt": "Exposure to a friend's curated playlist expanded Sarah Garcia's understanding and enjoyment of diverse pop music.",
+      "verdict": "NONE"
+    },
+    {
+      "gt": "Johnson Joseph's situation_reason is Continuing my health-focused routine has ensured I remain resilient and energetic, vital for managing the expanded business operations.",
+      "verdict": "NONE"
+    }
+  ],
+  "note": "judge_found_rate = share of matcher-unreachable items where the judge finds a top-10 candidate expressing the GT fact. High -> the severe matcher inflates unreachability (metric artifact); ~0 -> the retrieval gap is real. corrected_reachable_at10 = reachable@0.94 + unreachable_share * judge_found_rate."
+}

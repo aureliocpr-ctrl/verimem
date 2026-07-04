@@ -1,0 +1,19 @@
+{
+  "users": 5,
+  "k": 30,
+  "match_thr": 0.94,
+  "n_updates": 726,
+  "env": {
+    "ENGRAM_RECALL_CENTERING": "",
+    "ENGRAM_PPR_FUSION": "",
+    "ENGRAM_RECALL_RERANK": "",
+    "ENGRAM_ANN_RECALL": ""
+  },
+  "reachable_at": {
+    "10": 0.5592,
+    "20": 0.6488,
+    "30": 0.6832
+  },
+  "wall_s": 892.8,
+  "note": "reachable@k = share of is_update points whose GT original (e5@match_thr OR norm-exact) appears in the first k recalled hits, chronological ingest identical to halumem_updating_bench. The selector ceiling: judged accuracy <= reachable@k * top1."
+}
