@@ -1,0 +1,63 @@
+{
+  "tasks": "benchmark/results/halumem_tasks_seed7.json",
+  "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+  "n": 160,
+  "n_pos": 80,
+  "n_neg": 80,
+  "judge_baseline": "LLM judge (claude -p): halumem_score_<seed>.json (seed7 TPR 0.675 FPR 0.10)",
+  "grid": {
+    "overlap>=0.0": {
+      "auroc": 0.8016,
+      "sweep": {
+        "thr=0.9": {
+          "tpr": 0.7875,
+          "fpr": 0.3125
+        },
+        "thr=0.95": {
+          "tpr": 0.7125,
+          "fpr": 0.2625
+        }
+      }
+    },
+    "overlap>=0.1": {
+      "auroc": 0.8137,
+      "sweep": {
+        "thr=0.9": {
+          "tpr": 0.7875,
+          "fpr": 0.2875
+        },
+        "thr=0.95": {
+          "tpr": 0.7125,
+          "fpr": 0.25
+        }
+      }
+    },
+    "overlap>=0.15": {
+      "auroc": 0.7963,
+      "sweep": {
+        "thr=0.9": {
+          "tpr": 0.7125,
+          "fpr": 0.25
+        },
+        "thr=0.95": {
+          "tpr": 0.6125,
+          "fpr": 0.2375
+        }
+      }
+    },
+    "overlap>=0.2": {
+      "auroc": 0.7899,
+      "sweep": {
+        "thr=0.9": {
+          "tpr": 0.625,
+          "fpr": 0.225
+        },
+        "thr=0.95": {
+          "tpr": 0.55,
+          "fpr": 0.2125
+        }
+      }
+    }
+  },
+  "note": "local NLI (no claude -p) interference detection: max bidirectional contradiction over the task's top-k candidates, with an optional content-overlap floor to drop unrelated candidates. Compare TPR/FPR to the LLM judge. AUROC is threshold-free."
+}
