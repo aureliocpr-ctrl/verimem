@@ -89,7 +89,7 @@ gate on by default, provenance on reads (`engram/client.py`, `examples/sdk_quick
 
 | Metric (2026-07-01) | Value | Source |
 |---|---|---|
-| Full test suite | **5830 passed**, 2 failed — both environmental: `test_real_provider_smoke[anthropic]` (no API key by policy) and `test_8_subprocess_x5_all_saves_persist` (load-flaky on this laptop — fails under concurrent pytest storms and intermittently alone, clean re-run passed 2026-07-02; the SLO test spawns 8 real-model subprocesses under a 90 s timeout) | `pytest` 2026-07-01, 21:35 min |
+| Full test suite | **5941 passed**, 2 failed — both environmental: `test_real_provider_smoke[anthropic]` (no API key by policy) and `test_8_subprocess_x5_all_saves_persist` (load-flaky on this laptop — fails under concurrent pytest storms and intermittently alone, clean re-run passed 2026-07-02; the SLO test spawns 8 real-model subprocesses under a 90 s timeout) | `pytest` 2026-07-04, ~14 min |
 | Test files | **764** | `git ls-files 'tests/test_*.py' \| wc -l` (2026-07-01) |
 | `engram/` lines of code | **84,345** | `find engram -name '*.py' \| xargs wc -l` (2026-07-01) |
 | Dev corpus | ~1262 episodes · ~5410 facts · ~324 skills | SessionStart `~/.engram` live (2026-07-01) |
@@ -240,7 +240,7 @@ knowledge — is now structural:
   MAS-worker exhaust). Write-route + generic-recall hide inherit by
   construction (admission/semantic sync suite green); live ro smoke: 291
   machine-state facts now behind the generic-recall denylist (was 166).
-  NOTE: the running hippoagent MCP server picks the new prefixes up at its
+  NOTE: the running verimem MCP server picks the new prefixes up at its
   next restart (pip -e import already loaded).
 - **Scan is tier-aware** (`--tiers`, default `knowledge`) and every report
   carries `tier_composition` (live corpus: 3014 knowledge / 454 test / 291
@@ -538,7 +538,7 @@ LLM raw collapses to 0% at depth 3+. Engram stays at 100% on 3/4 providers.
 | **Emerging skills adoption** | promotion gateway (cycle 235) | no production trial loop yet — manual review required |
 | **Cycle 228 H8c parallel_drafter** | shipped + FALSIFIED 1.28×<1.5× | not wired in prod (value-as-boundary) |
 | **Adaptive threshold 4th anchor** | curve has 3 anchors @ 1305/1889/5000 | needs measurement at 3000-4000 facts when corpus crosses |
-| **PyPI distribution** | `hippoagent` only | `engram-memory` not yet registered |
+| **PyPI distribution** | name **`verimem`** (renamed 2026-07-04) | to reserve on PyPI before announce |
 | **Dashboard live push** | polling-based | sub-second EventBus or SQLite WAL hook |
 | **Hosted cloud variant** | local SQLite only | Postgres + S3 backend (long-term) |
 
