@@ -31,6 +31,8 @@ import json
 import time
 from pathlib import Path
 
+from engram.truth_reconciliation import _content_overlap
+
 _DATASET = Path.home() / ".cache" / "halumem" / "HaluMem-Medium.jsonl"
 
 
@@ -39,7 +41,7 @@ def _norm(s: str | None) -> str:
 
 
 def select_update_target(candidates, new_content: str, scorer, *,
-                         select_thr: float = 0.7):
+                         select_thr: float = 0.7, min_overlap: float = 0.0):
     """Pick the live memory the update targets.
 
     Probability probe on 12 GT (original → update) pairs (2026-07-03, user 0):
@@ -57,7 +59,8 @@ def select_update_target(candidates, new_content: str, scorer, *,
         scored = score_candidate_pairs(candidates, new_content, scorer)
     except Exception:  # noqa: BLE001 — a scorer failure must not kill the run
         return None
-    return select_from_scored(scored, select_thr=select_thr)
+    return select_from_scored(scored, new_content, select_thr=select_thr,
+                              min_overlap=min_overlap)
 
 
 def score_candidate_pairs(candidates, new_content: str, scorer):
@@ -76,14 +79,25 @@ def score_candidate_pairs(candidates, new_content: str, scorer):
             for i, (fid, text) in enumerate(candidates)]
 
 
-def select_from_scored(scored, *, select_thr: float = 0.7):
-    """v1 policy over pre-scored candidates (see select_update_target)."""
+def select_from_scored(scored, new_content: str | None = None, *,
+                       select_thr: float = 0.7, min_overlap: float = 0.0):
+    """v1 policy over pre-scored candidates (see select_update_target).
+
+    Optional ``min_overlap`` (needs ``new_content``): reject a candidate whose
+    content-token Jaccard with the update is below the floor — a precision guard
+    that cuts WRONG selections (updating an unrelated memory = corrupting truth).
+    Measured frontier (HaluMem 5u/726, local e5): floor 0.10 acc 0.664->0.674 AND
+    wrong 0.194->0.167 (Pareto); 0.15 wrong ->0.138 at flat acc. Default 0.0 =
+    unchanged (byte-identical)."""
     best_fid, best_score = None, 0.0
-    for fid, _, ab, ba in scored:
+    for fid, text, ab, ba in scored:
         p_contra = max(ab.get("contradiction", 0.0), ba.get("contradiction", 0.0))
         p_refine = ba.get("entailment", 0.0)
         score = max(p_contra, p_refine)
         if score >= select_thr and score > best_score:
+            if (min_overlap > 0.0 and new_content is not None
+                    and _content_overlap(text, new_content) < min_overlap):
+                continue
             best_fid, best_score = fid, score
     return best_fid
 
@@ -153,6 +167,10 @@ def main(argv=None) -> int:
     ap.add_argument("--select-thr", type=float, default=0.7,
                     help="min max(p_contra, p_entail(update=>cand)) to select "
                          "a target (probe-calibrated, see select_update_target)")
+    ap.add_argument("--select-min-overlap", type=float, default=0.0,
+                    help="precision floor: reject a selection whose content-overlap "
+                         "with the update is below this (cuts WRONG updates; frontier "
+                         "0.10 Pareto, 0.15 trust-lean). Default 0 = off (unchanged).")
     ap.add_argument("--nli-model", default=None,
                     help="override the default cached NLI cross-encoder")
     ap.add_argument("--match-thr", type=float, default=0.86,
@@ -200,7 +218,9 @@ def main(argv=None) -> int:
                         scored = score_candidate_pairs(cands, content, scorer)
                     except Exception:  # noqa: BLE001
                         scored = []
-                    sel = select_from_scored(scored, select_thr=a.select_thr)
+                    sel = select_from_scored(scored, content,
+                                             select_thr=a.select_thr,
+                                             min_overlap=a.select_min_overlap)
                     sel_text = dict(cands).get(sel) if sel else None
                     out = classify_update_outcome(
                         sel_text, gt_originals, [t for _, t in cands],
