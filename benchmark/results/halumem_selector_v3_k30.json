@@ -1,0 +1,110 @@
+{
+  "dump": "C:/Users/aurel/AppData/Local/Temp/claude/C--Users-aurel-Desktop-ProgettiAI/67a0a5f0-cd53-45ef-9e94-351aaa024deb/scratchpad/updating_dump_k30.json",
+  "match_thr": 0.94,
+  "n_items": 726,
+  "cv": {
+    "folds": [
+      {
+        "train_users": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "test_users": [
+          4
+        ]
+      },
+      {
+        "train_users": [
+          0,
+          1,
+          2,
+          4
+        ],
+        "test_users": [
+          3
+        ]
+      },
+      {
+        "train_users": [
+          0,
+          1,
+          3,
+          4
+        ],
+        "test_users": [
+          2
+        ]
+      },
+      {
+        "train_users": [
+          0,
+          2,
+          3,
+          4
+        ],
+        "test_users": [
+          1
+        ]
+      },
+      {
+        "train_users": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "test_users": [
+          0
+        ]
+      }
+    ],
+    "n_rows": 14910,
+    "n_reachable_items": 497
+  },
+  "gt_rank_v3_oof": {
+    "n_reachable": 497,
+    "gt_top1": 0.5211,
+    "gt_mrr": 0.6636
+  },
+  "policies": {
+    "v3_oof_abstain0.0": {
+      "n": 726,
+      "outcomes": {
+        "correct": 259,
+        "wrong": 467,
+        "missed": 0,
+        "missed_unreachable": 0
+      },
+      "accuracy": 0.3567,
+      "hallucination": 0.6433,
+      "omission": 0.0
+    },
+    "v3_oof_abstain0.3": {
+      "n": 726,
+      "outcomes": {
+        "correct": 259,
+        "wrong": 467,
+        "missed": 0,
+        "missed_unreachable": 0
+      },
+      "accuracy": 0.3567,
+      "hallucination": 0.6433,
+      "omission": 0.0
+    },
+    "v3_oof_abstain0.5": {
+      "n": 726,
+      "outcomes": {
+        "correct": 256,
+        "wrong": 457,
+        "missed": 5,
+        "missed_unreachable": 8
+      },
+      "accuracy": 0.3526,
+      "hallucination": 0.6295,
+      "omission": 0.0179
+    }
+  },
+  "dumped_selections": "C:/Users/aurel/AppData/Local/Temp/claude/C--Users-aurel-Desktop-ProgettiAI/67a0a5f0-cd53-45ef-9e94-351aaa024deb/scratchpad/v3_selections_k30.json"
+}
