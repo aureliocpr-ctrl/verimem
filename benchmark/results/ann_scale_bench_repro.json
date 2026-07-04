@@ -1,0 +1,45 @@
+{
+  "config": {
+    "dim": 768,
+    "k": 8,
+    "oversample": 8,
+    "trials": 20,
+    "seed": 7
+  },
+  "rows": [
+    {
+      "n": 100000,
+      "dim": 768,
+      "k": 8,
+      "oversample": 8,
+      "brute_p50_ms": 7.233,
+      "ann_p50_ms": 0.763,
+      "speedup": 9.5,
+      "recall_in_pool": 0.8719,
+      "build_s": 49.5
+    },
+    {
+      "n": 500000,
+      "dim": 768,
+      "k": 8,
+      "oversample": 8,
+      "brute_p50_ms": 37.425,
+      "ann_p50_ms": 1.254,
+      "speedup": 29.9,
+      "recall_in_pool": 0.525,
+      "build_s": 334.3
+    },
+    {
+      "n": 1000000,
+      "dim": 768,
+      "k": 8,
+      "oversample": 8,
+      "brute_p50_ms": 81.424,
+      "ann_p50_ms": 1.306,
+      "speedup": 62.3,
+      "recall_in_pool": 0.4062,
+      "build_s": 689.6
+    }
+  ],
+  "note": "SPEEDUP is the scale claim (brute cosine+argsort O(N) vs faiss HNSW sublinear query); it is ~data-agnostic and reproducible. recall_in_pool here is on SYNTHETIC clustered data = a sanity signal ONLY (synthetic geometry is not a faithful proxy for real-corpus recall); real-corpus behaviour-preservation (same top-k on e5) is proven in tests/test_ann_recall_equivalence.py. Pure numpy+faiss, seeded, OOM-safe."
+}
