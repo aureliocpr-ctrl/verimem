@@ -1,0 +1,18 @@
+{
+  "users": 3,
+  "match_thr": 0.86,
+  "gate_thr": 40.0,
+  "prompt_variant": "atomic",
+  "max_out_tokens": 600,
+  "no_gate": true,
+  "off": {
+    "sessions": 12,
+    "precision": 0.6824,
+    "recall": 0.8212,
+    "f1": 0.7264,
+    "avg_pred": 36.42
+  },
+  "on": {
+    "sessions": 0
+  }
+}
