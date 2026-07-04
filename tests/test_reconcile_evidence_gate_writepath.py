@@ -94,9 +94,9 @@ def _spy_reconcile(monkeypatch, sm):
 
 def test_store_forwards_evidence_gate_on_by_default_when_supersede_on(
         tmp_path, monkeypatch) -> None:
-    """Enabling auto-supersede on the write path turns the anti-sycophancy gate
-    ON by default (the only safe composition): store() forwards
-    require_evidence=True without any extra env."""
+    """Enabling auto-supersede turns the anti-sycophancy gate ON by default in its
+    TIERED form (iter 3): protect evidenced facts, allow bare->bare updates. store()
+    forwards protect_evidenced=True, require_evidence=False — no extra env."""
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "1")
     monkeypatch.setenv("ENGRAM_RECONCILE_AUTO_SUPERSEDE", "1")
     monkeypatch.delenv("ENGRAM_RECONCILE_REQUIRE_EVIDENCE", raising=False)
@@ -104,11 +104,13 @@ def test_store_forwards_evidence_gate_on_by_default_when_supersede_on(
     cap = _spy_reconcile(monkeypatch, sm)
     sm.store(Fact(id="x", proposition="Acme Corp uses Postgres", topic="t"))
     assert cap.get("auto_supersede") is True
-    assert cap.get("require_evidence") is True
+    assert cap.get("require_evidence") is False
+    assert cap.get("protect_evidenced") is True
 
 
 def test_store_evidence_gate_explicit_opt_out(tmp_path, monkeypatch) -> None:
-    """A deployment can explicitly opt out of the gate (dangerous, but allowed)."""
+    """A deployment can explicitly opt out of ALL protection (dangerous, allowed):
+    ENGRAM_RECONCILE_REQUIRE_EVIDENCE=0 -> neither strict nor tiered."""
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "1")
     monkeypatch.setenv("ENGRAM_RECONCILE_AUTO_SUPERSEDE", "1")
     monkeypatch.setenv("ENGRAM_RECONCILE_REQUIRE_EVIDENCE", "0")
@@ -117,6 +119,20 @@ def test_store_evidence_gate_explicit_opt_out(tmp_path, monkeypatch) -> None:
     sm.store(Fact(id="x", proposition="Acme Corp uses Postgres", topic="t"))
     assert cap.get("auto_supersede") is True
     assert cap.get("require_evidence") is False
+    assert cap.get("protect_evidenced") is False
+
+
+def test_store_strict_gate_when_require_evidence_env_1(tmp_path, monkeypatch) -> None:
+    """ENGRAM_RECONCILE_REQUIRE_EVIDENCE=1 forces STRICT (require_evidence=True,
+    tiered off): max safety, the deployment's explicit call."""
+    monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "1")
+    monkeypatch.setenv("ENGRAM_RECONCILE_AUTO_SUPERSEDE", "1")
+    monkeypatch.setenv("ENGRAM_RECONCILE_REQUIRE_EVIDENCE", "1")
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    cap = _spy_reconcile(monkeypatch, sm)
+    sm.store(Fact(id="x", proposition="Acme Corp uses Postgres", topic="t"))
+    assert cap.get("require_evidence") is True
+    assert cap.get("protect_evidenced") is False
 
 
 def test_store_default_reconcile_stays_contest_only(tmp_path, monkeypatch) -> None:
@@ -130,3 +146,4 @@ def test_store_default_reconcile_stays_contest_only(tmp_path, monkeypatch) -> No
     sm.store(Fact(id="x", proposition="Acme Corp uses Postgres", topic="t"))
     assert cap.get("auto_supersede") is False
     assert cap.get("require_evidence") is False
+    assert cap.get("protect_evidenced") is False

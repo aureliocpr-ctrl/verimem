@@ -1407,20 +1407,24 @@ def _reconcile_auto_supersede_enabled() -> bool:
     )
 
 
-def _reconcile_require_evidence(auto_supersede: bool) -> bool:
-    """Anti-sycophancy gate for write-path supersede: a bare claim (no
-    ``verified_by``, status != verified) can only CONTEST, never supersede a
-    stored fact on recency/confidence alone. When auto-supersede is enabled this
-    is ON BY DEFAULT — the only safe composition (auto-supersede without it is
-    exactly the sycophancy failure, measured cave-rate 0.5). An explicit
-    ENGRAM_RECONCILE_REQUIRE_EVIDENCE=0 opts out (dangerous, deployment's call);
-    =1 forces it on even without auto-supersede."""
+def _reconcile_evidence_policy(auto_supersede: bool) -> tuple[bool, bool]:
+    """Anti-sycophancy policy for write-path supersede -> ``(strict, tiered)``.
+
+    strict = require evidence to supersede ANY fact (max safety, but kills bare
+    update-recall — measured 0.28->0 on HaluMem, whose updates are bare claims).
+    tiered = require evidence only to overwrite an EVIDENCED fact; a bare->bare
+    update still applies (recall preserved). When auto-supersede is on the DEFAULT
+    is tiered (iter-3 finding: protect verified truth without the recall cliff).
+    ENGRAM_RECONCILE_REQUIRE_EVIDENCE=1 -> strict; =0 -> neither (raw recency+
+    authority, sycophantic). No auto-supersede -> (False, False)."""
+    if not auto_supersede:
+        return (False, False)
     v = os.environ.get("ENGRAM_RECONCILE_REQUIRE_EVIDENCE", "").strip().lower()
     if v in ("1", "on", "true", "yes"):
-        return True
+        return (True, False)      # strict
     if v in ("0", "off", "false", "no"):
-        return False
-    return auto_supersede
+        return (False, False)     # none (explicit opt-out of all protection)
+    return (False, True)          # default: tiered
 
 
 def _rerank_topn() -> int:
@@ -2118,10 +2122,11 @@ class SemanticMemory:
                 # lexical default at no precision cost (benchmark/reconcile_truth_
                 # maintenance.py --nli). None -> lexical heuristic (unchanged default).
                 _auto = _reconcile_auto_supersede_enabled()
+                _strict, _tiered = _reconcile_evidence_policy(_auto)
                 self.reconcile_new_fact(
                     fact, judge=getattr(self, "_reconcile_judge", None),
                     auto_supersede=_auto,
-                    require_evidence=_reconcile_require_evidence(_auto))
+                    require_evidence=_strict, protect_evidenced=_tiered)
             except Exception as exc:  # noqa: BLE001 — reconcile must never break store
                 _LOG.warning("reconcile-on-write failed (ignored): %s", exc)
         # Cycle #116 (2026-05-17): optional post-store coherence hook.
@@ -3065,7 +3070,8 @@ class SemanticMemory:
         self._reconcile_judge = judge
 
     def reconcile_new_fact(self, fact, *, auto_supersede: bool = False, judge=None,
-                           require_evidence: bool = False) -> dict:
+                           require_evidence: bool = False,
+                           protect_evidenced: bool = False) -> dict:
         """P1 truth-reconciliation on a just-stored fact: find shared-entity
         update candidates and reconcile. Fail-safe default (``auto_supersede=
         False``): contest, never supersede. Wired into ``store()`` behind
@@ -3082,7 +3088,7 @@ class SemanticMemory:
         return reconcile_against_corpus(
             self, fact, es, contradiction_store=cs, now=time.time(),
             auto_supersede=auto_supersede, judge=judge,
-            require_evidence=require_evidence)
+            require_evidence=require_evidence, protect_evidenced=protect_evidenced)
 
     def _maybe_fuse_ppr(
         self, query: str, hits: list[tuple[Fact, float]], k: int,

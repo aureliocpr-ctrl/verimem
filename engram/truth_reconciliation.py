@@ -95,7 +95,8 @@ def _has_evidence(fact) -> bool:
 
 
 def classify_conflict(old, new, *, now: float, min_age_gap_days: float = 1.0,
-                      require_evidence_to_supersede: bool = False) -> str:
+                      require_evidence_to_supersede: bool = False,
+                      protect_evidenced_facts: bool = False) -> str:
     """Classify a conflict between an older fact and a newer one.
 
     Returns ``'update'`` (new supersedes old) ONLY when new is clearly more
@@ -111,6 +112,13 @@ def classify_conflict(old, new, *, now: float, min_age_gap_days: float = 1.0,
     legitimate evidence-free self-update is contested (surfaced) instead of applied
     — the fail-safe direction (contesting is recoverable; a wrong supersede deletes
     truth), consistent with the rest of the stack.
+
+    ``protect_evidenced_facts`` (opt-in; default off) is the TIERED variant (loop
+    iter 3, 2026-07-04): require evidence to supersede ONLY when the OLD fact is
+    itself evidenced; a bare->bare update (both unverified beliefs) still applies.
+    This keeps update-recall on unverified corpora (HaluMem: the strict gate
+    measured 0.28->0, tiered preserves it) while keeping verified truth
+    sycophancy-proof. If both flags are set, strict wins.
     """
     age_gap_days = (float(new.created_at) - float(old.created_at)) / _DAY
     if age_gap_days < min_age_gap_days:
@@ -118,13 +126,16 @@ def classify_conflict(old, new, *, now: float, min_age_gap_days: float = 1.0,
     if _authority(new) < _authority(old):
         return "dispute"          # newer but LESS authoritative -> don't overwrite
     if require_evidence_to_supersede and not _has_evidence(new):
-        return "dispute"          # anti-sycophancy: bare assertion never supersedes
+        return "dispute"          # anti-sycophancy (strict): bare never supersedes
+    if protect_evidenced_facts and _has_evidence(old) and not _has_evidence(new):
+        return "dispute"          # anti-sycophancy (tiered): bare can't overwrite evidence
     return "update"
 
 
 def reconcile_fact_on_write(
     sm, new_fact, candidates, *, now: float, contradiction_store,
     min_age_gap_days: float = 1.0, judge=None, require_evidence: bool = False,
+    protect_evidenced: bool = False,
 ) -> dict:
     """Reconcile ``new_fact`` against conflicting older ``candidates`` (same
     subject). Clean temporal updates supersede; disputes are recorded contested.
@@ -146,7 +157,8 @@ def reconcile_fact_on_write(
             continue  # telemetry/test/dialog: untouchable by the judge
         verdict = classify_conflict(
             old, new_fact, now=now, min_age_gap_days=min_age_gap_days,
-            require_evidence_to_supersede=require_evidence)
+            require_evidence_to_supersede=require_evidence,
+            protect_evidenced_facts=protect_evidenced)
         if verdict == "update" and not _is_conflict(
             getattr(old, "proposition", ""),
             getattr(new_fact, "proposition", ""), judge,
@@ -220,7 +232,7 @@ def find_related_candidates(sm, new_fact, entity_store, *, judge=None) -> list:
 def reconcile_against_corpus(
     sm, new_fact, entity_store, *, contradiction_store, now: float,
     min_age_gap_days: float = 1.0, auto_supersede: bool = False, judge=None,
-    require_evidence: bool = False,
+    require_evidence: bool = False, protect_evidenced: bool = False,
 ) -> dict:
     """End-to-end P1: FIND shared-entity candidates for ``new_fact`` (instead of
     being handed them), then reconcile.
@@ -246,7 +258,7 @@ def reconcile_against_corpus(
             sm, new_fact, candidates, now=now,
             contradiction_store=contradiction_store,
             min_age_gap_days=min_age_gap_days, judge=judge,
-            require_evidence=require_evidence)
+            require_evidence=require_evidence, protect_evidenced=protect_evidenced)
     from engram.contradiction import Contradiction
     contested: list[str] = []
     for old in candidates:
