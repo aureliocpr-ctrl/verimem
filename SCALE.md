@@ -10,7 +10,7 @@ single-machine, the synthetic tests isolate one cost each.
 | Wall | Finding | Status |
 |---|---|---|
 | Recall precision vs N | recall@10 flat (65.7%) to 11k real distractors; distractors compete (cos 0.78) but don't displace gold — margin holds; %distractor in top-10 grows ~logarithmically (≈4.7% extrapolated @10M) | **robust** — not the wall |
-| Global recall latency | brute-force O(N): 0.6 / 5.9 / 28.4 ms @ 10k/100k/500k; **ANN (HNSW) now in-engine** (`engram/ann_index.py`): measured **6.47→2.57 ms @100k (2.5×)** in-engine, gap widens with N (brute is linear); RAM linear (10M ≈ 30GB) | **module shipped**; wire into recall next |
+| Global recall latency | brute-force O(N): 7.68 / 37.42 ms @100k/500k; **ANN (HNSW) WIRED** (`engram/ann_cache.py`, `ENGRAM_ANN_RECALL`): **0.96 / 1.38 ms = 8× / 27×** (gap widens with N — brute is linear, ANN sublinear); build 54s/338s once then incremental add; RAM linear (10M ≈ 30GB) | **wired, behaviour-preserving**; 500k/1M+auto-enable next |
 | **Multi-tenant lookup** | `topic LIKE 'prefix%'` → full `superseded_by` scan, **O(N_total)**: 203ms @ 1M rows / 10k tenants | **FIXED** → range + `INDEXED BY`, O(N_tenant) 0.16ms (**1270×**) — `d1ef0c0` |
 | **Multi-tenant deserialize** | per-row `np.stack([deserialize])` O(N_tenant): 374ms @ 100k rows/tenant | **FIXED** → batch `frombuffer(join).reshape` (**3.7×**) — `acc5ee7` |
 | Tenant isolation | 0 leak / 50 scoped recalls; `scope.py` strict `user:/agent:/run:` | **correct** |

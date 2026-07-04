@@ -1,0 +1,9 @@
+{
+  "bench": "recall-core latency: brute-force cosine+argsort vs ANN (HNSW) pool",
+  "dim": 768, "synthetic_unit_vectors": true, "queries_averaged": 15,
+  "results": [
+    {"n": 100000, "brute_ms": 7.68, "ann_ms": 0.96, "speedup": 8.0, "build_s": 54},
+    {"n": 500000, "brute_ms": 37.42, "ann_ms": 1.38, "speedup": 27.1, "build_s": 338}
+  ],
+  "note": "ANN build is one-time then incremental add per fact; gap widens with N (8x@100k -> 27x@500k). Behaviour-preserving: identical top-k scores (test_ann_recall_equivalence)."
+}
