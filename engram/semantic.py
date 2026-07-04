@@ -1396,6 +1396,33 @@ def _reconcile_on_write_enabled() -> bool:
     )
 
 
+def _reconcile_auto_supersede_enabled() -> bool:
+    """Allow reconcile-on-write to SUPERSEDE (apply a knowledge update), not just
+    contest. Default OFF (fail-safe, unchanged): every conflict is only contested.
+    ENGRAM_RECONCILE_AUTO_SUPERSEDE=1 lets a clean temporal update actually apply
+    — required to move the HaluMem *Updating* slice. Composed with the evidence
+    gate below so it can never become sycophantic by accident."""
+    return os.environ.get("ENGRAM_RECONCILE_AUTO_SUPERSEDE", "").strip().lower() in (
+        "1", "on", "true", "yes",
+    )
+
+
+def _reconcile_require_evidence(auto_supersede: bool) -> bool:
+    """Anti-sycophancy gate for write-path supersede: a bare claim (no
+    ``verified_by``, status != verified) can only CONTEST, never supersede a
+    stored fact on recency/confidence alone. When auto-supersede is enabled this
+    is ON BY DEFAULT — the only safe composition (auto-supersede without it is
+    exactly the sycophancy failure, measured cave-rate 0.5). An explicit
+    ENGRAM_RECONCILE_REQUIRE_EVIDENCE=0 opts out (dangerous, deployment's call);
+    =1 forces it on even without auto-supersede."""
+    v = os.environ.get("ENGRAM_RECONCILE_REQUIRE_EVIDENCE", "").strip().lower()
+    if v in ("1", "on", "true", "yes"):
+        return True
+    if v in ("0", "off", "false", "no"):
+        return False
+    return auto_supersede
+
+
 def _rerank_topn() -> int:
     """CE pool size = pairs actually scored — the latency knob (20 ≈ 1.6s/q
     CPU). Read per-call (like the centering flag) so tests/A-B can flip it."""
@@ -2090,8 +2117,11 @@ class SemanticMemory:
                 # (set_reconcile_judge) — validated to ~4× conflict-recall over the
                 # lexical default at no precision cost (benchmark/reconcile_truth_
                 # maintenance.py --nli). None -> lexical heuristic (unchanged default).
+                _auto = _reconcile_auto_supersede_enabled()
                 self.reconcile_new_fact(
-                    fact, judge=getattr(self, "_reconcile_judge", None))
+                    fact, judge=getattr(self, "_reconcile_judge", None),
+                    auto_supersede=_auto,
+                    require_evidence=_reconcile_require_evidence(_auto))
             except Exception as exc:  # noqa: BLE001 — reconcile must never break store
                 _LOG.warning("reconcile-on-write failed (ignored): %s", exc)
         # Cycle #116 (2026-05-17): optional post-store coherence hook.
@@ -3034,7 +3064,8 @@ class SemanticMemory:
         ~4× conflict-recall at no precision cost (benchmark/reconcile_truth_maintenance)."""
         self._reconcile_judge = judge
 
-    def reconcile_new_fact(self, fact, *, auto_supersede: bool = False, judge=None) -> dict:
+    def reconcile_new_fact(self, fact, *, auto_supersede: bool = False, judge=None,
+                           require_evidence: bool = False) -> dict:
         """P1 truth-reconciliation on a just-stored fact: find shared-entity
         update candidates and reconcile. Fail-safe default (``auto_supersede=
         False``): contest, never supersede. Wired into ``store()`` behind
@@ -3050,7 +3081,8 @@ class SemanticMemory:
         cs = ContradictionStore(self.db_path)
         return reconcile_against_corpus(
             self, fact, es, contradiction_store=cs, now=time.time(),
-            auto_supersede=auto_supersede, judge=judge)
+            auto_supersede=auto_supersede, judge=judge,
+            require_evidence=require_evidence)
 
     def _maybe_fuse_ppr(
         self, query: str, hits: list[tuple[Fact, float]], k: int,

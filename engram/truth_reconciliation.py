@@ -124,7 +124,7 @@ def classify_conflict(old, new, *, now: float, min_age_gap_days: float = 1.0,
 
 def reconcile_fact_on_write(
     sm, new_fact, candidates, *, now: float, contradiction_store,
-    min_age_gap_days: float = 1.0, judge=None,
+    min_age_gap_days: float = 1.0, judge=None, require_evidence: bool = False,
 ) -> dict:
     """Reconcile ``new_fact`` against conflicting older ``candidates`` (same
     subject). Clean temporal updates supersede; disputes are recorded contested.
@@ -145,7 +145,8 @@ def reconcile_fact_on_write(
         if not _is_reconcilable(old):
             continue  # telemetry/test/dialog: untouchable by the judge
         verdict = classify_conflict(
-            old, new_fact, now=now, min_age_gap_days=min_age_gap_days)
+            old, new_fact, now=now, min_age_gap_days=min_age_gap_days,
+            require_evidence_to_supersede=require_evidence)
         if verdict == "update" and not _is_conflict(
             getattr(old, "proposition", ""),
             getattr(new_fact, "proposition", ""), judge,
@@ -219,6 +220,7 @@ def find_related_candidates(sm, new_fact, entity_store, *, judge=None) -> list:
 def reconcile_against_corpus(
     sm, new_fact, entity_store, *, contradiction_store, now: float,
     min_age_gap_days: float = 1.0, auto_supersede: bool = False, judge=None,
+    require_evidence: bool = False,
 ) -> dict:
     """End-to-end P1: FIND shared-entity candidates for ``new_fact`` (instead of
     being handed them), then reconcile.
@@ -243,7 +245,8 @@ def reconcile_against_corpus(
         return reconcile_fact_on_write(
             sm, new_fact, candidates, now=now,
             contradiction_store=contradiction_store,
-            min_age_gap_days=min_age_gap_days, judge=judge)
+            min_age_gap_days=min_age_gap_days, judge=judge,
+            require_evidence=require_evidence)
     from engram.contradiction import Contradiction
     contested: list[str] = []
     for old in candidates:

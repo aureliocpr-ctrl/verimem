@@ -20,7 +20,7 @@ def _mem():
 def _capture(sm):
     seen = {}
 
-    def _stub(fact, *, auto_supersede=False, judge=None):
+    def _stub(fact, *, auto_supersede=False, judge=None, require_evidence=False):
         seen["judge"] = judge
         return {"superseded": [], "contested": []}
 
