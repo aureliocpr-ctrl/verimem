@@ -18,6 +18,31 @@ from .tools_extra import all_tools
 from .wake import Validator, WakeAgent, WakeConfig, WakeResult
 
 
+def wire_reconcile_judge(semantic, llm) -> None:
+    """Opt-in: wire the reconcile-on-write conflict judge from ENGRAM_RECONCILE_NLI.
+
+    - ``=local`` -> LocalRelationJudge: a local NLI cross-encoder, NO claude -p
+      (subscription-clean per O4), validated ~4x conflict-recall vs the lexical
+      default at no precision cost. This makes the trust-maintenance moat usable at
+      recall WITHOUT a paid judge and without a programmatic set_reconcile_judge call.
+    - ``=1|on|true|yes|llm`` -> LLMRelationJudge(llm): the subscription claude -p judge.
+    - unset / anything else -> no judge wired (lexical default, unchanged).
+
+    Lazy: neither judge loads its model until reconcile fires on a real candidate.
+    Never raises — a judge-wiring failure must not break agent build."""
+    import os as _os
+    v = _os.environ.get("ENGRAM_RECONCILE_NLI", "").strip().lower()
+    try:
+        if v in ("local", "local_nli"):
+            from .local_relation import LocalRelationJudge
+            semantic.set_reconcile_judge(LocalRelationJudge())
+        elif v in ("1", "on", "true", "yes", "llm"):
+            from .semantic_conflict import LLMRelationJudge
+            semantic.set_reconcile_judge(LLMRelationJudge(llm))
+    except Exception:  # noqa: BLE001 — judge wiring must never break agent build
+        pass
+
+
 @dataclass
 class HippoAgent:
     memory: EpisodicMemory
@@ -56,19 +81,11 @@ class HippoAgent:
             llm = LazyLLM()
         wake = WakeAgent(memory=memory, skills=skills, tools=tools or all_tools(),
                         llm=llm, config=wake_config)
-        # Opt-in: route reconcile-on-write conflict confirmation through the semantic
-        # NLI judge (validated ~4× recall vs lexical at no precision cost). Lazy —
-        # LLMRelationJudge holds the (lazy) llm; no inference until reconcile fires on a
-        # real conflict. Off by default; needs ENGRAM_RECONCILE_NLI + ENGRAM_RECONCILE_ON_WRITE.
-        import os as _os
-        if _os.environ.get("ENGRAM_RECONCILE_NLI", "").strip().lower() in (
-            "1", "on", "true", "yes",
-        ):
-            try:
-                from .semantic_conflict import LLMRelationJudge
-                semantic.set_reconcile_judge(LLMRelationJudge(llm))
-            except Exception:  # noqa: BLE001 — judge wiring must never break agent build
-                pass
+        # Opt-in: route reconcile-on-write conflict confirmation through an NLI judge
+        # (validated ~4× recall vs lexical at no precision cost). ENGRAM_RECONCILE_NLI:
+        # =local -> local NLI (no claude -p, O4-clean); =1/on/true/yes/llm -> claude -p.
+        # Lazy — no model/inference until reconcile fires on a real candidate.
+        wire_reconcile_judge(semantic, llm)
         sleep = SleepEngine(memory=memory, skills=skills, semantic=semantic, llm=llm)
         return cls(memory=memory, skills=skills, semantic=semantic,
                    wake=wake, sleep=sleep, entity_kg=entity_kg)
