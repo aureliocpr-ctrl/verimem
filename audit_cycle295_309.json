@@ -1,0 +1,149 @@
+{
+  "n_commits": 18,
+  "by_verdict_class": {
+    "OK_clean": 13,
+    "WARN_marketing_only": 1,
+    "OK_new_files_no_marketing": 4
+  },
+  "marketing_pattern_freq": {
+    "definitive(?!\\s+test)": 1
+  },
+  "per_commit": [
+    {
+      "sha": "0395aeed2d",
+      "subject": "cycle 309: CONTRIBUTING.md addendum M13+M14 + env vars table",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "83a1b45b56",
+      "subject": "cycle 306: pioneering #34 latency 4-mode bench - HYBRID 4.36x vanilla",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "0f3581d7b4",
+      "subject": "cycle 304: arxiv abstract refresh with cycle 281+295+301 empirical numbers",
+      "marketing_matches": [
+        "definitive(?!\\s+test)"
+      ],
+      "added_files": [],
+      "verdict_class": "WARN_marketing_only"
+    },
+    {
+      "sha": "196922ad80",
+      "subject": "cycle 303: pin HYBRID empirical headline via unit test (M14 closure)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "f249bc48e2",
+      "subject": "cycle 302: \u00a79.6.11 update N=2/2 post-264 HOLDS + M14 EMPIRICAL-HEADLINE-PROTECTION",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "d4de9d03f5",
+      "subject": "cycle 301: replicated HYBRID bench N=5 -> 44.6 \u00b1 2.15 statistically stable",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "6d0f203bf5",
+      "subject": "cycle 300: pioneering #33 Conv-Commit detection + honest M-rule recall bounded",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "979ea4dee8",
+      "subject": "cycle 298: sequential 3-cycle HYBRID stable detection 39-48-43 vs vanilla 0",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "efa715e3fe",
+      "subject": "cycle 297: wire HYBRID into auto_dream_worker via ENGRAM_USE_HYBRID env var",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "c09d5fd0fb",
+      "subject": "cycle 296: bench 4-mode comparison - HYBRID 44 vs 0 other modes",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "f0cff897cd",
+      "subject": "cycle 295: HYBRID mode composes stable_partition + second_pass",
+      "marketing_matches": [],
+      "added_files": [
+        "tests/test_hybrid_mode.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "b51f9842f9",
+      "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/analyze_critic_verdicts.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "ad893e8845",
+      "subject": "cycle 292: pioneering #31 BOTH cures precedence - stable wins, contract pinned",
+      "marketing_matches": [],
+      "added_files": [
+        "tests/test_both_cures_interaction.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "83b867891d",
+      "subject": "cycle 291: self-audit cycle 284-290 + \u00a79.3 empirical validation supports target",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "85dff13f26",
+      "subject": "cycle 290: pioneering #30 close cycle 289 vacuous gap with non-empty corpus",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "46830a62a0",
+      "subject": "cycle 289: close M13 SECOND-CALL-SITE COVERAGE gap (cycle 287 counterexample)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "06e0a20d59",
+      "subject": "cycle 287: critic gate HOLD 3-0-0 first post-cycle-264 PASS + M13 born",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "06fe114175",
+      "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/track_meta_rule_evolution.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    }
+  ]
+}

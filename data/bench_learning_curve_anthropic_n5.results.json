@@ -1,0 +1,1202 @@
+[
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.800891099999717,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6692590999991808,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6092556000003242,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6593883000005007,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6887133999989601,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6093646999997873,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7042910999989545,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6248448999995162,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 2959,
+    "latency_s": 18.795444999999745,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 2976,
+    "latency_s": 1.5025858999997581,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 2919,
+    "latency_s": 1.2382756999995763,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 5418,
+    "latency_s": 2.8380844999992405,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 2754,
+    "latency_s": 1.6472384999997303,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 5719,
+    "latency_s": 3.0219621999985975,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 5554,
+    "latency_s": 4.367571400000088,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 5503,
+    "latency_s": 2.3875399000007747,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6819240000004356,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 1
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6899360000006709,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 1
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.682944199999838,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 1
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7060024000002159,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 1
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6090090999987297,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 1
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7562696000004507,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "iter": 1
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.9194502000009379,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 1
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6308418000007805,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 1
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 2688,
+    "latency_s": 1.2339157000005798,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 1
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 5498,
+    "latency_s": 2.466067399998792,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 1
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.23768520000157878,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n24\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 1
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 5505,
+    "latency_s": 2.3450582999994367,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 1
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2592789000009361,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n19\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 1
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2641600999995717,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n25\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 1
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2854207000000315,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n20\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 1
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.26655179999943357,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n45\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 1
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.7679136999995535,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 2
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.7107863000001089,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 2
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6703173000005336,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 2
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.648066600000675,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 2
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.672602900000129,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 2
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7754117000004044,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "iter": 2
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.60396369999944,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 2
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.962575100000322,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 2
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2512596999986272,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n6\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 2
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 5496,
+    "latency_s": 2.5450324000012188,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 2
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.20757289999892237,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n24\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 2
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.26396289999865985,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n7\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 2
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2033157999994728,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n19\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 2
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2348999999994703,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n25\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 2
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.24353400000109104,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n20\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 2
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.22878599999967264,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n45\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 2
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 3.8787647999997716,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 3
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6031323000006523,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 3
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.7160472000014124,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 3
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7032355999999709,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 3
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7303195999993477,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 3
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7219615999983944,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "iter": 3
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6441415000008419,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 3
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6636018000008335,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 3
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.21225779999986116,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n6\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 3
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.24128420000124606,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n15\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 3
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.20923259999835864,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n24\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 3
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.195642399999997,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n7\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 3
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.22400930000003427,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n19\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 3
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.23045929999898362,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n25\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 3
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.1933153999998467,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n20\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 3
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.21907040000041889,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n45\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 3
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.690335999999661,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 4
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6654060000000754,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 4
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.7008986000000732,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 4
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.8135960000017803,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 4
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7788715999995475,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 4
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.5982339000001957,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "iter": 4
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6374345999993238,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 4
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6673068000000058,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 4
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.20786319999933767,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n6\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 4
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.23761449999983597,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n15\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 4
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.22120609999910812,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n24\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 4
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.22717499999998836,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n7\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 4
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.21604909999950905,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n19\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 4
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.34300009999969916,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n25\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 4
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.21436809999977413,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n20\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 4
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.23129770000014105,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\n45\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 4
+    }
+  }
+]

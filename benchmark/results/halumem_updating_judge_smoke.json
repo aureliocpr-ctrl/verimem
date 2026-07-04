@@ -1,0 +1,99 @@
+{
+  "results_file": "benchmark/results/halumem_updating_u5_local.json",
+  "judge_model": "claude-sonnet-4-6",
+  "note": "DECLARED Claude-judge (official protocol uses gpt-4o; O4 forbids external APIs). Judge scores target-SELECTION per the official rubric; corrected accuracy reweights full-run local class counts by sampled P(judge=correct|class).",
+  "sampled": 12,
+  "errors": 0,
+  "per_class": {
+    "correct": {
+      "n": 3,
+      "judge_correct": 0,
+      "agree": 0
+    },
+    "missed": {
+      "n": 3,
+      "judge_correct": 0,
+      "agree": 3
+    },
+    "missed_unreachable": {
+      "n": 3,
+      "judge_correct": 0,
+      "agree": 3
+    },
+    "wrong": {
+      "n": 3,
+      "judge_correct": 0,
+      "agree": 3
+    }
+  },
+  "judge_correct_rate_on_sample": 0.0,
+  "full_run_local_accuracy": 0.6515,
+  "judge_corrected_accuracy": 0.0,
+  "judge_corrected_accuracy_wilson_on_sample": [
+    0.0,
+    0.2425
+  ],
+  "wall_s": 92.2,
+  "judged": [
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Donna Gonzalez expressed enthusiasm about the potential for new connections to enhance her professional growth and align"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Johnson Joseph transitioned to part-time management at Albi B&B on Feb 15, 2029, to focus on personal growth and manage "
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Martin is exploring ways to balance professional responsibilities with personal well-being."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Donald Brown now enjoys social soccer games for their relaxed, non-competitive environment, which he finds conducive to "
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Sarah Garcia reflected on past experiences that shaped her approach to engaging with community leaders, using these refl"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Sarah Garcia's expanded social network has provided diverse perspectives and encouragement, positively impacting her abi"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Johnson Joseph now appreciates opera for its emotional depth and storytelling, considering it a sophisticated choice for"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "On Mar 09, 2042, Johnson Joseph hosted a live jazz band at Albi B&B, reigniting his passion for jazz and prompting him t"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Martin Mark expressed a deepened admiration for Golden Retrievers, recognizing their therapeutic potential in stress man"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Martin's commitment to yoga and meditation has led to exceptional physical and mental well-being."
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Brown previously enjoyed grilled salmon for its smoky flavor and tender texture, considering it a healthy energy "
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Brown expressed concern over deteriorating physical health and fatigue, aiming to reduce fatigue and increase ene"
+    }
+  ]
+}

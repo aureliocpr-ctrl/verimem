@@ -1,0 +1,389 @@
+{
+ "ideas": [
+  {
+   "title": "Persist the write-time grounding score on the Fact, then make it a hard signal at answer time (cite-or-abstain on g<thr facts)",
+   "what": "Today the write-path computes a 0-100 entailment score (grounding_gate.fact_grounding_score, called at anti_confab_gate.py:695) but THROWS IT AWAY after the pass/fail gate decision — it is never stored on the Fact. Add a persisted float field `grounding_score` (+ the `fact_grounding_span` provenance pointer) to the Fact dataclass/schema (semantic.py:1248, alongside status/verified_by), backfill via a one-shot job, and surface it in recall results. At answer time the answerer is given each retrieved fact tagged with its frozen write-time entailment score and source span; facts below threshold are quotable ONLY with an explicit hedge, facts above are quotable as ground truth. This directly attacks today's measured gap (gold fact surfaced 80%@k8 but answerer omits/fabricates): the answerer no longer has to re-judge trust from scratch — it inherits a calibrated, source-verified number.",
+   "why_unique": "mem0/Zep/Letta store the extracted fact text and at best a recency/confidence scalar; none of them run a source⊢fact entailment verifier ON WRITE (Engram's measured AUROC 0.971 SNLI / 0.992 wrong-source). So they have no per-fact entailment number to persist or condition on. They literally cannot reproduce this without first building the write-path moat Engram already shipped (grounding_gate.py L4 in run_validation_gate). It turns a one-shot gate decision into a permanent, queryable trust coordinate.",
+   "falsifiable_test": "On the existing QA bench (the 80%@k8-retrieval / answerer-omits regime), run answerer A = current vs answerer B = same prompt + persisted grounding_score+span per fact with cite-or-abstain. Prediction: B raises end-to-end QA accuracy on items where the gold fact IS retrieved, AND lowers fabrication rate on adversarial/no-gold items, with no net regression. KILL if B's accuracy on gold-retrieved items is <= A within noise, OR if B abstains so much that overall answered-correctly drops.",
+   "buildable_on": "engram/grounding_gate.py (fact_grounding_score, fact_grounding_span), engram/anti_confab_gate.py:693-705 (where gscore is computed and discarded), engram/semantic.py:1248-1298 (Fact dataclass + schema migration pattern, e.g. v8/v10/v11 appended fields), engram/bench_harness.py (QA validators)",
+   "effort": "M"
+  },
+  {
+   "title": "Provenance-conditioned retrieval: rank by entailment-trust, not just cosine, and let the query demand a min-grounding floor",
+   "what": "Recall today ranks by embedding similarity + cross-encoder rerank and exposes only a `min_status` categorical filter (semantic.py:577). Replace/augment the final ranking with a trust-weighted score that folds in the PERSISTED write-time grounding_score and live contradiction count: rank = f(rerank_score, grounding_score, 1/(1+n_contradictions), age_decay). Expose a `min_grounding` query parameter (continuous analogue of min_status) so a high-stakes answer step can say 'only give me facts the source provably entailed'. This is the retrieval-side complement to idea 1: instead of surfacing a high-cosine-but-confabulated fact at rank 1, the gold fact that was source-verified on write floats up.",
+   "why_unique": "Competitors rank on semantic similarity (+ optional recency/graph). They have no write-time entailment number and no per-fact contradiction count to weight by, so 'provenance-conditioned ranking' is uncomputable for them. Engram already persists status + contradictions (contradiction.py ContradictionStore, trust_signal.py) and — after idea 1 — the grounding score, so the ranking function is a pure rewrite over data only Engram has. Note trust_score.py already builds a composite (base*age_decay*corroboration) but ignores grounding_score and contradictions — this is the obvious upgrade.",
+   "falsifiable_test": "Measure retrieval gold-fact-in-top-k with k∈{1,3,8} on the QA bench, current ranker vs trust-weighted ranker, holding the candidate set fixed. Prediction: trust-weighted ranking improves Recall@1/@3 (pushes the verified gold fact up) without hurting Recall@8. Build a poisoned-corpus variant (inject high-cosine confabulated near-duplicates with low write-grounding) and predict the trust-weighted ranker keeps gold@1 while cosine-only collapses. KILL if Recall@1 does not improve on either clean or poisoned set.",
+   "buildable_on": "engram/trust_score.py (compute_trust_score composite to extend with grounding+contradictions), engram/cross_encoder_rerank.py + engram/rerank.py + engram/fuse_recall.py (final ranking stage), engram/semantic.py:577 (_row_passes_status_filter → add min_grounding), engram/contradiction.py (ContradictionStore.list_unresolved_for_fact for n_contradictions)",
+   "effort": "M"
+  },
+  {
+   "title": "Calibrated-confidence answers: emit P(correct) from the write-time trust signals and prove the calibration curve",
+   "what": "Wire compute_trust_signal (trust_signal.py, currently default-OFF behind recall's trust_signals=True flag, mcp_server.py:11413) plus the persisted grounding_score into a per-answer calibrated confidence. Fit a tiny monotonic calibrator (isotonic/Platt — a lookup table, not 'an LLM') mapping the supporting fact's (grounding_score, verdict∈{trusted/stale/contested/obsolete/unverified}, n_contradictions) to an empirical P(answer correct), trained on held-out QA labels. The answer then carries a real probability, and abstention becomes a principled threshold on that probability rather than a brittle prompt heuristic. trust_calibration.py / trust_calibration_eval.py already exist as the scaffold.",
+   "why_unique": "A calibrated confidence is only as good as its FEATURES. Engram's features are write-time provenance (source-entailment score, contradiction count, supersession) that no competitor records — mem0/Zep/Letta can at best calibrate on retrieval similarity, which the EPISTEMIC_FAILURES study already showed is dominated/uninformative for grounding. So Engram can publish a reliability diagram (ECE) that competitors structurally cannot match, turning 'trust' from marketing into a measured curve. The honest grounding_gate.py docstring even notes self-confidence is over-confident — the write-time signals are the fix.",
+   "falsifiable_test": "On held-out QA, plot reliability diagram and compute Expected Calibration Error for (a) model verbalized confidence baseline vs (b) the write-time-trust calibrator. Prediction: (b) achieves materially lower ECE and a near-diagonal curve. Second test: at a fixed abstention budget (e.g. abstain on lowest-confidence 20%), the trust-calibrated selector yields higher accuracy-on-answered than confidence-thresholding. KILL if ECE(b) >= ECE(a) or if selective accuracy is no better than the verbalized-confidence baseline.",
+   "buildable_on": "engram/trust_signal.py (compute_trust_signal — features), engram/trust_calibration.py + engram/trust_calibration_eval.py (existing calibration scaffold), engram/grounding_gate.py:140 optimal_threshold (Youden's J cut, the abstention-threshold primitive), engram/tier2_judge.py (assess_claim_trust composition), engram/bench_harness.py (labels)",
+   "effort": "L"
+  },
+  {
+   "title": "Contested-fact disambiguation at answer time: when two retrieved facts contradict, pick the higher-provenance one and SAY you did",
+   "what": "The contradiction detector (contradiction.py) and trust_signal's `contested` verdict already flag fact pairs that clash on a topic. Today that signal dies in the store. Add an answer-time arbitration step: when the retrieved set for a query contains a known contradiction pair (or a superseded→superseder chain), the answerer is handed BOTH facts plus their provenance (write-time grounding_score, status, supersession edge, age) and instructed to answer from the higher-provenance one while explicitly noting the conflict and which it discarded. This converts Engram's contradiction graph from a maintenance/dashboard feature into a live answer-correctness lever — the classic LongMemEval/temporal-update failure mode (old value vs updated value) becomes a provenance comparison, not a coin flip.",
+   "why_unique": "This requires THREE things only Engram has together: (1) a stored contradiction graph computed on write (contradiction.py schema v4 table), (2) supersession edges (superseded_by/superseded_at), and (3) per-fact write-time provenance to break the tie. mem0 does conflict-resolution by overwriting on write (loses the loser and the audit trail) and Zep tracks bi-temporal edges but has no source-entailment score to rank conflicting versions by trustworthiness. Engram can keep both, surface the conflict to the user, and justify the choice — falsifiable transparency competitors discard at write time.",
+   "falsifiable_test": "Construct a temporal-update QA subset (fact stated, later updated/contradicted; question asks current value) and an adversarial subset (a wrong value injected with high cosine). Compare answerer with vs without contested-fact arbitration. Prediction: arbitration raises accuracy on update questions (picks superseder/higher-grounding) and lowers wrong-answer rate on the adversarial set, while emitting a correct conflict note. KILL if accuracy on the update subset does not improve, or if arbitration introduces regressions on single-fact (non-contested) questions.",
+   "buildable_on": "engram/contradiction.py (ContradictionStore, list_unresolved_for_fact, contradictions table), engram/trust_signal.py (contested/obsolete verdicts), engram/semantic.py (superseded_by/superseded_at/superseded_reason fields ~1256, fact_supersede), engram/facts_conflict.py + engram/semantic_conflict.py (conflict surfacing), engram/grounding_gate.py (the tie-break score from idea 1)",
+   "effort": "M"
+  },
+  {
+   "title": "Quarantine ward: a third memory tier that isolates suspect facts instead of dropping or storing them",
+   "what": "Today anti_confab_gate has a binary-ish outcome: store, or store-but-downgrade-to-provisional. A poisoned/contested fact stays fully recallable (just lower-ranked) OR gets quarantined-via-personal/dev exceptions ad hoc. Introduce an explicit QUARANTINE status (a real isolation ward distinct from provisional/legacy): facts that trip L3-contradiction, L4-grounding-fail, OR arrive contradicting an existing higher-trust fact get parked in quarantine, EXCLUDED from default recall, but kept queryable for review and auto-released (promoted) only when corroboration_index>=1 from an independent topic OR a later verified write entails them. This is detect+isolate+heal as one state machine, not three scattered modules.",
+   "why_unique": "mem0/Zep/Letta/Cognee store-or-update; MemOS has governance but no per-fact isolation tier gated by entailment+independent corroboration. Nobody quarantines a write and conditionally releases it on later independent witness. Engram already has the grounding gate (write-path AUROC 0.971) + corroboration_index + contradiction store to make release decisions evidence-driven, not LLM-vibe.",
+   "falsifiable_test": "Extend bench_poisoning_resistance.py: inject poisoning facts that PASS status filters (status=model_claim, the realistic attack the bench admits strict-mode misses). Measure poisoning_in_topk WITH quarantine routing vs current default/strict. Falsified if quarantine does not drop poisoning_model_claim_in_topk well below strict-mode while keeping verified_in_topk within 5% of baseline (i.e. if it just degrades to strict mode or kills good recall).",
+   "buildable_on": "engram/anti_confab_gate.py (run_validation_gate L3/L4 already classify), engram/semantic.py (Fact.status + _STATUS_RANK + recall min_status/exclude_legacy plumbing), engram/corroboration.py (corroboration_index for release), engram/grounding_gate.py (should_store_fact for release entailment), benchmark/bench_poisoning_resistance.py (already has model_claim attack corpus).",
+   "effort": "M"
+  },
+  {
+   "title": "Write-rate immune response: burst/flood anomaly detector on the write-path (contradiction-flood defense)",
+   "what": "anomaly_detection.py only scans episode CLUSTERS post-hoc (outcome/token z-score); there is NO temporal write-rate sensor. Build a write-path anomaly detector that watches, per writer_role/source_signature and per topic, the rate of incoming facts and the share of them that contradict existing higher-trust facts in a sliding window. A spike of same-topic, mutually-or-cross contradicting writes (a contradiction flood / drift-injection attack) trips a circuit-breaker that auto-routes that writer's subsequent same-topic writes to quarantine and raises a corpus_health alarm, instead of letting the flood supersede truth via heal_contradictions trust-rank logic.",
+   "why_unique": "Every competitor treats writes as independent trusted events; none model an adversary that floods to win majority/trust. heal_contradictions today resolves toward higher STATUS rank, so an attacker who can write at model_claim can still crowd a topic and force human review fatigue. A rate+contradiction-share immune signal per writer is a security primitive no memory product markets. Engram already tags Fact.writer_role + source_signature + created_at, so the per-writer window is computable.",
+   "falsifiable_test": "New bench: seed a clean corpus, then simulate a flood (N contradicting writes to one topic in a short created_at window from one writer_role) vs an organic correction (1-2 writes spread over time). Metric: detector flags the flood (precision/recall on flood vs organic) AND post-flood verified_in_topk for that topic stays >=90% of pre-flood. Falsified if organic corrections are flagged at >10% (false-positive on legitimate updates) or the flood still flips topk truth.",
+   "buildable_on": "engram/anomaly_detection.py (extend with a write-rate detector + sliding window), engram/semantic.py (Fact.created_at/writer_role/source_signature already present; recall by topic), engram/contradiction.py (scan_corpus/ContradictionStore to compute contradiction-share), engram/corpus_health_metrics.py + corpus_health_score.py (surface the alarm), engram/trust_signal.py (feed 'contested' verdict).",
+   "effort": "M"
+  },
+  {
+   "title": "Drift sentinel: slow-poisoning detector via per-topic trust-trajectory over time",
+   "what": "Gradual drift (each write individually passes the gate, but the topic's consensus is slowly walked away from truth) is invisible to a per-write gate AND to a single-snapshot contradiction scan. Build a drift sentinel that snapshots, per topic, a trust-weighted centroid of fact values/embeddings at intervals and flags monotonic drift: when the topic's verified/corroborated anchor and the running model_claim consensus diverge beyond a threshold over a time window. On trip, it pins the verified anchor and quarantines the drifting tail rather than letting decay + heal silently ratify the new 'consensus'.",
+   "why_unique": "This is the attack memory products literally cannot see: no single write is anomalous. mem0/Zep update-in-place (drift IS their happy path); Letta/Cognee/MemOS have no temporal trust-trajectory per topic. Engram uniquely has verified_by provenance + corroboration_index to define an immovable anchor to measure drift AGAINST, plus decay.py whose interaction with drift is exactly the danger. It reframes 'memory update' as 'must not silently override a corroborated anchor'.",
+   "falsifiable_test": "Bench: take a topic with a verified anchor; inject a slow sequence of model_claim facts each individually grounding-passable but collectively shifting the value (e.g. a number creeping 5% per write). Without sentinel: measure recall returning the drifted value as if consensus. With sentinel: it must flag drift and keep the verified anchor top-1. Falsified if sentinel either misses sub-threshold-per-step drift or fires on legitimate genuine-change sequences (a real value that truly changed, signaled by a new verified write) > a set FP rate.",
+   "buildable_on": "engram/skill_drift.py (drift-detection pattern to generalize from skills to facts), engram/decay.py + time_decay_score.py (the interaction surface), engram/corroboration.py (anchor = corroborated fact), engram/semantic.py (verified_by anchor, created_at for trajectory, supersede chain), engram/trust_signal.py (verdict feed), engram/metrics_history-style snapshotting.",
+   "effort": "L"
+  },
+  {
+   "title": "Provenance antibody: bind every stored fact to a verifier-quoted source span and reject orphan high-trust claims at recall",
+   "what": "grounding_gate.fact_grounding_span already CAN return the exact source span that entails a fact, but it is not enforced as a stored, recall-time antibody. Make the write-path store the grounding span + a provenance hash alongside the fact, and add a recall-time antibody that DOWN-WEIGHTS or quarantines any fact claiming verified/high-trust whose provenance ref no longer validates (provenance_validator.evidence_ref_exists fails) or whose stored span no longer entails it. This turns provenance from a one-time admission check into a continuously-checkable immune marker, killing the 'forge status=verified' threat the poisoning bench explicitly defers to a future cycle.",
+   "why_unique": "The bench's own docstring admits the realistic open threat: an adversary forging status=verified WITHOUT authentic verified_by refs. No competitor stores a verifier-committed span as a re-checkable provenance antibody; mem0/Zep/Cognee store source ids at best, never re-validate entailment at recall. Engram already has fact_grounding_span (the span), provenance_validator (ref existence), and source_signature/verified_by fields — the pieces exist but are not wired into a recall-time self-check.",
+   "falsifiable_test": "Bench the deferred threat: inject facts with status=verified but (a) dangling verified_by refs and (b) a stored span that does NOT entail the proposition. Antibody must demote/quarantine these so poisoning_verified_in_topk ~ 0, while genuine verified facts (valid refs + entailing span) stay in topk. Falsified if forged-verified poison survives in topk OR genuine verified facts get demoted (re-validation FP) above threshold.",
+   "buildable_on": "engram/grounding_gate.py (fact_grounding_span already returns score+span), engram/provenance_validator.py (evidence_ref_exists/validate_verified_refs), engram/semantic.py (Fact.verified_by/source_signature/status; add span+provenance_hash; recall hook), engram/anti_confab_gate.py (wire as an L5 recall-time layer), engram/trusted_writer.py + capability_token.py (authenticate the verified status itself).",
+   "effort": "M"
+  },
+  {
+   "title": "Typed derivation edges on write → make the ATMS cascade actually fire (depends_on bootstrap)",
+   "what": "The ATMS cascade in justified_memory.propagate() is built and unit-tested but DORMANT on real data: fact_to_belief() deliberately refuses to use lineage_to (it's a narrative successor, 95% cross-topic) so real facts have empty depends_on and nothing ever cascades (the R23/R26 caveat in the docstring). Build the missing write-path primitive: when a fact is admitted, record a TYPED 'derives_from' edge to the specific OLDER facts whose propositions were the evidence/source for the new one (detect via the entity-KG candidate set already computed in truth_reconciliation.find_related_candidates, scored by grounding_gate.fact_grounding_span entailment ≥ θ). Then audit_facts/propagate cascade-retracts derived facts the moment a foundation is superseded — for real, not in a stub.",
+   "why_unique": "mem0/Zep/Letta/Cognee store facts with recency/supersede but have NO derivation graph: superseding fact A leaves every fact inferred from A silently live. MemOS has versioning but no justification-dependency closure. Engram already has the cascade engine + grounding span verifier + entity-KG; the only missing piece is the typed edge — no competitor has even the half of this that's already shipped.",
+   "falsifiable_test": "Construct a corpus where fact C ('deploy uses region eu-west') was derived from fact A ('prod cluster is in eu-west'). Supersede A with A' ('prod cluster moved to us-east'). Assertion: after audit_facts(), C appears in would_retract_ids (cascade) WITH the recorded derives_from edge present; and with the OLD lineage_to-only path C stays served (reproducing the documented false-negative). Measure: derived-fact retraction recall ≥0.8 on a 50-case synthetic set, with cross-topic false-cascade rate <5% (the R26 failure mode that killed lineage_to).",
+   "buildable_on": "engram/justified_memory.py (propagate/audit_facts/fact_to_belief depends_on), engram/truth_reconciliation.py (find_related_candidates), engram/grounding_gate.py (fact_grounding_span for the edge + provenance), engram/semantic.py (supersede + a new derives_from column/table), engram/mcp_server.py:7707 (audit hook)",
+   "effort": "M"
+  },
+  {
+   "title": "Answer Ledger: revise PAST answers when their supporting facts get falsified",
+   "what": "Episodes store final_answer as opaque text (memory.py:297) with NO link to the facts that justified it — so when a fact is later superseded/contested, every past answer that relied on it stays in the corpus as a stored falsehood (and gets replayed verbatim into future prompts per the episode-replay path at memory.py:456). Add a cited_facts edge captured at answer time (the retrieve→answer pipeline already surfaces the gold facts), then a maintenance pass that re-runs grounding_gate.gate_answer for each past answer whose cited facts changed status: if the new live fact set no longer entails the old answer, mark the episode 'stale-answer' and attach the corrected fact. 'Memory that changes its mind about what it already told you.'",
+   "why_unique": "Every competitor treats conversation/answer history as immutable logs. None re-validates a stored answer against an evolving fact base — Zep's temporal graph invalidates EDGES but never goes back to flag the ANSWERS it gave from the old edges. This directly attacks today's measured answer-step gap: a stale answer replayed as few-shot context is exactly what makes the answerer fabricate.",
+   "falsifiable_test": "Seed 30 (question, answer, cited_facts) episodes. Supersede the cited fact for 10 of them with a contradicting value. Run the answer-revision pass. Assertion: ≥9/10 affected episodes flagged stale-answer AND 0/20 unaffected episodes flagged (precision). Second axis: with episode-replay ON, measure answer-fabrication rate on the 10 questions before vs after revision — expect a drop because the stale few-shot is no longer injected.",
+   "buildable_on": "engram/memory.py (episodes schema + replay at :456, add cited_facts column), engram/grounding_gate.py (gate_answer re-check), engram/justified_memory.py (status lifecycle reused for answers), engram/semantic.py (superseded_by trigger)",
+   "effort": "M"
+  },
+  {
+   "title": "Semantic supersede detector to replace the lexical reconcile heuristic (close the auto_supersede gap)",
+   "what": "truth_reconciliation.reconcile_against_corpus is fail-safe-frozen at auto_supersede=False because its conflict test is looks_like_conflict() — a TOKEN heuristic (shared tokens + small diff) that the docstring itself admits 'is not a semantic detector' and exploded to 5090 spurious candidates on 16 facts. So no fact ever auto-supersedes on write; the truth-update path is effectively off. Replace the lexical gate with a directional entailment check: two facts conflict iff they share a subject/attribute AND each NEGATES the other's value (run fact_grounding_score(old_prop, new_prop) and the reverse; conflict = both LOW + high entity overlap). Then auto_supersede becomes safe to enable for clean temporal updates.",
+   "why_unique": "mem0's update/ADD/DELETE memory ops use an LLM diff but with no entailment-grounded, fail-safe, recoverable contested fallback and no authority/recency gate; it silently overwrites. Engram already has classify_conflict's authority+recency+anti-sycophancy gate AND the entailment verifier — combining them yields a supersede decision that is both semantic AND conservative, which mem0/Cognee do not have.",
+   "falsifiable_test": "Build a labeled set of 60 fact pairs: 20 true value-conflicts ('timeout is 5s' vs 'timeout is 30s'), 20 complementary same-entity ('config owner is Bob' vs 'config timeout is 5s'), 20 unrelated. Assertion: entailment detector reaches conflict-precision ≥0.9 and recall ≥0.8, vs looks_like_conflict's measured precision (re-run it as baseline). Then on the 20 true-conflicts, auto_supersede with the new detector must supersede ≥18 and wrongly supersede 0 complementary pairs.",
+   "buildable_on": "engram/truth_reconciliation.py (classify_conflict + reconcile_against_corpus + looks_like_conflict baseline), engram/grounding_gate.py (fact_grounding_score directional), engram/contradiction.py (ContradictionStore for the contested fallback), engram/entity_kg/entity store (candidate set)",
+   "effort": "M"
+  },
+  {
+   "title": "Belief-status-aware retrieval: never let a retracted/contested fact reach the answerer (read-path JBI gate)",
+   "what": "served() in justified_memory.py defines the read discipline ('never serve a retracted/contested/stale belief') and justified_belief_integrity (JBI) is the new metric — but retrieval today filters only WHERE superseded_by IS NULL. A fact can be CONTESTED (a recorded Contradiction) or cascade-retracted-but-not-yet-superseded and still be retrieved and fed to the answerer, which is a direct cause of the answer step omitting/fabricating (it sees conflicting evidence). Wire the audit_facts() belief-status result into the retrieval filter: down-rank contested facts and exclude cascade-retracted ones, and pass the answerer ONLY served() beliefs plus an explicit 'this was contested, here is the live value' annotation for contested ones.",
+   "why_unique": "No competitor's retriever is justification-aware: they rank by similarity/recency, blind to whether a top-k hit is currently disputed. Engram uniquely already computes a per-fact belief status (believed/contested/retracted/stale) AND has the JBI metric to prove the read-path serves fewer falsehoods — this turns the truth-maintenance layer from an audit into an active retrieval filter, the thing that should lift the answer step.",
+   "falsifiable_test": "On the LoCoMo/HaluMem QA pipeline already in the repo, take questions whose gold fact has a contested sibling in the corpus. Measure answer accuracy and fabrication rate with (a) plain superseded-only filter vs (b) belief-status-aware retrieval. Assertion: JBI of the served set rises (fewer contested/retracted beliefs served) AND end-to-end QA accuracy on the contested-sibling subset improves by ≥3 points with no regression on the clean subset. If accuracy does not move, the idea is falsified.",
+   "buildable_on": "engram/justified_memory.py (served + justified_belief_integrity + audit_facts), engram/semantic.py (recall filter currently superseded_by IS NULL), engram/contradiction.py (contested status source), engram/fuse_recall.py + bench_harness.py (QA pipeline + measurement)",
+   "effort": "L"
+  },
+  {
+   "title": "Fact Credit Assignment: C/H/O → per-fact retrieval reward (the missing provenance link)",
+   "what": "Persist, on every answered question, the list of recalled fact_ids that were in-context AND the C/H/O verdict, then accumulate a per-fact ledger: times_recalled, times_led_to_Correct, times_present_when_Hallucinated, times_present_when_Omitted. This becomes a learned 'answer-utility' score per fact (Wilson-smoothed correct-rate), distinct from cosine relevance. The benchmark already computes C/H/O per question but THROWS AWAY the `hits` (halumem_qa_bench.py:128 discards `hits` after building ctx); Episode has `outcome` but no `recalled_fact_ids` field. Add the field + a FactOutcomeLedger keyed by fact_id.",
+   "why_unique": "mem0/Zep/Letta/Cognee/MemOS all treat retrieval relevance as a static embedding/graph property; none close the loop from downstream answer correctness back to the individual memory unit. Engram uniquely already has (a) a write-path that mints stable fact_ids and (b) a C/H/O-scoring harness — the two endpoints of the credit-assignment wire that nobody else has both of.",
+   "falsifiable_test": "On HaluMem-Medium (benchmark/halumem_qa_bench.py): run 2x passes. Pass1 builds the ledger. Pass2 uses answer-utility as a tiebreak/boost in ranking. Kill criterion: if correct_rate does not rise by >=3 absolute points (Wilson CI non-overlapping) vs the no-ledger baseline, OR if facts flagged high-hallucination-association are NOT enriched for genuinely ambiguous/interference points (manual audit of top-20), the idea is falsified.",
+   "buildable_on": "engram/episode.py (add recalled_fact_ids field), benchmark/halumem_qa_bench.py (already has hits+verdict in the same loop, line 124-131), engram/outcome_pattern.py (reuse the success-rate-per-token math, applied per-fact-id instead of per-token)",
+   "effort": "M"
+  },
+  {
+   "title": "Outcome-weighted RRF: learn per-signal fusion weights per corpus from C/H/O",
+   "what": "rrf_fuse currently sums 1/(k+rank) with EQUAL weight across signals (dense, PPR-seed, BM25) and a hard-coded k=60. Replace with weighted RRF score = Σ w_s/(k+rank_s) where w_s is learned per corpus/topic from which signal's rank-1 hit most often co-occurred with a Correct verdict. Start uniform; after N answered questions, fit w_s by logistic regression on (signal_contributed_the_gold_fact → Correct). Pure, additive, defaults to today's behavior when no outcome data.",
+   "why_unique": "HippoRAG-2/Zep fuse graph+dense with fixed heuristics; mem0 is dense-only. The claim 'RRF needs no training' (multi_signal_fusion.py:12) is a virtue UNTIL you have outcome labels — Engram is the only one of these systems that generates per-answer Correct/Halluc labels, so it can do supervised fusion weighting that the others structurally cannot.",
+   "falsifiable_test": "LoCoMo + HaluMem: 5-fold cross-corpus. Learn weights on 4 corpora, test on held-out. Kill criterion: if learned weights do NOT beat uniform RRF on recall@8 of the gold fact by >=2 points on held-out (i.e., weights overfit and don't transfer), the per-corpus-weighting thesis is dead and we keep uniform RRF.",
+   "buildable_on": "engram/multi_signal_fusion.py (rrf_fuse — add optional weights param), engram/ppr_seed.py (fuse_dense_and_ppr passes the rank-lists), the Fact Credit ledger from idea #1 as the label source",
+   "effort": "M"
+  },
+  {
+   "title": "Hallucination-Risk Reranker: down-rank facts statistically linked to fabrication, not just up-rank relevant ones",
+   "what": "The measured gap is the ANSWER step fabricating despite the gold being retrieved@k8. Hypothesis: certain recalled facts ACTIVELY induce fabrication (near-miss distractors, stale/superseded facts, interference points). Build a second-stage reranker signal = answer-utility (correct-association) MINUS hallucination-association from the ledger, and use it to PRUNE the context window (drop top-cosine-but-high-halluc-risk facts) before the answerer sees them. This attacks the answerer directly by curating its input.",
+   "why_unique": "Every competitor optimizes retrieval for RELEVANCE; none has a 'this fact tends to make the model lie' signal because none measures per-fact fabrication association. Engram's write-path already separates verified vs provisional facts (anti_confab_gate), giving a prior that combines with the learned hallucination-association — a two-source fabrication-risk score no competitor can assemble.",
+   "falsifiable_test": "HaluMem with --with-interference (the hard mode, interference points ingested). A/B: baseline top-k vs top-k-minus-high-halluc-risk (same k after pruning, backfilled from pool). Kill criterion: if hallucination_rate does not DROP by >=4 points while correct_rate stays within -1 point (i.e., pruning kills good answers as often as bad ones), falsified.",
+   "buildable_on": "engram/rerank.py (recall_reranked 2-stage already exists — inject the risk signal as a post-CE filter), engram/anti_confab_gate.py (verified/provisional prior), engram/grounding_gate.py, the ledger from idea #1",
+   "effort": "M"
+  },
+  {
+   "title": "Seed-weight self-tuning loop: PPR seeds re-weighted by their historical answer-ROI",
+   "what": "ppr_seeded_fact_ids treats every query-extracted entity as an equal PPR seed (max_seeds=8, uniform mass). Learn a per-entity (or per-entity-type) seed weight = how often PPR-from-this-seed surfaced a fact that led to a Correct answer, mirroring skill_roi's value-per-use formula but for entities-as-retrieval-seeds. Entities whose graph-walks historically rescued gold facts get more restart mass; noise entities get suppressed. A nightly Dream job recomputes weights from the ledger.",
+   "why_unique": "HippoRAG-2's auto-seeding is static (all extracted entities equal). mem0/Letta have no persistent entity graph to seed at all. Engram already runs an Auto-Dream consolidation cron + has skill-ROI machinery — it can turn retrieval seeding into a self-improving, outcome-driven control loop, which is categorically beyond a static PPR.",
+   "falsifiable_test": "LoCoMo multi-hop subset (where PPR-seeding matters most). Compare uniform-seed PPR vs ROI-weighted-seed PPR on hit@k of gold evidence turns. Kill criterion: if multi-hop hit@8 does not improve by >=3 points, OR if weighting collapses to effectively-uniform (entropy of learned weights stays >90% of max), the entity-ROI seeding hypothesis is falsified.",
+   "buildable_on": "engram/ppr_seed.py (ppr_seeded_fact_ids — add per-seed weight lookup), engram/skill_roi.py (reuse fitness*value*log(1+trials) ROI shape for entities), engram/auto_dream_trigger.py + engram/active_learning.py (the cron that recomputes), ledger from idea #1",
+   "effort": "L"
+  },
+  {
+   "title": "Open Memory Bench (OMB): the only reproducible same-corpus multi-system memory leaderboard, with grounding ON/OFF as a published axis",
+   "what": "Generalize bench_harness.py (today raw / hippo_cold / hippo_warm conditions) into a 4th class of conditions: external adapters (mem0, Zep/Graphiti, Letta) run against the EXACT same LoCoMo/LongMemEval/HaluMem corpora already wired via lab_longmemeval_adapter.py and scripts/lab_halumem_adapter.py. Publish a single repo with frozen corpus hashes, the Claude-judge prompt verbatim, Wilson CIs, AND an ablation column that no competitor reports: write-path grounding gate ON vs OFF (ENGRAM_GROUNDING_WRITE / should_store_fact). The headline artifact is not 'Engram wins' but 'here is the harness, run it yourself, every number is reproducible with one command'.",
+   "why_unique": "mem0/Zep/MemOS each publish numbers on their OWN harness (MemOS literally authors HaluMem = conflict of interest; mem0 README 91.6 is unverified; Zep alleges mem0 misconfigured competitors). Nobody can credibly publish a NEUTRAL multi-system harness because each has incentive to tune their own config. Engram's ethos (Wilson CIs + judge asterisk already in docs/BENCHMARKS.md) makes it the only honest broker. The grounding ON/OFF column is unforgeable by them: they have no write-path gate to ablate.",
+   "falsifiable_test": "Run the harness on LoCoMo + LongMemEval-S 500 with >=2 real competitor adapters (mem0 pip, Graphiti) under identical retrieval budget. Claim is FALSIFIED if (a) competitor self-reported numbers reproduce within CI on our harness (meaning their numbers were honest and a neutral harness adds nothing), OR (b) the grounding-ON column does not change interference/QA-precision by a margin exceeding the Wilson CI. Claim SURVIVES if competitor numbers drop materially under neutral config AND grounding-ON measurably reduces corrupted-memory admission.",
+   "buildable_on": "engram/bench_harness.py (3-condition harness + aggregate + to_jsonable), engram/lab_longmemeval_adapter.py, scripts/lab_halumem_adapter.py, engram/tier2_judge.py, docs/BENCHMARKS.md, docs/HALUMEM_OFFICIAL_PROTOCOL.md",
+   "effort": "L"
+  },
+  {
+   "title": "Audit-on-recall: every recalled fact carries an inline, click-to-verify provenance span ('memory you can audit')",
+   "what": "fact_grounding_span() already produces the EXACT source sentence that entails a fact at write time, but that span is computed and thrown away. Persist it (the provenance v3 schema already has verified_by/status; add a grounding_span column) and surface it on every recall: recall_explain() returns, per fact, {proposition, status, source_episode_id, grounding_span, score}. Wire a verify(fact_id) MCP call that re-runs provenance_validator.evidence_ref_exists against repo_root/source episode live — so a user can click any recalled memory and see the literal sentence it came from, its entailment score, and a green/red 'still verifiable' check.",
+   "why_unique": "mem0/Zep/Letta store whatever the extractor LLM emits with no source-entailment link; their 'provenance' at best is which message a fact came from, never a verified entailment span with a live re-check. Engram already has (a) write-path NLI entailment (AUROC 0.971), (b) the span extractor, (c) an I/O-verifying provenance validator that demotes fabricated refs (the cycle-111-v2 lesson: regex allowlist was security theatre). The combination = a recalled memory whose provenance can be RE-PROVEN on demand, which is structurally impossible for an extractor-only store.",
+   "falsifiable_test": "Inject N facts whose source episode does NOT entail them (confabulations). Claim FALSIFIED if the stored grounding_span+score fails to separate entailed from non-entailed at recall (AUROC must hold near the write-path 0.97 on this held-out set), or if verify(fact_id) cannot detect a source episode that was later edited/deleted (stale provenance). SURVIVES if every confabulated fact recalls with span=NONE/low-score and every tampered source flips the live verify check to red.",
+   "buildable_on": "engram/grounding_gate.py (fact_grounding_span already returns {score, span}), engram/provenance_validator.py (evidence_ref_exists / any_evidence_ref_exists), engram/semantic.py (provenance v3: verified_by, status enum, _STATUS_RANK), engram/memory.py recall_explain (breakdown is a placeholder ready to extend), engram/lineage_trace.py",
+   "effort": "M"
+  },
+  {
+   "title": "Grounded-answer-or-abstain: route the measured answer-path gap through the write-path moat instead of a second weak judge",
+   "what": "The measured gap is the answer step (retrieval surfaces gold @k8 0.80 but the answerer omits/fabricates), and grounding_gate's own docstring admits gate_answer is DOMINATED by a strict prompt (R7 tie). So DON'T add another answer-side judge. Instead: at answer time, decompose the drafted answer into atomic claims and run each through the STRONG write-path primitive fact_grounding_span(claim, retrieved_evidence). Keep only claims with a grounding span; force 'NO ANSWER' for the rest. The answer the user sees is assembled exclusively from spans the write-path verifier (0.97 AUROC) already trusts — turning the answerer from a generator into a span-selector over verified evidence.",
+   "why_unique": "Competitors' answer step is a plain RAG generation with no per-claim entailment gate; their abstention (if any) is a confidence heuristic. Engram is the only system whose answer can be constrained to ONLY assert claims that pass the same NLI gate that guards its memory — a single verifier serving write AND answer means the answer inherits the moat's measured AUROC rather than a separate, weaker answer-judge. This directly attacks the omit/fabricate failure with the strongest tool already in the repo.",
+   "falsifiable_test": "On LongMemEval-S single-hop where recall@8 already surfaces gold (0.80), compare strict-prompt answerer vs claim-decomposition+span-gate answerer with a Claude judge. Claim FALSIFIED if span-gating does NOT raise QA-precision (fewer fabrications) without crushing recall below the strict-prompt baseline by more than CI, OR if it merely reproduces gate_answer's R7 tie. SURVIVES if fabrication rate drops measurably at equal-or-better answer recall, beating the strict-prompt end-to-end number that today dominates gate_answer.",
+   "buildable_on": "engram/grounding_gate.py (fact_grounding_span, gate_answer, optimal_threshold), engram/lab_longmemeval_adapter.py, engram/tier2_judge.py, engram/semantic_conflict.py (NLI claim splitting), docs/SEMANTIC_GROUNDING_STUDY.md, docs/EPISTEMIC_FAILURES_STUDY.md",
+   "effort": "M"
+  },
+  {
+   "title": "Trust-Diff: a public, signed corpus health/provenance report that competitors structurally cannot emit",
+   "what": "Engram already has corpus_health_score, corpus_health_metrics, legacy_audit, audit_summary, and a provenance status enum (verified/model_claim/provisional/legacy_unverified). Compose them into one reproducible 'Trust Report': % of stored memories with a live-verifiable provenance ref (provenance_validator over the whole corpus), distribution across the status hierarchy, count of facts a grounding re-scan would now demote, and a lineage-completeness score (orphan facts/episodes via lineage_trace). Emit it as a signed, versioned artifact (the repo already has capability_token / ed25519 signing in the clp stack) and run it in CI as a gate: a release fails if verifiable-provenance % regresses.",
+   "why_unique": "This is the ultimate honesty-as-moat play: a memory system publishing the fraction of its own contents it can PROVE versus merely claims. mem0/Zep/Letta cannot produce this number because they have no status hierarchy and no I/O-verifying provenance validator — every stored item is undifferentiated extractor output. The 'demote-on-rescan' count especially is impossible for them: it requires the write-path entailment gate to exist as a re-runnable check. It reframes the comparison from self-reported QA% (which they can inflate) to auditable-provenance%, an axis where Engram is alone.",
+   "falsifiable_test": "Generate the Trust Report on the live corpus, then adversarially inject 50 unverifiable/fabricated facts. Claim FALSIFIED if the report's verifiable-provenance % does not drop proportionally, or if a competitor (mem0) can be made to emit an equivalent live-re-verifiable provenance % for the same corpus. SURVIVES if the injected facts land in legacy_unverified/model_claim and the demote-on-rescan count rises by ~50, and no competitor adapter can reproduce the metric without reimplementing the write-path gate.",
+   "buildable_on": "engram/corpus_health_score.py, engram/corpus_health_metrics.py, engram/legacy_audit.py, engram/audit_summary.py, engram/provenance_validator.py (any_evidence_ref_exists over corpus), engram/lineage_trace.py (orphan detection), engram/capability_token.py (signing), engram/semantic.py (_STATUS_RANK)",
+   "effort": "M"
+  },
+  {
+   "title": "Self-Grounding Answerer: close the 80%-retrieved-to-answered gap by reusing the write-path NLI verifier as a per-sentence answer constructor",
+   "what": "Today the answer step is a single-shot strict prompt (qa_eval._ANSWER_SYSTEM_STRICT) and the verified honest note in grounding_gate.py says the external answer-gate only TIES verbalized confidence and is DOMINATED by that prompt. But that experiment used gate_answer as a yes/no FILTER on a finished answer. Instead, INVERT it: turn the proven write-path entailment primitive (fact_grounding_span, AUROC 0.971/0.992) into the answer GENERATOR. For each retrieved chunk, run fact_grounding_span(question-as-fact, chunk) to extract the exact entailing span + score; assemble the answer ONLY from spans scoring above threshold, ranked. The answerer can no longer omit a surfaced gold fact (every chunk is forced through entailment, not left to the LLM's attention) nor fabricate (no span -> nothing emitted). It is the write-path moat redeployed on the read path as construction, not post-hoc judging.",
+   "why_unique": "mem0/Zep/Letta/Cognee/MemOS all answer with a vanilla RAG prompt over retrieved context and have NO native span-level entailment verifier on EITHER path. Engram already owns a calibrated one (0.971 AUROC) that no competitor has built. Reusing it as the decoding constraint rather than a filter is a move only Engram is positioned to make, and it directly attacks the one measured weakness (answerer omits/fabricates despite 80%@k8 retrieval).",
+   "falsifiable_test": "On LoCoMo single-hop (cat1, today 0.67) and the answerable subset where retrieval@k8 surfaced the gold, compare span-assembled answers vs the current strict-prompt answerer, judged by qa_eval _JUDGE_SYSTEM. Prediction: omission rate on retrieved-gold drops and cat1 QA-accuracy rises >=5pp with no increase in fabrication on cat5 adversarial (gold=None must still abstain). KILL if span-assembly does not beat the strict prompt on retrieved-gold answerability, OR if cat5 abstention regresses.",
+   "buildable_on": "engram/grounding_gate.py (fact_grounding_span, _resolve_threshold, optimal_threshold), benchmark/qa_eval.py (_answer_system, score_qa), benchmark/qa_runner.py (_recall_context), engram/rerank.py (recall_reranked for chunk ordering)",
+   "effort": "M"
+  },
+  {
+   "title": "Sleep-time adversarial immunization: dream synthesizes hard-negatives that defeat the gate, then re-tunes the threshold against them",
+   "what": "distractor_bench.py shows fabrication rises monotonically D0<D1<D2 as distractors get nearer the true role — meaning the gate has a measurable soft spot at high distractor strength. Today dreaming (dream.py / auto_dream_worker.py) only snapshots DBs and drafts skills; it never stresses the gate. Add a dream phase that MINES the live corpus for each stored fact's nearest same-topic neighbors (via contradiction.py grouping + embedding cosine), synthesizes D2-strength hard-negatives (right type, near role, wrong value), and runs them through fact_grounding_score. Any hard-negative that scores ABOVE threshold is a gate breach. The dream then (a) recalibrates ENGRAM_GROUNDING_THRESHOLD per-topic via optimal_threshold on the mined labeled set, and (b) stores the surviving breaches as a regression immunization set. The gate gets harder every sleep cycle, from the agent's OWN corpus.",
+   "why_unique": "Every competitor treats consolidation as summarization/dedup. None has an anti-confabulation gate to immunize in the first place, so none can run adversarial self-play against it. Engram already has the gate (grounding_gate), the distractor taxonomy (distractor_bench), the neighbor-mining (contradiction.py), and the dream scaffolding — the only system where 'sleep makes the confab detector measurably harder to fool' is even definable.",
+   "falsifiable_test": "Build a held-out adversarial set NOT used for tuning. Measure gate AUROC + above-threshold-breach rate before and after one immunization dream. Prediction: breach rate on D2-strength held-out negatives drops (e.g. >=30% relative) with FP rate on genuine facts rising <2pp. KILL if post-immunization the gate over-rejects real facts (FP up >5pp) or if held-out breach rate does not improve (i.e. it overfit the mined negatives).",
+   "buildable_on": "engram/dream.py + engram/auto_dream_worker.py (dream phase hook, propose_dream_tasks), benchmark/distractor_bench.py (D0/D1/D2 synthesis logic), engram/contradiction.py (same-topic neighbor grouping), engram/grounding_gate.py (fact_grounding_score, optimal_threshold), engram/embedding.py",
+   "effort": "L"
+  },
+  {
+   "title": "Popperian severity per belief: corroboration-weighted survival score that ranks how hard each fact has TRIED to be falsified",
+   "what": "justified_memory.py already models facts as Beliefs with a justification and a believed/contested/retracted lifecycle. Extend each Belief with a Popperian SEVERITY score: a fact earns trust not by how confident the writer was, but by how many independent falsification ATTEMPTS it survived. Concretely: severity = f(corroboration_index count of independent same-value sources, number of contradiction-scan passes survived without a numeric/boolean clash, number of immunization dreams it was attacked in and held, grounding_score of its source). A fact with severity ~0 is a bold-but-untested conjecture; high severity = severely-tested and corroborated. The read path serves high-severity beliefs first and flags low-severity ones as conjectural. This makes Engram's memory a falsifiable belief system, not a confidence-weighted string store.",
+   "why_unique": "Competitors rank by recency/relevance/embedding-similarity or a writer-supplied confidence — none track an audit trail of falsification attempts survived, because none RUN falsification attempts (no contradiction scan + adversarial dream + corroboration index feeding one score). Engram already computes every input signal; assembling them into a single severity that drives ranking is a defensible epistemic moat (Popper: corroboration = surviving severe tests, never proof).",
+   "falsifiable_test": "Label a corpus slice with ground-truth currently-true vs stale/false facts (reuse justified_belief_bench). Rank by severity vs rank by writer confidence. Prediction: serving top-k by severity yields higher justified_belief_integrity (JBI, already defined in justified_memory) than serving by confidence. KILL if severity ranking does not beat confidence ranking on JBI, i.e. falsification-attempts-survived carries no signal beyond stored confidence.",
+   "buildable_on": "engram/justified_memory.py (Belief, served, justified_belief_integrity), engram/corroboration.py (corroboration_index), engram/contradiction.py (clash passes), engram/grounding_gate.py (source grounding_score), benchmark/justified_belief_bench.py (eval harness)",
+   "effort": "M"
+  },
+  {
+   "title": "ATMS cascade on write: record typed derivation edges so superseding one fact auto-retracts everything inferred from it",
+   "what": "justified_memory.propagate already implements an ATMS transitive-retraction fixpoint, but fact_to_belief documents (R26) that it stays DORMANT in production because the write path records no TYPED logical-derivation edge — only narrative lineage_to pointers (95% cross-topic), which would cause false retractions if fed in. Close the loop: when the gate admits a fact whose source is itself a STORED fact (not raw text), have fact_grounding_span tag the supporting fact id as a typed derives_from edge at write time. Now propagate has a real dependency graph: invalidate a foundational fact (supersede/contradict) and every belief inferred from it auto-retracts at the next maintenance pass — the capability the module was built for but can't currently exercise.",
+   "why_unique": "No agent-memory product retracts derived beliefs when their foundation falls — they store facts as independent rows, so a superseded premise leaves its conclusions silently asserted as truth (a confabulation source competitors structurally cannot fix). Engram already has the cascade engine AND the write-path verifier that knows WHICH stored fact grounded the new one — the unique position to populate the edge truthfully instead of guessing from narrative lineage.",
+   "falsifiable_test": "Construct a derivation chain A->B->C in the store, then supersede A. Run audit_facts. Prediction: B and C appear in would_retract_ids via the typed edge, while a narrative-only lineage_to sibling does NOT (no false retraction). On the live corpus, measure false-retraction rate of typed-edge propagate vs the old lineage_to-fed version. KILL if typed edges produce >0 false retractions on cross-topic narrative successors, or if real corpora yield ~no derivation edges (cascade still dormant -> idea adds nothing).",
+   "buildable_on": "engram/justified_memory.py (propagate, maintain, audit_facts, fact_to_belief — already has depends_on/derives_from plumbing), engram/grounding_gate.py (fact_grounding_span to identify the grounding fact id), engram/anti_confab_gate.py (run_validation_gate write-path hook to emit the edge), benchmark/lineage_cascade_exposure.py",
+   "effort": "L"
+  }
+ ],
+ "ranked": {
+  "ranked": [
+   {
+    "title": "Persist the write-time grounding score on the Fact, then make it a hard signal at answer time (cite-or-abstain on g<thr facts)",
+    "verdict": "build-now",
+    "uniqueness": 5,
+    "impact": 5,
+    "feasibility": 5,
+    "rank": 1,
+    "note": "Verified in source: gscore IS computed at anti_confab_gate.py:695 and only used for the pass/fail dict, never persisted on the Fact; and justified_memory.Belief ALREADY has a grounding_score field (line 39) that fact_to_belief hardcodes to 100/50 instead of the real number. So the wiring is half-built and the moat (0.971/0.992 write-path AUROC) is real and unique to Engram. Highest-leverage idea: turns a one-shot gate decision into a permanent queryable trust coordinate that ideas 2,3,4,5,10 all depend on. Only genuine risk is the falsifiable_test (answerer may not exploit the tag) but the schema-migration+persist is cheap (the v8/v10/v11 append-field pattern exists) and de-risks 6 other ideas. Build the field first; it is the keystone."
+   },
+   {
+    "title": "Provenance-conditioned retrieval: rank by entailment-trust, not just cosine, and let the query demand a min-grounding floor",
+    "verdict": "build-now",
+    "uniqueness": 4,
+    "impact": 4,
+    "feasibility": 4,
+    "rank": 2,
+    "note": "Verified: compute_trust_score (trust_score.py) genuinely ignores grounding_score AND contradictions today (base*age_decay*corroboration only) — a pure rewrite over data only Engram has, exactly as claimed. Attacks the measured gap from a different angle than idea 1 (retrieval-side vs answer-side); the poisoned-corpus falsification test is sharp. Feasibility 4 not 5 because it depends on idea 1 shipping first and because Recall@1 on the CLEAN set is the risky half — cosine is already strong without poison, so the honest win is the poisoned/adversarial set. Build it as the consumer of idea 1's field; gate ship on the poisoned-set result, not the clean-set headline."
+   },
+   {
+    "title": "Semantic supersede detector to replace the lexical reconcile heuristic (close the auto_supersede gap)",
+    "verdict": "build-now",
+    "uniqueness": 4,
+    "impact": 4,
+    "feasibility": 4,
+    "rank": 3,
+    "note": "Verified in truth_reconciliation.py: looks_like_conflict IS lexical, docstring admits 5090 spurious candidates on 16 facts, auto_supersede=False is the frozen fail-safe — the truth-update path is genuinely OFF in production. The most concrete shipped-blocker in the batch: a real feature disabled because its gate is a token heuristic, and the entailment primitive to fix it (fact_grounding_score directional) already exists and is the moat. Labeled-60-pairs test is honest and cheap. Not rank 1 only because it is a correctness fix more than a defensible-axis moonshot, and flipping auto_supersede ON silently rewrites the corpus — demands the conservative authority+recency gate plus a contested fallback. High confidence, shippable."
+   },
+   {
+    "title": "Contested-fact disambiguation at answer time: pick the higher-provenance one and SAY you did",
+    "verdict": "promising",
+    "uniqueness": 4,
+    "impact": 4,
+    "feasibility": 3,
+    "rank": 4,
+    "note": "Defensible: needs stored contradiction graph + supersession edges + per-fact provenance together, which only Engram has, and targets the LongMemEval temporal-update failure mode that is the real money axis. Downstream of idea 1 (needs the tie-break score) AND of belief-status-aware retrieval (must first surface both facts). Real risk: leans on the answerer to obey the arbitration instruction — the same weak link the repo's own R7/R9 docstring warns about. Promising not build-now because value is conditional on the contested-sibling subset being large enough to move the headline; build after 1 and the read-path filter, scoped to the temporal-update bench."
+   },
+   {
+    "title": "Belief-status-aware retrieval: never let a retracted/contested fact reach the answerer (read-path JBI gate)",
+    "verdict": "promising",
+    "uniqueness": 4,
+    "impact": 4,
+    "feasibility": 3,
+    "rank": 5,
+    "note": "Real gap verified: justified_memory defines served()/JBI but retrieval filters only superseded_by IS NULL, so a CONTESTED fact still reaches the answerer. Cleanest single lever to lift the answer step WITHOUT betting on the answer-path verifier the repo showed is dominated. Defensible (no competitor retriever is justification-aware). Feasibility 3 because audit_facts() must run cheaply at recall time (or be precomputed) and the contested-sibling subset must be non-trivial for the >=3pp claim. Strong companion to idea 4 — build and bench them together as 'the read-path truth filter'. Effort L is honest."
+   },
+   {
+    "title": "Typed derivation edges on write -> make the ATMS cascade fire (depends_on bootstrap) [== 'ATMS cascade on write', collapse]",
+    "verdict": "promising",
+    "uniqueness": 5,
+    "impact": 3,
+    "feasibility": 3,
+    "rank": 6,
+    "note": "Verified DORMANT for real: fact_to_belief (justified_memory.py:153-159) deliberately refuses lineage_to (95% cross-topic narrative), so depends_on is empty and propagate() never cascades — the engine is built and unit-tested but exercises nothing on real data. Genuinely unique (no competitor retracts derived beliefs when a premise falls). Capped at impact/feasibility 3 because of the EXACT risk the docstring documents: it hinges on a write-path edge detector (grounding-span entailment over the entity-KG candidate set) that does NOT exist yet, and the R26 false-cross-topic-cascade is what killed the naive version. The hard part is edge-detector precision, not the cascade. A research bet with a real <5% false-cascade bar; do not build before 1-5. NOTE: this and the separate 'ATMS cascade on write' entry are ONE project — collapse them."
+   },
+   {
+    "title": "Calibrated-confidence answers: emit P(correct) from write-time trust signals and prove the calibration curve",
+    "verdict": "promising",
+    "uniqueness": 4,
+    "impact": 3,
+    "feasibility": 3,
+    "rank": 7,
+    "note": "Defensible thesis: a calibrated curve is only as good as its features, and Engram's write-time provenance features are ones competitors structurally lack — the EPISTEMIC_FAILURES study already showed similarity-only calibration is uninformative. A reliability diagram/ECE competitors cannot match is a genuine honesty-moat. But effort L, it needs held-out QA LABELS to fit the calibrator (a data cost the idea understates), it is strictly downstream of idea 1's persisted features, and a tiny calibrator overfits on small corpora. The ECE win is plausible; the abstention-budget selective-accuracy claim is the riskier half. Promising as a publishable artifact after idea 1; long pole is the label pipeline."
+   },
+   {
+    "title": "Grounded-answer-or-abstain: claim-decomposition + write-path span-gate on the read path",
+    "verdict": "promising",
+    "uniqueness": 3,
+    "impact": 3,
+    "feasibility": 3,
+    "rank": 8,
+    "note": "Least-bad of the three answer-path-as-generator ideas and the only one I keep. Verified from grounding_gate.py docstring (lines 10-13): the answer-path gate only TIES verbalized confidence (0.812==0.812) and is DOMINATED by a strict prompt. These ideas bet that using fact_grounding_span as a per-claim CONSTRUCTOR not a yes/no FILTER escapes that null — a real, untested, falsifiable distinction, which is why it survives. BUT the why_unique commits a measurement-transfer fallacy: 0.971 is source-entailment-on-WRITE; it does NOT transfer to span-extraction-as-decoding over noisy retrieved chunks. Keep ONE version, scope to LongMemEval single-hop retrieved-gold, and kill the moment it merely reproduces the R7 tie. Low confidence."
+   },
+   {
+    "title": "Open Memory Bench (OMB): neutral same-corpus multi-system leaderboard with grounding ON/OFF axis",
+    "verdict": "promising",
+    "uniqueness": 3,
+    "impact": 4,
+    "feasibility": 2,
+    "rank": 9,
+    "note": "Strongest CREDIBILITY play: a neutral harness where each competitor self-tunes their own config is a real conflict-of-interest gap (MemOS authored HaluMem, etc.), and the grounding ON/OFF ablation column is genuinely unforgeable by competitors with no write-path gate. bench_harness + adapters partly exist. But feasibility 2 is honest: maintaining live mem0/Zep/Graphiti adapters at parity is a perpetual treadmill (versions drift, they will dispute your config exactly as Zep disputes mem0's), and the test admits it is worthless if competitor numbers reproduce within CI. A moat for REPUTATION, not the product. Pursue only if go-to-market needs a credibility artifact; it does not make the engine better and competes with ideas 1-5 for eng time."
+   },
+   {
+    "title": "Audit-on-recall: every recalled fact carries an inline click-to-verify provenance span",
+    "verdict": "promising",
+    "uniqueness": 4,
+    "impact": 3,
+    "feasibility": 3,
+    "rank": 10,
+    "note": "Real and defensible: fact_grounding_span exists and the span is thrown away; provenance_validator exists for live re-check. Persisting the span + a verify(fact_id) MCP call that re-proves provenance on demand is structurally impossible for extractor-only competitors — a clean 'memory you can audit' differentiator. Downgraded to promising because it overlaps heavily with idea 1 (both persist write-path provenance — share the migration) and with Provenance-antibody/Trust-Diff (all three are persist-span+re-validate). Its incremental value over idea 1 is the UX surface + live re-check, a feature not a separate moat. Build persistence with idea 1; ship the verify() UX as a fast-follow."
+   },
+   {
+    "title": "Fact Credit Assignment: C/H/O -> per-fact retrieval reward (the missing provenance link)",
+    "verdict": "promising",
+    "uniqueness": 3,
+    "impact": 3,
+    "feasibility": 3,
+    "rank": 11,
+    "note": "Verified real gap: episode schema (memory.py:297) has final_answer but no recalled_fact_ids/cited_facts, and the bench computes C/H/O then discards hits. Closing the downstream-correctness->fact-unit loop is something only Engram has both endpoints for (stable fact_ids + C/H/O harness). Novel vs static-relevance competitors. But it is a cold-start learning loop: needs many answered questions before the Wilson-smoothed ledger carries signal, the >=3pp transfer claim is where these loops overfit, and it spawns three near-identical follow-ons (weighted RRF, halluc-risk reranker, seed self-tuning) that all depend on this ONE ledger. Build the ledger (recalled_fact_ids field + FactOutcomeLedger) as shared substrate; treat the four consumers as ONE roadmap item, not four. Contingent on data volume."
+   },
+   {
+    "title": "Answer Ledger: revise PAST answers when their supporting facts get falsified",
+    "verdict": "promising",
+    "uniqueness": 4,
+    "impact": 3,
+    "feasibility": 3,
+    "rank": 12,
+    "note": "Verified: episodes store final_answer as opaque text and replay verbatim into prompts (memory.py:456-491), with no link to the facts that justified them — a stale answer replayed as few-shot is exactly what makes the answerer fabricate. 'Memory that changes its mind about what it told you' is a distinctive narrative competitors lack (they treat history as immutable logs). Promising not build-now because it depends on FIRST capturing cited_facts at answer time (same prerequisite as idea 11 — share the schema change), and the maintenance re-run of gate_answer over history scales with corpus. Precision/recall test is honest. Build on top of the idea-11 schema work."
+   },
+   {
+    "title": "Popperian severity per belief: corroboration-weighted survival score ranking falsification attempts survived",
+    "verdict": "promising",
+    "uniqueness": 4,
+    "impact": 3,
+    "feasibility": 2,
+    "rank": 13,
+    "note": "Most ELEGANT framing (corroboration = surviving severe tests, not proof) and defensible because severity aggregates signals only Engram computes. But feasibility 2: its inputs are themselves unbuilt or contested — it depends on the immunization-dream idea (a research bet), the contradiction-scan-passes count, AND idea 1's grounding_score, so it is a synthesis atop a stack of not-yet-proven components. The test (severity beats confidence on JBI) is fair, but until the inputs exist this is a name for a feature, not a feature. Keep as the eventual unifying ranking signal AFTER 1/5/6 land; do not start now. High aesthetic appeal, low present feasibility."
+   },
+   {
+    "title": "Quarantine ward: a third memory tier that isolates suspect facts (best of the security cluster)",
+    "verdict": "promising",
+    "uniqueness": 3,
+    "impact": 3,
+    "feasibility": 3,
+    "rank": 14,
+    "note": "Best of the security cluster, kept as representative. Real: unifies detect+isolate+heal that today is scattered (status downgrade + ad-hoc exceptions), and conditional release on independent corroboration is something store-or-update competitors do not do. Falsification test (poisoning that PASSES status filters = the realistic model_claim attack) is the sharpest in the batch and the bench corpus exists. But it is largely a state-machine REORGANIZATION of existing primitives (status, _STATUS_RANK, corroboration_index, grounding gate), and a new QUARANTINE status touches recall plumbing everywhere (regression surface). Lower than the moat-extenders because it hardens poisoning — an axis that is NOT yet the measured product gap; the measured gap is the answer step."
+   },
+   {
+    "title": "Provenance antibody: bind every fact to a verifier-quoted span and reject orphan high-trust claims at recall",
+    "verdict": "kill",
+    "uniqueness": 3,
+    "impact": 2,
+    "feasibility": 3,
+    "rank": 15,
+    "note": "KILL as standalone: it is the SAME persist-span-and-re-validate mechanism as idea 1 + Audit-on-recall + Trust-Diff, re-skinned as a security 'antibody'. The genuinely new sliver (recall-time down-weight of forged status=verified with dangling refs) is real but tiny and is better delivered as one clause inside idea 1's recall hook plus the existing provenance_validator. Shipping it separately triples the schema/recall churn for a threat (forging status=verified) the bench itself only DEFERS — not the current measured gap. Fold the one useful sentence into idea 1; do not staff as its own moonshot. Not vaporware, just redundant."
+   },
+   {
+    "title": "Trust-Diff: a public signed corpus health/provenance report",
+    "verdict": "kill",
+    "uniqueness": 3,
+    "impact": 2,
+    "feasibility": 3,
+    "rank": 16,
+    "note": "KILL as a moonshot. Components (corpus_health_score, legacy_audit, audit_summary, provenance_validator, _STATUS_RANK, ed25519 signing) all already exist — a REPORTING composition, not new capability, and its only novel number ('demote-on-rescan count') is just idea 1's grounding score run in batch. 'Signed artifact as CI gate' is ops hygiene, a dashboard not a defensible axis, and it overlaps OMB's credibility play. A competitor cannot emit the metric only because they lack the write-path gate Engram ALREADY shipped — so the moat is the gate, not this report. Demote to a 1-day reporting task after idea 1; not a strategic bet."
+   },
+   {
+    "title": "Self-Grounding Answerer (x2): write-path NLI verifier as a per-sentence answer constructor",
+    "verdict": "kill",
+    "uniqueness": 2,
+    "impact": 2,
+    "feasibility": 2,
+    "rank": 17,
+    "note": "KILL as DUPLICATES. These two entries are the same idea as rank-8 'Grounded-answer-or-abstain' (span-assembly answer construction) with near-identical buildable_on (fact_grounding_span + qa_eval/longmemeval). Three submissions of one bet is a red flag, not three moonshots. Worse, both lean hardest on the measurement-transfer fallacy: they headline 0.971/0.992 as if the answer inherits it, but that is source-entailment-on-WRITE and the repo's own R7/R9 result explicitly says the answer-path verifier only ties confidence and loses to a strict prompt. Keep exactly ONE version (rank 8) as a tightly-scoped experiment; kill the other two as redundant and over-claiming a moat the docstring already falsified."
+   },
+   {
+    "title": "Write-rate immune response: burst/flood anomaly detector on the write-path",
+    "verdict": "kill",
+    "uniqueness": 2,
+    "impact": 2,
+    "feasibility": 3,
+    "rank": 18,
+    "note": "KILL for the current stage. Buildable (anomaly_detection.py exists; Fact has writer_role/source_signature/created_at) and the test is honest, but it defends a THREAT MODEL Engram has no evidence it faces: a single adversary flooding contradicting writes to win majority. For a single-user/agent store that is hypothetical — security-theatre-by-anticipation. The FP risk on legitimate rapid corrections (>10% bar) is exactly where rate detectors die. Park until a real multi-writer adversarial deployment exists; spending eng here while the ANSWER STEP is the measured gap is a misallocation."
+   },
+   {
+    "title": "Drift sentinel: slow-poisoning detector via per-topic trust-trajectory over time",
+    "verdict": "kill",
+    "uniqueness": 3,
+    "impact": 2,
+    "feasibility": 1,
+    "rank": 19,
+    "note": "KILL. Most seductive-sounding security idea, least feasible. The core falsification problem is unsolvable at this stage: distinguishing malicious sub-threshold drift from a value that genuinely changed slowly is the SAME signal — the idea waves at 'signaled by a new verified write' but most real changes arrive as model_claim, so the detector will either miss the attack or fire on honest updates. Effort L, depends on snapshotting infra that does not exist, defends an unmeasured threat, and its happy-path conflict with decay.py is acknowledged but unresolved. Research-grade, no near-term ROI; do not staff."
+   },
+   {
+    "title": "Sleep-time adversarial immunization: dream synthesizes hard-negatives, re-tunes the threshold",
+    "verdict": "kill",
+    "uniqueness": 4,
+    "impact": 2,
+    "feasibility": 2,
+    "rank": 20,
+    "note": "KILL despite genuine novelty (it IS the only system where adversarial self-play against a confab gate is definable, and distractor_bench's monotonic D0<D1<D2 soft spot is real). Reasons: effort L; per-topic threshold recalibration from MINED negatives is the textbook overfitting trap the test itself flags; and crucially the payoff is hardening the WRITE gate, whose AUROC is already 0.971 — sharpening an already-strong moat while the answer/read-path gaps (ideas 1-5) are the measured weakness is wrong-end-of-the-telescope. Interesting paper, poor priority. Revisit only if the write gate is shown to be the binding constraint, which today's benches say it is not."
+   },
+   {
+    "title": "Outcome-weighted RRF / Hallucination-risk reranker / Seed-weight self-tuning (the C/H/O learned-fusion cluster)",
+    "verdict": "kill",
+    "uniqueness": 2,
+    "impact": 2,
+    "feasibility": 2,
+    "rank": 21,
+    "note": "KILL as independent moonshots — collapse all three into idea 11's ledger as ONE downstream roadmap, not three. Each is a thin supervised tweak (weighted RRF k, CE-filter risk signal, per-seed PPR mass) over the SAME FactOutcomeLedger, and each carries the same fatal dependency: it needs large volume of C/H/O-labeled answered questions to learn weights that TRANSFER cross-corpus — exactly what their own kill-criteria flag (overfit, weights collapse to uniform, entropy >90% max). Also the LEAST defensible: 'learned fusion weights' is something any system with outcome labels can do; the moat is the write-path gate, not RRF tuning. Build idea 11's ledger first; only IF it shows signal, pick the single best consumer and A/B it. Staffing three speculative rerankers now is dilution."
+   }
+  ]
+ }
+}

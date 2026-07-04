@@ -1,0 +1,20 @@
+{
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s",
+  "k": 5,
+  "n_questions": 50,
+  "overall": {
+    "recall_at_k": 0.82,
+    "hit_at_k": 0.82,
+    "mrr": 0.6663,
+    "latency_ms_mean": 39.6956
+  },
+  "per_type": {
+    "single-session-user": {
+      "n": 50,
+      "recall_at_k": 0.82,
+      "hit_at_k": 0.82,
+      "mrr": 0.6663
+    }
+  },
+  "metric_note": "session-level retrieval recall@k of gold answer_session_ids; judge-free, no external API; embedding via Engram's own model"
+}

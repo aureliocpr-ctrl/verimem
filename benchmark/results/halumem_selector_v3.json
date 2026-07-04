@@ -1,0 +1,186 @@
+{
+  "dump": "benchmark/results/halumem_updating_full20_dump.json",
+  "match_thr": 0.94,
+  "n_items": 3122,
+  "cv": {
+    "folds": [
+      {
+        "train_users": [
+          0,
+          1,
+          2,
+          3,
+          5,
+          6,
+          7,
+          8,
+          10,
+          11,
+          12,
+          13,
+          15,
+          16,
+          17,
+          18
+        ],
+        "test_users": [
+          4,
+          9,
+          14,
+          19
+        ]
+      },
+      {
+        "train_users": [
+          0,
+          1,
+          2,
+          4,
+          5,
+          6,
+          7,
+          9,
+          10,
+          11,
+          12,
+          14,
+          15,
+          16,
+          17,
+          19
+        ],
+        "test_users": [
+          3,
+          8,
+          13,
+          18
+        ]
+      },
+      {
+        "train_users": [
+          0,
+          1,
+          3,
+          4,
+          5,
+          6,
+          8,
+          9,
+          10,
+          11,
+          13,
+          14,
+          15,
+          16,
+          18,
+          19
+        ],
+        "test_users": [
+          2,
+          7,
+          12,
+          17
+        ]
+      },
+      {
+        "train_users": [
+          0,
+          2,
+          3,
+          4,
+          5,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          17,
+          18,
+          19
+        ],
+        "test_users": [
+          1,
+          6,
+          11,
+          16
+        ]
+      },
+      {
+        "train_users": [
+          1,
+          2,
+          3,
+          4,
+          6,
+          7,
+          8,
+          9,
+          11,
+          12,
+          13,
+          14,
+          16,
+          17,
+          18,
+          19
+        ],
+        "test_users": [
+          0,
+          5,
+          10,
+          15
+        ]
+      }
+    ],
+    "n_rows": 17381,
+    "n_reachable_items": 1739
+  },
+  "gt_rank_v3_oof": {
+    "n_reachable": 1739,
+    "gt_top1": 0.59,
+    "gt_mrr": 0.729
+  },
+  "policies": {
+    "v3_oof_abstain0.0": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 1026,
+        "wrong": 2095,
+        "missed": 0,
+        "missed_unreachable": 1
+      },
+      "accuracy": 0.3286,
+      "hallucination": 0.671,
+      "omission": 0.0003
+    },
+    "v3_oof_abstain0.3": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 1023,
+        "wrong": 2082,
+        "missed": 5,
+        "missed_unreachable": 12
+      },
+      "accuracy": 0.3277,
+      "hallucination": 0.6669,
+      "omission": 0.0054
+    },
+    "v3_oof_abstain0.5": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 1007,
+        "wrong": 1916,
+        "missed": 54,
+        "missed_unreachable": 145
+      },
+      "accuracy": 0.3225,
+      "hallucination": 0.6137,
+      "omission": 0.0637
+    }
+  },
+  "dumped_selections": "benchmark/results/halumem_updating_v3_selections.json",
+  "saved_model": "benchmark/results/halumem_selector_v3_model.json"
+}

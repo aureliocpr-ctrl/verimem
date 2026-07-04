@@ -1,0 +1,21 @@
+{
+  "n_corpus": 100,
+  "n_queries": 30,
+  "k": 5,
+  "seed": 42,
+  "with_engram": {
+    "precision_at_k": 1.0,
+    "mrr": 0.9833333333333333,
+    "mean_top1_cos": 0.6397067526976268,
+    "wall_s": 0.328,
+    "hits": 30
+  },
+  "without_engram": {
+    "precision_at_k": 0.03333333333333333,
+    "mrr": 0.03333333333333333,
+    "wall_s": 0.0,
+    "hits": 1
+  },
+  "ratio_precision_a_over_b": 30.0,
+  "verdict": "PASS"
+}

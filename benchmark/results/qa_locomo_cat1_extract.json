@@ -1,0 +1,446 @@
+{
+  "n": 60,
+  "n_correct": 37,
+  "n_errors": 0,
+  "accuracy": 0.6167,
+  "per_category": {
+    "1": {
+      "n": 60,
+      "accuracy": 0.6167
+    }
+  },
+  "details": [
+    {
+      "id": "0:3",
+      "category": "1",
+      "predicted": "Adoption agencies.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:4",
+      "category": "1",
+      "predicted": "Caroline is a transgender woman.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:7",
+      "category": "1",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "0:11",
+      "category": "1",
+      "predicted": "Sweden",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:13",
+      "category": "1",
+      "predicted": "Counseling and mental health, specifically working with trans people to help them accept themselves and support their mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:15",
+      "category": "1",
+      "predicted": "Hiking, exploring forests, running, reading, playing violin, playing clarinet, painting (especially nature-inspired landscapes and still life), pottery, camping (roasting marshmallows, hiking).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:3",
+      "category": "1",
+      "predicted": "A shared history and love of dance, mutual support for each other's entrepreneurial journeys, and they are collaborators and friends.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:5",
+      "category": "1",
+      "predicted": "Good floor size and good floor quality, and great natural light.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:9",
+      "category": "1",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:17",
+      "category": "1",
+      "predicted": "After losing her job.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:18",
+      "category": "1",
+      "predicted": "Yes. Jon started a dance studio driven by his love of dance, and Gina blended her love of dance and fashion in her store.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:23",
+      "category": "1",
+      "predicted": "Gina launched an advertising campaign (29 January 2023), emailed wholesalers (1 February 2023), and launched new offers and promotions to attract new customers (3 April 2023). She also developed a video presentation to teach how to style her fashion pieces (13 June 2023).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:2",
+      "category": "1",
+      "predicted": "Taekwondo, kickboxing.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:3",
+      "category": "1",
+      "predicted": "Community work/volunteering together (previously volunteered as a team), and John is involved with a fire-fighting brigade that does fundraising, while Maria volunteers at a homeless shelter.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:6",
+      "category": "1",
+      "predicted": "Church, a volunteer/charity event (where she met a fellow volunteer).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:7",
+      "category": "1",
+      "predicted": "Film camera, doll.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:9",
+      "category": "1",
+      "predicted": "Maria's aunt.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:11",
+      "category": "1",
+      "predicted": "Jean, Cindy, Laura, children at the shelter, a person who had been sad for months and laughed during her visit.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:1",
+      "category": "1",
+      "predicted": "Love of animals, desserts/food (recipes and sweets), movies/entertainment, writing/creative work (Nate supports Joanna's screenplay), and gaming (Nate recommends Xenoblade Chronicles).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:5",
+      "category": "1",
+      "predicted": "Writing, reading, watching movies, and exploring nature.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:10",
+      "category": "1",
+      "predicted": "Relief, excitement, and worry (at 9:27 am on 7 February, 2022); also anxiety and terror about her work getting noticed (18 March, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:11",
+      "category": "1",
+      "predicted": "Turtles, cockroaches, animals with fur, most reptiles, certain animals.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:19",
+      "category": "1",
+      "predicted": "2 (in her hometown on 17 April 2022, and again on 12 May 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:23",
+      "category": "1",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:0",
+      "category": "1",
+      "predicted": "Winning a championship, improving his shooting percentage, and starting a foundation/doing charity work after basketball.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:1",
+      "category": "1",
+      "predicted": "Winning a championship, starting a foundation and doing charity work after basketball, pursuing endorsements.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:2",
+      "category": "1",
+      "predicted": "Jerseys, sneakers, fantasy films, Harry Potter movie collection, basketball shoes (lucky pair with sentimental value), books (including The Hobbit), jerseys.\n\nConsolidated: jerseys, sneakers, fantasy films (including Harry Potter complete collection), books.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:4",
+      "category": "1",
+      "predicted": "Harry Potter series, Game of Thrones series (George R. R. Martin), a book about castles in the UK, a book about small changes making big differences, a book of travel stories from travelers around the world, a story about two hikers who trekked through the Himalayas (within that travel book), a fantasy book by Patrick Rothfuss (in progress as of August 9 2023), Lord of the Rings.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:7",
+      "category": "1",
+      "predicted": "London (Harry Potter-related place), Europe (general), Smoky Mountains, California.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:9",
+      "category": "1",
+      "predicted": "Nike (basketball shoes and gear), Under Armour (considering), a renowned outdoor gear company, a popular beverage company.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:2",
+      "category": "1",
+      "predicted": "Board games (13 October, 2023), wine tasting (24 October, 2023), café visit where they ate croissants, muffins, and tarts (16 April, 2023).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:3",
+      "category": "1",
+      "predicted": "Restaurants, cafes, and parks.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:9",
+      "category": "1",
+      "predicted": "Dog training course, agility classes at a dog park, dog owners group, and tips from a behaviorist.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:12",
+      "category": "1",
+      "predicted": "Rock climbing, bird watching/spotting, volunteering at a pet shelter, visiting parks, and he is interested in trying kayaking and bungee jumping.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:14",
+      "category": "1",
+      "predicted": "Hiking, exploring nature trails, being outdoors, and connecting with nature.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:15",
+      "category": "1",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:2",
+      "category": "1",
+      "predicted": "McGee's Pub, Starbucks (suggested by James), baseball game.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:3",
+      "category": "1",
+      "predicted": "No. James has pets (three dogs), John does not.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:5",
+      "category": "1",
+      "predicted": "John: CS:GO, Civilization, Total War. James: Apex Legends.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:8",
+      "category": "1",
+      "predicted": "3",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:9",
+      "category": "1",
+      "predicted": "Daisy, Max, Ned",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:18",
+      "category": "1",
+      "predicted": "\"The Name of the Wind\", Cyberpunk 2077 (a game, not a book).\n\nOnly book: **\"The Name of the Wind\"**.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:1",
+      "category": "1",
+      "predicted": "Deborah's mother, Deborah's father, Deborah's friend Karlie.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:6",
+      "category": "1",
+      "predicted": "Deborah owns an amulet that belonged to her mother. Jolene owns a pendant given to her by her mother in Paris in 2010, which has a symbol representing freedom and reminds her of her mother.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:8",
+      "category": "1",
+      "predicted": "Roses and dahlias in her garden, spending time in calming/nostalgic places, yoga, nature, meditation, and art (which kept her mother's memory alive).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:13",
+      "category": "1",
+      "predicted": "Garden, a calming/nostalgic spot she visited, Bali, the beach (nearby favorite + beach yoga), her nature park with forest trail, the retreat (with peace/enlightenment statue), historical places.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:14",
+      "category": "1",
+      "predicted": "Reading and cooking (she had a big passion for cooking), and she loved flowers.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:19",
+      "category": "1",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:0",
+      "category": "1",
+      "predicted": "Prius",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:1",
+      "category": "1",
+      "predicted": "Evan's old Prius, Evan's new Prius (shortly after buying it), and the rose bushes (damaged by Evan in an incident).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:2",
+      "category": "1",
+      "predicted": "Jasper, the Rocky Mountains (Rockies), Banff.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:3",
+      "category": "1",
+      "predicted": "2",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:6",
+      "category": "1",
+      "predicted": "1",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:7",
+      "category": "1",
+      "predicted": "Painting, kayaking.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:1",
+      "category": "1",
+      "predicted": "New luxury car, new mansion.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:3",
+      "category": "1",
+      "predicted": "Aerosmith, classic rock (general).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:5",
+      "category": "1",
+      "predicted": "Build a custom car from scratch, open a car maintenance shop, work on classic cars professionally.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:6",
+      "category": "1",
+      "predicted": "Classic cars.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:11",
+      "category": "1",
+      "predicted": "Calvin had a car accident last Friday (21 June 2023), was waiting on insurance for repairs (16 May 2023), and his car was eventually fixed after the crash (7 July 2023). He also experienced a creative block with his music (3 May 2023) and finds fame challenging, struggling to balance personal and professional life.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:15",
+      "category": "1",
+      "predicted": "To relax, explore his surroundings, take walks, and hang out with friends.",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 30,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": false,
+  "extract": true,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

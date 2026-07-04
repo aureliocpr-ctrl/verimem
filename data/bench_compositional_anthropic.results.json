@@ -1,0 +1,370 @@
+[
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 114,
+    "latency_s": 1.020096499999454,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 83,
+    "latency_s": 0.6766349999998056,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 54,
+    "latency_s": 0.8505556999998589,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "txlfn",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 52,
+    "latency_s": 1.1788769999993747,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "elzzup",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": false,
+    "tokens": 59,
+    "latency_s": 1.3206429000001663,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "eodlk",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": false,
+    "tokens": 60,
+    "latency_s": 0.7466641000000891,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "eqbvs",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv3-three-bridge",
+    "success": false,
+    "tokens": 64,
+    "latency_s": 0.7340868999999657,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "eulgg",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv3-three-planet",
+    "success": false,
+    "tokens": 65,
+    "latency_s": 0.7920299999996132,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "wodqhw",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 3656,
+    "latency_s": 39.66111399999954,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I understand the task and the lesson from the previous attempt. Let me acknowledge as requested:\n\nok\n\nNow I'm ready to proceed with defining the ROT3 operation if there are further instructions.",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 3034,
+    "latency_s": 0.8297775000000911,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 2575,
+    "latency_s": 1.8134370999996463,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "txlfn",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 5143,
+    "latency_s": 2.528887499999655,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "elzzup",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": true,
+    "tokens": 5528,
+    "latency_s": 3.123082699999941,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "hpdoi",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": true,
+    "tokens": 5576,
+    "latency_s": 3.4246216999999888,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "hqrwv",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "lv3-three-bridge",
+    "success": true,
+    "tokens": 5541,
+    "latency_s": 3.639001599999574,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "kmjoxh",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "lv3-three-planet",
+    "success": true,
+    "tokens": 5443,
+    "latency_s": 3.4624821000006705,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "sodqhw",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 2550,
+    "latency_s": 1.0674890000000232,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 2535,
+    "latency_s": 1.2390261999998984,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 3120,
+    "latency_s": 2.6793916999995417,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Thought: The task asks me to apply ROT3 (rotate each letter by 3 positions in the alphabet) to the word 'quick' and reply with the result only. This is a simple cipher operation that I can compute dir",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 3142,
+    "latency_s": 1.4410092999996778,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Thought: The task asks me to apply REVERSE to 'puzzle' and reply with the result only. This is a simple string reversal operation that I can compute directly from my training knowledge without needing",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": true,
+    "tokens": 6907,
+    "latency_s": 3.21938130000035,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "hpdoi",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": true,
+    "tokens": 6936,
+    "latency_s": 8.960852799999884,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "hqrwv",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv3-three-bridge",
+    "success": true,
+    "tokens": 3197,
+    "latency_s": 1.7261410999999498,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I'll apply the three string transformations to 'bridge' step by step.\n\n**Step 1: ROT3**\n- b \u2192 e\n- r \u2192 u\n- i \u2192 l\n- d \u2192 g\n- g \u2192 j\n- e \u2192 h\n\nResult: `eulgjh`\n\n**Step 2: REVERSE**\n- Reverse `eulgjh` \u2192 `hjg",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv3-three-planet",
+    "success": true,
+    "tokens": 6921,
+    "latency_s": 3.9504501999999775,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "sodqhw",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  }
+]

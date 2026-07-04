@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "inject_seed": 101,
+      "n_facts": 2269,
+      "hybrid_candidates": 42
+    },
+    {
+      "inject_seed": 102,
+      "n_facts": 2269,
+      "hybrid_candidates": 43
+    },
+    {
+      "inject_seed": 103,
+      "n_facts": 2269,
+      "hybrid_candidates": 48
+    },
+    {
+      "inject_seed": 104,
+      "n_facts": 2269,
+      "hybrid_candidates": 46
+    },
+    {
+      "inject_seed": 105,
+      "n_facts": 2269,
+      "hybrid_candidates": 44
+    }
+  ],
+  "mean": 44.6,
+  "std": 2.1540659228538015,
+  "min": 42,
+  "max": 48
+}

@@ -1,0 +1,52 @@
+{% extends "_layout.html" %}
+{% set active = "overview" %}
+{% block title %}Welcome{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Welcome to Engram</h1>
+    <p class="page-header__subtitle">
+      Engram is an LLM agent with persistent memory: every task becomes an
+      <em>episode</em>, and during sleep it consolidates lessons into reusable
+      <em>skills</em>. Over time it gets better at problems it has seen before
+      &mdash; without retraining.
+    </p>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--primary" href="/settings">Open settings</a>
+    <a class="btn btn--ghost" href="/chat">Skip to chat</a>
+  </div>
+</header>
+
+<section class="card stack">
+  <h2 class="card__title">Pick an LLM provider</h2>
+  <p class="text-muted">
+    Free options first &mdash; Engram detects them automatically once configured.
+  </p>
+  <ul class="stack-sm">
+    <li><strong>Ollama</strong> (fully local) &mdash; run
+      <code>ollama run qwen2.5:7b</code>.</li>
+    <li><strong>Groq</strong> &mdash; generous free tier with Llama 3.3 70B.
+      Get a key at <code>console.groq.com</code>.</li>
+    <li><strong>Google Gemini</strong> &mdash; free tier with
+      <code>gemini-1.5-flash</code>. Get a key at <code>aistudio.google.com</code>.</li>
+  </ul>
+  <p class="text-muted text-sm">
+    Paid options: Anthropic Claude, OpenAI GPT, DeepSeek, Kimi, Qwen, Mistral, and more.
+  </p>
+</section>
+
+<section class="card stack">
+  <h2 class="card__title">Once configured</h2>
+  <p>
+    Open <a href="/chat">Chat</a>, type a task in any language, press Send. The
+    agent thinks, uses tools (Python sandbox, AST checks), retrieves any past
+    skills, and answers. Every conversation creates an <em>episode</em> visible
+    under <a href="/episodes">Episodes</a>. After 3+ episodes, run a
+    <strong>sleep cycle</strong> to consolidate skills &mdash; they appear under
+    <a href="/skills">Skills</a> with their genealogy under
+    <a href="/lineage">Lineage</a>.
+  </p>
+</section>
+{% endblock %}

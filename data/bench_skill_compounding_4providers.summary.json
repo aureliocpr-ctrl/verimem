@@ -1,0 +1,98 @@
+{
+  "raw|anthropic": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 59.625,
+    "mean_latency_s": 0.6795045500002743,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_cold|anthropic": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 4282.875,
+    "mean_latency_s": 4.070060525000372,
+    "mean_attempts": 1.75,
+    "n_errors": 0.0
+  },
+  "hippo_warm|anthropic": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 5160.375,
+    "mean_latency_s": 2.388121374999173,
+    "mean_attempts": 2.0,
+    "n_errors": 0.0
+  },
+  "raw|groq": {
+    "n": 8.0,
+    "success_rate": 0.875,
+    "mean_tokens": 81.625,
+    "mean_latency_s": 0.6774827374993038,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_cold|groq": {
+    "n": 8.0,
+    "success_rate": 0.875,
+    "mean_tokens": 3420.25,
+    "mean_latency_s": 17.73423820000062,
+    "mean_attempts": 2.5,
+    "n_errors": 0.0
+  },
+  "hippo_warm|groq": {
+    "n": 8.0,
+    "success_rate": 0.0,
+    "mean_tokens": 384.75,
+    "mean_latency_s": 17.992385087500224,
+    "mean_attempts": 0.125,
+    "n_errors": 7.0
+  },
+  "raw|openrouter": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 59.625,
+    "mean_latency_s": 1.5011150624977745,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_cold|openrouter": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 6492.625,
+    "mean_latency_s": 4.049573024998608,
+    "mean_attempts": 2.0,
+    "n_errors": 0.0
+  },
+  "hippo_warm|openrouter": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 6468.125,
+    "mean_latency_s": 3.565435412501756,
+    "mean_attempts": 2.0,
+    "n_errors": 0.0
+  },
+  "raw|deepseek": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 49.625,
+    "mean_latency_s": 0.7004843250015256,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_cold|deepseek": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 5275.75,
+    "mean_latency_s": 3.073272524999993,
+    "mean_attempts": 2.0,
+    "n_errors": 0.0
+  },
+  "hippo_warm|deepseek": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 5290.25,
+    "mean_latency_s": 3.0982250874967576,
+    "mean_attempts": 2.0,
+    "n_errors": 0.0
+  }
+}

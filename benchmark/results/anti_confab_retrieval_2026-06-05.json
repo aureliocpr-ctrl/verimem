@@ -1,0 +1,27 @@
+{
+  "bench": "anti-confabulation retrieval (USP eval)",
+  "model": "intfloat/multilingual-e5-base",
+  "n_pairs": 10,
+  "k": 3,
+  "gate_classification": {
+    "confab_total": 10,
+    "confab_quarantined": 10,
+    "true_total": 10,
+    "true_kept_recallable": 10
+  },
+  "NAIVE_vector_store": {
+    "confab_leak_rate@k": 1.0,
+    "recall_precision@k": 0.667
+  },
+  "ENGRAM_gated": {
+    "confab_leak_rate@k": 0.0,
+    "recall_precision@k": 1.0
+  },
+  "subtle_confab_limit": {
+    "n": 5,
+    "caught_L1_only_no_corpus": 0,
+    "caught_L3_with_corpus": 4,
+    "note": "SUBTLE confab = plausible FALSE claims with invented specifics (numbers) and NO hype trigger words. (a) Keyword L1 detectors alone catch 0/5 \u2014 blind to subtle factual confab. (b) WITH the TRUE fact in memory + L3 numeric-quantity contradiction (validate='full' / hippo_validate_claim), 4/5 are caught: a claim asserting a DIFFERENT value for the same unit is flagged 'contradicted'. The remaining miss is a unit-parsing edge ('14 daily snapshots' vs '7-snapshot': adjective between number and noun). HONEST SCOPE: L3 catches confab that CONTRADICTS an existing fact; novel-domain confab (no prior fact) still needs an evidence-requirement layer. L3 is OFF on the default 'fast' write (cost/safety) \u2014 activating it on every write is a gated policy decision. Do NOT overclaim 'prevents all confabulation'."
+  },
+  "metric_note": "confab_leak_rate@k = fraction of queries whose top-k recall contains a confabulated (hype/unverified) fact. Lower=better. NAIVE = plain vector store (no write-gate); ENGRAM_gated = real anti_confab_gate quarantines confab at write -> excluded from recall. Same corpus, same e5 embedding."
+}

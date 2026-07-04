@@ -1,0 +1,40 @@
+{
+  "runs": [
+    {
+      "run": 0,
+      "elapsed_s": 43.122,
+      "n_clusters": 6,
+      "n_nrem_skills": 6,
+      "n_rem_skills": 2,
+      "n_facts": 6,
+      "error": null
+    },
+    {
+      "run": 1,
+      "elapsed_s": 30.135,
+      "n_clusters": 6,
+      "n_nrem_skills": 6,
+      "n_rem_skills": 2,
+      "n_facts": 6,
+      "error": null
+    },
+    {
+      "run": 2,
+      "elapsed_s": 30.266,
+      "n_clusters": 6,
+      "n_nrem_skills": 6,
+      "n_rem_skills": 2,
+      "n_facts": 6,
+      "error": null
+    }
+  ],
+  "warmup_elapsed_s": 43.122,
+  "measure_mean_elapsed_s": 30.200499999999998,
+  "n_mcp_calls_total": 43,
+  "mcp_call_latency_ms": {
+    "p50": 12.285947799682617,
+    "mean": 12.462172397347384,
+    "max": 20.125865936279297
+  },
+  "tmp_dir": "C:\\Users\\aurel\\AppData\\Local\\Temp\\hippo_c71_bench_hxl6w8he"
+}

@@ -1,0 +1,50 @@
+{
+  "raw|anthropic": {
+    "n": 12.0,
+    "success_rate": 0.5,
+    "mean_tokens": 62.0,
+    "mean_latency_s": 0.7751279000015833,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_cold|anthropic": {
+    "n": 12.0,
+    "success_rate": 1.0,
+    "mean_tokens": 2694.1666666666665,
+    "mean_latency_s": 3.2097757333334207,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_warm|anthropic": {
+    "n": 12.0,
+    "success_rate": 1.0,
+    "mean_tokens": 2880.75,
+    "mean_latency_s": 1.8209256250011094,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "raw|deepseek": {
+    "n": 12.0,
+    "success_rate": 0.5,
+    "mean_tokens": 48.0,
+    "mean_latency_s": 0.8128524166653127,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_cold|deepseek": {
+    "n": 12.0,
+    "success_rate": 1.0,
+    "mean_tokens": 2298.9166666666665,
+    "mean_latency_s": 2.0979764583316864,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_warm|deepseek": {
+    "n": 12.0,
+    "success_rate": 1.0,
+    "mean_tokens": 2756.3333333333335,
+    "mean_latency_s": 2.353429808334719,
+    "mean_attempts": 1.1666666666666667,
+    "n_errors": 0.0
+  }
+}

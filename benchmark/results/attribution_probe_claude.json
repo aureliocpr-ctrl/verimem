@@ -1,0 +1,169 @@
+{
+  "judge": "claude-sonnet-4-6 (_FACT_SYSTEM)",
+  "threshold": 40.0,
+  "speakers": true,
+  "budget": 1500,
+  "seed": 7,
+  "clean": {
+    "n": 15,
+    "admit_rate@40": 0.8,
+    "mean": 55.9
+  },
+  "interference": {
+    "n": 15,
+    "admit_rate@40": 0.4,
+    "mean": 28.1
+  },
+  "items": [
+    {
+      "kind": "clean",
+      "score": 95.0,
+      "fact": "Joseph expressed gratitude towards his network for their support in overcoming logistical challenges related to international partnerships."
+    },
+    {
+      "kind": "clean",
+      "score": 72.0,
+      "fact": "Susan Thompson plans to share insights on the benefits of herbs with her clients, integrating them into her wellness coaching to inspire die"
+    },
+    {
+      "kind": "interference",
+      "score": 62.0,
+      "fact": "Sarah Garcia expressed interest in exploring more music genres that promote energy and motivation."
+    },
+    {
+      "kind": "clean",
+      "score": 47.0,
+      "fact": "Ananya Sharma experienced a deeper appreciation for parrots after witnessing a talking parrot's interactive capabilities at a friend's house"
+    },
+    {
+      "kind": "clean",
+      "score": 85.0,
+      "fact": "Susan Thompson's new friendships have influenced her wellness strategies, inspiring her to incorporate diverse ideas into her health worksho"
+    },
+    {
+      "kind": "interference",
+      "score": 0.0,
+      "fact": "Ananya Sharma's physical health status changed from 'Good' to 'Excellent'"
+    },
+    {
+      "kind": "interference",
+      "score": 50.0,
+      "fact": "Martin expressed a preference for films that reinforce his existing beliefs rather than challenge them."
+    },
+    {
+      "kind": "interference",
+      "score": 30.0,
+      "fact": "Sharon Brown emphasized the importance of aligning activities with personal hobbies and the fulfillment gained from leisure pursuits."
+    },
+    {
+      "kind": "clean",
+      "score": 30.0,
+      "fact": "Jennifer's industry presence grew, leading to recognition as an emerging thought leader in cloud computing."
+    },
+    {
+      "kind": "interference",
+      "score": 0.0,
+      "fact": "On Jul 13, 2032, Steven Miller attended a friend's cat training session, which challenged his previous belief that cats were too independent"
+    },
+    {
+      "kind": "clean",
+      "score": 50.0,
+      "fact": "Donna used AI-generated content to share her experiences and engage with her audience during the launch event."
+    },
+    {
+      "kind": "interference",
+      "score": 5.0,
+      "fact": "Barbara Jones leveraged her improved health to lead a team-building workshop, focusing on collaborative research approaches."
+    },
+    {
+      "kind": "interference",
+      "score": 15.0,
+      "fact": "Ananya Sharma expresses excitement about participating in film festivals rather than academic collaborations."
+    },
+    {
+      "kind": "clean",
+      "score": 35.0,
+      "fact": "Karen Brown's age in January 2025 is 27 years old"
+    },
+    {
+      "kind": "interference",
+      "score": 50.0,
+      "fact": "Oleksandr Shevchenko received support from a mentor, which has been crucial in his career transition and personal growth."
+    },
+    {
+      "kind": "interference",
+      "score": 62.0,
+      "fact": "Donald Smith remains optimistic about the future of his consulting firm, focusing on the innovative strategies and modern technology he can "
+    },
+    {
+      "kind": "interference",
+      "score": 35.0,
+      "fact": "Sharon Brown shared excitement about leveraging her excellent health to pursue new projects in the culinary community, creating a lasting im"
+    },
+    {
+      "kind": "clean",
+      "score": 25.0,
+      "fact": "Sharon Brown considered how her newfound appreciation for romantic comedies might provide a pleasant break from reality in her daily routine"
+    },
+    {
+      "kind": "clean",
+      "score": 62.0,
+      "fact": "Oleksandr emphasized the importance of setting a solid foundation for continued success both professionally and personally."
+    },
+    {
+      "kind": "clean",
+      "score": 50.0,
+      "fact": "Jennifer Martin's physical health status changed from \"Normal\" to \"Below Normal\"."
+    },
+    {
+      "kind": "interference",
+      "score": 20.0,
+      "fact": "Williams Daniel's food preference evolved to include a broader interest in modern fusion baking techniques beyond sourdough."
+    },
+    {
+      "kind": "interference",
+      "score": 0.0,
+      "fact": "Sharon Brown emphasized the importance of individual achievement and competitive success in her new role."
+    },
+    {
+      "kind": "clean",
+      "score": 50.0,
+      "fact": "Joseph Garcia's love for Esther Williams' films inspires his career transition to film preservation."
+    },
+    {
+      "kind": "interference",
+      "score": 42.0,
+      "fact": "Jennifer Martin's strategic approach to problem-solving involves strictly adhering to a caffeine-free lifestyle."
+    },
+    {
+      "kind": "clean",
+      "score": 95.0,
+      "fact": "Taylor David plans to leverage his network and experience to explore new opportunities in consultancy and policy reform."
+    },
+    {
+      "kind": "interference",
+      "score": 50.0,
+      "fact": "Joseph Garcia expressed excitement about integrating modern electronic music elements into his educational programs."
+    },
+    {
+      "kind": "clean",
+      "score": 50.0,
+      "fact": "Michelle Hernandez seeks guidance on balancing alertness with health considerations in her daily routine."
+    },
+    {
+      "kind": "clean",
+      "score": 50.0,
+      "fact": "Donna Gonzalez reflected on the balance between needing quiet for composing and embracing inspiration from lively pets."
+    },
+    {
+      "kind": "interference",
+      "score": 0.0,
+      "fact": "Barbara Jones's career_status updated company_name from 'Heart Health Research Lab' to 'International Heart Health Institute'"
+    },
+    {
+      "kind": "clean",
+      "score": 42.0,
+      "fact": "Joseph Garcia's career_status updated job_title from \"Founder and Curator\" to \"Award-Winning Educator and Curator\"."
+    }
+  ]
+}

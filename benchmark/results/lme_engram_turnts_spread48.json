@@ -1,0 +1,382 @@
+{
+  "n": 48,
+  "n_correct": 32,
+  "n_errors": 0,
+  "accuracy": 0.6667,
+  "per_category": {
+    "knowledge-update": {
+      "n": 7,
+      "accuracy": 0.8571
+    },
+    "multi-session": {
+      "n": 12,
+      "accuracy": 0.5833
+    },
+    "single-session-assistant": {
+      "n": 6,
+      "accuracy": 0.6667
+    },
+    "single-session-preference": {
+      "n": 3,
+      "accuracy": 0.6667
+    },
+    "single-session-user": {
+      "n": 7,
+      "accuracy": 1.0
+    },
+    "temporal-reasoning": {
+      "n": 13,
+      "accuracy": 0.4615
+    }
+  },
+  "details": [
+    {
+      "id": "e47becba",
+      "category": "single-session-user",
+      "predicted": "Business Administration.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7527f7e2",
+      "category": "single-session-user",
+      "predicted": "$800",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8ebdbe50",
+      "category": "single-session-user",
+      "predicted": "Data Science.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "25e5aa4f",
+      "category": "single-session-user",
+      "predicted": "UCLA",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "bc8a6e93",
+      "category": "single-session-user",
+      "predicted": "Lemon blueberry cake.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "311778f1",
+      "category": "single-session-user",
+      "predicted": "10 hours.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0862e8bf_abs",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e831120c",
+      "category": "multi-session",
+      "predicted": "MCU: 2 weeks. Star Wars main films: 1.5 weeks (a week and a half).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "28dc39ac",
+      "category": "multi-session",
+      "predicted": "70 (AC Odyssey) + 10 (Celeste) + 30 (TLOU2 hard) + 25 (TLOU2 normal) = **135 hours**.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_2ba83207",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9d25d4e0",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "10d9b85a",
+      "category": "multi-session",
+      "predicted": "3 (workshop on April 17th and 18th = 2 days; lecture on April 10th = 1 day).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "80ec1f4f_abs",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "195a1a1b",
+      "category": "single-session-preference",
+      "predicted": "Reading, meditation, deep breathing exercises, yoga or stretching, listening to soothing music.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "95228167",
+      "category": "single-session-preference",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "07b6f563",
+      "category": "single-session-preference",
+      "predicted": "Portable power bank, phone wallet case.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e6041065",
+      "category": "multi-session",
+      "predicted": "40% (2 out of 5 pairs).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e25c3b8d",
+      "category": "multi-session",
+      "predicted": "$300 (pagato $200, prezzo originale $500).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "77eafa52",
+      "category": "multi-session",
+      "predicted": "$300 (from $2,500 to $2,800).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "bb7c3b45",
+      "category": "multi-session",
+      "predicted": "$300 (bought for $200, originally $500).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "157a136e",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "87f22b4a",
+      "category": "multi-session",
+      "predicted": "$120 (40 dozen × $3 per dozen).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_f49edff3",
+      "category": "temporal-reasoning",
+      "predicted": "Helped friend prepare nursery (2023-02-05), helped cousin pick out baby shower stuff (2023-02-10), ordered customized phone case (2023-02-20).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_e072b769",
+      "category": "temporal-reasoning",
+      "predicted": "Il contesto indica che hai scritto \"I've just downloaded Ibotta\" il 2023-04-16. La data attuale è 2026-06-30.\n\nDa 2023-04-16 a 2026-06-30 = 1171 giorni = **167 settimane fa**.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_7abb270c",
+      "category": "temporal-reasoning",
+      "predicted": "1. Science Museum (\"Space Exploration\") — 2023/01/15\n2. Modern Art Museum (permanent collection) — 2023/02/20\n3. Modern Art Museum (\"The Evolution of Abstract Expressionism\") — 2023/03/04\n4. Natural History Museum (dinosaur fossils) — 2023/03/04\n5. The Metropolitan Museum of Art (Egyptian artifacts) — 2023/03/04\n6. Children's Museum — 2023/03/04",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_4ef30696",
+      "category": "temporal-reasoning",
+      "predicted": "1",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_af6db32f",
+      "category": "temporal-reasoning",
+      "predicted": "8 days ago.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_e061b84g",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_fa19884d",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_76048e76",
+      "category": "temporal-reasoning",
+      "predicted": "The bike. It was repaired in mid-February, while the car (Corolla) was washed on February 27th.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_6ed717ea",
+      "category": "temporal-reasoning",
+      "predicted": "Training pads for Luna (1 month ago vs. 3 weeks ago for Max's bed).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_483dd43c",
+      "category": "temporal-reasoning",
+      "predicted": "Game of Thrones (started about a month before the conversation; The Crown season 3 was finished around the same time).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "d01c6aa8",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6613b389",
+      "category": "temporal-reasoning",
+      "predicted": "About 2 months (May 15th to July 22nd).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_93159ced_abs",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "71315a70",
+      "category": "knowledge-update",
+      "predicted": "10-12 hours.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "08e075c7",
+      "category": "knowledge-update",
+      "predicted": "9 months (as of 2023-09-02).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "c4ea545c",
+      "category": "knowledge-update",
+      "predicted": "Sì. A giugno 2023 andavi in palestra 3 volte a settimana (martedì, giovedì, sabato). Ad agosto 2023 hai dichiarato di andarci 4 volte a settimana.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8fb83627",
+      "category": "knowledge-update",
+      "predicted": "5",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "50635ada",
+      "category": "knowledge-update",
+      "predicted": "Premier Silver.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "06db6396",
+      "category": "knowledge-update",
+      "predicted": "5",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0977f2af",
+      "category": "knowledge-update",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "89527b6b",
+      "category": "single-session-assistant",
+      "predicted": "Blu.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "dc439ea3",
+      "category": "single-session-assistant",
+      "predicted": "Hoop Dance.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "70b3e69b",
+      "category": "single-session-assistant",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "e982271f",
+      "category": "single-session-assistant",
+      "predicted": "Revolution Hall",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "561fabcd",
+      "category": "single-session-assistant",
+      "predicted": "Fissionator.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "778164c6",
+      "category": "single-session-assistant",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    }
+  ],
+  "bench": "longmemeval",
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s.json",
+  "k": 10,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": true,
+  "extract": false,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

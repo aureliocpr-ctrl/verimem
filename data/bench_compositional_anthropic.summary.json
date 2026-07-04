@@ -1,0 +1,29 @@
+{
+  "raw|anthropic": {
+    "n": 8.0,
+    "success_rate": 0.5,
+    "mean_tokens": 68.875,
+    "mean_latency_s": 0.9149485124997909,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0,
+    "tokens_per_success": 137.75
+  },
+  "hippo_cold|anthropic": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 4562.0,
+    "mean_latency_s": 7.310300524999889,
+    "mean_attempts": 1.625,
+    "n_errors": 0.0,
+    "tokens_per_success": 4562.0
+  },
+  "hippo_warm|anthropic": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 4413.5,
+    "mean_latency_s": 3.035467699999913,
+    "mean_attempts": 1.375,
+    "n_errors": 0.0,
+    "tokens_per_success": 4413.5
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "n_critic_facts": 3,
+  "verdict_distribution": {
+    "CLAIM_FAILS": 1,
+    "SPLIT": 1,
+    "CLAIM_HOLDS": 1
+  },
+  "evidence_keyword_freq": {
+    "timeout": 1,
+    "counterexample": 2,
+    "GAP": 3,
+    "falsification": 3,
+    "production.ready": 1,
+    "surrogate": 2,
+    "dead.code": 1,
+    "second.call.site": 1
+  },
+  "per_cycle": [
+    {
+      "cycle": 258,
+      "id": "4d8c02a20f",
+      "topic": "critic/cycle258-verdict-second-pass-louvain-dead-code-2026-05-23",
+      "verdict": "CLAIM_FAILS",
+      "worker_confidences": {
+        "caller_verification": 0.95
+      }
+    },
+    {
+      "cycle": 262,
+      "id": "2d5cf4da10",
+      "topic": "critic/cycle262-verdict-stable-partition-same-class-gap-2026-05-23",
+      "verdict": "SPLIT",
+      "worker_confidences": {
+        "falsification": 0.9,
+        "caller_verification": 0.95
+      }
+    },
+    {
+      "cycle": 287,
+      "id": "0a69d3bb94",
+      "topic": "critic/cycle287-verdict-stable-partition-wire-CLAIM-HOLDS-2026-05-23",
+      "verdict": "CLAIM_HOLDS",
+      "worker_confidences": {}
+    }
+  ],
+  "verdict_trend": [
+    {
+      "cycle": 258,
+      "verdict": "CLAIM_FAILS"
+    },
+    {
+      "cycle": 262,
+      "verdict": "SPLIT"
+    },
+    {
+      "cycle": 287,
+      "verdict": "CLAIM_HOLDS"
+    }
+  ],
+  "worker_confidence_trend": {
+    "falsification": [
+      {
+        "cycle": 262,
+        "conf": 0.9
+      }
+    ],
+    "caller_verification": [
+      {
+        "cycle": 258,
+        "conf": 0.95
+      },
+      {
+        "cycle": 262,
+        "conf": 0.95
+      }
+    ],
+    "counterexample": []
+  }
+}

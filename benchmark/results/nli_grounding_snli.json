@@ -1,0 +1,1234 @@
+{
+  "n": 150,
+  "per_class": 50,
+  "seed": 0,
+  "min_cosine": 0.7,
+  "nli_3class_accuracy": 0.84,
+  "overall": {
+    "n_contradiction": 50,
+    "n_neutral": 50,
+    "nli_contra_recall": 0.72,
+    "nli_neutral_fp": 0.04,
+    "nli_contra_precision": 0.947,
+    "lexical_contra_recall": 0.04,
+    "lexical_neutral_fp": 0.08,
+    "lexical_contra_precision": 0.333
+  },
+  "low_overlap_contradiction": {
+    "n": 43,
+    "nli_recall": 0.698,
+    "lexical_recall": 0.023
+  },
+  "cosine_prefilter_recall_risk": {
+    "contradictions_below_min_cosine": 1,
+    "of_total_contradictions": 50
+  },
+  "gold_dist": {
+    "entailment": 50,
+    "neutral": 50,
+    "contradiction": 50
+  },
+  "rows": [
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.93,
+      "jaccard": 0.316,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.834,
+      "jaccard": 0.286,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.863,
+      "jaccard": 0.125,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.829,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.816,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.952,
+      "jaccard": 0.222,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.903,
+      "jaccard": 0.2,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.816,
+      "jaccard": 0.167,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.905,
+      "jaccard": 0.273,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.845,
+      "jaccard": 0.364,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.826,
+      "jaccard": 0.059,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.865,
+      "jaccard": 0.3,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.879,
+      "jaccard": 0.214,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.952,
+      "jaccard": 0.273,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.884,
+      "jaccard": 0.059,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.886,
+      "jaccard": 0.294,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": true,
+      "cosine": 0.979,
+      "jaccard": 0.778,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.972,
+      "jaccard": 0.474,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.903,
+      "jaccard": 0.118,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.97,
+      "jaccard": 0.429,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.868,
+      "jaccard": 0.2,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.87,
+      "jaccard": 0.111,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.857,
+      "jaccard": 0.333,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.936,
+      "jaccard": 0.375,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.921,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.926,
+      "jaccard": 0.125,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.917,
+      "jaccard": 0.4,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.903,
+      "jaccard": 0.25,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.846,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.906,
+      "jaccard": 0.308,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.959,
+      "jaccard": 0.5,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.923,
+      "jaccard": 0.5,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.924,
+      "jaccard": 0.364,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.921,
+      "jaccard": 0.097,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.971,
+      "jaccard": 0.727,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.965,
+      "jaccard": 0.182,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.831,
+      "jaccard": 0.077,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.918,
+      "jaccard": 0.375,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.864,
+      "jaccard": 0.111,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.84,
+      "jaccard": 0.222,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.89,
+      "jaccard": 0.154,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.813,
+      "jaccard": 0.111,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.889,
+      "jaccard": 0.24,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.859,
+      "jaccard": 0.125,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.807,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.914,
+      "jaccard": 0.167,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.949,
+      "jaccard": 0.273,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.887,
+      "jaccard": 0.182,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.862,
+      "jaccard": 0.231,
+      "below_prefilter": false
+    },
+    {
+      "gold": "entailment",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.98,
+      "jaccard": 0.692,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.865,
+      "jaccard": 0.185,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.833,
+      "jaccard": 0.111,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.864,
+      "jaccard": 0.087,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.823,
+      "jaccard": 0.095,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.867,
+      "jaccard": 0.125,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.821,
+      "jaccard": 0.087,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.953,
+      "jaccard": 0.471,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.8,
+      "jaccard": 0.091,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "contradiction",
+      "lexical_contra": true,
+      "cosine": 0.796,
+      "jaccard": 0.086,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.858,
+      "jaccard": 0.25,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.846,
+      "jaccard": 0.238,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.894,
+      "jaccard": 0.083,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "entailment",
+      "lexical_contra": false,
+      "cosine": 0.951,
+      "jaccard": 0.429,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.866,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.822,
+      "jaccard": 0.15,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": true,
+      "cosine": 0.859,
+      "jaccard": 0.161,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.862,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.768,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.791,
+      "jaccard": 0.1,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.878,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.907,
+      "jaccard": 0.267,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.813,
+      "jaccard": 0.095,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.819,
+      "jaccard": 0.125,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.816,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.872,
+      "jaccard": 0.111,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.851,
+      "jaccard": 0.067,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.874,
+      "jaccard": 0.182,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.834,
+      "jaccard": 0.125,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.91,
+      "jaccard": 0.333,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.97,
+      "jaccard": 0.857,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.852,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "contradiction",
+      "lexical_contra": true,
+      "cosine": 0.801,
+      "jaccard": 0.211,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.91,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.79,
+      "jaccard": 0.048,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.906,
+      "jaccard": 0.182,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.846,
+      "jaccard": 0.308,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.821,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.902,
+      "jaccard": 0.167,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.844,
+      "jaccard": 0.214,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.842,
+      "jaccard": 0.333,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.777,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.86,
+      "jaccard": 0.4,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.942,
+      "jaccard": 0.267,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.838,
+      "jaccard": 0.278,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.874,
+      "jaccard": 0.091,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.893,
+      "jaccard": 0.357,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.781,
+      "jaccard": 0.053,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.845,
+      "jaccard": 0.176,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.852,
+      "jaccard": 0.059,
+      "below_prefilter": false
+    },
+    {
+      "gold": "neutral",
+      "nli": "neutral",
+      "lexical_contra": true,
+      "cosine": 0.846,
+      "jaccard": 0.136,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.76,
+      "jaccard": 0.125,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.829,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.868,
+      "jaccard": 0.3,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.747,
+      "jaccard": 0.062,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.807,
+      "jaccard": 0.111,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.735,
+      "jaccard": 0.062,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.734,
+      "jaccard": 0.048,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.764,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.868,
+      "jaccard": 0.167,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.825,
+      "jaccard": 0.188,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.913,
+      "jaccard": 0.158,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.857,
+      "jaccard": 0.2,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.763,
+      "jaccard": 0.038,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.851,
+      "jaccard": 0.308,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.835,
+      "jaccard": 0.13,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.828,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.812,
+      "jaccard": 0.083,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.836,
+      "jaccard": 0.188,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": true,
+      "cosine": 0.938,
+      "jaccard": 0.857,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.751,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.724,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.696,
+      "jaccard": 0.0,
+      "below_prefilter": true
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": true,
+      "cosine": 0.82,
+      "jaccard": 0.25,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.769,
+      "jaccard": 0.154,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.771,
+      "jaccard": 0.1,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.853,
+      "jaccard": 0.412,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.761,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.807,
+      "jaccard": 0.154,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.818,
+      "jaccard": 0.105,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.776,
+      "jaccard": 0.04,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.727,
+      "jaccard": 0.0,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.766,
+      "jaccard": 0.077,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.811,
+      "jaccard": 0.13,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.723,
+      "jaccard": 0.083,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.793,
+      "jaccard": 0.1,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.768,
+      "jaccard": 0.143,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.827,
+      "jaccard": 0.308,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.716,
+      "jaccard": 0.045,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.772,
+      "jaccard": 0.267,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.845,
+      "jaccard": 0.375,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.82,
+      "jaccard": 0.083,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "neutral",
+      "lexical_contra": false,
+      "cosine": 0.768,
+      "jaccard": 0.083,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.746,
+      "jaccard": 0.067,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.849,
+      "jaccard": 0.176,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.94,
+      "jaccard": 0.125,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.799,
+      "jaccard": 0.2,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.782,
+      "jaccard": 0.067,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.783,
+      "jaccard": 0.071,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.917,
+      "jaccard": 0.333,
+      "below_prefilter": false
+    },
+    {
+      "gold": "contradiction",
+      "nli": "contradiction",
+      "lexical_contra": false,
+      "cosine": 0.871,
+      "jaccard": 0.211,
+      "below_prefilter": false
+    }
+  ],
+  "judge": "claude-cli (claude-sonnet-4-6)"
+}

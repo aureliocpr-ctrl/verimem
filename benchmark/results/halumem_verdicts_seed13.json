@@ -1,0 +1,804 @@
+{
+  "verdicts": [
+    {
+      "id": 0,
+      "relation": "CONSISTENT",
+      "reason": "Claim narrows instrumental motivation to personal development/growth, a subset of candidates that list efficiency + personal development; compatible, no conflict."
+    },
+    {
+      "id": 1,
+      "relation": "CONTRADICTION",
+      "reason": "Same transition source 'Research Associate' but claim targets 'Chief Research Scientist' vs candidate 'Lead Research Scientist' — incompatible value."
+    },
+    {
+      "id": 2,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate states fear of snakes due to unpredictable movements; claim states fascination due to mysterious movements — opposite sentiment on same subject."
+    },
+    {
+      "id": 3,
+      "relation": "CONTRADICTION",
+      "reason": "Both update monthly_income from 15000, but claim to 13000 vs candidate to 12000 — incompatible target value."
+    },
+    {
+      "id": 4,
+      "relation": "CONTRADICTION",
+      "reason": "Same preference-change-for-balanced-lifestyle but claim says black tea vs candidate matcha green tea — incompatible value."
+    },
+    {
+      "id": 5,
+      "relation": "CONSISTENT",
+      "reason": "Candidates frame goal as heart health AND reducing diabetes rates; diabetes commitment is supported, not conflicting."
+    },
+    {
+      "id": 6,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates state mindfulness practices to maintain health in educational role; yoga is not stated or implied, but not strictly incompatible."
+    },
+    {
+      "id": 7,
+      "relation": "CONSISTENT",
+      "reason": "Candidate states gratitude for network support facilitating 'global and regional partnerships'; claim's 'regional' is a supported subset."
+    },
+    {
+      "id": 8,
+      "relation": "CONSISTENT",
+      "reason": "Candidates directly support sharing herbal-tea insights in health workshops to inspire others."
+    },
+    {
+      "id": 9,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates list titles like Founder/CEO, Chief Visionary Officer, Executive Director; 'AI Research Consultant' is a new title none state or imply, but no explicit conflicting transition."
+    },
+    {
+      "id": 10,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate says Donna acknowledged compensatory motivation emphasizing both innate talent AND balanced work-life; claim says it was less significant, favoring natural ability over work-life balance — opposite stance."
+    },
+    {
+      "id": 11,
+      "relation": "CONTRADICTION",
+      "reason": "Same travel-preference modification for data collection but claim says remote/isolated locations vs candidate crowded tourist spots — opposite value."
+    },
+    {
+      "id": 12,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidate notes increased competition but frames collaboration as improved; claim's 'social relationships decreased' and 'tension in his role' is an ungrounded embellishment, not a clean conflict."
+    },
+    {
+      "id": 13,
+      "relation": "CONTRADICTION",
+      "reason": "Same Jul 13 2032 training session but claim says cat training challenging 'cats too independent' vs candidate dog training challenging 'dogs too demanding' — incompatible specifics."
+    },
+    {
+      "id": 14,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates attribute pets to welcoming atmosphere/security; claim asserts pets boost 'culinary appeal' — incompatible rationale for same subject+attribute."
+    },
+    {
+      "id": 15,
+      "relation": "CONTRADICTION",
+      "reason": "Established lineage is healthcare/community->consulting and 'works in healthcare'; claim reverses to consulting->healthcare services, conflicting with the recorded direction."
+    },
+    {
+      "id": 16,
+      "relation": "CONSISTENT",
+      "reason": "A candidate explicitly states her reading includes self-help books on personal wellness and mindfulness."
+    },
+    {
+      "id": 17,
+      "relation": "CONSISTENT",
+      "reason": "Candidates say 'maintaining his health'; 'fitness' is a compatible paraphrase, not a conflict."
+    },
+    {
+      "id": 18,
+      "relation": "CONSISTENT",
+      "reason": "Candidates show Donna broadened pet preference to dogs and values their companionship; exploring her dog's behavior is compatible."
+    },
+    {
+      "id": 19,
+      "relation": "CONTRADICTION",
+      "reason": "Same company-name change from AccessTech Innovations but candidate destination is EmpowerTech Innovations vs claim's TechEmpower Solutions."
+    },
+    {
+      "id": 20,
+      "relation": "CONSISTENT",
+      "reason": "A candidate identifies NewConnection7 as an academic collaborator expanding her platform's reach, matching the claim."
+    },
+    {
+      "id": 21,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate states yoga benefits flexibility and mindfulness; claim asserts cardiovascular health — incompatible benefit for same subject+attribute."
+    },
+    {
+      "id": 22,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates describe her part-time transition and support received but never state the cause; 'desire to spend more time with family' is an ungrounded addition that does not conflict."
+    },
+    {
+      "id": 23,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate specifies collaborating with filmmakers and critics; claim says actors and producers — different collaborators for same attribute."
+    },
+    {
+      "id": 24,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates attribute health-status change to retirement transition/stress (consultancy/research), not a new business venture; claim's stated cause conflicts."
+    },
+    {
+      "id": 25,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates state strategy games with historical battles; claim says futuristic battles — incompatible value for same preference."
+    },
+    {
+      "id": 26,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates say Golden Retrievers are energetic and Christopher reconsidered/sought a quieter pet; claim says he decided to adopt one after seeing calm behavior."
+    },
+    {
+      "id": 27,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates describe transitions to business/smart casual attire; claim asserts a shift to formal business attire (dated 2028) — incompatible direction for the same attire-change attribute."
+    },
+    {
+      "id": 28,
+      "relation": "CONTRADICTION",
+      "reason": "Same from-value 30000 but to-value/reason differs from candidate '30000 to 0'."
+    },
+    {
+      "id": 29,
+      "relation": "CONTRADICTION",
+      "reason": "Same event and date (Aug 10, 2026) but candidate states emerged with resilience/professional vision, not art/creativity."
+    },
+    {
+      "id": 30,
+      "relation": "CONTRADICTION",
+      "reason": "Same pet-expo event but reinforced 'exotic/unique' vs candidate 'non-intimidating' pets."
+    },
+    {
+      "id": 31,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates frame violent films as educational/insightful; claim asserts entertainment value, incompatible motivation."
+    },
+    {
+      "id": 32,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate attributes exclusive experiences/expert insights to group tours, claim attributes to solo travel."
+    },
+    {
+      "id": 33,
+      "relation": "CONSISTENT",
+      "reason": "Candidates include financial independence influencing exploring new cultures; compatible paraphrase."
+    },
+    {
+      "id": 34,
+      "relation": "UNSUPPORTED",
+      "reason": "No candidate mentions shifting platform focus to environmental issues; plausible but ungrounded."
+    },
+    {
+      "id": 35,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate: motivated to support relative's political career; claim: establish his own political career."
+    },
+    {
+      "id": 36,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates: switch to flavored sparkling water; claim: switch to herbal tea, incompatible value."
+    },
+    {
+      "id": 37,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates: vintage wines/historical traditions; claim: modern wines/contemporary innovations."
+    },
+    {
+      "id": 38,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate: creative motivation to inspire ideas/overcome creative blocks; claim: physical motivation for exercise."
+    },
+    {
+      "id": 39,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate: choosing between family recipes and regional variations; claim: international cuisines, different value."
+    },
+    {
+      "id": 40,
+      "relation": "CONSISTENT",
+      "reason": "Candidate states integrating interactive elements into his workshops; compatible with developing interactive workshops."
+    },
+    {
+      "id": 41,
+      "relation": "CONSISTENT",
+      "reason": "Exact paraphrase present verbatim among candidates."
+    },
+    {
+      "id": 42,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says focus on luxury rather than integrating pets; candidate states commitment to integrating pets into the B&B experience. Direct conflict on same intent."
+    },
+    {
+      "id": 43,
+      "relation": "UNSUPPORTED",
+      "reason": "Specific bird preference for calming atmosphere/entertainment is not stated or implied by candidates, which only note generic pet preferences. No conflict either."
+    },
+    {
+      "id": 44,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says 'adult nutrition' while all candidates consistently state 'children's nutrition'. Incompatible value for same attribute."
+    },
+    {
+      "id": 45,
+      "relation": "CONTRADICTION",
+      "reason": "Claim emphasizes sticking to structured plans for predictability; candidates emphasize balancing structure with flexibility, spontaneity, and adaptability. Conflicting travel philosophy."
+    },
+    {
+      "id": 46,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says uncertain and hesitant about pursuing the life goal; candidate says felt empowered and ready to pursue the same goal. Opposite emotional state."
+    },
+    {
+      "id": 47,
+      "relation": "CONTRADICTION",
+      "reason": "Claim attributes reliance to 'family network'; candidate states 'professional network' with otherwise identical phrasing. Incompatible value."
+    },
+    {
+      "id": 48,
+      "relation": "UNSUPPORTED",
+      "reason": "Job title 'Research Coordinator' appears in none of the candidate title transitions; a new specific value not stated, but titles evolve so no clear conflict."
+    },
+    {
+      "id": 49,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says motivated by professional success; candidate says same commitment motivated by emotional resonance. Same attribute, different motivation value."
+    },
+    {
+      "id": 50,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says music genres impacted creative process; candidate says literary genres (incl. poetry) impacted creative process. Conflicting genre type for same anecdote."
+    },
+    {
+      "id": 51,
+      "relation": "CONSISTENT",
+      "reason": "Candidate explicitly states Donna plans to explore tech hubs like Silicon Valley and beyond; excitement about innovative solutions there is compatible."
+    },
+    {
+      "id": 52,
+      "relation": "CONSISTENT",
+      "reason": "Candidate states she is planning to use savings strategically during her career transition; seeking financial stability is compatible with that financial framing."
+    },
+    {
+      "id": 53,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says reducing medical care to focus on professional responsibilities; candidate says integrating increased medical care while maintaining responsibilities. Opposite direction."
+    },
+    {
+      "id": 54,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says social motivation is developing new culinary experiences; candidate says social motivation is expressing identity/improving lifestyle through travel. Different content for same motivation type."
+    },
+    {
+      "id": 55,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says desire to integrate more seafood as of Aug 30, 2026; candidates all describe a plant-based transition on the same date. Incompatible dietary direction."
+    },
+    {
+      "id": 56,
+      "relation": "CONSISTENT",
+      "reason": "Claim is a subset of candidate 1 which states both within-industry exploration and outside-industry independent films; compatible."
+    },
+    {
+      "id": 57,
+      "relation": "CONSISTENT",
+      "reason": "'technical precision and emotional expression' paraphrases candidate's 'artistic and athletic elements' balancing challenge in synchronized swimming."
+    },
+    {
+      "id": 58,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate states international/global recognition; claim says national/local. Same attribute, incompatible scope."
+    },
+    {
+      "id": 59,
+      "relation": "CONTRADICTION",
+      "reason": "All candidates emphasize balancing health with career; claim says focus solely on career, sidelining health. Direct conflict."
+    },
+    {
+      "id": 60,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates say techno music; claim says classical music for the same campaign-strategy plan."
+    },
+    {
+      "id": 61,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates cover puzzle games, bowling, culinary; none mention casual board games. Plausible but ungrounded."
+    },
+    {
+      "id": 62,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate specifies avocado toast recipe; claim says smoothie recipe for the same plan to share with seniors."
+    },
+    {
+      "id": 63,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate says she finds the expanded network inspiring, aligning with creative motivation; claim says overwhelming, conflicting with it."
+    },
+    {
+      "id": 64,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate says cocktails enhanced his movie nights/gatherings; claim says diminished them."
+    },
+    {
+      "id": 65,
+      "relation": "CONTRADICTION",
+      "reason": "All candidates state preference for light cream sauces; claim says heavy cream sauces."
+    },
+    {
+      "id": 66,
+      "relation": "CONSISTENT",
+      "reason": "Candidate verbatim states mental health changed from Calm to Stressed."
+    },
+    {
+      "id": 67,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate says partnership enhanced platform features and scalability; claim asserts a setback to features and scalability from technical issues."
+    },
+    {
+      "id": 68,
+      "relation": "CONSISTENT",
+      "reason": "Candidate notes dual benefits of relaxation and productivity, supporting energizing/productivity-boosting effect; compatible."
+    },
+    {
+      "id": 69,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates list small group tours, backpacking, solo travel; none mention adventure-focused cruises."
+    },
+    {
+      "id": 70,
+      "relation": "CONSISTENT",
+      "reason": "Paraphrase of candidate stating he shared anecdotes transitioning from traditional to online education."
+    },
+    {
+      "id": 71,
+      "relation": "CONSISTENT",
+      "reason": "Candidates state evolving musical tastes and integrating diverse musical influences; openness to new experiences."
+    },
+    {
+      "id": 72,
+      "relation": "CONTRADICTION",
+      "reason": "Claim says practical benefits 'rather than emotional fulfillment'; candidates explicitly say for emotional fulfillment and meaningful connections."
+    },
+    {
+      "id": 73,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate says improved health let him tackle complex cases with renewed vigor; claim says he stepped away from complex cases on sabbatical."
+    },
+    {
+      "id": 74,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate states reptiles for emotional fulfillment and daily enrichment; claim says intellectual stimulation and learning."
+    },
+    {
+      "id": 75,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate attributes preference change to soothing movement of fish; claim attributes it to coral colors being more captivating than fish."
+    },
+    {
+      "id": 76,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidate weighs cognitive benefits versus value alignment; claim's 'versus time spent' is not stated or implied, though not directly conflicting."
+    },
+    {
+      "id": 77,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate: presentation on AI in gaming changing game preferences; claim: AI in education changing reading preferences."
+    },
+    {
+      "id": 78,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate: flexible group tours offering structured exploration; claim: solo backpacking offering unstructured exploration."
+    },
+    {
+      "id": 79,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate: balancing introversion with team collaboration; claim: balancing extroversion with solo work (direct opposite)."
+    },
+    {
+      "id": 80,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm new interest in mystery thrillers and willingness to embrace new genres."
+    },
+    {
+      "id": 81,
+      "relation": "CONSISTENT",
+      "reason": "Candidates state exercise and mindfulness improved health, essential for managing business growth."
+    },
+    {
+      "id": 82,
+      "relation": "CONSISTENT",
+      "reason": "Candidates show care plans yield broader impact toward 10,000 seniors; expanding to more centers is compatible with that aim."
+    },
+    {
+      "id": 83,
+      "relation": "CONSISTENT",
+      "reason": "Candidates support maintaining influence via mentorship/advisory expertise to guide future filmmakers."
+    },
+    {
+      "id": 84,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates cover health management, balancing health/career and flexible travel scheduling, but none state she implemented flexible working hours; specific ungrounded embellishment."
+    },
+    {
+      "id": 85,
+      "relation": "CONSISTENT",
+      "reason": "Candidate states instrumental motivation prioritizes practical problem-solving in pet ownership — aligns with personal choices and practical realities."
+    },
+    {
+      "id": 86,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm green smoothie preference for greens' health benefits and balancing work with a healthy diet."
+    },
+    {
+      "id": 87,
+      "relation": "CONSISTENT",
+      "reason": "Near-verbatim with candidate 1 about curiosity over philosophical implications of health experiences and testing resilience/adaptability."
+    },
+    {
+      "id": 88,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates state the Dec 05 2031 layoff was from a Senior Political Advisor role; claim attributes it to organizational restructuring at his own Donald Consulting — incompatible employer/cause."
+    },
+    {
+      "id": 89,
+      "relation": "CONSISTENT",
+      "reason": "Multiple candidates confirm relief/satisfaction and financial stability from consulting work."
+    },
+    {
+      "id": 90,
+      "relation": "CONSISTENT",
+      "reason": "Birth date 1984-01-15 yields age 41 in January 2025; correctly entailed."
+    },
+    {
+      "id": 91,
+      "relation": "CONSISTENT",
+      "reason": "Candidate states she plans to maintain her health regimen for continued well-being and professional productivity."
+    },
+    {
+      "id": 92,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates affirm impactful initiatives; the added 'instances with less impactful outcomes' is not stated by any candidate (ungrounded, not a direct value conflict)."
+    },
+    {
+      "id": 93,
+      "relation": "CONSISTENT",
+      "reason": "Multiple candidates paraphrase balancing professional responsibilities with personal well-being."
+    },
+    {
+      "id": 94,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm enthusiasm for crowded tourist spots' data-collection/pattern insights into behavior."
+    },
+    {
+      "id": 95,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates list Game, Travel, Movie and Food preferences; none mention a Sports preference."
+    },
+    {
+      "id": 96,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates confirm he founded/directs the Global Nutrition Initiative but give no founding date of Jun 28 2029; the specific date is ungrounded."
+    },
+    {
+      "id": 97,
+      "relation": "CONSISTENT",
+      "reason": "Candidate confirms increased social relationships with a new collaborator bringing fresh ideas to projects."
+    },
+    {
+      "id": 98,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates show declining/different mental-health trajectory (Abnormal->Normal, Mildly Abnormal->Abnormal due to stress); claim asserts Normal->Very Good, an incompatible value/direction."
+    },
+    {
+      "id": 99,
+      "relation": "CONSISTENT",
+      "reason": "Candidates affirm she seeks and adopts innovative/new stress management techniques."
+    },
+    {
+      "id": 100,
+      "relation": "CONSISTENT",
+      "reason": "Candidates cover anecdotes about past pet experiences and long-term benefits of pet companionship."
+    },
+    {
+      "id": 101,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates give other status labels (Improved, Optimized) but none state 'Peak'; no direct conflict, just an ungrounded value."
+    },
+    {
+      "id": 102,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates only generically reference dietary balance; no mention of the specific oatmeal-berries->mixed-fruits change for heart health."
+    },
+    {
+      "id": 103,
+      "relation": "CONSISTENT",
+      "reason": "Candidates affirm his strategic/perfectionist traits drive historically accurate films and historical research integration."
+    },
+    {
+      "id": 104,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates mention mentoring unnamed young researchers; the specific mentee 'Mark Thompson' is not stated."
+    },
+    {
+      "id": 105,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates cite clarificatory, instrumental, compensatory, cognitive motivations, not social motivation for identity expression."
+    },
+    {
+      "id": 106,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates reference general sharing/collaboration; no mention of hibiscus findings to inspire the community."
+    },
+    {
+      "id": 107,
+      "relation": "CONSISTENT",
+      "reason": "Candidates affirm VR/interactive storytelling to enhance engagement in film education; compatible paraphrase."
+    },
+    {
+      "id": 108,
+      "relation": "CONSISTENT",
+      "reason": "Candidates strongly affirm retirement gives freedom for personal interests and community initiatives, enhancing well-being."
+    },
+    {
+      "id": 109,
+      "relation": "CONSISTENT",
+      "reason": "Candidates affirm appreciation for league bowling's competitive edge and camaraderie."
+    },
+    {
+      "id": 110,
+      "relation": "CONSISTENT",
+      "reason": "Candidates affirm gratitude for emotional/empathetic support during career transitions."
+    },
+    {
+      "id": 111,
+      "relation": "CONSISTENT",
+      "reason": "Candidates affirm appreciation for psychological thrillers; documentaries/horror dislike not stated but compatible, not conflicting."
+    },
+    {
+      "id": 112,
+      "relation": "CONSISTENT",
+      "reason": "Candidates state Donna explored FPS and reconsidered her dislike, supporting the evolution claim."
+    },
+    {
+      "id": 113,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates discuss humanitarian goals and well-being but none mention health deterioration affecting his ability to fulfill the goal."
+    },
+    {
+      "id": 114,
+      "relation": "CONSISTENT",
+      "reason": "A candidate explicitly states he visited museums and historical sites and seeks travel with learning/cultural engagement."
+    },
+    {
+      "id": 115,
+      "relation": "CONSISTENT",
+      "reason": "Multiple candidates describe leveraging her network for opportunities and collaborations."
+    },
+    {
+      "id": 116,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm he attended a historical baking class and expressed excitement about culinary heritage/historical traditions."
+    },
+    {
+      "id": 117,
+      "relation": "CONSISTENT",
+      "reason": "Candidates state dynamic yoga enhances his physical and mental wellness, aligned with his wellness focus."
+    },
+    {
+      "id": 118,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates cite a nutritional science seminar and a plant-based culinary workshop, not an energy sustainability workshop; the specific workshop type is ungrounded but not conflicting."
+    },
+    {
+      "id": 119,
+      "relation": "CONSISTENT",
+      "reason": "Candidates describe engaging local businesses/organizations and forming partnerships to strengthen community ties."
+    },
+    {
+      "id": 120,
+      "relation": "CONSISTENT",
+      "reason": "A candidate states his emotional motivation and that he seeks empathetic interaction and emotional support from his network."
+    },
+    {
+      "id": 121,
+      "relation": "CONSISTENT",
+      "reason": "Candidates state he reflected on past campaign successes emphasizing adaptability and strategic insights."
+    },
+    {
+      "id": 122,
+      "relation": "CONSISTENT",
+      "reason": "Candidates describe her cat's playful antics inspiring new creative ideas; 'lively pets' paraphrases this."
+    },
+    {
+      "id": 123,
+      "relation": "CONSISTENT",
+      "reason": "A candidate directly states she plans to use bowling to teach strategic thinking and teamwork at her sports academy."
+    },
+    {
+      "id": 124,
+      "relation": "CONSISTENT",
+      "reason": "Candidates describe using AI-generated content for social signaling and expressing identity, supporting the influence claim."
+    },
+    {
+      "id": 125,
+      "relation": "CONSISTENT",
+      "reason": "Candidates state work-health balance improved her professional performance and productivity."
+    },
+    {
+      "id": 126,
+      "relation": "CONSISTENT",
+      "reason": "Candidates state the health change Normal->Below Average due to stress from the mobile device refurbishment shift."
+    },
+    {
+      "id": 127,
+      "relation": "UNSUPPORTED",
+      "reason": "No candidate mentions parent status or a deceased parent; covers child/partner/career only."
+    },
+    {
+      "id": 128,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm she seeks advice on integrating natural/flavored sparkling water into her routine."
+    },
+    {
+      "id": 129,
+      "relation": "CONSISTENT",
+      "reason": "Candidates show the move from Global Film Festivals to University of Film Studies."
+    },
+    {
+      "id": 130,
+      "relation": "UNSUPPORTED",
+      "reason": "Candidates cover mindfulness/stress/self-help insights into workshops, but none mention dietary change insights."
+    },
+    {
+      "id": 131,
+      "relation": "CONSISTENT",
+      "reason": "Candidates support emphasis on work-life balance for health and productivity."
+    },
+    {
+      "id": 132,
+      "relation": "CONSISTENT",
+      "reason": "Candidates support discovering community-based puzzle games merging mental challenge with social interaction for community goals."
+    },
+    {
+      "id": 133,
+      "relation": "CONTRADICTION",
+      "reason": "Candidates state the food preference was updated from fresh salads to hearty grain salads; claiming current preference is fresh salads conflicts with that update."
+    },
+    {
+      "id": 134,
+      "relation": "UNSUPPORTED",
+      "reason": "Collaboration is mentioned, but no candidate states the challenge of maintaining a unique voice while collaborating."
+    },
+    {
+      "id": 135,
+      "relation": "CONSISTENT",
+      "reason": "Candidates cover balancing career goals with well-being plus leveraging AI and social networks for support."
+    },
+    {
+      "id": 136,
+      "relation": "CONSISTENT",
+      "reason": "Candidate references handling new responsibilities as Senior Manager; compatible with pride in leading larger projects/teams in that prior role."
+    },
+    {
+      "id": 137,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm a guest shared the security benefit of dogs influencing Joseph's focus on dogs for security."
+    },
+    {
+      "id": 138,
+      "relation": "CONSISTENT",
+      "reason": "A candidate states exactly that she dislikes real-time strategy games."
+    },
+    {
+      "id": 139,
+      "relation": "CONSISTENT",
+      "reason": "Candidates support overcoming tight-jeans discomfort leading to a new preference for stylish, comfortable clothing."
+    },
+    {
+      "id": 140,
+      "relation": "CONSISTENT",
+      "reason": "Candidate 5 states his evolving pet preferences reflect openness to new experiences, including Sphynx cats."
+    },
+    {
+      "id": 141,
+      "relation": "CONSISTENT",
+      "reason": "Candidate 1 is a verbatim match: Sphynx cats for affectionate and social nature."
+    },
+    {
+      "id": 142,
+      "relation": "CONSISTENT",
+      "reason": "Candidate 5 covers business partner + envisioning future path; candidate 1 covers strategic adjustments amid financial crisis. Cost-cutting compatible, not conflicting."
+    },
+    {
+      "id": 143,
+      "relation": "UNSUPPORTED",
+      "reason": "No candidate mentions any location or residence; Philadelphia is ungrounded."
+    },
+    {
+      "id": 144,
+      "relation": "CONSISTENT",
+      "reason": "Candidate 1 confirms lead director role with creative control for innovative storytelling; groundbreaking historical dramas is compatible."
+    },
+    {
+      "id": 145,
+      "relation": "CONSISTENT",
+      "reason": "Candidates 1 and 3 directly state digital platforms/virtual seminars to reach broader audience while accommodating health needs."
+    },
+    {
+      "id": 146,
+      "relation": "CONSISTENT",
+      "reason": "Candidates 2,3,4 directly describe incorporating insights from films/movies into nutrition/health advocacy."
+    },
+    {
+      "id": 147,
+      "relation": "CONTRADICTION",
+      "reason": "Candidate 1 attributes reaching the 'Fatigued and Overwhelmed' state and subsequent transition to leading the Global Nutrition Initiative, while claim asserts a different cause (Hospital Nutrition Specialist transition) for that mental-health change — incompatible cause for the same attribute."
+    },
+    {
+      "id": 148,
+      "relation": "CONSISTENT",
+      "reason": "Candidate 1 states sparkling water aligns with her health goals; daily-routine incorporation is compatible."
+    },
+    {
+      "id": 149,
+      "relation": "CONSISTENT",
+      "reason": "Candidates 3 and 4 directly describe pursuing sustainable work-life balance amid increased responsibilities/new role demands."
+    },
+    {
+      "id": 150,
+      "relation": "CONSISTENT",
+      "reason": "Candidate 2 (mentored young researchers, legacy) and candidate 5 (celebrated achievements/legacy) support pride in accomplishments and mentorship."
+    },
+    {
+      "id": 151,
+      "relation": "UNSUPPORTED",
+      "reason": "Texture-dislike is supported (candidate 1: texture issues persist), but the specific reason 'cultural origins' for bubble tea is not stated; candidate 1 cites 'artisanal qualities' and cultural significance was tied to energy drinks. Plausible embellishment, not a direct conflict."
+    },
+    {
+      "id": 152,
+      "relation": "UNSUPPORTED",
+      "reason": "Comfort-over-style and evolving preferences are supported (candidates 1,3), but the specific inclusion of polo shirts is not stated by any candidate."
+    },
+    {
+      "id": 153,
+      "relation": "CONSISTENT",
+      "reason": "Candidates 1 and 2 directly tie his love of classic cinema to appreciation of (artistic) synchronized swimming."
+    },
+    {
+      "id": 154,
+      "relation": "UNSUPPORTED",
+      "reason": "Claim asserts romantic partner status 'Dating'. All candidates concern professional/collaborative relationships and mentorship; none state or imply a romantic/dating relationship. Plausible but ungrounded; no direct conflict."
+    },
+    {
+      "id": 155,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm music sustains Barbara's creativity, focus and productivity, including classical music during brainstorming/research phases. Claim paraphrases this."
+    },
+    {
+      "id": 156,
+      "relation": "CONSISTENT",
+      "reason": "Candidates state Ananya plans to incorporate culinary experiences into her food critiques and to reach/inspire a wider audience. Claim is entailed."
+    },
+    {
+      "id": 157,
+      "relation": "CONSISTENT",
+      "reason": "Candidates show analytical skills, strategic alliances/connections, and innovative projects, supporting the Analytical/Strategic Thinking/Innovative tags."
+    },
+    {
+      "id": 158,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm innovative puzzle games support Donna's mental agility, creative expansion and exploring ideas/new avenues, matching creative motivation to overcome blocks."
+    },
+    {
+      "id": 159,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm Sarah's dislike of traditional puzzle games changed into appreciation for puzzle games integrating social themes and narratives. Claim paraphrases this evolution."
+    }
+  ]
+}

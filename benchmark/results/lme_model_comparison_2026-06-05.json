@@ -1,0 +1,28 @@
+{
+  "experiment": "LongMemEval-s retrieval: embedding-model A/B on the SAME first-50 questions (all single-session-user = the hardest type)",
+  "date": "2026-06-05",
+  "dataset": "longmemeval_s",
+  "k": 5,
+  "n_questions": 50,
+  "metric": "session-level retrieval recall@k / hit@k / MRR of gold answer_session_ids; judge-free, no external API; fresh hermetic per-question store (never touches ~/.engram)",
+  "runs": {
+    "intfloat/multilingual-e5-base (768d) [ACTIVE default]": {
+      "recall_at_5": 0.800, "hit_at_5": 0.800, "mrr": 0.669, "latency_ms_mean": 52.8
+    },
+    "sentence-transformers/all-MiniLM-L6-v2 (English, 384d) [legacy]": {
+      "recall_at_5": 0.820, "hit_at_5": 0.820, "mrr": 0.666, "latency_ms_mean": 36.0
+    }
+  },
+  "full_500_saved_unlabeled": {
+    "recall_at_5": 0.857, "hit_at_5": 0.924, "mrr": 0.819,
+    "note": "benchmark/results/lme_s_k5_full.json — all 6 question types; model NOT recorded (the gap that motivated the runner model-tag fix). single-session-user is the hardest subset, which is why the 50-slice scores lower."
+  },
+  "hypothesis_B4": "e5 (multilingual) will NOT beat the English-tuned MiniLM on ENGLISH retrieval; the +52% MRR e5 win measured earlier was ITALIAN-specific.",
+  "verdict": "CONFIRMED (direction). On English the two are TIED within noise: recall 0.800 vs 0.820 (= 1 question / 50), MRR 0.669 vs 0.666. The e5 flip bought a large Italian recall gain (MRR 0.466->0.710, +52%) at ZERO English regression — the right call for an IT-heavy corpus. But 'e5 is universally better' is FALSE.",
+  "honesty_caveats": [
+    "RETRIEVAL sub-metric (recall@k of gold sessions), NOT end-to-end QA accuracy (which needs an LLM judge) -> NOT directly comparable to published Mem0/Zep QA-accuracy leaderboards.",
+    "50-question slice, all single-session-user (hardest type). Full-500 e5 re-run pending for the definitive current-model headline.",
+    "No head-to-head vs Mem0/Zep on an identical protocol yet -> cannot claim 'we beat X'.",
+    "session-granularity mapping; long sessions truncated by the tokenizer (Engram is tuned for short facts)."
+  ]
+}

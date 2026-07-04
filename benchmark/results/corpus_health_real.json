@@ -1,0 +1,28 @@
+{
+  "total": 10152,
+  "alive": 10145,
+  "superseded": 7,
+  "verified": 81,
+  "verified_frac": 0.008,
+  "with_verified_by": 406,
+  "provenance_frac": 0.04,
+  "with_source_episodes": 635,
+  "source_episode_frac": 0.0626,
+  "status_distribution": {
+    "quarantined": 7604,
+    "model_claim": 842,
+    "user_manual": 837,
+    "provisional": 515,
+    "legacy_unverified": 150,
+    "verified": 81,
+    "bootstrap_skill": 48,
+    "bootstrap_rule": 24,
+    "diary": 22,
+    "bootstrap_lesson": 14,
+    "lesson_manual": 3,
+    "bench_manual": 2,
+    "reverse_manual": 1,
+    "pending_handoff": 1,
+    "pending": 1
+  }
+}

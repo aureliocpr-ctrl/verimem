@@ -1,0 +1,1091 @@
+{
+  "n": 150,
+  "n_correct": 122,
+  "n_errors": 0,
+  "accuracy": 0.8133,
+  "per_category": {
+    "1": {
+      "n": 15,
+      "accuracy": 0.5333
+    },
+    "2": {
+      "n": 26,
+      "accuracy": 0.6923
+    },
+    "3": {
+      "n": 4,
+      "accuracy": 1.0
+    },
+    "4": {
+      "n": 71,
+      "accuracy": 0.8732
+    },
+    "5": {
+      "n": 34,
+      "accuracy": 0.8824
+    }
+  },
+  "details": [
+    {
+      "id": "0:2",
+      "category": "3",
+      "predicted": "Counseling, mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:28",
+      "category": "2",
+      "predicted": "9 July 2023 (last Friday before 15 July 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:67",
+      "category": "2",
+      "predicted": "September 2, 2023 (the weekend before September 13, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:79",
+      "category": "2",
+      "predicted": "October 20, 2023 (last Friday before October 22, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:82",
+      "category": "4",
+      "predicted": "Mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:127",
+      "category": "4",
+      "predicted": "A stained glass window.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:128",
+      "category": "4",
+      "predicted": "A rainbow sidewalk for Pride Month.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:141",
+      "category": "4",
+      "predicted": "Freedom, being real/authentic, staying true to herself, and embracing her womanhood.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:151",
+      "category": "4",
+      "predicted": "Went camping with her family.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "0:164",
+      "category": "5",
+      "predicted": "Caroline (not Melanie) attended the LGBTQ+ counseling workshop. NO ANSWER for Melanie attending a counseling workshop.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:183",
+      "category": "5",
+      "predicted": "\"Perfect\" by Ed Sheeran.\n\nWait — the context shows Melanie says she wants to be courageous for her family (they motivate her), but no specific song is linked to her courage. Her favorite songs are classical (Bach, Mozart) and Ed Sheeran's \"Perfect\" — but none are cited as motivating courage.\n\nNO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:186",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:187",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:191",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:194",
+      "category": "5",
+      "predicted": "Caroline has no children mentioned in the context. It was Melanie's children who were scared but reassured that their brother would be OK.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:3",
+      "category": "1",
+      "predicted": "Both Jon and Gina lost their jobs (Jon as a banker, Gina at DoorDash), started their own businesses, share a love of dance, and mutually support and encourage each other through their entrepreneurial journeys.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:7",
+      "category": "2",
+      "predicted": "January 29, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:24",
+      "category": "1",
+      "predicted": "A dance festival performance (February 2023), a business fair to showcase his studio (April 2023), and networking events (June–July 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:56",
+      "category": "4",
+      "predicted": "A rollercoaster.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:67",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:86",
+      "category": "5",
+      "predicted": "Gina is not looking for flooring — Jon is. Additionally, it's Jon who wants Marley flooring for his dance studio, not Gina.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:87",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:92",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:101",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:2",
+      "category": "1",
+      "predicted": "Kickboxing.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:72",
+      "category": "4",
+      "predicted": "Visited a homeless shelter to give out food and supplies, organized a toy drive for kids in need, participated in a community event to raise money for a good cause, and collected donations (canned food, toiletries, clothes).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:78",
+      "category": "4",
+      "predicted": "Kyle",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:83",
+      "category": "4",
+      "predicted": "Education and infrastructure.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:87",
+      "category": "4",
+      "predicted": "The Pacific Northwest coast and some national parks.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:112",
+      "category": "4",
+      "predicted": "Assistant manager.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:114",
+      "category": "4",
+      "predicted": "With support at home and his own grit, plus his family's trust and encouragement from Maria.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:143",
+      "category": "4",
+      "predicted": "Coco",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:150",
+      "category": "4",
+      "predicted": "Hiking, hanging out at the park, having picnics, playing board games, movie nights, climbing, sliding, playing games at the playground, boot camps, and swinging.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:184",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:191",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:2",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:16",
+      "category": "2",
+      "predicted": "Nate dyed his hair.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:33",
+      "category": "2",
+      "predicted": "August 7, 2022.\n\nWait — the context says \"last week\" relative to August 14, 2022, so the letter was received approximately August 7, 2022.\n\n**August 7, 2022.**",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:35",
+      "category": "2",
+      "predicted": "August 22, 2022.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:36",
+      "category": "2",
+      "predicted": "August 15, 2022 (the week before August 22, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:80",
+      "category": "1",
+      "predicted": "6",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:92",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:97",
+      "category": "4",
+      "predicted": "Her first full screenplay.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:99",
+      "category": "4",
+      "predicted": "Submit it to film festivals and get producers and directors to check it out.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:120",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:124",
+      "category": "4",
+      "predicted": "A gaming party (two weekends after June 3, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:138",
+      "category": "4",
+      "predicted": "A book from the 1900s with stories and sketches about the town and the people living there.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:150",
+      "category": "4",
+      "predicted": "By making a delicious treat.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:152",
+      "category": "4",
+      "predicted": "She is lactose intolerant.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:158",
+      "category": "4",
+      "predicted": "Dairy-free chocolate cake with raspberries.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:169",
+      "category": "4",
+      "predicted": "She keeps her stuffed animal dog Tilly with her while she writes.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:179",
+      "category": "4",
+      "predicted": "Amazing and surreal — she said she'd never forget it and it felt like her characters jumped off the page and became real.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:184",
+      "category": "4",
+      "predicted": "A letter (cute notes her brother used to make for her when they were kids).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:185",
+      "category": "4",
+      "predicted": "Fantasy RPG.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:227",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:236",
+      "category": "5",
+      "predicted": "Little Women",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:31",
+      "category": "2",
+      "predicted": "September 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:59",
+      "category": "1",
+      "predicted": "Career-high in assists, achieved on December 8, 2023 (last Friday before December 11, 2023).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:72",
+      "category": "4",
+      "predicted": "Shooting guard.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:104",
+      "category": "4",
+      "predicted": "Sage.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:132",
+      "category": "4",
+      "predicted": "Tim finds LeBron inspiring because of his epic block in the 2016 Finals Game 7, which showed a \"never give up\" attitude. John admires LeBron's work ethic, dedication, determination, and heart.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:149",
+      "category": "4",
+      "predicted": "\"A Dance with Dragons\"",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:154",
+      "category": "4",
+      "predicted": "John felt the atmosphere was \"really electric,\" and playing against rivals added \"an extra level of intensity,\" making it a memorable night.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:160",
+      "category": "4",
+      "predicted": "Visited a travel agency to check requirements for his next dream trip.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:209",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:218",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:219",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:238",
+      "category": "5",
+      "predicted": "A leader (and to stay true).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:3",
+      "category": "1",
+      "predicted": "New cafes and restaurants to eat at, a wine tasting, and a sushi spot.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:11",
+      "category": "2",
+      "predicted": "June 11, 2023 (last Sunday before the June 13, 2023 message).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:34",
+      "category": "2",
+      "predicted": "3 months (Toby: July 11, 2023; Buddy: October 19, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:41",
+      "category": "1",
+      "predicted": "Il contesto è inconsistente: in July/September 2023 Audrey dice due Jack Russell mixes e due Chihuahua mixes; in October 2023 dice Pepper e Panda sono Lab mixes, Precious e Pixie sono Chihuahua mixes. Tutti mutts.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:48",
+      "category": "1",
+      "predicted": "Family / buddies (he calls Buddy \"my buddy\" and says he can't imagine life without pets, viewing them as family).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:68",
+      "category": "4",
+      "predicted": "Per imparare cose nuove e rafforzare il legame con i suoi animali domestici.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:91",
+      "category": "4",
+      "predicted": "Audrey got new beds for her dogs.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:107",
+      "category": "4",
+      "predicted": "They hate it and were confused when she took them to a snowy park last winter.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:113",
+      "category": "4",
+      "predicted": "California or salmon roll.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:121",
+      "category": "4",
+      "predicted": "Take them to a nearby park.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:122",
+      "category": "4",
+      "predicted": "A bed, toys, and puppy pads.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:124",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:129",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:132",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:147",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:5",
+      "category": "1",
+      "predicted": "John: CS:GO, Hawaiian pizza aside — favorite game is CS:GO. James: The Witcher 3, Cyberpunk 2077, strategy games (Civilization-style); first loves were Super Mario and The Legend of Zelda.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:21",
+      "category": "2",
+      "predicted": "May 8, 2022.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:37",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:46",
+      "category": "2",
+      "predicted": "August 27, 2022 (they agreed to meet \"tomorrow\" on August 26, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:64",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:75",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:78",
+      "category": "4",
+      "predicted": "A pup (named Ned) from a shelter in Stamford.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:94",
+      "category": "4",
+      "predicted": "A football simulator (specifically collecting player databases).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:96",
+      "category": "4",
+      "predicted": "Manchester City.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:97",
+      "category": "4",
+      "predicted": "James supports Liverpool and John supports Manchester City. James claims Manchester City are in bad form with a terrible transfer policy, while John insists City's manager can handle it and that Manchester City will beat Liverpool in the championship standings.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:109",
+      "category": "4",
+      "predicted": "Routine examination and vaccination against seasonal canine disease.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:123",
+      "category": "4",
+      "predicted": "Dough.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:154",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:187",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:21",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:43",
+      "category": "2",
+      "predicted": "La settimana precedente al 9 aprile 2023 (Deborah dice \"last week\" nel messaggio del [4:30 pm on 9 April, 2023]).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:53",
+      "category": "2",
+      "predicted": "Two years before August 1, 2023 — so approximately August 2021.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:94",
+      "category": "4",
+      "predicted": "Max: from her mother (after her mother passed away). Luna: from a shelter.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:97",
+      "category": "4",
+      "predicted": "Yes, both. Jolene went with her partner (returned August 29, 2023). Deborah visited three years before August 30, 2023, so approximately August 2020.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:100",
+      "category": "4",
+      "predicted": "Electrical engineering project.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:107",
+      "category": "4",
+      "predicted": "Amulet (from her mom).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:126",
+      "category": "4",
+      "predicted": "Instrumental tracks with mellow melodies and rhythms. Her favorite track is \"Savana,\" and she also listens to the album \"Sleep\" for meditation and deep relaxation.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:147",
+      "category": "4",
+      "predicted": "Notebooks with elements like galaxies and circuitry.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:148",
+      "category": "4",
+      "predicted": "Bullet journal.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:200",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:204",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:205",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:19",
+      "category": "3",
+      "predicted": "Based on their conversations:\n\n**Evan** would advise: believe in yourself and take it one day at a time; step outside your comfort zone even in small ways; set concrete goals; find something that motivates you; celebrate small wins; surround yourself with people who care.\n\n**Sam** would advise: be adaptable when facing obstacles; remember that progress is more important than perfection; small steps still count as progress.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:21",
+      "category": "1",
+      "predicted": "Incredible, makes him feel alive, love at first sight — time stopped and he felt a spark lit inside him, it felt so right.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:48",
+      "category": "1",
+      "predicted": "Reducing soda and candy intake, eating healthier (more veggies/fruit), doing yoga, and going on hiking trips. Sam also posted a before/after photo to motivate others and reported benefits like more energy and less sluggishness after eating.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:51",
+      "category": "3",
+      "predicted": "**Challenges:**\n- Bad doctor check-up (weight issues, May 2023)\n- Friends mocking his weight (July 2023)\n- Cravings for sugary drinks and snacks, triggered by stress, boredom, comfort-seeking (September 2023)\n- Lack of motivation and confidence due to weight (December 2023)\n- Ongoing health issues affecting quality of life (January 2024)\n- Difficulty finding exercises he enjoys (January 2024)\n\n**How he addresses them:**\n- Started thinking about healthier choices and dietary changes after doctor's wake-up call\n- Posted before/after photos to motivate others (September 2023)\n- Took a cooking class to learn healthier meals (August 2023)\n- Adopted the mindset \"Don't fear it, just take the first step\" / progress over perfection\n- Took friends on a hiking trip (December 2023)\n- Used car rides in nature to relax and cope (January 2024)",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:58",
+      "category": "2",
+      "predicted": "One year ago from October 8, 2023, so approximately October 2022.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:59",
+      "category": "2",
+      "predicted": "October 14, 2023 at 4:07 pm.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:62",
+      "category": "1",
+      "predicted": "**Evan:** sudden heart palpitation incident (June 6, 2023); found something suspicious during a hospital check-up that turned out to be a misunderstanding (November 21, 2023).\n\n**Sam:** doctor check-up revealing concerning weight (May 24, 2023); ER visit for severe stomachache diagnosed as gastritis (October 17, 2023); ongoing discomfort limiting movement and weight-related health issues (November 2023 – January 2024).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:73",
+      "category": "2",
+      "predicted": "Next summer (relative to December 9, 2023), i.e. summer 2024.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:82",
+      "category": "1",
+      "predicted": "Yoga, painting.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:96",
+      "category": "4",
+      "predicted": "Strength and resilience.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:103",
+      "category": "4",
+      "predicted": "Evan requested the recipe for Sam's homemade sauce (used in the grilled chicken and veggie stir-fry).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:109",
+      "category": "4",
+      "predicted": "Reading a mystery novel (specifically \"The Great Gatsby\" — wait, \"The Great Gatsby\" was mentioned as the novel, but the mystery novel was a separate one he couldn't stop thinking about).\n\nEvan mentioned he couldn't stop thinking about a new mystery novel he had started.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:113",
+      "category": "4",
+      "predicted": "Painting and going for a drive (hiking also mentioned as calming and fun).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:134",
+      "category": "4",
+      "predicted": "A big family reunion.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:143",
+      "category": "4",
+      "predicted": "The news of getting married.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:155",
+      "category": "4",
+      "predicted": "Peaceful.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:186",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:190",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:0",
+      "category": "2",
+      "predicted": "April 20, 2023.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:10",
+      "category": "2",
+      "predicted": "Calvin's place did not get flooded in Tokyo. The flooding happened at his home (unspecified location). The incident was mentioned on May 16, 2023, as having occurred \"last week\" (around May 9, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:13",
+      "category": "3",
+      "predicted": "Yes, based on Calvin's love for performing live, connecting with crowds, and the rush of being on stage, he would almost certainly enjoy performing at the Hollywood Bowl.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:41",
+      "category": "1",
+      "predicted": "Calvin's dad, Dave's dad.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:44",
+      "category": "2",
+      "predicted": "October 3, 2023 (the day before his message on October 4, 2023, where he said \"Yesterday I met with some incredible artists in Boston\").",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:58",
+      "category": "1",
+      "predicted": "His dad taking him to his first car show at age 10, and finding an old car in a neighbor's garage that he fixed — which gave him his first sense of accomplishment in car engineering.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:65",
+      "category": "2",
+      "predicted": "September 2023 (last month relative to October 29, 2023), so **October 2023**.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:77",
+      "category": "4",
+      "predicted": "A necklace.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:81",
+      "category": "4",
+      "predicted": "His music gear and favorite microphone.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:87",
+      "category": "4",
+      "predicted": "Cruising around / driving.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:93",
+      "category": "4",
+      "predicted": "Stay focused and keep going, never forget your dreams, and keep working hard.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:96",
+      "category": "4",
+      "predicted": "Classic muscle car.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:98",
+      "category": "4",
+      "predicted": "Everyone sang along — it was a magical moment.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:99",
+      "category": "4",
+      "predicted": "Al music festival di Tokyo.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:106",
+      "category": "4",
+      "predicted": "San Francisco.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:109",
+      "category": "4",
+      "predicted": "Exploring and growing his brand, visiting Tokyo, and checking out a small town in Japan (with snowy mountain peaks).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:128",
+      "category": "4",
+      "predicted": "Ramen.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:191",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:195",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:197",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:199",
+      "category": "5",
+      "predicted": "Dave did not invite anyone — it was **Calvin** who invited his old high school buddy to see him perform in Boston on 13 November, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:200",
+      "category": "5",
+      "predicted": "A new luxury car (March 26, 2023).",
+      "correct": false,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 30,
+  "window": 1,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": false,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

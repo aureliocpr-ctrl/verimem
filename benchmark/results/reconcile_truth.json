@@ -1,0 +1,7 @@
+{
+  "update_pairs": 50,
+  "control_pairs": 50,
+  "update_recall": 0.02,
+  "false_supersede_rate": 0.0,
+  "note": "update_recall = true updates correctly superseded (want HIGH); false_supersede_rate = unrelated facts wrongly superseded (want ~0). Local, lexical reconcile (classify_conflict) on HaluMem is_update ground truth."
+}

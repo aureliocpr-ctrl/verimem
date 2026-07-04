@@ -1,0 +1,63 @@
+{
+  "n_pairs": 8,
+  "auroc": 1.0,
+  "ci95": [
+    1.0,
+    1.0
+  ],
+  "mean_faithful": 98.0,
+  "mean_confab": 23.8,
+  "falsified_below_0_85": false,
+  "rows": [
+    {
+      "faithful_score": 95.0,
+      "confab_score": 35.0,
+      "faithful": "The Veldran Institute, founded in 1962, operates three research wings and employ",
+      "confab": "The Calwen spectrometer is the most advanced research instrument at the Veldran "
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "faithful": "Project Harrow's research vessel, the Anwen, carries a sonar array rated to 6,00",
+      "confab": "Project Harrow has identified marine species that were previously unknown to sci"
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 15.0,
+      "faithful": "The Qel-9 protocol was ratified by the Brindle Working Group in 2019 and uses AE",
+      "confab": "Qel-9's restriction to industrial telemetry was necessitated by the computationa"
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 50.0,
+      "faithful": "Her 2022 monograph on photophore evolution won the Tarn Prize.",
+      "confab": "She has built her entire scientific career specializing in deep-sea bioluminesce"
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 15.0,
+      "faithful": "The Sennar Dam was completed in 1978 on the Ashen River and generates 340 megawa",
+      "confab": "The Sennar Dam's 2016 turbine refit was performed to restore the facility to opt"
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 50.0,
+      "faithful": "The Aster Festival, established in 1998 in Lindholm, draws approximately 120,000",
+      "confab": "The Aster Festival's ticket revenue serves as the primary funding source for Lin"
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 15.0,
+      "faithful": "The Orrel-2 spacecraft was launched in 2014 by the Mersk Agency and operates in ",
+      "confab": "The Orrel-2 is the second spacecraft in a series of Earth observation platforms "
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 10.0,
+      "faithful": "Calvenir, developed by Pell Therapeutics and approved in 2016, reduced the prima",
+      "confab": "Calvenir demonstrated a 19 percent reduction in cardiovascular mortality compare"
+    }
+  ],
+  "judge_model": "claude-sonnet-4-6",
+  "gen_model": "claude-haiku-4-5"
+}

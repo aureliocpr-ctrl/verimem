@@ -1,0 +1,28 @@
+{
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s",
+  "k": 5,
+  "n_questions": 100,
+  "embedding_model": "intfloat/multilingual-e5-base",
+  "embedding_dim": 768,
+  "overall": {
+    "recall_at_k": 0.8797,
+    "hit_at_k": 0.91,
+    "mrr": 0.7277,
+    "latency_ms_mean": 177.4456
+  },
+  "per_type": {
+    "multi-session": {
+      "n": 30,
+      "recall_at_k": 0.8989,
+      "hit_at_k": 1.0,
+      "mrr": 0.9222
+    },
+    "single-session-user": {
+      "n": 70,
+      "recall_at_k": 0.8714,
+      "hit_at_k": 0.8714,
+      "mrr": 0.6443
+    }
+  },
+  "metric_note": "session-level retrieval recall@k of gold answer_session_ids; judge-free, no external API; embedding via Engram's own model"
+}

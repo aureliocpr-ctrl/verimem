@@ -1,0 +1,74 @@
+{
+  "bench_name": "cycle-70-p2-load",
+  "timestamp_unix": 1778806733.7368445,
+  "bench_L1_workload": {
+    "n_entities": 100,
+    "n_edges": 300,
+    "n_aliases": 40,
+    "n_facts_linked": 200,
+    "n_queries": 200,
+    "stats": [
+      {
+        "label": "get_by_name(canonical)",
+        "n": 45,
+        "min_ms": 1.521,
+        "p50_ms": 2.115,
+        "p95_ms": 2.516,
+        "p99_ms": 2.822,
+        "max_ms": 2.822,
+        "mean_ms": 2.075
+      },
+      {
+        "label": "get_by_name(alias)",
+        "n": 34,
+        "min_ms": 1.675,
+        "p50_ms": 2.208,
+        "p95_ms": 2.422,
+        "p99_ms": 2.599,
+        "max_ms": 2.599,
+        "mean_ms": 2.131
+      },
+      {
+        "label": "neighbors(hops=1)",
+        "n": 47,
+        "min_ms": 1.604,
+        "p50_ms": 2.094,
+        "p95_ms": 2.9,
+        "p99_ms": 3.357,
+        "max_ms": 3.357,
+        "mean_ms": 2.152
+      },
+      {
+        "label": "neighbors(hops=2)",
+        "n": 40,
+        "min_ms": 3.66,
+        "p50_ms": 7.106,
+        "p95_ms": 17.737,
+        "p99_ms": 21.059,
+        "max_ms": 21.059,
+        "mean_ms": 7.908
+      },
+      {
+        "label": "ppr(3 seeds, k=20)",
+        "n": 34,
+        "min_ms": 36.75,
+        "p50_ms": 45.618,
+        "p95_ms": 53.728,
+        "p99_ms": 516.654,
+        "max_ms": 516.654,
+        "mean_ms": 60.29
+      }
+    ]
+  },
+  "bench_L2_concurrent": {
+    "n_threads": 50,
+    "ops_per_thread": 10,
+    "total_ops": 500,
+    "final_entity_count": 100,
+    "expected_unique_entities": 100,
+    "integrity_ok": true,
+    "errors": [],
+    "elapsed_s": 3.214,
+    "throughput_ops_per_s": 155.6
+  }
+}

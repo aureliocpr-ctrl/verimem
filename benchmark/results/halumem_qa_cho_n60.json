@@ -1,0 +1,20 @@
+{
+  "n_questions": 60,
+  "n_scored": 60,
+  "n_errors": 0,
+  "users": 4,
+  "with_interference": false,
+  "counts": {
+    "CORRECT": 8,
+    "HALLUCINATION": 8,
+    "OMISSION": 44,
+    "ERROR": 0
+  },
+  "correct_rate": 0.1333,
+  "hallucination_rate": 0.1333,
+  "omission_rate": 0.7333,
+  "hallucination_ci95": [
+    0.0691,
+    0.2417
+  ]
+}

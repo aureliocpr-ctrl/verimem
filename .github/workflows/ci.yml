@@ -1,0 +1,209 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PYTHONUNBUFFERED: "1"
+
+# Least-privilege default — fixes CodeQL `actions/missing-workflow-permissions`.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }} / py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    # 45, not 30: the windows-latest runners take ~20-24 min for the full
+    # suite (≈3-4x ubuntu/macos), leaving a razor-thin margin under a 30 min
+    # cap — a slightly slow runner tips one matrix leg into a spurious timeout
+    # (windows/py3.11 flaked red on an all-green run, 2026-06-08). 45 min gives
+    # comfortable headroom without masking a real hang (the in-process hang
+    # watchdog still stack-dumps long calls).
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # Cost-aware matrix (2026-07-04): ubuntu across all supported Python
+        # versions (cheap runner = full version coverage) + one windows and one
+        # macos leg for OS coverage. Cuts ~11 legs to 6 — matters because this
+        # repo's Actions were exhausting the private-repo quota. Widen to the
+        # full grid on release tags if per-version OS coverage is ever needed.
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - os: windows-latest
+            python-version: "3.12"
+          - os: macos-latest
+            python-version: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Cache HuggingFace models
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch/sentence_transformers
+          key: hf-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: hf-${{ runner.os }}-
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[full,dev]"
+
+      - name: Lint (ruff)
+        run: ruff check engram tests scripts
+
+      - name: Warm embedding model (best-effort HF cache warm for real-model tests)
+        # ONLINE step: downloads multilingual-e5-base into the cached
+        # ~/.cache/huggingface so the offline Tests step — and the real-model
+        # subprocess tests (concurrent-save SLO, cross-process index, airgap egress,
+        # resonator embed) which can't use the in-process stub — find it cached.
+        # NON-FATAL: a flaky HF download must not fail CI. When it succeeds those
+        # tests RUN (real coverage); when it fails they SKIP via the
+        # `requires_real_model` guard (tests/_real_model.py) — CI stays green either way.
+        continue-on-error: true
+        run: engram warmup --no-daemon
+
+      - name: Tests
+        env:
+          HIPPO_OFFLINE: "1"
+        run: >-
+          pytest
+          --cov=engram
+          --cov-report=xml
+          --cov-report=term-missing:skip-covered
+          --cov-fail-under=46
+          -m "not slow and not e2e and not perf"
+
+      - name: Smoke install (clean wheel)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        run: |
+          pip uninstall -y verimem
+          pip install .
+          engram --help
+          hippo --help
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  build:
+    name: build (sdist + wheel)
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: List artefacts
+        run: ls -la dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+          retention-days: 14
+
+  # G2/G8/G9 (RELEASE_GATE): the wheel a user actually installs, on a machine
+  # that has NOTHING — virgin venv, empty HF cache (first-run model download
+  # is exercised for real). SDK smoke asserts the admission gate fires and
+  # reads carry provenance; the MCP stdio server must answer initialize with
+  # a protocol-pure stdout (the bug the gate caught on 2026-07-04).
+  wheel-install:
+    name: wheel install-from-scratch (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: build
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install wheel in a virgin venv
+        shell: bash
+        run: |
+          python -m venv fresh
+          if [ "$RUNNER_OS" = "Windows" ]; then PY=fresh/Scripts/python.exe; else PY=fresh/bin/python; fi
+          echo "PY=$PY" >> "$GITHUB_ENV"
+          $PY -m pip install --quiet --upgrade pip
+          $PY -m pip install --quiet dist/*.whl
+      - name: SDK smoke — gate + provenance (downloads e5 on first use)
+        shell: bash
+        run: |
+          $PY - << 'PYEOF'
+          import tempfile
+          from pathlib import Path
+          from engram import Memory
+          tmp = Path(tempfile.mkdtemp()) / "mem.db"
+          m = Memory(path=tmp)
+          r = m.add("The CI benchmark of record is HaluMem.", topic="ci")
+          assert r["stored"], r
+          r2 = m.add("Everything works perfectly and is fully verified.", topic="ci")
+          assert r2["status"] == "quarantined", r2  # the admission gate must fire
+          hits = m.search("benchmark of record")
+          assert hits and "status" in hits[0], hits  # provenance on reads
+          print("SDK smoke OK:", r["status"], r2["status"], len(hits))
+          PYEOF
+      - name: MCP stdio purity — initialize handshake
+        shell: bash
+        run: |
+          $PY - << 'PYEOF'
+          import json, os, subprocess, sys
+          exe = os.path.join(os.path.dirname(sys.executable),
+                             "engram.exe" if os.name == "nt" else "engram")
+          proc = subprocess.Popen([exe, "mcp"], stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                  text=True)
+          req = {"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                 "params": {"protocolVersion": "2024-11-05", "capabilities": {},
+                            "clientInfo": {"name": "ci", "version": "0"}}}
+          proc.stdin.write(json.dumps(req) + "\n"); proc.stdin.flush()
+          ok = False
+          for _ in range(50):
+              line = proc.stdout.readline()
+              if not line:
+                  break
+              msg = json.loads(line.strip())  # ANY non-JSON stdout line fails here
+              if msg.get("id") == 1:
+                  assert "result" in msg, msg
+                  ok = True
+                  break
+          proc.kill(); proc.wait(timeout=30)
+          assert ok, "no initialize response"
+          print("MCP stdout protocol-pure OK")
+          PYEOF

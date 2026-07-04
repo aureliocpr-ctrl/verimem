@@ -1,0 +1,252 @@
+[
+  {
+    "id": "d315f906ae15",
+    "id_short": "d315f906ae",
+    "topic": "project/hippoagent/cycle276-prediction-9.3-test-pre-post-264-2026-05-23",
+    "proposition_excerpt": "CYCLE 276 EMPIRICAL TEST paper \u00a79.3 pre/post cycle-264 M-rule introduction. Pre-264 (15 commits): BLOCK 1 WARN_marketing",
+    "lineage_to": "e1c0689b9acf",
+    "lineage_to_short": "e1c0689b9a",
+    "created_at": 1779441514.0359004,
+    "created_at_iso": "2026-05-22T11:18:34.035900"
+  },
+  {
+    "id": "e1c0689b9acf",
+    "id_short": "e1c0689b9a",
+    "topic": "project/hippoagent/cycle275-cross-validation-clp-terse-vs-verbose-2026-05-23",
+    "proposition_excerpt": "CYCLE 275 CROSS-VALIDATION audit_a4_history.py on engram-orchestrator/clp 50 commits. RESULTS clp vs HippoAgent cycle 25",
+    "lineage_to": "448552774483",
+    "lineage_to_short": "4485527744",
+    "created_at": 1779441323.4980516,
+    "created_at_iso": "2026-05-22T11:15:23.498052"
+  },
+  {
+    "id": "448552774483",
+    "id_short": "4485527744",
+    "topic": "project/hippoagent/cycle274-audit-history-self-validation-2026-05-23",
+    "proposition_excerpt": "CYCLE 274 HISTORICAL AUDIT SELF-VALIDATION cycle 270 pre-flight gate. scripts/audit_a4_history.py 110 LOC run check_a4_v",
+    "lineage_to": "c783c09ba4fa",
+    "lineage_to_short": "c783c09ba4",
+    "created_at": 1779441191.6412656,
+    "created_at_iso": "2026-05-22T11:13:11.641266"
+  },
+  {
+    "id": "c783c09ba4fa",
+    "id_short": "c783c09ba4",
+    "topic": "project/hippoagent/cycle273-CONTRIBUTING-mrules-operationalized-2026-05-23",
+    "proposition_excerpt": "CYCLE 273 CONTRIBUTING.md addendum operationalizes cycle 253-272 M-rules per future contributors. Section 'Meta-rules fo",
+    "lineage_to": "9ae10ed03fcd",
+    "lineage_to_short": "9ae10ed03f",
+    "created_at": 1779441039.6692321,
+    "created_at_iso": "2026-05-22T11:10:39.669232"
+  },
+  {
+    "id": "9ae10ed03fcd",
+    "id_short": "9ae10ed03f",
+    "topic": "project/hippoagent/cycle272-latex-scaffold-arxiv-ready-2026-05-23",
+    "proposition_excerpt": "CYCLE 272 LaTeX SCAFFOLD per arxiv submission. docs/proposal/PAPER-21-LATEX/: main.tex 140 LOC NeurIPS/ICML workshop for",
+    "lineage_to": "8b3e628f5bff",
+    "lineage_to_short": "8b3e628f5b",
+    "created_at": 1779440902.1934302,
+    "created_at_iso": "2026-05-22T11:08:22.193430"
+  },
+  {
+    "id": "8b3e628f5bff",
+    "id_short": "8b3e628f5b",
+    "topic": "project/hippoagent/cycle271-singolarita-27-A4-tracker-INSUFFICIENT-DATA-2026-05-23",
+    "proposition_excerpt": "CYCLE 271 SINGOLARITA #27 CUMULATIVE A4-VIOLATION TRACKER. scripts/track_a4_violations.py 140 LOC query critic/* facts c",
+    "lineage_to": "410d1ff5f028",
+    "lineage_to_short": "410d1ff5f0",
+    "created_at": 1779440712.6948147,
+    "created_at_iso": "2026-05-22T11:05:12.694815"
+  },
+  {
+    "id": "410d1ff5f028",
+    "id_short": "410d1ff5f0",
+    "topic": "project/hippoagent/cycle270-singolarita-26-A4-preflight-check-2026-05-23",
+    "proposition_excerpt": "CYCLE 270 SINGOLARITA #26 A4-VIOLATION PRE-FLIGHT CHECK. scripts/check_a4_violations.py 165 LOC REIFIES M5 WIRE-OR-DISCL",
+    "lineage_to": "2d5cf4da1034",
+    "lineage_to_short": "2d5cf4da10",
+    "created_at": 1779440558.4951088,
+    "created_at_iso": "2026-05-22T11:02:38.495109"
+  },
+  {
+    "id": "2d5cf4da1034",
+    "id_short": "2d5cf4da10",
+    "topic": "critic/cycle262-verdict-stable-partition-same-class-gap-2026-05-23",
+    "proposition_excerpt": "CRITIC VERDICT cycle 262 (job bf0a24315851c8da). Claim: 'stable_partition.py implementa REAL SOS mitigation Jaccard=0.00",
+    "lineage_to": "4d8c02a20f9b",
+    "lineage_to_short": "4d8c02a20f",
+    "created_at": 1779440102.215655,
+    "created_at_iso": "2026-05-22T10:55:02.215655"
+  },
+  {
+    "id": "4d8c02a20f9b",
+    "id_short": "4d8c02a20f",
+    "topic": "critic/cycle258-verdict-second-pass-louvain-dead-code-2026-05-23",
+    "proposition_excerpt": "CRITIC VERDICT cycle 258 (job b4cc4c3d8d10e429). Claim: 'Singolarita #21 confermata + multi-signal cure shipped + downst",
+    "lineage_to": "a0fc8b658fe6",
+    "lineage_to_short": "a0fc8b658f",
+    "created_at": 1779439989.8799284,
+    "created_at_iso": "2026-05-22T10:53:09.879928"
+  },
+  {
+    "id": "a0fc8b658fe6",
+    "id_short": "a0fc8b658f",
+    "topic": "project/hippoagent/cycle268-cross-validation-mining-FALSIFIED-2026-05-23",
+    "proposition_excerpt": "CYCLE 268 CROSS-VALIDATION pioneering #23 FALSIFIED. Pre-registered hypothesis: recall >= 0.70 on third-party. Test: scr",
+    "lineage_to": "c69c6140886f",
+    "lineage_to_short": "c69c614088",
+    "created_at": 1779439916.6021261,
+    "created_at_iso": "2026-05-22T10:51:56.602126"
+  },
+  {
+    "id": "c69c6140886f",
+    "id_short": "c69c614088",
+    "topic": "project/hippoagent/singolarita-24-meta-rule-compression-2026-05-23",
+    "proposition_excerpt": "SINGOLARITA #24 META-RULE COMPRESSION 2026-05-23 (cycle 267, B5 analysis 10 M-rules cycle 264 -> 5 SUPER-RULES emergent ",
+    "lineage_to": "d86e217cdd60",
+    "lineage_to_short": "d86e217cdd",
+    "created_at": 1779439509.602718,
+    "created_at_iso": "2026-05-22T10:45:09.602718"
+  },
+  {
+    "id": "d86e217cdd60",
+    "id_short": "d86e217cdd",
+    "topic": "project/hippoagent/cycle266-automated-mining-self-referential-2026-05-23",
+    "proposition_excerpt": "CYCLE 266 automated meta-rule mining scripts/mine_meta_rules.py 220 LOC. 13 PATTERNS regex + 10 GROUND_TRUTH_RULES cycle",
+    "lineage_to": "cb019b9ab926",
+    "lineage_to_short": "cb019b9ab9",
+    "created_at": 1779439425.792161,
+    "created_at_iso": "2026-05-22T10:43:45.792161"
+  },
+  {
+    "id": "cb019b9ab926",
+    "id_short": "cb019b9ab9",
+    "topic": "project/hippoagent/singolarita-22-bench-critic-duality-2026-05-23",
+    "proposition_excerpt": "SINGOLARITA #22 BENCH-CRITIC DUALITY 2026-05-23 (cycle 265, B4 5-element chain: cycle 258 critic-gate verdict + cycle 26",
+    "lineage_to": "6dcd4dd55a3a",
+    "lineage_to_short": "6dcd4dd55a",
+    "created_at": 1779439141.7788854,
+    "created_at_iso": "2026-05-22T10:39:01.778885"
+  },
+  {
+    "id": "6dcd4dd55a3a",
+    "id_short": "6dcd4dd55a",
+    "topic": "lessons/aurelio/catena-pensiero-cycle-253-263-2026-05-23",
+    "proposition_excerpt": "CATENA-DI-PENSIERO cycle 253-263 (M8 chain-of-thought preservation). NARRATIVE COMPLETA decision-making 11 loop autonomo",
+    "lineage_to": "13a2be73b299",
+    "lineage_to_short": "13a2be73b2",
+    "created_at": 1779439063.7872024,
+    "created_at_iso": "2026-05-22T10:37:43.787202"
+  },
+  {
+    "id": "13a2be73b299",
+    "id_short": "13a2be73b2",
+    "topic": "rules/aurelio/meta-regole-ossessive-v3-2026-05-23",
+    "proposition_excerpt": "META-REGOLE OSSESSIVE v3 2026-05-23 derivate empiricamente da pattern cycle 253-263 (11 loop autonomous A5+meta). NON NE",
+    "lineage_to": "ee5aa5e85902",
+    "lineage_to_short": "ee5aa5e859",
+    "created_at": 1779439006.3963149,
+    "created_at_iso": "2026-05-22T10:36:46.396315"
+  },
+  {
+    "id": "ee5aa5e85902",
+    "id_short": "ee5aa5e859",
+    "topic": "rules/meta-process-b4-nuclear-catena-2026-05-23",
+    "proposition_excerpt": "REGOLA NON NEGOZIABILE: META-PROCESSO B4 NUCLEAR CATENA 2026-05-23 03:11 \u2014 Aurelio mandate 'queste catene di pensiero va",
+    "lineage_to": "3c028f1e60fd",
+    "lineage_to_short": "3c028f1e60",
+    "created_at": 1779411900.2266788,
+    "created_at_iso": "2026-05-22T03:05:00.226679"
+  },
+  {
+    "id": "3c028f1e60fd",
+    "id_short": "3c028f1e60",
+    "topic": "project/clp/loop224-self-apply-b4-ricorsivo-swarm-2026-05-23",
+    "proposition_excerpt": "LOOP 224 SELF-APPLY B4 RICORSIVO swarm su clp moduli 03:09 \u2014 5 sub-agents isolated parallel auditano 5 clp modules. Succ",
+    "lineage_to": "771bac07b455",
+    "lineage_to_short": "771bac07b4",
+    "created_at": 1779411831.460992,
+    "created_at_iso": "2026-05-22T03:03:51.460992"
+  },
+  {
+    "id": "771bac07b455",
+    "id_short": "771bac07b4",
+    "topic": "project/clp/loop223-scale-sub-linear-confirmed-2026-05-23",
+    "proposition_excerpt": "LOOP 223 SCALE FALSIFICATION SUB-LINEAR CONFIRMED 2026-05-23 03:03 \u2014 B2 Popperian scale test 18/18 success. N=3:13 tok 3",
+    "lineage_to": "732010614778",
+    "lineage_to_short": "7320106147",
+    "created_at": 1779411623.1890736,
+    "created_at_iso": "2026-05-22T03:00:23.189074"
+  },
+  {
+    "id": "732010614778",
+    "id_short": "7320106147",
+    "topic": "project/clp/loop222-b4-nuclear-a2a-swarm-singolarita-17-2026-05-23",
+    "proposition_excerpt": "LOOP 222 B4 NUCLEAR SINGOLARIT\u00c0 #17 A2A SWARM DISTRIBUTED BOUNDED-CONTEXT 2026-05-23 02:58 \u2014 Aurelio brutal challenge 'e",
+    "lineage_to": "b6ce2502cd07",
+    "lineage_to_short": "b6ce2502cd",
+    "created_at": 1779411280.742738,
+    "created_at_iso": "2026-05-22T02:54:40.742738"
+  },
+  {
+    "id": "b6ce2502cd07",
+    "id_short": "b6ce2502cd",
+    "topic": "project/clp/loop221-final-state-checkpoint-2026-05-23",
+    "proposition_excerpt": "LOOP 221 FINAL STATE CHECKPOINT 02:53 \u2014 44-hop catena, v0.8.2 stable commit 687538e tip origin/master pushed. Tutti i 9 ",
+    "lineage_to": "74582e515d0e",
+    "lineage_to_short": "74582e515d",
+    "created_at": 1779411012.8229175,
+    "created_at_iso": "2026-05-22T02:50:12.822917"
+  },
+  {
+    "id": "74582e515d0e",
+    "id_short": "74582e515d",
+    "topic": "project/clp/loop220-mcp-2026-research",
+    "proposition_excerpt": "LOOP 220 MCP 2026 research 02:52 \u2014 500+ public MCP servers, Anthropic+OpenAI+Google DeepMind support. 3 participants cli",
+    "lineage_to": "65dbf979ad87",
+    "lineage_to_short": "65dbf979ad",
+    "created_at": 1779410967.5308251,
+    "created_at_iso": "2026-05-22T02:49:27.530825"
+  },
+  {
+    "id": "65dbf979ad87",
+    "id_short": "65dbf979ad",
+    "topic": "project/clp/loop219-sota-context-window-2026",
+    "proposition_excerpt": "LOOP 219 WebSearch context window 2026 architecture 02:50 \u2014 emerging philosophy 'context window is the new RAM'. Infinit",
+    "lineage_to": "9a6eaad7a2d9",
+    "lineage_to_short": "9a6eaad7a2",
+    "created_at": 1779410912.4017034,
+    "created_at_iso": "2026-05-22T02:48:32.401703"
+  },
+  {
+    "id": "9a6eaad7a2d9",
+    "id_short": "9a6eaad7a2",
+    "topic": "project/clp/loop218-final-session-summary-2026-05-23",
+    "proposition_excerpt": "LOOP 218 FINAL-SESSION-SUMMARY-2026-05-23.md shipped 02:48 \u2014 closure document autonomous loop 23:30 -> 04:00. Timeline L",
+    "lineage_to": "45b95028d7a0",
+    "lineage_to_short": "45b95028d7",
+    "created_at": 1779410849.5943353,
+    "created_at_iso": "2026-05-22T02:47:29.594335"
+  },
+  {
+    "id": "45b95028d7a0",
+    "id_short": "45b95028d7",
+    "topic": "project/clp/loop216-217-handoff-wakeup-2026-05-23",
+    "proposition_excerpt": "LOOP 216-217 handoff refresh + ScheduleWakeup safety net 02:50 \u2014 handoff f823e1b1973a comprehensive 3091 char con v0.8.2",
+    "lineage_to": "c12d776fac13",
+    "lineage_to_short": "c12d776fac",
+    "created_at": 1779410714.4784245,
+    "created_at_iso": "2026-05-22T02:45:14.478425"
+  },
+  {
+    "id": "c12d776fac13",
+    "id_short": "c12d776fac",
+    "topic": "project/clp/loop215-sota-self-improving-agents-2026-05-23",
+    "proposition_excerpt": "LOOP 215 WebSearch SOTA self-improving agents 2026 02:47 \u2014 Self-improvement paradigms found: (1) 1.0 reflection task-lev",
+    "lineage_to": "01eca8a0a4fd",
+    "lineage_to_short": "01eca8a0a4",
+    "created_at": 1779410602.5960076,
+    "created_at_iso": "2026-05-22T02:43:22.596008"
+  }
+]

@@ -1,0 +1,63 @@
+{
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s",
+  "k": 5,
+  "n_questions": 100,
+  "embedding_model": "intfloat/multilingual-e5-base",
+  "arms": {
+    "engram": {
+      "recall_at_k": 0.723,
+      "hit_at_k": 0.76,
+      "mrr": 0.6097,
+      "latency_ms_mean": 2086.8497,
+      "per_type": {
+        "multi-session": {
+          "n": 30,
+          "recall_at_k": 0.81,
+          "mrr": 0.8178
+        },
+        "single-session-user": {
+          "n": 70,
+          "recall_at_k": 0.6857,
+          "mrr": 0.5205
+        }
+      }
+    },
+    "engram-base": {
+      "recall_at_k": 0.7997,
+      "hit_at_k": 0.83,
+      "mrr": 0.719,
+      "latency_ms_mean": 21.2687,
+      "per_type": {
+        "multi-session": {
+          "n": 30,
+          "recall_at_k": 0.8989,
+          "mrr": 0.9222
+        },
+        "single-session-user": {
+          "n": 70,
+          "recall_at_k": 0.7571,
+          "mrr": 0.6319
+        }
+      }
+    },
+    "vanilla": {
+      "recall_at_k": 0.7897,
+      "hit_at_k": 0.82,
+      "mrr": 0.717,
+      "latency_ms_mean": 0.1169,
+      "per_type": {
+        "multi-session": {
+          "n": 30,
+          "recall_at_k": 0.8989,
+          "mrr": 0.9222
+        },
+        "single-session-user": {
+          "n": 70,
+          "recall_at_k": 0.7429,
+          "mrr": 0.629
+        }
+      }
+    }
+  },
+  "metric_note": "session-level retrieval of gold answer_session_ids; identical (sid,text) ingest per arm; judge-free; zero external APIs"
+}

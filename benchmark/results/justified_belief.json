@@ -1,0 +1,23 @@
+{
+  "n_facts": 24,
+  "n_truth": 6,
+  "naive_store": {
+    "served": 24,
+    "jbi": 0.25,
+    "superseded_served": 0.25,
+    "contradiction_served": 0.25,
+    "stale_served": 0.25,
+    "valid_recall": 1.0
+  },
+  "tms_store": {
+    "served": 6,
+    "jbi": 1.0,
+    "superseded_served": 0.0,
+    "contradiction_served": 0.0,
+    "stale_served": 0.0,
+    "valid_recall": 1.0
+  },
+  "jbi_gain": 0.75,
+  "valid_recall_preserved": true,
+  "H_JM1_holds": true
+}

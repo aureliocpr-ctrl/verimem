@@ -1,0 +1,34 @@
+{
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s",
+  "k": 5,
+  "n_questions": 60,
+  "judge": "claude-cli (FAIR rubric); NOT GPT-4 judge \u2014 comparable in method not identical",
+  "arms": {
+    "vanilla": {
+      "qa_accuracy": 0.3833,
+      "n_correct": 23,
+      "abstention_rate": 0.5167,
+      "n_errors": 15
+    },
+    "engram-base": {
+      "qa_accuracy": 0.3667,
+      "n_correct": 22,
+      "abstention_rate": 0.5,
+      "n_errors": 15
+    },
+    "engram": {
+      "qa_accuracy": 0.3833,
+      "n_correct": 23,
+      "abstention_rate": 0.5,
+      "n_errors": 14
+    }
+  },
+  "per_type_engram": {
+    "knowledge-update": 0.6,
+    "multi-session": 0.1,
+    "single-session-assistant": 0.3,
+    "single-session-preference": 0.3,
+    "single-session-user": 0.5,
+    "temporal-reasoning": 0.5
+  }
+}

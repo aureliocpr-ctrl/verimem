@@ -1,0 +1,882 @@
+[
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.8186748000007356,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.6723379000031855,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 51,
+    "latency_s": 0.6796158999932231,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 53,
+    "latency_s": 0.8091062000021338,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "format",
+    "success": true,
+    "tokens": 78,
+    "latency_s": 0.658622099988861,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 2306,
+    "latency_s": 19.328604800000903,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 4773,
+    "latency_s": 2.2211766999971587,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 4851,
+    "latency_s": 2.442349100005231,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 2368,
+    "latency_s": 1.195310100010829,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "format",
+    "success": true,
+    "tokens": 4932,
+    "latency_s": 2.8885177000047406,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 2362,
+    "latency_s": 1.1151833000039915,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 4831,
+    "latency_s": 2.4964349000074435,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 4853,
+    "latency_s": 2.351006899989443,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 2960,
+    "latency_s": 1.3688796999922488,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "format",
+    "success": true,
+    "tokens": 3075,
+    "latency_s": 2.0413796000066213,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 74,
+    "latency_s": 0.6404763999889838,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 72,
+    "latency_s": 0.09868549999373499,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 73,
+    "latency_s": 0.10880750000069384,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 73,
+    "latency_s": 0.09752250000019558,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "format",
+    "success": true,
+    "tokens": 101,
+    "latency_s": 0.1110119999939343,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 2467,
+    "latency_s": 15.89075769999181,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "math2plus2",
+    "success": false,
+    "tokens": 2854,
+    "latency_s": 17.05522419999761,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "<function/run_python>{\"code\": \"print(2+2)\", \"stdin\": \"\"}</function>",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 2562,
+    "latency_s": 13.649260700010927,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 2488,
+    "latency_s": 12.725425600001472,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "format",
+    "success": true,
+    "tokens": 2639,
+    "latency_s": 12.597999599995092,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 2549,
+    "latency_s": 22.69624260001001,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 5099,
+    "latency_s": 15.200282600009814,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 2583,
+    "latency_s": 23.515047000008053,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 2557,
+    "latency_s": 13.796845500008203,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "format",
+    "success": true,
+    "tokens": 2639,
+    "latency_s": 12.67809010000201,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 1.8861498000042047,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 1.8804997999977786,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 51,
+    "latency_s": 1.511658700008411,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 53,
+    "latency_s": 1.4762582999974256,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "format",
+    "success": true,
+    "tokens": 78,
+    "latency_s": 1.4073156999947969,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 3035,
+    "latency_s": 3.7818119000003207,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 5699,
+    "latency_s": 3.5580432999995537,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 3397,
+    "latency_s": 5.486076500004856,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 2982,
+    "latency_s": 2.400506799996947,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "format",
+    "success": true,
+    "tokens": 3028,
+    "latency_s": 2.268491599999834,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 3035,
+    "latency_s": 2.476447300010477,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 5699,
+    "latency_s": 4.772187900001882,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 3162,
+    "latency_s": 5.938066900009289,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 3000,
+    "latency_s": 1.916591299988795,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "format",
+    "success": true,
+    "tokens": 3028,
+    "latency_s": 2.0888333000038983,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 42,
+    "latency_s": 0.7872470000002068,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 40,
+    "latency_s": 0.6235719999967841,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 41,
+    "latency_s": 0.5892626999993809,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 41,
+    "latency_s": 0.6744726999895647,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "format",
+    "success": true,
+    "tokens": 69,
+    "latency_s": 0.7678907999943476,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 2465,
+    "latency_s": 1.4154944000038086,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 4916,
+    "latency_s": 3.054750299997977,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 2610,
+    "latency_s": 3.489901600012672,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 2409,
+    "latency_s": 1.6625931000016863,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "format",
+    "success": true,
+    "tokens": 2370,
+    "latency_s": 0.9691829999937909,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 2465,
+    "latency_s": 1.3987492000014754,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 4909,
+    "latency_s": 2.9543607999949018,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 2612,
+    "latency_s": 3.221890999993775,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 2440,
+    "latency_s": 2.0115989000041736,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "format",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.09849259999464266,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  }
+]

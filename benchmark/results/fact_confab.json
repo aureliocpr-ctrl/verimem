@@ -1,0 +1,312 @@
+{
+  "n_pairs": 60,
+  "per_class": 60,
+  "mean_faithful": 87.8,
+  "mean_confab": 0.0,
+  "auroc_faithful_vs_confab": 0.992,
+  "aurc": 0.156,
+  "opt_threshold": 10.0,
+  "rows": [
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 72.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 62.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 42.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 72.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 85.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 85.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 85.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 50.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 85.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 0.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 42.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 42.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 90.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 85.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 95.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 10.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 100.0,
+      "confab_score": 0.0,
+      "same": false
+    },
+    {
+      "faithful_score": 97.0,
+      "confab_score": 0.0,
+      "same": false
+    }
+  ],
+  "model": "claude-sonnet-4-6"
+}

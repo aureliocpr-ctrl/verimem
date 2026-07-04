@@ -1,0 +1,125 @@
+{
+  "threshold": 40.0,
+  "arms": {
+    "v1": {
+      "clean": {
+        "n": 12,
+        "admit_rate": 0.75,
+        "mean": 68.5,
+        "scores": [
+          85.0,
+          100.0,
+          0.0,
+          95.0,
+          95.0,
+          95.0,
+          85.0,
+          95.0,
+          0.0,
+          100.0,
+          0.0,
+          72.0
+        ]
+      },
+      "foreign": {
+        "n": 10,
+        "admit_rate": 0.0,
+        "mean": 0.0,
+        "scores": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "confab": {
+        "n": 8,
+        "admit_rate": 0.0,
+        "mean": 0.0,
+        "scores": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "summary": {
+        "clean_admit": 0.75,
+        "foreign_reject": 1.0,
+        "confab_reject": 1.0
+      }
+    },
+    "v2": {
+      "clean": {
+        "n": 12,
+        "admit_rate": 0.75,
+        "mean": 64.4,
+        "scores": [
+          82.0,
+          100.0,
+          0.0,
+          72.0,
+          82.0,
+          90.0,
+          85.0,
+          95.0,
+          0.0,
+          95.0,
+          0.0,
+          72.0
+        ]
+      },
+      "foreign": {
+        "n": 10,
+        "admit_rate": 0.0,
+        "mean": 0.0,
+        "scores": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "confab": {
+        "n": 8,
+        "admit_rate": 0.0,
+        "mean": 0.0,
+        "scores": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "summary": {
+        "clean_admit": 0.75,
+        "foreign_reject": 1.0,
+        "confab_reject": 1.0
+      }
+    }
+  },
+  "verdict": {
+    "clean_admit_delta_v2_minus_v1": 0.0,
+    "v2_keeps_rejection": true
+  }
+}

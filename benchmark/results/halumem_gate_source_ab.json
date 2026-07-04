@@ -1,0 +1,57 @@
+{
+  "budget_chars": 2000,
+  "threshold": 40.0,
+  "seed": 7,
+  "clean": {
+    "prefix": {
+      "n": 20,
+      "admit_rate": 0.7,
+      "mean": 52.2
+    },
+    "span": {
+      "n": 20,
+      "admit_rate": 0.8,
+      "mean": 64.4
+    },
+    "full": {
+      "n": 20,
+      "admit_rate": 0.85,
+      "mean": 67.8
+    },
+    "full_abs": {
+      "n": 20,
+      "admit_rate": 0.85,
+      "mean": 70.3
+    }
+  },
+  "foreign": {
+    "span": {
+      "n": 10,
+      "admit_rate": 0.0,
+      "mean": 0.0
+    },
+    "full_abs": {
+      "n": 10,
+      "admit_rate": 0.0,
+      "mean": 0.0
+    }
+  },
+  "confab": {
+    "span": {
+      "n": 8,
+      "admit_rate": 0.0,
+      "mean": 0.0
+    },
+    "full_abs": {
+      "n": 8,
+      "admit_rate": 0.0,
+      "mean": 0.0
+    }
+  },
+  "verdict": {
+    "span_vs_prefix_admit_delta": 0.1,
+    "full_abs_vs_full_admit_delta": 0.0,
+    "span_keeps_rejection": true,
+    "full_abs_keeps_rejection": true
+  }
+}

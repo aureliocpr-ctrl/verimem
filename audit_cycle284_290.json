@@ -1,0 +1,107 @@
+{
+  "n_commits": 12,
+  "by_verdict_class": {
+    "OK_clean": 7,
+    "OK_new_files_no_marketing": 4,
+    "WARN_marketing_only": 1
+  },
+  "marketing_pattern_freq": {
+    "definitive(?!\\s+test)": 1
+  },
+  "per_commit": [
+    {
+      "sha": "85dff13f26",
+      "subject": "cycle 290: pioneering #30 close cycle 289 vacuous gap with non-empty corpus",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "46830a62a0",
+      "subject": "cycle 289: close M13 SECOND-CALL-SITE COVERAGE gap (cycle 287 counterexample)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "06e0a20d59",
+      "subject": "cycle 287: critic gate HOLD 3-0-0 first post-cycle-264 PASS + M13 born",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "06fe114175",
+      "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/track_meta_rule_evolution.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "a0145bf136",
+      "subject": "cycle 286: paper \u00a76.5 update - production wire cycle 284-285 documented",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "dc5be68d0f",
+      "subject": "cycle 285: TDD contract for ENGRAM_USE_STABLE_PARTITION env var routing",
+      "marketing_matches": [],
+      "added_files": [
+        "tests/test_auto_dream_stable_partition_envvar.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "9ba4621d24",
+      "subject": "cycle 284: wire stable_partition into auto_dream_worker (env-var opt-in)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "1c8ae0458f",
+      "subject": "cycle 282: sequential 3-cycle test -> stable_partition 10x more stable",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "055b102e7b",
+      "subject": "cycle 281: definitive replicated k=100 N=100 -> +0.089 [0.079, 0.100]",
+      "marketing_matches": [
+        "definitive(?!\\s+test)"
+      ],
+      "added_files": [],
+      "verdict_class": "WARN_marketing_only"
+    },
+    {
+      "sha": "96fb6060ef",
+      "subject": "cycle 280: replicated injection bench reveals original effects biased +30%",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/bench_replicated_injection.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "71b8cd60ec",
+      "subject": "cycle 278: paper \u00a79.9 session summary close + reproducibility expanded",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "71ba774f0f",
+      "subject": "cycle 277: pioneering #28 session lineage chain visualizer",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/visualize_session_lineage.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    }
+  ]
+}

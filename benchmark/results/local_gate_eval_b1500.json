@@ -1,0 +1,192 @@
+{
+  "jsonl": "C:\\Users\\aurel\\.cache\\halumem\\HaluMem-Medium.jsonl",
+  "seed": 7,
+  "budget_chars": 1500,
+  "n_pairs": 1400,
+  "n_by_kind": {
+    "clean": 600,
+    "interference": 600,
+    "foreign": 200
+  },
+  "split": {
+    "calib_users": 10,
+    "heldout_users": 10,
+    "n_calib": 658,
+    "n_heldout": 742
+  },
+  "reference_claude": {
+    "note": "halumem_gate_source_ab.json budget=2000 n=20/10/8: clean-admit 0.80, foreign/confab 0.0; SNLI AUROC 0.971 (different set)"
+  },
+  "models": {
+    "cross-encoder/nli-deberta-v3-base": {
+      "model": "cross-encoder/nli-deberta-v3-base",
+      "load_s": 15.1,
+      "id2label": {
+        "0": "contradiction",
+        "1": "entailment",
+        "2": "neutral"
+      },
+      "device": "cuda:0",
+      "max_length": 512,
+      "threshold": 0.6496112328022718,
+      "n_calib": 658,
+      "n_heldout": 742,
+      "heldout": {
+        "clean": {
+          "n": 318,
+          "admit_rate": 0.4843,
+          "wilson95": [
+            0.4299,
+            0.5391
+          ],
+          "mean_score": 17.56
+        },
+        "interference": {
+          "n": 321,
+          "admit_rate": 0.3769,
+          "wilson95": [
+            0.3257,
+            0.4311
+          ],
+          "mean_score": 8.3
+        },
+        "foreign": {
+          "n": 103,
+          "admit_rate": 0.2233,
+          "wilson95": [
+            0.1537,
+            0.3128
+          ],
+          "mean_score": 5.64
+        }
+      },
+      "auroc_heldout": 0.5998,
+      "latency_single": {
+        "n": 20,
+        "p50_ms": 44.2,
+        "p95_ms": 64.9,
+        "mean_ms": 47.8
+      },
+      "batch_total_s": 24.0,
+      "batch_ms_per_pair": 17.1,
+      "errors_sample": {
+        "false_reject_clean": [
+          {
+            "score": 0.0,
+            "fact": "Joseph Garcia acknowledged the importance of aligning his reading preferences with his professional goals."
+          },
+          {
+            "score": 0.0,
+            "fact": "Barbara Jones removed 'Wellness retreats' from her list of liked travel styles, preferring more dynamic and engaging travel experiences."
+          },
+          {
+            "score": 0.0,
+            "fact": "Donna Gonzalez concluded with a renewed sense of curiosity and openness to exploring adventurous activities."
+          }
+        ],
+        "false_admit_noise": [
+          {
+            "score": 99.6,
+            "kind": "interference",
+            "fact": "A colleague recommended a film with a simple narrative involving romance, explaining its value in studying emotional intelligence."
+          },
+          {
+            "score": 99.5,
+            "kind": "interference",
+            "fact": "Martin discussed the balance between seeking thrill and maintaining a positive mindset through his evolving preferences for comedy films."
+          },
+          {
+            "score": 99.3,
+            "kind": "interference",
+            "fact": "Sharon emphasized the importance of financial stability and resource management in her mentoring initiatives."
+          }
+        ]
+      }
+    },
+    "cross-encoder/nli-MiniLM2-L6-H768": {
+      "model": "cross-encoder/nli-MiniLM2-L6-H768",
+      "load_s": 9.0,
+      "id2label": {
+        "0": "contradiction",
+        "1": "entailment",
+        "2": "neutral"
+      },
+      "device": "cuda:0",
+      "max_length": 512,
+      "threshold": 1.26254390925169,
+      "n_calib": 658,
+      "n_heldout": 742,
+      "heldout": {
+        "clean": {
+          "n": 318,
+          "admit_rate": 0.8868,
+          "wilson95": [
+            0.8473,
+            0.9171
+          ],
+          "mean_score": 22.49
+        },
+        "interference": {
+          "n": 321,
+          "admit_rate": 0.8536,
+          "wilson95": [
+            0.8107,
+            0.8881
+          ],
+          "mean_score": 20.4
+        },
+        "foreign": {
+          "n": 103,
+          "admit_rate": 0.466,
+          "wilson95": [
+            0.3726,
+            0.5618
+          ],
+          "mean_score": 6.34
+        }
+      },
+      "auroc_heldout": 0.5783,
+      "latency_single": {
+        "n": 20,
+        "p50_ms": 12.3,
+        "p95_ms": 15.2,
+        "mean_ms": 12.5
+      },
+      "batch_total_s": 7.7,
+      "batch_ms_per_pair": 5.5,
+      "errors_sample": {
+        "false_reject_clean": [
+          {
+            "score": 0.2,
+            "fact": "Johnson Joseph's monthly income is now $2500 from his part-time role at Albi B&B."
+          },
+          {
+            "score": 0.3,
+            "fact": "Martin Mark seeks guidance on stress management techniques to ensure that increased responsibilities do not negatively impact his mental hea"
+          },
+          {
+            "score": 0.3,
+            "fact": "Donald Brown highlighted the role of mindfulness practices in improving focus and creativity, benefiting productivity."
+          }
+        ],
+        "false_admit_noise": [
+          {
+            "score": 92.8,
+            "kind": "interference",
+            "fact": "A colleague recommended a film with a simple narrative involving romance, explaining its value in studying emotional intelligence."
+          },
+          {
+            "score": 89.0,
+            "kind": "interference",
+            "fact": "Sharon emphasized the importance of financial stability and resource management in her mentoring initiatives."
+          },
+          {
+            "score": 87.0,
+            "kind": "interference",
+            "fact": "Joseph discussed strategies for improving program quality by collaborating with industry experts, rather than seeking advice from mentors."
+          }
+        ]
+      }
+    }
+  }
+}

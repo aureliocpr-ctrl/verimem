@@ -1,0 +1,117 @@
+{
+  "jsonl": "C:\\Users\\aurel\\.cache\\halumem\\HaluMem-Medium.jsonl",
+  "seed": 7,
+  "budget_chars": 1500,
+  "mode": "doc",
+  "speakers": true,
+  "n_pairs": 9200,
+  "n_by_kind": {
+    "clean": 6000,
+    "interference": 2600,
+    "foreign": 600
+  },
+  "split": {
+    "calib_users": 10,
+    "heldout_users": 10,
+    "n_calib": 4488,
+    "n_heldout": 4712
+  },
+  "reference_claude": {
+    "note": "halumem_gate_source_ab.json budget=2000 n=20/10/8: clean-admit 0.80, foreign/confab 0.0; SNLI AUROC 0.971 (different set)"
+  },
+  "models": {
+    "C:\\Users\\aurel\\.engram\\models\\local_gate_ce": {
+      "model": "C:\\Users\\aurel\\.engram\\models\\local_gate_ce",
+      "kind": "finetuned",
+      "gate_config": {
+        "threshold": 90.99,
+        "focus_budget": 1500,
+        "base_model": "cross-encoder/nli-deberta-v3-base",
+        "seed": 7,
+        "trained_on": "HaluMem-Medium ground truth (train users only), 2026-07-02",
+        "heldout_auroc": 0.9912,
+        "heldout": {
+          "clean_admit": 0.9451,
+          "interference_admit": 0.0701,
+          "foreign_admit": 0.0
+        }
+      },
+      "threshold": 90.99,
+      "n_calib": 4488,
+      "n_heldout": 4712,
+      "heldout": {
+        "clean": {
+          "n": 3092,
+          "admit_rate": 0.9479,
+          "wilson95": [
+            0.9395,
+            0.9552
+          ],
+          "mean_score": 95.83
+        },
+        "interference": {
+          "n": 1322,
+          "admit_rate": 0.0855,
+          "wilson95": [
+            0.0716,
+            0.1018
+          ],
+          "mean_score": 11.19
+        },
+        "foreign": {
+          "n": 298,
+          "admit_rate": 0.0235,
+          "wilson95": [
+            0.0114,
+            0.0477
+          ],
+          "mean_score": 3.22
+        }
+      },
+      "auroc_heldout": 0.9834,
+      "auroc_clean_vs_interference": 0.9805,
+      "auroc_clean_vs_foreign": 0.9961,
+      "latency_single": {
+        "n": 20,
+        "p50_ms": 43.2,
+        "p95_ms": 54.7,
+        "mean_ms": 41.3
+      },
+      "batch_total_s": 68.5,
+      "batch_ms_per_pair": 7.4,
+      "errors_sample": {
+        "false_reject_clean": [
+          {
+            "score": 0.1,
+            "fact": "Taylor David's friend introduced him to a traditional meditation class focusing on slow breathing techniques."
+          },
+          {
+            "score": 0.1,
+            "fact": "Joseph Garcia expressed curiosity about integrating peppermint tea into his daily routine for relaxation benefits."
+          },
+          {
+            "score": 0.2,
+            "fact": "Taylor David's social relationships increased to include Maria, a nutritionist and career coach who provided dietary advice and career guida"
+          }
+        ],
+        "false_admit_noise": [
+          {
+            "score": 99.9,
+            "kind": "interference",
+            "fact": "Johnson Joseph's game preference changed from liking solo board games to liking cooperative board games due to their ability to enhance team"
+          },
+          {
+            "score": 99.9,
+            "kind": "interference",
+            "fact": "Ananya Sharma seeks advice from her social network to manage stress from her new role as Head of Film Studies Department."
+          },
+          {
+            "score": 99.9,
+            "kind": "interference",
+            "fact": "Joseph Garcia's career_status updated monthly_income from '3200' to '4500'"
+          }
+        ]
+      }
+    }
+  }
+}

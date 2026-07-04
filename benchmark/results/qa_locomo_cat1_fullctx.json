@@ -1,0 +1,442 @@
+{
+  "n": 60,
+  "n_correct": 29,
+  "n_errors": 0,
+  "accuracy": 0.4833,
+  "per_category": {
+    "1": {
+      "n": 60,
+      "accuracy": 0.4833
+    }
+  },
+  "details": [
+    {
+      "id": "0:3",
+      "category": "1",
+      "predicted": "Adoption agencies, counseling and mental health career options, LGBTQ+ counseling workshops.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "0:4",
+      "category": "1",
+      "predicted": "Transgender woman.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:7",
+      "category": "1",
+      "predicted": "Caroline mentioned going through \"a tough breakup\" in the past, and she plans to be a single parent through adoption. No current partner is mentioned.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:11",
+      "category": "1",
+      "predicted": "Sweden",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:13",
+      "category": "1",
+      "predicted": "Counseling or mental health work, specifically supporting people with similar experiences (including trans people).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:15",
+      "category": "1",
+      "predicted": "Painting, pottery, running, playing violin, playing clarinet, swimming with kids, camping/hiking with family, volunteering at a homeless shelter, attending concerts, reading.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:3",
+      "category": "1",
+      "predicted": "Both lost their jobs, are passionate about dance (especially contemporary), started their own businesses, and support/encourage each other through their entrepreneurial journeys.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:5",
+      "category": "1",
+      "predicted": "By the water, with great natural light, downtown location for easy access, good-sized space, and Marley flooring (grippy, durable, easy to clean).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:9",
+      "category": "1",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:17",
+      "category": "1",
+      "predicted": "After losing her job at Door Dash, she wanted to take control of her own destiny, combining her passion for fashion trends and dance into one business.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:18",
+      "category": "1",
+      "predicted": "Yes. Jon starts a dance studio out of his lifelong passion for dancing, and Gina starts an online clothing store combining her love of fashion and dance.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:23",
+      "category": "1",
+      "predicted": "Ad campaign, offers and promotions, working with local artists for designs, collaborating with fashion bloggers and influencers, Instagram and TikTok social media, and building a new website for customer orders.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:2",
+      "category": "1",
+      "predicted": "Kickboxing, taekwondo",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:3",
+      "category": "1",
+      "predicted": "Helping veterans/military support, community events/fundraising, and working with people in need (John at a food bank/career fair, Maria at a homeless shelter). Both also participated in charity runs (5K events).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:6",
+      "category": "1",
+      "predicted": "Homeless shelter (fellow volunteer), gym, church.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:7",
+      "category": "1",
+      "predicted": "A little doll, a film camera.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:9",
+      "category": "1",
+      "predicted": "Her auntie.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:11",
+      "category": "1",
+      "predicted": "David, Jean, Laura, Cindy",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:1",
+      "category": "1",
+      "predicted": "Movies, dairy-free desserts/cooking, nature appreciation, books/reading, and supporting each other's creative pursuits.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:5",
+      "category": "1",
+      "predicted": "Writing, reading, watching movies, exploring nature/hiking, baking dairy-free desserts, DIY crafts.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:10",
+      "category": "1",
+      "predicted": "Relief, excitement, and anxiety.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:11",
+      "category": "1",
+      "predicted": "Most reptiles, animals with fur, and cockroaches.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:19",
+      "category": "1",
+      "predicted": "2",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:23",
+      "category": "1",
+      "predicted": "The screenplay submitted to a film festival (her first one) received a rejection from a major company, and the one submitted to a film contest also received a rejection from a production company.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:0",
+      "category": "1",
+      "predicted": "Winning a championship, improving his shooting percentage, becoming a consistent performer, helping his team, getting more endorsements, and building his brand for life after basketball.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:1",
+      "category": "1",
+      "predicted": "John wants to get more endorsement deals, build his personal brand, think about life after basketball, start a foundation, do charity work, and make a positive difference by inspiring others.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:2",
+      "category": "1",
+      "predicted": "Jerseys, sneakers.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:4",
+      "category": "1",
+      "predicted": "Harry Potter series, Game of Thrones series (including \"A Dance with Dragons\"), \"The Name of the Wind\" by Patrick Rothfuss, a book about small changes making big differences, a book about castles in the UK, a fantasy book by Patrick Rothfuss (referenced multiple times), stories from travelers around the world, Lord of the Rings, The Hobbit.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:7",
+      "category": "1",
+      "predicted": "London (UK), Smoky Mountains, a Harry Potter conference in the UK, a castle in the UK, Galway (Ireland, study abroad next month from the time of conversation).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:9",
+      "category": "1",
+      "predicted": "Nike (basketball shoe and gear deal), Gatorade (potential sponsorship), a popular beverage company, an outdoor gear company.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:2",
+      "category": "1",
+      "predicted": "Board games, wine tasting, cooking, and visiting cafes.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:3",
+      "category": "1",
+      "predicted": "A new cafe scene, a cozy cafe, a new spot with a sick view and vibe, a park outside of town (found on a bike ride), a farm (for fresh veggies), a wine tasting, and a sushi restaurant.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:9",
+      "category": "1",
+      "predicted": "Positive reinforcement training class (workshop on bonding with pets), a dog training course, a dog grooming course, and a dog owners group.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:12",
+      "category": "1",
+      "predicted": "Rock climbing, kayaking (planned), fishing, camping, bike riding, picnics, birdwatching (planned), visiting a nature reserve, visiting a farm.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:14",
+      "category": "1",
+      "predicted": "Being in nature / hiking outdoors.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:15",
+      "category": "1",
+      "predicted": "Finding pet-friendly housing/spaces in the city.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:2",
+      "category": "1",
+      "predicted": "VR gaming (next Saturday, planned on 17 March 2022), baseball game with Samantha (next Sunday, planned on 4 September 2022), McGee's pub (planned on 26 August 2022), volunteer organization (that weekend, planned on 19 June 2022).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:3",
+      "category": "1",
+      "predicted": "Only James has pets (dogs named Max, Daisy, and Ned). John does not have pets, though he expressed wanting one someday.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:5",
+      "category": "1",
+      "predicted": "John: CS:GO, The Witcher 3, AC Valhalla, FIFA 23. James: The Witcher 3, Apex Legends, Civilization VI, Cyberpunk 2077.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:8",
+      "category": "1",
+      "predicted": "3 dogs: Max, Daisy, and Ned.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:9",
+      "category": "1",
+      "predicted": "Max, Daisy, Ned",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:18",
+      "category": "1",
+      "predicted": "\"The Name of the Wind\", \"The Stormlight Archive\", \"Kingkiller Chronicle\", \"The Expanse\"",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:1",
+      "category": "1",
+      "predicted": "Deborah's mother, Deborah's father, Deborah's friend Karlie.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:6",
+      "category": "1",
+      "predicted": "Deborah has a pendant and an amulet from her mother. Jolene has a pendant given to her by her mother in 2010 in Paris.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:8",
+      "category": "1",
+      "predicted": "Visiting her mother's old house and sitting on a special bench by the window, bringing flowers to that spot, carrying an amulet that belonged to her mother, spending time in the garden with roses and dahlias, attending art shows (her mother loved art), reconnecting with her mother's friends, and practicing yoga and meditation.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:13",
+      "category": "1",
+      "predicted": "Her mother's old house (bench by the window), the park near her home (forest trail and bench), a spot by the water near her mom's old house, the beach (where she got married), her yoga studio, and the garden.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:14",
+      "category": "1",
+      "predicted": "Reading, travel.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:19",
+      "category": "1",
+      "predicted": "Jolene received a pendant from her mother in Paris in 2010, and bought her second snake Seraphim in Paris. NO explicit count of trips, but at least 2 visits to France are mentioned.\n\nWait — re-reading strictly from context: Paris is mentioned twice (pendant 2010, snake purchase), but whether these are separate trips is not stated. The question asks how many times — the context does not provide a definitive count.\n\nNO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:0",
+      "category": "1",
+      "predicted": "Prius",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:1",
+      "category": "1",
+      "predicted": "Evan's old Prius broke down, his new Prius also broke down, and he twisted his knee (twice — once playing basketball and once unspecified).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:2",
+      "category": "1",
+      "predicted": "Rockies, Jasper, Banff, Canada (Rocky Mountains)",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:3",
+      "category": "1",
+      "predicted": "2",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:6",
+      "category": "1",
+      "predicted": "2",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:7",
+      "category": "1",
+      "predicted": "Painting, hiking, kayaking.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:1",
+      "category": "1",
+      "predicted": "A new mansion and a new car.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:3",
+      "category": "1",
+      "predicted": "Aerosmith, The Fireworks, classic rock bands (general).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:5",
+      "category": "1",
+      "predicted": "Working on classic cars, building a custom car from scratch, and opening his own car maintenance shop.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:6",
+      "category": "1",
+      "predicted": "Classic cars.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:11",
+      "category": "1",
+      "predicted": "Calvin's place got flooded (around May 16, 2023), he had a car accident on a Friday (around June 21, 2023), and he experienced a creative block with his music (around May 3, 2023).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:15",
+      "category": "1",
+      "predicted": "Dave visits parks to relax and find calm/peace in nature.",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 5,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

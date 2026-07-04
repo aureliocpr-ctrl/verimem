@@ -1,0 +1,54 @@
+{
+  "users": 5,
+  "threshold": 40.0,
+  "mcnemar": {
+    "off_only_hall": 1,
+    "on_only_hall": 1,
+    "both_hall": 6,
+    "neither_hall": 82,
+    "discordant": 2,
+    "p_value_exact": 1.0,
+    "note": "b=off_only_hall (gate FIXED a fabrication), c=on_only_hall (gate CAUSED one); p tests if the moat's net effect on hallucination is real. Paired test \u2014 far more powerful than the independent rates."
+  },
+  "gate_admission": {
+    "noise_rejected": 80,
+    "noise_total": 80,
+    "clean_admitted": 29,
+    "clean_total": 50,
+    "noise_rejection_rate": 1.0,
+    "clean_admission_rate": 0.58
+  },
+  "off": {
+    "counts": {
+      "CORRECT": 23,
+      "HALLUCINATION": 7,
+      "OMISSION": 60,
+      "ERROR": 0
+    },
+    "n": 90,
+    "correct": 0.2556,
+    "hallucination": 0.0778,
+    "omission": 0.6667,
+    "hallucination_ci95": [
+      0.0382,
+      0.1519
+    ]
+  },
+  "on": {
+    "counts": {
+      "CORRECT": 24,
+      "HALLUCINATION": 7,
+      "OMISSION": 59,
+      "ERROR": 0
+    },
+    "n": 90,
+    "correct": 0.2667,
+    "hallucination": 0.0778,
+    "omission": 0.6556,
+    "hallucination_ci95": [
+      0.0382,
+      0.1519
+    ]
+  },
+  "hallucination_drop_on_vs_off": 0.0
+}

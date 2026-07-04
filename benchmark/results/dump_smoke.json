@@ -1,0 +1,475 @@
+{
+  "protocol": "HaluMem updating slice (local judge-free scoring; official LLM-judge layer is a separate pass)",
+  "dataset": "C:\\Users\\aurel\\.cache\\halumem\\HaluMem-Medium.jsonl",
+  "users": 1,
+  "k": 10,
+  "select_thr": 0.7,
+  "n_target_updates": 3,
+  "outcomes": {
+    "correct": 2,
+    "wrong": 1
+  },
+  "update_accuracy": 0.6667,
+  "update_hallucination_rate": 0.3333,
+  "update_omission_rate": 0.0,
+  "retrieval_unreachable_share": 0.0,
+  "wall_s": 36.6,
+  "items": [
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "correct",
+      "update": "Martin Mark is considering a career change due to the impact of his current role on his mental health.",
+      "gt_originals": [
+        "Martin Mark is considering a career change due to health impacts from his current role."
+      ],
+      "selected": "Martin Mark's employment status is Employed",
+      "candidates": [
+        {
+          "text": "Martin Mark's Colleague MartinezDaniel, Daniel's expertise in healthcare consulting challenges me to push boundaries and innovate in our projects, significantly impacting my career growth.",
+          "retrieval": 0.8145,
+          "ab": {
+            "contradiction": 0.004,
+            "entailment": 0.0001,
+            "neutral": 0.9956
+          },
+          "ba": {
+            "contradiction": 0.0341,
+            "entailment": 0.0011,
+            "neutral": 0.9648
+          }
+        },
+        {
+          "text": "Martin Mark's Friend ThomasSusan, Susan's support and encouragement inspire me to maintain my focus on promoting well-being in both my personal and professional life.",
+          "retrieval": 0.7963,
+          "ab": {
+            "contradiction": 0.0012,
+            "entailment": 0.0002,
+            "neutral": 0.9985
+          },
+          "ba": {
+            "contradiction": 0.1138,
+            "entailment": 0.001,
+            "neutral": 0.8853
+          }
+        },
+        {
+          "text": "Martin Mark's life goal statement: Establish a global health initiative to improve access to healthcare for underserved communities.",
+          "retrieval": 0.8092,
+          "ab": {
+            "contradiction": 0.0052,
+            "entailment": 0.0002,
+            "neutral": 0.9946
+          },
+          "ba": {
+            "contradiction": 0.0069,
+            "entailment": 0.0009,
+            "neutral": 0.9922
+          }
+        },
+        {
+          "text": "Martin Mark works in the healthcare industry",
+          "retrieval": 0.79,
+          "ab": {
+            "contradiction": 0.0009,
+            "entailment": 0.0002,
+            "neutral": 0.999
+          },
+          "ba": {
+            "contradiction": 0.0006,
+            "entailment": 0.0003,
+            "neutral": 0.999
+          }
+        },
+        {
+          "text": "Martin Mark's motivation for pursuing goals: Inspired by his family's medical background and a desire to promote well-being globally.",
+          "retrieval": 0.7996,
+          "ab": {
+            "contradiction": 0.0059,
+            "entailment": 0.0003,
+            "neutral": 0.9937
+          },
+          "ba": {
+            "contradiction": 0.0022,
+            "entailment": 0.0005,
+            "neutral": 0.9971
+          }
+        },
+        {
+          "text": "Martin Mark's Colleague WilliamsJoshua, Joshua's collaborative approach and insights into healthcare management enhance our team's effectiveness, positively influencing my work and leadership style.",
+          "retrieval": 0.7885,
+          "ab": {
+            "contradiction": 0.003,
+            "entailment": 0.0001,
+            "neutral": 0.9971
+          },
+          "ba": {
+            "contradiction": 0.019,
+            "entailment": 0.0012,
+            "neutral": 0.98
+          }
+        },
+        {
+          "text": "Martin Mark's personality tags include: Innovative Spirit, Active Thinking, Debate Skills, Empathetic",
+          "retrieval": 0.7798,
+          "ab": {
+            "contradiction": 0.0011,
+            "entailment": 0.0001,
+            "neutral": 0.999
+          },
+          "ba": {
+            "contradiction": 0.001,
+            "entailment": 0.0004,
+            "neutral": 0.9985
+          }
+        },
+        {
+          "text": "Martin Mark's employment status is Employed",
+          "retrieval": 0.7842,
+          "ab": {
+            "contradiction": 0.0007,
+            "entailment": 0.0003,
+            "neutral": 0.999
+          },
+          "ba": {
+            "contradiction": 0.0011,
+            "entailment": 0.9951,
+            "neutral": 0.0035
+          }
+        },
+        {
+          "text": "Martin Mark's major is Public Health",
+          "retrieval": 0.0,
+          "ab": {
+            "contradiction": 0.0021,
+            "entailment": 0.0002,
+            "neutral": 0.9976
+          },
+          "ba": {
+            "contradiction": 0.0009,
+            "entailment": 0.0003,
+            "neutral": 0.999
+          }
+        },
+        {
+          "text": "User's name is Martin Mark",
+          "retrieval": 0.7851,
+          "ab": {
+            "contradiction": 0.0002,
+            "entailment": 0.0002,
+            "neutral": 0.9995
+          },
+          "ba": {
+            "contradiction": 0.0005,
+            "entailment": 0.9932,
+            "neutral": 0.0065
+          }
+        }
+      ]
+    },
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "wrong",
+      "update": "Martin Mark aims to find a job that better aligns with his personal well-being, humanitarian goals, and career aspirations.",
+      "gt_originals": [
+        "Martin Mark aims to find a job that better aligns with his personal well-being and career goals."
+      ],
+      "selected": "User's name is Martin Mark",
+      "candidates": [
+        {
+          "text": "Martin Mark works in the healthcare industry",
+          "retrieval": 0.8442,
+          "ab": {
+            "contradiction": 0.0041,
+            "entailment": 0.0004,
+            "neutral": 0.9956
+          },
+          "ba": {
+            "contradiction": 0.0044,
+            "entailment": 0.0005,
+            "neutral": 0.9951
+          }
+        },
+        {
+          "text": "Martin Mark's employment status is Employed",
+          "retrieval": 0.8415,
+          "ab": {
+            "contradiction": 0.0013,
+            "entailment": 0.0003,
+            "neutral": 0.9985
+          },
+          "ba": {
+            "contradiction": 0.0256,
+            "entailment": 0.9014,
+            "neutral": 0.0729
+          }
+        },
+        {
+          "text": "Martin Mark is considering a career change due to the impact of his current role on his mental health.",
+          "retrieval": 0.8345,
+          "ab": {
+            "contradiction": 0.0004,
+            "entailment": 0.0019,
+            "neutral": 0.9976
+          },
+          "ba": {
+            "contradiction": 0.0013,
+            "entailment": 0.0849,
+            "neutral": 0.9136
+          }
+        },
+        {
+          "text": "Martin Mark's job title is director",
+          "retrieval": 0.834,
+          "ab": {
+            "contradiction": 0.0016,
+            "entailment": 0.0002,
+            "neutral": 0.998
+          },
+          "ba": {
+            "contradiction": 0.006,
+            "entailment": 0.0006,
+            "neutral": 0.9937
+          }
+        },
+        {
+          "text": "Martin Mark's life goal statement: Establish a global health initiative to improve access to healthcare for underserved communities.",
+          "retrieval": 0.8315,
+          "ab": {
+            "contradiction": 0.0039,
+            "entailment": 0.1737,
+            "neutral": 0.8223
+          },
+          "ba": {
+            "contradiction": 0.0289,
+            "entailment": 0.004,
+            "neutral": 0.9673
+          }
+        },
+        {
+          "text": "Martin Mark's motivation for pursuing goals: Inspired by his family's medical background and a desire to promote well-being globally.",
+          "retrieval": 0.8284,
+          "ab": {
+            "contradiction": 0.001,
+            "entailment": 0.0013,
+            "neutral": 0.9976
+          },
+          "ba": {
+            "contradiction": 0.0016,
+            "entailment": 0.0007,
+            "neutral": 0.9976
+          }
+        },
+        {
+          "text": "User's name is Martin Mark",
+          "retrieval": 0.8241,
+          "ab": {
+            "contradiction": 0.0002,
+            "entailment": 0.0003,
+            "neutral": 0.9995
+          },
+          "ba": {
+            "contradiction": 0.0005,
+            "entailment": 0.9961,
+            "neutral": 0.0033
+          }
+        },
+        {
+          "text": "Martin Mark has preferences in Game Preference",
+          "retrieval": 0.8219,
+          "ab": {
+            "contradiction": 0.0038,
+            "entailment": 0.0017,
+            "neutral": 0.9946
+          },
+          "ba": {
+            "contradiction": 0.0139,
+            "entailment": 0.0073,
+            "neutral": 0.979
+          }
+        },
+        {
+          "text": "Martin Mark has preferences in Sports Preference",
+          "retrieval": 0.8216,
+          "ab": {
+            "contradiction": 0.0016,
+            "entailment": 0.0016,
+            "neutral": 0.9966
+          },
+          "ba": {
+            "contradiction": 0.0026,
+            "entailment": 0.0021,
+            "neutral": 0.9951
+          }
+        },
+        {
+          "text": "Martin Mark has preferences in Clothing Preference",
+          "retrieval": 0.8187,
+          "ab": {
+            "contradiction": 0.0035,
+            "entailment": 0.0017,
+            "neutral": 0.9946
+          },
+          "ba": {
+            "contradiction": 0.0057,
+            "entailment": 0.0024,
+            "neutral": 0.9917
+          }
+        }
+      ]
+    },
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "correct",
+      "update": "Martin Mark's motivation for career change is driven by his desire for personal well-being and improving healthcare access for underserved communities.",
+      "gt_originals": [
+        "Martin Mark's motivation for career change is driven by his desire for personal well-being and humanitarian care."
+      ],
+      "selected": "Martin Mark aims to find a job that better aligns with his personal well-being, humanitarian goals, and career aspirations.",
+      "candidates": [
+        {
+          "text": "Martin Mark's Friend ThomasSusan, Susan's support and encouragement inspire me to maintain my focus on promoting well-being in both my personal and professional life.",
+          "retrieval": 0.8086,
+          "ab": {
+            "contradiction": 0.0034,
+            "entailment": 0.0011,
+            "neutral": 0.9956
+          },
+          "ba": {
+            "contradiction": 0.0103,
+            "entailment": 0.0015,
+            "neutral": 0.9883
+          }
+        },
+        {
+          "text": "Martin Mark's life goal statement: Establish a global health initiative to improve access to healthcare for underserved communities.",
+          "retrieval": 0.8593,
+          "ab": {
+            "contradiction": 0.0011,
+            "entailment": 0.0042,
+            "neutral": 0.9946
+          },
+          "ba": {
+            "contradiction": 0.0055,
+            "entailment": 0.0067,
+            "neutral": 0.9878
+          }
+        },
+        {
+          "text": "Martin Mark's motivation for pursuing goals: Inspired by his family's medical background and a desire to promote well-being globally.",
+          "retrieval": 0.8545,
+          "ab": {
+            "contradiction": 0.0037,
+            "entailment": 0.0029,
+            "neutral": 0.9932
+          },
+          "ba": {
+            "contradiction": 0.0213,
+            "entailment": 0.0107,
+            "neutral": 0.9678
+          }
+        },
+        {
+          "text": "Martin Mark aims to find a job that better aligns with his personal well-being, humanitarian goals, and career aspirations.",
+          "retrieval": 0.857,
+          "ab": {
+            "contradiction": 0.0029,
+            "entailment": 0.0013,
+            "neutral": 0.9956
+          },
+          "ba": {
+            "contradiction": 0.0007,
+            "entailment": 0.9795,
+            "neutral": 0.0198
+          }
+        },
+        {
+          "text": "Martin Mark is considering a career change due to the impact of his current role on his mental health.",
+          "retrieval": 0.8402,
+          "ab": {
+            "contradiction": 0.0026,
+            "entailment": 0.0016,
+            "neutral": 0.9956
+          },
+          "ba": {
+            "contradiction": 0.0013,
+            "entailment": 0.0087,
+            "neutral": 0.9902
+          }
+        },
+        {
+          "text": "Martin Mark's target metrics: Provide healthcare access to 1 million people in underserved areas.",
+          "retrieval": 0.8217,
+          "ab": {
+            "contradiction": 0.0008,
+            "entailment": 0.0009,
+            "neutral": 0.998
+          },
+          "ba": {
+            "contradiction": 0.001,
+            "entailment": 0.0002,
+            "neutral": 0.9985
+          }
+        },
+        {
+          "text": "Martin Mark's Colleague MartinezDaniel, Daniel's expertise in healthcare consulting challenges me to push boundaries and innovate in our projects, significantly impacting my career growth.",
+          "retrieval": 0.0,
+          "ab": {
+            "contradiction": 0.0056,
+            "entailment": 0.0008,
+            "neutral": 0.9937
+          },
+          "ba": {
+            "contradiction": 0.0147,
+            "entailment": 0.0025,
+            "neutral": 0.9829
+          }
+        },
+        {
+          "text": "Martin Mark has preferences in Beverage Preference",
+          "retrieval": 0.8125,
+          "ab": {
+            "contradiction": 0.0082,
+            "entailment": 0.0024,
+            "neutral": 0.9893
+          },
+          "ba": {
+            "contradiction": 0.0039,
+            "entailment": 0.001,
+            "neutral": 0.9951
+          }
+        },
+        {
+          "text": "Martin Mark's current job as director at Huaxin Consulting is negatively affecting his mental health.",
+          "retrieval": 0.0,
+          "ab": {
+            "contradiction": 0.0003,
+            "entailment": 0.0003,
+            "neutral": 0.9995
+          },
+          "ba": {
+            "contradiction": 0.0009,
+            "entailment": 0.0009,
+            "neutral": 0.998
+          }
+        },
+        {
+          "text": "Martin Mark works in the healthcare industry",
+          "retrieval": 0.8604,
+          "ab": {
+            "contradiction": 0.0411,
+            "entailment": 0.0017,
+            "neutral": 0.957
+          },
+          "ba": {
+            "contradiction": 0.0243,
+            "entailment": 0.0162,
+            "neutral": 0.9595
+          }
+        }
+      ]
+    }
+  ]
+}

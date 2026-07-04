@@ -1,0 +1,804 @@
+{
+  "verdicts": [
+    {
+      "id": 0,
+      "relation": "CONSISTENT",
+      "reason": "Same ts candidate describes the same transition (employed -> ... -> 'on sabbatical' for consultancy); claim captures a compatible subset."
+    },
+    {
+      "id": 1,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: claim says classical music's presence decreased vs candidate says ambient music's presence decreased — mutually exclusive at identical timestamp."
+    },
+    {
+      "id": 2,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: 'consultancy and academic work' vs candidate 'consultancy and non-profit work' — incompatible second activity, timestamps identical."
+    },
+    {
+      "id": 3,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: 'unstructured solo travel more beneficial' directly opposes candidate 'structured guided tours beneficial'."
+    },
+    {
+      "id": 4,
+      "relation": "CONTRADICTION",
+      "reason": "Employer name 'TechAccess Innovations' conflicts with the consistent candidate name 'AccessTech Innovations' for the same new position."
+    },
+    {
+      "id": 5,
+      "relation": "CONSISTENT",
+      "reason": "Emily Chan as senior researcher/mentee on career development matches same-ts candidate; 'health management' is supported by the mentor candidate ('career development and health management')."
+    },
+    {
+      "id": 6,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: emotional arc 'anxious anticipation to mild disappointment' opposes candidate 'cautious optimism to enthusiastic relief'."
+    },
+    {
+      "id": 7,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: 'thrill over safety' contradicts candidates emphasizing safety/organization and balancing thrill with safety."
+    },
+    {
+      "id": 8,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: claim appreciates 'traditional fast food' while candidates say he appreciates fast-casual/healthier options explicitly contrasted with traditional fast food."
+    },
+    {
+      "id": 9,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: 'playing quietly' conflicts with candidates describing the Golden Retrievers' energetic nature prompting need for a quieter pet."
+    },
+    {
+      "id": 10,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: 'puzzle-based word games' vs candidate 'story-based word games' — incompatible game type at identical timestamp."
+    },
+    {
+      "id": 11,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: inspiration for 'sports management journey' vs candidate 'culinary journey' — mutually exclusive domain."
+    },
+    {
+      "id": 12,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: 'focus on financial goals, diverging from social motivation' opposes candidate 'express identity..., aligning with social motivation goals'."
+    },
+    {
+      "id": 13,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: 'writing roles or publishing his own book' conflicts with candidate 'consulting roles or mentoring younger professionals'."
+    },
+    {
+      "id": 14,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (May 20 2033 20:19:27): claim says connections leveraged 'mainly for personal growth and travel' vs candidate 'to foster collaborative opportunities and achieve long-term career goals' — mutually exclusive purpose at identical timestamp."
+    },
+    {
+      "id": 15,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Jun 10 2033 22:20:37): claim 'avoid soda entirely' vs candidates 'occasionally enjoy soda' / 'balance enjoyment of soda' — incompatible at identical timestamp."
+    },
+    {
+      "id": 16,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Mar 13 2031 15:47:01): claim 'enjoys real-time strategy games' vs candidate 'enjoys turn-based strategy games ... without the stress of real-time action' — directly opposed preference at same timestamp."
+    },
+    {
+      "id": 17,
+      "relation": "CONSISTENT",
+      "reason": "Claim @Oct 2025 'employed→freelancer' fits the evolving career sequence; candidate 'Employed' @Sep 2025 precedes it, later candidates (unemployed@2035, self-employed CEO@2041) are subsequent states. Freelancing-as-web-developer candidate @2027 corroborates. Temporally reconcilable."
+    },
+    {
+      "id": 18,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Mar 01 2034 11:33:42): claim says compensatory motivation 'less significant than innate talent', focusing on natural ability not work-life balance, vs candidate 'acknowledged the role of compensatory motivation ... emphasizing both innate talent and a balanced work-life approach' — opposite stance at identical timestamp."
+    },
+    {
+      "id": 19,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Jun 22 2031 11:14:12): claim says visit 'primarily focused on photography rather than adaptability' vs candidate 'highlighted her openness to new experiences and adaptability' — incompatible framing at identical timestamp."
+    },
+    {
+      "id": 20,
+      "relation": "CONSISTENT",
+      "reason": "Claim @Aug 01 2037 'Energetic and Focused'→'Calm and Relaxed' aligns with same-ts candidate noting transition to optimistic/energetic 'with moments of Calm and Relaxed'; prior state 'Energetic and Focused' established @Jul 2035. Compatible evolution, not a hard conflict."
+    },
+    {
+      "id": 21,
+      "relation": "CONSISTENT",
+      "reason": "Same ts candidates state meditation AND tai chi discussed; claim mentions only tai chi — a subset/paraphrase, entailed by candidates."
+    },
+    {
+      "id": 22,
+      "relation": "CONSISTENT",
+      "reason": "Income series: 0→32000 @Dec 2037 fits sequence after 30000→0 @Dec 2031; monotone-style evolution across timestamps, reconcilable as recovery of income."
+    },
+    {
+      "id": 23,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Jun 23 2032 15:10:30): claim 'focus solely on financial success, prioritizing over personal well-being' vs candidate 'balance financial success with personal well-being' / 'balanced future' — opposite priority at identical timestamp."
+    },
+    {
+      "id": 24,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Feb 20 2026 21:19:41): claim 'isolation and lack of purpose due to decreased social interactions post-retirement' vs candidate 'belonging and purpose from increased social interactions post-retirement' — directly opposed at identical timestamp."
+    },
+    {
+      "id": 25,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (May 16 2037 21:31:48): claim 'experimenting with herbal tea blends' vs candidate identical-framed anecdote about 'smoothie ingredients' — mutually exclusive subject of the same anecdote at identical timestamp."
+    },
+    {
+      "id": 26,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (May 20 2031 15:19:37): claim says multiplayer strategy games enhance 'ability to work independently' vs candidates emphasizing collaboration/strategizing with others and switch to multiplayer 'due to collaborative nature' — opposite attribute at identical timestamp."
+    },
+    {
+      "id": 27,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Dec 15 2027 20:07:30): claim 'integrating traditional plant-based meals' vs candidate 'integrating innovative plant-based meals' — incompatible descriptor for the same clarificatory-motivation statement at identical timestamp."
+    },
+    {
+      "id": 28,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Mar 15, 2026): claim says social network is a source of stress/anxiety detracting from well-being; candidate says it is a source of strength/encouragement contributing to well-being. Mutually exclusive at identical timestamp."
+    },
+    {
+      "id": 29,
+      "relation": "CONSISTENT",
+      "reason": "Same ts (Jun 15, 2035) candidate states the mental health change to increased stress and elevated anxiety; claim 'Stable→Elevated Anxiety' is an entailed paraphrase."
+    },
+    {
+      "id": 30,
+      "relation": "CONSISTENT",
+      "reason": "Same ts (Dec 15, 2033) candidate: gratitude for expertise/collaboration from expanded network. Mentorship-opportunities framing is compatible paraphrase, not a conflict."
+    },
+    {
+      "id": 31,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Mar 04, 2028): claim says appreciation for classical Indian music; two candidates at same ts say fusion music / fusion Indian music. Classical vs fusion are mutually exclusive at identical timestamp."
+    },
+    {
+      "id": 32,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Aug 15, 2040): claim says anecdotes about homemade soups; candidate says canned foods, and another same-ts candidate discusses gourmet canned soups. Homemade vs canned are incompatible at identical timestamp."
+    },
+    {
+      "id": 33,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Jun 15, 2033): claim says surprise at culinary value of beach resorts; candidate says cultural value. All same-ts candidates are about cultural experiences, not culinary. Culinary vs cultural conflict at identical timestamp."
+    },
+    {
+      "id": 34,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Jul 17, 2034): claim says yoga beneficial for cardiovascular health; candidate says yoga beneficial for flexibility and mindfulness. Incompatible specific benefit at identical timestamp."
+    },
+    {
+      "id": 35,
+      "relation": "CONSISTENT",
+      "reason": "Candidates (Aug 2038) say she plans to share herbal tea insights in health workshops to inspire others; claim @Oct 2039 is a temporally-later compatible paraphrase/evolution."
+    },
+    {
+      "id": 36,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Sep 10, 2039): claim attributes focus to creating VR experiences for film history/preservation; candidate at same ts says delivering courses via digital platforms for global audience. VR pioneering is dated later (2041). Conflicting modality at identical timestamp."
+    },
+    {
+      "id": 37,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Jul 05, 2033): claim says health improvements had little to no impact on career/personal life; candidate says improved health positively influenced career and personal life. Direct opposite at identical timestamp."
+    },
+    {
+      "id": 38,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Nov 01, 2033): claim says industry updated political consulting→environmental advocacy; candidate says political consulting→political advocacy. Environmental vs political advocacy conflict at identical timestamp."
+    },
+    {
+      "id": 39,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Dec 31, 2032): claim says integrating culinary tours; multiple same-ts candidates say cultural and health tours. Culinary vs cultural/health are distinct values at identical timestamp."
+    },
+    {
+      "id": 40,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Apr 10, 2041): claim says commitment to focus solely on health before exploring any career; same-ts candidates say committed to exploring diverse career paths / seeking new career opportunities. Mutually exclusive at identical timestamp."
+    },
+    {
+      "id": 41,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Jan 10, 2036): claim says permanently remove classical music from Albi B&B; candidate says permanently remove electronic dance music. Different removed genre at identical timestamp."
+    },
+    {
+      "id": 42,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: claim says indulge in 'wine' at social gatherings; candidate says 'soda' (also two other same-ts candidates affirm soda). Mutually exclusive value for same attribute, identical timestamp — irreconcilable."
+    },
+    {
+      "id": 43,
+      "relation": "CONSISTENT",
+      "reason": "Career description as Senior Consultant at CloudTech Advisors @2027 is entailed/supported by same-ts candidates stating exactly that title and role, plus promotion candidate @2028."
+    },
+    {
+      "id": 44,
+      "relation": "CONSISTENT",
+      "reason": "'Becoming a physical therapist' resilience/self-care reflection is compatible with candidates establishing he is a (Senior) Physical Therapist; same-ts wellness-practices candidate aligns. Compatible paraphrase/evolution."
+    },
+    {
+      "id": 45,
+      "relation": "UNSUPPORTED",
+      "reason": "Optimism about 'increasing personal wealth' is not stated by any candidate (they cover social influence, heart health, personal projects). Plausible but ungrounded; no conflict."
+    },
+    {
+      "id": 46,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: claim updates sports preference Running->'Mountain biking'; candidate updates Running->'Trail running' (same ts, plus same-ts 'trail running' reflection). Incompatible target value at identical timestamp."
+    },
+    {
+      "id": 47,
+      "relation": "CONSISTENT",
+      "reason": "Evaluating impact of his educational programs on modern cinema @2032 is supported by candidates about his film-education programs and modernized classics in education. Compatible."
+    },
+    {
+      "id": 48,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: claim says 'high-speed tours' for global meal-planning insights; three same-ts candidates specify 'immersive travel experiences'/'immersive cultural experiences'. High-speed tours contradicts immersive at identical timestamp."
+    },
+    {
+      "id": 49,
+      "relation": "CONSISTENT",
+      "reason": "Claim is verbatim identical to candidate #1 (same ts) — direct match."
+    },
+    {
+      "id": 50,
+      "relation": "CONSISTENT",
+      "reason": "Herbal teas' calming/stress-relief benefits learned at a wellness/health context is affirmed by candidate (Aug 2038 seminar on herbal teas for stress relief). The same-ts spices variant differs but herbal-tea benefit is grounded elsewhere; default consistent."
+    },
+    {
+      "id": 51,
+      "relation": "CONTRADICTION",
+      "reason": "Claim explicitly states herbal tea valued 'primarily for health benefits, rather than its concentration-aiding properties', while two same-ts candidates assert he uses concentration-aiding herbal tea for focus enhancement/productivity. Direct negation at identical timestamp."
+    },
+    {
+      "id": 52,
+      "relation": "CONSISTENT",
+      "reason": "Excitement about participating in film festivals is strongly supported by multiple candidates; the 'rather than academic collaborations' contrast is not contradicted by any candidate. Compatible."
+    },
+    {
+      "id": 53,
+      "relation": "CONSISTENT",
+      "reason": "Increased social relationship with Emily Johnson and biotech/health insights is compatible with same-ts candidate stating relationships with Emily Johnson (and Oliver Smith) shaping his strategies."
+    },
+    {
+      "id": 54,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: claim attributes inspiring ideas/overcoming creative blocks to 'analytical reasoning', while same-ts candidate attributes that to 'creative motivation' and assigns analytical reasoning to structured problem-solving. Roles swapped, irreconcilable at identical timestamp."
+    },
+    {
+      "id": 55,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts: claim says Taylor expressed 'frustration' and 'concern about future expansion challenges', whereas same-ts candidate says 'satisfaction with the progress' and 'excitement about future expansion opportunities'. Opposite sentiment at identical timestamp."
+    },
+    {
+      "id": 56,
+      "relation": "CONTRADICTION",
+      "reason": "Same subject+attribute (monthly_income transition) and IDENTICAL ts Dec 05 2031; claim says 30000->5000 while candidate says 30000->0. Mutually exclusive target values at same instant."
+    },
+    {
+      "id": 57,
+      "relation": "CONSISTENT",
+      "reason": "Same ts candidate (board games decreased due to digital gaming) paraphrases the waning of traditional/card game interest due to digital; later candidates confirm the card->digital shift. Compatible."
+    },
+    {
+      "id": 58,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts Mar 10 2036 candidates all attribute emotional motivation to CULINARY/food exploration; claim reroutes the same emotional motivation to TRAVEL destinations. Incompatible object at same instant."
+    },
+    {
+      "id": 59,
+      "relation": "CONTRADICTION",
+      "reason": "Identical ts Nov 19 2026: candidate says keep an OPEN mind with compelling evidence; claim says keep a SKEPTICAL mind. Opposite stance, same instant."
+    },
+    {
+      "id": 60,
+      "relation": "CONSISTENT",
+      "reason": "Candidate at identical ts is the same statement about creative breakthroughs after a sabbatical year. Direct paraphrase."
+    },
+    {
+      "id": 61,
+      "relation": "CONSISTENT",
+      "reason": "Same ts candidate states recognition in BOTH consulting and financial industries; claim asserts the financial subset only. Compatible narrower restatement."
+    },
+    {
+      "id": 62,
+      "relation": "CONTRADICTION",
+      "reason": "Identical ts Feb 14 2041: candidate says desire to BALANCE personal enjoyment with professional responsibilities; claim says PRIORITIZE professional over personal. Mutually exclusive at same instant."
+    },
+    {
+      "id": 63,
+      "relation": "CONTRADICTION",
+      "reason": "All candidates at identical ts Mar 18 2031 specify MILD herbs (basil/thyme) chosen to avoid digestive discomfort; claim says STRONG spices. Incompatible at same instant."
+    },
+    {
+      "id": 64,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts Sep 18 2034 candidates: birdwatching used as practical means for MENTAL well-being/health; claim says PHYSICAL fitness. Same instrumental-motivation channel, incompatible goal, same instant."
+    },
+    {
+      "id": 65,
+      "relation": "CONTRADICTION",
+      "reason": "Identical ts May 06 2036: candidates say she appreciates/integrates extreme sports to INSPIRE her creative journey; claim says extreme sports have little to no impact. Opposite, same instant."
+    },
+    {
+      "id": 66,
+      "relation": "CONTRADICTION",
+      "reason": "Identical ts Apr 19 2027: candidate is about balancing excitement/comfort in MOVIE preferences; claim asserts TRAVEL preferences. Different domain, same instant, mutually exclusive."
+    },
+    {
+      "id": 67,
+      "relation": "UNSUPPORTED",
+      "reason": "Same ts candidate shares the cooking-shows/entertain anchor but frames AI-content as expressing identity via movie discussions; claim adds 'enhance culinary skills' which is not stated and does not strictly conflict (the two motives can coexist)."
+    },
+    {
+      "id": 68,
+      "relation": "CONSISTENT",
+      "reason": "A candidate explicitly lists reducing diabetes rates alongside improving heart health globally; claim's diabetes focus is part of her stated goals. Compatible (the same-ts heart-disease candidate is a sibling goal, not exclusive)."
+    },
+    {
+      "id": 69,
+      "relation": "CONTRADICTION",
+      "reason": "Identical ts Dec 01 2035: candidates describe growing influence in the general TECH community as a thought leader (cloud/AI); claim recasts it as the ENVIRONMENTAL tech community and sustainability leader. Different specialization at same instant."
+    },
+    {
+      "id": 70,
+      "relation": "CONTRADICTION",
+      "reason": "Same person, same event, same ts (Nov 25 2035 12:38:12) but claim says 'overwhelming support and ease' while candidate says 'challenges faced... resilience and adaptability' — mutually exclusive framing timestamps cannot reconcile."
+    },
+    {
+      "id": 71,
+      "relation": "CONTRADICTION",
+      "reason": "Identical ts (Jun 25 2028 23:55:27) and same subject+attribute (compensatory motivation to manage bloating): claim 'mindfulness techniques' vs candidate 'dietary knowledge' — incompatible value at same time."
+    },
+    {
+      "id": 72,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Jan 05 2035 15:16:47) and same transition (job_title from 'tech advisor'): claim destination 'chief technology officer' vs candidate 'founder and CEO' — incompatible."
+    },
+    {
+      "id": 73,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (May 20 2033 20:19:27): claim 'prioritizes logical/data-driven over empathetic' vs candidate 'aiming for empathetic interactions and companionship' — opposite priorities, reinforced by other companionship candidates."
+    },
+    {
+      "id": 74,
+      "relation": "CONSISTENT",
+      "reason": "Same ts; claim 'strong personal relationships' is a subset of candidate 'strong professional and personal relationships' — compatible."
+    },
+    {
+      "id": 75,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Aug 01 2033 08:27:01): claim 'outdated technology and conventional solutions' vs candidate 'AI-driven insights and innovative solutions' — directly opposite plan."
+    },
+    {
+      "id": 76,
+      "relation": "CONSISTENT",
+      "reason": "Same ts; claim 'leverage technology' is a subset of candidate 'leverage relationships and technology' — compatible."
+    },
+    {
+      "id": 77,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Feb 09 2033 09:26:31): claim 'technical expertise as key driver' vs candidate 'creative motivation as key driver' — incompatible key driver attribution."
+    },
+    {
+      "id": 78,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Feb 25 2030 10:31:09): claim 'fulfillment from virtual simulations, reducing interest in real-world' vs candidate 'fulfillment from real-world, reducing interest in virtual' plus reinforcing real-world-shift candidates — reversed."
+    },
+    {
+      "id": 79,
+      "relation": "CONTRADICTION",
+      "reason": "Same ts (Dec 01 2031 22:04:45): claim names friends 'Linda and Mark' vs candidate 'Linda and Joseph'; all other candidates consistently say Joseph — Mark is an incompatible identity."
+    },
+    {
+      "id": 80,
+      "relation": "CONSISTENT",
+      "reason": "All candidates confirm Sharon Brown's exploratory motivation and philosophical approaches for plans/wellness; claim paraphrases this evolving trait."
+    },
+    {
+      "id": 81,
+      "relation": "CONSISTENT",
+      "reason": "Same ts; candidate states she dislikes high-maintenance pets, and a sibling fact gives an analogous time/schedule reason — claim's added reason is a compatible elaboration."
+    },
+    {
+      "id": 82,
+      "relation": "CONSISTENT",
+      "reason": "Same ts; candidate 'sports preference updated, now open to extreme sports after watching a documentary' entails the claim about watching the documentary and sparked interest."
+    },
+    {
+      "id": 83,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm Williams Daniel integrates historical authenticity/culinary themes/accuracy into his films; claim is a compatible paraphrase/elaboration."
+    },
+    {
+      "id": 84,
+      "relation": "CONSISTENT",
+      "reason": "Candidates directly affirm strategic alliances with diverse partners and lessons from past collaborations driving rewarding outcomes."
+    },
+    {
+      "id": 85,
+      "relation": "CONSISTENT",
+      "reason": "Candidates at same/earlier ts state the calming effect of fish and plan to incorporate into health workshops for a tranquil environment."
+    },
+    {
+      "id": 86,
+      "relation": "CONSISTENT",
+      "reason": "Candidates same ts: adventure cruises to recharge/gain inspiration for mentoring; travel preference evolved to include adventure cruises."
+    },
+    {
+      "id": 87,
+      "relation": "CONSISTENT",
+      "reason": "Candidates support slow jazz for relaxation/balance and craving serene escape amid an energetic lifestyle."
+    },
+    {
+      "id": 88,
+      "relation": "CONSISTENT",
+      "reason": "Candidates same ts describe discovery/excitement about a new health-benefit herbal tea; sampling a new blend is compatible, not conflicting."
+    },
+    {
+      "id": 89,
+      "relation": "CONSISTENT",
+      "reason": "Candidates same ts: optimism strategizing Indian cinema promotion via enriched/innovative critique styles to engage audiences."
+    },
+    {
+      "id": 90,
+      "relation": "CONSISTENT",
+      "reason": "Candidate same ts directly: 'Books I like to read: Self-help books'; claim restates with reason of personal growth."
+    },
+    {
+      "id": 91,
+      "relation": "CONSISTENT",
+      "reason": "Candidates same ts confirm the gaming expo on Aug 21 2031 led him to reconsider first-person shooters."
+    },
+    {
+      "id": 92,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm a strategic beverage-preference change; 'reluctance' is a minor embellishment compatible with the modification, no conflict."
+    },
+    {
+      "id": 93,
+      "relation": "CONSISTENT",
+      "reason": "Candidate same ts: Donna set specific actionable goals for the coming year; reflecting on growth is entailed."
+    },
+    {
+      "id": 94,
+      "relation": "CONSISTENT",
+      "reason": "Candidates repeatedly affirm optimism about future opportunities centered on sustainability and innovation in her career."
+    },
+    {
+      "id": 95,
+      "relation": "CONSISTENT",
+      "reason": "A candidate at the same ts directly states 'Pets I like Cats' with reason; both Cats and Dogs coexist in the candidate set as stored truths, so claim is entailed by a candidate."
+    },
+    {
+      "id": 96,
+      "relation": "CONSISTENT",
+      "reason": "Later candidate is a near-identical superset; same-ts candidate echoes curiosity about new opportunities and consulting strategies."
+    },
+    {
+      "id": 97,
+      "relation": "CONSISTENT",
+      "reason": "Candidates support ambitious market-penetration targets and revolutionizing property management globally; temporally consistent planning."
+    },
+    {
+      "id": 98,
+      "relation": "CONSISTENT",
+      "reason": "Hard sci-fi novels aligning with AI/predictive-analytics goals is directly stated by same-ts candidates."
+    },
+    {
+      "id": 99,
+      "relation": "CONSISTENT",
+      "reason": "Relationships strengthening resolve/enriching life paraphrases candidates about social network as source of strength; same ts."
+    },
+    {
+      "id": 100,
+      "relation": "CONSISTENT",
+      "reason": "Pride in leadership boosting relative's political standing matches candidate with identical ts."
+    },
+    {
+      "id": 101,
+      "relation": "CONSISTENT",
+      "reason": "Balancing personal interests with community/social commitments aligns with candidate stating he balances personal interests with social commitments."
+    },
+    {
+      "id": 102,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate confirms exact dislike of uncomfortable shoes with reason."
+    },
+    {
+      "id": 103,
+      "relation": "CONSISTENT",
+      "reason": "Life goal (10,000 hospitals worldwide) matches same-ts target metrics candidate."
+    },
+    {
+      "id": 104,
+      "relation": "CONSISTENT",
+      "reason": "Gratitude for support from friends Linda and Joseph stated by multiple candidates."
+    },
+    {
+      "id": 105,
+      "relation": "CONSISTENT",
+      "reason": "Optimism/curiosity adapting evolving preferences (sports/clothing) is corroborated across candidates as evolution."
+    },
+    {
+      "id": 106,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate states he identified promising ventures in emerging tech markets."
+    },
+    {
+      "id": 107,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate confirms dislike of self-help books with reason; later deletion is a later state."
+    },
+    {
+      "id": 108,
+      "relation": "CONSISTENT",
+      "reason": "Planning tech investments for passive income/financial growth matches several same-ts candidates."
+    },
+    {
+      "id": 109,
+      "relation": "CONSISTENT",
+      "reason": "Satisfaction with financial growth via Albi B&B investments matches same-ts career-update candidate."
+    },
+    {
+      "id": 110,
+      "relation": "CONSISTENT",
+      "reason": "Integrating modern music without compromising historical fidelity matches same-ts candidate on balancing authenticity with modern creativity."
+    },
+    {
+      "id": 111,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate confirms liking psychology books with reason; later shift to cognitive psychology is evolution."
+    },
+    {
+      "id": 112,
+      "relation": "CONSISTENT",
+      "reason": "Recurring well-being/balance theme matches candidates, including same-ts entries."
+    },
+    {
+      "id": 113,
+      "relation": "UNSUPPORTED",
+      "reason": "No candidate names employer 'Senior Care Therapy Center'; candidates only give his PT title and community-center collaboration."
+    },
+    {
+      "id": 114,
+      "relation": "CONSISTENT",
+      "reason": "Job-title evolution fits the timestamp sequence (Director of Educational Outreach 2033 -> Founder and Curator 2035 -> Award-Winning 2037)."
+    },
+    {
+      "id": 115,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidates assert the same excitement about innovative narrative puzzle games."
+    },
+    {
+      "id": 116,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate states ambient music preference deleted for ineffectiveness during coding; entailed."
+    },
+    {
+      "id": 117,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate confirms attendance at sustainable fashion workshop influencing recycled-material preference."
+    },
+    {
+      "id": 118,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidates confirm shift from documentaries to fiction for relaxation."
+    },
+    {
+      "id": 119,
+      "relation": "UNSUPPORTED",
+      "reason": "Relaxation theme is present but no candidate mentions joining a local community group; specific embellishment, no conflict."
+    },
+    {
+      "id": 120,
+      "relation": "CONSISTENT",
+      "reason": "Candidate explicitly records update from 'Physical Therapist' to 'Senior Physical Therapist' in Oct 2025; the Sep 2025 claim is the earlier true state."
+    },
+    {
+      "id": 121,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidates affirm continuous learning reflected in evolving movie preferences."
+    },
+    {
+      "id": 122,
+      "relation": "CONSISTENT",
+      "reason": "Candidates confirm friends Michael and Robert as a source of support/inspiration in technology and social causes."
+    },
+    {
+      "id": 123,
+      "relation": "CONSISTENT",
+      "reason": "Candidates affirm balancing professional responsibilities with well-being via social network/friends and colleagues."
+    },
+    {
+      "id": 124,
+      "relation": "CONTRADICTION",
+      "reason": "Claim casts Emily Chan as a mentee seeking advice, but a near-contemporary candidate (Jan 2028) states Emily Chan is a mentor offering career-development advice; same person+role, mutually exclusive, timestamps cannot reconcile."
+    },
+    {
+      "id": 125,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidates confirm reassessing career and exploring independent political advocacy after the layoff."
+    },
+    {
+      "id": 126,
+      "relation": "CONSISTENT",
+      "reason": "General lifestyle/guest-experience aim compatible with all candidates describing engaging guest experiences at Albi B&B; no conflicting value."
+    },
+    {
+      "id": 127,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidates (live country band event, reassessing music prefs on Feb 22 2029) directly support the evolution removing dislike for country."
+    },
+    {
+      "id": 128,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidates state the family-gathering experience and shift to multiplayer puzzle games; claim is entailed."
+    },
+    {
+      "id": 129,
+      "relation": "CONSISTENT",
+      "reason": "Satisfaction with flexible work helping health management is corroborated by Dec 2027 freelance-flexibility and supportive-environment candidates."
+    },
+    {
+      "id": 130,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate expresses gratitude to friend for introducing classical music with focus/relaxation benefits; directly supported."
+    },
+    {
+      "id": 131,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate lists Green tea exactly; antioxidant/refreshing reasoning matches later green-tea candidates."
+    },
+    {
+      "id": 132,
+      "relation": "CONSISTENT",
+      "reason": "Savings 250k->320k @2028 is monotone evolution sitting between 207k->250k @2026 and 380k @2030; reconcilable as a sequence."
+    },
+    {
+      "id": 133,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate describes shifting travel focus to emerging global tech areas; claim paraphrases it."
+    },
+    {
+      "id": 134,
+      "relation": "UNSUPPORTED",
+      "reason": "Specific Mar 2026 advice-seeking on prioritizing goals/time with digital tools is not stated by any candidate (all dated 2033-2036); plausible but ungrounded, no conflict."
+    },
+    {
+      "id": 135,
+      "relation": "CONSISTENT",
+      "reason": "non-profit->social entrepreneurship @2035 continues the chain finance->social impact (2027)->non-profit (2033); temporal evolution."
+    },
+    {
+      "id": 136,
+      "relation": "CONSISTENT",
+      "reason": "Sarah and Karen support is corroborated by multiple candidates; Anthony is an extra name but does not conflict, default consistent."
+    },
+    {
+      "id": 137,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidates describe improving educational content with excitement and anxiety; claim is entailed."
+    },
+    {
+      "id": 138,
+      "relation": "CONSISTENT",
+      "reason": "Near-identical candidates repeatedly express gratitude for friends/colleagues support crucial to career; claim paraphrases them."
+    },
+    {
+      "id": 139,
+      "relation": "CONSISTENT",
+      "reason": "Candidates from 2034 describe integrating historical appreciation into daily life and cultural aspects of everyday items; claim paraphrases this."
+    },
+    {
+      "id": 140,
+      "relation": "CONSISTENT",
+      "reason": "Pushing creative boundaries/new projects paraphrases the exploratory motivation (testing boundaries, curiosity, expanding artistic horizons) repeatedly affirmed in candidates."
+    },
+    {
+      "id": 141,
+      "relation": "CONSISTENT",
+      "reason": "Evolving taste + adaptability + cultural exploration is entailed by near-same-ts candidate on evolving food preferences reflecting cultural exploration and openness."
+    },
+    {
+      "id": 142,
+      "relation": "CONSISTENT",
+      "reason": "Leveraging a financial boost to inspire/support others is compatible with same-ts plan to use salary increase for health strategies and later candidates on inspiring others toward wellness."
+    },
+    {
+      "id": 143,
+      "relation": "CONSISTENT",
+      "reason": "Balancing expanded responsibilities with well-being via team/social-network support matches candidates on social-network support during career growth and balancing professional/personal life."
+    },
+    {
+      "id": 144,
+      "relation": "CONSISTENT",
+      "reason": "Philosophical/character-complexity reflection showing cognitive curiosity matches same-ts candidate on sci-fi rich-character narratives reflecting cognitive curiosity."
+    },
+    {
+      "id": 145,
+      "relation": "CONSISTENT",
+      "reason": "Stepping away from strategy games for emotional support/companionship is entailed by same-ts candidates (stepped away, emotional motivation seeking empathetic support)."
+    },
+    {
+      "id": 146,
+      "relation": "CONSISTENT",
+      "reason": "Anecdotes about community events boosting local presence paraphrases candidates on community engagement, partnerships and ties driving Albi B&B's success."
+    },
+    {
+      "id": 147,
+      "relation": "CONSISTENT",
+      "reason": "Same-ts candidate states dislike of processed foods; the added reason (additives/preservatives trigger bloating) is consistent with the bloating-driven dietary theme."
+    },
+    {
+      "id": 148,
+      "relation": "CONSISTENT",
+      "reason": "Beverage modification reflecting commitment to healthy lifestyle is compatible with candidates on sustainable/natural/ethical beverage choices and nutritional focus."
+    },
+    {
+      "id": 149,
+      "relation": "CONSISTENT",
+      "reason": "Networking anecdotes emphasizing lasting relationships aligned to professional aspirations directly matches candidates on building genuine relationships aligning with aspirations."
+    },
+    {
+      "id": 150,
+      "relation": "CONSISTENT",
+      "reason": "Anecdotes about literary favorites and revisiting them affecting current projects matches same-ts candidate on curiosity to revisit classic literature."
+    },
+    {
+      "id": 151,
+      "relation": "UNSUPPORTED",
+      "reason": "None of the candidates state or imply parent status (they cover partner, name, mental/physical health, child status); plausible but ungrounded, no conflict."
+    },
+    {
+      "id": 152,
+      "relation": "CONSISTENT",
+      "reason": "Determination to succeed in new role driven by belief in AI's potential nearly duplicates candidate about determination to succeed at Innovative AI Corp driven by AI's transformative potential."
+    },
+    {
+      "id": 153,
+      "relation": "CONSISTENT",
+      "reason": "Using Platform Director role for social signaling/identity/attention matches candidates affirming her social motivation; the awareness of possible decreased engagement is an added nuance, not a conflict."
+    },
+    {
+      "id": 154,
+      "relation": "CONSISTENT",
+      "reason": "Claim 'Anxiety and stress' @Jul 15 2027 06:54:55 matches candidate at identical ts 'changed from Anxious to Stressed' — same subject+attribute, same state, paraphrase."
+    },
+    {
+      "id": 155,
+      "relation": "CONSISTENT",
+      "reason": "Claim @Jun 06 2030 (documentaries crucial for health journey, balancing entertainment/education) is supported by same-ts candidate 'appreciation deepened due to practical insights into health and wellness' plus candidates on educational/entertainment balance."
+    },
+    {
+      "id": 156,
+      "relation": "CONSISTENT",
+      "reason": "Claim @Jun 03 2029 (cognitive curiosity, philosophical stance on clothing, new preferences) is near-verbatim of the Oct 27 2033 candidate and compatible with the same-ts cultural-festival/Ukrainian-clothing candidate; no incompatible value."
+    },
+    {
+      "id": 157,
+      "relation": "CONSISTENT",
+      "reason": "Claim @Aug 16 2040 (workshop inspired shift to creative puzzle games) entailed by same-ts candidates: preference evolved to creative puzzle games and reflection on balancing structure with creative freedom."
+    },
+    {
+      "id": 158,
+      "relation": "CONSISTENT",
+      "reason": "Claim @Sep 07 2025 (likes steamed vegetables) exactly matches the same-ts candidate stating she likes steamed vegetables."
+    },
+    {
+      "id": 159,
+      "relation": "CONSISTENT",
+      "reason": "Claim @Jul 01 2041 (gratitude for expanded network providing resources/support, boosts confidence) paraphrases and is supported by multiple candidates expressing gratitude for her expanding network and its confidence/career support."
+    }
+  ]
+}

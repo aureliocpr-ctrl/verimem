@@ -1,0 +1,407 @@
+{
+  "n_purity": 7,
+  "n_cohesion": 7,
+  "matrix": [
+    {
+      "purity": 0.05,
+      "cohesion": 0.02,
+      "count": 12,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_cycle215-224",
+        "emerging_skill_loop-a5",
+        "emerging_skill_loop56-clp"
+      ]
+    },
+    {
+      "purity": 0.05,
+      "cohesion": 0.05,
+      "count": 12,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_cycle215-224",
+        "emerging_skill_loop-a5",
+        "emerging_skill_loop56-clp"
+      ]
+    },
+    {
+      "purity": 0.05,
+      "cohesion": 0.08,
+      "count": 12,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_cycle215-224",
+        "emerging_skill_loop-a5",
+        "emerging_skill_loop56-clp"
+      ]
+    },
+    {
+      "purity": 0.05,
+      "cohesion": 0.1,
+      "count": 12,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_cycle215-224",
+        "emerging_skill_loop-a5",
+        "emerging_skill_loop56-clp"
+      ]
+    },
+    {
+      "purity": 0.05,
+      "cohesion": 0.15,
+      "count": 12,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_cycle215-224",
+        "emerging_skill_loop-a5",
+        "emerging_skill_loop56-clp"
+      ]
+    },
+    {
+      "purity": 0.05,
+      "cohesion": 0.2,
+      "count": 12,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_cycle215-224",
+        "emerging_skill_loop-a5",
+        "emerging_skill_loop56-clp"
+      ]
+    },
+    {
+      "purity": 0.05,
+      "cohesion": 0.3,
+      "count": 12,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_cycle215-224",
+        "emerging_skill_loop-a5",
+        "emerging_skill_loop56-clp"
+      ]
+    },
+    {
+      "purity": 0.1,
+      "cohesion": 0.02,
+      "count": 9,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_loop-a5",
+        "emerging_skill_master-fact",
+        "emerging_skill_recovery3-v2"
+      ]
+    },
+    {
+      "purity": 0.1,
+      "cohesion": 0.05,
+      "count": 9,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_loop-a5",
+        "emerging_skill_master-fact",
+        "emerging_skill_recovery3-v2"
+      ]
+    },
+    {
+      "purity": 0.1,
+      "cohesion": 0.08,
+      "count": 9,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_loop-a5",
+        "emerging_skill_master-fact",
+        "emerging_skill_recovery3-v2"
+      ]
+    },
+    {
+      "purity": 0.1,
+      "cohesion": 0.1,
+      "count": 9,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_loop-a5",
+        "emerging_skill_master-fact",
+        "emerging_skill_recovery3-v2"
+      ]
+    },
+    {
+      "purity": 0.1,
+      "cohesion": 0.15,
+      "count": 9,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_loop-a5",
+        "emerging_skill_master-fact",
+        "emerging_skill_recovery3-v2"
+      ]
+    },
+    {
+      "purity": 0.1,
+      "cohesion": 0.2,
+      "count": 9,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_loop-a5",
+        "emerging_skill_master-fact",
+        "emerging_skill_recovery3-v2"
+      ]
+    },
+    {
+      "purity": 0.1,
+      "cohesion": 0.3,
+      "count": 9,
+      "names": [
+        "emerging_skill_clp-tui",
+        "emerging_skill_cycle-177",
+        "emerging_skill_loop-a5",
+        "emerging_skill_master-fact",
+        "emerging_skill_recovery3-v2"
+      ]
+    },
+    {
+      "purity": 0.15,
+      "cohesion": 0.02,
+      "count": 3,
+      "names": [
+        "emerging_skill_master-fact"
+      ]
+    },
+    {
+      "purity": 0.15,
+      "cohesion": 0.05,
+      "count": 3,
+      "names": [
+        "emerging_skill_master-fact"
+      ]
+    },
+    {
+      "purity": 0.15,
+      "cohesion": 0.08,
+      "count": 3,
+      "names": [
+        "emerging_skill_master-fact"
+      ]
+    },
+    {
+      "purity": 0.15,
+      "cohesion": 0.1,
+      "count": 3,
+      "names": [
+        "emerging_skill_master-fact"
+      ]
+    },
+    {
+      "purity": 0.15,
+      "cohesion": 0.15,
+      "count": 3,
+      "names": [
+        "emerging_skill_master-fact"
+      ]
+    },
+    {
+      "purity": 0.15,
+      "cohesion": 0.2,
+      "count": 3,
+      "names": [
+        "emerging_skill_master-fact"
+      ]
+    },
+    {
+      "purity": 0.15,
+      "cohesion": 0.3,
+      "count": 3,
+      "names": [
+        "emerging_skill_master-fact"
+      ]
+    },
+    {
+      "purity": 0.2,
+      "cohesion": 0.02,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.2,
+      "cohesion": 0.05,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.2,
+      "cohesion": 0.08,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.2,
+      "cohesion": 0.1,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.2,
+      "cohesion": 0.15,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.2,
+      "cohesion": 0.2,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.2,
+      "cohesion": 0.3,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.3,
+      "cohesion": 0.02,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.3,
+      "cohesion": 0.05,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.3,
+      "cohesion": 0.08,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.3,
+      "cohesion": 0.1,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.3,
+      "cohesion": 0.15,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.3,
+      "cohesion": 0.2,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.3,
+      "cohesion": 0.3,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.4,
+      "cohesion": 0.02,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.4,
+      "cohesion": 0.05,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.4,
+      "cohesion": 0.08,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.4,
+      "cohesion": 0.1,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.4,
+      "cohesion": 0.15,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.4,
+      "cohesion": 0.2,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.4,
+      "cohesion": 0.3,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.6,
+      "cohesion": 0.02,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.6,
+      "cohesion": 0.05,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.6,
+      "cohesion": 0.08,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.6,
+      "cohesion": 0.1,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.6,
+      "cohesion": 0.15,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.6,
+      "cohesion": 0.2,
+      "count": 0,
+      "names": []
+    },
+    {
+      "purity": 0.6,
+      "cohesion": 0.3,
+      "count": 0,
+      "names": []
+    }
+  ],
+  "first_activation_point": {
+    "purity": 0.15,
+    "cohesion": 0.3,
+    "count": 3,
+    "names": [
+      "emerging_skill_master-fact"
+    ]
+  },
+  "elapsed_s": 29.06840705871582
+}

@@ -1,0 +1,84 @@
+{
+  "target_size": 1000,
+  "n_subsamples": 5,
+  "n_seeds": 10,
+  "k_writes": 50,
+  "subsamples": [
+    {
+      "sub_seed": 1,
+      "baseline": 0.04867000263365817,
+      "treatment": 0.09800192505080571,
+      "effect": 0.04933192241714754,
+      "ci": [
+        0.01706837859075918,
+        0.08334483984745515
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 1350,
+      "n_facts_post": 1400
+    },
+    {
+      "sub_seed": 2,
+      "baseline": 0.09168276100509674,
+      "treatment": 0.12082275642290663,
+      "effect": 0.029139995417809886,
+      "ci": [
+        -0.018233344828355726,
+        0.07606802494759118
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 1350,
+      "n_facts_post": 1400
+    },
+    {
+      "sub_seed": 3,
+      "baseline": 0.10861245437259792,
+      "treatment": 0.10051934380822827,
+      "effect": -0.008093110564369649,
+      "ci": [
+        -0.04719431742957653,
+        0.03100809630083724
+      ],
+      "verdict": "H0_supported",
+      "n_facts_pre": 1350,
+      "n_facts_post": 1400
+    },
+    {
+      "sub_seed": 4,
+      "baseline": 0.06373117033603709,
+      "treatment": 0.11628629641360014,
+      "effect": 0.05255512607756305,
+      "ci": [
+        0.020873470548349232,
+        0.0825612646549044
+      ],
+      "verdict": "H1_supported",
+      "n_facts_pre": 1350,
+      "n_facts_post": 1400
+    },
+    {
+      "sub_seed": 5,
+      "baseline": 0.06879760227804342,
+      "treatment": 0.16802210032956624,
+      "effect": 0.09922449805152282,
+      "ci": [
+        0.05440016353262378,
+        0.14807048990352786
+      ],
+      "verdict": "H1_supported",
+      "n_facts_pre": 1350,
+      "n_facts_post": 1400
+    }
+  ],
+  "pearson_corr_baseline_effect": -0.696241887662348,
+  "effect_range": [
+    -0.008093110564369649,
+    0.09922449805152282
+  ],
+  "baseline_range": [
+    0.04867000263365817,
+    0.10861245437259792
+  ],
+  "verdict_hd": "inconclusive",
+  "elapsed_s": 11.891114950180054
+}

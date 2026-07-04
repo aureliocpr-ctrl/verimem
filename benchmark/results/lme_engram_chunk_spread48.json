@@ -1,0 +1,382 @@
+{
+  "n": 48,
+  "n_correct": 30,
+  "n_errors": 0,
+  "accuracy": 0.625,
+  "per_category": {
+    "knowledge-update": {
+      "n": 7,
+      "accuracy": 0.7143
+    },
+    "multi-session": {
+      "n": 12,
+      "accuracy": 0.5833
+    },
+    "single-session-assistant": {
+      "n": 6,
+      "accuracy": 0.6667
+    },
+    "single-session-preference": {
+      "n": 3,
+      "accuracy": 0.6667
+    },
+    "single-session-user": {
+      "n": 7,
+      "accuracy": 1.0
+    },
+    "temporal-reasoning": {
+      "n": 13,
+      "accuracy": 0.3846
+    }
+  },
+  "details": [
+    {
+      "id": "e47becba",
+      "category": "single-session-user",
+      "predicted": "Business Administration.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7527f7e2",
+      "category": "single-session-user",
+      "predicted": "$800",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8ebdbe50",
+      "category": "single-session-user",
+      "predicted": "Data Science certification.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "25e5aa4f",
+      "category": "single-session-user",
+      "predicted": "UCLA",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "bc8a6e93",
+      "category": "single-session-user",
+      "predicted": "Lemon blueberry cake.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "311778f1",
+      "category": "single-session-user",
+      "predicted": "10 hours.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0862e8bf_abs",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e831120c",
+      "category": "multi-session",
+      "predicted": "MCU: 2 weeks. Star Wars main films: 1 week and a half.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "28dc39ac",
+      "category": "multi-session",
+      "predicted": "Dal contesto:\n- Assassin's Creed Odyssey: 70 ore\n- Celeste: 10 ore\n- The Last of Us Part II: 30 ore (hard) + 25 ore (normal) = 55 ore (due playthrough menzionati)\n\n**Totale: 135 ore**",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_2ba83207",
+      "category": "multi-session",
+      "predicted": "Thrive Market ($150).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9d25d4e0",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "10d9b85a",
+      "category": "multi-session",
+      "predicted": "2",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "80ec1f4f_abs",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "195a1a1b",
+      "category": "single-session-preference",
+      "predicted": "Reading, meditation, deep breathing exercises, yoga or stretching, listening to soothing music.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "95228167",
+      "category": "single-session-preference",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "07b6f563",
+      "category": "single-session-preference",
+      "predicted": "Based on the context, here are accessories mentioned: power banks (Anker, Mophie, Jackery, EcoFlow, Aukey, Romoss, Xiaomi, EC Technology, RavPower, Auromars), and a phone wallet case (mentioned for iPhone 13 Pro).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e6041065",
+      "category": "multi-session",
+      "predicted": "40% (2 out of 5 pairs).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e25c3b8d",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "77eafa52",
+      "category": "multi-session",
+      "predicted": "$300 (from $2,500 to $2,800).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "bb7c3b45",
+      "category": "multi-session",
+      "predicted": "$300.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "157a136e",
+      "category": "multi-session",
+      "predicted": "43 anni (75 − 32).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "87f22b4a",
+      "category": "multi-session",
+      "predicted": "$120 (40 dozen × $3/dozen).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_f49edff3",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_e072b769",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_7abb270c",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_4ef30696",
+      "category": "temporal-reasoning",
+      "predicted": "0",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_af6db32f",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_e061b84g",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_fa19884d",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_76048e76",
+      "category": "temporal-reasoning",
+      "predicted": "The bike (repaired in mid-February), then the car (washed Monday, February 27th).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_6ed717ea",
+      "category": "temporal-reasoning",
+      "predicted": "Le training pads di Luna (circa un mese fa), il dog bed di Max è stato preso 3 settimane fa.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_483dd43c",
+      "category": "temporal-reasoning",
+      "predicted": "Game of Thrones (started about a month ago, before finishing The Crown season 3).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "d01c6aa8",
+      "category": "temporal-reasoning",
+      "predicted": "27.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6613b389",
+      "category": "temporal-reasoning",
+      "predicted": "Rachel got engaged on May 15th; the anniversary is July 22nd — circa **2 mesi** prima.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_93159ced_abs",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "71315a70",
+      "category": "knowledge-update",
+      "predicted": "10-12 hours.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "08e075c7",
+      "category": "knowledge-update",
+      "predicted": "9 months.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "c4ea545c",
+      "category": "knowledge-update",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8fb83627",
+      "category": "knowledge-update",
+      "predicted": "5",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "50635ada",
+      "category": "knowledge-update",
+      "predicted": "Premier Silver.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "06db6396",
+      "category": "knowledge-update",
+      "predicted": "5",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0977f2af",
+      "category": "knowledge-update",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "89527b6b",
+      "category": "single-session-assistant",
+      "predicted": "Blue.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "dc439ea3",
+      "category": "single-session-assistant",
+      "predicted": "Hoop Dance.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "70b3e69b",
+      "category": "single-session-assistant",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "e982271f",
+      "category": "single-session-assistant",
+      "predicted": "Revolution Hall",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "561fabcd",
+      "category": "single-session-assistant",
+      "predicted": "Fissionator",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "778164c6",
+      "category": "single-session-assistant",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    }
+  ],
+  "bench": "longmemeval",
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s.json",
+  "k": 10,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": true,
+  "extract": false,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

@@ -1,0 +1,252 @@
+{
+  "n": 30,
+  "n_correct": 24,
+  "n_errors": 0,
+  "accuracy": 0.8,
+  "per_category": {
+    "1": {
+      "n": 3,
+      "accuracy": 0.6667
+    },
+    "2": {
+      "n": 5,
+      "accuracy": 0.6
+    },
+    "3": {
+      "n": 2,
+      "accuracy": 0.5
+    },
+    "4": {
+      "n": 10,
+      "accuracy": 0.8
+    },
+    "5": {
+      "n": 10,
+      "accuracy": 1.0
+    }
+  },
+  "details": [
+    {
+      "id": "0:82",
+      "category": "4",
+      "predicted": "Mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:194",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:86",
+      "category": "5",
+      "predicted": "Gina is not looking for flooring — it's Jon who wants Marley flooring for his dance studio.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:87",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:143",
+      "category": "4",
+      "predicted": "Coco",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:33",
+      "category": "2",
+      "predicted": "August 14, 2022.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:80",
+      "category": "1",
+      "predicted": "5 (first tournament January 2022, second May 2022, third June 2022, fourth July 2022, fifth/Valorant November 2022). Plus an international tournament in August 2022 — total: **6**.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:124",
+      "category": "4",
+      "predicted": "Gaming party (two weekends after June 3, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:236",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:31",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:72",
+      "category": "4",
+      "predicted": "Shooting guard.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:104",
+      "category": "4",
+      "predicted": "Sage.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:219",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:238",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:34",
+      "category": "2",
+      "predicted": "3 months (July 2023 → October 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:48",
+      "category": "1",
+      "predicted": "Family members.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:37",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:109",
+      "category": "4",
+      "predicted": "The puppy had a routine examination and was vaccinated to prevent catching the seasonal canine disease.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:200",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:205",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:19",
+      "category": "3",
+      "predicted": "Basandomi esclusivamente sul contesto esplicito:\n\n**Evan** direbbe: procedi a piccoli passi, mantieni obiettivi concreti, circondati di persone che ti supportano, abbraccia il percorso anche quando è imprevedibile, e inizia la giornata attivamente.\n\n**Sam** direbbe: sii adattabile quando incontri ostacoli, cerca alternative (es. esercizi a basso impatto), e vai avanti un passo alla volta.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:51",
+      "category": "3",
+      "predicted": "**Challenges:** weight flagged as serious health risk by doctor (Oct 8), inconsistency reaching fitness goals (Nov 21), general difficulty coping with health struggles (Dec 17).\n\n**How he addresses them:** adopts motivational quotes (\"progress > perfection\", Aug 13), starts diet + exercise routine (Aug 27), uses pop culture inspiration (The Godfather, Jan 10), plans to exercise with a partner (Oct 17), and eventually takes friends on a hiking trip (Dec 31).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:113",
+      "category": "4",
+      "predicted": "Painting (watercolor painting) and hiking.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:143",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:41",
+      "category": "1",
+      "predicted": "Dave's dad (working on cars together).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:44",
+      "category": "2",
+      "predicted": "October 3, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:77",
+      "category": "4",
+      "predicted": "A great reminder of why he keeps hustling as a musician (the item he got from another artist as a gift).\n\nWait — re-reading: the context says \"I got it from another artist as a gift - it's a great reminder of why I keep hustling as a musician!\" but doesn't specify what \"it\" is explicitly in that message. However, from the August 31 messages, Calvin discusses a customized item with a shiny finish and an octopus design (custom made by his Japanese artist friend). But the gift from \"another artist\" referenced on May 1 is not explicitly named.\n\nNO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:98",
+      "category": "4",
+      "predicted": "Everyone sang along — it was a magical moment.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:195",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:200",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 30,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": true,
+  "extract": false,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

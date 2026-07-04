@@ -1,0 +1,737 @@
+{
+  "n": 100,
+  "n_correct": 59,
+  "n_errors": 0,
+  "accuracy": 0.59,
+  "per_category": {
+    "1": {
+      "n": 41,
+      "accuracy": 0.4878
+    },
+    "2": {
+      "n": 43,
+      "accuracy": 0.7209
+    },
+    "3": {
+      "n": 14,
+      "accuracy": 0.4286
+    },
+    "4": {
+      "n": 2,
+      "accuracy": 1.0
+    }
+  },
+  "details": [
+    {
+      "id": "0:0",
+      "category": "2",
+      "predicted": "May 7, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:1",
+      "category": "2",
+      "predicted": "May 8, 2023.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "0:2",
+      "category": "3",
+      "predicted": "Counseling and mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:3",
+      "category": "1",
+      "predicted": "Counseling and mental health career options.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "0:4",
+      "category": "1",
+      "predicted": "Caroline is a transgender woman.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:5",
+      "category": "2",
+      "predicted": "May 20, 2023 (last Saturday before May 25, 2023).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "0:6",
+      "category": "2",
+      "predicted": "June 2023 (she mentioned it in May 2023 as \"next month\").",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:7",
+      "category": "1",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "0:8",
+      "category": "2",
+      "predicted": "June 2, 2023 (the event was \"last week\" relative to June 9, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:9",
+      "category": "2",
+      "predicted": "June 2, 2023 (she mentioned \"a pic from when we met up last week\" on June 9, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:0",
+      "category": "2",
+      "predicted": "January 20, 2023.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:1",
+      "category": "2",
+      "predicted": "January 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:2",
+      "category": "4",
+      "predicted": "Dancing.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:3",
+      "category": "1",
+      "predicted": "Both lost their jobs and started their own businesses; both have a passion for dance.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:4",
+      "category": "4",
+      "predicted": "Jon lost his job as a banker and decided to pursue his lifelong passion for dancing, wanting to share the joy it brings him with others by teaching.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:5",
+      "category": "1",
+      "predicted": "Downtown location, natural light, good size, quality Marley flooring with enough bounce, and ideally by the water.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:6",
+      "category": "2",
+      "predicted": "February 2023 (next month from January 20, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:7",
+      "category": "2",
+      "predicted": "2:32 pm on 29 January, 2023",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:8",
+      "category": "2",
+      "predicted": "28 January 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:9",
+      "category": "1",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:0",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:1",
+      "category": "2",
+      "predicted": "21 December 2022.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:2",
+      "category": "1",
+      "predicted": "Kickboxing.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:3",
+      "category": "1",
+      "predicted": "Both John and Maria have volunteered at a homeless shelter.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:4",
+      "category": "2",
+      "predicted": "December 25, 2022 (he mentioned joining \"last week\" on January 1, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:5",
+      "category": "2",
+      "predicted": "December 2022 (she took the beach photo \"last month\" relative to January 1, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:6",
+      "category": "1",
+      "predicted": "At the homeless shelter (with a fellow volunteer) and at her church.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:7",
+      "category": "1",
+      "predicted": "A little doll.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:8",
+      "category": "3",
+      "predicted": "Probabilmente in difficoltà: la riparazione dell'auto stava mettendo a dura prova il suo portafoglio (10 aprile 2023), e successivamente ha perso il lavoro (5 agosto 2023). Tuttavia, a giugno 2023 aveva ricevuto una promozione, suggerendo una situazione finanziaria instabile con alti e bassi.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:9",
+      "category": "1",
+      "predicted": "Her auntie.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:0",
+      "category": "3",
+      "predicted": "Yes. Nate mentions tournament friends, old teammates, and a nearby couple he met dog-walking — all separate from Joanna.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:1",
+      "category": "1",
+      "predicted": "Watching movies.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:2",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:3",
+      "category": "2",
+      "predicted": "January 14, 2022.\n\nWait — the context says the conversation occurred at 7:31 pm on 21 January, 2022, where Nate says \"I won my first video game tournament last week.\"\n\n**Last week before January 21, 2022** = approximately January 14, 2022, but the exact date is not stated.\n\nThe conversation reporting it occurred on **21 January, 2022**.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:4",
+      "category": "3",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:5",
+      "category": "1",
+      "predicted": "Writing, reading, watching movies, exploring nature, hiking, cooking/trying new recipes.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:6",
+      "category": "2",
+      "predicted": "3 years.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:7",
+      "category": "2",
+      "predicted": "January 21, 2022 (last Friday before January 23, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:8",
+      "category": "2",
+      "predicted": "3 years before January 23, 2022, i.e. January 2019 (approximately — context states he had them for 3 years as of January 23, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:9",
+      "category": "2",
+      "predicted": "Joanna finished her first full screenplay and printed it on Friday, January 21, 2022.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:0",
+      "category": "1",
+      "predicted": "Winning a championship, improving shooting percentage, making more impact on the court, becoming a consistent performer, and helping his team win.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:1",
+      "category": "1",
+      "predicted": "Winning a championship, making a difference through charity/inspiring people, building his brand, pursuing endorsements (Nike, Under Armour), starting a foundation, and leaving a meaningful legacy.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:2",
+      "category": "1",
+      "predicted": "Jerseys.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:3",
+      "category": "3",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:4",
+      "category": "1",
+      "predicted": "\"A Dance with Dragons\" (George R. R. Martin), \"The Alchemist\" (Paulo Coelho), \"The Name of the Wind\" (Patrick Rothfuss), a book about two hikers trekking through the Himalayas (title unknown), a book about how small changes make big differences (title unknown), and the GoT series by George R. R. Martin.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:5",
+      "category": "3",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:6",
+      "category": "2",
+      "predicted": "July (July 16, 2023 — 40 points, his highest ever).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:7",
+      "category": "1",
+      "predicted": "London, Edinburgh (Scotland, mentioned as suggestion/birthplace of Harry Potter), Paris (Eiffel Tower mentioned), Italy (on his list but not confirmed visited), Himalayas (only read about in a book, not visited personally).\n\nConfirmed visited: London, Paris implied (\"I love traveling too\"), Edinburgh not confirmed visited.\n\nConfirmed: **London** (Harry Potter tour), **Paris** (context implies familiarity), **UK** (Harry Potter conference).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:8",
+      "category": "3",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:9",
+      "category": "1",
+      "predicted": "Nike (basketball shoe and gear deal), Gatorade (in talks/potential sponsorship), a popular beverage company.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:0",
+      "category": "2",
+      "predicted": "2020 (she adopted Pepper, Precious, and Panda 3 years before March 27, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:1",
+      "category": "2",
+      "predicted": "March 20, 2023 (one week before March 27, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:2",
+      "category": "1",
+      "predicted": "Board games (played Last Tuesday with his girlfriend and Toby, mentioned October 13, 2023).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:3",
+      "category": "1",
+      "predicted": "New places to eat around town, an awesome cafe with amazing pastries, a cozy cafe, and a new spot that just opened with a sick view and vibe.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:4",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:5",
+      "category": "2",
+      "predicted": "May 3, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:6",
+      "category": "2",
+      "predicted": "April 2, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:7",
+      "category": "2",
+      "predicted": "3 years. (Pepper, Precious, and Panda were adopted 3 years before March 2023; Pixie was adopted around April 2, 2023.)",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:8",
+      "category": "2",
+      "predicted": "No.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:9",
+      "category": "1",
+      "predicted": "Positive reinforcement training workshop (May 2023), dog training course (July 2023), agility classes at a dog park (August 2023), dog grooming course (August 2023), dog owners group (November 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:0",
+      "category": "3",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:1",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:2",
+      "category": "1",
+      "predicted": "McGee's Pub (planned 26 August 2022).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:3",
+      "category": "1",
+      "predicted": "No. James has pets (Max, Daisy, Ned), John does not.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:4",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:5",
+      "category": "1",
+      "predicted": "John: The Witcher 3, chess, AC Valhalla, Fortnite. James: Super Mario, The Legend of Zelda, Cyberpunk 2077, strategy games (aspires to make one like Civilization).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:6",
+      "category": "3",
+      "predicted": "Yes — James adopted a pup from a shelter in Stamford, which is in Connecticut.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:7",
+      "category": "3",
+      "predicted": "Connecticut",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:8",
+      "category": "1",
+      "predicted": "3 dogs.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:9",
+      "category": "1",
+      "predicted": "Max, Daisy, Ned",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:0",
+      "category": "2",
+      "predicted": "Electrical engineering project.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:1",
+      "category": "1",
+      "predicted": "Deborah's mother, Deborah's father, a friend (mentioned February 22, 2023).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:2",
+      "category": "2",
+      "predicted": "A few years ago (before January 23, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:3",
+      "category": "2",
+      "predicted": "2025 (last year relative to 23 January 2023).\n\nNO ANSWER — the context only states \"last year\" relative to January 23, 2023, making it 2022.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:4",
+      "category": "2",
+      "predicted": "2010",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:5",
+      "category": "3",
+      "predicted": "France (Paris).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:6",
+      "category": "1",
+      "predicted": "Deborah has a pendant and an amulet from her mother. Jolene has a pendant (given to her in Paris in 2010) with a symbol representing freedom.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:7",
+      "category": "2",
+      "predicted": "France (Paris).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:8",
+      "category": "1",
+      "predicted": "Spending time in nature (a spot by the water, garden), bringing her mother's amulet, sitting at her mom's bench by the window, looking at family photos/albums, attending art shows (reminded her of her mom), yoga, meditation, walks, and reconnecting with her mom's friends.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:9",
+      "category": "2",
+      "predicted": "January 25, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:0",
+      "category": "1",
+      "predicted": "Prius",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:1",
+      "category": "1",
+      "predicted": "His old Prius (broke down, then repaired and sold), his new Prius (broke down after purchase), and he got into a scrape/accident with the Prius on a mountain drive.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:2",
+      "category": "1",
+      "predicted": "Rockies, Jasper, Banff, Rocky Mountains.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:3",
+      "category": "1",
+      "predicted": "2",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:4",
+      "category": "2",
+      "predicted": "Painting.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:5",
+      "category": "3",
+      "predicted": "Canada (specifically Jasper, which is in Alberta, Canada — he drove through the Icefields Parkway). Wait — actually in May 2023 he visited the **Rockies** (Canadian Rockies), but the Jasper trip was also in May 2023. The country is **Canada**.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:6",
+      "category": "1",
+      "predicted": "1",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:7",
+      "category": "1",
+      "predicted": "Painting, kayaking, hiking (though Sam used to love it and wanted to return to it), and exercise/fitness.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:8",
+      "category": "1",
+      "predicted": "Watercolor painting.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:9",
+      "category": "2",
+      "predicted": "May 18, 2023 (the weekend before May 24, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:0",
+      "category": "2",
+      "predicted": "April 20, 2023.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:1",
+      "category": "1",
+      "predicted": "Luxury car (new ride).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:2",
+      "category": "2",
+      "predicted": "March 26, 2023.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:3",
+      "category": "1",
+      "predicted": "Aerosmith, classic rock bands (general).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:4",
+      "category": "3",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:5",
+      "category": "1",
+      "predicted": "Opening a shop and working on classic cars.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:6",
+      "category": "1",
+      "predicted": "Classic cars.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:7",
+      "category": "3",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:8",
+      "category": "2",
+      "predicted": "May 1, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:9",
+      "category": "2",
+      "predicted": "May 9, 2023 (the week before May 16, 2023).",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 30,
+  "window": 1,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": true,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

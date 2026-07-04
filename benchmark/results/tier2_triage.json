@@ -1,0 +1,7 @@
+{
+  "noise_n": 12,
+  "durable_n": 12,
+  "declass_recall_on_noise": 1.0,
+  "false_declass_on_durable": 0.3333,
+  "note": "declass_recall = noise correctly DECLASSed (want HIGH); false_declass = durable wrongly DECLASSed (want ~0). assess_claim_trust + LLMJudge on specific-unsourced-uncorroborated claims. The gate to wiring tier2 into consolidation."
+}

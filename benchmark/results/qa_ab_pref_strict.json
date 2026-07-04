@@ -1,0 +1,22 @@
+{
+  "question_type": "single-session-preference",
+  "n": 16,
+  "seed": 7,
+  "env": "ENGRAM_ANSWER_STRICT",
+  "off_value": "0",
+  "on_value": "1",
+  "model": "claude-sonnet-4-6",
+  "ENGRAM_ANSWER_STRICT=0": {
+    "n": 16,
+    "qa_accuracy": 0.4375,
+    "abstention_rate": 0.1875,
+    "n_errors": 0
+  },
+  "ENGRAM_ANSWER_STRICT=1": {
+    "n": 16,
+    "qa_accuracy": 0.375,
+    "abstention_rate": 0.5,
+    "n_errors": 0
+  },
+  "delta_on_minus_off": -0.0625
+}

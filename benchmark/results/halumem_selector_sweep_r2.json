@@ -1,0 +1,120 @@
+{
+  "dump": "benchmark/results/halumem_updating_full20_dump.json",
+  "match_thr": 0.94,
+  "n_items": 3122,
+  "gt_rank_diagnostics": {
+    "v1": {
+      "n_reachable": 1739,
+      "gt_top1": 0.3214,
+      "gt_mrr": 0.5185
+    },
+    "refine_ba_entail": {
+      "n_reachable": 1739,
+      "gt_top1": 0.3347,
+      "gt_mrr": 0.5395
+    },
+    "retrieval": {
+      "n_reachable": 1739,
+      "gt_top1": 0.4267,
+      "gt_mrr": 0.5829
+    }
+  },
+  "policies": {
+    "v1_thr0.7 (baseline)": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 514,
+        "wrong": 2159,
+        "missed": 197,
+        "missed_unreachable": 252
+      },
+      "accuracy": 0.1646,
+      "hallucination": 0.6915,
+      "omission": 0.1438
+    },
+    "oldvalue_then_v1": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 545,
+        "wrong": 2132,
+        "missed": 194,
+        "missed_unreachable": 251
+      },
+      "accuracy": 0.1746,
+      "hallucination": 0.6829,
+      "omission": 0.1425
+    },
+    "retrieval_top1_always": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 742,
+        "wrong": 2379,
+        "missed": 0,
+        "missed_unreachable": 1
+      },
+      "accuracy": 0.2377,
+      "hallucination": 0.762,
+      "omission": 0.0003
+    },
+    "ret_top1_nli_gate0.3": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 381,
+        "wrong": 1081,
+        "missed": 841,
+        "missed_unreachable": 819
+      },
+      "accuracy": 0.122,
+      "hallucination": 0.3463,
+      "omission": 0.5317
+    },
+    "ret_top1_nli_gate0.5": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 358,
+        "wrong": 1012,
+        "missed": 895,
+        "missed_unreachable": 857
+      },
+      "accuracy": 0.1147,
+      "hallucination": 0.3242,
+      "omission": 0.5612
+    },
+    "ret_top3_rerank_refine": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 621,
+        "wrong": 2500,
+        "missed": 0,
+        "missed_unreachable": 1
+      },
+      "accuracy": 0.1989,
+      "hallucination": 0.8008,
+      "omission": 0.0003
+    },
+    "ret_top2_rerank_refine": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 689,
+        "wrong": 2432,
+        "missed": 0,
+        "missed_unreachable": 1
+      },
+      "accuracy": 0.2207,
+      "hallucination": 0.779,
+      "omission": 0.0003
+    },
+    "oldvalue_then_ret_top1": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 793,
+        "wrong": 2328,
+        "missed": 0,
+        "missed_unreachable": 1
+      },
+      "accuracy": 0.254,
+      "hallucination": 0.7457,
+      "omission": 0.0003
+    }
+  }
+}

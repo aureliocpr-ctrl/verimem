@@ -1,0 +1,141 @@
+{
+  "protocol": "HaluMem updating slice (local judge-free scoring; official LLM-judge layer is a separate pass)",
+  "dataset": "C:\\Users\\aurel\\.cache\\halumem\\HaluMem-Medium.jsonl",
+  "users": 1,
+  "k": 10,
+  "select_thr": 0.7,
+  "n_target_updates": 12,
+  "outcomes": {
+    "correct": 7,
+    "wrong": 2,
+    "missed": 3
+  },
+  "update_accuracy": 0.5833,
+  "update_hallucination_rate": 0.1667,
+  "update_omission_rate": 0.25,
+  "retrieval_unreachable_share": 0.0,
+  "wall_s": 44.0,
+  "items": [
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "correct",
+      "update": "Martin Mark is considering a career change due to the impact of his current role on his mental health.",
+      "gt_originals": [
+        "Martin Mark is considering a career change due to health impacts from his current role."
+      ],
+      "selected": "Martin Mark's employment status is Employed"
+    },
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "wrong",
+      "update": "Martin Mark aims to find a job that better aligns with his personal well-being, humanitarian goals, and career aspirations.",
+      "gt_originals": [
+        "Martin Mark aims to find a job that better aligns with his personal well-being and career goals."
+      ],
+      "selected": "User's name is Martin Mark"
+    },
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "correct",
+      "update": "Martin Mark's motivation for career change is driven by his desire for personal well-being and improving healthcare access for underserved communities.",
+      "gt_originals": [
+        "Martin Mark's motivation for career change is driven by his desire for personal well-being and humanitarian care."
+      ],
+      "selected": "Martin Mark aims to find a job that better aligns with his personal well-being, humanitarian goals, and career aspirations."
+    },
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "missed",
+      "update": "Martin Mark seeks guidance on pursuing a new job opportunity that aligns with his values and aspirations to improve healthcare access.",
+      "gt_originals": [
+        "Martin Mark seeks guidance on pursuing a new job opportunity that aligns with his values and aspirations."
+      ],
+      "selected": ""
+    },
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "wrong",
+      "update": "Martin Mark uses tools and collaboration with diverse teams to inspire ideas and overcome creative blocks.",
+      "gt_originals": [
+        "Martin Mark's creative motivation is to use assistant tools to inspire ideas and overcome creative blocks."
+      ],
+      "selected": "User's name is Martin Mark"
+    },
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "missed",
+      "update": "Martin Mark values balancing professional responsibilities with health, especially through practices like yoga.",
+      "gt_originals": [
+        "Martin Mark values balancing professional responsibilities with health."
+      ],
+      "selected": ""
+    },
+    {
+      "user": 0,
+      "session": 3,
+      "outcome": "missed",
+      "update": "Martin Mark is committed to improving healthcare access while maintaining his personal health and creativity.",
+      "gt_originals": [
+        "Martin Mark expressed his commitment to improving healthcare access while maintaining personal health."
+      ],
+      "selected": ""
+    },
+    {
+      "user": 0,
+      "session": 4,
+      "outcome": "correct",
+      "update": "Martin has modified his pet preference from Labradors to Golden Retrievers due to their gentle nature and adaptability.",
+      "gt_originals": [
+        "Martin Mark Pets I like: Dogs, especially Labradors",
+        "Martin Mark Pets I like Dogs, especially Labradors reason: I love Labradors because they are friendly, loyal, and great companions for outdoor activities like j"
+      ],
+      "selected": "Martin Mark has preferences in Movie Preference"
+    },
+    {
+      "user": 0,
+      "session": 5,
+      "outcome": "correct",
+      "update": "Martin's mental health is mildly abnormal due to the pressures of his role as director at Huaxin Consulting.",
+      "gt_originals": [
+        "Martin Mark's mental health condition: Mildly Abnormal"
+      ],
+      "selected": "Martin Mark works in the healthcare industry"
+    },
+    {
+      "user": 0,
+      "session": 5,
+      "outcome": "correct",
+      "update": "Martin is considering a career change to improve his mental health and find a role that aligns with his personal and professional goals.",
+      "gt_originals": [
+        "Martin Mark is considering a career change due to health impacts from his current role."
+      ],
+      "selected": "Martin Mark is considering a career change due to a desire for higher financial stability."
+    },
+    {
+      "user": 0,
+      "session": 5,
+      "outcome": "correct",
+      "update": "Martin's recent change in pet preference from Labradors to Golden Retrievers reflects his openness to new experiences.",
+      "gt_originals": [
+        "Martin has modified his pet preference from Labradors to Golden Retrievers due to their gentle nature and adaptability."
+      ],
+      "selected": "Martin's evolving pet preference signifies his desire to explore new interactions and experiences."
+    },
+    {
+      "user": 0,
+      "session": 5,
+      "outcome": "correct",
+      "update": "Martin is exploring job opportunities that can provide a healthier work-life balance, focusing on flexibility and alignment with his values.",
+      "gt_originals": [
+        "Martin aims to find a job that better aligns with his personal well-being and career goals."
+      ],
+      "selected": "Martin discussed how pets provide relaxation and comfort, balancing his demanding career."
+    }
+  ]
+}

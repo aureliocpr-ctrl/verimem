@@ -1,0 +1,275 @@
+{
+  "summary": {
+    "n_rules_tracked": 15,
+    "n_rules_with_birth": 15,
+    "n_rules_with_applications": 10,
+    "rules_never_referenced": []
+  },
+  "timeline": {
+    "M7_PARTITION_VS_COUNT": {
+      "birth": {
+        "cycle": 257,
+        "sha": "879015a2f8",
+        "subject": "cycle 257: downstream emergence consequence bench - self-applying loop CONFIRMED"
+      },
+      "applications": [
+        {
+          "cycle": 264,
+          "sha": "0f64eae1fb",
+          "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+        },
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 282,
+          "sha": "1c8ae0458f",
+          "subject": "cycle 282: sequential 3-cycle test -> stable_partition 10x more stable"
+        }
+      ]
+    },
+    "M9_CLIFF_EDGE": {
+      "birth": {
+        "cycle": 259,
+        "sha": "64c66451cf",
+        "subject": "cycle 259: B6 probe -> purity cliff edge -> \u00a75.8 reframes #21 as REVEALING"
+      },
+      "applications": [
+        {
+          "cycle": 263,
+          "sha": "48bf237428",
+          "subject": "cycle 263: wire stable_partition into detect_emerging_skills (close cycle 262 ga"
+        },
+        {
+          "cycle": 264,
+          "sha": "0f64eae1fb",
+          "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+        },
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        }
+      ]
+    },
+    "M12_REVEALING_VS_CREATING": {
+      "birth": {
+        "cycle": 259,
+        "sha": "64c66451cf",
+        "subject": "cycle 259: B6 probe -> purity cliff edge -> \u00a75.8 reframes #21 as REVEALING"
+      },
+      "applications": [
+        {
+          "cycle": 264,
+          "sha": "0f64eae1fb",
+          "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+        },
+        {
+          "cycle": 266,
+          "sha": "a73c8d6599",
+          "subject": "cycle 266: automated meta-rule mining script + self-validation"
+        },
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 273,
+          "sha": "65946fdfad",
+          "subject": "cycle 273: CONTRIBUTING.md addendum - M-rules + automated A4 checks"
+        },
+        {
+          "cycle": 275,
+          "sha": "acfe83be6f",
+          "subject": "cycle 275: cross-validation audit on clp - terse style scores zero"
+        }
+      ]
+    },
+    "M3_BENCH_FIRST": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 266,
+          "sha": "a73c8d6599",
+          "subject": "cycle 266: automated meta-rule mining script + self-validation"
+        },
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 273,
+          "sha": "65946fdfad",
+          "subject": "cycle 273: CONTRIBUTING.md addendum - M-rules + automated A4 checks"
+        },
+        {
+          "cycle": 275,
+          "sha": "acfe83be6f",
+          "subject": "cycle 275: cross-validation audit on clp - terse style scores zero"
+        }
+      ]
+    },
+    "M4_CRITIC_GATE": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        }
+      ]
+    },
+    "M5_WIRE_OR_DISCLOSE": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 270,
+          "sha": "f79bf7eb66",
+          "subject": "cycle 270: pioneering #26 A4 pre-flight violation check (REIFIES M5)"
+        },
+        {
+          "cycle": 272,
+          "sha": "8a5aff7821",
+          "subject": "cycle 272: LaTeX scaffold per arxiv submission"
+        },
+        {
+          "cycle": 273,
+          "sha": "65946fdfad",
+          "subject": "cycle 273: CONTRIBUTING.md addendum - M-rules + automated A4 checks"
+        },
+        {
+          "cycle": 284,
+          "sha": "9ba4621d24",
+          "subject": "cycle 284: wire stable_partition into auto_dream_worker (env-var opt-in)"
+        },
+        {
+          "cycle": 285,
+          "sha": "dc5be68d0f",
+          "subject": "cycle 285: TDD contract for ENGRAM_USE_STABLE_PARTITION env var routing"
+        },
+        {
+          "cycle": 286,
+          "sha": "a0145bf136",
+          "subject": "cycle 286: paper \u00a76.5 update - production wire cycle 284-285 documented"
+        }
+      ]
+    },
+    "M6_A4_REFRAMING": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        }
+      ]
+    },
+    "M8_CHAIN_OF_THOUGHT": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        }
+      ]
+    },
+    "M10_MASTER_FACT_RATIO": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        }
+      ]
+    },
+    "M11_REPLICATED_SAMPLE": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        }
+      ]
+    },
+    "S1_EMPIRICAL_DISCIPLINE": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "S2_PROCESS_DISCIPLINE": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "S3_WIRING_DISCIPLINE": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "S4_REFRAMING_DISCIPLINE": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "S5_LEVEL_OF_EFFECT": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    }
+  }
+}

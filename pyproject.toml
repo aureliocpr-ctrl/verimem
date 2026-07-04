@@ -1,0 +1,230 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Distribution (PyPI) name = "verimem". DECISION 2026-07-04 (owner): public
+# brand is **Verimem** — verimem.com purchased by the owner; PyPI/npm/.ai/.dev
+# verified free the same day (RELEASE_GATE G7 + naming due-diligence). The
+# Python package/module stays `engram` (import engram): "engram" remains the
+# architecture term in docs, Verimem is the product. Reserve the PyPI name
+# with a placeholder upload from the owner's account BEFORE any announcement.
+# Prior working names "hippoagent" (2026-06-07) and "Engram" retired as brands.
+name = "verimem"
+version = "0.3.0"
+description = "Verimem — verified memory for AI agents. The only memory layer whose add() routes every write through an anti-confabulation admission gate (source entailment), with provenance on every read. Engram architecture: episodes → skills → consolidation, all inspectable."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+  { name = "Aurelio Capriello" },
+]
+keywords = ["verimem", "verified-memory", "engram", "agent", "llm", "memory", "consolidation", "hippocampus", "anthropic", "openai", "mcp"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# Minimal sane install: LLM clients + numerics + CLI + dashboard.
+# Heavy / platform-bound deps (opencv, pyautogui) and integrations (mcp, textual)
+# live in extras.
+dependencies = [
+  # LLM
+  "anthropic>=0.40.0",
+  "openai>=1.40.0",  # used for any OpenAI-compatible provider (OpenRouter, Kimi, DeepSeek, Qwen, Zhipu, ...)
+  # Embeddings + numerical
+  "sentence-transformers>=2.7.0",
+  "numpy>=1.26.0",
+  "scipy>=1.11.0",
+  "scikit-learn>=1.4.0",
+  # Graph (causal lineage)
+  "networkx>=3.2.0",
+  # Validation
+  "pydantic>=2.5.0",
+  # jsonschema: strict MCP tool-arg validation (mcp_server._validate_input).
+  # Core dep (audit P1 2026-06-07) so the weaker manual fallback is never the
+  # only guard — without it a null on a numeric arg crashed the handler.
+  "jsonschema>=4.0.0",
+  # Logging
+  "structlog>=24.1.0",
+  # CLI
+  "typer>=0.12.0",
+  "rich>=13.7.0",
+  # Web dashboard
+  "fastapi>=0.110.0",
+  "uvicorn[standard]>=0.27.0",
+  "jinja2>=3.1.0",
+  "python-multipart>=0.0.9",
+  # Env
+  "python-dotenv>=1.0.0",
+  # HTTP
+  "httpx>=0.27.0",
+  # Image I/O (lightweight)
+  "pillow>=10.0.0",
+  # Provider registry + Settings v2
+  "pyyaml>=6.0",
+  "pydantic-settings>=2.0",
+  # MCP server — the HEADLINE use (`engram mcp` for Claude Code / Cursor).
+  # mcp_server.py imports it unconditionally and the README primary install
+  # documents `engram mcp`, so it MUST be core (audit P0-5 2026-06-07: was
+  # extras-only -> fresh install crashed ModuleNotFoundError on first command).
+  "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+# Headless / server install — same as the default core. Explicit alias so
+# `pip install verimem[headless]` reads clearly in CI / Dockerfiles.
+headless = []
+
+# Just the MCP server stack — for users who only want to expose hippo to
+# Claude Code / Cursor / opencode and don't care about the dashboard.
+mcp-only = [
+  "mcp>=1.0.0",
+]
+
+# Terminal UI (textual). Optional — many deployments run dashboard-only.
+tui = [
+  "textual>=0.60.0",
+]
+
+# Computer-use / vision capabilities — heavy and platform-bound.
+# pyautogui requires a display server on Linux; opencv adds ~80MB.
+vision = [
+  "opencv-python>=4.8.0",
+  "pyautogui>=0.9.54",
+]
+
+# Everything (vision + tui + mcp).
+full = [
+  "opencv-python>=4.8.0",
+  "pyautogui>=0.9.54",
+  "textual>=0.60.0",
+  "mcp>=1.0.0",
+]
+
+dev = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.23.0",
+  "pytest-cov>=4.1.0",
+  "pytest-benchmark>=5.0.0",
+  "respx>=0.21.0",   # HTTPX request mocking for test_llm_client / test_tools_extra_web
+  "ruff>=0.4.0",
+  "build>=1.2.0",
+]
+
+[project.scripts]
+engram = "engram.cli:main"
+# Backward-compat alias (deprecated, kept for 3 months for existing user
+# muscle memory and pre-rename scripts).
+hippo = "engram.cli:main"
+
+[project.urls]
+Homepage = "https://verimem.com"
+Repository = "https://github.com/aureliocpr-ctrl/verimem"
+Issues = "https://github.com/aureliocpr-ctrl/verimem/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+# `engram` = canonical package post-cycle-#41 rename.
+# `hippoagent` = backward-compat shim that re-exports engram.
+include = ["engram*", "hippoagent*", "benchmark*"]
+
+[tool.setuptools.package-data]
+# Ship the dashboard's data assets INSIDE the wheel. Without these,
+# `pip install verimem` (and the Docker image) crash at startup with
+# "Directory '.../engram/static' does not exist" — StaticFiles + Jinja2
+# templates resolve relative to the INSTALLED package, not the source tree.
+# Found 2026-06-06 by actually running the built container (not by reading).
+engram = [
+    "static/*",
+    "static/**/*",
+    "templates/*",
+    "templates/**/*",
+    "*.yaml",
+    "providers.yaml",
+]
+
+# ─────────────────────────── pytest ─────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers"
+asyncio_mode = "auto"
+filterwarnings = [
+  # Promote internal deprecation warnings to errors so we don't ship them.
+  "ignore::DeprecationWarning:_pytest.*",
+  "ignore::DeprecationWarning:pluggy.*",
+  "ignore::pytest.PytestUnraisableExceptionWarning",
+]
+markers = [
+  "slow: tests that take more than 5 seconds",
+  "integration: tests that touch real external services (require credentials)",
+  "e2e: full end-to-end pipeline tests (slow, network)",
+  "security: security-focused tests (auth, sandbox, injection)",
+  "network: tests that require network access",
+  "perf: performance benchmarks (run with --benchmark-only)",
+]
+
+# ─────────────────────────── coverage ───────────────────────────
+[tool.coverage.run]
+branch = true
+source = ["engram"]
+omit = [
+  # Pure UI surface — exercised manually, not in CI.
+  "engram/tui.py",
+  # Backward-compat shim (re-exports engram).
+  "hippoagent/*",
+  # Generated / cache directories.
+  "*/site-packages/*",
+  "*/tests/*",
+  "tests/*",
+]
+
+[tool.coverage.report]
+fail_under = 46
+precision = 1
+show_missing = true
+skip_covered = false
+exclude_lines = [
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "\\.\\.\\.",
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# ─────────────────────────── ruff ────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# CI lint is the developer-feedback gate (correctness + style baseline).
+# Security audit runs as a separate workflow with `ruff check --select S`,
+# see .github/workflows/security.yml.
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+  # Long lines are inherited from existing code; tighten incrementally.
+  "E501",
+  # Compact oneliner statements are common in the IDE/dashboard JS-blob shims.
+  "E701", "E702",
+  # `try/except/pass` is a deliberate pattern in optional-import shims.
+  "B007",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["B011", "B017", "F401", "F841"]
+"benchmark/**/*.py" = ["B007"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["engram", "hippoagent", "benchmark"]

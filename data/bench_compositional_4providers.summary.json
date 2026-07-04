@@ -1,0 +1,74 @@
+{
+  "raw|anthropic": {
+    "n": 12.0,
+    "success_rate": 0.4166666666666667,
+    "mean_tokens": 72.25,
+    "mean_latency_s": 0.8307404499996665,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0,
+    "tokens_per_success": 173.4
+  },
+  "hippo_warm|anthropic": {
+    "n": 12.0,
+    "success_rate": 1.0,
+    "mean_tokens": 4582.333333333333,
+    "mean_latency_s": 3.929846075000114,
+    "mean_attempts": 1.3333333333333333,
+    "n_errors": 0.0,
+    "tokens_per_success": 4582.333333333333
+  },
+  "raw|deepseek": {
+    "n": 12.0,
+    "success_rate": 0.25,
+    "mean_tokens": 60.75,
+    "mean_latency_s": 0.7095955000001292,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0,
+    "tokens_per_success": 243.0
+  },
+  "hippo_warm|deepseek": {
+    "n": 12.0,
+    "success_rate": 1.0,
+    "mean_tokens": 3819.6666666666665,
+    "mean_latency_s": 5.634804225000153,
+    "mean_attempts": 1.5833333333333333,
+    "n_errors": 0.0,
+    "tokens_per_success": 3819.6666666666665
+  },
+  "raw|openrouter": {
+    "n": 12.0,
+    "success_rate": 0.3333333333333333,
+    "mean_tokens": 69.41666666666667,
+    "mean_latency_s": 1.337629941666819,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0,
+    "tokens_per_success": 208.25000000000003
+  },
+  "hippo_warm|openrouter": {
+    "n": 12.0,
+    "success_rate": 1.0,
+    "mean_tokens": 2780.8333333333335,
+    "mean_latency_s": 2.895127041666607,
+    "mean_attempts": 1.9166666666666667,
+    "n_errors": 0.0,
+    "tokens_per_success": 2780.8333333333335
+  },
+  "raw|groq": {
+    "n": 12.0,
+    "success_rate": 0.25,
+    "mean_tokens": 91.66666666666667,
+    "mean_latency_s": 1.4028468750002503,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0,
+    "tokens_per_success": 366.6666666666667
+  },
+  "hippo_warm|groq": {
+    "n": 12.0,
+    "success_rate": 0.8333333333333334,
+    "mean_tokens": 1996.0,
+    "mean_latency_s": 17.816672366666655,
+    "mean_attempts": 1.75,
+    "n_errors": 1.0,
+    "tokens_per_success": 2395.2
+  }
+}

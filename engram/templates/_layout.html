@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>{% block title %}{{ page_title|default("Console") }}{% endblock %} — Engram</title>
+  <link rel="stylesheet" href="/assets/dashboard.css">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  
+  <!-- Sleek Left Sidebar Console Layout -->
+  <aside class="app-sidebar" aria-label="Primary">
+    <a href="/" class="brand" aria-label="Engram home">
+      <span class="logo">E</span>
+      Engram Console
+    </a>
+
+    <nav class="nav-links">
+      <a class="nav-link {% if active == 'overview' %}active{% endif %}" href="/">Overview</a>
+      <a class="nav-link {% if active == 'facts' %}active{% endif %}" href="/facts">Facts</a>
+      <a class="nav-link {% if active == 'memory_map' %}active{% endif %}" href="/memory-map">Graph Map</a>
+      <a class="nav-link {% if active == 'episodes' %}active{% endif %}" href="/episodes">Episodes</a>
+      <a class="nav-link {% if active == 'skills' %}active{% endif %}" href="/skills">Skills</a>
+      <a class="nav-link {% if active == 'lineage' %}active{% endif %}" href="/lineage">Lineage</a>
+      <a class="nav-link {% if active == 'metrics' %}active{% endif %}" href="/metrics">Metrics</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      {% if status %}
+      <span class="text-xs" style="color: {% if status.kind == 'warn' %}var(--c-warning){% elif status.kind == 'bad' %}var(--c-danger){% else %}var(--c-success){% endif %}; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;" title="{{ status.tooltip|default('') }}">
+        ● {{ status.label }}
+      </span>
+      {% endif %}
+
+      <a class="btn btn--ghost btn--sm" href="/settings" aria-label="Settings" style="width: 28px; height: 28px; padding: 0; display: grid; place-items: center; border-radius: 4px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </a>
+    </div>
+  </aside>
+
+  <main class="app-content" id="main">
+    <div class="app-main">
+      {% block main %}{% endblock %}
+    </div>
+  </main>
+  
+  {% block scripts %}{% endblock %}
+</body>
+</html>

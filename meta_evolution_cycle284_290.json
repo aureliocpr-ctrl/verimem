@@ -1,0 +1,118 @@
+{
+  "summary": {
+    "n_rules_tracked": 15,
+    "n_rules_with_birth": 10,
+    "n_rules_with_applications": 2,
+    "rules_never_referenced": [
+      "S1_EMPIRICAL_DISCIPLINE",
+      "S2_PROCESS_DISCIPLINE",
+      "S3_WIRING_DISCIPLINE",
+      "S4_REFRAMING_DISCIPLINE",
+      "S5_LEVEL_OF_EFFECT"
+    ]
+  },
+  "timeline": {
+    "M7_PARTITION_VS_COUNT": {
+      "birth": {
+        "cycle": 282,
+        "sha": "1c8ae0458f",
+        "subject": "cycle 282: sequential 3-cycle test -> stable_partition 10x more stable"
+      },
+      "applications": [
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        }
+      ]
+    },
+    "M5_WIRE_OR_DISCLOSE": {
+      "birth": {
+        "cycle": 284,
+        "sha": "9ba4621d24",
+        "subject": "cycle 284: wire stable_partition into auto_dream_worker (env-var opt-in)"
+      },
+      "applications": [
+        {
+          "cycle": 285,
+          "sha": "dc5be68d0f",
+          "subject": "cycle 285: TDD contract for ENGRAM_USE_STABLE_PARTITION env var routing"
+        },
+        {
+          "cycle": 286,
+          "sha": "a0145bf136",
+          "subject": "cycle 286: paper \u00a76.5 update - production wire cycle 284-285 documented"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        }
+      ]
+    },
+    "M3_BENCH_FIRST": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M4_CRITIC_GATE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M6_A4_REFRAMING": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M8_CHAIN_OF_THOUGHT": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M9_CLIFF_EDGE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M10_MASTER_FACT_RATIO": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M11_REPLICATED_SAMPLE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M12_REVEALING_VS_CREATING": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    }
+  }
+}

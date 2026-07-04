@@ -1,0 +1,19 @@
+{
+  "users": 10,
+  "match_thr": 0.86,
+  "gate_thr": 40.0,
+  "off": {
+    "sessions": 60,
+    "precision": 0.6223,
+    "recall": 0.7175,
+    "f1": 0.6468,
+    "avg_pred": 14.42
+  },
+  "on": {
+    "sessions": 60,
+    "precision": 0.643,
+    "recall": 0.6955,
+    "f1": 0.6499,
+    "avg_pred": 13.57
+  }
+}

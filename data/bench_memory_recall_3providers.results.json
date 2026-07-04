@@ -1,0 +1,794 @@
+[
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.8042568000091705,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.7157925999927102,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 56,
+    "latency_s": 0.6717157999955816,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-color",
+    "success": false,
+    "tokens": 65,
+    "latency_s": 0.8164866000006441,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your favorite color. We haven't discussed this before.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-pet",
+    "success": false,
+    "tokens": 67,
+    "latency_s": 0.8313686000037706,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your pet's name. We haven't discussed this before.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-pin",
+    "success": false,
+    "tokens": 72,
+    "latency_s": 0.9094155999919167,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your favorite pin code. I have no access to your personal data or previous conversations.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 2258,
+    "latency_s": 16.507020499993814,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I'll remember this fact for you.\n\nok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 2322,
+    "latency_s": 0.956984200005536,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok\n\nI'll remember this fact: your pet's name is ZEPHYR-X42.",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 2361,
+    "latency_s": 0.9129385999985971,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I'll remember this fact for you.\n\nok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-color",
+    "success": true,
+    "tokens": 2425,
+    "latency_s": 1.5416032999928575,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ULTRAMARINE-7Q",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-pet",
+    "success": true,
+    "tokens": 2432,
+    "latency_s": 1.5762382000102662,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-pin",
+    "success": true,
+    "tokens": 2406,
+    "latency_s": 1.5006671000010101,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "9173",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 2389,
+    "latency_s": 1.1103903000039281,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 2406,
+    "latency_s": 1.2371610999980476,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 2380,
+    "latency_s": 1.2923454999981914,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-color",
+    "success": true,
+    "tokens": 3079,
+    "latency_s": 1.4396509000071092,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ULTRAMARINE-7Q",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-pet",
+    "success": true,
+    "tokens": 3146,
+    "latency_s": 1.5071596000052523,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-pin",
+    "success": true,
+    "tokens": 3305,
+    "latency_s": 3.428770500002429,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "9173",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 51,
+    "latency_s": 0.9034326999972109,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.6835016999975778,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 47,
+    "latency_s": 0.5303157000016654,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-color",
+    "success": false,
+    "tokens": 47,
+    "latency_s": 0.9258597000007285,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't know your favorite color.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-pet",
+    "success": false,
+    "tokens": 49,
+    "latency_s": 0.6622485000116285,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't know your pet's name.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-pin",
+    "success": false,
+    "tokens": 42,
+    "latency_s": 0.6974164999992354,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "110001",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 2565,
+    "latency_s": 1.380551700000069,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 2687,
+    "latency_s": 1.6103516000002855,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 2541,
+    "latency_s": 1.5260295000043698,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-color",
+    "success": true,
+    "tokens": 8074,
+    "latency_s": 5.077766699992935,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "ULTRAMARINE-7Q",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-pet",
+    "success": true,
+    "tokens": 2574,
+    "latency_s": 1.5663091000023996,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-pin",
+    "success": true,
+    "tokens": 2555,
+    "latency_s": 1.745950600001379,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "9173",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 2533,
+    "latency_s": 1.6455959000013536,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 2489,
+    "latency_s": 1.4358724000048824,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 2533,
+    "latency_s": 1.467282099998556,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-color",
+    "success": true,
+    "tokens": 5694,
+    "latency_s": 5.1163988999906,
+    "attempts": 4,
+    "error": "",
+    "extra": {
+      "answer": "ULTRAMARINE-7Q",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-pet",
+    "success": true,
+    "tokens": 2574,
+    "latency_s": 1.6978535999951418,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-pin",
+    "success": true,
+    "tokens": 2555,
+    "latency_s": 1.53681289999804,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "9173",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 1.512655899990932,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.5857389999873703,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 56,
+    "latency_s": 2.5672833999997238,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-color",
+    "success": false,
+    "tokens": 65,
+    "latency_s": 1.1468416999996407,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your favorite color. We haven't discussed this before.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-pet",
+    "success": false,
+    "tokens": 81,
+    "latency_s": 1.2233877000107896,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your pet's name. This is the first message in our conversation, so I have no prior context about you or your pet.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-pin",
+    "success": false,
+    "tokens": 72,
+    "latency_s": 1.684056199999759,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your favorite pin code. I have no access to your personal data or previous conversations.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 3211,
+    "latency_s": 2.6034822999936296,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 3128,
+    "latency_s": 2.4735368999972707,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 3066,
+    "latency_s": 2.305643500003498,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-color",
+    "success": true,
+    "tokens": 3124,
+    "latency_s": 1.8449424999998882,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ULTRAMARINE-7Q",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-pet",
+    "success": true,
+    "tokens": 3156,
+    "latency_s": 2.628499800004647,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-pin",
+    "success": true,
+    "tokens": 3180,
+    "latency_s": 2.308522899998934,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "9173",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-color",
+    "success": true,
+    "tokens": 3184,
+    "latency_s": 2.111358599999221,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-pet",
+    "success": true,
+    "tokens": 3192,
+    "latency_s": 2.653391700005159,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-pin",
+    "success": true,
+    "tokens": 3173,
+    "latency_s": 1.9791013999929419,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-color",
+    "success": true,
+    "tokens": 6603,
+    "latency_s": 3.7654049999982817,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "ULTRAMARINE-7Q",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-pet",
+    "success": true,
+    "tokens": 3093,
+    "latency_s": 1.9818747999961488,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-pin",
+    "success": true,
+    "tokens": 6280,
+    "latency_s": 3.910565799989854,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "9173",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  }
+]

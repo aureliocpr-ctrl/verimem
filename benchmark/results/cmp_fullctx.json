@@ -1,0 +1,252 @@
+{
+  "n": 30,
+  "n_correct": 24,
+  "n_errors": 0,
+  "accuracy": 0.8,
+  "per_category": {
+    "1": {
+      "n": 3,
+      "accuracy": 0.6667
+    },
+    "2": {
+      "n": 5,
+      "accuracy": 0.4
+    },
+    "3": {
+      "n": 2,
+      "accuracy": 1.0
+    },
+    "4": {
+      "n": 10,
+      "accuracy": 1.0
+    },
+    "5": {
+      "n": 10,
+      "accuracy": 0.8
+    }
+  },
+  "details": [
+    {
+      "id": "0:82",
+      "category": "4",
+      "predicted": "Mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:194",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:86",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:87",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:143",
+      "category": "4",
+      "predicted": "Coco",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:33",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:80",
+      "category": "1",
+      "predicted": "4 (CS:GO first tournament January 2022, Street Fighter second tournament ~May 2022, a regional tournament ~June 2022, an international/online tournament July 2022, and a Valorant tournament November 2022).\n\nWait — re-counting from context:\n\n1. CS:GO tournament (January 2022)\n2. Street Fighter local tournament (May 2022)\n3. Regional video game tournament (June 2022)\n4. Online/international tournament (July 2022 — \"fourth video game tournament\")\n5. Valorant tournament (November 2022)\n\n**5**",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:124",
+      "category": "4",
+      "predicted": "A gaming party.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:236",
+      "category": "5",
+      "predicted": "Little Women",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4:31",
+      "category": "2",
+      "predicted": "September",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:72",
+      "category": "4",
+      "predicted": "Shooting guard",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:104",
+      "category": "4",
+      "predicted": "Sage.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:219",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:238",
+      "category": "5",
+      "predicted": "A leader.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:34",
+      "category": "2",
+      "predicted": "3 months (Toby: July 11, 2023; Buddy: October 19, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:48",
+      "category": "1",
+      "predicted": "Family members.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:37",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:109",
+      "category": "4",
+      "predicted": "The puppy had a routine examination and was vaccinated to prevent seasonal canine disease.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:200",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:205",
+      "category": "5",
+      "predicted": "NO ANSWER\n\n(It was Deborah who told Jolene about the Eisenhower Matrix, not the other way around.)",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:19",
+      "category": "3",
+      "predicted": "Based on their conversations, Evan and Sam would likely advise: take it one step at a time and celebrate small victories; \"don't fear it, just take the first step\" (Sam's motivational quote); focus on progress over perfection and let go of unrealistic expectations (Evan's own transformation lesson); find something that motivates you and makes you happy, whether large or small; surround yourself with supportive people; and find joy in little things, especially in nature, as small moments can make a big impact during tough times.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:51",
+      "category": "3",
+      "predicted": "**Challenges:**\n- Doctor warned his weight is a serious health risk (multiple check-ups)\n- Cravings for soda, candy, and sugary snacks, triggered by stress, boredom, or comfort-seeking\n- Friends mocked his weight (July 27, 2023), hurting his confidence\n- Gastritis episode landing him in the ER (October 17, 2023)\n- Discomfort limiting movement and motivation\n- Difficulty breaking old habits and staying consistent\n\n**How he addresses them:**\n- Switched to flavored seltzer water and healthier snack alternatives\n- Took a cooking class to learn nutritious recipes\n- Started a diet and exercise routine (gym, morning runs, hiking)\n- Attended Weight Watchers meetings and became a coach in his group\n- Used painting as a stress-relief hobby\n- Made a meal plan and workout schedule\n- Planned to consult a doctor for balanced diet and low-impact exercise advice\n- Spent time in nature (car rides, hikes, beach walks) to de-stress and stay active\n- Relied on Evan's encouragement and motivational quotes to stay positive",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:113",
+      "category": "4",
+      "predicted": "Painting and kayaking.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:143",
+      "category": "4",
+      "predicted": "Evan wanted to share news about getting married.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:41",
+      "category": "1",
+      "predicted": "Calvin's dad, Dave's dad.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:44",
+      "category": "2",
+      "predicted": "October 4, 2023",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:77",
+      "category": "4",
+      "predicted": "A diamond pendant necklace.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:98",
+      "category": "4",
+      "predicted": "Everyone was so into it and sang along.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:195",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:200",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 5,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": true,
+  "hyde": false,
+  "extract": false,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

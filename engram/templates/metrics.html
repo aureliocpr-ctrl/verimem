@@ -1,0 +1,22 @@
+{% extends "_layout.html" %}
+{% set active = "metrics" %}
+{% block title %}Metrics{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Metrics</h1>
+    <p class="page-header__subtitle">
+      Raw counters, timers and gauges from the in-process metrics registry.
+    </p>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--ghost btn--sm" href="/events">Live events</a>
+    <a class="btn btn--ghost btn--sm" href="/active-memory">Active memory</a>
+  </div>
+</header>
+
+<section class="card stack">
+  <pre>{{ metrics_json }}</pre>
+</section>
+{% endblock %}

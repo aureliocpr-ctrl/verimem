@@ -1,0 +1,222 @@
+[
+  {
+    "condition": "raw",
+    "provider": "mock",
+    "task_id": "capital",
+    "success": true,
+    "tokens": 45,
+    "latency_s": 1.1900003300979733e-05,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Paris",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "mock",
+    "task_id": "math2plus2",
+    "success": true,
+    "tokens": 39,
+    "latency_s": 2.950000634882599e-05,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "4",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "mock",
+    "task_id": "reverse",
+    "success": true,
+    "tokens": 44,
+    "latency_s": 4.799992893822491e-06,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "olleh",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "mock",
+    "task_id": "echo",
+    "success": true,
+    "tokens": 41,
+    "latency_s": 3.2999960239976645e-06,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hippoagent",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "mock",
+    "task_id": "format",
+    "success": true,
+    "tokens": 51,
+    "latency_s": 3.5999983083456755e-06,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "[1, 2, 3]",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "mock",
+    "task_id": "capital",
+    "success": false,
+    "tokens": 2927,
+    "latency_s": 15.892007900009048,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "mock",
+    "task_id": "math2plus2",
+    "success": false,
+    "tokens": 2997,
+    "latency_s": 0.13961650000419468,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "mock",
+    "task_id": "reverse",
+    "success": false,
+    "tokens": 3224,
+    "latency_s": 0.1271841999987373,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "mock",
+    "task_id": "echo",
+    "success": false,
+    "tokens": 3218,
+    "latency_s": 0.14963679999345914,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "mock",
+    "task_id": "format",
+    "success": false,
+    "tokens": 3572,
+    "latency_s": 0.12598750001052395,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "mock",
+    "task_id": "capital",
+    "success": false,
+    "tokens": 2927,
+    "latency_s": 0.11791099999391008,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "mock",
+    "task_id": "math2plus2",
+    "success": false,
+    "tokens": 3000,
+    "latency_s": 0.10789909999584779,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "mock",
+    "task_id": "reverse",
+    "success": false,
+    "tokens": 2655,
+    "latency_s": 0.06306739999854472,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 1,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "mock",
+    "task_id": "echo",
+    "success": false,
+    "tokens": 2648,
+    "latency_s": 0.05583759999717586,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 1,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "mock",
+    "task_id": "format",
+    "success": false,
+    "tokens": 2718,
+    "latency_s": 0.050723299995297566,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "judge": "local_nli:MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+  "sweep": {
+    "contra_thr=0.9": {
+      "update_recall": 0.3333,
+      "n_update": 60,
+      "false_supersede_complementary": 0.0536,
+      "n_complementary": 56,
+      "false_supersede_unrelated": 0.0167,
+      "n_unrelated": 60
+    },
+    "contra_thr=0.95": {
+      "update_recall": 0.3333,
+      "n_update": 60,
+      "false_supersede_complementary": 0.0536,
+      "n_complementary": 56,
+      "false_supersede_unrelated": 0.0167,
+      "n_unrelated": 60
+    }
+  },
+  "note": "update_recall = true HaluMem updates correctly superseded (want HIGH); false_supersede_* = wrongly superseded (want ~0; complementary = same-user diff-attribute is the real precision risk). Local lexical reconcile; ground truth = HaluMem is_update / original_memories."
+}

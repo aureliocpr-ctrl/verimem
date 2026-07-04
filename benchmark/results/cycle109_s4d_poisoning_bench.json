@@ -1,0 +1,779 @@
+{
+  "bench": "cycle109_s4d_poisoning_resistance",
+  "started_at": 1778935487.9121382,
+  "elapsed_s": 23.163,
+  "corpus_sizes": {
+    "verified": 50,
+    "model_claim": 50,
+    "legacy_unverified": 50,
+    "poisoning": 20,
+    "poisoning_legacy": 10,
+    "poisoning_model_claim": 10
+  },
+  "queries": [
+    "How many MCP tools does HippoAgent have?",
+    "What is the NEXUS test count?",
+    "What is Aurelio's email?",
+    "What schema version is semantic.db on?",
+    "What is the ProvSEEK paper id?",
+    "How many tools registered in HippoAgent MCP server?",
+    "Tell me about NEXUS pytest cases collected.",
+    "Aurelio contact email please.",
+    "Cycle 109 schema migration result.",
+    "ProvSEEK 2508 paper arxiv reference."
+  ],
+  "modes": [
+    {
+      "mode": "baseline_include_legacy",
+      "include_legacy": true,
+      "min_status": null,
+      "k": 5,
+      "n_queries": 10,
+      "aggregate": {
+        "poisoning_total": 14,
+        "poisoning_legacy_in_topk": 6,
+        "poisoning_model_claim_in_topk": 8,
+        "verified_in_topk": 36,
+        "model_claim_in_topk": 0,
+        "legacy_unverified_in_topk": 0,
+        "avg_status_rank_topk": 2.48
+      },
+      "per_query": [
+        {
+          "query": "How many MCP tools does HippoAgent have?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-015",
+            "v-010",
+            "v-020",
+            "v-035",
+            "v-025"
+          ]
+        },
+        {
+          "query": "What is the NEXUS test count?",
+          "topk_groups": {
+            "verified": 2,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 1,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "v-046",
+            "pm-006",
+            "pm-001",
+            "pl-006",
+            "v-006"
+          ]
+        },
+        {
+          "query": "What is Aurelio's email?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-002",
+            "v-007",
+            "v-012",
+            "v-042",
+            "v-032"
+          ]
+        },
+        {
+          "query": "What schema version is semantic.db on?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-038",
+            "v-033",
+            "v-008",
+            "v-003",
+            "v-028"
+          ]
+        },
+        {
+          "query": "What is the ProvSEEK paper id?",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 2,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "pl-009",
+            "pl-004",
+            "v-024",
+            "v-039",
+            "v-049"
+          ]
+        },
+        {
+          "query": "How many tools registered in HippoAgent MCP server?",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 2,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-010",
+            "pl-000",
+            "v-015",
+            "v-020",
+            "pl-005"
+          ]
+        },
+        {
+          "query": "Tell me about NEXUS pytest cases collected.",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-021",
+            "v-011",
+            "v-036",
+            "v-041",
+            "v-046"
+          ]
+        },
+        {
+          "query": "Aurelio contact email please.",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-007",
+            "pm-002",
+            "v-047",
+            "v-037",
+            "v-017"
+          ]
+        },
+        {
+          "query": "Cycle 109 schema migration result.",
+          "topk_groups": {
+            "verified": 2,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 1,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-008",
+            "pm-003",
+            "v-048",
+            "v-043",
+            "pl-003"
+          ]
+        },
+        {
+          "query": "ProvSEEK 2508 paper arxiv reference.",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-009",
+            "pm-004",
+            "v-044",
+            "v-014",
+            "v-039"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "default_exclude_legacy",
+      "include_legacy": false,
+      "min_status": null,
+      "k": 5,
+      "n_queries": 10,
+      "aggregate": {
+        "poisoning_total": 8,
+        "poisoning_legacy_in_topk": 0,
+        "poisoning_model_claim_in_topk": 8,
+        "verified_in_topk": 42,
+        "model_claim_in_topk": 0,
+        "legacy_unverified_in_topk": 0,
+        "avg_status_rank_topk": 2.84
+      },
+      "per_query": [
+        {
+          "query": "How many MCP tools does HippoAgent have?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-015",
+            "v-010",
+            "v-020",
+            "v-035",
+            "v-025"
+          ]
+        },
+        {
+          "query": "What is the NEXUS test count?",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "v-046",
+            "pm-006",
+            "pm-001",
+            "v-006",
+            "v-026"
+          ]
+        },
+        {
+          "query": "What is Aurelio's email?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-002",
+            "v-007",
+            "v-012",
+            "v-042",
+            "v-032"
+          ]
+        },
+        {
+          "query": "What schema version is semantic.db on?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-038",
+            "v-033",
+            "v-008",
+            "v-003",
+            "v-028"
+          ]
+        },
+        {
+          "query": "What is the ProvSEEK paper id?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-024",
+            "v-039",
+            "v-049",
+            "v-009",
+            "v-004"
+          ]
+        },
+        {
+          "query": "How many tools registered in HippoAgent MCP server?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-010",
+            "v-015",
+            "v-020",
+            "v-025",
+            "v-005"
+          ]
+        },
+        {
+          "query": "Tell me about NEXUS pytest cases collected.",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-021",
+            "v-011",
+            "v-036",
+            "v-041",
+            "v-046"
+          ]
+        },
+        {
+          "query": "Aurelio contact email please.",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-007",
+            "pm-002",
+            "v-047",
+            "v-037",
+            "v-017"
+          ]
+        },
+        {
+          "query": "Cycle 109 schema migration result.",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-008",
+            "pm-003",
+            "v-048",
+            "v-043",
+            "v-013"
+          ]
+        },
+        {
+          "query": "ProvSEEK 2508 paper arxiv reference.",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-009",
+            "pm-004",
+            "v-044",
+            "v-014",
+            "v-039"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "strict_min_status_verified",
+      "include_legacy": false,
+      "min_status": "verified",
+      "k": 5,
+      "n_queries": 10,
+      "aggregate": {
+        "poisoning_total": 0,
+        "poisoning_legacy_in_topk": 0,
+        "poisoning_model_claim_in_topk": 0,
+        "verified_in_topk": 50,
+        "model_claim_in_topk": 0,
+        "legacy_unverified_in_topk": 0,
+        "avg_status_rank_topk": 3.0
+      },
+      "per_query": [
+        {
+          "query": "How many MCP tools does HippoAgent have?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-015",
+            "v-010",
+            "v-020",
+            "v-035",
+            "v-025"
+          ]
+        },
+        {
+          "query": "What is the NEXUS test count?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-046",
+            "v-006",
+            "v-026",
+            "v-036",
+            "v-041"
+          ]
+        },
+        {
+          "query": "What is Aurelio's email?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-002",
+            "v-007",
+            "v-012",
+            "v-042",
+            "v-032"
+          ]
+        },
+        {
+          "query": "What schema version is semantic.db on?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-038",
+            "v-033",
+            "v-008",
+            "v-003",
+            "v-028"
+          ]
+        },
+        {
+          "query": "What is the ProvSEEK paper id?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-024",
+            "v-039",
+            "v-049",
+            "v-009",
+            "v-004"
+          ]
+        },
+        {
+          "query": "How many tools registered in HippoAgent MCP server?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-010",
+            "v-015",
+            "v-020",
+            "v-025",
+            "v-005"
+          ]
+        },
+        {
+          "query": "Tell me about NEXUS pytest cases collected.",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-021",
+            "v-011",
+            "v-036",
+            "v-041",
+            "v-046"
+          ]
+        },
+        {
+          "query": "Aurelio contact email please.",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-047",
+            "v-037",
+            "v-017",
+            "v-042",
+            "v-002"
+          ]
+        },
+        {
+          "query": "Cycle 109 schema migration result.",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-048",
+            "v-043",
+            "v-013",
+            "v-038",
+            "v-023"
+          ]
+        },
+        {
+          "query": "ProvSEEK 2508 paper arxiv reference.",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-044",
+            "v-014",
+            "v-039",
+            "v-029",
+            "v-024"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "mid_min_status_model_claim",
+      "include_legacy": false,
+      "min_status": "model_claim",
+      "k": 5,
+      "n_queries": 10,
+      "aggregate": {
+        "poisoning_total": 8,
+        "poisoning_legacy_in_topk": 0,
+        "poisoning_model_claim_in_topk": 8,
+        "verified_in_topk": 42,
+        "model_claim_in_topk": 0,
+        "legacy_unverified_in_topk": 0,
+        "avg_status_rank_topk": 2.84
+      },
+      "per_query": [
+        {
+          "query": "How many MCP tools does HippoAgent have?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-015",
+            "v-010",
+            "v-020",
+            "v-035",
+            "v-025"
+          ]
+        },
+        {
+          "query": "What is the NEXUS test count?",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "v-046",
+            "pm-006",
+            "pm-001",
+            "v-006",
+            "v-026"
+          ]
+        },
+        {
+          "query": "What is Aurelio's email?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-002",
+            "v-007",
+            "v-012",
+            "v-042",
+            "v-032"
+          ]
+        },
+        {
+          "query": "What schema version is semantic.db on?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-038",
+            "v-033",
+            "v-008",
+            "v-003",
+            "v-028"
+          ]
+        },
+        {
+          "query": "What is the ProvSEEK paper id?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-024",
+            "v-039",
+            "v-049",
+            "v-009",
+            "v-004"
+          ]
+        },
+        {
+          "query": "How many tools registered in HippoAgent MCP server?",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-010",
+            "v-015",
+            "v-020",
+            "v-025",
+            "v-005"
+          ]
+        },
+        {
+          "query": "Tell me about NEXUS pytest cases collected.",
+          "topk_groups": {
+            "verified": 5,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 0
+          },
+          "topk_ids": [
+            "v-021",
+            "v-011",
+            "v-036",
+            "v-041",
+            "v-046"
+          ]
+        },
+        {
+          "query": "Aurelio contact email please.",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-007",
+            "pm-002",
+            "v-047",
+            "v-037",
+            "v-017"
+          ]
+        },
+        {
+          "query": "Cycle 109 schema migration result.",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-008",
+            "pm-003",
+            "v-048",
+            "v-043",
+            "v-013"
+          ]
+        },
+        {
+          "query": "ProvSEEK 2508 paper arxiv reference.",
+          "topk_groups": {
+            "verified": 3,
+            "model_claim": 0,
+            "legacy_unverified": 0,
+            "poisoning_legacy": 0,
+            "poisoning_model_claim": 2
+          },
+          "topk_ids": [
+            "pm-009",
+            "pm-004",
+            "v-044",
+            "v-014",
+            "v-039"
+          ]
+        }
+      ]
+    }
+  ]
+}

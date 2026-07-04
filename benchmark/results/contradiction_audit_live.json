@@ -1,0 +1,46 @@
+{
+  "corpus_facts_today": 4590,
+  "fp_bench_high_cosine_pairs": 148,
+  "fp_bench_raw_contradictions": 14,
+  "fp_bench_residual_after_filter": 5,
+  "fp_bench_residual_rate": 0.034,
+  "residual_contradiction_ids": [
+    "15e577e7f179",
+    "3a210fe5f785",
+    "3b4d78ad5c44",
+    "50c926e167bc",
+    "885fb29c8f27",
+    "9706d862386b",
+    "98b99081a51e",
+    "a47135979c5e",
+    "d4dd857b1eea",
+    "ee83d324813a"
+  ],
+  "residual_present_today": [
+    "15e577e7f179",
+    "3a210fe5f785",
+    "3b4d78ad5c44",
+    "50c926e167bc",
+    "885fb29c8f27",
+    "9706d862386b",
+    "98b99081a51e",
+    "a47135979c5e",
+    "d4dd857b1eea",
+    "ee83d324813a"
+  ],
+  "audit_would_contest": [
+    "d4dd857b1eea",
+    "9706d862386b",
+    "885fb29c8f27",
+    "3a210fe5f785",
+    "15e577e7f179",
+    "98b99081a51e",
+    "3b4d78ad5c44",
+    "ee83d324813a",
+    "a47135979c5e",
+    "50c926e167bc"
+  ],
+  "audit_served": 4568,
+  "honest_yield_true_contradictions": "~0 (residual flags are complementary/duplicate FPs)",
+  "posture": "opt-in + read-only vindicated; value is on evolving factual corpora"
+}

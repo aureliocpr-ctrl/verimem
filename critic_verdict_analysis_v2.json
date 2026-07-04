@@ -1,0 +1,109 @@
+{
+  "n_critic_facts": 5,
+  "verdict_distribution": {
+    "CLAIM_FAILS": 2,
+    "SPLIT": 1,
+    "CLAIM_HOLDS": 2
+  },
+  "evidence_keyword_freq": {
+    "timeout": 3,
+    "counterexample": 4,
+    "GAP": 3,
+    "falsification": 5,
+    "production.ready": 1,
+    "surrogate": 3,
+    "dead.code": 2,
+    "second.call.site": 1,
+    "production.caller": 1
+  },
+  "per_cycle": [
+    {
+      "cycle": 258,
+      "id": "4d8c02a20f",
+      "topic": "critic/cycle258-verdict-second-pass-louvain-dead-code-2026-05-23",
+      "verdict": "CLAIM_FAILS",
+      "worker_confidences": {
+        "caller_verification": 0.95
+      }
+    },
+    {
+      "cycle": 262,
+      "id": "2d5cf4da10",
+      "topic": "critic/cycle262-verdict-stable-partition-same-class-gap-2026-05-23",
+      "verdict": "SPLIT",
+      "worker_confidences": {
+        "falsification": 0.9,
+        "caller_verification": 0.95
+      }
+    },
+    {
+      "cycle": 287,
+      "id": "0a69d3bb94",
+      "topic": "critic/cycle287-verdict-stable-partition-wire-CLAIM-HOLDS-2026-05-23",
+      "verdict": "CLAIM_HOLDS",
+      "worker_confidences": {}
+    },
+    {
+      "cycle": 299,
+      "id": "6f177ed1f9",
+      "topic": "critic/cycle299-verdict-hybrid-CLAIM-HOLDS-2-0-1-2026-05-23",
+      "verdict": "CLAIM_HOLDS",
+      "worker_confidences": {}
+    },
+    {
+      "cycle": 308,
+      "id": "392adc3682",
+      "topic": "critic/cycle308-verdict-cycle-303-M14-fail-counterexample-2026-05-23",
+      "verdict": "CLAIM_FAILS",
+      "worker_confidences": {
+        "counterexample": 0.82
+      }
+    }
+  ],
+  "verdict_trend": [
+    {
+      "cycle": 258,
+      "verdict": "CLAIM_FAILS"
+    },
+    {
+      "cycle": 262,
+      "verdict": "SPLIT"
+    },
+    {
+      "cycle": 287,
+      "verdict": "CLAIM_HOLDS"
+    },
+    {
+      "cycle": 299,
+      "verdict": "CLAIM_HOLDS"
+    },
+    {
+      "cycle": 308,
+      "verdict": "CLAIM_FAILS"
+    }
+  ],
+  "worker_confidence_trend": {
+    "falsification": [
+      {
+        "cycle": 262,
+        "conf": 0.9
+      }
+    ],
+    "caller_verification": [
+      {
+        "cycle": 258,
+        "conf": 0.95
+      },
+      {
+        "cycle": 262,
+        "conf": 0.95
+      }
+    ],
+    "counterexample": [
+      {
+        "cycle": 308,
+        "conf": 0.82
+      }
+    ]
+  }
+}

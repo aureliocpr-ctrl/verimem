@@ -1,0 +1,19 @@
+{
+  "k_writes": 30,
+  "N_runs": 3,
+  "vanilla_delta_jaccards": [
+    0.3820255982192543,
+    0.3171753441053261,
+    0.373648461325201
+  ],
+  "compensated_delta_jaccards": [
+    0.26978654734834595,
+    0.250835612275904,
+    0.2869942196531792
+  ],
+  "vanilla_mean": 0.35761646788326046,
+  "compensated_mean": 0.26920545975914306,
+  "ratio": 0.7527770221337288,
+  "verdict": "supported_weak (\u0394J_comp < \u0394J_vanilla but not /2)",
+  "elapsed_s": 26.109686613082886
+}

@@ -1,0 +1,99 @@
+# ─── Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+.eggs/
+
+# ─── Virtual envs ────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ─── Build / packaging ───────────────────────────────────────────
+build/
+dist/
+wheels/
+*.whl
+
+# ─── Tests / coverage / typing caches ────────────────────────────
+.pytest_cache/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+.benchmarks/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.json
+coverage.xml
+htmlcov/
+
+# ─── Editor / IDE ────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*~
+
+# ─── HippoAgent runtime artefacts ────────────────────────────────
+data/episodes/*.db
+data/skills/*.json
+data/skills/*.db
+data/semantic/
+data/conversational/
+data/screenshots/
+data/reports/
+data/runs/
+data/user_settings.json
+
+# ─── Secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Logs ─────────────────────────────────────────────────────────
+*.log
+data/repomap_cache*.json
+data/ollama_test.txt
+
+# ─── scratch / loop artefacts (worktree cleanup 2026-06-05) ──────
+*.bak-*
+/data/hippo.db
+/data/episodes/
+/swarm-cycle*.yaml
+/bench_production_loop*.json
+
+# Local-gate personal-corpus artifacts (real facts/sources — NEVER commit)
+benchmark/results/real_corpus_gate_validation.json
+benchmark/results/_v2_eval_recheck.txt
+benchmark/results/_v2_halumem_recheck.txt
+benchmark/results/local_gate_pairs_real*.json
+
+# Benchmark working artifacts (regenerable; the CITED result jsons ARE tracked
+# — guarded by tests/test_repro_registry_g4.py)
+benchmark/results/*.log
+benchmark/results/halumem_batches*/
+benchmark/results/dormant_audit/
+# multi-MB dumps: regenerate via --dump-candidates / --dump-selections
+benchmark/results/*_dump.json
+benchmark/results/halumem_updating_v3_selections.json
+# personal-corpus scans (PRIVACY: they embed facts from the dev corpus) + multi-MB regenerable slices
+benchmark/results/corpus_truth_scan_tiered*.json
+benchmark/results/halumem_updating_full20_local.json
+benchmark/results/halumem_updating_u5_local.json
+# one-shot orchestration scripts parked in results/ by past sessions
+benchmark/results/*_workflow.js
+
+# PRIVACY (2026-07-04 security sweep C1/H1/M1): result dumps embedding the
+# personal dev corpus, real PII, or absolute local paths. Regenerate from
+# public datasets if a cited number needs them. NEVER commit corpus scans.
+benchmark/results/corpus_truth_scan*.json
+benchmark/results/corpus_fp*.json
+benchmark/results/github_deepdive_result.json
+benchmark/results/halumem_batch_paths.json
+benchmark/results/lineage_cascade_exposure_real.json
+benchmark/results/lme_mem0_spread48.json

@@ -1,0 +1,82 @@
+{
+  "bench_name": "cycle-70-critic-orchestrator-v0.3.0-variance",
+  "timestamp_unix": 1778810070,
+  "setup": {
+    "claim": "P1 hippo_validate_claim anti-confabulation deterministic (commit a07debf). Tool MCP che valida claim factual contro semantic memory: verdict in {supported, contradicted, unknown}, zero LLM call, sub-100ms su ~500 fact corpus. Test coverage 8/8 RED->GREEN.",
+    "test_path": "tests/test_validate_claim.py",
+    "fixed_function": "engram.validate_claim.validate_claim",
+    "timeout_s_per_worker": 200,
+    "critic_orchestrator_version": "v0.3.0 (commit 03ed212, debiased counterexample)"
+  },
+  "runs": [
+    {
+      "run": 1,
+      "job_id": "4b8ceed262447545",
+      "consensus": "claim_holds",
+      "votes": {"hold": 2, "fail": 0, "invalid": 1},
+      "wall_duration_ms": 200100,
+      "total_cost_usd": 1.33437775,
+      "workers": [
+        {"name": "falsification", "status": "timeout 200s", "confidence": null},
+        {"name": "caller_verification", "status": "ok hold", "confidence": 0.97},
+        {"name": "counterexample", "status": "ok hold (no bug)", "confidence": 0.78}
+      ]
+    },
+    {
+      "run": 2,
+      "job_id": "ee2a825155526a31",
+      "consensus": "claim_holds",
+      "votes": {"hold": 2, "fail": 0, "invalid": 1},
+      "wall_duration_ms": 200105,
+      "total_cost_usd": 1.24173375,
+      "workers": [
+        {"name": "falsification", "status": "ok hold", "confidence": 0.97},
+        {"name": "caller_verification", "status": "ok hold", "confidence": 0.95},
+        {"name": "counterexample", "status": "timeout 200s", "confidence": null}
+      ]
+    },
+    {
+      "run": 3,
+      "job_id": "4348773cc7c6934a",
+      "consensus": "claim_holds",
+      "votes": {"hold": 2, "fail": 0, "invalid": 1},
+      "wall_duration_ms": 200088,
+      "total_cost_usd": 1.029289,
+      "workers": [
+        {"name": "falsification", "status": "ok hold", "confidence": 0.97},
+        {"name": "caller_verification", "status": "ok hold", "confidence": 0.97},
+        {"name": "counterexample", "status": "timeout 200s", "confidence": null}
+      ]
+    }
+  ],
+  "summary": {
+    "consensus_reproducibility_rate": "3/3 (100%)",
+    "worker_timeout_rate": {
+      "falsification": "1/3 (33%)",
+      "caller_verification": "0/3 (0%)",
+      "counterexample": "2/3 (67%)"
+    },
+    "false_positives_on_valid_claim": 0,
+    "mean_cost_usd": 1.2018,
+    "mean_wall_s": 200.10,
+    "decision": "claim_holds 2-0-1 with counterexample timeout = soft-pass acceptable"
+  },
+  "symmetry_test_false_claim": {
+    "run": {
+      "job_id": "e08089eb0e9aee08",
+      "claim": "P2.a EntityStore.store() accepts empty/whitespace canonical_name and returns a valid entity id...",
+      "expected": "claim_fails (claim is provably false post P2.a hardened commit 12fa4ff)",
+      "consensus": "claim_fails",
+      "votes": {"hold": 1, "fail": 2, "invalid": 0},
+      "wall_duration_ms": 158109,
+      "total_cost_usd": 1.83809,
+      "workers": [
+        {"name": "falsification", "status": "ok hold (semantic confusion - votes on negation of fix, NOT on current claim)", "confidence": 0.95},
+        {"name": "caller_verification", "status": "ok fail", "confidence": 0.93},
+        {"name": "counterexample", "status": "ok fail (deterministic catch in 158s, cited entity_kg.py:475-480)", "confidence": 0.99}
+      ]
+    },
+    "symmetry_verdict": "DEBIASING_PRESERVES_BUG_DETECTION_AND_AVOIDS_FP: counterex 0.99 on FALSE claim + 0/3 FP on TRUE claim",
+    "identified_followup": "falsification semantic confusion on claim=negation-of-fix - prompting issue separate from debiasing, does not block consensus"
+  }
+}

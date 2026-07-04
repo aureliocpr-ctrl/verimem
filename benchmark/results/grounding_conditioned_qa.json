@@ -1,0 +1,36 @@
+{
+  "n_cases": 12,
+  "flat": {
+    "counts": {
+      "CORRECT": 0,
+      "HALLUCINATION": 4,
+      "OMISSION": 8,
+      "ERROR": 0
+    },
+    "n": 12,
+    "correct": 0.0,
+    "hallucination": 0.3333,
+    "omission": 0.6667,
+    "hallucination_ci95": [
+      0.1381,
+      0.6094
+    ]
+  },
+  "grounded": {
+    "counts": {
+      "CORRECT": 12,
+      "HALLUCINATION": 0,
+      "OMISSION": 0,
+      "ERROR": 0
+    },
+    "n": 12,
+    "correct": 1.0,
+    "hallucination": 0.0,
+    "omission": 0.0,
+    "hallucination_ci95": [
+      0.0,
+      0.2425
+    ]
+  },
+  "hallucination_drop": 0.3333
+}

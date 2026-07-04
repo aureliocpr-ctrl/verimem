@@ -1,0 +1,222 @@
+{
+  "n_commits": 25,
+  "by_verdict_class": {
+    "OK_clean": 14,
+    "WARN_marketing_only": 4,
+    "OK_new_files_no_marketing": 6,
+    "WARN_or_BLOCK": 1
+  },
+  "marketing_pattern_freq": {
+    "\\bcure\\b(?!.*test)": 3,
+    "definitive(?!\\s+test)": 2,
+    "\\bshipped\\b": 1,
+    "architectural\\s+cure": 1
+  },
+  "per_commit": [
+    {
+      "sha": "65946fdfad",
+      "subject": "cycle 273: CONTRIBUTING.md addendum - M-rules + automated A4 checks",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "8a5aff7821",
+      "subject": "cycle 272: LaTeX scaffold per arxiv submission",
+      "marketing_matches": [
+        "definitive(?!\\s+test)"
+      ],
+      "added_files": [],
+      "verdict_class": "WARN_marketing_only"
+    },
+    {
+      "sha": "a054350993",
+      "subject": "cycle 271: pioneering #27 cumulative A4-violation tracker + bug-fix",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/track_a4_violations.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "f79bf7eb66",
+      "subject": "cycle 270: pioneering #26 A4 pre-flight violation check (REIFIES M5)",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/check_a4_violations.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "92540aaf9f",
+      "subject": "cycle 269: singolarita #25 CRITIC-AS-MEMORY pioneering",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "b96be8dc4d",
+      "subject": "cycle 268: cross-validation FALSIFIES pioneering #23 mining recall",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "156159c170",
+      "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "a73c8d6599",
+      "subject": "cycle 266: automated meta-rule mining script + self-validation",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/mine_meta_rules.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "0f64eae1fb",
+      "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALITY",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "48bf237428",
+      "subject": "cycle 263: wire stable_partition into detect_emerging_skills (close cycle 262 gap)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "d78fdd53bb",
+      "subject": "cycle 262: critic-gate split verdict -> \u00a76.5 status disclaimer (A4)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "94a4d047db",
+      "subject": "paper \u00a78 polish: conclusion with full LOOP 253-261 empirical arc",
+      "marketing_matches": [
+        "\\bcure\\b(?!.*test)"
+      ],
+      "added_files": [],
+      "verdict_class": "WARN_marketing_only"
+    },
+    {
+      "sha": "088d48242c",
+      "subject": "cycle 261: stable_partition REAL SOS mitigation - paper \u00a76.5 promoted",
+      "marketing_matches": [],
+      "added_files": [
+        "engram/stable_partition.py",
+        "tests/test_stable_partition.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "725a0a0bf2",
+      "subject": "cycle 260: A3+A4 onesto disclosure - wire cure + empirical re-framing",
+      "marketing_matches": [
+        "\\bcure\\b(?!.*test)"
+      ],
+      "added_files": [],
+      "verdict_class": "WARN_marketing_only"
+    },
+    {
+      "sha": "64c66451cf",
+      "subject": "cycle 259: B6 probe -> purity cliff edge -> \u00a75.8 reframes #21 as REVEALING",
+      "marketing_matches": [],
+      "added_files": [
+        "scripts/probe_resting_corpus_emergence.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "879015a2f8",
+      "subject": "cycle 257: downstream emergence consequence bench - self-applying loop CONFIRMED",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "a9f03789fd",
+      "subject": "cycle 256: scaling curve empirica k=[10,25,50,100,200] N=20 -> paper \u00a75.7",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "98cbaedf2c",
+      "subject": "cycle 255: definitive observer-shift bench N=20 k=100 -> H1 SUPPORTED",
+      "marketing_matches": [
+        "definitive(?!\\s+test)"
+      ],
+      "added_files": [],
+      "verdict_class": "WARN_marketing_only"
+    },
+    {
+      "sha": "50bb3a0c27",
+      "subject": "cycle 254: production bench --auto-copy + paper \u00a75 honest empirical results",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "d55d2cc370",
+      "subject": "cycle 253: second-pass Louvain cure + observer-shift bench + paper outline",
+      "marketing_matches": [
+        "\\bshipped\\b",
+        "\\bcure\\b(?!.*test)",
+        "architectural\\s+cure"
+      ],
+      "added_files": [
+        "engram/second_pass_louvain.py",
+        "scripts/bench_observer_shift.py",
+        "tests/test_second_pass_louvain.py"
+      ],
+      "verdict_class": "WARN_or_BLOCK"
+    },
+    {
+      "sha": "43650b8d2f",
+      "subject": "cycle 252: docs/proposal/ dossier \u2014 7 documents for pitching the project (#194)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "5254affa64",
+      "subject": "cycle 251: STATE.md + README.md \u2014 maniacal update post cycle 213-250 (#193)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "b4a8d8473a",
+      "subject": "cycle 250: CHANGELOG \u2014 adaptive thresholds (cycle 248-249) (#192)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "a291d9b14b",
+      "subject": "cycle 249: wire adaptive_threshold into Auto-Dream worker (#191)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "703a6821bb",
+      "subject": "cycle 248: adaptive_threshold.py \u2014 corpus-size-aware emergence thresholds (#190)",
+      "marketing_matches": [],
+      "added_files": [
+        "engram/adaptive_threshold.py",
+        "tests/test_adaptive_threshold.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    }
+  ]
+}

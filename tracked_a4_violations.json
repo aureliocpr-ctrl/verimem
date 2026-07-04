@@ -1,0 +1,40 @@
+{
+  "n_critic_facts": 2,
+  "threshold_cycle": 264,
+  "pre_threshold": {
+    "n_total": 2,
+    "n_fails": 2,
+    "rate": 1.0,
+    "by_verdict": {
+      "CLAIM_FAILS": 2
+    }
+  },
+  "post_threshold": {
+    "n_total": 0,
+    "n_fails": 0,
+    "rate": 0.0,
+    "by_verdict": {}
+  },
+  "facts": [
+    {
+      "id": "4d8c02a20f9b",
+      "topic": "critic/cycle258-verdict-second-pass-louvain-dead-code-2026-05-23",
+      "cycle": 258,
+      "created_at": 1779439989.8799284,
+      "verdict": "CLAIM_FAILS"
+    },
+    {
+      "id": "2d5cf4da1034",
+      "topic": "critic/cycle262-verdict-stable-partition-same-class-gap-2026-05-23",
+      "cycle": 262,
+      "created_at": 1779440102.215655,
+      "verdict": "CLAIM_FAILS"
+    }
+  ],
+  "paper_9_3_prediction": {
+    "baseline_pct": 100.0,
+    "post_pct": 0.0,
+    "target_post_pct": 10.0,
+    "verdict": "INSUFFICIENT_DATA (need >= 3 post-threshold critic facts)"
+  }
+}

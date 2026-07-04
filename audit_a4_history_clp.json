@@ -1,0 +1,395 @@
+{
+  "n_commits": 50,
+  "by_verdict_class": {
+    "OK_clean": 33,
+    "OK_new_files_no_marketing": 17
+  },
+  "marketing_pattern_freq": {},
+  "per_commit": [
+    {
+      "sha": "60b061ce7f",
+      "subject": "feat(meta-process): LOOP 294-295 \u2014 auto-detect step + ambient_daemon meta-aware",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "d65e95fbe5",
+      "subject": "feat(tfm-bench): LOOP 293 Esperimento 3 Vulnerability Reduction scaffold",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/tfm_vulnerability_bench.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "a5d0e30500",
+      "subject": "release(clp): v0.22.0 \u2014 LOOP 292 META-PROCESSO 3-surface integration",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "ee0bfbf5c8",
+      "subject": "feat(cli): LOOP 292 \u2014 clp meta-process CLI subcommand nativo",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/commands/meta_process_cmd.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "65a412b91e",
+      "subject": "feat(meta-process): LOOP 292 \u2014 META-PROCESSO B4 NUCLEAR codified as skill + MCP tool",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "628ce81f34",
+      "subject": "feat(mcp): LOOP 291 \u2014 3 nuovi MCP tool TFM + ambient_daemon (#27/#28/#29)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "ad7ae52e2f",
+      "subject": "release(clp): v0.21.0 \u2014 LOOP 290 cross-PROVIDER REAL CONFIRMED + final sessione 2h",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "9f6ab41355",
+      "subject": "feat(tfm-cli): LOOP 290 cross-PROVIDER REAL \u2014 --gemini-model gemini-2.5-pro stable",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "7071b65fed",
+      "subject": "feat(tfm): LOOP 288 'clp tfm execute' REAL E2E LIVE \u2014 cross-LLM DAG \u2192 TFM",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "a3ab3841b6",
+      "subject": "feat(tfm-bench): LOOP 287 scaffold Architectural Robustness benchmark",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/tfm_bench.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "d78f34c412",
+      "subject": "feat(tfm): LOOP 285 CLI exposure 'clp tfm' subcommand",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/commands/tfm_cmd.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "24bcb163d9",
+      "subject": "feat(tfm): LOOP 284 self-bootstrap step 1+2 \u2014 EdgeType enum + edge_types dict",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "5beb053d1f",
+      "subject": "release(clp): v0.20.0 \u2014 TFM Topological Futures Market SINGOLARIT\u00c0 #41 candidate",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "e186cf8061",
+      "subject": "fix(tfm): LOOP 282 Gemini FAIL #1+#4 \u2192 NetworkX structural GED",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "f84d622b4f",
+      "subject": "fix(tfm): LOOP 281 Gemini FAIL #1+#5 \u2192 real DAG (Jaccard nodes+edges)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "4e57a1753e",
+      "subject": "feat(tfm): LOOP 280 SINGOLARIT\u00c0 candidate Topological Futures Market",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/topological_futures.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "5397621e7c",
+      "subject": "feat(ambient-daemon): LOOP 278 Gemini fix #3 explicit-consent + path bug fix",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "0deedbd93d",
+      "subject": "feat(ambient-daemon): LOOP 277 H-C proof-of-concept boundary v0.19.0",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/ambient_daemon.py",
+        "clp/clp/commands/ambient_daemon_cmd.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "aa6ae5c44d",
+      "subject": "release(clp): v0.18.0 \u2014 state-carry LIVE REAL Claude math chain verified",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "3b72fe2c55",
+      "subject": "feat(kernel): LOOP 275 state-carry across turns \u2014 vera conversazione multi-turn",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "9393a0a108",
+      "subject": "feat(cli): LOOP 273 \u2014 'clp kernel session' multi-turn exposure CLI",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "2ffe871b5c",
+      "subject": "feat(kernel): LOOP 272 INVENZIONE \u2014 Kernel.session_loop multi-turn auto-A2A routing",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "2042661653",
+      "subject": "release(clp): v0.17.0 \u2014 7 INTEGRATION WIRES (LOOP 265-271) 30 PRIMITIVES live",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "fa9cb477e9",
+      "subject": "feat(consensus): LOOP 271 META-B4 \u2014 consensus_run publishes verdict to PRIM12+24",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "90dcfa5e79",
+      "subject": "feat(critic): LOOP 270 META-B4 \u2014 critic_run wrapped in PRIM21 agentic_transaction",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "bfbd33a12c",
+      "subject": "feat(mcp): LOOP 269 META-B4 \u2014 prim_invoke MCP tool 26 expose 20 PRIMITIVES to chat",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "bdfde91dde",
+      "subject": "feat(cli): LOOP 268 META-B4 \u2014 'clp agentos prim' dispatch table to 20 PRIMITIVES",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "e8ee750044",
+      "subject": "feat(master_bridge): LOOP 267 META-B4 \u2014 PRIM20 agentic_quote cabled into bridge_run",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "32a58af39f",
+      "subject": "feat(kernel): LOOP 266 swarm_distribute MANAGED by default \u2014 PRIM11/15/16/18/24 cabled",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "965b261cda",
+      "subject": "feat(kernel): LOOP 265 INTEGRATION REAL \u2014 spawn_subagent_managed wires PRIM11/15/16/18/24",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "579abd4d25",
+      "subject": "release(clp): v0.16.0 \u2014 30 AGENTIC PRIMITIVES (round milestone) + PRIM30 cache",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "4560105806",
+      "subject": "feat(agentos): LOOP 264 SINGOLARIT\u00c0 #40 \u2014 PRIM30 agentic_cache memoization",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_cache.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "56546e52cd",
+      "subject": "release(clp): v0.15.0 \u2014 29 AGENTIC PRIMITIVES + PRIM28 observe + PRIM29 market",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "5d98d500e7",
+      "subject": "feat(agentos): LOOP 263 SINGOLARIT\u00c0 #39 \u2014 PRIM29 agentic_market economic bidding",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_market.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "3835bd1f3d",
+      "subject": "feat(agentos): LOOP 262 SINGOLARIT\u00c0 #38 \u2014 PRIM28 agentic_observe multi-voter consensus",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_observe.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "0a661075fd",
+      "subject": "docs(clp): CHANGELOG.md update v0.14.0 \u2014 17 new PRIMITIVES + Popperian test counts",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "49a86b649e",
+      "subject": "release(clp): v0.14.0 \u2014 27 AGENTIC PRIMITIVES (PRIM27 agentic_pin)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "5e8ecce1b0",
+      "subject": "feat(agentos): LOOP 261 SINGOLARIT\u00c0 #37 \u2014 PRIM27 agentic_pin memory protection",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_pin.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "934d0861ed",
+      "subject": "release(clp): v0.13.0 \u2014 26 AGENTIC PRIMITIVES (PRIM26 agentic_dream counterfactual)",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "1e0bfed0f0",
+      "subject": "feat(agentos): LOOP 260 SINGOLARIT\u00c0 #36 \u2014 PRIM26 agentic_dream counterfactual",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_dream.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "654cd6f3e5",
+      "subject": "release(clp): v0.12.0 \u2014 25 AGENTIC PRIMITIVES with PRIM25 agentic_negotiate",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "3512c85b0b",
+      "subject": "feat(agentos): LOOP 259 SINGOLARIT\u00c0 #35 \u2014 PRIM25 agentic_negotiate bilateral contract",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_negotiate.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "375c6bc3c9",
+      "subject": "chore(agentos): __init__.py exports 14 new primitives modules",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "c5c27f08b9",
+      "subject": "release(clp): v0.11.0 \u2014 24 AGENTIC PRIMITIVES + telemetry/RPC/signal/transaction",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "428edcf59e",
+      "subject": "feat(agentos): LOOP 258 SINGOLARIT\u00c0 #34 \u2014 PRIM24 agentic_emit telemetry-as-facts",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_emit.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "84652b6acb",
+      "subject": "feat(agentos): LOOP 257 SINGOLARIT\u00c0 #33 \u2014 PRIM23 agentic_signal interrupt",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_signal.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "3ec39c901f",
+      "subject": "feat(agentos): LOOP 256 SINGOLARIT\u00c0 #32 \u2014 PRIM22 agentic_dispatch RPC",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_dispatch.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "c68e63c38c",
+      "subject": "release(clp): v0.10.0 \u2014 21 AGENTIC PRIMITIVES (LOOP 240-255) milestone",
+      "marketing_matches": [],
+      "added_files": [],
+      "verdict_class": "OK_clean"
+    },
+    {
+      "sha": "0f4cfa676c",
+      "subject": "feat(agentos): LOOP 255 SINGOLARIT\u00c0 #31 \u2014 PRIM21 agentic_transaction atomic+rollback",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_transaction.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    },
+    {
+      "sha": "c5a3056783",
+      "subject": "feat(agentos): LOOP 254 SINGOLARIT\u00c0 #30 \u2014 PRIM20 agentic_quote citation/grounding",
+      "marketing_matches": [],
+      "added_files": [
+        "clp/clp/agentos/agentic_quote.py"
+      ],
+      "verdict_class": "OK_new_files_no_marketing"
+    }
+  ]
+}

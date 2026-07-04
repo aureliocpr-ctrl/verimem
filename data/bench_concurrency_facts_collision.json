@@ -1,0 +1,30 @@
+{
+  "store_kind": "facts_collision",
+  "n_procs": 20,
+  "n_writes_per_proc": 100,
+  "n_runs": 1,
+  "total_writes_per_run": 2000,
+  "runs": [
+    {
+      "run_idx": 0,
+      "wall_s": 53.644,
+      "throughput_wps": 37.3,
+      "n_expected": 2000,
+      "n_rows_in_db": 100,
+      "n_loss": 1900,
+      "n_worker_errors": 0,
+      "corruption": [],
+      "per_worker_avg_wps": 2.0,
+      "per_worker_avg_init_s": 0.342,
+      "worker_errors_preview": []
+    }
+  ],
+  "summary": {
+    "median_wall_s": 53.644,
+    "median_throughput_wps": 37.3,
+    "max_loss": 1900,
+    "total_loss": 1900,
+    "all_corruption_findings": [],
+    "all_runs_clean": false
+  }
+}

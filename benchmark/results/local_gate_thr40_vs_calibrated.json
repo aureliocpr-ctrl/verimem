@@ -1,0 +1,12 @@
+{
+ "40.0": {
+  "clean": 0.9622,
+  "interference": 0.115,
+  "foreign": 0.0302
+ },
+ "90.99": {
+  "clean": 0.9479,
+  "interference": 0.0855,
+  "foreign": 0.0235
+ }
+}

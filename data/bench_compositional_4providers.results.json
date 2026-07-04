@@ -1,0 +1,1439 @@
+[
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 114,
+    "latency_s": 0.9074363999989146,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 83,
+    "latency_s": 0.7285981999993965,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 54,
+    "latency_s": 1.4575334000001021,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "txlfn",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 52,
+    "latency_s": 0.7848942000000534,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "elzzup",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": false,
+    "tokens": 58,
+    "latency_s": 0.7269200999999157,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "eodph",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": true,
+    "tokens": 94,
+    "latency_s": 0.9919616999995924,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "REVERSE of 'stone' = 'enots'\nROT3 of 'enots' = 'hqrwv'\n\nhqrwv",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv3-three-bridge",
+    "success": false,
+    "tokens": 64,
+    "latency_s": 0.8419224999997823,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "eulgg",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv3-three-planet",
+    "success": false,
+    "tokens": 65,
+    "latency_s": 0.7485551999998279,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "wodqhw",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv4-four-crystal",
+    "success": false,
+    "tokens": 66,
+    "latency_s": 0.6361566999985371,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "crystal",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv4-four-thunder",
+    "success": false,
+    "tokens": 66,
+    "latency_s": 0.6290936000004876,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "thunder",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv5-five-magnetic",
+    "success": false,
+    "tokens": 78,
+    "latency_s": 0.7886464000002888,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "pdjqhwlf",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "lv5-five-forest",
+    "success": false,
+    "tokens": 73,
+    "latency_s": 0.7271669999990991,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "iruhvg",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 3500,
+    "latency_s": 21.014438399999563,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 3238,
+    "latency_s": 1.5068557000013243,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 3205,
+    "latency_s": 1.5952364999993733,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "txlfn",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 3125,
+    "latency_s": 1.264741299999514,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Final Answer: elzzup",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": true,
+    "tokens": 3305,
+    "latency_s": 2.3379792000014277,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hpdoi",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": true,
+    "tokens": 3252,
+    "latency_s": 1.47571649999918,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "hqrwv",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv3-three-bridge",
+    "success": true,
+    "tokens": 3393,
+    "latency_s": 1.655599900001107,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "kmjoxh",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv3-three-planet",
+    "success": true,
+    "tokens": 3297,
+    "latency_s": 1.7167117999997572,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "sodqhw",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv4-four-crystal",
+    "success": true,
+    "tokens": 7109,
+    "latency_s": 3.4253595000009227,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "ixeyzgr",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv4-four-thunder",
+    "success": true,
+    "tokens": 7094,
+    "latency_s": 3.4014024999996764,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "znatjkx",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv5-five-magnetic",
+    "success": true,
+    "tokens": 7330,
+    "latency_s": 4.015805400000318,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "vjpwncrl",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "lv5-five-forest",
+    "success": true,
+    "tokens": 7140,
+    "latency_s": 3.748306199999206,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "zykxul",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 103,
+    "latency_s": 1.3323967000014818,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 75,
+    "latency_s": 0.714533999998821,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv1-rot3-quick",
+    "success": false,
+    "tokens": 44,
+    "latency_s": 0.7207788000014261,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "tlxfn",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 45,
+    "latency_s": 0.5165442999987135,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "elzzup",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": false,
+    "tokens": 51,
+    "latency_s": 0.6390248999996402,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Emodn",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": false,
+    "tokens": 51,
+    "latency_s": 0.6564736000000266,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "VKRQH",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv3-three-bridge",
+    "success": false,
+    "tokens": 54,
+    "latency_s": 0.6624905000007857,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "bridge",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv3-three-planet",
+    "success": false,
+    "tokens": 54,
+    "latency_s": 0.7856572000000597,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "planet",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv4-four-crystal",
+    "success": false,
+    "tokens": 61,
+    "latency_s": 0.6724383000000671,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "crystal",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv4-four-thunder",
+    "success": false,
+    "tokens": 61,
+    "latency_s": 0.6190031000005547,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "thunder",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv5-five-magnetic",
+    "success": false,
+    "tokens": 66,
+    "latency_s": 0.6199159999996482,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "magnetic",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "lv5-five-forest",
+    "success": false,
+    "tokens": 64,
+    "latency_s": 0.5758886000003258,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "forest",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 2732,
+    "latency_s": 1.440886700000192,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 2643,
+    "latency_s": 1.5197155000005296,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 2622,
+    "latency_s": 1.9093318000013824,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "txlfn",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 2551,
+    "latency_s": 0.9180875000001834,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Final Answer: elzzup",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": true,
+    "tokens": 6419,
+    "latency_s": 11.322932800001581,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "I see my mistake \u2014 I mis-mapped the letters. Let me verify:\n\n- f \u2192 i (correct)\n- l \u2192 o (correct)\n- a \u2192 d (correct)\n- m \u2192 p (correct)\n- e \u2192 h (correct)\n\nSo ROT3('flame') = 'iodph' (not 'idoph' \u2014 I had ",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.23667360000035842,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nhqrwv\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv3-three-bridge",
+    "success": true,
+    "tokens": 6306,
+    "latency_s": 10.237186299998939,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "kmjoxh",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv3-three-planet",
+    "success": true,
+    "tokens": 2834,
+    "latency_s": 4.747386799999731,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "sodqhw",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv4-four-crystal",
+    "success": true,
+    "tokens": 6297,
+    "latency_s": 9.427920699999959,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "ixeyzgr",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv4-four-thunder",
+    "success": true,
+    "tokens": 6855,
+    "latency_s": 14.000920399999814,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "znatjkx",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv5-five-magnetic",
+    "success": true,
+    "tokens": 6577,
+    "latency_s": 11.589565599999332,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "vjpwncrl",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "lv5-five-forest",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2670429999998305,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nzykxul\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 114,
+    "latency_s": 1.8611793000000034,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 83,
+    "latency_s": 1.2343546000010974,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 54,
+    "latency_s": 1.3577370000002702,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "txlfn",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 52,
+    "latency_s": 1.396494700000403,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "elzzup",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": false,
+    "tokens": 59,
+    "latency_s": 1.1809620000003633,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "eodlk",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": false,
+    "tokens": 59,
+    "latency_s": 1.3201226000001043,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "grqvb",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv3-three-bridge",
+    "success": false,
+    "tokens": 66,
+    "latency_s": 1.2094056000005367,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "eulcjh",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv3-three-planet",
+    "success": false,
+    "tokens": 65,
+    "latency_s": 1.6029491999997845,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "wodqhw",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv4-four-crystal",
+    "success": false,
+    "tokens": 66,
+    "latency_s": 1.1093068000009225,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "crystal",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv4-four-thunder",
+    "success": false,
+    "tokens": 66,
+    "latency_s": 1.350243799999589,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "thunder",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv5-five-magnetic",
+    "success": false,
+    "tokens": 76,
+    "latency_s": 1.264815099999396,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "etcamgam",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "lv5-five-forest",
+    "success": false,
+    "tokens": 73,
+    "latency_s": 1.1639885999993567,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "iruhvg",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.4217024000008678,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nxt\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 3293,
+    "latency_s": 1.845993400000225,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.24375220000001718,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\ntxlfn\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.23758290000114357,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nelzzup\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": true,
+    "tokens": 7365,
+    "latency_s": 8.339289300000019,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "hpdoi",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2039742999986629,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nhqrwv\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv3-three-bridge",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.29601910000019416,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nkmjoxh\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv3-three-planet",
+    "success": true,
+    "tokens": 7344,
+    "latency_s": 8.777448999999251,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "sodqhw",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv4-four-crystal",
+    "success": true,
+    "tokens": 7761,
+    "latency_s": 7.037659600000552,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "ixeyzgr",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv4-four-thunder",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.3008215999998356,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nznatjkx\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv5-five-magnetic",
+    "success": true,
+    "tokens": 7607,
+    "latency_s": 6.823274399999718,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "vjpwncrl",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "lv5-five-forest",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.2140062999988004,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nzykxul\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 131,
+    "latency_s": 0.21948100000008708,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 103,
+    "latency_s": 0.10549189999983355,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv1-rot3-quick",
+    "success": false,
+    "tokens": 74,
+    "latency_s": 0.11414280000099097,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "surjud",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 76,
+    "latency_s": 0.1166006000003108,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "elzzup",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": false,
+    "tokens": 82,
+    "latency_s": 0.12817729999915173,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "'iopmq'",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": false,
+    "tokens": 83,
+    "latency_s": 4.200466399999641,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "enots -> frvwv",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv3-three-bridge",
+    "success": false,
+    "tokens": 86,
+    "latency_s": 11.244515500000489,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ehwvdh",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv3-three-planet",
+    "success": false,
+    "tokens": 99,
+    "latency_s": 0.2033807000007073,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "tenalp -> tenalp rot3 -> wdoqd -> dqqod",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv4-four-crystal",
+    "success": false,
+    "tokens": 89,
+    "latency_s": 0.11922930000037013,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "crystal",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv4-four-thunder",
+    "success": false,
+    "tokens": 89,
+    "latency_s": 0.12373810000099184,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "thunder",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv5-five-magnetic",
+    "success": false,
+    "tokens": 95,
+    "latency_s": 0.13735080000151356,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "qevivat",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "lv5-five-forest",
+    "success": false,
+    "tokens": 93,
+    "latency_s": 0.12158809999891673,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "tsifor",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "seed-rot3",
+    "success": true,
+    "tokens": 2579,
+    "latency_s": 46.049798300000475,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "seed-reverse",
+    "success": true,
+    "tokens": 2785,
+    "latency_s": 13.696150900001157,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "used_macro": false,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv1-rot3-quick",
+    "success": true,
+    "tokens": 5806,
+    "latency_s": 29.914529899999252,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "txlfn",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv1-rev-puzzle",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.20050710000032268,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nelzzup\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv2-rot3-rev-flame",
+    "success": false,
+    "tokens": 333,
+    "latency_s": 30.019352699999217,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv2-rev-rot3-stone",
+    "success": true,
+    "tokens": 9358,
+    "latency_s": 48.88289099999929,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "hqrwv",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv3-three-bridge",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.29398419999961334,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nkmjoxh\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv3-three-planet",
+    "success": true,
+    "tokens": 3091,
+    "latency_s": 14.973920499998712,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "sodqhw",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv4-four-crystal",
+    "success": false,
+    "tokens": 0,
+    "latency_s": 29.127327800000785,
+    "attempts": 0,
+    "error": "LLMError: groq call failed after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kjthfm1zef9rpv8m1hs0chqg` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 98434, Requested 2810. Please try again in 1",
+    "extra": {
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv4-four-thunder",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.21169069999996282,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nznatjkx\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv5-five-magnetic",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.24536840000109805,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nvjpwncrl\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "lv5-five-forest",
+    "success": true,
+    "tokens": 0,
+    "latency_s": 0.18454689999998664,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "OK\nzykxul\n",
+      "n_skills_retrieved": 3,
+      "used_macro": true,
+      "iter": 0
+    }
+  }
+]

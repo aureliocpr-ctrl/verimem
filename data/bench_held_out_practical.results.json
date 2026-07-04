@@ -1,0 +1,169 @@
+{
+  "provider": "anthropic",
+  "train": [
+    {
+      "task_id": "t1_dom",
+      "task": "Extract the domain (host) from this URL: 'https://www.exampl",
+      "expected": "www.example.com",
+      "answer": "www.example.com",
+      "match": true,
+      "tokens": 4427,
+      "steps": 1,
+      "skills": [
+        "da9087e4a315",
+        "597d3fc6fc8c",
+        "036ae586799a"
+      ],
+      "elapsed_s": 21.0
+    },
+    {
+      "task_id": "t2_date",
+      "task": "Convert the ISO date '2026-01-15' to long English form 'Mont",
+      "expected": "January 15, 2026",
+      "answer": "January 15, 2026",
+      "match": true,
+      "tokens": 4579,
+      "steps": 1,
+      "skills": [
+        "2b05f2143c74",
+        "188f3664cf84",
+        "58bbd02ed3f2"
+      ],
+      "elapsed_s": 3.11
+    },
+    {
+      "task_id": "t3_cap",
+      "task": "Capitalize the first letter of each word in: 'the quick brow",
+      "expected": "The Quick Brown Fox",
+      "answer": "The Quick Brown Fox",
+      "match": true,
+      "tokens": 4453,
+      "steps": 1,
+      "skills": [
+        "2b05f2143c74",
+        "6ded077cb87e",
+        "188f3664cf84"
+      ],
+      "elapsed_s": 2.6
+    },
+    {
+      "task_id": "t4_rev",
+      "task": "Reverse this string character by character: 'abcdef'. Answer",
+      "expected": "fedcba",
+      "answer": "fedcba",
+      "match": true,
+      "tokens": 4514,
+      "steps": 1,
+      "skills": [
+        "2b05f2143c74",
+        "188f3664cf84",
+        "04a21f904b50"
+      ],
+      "elapsed_s": 3.01
+    },
+    {
+      "task_id": "t5_count",
+      "task": "Count the number of words in: 'the rain in spain falls mainl",
+      "expected": "9",
+      "answer": "9",
+      "match": true,
+      "tokens": 3687,
+      "steps": 1,
+      "skills": [
+        "bbc513ccf05f",
+        "6e9dfdd5d5c7",
+        "cbdbd385abef"
+      ],
+      "elapsed_s": 2.22
+    }
+  ],
+  "heldout": [
+    {
+      "task_id": "h1_dom",
+      "task": "Extract the domain (host) from this URL: 'https://api.github",
+      "expected": "api.github.com",
+      "answer": "api.github.com",
+      "match": true,
+      "tokens": 4248,
+      "steps": 1,
+      "skills": [
+        "3ae89939fd34",
+        "df87a89d59b5",
+        "036ae586799a"
+      ],
+      "elapsed_s": 3.96
+    },
+    {
+      "task_id": "h2_date",
+      "task": "Convert the ISO date '2027-12-25' to long English form 'Mont",
+      "expected": "December 25, 2027",
+      "answer": "December 25, 2027",
+      "match": true,
+      "tokens": 4393,
+      "steps": 1,
+      "skills": [
+        "188f3664cf84",
+        "2b05f2143c74",
+        "58bbd02ed3f2"
+      ],
+      "elapsed_s": 2.98
+    },
+    {
+      "task_id": "h3_cap",
+      "task": "Capitalize the first letter of each word in: 'hippoagent is ",
+      "expected": "Hippoagent Is A Memory Layer",
+      "answer": "Hippoagent Is A Memory Layer",
+      "match": true,
+      "tokens": 4448,
+      "steps": 1,
+      "skills": [
+        "04a21f904b50",
+        "6ded077cb87e",
+        "2b05f2143c74"
+      ],
+      "elapsed_s": 2.31
+    },
+    {
+      "task_id": "h4_rev",
+      "task": "Reverse this string character by character: 'hello world'. A",
+      "expected": "dlrow olleh",
+      "answer": "dlrow olleh",
+      "match": true,
+      "tokens": 4401,
+      "steps": 1,
+      "skills": [
+        "188f3664cf84",
+        "2b05f2143c74",
+        "c551c969c9c8"
+      ],
+      "elapsed_s": 2.78
+    },
+    {
+      "task_id": "h5_count",
+      "task": "Count the number of words in: 'machine learning models compo",
+      "expected": "5",
+      "answer": "5",
+      "match": true,
+      "tokens": 3982,
+      "steps": 1,
+      "skills": [
+        "32a7df3eda22",
+        "6ded077cb87e",
+        "4628fe9aa33e"
+      ],
+      "elapsed_s": 3.34
+    }
+  ],
+  "consolidate": {
+    "n_clusters": 6,
+    "n_nrem_skills": 6,
+    "n_rem_skills": 2,
+    "promoted": []
+  },
+  "summary": {
+    "train_success": 5,
+    "heldout_success": 5,
+    "train_total": 5,
+    "heldout_total": 5
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "arm": "mem0-e5parity",
+  "mem0_mode": "infer=False (raw add, llm never invoked), chroma local",
+  "embedder": "huggingface intfloat/multilingual-e5-base",
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s",
+  "k": 5,
+  "n_questions": 100,
+  "overall": {
+    "recall_at_k": 0.7897,
+    "hit_at_k": 0.82,
+    "mrr": 0.717,
+    "latency_ms_mean": 58.6709
+  },
+  "per_type": {
+    "multi-session": {
+      "n": 30,
+      "recall_at_k": 0.8989,
+      "mrr": 0.9222
+    },
+    "single-session-user": {
+      "n": 70,
+      "recall_at_k": 0.7429,
+      "mrr": 0.629
+    }
+  }
+}

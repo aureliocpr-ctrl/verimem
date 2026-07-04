@@ -1,0 +1,19 @@
+{
+  "question_type": "temporal-reasoning",
+  "n": 12,
+  "seed": 7,
+  "model": "claude-sonnet-4-6",
+  "dates_off": {
+    "n": 12,
+    "qa_accuracy": 0.4167,
+    "abstention_rate": 0.5833,
+    "n_errors": 0
+  },
+  "dates_on": {
+    "n": 12,
+    "qa_accuracy": 0.5,
+    "abstention_rate": 0.4167,
+    "n_errors": 0
+  },
+  "delta_accuracy": 0.0833
+}

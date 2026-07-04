@@ -1,0 +1,494 @@
+{
+  "results_file": "benchmark/results/halumem_updating_full20_local.json",
+  "judge_model": "claude-sonnet-4-6",
+  "note": "DECLARED Claude-judge (official protocol uses gpt-4o; O4 forbids external APIs). Judge scores target-SELECTION per the official rubric; corrected accuracy reweights full-run local class counts by sampled P(judge=correct|class).",
+  "sampled": 91,
+  "errors": 0,
+  "per_class": {
+    "correct": {
+      "n": 25,
+      "judge_correct": 9,
+      "agree": 9
+    },
+    "missed": {
+      "n": 25,
+      "judge_correct": 0,
+      "agree": 25
+    },
+    "missed_unreachable": {
+      "n": 16,
+      "judge_correct": 0,
+      "agree": 16
+    },
+    "wrong": {
+      "n": 25,
+      "judge_correct": 0,
+      "agree": 25
+    }
+  },
+  "judge_correct_rate_on_sample": 0.0989,
+  "full_run_local_accuracy": 0.6608,
+  "judge_corrected_accuracy": 0.2379,
+  "judge_corrected_accuracy_wilson_on_sample": [
+    0.0529,
+    0.1774
+  ],
+  "wall_s": 995.9,
+  "judged": [
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Taylor David's career_status updated company_name from 'Global Nutrition Initiative' to 'World Nutrition Organization'."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Taylor David's job_title updated from \"Global Nutrition Director\" to \"Nutrition Policy Advisor\"."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Joseph Garcia's career_status updated career_description from \"I am now focusing on film education, using my archive as "
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Sharon Brown's mental health status changed from 'Mildly Abnormal' to 'Exceptional'."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Oleksandr realized rodents can be gentle and engaging pets after observing a friend's hamster, reflecting his commitment"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Donald Smith reflected on the importance of adaptability during career transitions."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Oleksandr's perception of team sports shifted from dislike to appreciation due to the corporate retreat, enhancing his v"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Oleksandr discussed the impact of his leadership role on his health, emphasizing the need for lifestyle reassessment to "
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Donna expressed pride in her consultancy firm's growing reputation as a leader in sustainability consultancy and is enth"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Michelle Hernandez discovered customizable package tours that offer flexibility for personal exploration and data collec"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donald Brown completed a half-marathon on Sep 04, 2031, leading to a reevaluation of marathon running as an enjoyable ch"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Donald Smith used creative motivation to inspire ideas and overcome creative blocks, assisted by his assistant during st"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Joseph Garcia uses his educational platform for social signaling, expressing identity, and entertaining others."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Sarah Garcia's career status updated employment status from 'self-employed' to 'unemployed' due to a layoff as the found"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Taylor David reached out to his network, including his mentor Michael and policy maker ChenLi, for support and guidance "
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Steven Miller's chronic disease situation updated from 'Stress-related fatigue' to 'None reported'."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Martin acknowledged the role of his social network in facilitating his career transition."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Barbara Jones's game preference shifted from science-themed strategy games to health and nutrition strategy games."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Jennifer Martin's employment status updated from \"unemployed\" to \"employed\"."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Donna Gonzalez's dialogue emphasized the importance of aligning her efforts with her vision for establishing a music aca"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Barbara Jones's career_status updated monthly_income from \"8000\" to \"9500\"."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Joseph Garcia's career_status updated company_name from \"Joseph's Digital Film Archive\" to \"Joseph's VR Film Archive\"."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Jennifer Martin updated her clothing preference by deleting her previous dislike for brightly colored outfits due to the"
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Karen Brown transitioned from working at Karen's Freelance Services to Innovate Property Tech."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donald Smith expressed gratitude for the ongoing support from MooreSandra and GonzalezMary during his career reassessmen"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Donna Gonzalez decided to eliminate sugary soft drinks to enhance focus and energy during composing sessions."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Sarah Garcia is committed to impacting 1 million lives positively through her work despite health challenges."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Steven Miller actively sought ways to manage stress and improve health while maintaining professional performance."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Sharon feels fulfilled by aligning her lifestyle with her mentoring goals, emphasizing community engagement and personal"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Donald Smith shared key interactions with influential figures that contributed to campaign success."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Christopher plans to integrate more diverse activities into future community projects to cater to different interests an"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Taylor formulated strategies to enhance the global reach of nutrition programs, tailoring them to different regions whil"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Donald Smith felt a sense of achievement and relief as his consulting firm began attracting initial clients."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Karen invested financial resources into her property management platform to enhance its features and scalability."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Karen expressed gratitude for the support from her network, which is crucial in providing both emotional and practical a"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Ananya Sharma feels a sense of pride and accomplishment following her recognition as a leading documentary critic, which"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Christopher plans to introduce innovative programs addressing physical, cognitive, and nutritional health for seniors, e"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Ananya balances freelance work with consultant responsibilities, leveraging support from friends like Sam and Alex."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Joseph Garcia plans to develop more comprehensive educational programs based on feedback from attendees to enhance futur"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Williams Daniel acknowledged the role of industry experts, colleagues, and his financial advisor in supporting funding n"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Johnson Joseph conveyed optimism about hosting over 10,000 guests annually at Albi B&B, believing it is within reach wit"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Joseph is considering organizing international film festivals and workshops to engage audiences and showcase diverse fil"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Oleksandr Shevchenko expressed gratitude for the support from colleagues, which has been crucial in his successful trans"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Donna Gonzalez discussed strategies for maintaining relationships that enrich her personal and professional life, such a"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Christopher Anderson expressed satisfaction with the positive outcomes of the literacy programs and plans to expand them"
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Taylor expressed curiosity about optimizing nutrition plans through innovative approaches and continuous learning."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Karen Brown decided to explore more protein-rich breakfast options and reduce her consumption of avocado toast."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Oleksandr emphasized the importance of balancing professional responsibilities with personal health needs."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Martin expresses excitement about potential personal growth and career development during his sabbatical."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Susan Thompson consolidated her financial and social gains, setting a strong foundation for future endeavors in the well"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Michelle Hernandez believes AI-driven strategy games provide a platform for testing predictive models, aligning with her"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Ananya Sharma developed a preference for moderately spicy Indian curries after visiting an Indian restaurant that balanc"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Donna Gonzalez is engaged in strategic planning for the establishment of a music academy focused on innovative compositi"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Taylor David appreciates films that address societal issues for their educational value and platform to explore solution"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Michelle Hernandez decided to cut back on coffee consumption due to health reasons discovered during a recent health ass"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Ananya Sharma's food preference evolved to include pickled onions for their tangy and sweet flavor."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Donald Smith plans to leverage increased income to support his relative's political campaigns more significantly."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "On Mar 09, 2042, Johnson Joseph hosted a live jazz band at Albi B&B, reigniting his passion for jazz and prompting him t"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Joseph Garcia's monthly income increased from $3200 to $4000 at the film archive."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Williams Daniel's movie preference evolved to include innovative historical dramas after attending a film festival."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Susan Thompson enjoys documentaries that delve into health and wellness topics, enhancing her understanding."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Ananya Sharma's network within the film industry has expanded significantly since becoming a film festival consultant."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Ananya's childhood love for storytelling motivates her career in film criticism and efforts in promoting Indian cinema."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Martin Mark expressed a deepened admiration for Golden Retrievers, recognizing their therapeutic potential in stress man"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Susan Thompson has modified her food preference to include lactose-free dairy products."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Susan Thompson experienced noticeable improvements in her physical and mental health after implementing refined health s"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Smith decided to shift focus from card games to digital strategy games due to their strategic relevance to his co"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson's dialogue highlighted his commitment to fostering growth and exploring new opportunities within the consultancy"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Sharon Brown reflected on her financial achievements and successful expansion of her consulting business, highlighting h"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Michelle Hernandez's role at Google offers the flexibility needed to manage her chronic disease effectively."
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Sharon's dialogue revealed her emotional motivation to contribute positively to her community and explore new technologi"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donna's job title is CEO of International Operations at ReviveTech Solutions."
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Michelle Hernandez has modified her movie preference to include science fiction films with realistic scientific concepts"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Taylor David's food preference has shifted from disliking processed snacks to liking natural snacks, which align with hi"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Taylor's movie preferences have evolved to include films with complex narratives involving violence to gain insights int"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Barbara is inspired by films about scientific breakthroughs, which help her see things from different angles and organiz"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Ananya Sharma's career_status updated career_description to emphasize her expanded professional network and opportunitie"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Sharon Brown's job title is Senior Advisor, previously Mentor."
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donna expressed excitement about new perspectives and support offered by her expanded network, including NewContact3, wh"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Barbara Jones shared an instance where Michael Williams shared a new study on dietary impacts on heart health, prompting"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Barbara Jones's sports preference updated, now open to exploring extreme sports after watching a documentary."
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donna modified her food preference from disliking highly processed snacks to avoiding traditional processed snacks due t"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Smith expressed excitement about new opportunities to connect with influential figures due to his leadership role"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Barbara finds escape room puzzle games offer a more immersive and interactive problem-solving experience."
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Smith updated his music preference from disliking to liking techno music for its motivational impact during campa"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Michelle Hernandez is interested in immersive cultural experiences to gain deeper insights into societal behaviors and e"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Brown's food preference evolved to include spicy vegetable stir-fry, which he plans to incorporate into his regul"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Oleksandr's appreciation for subtlety and elegance in clothing deepened after attending the seminar."
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson Joseph's employment status changed from self-employed to unemployed due to a layoff from Albi B&B."
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Martin has experienced significant health improvements through yoga and meditation, which have contributed to his except"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Williams Daniel's appreciation for Greyhounds deepened after learning about their historical role in hunting and compani"
+    }
+  ]
+}

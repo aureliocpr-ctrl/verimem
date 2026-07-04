@@ -1,0 +1,61 @@
+{
+  "n_entities": 10000,
+  "n_edges_attempted": 50000,
+  "populate_s": 88.708,
+  "populate_throughput_ent_per_s": 112.7,
+  "edges_s": 463.803,
+  "edges_throughput_per_s": 107.8,
+  "read_stats": [
+    {
+      "label": "get_by_name (200 queries)",
+      "n": 200,
+      "min_ms": 1.775,
+      "p50_ms": 3.265,
+      "p95_ms": 4.208,
+      "p99_ms": 4.708,
+      "max_ms": 5.411,
+      "mean_ms": 3.054
+    },
+    {
+      "label": "neighbors(hops=1) (100)",
+      "n": 100,
+      "min_ms": 1.91,
+      "p50_ms": 2.22,
+      "p95_ms": 3.574,
+      "p99_ms": 4.197,
+      "max_ms": 4.197,
+      "mean_ms": 2.369
+    },
+    {
+      "label": "neighbors(hops=2) (50)",
+      "n": 50,
+      "min_ms": 3.982,
+      "p50_ms": 12.465,
+      "p95_ms": 25.308,
+      "p99_ms": 26.516,
+      "max_ms": 26.516,
+      "mean_ms": 13.789
+    }
+  ],
+  "ppr_by_damping": {
+    "damping_0.3": {
+      "n": 5,
+      "min_ms": 238.242,
+      "mean_ms": 376.286,
+      "max_ms": 718.232
+    },
+    "damping_0.5": {
+      "n": 5,
+      "min_ms": 239.471,
+      "mean_ms": 315.107,
+      "max_ms": 387.122
+    },
+    "damping_0.85": {
+      "n": 5,
+      "min_ms": 248.091,
+      "mean_ms": 336.665,
+      "max_ms": 395.832
+    }
+  },
+  "db_size_bytes": 9039872
+}

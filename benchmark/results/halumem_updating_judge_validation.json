@@ -1,0 +1,99 @@
+{
+  "results_file": "benchmark/results/halumem_updating_full20_local.json",
+  "judge_model": "claude-sonnet-4-6",
+  "note": "DECLARED Claude-judge (official protocol uses gpt-4o; O4 forbids external APIs). Judge scores target-SELECTION per the official rubric; corrected accuracy reweights full-run local class counts by sampled P(judge=correct|class).",
+  "sampled": 12,
+  "errors": 0,
+  "per_class": {
+    "correct": {
+      "n": 3,
+      "judge_correct": 0,
+      "agree": 0
+    },
+    "missed": {
+      "n": 3,
+      "judge_correct": 0,
+      "agree": 3
+    },
+    "missed_unreachable": {
+      "n": 3,
+      "judge_correct": 0,
+      "agree": 3
+    },
+    "wrong": {
+      "n": 3,
+      "judge_correct": 0,
+      "agree": 3
+    }
+  },
+  "judge_correct_rate_on_sample": 0.0,
+  "full_run_local_accuracy": 0.6608,
+  "judge_corrected_accuracy": 0.0,
+  "judge_corrected_accuracy_wilson_on_sample": [
+    0.0,
+    0.2425
+  ],
+  "wall_s": 108.4,
+  "judged": [
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Taylor David's career_status updated company_name from 'Global Nutrition Initiative' to 'World Nutrition Organization'."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Taylor David's job_title updated from \"Global Nutrition Director\" to \"Nutrition Policy Advisor\"."
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Joseph Garcia's career_status updated career_description from \"I am now focusing on film education, using my archive as "
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Donna Gonzalez decided to eliminate sugary soft drinks to enhance focus and energy during composing sessions."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Sarah Garcia is committed to impacting 1 million lives positively through her work despite health challenges."
+    },
+    {
+      "local_outcome": "missed",
+      "judge": "omitted",
+      "update": "Steven Miller actively sought ways to manage stress and improve health while maintaining professional performance."
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Michelle Hernandez believes AI-driven strategy games provide a platform for testing predictive models, aligning with her"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Ananya Sharma developed a preference for moderately spicy Indian curries after visiting an Indian restaurant that balanc"
+    },
+    {
+      "local_outcome": "missed_unreachable",
+      "judge": "omitted",
+      "update": "Donna Gonzalez is engaged in strategic planning for the establishment of a music academy focused on innovative compositi"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Smith decided to shift focus from card games to digital strategy games due to their strategic relevance to his co"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson's dialogue highlighted his commitment to fostering growth and exploring new opportunities within the consultancy"
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Sharon Brown reflected on her financial achievements and successful expansion of her consulting business, highlighting h"
+    }
+  ]
+}

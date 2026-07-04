@@ -1,0 +1,96 @@
+{
+  "dump": "benchmark/results/halumem_updating_full20_dump.json",
+  "match_thr": 0.94,
+  "n_items": 3122,
+  "gt_rank_diagnostics": {
+    "v1": {
+      "n_reachable": 1739,
+      "gt_top1": 0.3214,
+      "gt_mrr": 0.5185
+    },
+    "refine_ba_entail": {
+      "n_reachable": 1739,
+      "gt_top1": 0.3347,
+      "gt_mrr": 0.5395
+    },
+    "retrieval": {
+      "n_reachable": 1739,
+      "gt_top1": 0.4267,
+      "gt_mrr": 0.5829
+    }
+  },
+  "policies": {
+    "v1_thr0.7 (baseline)": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 514,
+        "wrong": 2159,
+        "missed": 197,
+        "missed_unreachable": 252
+      },
+      "accuracy": 0.1646,
+      "hallucination": 0.6915,
+      "omission": 0.1438
+    },
+    "v1_thr0.8": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 507,
+        "wrong": 2100,
+        "missed": 231,
+        "missed_unreachable": 284
+      },
+      "accuracy": 0.1624,
+      "hallucination": 0.6726,
+      "omission": 0.165
+    },
+    "v1_thr0.9": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 492,
+        "wrong": 2001,
+        "missed": 285,
+        "missed_unreachable": 344
+      },
+      "accuracy": 0.1576,
+      "hallucination": 0.6409,
+      "omission": 0.2015
+    },
+    "oldvalue_then_v1": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 545,
+        "wrong": 2132,
+        "missed": 194,
+        "missed_unreachable": 251
+      },
+      "accuracy": 0.1746,
+      "hallucination": 0.6829,
+      "omission": 0.1425
+    },
+    "refine_only_thr0.7": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 278,
+        "wrong": 1061,
+        "missed": 872,
+        "missed_unreachable": 911
+      },
+      "accuracy": 0.089,
+      "hallucination": 0.3398,
+      "omission": 0.5711
+    },
+    "retrieval_top1_always": {
+      "n": 3122,
+      "outcomes": {
+        "correct": 742,
+        "wrong": 2379,
+        "missed": 0,
+        "missed_unreachable": 1
+      },
+      "accuracy": 0.2377,
+      "hallucination": 0.762,
+      "omission": 0.0003
+    }
+  }
+}

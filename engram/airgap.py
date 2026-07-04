@@ -1,0 +1,115 @@
+"""Air-gap self-verification — can this Engram config run with ZERO network egress?
+
+For the sovereign / air-gapped enterprise segment (regulated industries that
+cannot send data to ANY cloud). Engram's embeddings are local
+(sentence-transformers, offline-capable) and the LLM layer can target a LOCAL
+model — Ollama (`HIPPO_LLM_PROVIDER=ollama`) or any OpenAI-compatible local
+endpoint (vLLM / LM Studio / llama.cpp) via a localhost `*_BASE_URL`. The
+anti-confab governance core (L1-L3 detectors) is deterministic = zero-LLM, so
+it works fully offline. A fully-air-gapped deployment is therefore possible —
+this module turns that property into a VERIFIABLE, structured self-check
+(a sellable feature: *prove* there is no egress, instead of asserting it).
+
+Scope (honest): this inspects CONFIGURATION + the known code paths surfaced by
+the 2026-06-06 LLM leak-audit (get_llm chokepoint + `_is_hosted` gating +
+provider-dispatched vision + offline embeddings). It makes NO network calls and
+loads NO model. A LIVE no-egress probe (intercept sockets while exercising a
+real local model) is a separate, heavier step — see ENGRAM-ENTERPRISE-ROADMAP.
+"""
+from __future__ import annotations
+
+import os
+from collections.abc import Mapping
+from typing import Any
+
+_TRUTHY = {"1", "true", "yes", "on"}
+
+#: Offline flags that pin the embedding model to cache-only (no HF Hub round-trip).
+#: Mirrors ``engram.embedding._OFFLINE_ENV_VARS``.
+_OFFLINE_FLAGS = (
+    "HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE",
+)
+
+#: Providers whose model runs LOCALLY (no cloud egress by construction).
+#: ``mock`` makes no network call at all; ``ollama`` is a local daemon.
+_LOCAL_PROVIDERS = {"ollama", "mock"}
+
+#: Host substrings that denote a loopback / local endpoint for an
+#: OpenAI-compatible provider (vLLM / LM Studio / llama.cpp / text-gen-webui).
+_LOCAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1")
+
+
+def _is_local_base_url(url: str) -> bool:
+    u = (url or "").strip().lower()
+    return bool(u) and any(h in u for h in _LOCAL_HOSTS)
+
+
+def _llm_locality(provider: str, env: Mapping[str, str]) -> tuple[bool, str]:
+    """Return (is_local, reason) for the configured LLM provider."""
+    p = (provider or "").strip().lower()
+    if p in _LOCAL_PROVIDERS:
+        return True, f"provider '{p}' runs locally"
+    if not p:
+        return (
+            False,
+            "no HIPPO_LLM_PROVIDER set — auto-detect may pick a cloud provider "
+            "or (with HIPPO_HOSTED) the host's LLM",
+        )
+    # OpenAI-compatible providers are local IFF their base_url is a local host.
+    # base_url override: <PROVIDER>_BASE_URL, else the generic OPENAI_BASE_URL.
+    base = (env.get(f"{p.upper()}_BASE_URL") or env.get("OPENAI_BASE_URL") or "").strip()
+    if _is_local_base_url(base):
+        return True, f"provider '{p}' targets a local endpoint ({base})"
+    if base:
+        return False, f"provider '{p}' targets a non-local endpoint ({base})"
+    return False, f"provider '{p}' is a cloud provider (no local base_url override)"
+
+
+def airgap_status(env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    """Structured verdict on whether the current config can run air-gapped.
+
+    Returns a dict::
+
+        {
+          "air_gapped": bool,           # True only if there are NO leaks
+          "llm": {"provider", "local", "reason"},
+          "embeddings": {"offline_pinned": bool},
+          "hosted_mode": bool,
+          "leaks": [str, ...],          # one human-readable line per egress risk
+        }
+
+    Pure over ``env`` (defaults to ``os.environ``) — no network, no model load.
+    """
+    env = os.environ if env is None else env
+    provider = (env.get("HIPPO_LLM_PROVIDER") or "").strip().lower()
+    hosted = env.get("HIPPO_HOSTED", "").strip().lower() in _TRUTHY
+    llm_local, llm_reason = _llm_locality(provider, env)
+    emb_offline = any(
+        env.get(flag, "").strip().lower() in _TRUTHY for flag in _OFFLINE_FLAGS
+    )
+
+    leaks: list[str] = []
+    if hosted:
+        leaks.append(
+            "HIPPO_HOSTED is set: consolidate/run route the LLM to the host "
+            "(MCP sampling / `claude` CLI) = cloud egress. Unset it for air-gap."
+        )
+    if not llm_local:
+        leaks.append(f"LLM may egress to the cloud: {llm_reason}.")
+    if not emb_offline:
+        leaks.append(
+            "Embeddings not pinned offline: set one of "
+            + "/".join(_OFFLINE_FLAGS)
+            + "=1 so the model loads cache-only (no HF Hub round-trip on cold load)."
+        )
+
+    return {
+        "air_gapped": not leaks,
+        "llm": {"provider": provider or "auto", "local": llm_local, "reason": llm_reason},
+        "embeddings": {"offline_pinned": emb_offline},
+        "hosted_mode": hosted,
+        "leaks": leaks,
+    }
+
+
+__all__ = ["airgap_status"]

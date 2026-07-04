@@ -1,0 +1,141 @@
+{
+  "judge": {
+    "backend": "local",
+    "model_dir": "C:\\Users\\aurel\\.engram\\models\\local_gate_ce_v2",
+    "threshold": 99.64130401611328,
+    "focus_budget": 1500
+  },
+  "heldout_counts": {
+    "clean": 158,
+    "interference": 158,
+    "foreign": 48
+  },
+  "top_k": 3,
+  "sweep": {
+    "0.2": {
+      "clean": {
+        "n": 158,
+        "admit_base": 0.924,
+        "admit_effective": 1.0,
+        "repaired_in": 0.076
+      },
+      "interference": {
+        "n": 158,
+        "admit_base": 0.051,
+        "admit_effective": 0.994,
+        "repaired_in": 0.943
+      },
+      "foreign": {
+        "n": 48,
+        "admit_base": 0.021,
+        "admit_effective": 0.25,
+        "repaired_in": 0.229
+      }
+    },
+    "0.25": {
+      "clean": {
+        "n": 158,
+        "admit_base": 0.924,
+        "admit_effective": 1.0,
+        "repaired_in": 0.076
+      },
+      "interference": {
+        "n": 158,
+        "admit_base": 0.051,
+        "admit_effective": 0.994,
+        "repaired_in": 0.943
+      },
+      "foreign": {
+        "n": 48,
+        "admit_base": 0.021,
+        "admit_effective": 0.167,
+        "repaired_in": 0.146
+      }
+    },
+    "0.35": {
+      "clean": {
+        "n": 158,
+        "admit_base": 0.924,
+        "admit_effective": 0.994,
+        "repaired_in": 0.07
+      },
+      "interference": {
+        "n": 158,
+        "admit_base": 0.051,
+        "admit_effective": 0.981,
+        "repaired_in": 0.93
+      },
+      "foreign": {
+        "n": 48,
+        "admit_base": 0.021,
+        "admit_effective": 0.042,
+        "repaired_in": 0.021
+      }
+    },
+    "0.5": {
+      "clean": {
+        "n": 158,
+        "admit_base": 0.924,
+        "admit_effective": 0.987,
+        "repaired_in": 0.063
+      },
+      "interference": {
+        "n": 158,
+        "admit_base": 0.051,
+        "admit_effective": 0.949,
+        "repaired_in": 0.899
+      },
+      "foreign": {
+        "n": 48,
+        "admit_base": 0.021,
+        "admit_effective": 0.021,
+        "repaired_in": 0.0
+      }
+    }
+  },
+  "repaired_examples_tau_0.25": [
+    {
+      "original": "Donald Smith acknowledged the strategic depth of digital games as more engaging and relevant to his professional goals in consultancy.",
+      "original_score": 7.309985160827637,
+      "repaired": "Assistant: It's fascinating to hear about your reflections on card games. Their strategic depth and the relaxed setting they provided during gatherings must have been quite enjoyable. However, it's also interesting to consider how digital strategy games can offer even more dynamic and engaging experiences that align with your professional goals. This shift seems to reflect your instrumental motivation in aligning game preferences with your consultancy work, where strategic thinking is crucial. By the way, I recall you also mentioned the strategic depth of board games being particularly engaging and relevant to your professional goals, which adds another layer to your gaming interests.",
+      "score": 99.97764587402344
+    },
+    {
+      "original": "Ananya Sharma's compensatory motivation involves using the assistant to enhance her film critiques by accessing comprehensive historical resources.",
+      "original_score": 0.4334772825241089,
+      "repaired": "Assistant: Collaborating with film festivals to feature classic Bollywood films is a brilliant idea. By integrating your insights into their programming, you can highlight the films' cultural and historical significance, as well as their aesthetic and stylistic elements. This collaboration can provide a platform for you to share your expertise and engage with a broader audience. It also aligns with your compensatory motivation, as you can use this opportunity to access comprehensive historical resources and enhance your critiques. What steps do you plan to take to initiate these collaborations?",
+      "score": 99.97673797607422
+    },
+    {
+      "original": "Oleksandr Shevchenko's dialogue emphasized the role of clarificatory motivation in organizing thoughts around dietary evolution.",
+      "original_score": 99.15757751464844,
+      "repaired": "Assistant: Viewing food as nourishment for both body and soul beautifully captures the essence of mindful eating. Your approach emphasizes the importance of aligning dietary choices with personal values and well-being. It's intriguing to think about how incorporating fast food in moderation could offer a different perspective on balance and nourishment. This contrast can enhance your clarificatory motivation, helping you gain perspective on your dietary evolution. What new insights have you gained from this reflective process?",
+      "score": 99.9825668334961
+    },
+    {
+      "original": "Williams Donna's monthly income is 8500 yuan.",
+      "original_score": 99.5102767944336,
+      "repaired": "Williams Donna: I recently got promoted to CEO of International Operations at ReviveTech Solutions. It's exciting, but I'm also feeling a bit overwhelmed by the new responsibilities.",
+      "score": 99.97442626953125
+    },
+    {
+      "original": "Christopher reflected on balancing solitude with guided group activities during retreats, finding that a mix allows for personal reflection and shared experiences.",
+      "original_score": 99.25940704345703,
+      "repaired": "Christopher Anderson: I find that a mix of solitude and guided activities works best for me. It allows me to enjoy personal reflection while also benefiting from shared experiences.",
+      "score": 99.98374938964844
+    },
+    {
+      "original": "Donna uses the assistant to overcome creative blocks in her interior design choices.",
+      "original_score": 0.09236659109592438,
+      "repaired": "Assistant: That's a fantastic realization, Donna! Attending the conference must have been quite enlightening. It's wonderful that you're considering integrating more sustainable options into your wardrobe. As the CEO of ReviveTech Solutions, your clothing choices can reflect your commitment to sustainability and innovation. Exploring eco-friendly materials not only aligns with your values but also sets a powerful example for others in your industry. Additionally, using the assistant to overcome creative blocks, particularly in your interior design choices, could provide fresh insights into how to balance aesthetics with sustainability. How do you envision your new wardrobe supporting your professional image?",
+      "score": 99.97220611572266
+    }
+  ],
+  "wall_s": 174.6,
+  "verdict": {
+    "P1_clean_recovery_pp": 7.6,
+    "P1_met_(>=+10pp)": false,
+    "P2_worst_negative_rise_pp": 94.3,
+    "P2_met_(<=+2pp)": false
+  }
+}

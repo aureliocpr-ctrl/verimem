@@ -1,0 +1,199 @@
+{% extends "_layout.html" %}
+{% set active = "settings" %}
+{% block title %}Settings{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Toggle switch — used for sandbox + per-permission dropdowns */
+  .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: var(--c-bg-3); transition: .2s; border-radius: 26px;
+    border: 1px solid var(--c-border-strong); }
+  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px;
+    bottom: 3px; background-color: var(--c-text); transition: .2s; border-radius: 50%; }
+  input:checked + .slider { background-color: var(--c-accent); border-color: var(--c-accent); }
+  input:checked + .slider:before { transform: translateX(24px); background-color: var(--c-bg-0); }
+
+  .perm-grid { display: grid; grid-template-columns: 200px 1fr; gap: var(--s-2);
+               align-items: center; }
+  .form-grid { display: grid; grid-template-columns: 160px 1fr; gap: var(--s-3);
+               align-items: center; }
+  .form-grid label { font-size: var(--fs-sm); color: var(--c-muted); }
+
+  .alert {
+    padding: var(--s-3) var(--s-4);
+    background: rgba(255,123,114,.10);
+    border: 1px solid rgba(255,123,114,.45);
+    border-radius: var(--radius);
+    color: var(--c-danger);
+    font-size: var(--fs-sm);
+  }
+  .alert--warn {
+    background: rgba(227,179,65,.10);
+    border-color: rgba(227,179,65,.45);
+    color: var(--c-warning);
+  }
+  .alert strong { color: inherit; }
+</style>
+{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Settings</h1>
+    <p class="page-header__subtitle">
+      Provider, models, fallback chain, permissions. Switch live, no restart.
+    </p>
+  </div>
+</header>
+
+<section class="card stack">
+  <h2 class="card__title">Active LLM</h2>
+  <div id="active-summary" class="text-sm text-muted">loading&hellip;</div>
+</section>
+
+<section class="card stack" style="margin-top: var(--s-4);">
+  <h2 class="card__title">Quick model switcher</h2>
+  <p class="text-muted text-sm">
+    One-click switch between curated presets. Free options first; scale up
+    when needed. Requires the matching API key set in the Provider section
+    below.
+  </p>
+  <div id="presets" class="flex-row" style="flex-wrap:wrap;gap:var(--s-2);"></div>
+</section>
+
+<section class="card stack" style="margin-top: var(--s-4);">
+  <h2 class="card__title">Fallback chain</h2>
+  <p class="text-muted text-sm">
+    When the active provider hits rate-limit / quota / 5xx, Engram transparently
+    tries the next configured provider in this list. Order matters &mdash; first
+    matching wins.
+  </p>
+  <div id="fallback-chain" class="flex-row"
+       style="flex-wrap:wrap;gap:var(--s-2);min-height:36px;
+              border:1px dashed var(--c-border-strong);
+              border-radius: var(--radius);
+              padding: var(--s-2);"></div>
+  <div class="flex-row" style="flex-wrap:wrap;gap:var(--s-2);">
+    <select id="fallback-add" class="select" style="max-width: 240px;"></select>
+    <button id="fallback-add-btn" type="button" class="btn">+ Add to chain</button>
+    <button id="fallback-save" type="button" class="btn btn--primary">Save chain</button>
+    <span id="fallback-status" class="text-sm text-muted"></span>
+  </div>
+</section>
+
+<section class="card stack" id="permissions-card" style="margin-top: var(--s-4);">
+  <h2 class="card__title">Permissions / sandbox</h2>
+  <p class="text-muted text-sm">
+    Master toggle off = the agent has full unrestricted access to your
+    computer (filesystem, shell, computer use, webcam, web, vision). Use the
+    granular toggles below for fine-grained control.
+  </p>
+
+  <div id="strict-warning" class="alert alert--warn" style="display:none;">
+    <strong>Warning:</strong> moving the filesystem permission outside
+    <code>strict</code> grants the agent broader read/write access to your
+    drive. Only do this for trusted local sessions; review the changes in the
+    permissions audit before saving.
+  </div>
+
+  <div class="flex-row" style="gap: var(--s-3);">
+    <label class="text-mono" style="font-weight:600;">Sandbox</label>
+    <label class="switch">
+      <input type="checkbox" id="sandbox_enabled">
+      <span class="slider"></span>
+    </label>
+    <span id="sandbox-status" class="text-sm text-muted"></span>
+  </div>
+
+  <div class="perm-grid" id="perm-grid"></div>
+
+  <div class="flex-row" style="gap:var(--s-2);flex-wrap:wrap;">
+    <button id="perm-save" type="button" class="btn btn--primary">Save permissions</button>
+    <button id="perm-unleash" type="button" class="btn btn--danger">Unleash (all on)</button>
+    <button id="perm-lockdown" type="button" class="btn btn--success">Lockdown (strict)</button>
+    <span class="spacer"></span>
+    <span id="perm-status" class="text-sm text-muted"></span>
+  </div>
+</section>
+
+<section class="card stack" style="margin-top: var(--s-4);">
+  <h2 class="card__title">Provider</h2>
+  <p class="text-muted text-sm">
+    Pick a provider, enter its API key (or run Ollama locally &mdash; no key
+    needed). Engram uses it for new tasks immediately.
+  </p>
+
+  <div class="form-grid">
+    <label for="provider">Provider</label>
+    <select id="provider" class="select"></select>
+
+    <label for="api_key">API key</label>
+    <input id="api_key" class="input" type="password"
+           placeholder="leave empty to keep current">
+
+    <label for="base_url" id="base_url_label">
+      Base URL <span class="text-muted">(optional)</span>
+    </label>
+    <input id="base_url" class="input"
+           placeholder="custom endpoint, e.g. https://your-azure-host/v1">
+
+    <label for="model_select">Model (all stages)</label>
+    <select id="model_select" class="select">
+      <option value="">(provider default)</option>
+    </select>
+
+    <label for="model_text">
+      Custom model id <span class="text-muted">(overrides dropdown)</span>
+    </label>
+    <input id="model_text" class="input"
+           placeholder="e.g. gpt-4o, qwen2.5:7b, claude-haiku-4-5-20251001">
+
+    <label for="model_executor">Executor model <span class="text-muted">(opt.)</span></label>
+    <input id="model_executor" class="input">
+
+    <label for="model_dreamer">
+      Dreamer model <span class="text-muted">(opt., smarter)</span>
+    </label>
+    <input id="model_dreamer" class="input">
+
+    <label for="model_critic">
+      Critic model <span class="text-muted">(opt., cheap)</span>
+    </label>
+    <input id="model_critic" class="input">
+  </div>
+
+  <div class="flex-row" style="gap:var(--s-2);flex-wrap:wrap;">
+    <button id="discover" type="button" class="btn">Discover models</button>
+    <button id="test" type="button" class="btn">Test connection</button>
+    <button id="save" type="button" class="btn btn--primary">Save</button>
+    <span class="spacer"></span>
+    <span id="status" class="text-sm text-muted"></span>
+  </div>
+</section>
+
+<section class="card stack" style="margin-top: var(--s-4);">
+  <h2 class="card__title">All providers</h2>
+  <p class="text-muted text-sm">
+    Status of every known provider. Click any row to set it as active.
+  </p>
+  <div id="providers-table" class="text-sm text-muted">loading&hellip;</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/settings.js" defer></script>
+<script>
+(function(){
+  // Strict-mode warning: surface it only when filesystem perm leaves "strict".
+  document.addEventListener('change', e => {
+    const tgt = e.target;
+    if (tgt && tgt.id === 'perm_filesystem') {
+      const warn = document.getElementById('strict-warning');
+      if (warn) warn.style.display = (tgt.value === 'strict') ? 'none' : 'block';
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,131 @@
+{
+  "summary": {
+    "n_rules_tracked": 15,
+    "n_rules_with_birth": 10,
+    "n_rules_with_applications": 5,
+    "rules_never_referenced": [
+      "S1_EMPIRICAL_DISCIPLINE",
+      "S2_PROCESS_DISCIPLINE",
+      "S3_WIRING_DISCIPLINE",
+      "S4_REFRAMING_DISCIPLINE",
+      "S5_LEVEL_OF_EFFECT"
+    ]
+  },
+  "timeline": {
+    "M3_BENCH_FIRST": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": [
+        {
+          "cycle": 300,
+          "sha": "6d0f203bf5",
+          "subject": "cycle 300: pioneering #33 Conv-Commit detection + honest M-rule recall bounded"
+        }
+      ]
+    },
+    "M4_CRITIC_GATE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M5_WIRE_OR_DISCLOSE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": [
+        {
+          "cycle": 291,
+          "sha": "83b867891d",
+          "subject": "cycle 291: self-audit cycle 284-290 + \u00a79.3 empirical validation supports target"
+        },
+        {
+          "cycle": 293,
+          "sha": "b51f9842f9",
+          "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer"
+        }
+      ]
+    },
+    "M6_A4_REFRAMING": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M7_PARTITION_VS_COUNT": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": [
+        {
+          "cycle": 291,
+          "sha": "83b867891d",
+          "subject": "cycle 291: self-audit cycle 284-290 + \u00a79.3 empirical validation supports target"
+        }
+      ]
+    },
+    "M8_CHAIN_OF_THOUGHT": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M9_CLIFF_EDGE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M10_MASTER_FACT_RATIO": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M11_REPLICATED_SAMPLE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": [
+        {
+          "cycle": 293,
+          "sha": "b51f9842f9",
+          "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer"
+        }
+      ]
+    },
+    "M12_REVEALING_VS_CREATING": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": [
+        {
+          "cycle": 300,
+          "sha": "6d0f203bf5",
+          "subject": "cycle 300: pioneering #33 Conv-Commit detection + honest M-rule recall bounded"
+        }
+      ]
+    }
+  }
+}

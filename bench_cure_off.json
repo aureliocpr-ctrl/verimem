@@ -1,0 +1,43 @@
+{
+  "n_seeds": 5,
+  "k_writes": 100,
+  "n_facts_pre": 2150,
+  "n_facts_post": 2250,
+  "baseline_jaccards": [
+    0.28590285110876457,
+    0.22047134290893877,
+    0.2739025429748544,
+    0.282831195041084,
+    0.24924609938376818,
+    0.2424827586206897,
+    0.29063568010936436,
+    0.26080311240794773,
+    0.24410124410124412,
+    0.12682613581634294
+  ],
+  "treatment_jaccards": [
+    0.3791615289765722,
+    0.365742897065673,
+    0.3809746406450859,
+    0.38652615732028606,
+    0.338672475653511
+  ],
+  "baseline_mean": 0.2477202962472999,
+  "treatment_mean": 0.37021553993222567,
+  "effect": 0.12249524368492576,
+  "bootstrap_ci_95": [
+    0.10593700002199849,
+    0.1351123287341633
+  ],
+  "effect_threshold": 0.05,
+  "verdict": "H1_supported",
+  "elapsed_s": 4.8376100063323975,
+  "emerging_pre_count": 0,
+  "emerging_post_count": 1,
+  "emerging_pre_names": [],
+  "emerging_post_names": [
+    "emerging_skill_cycle159-12"
+  ],
+  "emerging_jaccard": 1.0,
+  "mode": "production_safecopy"
+}

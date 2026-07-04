@@ -1,0 +1,134 @@
+{% extends "_layout.html" %}
+{% set active = "overview" %}
+{% block title %}Overview{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Overview</h1>
+    <p class="page-header__subtitle">
+      Engram health at a glance &mdash; episodes captured, skills distilled,
+      semantic facts learned. Use the actions to drive the wake/sleep loop.
+    </p>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--primary" href="/chat">Open chat</a>
+    <a class="btn btn--ghost" href="/ide">Open IDE</a>
+    <button id="run-sleep" type="button" class="btn">Run sleep cycle</button>
+  </div>
+</header>
+
+<section class="grid-tiles-large" aria-label="Engram health">
+  <!-- Core KPI -->
+  <div class="kpi kpi--accent">
+    <span class="kpi__label">Episodes (Total)</span>
+    <span class="kpi__value">{{ kpi.episodes }}</span>
+    <span class="kpi__sub">Interactions recorded</span>
+  </div>
+
+  <!-- Trust Tier: Recallable -->
+  <div class="kpi kpi--success">
+    <span class="kpi__label">Facts (Recallable)</span>
+    <span class="kpi__value">{{ health.n_recallable | default(kpi.facts) }}</span>
+    <span class="kpi__sub">Active & embedded ({{ health.active_embedding_model | default("model unknown") }})</span>
+  </div>
+
+  <!-- Trust Tier: Quarantined -->
+  <div class="kpi kpi--danger">
+    <span class="kpi__label">Facts (Quarantined)</span>
+    <span class="kpi__value">{{ health.n_quarantined | default(0) }}</span>
+    <span class="kpi__sub">Anti-confabulation held these back</span>
+  </div>
+
+  <!-- Trust Tier: Dark / Chains -->
+  <div class="kpi kpi--warning">
+    <span class="kpi__label">Superseded / Dark</span>
+    <span class="kpi__value">{{ health.n_superseded | default(0) }} <span class="text-xs text-muted">/ {{ health.n_embedding_dark | default(0) }}</span></span>
+    <span class="kpi__sub">{{ health.n_chains | default(0) }} update chains (max length: {{ health.max_chain_length | default(0) }})</span>
+  </div>
+
+  <!-- Skills KPI -->
+  <div class="kpi kpi--purple">
+    <span class="kpi__label">Skills (Promoted / Total)</span>
+    <span class="kpi__value">{{ kpi.skills_promoted }} <span class="text-xs text-muted">/ {{ kpi.skills_total }}</span></span>
+    <span class="kpi__sub">{{ kpi.skills_candidate }} candidates pending</span>
+  </div>
+
+  <!-- Mode -->
+  <div class="kpi {% if kpi.sandbox_on %}kpi--warning{% else %}kpi--info{% endif %}">
+    <span class="kpi__label">Mode</span>
+    <span class="kpi__value">{{ kpi.mode | upper }}</span>
+    <span class="kpi__sub">Provider: {{ kpi.provider or "none" }}</span>
+  </div>
+</section>
+
+<!-- Top Topics Section -->
+{% if health and health.top_topics %}
+<section class="card stack" style="margin-top: var(--s-6);">
+  <h2 class="card__title">Top Topics taxonomy</h2>
+  <div class="filter-pills">
+    {% for topic in health.top_topics %}
+      <span class="filter-pill">{{ topic.topic }} <span class="text-mono text-dim">({{ topic.count }})</span></span>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="card stack" style="margin-top: var(--s-6);">
+  <h2 class="card__title">Recent events</h2>
+  {% if events %}
+  <table class="table">
+    <thead>
+      <tr><th>time</th><th>event</th><th>payload</th></tr>
+    </thead>
+    <tbody>
+      {% for ev in events %}
+      <tr>
+        <td class="text-mono text-xs">{{ ev.time }}</td>
+        <td><strong>{{ ev.name }}</strong></td>
+        <td><code class="text-xs">{{ ev.payload_short }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a class="btn btn--ghost btn--sm" href="/events">Open live event stream</a>
+  {% else %}
+  <p class="text-muted">No events yet &mdash; start a chat to populate the bus.</p>
+  {% endif %}
+</section>
+
+<section class="card stack" style="margin-top: var(--s-6);">
+  <h2 class="card__title">Metrics snapshot
+    <span class="card__hint">(<a href="/metrics">full view</a>)</span>
+  </h2>
+  <pre>{{ metrics_json }}</pre>
+</section>
+
+<div id="sleep-status" class="text-sm text-muted" role="status" aria-live="polite"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  const btn = document.getElementById('run-sleep');
+  const status = document.getElementById('sleep-status');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    status.textContent = 'Running sleep cycle...';
+    try {
+      const r = await fetch('/api/sleep', { method: 'POST' });
+      if (!r.ok) throw new Error('sleep failed: ' + r.status);
+      const d = await r.json();
+      status.textContent = 'Sleep complete: ' + d.n_nrem_skills + ' NREM, '
+        + d.n_rem_skills + ' REM, ' + (d.promoted || []).length + ' promoted ('
+        + d.duration_s.toFixed(1) + 's)';
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+{% endblock %}

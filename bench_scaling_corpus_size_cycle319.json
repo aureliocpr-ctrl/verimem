@@ -1,0 +1,55 @@
+{
+  "sizes": [
+    500,
+    1000,
+    2000
+  ],
+  "n_seeds": 5,
+  "k_writes": 50,
+  "results": [
+    {
+      "size": 500,
+      "actual_size": 500,
+      "effect": -0.0017242294953167953,
+      "ci": [
+        -0.06044466912296879,
+        0.05312018975274727
+      ],
+      "baseline_mean": 0.12656366144436276,
+      "treatment_mean": 0.12483943194904597,
+      "verdict": "inconclusive",
+      "n_facts_pre": 850,
+      "n_facts_post": 900
+    },
+    {
+      "size": 1000,
+      "actual_size": 1000,
+      "effect": 0.06490943588866357,
+      "ci": [
+        0.023269175524274655,
+        0.10654969625305251
+      ],
+      "baseline_mean": 0.0,
+      "treatment_mean": 0.06490943588866357,
+      "verdict": "H1_supported",
+      "n_facts_pre": 1350,
+      "n_facts_post": 1400
+    },
+    {
+      "size": 2000,
+      "actual_size": 2000,
+      "effect": 0.011254029377915586,
+      "ci": [
+        -0.04438408524603112,
+        0.07523189997907427
+      ],
+      "baseline_mean": 0.27930007763133025,
+      "treatment_mean": 0.29055410700924583,
+      "verdict": "inconclusive",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    }
+  ],
+  "monotonic_decrease": false,
+  "elapsed_s": 5.463159799575806
+}

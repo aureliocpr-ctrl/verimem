@@ -1,0 +1,568 @@
+# Provider registry — single source of truth.
+#
+# Each entry is parsed as `ProviderSpec` (see hippoagent/provider_registry.py).
+# Required fields:
+#   name              canonical identifier (lowercase, no spaces).
+#   env               name of the env var that holds the API key (or empty for ollama).
+#   base_url          default OpenAI-compatible endpoint (or empty for native SDKs).
+#   default_model     fallback model id when HIPPO_MODEL not set.
+#   family            one of {anthropic, openai_compat, ollama, mock} — selects adapter.
+#   supports_tools    whether the provider exposes native tool-use.
+#   supports_vision   whether the provider accepts image inputs.
+# Optional:
+#   base_url_env      env var name that overrides base_url at runtime.
+#   aliases           list of user-friendly names that resolve to this entry.
+#   recommended_models  curated list shown in the UI selector. Each entry has:
+#                     id, label, tier (frontier/mid/fast/reasoning/coder/small),
+#                     notes, optional capability overrides.
+#
+# Last refreshed: 2026-05-08 — model ids verified against each provider's
+# official documentation as of that date. Re-check periodically; cloud
+# providers rotate flagship ids (Anthropic moved to dateless ids from the
+# 4.6 generation onward, OpenAI keeps date-suffixed snapshots).
+
+providers:
+  # ---- Anthropic — native SDK -------------------------------------------
+  - name: anthropic
+    env: ANTHROPIC_API_KEY
+    base_url: ""
+    default_model: claude-haiku-4-5-20251001
+    family: anthropic
+    supports_tools: true
+    supports_vision: true
+    aliases: [claude]
+    recommended_models:
+      - id: claude-opus-4-7
+        label: "Claude Opus 4.7"
+        tier: frontier
+        notes: "MCP-Atlas leader (77.3%); SWE-bench Pro 64.3%. Best for tool-heavy coding agents."
+        supports_reasoning: true
+      - id: claude-sonnet-4-6
+        label: "Claude Sonnet 4.6"
+        tier: mid
+        notes: "Balanced quality/speed. Released Feb 2026."
+        supports_reasoning: true
+      - id: claude-haiku-4-5-20251001
+        label: "Claude Haiku 4.5"
+        tier: fast
+        notes: "Fastest/cheapest Claude 4. Pinned snapshot."
+
+  # ---- OpenAI ----------------------------------------------------------
+  - name: openai
+    env: OPENAI_API_KEY
+    base_url: https://api.openai.com/v1
+    base_url_env: OPENAI_BASE_URL
+    default_model: gpt-5.4-mini-2026-03-17
+    family: openai_compat
+    supports_tools: true
+    supports_vision: true
+    recommended_models:
+      - id: gpt-5.5-2026-04-23
+        label: "GPT-5.5"
+        tier: frontier
+        notes: "Terminal-Bench 2.0 leader (82.7%). Use reasoning.effort={low,medium,high,xhigh}."
+        supports_reasoning: true
+      - id: gpt-5.4-2026-03-05
+        label: "GPT-5.4"
+        tier: frontier
+        notes: "Frontier for complex professional work; cheaper than 5.5."
+        supports_reasoning: true
+      - id: gpt-5.4-mini-2026-03-17
+        label: "GPT-5.4 mini"
+        tier: mid
+        notes: "High-volume workloads. Default."
+      - id: gpt-5.4-nano-2026-03-17
+        label: "GPT-5.4 nano"
+        tier: fast
+        notes: "Classification, ranking, sub-agents. Cheapest."
+      - id: gpt-5-2026-01-15
+        label: "GPT-5 (legacy)"
+        tier: frontier
+        notes: "Initial GPT-5 release. Kept for compatibility with older configs."
+
+  # ---- OpenRouter — gateway to many providers --------------------------
+  - name: openrouter
+    env: OPENROUTER_API_KEY
+    base_url: https://openrouter.ai/api/v1
+    default_model: anthropic/claude-haiku-4.5
+    family: openai_compat
+    supports_tools: true
+    supports_vision: true
+    recommended_models:
+      - id: anthropic/claude-opus-4.7
+        label: "Claude Opus 4.7 (via OpenRouter)"
+        tier: frontier
+        notes: "Same model as direct Anthropic; pay-as-you-go if you don't have Anthropic key."
+      - id: openai/gpt-5.5
+        label: "GPT-5.5 (via OpenRouter)"
+        tier: frontier
+      - id: deepseek/deepseek-v4-pro
+        label: "DeepSeek V4 Pro"
+        tier: frontier
+        notes: "1.6T MoE, 49B active. Open weights. Cheaper than the closed frontiers."
+        supports_reasoning: true
+      - id: google/gemini-3.1-pro
+        label: "Gemini 3.1 Pro"
+        tier: frontier
+        notes: "GPQA Diamond leader (94.3%)."
+        supports_reasoning: true
+      - id: meta-llama/llama-4-scout-17b-instruct
+        label: "Llama 4 Scout"
+        tier: mid
+        notes: "MoE, 17B active / 109B total. Strong long-context."
+      - id: qwen/qwen3-235b-a22b
+        label: "Qwen 3 235B-A22B"
+        tier: frontier
+        notes: "Apache 2.0. Top open-source on broad benchmarks."
+        supports_reasoning: true
+      - id: zhipu/glm-5.1
+        label: "GLM-5.1 (Zhipu)"
+        tier: frontier
+        notes: "Designed for agentic engineering and long-horizon software tasks."
+
+  # ---- DeepSeek --------------------------------------------------------
+  - name: deepseek
+    env: DEEPSEEK_API_KEY
+    base_url: https://api.deepseek.com/v1
+    default_model: deepseek-v4-flash
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    recommended_models:
+      - id: deepseek-v4-pro
+        label: "DeepSeek V4 Pro"
+        tier: frontier
+        notes: "Flagship reasoning + agentic. 1.6T MoE, 49B active. -75% promo until 2026-05-31."
+        supports_reasoning: true
+      - id: deepseek-v4-flash
+        label: "DeepSeek V4 Flash"
+        tier: mid
+        notes: "Default; thinking + non-thinking modes via reasoning.effort."
+        supports_reasoning: true
+      - id: deepseek-chat
+        label: "deepseek-chat (alias, deprecating 2026-07-24)"
+        tier: mid
+        notes: "Compatibility alias — corresponds to v4-flash non-thinking. Migrate to v4-flash."
+      - id: deepseek-reasoner
+        label: "deepseek-reasoner (alias, deprecating 2026-07-24)"
+        tier: reasoning
+        notes: "Compatibility alias — corresponds to v4-flash thinking. Migrate to v4-flash + reasoning.effort."
+        supports_reasoning: true
+
+  # ---- Groq ------------------------------------------------------------
+  # 2026-06-10: ids realigned to the LIVE /v1/models listing — Groq moved
+  # current models under org prefixes (meta-llama/, qwen/, openai/); the
+  # old unprefixed ids 404 ("model_not_found", NOT retired — verified live
+  # with GET /openai/v1/models). Legacy llama-3.x ids stay unprefixed.
+  # Both r1-distill models are gone from the listing (actually retired).
+  - name: groq
+    env: GROQ_API_KEY
+    base_url: https://api.groq.com/openai/v1
+    default_model: meta-llama/llama-4-scout-17b-16e-instruct
+    family: openai_compat
+    supports_tools: true
+    supports_vision: true
+    recommended_models:
+      - id: meta-llama/llama-4-scout-17b-16e-instruct
+        label: "Llama 4 Scout"
+        tier: mid
+        notes: "MoE, native multimodal. 12 languages. Best general Groq model."
+        supports_vision: true
+      - id: llama-3.3-70b-versatile
+        label: "Llama 3.3 70B versatile"
+        tier: mid
+        notes: "Legacy unprefixed id, still served. Text-only workhorse."
+      - id: qwen/qwen3-32b
+        label: "Qwen 3 32B"
+        tier: mid
+        notes: "Thinking + non-thinking switch. Reasoning + dialogue."
+        supports_reasoning: true
+      - id: openai/gpt-oss-120b
+        label: "GPT-OSS 120B"
+        tier: frontier
+        notes: "OpenAI's open-weights model on Groq."
+        supports_reasoning: true
+
+  # ---- xAI / Grok ------------------------------------------------------
+  - name: xai
+    env: XAI_API_KEY
+    base_url: https://api.x.ai/v1
+    default_model: grok-4
+    family: openai_compat
+    supports_tools: true
+    supports_vision: true
+    aliases: [grok]
+    recommended_models:
+      - id: grok-4
+        label: "Grok 4"
+        tier: frontier
+        notes: "Real-time data access; vision."
+        supports_vision: true
+        supports_reasoning: true
+      - id: grok-4-fast
+        label: "Grok 4 Fast"
+        tier: fast
+
+  # ---- Ollama — local --------------------------------------------------
+  - name: ollama
+    env: ""
+    base_url: http://localhost:11434
+    base_url_env: OLLAMA_HOST
+    default_model: gemma3:12b
+    family: ollama
+    supports_tools: true
+    supports_vision: true
+    recommended_models:
+      # ----- Top tier (best quality if you have the VRAM) -----
+      - id: gemma3:27b
+        label: "Gemma 3 27B"
+        tier: frontier
+        notes: "Native function calling. ~24GB VRAM (RTX 4090). Best Gemma for tool use."
+      - id: qwen3:32b
+        label: "Qwen 3 32B"
+        tier: frontier
+        notes: "Thinking + non-thinking switch. Most stable tool calling per Ollama benchmarks. ~24GB VRAM."
+        supports_reasoning: true
+      - id: llama4:scout
+        label: "Llama 4 Scout"
+        tier: frontier
+        notes: "MoE 17B active / 109B total. Long-context. ~10GB VRAM (single H100)."
+      - id: deepseek-r1:32b
+        label: "DeepSeek R1 32B"
+        tier: reasoning
+        notes: "Reasoning. Use for math/code planning, expensive otherwise."
+        supports_reasoning: true
+      # ----- Mid tier (balanced) -----
+      - id: gemma4:9b
+        label: "Gemma 4 9B"
+        tier: mid
+        notes: "Released 2026-04-02. Native function calling. ~9GB VRAM."
+      - id: qwen3:14b
+        label: "Qwen 3 14B"
+        tier: mid
+        notes: "Solid tool calling. ~10GB VRAM."
+        supports_reasoning: true
+      - id: gemma3:12b
+        label: "Gemma 3 12B"
+        tier: mid
+        notes: "Default. ~12GB VRAM. Good general-purpose with tool use."
+      - id: qwen3-coder:14b
+        label: "Qwen 3 Coder 14B"
+        tier: coder
+        notes: "Trained on SWE-Bench with RL. Multi-step agentic coding."
+      - id: phi-4:14b
+        label: "Phi-4 14B"
+        tier: mid
+        notes: "Microsoft. Compact, good reasoning."
+        supports_reasoning: true
+      # ----- Small tier (laptop / 8GB) -----
+      - id: qwen3:8b
+        label: "Qwen 3 8B"
+        tier: small
+        notes: "Best <10GB option for coding (76% HumanEval). ~5GB VRAM."
+      - id: gemma3:4b
+        label: "Gemma 3 4B"
+        tier: small
+        notes: "RAM-efficient. ~4.2GB. Fits memory-constrained machines."
+      - id: mistral:7b
+        label: "Mistral 7B"
+        tier: small
+        notes: "Fastest 8GB option. 40-60 tok/s on consumer GPU."
+      - id: llama3.1:8b
+        label: "Llama 3.1 8B"
+        tier: small
+        notes: "Stable workhorse, kept for compatibility."
+
+  # ---- Google Gemini ---------------------------------------------------
+  - name: gemini
+    env: GEMINI_API_KEY
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    default_model: gemini-3-flash
+    family: openai_compat
+    supports_tools: true
+    supports_vision: true
+    aliases: [google]
+    recommended_models:
+      - id: gemini-3.1-pro
+        label: "Gemini 3.1 Pro"
+        tier: frontier
+        notes: "Reasoning-first; agentic workflows + coding. GPQA Diamond leader (94.3%)."
+        supports_reasoning: true
+      - id: gemini-3-flash
+        label: "Gemini 3 Flash"
+        tier: mid
+        notes: "Default. Pro-level reasoning at Flash latency/cost."
+        supports_reasoning: true
+      - id: gemini-3.1-flash-lite-preview
+        label: "Gemini 3.1 Flash-Lite (preview)"
+        tier: fast
+        notes: "Most cost-efficient Gemini. Low-latency, high-volume."
+
+  # ---- Mistral ---------------------------------------------------------
+  - name: mistral
+    env: MISTRAL_API_KEY
+    base_url: https://api.mistral.ai/v1
+    default_model: mistral-medium-latest
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    recommended_models:
+      - id: mistral-medium-latest
+        label: "Mistral Medium 3.5"
+        tier: frontier
+        notes: "Best Mistral for agentic tool use; native GitHub/Linear/Jira/Sentry integrations."
+      - id: mistral-large-latest
+        label: "Mistral Large"
+        tier: mid
+        notes: "Previous flagship; kept for stability."
+      - id: codestral-latest
+        label: "Codestral"
+        tier: coder
+        notes: "Code generation specialist."
+
+  # ---- Moonshot / Kimi -------------------------------------------------
+  - name: moonshot
+    env: MOONSHOT_API_KEY
+    base_url: https://api.moonshot.cn/v1
+    base_url_env: MOONSHOT_BASE_URL
+    default_model: kimi-k2-0711-preview
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    aliases: [kimi]
+    recommended_models:
+      - id: kimi-k2-0711-preview
+        label: "Kimi K2"
+        tier: frontier
+        notes: "Long context, agentic tool use. Open weights variant available."
+      - id: moonshot-v1-128k
+        label: "Moonshot v1 128k"
+        tier: mid
+        notes: "Standard chat with very long context."
+      - id: moonshot-v1-32k
+        label: "Moonshot v1 32k"
+        tier: fast
+
+  # ---- Qwen / DashScope ------------------------------------------------
+  - name: qwen
+    env: DASHSCOPE_API_KEY
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    base_url_env: DASHSCOPE_BASE_URL
+    default_model: qwen3-235b-a22b
+    family: openai_compat
+    supports_tools: true
+    supports_vision: true
+    aliases: [dashscope, alibaba, tongyi]
+    recommended_models:
+      - id: qwen3-235b-a22b
+        label: "Qwen 3 235B-A22B"
+        tier: frontier
+        notes: "Top open-weights on broad benchmarks. Apache 2.0. Reasoning + multilingual."
+        supports_reasoning: true
+      - id: qwen3-32b
+        label: "Qwen 3 32B"
+        tier: mid
+        notes: "Thinking + non-thinking switch."
+        supports_reasoning: true
+      - id: qwen3-coder
+        label: "Qwen 3 Coder"
+        tier: coder
+        notes: "Multi-step agentic coding (RL on SWE-Bench)."
+      - id: qwen-vl-max
+        label: "Qwen VL Max"
+        tier: mid
+        notes: "Vision flagship."
+        supports_vision: true
+      - id: qwen-plus
+        label: "Qwen Plus (legacy)"
+        tier: mid
+
+  # ---- Zhipu / GLM -----------------------------------------------------
+  - name: zhipu
+    env: ZHIPU_API_KEY
+    base_url: https://open.bigmodel.cn/api/paas/v4
+    default_model: glm-5.1
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    aliases: [glm, chatglm]
+    recommended_models:
+      - id: glm-5.1
+        label: "GLM-5.1"
+        tier: frontier
+        notes: "Latest Zhipu flagship — agentic engineering, long-horizon coding."
+        supports_reasoning: true
+      - id: glm-5
+        label: "GLM-5"
+        tier: mid
+      - id: glm-4-plus
+        label: "GLM-4 Plus (legacy)"
+        tier: mid
+
+  # ---- Fireworks -------------------------------------------------------
+  - name: fireworks
+    env: FIREWORKS_API_KEY
+    base_url: https://api.fireworks.ai/inference/v1
+    default_model: accounts/fireworks/models/llama-v4-scout-17b-instruct
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    recommended_models:
+      - id: accounts/fireworks/models/llama-v4-scout-17b-instruct
+        label: "Llama 4 Scout"
+        tier: frontier
+      - id: accounts/fireworks/models/qwen3-32b-instruct
+        label: "Qwen 3 32B"
+        tier: mid
+        supports_reasoning: true
+      - id: accounts/fireworks/models/deepseek-v4-flash
+        label: "DeepSeek V4 Flash"
+        tier: mid
+        supports_reasoning: true
+      - id: accounts/fireworks/models/llama-v3p3-70b-instruct
+        label: "Llama 3.3 70B (legacy)"
+        tier: mid
+
+  # ---- Together --------------------------------------------------------
+  - name: together
+    env: TOGETHER_API_KEY
+    base_url: https://api.together.xyz/v1
+    default_model: meta-llama/Llama-4-Scout-17B-Instruct
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    recommended_models:
+      - id: meta-llama/Llama-4-Scout-17B-Instruct
+        label: "Llama 4 Scout"
+        tier: frontier
+      - id: Qwen/Qwen3-235B-A22B
+        label: "Qwen 3 235B-A22B"
+        tier: frontier
+        supports_reasoning: true
+      - id: deepseek-ai/DeepSeek-V4
+        label: "DeepSeek V4"
+        tier: frontier
+        supports_reasoning: true
+      - id: google/gemma-3-27b
+        label: "Gemma 3 27B"
+        tier: mid
+
+  # ---- Perplexity ------------------------------------------------------
+  - name: perplexity
+    env: PERPLEXITY_API_KEY
+    base_url: https://api.perplexity.ai
+    default_model: sonar
+    family: openai_compat
+    supports_tools: false
+    supports_vision: false
+    recommended_models:
+      - id: sonar
+        label: "Sonar"
+        tier: mid
+        notes: "Web-grounded chat (real-time search)."
+      - id: sonar-reasoning
+        label: "Sonar Reasoning"
+        tier: reasoning
+        supports_reasoning: true
+      - id: sonar-pro
+        label: "Sonar Pro"
+        tier: frontier
+        notes: "Higher-quality web-grounded responses."
+
+  # ---- Novita ----------------------------------------------------------
+  - name: novita
+    env: NOVITA_API_KEY
+    base_url: https://api.novita.ai/v3/openai
+    default_model: meta-llama/llama-4-scout-17b-instruct
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    recommended_models:
+      - id: meta-llama/llama-4-scout-17b-instruct
+        label: "Llama 4 Scout"
+        tier: frontier
+      - id: deepseek/deepseek-v4-flash
+        label: "DeepSeek V4 Flash"
+        tier: mid
+        supports_reasoning: true
+      - id: qwen/qwen3-32b
+        label: "Qwen 3 32B"
+        tier: mid
+
+  # ---- SambaNova / via OpenAI-compat (Cerebras-like) -------------------
+  - name: sambanova
+    env: SAMBANOVA_API_KEY
+    base_url: https://api.sambanova.ai/v1
+    default_model: Meta-Llama-4-Scout-17B-Instruct
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    recommended_models:
+      - id: Meta-Llama-4-Scout-17B-Instruct
+        label: "Llama 4 Scout"
+        tier: frontier
+        notes: "SambaNova is the fastest hosted Llama 4 (RDU hardware)."
+      - id: Meta-Llama-3.3-70B-Instruct
+        label: "Llama 3.3 70B (legacy)"
+        tier: mid
+      - id: DeepSeek-V4-Flash
+        label: "DeepSeek V4 Flash"
+        tier: mid
+        supports_reasoning: true
+
+  # ---- Hyperbolic ------------------------------------------------------
+  - name: hyperbolic
+    env: HYPERBOLIC_API_KEY
+    base_url: https://api.hyperbolic.xyz/v1
+    default_model: meta-llama/Llama-4-Scout-17B-Instruct
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    recommended_models:
+      - id: meta-llama/Llama-4-Scout-17B-Instruct
+        label: "Llama 4 Scout"
+        tier: frontier
+      - id: deepseek-ai/DeepSeek-V4
+        label: "DeepSeek V4"
+        tier: frontier
+        supports_reasoning: true
+      - id: Qwen/Qwen3-32B
+        label: "Qwen 3 32B"
+        tier: mid
+
+  # ---- LM Studio — local OpenAI-compat ---------------------------------
+  - name: lmstudio
+    env: LMSTUDIO_API_KEY
+    base_url: http://localhost:1234/v1
+    base_url_env: LMSTUDIO_BASE_URL
+    default_model: local-model
+    family: openai_compat
+    supports_tools: true
+    supports_vision: false
+    aliases: [lm-studio, lm_studio]
+    recommended_models:
+      # LM Studio resolves model ids from whatever is loaded locally;
+      # these are guidance for which GGUFs to download manually:
+      - id: gemma-3-27b-it
+        label: "Gemma 3 27B (local GGUF)"
+        tier: frontier
+        notes: "Pull from lmstudio-community on HuggingFace. ~24GB VRAM Q5_K_M."
+      - id: qwen3-32b
+        label: "Qwen 3 32B (local GGUF)"
+        tier: frontier
+        supports_reasoning: true
+      - id: llama-4-scout-17b-instruct
+        label: "Llama 4 Scout (local GGUF)"
+        tier: frontier
+      - id: phi-4-14b-instruct
+        label: "Phi-4 14B (local GGUF)"
+        tier: mid
+
+  # ---- Mock — deterministic, in-memory --------------------------------
+  - name: mock
+    env: ""
+    base_url: ""
+    default_model: mock-model
+    family: mock
+    supports_tools: false
+    supports_vision: false

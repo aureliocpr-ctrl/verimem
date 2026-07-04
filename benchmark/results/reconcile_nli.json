@@ -1,0 +1,13 @@
+{
+  "sweep": {
+    "max_diff=1": {
+      "update_recall": 0.08,
+      "n_update": 25,
+      "false_supersede_complementary": 0.0,
+      "n_complementary": 25,
+      "false_supersede_unrelated": 0.0,
+      "n_unrelated": 25
+    }
+  },
+  "note": "update_recall = true HaluMem updates correctly superseded (want HIGH); false_supersede_* = wrongly superseded (want ~0; complementary = same-user diff-attribute is the real precision risk). Local lexical reconcile; ground truth = HaluMem is_update / original_memories."
+}

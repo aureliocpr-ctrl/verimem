@@ -1,0 +1,52 @@
+{
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s",
+  "k": 5,
+  "n_questions": 500,
+  "embedding_model": "intfloat/multilingual-e5-base",
+  "embedding_dim": 768,
+  "overall": {
+    "recall_at_k": 0.8745,
+    "hit_at_k": 0.944,
+    "mrr": 0.8556,
+    "latency_ms_mean": 216.0024
+  },
+  "per_type": {
+    "knowledge-update": {
+      "n": 78,
+      "recall_at_k": 0.891,
+      "hit_at_k": 0.9487,
+      "mrr": 0.8974
+    },
+    "multi-session": {
+      "n": 133,
+      "recall_at_k": 0.9043,
+      "hit_at_k": 0.9925,
+      "mrr": 0.9363
+    },
+    "single-session-assistant": {
+      "n": 56,
+      "recall_at_k": 0.9643,
+      "hit_at_k": 0.9643,
+      "mrr": 0.9554
+    },
+    "single-session-preference": {
+      "n": 30,
+      "recall_at_k": 0.9,
+      "hit_at_k": 0.9,
+      "mrr": 0.76
+    },
+    "single-session-user": {
+      "n": 70,
+      "recall_at_k": 0.8714,
+      "hit_at_k": 0.8714,
+      "mrr": 0.6467
+    },
+    "temporal-reasoning": {
+      "n": 133,
+      "recall_at_k": 0.7931,
+      "hit_at_k": 0.9323,
+      "mrr": 0.8398
+    }
+  },
+  "metric_note": "session-level retrieval recall@k of gold answer_session_ids; judge-free, no external API; embedding via Engram's own model"
+}

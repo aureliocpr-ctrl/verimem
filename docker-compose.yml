@@ -1,0 +1,40 @@
+services:
+  hippoagent:
+    build: .
+    image: hippoagent:latest
+    container_name: hippoagent
+    restart: unless-stopped
+    # Loopback-bind on the host by default (CVE-008). To expose externally,
+    # change to "8765:8765" AND set HIPPO_TRUSTED_NETWORK=1 + run with
+    # `hippo dashboard --insecure-bind --host 0.0.0.0` in the container.
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8765/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    environment:
+      # Pick ONE provider (or leave empty for autodetect).
+      # See README "Providers" for the full list.
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      MOONSHOT_API_KEY: "${MOONSHOT_API_KEY:-}"
+      DASHSCOPE_API_KEY: "${DASHSCOPE_API_KEY:-}"
+      ZHIPU_API_KEY: "${ZHIPU_API_KEY:-}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      MISTRAL_API_KEY: "${MISTRAL_API_KEY:-}"
+      XAI_API_KEY: "${XAI_API_KEY:-}"
+      # Force a specific provider (optional)
+      HIPPO_LLM_PROVIDER: "${HIPPO_LLM_PROVIDER:-}"
+      HIPPO_MODEL: "${HIPPO_MODEL:-}"
+      # Use the Ollama instance running on the host
+      OLLAMA_HOST: "${OLLAMA_HOST:-http://host.docker.internal:11434}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -1,0 +1,11 @@
+{
+  "n": 16,
+  "per_class": 8,
+  "mean_conf_correct_grounded": 95.3,
+  "mean_conf_fabrication": 94.0,
+  "auroc_conf_sound_vs_pathological": 0.373,
+  "ece": 0.362,
+  "n_fabrications": 3,
+  "n_correct_grounded": 6,
+  "model": "claude-haiku-4-5"
+}

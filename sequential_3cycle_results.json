@@ -1,0 +1,42 @@
+{
+  "stable": [
+    {
+      "cycle": 0,
+      "n_facts": 2150,
+      "n_candidates": 0,
+      "jaccard_vs_prior": 0.0
+    },
+    {
+      "cycle": 1,
+      "n_facts": 2180,
+      "n_candidates": 0,
+      "jaccard_vs_prior": 0.025181096929975832
+    },
+    {
+      "cycle": 2,
+      "n_facts": 2210,
+      "n_candidates": 0,
+      "jaccard_vs_prior": 0.0258736559139785
+    }
+  ],
+  "vanilla": [
+    {
+      "cycle": 0,
+      "n_facts": 2150,
+      "n_candidates": 0,
+      "jaccard_vs_prior": 0.0
+    },
+    {
+      "cycle": 1,
+      "n_facts": 2180,
+      "n_candidates": 0,
+      "jaccard_vs_prior": 0.2650602409638554
+    },
+    {
+      "cycle": 2,
+      "n_facts": 2210,
+      "n_candidates": 0,
+      "jaccard_vs_prior": 0.29807692307692313
+    }
+  ]
+}

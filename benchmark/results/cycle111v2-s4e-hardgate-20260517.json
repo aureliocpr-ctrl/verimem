@@ -1,0 +1,52 @@
+{
+  "bench": "cycle111v2_s4e_verified_by_hardgate",
+  "evaluated_at": 1778972022.5015788,
+  "repo_root": "C:\\Users\\aurel\\Code\\HippoAgent",
+  "head_sha": "38ed19783c044364cb0dc3381d535fd7e7bc38ee",
+  "n_verified_real_seeded": 50,
+  "n_model_claim_seeded": 50,
+  "n_poisoning_seeded": 20,
+  "by_group_after_store": {
+    "poisoning": {
+      "model_claim": 20
+    },
+    "model_claim": {
+      "model_claim": 50
+    },
+    "verified_real": {
+      "verified": 50
+    }
+  },
+  "hypothetical_pre_fix": {
+    "poisoning_admitted_as_verified": 20,
+    "poisoning_success_rate": 1.0,
+    "note": "If the gate were syntactic-only (PR #50 v1 state), every format-valid attack vector would land as status='verified'. Pure free-text 'banana' would fail the regex check, but the other 15+ format-valid voids (pytest, exit 0, bash:fake, commit abcdef1, etc.) would pass."
+  },
+  "actual_post_fix_v2": {
+    "poisoning_admitted_as_verified": 0,
+    "verified_real_surviving": 50,
+    "poisoning_success_rate": 0.0
+  },
+  "attack_vectors": [
+    "banana",
+    "url:banana",
+    "lying claim that pytest passed",
+    "not-a-valid-ref",
+    "",
+    "pytest",
+    "pytest_collect",
+    "pytest:test_fake_DNE",
+    "exit 0",
+    "exit0",
+    "bash:date",
+    "bash:notreallyacommand",
+    "bash:fake:anything",
+    "bash:sqlite:count_42",
+    "sha256:deadbeefdeadbeef",
+    "commit abcdef1",
+    "commit 0000000",
+    "file:/no/such/path:99999",
+    "file:does/not/exist.py:1",
+    "arxiv.org/abs/9999.99999"
+  ]
+}

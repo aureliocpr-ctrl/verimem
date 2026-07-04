@@ -1,0 +1,98 @@
+{
+  "clean_n": 15,
+  "noise_n": 15,
+  "clean_mean": 60.27,
+  "noise_mean": 0.0,
+  "clean_scores": [
+    85.0,
+    100.0,
+    0.0,
+    85.0,
+    72.0,
+    95.0,
+    62.0,
+    42.0,
+    0.0,
+    100.0,
+    0.0,
+    72.0,
+    72.0,
+    72.0,
+    47.0
+  ],
+  "noise_scores": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "sweep": [
+    {
+      "threshold": 10,
+      "clean_admit_rate": 0.8,
+      "noise_reject_rate": 1.0,
+      "admission_precision": 1.0,
+      "admission_recall": 0.8
+    },
+    {
+      "threshold": 20,
+      "clean_admit_rate": 0.8,
+      "noise_reject_rate": 1.0,
+      "admission_precision": 1.0,
+      "admission_recall": 0.8
+    },
+    {
+      "threshold": 30,
+      "clean_admit_rate": 0.8,
+      "noise_reject_rate": 1.0,
+      "admission_precision": 1.0,
+      "admission_recall": 0.8
+    },
+    {
+      "threshold": 40,
+      "clean_admit_rate": 0.8,
+      "noise_reject_rate": 1.0,
+      "admission_precision": 1.0,
+      "admission_recall": 0.8
+    },
+    {
+      "threshold": 50,
+      "clean_admit_rate": 0.667,
+      "noise_reject_rate": 1.0,
+      "admission_precision": 1.0,
+      "admission_recall": 0.667
+    },
+    {
+      "threshold": 60,
+      "clean_admit_rate": 0.667,
+      "noise_reject_rate": 1.0,
+      "admission_precision": 1.0,
+      "admission_recall": 0.667
+    },
+    {
+      "threshold": 70,
+      "clean_admit_rate": 0.6,
+      "noise_reject_rate": 1.0,
+      "admission_precision": 1.0,
+      "admission_recall": 0.6
+    },
+    {
+      "threshold": 80,
+      "clean_admit_rate": 0.333,
+      "noise_reject_rate": 1.0,
+      "admission_precision": 1.0,
+      "admission_recall": 0.333
+    }
+  ]
+}

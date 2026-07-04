@@ -1,0 +1,325 @@
+{
+  "n": 40,
+  "n_correct": 25,
+  "n_errors": 0,
+  "accuracy": 0.625,
+  "per_category": {
+    "knowledge-update": {
+      "n": 6,
+      "accuracy": 0.6667
+    },
+    "multi-session": {
+      "n": 11,
+      "accuracy": 0.6364
+    },
+    "single-session-assistant": {
+      "n": 5,
+      "accuracy": 1.0
+    },
+    "single-session-preference": {
+      "n": 2,
+      "accuracy": 0.5
+    },
+    "single-session-user": {
+      "n": 6,
+      "accuracy": 0.8333
+    },
+    "temporal-reasoning": {
+      "n": 10,
+      "accuracy": 0.3
+    }
+  },
+  "details": [
+    {
+      "id": "e47becba",
+      "category": "single-session-user",
+      "predicted": "Business Administration.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3b6f954b",
+      "category": "single-session-user",
+      "predicted": "University of Melbourne.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0862e8bf",
+      "category": "single-session-user",
+      "predicted": "Luna",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "577d4d32",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "86f00804",
+      "category": "single-session-user",
+      "predicted": "\"The Seven Husbands of Evelyn Hugo\"",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0862e8bf_abs",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "aae3761f",
+      "category": "multi-session",
+      "predicted": "NO ANSWER\n\nThe context only mentions driving times for two destinations: 6 hours to Washington D.C. and 4 hours to Outer Banks. No third completed road trip with a driving time is mentioned.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "80ec1f4f",
+      "category": "multi-session",
+      "predicted": "2 (The Art Cube on 2/15, Natural History Museum on 2/8).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_31ff4165",
+      "category": "multi-session",
+      "predicted": "2 (Fitbit Versa 3, Accu-Chek Aviva Nano).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_731e37d7",
+      "category": "multi-session",
+      "predicted": "$720 — digital marketing workshop ($500) + writing workshop ($200) + mindfulness workshop ($20) + photography workshop ($0). The entrepreneurship workshop cost is not mentioned in the context.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "eeda8a6d_abs",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "54026fce",
+      "category": "single-session-preference",
+      "predicted": "Virtual coffee breaks, online team activities, collaborative projects, informal chat channels (Slack/Teams), interest-based groups, and celebrating milestones together.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "fca70973",
+      "category": "single-session-preference",
+      "predicted": "Based on your previous visits to Disneyland, Knott's Berry Farm, Six Flags Magic Mountain, and Universal Studios Hollywood, you might want to explore some parks you haven't visited yet, such as SeaWorld San Diego, Legoland California, or Busch Gardens.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4f54b7c9",
+      "category": "multi-session",
+      "predicted": "6: antique tea set (cousin Rachel), vintage typewriter (dad), vintage diamond necklace (grandmother), antique music box (great-aunt), depression-era glassware (mom), antique armchair (inherited).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "681a1674",
+      "category": "multi-session",
+      "predicted": "2",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8979f9ec",
+      "category": "multi-session",
+      "predicted": "8 (5 from lentil soup + 3 from chicken fajitas).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "60159905",
+      "category": "multi-session",
+      "predicted": "3: Sarah's Italian feast (last week), Alex's potluck (referenced as \"yesterday\"), and Mike's BBQ (two weeks ago).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "078150f1",
+      "category": "multi-session",
+      "predicted": "$50",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "a96c20ee_abs",
+      "category": "multi-session",
+      "predicted": "Harvard University",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_1d4ab0c9",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_1e4a8aeb",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_f420262c",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER\n\nThe context lacks [timestamp] prefixes on the conversation sessions, so relative references like \"today\" and \"just got back from\" cannot be resolved to absolute dates. The only absolute date provided is the American Airlines NYC→LAX flight on February 10th; the remaining flights (AA LAX→JFK, United BOS→Chicago, Delta BOS→Atlanta, JetBlue SFO→BOS) cannot be ordered chronologically.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_b0863698",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_e414231f",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_2487a7cb",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_70e84552",
+      "category": "temporal-reasoning",
+      "predicted": "Fixing the fence (three weeks ago, ~2026-05-27) came before trimming the goats' hooves (two weeks ago, ~2026-06-03).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "dcfa8644",
+      "category": "temporal-reasoning",
+      "predicted": "14",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_88806d6e",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_fe651585",
+      "category": "temporal-reasoning",
+      "predicted": "Alex (adopted a baby girl from China in January).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "d7c942c3",
+      "category": "knowledge-update",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "41698283",
+      "category": "knowledge-update",
+      "predicted": "Canon EF 70-200mm f/2.8L IS III USM",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "18bc8abd",
+      "category": "knowledge-update",
+      "predicted": "Kansas City Masterpiece",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "603deb26",
+      "category": "knowledge-update",
+      "predicted": "10",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "cf22b7bf",
+      "category": "knowledge-update",
+      "predicted": "10 pounds",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0977f2af",
+      "category": "knowledge-update",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "4c36ccef",
+      "category": "single-session-assistant",
+      "predicted": "Roscioli.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8cf51dda",
+      "category": "single-session-assistant",
+      "predicted": "1. To identify molecular subtypes of endometrial cancer using genomic and transcriptomic approaches.\n2. To investigate the clinical and biological significance of the identified molecular subtypes, including association with patient outcomes and response to therapy.\n3. To develop biomarkers for early detection and prognosis of endometrial cancer based on the identified molecular subtypes.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e8a79c70",
+      "category": "single-session-assistant",
+      "predicted": "2-3 eggs.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4388e9dd",
+      "category": "single-session-assistant",
+      "predicted": "An untidy, stained white shirt.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "778164c6",
+      "category": "single-session-assistant",
+      "predicted": "Grilled Snapper with Mango Salsa.",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "longmemeval",
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s",
+  "k": 5,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": false,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

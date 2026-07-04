@@ -1,0 +1,62 @@
+{
+  "raw|anthropic|iter0": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 59.625,
+    "mean_latency_s": 0.6707510249996176
+  },
+  "hippo_warm|anthropic|iter0": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 4225.25,
+    "mean_latency_s": 4.474837887499689
+  },
+  "raw|anthropic|iter1": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 59.625,
+    "mean_latency_s": 0.7095471625002574
+  },
+  "hippo_warm|anthropic|iter1": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 1711.375,
+    "mean_latency_s": 0.919767262500045
+  },
+  "raw|anthropic|iter2": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 59.625,
+    "mean_latency_s": 0.8514546625001458
+  },
+  "hippo_warm|anthropic|iter2": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 687.0,
+    "mean_latency_s": 0.5222954624996419
+  },
+  "raw|anthropic|iter3": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 59.625,
+    "mean_latency_s": 1.082650550000153
+  },
+  "hippo_warm|anthropic|iter3": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 0.0,
+    "mean_latency_s": 0.2156589249998433
+  },
+  "raw|anthropic|iter4": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 59.625,
+    "mean_latency_s": 0.6940104375000828
+  },
+  "hippo_warm|anthropic|iter4": {
+    "n": 8.0,
+    "success_rate": 1.0,
+    "mean_tokens": 0.0,
+    "mean_latency_s": 0.2373217249996742
+  }
+}

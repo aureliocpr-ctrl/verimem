@@ -1,0 +1,252 @@
+{
+  "n": 30,
+  "n_correct": 24,
+  "n_errors": 0,
+  "accuracy": 0.8,
+  "per_category": {
+    "1": {
+      "n": 3,
+      "accuracy": 0.6667
+    },
+    "2": {
+      "n": 5,
+      "accuracy": 0.8
+    },
+    "3": {
+      "n": 2,
+      "accuracy": 0.0
+    },
+    "4": {
+      "n": 10,
+      "accuracy": 0.9
+    },
+    "5": {
+      "n": 10,
+      "accuracy": 0.9
+    }
+  },
+  "details": [
+    {
+      "id": "0:82",
+      "category": "4",
+      "predicted": "Mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:194",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:86",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:87",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:143",
+      "category": "4",
+      "predicted": "Coco",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:33",
+      "category": "2",
+      "predicted": "14 August 2022 (a reader wrote to say her blog post brought them comfort), and 7 November 2022 (Joanna's brother wrote a letter she included in her script).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:80",
+      "category": "1",
+      "predicted": "6",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:124",
+      "category": "4",
+      "predicted": "Gaming party (two weekends after 3 June 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:236",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:31",
+      "category": "2",
+      "predicted": "September 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:72",
+      "category": "4",
+      "predicted": "Shooting guard.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:104",
+      "category": "4",
+      "predicted": "Sage.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:219",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:238",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:34",
+      "category": "2",
+      "predicted": "3 months (Toby: July 11, 2023; Buddy: October 19, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:48",
+      "category": "1",
+      "predicted": "Family.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:37",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:109",
+      "category": "4",
+      "predicted": "The puppy had a routine examination and was vaccinated against seasonal canine disease.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:200",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:205",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:19",
+      "category": "3",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:51",
+      "category": "3",
+      "predicted": "Sam struggles with cravings for sugary drinks and snacks, faced mockery from friends about his weight, and has been experiencing ongoing health challenges. He addresses them by starting a diet, maintaining a new health routine, trying to eat healthier, and motivating others to make healthier choices.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:113",
+      "category": "4",
+      "predicted": "Watercolor painting.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:143",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:41",
+      "category": "1",
+      "predicted": "Calvin's dad, Dave's father.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:44",
+      "category": "2",
+      "predicted": "3 October 2023",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:77",
+      "category": "4",
+      "predicted": "The diamond pendant necklace.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:98",
+      "category": "4",
+      "predicted": "The crowd sang along.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:195",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:200",
+      "category": "5",
+      "predicted": "Ferrari (purchased the week prior to October 8, 2023).",
+      "correct": false,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 30,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": true,
+  "extract": true,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

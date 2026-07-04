@@ -1,0 +1,718 @@
+{
+  "n": 96,
+  "n_correct": 58,
+  "n_errors": 0,
+  "accuracy": 0.6042,
+  "per_category": {
+    "knowledge-update": {
+      "n": 15,
+      "accuracy": 0.6
+    },
+    "multi-session": {
+      "n": 26,
+      "accuracy": 0.6154
+    },
+    "single-session-assistant": {
+      "n": 11,
+      "accuracy": 0.8182
+    },
+    "single-session-preference": {
+      "n": 5,
+      "accuracy": 0.2
+    },
+    "single-session-user": {
+      "n": 14,
+      "accuracy": 1.0
+    },
+    "temporal-reasoning": {
+      "n": 25,
+      "accuracy": 0.36
+    }
+  },
+  "details": [
+    {
+      "id": "e47becba",
+      "category": "single-session-user",
+      "predicted": "Business Administration.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "c5e8278d",
+      "category": "single-session-user",
+      "predicted": "Johnson",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7527f7e2",
+      "category": "single-session-user",
+      "predicted": "$800.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "66f24dbb",
+      "category": "single-session-user",
+      "predicted": "Yellow dress and a pair of earrings (matching the dress).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8ebdbe50",
+      "category": "single-session-user",
+      "predicted": "Data Science certification.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0862e8bf",
+      "category": "single-session-user",
+      "predicted": "Luna",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "25e5aa4f",
+      "category": "single-session-user",
+      "predicted": "UCLA",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "86b68151",
+      "category": "single-session-user",
+      "predicted": "IKEA",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "bc8a6e93",
+      "category": "single-session-user",
+      "predicted": "Lemon blueberry cake.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4fd1909e",
+      "category": "single-session-user",
+      "predicted": "Xfinity Center",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "311778f1",
+      "category": "single-session-user",
+      "predicted": "10 hours.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "faba32e5",
+      "category": "single-session-user",
+      "predicted": "24 hours.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "a82c026e",
+      "category": "single-session-user",
+      "predicted": "The last boss in the Dark Souls 3 DLC.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "29f2956b_abs",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e831120c",
+      "category": "multi-session",
+      "predicted": "MCU: 2 weeks. Star Wars main films: 1.5 weeks (week and a half).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "dd2973ad",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "36b9f61e",
+      "category": "multi-session",
+      "predicted": "$800 (evening gown) + $1,200 (Gucci handbag) = **$2,000**",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "88432d0a",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_5501fe77",
+      "category": "multi-session",
+      "predicted": "Twitter (from 420 to 540, a gain of 120 followers).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "00ca467f",
+      "category": "multi-session",
+      "predicted": "2: Dr. Smith on March 3rd (bronchitis diagnosis) and Dr. Thompson on March 20th (knee follow-up).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "60bf93ed",
+      "category": "multi-session",
+      "predicted": "5 days (bought 1/15, arrived 1/20).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "a9f6b44c",
+      "category": "multi-session",
+      "predicted": "1 (the road bike, referenced multiple times with different March dates).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "edced276",
+      "category": "multi-session",
+      "predicted": "New York City: 5 giorni. Hawaii (famiglia): 10 giorni (\"plan everything out for the 10-day\"). Totale: **15 giorni**.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "c2ac3c61",
+      "category": "multi-session",
+      "predicted": "5 (2 su edX + 3 su Coursera).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "88432d0a_abs",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_372c3eed_abs",
+      "category": "multi-session",
+      "predicted": "NO ANSWER. Il contesto indica che stai *considerando* di conseguire un Master, non che lo hai completato — quindi la durata totale non è calcolabile.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "32260d93",
+      "category": "single-session-preference",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "06f04340",
+      "category": "single-session-preference",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "d24813b1",
+      "category": "single-session-preference",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "d6233ab6",
+      "category": "single-session-preference",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1d4e3b97",
+      "category": "single-session-preference",
+      "predicted": "Hai sostituito catena e pignone il 1° febbraio — quella manutenzione è la causa esplicita del miglioramento citata nel contesto.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2311e44b",
+      "category": "multi-session",
+      "predicted": "190 pages (440 total, currently on page 250).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9aaed6a3",
+      "category": "multi-session",
+      "predicted": "$0.75",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7405e8b1",
+      "category": "multi-session",
+      "predicted": "Sì. HelloFresh: 40% di sconto. UberEats: 20% di sconto.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "681a1674",
+      "category": "multi-session",
+      "predicted": "2",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5025383b",
+      "category": "multi-session",
+      "predicted": "Cooking and photography.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "27016adc",
+      "category": "multi-session",
+      "predicted": "10% ($20,000 renovation cost ÷ $200,000 countryside property price).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "a96c20ee",
+      "category": "multi-session",
+      "predicted": "Harvard University",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0ea62687",
+      "category": "multi-session",
+      "predicted": "2 MPG (30 vs 28).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "60159905",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "09ba9854",
+      "category": "multi-session",
+      "predicted": "~$50 (taxi ~$60, train ~$10).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "55241a1f",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "37f165cf",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "21d02d0d",
+      "category": "multi-session",
+      "predicted": "1",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "ba358f49_abs",
+      "category": "multi-session",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "b46e15ed",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9a707b81",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_7f6b06db",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_1916e0ea",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_4fc4f797",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "370a8ff4",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8077ef71",
+      "category": "temporal-reasoning",
+      "predicted": "0 days ago (today, 2026-06-30).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_21adecb5",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_7ddcf75f",
+      "category": "temporal-reasoning",
+      "predicted": "0 giorni fa (oggi, 2026-06-30).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_7ca326fa",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "b46e15ee",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_e414231f",
+      "category": "temporal-reasoning",
+      "predicted": "Mountain bike (replaced inner tube, cleaned chain).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "eac54add",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "gpt4_68e94288",
+      "category": "temporal-reasoning",
+      "predicted": "#PlankChallenge",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0bb5a684",
+      "category": "temporal-reasoning",
+      "predicted": "7 days.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "bbf86515",
+      "category": "temporal-reasoning",
+      "predicted": "4 days (June 14 vs June 18).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_70e84552",
+      "category": "temporal-reasoning",
+      "predicted": "Fixing the fence (three weeks ago), then trimming the hooves (two weeks ago).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "b9cfe692",
+      "category": "temporal-reasoning",
+      "predicted": "5,5 settimane (2,5 + 3).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "c9f37c46",
+      "category": "temporal-reasoning",
+      "predicted": "Circa 2 mesi (iniziato ~3 mesi fa, open mic il mese scorso).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "cc6d1ec1",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "993da5e2",
+      "category": "temporal-reasoning",
+      "predicted": "Circa 1 settimana (il tappeto era stato acquistato un mese fa, il mobilio spostato tre settimane fa).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_93f6379c",
+      "category": "temporal-reasoning",
+      "predicted": "Page Turners (joined \"last week\" vs. Marketing Professionals joined \"yesterday\").",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_0a05b494",
+      "category": "temporal-reasoning",
+      "predicted": "Il jam maker al farmer's market (due settimane fa, sabato 16 giugno), prima del turista australiano (giovedì scorso, 26 giugno).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "gpt4_c27434e8",
+      "category": "temporal-reasoning",
+      "predicted": "The Ferrari 288 GTO model, since the Japanese Zero was started \"about a month ago\" (relative to the conversation).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "982b5123_abs",
+      "category": "temporal-reasoning",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "830ce83f",
+      "category": "knowledge-update",
+      "predicted": "Chicago.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "89941a93",
+      "category": "knowledge-update",
+      "predicted": "4",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "184da446",
+      "category": "knowledge-update",
+      "predicted": "220",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "f9e8c073",
+      "category": "knowledge-update",
+      "predicted": "Il contesto riporta due numeri in conflitto: **3 sessioni** (primo elemento) e **5 sessioni** (secondo elemento).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6071bd76",
+      "category": "knowledge-update",
+      "predicted": "Less: da 6 oz a 5 oz per tablespoon.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "01493427",
+      "category": "knowledge-update",
+      "predicted": "25",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7a87bd0c",
+      "category": "knowledge-update",
+      "predicted": "4 weeks.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "b01defab",
+      "category": "knowledge-update",
+      "predicted": "Sì.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "59524333",
+      "category": "knowledge-update",
+      "predicted": "7:00 pm on Mondays, Wednesdays, and Fridays.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "e66b632c",
+      "category": "knowledge-update",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "69fee5aa",
+      "category": "knowledge-update",
+      "predicted": "37",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "06db6396",
+      "category": "knowledge-update",
+      "predicted": "5",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "42ec0761",
+      "category": "knowledge-update",
+      "predicted": "Yes.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6aeb4375_abs",
+      "category": "knowledge-update",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "f685340e_abs",
+      "category": "knowledge-update",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "89527b6b",
+      "category": "single-session-assistant",
+      "predicted": "Blue.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "ceb54acb",
+      "category": "single-session-assistant",
+      "predicted": "Sexual fixations, problematic sexual behaviors, sexual impulsivity, compulsive sexuality.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "dc439ea3",
+      "category": "single-session-assistant",
+      "predicted": "Hoop Dance.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1d4da289",
+      "category": "single-session-assistant",
+      "predicted": "Biometric authentication e one-time passwords (OTP).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "70b3e69b",
+      "category": "single-session-assistant",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "e8a79c70",
+      "category": "single-session-assistant",
+      "predicted": "2-3 eggs.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "e982271f",
+      "category": "single-session-assistant",
+      "predicted": "Revolution Hall",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8b9d4367",
+      "category": "single-session-assistant",
+      "predicted": "Jaipur Rugs.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "561fabcd",
+      "category": "single-session-assistant",
+      "predicted": "Fissionator",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "eaca4986",
+      "category": "single-session-assistant",
+      "predicted": "Il secondo brano non era triste ma romantico. Le note del chorus erano:\n\n**C D E F G A B A G F E D C**\n\n(ripetute per ogni riga del chorus). Nessuna chord progression esplicita nel contesto — solo la sequenza di note.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "778164c6",
+      "category": "single-session-assistant",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    }
+  ],
+  "bench": "longmemeval",
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s.json",
+  "k": 10,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": true,
+  "extract": false,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

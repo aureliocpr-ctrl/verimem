@@ -1,0 +1,149 @@
+{
+  "target_size": 2000,
+  "n_subsamples": 10,
+  "n_seeds": 10,
+  "k_writes": 50,
+  "subsamples": [
+    {
+      "sub_seed": 1,
+      "baseline": 0.23619223762851768,
+      "treatment": 0.2825444736804124,
+      "effect": 0.04635223605189473,
+      "ci": [
+        0.013687231187022338,
+        0.07532420042057383
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 2,
+      "baseline": 0.28049242248123435,
+      "treatment": 0.29927183302135024,
+      "effect": 0.018779410540115893,
+      "ci": [
+        -0.0164629719103512,
+        0.049105500267337725
+      ],
+      "verdict": "H0_supported",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 3,
+      "baseline": 0.2659218421864238,
+      "treatment": 0.3005312469933576,
+      "effect": 0.03460940480693381,
+      "ci": [
+        0.00460542408073472,
+        0.06761057998839433
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 4,
+      "baseline": 0.2505194927215777,
+      "treatment": 0.3223059615170905,
+      "effect": 0.07178646879551281,
+      "ci": [
+        0.02354637191319796,
+        0.12009315515326861
+      ],
+      "verdict": "H1_supported",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 5,
+      "baseline": 0.244523147462117,
+      "treatment": 0.2883933856690829,
+      "effect": 0.043870238206965895,
+      "ci": [
+        -0.006709427573030707,
+        0.09442152754455783
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 6,
+      "baseline": 0.22062386549221646,
+      "treatment": 0.22654457785415055,
+      "effect": 0.0059207123619340885,
+      "ci": [
+        -0.03481294750568747,
+        0.05129894352934613
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 7,
+      "baseline": 0.16991861278973838,
+      "treatment": 0.20351627352300197,
+      "effect": 0.03359766073326359,
+      "ci": [
+        0.005964682920403718,
+        0.06218650539151072
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 8,
+      "baseline": 0.23504676479875097,
+      "treatment": 0.2725546863877657,
+      "effect": 0.037507921589014726,
+      "ci": [
+        0.00881686800834082,
+        0.06878322081979268
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 9,
+      "baseline": 0.20272057642184357,
+      "treatment": 0.2728958295196829,
+      "effect": 0.07017525309783931,
+      "ci": [
+        0.04919968511110024,
+        0.09924837333889046
+      ],
+      "verdict": "H1_supported",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    },
+    {
+      "sub_seed": 10,
+      "baseline": 0.2775163048212036,
+      "treatment": 0.3092493267584602,
+      "effect": 0.03173302193725658,
+      "ci": [
+        0.008761756646678893,
+        0.05245667704852684
+      ],
+      "verdict": "inconclusive",
+      "n_facts_pre": 2350,
+      "n_facts_post": 2400
+    }
+  ],
+  "pearson_corr_baseline_effect": -0.15861679014710567,
+  "effect_range": [
+    0.0059207123619340885,
+    0.07178646879551281
+  ],
+  "baseline_range": [
+    0.16991861278973838,
+    0.28049242248123435
+  ],
+  "verdict_hd": "H_d_falsified",
+  "elapsed_s": 68.66174840927124
+}

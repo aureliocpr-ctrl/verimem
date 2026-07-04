@@ -1,0 +1,37 @@
+{
+  "sweep": {
+    "max_diff=1": {
+      "update_recall": 0.025,
+      "n_update": 40,
+      "false_supersede_complementary": 0.0,
+      "n_complementary": 36,
+      "false_supersede_unrelated": 0.0,
+      "n_unrelated": 40
+    },
+    "max_diff=2": {
+      "update_recall": 0.05,
+      "n_update": 40,
+      "false_supersede_complementary": 0.0,
+      "n_complementary": 36,
+      "false_supersede_unrelated": 0.0,
+      "n_unrelated": 40
+    },
+    "max_diff=3": {
+      "update_recall": 0.075,
+      "n_update": 40,
+      "false_supersede_complementary": 0.0,
+      "n_complementary": 36,
+      "false_supersede_unrelated": 0.0,
+      "n_unrelated": 40
+    },
+    "max_diff=4": {
+      "update_recall": 0.1,
+      "n_update": 40,
+      "false_supersede_complementary": 0.0,
+      "n_complementary": 36,
+      "false_supersede_unrelated": 0.0,
+      "n_unrelated": 40
+    }
+  },
+  "note": "update_recall = true HaluMem updates correctly superseded (want HIGH); false_supersede_* = wrongly superseded (want ~0; complementary = same-user diff-attribute is the real precision risk). Local lexical reconcile; ground truth = HaluMem is_update / original_memories."
+}

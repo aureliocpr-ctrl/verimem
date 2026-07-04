@@ -1,0 +1,9 @@
+{
+  "v1_test": {
+    "n": 90,
+    "threshold": 99.64130401611328,
+    "agreement_vs_claude": 0.8889,
+    "real_admit_local": 0.9833,
+    "auroc_vs_claude_admit": 0.9351
+  }
+}

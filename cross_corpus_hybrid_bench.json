@@ -1,0 +1,28 @@
+{
+  "production": {
+    "n_facts": 2366,
+    "thresholds": [
+      0.185,
+      0.092
+    ],
+    "counts": {
+      "vanilla": 0,
+      "stable_partition": 0,
+      "second_pass": 5,
+      "hybrid": 45
+    }
+  },
+  "hostile_synthetic": {
+    "n_facts": 200,
+    "thresholds": [
+      0.4,
+      0.2
+    ],
+    "counts": {
+      "vanilla": 10,
+      "stable_partition": 10,
+      "second_pass": 11,
+      "hybrid": 11
+    }
+  }
+}

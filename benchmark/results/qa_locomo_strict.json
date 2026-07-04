@@ -1,0 +1,1092 @@
+{
+  "n": 150,
+  "n_correct": 124,
+  "n_errors": 0,
+  "accuracy": 0.8267,
+  "per_category": {
+    "1": {
+      "n": 15,
+      "accuracy": 0.6667
+    },
+    "2": {
+      "n": 26,
+      "accuracy": 0.6154
+    },
+    "3": {
+      "n": 4,
+      "accuracy": 1.0
+    },
+    "4": {
+      "n": 71,
+      "accuracy": 0.8732
+    },
+    "5": {
+      "n": 34,
+      "accuracy": 0.9412
+    }
+  },
+  "details": [
+    {
+      "id": "0:2",
+      "category": "3",
+      "predicted": "Counseling, mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:28",
+      "category": "2",
+      "predicted": "9 July 2023 (last Friday before 15 July 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:67",
+      "category": "2",
+      "predicted": "September 6, 2023 (the weekend before September 13, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:79",
+      "category": "2",
+      "predicted": "2023-10-20 (last Friday before 22 October 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:82",
+      "category": "4",
+      "predicted": "Mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:127",
+      "category": "4",
+      "predicted": "A stained glass window.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:128",
+      "category": "4",
+      "predicted": "A rainbow sidewalk for Pride Month.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:141",
+      "category": "4",
+      "predicted": "Freedom, being real, a nudge to stay true to herself, and embrace her womanhood.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:151",
+      "category": "4",
+      "predicted": "Went camping/hiking with her family.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:164",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:183",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:186",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:187",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:191",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:194",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:3",
+      "category": "1",
+      "predicted": "Both Jon and Gina lost their jobs, started their own businesses, share a passion for dance, support and motivate each other, and face similar entrepreneurial challenges.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:7",
+      "category": "2",
+      "predicted": "January 29, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:24",
+      "category": "1",
+      "predicted": "A fair (April 24, 2023), networking events (June 20, 2023 and July 2023), and an investor networking event (July 21, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:56",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:67",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:86",
+      "category": "5",
+      "predicted": "Gina is not looking for flooring — it's Jon who wants Marley flooring for his dance studio.\n\nNO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:87",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:92",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:101",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:2",
+      "category": "1",
+      "predicted": "Weight training, kickboxing.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "2:72",
+      "category": "4",
+      "predicted": "Went to a homeless shelter to give out food and supplies, organized a toy drive for kids in need, participated in a community event to raise money for a good cause, and collected donations (canned food, toiletries, clothes).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:78",
+      "category": "4",
+      "predicted": "Kyle",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:83",
+      "category": "4",
+      "predicted": "Education and infrastructure.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:87",
+      "category": "4",
+      "predicted": "The coast of the Pacific Northwest and some national parks.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:112",
+      "category": "4",
+      "predicted": "Assistant manager.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:114",
+      "category": "4",
+      "predicted": "Support at home and his own grit helped him power through self-doubt and other hurdles (tech stuff, workplace stuff).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:143",
+      "category": "4",
+      "predicted": "Coco",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:150",
+      "category": "4",
+      "predicted": "Hikes, hanging out at the park, picnics, board games, movie nights, climbing, sliding, playing games at the playground, boot camps, and swinging.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:184",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:191",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:2",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:16",
+      "category": "2",
+      "predicted": "Nate dyed his hair.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:33",
+      "category": "2",
+      "predicted": "August 7, 2022.\n\nWait — the context says \"last week\" relative to 6:12 pm on 14 August 2022, so the letter arrived approximately the week of August 7, 2022. But the exact date is not explicitly stated.\n\nNO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:35",
+      "category": "2",
+      "predicted": "August 22, 2022.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:36",
+      "category": "2",
+      "predicted": "August 15, 2022 (the week before August 22, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:80",
+      "category": "1",
+      "predicted": "7. The context tracks: 2nd (May 2022, Street Fighter), 3rd (June 2022, regional), 4th (July 2022, online — explicitly stated as \"fourth\"), 5th (August 2022, international), 6th (October 2022, \"really big\"), 7th (November 2022, Valorant). The \"second\" implies a first win predating the context window.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:92",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:97",
+      "category": "4",
+      "predicted": "Her first full screenplay.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:99",
+      "category": "4",
+      "predicted": "Submit it to film festivals and get producers and directors to check it out.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:120",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:124",
+      "category": "4",
+      "predicted": "Gaming party (two weekends after June 3, 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:138",
+      "category": "4",
+      "predicted": "A book from the 1900s with stories and sketches about the town and the people living there.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:150",
+      "category": "4",
+      "predicted": "By making a delicious treat.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:152",
+      "category": "4",
+      "predicted": "Perché è intollerante al lattosio.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:158",
+      "category": "4",
+      "predicted": "Dairy-free chocolate cake with raspberries.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:169",
+      "category": "4",
+      "predicted": "She keeps Tilly (her stuffed animal dog) with her while she writes.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:179",
+      "category": "4",
+      "predicted": "Joanna felt it was an amazing experience — surreal, like her characters jumped off the page and became real. Seeing them come alive on screen was her favorite part.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:184",
+      "category": "4",
+      "predicted": "Cute notes (which she used as inspiration — specifically, a letter she included at the beginning of her next movie script).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "3:185",
+      "category": "4",
+      "predicted": "Fantasy RPG.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:227",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3:236",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:31",
+      "category": "2",
+      "predicted": "September 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:59",
+      "category": "1",
+      "predicted": "Career-high in assists (last Friday before December 11, 2023, i.e. December 8, 2023), career-high 40 points (last week before July 16, 2023, i.e. July 9, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:72",
+      "category": "4",
+      "predicted": "Shooting guard.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:104",
+      "category": "4",
+      "predicted": "Sage.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:132",
+      "category": "4",
+      "predicted": "His determination, heart, work ethic, dedication, skills, and leadership — exemplified by the Game 7 Finals block where he never gave up.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:149",
+      "category": "4",
+      "predicted": "\"A Dance with Dragons\"",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:154",
+      "category": "4",
+      "predicted": "John felt the atmosphere was \"really electric,\" and said playing against rivals added \"an extra level of intensity,\" making it a memorable night.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:160",
+      "category": "4",
+      "predicted": "Tim visited a travel agency to see what the requirements would be for his next dream trip.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:209",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:218",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:219",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "4:238",
+      "category": "5",
+      "predicted": "A leader (and stay true).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:3",
+      "category": "1",
+      "predicted": "New places to eat around town, a new cafe with amazing pastries, a new sushi spot, a wine tasting.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:11",
+      "category": "2",
+      "predicted": "June 11, 2023 (last Sunday before June 13, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:34",
+      "category": "2",
+      "predicted": "3 months (Toby: July 11, 2023; Buddy announced: October 19, 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:41",
+      "category": "1",
+      "predicted": "Dalle conversazioni emergono descrizioni contrastanti:\n- **Luglio e Settembre 2023**: due Jack Russell mixes e due Chihuahua mixes.\n- **Ottobre 2023**: Pepper e Panda sono Lab mixes, Precious e Pixie sono Chihuahua mixes.\n\nTutti descritti come mutts.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:48",
+      "category": "1",
+      "predicted": "Family / buddies (he named his new dog Buddy \"because he's my buddy\").",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:68",
+      "category": "4",
+      "predicted": "To learn new stuff and strengthen her bond with her pets.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:91",
+      "category": "4",
+      "predicted": "Got new beds for them.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:107",
+      "category": "4",
+      "predicted": "They hate it and were confused when Audrey took them to a snowy park last winter. They prefer sunny days in the grass.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5:113",
+      "category": "4",
+      "predicted": "California or salmon roll.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:121",
+      "category": "4",
+      "predicted": "Take them to a nearby park.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:122",
+      "category": "4",
+      "predicted": "A bed, toys, and some puppy pads.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:124",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:129",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:132",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:147",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:5",
+      "category": "1",
+      "predicted": "John: CS:GO, AC Valhalla. James: The Witcher 3.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:21",
+      "category": "2",
+      "predicted": "May 8, 2022",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:37",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:46",
+      "category": "2",
+      "predicted": "August 27, 2022 (they agreed to meet \"tomorrow\" on 26 August 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:64",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:75",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6:78",
+      "category": "4",
+      "predicted": "A pup (named Ned), adopted from a shelter in Stamford.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:94",
+      "category": "4",
+      "predicted": "A football simulator (specifically working on collecting player databases).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:96",
+      "category": "4",
+      "predicted": "Manchester City.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:97",
+      "category": "4",
+      "predicted": "James supports Liverpool and believes Manchester City are in bad form with a terrible transfer policy, predicting Liverpool will finish higher in the standings. John supports Manchester City and believes his team will win the championship, though he concedes the City manager can handle the issues.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:109",
+      "category": "4",
+      "predicted": "Routine examination and vaccination against the seasonal canine disease.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:123",
+      "category": "4",
+      "predicted": "Dough.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:154",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "6:187",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:21",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:43",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7:53",
+      "category": "2",
+      "predicted": "Two years before August 1, 2023 — so August 1, 2021.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:94",
+      "category": "4",
+      "predicted": "Max: from her mother (took him when her mother passed away). Luna: from a shelter.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:97",
+      "category": "4",
+      "predicted": "Yes. Jolene visited Rio de Janeiro with her partner (returning on 29 August 2023). Deborah also visited Rio de Janeiro three years before 30 August 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:100",
+      "category": "4",
+      "predicted": "An electrical engineering project.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:107",
+      "category": "4",
+      "predicted": "An amulet from her mom.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:126",
+      "category": "4",
+      "predicted": "Instrumental tracks with mellow melodies and rhythms.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:147",
+      "category": "4",
+      "predicted": "Notebooks with elements like galaxies and circuitry.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:148",
+      "category": "4",
+      "predicted": "Bullet journal.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:200",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:204",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "7:205",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:19",
+      "category": "3",
+      "predicted": "Based on their conversations:\n\n**Evan's advice:** Believe in yourself and take it one day at a time; step out of your comfort zone even with small things; set concrete goals; find a buddy for accountability; celebrate small wins — every step forward counts; find something that motivates you and makes you happy.\n\n**Sam's advice:** Progress is more important than perfection; take small steps; be adaptable and find alternative ways forward when facing obstacles; surround yourself with people who care.\n\nBoth would emphasize: don't go through it alone, and embrace the process over the outcome.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:21",
+      "category": "1",
+      "predicted": "Incredible, being with her makes him feel alive, love at first sight, time stopped, a spark lit inside him, felt so right, every moment with her is fun and energizing.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:48",
+      "category": "1",
+      "predicted": "Reduced soda and candy intake, eating healthier, and eventually taking friends on hiking trips. Sam also started yoga and beach walks.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:51",
+      "category": "3",
+      "predicted": "**Challenges:**\n- Bad doctor check-up results (weight issues) as a wake-up call\n- Friends mocking his weight\n- Cravings for sugary drinks and snacks, triggered by stress, boredom, or comfort-seeking\n- Lack of motivation and confidence\n- Difficulty breaking old habits and leaving his comfort zone\n- Health issues affecting his daily life\n\n**How he addresses them:**\n- Taking a cooking class to learn healthier meals\n- Making dietary changes\n- Posting before/after photos to motivate others\n- Going on car rides in nature to relax and reduce stress\n- Taking friends on a hiking trip\n- Using the motivational quote: \"Don't fear it, just take the first step\"\n- Staying positive and taking it one day at a time",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:58",
+      "category": "2",
+      "predicted": "One year ago from October 8, 2023, so October 2022.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:59",
+      "category": "2",
+      "predicted": "October 14, 2023 at 4:07 pm.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:62",
+      "category": "1",
+      "predicted": "**Evan:** heart palpitation incident (2023-06-06); hospital visit for a suspicious finding during check-up that turned out to be a misunderstanding (2023-11-21).\n\n**Sam:** weight issues causing discomfort and limiting movement (ongoing); ER visit for severe stomachache diagnosed as gastritis (2023-10-17).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:73",
+      "category": "2",
+      "predicted": "Next summer (relative to December 9, 2023), i.e. summer 2024.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:82",
+      "category": "1",
+      "predicted": "Yoga, painting.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:96",
+      "category": "4",
+      "predicted": "Strength and resilience.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:103",
+      "category": "4",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:109",
+      "category": "4",
+      "predicted": "Evan mentioned exercising (going to the gym).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8:113",
+      "category": "4",
+      "predicted": "Painting, kayaking, hiking.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:134",
+      "category": "4",
+      "predicted": "A big family reunion.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:143",
+      "category": "4",
+      "predicted": "That he got married.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:155",
+      "category": "4",
+      "predicted": "Peaceful.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:186",
+      "category": "5",
+      "predicted": "A close friend of Evan (not Sam) helped **Evan** get the painting published in the exhibition.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "8:190",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:0",
+      "category": "2",
+      "predicted": "April 20, 2023.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:10",
+      "category": "2",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:13",
+      "category": "3",
+      "predicted": "YES — Calvin loves performing live, calling it an \"absolute high\" and saying it \"fuels his soul.\" The Hollywood Bowl, as a major live music venue, fits exactly what energizes him.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:41",
+      "category": "1",
+      "predicted": "Their fathers (dad).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:44",
+      "category": "2",
+      "predicted": "October 3, 2023 (the day before his message on October 4, 2023, where he said \"Yesterday I met with some incredible artists in Boston\").",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:58",
+      "category": "1",
+      "predicted": "His dad took him to his first car show at age 10, which hooked him. Then he found an old car in a neighbor's garage and fixed it, sparking his love for car engineering.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:65",
+      "category": "2",
+      "predicted": "October 29, 2023",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "9:77",
+      "category": "4",
+      "predicted": "A necklace (with a diamond pendant).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:81",
+      "category": "4",
+      "predicted": "His music gear and favorite microphone.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:87",
+      "category": "4",
+      "predicted": "Cruising around / driving.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:93",
+      "category": "4",
+      "predicted": "Stay focused and keep going, never forget your dreams, and keep at it.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:96",
+      "category": "4",
+      "predicted": "Classic muscle car.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:98",
+      "category": "4",
+      "predicted": "Everyone was so into it and sang along.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:99",
+      "category": "4",
+      "predicted": "A un festival musicale a Tokyo.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:106",
+      "category": "4",
+      "predicted": "San Francisco",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:109",
+      "category": "4",
+      "predicted": "Exploring and growing his brand, and going to Tokyo.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:128",
+      "category": "4",
+      "predicted": "Ramen.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:191",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:195",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:197",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:199",
+      "category": "5",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:200",
+      "category": "5",
+      "predicted": "Una nuova auto di lusso (una Ferrari).",
+      "correct": false,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 30,
+  "window": 1,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": false,
+  "extract": false,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

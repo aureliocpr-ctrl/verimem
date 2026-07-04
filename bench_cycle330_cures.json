@@ -1,0 +1,33 @@
+{
+  "n_seeds": 10,
+  "k_writes": 100,
+  "modes": [
+    {
+      "mode": "vanilla",
+      "n_facts_pre": 2366,
+      "n_facts_post": 2466,
+      "baseline_mean": 0.2818730302372087,
+      "treatment_mean": 0.3601257601682044,
+      "effect": 0.07825272993099569,
+      "ci": [
+        0.04915228944901779,
+        0.10594130719440925
+      ],
+      "verdict": "H1_supported"
+    },
+    {
+      "mode": "stable",
+      "n_facts_pre": 2366,
+      "n_facts_post": 2466,
+      "baseline_mean": 0.2818730302372087,
+      "treatment_mean": 0.08056944147518229,
+      "effect": -0.20130358876202642,
+      "ci": [
+        -0.2029007036711838,
+        -0.1996946396374781
+      ],
+      "verdict": "H0_supported"
+    }
+  ],
+  "elapsed_s": 13.445319175720215
+}

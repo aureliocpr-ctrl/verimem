@@ -1,0 +1,523 @@
+{
+  "summary": {
+    "n_rules_tracked": 17,
+    "n_rules_with_birth": 17,
+    "n_rules_with_applications": 12,
+    "rules_never_referenced": []
+  },
+  "timeline": {
+    "M7_PARTITION_VS_COUNT": {
+      "birth": {
+        "cycle": 257,
+        "sha": "879015a2f8",
+        "subject": "cycle 257: downstream emergence consequence bench - self-applying loop CONFIRMED"
+      },
+      "applications": [
+        {
+          "cycle": 264,
+          "sha": "0f64eae1fb",
+          "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+        },
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 282,
+          "sha": "1c8ae0458f",
+          "subject": "cycle 282: sequential 3-cycle test -> stable_partition 10x more stable"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 291,
+          "sha": "83b867891d",
+          "subject": "cycle 291: self-audit cycle 284-290 + \u00a79.3 empirical validation supports target"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        }
+      ]
+    },
+    "M9_CLIFF_EDGE": {
+      "birth": {
+        "cycle": 259,
+        "sha": "64c66451cf",
+        "subject": "cycle 259: B6 probe -> purity cliff edge -> \u00a75.8 reframes #21 as REVEALING"
+      },
+      "applications": [
+        {
+          "cycle": 263,
+          "sha": "48bf237428",
+          "subject": "cycle 263: wire stable_partition into detect_emerging_skills (close cycle 262 ga"
+        },
+        {
+          "cycle": 264,
+          "sha": "0f64eae1fb",
+          "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+        },
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        }
+      ]
+    },
+    "M12_REVEALING_VS_CREATING": {
+      "birth": {
+        "cycle": 259,
+        "sha": "64c66451cf",
+        "subject": "cycle 259: B6 probe -> purity cliff edge -> \u00a75.8 reframes #21 as REVEALING"
+      },
+      "applications": [
+        {
+          "cycle": 264,
+          "sha": "0f64eae1fb",
+          "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+        },
+        {
+          "cycle": 266,
+          "sha": "a73c8d6599",
+          "subject": "cycle 266: automated meta-rule mining script + self-validation"
+        },
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 273,
+          "sha": "65946fdfad",
+          "subject": "cycle 273: CONTRIBUTING.md addendum - M-rules + automated A4 checks"
+        },
+        {
+          "cycle": 275,
+          "sha": "acfe83be6f",
+          "subject": "cycle 275: cross-validation audit on clp - terse style scores zero"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 300,
+          "sha": "6d0f203bf5",
+          "subject": "cycle 300: pioneering #33 Conv-Commit detection + honest M-rule recall bounded"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        }
+      ]
+    },
+    "M3_BENCH_FIRST": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 266,
+          "sha": "a73c8d6599",
+          "subject": "cycle 266: automated meta-rule mining script + self-validation"
+        },
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 273,
+          "sha": "65946fdfad",
+          "subject": "cycle 273: CONTRIBUTING.md addendum - M-rules + automated A4 checks"
+        },
+        {
+          "cycle": 275,
+          "sha": "acfe83be6f",
+          "subject": "cycle 275: cross-validation audit on clp - terse style scores zero"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 300,
+          "sha": "6d0f203bf5",
+          "subject": "cycle 300: pioneering #33 Conv-Commit detection + honest M-rule recall bounded"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        },
+        {
+          "cycle": 311,
+          "sha": "fe5b13030d",
+          "subject": "cycle 311: honest M14 closure fix + M15 DOCSTRING-VS-ASSERT-PARITY born"
+        },
+        {
+          "cycle": 329,
+          "sha": "2244bd6c0f",
+          "subject": "cycle 329: M15 + M16 meta-rules documented (DOCSTRING-VS-ASSERT-PARITY + POST-FI"
+        }
+      ]
+    },
+    "M4_CRITIC_GATE": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        }
+      ]
+    },
+    "M5_WIRE_OR_DISCLOSE": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 270,
+          "sha": "f79bf7eb66",
+          "subject": "cycle 270: pioneering #26 A4 pre-flight violation check (REIFIES M5)"
+        },
+        {
+          "cycle": 272,
+          "sha": "8a5aff7821",
+          "subject": "cycle 272: LaTeX scaffold per arxiv submission"
+        },
+        {
+          "cycle": 273,
+          "sha": "65946fdfad",
+          "subject": "cycle 273: CONTRIBUTING.md addendum - M-rules + automated A4 checks"
+        },
+        {
+          "cycle": 284,
+          "sha": "9ba4621d24",
+          "subject": "cycle 284: wire stable_partition into auto_dream_worker (env-var opt-in)"
+        },
+        {
+          "cycle": 285,
+          "sha": "dc5be68d0f",
+          "subject": "cycle 285: TDD contract for ENGRAM_USE_STABLE_PARTITION env var routing"
+        },
+        {
+          "cycle": 286,
+          "sha": "a0145bf136",
+          "subject": "cycle 286: paper \u00a76.5 update - production wire cycle 284-285 documented"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 291,
+          "sha": "83b867891d",
+          "subject": "cycle 291: self-audit cycle 284-290 + \u00a79.3 empirical validation supports target"
+        },
+        {
+          "cycle": 293,
+          "sha": "b51f9842f9",
+          "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        },
+        {
+          "cycle": 318,
+          "sha": "1f1596ee7f",
+          "subject": "cycle 318-322: critic gate 4 FAIL \u2192 M15 self-violation repair + scaling-by-N fal"
+        }
+      ]
+    },
+    "M6_A4_REFRAMING": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        }
+      ]
+    },
+    "M8_CHAIN_OF_THOUGHT": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        }
+      ]
+    },
+    "M10_MASTER_FACT_RATIO": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        }
+      ]
+    },
+    "M11_REPLICATED_SAMPLE": {
+      "birth": {
+        "cycle": 264,
+        "sha": "0f64eae1fb",
+        "subject": "cycle 264-265: 10 meta-regole ossessive v3 + singolarita #22 BENCH-CRITIC DUALIT"
+      },
+      "applications": [
+        {
+          "cycle": 267,
+          "sha": "156159c170",
+          "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 293,
+          "sha": "b51f9842f9",
+          "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        }
+      ]
+    },
+    "S1_EMPIRICAL_DISCIPLINE": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "S2_PROCESS_DISCIPLINE": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "S3_WIRING_DISCIPLINE": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "S4_REFRAMING_DISCIPLINE": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "S5_LEVEL_OF_EFFECT": {
+      "birth": {
+        "cycle": 267,
+        "sha": "156159c170",
+        "subject": "cycle 267: singolarita #24 META-RULE COMPRESSION (10 -> 5 super-rules)"
+      },
+      "applications": []
+    },
+    "M13_SECOND_CALL_SITE": {
+      "birth": {
+        "cycle": 287,
+        "sha": "06e0a20d59",
+        "subject": "cycle 287: critic gate HOLD 3-0-0 first post-cycle-264 PASS + M13 born"
+      },
+      "applications": [
+        {
+          "cycle": 289,
+          "sha": "46830a62a0",
+          "subject": "cycle 289: close M13 SECOND-CALL-SITE COVERAGE gap (cycle 287 counterexample)"
+        },
+        {
+          "cycle": 290,
+          "sha": "85dff13f26",
+          "subject": "cycle 290: pioneering #30 close cycle 289 vacuous gap with non-empty corpus"
+        },
+        {
+          "cycle": 293,
+          "sha": "b51f9842f9",
+          "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer"
+        },
+        {
+          "cycle": 297,
+          "sha": "efa715e3fe",
+          "subject": "cycle 297: wire HYBRID into auto_dream_worker via ENGRAM_USE_HYBRID env var"
+        },
+        {
+          "cycle": 302,
+          "sha": "f249bc48e2",
+          "subject": "cycle 302: \u00a79.6.11 update N=2/2 post-264 HOLDS + M14 EMPIRICAL-HEADLINE-PROTECTI"
+        },
+        {
+          "cycle": 303,
+          "sha": "196922ad80",
+          "subject": "cycle 303: pin HYBRID empirical headline via unit test (M14 closure)"
+        },
+        {
+          "cycle": 309,
+          "sha": "0395aeed2d",
+          "subject": "cycle 309: CONTRIBUTING.md addendum M13+M14 + env vars table"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        },
+        {
+          "cycle": 311,
+          "sha": "fe5b13030d",
+          "subject": "cycle 311: honest M14 closure fix + M15 DOCSTRING-VS-ASSERT-PARITY born"
+        }
+      ]
+    },
+    "M14_EMPIRICAL_HEADLINE": {
+      "birth": {
+        "cycle": 302,
+        "sha": "f249bc48e2",
+        "subject": "cycle 302: \u00a79.6.11 update N=2/2 post-264 HOLDS + M14 EMPIRICAL-HEADLINE-PROTECTI"
+      },
+      "applications": [
+        {
+          "cycle": 303,
+          "sha": "196922ad80",
+          "subject": "cycle 303: pin HYBRID empirical headline via unit test (M14 closure)"
+        },
+        {
+          "cycle": 309,
+          "sha": "0395aeed2d",
+          "subject": "cycle 309: CONTRIBUTING.md addendum M13+M14 + env vars table"
+        },
+        {
+          "cycle": 310,
+          "sha": "6fe9536d7b",
+          "subject": "cycle 310: audit cycle 295-309 + extended tracker M13+M14 patterns"
+        },
+        {
+          "cycle": 311,
+          "sha": "fe5b13030d",
+          "subject": "cycle 311: honest M14 closure fix + M15 DOCSTRING-VS-ASSERT-PARITY born"
+        },
+        {
+          "cycle": 312,
+          "sha": "a042325df1",
+          "subject": "cycle 312: critic tracker N=5 honest reveal NOT monotonic post-264"
+        },
+        {
+          "cycle": 316,
+          "sha": "2bb1ba39ae",
+          "subject": "cycle 316: replicated HYBRID N=25 production - 44.4 \u00b1 3.62 confirms claim"
+        },
+        {
+          "cycle": 318,
+          "sha": "1f1596ee7f",
+          "subject": "cycle 318-322: critic gate 4 FAIL \u2192 M15 self-violation repair + scaling-by-N fal"
+        },
+        {
+          "cycle": 329,
+          "sha": "2244bd6c0f",
+          "subject": "cycle 329: M15 + M16 meta-rules documented (DOCSTRING-VS-ASSERT-PARITY + POST-FI"
+        }
+      ]
+    }
+  }
+}

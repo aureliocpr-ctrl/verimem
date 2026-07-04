@@ -1,0 +1,1159 @@
+{
+  "n_judged": 141,
+  "n_abstained": 59,
+  "judge": "both",
+  "n_sound": 92,
+  "n_pathological": 49,
+  "S1_conf_self": {
+    "auroc": 0.812,
+    "aurc": 0.123,
+    "opt_threshold": 98.0,
+    "mean_on_sound": 97.8,
+    "mean_on_patho": 89.9
+  },
+  "S2_entail_ext": {
+    "auroc": 0.812,
+    "aurc": 0.123,
+    "opt_threshold": 97.0,
+    "mean_on_sound": 96.5,
+    "mean_on_patho": 84.4
+  },
+  "S2b_entail_span": {
+    "auroc": 0.619,
+    "aurc": 0.101,
+    "opt_threshold": 95.0,
+    "mean_on_sound": 98.5,
+    "mean_on_patho": 87.1
+  },
+  "rows": [
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 100.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 95.0,
+      "entail": 90.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 90.0,
+      "entail": 72.0,
+      "entail_span": 55.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 98.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 85.0,
+      "entail_span": 85.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 98.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 98.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 90.0,
+      "entail": 85.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 95.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 72.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 98.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 98.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 85.0,
+      "entail": 62.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 98.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 100.0,
+      "entail": 100.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 95.0,
+      "entail": 95.0,
+      "entail_span": 40.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 85.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 95.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 98.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 100.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 100.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 100.0,
+      "entail": 100.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 100.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 95.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 98.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 85.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 95.0,
+      "entail": 85.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 95.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 100.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 90.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 99.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": false,
+      "sound": 1,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 35.0,
+      "entail_span": 50.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 85.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 62.0,
+      "entail": 62.0,
+      "entail_span": 30.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 62.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 72.0,
+      "entail": 85.0,
+      "entail_span": 40.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 85.0,
+      "entail": 85.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 82.0,
+      "entail": 85.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 62.0,
+      "entail": 62.0,
+      "entail_span": 85.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 72.0,
+      "entail": 40.0,
+      "entail_span": 85.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 82.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 82.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 62.0,
+      "entail": 72.0,
+      "entail_span": 35.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 99.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 60.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 72.0,
+      "entail": 82.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 85.0,
+      "entail": 90.0,
+      "entail_span": 60.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 88.0,
+      "entail": 82.0,
+      "entail_span": 72.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 92.0,
+      "entail": 85.0,
+      "entail_span": 75.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 97.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 72.0,
+      "entail": 85.0,
+      "entail_span": 0.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 95.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 99.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 90.0,
+      "entail": 62.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 72.0,
+      "entail": 20.0,
+      "entail_span": 50.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 85.0,
+      "entail": 72.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 92.0,
+      "entail": 82.0,
+      "entail_span": 40.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 72.0,
+      "entail": 62.0,
+      "entail_span": 85.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 82.0,
+      "entail": 95.0,
+      "entail_span": 100.0,
+      "cons": null
+    },
+    {
+      "impossible": true,
+      "sound": 0,
+      "conf": 97.0,
+      "entail": 72.0,
+      "entail_span": 100.0,
+      "cons": null
+    }
+  ],
+  "model": "claude-sonnet-4-6"
+}

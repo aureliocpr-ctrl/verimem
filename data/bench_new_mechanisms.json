@@ -1,0 +1,38 @@
+{
+  "baseline": {
+    "label": "baseline_default_off",
+    "all_on": false,
+    "duration_s": 0.027,
+    "n_skills_pre": 5,
+    "n_skills_post": 5,
+    "n_skills_added": 0,
+    "compound_skills": 0,
+    "crossover_skills": 0,
+    "report.n_bundles_proposed": 0,
+    "report.n_bundle_skills": 0,
+    "report.n_antagonisms": 0,
+    "report.n_synaptic_tags": 0,
+    "report.n_crossovers": 0,
+    "report.n_llm_calls": 4,
+    "c_fail.salience_pre": 0.3,
+    "c_fail.salience_post": 0.3
+  },
+  "enabled": {
+    "label": "all_mechanisms_on",
+    "all_on": true,
+    "duration_s": 0.137,
+    "n_skills_pre": 5,
+    "n_skills_post": 9,
+    "n_skills_added": 4,
+    "compound_skills": 4,
+    "crossover_skills": 2,
+    "report.n_bundles_proposed": 2,
+    "report.n_bundle_skills": 2,
+    "report.n_antagonisms": 1,
+    "report.n_synaptic_tags": 1,
+    "report.n_crossovers": 2,
+    "report.n_llm_calls": 4,
+    "c_fail.salience_pre": 0.3,
+    "c_fail.salience_post": 0.55
+  }
+}

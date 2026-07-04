@@ -1,0 +1,1586 @@
+[
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 58,
+    "latency_s": 0.8757543999963673,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 61,
+    "latency_s": 0.6729696999973385,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 66,
+    "latency_s": 0.6532329000037862,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6249934999941615,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6709016999957385,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 63,
+    "latency_s": 0.646851899989997,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-A-direct",
+    "success": false,
+    "tokens": 68,
+    "latency_s": 0.7142297999962466,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your codename. We haven't discussed this previously in our conversation.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-D-direct",
+    "success": false,
+    "tokens": 75,
+    "latency_s": 1.0699880000029225,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your preferred drink. This is the start of our conversation, and I have no previous context about you.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-B-paraphrased",
+    "success": false,
+    "tokens": 74,
+    "latency_s": 0.7787591999949655,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any record of previous conversations with you. Each conversation starts fresh without access to prior chat history.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-E-paraphrased",
+    "success": false,
+    "tokens": 77,
+    "latency_s": 0.8488870000001043,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have information about what animals live with you. I don't have access to personal details about your life.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-C-synthesis",
+    "success": false,
+    "tokens": 112,
+    "latency_s": 1.0442344000039157,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about a secret pin code you told me or the year you joined. This is the start of our conversation, and no such details have been shared with me.\n\nPlease provide these numb",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "query-F-direct",
+    "success": false,
+    "tokens": 73,
+    "latency_s": 0.789199799997732,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any record of you telling me about a kitchen tool. This is the start of our conversation.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 2274,
+    "latency_s": 20.250101900004665,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I'll remember this fact for you.\n\n**Fact stored:** Your codename is QUARTZ-ECHO.\n\nok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 2348,
+    "latency_s": 1.004391599999508,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I'll remember this fact for you.\n\n**Fact stored:** Your favourite hue you always pick is celadon-green.\n\nok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 2422,
+    "latency_s": 1.0108102000085637,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I'll remember these facts for you.\n\n**Facts stored:**\n- Your secret pin code is 5742\n- The year you joined was 2018\n\nok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 2461,
+    "latency_s": 1.1457611999940127,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 2431,
+    "latency_s": 1.1782233000121778,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 2386,
+    "latency_s": 0.9021865000104299,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I'll remember this fact for you.\n\n**Fact stored:** Your favourite kitchen tool is a moka-RUBI-9000.\n\nok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-A-direct",
+    "success": true,
+    "tokens": 2472,
+    "latency_s": 1.3523859999986598,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "QUARTZ-ECHO",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-D-direct",
+    "success": true,
+    "tokens": 2450,
+    "latency_s": 1.4720950000046287,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "matcha-latte-X3",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-B-paraphrased",
+    "success": true,
+    "tokens": 2442,
+    "latency_s": 1.4565803000004962,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "celadon-green",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-E-paraphrased",
+    "success": true,
+    "tokens": 2453,
+    "latency_s": 1.4061652999953367,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-C-synthesis",
+    "success": true,
+    "tokens": 5140,
+    "latency_s": 2.5318743999960134,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7760",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "query-F-direct",
+    "success": true,
+    "tokens": 2447,
+    "latency_s": 1.3525807999976678,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "moka-RUBI-9000",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 2418,
+    "latency_s": 1.1154798999923514,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 2433,
+    "latency_s": 1.0077015999995638,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 2461,
+    "latency_s": 1.0553475000051549,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 2407,
+    "latency_s": 1.4312390999984927,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 2390,
+    "latency_s": 1.1264062999980524,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 2444,
+    "latency_s": 1.0821455000113929,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-A-direct",
+    "success": true,
+    "tokens": 3112,
+    "latency_s": 1.5933471000025747,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "QUARTZ-ECHO",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-D-direct",
+    "success": true,
+    "tokens": 3002,
+    "latency_s": 1.164308000006713,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I'll search my memory for your preferred drink preference.\n\nBased on the similar past episodes provided in the context, I can see that your preferred drink was previously stated as:\n\n**matcha-latte-X3",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-B-paraphrased",
+    "success": true,
+    "tokens": 3161,
+    "latency_s": 1.6311603000067407,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "celadon-green",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-E-paraphrased",
+    "success": true,
+    "tokens": 3120,
+    "latency_s": 1.6172763999929884,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-C-synthesis",
+    "success": true,
+    "tokens": 6473,
+    "latency_s": 2.484159699990414,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7760",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "query-F-direct",
+    "success": true,
+    "tokens": 3168,
+    "latency_s": 1.678096599993296,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "moka-RUBI-9000",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 49,
+    "latency_s": 1.1478237999981502,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.8334981000080006,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 57,
+    "latency_s": 0.6224816000030842,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 49,
+    "latency_s": 0.87803389999317,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.6794251000101212,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 53,
+    "latency_s": 0.8463117000064813,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-A-direct",
+    "success": false,
+    "tokens": 40,
+    "latency_s": 0.6546046000003116,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Unknown",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-D-direct",
+    "success": false,
+    "tokens": 42,
+    "latency_s": 0.7665132999973139,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "Iced tea",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-B-paraphrased",
+    "success": false,
+    "tokens": 52,
+    "latency_s": 0.7554640999878757,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "You haven't told me about any hue earlier.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-E-paraphrased",
+    "success": false,
+    "tokens": 46,
+    "latency_s": 0.742733600010979,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "You",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-C-synthesis",
+    "success": false,
+    "tokens": 51,
+    "latency_s": 0.6868133000098169,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "-1",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "query-F-direct",
+    "success": false,
+    "tokens": 52,
+    "latency_s": 0.845337799997651,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "You haven't told me about any kitchen tool.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 2601,
+    "latency_s": 1.917608999996446,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 2560,
+    "latency_s": 1.4739228999969782,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 2561,
+    "latency_s": 1.7200321999989683,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 2623,
+    "latency_s": 1.6072540000022855,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 2539,
+    "latency_s": 1.6572307000024011,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 2555,
+    "latency_s": 1.5061810999904992,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-A-direct",
+    "success": true,
+    "tokens": 22380,
+    "latency_s": 15.860386100001051,
+    "attempts": 11,
+    "error": "",
+    "extra": {
+      "answer": "QUARTZ-ECHO",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-D-direct",
+    "success": true,
+    "tokens": 2577,
+    "latency_s": 1.6575635000044713,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "matcha-latte-X3",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-B-paraphrased",
+    "success": true,
+    "tokens": 5291,
+    "latency_s": 4.040412000002107,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "celadon-green",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-E-paraphrased",
+    "success": true,
+    "tokens": 2556,
+    "latency_s": 1.8405218999978388,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-C-synthesis",
+    "success": false,
+    "tokens": 39105,
+    "latency_s": 46.44909570000891,
+    "attempts": 8,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "query-F-direct",
+    "success": true,
+    "tokens": 5517,
+    "latency_s": 32.840575700000045,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "The value \"moka-RUBI-9000\" is stored in the episodes database and skills. Based on the similar past episodes, the answer is clear.\n\nmoka-RUBI-9000",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 2567,
+    "latency_s": 2.242325900006108,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 2536,
+    "latency_s": 1.4605640000081621,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 2620,
+    "latency_s": 1.835133600005065,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 2528,
+    "latency_s": 1.6336612000013702,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 2630,
+    "latency_s": 1.4285034000058658,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 2530,
+    "latency_s": 1.8461648000084097,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-A-direct",
+    "success": true,
+    "tokens": 29577,
+    "latency_s": 20.016656599997077,
+    "attempts": 12,
+    "error": "",
+    "extra": {
+      "answer": "QUARTZ-ECHO",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-D-direct",
+    "success": true,
+    "tokens": 7777,
+    "latency_s": 5.827795300006983,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "matcha-latte-X3",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-B-paraphrased",
+    "success": true,
+    "tokens": 2630,
+    "latency_s": 2.0723941999895032,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "celadon-green",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-E-paraphrased",
+    "success": true,
+    "tokens": 2556,
+    "latency_s": 1.799573500000406,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-C-synthesis",
+    "success": false,
+    "tokens": 35224,
+    "latency_s": 55.849995099997614,
+    "attempts": 16,
+    "error": "",
+    "extra": {
+      "answer": "",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "query-F-direct",
+    "success": true,
+    "tokens": 8550,
+    "latency_s": 7.36675029998878,
+    "attempts": 5,
+    "error": "",
+    "extra": {
+      "answer": "moka-RUBI-9000",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 58,
+    "latency_s": 2.106691299995873,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 61,
+    "latency_s": 1.7602229999902193,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 66,
+    "latency_s": 1.3615508999937447,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.6559780000097817,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.393411400000332,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 63,
+    "latency_s": 1.1633302999980515,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-A-direct",
+    "success": false,
+    "tokens": 68,
+    "latency_s": 1.6661996000038926,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your codename. We haven't discussed this previously in our conversation.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-D-direct",
+    "success": false,
+    "tokens": 75,
+    "latency_s": 1.8558213999931468,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about your preferred drink. This is the start of our conversation, and I have no previous context about you.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-B-paraphrased",
+    "success": false,
+    "tokens": 74,
+    "latency_s": 1.4638516999984859,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any record of previous conversations with you. Each conversation starts fresh without access to prior chat history.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-E-paraphrased",
+    "success": false,
+    "tokens": 77,
+    "latency_s": 1.5122420999978203,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have information about what animals live with you. I don't have access to personal details about your life.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-C-synthesis",
+    "success": false,
+    "tokens": 111,
+    "latency_s": 2.1850418000103673,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any information about a secret pin code you told me or the year you joined. This is the start of our conversation, and I have no previous context about you.\n\nPlease provide both pieces of",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "query-F-direct",
+    "success": false,
+    "tokens": 73,
+    "latency_s": 1.572766999990563,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "I don't have any record of you telling me about a kitchen tool. This is the start of our conversation.",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 3205,
+    "latency_s": 1.6135345999937272,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 3187,
+    "latency_s": 3.0414357999979984,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 3213,
+    "latency_s": 2.5501128000032622,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 3052,
+    "latency_s": 2.5499148999952013,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 3228,
+    "latency_s": 1.968120399993495,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 3130,
+    "latency_s": 2.3475028999964707,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-A-direct",
+    "success": true,
+    "tokens": 3271,
+    "latency_s": 3.400848200006294,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "QUARTZ-ECHO",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-D-direct",
+    "success": true,
+    "tokens": 3033,
+    "latency_s": 1.889902399998391,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "matcha-latte-X3",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-B-paraphrased",
+    "success": true,
+    "tokens": 3226,
+    "latency_s": 2.7131030000018654,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "celadon-green",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-E-paraphrased",
+    "success": true,
+    "tokens": 3150,
+    "latency_s": 2.349423499996192,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-C-synthesis",
+    "success": true,
+    "tokens": 7004,
+    "latency_s": 7.44536589999916,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7760",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "query-F-direct",
+    "success": true,
+    "tokens": 3161,
+    "latency_s": 2.3320793000020785,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "moka-RUBI-9000",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-A",
+    "success": true,
+    "tokens": 3132,
+    "latency_s": 2.4647314000030747,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-B",
+    "success": true,
+    "tokens": 3172,
+    "latency_s": 2.836295200002496,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-C",
+    "success": true,
+    "tokens": 3227,
+    "latency_s": 2.2344058000016958,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-D",
+    "success": true,
+    "tokens": 3052,
+    "latency_s": 2.8762608999968506,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-E",
+    "success": true,
+    "tokens": 3212,
+    "latency_s": 2.135034099992481,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "seed-F",
+    "success": true,
+    "tokens": 3098,
+    "latency_s": 1.5292841000045883,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ok",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-A-direct",
+    "success": true,
+    "tokens": 3284,
+    "latency_s": 1.8641304000047967,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "QUARTZ-ECHO",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-D-direct",
+    "success": true,
+    "tokens": 3030,
+    "latency_s": 2.7392546000046423,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "matcha-latte-X3",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-B-paraphrased",
+    "success": true,
+    "tokens": 3324,
+    "latency_s": 4.646652199997334,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "celadon-green",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-E-paraphrased",
+    "success": true,
+    "tokens": 3150,
+    "latency_s": 2.3556530000059865,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "ZEPHYR-X42",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-C-synthesis",
+    "success": true,
+    "tokens": 6984,
+    "latency_s": 7.847541800001636,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7760",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "query-F-direct",
+    "success": true,
+    "tokens": 3161,
+    "latency_s": 2.504516799992416,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "moka-RUBI-9000",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  }
+]

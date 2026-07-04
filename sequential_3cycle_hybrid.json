@@ -1,0 +1,20 @@
+[
+  {
+    "cycle": 0,
+    "n_facts": 2219,
+    "hybrid_n": 39,
+    "vanilla_n": 0
+  },
+  {
+    "cycle": 1,
+    "n_facts": 2249,
+    "hybrid_n": 48,
+    "vanilla_n": 0
+  },
+  {
+    "cycle": 2,
+    "n_facts": 2279,
+    "hybrid_n": 43,
+    "vanilla_n": 0
+  }
+]

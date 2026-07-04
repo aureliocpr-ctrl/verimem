@@ -1,0 +1,104 @@
+{
+  "n": 10,
+  "n_correct": 9,
+  "n_errors": 0,
+  "accuracy": 0.9,
+  "per_category": {
+    "1": {
+      "n": 3,
+      "accuracy": 0.6667
+    },
+    "2": {
+      "n": 4,
+      "accuracy": 1.0
+    },
+    "3": {
+      "n": 1,
+      "accuracy": 1.0
+    },
+    "4": {
+      "n": 2,
+      "accuracy": 1.0
+    }
+  },
+  "details": [
+    {
+      "id": "0:0",
+      "category": "2",
+      "predicted": "May 7, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:1",
+      "category": "2",
+      "predicted": "Last year before May 8, 2023 (i.e., in 2022).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:2",
+      "category": "3",
+      "predicted": "Counseling and mental health.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:3",
+      "category": "1",
+      "predicted": "Adoption agencies.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "0:4",
+      "category": "1",
+      "predicted": "Trans woman.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:0",
+      "category": "2",
+      "predicted": "January 19, 2023.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:1",
+      "category": "2",
+      "predicted": "January 2023 (she mentioned it on 20 January 2023).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:2",
+      "category": "4",
+      "predicted": "Dancing.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:3",
+      "category": "1",
+      "predicted": "Both Jon and Gina have a background in dance and are pursuing entrepreneurial ventures (Jon's dance studio, Gina's clothing store).",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:4",
+      "category": "4",
+      "predicted": "Jon lost his job, which pushed him to finally pursue his dream of opening a dance studio. He's also passionate about dance since childhood and wants to share that joy with others.",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "locomo",
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 10,
+  "window": 2,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

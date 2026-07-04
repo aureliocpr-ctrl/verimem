@@ -1,0 +1,19 @@
+{
+  "n_judged": 71,
+  "n_abstained": 29,
+  "n_sound": 46,
+  "n_pathological": 25,
+  "S1_conf_self": {
+    "auroc": 0.705,
+    "aurc": 0.13,
+    "mean_on_sound": 97.7,
+    "mean_on_patho": 88.2
+  },
+  "S2_entail_ext": {
+    "auroc": 0.81,
+    "aurc": 0.121,
+    "mean_on_sound": 96.2,
+    "mean_on_patho": 79.6
+  },
+  "model": "claude-sonnet-4-6"
+}

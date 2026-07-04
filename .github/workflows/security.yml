@@ -1,0 +1,125 @@
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly on Mondays 04:17 UTC — off-peak, avoids GH-cron stampede
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+# Least-privilege default — fixes CodeQL `actions/missing-workflow-permissions`.
+permissions:
+  contents: read
+  security-events: write   # required by codeql-action/upload-sarif
+
+jobs:
+  codeql:
+    name: CodeQL (Python, custom config)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          config-file: ./.github/codeql/codeql-config.yml
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
+
+  ruff-security:
+    name: ruff (security rules)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+      - name: Ruff S-rules (security, report-only)
+        # A-3 (audit#2 2026-06-08): scan the REAL package `engram`. This used to
+        # target the `hippoagent` deprecation shim (one __init__.py) so it scanned
+        # ~0 LOC and passed trivially — SECURITY.md's "SAST on every change" was
+        # materially false. Report-only for now (engram has ~192 pre-existing
+        # S-findings to triage); CodeQL above is the blocking whole-tree gate.
+        run: ruff check --select S engram || true
+
+  bandit:
+    name: bandit (low+low report)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install bandit[toml]
+      - name: Bandit scan (report-only)
+        # A-3 (audit#2 2026-06-08): scan the REAL package `engram` (was the empty
+        # `hippoagent` shim). -ll low sev, -i low conf — report only (engram has
+        # ~4 HIGH-sev findings to triage before this can gate; CodeQL gates).
+        run: bandit -r engram -ll -i || true
+
+  pip-audit:
+    name: pip-audit (HIGH/CRITICAL gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+          pip install -e ".[full,dev]"
+      - name: pip-audit (project deps)
+        # CVE-2025-3000 (torch, alias PYSEC-2025-194): CVSS4 AV:L/PR:L, all
+        # impacts Low (~4.8 MEDIUM) — below this gate's declared HIGH/CRITICAL
+        # bar — and OSV lists no fixed version yet (2026-06-10). Re-check when
+        # torch publishes a fix.
+        run: pip-audit --strict --vulnerability-service osv --ignore-vuln CVE-2025-3000
+
+  safety:
+    name: safety check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install safety
+          pip install -e ".[full,dev]"
+      - name: safety scan
+        # Report only — do not fail the build until baseline is green.
+        run: safety check --short-report || true

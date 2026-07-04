@@ -1,0 +1,190 @@
+{
+  "n_cases": 15,
+  "gate_separation": {
+    "true_mean": 97.8,
+    "contradiction_mean": 0.0,
+    "inference_mean": 2.0,
+    "roc_auc_true_vs_contradiction": 1.0,
+    "roc_auc_true_vs_inference": 1.0,
+    "true_scores": [
+      95.0,
+      95.0,
+      95.0,
+      100.0,
+      95.0,
+      100.0,
+      100.0,
+      100.0,
+      97.0,
+      95.0,
+      100.0,
+      100.0,
+      95.0,
+      100.0,
+      100.0
+    ],
+    "contradiction_scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "inference_scores": [
+      0.0,
+      0.0,
+      5.0,
+      5.0,
+      0.0,
+      5.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      15.0
+    ]
+  },
+  "arms": {
+    "source": {
+      "counts": {
+        "CORRECT": 13,
+        "HALLUCINATION": 0,
+        "OMISSION": 0,
+        "ERROR": 2
+      },
+      "n": 13,
+      "correct": 1.0,
+      "hallucination": 0.0,
+      "omission": 0.0,
+      "hallucination_ci95": [
+        0.0,
+        0.2281
+      ],
+      "correct_ci95": [
+        0.7719,
+        1.0
+      ]
+    },
+    "factsflat": {
+      "counts": {
+        "CORRECT": 1,
+        "HALLUCINATION": 5,
+        "OMISSION": 8,
+        "ERROR": 1
+      },
+      "n": 14,
+      "correct": 0.0714,
+      "hallucination": 0.3571,
+      "omission": 0.5714,
+      "hallucination_ci95": [
+        0.1634,
+        0.6124
+      ],
+      "correct_ci95": [
+        0.0127,
+        0.3147
+      ]
+    },
+    "grounded": {
+      "counts": {
+        "CORRECT": 14,
+        "HALLUCINATION": 0,
+        "OMISSION": 0,
+        "ERROR": 1
+      },
+      "n": 14,
+      "correct": 1.0,
+      "hallucination": 0.0,
+      "omission": 0.0,
+      "hallucination_ci95": [
+        0.0,
+        0.2153
+      ],
+      "correct_ci95": [
+        0.7847,
+        1.0
+      ]
+    },
+    "wrongtag": {
+      "counts": {
+        "CORRECT": 0,
+        "HALLUCINATION": 14,
+        "OMISSION": 0,
+        "ERROR": 1
+      },
+      "n": 14,
+      "correct": 0.0,
+      "hallucination": 1.0,
+      "omission": 0.0,
+      "hallucination_ci95": [
+        0.7847,
+        1.0
+      ],
+      "correct_ci95": [
+        0.0,
+        0.2153
+      ]
+    },
+    "contra_source": {
+      "counts": {
+        "CORRECT": 14,
+        "HALLUCINATION": 0,
+        "OMISSION": 0,
+        "ERROR": 1
+      },
+      "n": 14,
+      "correct": 1.0,
+      "hallucination": 0.0,
+      "omission": 0.0,
+      "hallucination_ci95": [
+        0.0,
+        0.2153
+      ],
+      "correct_ci95": [
+        0.7847,
+        1.0
+      ]
+    },
+    "contra_grounded": {
+      "counts": {
+        "CORRECT": 13,
+        "HALLUCINATION": 0,
+        "OMISSION": 0,
+        "ERROR": 2
+      },
+      "n": 13,
+      "correct": 1.0,
+      "hallucination": 0.0,
+      "omission": 0.0,
+      "hallucination_ci95": [
+        0.0,
+        0.2281
+      ],
+      "correct_ci95": [
+        0.7719,
+        1.0
+      ]
+    }
+  },
+  "wrongtag_obedience": {
+    "followed_wrong_tag": 14,
+    "resisted": 0,
+    "abstained": 0,
+    "n": 14
+  },
+  "grounded_vs_source_hallucination_delta": 0.0
+}

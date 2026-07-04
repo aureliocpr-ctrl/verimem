@@ -1,0 +1,370 @@
+{
+  "n_scenarios": 12,
+  "overall_auroc": 1.0,
+  "overall_ci95": [
+    1.0,
+    1.0
+  ],
+  "overall_plain_auroc": 1.0,
+  "per_type": {
+    "entity_swap": {
+      "auroc": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "mean_faithful": 99.6,
+      "mean_confab": 6.2,
+      "n_pairs": 12,
+      "blind_spot": false
+    },
+    "numeric": {
+      "auroc": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "mean_faithful": 98.3,
+      "mean_confab": 0.0,
+      "n_pairs": 12,
+      "blind_spot": false
+    },
+    "temporal_drift": {
+      "auroc": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "mean_faithful": 100.0,
+      "mean_confab": 0.0,
+      "n_pairs": 12,
+      "blind_spot": false
+    },
+    "overgeneralization": {
+      "auroc": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "mean_faithful": 100.0,
+      "mean_confab": 5.0,
+      "n_pairs": 12,
+      "blind_spot": false
+    },
+    "plausible_inference": {
+      "auroc": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "mean_faithful": 99.6,
+      "mean_confab": 1.2,
+      "n_pairs": 12,
+      "blind_spot": false
+    }
+  },
+  "blind_spots": [],
+  "rows": [
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 95.0,
+      "confab_score": 15.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 5.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 95.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 95.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 15.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 95.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 5.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 95.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 20.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 95.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "entity_swap",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "numeric",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "temporal_drift",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    },
+    {
+      "type": "overgeneralization",
+      "faithful_score": 100.0,
+      "confab_score": 10.0
+    },
+    {
+      "type": "plausible_inference",
+      "faithful_score": 100.0,
+      "confab_score": 0.0
+    }
+  ],
+  "model": "claude-sonnet-4-6"
+}

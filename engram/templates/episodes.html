@@ -1,0 +1,121 @@
+{% extends "_layout.html" %}
+{% set active = "episodes" %}
+{% block title %}Episodes{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Episodes <span class="text-muted text-sm">({{ episodes|length }})</span></h1>
+    <p class="page-header__subtitle">
+      Every chat turn becomes an episode. They feed the sleep cycle that
+      consolidates skills.
+    </p>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--ghost btn--sm" href="/skills">View skills</a>
+    <a class="btn btn--ghost btn--sm" href="/lineage">Lineage</a>
+  </div>
+</header>
+
+<section class="skills-toolbar" role="search">
+  <input id="ep-search" type="search" class="input"
+         placeholder="Filter by task or id..." aria-label="Filter episodes">
+  <div class="filter-pills" role="tablist" aria-label="Filter by outcome">
+    <button class="filter-pill is-active" data-filter="all" type="button"
+            role="tab" aria-selected="true">All</button>
+    <button class="filter-pill" data-filter="success" type="button"
+            role="tab" aria-selected="false">Success</button>
+    <button class="filter-pill" data-filter="failure" type="button"
+            role="tab" aria-selected="false">Failure</button>
+  </div>
+  <span class="spacer"></span>
+  <span class="text-xs text-muted" id="ep-count">{{ episodes|length }} episodes</span>
+</section>
+
+{% if episodes %}
+<section class="card" style="padding: 0;">
+<table class="table" id="ep-table">
+  <thead>
+    <tr>
+      <th>id</th>
+      <th>task</th>
+      <th>outcome</th>
+      <th class="text-mono">steps</th>
+      <th class="text-mono">tokens</th>
+      <th class="text-mono">skills</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in episodes %}
+    <tr data-outcome="{{ e.outcome }}"
+        data-search="{{ (e.task_text ~ ' ' ~ e.id)|lower }}">
+      <td class="text-mono"><a href="/episodes/{{ e.id }}">{{ e.id[:8] }}</a></td>
+      <td>{{ e.task_text[:80] }}</td>
+      <td>
+        {% if e.outcome == "success" %}
+        <span class="chip chip--status-promoted">success</span>
+        {% elif e.outcome == "failure" %}
+        <span class="chip" style="color: var(--c-danger); border-color: rgba(255,123,114,.45); background: rgba(255,123,114,.10);">failure</span>
+        {% else %}
+        <span class="chip">{{ e.outcome }}</span>
+        {% endif %}
+      </td>
+      <td class="text-mono">{{ e.num_steps }}</td>
+      <td class="text-mono">{{ e.tokens_used }}</td>
+      <td class="text-mono">{{ e.skills_used|length }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</section>
+{% else %}
+<div class="empty card">
+  <h2 class="empty__title">No episodes yet</h2>
+  <p class="empty__hint">
+    Start a conversation in <a href="/chat">Chat</a> to populate the episode log.
+  </p>
+  <div class="page-header__actions" style="justify-content: center;">
+    <a class="btn btn--primary" href="/chat">Open chat</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const search = document.getElementById('ep-search');
+  const pills = document.querySelectorAll('.filter-pill');
+  const rows = document.querySelectorAll('#ep-table tbody tr');
+  const counter = document.getElementById('ep-count');
+  let activeFilter = 'all';
+  let activeQuery = '';
+
+  function apply() {
+    let visible = 0;
+    rows.forEach(r => {
+      const outcomeOk = activeFilter === 'all' || r.dataset.outcome === activeFilter;
+      const searchOk = !activeQuery || (r.dataset.search || '').includes(activeQuery);
+      const show = outcomeOk && searchOk;
+      r.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    if (counter) counter.textContent = visible + ' episodes';
+  }
+
+  if (search) {
+    search.addEventListener('input', e => {
+      activeQuery = e.target.value.toLowerCase().trim();
+      apply();
+    });
+  }
+  pills.forEach(p => p.addEventListener('click', () => {
+    pills.forEach(x => { x.classList.remove('is-active'); x.setAttribute('aria-selected', 'false'); });
+    p.classList.add('is-active');
+    p.setAttribute('aria-selected', 'true');
+    activeFilter = p.dataset.filter;
+    apply();
+  }));
+})();
+</script>
+{% endblock %}

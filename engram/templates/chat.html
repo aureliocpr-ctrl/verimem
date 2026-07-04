@@ -1,0 +1,72 @@
+{% extends "_layout.html" %}
+{% set active = "chat" %}
+{% block title %}Chat{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">
+      Chat
+      <span id="active-llm" class="chip" title="Active LLM provider/model">&hellip;</span>
+    </h1>
+    <p class="page-header__subtitle">
+      Each conversation creates an <em>episode</em>. Past skills are auto-injected.
+      Native tool-use is used when the provider supports it (Anthropic, Ollama,
+      Groq, OpenAI, &hellip;).
+    </p>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--ghost btn--sm" href="/episodes">Browse episodes</a>
+    <a class="btn btn--ghost btn--sm" href="/skills">Skills</a>
+  </div>
+</header>
+
+<section class="card stack">
+  <textarea id="task" class="textarea" rows="4"
+    placeholder="e.g. Crea un file di backup della cartella Documenti, poi descrivimi cosa vedi sullo schermo"
+    aria-label="Task input"></textarea>
+
+  <div class="flex-row" style="flex-wrap: wrap; gap: var(--s-2);">
+    <button id="run" type="button" class="btn btn--primary"
+            aria-label="Send task (Ctrl+Enter)">
+      Send <span class="text-xs text-muted">(Ctrl+Enter)</span>
+    </button>
+    <button id="plan" type="button" class="btn"
+            title="Ask the agent to plan before executing">
+      Plan first
+    </button>
+    <button id="stop" type="button" class="btn btn--danger" style="display:none;">
+      Stop
+    </button>
+    <button id="sleep" type="button" class="btn">
+      Run sleep cycle
+    </button>
+    <button id="clear" type="button" class="btn btn--ghost">
+      Clear history
+    </button>
+    <span class="spacer"></span>
+    <span id="status" class="text-sm text-muted" role="status" aria-live="polite"></span>
+  </div>
+</section>
+
+<section id="conversation" class="stack" style="margin-top: var(--s-6);"
+         aria-label="Conversation history"></section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/chat.js" defer></script>
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const prefill = params.get("prefill");
+  if (prefill) {
+    const ta = document.getElementById("task");
+    if (ta) {
+      ta.value = prefill;
+      ta.focus();
+      ta.setSelectionRange(prefill.length, prefill.length);
+    }
+  }
+})();
+</script>
+{% endblock %}

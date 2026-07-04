@@ -1,0 +1,28 @@
+{
+  "n_interference": 80,
+  "n_control": 80,
+  "interference_breakdown": {
+    "CONTRADICTION": 54,
+    "UNSUPPORTED": 10,
+    "CONSISTENT": 16,
+    "MISSING": 0
+  },
+  "control_breakdown": {
+    "CONTRADICTION": 8,
+    "UNSUPPORTED": 10,
+    "CONSISTENT": 62,
+    "MISSING": 0
+  },
+  "tpr_contradiction": 0.675,
+  "tpr_ci95": [
+    0.5664,
+    0.7676
+  ],
+  "fpr_contradiction": 0.1,
+  "fpr_ci95": [
+    0.0515,
+    0.1851
+  ],
+  "detect_ceiling_contra_or_unsupported": 0.8,
+  "unsupported_tail_share": 0.125
+}

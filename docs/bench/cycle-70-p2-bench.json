@@ -1,0 +1,278 @@
+{
+  "bench_name": "cycle-70-p2-entity-kg",
+  "timestamp_unix": 1778806429.7690954,
+  "bench_A_recall": {
+    "per_query": [
+      {
+        "query": "Tonegawa",
+        "entity_get": {
+          "latency_ms": 2.173,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 5.893,
+          "hits_k5": 2,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 29.331,
+          "hits_k5": 5,
+          "hit": true
+        }
+      },
+      {
+        "query": "P2.a",
+        "entity_get": {
+          "latency_ms": 2.364,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 5.274,
+          "hits_k5": 5,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 11.416,
+          "hits_k5": 5,
+          "hit": true
+        }
+      },
+      {
+        "query": "critic-orchestrator",
+        "entity_get": {
+          "latency_ms": 2.995,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 5.715,
+          "hits_k5": 5,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 11.227,
+          "hits_k5": 5,
+          "hit": true
+        }
+      },
+      {
+        "query": "M\u00fcller",
+        "entity_get": {
+          "latency_ms": 2.461,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 5.017,
+          "hits_k5": 1,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 12.79,
+          "hits_k5": 2,
+          "hit": true
+        }
+      },
+      {
+        "query": "HippoRAG",
+        "entity_get": {
+          "latency_ms": 2.409,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 5.073,
+          "hits_k5": 5,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 11.681,
+          "hits_k5": 5,
+          "hit": true
+        }
+      },
+      {
+        "query": "cycle #70",
+        "entity_get": {
+          "latency_ms": 2.356,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 5.321,
+          "hits_k5": 5,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 11.45,
+          "hits_k5": 5,
+          "hit": true
+        }
+      },
+      {
+        "query": "engram",
+        "entity_get": {
+          "latency_ms": 2.781,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 5.75,
+          "hits_k5": 5,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 11.715,
+          "hits_k5": 5,
+          "hit": true
+        }
+      },
+      {
+        "query": "self_model",
+        "entity_get": {
+          "latency_ms": 2.804,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 6.364,
+          "hits_k5": 5,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 12.028,
+          "hits_k5": 5,
+          "hit": true
+        }
+      },
+      {
+        "query": "entity_kg",
+        "entity_get": {
+          "latency_ms": 2.379,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 6.139,
+          "hits_k5": 2,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 11.384,
+          "hits_k5": 1,
+          "hit": true
+        }
+      },
+      {
+        "query": "skill",
+        "entity_get": {
+          "latency_ms": 2.991,
+          "hit": false,
+          "facts_linked": 0
+        },
+        "facts_search": {
+          "latency_ms": 5.623,
+          "hits_k5": 5,
+          "hit_k1": true,
+          "hit_k3_query_in_prop": true
+        },
+        "episodic_recall": {
+          "latency_ms": 11.387,
+          "hits_k5": 5,
+          "hit": true
+        }
+      }
+    ],
+    "summary": {
+      "n_queries": 10,
+      "entity_get": {
+        "hit_rate": 0.0,
+        "mean_latency_ms": 2.5713,
+        "p95_latency_ms": null
+      },
+      "facts_search": {
+        "hit_rate_k1": 1.0,
+        "hit_rate_k3_query_in_prop": 1.0,
+        "mean_latency_ms": 5.6169
+      },
+      "episodic_recall": {
+        "hit_rate": 1.0,
+        "mean_latency_ms": 13.4409
+      }
+    }
+  },
+  "bench_B_determinism": {
+    "n_nodes": 50,
+    "n_edges_attempted": 100,
+    "n_runs": 10,
+    "deterministic_byte_identical": true,
+    "first_run_top5": [
+      [
+        "5bd8df21f9d0",
+        0.24222326081847628
+      ],
+      [
+        "498d3a4cb02c",
+        0.22099665036353766
+      ],
+      [
+        "ad5a506cf96f",
+        0.21993168087479606
+      ],
+      [
+        "ae2ab07ce8b3",
+        0.06896249760625575
+      ],
+      [
+        "7b34514428b4",
+        0.03696072527936248
+      ]
+    ],
+    "discrepancies": [],
+    "mean_latency_ms": 79.408,
+    "median_latency_ms": 47.824
+  },
+  "bench_C_latency": {
+    "runs": [
+      {
+        "n_nodes": 10,
+        "n_edges_attempted": 50,
+        "min_latency_ms": 25.652,
+        "mean_latency_ms": 27.466,
+        "max_latency_ms": 28.972
+      },
+      {
+        "n_nodes": 100,
+        "n_edges_attempted": 500,
+        "min_latency_ms": 45.538,
+        "mean_latency_ms": 51.574,
+        "max_latency_ms": 67.161
+      },
+      {
+        "n_nodes": 500,
+        "n_edges_attempted": 2500,
+        "min_latency_ms": 50.414,
+        "mean_latency_ms": 53.394,
+        "max_latency_ms": 59.141
+      },
+      {
+        "n_nodes": 1000,
+        "n_edges_attempted": 5000,
+        "min_latency_ms": 65.273,
+        "mean_latency_ms": 70.157,
+        "max_latency_ms": 73.986
+      }
+    ]
+  }
+}

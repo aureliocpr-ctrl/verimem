@@ -1,0 +1,1091 @@
+{
+  "n": 100,
+  "per_class": 50,
+  "seed": 0,
+  "n_impossible": 50,
+  "n_answerable": 50,
+  "fabrication_rate": 0.26,
+  "abstention_rate_on_impossible": 0.74,
+  "answer_correct_rate_on_answerable": 0.94,
+  "over_abstention_on_answerable": 0.0,
+  "fabrications_for_audit": [
+    {
+      "q": "NSF began in 1985 to promote what?",
+      "pred": "Advanced research and education networking in the United States."
+    },
+    {
+      "q": "Since what year has the ARWU ranked academic performance?",
+      "pred": "2003"
+    },
+    {
+      "q": "What form do complex rational primes have?",
+      "pred": "4k + 3"
+    },
+    {
+      "q": "What type of steam engine doesn't need valves to direct engines?",
+      "pred": "Oscillating cylinder steam engine."
+    },
+    {
+      "q": "What type of forces act at very long distances?",
+      "pred": "Gravitational force e electromagnetic force."
+    },
+    {
+      "q": "What did the public KPN service Telepad use?",
+      "pred": "DNIC 2049"
+    },
+    {
+      "q": "What is not the primary law of the EU?",
+      "pred": "Founding treaties (TEU and TFEU) ARE the primary law. What is NOT primary law includes secondary legislation such as regulations, directives, and decisions issued by EU institutions."
+    },
+    {
+      "q": "Where did Friedrich Ratzel work?",
+      "pred": "Germany"
+    },
+    {
+      "q": "How do private schools in the rest of the world differ from Ireland?",
+      "pred": "Fees in Ireland tend to be relatively low compared to the rest of the world."
+    },
+    {
+      "q": "What is the proven assumption generally ascribed to the value of complexity classes?",
+      "pred": "Many known complexity classes are suspected to be unequal, but this has not been proved."
+    },
+    {
+      "q": "What does treatment only do?",
+      "pred": "Increases oxygen levels in the patient's blood and decreases resistance to blood flow in many types of diseased lungs."
+    },
+    {
+      "q": "What type of reaction produces oxygen in plane cabins?",
+      "pred": "Exothermic reaction."
+    },
+    {
+      "q": "Western governments considered Islamists to be the worse of two evils when compared to whom?",
+      "pred": "Leftists/communists/nationalists."
+    }
+  ],
+  "rows": [
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "April 1991.",
+      "golds": [
+        "April 1991",
+        "April 1991",
+        "April 1991"
+      ],
+      "question": "When was Warsaw's stock exchange brought back to life?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "43 million tons.",
+      "golds": [
+        "43 million tons",
+        "43 million tons",
+        "43 million tons"
+      ],
+      "question": "How much Saharan dust is blown and falls upon the Caribbean Sea each year?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Academic scholarship.",
+      "golds": [
+        "academic",
+        "academic",
+        "academic"
+      ],
+      "question": "Along with sport and art, what is a type of talent scholarship?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "47",
+      "golds": [
+        "47 streetcars",
+        "47",
+        "47"
+      ],
+      "question": "How many streetcars did the Fresno Traction Company operate in 1931?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Euclid.",
+      "golds": [
+        "Euclid",
+        "Euclid",
+        "Euclid",
+        "Euclid",
+        "Euclid"
+      ],
+      "question": "Who established the amount of prime numbers in existence?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Poor management, internal divisions, and effective Canadian scouts, French regular forces, and Indian warrior allies.",
+      "golds": [
+        "combination of poor management, internal divisions, and effective Canadian scouts, French regular forces, and Indian warrior allies",
+        "poor management, internal divisions, and effective Canadian scouts, French regular forces, and Indian warrior allies",
+        "a combination of poor management, internal divisions, and effective Canadian scouts, French regular forces, and Indian warrior allies",
+        "poor management, internal divisions, and effective Canadian scouts",
+        "a combination of poor management, internal divisions, and effective Canadian scouts"
+      ],
+      "question": "Why did British operation fail in 1755, 56, 57?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Full citizenship rights (\"assimilation\").",
+      "golds": [
+        "assimilation",
+        "Full citizenship rights",
+        "assimilation",
+        "assimilation",
+        "Full citizenship rights"
+      ],
+      "question": "What did France offer that was rare by imperial standards?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "General disobedience which is neither conscientious nor of social benefit.",
+      "golds": [
+        "general disobedience",
+        "undermine the law by encouraging general disobedience which is neither conscientious nor of social benefit",
+        "great amount of it",
+        "general disobedience",
+        "conscientious lawbreakers"
+      ],
+      "question": "What needs to be avoided with civil disobedience?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "About 3,000 troupes de la marine (colonial regulars), plus militia recruited when needed. No French regular army troops in North America.",
+      "golds": [
+        "no French regular army troops were stationed in North America",
+        "no French regular army troops were stationed in North America",
+        "no French regular army troops were stationed in North America,",
+        "no French regular army",
+        "no French regular army troops were stationed in North America"
+      ],
+      "question": "What was Frensh military presence at start of war?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "One of the largest gold rushes the world has ever seen, rapid growth in population and economic power, with Victoria's population increasing sevenfold from 76,000 to 540,000 in ten years.",
+      "golds": [
+        "gold rush",
+        "gold rush",
+        "gold rushes"
+      ],
+      "question": "What did the finding of gold in Victoria cause?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Until the oil shock.",
+      "golds": [
+        "Until the oil shock",
+        "the oil shock",
+        "the oil shock",
+        "Until the oil shock",
+        "the oil shock"
+      ],
+      "question": "The price of oil is usually a stable commodity until when?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "In a modern context.",
+      "golds": [
+        "a modern context",
+        "a modern context",
+        "modern context"
+      ],
+      "question": "Where did Maududi's books place Islam?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "79",
+      "golds": [
+        "79 individual libraries",
+        "79",
+        "79"
+      ],
+      "question": "How many individual libraries make up the main school library?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "The working fluid.",
+      "golds": [
+        "working fluid",
+        "working fluid",
+        "the working fluid"
+      ],
+      "question": "What limits the Rankine cycle's efficiency?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": false,
+      "predicted": "4,000",
+      "golds": [
+        "Four thousand",
+        "Four thousand",
+        "Four thousand"
+      ],
+      "question": "How many Huguenots emigrated to North America as colonists?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Wankel engine.",
+      "golds": [
+        "Wankel",
+        "Wankel",
+        "the Wankel engine"
+      ],
+      "question": "What is an example of a rotary engine without pistons?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Lothar de Maizi\u00e8re",
+      "golds": [
+        "Lothar de Maizi\u00e8re",
+        "Lothar de Maizi\u00e8re",
+        "Lothar de Maizi\u00e8re"
+      ],
+      "question": "Who was the final Prime Minister of East Germany?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Michael Heckenberger and colleagues of the University of Florida.",
+      "golds": [
+        "Michael Heckenberger and colleagues",
+        "Michael Heckenberger and colleagues of the University of Florida",
+        "Michael Heckenberger"
+      ],
+      "question": "Who is credited with finding evidence of large settlements in the Amazon forest?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Symbols.",
+      "golds": [
+        "symbols",
+        "symbols",
+        "symbols"
+      ],
+      "question": "What does a Turing machine handle on a strip of tape?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Sandwich, Faversham, Maidstone.",
+      "golds": [
+        "Kent, particularly Sandwich, Faversham and Maidstone",
+        "Sandwich, Faversham and Maidstone",
+        "Sandwich, Faversham and Maidstone"
+      ],
+      "question": "What other English towns were sites of Huguenot settlement?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Ocean liners.",
+      "golds": [
+        "ocean liners",
+        "ocean liners",
+        "ocean liners"
+      ],
+      "question": "Other than warships, what ships typically required high speeds?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Conant devised programs to identify, recruit, and support talented youth.",
+      "golds": [
+        "identify, recruit",
+        "Conant devised programs",
+        "programs to identify, recruit, and support talented youth"
+      ],
+      "question": "How was the school able to bring aboard the best talented students?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Fifteen fraternities (plus one co-ed community service fraternity, Alpha Phi Omega).",
+      "golds": [
+        "fifteen",
+        "fifteen",
+        "fifteen"
+      ],
+      "question": "How many fraternities are apart of the university?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "1749",
+      "golds": [
+        "1749",
+        "1749",
+        "1749",
+        "1749",
+        "1749"
+      ],
+      "question": "When did British government give land for development of Ohio Country?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "A \"Welfare Cash Card\".",
+      "golds": [
+        "Welfare Cash Card",
+        "Welfare Cash Card",
+        "Welfare Cash Card"
+      ],
+      "question": "What did Alec Shelbrooke propose payments of benefits to be made on?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Topographic.",
+      "golds": [
+        "topographic",
+        "topographic",
+        "topographic"
+      ],
+      "question": "What type of landscapes other than geologic and natural ecosystem landscapes can be found in southern California?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Non-combustible substances that corrode, such as iron.",
+      "golds": [
+        "non-combustible",
+        "non-combustible substances that corrode",
+        "wood",
+        "wood"
+      ],
+      "question": "What type of combustible materials were considered to have little philogiston?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Un arcipelago di estuario (archipelago-like estuary).",
+      "golds": [
+        "archipelago-like estuary",
+        "archipelago-like estuary",
+        "archipelago-like estuary"
+      ],
+      "question": "What did the Merwede-Oude Maas form with Waal and Lek?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "The principle of inclusions and components.",
+      "golds": [
+        "The principle of inclusions and components",
+        "principle of inclusions and components",
+        "The principle of inclusions and components",
+        "inclusions and components"
+      ],
+      "question": "What is the principle that states that with sedimentary rocks, inclusions must be older than the formation that contains"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "MHC class I molecules.",
+      "golds": [
+        "MHC class I molecules",
+        "MHC class I",
+        "MHC class I molecules"
+      ],
+      "question": "Lots of tumor cells have fewer of what type of molecule on their surface?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "As a connected sum of prime knots.",
+      "golds": [
+        "as a connected sum of prime knots",
+        "as a connected sum of prime knots",
+        "as a connected sum of prime knots",
+        "as a connected sum of prime knots"
+      ],
+      "question": "How can any knot be distinctively indicated?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Painting, poetry, and calligraphy.",
+      "golds": [
+        "painting, poetry, and calligraphy",
+        "painting, poetry, and calligraphy",
+        "painting, poetry, and calligraphy"
+      ],
+      "question": "Which arts were often practiced together by the same artists?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "1,036.20 km (Rhine-kilometers, from Constance to Hoek van Holland).",
+      "golds": [
+        "Rhine-kilometers\"",
+        "Rhine-kilometers",
+        "kilometres",
+        "Rhine-kilometers",
+        "Rhine-kilometers"
+      ],
+      "question": "What is the conventional measurement of the Rhine? "
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Turing machines.",
+      "golds": [
+        "Turing machines",
+        "Turing machines",
+        "Turing machines"
+      ],
+      "question": "What theoretical device is attributed to Alan Turing?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Christopher Gist",
+      "golds": [
+        "Christopher Gist",
+        "Christopher Gist",
+        "Christopher Gist",
+        "Christopher Gist",
+        "Christopher Gist"
+      ],
+      "question": "Who explored Ohio territory in 1750?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Recover the latent heat of vaporisation.",
+      "golds": [
+        "recover the latent heat of vaporisation",
+        "recover the latent heat of vaporisation",
+        "recover the latent heat of vaporisation"
+      ],
+      "question": "In addition to recirculating water, what do condensers do?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Jani Beg",
+      "golds": [
+        "Jani Beg",
+        "Jani Beg",
+        "Jani Beg"
+      ],
+      "question": "Who did the army siege belong to?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "\u00a342,090",
+      "golds": [
+        "\u00a342,090",
+        "\u00a342,090",
+        "\u00a342,090"
+      ],
+      "question": "What is the average construction salary in the Middle East?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Reactive oxygen species (such as superoxide and hydrogen peroxide) are dangerous by-products of oxygen use in organisms.",
+      "golds": [
+        "dangerous by-products",
+        "the immune system",
+        "hypersensitive response of plants against pathogen attack",
+        "dangerous by-products of oxygen use in organisms"
+      ],
+      "question": "What do the reactive forms of oxygen produce in organisms?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Religious groups.",
+      "golds": [
+        "religious",
+        "religious groups",
+        "religious"
+      ],
+      "question": "Along with private individuals and organizations, what groups sometimes runs erg\u00e4nzungsschulen?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Architect.",
+      "golds": [
+        "architects",
+        "architects",
+        "architects"
+      ],
+      "question": "What profession does Zbigniew Badowski have?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Robert Guiscard",
+      "golds": [
+        "Robert Guiscard",
+        "Robert Guiscard",
+        "Robert Guiscard"
+      ],
+      "question": "Who patronized the monks in Italy? "
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Other members.",
+      "golds": [
+        "other members",
+        "other members",
+        "other members"
+      ],
+      "question": "Who contributes to Members Business in addition to the proposer?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "African-American community.",
+      "golds": [
+        "African-American",
+        "African-American",
+        "African-American"
+      ],
+      "question": "The west side of Fresno is the center of which ethnic community?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Warsaw.",
+      "golds": [
+        "Warsaw",
+        "Warsaw",
+        "Warsaw"
+      ],
+      "question": "What is the largest city of Poland?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "High inequality.",
+      "golds": [
+        "high inequality",
+        "high inequality",
+        "high inequality"
+      ],
+      "question": "What do weak labor movement correlate with?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Il concetto di **Distributed Adaptive Message Block Switching**.",
+      "golds": [
+        "Paul Baran developed the concept Distributed Adaptive Message Block Switching",
+        "the concept Distributed Adaptive Message Block Switching",
+        "Distributed Adaptive Message Block Switching"
+      ],
+      "question": "What did Paul Baran develop "
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Silver.",
+      "golds": [
+        "silver",
+        "silver",
+        "silver"
+      ],
+      "question": "What were Isaac's chains made out of?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "Algeria.",
+      "golds": [
+        "Algeria",
+        "Algeria",
+        "Afghanistan"
+      ],
+      "question": "Where was the FIS formed?"
+    },
+    {
+      "impossible": false,
+      "abstained": false,
+      "correct": true,
+      "predicted": "1206.",
+      "golds": [
+        "1206",
+        "1206",
+        "1206"
+      ],
+      "question": "When did Genghis Khan become Great Khan?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What does the currently flooded ditch still have visible?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Advanced research and education networking in the United States.",
+      "golds": [],
+      "question": "NSF began in 1985 to promote what?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What cells help breed cells that are infected with viruses?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "Discovery of gas in the North Sea resulted in what?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": " What city did the Grand Canal never reach during the Yuan?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "2003",
+      "golds": [],
+      "question": "Since what year has the ARWU ranked academic performance?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "4k + 3",
+      "golds": [],
+      "question": "What form do complex rational primes have?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What year did the BankAmericard become successful?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Oscillating cylinder steam engine.",
+      "golds": [],
+      "question": "What type of steam engine doesn't need valves to direct engines?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What was an example of a type of warship that required expansion engines?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "Who notably improved the Smeaton water pump?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "Who established the amount of chosen numbers in existence?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What equilibrium occurs in fluctuating velocity motion?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "When did Millerton residents move out of Fresno?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "Where does the Lek separate?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What is the graph isolation problem? "
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Gravitational force e electromagnetic force.",
+      "golds": [],
+      "question": "What type of forces act at very long distances?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What percentage of the population of Poland was Jewish in 1897?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "DNIC 2049",
+      "golds": [],
+      "question": "What did the public KPN service Telepad use?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "In UDP, the network guarantees what?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Founding treaties (TEU and TFEU) ARE the primary law. What is NOT primary law includes secondary legislation such as regulations, directives, and decisions issued by EU institutions.",
+      "golds": [],
+      "question": "What is not the primary law of the EU?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "When did Germany invade Poland and in doing so start World War I?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What is the intergovernmental body under the control of the United States?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": " What goal does Islamism not have when it comes to society and government?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Germany",
+      "golds": [],
+      "question": "Where did Friedrich Ratzel work?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Fees in Ireland tend to be relatively low compared to the rest of the world.",
+      "golds": [],
+      "question": "How do private schools in the rest of the world differ from Ireland?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What service is a VideoGuard UK equipped receiver never able to decrypt?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What was the first Internet2 Network created with NLR?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Many known complexity classes are suspected to be unequal, but this has not been proved.",
+      "golds": [],
+      "question": "What is the proven assumption generally ascribed to the value of complexity classes?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What was liquified in a stable state for the first time on March 22, 1883?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Increases oxygen levels in the patient's blood and decreases resistance to blood flow in many types of diseased lungs.",
+      "golds": [],
+      "question": "What does treatment only do?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Exothermic reaction.",
+      "golds": [],
+      "question": "What type of reaction produces oxygen in plane cabins?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "How many days did the U.S. forces participate in the Cold War?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "Increased rainfall and decreased temperatures may make what unsustainable?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What's the party's take on Muslim present?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What religion was Janet Gray?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What are responsibilities pharmacy technicians never deal with?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "When did Khan disestablish the Great Yuan?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "Who was appointed as third in command to Lor Loudoun in 1756?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": " What organization was defeated by Hasan al-Hudaybi?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "How many citizens conflict in a constitutional impasse?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": " Who thought the world could not be split into climatic zones?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What does vaccination not exploit?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What happened as a result of hydrothermal vents and underwater volcanoes that are transform boundaries?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What did George Carlin tell the city council to do in New Hampshire?"
+    },
+    {
+      "impossible": true,
+      "abstained": false,
+      "correct": false,
+      "predicted": "Leftists/communists/nationalists.",
+      "golds": [],
+      "question": "Western governments considered Islamists to be the worse of two evils when compared to whom?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What treaty is the Social Chapter not a chapter of?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "What had Radcliffe been transformed into by the 19th century?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "How much British military was in South America at start of War?"
+    },
+    {
+      "impossible": true,
+      "abstained": true,
+      "correct": false,
+      "predicted": "NO ANSWER",
+      "golds": [],
+      "question": "Where are there 34 cities over 200,000 in population?"
+    }
+  ],
+  "model": "claude-sonnet-4-6",
+  "mode": "normal"
+}

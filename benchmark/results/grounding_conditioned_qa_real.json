@@ -1,0 +1,69 @@
+{
+  "n_cases": 12,
+  "gate_separation": {
+    "true_mean": 94.58,
+    "distractor_mean": 0.0,
+    "roc_auc": 1.0,
+    "true_scores": [
+      95.0,
+      85.0,
+      95.0,
+      85.0,
+      95.0,
+      95.0,
+      100.0,
+      100.0,
+      95.0,
+      100.0,
+      95.0,
+      95.0
+    ],
+    "distractor_scores": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "flat": {
+    "counts": {
+      "CORRECT": 0,
+      "HALLUCINATION": 5,
+      "OMISSION": 7,
+      "ERROR": 0
+    },
+    "n": 12,
+    "correct": 0.0,
+    "hallucination": 0.4167,
+    "omission": 0.5833,
+    "hallucination_ci95": [
+      0.1933,
+      0.6805
+    ]
+  },
+  "grounded": {
+    "counts": {
+      "CORRECT": 12,
+      "HALLUCINATION": 0,
+      "OMISSION": 0,
+      "ERROR": 0
+    },
+    "n": 12,
+    "correct": 1.0,
+    "hallucination": 0.0,
+    "omission": 0.0,
+    "hallucination_ci95": [
+      0.0,
+      0.2425
+    ]
+  },
+  "hallucination_drop": 0.4167
+}

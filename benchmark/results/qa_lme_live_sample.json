@@ -1,0 +1,54 @@
+{
+  "n": 5,
+  "n_correct": 2,
+  "n_errors": 0,
+  "accuracy": 0.4,
+  "per_category": {
+    "single-session-user": {
+      "n": 5,
+      "accuracy": 0.4
+    }
+  },
+  "details": [
+    {
+      "id": "e47becba",
+      "category": "single-session-user",
+      "predicted": "Business Administration.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "118b2229",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "51a45a95",
+      "category": "single-session-user",
+      "predicted": "Email inbox.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "58bf7951",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1e043500",
+      "category": "single-session-user",
+      "predicted": "Summer Vibes",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "longmemeval",
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s",
+  "k": 5,
+  "model": "claude-sonnet-4-6",
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

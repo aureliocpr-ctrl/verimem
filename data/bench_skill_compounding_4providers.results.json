@@ -1,0 +1,1396 @@
+[
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 1.058881899996777,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6524499000079231,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 0.6333517000020947,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6106637999910163,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6340860000054818,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6091545999952359,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6212519000109751,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 0.6161965999926906,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 4815,
+    "latency_s": 17.321024999997462,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 2373,
+    "latency_s": 1.3717746999900555,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 4893,
+    "latency_s": 2.1780508999945596,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 4946,
+    "latency_s": 2.5328608000127133,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 2412,
+    "latency_s": 1.2055852000048617,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 4925,
+    "latency_s": 2.9173368999909144,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 4952,
+    "latency_s": 2.4808565999992425,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 4947,
+    "latency_s": 2.5529941000131657,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 4911,
+    "latency_s": 2.3102713999978732,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 4913,
+    "latency_s": 2.5304153000033693,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 4931,
+    "latency_s": 2.2998025999986567,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 4950,
+    "latency_s": 2.457004700001562,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 0,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 5319,
+    "latency_s": 2.374476999990293,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "n_skills_retrieved": 1,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 5319,
+    "latency_s": 2.1974115000048187,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "n_skills_retrieved": 1,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 5469,
+    "latency_s": 2.6294032000005245,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "n_skills_retrieved": 1,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "anthropic",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 5471,
+    "latency_s": 2.3061852999962866,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "n_skills_retrieved": 1,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 81,
+    "latency_s": 0.5255136000050697,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 81,
+    "latency_s": 0.1097589999990305,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 81,
+    "latency_s": 0.10852049999812152,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 82,
+    "latency_s": 0.10651250000228174,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 82,
+    "latency_s": 0.10685100000409875,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "digitsum-13579",
+    "success": false,
+    "tokens": 82,
+    "latency_s": 4.244739899993874,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 82,
+    "latency_s": 0.10738899999705609,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "groq",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 82,
+    "latency_s": 0.11057639999489766,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 2674,
+    "latency_s": 3.821183899999596,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 2607,
+    "latency_s": 12.856197999994038,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 2674,
+    "latency_s": 13.92643940000562,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 2679,
+    "latency_s": 12.858884799992666,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 5301,
+    "latency_s": 27.26864400001068,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "digitsum-13579",
+    "success": false,
+    "tokens": 3060,
+    "latency_s": 29.05417980000493,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "<function/run_python>{\"code\": \"number = 13579\\nresult = sum(int(d) for d in str(number))\\nprint(result)\"}</function>\n<function/submit_solution>{\"answer\": \"25\"}</function>",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 2735,
+    "latency_s": 13.829418799999985,
+    "attempts": 3,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "groq",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 5632,
+    "latency_s": 28.25895689999743,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "digitsum-123",
+    "success": false,
+    "tokens": 3078,
+    "latency_s": 29.38025760000164,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "<function/run_python>{\"code\": \"number = 123\\nresult = sum(int(d) for d in str(number))\\nprint(result)\"}</function>",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "digitsum-456",
+    "success": false,
+    "tokens": 0,
+    "latency_s": 27.91666499999701,
+    "attempts": 0,
+    "error": "LLMError: groq call failed after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kjthfm1zef9rpv8m1hs0chqg` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99629, Requested 2460. Please try again in 3",
+    "extra": {
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "digitsum-789",
+    "success": false,
+    "tokens": 0,
+    "latency_s": 14.43656399998872,
+    "attempts": 0,
+    "error": "LLMError: groq call failed after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kjthfm1zef9rpv8m1hs0chqg` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99669, Requested 2463. Please try again in 3",
+    "extra": {
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "digitsum-1024",
+    "success": false,
+    "tokens": 0,
+    "latency_s": 14.516333100007614,
+    "attempts": 0,
+    "error": "LLMError: groq call failed after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kjthfm1zef9rpv8m1hs0chqg` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99652, Requested 2580. Please try again in 3",
+    "extra": {
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "digitsum-4096",
+    "success": false,
+    "tokens": 0,
+    "latency_s": 14.527752800000599,
+    "attempts": 0,
+    "error": "LLMError: groq call failed after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kjthfm1zef9rpv8m1hs0chqg` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99609, Requested 2464. Please try again in 2",
+    "extra": {
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "digitsum-13579",
+    "success": false,
+    "tokens": 0,
+    "latency_s": 14.354016400000546,
+    "attempts": 0,
+    "error": "LLMError: groq call failed after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kjthfm1zef9rpv8m1hs0chqg` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99593, Requested 2569. Please try again in 3",
+    "extra": {
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "digitsum-24680",
+    "success": false,
+    "tokens": 0,
+    "latency_s": 14.361525400003302,
+    "attempts": 0,
+    "error": "LLMError: groq call failed after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kjthfm1zef9rpv8m1hs0chqg` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99576, Requested 2545. Please try again in 3",
+    "extra": {
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "groq",
+    "task_id": "digitsum-99999",
+    "success": false,
+    "tokens": 0,
+    "latency_s": 14.445966400002362,
+    "attempts": 0,
+    "error": "LLMError: groq call failed after retries: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kjthfm1zef9rpv8m1hs0chqg` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99559, Requested 2621. Please try again in 3",
+    "extra": {
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 1.5824150999978883,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 1.5232978999993065,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 59,
+    "latency_s": 1.0922051999950781,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.7521207999961916,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.3472623999987263,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.501297099996009,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.9922359000047436,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "openrouter",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 60,
+    "latency_s": 1.2180860999942524,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 6454,
+    "latency_s": 3.951051299998653,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 6423,
+    "latency_s": 4.671953700002632,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 6433,
+    "latency_s": 3.4684746999992058,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 6477,
+    "latency_s": 3.5952449000033084,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 6475,
+    "latency_s": 5.034198099994683,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 6441,
+    "latency_s": 3.8768307999998797,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 6750,
+    "latency_s": 3.5450108999939403,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "openrouter",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 6488,
+    "latency_s": 4.253819799996563,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 6435,
+    "latency_s": 3.370878100002301,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 6435,
+    "latency_s": 3.348250100010773,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 6439,
+    "latency_s": 3.6412555999995675,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 6469,
+    "latency_s": 3.3707557000016095,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 6485,
+    "latency_s": 3.5170684000040637,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 6491,
+    "latency_s": 3.9526691999926697,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 6487,
+    "latency_s": 3.7131294999999227,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "openrouter",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 6504,
+    "latency_s": 3.6094767000031425,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 49,
+    "latency_s": 0.710090599997784,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 49,
+    "latency_s": 0.6903345000027912,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 49,
+    "latency_s": 0.7935203000088222,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.6626798999932362,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.8076729000022169,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.5826874000049429,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.6494881000107853,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "raw",
+    "provider": "deepseek",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 50,
+    "latency_s": 0.7074008999916259,
+    "attempts": 1,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 5269,
+    "latency_s": 3.0081948000006378,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 5269,
+    "latency_s": 2.768314899993129,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 5281,
+    "latency_s": 3.3016143000131706,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 5277,
+    "latency_s": 2.9203411000053165,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 5277,
+    "latency_s": 3.023843700008001,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 5275,
+    "latency_s": 3.2233530999947106,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 5279,
+    "latency_s": 3.1314416999957757,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_cold",
+    "provider": "deepseek",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 5279,
+    "latency_s": 3.209076599989203,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "digitsum-123",
+    "success": true,
+    "tokens": 5271,
+    "latency_s": 3.118926299997838,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "6",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "digitsum-456",
+    "success": true,
+    "tokens": 5279,
+    "latency_s": 2.9595271999860415,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "15",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "digitsum-789",
+    "success": true,
+    "tokens": 5267,
+    "latency_s": 3.2538716999988537,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "24",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "digitsum-1024",
+    "success": true,
+    "tokens": 5277,
+    "latency_s": 2.994865900007426,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "7",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "digitsum-4096",
+    "success": true,
+    "tokens": 5307,
+    "latency_s": 2.9777501999924425,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "19",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "digitsum-13579",
+    "success": true,
+    "tokens": 5307,
+    "latency_s": 3.3141759999998612,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "25",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "digitsum-24680",
+    "success": true,
+    "tokens": 5137,
+    "latency_s": 3.046300199988764,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "20",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  },
+  {
+    "condition": "hippo_warm",
+    "provider": "deepseek",
+    "task_id": "digitsum-99999",
+    "success": true,
+    "tokens": 5477,
+    "latency_s": 3.120383200002834,
+    "attempts": 2,
+    "error": "",
+    "extra": {
+      "answer": "45",
+      "n_skills_retrieved": 3,
+      "iter": 0
+    }
+  }
+]

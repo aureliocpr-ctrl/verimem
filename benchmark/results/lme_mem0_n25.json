@@ -1,0 +1,201 @@
+{
+  "n": 25,
+  "n_correct": 8,
+  "n_errors": 0,
+  "accuracy": 0.32,
+  "per_category": {
+    "single-session-user": {
+      "n": 25,
+      "accuracy": 0.32
+    }
+  },
+  "details": [
+    {
+      "id": "e47becba",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "118b2229",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "51a45a95",
+      "category": "single-session-user",
+      "predicted": "In my email inbox.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "58bf7951",
+      "category": "single-session-user",
+      "predicted": "The Glass Menagerie",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1e043500",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "c5e8278d",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6ade9755",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6f9b354f",
+      "category": "single-session-user",
+      "predicted": "A lighter shade of gray.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "58ef2f1c",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "f8c5f88b",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "5d3d2817",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "7527f7e2",
+      "category": "single-session-user",
+      "predicted": "$800",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "c960da58",
+      "category": "single-session-user",
+      "predicted": "20",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "3b6f954b",
+      "category": "single-session-user",
+      "predicted": "University of Melbourne",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "726462e0",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "94f70d80",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "66f24dbb",
+      "category": "single-session-user",
+      "predicted": "A yellow dress and a pair of earrings to match.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "ad7109d1",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "af8d2e46",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "dccbc061",
+      "category": "single-session-user",
+      "predicted": "Staunch atheist.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "c8c3f81d",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "8ebdbe50",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "6b168ec8",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "75499fd8",
+      "category": "single-session-user",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "21436231",
+      "category": "single-session-user",
+      "predicted": "12",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "bench": "longmemeval",
+  "dataset": "C:\\Users\\aurel\\.cache\\longmemeval\\longmemeval_s.json",
+  "k": 30,
+  "window": 0,
+  "client": "lean-claude-cli",
+  "answer_model": "claude-sonnet-4-6",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_rubric": "fair",
+  "full_context": false,
+  "hyde": true,
+  "extract": true,
+  "judge": "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
+}

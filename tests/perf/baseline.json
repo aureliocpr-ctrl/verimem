@@ -1,0 +1,90 @@
+{
+  "skill.find_duplicates (1k skills)": {
+    "p50": 750.6107999943197,
+    "p95": 10585.994600027334,
+    "p99": 10585.994600027334,
+    "mean": 2706.648360006511,
+    "n": 5,
+    "label": "skill.find_duplicates (1k skills)"
+  },
+  "skill.cluster_by_embedding (1k skills)": {
+    "p50": 820.6164000148419,
+    "p95": 847.4706999841146,
+    "p99": 847.4706999841146,
+    "mean": 818.0842200003099,
+    "n": 5,
+    "label": "skill.cluster_by_embedding (1k skills)"
+  },
+  "skill.retrieve (1k skills, k=5)": {
+    "p50": 11.259600025368854,
+    "p95": 20.844300015596673,
+    "p99": 20.844300015596673,
+    "mean": 12.09352500300156,
+    "n": 20,
+    "label": "skill.retrieve (1k skills, k=5)"
+  },
+  "skill.all (1k skills)": {
+    "p50": 124.11860001157038,
+    "p95": 142.4756000051275,
+    "p99": 142.4756000051275,
+    "mean": 122.4307399999816,
+    "n": 10,
+    "label": "skill.all (1k skills)"
+  },
+  "memory.recall (5k episodes, k=5)": {
+    "p50": 67.49089999357238,
+    "p95": 78.77609998104163,
+    "p99": 78.77609998104163,
+    "mean": 67.23582499689655,
+    "n": 20,
+    "label": "memory.recall (5k episodes, k=5)"
+  },
+  "memory.recall (filtered, k=5)": {
+    "p50": 59.16289999731816,
+    "p95": 80.68529999582097,
+    "p99": 80.68529999582097,
+    "mean": 58.890464997966774,
+    "n": 20,
+    "label": "memory.recall (filtered, k=5)"
+  },
+  "memory.cluster_similar (5k episodes)": {
+    "p50": 4003.38060001377,
+    "p95": 4003.38060001377,
+    "p99": 4003.38060001377,
+    "mean": 3959.9824500182876,
+    "n": 2,
+    "label": "memory.cluster_similar (5k episodes)"
+  },
+  "semantic.recall (500 facts, k=5)": {
+    "p50": 4.899999999906868,
+    "p95": 7.8652999945916235,
+    "p99": 7.8652999945916235,
+    "mean": 5.386595003074035,
+    "n": 20,
+    "label": "semantic.recall (500 facts, k=5)"
+  },
+  "repomap.scan_repo (1k files)": {
+    "p50": 237.34319998766296,
+    "p95": 5376.060700014932,
+    "p99": 5376.060700014932,
+    "mean": 1946.1671666649636,
+    "n": 3,
+    "label": "repomap.scan_repo (1k files)"
+  },
+  "repomap.build_repomap (1k files cold)": {
+    "p50": 230.9728999971412,
+    "p95": 242.1631999895908,
+    "p99": 242.1631999895908,
+    "mean": 231.19909999271235,
+    "n": 3,
+    "label": "repomap.build_repomap (1k files cold)"
+  },
+  "embedding.encode (20 texts \u00d7 2 reps)": {
+    "p50": 0.28989999555051327,
+    "p95": 0.40690001333132386,
+    "p99": 0.40690001333132386,
+    "mean": 0.30309000285342336,
+    "n": 10,
+    "label": "embedding.encode (20 texts \u00d7 2 reps)"
+  }
+}

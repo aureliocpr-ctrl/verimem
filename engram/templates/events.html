@@ -1,0 +1,42 @@
+{% extends "_layout.html" %}
+{% set active = "events" %}
+{% block title %}Events{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">
+      Events
+      <span id="evt-status" class="chip" style="color: var(--c-success); border-color: rgba(86,211,100,.45); background: rgba(86,211,100,.10);">live</span>
+    </h1>
+    <p class="page-header__subtitle">
+      Live event stream &mdash; newest at the top, streamed via Server-Sent
+      Events.
+    </p>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--ghost btn--sm" href="/active-memory">Active memory</a>
+    <a class="btn btn--ghost btn--sm" href="/metrics">Metrics</a>
+  </div>
+</header>
+
+<section class="card stack">
+  <div class="flex-row" style="gap: var(--s-2);flex-wrap:wrap;">
+    <input id="evt-filter" class="input" style="flex:1; max-width: 480px;"
+           placeholder="filter by name/payload..." aria-label="Filter events">
+    <button id="evt-clear" type="button" class="btn">Clear</button>
+    <button id="evt-pause" type="button" class="btn">Pause</button>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr><th>time</th><th>event</th><th>payload</th></tr>
+    </thead>
+    <tbody id="evt-tbody"></tbody>
+  </table>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/events.js" defer></script>
+{% endblock %}

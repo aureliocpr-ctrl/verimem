@@ -1,0 +1,30 @@
+{
+  "vanilla": {
+    "n_candidates": 0,
+    "n_from_master": 0,
+    "n_from_hybrid": 0,
+    "first_3_names": []
+  },
+  "stable_partition": {
+    "n_candidates": 0,
+    "n_from_master": 0,
+    "n_from_hybrid": 0,
+    "first_3_names": []
+  },
+  "second_pass": {
+    "n_candidates": 0,
+    "n_from_master": 0,
+    "n_from_hybrid": 0,
+    "first_3_names": []
+  },
+  "hybrid": {
+    "n_candidates": 44,
+    "n_from_master": 0,
+    "n_from_hybrid": 44,
+    "first_3_names": [
+      "emerging_skill_ambient",
+      "emerging_skill_antigravity-reverse",
+      "emerging_skill_bridge-to"
+    ]
+  }
+}

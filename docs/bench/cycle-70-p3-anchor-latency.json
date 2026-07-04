@@ -1,0 +1,48 @@
+{
+  "bench_name": "cycle-70-p3-anchor-latency",
+  "timestamp_unix": 1778816108.3320007,
+  "setup": {
+    "n_anchors": 5,
+    "n_other_entities": 50,
+    "n_edges": 100,
+    "n_fact_links": 200,
+    "anchor_age_days": [
+      0,
+      1,
+      5,
+      20,
+      90
+    ],
+    "anchor_half_life_days": [
+      1,
+      3,
+      7,
+      14,
+      30
+    ]
+  },
+  "anchor_recall": {
+    "runs": 50,
+    "p50_ms": 59.746,
+    "p95_ms": 86.02,
+    "p99_ms": 511.466,
+    "mean_ms": 70.116,
+    "max_ms": 511.466
+  },
+  "ppr_direct": {
+    "runs": 50,
+    "p50_ms": 46.046,
+    "p95_ms": 55.523,
+    "p99_ms": 80.846,
+    "mean_ms": 47.461,
+    "max_ms": 80.846
+  },
+  "facts_for_entity_baseline": {
+    "runs": 50,
+    "p50_ms": 10.06,
+    "p95_ms": 11.154,
+    "p99_ms": 11.966,
+    "mean_ms": 10.182,
+    "max_ms": 11.966
+  }
+}

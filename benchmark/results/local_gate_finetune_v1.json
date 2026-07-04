@@ -1,0 +1,68 @@
+{
+  "config": {
+    "jsonl": "C:\\Users\\aurel\\.cache\\halumem\\HaluMem-Medium.jsonl",
+    "base_model": "cross-encoder/nli-deberta-v3-base",
+    "epochs": 2,
+    "batch": 8,
+    "lr": 2e-05,
+    "budget": 1500,
+    "seed": 7,
+    "foreign_per_user": 60,
+    "eval_clean": 300,
+    "eval_interference": 300,
+    "eval_foreign": 100,
+    "out_dir": "C:\\Users\\aurel\\.engram\\models\\local_gate_ce",
+    "results": "benchmark/results/local_gate_finetune_v1.json"
+  },
+  "training": {
+    "base_model": "cross-encoder/nli-deberta-v3-base",
+    "device": "cuda",
+    "epochs": 2,
+    "batch_size": 8,
+    "lr": 2e-05,
+    "best": {
+      "val_auroc": 0.985,
+      "epoch": 1
+    },
+    "n_train": 5093,
+    "n_val": 565
+  },
+  "threshold_from_val": 90.98934173583984,
+  "heldout": {
+    "clean": {
+      "n": 164,
+      "admit_rate": 0.9451,
+      "wilson95": [
+        0.899,
+        0.9709
+      ],
+      "mean_score": 95.64
+    },
+    "interference": {
+      "n": 157,
+      "admit_rate": 0.0701,
+      "wilson95": [
+        0.0396,
+        0.1211
+      ],
+      "mean_score": 7.88
+    },
+    "foreign": {
+      "n": 61,
+      "admit_rate": 0.0,
+      "wilson95": [
+        0.0,
+        0.0592
+      ],
+      "mean_score": 0.23
+    }
+  },
+  "auroc_heldout": 0.9912,
+  "auroc_clean_vs_interference": 0.988,
+  "auroc_clean_vs_foreign": 0.9994,
+  "latency_single_ms": 88.5,
+  "reference": {
+    "zero_shot_v2": "local_gate_eval_v2_sentmax.json (base 0.75 / large 0.81)",
+    "claude_probe": "attribution_probe_claude.json (clean 0.80, interference ADMIT 0.40, n=15)"
+  }
+}

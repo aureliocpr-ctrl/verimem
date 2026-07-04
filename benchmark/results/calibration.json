@@ -1,0 +1,11 @@
+{
+  "n": 100,
+  "per_class": 50,
+  "mean_conf_correct_grounded": 97.7,
+  "mean_conf_fabrication": 91.2,
+  "auroc_conf_sound_vs_pathological": 0.494,
+  "ece": 0.186,
+  "n_fabrications": 14,
+  "n_correct_grounded": 46,
+  "model": "claude-sonnet-4-6"
+}

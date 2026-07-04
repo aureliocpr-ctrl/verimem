@@ -1,0 +1,119 @@
+{
+ "done": [
+  "Write-path anti-confab moat CONFIRMED UNIQUE: L1/L3 lexical + L3-semantic NLI + L4 grounding (source⊢fact, SNLI AUROC 0.971). No competitor (mem0/Zep/Letta/Cognee) has any grounding/entailment admission test — they admit whatever the extractor LLM emits.",
+  "Timestamp-aware semantic_conflict shipped & wired into the gate: HaluMem-Medium interference FPR 0.10→0.0125 (~8x) at preserved recall (TPR 0.675→0.70), n=160/run, Wilson CI, real HaluMem-Medium.jsonl offline. Two-seed CIs overlap → robust, not seed-luck.",
+  "End-to-end QA head-to-head proven: Engram pipeline beats plain-RAG baseline by +10-12pts on easy slice (0.78 vs 0.66) and +5.6pts type-stratified (0.389 vs 0.333), abstaining LESS in both — the memory engineering measurably helps, not fake.",
+  "Retrieval recall@5 ≈ 0.909 (n=300, fusion ON: dense e5 + entity-PPR + BM25 + CE-rerank) vs plain-RAG ≈0.79.",
+  "PPR core is live and equals/beats the HippoRAG reference (entity_kg.ppr/ppr_weighted + ppr_seed auto-seed, ENGRAM_PPR_FUSION default-on, budget-capped) — not a gap, a strength.",
+  "Bi-temporal at FACT level shipped (valid_until v10 + status-ranked soft supersede + lineage) — strictly better than mem0's hard DELETE; honest reproducible benchmarking with Wilson CIs + load-bearing caveats + declared Claude-judge asterisk.",
+  "Recall `when` dates exposed on all MCP recall tools; 3 verified bug fixes shipped (requalify injection-topic security, replay data-loss durability, daemon model-blind); dormant apply_topic_penalty wired (env-gated); ENGRAM_SQLITE_SYNCHRONOUS durability knob; RRF tie-break.",
+  "Honest temporal/preference correction recorded: the stratified '0.0' temporal-reasoning & preference were small-n artifacts (real ~0.4-0.5); date-blind harness bug found & corrected (ENGRAM_QA_DATES default-on, +date prefix → abstention 0.58→0.42 on temporal)."
+ ],
+ "roadmap": [
+  {
+   "item": "Build the OFFICIAL HaluMem harness (Extraction-F1 / Memory-Updating / QA-hallucination, the full leaderboard protocol — not just the interference proxy already shipped) and post an honest number vs the conflict-of-interest MemOS leaderboard (MemOS self-reports QA ~67%, large headroom). This is the moat's home turf and the single best 'honest best-on-X' opportunity.",
+   "category": "benchmark",
+   "priority": "P0",
+   "effort": "L",
+   "impact": "The ONE defensible 'best-on-axis' claim. HaluMem measures exactly what Engram's write-path gate is built to win (admitting corrupted memory); the leaderboard is conflicted + low-ceiling. Converts the moat from architecture-claim to a posted number.",
+   "where": "new benchmark/halumem_official_{extraction,updating,qa}.py reusing benchmark/halumem_interference_stage.py embed/retrieve scaffold + semantic_conflict.LLMRelationJudge; score with Wilson CIs + Claude-judge asterisk like BENCHMARKS.md"
+  },
+  {
+   "item": "Run qa_comparative over the FULL LongMemEval-S 500 (strict-answer + ENGRAM_QA_DATES on), end-to-end retrieve→answer→judge, all 6 types, accept the Claude-judge asterisk — the like-for-like headline vs cited SOTA (TiMem 76.9, EverMemOS 83.0 peer-reviewed; vendor 90%+ unverified).",
+   "category": "benchmark",
+   "priority": "P0",
+   "effort": "M",
+   "impact": "Replaces the n=36/n=50 artifacts with one defensible representative number at the field's standard scale. Removes the biggest 'no like-for-like' credibility gap; harness already exists, only scale + config.",
+   "where": "benchmark/qa_comparative.py --stratify at n=500 on LongMemEval_s; commit lme_s_qa_n500.json"
+  },
+  {
+   "item": "Wire typed-predicate KG edges into the write-path: replace the untyped 'co_occurs' clique with openie.extract_entities(mode='ner+triple') typed snake_case edges (env-gated, mirror ENGRAM_GROUNDING_WRITE; keep deterministic lite tier default). The extractor + edge store already exist; only the wiring is missing.",
+   "category": "retrieval",
+   "priority": "P0",
+   "effort": "M",
+   "impact": "Highest value/effort dormant-activate: PPR currently walks co-occurrence NOISE instead of semantic relations. Typed edges directly improve PPR-fusion retrieval (the strong axis) and feed the LongMemEval-500 number. A/B on existing harness before default-on.",
+   "where": "engram/entity_populate.py populate_entities_for_fact (replace co_occurs clique at lines 85-87) → kg.add_edge(subj,obj,triple['predicate'],source_fact_id=fact_id); extractor engram/openie.py already returns triples"
+  },
+  {
+   "item": "Replace the production cross-encoder reranker or make it query-class-adaptive: it is ~neutral-to-negative (engram 0.76 vs engram-base 0.78) — a MS-MARCO CE mismatched to long multi-turn sessions. Try a long-context reranker or gate CE off when session length exceeds a threshold; A/B on the 500-set.",
+   "category": "retrieval",
+   "priority": "P1",
+   "effort": "M",
+   "impact": "Removes a measured drag on the production default. Recovering even the 2pts to base 0.78 on the full set is a direct headline gain at zero new infra.",
+   "where": "engram/semantic.py _rerank_stage2 / _fuse (the CE rerank stage feeding recall); flag the swap, measure via qa_comparative.py"
+  },
+  {
+   "item": "Synchronous mem0-style ADD/UPDATE/DELETE/NONE reconcile loop over top-k neighbors at write, but NLI-judged + evidence/trust-rank gated: replace looks_like_conflict (token-correlation) with semantic_conflict NLI; flip reconcile_new_fact to auto_supersede=True ONLY when (status-rank strictly greater AND NLI=contradiction AND require_evidence); add a semantic near-dup NONE/merge branch in admission_gate (currently exact-match only). Keep Engram's soft-delete.",
+   "category": "differentiator",
+   "priority": "P1",
+   "effort": "M",
+   "impact": "Closes the only real mem0 capability gap (semantic dedup + live supersession) WITHOUT adopting its over-trust hard-DELETE. Reduces corpus pollution → cleaner recall + directly boosts HaluMem Memory-Updating score. All pieces exist, gated OFF today.",
+   "where": "engram/truth_reconciliation.py (swap looks_like_conflict→semantic_conflict NLI) + semantic.py:2924 reconcile_new_fact (flip auto_supersede under guards) + admission_gate.classify_admission (semantic near-dup branch reusing store()'s embedding); measure before default-on"
+  },
+  {
+   "item": "Bi-temporal EDGE invalidation: add invalidated_at (+ optional valid_from/valid_until) to entity_kg.entity_edges via ADD COLUMN migration; filter add_edge/edges_from WHERE invalidated_at IS NULL; in auto_supersede_on_contradiction set invalidated_at=now on edges WHERE source_fact_id == the superseded loser. Copy graphiti's schema, NOT its buggy LLM date-extractor.",
+   "category": "retrieval",
+   "priority": "P1",
+   "effort": "M",
+   "impact": "Today a superseded fact's supporting edges still live and pollute PPR walks. Fact-level bi-temporal already beats Zep; this closes the edge-level gap and compounds with typed edges + the reconcile loop.",
+   "where": "engram/entity_kg.py (entity_edges migration + edge filters) + engram/semantic.py:3596 auto_supersede_on_contradiction"
+  },
+  {
+   "item": "Durability hot-path: add a post-write checkpoint on the non-deferred path (currently synchronous=NORMAL, never checkpoints → committed-but-uncheckpointed write lost on hard crash; journal only covers DEFERRED writes) + a real crash-injection test; document the loss window. ENGRAM_SQLITE_SYNCHRONOUS knob already shipped — finish the story.",
+   "category": "durability",
+   "priority": "P1",
+   "effort": "M",
+   "impact": "A 'best real memory layer' cannot silently lose committed writes on crash. Turns a known correctness hole into a tested, documented guarantee — a claim mem0/Zep don't make.",
+   "where": "engram/semantic.py store() non-deferred write path + new crash-injection test under tests/ (kill mid-commit, assert recovery)"
+  },
+  {
+   "item": "Perf at scale: extend ANN (FAISS/HNSW) to FACTS recall (today O(N) brute-force numpy, ~3GB matrix at 1M, full rebuild on write); add incremental corpus cache. Commit a 768-d 100k-1M scale latency/recall bench.",
+   "category": "perf",
+   "priority": "P1",
+   "effort": "L",
+   "impact": "Brute-force facts recall caps real-world corpus size and write throughput. ANN + incremental cache makes Engram credible past toy scale; the scale bench is itself a marketable artifact.",
+   "where": "engram/semantic.py facts recall (FAISS is episode-only today); new benchmark/scale_bench.py at 100k/1M 768-d"
+  },
+  {
+   "item": "DX/distribution: ship a thin add()/search() Python+npm SDK over the MCP tools + a 5-minute quickstart, to answer mem0's adoption ergonomics (pip+npm, OpenMemory MCP, ~59k stars). Engram is MCP-first but lacks a marketable surface.",
+   "category": "dx",
+   "priority": "P2",
+   "effort": "M",
+   "impact": "Adoption is the gap that keeps the moat invisible. A 5-line SDK + quickstart is the difference between 'rare tech' and 'used'. Lower correctness-impact, high reach.",
+   "where": "new sdk/ over engram/mcp_server.py hippo_remember/hippo_recall; README quickstart"
+  },
+  {
+   "item": "Recognition-memory seed filter before PPR seeding: insert an optional CE/LLM gate between extract_entities_lite and EntityStore.ppr so noisy entities don't dilute the reset vector (HippoRAG-2's rerank_filter). Flag-gated, fail-soft, reuse the existing stage-2 CE.",
+   "category": "retrieval",
+   "priority": "P2",
+   "effort": "M",
+   "impact": "Quality lever on the strong retrieval axis; needs an A/B to confirm. Compounds with typed edges.",
+   "where": "engram/ppr_seed.py ppr_seeded_fact_ids (filter between extract_entities_lite and EntityStore.ppr, reuse _rerank_stage2 CE)"
+  },
+  {
+   "item": "PPR passage-vs-phrase seed weighting: call the already-existing ppr_weighted() with per-seed confidence/recency weights instead of uniform 1/len(seeds). Cheap win, code already present and unused on this path.",
+   "category": "dormant-activate",
+   "priority": "P2",
+   "effort": "S",
+   "impact": "Down-weighting broad seeds (HippoRAG-2 passage_node_weight=0.05) sharpens the reset vector. Smallest-effort retrieval tweak; A/B-gate.",
+   "where": "engram/ppr_seed.py ppr_seeded_fact_ids → EntityStore.ppr_weighted (entity_kg.py:1042) instead of uniform ppr() (entity_kg.py:989)"
+  },
+  {
+   "item": "Agent-callable self-edit block tools (Letta parity): add hippo_block_append / hippo_block_replace / hippo_block_rethink as thin wrappers over SelfModelStore.update, copying Letta's docstring guards verbatim (replace asserts old_content exists; reject 'Line N:' artifacts; byte-limit already enforced). Optional label column for multi-block.",
+   "category": "dx",
+   "priority": "P2",
+   "effort": "S",
+   "impact": "Small, well-bounded Letta-parity. Storage/limit/versioning/injection/heal all already ship — only the self-edit surface is missing.",
+   "where": "engram/mcp_server.py (new tools over engram/self_model.py SelfModelStore.update)"
+  },
+  {
+   "item": "Foresight memory type (EverOS parity): new engram/foresight.py ForesightExtractor (mirror causal_extract.py) called from the write-path, emitting LLM-derived 'what the user will need next' as facts under topic foresight/* with start/end/duration metadata so they decay, supersede and surface in recall. Env-gated, additive.",
+   "category": "differentiator",
+   "priority": "P2",
+   "effort": "M",
+   "impact": "A proactive memory type no competitor open-sources well; distinct from Engram's reactive outcome_predict/skill_warmup. Speculative value — deprioritized below the proven axes.",
+   "where": "new engram/foresight.py; wire into engram/memory.py store() hippo_record_episode path; reuse contradiction.py to heal falsified foresights"
+  }
+ ],
+ "verdict": "Engram is NOT the best-known memory layer today, but it owns a real, rare moat no competitor matches — a write-path grounding/entailment admission gate (SNLI AUROC 0.971) plus honest CI-backed measurement — and it already beats a plain-RAG baseline end-to-end (+5.6 to +12pts, abstaining less) with strong retrieval (recall@5 0.909). The distance-to-best is three things: (1) no POSTED number on the one axis the moat is designed to win, (2) no like-for-like headline at field scale, and (3) absolute hard-type QA still mid-pack (~0.4-0.5). The single highest-leverage move is to build the official HaluMem harness and post an honest extraction/updating/QA number against the conflict-of-interest MemOS leaderboard: it is the only place Engram can credibly claim 'best-on-X' on its home turf, it is runnable with the existing interference scaffold, and a posted number converts an architecture-claim into proof. Pair it immediately with the LongMemEval-S full-500 run (same harness, just scale+config) and the dormant typed-edge wiring (highest value/effort, directly lifts the retrieval axis feeding both benchmarks) — those three land the differentiator, the like-for-like, and a core retrieval gain in one pass."
+}

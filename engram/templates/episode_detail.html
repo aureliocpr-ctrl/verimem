@@ -1,0 +1,67 @@
+{% extends "_layout.html" %}
+{% set active = "episodes" %}
+{% block title %}Episode {{ episode.id[:8] }}{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">
+      Episode <span class="text-mono">{{ episode.id[:12] }}</span>
+    </h1>
+    <p class="page-header__subtitle">{{ episode.task_text }}</p>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--ghost btn--sm" href="/episodes">&larr; back to episodes</a>
+  </div>
+</header>
+
+<section class="card stack">
+  <div class="flex-row" style="flex-wrap: wrap; gap: var(--s-3);">
+    <div>
+      <span class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.05em;">Outcome</span><br>
+      {% if episode.outcome == "success" %}
+      <span class="chip chip--status-promoted">success</span>
+      {% elif episode.outcome == "failure" %}
+      <span class="chip" style="color:var(--c-danger);border-color:rgba(255,123,114,.45);background:rgba(255,123,114,.10);">failure</span>
+      {% else %}
+      <span class="chip">{{ episode.outcome }}</span>
+      {% endif %}
+    </div>
+    <div>
+      <span class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.05em;">Steps</span><br>
+      <span class="text-mono">{{ episode.num_steps }}</span>
+    </div>
+    <div>
+      <span class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.05em;">Tokens</span><br>
+      <span class="text-mono">{{ episode.tokens_used }}</span>
+    </div>
+    <div>
+      <span class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.05em;">Skills used</span><br>
+      {% if episode.skills_used %}
+        {% for sid in episode.skills_used %}
+        <a class="chip chip--ico-learned" href="/skills/{{ sid }}">{{ sid[:8] }}</a>
+        {% endfor %}
+      {% else %}
+      <span class="chip">none</span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="card stack" style="margin-top: var(--s-4);">
+  <h2 class="card__title">Final answer</h2>
+  <pre>{{ episode.final_answer }}</pre>
+</section>
+
+{% if episode.critique %}
+<section class="card stack" style="margin-top: var(--s-4);">
+  <h2 class="card__title">Self-critique</h2>
+  <pre>{{ episode.critique }}</pre>
+</section>
+{% endif %}
+
+<section class="card stack" style="margin-top: var(--s-4);">
+  <h2 class="card__title">Trajectory</h2>
+  <pre>{{ trajectory_text }}</pre>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{
+  "raw|mock": {
+    "n": 5.0,
+    "success_rate": 1.0,
+    "mean_tokens": 44.0,
+    "mean_latency_s": 1.0619999375194312e-05,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_cold|mock": {
+    "n": 5.0,
+    "success_rate": 0.0,
+    "mean_tokens": 3187.6,
+    "mean_latency_s": 3.2868865800031926,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  },
+  "hippo_warm|mock": {
+    "n": 5.0,
+    "success_rate": 0.0,
+    "mean_tokens": 2789.6,
+    "mean_latency_s": 0.07908767999615521,
+    "mean_attempts": 1.0,
+    "n_errors": 0.0
+  }
+}

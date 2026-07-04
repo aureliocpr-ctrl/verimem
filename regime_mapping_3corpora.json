@@ -1,0 +1,44 @@
+{
+  "small_dense_n100": {
+    "n": 96,
+    "thresh": [
+      0.4,
+      0.2
+    ],
+    "counts": {
+      "vanilla": 8,
+      "stable": 8,
+      "second": 8,
+      "hybrid": 8
+    },
+    "hyb_van_ratio": 1.0
+  },
+  "medium_sparse_n500": {
+    "n": 500,
+    "thresh": [
+      0.4,
+      0.2
+    ],
+    "counts": {
+      "vanilla": 20,
+      "stable": 20,
+      "second": 23,
+      "hybrid": 74
+    },
+    "hyb_van_ratio": 3.7
+  },
+  "large_dense_n2000": {
+    "n": 2000,
+    "thresh": [
+      0.196,
+      0.098
+    ],
+    "counts": {
+      "vanilla": 25,
+      "stable": 25,
+      "second": 25,
+      "hybrid": 25
+    },
+    "hyb_van_ratio": 1.0
+  }
+}

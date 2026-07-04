@@ -1,0 +1,56 @@
+[
+  {
+    "cell": "baseline_cosine",
+    "mean_rank": 1.0,
+    "top1": 1.0,
+    "top3": 1.0
+  },
+  {
+    "cell": "dg_only",
+    "use_dg": true,
+    "mean_rank": 1.0,
+    "top1": 1.0,
+    "top3": 1.0
+  },
+  {
+    "cell": "hopfield_only",
+    "use_hopfield": true,
+    "hopfield_beta": 8.0,
+    "mean_rank": 1.0,
+    "top1": 1.0,
+    "top3": 1.0
+  },
+  {
+    "cell": "salience_only",
+    "salience_weight": 0.3,
+    "mean_rank": 1.0,
+    "top1": 1.0,
+    "top3": 1.0
+  },
+  {
+    "cell": "recency_only",
+    "recency_weight": 0.3,
+    "recency_tau_s": 604800.0,
+    "mean_rank": 1.0,
+    "top1": 1.0,
+    "top3": 1.0
+  },
+  {
+    "cell": "dg+salience",
+    "use_dg": true,
+    "salience_weight": 0.2,
+    "mean_rank": 1.0,
+    "top1": 1.0,
+    "top3": 1.0
+  },
+  {
+    "cell": "all_on",
+    "use_dg": true,
+    "salience_weight": 0.2,
+    "recency_weight": 0.1,
+    "recency_tau_s": 604800.0,
+    "mean_rank": 1.0,
+    "top1": 1.0,
+    "top3": 1.0
+  }
+]

@@ -1,0 +1,83 @@
+{% extends "_layout.html" %}
+{% set active = "lineage" %}
+{% block title %}Skill lineage{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Skill lineage</h1>
+    <p class="page-header__subtitle">
+      Skills are nodes (color = status), edges are <em>derived from</em>
+      relations (REM hybrids, merges, schema specialisations). Click a node to
+      open its detail page.
+    </p>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--ghost btn--sm" href="/skills">All skills</a>
+    <a class="btn btn--ghost btn--sm" href="/active-memory">Active memory</a>
+  </div>
+</header>
+
+<section class="card stack">
+  <div class="flex-row" aria-label="Legend" style="flex-wrap:wrap;gap:var(--s-3);">
+    <span class="chip chip--status-promoted">promoted</span>
+    <span class="chip chip--status-candidate">candidate</span>
+    <span class="chip chip--status-retired">retired</span>
+    <span class="spacer"></span>
+    <span class="text-xs text-muted" id="net-count">loading&hellip;</span>
+  </div>
+  <div id="net" role="img" aria-label="Skill lineage network graph"
+       style="height: 600px; background: var(--c-bg-2); border-radius: var(--radius-md);
+              border: 1px solid var(--c-border);"></div>
+  <p class="text-xs text-muted" id="net-empty" style="display:none;">
+    No skills with lineage edges yet &mdash; run a sleep cycle after a few episodes
+    so the dreamer can derive REM hybrids and counterfactuals.
+  </p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script>
+(function() {
+  fetch('/api/lineage')
+    .then(r => r.json())
+    .then(data => {
+      const counter = document.getElementById('net-count');
+      const empty = document.getElementById('net-empty');
+      const container = document.getElementById('net');
+      counter.textContent = data.nodes.length + ' nodes, ' + data.edges.length + ' edges';
+      if (!data.nodes.length) {
+        empty.style.display = 'block';
+        container.style.display = 'none';
+        return;
+      }
+      const colors = {
+        promoted:  '#56d364',
+        candidate: '#e3b341',
+        retired:   '#6b7585',
+      };
+      const nodes = new vis.DataSet(data.nodes.map(n => ({
+        id: n.id,
+        label: n.name + '\n[' + n.stage + ' | ' + n.status + ']\nf=' + (n.fitness || 0).toFixed(2),
+        color: { background: colors[n.status] || '#6ea8ff', border: '#2b3340' },
+        shape: 'box',
+        font: { color: '#0b0e13', size: 12, face: 'JetBrains Mono, ui-monospace, monospace' },
+      })));
+      const edges = new vis.DataSet(data.edges.map(e => ({
+        from: e.source, to: e.target, arrows: 'to', color: { color: '#6ea8ff' },
+      })));
+      const net = new vis.Network(container, { nodes, edges }, {
+        layout: { hierarchical: { direction: 'UD', sortMethod: 'directed', nodeSpacing: 180 } },
+        edges: { smooth: false },
+        interaction: { hover: true, tooltipDelay: 200 },
+      });
+      net.on('click', p => { if (p.nodes.length) location.href = '/skills/' + p.nodes[0]; });
+    })
+    .catch(err => {
+      const counter = document.getElementById('net-count');
+      counter.textContent = 'error: ' + err.message;
+    });
+})();
+</script>
+{% endblock %}

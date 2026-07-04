@@ -1,0 +1,182 @@
+{
+  "robust_0.0": {
+    "config": {
+      "n_foundations": 60,
+      "n_derived": 140,
+      "seeds": 30,
+      "frac_robust": 0.0
+    },
+    "avg_facts": 200.0,
+    "avg_true_fraction": 0.3,
+    "naive_recency_mem0_style": {
+      "jbi": {
+        "mean": 0.375,
+        "ci95": [
+          0.2812,
+          0.4813
+        ]
+      },
+      "valid_recall": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "edge_invalidation_zep_style": {
+      "jbi": {
+        "mean": 0.5,
+        "ci95": [
+          0.375,
+          0.6417
+        ]
+      },
+      "valid_recall": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "engram_tms_this_work": {
+      "jbi": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      },
+      "valid_recall": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "jbi_gain_vs_zep_style": 0.5,
+    "engram_preserves_valid_recall": true
+  },
+  "robust_0.3": {
+    "config": {
+      "n_foundations": 60,
+      "n_derived": 140,
+      "seeds": 30,
+      "frac_robust": 0.3
+    },
+    "avg_facts": 200.0,
+    "avg_true_fraction": 0.408,
+    "naive_recency_mem0_style": {
+      "jbi": {
+        "mean": 0.5096,
+        "ci95": [
+          0.4313,
+          0.575
+        ]
+      },
+      "valid_recall": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "edge_invalidation_zep_style": {
+      "jbi": {
+        "mean": 0.6794,
+        "ci95": [
+          0.575,
+          0.7667
+        ]
+      },
+      "valid_recall": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "engram_tms_this_work": {
+      "jbi": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      },
+      "valid_recall": {
+        "mean": 0.7346,
+        "ci95": [
+          0.6081,
+          0.8953
+        ]
+      }
+    },
+    "jbi_gain_vs_zep_style": 0.3206,
+    "engram_preserves_valid_recall": false
+  },
+  "robust_0.6": {
+    "config": {
+      "n_foundations": 60,
+      "n_derived": 140,
+      "seeds": 30,
+      "frac_robust": 0.6
+    },
+    "avg_facts": 200.0,
+    "avg_true_fraction": 0.489,
+    "naive_recency_mem0_style": {
+      "jbi": {
+        "mean": 0.6115,
+        "ci95": [
+          0.5625,
+          0.6562
+        ]
+      },
+      "valid_recall": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "edge_invalidation_zep_style": {
+      "jbi": {
+        "mean": 0.8153,
+        "ci95": [
+          0.75,
+          0.875
+        ]
+      },
+      "valid_recall": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "engram_tms_this_work": {
+      "jbi": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      },
+      "valid_recall": {
+        "mean": 0.6124,
+        "ci95": [
+          0.4639,
+          0.7404
+        ]
+      }
+    },
+    "jbi_gain_vs_zep_style": 0.1847,
+    "engram_preserves_valid_recall": false
+  }
+}

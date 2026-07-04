@@ -1,0 +1,99 @@
+# syntax=docker/dockerfile:1.7
+#
+# HippoAgent multi-stage build
+# - Stage 1 (builder): build wheels for all runtime deps inside a fat image
+# - Stage 2 (runtime): copy wheels into a slim runtime, drop build tools
+#
+# Defaults to loopback bind (CVE-008). To expose on a non-loopback interface,
+# the operator MUST opt in:
+#     -e HIPPO_TRUSTED_NETWORK=1 ... hippo dashboard --insecure-bind --host 0.0.0.0
+# See docs/SECURITY.md for the full threat model.
+
+# ──────────────────────────── builder ────────────────────────────
+FROM python:3.12-slim AS builder
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential ca-certificates curl git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml README.md ./
+COPY engram/ engram/
+COPY hippoagent/ hippoagent/
+COPY benchmark/ benchmark/
+
+# Build wheels for the project + the "full" extras (opencv, pyautogui, mcp).
+# Wheels go to /wheels and are copied into the runtime image. The runtime
+# image never sees apt build-essential.
+RUN python -m pip install --upgrade pip wheel build && \
+    python -m pip wheel --wheel-dir /wheels ".[headless]"
+
+# Pre-fetch the embedding model into a known cache, then copy it into runtime.
+# Pre-fetch BOTH the active default model (multilingual-e5-base, 768d — what the
+# server actually uses) AND the legacy MiniLM (384d — the COALESCE fallback for
+# pre-v9 NULL-embedding rows). Baking them = the image works fully OFFLINE /
+# air-gapped (no HF Hub round-trip on first encode).
+# NOT --no-deps: sentence-transformers imports `transformers` at module load,
+# so a deps-less install crashes the prefetch (ModuleNotFoundError: transformers).
+# Install ST + its deps from the wheels built above, OFFLINE (--no-index).
+RUN python -m pip install --no-index --find-links /wheels sentence-transformers && \
+    python -c "from sentence_transformers import SentenceTransformer as S; \
+        S('intfloat/multilingual-e5-base'); \
+        S('sentence-transformers/all-MiniLM-L6-v2')" && \
+    cp -R /root/.cache /tmp/cache_seed
+
+# ──────────────────────────── runtime ────────────────────────────
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HIPPO_DATA_DIR=/app/data \
+    HF_HOME=/home/hippo/.cache/huggingface
+
+# Minimal runtime libs (libgomp for sklearn/onnx, libglib for opencv runtime).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl libgomp1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 1000 hippo \
+    && useradd  --system --uid 1000 --gid hippo --create-home --shell /usr/sbin/nologin hippo
+
+WORKDIR /app
+
+# Install from wheels only — no compiler in the runtime image.
+COPY --from=builder /wheels /wheels
+COPY pyproject.toml README.md ./
+COPY engram/ engram/
+COPY hippoagent/ hippoagent/
+COPY benchmark/ benchmark/
+
+# Install the PREBUILT project wheel by distribution NAME (hippoagent), not "."
+# — `.` would make pip rebuild /app from source, which needs a build backend
+# that --no-index can't fetch ("Failed to build file:///app"). The builder
+# already produced hippoagent-*.whl + every dep wheel, so this is fully offline.
+RUN pip install --upgrade pip && \
+    pip install --no-index --find-links /wheels "hippoagent[headless]" && \
+    rm -rf /wheels
+
+# Move pre-fetched HuggingFace cache into the unprivileged user's home.
+COPY --from=builder /tmp/cache_seed /home/hippo/.cache
+RUN chown -R hippo:hippo /home/hippo /app && mkdir -p /app/data && chown hippo:hippo /app/data
+
+VOLUME ["/app/data"]
+EXPOSE 8765
+
+USER hippo
+
+# Healthcheck against the loopback bind (the default).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl --fail --silent --show-error http://127.0.0.1:8765/healthz || exit 1
+
+# Default to loopback. Operators that need to expose on 0.0.0.0 must:
+#   docker run -e HIPPO_TRUSTED_NETWORK=1 hippoagent \
+#     hippo dashboard --insecure-bind --host 0.0.0.0 --port 8765
+CMD ["hippo", "dashboard", "--host", "127.0.0.1", "--port", "8765"]

@@ -1,0 +1,149 @@
+{% extends "_layout.html" %}
+{% set active = "skills" %}
+{% block title %}Skill {{ skill.id[:8] }}{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">{{ skill.name }}</h1>
+    <p class="page-header__subtitle">{{ skill.trigger }}</p>
+    <div class="flex-row" style="gap: var(--s-1); margin-top: var(--s-2);">
+      <span class="chip chip--stage-{{ skill.stage|lower }}">{{ skill.stage }}</span>
+      <span class="chip chip--status-{{ skill.status }}">{{ skill.status }}</span>
+      {% if skill.compiled_macro %}
+      <span class="chip chip--ico-compiled">compiled</span>
+      {% endif %}
+      {% if skill.is_counterfactual %}
+      <span class="chip chip--ico-cf">counterfactual</span>
+      {% endif %}
+      {% if skill.learned_embedding is not none %}
+      <span class="chip chip--ico-learned">Hebbian</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--ghost btn--sm" href="/skills">&larr; back to skills</a>
+    <button class="btn btn--success btn--sm js-promote" data-id="{{ skill.id }}" type="button">
+      Promote
+    </button>
+    <button class="btn btn--danger btn--sm js-retire" data-id="{{ skill.id }}" type="button">
+      Retire
+    </button>
+  </div>
+</header>
+
+<section class="card stack">
+  <dl class="form-grid" style="grid-template-columns: 160px 1fr;">
+    <dt class="text-muted text-sm">Fitness</dt>
+    <dd class="text-mono">
+      {{ "%.2f"|format(skill.fitness_mean) }}
+      <span class="text-muted">({{ skill.successes }}/{{ skill.trials }})</span>
+    </dd>
+    <dt class="text-muted text-sm">Trigger</dt>
+    <dd>{{ skill.trigger }}</dd>
+    <dt class="text-muted text-sm">Body</dt>
+    <dd><pre>{{ skill.body }}</pre></dd>
+    <dt class="text-muted text-sm">Rationale</dt>
+    <dd>{{ skill.rationale }}</dd>
+    <dt class="text-muted text-sm">Parents</dt>
+    <dd>
+      {% if skill.parent_skills %}
+        {% for pid in skill.parent_skills %}
+        <a class="chip" href="/skills/{{ pid }}">{{ pid[:8] }}</a>
+        {% endfor %}
+      {% else %}
+      <span class="chip">none (root)</span>
+      {% endif %}
+    </dd>
+    <dt class="text-muted text-sm">Provenance episodes</dt>
+    <dd>
+      {% if skill.provenance_episodes %}
+        {% for eid in skill.provenance_episodes[:20] %}
+        <a class="chip" href="/episodes/{{ eid }}">{{ eid[:8] }}</a>
+        {% endfor %}
+      {% else %}
+      <span class="chip">none</span>
+      {% endif %}
+    </dd>
+  </dl>
+</section>
+
+{% if skill.compiled_macro %}
+<section class="card stack" style="margin-top: var(--s-4); border-left: 3px solid var(--c-info);">
+  <h2 class="card__title">Compiled macro</h2>
+  <p class="text-muted text-sm">
+    When this skill matches a task strongly, the macro below is executed
+    deterministically &mdash; <strong>zero LLM tokens</strong>, no model latency
+    between steps. On any error the agent falls back to the regular ReAct loop.
+  </p>
+  <p>
+    <strong>Confidence:</strong> {{ "%.2f"|format(macro_conf) }} &middot;
+    <strong>Steps:</strong> {{ macro_steps|length }} &middot;
+    <strong>Distilled from:</strong> {{ macro_episodes|length }} successful episodes
+  </p>
+  <ol>
+    {% for st in macro_steps %}
+    <li>
+      <code>{{ st.tool }}</code>
+      <pre>{{ st.args_json }}</pre>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% if skill.is_counterfactual and skill.parent_skills %}
+<section class="card stack" style="margin-top: var(--s-4); border-left: 3px solid var(--c-purple);">
+  <h2 class="card__title">Counterfactual lineage</h2>
+  <p>
+    Generated as an alternative to a failing skill:
+    <a class="chip" href="/skills/{{ skill.parent_skills[0] }}">{{ skill.parent_skills[0][:8] }}</a>.
+    This skill competes with the parent for retrieval; if it outperforms, the
+    parent is eventually retired.
+  </p>
+</section>
+{% endif %}
+
+{% if practice_prompts %}
+<section class="card stack" style="margin-top: var(--s-4); border-left: 3px solid var(--c-accent);">
+  <h2 class="card__title">
+    Practice prompts <span class="card__hint">dreamer-suggested</span>
+  </h2>
+  <p class="text-muted text-sm">
+    This skill's fitness is in the uncertain zone (~{{ "%.2f"|format(skill.fitness_mean) }}).
+    The dreamer wrote concrete tasks the agent could try &mdash; running them
+    feeds real evidence into the Bayesian fitness so the skill is either
+    promoted or retired.
+  </p>
+  <ul class="stack-sm" style="list-style:none;padding:0;margin:0;">
+    {% for p in practice_prompts %}
+    <li class="flex-row" style="gap:var(--s-3);align-items:flex-start;">
+      <span style="flex:1;">{{ p.text }}</span>
+      <a class="btn btn--sm" href="/chat?prefill={{ p.url_encoded }}">Run in chat</a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  document.querySelectorAll('.js-promote').forEach(b => {
+    b.addEventListener('click', () => {
+      if (!confirm('Promote this skill?')) return;
+      fetch('/api/skills/' + b.dataset.id + '/promote', {method:'POST'})
+        .then(() => location.reload());
+    });
+  });
+  document.querySelectorAll('.js-retire').forEach(b => {
+    b.addEventListener('click', () => {
+      if (!confirm('Retire (archive) this skill?')) return;
+      fetch('/api/skills/' + b.dataset.id + '/retire', {method:'POST'})
+        .then(() => location.reload());
+    });
+  });
+})();
+</script>
+{% endblock %}

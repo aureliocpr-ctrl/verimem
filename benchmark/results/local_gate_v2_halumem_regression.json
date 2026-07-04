@@ -1,0 +1,124 @@
+{
+  "jsonl": "C:\\Users\\aurel\\.cache\\halumem\\HaluMem-Medium.jsonl",
+  "seed": 7,
+  "budget_chars": 1500,
+  "mode": "doc",
+  "speakers": true,
+  "n_pairs": 5500,
+  "n_by_kind": {
+    "clean": 3000,
+    "interference": 2000,
+    "foreign": 500
+  },
+  "split": {
+    "calib_users": 10,
+    "heldout_users": 10,
+    "n_calib": 2664,
+    "n_heldout": 2836
+  },
+  "reference_claude": {
+    "note": "halumem_gate_source_ab.json budget=2000 n=20/10/8: clean-admit 0.80, foreign/confab 0.0; SNLI AUROC 0.971 (different set)"
+  },
+  "models": {
+    "C:\\Users\\aurel\\.engram\\models\\local_gate_ce_v2": {
+      "model": "C:\\Users\\aurel\\.engram\\models\\local_gate_ce_v2",
+      "kind": "finetuned",
+      "gate_config": {
+        "threshold": 99.64130401611328,
+        "focus_budget": 1500,
+        "base_model": "cross-encoder/nli-deberta-v3-base",
+        "seed": 11,
+        "trained_on": "HaluMem GT + real-corpus claude soft labels (v2 mix)",
+        "training": {
+          "base_model": "cross-encoder/nli-deberta-v3-base",
+          "device": "cuda",
+          "epochs": 3,
+          "batch_size": 8,
+          "lr": 2e-05,
+          "best": {
+            "val_auroc": 0.9879,
+            "epoch": 1
+          },
+          "n_train": 7493,
+          "n_val": 832
+        }
+      },
+      "threshold": 99.64130401611328,
+      "n_calib": 2664,
+      "n_heldout": 2836,
+      "heldout": {
+        "clean": {
+          "n": 1566,
+          "admit_rate": 0.9208,
+          "wilson95": [
+            0.9064,
+            0.9332
+          ],
+          "mean_score": 97.04
+        },
+        "interference": {
+          "n": 1013,
+          "admit_rate": 0.0227,
+          "wilson95": [
+            0.0152,
+            0.0338
+          ],
+          "mean_score": 6.73
+        },
+        "foreign": {
+          "n": 257,
+          "admit_rate": 0.0078,
+          "wilson95": [
+            0.0021,
+            0.0279
+          ],
+          "mean_score": 2.25
+        }
+      },
+      "auroc_heldout": 0.99,
+      "auroc_clean_vs_interference": 0.9884,
+      "auroc_clean_vs_foreign": 0.9962,
+      "latency_single": {
+        "n": 20,
+        "p50_ms": 27.9,
+        "p95_ms": 35.6,
+        "mean_ms": 28.5
+      },
+      "batch_total_s": 40.6,
+      "batch_ms_per_pair": 7.4,
+      "errors_sample": {
+        "false_reject_clean": [
+          {
+            "score": 0.1,
+            "fact": "Joseph Garcia expressed curiosity about integrating peppermint tea into his daily routine for relaxation benefits."
+          },
+          {
+            "score": 0.1,
+            "fact": "Taylor David's employment status updated from \"entrepreneur\" to \"chief strategist\"."
+          },
+          {
+            "score": 0.1,
+            "fact": "Ananya Sharma's career_status updated industry from \"film festivals\" to \"education\"."
+          }
+        ],
+        "false_admit_noise": [
+          {
+            "score": 100.0,
+            "kind": "interference",
+            "fact": "Barbara Jones values balancing scientific accuracy with imaginative storytelling in movies."
+          },
+          {
+            "score": 100.0,
+            "kind": "interference",
+            "fact": "Martin Mark's career_status updated monthly_income from '18000' to '22000'"
+          },
+          {
+            "score": 100.0,
+            "kind": "interference",
+            "fact": "Martin Mark's physical health status changed from 'Improved' to 'Good'"
+          }
+        ]
+      }
+    }
+  }
+}

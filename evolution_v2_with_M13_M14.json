@@ -1,0 +1,214 @@
+{
+  "summary": {
+    "n_rules_tracked": 17,
+    "n_rules_with_birth": 12,
+    "n_rules_with_applications": 7,
+    "rules_never_referenced": [
+      "S1_EMPIRICAL_DISCIPLINE",
+      "S2_PROCESS_DISCIPLINE",
+      "S3_WIRING_DISCIPLINE",
+      "S4_REFRAMING_DISCIPLINE",
+      "S5_LEVEL_OF_EFFECT"
+    ]
+  },
+  "timeline": {
+    "M7_PARTITION_VS_COUNT": {
+      "birth": {
+        "cycle": 282,
+        "sha": "1c8ae0458f",
+        "subject": "cycle 282: sequential 3-cycle test -> stable_partition 10x more stable"
+      },
+      "applications": [
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 291,
+          "sha": "83b867891d",
+          "subject": "cycle 291: self-audit cycle 284-290 + \u00a79.3 empirical validation supports target"
+        }
+      ]
+    },
+    "M5_WIRE_OR_DISCLOSE": {
+      "birth": {
+        "cycle": 284,
+        "sha": "9ba4621d24",
+        "subject": "cycle 284: wire stable_partition into auto_dream_worker (env-var opt-in)"
+      },
+      "applications": [
+        {
+          "cycle": 285,
+          "sha": "dc5be68d0f",
+          "subject": "cycle 285: TDD contract for ENGRAM_USE_STABLE_PARTITION env var routing"
+        },
+        {
+          "cycle": 286,
+          "sha": "a0145bf136",
+          "subject": "cycle 286: paper \u00a76.5 update - production wire cycle 284-285 documented"
+        },
+        {
+          "cycle": 288,
+          "sha": "06fe114175",
+          "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+        },
+        {
+          "cycle": 291,
+          "sha": "83b867891d",
+          "subject": "cycle 291: self-audit cycle 284-290 + \u00a79.3 empirical validation supports target"
+        },
+        {
+          "cycle": 293,
+          "sha": "b51f9842f9",
+          "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer"
+        }
+      ]
+    },
+    "M3_BENCH_FIRST": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": [
+        {
+          "cycle": 300,
+          "sha": "6d0f203bf5",
+          "subject": "cycle 300: pioneering #33 Conv-Commit detection + honest M-rule recall bounded"
+        }
+      ]
+    },
+    "M4_CRITIC_GATE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M6_A4_REFRAMING": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M8_CHAIN_OF_THOUGHT": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M9_CLIFF_EDGE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M10_MASTER_FACT_RATIO": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": []
+    },
+    "M11_REPLICATED_SAMPLE": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": [
+        {
+          "cycle": 293,
+          "sha": "b51f9842f9",
+          "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer"
+        }
+      ]
+    },
+    "M12_REVEALING_VS_CREATING": {
+      "birth": {
+        "cycle": 288,
+        "sha": "06fe114175",
+        "subject": "cycle 288: pioneering #29 META-RULE EVOLUTION timeline + paper \u00a79.8"
+      },
+      "applications": [
+        {
+          "cycle": 300,
+          "sha": "6d0f203bf5",
+          "subject": "cycle 300: pioneering #33 Conv-Commit detection + honest M-rule recall bounded"
+        }
+      ]
+    },
+    "M13_SECOND_CALL_SITE": {
+      "birth": {
+        "cycle": 287,
+        "sha": "06e0a20d59",
+        "subject": "cycle 287: critic gate HOLD 3-0-0 first post-cycle-264 PASS + M13 born"
+      },
+      "applications": [
+        {
+          "cycle": 289,
+          "sha": "46830a62a0",
+          "subject": "cycle 289: close M13 SECOND-CALL-SITE COVERAGE gap (cycle 287 counterexample)"
+        },
+        {
+          "cycle": 290,
+          "sha": "85dff13f26",
+          "subject": "cycle 290: pioneering #30 close cycle 289 vacuous gap with non-empty corpus"
+        },
+        {
+          "cycle": 293,
+          "sha": "b51f9842f9",
+          "subject": "cycle 293: pioneering #32 critic verdict pattern analyzer"
+        },
+        {
+          "cycle": 297,
+          "sha": "efa715e3fe",
+          "subject": "cycle 297: wire HYBRID into auto_dream_worker via ENGRAM_USE_HYBRID env var"
+        },
+        {
+          "cycle": 302,
+          "sha": "f249bc48e2",
+          "subject": "cycle 302: \u00a79.6.11 update N=2/2 post-264 HOLDS + M14 EMPIRICAL-HEADLINE-PROTECTI"
+        },
+        {
+          "cycle": 303,
+          "sha": "196922ad80",
+          "subject": "cycle 303: pin HYBRID empirical headline via unit test (M14 closure)"
+        },
+        {
+          "cycle": 309,
+          "sha": "0395aeed2d",
+          "subject": "cycle 309: CONTRIBUTING.md addendum M13+M14 + env vars table"
+        }
+      ]
+    },
+    "M14_EMPIRICAL_HEADLINE": {
+      "birth": {
+        "cycle": 302,
+        "sha": "f249bc48e2",
+        "subject": "cycle 302: \u00a79.6.11 update N=2/2 post-264 HOLDS + M14 EMPIRICAL-HEADLINE-PROTECTI"
+      },
+      "applications": [
+        {
+          "cycle": 303,
+          "sha": "196922ad80",
+          "subject": "cycle 303: pin HYBRID empirical headline via unit test (M14 closure)"
+        },
+        {
+          "cycle": 309,
+          "sha": "0395aeed2d",
+          "subject": "cycle 309: CONTRIBUTING.md addendum M13+M14 + env vars table"
+        }
+      ]
+    }
+  }
+}

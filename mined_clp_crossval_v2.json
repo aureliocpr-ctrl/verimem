@@ -1,0 +1,122 @@
+{
+  "n_commits_analyzed": 50,
+  "n_commits_with_patterns": 50,
+  "patterns_count": {
+    "CONV_feat": 36,
+    "LOOP_naming": 47,
+    "A2_anti_hallucination": 15,
+    "A3_sincerity": 28,
+    "B2_falsification": 21,
+    "A1_anti_confab": 8,
+    "REPLICATED_sample": 18,
+    "CONV_release": 13,
+    "CONV_docs": 2,
+    "CONV_fix": 3,
+    "B4_chain": 22,
+    "B6_curiosity": 2,
+    "A4_anti_marketing": 2,
+    "WIRE_disclose": 9
+  },
+  "top_co_occurrences": {
+    "CONV_feat+LOOP_naming": 36,
+    "A3_sincerity+LOOP_naming": 28,
+    "B4_chain+LOOP_naming": 22,
+    "A3_sincerity+CONV_feat": 21,
+    "B2_falsification+LOOP_naming": 20,
+    "LOOP_naming+REPLICATED_sample": 18,
+    "B4_chain+CONV_feat": 18,
+    "B2_falsification+CONV_feat": 17,
+    "A2_anti_hallucination+LOOP_naming": 15,
+    "A3_sincerity+REPLICATED_sample": 15
+  },
+  "ground_truth_recall": {
+    "M3_BENCH_FIRST": {
+      "expected_categories": [
+        "A2_anti_hallucination",
+        "B6_curiosity"
+      ],
+      "found_categories": [
+        "A2_anti_hallucination",
+        "B6_curiosity"
+      ],
+      "recall_score": 1.0
+    },
+    "M4_CRITIC_GATE_NON_OPTIONAL": {
+      "expected_categories": [
+        "O3_critic_gate"
+      ],
+      "found_categories": [],
+      "recall_score": 0.0
+    },
+    "M5_WIRE_OR_DISCLOSE": {
+      "expected_categories": [
+        "WIRE_disclose",
+        "A4_anti_marketing"
+      ],
+      "found_categories": [
+        "WIRE_disclose",
+        "A4_anti_marketing"
+      ],
+      "recall_score": 1.0
+    },
+    "M6_A4_REFRAMING_POSITIVE": {
+      "expected_categories": [
+        "A4_anti_marketing",
+        "B2_falsification"
+      ],
+      "found_categories": [
+        "A4_anti_marketing",
+        "B2_falsification"
+      ],
+      "recall_score": 1.0
+    },
+    "M7_PARTITION_SHAPE_vs_COUNT": {
+      "expected_categories": [
+        "REVEALING_creating"
+      ],
+      "found_categories": [],
+      "recall_score": 0.0
+    },
+    "M8_CHAIN_OF_THOUGHT_PRESERVATION": {
+      "expected_categories": [
+        "M_meta_rule"
+      ],
+      "found_categories": [],
+      "recall_score": 0.0
+    },
+    "M9_CLIFF_EDGE_CALIBRATION": {
+      "expected_categories": [
+        "REVEALING_creating"
+      ],
+      "found_categories": [],
+      "recall_score": 0.0
+    },
+    "M10_MASTER_FACT_RATIO": {
+      "expected_categories": [
+        "WIRE_disclose"
+      ],
+      "found_categories": [
+        "WIRE_disclose"
+      ],
+      "recall_score": 1.0
+    },
+    "M11_REPLICATED_SAMPLE_EXTENSION": {
+      "expected_categories": [
+        "REPLICATED_sample"
+      ],
+      "found_categories": [
+        "REPLICATED_sample"
+      ],
+      "recall_score": 1.0
+    },
+    "M12_REVEALING_vs_CREATING": {
+      "expected_categories": [
+        "REVEALING_creating"
+      ],
+      "found_categories": [],
+      "recall_score": 0.0
+    }
+  },
+  "overall_recall": 0.5,
+  "falsifiable_claim_test": "FAIL (<0.70)"
+}

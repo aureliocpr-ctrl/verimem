@@ -1,0 +1,285 @@
+{
+  "jsonl": "C:\\Users\\aurel\\.cache\\halumem\\HaluMem-Medium.jsonl",
+  "seed": 7,
+  "budget_chars": 1500,
+  "mode": "sent_max",
+  "speakers": true,
+  "n_pairs": 700,
+  "n_by_kind": {
+    "clean": 300,
+    "interference": 300,
+    "foreign": 100
+  },
+  "split": {
+    "calib_users": 10,
+    "heldout_users": 10,
+    "n_calib": 318,
+    "n_heldout": 382
+  },
+  "reference_claude": {
+    "note": "halumem_gate_source_ab.json budget=2000 n=20/10/8: clean-admit 0.80, foreign/confab 0.0; SNLI AUROC 0.971 (different set)"
+  },
+  "models": {
+    "cross-encoder/nli-deberta-v3-base": {
+      "model": "cross-encoder/nli-deberta-v3-base",
+      "load_s": 5.1,
+      "id2label": {
+        "0": "contradiction",
+        "1": "entailment",
+        "2": "neutral"
+      },
+      "device": "cuda:0",
+      "max_length": 512,
+      "threshold": 89.91380333900452,
+      "n_calib": 318,
+      "n_heldout": 382,
+      "heldout": {
+        "clean": {
+          "n": 164,
+          "admit_rate": 0.5732,
+          "wilson95": [
+            0.4966,
+            0.6463
+          ],
+          "mean_score": 59.59
+        },
+        "interference": {
+          "n": 157,
+          "admit_rate": 0.1975,
+          "wilson95": [
+            0.1427,
+            0.2666
+          ],
+          "mean_score": 23.15
+        },
+        "foreign": {
+          "n": 61,
+          "admit_rate": 0.0656,
+          "wilson95": [
+            0.0258,
+            0.1568
+          ],
+          "mean_score": 10.73
+        }
+      },
+      "auroc_heldout": 0.7478,
+      "auroc_clean_vs_interference": 0.7149,
+      "auroc_clean_vs_foreign": 0.8326,
+      "latency_single": {
+        "n": 20,
+        "p50_ms": 61.3,
+        "p95_ms": 72.1,
+        "mean_ms": 60.0
+      },
+      "batch_total_s": 28.7,
+      "batch_ms_per_pair": 41.0,
+      "errors_sample": {
+        "false_reject_clean": [
+          {
+            "score": 0.0,
+            "fact": "Joseph Garcia received a prestigious award for excellence in film education on Feb 15, 2037, marking a significant milestone in his career."
+          },
+          {
+            "score": 0.0,
+            "fact": "Johnson Joseph received overwhelmingly positive feedback from guests and partners regarding the new marketing strategies at Albi B&B."
+          },
+          {
+            "score": 0.0,
+            "fact": "Barbara Jones removed 'Wellness retreats' from her list of liked travel styles, preferring more dynamic and engaging travel experiences."
+          }
+        ],
+        "false_admit_noise": [
+          {
+            "score": 99.8,
+            "kind": "interference",
+            "fact": "Joseph Garcia discussed the emotional impact of receiving an award, emphasizing his commitment to modern cinema education."
+          },
+          {
+            "score": 99.8,
+            "kind": "interference",
+            "fact": "Sharon Brown expressed gratitude for the support from her family, which has been instrumental in her career advancement."
+          },
+          {
+            "score": 99.8,
+            "kind": "interference",
+            "fact": "Martin Mark discussed the importance of aligning personal choices with financial goals."
+          }
+        ]
+      }
+    },
+    "cross-encoder/nli-MiniLM2-L6-H768": {
+      "model": "cross-encoder/nli-MiniLM2-L6-H768",
+      "load_s": 3.2,
+      "id2label": {
+        "0": "contradiction",
+        "1": "entailment",
+        "2": "neutral"
+      },
+      "device": "cuda:0",
+      "max_length": 512,
+      "threshold": 16.61086231470108,
+      "n_calib": 318,
+      "n_heldout": 382,
+      "heldout": {
+        "clean": {
+          "n": 164,
+          "admit_rate": 0.7439,
+          "wilson95": [
+            0.6721,
+            0.8046
+          ],
+          "mean_score": 57.78
+        },
+        "interference": {
+          "n": 157,
+          "admit_rate": 0.6115,
+          "wilson95": [
+            0.5334,
+            0.6842
+          ],
+          "mean_score": 38.3
+        },
+        "foreign": {
+          "n": 61,
+          "admit_rate": 0.0164,
+          "wilson95": [
+            0.0029,
+            0.0872
+          ],
+          "mean_score": 2.26
+        }
+      },
+      "auroc_heldout": 0.7471,
+      "auroc_clean_vs_interference": 0.6636,
+      "auroc_clean_vs_foreign": 0.9619,
+      "latency_single": {
+        "n": 20,
+        "p50_ms": 21.8,
+        "p95_ms": 27.8,
+        "mean_ms": 21.9
+      },
+      "batch_total_s": 10.0,
+      "batch_ms_per_pair": 14.3,
+      "errors_sample": {
+        "false_reject_clean": [
+          {
+            "score": 0.4,
+            "fact": "Donna Gonzalez expressed excitement about the freedom her independent career provides for strategic planning, which includes sponsorships an"
+          },
+          {
+            "score": 0.6,
+            "fact": "Martin's financial stability has enabled him to invest in activities like fitness programs and mindfulness workshops, significantly improvin"
+          },
+          {
+            "score": 0.7,
+            "fact": "Donald Brown's newfound appreciation for heavy metal reflects his evolving music taste and openness to cultural diversity."
+          }
+        ],
+        "false_admit_noise": [
+          {
+            "score": 99.1,
+            "kind": "interference",
+            "fact": "Joseph Garcia discussed the emotional impact of receiving an award, emphasizing his commitment to modern cinema education."
+          },
+          {
+            "score": 98.7,
+            "kind": "interference",
+            "fact": "Martin Mark discussed the importance of aligning personal choices with financial goals."
+          },
+          {
+            "score": 98.4,
+            "kind": "interference",
+            "fact": "Donna Gonzalez views simulation games with customizable sound environments as a tool for relaxation and stress relief."
+          }
+        ]
+      }
+    },
+    "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli": {
+      "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+      "load_s": 20.6,
+      "id2label": {
+        "0": "entailment",
+        "1": "neutral",
+        "2": "contradiction"
+      },
+      "device": "cuda:0",
+      "max_length": 512,
+      "threshold": 98.72624278068542,
+      "n_calib": 318,
+      "n_heldout": 382,
+      "heldout": {
+        "clean": {
+          "n": 164,
+          "admit_rate": 0.5854,
+          "wilson95": [
+            0.5089,
+            0.658
+          ],
+          "mean_score": 75.39
+        },
+        "interference": {
+          "n": 157,
+          "admit_rate": 0.1529,
+          "wilson95": [
+            0.1049,
+            0.2174
+          ],
+          "mean_score": 39.79
+        },
+        "foreign": {
+          "n": 61,
+          "admit_rate": 0.0,
+          "wilson95": [
+            0.0,
+            0.0592
+          ],
+          "mean_score": 3.45
+        }
+      },
+      "auroc_heldout": 0.8133,
+      "auroc_clean_vs_interference": 0.7741,
+      "auroc_clean_vs_foreign": 0.9142,
+      "latency_single": {
+        "n": 20,
+        "p50_ms": 62.9,
+        "p95_ms": 86.0,
+        "mean_ms": 65.0
+      },
+      "batch_total_s": 28.3,
+      "batch_ms_per_pair": 40.4,
+      "errors_sample": {
+        "false_reject_clean": [
+          {
+            "score": 0.1,
+            "fact": "Johnson Joseph's monthly income increased from $6000 to $8000."
+          },
+          {
+            "score": 0.1,
+            "fact": "Joseph Garcia received a prestigious award for excellence in film education on Feb 15, 2037, marking a significant milestone in his career."
+          },
+          {
+            "score": 0.1,
+            "fact": "Johnson Joseph initiated a retirement strategy on Oct 15, 2035, focusing on evaluating business operations and identifying potential success"
+          }
+        ],
+        "false_admit_noise": [
+          {
+            "score": 100.0,
+            "kind": "interference",
+            "fact": "Donald Brown expressed concern over his deteriorating emotional health and stress levels."
+          },
+          {
+            "score": 99.9,
+            "kind": "interference",
+            "fact": "Sarah Garcia expressed interest in exploring more music genres that promote energy and motivation."
+          },
+          {
+            "score": 99.9,
+            "kind": "interference",
+            "fact": "Martin shared anecdotes about past experiences with coffee as a staple for relaxation."
+          }
+        ]
+      }
+    }
+  }
+}

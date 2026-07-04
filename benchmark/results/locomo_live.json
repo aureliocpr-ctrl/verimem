@@ -1,0 +1,46 @@
+{
+  "dataset": "C:\\Users\\aurel\\.cache\\locomo\\locomo10.json",
+  "k": 5,
+  "n_conversations": 10,
+  "n_qa_scored": 1982,
+  "embedding_model": "intfloat/multilingual-e5-base",
+  "embedding_dim": 768,
+  "overall": {
+    "recall_at_k": 0.5756,
+    "hit_at_k": 0.6337,
+    "mrr": 0.4739
+  },
+  "per_category": {
+    "1": {
+      "n": 282,
+      "recall_at_k": 0.297,
+      "hit_at_k": 0.5816,
+      "mrr": 0.3884
+    },
+    "2": {
+      "n": 321,
+      "recall_at_k": 0.6765,
+      "hit_at_k": 0.7103,
+      "mrr": 0.5828
+    },
+    "3": {
+      "n": 92,
+      "recall_at_k": 0.2681,
+      "hit_at_k": 0.3696,
+      "mrr": 0.2495
+    },
+    "4": {
+      "n": 841,
+      "recall_at_k": 0.6799,
+      "hit_at_k": 0.6932,
+      "mrr": 0.5328
+    },
+    "5": {
+      "n": 446,
+      "recall_at_k": 0.546,
+      "hit_at_k": 0.5538,
+      "mrr": 0.3849
+    }
+  },
+  "metric_note": "turn-level retrieval recall@k of gold evidence dia_ids; judge-free, no external API; embedding via Engram's own model. Unanswerable QA (no turn evidence) excluded from the recall metric."
+}
