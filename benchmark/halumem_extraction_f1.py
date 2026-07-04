@@ -44,12 +44,29 @@ _EXTRACT_SYSTEM = (
     "events, plans). One short declarative sentence per fact, one per line, no numbering, "
     "no preamble. Only facts the dialogue actually states.")
 
+# Granularity lever (iter 19): HaluMem gold memory_points are ATOMIC, subject-named
+# and exhaustive; the generic prompt yields fewer, compound facts (each matches at
+# most one gold at the e5 threshold) and 600 max_tokens truncates dense sessions.
+_EXTRACT_SYSTEM_ATOMIC = (
+    "Extract EVERY durable memory fact a personal assistant should store from this "
+    "conversation — identity, relationships, preferences (likes AND dislikes), events, "
+    "plans, health, work, reasons. Rules:\n"
+    "- ATOMIC: exactly ONE attribute or fact per line; if a sentence carries several "
+    "(a preference + its reason + a date), split them into separate lines.\n"
+    "- Start every line with the user's full name (never a pronoun).\n"
+    "- Be EXHAUSTIVE: list every stable fact the dialogue states, including minor ones.\n"
+    "- Only facts the dialogue actually states — never invent or infer beyond it.\n"
+    "One fact per line, no numbering, no preamble.")
 
-def _extract(llm, dialogue: str, model=None) -> list[str]:
+_PROMPTS = {"v1": _EXTRACT_SYSTEM, "atomic": _EXTRACT_SYSTEM_ATOMIC}
+
+
+def _extract(llm, dialogue: str, model=None, *, system: str = _EXTRACT_SYSTEM,
+             max_tokens: int = 600) -> list[str]:
     try:
-        r = llm.complete(_EXTRACT_SYSTEM,
+        r = llm.complete(system,
                          [{"role": "user", "content": f"Conversation:\n{dialogue}\n\nFacts:"}],
-                         model=model, max_tokens=600)
+                         model=model, max_tokens=max_tokens)
         text = (getattr(r, "text", "") or "")
     except Exception:  # noqa: BLE001
         return []
@@ -96,6 +113,13 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=120)
     ap.add_argument("--model", default="claude-sonnet-4-6")
     ap.add_argument("--self-test", action="store_true", help="score gold-vs-gold (no LLM)")
+    ap.add_argument("--prompt", choices=sorted(_PROMPTS), default="v1",
+                    help="extraction prompt variant (atomic = granularity lever)")
+    ap.add_argument("--max-out-tokens", type=int, default=600,
+                    help="extraction output cap (600 truncates dense sessions)")
+    ap.add_argument("--no-gate", action="store_true",
+                    help="skip the admission-gate arm (halves LLM calls; "
+                         "granularity iterations only need the off arm)")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
 
@@ -135,13 +159,16 @@ def main(argv=None) -> int:
             if not gold:
                 continue
             src = _session_text(s)
-            extracted = _extract(llm, src, model=a.model)
+            extracted = _extract(llm, src, model=a.model,
+                                 system=_PROMPTS[a.prompt],
+                                 max_tokens=a.max_out_tokens)
             if not extracted:
                 continue
-            admitted = [f for f in extracted
-                        if fact_grounding_score(llm, src, f) >= a.gate_thr]
             arms["off"].append(_prf(extracted, gold, a.match_thr))
-            arms["on"].append(_prf(admitted, gold, a.match_thr))
+            if not a.no_gate:
+                admitted = [f for f in extracted
+                            if fact_grounding_score(llm, src, f) >= a.gate_thr]
+                arms["on"].append(_prf(admitted, gold, a.match_thr))
 
     def agg(rows):
         if not rows:
@@ -153,6 +180,9 @@ def main(argv=None) -> int:
                 "avg_pred": round(sum(r[3] for r in rows) / len(rows), 2)}
 
     res = {"users": len(users), "match_thr": a.match_thr, "gate_thr": a.gate_thr,
+           # A/B self-proving: the variant actually used by THIS process
+           "prompt_variant": a.prompt, "max_out_tokens": a.max_out_tokens,
+           "no_gate": bool(a.no_gate),
            "off": agg(arms["off"]), "on": agg(arms["on"])}
     print(json.dumps(res, indent=2))
     if a.out:
