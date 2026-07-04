@@ -1,0 +1,22 @@
+{
+  "n_questions": 120,
+  "n_scored": 117,
+  "n_errors": 3,
+  "users": 8,
+  "with_interference": false,
+  "grounding_gate": true,
+  "recall_centering": true,
+  "counts": {
+    "CORRECT": 41,
+    "HALLUCINATION": 13,
+    "OMISSION": 63,
+    "ERROR": 3
+  },
+  "correct_rate": 0.3504,
+  "hallucination_rate": 0.1111,
+  "omission_rate": 0.5385,
+  "hallucination_ci95": [
+    0.0661,
+    0.1809
+  ]
+}
