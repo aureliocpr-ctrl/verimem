@@ -68,6 +68,12 @@ the moat to *do* anything at recall, set `ENGRAM_RECONCILE_NLI=local`.
   offline/subscription loop).
 - **`ENGRAM_RECONCILE_NLI` is wired by `HippoAgent.build`.** A bare `SemanticMemory`
   needs a programmatic `set_reconcile_judge(...)`.
+- **The local NLI judge is usable but noisier than the paid one.** On HaluMem
+  interference (seed7, n=160): local NLI AUROC ~0.81, best point TPR 0.71 / FPR 0.25
+  vs the LLM judge's TPR 0.675 / FPR 0.10 — comparable recall, ~2.5× the false
+  positives. Fail-safe bounds the cost (a false positive is a recoverable CONTESTED
+  doubt, not a deletion); a precision-first deployment should raise the threshold or
+  use `=llm`. Measured by `benchmark/interference_local_nli.py`.
 
 ## Evidence (tests + benches)
 
