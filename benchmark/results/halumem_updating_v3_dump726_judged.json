@@ -1,0 +1,403 @@
+{
+  "results_file": "C:\\Users\\aurel\\AppData\\Local\\Temp\\claude\\C--Users-aurel-Desktop-ProgettiAI\\67a0a5f0-cd53-45ef-9e94-351aaa024deb\\scratchpad\\v3_selections_726.json",
+  "judge_model": "claude-sonnet-4-6",
+  "note": "DECLARED Claude-judge (official protocol uses gpt-4o; O4 forbids external APIs). Judge scores target-SELECTION per the official rubric; corrected accuracy reweights full-run local class counts by sampled P(judge=correct|class).",
+  "sampled": 40,
+  "errors": 0,
+  "per_class": {
+    "correct": {
+      "n": 20,
+      "judge_correct": 13,
+      "agree": 13
+    },
+    "wrong": {
+      "n": 20,
+      "judge_correct": 1,
+      "agree": 19
+    }
+  },
+  "judge_correct_rate_on_sample": 0.35,
+  "full_run_local_accuracy": 0.3347,
+  "judge_corrected_accuracy": 0.2508,
+  "judge_corrected_accuracy_wilson_on_sample": [
+    0.2213,
+    0.5049
+  ],
+  "wall_s": 365.4,
+  "judged": [
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donna Gonzalez decided to eliminate sugary soft drinks to enhance focus and energy during composing sessions.",
+      "selected": "Donna Gonzalez Beverages I dislike: Sugary soft drinks",
+      "gt_originals": [
+        "Donna Gonzalez Beverages I dislike: Sugary soft drinks"
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donald Brown's travel preference now excludes high-altitude destinations to avoid discomfort and enhance overall travel ",
+      "selected": "Donald Brown Travel styles I dislike: High-altitude destinations",
+      "gt_originals": [
+        "Donald Brown Travel styles I dislike: High-altitude destinations",
+        "Donald Brown Travel styles I dislike High-altitude destinations reason: I avoid high-altitude destinations because I struggle with altitude sickness, which affects my enjoyment of the trip."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Martin's improved well-being has positively influenced his work environment, fostering a positive and energetic atmosphe",
+      "selected": "Martin's health improvements have positively influenced his work environment, fostering a positive and energetic atmosphere, and have been a source of mutual inspiration between him and his team.",
+      "gt_originals": [
+        "Martin's health improvements have positively influenced his work environment, fostering a positive and energetic atmosphere."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Sarah Garcia's clothing preference for bold patterned blazers has shifted towards more versatile wardrobe pieces influen",
+      "selected": "Sarah Garcia Clothing I like to wear: Bold patterned blazers",
+      "gt_originals": [
+        "Sarah Garcia Clothing I like to wear: Bold patterned blazers",
+        "Sarah Garcia Clothing I like to wear Bold patterned blazers reason: I love wearing bold patterned blazers because they make me feel confident and stand out in a crowd, much like Shirley Franco's style."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Martin Mark's career_status updated monthly_income from \"20000\" to \"23000 yuan\".",
+      "selected": "Martin Mark's monthly income is 15700 USD",
+      "gt_originals": [
+        "Martin Mark's monthly income is 20000 yuan"
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donald Brown expressed a preference for cultural engagement over solitude offered by nature retreats.",
+      "selected": "Donald Brown Travel styles I like: Nature retreats",
+      "gt_originals": [
+        "Donald Brown Travel styles I like: Nature retreats",
+        "Donald Brown Travel styles I like Nature retreats reason: I love nature retreats where I can unwind and connect with the environment, away from the hustle and bustle."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Martin Mark's employment status updated from \"employed\" to \"self-employed\".",
+      "selected": "Martin Mark's employment status is Employed",
+      "gt_originals": [
+        "Martin Mark's employment status is employed"
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Martin Mark's physical health status changed from 'Normal' to 'Improved'.",
+      "selected": "Martin Mark's physical health condition: Normal",
+      "gt_originals": [
+        "Martin Mark's physical health status: Normal"
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Sarah Garcia's beverage preference updated from disliking instant coffee to liking premium instant coffee due to its ric",
+      "selected": "Sarah Garcia Beverages I dislike: Instant coffee",
+      "gt_originals": [
+        "[Sep 06, 2025, 13:56:51][Persona Memory]Sarah Garcia Beverages I dislike: Instant coffee",
+        "[Sep 06, 2025, 13:56:51][Persona Memory]Sarah Garcia Beverages I dislike Instant coffee reason: Instant coffee lacks the rich aroma and flavor of freshly brewed coffee, which I prefer."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donald Brown's career_status updated monthly_income from \"7000\" to \"0\"",
+      "selected": "Donald Brown's monthly income is $7000.",
+      "gt_originals": [
+        "Donald Brown's monthly income is 7000 yuan"
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Johnson expressed gratitude for the support from his consultancy partners, emphasizing their role in his career achievem",
+      "selected": "Johnson expressed gratitude towards his team and partners for their support during his career transitions.",
+      "gt_originals": [
+        "Johnson expressed gratitude for the support from his consultancy partners, emphasizing their role in his career achievements."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donna Gonzalez reflected on the importance of her social network in providing emotional and practical support during her",
+      "selected": "Donna Gonzalez's friends and colleagues provided emotional support and practical advice during her health challenges.",
+      "gt_originals": [
+        "Donna Gonzalez's friends and colleagues provided emotional support and practical advice during her health challenges."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donald Brown decided to remove high-altitude destinations from his travel plans due to persistent altitude sickness expe",
+      "selected": "Donald Brown Travel styles I dislike: High-altitude destinations",
+      "gt_originals": [
+        "Donald Brown Travel styles I dislike: High-altitude destinations",
+        "Donald Brown Travel styles I dislike High-altitude destinations reason: I avoid high-altitude destinations because I struggle with altitude sickness, which affects my enjoyment of the trip."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Donna Gonzalez articulated her long-term vision of establishing a music academy to nurture future composers, with plans ",
+      "selected": "Donna Gonzalez shared her vision for the music academy, but emphasized its role in nurturing future performers rather than composers.",
+      "gt_originals": [
+        "Donna Gonzalez articulated her long-term vision of establishing a music academy to nurture future composers.",
+        "Donna Gonzalez discussed practical steps for establishing a music academy, including securing funding and developing a curriculum.",
+        "Donna Gonzalez outlined her strategic vision and steps necessary to establish her music academy."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Johnson Joseph's mental health status changed from \"Positive and Sunny\" to \"Highly Positive\".",
+      "selected": "Johnson Joseph's mental health condition: Positive and Sunny",
+      "gt_originals": [
+        "Johnson Joseph's mental health status: Positive and Sunny"
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Donna Gonzalez's social network provides emotional support and practical guidance during stress-related challenges.",
+      "selected": "Donna Gonzalez reflected on the importance of her social network in providing financial support during her health challenges.",
+      "gt_originals": [
+        "Donna Gonzalez emphasized the importance of her social network in managing stress and maintaining creative output during her health challenges.",
+        "Donna Gonzalez expressed gratitude for the support and collaboration opportunities provided by her friends and colleagues."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donald Brown previously enjoyed grilled salmon for its smoky flavor and tender texture, considering it a healthy energy ",
+      "selected": "Donald Brown Foods I like to eat Grilled salmon reason: I love the smoky flavor and tender texture of grilled salmon. It's a healthy option that keeps me energized throughout the day.",
+      "gt_originals": [
+        "Donald Brown Foods I like to eat Grilled salmon reason: I love the smoky flavor and tender texture of grilled salmon. It's a healthy option that keeps me energized throughout the day."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "correct",
+      "update": "Donald Brown updated his clothing preference from 'comfortable sneakers' to 'stylish yet comfortable sneakers' to balanc",
+      "selected": "Donald Brown Clothing I like to wear: Comfortable sneakers",
+      "gt_originals": [
+        "Donald Brown Clothing I like to wear: Comfortable sneakers",
+        "Donald Brown Clothing I like to wear Comfortable sneakers reason: I prefer wearing sneakers because they provide support and comfort for long days at work."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Sarah Garcia emphasized the importance of strategic partnerships with international leaders for effective advocacy, whil",
+      "selected": "Sarah Garcia emphasized the importance of building partnerships with local leaders and organizations for effective advocacy.",
+      "gt_originals": [
+        "Sarah Garcia emphasized the importance of strategic partnerships with international leaders for effective advocacy."
+      ]
+    },
+    {
+      "local_outcome": "correct",
+      "judge": "hallucinated",
+      "update": "Sarah Garcia is committed to impacting 1 million lives positively through her work despite health challenges.",
+      "selected": "Sarah Garcia's promotion aligns with her goal of impacting 1 million lives through social change.",
+      "gt_originals": [
+        "Sarah Garcia remains committed to impacting 1 million lives positively through her work despite health challenges."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donna Gonzalez discussed strategies for maintaining relationships that enrich her personal and professional life, such a",
+      "selected": "Donna Gonzalez recognized the value of her relationships, noting how they have strengthened her resolve and enriched her life.",
+      "gt_originals": [
+        "Donna Gonzalez discussed strategies for maintaining relationships that enrich her personal and professional life."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson Joseph shared anecdotes about successful past events and collaborations that contributed to reaching the milesto",
+      "selected": "Johnson Joseph discussed the role of his team and local partners in achieving the milestone of hosting over 5,000 guests at Albi B&B.",
+      "gt_originals": [
+        "Johnson Joseph shared anecdotes about successful past events and collaborations that contributed to reaching the milestone of hosting over 8,000 guests."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Brown aims to inspire a new generation of leaders who can drive social innovation and make meaningful changes.",
+      "selected": "Donald Brown plans to leverage his skills and resources to foster social connections and make a meaningful impact in the community.",
+      "gt_originals": [
+        "Donald Brown expressed fulfillment and purpose in mentoring future leaders, emphasizing the importance of mentorship in shaping innovators."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Martin's pet preference for parrots now includes a focus on conservation and ethical considerations.",
+      "selected": "Martin Mark has preferences in Pet Preference",
+      "gt_originals": [
+        "Pets I like: Parrots reason: I enjoy parrots because they are intelligent and can be taught to mimic speech, which makes interactions fun and engaging."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "correct",
+      "update": "Johnson Joseph adjusted his lifestyle to cope with the financial impact of the layoff in August 2027, focusing on cost-s",
+      "selected": "Johnson Joseph adjusted his lifestyle to cope with the financial impact of the layoff, focusing on cost-saving measures and personal development.",
+      "gt_originals": [
+        "Johnson Joseph's monthly income is 4500 USD",
+        "Johnson Joseph's savings amount is 14000 USD"
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson Joseph now likes classical music, finding it soothing and a perfect fit for the ambiance of his bed and breakfas",
+      "selected": "Johnson Joseph Music I like to listen to: Jazz",
+      "gt_originals": [
+        "Johnson Joseph Music I dislike Heavy metal reason: Heavy metal is too loud and chaotic for my taste; I prefer more soothing music."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donna Gonzalez remains determined to achieve her long-term career goals of influencing 100 films and establishing a musi",
+      "selected": "Donna Gonzalez discussed her long-term goal of influencing 100 films and winning multiple Academy Awards, seeing her salary increase as a step towards these objectives.",
+      "gt_originals": [
+        "Donna Gonzalez remains determined to achieve her long-term career goals despite her health challenges."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson faced challenges coordinating with local guides but leveraged their expertise to ensure quality guest experience",
+      "selected": "Johnson Joseph's Colleague WilsonDonald, Donald is a local supplier whose reliable services help me maintain quality standards at my B&B.",
+      "gt_originals": [
+        "Johnson faced challenges coordinating with local guides to ensure quality guest experiences."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson's dialogue highlighted his commitment to fostering growth and exploring new opportunities within the consultancy",
+      "selected": "Johnson expressed pride in his ability to navigate the consultancy field and emphasized the importance of forming strong professional connections.",
+      "gt_originals": [
+        "Johnson's dialogue highlighted his commitment to fostering growth and exploring new opportunities within the consultancy field."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson Joseph's past collaborations have taught him valuable lessons in adaptability and innovation, influencing his cu",
+      "selected": "Johnson Joseph's dialogue about reading preferences reflects his ongoing journey to balance personal interests with business innovation.",
+      "gt_originals": [
+        "Johnson Joseph shared anecdotes of past collaborations influencing his current approach to business growth."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Sarah Garcia has a new ally in the social sector who provides strategic partnership opportunities to enhance her platfor",
+      "selected": "Sarah Garcia established strategic partnerships to enhance resource allocation for her projects.",
+      "gt_originals": [
+        "Sarah Garcia's social relationships increased NewAlly, A new ally in the social sector who has provided strategic partnership opportunities to enhance our platform's impact."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson Joseph's monthly income has halted, changing from 4500 yuan to 0.",
+      "selected": "Johnson Joseph's career status updated monthly income from '3500 yuan' to '4500 USD'.",
+      "gt_originals": [
+        "Johnson Joseph's monthly income is 4500 yuan"
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donald Brown enjoys connecting with his community post-retirement and finds fulfillment in joining a local community gro",
+      "selected": "Donald Brown is concerned about adjusting to a new lifestyle after retirement.",
+      "gt_originals": [
+        "Donald Brown's social relationships increased NewCommunityGroup, I joined a local community group that focuses on social engagement and support, further enhancing my social network and sense of belonging.",
+        "Donald Brown expressed joy in joining a local community group that focuses on social engagement and support."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donna Gonzalez shared specific examples of recent projects where her innovative techniques were applied, inspired by tra",
+      "selected": "Donna Gonzalez has been inspired by traditional Japanese and Middle Eastern music, particularly their unique scales and rhythms.",
+      "gt_originals": [
+        "Donna Gonzalez shared specific examples of recent projects where her innovative techniques were applied."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Sarah Garcia's food preference updated from liking gourmet burgers to liking artisan burgers due to their inventive use ",
+      "selected": "Sarah Garcia has preferences in Food Preference",
+      "gt_originals": [
+        "Foods I like to eat: Gourmet burgers - Gourmet burgers are my favorite because they offer a variety of flavors and textures in every bite."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Donna's social network offers diverse collaboration opportunities that enhance her creative output and support her profe",
+      "selected": "Donna Gonzalez's social network provides emotional encouragement and professional collaboration opportunities during her transition to part-time work.",
+      "gt_originals": [
+        "Donna Gonzalez's social relationships increased NewCollaborator, A new collaborator inspired by Donna's work, adding fresh perspectives to her projects.",
+        "Donna Gonzalez's social relationships increased CreativePartner, A creative partner who collaborates with Donna on innovative projects.",
+        "Donna Gonzalez's social relationships increased EmergingComposer, An emerging composer who brings fresh ideas and enthusiasm to collaborative projects."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Martin is considering a career change to improve his mental health and find a role that aligns with his personal and pro",
+      "selected": "Martin Mark aims to find a job that better aligns with his personal well-being, humanitarian goals, and career aspirations.",
+      "gt_originals": [
+        "Martin Mark is considering a career change due to health impacts from his current role."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Sarah Garcia shared anecdotes about her interactions with key figures in her network, highlighting transformative strate",
+      "selected": "Sarah Garcia shared anecdotes about past experiences that informed her approach to partnerships, highlighting lessons learned from previous career transitions.",
+      "gt_originals": [
+        "Sarah Garcia shared anecdotes about her interactions with key figures in her network, highlighting strategic partnerships formed as a result."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Johnson plans to collaborate with local artists and chefs to offer unique events showcasing the rich culture and culinar",
+      "selected": "Johnson Joseph's Colleague RodriguezMichael, Michael is a fellow B&B owner in Albi, and we often share insights and collaborate on local events.",
+      "gt_originals": [
+        "Johnson plans to collaborate with local artists and chefs for exclusive events at Albi B&B."
+      ]
+    },
+    {
+      "local_outcome": "wrong",
+      "judge": "hallucinated",
+      "update": "Martin's pet preference includes an exception for iguanas, appreciating their social behaviors.",
+      "selected": "Martin visited a reptile sanctuary and found iguanas' social behaviors interesting.",
+      "gt_originals": [
+        "[Sep 06, 2025, 22:43:36][Persona Memory]Martin Mark Pets I dislike: Reptiles, like snakes",
+        "[Sep 06, 2025, 22:43:36][Persona Memory]Martin Mark Pets I dislike Reptiles, like snakes reason: I find snakes unsettling due to their unpredictable movements and the fact that they don't exhibit the social behaviors I appreciate in pets."
+      ]
+    }
+  ]
+}
