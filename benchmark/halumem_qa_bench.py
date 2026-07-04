@@ -136,10 +136,12 @@ def main(argv=None) -> int:
     res = {
         "n_questions": n_q, "n_scored": scored, "n_errors": cho["ERROR"],
         "users": len(users), "with_interference": a.with_interference,
-        # A/B verifiability: record the answer-gate env actually seen by THIS
-        # process, so a mis-passed env can never be misattributed to the gate.
+        # A/B verifiability: record the A/B envs actually seen by THIS process,
+        # so a mis-passed env can never be misattributed to a lever.
         "grounding_gate": os.environ.get("ENGRAM_GROUNDING_GATE", "") in
                           ("1", "on", "true", "yes"),
+        "recall_centering": os.environ.get("ENGRAM_RECALL_CENTERING", "") in
+                            ("1", "on", "true", "yes"),
         "counts": cho,
         "correct_rate": round(cho["CORRECT"] / scored, 4) if scored else 0.0,
         "hallucination_rate": round(cho["HALLUCINATION"] / scored, 4) if scored else 0.0,
