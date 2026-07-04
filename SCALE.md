@@ -10,7 +10,7 @@ single-machine, the synthetic tests isolate one cost each.
 | Wall | Finding | Status |
 |---|---|---|
 | Recall precision vs N | recall@10 flat (65.7%) to 11k real distractors; distractors compete (cos 0.78) but don't displace gold — margin holds; %distractor in top-10 grows ~logarithmically (≈4.7% extrapolated @10M) | **robust** — not the wall |
-| Global recall latency | brute-force O(N): 7.68 / 37.42 ms @100k/500k; **ANN (HNSW) WIRED** (`engram/ann_cache.py`, `ENGRAM_ANN_RECALL`): **0.96 / 1.38 ms = 8× / 27×** (gap widens with N — brute is linear, ANN sublinear); build 54s/338s once then incremental add; RAM linear (10M ≈ 30GB) | **wired, behaviour-preserving**; 500k/1M+auto-enable next |
+| Global recall latency | brute-force O(N) grows linear: 7.2 / 37.4 / 81.4 ms @100k/500k/1M; **ANN (HNSW) WIRED** (`engram/ann_cache.py`, `ENGRAM_ANN_RECALL`) stays ~flat 0.76 / 1.25 / 1.31 ms = **9.5× / 29.9× / 62.3×** (speedup GROWS with N — sublinear); build 50s/334s/690s once then incremental add; RAM linear | **wired, behaviour-preserving, reproduced + extended to 1M** (`benchmark/ann_recall_scale_bench.py`); auto-enable next |
 | **Multi-tenant lookup** | `topic LIKE 'prefix%'` → full `superseded_by` scan, **O(N_total)**: 203ms @ 1M rows / 10k tenants | **FIXED** → range + `INDEXED BY`, O(N_tenant) 0.16ms (**1270×**) — `d1ef0c0` |
 | **Multi-tenant deserialize** | per-row `np.stack([deserialize])` O(N_tenant): 374ms @ 100k rows/tenant | **FIXED** → batch `frombuffer(join).reshape` (**3.7×**) — `acc5ee7` |
 | Tenant isolation | 0 leak / 50 scoped recalls; `scope.py` strict `user:/agent:/run:` | **correct** |
@@ -41,8 +41,14 @@ are not directly comparable (Zep 84→58 shows ±25pp of pure methodology).
    BEFORE the filters/cosine/rerank — so they run on O(pool) not O(N). Proven
    behaviour-preserving: ANN-on recall returns identical top-k SCORES to the
    exact brute-force path (`tests/test_ann_recall_equivalence.py`); the whole
-   5941-test suite is byte-identical with the gate off. **Remaining**: a
-   500k/1M in-engine bench + auto-enable heuristic.
+   test suite is byte-identical with the gate off. **Bench DONE** — tracked,
+   reproducible `benchmark/ann_recall_scale_bench.py` (2026-07-04) reproduces
+   9.5×@100k / 29.9×@500k and extends to **62.3×@1M** (dim 768; ANN query ~flat
+   0.76→1.31 ms vs brute 7.2→81.4 ms; recall-in-pool is validated on real e5 in
+   the equivalence test, not on the synthetic scale corpus). **Remaining**:
+   auto-enable heuristic — deferred because making ANN the default flips recall
+   tie-order among equal-score facts (score-identical, not byte-identical), a
+   persistent-behavior call left explicit rather than taken silently.
 2. **Very-large-tenant recall** (> ~10k facts/tenant): the scoped path still
    re-stacks per query. A cache-matrix scope-mask would be ~35× but touches the
    hot-path (deferred — risk/benefit).

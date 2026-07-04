@@ -66,6 +66,14 @@ opt-out with `ENGRAM_PPR_FUSION=0`. On top of retrieval, Verimem ships two thing
 **bi-temporal valid-time** (`valid_until` hard-expire — the differentiator vs
 Mem0/Zep) and a **write-time prompt-injection screen** that is multilingual
 (incl. Italian) — mem0 and `engram-memory` ship none.
+
+On the **write path**, a tunable **trust-maintenance** dial no competitor ships:
+anti-sycophancy (a bare assertion can't overwrite a *verified* fact), evidence-tiered
+supersession, and a precision floor — recall-first ↔ never-delete-truth, all env-driven
+and default-off. Numbers, knobs and honest caveats: **[docs/TRUST_MAINTENANCE.md](./docs/TRUST_MAINTENANCE.md)**.
+And it holds at **scale**: brute-force recall is O(N) (81 ms @1M) while the wired ANN
+stays ~flat (1.3 ms) — **62× @1M, sublinear** (reproducible): **[SCALE.md](./SCALE.md)**.
+
 Full numbers, fairness notes and honest limits: **[BENCHMARKS.md](./BENCHMARKS.md)**.
 
 ## ⚡ Install in 2 minutes (Claude Code)
