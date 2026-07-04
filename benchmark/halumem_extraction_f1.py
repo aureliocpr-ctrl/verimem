@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 from pathlib import Path
 
@@ -192,6 +193,8 @@ def main(argv=None) -> int:
            # A/B self-proving: the variant actually used by THIS process
            "prompt_variant": a.prompt, "max_out_tokens": a.max_out_tokens,
            "no_gate": bool(a.no_gate), "gate_errors": gate_errors,
+           "grounding_backend": os.environ.get("ENGRAM_GROUNDING_BACKEND", "")
+                                or "llm",
            "off": agg(arms["off"]), "on": agg(arms["on"])}
     print(json.dumps(res, indent=2))
     if a.out:
