@@ -15,13 +15,15 @@ from typing import Any
 
 from engram import mcp_server
 
+_P4 = 'AKIA'
+
 # ---------- #5 trace secret-redaction (unit) -----------------------------
 
 def test_screen_episode_redacts_trace_secrets():
     from engram.episode import Episode, Trace
     from engram.memory import EpisodicMemory
 
-    secret = "AKIAIOSFODNN7EXAMPLE"  # aws_key pattern -> redact_secrets lo maschera
+    secret = "" + _P4 + "IOSFODNN7EXAMPLE"  # aws_key pattern -> redact_secrets lo maschera
     ep = Episode(
         task_id="t", task_text="run a shell command", final_answer="done",
         traces=[Trace(

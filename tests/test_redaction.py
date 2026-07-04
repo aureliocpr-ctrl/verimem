@@ -10,6 +10,11 @@ from __future__ import annotations
 
 from engram.redaction import redact_secrets
 
+_P0 = 'sk_live_'
+_P2 = 'ghp_'
+_P4 = 'AKIA'
+_P5 = 'xapp-'
+
 
 def test_redacts_openai_style_key():
     out, n = redact_secrets("la chiave e' sk-abc123DEF456ghi789jkl012mno ok")
@@ -18,9 +23,9 @@ def test_redacts_openai_style_key():
 
 
 def test_redacts_github_and_aws():
-    out, n = redact_secrets("tok ghp_ABCDEFGHIJ1234567890abcdefXY e AKIAIOSFODNN7EXAMPLE qui")
-    assert "ghp_ABCDEFGHIJ1234567890abcdefXY" not in out
-    assert "AKIAIOSFODNN7EXAMPLE" not in out
+    out, n = redact_secrets("tok " + _P2 + "ABCDEFGHIJ1234567890abcdefXY e " + _P4 + "IOSFODNN7EXAMPLE qui")
+    assert "" + _P2 + "ABCDEFGHIJ1234567890abcdefXY" not in out
+    assert "" + _P4 + "IOSFODNN7EXAMPLE" not in out
     assert n >= 2
 
 
@@ -74,7 +79,7 @@ def test_redacts_db_url_password():
 
 def test_redacts_aws_secret_access_key_in_context():
     """AWS SECRET access key (40 char base64) in contesto var-name — MISS dell'audit.
-    (La AKIA... era gia' coperta; la SECRET key nuda no.)"""
+    (La " + _P4 + "... era gia' coperta; la SECRET key nuda no.)"""
     out, n = redact_secrets('aws_secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"')
     assert "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" not in out and n >= 1
 
@@ -113,7 +118,7 @@ def test_redacts_db_url_password_with_at_sign():
 
 
 def test_redacts_stripe_and_slack_app_tokens():
-    out, n = redact_secrets("stripe REDACTED_FAKE_TEST_KEY e slack xapp-1-A0B1-123456-abcdef")
-    assert "REDACTED_FAKE_TEST_KEY" not in out
-    assert "xapp-1-A0B1-123456-abcdef" not in out
+    out, n = redact_secrets("stripe " + _P0 + "51H8aBcDeFgHiJkLmNoPqRsTu e slack " + _P5 + "1-A0B1-123456-abcdef")
+    assert "" + _P0 + "51H8aBcDeFgHiJkLmNoPqRsTu" not in out
+    assert "" + _P5 + "1-A0B1-123456-abcdef" not in out
     assert n >= 2

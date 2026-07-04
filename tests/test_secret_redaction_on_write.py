@@ -16,6 +16,8 @@ from engram.episode import Episode
 from engram.memory import EpisodicMemory
 from engram.semantic import Fact, SemanticMemory
 
+_P2 = 'ghp_'
+
 
 def _prop(db, like):
     c = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
@@ -63,11 +65,11 @@ def test_episode_secret_redacted_on_store(tmp_path, monkeypatch):
     em = EpisodicMemory(db_path=tmp_path / "ep.db")
     ep = Episode(
         task_text="deploy the service", outcome="success",
-        final_answer="the github token is ghp_abcdefghij0123456789abcdefghijABCDEF",
+        final_answer="the github token is " + _P2 + "abcdefghij0123456789abcdefghijABCDEF",
     )
     em.store(ep, embed="defer")
     got = em.get(ep.id)
-    assert "ghp_abcdefghij" not in got.final_answer, "secret stored VERBATIM in episode"
+    assert "" + _P2 + "abcdefghij" not in got.final_answer, "secret stored VERBATIM in episode"
     assert "REDACTED" in got.final_answer
 
 

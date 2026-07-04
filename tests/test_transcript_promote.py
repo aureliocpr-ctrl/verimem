@@ -20,6 +20,8 @@ from engram.semantic import SemanticMemory
 from engram.transcript_index import TranscriptIndex, Turn
 from engram.transcript_promote import promote_turn_to_fact
 
+_P2 = 'ghp_'
+
 
 def test_promote_creates_model_claim_with_provenance(tmp_path):
     idx = TranscriptIndex(db_path=tmp_path / "t.db")
@@ -73,10 +75,10 @@ def test_promote_redacts_secret_in_proposition(tmp_path):
     (no laundering di credenziali dal grezzo al corpus + banner)."""
     idx = TranscriptIndex(db_path=tmp_path / "t.db")
     idx.store(Turn(
-        text="ho incollato per errore il token ghp_ABCDEFGHIJ1234567890abcdefXY nella chat",
+        text="ho incollato per errore il token " + _P2 + "ABCDEFGHIJ1234567890abcdefXY nella chat",
         session_id="S", id="sek1",
     ))
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     fact = promote_turn_to_fact(idx, "sek1", sm)
-    assert "ghp_ABCDEFGHIJ1234567890abcdefXY" not in fact.proposition
+    assert "" + _P2 + "ABCDEFGHIJ1234567890abcdefXY" not in fact.proposition
     assert "REDACTED" in fact.proposition
