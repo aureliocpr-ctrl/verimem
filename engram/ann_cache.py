@@ -16,14 +16,21 @@ filters/fusion/rerank/write-gate INSIDE the pool.
 """
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from engram.ann_index import _ANN_MIN_N, ANNIndex
 
 
+def _default_min_n() -> int:
+    """Deploy override for the ANN gate; falls back to the module default."""
+    v = os.environ.get("ENGRAM_ANN_MIN_N", "").strip()
+    return int(v) if v.isdigit() else _ANN_MIN_N
+
+
 class ANNCache:
-    def __init__(self, *, min_n: int = _ANN_MIN_N):
-        self.min_n = int(min_n)
+    def __init__(self, *, min_n: int | None = None):
+        self.min_n = int(min_n) if min_n is not None else _default_min_n()
         self._idx: ANNIndex | None = None
         self._version: Any = None
         self._n: int = 0

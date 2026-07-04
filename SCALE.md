@@ -35,10 +35,14 @@ are not directly comparable (Zep 84→58 shows ±25pp of pure methodology).
 1. **ANN for global recall** — **module SHIPPED** `engram/ann_index.py`
    (2026-07-04): faiss HNSW, oversampled candidate pool (recall-in-pool ≈ 1.0,
    5 tests), gated `>_ANN_MIN_N=100k`, and the hard part solved — **incremental
-   `add`** (faiss appends, no 348s rebuild-per-store). **Remaining**: wire it into
-   the recall cache-path (`semantic.py:2694/2714`) behind the gate, so the ANN
-   pool feeds the exact same filters/fusion/rerank/write-gate. Then a 500k/1M
-   in-engine bench.
+   `add`** (faiss appends, no 348s rebuild-per-store). **WIRED into recall**
+   (2026-07-04, `ENGRAM_ANN_RECALL=1`, default OFF): `ANNCache` (build-once,
+   version-keyed, incremental grow) pre-narrows the corpus to the ANN pool
+   BEFORE the filters/cosine/rerank — so they run on O(pool) not O(N). Proven
+   behaviour-preserving: ANN-on recall returns identical top-k SCORES to the
+   exact brute-force path (`tests/test_ann_recall_equivalence.py`); the whole
+   5941-test suite is byte-identical with the gate off. **Remaining**: a
+   500k/1M in-engine bench + auto-enable heuristic.
 2. **Very-large-tenant recall** (> ~10k facts/tenant): the scoped path still
    re-stacks per query. A cache-matrix scope-mask would be ~35× but touches the
    hot-path (deferred — risk/benefit).

@@ -1368,6 +1368,14 @@ def _rerank_enabled() -> bool:
     )
 
 
+def _ann_recall_enabled() -> bool:
+    """ANN pre-narrowing of the recall corpus. Default OFF (opt-in): when off,
+    the recall hot-path is byte-identical to the exact brute-force cosine."""
+    return os.environ.get("ENGRAM_ANN_RECALL", "").strip().lower() in (
+        "1", "on", "true", "yes",
+    )
+
+
 def _entity_live_enabled() -> bool:
     """Entity-live write path (2026-06-10): keep the entity KG in sync at
     write time so PPR coverage doesn't decay between backfills. Default ON;
@@ -1555,6 +1563,11 @@ class SemanticMemory:
         # Post-cache target: ratio < 1.5× (only SQL fetchall scales).
         self._corpus_cache: dict[str, Any] | None = None
         self._cache_version: int = 0
+        # ANN index cache for scale recall (opt-in via ENGRAM_ANN_RECALL; keyed
+        # by _cache_version so a write invalidates/rebuilds it). Dormant until
+        # the corpus crosses the gate; the exact brute-force path is unchanged.
+        from engram.ann_cache import ANNCache
+        self._ann_cache = ANNCache()
         # Cross-process cache-coherence (sorelle loop 2026-06-03): a LONG-LIVED
         # probe connection whose ``PRAGMA data_version`` tracks commits made by
         # OTHER connections/processes. A fresh connection cannot do this — its
@@ -2607,6 +2620,19 @@ class SemanticMemory:
             facts, matrix, lv, vu = self._get_corpus_cache()  # quadrupla ATOMICA
             if not facts:
                 return []
+            # ANN pre-narrowing (opt-in ENGRAM_ANN_RECALL, dormant by default):
+            # restrict the corpus to the ANN candidate pool so the exact filters
+            # / cosine / rerank below run on O(pool) not O(N). Byte-identical to
+            # brute-force when OFF or below the gate (query_pool -> None). The
+            # oversampled pool preserves the true top-k that survive the filters.
+            if _ann_recall_enabled():
+                _pool = self._ann_cache.query_pool(
+                    matrix, q_emb, k, version=self._cache_version)
+                if _pool is not None and len(_pool):
+                    facts = [facts[i] for i in _pool]
+                    matrix = matrix[_pool]
+                    lv = lv[_pool]
+                    vu = vu[_pool]
             # Status/legacy filters: bitmask on the cached facts list.
             keep_idx: list[int] | None = None
             if exclude_legacy or min_status is not None:
