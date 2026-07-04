@@ -65,6 +65,10 @@ def main(argv=None) -> int:
                     help="local-NLI contradiction-threshold sweep (precision/recall knob)")
     ap.add_argument("--model", default="claude-sonnet-4-6")
     ap.add_argument("--timeout", type=int, default=120)
+    ap.add_argument("--require-evidence", action="store_true",
+                    help="anti-sycophancy gate: a bare claim (no verified_by, status != "
+                         "verified) can only contest, never supersede — measures the "
+                         "update-recall COST of the evidence gate on real HaluMem updates")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
     a.max_diff_values = [int(x) for x in str(a.max_diff_values).split(",") if x.strip()]
@@ -136,7 +140,8 @@ def main(argv=None) -> int:
         try:
             sm.store(old, embed="sync")
             sm.store(new, embed="sync")
-            sm.reconcile_new_fact(new, auto_supersede=True, judge=judge)
+            sm.reconcile_new_fact(new, auto_supersede=True, judge=judge,
+                                  require_evidence=a.require_evidence)
             return getattr(sm.get(old.id), "superseded_by", None) == new.id
         except Exception:  # noqa: BLE001
             return None
@@ -180,6 +185,7 @@ def main(argv=None) -> int:
 
     res = {
         "judge": judge_kind,
+        "require_evidence": bool(a.require_evidence),
         "sweep": sweep,
         "note": "update_recall = true HaluMem updates correctly superseded (want HIGH); "
                 "false_supersede_* = wrongly superseded (want ~0; complementary = same-user "
