@@ -1368,6 +1368,37 @@ def _rerank_enabled() -> bool:
     )
 
 
+def _topk_deterministic(sims, n: int, facts):
+    """Top-``n`` candidate indices by ``(-score, fact.id)`` — deterministic and
+    ROW-ORDER INVARIANT: any permutation of the same candidate rows (full corpus
+    vs ANN pool) yields the same fact sequence. Replaces the bare
+    ``np.argsort(-sims)[:n]`` whose tie order was quicksort-arbitrary and made
+    ANN-on recall score-identical but not byte-identical (iter 23, mandate).
+
+    Cost: O(N) argpartition + a Python sort over ~n candidates (plus the boundary
+    tie-group) — asymptotically cheaper than the full argsort it replaces."""
+    m = int(len(sims))
+    if m == 0 or n <= 0:
+        return np.array([], dtype=int)
+    if n < m:
+        part = np.argpartition(-sims, n - 1)[:n]
+        boundary = float(sims[part].min())
+        cand = np.nonzero(sims >= boundary)[0]
+    else:
+        cand = np.arange(m)
+    def _fid(obj) -> str:
+        fid = getattr(obj, "id", None)
+        if fid is None:
+            try:                      # sqlite Row on the legacy path (SCAN-68:
+                fid = obj["id"]       # cache-vs-legacy must stay symmetric)
+            except Exception:  # noqa: BLE001
+                fid = ""
+        return str(fid or "")
+
+    order = sorted(cand.tolist(), key=lambda i: (-float(sims[i]), _fid(facts[i])))
+    return np.asarray(order[:n], dtype=int)
+
+
 def _ann_recall_enabled() -> bool:
     """ANN pre-narrowing of the recall corpus. Default OFF (opt-in): when off,
     the recall hot-path is byte-identical to the exact brute-force cosine."""
@@ -2661,8 +2692,11 @@ class SemanticMemory:
             # brute-force when OFF or below the gate (query_pool -> None). The
             # oversampled pool preserves the true top-k that survive the filters.
             if _ann_recall_enabled():
-                _pool = self._ann_cache.query_pool(
-                    matrix, q_emb, k, version=self._cache_version)
+                try:
+                    _pool = self._ann_cache.query_pool(
+                        matrix, q_emb, k, version=self._cache_version)
+                except Exception:  # noqa: BLE001 — faiss missing/broken -> exact brute
+                    _pool = None
                 if _pool is not None and len(_pool):
                     facts = [facts[i] for i in _pool]
                     matrix = matrix[_pool]
@@ -2772,7 +2806,9 @@ class SemanticMemory:
             # head, keep the cosine as the score, cut back to k.
             _rr_on = _rerank_enabled()
             _pool_n = max(k, _rerank_topn()) if _rr_on else k
-            top_idx = np.argsort(-sims)[:_pool_n]
+            # (-score, fact.id) top-k: deterministic + row-order invariant, so
+            # the ANN pool path returns EXACTLY the brute-force sequence.
+            top_idx = _topk_deterministic(sims, _pool_n, view_facts)
             hits_2t = [
                 (view_facts[i], float(sims[i]))
                 for i in top_idx if np.isfinite(sims[i])
@@ -2924,7 +2960,9 @@ class SemanticMemory:
             # SCAN-68 lesson: cache-vs-legacy asymmetries are audit findings.
             _rr_on = _rerank_enabled()
             _pool_n = max(k, _rerank_topn()) if _rr_on else k
-            top_idx = np.argsort(-sims)[:_pool_n]
+            # same deterministic tie-break as the cache fast-path (SCAN-68:
+            # cache-vs-legacy asymmetries are audit findings).
+            top_idx = _topk_deterministic(sims, _pool_n, rows)
             hits_2t = [
                 (self._row(rows[i]), float(sims[i]))
                 for i in top_idx if np.isfinite(sims[i])
