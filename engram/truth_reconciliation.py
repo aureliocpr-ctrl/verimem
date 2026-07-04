@@ -182,17 +182,61 @@ def reconcile_fact_on_write(
     return {"superseded": superseded, "contested": contested}
 
 
+_OVERLAP_STOP = frozenset(
+    "the a an is are was were of to in on at for and or with by from as be been "
+    "being this that these those it its their his her have has had not s do does "
+    "now".split())
+
+
+def _content_tokens(text: str) -> set[str]:
+    """Lowercased content tokens (stopwords removed) for the overlap guard."""
+    return {t for t in _conflict_tokens(text) if t not in _OVERLAP_STOP}
+
+
+def _content_overlap(a: str, b: str) -> float:
+    """Jaccard overlap of content tokens. A same-attribute VALUE conflict shares
+    subject+attribute (high overlap); a same-entity DIFFERENT-attribute
+    (complementary) pair shares little beyond the entity (low overlap)."""
+    ta, tb = _content_tokens(a), _content_tokens(b)
+    return len(ta & tb) / len(ta | tb) if (ta and tb) else 0.0
+
+
+def _min_conflict_overlap() -> float:
+    """Precision guard on the JUDGE path (default 0.0 = OFF, unchanged). When > 0,
+    an NLI CONTRADICTION is accepted only if the two propositions share at least this
+    Jaccard content-overlap — filters the same-entity DIFFERENT-attribute pairs the
+    NLI over-calls (~6.7% on HaluMem). Measured frontier (NLI thr 0.9): 0.0 -> recall
+    0.2833 / false-compl 0.0667; 0.2 -> recall ~0.20 / false-compl ~0.008. A
+    precision/recall DIAL (not a free win) for trust-first deployments;
+    ENGRAM_RECONCILE_MIN_OVERLAP."""
+    import os
+    try:
+        return max(0.0, float(os.environ.get("ENGRAM_RECONCILE_MIN_OVERLAP", "0")))
+    except ValueError:
+        return 0.0
+
+
 def _is_conflict(old_prop: str, new_prop: str, judge=None) -> bool:
     """Conflict confirmation. With a semantic ``judge`` (RelationJudge), True iff it
     classifies the pair CONTRADICTION — this catches paraphrase/antonym value-conflicts
     the lexical heuristic misses AND rejects same-entity COMPLEMENTARY facts (different
     attribute -> NEUTRAL), solving both failure modes of looks_like_conflict. Without a
-    judge, falls back to the lexical heuristic (unchanged default)."""
+    judge, falls back to the lexical heuristic (unchanged default).
+
+    An optional overlap floor (``_min_conflict_overlap``, default 0 = off) is a
+    precision guard on the judge path: an NLI CONTRADICTION on two propositions that
+    share too little content is rejected (the residual same-entity different-attribute
+    error mode)."""
     if judge is None:
         return looks_like_conflict(old_prop, new_prop)
     try:
         from .semantic_conflict import Relation
-        return judge.classify(old_prop, new_prop) == Relation.CONTRADICTION
+        if judge.classify(old_prop, new_prop) != Relation.CONTRADICTION:
+            return False
+        floor = _min_conflict_overlap()
+        if floor > 0.0 and _content_overlap(old_prop, new_prop) < floor:
+            return False   # NLI over-called a same-entity different-attribute pair
+        return True
     except Exception:  # noqa: BLE001 — a judge hiccup falls back to lexical, never crashes
         return looks_like_conflict(old_prop, new_prop)
 

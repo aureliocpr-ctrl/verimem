@@ -33,6 +33,13 @@
       "strict_update_recall": 0.0,
       "tiered_false_supersede_complementary": 0.0667,
       "conclusion": "TIERED preserves full update-recall (= none, 0.2833) AND protects evidenced facts (unit-tested); STRICT collapses to 0 recall. Tiered is the write-path default when auto-supersede is on."
+    },
+    "overlap_guard_frontier_iter4": {
+      "env": "ENGRAM_RECONCILE_MIN_OVERLAP (Jaccard content-token floor on the NLI conflict verdict)",
+      "cmd": "ENGRAM_RECONCILE_MIN_OVERLAP=<f> ... --local-nli --contra-thresholds 0.9 --protect-evidenced",
+      "floor_0.0_default": {"update_recall": 0.2833, "false_supersede_complementary": 0.0667},
+      "floor_0.2_precision": {"update_recall": 0.2, "false_supersede_complementary": 0.0},
+      "conclusion": "A precision/recall DIAL, not a free win: floor 0.2 drives complementary false-supersede 0.0667 -> 0.0 (never deletes complementary truth) at recall 0.2833 -> 0.20 (-29%). Default OFF (recall-optimized); opt-in for trust-first configs. Composed with the tiered gate = verified facts protected AND zero complementary truth-deletion."
     }
   },
   "findings": [
@@ -40,6 +47,7 @@
     "The local NLI judge is the Updating lever: ~17x update-recall (0.0167 -> 0.2833 at thr=0.9) over lexical.",
     "The anti-sycophancy evidence gate costs ~nothing on Updating here (removes 1/60): it is a near-free SAFETY property, not a recall regression.",
     "OPEN precision problem: the NLI judge wrongly supersedes 6.7-10% of COMPLEMENTARY (same-entity, different-attribute) pairs. That deletes truth from the live set. This is the real barrier to shipping auto-supersede at high recall.",
-    "RESOLVED (iter3): the TIERED gate — require evidence ONLY to overwrite an EVIDENCED fact, allow bare->bare updates — preserves full update-recall (0.2833 = ungated) while keeping verified truth sycophancy-proof (unit-tested). Strict collapses recall to 0. Tiered is now the write-path default when auto-supersede is on."
+    "RESOLVED (iter3): the TIERED gate — require evidence ONLY to overwrite an EVIDENCED fact, allow bare->bare updates — preserves full update-recall (0.2833 = ungated) while keeping verified truth sycophancy-proof (unit-tested). Strict collapses recall to 0. Tiered is now the write-path default when auto-supersede is on.",
+    "iter4: an NLI CONTRADICTION + content-overlap floor (ENGRAM_RECONCILE_MIN_OVERLAP) is a precision/recall DIAL. floor 0.2 -> complementary false-supersede 0.0667->0.0 at recall 0.2833->0.20. NOT a free win — the discriminator overlaps (some genuine paraphrase-heavy updates also share few tokens). Default off; the trust-first operating point (zero complementary truth-deletion) is now reachable and composes with the tiered gate."
   ]
 }
