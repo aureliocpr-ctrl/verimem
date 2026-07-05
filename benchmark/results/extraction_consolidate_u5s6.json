@@ -1,0 +1,28 @@
+{
+  "users": 5,
+  "match_thr": 0.86,
+  "gate_thr": 40.0,
+  "prompt_variant": "atomic",
+  "max_out_tokens": 1200,
+  "no_gate": true,
+  "gate_errors": 0,
+  "consolidate": true,
+  "grounding_backend": "llm",
+  "off": {
+    "sessions": 30,
+    "precision": 0.6639,
+    "recall": 0.8407,
+    "f1": 0.7286,
+    "avg_pred": 36.5
+  },
+  "on": {
+    "sessions": 0
+  },
+  "consolidated": {
+    "sessions": 30,
+    "precision": 0.7453,
+    "recall": 0.8216,
+    "f1": 0.7613,
+    "avg_pred": 19.43
+  }
+}
