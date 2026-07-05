@@ -71,8 +71,29 @@ On the **write path**, a tunable **trust-maintenance** dial no competitor ships:
 anti-sycophancy (a bare assertion can't overwrite a *verified* fact), evidence-tiered
 supersession, and a precision floor — recall-first ↔ never-delete-truth, all env-driven
 and default-off. Numbers, knobs and honest caveats: **[docs/TRUST_MAINTENANCE.md](./docs/TRUST_MAINTENANCE.md)**.
-And it holds at **scale**: brute-force recall is O(N) (81 ms @1M) while the wired ANN
-stays ~flat (1.3 ms) — **62× @1M, sublinear** (reproducible): **[SCALE.md](./SCALE.md)**.
+
+On the **read path**, the same philosophy as a measured 4-point dial
+(HaluMem QA, n=120, like-for-like — competitors ship one unmeasured operating point):
+
+| arm | correct | hallucination |
+|---|---|---|
+| baseline | 0.408 | 0.233 |
+| `ENGRAM_RECALL_CENTERING=1` | **0.433** | 0.225 |
+| `ENGRAM_GROUNDING_GATE=1` | 0.358 | 0.125 |
+| both | 0.350 | **0.111** |
+
+Every answer is externally verified against the retrieved evidence; unsupported
+answers become abstentions — **hallucinations −52%** at the trust-first end, your call
+where to sit. And it holds at **scale**: brute-force recall is O(N) (81 ms @1M) while
+the wired ANN stays ~flat (1.3 ms) — **62× @1M, sublinear** (reproducible):
+**[SCALE.md](./SCALE.md)**.
+
+**Honest scorecard vs MemOS (self-reported) on HaluMem**: extraction F1 0.71–0.74
+vs 79.7 (gap −6/−9pp, was −14.7); updating 0.25–0.29 judged vs 62.1 — retrieval-capped
+(4 embedders across 3 families within ~3pp; the paraphrase-matching ceiling is a
+model-class limit we state instead of hiding); QA correct 0.35–0.43 vs 67.2 with the
+hallucination trade above. Our axis is **measured trust + reproducible scale + the
+dial** — not raw-recall parity.
 
 Full numbers, fairness notes and honest limits: **[BENCHMARKS.md](./BENCHMARKS.md)**.
 
