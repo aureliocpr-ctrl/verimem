@@ -164,6 +164,9 @@ _EXPECTED_TOOLS = {
     # iter 42 (2026-07-05): answer-with-history — recall enriched with the
     # supersession-chain transition story + declared unresolved conflicts.
     "hippo_recall_history",
+    # iter 46 (2026-07-05): time-travel — what was CURRENT at a moment
+    # (asserted_at + supersession timestamps). "What did we know in March?"
+    "hippo_recall_as_of",
     "hippo_document_list",
     "hippo_document_search",
     "hippo_document_get",
@@ -957,6 +960,34 @@ async def test_call_tool_recall_history(tmp_path, fake_agent: _FakeAgent) -> Non
     assert "5000" in joined, "live value served"
     assert "PREVIOUSLY" in joined and "3500" in joined, \
         "the superseded value rides along as the transition story"
+
+
+@pytest.mark.asyncio
+async def test_call_tool_recall_as_of(tmp_path, fake_agent: _FakeAgent) -> None:
+    """hippo_recall_as_of (iter 46): ricostruzione point-in-time — ad aprile la
+    verità era 3500 (poi superseduta), oggi è 5000."""
+    import time as _t
+
+    from engram.semantic import Fact, SemanticMemory
+
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    now = _t.time()
+    _D = 86400.0
+    old = Fact(id="a-old", proposition="Johnson's monthly income is 3500 USD",
+               topic="t", asserted_at=now - 120 * _D)
+    new = Fact(id="a-new", proposition="Johnson's monthly income is 5000 USD",
+               topic="t", asserted_at=now - 30 * _D)
+    sm.store(old, embed="sync")
+    sm.store(new, embed="sync")
+    sm.supersede("a-old", "a-new", reason="update")
+    fake_agent.semantic = sm
+
+    blocks = await _invoke_tool(
+        "hippo_recall_as_of",
+        {"query": "Johnson monthly income", "when": now - 90 * _D, "k": 3})
+    payload = json.loads(blocks[0])
+    ids = {x["id"] for x in payload.get("facts", [])}
+    assert ids == {"a-old"}, f"April view must serve the OLD truth, got {ids}"
 
 
 @pytest.mark.asyncio

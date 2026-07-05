@@ -903,6 +903,7 @@ def _fact_is_stale(
     half_life_days: float = _DEFAULT_HALF_LIFE_DAYS,
     *,
     valid_until: float | None = None,
+    ignore_age: bool = False,
 ) -> bool:
     """v8 (2026-06-03) buco #3: True se il fatto e' scaduto per eta.
 
@@ -939,6 +940,12 @@ def _fact_is_stale(
         return False
     if base > now:
         return True  # verifica nel futuro = impossibile = spoof -> fail-closed
+    # v14 deep-recall (iter 46): archaeology mode lifts ONLY the age-based
+    # hiding — a dormant-but-true memory ("the client set the budget in March")
+    # must be findable months later. The two INTEGRITY guards above (future
+    # timestamp = tamper signal; valid_until hard-expire) hold in every mode.
+    if ignore_age:
+        return False
     age_days = (now - base) / 86400.0
     return is_stale(age_days, half_life_days)
 
@@ -2610,8 +2617,16 @@ class SemanticMemory:
         include_orphaned: bool = False,
         include_conversational: bool = False,
         topic_prefix: str | None = None,
+        deep: bool = False,
     ) -> list[tuple]:
         """Semantic recall over facts (cosine on embeddings).
+
+        ``deep`` (v14, archaeology mode): lift the AGE-based freshness hiding so
+        dormant-but-true memories stay findable months/years later ("what did
+        the client say in March?"). The integrity guards are NOT lifted: a
+        future transaction time (tamper signal) and a ``valid_until``
+        hard-expire stay excluded in every mode. Default OFF = byte-identical
+        recall.
 
         Args:
             query: text query, embedded and matched against fact corpus.
@@ -2668,10 +2683,12 @@ class SemanticMemory:
             _now = time.time()
 
             def _passes_recall_view(f: Fact) -> bool:
-                # (a) freshness cutoff — both warm paths hide stale-aged facts.
+                # (a) freshness cutoff — both warm paths hide stale-aged facts
+                # (deep=archaeology lifts only the age part, integrity stays).
                 if _fact_is_stale(
                     getattr(f, "last_verified_at", None), f.created_at, _now,
                     valid_until=getattr(f, "valid_until", None),
+                    ignore_age=deep,
                 ):
                     return False
                 # (b) anti-laundering — unverified conversational_promotion.
@@ -2809,9 +2826,14 @@ class SemanticMemory:
             # (vu > now sempre vero -> mai esclusi); un valid_until <= now li
             # toglie dal top-k a prescindere dall'eta. Specchio del per-riga
             # _fact_is_stale(valid_until=...) sui due path freddi.
-            fresh_mask = (
-                (view_lv >= _fresh_after) & (view_lv <= now) & (view_vu > now)
-            )
+            # v14 deep: l'archeologia toglie SOLO il bound inferiore d'eta;
+            # anti-spoof (lv<=now) e hard-expire (vu>now) valgono in ogni modo.
+            if deep:
+                fresh_mask = (view_lv <= now) & (view_vu > now)
+            else:
+                fresh_mask = (
+                    (view_lv >= _fresh_after) & (view_lv <= now) & (view_vu > now)
+                )
             if not bool(fresh_mask.all()):
                 fresh_idx = np.nonzero(fresh_mask)[0]
                 if fresh_idx.size == 0:
@@ -2996,7 +3018,8 @@ class SemanticMemory:
             rows = [
                 r for r in rows
                 if not _fact_is_stale(
-                    _row_lv(r), r["created_at"], _now, valid_until=_row_vu(r)
+                    _row_lv(r), r["created_at"], _now, valid_until=_row_vu(r),
+                    ignore_age=deep,
                 )
             ]
             if not rows:

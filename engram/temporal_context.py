@@ -19,7 +19,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-__all__ = ["fact_history", "history_line", "recall_with_history"]
+__all__ = ["fact_history", "history_line", "recall_with_history", "recall_as_of"]
 
 
 def _iso(ts: Any) -> str:
@@ -77,6 +77,38 @@ def history_line(fact, history: list, *, disputes: list[str] | None = None) -> s
         if d:
             line += f" | DISPUTED: conflicting record '{d}' (unresolved)"
     return line
+
+
+def recall_as_of(sm, query: str, *, when: float, k: int = 5) -> list[tuple]:
+    """Time-travel recall over the bi-temporal store: the facts that were
+    CURRENT at ``when`` — asserted on/before it (event time, ``asserted_at``
+    with ``created_at`` fallback) and not yet superseded by then
+    (``superseded_at`` after ``when`` counts as still-current at ``when``).
+
+    "What did we know in March?" — point-in-time reconstruction for lawyers
+    (state of knowledge at signature date), researchers (literature as of a
+    date), real estate (the price back then). Composes deep recall (age hiding
+    lifted — the past is old by definition) over the FULL archive including
+    superseded rows, oversampled so the as-of filter doesn't starve top-k.
+    Returns the same ``(Fact, score, ...)`` tuples recall returns."""
+    when = float(when)
+    hits = sm.recall(query or "", k=max(k * 6, k), deep=True,
+                     include_superseded=True)
+    out: list[tuple] = []
+    for hit in hits:
+        f = hit[0]
+        born = getattr(f, "asserted_at", None)
+        born = float(born) if born is not None else float(
+            getattr(f, "created_at", 0.0) or 0.0)
+        if born > when:
+            continue                      # not yet asserted at `when`
+        died = getattr(f, "superseded_at", None)
+        if died is not None and float(died) <= when:
+            continue                      # already superseded by `when`
+        out.append(hit)
+        if len(out) >= k:
+            break
+    return out
 
 
 def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,

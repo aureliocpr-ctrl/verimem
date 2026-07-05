@@ -2036,8 +2036,40 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "discover it via tools/list introspection."
                         ),
                     },
+                    "deep": {
+                        "type": "boolean", "default": False,
+                        "description": (
+                            "v14 ARCHAEOLOGY mode: lift the 45-day age-based "
+                            "hiding so dormant-but-true memories stay findable "
+                            "months/years later ('what did the client say in "
+                            "March?'). Integrity guards stay (future timestamp "
+                            "= tamper, valid_until hard-expire)."
+                        ),
+                    },
                 },
                 "required": ["query"],
+            },
+        ),
+        t.Tool(
+            name="hippo_recall_as_of",
+            description=(
+                "TIME-TRAVEL recall over the bi-temporal store: the facts that "
+                "were CURRENT at a given moment — asserted on/before it and not "
+                "yet superseded by then. 'What did we know in March?' — "
+                "point-in-time reconstruction for lawyers (state of knowledge "
+                "at signature date), researchers (literature as of a date), "
+                "real estate (the price back then). Composes asserted_at (v13) "
+                "+ the supersession chain. No competitor can answer this."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "when": {"type": "number",
+                              "description": "epoch seconds of the moment to reconstruct"},
+                    "k": {"type": "integer", "default": 5},
+                },
+                "required": ["query", "when"],
             },
         ),
         t.Tool(
@@ -6810,6 +6842,29 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 with_disputes=bool(arguments.get("with_disputes", True)))
             _audit(name, arguments, outcome="ok")
             return _ok({"context": lines, "n": len(lines)})
+
+        if name == "hippo_recall_as_of":
+            # Time-travel (iter 46): cosa era CORRENTE a un dato istante —
+            # asserted_at (v13) + timestamp della catena supersede.
+            from engram.temporal_context import recall_as_of
+            hits = recall_as_of(
+                a.semantic, arguments.get("query", ""),
+                when=float(arguments.get("when", 0.0)),
+                k=int(arguments.get("k", 5)))
+            items = []
+            for h in hits:
+                f = h[0]
+                items.append({
+                    "id": getattr(f, "id", ""),
+                    "proposition": getattr(f, "proposition", ""),
+                    "topic": getattr(f, "topic", ""),
+                    "asserted_at": getattr(f, "asserted_at", None),
+                    "superseded_at": getattr(f, "superseded_at", None),
+                    "status": getattr(f, "status", ""),
+                })
+            _audit(name, arguments, outcome="ok")
+            return _ok({"as_of": arguments.get("when"), "facts": items,
+                        "n": len(items)})
 
         if name == "hippo_document_list":
             # Tier Documents — store ISOLATO (versionato-per-hash), NON il corpus
@@ -11613,6 +11668,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # unchanged for the unscoped path (custom/mocked semantics that
             # don't accept the kwarg keep working).
             _pf = {"topic_prefix": _topic_prefix} if _topic_prefix else {}
+            if arguments.get("deep"):
+                _pf["deep"] = True   # v14 archaeology: lift age hiding only
             try:
                 hits = a.semantic.recall(
                     query, k=_recall_k, topic=_recall_topic,
