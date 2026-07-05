@@ -193,6 +193,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--reconcile", action="store_true",
                     help="enable reconcile-on-write (auto-supersede stale facts on "
                          "cross-session Memory-Conflict) with the LOCAL NLI judge")
+    ap.add_argument("--reconcile-min-overlap", type=float, default=0.35,
+                    help="precision floor for auto-supersede (0.35 measured to "
+                         "keep only same-attribute updates; 0 = destructive)")
     ap.add_argument("--cumulative", action="store_true", default=True)
     ap.add_argument("--per-session", dest="cumulative", action="store_false",
                     help="ablation: isolate each session (breaks cross-session QA)")
@@ -218,6 +221,12 @@ def main(argv: list[str] | None = None) -> int:
         os.environ.setdefault("ENGRAM_RECONCILE_ON_WRITE", "1")
         os.environ.setdefault("ENGRAM_RECONCILE_AUTO_SUPERSEDE", "1")
         os.environ.setdefault("ENGRAM_RECONCILE_NLI", "local")
+        # Precision floor is MANDATORY with auto-supersede: at floor 0 the NLI
+        # over-called cross-attribute pairs and retired 99/165 facts (birth-date
+        # dropped for an unrelated fact). 0.35 kept only same-attribute updates
+        # (measured). Also gates the O(N^2) NLI pre-screen (perf).
+        os.environ.setdefault("ENGRAM_RECONCILE_MIN_OVERLAP",
+                              str(a.reconcile_min_overlap))
 
     llm = LeanClaudeCLILLM(timeout_s=a.timeout, model=a.model)
     workdir = Path(tempfile.mkdtemp(prefix="halumem_qa_"))
