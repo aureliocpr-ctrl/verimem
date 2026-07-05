@@ -114,6 +114,11 @@ def main(argv=None) -> int:
     ap.add_argument("--no-gate", action="store_true",
                     help="skip the admission-gate arm (halves LLM calls; "
                          "granularity iterations only need the off arm)")
+    ap.add_argument("--consolidate", action="store_true",
+                    help="add a 'consolidated' arm: a 2nd LLM pass merges "
+                         "near-duplicates + drops trivia to lift PRECISION "
+                         "(the F1 bottleneck at ~0.65) — the product ingest "
+                         "consolidation, measured")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
 
@@ -146,7 +151,7 @@ def main(argv=None) -> int:
     from engram.grounding_gate import fact_grounding_score
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=a.timeout)
 
-    arms = {"off": [], "on": []}
+    arms = {"off": [], "on": [], "consolidated": []}
     gate_errors = 0
     for u in users:
         for s in u.get("sessions", [])[: a.sessions]:
@@ -160,6 +165,11 @@ def main(argv=None) -> int:
             if not extracted:
                 continue
             arms["off"].append(_prf(extracted, gold, a.match_thr))
+            if a.consolidate:
+                from engram.conversation_ingest import consolidate_facts
+                cons = consolidate_facts(extracted, llm=llm,
+                                         max_out_tokens=a.max_out_tokens)
+                arms["consolidated"].append(_prf(cons, gold, a.match_thr))
             if not a.no_gate:
                 # A transient LLM timeout on ONE gate call must not kill a
                 # multi-hour run (it did, 2026-07-04: LLMError 120s ~35min in).
@@ -186,9 +196,11 @@ def main(argv=None) -> int:
            # A/B self-proving: the variant actually used by THIS process
            "prompt_variant": a.prompt, "max_out_tokens": a.max_out_tokens,
            "no_gate": bool(a.no_gate), "gate_errors": gate_errors,
+           "consolidate": bool(a.consolidate),
            "grounding_backend": os.environ.get("ENGRAM_GROUNDING_BACKEND", "")
                                 or "llm",
-           "off": agg(arms["off"]), "on": agg(arms["on"])}
+           "off": agg(arms["off"]), "on": agg(arms["on"]),
+           "consolidated": agg(arms["consolidated"])}
     print(json.dumps(res, indent=2))
     if a.out:
         Path(a.out).write_text(json.dumps(res, indent=2), encoding="utf-8")

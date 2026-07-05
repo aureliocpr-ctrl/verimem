@@ -101,3 +101,31 @@ def test_bench_prompt_is_the_product_prompt() -> None:
     bench win IS a product win from now on."""
     from benchmark.halumem_extraction_f1 import _PROMPTS
     assert _PROMPTS["atomic"] is ATOMIC_EXTRACT_SYSTEM
+
+
+def test_consolidate_merges_and_drops(monkeypatch) -> None:
+    from engram.conversation_ingest import consolidate_facts
+    cleaned = "Martin Mark works as a nurse in Berlin\nMartin Mark adopted a puppy"
+    llm = _StubLLM(cleaned)
+    out = consolidate_facts(
+        ["Martin Mark is a nurse", "Martin Mark works as a nurse in Berlin",
+         "Hello there", "Martin Mark adopted a puppy"], llm=llm)
+    assert out == ["Martin Mark works as a nurse in Berlin",
+                   "Martin Mark adopted a puppy"]
+
+
+def test_consolidate_failsafe_returns_original_on_error() -> None:
+    from engram.conversation_ingest import consolidate_facts
+
+    class _Boom:
+        def complete(self, *a, **k):
+            raise RuntimeError("down")
+
+    orig = ["Martin Mark is a nurse", "Martin Mark likes tea"]
+    assert consolidate_facts(orig, llm=_Boom()) == orig
+
+
+def test_consolidate_empty_pass_keeps_original() -> None:
+    from engram.conversation_ingest import consolidate_facts
+    orig = ["Martin Mark is a nurse"]
+    assert consolidate_facts(orig, llm=_StubLLM("")) == orig

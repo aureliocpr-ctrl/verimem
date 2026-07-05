@@ -36,6 +36,23 @@ ATOMIC_EXTRACT_SYSTEM = (
     "- Only facts the dialogue actually states — never invent or infer beyond it.\n"
     "One fact per line, no numbering, no preamble.")
 
+#: Consolidation pass (iter 35, mandate "beat them on every axis"): raw atomic
+#: extraction over-produces (~37 facts vs ~20 gold on HaluMem -> precision 0.65
+#: is the F1 bottleneck). This pass merges near-duplicates and drops
+#: non-durable trivia while KEEPING every distinct durable fact.
+CONSOLIDATE_SYSTEM = (
+    "You are cleaning a list of extracted memory facts. Rules:\n"
+    "- MERGE lines that state the same fact in different words into ONE line "
+    "(keep the most complete phrasing).\n"
+    "- DROP lines that are not durable memories: greetings, meta-talk about the "
+    "conversation itself, restatements of the assistant's replies, transient "
+    "chit-chat with no future value.\n"
+    "- KEEP every distinct durable fact — do NOT summarize several facts into "
+    "one, do NOT drop minor but durable details (dates, names, reasons).\n"
+    "- Keep each line ATOMIC (one attribute per line) and starting with the "
+    "person's full name.\n"
+    "Return the cleaned list, one fact per line, no numbering, no preamble.")
+
 #: writer_role of ingested facts: NOT a trusted hook -> the full gate runs.
 INGEST_WRITER_ROLE = "conversational_ingest"
 
@@ -127,7 +144,28 @@ def ingest_conversation(
     return res
 
 
+def consolidate_facts(facts: list[str], *, llm: Any,
+                      max_out_tokens: int = 1200) -> list[str]:
+    """Merge near-duplicates and drop non-durable trivia from an extracted fact
+    list (the precision pass). Fail-safe: on any LLM error, or if the pass
+    returns nothing, the ORIGINAL list is returned unchanged — consolidation can
+    only refine, never lose everything."""
+    if not facts:
+        return []
+    try:
+        r = llm.complete(
+            CONSOLIDATE_SYSTEM,
+            [{"role": "user",
+              "content": "Facts:\n" + "\n".join(facts) + "\n\nCleaned:"}],
+            max_tokens=max_out_tokens)
+        cleaned = parse_extracted_lines(getattr(r, "text", "") or "")
+    except Exception:  # noqa: BLE001 — the pass must never lose the extraction
+        return facts
+    return cleaned if cleaned else facts
+
+
 __all__ = [
-    "ATOMIC_EXTRACT_SYSTEM", "INGEST_WRITER_ROLE", "conversation_provenance_ref",
-    "parse_extracted_lines", "render_conversation", "ingest_conversation",
+    "ATOMIC_EXTRACT_SYSTEM", "CONSOLIDATE_SYSTEM", "INGEST_WRITER_ROLE",
+    "conversation_provenance_ref", "parse_extracted_lines",
+    "render_conversation", "ingest_conversation", "consolidate_facts",
 ]
