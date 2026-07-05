@@ -98,27 +98,42 @@ def _model():
     return _MODEL
 
 
-def _adopt_true_dim(model) -> None:
-    """iter 31 — kill the silent-empty-recall trap: when CONFIG.embedding_dim is
-    an ASSUMPTION (unknown model, no pinned HIPPO_EMBEDDING_DIM), adopt the
-    loaded model's true dimension. The recall length-filter reads
-    CONFIG.embedding_dim per access, so the late update takes effect for every
-    subsequent store/recall. A pinned or known-table dim is never overridden.
-    Best-effort: any error leaves the assumption in place (warned at config)."""
+def _adopt_observed_dim(dim: int, source: str) -> None:
+    """iter 31/32 — kill the silent-empty-recall trap: when CONFIG.embedding_dim
+    is an ASSUMPTION (unknown model, no pinned HIPPO_EMBEDDING_DIM), adopt the
+    OBSERVED true dimension. The recall length-filter reads CONFIG.embedding_dim
+    per access, so the late update takes effect for every subsequent
+    store/recall. A pinned or known-table dim is never overridden. Best-effort:
+    any error leaves the assumption in place (warned at config).
+
+    Called from BOTH dim sources, because they live in different processes
+    (critic counterexample 2026-07-05): the in-process model load, AND the first
+    vector received from the shared encode daemon — in the default MCP topology
+    (HIPPO_ENCODE_DELEGATE_ONLY=1) the model never loads in the server process,
+    so only the observed-vector path can correct the assumption there."""
     try:
         from engram.config import CONFIG
         if not getattr(CONFIG, "embedding_dim_assumed", False):
             return
-        dim = model.get_sentence_embedding_dimension()
-        if dim and int(dim) != CONFIG.embedding_dim:
+        if not dim or int(dim) <= 0:
+            return
+        if int(dim) != CONFIG.embedding_dim:
             import logging
             logging.getLogger(__name__).warning(
-                "embedding_dim auto-detected %d -> %d from loaded model "
+                "embedding_dim auto-detected %d -> %d from %s "
                 "(was an assumption for an unknown model)",
-                CONFIG.embedding_dim, int(dim))
-        if dim:
-            object.__setattr__(CONFIG, "embedding_dim", int(dim))
-            object.__setattr__(CONFIG, "embedding_dim_assumed", False)
+                CONFIG.embedding_dim, int(dim), source)
+        object.__setattr__(CONFIG, "embedding_dim", int(dim))
+        object.__setattr__(CONFIG, "embedding_dim_assumed", False)
+    except Exception:  # noqa: BLE001 — adoption must never break encoding
+        pass
+
+
+def _adopt_true_dim(model) -> None:
+    """Load-time adoption: ask the loaded model for its true dimension."""
+    try:
+        _adopt_observed_dim(int(model.get_sentence_embedding_dimension() or 0),
+                            "loaded model")
     except Exception:  # noqa: BLE001 — adoption must never break model load
         pass
 
@@ -228,6 +243,9 @@ def _encode_one(text: str) -> np.ndarray:
     happens to be loaded (no cold-load = no lock contention)."""
     vec = _encode_via_service(text)
     if vec is not None:
+        # first observed daemon vector corrects an ASSUMED dim in THIS process
+        # (the model itself may only ever load in the daemon process).
+        _adopt_observed_dim(int(vec.shape[-1]), "encode-service vector")
         return vec
     if _delegate_only() and not is_loaded():
         raise EncodeDelegateUnavailable(

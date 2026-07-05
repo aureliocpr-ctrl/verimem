@@ -96,3 +96,36 @@ def test_adopt_survives_model_errors() -> None:
         assert cfg.embedding_dim == 768       # assumption left in place
     finally:
         restore()
+
+
+def test_encode_adopts_dim_from_service_vector(monkeypatch) -> None:
+    """Critic counterexample (2026-07-05, conf 0.82): in the DEFAULT production
+    topology (MCP process with HIPPO_ENCODE_DELEGATE_ONLY=1 + shared encode
+    daemon) _model() never runs in the MCP process, so load-time adoption never
+    fires THERE while the daemon emits true-dim vectors -> the length-filter
+    still drops every row. Fix: adopt from the FIRST OBSERVED VECTOR wherever it
+    enters the process — daemon, service or in-process alike."""
+    import numpy as np
+    cfg, restore = _with_config(768, assumed=True)
+    monkeypatch.setattr(emb, "_encode_via_service",
+                        lambda text: np.ones(1024, dtype=np.float32))
+    try:
+        v = emb.encode("adopt-svc-probe-1024-unique-a7f3")
+        assert v.shape[-1] == 1024
+        assert cfg.embedding_dim == 1024, \
+            "dim must be adopted from the observed service vector"
+        assert cfg.embedding_dim_assumed is False
+    finally:
+        restore()
+
+
+def test_encode_never_adopts_when_not_assumed(monkeypatch) -> None:
+    import numpy as np
+    cfg, restore = _with_config(768, assumed=False)   # pinned/known
+    monkeypatch.setattr(emb, "_encode_via_service",
+                        lambda text: np.ones(1024, dtype=np.float32))
+    try:
+        emb.encode("no-adopt-svc-probe-unique-b9e1")
+        assert cfg.embedding_dim == 768, "explicit dim must never be touched"
+    finally:
+        restore()
