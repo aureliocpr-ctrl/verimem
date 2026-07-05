@@ -1,0 +1,24 @@
+{
+  "users": 10,
+  "match_thr": 0.86,
+  "gate_thr": 40.0,
+  "prompt_variant": "atomic",
+  "max_out_tokens": 1200,
+  "no_gate": false,
+  "gate_errors": 0,
+  "grounding_backend": "local",
+  "off": {
+    "sessions": 60,
+    "precision": 0.6834,
+    "recall": 0.8506,
+    "f1": 0.7436,
+    "avg_pred": 36.07
+  },
+  "on": {
+    "sessions": 60,
+    "precision": 0.6929,
+    "recall": 0.8239,
+    "f1": 0.7419,
+    "avg_pred": 33.17
+  }
+}
