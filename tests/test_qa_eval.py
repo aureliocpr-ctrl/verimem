@@ -134,3 +134,21 @@ def test_score_qa_survives_llm_error() -> None:
     records = [{"id": "1", "question": "q", "gold": "a", "context": ["c"], "category": "x"}]
     res = score_qa(records, answer_llm=BoomLLM(), judge_llm=MockLLM(scripted=["CORRECT"]))
     assert res["n"] == 1 and res["n_correct"] == 0 and res["n_errors"] == 1
+
+
+def test_answer_system_verify_env(monkeypatch) -> None:
+    """ENGRAM_ANSWER_VERIFY=1 -> the verification-aware answerer (premise-check +
+    correction from context; measured Memory-Conflict QA 0.15 -> 0.65 on the
+    reconciled store). Must stay GROUNDED (context-only + NO ANSWER) so the
+    anti-hallucination property is preserved. Default OFF -> strict unchanged."""
+    from benchmark.qa_eval import _answer_system
+
+    monkeypatch.setenv("ENGRAM_ANSWER_VERIFY", "1")
+    verify = _answer_system()
+    assert "FALSE ASSUMPTION" in verify, "premise-check instruction present"
+    assert "NO ANSWER" in verify, "grounded abstention preserved"
+
+    monkeypatch.delenv("ENGRAM_ANSWER_VERIFY")
+    default = _answer_system()
+    assert "FALSE ASSUMPTION" not in default, "default unchanged (strict)"
+    assert "EXPLICITLY present" in default

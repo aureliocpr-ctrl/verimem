@@ -43,9 +43,34 @@ _ANSWER_SYSTEM_STRICT = _ANSWER_SYSTEM + (
     "phrase is NOT the answer. When in doubt, reply exactly: NO ANSWER."
 )
 
+# VERIFICATION-AWARE variant (iter 41, 2026-07-05): false-premise questions
+# (HaluMem Memory-Conflict style — "did X do Y with his partner?" when he has no
+# partner) need a premise-check + explicit correction; the strict minimal-span /
+# NO ANSWER style forfeits them at the judge even when retrieval is perfect
+# (evidence recall@5 was 40/40 while accuracy sat at 0.15). Measured on the
+# reconciled store: Memory-Conflict QA 0.15 -> 0.65 (n=40), overall 0.1591 ->
+# 0.5909 (n=44). Still GROUNDED: context-only, no outside knowledge, and the
+# NO ANSWER abstention is preserved — the anti-hallucination contract stands.
+# Env-gated (ENGRAM_ANSWER_VERIFY=1), default OFF.
+_ANSWER_SYSTEM_VERIFY = (
+    "Answer from the CONTEXT only. The question may contain a FALSE ASSUMPTION: "
+    "first check every claim inside the question against the context. "
+    "If a claim contradicts the context, answer 'No' and state the correct fact "
+    "from the context in the same sentence. "
+    "If the context confirms the claim, answer 'Yes' plus the key fact. "
+    "If the context says nothing about it, reply exactly: NO ANSWER. "
+    "Never use outside knowledge; one short sentence."
+)
+
 
 def _answer_system() -> str:
     import os
+    # Verification-aware mode (opt-in): premise-check + correction for
+    # false-premise questions. Measured 4.3x on Memory-Conflict (0.15 -> 0.65).
+    if os.environ.get("ENGRAM_ANSWER_VERIFY", "").strip().lower() in (
+        "1", "on", "true", "yes",
+    ):
+        return _ANSWER_SYSTEM_VERIFY
     # Strict anti-hallucination is now the DEFAULT — validated net-win: LoCoMo QA
     # 0.813 -> 0.827 (cat5 adversarial 0.88->0.94, cat1 0.53->0.67, cat4 open-domain
     # UNCHANGED = no over-abstention damage; only cat2 temporal -8pp), SQuAD-v2
