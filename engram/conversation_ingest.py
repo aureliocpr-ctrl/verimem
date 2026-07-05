@@ -92,19 +92,25 @@ def ingest_conversation(
     topic: str = "conversational/ingested",
     confidence: float = 0.5,
     max_out_tokens: int = 1200,
+    consolidate: bool = True,
     embed: str | None = None,
 ) -> dict:
     """Extract ATOMIC facts from ``messages`` and store each through the gate.
 
-    Returns ``{"stored", "rejected", "fact_ids", "extracted", "error"}``.
-    Fail-safe end to end: an LLM error reports instead of raising; a fact the
-    store gate rejects is counted, never re-tried blindly.
+    ``consolidate`` (default ON, quality-first): a 2nd LLM pass merges
+    near-duplicates and drops trivia, lifting precision +8pp / F1 +3.3pp
+    (measured u5s6 2026-07-05). Set ``consolidate=False`` for a single-pass /
+    lower-latency ingest.
+
+    Returns ``{"stored", "rejected", "fact_ids", "extracted", "consolidated",
+    "error"}``. Fail-safe end to end: an LLM error reports instead of raising;
+    a fact the store gate rejects is counted, never re-tried blindly.
     """
     from .redaction import redact_secrets
     from .semantic import Fact
 
     res: dict = {"stored": 0, "rejected": 0, "fact_ids": [],
-                 "extracted": 0, "error": None}
+                 "extracted": 0, "consolidated": 0, "error": None}
     dialogue = render_conversation(messages)
     if not dialogue:
         return res
@@ -121,6 +127,9 @@ def ingest_conversation(
 
     lines = parse_extracted_lines(raw)
     res["extracted"] = len(lines)
+    if consolidate and lines:
+        lines = consolidate_facts(lines, llm=llm, max_out_tokens=max_out_tokens)
+        res["consolidated"] = len(lines)
     prov = conversation_provenance_ref(conversation_id)
     for prop in lines:
         prop, _ = redact_secrets(prop)

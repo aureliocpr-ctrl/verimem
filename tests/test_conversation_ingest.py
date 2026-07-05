@@ -129,3 +129,24 @@ def test_consolidate_empty_pass_keeps_original() -> None:
     from engram.conversation_ingest import consolidate_facts
     orig = ["Martin Mark is a nurse"]
     assert consolidate_facts(orig, llm=_StubLLM("")) == orig
+
+
+def test_ingest_consolidates_by_default(tmp_path) -> None:
+    """Default-on quality: ingest runs BOTH passes (extract + consolidate), and
+    the consolidated list is what gets stored."""
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    llm = _StubLLM("Martin Mark is a nurse\nMartin Mark works as a nurse in Berlin\n"
+                   "Martin Mark adopted a puppy")
+    res = ingest_conversation(sm, _CONV, llm=llm, conversation_id="cc",
+                              embed="sync")
+    assert len(llm.calls) == 2, "extract + consolidate = two passes by default"
+    assert llm.calls[1]["system"].startswith("You are cleaning")  # consolidate
+    assert res["consolidated"] == 3
+
+
+def test_ingest_consolidate_false_single_pass(tmp_path) -> None:
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    llm = _StubLLM("Martin Mark is a nurse")
+    ingest_conversation(sm, _CONV, llm=llm, conversation_id="cd",
+                        consolidate=False, embed="sync")
+    assert len(llm.calls) == 1, "consolidate=False -> extraction only"
