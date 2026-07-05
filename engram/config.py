@@ -158,6 +158,11 @@ class Config:
     # moves the length-guard with it. Cross-dim writes are still filtered out
     # (not poisoned) by both the length-guard AND the per-row embedding_model
     # isolation, so old-dim corpora stay safely excluded after a switch.
+    #: True when embedding_dim is an ASSUMPTION (unknown model, no pinned env):
+    #: the embedding loader adopts the model's real dim at first load (iter 31 —
+    #: kills the silent-empty-recall trap on custom models). Never True for a
+    #: known-table model or a pinned HIPPO_EMBEDDING_DIM.
+    embedding_dim_assumed: bool = False
     embedding_dim: int = field(
         default_factory=lambda: int(os.environ.get("HIPPO_EMBEDDING_DIM", "768"))
     )
@@ -523,11 +528,14 @@ class Config:
         ):
             _LOG.warning(
                 "embedding_model=%r is not in the known-dim table and "
-                "HIPPO_EMBEDDING_DIM is unset; assuming %d. If the model's real "
-                "dim differs, semantic recall will be empty — verify with "
-                "engram.embedding.verify_model_dim() or pin HIPPO_EMBEDDING_DIM.",
+                "HIPPO_EMBEDDING_DIM is unset; assuming %d until first model "
+                "load, then adopting the model's true dimension automatically. "
+                "Pin HIPPO_EMBEDDING_DIM to silence this.",
                 self.embedding_model, self.embedding_dim,
             )
+            # iter 31: mark it so the embedding loader can adopt the true dim
+            # at first load instead of leaving recall silently empty.
+            object.__setattr__(self, "embedding_dim_assumed", True)
 
     def ensure_dirs(self) -> None:
         for d in (

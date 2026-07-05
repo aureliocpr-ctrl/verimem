@@ -92,9 +92,35 @@ def _model():
         try:
             if _MODEL is None:
                 _MODEL = _load_model()
+                _adopt_true_dim(_MODEL)
         finally:
             _MODEL_LOCK.release()
     return _MODEL
+
+
+def _adopt_true_dim(model) -> None:
+    """iter 31 — kill the silent-empty-recall trap: when CONFIG.embedding_dim is
+    an ASSUMPTION (unknown model, no pinned HIPPO_EMBEDDING_DIM), adopt the
+    loaded model's true dimension. The recall length-filter reads
+    CONFIG.embedding_dim per access, so the late update takes effect for every
+    subsequent store/recall. A pinned or known-table dim is never overridden.
+    Best-effort: any error leaves the assumption in place (warned at config)."""
+    try:
+        from engram.config import CONFIG
+        if not getattr(CONFIG, "embedding_dim_assumed", False):
+            return
+        dim = model.get_sentence_embedding_dimension()
+        if dim and int(dim) != CONFIG.embedding_dim:
+            import logging
+            logging.getLogger(__name__).warning(
+                "embedding_dim auto-detected %d -> %d from loaded model "
+                "(was an assumption for an unknown model)",
+                CONFIG.embedding_dim, int(dim))
+        if dim:
+            object.__setattr__(CONFIG, "embedding_dim", int(dim))
+            object.__setattr__(CONFIG, "embedding_dim_assumed", False)
+    except Exception:  # noqa: BLE001 — adoption must never break model load
+        pass
 
 
 def is_loaded() -> bool:
