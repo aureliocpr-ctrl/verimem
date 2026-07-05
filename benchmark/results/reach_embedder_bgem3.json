@@ -1,0 +1,11 @@
+{
+  "hits_file": "C:\\Users\\aurel\\AppData\\Local\\Temp\\claude\\C--Users-aurel-Desktop-ProgettiAI\\67a0a5f0-cd53-45ef-9e94-351aaa024deb\\scratchpad\\hits_bgem3.jsonl",
+  "embedder_arm": "BAAI/bge-m3",
+  "n_updates": 726,
+  "match_thr": 0.94,
+  "reachable_at": {
+    "10": 0.0,
+    "20": 0.0,
+    "30": 0.0
+  }
+}

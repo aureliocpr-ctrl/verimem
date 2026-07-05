@@ -1,0 +1,11 @@
+{
+  "hits_file": "C:\\Users\\aurel\\AppData\\Local\\Temp\\claude\\C--Users-aurel-Desktop-ProgettiAI\\67a0a5f0-cd53-45ef-9e94-351aaa024deb\\scratchpad\\hits_e5large.jsonl",
+  "embedder_arm": "intfloat/multilingual-e5-large",
+  "n_updates": 726,
+  "match_thr": 0.94,
+  "reachable_at": {
+    "10": 0.5413,
+    "20": 0.6391,
+    "30": 0.6763
+  }
+}
