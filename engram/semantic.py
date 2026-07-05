@@ -1403,10 +1403,14 @@ def _ann_recall_enabled() -> bool:
     """ANN pre-narrowing of the recall corpus. Default AUTO-ON (iter 26 flip,
     mandate 2026-07-04): enabled when faiss is importable. Safe as a default
     because (a) the _ANN_MIN_N=100k gate keeps it dormant on small corpora,
-    (b) recall is BYTE-IDENTICAL to brute (deterministic tie-break, iter 23),
+    (b) results are byte-identical to brute WHENEVER the HNSW pool contains the
+    true top-k — deterministic tie-break (iter 23) removes all order divergence,
+    and recall-in-pool measures ~1.0 on real e5 at oversample 8; but HNSW is
+    APPROXIMATE, so above the gate a borderline fact can rarely miss the pool
+    (critic 2026-07-05 corrected the earlier unconditional "byte-identical"),
     (c) the background build keeps the hot path exact-brute until the index is
     ready — no synchronous build stall, and a version mismatch never serves a
-    stale index. ENGRAM_ANN_RECALL=0 opts out; =1 forces on."""
+    stale index. ENGRAM_ANN_RECALL=0 opts out (exact at any scale); =1 forces on."""
     v = os.environ.get("ENGRAM_ANN_RECALL", "").strip().lower()
     if v in ("0", "off", "false", "no"):
         return False

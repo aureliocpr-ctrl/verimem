@@ -46,13 +46,20 @@ are not directly comparable (Zep 84→58 shows ±25pp of pure methodology).
    9.5×@100k / 29.9×@500k and extends to **62.3×@1M** (dim 768; ANN query ~flat
    0.76→1.31 ms vs brute 7.2→81.4 ms; recall-in-pool is validated on real e5 in
    the equivalence test, not on the synthetic scale corpus).
-   **DEFAULT-ON since 2026-07-05** (`d75ab27`): safe because (a) recall is now
-   BYTE-identical, not just score-identical — deterministic `(-score, fact.id)`
-   top-k (`ecb3cca`), row-order invariant, exact-equality tested; (b) the build
-   happens in ONE debounced background thread and recall stays exact-brute
-   until the index for the CURRENT corpus version is ready — no first-query
-   stall, never a stale index, failed build ⇒ brute forever; (c) below the
-   100k gate nothing ever builds. `ENGRAM_ANN_RECALL=0` opts out.
+   **DEFAULT-ON since 2026-07-05** (`d75ab27`): (a) the deterministic
+   `(-score, fact.id)` top-k (`ecb3cca`) is row-order invariant, so ANN results
+   are byte-identical to brute **whenever the HNSW pool contains the true
+   top-k** — measured recall-in-pool ~1.0 on real e5 embeddings (oversample 8)
+   and exact-equality tested at small scale; HNSW is approximate, so above the
+   gate a borderline fact can RARELY miss the pool (critic 2026-07-05 corrected
+   this claim from an unconditional "byte-identical": exactness is conditional,
+   not guaranteed at 100k+). Every competitor's vector index is approximate
+   AND unmeasured; ours is exact below the gate, deterministic always, and
+   measured above. (b) the build happens in ONE debounced background thread
+   and recall stays exact-brute until the index for the CURRENT corpus version
+   is ready — no first-query stall, never a stale index, failed build ⇒ brute
+   forever; (c) below the 100k gate nothing ever builds.
+   `ENGRAM_ANN_RECALL=0` opts out (exact brute at any scale).
 2. **Very-large-tenant recall** (> ~10k facts/tenant): the scoped path still
    re-stacks per query. A cache-matrix scope-mask would be ~35× but touches the
    hot-path (deferred — risk/benefit).
