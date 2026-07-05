@@ -87,6 +87,45 @@ def test_default_is_conservative_contest_not_supersede(tmp_path) -> None:
     assert cs.list_unresolved_for_fact("old"), "the doubt is recorded + visible"
 
 
+class _SpyJudge:
+    """Counts classify() calls; always says CONTRADICTION (so only the pre-gate,
+    not the verdict, decides whether the NLI runs)."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def classify(self, a, b):  # noqa: ANN001
+        from engram.semantic_conflict import Relation
+        self.calls += 1
+        return Relation.CONTRADICTION
+
+
+def test_overlap_pregate_skips_nli_below_floor(tmp_path, monkeypatch) -> None:
+    """Performance + precision: with the overlap floor on, a cross-attribute
+    candidate (low overlap) is screened out BEFORE the expensive NLI call — the
+    result is identical to the post-NLI floor, but the judge is never invoked on
+    it (the O(N^2) blow-up on a popular entity is what made reconcile 4.7s/store
+    and over-supersede)."""
+    monkeypatch.setenv("ENGRAM_RECONCILE_MIN_OVERLAP", "0.3")
+    sm, es, _ = _setup(tmp_path)
+    new = Fact(id="new", proposition="Johnson's monthly income is 5000 USD",
+               topic="t", created_at=_NOW)
+    hi = Fact(id="hi", proposition="Johnson's monthly income is 3500 USD",
+              topic="t", created_at=_NOW - 30 * _DAY)          # same attribute
+    lo = Fact(id="lo", proposition="Johnson enjoys hiking on weekends",
+              topic="t", created_at=_NOW - 30 * _DAY)          # different attribute
+    for f in (new, hi, lo):
+        sm.store(f)
+    eid = es.store(Entity(canonical_name="johnson", type="person"))
+    for fid in ("new", "hi", "lo"):
+        es.link_fact(fid, eid)
+    spy = _SpyJudge()
+    cands = find_related_candidates(sm, new, es, judge=spy)
+    ids = {c.id for c in cands}
+    assert "hi" in ids and "lo" not in ids, "keeps the update, drops cross-attribute"
+    assert spy.calls == 1, "NLI skipped on the low-overlap pair (pre-gate)"
+
+
 def test_excludes_duplicate_and_superseded(tmp_path) -> None:
     sm, es, _ = _setup(tmp_path)
     dup = Fact(id="dup", proposition="config X is 5s", topic="t",

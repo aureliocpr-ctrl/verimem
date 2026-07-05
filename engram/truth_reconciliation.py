@@ -256,6 +256,14 @@ def find_related_candidates(sm, new_fact, entity_store, *, judge=None) -> list:
     seen: set[str] = set()
     out: list = []
     new_prop = (getattr(new_fact, "proposition", "") or "").strip()
+    # Cheap overlap PRE-screen on the judge path: _is_conflict already rejects an
+    # NLI CONTRADICTION whose propositions share less than _min_conflict_overlap
+    # (the precision floor), so skipping the EXPENSIVE NLI call below that floor is
+    # behavior-preserving — and it kills the O(facts-per-entity) NLI blow-up a
+    # popular entity causes (measured: over-supersede 99/165 with floor 0 —
+    # birth-date paired with an unrelated fact — collapses once the floor screens
+    # cross-attribute pairs BEFORE they reach the judge).
+    floor = _min_conflict_overlap() if judge is not None else 0.0
     for eid in entity_store.entities_for_fact(new_fact.id):
         for fid in entity_store.facts_for_entity(eid):
             if fid == new_fact.id or fid in seen:
@@ -267,6 +275,8 @@ def find_related_candidates(sm, new_fact, entity_store, *, judge=None) -> list:
             old_prop = (getattr(old, "proposition", "") or "").strip()
             if old_prop == new_prop:
                 continue  # exact duplicate, not an update
+            if floor > 0.0 and _content_overlap(old_prop, new_prop) < floor:
+                continue  # below the precision floor -> _is_conflict rejects anyway; skip the NLI
             if not _is_conflict(old_prop, new_prop, judge):
                 continue  # shares an entity but not the same attribute -> ignore
             out.append(old)
