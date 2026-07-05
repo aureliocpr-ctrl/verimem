@@ -28,9 +28,16 @@ from .temporal_context import _event_ts, _iso, fact_history
 __all__ = ["build_trust_report"]
 
 
-def _fact_evidence(sm, fact, cs, *, max_hops: int = 3) -> dict[str, Any]:
+def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
+                   score: float | None = None) -> dict[str, Any]:
     """One fact's full custody record. Best-effort: a history/dispute lookup
-    error degrades to the plain record — the dossier never fails to build."""
+    error degrades to the plain record — the dossier never fails to build.
+    ``score`` is the retrieval relevance (cosine): the dossier DECLARES weak
+    relevance instead of hiding it (glass contract). NB known limit: recall has
+    no relevance floor, so on a small store an off-domain query still returns
+    top-k (e5 anisotropy ~0.8 baseline) — the consumer must read the score;
+    an evidence-floor is an open item (answer-side abstention is the measured
+    mechanism, ENGRAM_GROUNDING_GATE)."""
     now = time.time()
     created = getattr(fact, "created_at", None)
     asserted = getattr(fact, "asserted_at", None)
@@ -38,6 +45,7 @@ def _fact_evidence(sm, fact, cs, *, max_hops: int = 3) -> dict[str, Any]:
     age_days = (now - float(lv)) / 86400.0 if lv is not None else None
     ev: dict[str, Any] = {
         "id": getattr(fact, "id", ""),
+        "relevance": round(float(score), 4) if score is not None else None,
         "proposition": getattr(fact, "proposition", ""),
         "topic": getattr(fact, "topic", ""),
         "status": getattr(fact, "status", ""),
@@ -101,7 +109,11 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         hits = recall_as_of(sm, query, when=float(as_of), k=k)
     else:
         hits = sm.recall(query or "", k=k, deep=deep)
-    facts = [_fact_evidence(sm, h[0], cs, max_hops=max_hops) for h in hits]
+    facts = [
+        _fact_evidence(sm, h[0], cs, max_hops=max_hops,
+                       score=(h[1] if len(h) > 1 else None))
+        for h in hits
+    ]
     report: dict[str, Any] = {
         "query": query,
         "as_of": as_of,

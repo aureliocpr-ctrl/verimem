@@ -149,3 +149,112 @@ def test_missing_attr_raises(name):
     getattr(engram, name)  # both exist
     with pytest.raises(AttributeError):
         engram.DefinitelyNotAThing  # noqa: B018
+
+
+# ---- iter 50 (2026-07-06): the 24h capabilities land on the SDK -------------
+
+class _StubLLM:
+    def __init__(self, text):
+        self._text = text
+        self.calls = []
+
+    def complete(self, system, messages, **kw):
+        self.calls.append({"system": system})
+
+        class R:
+            text = self._text
+        return R()
+
+
+def test_add_messages_ingests_conversation_with_event_time(tmp_path):
+    """add(list[messages]) routes through the gated conversation ingestion
+    (atomic extraction + consolidation) and stamps the EVENT time (v13)."""
+    from engram.client import Memory
+    mem = Memory(tmp_path / "m.db", llm=_StubLLM("Rossi's budget is 500k"))
+    ts = 1_750_000_000.0
+    res = mem.add([{"role": "user", "content": "il budget di Rossi è 500k"}],
+                  asserted_at=ts, conversation_id="c1")
+    assert res["stored"] == 1
+    hit = mem.search("Rossi budget", k=3)[0]
+    f = mem.semantic.get(hit["id"])
+    assert abs(float(f.asserted_at) - ts) < 1.0
+
+
+def test_add_messages_without_llm_raises_clear_error(tmp_path):
+    from engram.client import Memory
+    mem = Memory(tmp_path / "m.db")
+    try:
+        mem.add([{"role": "user", "content": "ciao"}])
+        raise AssertionError("expected ValueError")
+    except ValueError as exc:
+        assert "llm" in str(exc).lower()
+
+
+def test_add_text_accepts_asserted_at(tmp_path):
+    from engram.client import Memory
+    mem = Memory(tmp_path / "m.db")
+    ts = 1_750_000_000.0
+    res = mem.add("Rossi's budget is 500k", asserted_at=ts)
+    f = mem.semantic.get(res["id"])
+    assert abs(float(f.asserted_at) - ts) < 1.0
+
+
+def test_search_deep_finds_dormant(tmp_path):
+    import time
+    from engram.client import Memory
+    from engram.semantic import Fact
+    mem = Memory(tmp_path / "m.db")
+    old = time.time() - 90 * 86400.0
+    mem.semantic.store(Fact(id="dorm", proposition="Rossi budget set at 500k",
+                            topic="t", created_at=old, last_verified_at=old),
+                       embed="sync")
+    assert all(h["id"] != "dorm" for h in mem.search("Rossi budget", k=5))
+    got = mem.search("Rossi budget", k=5, deep=True)
+    assert any(h["id"] == "dorm" for h in got), "deep surfaces the dormant fact"
+
+
+def test_search_as_of_time_travels(tmp_path):
+    import time
+    from engram.client import Memory
+    from engram.semantic import Fact
+    mem = Memory(tmp_path / "m.db")
+    now = time.time()
+    D = 86400.0
+    mem.semantic.store(Fact(id="o", proposition="income is 3500", topic="t",
+                            asserted_at=now - 120 * D), embed="sync")
+    mem.semantic.store(Fact(id="n", proposition="income is 5000", topic="t",
+                            asserted_at=now - 30 * D), embed="sync")
+    mem.semantic.supersede("o", "n", reason="update")
+    april = mem.search("income", k=3, as_of=now - 60 * D)
+    assert [h["id"] for h in april] == ["o"], "the past view serves the OLD truth"
+
+
+def test_search_with_history_carries_transition(tmp_path):
+    import time
+    from engram.client import Memory
+    from engram.semantic import Fact
+    mem = Memory(tmp_path / "m.db")
+    now = time.time()
+    mem.semantic.store(Fact(id="o2", proposition="income is 3500", topic="t",
+                            asserted_at=now - 120 * 86400.0), embed="sync")
+    mem.semantic.store(Fact(id="n2", proposition="income is 5000", topic="t",
+                            asserted_at=now - 30 * 86400.0), embed="sync")
+    mem.semantic.supersede("o2", "n2", reason="update")
+    hits = mem.search("income", k=3, with_history=True)
+    top = next(h for h in hits if h["id"] == "n2")
+    assert top["history"] and "3500" in top["history"][0]["text"], \
+        "the transition story rides on the hit"
+
+
+def test_explain_returns_trust_report(tmp_path):
+    from engram.client import Memory
+    mem = Memory(tmp_path / "m.db")
+    mem.add("Rossi's budget is 500k")
+    rep = mem.explain("Rossi budget")
+    assert rep["abstained"] is False and rep["n_facts"] >= 1
+    # GLASS contract (known limit, open item for the critic): recall has no
+    # relevance floor, so on a non-empty store an off-domain query still
+    # returns top-k — the dossier DECLARES the weak relevance score instead
+    # of hiding it (abstained=True only on zero hits, e.g. empty store).
+    rep2 = mem.explain("marziani viola")
+    assert rep2["facts"][0]["relevance"] is not None, "relevance declared"

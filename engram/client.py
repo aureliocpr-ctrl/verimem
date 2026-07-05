@@ -31,15 +31,21 @@ from .semantic import Fact, SemanticMemory
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
-    def __init__(self, path: str | Path | None = None, *, grounding_llm: Any = None) -> None:
+    def __init__(self, path: str | Path | None = None, *, grounding_llm: Any = None,
+                 llm: Any = None) -> None:
         self.semantic = SemanticMemory(db_path=Path(path) if path else None)
         self.grounding_llm = grounding_llm
+        #: extraction LLM for ``add(messages)`` — anything with
+        #: ``.complete(system, messages, **kw)``; optional otherwise.
+        self.llm = llm
 
     # ---- write -------------------------------------------------------------
     def add(
-        self, text: str, *, topic: str = "user", source: str | None = None,
+        self, content: str | list[dict], *, topic: str = "user",
+        source: str | None = None,
         verified_by: list[str] | None = None, validate: str = "fast",
         ground: bool = False, gate_mode: str | None = None,
+        asserted_at: float | None = None, conversation_id: str | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -58,8 +64,26 @@ class Memory:
           or a judge, L4 is skipped and ``grounding_score`` is ``None``.
 
         ``gate_mode='reject'`` makes a below-threshold write return
-        ``stored=False`` (default ``'downgrade'`` stores it quarantined)."""
-        text = (text or "").strip()
+        ``stored=False`` (default ``'downgrade'`` stores it quarantined).
+
+        ``content`` may also be a **conversation** (``list`` of
+        ``{"role","content"}`` messages): it is routed through the gated
+        conversation ingestion — atomic extraction + consolidation, every fact
+        through the gate, conversation provenance. Needs the ``llm`` the
+        client was built with. ``asserted_at`` (epoch seconds) stamps the
+        EVENT time (bi-temporal v13: when it was said/true — drives
+        reconciliation age-gaps and answer-with-history)."""
+        if isinstance(content, list):
+            if self.llm is None:
+                raise ValueError(
+                    "add(messages) needs an extraction llm: Memory(..., llm=...)")
+            from .conversation_ingest import ingest_conversation
+            return ingest_conversation(
+                self.semantic, content, llm=self.llm,
+                conversation_id=conversation_id or "sdk",
+                topic=topic if topic != "user" else "conversational/ingested",
+                asserted_at=asserted_at, embed="sync")
+        text = (content or "").strip()
         if not text:
             return {"stored": False, "status": "empty", "warnings": [], "advice": "empty text"}
         gate = run_validation_gate(
@@ -71,7 +95,7 @@ class Memory:
             return {"stored": False, "status": "rejected", "warnings": list(gate.warnings),
                     "advice": gate.advice, "grounding_score": gate.grounding_score}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
-                    grounding_score=gate.grounding_score)
+                    grounding_score=gate.grounding_score, asserted_at=asserted_at)
         if gate.action == "downgrade":
             fact.status = "quarantined"
         self.semantic.store(fact, embed="sync")
@@ -82,21 +106,56 @@ class Memory:
         }
 
     # ---- read --------------------------------------------------------------
-    def search(self, query: str, k: int = 5) -> list[dict[str, Any]]:
+    def search(self, query: str, k: int = 5, *, deep: bool = False,
+               as_of: float | None = None,
+               with_history: bool = False) -> list[dict[str, Any]]:
         """Recall the top-k facts for ``query``, each with its provenance — the
         differentiator: ``status`` + write-time ``grounding_score`` so a caller can
-        prefer/assert grounded facts and hedge low-trust ones."""
+        prefer/assert grounded facts and hedge low-trust ones.
+
+        * ``deep`` — archaeology: also search dormant memories the freshness
+          half-life hides from the default view (integrity guards stay).
+        * ``as_of`` (epoch seconds) — time travel: what was CURRENT at that
+          moment (asserted by then, not yet superseded). No competitor has it.
+        * ``with_history`` — each hit carries its transition story
+          (``history: [{text, asserted_date, until}]``) from the supersession
+          chain: "changed from X to Y on <date>"."""
+        if as_of is not None:
+            from .temporal_context import recall_as_of
+            hits = recall_as_of(self.semantic, query, when=float(as_of), k=k)
+        else:
+            hits = self.semantic.recall(query, k=k, deep=deep)
         out: list[dict[str, Any]] = []
-        for f, score in self.semantic.recall(query, k=k):
-            out.append({
+        for f, score, *_rest in [h if len(h) >= 2 else (h[0], 0.0) for h in hits]:
+            item = {
                 "text": getattr(f, "proposition", ""),
                 "score": round(float(score), 4),
                 "status": getattr(f, "status", "model_claim"),
                 "grounding_score": getattr(f, "grounding_score", None),
                 "topic": getattr(f, "topic", ""),
                 "id": getattr(f, "id", ""),
-            })
+            }
+            if with_history:
+                from .temporal_context import _event_ts, _iso, fact_history
+                item["history"] = [
+                    {"text": getattr(p, "proposition", ""),
+                     "asserted_date": _iso(_event_ts(p)),
+                     "until": getattr(p, "superseded_at", None)}
+                    for p in fact_history(self.semantic, item["id"])
+                ]
+            out.append(item)
         return out
+
+    def explain(self, query: str, k: int = 5, *, deep: bool = False,
+                as_of: float | None = None) -> dict[str, Any]:
+        """The evidence dossier behind an answer — the trust gate made atomic:
+        per fact the full chain of custody (provenance, writer, status,
+        verified_by, grounding, the two clocks, what it replaced, declared
+        disputes) or an EXPLICIT abstention with its reason. Judge-grade
+        "how do you know?" for any query."""
+        from .trust_report import build_trust_report
+        return build_trust_report(self.semantic, query, k=k, deep=deep,
+                                  as_of=as_of)
 
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).
     recall = search
