@@ -1177,6 +1177,37 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_ingest_conversation",
+            description=(
+                "Ingest a whole conversation: extract EVERY durable ATOMIC "
+                "memory fact (one attribute per fact, subject-named — the "
+                "granularity that beat compound extraction by +6-9 F1 on "
+                "HaluMem) and store each through the full anti-confab gate as "
+                "a low-trust 'model_claim' with conversation provenance. The "
+                "competitors' add(messages) — with a trust gate they don't have."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "role": {"type": "string"},
+                                "content": {"type": "string"},
+                            },
+                            "required": ["role", "content"],
+                        },
+                    },
+                    "conversation_id": {"type": "string"},
+                    "topic": {"type": "string",
+                               "default": "conversational/ingested"},
+                },
+                "required": ["messages", "conversation_id"],
+            },
+        ),
+        t.Tool(
             name="hippo_document_list",
             description=(
                 "List ingested source documents (Tier Documents): one row per "
@@ -6716,6 +6747,24 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "note": ("promoted as low-trust model_claim; raw chat is NOT "
                           "auto-verified — supply evidence to elevate status"),
             })
+
+        if name == "hippo_ingest_conversation":
+            # Ingestion di prodotto (iter 34): conversazione -> fatti ATOMICI
+            # (prompt vincente condiviso col bench) -> store gated per-fatto,
+            # provenance conversation:<id>. LLM dell'agente (hosted/injected).
+            from engram.conversation_ingest import ingest_conversation
+            msgs = arguments.get("messages") or []
+            conv_id = arguments.get("conversation_id", "")
+            topic = arguments.get("topic", "conversational/ingested")
+            res = ingest_conversation(
+                a.semantic, msgs, llm=a.wake.llm,
+                conversation_id=conv_id, topic=topic)
+            _audit(name, arguments,
+                   outcome="ok" if not res.get("error") else "llm_error")
+            return _ok({**res,
+                        "note": ("atomic facts stored as low-trust model_claim "
+                                  "with conversation provenance; evidence "
+                                  "elevates status, never the chat itself")})
 
         if name == "hippo_document_list":
             # Tier Documents — store ISOLATO (versionato-per-hash), NON il corpus

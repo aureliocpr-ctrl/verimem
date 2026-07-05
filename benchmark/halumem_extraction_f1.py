@@ -48,16 +48,9 @@ _EXTRACT_SYSTEM = (
 # Granularity lever (iter 19): HaluMem gold memory_points are ATOMIC, subject-named
 # and exhaustive; the generic prompt yields fewer, compound facts (each matches at
 # most one gold at the e5 threshold) and 600 max_tokens truncates dense sessions.
-_EXTRACT_SYSTEM_ATOMIC = (
-    "Extract EVERY durable memory fact a personal assistant should store from this "
-    "conversation — identity, relationships, preferences (likes AND dislikes), events, "
-    "plans, health, work, reasons. Rules:\n"
-    "- ATOMIC: exactly ONE attribute or fact per line; if a sentence carries several "
-    "(a preference + its reason + a date), split them into separate lines.\n"
-    "- Start every line with the user's full name (never a pronoun).\n"
-    "- Be EXHAUSTIVE: list every stable fact the dialogue states, including minor ones.\n"
-    "- Only facts the dialogue actually states — never invent or infer beyond it.\n"
-    "One fact per line, no numbering, no preamble.")
+# SINGLE SOURCE OF TRUTH (iter 34): the atomic prompt lives in the PRODUCT module
+# (engram.conversation_ingest) and the bench imports it — a bench win IS a product win.
+from engram.conversation_ingest import ATOMIC_EXTRACT_SYSTEM as _EXTRACT_SYSTEM_ATOMIC
 
 _PROMPTS = {"v1": _EXTRACT_SYSTEM, "atomic": _EXTRACT_SYSTEM_ATOMIC}
 
