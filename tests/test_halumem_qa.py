@@ -86,6 +86,15 @@ def test_build_records_ingests_via_our_pipeline_and_flags_abstention() -> None:
     assert bnd["gold"] == ""
 
 
+def test_parse_halumem_ts() -> None:
+    from benchmark.halumem_qa import _parse_halumem_ts
+    a = _parse_halumem_ts("Sep 04, 2025, 18:42:18")
+    b = _parse_halumem_ts("Dec 15, 2025, 09:00:00")
+    assert a and b and b > a, "later date -> larger epoch (real age gap)"
+    assert _parse_halumem_ts("") is None
+    assert _parse_halumem_ts("not a date") is None
+
+
 def test_raw_turns_arm_skips_the_gate() -> None:
     """The baseline arm (what mem0/raw ingestion does) stores turns verbatim and
     never calls the extraction LLM — so a comparison isolates OUR pipeline's

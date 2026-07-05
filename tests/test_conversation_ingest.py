@@ -144,6 +144,29 @@ def test_ingest_consolidates_by_default(tmp_path) -> None:
     assert res["consolidated"] == 3
 
 
+def test_ingest_propagates_asserted_at_to_created_at(tmp_path) -> None:
+    """Memory-Conflict resolution needs the SEMANTIC timestamp: facts ingested in
+    one batch otherwise share created_at=now, so no update ever has an age gap and
+    reconcile can never supersede. asserted_at stamps the conversation's time."""
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    llm = _StubLLM("Martin Mark is a nurse")
+    ts = 1_700_000_000.0
+    res = ingest_conversation(sm, _CONV, llm=llm, conversation_id="ct",
+                              asserted_at=ts, consolidate=False, embed="sync")
+    assert res["stored"] >= 1
+    f = sm.get(res["fact_ids"][0])
+    assert abs(float(f.created_at) - ts) < 1.0, "fact carries the asserted time"
+
+
+def test_ingest_without_asserted_at_uses_default_now(tmp_path) -> None:
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    llm = _StubLLM("Martin Mark is a nurse")
+    res = ingest_conversation(sm, _CONV, llm=llm, conversation_id="cu",
+                              consolidate=False, embed="sync")
+    f = sm.get(res["fact_ids"][0])
+    assert float(f.created_at) > 1_600_000_000.0, "defaults to a real now-ish stamp"
+
+
 def test_ingest_consolidate_false_single_pass(tmp_path) -> None:
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     llm = _StubLLM("Martin Mark is a nurse")

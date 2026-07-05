@@ -109,6 +109,7 @@ def ingest_conversation(
     max_out_tokens: int = 1200,
     consolidate: bool = True,
     completeness: bool = False,
+    asserted_at: float | None = None,
     embed: str | None = None,
 ) -> dict:
     """Extract ATOMIC facts from ``messages`` and store each through the gate.
@@ -159,6 +160,11 @@ def ingest_conversation(
         lines = consolidate_facts(lines, llm=llm, max_out_tokens=max_out_tokens)
         res["consolidated"] = len(lines)
     prov = conversation_provenance_ref(conversation_id)
+    # The SEMANTIC timestamp (when the conversation happened), not now: facts from
+    # one ingest batch otherwise share created_at=now, giving every cross-turn
+    # update a zero age gap so reconcile-on-write can never supersede the stale
+    # fact (Memory-Conflict stays 0/10). Stamping asserted_at unlocks it.
+    stamp = {"created_at": float(asserted_at)} if asserted_at is not None else {}
     for prop in lines:
         prop, _ = redact_secrets(prop)
         fact = Fact(
@@ -168,6 +174,7 @@ def ingest_conversation(
             status="model_claim",          # a claim, never laundered truth
             source_episodes=[prov],
             writer_role=INGEST_WRITER_ROLE,
+            **stamp,
         )
         try:
             if embed is not None:

@@ -53,64 +53,122 @@ def _is_abstention_gold(answer: str) -> bool:
 
 
 def _ingest_raw_turns(sm: SemanticMemory, dialogue: list[dict], *,
-                      topic: str) -> None:
+                      topic: str, asserted_at: float | None = None) -> None:
     """Baseline: store each user/assistant turn verbatim (no extraction, no gate)
     — a stand-in for mem0/raw ingestion, to isolate our pipeline's lift."""
+    stamp = {"created_at": float(asserted_at)} if asserted_at is not None else {}
     for i, t in enumerate(dialogue or []):
         c = (t.get("content") or "").strip()
         if c:
             sm.store(Fact(proposition=c, topic=topic,
-                          source_episodes=[f"turn:{i}"]), embed="sync")
+                          source_episodes=[f"turn:{i}"], **stamp), embed="sync")
+
+
+def _parse_halumem_ts(s: str) -> float | None:
+    """Parse a HaluMem session/turn stamp ("Sep 04, 2025, 18:42:18") to epoch
+    seconds — the SEMANTIC time a fact was asserted, so cross-session updates get
+    a real age gap and reconcile-on-write can supersede the stale fact. Best-effort:
+    unparseable -> None (fall back to now)."""
+    import datetime as _dt
+    s = (s or "").strip()
+    for fmt in ("%b %d, %Y, %H:%M:%S", "%b %d, %Y, %H:%M", "%b %d, %Y",
+                "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            return _dt.datetime.strptime(s, fmt).replace(
+                tzinfo=_dt.timezone.utc).timestamp()
+        except ValueError:
+            continue
+    return None
+
+
+def _ingest_session(sm: SemanticMemory, dialogue: list[dict], *, topic: str,
+                    conversation_id: str, ingest_llm: Any, raw_turns: bool,
+                    completeness: bool, consolidate: bool,
+                    max_out_tokens: int, asserted_at: float | None = None) -> None:
+    from engram.conversation_ingest import ingest_conversation
+    if raw_turns:
+        _ingest_raw_turns(sm, dialogue, topic=topic, asserted_at=asserted_at)
+    else:
+        msgs = [{"role": t.get("role", "user"), "content": t.get("content", "")}
+                for t in dialogue if (t.get("content") or "").strip()]
+        ingest_conversation(
+            sm, msgs, llm=ingest_llm, conversation_id=conversation_id,
+            topic=topic, completeness=completeness, consolidate=consolidate,
+            max_out_tokens=max_out_tokens, asserted_at=asserted_at, embed="sync")
+
+
+def _emit_question_records(records: list, sm: SemanticMemory, questions: list, *,
+                           k: int, prefix: str, per_session_qa: int | None) -> None:
+    qs = questions[:per_session_qa] if per_session_qa else questions
+    for qj, q in enumerate(qs):
+        gold = str(q.get("answer", ""))
+        cat = str(q.get("question_type", "?"))
+        adversarial = _is_abstention_gold(gold) or cat == "Memory Boundary"
+        ctx = _recall_context(sm, q.get("question", ""), k)
+        records.append({
+            "id": f"{prefix}:{qj}",
+            "question": q.get("question", ""),
+            "gold": "" if adversarial else gold,
+            "context": ctx,
+            "category": cat,
+            "adversarial": adversarial,
+        })
 
 
 def build_records_halumem(
     users: list[dict[str, Any]], *, k: int, workdir: Path | str,
     ingest_llm: Any, completeness: bool = False, consolidate: bool = True,
     raw_turns: bool = False, per_session_qa: int | None = None,
-    max_out_tokens: int = 1200,
+    max_out_tokens: int = 1200, cumulative: bool = True,
+    reconcile: bool = False,
 ) -> list[dict[str, Any]]:
-    """One record per question. Per session: ingest the dialogue (OUR gated
-    pipeline, or raw turns for the baseline arm), then recall top-k context per
-    question. Memory-Boundary / abstention golds are flagged ``adversarial`` so
-    scoring rewards abstention instead of string-matching."""
-    from engram.conversation_ingest import ingest_conversation
-
+    """One record per question. ``cumulative`` (default, realistic): ALL a user's
+    sessions ingest into ONE store before answering, so cross-session
+    Memory-Conflict facts coexist and reconcile-on-write can retire the stale one
+    (per-session isolation made those questions unanswerable — measured 0/10).
+    ``reconcile`` wires the local NLI conflict judge on the store (auto-supersede
+    is env-gated: ENGRAM_RECONCILE_ON_WRITE/AUTO_SUPERSEDE). Memory-Boundary /
+    abstention golds are flagged ``adversarial`` so scoring rewards abstention."""
     records: list[dict[str, Any]] = []
     for ui, u in enumerate(users):
-        for si, s in enumerate(u.get("sessions", []) or []):
-            questions = s.get("questions") or []
-            if not questions:
-                continue
-            dialogue = s.get("dialogue") or []
-            db = Path(workdir) / f"hm_{ui}_{si}.db"
+        sessions = [s for s in (u.get("sessions", []) or [])
+                    if s.get("questions")]
+        if not sessions:
+            continue
+        if cumulative:
+            db = Path(workdir) / f"hm_u{ui}.db"
             sm = SemanticMemory(db_path=db)
-            topic = f"halumem/{ui}/{si}"
-            if raw_turns:
-                _ingest_raw_turns(sm, dialogue, topic=topic)
-            else:
-                msgs = [{"role": t.get("role", "user"),
-                         "content": t.get("content", "")}
-                        for t in dialogue if (t.get("content") or "").strip()]
-                ingest_conversation(
-                    sm, msgs, llm=ingest_llm, conversation_id=f"{ui}:{si}",
-                    topic=topic, completeness=completeness,
+            if reconcile:
+                from engram.agent import wire_reconcile_judge
+                wire_reconcile_judge(sm, ingest_llm)
+            for si, s in enumerate(u.get("sessions", []) or []):  # ingest ALL
+                _ingest_session(
+                    sm, s.get("dialogue") or [], topic=f"halumem/{ui}/{si}",
+                    conversation_id=f"{ui}:{si}", ingest_llm=ingest_llm,
+                    raw_turns=raw_turns, completeness=completeness,
                     consolidate=consolidate, max_out_tokens=max_out_tokens,
-                    embed="sync")
-            qs = questions[:per_session_qa] if per_session_qa else questions
-            for qj, q in enumerate(qs):
-                gold = str(q.get("answer", ""))
-                cat = str(q.get("question_type", "?"))
-                adversarial = _is_abstention_gold(gold) or cat == "Memory Boundary"
-                ctx = _recall_context(sm, q.get("question", ""), k)
-                records.append({
-                    "id": f"{ui}:{si}:{qj}",
-                    "question": q.get("question", ""),
-                    "gold": "" if adversarial else gold,
-                    "context": ctx,
-                    "category": cat,
-                    "adversarial": adversarial,
-                })
+                    asserted_at=_parse_halumem_ts(s.get("start_time", "")))
+            for si, s in enumerate(u.get("sessions", []) or []):  # then answer
+                _emit_question_records(records, sm, s.get("questions") or [],
+                                       k=k, prefix=f"{ui}:{si}",
+                                       per_session_qa=per_session_qa)
             _cleanup_db(db)
+        else:
+            for si, s in enumerate(u.get("sessions", []) or []):
+                if not s.get("questions"):
+                    continue
+                db = Path(workdir) / f"hm_{ui}_{si}.db"
+                sm = SemanticMemory(db_path=db)
+                _ingest_session(
+                    sm, s.get("dialogue") or [], topic=f"halumem/{ui}/{si}",
+                    conversation_id=f"{ui}:{si}", ingest_llm=ingest_llm,
+                    raw_turns=raw_turns, completeness=completeness,
+                    consolidate=consolidate, max_out_tokens=max_out_tokens,
+                    asserted_at=_parse_halumem_ts(s.get("start_time", "")))
+                _emit_question_records(records, sm, s.get("questions") or [],
+                                       k=k, prefix=f"{ui}:{si}",
+                                       per_session_qa=per_session_qa)
+                _cleanup_db(db)
     return records
 
 
@@ -132,6 +190,12 @@ def main(argv: list[str] | None = None) -> int:
                     help="gap-fill recall pass at ingest (extract->gapfill->consolidate)")
     ap.add_argument("--raw-turns", action="store_true",
                     help="BASELINE arm: store turns verbatim (no extraction, no gate)")
+    ap.add_argument("--reconcile", action="store_true",
+                    help="enable reconcile-on-write (auto-supersede stale facts on "
+                         "cross-session Memory-Conflict) with the LOCAL NLI judge")
+    ap.add_argument("--cumulative", action="store_true", default=True)
+    ap.add_argument("--per-session", dest="cumulative", action="store_false",
+                    help="ablation: isolate each session (breaks cross-session QA)")
     ap.add_argument("--max-out-tokens", type=int, default=1200)
     ap.add_argument("--model", default="claude-sonnet-4-6",
                     help="claude CLI model for ingest + answer + judge")
@@ -150,6 +214,11 @@ def main(argv: list[str] | None = None) -> int:
         for u in users:
             u["sessions"] = (u.get("sessions") or [])[: a.sessions]
 
+    if a.reconcile:
+        os.environ.setdefault("ENGRAM_RECONCILE_ON_WRITE", "1")
+        os.environ.setdefault("ENGRAM_RECONCILE_AUTO_SUPERSEDE", "1")
+        os.environ.setdefault("ENGRAM_RECONCILE_NLI", "local")
+
     llm = LeanClaudeCLILLM(timeout_s=a.timeout, model=a.model)
     workdir = Path(tempfile.mkdtemp(prefix="halumem_qa_"))
     try:
@@ -157,7 +226,8 @@ def main(argv: list[str] | None = None) -> int:
             users, k=a.k, workdir=workdir, ingest_llm=llm,
             completeness=a.completeness, consolidate=a.consolidate,
             raw_turns=a.raw_turns, per_session_qa=a.per_session_qa,
-            max_out_tokens=a.max_out_tokens)
+            max_out_tokens=a.max_out_tokens, cumulative=a.cumulative,
+            reconcile=a.reconcile)
 
         def _progress(done: int, total: int) -> None:
             print(f"  ... {done}/{total}", flush=True)
@@ -172,6 +242,8 @@ def main(argv: list[str] | None = None) -> int:
     res["arm"] = ("raw-turns" if a.raw_turns
                   else f"pipeline(consolidate={a.consolidate},"
                        f"completeness={a.completeness})")
+    res["cumulative"] = bool(a.cumulative)
+    res["reconcile"] = bool(a.reconcile)
     res["model"] = a.model
     res["grounding_gate"] = os.environ.get("ENGRAM_GROUNDING_GATE", "")
     res["judge"] = "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
