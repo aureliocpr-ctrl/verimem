@@ -150,3 +150,50 @@ def test_ingest_consolidate_false_single_pass(tmp_path) -> None:
     ingest_conversation(sm, _CONV, llm=llm, conversation_id="cd",
                         consolidate=False, embed="sync")
     assert len(llm.calls) == 1, "consolidate=False -> extraction only"
+
+
+# --- gap-fill completeness pass (recall lever toward F1 > 0.80) ---
+
+def test_gapfill_returns_only_missing_facts() -> None:
+    from engram.conversation_ingest import gapfill_facts
+    # the pass names two facts; one is already present -> only the NEW one is added
+    llm = _StubLLM("Martin Mark works as a nurse in Berlin\n"
+                   "Martin Mark has a sister called Ada")
+    extra = gapfill_facts(
+        "user: I'm Martin Mark, a nurse in Berlin. My sister Ada visits Sundays.",
+        ["Martin Mark works as a nurse in Berlin"], llm=llm)
+    assert extra == ["Martin Mark has a sister called Ada"], \
+        "only STATED-but-MISSING facts, no duplicates of what we already have"
+
+
+def test_gapfill_failsafe_returns_empty_on_error() -> None:
+    from engram.conversation_ingest import gapfill_facts
+
+    class _Boom:
+        def complete(self, *a, **k):
+            raise RuntimeError("down")
+
+    # a gap-fill error must ADD NOTHING (never lose the base extraction, never crash)
+    assert gapfill_facts("dialogue", ["a fact"], llm=_Boom()) == []
+
+
+def test_ingest_completeness_runs_gapfill_then_consolidate(tmp_path) -> None:
+    """completeness=True order: extract -> gapfill (recall) -> consolidate
+    (precision). Three LLM passes; gapfill sees the extraction, consolidate sees
+    extraction+gapfill."""
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    llm = _StubLLM("Martin Mark is a nurse")
+    ingest_conversation(sm, _CONV, llm=llm, conversation_id="ce",
+                        completeness=True, embed="sync")
+    assert len(llm.calls) == 3, "extract + gapfill + consolidate"
+    assert llm.calls[0]["system"] == ATOMIC_EXTRACT_SYSTEM
+    assert "MISSING" in llm.calls[1]["system"]          # gap-fill pass
+    assert llm.calls[2]["system"].startswith("You are cleaning")  # consolidate
+
+
+def test_ingest_completeness_default_off(tmp_path) -> None:
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    llm = _StubLLM("Martin Mark is a nurse")
+    ingest_conversation(sm, _CONV, llm=llm, conversation_id="cf", embed="sync")
+    # default: extract + consolidate only (completeness is opt-in until A/B-proven)
+    assert len(llm.calls) == 2, "no gap-fill unless completeness=True"

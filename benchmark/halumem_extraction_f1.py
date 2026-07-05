@@ -119,6 +119,11 @@ def main(argv=None) -> int:
                          "near-duplicates + drops trivia to lift PRECISION "
                          "(the F1 bottleneck at ~0.65) — the product ingest "
                          "consolidation, measured")
+    ap.add_argument("--completeness", action="store_true",
+                    help="add 'completed' (+ 'completed_consolidated' if "
+                         "--consolidate) arms: a gap-fill pass adds durable "
+                         "facts the first extraction MISSED — the RECALL lever "
+                         "toward F1 > 0.80")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
 
@@ -151,7 +156,8 @@ def main(argv=None) -> int:
     from engram.grounding_gate import fact_grounding_score
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=a.timeout)
 
-    arms = {"off": [], "on": [], "consolidated": []}
+    arms = {"off": [], "on": [], "consolidated": [],
+            "completed": [], "completed_consolidated": []}
     gate_errors = 0
     for u in users:
         for s in u.get("sessions", [])[: a.sessions]:
@@ -170,6 +176,18 @@ def main(argv=None) -> int:
                 cons = consolidate_facts(extracted, llm=llm,
                                          max_out_tokens=a.max_out_tokens)
                 arms["consolidated"].append(_prf(cons, gold, a.match_thr))
+            if a.completeness:
+                from engram.conversation_ingest import (consolidate_facts,
+                                                        gapfill_facts)
+                gap = gapfill_facts(src, extracted, llm=llm,
+                                    max_out_tokens=a.max_out_tokens)
+                completed = extracted + gap
+                arms["completed"].append(_prf(completed, gold, a.match_thr))
+                if a.consolidate:
+                    cc = consolidate_facts(completed, llm=llm,
+                                           max_out_tokens=a.max_out_tokens)
+                    arms["completed_consolidated"].append(
+                        _prf(cc, gold, a.match_thr))
             if not a.no_gate:
                 # A transient LLM timeout on ONE gate call must not kill a
                 # multi-hour run (it did, 2026-07-04: LLMError 120s ~35min in).
@@ -197,10 +215,13 @@ def main(argv=None) -> int:
            "prompt_variant": a.prompt, "max_out_tokens": a.max_out_tokens,
            "no_gate": bool(a.no_gate), "gate_errors": gate_errors,
            "consolidate": bool(a.consolidate),
+           "completeness": bool(a.completeness),
            "grounding_backend": os.environ.get("ENGRAM_GROUNDING_BACKEND", "")
                                 or "llm",
            "off": agg(arms["off"]), "on": agg(arms["on"]),
-           "consolidated": agg(arms["consolidated"])}
+           "consolidated": agg(arms["consolidated"]),
+           "completed": agg(arms["completed"]),
+           "completed_consolidated": agg(arms["completed_consolidated"])}
     print(json.dumps(res, indent=2))
     if a.out:
         Path(a.out).write_text(json.dumps(res, indent=2), encoding="utf-8")

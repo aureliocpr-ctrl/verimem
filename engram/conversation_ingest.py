@@ -53,6 +53,21 @@ CONSOLIDATE_SYSTEM = (
     "person's full name.\n"
     "Return the cleaned list, one fact per line, no numbering, no preamble.")
 
+#: Gap-fill / completeness pass (iter 36, mandate "beat them on EVERY axis" —
+#: MemOS extraction is 79.7 and consolidation trades ~2pp recall for precision,
+#: so recall is the other half of the climb toward F1 > 0.80). Given the
+#: dialogue AND the facts already extracted, name ONLY the durable facts that
+#: are stated but MISSING — a targeted second look, not a blind re-extract.
+GAPFILL_SYSTEM = (
+    "You are given a conversation and a list of memory facts ALREADY extracted "
+    "from it. Your job: find durable memory facts the conversation STATES but "
+    "that are MISSING from the list. Rules:\n"
+    "- Output ONLY facts that are missing — never repeat a fact already listed.\n"
+    "- Only facts the dialogue actually states — never invent or infer beyond it.\n"
+    "- ATOMIC: one attribute per line, starting with the person's full name.\n"
+    "- If nothing durable is missing, return an empty response.\n"
+    "One missing fact per line, no numbering, no preamble.")
+
 #: writer_role of ingested facts: NOT a trusted hook -> the full gate runs.
 INGEST_WRITER_ROLE = "conversational_ingest"
 
@@ -93,24 +108,32 @@ def ingest_conversation(
     confidence: float = 0.5,
     max_out_tokens: int = 1200,
     consolidate: bool = True,
+    completeness: bool = False,
     embed: str | None = None,
 ) -> dict:
     """Extract ATOMIC facts from ``messages`` and store each through the gate.
+
+    ``completeness`` (opt-in, recall lever): a gap-fill LLM pass names durable
+    facts the dialogue states but the first extraction missed, run BEFORE
+    consolidation (extract -> gap-fill -> consolidate). Off by default until the
+    A/B proves the recall gain is worth the extra pass.
 
     ``consolidate`` (default ON, quality-first): a 2nd LLM pass merges
     near-duplicates and drops trivia, lifting precision +8pp / F1 +3.3pp
     (measured u5s6 2026-07-05). Set ``consolidate=False`` for a single-pass /
     lower-latency ingest.
 
-    Returns ``{"stored", "rejected", "fact_ids", "extracted", "consolidated",
-    "error"}``. Fail-safe end to end: an LLM error reports instead of raising;
-    a fact the store gate rejects is counted, never re-tried blindly.
+    Returns ``{"stored", "rejected", "fact_ids", "extracted", "gapfilled",
+    "consolidated", "error"}``. Fail-safe end to end: an LLM error reports
+    instead of raising; a fact the store gate rejects is counted, never
+    re-tried blindly.
     """
     from .redaction import redact_secrets
     from .semantic import Fact
 
     res: dict = {"stored": 0, "rejected": 0, "fact_ids": [],
-                 "extracted": 0, "consolidated": 0, "error": None}
+                 "extracted": 0, "gapfilled": 0, "consolidated": 0,
+                 "error": None}
     dialogue = render_conversation(messages)
     if not dialogue:
         return res
@@ -127,6 +150,11 @@ def ingest_conversation(
 
     lines = parse_extracted_lines(raw)
     res["extracted"] = len(lines)
+    if completeness and lines:
+        extra = gapfill_facts(dialogue, lines, llm=llm,
+                              max_out_tokens=max_out_tokens)
+        lines = lines + extra
+        res["gapfilled"] = len(extra)
     if consolidate and lines:
         lines = consolidate_facts(lines, llm=llm, max_out_tokens=max_out_tokens)
         res["consolidated"] = len(lines)
@@ -153,6 +181,35 @@ def ingest_conversation(
     return res
 
 
+def gapfill_facts(dialogue: str, facts: list[str], *, llm: Any,
+                  max_out_tokens: int = 1200) -> list[str]:
+    """Return durable facts the ``dialogue`` STATES but ``facts`` missed (the
+    recall pass). Additive-only and fail-safe: on any LLM error, or nothing new,
+    returns ``[]`` — a gap-fill can only ADD, never lose the base extraction.
+    Deduplicated against ``facts`` by normalized text so the pass never
+    re-emits what we already have."""
+    if not dialogue:
+        return []
+    have = {f.strip().casefold() for f in facts}
+    try:
+        r = llm.complete(
+            GAPFILL_SYSTEM,
+            [{"role": "user",
+              "content": f"Conversation:\n{dialogue}\n\nAlready extracted:\n"
+                         + "\n".join(facts) + "\n\nMissing facts:"}],
+            max_tokens=max_out_tokens)
+        found = parse_extracted_lines(getattr(r, "text", "") or "")
+    except Exception:  # noqa: BLE001 — a gap-fill must never crash the ingest
+        return []
+    out, seen = [], set(have)
+    for f in found:
+        k = f.strip().casefold()
+        if k and k not in seen:
+            seen.add(k)
+            out.append(f)
+    return out
+
+
 def consolidate_facts(facts: list[str], *, llm: Any,
                       max_out_tokens: int = 1200) -> list[str]:
     """Merge near-duplicates and drop non-durable trivia from an extracted fact
@@ -174,7 +231,8 @@ def consolidate_facts(facts: list[str], *, llm: Any,
 
 
 __all__ = [
-    "ATOMIC_EXTRACT_SYSTEM", "CONSOLIDATE_SYSTEM", "INGEST_WRITER_ROLE",
-    "conversation_provenance_ref", "parse_extracted_lines",
-    "render_conversation", "ingest_conversation", "consolidate_facts",
+    "ATOMIC_EXTRACT_SYSTEM", "CONSOLIDATE_SYSTEM", "GAPFILL_SYSTEM",
+    "INGEST_WRITER_ROLE", "conversation_provenance_ref",
+    "parse_extracted_lines", "render_conversation", "ingest_conversation",
+    "consolidate_facts", "gapfill_facts",
 ]
