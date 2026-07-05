@@ -1203,8 +1203,39 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     "conversation_id": {"type": "string"},
                     "topic": {"type": "string",
                                "default": "conversational/ingested"},
+                    "asserted_at": {
+                        "type": "number",
+                        "description": (
+                            "EVENT time (epoch seconds): when the conversation "
+                            "happened / the facts were true. Bi-temporal v13: "
+                            "drives the reconcile age-gap and answer-with-history; "
+                            "created_at stays the ingest time. Omit if unknown."
+                        ),
+                    },
                 },
                 "required": ["messages", "conversation_id"],
+            },
+        ),
+        t.Tool(
+            name="hippo_recall_history",
+            description=(
+                "Answer-with-history recall: live top-k facts, each enriched with "
+                "its TRANSITION story from the supersession chain ('current since "
+                "<date> | PREVIOUSLY: ... until <date>') and any DECLARED "
+                "unresolved conflicts ('DISPUTED: ...'). The memory that can say "
+                "WHAT CHANGED, WHEN — and what it is not sure about — instead of "
+                "serving only the latest value. No competitor keeps this."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "k": {"type": "integer", "default": 5},
+                    "max_hops": {"type": "integer", "default": 3,
+                                  "description": "history depth per fact"},
+                    "with_disputes": {"type": "boolean", "default": True},
+                },
+                "required": ["query"],
             },
         ),
         t.Tool(
@@ -6756,15 +6787,29 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             msgs = arguments.get("messages") or []
             conv_id = arguments.get("conversation_id", "")
             topic = arguments.get("topic", "conversational/ingested")
+            _aat = arguments.get("asserted_at")
             res = ingest_conversation(
                 a.semantic, msgs, llm=a.wake.llm,
-                conversation_id=conv_id, topic=topic)
+                conversation_id=conv_id, topic=topic,
+                asserted_at=float(_aat) if _aat is not None else None)
             _audit(name, arguments,
                    outcome="ok" if not res.get("error") else "llm_error")
             return _ok({**res,
                         "note": ("atomic facts stored as low-trust model_claim "
                                   "with conversation provenance; evidence "
                                   "elevates status, never the chat itself")})
+
+        if name == "hippo_recall_history":
+            # Answer-with-history (iter 42): recall arricchito con la storia
+            # delle transizioni (catena supersede) + conflitti DICHIARATI.
+            from engram.temporal_context import recall_with_history
+            lines = recall_with_history(
+                a.semantic, arguments.get("query", ""),
+                k=int(arguments.get("k", 5)),
+                max_hops=int(arguments.get("max_hops", 3)),
+                with_disputes=bool(arguments.get("with_disputes", True)))
+            _audit(name, arguments, outcome="ok")
+            return _ok({"context": lines, "n": len(lines)})
 
         if name == "hippo_document_list":
             # Tier Documents — store ISOLATO (versionato-per-hash), NON il corpus

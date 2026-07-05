@@ -158,6 +158,12 @@ _EXPECTED_TOOLS = {
     "hippo_recall",
     "hippo_transcript_recall",
     "hippo_transcript_promote",
+    # iter 34 (2026-07-05): the product add(messages) — atomic extraction
+    # through the anti-confab gate with conversation provenance.
+    "hippo_ingest_conversation",
+    # iter 42 (2026-07-05): answer-with-history — recall enriched with the
+    # supersession-chain transition story + declared unresolved conflicts.
+    "hippo_recall_history",
     "hippo_document_list",
     "hippo_document_search",
     "hippo_document_get",
@@ -926,6 +932,31 @@ async def test_call_tool_transcript_recall(monkeypatch: pytest.MonkeyPatch,
     assert payload[0]["id"] == "tt1"
     assert payload[0]["confidence"] == 0.0, "deve esporre la fiducia ~0 (low-trust)"
     assert payload[0]["source_type"] == "conversational_raw"
+
+
+@pytest.mark.asyncio
+async def test_call_tool_recall_history(tmp_path, fake_agent: _FakeAgent) -> None:
+    """hippo_recall_history (iter 42): il recall racconta la TRANSIZIONE dalla
+    catena supersede — 'current | PREVIOUSLY: ...' — non solo l'ultimo valore."""
+    from engram.semantic import Fact, SemanticMemory
+
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    old = Fact(id="h-old", proposition="Johnson's monthly income is 3500 USD",
+               topic="t", asserted_at=1_700_000_000.0)
+    new = Fact(id="h-new", proposition="Johnson's monthly income is 5000 USD",
+               topic="t", asserted_at=1_700_000_000.0 + 60 * 86400)
+    sm.store(old, embed="sync")
+    sm.store(new, embed="sync")
+    sm.supersede("h-old", "h-new", reason="update")
+    fake_agent.semantic = sm
+
+    blocks = await _invoke_tool(
+        "hippo_recall_history", {"query": "Johnson monthly income", "k": 3})
+    payload = json.loads(blocks[0])
+    joined = "\n".join(payload.get("context", []))
+    assert "5000" in joined, "live value served"
+    assert "PREVIOUSLY" in joined and "3500" in joined, \
+        "the superseded value rides along as the transition story"
 
 
 @pytest.mark.asyncio

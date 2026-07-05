@@ -111,6 +111,42 @@ Product surface: `ingest_conversation(..., asserted_at=<epoch>)`
 (asserted_at propagation), `tests/test_truth_reconciliation_matching.py`
 (pre-gate skips the NLI below the floor), `benchmark/results/reconcile_scale_fixed.json`.
 
+## Bi-temporal memory (v13): two clocks, like a real memory
+
+``created_at`` is TRANSACTION time (when the system learned it — never
+backdated, so the staleness half-life and the anti-spoof fail-closed guard stay
+sound). ``asserted_at`` (schema v13) is EVENT time (when it was said / true —
+drives the reconcile age-gap and the history story; a FUTURE value is a
+legitimate calendar fact, not spoofing). Root-cause that forced it: stuffing
+event time into ``created_at`` made **83% of a timestamped store invisible to
+recall** (673/807 facts on HaluMem u1 — staleness hid the backdated, anti-spoof
+hid the future-dated). Product surface: ``ingest_conversation(asserted_at=…)``
+and ``hippo_ingest_conversation(asserted_at=…)``.
+
+## Answer-with-history: "what changed, when — and what I'm not sure about"
+
+Competitors serve the latest value; Verimem KEEPS the supersession chain
+(``superseded_by`` + ``superseded_at`` + reason) and the unresolved-conflict
+ledger, and ``engram/temporal_context.py`` turns both into recall context:
+
+```
+Johnson's monthly income is 5000 USD [current, since 2024-01-13]
+  | PREVIOUSLY: 'Johnson's monthly income is 3500 USD' (asserted 2023-11-14, until 2024-01-13)
+  | DISPUTED: conflicting record 'Johnson works at Hotel Riva' (unresolved)
+```
+
+* ``fact_history`` — backward walk over ``SemanticMemory.direct_predecessors``
+  (bounded, cycle-safe, main line only);
+* ``recall_with_history`` — live top-k, each hit enriched, fail-safe (an
+  enrichment error degrades to the plain proposition);
+* declared disputes — an honest memory SAYS it holds two conflicting records
+  instead of silently picking one.
+
+MCP surface: ``hippo_recall_history``. Bench arm: ``halumem_qa --history``
+(the transition-QA lever: Memory-Conflict golds narrate transitions "from X to
+Y", which a reconciled store serving only the endpoint forfeits — measured
+failure mode of the residual 18/44).
+
 ## The read-path dial: QA on HaluMem (n=120, like-for-like, self-proving arms)
 
 The same trust philosophy on the ANSWER side. `ENGRAM_GROUNDING_GATE=1` verifies

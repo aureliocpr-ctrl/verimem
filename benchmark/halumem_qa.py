@@ -98,13 +98,22 @@ def _ingest_session(sm: SemanticMemory, dialogue: list[dict], *, topic: str,
 
 
 def _emit_question_records(records: list, sm: SemanticMemory, questions: list, *,
-                           k: int, prefix: str, per_session_qa: int | None) -> None:
+                           k: int, prefix: str, per_session_qa: int | None,
+                           history: bool = False) -> None:
     qs = questions[:per_session_qa] if per_session_qa else questions
     for qj, q in enumerate(qs):
         gold = str(q.get("answer", ""))
         cat = str(q.get("question_type", "?"))
         adversarial = _is_abstention_gold(gold) or cat == "Memory Boundary"
-        ctx = _recall_context(sm, q.get("question", ""), k)
+        if history:
+            # answer-with-history: the context line carries the supersession
+            # TRANSITION story + declared disputes — Memory-Conflict golds
+            # narrate transitions ("from X to Y"), which a reconciled store
+            # serving only the current value forfeits (measured failure mode).
+            from engram.temporal_context import recall_with_history
+            ctx = recall_with_history(sm, q.get("question", ""), k=k)
+        else:
+            ctx = _recall_context(sm, q.get("question", ""), k)
         records.append({
             "id": f"{prefix}:{qj}",
             "question": q.get("question", ""),
@@ -120,7 +129,7 @@ def build_records_halumem(
     ingest_llm: Any, completeness: bool = False, consolidate: bool = True,
     raw_turns: bool = False, per_session_qa: int | None = None,
     max_out_tokens: int = 1200, cumulative: bool = True,
-    reconcile: bool = False,
+    reconcile: bool = False, history: bool = False,
 ) -> list[dict[str, Any]]:
     """One record per question. ``cumulative`` (default, realistic): ALL a user's
     sessions ingest into ONE store before answering, so cross-session
@@ -151,7 +160,8 @@ def build_records_halumem(
             for si, s in enumerate(u.get("sessions", []) or []):  # then answer
                 _emit_question_records(records, sm, s.get("questions") or [],
                                        k=k, prefix=f"{ui}:{si}",
-                                       per_session_qa=per_session_qa)
+                                       per_session_qa=per_session_qa,
+                                       history=history)
             _cleanup_db(db)
         else:
             for si, s in enumerate(u.get("sessions", []) or []):
@@ -167,7 +177,8 @@ def build_records_halumem(
                     asserted_at=_parse_halumem_ts(s.get("start_time", "")))
                 _emit_question_records(records, sm, s.get("questions") or [],
                                        k=k, prefix=f"{ui}:{si}",
-                                       per_session_qa=per_session_qa)
+                                       per_session_qa=per_session_qa,
+                                       history=history)
                 _cleanup_db(db)
     return records
 
@@ -196,6 +207,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--reconcile-min-overlap", type=float, default=0.35,
                     help="precision floor for auto-supersede (0.35 measured to "
                          "keep only same-attribute updates; 0 = destructive)")
+    ap.add_argument("--history", action="store_true",
+                    help="answer-with-history context: each hit carries its "
+                         "supersession TRANSITION story + declared disputes "
+                         "(engram.temporal_context) — the transition-QA lever")
     ap.add_argument("--cumulative", action="store_true", default=True)
     ap.add_argument("--per-session", dest="cumulative", action="store_false",
                     help="ablation: isolate each session (breaks cross-session QA)")
@@ -236,7 +251,7 @@ def main(argv: list[str] | None = None) -> int:
             completeness=a.completeness, consolidate=a.consolidate,
             raw_turns=a.raw_turns, per_session_qa=a.per_session_qa,
             max_out_tokens=a.max_out_tokens, cumulative=a.cumulative,
-            reconcile=a.reconcile)
+            reconcile=a.reconcile, history=a.history)
 
         def _progress(done: int, total: int) -> None:
             print(f"  ... {done}/{total}", flush=True)
@@ -253,6 +268,7 @@ def main(argv: list[str] | None = None) -> int:
                        f"completeness={a.completeness})")
     res["cumulative"] = bool(a.cumulative)
     res["reconcile"] = bool(a.reconcile)
+    res["history"] = bool(a.history)
     res["model"] = a.model
     res["grounding_gate"] = os.environ.get("ENGRAM_GROUNDING_GATE", "")
     res["judge"] = "claude-cli (subscription; NOT GPT-4 — see BENCHMARKS.md)"
