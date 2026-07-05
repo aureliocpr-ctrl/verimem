@@ -75,6 +75,42 @@ the moat to *do* anything at recall, set `ENGRAM_RECONCILE_NLI=local`.
   doubt, not a deletion); a precision-first deployment should raise the threshold or
   use `=llm`. Measured by `benchmark/interference_local_nli.py`.
 
+## Self-correcting memory — the temporal recipe (measured 2026-07-05)
+
+Auto-supersede only *works* when three conditions hold together. Each was
+root-caused on HaluMem-Medium (65 sessions, 807 gold facts, one user):
+
+1. **One cumulative store per user.** A cross-session conflict's two facts must
+   coexist: with per-session isolated stores, Memory-Conflict evidence never meets
+   its contradiction (measured QA 0/10, while cumulative evidence-recall@5 = 40/40).
+2. **The semantic timestamp, not `now`.** `classify_conflict` computes the age gap
+   from `created_at` (`engram/truth_reconciliation.py:123`); facts ingested in one
+   batch share `created_at=now` ⇒ age gap 0 ⇒ every update is a *dispute*, never a
+   supersede. `ingest_conversation(asserted_at=...)` stamps the conversation's own
+   time onto the facts — this is what unlocks the axis.
+3. **The precision floor is MANDATORY with auto-supersede.** At floor 0 the NLI
+   over-calls same-entity/different-attribute pairs and the result is destructive:
+   **700/807 facts retired (87%)** — a birth date superseded because a fact about
+   snakes arrived; sampled legitimacy ~6%. At `ENGRAM_RECONCILE_MIN_OVERLAP=0.35`
+   the same run retires **146, with 0 cross-attribute pairs** (12-session inspection:
+   99→7 supersessions, all real same-attribute updates — income, savings, health,
+   job; birth date / age / degree untouched). Real updates separate cleanly
+   (overlap 0.45–0.60) from the junk (<0.25).
+
+**Performance.** The overlap pre-gate (`find_related_candidates`) screens
+candidates *before* the expensive NLI call — behaviour-preserving (the floor would
+reject them after) and it kills the O(facts-per-entity) blow-up on a popular
+entity: full-history ingest **1752s → 573s (3×)** at equal-or-better precision.
+Remaining honest cost: ~0.7s/store with the default DeBERTa-large judge — fine for
+background ingest, not yet for interactive hot paths (next lever: base model /
+batched pairs).
+
+Product surface: `ingest_conversation(..., asserted_at=<epoch>)`
+(`engram/conversation_ingest.py`) and `benchmark/halumem_qa.py --reconcile`
+(defaults the floor to 0.35). Evidence: `tests/test_conversation_ingest.py`
+(asserted_at propagation), `tests/test_truth_reconciliation_matching.py`
+(pre-gate skips the NLI below the floor), `benchmark/results/reconcile_scale_fixed.json`.
+
 ## The read-path dial: QA on HaluMem (n=120, like-for-like, self-proving arms)
 
 The same trust philosophy on the ANSWER side. `ENGRAM_GROUNDING_GATE=1` verifies
