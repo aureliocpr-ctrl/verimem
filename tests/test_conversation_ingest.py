@@ -144,10 +144,12 @@ def test_ingest_consolidates_by_default(tmp_path) -> None:
     assert res["consolidated"] == 3
 
 
-def test_ingest_propagates_asserted_at_to_created_at(tmp_path) -> None:
-    """Memory-Conflict resolution needs the SEMANTIC timestamp: facts ingested in
-    one batch otherwise share created_at=now, so no update ever has an age gap and
-    reconcile can never supersede. asserted_at stamps the conversation's time."""
+def test_ingest_propagates_asserted_at_bitemporal(tmp_path) -> None:
+    """Bi-temporal (v13): the conversation's EVENT time lands on asserted_at
+    (reconcile age-gap + history), while created_at stays TRANSACTION time —
+    stuffing the event time into created_at made staleness/anti-spoof hide
+    backdated/future facts from recall (83% of a timestamped store, measured)."""
+    import time as _time
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     llm = _StubLLM("Martin Mark is a nurse")
     ts = 1_700_000_000.0
@@ -155,16 +157,19 @@ def test_ingest_propagates_asserted_at_to_created_at(tmp_path) -> None:
                               asserted_at=ts, consolidate=False, embed="sync")
     assert res["stored"] >= 1
     f = sm.get(res["fact_ids"][0])
-    assert abs(float(f.created_at) - ts) < 1.0, "fact carries the asserted time"
+    assert abs(float(f.asserted_at) - ts) < 1.0, "EVENT time on asserted_at"
+    assert float(f.created_at) > _time.time() - 3600, \
+        "TRANSACTION time stays now — never backdated"
 
 
-def test_ingest_without_asserted_at_uses_default_now(tmp_path) -> None:
+def test_ingest_without_asserted_at_leaves_event_time_unknown(tmp_path) -> None:
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     llm = _StubLLM("Martin Mark is a nurse")
     res = ingest_conversation(sm, _CONV, llm=llm, conversation_id="cu",
                               consolidate=False, embed="sync")
     f = sm.get(res["fact_ids"][0])
-    assert float(f.created_at) > 1_600_000_000.0, "defaults to a real now-ish stamp"
+    assert f.asserted_at is None, "no event time claimed when none was given"
+    assert float(f.created_at) > 1_600_000_000.0
 
 
 def test_ingest_consolidate_false_single_pass(tmp_path) -> None:

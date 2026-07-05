@@ -660,7 +660,17 @@ CREATE TABLE IF NOT EXISTS facts (
     -- v12 (2026-06-20) write-time grounding score (0-100): L4 source-entailment
     -- (grounding_gate, AUROC 0.971) calcolato dal gate e ora PERSISTITO (era scartato).
     -- Trust-coordinate write-time per provenance-conditioned recall/answer. Nullable.
-    grounding_score REAL
+    grounding_score REAL,
+    -- v13 (2026-07-05) EVENT time bi-temporale (asserted/valid-FROM): quando il
+    -- fatto e' stato detto/era vero, DISTINTO da created_at (transaction time =
+    -- quando il sistema l'ha imparato). created_at resta mai-retrodatato, cosi'
+    -- staleness half-life e anti-spoof fail-closed restano fondati; asserted_at
+    -- guida l'age-gap del reconcile e la storia temporale, e un valore nel
+    -- futuro e' LEGITTIMO (appuntamenti, scadenze), non spoofing. Root-cause
+    -- 2026-07-05: stipare l'event time in created_at rendeva invisibile al
+    -- recall l'83% di uno store retro/post-datato. Nullable, additiva, NO
+    -- backfill: NULL = "event time sconosciuto" -> fallback created_at.
+    asserted_at REAL
 );
 CREATE INDEX IF NOT EXISTS idx_facts_topic ON facts(topic);
 """
@@ -744,9 +754,14 @@ class SupersedeConflict(RuntimeError):
 #:        freshness.is_stale come cutoff nel recall.
 #:   v9 — 2026-06-03 buco silent-poisoning (Sorella C): colonna per-riga
 #:        ``embedding_model`` + filtro recall per-modello su entrambi i path.
-#:        Additiva, nullable; NULL == legacy == _LEGACY_EMBEDDING_MODEL
-#:        (current).
-_SEMANTIC_TARGET_VERSION: int = 12
+#:        Additiva, nullable; NULL == legacy == _LEGACY_EMBEDDING_MODEL.
+#:   v10 — 2026-06-14 valid-time ``valid_until`` (hard-expire nel recall).
+#:   v11 — 2026-06-19 typed derivation edge ``derives_from`` (ATMS).
+#:   v12 — 2026-06-20 write-time ``grounding_score`` persistito.
+#:   v13 — 2026-07-05 bi-temporal EVENT time ``asserted_at`` (valid-FROM):
+#:        created_at resta transaction time (guardie freshness/anti-spoof
+#:        fondate); asserted_at guida reconcile age-gap + answer-with-history.
+_SEMANTIC_TARGET_VERSION: int = 13
 
 #: v8 (2026-06-03) — half-life di default per il decadimento di freshness
 #: nel recall. is_stale(age, half_life, floor=0.5) e' True quando il fattore
@@ -1285,6 +1300,27 @@ def _migrate_v11_to_v12(conn: sqlite3.Connection) -> None:
             raise
 
 
+def _migrate_v12_to_v13(conn: sqlite3.Connection) -> None:
+    """2026-07-05 bi-temporal EVENT time ``asserted_at`` (valid-FROM).
+
+    Root-cause (loop iter 42): the semantic time was being stuffed into
+    ``created_at``, so the staleness half-life hid backdated-but-current facts
+    and the anti-spoof fail-closed guard hid future-dated ones (measured: 83%
+    of a timestamped HaluMem store invisible to recall). ``created_at`` stays
+    TRANSACTION time (never backdated — the freshness/anti-spoof guards keep
+    their soundness); ``asserted_at`` is WHEN IT WAS SAID/TRUE — it drives the
+    reconcile age-gap and answer-with-history, and a future value is legitimate
+    (calendar facts), never spoofing. Additive, nullable, NO backfill: NULL =
+    "event time unknown" → callers fall back to created_at. Recall
+    byte-identical (column unused by the recall filters).
+    """
+    try:
+        conn.execute("ALTER TABLE facts ADD COLUMN asserted_at REAL")
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" not in str(exc).lower():
+            raise
+
+
 @dataclass
 class Fact:
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
@@ -1343,6 +1379,12 @@ class Fact:
     # None == not computed (no source / ENGRAM_GROUNDING_WRITE off). Appended last;
     # recall byte-identical (column unused by recall until conditioning ships).
     grounding_score: float | None = None
+    # v13 (2026-07-05) bi-temporal EVENT time (valid-FROM): when the fact was
+    # said/true, DISTINCT from created_at (transaction time, never backdated so
+    # the freshness/anti-spoof guards stay sound). Drives the reconcile age-gap
+    # and answer-with-history; a FUTURE value is legitimate (calendar facts).
+    # None == event time unknown -> callers fall back to created_at.
+    asserted_at: float | None = None
 
 
 # ── P0.3 (2026-06-09) — stage-2 cross-encoder rerank, default ON 2026-06-10 ──
@@ -1623,6 +1665,7 @@ class SemanticMemory:
                     (10, _migrate_v9_to_v10),
                     (11, _migrate_v10_to_v11),
                     (12, _migrate_v11_to_v12),
+                    (13, _migrate_v12_to_v13),
                 ],
             )
         # Cycle #135 (2026-05-17): hot-path recall cache. The default
@@ -2062,8 +2105,8 @@ class SemanticMemory:
                  created_at, embedding, verified_by, status, source_signature,
                  trigger_keywords, applicable_when, worked_example, lineage_to,
                  writer_role, meta_narrative, last_verified_at, embedding_model,
-                 valid_until, derives_from, grounding_score)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 valid_until, derives_from, grounding_score, asserted_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                  proposition=excluded.proposition, topic=excluded.topic,
                  confidence=excluded.confidence,
@@ -2105,7 +2148,10 @@ class SemanticMemory:
                  -- v12: preserve a known grounding score if the re-store doesn't carry one
                  -- (None), else take the new one — mirrors the embedding-preserve guard.
                  grounding_score=CASE WHEN excluded.grounding_score IS NOT NULL
-                     THEN excluded.grounding_score ELSE facts.grounding_score END""",
+                     THEN excluded.grounding_score ELSE facts.grounding_score END,
+                 -- v13: preserve a known event time on re-store without one.
+                 asserted_at=CASE WHEN excluded.asserted_at IS NOT NULL
+                     THEN excluded.asserted_at ELSE facts.asserted_at END""",
                 (
                     fact.id, fact.proposition, fact.topic, fact.confidence,
                     ",".join(fact.source_episodes), fact.created_at,
@@ -2119,6 +2165,7 @@ class SemanticMemory:
                     getattr(fact, "valid_until", None),
                     df,
                     getattr(fact, "grounding_score", None),
+                    getattr(fact, "asserted_at", None),
                 ),
             )
         # Entity-live write path (2026-06-10, critic caveat on 2aa6769):
@@ -3960,6 +4007,25 @@ class SemanticMemory:
                 result["skipped"].append(old_id)
         return result
 
+    def direct_predecessors(self, fact_id: str, *, limit: int = 10) -> list[Fact]:
+        """Facts this fact directly REPLACED (``superseded_by == fact_id``),
+        most recently retired first. The inverse edge of
+        :meth:`get_supersession_chain` (which walks forward to the live
+        successor); uses ``idx_facts_superseded_by``. Raw material for
+        answer-with-history: "changed from X to Y on <date>"."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT id FROM facts WHERE superseded_by = ? "
+                "ORDER BY COALESCE(superseded_at, 0) DESC, created_at DESC "
+                "LIMIT ?",
+                (fact_id, int(limit))).fetchall()
+        out: list[Fact] = []
+        for r in rows:
+            f = self.get(r["id"])
+            if f is not None:
+                out.append(f)
+        return out
+
     def get_supersession_chain(self, fact_id: str) -> list[Fact]:
         """Walk forward from ``fact_id`` along ``superseded_by`` pointers
         until a terminal (live) fact is reached or a cycle is detected.
@@ -4361,4 +4427,5 @@ class SemanticMemory:
             # v12 (2026-06-20) write-time grounding score. Defensive on pre-v12 rows
             # (None -> not computed). float when persisted.
             grounding_score=_opt("grounding_score"),
+            asserted_at=_opt("asserted_at"),
         )

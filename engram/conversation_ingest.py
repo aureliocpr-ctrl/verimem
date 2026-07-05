@@ -160,11 +160,13 @@ def ingest_conversation(
         lines = consolidate_facts(lines, llm=llm, max_out_tokens=max_out_tokens)
         res["consolidated"] = len(lines)
     prov = conversation_provenance_ref(conversation_id)
-    # The SEMANTIC timestamp (when the conversation happened), not now: facts from
-    # one ingest batch otherwise share created_at=now, giving every cross-turn
-    # update a zero age gap so reconcile-on-write can never supersede the stale
-    # fact (Memory-Conflict stays 0/10). Stamping asserted_at unlocks it.
-    stamp = {"created_at": float(asserted_at)} if asserted_at is not None else {}
+    # Bi-temporal (v13): asserted_at = EVENT time (when the conversation
+    # happened) — drives the reconcile age-gap and answer-with-history.
+    # created_at stays TRANSACTION time (now): stuffing the event time into
+    # created_at made the staleness half-life hide backdated facts and the
+    # anti-spoof guard hide future ones (83% of a timestamped store invisible
+    # to recall — root-caused 2026-07-05).
+    stamp = {"asserted_at": float(asserted_at)} if asserted_at is not None else {}
     for prop in lines:
         prop, _ = redact_secrets(prop)
         fact = Fact(

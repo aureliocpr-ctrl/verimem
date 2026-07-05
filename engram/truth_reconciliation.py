@@ -120,7 +120,15 @@ def classify_conflict(old, new, *, now: float, min_age_gap_days: float = 1.0,
     measured 0.28->0, tiered preserves it) while keeping verified truth
     sycophancy-proof. If both flags are set, strict wins.
     """
-    age_gap_days = (float(new.created_at) - float(old.created_at)) / _DAY
+    # v13 bi-temporal: the age gap lives in EVENT time (asserted_at = when it
+    # was said/true) with a per-side created_at fallback. Same-batch ingest of a
+    # user's history shares created_at=now — without this, every cross-session
+    # update had gap 0 and could never supersede (root-caused 2026-07-05).
+    def _event_time(f) -> float:
+        ts = getattr(f, "asserted_at", None)
+        return float(ts) if ts is not None else float(f.created_at)
+
+    age_gap_days = (_event_time(new) - _event_time(old)) / _DAY
     if age_gap_days < min_age_gap_days:
         return "dispute"          # too close in time -> not a clean update
     if _authority(new) < _authority(old):
