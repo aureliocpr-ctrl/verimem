@@ -81,7 +81,8 @@ def main(argv=None) -> int:
         "n_updates": n_upd,
         "env": {k: os.environ.get(k, "") for k in
                 ("ENGRAM_RECALL_CENTERING", "ENGRAM_PPR_FUSION",
-                 "ENGRAM_RECALL_RERANK", "ENGRAM_ANN_RECALL")},
+                 "ENGRAM_RECALL_RERANK", "ENGRAM_RERANK_TOPN",
+                 "ENGRAM_ANN_RECALL")},
         "reachable_at": {str(s): round(hit_at[s] / n_upd, 4) if n_upd else None
                          for s in slices},
         "wall_s": round(time.time() - t0, 1),
