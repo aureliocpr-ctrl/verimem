@@ -142,10 +142,16 @@ Johnson's monthly income is 5000 USD [current, since 2024-01-13]
 * declared disputes — an honest memory SAYS it holds two conflicting records
   instead of silently picking one.
 
-MCP surface: ``hippo_recall_history``. Bench arm: ``halumem_qa --history``
-(the transition-QA lever: Memory-Conflict golds narrate transitions "from X to
-Y", which a reconciled store serving only the endpoint forfeits — measured
-failure mode of the residual 18/44).
+MCP surface: ``hippo_recall_history``. Bench arm: ``halumem_qa --history``.
+
+**Measured** (HaluMem u1 transition questions — Memory Conflict + Dynamic
+Update, n=44, same reconciled bi-temporal store, same verify answerer, the ONLY
+variable is the history-enriched context): plain 0.6364 → **history 0.7955**
+(+16pp); Memory Conflict 0.70 → **0.825**, Dynamic Update 0.0 → 0.5. Strictly
+additive: **7 questions unlocked, 0 lost**, and the unlocked golds are exactly
+the transitions ("increased from 3500 to 4500", "Retired", "health improved").
+Compound arc on Memory-Conflict QA: 0.15 (plain store, strict answerer) → 0.675
+(reconciled + verify) → **0.825** (+ history) = **5.5× from baseline**.
 
 ## The read-path dial: QA on HaluMem (n=120, like-for-like, self-proving arms)
 
