@@ -45,10 +45,14 @@ are not directly comparable (Zep 84→58 shows ±25pp of pure methodology).
    reproducible `benchmark/ann_recall_scale_bench.py` (2026-07-04) reproduces
    9.5×@100k / 29.9×@500k and extends to **62.3×@1M** (dim 768; ANN query ~flat
    0.76→1.31 ms vs brute 7.2→81.4 ms; recall-in-pool is validated on real e5 in
-   the equivalence test, not on the synthetic scale corpus). **Remaining**:
-   auto-enable heuristic — deferred because making ANN the default flips recall
-   tie-order among equal-score facts (score-identical, not byte-identical), a
-   persistent-behavior call left explicit rather than taken silently.
+   the equivalence test, not on the synthetic scale corpus).
+   **DEFAULT-ON since 2026-07-05** (`d75ab27`): safe because (a) recall is now
+   BYTE-identical, not just score-identical — deterministic `(-score, fact.id)`
+   top-k (`ecb3cca`), row-order invariant, exact-equality tested; (b) the build
+   happens in ONE debounced background thread and recall stays exact-brute
+   until the index for the CURRENT corpus version is ready — no first-query
+   stall, never a stale index, failed build ⇒ brute forever; (c) below the
+   100k gate nothing ever builds. `ENGRAM_ANN_RECALL=0` opts out.
 2. **Very-large-tenant recall** (> ~10k facts/tenant): the scoped path still
    re-stacks per query. A cache-matrix scope-mask would be ~35× but touches the
    hot-path (deferred — risk/benefit).

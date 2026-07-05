@@ -75,6 +75,26 @@ the moat to *do* anything at recall, set `ENGRAM_RECONCILE_NLI=local`.
   doubt, not a deletion); a precision-first deployment should raise the threshold or
   use `=llm`. Measured by `benchmark/interference_local_nli.py`.
 
+## The read-path dial: QA on HaluMem (n=120, like-for-like, self-proving arms)
+
+The same trust philosophy on the ANSWER side. `ENGRAM_GROUNDING_GATE=1` verifies
+each answer externally against the retrieved evidence (the model's own confidence
+is at chance for flagging its fabrications) and abstains when unsupported;
+`ENGRAM_RECALL_CENTERING=1` is a zero-cost retrieval de-anisotropy lever.
+
+| arm | correct | hallucination | omission |
+|---|---|---|---|
+| baseline | 0.4083 | 0.2333 | 0.3583 |
+| centering | **0.4333** | 0.2250 | 0.3417 |
+| gate | 0.3583 | 0.1250 | 0.5167 |
+| centering+gate | 0.3504 | **0.1111** | 0.5385 |
+
+Max-correct point: centering. Min-hallucination point: centering+gate (**−52%**
+vs baseline). Honest: the effects do not compose additively on correct (the
+gate's abstentions dominate). Competitors ship one unmeasured operating point;
+this is a measured 4-point dial. On the extraction axis the same gate is
+**F1-flat insurance** (+0.95pp precision / −2.7pp recall) with the local judge.
+
 ## Evidence (tests + benches)
 
 - `tests/test_reconcile_tiered_gate.py`, `tests/test_reconcile_evidence_gate_writepath.py`
