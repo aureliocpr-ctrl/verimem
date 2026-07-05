@@ -2073,6 +2073,33 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_trust_report",
+            description=(
+                "THE evidence dossier behind an answer — the trust gate made "
+                "ATOMIC. For any query returns the chain of custody of every "
+                "retrieved fact: WHAT (proposition), WHERE FROM (provenance, "
+                "writer_role), HOW TRUSTED (status, verified_by, grounding "
+                "score), WHEN true vs learned (asserted_at/created_at), what it "
+                "REPLACED (supersession history + reasons) and what it "
+                "CONFLICTS with (declared unresolved disputes) — or an EXPLICIT "
+                "abstention with its reason instead of a guess. Judge-grade: "
+                "'how do you know?' answered for every response. Supports "
+                "deep (archive) and as_of (past state of knowledge)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "k": {"type": "integer", "default": 5},
+                    "deep": {"type": "boolean", "default": False},
+                    "as_of": {"type": "number",
+                               "description": "epoch seconds: dossier of what "
+                                              "was known/current at that moment"},
+                },
+                "required": ["query"],
+            },
+        ),
+        t.Tool(
             name="hippo_anti_confab_scan",
             description=(
                 "Cycle #133 (2026-05-17). Scan the live corpus for "
@@ -6842,6 +6869,18 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 with_disputes=bool(arguments.get("with_disputes", True)))
             _audit(name, arguments, outcome="ok")
             return _ok({"context": lines, "n": len(lines)})
+
+        if name == "hippo_trust_report":
+            # F3 (iter 47): il gate reso ATOMICO — dossier di custodia per query.
+            from engram.trust_report import build_trust_report
+            _as_of = arguments.get("as_of")
+            rep = build_trust_report(
+                a.semantic, arguments.get("query", ""),
+                k=int(arguments.get("k", 5)),
+                deep=bool(arguments.get("deep", False)),
+                as_of=float(_as_of) if _as_of is not None else None)
+            _audit(name, arguments, outcome="ok")
+            return _ok(rep)
 
         if name == "hippo_recall_as_of":
             # Time-travel (iter 46): cosa era CORRENTE a un dato istante —

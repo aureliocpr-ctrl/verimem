@@ -167,6 +167,9 @@ _EXPECTED_TOOLS = {
     # iter 46 (2026-07-05): time-travel — what was CURRENT at a moment
     # (asserted_at + supersession timestamps). "What did we know in March?"
     "hippo_recall_as_of",
+    # iter 47 (2026-07-05): the trust gate made ATOMIC — per-query evidence
+    # dossier (chain of custody / declared disputes / explicit abstention).
+    "hippo_trust_report",
     "hippo_document_list",
     "hippo_document_search",
     "hippo_document_get",
