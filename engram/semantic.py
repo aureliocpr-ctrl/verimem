@@ -1400,11 +1400,20 @@ def _topk_deterministic(sims, n: int, facts):
 
 
 def _ann_recall_enabled() -> bool:
-    """ANN pre-narrowing of the recall corpus. Default OFF (opt-in): when off,
-    the recall hot-path is byte-identical to the exact brute-force cosine."""
-    return os.environ.get("ENGRAM_ANN_RECALL", "").strip().lower() in (
-        "1", "on", "true", "yes",
-    )
+    """ANN pre-narrowing of the recall corpus. Default AUTO-ON (iter 26 flip,
+    mandate 2026-07-04): enabled when faiss is importable. Safe as a default
+    because (a) the _ANN_MIN_N=100k gate keeps it dormant on small corpora,
+    (b) recall is BYTE-IDENTICAL to brute (deterministic tie-break, iter 23),
+    (c) the background build keeps the hot path exact-brute until the index is
+    ready — no synchronous build stall, and a version mismatch never serves a
+    stale index. ENGRAM_ANN_RECALL=0 opts out; =1 forces on."""
+    v = os.environ.get("ENGRAM_ANN_RECALL", "").strip().lower()
+    if v in ("0", "off", "false", "no"):
+        return False
+    if v in ("1", "on", "true", "yes"):
+        return True
+    from engram.ann_index import faiss as _faiss
+    return _faiss is not None
 
 
 def _entity_live_enabled() -> bool:
@@ -2693,8 +2702,11 @@ class SemanticMemory:
             # oversampled pool preserves the true top-k that survive the filters.
             if _ann_recall_enabled():
                 try:
+                    # background=True: never build inline — exact brute until
+                    # the index for THIS corpus version is ready (iter 26).
                     _pool = self._ann_cache.query_pool(
-                        matrix, q_emb, k, version=self._cache_version)
+                        matrix, q_emb, k, version=self._cache_version,
+                        background=True)
                 except Exception:  # noqa: BLE001 — faiss missing/broken -> exact brute
                     _pool = None
                 if _pool is not None and len(_pool):

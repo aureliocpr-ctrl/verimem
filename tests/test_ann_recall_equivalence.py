@@ -31,14 +31,22 @@ def test_ann_on_matches_bruteforce_on_top_hits(tmp_path, monkeypatch):
     _seed(mem, 140)
     q = "which service used redis configuration"
 
-    monkeypatch.delenv("ENGRAM_ANN_RECALL", raising=False)
+    monkeypatch.setenv("ENGRAM_ANN_RECALL", "0")
     off = mem.recall(q, k=8)
 
-    # enable ANN with a gate low enough for a 140-fact corpus, fresh cache
+    # enable ANN with a gate low enough for a 140-fact corpus, fresh cache.
+    # Background contract (iter 26): the first enabled recall SPAWNS the build
+    # and stays brute; once built, the pool serves.
     monkeypatch.setenv("ENGRAM_ANN_RECALL", "1")
     monkeypatch.setenv("ENGRAM_ANN_MIN_N", "50")
     mem._ann_cache.min_n = 50
-    on = mem.recall(q, k=8)
+    first = mem.recall(q, k=8)          # spawns background build, exact brute
+    assert [f.id for f, _ in first] == [f.id for f, _ in off]
+    import time as _t
+    t0 = _t.time()
+    while mem._ann_cache.building and _t.time() - t0 < 20:
+        _t.sleep(0.05)
+    on = mem.recall(q, k=8)             # index ready -> ANN pool serves
 
     assert off, "brute-force returned nothing"
     assert mem._ann_cache.builds == 1, "ANN path was not exercised"
@@ -54,11 +62,23 @@ def test_ann_on_matches_bruteforce_on_top_hits(tmp_path, monkeypatch):
     assert len({f.id for f, _ in on} & {f.id for f, _ in off}) >= 7
 
 
-def test_ann_default_off_is_byte_identical(tmp_path, monkeypatch):
+def test_ann_default_auto_dormant_below_gate(tmp_path, monkeypatch):
+    """Post-flip default: AUTO-ON, but the _ANN_MIN_N gate keeps it fully
+    dormant below 100k facts — small corpora never build or query an index."""
     monkeypatch.delenv("ENGRAM_ANN_RECALL", raising=False)
+    monkeypatch.delenv("ENGRAM_ANN_MIN_N", raising=False)
     mem = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     _seed(mem, 60)
     q = "docker service setting"
-    # with the gate default-off, recall never touches the ANN path
     res = mem.recall(q, k=5)
     assert res and mem._ann_cache.builds == 0
+    assert not mem._ann_cache.building
+
+
+def test_ann_env_zero_opts_out(tmp_path, monkeypatch):
+    monkeypatch.setenv("ENGRAM_ANN_RECALL", "0")
+    monkeypatch.setenv("ENGRAM_ANN_MIN_N", "50")
+    mem = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
+    _seed(mem, 60)
+    res = mem.recall("docker service setting", k=5)
+    assert res and mem._ann_cache.builds == 0 and not mem._ann_cache.building

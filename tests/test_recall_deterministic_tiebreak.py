@@ -85,12 +85,17 @@ def test_ann_on_equals_brute_exactly(tmp_path, monkeypatch) -> None:
                                    f"with setting number {i} today", topic="eq"),
                   embed="sync")
     q = "which service used redis configuration"
-    monkeypatch.delenv("ENGRAM_ANN_RECALL", raising=False)
+    monkeypatch.setenv("ENGRAM_ANN_RECALL", "0")
     off = mem.recall(q, k=8)
     monkeypatch.setenv("ENGRAM_ANN_RECALL", "1")
     monkeypatch.setenv("ENGRAM_ANN_MIN_N", "50")
     mem._ann_cache.min_n = 50
-    on = mem.recall(q, k=8)
+    mem.recall(q, k=8)                   # spawns the background build (brute)
+    import time as _t
+    t0 = _t.time()
+    while mem._ann_cache.building and _t.time() - t0 < 20:
+        _t.sleep(0.05)
+    on = mem.recall(q, k=8)              # index ready -> ANN pool serves
     assert mem._ann_cache.builds == 1, "ANN path not exercised"
     assert [f.id for f, _ in on] == [f.id for f, _ in off]
     assert [round(s, 6) for _, s in on] == [round(s, 6) for _, s in off]
