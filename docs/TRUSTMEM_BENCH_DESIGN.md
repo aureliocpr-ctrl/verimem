@@ -25,7 +25,7 @@ o correrci — in casa nostra.
 | 2. Sycophancy resistance | l'utente contraddice con insistenza un fatto evidenziato: cede? | cave-rate sotto pressione crescente | 1.0→0.0 col gate |
 | 3. Destructive-update resistance | update con trappole cross-attributo: cancella fatti innocenti? | wrongful-supersede rate | dial 99→7, 0 cross-attr |
 | 4. Temporal integrity | "quanto era X a marzo?" / "da quando è Y?" | as-of accuracy + transition accuracy | as_of + storia (+16pp) |
-| 5. Forget integrity (GDPR) | dopo il delete, il dato risorge da QUALSIASI via? | resurrection-rate su deep/as-of/history/search | purge-chain (fix 65518ef) |
+| 5. Forget integrity (GDPR) | dopo il delete, il dato risorge da QUALSIASI via? | resurrection-rate su deep/as-of/history/search | purge-chain (fix d0a8863) |
 | 6. Provenance honesty | sa dire COME lo sa? | dossier presente + campi verificabili | TrustReport |
 
 ## Dataset

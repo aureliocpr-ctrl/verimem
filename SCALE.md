@@ -46,8 +46,8 @@ are not directly comparable (Zep 84→58 shows ±25pp of pure methodology).
    9.5×@100k / 29.9×@500k and extends to **62.3×@1M** (dim 768; ANN query ~flat
    0.76→1.31 ms vs brute 7.2→81.4 ms; recall-in-pool is validated on real e5 in
    the equivalence test, not on the synthetic scale corpus).
-   **DEFAULT-ON since 2026-07-05** (`d75ab27`): (a) the deterministic
-   `(-score, fact.id)` top-k (`ecb3cca`) is row-order invariant, so ANN results
+   **DEFAULT-ON since 2026-07-05** (`d213dcd`): (a) the deterministic
+   `(-score, fact.id)` top-k (`daf49a0`) is row-order invariant, so ANN results
    are byte-identical to brute **whenever the HNSW pool contains the true
    top-k** — measured recall-in-pool ~1.0 on real e5 embeddings (oversample 8)
    and exact-equality tested at small scale; HNSW is approximate, so above the
