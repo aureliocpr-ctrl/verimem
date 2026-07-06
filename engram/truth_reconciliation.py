@@ -27,6 +27,8 @@ from ._telemetry_prefixes import TIER_KNOWLEDGE, classify_tier
 
 _STATUS_AUTHORITY = {"verified": 3, "model_claim": 2, "legacy_unverified": 1}
 _DAY = 86400.0
+#: Clock-skew tolerance before an asserted_at counts as "the future" (C6 gate).
+_FUTURE_SKEW_S = 300.0
 _CONFLICT_TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 
 
@@ -131,6 +133,12 @@ def classify_conflict(old, new, *, now: float, min_age_gap_days: float = 1.0,
     age_gap_days = (_event_time(new) - _event_time(old)) / _DAY
     if age_gap_days < min_age_gap_days:
         return "dispute"          # too close in time -> not a clean update
+    if _event_time(new) > now + _FUTURE_SKEW_S:
+        # v13: a FUTURE asserted_at is legitimate data (appointments, planned
+        # moves) but not yet CURRENT truth — it must not delete the present
+        # (review 5-lenti C6). Dispute is recoverable; promotion when its time
+        # arrives is a re-reconcile concern, not a write-path one.
+        return "dispute"
     if _authority(new) < _authority(old):
         return "dispute"          # newer but LESS authoritative -> don't overwrite
     if require_evidence_to_supersede and not _has_evidence(new):

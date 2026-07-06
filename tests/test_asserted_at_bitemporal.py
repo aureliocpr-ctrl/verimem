@@ -85,3 +85,21 @@ def test_classify_conflict_prefers_asserted_at() -> None:
     assert classify_conflict(old, new, now=now) == "update"
     # and the REVERSED event order must not update (newer info is the OLD one)
     assert classify_conflict(new, old, now=now) == "dispute"
+
+
+def test_classify_conflict_future_assertion_cannot_supersede_present() -> None:
+    """Review 5-lenti C6: an asserted_at in the FUTURE is legitimate v13 data
+    (appointments, planned moves) but it is NOT yet current truth — it must not
+    delete the present fact at write time. Fail-safe direction: dispute
+    (recoverable, surfaces in the TrustReport); promoting the fact once its
+    time arrives is a re-reconcile concern, not a write-path one."""
+    from engram.truth_reconciliation import classify_conflict
+    now = time.time()
+    old = Fact(id="o", proposition="Aurelio lives in Rome", topic="t",
+               created_at=now, asserted_at=now)
+    new = Fact(id="n", proposition="Aurelio lives in Milan", topic="t",
+               created_at=now, asserted_at=now + 60 * _DAY)
+    assert classify_conflict(old, new, now=now) == "dispute", \
+        "a future-dated assertion must not supersede present truth"
+    # the same pair evaluated once the future date HAS arrived: clean update
+    assert classify_conflict(old, new, now=now + 61 * _DAY) == "update"
