@@ -110,3 +110,28 @@ def test_raw_turns_arm_skips_the_gate() -> None:
         shutil.rmtree(workdir, ignore_errors=True)
     assert len(recs) == 2
     assert llm.calls == [], "raw-turns baseline must not invoke the extraction LLM"
+
+
+def test_raw_turns_baseline_visible_with_event_time_stamp() -> None:
+    """Review 5-lenti C1 (CRITICAL): the baseline arm used to write the HaluMem
+    event-time into created_at — the anti-spoof + half-life guards then hid the
+    baseline store from default recall (dataset scale: 1379/1387 sessions out of
+    the visible window), inflating every pipeline-vs-raw delta. The stamp must go
+    to asserted_at (v13), exactly like the pipeline arm does."""
+    from benchmark.halumem_qa import _ingest_raw_turns, _parse_halumem_ts
+    from engram.semantic import SemanticMemory
+    workdir = Path(tempfile.mkdtemp(prefix="hm_raw_stamp_"))
+    try:
+        sm = SemanticMemory(db_path=workdir / "raw.db")
+        ts = _parse_halumem_ts("Sep 04, 2025, 18:42:18")  # real dataset event-time
+        _ingest_raw_turns(sm, [{"role": "user",
+                                "content": "I am Martin Mark, a nurse in Berlin."}],
+                          topic="t", asserted_at=ts)
+        hits = sm.recall("Where does Martin Mark live?", k=5)
+        assert len(hits) == 1, "baseline turn must be visible to default recall"
+        fact = hits[0][0]
+        assert fact.asserted_at == ts, "event-time belongs in asserted_at (v13)"
+        assert fact.created_at > ts, "created_at is transaction time, never backdated"
+    finally:
+        import shutil
+        shutil.rmtree(workdir, ignore_errors=True)

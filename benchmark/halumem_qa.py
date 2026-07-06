@@ -55,8 +55,12 @@ def _is_abstention_gold(answer: str) -> bool:
 def _ingest_raw_turns(sm: SemanticMemory, dialogue: list[dict], *,
                       topic: str, asserted_at: float | None = None) -> None:
     """Baseline: store each user/assistant turn verbatim (no extraction, no gate)
-    — a stand-in for mem0/raw ingestion, to isolate our pipeline's lift."""
-    stamp = {"created_at": float(asserted_at)} if asserted_at is not None else {}
+    — a stand-in for mem0/raw ingestion, to isolate our pipeline's lift.
+
+    The event-time goes to asserted_at (v13), NEVER created_at: backdating
+    created_at trips the anti-spoof + half-life guards and blinds default recall,
+    which would sink the baseline arm by harness artefact and inflate the delta."""
+    stamp = {"asserted_at": float(asserted_at)} if asserted_at is not None else {}
     for i, t in enumerate(dialogue or []):
         c = (t.get("content") or "").strip()
         if c:
