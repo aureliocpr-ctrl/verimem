@@ -228,6 +228,36 @@ dossier included). Write-path robustness, same block: reconcile auto-supersede m
 surgical (146/807 retired, **0 cross-attribute**, 3× faster) and a 7/7 stress battery
 ([evidence](./benchmark/results/stress_battery.json)).
 
+### TrustMem-Bench — the trust benchmark we impose (offline, run it yourself)
+
+Every memory benchmark measures *accuracy*. None measures whether a memory can
+be **trusted** — so we built one. Seeded synthetic personas (EN + IT), six axes
+whose verdict is deterministic (no LLM, no network), one command:
+
+```bash
+python -m benchmark.trustmem_bench --engine verimem   # 6/6, offline
+python -m benchmark.trustmem_bench --engine mem0      # competitor (pip install mem0ai)
+```
+
+Same dataset, both engines ([verimem](./benchmark/results/trustmem_verimem_scorecard.json)
+· [mem0](./benchmark/results/trustmem_mem0_scorecard.json), n=10 seed=42):
+
+| Axis | Verimem | mem0 OSS (raw) |
+|---|---|---|
+| Fabrication under absence | **10/10** | 0/10 |
+| Destructive-update | 10/10 | 10/10 · *trivial (never reconciles)* |
+| Temporal integrity (as-of) | **10/10** | n/a — cloud-API-gated |
+| Forget integrity (GDPR) | **10/10** | 0/10 · *delete leaves it in `history()`, verified live* |
+| Provenance honesty | **10/10** | 0/10 |
+| Sycophancy resistance | **10/10** | n/a — cloud-API-gated |
+| **API coverage** | 6/6 | 40/60 (0.67) |
+
+Honest by construction (design §2): 100% on axes we *build* only proves no
+regression — the value is the competitor column and the two LLM-judged axes
+(still to come) where nobody scores 100%. mem0 runs in raw-store mode (their
+LLM extraction is out of scope, HaluMem measures that); maintainers are invited
+to PR an official run. Design + full reads: [TRUSTMEM_BENCH_DESIGN.md](./docs/TRUSTMEM_BENCH_DESIGN.md).
+
 ### Retrieval (LongMemEval-s, judge-free, fully local)
 
 On the standard **LongMemEval-s** benchmark (full 500 questions, judge-free, fully local —
