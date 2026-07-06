@@ -91,7 +91,9 @@ the wired ANN stays ~flat (1.3 ms) — **62× @1M, sublinear** (reproducible):
 **Honest scorecard vs MemOS (self-reported) on HaluMem**: extraction F1 0.71–0.74
 vs 79.7 (gap −6/−9pp, was −14.7); updating 0.25–0.29 judged vs 62.1 — retrieval-capped
 (4 embedders across 3 families within ~3pp; the paraphrase-matching ceiling is a
-model-class limit we state instead of hiding); QA correct 0.35–0.43 vs 67.2 with the
+model-class limit we state instead of hiding); QA **end-to-end 0.553 vs 0.672**
+(behind; extraction recall is the bottleneck — the same recipe on a gold store
+reads 0.739–0.750, split detailed in the comparison section below) with the
 hallucination trade above. Our axis is **measured trust + reproducible scale + the
 dial** — not raw-recall parity.
 
@@ -186,19 +188,32 @@ With the full recipe ON (bi-temporal `asserted_at` + reconcile floor 0.35 +
 verification-aware answerer + **dated history context** + k=12), per-session QA on
 **HaluMem-Medium** ([u0 evidence](./benchmark/results/qa_gem_k12_u0.json)):
 
-| | user 1 (n=188) | user 0 (n=164) | MemOS self-reported |
-|---|---|---|---|
-| **Overall QA** | **0.739** | **0.750** | 0.672 |
-| Memory Conflict | 0.800 | 0.872 | — |
-| Memory Boundary (never fabricate) | 0.976 | 0.897 | — |
-| Basic Fact Recall | 0.800 | 0.725 | — |
+Two DIFFERENT measurements, never on the same row (adversarial review C8 —
+an earlier draft compared our read-path number against MemOS's end-to-end
+number without saying so):
 
-The claim survived an adversarial counterexample review (`claim_holds`, conf 0.86:
-per-category counts consistent by construction; abstention flagging doesn't inflate —
-fabrications are penalized; answerable categories graded by the strict judge).
+| | user 1 (n=188) | user 0 (n=164) | MemOS **end-to-end** (self-reported) |
+|---|---|---|---|
+| **Read-path QA** — store built from *gold* memory points; measures the memory (recall+history+verify+abstention), not our extractor | **0.739** | **0.750** | — |
+| **End-to-end QA** — our extraction → gated store → answer, same questions ([evidence](./benchmark/results/e2e_full_pipeline_u1.json)) | 0.553* | not run | 0.672 |
+| Memory Boundary, never fabricate (read-path / e2e) | 0.976 / **1.000** | 0.897 / — | — |
+| Memory Conflict (read-path / e2e) | 0.800 / 0.800 | 0.872 / — | — |
+| Basic Fact Recall (read-path / e2e) | 0.800 / 0.267 | 0.725 / — | — |
+
+**End-to-end we are BEHIND MemOS (−12pp) — stated, not hidden.** The split shows
+where: the trust properties HOLD through the full pipeline (Boundary 1.000,
+Conflict 0.800 e2e) while extraction recall on basic facts is the bottleneck
+(0.267 e2e vs 0.800 read-path). \*The 0.553 is additionally depressed by an
+identity-leak artefact found after the run by reading the failures (the
+extractor baptised anonymous speakers with an out-of-text name — reproduced
+live, fixed, rerun queued); we publish the number we have, with its defect.
+
+The read-path claim survived an adversarial counterexample review
+(`claim_holds`, conf 0.86: per-category counts consistent by construction;
+abstention flagging doesn't inflate — fabrications are penalized; answerable
+categories graded by the strict judge).
 **Declared caveats, every time:** judge is Claude (MemOS self-reports with GPT-4 —
-comparable method, not identical); the store is built from gold memory points, so this
-measures the **read-path** of the recipe, not end-to-end ingest→QA; n=2 users; the rich
+comparable method, not identical); n=2 users; the rich
 context trades a little abstention purity (0.976/0.897 vs 1.0 with the strict answerer).
 The single biggest lever is the **answer-with-history** dated context: on transition
 questions it lifts +16pp (7 unlocked, 0 lost), and the Memory-Conflict arc is

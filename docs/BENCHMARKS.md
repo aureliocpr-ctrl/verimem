@@ -39,6 +39,18 @@ under-sampled temporal-reasoning 0.793) — optimistic; the full-500 0.8745 is t
 headline. (CE rerank doesn't move LongMemEval recall@5 — it reorders within top-k.)
 
 ## HaluMem QA — official C/H/O protocol (the differentiator's home turf), honestly
+
+> **UPDATE 2026-07-06 — the numbers below are the HISTORICAL pre-recipe
+> baseline** (strict answerer, k=8, no bi-temporal, no history context, no
+> answer verification). With the full composed recipe the same protocol reads
+> **0.739–0.750 read-path** (store from gold points, n=2 users) and **0.553
+> end-to-end** (our extraction → gated store → answer; identity-leak artefact
+> stated, rerun queued) vs MemOS **end-to-end** self-reported 0.672 — the two
+> measurements live on separate, labelled rows in the README comparison table
+> (adversarial review C8). The mid-pack verdict below was true of the
+> pre-recipe system and is kept as the honest starting point of that arc
+> (Memory Conflict 0.15 → 0.825).
+
 `benchmark/halumem_qa_bench.py` on real HaluMem-Medium: ingest a user's REFERENCE memory points into
 Engram, then per question retrieve→answer (strict + dates) → LLM-judge Correct / Hallucination /
 Omission (the official HaluMem rubric, see `docs/HALUMEM_OFFICIAL_PROTOCOL.md`). n=60 (4 users), 0 errors.
