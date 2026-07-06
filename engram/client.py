@@ -108,7 +108,7 @@ class Memory:
     # ---- read --------------------------------------------------------------
     def search(self, query: str, k: int = 5, *, deep: bool = False,
                as_of: float | None = None,
-               with_history: bool = False) -> list[dict[str, Any]]:
+               with_history: bool | str = False) -> list[dict[str, Any]]:
         """Recall the top-k facts for ``query``, each with its provenance — the
         differentiator: ``status`` + write-time ``grounding_score`` so a caller can
         prefer/assert grounded facts and hedge low-trust ones.
@@ -119,7 +119,14 @@ class Memory:
           moment (asserted by then, not yet superseded). No competitor has it.
         * ``with_history`` — each hit carries its transition story
           (``history: [{text, asserted_date, until}]``) from the supersession
-          chain: "changed from X to Y on <date>"."""
+          chain: "changed from X to Y on <date>". ``"auto"`` routes per query
+          (``wants_history``): temporal wording gets the story (+16pp measured
+          on transition questions), plain lookups keep the lean context whose
+          abstention on trap questions is pure (1.000 vs 0.949 — the measured
+          price of always-on history, docs/TRUST_MAINTENANCE.md)."""
+        if with_history == "auto":
+            from .temporal_context import wants_history
+            with_history = wants_history(query)
         if as_of is not None:
             from .temporal_context import recall_as_of
             hits = recall_as_of(self.semantic, query, when=float(as_of), k=k)

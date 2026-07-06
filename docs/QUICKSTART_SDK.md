@@ -18,6 +18,7 @@ mem.search("Rossi budget")                        # default view
 mem.search("Rossi budget", deep=True)             # archaeology: dormant memories too
 mem.search("Rossi budget", as_of=1735000000)      # time travel: what was true THEN
 mem.search("Rossi budget", with_history=True)     # each hit carries its transitions
+mem.search("When did it change?", with_history="auto")  # routed: the story only where the wording is temporal (EN+IT) — keeps trap-question abstention pure
 
 # 3) update — never destroys: stores the new fact and supersedes the old
 r = mem.add("Client Rossi's budget is 550k")      # then: mem.update(old_id, ...)

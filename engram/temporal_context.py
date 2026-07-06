@@ -16,10 +16,37 @@ Pure read-side, no LLM, no schema change: it composes ``SemanticMemory.recall``
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any
 
-__all__ = ["fact_history", "history_line", "recall_with_history", "recall_as_of"]
+__all__ = ["fact_history", "history_line", "recall_with_history", "recall_as_of",
+           "wants_history"]
+
+#: Queries that benefit from the TRANSITION story (dates, change verbs, "as of",
+#: tense markers) vs. plain point lookups. Routing exists because rich history
+#: context has a measured abstention price on trap questions (1.000 -> 0.949,
+#: docs/TRUST_MAINTENANCE.md): serve the story only where it pays. EN + IT.
+_TEMPORAL_QUERY_RE = re.compile(
+    r"\bas of\b|\bwhen\b|\bsince\b|\bstill\b|\bnow\b|\bcurrent|\bchange|"
+    r"\bupdate|\bevolv|\btransition|\bpreviously\b|\boriginally\b|\binitially\b|"
+    r"\bused to\b|\banymore\b|\bago\b|\bbefore\b|\bafter\b|\buntil\b|\bhistory\b|"
+    r"\bfirst\b|\blast\b|\d{4}|january|february|march|april|may|june|july|"
+    r"august|september|october|november|december|"
+    # italiano: interrogativi/tempo/mutamento (il prodotto dichiara memoria
+    # multilingue, G10 — il router non deve essere EN-only)
+    r"\bquando\b|\bcambiat|\baggiornat|\bprima\b|\bdopo\b|\bancora\b|\badesso\b|"
+    r"\bora\b|\battuale|\bfinora\b|\ball'epoca\b|\ballora\b|\bstoria\b|\bfa\b|"
+    r"gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|"
+    r"ottobre|novembre|dicembre", re.IGNORECASE)
+
+
+def wants_history(query: str) -> bool:
+    """Route a query to history-enriched recall iff its wording is temporal
+    (dates, change verbs, as-of/tense markers, EN+IT). The cure for the
+    measured trade: transition questions gain +16pp from the dated story while
+    trap questions keep the pure abstention of the plain context."""
+    return bool(_TEMPORAL_QUERY_RE.search(query or ""))
 
 
 def _iso(ts: Any) -> str:
