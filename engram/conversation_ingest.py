@@ -31,7 +31,10 @@ ATOMIC_EXTRACT_SYSTEM = (
     "plans, health, work, reasons. Rules:\n"
     "- ATOMIC: exactly ONE attribute or fact per line; if a sentence carries several "
     "(a preference + its reason + a date), split them into separate lines.\n"
-    "- Start every line with the user's full name (never a pronoun).\n"
+    "- Start every line with the speaker's full name AS STATED IN THE CONVERSATION "
+    "TEXT (never a pronoun). If the conversation never states a name, write "
+    "'The user'. NEVER use a name that does not appear in the conversation itself "
+    "— a name known from outside this text is contamination, not memory.\n"
     "- Be EXHAUSTIVE: list every stable fact the dialogue states, including minor ones.\n"
     "- Only facts the dialogue actually states — never invent or infer beyond it.\n"
     "One fact per line, no numbering, no preamble.")
@@ -50,7 +53,8 @@ CONSOLIDATE_SYSTEM = (
     "- KEEP every distinct durable fact — do NOT summarize several facts into "
     "one, do NOT drop minor but durable details (dates, names, reasons).\n"
     "- Keep each line ATOMIC (one attribute per line) and starting with the "
-    "person's full name.\n"
+    "person's name exactly as it appears in the list (do NOT introduce any "
+    "name that is not already there).\n"
     "Return the cleaned list, one fact per line, no numbering, no preamble.")
 
 #: Gap-fill / completeness pass (iter 36, mandate "beat them on EVERY axis" —

@@ -225,3 +225,24 @@ def test_ingest_completeness_default_off(tmp_path) -> None:
     ingest_conversation(sm, _CONV, llm=llm, conversation_id="cf", embed="sync")
     # default: extract + consolidate only (completeness is opt-in until A/B-proven)
     assert len(llm.calls) == 2, "no gap-fill unless completeness=True"
+
+
+def test_extract_prompts_forbid_out_of_text_names() -> None:
+    """Identity-leak regression guard (e2e u1 2026-07-06): claude -p injects the
+    account owner's identity; with the old 'start with the user's full name'
+    instruction the extractor BAPTISED anonymous speakers with a name absent
+    from the conversation (reproduced live: 'Aurelio visited...' from a no-name
+    dialogue) — mass attribution errors in the store. The prompts must anchor
+    the subject to names present in the text (fallback 'The user') and forbid
+    outside names. Live A/B of the fix: anonymous -> 'The user ...', named ->
+    'Johnson Joseph ...', zero leak (2026-07-06)."""
+    from engram.conversation_ingest import (
+        ATOMIC_EXTRACT_SYSTEM,
+        CONSOLIDATE_SYSTEM,
+    )
+    low = ATOMIC_EXTRACT_SYSTEM.lower()
+    assert "as stated in the conversation" in low
+    assert "the user" in low, "anonymous fallback subject"
+    assert "contamination" in low, "outside-name ban stated"
+    assert "not already there" in CONSOLIDATE_SYSTEM.lower(), \
+        "consolidation must not introduce new names"
