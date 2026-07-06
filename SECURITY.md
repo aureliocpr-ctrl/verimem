@@ -4,7 +4,7 @@
 
 Please report security vulnerabilities **privately** via GitHub Security
 Advisories — open one at
-[Security ▸ Report a vulnerability](https://github.com/aureliocpr-ctrl/hippoagent/security/advisories/new).
+[Security ▸ Report a vulnerability](https://github.com/aureliocpr-ctrl/verimem/security/advisories/new).
 Do **not** open a public issue for a security report.
 
 We aim to acknowledge a report within 72 hours and to ship a fix or mitigation

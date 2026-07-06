@@ -14,7 +14,7 @@ After installation, every Claude Code session has:
 
 ```bash
 # 1. Install HippoAgent from source (not published to PyPI yet)
-pip install "git+https://github.com/aureliocpr-ctrl/hippoagent.git"
+pip install "git+https://github.com/aureliocpr-ctrl/verimem.git"
 
 # 2. Register the MCP server with Claude Code via .mcp.json
 #    (command: "engram", args: ["mcp"] — see README "Install in 2 minutes")

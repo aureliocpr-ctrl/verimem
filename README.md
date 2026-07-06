@@ -103,7 +103,7 @@ Full numbers, fairness notes and honest limits: **[BENCHMARKS.md](./BENCHMARKS.m
 
 ```bash
 # Not on PyPI yet — install from source (provides the `engram` command):
-pip install "git+https://github.com/aureliocpr-ctrl/hippoagent.git"
+pip install "git+https://github.com/aureliocpr-ctrl/verimem.git"
 # Or for development:  git clone … && cd hippoagent && pip install -e .
 ```
 
@@ -793,7 +793,7 @@ fitness posterior:
 ### Option A — Python (local)
 
 ```bash
-git clone https://github.com/aureliocpr-ctrl/hippoagent.git
+git clone https://github.com/aureliocpr-ctrl/verimem.git
 cd hippoagent
 python -m venv .venv
 source .venv/Scripts/activate           # or .venv/bin/activate on POSIX
@@ -1163,7 +1163,7 @@ Verimem runs on Termux (Android 10+) with a few caveats:
 
 ```bash
 pkg install python git ffmpeg-essentials
-git clone https://github.com/aureliocpr-ctrl/hippoagent.git
+git clone https://github.com/aureliocpr-ctrl/verimem.git
 cd hippoagent
 python -m venv .venv && source .venv/bin/activate
 # Skip pyautogui (no display server) and opencv (heavy):

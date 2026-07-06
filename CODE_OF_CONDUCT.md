@@ -30,7 +30,7 @@ Examples of unacceptable behavior:
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported privately to the maintainers — open a confidential report via
-[GitHub Security Advisories](https://github.com/aureliocpr-ctrl/hippoagent/security/advisories/new)
+[GitHub Security Advisories](https://github.com/aureliocpr-ctrl/verimem/security/advisories/new)
 or contact the repository owner ([@aureliocpr-ctrl](https://github.com/aureliocpr-ctrl)).
 All complaints will be reviewed and investigated promptly and fairly. Maintainers
 will respect the privacy and security of the reporter of any incident.
