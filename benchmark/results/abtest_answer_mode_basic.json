@@ -1,0 +1,22 @@
+{
+  "n": 9,
+  "strict": 0.3333333333333333,
+  "declared": 0.5555555555555556,
+  "lift": 0.22222222222222227,
+  "flips": [
+    {
+      "q": "What type of games is Martin interested in exploring as of July 14, 20",
+      "gold": "Non-violent action games",
+      "strict_ok": false,
+      "declared_ok": true,
+      "declared_pred": "Martin is interested in non-violent action games that are engaging but not aggressive, as "
+    },
+    {
+      "q": "What type of beverage did Martin express enthusiasm about incorporatin",
+      "gold": "Herbal teas with added health blends.",
+      "strict_ok": false,
+      "declared_ok": true,
+      "declared_pred": "No. The context contains no information about April 23, 2027. The correct fact is that Mar"
+    }
+  ]
+}
