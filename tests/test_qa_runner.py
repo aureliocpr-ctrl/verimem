@@ -197,3 +197,32 @@ def test_qa_runner_endtoend_with_mock(tmp_path) -> None:
         judge_llm=MockLLM(scripted=["CORRECT"]),
     )
     assert res["n"] == 1 and res["accuracy"] == 1.0
+
+
+def test_lean_claude_survives_non_utf8_stdout(monkeypatch) -> None:
+    """Real crash 2026-07-06 (exp4, an Italian/accented answer): claude -p
+    stdout decoded utf-8 STRICT raised UnicodeDecodeError on byte 0xe8 ('è'),
+    killing the whole run mid-benchmark. The subprocess read must use
+    errors='replace' so one odd byte degrades to U+FFFD, never aborts —
+    critical for the Italian QA axis. Contract test: the fake reproduces the
+    strict-decode crash unless errors='replace' is passed."""
+    import subprocess
+
+    from benchmark.qa_runner import LeanClaudeCLILLM
+
+    class _Proc:
+        returncode = 0
+        # a well-formed JSON where the model text had a replaced byte
+        stdout = '{"result": "caff� latte", "usage": {}}'
+        stderr = ""
+
+    def _fake_run(cmd, **kw):
+        if kw.get("errors") != "replace":
+            raise UnicodeDecodeError("utf-8", b"\xe8", 0, 1,
+                                     "invalid continuation byte")
+        return _Proc()
+
+    monkeypatch.setattr(subprocess, "run", _fake_run)
+    llm = LeanClaudeCLILLM(model="claude-sonnet-4-6")
+    r = llm.complete("SYS", [{"role": "user", "content": "Come stai?"}])
+    assert "caff" in r.text and "latte" in r.text  # survived, text usable

@@ -76,8 +76,12 @@ class LeanClaudeCLILLM:
             cmd += ["--model", mdl]
         t0 = _t.time()
         try:
+            # errors="replace": a single non-utf8 byte in the model's stdout
+            # (e.g. an accented 'è' = 0xe8) must NOT abort the whole run —
+            # it degrades to U+FFFD. Real crash 2026-07-06 on the Italian axis.
             r = _sp.run(cmd, input=stdin, capture_output=True, text=True,
-                        timeout=self.timeout_s, encoding="utf-8")
+                        timeout=self.timeout_s, encoding="utf-8",
+                        errors="replace")
         except _sp.TimeoutExpired as exc:
             raise LLMError(f"lean claude CLI timeout {self.timeout_s}s") from exc
         if r.returncode != 0:
