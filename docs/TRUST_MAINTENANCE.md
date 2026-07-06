@@ -183,3 +183,25 @@ this is a measured 4-point dial. On the extraction axis the same gate is
 - `benchmark/reconcile_truth_maintenance.py` (+ `results/reconcile_evidence_gate_tradeoff.json`)
   — the update-recall / false-supersede frontiers.
 - `benchmark/sycophancy_mem.py`, `benchmark/sycophancy_bench.py` — the cave-rate.
+
+## The abstention price of rich context — measured, with the cure queued
+
+Dated-history context lifts transition QA by +16pp, but it has a measured
+price on unanswerable questions: Boundary abstention **1.000 (plain context) →
+0.949 (history context)** on u0 (39 questions, same store, same verify
+answerer — the model, seduced by dated specifics, asserted 2 answers it should
+have refused; 0 recovered). The queued cure is **routing**: serve history only
+on temporally-qualified questions (the +33pp Basic-Fact lift came exactly from
+those) and plain context elsewhere — hypothesis: keep both 1.000 and +16pp
+(`exp3`, pre-written, falsifiable).
+
+## GDPR-grade forget: the chain dies, nothing resurrects
+
+Probe-confirmed defect (2026-07-06): a plain `delete()` removes ONE row while
+superseded predecessors carrying the SAME sensitive datum survive — and
+resurface via deep recall and `as_of` time travel. Fixed:
+``Memory.delete(fact_id, purge_history=True)`` removes the full supersession
+closure (forward successors + every predecessor generation, all branches) and
+scrubs the dispute-ledger entries referencing them. Default stays single-row.
+For the lawyer/medical personas this is the difference between "hidden" and
+"forgotten" — and the memory now knows both, explicitly.
