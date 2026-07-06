@@ -1,0 +1,1394 @@
+{
+  "n": 169,
+  "n_correct": 133,
+  "n_errors": 0,
+  "accuracy": 0.787,
+  "per_category": {
+    "Basic Fact Recall": {
+      "n": 36,
+      "accuracy": 0.75
+    },
+    "Dynamic Update": {
+      "n": 7,
+      "accuracy": 0.5714
+    },
+    "Generalization & Application": {
+      "n": 34,
+      "accuracy": 0.5
+    },
+    "Memory Boundary": {
+      "n": 43,
+      "accuracy": 1.0
+    },
+    "Memory Conflict": {
+      "n": 36,
+      "accuracy": 0.8889
+    },
+    "Multi-hop Inference": {
+      "n": 13,
+      "accuracy": 0.7692
+    }
+  },
+  "details": [
+    {
+      "id": "0:0",
+      "category": "Memory Conflict",
+      "predicted": "No, Donald Brown's birth date is 1994-10-03, not 1995-10-03.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, it is 1994-10-03."
+    },
+    {
+      "id": "0:1",
+      "category": "Memory Conflict",
+      "predicted": "No, Donald Brown had no children as of September 2025.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he has no children."
+    },
+    {
+      "id": "0:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Donald Brown's birth date is October 3, 1994.",
+      "correct": true,
+      "errored": false,
+      "gold": "1994-10-03"
+    },
+    {
+      "id": "1:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context records Donald Brown's job title as **manager** as of 2025-09-05.",
+      "correct": true,
+      "errored": false,
+      "gold": "Manager"
+    },
+    {
+      "id": "1:1",
+      "category": "Memory Conflict",
+      "predicted": "No — as of Sep 05, 2025, the context records Donald Brown simply as working at EmpowerTech Foundation with no specific job title given (the \"manager\" title was recorded from 2025-12-12 onward).",
+      "correct": false,
+      "errored": false,
+      "gold": "Donald Brown's job title is manager."
+    },
+    {
+      "id": "1:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "2:0",
+      "category": "Memory Conflict",
+      "predicted": "No; while he originally disliked heavy metal, he shifted to appreciating it after attending a live concert on Mar 02, 2027.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, Donald dislikes heavy metal music."
+    },
+    {
+      "id": "2:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of Sep 06, 2025, Donald Brown dislikes **Rap music**, **Techno music**, **Country music**, **Heavy metal**, and **Opera** (all recorded as current since that date, though some records are mutually disputed as unresolved).",
+      "correct": true,
+      "errored": false,
+      "gold": "Heavy metal, Rap music, Techno music, Opera, Country music"
+    },
+    {
+      "id": "2:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided by the user."
+    },
+    {
+      "id": "4:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after losing interest in grilled salmon, Donald Brown is exploring new culinary options aligned with his evolving tastes, including sweet and savory fusion dishes, spicy vegetable stir-fry, and tropical and Mediterranean fruits.",
+      "correct": true,
+      "errored": false,
+      "gold": "Options aligning with evolving tastes and preferences."
+    },
+    {
+      "id": "4:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that on 2026-01-14 Donald Brown had a **negative** dining experience (overcooked, flavorless grilled salmon) that changed his food preferences, implying disappointment rather than joy.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he was disappointed by the overcooked salmon."
+    },
+    {
+      "id": "4:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided in the input."
+    },
+    {
+      "id": "7:0",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — the context states Donald Brown retired from his manager position at EmpowerTech Foundation to focus on **personal growth and lifestyle changes**.",
+      "correct": true,
+      "errored": false,
+      "gold": "Focus on personal growth and lifestyle changes."
+    },
+    {
+      "id": "7:1",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — the context confirms that regular exercise and mindfulness practices contributed to Donald Brown's improved physical health by January 15, 2026.",
+      "correct": true,
+      "errored": false,
+      "gold": "Regular exercise and mindfulness practices."
+    },
+    {
+      "id": "7:2",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Encouragement and inspiration for social causes."
+    },
+    {
+      "id": "7:3",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — the context confirms Donald Brown is excited about potential new ventures aligned with his life goal, including collaboration with organizations focused on disability empowerment; however, two disputed records conflict on *how* (consulting/mentoring roles vs. community events), leaving the specific method unresolved.",
+      "correct": false,
+      "errored": false,
+      "gold": "Through consulting or mentoring roles."
+    },
+    {
+      "id": "7:4",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context shows that as of Dec 12, 2025, Donald Brown's employment status changed from **employed to self-employed**, not employed.",
+      "correct": false,
+      "errored": false,
+      "gold": "Retired"
+    },
+    {
+      "id": "7:5",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of Jan 15, 2026, Donald Brown adopted regular exercise and mindfulness practices to improve his physical health post-retirement.",
+      "correct": true,
+      "errored": false,
+      "gold": "Regular exercise and mindfulness practices"
+    },
+    {
+      "id": "7:6",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Michael and Robert are the friends who share Donald Brown's passion for technology and social causes, as confirmed by the memory entry dated 2026-02-20.",
+      "correct": true,
+      "errored": false,
+      "gold": "Michael and Robert"
+    },
+    {
+      "id": "7:7",
+      "category": "Dynamic Update",
+      "predicted": "As of Mar 12, 2026, the context records Donald Brown's employment status as **self-employed** (updated from 'employed' to 'self-employed' on 2025-12-12), though this is disputed by a conflicting record from the same date indicating he became \"retired.\"",
+      "correct": false,
+      "errored": false,
+      "gold": "Retired"
+    },
+    {
+      "id": "7:8",
+      "category": "Dynamic Update",
+      "predicted": "Yes — by Jan 15, 2026, Donald Brown's physical health changed from 'Normal' to 'Improved', due to regular exercise and mindfulness after retirement.",
+      "correct": true,
+      "errored": false,
+      "gold": "Improved"
+    },
+    {
+      "id": "7:9",
+      "category": "Dynamic Update",
+      "predicted": "Yes — as of 2026-02-20, Donald Brown plans to involve his community group by organizing workshops and discussions to gather ideas and support for initiatives.",
+      "correct": true,
+      "errored": false,
+      "gold": "Organizing workshops and discussions with his community group."
+    },
+    {
+      "id": "8:0",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, Donald Brown's current footwear preference is **ergonomic sneakers**, chosen for their enhanced support, comfort, and style during extended periods of standing.",
+      "correct": false,
+      "errored": false,
+      "gold": "Stylish yet comfortable sneakers."
+    },
+    {
+      "id": "8:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not mentioned."
+    },
+    {
+      "id": "8:2",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context records his clothing preference changed from 'comfortable sneakers' to 'stylish yet comfortable sneakers' on 2026-04-27, not a change solely to sneaker type.",
+      "correct": true,
+      "errored": false,
+      "gold": "From 'comfortable sneakers' to 'stylish yet comfortable sneakers'."
+    },
+    {
+      "id": "9:0",
+      "category": "Generalization & Application",
+      "predicted": "Based on the 2027 timeframe, the only established preference is that Donald avoids **high-altitude destinations** due to altitude sickness (recorded since 2025-09-06); his shift toward cultural immersion and personal comfort was only recorded from 2028-07-29 onward, so it isn't confirmed for 2027.",
+      "correct": false,
+      "errored": false,
+      "gold": "Cultural immersion destinations with personal space."
+    },
+    {
+      "id": "9:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Donald Brown experienced dissatisfaction due to lack of personal space and peace in a crowded city, and he dislikes crowded tourist spots.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed dissatisfaction and prefers cultural immersion trips."
+    },
+    {
+      "id": "9:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "10:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — Donald plans to explore more **romantic novels** after November 19, 2026, following a positive experience with a friend's recommendation.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unique romantic novels with engaging narratives."
+    },
+    {
+      "id": "10:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is not provided."
+    },
+    {
+      "id": "10:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — a friend recommended a romantic novel with an engaging and unpredictable storyline, which changed his perception of the genre.",
+      "correct": true,
+      "errored": false,
+      "gold": "A novel with an engaging and unpredictable storyline recommended by his friend."
+    },
+    {
+      "id": "11:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "11:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "11:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Donald Brown attended the heavy metal concert on **Mar 02, 2027**.",
+      "correct": true,
+      "errored": false,
+      "gold": "Mar 02, 2027"
+    },
+    {
+      "id": "12:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "12:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — energy drinks made with natural ingredients, as Donald Brown discovered this brand specifically while preparing for a demanding project (context dated 2027-06-13), before his later shift to health-benefit herbal tea in 2031.",
+      "correct": true,
+      "errored": false,
+      "gold": "Energy drinks with natural ingredients."
+    },
+    {
+      "id": "12:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Donald Brown values natural solutions that support his work routine without compromising well-being (since 2027-06-13), so by 2028 this would likely steer him toward beverages with natural ingredients, consistent with his documented shift driven by discovering a new natural-ingredient brand.",
+      "correct": true,
+      "errored": false,
+      "gold": "He may choose beverages with natural ingredients."
+    },
+    {
+      "id": "14:0",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Donald might explore skydiving with safety precautions."
+    },
+    {
+      "id": "14:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown from the provided information."
+    },
+    {
+      "id": "16:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Donald Brown discovered a newfound appreciation (not dislike) for tropical fruits like mango and pineapple during his Hawaii vacation.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed excitement about them."
+    },
+    {
+      "id": "16:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context shows two **conflicting, unresolved** records for January 5, 2028: one states his preference changed to **Tropical fruit salad** (mango and pineapple), the other to **Mediterranean fruit salad** (figs and dates); both are disputed with no resolution.",
+      "correct": false,
+      "errored": false,
+      "gold": "Tropical fruit salad, preferring mango and pineapple."
+    },
+    {
+      "id": "16:2",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, Donald Brown developed a preference for Mediterranean fruit salad (figs and dates) and tropical fruits (mango and pineapple) discovered during travel in 2028, so he would likely enjoy a **Mediterranean restaurant** or a restaurant featuring **tropical/exotic fruit-based dishes**.",
+      "correct": false,
+      "errored": false,
+      "gold": "A tropical-themed restaurant."
+    },
+    {
+      "id": "18:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that on 2028-04-17 Donald Brown found a comfortable brand of tight-fitting jeans, leading him to reconsider his previous dislike.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he found a comfortable brand and reconsidered his dislike."
+    },
+    {
+      "id": "18:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "18:2",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, Donald Brown expressed a desire to explore more fashion options that offer both style and comfort after April 17, 2028, so he might explore shoe styles that balance style with comfort — consistent with his later shift toward \"stylish yet comfortable sneakers\" and \"ergonomic sneakers.\"",
+      "correct": true,
+      "errored": false,
+      "gold": "Stylish and comfortable shoe styles."
+    },
+    {
+      "id": "19:0",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — Donald took up gardening, volunteering at a local community center, painting, organizing community events, and taking online courses (including learning new languages), alongside regular exercise and mindfulness practices.",
+      "correct": true,
+      "errored": false,
+      "gold": "Gardening, volunteering, painting, learning languages."
+    },
+    {
+      "id": "19:1",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — his regular exercise and mindfulness practices greatly enhanced his physical health and maintained a positive mental state, while also allowing him quality time with friends and family through a flexible retirement schedule.",
+      "correct": true,
+      "errored": false,
+      "gold": "Enhanced physical health and positive mental state."
+    },
+    {
+      "id": "19:2",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — Donald Brown is considering **consulting and mentoring roles**, as well as **collaboration with organizations focused on disability empowerment**, all aimed at positively impacting individuals with disabilities and aligning with his humanitarian core values.",
+      "correct": true,
+      "errored": false,
+      "gold": "Consulting and mentoring."
+    },
+    {
+      "id": "19:3",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states he retired to focus on personal growth, lifestyle changes, and humanitarian/community service goals, with no mention of chronic health conditions as a reason.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Donald retired for personal growth, not due to chronic health conditions."
+    },
+    {
+      "id": "19:4",
+      "category": "Memory Conflict",
+      "predicted": "No; the context confirms Donald Brown actively integrated wellness practices such as meditation, yoga, regular exercise, and mindfulness into his retirement routine.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Donald engaged in wellness practices like yoga and meditation."
+    },
+    {
+      "id": "19:5",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states he became actively involved in a volunteer network dedicated to community projects in 2036.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Donald continues to engage in community initiatives."
+    },
+    {
+      "id": "19:6",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided in the memory points."
+    },
+    {
+      "id": "19:7",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided in the memory points."
+    },
+    {
+      "id": "19:8",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided in the memory points."
+    },
+    {
+      "id": "20:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — on 2028-07-29, Donald Brown's preferences indicate he sought destinations offering **cultural immersion and personal comfort**, while explicitly **excluding high-altitude locations**, driven by his compensatory motivation and well-being focus.",
+      "correct": true,
+      "errored": false,
+      "gold": "Destinations offering cultural immersion and personal comfort."
+    },
+    {
+      "id": "20:1",
+      "category": "Generalization & Application",
+      "predicted": "No — the context on 2028-07-29 says Donald Brown was focused on cultural immersion and personal comfort (compensatory motivation), with no mention of travel companion preferences.",
+      "correct": false,
+      "errored": false,
+      "gold": "Friends who share preferences for cultural immersion and comfort."
+    },
+    {
+      "id": "20:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context contains directly conflicting records on this point, but the majority of consistent, undisputed records indicate Donald Brown **excluded** high-altitude destinations due to altitude sickness affecting his enjoyment.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he decided to exclude them due to altitude sickness."
+    },
+    {
+      "id": "21:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context states Donald expressed excitement about using **scientifically-backed self-help books** to inspire creative ideas and overcome professional challenges.",
+      "correct": true,
+      "errored": false,
+      "gold": "Scientifically-backed self-help books."
+    },
+    {
+      "id": "21:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "21:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of Nov 09, 2028, Donald Brown appreciates self-help books that are research-backed and provide actionable insights grounded in scientific research.",
+      "correct": true,
+      "errored": false,
+      "gold": "Self-help books with scientific backing."
+    },
+    {
+      "id": "22:0",
+      "category": "Generalization & Application",
+      "predicted": "No — the context contains a direct contradiction: one record states his exploration of diverse cultural narratives reflects **openness to new experiences**, while another states it reflects a **preference for traditional storytelling and reluctance to adopt new cultural forms**, leaving his actual disposition unresolved.",
+      "correct": false,
+      "errored": false,
+      "gold": "He may use rap music to connect with others."
+    },
+    {
+      "id": "22:1",
+      "category": "Memory Conflict",
+      "predicted": "No — on Feb 20, 2029, the context records that Donald Brown expressed **surprise at the narrative potential of rap music**, leading to a **newfound enjoyment** of the genre, not disappointment.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he appreciated rap's storytelling and lyrical depth."
+    },
+    {
+      "id": "22:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "23:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after June 2, 2029, Donald Brown removed sugary sodas from his dislike list and recognized their role in enhancing social enjoyment, so he would likely choose a sugary soda.",
+      "correct": true,
+      "errored": false,
+      "gold": "Sugary sodas."
+    },
+    {
+      "id": "23:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "23:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states he **removed** sugary sodas from his dislike list after recognizing their role in enhancing social enjoyment at gatherings.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he removed sugary sodas from his dislike list."
+    },
+    {
+      "id": "25:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Neighborhood basketball league."
+    },
+    {
+      "id": "25:1",
+      "category": "Generalization & Application",
+      "predicted": "The context confirms Donald Brown joined a **basketball** league (though there's a disputed soccer record), and he has expressed interest in organizing **extreme sports** outings with friends — so he might enjoy joining an extreme sports group in the future.",
+      "correct": false,
+      "errored": false,
+      "gold": "A league emphasizing fun and camaraderie."
+    },
+    {
+      "id": "25:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "27:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "27:1",
+      "category": "Memory Conflict",
+      "predicted": "No; the context states Donald Brown expressed **enthusiasm** about spicy vegetable stir-fry after the cooking class.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed enthusiasm for it."
+    },
+    {
+      "id": "27:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Donald Brown's food preference evolved to *include* spicy vegetable stir-fry, which he plans to incorporate into his regular cooking routine.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he plans to include spicy elements."
+    },
+    {
+      "id": "28:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after April 7, 2030, Donald Brown plans to explore other sustainable clothing options, with a specific interest in recycled materials (influenced by a sustainable fashion workshop) and eco-friendly wardrobe integrations aligned with his personal environmental values.",
+      "correct": false,
+      "errored": false,
+      "gold": "Eco-friendly fabrics like hemp or bamboo."
+    },
+    {
+      "id": "28:1",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2030-04-07 the context records Donald Brown updated his preference to **organic cotton t-shirts** (not synthetic fiber) for their environmental benefits.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he preferred organic cotton t-shirts for environmental benefits."
+    },
+    {
+      "id": "28:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Donald Brown's documentary watching influenced a switch to **organic cotton** t-shirts and a desire to integrate more **eco-friendly** options, not synthetic clothing.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he planned to explore sustainable clothing options."
+    },
+    {
+      "id": "29:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "29:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "29:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "29:3",
+      "category": "Memory Conflict",
+      "predicted": "No; the context states that on 2029-08-07 Donald Brown **transitioned from retirement to employed status**, taking on a new role at AccessTech Innovations.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he started working at AccessTech Innovations after retirement."
+    },
+    {
+      "id": "29:4",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Donald Brown expressed excitement about personal growth and fulfillment at AccessTech Innovations as of 2030-04-15.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed excitement and fulfillment in his role."
+    },
+    {
+      "id": "29:5",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — Donald Brown's career change aligns with his humanitarian life goal of positively impacting 1 million people globally through technology for disabilities, and as of April 2030 he finds satisfaction at AccessTech Innovations contributing to impactful projects that align with those humanitarian goals (though a disputed record suggests some projects focus on financial growth instead, the conflict is unresolved).",
+      "correct": true,
+      "errored": false,
+      "gold": "Impacting 1 million people globally through accessibility technology."
+    },
+    {
+      "id": "29:6",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Setting clear boundaries between work and personal commitments."
+    },
+    {
+      "id": "30:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Donald Brown's middle name is unknown."
+    },
+    {
+      "id": "30:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The exact date of Donald Brown's first nature retreat is unknown."
+    },
+    {
+      "id": "30:2",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2030-07-19 the context records that Donald Brown **no longer** preferred nature retreats (due to lack of social interaction), favoring more engaging and culturally immersive travel experiences instead.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he prefers culturally immersive experiences over nature retreats."
+    },
+    {
+      "id": "31:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of October 30, 2030, Donald Brown prefers **character-driven science fiction novels**, appreciating deeper character development and interpersonal dynamics.",
+      "correct": true,
+      "errored": false,
+      "gold": "Character-driven science fiction novels."
+    },
+    {
+      "id": "31:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — in 2031, Donald Brown would likely enjoy **character-driven science fiction** with deep character development and interpersonal dynamics, as that preference was established by 2030-10-30 (before his 2032 shift to diverse genres).",
+      "correct": true,
+      "errored": false,
+      "gold": "Character-driven novels with rich interpersonal dynamics."
+    },
+    {
+      "id": "31:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "32:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "32:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of February 10, 2031, Donald Brown changed from disliking techno music to appreciating its complexity and diversity after being exposed to its diverse sub-genres at music festivals.",
+      "correct": true,
+      "errored": false,
+      "gold": "He appreciates its complexity and diversity."
+    },
+    {
+      "id": "32:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — attending music festivals where he was exposed to various sub-genres of techno significantly impacted Donald Brown's perspective, changing his view from disliking the genre to appreciating its complexity and diversity.",
+      "correct": true,
+      "errored": false,
+      "gold": "Attending music festivals."
+    },
+    {
+      "id": "33:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Donald Brown values herbal teas for their calming effects and stress management, and integrates concentration-aiding herbal tea into his work routine, so he would likely choose health-benefit herbal tea during a stressful workday.",
+      "correct": true,
+      "errored": false,
+      "gold": "A calming herbal tea with health benefits."
+    },
+    {
+      "id": "33:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "33:2",
+      "category": "Memory Conflict",
+      "predicted": "No — context shows that on 2031-05-24 Donald Brown sampled a new herbal blend at a specialty tea shop and planned to incorporate it into his daily routine specifically *for* its health benefits.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he appreciated herbal teas for their health benefits."
+    },
+    {
+      "id": "34:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Donald Brown expressed a desire to **continue** participating in endurance events after the half-marathon, valuing community support and personal achievement.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed a desire to continue participating."
+    },
+    {
+      "id": "34:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — having completed a half-marathon on Sep 04, 2031, and expressed a desire to continue participating in endurance events valuing community support and personal achievement, he would likely enjoy similar endurance/running events in the future.",
+      "correct": true,
+      "errored": false,
+      "gold": "Endurance events with strong community support."
+    },
+    {
+      "id": "34:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Donald Brown completed a **half-marathon** on Sep 04, 2031, which led to a reevaluation of marathon running as an enjoyable challenge.",
+      "correct": true,
+      "errored": false,
+      "gold": "Donald Brown completed a half-marathon."
+    },
+    {
+      "id": "36:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "36:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on December 16, 2031, his health check-up revealed a need to increase fiber intake and reduce sugar intake, prompting dietary changes for long-term well-being.",
+      "correct": false,
+      "errored": false,
+      "gold": "Removed dark chocolate from his diet."
+    },
+    {
+      "id": "36:2",
+      "category": "Generalization & Application",
+      "predicted": "The context confirms he is seeking such snacks (since 2031-12-16) but doesn't list specific alternatives beyond what's elsewhere in the context: **tropical fruits like mango and pineapple** (enjoyed for their sweetness since 2028) and **spicy vegetable stir-fry** (incorporated into his routine since 2029) are the only health-conscious food choices mentioned.",
+      "correct": false,
+      "errored": false,
+      "gold": "Snacks low in sugar."
+    },
+    {
+      "id": "39:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on Mar 28, 2032, Donald Brown changed his preference **from** comfortable sneakers **to ergonomic sneakers**, citing enhanced support, comfort, and style during extended periods of standing.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he switched to ergonomic sneakers for better support and style."
+    },
+    {
+      "id": "39:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "39:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Ergonomic hiking boots."
+    },
+    {
+      "id": "40:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "40:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "40:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "40:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "40:4",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "40:5",
+      "category": "Generalization & Application",
+      "predicted": "The context does not specify which techniques Donald Brown would find effective for future challenges — only that he expressed a desire to **continue exploring additional stress management techniques and resources**, and had already explored mindfulness, exercise, creative visualization, journaling, breathing exercises, and yoga.",
+      "correct": false,
+      "errored": false,
+      "gold": "Meditation and yoga."
+    },
+    {
+      "id": "40:6",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER — the context confirms Donald Brown's humanitarian commitment and his stress from entrepreneurship at EmpowerTech Innovations, but says nothing about his specific business strategies after April 24, 2032.",
+      "correct": false,
+      "errored": false,
+      "gold": "Focus on empowering individuals with disabilities."
+    },
+    {
+      "id": "40:7",
+      "category": "Generalization & Application",
+      "predicted": "Yes — from April 24, 2032 onward, context confirms mindfulness practices played a role in maintaining Donald Brown's mental health, managing stress from entrepreneurial challenges, and later (March 15, 2034) improving his focus and creativity to benefit productivity.",
+      "correct": true,
+      "errored": false,
+      "gold": "Help maintain mental health and manage stress."
+    },
+    {
+      "id": "40:8",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Donald Brown considered **expanding partnerships** and **increasing technology adoption by organizations** as the key strategies to enhance EmpowerTech Innovations' impact after April 24, 2032.",
+      "correct": true,
+      "errored": false,
+      "gold": "Expand partnerships and increase technology adoption."
+    },
+    {
+      "id": "41:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of July 2032, the most recent applicable record (since 2030-07-19) states Donald Brown's travel preferences had shifted towards destinations offering **social interaction and cultural engagement**.",
+      "correct": false,
+      "errored": false,
+      "gold": "Cultural festivals"
+    },
+    {
+      "id": "41:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "41:2",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2032-07-09 the context records that Donald Brown expressed a preference for **cultural engagement over** the solitude offered by nature retreats, and that his travel preference shifted towards cultural festivals.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he prefers cultural festivals over nature retreats."
+    },
+    {
+      "id": "42:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on Oct 19, 2032, Donald Brown's reading preference *changed to appreciating* diverse genres (mystery and fantasy), not expressing a dislike for them.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed appreciation for diverse genres."
+    },
+    {
+      "id": "42:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after Oct 19, 2032, Donald Brown's reading preference shifted to **diverse genres including mystery and fantasy**, and he joined a genre-rotating book club, suggesting those are the new genres he would explore.",
+      "correct": true,
+      "errored": false,
+      "gold": "Mystery and fantasy genres."
+    },
+    {
+      "id": "42:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — before joining the book club, Donald Brown's reading preference was science fiction novels (specifically character-driven science fiction).",
+      "correct": true,
+      "errored": false,
+      "gold": "Science fiction novels"
+    },
+    {
+      "id": "43:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on Jan 30, 2033, Donald Brown attended an opera performance that led to a newfound appreciation for the genre, and he expressed a desire to attend *more* live opera performances.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he found it appealing and wants to attend more performances."
+    },
+    {
+      "id": "43:1",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, after January 30, 2033, Donald Brown might explore more **operatic performances**, as he shared his excitement about exploring them on that date, reflecting his openness to new cultural experiences.",
+      "correct": false,
+      "errored": false,
+      "gold": "Jazz, due to similar exploratory motivation."
+    },
+    {
+      "id": "43:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after January 30, 2033, Donald Brown is likely to attend live opera and jazz performances, as the context records that witnessing live performances of both genres led him to reevaluate his perception and express a desire to explore more operatic and musical experiences.",
+      "correct": false,
+      "errored": false,
+      "gold": "Live opera performances."
+    },
+    {
+      "id": "45:0",
+      "category": "Basic Fact Recall",
+      "predicted": "No — as of May 13, 2033, Donald Brown no longer dislikes **energy drinks**, after experiencing positive effects from a new brand that provides sustained energy without jitters.",
+      "correct": true,
+      "errored": false,
+      "gold": "Energy drinks"
+    },
+    {
+      "id": "45:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on May 13, 2033, Donald Brown noticed a sustained energy boost without jitters, which helped maintain focus during long work sessions.",
+      "correct": false,
+      "errored": false,
+      "gold": "Improved productivity and energy levels"
+    },
+    {
+      "id": "45:2",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, Donald Brown's exploratory motivation includes testing boundaries and exploring new preferences, such as trying new activities or revisiting old hobbies (since 2033-05-13), so he might explore nature retreats or cultural immersion trips, consistent with his post-retirement plans.",
+      "correct": false,
+      "errored": false,
+      "gold": "Activities offering sustained energy without negative side effects."
+    },
+    {
+      "id": "46:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — given his excitement about rock climbing and focus on adrenaline-pumping, thrill-seeking adventurous activities, Donald Brown would likely be interested in similar physically challenging or extreme sports, such as bouldering, wall climbing outdoors, or other adventure sports.",
+      "correct": true,
+      "errored": false,
+      "gold": "Other outdoor adventure sports."
+    },
+    {
+      "id": "46:1",
+      "category": "Memory Conflict",
+      "predicted": "No; on Aug 24, 2033, Donald Brown discovered the **thrill and safety** of rock climbing, overcoming his fear of heights — he did not express dislike.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed excitement about rock climbing."
+    },
+    {
+      "id": "46:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER. The context confirms Donald Brown had a guided rock climbing session on 2033-08-24 with friends, but does not name which specific friend invited him.",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is unknown."
+    },
+    {
+      "id": "48:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "48:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context confirms Donald Brown appreciates homemade **turkey sausage**, specifically for its fresh taste and non-salty flavor.",
+      "correct": true,
+      "errored": false,
+      "gold": "Homemade turkey sausage"
+    },
+    {
+      "id": "48:2",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, Donald Brown enjoys **sweet and savory fusion dishes**, **spicy vegetable stir-fry**, and **tropical fruits like mango and pineapple** discovered through travel — so he might enjoy a **spicy mango-pineapple stir-fry**, which combines all three established preferences.",
+      "correct": false,
+      "errored": false,
+      "gold": "Homemade low-salt charcuterie using fresh ingredients."
+    },
+    {
+      "id": "50:0",
+      "category": "Multi-hop Inference",
+      "predicted": "No — the context states Donald Brown transitioned to a consultancy role at TechConsult Solutions to leverage his expertise more flexibly and maintain a better work-life balance (not on May 10, 2033 specifically, but that date is the only record for that transition).",
+      "correct": true,
+      "errored": false,
+      "gold": "Flexibility, work-life balance, and leveraging expertise."
+    },
+    {
+      "id": "50:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context states that on 2033-05-10, Donald Brown's employment status changed from self-employed to **employed** at TechConsult Solutions.",
+      "correct": true,
+      "errored": false,
+      "gold": "Employed at TechConsult Solutions"
+    },
+    {
+      "id": "50:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context states his physical health status changed from 'Excellent' to 'Stable' effective 2033-09-15, so on September 16, 2033 his status was **Stable**.",
+      "correct": true,
+      "errored": false,
+      "gold": "Stable"
+    },
+    {
+      "id": "50:3",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on March 15, 2034, Donald Brown integrated meditation, yoga, regular exercise, and creative visualization techniques into his routine for stress management, health improvement, and recovery.",
+      "correct": false,
+      "errored": false,
+      "gold": "Meditation and yoga"
+    },
+    {
+      "id": "50:4",
+      "category": "Dynamic Update",
+      "predicted": "No — the context contains heavily conflicting and disputed records about Donald Brown's employment status, with no single unambiguous fact confirmed for March 15, 2034; the most recent undisputed transition places him as **employed at TechConsult Solutions since 2033-05-10**, but multiple disputed records (retired, freelancer, self-employed, unemployed) remain unresolved.",
+      "correct": true,
+      "errored": false,
+      "gold": "Employed at TechConsult Solutions"
+    },
+    {
+      "id": "50:5",
+      "category": "Dynamic Update",
+      "predicted": "No — the context shows the latest physical health change is from 'Excellent' to 'Stable' (since 2033-09-15), and his mental health shifted to 'Stressed' due to the pressures of running EmpowerTech Innovations (since 2032-01-15).",
+      "correct": false,
+      "errored": false,
+      "gold": "Stable with improved focus and creativity"
+    },
+    {
+      "id": "50:6",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states his monthly income was updated **from '0' to '5000'** (an increase, not a decrease) after joining TechConsult Solutions on 2033-05-10.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, his income increased to 8000."
+    },
+    {
+      "id": "50:7",
+      "category": "Memory Conflict",
+      "predicted": "No; the context states his physical health status changed from 'Excellent' to 'Stable' since 2033-09-15, so by Dec 20, 2033 his status was 'Stable', not 'Excellent'.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his health status was 'Stable'."
+    },
+    {
+      "id": "51:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on 2034-03-18, Donald Brown updated his clothing preference from t-shirts to polo shirts for their versatility and ability to transition between casual and formal settings.",
+      "correct": true,
+      "errored": false,
+      "gold": "Polo shirts for their versatility and style."
+    },
+    {
+      "id": "51:1",
+      "category": "Memory Conflict",
+      "predicted": "No; on 2034-03-18 Donald Brown shifted his preference to **polo shirts** (not t-shirts) for their versatility and ability to transition between casual and formal settings.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he shifted to polo shirts for their versatility."
+    },
+    {
+      "id": "51:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after March 18, 2034, Donald Brown updated his preference to **polo shirts** for their versatility and ability to transition between casual and formal settings, prompted by a semi-formal event invitation.",
+      "correct": true,
+      "errored": false,
+      "gold": "Polo shirts."
+    },
+    {
+      "id": "52:0",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context states Donald Brown removed **cultural immersion trips** from his preferences (recorded 2034-06-29), not on June 30, 2034; the date is June 29, 2034.",
+      "correct": true,
+      "errored": false,
+      "gold": "Cultural immersion trips"
+    },
+    {
+      "id": "52:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of June 29, 2034, Donald Brown prefers travel experiences that offer **relaxation and personal reflection**, avoiding continuous cultural engagement.",
+      "correct": true,
+      "errored": false,
+      "gold": "Relaxation and personal reflection"
+    },
+    {
+      "id": "52:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "53:0",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Donald might explore genres with rich storytelling elements."
+    },
+    {
+      "id": "53:1",
+      "category": "Memory Conflict",
+      "predicted": "No; by October 10, 2034, the context shows Donald Brown had actually updated his preference to **appreciating** country music for its storytelling charm, thanks to playlists shared by friends.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he shifted to a neutral stance appreciating its storytelling charm."
+    },
+    {
+      "id": "53:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of 2034-10-10, Donald Brown updated his stance on country music from disliking it to appreciating its storytelling charm, thanks to playlists shared by friends.",
+      "correct": true,
+      "errored": false,
+      "gold": "Neutral stance, appreciating its storytelling charm."
+    },
+    {
+      "id": "54:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2035-01-21 Donald Brown preferred concentration-aiding herbal tea (not coffee) for its dual benefits of relaxation and productivity.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Donald preferred herbal tea for concentration enhancement."
+    },
+    {
+      "id": "54:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "54:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Donald Brown prefers concentration-aiding herbal tea for its dual benefits of relaxation and productivity.",
+      "correct": true,
+      "errored": false,
+      "gold": "Concentration-aiding herbal tea"
+    },
+    {
+      "id": "55:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of May 04, 2035, Donald Brown values **supportive environments and experienced instructors** as key factors in fostering new sports interests, as established since 2033-08-24.",
+      "correct": false,
+      "errored": false,
+      "gold": "Relaxed, non-competitive environments."
+    },
+    {
+      "id": "55:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "55:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Donald Brown desired non-competitive sports for their social and emotional benefits, and his participation in social soccer games aligns with his motivation for companionship and team spirit; similar non-competitive, socially-oriented activities he could explore include casual team sports, recreational group fitness, and community-based outdoor games.",
+      "correct": true,
+      "errored": false,
+      "gold": "Non-competitive sports activities."
+    },
+    {
+      "id": "56:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context records Donald Brown attended a workshop on **sustainable fashion** (not sustainable energy) on 2035-08-15.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Donald attended a sustainable fashion workshop."
+    },
+    {
+      "id": "56:1",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2035-08-15 Donald updated his preference to **recycled fabric t-shirts** (not silk shirts) for environmental benefits and comfort.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Donald updated his preference to recycled fabric t-shirts."
+    },
+    {
+      "id": "56:2",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context contains two conflicting records dated 2035-08-15: one states he updated to **Recycled fabric t-shirts** (for environmental benefits and comfort), while a disputed record mentions Organic cotton t-shirts; both are marked unresolved, so the preference is contested.",
+      "correct": false,
+      "errored": false,
+      "gold": "Recycled fabric t-shirts"
+    },
+    {
+      "id": "58:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown from provided information."
+    },
+    {
+      "id": "58:1",
+      "category": "Memory Conflict",
+      "predicted": "No; on Nov 26, 2035, the context records that Donald Brown's preference had shifted **away** from cultural immersion trips toward leisurely explorations, appreciating spontaneous discoveries and relaxation.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Donald prefers leisurely explorations with relaxation and spontaneous discoveries."
+    },
+    {
+      "id": "58:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of Nov 26, 2035, Donald Brown's travel preference shifted from cultural immersion trips to leisurely explorations, appreciating spontaneous discoveries and relaxation.",
+      "correct": true,
+      "errored": false,
+      "gold": "Leisurely explorations appreciating spontaneous discoveries and relaxation."
+    },
+    {
+      "id": "61:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "61:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "61:2",
+      "category": "Dynamic Update",
+      "predicted": "No — the context contains heavily disputed and contradictory records, but the most recent undisputed/current record (since 2035-11-08) states Donald Brown's employment status was updated to **retired**.",
+      "correct": true,
+      "errored": false,
+      "gold": "Retired"
+    },
+    {
+      "id": "61:3",
+      "category": "Dynamic Update",
+      "predicted": "Yes — Donald Brown's latest focus is humanitarian care, aligning with his life goal, while also expressing gratitude for community support during his transition to expanded community involvement.",
+      "correct": false,
+      "errored": false,
+      "gold": "Volunteer network involvement"
+    },
+    {
+      "id": "61:4",
+      "category": "Multi-hop Inference",
+      "predicted": "No — the context states the motivation for his 2035-11-08 permanent retirement was to focus on **community service and personal interests, aligning with his humanitarian goals**, not specifically burnout from the consultancy role (though earlier records note fatigue and health decline from that role since 2033-09-15).",
+      "correct": true,
+      "errored": false,
+      "gold": "Desire to focus on community service and personal interests."
+    },
+    {
+      "id": "61:5",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — by January 5, 2036, Donald Brown's community involvement post-retirement directly aligned with his life goal of humanitarian care, as confirmed by the context record dated 2036-01-05.",
+      "correct": true,
+      "errored": false,
+      "gold": "Aligned with his life goal of humanitarian care."
+    },
+    {
+      "id": "61:6",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — by March 8, 2036, Donald emphasized mentoring young professionals and inspiring future leaders as part of his legacy, focusing on their growth rather than seeking external recognition.",
+      "correct": true,
+      "errored": false,
+      "gold": "Inspire future leaders and make meaningful changes."
+    },
+    {
+      "id": "61:7",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Donald Brown's job title before his retirement on Nov 08, 2035 was **consultant**, as that is the title that was updated to \"former consultant\" on that date.",
+      "correct": true,
+      "errored": false,
+      "gold": "Consultant"
+    },
+    {
+      "id": "61:8",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on January 5, 2036, Donald Brown became actively involved in a **volunteer network**, dedicating his time to support various community projects and initiatives.",
+      "correct": true,
+      "errored": false,
+      "gold": "Volunteer network"
+    },
+    {
+      "id": "61:9",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context is disputed, but the most recent record from 2035-11-08 states his monthly income updated from \"8000\" to \"0\", though a conflicting record from the same date says it updated to \"2000\" with a part-time consultancy role; both claims are unresolved.",
+      "correct": true,
+      "errored": false,
+      "gold": "0"
+    }
+  ],
+  "recipe": {
+    "user": 2,
+    "k": 12,
+    "reconcile": 0.35,
+    "verify": true,
+    "history": true,
+    "bitemporal": "v13"
+  }
+}

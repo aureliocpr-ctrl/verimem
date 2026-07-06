@@ -193,13 +193,16 @@ Two DIFFERENT measurements, never on the same row (adversarial review C8 —
 an earlier draft compared our read-path number against MemOS's end-to-end
 number without saying so):
 
-| | user 1 (n=188) | user 0 (n=164) | MemOS **end-to-end** (self-reported) |
-|---|---|---|---|
-| **Read-path QA** — store built from *gold* memory points; measures the memory (recall+history+verify+abstention), not our extractor | **0.739** | **0.750** | — |
-| **End-to-end QA** — our extraction → gated store → answer, same questions ([run 1](./benchmark/results/e2e_full_pipeline_u1.json), [run 2](./benchmark/results/e2e_full_pipeline_u1_postfix.json)) | 0.553* (×2 runs) | not run | 0.672 |
-| Memory Boundary, never fabricate (read-path / e2e) | 0.976 / **1.000** | 0.897 / — | — |
-| Memory Conflict (read-path / e2e) | 0.800 / 0.800 | 0.872 / — | — |
-| Basic Fact Recall (read-path / e2e) | 0.800 / 0.267 | 0.725 / — | — |
+| | user 1 (n=188) | user 0 (n=164) | user 2 (n=169) | MemOS **end-to-end** (self-reported) |
+|---|---|---|---|---|
+| **Read-path QA** — store built from *gold* memory points; measures the memory (recall+history+verify+abstention), not our extractor | **0.739** | **0.750** | **0.787** | — |
+| **End-to-end QA** — our extraction → gated store → answer, same questions ([run 1](./benchmark/results/e2e_full_pipeline_u1.json), [run 2](./benchmark/results/e2e_full_pipeline_u1_postfix.json)) | 0.553* (×2 runs) | not run | not run | 0.672 |
+| Memory Boundary, never fabricate (read-path / e2e) | 0.976 / **1.000** | 0.897 / — | **1.000** / — | — |
+| Memory Conflict (read-path / e2e) | 0.800 / 0.800 | 0.872 / — | 0.889 / — | — |
+| Basic Fact Recall (read-path / e2e) | 0.800 / 0.267 | 0.725 / — | 0.750 / — | — |
+
+Read-path across **3 users: 0.739 / 0.750 / 0.787 (mean 0.759)** — every run
+above MemOS's end-to-end 0.672 ([u2 evidence](./benchmark/results/qa_gem_k12_u2.json)).
 
 **End-to-end we are BEHIND MemOS (−12pp) — stated, not hidden.** The split shows
 where: the trust properties HOLD through the full pipeline (Boundary 1.000 on
@@ -216,7 +219,7 @@ The read-path claim survived an adversarial counterexample review
 abstention flagging doesn't inflate — fabrications are penalized; answerable
 categories graded by the strict judge).
 **Declared caveats, every time:** judge is Claude (MemOS self-reports with GPT-4 —
-comparable method, not identical); n=2 users; the rich
+comparable method, not identical); n=3 users; the rich
 context trades a little abstention purity (0.976/0.897 vs 1.0 with the strict answerer).
 The single biggest lever is the **answer-with-history** dated context: on transition
 questions it lifts +16pp (7 unlocked, 0 lost), and the Memory-Conflict arc is
