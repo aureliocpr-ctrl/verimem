@@ -1,0 +1,8 @@
+{
+  "n_facts": 5000,
+  "recall_default_p50_ms": 237,
+  "recall_deep_p50_ms": 166,
+  "recall_history_p50_ms": 190,
+  "trust_report_p50_ms": 190,
+  "store_build_s": 293
+}

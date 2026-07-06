@@ -821,3 +821,13 @@ strict answerer) — quantifying and routing that trade is the next queued
 experiment. Stress battery same day: 7/7 (temporal edge inputs, forged cycles,
 5k-fact store, adversarial queries, SDK p50 62ms) —
 `benchmark/results/stress_battery.json`.
+
+## Read-surface latency, 5k-fact store with real embeddings (2026-07-06)
+
+p50 over 20 queries (`benchmark/results/perf_profile_5k.json`): recall k=6
+**237ms** · deep (archaeology) **166ms** · with-history **190ms** ·
+trust-report dossier **190ms**. Honest reading: all four surfaces sit in the
+same 170-240ms band — deep recall and the history/dossier enrichments add **no
+measurable overhead** on top of base recall (the 1.2s deep figure measured
+earlier was the keyword-fallback path on an embedding-less store; the
+deep-faster-than-default gap here is warm-cache ordering, not a real speedup).
