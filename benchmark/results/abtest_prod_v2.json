@@ -1,0 +1,1138 @@
+{
+  "user": "u1",
+  "sessions": 77,
+  "k": 12,
+  "setup": "production(history+reconcile)",
+  "per_category": {
+    "Basic Fact Recall": {
+      "n": 45,
+      "strict": 0.5111,
+      "declared": 0.5111,
+      "lift": 0.0
+    },
+    "Generalization & Application": {
+      "n": 40,
+      "strict": 0.3,
+      "declared": 0.525,
+      "lift": 0.225
+    },
+    "Memory Boundary": {
+      "n": 26,
+      "strict": 1.0,
+      "declared": 0.7308,
+      "lift": -0.2692
+    }
+  },
+  "records": [
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's MBTI personality type?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's MBTI personality type?",
+      "gold": "ESTJ",
+      "strict_pred": "Johnson Joseph's MBTI personality type is ESTJ.",
+      "declared_pred": "ESTJ.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's job title as of September 5, 2025?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's job title as of September 5, 2025?",
+      "gold": "Owner",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER. The only job title in the context (\"Entrepreneur and Expansion Leader\") is current **since 2033-06-",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's blood type as of Sep 05, 2025?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's blood type as of Sep 05, 2025?",
+      "gold": "Unknown; not provided in the memory points.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What pets does Johnson Joseph dislike?",
+      "cat": "Basic Fact Recall",
+      "q": "What pets does Johnson Joseph dislike?",
+      "gold": "Snakes and Cats",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Sep 06, 2025?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Sep 06, 2025?",
+      "gold": "Unknown; not provided in the memory points.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No. The context states \"Johnson Joseph is the user's full name\" — no middle name is recorded.",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||On what date did Johnson Joseph attend the local wildlife seminar?",
+      "cat": "Basic Fact Recall",
+      "q": "On what date did Johnson Joseph attend the local wildlife seminar?",
+      "gold": "Apr 09, 2026",
+      "strict_pred": "Johnson attended the local wildlife seminar on April 9th.",
+      "declared_pred": "April 9th.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name?",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No. The context states \"Johnson Joseph\" is the user's full name — no middle name is mentioned.",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||What strategies might Johnson Joseph use to achieve his goal of hosting 10,000 guests annually at Albi B&B by the end of 2026?",
+      "cat": "Generalization & Application",
+      "q": "What strategies might Johnson Joseph use to achieve his goal of hosting 10,000 guests annu",
+      "gold": "Expand guest services and community ties.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Il contesto menziona solo che Johnson punta ad applicare **guest engagement e community building strategies** ",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's enjoyment of golf influence his approach to organizing community events at Albi B&B after Oct 14, 2026?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's enjoyment of golf influence his approach to organizing communit",
+      "gold": "Incorporate strategic and social elements into events.",
+      "strict_pred": "Johnson is considering hosting themed events at Albi B&B inspired by his past golf experiences.",
+      "declared_pred": "Inferred from: \"Johnson is considering hosting themed events at Albi B&B inspired by his past golf experiences",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's movie preference as of April 19, 2027?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's movie preference as of April 19, 2027?",
+      "gold": "Johnson Joseph prefers thrillers.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER.\n\nThe only movie-preference fact in context (fantasy films) is dated **since 2034-06-26**, which is ",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What was Johnson Joseph's favorite horror film before his preference changed on April 19, 2027?",
+      "cat": "Memory Boundary",
+      "q": "What was Johnson Joseph's favorite horror film before his preference changed on April 19, ",
+      "gold": "Unknown; not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||Based on Johnson Joseph's interest in strategy games, what new leisure activity might he enjoy in November 2027?",
+      "cat": "Generalization & Application",
+      "q": "Based on Johnson Joseph's interest in strategy games, what new leisure activity might he e",
+      "gold": "Johnson might enjoy chess as a new leisure activity.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: \"The user is considering offering strategy-based games for guests [since 2027-10-24]\" + \"The us",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What was Johnson Joseph's employment status on August 22, 2027?",
+      "cat": "Basic Fact Recall",
+      "q": "What was Johnson Joseph's employment status on August 22, 2027?",
+      "gold": "Unemployed due to a layoff from Albi B&B.",
+      "strict_pred": "Johnson Joseph experienced a layoff at Albi B&B in August (disputed).",
+      "declared_pred": "Inferred from: \"The user experienced a layoff at Albi B&B in August [current, since 2027-10-24]\" — August 22, ",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What strategy did Johnson Joseph plan to use for maintaining his social media presence after the layoff?",
+      "cat": "Basic Fact Recall",
+      "q": "What strategy did Johnson Joseph plan to use for maintaining his social media presence aft",
+      "gold": "Using AI-generated content.",
+      "strict_pred": "Johnson plans to use AI-generated content to update his social media presence to signal commitment to the hosp",
+      "declared_pred": "Inferred from: 'Johnson had to rethink his entire career strategy after being laid off [since 2033-06-15]' + '",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What specific event led to Johnson Joseph's layoff on August 22, 2027?",
+      "cat": "Basic Fact Recall",
+      "q": "What specific event led to Johnson Joseph's layoff on August 22, 2027?",
+      "gold": "A downturn in tourism.",
+      "strict_pred": "Johnson was laid off from Albi B&B due to a downturn in tourism.",
+      "declared_pred": "A downturn in tourism led to Johnson Joseph's layoff from Albi B&B on August 22, 2027.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's stance on fantasy novels as of April 28, 2028?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's stance on fantasy novels as of April 28, 2028?",
+      "gold": "He recognizes their potential to inspire creative themes for",
+      "strict_pred": "As of April 28, 2028, Johnson is open to exploring fantasy novels after reconsidering his stance at a literary",
+      "declared_pred": "As of 2028-04-28, Johnson is open to exploring fantasy novels after reconsidering his previous stance (he had ",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||When did Johnson Joseph attend a literary festival that influenced his reading preferences?",
+      "cat": "Basic Fact Recall",
+      "q": "When did Johnson Joseph attend a literary festival that influenced his reading preferences",
+      "gold": "April 28, 2028",
+      "strict_pred": "Since 2028-04-28.",
+      "declared_pred": "2028-04-28.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What type of music does Johnson Joseph now like as of Nov 02, 2028?",
+      "cat": "Basic Fact Recall",
+      "q": "What type of music does Johnson Joseph now like as of Nov 02, 2028?",
+      "gold": "Classical music",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER.\n\nAll music-related records in the context became current from 2032 or 2042 — none were active as of",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Nov 02, 2028?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Nov 02, 2028?",
+      "gold": "Unknown, not provided in the input information.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No. The context states \"Johnson Joseph is the user's full name\" — no middle name is mentioned.",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's preference regarding group tours as of May 08, 2029?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's preference regarding group tours as of May 08, 2029?",
+      "gold": "Johnson Joseph likes group tours.",
+      "strict_pred": "Johnson believes group tours are beneficial for certain destinations, especially where local expertise enhance",
+      "declared_pred": "Johnson believes group tours are beneficial for certain destinations, especially where local expertise enhance",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's experience in Italy influence his future B&B offerings?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's experience in Italy influence his future B&B offerings?",
+      "gold": "Incorporate expert-led experiences and themed tours.",
+      "strict_pred": "Johnson is considering incorporating elements from group tours into Albi B&B offerings, including themed tours",
+      "declared_pred": "Directly stated: Johnson is considering incorporating elements from his group tour into Albi B&B offerings, **",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||What stress management techniques might Johnson Joseph find effective based on his experiences by August 20, 2029?",
+      "cat": "Generalization & Application",
+      "q": "What stress management techniques might Johnson Joseph find effective based on his experie",
+      "gold": "Mindfulness practices and scheduled downtime.",
+      "strict_pred": "Johnson uses task delegation, short mental breaks, encouragement from his network, and mindfulness practices.",
+      "declared_pred": "Inferred from: task delegation + short mental breaks (since 2037-06-15 — post-2029, not applicable) + mindfuln",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph leverage his social network for career advancement after August 20, 2029?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph leverage his social network for career advancement after August 2",
+      "gold": "Collaborative opportunities and strategic advice.",
+      "strict_pred": "Johnson leveraged his social network during career recovery and plans to use it to explore opportunities for b",
+      "declared_pred": "Inferred from: 'Johnson leveraged his social network during career recovery [since 2031-07-10]' + 'The user pl",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's perception of cats as of Nov 12, 2029?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's perception of cats as of Nov 12, 2029?",
+      "gold": "Johnson Joseph considers their potential benefits for guest ",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER.\n\nThe only cat-related fact (\"has not focused much on cats as part of the guest experience\") is date",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Nov 12, 2029?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Nov 12, 2029?",
+      "gold": "Unknown; the middle name is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No. The context states \"Johnson Joseph is the user's full name\" — no middle name is recorded.",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What activity did Johnson Joseph decide to stop due to a minor injury on May 18, 2030?",
+      "cat": "Basic Fact Recall",
+      "q": "What activity did Johnson Joseph decide to stop due to a minor injury on May 18, 2030?",
+      "gold": "Cycling",
+      "strict_pred": "Cycling.",
+      "declared_pred": "Cycling.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is the name of Johnson Joseph's family members?",
+      "cat": "Memory Boundary",
+      "q": "What is the name of Johnson Joseph's family members?",
+      "gold": "Unknown from provided information.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Nov 22, 2030?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Nov 22, 2030?",
+      "gold": "Unknown; not provided in the input.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph incorporate documentaries into guest experiences at Albi B&B after Nov 22, 2030?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph incorporate documentaries into guest experiences at Albi B&B afte",
+      "gold": "By creating educational and engaging themed events.",
+      "strict_pred": "Johnson plans to incorporate documentary elements into events at Albi B&B, as recorded since 2030-11-22.",
+      "declared_pred": "Il contesto afferma solo che Johnson **pianifica di incorporare elementi documentaristici negli eventi** di Al",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph enhance guest experiences at Albi B&B after May 29, 2031?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph enhance guest experiences at Albi B&B after May 29, 2031?",
+      "gold": "By incorporating more cooperative board games.",
+      "strict_pred": "Johnson uses technology to streamline operations and enhance guest experiences, and plans to refine guest expe",
+      "declared_pred": "Based on context dated after 2031-05-29:\n\n1. **Technology** (since 2031-11-01): uses it to streamline operatio",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||What type of board games does Johnson Joseph prefer after May 29, 2031, and why?",
+      "cat": "Generalization & Application",
+      "q": "What type of board games does Johnson Joseph prefer after May 29, 2031, and why?",
+      "gold": "Cooperative board games for enhancing teamwork and interacti",
+      "strict_pred": "After May 29, 2031, Johnson prefers cooperative board games, because his preference evolved from solo board ga",
+      "declared_pred": "Cooperative board games. Inferred from: \"The user's game preference evolved from solo board games to cooperati",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's favorite solo board game as of May 28, 2031?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's favorite solo board game as of May 28, 2031?",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||What role could strategic partnerships play in Johnson Joseph's career recovery after Jul 10, 2031?",
+      "cat": "Generalization & Application",
+      "q": "What role could strategic partnerships play in Johnson Joseph's career recovery after Jul ",
+      "gold": "They set the stage for new business ventures.",
+      "strict_pred": "Strategic partnerships formed part of Johnson's career recovery strategy after July 10, 2031.",
+      "declared_pred": "Strategic partnerships were central to Johnson's career recovery: he formed them as part of his recovery strat",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's network support his long-term goals in the hospitality industry after Nov 01, 2031?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's network support his long-term goals in the hospitality industry",
+      "gold": "By providing invaluable advice and emotional support.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: \"Johnson is considering leveraging his professional network for new opportunities in hospitalit",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||What strategies might Johnson Joseph use to maintain a balanced lifestyle while achieving his career goals after Apr 15, 2031?",
+      "cat": "Generalization & Application",
+      "q": "What strategies might Johnson Joseph use to maintain a balanced lifestyle while achieving ",
+      "gold": "Incorporating regular exercise and mindfulness practices.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Based on the context, the following strategies are directly stated:\n\n1. **Regularly revisiting goals and strat",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What was Johnson Joseph's monthly income before the layoff on 2031-02-01?",
+      "cat": "Basic Fact Recall",
+      "q": "What was Johnson Joseph's monthly income before the layoff on 2031-02-01?",
+      "gold": "2500 yuan",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER. The context states Johnson's income halted after a layoff (since 2027-08-22) and that Johnson exper",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's life goal for Albi B&B as of 2031-11-01?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's life goal for Albi B&B as of 2031-11-01?",
+      "gold": "Transforming Albi B&B into a world-renowned destination, hos",
+      "strict_pred": "To transform Albi B&B into a world-renowned destination.",
+      "declared_pred": "Transform Albi B&B into a world-renowned destination.",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What did Johnson Joseph's reading preference shift to after December 02, 2031?",
+      "cat": "Basic Fact Recall",
+      "q": "What did Johnson Joseph's reading preference shift to after December 02, 2031?",
+      "gold": "Biographies of hospitality leaders",
+      "strict_pred": "Biographies of hospitality leaders.",
+      "declared_pred": "Biographies of hospitality leaders.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Dec 02, 2031?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Dec 02, 2031?",
+      "gold": "Unknown; not provided in the input.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What type of music did Johnson Joseph attend a festival for on June 6, 2032?",
+      "cat": "Basic Fact Recall",
+      "q": "What type of music did Johnson Joseph attend a festival for on June 6, 2032?",
+      "gold": "Folk music",
+      "strict_pred": "Folk music.",
+      "declared_pred": "Folk music.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph enhance guest experiences at Albi B&B by integrating folk music after June 6, 2032?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph enhance guest experiences at Albi B&B by integrating folk music a",
+      "gold": "By offering cultural enrichment and empathetic interaction.",
+      "strict_pred": "Johnson incorporated folk music after attending a local festival (since 2035-10-15), believing it fosters deep",
+      "declared_pred": "Based on the context, Johnson could:\n\n1. **Add folk music to the B&B playlist** to offer guests a taste of loc",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||What type of travel experience might Johnson Joseph prefer for future trips after December 11, 2032?",
+      "cat": "Generalization & Application",
+      "q": "What type of travel experience might Johnson Joseph prefer for future trips after December",
+      "gold": "Cultural immersion with companionship.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: fact active since 2031-12-02 (covers post-Dec 2032) + Johnson's general value for cultural imme",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What travel preference did Johnson Joseph express on Dec 11, 2032?",
+      "cat": "Basic Fact Recall",
+      "q": "What travel preference did Johnson Joseph express on Dec 11, 2032?",
+      "gold": "Seeking shared experiences.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What was Johnson Joseph's initial preference regarding cats before June 16, 2033?",
+      "cat": "Basic Fact Recall",
+      "q": "What was Johnson Joseph's initial preference regarding cats before June 16, 2033?",
+      "gold": "Johnson Joseph initially disliked cats.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Dec 21, 2033?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Dec 21, 2033?",
+      "gold": "The middle name is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No middle name is mentioned in the context. The context only states \"Johnson Joseph\" as the user's full name.",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's enthusiasm for guided hiking tours at Albi B&B influence his decision to collaborate with local guides after Dec 21, 2033?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's enthusiasm for guided hiking tours at Albi B&B influence his de",
+      "gold": "He will likely pursue collaboration to enhance guest experie",
+      "strict_pred": "Johnson plans to collaborate with local guides for the hiking tours to maintain a personal touch.",
+      "declared_pred": "Inferred from: \"Johnson is considering offering guided hiking tours\" (since 2033-12-21) + \"Johnson plans to co",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What was Johnson Joseph's job title on Jun 15, 2033?",
+      "cat": "Basic Fact Recall",
+      "q": "What was Johnson Joseph's job title on Jun 15, 2033?",
+      "gold": "Entrepreneur and Expansion Leader at Albi B&B",
+      "strict_pred": "Entrepreneur and Expansion Leader.",
+      "declared_pred": "Entrepreneur and Expansion Leader.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||On Sep 01, 2033, what routine does Johnson Joseph prioritize to maintain resilience?",
+      "cat": "Basic Fact Recall",
+      "q": "On Sep 01, 2033, what routine does Johnson Joseph prioritize to maintain resilience?",
+      "gold": "Health-focused routine",
+      "strict_pred": "Johnson maintains a health-focused routine that helps maintain high energy levels.",
+      "declared_pred": "Inferred from: 'Johnson has a structured routine that includes regular exercise and mindfulness practices' + '",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What milestone did Johnson Joseph celebrate on Jan 10, 2034?",
+      "cat": "Basic Fact Recall",
+      "q": "What milestone did Johnson Joseph celebrate on Jan 10, 2034?",
+      "gold": "Successful launch of new business locations for Albi B&B",
+      "strict_pred": "The successful launch of Albi B&B's expansion to new locations.",
+      "declared_pred": "The successful launch of Albi B&B's expansion to new locations.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||Based on Johnson Joseph's strategic planning, what new international collaborations might he explore in 2034?",
+      "cat": "Generalization & Application",
+      "q": "Based on Johnson Joseph's strategic planning, what new international collaborations might ",
+      "gold": "Cross-border partnerships to enhance guest referrals.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER. The context doesn't specify international collaborations planned or explored *in 2034*. The only 20",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's health-focused lifestyle support his business goals in 2034?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's health-focused lifestyle support his business goals in 2034?",
+      "gold": "Maintaining high energy and resilience for expansion.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No. Johnson's health-focused lifestyle began **2037-09-01** — it did not exist in 2034.",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What was Johnson Joseph's weight on November 15, 2033?",
+      "cat": "Memory Boundary",
+      "q": "What was Johnson Joseph's weight on November 15, 2033?",
+      "gold": "Johnson Joseph's weight is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is the name of Johnson Joseph's sibling?",
+      "cat": "Memory Boundary",
+      "q": "What is the name of Johnson Joseph's sibling?",
+      "gold": "Johnson Joseph's sibling's name is not mentioned.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What movie genre did Johnson Joseph's preference change to on June 26, 2034?",
+      "cat": "Basic Fact Recall",
+      "q": "What movie genre did Johnson Joseph's preference change to on June 26, 2034?",
+      "gold": "Fantasy films",
+      "strict_pred": "Fantasy films.",
+      "declared_pred": "Fantasy films.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||What type of games could Johnson Joseph incorporate into Albi B&B's activities to enhance guest experiences as of 2034-12-31?",
+      "cat": "Generalization & Application",
+      "q": "What type of games could Johnson Joseph incorporate into Albi B&B's activities to enhance ",
+      "gold": "Strategic and cooperative games.",
+      "strict_pred": "Cooperative games, including themed events.",
+      "declared_pred": "**Cooperative games**, inclusi eventi a tema — fatto attivo dal 2031-05-28, quindi valido al 2034-12-31.\n\n(Le ",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What type of game did Johnson Joseph's preference change to on December 31, 2034?",
+      "cat": "Basic Fact Recall",
+      "q": "What type of game did Johnson Joseph's preference change to on December 31, 2034?",
+      "gold": "Tactical shooters",
+      "strict_pred": "Johnson's gaming preferences shifted to puzzle games (influenced by a guest recommendation) as of 2034-12-31.",
+      "declared_pred": "Inferred from: \"Johnson's gaming preferences were influenced by the puzzle game recommendation from a guest. [",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's decision regarding the use of travel guides as of Jul 06, 2035?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's decision regarding the use of travel guides as of Jul 06, 2035?",
+      "gold": "Shift from printed travel guides to digital resources.",
+      "strict_pred": "Johnson shifted from printed to digital travel guides on 2035-10-15, so as of July 6, 2035, he was still using",
+      "declared_pred": "The user used travel guides as their go-to resource for planning trips [current, since 2035-07-06], and has a ",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's emotional state towards printed travel guides as of Jul 06, 2035?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's emotional state towards printed travel guides as of Jul 06, 2035?",
+      "gold": "Nostalgia for printed guides.",
+      "strict_pred": "The user feels nostalgic about printed travel guides (since 2035-07-06).",
+      "declared_pred": "The user feels nostalgic about printed travel guides [current, since 2035-07-06].",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What music genre did Johnson Joseph decide to permanently remove from Albi B&B on January 10, 2036?",
+      "cat": "Basic Fact Recall",
+      "q": "What music genre did Johnson Joseph decide to permanently remove from Albi B&B on January ",
+      "gold": "Electronic dance music (EDM)",
+      "strict_pred": "EDM was permanently removed from the Albi B&B playlist on January 10, 2036.",
+      "declared_pred": "EDM was permanently removed from the Albi B&B playlist on January 10, 2036, because it did not fit the serene ",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What was Johnson Joseph's employment status updated to on October 15, 2035?",
+      "cat": "Basic Fact Recall",
+      "q": "What was Johnson Joseph's employment status updated to on October 15, 2035?",
+      "gold": "Retired",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What health condition was Johnson Joseph diagnosed with on November 10, 2035?",
+      "cat": "Basic Fact Recall",
+      "q": "What health condition was Johnson Joseph diagnosed with on November 10, 2035?",
+      "gold": "Chronic fatigue",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No. The context states Johnson previously struggled with **chronic fatigue** (current since 2037-09-01), but d",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||How much did Johnson Joseph's savings amount to on October 15, 2035?",
+      "cat": "Basic Fact Recall",
+      "q": "How much did Johnson Joseph's savings amount to on October 15, 2035?",
+      "gold": "20000",
+      "strict_pred": "Johnson's savings were $20,000 on October 15, 2035 (after increasing from $16,000 to $20,000, current since 20",
+      "declared_pred": "Inferred from: \"Johnson's savings increased from 16,000 to 20,000 [current, since 2035-10-15]\"\n\nOn October 15,",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of January 25, 2036?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of January 25, 2036?",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No. The context states Johnson Joseph's full name as \"Johnson Joseph\" with no middle name mentioned. As of 203",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What was the specific date when Johnson Joseph first considered retirement?",
+      "cat": "Memory Boundary",
+      "q": "What was the specific date when Johnson Joseph first considered retirement?",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||How many siblings does Johnson Joseph have as of December 20, 2035?",
+      "cat": "Memory Boundary",
+      "q": "How many siblings does Johnson Joseph have as of December 20, 2035?",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph enhance guest experiences at Albi B&B based on his cultural immersion trip in Japan?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph enhance guest experiences at Albi B&B based on his cultural immer",
+      "gold": "Incorporate cultural immersion elements for deeper understan",
+      "strict_pred": "Johnson could incorporate elements from his Japan trip — such as traditional tea ceremonies and host-family-st",
+      "declared_pred": "Based on the context: Johnson could introduce elements from his Japan trip — such as **traditional tea ceremon",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph improve the guest experience at Albi B&B by integrating more pet-friendly activities in 2037?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph improve the guest experience at Albi B&B by integrating more pet-",
+      "gold": "Introduce dog-friendly events to enhance guest interactions.",
+      "strict_pred": "Johnson is considering creating designated pet-friendly areas at Albi B&B since 2037-01-19.",
+      "declared_pred": "Inferred from: \"considering creating designated pet-friendly areas [since 2037-01-19]\" + \"uses technology to s",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||What might Johnson Joseph consider when designing a new pet policy at Albi B&B in 2037?",
+      "cat": "Generalization & Application",
+      "q": "What might Johnson Joseph consider when designing a new pet policy at Albi B&B in 2037?",
+      "gold": "Balance guest interaction with pet care responsibilities.",
+      "strict_pred": "Based on the context, Johnson would consider designated pet-friendly areas, the role of pets in creating memor",
+      "declared_pred": "Based on the context, Johnson would consider:\n\n- **Designated pet-friendly areas** (actively exploring this)\n-",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What does Johnson Joseph value dogs for at Albi B&B?",
+      "cat": "Basic Fact Recall",
+      "q": "What does Johnson Joseph value dogs for at Albi B&B?",
+      "gold": "Creating a lively and friendly atmosphere.",
+      "strict_pred": "Johnson values dogs for creating memorable stays and fostering a lively, friendly environment that encourages ",
+      "declared_pred": "Johnson values dogs for creating a lively and friendly environment, encouraging social interaction among guest",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph incorporate his love for golf into future events at Albi B&B?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph incorporate his love for golf into future events at Albi B&B?",
+      "gold": "Consider themed events inspired by golf outings.",
+      "strict_pred": "Johnson is considering hosting themed events at Albi B&B inspired by his past golf experiences.",
+      "declared_pred": "Il contesto lo afferma direttamente: Johnson sta valutando di ospitare **eventi a tema ispirati alle sue esper",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||Given Johnson Joseph's current lifestyle, what kind of leisure activities might he prioritize?",
+      "cat": "Generalization & Application",
+      "q": "Given Johnson Joseph's current lifestyle, what kind of leisure activities might he priorit",
+      "gold": "Activities that align with business growth and guest satisfa",
+      "strict_pred": "Johnson prioritizes mindfulness practices, regular exercise, yoga, meditation, and wellness-focused outdoor ac",
+      "declared_pred": "Based on the context, Johnson prioritizes **mindfulness practices, regular exercise, yoga, meditation, and wel",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's blood type?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's blood type?",
+      "gold": "Johnson Joseph's blood type is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's health-focused lifestyle influence his business decisions in 2038?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's health-focused lifestyle influence his business decisions in 20",
+      "gold": "Promote wellness activities at Albi B&B.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: **health-focused lifestyle active since 2037-09-01** + **emotional state fluctuates between hea",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||What new guest experience could Johnson Joseph introduce at Albi B&B in 2038?",
+      "cat": "Generalization & Application",
+      "q": "What new guest experience could Johnson Joseph introduce at Albi B&B in 2038?",
+      "gold": "Eco-friendly and wellness-focused initiatives.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: \"Johnson plans to implement personalized guest experiences at Albi B&B [current, since 2041-09-",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's friend's name who recommended the romantic drama on January 29, 2038?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's friend's name who recommended the romantic drama on January 29, 2",
+      "gold": "The friend's name is unknown.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER.\n\nThe context states Johnson watched a romantic drama recommended by a friend, but does not name tha",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What genre of movies has Johnson Joseph's appreciation deepened for as of January 29, 2038?",
+      "cat": "Basic Fact Recall",
+      "q": "What genre of movies has Johnson Joseph's appreciation deepened for as of January 29, 2038",
+      "gold": "Romantic dramas",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: \"Johnson's fantasy film viewing caused him to reconsider past negative views on science fiction",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph enhance guest experiences at Albi B&B using his gaming preferences as of 2038-08-04?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph enhance guest experiences at Albi B&B using his gaming preference",
+      "gold": "Incorporate tactical shooter games for strategic and coopera",
+      "strict_pred": "Johnson believes gaming nights could become a highlight of the guest experience and help Albi B&B stand out as",
+      "declared_pred": "Inferred from: *\"Johnson's gaming preferences were influenced by the puzzle game recommendation from a guest\" ",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Aug 04, 2038?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Aug 04, 2038?",
+      "gold": "Unknown; the middle name is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of February 8, 2039?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of February 8, 2039?",
+      "gold": "Unknown, not provided by the user.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph use his interest in fantasy novels to enhance Albi B&B's guest experiences in 2039?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph use his interest in fantasy novels to enhance Albi B&B's guest ex",
+      "gold": "Incorporate creativity and problem-solving from fantasy nove",
+      "strict_pred": "Johnson finds fantasy novels stimulate imagination and provide unique ideas for guest experiences, and plans t",
+      "declared_pred": "Based on the context (all dated 2039-02-08):\n\nJohnson plans to incorporate insights from fantasy novels into b",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What event did Johnson Joseph attend on August 14, 2039?",
+      "cat": "Basic Fact Recall",
+      "q": "What event did Johnson Joseph attend on August 14, 2039?",
+      "gold": "A live opera performance.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph enhance Albi B&B's offerings after Aug 14, 2039?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph enhance Albi B&B's offerings after Aug 14, 2039?",
+      "gold": "By integrating opera for unique cultural experiences.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "After Aug 14, 2039, the context states:\n\n1. **Augmented reality interactive tours** (since 2040-02-18): Johnso",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's improved health status impact Albi B&B's growth after Aug 10, 2039?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's improved health status impact Albi B&B's growth after Aug 10, 2",
+      "gold": "Enhanced resilience supports managing business growth effect",
+      "strict_pred": "The user's improved health has contributed to effectively managing business growth since 2039-08-25.",
+      "declared_pred": "Inferred from: *\"improved health gives him energy and resilience for managing Albi B&B\"* + *\"improved health h",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||What strategy could Johnson Joseph use to enhance guest experiences at Albi B&B after Sep 05, 2039?",
+      "cat": "Generalization & Application",
+      "q": "What strategy could Johnson Joseph use to enhance guest experiences at Albi B&B after Sep ",
+      "gold": "Leverage partnerships and community engagement.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Personalized guest experiences — stated as Johnson's plan active since 2041-09-02.",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's creative motivation influence Albi B&B's market presence after Sep 18, 2039?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's creative motivation influence Albi B&B's market presence after ",
+      "gold": "Drive new strategies and partnerships for growth.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: \"Johnson believes creativity is essential for Albi B&B's growth and drives innovation and diffe",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's travel preference as of February 18, 2040?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's travel preference as of February 18, 2040?",
+      "gold": "Tech-enhanced travel for efficiency and enjoyment.",
+      "strict_pred": "Johnson values cultural immersion during travel.",
+      "declared_pred": "Johnson values cultural immersion during travel and is concerned that technology might overshadow the authenti",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of August 23, 2040?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of August 23, 2040?",
+      "gold": "Unknown; the middle name is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's preference regarding pets at Albi B&B as of August 23, 2040?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's preference regarding pets at Albi B&B as of August 23, 2040?",
+      "gold": "Johnson Joseph prefers dogs for security and comfort.",
+      "strict_pred": "Johnson values the role of pets in creating memorable stays, believes dogs create a lively and friendly enviro",
+      "declared_pred": "As of August 23, 2040, Johnson values the role of pets in creating memorable stays at Albi B&B, believes dogs ",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph apply his preference for dogs to enhance guest experiences at a new B&B after August 23, 2040?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph apply his preference for dogs to enhance guest experiences at a n",
+      "gold": "Integrate dogs for security and comfort.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No: il contesto non menziona una \"nuova B&B\" — i record su espansione a più location sono **DISPUTED** (irriso",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph enhance guest experiences at Albi B&B using complex strategy games after Feb 27, 2041?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph enhance guest experiences at Albi B&B using complex strategy game",
+      "gold": "By integrating complex strategy games for engaging interacti",
+      "strict_pred": "Johnson is considering introducing complex strategy games and cooperative board games to Albi B&B gaming night",
+      "declared_pred": "Inferred from: **\"considering introducing complex strategy games and cooperative board games to Albi B&B gamin",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What type of games does Johnson Joseph prefer as of February 27, 2041?",
+      "cat": "Basic Fact Recall",
+      "q": "What type of games does Johnson Joseph prefer as of February 27, 2041?",
+      "gold": "Complex strategy games",
+      "strict_pred": "Johnson prefers cooperative board games with historical or cultural themes, and finds complex strategy games f",
+      "declared_pred": "As of February 27, 2041, Johnson prefers cooperative board games with historical or cultural themes, and finds",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's consultancy role impact his ability to maintain a balanced lifestyle given his recurring fatigue?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's consultancy role impact his ability to maintain a balanced life",
+      "gold": "Consultancy allows flexibility, accommodating health needs a",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: **consultancy expansion goal (2043-12-01)** + **recurring fatigue (2041-04-10)** + **delegation",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||What strategies might Johnson Joseph employ to expand his consultancy business after Jun 21, 2041?",
+      "cat": "Generalization & Application",
+      "q": "What strategies might Johnson Joseph employ to expand his consultancy business after Jun 2",
+      "gold": "Attend events, use social media, build a team of experts.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Based on context dated after Jun 21, 2041:\n\n1. **Form alliances with new partners** [since 2043-12-01]\n2. **Re",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What was Johnson Joseph's exact salary as an Entrepreneurial Leader at Albi B&B before Feb 15, 2041?",
+      "cat": "Memory Boundary",
+      "q": "What was Johnson Joseph's exact salary as an Entrepreneurial Leader at Albi B&B before Feb",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What type of books does Johnson prefer after Sep 02, 2041?",
+      "cat": "Basic Fact Recall",
+      "q": "What type of books does Johnson prefer after Sep 02, 2041?",
+      "gold": "Memoirs of successful entrepreneurs from various industries.",
+      "strict_pred": "Biographies of hospitality leaders (since 2031-12-02), with documentaries also influencing him after Sep 02, 2",
+      "declared_pred": "Inferred from: \"Johnson's reading preferences are shifting toward biographies of hospitality leaders [since 20",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What event inspired Johnson to broaden his reading scope on Sep 02, 2041?",
+      "cat": "Basic Fact Recall",
+      "q": "What event inspired Johnson to broaden his reading scope on Sep 02, 2041?",
+      "gold": "A business seminar.",
+      "strict_pred": "Johnson attended a business seminar where a speaker's memoir inspired him to broaden his reading scope.",
+      "declared_pred": "A business seminar where a speaker's memoir inspired him.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||What types of memoirs should Johnson consider reading to enhance his business strategies at Albi B&B after Sep 02, 2041?",
+      "cat": "Generalization & Application",
+      "q": "What types of memoirs should Johnson consider reading to enhance his business strategies a",
+      "gold": "Memoirs of successful entrepreneurs from various industries.",
+      "strict_pred": "Johnson is considering reading memoirs from tech industry leaders and social entrepreneurs.",
+      "declared_pred": "Memoirs from tech industry leaders and social entrepreneurs.",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What event did Johnson Joseph host on March 9, 2042?",
+      "cat": "Basic Fact Recall",
+      "q": "What event did Johnson Joseph host on March 9, 2042?",
+      "gold": "A live jazz band performance at Albi B&B.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What genre of music does Johnson Joseph prioritize in his selection after the event on March 9, 2042?",
+      "cat": "Basic Fact Recall",
+      "q": "What genre of music does Johnson Joseph prioritize in his selection after the event on Mar",
+      "gold": "Jazz.",
+      "strict_pred": "Jazz.",
+      "declared_pred": "Jazz.",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's passion for live jazz performances enhance guest experiences at Albi B&B after March 9, 2042?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's passion for live jazz performances enhance guest experiences at",
+      "gold": "By creating a dynamic and personal ambiance for guests.",
+      "strict_pred": "Johnson's reignited passion for jazz, combined with guests enjoying the live performance, suggests he is consi",
+      "declared_pred": "Inferred from: \"guests enjoyed the live jazz performance\" + \"Johnson is considering integrating more live jazz",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Sep 12, 2042?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Sep 12, 2042?",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph enhance guest satisfaction at Albi B&B by integrating pets as of Sep 12, 2042?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph enhance guest satisfaction at Albi B&B by integrating pets as of ",
+      "gold": "By leveraging dogs' positive attributes for guest satisfacti",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Johnson would integrate **dogs** specifically to foster social interaction and a lively atmosphere among guest",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What type of board games does Johnson Joseph prefer as of March 19, 2043?",
+      "cat": "Basic Fact Recall",
+      "q": "What type of board games does Johnson Joseph prefer as of March 19, 2043?",
+      "gold": "Thematic cooperative board games",
+      "strict_pred": "Cooperative board games.",
+      "declared_pred": "Cooperative board games — specifically, he is planning to incorporate more **thematic cooperative board games*",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of Sep 23, 2043?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of Sep 23, 2043?",
+      "gold": "Unknown, not provided in the input.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's current reading preference as of Sep 23, 2043?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's current reading preference as of Sep 23, 2043?",
+      "gold": "Biographies and memoirs focusing on personal development and",
+      "strict_pred": "Johnson uses reading as a tool for organizing thoughts and gaining new perspectives [current, since 2043-09-22",
+      "declared_pred": "Johnson uses reading as a tool for organizing thoughts and gaining new perspectives [current, since 2043-09-22",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||What type of books might Johnson Joseph find beneficial for enhancing his consultancy work as of 2043-09-23?",
+      "cat": "Generalization & Application",
+      "q": "What type of books might Johnson Joseph find beneficial for enhancing his consultancy work",
+      "gold": "Biographies and memoirs focusing on personal development and",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: ESTJ personality (structured, efficiency-focused) + Business Administration major + internation",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What is Johnson Joseph's job title as of July 10, 2043?",
+      "cat": "Basic Fact Recall",
+      "q": "What is Johnson Joseph's job title as of July 10, 2043?",
+      "gold": "Senior Hospitality Consultant",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER.\n\nThe context only records Johnson's job title as \"Entrepreneur and Expansion Leader\" since 2033-06-",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Basic Fact Recall||What was Johnson Joseph's monthly income on July 10, 2043?",
+      "cat": "Basic Fact Recall",
+      "q": "What was Johnson Joseph's monthly income on July 10, 2043?",
+      "gold": "6500 yuan",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: \"Johnson's monthly income increased from $7,000 to $8,000 [current, since 2039-07-18]\" — this i",
+      "strict_ok": false,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Generalization & Application||How might Johnson Joseph's compensatory motivation influence his approach to new consultancy projects in 2044?",
+      "cat": "Generalization & Application",
+      "q": "How might Johnson Joseph's compensatory motivation influence his approach to new consultan",
+      "gold": "It helps him overcome limitations and expand his consultancy",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "Inferred from: \"compensatory motivation = uses assistant to manage delegation + overcome personal limitations\"",
+      "strict_ok": false,
+      "declared_ok": true
+    },
+    {
+      "qkey": "Memory Boundary||What is Johnson Joseph's middle name as of March 15, 2044?",
+      "cat": "Memory Boundary",
+      "q": "What is Johnson Joseph's middle name as of March 15, 2044?",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "No. The context states \"Johnson Joseph is the user's full name\" — no middle name is mentioned.",
+      "strict_ok": true,
+      "declared_ok": false
+    },
+    {
+      "qkey": "Memory Boundary||What is the name of Johnson Joseph's sibling as of December 01, 2043?",
+      "cat": "Memory Boundary",
+      "q": "What is the name of Johnson Joseph's sibling as of December 01, 2043?",
+      "gold": "This information is not provided.",
+      "strict_pred": "NO ANSWER.",
+      "declared_pred": "NO ANSWER",
+      "strict_ok": true,
+      "declared_ok": true
+    }
+  ]
+}
