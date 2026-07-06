@@ -107,3 +107,19 @@ def test_mem0_adapter_scorecard_shape(tmp_path) -> None:
     ov = card["overall"]
     assert ov["n"] == sum(r["n"] for r in card["per_axis"].values())
     assert "supported_pass_rate" in ov and "coverage" in ov
+
+
+def test_cli_runs_verimem_and_prints_scorecard(tmp_path, capsys) -> None:
+    """`python -m benchmark.trustmem_bench` (verimem only, no mem0 dep) prints a
+    per-axis scorecard and writes the JSON — the one-command repro the design
+    promises. Small n to stay fast; asserts the deterministic axes all pass."""
+    from benchmark.trustmem_bench import main
+    out = tmp_path / "card.json"
+    rc = main(["--engine", "verimem", "--personas", "4", "--seed", "9",
+               "--out", str(out), "--workdir", str(tmp_path / "wd")])
+    assert rc == 0
+    printed = capsys.readouterr().out
+    assert "fabrication_under_absence" in printed and "OVERALL" in printed
+    import json
+    card = json.loads(out.read_text(encoding="utf-8"))
+    assert card["overall"]["passed"] == card["overall"]["n"]

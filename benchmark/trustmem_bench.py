@@ -299,3 +299,57 @@ def run_verimem(dataset: dict, *, workdir: Path) -> dict[str, Any]:
             "per_axis": per_axis,
             "overall": {"n": n, "passed": passed,
                         "rate": round(passed / n, 4) if n else 0.0}}
+
+
+def _print_scorecard(card: dict) -> None:
+    """One-glance per-axis scorecard to stdout (the CLI face of the bench)."""
+    print(f"TrustMem-Bench — {card['engine']} (seed={card['seed']})")
+    for ax, r in card["per_axis"].items():
+        cell = f"{r['passed']}/{r['n']}"
+        if r.get("not_supported"):
+            cell += f"  (not_supported: {r['not_supported']})"
+        print(f"  {ax:28s} {cell}")
+    ov = card["overall"]
+    if "rate" in ov:
+        print(f"  {'OVERALL':28s} {ov['passed']}/{ov['n']} = {ov['rate']}")
+    else:  # competitor card: coverage + pass-rate on supported
+        print(f"  {'COVERAGE':28s} {ov['supported']}/{ov['n']} "
+              f"({ov['coverage']})  pass-rate(supported)="
+              f"{ov['supported_pass_rate']}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    """`python -m benchmark.trustmem_bench` — one-command reproduction of the
+    trust scorecard. Deterministic axes only, offline (verimem needs no LLM;
+    the mem0 engine is a bench-only extra)."""
+    import argparse
+    import json
+    import tempfile
+
+    ap = argparse.ArgumentParser(
+        prog="trustmem_bench",
+        description="TrustMem-Bench — the trust benchmark we impose (offline).")
+    ap.add_argument("--engine", choices=("verimem", "mem0"), default="verimem")
+    ap.add_argument("--personas", type=int, default=10)
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--out", default=None, help="write scorecard JSON here")
+    ap.add_argument("--workdir", default=None)
+    args = ap.parse_args(argv)
+
+    ds = generate_dataset(n_personas=args.personas, seed=args.seed)
+    workdir = Path(args.workdir or tempfile.mkdtemp(prefix="trustmem_"))
+    if args.engine == "verimem":
+        card = run_verimem(ds, workdir=workdir)
+    else:
+        from benchmark.trustmem_adapters import run_mem0
+        card = run_mem0(ds, workdir=workdir)
+    _print_scorecard(card)
+    if args.out:
+        Path(args.out).write_text(
+            json.dumps(card, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"-> {args.out}")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

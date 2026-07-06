@@ -46,6 +46,12 @@ v0 design (questo doc) → **✅ generatore+smoke-set+run Verimem (2026-07-06,
 `benchmark/trustmem_bench.py`)** → adapter mem0 + invito pubblico → i 2 assi
 LLM-judged (answer quality, sycophancy sotto pressione) → leaderboard nel repo.
 
+## Uso (una riga, offline)
+```bash
+python -m benchmark.trustmem_bench --engine verimem            # 6 assi, no LLM
+python -m benchmark.trustmem_bench --engine mem0 --out card.json  # richiede: pip install mem0ai
+```
+
 ## Stato v0.1 (2026-07-06) — SHIPPED
 - **Generatore** `generate_dataset(n_personas, seed)`: puro, seeded, EN+IT,
   timeline datate + trappole cross-attributo + attributo assente + fatto GDPR.
