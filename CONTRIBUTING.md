@@ -208,3 +208,17 @@ Falsifying your own hypothesis is positive science. Cycles 253 and 261 both ship
 
 Be kind, be precise, attack ideas not people. We follow the
 [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
+
+## License of contributions (important)
+
+Verimem is **dual-licensed** (AGPL-3.0 + a commercial license — see
+[`LICENSING.md`](./LICENSING.md)). By submitting a contribution you agree that:
+
+1. your contribution is licensed to the project and its users under **AGPL-3.0**; and
+2. you grant the maintainer (Aurelio Capriello) the right to **also** distribute
+   your contribution under the **commercial license**, so the dual-licensing
+   model remains possible.
+
+This is a lightweight inbound=outbound + commercial-grant agreement (the model
+used by dual-licensed projects). If you cannot agree to point 2, please open an
+issue to discuss before sending code.

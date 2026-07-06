@@ -2,6 +2,18 @@
 
 All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — License change to AGPL-3.0 + commercial (2026-07-06)
+
+- **License**: the project moves from MIT to **AGPL-3.0** for release 0.4.0 and
+  later, with a **commercial license** available for proprietary / closed-source
+  / unmodified-SaaS use (dual-licensing — see `LICENSING.md`). Rationale: MIT let
+  anyone close the source and resell it; AGPL's §13 network-copyleft protects the
+  project (a hosted competitor must publish its modifications) while the
+  commercial license monetizes proprietary users. Copyright is held solely by
+  Aurelio Capriello, so future releases can set their own license. **0.3.x and
+  earlier remain MIT** (an existing license grant is irrevocable); this policy
+  applies to 0.4.0 onward.
+
 ## [0.3.1] — Trust hardening + TrustMem-Bench + first public CI (2026-07-06)
 
 First patch release after the public launch of `verimem` on PyPI. All changes
