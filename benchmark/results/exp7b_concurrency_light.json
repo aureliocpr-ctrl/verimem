@@ -1,0 +1,58 @@
+[
+  {
+    "workers": 25,
+    "readers": 20,
+    "writers": 5,
+    "ops_each": 40,
+    "reported": 25,
+    "wall_s": 4.5,
+    "read_p50_ms": 0.0,
+    "read_p95_ms": 0.1,
+    "write_p50_ms": 5.4,
+    "write_p95_ms": 9.5,
+    "errors": 0,
+    "ops_per_s": 222.0
+  },
+  {
+    "workers": 100,
+    "readers": 80,
+    "writers": 20,
+    "ops_each": 40,
+    "reported": 100,
+    "wall_s": 22.2,
+    "read_p50_ms": 0.0,
+    "read_p95_ms": 0.1,
+    "write_p50_ms": 4.7,
+    "write_p95_ms": 32.2,
+    "errors": 0,
+    "ops_per_s": 180.5
+  },
+  {
+    "workers": 250,
+    "readers": 200,
+    "writers": 50,
+    "ops_each": 40,
+    "reported": 250,
+    "wall_s": 54.2,
+    "read_p50_ms": 0.0,
+    "read_p95_ms": 0.1,
+    "write_p50_ms": 4.6,
+    "write_p95_ms": 42.2,
+    "errors": 0,
+    "ops_per_s": 184.4
+  },
+  {
+    "workers": 500,
+    "readers": 400,
+    "writers": 100,
+    "ops_each": 40,
+    "reported": 500,
+    "wall_s": 104.7,
+    "read_p50_ms": 0.0,
+    "read_p95_ms": 0.1,
+    "write_p50_ms": 4.6,
+    "write_p95_ms": 9.4,
+    "errors": 0,
+    "ops_per_s": 191.1
+  }
+]
