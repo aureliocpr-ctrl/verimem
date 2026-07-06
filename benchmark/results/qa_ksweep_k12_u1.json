@@ -1,0 +1,625 @@
+{
+  "n": 86,
+  "n_correct": 63,
+  "n_errors": 0,
+  "accuracy": 0.7326,
+  "per_category": {
+    "Basic Fact Recall": {
+      "n": 45,
+      "accuracy": 0.4889
+    },
+    "Memory Boundary": {
+      "n": 41,
+      "accuracy": 1.0
+    }
+  },
+  "details": [
+    {
+      "id": "0:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Johnson Joseph's MBTI personality type is **ESTJ**.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "1:1",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "1:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph dislikes **snakes** (finds their movements unpredictable and unsettling) and **cats** (finds them aloof and non-interactive with guests).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "2:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph attended the local wildlife seminar on **Apr 09, 2026**.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "5:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "9:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "10:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of April 19, 2027, Johnson Joseph's movie preference was **action films**, which had deepened due to their thrilling and adventurous value; his shift to liking fantasy films only occurred after a movie night on **Jun 26, 2034** — well after the date in question.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "10:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "10:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "14:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "15:4",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph's employment status changed from employed to **unemployed** at Albi B&B due to a planned restructuring on Aug 22, 2027.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "15:5",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph planned to use AI-generated content to maintain his social media presence and signal his commitment to the hospitality industry during his career transition.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "15:6",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context states the layoff was due to **planned restructuring** at Albi B&B, not any specific triggering event beyond that.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "16:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context shows Johnson Joseph reconsidered his initial dislike and now appreciates fantasy novels for their imaginative themes and problem-solving qualities, influenced by a friend's recommendation and a literary festival.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "16:2",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER. The context confirms Johnson Joseph attended a literary festival where authors discussed fantasy novels, influencing his reading preferences, but no date is mentioned.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "17:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of Nov 02, 2028, Johnson Joseph started liking **jazz**, after a guest played saxophone at an evening gathering that changed his perception of music.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "17:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "19:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph's preference changed from disliking group tours to **liking them**, due to their enriching experiences, knowledgeable guides, and social interactions.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "22:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph's perception of cats shifted positively, viewing them as potentially beneficial for guest interaction at Albi B&B and as providers of joy and comfort to guests during their stay.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "22:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "23:0",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context states there are conflicting claims (both \"minor injury\" and \"major injury\" are recorded), but the activity itself was **cycling**, not specifically tied to May 18, 2030 (that date isn't mentioned in the context).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "23:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "23:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "24:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "27:2",
+      "category": "Memory Boundary",
+      "predicted": "No — the context states Johnson Joseph's game preference *evolved from* solo board games to cooperative board games; no specific solo board game is named.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "29:6",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context does not place a layoff on 2031-02-01; it states his layoff was on Oct 10, 2027, after which his income dropped from 2500 yuan to 0.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "29:7",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph's life goal for Albi B&B is to transform it into a world-renowned destination, hosting over 10,000 guests annually.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "30:0",
+      "category": "Basic Fact Recall",
+      "predicted": "The context does not mention December 02, 2031 at all, so no reading preference shift is tied to that specific date. What the context does document is that Johnson Joseph's reading shifted to biographies and memoirs focusing on personal development and mindset (away from hospitality leader biographies), and he also came to appreciate fantasy novels for their imaginative themes and problem-solving qualities.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "30:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "31:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "31:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — on June 6, 2032, Johnson Joseph attended a local **art exhibition**, not a music festival; the folk music festival has no specific date mentioned in the context.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "32:1",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "34:2",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context states Johnson Joseph's initial preference was that he **disliked cats** (listed under \"Pets I dislike: Cats\"), before his perception changed positively after a guest's friendly cat at Albi B&B influenced him.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "37:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "38:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "38:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context confirms Johnson Joseph prioritizes both a **health-focused routine** and a **creative-focused routine** to maintain resilience and energy levels for managing expanded business operations (no specific date is attached to these facts in the context).",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "38:2",
+      "category": "Basic Fact Recall",
+      "predicted": "No, the milestone celebrated on January 10, 2034 was the successful launch of **new business locations** for Albi B&B, not a guest-count milestone.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "38:8",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "38:9",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "38:10",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "39:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "39:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — his preference changed to **fantasy films**, drawn by their creativity and escapism.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "40:1",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "41:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "41:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context contains no information about July 6, 2035; the context records that Johnson Joseph decided to shift from **printed travel guides to digital resources** due to their outdated nature, while still listing travel guides among books he enjoys reading.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "41:2",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "45:0",
+      "category": "Basic Fact Recall",
+      "predicted": "No — Johnson Joseph actually decided to permanently remove **two** genres on that date: **classical music** and **electronic dance music**, both to create a more serene environment.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "46:2",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER. The October 15, 2035 context entry only states that Johnson Joseph *initiated a retirement strategy* (evaluating operations and identifying successors) — it records no employment status update on that date.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "46:3",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "46:4",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER. The context mentions Johnson Joseph initiated a retirement strategy on Oct 15, 2035, but does not specify his savings amount on that date.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "46:5",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "46:6",
+      "category": "Memory Boundary",
+      "predicted": "No — the context states Johnson Joseph **initiated a retirement strategy on Oct 15, 2035**, not \"first considered\" it, but that is the only retirement-related date provided.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "46:7",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "47:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "48:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph values dogs for their ability to create a lively and friendly atmosphere, provide joy and comfort to guests, and enhance security at Albi B&B.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "52:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "52:4",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "53:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "53:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context confirms Johnson Joseph's appreciation has deepened for **romantic dramas** (emotional depth/narrative richness), **action films** (thrilling/adventurous value), and **documentaries** (educational/inspirational value). No date of January 29, 2038 is specified in the context, but these are the genres recorded.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "54:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "55:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no information about Johnson Joseph having a middle name.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "58:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on Aug 14, 2039, Johnson Joseph attended a live opera performance that changed his perception of opera from disliking it to appreciating its emotional depth and storytelling.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "58:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "62:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "62:1",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "63:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "63:1",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "65:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "65:2",
+      "category": "Basic Fact Recall",
+      "predicted": "On February 27, 2041, Johnson Joseph was introduced to both a **simple puzzle game** and a **complex strategy game** that captivated him — the context does not state a single definitive preference for that exact date, but specifically notes the complex strategy game influenced his plans for Albi B&B.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "67:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "67:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "68:0",
+      "category": "Basic Fact Recall",
+      "predicted": "After Sep 02, 2041, Johnson prefers **memoirs of successful entrepreneurs from various industries**, **biographies and memoirs focusing on personal development and mindset**, **travel guides**, and he also came to appreciate **fantasy novels** for their imaginative themes and problem-solving qualities — a broadened scope triggered by the seminar speaker's memoir.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "68:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on Sep 02, 2041, Johnson Joseph attended a **business seminar** where he was inspired by a **speaker's memoir** to broaden his reading scope.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "69:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph hosted a live jazz band at Albi B&B on March 9, 2042.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "69:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — after hosting a live jazz band at Albi B&B on March 9, 2042, Johnson Joseph reignited his passion for jazz and began prioritizing it in his music selection.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "70:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no information about Johnson Joseph having a middle name; \"Joseph\" is his last name, not a middle name.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "71:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "71:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context contains no information about March 19, 2043; based on the available context, Johnson Joseph prefers thematic cooperative board games.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "74:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "74:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph's current reading preference includes biographies and memoirs focused on personal development and mindset (memoirs of successful entrepreneurs from various industries), and he also now appreciates fantasy novels for their imaginative themes and problem-solving qualities.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "76:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "76:1",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false
+    },
+    {
+      "id": "76:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    },
+    {
+      "id": "76:4",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false
+    }
+  ],
+  "k": 12,
+  "baseline_k6_record_v2": {
+    "Basic Fact Recall": 0.4667,
+    "Memory Boundary": 1.0
+  }
+}

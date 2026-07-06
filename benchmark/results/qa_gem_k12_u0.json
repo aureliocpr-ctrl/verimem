@@ -1,0 +1,1354 @@
+{
+  "n": 164,
+  "n_correct": 123,
+  "n_errors": 0,
+  "accuracy": 0.75,
+  "per_category": {
+    "Basic Fact Recall": {
+      "n": 40,
+      "accuracy": 0.725
+    },
+    "Dynamic Update": {
+      "n": 6,
+      "accuracy": 0.6667
+    },
+    "Generalization & Application": {
+      "n": 31,
+      "accuracy": 0.5806
+    },
+    "Memory Boundary": {
+      "n": 39,
+      "accuracy": 0.8974
+    },
+    "Memory Conflict": {
+      "n": 39,
+      "accuracy": 0.8718
+    },
+    "Multi-hop Inference": {
+      "n": 9,
+      "accuracy": 0.3333
+    }
+  },
+  "details": [
+    {
+      "id": "0:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided by the user."
+    },
+    {
+      "id": "0:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Martin Mark's birth date is 1996-08-02.",
+      "correct": true,
+      "errored": false,
+      "gold": "1996-08-02"
+    },
+    {
+      "id": "0:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Martin's life goal was stated in 2025, but the initiative was officially launched in 2034/2035 (disputed between the two years), not 2025; additionally, the strategic partner relationship is recorded from 2035-05-01.",
+      "correct": false,
+      "errored": false,
+      "gold": "Martin Mark has no partner; he aims to establish a health initiative."
+    },
+    {
+      "id": "1:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Martin Mark worked at Huaxin Consulting as of 2025-09-05, but his role there was director-level (Senior Director/VP), not nurse.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin Mark is a director at Huaxin Consulting."
+    },
+    {
+      "id": "1:1",
+      "category": "Memory Conflict",
+      "predicted": "No — as of Sep 2025, Martin was employed at Huaxin Consulting, and his role there is described as financially rewarding (though mentally stressful).",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin Mark is employed with a monthly income of 15700 USD."
+    },
+    {
+      "id": "1:2",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER. The context confirms Martin worked at Huaxin Consulting as of Sep 05, 2025, but does not specify his job title at that date — the earliest title on record (Senior Director) was only asserted from 2029-01-15 onward.",
+      "correct": false,
+      "errored": false,
+      "gold": "Director"
+    },
+    {
+      "id": "2:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "2:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin Mark *dislikes* reptiles (like snakes) as pets.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin dislikes reptiles, especially snakes."
+    },
+    {
+      "id": "2:2",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context contains multiple conflicting and disputed records about Martin Mark's pet preferences, with no single resolved answer: records variously indicate Cats, Parrots, Dogs/Labradors, Golden Retrievers, Sphynx cats, Maine Coon cats, and therapy dogs, all marked as disputed or unresolved.",
+      "correct": false,
+      "errored": false,
+      "gold": "Dogs, cats, and parrots."
+    },
+    {
+      "id": "4:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2026-01-06, Martin *modified* his preference **from** Labradors **to** Golden Retrievers due to their gentle nature and adaptability.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin prefers Golden Retrievers over Labradors."
+    },
+    {
+      "id": "4:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The name of Martin's friend is not provided."
+    },
+    {
+      "id": "4:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — multiple context records confirm that by early 2026 Martin had already shifted from Labradors to Golden Retrievers for their gentle nature, adaptability, and emotional support, making them his likely pet choice during stressful work periods.",
+      "correct": true,
+      "errored": false,
+      "gold": "Golden Retrievers provide relaxation and emotional support."
+    },
+    {
+      "id": "7:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context records Martin's monthly income as **23,000 yuan** (updated 2033-04-25), not a \"director\" salary specifically, but as Executive Director at Huaxin Consulting at that time.",
+      "correct": false,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:4",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "A role offering a healthier work-life balance."
+    },
+    {
+      "id": "7:5",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — as of January 10, 2026, Martin's change in pet preference from Labradors to Golden Retrievers reflected his openness to new experiences.",
+      "correct": true,
+      "errored": false,
+      "gold": "Switching from Labradors to Golden Retrievers."
+    },
+    {
+      "id": "7:6",
+      "category": "Multi-hop Inference",
+      "predicted": "No — the context shows **two** reasons documented on 2025-12-15, not one: (1) the impact of his current role on his **mental health**, and (2) a desire for **higher financial stability**; a third record from the same date also cites personal well-being and improving healthcare access for underserved communities.",
+      "correct": false,
+      "errored": false,
+      "gold": "Impact on his mental health."
+    },
+    {
+      "id": "7:7",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — on February 05, 2026, Martin's colleague Joshua's collaborative approach positively influenced his leadership style, and his friend Susan provided crucial support and encouragement during his job transition, helping him stay focused on his goals.",
+      "correct": false,
+      "errored": false,
+      "gold": "Through insights and a collaborative approach."
+    },
+    {
+      "id": "8:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after April 10, 2026, Martin engaged in extreme sports, which helped him overcome creative blocks and inspired new ideas.",
+      "correct": false,
+      "errored": false,
+      "gold": "Other extreme sports."
+    },
+    {
+      "id": "8:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context states that engaging in extreme sports helps Martin overcome creative blocks and inspires new ideas, so his approach likely steers him toward choosing high-adrenaline, physically challenging activities to spark creativity.",
+      "correct": true,
+      "errored": false,
+      "gold": "Choosing challenging physical activities."
+    },
+    {
+      "id": "8:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Martin participated in a simulated skydiving experience during a team-building event on April 10, 2026.",
+      "correct": true,
+      "errored": false,
+      "gold": "Simulated skydiving"
+    },
+    {
+      "id": "9:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — context confirms Martin seeks non-violent action games that enhance cognitive skills and align with his values of peace and well-being, so he could explore **puzzle-action games, strategy games, or exploration/adventure titles** focused on problem-solving and mental agility.",
+      "correct": true,
+      "errored": false,
+      "gold": "Games enhancing cognitive skills and aligning with peace values."
+    },
+    {
+      "id": "9:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of July 14, 2026, Martin is interested in exploring **non-violent action games** to enhance cognitive functions, aligning with his values of peace and well-being.",
+      "correct": true,
+      "errored": false,
+      "gold": "Non-violent action games"
+    },
+    {
+      "id": "9:2",
+      "category": "Memory Conflict",
+      "predicted": "No — Martin expressed interest in the cognitive benefits of **non-violent** action games, not violent ones.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he is skeptical about violent games but interested in non-violent ones."
+    },
+    {
+      "id": "10:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context confirms Martin is exploring **nature hikes and cultural tours**, as well as **spa weekends and culinary tours**, as alternatives to wellness retreats as of October 16, 2026.",
+      "correct": false,
+      "errored": false,
+      "gold": "Nature hikes and cultural tours."
+    },
+    {
+      "id": "10:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "10:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The exact date is not provided."
+    },
+    {
+      "id": "11:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context gives Martin's name as \"Martin Mark,\" where \"Mark\" is his last name, not a middle name; no middle name is recorded.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "11:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states the shift was the opposite: Martin's preference moved **from documentaries to fictional narratives** after a stressful (not relaxing) week.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin's preference shifted to fictional narratives after a stressful week."
+    },
+    {
+      "id": "11:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Martin was drawn to **adventure and fantasy** genres as new avenues for relaxation after a stressful week.",
+      "correct": true,
+      "errored": false,
+      "gold": "Adventure and fantasy genres."
+    },
+    {
+      "id": "12:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on April 23, 2027, Martin expressed enthusiasm about incorporating **herbal teas with added health blends** into his daily routine, considering their calming effects and potential to help during stressful periods.",
+      "correct": true,
+      "errored": false,
+      "gold": "Herbal teas with added health blends."
+    },
+    {
+      "id": "12:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context gives Martin's name as \"Martin Mark,\" which is his full name (no middle name is mentioned).",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the dialogue."
+    },
+    {
+      "id": "12:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context states Martin considers **new herbal tea blends** to support his mental health during stressful periods and enhance his yoga practice (since 2027-04-23).",
+      "correct": true,
+      "errored": false,
+      "gold": "Herbal teas with health blends."
+    },
+    {
+      "id": "13:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context states Martin expressed curiosity about integrating **ambient and jazz music** alongside heavy metal into his relaxation routine.",
+      "correct": true,
+      "errored": false,
+      "gold": "Ambient or jazz music."
+    },
+    {
+      "id": "13:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context lists his name as \"Martin Mark,\" where \"Mark\" is his last name, not a middle name; no middle name is mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "14:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after October 29, 2027, Martin might consider nature hikes and cultural tours, as his travel preferences evolved to focus on activities supporting his health and humanitarian goals, while reconsidering wellness retreats due to their shift towards luxury experiences.",
+      "correct": false,
+      "errored": false,
+      "gold": "Eco-friendly transportation or supporting local eco-tourism."
+    },
+    {
+      "id": "14:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of October 29, 2027, Martin prefers **eco-friendly athletic wear**, driven by increased environmental awareness and his motivation to align personal habits with environmental goals.",
+      "correct": true,
+      "errored": false,
+      "gold": "Eco-friendly athletic wear."
+    },
+    {
+      "id": "14:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin's perspective shifted *away* from traditional athletic wear after the seminar, moving toward high-tech and eco-friendly athletic wear.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin switched to eco-friendly athletic wear."
+    },
+    {
+      "id": "17:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Martin found iguanas interesting, specifically their social behaviors, during his visit to a reptile sanctuary on Feb 01, 2028.",
+      "correct": true,
+      "errored": false,
+      "gold": "Iguanas"
+    },
+    {
+      "id": "17:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin expressed interest in iguanas (not snakes) after his reptile sanctuary visit, while maintaining a fear of snakes due to their unpredictable movements.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin maintains a fear of snakes."
+    },
+    {
+      "id": "17:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin's middle name is unknown."
+    },
+    {
+      "id": "20:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on May 5, 2028, Martin appreciated boxing's **strategic and disciplined aspects**, also expressing a newfound appreciation for its **mental and physical rigor**.",
+      "correct": true,
+      "errored": false,
+      "gold": "The strategic and disciplined aspects."
+    },
+    {
+      "id": "20:1",
+      "category": "Memory Conflict",
+      "predicted": "No; the context shows Martin's perception shifted from purely negative/aggressive to appreciating its strategic, disciplined, and physical exercise aspects after May 05, 2028.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin's perception shifted to appreciate its strategic aspects."
+    },
+    {
+      "id": "20:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin values sports that **balance physical activity with mental challenges**, and shows continued openness to new experiences (e.g., wrestling added in 2030, curiosity about challenging films in 2031 and 2034).",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin is open to new experiences and values sports with mental challenges."
+    },
+    {
+      "id": "21:0",
+      "category": "Memory Conflict",
+      "predicted": "No; the context shows Martin *considered* early retirement on that date but later changed his mind due to unexpected financial constraints — he did not actually retire.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, Martin decided to take a sabbatical instead of retiring."
+    },
+    {
+      "id": "21:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin's social network led him to choose a **sabbatical** instead of retiring early.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his social network supported his decision to take a sabbatical."
+    },
+    {
+      "id": "21:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context says Martin started his **sabbatical** (not retirement) on June 1, 2028, to focus on personal well-being and career reassessment.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin officially started his sabbatical on June 1, 2028."
+    },
+    {
+      "id": "21:3",
+      "category": "Multi-hop Inference",
+      "predicted": "No — the context does not say he retired early; he *considered* early retirement due to stress but then chose a sabbatical instead, influenced by emotional support and alternative perspectives from his social network (Susan, Daniel, and Joshua) and his mentor's advice to pursue academic research.",
+      "correct": true,
+      "errored": false,
+      "gold": "Support from his social network influenced him."
+    },
+    {
+      "id": "21:4",
+      "category": "Multi-hop Inference",
+      "predicted": "The context is split on the start date — one entry says **June 1, 2028**, another says **July 1, 2028** — so that claim is internally contradicted. As for activities, the context lists: **yoga retreats, nature hikes, meditation retreats, city tours, and workshops/seminars** to expand his skill set.",
+      "correct": false,
+      "errored": false,
+      "gold": "Yoga retreats, nature hikes, workshops, and seminars."
+    },
+    {
+      "id": "21:5",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — Martin's role as director at Huaxin Consulting was financially rewarding but mentally stressful, leading him to consider early retirement; ultimately, influenced by emotional support from his social network (Susan, Daniel, and Joshua) and his mentor's advice to pursue academic research, he chose a sabbatical instead.",
+      "correct": true,
+      "errored": false,
+      "gold": "Stress and mental health challenges led to his decision."
+    },
+    {
+      "id": "21:6",
+      "category": "Multi-hop Inference",
+      "predicted": "No — the context does not say the sabbatical started on April 20, 2028; that date marks when certain facts were recorded, while the sabbatical started June 1 (or July 1) 2028. The factors tied to the April 20, 2028 entries are: exploring new career paths aligned with his **humanitarian goals**, and **support from his social network** (Susan, Daniel, and Joshua).",
+      "correct": false,
+      "errored": false,
+      "gold": "Support from his social network and opportunities for personal growth."
+    },
+    {
+      "id": "21:7",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the user's name is Martin Mark.",
+      "correct": false,
+      "errored": false,
+      "gold": "Martin"
+    },
+    {
+      "id": "21:8",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context contains two conflicting records: one states June 1, 2028, and another states July 1, 2028, so the exact start date is unresolved.",
+      "correct": false,
+      "errored": false,
+      "gold": "June 1, 2028"
+    },
+    {
+      "id": "21:9",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context states Martin plans to engage in **yoga retreats and nature hikes** to reduce stress during his sabbatical.",
+      "correct": true,
+      "errored": false,
+      "gold": "Yoga retreats and nature hikes"
+    },
+    {
+      "id": "21:10",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context confirms Susan, Daniel, and Joshua are specifically mentioned as part of Martin's social network that supported his sabbatical decision, alongside his mentor's advice to pursue academic research.",
+      "correct": true,
+      "errored": false,
+      "gold": "Susan, Daniel, and Joshua"
+    },
+    {
+      "id": "21:11",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Martin remains committed to his humanitarian care goals despite career challenges.",
+      "correct": true,
+      "errored": false,
+      "gold": "Humanitarian care goals"
+    },
+    {
+      "id": "21:12",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Martin feels a mix of relief and anticipation as he begins his sabbatical.",
+      "correct": true,
+      "errored": false,
+      "gold": "A mix of relief and anticipation"
+    },
+    {
+      "id": "22:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context only records Martin's name as \"Martin Mark,\" with no middle name mentioned.",
+      "correct": false,
+      "errored": false,
+      "gold": "Unknown; not provided in the dialogue."
+    },
+    {
+      "id": "22:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Martin values multiplayer puzzle games for collaborative problem-solving and social interaction, with no record of him preferring solo gaming over multiplayer; in fact, one record notes he values the social aspects of multiplayer puzzle games.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin preferred multiplayer puzzle games for collaboration."
+    },
+    {
+      "id": "22:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin expressed **curiosity about exploring more cooperative gaming opportunities** on 2028-08-08.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin expressed curiosity about cooperative gaming opportunities."
+    },
+    {
+      "id": "23:0",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context contains two unresolved, conflicting records from that same date (2028-11-10): one states remote locations for tranquility/isolation, the other states crowded tourist spots for cultural enrichment, and neither has been resolved.",
+      "correct": false,
+      "errored": false,
+      "gold": "Crowded tourist spots for cultural enrichment."
+    },
+    {
+      "id": "23:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after Nov 10, 2028, Martin should consider destinations offering **cultural richness with manageable crowds**, as well as **remote locations for their tranquility and isolation**, both preferences being recorded as current from that date.",
+      "correct": true,
+      "errored": false,
+      "gold": "Destinations with cultural richness and manageable crowds."
+    },
+    {
+      "id": "23:2",
+      "category": "Memory Conflict",
+      "predicted": "No — on Nov 10, 2028, the context records a **disputed** claim that Martin added crowded tourist spots to his preferences for cultural enrichment, contradicting his established preference (since 2025-09-06) of **avoiding** crowded tourist spots as overwhelming and stressful.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he now appreciates crowded spots for cultural enrichment."
+    },
+    {
+      "id": "25:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context states Martin seeks **horror films with compelling narratives that balance thrill and positivity** as the type to explore next.",
+      "correct": true,
+      "errored": false,
+      "gold": "Films with compelling narratives balancing thrill and positivity."
+    },
+    {
+      "id": "25:1",
+      "category": "Memory Conflict",
+      "predicted": "No; on February 13, 2029, Martin expressed **excitement** about exploring more horror films for relaxation and mental stimulation — the opposite of dislike.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin expressed excitement about exploring horror films."
+    },
+    {
+      "id": "25:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — according to the context, Martin has recently developed an appreciation for **horror films** (finding them suspenseful and mentally stimulating), **psychological thrillers** (for their complex narratives), **slasher films**, and **educational films** covering science and cultural topics.",
+      "correct": true,
+      "errored": false,
+      "gold": "Horror films"
+    },
+    {
+      "id": "28:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Martin expressed enthusiasm for **superfood smoothies**, specifically motivated by their enhanced nutritional value and ability to sustain his energy levels.",
+      "correct": true,
+      "errored": false,
+      "gold": "Superfood smoothies"
+    },
+    {
+      "id": "28:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Martin is actively curious about superfood smoothies for high-demand activities and is already exploring chia seeds, spirulina, and goji berries as of 2029-05-18, so for a high-energy event two days later he could incorporate those exact ingredients into recipes that balance flavor with nutritional benefits, as the context explicitly notes that is his stated goal.",
+      "correct": true,
+      "errored": false,
+      "gold": "Include chia seeds, spirulina, and goji berries."
+    },
+    {
+      "id": "28:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin's middle name is not mentioned."
+    },
+    {
+      "id": "29:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "29:1",
+      "category": "Memory Boundary",
+      "predicted": "Yes — the colleague mentioned on 2029-05-01 is **Joshua**, whose insights improved team collaboration but also led to increased competition within the team.",
+      "correct": false,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "29:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "29:3",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin accepted the promotion to Senior Director at Huaxin Consulting in January 2029, not after June 2029.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, it occurred on Jan 15, 2029."
+    },
+    {
+      "id": "29:4",
+      "category": "Memory Conflict",
+      "predicted": "No — his promotion to Senior Director in March 2029 actually worsened his mental health, changing it from \"Mildly Abnormal\" to \"Abnormal\" due to increased stress.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his mental health status changed to 'Abnormal' due to increased stress."
+    },
+    {
+      "id": "29:5",
+      "category": "Memory Conflict",
+      "predicted": "No — the context records Martin Mark's optimism about his role as Senior Director starting from **2029-06-15**, not *before* June 2029.",
+      "correct": false,
+      "errored": false,
+      "gold": "Yes, in May 2029, he viewed challenges as growth opportunities."
+    },
+    {
+      "id": "29:6",
+      "category": "Dynamic Update",
+      "predicted": "No — as of March 10, 2029, his mental health status changed **from \"Mildly Abnormal\" to \"Abnormal\"** due to increased stress from his promotion to Senior Director.",
+      "correct": true,
+      "errored": false,
+      "gold": "Abnormal"
+    },
+    {
+      "id": "29:7",
+      "category": "Dynamic Update",
+      "predicted": "Yes — by June 15, 2029, Martin Mark had incorporated **yoga and meditation** into his routine to manage stress and maintain balance between work and personal well-being.",
+      "correct": true,
+      "errored": false,
+      "gold": "Yoga and meditation"
+    },
+    {
+      "id": "30:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on 2029-08-21 Martin Mark was captivated by **contemporary classical music** (and also expressed enthusiasm for contemporary rock music to enhance his creative motivation).",
+      "correct": false,
+      "errored": false,
+      "gold": "Contemporary classical music."
+    },
+    {
+      "id": "30:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Martin Mark explored contemporary classical music and contemporary rock music to enhance his creative motivation around that time.",
+      "correct": false,
+      "errored": false,
+      "gold": "Contemporary classical music."
+    },
+    {
+      "id": "30:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "31:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "31:1",
+      "category": "Generalization & Application",
+      "predicted": "No — the context is disputed: two conflicting records (both dated 2029-11-23) show one update to **formal** and another to **smart-casual** business attire, unresolved. However, multiple non-disputed records consistently support **smart-casual**, noting Martin values it for balancing professionalism and comfort.",
+      "correct": true,
+      "errored": false,
+      "gold": "Smart-casual business attire."
+    },
+    {
+      "id": "31:2",
+      "category": "Memory Conflict",
+      "predicted": "No. On 2029-11-23, Martin Mark updated his clothing preference to **smart-casual** (not casual) attire, specifically to balance professionalism and comfort.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin switched to smart-casual attire for professionalism."
+    },
+    {
+      "id": "32:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states the visit *expanded* his preferences to include Sphynx cats, not exclude them.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he included Sphynx cats in his preferences."
+    },
+    {
+      "id": "32:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — Martin didn't modify a preference on that date; rather, two new disputed records were added on 2030-02-26 showing his preference now includes either **Sphynx cats** (affectionate/social) or **Maine Coon cats** (independent/playful), with no modification from a prior pet noted.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin Mark now includes Sphynx cats in his pet preference."
+    },
+    {
+      "id": "32:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER. The context as of 2030-02-26 documents only Golden Retrievers, Sphynx cats, and Maine Coon cats as his known preferences; no additional breeds he might explore are specified.",
+      "correct": false,
+      "errored": false,
+      "gold": "Martin might explore breeds known for social and affectionate traits."
+    },
+    {
+      "id": "33:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Martin Mark attended a live wrestling event on May 31, 2030, which changed his perception of the sport.",
+      "correct": true,
+      "errored": false,
+      "gold": "A live wrestling event."
+    },
+    {
+      "id": "33:1",
+      "category": "Memory Conflict",
+      "predicted": "No — attending the live event on May 31, 2030 shifted his perception positively, revealing wrestling's strategic and technical aspects, and he now appreciates it for its strategic depth and personal discipline.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his perception became positive, appreciating its strategic depth and discipline."
+    },
+    {
+      "id": "33:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "34:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is unknown."
+    },
+    {
+      "id": "34:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The specific games are unknown."
+    },
+    {
+      "id": "34:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin expressed *curiosity* about responsible gaming practices and *optimism* about healthier gaming habits, not skepticism.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin expressed curiosity and optimism about responsible gaming practices."
+    },
+    {
+      "id": "35:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Martin Mark's conservation-focused hikes are marked **current since 2030-12-06**, with no record of abandonment.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he embraced them for his environmental and humanitarian goals."
+    },
+    {
+      "id": "35:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context indicates Martin would likely pursue environmentally conscious activities (hiking, nature-based travel) aligned with his conservation awareness, plus stress-reducing options like yoga, meditation, and painting.",
+      "correct": false,
+      "errored": false,
+      "gold": "Conservation-focused hikes."
+    },
+    {
+      "id": "35:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Martin Mark's travel preferences evolved to include conservation-focused hikes, aligning with his environmental and humanitarian goals.",
+      "correct": true,
+      "errored": false,
+      "gold": "Conservation-focused hikes."
+    },
+    {
+      "id": "36:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "36:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "36:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Martin reconsidered his stance on **slasher films** on Mar 11, 2031, after a discussion with friends highlighted their complex narratives and social commentary.",
+      "correct": true,
+      "errored": false,
+      "gold": "Slasher films"
+    },
+    {
+      "id": "37:0",
+      "category": "Basic Fact Recall",
+      "predicted": "He read a **health magazine article** highlighting the negative impacts of sugar, which prompted a reconsideration of his beverage choices.",
+      "correct": true,
+      "errored": false,
+      "gold": "A health magazine article highlighting the negative impacts of sugar."
+    },
+    {
+      "id": "37:1",
+      "category": "Basic Fact Recall",
+      "predicted": "As of June 13, 2031, Martin Mark's beverage preference had evolved to include sodas with higher caffeine content and sodas with lower sugar content, reflecting his commitment to reducing health risks associated with high sugar consumption.",
+      "correct": false,
+      "errored": false,
+      "gold": "Sodas with lower sugar content."
+    },
+    {
+      "id": "37:2",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no information about Martin Mark having a middle name; his name is listed simply as \"Martin Mark.\"",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown."
+    },
+    {
+      "id": "39:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — jazz, as Martin Mark uses jazz as a means of stress relief during challenging periods at work, recorded since 2031-09-16.",
+      "correct": true,
+      "errored": false,
+      "gold": "Jazz"
+    },
+    {
+      "id": "39:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context contains a disputed conflict: one record states Martin has **late-night jazz sessions** to unwind, while a conflicting record states he has **early morning jazz sessions** to focus. Both are unresolved disputes, so the timing cannot be confirmed as \"late-night\" with certainty.",
+      "correct": false,
+      "errored": false,
+      "gold": "Late-night jazz sessions"
+    },
+    {
+      "id": "39:2",
+      "category": "Memory Conflict",
+      "predicted": "No; the context states it was jazz that Martin Mark used as a means of stress relief during challenging periods at work (since 2031-09-16), not rock music.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin found jazz therapeutic, not rock music."
+    },
+    {
+      "id": "42:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that on 2031-12-19 Martin Mark decided to **phase out** formal wear from his wardrobe, focusing on comfort and practicality.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin decided to phase out formal wear."
+    },
+    {
+      "id": "42:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context contains no record of a clothing preference expressed specifically on Dec 20, 2031; the closest dated record is from 2031-12-19, stating Martin Mark considered how his clothing preference shift might impact his **social interactions** (not professional image).",
+      "correct": false,
+      "errored": false,
+      "gold": "Comfort and practicality over formal wear."
+    },
+    {
+      "id": "42:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — based on the context, Martin would likely prefer **comfortable athletic wear**, as he values comfort, flexibility, and an active lifestyle, which suits hiking.",
+      "correct": true,
+      "errored": false,
+      "gold": "Comfortable and functional attire."
+    },
+    {
+      "id": "43:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — context confirms that in 2032, Martin's financial stability enabled him to invest in fitness programs and mindfulness workshops improving his health, while his social network helped him balance humanitarian goals with career demands.",
+      "correct": false,
+      "errored": false,
+      "gold": "Invest in personal growth and well-being."
+    },
+    {
+      "id": "43:1",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, in 2032 Martin uses:\n\n1. **Music and yoga** for stress relief — pivotal for lifestyle balance.\n2. **Clarificatory motivation** to organize thoughts and gain perspective on balancing career demands.\n3. **Financial stability** as a foundation to focus on personal growth and well-being.\n\nNote: the context contains a contradiction — one entry states his lifestyle improvements *enhanced* professional performance (productivity/job satisfaction), while another states they *decreased* it due to distraction. Both are dated since 2031-12-01; the net outcome per 2032 entries favors the positive reading.",
+      "correct": true,
+      "errored": false,
+      "gold": "Set boundaries and use stress relief methods."
+    },
+    {
+      "id": "43:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin felt a **newfound sense of financial freedom** following his salary increase on Aug 15, 2031.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin felt a newfound sense of financial freedom."
+    },
+    {
+      "id": "43:3",
+      "category": "Memory Conflict",
+      "predicted": "No — by December 1, 2031, the context states Martin's lifestyle improvements led to **increased productivity and job satisfaction**, not decreased satisfaction.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, they led to increased productivity and job satisfaction."
+    },
+    {
+      "id": "44:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after March 23, 2032, Martin adopted **conservation-focused, ethically conscious** pet ownership practices, particularly centered on **parrots and turtles**, including considering support for parrot conservation programs and integrating responsible ownership into his daily routine.",
+      "correct": true,
+      "errored": false,
+      "gold": "Conservation-focused and ethical practices."
+    },
+    {
+      "id": "44:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of Mar 23, 2032, Martin's pet preference includes parrots, with a focus on conservation and ethical considerations.",
+      "correct": true,
+      "errored": false,
+      "gold": "Parrots, with a focus on conservation and ethical considerations."
+    },
+    {
+      "id": "44:2",
+      "category": "Memory Boundary",
+      "predicted": "No — the context gives Martin's name as \"Martin Mark,\" where \"Mark\" appears to be his last name, not a middle name; no middle name is mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided by the user."
+    },
+    {
+      "id": "45:0",
+      "category": "Basic Fact Recall",
+      "predicted": "No — on June 25, 2032, Martin Mark expressed excitement about **eco-friendly racing technology**, not a specific sport per se, aligning with his values of sustainability.",
+      "correct": true,
+      "errored": false,
+      "gold": "Eco-friendly automobile racing"
+    },
+    {
+      "id": "45:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is unknown."
+    },
+    {
+      "id": "45:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER — the context states his preference evolved to eco-friendly automobile racing after 2032-06-25, but says nothing about any additional sports he might explore after that date.",
+      "correct": false,
+      "errored": false,
+      "gold": "Sports with innovative, sustainable practices."
+    },
+    {
+      "id": "46:0",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, Martin discussed narrative-driven games as a mental escape and creativity enhancer, so he might next explore interactive fiction, visual novels, or tabletop role-playing games — all offering similar storytelling immersion.",
+      "correct": false,
+      "errored": false,
+      "gold": "Story-rich books or immersive theater experiences."
+    },
+    {
+      "id": "46:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Martin Mark started appreciating narrative-driven games for their storytelling and immersive experiences as of Sep 28, 2032.",
+      "correct": true,
+      "errored": false,
+      "gold": "Narrative-driven games"
+    },
+    {
+      "id": "46:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "47:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context confirms the opposite: as of 2032-12-31, Martin's travel preferences **include** cultural and health tours, with enthusiasm for integrating them into his routine to support his global health initiative.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin included cultural and health tours in his travel preferences."
+    },
+    {
+      "id": "47:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Martin should consider **cultural and health tours**, as his travel preferences have evolved to include cultural tours, culinary tours, nature/conservation hikes, and wellness retreats, all aligned with his global health and humanitarian goals.",
+      "correct": true,
+      "errored": false,
+      "gold": "Cultural and health tours."
+    },
+    {
+      "id": "47:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on Dec 31, 2032, Martin Mark's travel preference evolved to include **cultural and health tours**, aiming to deepen understanding of global health challenges through immersive experiences.",
+      "correct": true,
+      "errored": false,
+      "gold": "Cultural and health tours."
+    },
+    {
+      "id": "48:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "52:0",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Promotion motivated sustained health practices."
+    },
+    {
+      "id": "52:1",
+      "category": "Dynamic Update",
+      "predicted": "No — as of June 15, 2033, Martin Mark's job title was **Executive Director at Huaxin Consulting**, having been promoted from Senior Director on April 25, 2033 (not Senior Director, which was his title before that date).",
+      "correct": true,
+      "errored": false,
+      "gold": "Executive Director at Huaxin Consulting"
+    },
+    {
+      "id": "52:2",
+      "category": "Dynamic Update",
+      "predicted": "No — the context contains two conflicting records for that date: one states his status changed from \"Improved\" to \"Excellent,\" while a disputed record states it changed from \"Improved\" to \"Good,\" leaving the exact final status unresolved.",
+      "correct": false,
+      "errored": false,
+      "gold": "Excellent"
+    },
+    {
+      "id": "52:3",
+      "category": "Dynamic Update",
+      "predicted": "Yes — by April 25, 2033, Martin Mark's monthly income had risen from 18000 to 22000 yuan (salary increase dated 2031-08-15), then updated to 23000 yuan on that exact date.",
+      "correct": false,
+      "errored": false,
+      "gold": "From 20000 to 23000 yuan"
+    },
+    {
+      "id": "52:4",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER. The context confirms Martin's yoga and meditation commitment benefits his own physical and mental well-being, but says nothing about how this translates to team benefits in future projects.",
+      "correct": false,
+      "errored": false,
+      "gold": "It can inspire and motivate his team for high performance."
+    },
+    {
+      "id": "52:5",
+      "category": "Generalization & Application",
+      "predicted": "Yes — per the context, after May 25, 2033, Martin's health improvements positively influenced his work environment, fostered an energetic atmosphere, inspired his team, and enhanced his productivity and creativity as Executive Director.",
+      "correct": true,
+      "errored": false,
+      "gold": "Enhanced productivity and creativity as Executive Director."
+    },
+    {
+      "id": "53:0",
+      "category": "Memory Conflict",
+      "predicted": "No — after the tea expo on Jul 08, 2033, Martin Mark's preference evolved to **enhanced antioxidant green tea**, not regular green tea.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin prefers enhanced antioxidant green tea after the expo."
+    },
+    {
+      "id": "53:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after the Jul 08, 2033 tea expo, Martin's preference shifted toward potent health beverages like kombucha and matcha, as well as green tea varieties with enhanced antioxidant properties.",
+      "correct": true,
+      "errored": false,
+      "gold": "Enhanced antioxidant green tea."
+    },
+    {
+      "id": "53:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — after the expo, Martin Mark's preference evolved to include **enhanced antioxidant green tea** for its health benefits and refreshing flavor.",
+      "correct": true,
+      "errored": false,
+      "gold": "Enhanced antioxidant green tea."
+    },
+    {
+      "id": "54:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on October 11, 2033, Martin Mark expressed **curiosity** about exploring socially conscious rap tracks and highlighted rap's role in advocating for social change, the opposite of disinterest.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin expressed curiosity about socially conscious rap."
+    },
+    {
+      "id": "54:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — socially conscious rap, for its positive messages and alignment with his values of positivity and humanitarian care.",
+      "correct": true,
+      "errored": false,
+      "gold": "Socially conscious rap"
+    },
+    {
+      "id": "54:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes, but with a caveat: the context records both **classical music** (for calming effects) *and* **socially conscious rap** (for positive messages) as possibilities after Oct 11, 2033 — these two records are in **unresolved conflict**, so no single definitive answer can be given from the context alone.",
+      "correct": false,
+      "errored": false,
+      "gold": "Socially conscious rap."
+    },
+    {
+      "id": "55:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "55:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "55:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that on 2034-01-13 Martin Mark expressed **optimism** (not skepticism) about the positive impact of sustainable clothing on his lifestyle and the environment.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin Mark is optimistic about the impact of sustainable clothing."
+    },
+    {
+      "id": "56:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "56:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "56:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Martin Mark developed a preference for **Golden Retrievers** on Apr 18, 2034, after witnessing them providing therapy during a volunteer session, which deepened his appreciation for their role in emotional support.",
+      "correct": true,
+      "errored": false,
+      "gold": "Golden Retrievers"
+    },
+    {
+      "id": "57:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of July 21, 2034, Martin Mark's movie preference evolved to include psychological thrillers, due to their complex narratives and exploration of human psychology.",
+      "correct": true,
+      "errored": false,
+      "gold": "Psychological thrillers."
+    },
+    {
+      "id": "57:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context is disputed: one record says a friend recommended a psychological thriller, while a conflicting record says a friend recommended a romantic comedy, and the specific identity of the recommender is not mentioned in either case.",
+      "correct": false,
+      "errored": false,
+      "gold": "A friend."
+    },
+    {
+      "id": "57:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is unknown."
+    },
+    {
+      "id": "58:0",
+      "category": "Memory Conflict",
+      "predicted": "No; on 2034-10-24 the context states Martin Mark's preference had **shifted away from** herbal teas **toward** potent health beverages like kombucha and matcha.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin prefers potent health beverages like kombucha and matcha."
+    },
+    {
+      "id": "58:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "58:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER. The context states only that Martin Mark *considered* how his shift to kombucha and matcha might influence his dietary habits — it does not specify any new dietary habits he actually adopted after Oct 24, 2034.",
+      "correct": false,
+      "errored": false,
+      "gold": "Martin may adopt a diet focused on health-conscious options."
+    },
+    {
+      "id": "59:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — on 2035-01-26 Martin Mark's music preference shifted to **jazz and contemporary classical music**, reflecting a newfound interest in dynamic and stimulating genres.",
+      "correct": true,
+      "errored": false,
+      "gold": "Jazz and contemporary classical music."
+    },
+    {
+      "id": "59:1",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, as of Jan 26, 2035, Martin's music preference shifted to jazz and contemporary classical music — so the next exploration would likely be within those dynamic and stimulating genres rather than something entirely new already documented.",
+      "correct": false,
+      "errored": false,
+      "gold": "Electronic music, offering dynamic and engaging experiences."
+    },
+    {
+      "id": "59:2",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2035-01-26 the context states Martin's preference **shifted away from ambient** toward jazz and contemporary classical, with ambient music having a \"decreased presence\" in his daily life.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin shifted from ambient to jazz and contemporary classical music."
+    },
+    {
+      "id": "62:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin Mark's middle name is unknown."
+    },
+    {
+      "id": "62:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that Martin Mark *updated* his clothing preference to include stylish and functional athletic wear since 2035-05-01, not to avoid it.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin decided to include stylish athletic wear."
+    },
+    {
+      "id": "62:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — based on multiple context records, Martin would likely prefer **stylish, functional, and eco-friendly athletic wear**, reflecting his updated preferences as of 2035-05-01 and his ongoing shift toward high-tech/eco-friendly athletic clothing.",
+      "correct": true,
+      "errored": false,
+      "gold": "Stylish and functional athletic wear."
+    },
+    {
+      "id": "63:0",
+      "category": "Memory Conflict",
+      "predicted": "No; the context states Martin Mark expressed **enthusiasm** about integrating new insights on feline communication into his pet preferences (particularly with Sphynx cats) since 2035-08-03, not disinterest.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed enthusiasm about integrating these insights."
+    },
+    {
+      "id": "63:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "63:2",
+      "category": "Memory Boundary",
+      "predicted": "No — the context shows his monthly income transitioned to **0 yuan** as of Feb 15, 2035 (due to his shift from employment to entrepreneurship), so by Aug 03, 2035 he had no employment salary.",
+      "correct": false,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "64:0",
+      "category": "Dynamic Update",
+      "predicted": "Yes — Martin Mark is self-employed as of September 15, 2035, having transitioned from Huaxin Consulting to founding the Global Health Initiative (updated since 2035-02-15).",
+      "correct": true,
+      "errored": false,
+      "gold": "Self-employed"
+    },
+    {
+      "id": "64:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context records the launch as Sep 15, 2035 (with a disputed record also citing Sep 15, 2034), not May 2035.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, Martin launched it on Feb 15, 2035."
+    },
+    {
+      "id": "64:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Form partnerships and leverage social network support."
+    },
+    {
+      "id": "64:3",
+      "category": "Generalization & Application",
+      "predicted": "Yes — per context, Martin's family medical background directly inspired his Global Health Initiative and his desire to promote well-being globally, suggesting it will continue motivating decisions aimed at expanding healthcare access (e.g., his goal of reaching 1 million people).",
+      "correct": true,
+      "errored": false,
+      "gold": "Inspire strategic planning and focus on healthcare access."
+    },
+    {
+      "id": "64:4",
+      "category": "Basic Fact Recall",
+      "predicted": "No — on Feb 15, 2035, his employment status was updated to **self-employed** (having founded the Global Health Initiative), not employed.",
+      "correct": true,
+      "errored": false,
+      "gold": "Self-employed"
+    }
+  ],
+  "recipe": {
+    "reconcile": true,
+    "min_overlap": 0.35,
+    "answer_verify": true,
+    "history": true,
+    "k": 12,
+    "bitemporal": "asserted_at v13"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "n_failed": 24,
+  "retrieval_miss_k6": 3,
+  "answer_miss_k6": 21,
+  "retrieval_miss_k12": 2,
+  "answer_miss_k12": 22,
+  "samples": [
+    {
+      "q": "What is Johnson Joseph's job title as of September 5, 2025?",
+      "gold": "Owner",
+      "supported@12": true,
+      "best_sim": 0.827,
+      "pred_was": "NO ANSWER. The context lists multiple job title changes for Johnson Jo"
+    },
+    {
+      "q": "What is Johnson Joseph's movie preference as of April 19, 2027?",
+      "gold": "Johnson Joseph prefers thrillers.",
+      "supported@12": true,
+      "best_sim": 0.912,
+      "pred_was": "Yes — as of the context provided, Johnson Joseph likes **action films*"
+    },
+    {
+      "q": "What specific event led to Johnson Joseph's layoff on August 22, 2027?",
+      "gold": "A downturn in tourism.",
+      "supported@12": false,
+      "best_sim": 0.79,
+      "pred_was": "No — the context does not specify any specific event that led to the l"
+    },
+    {
+      "q": "What is Johnson Joseph's stance on fantasy novels as of April 28, 2028",
+      "gold": "He recognizes their potential to inspire creative themes for",
+      "supported@12": true,
+      "best_sim": 0.885,
+      "pred_was": "NO ANSWER."
+    },
+    {
+      "q": "When did Johnson Joseph attend a literary festival that influenced his",
+      "gold": "April 28, 2028",
+      "supported@12": false,
+      "best_sim": 0.778,
+      "pred_was": "NO ANSWER. The context states Johnson Joseph attended a literary festi"
+    },
+    {
+      "q": "What type of music does Johnson Joseph now like as of Nov 02, 2028?",
+      "gold": "Classical music",
+      "supported@12": true,
+      "best_sim": 0.807,
+      "pred_was": "Yes — as of Nov 02, 2028, Johnson Joseph likes **jazz, classical, and "
+    },
+    {
+      "q": "What did Johnson Joseph's reading preference shift to after December 0",
+      "gold": "Biographies of hospitality leaders",
+      "supported@12": true,
+      "best_sim": 0.839,
+      "pred_was": "NO ANSWER."
+    },
+    {
+      "q": "What type of music did Johnson Joseph attend a festival for on June 6,",
+      "gold": "Folk music",
+      "supported@12": true,
+      "best_sim": 0.828,
+      "pred_was": "No — on Jun 06, 2032, Johnson Joseph attended a local **art exhibition"
+    }
+  ]
+}
