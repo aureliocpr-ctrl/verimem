@@ -394,8 +394,14 @@ def wake(
     no_skills: bool = typer.Option(False, "--no-skills", help="Baseline: ignore skill library"),
 ):
     """Run agent on the wake-set of the benchmark, recording episodes."""
-    from benchmark.evaluator import Evaluator
-    from benchmark.tasks import wake_split
+    try:
+        from benchmark.evaluator import Evaluator
+        from benchmark.tasks import wake_split
+    except ImportError:
+        console.print("[red]research command — the `benchmark` harness is not "
+                      "shipped in the wheel; run from a source checkout "
+                      "(git clone https://github.com/aureliocpr-ctrl/verimem)[/]")
+        raise typer.Exit(1)
 
     from .wake import WakeConfig
     cfg = WakeConfig(use_skills=not no_skills, use_past_episodes=not no_skills)
@@ -431,8 +437,14 @@ def benchmark(
     no_skills: bool = typer.Option(False, "--no-skills"),
 ):
     """Run the held-out test set."""
-    from benchmark.evaluator import Evaluator
-    from benchmark.tasks import heldout_split
+    try:
+        from benchmark.evaluator import Evaluator
+        from benchmark.tasks import heldout_split
+    except ImportError:
+        console.print("[red]research command — the `benchmark` harness is not "
+                      "shipped in the wheel; run from a source checkout "
+                      "(git clone https://github.com/aureliocpr-ctrl/verimem)[/]")
+        raise typer.Exit(1)
 
     from .wake import WakeConfig
     cfg = WakeConfig(use_skills=not no_skills, use_past_episodes=not no_skills)

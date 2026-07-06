@@ -149,7 +149,10 @@ where = ["."]
 # `engram` = canonical package post-cycle-#41 rename.
 # `hippoagent` = backward-compat shim that re-exports engram.
 # `verimem` = the CANONICAL public alias package (lazy, non-deprecated).
-include = ["verimem*", "engram*", "hippoagent*", "benchmark*"]
+# `benchmark` is research harness, NOT shipped: it would squat the generic
+# top-level name "benchmark" in site-packages (PyPI release audit 2026-07-06);
+# the two research CLI commands that use it degrade with a clear message.
+include = ["verimem*", "engram*", "hippoagent*"]
 
 [tool.setuptools.package-data]
 # Ship the dashboard's data assets INSIDE the wheel. Without these,
