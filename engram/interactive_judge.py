@@ -27,11 +27,11 @@ import atexit
 import json
 import re
 import subprocess
-
-from engram._proc_quiet import quiet_popen_kwargs
 import time
 from pathlib import Path
 from typing import Any, Protocol
+
+from engram._proc_quiet import quiet_popen_kwargs
 
 _RUBRIC = (
     "Sei il judge di grounding del write-gate di Engram. Per OGNI item qui sotto valuta"

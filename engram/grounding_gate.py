@@ -229,7 +229,7 @@ _SPAN_CJK = re.compile(r"[぀-ヿ㐀-䶿一-鿿가-힯]")
 def _span_tokens(text: str) -> set[str]:
     toks = set(_SPAN_WORD.findall(text))
     cjk = _SPAN_CJK.findall(text)
-    toks.update(a + b for a, b in zip(cjk, cjk[1:]))
+    toks.update(a + b for a, b in zip(cjk, cjk[1:], strict=False))
     return toks
 
 

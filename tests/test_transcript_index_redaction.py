@@ -1,5 +1,6 @@
 """WF1 defense-in-depth: TranscriptIndex.store/store_batch redact secrets at the sink."""
 from pathlib import Path
+
 from engram.transcript_index import TranscriptIndex, Turn
 
 _P2 = 'ghp_'

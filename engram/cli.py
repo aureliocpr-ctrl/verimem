@@ -401,7 +401,7 @@ def wake(
         console.print("[red]research command — the `benchmark` harness is not "
                       "shipped in the wheel; run from a source checkout "
                       "(git clone https://github.com/aureliocpr-ctrl/verimem)[/]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     from .wake import WakeConfig
     cfg = WakeConfig(use_skills=not no_skills, use_past_episodes=not no_skills)
@@ -444,7 +444,7 @@ def benchmark(
         console.print("[red]research command — the `benchmark` harness is not "
                       "shipped in the wheel; run from a source checkout "
                       "(git clone https://github.com/aureliocpr-ctrl/verimem)[/]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     from .wake import WakeConfig
     cfg = WakeConfig(use_skills=not no_skills, use_past_episodes=not no_skills)

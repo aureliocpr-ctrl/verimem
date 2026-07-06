@@ -16,7 +16,7 @@ import pytest
 
 faiss = pytest.importorskip("faiss")
 
-from engram.ann_cache import ANNCache
+from engram.ann_cache import ANNCache  # noqa: E402  (importorskip gate above, by design)
 
 
 def _unit(n, d=64, seed=0):

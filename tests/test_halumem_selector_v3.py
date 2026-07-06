@@ -54,8 +54,8 @@ def test_overlap_and_number_features_discriminate() -> None:
     it = _item(0, upd, [target, offtopic], ["Martin runs 3 sessions per week"])
     idf = build_idf([it])
     rows = featurize_item(it, idf)
-    feats = dict(zip(FEATURE_NAMES, rows[0]))
-    feats_off = dict(zip(FEATURE_NAMES, rows[1]))
+    feats = dict(zip(FEATURE_NAMES, rows[0], strict=True))
+    feats_off = dict(zip(FEATURE_NAMES, rows[1], strict=True))
     assert feats["jaccard"] > feats_off["jaccard"]
     assert feats["num_shared"] > feats_off["num_shared"]
 
@@ -94,7 +94,7 @@ def test_crossval_no_user_leakage_and_learns_separable_signal() -> None:
         assert not (set(fold["train_users"]) & set(fold["test_users"]))
     picked = [res["selected"][i] for i in range(len(items))]
     correct = sum(sel == it["gt_originals"][0]
-                  for sel, it in zip(picked, items))
+                  for sel, it in zip(picked, items, strict=True))
     # retrieval alone would pick the noise every time (0/24)
     assert correct >= 20
 

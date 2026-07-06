@@ -15,7 +15,10 @@ import pytest
 
 faiss = pytest.importorskip("faiss")
 
-from engram.ann_index import ANNIndex, should_use_ann
+from engram.ann_index import (  # noqa: E402  (importorskip gate above, by design)
+    ANNIndex,
+    should_use_ann,
+)
 
 
 def _unit(rng, n, d=768):

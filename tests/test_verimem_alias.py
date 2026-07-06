@@ -11,7 +11,6 @@ from __future__ import annotations
 
 def test_import_verimem_exposes_memory():
     import verimem
-
     from engram.client import Memory as EngramMemory
     assert verimem.Memory is EngramMemory, "same class object, not a copy"
 
@@ -97,6 +96,7 @@ def test_nested_subpackage_module_identity():
     PathFinder won nested names (verimem.swarm.X) via the swapped parent's
     real __path__ and re-executed the file under the alias name — two distinct
     module objects, the exact cycle-#41 trap the docstring promises to avoid."""
-    import engram.swarm.lifecycle as e
     import verimem.swarm.lifecycle as v
+
+    import engram.swarm.lifecycle as e
     assert v is e, "nested alias must be the SAME module object"

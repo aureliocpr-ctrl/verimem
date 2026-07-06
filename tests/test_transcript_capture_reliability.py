@@ -1,7 +1,8 @@
 """WF3 capture-reliability: skip sidechain turns + subagent/journal files."""
 import json
 from pathlib import Path
-from engram.transcript_ingest import parse_turns, find_current_session, _is_real_session_file
+
+from engram.transcript_ingest import _is_real_session_file, find_current_session, parse_turns
 
 
 def _write(p, records):
@@ -29,6 +30,7 @@ def test_find_current_skips_transient_subagent(tmp_path):
     proj = tmp_path / "proj"; (proj / "subagents").mkdir(parents=True)
     real = proj / "aaaa-real.jsonl"; real.write_text('{"type":"user"}', encoding="utf-8")
     agent = proj / "agent-transient.jsonl"; agent.write_text('{"type":"user"}', encoding="utf-8")
-    import os, time
+    import os
+    import time
     os.utime(agent, (time.time() + 100, time.time() + 100))  # agent file is NEWER
     assert find_current_session(proj) == real   # still picks the real session, not the newer agent tape

@@ -201,6 +201,7 @@ def test_add_text_accepts_asserted_at(tmp_path):
 
 def test_search_deep_finds_dormant(tmp_path):
     import time
+
     from engram.client import Memory
     from engram.semantic import Fact
     mem = Memory(tmp_path / "m.db")
@@ -215,6 +216,7 @@ def test_search_deep_finds_dormant(tmp_path):
 
 def test_search_as_of_time_travels(tmp_path):
     import time
+
     from engram.client import Memory
     from engram.semantic import Fact
     mem = Memory(tmp_path / "m.db")
@@ -231,6 +233,7 @@ def test_search_as_of_time_travels(tmp_path):
 
 def test_search_with_history_carries_transition(tmp_path):
     import time
+
     from engram.client import Memory
     from engram.semantic import Fact
     mem = Memory(tmp_path / "m.db")
