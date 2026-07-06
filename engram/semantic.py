@@ -2449,6 +2449,14 @@ class SemanticMemory:
                 and cache.get("data_version") == self._db_data_version()
             ):
                 return cache["facts"], cache["matrix"], cache["lv"], cache["vu"]
+            # Review 5-lenti C5: a rebuild driven by a CROSS-PROCESS commit
+            # (data_version moved, our counter did not) yields a DIFFERENT
+            # corpus under the SAME _cache_version — version-keyed consumers
+            # (the ANN pool) would keep serving indices computed for the OLD
+            # matrix (IndexError on the shrunken facts list / wrong rows).
+            # Open a new generation so every such consumer rebuilds.
+            if cache is not None and cache.get("version") == self._cache_version:
+                self._cache_version += 1
             # Read the cross-process version BEFORE snapshotting rows, so the
             # stored value reflects a state <= the rows about to be read. If a
             # write lands after this point, dv is bumped on the NEXT gate check
