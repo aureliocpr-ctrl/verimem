@@ -117,3 +117,21 @@ def test_recall_as_of_died_axis_is_event_time(tmp_path) -> None:
     ids_before = {f.id for f, *_ in recall_as_of(
         sm, "where does the user live", when=now - 800 * _DAY, k=5)}
     assert ids_before == {"roma"}, "before the move only Rome existed"
+
+
+def test_deep_recall_is_read_only_no_freshness_bump(tmp_path) -> None:
+    """Review 5-lenti C3: deep/as-of recall is archaeology — a READ of the past
+    must not write last_verified_at=now, or a single time-travel query
+    resurrects dormant facts into every subsequent DEFAULT recall (and a
+    default recall right after deep would show a different world than before,
+    with no write in between)."""
+    sm, _ = _seed_dormant(tmp_path)
+    assert all(f.id != "m3" for f, *_ in sm.recall("Rossi budget", k=5)), \
+        "sanity: dormant fact hidden from default recall"
+    got_deep = {f.id for f, *_ in sm.recall("Rossi budget", k=5, deep=True)}
+    assert "m3" in got_deep, "sanity: deep surfaces it (the feature)"
+    assert all(f.id != "m3" for f, *_ in sm.recall("Rossi budget", k=5)), \
+        "deep read must NOT refresh the fact into the live default view"
+    lv = sm.get("m3").last_verified_at
+    assert lv is not None and time.time() - lv > 80 * _DAY, \
+        "last_verified_at untouched by the deep read"

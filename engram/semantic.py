@@ -2906,7 +2906,11 @@ class SemanticMemory:
                 query, hits_2t, k,
                 exclude_legacy=exclude_legacy, min_status=min_status)
             # bump-on-recall (no open txn on this cache path -> safe to write).
-            self._bump_verified(hits_2t, now)
+            # deep = archaeology: a read of the PAST must not refresh
+            # last_verified_at, or one time-travel query resurrects dormant
+            # facts into the live default view (review 5-lenti C3).
+            if not deep:
+                self._bump_verified(hits_2t, now)
             # Fall-through into the trust-signal branch below.
             if not trust_signals:
                 return hits_2t
@@ -3064,7 +3068,9 @@ class SemanticMemory:
             exclude_legacy=exclude_legacy, min_status=min_status,
             include_conversational=include_conversational)
         # bump-on-recall (outside the read txn -> no nested connection).
-        self._bump_verified(hits_2t, _now)
+        # deep = archaeology, read-only w.r.t. freshness (review 5-lenti C3).
+        if not deep:
+            self._bump_verified(hits_2t, _now)
         # Cycle #117: optional trust signals — attach a live verdict
         # (trusted/stale/contested/obsolete/unverified) to each hit so
         # the caller (LLM, dashboard, tests) sees both content and
