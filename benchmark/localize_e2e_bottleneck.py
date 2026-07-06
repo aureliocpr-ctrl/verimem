@@ -23,7 +23,7 @@ from benchmark.qa_runner import LeanClaudeCLILLM
 from engram import embedding
 from engram.agent import wire_reconcile_judge
 from engram.conversation_ingest import ingest_conversation
-from engram.semantic import SemanticMemory
+from engram.semantic import Fact, SemanticMemory
 
 p = os.path.expanduser("~/.cache/halumem/HaluMem-Medium.jsonl")
 u = [json.loads(line) for line in open(p, encoding="utf-8") if line.strip()][0]
@@ -39,7 +39,6 @@ sm = SemanticMemory(db_path=Path(tempfile.mkdtemp(prefix="loc_")) / "d.db")
 wire_reconcile_judge(sm, None)
 # store GOLD parallelo (i memory_points), per il confronto retrieval nostri-vs-gold
 smg = SemanticMemory(db_path=Path(tempfile.mkdtemp(prefix="locg_")) / "g.db")
-from engram.semantic import Fact
 
 for si, s in enumerate(u["sessions"][:N_SESS]):
     msgs = [{"role": t.get("role", "user"), "content": t.get("content", "")}

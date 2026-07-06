@@ -152,3 +152,21 @@ def test_answer_system_verify_env(monkeypatch) -> None:
     default = _answer_system()
     assert "FALSE ASSUMPTION" not in default, "default unchanged (strict)"
     assert "EXPLICITLY present" in default
+
+
+def test_answer_mode_declared_inference_opt_in(monkeypatch) -> None:
+    """Iter 79: the e2e Basic bottleneck is the ANSWERER (retrieval-hit 1.0).
+    exp4 validated a declared-inference answer mode (Generalization+Boundary
+    both up). Ship it as an opt-in answer mode; default behaviour unchanged."""
+    import benchmark.qa_eval as qa
+
+    monkeypatch.delenv("ENGRAM_ANSWER_MODE", raising=False)
+    monkeypatch.delenv("ENGRAM_ANSWER_VERIFY", raising=False)
+    monkeypatch.delenv("ENGRAM_ANSWER_STRICT", raising=False)
+    default = qa._answer_system()
+    assert "Inferred from" not in default, "default is unchanged (strict)"
+
+    monkeypatch.setenv("ENGRAM_ANSWER_MODE", "declared")
+    declared = qa._answer_system()
+    assert "Inferred from" in declared, "declared mode exposes the derivation rule"
+    assert "NO ANSWER" in declared, "abstention preserved (anti-confab contract)"

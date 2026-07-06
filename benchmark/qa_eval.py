@@ -63,8 +63,34 @@ _ANSWER_SYSTEM_VERIFY = (
 )
 
 
+# DECLARED-INFERENCE variant (iter 79, exp4 2026-07-06): the e2e Basic
+# bottleneck is the ANSWERER — the fact is retrieved (hit 1.0) but the strict
+# answerer, faced with the gold fact amid distractors, either abstains or picks
+# a neighbour. A THIRD way: infer when the answer FOLLOWS from the context but
+# DECLARE the single-step derivation. Measured on read-path u0 (exp4): both
+# Generalization 0.581 -> 0.645 AND the abstention canary 0.897 -> 0.974 rose —
+# no trade-off, fabrications went DOWN. Opt-in ENGRAM_ANSWER_MODE=declared;
+# small-n, not yet the default. Abstention preserved.
+_ANSWER_SYSTEM_DECLARED = (
+    "Answer from the CONTEXT only. Rules:\n"
+    "- If the answer is stated, give it directly (short).\n"
+    "- If the answer is NOT stated but clearly FOLLOWS from facts in the "
+    "context, you MAY infer it — but you MUST declare the derivation: "
+    "'Inferred from: <fact A> + <fact B>'. Only single-step, conservative "
+    "inferences; never stack assumptions.\n"
+    "- If the question contains a false assumption, answer 'No' and state "
+    "the correct fact.\n"
+    "- If the context neither states nor supports it, reply exactly: NO ANSWER.\n"
+    "Never use outside knowledge; at most two short sentences."
+)
+
+
 def _answer_system() -> str:
     import os
+    # Declared-inference mode (opt-in): infer-with-declared-derivation, the
+    # answerer lever for the e2e Basic bottleneck (exp4). Highest precedence.
+    if os.environ.get("ENGRAM_ANSWER_MODE", "").strip().lower() == "declared":
+        return _ANSWER_SYSTEM_DECLARED
     # Verification-aware mode (opt-in): premise-check + correction for
     # false-premise questions. Measured 4.3x on Memory-Conflict (0.15 -> 0.65).
     if os.environ.get("ENGRAM_ANSWER_VERIFY", "").strip().lower() in (
