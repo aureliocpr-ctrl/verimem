@@ -123,6 +123,28 @@ recall** (673/807 facts on HaluMem u1 — staleness hid the backdated, anti-spoo
 hid the future-dated). Product surface: ``ingest_conversation(asserted_at=…)``
 and ``hippo_ingest_conversation(asserted_at=…)``.
 
+Four contracts hardened by the adversarial 5-lens review (2026-07-06, each
+with a pre-fix-failing test; findings + minimal repros committed in
+``benchmark/results/workflow_5lenti_findings.json``):
+
+* **A future assertion is data, not truth-yet** — ``classify_conflict`` now
+  uses ``now``: an ``asserted_at`` beyond now+300s cannot supersede the
+  present fact (dispute, recoverable); the same pair re-evaluated once the
+  date has arrived is a clean update. Before: a calendar fact deleted present
+  truth 60 days early.
+* **``recall_as_of`` death is EVENT time** — a fact stops being current at its
+  *successor's* ``asserted_at``, not at ``superseded_at`` (wall-clock): a
+  batch-ingested 2024 history is superseded *today*, which made every retired
+  version look still-current at any past ``when``.
+* **Deep / as-of reads are archaeology** — they no longer bump
+  ``last_verified_at``: a READ of the past must not refresh dormant facts
+  into the live default view.
+* **The plain delete keeps chains walkable** — incoming supersession pointers
+  are re-linked through the removed row, so a later GDPR
+  ``purge_history=True`` closes over the whole chain even across holes dug by
+  earlier plain deletes (holes dug BEFORE this fix are not reconstructible —
+  stated limit).
+
 ## Answer-with-history: "what changed, when — and what I'm not sure about"
 
 Competitors serve the latest value; Verimem KEEPS the supersession chain
