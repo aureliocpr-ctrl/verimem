@@ -258,3 +258,49 @@ def test_explain_returns_trust_report(tmp_path):
     # of hiding it (abstained=True only on zero hits, e.g. empty store).
     rep2 = mem.explain("marziani viola")
     assert rep2["facts"][0]["relevance"] is not None, "relevance declared"
+
+
+def test_delete_purge_history_kills_the_whole_chain(tmp_path):
+    """GDPR contract (iter 64, probe-confirmed defect): delete() alone removes
+    ONE row — the superseded predecessors carrying the SAME sensitive datum
+    survive and resurface via deep recall and as_of (time travel). For a
+    judge-grade memory, "forget my salary" must forget the WHOLE chain:
+    delete(fact_id, purge_history=True) removes predecessors, successors and
+    their unresolved-dispute ledger entries. Default False = behaviour
+    unchanged."""
+    import time as _t
+
+    from engram.client import Memory
+    from engram.semantic import Fact
+    from engram.temporal_context import recall_as_of
+
+    mem = Memory(tmp_path / "g.db")
+    now = _t.time()
+    D = 86400.0
+    for fid, val, age in (("a", 3000, 120), ("b", 4000, 60), ("c", 5000, 10)):
+        mem.semantic.store(Fact(id=fid, topic="t",
+                                proposition=f"Rossi salary is {val} (SENSITIVE)",
+                                asserted_at=now - age * D), embed="sync")
+    mem.semantic.supersede("a", "b", reason="update")
+    mem.semantic.supersede("b", "c", reason="update")
+
+    assert mem.delete("c", purge_history=True) is True
+    for fid in ("a", "b", "c"):
+        assert mem.semantic.get(fid) is None, f"{fid} must be gone"
+    deep = mem.semantic.recall("Rossi salary", k=5, deep=True,
+                               include_superseded=True)
+    assert not any("SENSITIVE" in getattr(f, "proposition", "")
+                   for f, *_ in deep), "no resurrection via deep"
+    past = recall_as_of(mem.semantic, "Rossi salary", when=now - 90 * D, k=5)
+    assert past == [], "no resurrection via time travel"
+
+
+def test_delete_default_still_single_row(tmp_path):
+    from engram.client import Memory
+    from engram.semantic import Fact
+    mem = Memory(tmp_path / "g2.db")
+    mem.semantic.store(Fact(id="x", proposition="old note", topic="t"), embed="sync")
+    mem.semantic.store(Fact(id="y", proposition="new note", topic="t"), embed="sync")
+    mem.semantic.supersede("x", "y", reason="u")
+    assert mem.delete("y") is True
+    assert mem.semantic.get("x") is not None, "default delete stays single-row"

@@ -173,9 +173,62 @@ class Memory:
             "topic": getattr(f, "topic", ""),
         }
 
-    def delete(self, fact_id: str) -> bool:
-        """Forget one fact by id (privacy / GDPR). True iff a row was removed."""
-        return self.semantic.delete(fact_id)
+    def delete(self, fact_id: str, *, purge_history: bool = False) -> bool:
+        """Forget a fact by id (privacy / GDPR). True iff at least a row was removed.
+
+        ``purge_history=True`` — the GDPR-grade delete (probe-confirmed defect
+        2026-07-06: a plain delete removes ONE row while superseded predecessors
+        carrying the SAME sensitive datum survive and RESURFACE via deep recall
+        and ``as_of`` time travel). It removes the whole supersession chain —
+        predecessors (recursive) and forward successors — plus their
+        unresolved-dispute ledger entries. Default False = single-row delete,
+        behaviour unchanged."""
+        if not purge_history:
+            return self.semantic.delete(fact_id)
+        ids: set[str] = set()
+        # forward: the live successors this fact was replaced by
+        try:
+            for f in self.semantic.get_supersession_chain(fact_id):
+                ids.add(getattr(f, "id", ""))
+        except Exception:  # noqa: BLE001 — best-effort walk, delete goes on
+            ids.add(fact_id)
+        # backward: EVERY predecessor generation (full closure, all branches —
+        # a partial purge would leave sensitive rows resurrectable via as_of)
+        frontier = list(ids)
+        while frontier:
+            nxt: list[str] = []
+            for fid in frontier:
+                try:
+                    for p in self.semantic.direct_predecessors(fid, limit=1000):
+                        pid = getattr(p, "id", "")
+                        if pid and pid not in ids:
+                            ids.add(pid)
+                            nxt.append(pid)
+                except Exception:  # noqa: BLE001
+                    continue
+            frontier = nxt
+        removed = False
+        for fid in ids:
+            try:
+                removed = self.semantic.delete(fid) or removed
+            except Exception:  # noqa: BLE001 — one failed row must not stop the purge
+                continue
+        # scrub the dispute ledger referencing purged facts (best-effort)
+        try:
+            import sqlite3
+
+            from .contradiction import ContradictionStore
+            cs = ContradictionStore(self.semantic.db_path)
+            with sqlite3.connect(str(cs.db_path if hasattr(cs, "db_path")
+                                     else self.semantic.db_path)) as con:
+                qmarks = ",".join("?" for _ in ids)
+                con.execute(
+                    f"DELETE FROM contradictions WHERE fact_a_id IN ({qmarks}) "
+                    f"OR fact_b_id IN ({qmarks})", (*ids, *ids))
+                con.commit()
+        except Exception:  # noqa: BLE001 — ledger scrub is best-effort
+            pass
+        return removed
 
     def get_all(self, *, topic: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         """List stored facts (with provenance), newest-relevant first. mem0/Zep parity."""
