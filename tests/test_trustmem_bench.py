@@ -51,7 +51,8 @@ def test_run_verimem_scorecard_deterministic_axes(tmp_path) -> None:
 
     assert set(card["per_axis"]) >= {
         "fabrication_under_absence", "destructive_update",
-        "temporal_integrity", "forget_integrity", "provenance_honesty"}
+        "temporal_integrity", "forget_integrity", "provenance_honesty",
+        "sycophancy_resistance"}
     # our engine is built to pass these — a regression here is a real defect,
     # so the bench doubles as an integration guard on the trust surfaces.
     for axis, res in card["per_axis"].items():

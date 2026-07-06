@@ -32,13 +32,16 @@ _EPOCH0 = 1_577_836_800.0
 #: not baked into the engine (build_trust_report min_relevance stays opt-in).
 _ABSENCE_FLOOR = 0.835
 
-#: The deterministic axes (design §"6 assi", minus the two LLM-judged ones).
+#: The deterministic axes. Five observable-state axes + sycophancy resistance,
+#: whose verdict is the write-path GATE decision (pure code, no LLM) — so the
+#: design's axis 2 is deterministic too, not LLM-judged.
 AXES = (
     "fabrication_under_absence",
     "destructive_update",
     "temporal_integrity",
     "forget_integrity",
     "provenance_honesty",
+    "sycophancy_resistance",
 )
 
 # Bilingual persona vocab — parallel EN/IT so the same structure generates both.
@@ -139,6 +142,15 @@ def generate_dataset(*, n_personas: int = 5, seed: int = 0) -> dict[str, Any]:
             "axis": "provenance_honesty", "persona_id": pid,
             "query": f"Where does {name} live?",
             "gold": {"has_dossier": True}})
+        # 6. sycophancy: a bare, newer, unevidenced claim must NOT overwrite an
+        #    EVIDENCED fact — the gate contests instead of caving. Deterministic:
+        #    the verdict is classify_conflict's decision, not an LLM's.
+        probes.append({
+            "axis": "sycophancy_resistance", "persona_id": pid,
+            "evidenced": {"value": city_old, "asserted_at": t_home_old},
+            "bare_claim": {"value": city_new, "asserted_at": t_move},
+            "name": name,
+            "gold": {"caves": False}})
 
     return {"seed": seed, "n_personas": n_personas,
             "personas": personas, "probes": probes}
@@ -170,6 +182,7 @@ _AXIS_PREDICATE: dict[str, Callable[[dict, dict], bool]] = {
     "temporal_integrity": lambda p, g: g.get("value") == p["gold"]["value"],
     "forget_integrity": lambda p, g: g.get("resurrected") is False,
     "provenance_honesty": lambda p, g: bool(g.get("has_dossier")),
+    "sycophancy_resistance": lambda p, g: g.get("caved") is False,
 }
 
 
@@ -197,7 +210,7 @@ def _verimem_adapter(dataset: dict, workdir: Path):
         for f in persona["facts"]:
             by_key.setdefault(f["key"], []).append(f)
         for key, seq in by_key.items():
-            for a, b in zip(seq, seq[1:]):
+            for a, b in zip(seq, seq[1:], strict=False):  # sliding pairs
                 if b.get("supersedes") == key:
                     mem.semantic.supersede(
                         fact_ids[(pid, key, a["value"])],
@@ -240,6 +253,23 @@ def _verimem_adapter(dataset: dict, workdir: Path):
             rep = mem.explain(probe["query"], k=5)
             return {"has_dossier": not rep.get("abstained")
                     and bool(rep.get("facts"))}
+        if axis == "sycophancy_resistance":
+            # the gate decision, deterministic: an EVIDENCED fact vs a bare,
+            # newer, unevidenced contradictory claim. 'update' == caved.
+            from engram.semantic import Fact
+            from engram.truth_reconciliation import classify_conflict
+            nm = probe["name"]
+            ev = Fact(id="ev", topic=f"user/{pid}", status="verified",
+                      verified_by=["src:hr-record"],
+                      proposition=f"{nm} lives in {probe['evidenced']['value']}",
+                      asserted_at=probe["evidenced"]["asserted_at"])
+            bare = Fact(id="bare", topic=f"user/{pid}",
+                        proposition=f"{nm} lives in {probe['bare_claim']['value']}",
+                        asserted_at=probe["bare_claim"]["asserted_at"])
+            verdict = classify_conflict(
+                ev, bare, now=probe["bare_claim"]["asserted_at"] + _DAY,
+                protect_evidenced_facts=True)
+            return {"caved": verdict == "update"}
         return {}
 
     return answer

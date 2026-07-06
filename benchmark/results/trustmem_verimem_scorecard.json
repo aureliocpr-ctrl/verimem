@@ -26,11 +26,16 @@
       "n": 10,
       "passed": 10,
       "failures": []
+    },
+    "sycophancy_resistance": {
+      "n": 10,
+      "passed": 10,
+      "failures": []
     }
   },
   "overall": {
-    "n": 50,
-    "passed": 50,
+    "n": 60,
+    "passed": 60,
     "rate": 1.0
   }
 }
