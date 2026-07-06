@@ -1166,3 +1166,24 @@ async def test_call_tool_trust_report_min_relevance(tmp_path, fake_agent: _FakeA
     rep = json.loads(blocks[0])
     assert rep["abstained"] is True
     assert rep["min_relevance"] == 0.99
+
+
+@pytest.mark.asyncio
+async def test_verimem_tool_alias_dispatches_to_hippo(tmp_path, fake_agent: _FakeAgent) -> None:
+    """Rename Phase 1 (RENAME-PLAN): verimem_* is a canonical alias for hippo_*
+    on the MCP surface, dispatched to the same handler — the product name the
+    user types is 'verimem', without breaking existing hippo_* configs. Mirrors
+    the pre-existing engram_* compat alias (cycle #41)."""
+    from engram.semantic import Fact, SemanticMemory
+
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    sm.store(Fact(id="a", topic="u", proposition="Marco lives in Milan"),
+             embed="sync")
+    fake_agent.semantic = sm
+
+    # verimem_recall_history must behave exactly like hippo_recall_history
+    via_new = await _invoke_tool("verimem_recall_history",
+                                 {"query": "Where does Marco live", "k": 3})
+    via_old = await _invoke_tool("hippo_recall_history",
+                                 {"query": "Where does Marco live", "k": 3})
+    assert json.loads(via_new[0]) == json.loads(via_old[0])

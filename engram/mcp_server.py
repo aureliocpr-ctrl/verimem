@@ -6489,6 +6489,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # and `hippo_*` will become the deprecated alias. See STATE.md.
     if name.startswith("engram_"):
         name = "hippo_" + name[len("engram_"):]
+    # Rename Phase 1 (RENAME-PLAN.md, 2026-07-06): verimem_* is the NEW
+    # canonical product alias. Dispatched to the same hippo_* handler so a
+    # host config can spell the product name without any behaviour change;
+    # hippo_* stays valid (non-breaking for 0.3.x users).
+    if name.startswith("verimem_"):
+        name = "hippo_" + name[len("verimem_"):]
     # A10: normalize JSON `null` → absent so optional numeric args fall back to
     # their defaults instead of feeding None into int()/float() (TypeError).
     # Done BEFORE validation so a null for a REQUIRED field still fails cleanly
