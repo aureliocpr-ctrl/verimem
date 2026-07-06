@@ -8,6 +8,12 @@ warning), plus a `verimem` console script. Internal deep rename = v0.4 gated.
 """
 from __future__ import annotations
 
+import pathlib
+
+#: repo root derived from this file — NEVER a hardcoded absolute path
+#: (the first CI run in repo history failed on every non-Windows runner here)
+_REPO_ROOT = str(pathlib.Path(__file__).resolve().parents[1])
+
 
 def test_import_verimem_exposes_memory():
     import verimem
@@ -30,7 +36,7 @@ def test_no_deprecation_warning_on_import():
         [sys.executable, "-W", "error::DeprecationWarning", "-c",
          "import verimem; print(verimem.__version__)"],
         capture_output=True, text=True, timeout=120,
-        cwd=r"C:\Users\aurel\Code\hippoagent")
+        cwd=_REPO_ROOT)
     assert r.returncode == 0, (r.stderr or "")[-400:]
     assert r.stdout.strip(), "version exposed"
 
@@ -57,7 +63,7 @@ def test_sdk_import_safe_without_server_and_byok_deps():
     )
     r = subprocess.run([sys.executable, "-c", code], capture_output=True,
                        text=True, timeout=300,
-                       cwd=r"C:\Users\aurel\Code\hippoagent")
+                       cwd=_REPO_ROOT)
     assert r.returncode == 0, (r.stderr or "")[-500:]
     assert "SDK OK" in r.stdout
 
