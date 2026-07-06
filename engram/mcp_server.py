@@ -1234,6 +1234,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     "max_hops": {"type": "integer", "default": 3,
                                   "description": "history depth per fact"},
                     "with_disputes": {"type": "boolean", "default": True},
+                    "route": {"type": "boolean", "default": False,
+                              "description": "auto-route: serve the story only "
+                              "when the query wording is temporal (EN+IT); a "
+                              "plain lookup falls back to lean recall — keeps "
+                              "trap-question abstention pure (measured trade)"},
                 },
                 "required": ["query"],
             },
@@ -6861,9 +6866,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if name == "hippo_recall_history":
             # Answer-with-history (iter 42): recall arricchito con la storia
             # delle transizioni (catena supersede) + conflitti DICHIARATI.
-            from engram.temporal_context import recall_with_history
+            from engram.temporal_context import recall_with_history, wants_history
+            _q = arguments.get("query", "")
+            if bool(arguments.get("route", False)) and not wants_history(_q):
+                # routed away: plain lean recall (the abstention-pure context)
+                hits = a.semantic.recall(_q, k=int(arguments.get("k", 5)))
+                lines = [getattr(f, "proposition", "") for f, *_ in hits]
+                _audit(name, arguments, outcome="ok")
+                return _ok({"context": lines, "n": len(lines), "routed": "plain"})
             lines = recall_with_history(
-                a.semantic, arguments.get("query", ""),
+                a.semantic, _q,
                 k=int(arguments.get("k", 5)),
                 max_hops=int(arguments.get("max_hops", 3)),
                 with_disputes=bool(arguments.get("with_disputes", True)))

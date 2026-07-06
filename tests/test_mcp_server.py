@@ -1110,3 +1110,37 @@ async def test_read_resource_unknown_uri(fake_agent: _FakeAgent) -> None:
     payload = result.root if hasattr(result, "root") else result
     parsed = json.loads(payload.contents[0].text)
     assert "error" in parsed
+
+
+@pytest.mark.asyncio
+async def test_call_tool_recall_history_route(tmp_path, fake_agent: _FakeAgent) -> None:
+    """route=True: la storia viene servita SOLO se il wording della query è
+    temporale — un lookup piatto ricade sul recall lean (astensione pura sulle
+    trap questions: il trade misurato di TRUST_MAINTENANCE)."""
+    from engram.semantic import Fact, SemanticMemory
+
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    sm.store(Fact(id="r-old", proposition="Johnson's monthly income is 3500 USD",
+                  topic="t", asserted_at=1_700_000_000.0), embed="sync")
+    sm.store(Fact(id="r-new", proposition="Johnson's monthly income is 5000 USD",
+                  topic="t", asserted_at=1_700_000_000.0 + 60 * 86400),
+             embed="sync")
+    sm.supersede("r-old", "r-new", reason="update")
+    fake_agent.semantic = sm
+
+    # wording temporale -> storia servita
+    blocks = await _invoke_tool(
+        "hippo_recall_history",
+        {"query": "When did Johnson's income change?", "k": 3, "route": True})
+    temporal = json.loads(blocks[0])
+    assert "PREVIOUSLY" in "\n".join(temporal.get("context", []))
+
+    # lookup piatto -> lean, marcato routed=plain, niente storia
+    blocks = await _invoke_tool(
+        "hippo_recall_history",
+        {"query": "Johnson monthly income figure", "k": 3, "route": True})
+    plain = json.loads(blocks[0])
+    joined = "\n".join(plain.get("context", []))
+    assert plain.get("routed") == "plain"
+    assert "PREVIOUSLY" not in joined
+    assert "5000" in joined, "the live value is still served"
