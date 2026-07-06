@@ -4,7 +4,7 @@
 > `pip install -e .` from this repo)*. Local SQLite, no external API key.
 
 ```python
-from engram import Memory
+from verimem import Memory   # `from engram import Memory` works too
 
 mem = Memory("my.db")                     # or Memory("my.db", llm=your_llm)
 

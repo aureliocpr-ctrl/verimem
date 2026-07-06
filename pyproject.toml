@@ -118,6 +118,8 @@ dev = [
 ]
 
 [project.scripts]
+# `verimem` = the PUBLIC command (one product, one name — 2026-07-06).
+verimem = "engram.cli:main"
 engram = "engram.cli:main"
 # Backward-compat alias (deprecated, kept for 3 months for existing user
 # muscle memory and pre-rename scripts).
@@ -132,7 +134,8 @@ Issues = "https://github.com/aureliocpr-ctrl/verimem/issues"
 where = ["."]
 # `engram` = canonical package post-cycle-#41 rename.
 # `hippoagent` = backward-compat shim that re-exports engram.
-include = ["engram*", "hippoagent*", "benchmark*"]
+# `verimem` = the CANONICAL public alias package (lazy, non-deprecated).
+include = ["verimem*", "engram*", "hippoagent*", "benchmark*"]
 
 [tool.setuptools.package-data]
 # Ship the dashboard's data assets INSIDE the wheel. Without these,
