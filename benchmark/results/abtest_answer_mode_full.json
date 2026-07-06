@@ -1,0 +1,58 @@
+{
+  "n": 45,
+  "user": "u1",
+  "sessions": 77,
+  "k": 12,
+  "strict": 0.1333,
+  "declared": 0.2444,
+  "lift": 0.1111,
+  "c_strict": 6,
+  "c_declared": 11,
+  "flips": [
+    {
+      "q": "What activity did Johnson Joseph decide to stop due to a minor injury ",
+      "gold": "Cycling",
+      "strict_ok": false,
+      "declared_ok": true,
+      "declared_pred": "Cycling.",
+      "strict_pred": "NO ANSWER."
+    },
+    {
+      "q": "What is Johnson Joseph's life goal for Albi B&B as of 2031-11-01?",
+      "gold": "Transforming Albi B&B into a world-renowned d",
+      "strict_ok": false,
+      "declared_ok": true,
+      "declared_pred": "Transforming Albi B&B into a world-renowned destination and hosting over 10,000 guests ann",
+      "strict_pred": "Johnson's life goal is to transform Albi B&B into a world-renowned destination."
+    },
+    {
+      "q": "What movie genre did Johnson Joseph's preference change to on June 26,",
+      "gold": "Fantasy films",
+      "strict_ok": false,
+      "declared_ok": true,
+      "declared_pred": "No — the context states Johnson shifted to enjoying **fantasy films**, but no date (June 2",
+      "strict_pred": "NO ANSWER."
+    },
+    {
+      "q": "What genre of music does Johnson Joseph prioritize in his selection af",
+      "gold": "Jazz.",
+      "strict_ok": false,
+      "declared_ok": true,
+      "declared_pred": "No. The context contains no information about any event on March 9, 2042. The correct fact",
+      "strict_pred": "NO ANSWER."
+    },
+    {
+      "q": "What type of board games does Johnson Joseph prefer as of March 19, 20",
+      "gold": "Thematic cooperative board games",
+      "strict_ok": false,
+      "declared_ok": true,
+      "declared_pred": "No. The context states no information about March 19, 2043. The correct fact is that Johns",
+      "strict_pred": "NO ANSWER."
+    }
+  ],
+  "baseline_n9": {
+    "strict": 0.333,
+    "declared": 0.556,
+    "note": "iter-80 A/B piccolo campione = rumore"
+  }
+}
