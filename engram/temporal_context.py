@@ -102,13 +102,36 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5) -> list[tuple]:
             getattr(f, "created_at", 0.0) or 0.0)
         if born > when:
             continue                      # not yet asserted at `when`
-        died = getattr(f, "superseded_at", None)
-        if died is not None and float(died) <= when:
+        died = _died_event_ts(sm, f)
+        if died is not None and died <= when:
             continue                      # already superseded by `when`
         out.append(hit)
         if len(out) >= k:
             break
     return out
+
+
+def _died_event_ts(sm, fact) -> float | None:
+    """EVENT time a fact stopped being current: its successor's asserted_at —
+    NOT ``superseded_at``, which is transaction time (a batch ingest today of a
+    2024 history supersedes everything today, making every version look
+    still-current at any past ``when`` — review 5-lenti C2). Fallback to
+    ``superseded_at`` when the successor is unreadable (dangling link) or
+    carries no event time. None = still current."""
+    succ_id = getattr(fact, "superseded_by", None)
+    tx = getattr(fact, "superseded_at", None)
+    if not succ_id and tx is None:
+        return None
+    if succ_id:
+        try:
+            succ = sm.get(succ_id)
+        except Exception:  # noqa: BLE001 — read enrichment, degrade to tx time
+            succ = None
+        if succ is not None:
+            ev = _event_ts(succ)
+            if ev is not None:
+                return float(ev)
+    return float(tx) if tx is not None else None
 
 
 def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,

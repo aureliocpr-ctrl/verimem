@@ -93,3 +93,27 @@ def test_recall_as_of_reconstructs_the_past(tmp_path) -> None:
     # BEFORE anything was asserted: empty
     feb = recall_as_of(sm, "Johnson income", when=mar - 30 * _DAY, k=5)
     assert feb == []
+
+
+def test_recall_as_of_died_axis_is_event_time(tmp_path) -> None:
+    """Review 5-lenti C2: batch-ingested history (asserted_at in the past, the
+    supersede executed TODAY) — superseded_at is transaction time, so filtering
+    'died' on it makes every version look still-current at any past `when`.
+    The event-time death of a fact is its successor's asserted_at."""
+    from engram.temporal_context import recall_as_of
+    now = time.time()
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    sm.store(Fact(id="roma", topic="user/home",
+                  proposition="User lives in Rome",
+                  asserted_at=now - 900 * _DAY), embed="sync")
+    sm.store(Fact(id="milano", topic="user/home",
+                  proposition="User lives in Milan",
+                  asserted_at=now - 750 * _DAY), embed="sync")
+    sm.supersede("roma", "milano", reason="moved")  # superseded_at = today
+    ids = {f.id for f, *_ in recall_as_of(
+        sm, "where does the user live", when=now - 560 * _DAY, k=5)}
+    assert ids == {"milano"}, \
+        "at `when` Rome was already replaced in EVENT time; only Milan was current"
+    ids_before = {f.id for f, *_ in recall_as_of(
+        sm, "where does the user live", when=now - 800 * _DAY, k=5)}
+    assert ids_before == {"roma"}, "before the move only Rome existed"
