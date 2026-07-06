@@ -1,0 +1,44 @@
+[
+  {
+    "readers": 10,
+    "writers": 2,
+    "ops_each": 30,
+    "wall_s": 38.0,
+    "finished": 12,
+    "expected": 12,
+    "read_p50_ms": 16,
+    "read_p95_ms": 68,
+    "write_p50_ms": 42,
+    "write_p95_ms": 82,
+    "errors": 0,
+    "total_ops_per_s": 9.5
+  },
+  {
+    "readers": 40,
+    "writers": 8,
+    "ops_each": 30,
+    "wall_s": 476.6,
+    "finished": 36,
+    "expected": 48,
+    "read_p50_ms": 13,
+    "read_p95_ms": 83738,
+    "write_p50_ms": 63,
+    "write_p95_ms": 87,
+    "errors": 0,
+    "total_ops_per_s": 3.0
+  },
+  {
+    "readers": 80,
+    "writers": 20,
+    "ops_each": 30,
+    "wall_s": 49.6,
+    "finished": 32,
+    "expected": 100,
+    "read_p50_ms": 25,
+    "read_p95_ms": 1313,
+    "write_p50_ms": null,
+    "write_p95_ms": null,
+    "errors": 0,
+    "total_ops_per_s": 60.5
+  }
+]
