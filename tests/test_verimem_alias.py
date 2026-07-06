@@ -14,6 +14,8 @@ import pathlib
 #: (the first CI run in repo history failed on every non-Windows runner here)
 _REPO_ROOT = str(pathlib.Path(__file__).resolve().parents[1])
 
+from tests._real_model import requires_real_model  # noqa: E402
+
 
 def test_import_verimem_exposes_memory():
     import verimem
@@ -41,6 +43,7 @@ def test_no_deprecation_warning_on_import():
     assert r.stdout.strip(), "version exposed"
 
 
+@requires_real_model  # subprocess embeds for real: fresh python, no stub
 def test_sdk_import_safe_without_server_and_byok_deps():
     """Packaging contract (iter 59): `import engram/verimem` + the 5-verb SDK
     must work WITHOUT fastapi/uvicorn/jinja2/openai installed (they moved to
