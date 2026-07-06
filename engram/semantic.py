@@ -3635,12 +3635,32 @@ class SemanticMemory:
         except Exception:  # noqa: BLE001
             pass
 
+    @staticmethod
+    def _relink_through(conn, fact_id: str) -> None:
+        """Re-link incoming supersession pointers THROUGH a row about to be
+        deleted (review 5-lenti C4): rows pointing at ``fact_id`` inherit its
+        successor, so A -> B(deleted) -> C stays walkable as A -> C and a later
+        ``purge_history`` closes over the whole chain in both directions.
+        Without this the plain delete digs a dangling hole: purge(A) never
+        reaches C (stays LIVE), purge(C) never reaches A (resurrectable via
+        as_of). No successor -> pointers left as-is (behaviour unchanged;
+        NULLing them would resurrect retired versions into the live set)."""
+        row = conn.execute(
+            "SELECT superseded_by FROM facts WHERE id = ?", (fact_id,),
+        ).fetchone()
+        succ = row[0] if row else None
+        if succ and succ != fact_id:
+            conn.execute(
+                "UPDATE facts SET superseded_by = ? WHERE superseded_by = ?",
+                (succ, fact_id))
+
     def delete(self, fact_id: str) -> bool:
         """FORGIA pezzo #202: delete one fact by id (privacy / GDPR).
 
         Returns True iff a row was actually removed.
         """
         with self._connect() as conn:
+            self._relink_through(conn, fact_id)
             cur = conn.execute(
                 "DELETE FROM facts WHERE id = ?", (fact_id,),
             )
@@ -3670,6 +3690,7 @@ class SemanticMemory:
                     "ok": True, "fact_id": fact_id,
                     "removed": False, "op_id": None,
                 }
+            self._relink_through(conn, fact_id)   # C4: keep chains walkable
             cur = conn.execute(
                 "DELETE FROM facts WHERE id = ?", (fact_id,),
             )

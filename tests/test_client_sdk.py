@@ -304,3 +304,45 @@ def test_delete_default_still_single_row(tmp_path):
     mem.semantic.supersede("x", "y", reason="u")
     assert mem.delete("y") is True
     assert mem.semantic.get("x") is not None, "default delete stays single-row"
+
+
+def _seed_sensitive_chain(mem):
+    import time as _t
+
+    from engram.semantic import Fact
+    now = _t.time()
+    D = 86400.0
+    for fid, val, age in (("a", 3000, 120), ("b", 4000, 60), ("c", 5000, 10)):
+        mem.semantic.store(Fact(id=fid, topic="t",
+                                proposition=f"Rossi salary is {val} (SENSITIVE)",
+                                asserted_at=now - age * D), embed="sync")
+    mem.semantic.supersede("a", "b", reason="update")
+    mem.semantic.supersede("b", "c", reason="update")
+    return now
+
+
+def test_purge_history_closes_over_a_prior_plain_delete(tmp_path):
+    """Review 5-lenti C4: A->B->C same sensitive datum; a plain delete(B) —
+    the DEFAULT of the same API, so any pre-existing DB has such holes — left
+    A.superseded_by dangling. The later GDPR purge then stopped at the hole:
+    purge(A) never reached C (still LIVE), purge(C) never reached A
+    (resurrectable via as_of). The plain delete now re-links pointers through
+    the deleted row, so the chain stays walkable in both directions."""
+    from engram.client import Memory
+
+    # forward: purge(A) must reach C through the hole left by delete(B)
+    mem = Memory(tmp_path / "fw.db")
+    _seed_sensitive_chain(mem)
+    assert mem.delete("b") is True                     # plain delete digs the hole
+    assert mem.delete("a", purge_history=True) is True
+    assert mem.semantic.get("c") is None, "forward closure must cross the hole"
+
+    # backward: purge(C) must reach A through the same hole (fresh db)
+    mem2 = Memory(tmp_path / "bw.db")
+    now = _seed_sensitive_chain(mem2)
+    assert mem2.delete("b") is True
+    assert mem2.delete("c", purge_history=True) is True
+    assert mem2.semantic.get("a") is None, "backward closure must cross the hole"
+    from engram.temporal_context import recall_as_of
+    past = recall_as_of(mem2.semantic, "Rossi salary", when=now - 90 * 86400.0, k=5)
+    assert past == [], "no resurrection via time travel after the purge"
