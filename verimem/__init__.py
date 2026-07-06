@@ -22,6 +22,7 @@ from __future__ import annotations
 import importlib
 import importlib.abc
 import importlib.machinery
+import importlib.util
 import sys
 
 import engram as _engram
@@ -45,19 +46,57 @@ class _AliasLoader(importlib.abc.Loader):
         # the placeholder is dropped. engram.X's __name__/__spec__ untouched.
         sys.modules[module.__spec__.name] = real
 
+    # runpy support (``python -m verimem.X``, review 5-lenti C7): delegate the
+    # code lookup to the real module's loader under its REAL name, so -m
+    # executes engram/X.py exactly as ``python -m engram.X`` would.
+    def get_code(self, fullname):  # noqa: ANN001 - importlib protocol
+        spec = importlib.util.find_spec(self._target)
+        if spec and spec.loader and hasattr(spec.loader, "get_code"):
+            return spec.loader.get_code(self._target)
+        return None
+
+    def get_source(self, fullname):  # noqa: ANN001 - importlib protocol
+        spec = importlib.util.find_spec(self._target)
+        if spec and spec.loader and hasattr(spec.loader, "get_source"):
+            return spec.loader.get_source(self._target)
+        return None
+
 
 class _AliasFinder(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):  # noqa: ANN001
         if not fullname.startswith("verimem."):
             return None
         real = "engram" + fullname[len("verimem"):]
-        return importlib.machinery.ModuleSpec(
-            fullname, _AliasLoader(real), is_package=True)
+        # Review 5-lenti C7: resolve the REAL spec first. (a) Missing target ->
+        # None, so the machinery raises ModuleNotFoundError named after what
+        # the USER typed (no synthetic spec for nonexistent modules, no
+        # feature-detection false positives). (b) Mirror the real module's
+        # shape: is_package=True on a flat module broke ``python -m``
+        # ("is a package and cannot be directly executed").
+        try:
+            real_spec = importlib.util.find_spec(real)
+        except (ImportError, AttributeError, ValueError):
+            return None
+        if real_spec is None:
+            return None
+        spec = importlib.machinery.ModuleSpec(
+            fullname, _AliasLoader(real), origin=real_spec.origin,
+            is_package=real_spec.submodule_search_locations is not None)
+        if real_spec.submodule_search_locations is not None:
+            spec.submodule_search_locations = list(
+                real_spec.submodule_search_locations)
+        return spec
 
 
 # Idempotent install (re-import of this module must not stack finders).
+# INSERTED AT THE HEAD (C7): appended, the finder lost every NESTED name
+# (verimem.swarm.X) to PathFinder, which found the file via the swapped
+# parent's real __path__ and RE-EXECUTED it under the alias name — two
+# distinct module objects (the cycle-#41 trap). First in line, every
+# verimem.* import resolves through the alias; non-verimem names cost one
+# startswith check.
 if not any(isinstance(f, _AliasFinder) for f in sys.meta_path):
-    sys.meta_path.append(_AliasFinder())
+    sys.meta_path.insert(0, _AliasFinder())
 
 
 def __getattr__(name: str):

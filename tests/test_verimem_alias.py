@@ -61,3 +61,42 @@ def test_sdk_import_safe_without_server_and_byok_deps():
                        cwd=r"C:\Users\aurel\Code\hippoagent")
     assert r.returncode == 0, (r.stderr or "")[-500:]
     assert "SDK OK" in r.stdout
+
+
+def test_find_spec_is_honest_about_missing_modules():
+    """Review 5-lenti C7: the finder used to return a synthetic spec for ANY
+    verimem.* name — feature-detection via find_spec got false positives."""
+    import importlib.util
+    assert importlib.util.find_spec("verimem.no_such_module_xyz123") is None
+
+
+def test_missing_submodule_error_names_verimem():
+    """C7: the ModuleNotFoundError must name what the USER typed, not the
+    internal package."""
+    import importlib
+
+    import pytest as _pytest
+    with _pytest.raises(ModuleNotFoundError) as ei:
+        importlib.import_module("verimem.no_such_module_xyz123b")
+    assert ei.value.name == "verimem.no_such_module_xyz123b"
+
+
+def test_python_dash_m_runs_flat_modules():
+    """C7: `python -m verimem.X` on a flat module used to die with 'is a
+    package and cannot be directly executed' (is_package=True on everything)."""
+    import subprocess
+    import sys
+    r = subprocess.run(
+        [sys.executable, "-m", "verimem.temporal_context"],
+        capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, r.stderr[-500:]
+
+
+def test_nested_subpackage_module_identity():
+    """C7 (double-execution hazard): with the finder APPENDED to meta_path,
+    PathFinder won nested names (verimem.swarm.X) via the swapped parent's
+    real __path__ and re-executed the file under the alias name — two distinct
+    module objects, the exact cycle-#41 trap the docstring promises to avoid."""
+    import engram.swarm.lifecycle as e
+    import verimem.swarm.lifecycle as v
+    assert v is e, "nested alias must be the SAME module object"
