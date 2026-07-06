@@ -206,16 +206,26 @@ this is a measured 4-point dial. On the extraction axis the same gate is
   — the update-recall / false-supersede frontiers.
 - `benchmark/sycophancy_mem.py`, `benchmark/sycophancy_bench.py` — the cave-rate.
 
-## The abstention price of rich context — measured, with the cure queued
+## The abstention price of rich context — measured, and the cure (partial)
 
 Dated-history context lifts transition QA by +16pp, but it has a measured
 price on unanswerable questions: Boundary abstention **1.000 (plain context) →
 0.949 (history context)** on u0 (39 questions, same store, same verify
 answerer — the model, seduced by dated specifics, asserted 2 answers it should
-have refused; 0 recovered). The queued cure is **routing**: serve history only
-on temporally-qualified questions (the +33pp Basic-Fact lift came exactly from
-those) and plain context elsewhere — hypothesis: keep both 1.000 and +16pp
-(`exp3`, pre-written, falsifiable).
+have refused; 0 recovered). The cure is **routing**: serve history only on
+temporally-qualified questions (`wants_history`, shipped in `search(
+with_history="auto")` + MCP `hippo_recall_history(route=true)`), plain
+context elsewhere.
+
+**Measured (`exp3`, u0, 78 questions Boundary+Conflict, same verify answerer,
+`results/exp3_routing_u0.json`):** routing recovers **~half** of the abstention
+cost — Boundary **0.949 (always-history) → 0.974 (routed)**, toward the 1.000
+plain ceiling — while keeping Conflict high (0.897). It does NOT fully close it:
+62/78 questions still routed to history because many HaluMem trap questions
+*mention a date* (e.g. "as of <year>…") which the temporal signal reads as
+"needs the story". **Stated limit → next lever:** the router should separate a
+*transition* question (needs history) from a *dated-but-existence* question (a
+trap) — a finer signal than "contains a temporal marker".
 
 ## GDPR-grade forget: the chain dies, nothing resurrects
 

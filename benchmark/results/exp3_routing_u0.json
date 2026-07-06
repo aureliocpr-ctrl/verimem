@@ -1,0 +1,646 @@
+{
+  "n": 78,
+  "n_correct": 72,
+  "n_errors": 0,
+  "accuracy": 0.9231,
+  "per_category": {
+    "Memory Boundary": {
+      "n": 39,
+      "accuracy": 0.9744
+    },
+    "Memory Conflict": {
+      "n": 39,
+      "accuracy": 0.8718
+    }
+  },
+  "details": [
+    {
+      "id": "0:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided by the user."
+    },
+    {
+      "id": "0:2",
+      "category": "Memory Conflict",
+      "predicted": "No; the context shows Martin's life goal was *stated* in 2025, but the initiative was launched in 2034/2035 (disputed between the two years), not 2025.",
+      "correct": false,
+      "errored": false,
+      "gold": "Martin Mark has no partner; he aims to establish a health initiative."
+    },
+    {
+      "id": "1:0",
+      "category": "Memory Conflict",
+      "predicted": "No; the context shows Martin Mark worked at Huaxin Consulting as of 2025-09-05, but his role was never listed as nurse — his recorded titles are director-level positions.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin Mark is a director at Huaxin Consulting."
+    },
+    {
+      "id": "1:1",
+      "category": "Memory Conflict",
+      "predicted": "No; the context shows Martin Mark was employed as director at Huaxin Consulting as of 2025, with his role described as financially rewarding (though mentally stressful).",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin Mark is employed with a monthly income of 15700 USD."
+    },
+    {
+      "id": "2:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "2:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin Mark *dislikes* reptiles (like snakes) as pets.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin dislikes reptiles, especially snakes."
+    },
+    {
+      "id": "4:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2026-01-06 the context shows Martin **modified** his preference **from** Labradors **to** Golden Retrievers, not the other way around.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin prefers Golden Retrievers over Labradors."
+    },
+    {
+      "id": "4:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The name of Martin's friend is not provided."
+    },
+    {
+      "id": "7:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "9:2",
+      "category": "Memory Conflict",
+      "predicted": "No — Martin expressed interest in **non-violent** action games for their cognitive benefits, explicitly remaining skeptical about violent video games.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he is skeptical about violent games but interested in non-violent ones."
+    },
+    {
+      "id": "10:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "10:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The exact date is not provided."
+    },
+    {
+      "id": "11:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context gives Martin's name as \"Martin Mark,\" where \"Mark\" appears to be his last name, not a middle name; no middle name is recorded.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "11:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states the opposite: Martin's preference shifted **from documentaries to fictional narratives** after a stressful (not relaxing) week.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin's preference shifted to fictional narratives after a stressful week."
+    },
+    {
+      "id": "12:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the dialogue."
+    },
+    {
+      "id": "13:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context gives Martin's full name as \"Martin Mark,\" where Mark appears to be his last name, not a middle name; no middle name is recorded.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "14:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin's clothing preference shifted to eco-friendly and high-tech athletic wear after the seminar, not that he kept using traditional athletic wear.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin switched to eco-friendly athletic wear."
+    },
+    {
+      "id": "17:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin found **iguanas'** social behaviors interesting after the sanctuary visit, not snakes; he actually maintains a **fear** of snakes due to their unpredictable movements.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin maintains a fear of snakes."
+    },
+    {
+      "id": "17:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin's middle name is unknown."
+    },
+    {
+      "id": "20:1",
+      "category": "Memory Conflict",
+      "predicted": "No — by May 05, 2028, Martin's perception had shifted away from purely negative, as he expressed a newfound appreciation for boxing's mental and physical rigor, even seeing it as intense physical exercise and a form of personal growth.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin's perception shifted to appreciate its strategic aspects."
+    },
+    {
+      "id": "20:2",
+      "category": "Memory Conflict",
+      "predicted": "No; the context states Martin values sports that balance physical activity with mental challenges and shows openness to new experiences, including boxing, from May 05, 2028 onward.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin is open to new experiences and values sports with mental challenges."
+    },
+    {
+      "id": "21:0",
+      "category": "Memory Conflict",
+      "predicted": "No; the context states Martin *considered* early retirement on that date due to stress, but does not confirm he actually retired.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, Martin decided to take a sabbatical instead of retiring."
+    },
+    {
+      "id": "21:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states his social network led him to choose a **sabbatical**, not early retirement.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his social network supported his decision to take a sabbatical."
+    },
+    {
+      "id": "21:2",
+      "category": "Memory Conflict",
+      "predicted": "No; the context records his **sabbatical** (not retirement) starting June 1, 2028 — retirement was only under consideration, never confirmed.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin officially started his sabbatical on June 1, 2028."
+    },
+    {
+      "id": "22:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context only records Martin's full name as \"Martin Mark,\" with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the dialogue."
+    },
+    {
+      "id": "22:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Martin values multiplayer puzzle games for collaborative problem-solving and social interaction, while solo gaming is mentioned only as a past experience he moved away from.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin preferred multiplayer puzzle games for collaboration."
+    },
+    {
+      "id": "22:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context confirms that on Aug 08, 2028, Martin expressed **curiosity** about exploring more cooperative gaming opportunities offering cognitive challenges and social engagement.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin expressed curiosity about cooperative gaming opportunities."
+    },
+    {
+      "id": "23:2",
+      "category": "Memory Conflict",
+      "predicted": "No — on Nov 10, 2028 the context shows a **disputed** record: one entry says Martin *added* crowded tourist spots as a preference for cultural enrichment, directly conflicting with the earlier (2025-09-06) record that he *dislikes* crowded tourist spots.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he now appreciates crowded spots for cultural enrichment."
+    },
+    {
+      "id": "25:1",
+      "category": "Memory Conflict",
+      "predicted": "No; on February 13, 2029, Martin expressed **excitement** about exploring more horror films, not a dislike — his dislike was recorded earlier, on September 6, 2025.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin expressed excitement about exploring horror films."
+    },
+    {
+      "id": "28:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin's middle name is not mentioned."
+    },
+    {
+      "id": "29:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "29:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER. The two records dated 2029-05-01 describe a new colleague but do not provide their name.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "29:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "29:3",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin Mark's promotion to Senior Director occurred since 2029-01-15, which is before June 2029.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, it occurred on Jan 15, 2029."
+    },
+    {
+      "id": "29:4",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states his promotion to Senior Director in March 2029 changed his mental health from 'Mildly Abnormal' to 'Abnormal', indicating a worsening, not an improvement.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his mental health status changed to 'Abnormal' due to increased stress."
+    },
+    {
+      "id": "29:5",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Martin Mark's optimism about his role as Senior Director is dated from 2029-06-15, not before June 2029.",
+      "correct": false,
+      "errored": false,
+      "gold": "Yes, in May 2029, he viewed challenges as growth opportunities."
+    },
+    {
+      "id": "30:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "31:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "31:2",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2029-11-23 Martin Mark switched to **smart-casual** business attire (not casual), specifically to balance professionalism with comfort.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin switched to smart-casual attire for professionalism."
+    },
+    {
+      "id": "32:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that Martin Mark's visit to a colleague's home on 2030-02-26 **expanded** his pet preferences to **include** Sphynx cats, not exclude them.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he included Sphynx cats in his preferences."
+    },
+    {
+      "id": "33:1",
+      "category": "Memory Conflict",
+      "predicted": "No; attending the live event shifted his perception positively, revealing the sport's strategic and technical aspects.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his perception became positive, appreciating its strategic depth and discipline."
+    },
+    {
+      "id": "33:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "34:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is unknown."
+    },
+    {
+      "id": "34:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The specific games are unknown."
+    },
+    {
+      "id": "34:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin expressed **curiosity** about responsible gaming practices (not skepticism), and his reflections were marked by **empathy and optimism** about healthier gaming practices.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin expressed curiosity and optimism about responsible gaming practices."
+    },
+    {
+      "id": "35:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Martin Mark's conservation-focused hike experiences are marked as **current since 2030-12-06**, with no record of abandonment.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he embraced them for his environmental and humanitarian goals."
+    },
+    {
+      "id": "36:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "36:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "37:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown."
+    },
+    {
+      "id": "39:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states it was **jazz** that Martin Mark used as a means of stress relief during challenging periods at work (since 2031-09-16), not rock music.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin found jazz therapeutic, not rock music."
+    },
+    {
+      "id": "42:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2031-12-19, Martin Mark decided to **phase out** formal wear from his wardrobe, focusing on comfort and practicality.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin decided to phase out formal wear."
+    },
+    {
+      "id": "43:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin felt a **newfound sense of financial freedom** following his salary increase on Aug 15, 2031.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin felt a newfound sense of financial freedom."
+    },
+    {
+      "id": "43:3",
+      "category": "Memory Conflict",
+      "predicted": "No — by December 1, 2031 the context states his lifestyle improvements led to **increased productivity and job satisfaction**, not decreased.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, they led to increased productivity and job satisfaction."
+    },
+    {
+      "id": "44:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided by the user."
+    },
+    {
+      "id": "45:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is unknown."
+    },
+    {
+      "id": "46:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "47:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context confirms the opposite: as of 2032-12-31, Martin's travel preferences **include** cultural and health tours, with multiple records showing his enthusiasm for integrating them into his routine.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin included cultural and health tours in his travel preferences."
+    },
+    {
+      "id": "48:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "53:0",
+      "category": "Memory Conflict",
+      "predicted": "No — after the tea expo on Jul 08, 2033, Martin Mark expressed a preference for **enhanced antioxidant green tea**, not regular green tea.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin prefers enhanced antioxidant green tea after the expo."
+    },
+    {
+      "id": "54:0",
+      "category": "Memory Conflict",
+      "predicted": "No; on October 11, 2033, Martin Mark expressed **curiosity** about exploring socially conscious rap tracks and acknowledged rap's role in advocating for social change — the opposite of disinterest.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin expressed curiosity about socially conscious rap."
+    },
+    {
+      "id": "55:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "55:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "55:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin Mark expressed **optimism** (not skepticism) about the positive impact of sustainable clothing on his lifestyle and the environment since 2034-01-13.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin Mark is optimistic about the impact of sustainable clothing."
+    },
+    {
+      "id": "56:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "56:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "57:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is unknown."
+    },
+    {
+      "id": "58:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that on 2034-10-24 Martin Mark's preference had **shifted away from** herbal teas **toward** potent health beverages like kombucha and matcha.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin prefers potent health beverages like kombucha and matcha."
+    },
+    {
+      "id": "58:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "59:2",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2035-01-26 the context states his preference had **shifted from ambient to jazz and contemporary classical**, with ambient music having a **decreased presence** in his daily life.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin shifted from ambient to jazz and contemporary classical music."
+    },
+    {
+      "id": "62:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin Mark's middle name is unknown."
+    },
+    {
+      "id": "62:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin Mark **updated his preference to include** stylish and functional athletic wear as of 2035-05-01, the opposite of avoiding it.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Martin decided to include stylish athletic wear."
+    },
+    {
+      "id": "63:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Martin Mark expressed **enthusiasm** about integrating new insights on feline communication into his pet preferences on 2035-08-03.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed enthusiasm about integrating these insights."
+    },
+    {
+      "id": "63:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "63:2",
+      "category": "Memory Boundary",
+      "predicted": "No — the context shows his monthly income transitioned to \"0 yuan\" on Feb 15, 2035 due to his shift from employment to entrepreneurship, so by Aug 3, 2035 his salary was 0 yuan.",
+      "correct": false,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "64:1",
+      "category": "Memory Conflict",
+      "predicted": "No; the context records the launch on Sep 15, 2035 (or Sep 15, 2034 in a disputed record), not May 2035.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, Martin launched it on Feb 15, 2035."
+    }
+  ],
+  "routing": {
+    "temporal_routed": 63,
+    "total": 78
+  }
+}
