@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 # with a placeholder upload from the owner's account BEFORE any announcement.
 # Prior working names "hippoagent" (2026-06-07) and "Engram" retired as brands.
 name = "verimem"
-version = "0.3.0"
+version = "0.3.1"
 description = "Verimem — verified memory for AI agents. The only memory layer whose add() routes every write through an anti-confabulation admission gate (source entailment), with provenance on every read. Engram architecture: episodes → skills → consolidation, all inspectable."
 readme = "README.md"
 license = { file = "LICENSE" }

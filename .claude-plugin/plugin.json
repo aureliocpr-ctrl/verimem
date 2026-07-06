@@ -1,7 +1,7 @@
 {
   "name": "verimem",
   "displayName": "Verimem — verified memory for AI agents",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Give Claude Code a hippocampus with a notary at the door: persistent episodic+semantic+procedural memory with a write-time anti-confabulation admission gate (source⊢fact entailment) and provenance on every read, plus sleep-cycle consolidation and compiled procedural macros.",
   "author": {
     "name": "Aurelio Capriello",

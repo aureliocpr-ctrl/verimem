@@ -2,6 +2,43 @@
 
 All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] — Trust hardening + TrustMem-Bench + first public CI (2026-07-06)
+
+First patch release after the public launch of `verimem` on PyPI. All changes
+are additive / bugfix; default behaviour of 0.3.0 is preserved unless noted.
+
+### Added
+- **TrustMem-Bench** (`benchmark/trustmem_bench.py`, `trustmem_adapters.py`) — the
+  trust benchmark we impose: seeded EN+IT synthetic personas, six deterministic
+  axes (no LLM, no network), one-command run (`python -m benchmark.trustmem_bench`).
+  Verimem 6/6; competitor leaderboard vs mem0 OSS (6/6 vs 40/60 API coverage).
+- **`min_relevance` floor** on `build_trust_report` / `Memory.explain` (opt-in,
+  default 0.0) — LLM-free abstention when no fact clears the relevance floor.
+- **Per-query history routing** — `wants_history()` + `Memory.search(with_history="auto")`
+  + MCP `hippo_recall_history(route=true)`: serve the transition story only on
+  temporal questions (EN+IT), keeping trap-question abstention pure.
+
+### Fixed (adversarial 5-lens review + e2e failure analysis)
+- **Bench honesty (CRITICAL)** — the `--raw-turns` baseline stamped event-time into
+  `created_at`, blinding ~99% of it to recall and inflating every pipeline delta;
+  now `asserted_at`.
+- **Future assertion can't supersede present truth** — `classify_conflict` now uses `now`.
+- **`recall_as_of` death axis in event time** (successor's `asserted_at`), not the
+  wall-clock `superseded_at`.
+- **Deep/as-of reads are freshness-read-only** — no bump-on-recall on archaeology.
+- **GDPR purge crosses holes** — plain delete re-links supersession pointers.
+- **ANN cross-process staleness** — a data_version rebuild opens a new cache generation.
+- **verimem alias finder** — mirrors real specs (`python -m`, honest `find_spec`,
+  no nested double-execution).
+- **Identity leak in extraction** — the prompt anchored the subject to in-text names
+  (`claude -p` was injecting the account owner's identity onto anonymous speakers).
+- **Packaging** — the research `benchmark` harness no longer ships in the wheel.
+
+### Evidence
+- End-to-end QA 0.553 stable across 2 runs (n=188); read-path 0.739/0.750.
+  First green CI run in repo history (lint, hypothesis dep, portable test cwd,
+  real-model skip-guard).
+
 ## [Unreleased] — Cycle 13-16 foundation safety + #48 sandbox_exec MCP wrapper (2026-05-28)
 
 Multi-LLM tribunal (Claude + agy/Gemini + Codex/GPT) ROUND 16. critic-orchestrator O3 gate per claim, TDD strict RED→GREEN.
