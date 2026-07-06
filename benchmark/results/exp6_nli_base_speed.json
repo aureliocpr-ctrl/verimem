@@ -1,0 +1,13 @@
+{
+  "model_env": "cross-encoder/nli-deberta-v3-base",
+  "stored": 165,
+  "seconds": 65,
+  "s_per_fact": 0.4,
+  "superseded": 7,
+  "cross_attr": 0,
+  "reference_large": {
+    "superseded_floor035_12sess": 7,
+    "cross_attr": 0,
+    "s_per_fact": "~1.8 (300s/165)"
+  }
+}
