@@ -26,6 +26,13 @@ interno), `hippo_*` (tool MCP), `verimem` (nome pubblico/PyPI). Confonde.
 ## Strategia raccomandata — a fasi, non big-bang
 
 ### Fase 1 — tool MCP `hippo_*` → `verimem_*` CON alias di compat (NON-breaking)
+
+> **✅ FASE 1 SHIPPED 2026-07-06** (`9fd1d8d` + namespace switch): il
+> dispatch accetta `verimem_*` (→ handler `hippo_*`, byte-identical); con
+> `ENGRAM_TOOL_NAMESPACE=verimem` anche `list_tools` li espone come
+> `verimem_*` (stesso conteggio, nessun raddoppio). Default = `hippo_*`
+> invariato (0.3.x non si rompe). TDD 32/32. Resta: doc utente + il flip
+> del DEFAULT a verimem (decisione release 0.4.0).
 Il pezzo che conta. Ogni tool esposto due volte: nome nuovo `verimem_*` +
 alias deprecato `hippo_*` che dispatcha allo stesso handler (deprecation
 warning nel description, non runtime). Gli utenti 0.3.x con `hippo_recall`

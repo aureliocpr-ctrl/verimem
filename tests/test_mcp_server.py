@@ -1187,3 +1187,27 @@ async def test_verimem_tool_alias_dispatches_to_hippo(tmp_path, fake_agent: _Fak
     via_old = await _invoke_tool("hippo_recall_history",
                                  {"query": "Where does Marco live", "k": 3})
     assert json.loads(via_new[0]) == json.loads(via_old[0])
+
+
+@pytest.mark.asyncio
+async def test_tool_namespace_env_flips_canonical_names(monkeypatch) -> None:
+    """Rename Phase 1 step 2: ENGRAM_TOOL_NAMESPACE=verimem exposes the tools as
+    verimem_* (the product name) instead of hippo_*, WITHOUT doubling the list.
+    Default (unset) stays hippo_* — byte-identical, 0.3.x configs unaffected."""
+    import engram.mcp_server as mcp_server
+
+    monkeypatch.delenv("ENGRAM_TOOL_NAMESPACE", raising=False)
+    monkeypatch.delenv("ENGRAM_MCP_TOOLS_PREFIX", raising=False)
+    default = await mcp_server.list_tools()
+    default_names = {t.name for t in default}
+    assert "hippo_recall" in default_names
+    assert not any(n.startswith("verimem_") for n in default_names)
+
+    monkeypatch.setenv("ENGRAM_TOOL_NAMESPACE", "verimem")
+    renamed = await mcp_server.list_tools()
+    renamed_names = {t.name for t in renamed}
+    assert len(renamed) == len(default), "same count — no doubling"
+    assert "verimem_recall" in renamed_names
+    assert not any(n.startswith("hippo_") for n in renamed_names)
+    # the non-hippo tools (sandbox_exec) are untouched by the namespace
+    assert "sandbox_exec" in renamed_names

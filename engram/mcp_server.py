@@ -6452,10 +6452,30 @@ async def list_tools() -> list[t.Tool]:
     ``_list_tools_unfiltered``. When the env var is unset the output is
     byte-identical to the legacy behaviour.
     """
-    return _filter_tools(
+    return _apply_tool_namespace(_filter_tools(
         await _list_tools_unfiltered(),
         _allowed_tool_prefixes(),
-    )
+    ))
+
+
+def _apply_tool_namespace(tools: list[t.Tool]) -> list[t.Tool]:
+    """Rename Phase 1 (RENAME-PLAN.md): ENGRAM_TOOL_NAMESPACE=verimem exposes the
+    hippo_* tools under the product name verimem_* (the dispatch accepts both).
+    Default/unset = unchanged hippo_* (byte-identical; 0.3.x host configs keep
+    working). Applied AFTER the prefix filter, so ENGRAM_MCP_TOOLS_PREFIX still
+    matches on hippo_. Renames only hippo_* — other tools (sandbox_exec) as-is.
+    No doubling: one tool in, one tool out."""
+    ns = os.environ.get("ENGRAM_TOOL_NAMESPACE", "").strip().lower()
+    if ns != "verimem":
+        return tools
+    out: list[t.Tool] = []
+    for tool in tools:
+        if tool.name.startswith("hippo_"):
+            out.append(tool.model_copy(
+                update={"name": "verimem_" + tool.name[len("hippo_"):]}))
+        else:
+            out.append(tool)
+    return out
 
 
 # Hang watchdog budget (2026-06-06): if any tool call runs longer than this, an
