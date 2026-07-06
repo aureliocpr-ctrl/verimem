@@ -196,18 +196,20 @@ number without saying so):
 | | user 1 (n=188) | user 0 (n=164) | MemOS **end-to-end** (self-reported) |
 |---|---|---|---|
 | **Read-path QA** — store built from *gold* memory points; measures the memory (recall+history+verify+abstention), not our extractor | **0.739** | **0.750** | — |
-| **End-to-end QA** — our extraction → gated store → answer, same questions ([evidence](./benchmark/results/e2e_full_pipeline_u1.json)) | 0.553* | not run | 0.672 |
+| **End-to-end QA** — our extraction → gated store → answer, same questions ([run 1](./benchmark/results/e2e_full_pipeline_u1.json), [run 2](./benchmark/results/e2e_full_pipeline_u1_postfix.json)) | 0.553* (×2 runs) | not run | 0.672 |
 | Memory Boundary, never fabricate (read-path / e2e) | 0.976 / **1.000** | 0.897 / — | — |
 | Memory Conflict (read-path / e2e) | 0.800 / 0.800 | 0.872 / — | — |
 | Basic Fact Recall (read-path / e2e) | 0.800 / 0.267 | 0.725 / — | — |
 
 **End-to-end we are BEHIND MemOS (−12pp) — stated, not hidden.** The split shows
-where: the trust properties HOLD through the full pipeline (Boundary 1.000,
-Conflict 0.800 e2e) while extraction recall on basic facts is the bottleneck
-(0.267 e2e vs 0.800 read-path). \*The 0.553 is additionally depressed by an
-identity-leak artefact found after the run by reading the failures (the
-extractor baptised anonymous speakers with an out-of-text name — reproduced
-live, fixed, rerun queued); we publish the number we have, with its defect.
+where: the trust properties HOLD through the full pipeline (Boundary 1.000 on
+both runs, Conflict 0.70–0.80) while extraction recall on basic facts is the
+bottleneck (0.27–0.38 e2e vs 0.800 read-path). \*Two independent runs both
+scored 0.5532 (stable overall). Between them we found and fixed an
+identity-leak artefact by reading run-1's failures (the extractor baptised
+anonymous speakers with an out-of-text name — reproduced live, fixed): run 2
+has 3/188 leak-tainted answers vs 13/188, and Basic Fact +11pp where the fix
+bites; per-category shifts elsewhere are within run-to-run variance.
 
 The read-path claim survived an adversarial counterexample review
 (`claim_holds`, conf 0.86: per-category counts consistent by construction;

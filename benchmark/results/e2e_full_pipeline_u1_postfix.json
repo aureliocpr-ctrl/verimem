@@ -1,0 +1,1552 @@
+{
+  "n": 188,
+  "n_correct": 104,
+  "n_errors": 1,
+  "accuracy": 0.5532,
+  "per_category": {
+    "Basic Fact Recall": {
+      "n": 45,
+      "accuracy": 0.3778
+    },
+    "Dynamic Update": {
+      "n": 4,
+      "accuracy": 0.25
+    },
+    "Generalization & Application": {
+      "n": 40,
+      "accuracy": 0.2
+    },
+    "Memory Boundary": {
+      "n": 41,
+      "accuracy": 1.0
+    },
+    "Memory Conflict": {
+      "n": 40,
+      "accuracy": 0.7
+    },
+    "Multi-hop Inference": {
+      "n": 18,
+      "accuracy": 0.5
+    }
+  },
+  "details": [
+    {
+      "id": "0:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Johnson Joseph's MBTI personality type is ESTJ.",
+      "correct": true,
+      "errored": false,
+      "gold": "ESTJ"
+    },
+    {
+      "id": "0:1",
+      "category": "Memory Conflict",
+      "predicted": "No — Johnson Joseph's highest education is a Master's degree in **Business Administration**, not Mechanical Engineering.",
+      "correct": true,
+      "errored": false,
+      "gold": "Johnson's major is Business Administration, not Mechanical Engineering."
+    },
+    {
+      "id": "0:2",
+      "category": "Memory Conflict",
+      "predicted": "No — Johnson Joseph's life goal is not in the technology sector; it is to become a leading figure in the hospitality industry.",
+      "correct": true,
+      "errored": false,
+      "gold": "Johnson's life goal is in the hospitality industry, not technology."
+    },
+    {
+      "id": "1:0",
+      "category": "Memory Conflict",
+      "predicted": "No — Johnson Joseph owns or operates a bed and breakfast business and is self-employed (later recorded as unemployed), not employed as a manager by a large hotel chain.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Johnson Joseph is self-employed as the owner of Albi B&B."
+    },
+    {
+      "id": "1:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — as of September 5, 2025, the context only records his job title update as current since 2033-06-15 (Entrepreneur and Expansion Leader), with no separate entry for what his title was on September 5, 2025.",
+      "correct": false,
+      "errored": false,
+      "gold": "Owner"
+    },
+    {
+      "id": "1:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the memory points."
+    },
+    {
+      "id": "2:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Snakes and Cats"
+    },
+    {
+      "id": "2:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no middle name for Johnson Joseph; only the full name \"Johnson Joseph\" is recorded.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the memory points."
+    },
+    {
+      "id": "2:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Johnson has consistently valued documentaries for their educational value, with no record of him disliking them.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Johnson Joseph likes documentaries."
+    },
+    {
+      "id": "5:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Johnson attended the local wildlife seminar on April 9th.",
+      "correct": true,
+      "errored": false,
+      "gold": "Apr 09, 2026"
+    },
+    {
+      "id": "5:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "5:2",
+      "category": "Memory Conflict",
+      "predicted": "No, Johnson's fear of snakes transformed into curiosity and admiration after attending the seminar.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his fear changed to curiosity and admiration."
+    },
+    {
+      "id": "8:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states his income was in USD (not yuan), increasing from $3,000 to $4,500 after his promotion on 2025-12-21.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, it increased from 3500 yuan to 4500 USD."
+    },
+    {
+      "id": "8:1",
+      "category": "Memory Conflict",
+      "predicted": "NO ANSWER",
+      "correct": false,
+      "errored": false,
+      "gold": "No, it hosted over 5,000 guests."
+    },
+    {
+      "id": "8:2",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — Johnson's promotion increased his monthly income, per the stored context.",
+      "correct": true,
+      "errored": false,
+      "gold": "Increased income and savings."
+    },
+    {
+      "id": "8:3",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Enhanced guest services and community engagement."
+    },
+    {
+      "id": "8:4",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER. None of the context facts about community support or social network were established before April 15, 2026 (the earliest relevant entry dates from 2027-04-19).",
+      "correct": false,
+      "errored": false,
+      "gold": "Increased guest traffic and referrals."
+    },
+    {
+      "id": "8:5",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Expand guest services and community ties."
+    },
+    {
+      "id": "9:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context lists his full name as \"Johnson Joseph\" with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not mentioned in the memory points."
+    },
+    {
+      "id": "9:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows no outing for Johnson on Oct 14, 2026; it was **Aurelio** who went to a local golf course on 2026-07-06 with friends.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he began to like golf due to its strategic and social benefits."
+    },
+    {
+      "id": "9:2",
+      "category": "Generalization & Application",
+      "predicted": "No — the context attributes golf enjoyment and plans to host golf events at Albi B&B to **Aurelio**, not Johnson Joseph; Johnson's themed events inspired by golf appear only in a disputed record.",
+      "correct": false,
+      "errored": false,
+      "gold": "Incorporate strategic and social elements into events."
+    },
+    {
+      "id": "10:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Johnson Joseph prefers thrillers."
+    },
+    {
+      "id": "10:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no information about Johnson Joseph having a middle name.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided."
+    },
+    {
+      "id": "10:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided."
+    },
+    {
+      "id": "14:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states he began playing strategy-based games after the layoff and uses them to relax, finding them engaging.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he developed an interest in strategy-based games after the layoff."
+    },
+    {
+      "id": "14:1",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER. The context records Johnson's enjoyment of strategy-based games starting October 2027, but does not specify any *new* leisure activity he might take up in November 2027.",
+      "correct": false,
+      "errored": false,
+      "gold": "Johnson might enjoy chess as a new leisure activity."
+    },
+    {
+      "id": "14:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "15:0",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Secured consultancy projects."
+    },
+    {
+      "id": "15:1",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — by October 2027, Johnson wanted to maintain a positive mindset and stay connected with friends and colleagues for support during his transition.",
+      "correct": true,
+      "errored": false,
+      "gold": "Provided emotional and professional support."
+    },
+    {
+      "id": "15:2",
+      "category": "Multi-hop Inference",
+      "predicted": "No — the context contains no mention of a layoff for Johnson Joseph; it states he uses AI-generated content to maintain industry presence and social signaling.",
+      "correct": true,
+      "errored": false,
+      "gold": "Using AI-generated content for social media."
+    },
+    {
+      "id": "15:3",
+      "category": "Multi-hop Inference",
+      "predicted": "No — the context does not mention a layoff; it states his motivation for returning to active leadership was a **desire to innovate and create meaningful experiences for guests**, and his family's hospitality background also influenced his drive.",
+      "correct": true,
+      "errored": false,
+      "gold": "His family's legacy in hospitality."
+    },
+    {
+      "id": "15:4",
+      "category": "Basic Fact Recall",
+      "predicted": "The context confirms a layoff at Albi B&B occurred in August 2027, but the exact date within that month is not specified — so whether August 22 fell before or after the layoff cannot be determined from the available context.",
+      "correct": false,
+      "errored": false,
+      "gold": "Unemployed due to a layoff from Albi B&B."
+    },
+    {
+      "id": "15:5",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context does not link the post-layoff career rethink to a specific social media maintenance strategy; it only states he rethought his entire career strategy after being laid off. The AI-generated content plan for social media is recorded separately with no connection to the layoff event.",
+      "correct": false,
+      "errored": false,
+      "gold": "Using AI-generated content."
+    },
+    {
+      "id": "15:6",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context confirms Johnson was laid off from Albi B&B due to a downturn in tourism.",
+      "correct": true,
+      "errored": false,
+      "gold": "A downturn in tourism."
+    },
+    {
+      "id": "16:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that attending the literary festival prompted Johnson to **reconsider his initial dislike** of fantasy novels, which he now believes have more to offer than he initially thought.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he reconsidered and embraced fantasy novels for creative inspiration."
+    },
+    {
+      "id": "16:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of April 28, 2028, Johnson Joseph had reconsidered his initial dislike of fantasy novels after attending a literary festival, concluding they have more to offer than he initially thought.",
+      "correct": false,
+      "errored": false,
+      "gold": "He recognizes their potential to inspire creative themes for his bed and breakfast."
+    },
+    {
+      "id": "16:2",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context confirms Johnson attended a literary festival that influenced his reading preferences, but it does not specify when he attended it.",
+      "correct": false,
+      "errored": false,
+      "gold": "April 28, 2028"
+    },
+    {
+      "id": "17:0",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context does not say jazz became his favorite as of Nov 2, 2028; that record is dated 2042-03-09. The Nov 2, 2028 record only states that a guest playing **classical music** on the piano changed his perception of music, without specifying a new favorite genre.",
+      "correct": true,
+      "errored": false,
+      "gold": "Classical music"
+    },
+    {
+      "id": "17:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no middle name for Johnson Joseph; his name is recorded simply as \"Johnson Joseph\" with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided in the input information."
+    },
+    {
+      "id": "17:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson found classical music soothing, considered it a perfect fit for Albi B&B's ambiance, expressed gratitude toward the guest who introduced him to it, and planned to make it a regular staple of the guest experience.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he found classical music soothing and suitable for his B&B."
+    },
+    {
+      "id": "19:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of 2029-05-08, Johnson believes group tours are beneficial for destinations where local expertise enhances the experience, found their structured nature helpful for maximizing sightseeing efficiency, and intended to incorporate elements from group tours into Albi B&B offerings.",
+      "correct": false,
+      "errored": false,
+      "gold": "Johnson Joseph likes group tours."
+    },
+    {
+      "id": "19:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson found the social aspect and camaraderie of the Italy group tour unexpectedly **enjoyable**.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he appreciated the social interactions with fellow travelers."
+    },
+    {
+      "id": "19:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Incorporate expert-led experiences and themed tours."
+    },
+    {
+      "id": "21:0",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Testing new approaches and ideas for balance."
+    },
+    {
+      "id": "21:1",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — Johnson's network provided emotional, professional support, motivation, focus on goals, personal growth identification, and stress management during that period.",
+      "correct": true,
+      "errored": false,
+      "gold": "Provided emotional support and collaborative opportunities."
+    },
+    {
+      "id": "21:2",
+      "category": "Generalization & Application",
+      "predicted": "By August 20, 2029, the context supports three techniques: **part-time management transition** (stress improvement noted since 2029-02-15), **yoga exploration** (being considered since 2029-05-10), and **leveraging his network** for managing stress (since 2029-02-15). Delegation/short breaks and mindfulness strategies are recorded only after 2037 and 2041, so they fall outside this timeframe.",
+      "correct": false,
+      "errored": false,
+      "gold": "Mindfulness practices and scheduled downtime."
+    },
+    {
+      "id": "21:3",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Johnson leverages his social network for emotional, professional, and financial support during career recovery, has formed strategic partnerships through it, and plans to use Instagram and YouTube to market Albi B&B offerings, all of which directly support career advancement.",
+      "correct": false,
+      "errored": false,
+      "gold": "Collaborative opportunities and strategic advice."
+    },
+    {
+      "id": "21:4",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Johnson transitioned to **part-time** (not full-time) management at Albi B&B, with no specific date of August 20, 2029 mentioned.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he transitioned to part-time management on February 15, 2029."
+    },
+    {
+      "id": "21:5",
+      "category": "Memory Conflict",
+      "predicted": "No; the context states Johnson's monthly income increased from $3000 to $7000, not $5000.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, his monthly income is $2500 from his part-time role."
+    },
+    {
+      "id": "22:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Johnson Joseph considers their potential benefits for guest interaction."
+    },
+    {
+      "id": "22:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; the middle name is not provided."
+    },
+    {
+      "id": "22:2",
+      "category": "Memory Conflict",
+      "predicted": "No — on Nov 12, 2029, the context records a **change in perception** about cats (caused by a guest's friendly cat at Albi B&B), not a continued strong dislike.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, Johnson's perception changed positively after observing a guest's cat."
+    },
+    {
+      "id": "23:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, Johnson Joseph decided to stop **cycling** due to a minor injury experienced during a cycling trip.",
+      "correct": true,
+      "errored": false,
+      "gold": "Cycling"
+    },
+    {
+      "id": "23:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no middle name for Johnson Joseph; only the full name \"Johnson Joseph\" is recorded.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown from provided information."
+    },
+    {
+      "id": "23:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER. The context mentions Johnson Joseph's mother, father, and partner but provides no names for any of them.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown from provided information."
+    },
+    {
+      "id": "24:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson expressed **gratitude** (not regret) toward the guest who recommended the documentary.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed gratitude for the recommendation."
+    },
+    {
+      "id": "24:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "24:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "By creating educational and engaging themed events."
+    },
+    {
+      "id": "27:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after May 29, 2031, the context records multiple approaches: Johnson uses technology to streamline operations and enhance guest experiences (since 2031-11-01), refines experiences and strengthens community ties through reading insights (since 2031-12-02), offers guided hiking tours (since 2033-12-21), reinvests increased revenue into enhanced operations (since 2039-07-18), and plans personalized itineraries with real-time local event updates via technology (since 2040-02-18).",
+      "correct": false,
+      "errored": false,
+      "gold": "By incorporating more cooperative board games."
+    },
+    {
+      "id": "27:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after May 29, 2031, Johnson shifted toward **cooperative board games** (noted since 2033-06-15), and later also favors **complex strategy games with historical or cultural elements** (since 2041-02-27). The context does not state *why*, so a reason cannot be given from the available information.",
+      "correct": false,
+      "errored": false,
+      "gold": "Cooperative board games for enhancing teamwork and interaction."
+    },
+    {
+      "id": "27:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "29:0",
+      "category": "Multi-hop Inference",
+      "predicted": "Based on the context, during that period Johnson: explored new opportunities with long-term aspirations in hospitality (April 2031), leveraged his social network for emotional, professional, and financial support (July 2031), took a proactive approach to career recovery, and worked on strengthening leadership skills — with goal-and-strategy reviews beginning by November 2031.",
+      "correct": true,
+      "errored": false,
+      "gold": "Leveraging partnerships and improving health."
+    },
+    {
+      "id": "29:1",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — by July 10, 2031, Johnson's social network provided emotional, professional, and financial support during career recovery, helped form strategic partnerships, maintained a positive outlook, and aided with motivation, focus on goals, personal growth, and stress management.",
+      "correct": true,
+      "errored": false,
+      "gold": "Provided emotional, professional, and financial support."
+    },
+    {
+      "id": "29:2",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — by November 2031, Johnson's strategic partnerships played a crucial role in his business development and were formed through his social network, directly shaping his business strategies.",
+      "correct": false,
+      "errored": false,
+      "gold": "They shaped strategies and revitalized his career."
+    },
+    {
+      "id": "29:3",
+      "category": "Generalization & Application",
+      "predicted": "",
+      "correct": false,
+      "errored": true,
+      "gold": "They set the stage for new business ventures."
+    },
+    {
+      "id": "29:4",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Johnson is considering leveraging his extensive hospitality network for new opportunities, and his long-term aspirations remain in the hospitality industry, suggesting his network could support career rebuilding and potential long-term partnerships he envisions in that sector.",
+      "correct": false,
+      "errored": false,
+      "gold": "By providing invaluable advice and emotional support."
+    },
+    {
+      "id": "29:5",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms several strategies Johnson uses after that date:\n\n1. **Clear work/personal boundaries** (since 2029, ongoing) — separating work time from personal time.\n2. **Pursuing personal life goals alongside career goals** (since July 2031) — treating both as equal priorities.\n3. **Regularly revisiting goals and strategies** (since Nov 2031) — ensuring ongoing alignment with his vision.\n4. **Balancing lifestyle changes with professional responsibilities** (since 2037).\n5. **Balancing creative expansion with practical strategies** (since 2039) — sustaining growth without sacrificing stability.\n6. **Integrating new insights with current goals** (since 2043) — adaptive alignment rather than reactive pivoting.",
+      "correct": false,
+      "errored": false,
+      "gold": "Incorporating regular exercise and mindfulness practices."
+    },
+    {
+      "id": "29:6",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context indicates Johnson's monthly income was **$6,000** at one point, which aligns with the pre-layoff period (income halted after the layoff, per the context).",
+      "correct": false,
+      "errored": false,
+      "gold": "2500 yuan"
+    },
+    {
+      "id": "29:7",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of 2031-11-01, Johnson's life goal is to transform Albi B&B into a world-renowned destination hosting over 10,000 guests annually.",
+      "correct": true,
+      "errored": false,
+      "gold": "Transforming Albi B&B into a world-renowned destination, hosting over 10,000 guests annually."
+    },
+    {
+      "id": "30:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — after December 02, 2031, Johnson shifted his reading preferences toward **biographies of hospitality leaders, particularly those who had expanded internationally**.",
+      "correct": true,
+      "errored": false,
+      "gold": "Biographies of hospitality leaders"
+    },
+    {
+      "id": "30:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the networking event on Dec 02, 2031 inspired a shift toward **hospitality leaders** (specifically those who expanded internationally), not tech industry leaders.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he decided to focus on hospitality leaders."
+    },
+    {
+      "id": "30:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "31:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no middle name for Johnson Joseph; only the full name \"Johnson Joseph\" is recorded.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is unknown."
+    },
+    {
+      "id": "31:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson attended a **folk music** festival on 2032-06-06.",
+      "correct": true,
+      "errored": false,
+      "gold": "Folk music"
+    },
+    {
+      "id": "31:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — after June 6, 2032, Johnson incorporated folk music into Albi B&B's playlist to offer guests a taste of local culture, later deepened this by attending a local festival and bringing that music in directly (2035), and leveraged technology as a tool for cultural immersion (2040) — though by 2042 his focus shifted to live jazz.",
+      "correct": false,
+      "errored": false,
+      "gold": "By offering cultural enrichment and empathetic interaction."
+    },
+    {
+      "id": "32:0",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, after December 11, 2032, Johnson Joseph shows interest in **cultural immersion experiences** (noted since 2031-12-02) and **augmented reality for travel** (noted since 2040-02-18), which he believes provides immersive experiences and deeper insights into historical sites.",
+      "correct": false,
+      "errored": false,
+      "gold": "Cultural immersion with companionship."
+    },
+    {
+      "id": "32:1",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Seeking shared experiences."
+    },
+    {
+      "id": "32:2",
+      "category": "Memory Conflict",
+      "predicted": "No — by June 15, 2033, Johnson's preferences had shifted toward group tours, not exclusive solo travel.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he decided to balance solo travel with shared experiences."
+    },
+    {
+      "id": "34:0",
+      "category": "Memory Conflict",
+      "predicted": "No — as of June 16, 2033, Johnson had changed his view, describing cats as a delightful addition to Albi B&B's ambiance (though he had initially disliked them for being aloof).",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he changed his stance due to their positive impact."
+    },
+    {
+      "id": "34:1",
+      "category": "Memory Conflict",
+      "predicted": "No — on that date the context records that it was **the user** (not Johnson Joseph) who initially disliked cats, thinking they were aloof and did not interact well with guests.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he believed cats enhanced guest interactions."
+    },
+    {
+      "id": "34:2",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Johnson Joseph initially disliked cats."
+    },
+    {
+      "id": "37:0",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2033-12-21 Johnson was actively **considering** offering guided hiking tours (and wanting to maintain a personal touch in them), not deciding against them.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he decided to offer guided hiking tours."
+    },
+    {
+      "id": "37:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "37:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms that from 2033-12-21 Johnson planned to collaborate with local guides specifically to manage logistics for the hiking tours while maintaining a personal touch.",
+      "correct": false,
+      "errored": false,
+      "gold": "He will likely pursue collaboration to enhance guest experiences."
+    },
+    {
+      "id": "38:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson Joseph's job title on Jun 15, 2033 was Entrepreneur and Expansion Leader.",
+      "correct": true,
+      "errored": false,
+      "gold": "Entrepreneur and Expansion Leader at Albi B&B"
+    },
+    {
+      "id": "38:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context states Johnson prioritizes mindfulness practices and regular exercise to maintain **personal well-being**, not specifically \"resilience.\"",
+      "correct": false,
+      "errored": false,
+      "gold": "Health-focused routine"
+    },
+    {
+      "id": "38:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson celebrated the successful launch of Albi B&B's new locations on January 10, 2034.",
+      "correct": true,
+      "errored": false,
+      "gold": "Successful launch of new business locations for Albi B&B"
+    },
+    {
+      "id": "38:3",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Increased from $6000 to $8000 monthly."
+    },
+    {
+      "id": "38:4",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — by January 10, 2034, Johnson's social network had enabled strategic partnerships crucial to his business development, and Albi B&B successfully launched its new locations on that date.",
+      "correct": true,
+      "errored": false,
+      "gold": "Supported strategic expansion and provided collaboration opportunities."
+    },
+    {
+      "id": "38:5",
+      "category": "Multi-hop Inference",
+      "predicted": "No — the context links cognitive clarity (from golf) to **Aurelio**, not Johnson Joseph; the context says nothing about cognitive clarity being important for Johnson during Albi B&B's expansion.",
+      "correct": false,
+      "errored": false,
+      "gold": "For informed decision-making and balanced personal/professional life."
+    },
+    {
+      "id": "38:6",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Cross-border partnerships to enhance guest referrals."
+    },
+    {
+      "id": "38:7",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Maintaining high energy and resilience for expansion."
+    },
+    {
+      "id": "38:8",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Johnson Joseph's middle name is unknown."
+    },
+    {
+      "id": "38:9",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Johnson Joseph's weight is not provided."
+    },
+    {
+      "id": "38:10",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Johnson Joseph's sibling's name is not mentioned."
+    },
+    {
+      "id": "39:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson found the fantasy film captivating and it made him excited to explore more fantasy films.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed appreciation for fantasy films."
+    },
+    {
+      "id": "39:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no middle name for Johnson Joseph; only \"Johnson Joseph\" is recorded as his full name.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "39:2",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context doesn't record a personal movie genre preference change; the 2034-06-26 entry states Johnson believes **fantasy film themes** could lead to more engaging interactions with *guests who enjoy the genre*, not that his own viewing preference shifted.",
+      "correct": false,
+      "errored": false,
+      "gold": "Fantasy films"
+    },
+    {
+      "id": "40:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — as of 2034-12-31, the context confirms Johnson was interested in exploring **classic board games** as part of guest activities at Albi B&B.",
+      "correct": false,
+      "errored": false,
+      "gold": "Strategic and cooperative games."
+    },
+    {
+      "id": "40:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context states Johnson's preferences shifted toward cooperative board games, but dates this to 2033-06-15, not December 31, 2034.",
+      "correct": false,
+      "errored": false,
+      "gold": "Tactical shooters"
+    },
+    {
+      "id": "40:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson *became a fan* of tactical shooters specifically *for their strategic depth*, not a dislike.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he likes tactical shooters for their strategic gameplay."
+    },
+    {
+      "id": "41:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context lists his full name as \"Johnson Joseph\" with no middle name recorded.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the memory points."
+    },
+    {
+      "id": "41:1",
+      "category": "Basic Fact Recall",
+      "predicted": "As of July 6, 2035, Johnson has a collection of travel guides — the shift from printed to digital travel guides happens later, since that fact is dated from 2035-10-15 (October 15, 2035).",
+      "correct": false,
+      "errored": false,
+      "gold": "Shift from printed travel guides to digital resources."
+    },
+    {
+      "id": "41:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context states Johnson feels nostalgic about printed travel guides as of 2035-07-06.",
+      "correct": true,
+      "errored": false,
+      "gold": "Nostalgia for printed guides."
+    },
+    {
+      "id": "45:0",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson permanently removed **EDM** from the Albi B&B playlist on January 10, 2036, because it did not fit the serene environment he wants to create for guests.",
+      "correct": true,
+      "errored": false,
+      "gold": "Electronic dance music (EDM)"
+    },
+    {
+      "id": "45:1",
+      "category": "Memory Conflict",
+      "predicted": "No — on January 10, 2036, Johnson permanently **removed** EDM from the Albi B&B playlist because it didn't fit the serene environment they want to create for guests.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he decided to permanently remove EDM."
+    },
+    {
+      "id": "46:0",
+      "category": "Dynamic Update",
+      "predicted": "No — the context states Johnson's employment status changed to **unemployed** (effective 2027-08-22), not self-employed or any other status.",
+      "correct": false,
+      "errored": false,
+      "gold": "Retired"
+    },
+    {
+      "id": "46:1",
+      "category": "Dynamic Update",
+      "predicted": "As of December 20, 2035, Johnson's **mental health** is **Moderately Positive** (since 2031-04-15), and he is actively incorporating mindfulness practices and stress reduction as part of health recovery (since 2035-11-10). His **physical health** is **disputed**: one record shows **Excellent** (since 2031-04-15), while a conflicting unresolved record states it **declined to Average** — no definitive current status can be confirmed.",
+      "correct": false,
+      "errored": false,
+      "gold": "Poor"
+    },
+    {
+      "id": "46:2",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context states Johnson's employment status changed to **unemployed** (not on October 15, 2035, but since 2027-08-22).",
+      "correct": false,
+      "errored": false,
+      "gold": "Retired"
+    },
+    {
+      "id": "46:3",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Chronic fatigue"
+    },
+    {
+      "id": "46:4",
+      "category": "Basic Fact Recall",
+      "predicted": "No — on October 15, 2035, Johnson's savings increased **from** $16,000 **to** $20,000, meaning they reached $20,000 on that date.",
+      "correct": true,
+      "errored": false,
+      "gold": "20000"
+    },
+    {
+      "id": "46:5",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "46:6",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "46:7",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "47:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context lists his full name as Johnson Joseph with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the dialogue."
+    },
+    {
+      "id": "47:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Johnson returned from a Japan cultural immersion trip and plans to use those insights directly: he aims to introduce local traditions and cuisine experiences, leverage technology for personalized itineraries and real-time local event updates, and market new offerings via Instagram and YouTube.",
+      "correct": true,
+      "errored": false,
+      "gold": "Incorporate cultural immersion elements for deeper understanding."
+    },
+    {
+      "id": "47:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson found direct community engagement during the Japan trip **profoundly emotionally fulfilling, surpassing previous experiences**.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he found it more enriching than previous experiences."
+    },
+    {
+      "id": "48:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — in 2037 the context shows Johnson is considering **encouraging more guests to bring their dogs** and **creating designated pet-friendly areas** at Albi B&B to enhance guest security and comfort.",
+      "correct": false,
+      "errored": false,
+      "gold": "Introduce dog-friendly events to enhance guest interactions."
+    },
+    {
+      "id": "48:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — in 2037, Johnson is considering encouraging more guests to bring their dogs and creating designated pet-friendly areas, believing dogs create a lively and friendly environment for guests.",
+      "correct": false,
+      "errored": false,
+      "gold": "Balance guest interaction with pet care responsibilities."
+    },
+    {
+      "id": "48:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — Johnson believes dogs create a lively and friendly environment for guests at Albi B&B.",
+      "correct": true,
+      "errored": false,
+      "gold": "Creating a lively and friendly atmosphere."
+    },
+    {
+      "id": "50:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Johnson is considering themed events at Albi B&B incorporating strategic elements of golf, plans to involve his network in planning and executing those events, and the broader plan includes collaborating with local golf clubs.",
+      "correct": false,
+      "errored": false,
+      "gold": "Consider themed events inspired by golf outings."
+    },
+    {
+      "id": "50:1",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context shows Johnson prioritizes **mindfulness practices, regular exercise, physical activities, relaxation**, and **classic board games**, while also dedicating scheduled time to personal interests and community-building activities.",
+      "correct": false,
+      "errored": false,
+      "gold": "Activities that align with business growth and guest satisfaction."
+    },
+    {
+      "id": "50:2",
+      "category": "Memory Conflict",
+      "predicted": "No — as of July 25, 2037, Johnson was phasing golf **out** due to difficulty balancing it with his growing business responsibilities.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he decided to phase out golf to focus on his business."
+    },
+    {
+      "id": "52:0",
+      "category": "Memory Conflict",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, his income increased to $7000."
+    },
+    {
+      "id": "52:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson's physical health improved from poor to **good** as of 2037-09-01, meaning it was no longer poor after that date.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his physical health improved to 'Good'."
+    },
+    {
+      "id": "52:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson received **overwhelmingly positive feedback** on the new marketing strategies launched on Dec 10, 2037.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed satisfaction with the strategies."
+    },
+    {
+      "id": "52:3",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no middle name for Johnson Joseph; his name is listed simply as \"Johnson Joseph\" with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Johnson Joseph's middle name is not provided."
+    },
+    {
+      "id": "52:4",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Johnson Joseph's blood type is not provided."
+    },
+    {
+      "id": "52:5",
+      "category": "Generalization & Application",
+      "predicted": "No — the context documents Johnson's commitment to a health-focused lifestyle only from **2039-08-10**, which is after 2038. For 2038, the context confirms his health had already improved and played a role in his business journey (since 2031), and his emotional state fluctuated between concern for his health and optimism about his team sustaining operations (since 2035-12-20).",
+      "correct": false,
+      "errored": false,
+      "gold": "Promote wellness activities at Albi B&B."
+    },
+    {
+      "id": "52:6",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Eco-friendly and wellness-focused initiatives."
+    },
+    {
+      "id": "53:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Johnson *enjoyed* the romantic drama recommended by a friend (finding it emotionally deep, narratively rich, and personally resonant) and has liked romantic dramas since 2025-09-06.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he appreciated them more after the recommendation."
+    },
+    {
+      "id": "53:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is unknown."
+    },
+    {
+      "id": "53:2",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER — the context confirms interests in **thriller films** (since 2027-04-19), **mystery films**, and **fantasy films** (both since 2034-06-26), but none of these entries use the word \"deepened\" or single out one genre for that as of January 29, 2038.",
+      "correct": false,
+      "errored": false,
+      "gold": "Romantic dramas"
+    },
+    {
+      "id": "54:0",
+      "category": "Memory Conflict",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he planned to incorporate tactical shooter games."
+    },
+    {
+      "id": "54:1",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Incorporate tactical shooter games for strategic and cooperative gameplay."
+    },
+    {
+      "id": "54:2",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no middle name for Johnson Joseph; his name is recorded simply as \"Johnson Joseph\" with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; the middle name is not provided."
+    },
+    {
+      "id": "55:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states that a friend's recommendation of a fantasy novel featuring innovative world-building influenced Johnson's change in reading preference *toward* fantasy, and by 2039-02-08 he appreciates them for imagination, problem-solving, and world-building.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he began appreciating them after a friend's recommendation."
+    },
+    {
+      "id": "55:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "55:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms that in 2039 Johnson plans to use insights from fantasy novels to create unique guest experiences, considers themed rooms inspired by fantasy novels, values creativity and problem-solving lessons from them, and finds they stimulate his imagination, all aimed at memorable, culturally enriching stays at Albi B&B.",
+      "correct": true,
+      "errored": false,
+      "gold": "Incorporate creativity and problem-solving from fantasy novels."
+    },
+    {
+      "id": "58:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "A live opera performance."
+    },
+    {
+      "id": "58:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "58:2",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, after Aug 14, 2039 Johnson plans to: enhance marketing strategies and expand community engagement (since 2041-09-02), leverage partnerships to enrich guest offerings (since 2041-02-27), and use live jazz to elevate Albi B&B's ambiance (since 2042-03-09).",
+      "correct": false,
+      "errored": false,
+      "gold": "By integrating opera for unique cultural experiences."
+    },
+    {
+      "id": "61:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context states Johnson's monthly income **increased** from $7,000 to $8,000 on 2039-07-18, not decreased.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, his monthly income increased from $7,000 to $8,000."
+    },
+    {
+      "id": "61:1",
+      "category": "Memory Conflict",
+      "predicted": "No — the context contains no record of a decline from 'Excellent' to 'Good' on that date; the closest records show a decline from Excellent to Average (since 2027-09-15) and a shift from excellent to poor (since 2035-11-10).",
+      "correct": false,
+      "errored": false,
+      "gold": "No, his physical health status improved from 'Good' to 'Excellent'."
+    },
+    {
+      "id": "61:2",
+      "category": "Dynamic Update",
+      "predicted": "Yes, Johnson's monthly income is $8,000 as of July 18, 2039, when it increased from $7,000 to $8,000.",
+      "correct": true,
+      "errored": false,
+      "gold": "$8,000"
+    },
+    {
+      "id": "61:3",
+      "category": "Dynamic Update",
+      "predicted": "No — the context contains conflicting records without a resolved answer. By 2039-07-18 the context states Johnson's physical health improved from **poor to good** (since 2037-09-01), attributed to reduced stress from financial stability and wellness activities; however, a separate disputed record claims it went from Good to Excellent (2031-04-15), countered by a conflicting claim of a decline to Average — both unresolved.",
+      "correct": false,
+      "errored": false,
+      "gold": "Changed from 'Good' to 'Excellent'."
+    },
+    {
+      "id": "61:4",
+      "category": "Multi-hop Inference",
+      "predicted": "Yes — by that date, Johnson's health improvements had boosted his energy, focus, and resilience, which he leveraged through wellness activities to manage business growth more effectively, while also considering how continued well-being could further enhance that growth.",
+      "correct": true,
+      "errored": false,
+      "gold": "Enhanced resilience and effective management of business growth."
+    },
+    {
+      "id": "61:5",
+      "category": "Generalization & Application",
+      "predicted": "Yes — context confirms his improved health keeps him **active and engaged** in managing Albi B&B (since 2031-11-01), and as of 2039-07-18 he has already reinvested increased revenue back into the B&B, yielding enhanced operations, better guest experiences, and improved market presence — so continued good health post-Aug 2039 sustains that reinvestment cycle. Note: one **disputed** record flags a health decline from Excellent to Average (unresolved), which could interrupt this trajectory.",
+      "correct": true,
+      "errored": false,
+      "gold": "Enhanced resilience supports managing business growth effectively."
+    },
+    {
+      "id": "61:6",
+      "category": "Generalization & Application",
+      "predicted": "Yes — two strategies are recorded after that date: (1) using **technology to provide personalized itineraries and real-time updates on local events** (since 2040-02-18), and (2) **live jazz** to enhance ambiance and create unforgettable experiences (since 2042-03-09).",
+      "correct": false,
+      "errored": false,
+      "gold": "Leverage partnerships and community engagement."
+    },
+    {
+      "id": "61:7",
+      "category": "Generalization & Application",
+      "predicted": "Yes — from Sep 18, 2039 onward, Johnson's creative motivation style directly aligns with his already-demonstrated pattern: he has implemented creative strategies at Albi B&B, reinvested increased revenue into enhanced operations and improved market presence, and plans to leverage Instagram and YouTube for marketing new offerings — suggesting his creative drive will continue expanding Albi B&B's market presence through innovative guest experiences and social media visibility.",
+      "correct": true,
+      "errored": false,
+      "gold": "Drive new strategies and partnerships for growth."
+    },
+    {
+      "id": "62:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "62:1",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Tech-enhanced travel for efficiency and enjoyment."
+    },
+    {
+      "id": "62:2",
+      "category": "Memory Conflict",
+      "predicted": "No — as of 2040-02-18, Johnson found technology made his trips more efficient and enjoyable, and he actively believed tech-enhanced travel leads to richer narratives and deeper cultural insights.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he prefers tech-enhanced travel for efficiency and enjoyment."
+    },
+    {
+      "id": "63:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context contains no middle name for Johnson Joseph; only the full name \"Johnson Joseph\" is recorded.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; the middle name is not provided."
+    },
+    {
+      "id": "63:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of 2040, Johnson favors encouraging guests to bring dogs and creating designated pet-friendly areas, believing dogs create a lively, friendly atmosphere, with focus on guest interaction (not culinary aspects); the exotic pets awareness record only starts in 2042 and wouldn't apply yet.",
+      "correct": true,
+      "errored": false,
+      "gold": "Johnson Joseph prefers dogs for security and comfort."
+    },
+    {
+      "id": "63:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — from the context, Johnson is considering encouraging more guests to bring their dogs, creating designated pet-friendly areas, and integrating dogs more effectively into the B&B environment to enhance guest security and comfort, with openness to other animals as well.",
+      "correct": true,
+      "errored": false,
+      "gold": "Integrate dogs for security and comfort."
+    },
+    {
+      "id": "65:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — context confirms Johnson finds complex strategy games more engaging and plans to incorporate them into gaming nights, plus he's excited about thematic cooperative games for immersive experiences; he could host structured gaming nights featuring complex strategy and cooperative titles, market them via Instagram/YouTube, and offer personalized itineraries highlighting these sessions as unique B&B activities.",
+      "correct": true,
+      "errored": false,
+      "gold": "By integrating complex strategy games for engaging interactions."
+    },
+    {
+      "id": "65:1",
+      "category": "Memory Boundary",
+      "predicted": "No — the context lists his full name as \"Johnson Joseph\" with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "65:2",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of February 27, 2041, Johnson prefers games with historical or cultural elements and finds complex strategy games more engaging than simpler ones, and is considering introducing cooperative board games for guests.",
+      "correct": true,
+      "errored": false,
+      "gold": "Complex strategy games"
+    },
+    {
+      "id": "67:0",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Johnson experiences recurring fatigue, finds balancing personal life with business demands challenging, yet remains committed to maintaining a health-focused lifestyle; his consultancy role's demands likely intensify this tension, making fatigue management a key constraint on his work-life balance.",
+      "correct": false,
+      "errored": false,
+      "gold": "Consultancy allows flexibility, accommodating health needs and personal goals."
+    },
+    {
+      "id": "67:1",
+      "category": "Generalization & Application",
+      "predicted": "Based on the context, after Jun 21, 2041 (following his portfolio diversification), Johnson would likely pursue:\n\n1. **Network & alliances** — leveraging existing relationships and forming new partner alliances, which he considers crucial to consultancy success.\n2. **International expansion** — extending his consultancy network into international markets.\n3. **Team building** — recruiting a team of experts matched to identified key areas of need.\n4. **Multi-location scaling** — expanding operations to multiple locations, consistent with his long-term goal of solidifying influence in the field.\n\nThese are all directly supported by the context provided.",
+      "correct": false,
+      "errored": false,
+      "gold": "Attend events, use social media, build a team of experts."
+    },
+    {
+      "id": "67:2",
+      "category": "Memory Boundary",
+      "predicted": "No — the context lists his full name as Johnson Joseph with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "67:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "67:4",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows Johnson is still in the hospitality industry as of 2041-09-02, with no record of him leaving.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he diversified his portfolio to include consultancy roles."
+    },
+    {
+      "id": "67:5",
+      "category": "Memory Conflict",
+      "predicted": "No — the context marks that claim as **disputed**, with a conflicting record stating the status changed from Highly Positive to Stable (since 2027-09-15); both records remain unresolved.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, it changed to 'Cautiously Optimistic' and later 'Mildly Anxious'."
+    },
+    {
+      "id": "67:6",
+      "category": "Memory Conflict",
+      "predicted": "No — on 2029-02-15 Johnson found the transition to part-time management **a relief**, not pessimism; the 2041 context shows optimism about his team's ability to sustain operations.",
+      "correct": false,
+      "errored": false,
+      "gold": "No, he expressed optimism about contributing as a consultant."
+    },
+    {
+      "id": "68:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Memoirs of successful entrepreneurs from various industries."
+    },
+    {
+      "id": "68:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — the context confirms Johnson wanted to broaden his reading scope as of 2041-09-02, but states no specific event as the cause; only his motivation (clarifying thoughts and gaining new perspectives) is mentioned.",
+      "correct": false,
+      "errored": false,
+      "gold": "A business seminar."
+    },
+    {
+      "id": "68:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Memoirs of successful entrepreneurs from various industries."
+    },
+    {
+      "id": "69:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "A live jazz band performance at Albi B&B."
+    },
+    {
+      "id": "69:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes, jazz is the genre Johnson prioritizes after the live jazz experience on March 9, 2042 reignited his passion for it as his favorite music genre.",
+      "correct": true,
+      "errored": false,
+      "gold": "Jazz."
+    },
+    {
+      "id": "69:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms that after March 9, 2042, Johnson is committed to integrating live jazz into Albi B&B to enhance ambiance and create unforgettable experiences, reignited by a personal passion for jazz as his favorite genre.",
+      "correct": true,
+      "errored": false,
+      "gold": "By creating a dynamic and personal ambiance for guests."
+    },
+    {
+      "id": "70:0",
+      "category": "Memory Conflict",
+      "predicted": "No — the context shows the opposite: Johnson believes dogs create a lively and friendly environment for guests, and he is actively considering encouraging more guests to bring their dogs and creating designated pet-friendly areas at Albi B&B.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he appreciates dogs' role in enhancing guest experiences."
+    },
+    {
+      "id": "70:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "70:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — by Sep 12, 2042, Johnson is integrating **dogs** to enhance guest security and comfort, and is also aware of guest preferences for **exotic pets such as parrots and reptiles**, opening opportunities to cater to those preferences as well.",
+      "correct": false,
+      "errored": false,
+      "gold": "By leveraging dogs' positive attributes for guest satisfaction and security."
+    },
+    {
+      "id": "71:0",
+      "category": "Memory Boundary",
+      "predicted": "No — the context lists his full name as \"Johnson Joseph\" with no middle name mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "71:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — as of that date, Johnson prefers **complex strategy games** over simpler ones, games with **historical or cultural elements**, and has shifted toward **cooperative board games**.",
+      "correct": false,
+      "errored": false,
+      "gold": "Thematic cooperative board games"
+    },
+    {
+      "id": "71:2",
+      "category": "Memory Conflict",
+      "predicted": "No — the context consistently shows Johnson is excited about and actively planning to incorporate thematic cooperative games into Albi B&B's offerings.",
+      "correct": true,
+      "errored": false,
+      "gold": "No, he expressed excitement about using them."
+    },
+    {
+      "id": "74:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided in the input."
+    },
+    {
+      "id": "74:1",
+      "category": "Basic Fact Recall",
+      "predicted": "No — as of 2043-09-22, Johnson uses reading as a tool for organizing thoughts and gaining new perspectives, which is the most recent update (the shift toward hospitality leader biographies is from 2031, superseded by this later entry).",
+      "correct": false,
+      "errored": false,
+      "gold": "Biographies and memoirs focusing on personal development and mindset."
+    },
+    {
+      "id": "74:2",
+      "category": "Generalization & Application",
+      "predicted": "Based on context, books on **strategic planning, leadership, team building, and hospitality guest experience** would align with Johnson's stated consultancy focus areas (strategic planning, leadership experience, enhancing guest experiences, and expanding with a team of experts).",
+      "correct": false,
+      "errored": false,
+      "gold": "Biographies and memoirs focusing on personal development and mindset."
+    },
+    {
+      "id": "76:0",
+      "category": "Basic Fact Recall",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Senior Hospitality Consultant"
+    },
+    {
+      "id": "76:1",
+      "category": "Basic Fact Recall",
+      "predicted": "Yes — the context shows Johnson's income increased to **$8,000/month** as of 2039-07-18, with no subsequent change recorded, so that remained his income on July 10, 2043.",
+      "correct": false,
+      "errored": false,
+      "gold": "6500 yuan"
+    },
+    {
+      "id": "76:2",
+      "category": "Generalization & Application",
+      "predicted": "Yes — the context confirms Johnson uses compensatory motivation to overcome personal limitations in skills and resources, so in 2044 this would likely drive him to leverage his assistant and strategic approach to fill skill/resource gaps when tackling new consultancy projects.",
+      "correct": true,
+      "errored": false,
+      "gold": "It helps him overcome limitations and expand his consultancy portfolio."
+    },
+    {
+      "id": "76:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "76:4",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "76:5",
+      "category": "Multi-hop Inference",
+      "predicted": "NO ANSWER.",
+      "correct": false,
+      "errored": false,
+      "gold": "Compensatory motivation and emotional support from his network."
+    },
+    {
+      "id": "76:6",
+      "category": "Multi-hop Inference",
+      "predicted": "The context confirms commitment but not a measurable impact: as of 2043-09-15, Johnson was **committed to leveraging his network for further business expansion** — meaning it was an ongoing intent, not a documented outcome.",
+      "correct": false,
+      "errored": false,
+      "gold": "Increased collaborations and consultancy projects."
+    }
+  ],
+  "ingest": {
+    "stored": 1466,
+    "rejected": 0,
+    "errors": 0
+  },
+  "recipe": {
+    "pipeline": "ingest_conversation(atomic+consolidate)",
+    "reconcile": true,
+    "min_overlap": 0.35,
+    "answer_verify": true,
+    "history": true,
+    "k": 12,
+    "bitemporal": "asserted_at v13"
+  }
+}
