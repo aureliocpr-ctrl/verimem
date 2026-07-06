@@ -40,3 +40,13 @@ answer *"what changed, when — and how do you know?"*.
 
 MCP server (`hippo_*` tools) exposes the same surfaces for Claude/agents —
 memory that integrates with today's AIs (MCP) and tomorrow's (plain SQLite).
+
+## Packaging status (installability audit 2026-07-06)
+
+Wheel builds clean (`verimem-0.3.0-py3-none-any.whl`, 1.5 MB). Core deps 22→19
+(removed dead: scikit-learn, pillow, python-multipart — 0 imports, verified).
+**Known weight, proposal pending**: `sentence-transformers`→torch (the offline
+embedding core, ~200MB-2GB) stays in core for the no-API promise; the dashboard
+group (fastapi/uvicorn/jinja2, 15 files, server-only surfaces) and the BYOK
+client (`openai`, 2 files) should move to `[server]` / `[byok]` extras — a
+behavior change for dashboard users, gated on the adversarial review pass.

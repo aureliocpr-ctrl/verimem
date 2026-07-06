@@ -1,0 +1,41 @@
+{
+  "sections": {
+    "asof_edge_inputs": {
+      "ok": true,
+      "t": 25.99
+    },
+    "history_long_chain_100_hops": {
+      "ok": true,
+      "t": 8.65,
+      "walk_s": 0.026
+    },
+    "history_cycle_safety": {
+      "ok": true,
+      "t": 0.19,
+      "hops": 1
+    },
+    "deep_recall_5k_store_latency": {
+      "ok": true,
+      "t": 290.41,
+      "recall_s": 0.388,
+      "deep_s": 1.215,
+      "n": 5001
+    },
+    "trust_report_adversarial_inputs": {
+      "ok": true,
+      "t": 3.35,
+      "k200_n": 1
+    },
+    "sdk_latency_p50": {
+      "ok": true,
+      "t": 4.0,
+      "add_p50_ms": 62,
+      "search_p50_ms": 62
+    },
+    "asof_ignores_unasserted_created_now": {
+      "ok": true,
+      "t": 0.17
+    }
+  },
+  "failures": []
+}
