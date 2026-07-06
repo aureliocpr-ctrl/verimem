@@ -65,6 +65,43 @@ LLM-judged (answer quality, sycophancy sotto pressione) → leaderboard nel repo
   aggiunto `min_relevance` opt-in a `build_trust_report`/`Memory.explain`
   (default 0.0 invariato). Un benchmark che possiedi trova i tuoi buchi.
 
+## Leaderboard v0.1 — Verimem vs mem0 OSS (2026-07-06, stesso dataset n=10 seed=42)
+
+Entrambi sullo STESSO smoke-set generato. mem0 in **raw-store mode**
+(`add(infer=False)`, chroma + HF-embedder locali, LLM istanziato ma MAI
+invocato) = 100% offline, misura il comportamento dell'ENGINE (la qualità
+d'estrazione LLM è fuori scope, la misura HaluMem). Capacità che l'API mem0 non
+esprime = **n/a (API)**, mai contate come pass. Evidenze:
+`benchmark/results/trustmem_{verimem,mem0}_scorecard.json`.
+
+| Asse | Verimem | mem0 OSS (raw) |
+|---|---|---|
+| Fabrication under absence | 10/10 | **0/10** |
+| Destructive-update | 10/10 | 10/10 |
+| Temporal integrity (as-of) | 10/10 | **n/a (API)** |
+| Forget integrity (GDPR) | 10/10 | **0/10** |
+| Provenance honesty | 10/10 | **0/10** |
+| Sycophancy resistance | 10/10 | **n/a (API)** |
+| **Coverage API** | 6/6 | 40/60 (0.67) |
+
+**Letto onestamente** (non spin):
+- **Destructive-update 10/10 anche mem0** — ma è un pass *banale*: in raw mode
+  non riconcilia affatto, quindi entrambe le versioni contraddittorie
+  coesistono irrisolte. Verimem lo passa *risolvendo* (supersede + as-of).
+- **Forget 0/10 mem0 — verificato live**: `delete(id)` toglie il fatto da
+  `search`, MA `history(id)` restituisce ancora il testo cancellato
+  (2 entry, "SENSITIVE" presente). La resurrezione che TrustMem-Bench cerca,
+  su un competitor reale.
+- **Absence 0/10, Provenance 0/10**: l'engine non ha una verdetto di astensione
+  né un dossier di provenienza/verifica nella sua API OSS.
+- **Temporal + Sycophancy n/a**: l'as-of e la risoluzione-conflitti di mem0
+  vivono dietro la loro **piattaforma cloud a chiave API** (l'ingest di un
+  event-timestamp in OSS solleva "Temporal reasoning requires a Mem0 API key",
+  verificato su 2.0.11). Non eseguibili offline → dichiarati, non inventati.
+
+Invito pubblico: i manutentori possono PR-are un adapter/run ufficiale.
+
 ## Prossimo
-Adapter mem0 (config LLM dichiarata) + i 2 assi LLM-judged + invito pubblico.
-Gate competitor-run: quando lo slot claude-p è libero.
+I 2 assi LLM-judged (answer quality, sycophancy sotto pressione crescente) +
+adapter Zep/altri se eseguibili localmente. Gate: quando lo slot claude-p è
+libero.

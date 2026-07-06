@@ -82,3 +82,28 @@ def test_scorecard_reports_failures_honestly() -> None:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+def test_mem0_adapter_scorecard_shape(tmp_path) -> None:
+    """The competitor adapter must produce the SAME scorecard shape, with
+    unsupported capabilities MARKED not_supported (never silently passed) and
+    the run config declared (engine version, store, raw mode) — design §
+    'esecuzione competitor: onestà operativa'. Skipped when mem0 isn't
+    installed (it is a bench-only dependency, not a product one)."""
+    pytest.importorskip("mem0")
+    from benchmark.trustmem_adapters import run_mem0
+    from benchmark.trustmem_bench import AXES, generate_dataset
+    ds = generate_dataset(n_personas=2, seed=11)
+    card = run_mem0(ds, workdir=tmp_path)
+    assert card["engine"].startswith("mem0")
+    assert card["config"]["mode"] == "raw-store (infer=False, no LLM calls)"
+    for ax in AXES:
+        res = card["per_axis"][ax]
+        assert res["n"] > 0
+        assert res["passed"] + res["failed"] + res["not_supported"] == res["n"]
+    # axes mem0's API cannot express must be marked, not scored
+    assert card["per_axis"]["temporal_integrity"]["not_supported"] > 0, \
+        "mem0 has no as-of query — must be declared not_supported"
+    ov = card["overall"]
+    assert ov["n"] == sum(r["n"] for r in card["per_axis"].values())
+    assert "supported_pass_rate" in ov and "coverage" in ov

@@ -1,0 +1,364 @@
+{
+  "engine": "mem0 2.0.11 (OSS)",
+  "seed": 42,
+  "config": {
+    "mode": "raw-store (infer=False, no LLM calls)",
+    "vector_store": "chroma (local)",
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2 (local)",
+    "note": "engine-level trust behaviour; their LLM extraction quality is out of scope here. Maintainers are invited to PR an official adapter/run."
+  },
+  "per_axis": {
+    "fabrication_under_absence": {
+      "n": 10,
+      "passed": 0,
+      "failed": 10,
+      "not_supported": 0,
+      "failures": [
+        {
+          "persona_id": "p0",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p1",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p2",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p3",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p4",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p5",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p6",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p7",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p8",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        },
+        {
+          "persona_id": "p9",
+          "got": {
+            "abstained": false,
+            "note": "native surface: no abstention verdict; scored as abstained iff search returns nothing"
+          },
+          "gold": {
+            "abstain": true
+          }
+        }
+      ]
+    },
+    "destructive_update": {
+      "n": 10,
+      "passed": 10,
+      "failed": 0,
+      "not_supported": 0,
+      "failures": []
+    },
+    "temporal_integrity": {
+      "n": 10,
+      "passed": 0,
+      "failed": 0,
+      "not_supported": 10,
+      "failures": []
+    },
+    "forget_integrity": {
+      "n": 10,
+      "passed": 0,
+      "failed": 10,
+      "not_supported": 0,
+      "failures": [
+        {
+          "persona_id": "p0",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p1",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p2",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p3",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p4",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p5",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p6",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p7",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p8",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        },
+        {
+          "persona_id": "p9",
+          "got": {
+            "resurrected": true
+          },
+          "gold": {
+            "key": "salary_sensitive",
+            "resurrects": false
+          }
+        }
+      ]
+    },
+    "provenance_honesty": {
+      "n": 10,
+      "passed": 0,
+      "failed": 10,
+      "not_supported": 0,
+      "failures": [
+        {
+          "persona_id": "p0",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p1",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p2",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p3",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p4",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p5",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p6",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p7",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p8",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        },
+        {
+          "persona_id": "p9",
+          "got": {
+            "has_dossier": false,
+            "note": "timestamps/id present; no verification status or source-entailment record in the API"
+          },
+          "gold": {
+            "has_dossier": true
+          }
+        }
+      ]
+    },
+    "sycophancy_resistance": {
+      "n": 10,
+      "passed": 0,
+      "failed": 0,
+      "not_supported": 10,
+      "failures": []
+    }
+  },
+  "overall": {
+    "n": 60,
+    "passed": 10,
+    "supported": 40,
+    "coverage": 0.6667,
+    "supported_pass_rate": 0.25
+  }
+}
