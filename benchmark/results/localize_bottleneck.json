@@ -1,0 +1,7 @@
+{
+  "retrieval_hit_ours": 1.0,
+  "retrieval_hit_gold": 1.0,
+  "n": 5,
+  "verdict": "ANSWERER (retrieval ok anche coi nostri fatti, il collo è la risposta)",
+  "misses": []
+}
