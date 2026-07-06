@@ -270,6 +270,13 @@ On the **Italian** embedding A/B ([result file](./benchmark/results/lme_model_co
 the e5 flip lifts Italian **MRR 0.466 → 0.710 (+52%)** at **zero** English regression
 (English recall@5 ties within noise: **0.80** e5 vs **0.82** legacy-MiniLM, 50-question slice).
 
+**End-to-end Italian smoke** (`benchmark/qa_italiano_smoke.py`, the full recipe
+on an all-Italian store with accents): **13/13 factual + 6/6 abstention on trap
+questions = 1.000**, dated transition resolved ("prima di trasferirsi → Milano").
+Honest: a small hand-built synthetic set (easy, distinct facts) — a proof that
+recall AND anti-fabrication work in Italian end-to-end, not an external
+benchmark. The abstention 6/6 shows the anti-confab gate is not English-only.
+
 **New (2026-06-10): same-embedder comparative + full method notes in
 [BENCHMARKS.md](./BENCHMARKS.md)** — Verimem vs a bare cosine baseline with the *identical*
 e5 model (the honest reading both ways: on pure ranking over a clean haystack the layer adds

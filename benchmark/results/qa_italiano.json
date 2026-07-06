@@ -1,0 +1,171 @@
+{
+  "n": 19,
+  "n_correct": 19,
+  "n_errors": 0,
+  "accuracy": 1.0,
+  "per_category": {
+    "Astensione IT": {
+      "n": 6,
+      "accuracy": 1.0
+    },
+    "Fattuale IT": {
+      "n": 13,
+      "accuracy": 1.0
+    }
+  },
+  "details": [
+    {
+      "id": "it:0",
+      "category": "Fattuale IT",
+      "predicted": "No — si è trasferito a Torino nel 2021 per un nuovo incarico, non vive a Milano.",
+      "correct": true,
+      "errored": false,
+      "gold": "Torino"
+    },
+    {
+      "id": "it:1",
+      "category": "Fattuale IT",
+      "predicted": "Yes, Marco Rossi lavora come ingegnere civile.",
+      "correct": true,
+      "errored": false,
+      "gold": "ingegnere civile"
+    },
+    {
+      "id": "it:2",
+      "category": "Fattuale IT",
+      "predicted": "Yes, la figlia di Marco Rossi si chiama Sofia.",
+      "correct": true,
+      "errored": false,
+      "gold": "Sofia"
+    },
+    {
+      "id": "it:3",
+      "category": "Fattuale IT",
+      "predicted": "Sì — Marco Rossi preferisce il caffè macchiato senza zucchero.",
+      "correct": true,
+      "errored": false,
+      "gold": "macchiato senza zucchero"
+    },
+    {
+      "id": "it:4",
+      "category": "Fattuale IT",
+      "predicted": "Yes, Marco Rossi è appassionato di **fotografia analogica**.",
+      "correct": true,
+      "errored": false,
+      "gold": "fotografia analogica"
+    },
+    {
+      "id": "it:5",
+      "category": "Fattuale IT",
+      "predicted": "No, Giulia Bianchi è di Napoli, non di un'altra città.",
+      "correct": true,
+      "errored": false,
+      "gold": "Napoli"
+    },
+    {
+      "id": "it:6",
+      "category": "Fattuale IT",
+      "predicted": "Sì, Giulia Bianchi ha adottato un gatto di nome Nuvola.",
+      "correct": true,
+      "errored": false,
+      "gold": "un gatto"
+    },
+    {
+      "id": "it:7",
+      "category": "Fattuale IT",
+      "predicted": "Sì, il gatto di Giulia Bianchi si chiama Nuvola.",
+      "correct": true,
+      "errored": false,
+      "gold": "Nuvola"
+    },
+    {
+      "id": "it:8",
+      "category": "Fattuale IT",
+      "predicted": "Yes — Giulia Bianchi parla correntemente **inglese** e **spagnolo**.",
+      "correct": true,
+      "errored": false,
+      "gold": "inglese e spagnolo"
+    },
+    {
+      "id": "it:9",
+      "category": "Fattuale IT",
+      "predicted": "Yes, il budget del progetto Delta è di 500.000 euro.",
+      "correct": true,
+      "errored": false,
+      "gold": "500.000 euro"
+    },
+    {
+      "id": "it:10",
+      "category": "Fattuale IT",
+      "predicted": "Yes — Giulia Bianchi è una **biologa marina** di Napoli.",
+      "correct": true,
+      "errored": false,
+      "gold": "biologa marina"
+    },
+    {
+      "id": "it:11",
+      "category": "Fattuale IT",
+      "predicted": "Sì — Giulia Bianchi soffre di allergia ai pollini in primavera.",
+      "correct": true,
+      "errored": false,
+      "gold": "allergia ai pollini"
+    },
+    {
+      "id": "it:12",
+      "category": "Astensione IT",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "sconosciuto"
+    },
+    {
+      "id": "it:13",
+      "category": "Astensione IT",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "non fornito"
+    },
+    {
+      "id": "it:14",
+      "category": "Astensione IT",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "non indicato"
+    },
+    {
+      "id": "it:15",
+      "category": "Astensione IT",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "sconosciuto"
+    },
+    {
+      "id": "it:16",
+      "category": "Astensione IT",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "non fornito"
+    },
+    {
+      "id": "it:17",
+      "category": "Astensione IT",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "non fornito"
+    },
+    {
+      "id": "it:18",
+      "category": "Fattuale IT",
+      "predicted": "No — il contesto riporta che Marco Rossi **vive a Milano** (dal 2020-04-10), ma si è trasferito a Torino per un nuovo incarico (dal 2021-05-15): quindi Milano è la città di residenza precedente al trasferimento.",
+      "correct": true,
+      "errored": false,
+      "gold": "Milano"
+    }
+  ],
+  "lang": "it"
+}
