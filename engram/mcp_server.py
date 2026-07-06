@@ -2100,6 +2100,12 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     "as_of": {"type": "number",
                                "description": "epoch seconds: dossier of what "
                                               "was known/current at that moment"},
+                    "min_relevance": {"type": "number", "default": 0.0,
+                                      "description": "retrieval floor: hits "
+                                      "below it are dropped so an absent-"
+                                      "attribute query ABSTAINS without an "
+                                      "LLM (opt-in; the useful value is "
+                                      "corpus/model-dependent)"},
                 },
                 "required": ["query"],
             },
@@ -6890,7 +6896,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 a.semantic, arguments.get("query", ""),
                 k=int(arguments.get("k", 5)),
                 deep=bool(arguments.get("deep", False)),
-                as_of=float(_as_of) if _as_of is not None else None)
+                as_of=float(_as_of) if _as_of is not None else None,
+                # critic O3 caveat 2026-07-06: the floor was SDK-only
+                min_relevance=float(arguments.get("min_relevance", 0.0)))
             _audit(name, arguments, outcome="ok")
             return _ok(rep)
 

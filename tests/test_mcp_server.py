@@ -1144,3 +1144,25 @@ async def test_call_tool_recall_history_route(tmp_path, fake_agent: _FakeAgent) 
     assert plain.get("routed") == "plain"
     assert "PREVIOUSLY" not in joined
     assert "5000" in joined, "the live value is still served"
+
+
+@pytest.mark.asyncio
+async def test_call_tool_trust_report_min_relevance(tmp_path, fake_agent: _FakeAgent) -> None:
+    """Critic O3 caller-verification caveat (2026-07-06): the MCP dispatch did
+    not forward min_relevance — the LLM-free abstention floor existed only on
+    the SDK surface. With a floor above the anisotropic noise, an absent-
+    attribute query must abstain via the MCP tool too."""
+    from engram.semantic import Fact, SemanticMemory
+
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    sm.store(Fact(id="a", topic="u",
+                  proposition="Alex Rivera lives in Rome"), embed="sync")
+    fake_agent.semantic = sm
+
+    blocks = await _invoke_tool(
+        "hippo_trust_report",
+        {"query": "What is Alex Rivera's blood type?", "k": 3,
+         "min_relevance": 0.99})
+    rep = json.loads(blocks[0])
+    assert rep["abstained"] is True
+    assert rep["min_relevance"] == 0.99
