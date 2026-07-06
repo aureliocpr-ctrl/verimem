@@ -1,0 +1,15 @@
+{
+  "n": 9,
+  "cells": {
+    "strict@k6": 0.333,
+    "strict@k12": 0.333,
+    "declared@k6": 0.222,
+    "declared@k12": 0.333,
+    "verify@k6": 0.333,
+    "verify@k12": 0.444,
+    "declared_verify@k6": 0.333,
+    "declared_verify@k12": 0.333
+  },
+  "best": "verify@k12",
+  "best_acc": 0.444
+}
