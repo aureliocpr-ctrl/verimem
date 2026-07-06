@@ -1,0 +1,654 @@
+{
+  "plain": {
+    "n": 39,
+    "n_correct": 39,
+    "n_errors": 0,
+    "accuracy": 1.0,
+    "per_category": {
+      "Memory Boundary": {
+        "n": 39,
+        "accuracy": 1.0
+      }
+    },
+    "details": [
+      {
+        "id": "0:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided by the user."
+      },
+      {
+        "id": "2:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown, not provided by the user."
+      },
+      {
+        "id": "4:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The name of Martin's friend is not provided."
+      },
+      {
+        "id": "7:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown"
+      },
+      {
+        "id": "7:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context states his monthly income was updated **to 23,000 yuan**, but doesn't specify what his salary was specifically as a director at Huaxin Consulting.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown"
+      },
+      {
+        "id": "7:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown"
+      },
+      {
+        "id": "7:3",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown"
+      },
+      {
+        "id": "10:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The middle name is not provided."
+      },
+      {
+        "id": "10:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The exact date is not provided."
+      },
+      {
+        "id": "11:0",
+        "category": "Memory Boundary",
+        "predicted": "No — the context gives Martin's full name as \"Martin Mark,\" where \"Mark\" is his last name, not a middle name; no middle name is mentioned.",
+        "correct": true,
+        "errored": false,
+        "gold": "This information is not provided."
+      },
+      {
+        "id": "12:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context only records Martin's full name as \"Martin Mark,\" with no middle name mentioned anywhere.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the dialogue."
+      },
+      {
+        "id": "13:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context does not associate a middle name with a specific date; Martin's full name is **Martin Mark**, where \"Mark\" is his last name, not a middle name, and no middle name is mentioned anywhere in the context.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown, not provided by the user."
+      },
+      {
+        "id": "17:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Martin's middle name is unknown."
+      },
+      {
+        "id": "22:0",
+        "category": "Memory Boundary",
+        "predicted": "No — the context lists Martin's full name as \"Martin Mark\" with no middle name mentioned; \"Mark\" appears to be his last name.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the dialogue."
+      },
+      {
+        "id": "28:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Martin's middle name is not mentioned."
+      },
+      {
+        "id": "29:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the information."
+      },
+      {
+        "id": "29:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the information."
+      },
+      {
+        "id": "29:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the information."
+      },
+      {
+        "id": "30:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown, not provided by the user."
+      },
+      {
+        "id": "31:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "This information is not provided."
+      },
+      {
+        "id": "33:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input information."
+      },
+      {
+        "id": "34:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The friend's name is unknown."
+      },
+      {
+        "id": "34:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The specific games are unknown."
+      },
+      {
+        "id": "36:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input information."
+      },
+      {
+        "id": "36:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input information."
+      },
+      {
+        "id": "37:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown."
+      },
+      {
+        "id": "44:2",
+        "category": "Memory Boundary",
+        "predicted": "No — the context does not include any middle name for Martin; his name is recorded simply as \"Martin Mark.\"",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided by the user."
+      },
+      {
+        "id": "45:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The middle name is unknown."
+      },
+      {
+        "id": "46:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The middle name is not provided."
+      },
+      {
+        "id": "48:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input information."
+      },
+      {
+        "id": "55:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input."
+      },
+      {
+        "id": "55:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context only states that Martin Mark is enthusiastic about researching the environmental benefits of organic and recycled materials, but no specific start date for that research is mentioned.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input."
+      },
+      {
+        "id": "56:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown based on provided information."
+      },
+      {
+        "id": "56:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context only states that Martin Mark *witnessed* Golden Retrievers providing therapy during a volunteer session on Apr 18, 2034; there is no mention of him attending any number of therapy sessions.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown based on provided information."
+      },
+      {
+        "id": "57:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The friend's name is unknown."
+      },
+      {
+        "id": "58:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The middle name is not provided."
+      },
+      {
+        "id": "62:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Martin Mark's middle name is unknown."
+      },
+      {
+        "id": "63:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context contains no information about Martin Mark having a middle name.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown based on provided information."
+      },
+      {
+        "id": "63:2",
+        "category": "Memory Boundary",
+        "predicted": "No — the context only records Martin's monthly income as 15700 USD, with no salary figure specified for Aug 03, 2035.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown based on provided information."
+      }
+    ]
+  },
+  "history": {
+    "n": 39,
+    "n_correct": 37,
+    "n_errors": 0,
+    "accuracy": 0.9487,
+    "per_category": {
+      "Memory Boundary": {
+        "n": 39,
+        "accuracy": 0.9487
+      }
+    },
+    "details": [
+      {
+        "id": "0:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided by the user."
+      },
+      {
+        "id": "2:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown, not provided by the user."
+      },
+      {
+        "id": "4:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The name of Martin's friend is not provided."
+      },
+      {
+        "id": "7:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown"
+      },
+      {
+        "id": "7:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context records his salary as 20,000 yuan (later updated to 23,000 yuan), but his title at Huaxin Consulting was \"Executive Director\" (not simply \"director\").",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown"
+      },
+      {
+        "id": "7:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown"
+      },
+      {
+        "id": "7:3",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown"
+      },
+      {
+        "id": "10:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The middle name is not provided."
+      },
+      {
+        "id": "10:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The exact date is not provided."
+      },
+      {
+        "id": "11:0",
+        "category": "Memory Boundary",
+        "predicted": "No — the context gives Martin's full name as \"Martin Mark,\" where \"Mark\" is his last name, not a middle name; no middle name is mentioned.",
+        "correct": true,
+        "errored": false,
+        "gold": "This information is not provided."
+      },
+      {
+        "id": "12:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context only records Martin's name as \"Martin Mark\" with no middle name mentioned.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the dialogue."
+      },
+      {
+        "id": "13:1",
+        "category": "Memory Boundary",
+        "predicted": "No — the context records Martin's full name as \"Martin Mark,\" where \"Mark\" is his last name, not a middle name; no middle name is mentioned.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown, not provided by the user."
+      },
+      {
+        "id": "17:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Martin's middle name is unknown."
+      },
+      {
+        "id": "22:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the dialogue."
+      },
+      {
+        "id": "28:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Martin's middle name is not mentioned."
+      },
+      {
+        "id": "29:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the information."
+      },
+      {
+        "id": "29:1",
+        "category": "Memory Boundary",
+        "predicted": "Yes, the colleague mentioned on 2029-05-01 is **Joshua**, whose insights improved team collaboration but also led to increased competition within the team.",
+        "correct": false,
+        "errored": false,
+        "gold": "Unknown; not provided in the information."
+      },
+      {
+        "id": "29:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the information."
+      },
+      {
+        "id": "30:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown, not provided by the user."
+      },
+      {
+        "id": "31:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER",
+        "correct": true,
+        "errored": false,
+        "gold": "This information is not provided."
+      },
+      {
+        "id": "33:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input information."
+      },
+      {
+        "id": "34:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The friend's name is unknown."
+      },
+      {
+        "id": "34:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The specific games are unknown."
+      },
+      {
+        "id": "36:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input information."
+      },
+      {
+        "id": "36:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input information."
+      },
+      {
+        "id": "37:2",
+        "category": "Memory Boundary",
+        "predicted": "No — the context contains no information about Martin Mark having a middle name.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown."
+      },
+      {
+        "id": "44:2",
+        "category": "Memory Boundary",
+        "predicted": "No — the context gives his name as \"Martin Mark\" with no middle name recorded; \"Mark\" appears to be his last name, not a middle name.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided by the user."
+      },
+      {
+        "id": "45:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The middle name is unknown."
+      },
+      {
+        "id": "46:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER",
+        "correct": true,
+        "errored": false,
+        "gold": "The middle name is not provided."
+      },
+      {
+        "id": "48:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input information."
+      },
+      {
+        "id": "55:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input."
+      },
+      {
+        "id": "55:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown; not provided in the input."
+      },
+      {
+        "id": "56:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown based on provided information."
+      },
+      {
+        "id": "56:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown based on provided information."
+      },
+      {
+        "id": "57:2",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "The friend's name is unknown."
+      },
+      {
+        "id": "58:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER",
+        "correct": true,
+        "errored": false,
+        "gold": "The middle name is not provided."
+      },
+      {
+        "id": "62:0",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Martin Mark's middle name is unknown."
+      },
+      {
+        "id": "63:1",
+        "category": "Memory Boundary",
+        "predicted": "NO ANSWER.",
+        "correct": true,
+        "errored": false,
+        "gold": "Unknown based on provided information."
+      },
+      {
+        "id": "63:2",
+        "category": "Memory Boundary",
+        "predicted": "No — by Aug 03, 2035, Martin Mark's monthly income was **0 yuan**, as his transition from employment to entrepreneurship (Global Health Initiative) took effect on Feb 15, 2035, dropping his income to 0.",
+        "correct": false,
+        "errored": false,
+        "gold": "Unknown based on provided information."
+      }
+    ]
+  }
+}
