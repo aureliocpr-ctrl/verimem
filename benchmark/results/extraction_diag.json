@@ -1,0 +1,82 @@
+{
+  "recall": 0.4230769230769231,
+  "covered": 11,
+  "total": 26,
+  "missed": [
+    {
+      "session": 0,
+      "gold": "Martin Mark's age in January 2025 is 29 years old",
+      "best_overlap": 0.22
+    },
+    {
+      "session": 0,
+      "gold": "Martin Mark's major is Public Health",
+      "best_overlap": 0.4
+    },
+    {
+      "session": 0,
+      "gold": "Martin Mark's parent status: Both parents are alive",
+      "best_overlap": 0.25
+    },
+    {
+      "session": 0,
+      "gold": "Martin Mark's partner status: no_relationship",
+      "best_overlap": 0.33
+    },
+    {
+      "session": 0,
+      "gold": "Martin Mark's motivation for pursuing goals: Inspired by his family's medical background and a desire to promote well-being globally.",
+      "best_overlap": 0.23
+    },
+    {
+      "session": 0,
+      "gold": "Martin Mark's target metrics: Provide healthcare access to 1 million people in underserved areas.",
+      "best_overlap": 0.41
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's employment status is Employed",
+      "best_overlap": 0.0
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's job title is director",
+      "best_overlap": 0.22
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's monthly income is 15700 USD",
+      "best_overlap": 0.33
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's savings amount is 43700 USD",
+      "best_overlap": 0.2
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's physical health condition: Normal",
+      "best_overlap": 0.25
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's mental health condition: Mildly Abnormal",
+      "best_overlap": 0.18
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's Friend ThomasSusan, Susan's support and encouragement inspire me to maintain my focus on promoting well-being in both my personal and professional life.",
+      "best_overlap": 0.48
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's Colleague MartinezDaniel, Daniel's expertise in healthcare consulting challenges me to push boundaries and innovate in our projects, significantly impacting my career growth.",
+      "best_overlap": 0.29
+    },
+    {
+      "session": 1,
+      "gold": "Martin Mark's Colleague WilliamsJoshua, Joshua's collaborative approach and insights into healthcare management enhance our team's effectiveness, positively influencing my work and leadership style.",
+      "best_overlap": 0.24
+    }
+  ]
+}
