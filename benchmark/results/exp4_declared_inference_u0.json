@@ -1,0 +1,578 @@
+{
+  "n": 70,
+  "n_correct": 58,
+  "n_errors": 0,
+  "accuracy": 0.8286,
+  "per_category": {
+    "Generalization & Application": {
+      "n": 31,
+      "accuracy": 0.6452
+    },
+    "Memory Boundary": {
+      "n": 39,
+      "accuracy": 0.9744
+    }
+  },
+  "details": [
+    {
+      "id": "0:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided by the user."
+    },
+    {
+      "id": "2:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "4:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The name of Martin's friend is not provided."
+    },
+    {
+      "id": "4:2",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: Martin finds comfort and relaxation in having pets, particularly Golden Retrievers, which provide emotional support and companionship [since 2026-04-10] + Martin's change in pet preference from Labradors to Golden Retrievers reflects his openness to new experiences [since 2026-01-10].\n\nDurante periodi lavorativi stressanti nel 2026, Martin sceglierebbe probabilmente un Golden Retriever come animale domestico per il loro supporto emotivo e la loro presenza calmante.",
+      "correct": true,
+      "errored": false,
+      "gold": "Golden Retrievers provide relaxation and emotional support."
+    },
+    {
+      "id": "7:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "7:3",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown"
+    },
+    {
+      "id": "8:0",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"Engaging in extreme sports helps Martin overcome creative blocks\" + \"Martin's openness to new experiences is reflected in his evolving sports preferences\" (both current since 2026-04-10).\n\nMartin might be interested in trying new **extreme sports**, given their creative and personal growth benefits he recognized around that date.",
+      "correct": true,
+      "errored": false,
+      "gold": "Other extreme sports."
+    },
+    {
+      "id": "8:1",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"Engaging in extreme sports helps Martin overcome creative blocks and inspires new ideas\" + \"Martin's exploratory motivation leads him to test boundaries and find new ways to unwind.\"\n\nMartin will likely continue choosing physically and emotionally challenging activities — extreme sports, adventure genres, new experiences — as his go-to strategy for unlocking creativity.",
+      "correct": true,
+      "errored": false,
+      "gold": "Choosing challenging physical activities."
+    },
+    {
+      "id": "9:0",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: **\"Martin seeks recommendations for non-violent action games that enhance cognitive skills\"** + **\"aligning with his values of peace and well-being\"** + **\"interest sparked by a seminar on cognitive development\"**.\n\nHe could explore **non-violent action games focused on cognitive enhancement** — e.g. puzzle-action, strategy-action, or exploration/adventure genres that emphasize problem-solving, spatial reasoning, and quick decision-making, without violent content.\n\nThe context doesn't name specific titles or sub-genres beyond this description.",
+      "correct": true,
+      "errored": false,
+      "gold": "Games enhancing cognitive skills and aligning with peace values."
+    },
+    {
+      "id": "10:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "10:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The exact date is not provided."
+    },
+    {
+      "id": "11:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "11:2",
+      "category": "Generalization & Application",
+      "predicted": "Adventure and fantasy genres.",
+      "correct": true,
+      "errored": false,
+      "gold": "Adventure and fantasy genres."
+    },
+    {
+      "id": "12:1",
+      "category": "Memory Boundary",
+      "predicted": "No — Martin's full name is stated as \"Martin Mark,\" where \"Mark\" appears to be his last name, not a middle name. No middle name is mentioned in the context.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the dialogue."
+    },
+    {
+      "id": "12:2",
+      "category": "Generalization & Application",
+      "predicted": "Herbal tea blends — specifically those with enhanced calming properties. The context directly states Martin considers how new herbal tea blends can support his mental health and **enhance his yoga practice**.",
+      "correct": true,
+      "errored": false,
+      "gold": "Herbal teas with health blends."
+    },
+    {
+      "id": "13:0",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"curiosity about integrating heavy metal alongside **ambient and jazz**\" + \"exploratory motivation to discover new ways to unwind through heavy metal, jazz, and classical music.\"\n\nMartin would likely explore **ambient** or **jazz** next, as both are explicitly mentioned as companion genres in his relaxation exploration.",
+      "correct": true,
+      "errored": false,
+      "gold": "Ambient or jazz music."
+    },
+    {
+      "id": "13:1",
+      "category": "Memory Boundary",
+      "predicted": "No. Martin's recorded name is \"Martin Mark\" — \"Mark\" is his last name, not a middle name. No middle name is stated in the context.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "14:0",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"Martin is exploring other areas of life to integrate sustainable choices, such as travel and dietary habits\" (since 2027-10-29) + \"Martin's travel preferences are evolving to focus on activities that support his health and humanitarian goals, such as nature hikes and cultural tours.\"\n\nMartin might consider **nature hikes** and **cultural tours** as sustainable travel options that align with his health and humanitarian goals.",
+      "correct": false,
+      "errored": false,
+      "gold": "Eco-friendly transportation or supporting local eco-tourism."
+    },
+    {
+      "id": "17:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin's middle name is unknown."
+    },
+    {
+      "id": "22:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the dialogue."
+    },
+    {
+      "id": "23:1",
+      "category": "Generalization & Application",
+      "predicted": "Destinations that offer **cultural richness with manageable crowds**.",
+      "correct": true,
+      "errored": false,
+      "gold": "Destinations with cultural richness and manageable crowds."
+    },
+    {
+      "id": "25:0",
+      "category": "Generalization & Application",
+      "predicted": "Martin should explore horror films with **compelling narratives that balance thrill and positivity** — directly stated in context as his stated preference as of 2029-02-13.",
+      "correct": true,
+      "errored": false,
+      "gold": "Films with compelling narratives balancing thrill and positivity."
+    },
+    {
+      "id": "28:1",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: *Martin explores chia seeds, spirulina, and goji berries* + *his focus on superfood smoothies for high-demand activities* + *enthusiasm for sustaining energy levels*:\n\nMartin would likely combine those superfoods (chia seeds for sustained fuel, spirulina for nutrients, goji berries for antioxidants) into a pre-event smoothie designed for endurance, aligning with his existing energizing smoothie preference.",
+      "correct": true,
+      "errored": false,
+      "gold": "Include chia seeds, spirulina, and goji berries."
+    },
+    {
+      "id": "28:2",
+      "category": "Memory Boundary",
+      "predicted": "No. The context states Martin's name is \"Martin Mark\" — \"Mark\" is his last name, not a middle name. No middle name is mentioned.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin's middle name is not mentioned."
+    },
+    {
+      "id": "29:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "29:1",
+      "category": "Memory Boundary",
+      "predicted": "The context does not provide a name for the new colleague mentioned on 2029-05-01. NO ANSWER.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "29:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the information."
+    },
+    {
+      "id": "30:1",
+      "category": "Generalization & Application",
+      "predicted": "Contemporary classical music and contemporary rock music.",
+      "correct": false,
+      "errored": false,
+      "gold": "Contemporary classical music."
+    },
+    {
+      "id": "30:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown, not provided by the user."
+    },
+    {
+      "id": "31:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "This information is not provided."
+    },
+    {
+      "id": "31:1",
+      "category": "Generalization & Application",
+      "predicted": "Smart-casual business attire.\n\nInferred from: Martin updated his preference to smart-casual in November 2029 + he was actively integrating it into his daily routine at that time.",
+      "correct": true,
+      "errored": false,
+      "gold": "Smart-casual business attire."
+    },
+    {
+      "id": "32:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER — il contesto non nomina altri breed specifici oltre i Golden Retrievers per il periodo Feb 2030.\n\nInferred from: preferenza per supporto emotivo + companionship (2030-02-26) → potrebbe esplorare breed noti per queste caratteristiche, ma nessun nome concreto è citato nel contesto.",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin might explore breeds known for social and affectionate traits."
+    },
+    {
+      "id": "33:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "34:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is unknown."
+    },
+    {
+      "id": "34:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The specific games are unknown."
+    },
+    {
+      "id": "35:1",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: Martin Mark's travel preference evolved to include cultural and health tours (since 2032-12-31) + his commitment to integrating environmental awareness with leisure activities (since 2030-12-06).\n\nIn 2031 (before the 2032 shift), Martin would likely pursue **eco-conscious travel** with an environmental/conservation focus, possibly nature-based experiences that align with his storytelling and conservation awareness goals.",
+      "correct": true,
+      "errored": false,
+      "gold": "Conservation-focused hikes."
+    },
+    {
+      "id": "36:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "36:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "37:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown."
+    },
+    {
+      "id": "42:2",
+      "category": "Generalization & Application",
+      "predicted": "Comfortable athletic wear.\n\nInferred from: Martin likes athletic wear for comfort and flexibility (active lifestyle) + he considered professional image impact after Dec 2031 but no clothing preference change is recorded post that date.",
+      "correct": true,
+      "errored": false,
+      "gold": "Comfortable and functional attire."
+    },
+    {
+      "id": "43:0",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"Martin's financial stability has enabled him to invest in activities like fitness programs and mindfulness workshops, significantly improving his physical and mental health\" (since 2032-02-20) + \"financial stability in achieving his humanitarian goals\" (since 2031-08-15).\n\nMartin likely used his financial stability in 2032 to fund fitness and mindfulness investments that supported his personal well-being, which in turn strengthened his capacity to pursue humanitarian goals.",
+      "correct": true,
+      "errored": false,
+      "gold": "Invest in personal growth and well-being."
+    },
+    {
+      "id": "43:1",
+      "category": "Generalization & Application",
+      "predicted": "Dalle memorie al 2032, le strategie documentate sono:\n\n1. **Clarificatory motivation** — organizza pensieri e prospettiva per bilanciare lifestyle e career demands (fatto 2032-02-20).\n2. **Health & wellness activities** — migliorano fitness, mental clarity e stress management (fatto 2031-10-05).\n3. **Leva sulla stabilità finanziaria** — riduce pressioni esterne, libera focus su personal growth (fatto 2032-02-20).\n\n⚠️ Nota: il contesto contiene una contraddizione diretta — un fatto del 2031-12-01 afferma che i lifestyle improvements hanno *diminuito* la performance professionale, un altro dello stesso giorno la collega a un *miglioramento*. Nessuno dei due è risolto nel contesto fornito.",
+      "correct": false,
+      "errored": false,
+      "gold": "Set boundaries and use stress relief methods."
+    },
+    {
+      "id": "44:0",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: Martin's evolving pet preferences focus on parrots and turtles + commitment to responsible ownership and conservation + seeks to integrate conservation-focused practices into daily routine.\n\nMartin likely adopted conservation-aligned practices: supporting parrot conservation programs, prioritizing ethical sourcing, and integrating pet care into his stress-management routine.",
+      "correct": true,
+      "errored": false,
+      "gold": "Conservation-focused and ethical practices."
+    },
+    {
+      "id": "44:2",
+      "category": "Memory Boundary",
+      "predicted": "No — Martin's full name is stated as \"Martin Mark,\" where \"Mark\" appears to be his last name, not a middle name. No middle name is mentioned in the context.",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided by the user."
+    },
+    {
+      "id": "45:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is unknown."
+    },
+    {
+      "id": "45:2",
+      "category": "Generalization & Application",
+      "predicted": "Il contesto non menziona altri sport esplorati dopo il 2032-06-25 oltre all'eco-friendly racing stesso.\n\n**NO ANSWER** — nessun dato nel contesto indica sport aggiuntivi esplorati dopo quella data.",
+      "correct": false,
+      "errored": false,
+      "gold": "Sports with innovative, sustainable practices."
+    },
+    {
+      "id": "46:0",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.\n\nThe context states his interest in narrative-driven games for mental escape, creativity, and immersive storytelling, but does not specify any next leisure activity he planned or considered exploring.",
+      "correct": false,
+      "errored": false,
+      "gold": "Story-rich books or immersive theater experiences."
+    },
+    {
+      "id": "46:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "47:1",
+      "category": "Generalization & Application",
+      "predicted": "Cultural tours and health/culinary tours — both are directly stated in the memory context as Martin's evolving travel preferences.",
+      "correct": true,
+      "errored": false,
+      "gold": "Cultural and health tours."
+    },
+    {
+      "id": "48:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input information."
+    },
+    {
+      "id": "52:4",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"Martin's commitment to yoga and meditation has led to exceptional physical and mental well-being\" [2033-06-15] + \"Joshua's collaborative approach positively influenced Martin's leadership style\" [2026-02-05].\n\nMartin's enhanced mental clarity and well-being could support more effective, balanced leadership — benefiting team dynamics on future projects like the Global Health Initiative.",
+      "correct": false,
+      "errored": false,
+      "gold": "It can inspire and motivate his team for high performance."
+    },
+    {
+      "id": "52:5",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"Regular engagement in health and wellness activities has significantly improved Martin's physical fitness and mental clarity, allowing him to better manage stress\" + \"Martin Mark's motivation for accepting the promotion is driven by his desire to have a greater impact on healthcare outcomes and further his personal and professional development.\"\n\nImproved health likely supports better stress management and mental clarity, which could enhance Martin's decision-making and effectiveness in his career advancement and humanitarian goals.",
+      "correct": false,
+      "errored": false,
+      "gold": "Enhanced productivity and creativity as Executive Director."
+    },
+    {
+      "id": "53:1",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: Martin attended a tea expo on Jul 08, 2033 (introduced to green tea varieties with enhanced antioxidant properties) + Martin thoughtfully considers balancing enjoyment with health benefits in his beverage choices + Martin expressed interest in drinks with pronounced health benefits.\n\nMartin would likely prefer **green tea** (or similar antioxidant-rich herbal teas) at a health-focused event.",
+      "correct": true,
+      "errored": false,
+      "gold": "Enhanced antioxidant green tea."
+    },
+    {
+      "id": "54:2",
+      "category": "Generalization & Application",
+      "predicted": "Classical music.\n\nStated directly in context: \"Martin Mark's music preference has shifted to include classical music for its calming effects and alignment with his values.\" [since 2033-10-11]",
+      "correct": false,
+      "errored": false,
+      "gold": "Socially conscious rap."
+    },
+    {
+      "id": "55:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "55:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown; not provided in the input."
+    },
+    {
+      "id": "56:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "56:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "57:2",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The friend's name is unknown."
+    },
+    {
+      "id": "58:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "The middle name is not provided."
+    },
+    {
+      "id": "58:2",
+      "category": "Generalization & Application",
+      "predicted": "Il contesto dice solo che Martin Mark ha *considerato* come il cambiamento di preferenza (verso tè erboristici tradizionali) possa influenzare abitudini alimentari e obiettivi di salute — ma non specifica quali nuove abitudini abbia effettivamente adottato.\n\nNO ANSWER",
+      "correct": false,
+      "errored": false,
+      "gold": "Martin may adopt a diet focused on health-conscious options."
+    },
+    {
+      "id": "59:1",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER. The context states Martin's preference shifted to **jazz and contemporary classical** as of Jan 26, 2035, and that he plans to explore more genres, but no specific next genre is named.",
+      "correct": false,
+      "errored": false,
+      "gold": "Electronic music, offering dynamic and engaging experiences."
+    },
+    {
+      "id": "62:0",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Martin Mark's middle name is unknown."
+    },
+    {
+      "id": "62:2",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"Martin Mark has updated his clothing preference to include stylish and functional athletic wear\" (since 2035-05-01) + \"clothing preference shifted to eco-friendly athletic wear.\"\n\nMartin would likely prefer **eco-friendly, stylish, and functional athletic wear** for the fitness class.",
+      "correct": true,
+      "errored": false,
+      "gold": "Stylish and functional athletic wear."
+    },
+    {
+      "id": "63:1",
+      "category": "Memory Boundary",
+      "predicted": "NO ANSWER",
+      "correct": true,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "63:2",
+      "category": "Memory Boundary",
+      "predicted": "Inferred from: last income update (2033-04-25) setting monthly income to **23,000 yuan**, with no subsequent update before Aug 03, 2035.\n\nMartin Mark's monthly income on Aug 03, 2035 was **23,000 yuan**.",
+      "correct": false,
+      "errored": false,
+      "gold": "Unknown based on provided information."
+    },
+    {
+      "id": "64:2",
+      "category": "Generalization & Application",
+      "predicted": "NO ANSWER.\n\nThe context records what Martin *did* and *expressed*, but contains no information about his planned 2036 expansion strategy.",
+      "correct": false,
+      "errored": false,
+      "gold": "Form partnerships and leverage social network support."
+    },
+    {
+      "id": "64:3",
+      "category": "Generalization & Application",
+      "predicted": "Inferred from: \"Martin Mark's motivation for pursuing goals: Inspired by his family's medical background and a desire to promote well-being globally\" + \"Martin reflected on the influence of his family's medical background in inspiring his Global Health Initiative.\"\n\nMartin's family medical background will likely continue to shape his healthcare initiative decisions — reinforcing his focus on global health access, guiding partner selection toward medically credible organizations, and sustaining his emotional commitment to reaching 1 million people.",
+      "correct": true,
+      "errored": false,
+      "gold": "Inspire strategic planning and focus on healthcare access."
+    }
+  ]
+}

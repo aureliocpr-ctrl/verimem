@@ -848,3 +848,21 @@ deep-faster-than-default gap here is warm-cache ordering, not a real speedup).
 store + sync embed): p50 **38ms**, p95 43ms, p99 58ms (~17 facts/s single
 thread) — the trust gate adds no meaningful write cost
 (`benchmark/results/write_profile_1k.json`).
+
+## Declared-inference answerer (exp4, 2026-07-06) — a validated lever, not yet shipped
+
+The strict answerer either states a fact or abstains. A third mode — **infer
+when it FOLLOWS from the context, but DECLARE the derivation** ("Inferred from:
+A + B", single-step only) — beats strict on BOTH the reasoning axis and the
+abstention canary, same user (u0), same questions:
+
+| Category | strict | declared-inference | Δ |
+|---|---|---|---|
+| Generalization & Application (n=31) | 0.581 | **0.645** | +6.5pp |
+| Memory Boundary — abstention canary (n=39) | 0.897 | **0.974** | +7.7pp |
+
+No trade-off: fabrications went DOWN while inference went up — the explicit
+"otherwise reply NO ANSWER" rule is better calibrated than the strict prompt.
+**Honest limits:** small n (a 2–3 question swing), single user; a validated
+lever, not a shipped default. Next: replicate across users before making it a
+selectable answer mode. Evidence: `benchmark/results/exp4_declared_inference_u0.json`.
