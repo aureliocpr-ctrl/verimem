@@ -831,3 +831,8 @@ same 170-240ms band — deep recall and the history/dossier enrichments add **no
 measurable overhead** on top of base recall (the 1.2s deep figure measured
 earlier was the keyword-fallback path on an embedding-less store; the
 deep-faster-than-default gap here is warm-cache ordering, not a real speedup).
+
+**Write path** (1000 `add()` through the FULL gate — L1 anti-confab screen +
+store + sync embed): p50 **38ms**, p95 43ms, p99 58ms (~17 facts/s single
+thread) — the trust gate adds no meaningful write cost
+(`benchmark/results/write_profile_1k.json`).

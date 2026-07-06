@@ -1,0 +1,8 @@
+{
+  "n": 1000,
+  "add_p50_ms": 38,
+  "add_p95_ms": 43,
+  "add_p99_ms": 58,
+  "throughput_facts_per_s": 16.9,
+  "note": "full path: L1 anti-confab screen + gate + store + sync embed"
+}
