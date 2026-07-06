@@ -5,6 +5,7 @@
 > architecture term: the inspectable memory-trace artifacts this system produces)*
 
 [![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python ≥ 3.10](https://img.shields.io/badge/python-≥3.10-blue.svg)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/tests-5900%2B-brightgreen)](../../actions/workflows/ci.yml)
@@ -102,9 +103,9 @@ Full numbers, fairness notes and honest limits: **[BENCHMARKS.md](./BENCHMARKS.m
 ## ⚡ Install in 2 minutes (Claude Code)
 
 ```bash
-# Not on PyPI yet — install from source (provides the `engram` command):
-pip install "git+https://github.com/aureliocpr-ctrl/verimem.git"
-# Or for development:  git clone … && cd hippoagent && pip install -e .
+pip install verimem
+# From source (latest main):  pip install "git+https://github.com/aureliocpr-ctrl/verimem.git"
+# For development:  git clone https://github.com/aureliocpr-ctrl/verimem && cd verimem && pip install -e .
 ```
 
 Drop `.mcp.json` in your project root (or `~/.claude/.mcp.json` global):
