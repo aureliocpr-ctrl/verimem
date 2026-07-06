@@ -1,0 +1,19 @@
+{
+  "identical_pairs": [
+    "Johnson Joseph's monthly income is 3500 USD ==> Johnson Joseph's career status updated monthly income from '3500 yuan' to '4500 USD'.",
+    "Johnson Joseph's physical health condition: Normal ==> Johnson Joseph's physical health status changed from \"Normal\" to \"Excellent\".",
+    "Johnson Joseph's savings amount is 12000 USD ==> Johnson Joseph's career status updated savings amount from '12000 yuan' to '14000 USD'."
+  ],
+  "only_base": [
+    "Johnson Joseph lives in Albi ==> Johnson Joseph works at Albi B&B",
+    "Johnson Joseph's partner status: Dating ==> Johnson Joseph's employment status is self-employed"
+  ],
+  "only_large": [
+    "Johnson Joseph's job title is Owner ==> Johnson Joseph's career status updated job title from 'Owner' to 'Owner and Local Hospitality Leader'.",
+    "Johnson Joseph's mental health condition: Positive and Sunny ==> Johnson Joseph's mental health status changed from \"Positive and Sunny\" to \"Highly Positive\"."
+  ],
+  "verdict_same_set": false,
+  "base_seconds": 62,
+  "large_seconds": 65,
+  "note": "12 sessioni gold u1, floor 0.35, stesso codice \u2014 solo il modello NLI cambia"
+}
