@@ -34,3 +34,30 @@ def test_no_deprecation_warning_on_import():
         cwd=r"C:\Users\aurel\Code\hippoagent")
     assert r.returncode == 0, (r.stderr or "")[-400:]
     assert r.stdout.strip(), "version exposed"
+
+
+def test_sdk_import_safe_without_server_and_byok_deps():
+    """Packaging contract (iter 59): `import engram/verimem` + the 5-verb SDK
+    must work WITHOUT fastapi/uvicorn/jinja2/openai installed (they moved to
+    [server]/[byok] extras). Simulated by blocking the modules in a child
+    interpreter — an import of any blocked dep on the SDK path would raise."""
+    import subprocess
+    import sys
+    code = (
+        "import sys\n"
+        "for m in ('fastapi','uvicorn','jinja2','openai'):\n"
+        "    sys.modules[m] = None\n"   # import -> ImportError('None in sys.modules')
+        "import tempfile, pathlib\n"
+        "from verimem import Memory\n"
+        "mem = Memory(pathlib.Path(tempfile.mkdtemp())/'m.db')\n"
+        "r = mem.add('packaging probe fact')\n"
+        "assert r['stored'], r\n"
+        "assert mem.search('packaging probe')\n"
+        "assert mem.explain('packaging probe')['n_facts'] >= 1\n"
+        "print('SDK OK without server/byok deps')\n"
+    )
+    r = subprocess.run([sys.executable, "-c", code], capture_output=True,
+                       text=True, timeout=300,
+                       cwd=r"C:\Users\aurel\Code\hippoagent")
+    assert r.returncode == 0, (r.stderr or "")[-500:]
+    assert "SDK OK" in r.stdout

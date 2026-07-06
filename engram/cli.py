@@ -587,7 +587,13 @@ def dashboard(
     import os as _os
     import secrets as _secrets
 
-    import uvicorn
+    try:
+        import uvicorn
+    except ImportError:
+        console.print(
+            "[red]The web dashboard needs the server extra:[/] "
+            "pip install verimem[server]")
+        raise typer.Exit(1) from None
 
     # ---- Bind safety ------------------------------------------------------
     loopback_hosts = {"127.0.0.1", "localhost", "::1"}
