@@ -180,6 +180,38 @@ For explicit control instead, install the optional slash commands from
 
 ## 📊 How Verimem compares (honest, no spin)
 
+### HaluMem QA — the composed trust recipe, adversarially reviewed (2026-07-06)
+
+With the full recipe ON (bi-temporal `asserted_at` + reconcile floor 0.35 +
+verification-aware answerer + **dated history context** + k=12), per-session QA on
+**HaluMem-Medium** ([u0 evidence](./benchmark/results/qa_gem_k12_u0.json)):
+
+| | user 1 (n=188) | user 0 (n=164) | MemOS self-reported |
+|---|---|---|---|
+| **Overall QA** | **0.739** | **0.750** | 0.672 |
+| Memory Conflict | 0.800 | 0.872 | — |
+| Memory Boundary (never fabricate) | 0.976 | 0.897 | — |
+| Basic Fact Recall | 0.800 | 0.725 | — |
+
+The claim survived an adversarial counterexample review (`claim_holds`, conf 0.86:
+per-category counts consistent by construction; abstention flagging doesn't inflate —
+fabrications are penalized; answerable categories graded by the strict judge).
+**Declared caveats, every time:** judge is Claude (MemOS self-reports with GPT-4 —
+comparable method, not identical); the store is built from gold memory points, so this
+measures the **read-path** of the recipe, not end-to-end ingest→QA; n=2 users; the rich
+context trades a little abstention purity (0.976/0.897 vs 1.0 with the strict answerer).
+The single biggest lever is the **answer-with-history** dated context: on transition
+questions it lifts +16pp (7 unlocked, 0 lost), and the Memory-Conflict arc is
+**0.15 → 0.825 (5.5×)** from plain store to full recipe — see
+[TRUST_MAINTENANCE.md](./docs/TRUST_MAINTENANCE.md) for the measured dial and
+[QUICKSTART_SDK.md](./docs/QUICKSTART_SDK.md) for the 5-verb SDK that ships it
+(`add/search/history/as_of/explain` — archaeology, time-travel and the evidence
+dossier included). Write-path robustness, same block: reconcile auto-supersede made
+surgical (146/807 retired, **0 cross-attribute**, 3× faster) and a 7/7 stress battery
+([evidence](./benchmark/results/stress_battery.json)).
+
+### Retrieval (LongMemEval-s, judge-free, fully local)
+
 On the standard **LongMemEval-s** benchmark (full 500 questions, judge-free, fully local —
 [result file](./benchmark/results/lme_s_fusionON_n500_clean.json)):
 **recall@5 0.8745 · hit@5 0.944 · MRR 0.856** (`multilingual-e5-base`, 768-d, fusion ON).

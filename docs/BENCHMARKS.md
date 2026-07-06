@@ -769,3 +769,55 @@ Reconcile on HaluMem `is_update` ground truth (`benchmark/reconcile_truth_mainte
   missed (lexical `looks_like_conflict` gating upstream + NLI misses) — real, not
   closed. Opt-in (`set_reconcile_judge(LocalRelationJudge())`); default stays lexical.
   11 unit tests pin the decision logic (stub classifier, no model load).
+
+## HaluMem per-session QA — the composed trust recipe (2026-07-05/06, adversarially reviewed)
+
+The 24h loop's headline. Recipe (all product surfaces, no bench-only hacks):
+bi-temporal store (`asserted_at` v13, session `start_time` as EVENT time) →
+reconcile-on-write with the local NLI judge + precision floor 0.35
+(auto-supersede made surgical: 146/807 retired, 0 cross-attribute, vs 700/807
+destructive at floor 0; pre-gate 3× faster, 1752s→573s) → recall k=12 with
+**dated history context** (`recall_with_history`) → verification-aware answerer
+(`ENGRAM_ANSWER_VERIFY=1`) → strict judge (`claude-sonnet-4-6`), abstention-gold
+questions scored as adversarial (reward = abstain, fabrication = fail).
+
+| category | u1 (n=188) | u0 (n=164) |
+|---|---|---|
+| **Overall** | **0.7394** | **0.7500** |
+| Basic Fact Recall | 0.800 | 0.725 |
+| Memory Conflict | 0.800 | 0.872 |
+| Memory Boundary | 0.976 | 0.897 |
+| Generalization & Application | 0.425 | 0.581 |
+| Multi-hop Inference | 0.667 | 0.333 |
+| Dynamic Update | 0.500 | 0.667 |
+
+Reference: MemOS self-reports 0.672 overall (GPT-4 judge — comparable method,
+not judge-identical). Evidence: `benchmark/results/qa_gem_k12_u0.json`
+(u1 per-record details lost to a scripting overwrite — summary preserved in the
+run log and scoreboard; results files are under version control since).
+
+**Ablations that got us here (measured, same store/judge):**
+- Memory-Conflict arc: 0.15 (plain store + strict answerer) → 0.591 (verify
+  answerer, +4.3×) → 0.675 (reconciled store) → **0.825 (+ dated history)**.
+- Answer-with-history A/B on transition questions (n=44): plain 0.636 →
+  **history 0.795** (+16pp; 7 unlocked, 0 lost — strictly additive).
+- k-sweep 6→12: Basic +2.2pp, Boundary holds 1.0 (safety check passed) —
+  retrieval breadth was NOT the bottleneck; missing DATES in context were
+  (diagnosis: 21-22/24 Basic failures had the right fact already served).
+- Bi-temporal fix precondition: stuffing event time into `created_at` hid 83%
+  of a timestamped store from recall (staleness half-life + anti-spoof) —
+  every number above uses `asserted_at` (schema v13).
+
+**Adversarial review (2026-07-06, single consolidated review):** `claim_holds`,
+confidence 0.86 — verified per-category counts consistent by construction,
+abstention flagging doesn't over-trigger (39/39 genuine), fabrications on
+Boundary are penalized not forgiven, answerable categories use the strict
+judge; the one anomaly found (judge noise) deflates rather than inflates.
+
+**Declared limits:** read-path measurement (store = gold memory points; the
+end-to-end ingest→QA run is queued); n=2 users; Claude judge; the rich context
+costs some abstention purity (Boundary 0.976/0.897 vs 1.00 with the plain
+strict answerer) — quantifying and routing that trade is the next queued
+experiment. Stress battery same day: 7/7 (temporal edge inputs, forged cycles,
+5k-fact store, adversarial queries, SDK p50 62ms) —
+`benchmark/results/stress_battery.json`.
