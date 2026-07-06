@@ -93,11 +93,21 @@ def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
 
 def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
                        as_of: float | None = None,
-                       max_hops: int = 3) -> dict[str, Any]:
+                       max_hops: int = 3,
+                       min_relevance: float = 0.0) -> dict[str, Any]:
     """Build the evidence dossier for ``query``: the retrieved facts with their
     full chain of custody, or an EXPLICIT abstention when the memory holds
     nothing relevant. ``deep`` searches the archive (dormant memories);
-    ``as_of`` reconstructs a past moment's state of knowledge."""
+    ``as_of`` reconstructs a past moment's state of knowledge.
+
+    ``min_relevance`` (default 0.0 = off, behaviour unchanged) is a retrieval
+    floor: hits scoring below it are dropped, so a query with NO relevant fact
+    abstains WITHOUT an LLM. Needed because the bi-encoder is anisotropic —
+    every query cosine-matches *something* ~0.8, so ``abstained = no hits``
+    alone never fires on an absent attribute (surfaced by TrustMem-Bench axis 1,
+    which measured relevant top-1 ≥0.842 vs absent ≤0.828 on the synthetic set:
+    the floor is model- and corpus-dependent, so it stays opt-in, not a
+    baked-in constant)."""
     cs = None
     try:
         from .contradiction import ContradictionStore
@@ -109,6 +119,12 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         hits = recall_as_of(sm, query, when=float(as_of), k=k)
     else:
         hits = sm.recall(query or "", k=k, deep=deep)
+    floored = False
+    if min_relevance > 0.0:
+        kept = [h for h in hits
+                if len(h) > 1 and h[1] is not None and h[1] >= min_relevance]
+        floored = len(kept) < len(hits)
+        hits = kept
     facts = [
         _fact_evidence(sm, h[0], cs, max_hops=max_hops,
                        score=(h[1] if len(h) > 1 else None))
@@ -119,13 +135,17 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         "as_of": as_of,
         "deep": bool(deep),
         "k": k,
+        "min_relevance": min_relevance,
         "generated_at": time.time(),
         "facts": facts,
         "n_facts": len(facts),
         "n_disputed": sum(1 for e in facts if e["disputes"]),
         "n_dormant": sum(1 for e in facts if e["freshness"] == "dormant"),
         "abstained": not facts,
-        "reason": ("no supporting facts in memory for this query"
-                   if not facts else None),
+        "reason": (
+            "nothing scored above the relevance floor for this query"
+            if not facts and floored
+            else "no supporting facts in memory for this query"
+            if not facts else None),
     }
     return report

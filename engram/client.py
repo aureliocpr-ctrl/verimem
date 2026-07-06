@@ -154,15 +154,20 @@ class Memory:
         return out
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
-                as_of: float | None = None) -> dict[str, Any]:
+                as_of: float | None = None,
+                min_relevance: float = 0.0) -> dict[str, Any]:
         """The evidence dossier behind an answer — the trust gate made atomic:
         per fact the full chain of custody (provenance, writer, status,
         verified_by, grounding, the two clocks, what it replaced, declared
         disputes) or an EXPLICIT abstention with its reason. Judge-grade
-        "how do you know?" for any query."""
+        "how do you know?" for any query.
+
+        ``min_relevance`` (default 0.0 = off) applies a retrieval floor so a
+        query with no relevant fact abstains without an LLM — see
+        ``build_trust_report`` for why it is opt-in (anisotropic bi-encoder)."""
         from .trust_report import build_trust_report
         return build_trust_report(self.semantic, query, k=k, deep=deep,
-                                  as_of=as_of)
+                                  as_of=as_of, min_relevance=min_relevance)
 
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).
     recall = search

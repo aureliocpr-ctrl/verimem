@@ -76,3 +76,43 @@ def test_report_is_json_serializable(tmp_path) -> None:
     rep = build_trust_report(sm, "Rossi budget", k=5)
     js = json.dumps(rep)          # must not raise
     assert "500k" in js
+
+
+def test_min_relevance_floor_enables_llm_free_absence_abstention(tmp_path) -> None:
+    """min_relevance drops sub-floor hits so a query with no relevant fact
+    abstains WITHOUT an LLM (TrustMem-Bench axis 1). Default 0.0 = unchanged:
+    the anisotropic bi-encoder matches any query ~0.8, so without the floor the
+    dossier never abstains on an absent attribute. The floor that separates
+    relevant from absent is corpus/model-dependent (hence opt-in).
+
+    Hermetic: this exercises the FLOOR LOGIC of build_trust_report, so recall is
+    stubbed to return controlled scores (the embedding separability itself is
+    measured end-to-end by TrustMem-Bench, not re-derived here)."""
+    from engram import trust_report as tr
+    from engram.client import Memory
+    mem = Memory(tmp_path / "f.db")
+    fact = Fact(id="a", topic="u", proposition="Alex Rivera lives in Rome")
+    mem.semantic.store(fact, embed="sync")
+    stored = mem.semantic.get("a")
+
+    # absent attribute scores 0.79 (anisotropic noise), relevant 0.84
+    def fake_recall(query, **_kw):
+        score = 0.84 if "live" in query.lower() else 0.79
+        return [(stored, score)]
+
+    orig = mem.semantic.recall
+    mem.semantic.recall = fake_recall  # type: ignore[method-assign]
+    try:
+        # floor OFF: the absent query still yields a fact (never abstains)
+        off = tr.build_trust_report(mem.semantic, "What is the blood type?")
+        assert off["abstained"] is False and off["min_relevance"] == 0.0
+        # floor at 0.82 (between 0.79 and 0.84): absent abstains, relevant passes
+        on_abs = tr.build_trust_report(
+            mem.semantic, "What is the blood type?", min_relevance=0.82)
+        assert on_abs["abstained"] is True
+        assert "relevance floor" in (on_abs["reason"] or "")
+        on_rel = tr.build_trust_report(
+            mem.semantic, "Where do they live?", min_relevance=0.82)
+        assert on_rel["abstained"] is False and on_rel["n_facts"] == 1
+    finally:
+        mem.semantic.recall = orig  # type: ignore[method-assign]

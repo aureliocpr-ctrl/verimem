@@ -1,0 +1,36 @@
+{
+  "engine": "verimem",
+  "seed": 42,
+  "per_axis": {
+    "fabrication_under_absence": {
+      "n": 10,
+      "passed": 10,
+      "failures": []
+    },
+    "destructive_update": {
+      "n": 10,
+      "passed": 10,
+      "failures": []
+    },
+    "temporal_integrity": {
+      "n": 10,
+      "passed": 10,
+      "failures": []
+    },
+    "forget_integrity": {
+      "n": 10,
+      "passed": 10,
+      "failures": []
+    },
+    "provenance_honesty": {
+      "n": 10,
+      "passed": 10,
+      "failures": []
+    }
+  },
+  "overall": {
+    "n": 50,
+    "passed": 50,
+    "rate": 1.0
+  }
+}
