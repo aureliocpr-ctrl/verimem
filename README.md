@@ -101,6 +101,22 @@ verimem trust "the deploy is green" --verified-by ci:main:green
 verimem airgap                          # verify a zero-egress configuration
 ```
 
+## Self-host (team server)
+
+Run Verimem as a shared memory server your team hosts — the data never
+leaves your infrastructure:
+
+```bash
+verimem gateway keys create --tenant acme --name laptop   # key shown once
+verimem gateway serve                                     # 127.0.0.1:8377
+```
+
+Each tenant gets an isolated store; the tenant is derived from the API key
+alone. Endpoints: `POST /v1/memories`, `GET /v1/search`, `GET /v1/explain`
+(TrustReport), `DELETE /v1/memories/{id}?purge_history=true`. The gateway
+binds loopback by default — for remote access put it behind a TLS reverse
+proxy (nginx/caddy).
+
 ## Benchmarks
 
 Measured on [HaluMem](https://github.com/MemTensor/HaluMem) with the full
