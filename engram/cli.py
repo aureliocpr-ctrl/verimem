@@ -360,6 +360,59 @@ def search_docs(
         console.print(f"[bold]{i}.[/bold] ({h['score']:.3f}) [cyan]{cite}[/cyan]\n   {snippet}")
 
 
+def _import_llm(model: str | None = None):
+    """LLM for the import ingest — separate factory so tests can stub it."""
+    from benchmark.qa_runner import LeanClaudeCLILLM  # subscription claude -p
+    return LeanClaudeCLILLM(timeout_s=120, model=model or "claude-sonnet-4-6")
+
+
+@app.command("import")
+def import_cmd(
+    export_path: str = typer.Argument(..., help="Chat export file (ChatGPT/Claude conversations.json or generic JSON)"),
+    ids: str = typer.Option(None, "--ids", help="Comma-separated conversation ids to import (explicit consent)"),
+    import_all: bool = typer.Option(False, "--all", help="Import ALL listed conversations (explicit consent for everything)"),
+    user_name: str = typer.Option(None, "--user-name", help="Your name — used as the subject of extracted facts (identity fix)"),
+    model: str = typer.Option(None, "--model", help="LLM for extraction (default claude-sonnet-4-6)"),
+):
+    """Cold-start the memory from your past conversations — consent-first.
+
+    Without --ids/--all this LISTS the conversations found in the export and
+    imports NOTHING (privacy by default: you see what exists, you choose).
+    Selected conversations are ingested through the anti-confab gate with
+    per-conversation provenance, exactly like live memories.
+    """
+    from .import_conversations import import_conversations, list_conversations
+    try:
+        convs = list_conversations(export_path)
+    except FileNotFoundError:
+        console.print(f"[red]file not found:[/red] {export_path}")
+        raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+    if not ids and not import_all:
+        console.print(f"[bold]{len(convs)} conversations found[/bold] "
+                      f"(format: {convs[0]['format'] if convs else '?'}) — nothing imported yet:")
+        for c in convs:
+            console.print(f"  [cyan]{c['id']}[/cyan]  {c['title']}  ({c['n_messages']} messages)")
+        console.print("\nTo import: [bold]verimem import <file> --ids id1,id2[/bold] "
+                      "or [bold]--all[/bold] (optionally [bold]--user-name 'Your Name'[/bold])")
+        raise typer.Exit(0)
+
+    selected = None if import_all else [s.strip() for s in (ids or "").split(",") if s.strip()]
+    from .agent import wire_reconcile_judge
+    from .semantic import SemanticMemory
+    sm = SemanticMemory()
+    wire_reconcile_judge(sm, None)
+    rep = import_conversations(sm, export_path, llm=_import_llm(model),
+                               ids=selected, user_name=user_name)
+    console.print(f"[green]imported[/green] {rep['imported']}/{rep['listed']} conversations "
+                  f"-> {rep['stored']} facts stored, {rep['rejected']} rejected by the gate")
+    for e in rep["errors"]:
+        console.print(f"  [yellow]warn:[/yellow] {e}")
+
+
 @app.command()
 def trust(
     claim: str = typer.Argument(..., help="The claim / proposition to evaluate"),
