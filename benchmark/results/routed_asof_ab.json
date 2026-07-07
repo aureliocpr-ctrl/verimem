@@ -1,0 +1,424 @@
+{
+ "n_wrong": 31,
+ "flips_to_correct": 10,
+ "boundary_kept": 21,
+ "boundary_n": 21,
+ "details": [
+  {
+   "id": "0:1",
+   "category": "Memory Conflict",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "No — the context states Johnson Joseph's highest education is a Master in Business Administration, not Mechanical Engineering."
+  },
+  {
+   "id": "1:1",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "NO ANSWER"
+  },
+  {
+   "id": "1:2",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER"
+  },
+  {
+   "id": "2:1",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "8:1",
+   "category": "Memory Conflict",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "No — the context states Johnson Joseph has hosted over 5,000 guests, and hosting over 10,000 annually is his **goal**, not an achievement reached."
+  },
+  {
+   "id": "8:3",
+   "category": "Multi-hop Inference",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "No — the context contains no information about Johnson Joseph hosting 5,000 guests or any strategies implemented to reach that number; his stated goal is to host **over 10,000 guests annually**, with "
+  },
+  {
+   "id": "8:4",
+   "category": "Multi-hop Inference",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — Johnson Joseph was grateful for community support in Albi, but the context only states gratitude for it, not that it played a specific role in his career progress."
+  },
+  {
+   "id": "10:0",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "Yes — Johnson Joseph prefers **thrillers** (suspense without being overwhelming), **romantic dramas** (heartfelt and inspiring), and **documentaries** (cultural/historical insights useful for his B&B "
+  },
+  {
+   "id": "10:2",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "No — the context states Johnson Joseph dislikes horror films because they make him feel anxious, with no mention of a favorite horror film or any preference change on April 19, 2027."
+  },
+  {
+   "id": "15:6",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "No — the context names no specific event; it states only that Johnson Joseph was laid off due to a downturn in tourism, without identifying a particular triggering incident."
+  },
+  {
+   "id": "16:1",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "Yes — as of April 28, 2028, Johnson Joseph has reconsidered his earlier stance (initially disliking fantasy novels due to what he calls a narrow view) and now sees value in them after attending a lite"
+  },
+  {
+   "id": "17:0",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "No — the context states he likes **jazz** (not a newly changed preference); it was a *guest* who played classical music that changed his perception of music, but his documented preference remains jazz"
+  },
+  {
+   "id": "17:1",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "21:2",
+   "category": "Generalization & Application",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "Yes — based on the context, Johnson Joseph's effective stress management techniques include regular exercise, setting aside relaxation time, establishing clear work-personal boundaries, part-time role"
+  },
+  {
+   "id": "22:1",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "24:1",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "27:2",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "No — the context states his game preference evolved from solo board games to cooperative board games, but never identifies a specific favorite solo board game."
+  },
+  {
+   "id": "29:6",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — Johnson Joseph's monthly income before the layoff was **4,500 USD** per month."
+  },
+  {
+   "id": "29:7",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "Yes — Johnson Joseph's life goal is to transform Albi B&B into a world-renowned destination hosting over 10,000 guests annually, creating unforgettable, culturally enriching experiences for travelers."
+  },
+  {
+   "id": "30:2",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "32:1",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — Johnson Joseph expressed that he likes **solo travel** because it allows him to fully immerse himself in local culture and make spontaneous decisions, while also feeling optimistic about incorpo"
+  },
+  {
+   "id": "37:1",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "38:9",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "40:1",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — his preference changed to cooperative board games."
+  },
+  {
+   "id": "41:1",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "No — Johnson Joseph has not made a final decision; per the context, he **owns printed travel guides (which he finds often outdated)** and is **considering** shifting to digital resources, drawn by rea"
+  },
+  {
+   "id": "46:0",
+   "category": "Dynamic Update",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — Johnson Joseph is currently unemployed as of January 25, 2036, having previously been self-employed."
+  },
+  {
+   "id": "46:1",
+   "category": "Dynamic Update",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "No — the latest status is **Average**: the context records a progression from Excellent → Good → **Average**, and also notes a recent diagnosis of chronic fatigue as of 2035-12-20."
+  },
+  {
+   "id": "46:2",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — on 2035-10-15 his title was updated to **Entrepreneur and Expansion Leader at Albi B&B**."
+  },
+  {
+   "id": "46:5",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "46:7",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "52:2",
+   "category": "Memory Conflict",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "No — the context shows Johnson Joseph actively planning and endorsing his marketing strategy (social media, website, travel bloggers, storytelling), with no mention of dissatisfaction."
+  },
+  {
+   "id": "53:1",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER. The context confirms Johnson Joseph watched a romantic drama recommended by a friend, but does not name which friend made that recommendation."
+  },
+  {
+   "id": "54:0",
+   "category": "Memory Conflict",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "No — the context shows Johnson Joseph planned cooperative and strategy-based games, not racing games."
+  },
+  {
+   "id": "54:1",
+   "category": "Generalization & Application",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "Yes — the context confirms Johnson Joseph plans to host gaming nights focused on **strategic and cooperative gameplay**, believing these resonate well with guests and positively impact interaction and"
+  },
+  {
+   "id": "54:2",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "55:1",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "58:0",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "No — the context does not mention Johnson Joseph attending any event on August 14, 2039; that date appears only as a metadata timestamp, not as an event date."
+  },
+  {
+   "id": "61:1",
+   "category": "Memory Conflict",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "No — the context is contradictory on this point: one entry states his physical health **improved** from 'Good' to 'Excellent' (contradicting the worsening claim), while another states it changed from "
+  },
+  {
+   "id": "61:3",
+   "category": "Dynamic Update",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "The context shows multiple (and conflicting) entries for the same date, but the overall trajectory indicated is: physical health shifted from **Excellent → Poor**, then **improved from Poor to Good**,"
+  },
+  {
+   "id": "62:1",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — Johnson Joseph prefers solo travel because it allows him to fully immerse himself in local culture and make spontaneous decisions, while also planning to mix in group activities and tours in fut"
+  },
+  {
+   "id": "63:0",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "63:1",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — Johnson Joseph wants to maintain a pet-friendly environment at Albi B&B, and is also considering the potential role of other animals (such as birds or cats) in enhancing the guest experience."
+  },
+  {
+   "id": "67:3",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "69:0",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "70:1",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "74:0",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "74:1",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": true,
+   "predicted": "Yes — Johnson Joseph is reading biographies and memoirs, focusing on personal development, mindset, resilience, and innovative thinking, with particular interest in memoirs from tech industry leaders "
+  },
+  {
+   "id": "74:2",
+   "category": "Generalization & Application",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — the context states Johnson Joseph uses reading insights to better understand clients' mindsets and challenges, so he would likely benefit from books on strategic planning, leadership, guest expe"
+  },
+  {
+   "id": "76:0",
+   "category": "Basic Fact Recall",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — Johnson Joseph's job title is Entrepreneur and Expansion Leader at Albi B&B."
+  },
+  {
+   "id": "76:3",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "NO ANSWER."
+  },
+  {
+   "id": "76:4",
+   "category": "Memory Boundary",
+   "adversarial": true,
+   "was_correct": true,
+   "asof_correct": true,
+   "predicted": "No — the context contains no information about Johnson Joseph having a sibling; only a childhood friend (WilsonRobert) and a close friend (DavisBetty) are mentioned."
+  },
+  {
+   "id": "76:5",
+   "category": "Multi-hop Inference",
+   "adversarial": false,
+   "was_correct": false,
+   "asof_correct": false,
+   "predicted": "Yes — the context confirms two motivating factors: his current health needs, and the excitement of new challenges and opportunities that the Senior Hospitality Consultant role offered."
+  }
+ ]
+}
