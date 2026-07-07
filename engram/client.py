@@ -109,7 +109,7 @@ class Memory:
 
     # ---- read --------------------------------------------------------------
     def search(self, query: str, k: int = 5, *, deep: bool = False,
-               as_of: float | None = None,
+               as_of: float | str | None = None,
                with_history: bool | str = False) -> list[dict[str, Any]]:
         """Recall the top-k facts for ``query``, each with its provenance — the
         differentiator: ``status`` + write-time ``grounding_score`` so a caller can
@@ -119,6 +119,12 @@ class Memory:
           half-life hides from the default view (integrity guards stay).
         * ``as_of`` (epoch seconds) — time travel: what was CURRENT at that
           moment (asserted by then, not yet superseded). No competitor has it.
+          ``as_of="auto"`` routes per query: an explicit retrospective anchor
+          in the question ("as of / on / by <date>") activates time travel at
+          that date; without one the live recall is byte-identical. Measured
+          (routed_asof_ab.json): 10/31 previously-wrong anchored questions
+          flip correct, abstention 21/21 intact — the live "[current]" story
+          on as-of questions was drowning the answer in future facts.
         * ``with_history`` — each hit carries its transition story
           (``history: [{text, asserted_date, until}]``) from the supersession
           chain: "changed from X to Y on <date>". ``"auto"`` routes per query
@@ -129,6 +135,9 @@ class Memory:
         if with_history == "auto":
             from .temporal_context import wants_history
             with_history = wants_history(query)
+        if as_of == "auto":
+            from .temporal_context import extract_as_of
+            as_of = extract_as_of(query)
         if as_of is not None:
             from .temporal_context import recall_as_of
             hits = recall_as_of(self.semantic, query, when=float(as_of), k=k)
