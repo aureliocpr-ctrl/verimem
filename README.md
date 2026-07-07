@@ -81,14 +81,16 @@ Add to `.mcp.json` in your project (or `~/.claude/.mcp.json`):
     "verimem": {
       "command": "engram",
       "args": ["mcp"],
-      "env": { "ENGRAM_HOSTED": "1" }
+      "env": { "ENGRAM_HOSTED": "1", "ENGRAM_TOOL_NAMESPACE": "verimem" }
     }
   }
 }
 ```
 
-This exposes the memory tools (`hippo_remember`, `hippo_facts_recall`,
-`hippo_trust_report`, `hippo_document_semantic_search`, …) to any MCP client.
+This exposes the memory tools (`verimem_remember`, `verimem_facts_recall`,
+`verimem_trust_report`, `verimem_document_semantic_search`, …) to any MCP
+client. Drop the `ENGRAM_TOOL_NAMESPACE` entry to keep the legacy `hippo_*`
+names — both dispatch to the same tools.
 
 ## CLI
 
