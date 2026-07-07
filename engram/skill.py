@@ -502,10 +502,29 @@ class SkillLibrary:
         sel_j = ju[mask]
         sel_sim = sims[sel_i, sel_j]
         order = np.argsort(-sel_sim)
-        return [
+        out = [
             (skills_by_id[ids[sel_i[k]]], skills_by_id[ids[sel_j[k]]], float(sel_sim[k]))
             for k in order
         ]
+        # Same-name guard (2026-07-08, qualità skill #5): un nome normalizzato
+        # identico è un segnale ESATTO di duplicazione funzionale che la cosine
+        # sui trigger manca quando i trigger sono stati riscritti in run diversi
+        # (misurato sul corpus vivo: 6 paia residue a nome identico sotto la
+        # soglia merge). Riportate a similarity 1.0 IN TESTA, così il cap
+        # merges-per-ciclo del curator le processa per prime. Zero LLM.
+        def _norm(name: str) -> str:
+            return " ".join((name or "").lower().split())
+        seen_pairs = {frozenset((a.id, b.id)) for a, b, _ in out}
+        by_name: dict[str, list[Skill]] = {}
+        for s in skills:
+            by_name.setdefault(_norm(s.name), []).append(s)
+        same_name: list[tuple[Skill, Skill, float]] = []
+        for group in by_name.values():
+            for i in range(len(group) - 1):
+                a, b = group[i], group[i + 1]  # paia consecutive: il merge
+                if frozenset((a.id, b.id)) not in seen_pairs:  # itera sui cicli
+                    same_name.append((a, b, 1.0))
+        return same_name + out
 
     def update_fitness(
         self, skill_id: str, success: bool, tokens: int, task_text: str = ""
