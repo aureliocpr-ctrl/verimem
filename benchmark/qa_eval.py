@@ -85,12 +85,37 @@ _ANSWER_SYSTEM_DECLARED = (
 )
 
 
+# ADAPTIVE mode (opt-in, iter 80): the production A/B (abtest_prod_v2, n=111)
+# showed declared lifts Generalization (+22.5pp) but BREAKS Boundary abstention
+# (1.0 -> 0.71) — it infers even when the context is empty. ADAPTIVE gates the
+# inference on a context-support check FIRST: infer only when the context
+# supports an answer, else abstain. Measured (abtest_adaptive_v3, n=90): Boundary
+# held at 1.000 (the moat intact) while Generalization rose 0.394 -> 0.455 with 0
+# answers lost to over-caution. Opt-in ENGRAM_ANSWER_MODE=adaptive; default
+# strict unchanged. This preserves the sacred criterion (abstention).
+_ANSWER_SYSTEM_ADAPTIVE = (
+    "Answer from the CONTEXT only. FIRST decide: does the context contain "
+    "information that supports an answer, either directly OR by reasonable "
+    "inference from what is stated? If YES, answer in ONE short sentence "
+    "(inference is allowed, but grounded ONLY in the context). If the context "
+    "does NOT support any answer, reply EXACTLY: NO ANSWER. Never invent facts, "
+    "dates, names or details that are not grounded in the context."
+)
+
+
 def _answer_system() -> str:
     import os
+    # Answer-mode selector (opt-in overrides). declared + adaptive are the two
+    # inference-enabled modes; adaptive additionally protects Boundary abstention.
+    _mode = os.environ.get("ENGRAM_ANSWER_MODE", "").strip().lower()
     # Declared-inference mode (opt-in): infer-with-declared-derivation, the
-    # answerer lever for the e2e Basic bottleneck (exp4). Highest precedence.
-    if os.environ.get("ENGRAM_ANSWER_MODE", "").strip().lower() == "declared":
+    # answerer lever for the e2e Basic bottleneck (exp4).
+    if _mode == "declared":
         return _ANSWER_SYSTEM_DECLARED
+    # Adaptive mode (opt-in): gate inference on a context-support check -> lift
+    # Generalization WITHOUT breaking Boundary abstention (the moat).
+    if _mode == "adaptive":
+        return _ANSWER_SYSTEM_ADAPTIVE
     # Verification-aware mode (opt-in): premise-check + correction for
     # false-premise questions. Measured 4.3x on Memory-Conflict (0.15 -> 0.65).
     if os.environ.get("ENGRAM_ANSWER_VERIFY", "").strip().lower() in (

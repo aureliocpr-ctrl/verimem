@@ -170,3 +170,24 @@ def test_answer_mode_declared_inference_opt_in(monkeypatch) -> None:
     declared = qa._answer_system()
     assert "Inferred from" in declared, "declared mode exposes the derivation rule"
     assert "NO ANSWER" in declared, "abstention preserved (anti-confab contract)"
+
+
+def test_answer_mode_adaptive_opt_in(monkeypatch) -> None:
+    """Production A/B (abtest_prod_v2 n=111, abtest_adaptive_v3 n=90): declared
+    lifts Generalization (+22.5pp) but BREAKS Boundary abstention (1.0 -> 0.71) =
+    the moat. The ADAPTIVE mode GATES inference on whether the context supports an
+    answer -> keeps Boundary at 1.0 AND still lifts Generalization (strict 0.394 ->
+    adaptive 0.455, with 0 answers lost to over-caution). Opt-in; default strict
+    unchanged. Sacred criterion (abstention) preserved."""
+    import benchmark.qa_eval as qa
+
+    monkeypatch.delenv("ENGRAM_ANSWER_MODE", raising=False)
+    monkeypatch.delenv("ENGRAM_ANSWER_VERIFY", raising=False)
+    monkeypatch.delenv("ENGRAM_ANSWER_STRICT", raising=False)
+    default = qa._answer_system()
+    assert "supports an answer" not in default.lower(), "default is unchanged (strict)"
+
+    monkeypatch.setenv("ENGRAM_ANSWER_MODE", "adaptive")
+    adaptive = qa._answer_system()
+    assert "supports an answer" in adaptive.lower(), "adaptive gates inference on context support"
+    assert "NO ANSWER" in adaptive, "abstention preserved (moat: Boundary stays 1.0)"
