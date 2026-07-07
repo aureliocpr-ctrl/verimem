@@ -173,6 +173,10 @@ _EXPECTED_TOOLS = {
     "hippo_document_list",
     "hippo_document_search",
     "hippo_document_get",
+    # roadmap #1 (2026-07-07): document RAG — semantic chunk index over whole
+    # files with exact citation (source_id, version, start, end).
+    "hippo_document_index_file",
+    "hippo_document_semantic_search",
     "hippo_warmup_status",
     "hippo_backfill_embeddings",
     "hippo_skills_for",
@@ -1050,6 +1054,64 @@ async def test_call_tool_document_get_missing_is_clean_error(
         monkeypatch: pytest.MonkeyPatch, tmp_path, fake_agent: _FakeAgent) -> None:
     monkeypatch.setenv("HIPPO_DOCUMENTS_DB", str(tmp_path / "docs.db"))
     err = json.loads((await _invoke_tool("hippo_document_get", {"source_id": "assente"}))[0])
+    assert "error" in err, err
+
+
+class _FakeDocEmbedder:
+    """Deterministic bag-of-words embedder — keeps the MCP test model-free."""
+
+    DIM = 32
+
+    def encode(self, texts):
+        import math
+        import re as _re
+        out = []
+        for t in texts:
+            v = [0.0] * self.DIM
+            for tok in _re.findall(r"[a-z0-9]+", (t or "").lower()):
+                v[hash(tok) % self.DIM] += 1.0
+            n = math.sqrt(sum(x * x for x in v)) or 1.0
+            out.append([x / n for x in v])
+        return out
+
+
+@pytest.mark.asyncio
+async def test_call_tool_document_semantic_index_and_search(
+        monkeypatch: pytest.MonkeyPatch, tmp_path, fake_agent: _FakeAgent) -> None:
+    """Roadmap #1 via MCP: index a real file, then semantic search returns the
+    relevant chunk WITH the exact citation (source_id, version, start, end)."""
+    import engram.document_index as di
+
+    monkeypatch.setenv("HIPPO_DOCINDEX_DB", str(tmp_path / "docidx.db"))
+    monkeypatch.setattr(di, "_DefaultEmbedder", _FakeDocEmbedder)  # no model load
+
+    filler = "La pasta va cotta in acqua salata con pazienza e cura. " * 8
+    needle = "Il condensatore zorbium richiede calibrazione trimestrale del tecnico. "
+    f = tmp_path / "manuale.txt"
+    f.write_text(filler + needle + filler, encoding="utf-8")
+
+    r = json.loads((await _invoke_tool(
+        "hippo_document_index_file", {"path": str(f)}))[0])
+    assert r.get("chunks_indexed", 0) >= 1, r
+    assert r.get("is_new") is True
+
+    hits = json.loads((await _invoke_tool(
+        "hippo_document_semantic_search",
+        {"query": "calibrazione condensatore zorbium", "k": 3}))[0])
+    assert hits, "semantic search must return hits"
+    top = hits[0]
+    assert "zorbium" in top["text"].lower()
+    # exact citation contract
+    assert top["source_id"] == str(f) and top["version"] >= 1
+    assert 0 <= top["start"] < top["end"]
+
+
+@pytest.mark.asyncio
+async def test_call_tool_document_index_file_missing_is_clean_error(
+        monkeypatch: pytest.MonkeyPatch, tmp_path, fake_agent: _FakeAgent) -> None:
+    monkeypatch.setenv("HIPPO_DOCINDEX_DB", str(tmp_path / "docidx.db"))
+    err = json.loads((await _invoke_tool(
+        "hippo_document_index_file", {"path": str(tmp_path / "manca.txt")}))[0])
     assert "error" in err, err
 
 

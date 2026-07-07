@@ -1291,6 +1291,46 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_document_index_file",
+            description=(
+                "Index a whole FILE (pdf/docx/html/txt/md) for SEMANTIC search "
+                "with exact citation (roadmap #1 document RAG): extract text -> "
+                "provenance-anchored chunks -> embeddings. Idempotent per "
+                "content-hash (re-indexing unchanged content does zero work); a "
+                "changed file becomes a new version that supersedes the old one "
+                "in search. Isolated store — NOT the accepted recall corpus."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string",
+                             "description": "absolute path of the file to index"},
+                    "source_id": {"type": "string",
+                                  "description": "logical id (default: the path)"},
+                },
+                "required": ["path"],
+            },
+        ),
+        t.Tool(
+            name="hippo_document_semantic_search",
+            description=(
+                "SEMANTIC search over indexed documents (Tier Documents RAG). "
+                "Returns the top-k chunks with the EXACT citation — source_id, "
+                "version, start/end character offsets (original[start:end] == "
+                "text) — so every answer can point to file + position. Only the "
+                "LATEST version of each source is searched. Complements the "
+                "lexical hippo_document_search."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "k": {"type": "integer", "default": 5},
+                },
+                "required": ["query"],
+            },
+        ),
+        t.Tool(
             name="hippo_warmup_status",
             description=(
                 "Readiness probe for semantic recall — PURE, never triggers a "
@@ -6987,6 +7027,35 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "content_hash": doc.content_hash, "fetched_at": doc.fetched_at,
                 "content": doc.content,
             })
+
+        if name == "hippo_document_index_file":
+            # Roadmap #1 document RAG — file -> chunks -> embeddings, exact
+            # citation. Lazy import: the embedder loads only on first real use.
+            from engram.document_index import DocumentIndex
+            path = str(arguments.get("path", "")).strip()
+            if not path:
+                return _err("path is required")
+            try:
+                res = DocumentIndex().index_file(
+                    path, source_id=arguments.get("source_id"))
+            except FileNotFoundError:
+                _audit(name, arguments, outcome="not_found")
+                return _err(f"file not found: {path}")
+            except (ValueError, RuntimeError) as e:
+                _audit(name, arguments, outcome="error")
+                return _err(str(e))
+            _audit(name, arguments, outcome="ok")
+            return _ok(res)
+
+        if name == "hippo_document_semantic_search":
+            from engram.document_index import DocumentIndex
+            query = str(arguments.get("query", "")).strip()
+            if not query:
+                return _err("query is required")
+            k = int(arguments.get("k", 5))
+            hits = DocumentIndex().search(query, k=k)
+            _audit(name, arguments, outcome="ok")
+            return _ok(hits)
 
         if name == "hippo_recall":
             query = arguments.get("query", "")

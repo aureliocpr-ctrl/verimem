@@ -64,8 +64,11 @@ class DocumentIndex:
     def __init__(self, db_path: Path | str | None = None, embedder=None,
                  chunk_size: int = 1000, overlap: int = 150,
                  document_store: DocumentStore | None = None) -> None:
+        import os
+        env = os.environ.get("HIPPO_DOCINDEX_DB", "").strip()
         self.db_path = Path(db_path) if db_path else (
-            Path(DocumentStore().db_path).parent / "document_index.db")
+            Path(env) if env
+            else Path(DocumentStore().db_path).parent / "document_index.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.embedder = embedder or _DefaultEmbedder()
         self.chunk_size = int(chunk_size)
