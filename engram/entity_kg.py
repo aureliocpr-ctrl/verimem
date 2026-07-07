@@ -946,6 +946,28 @@ class EntityStore:
         out.sort(key=lambda x: (-x["score"], x["fact_id"]))
         return out[:k_facts]
 
+    def fact_counts(self, entity_ids: list[str]) -> tuple[int, dict[str, int]]:
+        """(fatti distinti totali in entity_facts, {entity_id: n fatti linkati}).
+
+        Serve all'hub-guard del PPR seeding (2026-07-07): un'entità che linka
+        una quota alta del corpus non discrimina nulla come seed. Due query
+        aggregate, nessun fetch di righe.
+        """
+        if not entity_ids:
+            return 0, {}
+        placeholders = ",".join("?" * len(entity_ids))
+        with self._connect() as conn:
+            total = conn.execute(
+                "SELECT count(DISTINCT fact_id) FROM entity_facts",
+            ).fetchone()[0]
+            rows = conn.execute(
+                "SELECT entity_id, count(DISTINCT fact_id) AS n "
+                f"FROM entity_facts WHERE entity_id IN ({placeholders}) "  # noqa: S608 — internal uuids
+                "GROUP BY entity_id",
+                entity_ids,
+            ).fetchall()
+        return int(total), {r["entity_id"]: int(r["n"]) for r in rows}
+
     def ppr(
         self,
         query_entities: list[str],

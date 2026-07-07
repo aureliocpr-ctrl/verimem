@@ -3281,9 +3281,14 @@ class SemanticMemory:
             # quarantined (ritrattato) non viene resuscitato dal fusion (stesso
             # leak chiuso per anchor/entity in HIGH-2). I dense hits NON passano
             # da fetch_fact (sono gia' nel pool, gia' filtrati), quindi restano.
+            # protect_top=k//2 (dense-floor 2026-07-07): la testa CE-reranked è
+            # intoccabile, gli extra PPR/BM25 competono solo per la coda —
+            # misurato: senza floor, a k=12 su grafo hub-dominated la fusione
+            # DIMEZZAVA la copertura evidence (16/61 → 8/61, fact a2217252f9ad).
             fused = fuse_dense_and_ppr(
                 hits, [ppr_ids, bm25_ids],
                 lambda fid: self.get(fid, live_only=True),
+                protect_top=max(1, k // 2),
             )
             # B-1 multi-tenant (CI 2026-06-15, flip default-ON): PPR/BM25
             # ripescano fact-id dal corpus INTERO, ignorando lo scope che il

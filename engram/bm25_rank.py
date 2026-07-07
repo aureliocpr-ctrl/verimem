@@ -20,13 +20,75 @@ import sqlite3
 #: curated view = same default filter recall uses (no superseded / hidden rows).
 _CURATED = "superseded_by IS NULL AND status NOT IN ('orphaned', 'quarantined')"
 
+#: Informative-token guard (2026-07-07, fact a2217252f9ad): sotto questo numero
+#: di righe FTS il filtro df non si applica (contratto storico invariato).
+MIN_CORPUS_FOR_DF_FILTER = 50
+#: Un token presente in più di questa quota del corpus non discrimina nulla:
+#: l'OR-di-tutti-i-token lo faceva comunque matchare, riempiendo il ranklist di
+#: rumore che in RRF sfrattava dense hit validi al k stretto.
+DF_CEILING = 0.25
+
+#: Function/question word (en+it): mai informative come segnale LESSICALE, e il
+#: filtro df NON le prende — in un corpus di proposizioni dichiarative "what",
+#: "did", "on" sono RARE (df bassa) ma il loro match è rumore puro (i 3 flip
+#: residui del micro-bench 2026-07-07). Linguistica, non corpus-dipendente →
+#: sempre attiva. Volutamente corta: solo funzionali inequivocabili.
+_QUERY_STOPWORDS = frozenset({
+    # en — question/aux/function
+    "what", "which", "who", "whom", "whose", "when", "where", "why", "how",
+    "did", "does", "do", "is", "are", "was", "were", "be", "been", "being",
+    "has", "have", "had", "will", "would", "can", "could", "should", "shall",
+    "may", "might", "must", "the", "an", "of", "to", "in", "on", "at", "by",
+    "as", "for", "with", "from", "into", "about", "and", "or", "but", "not",
+    "it", "its", "his", "her", "their", "them", "they", "he", "she", "you",
+    "your", "there", "this", "that", "these", "those", "any", "some",
+    # it — interrogative/funzionali
+    "cosa", "che", "chi", "quando", "dove", "perche", "come", "quale", "quali",
+    "il", "lo", "la", "le", "gli", "un", "una", "uno", "di", "da", "per",
+    "con", "su", "tra", "fra", "del", "della", "dei", "delle", "nel", "nella",
+    "ed", "sono", "era", "erano", "ha", "hanno", "aveva",
+})
+
+
+def _tokens(query: str) -> list[str]:
+    return [t for t in re.findall(r"\w+", query.lower())
+            if len(t) >= 2 and t not in _QUERY_STOPWORDS]
+
 
 def _to_fts_query(query: str) -> str:
     """Turn free text into a safe FTS5 MATCH expr: OR of double-quoted tokens
     (quoting each token neutralizes FTS5 operators, so arbitrary input never
     raises a syntax error; OR maximizes recall, the rank does the ordering)."""
-    toks = [t for t in re.findall(r"\w+", query.lower()) if len(t) >= 2]
-    return " OR ".join(f'"{t}"' for t in toks)
+    return " OR ".join(f'"{t}"' for t in _tokens(query))
+
+
+def _informative_fts_query(conn: sqlite3.Connection, query: str) -> str:
+    """MATCH expr limitata ai token con document-frequency <= DF_CEILING.
+
+    Su corpus >= MIN_CORPUS_FOR_DF_FILTER un token onnipresente ("guests" in un
+    corpus di soggiorni) non ordina nulla: tenerlo nella OR produce un top-N
+    quasi-random. Se nessun token è informativo la query è vuota → il chiamante
+    ritorna [] e la fusione degrada al dense puro. Sotto il floor: tutti i token
+    (identico al comportamento storico)."""
+    toks = _tokens(query)
+    if not toks:
+        return ""
+    n_fts = conn.execute("SELECT count(*) FROM facts_fts").fetchone()[0]
+    if n_fts < MIN_CORPUS_FOR_DF_FILTER:
+        return " OR ".join(f'"{t}"' for t in toks)
+    keep: list[str] = []
+    seen: set[str] = set()
+    for t in toks:
+        if t in seen:
+            continue
+        seen.add(t)
+        df = conn.execute(
+            "SELECT count(*) FROM facts_fts WHERE facts_fts MATCH ?",
+            (f'"{t}"',),
+        ).fetchone()[0]
+        if df / n_fts <= DF_CEILING:
+            keep.append(t)
+    return " OR ".join(f'"{t}"' for t in keep)
 
 
 def _ensure_fts(conn: sqlite3.Connection) -> None:
@@ -75,7 +137,7 @@ def bm25_fact_ids(query: str | None, db_path, *, limit: int = 20) -> list[str]:
         conn = sqlite3.connect(db_path, timeout=10.0)
         try:
             _ensure_fts(conn)
-            expr = _to_fts_query(query)
+            expr = _informative_fts_query(conn, query)
             if not expr:
                 return []
             rows = conn.execute(

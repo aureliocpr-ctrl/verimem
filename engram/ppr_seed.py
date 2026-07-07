@@ -20,6 +20,15 @@ from typing import Any
 
 from .multi_signal_fusion import rrf_fuse
 
+#: Quality guards (2026-07-07, fact a2217252f9ad): sotto questo numero di fatti
+#: linkati il corpus è troppo piccolo per stimare cosa sia un "hub" — nessuna
+#: esclusione (contratto storico invariato, allineato a ENGRAM_PPR_FUSION_FLOOR).
+MIN_CORPUS_FOR_HUB_GUARD = 50
+#: Un seed la cui entità linka più di questa quota dei fatti del corpus è un
+#: hub non-discriminante (es. l'entità-utente linkata a ogni fatto): il suo PPR
+#: è quasi uniforme e in RRF sfratta dense hit validi con rumore.
+HUB_FACT_SHARE = 0.2
+
 
 def _fact_id_of(x: Any) -> str | None:
     """Extract a fact id from a facts_ranked entry, tolerant to its shape
@@ -63,6 +72,20 @@ def ppr_seeded_fact_ids(
                 break
         if not seeds:
             return []
+        # Hub-guard: su corpus non-piccoli scarta i seed non-discriminanti
+        # (share di fatti linkati > HUB_FACT_SHARE). Fail-soft: store senza
+        # fact_counts (o che erra) → nessuna esclusione.
+        try:
+            fc = getattr(entity_store, "fact_counts", None)
+            if fc is not None:
+                total, per_entity = fc(seeds)
+                if total >= MIN_CORPUS_FOR_HUB_GUARD:
+                    seeds = [s for s in seeds
+                             if per_entity.get(s, 0) / total <= HUB_FACT_SHARE]
+                    if not seeds:
+                        return []
+        except Exception:  # noqa: BLE001 — guard is best-effort, never blocks
+            pass
         res = entity_store.ppr(seeds, k_facts=k_facts)
         ranked = (res or {}).get("facts_ranked") or []
         out: list[str] = []
@@ -81,6 +104,7 @@ def fuse_dense_and_ppr(
     fetch_fact: Callable[[str], Any],
     *,
     k: float = 60.0,
+    protect_top: int = 0,
 ) -> list[tuple[Any, float]]:
     """RRF-fuse a dense ``(Fact, sim)`` hit list with N extra fact-id ranklists
     (entity-PPR, BM25-lexical, …) — pure, no SemanticMemory dependency.
@@ -95,10 +119,26 @@ def fuse_dense_and_ppr(
 
     Fail-soft: no extra ids → the dense list is returned unchanged; a failing
     ``fetch_fact`` for one id is skipped, never raised.
+
+    ``protect_top`` (dense-floor, 2026-07-07): the first N dense hits — the
+    CE-reranked head — are kept verbatim at the front; the fusion only competes
+    for the remaining slots (extend, never evict). 0 = legacy behaviour. Guards
+    the measured failure mode where near-random extra signals (hub-seeded PPR /
+    common-token BM25) evicted valid dense hits at small k (fact a2217252f9ad).
     """
     extra = [lst for lst in extra_ranklists if lst]
     if not extra:
         return list(dense_hits)
+    if protect_top > 0:
+        head = list(dense_hits[:protect_top])
+        head_ids = {getattr(f, "id", None) for f, _ in head}
+        tail_extra = [[fid for fid in lst if fid not in head_ids]
+                      for lst in extra]
+        fused_tail = fuse_dense_and_ppr(
+            list(dense_hits[protect_top:]), tail_extra, fetch_fact, k=k,
+        )
+        return head + [(f, s) for f, s in fused_tail
+                       if getattr(f, "id", None) not in head_ids]
     by_id: dict[str, tuple[Any, float]] = {}
     dense_ids: list[str] = []
     for f, sim in dense_hits:
