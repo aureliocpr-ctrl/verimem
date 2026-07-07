@@ -177,6 +177,8 @@ _EXPECTED_TOOLS = {
     # files with exact citation (source_id, version, start, end).
     "hippo_document_index_file",
     "hippo_document_semantic_search",
+    # roadmap #2 (2026-07-07): consent-first onboarding import from chat exports.
+    "hippo_import_conversations",
     "hippo_warmup_status",
     "hippo_backfill_embeddings",
     "hippo_skills_for",
@@ -1055,6 +1057,70 @@ async def test_call_tool_document_get_missing_is_clean_error(
     monkeypatch.setenv("HIPPO_DOCUMENTS_DB", str(tmp_path / "docs.db"))
     err = json.loads((await _invoke_tool("hippo_document_get", {"source_id": "assente"}))[0])
     assert "error" in err, err
+
+
+@pytest.mark.asyncio
+async def test_call_tool_ingest_conversation_forwards_user_name(
+        monkeypatch: pytest.MonkeyPatch, fake_agent: _FakeAgent) -> None:
+    """Identity fix on MCP: user_name flows from the tool args to the product
+    ingest (the app-level metadata that makes facts retrieval-ready)."""
+    import types
+
+    import engram.conversation_ingest as ci
+
+    fake_agent.wake = types.SimpleNamespace(llm=object())  # handler reads a.wake.llm
+    seen = {}
+
+    def _spy(sm, msgs, **kw):
+        seen.update(kw)
+        return {"stored": 1, "rejected": 0, "fact_ids": ["f1"], "extracted": 1,
+                "gapfilled": 0, "consolidated": 1, "error": None}
+
+    monkeypatch.setattr(ci, "ingest_conversation", _spy)
+    out = json.loads((await _invoke_tool("hippo_ingest_conversation", {
+        "messages": [{"role": "user", "content": "I love tea."}],
+        "conversation_id": "c-1", "user_name": "Johnson Joseph"}))[0])
+    assert out["stored"] == 1
+    assert seen.get("user_name") == "Johnson Joseph", "user_name must reach the ingest"
+
+
+@pytest.mark.asyncio
+async def test_call_tool_import_conversations_list_and_consent(
+        monkeypatch: pytest.MonkeyPatch, tmp_path, fake_agent: _FakeAgent) -> None:
+    """hippo_import_conversations: default LISTS ONLY (imports nothing without
+    an explicit ids/all selection) — consent-first, like the CLI."""
+    export = tmp_path / "conversations.json"
+    export.write_text(json.dumps([{
+        "uuid": "cl-1", "name": "Recipe ideas",
+        "chat_messages": [
+            {"sender": "human", "text": "I dislike snakes and cats."},
+            {"sender": "assistant", "text": "Noted!"}]}]), encoding="utf-8")
+
+    # default: list only, nothing ingested
+    out = json.loads((await _invoke_tool(
+        "hippo_import_conversations", {"path": str(export)}))[0])
+    assert out["imported"] == 0
+    assert out["conversations"][0]["id"] == "cl-1"
+    assert "consent" in out["note"].lower()
+
+    # explicit ids -> ingests through the gate (spy the module function)
+    import types
+
+    import engram.import_conversations as ic
+    fake_agent.wake = types.SimpleNamespace(llm=object())  # handler reads a.wake.llm
+    seen = {}
+
+    def _spy(sm, path, **kw):
+        seen.update(kw)
+        return {"listed": 1, "imported": 1, "skipped": 0, "stored": 2,
+                "rejected": 0, "errors": []}
+
+    monkeypatch.setattr(ic, "import_conversations", _spy)
+    out2 = json.loads((await _invoke_tool(
+        "hippo_import_conversations",
+        {"path": str(export), "ids": ["cl-1"], "user_name": "Johnson Joseph"}))[0])
+    assert out2["imported"] == 1 and out2["stored"] == 2
+    assert seen.get("ids") == ["cl-1"] and seen.get("user_name") == "Johnson Joseph"
 
 
 class _FakeDocEmbedder:

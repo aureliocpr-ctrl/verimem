@@ -1212,8 +1212,45 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "created_at stays the ingest time. Omit if unknown."
                         ),
                     },
+                    "user_name": {
+                        "type": "string",
+                        "description": (
+                            "The user's name, provided by the APPLICATION (not "
+                            "the dialogue). Identity fix: dialogues rarely state "
+                            "the speaker's own name, so facts said 'The user ...' "
+                            "while questions ask by name — crippling retrieval. "
+                            "Declared app-level metadata; omit to keep the "
+                            "strict in-text-only naming."
+                        ),
+                    },
                 },
                 "required": ["messages", "conversation_id"],
+            },
+        ),
+        t.Tool(
+            name="hippo_import_conversations",
+            description=(
+                "Consent-first onboarding import from chat exports (ChatGPT / "
+                "Claude data export / generic JSON). WITHOUT an explicit "
+                "selection it LISTS conversations (metadata only) and imports "
+                "NOTHING — privacy by default. Pass ids=[...] (or all=true) to "
+                "ingest the selected ones through the anti-confab gate with "
+                "per-conversation provenance; user_name applies the identity fix."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string",
+                             "description": "path of the export file (conversations.json)"},
+                    "ids": {"type": "array", "items": {"type": "string"},
+                            "description": "explicit conversation ids to import (consent)"},
+                    "all": {"type": "boolean", "default": False,
+                            "description": "import ALL listed conversations (explicit consent for everything)"},
+                    "user_name": {"type": "string",
+                                  "description": "the user's name (identity fix on extracted facts)"},
+                    "topic": {"type": "string", "default": "conversational/imported"},
+                },
+                "required": ["path"],
             },
         ),
         t.Tool(
@@ -6927,13 +6964,46 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             res = ingest_conversation(
                 a.semantic, msgs, llm=a.wake.llm,
                 conversation_id=conv_id, topic=topic,
-                asserted_at=float(_aat) if _aat is not None else None)
+                asserted_at=float(_aat) if _aat is not None else None,
+                user_name=arguments.get("user_name"))
             _audit(name, arguments,
                    outcome="ok" if not res.get("error") else "llm_error")
             return _ok({**res,
                         "note": ("atomic facts stored as low-trust model_claim "
                                   "with conversation provenance; evidence "
                                   "elevates status, never the chat itself")})
+
+        if name == "hippo_import_conversations":
+            # Onboarding import (roadmap #2) — consent-first: default = list
+            # only; ids/all = explicit consent. Same gate as live ingestion.
+            from engram.import_conversations import (
+                import_conversations, list_conversations)
+            path = str(arguments.get("path", "")).strip()
+            if not path:
+                return _err("path is required")
+            try:
+                convs = list_conversations(path)
+            except FileNotFoundError:
+                _audit(name, arguments, outcome="not_found")
+                return _err(f"file not found: {path}")
+            except ValueError as e:
+                _audit(name, arguments, outcome="error")
+                return _err(str(e))
+            ids = arguments.get("ids")
+            import_all = bool(arguments.get("all", False))
+            if not ids and not import_all:
+                _audit(name, arguments, outcome="listed")
+                return _ok({"conversations": convs, "imported": 0,
+                            "note": ("nothing imported — pass ids=[...] or "
+                                     "all=true for explicit consent")})
+            rep = import_conversations(
+                a.semantic, path, llm=a.wake.llm,
+                ids=None if import_all else [str(i) for i in ids],
+                user_name=arguments.get("user_name"),
+                topic=arguments.get("topic", "conversational/imported"))
+            _audit(name, arguments,
+                   outcome="ok" if not rep.get("errors") else "partial")
+            return _ok(rep)
 
         if name == "hippo_recall_history":
             # Answer-with-history (iter 42): recall arricchito con la storia
