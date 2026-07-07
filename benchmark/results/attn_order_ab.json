@@ -1,0 +1,532 @@
+{
+ "n": 43,
+ "accuracy": {
+  "best_first": 0.5581395348837209,
+  "best_last": 0.5581395348837209
+ },
+ "paired": {
+  "first_only": 2,
+  "last_only": 2,
+  "both": 22,
+  "neither": 17
+ },
+ "recipe": "same ctx k=12 fixfusion store, answer plain + judge fair, arms best_first/best_last",
+ "details": [
+  {
+   "id": "0:0",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "ESTJ",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "ESTJ",
+    "correct": true
+   }
+  },
+  {
+   "id": "0:2",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   }
+  },
+  {
+   "id": "1:1",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   }
+  },
+  {
+   "id": "2:2",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "No.",
+    "correct": true
+   }
+  },
+  {
+   "id": "5:0",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "April 9th, 2026.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "April 9th, 2026.",
+    "correct": true
+   }
+  },
+  {
+   "id": "5:2",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "No.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "No. His fear transformed into curiosity and admiration after the seminar.",
+    "correct": true
+   }
+  },
+  {
+   "id": "8:0",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   }
+  },
+  {
+   "id": "8:1",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   }
+  },
+  {
+   "id": "15:2",
+   "category": "Multi-hop Inference",
+   "best_first": {
+    "predicted": "By using AI-generated content to update his social media presence and signal ongoing commitment to hospitality, considering leveraging his network for new opportunities, and staying informed about ind",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "By using AI-generated content to update his social media presence and signal ongoing commitment to hospitality, and by considering leveraging his network for new opportunities in the industry.",
+    "correct": true
+   }
+  },
+  {
+   "id": "15:3",
+   "category": "Multi-hop Inference",
+   "best_first": {
+    "predicted": "His family history in hospitality.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "His family history in hospitality.",
+    "correct": true
+   }
+  },
+  {
+   "id": "15:5",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "AI-generated content to update his social media presence and signal ongoing commitment to the hospitality industry.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "AI-generated content to signal ongoing commitment to the hospitality industry during his career transition.",
+    "correct": true
+   }
+  },
+  {
+   "id": "17:2",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "No.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "No.",
+    "correct": true
+   }
+  },
+  {
+   "id": "21:1",
+   "category": "Multi-hop Inference",
+   "best_first": {
+    "predicted": "Johnson's social connections supported him through his transition to part-time work (since 2029-08-20), and he leveraged his network during career transitions through open communication and regular ch",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "His social connections supported him through the transition to part-time work, and he leveraged open communication and regular check-ins with his network during career transitions.",
+    "correct": true
+   }
+  },
+  {
+   "id": "22:2",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "No. On 2029-11-12, the context explicitly records that Johnson Joseph's perception of cats **had already changed** after a guest's friendly cat at Albi B&B made him reconsider.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "No. On 2029-11-12, Johnson Joseph's perception of cats had already changed (he reconsidered after a guest's friendly cat at Albi B&B).",
+    "correct": true
+   }
+  },
+  {
+   "id": "24:2",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "Johnson Joseph plans to create themed events at Albi B&B inspired by documentaries (since 2030-11-22), and appreciates documentaries for their educational value. He also aims to create memorable, educ",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Based on the context, after 2030-11-22 Johnson Joseph plans to create themed events at Albi B&B inspired by documentaries, aiming to create memorable, educational, and culturally enriching guest exper",
+    "correct": true
+   }
+  },
+  {
+   "id": "31:2",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "After June 6, 2032, the context shows Johnson Joseph enhanced/planned to enhance folk music integration at Albi B&B through these steps:\n\n- **Incorporated folk music into the B&B** after attending a l",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "By incorporating folk music into the playlist alongside jazz (2032-06-06), previously incorporating folk music after attending a local festival (2035-10-15), integrating live music events featuring lo",
+    "correct": false
+   }
+  },
+  {
+   "id": "38:0",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "Entrepreneur and Expansion Leader at Albi B&B",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Entrepreneur and Expansion Leader at Albi B&B",
+    "correct": true
+   }
+  },
+  {
+   "id": "38:2",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "Albi B&B's expansion to new locations.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "The successful launch of Albi B&B's expansion to new locations.",
+    "correct": true
+   }
+  },
+  {
+   "id": "38:3",
+   "category": "Multi-hop Inference",
+   "best_first": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "Johnson Joseph's monthly income increased from $3000 to $7000 after returning to lead Albi B&B.",
+    "correct": false
+   }
+  },
+  {
+   "id": "46:1",
+   "category": "Dynamic Update",
+   "best_first": {
+    "predicted": "As of 2035-12-20, the most recent records (since 2031-04-15) indicate:\n\n- **Physical health**: Excellent (improved from Good) — DISPUTED\n- **Mental health**: Moderately Positive (shifted from Stressed",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "As of 2035-12-20, based on the most recent records before that date:\n\n- **Physical health**: Excellent (since 2031-04-15) — *disputed*\n- **Mental health**: Moderately Positive (since 2031-04-15) — *di",
+    "correct": false
+   }
+  },
+  {
+   "id": "46:3",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "Chronic fatigue.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Chronic fatigue.",
+    "correct": true
+   }
+  },
+  {
+   "id": "48:1",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "Dogs (positive for satisfaction/security), cats, practical implications of encouraging guests to bring pets, guest feedback on pet preferences, maintaining a pet-friendly environment, and AI assistanc",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "Dogs (practical implications of encouraging guests to bring them), cats (possible incorporation), other animals like birds, guest feedback on food and pet preferences, maintaining a pet-friendly envir",
+    "correct": false
+   }
+  },
+  {
+   "id": "48:2",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "Security and enhancing guest satisfaction; dogs create a lively and friendly atmosphere.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Enhancing guest satisfaction and contributing to security.",
+    "correct": false
+   }
+  },
+  {
+   "id": "52:0",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   }
+  },
+  {
+   "id": "52:1",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "No.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "No.",
+    "correct": true
+   }
+  },
+  {
+   "id": "52:5",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   }
+  },
+  {
+   "id": "54:1",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "By hosting gaming nights focused on strategic and cooperative gameplay, collaborating with local game designers and gaming communities, and using gaming as a lens for reflection and memorable experien",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Johnson Joseph views changes in gaming preferences as parallel to his broader professional growth, and believes cooperative games resonate well with guests, enhancing interaction and atmosphere. He is",
+    "correct": true
+   }
+  },
+  {
+   "id": "55:0",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "No.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "No. On 2039-02-08, a friend's recommendation of a fantasy novel with innovative world-building changed his attitude — he now appreciates fantasy novels for their imaginative themes, world-building, an",
+    "correct": true
+   }
+  },
+  {
+   "id": "55:2",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "Johnson Joseph plans to use insights from fantasy novels to create unique experiences for guests at Albi B&B (since 2039-02-08).",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "Johnson Joseph plans to use insights from fantasy novels to create unique experiences for guests at Albi B&B, influenced by a friend's recommendation of a fantasy novel with innovative world-building ",
+    "correct": false
+   }
+  },
+  {
+   "id": "61:0",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   }
+  },
+  {
+   "id": "61:1",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   }
+  },
+  {
+   "id": "61:2",
+   "category": "Dynamic Update",
+   "best_first": {
+    "predicted": "$8,000",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "$8,000",
+    "correct": true
+   }
+  },
+  {
+   "id": "61:3",
+   "category": "Dynamic Update",
+   "best_first": {
+    "predicted": "Per i record disponibili, entro il 10 agosto 2039 la salute fisica di Johnson Joseph era migliorata da **poor (scadente) a good (buona)** (dal 2037-09-01). Il record del 2039-08-10 conferma che tali m",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "Migliorata da **poor** a **good** (dal 2037-09-01).",
+    "correct": false
+   }
+  },
+  {
+   "id": "61:5",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "Johnson Joseph's improved health opened doors to more demanding projects and collaborations (since 2034-01-10), and he plans to incorporate wellness elements into Albi B&B's offerings aligned with hol",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Johnson Joseph's improved health opened doors to more demanding projects and collaborations for Albi B&B, and he plans to incorporate wellness elements into Albi B&B's offerings aligned with the trend",
+    "correct": true
+   }
+  },
+  {
+   "id": "63:2",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "Based on the context, after 2040-08-23 Johnson Joseph was integrating dogs more effectively into the B&B environment to enhance guest security and comfort, considering practical implications of encour",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Johnson Joseph integrates dogs more effectively into the B&B environment to enhance guest security and comfort, and considers dogs a positive addition that enhances guest satisfaction and contributes ",
+    "correct": true
+   }
+  },
+  {
+   "id": "67:1",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "NO ANSWER",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "Forming alliances with new partners, leveraging his network, expanding to international markets, recruiting a team of experts by identifying key expertise areas, enhancing guest referrals through part",
+    "correct": true
+   }
+  },
+  {
+   "id": "67:5",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "NO ANSWER.\n\n(The record states his status *shifted FROM* 'Highly Positive' to 'Cautiously Optimistic' as of 2041-04-10 — meaning it was no longer 'Highly Positive' on that date.)",
+    "correct": false
+   }
+  },
+  {
+   "id": "68:1",
+   "category": "Basic Fact Recall",
+   "best_first": {
+    "predicted": "A business seminar where a speaker's memoir inspired him.",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Attending a business seminar where a speaker's memoir inspired him to broaden his reading scope.",
+    "correct": true
+   }
+  },
+  {
+   "id": "68:2",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "Memoirs from tech industry leaders and social entrepreneurs (focusing on creativity, resilience, and problem-solving).",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "Memoirs from tech industry leaders and social entrepreneurs.",
+    "correct": false
+   }
+  },
+  {
+   "id": "70:0",
+   "category": "Memory Conflict",
+   "best_first": {
+    "predicted": "NO ANSWER.",
+    "correct": false
+   },
+   "best_last": {
+    "predicted": "No.",
+    "correct": false
+   }
+  },
+  {
+   "id": "70:2",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "By integrating dogs for security and comfort, considering birds/cats, using an AI assistant to manage pet care and guest preferences, and leveraging guest insights on exotic pets (parrots, reptiles).",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Johnson Joseph enhances guest satisfaction at Albi B&B by integrating dogs (for security and comfort), considering birds/cats, and gaining insights from guest interactions about preferences for exotic",
+    "correct": true
+   }
+  },
+  {
+   "id": "76:2",
+   "category": "Generalization & Application",
+   "best_first": {
+    "predicted": "Johnson Joseph uses compensatory motivation to leverage the assistant to overcome personal limitations in skills and resources, and to maintain strategic oversight despite health limitations. In 2044,",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "Secondo il contesto: mantiene supervisione strategica nonostante limitazioni di salute, e sfrutta l'assistente per superare limitazioni personali in competenze e risorse. Non ci sono affermazioni espl",
+    "correct": false
+   }
+  },
+  {
+   "id": "76:6",
+   "category": "Multi-hop Inference",
+   "best_first": {
+    "predicted": "By 2043-09-15, Johnson Joseph's professional network expansion resulted in new partnerships that enhanced his consultancy portfolio, and he became committed to leveraging his network for further busin",
+    "correct": true
+   },
+   "best_last": {
+    "predicted": "By September 15, 2043, Johnson Joseph had recently expanded his professional network and formed new partnerships that enhanced his consultancy portfolio, and he was committed to leveraging his network",
+    "correct": true
+   }
+  }
+ ]
+}

@@ -20,8 +20,8 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-__all__ = ["fact_history", "history_line", "recall_with_history", "recall_as_of",
-           "wants_history"]
+__all__ = ["extract_as_of", "fact_history", "history_line",
+           "recall_with_history", "recall_as_of", "wants_history"]
 
 #: Queries that benefit from the TRANSITION story (dates, change verbs, "as of",
 #: tense markers) vs. plain point lookups. Routing exists because rich history
@@ -56,6 +56,52 @@ def _iso(ts: Any) -> str:
             "%Y-%m-%d")
     except (TypeError, ValueError, OSError, OverflowError):
         return ""
+
+
+#: Query→as_of routing (cantiere attenzione 2026-07-08). Solo àncore
+#: RETROSPETTIVE esplicite: "as of/on/by/until/before <data>". "after <data>"
+#: apre un periodo successivo che il time-travel taglierebbe → NON instradato.
+#: Misura che ha motivato il fix: su domande "as of 2025" il recall live
+#: portava 6 fatti income [current since 2033-2043] in conflitto → l'answerer
+#: si asteneva PUR AVENDO la risposta alla riga 2 del contesto.
+_MONTHS = {m: i + 1 for i, m in enumerate(
+    ["january", "february", "march", "april", "may", "june", "july",
+     "august", "september", "october", "november", "december"])}
+_MONTHS.update({m[:3]: i for m, i in list(_MONTHS.items())})
+_AS_OF_ANCHOR_RE = re.compile(
+    r"\b(?:as of|on|by|until|till|before)\s+"
+    r"(?:(\d{4})-(\d{2})-(\d{2})"                       # ISO 2025-09-04
+    r"|([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})"  # Dec 21, 2025
+    r"|(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?\s+(\d{4}))",  # 21 Dec 2025
+    re.IGNORECASE)
+
+
+def extract_as_of(query: str | None) -> float | None:
+    """Data esplicitamente ancorata da una domanda retrospettiva → epoch di
+    FINE giornata UTC (i fatti asserted quel giorno contano come già veri),
+    oppure ``None`` quando la domanda non àncora un punto temporale. Pure,
+    conservativa: nessuna àncora inventata, "after <data>" escluso."""
+    if not query:
+        return None
+    m = _AS_OF_ANCHOR_RE.search(query)
+    if not m:
+        return None
+    try:
+        if m.group(1):                      # ISO
+            y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        elif m.group(4):                    # Month D, YYYY
+            mo = _MONTHS.get(m.group(4).lower()[:3])
+            if mo is None:
+                return None
+            d, y = int(m.group(5)), int(m.group(6))
+        else:                               # D Month YYYY
+            mo = _MONTHS.get(m.group(8).lower()[:3])
+            if mo is None:
+                return None
+            d, y = int(m.group(7)), int(m.group(9))
+        return datetime(y, mo, d, 23, 59, 59, tzinfo=timezone.utc).timestamp()
+    except (ValueError, OverflowError):
+        return None                          # data malformata: nessun routing
 
 
 def _event_ts(fact) -> Any:
@@ -162,10 +208,27 @@ def _died_event_ts(sm, fact) -> float | None:
 
 
 def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
-                        with_disputes: bool = True) -> list[str]:
+                        with_disputes: bool = True,
+                        as_of: float | None = None) -> list[str]:
     """Live top-k recall, each hit enriched with its transition story and its
     declared unresolved conflicts. Best-effort: a history/dispute lookup error
-    degrades that hit to its plain proposition — recall itself never breaks."""
+    degrades that hit to its plain proposition — recall itself never breaks.
+
+    ``as_of`` (epoch) — point-in-time context for retrospective questions:
+    the hits come from the bi-temporal time-travel (``recall_as_of``) and each
+    line is labelled ``[as of <date>]`` instead of the live transition story
+    (a "[current since 2043]" label is exactly the noise that drowned the
+    answer on as-of questions — measured, cantiere attenzione 2026-07-08).
+    Pair with ``extract_as_of(query)`` for automatic routing."""
+    if as_of is not None:
+        stamp = _iso(as_of)
+        out: list[str] = []
+        for hit in recall_as_of(sm, query or "", when=float(as_of), k=k):
+            f = hit[0]
+            prop = getattr(f, "proposition", "")
+            if prop:
+                out.append(f"{prop} [as of {stamp}]")
+        return out
     hits = sm.recall(query or "", k=k)
     cs = None
     if with_disputes:
