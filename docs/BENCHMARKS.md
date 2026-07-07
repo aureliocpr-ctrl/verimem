@@ -54,6 +54,22 @@ headline. (CE rerank doesn't move LongMemEval recall@5 — it reorders within to
 > (adversarial review C8). The mid-pack verdict below was true of the
 > pre-recipe system and is kept as the honest starting point of that arc
 > (Memory Conflict 0.15 → 0.825).
+>
+> **UPDATE 2026-07-08 — third e2e data point + retrieval-fusion fix.** A
+> same-store re-run after the fusion quality guards (`27f10cc`: hub-guard,
+> informative-token BM25, dense-floor — measured at the retrieval layer:
+> evidence coverage on the 61 previously-wrong questions 8/61 → 15/61 at
+> k=12, fusion flipped from net-negative to neutral-or-better) scored
+> **0.6649** vs 0.6755 on the same store: **−1.1pp, within run-to-run
+> variance (~1.6pp) — we predicted 0.69–0.70 and were wrong.** 7 of the 9
+> right→wrong flips lacked full evidence in the context both before and
+> after (answerer churn on borderline questions, not a retrieval
+> regression). Multi-hop 0.444 → **0.500** (n=18, weak signal), Memory
+> Boundary **1.000** again. Three-run mean of the same recipe:
+> **0.667 (0.6755 / 0.6596 / 0.6649) vs MemOS 0.672 — parity, n=3.** The
+> guards stay: principled, positive at the retrieval layer, and the
+> remaining bottleneck is context→answer conversion (attention/position),
+> which is the next measured workstream. Raw: `e2e_official_fixfusion.json`.
 
 `benchmark/halumem_qa_bench.py` on real HaluMem-Medium: ingest a user's REFERENCE memory points into
 Engram, then per question retrieve→answer (strict + dates) → LLM-judge Correct / Hallucination /
