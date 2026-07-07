@@ -1368,6 +1368,32 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_document_promote_chunk",
+            description=(
+                "Promote a retrieved document chunk into the recall corpus as a "
+                "GATED Fact (roadmap #1 last brick). Enters as low-trust "
+                "model_claim through the full anti-confab gate, with the EXACT "
+                "citation file:<source_id>:<start>-<end> in verified_by — any "
+                "reader can open the file at those offsets and check. Pass the "
+                "hit fields from hippo_document_semantic_search; optionally a "
+                "distilled one-sentence 'claim' instead of the raw chunk text."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "the chunk text"},
+                    "source_id": {"type": "string"},
+                    "start": {"type": "integer"},
+                    "end": {"type": "integer"},
+                    "version": {"type": "integer"},
+                    "claim": {"type": "string",
+                              "description": "optional distilled claim to store instead of the raw chunk"},
+                    "topic": {"type": "string", "default": "documents/promoted"},
+                },
+                "required": ["text", "source_id", "start", "end"],
+            },
+        ),
+        t.Tool(
             name="hippo_warmup_status",
             description=(
                 "Readiness probe for semantic recall — PURE, never triggers a "
@@ -7145,6 +7171,18 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 }
                 for ep, score in hits
             ])
+
+        if name == "hippo_document_promote_chunk":
+            # Roadmap #1 last brick: chunk -> gated Fact with exact citation.
+            from engram.document_promote import promote_chunk_to_fact
+            hit = {k: arguments.get(k) for k in
+                   ("text", "source_id", "start", "end", "version")}
+            res = promote_chunk_to_fact(
+                a.semantic, hit, claim=arguments.get("claim"),
+                topic=arguments.get("topic", "documents/promoted"))
+            _audit(name, arguments,
+                   outcome="ok" if res.get("stored") else "rejected")
+            return _ok(res)
 
         if name == "hippo_warmup_status":
             # PURE readiness probe — embed-free, never triggers the ~20s load.

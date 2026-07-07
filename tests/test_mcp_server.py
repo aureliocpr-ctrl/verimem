@@ -179,6 +179,8 @@ _EXPECTED_TOOLS = {
     "hippo_document_semantic_search",
     # roadmap #2 (2026-07-07): consent-first onboarding import from chat exports.
     "hippo_import_conversations",
+    # roadmap #1 last brick: chunk -> gated Fact with the exact file citation.
+    "hippo_document_promote_chunk",
     "hippo_warmup_status",
     "hippo_backfill_embeddings",
     "hippo_skills_for",
@@ -1121,6 +1123,23 @@ async def test_call_tool_import_conversations_list_and_consent(
         {"path": str(export), "ids": ["cl-1"], "user_name": "Johnson Joseph"}))[0])
     assert out2["imported"] == 1 and out2["stored"] == 2
     assert seen.get("ids") == ["cl-1"] and seen.get("user_name") == "Johnson Joseph"
+
+
+@pytest.mark.asyncio
+async def test_call_tool_document_promote_chunk(
+        monkeypatch: pytest.MonkeyPatch, tmp_path, fake_agent: _FakeAgent) -> None:
+    """chunk -> gated Fact via MCP: model_claim + exact file citation."""
+    from engram.semantic import SemanticMemory
+
+    fake_agent.semantic = SemanticMemory(db_path=tmp_path / "s.db")
+    out = json.loads((await _invoke_tool("hippo_document_promote_chunk", {
+        "text": "Il rogito della casa di Albi risale al 12 marzo 2019.",
+        "source_id": "atti/rogito.txt", "start": 224, "end": 279, "version": 1,
+        "claim": "Il rogito della casa di Albi e del 12 marzo 2019."}))[0])
+    assert out["stored"] is True
+    assert out["citation"] == "file:atti/rogito.txt:224-279"
+    f = fake_agent.semantic.get(out["fact_id"])
+    assert f.status == "model_claim" and "12 marzo 2019" in f.proposition
 
 
 class _FakeDocEmbedder:
