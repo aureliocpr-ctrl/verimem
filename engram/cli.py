@@ -302,6 +302,65 @@ def airgap(
 
 
 @app.command()
+def index(
+    path: str = typer.Argument(..., help="File to index (pdf/docx/html/txt/md)"),
+    source_id: str = typer.Option(None, "--source-id", help="Logical id (default: the path)"),
+):
+    """Index a whole FILE for semantic search with exact citation (document RAG).
+
+    Extracts text (pdf/docx/html/txt), splits it into provenance-anchored
+    chunks and embeds them. Idempotent per content-hash: re-indexing an
+    unchanged file does zero work; a changed file becomes a new version that
+    supersedes the old one in search. Isolated store — NOT the recall corpus.
+    """
+    from .document_index import DocumentIndex
+    try:
+        res = DocumentIndex().index_file(path, source_id=source_id)
+    except FileNotFoundError:
+        console.print(f"[red]file not found:[/red] {path}")
+        raise typer.Exit(1)
+    except (ValueError, RuntimeError) as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    if not res["is_new"]:
+        console.print(f"[yellow]unchanged[/yellow] — already indexed as "
+                      f"v{res['version']} (0 new chunks)")
+        raise typer.Exit(0)
+    console.print(f"[green]indexed[/green] {path} -> v{res['version']}, "
+                  f"{res['chunks_indexed']} chunks (source_id={res['source_id']})")
+
+
+@app.command("search-docs")
+def search_docs(
+    query: str = typer.Argument(..., help="Natural-language query"),
+    k: int = typer.Option(5, "-k", help="Top-k chunks"),
+):
+    """Semantic search over indexed documents, with the exact citation.
+
+    Every hit shows source file, version and character offsets
+    (original[start:end] == chunk text) — the provenance moat applied to
+    documents. Only the LATEST version of each source is searched.
+    """
+    from .document_index import DocumentIndex
+    hits = DocumentIndex().search(query, k=k)
+    if not hits:
+        console.print("no results (index empty or no match)")
+        raise typer.Exit(0)
+    terms = [t for t in query.lower().split() if t.strip()]
+    for i, h in enumerate(hits, 1):
+        cite = f"{h['source_id']} v{h['version']} [{h['start']}:{h['end']}]"
+        text = h["text"]
+        # Snippet centered on the first query term present — show WHY it matched,
+        # not just how the chunk begins (same idea as the lexical tier's snippet).
+        low = text.lower()
+        pos = min((p for p in (low.find(t) for t in terms) if p >= 0), default=0)
+        start = max(0, pos - 90)
+        snippet = ("…" if start > 0 else "") + text[start:start + 180].strip() \
+                  + ("…" if start + 180 < len(text) else "")
+        console.print(f"[bold]{i}.[/bold] ({h['score']:.3f}) [cyan]{cite}[/cyan]\n   {snippet}")
+
+
+@app.command()
 def trust(
     claim: str = typer.Argument(..., help="The claim / proposition to evaluate"),
     verified_by: list[str] = typer.Option(  # noqa: B008 — typer idiom
