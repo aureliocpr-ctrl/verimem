@@ -40,13 +40,17 @@ headline. (CE rerank doesn't move LongMemEval recall@5 — it reorders within to
 
 ## HaluMem QA — official C/H/O protocol (the differentiator's home turf), honestly
 
-> **UPDATE 2026-07-06 — the numbers below are the HISTORICAL pre-recipe
+> **UPDATE 2026-07-07 (0.4.0) — the numbers below are the HISTORICAL pre-recipe
 > baseline** (strict answerer, k=8, no bi-temporal, no history context, no
 > answer verification). With the full composed recipe the same protocol reads
-> **0.739–0.750 read-path** (store from gold points, n=2 users) and **0.553
-> end-to-end** (our extraction → gated store → answer; identity-leak artefact
-> stated, rerun queued) vs MemOS **end-to-end** self-reported 0.672 — the two
-> measurements live on separate, labelled rows in the README comparison table
+> **0.739–0.787 read-path** (store from gold points, n=3 users, mean 0.759) and
+> **end-to-end mean 0.6675 across two independent fresh stores (0.6755 / 0.6596)**
+> vs MemOS **end-to-end** self-reported **0.672 — statistical parity** (one run
+> above, one just below; variance ~1.6pp, so *parity*, not *overtake*), with
+> Memory Boundary (abstention) **1.000 in both runs**. The e2e jump from 0.553
+> (+9.8pp, replicated) came from the 0.4.0 extraction fixes: `user_name`
+> identity fix + anti-fragmentation rules (extraction F1 0.711 → 0.761–0.768,
+> replicated ×2). Read-path and end-to-end stay on separate, labelled rows
 > (adversarial review C8). The mid-pack verdict below was true of the
 > pre-recipe system and is kept as the honest starting point of that arc
 > (Memory Conflict 0.15 → 0.825).

@@ -89,14 +89,15 @@ where to sit. And it holds at **scale**: brute-force recall is O(N) (81 ms @1M) 
 the wired ANN stays ~flat (1.3 ms) — **62× @1M, sublinear** (reproducible):
 **[SCALE.md](./SCALE.md)**.
 
-**Honest scorecard vs MemOS (self-reported) on HaluMem**: extraction F1 0.71–0.74
-vs 79.7 (gap −6/−9pp, was −14.7); updating 0.25–0.29 judged vs 62.1 — retrieval-capped
-(4 embedders across 3 families within ~3pp; the paraphrase-matching ceiling is a
-model-class limit we state instead of hiding); QA **end-to-end 0.553 vs 0.672**
-(behind; extraction recall is the bottleneck — the same recipe on a gold store
-reads 0.739–0.750, split detailed in the comparison section below) with the
-hallucination trade above. Our axis is **measured trust + reproducible scale + the
-dial** — not raw-recall parity.
+**Honest scorecard vs MemOS (self-reported) on HaluMem** (updated 0.4.0):
+extraction F1 **0.761–0.768** vs 79.7 (gap −3pp, was −14.7 — identity +
+anti-fragmentation fixes, bench-gated, replicated ×2); QA **end-to-end mean
+0.6675 (two independent fresh stores: 0.6755 / 0.6596) vs 0.672 — statistical
+parity**, from −12pp, with **abstention (Memory Boundary) 1.0 in both runs**;
+updating 0.25–0.29 judged vs 62.1 — retrieval-capped (4 embedders across 3
+families within ~3pp; a model-class limit we state instead of hiding). Our axis
+is **measured trust + reproducible scale + the dial** — raw-recall parity is now
+also there, but trust is the moat.
 
 Full numbers, fairness notes and honest limits: **[BENCHMARKS.md](./BENCHMARKS.md)**.
 
@@ -196,23 +197,25 @@ number without saying so):
 | | user 1 (n=188) | user 0 (n=164) | user 2 (n=169) | MemOS **end-to-end** (self-reported) |
 |---|---|---|---|---|
 | **Read-path QA** — store built from *gold* memory points; measures the memory (recall+history+verify+abstention), not our extractor | **0.739** | **0.750** | **0.787** | — |
-| **End-to-end QA** — our extraction → gated store → answer, same questions ([run 1](./benchmark/results/e2e_full_pipeline_u1.json), [run 2](./benchmark/results/e2e_full_pipeline_u1_postfix.json)) | 0.553* (×2 runs) | not run | not run | 0.672 |
-| Memory Boundary, never fabricate (read-path / e2e) | 0.976 / **1.000** | 0.897 / — | **1.000** / — | — |
-| Memory Conflict (read-path / e2e) | 0.800 / 0.800 | 0.872 / — | 0.889 / — | — |
-| Basic Fact Recall (read-path / e2e) | 0.800 / 0.267 | 0.725 / — | 0.750 / — | — |
+| **End-to-end QA (0.4.0)** — our extraction → gated store → answer, same questions ([run 1](./benchmark/results/e2e_official_refined.json), [run 2](./benchmark/results/e2e_official_refined_r2.json)) | **0.6755 / 0.6596 (mean 0.6675, ×2 fresh stores)** | not run | not run | 0.672 |
+| Memory Boundary, never fabricate (read-path / e2e) | 0.976 / **1.000 both runs** | 0.897 / — | **1.000** / — | — |
+| Memory Conflict (read-path / e2e r1/r2) | 0.800 / 0.825·0.875 | 0.872 / — | 0.889 / — | — |
+| Basic Fact Recall (read-path / e2e r1/r2) | 0.800 / 0.644·0.489 | 0.725 / — | 0.750 / — | — |
 
 Read-path across **3 users: 0.739 / 0.750 / 0.787 (mean 0.759)** — every run
 above MemOS's end-to-end 0.672 ([u2 evidence](./benchmark/results/qa_gem_k12_u2.json)).
 
-**End-to-end we are BEHIND MemOS (−12pp) — stated, not hidden.** The split shows
-where: the trust properties HOLD through the full pipeline (Boundary 1.000 on
-both runs, Conflict 0.70–0.80) while extraction recall on basic facts is the
-bottleneck (0.27–0.38 e2e vs 0.800 read-path). \*Two independent runs both
-scored 0.5532 (stable overall). Between them we found and fixed an
-identity-leak artefact by reading run-1's failures (the extractor baptised
-anonymous speakers with an out-of-text name — reproduced live, fixed): run 2
-has 3/188 leak-tainted answers vs 13/188, and Basic Fact +11pp where the fix
-bites; per-category shifts elsewhere are within run-to-run variance.
+**End-to-end (0.4.0): statistical PARITY with MemOS** — mean 0.6675 over two
+independent fresh stores vs their self-reported 0.672 (one run above, one just
+below; run-to-run variance ~1.6pp, so we say *parity*, not *overtake*). This is
+up from 0.553 (−12pp) in 0.3.x: the jump (+9.8pp, replicated) came from two
+root-caused extraction fixes shipped in 0.4.0 — the **identity fix**
+(`user_name`: dialogues state the speaker's name in 1/3242 turns, so facts said
+"The user…" while questions ask by name) and **anti-fragmentation rules**
+(enumerations stay one fact; dates stay attached). The trust properties HOLD
+through the full pipeline: **Boundary 1.000 in both runs**, Conflict 0.825/0.875.
+Remaining variance concentrates in Basic Fact Recall (0.644/0.489 — LLM
+extraction non-determinism), the declared next target together with multi-hop.
 
 The read-path claim survived an adversarial counterexample review
 (`claim_holds`, conf 0.86: per-category counts consistent by construction;
