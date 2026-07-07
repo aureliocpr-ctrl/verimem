@@ -13,7 +13,7 @@ from __future__ import annotations
 
 # Keep in lockstep with pyproject [project].version and .claude-plugin/
 # plugin.json — enforced by tests/test_version_single_source.py (audit#2 C-4).
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 # Initialize backward-compat env mirror (HIPPO_* ↔ ENGRAM_*) at import time
 # so the rest of the package — and anyone importing ``engram`` — sees a
