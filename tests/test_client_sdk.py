@@ -180,6 +180,19 @@ def test_add_messages_ingests_conversation_with_event_time(tmp_path):
     assert abs(float(f.asserted_at) - ts) < 1.0
 
 
+def test_add_messages_forwards_user_name_identity_fix(tmp_path):
+    """0.4.0 identity fix on the SDK verb: add(list, user_name=...) forwards the
+    app-provided name to the extraction prompt (facts become retrieval-ready:
+    'Alice ...' instead of 'The user ...')."""
+    from engram.client import Memory
+    llm = _StubLLM("Alice moved to Berlin in March")
+    mem = Memory(tmp_path / "m.db", llm=llm)
+    mem.add([{"role": "user", "content": "I moved to Berlin in March."}],
+            user_name="Alice", conversation_id="c2")
+    assert any("Alice" in c["system"] for c in llm.calls), \
+        "user_name must reach the extraction prompt"
+
+
 def test_add_messages_without_llm_raises_clear_error(tmp_path):
     from engram.client import Memory
     mem = Memory(tmp_path / "m.db")

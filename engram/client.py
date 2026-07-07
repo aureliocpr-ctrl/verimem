@@ -46,6 +46,7 @@ class Memory:
         verified_by: list[str] | None = None, validate: str = "fast",
         ground: bool = False, gate_mode: str | None = None,
         asserted_at: float | None = None, conversation_id: str | None = None,
+        user_name: str | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -82,7 +83,8 @@ class Memory:
                 self.semantic, content, llm=self.llm,
                 conversation_id=conversation_id or "sdk",
                 topic=topic if topic != "user" else "conversational/ingested",
-                asserted_at=asserted_at, embed="sync")
+                asserted_at=asserted_at, embed="sync",
+                user_name=user_name)
         text = (content or "").strip()
         if not text:
             return {"stored": False, "status": "empty", "warnings": [], "advice": "empty text"}

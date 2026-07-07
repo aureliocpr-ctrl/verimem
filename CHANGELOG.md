@@ -2,6 +2,18 @@
 
 All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] — Professional README + `user_name` on the SDK verb (2026-07-07)
+
+- **Docs**: the README was rewritten from scratch (1280 → ~170 lines): a
+  professional, standard OSS structure (features, install, verified quickstart,
+  CLI, benchmarks with caveats, architecture, license). Internal iteration
+  logs and duplicated sections are gone; deep dives live in `docs/`. The PyPI
+  one-line description was shortened accordingly.
+- **SDK**: `Memory.add(messages, user_name=...)` — the 0.4.0 identity fix is now
+  available on the main SDK verb (it forwards to the gated conversation
+  ingestion), matching MCP and CLI. Quickstart examples are signature-verified
+  by tests.
+
 ## [0.4.0] — Document RAG + onboarding import + e2e parity with MemOS (2026-07-07)
 
 The big one: whole-file memory with exact citations, consent-first onboarding
