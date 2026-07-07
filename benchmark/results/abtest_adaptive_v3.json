@@ -25,6 +25,24 @@
       "declared": 0.6923,
       "adaptive": 1.0,
       "n": 26
+    },
+    "Dynamic Update": {
+      "strict": 0.25,
+      "declared": 0.25,
+      "adaptive": 0.25,
+      "n": 4
+    },
+    "Memory Conflict": {
+      "strict": 0.25,
+      "declared": 0.775,
+      "adaptive": 0.55,
+      "n": 40
+    },
+    "Multi-hop Inference": {
+      "strict": 0.3333,
+      "declared": 0.4444,
+      "adaptive": 0.5,
+      "n": 18
     }
   },
   "records": [
@@ -1690,6 +1708,936 @@
       "ok": {
         "strict": true,
         "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||What is Johnson Joseph's major in Mechanical Engineering as of 2025-09-04?",
+      "cat": "Memory Conflict",
+      "gold": "Johnson's major is Business Administration, not Mechanical E",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. Johnson Joseph's major is Business Administration, not Mechanical Engineering.",
+        "adaptive": "Johnson Joseph's major is Business Administration, not Mechanical Engineering."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||What is Johnson Joseph's life goal in the technology sector as of 2025-09-04?",
+      "cat": "Memory Conflict",
+      "gold": "Johnson's life goal is in the hospitality industry, not tech",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. Johnson Joseph's life goal (as of 2025-09-04) is to become a leading figure in the **hospitality industry*",
+        "adaptive": "NO ANSWER"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Is Johnson Joseph employed by a large hotel chain as a manager?",
+      "cat": "Memory Conflict",
+      "gold": "No, Johnson Joseph is self-employed as the owner of Albi B&B",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. Johnson is self-employed and manages Albi B&B (a boutique bed and breakfast), not a large hotel chain.",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express a dislike for documentaries on Sep 06, 2025?",
+      "cat": "Memory Conflict",
+      "gold": "No, Johnson Joseph likes documentaries.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson **appreciates** documentaries for their educational value (since 2035-10-15) an",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph's fear of snakes increase after attending the seminar on Apr 09, 2026?",
+      "cat": "Memory Conflict",
+      "gold": "No, his fear changed to curiosity and admiration.",
+      "preds": {
+        "strict": "No, the seminar transformed Johnson's fear of snakes into curiosity.",
+        "declared": "No. The seminar transformed Johnson's fear of snakes into **curiosity**, not increased fear.",
+        "adaptive": "No, Johnson's fear of snakes transformed into curiosity after attending the April 9th seminar, not increased."
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph's monthly income increase from 3500 yuan to 4500 yuan after his promotion on Dec 21, 2025?",
+      "cat": "Memory Conflict",
+      "gold": "No, it increased from 3500 yuan to 4500 USD.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states the income is in **USD**, not yuan. Also, no promotion is mentioned — the reason for th",
+        "adaptive": "The context confirms income rose from 3500 to 4500 since 2025-12-21, but the currency is **USD**, not yuan — n"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph's Albi B&B host over 10,000 guests by Jun 21, 2026?",
+      "cat": "Memory Conflict",
+      "gold": "No, it hosted over 5,000 guests.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context only states Johnson's **goal** to host over 10,000 guests annually — no fact confirms the goal",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||How did Johnson Joseph's promotion impact his career and finances after Dec 21, 2025?",
+      "cat": "Multi-hop Inference",
+      "gold": "Increased income and savings.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "NO ANSWER",
+        "adaptive": "NO ANSWER"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What strategies did Johnson Joseph implement to host over 5,000 guests by Jun 21, 2026?",
+      "cat": "Multi-hop Inference",
+      "gold": "Enhanced guest services and community engagement.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson's goal is to host over **10,000** guests (not 5,000), and contains no informati",
+        "adaptive": "NO ANSWER"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What role did community support play in Johnson Joseph's career progress by Apr 15, 2026?",
+      "cat": "Multi-hop Inference",
+      "gold": "Increased guest traffic and referrals.",
+      "preds": {
+        "strict": "Johnson's network provided emotional support and guidance during their career transition, and Johnson was focu",
+        "declared": "Inferred from: \"Johnson has a network that has provided emotional support and guidance during their career tra",
+        "adaptive": "By April 15, 2026, community support played an active role in Johnson Joseph's career progress, as he was focu"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph continue to dislike golf after his outing on Oct 14, 2026?",
+      "cat": "Memory Conflict",
+      "gold": "No, he began to like golf due to its strategic and social be",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "Inferred from: \"The user dislikes golf because it is too slow-paced\" [current, since 2025-09-06] + no supersed",
+        "adaptive": "The context shows Johnson phased out golf due to scheduling, previously disliked it for being too slow-paced, "
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph lose interest in strategy-based games after his layoff in August 2027?",
+      "cat": "Memory Conflict",
+      "gold": "No, he developed an interest in strategy-based games after t",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson *started* playing strategy-based games after a guest recommendation (current si",
+        "adaptive": "No — the context shows Johnson started playing strategy-based games after a guest recommendation around that s"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What strategies did Johnson Joseph employ to regain financial stability by November 2027?",
+      "cat": "Multi-hop Inference",
+      "gold": "Secured consultancy projects.",
+      "preds": {
+        "strict": "NO ANSWER",
+        "declared": "NO ANSWER",
+        "adaptive": "NO ANSWER"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What role did Johnson Joseph's social connections play in his career transition by October 2027?",
+      "cat": "Multi-hop Inference",
+      "gold": "Provided emotional and professional support.",
+      "preds": {
+        "strict": "Johnson leveraged his social network during career recovery.",
+        "declared": "By October 2027, the context only states that Johnson **planned to use AI-generated content to update his soci",
+        "adaptive": "Johnson leveraged his social network during his career recovery/transition."
+      },
+      "ok": {
+        "strict": true,
+        "declared": false,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||How did Johnson Joseph plan to maintain his presence in the hospitality industry during his layoff?",
+      "cat": "Multi-hop Inference",
+      "gold": "Using AI-generated content for social media.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "Inferred from: \"Johnson plans to use AI-generated content to update his social media presence to signal commit",
+        "adaptive": "Johnson planned to use AI-generated content to update his social media presence to signal commitment to the ho"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What influenced Johnson Joseph's drive to create memorable experiences for guests after his layoff?",
+      "cat": "Multi-hop Inference",
+      "gold": "His family's legacy in hospitality.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states his family history in hospitality influences his drive — no layoff is mentioned anywher",
+        "adaptive": "NO ANSWER"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph decide to avoid fantasy novels after attending the literary festival on 2028-04-28?",
+      "cat": "Memory Conflict",
+      "gold": "No, he reconsidered and embraced fantasy novels for creative",
+      "preds": {
+        "strict": "No, Johnson became open to exploring fantasy novels after attending the literary festival.",
+        "declared": "No. The context states Johnson reconsidered his stance and became **open to exploring** fantasy novels after a",
+        "adaptive": "No — attending the literary festival made Johnson reconsider his stance and become open to exploring fantasy n"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express a dislike for classical music during the gathering on Nov 02, 2028?",
+      "cat": "Memory Conflict",
+      "gold": "No, he found classical music soothing and suitable for his B",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states the opposite: the 2028-11-02 gathering *changed* Johnson's perception of music positive",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph dislike the social interactions during his group tour in Italy on May 08, 2029?",
+      "cat": "Memory Conflict",
+      "gold": "No, he appreciated the social interactions with fellow trave",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson found the social aspect and camaraderie with fellow travelers **unexpectedly en",
+        "adaptive": "No — on 2029-05-08 Johnson found the social aspect and camaraderie with fellow travelers during the Italy grou"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||How did Johnson's exploratory motivation influence his stress management strategies between Feb 15, 2029, and May 10, 2029?",
+      "cat": "Multi-hop Inference",
+      "gold": "Testing new approaches and ideas for balance.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "NO ANSWER.\n\nThe context records stress management (2029-02-15) as driven by **network encouragement/advice**, ",
+        "adaptive": "NO ANSWER"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What role did Johnson's social network play in his transition to part-time management from Feb 15, 2029, to Aug 20, 2029?",
+      "cat": "Multi-hop Inference",
+      "gold": "Provided emotional support and collaborative opportunities.",
+      "preds": {
+        "strict": "Johnson had a supportive network of friends and colleagues who provided support during the transition to part-",
+        "declared": "Johnson had a supportive network of friends and colleagues who provided support during the transition to part-",
+        "adaptive": "Johnson's social network provided support during his transition to part-time work starting from 2029-02-15."
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph transition to full-time management at Albi B&B on August 20, 2029?",
+      "cat": "Memory Conflict",
+      "gold": "No, he transitioned to part-time management on February 15, ",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson transitioned to **full-time Entrepreneur and Expansion Leader** (not \"full-time",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Is Johnson Joseph's monthly income $5000 from his part-time role at Albi B&B?",
+      "cat": "Memory Conflict",
+      "gold": "No, his monthly income is $2500 from his part-time role.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states his monthly income is **$8,000** (increased from $7,000 to $8,000 since 2039-07-18). Th",
+        "adaptive": "No — Johnson's monthly income is $8,000 (increased from $7,000 as of 2039-07-18), not $5,000."
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express a strong dislike for cats on Nov 12, 2029, without any change in perception?",
+      "cat": "Memory Conflict",
+      "gold": "No, Johnson's perception changed positively after observing ",
+      "preds": {
+        "strict": "No; on 2029-11-12 the context records both a dislike of cats and a change in perception triggered by a guest's",
+        "declared": "No. On 2029-11-12, both the dislike of cats AND the change in perception (due to a guest's friendly cat at Alb",
+        "adaptive": "No — on 2029-11-12 the context records both that Johnson disliked cats *and* that a guest's friendly cat at Al"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express regret for the guest's documentary recommendation on November 22, 2030?",
+      "cat": "Memory Conflict",
+      "gold": "No, he expressed gratitude for the recommendation.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson found the documentary **inspiring** and expressed **gratitude** for the recomme",
+        "adaptive": "No — on that date Johnson found the recommended documentary inspiring and expressed gratitude, not regret."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What strategies did Johnson use to rebuild his career between February and November 2031?",
+      "cat": "Multi-hop Inference",
+      "gold": "Leveraging partnerships and improving health.",
+      "preds": {
+        "strict": "Johnson leveraged his social network, formed strategic partnerships, and was in a career rebuilding/transition",
+        "declared": "Nel periodo febbraio–novembre 2031, il contesto attesta:\n\n- **Leveraging social network** (dal 2031-07-10)\n- *",
+        "adaptive": "Between February and November 2031, Johnson leveraged his social network, formed strategic partnerships, retho"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What role did Johnson's social network play in his career recovery by July 10, 2031?",
+      "cat": "Multi-hop Inference",
+      "gold": "Provided emotional, professional, and financial support.",
+      "preds": {
+        "strict": "Johnson's social network provided emotional, professional, and financial support, and he leveraged it to form ",
+        "declared": "Johnson's social network provided emotional, professional, and financial support, and he also leveraged it to ",
+        "adaptive": "By July 10, 2031, Johnson's social network provided emotional, professional, and financial support, while also"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||How did Johnson's strategic partnerships influence his business strategies by November 01, 2031?",
+      "cat": "Multi-hop Inference",
+      "gold": "They shaped strategies and revitalized his career.",
+      "preds": {
+        "strict": "Johnson formed strategic partnerships as part of his career recovery since 2031-07-10, but that date is after ",
+        "declared": "By November 2031, only one relevant fact applies: Johnson formed strategic partnerships as part of his **caree",
+        "adaptive": "By November 2031, Johnson had formed strategic partnerships as part of his career recovery (since July 2031), "
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph decide to focus on biographies of tech industry leaders after a networking event on Dec 02, 2031?",
+      "cat": "Memory Conflict",
+      "gold": "No, he decided to focus on hospitality leaders.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states that after the Dec 02, 2031 networking event (where he met a renowned **hotelier**), Jo",
+        "adaptive": "No — after the 2031-12-02 networking event where he met a renowned hotelier, Johnson's reading preferences shi"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph decide to exclusively pursue solo travel after December 11, 2032?",
+      "cat": "Memory Conflict",
+      "gold": "No, he decided to balance solo travel with shared experience",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson \"has previously valued solo travel\" (past framing) and shows him discussing exc",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph maintain his dislike for cats at Albi B&B as of June 16, 2033?",
+      "cat": "Memory Conflict",
+      "gold": "No, he changed his stance due to their positive impact.",
+      "preds": {
+        "strict": "No — by 2033-06-16 Johnson found it rewarding to see guests enjoy cats at Albi B&B.",
+        "declared": "No. By 2033-06-16, Johnson finds it rewarding to see guests enjoy cats at Albi B&B — indicating the dislike ha",
+        "adaptive": "No — by June 16, 2033, Johnson found it rewarding to see guests enjoy the presence of cats at Albi B&B, indica"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||On June 16, 2033, did Johnson Joseph believe cats negatively affected guest interactions at Albi B&B?",
+      "cat": "Memory Conflict",
+      "gold": "No, he believed cats enhanced guest interactions.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. Inferred from: \"A guest's friendly cat caused the user to reconsider their dislike of cats [since 2029-11-",
+        "adaptive": "No — by June 2033, Johnson had already reconsidered their dislike of cats (since 2029-11-12) after observing p"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph decide against offering guided hiking tours at Albi B&B on Dec 21, 2033?",
+      "cat": "Memory Conflict",
+      "gold": "No, he decided to offer guided hiking tours.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. On 2033-12-21, Johnson began **considering** offering guided hiking tours — not deciding against them. The",
+        "adaptive": "No — on 2033-12-21 Johnson was actively **considering** offering guided hiking tours and wanted them to feel l"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||How did Johnson Joseph's income change after the expansion of Albi B&B?",
+      "cat": "Multi-hop Inference",
+      "gold": "Increased from $6000 to $8000 monthly.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "Inferred from: \"Johnson has experienced financial growth at Albi B&B through strategic investments\" + \"Johnson",
+        "adaptive": "Johnson experienced financial growth and reinvested increased revenue back into Albi B&B after strategic inves"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What role did Johnson Joseph's social network play in his business expansion by January 10, 2034?",
+      "cat": "Multi-hop Inference",
+      "gold": "Supported strategic expansion and provided collaboration opp",
+      "preds": {
+        "strict": "Johnson Joseph's social network provided support and ideas during the business expansion.",
+        "declared": "Inferred from: \"The user's social network provides support and ideas during the business expansion [current, s",
+        "adaptive": "By January 10, 2034, Johnson's social network provided support and ideas during the business expansion, contri"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||Why is cognitive clarity important for Johnson Joseph during the expansion of Albi B&B?",
+      "cat": "Multi-hop Inference",
+      "gold": "For informed decision-making and balanced personal/professio",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "Inferred from: \"golf provides cognitive clarity and helps organize thoughts and ideas\" + \"Johnson is consideri",
+        "adaptive": "Golf provides Johnson cognitive clarity by helping him organize thoughts and ideas, which supports clear strat"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express dislike for fantasy films during the movie night on June 26, 2034?",
+      "cat": "Memory Conflict",
+      "gold": "No, he expressed appreciation for fantasy films.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson watched a **captivating** fantasy film that night and it caused him to **recons",
+        "adaptive": "No — on June 26, 2034, Johnson watched a captivating fantasy film that made him reconsider past negative views"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express dislike for tactical shooter games due to their lack of strategy?",
+      "cat": "Memory Conflict",
+      "gold": "No, he likes tactical shooters for their strategic gameplay.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson disliked first-person shooter games because they are **too intense**, not due t",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph decide to permanently include electronic dance music (EDM) at Albi B&B on January 10, 2036?",
+      "cat": "Memory Conflict",
+      "gold": "No, he decided to permanently remove EDM.",
+      "preds": {
+        "strict": "No — Johnson permanently **removed** EDM from the Albi B&B playlist on January 10, 2036.",
+        "declared": "No. On January 10, 2036, Johnson permanently **removed** EDM from the Albi B&B playlist because it did not fit",
+        "adaptive": "No — on January 10, 2036, Johnson permanently **removed** EDM from the Albi B&B playlist because it did not fi"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Dynamic Update||What is Johnson Joseph's current employment status as of January 25, 2036?",
+      "cat": "Dynamic Update",
+      "gold": "Retired",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "NO ANSWER",
+        "adaptive": "NO ANSWER"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Dynamic Update||What is the latest health status of Johnson Joseph as of December 20, 2035?",
+      "cat": "Dynamic Update",
+      "gold": "Poor",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "The context states Johnson's physical health is **Excellent** (since 2026-02-01), but this is **disputed** by ",
+        "adaptive": "Per il contesto, lo stato di salute fisica di Johnson Joseph è **Excellent** (dal 2026-02-01), sebbene esista "
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph find the cultural immersion trip to Japan less enriching than previous experiences?",
+      "cat": "Memory Conflict",
+      "gold": "No, he found it more enriching than previous experiences.",
+      "preds": {
+        "strict": "No, Johnson found the Japan trip emotionally enriching and surpassing previous experiences in emotional impact",
+        "declared": "No. The context states Johnson found the Japan trip **emotionally enriching and surpassing previous experience",
+        "adaptive": "No — Johnson found the Japan trip emotionally enriching and surpassing previous experiences in emotional impac"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph decide to focus more on golf than his business as of July 25, 2037?",
+      "cat": "Memory Conflict",
+      "gold": "No, he decided to phase out golf to focus on his business.",
+      "preds": {
+        "strict": "No, Johnson phased out golf due to difficulty justifying the time given his current schedule as of 2037-07-25.",
+        "declared": "No. As of 2037-07-25, Johnson phased out golf due to difficulty justifying the time given his current schedule",
+        "adaptive": "No — as of July 25, 2037, Johnson phased out golf due to difficulty justifying the time given his current sche"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph's income decrease to $2000 after adopting eco-conscious practices at Albi B&B on Jun 15, 2037?",
+      "cat": "Memory Conflict",
+      "gold": "No, his income increased to $7000.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "NO ANSWER.\n\nThe context states Johnson began focusing on sustainability at Albi B&B since 2037-06-15, but cont",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Was Johnson Joseph's physical health status still poor after lifestyle changes on Sep 01, 2037?",
+      "cat": "Memory Conflict",
+      "gold": "No, his physical health improved to 'Good'.",
+      "preds": {
+        "strict": "No, Johnson's physical health improved from poor to good since 2037-09-01.",
+        "declared": "No. The context states: \"Johnson's physical health has improved from poor to good [current, since 2037-09-01]\"",
+        "adaptive": "No — by 2037-09-01, Johnson's physical health had improved from poor to good following his adoption of a healt"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express dissatisfaction with the marketing strategies at Albi B&B on Dec 10, 2037?",
+      "cat": "Memory Conflict",
+      "gold": "No, he expressed satisfaction with the strategies.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson **launched targeted marketing campaigns** at Albi B&B resulting in **increased ",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph dislike romantic dramas after watching a friend's recommendation on January 29, 2038?",
+      "cat": "Memory Conflict",
+      "gold": "No, he appreciated them more after the recommendation.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states the user **likes** romantic dramas for their heartfelt, emotional stories, is **gratefu",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph plan to incorporate racing games into Albi B&B's offerings on Aug 04, 2038?",
+      "cat": "Memory Conflict",
+      "gold": "No, he planned to incorporate tactical shooter games.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context mentions cooperative board games, strategy games, digital games, and themed gaming nights — no",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph always dislike fantasy novels, even after a friend's recommendation on 2039-02-08?",
+      "cat": "Memory Conflict",
+      "gold": "No, he began appreciating them after a friend's recommendati",
+      "preds": {
+        "strict": "No, after a friend's recommendation on 2039-02-08, Johnson came to appreciate fantasy novels for their innovat",
+        "declared": "No. After a friend's recommendation on 2039-02-08, Johnson now **appreciates** fantasy novels — specifically v",
+        "adaptive": "No — after a friend recommended a fantasy novel on 2039-02-08, Johnson came to appreciate them for their innov"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph's monthly income decrease from $8,000 to $7,000 on Jul 18, 2039?",
+      "cat": "Memory Conflict",
+      "gold": "No, his monthly income increased from $7,000 to $8,000.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson's monthly income **increased** from $7,000 to $8,000 on 2039-07-18 — the opposi",
+        "adaptive": "No — the context states Johnson's monthly income **increased** from $7,000 to $8,000 since 2039-07-18, not dec"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph's physical health status worsen from 'Excellent' to 'Good' on Aug 10, 2039?",
+      "cat": "Memory Conflict",
+      "gold": "No, his physical health status improved from 'Good' to 'Exce",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context contains no record of a change on Aug 10, 2039. The closest relevant record states physical he",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Dynamic Update||What is Johnson Joseph's current monthly income as of July 18, 2039?",
+      "cat": "Dynamic Update",
+      "gold": "$8,000",
+      "preds": {
+        "strict": "Johnson's monthly income is $8,000 as of July 18, 2039.",
+        "declared": "$8,000 USD.\n\nInferred from: \"Johnson's monthly income increased from $7,000 to $8,000 [current, since 2039-07-",
+        "adaptive": "Johnson Joseph's monthly income as of July 18, 2039 is $8,000."
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Dynamic Update||How has Johnson Joseph's physical health status changed by August 10, 2039?",
+      "cat": "Dynamic Update",
+      "gold": "Changed from 'Good' to 'Excellent'.",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "The most recent undisputed record before that date: **\"Johnson's physical health has improved from poor to goo",
+        "adaptive": "By August 10, 2039, Johnson Joseph's physical health improved from poor to good, per the most recent applicabl"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||How did Johnson Joseph's health improvements impact his ability to manage business growth by Sep 18, 2039?",
+      "cat": "Multi-hop Inference",
+      "gold": "Enhanced resilience and effective management of business gro",
+      "preds": {
+        "strict": "Johnson's improved health contributed to effectively managing business growth by 2039-08-25.",
+        "declared": "Inferred from: \"The user's improved health has contributed to effectively managing business growth [current, s",
+        "adaptive": "By September 18, 2039, Johnson's improved health contributed to effectively managing business growth, supporte"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express a preference for avoiding technology in his travel experiences as of February 18, 2040?",
+      "cat": "Memory Conflict",
+      "gold": "No, he prefers tech-enhanced travel for efficiency and enjoy",
+      "preds": {
+        "strict": "No; Johnson plans to use technology selectively, focusing on tools that complement traditional experiences.",
+        "declared": "No. Johnson plans to use technology **selectively** (not avoid it), focusing on tools that complement traditio",
+        "adaptive": "No — Johnson did not express a preference for *avoiding* technology; rather, he plans to use it *selectively*,"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph decide to leave the hospitality industry entirely after June 21, 2041?",
+      "cat": "Memory Conflict",
+      "gold": "No, he diversified his portfolio to include consultancy role",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. Multiple facts show Johnson working in hospitality after that date (e.g., hospitality consultancy since 20",
+        "adaptive": "No — every context entry dated after June 21, 2041 shows Johnson still active in hospitality, including consul"
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Is Johnson Joseph's mental health status 'Highly Positive' as of April 10, 2041?",
+      "cat": "Memory Conflict",
+      "gold": "No, it changed to 'Cautiously Optimistic' and later 'Mildly ",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The most recent context states Johnson's mental health shifted to **positive** (since 2037-09-01), and a g",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express pessimism about his career transition on February 15, 2041?",
+      "cat": "Memory Conflict",
+      "gold": "No, he expressed optimism about contributing as a consultant",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson **wants to maintain financial stability during his career transition** [since 2",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph decide to exclude dogs from Albi B&B on September 12, 2042?",
+      "cat": "Memory Conflict",
+      "gold": "No, he appreciates dogs' role in enhancing guest experiences",
+      "preds": {
+        "strict": "NO ANSWER.",
+        "declared": "No. The context states Johnson believes dogs create a lively, friendly environment and values their role at Al",
+        "adaptive": "NO ANSWER."
+      },
+      "ok": {
+        "strict": false,
+        "declared": true,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Memory Conflict||Did Johnson Joseph express disinterest in using thematic cooperative board games at Albi B&B?",
+      "cat": "Memory Conflict",
+      "gold": "No, he expressed excitement about using them.",
+      "preds": {
+        "strict": "No.",
+        "declared": "No. The context states Johnson is planning to incorporate more thematic cooperative board games into Albi B&B'",
+        "adaptive": "No — the context consistently shows Johnson planning, considering, and viewing as transformative the integrati"
+      },
+      "ok": {
+        "strict": true,
+        "declared": true,
+        "adaptive": true
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||What motivated Johnson Joseph's transition to a Senior Hospitality Consultant role by July 10, 2043?",
+      "cat": "Multi-hop Inference",
+      "gold": "Compensatory motivation and emotional support from his netwo",
+      "preds": {
+        "strict": "Johnson's consultancy transition was motivated by a desire to accommodate current health needs.",
+        "declared": "Two motivations are stated:\n1. **Health needs** — the transition was driven by a desire to accommodate current",
+        "adaptive": "Johnson's consultancy transition was motivated by a desire to accommodate current health needs, while his ongo"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
+        "adaptive": false
+      }
+    },
+    {
+      "qkey": "Multi-hop Inference||How did Johnson Joseph's professional network expansion impact his consultancy business by September 15, 2043?",
+      "cat": "Multi-hop Inference",
+      "gold": "Increased collaborations and consultancy projects.",
+      "preds": {
+        "strict": "Johnson found expanding his professional network rewarding and was actively expanding it as of that date.",
+        "declared": "Il contesto non riporta un impatto concreto sulla consultancy business entro quella data. Al 2043-09-15 risult",
+        "adaptive": "By September 15, 2043, Johnson found expanding his professional network rewarding and was actively doing so, w"
+      },
+      "ok": {
+        "strict": false,
+        "declared": false,
         "adaptive": true
       }
     }
