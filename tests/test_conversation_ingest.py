@@ -51,6 +51,38 @@ def test_parse_extracted_lines_strips_bullets_and_numbering() -> None:
                          "Martin Mark lives in Berlin"]
 
 
+def test_ingest_user_name_reaches_extraction_prompt(tmp_path) -> None:
+    """Identity fix (diag 2026-07-07): dialogues almost never state the user's
+    name (1/3242 turns on HaluMem u1), so facts said 'The user ...' while
+    questions ask by name -> retrieval structurally crippled. The application
+    KNOWS the user's name (legitimate app-level metadata every competitor uses):
+    pass it opt-in and the extractor uses it as the subject. Without it the
+    prompt is byte-identical to before (anti-contamination rule untouched)."""
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    llm = _StubLLM("Johnson Joseph works at Albi B&B as owner")
+    ingest_conversation(sm, _CONV, llm=llm, conversation_id="c1",
+                        user_name="Johnson Joseph", embed="sync")
+    system = llm.calls[0]["system"]
+    assert "Johnson Joseph" in system, "app-provided name must reach the prompt"
+    assert "provided by the application" in system, "source declared, not laundered"
+    assert system.startswith(ATOMIC_EXTRACT_SYSTEM), "base prompt unchanged (extension only)"
+
+    llm2 = _StubLLM("The user works somewhere")
+    ingest_conversation(sm, _CONV, llm=llm2, conversation_id="c2", embed="sync")
+    assert llm2.calls[0]["system"] == ATOMIC_EXTRACT_SYSTEM, "no user_name -> byte-identical"
+
+
+def test_atomic_prompt_keeps_enumerations_and_dates_attached() -> None:
+    """Fragmentation fix (diag 2026-07-07: 33/54 failures were gold terms
+    scattered across facts): an enumeration of the same attribute is ONE fact
+    ('dislikes snakes and cats'), and a fact's date/qualifier stays ON its line
+    — splitting them orphans the date and breaks whole-question retrieval."""
+    low = ATOMIC_EXTRACT_SYSTEM.lower()
+    assert "enumeration" in low, "enumeration-stays-together rule missing"
+    assert "date" in low and ("keep" in low or "attach" in low or "on the same line" in low), \
+        "date-attached rule missing"
+
+
 def test_ingest_stores_atomic_facts_with_provenance(tmp_path) -> None:
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     llm = _StubLLM("Martin Mark works as a nurse in Berlin\n"

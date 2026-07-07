@@ -30,7 +30,12 @@ ATOMIC_EXTRACT_SYSTEM = (
     "conversation — identity, relationships, preferences (likes AND dislikes), events, "
     "plans, health, work, reasons. Rules:\n"
     "- ATOMIC: exactly ONE attribute or fact per line; if a sentence carries several "
-    "(a preference + its reason + a date), split them into separate lines.\n"
+    "DIFFERENT facts (a preference + its reason), split them into separate lines.\n"
+    "- An ENUMERATION of values of the SAME attribute is ONE fact — keep the whole "
+    "list on one line ('dislikes snakes and cats'), never split it across lines.\n"
+    "- Keep each fact's own date or qualifier ON the same line as the fact "
+    "('switched to classical music on 2043-07-10') — a date split onto its own "
+    "line is an orphan that answers nothing.\n"
     "- Start every line with the speaker's full name AS STATED IN THE CONVERSATION "
     "TEXT (never a pronoun). If the conversation never states a name, write "
     "'The user'. NEVER use a name that does not appear in the conversation itself "
@@ -38,6 +43,27 @@ ATOMIC_EXTRACT_SYSTEM = (
     "- Be EXHAUSTIVE: list every stable fact the dialogue states, including minor ones.\n"
     "- Only facts the dialogue actually states — never invent or infer beyond it.\n"
     "One fact per line, no numbering, no preamble.")
+
+
+def extraction_system_for(user_name: str | None) -> str:
+    """The extraction system prompt, optionally extended with the app-provided
+    user name (identity fix, diag 2026-07-07).
+
+    Dialogues almost never state the user's own name, so extracted facts said
+    'The user ...' while questions ask by name — a structural query/store
+    mismatch that cripples retrieval. When the APPLICATION knows the user's name
+    (legitimate metadata, exactly what competitors consume), passing it here
+    makes facts retrieval-ready. The source is DECLARED in the prompt; the
+    in-text anti-contamination rule stays for every other name. No ``user_name``
+    -> byte-identical base prompt."""
+    if not (user_name or "").strip():
+        return ATOMIC_EXTRACT_SYSTEM
+    return (ATOMIC_EXTRACT_SYSTEM +
+            f"\n- The user's name is '{user_name.strip()}' (provided by the "
+            "application, not by this conversation). Use it as the subject of "
+            "facts about the user instead of 'The user'. This exception applies "
+            "ONLY to this one name; every other name must still appear in the "
+            "conversation text.")
 
 #: Consolidation pass (iter 35, mandate "beat them on every axis"): raw atomic
 #: extraction over-produces (~37 facts vs ~20 gold on HaluMem -> precision 0.65
@@ -115,6 +141,7 @@ def ingest_conversation(
     completeness: bool = False,
     asserted_at: float | None = None,
     embed: str | None = None,
+    user_name: str | None = None,
 ) -> dict:
     """Extract ATOMIC facts from ``messages`` and store each through the gate.
 
@@ -144,7 +171,7 @@ def ingest_conversation(
         return res
     try:
         r = llm.complete(
-            ATOMIC_EXTRACT_SYSTEM,
+            extraction_system_for(user_name),
             [{"role": "user",
               "content": f"Conversation:\n{dialogue}\n\nFacts:"}],
             max_tokens=max_out_tokens)
@@ -246,6 +273,6 @@ def consolidate_facts(facts: list[str], *, llm: Any,
 __all__ = [
     "ATOMIC_EXTRACT_SYSTEM", "CONSOLIDATE_SYSTEM", "GAPFILL_SYSTEM",
     "INGEST_WRITER_ROLE", "conversation_provenance_ref",
-    "parse_extracted_lines", "render_conversation", "ingest_conversation",
-    "consolidate_facts", "gapfill_facts",
+    "extraction_system_for", "parse_extracted_lines", "render_conversation",
+    "ingest_conversation", "consolidate_facts", "gapfill_facts",
 ]
