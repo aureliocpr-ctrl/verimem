@@ -61,6 +61,14 @@ app.add_typer(swarm_app, name="swarm")
 # nell'inbox di un teammate dall'esterno della sessione Claude.
 from .teams.cli import teams_app  # noqa: E402  # isort:skip
 app.add_typer(teams_app, name="teams")
+# Self-host gateway (roadmap #3, 2026-07-08): REST multi-tenant sopra l'SDK.
+gateway_app = typer.Typer(
+    help="Self-host REST gateway (multi-tenant, API-key auth)",
+    no_args_is_help=True,
+)
+gateway_keys_app = typer.Typer(help="Manage gateway API keys", no_args_is_help=True)
+gateway_app.add_typer(gateway_keys_app, name="keys")
+app.add_typer(gateway_app, name="gateway")
 
 
 @lab_app.command("live")
@@ -358,6 +366,88 @@ def search_docs(
         snippet = ("…" if start > 0 else "") + text[start:start + 180].strip() \
                   + ("…" if start + 180 < len(text) else "")
         console.print(f"[bold]{i}.[/bold] ({h['score']:.3f}) [cyan]{cite}[/cyan]\n   {snippet}")
+
+
+def _gateway_data_dir(data_dir: str | None) -> Path:
+    from engram._compat import data_dir as _dd
+    return Path(data_dir) if data_dir else _dd() / "gateway"
+
+
+@gateway_app.command("serve")
+def gateway_serve(
+    host: str = typer.Option("127.0.0.1", "--host", help="Bind address (loopback by default; expose remotely behind a TLS reverse-proxy)"),
+    port: int = typer.Option(8377, "--port"),
+    data_dir: str = typer.Option(None, "--data-dir", help="Gateway data dir (keys db + per-tenant stores); default <engram data>/gateway"),
+):
+    """Serve the multi-tenant REST gateway (self-host scenario).
+
+    Every tenant gets an ISOLATED SQLite store under <data-dir>/tenants/;
+    the tenant is derived from the API key alone. Writes pass the
+    anti-confabulation gate, reads carry provenance, /v1/explain returns the
+    TrustReport. Create keys first: ``verimem gateway keys create --tenant t``.
+    """
+    try:
+        import uvicorn
+        from .gateway import create_app
+    except ImportError:
+        console.print("[red]the gateway needs fastapi+uvicorn[/red] — "
+                      "pip install 'verimem[dashboard]'")
+        raise typer.Exit(1)
+    dd = _gateway_data_dir(data_dir)
+    app_ = create_app(data_dir=dd)
+    console.print(f"[green]verimem gateway[/green] on http://{host}:{port} "
+                  f"(data: {dd})")
+    if host not in ("127.0.0.1", "localhost", "::1"):
+        console.print("[yellow]non-loopback bind:[/yellow] put a TLS "
+                      "reverse-proxy (nginx/caddy) in front for remote use")
+    uvicorn.run(app_, host=host, port=port, log_level="info")
+
+
+@gateway_keys_app.command("create")
+def gateway_keys_create(
+    tenant: str = typer.Option(..., "--tenant", help="Tenant slug ([a-z0-9._-], max 64) — its facts live in an isolated store"),
+    name: str = typer.Option("", "--name", help="Label for this key (e.g. 'laptop', 'ci')"),
+    data_dir: str = typer.Option(None, "--data-dir"),
+):
+    """Create an API key for a tenant. The key is shown ONCE — only its
+    sha256 is stored at rest."""
+    from .gateway import GatewayKeys
+    try:
+        key = GatewayKeys(_gateway_data_dir(data_dir) / "gateway_keys.db").create(
+            tenant_id=tenant, name=name)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    console.print(f"[green]key created[/green] for tenant [cyan]{tenant}[/cyan] "
+                  f"— save it now, it is NOT retrievable later:\n  {key}")
+
+
+@gateway_keys_app.command("list")
+def gateway_keys_list(data_dir: str = typer.Option(None, "--data-dir")):
+    """List keys (id, tenant, name, status) — never the secret itself."""
+    from .gateway import GatewayKeys
+    rows = GatewayKeys(_gateway_data_dir(data_dir) / "gateway_keys.db").list()
+    if not rows:
+        console.print("no keys yet — verimem gateway keys create --tenant <t>")
+        raise typer.Exit(0)
+    t = Table("key_id", "tenant", "name", "status")
+    for r in rows:
+        t.add_row(r["key_id"], r["tenant_id"], r["name"] or "-",
+                  "[red]revoked[/red]" if r["revoked_at"] else "[green]active[/green]")
+    console.print(t)
+
+
+@gateway_keys_app.command("revoke")
+def gateway_keys_revoke(
+    key_id: str = typer.Argument(..., help="key_id from `gateway keys list`"),
+    data_dir: str = typer.Option(None, "--data-dir"),
+):
+    """Revoke a key (kept in the table for audit, no longer accepted)."""
+    from .gateway import GatewayKeys
+    ok = GatewayKeys(_gateway_data_dir(data_dir) / "gateway_keys.db").revoke(key_id)
+    console.print("[green]revoked[/green]" if ok
+                  else "[yellow]not found or already revoked[/yellow]")
+    raise typer.Exit(0 if ok else 1)
 
 
 def _import_llm(model: str | None = None):
