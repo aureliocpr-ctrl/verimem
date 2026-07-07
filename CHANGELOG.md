@@ -2,17 +2,75 @@
 
 All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — License change to AGPL-3.0 + commercial (2026-07-06)
+## [0.4.0] — Document RAG + onboarding import + e2e parity with MemOS (2026-07-07)
 
-- **License**: the project moves from MIT to **AGPL-3.0** for release 0.4.0 and
-  later, with a **commercial license** available for proprietary / closed-source
-  / unmodified-SaaS use (dual-licensing — see `LICENSING.md`). Rationale: MIT let
-  anyone close the source and resell it; AGPL's §13 network-copyleft protects the
-  project (a hosted competitor must publish its modifications) while the
-  commercial license monetizes proprietary users. Copyright is held solely by
-  Aurelio Capriello, so future releases can set their own license. **0.3.x and
-  earlier remain MIT** (an existing license grant is irrevocable); this policy
-  applies to 0.4.0 onward.
+The big one: whole-file memory with exact citations, consent-first onboarding
+from your ChatGPT/Claude history, an extraction engine rebuilt around two
+root-caused fixes (+9.8pp e2e, replicated), and the license change to AGPL-3.0
+dual. Trust regressions: zero (TrustMem-Bench 60/60, abstention 1.0 everywhere).
+
+### Added — Document RAG (whole files, exact citations)
+- **`engram/chunking.py`** — boundary-aware text chunker with the provenance
+  invariant `text[start:end] == chunk.text` (every chunk cites its exact offsets).
+- **`engram/file_extract.py`** — file→text for `.pdf` (PyMuPDF), `.docx`,
+  `.html`, `.txt/.md`; lazy parser imports degrade with clear errors.
+- **`engram/document_index.py`** — `DocumentIndex`: file → chunks → embeddings →
+  `search(query)` returns chunks with `(source_id, version, start, end)`;
+  content-hash idempotent; a changed file supersedes its old version in search;
+  embedder injected (tests run model-free); isolated store (NOT the recall corpus).
+- **`engram/document_promote.py`** — `promote_chunk_to_fact`: a retrieved chunk
+  (or a distilled claim) enters the recall corpus THROUGH the anti-confab gate as
+  a low-trust `model_claim` whose `verified_by` IS the citation
+  `file:<source_id>:<start>-<end>` — open the file at those offsets and check.
+- **MCP**: `hippo_document_index_file`, `hippo_document_semantic_search`,
+  `hippo_document_promote_chunk`. **CLI**: `verimem index <file>`,
+  `verimem search-docs <query>` (snippet centered on the matched term).
+
+### Added — Onboarding import (cold-start, consent-first)
+- **`engram/import_conversations.py`** — parse ChatGPT (mapping-tree) / Claude
+  (chat_messages) / generic JSON exports; `list_conversations` shows metadata
+  only; `import_conversations` ingests ONLY the explicitly selected ids through
+  the gate with `import:<format>:<id>` provenance.
+- **CLI `verimem import <export.json>`** — lists and imports NOTHING by default;
+  `--ids`/`--all` is the explicit consent; `--user-name` applies the identity fix.
+  **MCP**: `hippo_import_conversations` (same consent-first contract).
+
+### Changed — Extraction engine (bench-gated, the e2e lever)
+- **Identity fix**: `ingest_conversation(..., user_name=...)` (SDK + MCP) — the
+  app-provided name becomes the declared subject of user facts. Root cause: on
+  HaluMem u1 the dialogues state the user's name in 1/3242 turns, so facts said
+  "The user…" while questions ask by name — retrieval was structurally crippled.
+  Without `user_name` the prompt is byte-identical (anti-contamination intact).
+- **Anti-fragmentation rules** in `ATOMIC_EXTRACT_SYSTEM` (default, bench-gated):
+  enumerations of the same attribute stay ONE fact; a fact's date/qualifier stays
+  on its line. Extraction F1 (u10s6, 58 sessions): **0.711 → 0.761** — precision
+  AND recall up together, −26% fact count (denser, less fragmented).
+- **e2e (HaluMem u1, official score_qa, n=188, verify recipe)**: 0.5691 →
+  **0.6755 / 0.6596 on two independent fresh stores (mean 0.6675)** — statistical
+  **parity with MemOS's self-reported 0.672** (from −12pp two days ago), with
+  **Memory Boundary (abstention) 1.0 in both runs**. Honest caveats: n=2,
+  run-to-run variance ~1.6pp, our FAIR-family judge vs their pipeline.
+- **`ENGRAM_ANSWER_MODE=adaptive`** (opt-in) — context-gated inference: lifts
+  Generalization (+12.5pp) while holding Boundary at 1.0. `declared` and
+  `adaptive_fp` were measured and REJECTED as defaults (they break abstention);
+  `verify` remains the default recipe.
+
+### Changed — License
+- **AGPL-3.0 + commercial dual-license** from this release (see `LICENSING.md`).
+  MIT let anyone close the source and resell it; AGPL §13 network-copyleft makes
+  a hosted competitor publish its modifications, while the commercial license
+  covers proprietary use. **0.3.x and earlier remain MIT** (irrevocable grant).
+
+### Fixed
+- Embedding daemon post-reboot race: N sessions spawned N ~2GB daemons (12GB
+  observed). OS-atomic singleton lock (fixed-port bind) as the daemon's first
+  action — a losing duplicate exits in milliseconds.
+
+### Trust (regression checks for this release)
+- TrustMem-Bench **60/60** (same seed as the public leaderboard run).
+- Abstention (Memory Boundary) **1.0** in every e2e run of this cycle.
+- Full suite: 6139+ passed (2 known environment-only failures: real-provider
+  smoke needs network; concurrent-save SLO needs a larger Windows pagefile).
 
 ## [0.3.1] — Trust hardening + TrustMem-Bench + first public CI (2026-07-06)
 
