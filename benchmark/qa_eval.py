@@ -103,6 +103,23 @@ _ANSWER_SYSTEM_ADAPTIVE = (
 )
 
 
+# ADAPTIVE + FALSE-PREMISE (opt-in, iter 80): the e2e overall (n=173) showed
+# declared crushes Memory Conflict (0.775 vs adaptive 0.55) via its false-assumption
+# rule; adaptive lacked it. adaptive_fp grafts that one rule onto adaptive — same
+# context-gate and NO ANSWER abstention (Boundary stays 1.0), plus: if the QUESTION
+# asserts something the context contradicts, say 'No' and give the correct fact.
+_ANSWER_SYSTEM_ADAPTIVE_FP = (
+    "Answer from the CONTEXT only. FIRST decide: does the context contain "
+    "information that supports an answer, either directly OR by reasonable "
+    "inference from what is stated? If YES, answer in ONE short sentence "
+    "(inference is allowed, but grounded ONLY in the context). "
+    "If the QUESTION contains a false assumption that the context contradicts, "
+    "reply 'No' and state the correct fact from the context. "
+    "If the context does NOT support any answer, reply EXACTLY: NO ANSWER. "
+    "Never invent facts, dates, names or details that are not grounded in the context."
+)
+
+
 def _answer_system() -> str:
     import os
     # Answer-mode selector (opt-in overrides). declared + adaptive are the two
@@ -116,6 +133,10 @@ def _answer_system() -> str:
     # Generalization WITHOUT breaking Boundary abstention (the moat).
     if _mode == "adaptive":
         return _ANSWER_SYSTEM_ADAPTIVE
+    # Adaptive + false-premise (opt-in): adaptive's context-gate PLUS declared's
+    # false-assumption correction -> lift Memory Conflict without breaking Boundary.
+    if _mode == "adaptive_fp":
+        return _ANSWER_SYSTEM_ADAPTIVE_FP
     # Verification-aware mode (opt-in): premise-check + correction for
     # false-premise questions. Measured 4.3x on Memory-Conflict (0.15 -> 0.65).
     if os.environ.get("ENGRAM_ANSWER_VERIFY", "").strip().lower() in (

@@ -191,3 +191,18 @@ def test_answer_mode_adaptive_opt_in(monkeypatch) -> None:
     adaptive = qa._answer_system()
     assert "supports an answer" in adaptive.lower(), "adaptive gates inference on context support"
     assert "NO ANSWER" in adaptive, "abstention preserved (moat: Boundary stays 1.0)"
+
+
+def test_answer_mode_adaptive_fp_opt_in(monkeypatch) -> None:
+    """adaptive_fp = adaptive + false-premise handling. The e2e overall (n=173)
+    showed declared crushes Memory Conflict (0.775 vs adaptive 0.55) via its
+    false-assumption rule, which adaptive lacks. adaptive_fp grafts that rule onto
+    adaptive to lift Conflict WHILE keeping the context-gate + Boundary abstention
+    (the moat). Opt-in; default strict unchanged."""
+    import benchmark.qa_eval as qa
+
+    monkeypatch.setenv("ENGRAM_ANSWER_MODE", "adaptive_fp")
+    fp = qa._answer_system()
+    assert "supports an answer" in fp.lower(), "keeps the adaptive context-gate"
+    assert "false assumption" in fp.lower(), "adds false-premise correction"
+    assert "NO ANSWER" in fp, "abstention preserved (moat)"
