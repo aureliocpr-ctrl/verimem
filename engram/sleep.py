@@ -1096,12 +1096,19 @@ class SleepEngine:
         promoted, retired = self.skills.promote_or_retire()
         report.promoted.extend(promoted)
         report.retired.extend(retired)
+        # Gamba B qualità skill (2026-07-08): promote_or_retire salta le
+        # candidate sotto min_trials — le mai-provate restavano attive per
+        # sempre. Il sonno ritira anche le DORMIENTI (>30gg senza attività,
+        # reversibile, cap 10/ciclo — stessa gradualità del cap merge).
+        dormant = self.skills.retire_dormant_candidates()
+        report.retired.extend(dormant)
         # Synaptic homeostasis: stale Hebbian drift snaps back toward the
         # canonical anchor so the embedding doesn't lock-in to a one-shot task
         # that no longer recurs.
         n_decayed = self.skills.decay_idle_embeddings()
-        emit("pruning_done", promoted=len(promoted), retired=len(retired),
-             hebbian_decayed=n_decayed)
+        emit("pruning_done", promoted=len(promoted),
+             retired=len(retired) + len(dormant),
+             dormant_retired=len(dormant), hebbian_decayed=n_decayed)
 
     def _stage_bundle_discovery(
         self,

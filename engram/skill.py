@@ -746,6 +746,53 @@ class SkillLibrary:
                 retired.append(s.id)
         return promoted, retired
 
+    def retire_dormant_candidates(
+        self, *, max_age_days: float = 30.0, cap: int = 10,
+        min_trials: int = CONFIG.fitness_min_trials,
+        now: float | None = None,
+    ) -> list[str]:
+        """Ritira le candidate-ZOMBIE: sotto ``min_trials`` (quindi invisibili
+        a ``promote_or_retire``, che le salta) e dormienti da più di
+        ``max_age_days``. Ultima attività = ``updated_at`` (ogni uso passa da
+        ``update_fitness``→``store`` che lo tocca; ``last_used_at`` NON è
+        persistito in tabella), fallback ``created_at``. Reversibile come ogni
+        retire (status recuperabile).
+
+        Il buco che chiude (2026-07-08, gamba B qualità skill): una candidate
+        mai provata non veniva MAI né promossa né ritirata — restava attiva
+        per sempre pagando retrieve/dedup/cluster a ogni ciclo (corpus vivo:
+        162/324 candidate). ``cap`` tiene il ritiro graduale (stessa filosofia
+        del cap merge del curator). Le più vecchie prima."""
+        t = time.time() if now is None else float(now)
+        cutoff = t - max_age_days * 86400.0
+        # I timestamp vanno letti dalla TABELLA: l'idratazione di Skill non
+        # round-trippa created_at (l'oggetto riletto porta il default = now,
+        # verificato empiricamente), quindi il giudizio di dormienza
+        # sull'oggetto sarebbe sempre "fresca".
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT id, COALESCE(NULLIF(updated_at, 0), created_at) "
+                "AS last_activity FROM skills "
+                "WHERE status = 'candidate' AND trials < ? "
+                "AND COALESCE(NULLIF(updated_at, 0), created_at, 0) > 0 "
+                "AND COALESCE(NULLIF(updated_at, 0), created_at) < ?",
+                (int(min_trials), cutoff),
+            ).fetchall()
+        dormant: list[tuple[float, Skill]] = []
+        for r in rows:
+            s = self.get(r["id"])
+            if s is not None:
+                dormant.append((float(r["last_activity"]), s))
+        dormant.sort(key=lambda x: x[0])
+        retired: list[str] = []
+        for last, s in dormant[:max(0, int(cap))]:
+            s.status = "retired"
+            self.store(s)
+            emit("skill_retired_dormant", skill_id=s.id, trials=s.trials,
+                 last_activity=last)
+            retired.append(s.id)
+        return retired
+
     def add_lineage_edge(self, parent_id: str, child_id: str, relation: str) -> None:
         """Record an arbitrary lineage edge (e.g. 'specialises' for schemas).
 
