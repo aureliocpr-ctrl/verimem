@@ -55,6 +55,11 @@ from verimem import Memory
 
 m = Memory("memory.db", llm=my_llm)   # any client with .complete(system, messages)
 
+# Gate presets: "balanced" (default), "strict" (reject on contradiction or
+# failed source-grounding — needs a grounding judge), "permissive" (creative /
+# low-stakes contexts, no quarantine). Per-call args always override.
+m = Memory("memory.db", preset="strict", grounding_llm=my_llm)
+
 # Store a conversation — facts are extracted atomically and pass the gate.
 # user_name makes the app-provided identity the subject of the facts.
 m.add([{"role": "user", "content": "I moved to Berlin in March."}],

@@ -28,11 +28,28 @@ from .anti_confab_gate import run_validation_gate
 from .semantic import Fact, SemanticMemory
 
 
+#: Gate presets (packaging 2026-07-08): the gate's knobs existed for months
+#: (validate off/fast/full, gate_mode downgrade/reject, ground L4) but you had
+#: to know them. Three declarative modes; ``balanced`` = the historic default,
+#: byte-identical. Any explicit per-call parameter always wins over the preset.
+_GATE_PRESETS: dict[str, dict[str, Any]] = {
+    "strict":     {"validate": "full", "gate_mode": "reject",    "ground": True},
+    "balanced":   {"validate": "fast", "gate_mode": None,        "ground": False},
+    "permissive": {"validate": "off",  "gate_mode": None,        "ground": False},
+}
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
     def __init__(self, path: str | Path | None = None, *, grounding_llm: Any = None,
-                 llm: Any = None) -> None:
+                 llm: Any = None, preset: str = "balanced") -> None:
+        if preset not in _GATE_PRESETS:
+            raise ValueError(
+                f"unknown gate preset {preset!r} — one of: "
+                f"{', '.join(sorted(_GATE_PRESETS))}")
+        self.preset = preset
+        self._preset_defaults = _GATE_PRESETS[preset]
         self.semantic = SemanticMemory(db_path=Path(path) if path else None)
         self.grounding_llm = grounding_llm
         #: extraction LLM for ``add(messages)`` — anything with
@@ -43,8 +60,8 @@ class Memory:
     def add(
         self, content: str | list[dict], *, topic: str = "user",
         source: str | None = None,
-        verified_by: list[str] | None = None, validate: str = "fast",
-        ground: bool = False, gate_mode: str | None = None,
+        verified_by: list[str] | None = None, validate: str | None = None,
+        ground: bool | None = None, gate_mode: str | None = None,
         asserted_at: float | None = None, conversation_id: str | None = None,
         user_name: str | None = None,
     ) -> dict[str, Any]:
@@ -88,6 +105,14 @@ class Memory:
         text = (content or "").strip()
         if not text:
             return {"stored": False, "status": "empty", "warnings": [], "advice": "empty text"}
+        # preset defaults fill only what the call left unspecified (None):
+        # an explicit per-call parameter always wins over the preset.
+        if validate is None:
+            validate = self._preset_defaults["validate"]
+        if gate_mode is None:
+            gate_mode = self._preset_defaults["gate_mode"]
+        if ground is None:
+            ground = self._preset_defaults["ground"]
         gate = run_validation_gate(
             proposition=text, verified_by=verified_by, topic=topic, agent=self,
             validate=validate, source=source, grounding_llm=self.grounding_llm,
