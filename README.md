@@ -128,13 +128,14 @@ grader. Full methodology, caveats and raw result files:
 
 | Metric | Verimem | MemOS (self-reported) |
 |---|---|---|
-| End-to-end QA, mean of 2 independent runs (n=188) | **0.6675** (0.6755 / 0.6596) | 0.672 |
+| End-to-end QA, same-recipe cluster (7 full runs, n=188) | **0.66–0.68** (mean 0.667, n=3 clean) | 0.672 |
+| End-to-end QA, cross-user generalization (never-seen user, n=169) | **0.716** | — |
 | Read-path QA (gold store, 3 users) | 0.739 / 0.750 / 0.787 | — |
-| Memory-boundary abstention (end-to-end) | **1.000** (both runs) | — |
+| Memory-boundary abstention (end-to-end) | **1.000 — seven consecutive full runs** | — |
 | Extraction F1 (58 sessions, replicated ×2) | 0.761–0.768 | 0.797 |
 
-We describe the end-to-end result as **parity, not a win**: one run scored
-above MemOS's self-reported number, one just below, and the judges differ
+We describe the end-to-end result as **parity, not a win**: the same-recipe
+runs cluster around MemOS's self-reported number and the judges differ
 (ours vs theirs). Trust properties hold through the full pipeline. On
 [TrustMem-Bench](./benchmark/trustmem_bench.py) — six deterministic trust axes
 (fabrication under absence, destructive updates, temporal integrity, forget
@@ -143,6 +144,31 @@ the bench is offline and seeded, run it yourself in one command.
 
 Scale: recall latency stays ~flat with an ANN index (1.3 ms at 1M facts vs
 81 ms brute-force — reproducible, see [SCALE.md](./SCALE.md)).
+
+## Why the numbers matter
+
+Accuracy benchmarks measure how often a memory system answers correctly.
+They do not measure what happens **when it cannot know** — and that failure
+mode is exactly what makes memory systems risky in serious applications.
+This is where Verimem is structurally different, and every row below is a
+measured result with the raw file in the repo, not a design intention:
+
+| Capability | Verimem (measured) | mem0 / Zep / MemOS |
+|---|---|---|
+| Abstains instead of fabricating when the store can't support an answer | **1.000 across seven consecutive full e2e runs** | not measured by their leaderboards |
+| Write-path gate (unsupported "it works" claims quarantined, not stored) | grounding judge AUROC **0.971** | no write gate |
+| Trust axes under adversarial pressure ([TrustMem-Bench](./benchmark/trustmem_bench.py), deterministic, run it yourself) | **60/60** | mem0: 40/60 (forget-leak reproduced live) |
+| Bi-temporal history & time travel (`as_of`, "changed from X to Y on date Z") | shipped, tested | latest-value only |
+| True forget (GDPR): deleted data cannot resurface via history or time travel | shipped, probe-tested | mem0 leaked in our probe |
+| Provenance on every read (who wrote it, source ref, gate status) | every hit | absent or partial |
+| Runs fully air-gapped (local embeddings, injectable LLM, zero egress check) | `verimem airgap` | cloud-first |
+
+Our method is the other differentiator: **every claim in this README links
+to a raw result file, negative results are published** (see the declared
+regressions and falsified hypotheses in
+[BENCHMARKS.md](./docs/BENCHMARKS.md)), and the honest framing rule —
+"parity, not a win" — is enforced against ourselves. A memory layer asking
+for your trust should be able to show its work. This one does.
 
 ## Architecture
 
