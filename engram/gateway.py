@@ -151,9 +151,16 @@ class _TenantMemories:
 
 
 def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
-               llm: Any = None, grounding_llm: Any = None):
+               llm: Any = None, grounding_llm: Any = None,
+               rate_limit_per_minute: int = 0):
     """Costruisce l'app FastAPI del gateway. ``keys`` iniettabile (test);
-    default: ``<data_dir>/gateway_keys.db``."""
+    default: ``<data_dir>/gateway_keys.db``.
+
+    ``rate_limit_per_minute`` (0 = off, default): tetto per CHIAVE su una
+    finestra scorrevole di 60s — oltre, 429 con ``Retry-After``. In-memory
+    per processo (Fase 1 del design datacenter: single-node; il limite
+    distribuito è Fase 2+). Ogni chiave ha il suo bucket: il consumo di un
+    tenant non tocca gli altri. ``/v1/health`` non è mai limitato (liveness)."""
     if FastAPI is None:  # pragma: no cover
         raise ImportError(
             "the gateway needs fastapi — pip install 'verimem[dashboard]'"
@@ -163,6 +170,24 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     tenants = _TenantMemories(data_dir, llm=llm, grounding_llm=grounding_llm)
     app = FastAPI(title="Verimem gateway", docs_url=None, redoc_url=None)
 
+    _buckets: dict[str, list[float]] = {}
+    _buckets_lock = threading.Lock()
+
+    def _check_rate(bucket_key: str) -> None:
+        if rate_limit_per_minute <= 0:
+            return
+        now = time.time()
+        with _buckets_lock:
+            window = [t for t in _buckets.get(bucket_key, ()) if now - t < 60.0]
+            if len(window) >= rate_limit_per_minute:
+                retry = max(1, int(61.0 - (now - window[0])))
+                _buckets[bucket_key] = window
+                raise HTTPException(
+                    status_code=429, detail="rate limit exceeded for this key",
+                    headers={"Retry-After": str(retry)})
+            window.append(now)
+            _buckets[bucket_key] = window
+
     def _tenant(authorization: str | None = Header(default=None),
                 x_api_key: str | None = Header(default=None)) -> str:
         presented = x_api_key
@@ -171,6 +196,9 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         tenant_id = keys.resolve(presented)
         if tenant_id is None:
             raise HTTPException(status_code=401, detail="invalid or missing API key")
+        # il bucket segue la CHIAVE presentata (hash), non il tenant: due
+        # chiavi dello stesso tenant hanno tetti indipendenti e revocabili
+        _check_rate(GatewayKeys._hash(presented or ""))
         return tenant_id
 
     @app.get("/v1/health")

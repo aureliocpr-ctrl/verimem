@@ -378,6 +378,7 @@ def gateway_serve(
     host: str = typer.Option("127.0.0.1", "--host", help="Bind address (loopback by default; expose remotely behind a TLS reverse-proxy)"),
     port: int = typer.Option(8377, "--port"),
     data_dir: str = typer.Option(None, "--data-dir", help="Gateway data dir (keys db + per-tenant stores); default <engram data>/gateway"),
+    rate_limit: int = typer.Option(0, "--rate-limit", help="Max requests per key per minute (0 = off); 429 + Retry-After beyond it"),
 ):
     """Serve the multi-tenant REST gateway (self-host scenario).
 
@@ -394,7 +395,7 @@ def gateway_serve(
                       "pip install 'verimem[dashboard]'")
         raise typer.Exit(1)
     dd = _gateway_data_dir(data_dir)
-    app_ = create_app(data_dir=dd)
+    app_ = create_app(data_dir=dd, rate_limit_per_minute=rate_limit)
     console.print(f"[green]verimem gateway[/green] on http://{host}:{port} "
                   f"(data: {dd})")
     if host not in ("127.0.0.1", "localhost", "::1"):

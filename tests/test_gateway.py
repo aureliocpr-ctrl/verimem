@@ -116,6 +116,35 @@ def test_explain_returns_report(gw):
     assert isinstance(r.json(), dict) and r.json(), "trust report json"
 
 
+def test_rate_limit_per_key(tmp_path):
+    """Fase 1 del design datacenter (docs/DATACENTER_DESIGN.md): rate-limit
+    per chiave — oltre il tetto la risposta è 429 (con Retry-After), le altre
+    chiavi NON sono toccate (isolamento anche sul limite)."""
+    keys = GatewayKeys(tmp_path / "gateway_keys.db")
+    key_a = keys.create(tenant_id="team-alpha", name="ci")
+    key_b = keys.create(tenant_id="team-beta", name="ci")
+    app = create_app(data_dir=tmp_path, keys=keys, rate_limit_per_minute=3)
+    client = TestClient(app)
+    for _ in range(3):
+        assert client.get("/v1/search", params={"q": "x"},
+                          headers=_auth(key_a)).status_code == 200
+    r = client.get("/v1/search", params={"q": "x"}, headers=_auth(key_a))
+    assert r.status_code == 429
+    assert "retry-after" in {k.lower() for k in r.headers}
+    # un'altra chiave non è rate-limitata dal consumo della prima
+    assert client.get("/v1/search", params={"q": "x"},
+                      headers=_auth(key_b)).status_code == 200
+    # health resta libero (liveness non autenticata, mai limitata)
+    assert client.get("/v1/health").status_code == 200
+
+
+def test_rate_limit_disabled_by_default(gw):
+    client, key_a, *_ = gw
+    for _ in range(30):
+        assert client.get("/v1/search", params={"q": "x"},
+                          headers=_auth(key_a)).status_code == 200
+
+
 def test_key_is_hashed_at_rest(gw, tmp_path):
     _, key_a, _, keys = gw
     import sqlite3
