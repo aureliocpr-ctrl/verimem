@@ -45,7 +45,53 @@ ATOMIC_EXTRACT_SYSTEM = (
     "One fact per line, no numbering, no preamble.")
 
 
-def extraction_system_for(user_name: str | None) -> str:
+#: Tier-2 piggyback (2026-07-08, CONVERSATIONAL_ENTITY_DESIGN.md): typed
+#: entities asked for in the SAME extraction call — zero extra LLM cost. One
+#: final line OUTSIDE the fact list, so the consolidate pass (which only sees
+#: fact lines) can never eat it. The regex tier stays as the floor; these are
+#: additive and idempotent at populate time.
+_TYPED_ENTITIES_INSTRUCTION = (
+    "\n- After ALL fact lines, add exactly ONE final line starting with "
+    "'ENTITIES: ' listing the people, places, organizations, activities and "
+    "life events EXPLICITLY mentioned in the conversation, as 'type:Name' "
+    "pairs separated by '; ' (types: person, place, org, activity, event). "
+    "Only entities the conversation text actually names — never infer. "
+    "Example: ENTITIES: person:Emily; place:Kyoto; event:promotion")
+
+_ENTITY_TYPES = {"person", "place", "org", "organization", "activity", "event"}
+
+
+def split_entities_line(text: str) -> tuple[str, list[dict[str, str]]]:
+    """Separa la riga finale ``ENTITIES: type:Name; ...`` dal testo fatti.
+
+    Fail-safe: nessuna riga ENTITIES → ``(testo invariato, [])``. Tipi fuori
+    dal vocabolario scartati; 'organization' normalizzato a 'org'."""
+    if not text:
+        return text or "", []
+    lines = text.splitlines()
+    ents: list[dict[str, str]] = []
+    kept: list[str] = []
+    for line in lines:
+        s = line.strip().lstrip("-*• ").strip()
+        if s.upper().startswith("ENTITIES:"):
+            body = s[len("ENTITIES:"):].strip()
+            for pair in body.split(";"):
+                if ":" not in pair:
+                    continue
+                etype, _, name = pair.partition(":")
+                etype = etype.strip().lower()
+                name = name.strip().strip(".,;:()[]{}\"'")
+                if etype == "organization":
+                    etype = "org"
+                if etype in _ENTITY_TYPES and len(name) >= 2:
+                    ents.append({"name": name, "type": etype})
+            continue
+        kept.append(line)
+    return "\n".join(kept), ents
+
+
+def extraction_system_for(user_name: str | None,
+                          *, typed_entities: bool = False) -> str:
     """The extraction system prompt, optionally extended with the app-provided
     user name (identity fix, diag 2026-07-07).
 
@@ -55,15 +101,19 @@ def extraction_system_for(user_name: str | None) -> str:
     (legitimate metadata, exactly what competitors consume), passing it here
     makes facts retrieval-ready. The source is DECLARED in the prompt; the
     in-text anti-contamination rule stays for every other name. No ``user_name``
-    -> byte-identical base prompt."""
-    if not (user_name or "").strip():
-        return ATOMIC_EXTRACT_SYSTEM
-    return (ATOMIC_EXTRACT_SYSTEM +
-            f"\n- The user's name is '{user_name.strip()}' (provided by the "
-            "application, not by this conversation). Use it as the subject of "
-            "facts about the user instead of 'The user'. This exception applies "
-            "ONLY to this one name; every other name must still appear in the "
-            "conversation text.")
+    -> byte-identical base prompt. ``typed_entities`` appends the tier-2
+    ENTITIES-line instruction (default False: existing callers unchanged)."""
+    base = ATOMIC_EXTRACT_SYSTEM
+    if (user_name or "").strip():
+        base = (base +
+                f"\n- The user's name is '{user_name.strip()}' (provided by the "
+                "application, not by this conversation). Use it as the subject of "
+                "facts about the user instead of 'The user'. This exception applies "
+                "ONLY to this one name; every other name must still appear in the "
+                "conversation text.")
+    if typed_entities:
+        base = base + _TYPED_ENTITIES_INSTRUCTION
+    return base
 
 #: Consolidation pass (iter 35, mandate "beat them on every axis"): raw atomic
 #: extraction over-produces (~37 facts vs ~20 gold on HaluMem -> precision 0.65
@@ -142,6 +192,7 @@ def ingest_conversation(
     asserted_at: float | None = None,
     embed: str | None = None,
     user_name: str | None = None,
+    typed_entities: bool = False,
 ) -> dict:
     """Extract ATOMIC facts from ``messages`` and store each through the gate.
 
@@ -171,7 +222,7 @@ def ingest_conversation(
         return res
     try:
         r = llm.complete(
-            extraction_system_for(user_name),
+            extraction_system_for(user_name, typed_entities=typed_entities),
             [{"role": "user",
               "content": f"Conversation:\n{dialogue}\n\nFacts:"}],
             max_tokens=max_out_tokens)
@@ -180,6 +231,10 @@ def ingest_conversation(
         res["error"] = f"extraction llm error: {exc!s:.120}"
         return res
 
+    # tier-2: la riga ENTITIES (se presente) esce dal flusso fatti PRIMA del
+    # parse — fail-safe totale: senza riga, tutto identico.
+    raw, session_entities = split_entities_line(raw)
+    res["typed_entities"] = len(session_entities)
     lines = parse_extracted_lines(raw)
     res["extracted"] = len(lines)
     if completeness and lines:
@@ -198,6 +253,15 @@ def ingest_conversation(
     # anti-spoof guard hide future ones (83% of a timestamped store invisible
     # to recall — root-caused 2026-07-05).
     stamp = {"asserted_at": float(asserted_at)} if asserted_at is not None else {}
+    kg = None
+    if session_entities:
+        try:
+            from .entity_kg import EntityStore
+            from .entity_populate import entity_kg_path_for
+            kg = EntityStore(db_path=entity_kg_path_for(
+                semantic_memory.db_path))
+        except Exception:  # noqa: BLE001 — graph enrichment must never block ingest
+            kg = None
     for prop in lines:
         prop, _ = redact_secrets(prop)
         fact = Fact(
@@ -218,6 +282,20 @@ def ingest_conversation(
             res["fact_ids"].append(fact.id)
         except Exception:  # noqa: BLE001 — one rejected fact must not stop the rest
             res["rejected"] += 1
+            continue
+        # tier-2 link additivo: le entità LLM della sessione i cui nomi
+        # compaiono nel fatto — idempotente sopra il populate regex del
+        # hook store() (dedup name_norm, PK link). Best-effort.
+        if kg is not None:
+            low = prop.lower()
+            match = [e for e in session_entities if e["name"].lower() in low]
+            if match:
+                try:
+                    from .entity_populate import populate_entities_for_fact
+                    populate_entities_for_fact(fact.id, prop, kg,
+                                               entities=match)
+                except Exception:  # noqa: BLE001 — never break the ingest
+                    pass
     return res
 
 
