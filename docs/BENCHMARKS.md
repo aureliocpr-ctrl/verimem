@@ -70,6 +70,24 @@ headline. (CE rerank doesn't move LongMemEval recall@5 — it reorders within to
 > guards stay: principled, positive at the retrieval layer, and the
 > remaining bottleneck is context→answer conversion (attention/position),
 > which is the next measured workstream. Raw: `e2e_official_fixfusion.json`.
+>
+> **UPDATE 2026-07-08 (attention workstream, closed honestly).** Three
+> falsifications and one shipped feature. (a) Context ORDER at k=12 does not
+> matter: interventional A/B, 43 paired questions, best-first = best-last
+> (0.558 = 0.558) — the static position signal was a rank≈relevance
+> confounder; no reordering shipped. (b) Auto-routing retrospective questions
+> to bi-temporal time travel (`as_of`) helps exactly where measured (10/31
+> previously-wrong anchored questions flip correct, abstention 21/21) but a
+> full e2e showed 15 previously-correct questions flip down (0.6383, −2.7pp)
+> — v1 declared a regression; v2 (transition story pruned at the anchor)
+> recovers to a projected ~0.654, still below the 0.6649 recipe. The
+> automatic routing therefore does NOT enter the e2e recipe; it ships as the
+> explicit SDK option `Memory.search(as_of="auto")`, useful when the USER
+> asks for point-in-time state. (c) Method lesson, kept: a micro-bench over
+> only-the-wrong questions is optimistic by construction — pair it over the
+> previously-correct set before predicting e2e effects. Boundary stayed 1.000
+> through every variant. Raw: `attn_order_ab.json`, `routed_asof_ab.json`,
+> `e2e_official_asof.json`, `asof_v2_paired.json`.
 
 `benchmark/halumem_qa_bench.py` on real HaluMem-Medium: ingest a user's REFERENCE memory points into
 Engram, then per question retrieve→answer (strict + dates) → LLM-judge Correct / Hallucination /

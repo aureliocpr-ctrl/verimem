@@ -1,0 +1,181 @@
+{
+ "kept_up": 7,
+ "recovered_dn": 6,
+ "details": [
+  {
+   "id": "0:1",
+   "tag": "was_up",
+   "category": "Memory Conflict",
+   "v2_correct": true,
+   "predicted": "No — the context states Johnson Joseph's highest education is a Master in Business Administration, not Mechanical Engineering."
+  },
+  {
+   "id": "8:1",
+   "tag": "was_up",
+   "category": "Memory Conflict",
+   "v2_correct": true,
+   "predicted": "No, the context states Johnson Joseph has hosted over 5,000 guests, and hosting 10,000 annually remains his goal, not an achievement."
+  },
+  {
+   "id": "10:0",
+   "tag": "was_up",
+   "category": "Basic Fact Recall",
+   "v2_correct": true,
+   "predicted": "Yes — as of April 19, 2027, Johnson Joseph prefers **thrillers** (for their mix of suspense and comfort), **romantic dramas** (for heartfelt and inspi"
+  },
+  {
+   "id": "15:6",
+   "tag": "was_up",
+   "category": "Basic Fact Recall",
+   "v2_correct": true,
+   "predicted": "No specific event is named in the context — it only states that Johnson Joseph was laid off from Albi B&B **due to a downturn in tourism** (the date 2"
+  },
+  {
+   "id": "17:0",
+   "tag": "was_up",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "No — the context states Johnson Joseph likes **jazz** (not a different type), specifically because it complements the ambiance of his bed and breakfas"
+  },
+  {
+   "id": "21:2",
+   "tag": "was_up",
+   "category": "Generalization & Application",
+   "v2_correct": false,
+   "predicted": "Based on the context, Johnson Joseph finds (or expects to find) the following stress management techniques effective by August 20, 2029:\n\n- **Regular "
+  },
+  {
+   "id": "29:7",
+   "tag": "was_up",
+   "category": "Basic Fact Recall",
+   "v2_correct": true,
+   "predicted": "Yes — Johnson Joseph's life goal is to transform Albi B&B into a world-renowned destination hosting over 10,000 guests annually, creating unforgettabl"
+  },
+  {
+   "id": "32:1",
+   "tag": "was_up",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "Yes, Johnson Joseph expressed a preference for solo travel because it allows him to fully immerse himself in local culture and make spontaneous decisi"
+  },
+  {
+   "id": "52:2",
+   "tag": "was_up",
+   "category": "Memory Conflict",
+   "v2_correct": true,
+   "predicted": "No — the context shows Johnson Joseph actively planning and embracing his marketing strategies (social media, travel bloggers, storytelling), with no "
+  },
+  {
+   "id": "54:1",
+   "tag": "was_up",
+   "category": "Generalization & Application",
+   "v2_correct": true,
+   "predicted": "Yes — the context confirms Johnson Joseph plans to host gaming nights at Albi B&B focusing on strategic and cooperative gameplay, believing cooperativ"
+  },
+  {
+   "id": "8:0",
+   "tag": "was_dn",
+   "category": "Memory Conflict",
+   "v2_correct": true,
+   "predicted": "No — the income figures are in **USD**, not yuan, and the context mentions no promotion as the cause of the change."
+  },
+  {
+   "id": "9:1",
+   "tag": "was_dn",
+   "category": "Memory Conflict",
+   "v2_correct": true,
+   "predicted": "No — the context shows Johnson Joseph was surprised to enjoy golf on 2026-07-07 and subsequently planned to regularly engage in it for strategic think"
+  },
+  {
+   "id": "15:1",
+   "tag": "was_dn",
+   "category": "Multi-hop Inference",
+   "v2_correct": true,
+   "predicted": "Yes — by October 2027 his social connections were providing him emotional support, helping him maintain his identity and reputation in the community, "
+  },
+  {
+   "id": "15:3",
+   "tag": "was_dn",
+   "category": "Multi-hop Inference",
+   "v2_correct": true,
+   "predicted": "Yes — his **family history in hospitality** is what influenced his drive to create memorable experiences for guests."
+  },
+  {
+   "id": "15:4",
+   "tag": "was_dn",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "Yes — Johnson Joseph was currently unemployed (after being previously self-employed) as of 2027-08-22."
+  },
+  {
+   "id": "19:0",
+   "tag": "was_dn",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "Johnson Joseph holds a nuanced, mixed view: he **dislikes** group tours for feeling too restrictive (preferring his own pace), yet **considers them be"
+  },
+  {
+   "id": "29:5",
+   "tag": "was_dn",
+   "category": "Generalization & Application",
+   "v2_correct": true,
+   "predicted": "Based on the context, after Apr 15, 2031 Johnson Joseph uses **improved health as a catalyst for career rebuilding** and tackling professional challen"
+  },
+  {
+   "id": "37:0",
+   "tag": "was_dn",
+   "category": "Memory Conflict",
+   "v2_correct": true,
+   "predicted": "No — the context states he is *considering* offering guided hiking tours as a holistic part of Albi B&B's offerings as of 2033-12-21, not that he deci"
+  },
+  {
+   "id": "46:4",
+   "tag": "was_dn",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "The context is contradictory: it simultaneously states Johnson Joseph's savings as of 2035-10-15 were **$14,000**, **$16,000**, and **$20,000** — no s"
+  },
+  {
+   "id": "50:2",
+   "tag": "was_dn",
+   "category": "Memory Conflict",
+   "v2_correct": false,
+   "predicted": "No — the context shows Johnson Joseph planned to *integrate* golf into his business (at Albi B&B) and take on more strategic roles, not abandon his bu"
+  },
+  {
+   "id": "53:2",
+   "tag": "was_dn",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "Yes — Johnson Joseph's appreciation deepened for **fantasy films**, shifting from previous skepticism toward science fiction/fantasy to finding them c"
+  },
+  {
+   "id": "61:2",
+   "tag": "was_dn",
+   "category": "Dynamic Update",
+   "v2_correct": false,
+   "predicted": "The context is contradictory: one entry states $4,500 USD as of 2039-07-18, while multiple other entries state it increased to **$8,000** as of the sa"
+  },
+  {
+   "id": "65:2",
+   "tag": "was_dn",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "Yes — as of 2041-02-27, Johnson Joseph prefers **cooperative board games** (evolved from solo board games), alongside puzzle games and tactical shoote"
+  },
+  {
+   "id": "71:1",
+   "tag": "was_dn",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "Yes — as of 2043-03-19, Johnson Joseph prefers cooperative board games, valuing them for fostering community, teamwork, and guest interaction."
+  },
+  {
+   "id": "76:1",
+   "tag": "was_dn",
+   "category": "Basic Fact Recall",
+   "v2_correct": false,
+   "predicted": "No — the context contains multiple conflicting figures for that date (4500, 7000, 8000, 6500 USD all asserted as of 2043-07-10), so a single definitiv"
+  }
+ ]
+}
