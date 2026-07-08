@@ -114,6 +114,19 @@ headline. (CE rerank doesn't move LongMemEval recall@5 — it reorders within to
 > is stable there, and the next real lever is extraction-time typed entities
 > (tier 2), not retrieval re-ranking. Raw: `tier1_paired.json`,
 > `e2e_official_tier1.json`.
+>
+> **UPDATE 2026-07-08 — tier-2 typed entities: structural win, e2e flat,
+> abstention 7/7.** A fresh store ingested with extraction-time typed
+> entities (one ENTITIES line in the same LLM call, zero extra cost — F1
+> gate: paired-identical, no prompt perturbation) grows the knowledge graph
+> to **269 entities / 903 edges (5.5×/5.6× the regex base)** with 187
+> activities, 17 life events, 10 orgs. The full e2e reads **0.6596 — inside
+> the stable 0.66–0.68 cluster (7 runs)**, Memory Boundary **1.000 for the
+> seventh consecutive full run**. Verdict kept honest: the richer graph is
+> a structural asset (multi-hop tissue, entity-centric verticals) that does
+> not by itself move answering accuracy on this benchmark; typed entities
+> stay opt-in in the engine and ON in the recipe. Raw:
+> `tier2_f1_gate.json`, `e2e_official_typed.json`.
 
 `benchmark/halumem_qa_bench.py` on real HaluMem-Medium: ingest a user's REFERENCE memory points into
 Engram, then per question retrieve→answer (strict + dates) → LLM-judge Correct / Hallucination /
