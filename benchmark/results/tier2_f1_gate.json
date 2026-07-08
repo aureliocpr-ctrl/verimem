@@ -1,0 +1,499 @@
+{
+ "n_sessions": 8,
+ "f1_base_mean": 1.0,
+ "f1_typed_mean": 1.0,
+ "total_entities": 101,
+ "by_type": {
+  "person": 20,
+  "place": 2,
+  "activity": 69,
+  "event": 5,
+  "org": 5
+ },
+ "rows": [
+  {
+   "sid": "u3s0",
+   "f1_base": 1.0,
+   "f1_typed": 1.0,
+   "n_base": 19,
+   "n_typed": 19,
+   "n_entities": 6,
+   "entities": [
+    {
+     "name": "Shirley Franco",
+     "type": "person"
+    },
+    {
+     "name": "Miami",
+     "type": "place"
+    },
+    {
+     "name": "social activism",
+     "type": "activity"
+    },
+    {
+     "name": "social work",
+     "type": "activity"
+    },
+    {
+     "name": "community support",
+     "type": "activity"
+    },
+    {
+     "name": "divorce",
+     "type": "event"
+    }
+   ]
+  },
+  {
+   "sid": "u3s1",
+   "f1_base": 1.0,
+   "f1_typed": 1.0,
+   "n_base": 26,
+   "n_typed": 24,
+   "n_entities": 9,
+   "entities": [
+    {
+     "name": "WilsonMatthew",
+     "type": "person"
+    },
+    {
+     "name": "JacksonLinda",
+     "type": "person"
+    },
+    {
+     "name": "MartinezJohn",
+     "type": "person"
+    },
+    {
+     "name": "WilsonPatricia",
+     "type": "person"
+    },
+    {
+     "name": "Shirley Franco",
+     "type": "person"
+    },
+    {
+     "name": "Oracle",
+     "type": "org"
+    },
+    {
+     "name": "regular exercise",
+     "type": "activity"
+    },
+    {
+     "name": "healthy diet",
+     "type": "activity"
+    },
+    {
+     "name": "attending events",
+     "type": "activity"
+    }
+   ]
+  },
+  {
+   "sid": "u3s2",
+   "f1_base": 1.0,
+   "f1_typed": 1.0,
+   "n_base": 67,
+   "n_typed": 67,
+   "n_entities": 28,
+   "entities": [
+    {
+     "name": "Shirley Franco",
+     "type": "person"
+    },
+    {
+     "name": "wearing bold patterned blazers",
+     "type": "activity"
+    },
+    {
+     "name": "wearing plain t-shirts",
+     "type": "activity"
+    },
+    {
+     "name": "wearing cargo pants",
+     "type": "activity"
+    },
+    {
+     "name": "wearing oversized sweaters",
+     "type": "activity"
+    },
+    {
+     "name": "watching adventure films",
+     "type": "activity"
+    },
+    {
+     "name": "watching romantic comedies",
+     "type": "activity"
+    },
+    {
+     "name": "watching biographical dramas",
+     "type": "activity"
+    },
+    {
+     "name": "listening to uplifting pop music",
+     "type": "activity"
+    },
+    {
+     "name": "listening to heavy metal",
+     "type": "activity"
+    },
+    {
+     "name": "listening to slow jazz",
+     "type": "activity"
+    },
+    {
+     "name": "drinking sugary sodas",
+     "type": "activity"
+    },
+    {
+     "name": "drinking herbal teas",
+     "type": "activity"
+    },
+    {
+     "name": "drinking energy drinks",
+     "type": "activity"
+    },
+    {
+     "name": "drinking fresh fruit smoothies",
+     "type": "activity"
+    },
+    {
+     "name": "drinking instant coffee",
+     "type": "activity"
+    },
+    {
+     "name": "reading romance novels",
+     "type": "activity"
+    },
+    {
+     "name": "reading self-help books",
+     "type": "activity"
+    },
+    {
+     "name": "reading adventure novels",
+     "type": "activity"
+    },
+    {
+     "name": "reading biographies",
+     "type": "activity"
+    },
+    {
+     "name": "reading historical fiction",
+     "type": "activity"
+    },
+    {
+     "name": "eating spicy Thai cuisine",
+     "type": "activity"
+    },
+    {
+     "name": "eating gourmet burgers",
+     "type": "activity"
+    },
+    {
+     "name": "eating fresh sushi",
+     "type": "activity"
+    },
+    {
+     "name": "eating canned soup",
+     "type": "activity"
+    },
+    {
+     "name": "playing first-person shooters",
+     "type": "activity"
+    },
+    {
+     "name": "playing puzzle games",
+     "type": "activity"
+    },
+    {
+     "name": "playing strategy games",
+     "type": "activity"
+    }
+   ]
+  },
+  {
+   "sid": "u3s3",
+   "f1_base": 1.0,
+   "f1_typed": 1.0,
+   "n_base": 31,
+   "n_typed": 30,
+   "n_entities": 8,
+   "entities": [
+    {
+     "name": "Shirley Franco",
+     "type": "person"
+    },
+    {
+     "name": "Oracle",
+     "type": "org"
+    },
+    {
+     "name": "promotion to Senior Manager",
+     "type": "event"
+    },
+    {
+     "name": "community-focused initiatives",
+     "type": "activity"
+    },
+    {
+     "name": "team-building activities",
+     "type": "activity"
+    },
+    {
+     "name": "storytelling workshops",
+     "type": "activity"
+    },
+    {
+     "name": "creative workshops",
+     "type": "activity"
+    },
+    {
+     "name": "wellness initiatives",
+     "type": "activity"
+    }
+   ]
+  },
+  {
+   "sid": "u4s0",
+   "f1_base": 1.0,
+   "f1_typed": 1.0,
+   "n_base": 32,
+   "n_typed": 32,
+   "n_entities": 11,
+   "entities": [
+    {
+     "name": "Donna Gonzalez",
+     "type": "person"
+    },
+    {
+     "name": "Donna's father",
+     "type": "person"
+    },
+    {
+     "name": "Donna's mother",
+     "type": "person"
+    },
+    {
+     "name": "Donna's partner",
+     "type": "person"
+    },
+    {
+     "name": "Donna's child",
+     "type": "person"
+    },
+    {
+     "name": "San Diego",
+     "type": "place"
+    },
+    {
+     "name": "Music Composition",
+     "type": "activity"
+    },
+    {
+     "name": "film music",
+     "type": "activity"
+    },
+    {
+     "name": "playing piano",
+     "type": "activity"
+    },
+    {
+     "name": "music academy",
+     "type": "org"
+    },
+    {
+     "name": "Academy Awards",
+     "type": "event"
+    }
+   ]
+  },
+  {
+   "sid": "u4s1",
+   "f1_base": 1.0,
+   "f1_typed": 1.0,
+   "n_base": 27,
+   "n_typed": 27,
+   "n_entities": 8,
+   "entities": [
+    {
+     "name": "Anthony Martinez",
+     "type": "person"
+    },
+    {
+     "name": "Mary Brown",
+     "type": "person"
+    },
+    {
+     "name": "Paul Lopez",
+     "type": "person"
+    },
+    {
+     "name": "Charles Garcia",
+     "type": "person"
+    },
+    {
+     "name": "Sarah Martinez",
+     "type": "person"
+    },
+    {
+     "name": "Atmospheric Sounds Inc",
+     "type": "org"
+    },
+    {
+     "name": "film score production",
+     "type": "activity"
+    },
+    {
+     "name": "music production",
+     "type": "activity"
+    }
+   ]
+  },
+  {
+   "sid": "u4s2",
+   "f1_base": 1.0,
+   "f1_typed": 1.0,
+   "n_base": 51,
+   "n_typed": 50,
+   "n_entities": 22,
+   "entities": [
+    {
+     "name": "marathon running",
+     "type": "activity"
+    },
+    {
+     "name": "boxing",
+     "type": "activity"
+    },
+    {
+     "name": "yoga",
+     "type": "activity"
+    },
+    {
+     "name": "soccer",
+     "type": "activity"
+    },
+    {
+     "name": "music rhythm games",
+     "type": "activity"
+    },
+    {
+     "name": "puzzle games",
+     "type": "activity"
+    },
+    {
+     "name": "adventure games",
+     "type": "activity"
+    },
+    {
+     "name": "simulation games",
+     "type": "activity"
+    },
+    {
+     "name": "strategy games",
+     "type": "activity"
+    },
+    {
+     "name": "reading music theory books",
+     "type": "activity"
+    },
+    {
+     "name": "reading biographies of famous composers",
+     "type": "activity"
+    },
+    {
+     "name": "reading romance novels",
+     "type": "activity"
+    },
+    {
+     "name": "drinking green tea",
+     "type": "activity"
+    },
+    {
+     "name": "drinking Espresso",
+     "type": "activity"
+    },
+    {
+     "name": "drinking sugary soft drinks",
+     "type": "activity"
+    },
+    {
+     "name": "keeping loud parrots",
+     "type": "activity"
+    },
+    {
+     "name": "keeping cats",
+     "type": "activity"
+    },
+    {
+     "name": "keeping fish",
+     "type": "activity"
+    },
+    {
+     "name": "quiet countryside retreats",
+     "type": "activity"
+    },
+    {
+     "name": "crowded city tours",
+     "type": "activity"
+    },
+    {
+     "name": "adventure travel with extreme sports",
+     "type": "activity"
+    },
+    {
+     "name": "group tours with rigid schedules",
+     "type": "activity"
+    }
+   ]
+  },
+  {
+   "sid": "u4s3",
+   "f1_base": 1.0,
+   "f1_typed": 1.0,
+   "n_base": 24,
+   "n_typed": 29,
+   "n_entities": 9,
+   "entities": [
+    {
+     "name": "Donna Gonzalez",
+     "type": "person"
+    },
+    {
+     "name": "Mary",
+     "type": "person"
+    },
+    {
+     "name": "Atmospheric Sounds Inc",
+     "type": "org"
+    },
+    {
+     "name": "film music composition",
+     "type": "activity"
+    },
+    {
+     "name": "networking",
+     "type": "activity"
+    },
+    {
+     "name": "workshops",
+     "type": "activity"
+    },
+    {
+     "name": "music equipment upgrade",
+     "type": "activity"
+    },
+    {
+     "name": "salary increase",
+     "type": "event"
+    },
+    {
+     "name": "music academy establishment",
+     "type": "event"
+    }
+   ]
+  }
+ ]
+}
