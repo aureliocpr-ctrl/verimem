@@ -438,6 +438,43 @@ def gateway_keys_list(data_dir: str = typer.Option(None, "--data-dir")):
     console.print(t)
 
 
+@gateway_app.command("backup")
+def gateway_backup_cmd(
+    dest: str = typer.Argument(..., help="Snapshot directory (one per backup, never overwritten)"),
+    data_dir: str = typer.Option(None, "--data-dir"),
+):
+    """Consistent snapshot of the gateway (keys + every tenant store).
+
+    Uses SQLite's online backup API — correct even while the gateway is
+    serving traffic (WAL connections open). Writes a backup_manifest.json.
+    """
+    from .gateway_backup import backup_gateway
+    try:
+        m = backup_gateway(_gateway_data_dir(data_dir), dest)
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    console.print(f"[green]backup ok[/green] → {dest}  "
+                  f"({m['n_files']} db, {m['n_tenants']} tenants)")
+
+
+@gateway_app.command("restore")
+def gateway_restore_cmd(
+    snapshot: str = typer.Argument(..., help="Snapshot directory (from `gateway backup`)"),
+    target: str = typer.Argument(..., help="NEW/empty gateway data dir to restore into"),
+):
+    """Restore a snapshot into an empty directory (never overwrites state)."""
+    from .gateway_backup import restore_gateway
+    try:
+        m = restore_gateway(snapshot, target)
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+    console.print(f"[green]restore ok[/green] → {target}  "
+                  f"({m['n_files']} db, {m['n_tenants']} tenants). "
+                  f"Serve with: verimem gateway serve --data-dir {target}")
+
+
 @gateway_keys_app.command("revoke")
 def gateway_keys_revoke(
     key_id: str = typer.Argument(..., help="key_id from `gateway keys list`"),
