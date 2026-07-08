@@ -88,6 +88,17 @@ headline. (CE rerank doesn't move LongMemEval recall@5 — it reorders within to
 > previously-correct set before predicting e2e effects. Boundary stayed 1.000
 > through every variant. Raw: `attn_order_ab.json`, `routed_asof_ab.json`,
 > `e2e_official_asof.json`, `asof_v2_paired.json`.
+>
+> **UPDATE 2026-07-08 — cross-user generalization check (the recipe is not
+> overfitted to user 1).** The full official recipe (extraction + fusion
+> guards + verify answering), unchanged, on a NEVER-before-used dataset user
+> (fresh store, 169 questions): **0.716 accuracy, Memory Boundary 1.000
+> (43/43), 0 errors** — above the 0.60–0.68 range we pre-registered.
+> Honest framing: per-user question mix differs (this user has a higher
+> share of Boundary questions, where we are at 1.0), the judge is ours, and
+> cross-user n=1 — so this is NOT an "overtake MemOS" claim; it is the
+> generalization check: same-user mean stays 0.667 (n=3), and abstention has
+> now held at 1.000 across five full e2e runs. Raw: `e2e_crossuser_u2.json`.
 
 `benchmark/halumem_qa_bench.py` on real HaluMem-Medium: ingest a user's REFERENCE memory points into
 Engram, then per question retrieve→answer (strict + dates) → LLM-judge Correct / Hallucination /
