@@ -99,6 +99,21 @@ headline. (CE rerank doesn't move LongMemEval recall@5 — it reorders within to
 > cross-user n=1 — so this is NOT an "overtake MemOS" claim; it is the
 > generalization check: same-user mean stays 0.667 (n=3), and abstention has
 > now held at 1.000 across five full e2e runs. Raw: `e2e_crossuser_u2.json`.
+>
+> **UPDATE 2026-07-08 — tier-1 conversational entity graph: retrieval-layer
+> gain, e2e flat, and a measurement lesson.** Rebuilding the entity KG with
+> the conversational tier-1 extractor (49 → 81 entities) raised deterministic
+> evidence coverage on the wrong set (15 → 18 fully covered at k=12) and a
+> paired answer micro-bench looked strongly positive (15/63 up, 2/40 down) —
+> but the full e2e on the same store read **0.6596 vs 0.6649 (flat, within
+> noise)**, Multi-hop 0.50 → 0.556, Boundary 1.000 again. The lesson we keep:
+> **a paired micro-bench re-answering borderline questions measures answerer
+> churn (~±20% on hard questions), not the intervention** — only a full
+> identical-protocol run (or a deterministic layer metric) separates signal
+> from churn. Six same-recipe e2e runs now cluster at 0.66–0.68: the system
+> is stable there, and the next real lever is extraction-time typed entities
+> (tier 2), not retrieval re-ranking. Raw: `tier1_paired.json`,
+> `e2e_official_tier1.json`.
 
 `benchmark/halumem_qa_bench.py` on real HaluMem-Medium: ingest a user's REFERENCE memory points into
 Engram, then per question retrieve→answer (strict + dates) → LLM-judge Correct / Hallucination /
