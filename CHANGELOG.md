@@ -2,6 +2,34 @@
 
 All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- **Self-host gateway** (`verimem gateway serve` + `gateway keys
+  create/list/revoke`): multi-tenant REST over the Memory SDK — API keys
+  hashed at rest and shown once, one isolated SQLite store per tenant (the
+  tenant derives from the key alone), writes through the anti-confabulation
+  gate, `/v1/explain` returns the TrustReport, GDPR-grade delete, optional
+  per-key rate limiting (429 + `Retry-After`). Loopback bind by default.
+- **Retrieval fusion quality guards**: hub-guard (PPR seeds linking >20% of
+  the corpus are dropped), informative-token BM25 (linguistic stopwords +
+  document-frequency ceiling), and a dense-floor (`protect_top=k//2`) so
+  extra signals can extend but never evict the CE-verified head. Measured:
+  fusion flips from net-negative to neutral-or-better at small k on
+  conversational corpora; inactive below a 50-fact floor (small-store
+  behaviour byte-identical).
+- **SDK**: `Memory.search(as_of="auto")` — an explicit retrospective anchor
+  in the question ("as of / on / by <date>") activates bi-temporal time
+  travel at that date; as-of context keeps the transition story pruned at
+  the anchor. Automatic routing measured and deliberately NOT wired into
+  the default answering recipe (declared in `docs/BENCHMARKS.md`).
+- **Skill hygiene in the sleep cycle**: same-name duplicate pairs merge
+  first regardless of trigger cosine; dormant never-tried candidates
+  (>30 days, below min trials) are retired gradually (cap 10/cycle,
+  reversible) — on the live corpus 159/162 candidates were dormant.
+- **Docs**: `DATACENTER_DESIGN.md` (honest 4-phase map to hosted MaaS) and
+  `CONVERSATIONAL_ENTITY_DESIGN.md` (typed-entity extraction plan from
+  measured graph starvation).
+
 ## [0.4.1] — Professional README + `user_name` on the SDK verb (2026-07-07)
 
 - **Docs**: the README was rewritten from scratch (1280 → ~170 lines): a
