@@ -226,8 +226,23 @@ def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
         for hit in recall_as_of(sm, query or "", when=float(as_of), k=k):
             f = hit[0]
             prop = getattr(f, "proposition", "")
-            if prop:
-                out.append(f"{prop} [as of {stamp}]")
+            if not prop:
+                continue
+            line = f"{prop} [as of {stamp}]"
+            # v2 (misurato: 14/21 residui erano gold di TRANSIZIONE): la
+            # storia dei predecessori è ≤ as_of per definizione — legittima
+            # nel punto temporale. Era il label live "[current since
+            # <futuro>]" il rumore, non la transizione.
+            try:
+                for prev in fact_history(sm, f.id, max_hops=max_hops):
+                    p_prop = getattr(prev, "proposition", "")
+                    if p_prop:
+                        span = _iso(_event_ts(prev))
+                        line += (f" | PREVIOUSLY: '{p_prop}'"
+                                 + (f" (asserted {span})" if span else ""))
+            except Exception:  # noqa: BLE001 — enrichment must never break recall
+                pass
+            out.append(line)
         return out
     hits = sm.recall(query or "", k=k)
     cs = None

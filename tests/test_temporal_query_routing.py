@@ -72,3 +72,35 @@ def test_recall_with_history_as_of_hides_the_future(tmp_path):
     # senza as_of: comportamento invariato (il corrente vince)
     live = "\n".join(recall_with_history(sm, "monthly income", k=5))
     assert "4500" in live
+
+
+def test_recall_as_of_keeps_the_pruned_transition_story(tmp_path):
+    """La TRANSIZIONE fino ad as_of resta nel contesto (v2): i predecessori
+    sono ≤ as_of per definizione, quindi 'PREVIOUSLY' è legittimo — era il
+    label live '[current since <futuro>]' il rumore, non la storia. Misura
+    che ha motivato il fix: 14/21 residui del micro-bench erano gold di
+    transizione ('changed from A to B') che il contesto as-of v1 (senza
+    storia) non copriva."""
+    sm = SemanticMemory(db_path=tmp_path / "d.db")
+    v1 = Fact(proposition="the travel preference is solo travel",
+              topic="t", asserted_at=_epoch(2025, 3, 1))
+    sm.store(v1, embed="sync")
+    v2 = Fact(proposition="the travel preference is group tours",
+              topic="t", asserted_at=_epoch(2025, 11, 10))
+    sm.store(v2, embed="sync")
+    sm.supersede(v1.id, v2.id, reason="changed")
+    v3 = Fact(proposition="the travel preference is luxury cruises",
+              topic="t", asserted_at=_epoch(2027, 1, 1))
+    sm.store(v3, embed="sync")
+    sm.supersede(v2.id, v3.id, reason="changed again")
+
+    # as-of dic 2025: corrente = group tours, PREVIOUSLY solo travel,
+    # e il futuro (luxury cruises, 2027) resta invisibile
+    lines = recall_with_history(sm, "travel preference", k=5,
+                                as_of=_epoch(2025, 12, 15))
+    joined = "\n".join(lines)
+    assert "group tours" in joined
+    assert "PREVIOUSLY" in joined and "solo travel" in joined, (
+        "la transizione fino ad as_of deve restare nel contesto"
+    )
+    assert "luxury cruises" not in joined, "il futuro non deve filtrare"
