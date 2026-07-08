@@ -27,11 +27,13 @@ COPY engram/ engram/
 COPY hippoagent/ hippoagent/
 COPY benchmark/ benchmark/
 
-# Build wheels for the project + the "full" extras (opencv, pyautogui, mcp).
-# Wheels go to /wheels and are copied into the runtime image. The runtime
+# Build wheels for the project + the "server" extra. NOT [headless]: that
+# extra is empty (core only) and fastapi/uvicorn live in [server] — an image
+# built without them cannot run its own CMD (dashboard) nor the gateway
+# (latent bug caught 2026-07-08 while adding gateway support). The runtime
 # image never sees apt build-essential.
 RUN python -m pip install --upgrade pip wheel build && \
-    python -m pip wheel --wheel-dir /wheels ".[headless]"
+    python -m pip wheel --wheel-dir /wheels ".[server]"
 
 # Pre-fetch the embedding model into a known cache, then copy it into runtime.
 # Pre-fetch BOTH the active default model (multilingual-e5-base, 768d — what the
@@ -77,7 +79,7 @@ COPY benchmark/ benchmark/
 # that --no-index can't fetch ("Failed to build file:///app"). The builder
 # already produced hippoagent-*.whl + every dep wheel, so this is fully offline.
 RUN pip install --upgrade pip && \
-    pip install --no-index --find-links /wheels "hippoagent[headless]" && \
+    pip install --no-index --find-links /wheels "hippoagent[server]" && \
     rm -rf /wheels
 
 # Move pre-fetched HuggingFace cache into the unprivileged user's home.
@@ -85,7 +87,9 @@ COPY --from=builder /tmp/cache_seed /home/hippo/.cache
 RUN chown -R hippo:hippo /home/hippo /app && mkdir -p /app/data && chown hippo:hippo /app/data
 
 VOLUME ["/app/data"]
-EXPOSE 8765
+# 8765 = dashboard (legacy default CMD); 8377 = self-host gateway (see
+# docker-compose.gateway.yml — override the command to run it).
+EXPOSE 8765 8377
 
 USER hippo
 

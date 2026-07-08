@@ -124,6 +124,19 @@ alone. Endpoints: `POST /v1/memories`, `GET /v1/search`, `GET /v1/explain`
 binds loopback by default — for remote access put it behind a TLS reverse
 proxy (nginx/caddy).
 
+Docker (embedding models baked in — runs fully offline):
+
+```bash
+docker compose -f docker-compose.gateway.yml up -d --build
+```
+
+Consistent hot backups (SQLite online backup API — correct while serving):
+
+```bash
+verimem gateway backup ./snap-2026-07-08   # keys + every tenant store + manifest
+verimem gateway restore ./snap-2026-07-08 ./new-data-dir
+```
+
 ## Benchmarks
 
 Measured on [HaluMem](https://github.com/MemTensor/HaluMem) with the full

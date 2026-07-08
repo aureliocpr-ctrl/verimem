@@ -1,0 +1,33 @@
+# Verimem self-host gateway in Docker (datacenter design phase 1).
+#
+#   docker compose -f docker-compose.gateway.yml up -d --build
+#   docker compose -f docker-compose.gateway.yml exec gateway \
+#     verimem gateway keys create --tenant acme --data-dir /app/data/gateway
+#   curl http://127.0.0.1:8377/v1/health
+#
+# Published on LOOPBACK by default — same posture as the bare CLI. For remote
+# access put a TLS reverse proxy (nginx/caddy) in front; the gateway never
+# terminates TLS itself. All state (keys db, tenant stores, embedding model
+# cache) lives in the named volume: the container stays disposable.
+services:
+  gateway:
+    build: .
+    image: verimem-gateway
+    command: ["verimem", "gateway", "serve",
+              "--host", "0.0.0.0", "--port", "8377",
+              "--data-dir", "/app/data/gateway",
+              "--rate-limit", "120"]
+    ports:
+      - "127.0.0.1:8377:8377"
+    volumes:
+      - verimem-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL",
+             "python -c \"import urllib.request as u; u.urlopen('http://127.0.0.1:8377/v1/health', timeout=4)\""]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+
+volumes:
+  verimem-data:
