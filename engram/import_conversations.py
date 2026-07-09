@@ -24,7 +24,7 @@ from typing import Any
 from .conversation_ingest import ingest_conversation
 
 __all__ = ["detect_format", "list_conversations", "load_conversation",
-           "import_conversations"]
+           "filter_conversations", "import_conversations"]
 
 
 def _read_json(path: Path | str) -> Any:
@@ -108,20 +108,73 @@ def list_conversations(path: Path | str) -> list[dict]:
                 "n_messages": len(_chatgpt_messages(conv)),
                 "format": fmt,
                 "updated_at": conv.get("update_time"),
+                "project": None,  # not present in the standard chatgpt export
             })
     elif fmt == "claude":
         for conv in data:
+            # claude.ai exports carry the conversation's project when it has
+            # one — defensive read: absent/odd shapes -> None, never a crash.
+            proj = conv.get("project")
+            proj_name = (proj.get("name") if isinstance(proj, dict) else None)
             out.append({
                 "id": str(conv.get("uuid") or ""),
                 "title": conv.get("name") or "(untitled)",
                 "n_messages": len(_claude_messages(conv)),
                 "format": fmt,
                 "updated_at": conv.get("updated_at"),
+                "project": proj_name or None,
             })
     else:  # generic — the file IS one conversation
         msgs = _generic_messages(data)
         out.append({"id": "generic-1", "title": Path(path).name,
-                    "n_messages": len(msgs), "format": fmt, "updated_at": None})
+                    "n_messages": len(msgs), "format": fmt, "updated_at": None,
+                    "project": None})
+    return out
+
+
+def filter_conversations(
+    convs: list[dict], *, match: str | None = None,
+    since: str | None = None, project: str | None = None,
+) -> list[dict]:
+    """Composable selection filters over ``list_conversations`` rows.
+
+    ``match``   — case-insensitive substring on the title;
+    ``since``   — keep rows with ``updated_at`` >= the given date. Accepts the
+                  ISO strings of claude exports and the epoch floats of chatgpt
+                  exports; rows WITHOUT a date are excluded (we cannot claim
+                  they are recent), never a crash;
+    ``project`` — exact (case-insensitive) project name, claude exports only.
+
+    An explicit filter is itself a consent statement: the CLI's
+    ``--all-matching`` imports exactly this subset.
+    """
+    def _epoch(value) -> float | None:
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        from datetime import datetime, timezone
+        try:
+            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.timestamp()
+        except ValueError:
+            return None
+
+    out = list(convs)
+    if match:
+        needle = match.lower()
+        out = [c for c in out if needle in str(c.get("title") or "").lower()]
+    if since:
+        floor = _epoch(since)
+        out = [c for c in out
+               if (ts := _epoch(c.get("updated_at"))) is not None
+               and floor is not None and ts >= floor]
+    if project:
+        want = project.lower()
+        out = [c for c in out
+               if str(c.get("project") or "").lower() == want]
     return out
 
 

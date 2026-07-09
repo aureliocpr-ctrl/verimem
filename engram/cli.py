@@ -506,19 +506,28 @@ def import_cmd(
     export_path: str = typer.Argument(..., help="Chat export file (ChatGPT/Claude conversations.json or generic JSON)"),
     ids: str = typer.Option(None, "--ids", help="Comma-separated conversation ids to import (explicit consent)"),
     import_all: bool = typer.Option(False, "--all", help="Import ALL listed conversations (explicit consent for everything)"),
+    match: str = typer.Option(None, "--match", help="Filter: case-insensitive substring on the conversation title"),
+    since: str = typer.Option(None, "--since", help="Filter: only conversations updated on/after this date (e.g. 2026-06-01)"),
+    project: str = typer.Option(None, "--project", help="Filter: exact project name (claude.ai exports)"),
+    all_matching: bool = typer.Option(False, "--all-matching", help="Import the whole FILTERED subset (the explicit filter is the consent)"),
     user_name: str = typer.Option(None, "--user-name", help="Your name — used as the subject of extracted facts (identity fix)"),
     model: str = typer.Option(None, "--model", help="LLM for extraction (default claude-sonnet-4-6)"),
 ):
     """Cold-start the memory from your past conversations — consent-first.
 
-    Without --ids/--all this LISTS the conversations found in the export and
-    imports NOTHING (privacy by default: you see what exists, you choose).
-    Selected conversations are ingested through the anti-confab gate with
-    per-conversation provenance, exactly like live memories.
+    Without a selection (--ids / --all / --all-matching) this LISTS the
+    conversations and imports NOTHING (privacy by default). --match/--since/
+    --project narrow both the listing and --all-matching; with hundreds of
+    conversations "import my verimem project since June" becomes:
+    verimem import export.json --project verimem --since 2026-06-01 --all-matching
     """
-    from .import_conversations import import_conversations, list_conversations
+    from .import_conversations import (filter_conversations,
+                                       import_conversations,
+                                       list_conversations)
     try:
-        convs = list_conversations(export_path)
+        convs = filter_conversations(
+            list_conversations(export_path),
+            match=match, since=since, project=project)
     except FileNotFoundError:
         console.print(f"[red]file not found:[/red] {export_path}")
         raise typer.Exit(1)
@@ -526,16 +535,27 @@ def import_cmd(
         console.print(f"[red]{e}[/red]")
         raise typer.Exit(1)
 
-    if not ids and not import_all:
-        console.print(f"[bold]{len(convs)} conversations found[/bold] "
+    filtered = any((match, since, project))
+    if not ids and not import_all and not all_matching:
+        console.print(f"[bold]{len(convs)} conversations[/bold]"
+                      f"{' (filtered)' if filtered else ' found'} "
                       f"(format: {convs[0]['format'] if convs else '?'}) — nothing imported yet:")
         for c in convs:
-            console.print(f"  [cyan]{c['id']}[/cyan]  {c['title']}  ({c['n_messages']} messages)")
-        console.print("\nTo import: [bold]verimem import <file> --ids id1,id2[/bold] "
-                      "or [bold]--all[/bold] (optionally [bold]--user-name 'Your Name'[/bold])")
+            proj = f"  [magenta]{c['project']}[/magenta]" if c.get("project") else ""
+            console.print(f"  [cyan]{c['id']}[/cyan]  {c['title']}{proj}  ({c['n_messages']} messages)")
+        console.print("\nTo import: [bold]--ids id1,id2[/bold], [bold]--all[/bold], "
+                      "or narrow with [bold]--match/--since/--project[/bold] then [bold]--all-matching[/bold]")
         raise typer.Exit(0)
 
-    selected = None if import_all else [s.strip() for s in (ids or "").split(",") if s.strip()]
+    if all_matching and not filtered:
+        console.print("[red]--all-matching requires at least one filter "
+                      "(--match/--since/--project); for everything use --all[/red]")
+        raise typer.Exit(1)
+
+    if import_all or all_matching:
+        selected = [c["id"] for c in convs] if all_matching else None
+    else:
+        selected = [s.strip() for s in (ids or "").split(",") if s.strip()]
     from .agent import wire_reconcile_judge
     from .semantic import SemanticMemory
     sm = SemanticMemory()

@@ -114,6 +114,8 @@ verimem index contract.pdf              # index a document for semantic search
 verimem search-docs "termination clause" # passages with file + offset citations
 verimem import conversations.json       # list a ChatGPT/Claude export (imports nothing
                                         # until you pass --ids or --all)
+verimem import conversations.json --project verimem --since 2026-06-01 --all-matching
+                                        # import a filtered subset (title/date/project)
 verimem trust "the deploy is green" --verified-by ci:main:green
 verimem airgap                          # verify a zero-egress configuration
 ```
