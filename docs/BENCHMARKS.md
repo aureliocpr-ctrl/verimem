@@ -943,3 +943,48 @@ No trade-off: fabrications went DOWN while inference went up — the explicit
 **Honest limits:** small n (a 2–3 question swing), single user; a validated
 lever, not a shipped default. Next: replicate across users before making it a
 selectable answer mode. Evidence: `benchmark/results/exp4_declared_inference_u0.json`.
+
+## Multilingual gate hole — reproduced, root-caused, closed (2026-07-09)
+
+**The finding** (reported by the CEO from live testing, then reproduced
+exactly): the same unsupported hype claim ("the deployment works and is
+verified in production"), translated into 10 languages and written through
+`Memory.add` with no evidence, was quarantined only in **en and it — 8/10
+languages passed clean** (es, fr, de, pt, ru, zh, ja, ar). For a product whose
+moat is the admission gate, that is a hole, not a nuance.
+
+**Root cause is NOT the embedder.** On a 20-fact store with the same 10
+questions asked in 10 languages, the production encoder
+(multilingual-e5-base) scores **recall@5 = 1.00 in every language**
+(`benchmark/multilingual_recall.py`,
+`benchmark/results/multilingual_recall_e5_baseline.json`). The hole was the
+L1 keyword family — EN/IT lexical detectors by construction.
+
+**The fix uses the multilingual embedder AS the detector** (L1.20): the
+incoming claim is compared against hype exemplars in 10 languages and against
+neutral factual anchors, and is flagged only when it is BOTH close to hype in
+absolute terms AND closer to hype than to plain facts (dual-check). Threshold
+search on 40 hype claims × 10 languages vs 42 legitimate facts
+(`benchmark/selfclaim_threshold_calibration.py`):
+
+| Config | recall @ 0 FP | margin |
+|---|---|---|
+| e5, single absolute threshold | 0.975 | 0.001 (unusable) |
+| e5, contrastive only | 0.875 | — |
+| Qwen3-Embedding-0.6B, absolute | 0.825 | — |
+| Qwen3-0.6B, contrastive+symmetric | 0.900 | — |
+| **e5, dual-check (shipped)** | **1.000** | **0.037** |
+
+Result on the real write path after wiring: **0/10 languages pass clean**
+(en/it caught by keyword+semantic, the other 8 by L1.20 alone), **0 false
+positives** on legitimate multilingual facts including deploy-adjacent
+wording ("the production database password is rotated…"). Fail-open,
+evidence-disarmed, downgrade-only, `ENGRAM_L1_SEMANTIC=0` kill-switch;
+thresholds are model-gated (calibrated for the e5 family — a different
+encoder disarms the detector unless recalibrated via env).
+
+**Embedder migration verdict:** not needed for this hole, and the candidate
+LOST on the detector task (Qwen3-0.6B best config 0.925 vs e5 1.000). The
+question "is a newer embedder better for general retrieval quality" stays
+open as a separate, evidence-gated track (prior finding iter30: 4 encoders
+within 3pp on EN e2e = intrinsic cap).

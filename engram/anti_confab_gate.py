@@ -464,6 +464,16 @@ def _l1_warnings(
             "pattern_kind": quant.pattern_kind,
             "matched_text": quant.matched_text,
         })
+
+    # 2026-07-09: L1.20 multilingual SEMANTIC self-claim detector — closes the
+    # measured 8-of-10-languages hole (the keyword family above is EN/IT-only;
+    # the same hype claim in es/fr/de/pt/ru/zh/ja/ar passed clean). Embedding
+    # dual-check calibrated at recall 1.0 / 0 FP across 10 languages; fail-open
+    # and evidence-disarmed like every other L1 detector.
+    from .semantic_selfclaim import detect_semantic_selfclaim
+    sem = detect_semantic_selfclaim(proposition, vb_list)
+    if sem is not None:
+        out.append(sem)
     return out
 
 

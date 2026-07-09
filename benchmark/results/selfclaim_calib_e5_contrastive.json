@@ -1,0 +1,33 @@
+{
+  "exemplars": 10,
+  "positives": 40,
+  "negatives": 43,
+  "results": [
+    {
+      "model": "intfloat/multilingual-e5-base",
+      "mode": "contrastive",
+      "positives_min": 0.018,
+      "positives_mean": 0.106,
+      "negatives_max": 0.074,
+      "negatives_mean": -0.032,
+      "separation": -0.056,
+      "best": {
+        "threshold": 0.076,
+        "recall": 0.875,
+        "fp": 0
+      },
+      "recall_per_lang_at_best": {
+        "en": 1.0,
+        "it": 1.0,
+        "es": 1.0,
+        "fr": 1.0,
+        "de": 1.0,
+        "pt": 1.0,
+        "ru": 0.5,
+        "zh": 0.5,
+        "ja": 0.75,
+        "ar": 1.0
+      }
+    }
+  ]
+}

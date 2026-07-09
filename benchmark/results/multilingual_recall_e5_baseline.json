@@ -1,0 +1,57 @@
+{
+  "facts": 20,
+  "queries_per_lang": 10,
+  "results": [
+    {
+      "model": "intfloat/multilingual-e5-base",
+      "load_s": 8.1,
+      "languages": {
+        "en": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "it": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "es": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "fr": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "de": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "pt": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "ru": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "zh": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "ja": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        },
+        "ar": {
+          "recall@1": 1.0,
+          "recall@5": 1.0
+        }
+      },
+      "mean": {
+        "recall@1": 1.0,
+        "recall@5": 1.0
+      },
+      "broken_languages": []
+    }
+  ]
+}
