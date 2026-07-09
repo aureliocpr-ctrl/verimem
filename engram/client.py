@@ -21,6 +21,7 @@ local distilled CE, ENGRAM_GROUNDING_BACKEND=local).
 """
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +52,10 @@ class Memory:
         self.preset = preset
         self._preset_defaults = _GATE_PRESETS[preset]
         self.semantic = SemanticMemory(db_path=Path(path) if path else None)
+        #: trust odometer: persistent counters of what the gate did (admitted /
+        #: quarantined / rejected / abstained) — same DB file, fail-open, no PII.
+        from .trust_ledger import TrustLedger
+        self._ledger = TrustLedger(self.semantic.db_path)
         self.grounding_llm = grounding_llm
         #: extraction LLM for ``add(messages)`` — anything with
         #: ``.complete(system, messages, **kw)``; optional otherwise.
@@ -118,13 +123,18 @@ class Memory:
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode,
         )
+        _layers = sorted({str(w.get("layer", "")) for w in gate.warnings if w.get("layer")})
         if gate.action == "reject":
+            self._record_trust("rejected", layers=_layers, topic=topic)
             return {"stored": False, "status": "rejected", "warnings": list(gate.warnings),
                     "advice": gate.advice, "grounding_score": gate.grounding_score}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at)
         if gate.action == "downgrade":
             fact.status = "quarantined"
+        self._record_trust(
+            "quarantined" if gate.action == "downgrade" else "admitted",
+            layers=_layers, topic=topic)
         self.semantic.store(fact, embed="sync")
         return {
             "stored": True, "id": fact.id, "status": fact.status,
@@ -202,8 +212,44 @@ class Memory:
         query with no relevant fact abstains without an LLM — see
         ``build_trust_report`` for why it is opt-in (anisotropic bi-encoder)."""
         from .trust_report import build_trust_report
-        return build_trust_report(self.semantic, query, k=k, deep=deep,
-                                  as_of=as_of, min_relevance=min_relevance)
+        report = build_trust_report(self.semantic, query, k=k, deep=deep,
+                                    as_of=as_of, min_relevance=min_relevance)
+        if report.get("abstained"):
+            # honest-"I don't know" counter — the read-path half of the odometer
+            self._record_trust("abstained")
+        return report
+
+    def _record_trust(self, action: str, layers: list[str] | None = None,
+                      topic: str = "") -> None:
+        """Ledger write that can never cost the caller anything — defence in
+        depth on top of the ledger's own fail-open (a buggy or replaced
+        ledger must still not break add/explain)."""
+        try:
+            self._ledger.record(action, layers=layers, topic=topic)
+        except Exception:
+            pass
+
+    def trust_stats(self) -> dict[str, Any]:
+        """The trust odometer: what the gate DID on this store, live.
+
+        ``ledger`` — persistent per-action counters (admitted / quarantined /
+        rejected / abstained) with ``by_layer`` attribution; ``store`` — the
+        current live facts broken down by status. Honest naming by design:
+        these are observable gate actions, not a claim about how many
+        "hallucinations" they equal. Conversation-ingest facts pass the same
+        gate but are not ledgered yet (v2)."""
+        out = self._ledger.stats()
+        store: dict[str, int] = {}
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as con:
+                for status, n in con.execute(
+                        "SELECT status, COUNT(*) FROM facts "
+                        "WHERE superseded_by IS NULL GROUP BY status"):
+                    store[str(status)] = int(n)
+        except Exception:
+            pass
+        out["store"] = store
+        return out
 
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).
     recall = search

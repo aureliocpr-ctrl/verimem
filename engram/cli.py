@@ -548,6 +548,40 @@ def import_cmd(
         console.print(f"  [yellow]warn:[/yellow] {e}")
 
 
+@app.command("stats")
+def trust_stats_cmd(
+    db: str = typer.Option(
+        None, "--db", help="Store file (default: the configured corpus)"),
+    json_out: bool = typer.Option(False, "--json", help="Emit raw JSON"),
+):
+    """Trust odometer: what the admission gate DID on this store.
+
+    Persistent counters of observable gate actions — writes admitted,
+    quarantined (unsupported self-claims), rejected (contradicted /
+    ungrounded), plus honest read-path abstentions — and the live facts
+    broken down by status. The numbers competitors don't show.
+    """
+    from .client import Memory
+    m = Memory(db) if db else Memory()
+    s = m.trust_stats()
+    if json_out:
+        import json as _json
+        console.print_json(_json.dumps(s))
+        raise typer.Exit(0)
+    led = s["ledger"]
+    console.print("[bold]Gate actions (all time)[/bold]")
+    console.print(f"  admitted:    {led['admitted']}")
+    console.print(f"  quarantined: {led['quarantined']}  [dim]unsupported claims stored hidden[/dim]")
+    console.print(f"  rejected:    {led['rejected']}  [dim]not stored at all[/dim]")
+    console.print(f"  abstained:   {led['abstained']}  [dim]honest 'I don't know' on reads[/dim]")
+    if s["by_layer"]:
+        layers = ", ".join(f"{k}:{v}" for k, v in sorted(s["by_layer"].items()))
+        console.print(f"  by layer:    {layers}")
+    if s["store"]:
+        live = ", ".join(f"{k}:{v}" for k, v in sorted(s["store"].items()))
+        console.print(f"[bold]Live facts by status[/bold]  {live}")
+
+
 @app.command()
 def trust(
     claim: str = typer.Argument(..., help="The claim / proposition to evaluate"),

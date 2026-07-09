@@ -354,6 +354,16 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         meter.bump(tenant_id, writes=1)
         return {"removed": bool(removed)}
 
+    @app.get("/v1/stats")
+    def tenant_stats(tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """L'odometro della fiducia del TUO store: quante scritture ammesse /
+        quarantenate / rifiutate, quante astensioni oneste, più il tuo uso.
+        Solo bearer key: ogni tenant vede esclusivamente i propri numeri."""
+        trust = tenants.get(tenant_id).trust_stats()
+        meter.bump(tenant_id, reads=1)
+        usage = meter.totals().get(tenant_id, {})
+        return {"tenant": tenant_id, "trust": trust, "usage": usage}
+
     # ---- control plane (/admin/*) — esiste SOLO con una admin key --------
     if admin_key:
         def _admin(x_admin_key: str | None = Header(default=None)) -> None:

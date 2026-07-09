@@ -38,6 +38,11 @@ honest *"I don't know."*
   live conversation and remembers on its own, but through the SAME gated
   pipeline as explicit writes (extraction → gate → provenance). Opt-in by
   construction: if you don't instantiate it, it doesn't exist.
+- **Trust odometer** — `m.trust_stats()` / `verimem stats`: persistent
+  counters of what the gate actually *did* on your store — writes admitted,
+  quarantined, rejected, and honest read-path abstentions, with per-layer
+  attribution. Observable actions, not marketing claims; no fact text is
+  copied into the counter.
 - **True forget** — `delete(purge_history=True)` removes the fact *and* its
   supersession chain; the deleted data does not resurface through history or
   time-travel queries.
@@ -124,9 +129,9 @@ verimem gateway serve                                     # 127.0.0.1:8377
 
 Each tenant gets an isolated store; the tenant is derived from the API key
 alone. Endpoints: `POST /v1/memories`, `GET /v1/search`, `GET /v1/explain`
-(TrustReport), `DELETE /v1/memories/{id}?purge_history=true`. The gateway
-binds loopback by default — for remote access put it behind a TLS reverse
-proxy (nginx/caddy).
+(TrustReport), `GET /v1/stats` (the tenant's own trust odometer + usage),
+`DELETE /v1/memories/{id}?purge_history=true`. The gateway binds loopback by
+default — for remote access put it behind a TLS reverse proxy (nginx/caddy).
 
 Docker (embedding models baked in — runs fully offline):
 
