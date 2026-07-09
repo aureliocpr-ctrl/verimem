@@ -34,6 +34,10 @@ honest *"I don't know."*
 - **Consent-first import** — bootstrap from your ChatGPT / Claude export:
   conversations are listed first, nothing is ingested without an explicit
   selection.
+- **Opt-in auto-memory** — `AutoMemory(memory).observe(role, text)` watches a
+  live conversation and remembers on its own, but through the SAME gated
+  pipeline as explicit writes (extraction → gate → provenance). Opt-in by
+  construction: if you don't instantiate it, it doesn't exist.
 - **True forget** — `delete(purge_history=True)` removes the fact *and* its
   supersession chain; the deleted data does not resurface through history or
   time-travel queries.

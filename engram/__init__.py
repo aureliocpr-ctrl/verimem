@@ -33,7 +33,7 @@ _apply_engram_mode()
 
 # Public turnkey SDK — exposed lazily so ``import engram`` stays light (the
 # Memory client pulls in the embedding/semantic stack only when first used).
-__all__ = ["Memory", "Client"]
+__all__ = ["AutoMemory", "Memory", "Client"]
 
 
 def __getattr__(name: str):  # PEP 562 lazy attribute access
@@ -41,4 +41,8 @@ def __getattr__(name: str):  # PEP 562 lazy attribute access
         from .client import Client, Memory
 
         return {"Memory": Memory, "Client": Client}[name]
+    if name == "AutoMemory":
+        from .auto_memory import AutoMemory
+
+        return AutoMemory
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
