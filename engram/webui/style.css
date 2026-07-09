@@ -1,0 +1,155 @@
+/* Verimem trust console — self-contained, no CDN, both themes.
+   Tokens first: components read ONLY the tokens, themes redefine them. */
+:root {
+  color-scheme: light dark;
+  --bg: #0d1017;          /* cool near-black, blue bias toward the accent */
+  --panel: #151a23;
+  --panel-2: #1b212c;
+  --ink: #e8edf4;
+  --dim: #8b96a5;
+  --line: #2a3240;
+  --ok: #3fb950;          /* admitted / grounded */
+  --warn: #d9a62e;        /* quarantined */
+  --bad: #f2555a;         /* rejected / ungrounded */
+  --info: #58a6ff;        /* abstained / links */
+  --node: #9ecbff;
+  --focus: #58a6ff;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f7fa; --panel: #ffffff; --panel-2: #eef1f5;
+    --ink: #1c2430; --dim: #5b6674; --line: #d5dce4;
+    --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e; --info: #0969da;
+    --node: #0969da; --focus: #0969da;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; }
+/* l'attributo hidden VINCE sempre — anche su .empty che ridefinisce display
+   (bug visto a schermo 2026-07-10: empty-state sopra il grafo popolato) */
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); min-height: 100vh;
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 1.25rem clamp(1rem, 3vw, 2rem) 2rem;
+}
+
+/* ---- header ---------------------------------------------------------- */
+.top { display: flex; align-items: center; justify-content: space-between;
+       gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.brand { display: flex; align-items: baseline; gap: .5rem; font-size: 1.15rem; }
+.brand small { color: var(--dim); font-size: .8rem; text-transform: uppercase;
+               letter-spacing: .09em; }
+.pulse { width: .55rem; height: .55rem; border-radius: 50%;
+         background: var(--ok); display: inline-block; align-self: center;
+         animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+
+#keyform { display: flex; gap: .5rem; }
+#keyform input { background: var(--panel); color: var(--ink); min-width: 230px;
+  border: 1px solid var(--line); border-radius: 8px; padding: .5rem .75rem; }
+#keyform button, .graph-legend button {
+  background: var(--info); color: #fff; border: 0; border-radius: 8px;
+  padding: .5rem 1rem; cursor: pointer; font-weight: 600; }
+:is(button, input):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.err { color: var(--bad); margin: .5rem 0 1rem; }
+
+/* ---- odometer -------------------------------------------------------- */
+.odometer { display: grid; gap: .7rem; margin-bottom: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--line);
+        border-radius: 12px; padding: .9rem 1rem; }
+.card .n { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.card .l { color: var(--dim); font-size: .8rem; margin-top: .1rem; }
+.admitted .n { color: var(--ok); } .quarantined .n { color: var(--warn); }
+.rejected .n { color: var(--bad); } .abstained .n { color: var(--info); }
+
+/* ---- tabs ------------------------------------------------------------ */
+.tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--line);
+        margin-bottom: 1rem; }
+.tab-btn { background: none; border: 0; color: var(--dim); padding: .55rem .9rem;
+  cursor: pointer; font: inherit; font-weight: 600;
+  border-bottom: 2px solid transparent; }
+.tab-btn.on { color: var(--ink); border-bottom-color: var(--info); }
+.tab { display: none; }
+.tab.on { display: block; }
+
+/* ---- graph + dossier -------------------------------------------------- */
+.graph-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+              gap: 1rem; align-items: start; }
+@media (max-width: 900px) { .graph-wrap { grid-template-columns: 1fr; } }
+.graph-canvas { background: var(--panel); border: 1px solid var(--line);
+                border-radius: 12px; position: relative; overflow: hidden; }
+#graph { width: 100%; height: 520px; display: block; }
+#graph .edge { stroke: var(--dim); stroke-width: 1.4; opacity: .8; }
+#graph .edge.grounded { stroke: var(--ok); }
+#graph .edge.ungrounded { stroke: var(--bad); stroke-dasharray: 5 4; }
+#graph .edge.hl { stroke-width: 2.6; opacity: 1; }
+#graph .node circle { fill: var(--node); stroke: var(--bg); stroke-width: 1.5;
+                      cursor: pointer; }
+#graph .node.sel circle { stroke: var(--info); stroke-width: 3; }
+#graph .node text { fill: var(--ink); font-size: 11px; pointer-events: none; }
+#graph .edge-label { fill: var(--dim); font-size: 9.5px; pointer-events: none; }
+.graph-legend { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+  padding: .55rem .8rem; border-top: 1px solid var(--line);
+  color: var(--dim); font-size: .78rem; }
+.graph-legend button { margin-left: auto; padding: .3rem .7rem; font-size: .78rem; }
+.sw { display: inline-block; width: 1.4em; height: 0; vertical-align: middle;
+      margin-right: .35em; border-top: 2px solid var(--ok); }
+.sw.dashed { border-top-style: dashed; border-top-color: var(--bad); }
+
+.dossier { background: var(--panel); border: 1px solid var(--line);
+           border-radius: 12px; padding: 1rem; max-height: 560px; overflow: auto; }
+.dossier h2 { font-size: .82rem; text-transform: uppercase;
+              letter-spacing: .07em; color: var(--dim); margin-bottom: .6rem; }
+.d-target { border: 1px solid var(--line); border-radius: 10px;
+            padding: .6rem .7rem; margin-bottom: .55rem; background: var(--panel-2); }
+.d-target > button { all: unset; cursor: pointer; display: flex; width: 100%;
+                     justify-content: space-between; gap: .5rem; font-weight: 600; }
+.d-target .w { color: var(--dim); font-weight: 400;
+               font-variant-numeric: tabular-nums; }
+.d-target.abst > button { color: var(--warn); }
+.d-chain { margin-top: .55rem; display: none; }
+.d-target.open .d-chain { display: block; }
+.hop { border-left: 2px solid var(--ok); padding: .25rem 0 .25rem .65rem;
+       margin: .35rem 0; font-size: .85rem; }
+.hop .rel { color: var(--info); font-weight: 600; }
+.hop .prop { display: block; color: var(--ink); }
+.hop .fid { color: var(--dim); font-size: .75rem;
+            font-family: ui-monospace, monospace; }
+.d-reason { color: var(--warn); font-size: .85rem; margin-top: .4rem; }
+
+/* ---- blocked log ------------------------------------------------------ */
+.hint { color: var(--dim); font-size: .85rem; margin-bottom: .8rem; }
+.hint code { background: var(--panel-2); padding: .05rem .3rem; border-radius: 4px; }
+.blocked-table { width: 100%; border-collapse: collapse; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.blocked-table th { text-align: left; font-size: .74rem; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--dim); padding: .55rem .8rem;
+  border-bottom: 1px solid var(--line); }
+.blocked-table td { padding: .55rem .8rem; border-bottom: 1px solid var(--line);
+  vertical-align: top; }
+.blocked-table tr:last-child td { border-bottom: 0; }
+.blocked-table .when { white-space: nowrap; color: var(--dim);
+  font-variant-numeric: tabular-nums; font-size: .85rem; }
+.blocked-table .claim { color: var(--warn); }
+.blocked-table .topic { color: var(--dim); font-size: .85rem; }
+
+/* ---- layers / rows ----------------------------------------------------- */
+.rows { background: var(--panel); border: 1px solid var(--line);
+        border-radius: 12px; padding: .35rem .9rem; max-width: 560px; }
+.rows .row { display: flex; justify-content: space-between; padding: .35rem 0;
+  border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.rows .row:last-child { border-bottom: 0; }
+.sub-h { font-size: .82rem; text-transform: uppercase; letter-spacing: .07em;
+         color: var(--dim); margin: 1.1rem 0 .5rem; }
+
+.empty { color: var(--dim); padding: 2.2rem 1.4rem; text-align: center;
+         font-size: .9rem; max-width: 46ch; margin: 0 auto; }
+.graph-canvas .empty { position: absolute; inset: 0; display: flex;
+                       align-items: center; justify-content: center; }
+.muted { color: var(--dim); }
+.meta { color: var(--dim); font-size: .78rem; margin-top: 1.25rem; }
+.meta .warn { color: var(--bad); }

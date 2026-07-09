@@ -67,6 +67,8 @@ def test_ungrounded_path_abstains_with_reason(kg, sem):
     assert d["grounded"] is False
     assert "friend_of" in d["reason"] or "not grounded" in d["reason"].lower()
     assert d.get("answer") is None, "non affermare una derivazione non fondata"
+    assert d["target_name"] == "Carol", (
+        "anche l'astensione porta il NOME del target (una UI non mostra id)")
 
 
 def test_missing_source_fact_abstains_not_fabricates(kg):

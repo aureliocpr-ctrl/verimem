@@ -37,6 +37,9 @@ def _dossier_for_path(store: Any, semantic: Any, src_id: str,
     answer_name = _entity_name(store, target)
     base = {
         "target": target,
+        # the resolved NAME travels on every outcome (abstentions included):
+        # a UI must never have to show a raw entity id
+        "target_name": answer_name,
         "min_weight": path.get("min_weight"),
         "path_weight": path.get("path_weight"),
     }
@@ -98,7 +101,9 @@ def reasoning_dossier(
     if target is not None:
         chosen = next((p for p in paths if p["target"] == target), None)
         if chosen is None:
-            return {"target": target, "abstained": True, "grounded": False,
+            return {"target": target,
+                    "target_name": _entity_name(store, target),
+                    "abstained": True, "grounded": False,
                     "answer": None,
                     "reason": f"no path from {_entity_name(store, src_entity_id)} "
                               f"to {_entity_name(store, target)} within "

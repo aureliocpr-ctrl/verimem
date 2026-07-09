@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verimem — Trust Console</title>
+<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="pulse" aria-hidden="true"></span>
+    <strong>Verimem</strong><small>trust console</small>
+  </div>
+  <form id="keyform" autocomplete="off">
+    <input id="key" type="password" placeholder="paste your API key" autocomplete="off">
+    <button type="submit">Connect</button>
+  </form>
+</header>
+
+<p id="err" class="err" hidden></p>
+
+<section id="board" hidden>
+
+  <!-- the trust odometer: what the admission gate actually DID, live -->
+  <section class="odometer" aria-label="Trust odometer">
+    <div class="card admitted"><div class="n" id="n-admitted">0</div>
+      <div class="l">writes admitted</div></div>
+    <div class="card quarantined"><div class="n" id="n-quarantined">0</div>
+      <div class="l">claims quarantined</div></div>
+    <div class="card rejected"><div class="n" id="n-rejected">0</div>
+      <div class="l">writes rejected</div></div>
+    <div class="card abstained"><div class="n" id="n-abstained">0</div>
+      <div class="l">honest &ldquo;I don't know&rdquo;</div></div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn on" data-tab="graph" role="tab">Knowledge graph</button>
+    <button class="tab-btn" data-tab="blocked" role="tab">Blocked claims</button>
+    <button class="tab-btn" data-tab="layers" role="tab">Gate layers</button>
+  </nav>
+
+  <!-- graph + chain of custody -->
+  <section id="tab-graph" class="tab on">
+    <div class="graph-wrap">
+      <div class="graph-canvas">
+        <svg id="graph" role="img" aria-label="Entity knowledge graph"></svg>
+        <div id="graph-empty" class="empty" hidden>
+          No knowledge graph yet — ingest conversations or documents and the
+          entities they mention will appear here, every edge citing the fact
+          that created it.
+        </div>
+        <div class="graph-legend">
+          <span><i class="sw solid"></i> grounded edge (cites a fact)</span>
+          <span><i class="sw dashed"></i> ungrounded (declared, never hidden)</span>
+          <button id="graph-refresh" type="button" title="re-fetch and re-layout">refresh</button>
+        </div>
+      </div>
+      <aside class="dossier" aria-label="Chain of custody">
+        <h2>Chain of custody</h2>
+        <div id="dossier-body" class="muted">
+          Click a node to see every conclusion reachable from it — each one
+          derived from cited facts, or an honest abstention when a link in the
+          chain has no source.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- the confabulations the gate stopped -->
+  <section id="tab-blocked" class="tab">
+    <p class="hint">Unsupported claims the admission gate refused to treat as
+      truth — quarantined, visible, auditable. Rescue a false positive by
+      re-adding it with <code>verified_by</code> evidence.</p>
+    <table class="blocked-table">
+      <thead><tr><th>when</th><th>blocked claim</th><th>topic</th></tr></thead>
+      <tbody id="blocked-rows"></tbody>
+    </table>
+    <div id="blocked-empty" class="empty" hidden>
+      Nothing in quarantine — no unsupported claim has tried to enter this
+      store yet.
+    </div>
+  </section>
+
+  <!-- which gate layers acted -->
+  <section id="tab-layers" class="tab">
+    <p class="hint">Which defense actually fired, cumulatively.</p>
+    <div id="layers" class="rows"></div>
+    <h3 class="sub-h">Live facts by status</h3>
+    <div id="store" class="rows"></div>
+  </section>
+
+  <footer id="meta" class="meta"></footer>
+</section>
+
+<script src="/ui/app.js"></script>
+</body>
+</html>

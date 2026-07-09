@@ -303,6 +303,29 @@ class Memory:
             getattr(self._ledger, "write_failures", 0) or 0)
         return out
 
+    def quarantine_log(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        """The blocked-claims log: live QUARANTINED facts, newest first.
+
+        The odometer says HOW MANY the gate stopped; this says WHAT — each
+        unsupported claim the gate downgraded, with topic and timestamp, so a
+        human can audit the stops (and rescue a false positive via
+        ``verified_by`` + update). Read-only; deleted/superseded quarantined
+        facts drop out of this view but stay counted in the ledger."""
+        rows: list[dict[str, Any]] = []
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as con:
+                con.row_factory = sqlite3.Row
+                for r in con.execute(
+                        "SELECT id, proposition, topic, created_at, status "
+                        "FROM facts WHERE status = 'quarantined' "
+                        "AND superseded_by IS NULL "
+                        "ORDER BY created_at DESC LIMIT ?",
+                        (max(1, int(limit)),)):
+                    rows.append(dict(r))
+        except Exception:
+            pass  # read-only view: an unreadable store shows empty, not 500
+        return rows
+
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).
     recall = search
 

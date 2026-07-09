@@ -166,6 +166,11 @@ engram = [
     "static/**/*",
     "templates/*",
     "templates/**/*",
+    # trust console (/ui): html+js+css nel wheel (engram.webui è un package,
+    # ma i non-.py viaggiano solo se dichiarati qui)
+    "webui/*.html",
+    "webui/*.js",
+    "webui/*.css",
     "*.yaml",
     "providers.yaml",
 ]

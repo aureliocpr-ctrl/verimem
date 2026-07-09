@@ -991,6 +991,84 @@ class EntityStore:
             key=lambda p: (len(p["hops"]), -p["min_weight"]))
         return out[:k]
 
+    def snapshot(self, *, max_nodes: int = 300,
+                 max_edges: int = 600) -> dict[str, Any]:
+        """Renderable view of the graph for a UI: nodes + edges, capped.
+
+        Edges-first policy: the caps must never produce an edge whose
+        endpoint is missing from ``nodes`` (an unrenderable graph), so the
+        endpoints of every returned edge are ALWAYS included — if they alone
+        would exceed ``max_nodes``, edges are trimmed until they fit.
+        Leftover node budget is filled with the remaining (possibly isolated)
+        entities. Deterministic: insertion order (created_at, pk).
+
+        Each edge carries its provenance: ``source_fact_id`` and a
+        ``grounded`` flag (has a source pointer at all — whether that fact is
+        still LIVE is the deeper check ``reasoning_dossier`` performs against
+        the store).
+        """
+        with self._connect() as conn:
+            edge_rows = conn.execute(
+                "SELECT src_entity, dst_entity, predicate, weight, "
+                "source_fact_id FROM entity_edges "
+                "ORDER BY created_at ASC, src_entity, dst_entity, predicate "
+                "LIMIT ?", (max(0, max_edges),)).fetchall()
+            edges = [{
+                "src": r["src_entity"], "dst": r["dst_entity"],
+                "predicate": r["predicate"], "weight": r["weight"],
+                "source_fact_id": r["source_fact_id"],
+                "grounded": r["source_fact_id"] is not None,
+            } for r in edge_rows]
+
+            def _endpoints(es: list[dict[str, Any]]) -> list[str]:
+                seen: list[str] = []
+                for e in es:
+                    for eid in (e["src"], e["dst"]):
+                        if eid not in seen:
+                            seen.append(eid)
+                return seen
+
+            endpoint_ids = _endpoints(edges)
+            while len(endpoint_ids) > max_nodes and edges:
+                edges.pop()  # trim the newest edge until endpoints fit
+                endpoint_ids = _endpoints(edges)
+
+            nodes: list[dict[str, Any]] = []
+            known: set[str] = set()
+            if endpoint_ids:
+                marks = ",".join("?" for _ in endpoint_ids)
+                rows = conn.execute(
+                    f"SELECT id, canonical_name, type FROM entities "
+                    f"WHERE id IN ({marks})", endpoint_ids).fetchall()
+                by_id = {r["id"]: r for r in rows}
+                for eid in endpoint_ids:  # keep edge insertion order
+                    r = by_id.get(eid)
+                    # dangling endpoint (soft-reference): placeholder node,
+                    # declared as unknown — never a broken render
+                    nodes.append({
+                        "id": eid,
+                        "name": r["canonical_name"] if r else eid,
+                        "type": r["type"] if r else "unknown",
+                    })
+                    known.add(eid)
+            spare = max_nodes - len(nodes)
+            if spare > 0:
+                if known:
+                    marks = ",".join("?" for _ in known)
+                    extra = conn.execute(
+                        f"SELECT id, canonical_name, type FROM entities "
+                        f"WHERE id NOT IN ({marks}) "
+                        f"ORDER BY created_at ASC, id LIMIT ?",
+                        (*known, spare)).fetchall()
+                else:
+                    extra = conn.execute(
+                        "SELECT id, canonical_name, type FROM entities "
+                        "ORDER BY created_at ASC, id LIMIT ?",
+                        (spare,)).fetchall()
+                nodes.extend({"id": r["id"], "name": r["canonical_name"],
+                              "type": r["type"]} for r in extra)
+        return {"nodes": nodes, "edges": edges}
+
     def _rank_facts(
         self,
         ranked: list[dict[str, Any]],

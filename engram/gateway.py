@@ -37,7 +37,7 @@ from typing import Any
 
 try:  # fastapi è la stessa dipendenza opzionale della dashboard
     from fastapi import Depends, FastAPI, Header, HTTPException, Query
-    from fastapi.responses import HTMLResponse
+    from fastapi.responses import HTMLResponse, Response
 except ImportError as _exc:  # pragma: no cover — surfaced by the CLI command
     FastAPI = None  # type: ignore[assignment]
     _FASTAPI_IMPORT_ERROR = _exc
@@ -497,6 +497,72 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         usage = meter.totals().get(tenant_id, {})
         return {"tenant": tenant_id, "trust": trust, "usage": usage}
 
+    @app.get("/v1/quarantine")
+    def quarantine(limit: int = Query(default=50, ge=1, le=500),
+                   tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Il log delle confabulazioni FERMATE: i claim vivi in quarantena,
+        i più recenti prima. L'odometro dice QUANTI, questo dice QUALI."""
+        items = tenants.get(tenant_id).quarantine_log(limit=limit)
+        meter.bump(tenant_id, reads=1)
+        return {"items": items, "count": len(items)}
+
+    # ---- knowledge graph (read-only views for the console) ----------------
+    _kgs: dict[str, Any] = {}
+    _kgs_lock = threading.Lock()
+
+    def _kg_for(tenant_id: str):
+        """L'EntityStore del tenant, o None se il KG non esiste ancora.
+        Il path è derivato SOLO dal tenant risolto dalla chiave (stessa
+        proprietà anti-traversal di ``_TenantMemories``); non crea il DB —
+        un tenant senza grafo vede un grafo vuoto, non un file nuovo."""
+        from .entity_populate import entity_kg_path_for
+        kg_path = entity_kg_path_for(
+            data_dir / "tenants" / tenant_id / "memory.db")
+        if not kg_path.exists():
+            return None
+        with _kgs_lock:
+            kg = _kgs.get(tenant_id)
+            if kg is None:
+                from .entity_kg import EntityStore
+                kg = EntityStore(db_path=kg_path)
+                _kgs[tenant_id] = kg
+            return kg
+
+    @app.get("/v1/graph")
+    def graph(max_nodes: int = Query(default=300, ge=1, le=2000),
+              max_edges: int = Query(default=600, ge=0, le=5000),
+              tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Il grafo entità del tenant, renderizzabile: nodi + edge, ogni edge
+        con la sua provenance (``source_fact_id``) e il flag ``grounded``."""
+        kg = _kg_for(tenant_id)
+        meter.bump(tenant_id, reads=1)
+        if kg is None:
+            return {"nodes": [], "edges": []}
+        return kg.snapshot(max_nodes=max_nodes, max_edges=max_edges)
+
+    @app.get("/v1/graph/dossier")
+    def graph_dossier(src: str = Query(...),
+                      target: str | None = Query(default=None),
+                      max_hops: int = Query(default=3, ge=1, le=5),
+                      k: int = Query(default=25, ge=1, le=100),
+                      tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Il multi-hop CON la catena di custodia: derivazione citata dai
+        fatti reali dello store, o astensione onesta (salto senza fonte,
+        fatto citato sparito, target irraggiungibile)."""
+        kg = _kg_for(tenant_id)
+        meter.bump(tenant_id, reads=1)
+        if kg is None:
+            if target is None:
+                return {"dossiers": []}
+            return {"target": target, "abstained": True, "grounded": False,
+                    "answer": None,
+                    "reason": "no knowledge graph for this tenant yet"}
+        from .graph_reasoning import reasoning_dossier
+        sem = tenants.get(tenant_id).semantic
+        out = reasoning_dossier(kg, sem, src, target=target,
+                                max_hops=max_hops, k=k)
+        return out if target is not None else {"dossiers": out}
+
     @app.get("/dashboard", response_class=HTMLResponse)
     def dashboard() -> str:
         """La vetrina dell'odometro. Pagina STATICA e senza dati: i numeri
@@ -504,6 +570,23 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         tenant; la bearer key vive in sessionStorage (mai in un URL, mai
         renderizzata server-side). Due tenant ricevono byte identici."""
         return _DASHBOARD_HTML
+
+    # ---- /ui — la trust console (il volto del prodotto) --------------------
+    # Stessa proprietà del /dashboard: asset STATICI dal package (nessun
+    # dato interpolato server-side); odometro + grafo con catena di custodia
+    # + log dei claim bloccati, tutto via fetch autenticato dal browser.
+    from . import webui as _webui
+
+    @app.get("/ui", response_class=HTMLResponse)
+    def ui_index() -> str:
+        return _webui.asset("index.html")
+
+    @app.get("/ui/{asset_name}")
+    def ui_asset(asset_name: str) -> Response:
+        if asset_name not in ("app.js", "style.css"):  # allowlist, no fs walk
+            raise HTTPException(status_code=404, detail="unknown asset")
+        return Response(content=_webui.asset(asset_name),
+                        media_type=_webui.media_type(asset_name))
 
     # ---- control plane (/admin/*) — esiste SOLO con una admin key --------
     if admin_key:
