@@ -39,6 +39,21 @@ _OK_CONTEXTUAL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# FP employment (trovato dalla trust console 2026-07-10): "PERSON works
+# at/for ORG" è biografia, non un claim di funzionamento — ed è il fatto
+# più comune in una memoria personale. Discriminante precision-first: dopo
+# "works/working" segue " at|for " + parola Capitalizzata (nome proprio).
+# "the system works at scale" resta un claim ('scale' minuscolo); il caso
+# "works as a nurse" NON è coperto (FP noto — la rete dietro è L1.20
+# semantico, il costo di un miss keyword qui è basso).
+_EMPLOYMENT_AFTER_RE = re.compile(r"\s+(?:at|for)\s+[A-Z]")
+
+
+def _is_employment_use(proposition: str, m: re.Match) -> bool:
+    if m.group(0).lower() not in ("works", "working"):
+        return False
+    return _EMPLOYMENT_AFTER_RE.match(proposition, m.end()) is not None
+
 # Evidence prefixes that count as "runtime/test evidence"
 _RUNTIME_EVIDENCE_PREFIXES: tuple[str, ...] = (
     "pytest:", "test:", "bash:", "cmd:", "smoke:",
@@ -113,8 +128,10 @@ def detect_unsupported_works_claim(
     """
     if not proposition:
         return None
-    # Match main pattern first
-    m = _WORKS_PATTERN.search(proposition)
+    # Match main pattern first — skipping employment uses ("works at Acme"),
+    # which are biography, not functionality claims
+    m = next((cand for cand in _WORKS_PATTERN.finditer(proposition)
+              if not _is_employment_use(proposition, cand)), None)
     if m is None:
         # Try contextual ok/passa
         m = _OK_CONTEXTUAL_PATTERN.search(proposition)
