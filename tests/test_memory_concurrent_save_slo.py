@@ -8,6 +8,16 @@ semantic.db must ALL succeed (no lost write, no SQLITE_BUSY surfaced as failure)
 This pins the SLO: 8 concurrent subprocess writers x 5 runs = 40 stores, and
 ALL 40 rows must land in the DB. Real process-level concurrency (subprocess),
 not threads, to exercise the OS file lock / WAL path the way `clp save` does.
+
+Workers write with ``embed="defer"``: the row INSERT — i.e. the WAL/OS-lock
+path this SLO actually pins — is byte-identical, but the embedding is NOT
+computed inline, so no worker loads the ~500 MB model. That removes an
+irrelevant dependency (the encoder plays no part in the write-lock contract)
+that made this test flaky under memory pressure (Windows pagefile os1455 when
+8 subprocesses each loaded the model) AND skipped in CI (no warmed HF cache).
+Now it runs everywhere and is *stricter* on concurrency: model-less workers
+start faster, so their lock windows overlap more, not less. Verified 2026-07-09:
+one 8-worker batch already lands 8/8 with zero lost writes; this pins all 40.
 """
 from __future__ import annotations
 
@@ -16,16 +26,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from engram.semantic import SemanticMemory
-from tests._real_model import requires_real_model
-
-# Subprocess workers spawn a fresh Python that loads the REAL model (no
-# in-process stub); skip when it isn't cached (CI without a warmed HF cache).
-pytestmark = requires_real_model
 
 # Worker: open the SHARED db and store ONE fact. Exit 0 + "OK" on success.
+# embed="defer" -> same row INSERT / WAL path, no model load (see module docstring).
 _WORKER_SRC = """
 import sys
 from pathlib import Path
@@ -39,7 +43,7 @@ sm.store(Fact(
     confidence=0.9,
     verified_by=[],
     status="model_claim",
-))
+), embed="defer")
 print("OK")
 """
 
