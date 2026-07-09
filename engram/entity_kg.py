@@ -612,6 +612,18 @@ class EntityStore:
                 raise
         return entity.id
 
+    def get(self, entity_id: str) -> Entity | None:
+        """Fetch one Entity by id (symmetric with get_by_name / SemanticMemory
+        .get). Returns None if not found. Needed by graph_reasoning to name
+        the nodes of a traced path."""
+        if not entity_id:
+            return None
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM entities WHERE id = ?", (entity_id,),
+            ).fetchone()
+        return self._row_to_entity(row) if row is not None else None
+
     def get_by_name(self, name_or_alias: str) -> Entity | None:
         """Lookup case-insensitive Unicode: prima su canonical_name,
         poi su alias. Ritorna None se nessuna entity trovata.
