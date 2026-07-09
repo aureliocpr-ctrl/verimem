@@ -909,6 +909,76 @@ class EntityStore:
                 queue.append((dst, d + 1))
         return result[:k]
 
+    def traced_paths(
+        self,
+        entity_id: str,
+        max_hops: int = 2,
+        k: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Multi-hop traversal that KEEPS the chain of custody — the trust
+        differentiator ``neighbors`` throws away.
+
+        BFS from ``entity_id``; for each reachable target the FULL edge chain
+        that reached it (shortest path — fewest links = most trust), each hop
+        carrying ``predicate`` + ``source_fact_id`` + ``weight``. Per path:
+
+        * ``hops``       — ordered edges ``{src_entity, dst_entity, predicate,
+          source_fact_id, weight}`` from the start to the target;
+        * ``grounded``   — True iff EVERY hop cites a ``source_fact_id`` (an
+          ungrounded hop is FLAGGED, not hidden — the caller can abstain);
+        * ``min_weight`` — the weakest link, i.e. the trust of the whole path;
+        * ``path_weight``— product of hop weights (decays with length).
+
+        Shortest path wins on ties (BFS reaches a node at its minimal depth
+        first); a node is never revisited within a path, so cycles terminate.
+        Returns at most ``k`` paths, shortest first then by ``min_weight``
+        desc. Deterministic, no model, no network — the safe core the
+        answerer and TrustReport build the reasoning dossier on.
+        """
+        if max_hops < 1 or k < 1:
+            return []
+        best: dict[str, dict[str, Any]] = {}
+        # queue holds (current_node, path_so_far); BFS guarantees the first
+        # time we settle a target it is via a shortest path.
+        queue: list[tuple[str, list[dict[str, Any]]]] = [(entity_id, [])]
+        while queue:
+            cur, path = queue.pop(0)
+            if len(path) >= max_hops:
+                continue
+            on_path = {entity_id} | {h["dst_entity"] for h in path}
+            for edge in self.edges_from(cur):
+                dst = edge["dst_entity"]
+                if dst in on_path:
+                    continue  # no revisit within this path -> cycle-safe
+                hop = {
+                    "src_entity": edge["src_entity"],
+                    "dst_entity": dst,
+                    "predicate": edge["predicate"],
+                    "source_fact_id": edge["source_fact_id"],
+                    "weight": edge["weight"],
+                }
+                new_path = path + [hop]
+                # settle the target the FIRST time BFS reaches it (shortest);
+                # a later, longer path to the same target is discarded.
+                if dst not in best:
+                    weights = [h["weight"] for h in new_path]
+                    product = 1.0
+                    for w in weights:
+                        product *= w
+                    best[dst] = {
+                        "target": dst,
+                        "hops": new_path,
+                        "grounded": all(
+                            h["source_fact_id"] for h in new_path),
+                        "min_weight": min(weights),
+                        "path_weight": product,
+                    }
+                queue.append((dst, new_path))
+        out = sorted(
+            best.values(),
+            key=lambda p: (len(p["hops"]), -p["min_weight"]))
+        return out[:k]
+
     def _rank_facts(
         self,
         ranked: list[dict[str, Any]],
