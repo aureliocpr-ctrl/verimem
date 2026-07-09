@@ -137,3 +137,36 @@ def test_gateway_tenant_stats_endpoint(tmp_path):
     body = r.json()
     assert body["trust"]["ledger"]["admitted"] >= 1
     assert body["usage"]["requests"] >= 2
+
+
+# ---- serie giornaliera (la console v2 disegna sparkline VERE) ---------------
+
+def test_daily_series_buckets_by_day(tmp_path):
+    """Gli eventi hanno già ts: la serie per-giorno è un GROUP BY, non una
+    nuova tabella. Oggi deve contenere ciò che è appena successo."""
+    m = Memory(tmp_path / "m.db")
+    m.add("the office is in Milan", topic="hq", verified_by=["hr-doc"])
+    m.add(_UNSUPPORTED)
+    s = m.trust_stats()
+    daily = s["daily"]
+    assert isinstance(daily, list) and daily, "almeno il giorno corrente"
+    today = daily[-1]
+    assert today["admitted"] == 1
+    assert today["quarantined"] == 1
+    assert set(today) == {"day", "admitted", "quarantined",
+                          "rejected", "abstained"}
+    import time as _t
+    assert today["day"] == _t.strftime("%Y-%m-%d", _t.gmtime())
+
+
+def test_daily_series_is_capped_and_fail_open(tmp_path):
+    from engram.trust_ledger import TrustLedger
+    led = TrustLedger(tmp_path / "x.db")
+    for _ in range(3):
+        led.record("admitted")
+    d = led.stats(daily_days=1)["daily"]
+    assert len(d) == 1 and d[0]["admitted"] == 3
+    # fail-open: db illeggibile → daily assente ma stats non esplode
+    bad = TrustLedger(tmp_path)  # directory, non file
+    out = bad.stats()
+    assert out["ledger"]["admitted"] == 0

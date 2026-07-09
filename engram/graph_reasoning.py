@@ -72,6 +72,10 @@ def _dossier_for_path(store: Any, semantic: Any, src_id: str,
         derivation.append({
             "from_entity": _entity_name(store, hop["src_entity"]),
             "to_entity": _entity_name(store, hop["dst_entity"]),
+            # raw ids too: a consumer (the console) re-anchors the hop to its
+            # graph edge by id, never by name matching
+            "src_entity": hop["src_entity"],
+            "dst_entity": hop["dst_entity"],
             "predicate": hop["predicate"],
             "source_fact_id": fid,
             "weight": hop["weight"],

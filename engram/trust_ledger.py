@@ -80,8 +80,11 @@ class TrustLedger:
         except Exception:
             self.write_failures += int(n)
 
-    def stats(self) -> dict[str, Any]:
-        """Aggregate counters: per-action totals + which gate layer fired.
+    def stats(self, *, daily_days: int = 14) -> dict[str, Any]:
+        """Aggregate counters: per-action totals + which gate layer fired +
+        the per-day series of the last ``daily_days`` UTC days (``daily``,
+        oldest→newest, only days with events — the events already carry
+        ``ts``, so the series is a GROUP BY, not a second table).
 
         Returns zeros (not an error) on a fresh or unreadable store — the
         odometer must be safe to render anywhere.
@@ -89,6 +92,7 @@ class TrustLedger:
         counts = {a: 0 for a in _ACTIONS}
         by_layer: dict[str, int] = {}
         since: float | None = None
+        daily: list[dict[str, Any]] = []
         try:
             with self._connect() as conn:
                 for action, n in conn.execute(
@@ -105,6 +109,19 @@ class TrustLedger:
                 row = conn.execute(
                     "SELECT MIN(ts) FROM trust_ledger").fetchone()
                 since = float(row[0]) if row and row[0] is not None else None
+                cutoff = time.time() - max(1, int(daily_days)) * 86400.0
+                buckets: dict[str, dict[str, Any]] = {}
+                for day, action, n in conn.execute(
+                        "SELECT date(ts, 'unixepoch') AS day, action, "
+                        "COUNT(*) FROM trust_ledger WHERE ts >= ? "
+                        "GROUP BY day, action ORDER BY day ASC", (cutoff,)):
+                    b = buckets.setdefault(
+                        str(day), {"day": str(day),
+                                   **{a: 0 for a in _ACTIONS}})
+                    if action in _ACTIONS:
+                        b[action] = int(n)
+                daily = list(buckets.values())
         except Exception:
             pass
-        return {"ledger": counts, "by_layer": by_layer, "since": since}
+        return {"ledger": counts, "by_layer": by_layer, "since": since,
+                "daily": daily}

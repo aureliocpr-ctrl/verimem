@@ -7,10 +7,13 @@
 <link rel="stylesheet" href="/ui/style.css">
 </head>
 <body>
+<div class="atmo" aria-hidden="true"></div>
+
 <header class="top">
   <div class="brand">
     <span class="pulse" aria-hidden="true"></span>
     <strong>Verimem</strong><small>trust console</small>
+    <span id="live" class="live-chip" hidden>live</span>
   </div>
   <form id="keyform" autocomplete="off">
     <input id="key" type="password" placeholder="paste your API key" autocomplete="off">
@@ -22,16 +25,53 @@
 
 <section id="board" hidden>
 
-  <!-- the trust odometer: what the admission gate actually DID, live -->
-  <section class="odometer" aria-label="Trust odometer">
-    <div class="card admitted"><div class="n" id="n-admitted">0</div>
-      <div class="l">writes admitted</div></div>
-    <div class="card quarantined"><div class="n" id="n-quarantined">0</div>
-      <div class="l">claims quarantined</div></div>
-    <div class="card rejected"><div class="n" id="n-rejected">0</div>
-      <div class="l">writes rejected</div></div>
-    <div class="card abstained"><div class="n" id="n-abstained">0</div>
-      <div class="l">honest &ldquo;I don't know&rdquo;</div></div>
+  <!-- hero: the trust instrument — what the admission gate actually DID -->
+  <section class="hero" aria-label="Trust odometer">
+    <div class="ring-wrap card">
+      <svg id="ring" viewBox="0 0 200 200" role="img"
+           aria-label="Share of writes admitted clean">
+        <circle class="ring-track" cx="100" cy="100" r="84"></circle>
+        <circle class="ring-arc arc-rejected" cx="100" cy="100" r="84"></circle>
+        <circle class="ring-arc arc-quarantined" cx="100" cy="100" r="84"></circle>
+        <circle class="ring-arc arc-admitted" cx="100" cy="100" r="84"></circle>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-n" id="ring-pct">—</div>
+        <div class="ring-l">writes admitted<br>clean</div>
+      </div>
+      <div class="ring-foot" id="ring-foot">no gate activity yet</div>
+    </div>
+
+    <div class="counters">
+      <div class="card counter admitted">
+        <div class="n" id="n-admitted">0</div>
+        <div class="l">writes admitted</div>
+        <div class="delta" id="d-admitted"></div>
+        <svg class="spark" id="s-admitted" viewBox="0 0 120 26"
+             preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+      <div class="card counter quarantined">
+        <div class="n" id="n-quarantined">0</div>
+        <div class="l">claims quarantined</div>
+        <div class="delta" id="d-quarantined"></div>
+        <svg class="spark" id="s-quarantined" viewBox="0 0 120 26"
+             preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+      <div class="card counter rejected">
+        <div class="n" id="n-rejected">0</div>
+        <div class="l">writes rejected</div>
+        <div class="delta" id="d-rejected"></div>
+        <svg class="spark" id="s-rejected" viewBox="0 0 120 26"
+             preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+      <div class="card counter abstained">
+        <div class="n" id="n-abstained">0</div>
+        <div class="l">honest &ldquo;I don't know&rdquo;</div>
+        <div class="delta" id="d-abstained"></div>
+        <svg class="spark" id="s-abstained" viewBox="0 0 120 26"
+             preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+    </div>
   </section>
 
   <nav class="tabs" role="tablist">
@@ -43,7 +83,7 @@
   <!-- graph + chain of custody -->
   <section id="tab-graph" class="tab on">
     <div class="graph-wrap">
-      <div class="graph-canvas">
+      <div class="graph-canvas card">
         <svg id="graph" role="img" aria-label="Entity knowledge graph"></svg>
         <div id="graph-empty" class="empty" hidden>
           No knowledge graph yet — ingest conversations or documents and the
@@ -51,17 +91,19 @@
           that created it.
         </div>
         <div class="graph-legend">
-          <span><i class="sw solid"></i> grounded edge (cites a fact)</span>
+          <span><i class="sw solid"></i> grounded (cites a fact)</span>
           <span><i class="sw dashed"></i> ungrounded (declared, never hidden)</span>
+          <span class="hint-drag">drag nodes &middot; wheel to zoom</span>
           <button id="graph-refresh" type="button" title="re-fetch and re-layout">refresh</button>
         </div>
       </div>
-      <aside class="dossier" aria-label="Chain of custody">
+      <aside class="dossier card" aria-label="Chain of custody">
         <h2>Chain of custody</h2>
         <div id="dossier-body" class="muted">
           Click a node to see every conclusion reachable from it — each one
-          derived from cited facts, or an honest abstention when a link in the
-          chain has no source.
+          derived from cited facts, or an honest abstention when a link in
+          the chain has no source. Selecting a conclusion lights its path
+          through the graph.
         </div>
       </aside>
     </div>
@@ -72,7 +114,7 @@
     <p class="hint">Unsupported claims the admission gate refused to treat as
       truth — quarantined, visible, auditable. Rescue a false positive by
       re-adding it with <code>verified_by</code> evidence.</p>
-    <table class="blocked-table">
+    <table class="blocked-table card">
       <thead><tr><th>when</th><th>blocked claim</th><th>topic</th></tr></thead>
       <tbody id="blocked-rows"></tbody>
     </table>
@@ -85,9 +127,9 @@
   <!-- which gate layers acted -->
   <section id="tab-layers" class="tab">
     <p class="hint">Which defense actually fired, cumulatively.</p>
-    <div id="layers" class="rows"></div>
+    <div id="layers" class="rows card"></div>
     <h3 class="sub-h">Live facts by status</h3>
-    <div id="store" class="rows"></div>
+    <div id="store" class="rows card"></div>
   </section>
 
   <footer id="meta" class="meta"></footer>

@@ -56,6 +56,10 @@ def test_grounded_two_hop_dossier_cites_every_step(kg, sem):
     props = [step["proposition"] for step in d["derivation"]]
     assert props == ["Alice is married to Bob.", "Bob works at Acme Corporation."]
     assert [s["source_fact_id"] for s in d["derivation"]] == ["f_marry", "f_job"]
+    # ogni salto porta ANCHE gli id delle entità: un consumer (la console)
+    # deve poter riagganciare il salto all'edge del grafo senza matching by-name
+    assert [(s["src_entity"], s["dst_entity"]) for s in d["derivation"]] == [
+        ("e_alice", "e_bob"), ("e_bob", "e_acme")]
     # una riga leggibile "come lo so"
     assert "Alice is married to Bob." in d["chain"]
     assert "Bob works at Acme Corporation." in d["chain"]
