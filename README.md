@@ -145,6 +145,14 @@ Docker (embedding models baked in — runs fully offline):
 docker compose -f docker-compose.gateway.yml up -d --build
 ```
 
+TypeScript client ([sdk/typescript](./sdk/typescript)) — typed, zero-dependency,
+contract-tested against the live gateway from the Python suite:
+
+```ts
+const memory = new VerimemClient({ baseUrl, apiKey });
+await memory.add("deploy is green", { verifiedBy: ["ci:main:green"] });
+```
+
 Consistent hot backups (SQLite online backup API — correct while serving):
 
 ```bash

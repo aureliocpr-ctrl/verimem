@@ -1,0 +1,26 @@
+{
+  "name": "verimem-client",
+  "version": "0.1.0",
+  "description": "TypeScript client for the Verimem trusted-memory gateway (verified writes, provenance reads, trust odometer)",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test test/client.test.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "keywords": ["memory", "ai-agents", "trust", "provenance", "verimem"],
+  "homepage": "https://verimem.com"
+}
