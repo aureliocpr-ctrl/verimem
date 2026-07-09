@@ -37,11 +37,144 @@ from typing import Any
 
 try:  # fastapi è la stessa dipendenza opzionale della dashboard
     from fastapi import Depends, FastAPI, Header, HTTPException, Query
+    from fastapi.responses import HTMLResponse
 except ImportError as _exc:  # pragma: no cover — surfaced by the CLI command
     FastAPI = None  # type: ignore[assignment]
     _FASTAPI_IMPORT_ERROR = _exc
 
 _TENANT_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
+
+#: Trust dashboard: UNA pagina self-contained (no CDN, no template engine).
+#: Statica per costruzione — nessun dato, nessuna chiave, nessun tenant id
+#: viene mai interpolato qui dentro; il browser fetcha /v1/stats con la
+#: bearer key che l'utente incolla (sessionStorage: muore con la tab).
+_DASHBOARD_HTML = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verimem — Trust Dashboard</title>
+<style>
+  :root { color-scheme: light dark;
+    --bg:#0e1116; --card:#161b22; --ink:#e6edf3; --dim:#8b949e;
+    --ok:#3fb950; --warn:#d29922; --bad:#f85149; --info:#58a6ff; --line:#30363d; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f6f8fa; --card:#ffffff; --ink:#1f2328; --dim:#59636e;
+            --line:#d1d9e0; } }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); min-height:100vh;
+         font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif; padding:2rem 1rem; }
+  main { max-width:880px; margin:0 auto; }
+  h1 { font-size:1.25rem; font-weight:600; }
+  h1 small { color:var(--dim); font-weight:400; margin-left:.5rem; }
+  .sub { color:var(--dim); margin:.25rem 0 1.5rem; font-size:.9rem; }
+  form { display:flex; gap:.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+  input { flex:1; min-width:240px; background:var(--card); color:var(--ink);
+          border:1px solid var(--line); border-radius:8px; padding:.55rem .8rem; }
+  button { background:var(--info); color:#fff; border:0; border-radius:8px;
+           padding:.55rem 1.1rem; cursor:pointer; font-weight:600; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+          gap:.75rem; margin-bottom:.75rem; }
+  .card { background:var(--card); border:1px solid var(--line);
+          border-radius:12px; padding:1rem 1.1rem; }
+  .card .n { font-size:2.1rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .card .l { color:var(--dim); font-size:.82rem; margin-top:.15rem; }
+  .admitted .n { color:var(--ok); } .quarantined .n { color:var(--warn); }
+  .rejected .n { color:var(--bad); } .abstained .n { color:var(--info); }
+  .wide { margin-bottom:.75rem; }
+  .wide h2 { font-size:.85rem; color:var(--dim); text-transform:uppercase;
+             letter-spacing:.06em; margin-bottom:.5rem; }
+  .row { display:flex; justify-content:space-between; padding:.3rem 0;
+         border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  .row:last-child { border-bottom:0; }
+  .muted { color:var(--dim); }
+  #err { color:var(--bad); margin-bottom:1rem; display:none; }
+  footer { color:var(--dim); font-size:.8rem; margin-top:1.5rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Trust odometer <small>Verimem gateway</small></h1>
+  <p class="sub">What the admission gate actually did on your store —
+    observable actions, counted live. Your API key stays in this tab
+    (sessionStorage) and is sent only as an Authorization header.</p>
+  <form id="f">
+    <input id="k" type="password" placeholder="paste your API key (vm_ prefix)"
+           autocomplete="off">
+    <button type="submit">Load my stats</button>
+  </form>
+  <p id="err"></p>
+  <div id="board" style="display:none">
+    <div class="grid">
+      <div class="card admitted"><div class="n" id="n-admitted">0</div>
+        <div class="l">writes admitted</div></div>
+      <div class="card quarantined"><div class="n" id="n-quarantined">0</div>
+        <div class="l">unsupported claims quarantined</div></div>
+      <div class="card rejected"><div class="n" id="n-rejected">0</div>
+        <div class="l">writes rejected (not stored)</div></div>
+      <div class="card abstained"><div class="n" id="n-abstained">0</div>
+        <div class="l">honest &ldquo;I don't know&rdquo; answers</div></div>
+    </div>
+    <div class="card wide"><h2>Gate layers that fired</h2><div id="layers"></div></div>
+    <div class="card wide"><h2>Live facts by status</h2><div id="store"></div></div>
+    <div class="card wide"><h2>Usage</h2><div id="usage"></div></div>
+    <footer id="meta"></footer>
+  </div>
+</main>
+<script>
+(function () {
+  var STORE = 'verimem_bearer';
+  var f = document.getElementById('f'), inp = document.getElementById('k');
+  var err = document.getElementById('err'), board = document.getElementById('board');
+  function rows(el, obj, empty) {
+    var keys = Object.keys(obj || {}).sort();
+    if (!keys.length) { el.innerHTML = '<div class="row muted">' + empty + '</div>'; return; }
+    el.innerHTML = keys.map(function (name) {
+      return '<div class="row"><span>' + name + '</span><span>' + obj[name] + '</span></div>';
+    }).join('');
+  }
+  function render(d) {
+    board.style.display = 'block'; err.style.display = 'none';
+    var led = (d.trust || {}).ledger || {};
+    ['admitted', 'quarantined', 'rejected', 'abstained'].forEach(function (a) {
+      document.getElementById('n-' + a).textContent = led[a] || 0;
+    });
+    rows(document.getElementById('layers'), (d.trust || {}).by_layer,
+         'no gate layer has fired yet');
+    rows(document.getElementById('store'), (d.trust || {}).store, 'empty store');
+    rows(document.getElementById('usage'), d.usage, 'no usage recorded yet');
+    document.getElementById('meta').textContent =
+      'tenant: ' + d.tenant + ' - refreshed ' + new Date().toLocaleTimeString() +
+      ' - auto-refresh 30s';
+  }
+  function load() {
+    var tok = sessionStorage.getItem(STORE);
+    if (!tok) return;
+    fetch('/v1/stats', { headers: { 'Authorization': 'Bearer ' + tok } })
+      .then(function (r) {
+        if (r.status === 401) { sessionStorage.removeItem(STORE);
+          throw new Error('invalid key - paste it again'); }
+        if (!r.ok) throw new Error('gateway error ' + r.status);
+        return r.json();
+      })
+      .then(render)
+      .catch(function (e) {
+        board.style.display = 'none';
+        err.textContent = e.message; err.style.display = 'block';
+      });
+  }
+  f.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = inp.value.trim();
+    if (v) { sessionStorage.setItem(STORE, v); inp.value = ''; load(); }
+  });
+  setInterval(load, 30000);
+  load();
+})();
+</script>
+</body>
+</html>
+"""
 
 _KEYS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS gateway_keys (
@@ -363,6 +496,14 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         meter.bump(tenant_id, reads=1)
         usage = meter.totals().get(tenant_id, {})
         return {"tenant": tenant_id, "trust": trust, "usage": usage}
+
+    @app.get("/dashboard", response_class=HTMLResponse)
+    def dashboard() -> str:
+        """La vetrina dell'odometro. Pagina STATICA e senza dati: i numeri
+        arrivano solo dal fetch autenticato a /v1/stats fatto dal browser del
+        tenant; la bearer key vive in sessionStorage (mai in un URL, mai
+        renderizzata server-side). Due tenant ricevono byte identici."""
+        return _DASHBOARD_HTML
 
     # ---- control plane (/admin/*) — esiste SOLO con una admin key --------
     if admin_key:

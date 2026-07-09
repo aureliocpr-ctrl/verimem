@@ -130,8 +130,11 @@ verimem gateway serve                                     # 127.0.0.1:8377
 Each tenant gets an isolated store; the tenant is derived from the API key
 alone. Endpoints: `POST /v1/memories`, `GET /v1/search`, `GET /v1/explain`
 (TrustReport), `GET /v1/stats` (the tenant's own trust odometer + usage),
-`DELETE /v1/memories/{id}?purge_history=true`. The gateway binds loopback by
-default — for remote access put it behind a TLS reverse proxy (nginx/caddy).
+`DELETE /v1/memories/{id}?purge_history=true`. Open `/dashboard` in a browser
+for the visual trust odometer — a static, dependency-free page; your API key
+stays in the tab and travels only as an Authorization header. The gateway
+binds loopback by default — for remote access put it behind a TLS reverse
+proxy (nginx/caddy).
 
 Docker (embedding models baked in — runs fully offline):
 
