@@ -28,9 +28,10 @@ honest *"I don't know."*
   on date Z"), and audit every revision.
 - **Abstention by design** — on questions the store cannot support, Verimem
   says so. Memory-boundary abstention holds at 1.0 across our end-to-end runs.
-- **Document memory with exact citations** — index PDF/DOCX/HTML/text files;
-  semantic search returns passages with file, version and character offsets;
-  passages can be promoted to memory *through the gate*, citation attached.
+- **Document memory with exact citations** — index PDF/DOCX/HTML/EPUB/text
+  files; semantic search returns passages with file, version and character
+  offsets; passages can be promoted to memory *through the gate*, citation
+  attached.
 - **Consent-first import** — bootstrap from your ChatGPT / Claude export:
   conversations are listed first, nothing is ingested without an explicit
   selection.
