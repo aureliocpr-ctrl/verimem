@@ -145,6 +145,79 @@ ANCHORS: list[str] = [
     "الاجتماع مقرر يوم الخميس الساعة التاسعة صباحا",
     "العملية تتطلب موافقتين قبل الإصدار",
 ]
+# NOTE (adversarial review 2026-07-09): failure admissions ("does NOT work")
+# and reported speech ("the vendor CLAIMS it works") are NOT anchored — e5 is
+# nearly blind to negation and attribution markers, so same-vocabulary
+# "honest" anchors only compressed the hype delta (zh/ja) without separating.
+# Both are SYNTACTIC phenomena → deterministic guards below, before any
+# embedding. Anchors stay purely neutral-factual.
+
+#: Question marks across the supported scripts — a QUESTION is never a
+#: self-claim (review 2026-07-09: "does the deployment work?" was flagged).
+_QUESTION_MARKS = ("?", "？", "؟")
+
+#: Negation guard (review 2026-07-09, negation-blindness): an honest failure
+#: admission — "the deployment does NOT work" — sits at cosine ~0.95 from the
+#: hype claim for e5, so NO threshold separates them in embedding space.
+#: Negation is a SYNTACTIC phenomenon → deterministic pre-embedding guard.
+#: FP-safety-first like the whole L1 family: a negated claim skips the
+#: semantic detector (worst case an odd hype slips; quarantining honesty is
+#: the worse error).
+import re as _re
+
+_NEGATION_RE = _re.compile(
+    r"(?:\bnot\b|n't\b|\bnever\b|\bno longer\b"
+    r"|\bnon\b|\bné\b"                     # it
+    r"|\bnicht\b|\bkein(?:e|en|em|er)?\b"  # de
+    r"|\bne\b.{0,24}?\bpas\b|\bn'\w"       # fr
+    r"|\bno\s+(?:funciona|está|es|pasa|pasó)\b|\btodavía no\b"  # es
+    r"|\bnão\b"                            # pt
+    r"|\bне\b|\bнет\b"                     # ru
+    r"|不|没|未能|无法"                      # zh
+    r"|ない|ません|なかった|できない"           # ja
+    r"|\bلا\b|\bلم\b|\bليس\b)",             # ar
+    _re.IGNORECASE)
+
+#: Negation-of-a-negative is still hype ("no errors", "senza errori",
+#: "keine Fehler"): these override the guard.
+_NEGATED_NEGATIVE_RE = _re.compile(
+    r"(?:no|without|zero|senza|sans|sin|sem|keine?|без|没有|なし|بدون|بلا)"
+    r"\s*(?:known\s+)?"
+    r"(?:errors?|issues?|bugs?|failures?|problems?"
+    r"|errori|problemi|erreurs?|problèmes?|errores?|problemas?"
+    r"|fehler|probleme|ошибок|проблем|错误|问题|エラー|問題|أخطاء|مشاكل)",
+    _re.IGNORECASE)
+
+
+def _looks_negated(text: str) -> bool:
+    """True when the claim contains a real negation (honest failure report),
+    excluding negation-of-a-negative forms that remain hype."""
+    if not _NEGATION_RE.search(text):
+        return False
+    stripped = _NEGATED_NEGATIVE_RE.sub("", text)
+    return bool(_NEGATION_RE.search(stripped))
+
+
+#: Reported-speech markers: "the vendor CLAIMS it works" is a legitimate fact
+#: about someone else's claim, not our self-claim. The attribution marker is
+#: nearly invisible to e5 (same finding as negation) → deterministic guard.
+_REPORTED_RE = _re.compile(
+    r"(?:\bclaims?\b|\bsays?\b|\bsaid\b|\breports?\b|\bstated?\b"
+    r"|\baccording to\b"
+    r"|\bdice(?:va)?\s+che\b|\bdicono\s+che\b|\bsostiene\b|\bafferma\b"
+    r"|\bsagt\b|\bbehauptet\b|\blaut\b"
+    r"|\baffirme\b|\bdit\s+que\b|\bselon\b"
+    r"|\bdice\s+que\b|\bafirma\b|\bsegún\b"
+    r"|\bdiz\s+que\b|\bsegundo\b"
+    r"|\bутверждает\b|\bговорит\b|\bпо\s+словам\b"
+    r"|声称|表示|据说|说过?他?们?|によると|と主張|と言って"
+    r"|\bيدعي\b|\bيقول\b|\bحسب\b)",
+    _re.IGNORECASE)
+
+
+def _looks_reported(text: str) -> bool:
+    """True when the claim is ATTRIBUTED to someone else (reported speech)."""
+    return bool(_REPORTED_RE.search(text))
 
 _EXEMPLAR_SET = frozenset(EXEMPLARS)
 _ANCHOR_SET = frozenset(ANCHORS)
@@ -239,6 +312,12 @@ def detect_semantic_selfclaim(
         return None
     if verified_by:  # una claim con evidenza è legittima
         return None
+    if proposition.rstrip().endswith(_QUESTION_MARKS):
+        return None  # una domanda non è mai una self-claim (review held-out FP)
+    if _looks_negated(proposition):
+        return None  # ammissione di fallimento = onestà, mai quarantena
+    if _looks_reported(proposition):
+        return None  # claim ALTRUI riportata = fatto legittimo su chi la fa
     thresholds = _thresholds()
     if thresholds is None:
         return None

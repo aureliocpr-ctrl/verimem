@@ -45,6 +45,11 @@ class TrustLedger:
 
     def __init__(self, db_path: str | Path) -> None:
         self.db_path = str(db_path)
+        #: Dropped events in THIS process (review 2026-07-09 #6): fail-open
+        #: stays — a broken ledger must never cost a write — but the loss is
+        #: now VISIBLE (surfaced by ``Memory.trust_stats`` as
+        #: ``ledger_write_failures``) instead of masquerading as zeros.
+        self.write_failures: int = 0
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, timeout=10.0)
@@ -55,18 +60,25 @@ class TrustLedger:
                topic: str = "") -> None:
         """Append one gate event. Never raises: a ledger failure must not
         cost the caller a write (observability, not data-path)."""
-        if action not in _ACTIONS:
+        self.record_many(action, 1, layers=layers, topic=topic)
+
+    def record_many(self, action: str, n: int, *,
+                    layers: list[str] | None = None, topic: str = "") -> None:
+        """Append ``n`` identical events in one transaction (conversation
+        ingest counts whole batches). Same fail-open contract as record()."""
+        if action not in _ACTIONS or n <= 0:
             return
         try:
+            now = time.time()
+            row = (now, action, ",".join(sorted(set(layers or []))),
+                   str(topic or ""))
             with self._connect() as conn:
-                conn.execute(
+                conn.executemany(
                     "INSERT INTO trust_ledger (ts, action, layers, topic) "
-                    "VALUES (?, ?, ?, ?)",
-                    (time.time(), action, ",".join(sorted(set(layers or []))),
-                     str(topic or "")),
+                    "VALUES (?, ?, ?, ?)", [row] * int(n),
                 )
         except Exception:
-            pass
+            self.write_failures += int(n)
 
     def stats(self) -> dict[str, Any]:
         """Aggregate counters: per-action totals + which gate layer fired.

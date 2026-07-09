@@ -113,7 +113,7 @@ _DASHBOARD_HTML = """<!doctype html>
       <div class="card rejected"><div class="n" id="n-rejected">0</div>
         <div class="l">writes rejected (not stored)</div></div>
       <div class="card abstained"><div class="n" id="n-abstained">0</div>
-        <div class="l">honest &ldquo;I don't know&rdquo; answers</div></div>
+        <div class="l">honest &ldquo;I don't know&rdquo; (explain events)</div></div>
     </div>
     <div class="card wide"><h2>Gate layers that fired</h2><div id="layers"></div></div>
     <div class="card wide"><h2>Live facts by status</h2><div id="store"></div></div>

@@ -89,6 +89,15 @@ def test_filter_handles_missing_updated_at():
     assert filter_conversations(convs, match="t") == convs
 
 
+def test_invalid_since_raises_instead_of_matching_nothing(export_file):
+    """Review B1: '--since July 2026' invalido escludeva TUTTO in silenzio —
+    l'utente concludeva 'non ho conversazioni recenti'. Un filtro non
+    parsabile deve FALLIRE FORTE, non mentire."""
+    convs = list_conversations(export_file)
+    with pytest.raises(ValueError, match="since"):
+        filter_conversations(convs, since="July 2026")
+
+
 def test_chatgpt_rows_have_project_none(tmp_path):
     """Formato chatgpt: il campo project esiste nella riga (None) — le UI a
     valle iterano chiavi uniformi, mai KeyError cross-formato."""

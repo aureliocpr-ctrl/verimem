@@ -988,3 +988,22 @@ LOST on the detector task (Qwen3-0.6B best config 0.925 vs e5 1.000). The
 question "is a newer embedder better for general retrieval quality" stays
 open as a separate, evidence-gated track (prior finding iter30: 4 encoders
 within 3pp on EN e2e = intrinsic cap).
+
+**UPDATE 2026-07-09 (adversarial review round on L1.20 — found real, fixed).**
+An independent adversarial review (real model, held-out sentences) falsified
+the original "0 FP" claim: it held only ON the calibration set. Confirmed
+held-out false positives: questions ("does the deployment work?"), reported
+speech ("il cliente dice che il loro sistema funziona"), and honest failure
+admissions in de/zh — e5 is nearly blind to negation and attribution markers,
+so no threshold separates them in embedding space. Fix is structural, not a
+threshold tweak: SYNTACTIC phenomena get deterministic pre-embedding guards
+(question marks across scripts; a 10-language negation guard with a
+negation-of-a-negative exception — "no errors" stays hype; reported-speech
+markers), while the embedding dual-check keeps only the SEMANTIC job
+(hype-shape). Anchors are purely neutral-factual again — same-vocabulary
+"honest" anchors had compressed the zh/ja hype delta without separating.
+Post-fix, real write path: hype flagged 10/10 languages, held-out false
+positives 0/14 (negations, reported speech, questions, deploy-adjacent
+facts), gate regression 45/45. The honest phrasing is now: 0 FP on
+calibration AND on the review's held-out set — with questions, negations and
+attributed claims excluded by design, not by luck.

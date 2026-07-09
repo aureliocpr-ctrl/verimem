@@ -142,7 +142,9 @@ def filter_conversations(
     ``since``   — keep rows with ``updated_at`` >= the given date. Accepts the
                   ISO strings of claude exports and the epoch floats of chatgpt
                   exports; rows WITHOUT a date are excluded (we cannot claim
-                  they are recent), never a crash;
+                  they are recent), never a crash. An UNPARSEABLE ``since``
+                  raises ValueError (review 2026-07-09 B1: it used to match
+                  NOTHING silently — a filter must fail loud, not lie);
     ``project`` — exact (case-insensitive) project name, claude exports only.
 
     An explicit filter is itself a consent statement: the CLI's
@@ -168,9 +170,13 @@ def filter_conversations(
         out = [c for c in out if needle in str(c.get("title") or "").lower()]
     if since:
         floor = _epoch(since)
+        if floor is None:
+            raise ValueError(
+                f"unparseable --since date: {since!r} — use ISO format "
+                f"(e.g. 2026-06-01) or an epoch timestamp")
         out = [c for c in out
                if (ts := _epoch(c.get("updated_at"))) is not None
-               and floor is not None and ts >= floor]
+               and ts >= floor]
     if project:
         want = project.lower()
         out = [c for c in out

@@ -101,12 +101,18 @@ class Memory:
                 raise ValueError(
                     "add(messages) needs an extraction llm: Memory(..., llm=...)")
             from .conversation_ingest import ingest_conversation
-            return ingest_conversation(
+            res = ingest_conversation(
                 self.semantic, content, llm=self.llm,
                 conversation_id=conversation_id or "sdk",
                 topic=topic if topic != "user" else "conversational/ingested",
                 asserted_at=asserted_at, embed="sync",
                 user_name=user_name)
+            # Review 2026-07-09 #1: the ingest path was INVISIBLE to the trust
+            # odometer while its facts showed up in the store — ledger and
+            # store contradicted each other inside one /v1/stats response.
+            # Count from the facts' FINAL stored status (post store-screens).
+            self._ledger_ingest_result(res, topic=topic)
+            return res
         text = (content or "").strip()
         if not text:
             return {"stored": False, "status": "empty", "warnings": [], "advice": "empty text"}
@@ -132,10 +138,21 @@ class Memory:
                     grounding_score=gate.grounding_score, asserted_at=asserted_at)
         if gate.action == "downgrade":
             fact.status = "quarantined"
-        self._record_trust(
-            "quarantined" if gate.action == "downgrade" else "admitted",
-            layers=_layers, topic=topic)
         self.semantic.store(fact, embed="sync")
+        # Review 2026-07-09 #2/#3: count AFTER store, from the fact's FINAL
+        # status — screens inside store() (injection screen: default ON) can
+        # flip a gate-persisted fact to quarantined, and the odometer must
+        # report what HAPPENED, not the gate's intention. Layer attribution
+        # only when a layer actually ACTED: gate downgrade -> its layers;
+        # store-screen flip -> "store-screen"; clean admit -> none (advisory
+        # warnings are in the add() response, not in by_layer).
+        if fact.status == "quarantined":
+            self._record_trust(
+                "quarantined",
+                layers=_layers if gate.action == "downgrade" else ["store-screen"],
+                topic=topic)
+        else:
+            self._record_trust("admitted", layers=None, topic=topic)
         return {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
@@ -229,15 +246,48 @@ class Memory:
         except Exception:
             pass
 
+    def _ledger_ingest_result(self, res: dict, *, topic: str) -> None:
+        """Count a conversation-ingest batch in the trust odometer, from the
+        FINAL stored status of each fact (screens inside store() included).
+        Fail-open: counting must never break the ingest that just succeeded."""
+        try:
+            ids = list(res.get("fact_ids") or [])
+            by_status: dict[str, int] = {}
+            if ids:
+                qmarks = ",".join("?" * len(ids))
+                with sqlite3.connect(str(self.semantic.db_path)) as con:
+                    for status, n in con.execute(
+                            f"SELECT status, COUNT(*) FROM facts "
+                            f"WHERE id IN ({qmarks}) GROUP BY status", ids):
+                        by_status[str(status)] = int(n)
+            n_quar = by_status.pop("quarantined", 0)
+            n_admitted = sum(by_status.values())
+            if n_quar:
+                self._ledger.record_many("quarantined", n_quar,
+                                         layers=["ingest"], topic=topic)
+            if n_admitted:
+                self._ledger.record_many("admitted", n_admitted, topic=topic)
+            n_rej = int(res.get("rejected") or 0)
+            if n_rej:
+                self._ledger.record_many("rejected", n_rej,
+                                         layers=["ingest"], topic=topic)
+        except Exception:
+            pass
+
     def trust_stats(self) -> dict[str, Any]:
         """The trust odometer: what the gate DID on this store, live.
 
         ``ledger`` — persistent per-action counters (admitted / quarantined /
-        rejected / abstained) with ``by_layer`` attribution; ``store`` — the
-        current live facts broken down by status. Honest naming by design:
-        these are observable gate actions, not a claim about how many
-        "hallucinations" they equal. Conversation-ingest facts pass the same
-        gate but are not ledgered yet (v2)."""
+        rejected / abstained), counted from each fact's FINAL stored status
+        (store-screens included) and covering the conversation-ingest path
+        too; ``by_layer`` attributes only layers that actually ACTED (advisory
+        warnings stay in the add() response). ``store`` — a SNAPSHOT of the
+        live facts by status (a quarantined fact later deleted leaves the
+        snapshot but stays in the cumulative ledger — different questions,
+        both honest). ``abstained`` counts explain() abstention EVENTS (not
+        deduped by query; plain search() misses are not abstentions).
+        ``ledger_write_failures`` — events this process dropped because the
+        ledger itself failed (fail-open stays, but visibly)."""
         out = self._ledger.stats()
         store: dict[str, int] = {}
         try:
@@ -249,6 +299,8 @@ class Memory:
         except Exception:
             pass
         out["store"] = store
+        out["ledger_write_failures"] = int(
+            getattr(self._ledger, "write_failures", 0) or 0)
         return out
 
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).

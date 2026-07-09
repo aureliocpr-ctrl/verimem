@@ -75,6 +75,43 @@ def test_epub_without_opf_falls_back_to_zip_scan(tmp_path):
     assert "Call me Ishmael." in text and "The voyage begins." in text
 
 
+def test_epub_percent_encoded_href_still_resolves(tmp_path):
+    """Adversarial review 2026-07-09 (A1): negli EPUB reali l'href del
+    manifest è una URI reference — 'Chapter%20one.xhtml' punta al membro zip
+    'Chapter one.xhtml'. Senza unquote il capitolo si perde IN SILENZIO nel
+    caso misto (alcuni href ascii risolvono, quello encoded no -> niente
+    fallback). Sigil/Calibre/InDesign producono esattamente questo."""
+    opf = """<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+  <manifest>
+    <item id="c1" href="Chapter%20one.xhtml" media-type="application/xhtml+xml"/>
+    <item id="c2" href="plain.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine><itemref idref="c1"/><itemref idref="c2"/></spine>
+</package>"""
+    book = tmp_path / "encoded.epub"
+    with zipfile.ZipFile(book, "w") as z:
+        z.writestr("mimetype", "application/epub+zip")
+        z.writestr("META-INF/container.xml", _CONTAINER)
+        z.writestr("OEBPS/content.opf", opf)
+        z.writestr("OEBPS/Chapter one.xhtml", _CH1)   # spazio nel nome reale
+        z.writestr("OEBPS/plain.xhtml", _CH2)
+    text = extract_text(book)
+    assert "Call me Ishmael." in text, "capitolo con href %20 perso"
+    assert "The voyage begins." in text
+    assert text.index("Call me Ishmael.") < text.index("The voyage begins.")
+
+
+def test_epub_fallback_includes_xml_content_documents(tmp_path):
+    """Review A3: EPUB imperfetto con capitoli .xml — il fallback deve
+    includerli, non ritornare stringa vuota."""
+    book = tmp_path / "xmlbook.epub"
+    with zipfile.ZipFile(book, "w") as z:
+        z.writestr("mimetype", "application/epub+zip")
+        z.writestr("OEBPS/ch1.xml", _CH1)  # niente container/OPF -> fallback
+    assert "Call me Ishmael." in extract_text(book)
+
+
 def test_epub_with_doctype_xml_is_not_parsed_as_xml(tmp_path):
     """Sicurezza (XXE / billion-laughs): container/OPF con DTD non vengono MAI
     passati al parser XML stdlib — EPUB legittimi non hanno DOCTYPE, quindi

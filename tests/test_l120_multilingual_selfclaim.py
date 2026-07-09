@@ -140,6 +140,96 @@ def test_gate_off_for_uncalibrated_model(monkeypatch):
     assert w is None
 
 
+def test_questions_are_never_selfclaims():
+    """Review 2026-07-09 (held-out FP): 'does the deployment work?' veniva
+    quarantenata — una DOMANDA non è mai una self-claim. Guardia sintattica
+    pre-embedding, multilingue (?, ？, ¿)."""
+    for q in ("does the deployment work in production?",
+              "i test passano tutti？",
+              "¿funciona el despliegue?"):
+        w = ssc.detect_semantic_selfclaim(q, verified_by=None,
+                                          _encode=_fake_encode)
+        assert w is None, f"domanda flaggata: {q!r}"
+
+
+def test_failure_admissions_skip_via_negation_guard():
+    """Review 2026-07-09 (negation-blindness): e5 mette 'funziona' e 'NON
+    funziona' a cosine ~0.95 — nessuna soglia li separa nello spazio. La
+    negazione è sintassi → guardia deterministica pre-embedding: le
+    ammissioni oneste di fallimento non arrivano mai al detector
+    (quarantenare l'onestà è il peggior falso positivo possibile)."""
+    for admission in (
+            "the deployment does not work yet, two tests are failing",
+            "il deployment non funziona ancora, due test falliscono",
+            "das Deployment funktioniert noch nicht",
+            "部署还不能正常工作",
+            "デプロイはまだ動作していません",
+            "развертывание пока не работает",
+            "النشر لا يعمل بعد"):
+        w = ssc.detect_semantic_selfclaim(admission, verified_by=None,
+                                          _encode=_fake_encode)
+        assert w is None, f"ammissione onesta flaggata: {admission!r}"
+
+
+def test_negation_of_a_negative_is_still_checked():
+    """'senza errori / no errors / keine Fehler' è hype CON una negazione —
+    l'eccezione della guardia la lascia passare al detector semantico."""
+    assert not ssc._looks_negated("all tests pass with no errors")
+    assert not ssc._looks_negated("l'intera suite passa senza errori")
+    assert not ssc._looks_negated("läuft einwandfrei, keine Fehler")
+    assert ssc._looks_negated("the fix does not work")
+    assert ssc._looks_negated("il fix non funziona")
+
+
+def test_reported_speech_skips_via_guard():
+    """Review 2026-07-09 (held-out FP): 'il cliente dice che il loro sistema
+    funziona' è reported speech — un fatto legittimo su ciò che ALTRI
+    affermano. Il marcatore di attribuzione è quasi invisibile per e5
+    (stesso finding della negazione) → guardia deterministica, non àncora."""
+    for reported in (
+            "the vendor claims their integration is fully validated",
+            "il cliente dice che il loro sistema funziona perfettamente",
+            "der Kunde sagt, ihr System funktioniere einwandfrei",
+            "供应商声称他们的系统运行完美",
+            "according to the report, everything works"):
+        w = ssc.detect_semantic_selfclaim(reported, verified_by=None,
+                                          _encode=_fake_encode)
+        assert w is None, f"reported speech flaggato: {reported!r}"
+
+
+@pytest.mark.skipif(
+    os.environ.get("ENGRAM_RUN_MODEL_TESTS") != "1",
+    reason="opt-in: carica il modello e5 reale (ENGRAM_RUN_MODEL_TESTS=1)")
+def test_real_e5_held_out_negatives_pass(monkeypatch):
+    """I falsi positivi held-out della review, col modello vero: negazioni,
+    reported speech, domande, fatti deploy-adjacent nuovi — NESSUNO deve
+    essere flaggato dopo il fix."""
+    from sentence_transformers import SentenceTransformer
+    model = SentenceTransformer("intfloat/multilingual-e5-base")
+
+    def enc(x):
+        return model.encode(x if isinstance(x, str) else list(x),
+                            normalize_embeddings=True, show_progress_bar=False)
+
+    monkeypatch.setattr(ssc, "_active_model",
+                        lambda: "intfloat/multilingual-e5-base")
+    ssc._reset_matrices_for_tests()
+    held_out = [
+        "the deployment does not work yet, two tests are failing",
+        "il deployment non funziona ancora, due test falliscono",
+        "das Deployment funktioniert noch nicht, zwei Tests schlagen fehl",
+        "部署还不能正常工作，有两个测试失败了",
+        "the vendor claims their integration is fully validated",
+        "il cliente dice che il loro sistema funziona perfettamente",
+        "does the deployment work in production?",
+        "we deploy every Friday at noon after the standup",
+        "il server di staging viene aggiornato ogni notte alle 3",
+    ]
+    flagged = [t for t in held_out
+               if ssc.detect_semantic_selfclaim(t, verified_by=None, _encode=enc)]
+    assert not flagged, f"falsi positivi held-out: {flagged}"
+
+
 @pytest.mark.skipif(
     os.environ.get("ENGRAM_RUN_MODEL_TESTS") != "1",
     reason="opt-in: carica il modello e5 reale (ENGRAM_RUN_MODEL_TESTS=1)")

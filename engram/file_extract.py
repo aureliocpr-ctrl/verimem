@@ -123,7 +123,14 @@ def _extract_epub(p: Path) -> str:
                 if ref.tag.endswith("itemref"):
                     href = hrefs.get(ref.get("idref"))
                     if href:
-                        full = posixpath.normpath(posixpath.join(base, href))
+                        # review 2026-07-09 (A1): manifest hrefs are URI
+                        # references — 'Chapter%20one.xhtml' names the zip
+                        # member 'Chapter one.xhtml' (Sigil/Calibre/InDesign
+                        # percent-encode). Without unquote the chapter is
+                        # silently dropped in the mixed case.
+                        from urllib.parse import unquote
+                        full = posixpath.normpath(
+                            posixpath.join(base, unquote(href)))
                         if full in names:
                             docs.append(full)
             return docs
@@ -132,9 +139,13 @@ def _extract_epub(p: Path) -> str:
             docs = spine_docs()
         except Exception:
             docs = []
-        if not docs:  # fallback: every markup file, name order
+        if not docs:  # fallback: every markup file, name order (.xml too —
+            # review A3: some EPUBs ship content documents as .xml)
             docs = sorted(n for n in names
-                          if n.lower().endswith((".xhtml", ".html", ".htm")))
+                          if n.lower().endswith(
+                              (".xhtml", ".html", ".htm", ".xml"))
+                          and not n.lower().endswith("container.xml")
+                          and not n.lower().endswith(".opf"))
         parts = []
         for name in docs:
             soup = BeautifulSoup(
