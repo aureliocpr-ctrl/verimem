@@ -392,12 +392,19 @@ def gateway_serve(
         from .gateway import create_app
     except ImportError:
         console.print("[red]the gateway needs fastapi+uvicorn[/red] — "
-                      "pip install 'verimem[dashboard]'")
+                      "pip install 'verimem[server]'")
         raise typer.Exit(1)
     dd = _gateway_data_dir(data_dir)
-    app_ = create_app(data_dir=dd, rate_limit_per_minute=rate_limit)
+    # control plane: la admin key arriva SOLO da env (mai flag = mai nella
+    # shell history). Senza, gli endpoint /admin/* non esistono.
+    admin_key = os.environ.get("VERIMEM_ADMIN_KEY", "").strip() or None
+    app_ = create_app(data_dir=dd, rate_limit_per_minute=rate_limit,
+                      admin_key=admin_key)
     console.print(f"[green]verimem gateway[/green] on http://{host}:{port} "
                   f"(data: {dd})")
+    console.print("[cyan]admin API:[/cyan] "
+                  + ("ON (/admin/tenants, /admin/stats)" if admin_key
+                     else "off — set VERIMEM_ADMIN_KEY to enable"))
     if host not in ("127.0.0.1", "localhost", "::1"):
         console.print("[yellow]non-loopback bind:[/yellow] put a TLS "
                       "reverse-proxy (nginx/caddy) in front for remote use")

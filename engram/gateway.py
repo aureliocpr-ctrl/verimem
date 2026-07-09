@@ -150,9 +150,70 @@ class _TenantMemories:
             return mem
 
 
+class _Metering:
+    """Contatori d'uso per tenant, persistiti accanto alle chiavi.
+
+    Il ponte 'software → servizio': senza contatori non si fattura e non si
+    vedono gli abusi. UPSERT per giorno/tenant (single-node, Fase 1); include
+    le trust-metrics che nessun competitor espone: scritture ammesse vs
+    rifiutate dal gate."""
+
+    _SCHEMA = """
+    CREATE TABLE IF NOT EXISTS gateway_usage (
+        tenant_id TEXT NOT NULL,
+        day       TEXT NOT NULL,
+        requests  INTEGER NOT NULL DEFAULT 0,
+        reads     INTEGER NOT NULL DEFAULT 0,
+        writes    INTEGER NOT NULL DEFAULT 0,
+        stored_ok INTEGER NOT NULL DEFAULT 0,
+        rejected  INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (tenant_id, day)
+    );
+    """
+
+    def __init__(self, db_path: Path) -> None:
+        self.db_path = db_path
+        with sqlite3.connect(self.db_path, timeout=10.0) as conn:
+            conn.executescript(self._SCHEMA)
+
+    def bump(self, tenant_id: str, *, reads: int = 0, writes: int = 0,
+             stored_ok: int = 0, rejected: int = 0) -> None:
+        day = time.strftime("%Y-%m-%d", time.gmtime())
+        try:
+            with sqlite3.connect(self.db_path, timeout=10.0) as conn:
+                conn.execute(
+                    "INSERT INTO gateway_usage "
+                    "(tenant_id, day, requests, reads, writes, stored_ok, rejected) "
+                    "VALUES (?, ?, 1, ?, ?, ?, ?) "
+                    "ON CONFLICT(tenant_id, day) DO UPDATE SET "
+                    "requests = requests + 1, reads = reads + excluded.reads, "
+                    "writes = writes + excluded.writes, "
+                    "stored_ok = stored_ok + excluded.stored_ok, "
+                    "rejected = rejected + excluded.rejected",
+                    (tenant_id, day, reads, writes, stored_ok, rejected))
+                conn.commit()
+        except sqlite3.Error:  # noqa: PERF203 — metering must never break serving
+            pass
+
+    def totals(self) -> dict[str, dict[str, int]]:
+        with sqlite3.connect(self.db_path, timeout=10.0) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT tenant_id, SUM(requests) requests, SUM(reads) reads, "
+                "SUM(writes) writes, SUM(stored_ok) stored_ok, "
+                "SUM(rejected) rejected FROM gateway_usage GROUP BY tenant_id",
+            ).fetchall()
+        return {r["tenant_id"]: {k: int(r[k] or 0) for k in
+                                 ("requests", "reads", "writes",
+                                  "stored_ok", "rejected")}
+                for r in rows}
+
+
 def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                llm: Any = None, grounding_llm: Any = None,
-               rate_limit_per_minute: int = 0):
+               rate_limit_per_minute: int = 0,
+               admin_key: str | None = None,
+               max_body_bytes: int = 1_048_576):
     """Costruisce l'app FastAPI del gateway. ``keys`` iniettabile (test);
     default: ``<data_dir>/gateway_keys.db``.
 
@@ -160,15 +221,36 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     finestra scorrevole di 60s — oltre, 429 con ``Retry-After``. In-memory
     per processo (Fase 1 del design datacenter: single-node; il limite
     distribuito è Fase 2+). Ogni chiave ha il suo bucket: il consumo di un
-    tenant non tocca gli altri. ``/v1/health`` non è mai limitato (liveness)."""
+    tenant non tocca gli altri. ``/v1/health`` non è mai limitato (liveness).
+
+    ``admin_key`` (None = default): SENZA, gli endpoint ``/admin/*`` non
+    esistono — un gateway senza control plane è byte-identico a prima. CON,
+    il control plane HTTP si accende: provisioning tenant remoto
+    (``POST /admin/tenants``) e stats con metering per tenant
+    (``GET /admin/stats``) — il ponte per offrire il servizio online senza
+    SSH sull'host. La admin key non è mai una chiave tenant.
+
+    ``max_body_bytes`` (1 MB default): 413 oltre il limite — anti-DoS sul
+    data plane."""
     if FastAPI is None:  # pragma: no cover
         raise ImportError(
-            "the gateway needs fastapi — pip install 'verimem[dashboard]'"
+            "the gateway needs fastapi — pip install 'verimem[server]'"
         ) from _FASTAPI_IMPORT_ERROR
     data_dir = Path(data_dir)
     keys = keys or GatewayKeys(data_dir / "gateway_keys.db")
     tenants = _TenantMemories(data_dir, llm=llm, grounding_llm=grounding_llm)
+    meter = _Metering(keys.db_path)
+    _started_at = time.time()
     app = FastAPI(title="Verimem gateway", docs_url=None, redoc_url=None)
+
+    @app.middleware("http")
+    async def _body_limit(request, call_next):
+        cl = request.headers.get("content-length")
+        if cl and cl.isdigit() and int(cl) > max_body_bytes:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(status_code=413, content={
+                "detail": f"body too large (max {max_body_bytes} bytes)"})
+        return await call_next(request)
 
     _buckets: dict[str, list[float]] = {}
     _buckets_lock = threading.Lock()
@@ -219,7 +301,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                        "single verified facts work without it",
             )
         try:
-            return mem.add(
+            res = mem.add(
                 content,
                 topic=body.get("topic", "user"),
                 source=body.get("source"),
@@ -231,7 +313,12 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                 user_name=body.get("user_name"),
             )
         except ValueError as exc:
+            meter.bump(tenant_id, writes=1, rejected=1)
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        meter.bump(tenant_id, writes=1,
+                   stored_ok=1 if res.get("stored") else 0,
+                   rejected=0 if res.get("stored") else 1)
+        return res
 
     @app.get("/v1/search")
     def search(q: str = Query(...), k: int = Query(default=5, ge=1, le=100),
@@ -240,17 +327,21 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         hits = tenants.get(tenant_id).search(
             q, k=k, deep=deep, as_of=as_of, with_history=with_history)
+        meter.bump(tenant_id, reads=1)
         return {"hits": hits}
 
     @app.get("/v1/explain")
     def explain(q: str = Query(...), k: int = Query(default=5, ge=1, le=100),
                 as_of: float | None = None,
                 tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
-        return tenants.get(tenant_id).explain(q, k=k, as_of=as_of)
+        report = tenants.get(tenant_id).explain(q, k=k, as_of=as_of)
+        meter.bump(tenant_id, reads=1)
+        return report
 
     @app.get("/v1/memories/{fact_id}")
     def get_memory(fact_id: str, tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         item = tenants.get(tenant_id).get(fact_id)
+        meter.bump(tenant_id, reads=1)
         if item is None:
             raise HTTPException(status_code=404, detail="fact not found")
         return item
@@ -260,7 +351,40 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                       tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         removed = tenants.get(tenant_id).delete(
             fact_id, purge_history=purge_history)
+        meter.bump(tenant_id, writes=1)
         return {"removed": bool(removed)}
+
+    # ---- control plane (/admin/*) — esiste SOLO con una admin key --------
+    if admin_key:
+        def _admin(x_admin_key: str | None = Header(default=None)) -> None:
+            if not (x_admin_key and
+                    secrets.compare_digest(x_admin_key, admin_key)):
+                raise HTTPException(status_code=401,
+                                    detail="invalid or missing admin key")
+
+        @app.post("/admin/tenants")
+        def create_tenant(body: dict, _: None = Depends(_admin)) -> dict[str, Any]:
+            """Provisioning remoto: tenant + chiave via HTTP (non SSH).
+            La chiave si vede UNA volta, qui — hash-only a riposo."""
+            try:
+                api_key = keys.create(
+                    tenant_id=str(body.get("tenant_id", "")),
+                    name=str(body.get("name", "")))
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            return {"tenant_id": body.get("tenant_id"), "api_key": api_key}
+
+        @app.get("/admin/stats")
+        def stats(_: None = Depends(_admin)) -> dict[str, Any]:
+            """Uso per tenant + le trust-metrics che nessun competitor
+            espone (scritture ammesse vs rifiutate dal gate)."""
+            usage = meter.totals()
+            known = {k["tenant_id"] for k in keys.list()}
+            for t in known:
+                usage.setdefault(t, {"requests": 0, "reads": 0, "writes": 0,
+                                     "stored_ok": 0, "rejected": 0})
+            return {"uptime_s": round(time.time() - _started_at, 1),
+                    "n_tenants": len(usage), "tenants": usage}
 
     return app
 
