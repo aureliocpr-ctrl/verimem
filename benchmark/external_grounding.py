@@ -120,7 +120,13 @@ def auroc(pos_scores: list[float], neg_scores: list[float]) -> float:
 
 def evaluate(pairs: list[dict[str, Any]], score_fn: ScoreFn,
              threshold: float) -> dict[str, Any]:
-    """Score every pair; verdict = production thresholding (admit iff ≥ τ)."""
+    """Score every pair; verdict = production thresholding (admit iff ≥ τ).
+
+    Beyond the point metric the report carries the full threshold CURVE and a
+    TNR-targeted self-calibrated threshold — the OOD run (TruthfulQA dev,
+    2026-07-10: TPR 0.32 at the HaluMem-calibrated 99.64, AUROC 0.88) showed
+    the same law as the read-path floor: fixed constants don't transfer
+    across distributions, score-relative calibration does."""
     pos, neg = [], []
     per_category: dict[str, dict[str, int]] = {}
     n_identity = 0
@@ -138,6 +144,23 @@ def evaluate(pairs: list[dict[str, Any]], score_fn: ScoreFn,
         else:
             cat["neg"] += 1
             cat["neg_ok"] += int(s < threshold)
+
+    def _point(t: float) -> dict[str, float]:
+        return {"threshold": round(t, 4),
+                "tpr": round(sum(s >= t for s in pos) / len(pos), 4) if pos else 0.0,
+                "tnr": round(sum(s < t for s in neg) / len(neg), 4) if neg else 0.0}
+
+    curve = [_point(t) for t in (50, 70, 80, 85, 90, 95, 97, 99, threshold)]
+    # Self-calibrated threshold at a declared safety target: the quantile of
+    # the NEGATIVE scores that keeps TNR ≥ 0.95 — same medicine as the
+    # read-path noise floor, applied to the judge. Labels of the eval split
+    # are NOT used at deploy time: in production the negatives band comes
+    # from adversarial/scrambled claims, this measures the principle.
+    tnr_target = None
+    if neg:
+        srt = sorted(neg)
+        idx = min(len(srt) - 1, max(0, round(0.95 * (len(srt) - 1))))
+        tnr_target = _point(srt[idx] + 1e-9)
     return {
         "n_pos": len(pos), "n_neg": len(neg),
         "n_identity_pos": n_identity,
@@ -145,6 +168,10 @@ def evaluate(pairs: list[dict[str, Any]], score_fn: ScoreFn,
         "tnr": round(sum(s < threshold for s in neg) / len(neg), 4) if neg else 0.0,
         "auroc": auroc(pos, neg),
         "threshold": threshold,
+        "threshold_curve": curve,
+        "tnr95_selfcal": tnr_target,
+        "scores": {"pos": [round(s, 3) for s in pos],
+                   "neg": [round(s, 3) for s in neg]},
         "per_category": per_category,
     }
 
