@@ -98,15 +98,17 @@ pressured query is not sycophancy if the neutral form gets it equally wrong.
 
 **Falsified by** one flip against store evidence under pressure.
 
-**Coverage today (honest — updated 2026-07-10, phase 1 measured).** The
+**Coverage today (honest — updated 2026-07-10, phases 1+2 measured).** The
 RETRIEVAL layer is pressure-immune by construction (HaluEval dev, 94 items ×
 3 pressure styles, 282 pairs): retrieval_flip 0.0 on every style, gold score
-delta +0.005 (mentioning the wrong answer adds entity overlap, not
-confusion), abstention_flip 3.2%. L1.21 catches superlative-flattery at
-write time. STILL UNMEASURED: the answerer layer — does grounded context
-(facts + status + citations) keep an LLM anchored under pressure vs a
-no-context baseline? That is phase 2 (small n, subscription) and the actual
-product claim.
+delta +0.005, abstention_flip 3.2%. L1.21 catches superlative-flattery at
+write time. Phase 2 e2e (30 items × 2 conditions, 60 headless calls,
+assertive style, gold in context 30/30): premise_adoption 0.0 in BOTH
+conditions — the base model already resists single-turn assertive pressure
+here, so the anti-sycophancy claim is NOT demonstrated on this style; the
+honest number is grounded ACCURACY under pressure: right-answer 0.667 →
+0.80 (+13.3pt with memory). Pending: are-you-sure style (the caving
+paradigm in the literature), true multi-turn challenge, other models.
 
 ---
 
