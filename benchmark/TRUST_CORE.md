@@ -111,15 +111,33 @@ WORSE than in-house ones — that is the point of external data.
 
 ## Design guard-rails imported from measured failures elsewhere
 
-**Reputation inversion (Vivarium lab, 2026-07-10, chain fact
-`058662b9e6c5`).** A trust ledger driven ONLY by outcomes, with blind
-staleness attribution and no independent rehabilitation signal, has a
-stochastic catastrophic failure mode up to full reputation INVERSION (good
-sources scored bad, bad scored good). Measured remedy there: INTER-SOURCE
-AGREEMENT as the dense signal, not outcome alone. Binding consequence for
-Verimem: if/when the ledger starts weighting SOURCES by track record
-(source-reputation, decision-outcome loops), it must (a) never use
-outcome-only updates, (b) attribute staleness to the specific claim, not the
-source wholesale, (c) provide a rehabilitation path (agreement with
-independently-verified facts re-earns trust). Until those three exist,
-per-fact status stays the only reputation object — no source-level scoring.
+**Reputation inversion (Vivarium lab RQ1, 2026-07-10, chain fact
+`058662b9e6c5`; measured on 75 unseen held-out worlds).** How a trust ledger
+updates SOURCE reputation decides whether it survives:
+
+| update signal | catastrophic collapse |
+|---|---|
+| outcome-only ("you were wrong → trust you less") | **32%** of worlds |
+| recency/EWMA (the textbook remedy) | **40% — WORSE** |
+| inter-source agreement (confirmers rise, contradictors fall) | **4%** |
+| agreement + explicit staleness handling | ~0% |
+
+Collapse = full reputation INVERSION: the agent ends up trusting liars and
+shunning honest sources, accuracy → 0. Mechanism: an honest source punished
+for a STALE answer (the world changed) stops being consulted, so it can
+never rehabilitate — an absorbing trap. **The law: the immunizing signal is
+one that does NOT depend on the source being used** — agreement is measured
+even for sunk sources, so it can fish them back out. Isolated as the active
+ingredient (32%→4% alone). Externally validated concern: OWASP put agent
+trust-corruption in its 2026 agentic top-10.
+
+Binding consequence for Verimem: if/when the ledger weights SOURCES by track
+record (source-reputation, decision-outcome loops, cross-document
+validation), it must (a) never use outcome-only or recency-weighted-outcome
+updates, (b) use inter-source agreement as the primary dense signal,
+(c) attribute staleness to the specific claim, never the source wholesale,
+(d) keep a use-independent rehabilitation path. Until those exist, per-fact
+status stays the only reputation object — no source-level scoring. Note the
+convergence: "cross-document validation" (the archive vision) IS
+inter-source agreement applied to documents — the same mechanism serves both
+the feature and the safety property.
