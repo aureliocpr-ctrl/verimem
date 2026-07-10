@@ -1,7 +1,11 @@
 # Decision chain — decisions as first-class, explainable memory objects
 
-Status: DESIGN (task #15, mandate Aurelio 2026-07-10). Implementation AFTER
-the trust-core block. Deliberately reuses existing bricks — no new subsystem.
+Status: SHIPPED (task #15, 2026-07-10). Chose storage option B (isolated
+sibling store, the documents.py pattern) — the facts table has no free-form
+metadata column and a decision CITES facts rather than being one.
+`engram/decision_chain.py` + `Memory.record_decision / decision_outcome /
+why_decision` (commits bf451f9, 57d2f3c). Dogfood-verified end-to-end on
+today's real decisions. Remaining polish: gateway/console UI exposure.
 
 ## Why
 
