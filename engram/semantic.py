@@ -1584,6 +1584,45 @@ def _reranker_ready() -> bool:
     return _RERANKER is not None
 
 
+# --- Rerank circuit-breaker (task #16, 2026-07-10) ---------------------------
+# Observed on the external read-path runs: on a loaded CPU the CE predict
+# exceeds the budget on EVERY query — each recall then pays the full budget in
+# wasted wall-clock and keeps bi-encoder order anyway. Systematic overruns are
+# a session property, not per-query bad luck: after N CONSECUTIVE overruns the
+# CE is disabled for this process (explicit log, one line) and recall stops
+# waiting. A successful in-budget rerank resets the count, so transient
+# contention never disables the measured R@1 lift permanently.
+_RERANK_BREAKER: dict[str, Any] = {"consecutive": 0, "tripped": False}
+
+
+def _rerank_breaker_n() -> int:
+    """Consecutive overruns that trip the breaker. 0 disables the breaker.
+    Env ENGRAM_RERANK_BREAKER_N, default 5."""
+    try:
+        return max(0, int(os.environ.get("ENGRAM_RERANK_BREAKER_N", "5")))
+    except ValueError:
+        return 5
+
+
+def _rerank_breaker_reset() -> None:
+    """Re-arm the breaker (tests; model/env swap at runtime)."""
+    _RERANK_BREAKER["consecutive"] = 0
+    _RERANK_BREAKER["tripped"] = False
+
+
+def _rerank_breaker_overrun() -> None:
+    _RERANK_BREAKER["consecutive"] += 1
+    n = _rerank_breaker_n()
+    if n and not _RERANK_BREAKER["tripped"] \
+            and _RERANK_BREAKER["consecutive"] >= n:
+        _RERANK_BREAKER["tripped"] = True
+        _LOG.warning(
+            "rerank breaker TRIPPED after %d consecutive budget overruns — "
+            "CE rerank disabled for this process (bi-encoder order stands; "
+            "restart or _rerank_breaker_reset() to re-arm)", n,
+        )
+
+
 def _rerank_cold_budget_s() -> float:
     """Wall-clock budget for a rerank attempt while the CE is still COLD-loading.
     Much smaller than the steady budget: a cold query must not pay the full ~3s
@@ -3117,6 +3156,8 @@ class SemanticMemory:
         skipped — not even loaded — and the bi-encoder order stands.
         """
         from .cross_encoder_rerank import rerank_candidates
+        if _RERANK_BREAKER["tripped"]:
+            return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]
         tail = hits_2t[len(pool):]
         _cap = _rerank_max_doc_chars()
@@ -3175,10 +3216,12 @@ class SemanticMemory:
                     "rerank exceeded %.1fs budget → keeping bi-encoder order "
                     "(CE warming in background; next query reranks)", _budget,
                 )
+                _rerank_breaker_overrun()
                 return hits_2t[:k]
             if "err" in _box:
                 return hits_2t[:k]  # scorer error → bi-encoder order
             ranked = _box.get("ranked")
+            _RERANK_BREAKER["consecutive"] = 0  # in-budget → transient, re-arm
         if not ranked:
             return hits_2t[:k]
         reordered = [by_id[fid] for fid, _ce in ranked if fid in by_id]
