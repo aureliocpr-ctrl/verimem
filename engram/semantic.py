@@ -2260,10 +2260,15 @@ class SemanticMemory:
                 # maintenance.py --nli). None -> lexical heuristic (unchanged default).
                 _auto = _reconcile_auto_supersede_enabled()
                 _strict, _tiered = _reconcile_evidence_policy(_auto)
-                self.reconcile_new_fact(
+                _res = self.reconcile_new_fact(
                     fact, judge=getattr(self, "_reconcile_judge", None),
                     auto_supersede=_auto,
                     require_evidence=_strict, protect_evidenced=_tiered)
+                # task #20b: a supersession feeds the source-trust outcome
+                # channel (age-attenuated) — flag-gated, best-effort inside.
+                from .source_trust import observe_supersessions
+                observe_supersessions(
+                    self, (_res or {}).get("superseded") or [])
             except Exception as exc:  # noqa: BLE001 — reconcile must never break store
                 _LOG.warning("reconcile-on-write failed (ignored): %s", exc)
         # Cycle #116 (2026-05-17): optional post-store coherence hook.

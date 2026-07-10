@@ -198,6 +198,57 @@ def stale_weight(age_s: float, *, half_life_s: float) -> float:
     return max(_STALE_WEIGHT_FLOOR, 0.5 ** (age_s / half_life_s))
 
 
+def half_life_s() -> float:
+    """The world's value half-life for outcome attenuation.
+    Env ENGRAM_SOURCE_TRUST_HALF_LIFE_DAYS, default 7 days."""
+    try:
+        days = float(os.environ.get("ENGRAM_SOURCE_TRUST_HALF_LIFE_DAYS", "7"))
+    except ValueError:
+        days = 7.0
+    return max(0.0, days) * 86400.0
+
+
+def observe_supersessions(sm, superseded_ids: list[str], *,
+                          now: float | None = None) -> None:
+    """Production loop closure (task #20b): a SUPERSEDED fact's source takes
+    an outcome=False observation attenuated by the fact's age — an old fact
+    being superseded is mostly the world moving (light blame), a fresh one
+    blames the source more (attribution law L3, stale_weight #18b).
+    Contested facts feed NOTHING: ambiguous conflicts punish no one.
+    Best-effort and flag-gated; called from the store's reconcile path."""
+    if not enabled() or not superseded_ids:
+        return
+    import json as _json
+    now = now or time.time()
+    hl = half_life_s()
+    book = load_book(sm.db_path)
+    changed = False
+    # direct SQL: by the time this hook runs the fact IS superseded, and the
+    # store's get() hides superseded facts — read the row, not the API view.
+    try:
+        with sqlite3.connect(str(sm.db_path)) as conn:
+            for fid in superseded_ids:
+                row = conn.execute(
+                    "SELECT verified_by, asserted_at, created_at FROM facts "
+                    "WHERE id=?", (fid,)).fetchone()
+                if row is None:
+                    continue
+                try:
+                    vb = _json.loads(row[0]) if row[0] else []
+                except (TypeError, ValueError):
+                    vb = []
+                src = canonical_source(vb)
+                ts = row[1] or row[2] or now
+                book.observe_outcome(
+                    src, good=False,
+                    weight=stale_weight(now - float(ts), half_life_s=hl))
+                changed = True
+    except sqlite3.Error:
+        return
+    if changed:
+        save_book(sm.db_path, book)
+
+
 # ---- persistence (the store's own SQLite, one small table) -------------------
 
 _TABLE_SQL = """CREATE TABLE IF NOT EXISTS source_trust (

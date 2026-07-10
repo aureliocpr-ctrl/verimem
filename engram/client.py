@@ -264,6 +264,15 @@ class Memory:
         report = build_trust_report(self.semantic, query, k=k, deep=deep,
                                     as_of=as_of, min_relevance=min_relevance)
         report["min_relevance"] = float(min_relevance)
+        # task #20a: dossier transparency — with source-trust on, every fact
+        # shows its SOURCE's two-channel trust, not just its own status.
+        from . import source_trust as _st
+        if _st.enabled():
+            book = self._source_trust_book()
+            for e in report.get("facts") or []:
+                src = _st.canonical_source(e.get("verified_by"))
+                e["source_trust"] = {"source": src,
+                                     "trust": round(book.trust(src), 4)}
         if report.get("abstained"):
             # honest-"I don't know" counter — the read-path half of the odometer
             self._record_trust("abstained")
