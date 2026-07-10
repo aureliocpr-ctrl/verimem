@@ -11,6 +11,34 @@ recalls WITH provenance, and defends the truth (contradictions, staleness,
 poisoning, hallucination). So the surface is not just "does recall work" but
 "does every PROMISE hold on every INPUT for every USER".
 
+## Unifying principle (thesis, 2026-07-10) — CLASSIFY BEFORE ACTING
+
+Every fall this session, and the prior laws, collapse into one shape:
+**Verimem 1.0 was a straight pipe (input → one embedding → one gate → one
+recall, all inputs treated alike). The robust engine is a SWITCHBOARD: it
+classifies context, THEN acts.** Three symmetric layers, one idea:
+
+| layer | classify on | mechanism | status |
+|---|---|---|---|
+| write | PROVENANCE (whose claim: agent/doc/user) | `gate_router` | ✅ shipped (C2/C4) |
+| read | INTENT (find / count / exclude / traverse) | `query_intent` + `Memory.ask` | ✅ shipped (aggregation closed end-to-end: 12 not 5) |
+| threshold | SELF-NOISE (the store measures its own floor) | self-calibrating relevance floor | ✅ prior |
+
+Quality did not come from better components — it came from a context-aware
+meta-layer (the same shape as rule M1: the rule is constant, the WAY to honor
+it changes with context). Residual falls fit the frame: contradictions need a
+4th classifier (complementary-vs-conflicting = an NLI judge); multi-hop needs
+a traversal operation (graph). Negation/exclude is a set-difference the read
+router now FLAGS but doesn't yet execute (follow-up atom).
+
+**Business edge (falsifiable):** the F1 falls ARE the VeriBench axes. Everyone
+measures recall@k (we're at parity there). No competitor measures
+silent-data-loss, set-operation correctness (count/exclude), contradiction
+detection, or provenance-awareness — the exact dimensions we hardened tonight.
+To beat everyone "a priori" is to DEFINE the game on what trust actually needs.
+Falsify by running mem0 / engram-memory on these same probes and seeing if they
+fall where we now hold.
+
 ## Axis A — Verticals / personas (WHO)
 
 | vertical | core need | status | note |
