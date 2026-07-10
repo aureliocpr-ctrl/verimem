@@ -129,14 +129,36 @@ class Memory:
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode,
         )
-        _layers = sorted({str(w.get("layer", "")) for w in gate.warnings if w.get("layer")})
-        if gate.action == "reject":
+        warnings = list(gate.warnings)
+        action = gate.action
+        # Source-trust consultation (task #17, behind ENGRAM_SOURCE_TRUST=1,
+        # default OFF): a source whose persisted two-channel trust sits below
+        # the floor gets QUARANTINED (never rejected — quarantine is
+        # rehabilitable, and the consistency channel must be able to fish the
+        # source back out; TRUST_CORE.md guard-rail).
+        from . import source_trust as _st
+        if _st.enabled() and action == "persist":
+            _src = _st.canonical_source(verified_by)
+            _t = self._source_trust_book().trust(_src)
+            if _t < _st.threshold():
+                action = "downgrade"
+                warnings.append({
+                    "layer": "SOURCE_TRUST",
+                    "matched_text": _src,
+                    "advice": (
+                        f"source '{_src}' trust {_t:.2f} is below "
+                        f"{_st.threshold():.2f} — stored quarantined pending "
+                        "corroboration (confirmations by independent sources "
+                        "rehabilitate it)"),
+                })
+        _layers = sorted({str(w.get("layer", "")) for w in warnings if w.get("layer")})
+        if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
-            return {"stored": False, "status": "rejected", "warnings": list(gate.warnings),
+            return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at)
-        if gate.action == "downgrade":
+        if action == "downgrade":
             fact.status = "quarantined"
         self.semantic.store(fact, embed="sync")
         # Review 2026-07-09 #2/#3: count AFTER store, from the fact's FINAL
@@ -149,14 +171,14 @@ class Memory:
         if fact.status == "quarantined":
             self._record_trust(
                 "quarantined",
-                layers=_layers if gate.action == "downgrade" else ["store-screen"],
+                layers=_layers if action == "downgrade" else ["store-screen"],
                 topic=topic)
         else:
             self._record_trust("admitted", layers=None, topic=topic)
         return {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
-            "warnings": list(gate.warnings), "advice": gate.advice,
+            "warnings": warnings, "advice": gate.advice,
         }
 
     # ---- read --------------------------------------------------------------
@@ -246,6 +268,43 @@ class Memory:
             # honest-"I don't know" counter — the read-path half of the odometer
             self._record_trust("abstained")
         return report
+
+    # ---- source trust (task #17, behind ENGRAM_SOURCE_TRUST) ----------------
+
+    def _source_trust_book(self):
+        """Lazy-loaded persisted book (the store's own SQLite)."""
+        book = getattr(self, "_stb", None)
+        if book is None:
+            from .source_trust import load_book
+            book = self._stb = load_book(self.semantic.db_path)
+        return book
+
+    def source_trust_observe(self, *, confirmation: list[str] | None = None,
+                             contradiction: str | None = None,
+                             outcome: tuple[str, bool, float] | None = None,
+                             ) -> None:
+        """Feed the per-source book and persist it. ``confirmation`` = ≥2
+        distinct sources asserted the same accepted value; ``contradiction``
+        = this source contradicted an accepted value; ``outcome`` =
+        (source, good, weight) — weight<1 attenuates stale blame (task #18).
+        Automatic reconciliation hooks arrive with the mini-world step."""
+        from .source_trust import save_book
+        book = self._source_trust_book()
+        if confirmation:
+            book.observe_confirmation(confirmation)
+        if contradiction:
+            book.observe_contradiction(contradiction)
+        if outcome:
+            src, good, weight = outcome
+            book.observe_outcome(src, good=good, weight=weight)
+        save_book(self.semantic.db_path, book)
+
+    def source_trust(self, source: str) -> float:
+        """Combined (min-of-observed-channels) trust for ``source``."""
+        return self._source_trust_book().trust(source)
+
+    def consistency_trust(self, source: str) -> float:
+        return self._source_trust_book().consistency(source)
 
     _FLOOR_CACHE_TTL_S = 300.0
 

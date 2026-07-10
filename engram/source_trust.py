@@ -26,12 +26,54 @@ held-out reproduction on real VeriMem data).
 """
 from __future__ import annotations
 
+import os
+import re
+import sqlite3
+import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
-__all__ = ["SourceTrustBook"]
+__all__ = ["SourceTrustBook", "canonical_source", "enabled", "threshold",
+           "load_book", "save_book"]
 
 _NEUTRAL = 0.5
+
+# ---- gate wiring knobs (behind-flag, default OFF — TRUST_CORE.md guard-rail:
+# no default flip before the held-out reproduction on real VeriMem data) ------
+
+_TRUTHY = {"1", "true", "yes", "on"}
+
+
+def enabled() -> bool:
+    """ENGRAM_SOURCE_TRUST=1 turns the write-gate consultation on."""
+    return os.environ.get("ENGRAM_SOURCE_TRUST", "").strip().lower() in _TRUTHY
+
+
+def threshold() -> float:
+    """Below this trust the write is quarantined (never rejected — quarantine
+    is rehabilitable, rejection is not; the consistency channel must be able
+    to fish a source back out). Env ENGRAM_SOURCE_TRUST_MIN, default 0.25."""
+    try:
+        return float(os.environ.get("ENGRAM_SOURCE_TRUST_MIN", "0.25"))
+    except ValueError:
+        return 0.25
+
+
+_SOURCE_REF_RE = re.compile(r"^(?:source-doc|source|src|doc|file):([^:]+)",
+                            re.IGNORECASE)
+
+
+def canonical_source(verified_by: list[str] | None,
+                     fallback: str = "user") -> str:
+    """The reputation key for a write: the first source-like ref in
+    ``verified_by`` (``source-doc:X:...`` → ``X``), else ``fallback``."""
+    for ref in verified_by or []:
+        if isinstance(ref, str):
+            m = _SOURCE_REF_RE.match(ref.strip())
+            if m:
+                return m.group(1)
+    return fallback
 
 
 @dataclass
@@ -136,3 +178,52 @@ class SourceTrustBook:
                 good=float(row.get("good", 0.0)),
                 bad=float(row.get("bad", 0.0)))
         return book
+
+
+# ---- persistence (the store's own SQLite, one small table) -------------------
+
+_TABLE_SQL = """CREATE TABLE IF NOT EXISTS source_trust (
+    source TEXT PRIMARY KEY,
+    confirms REAL NOT NULL DEFAULT 0,
+    contradicts REAL NOT NULL DEFAULT 0,
+    good REAL NOT NULL DEFAULT 0,
+    bad REAL NOT NULL DEFAULT 0,
+    updated_at REAL NOT NULL
+)"""
+
+
+def load_book(db_path: str | Path) -> SourceTrustBook:
+    """Read the persisted book (empty book if the table is absent)."""
+    book = SourceTrustBook()
+    try:
+        with sqlite3.connect(str(db_path)) as conn:
+            conn.execute(_TABLE_SQL)
+            rows = conn.execute(
+                "SELECT source, confirms, contradicts, good, bad "
+                "FROM source_trust").fetchall()
+    except sqlite3.Error:
+        return book
+    for s, c, x, g, b in rows:
+        book._sources[s] = _Ledger(confirms=c, contradicts=x, good=g, bad=b)
+    return book
+
+
+def save_book(db_path: str | Path, book: SourceTrustBook) -> None:
+    """Upsert every ledger row. Best-effort: reputation persistence must
+    never break a write."""
+    now = time.time()
+    try:
+        with sqlite3.connect(str(db_path)) as conn:
+            conn.execute(_TABLE_SQL)
+            conn.executemany(
+                "INSERT INTO source_trust "
+                "(source, confirms, contradicts, good, bad, updated_at) "
+                "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(source) DO UPDATE SET "
+                "confirms=excluded.confirms, contradicts=excluded.contradicts,"
+                " good=excluded.good, bad=excluded.bad, "
+                "updated_at=excluded.updated_at",
+                [(s, led.confirms, led.contradicts, led.good, led.bad, now)
+                 for s, led in book._sources.items()])
+            conn.commit()
+    except sqlite3.Error:
+        pass
