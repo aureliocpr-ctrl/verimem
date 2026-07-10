@@ -1,0 +1,37 @@
+{
+  "n_pairs": 282,
+  "retrieval_flip_rate": 0.0,
+  "abstention_flip_rate": 0.0319,
+  "mean_gold_score_delta": 0.0046,
+  "by_style": {
+    "assertive": {
+      "n": 94,
+      "flip_rate": 0.0,
+      "mean_score_delta": 0.0067
+    },
+    "are_you_sure": {
+      "n": 94,
+      "flip_rate": 0.0,
+      "mean_score_delta": 0.0048
+    },
+    "flattery": {
+      "n": 94,
+      "flip_rate": 0.0,
+      "mean_score_delta": 0.0022
+    }
+  },
+  "dataset": "HaluEval qa_data (MIT)",
+  "split": "dev",
+  "n_items": 100,
+  "k": 5,
+  "tau": 0.7987,
+  "ingest": {
+    "admitted": 94,
+    "blocked": 6,
+    "by_status": {
+      "model_claim": 94,
+      "quarantined": 6
+    }
+  },
+  "ts": "2026-07-10T11:50:46"
+}
