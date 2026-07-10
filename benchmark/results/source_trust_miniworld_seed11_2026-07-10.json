@@ -62,5 +62,5 @@
     "v3_liar_still_low": true
   },
   "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) <= 0.5*wrong_liar(OFF) AND no inversion; stale component reported, ~unchanged expected",
-  "ts": "2026-07-10T15:17:34"
+  "ts": "2026-07-10T19:56:31"
 }

@@ -2260,15 +2260,19 @@ class SemanticMemory:
                 # maintenance.py --nli). None -> lexical heuristic (unchanged default).
                 _auto = _reconcile_auto_supersede_enabled()
                 _strict, _tiered = _reconcile_evidence_policy(_auto)
-                _res = self.reconcile_new_fact(
+                self.reconcile_new_fact(
                     fact, judge=getattr(self, "_reconcile_judge", None),
                     auto_supersede=_auto,
                     require_evidence=_strict, protect_evidenced=_tiered)
-                # task #20b: a supersession feeds the source-trust outcome
-                # channel (age-attenuated) — flag-gated, best-effort inside.
-                from .source_trust import observe_supersessions
-                observe_supersessions(
-                    self, (_res or {}).get("superseded") or [])
+                # NOTE (task #20b REVERTED, mini-world regression 2026-07-10):
+                # feeding supersessions into the source-trust OUTCOME channel
+                # is an attribution error (law L3). Under churn an honest
+                # source's fact is superseded by newer truth CONSTANTLY — that
+                # is the world moving, NOT the source lying. The hook made
+                # honest sources accumulate blame, sink, and get retro-demoted
+                # (mini-world stale 0.10 -> 1.00). Supersession must feed NO
+                # source penalty; the outcome channel needs an
+                # independent-verification signal, not a temporal one.
             except Exception as exc:  # noqa: BLE001 — reconcile must never break store
                 _LOG.warning("reconcile-on-write failed (ignored): %s", exc)
         # Cycle #116 (2026-05-17): optional post-store coherence hook.

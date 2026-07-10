@@ -1,21 +1,23 @@
-"""Source-trust polish (task #20 a+b) — TDD.
+"""Source-trust polish (task #20) — TDD.
 
 (a) dossier transparency: with the flag on, every fact in the explain()
     dossier carries its source's trust — the console/customer sees WHY a
     fact's writer is (dis)trusted, not just the fact's own status.
-(b) production loop closure: a SUPERSESSION observed by reconcile-on-write
-    feeds the outcome channel automatically — attenuated by the fact's age
-    (stale_weight, #18b): an old fact being superseded is the world moving,
-    a fresh one being superseded blames the source more. Contested facts
-    feed NOTHING (ambiguous, punish no one — guard-rail prudence).
+(c) rehabilitation: a source demoted below the floor records the exact facts
+    it demoted; when it recovers ABOVE the floor those return — never an
+    L1/L4 quarantine (content, not source).
+
+NOTE — task #20b (automatic supersession → outcome penalty) was REVERTED:
+feeding temporal supersessions into the outcome channel is an attribution
+error (law L3). Under churn an honest source's fact is superseded by newer
+truth constantly — the world moving, not the source lying — which sank
+honest sources (mini-world stale 0.10 → 1.00). Caught by the mini-world
+regression. The outcome channel needs an INDEPENDENT-VERIFICATION signal,
+not a temporal one.
 """
 from __future__ import annotations
 
-import time
-
 from engram.client import Memory
-
-DAY = 86400.0
 
 
 def _fresh(monkeypatch):
@@ -49,10 +51,10 @@ def test_explain_no_source_trust_when_disabled(tmp_path, monkeypatch):
 
 
 def test_retro_demoted_facts_rehabilitate_when_source_recovers(tmp_path, monkeypatch):
-    """Guard-rail rehabilitation path: a source demoted below the floor sinks
-    its facts (retro-demote); when independent confirmations lift it back
-    ABOVE the floor, ONLY the facts it demoted for source-trust return —
-    never a fact L1/L4 quarantined for its own content."""
+    """A source demoted below the floor sinks its facts (retro-demote); when
+    independent confirmations lift it back ABOVE the floor, ONLY the facts it
+    demoted for source-trust return — never a fact L1/L4 quarantined for its
+    own content."""
     _fresh(monkeypatch)
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
     mem = Memory(tmp_path / "m.db")
@@ -74,41 +76,3 @@ def test_retro_demoted_facts_rehabilitate_when_source_recovers(tmp_path, monkeyp
         "source-trust demotion must reverse when the source recovers")
     assert mem.semantic.get(r_l1["id"]).status == "quarantined", (
         "an L1-quarantined fact must NEVER be rehabilitated by source trust")
-
-
-def test_supersession_feeds_attenuated_outcome(tmp_path, monkeypatch):
-    """Unit + wiring: when store()'s reconcile supersedes an old fact, the
-    old fact's SOURCE gets an outcome=False observation whose weight is
-    attenuated by the fact's age (old fact → light blame)."""
-    _fresh(monkeypatch)
-    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
-    monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "1")
-    monkeypatch.setenv("ENGRAM_RECONCILE_AUTO_SUPERSEDE", "1")
-    mem = Memory(tmp_path / "m.db")
-    now = time.time()
-    r_old = mem.add("The access code of vault_9 is mm33nn.", topic="t",
-                    verified_by=["source-doc:alice:t0"],
-                    asserted_at=now - 14 * DAY)  # two half-lives old
-    old_id = r_old["id"]
-
-    # force the supersession outcome deterministically (the suite's embedding
-    # stub cannot produce similarity candidates — judged on the real embedder
-    # by the mini-world; here we test the OBSERVATION wiring)
-    from engram import semantic as sem
-
-    def _mock_reconcile(self, fact, **kw):
-        self.supersede(old_id, fact.id, reason="test")
-        return {"superseded": [old_id], "contested": []}
-
-    monkeypatch.setattr(sem.SemanticMemory, "reconcile_new_fact",
-                        _mock_reconcile)
-    mem.add("The access code of vault_9 is pp55qq.", topic="t",
-            verified_by=["source-doc:bob:t1"])
-
-    book = mem._source_trust_book()
-    led = book._sources.get("alice")
-    assert led is not None and led.bad > 0, "alice must carry outcome blame"
-    assert led.bad < 0.5, (
-        "a 14-day-old fact (2 half-lives, default 7d) must blame lightly "
-        f"— got {led.bad}")
-    assert "bob" not in book._sources or book._sources["bob"].bad == 0

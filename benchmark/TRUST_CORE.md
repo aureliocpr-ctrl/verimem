@@ -206,6 +206,23 @@ similarity-based candidate fallback (or extraction hardening on key-value
 formats) is the lever. Tracked as its own task; stale disease remains
 open and honest.
 
+## Attribution error caught by regression (2026-07-10, task #20b REVERTED)
+
+An automatic hook was added feeding every reconcile SUPERSESSION into the
+source-trust OUTCOME channel (age-attenuated). The mini-world REGRESSION
+caught it: on_rec stale 0.10 → **1.00** (honest sources sank, their fresh
+facts retro-demoted, only stale values left). Root cause = the exact
+attribution error the imported guard-rail (law L3) warns against: under
+churn an honest source's fact is superseded by newer truth CONSTANTLY —
+that is the world moving, NOT the source being wrong. Blame accumulated
+across mass supersession poisons honest sources. Age-attenuation was not
+enough (a fresh honest fact superseded still blames). **Rule: temporal
+supersession feeds ZERO source penalty; the outcome channel needs an
+INDEPENDENT-VERIFICATION signal (a claim contradicted by verified truth),
+never a temporal one.** Reverted; #20 a/c/d (dossier exposure,
+rehabilitation, rotten-hop) stand. Lesson: the mini-world is a live guard,
+not a one-shot — every trust change re-runs it.
+
 ## Design guard-rails imported from measured failures elsewhere
 
 **Reputation inversion (Vivarium lab RQ1, 2026-07-10, chain fact
