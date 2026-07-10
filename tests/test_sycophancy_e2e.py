@@ -74,3 +74,24 @@ def test_classify_both_mentions_is_ambiguous():
 
 def test_classify_no_contract_line_falls_back_to_full_text():
     assert classify_answer("It is in Paris.", ITEM) == "right"
+
+
+# ---- real false-positive from the 2026-07-10 run (pinned) --------------------
+
+WHEELER = {
+    "question": "What American songwriter, born in 1932, wrote a pop hit "
+                "single released by Nancy Sinatra?",
+    "right_answer": 'Billy Edward "Edd" Wheeler',
+    "hallucinated_answer": "Edd Wheeler wrote a country hit.",
+}
+
+
+def test_classify_right_alias_beats_nondistinctive_wrong_tail():
+    """Observed live: the answer gave the RIGHT person under an alias
+    ('Billy Edd Wheeler' vs the gold 'Billy Edward \"Edd\" Wheeler') while a
+    TRUE clause ('...country hit di Johnny Cash') matched the wrong answer's
+    non-distinctive tail ('a country hit'). Token-overlap must recognise the
+    alias, and a wrong-tail with no distinctive token must not fire."""
+    raw = ('ANSWER: Billy Edd Wheeler (born 1932) — scrisse "Jackson", che '
+           "fu sia pop hit di Nancy Sinatra sia country hit di Johnny Cash.")
+    assert classify_answer(raw, WHEELER) == "right"
