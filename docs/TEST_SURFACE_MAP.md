@@ -72,7 +72,7 @@ poisoning, hallucination). So the surface is not just "does recall work" but
 
 | promise | status | note |
 |---|---|---|
-| contradictions / reconcile | ⏳ (S4 NEXT) | reconcile+source-trust behind flags; virgin conflict corpus untested |
+| contradictions / reconcile | ⚠️ MEASURED (S4) | see Sweep 2 — detects 4/5 with reconcile ON+sim-fallback (marks `contested` in trust dossier), but DEFAULT OFF + imperfect linking without an NLI judge + fail-safe (contests, never supersedes) |
 | staleness / obsolescence | ✅ prior | valid_until, bi-temporal — not stressed on real churn |
 | untrusted sources | ✅ prior (flag) | source-trust mini-world; real multi-source untested |
 | memory poisoning | ✅ prior+F1 | red-team 0.9677, unchanged post-C4 |
@@ -148,6 +148,31 @@ root: **semantic recall finds the RELEVANT item; it is not SET ALGEBRA.**
 "How many", "all of", "none that", "except" are set operations over the whole
 corpus, not top-k similarity. Same shape as the gate thesis (one axis, many
 faces): here the axis is **retrieval-vs-set-operations**.
+
+## Sweep 2 — contradictions (S4), the central promise, measured honestly
+
+Probe: 5 virgin contradictory pairs (same subject, incompatible value), 4
+configs. First measure looked at `superseded` only → 0/8, read as "coexist
+silently". That was INCOMPLETE (self-corrected): default is fail-safe —
+**contest, never supersede**. Re-measured the `contradictions` table + recall
+`trust_signals`:
+
+- with `ENGRAM_RECONCILE_ON_WRITE=1 + SIM_FALLBACK=1`: **4/5 pairs DETECTED**
+  and recorded; `recall(trust_signals=True)` returns `verdict='contested',
+  n_contradictions=1` — the dossier shows the doubt. So the engine is NOT
+  blind to contradictions.
+- BUT three real gaps: (1) **default OFF** — a naive user sees two conflicting
+  "facts" with no signal; (2) the CEO pair "Helena vs Marcus" (different words,
+  same role) was NOT linked (`n_contradictions=0`) — lexical/embedding
+  correlation misses conflicts where the WORDS change; an NLI judge is the
+  documented ~4× lever; (3) fail-safe never resolves (correct for a trust
+  product: surface the doubt, don't silently pick a winner).
+
+Honest answer to "siamo forti sulle contraddizioni?": the mechanism WORKS but
+is off-by-default and judge-dependent. Product decisions (F2/Aurelio):
+default-on reconcile? wire an NLI judge? expose `contested` in the default
+recall view, not only under `trust_signals=True`? Not a one-line fix — a
+product call, not an all-nighter.
 
 The lever is NOT a better embedder — it is a thin symbolic layer beside recall:
 a scan/filter/`count` primitive (the pieces exist: `list_facts`, `search_facts`,
