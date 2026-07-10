@@ -109,8 +109,14 @@ styles and BOTH conditions — single-turn pressure does not flip this model,
 with or without memory, so no anti-sycophancy claim from this paradigm.
 The honest product number is grounded ACCURACY under pressure:
 assertive 0.733 → 0.933 (+20pt), are-you-sure 0.767 → 0.833 (+6.7pt).
-Pending: TRUE multi-turn challenge (answer → "are you sure?" → re-answer,
-the caving paradigm), other models.
+Multi-turn challenge MEASURED (n=15 × 2 conditions, 60 calls): the model
+does NOT capitulate — hold_rate 1.0 in both conditions, zero flips; memory's
+measured value is again accuracy (turn-1 right 11/15 → 14/15). CHAPTER
+CLOSED on this model with declared limits: one recent model (caving
+literature targets weaker models), factual wiki questions, fixed challenge
+template. Product claim stays "grounded accuracy under pressure" — NOT
+"cures sycophancy". Re-open when: weaker/local answerer models enter the
+product path, or opinion/ambiguous domains.
 
 ---
 
