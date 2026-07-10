@@ -136,6 +136,31 @@ WORSE than in-house ones — that is the point of external data.
 
 ---
 
+## Accepted transfer — Vivarium → write-gate (2026-07-10)
+
+`Code/vivarium/docs/TRANSFER-TO-VERIMEM.md` (verified on a REAL VeriMem
+clone, not just the toy world) is ACCEPTED as the roadmap for source-level
+trust, because it satisfies this file's guard-rails by construction:
+
+1. **Per-source consistency-trust IN THE WRITE-GATE** (not retrieval — the
+   clone measured the placement: write-path wrong 0.121 ≈ reference 0.122,
+   retrieval-reranker 0.314 ≈ no trust) with **TWO channels** (complementarity
+   law: consistency alone falls to the trusted-sleeper, wrong 0.89;
+   outcome alone falls to the absorbing trap — only together robust).
+2. **Attribution-aware feedback**: stale → attenuated penalty; multi-hop
+   derivation → blame the rotten hop (revision tracking on traced_paths),
+   never the downstream sources.
+3. Collusion/eclipse: consistency degrades GRACEFULLY (abstains instead of
+   asserting, 0.95); declared boundary (fixed-value sleeper) is L4/grounding
+   territory + per-key honest-coverage monitoring.
+4. Read-path stress must target PRIOR-vs-EVIDENCE conflict (ClashEval-style,
+   facts the LLM "already believes"), not clean synthetic facts — the lab
+   measured zero confabulation on evidence-only prompts.
+
+Adoption path (the doc's own discipline): behind-flag module, default OFF,
+REPRODUCED on VeriMem's real/held-out corpus before any default flip.
+Absolute lab numbers do NOT transfer — only the laws and placements.
+
 ## Design guard-rails imported from measured failures elsewhere
 
 **Reputation inversion (Vivarium lab RQ1, 2026-07-10, chain fact
