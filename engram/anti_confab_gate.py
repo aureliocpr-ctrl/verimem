@@ -241,6 +241,31 @@ def _semantic_conflict_on() -> bool:
         "1", "on", "true", "yes")
 
 
+#: explicit non-verification disclaimers (multi-language) — the honest marker
+#: that turns attributed reported speech into a safe-to-record fact.
+_NONVERIFY_RE = re.compile(
+    r"\b(?:not\s+(?:yet\s+)?verified|unverified|unconfirmed|not\s+confirmed"
+    r"|have\s*n'?t\s+verified|cannot\s+confirm|can'?t\s+confirm"
+    r"|allegedly|supposedly|reportedly|purportedly|unproven"
+    r"|non\s+verificato|non\s+confermato|da\s+verificare|non\s+abbiamo\s+verificato"
+    r"|nicht\s+verifiziert|unbestätigt|no\s+verificado|non\s+vérifié"
+    r"|не\s+проверено|未验证|未確認)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_honest_reported(proposition: str) -> bool:
+    """True iff the proposition is BOTH third-party-attributed reported speech
+    AND carries an explicit non-verification disclaimer. Both are required:
+    attribution alone is not enough (bare attributed hype stays caught)."""
+    try:
+        from .semantic_selfclaim import _looks_reported
+    except Exception:  # noqa: BLE001 — never let the guard break the gate
+        return False
+    return bool(_looks_reported(proposition)) and bool(
+        _NONVERIFY_RE.search(proposition))
+
+
 def _l1_warnings(
     proposition: str, verified_by: Iterable[str] | None,
 ) -> list[dict[str, Any]]:
@@ -470,10 +495,40 @@ def _l1_warnings(
     # the same hype claim in es/fr/de/pt/ru/zh/ja/ar passed clean). Embedding
     # dual-check calibrated at recall 1.0 / 0 FP across 10 languages; fail-open
     # and evidence-disarmed like every other L1 detector.
+    # 2026-07-10 (red-team): L1.21 quality-superlative / sycophancy detector —
+    # the deterministic net behind the fuzzy L1.20 embedding, which a flattery
+    # prefix ("as you correctly said…") can dilute below threshold.
+    from .l1_quality_detector import detect_unsupported_quality_claim
+    qual = detect_unsupported_quality_claim(
+        proposition=proposition, verified_by=vb_list)
+    if qual is not None:
+        out.append({
+            "layer": "L1.21",
+            "reason": (
+                f"Quality superlative '{qual.matched_text}' asserts "
+                f"perfection without evidence"
+            ),
+            "advice": qual.advice,
+            "matched_text": qual.matched_text,
+        })
+
     from .semantic_selfclaim import detect_semantic_selfclaim
     sem = detect_semantic_selfclaim(proposition, vb_list)
     if sem is not None:
         out.append(sem)
+
+    # 2026-07-10 (red-team FP fix): honest reported speech — a claim
+    # ATTRIBUTED to a third party AND carrying an explicit non-verification
+    # disclaimer ("the vendor claims it works, we have NOT verified it") is a
+    # record of someone else's claim, not our confabulation → drop the
+    # state/success-family warnings. HARD stance preserved: bare attributed
+    # hype (no disclaimer) stays caught. Quantitative/perf layers are kept —
+    # a fabricated NUMBER is flagged regardless of attribution.
+    if out and _is_honest_reported(proposition):
+        _STATE_FAMILY = {"L1", "L1.8", "L1.10", "L1.11", "L1.12", "L1.13",
+                         "L1.14", "L1.15", "L1.16", "L1.17", "L1.18",
+                         "L1.20", "L1.21"}
+        out = [w for w in out if w.get("layer") not in _STATE_FAMILY]
     return out
 
 

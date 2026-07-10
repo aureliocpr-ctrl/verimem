@@ -43,6 +43,41 @@ _PERF_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             re.IGNORECASE,
         ),
     ),
+    # NEW 2026-07-10 (red-team): absolute achieved perf value — a perf noun
+    # + achievement verb + magnitude+unit ("latency dropped to 12ms",
+    # "responds in 8ms"). The perf noun is REQUIRED so a wall-clock time
+    # ("meeting at 3pm") never trips it.
+    (
+        "absolute_latency",
+        re.compile(
+            # NB: 'to' is deliberately NOT an achievement verb here — it would
+            # swallow the "from Xs to Ys" reduction case that from_to_latency
+            # owns. "dropped to 12ms" still matches via "dropped".
+            r"\b(?:latency|response\s+time|p50|p95|p99|ttfb)\b"
+            r"(?:\s+\w+){0,4}?\s*"
+            r"(?:drop(?:ped|s)?|fell|reduced?|down|now|reach(?:ed|es)?|"
+            r"hits?|is|was|at|under|below)\s+"
+            r"(?:\w+\s+){0,2}?"
+            r"\d+(?:\.\d+)?\s*(?:ms|µs|us|ns|s|sec|seconds?)\b"
+            r"|"
+            r"\b(?:responds?|replies|returns?)\s+in\s+"
+            r"\d+(?:\.\d+)?\s*(?:ms|µs|us|ns|s|sec|seconds?)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "absolute_throughput",
+        re.compile(
+            r"\b(?:throughput|qps|rps)\b"
+            r"(?:\s+\w+){0,4}?\s*"
+            r"(?:reach(?:ed|es)?|hit|hits|now|is|was|of|at|up\s+to)\s+"
+            r"(?:\w+\s+){0,2}?\d+(?:[.,]\d+)?\s*[kKmM]?\b"
+            r"|"
+            r"\b\d+(?:[.,]\d+)?\s*[kKmM]?\s*"
+            r"(?:qps|rps|requests?\s+per\s+second|ops/s)\b",
+            re.IGNORECASE,
+        ),
+    ),
     # "Nx faster/slower/speedup"
     (
         "nx_speedup",

@@ -1018,3 +1018,25 @@ attributed claims excluded by design, not by luck.
 > admitted) depressed the "on" arm. Numbers from that run are discarded.
 > Caveat: n=12 sessions, single run — the +4pp over the historical
 > atomic/1200 off (0.7789) is within run-to-run noise until replicated.
+
+> **2026-07-10 — gate red-team (pre-revenue hardening, Aurelio mandate):**
+> a versioned adversarial corpus (`benchmark/data/gate_redteam_v1.jsonl`, 31
+> hostile + 12 benign across 25 attack categories) run through the REAL
+> admission path (`benchmark/gate_redteam.py`). Baseline catch **90.3%**
+> (28/31), FP **8.3%** (1/12). Three holes closed TDD → catch **96.8%**
+> (30/31), FP **0.0%** (0/12):
+> - FP: honest reported speech WITH a non-verification disclaimer ("the
+>   vendor claims it works, we have NOT verified it") now admitted; bare
+>   attributed hype stays caught (hard). Gate-level filter, both signals
+>   required.
+> - L1.9 extended: absolute achieved perf values ("latency dropped to 12ms
+>   p99", "responds in 8ms") — the detector caught arrows/%/Nx but not
+>   absolutes.
+> - L1.21 (new): quality-superlative / sycophancy ("perfect and bug-free",
+>   "flawless and bulletproof") — the deterministic net behind the fuzzy
+>   L1.20 embedding, which a flattery prefix can dilute.
+> Known limit (1 residual slip, out of keyword-gate scope): fabricated
+> EXTERNAL citation of a non-existent authority ("according to RFC 9999…")
+> — stored as attributed reported speech with provenance preserved;
+> catching it needs citation-grounding, a VeriBench axis, not a keyword
+> detector that would FP on real RFCs.
