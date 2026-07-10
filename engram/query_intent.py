@@ -96,5 +96,18 @@ def content_terms(query: str | None) -> str:
     return " ".join(toks)
 
 
+def split_exclude(query: str | None) -> tuple[str, str]:
+    """Split an EXCLUDE query at its negation pivot -> (subject, excluded).
+    "notes not about tax" -> ("notes", "tax"). The excluded terms are what a
+    set-difference removes; subject is informational (the base is the scoped
+    corpus, so a generic subject like "things" never zeroes the result)."""
+    q = query or ""
+    m = _EXCLUDE.search(q)
+    if not m:
+        return (content_terms(q), "")
+    return (content_terms(q[:m.start()]), content_terms(q[m.end():]))
+
+
 __all__ = ["FIND", "COUNT", "EXCLUDE", "LIST_ALL",
-           "classify_query_intent", "is_set_operation", "content_terms"]
+           "classify_query_intent", "is_set_operation", "content_terms",
+           "split_exclude"]

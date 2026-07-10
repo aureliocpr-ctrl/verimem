@@ -305,11 +305,26 @@ class Memory:
             return {"intent": LIST_ALL, "terms": terms,
                     "results": [{"text": f.proposition, "id": f.id,
                                  "topic": f.topic} for f in rows]}
-        # EXCLUDE is honored as FIND today (recall the corpus, minus later is a
-        # caller concern) — flagged so the caller knows a set-difference was
-        # asked. A true anti-query is a follow-up atom.
-        return {"intent": FIND if intent != EXCLUDE else EXCLUDE,
-                "results": self.search(query, k=k)}
+        if intent == EXCLUDE:
+            # Set-difference: the scoped corpus MINUS the facts matching the
+            # excluded terms. Embeddings ignore "not"; this executes it as a
+            # scan + removal (F1 negation fall). Base is the whole scope so a
+            # generic subject never zeroes the set.
+            from .query_intent import split_exclude
+            _subj, excluded = split_exclude(query)
+            base = (self.semantic.search_facts("", limit=10000,
+                                               topic_prefix=topic_prefix)
+                    if topic_prefix else self.semantic.list_facts(limit=10000))
+            excl_ids: set[str] = set()
+            if excluded:
+                excl_ids = {f.id for f in self.semantic.search_facts(
+                    excluded, limit=10000, require_all_tokens=True,
+                    topic_prefix=topic_prefix)}
+            results = [f for f in base if f.id not in excl_ids]
+            return {"intent": EXCLUDE, "excluded": excluded,
+                    "results": [{"text": f.proposition, "id": f.id,
+                                 "topic": f.topic} for f in results]}
+        return {"intent": FIND, "results": self.search(query, k=k)}
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
                 as_of: float | None = None,

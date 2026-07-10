@@ -50,6 +50,22 @@ def test_find_query_is_ordinary_recall(tmp_path):
     assert isinstance(r["results"], list) and r["results"]
 
 
+def test_exclude_executes_set_difference(tmp_path):
+    # F1 negation fall: embeddings ignore "not". ask EXCLUDE must scan+remove.
+    mem = Memory(tmp_path / "m.db")
+    for i in range(3):
+        mem.add(f"The tax module computes rate {i}.", topic="mod")
+    for i in range(3):
+        mem.add(f"The email module sends message {i}.", topic="mod")
+    for i in range(3):
+        mem.add(f"The user module stores profile {i}.", topic="mod")
+    r = mem.ask("show modules not about tax")
+    assert r["intent"] == "exclude"
+    texts = " ".join(x["text"].lower() for x in r["results"])
+    assert "tax" not in texts, "excluded term must be removed from the set"
+    assert len(r["results"]) == 6, "the other 6 facts survive the difference"
+
+
 def test_list_all_returns_the_set(tmp_path):
     # content_terms is LEXICAL: generic query nouns not in the facts ("notes")
     # over-constrain require_all_tokens. A query naming the entity enumerates
