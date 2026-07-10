@@ -1,0 +1,14 @@
+{
+  "tool": "verimem",
+  "aggregation": {
+    "count_via_top5_naive": 5,
+    "count_via_ask": 12,
+    "ground_truth": 12,
+    "has_count_api": true
+  },
+  "contradictions": {
+    "pairs": 5,
+    "detected_contradictions": 4,
+    "has_contradiction_signal": true
+  }
+}

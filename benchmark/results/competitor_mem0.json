@@ -1,0 +1,17 @@
+{
+  "tool": "mem0",
+  "version": "2.0.4",
+  "aggregation": {
+    "count_via_top5": 5,
+    "count_via_top10": 10,
+    "count_via_top20": 12,
+    "ground_truth": 12,
+    "has_count_api": false
+  },
+  "contradictions": {
+    "pairs": 5,
+    "subjects_with_both_versions": 5,
+    "detected_contradictions": 0,
+    "has_contradiction_signal": false
+  }
+}

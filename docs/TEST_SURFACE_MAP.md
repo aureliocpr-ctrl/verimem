@@ -39,6 +39,27 @@ To beat everyone "a priori" is to DEFINE the game on what trust actually needs.
 Falsify by running mem0 / engram-memory on these same probes and seeing if they
 fall where we now hold.
 
+### Falsification run — mem0 2.0.4 on the F1 probes (2026-07-10)
+
+Fair by construction: mem0's local e5-base embedder (SAME model), LLM never
+called (`infer=False`, zero-API — the local-first regime our O4 mandates),
+mem0's own `vector_store.search` (bypassing its documented Memory.search
+ranking bug so we do NOT handicap it). Identical data both sides.
+`benchmark/competitor_probe_mem0.py` + `competitor_verimem.json`.
+
+| dimension | mem0 (local, 0-API) | Verimem naive (same top-k) | Verimem (its layer) |
+|---|---|---|---|
+| count "how many times X" (gt=12) | 5 @top5 / 12 @top20, **no count API** | 5 @top5 | **12** (`Memory.ask` → scan) |
+| contradictions detected (of 5) | **0**, no signal | 0 (default) | **4** (reconcile ON) |
+
+Reading (honest): with the SAME embedder and SAME naive top-k, mem0 and Verimem
+are IDENTICAL (5/12) — the edge is NOT the encoder, it is the meta-layer
+(intent routing 5→12, reconcile 0→4). Declared limits: small n (12 mentions,
+5 pairs); mem0 with `infer=True` (LLM ON, = API cost) has an LLM memory-update
+that MIGHT dedup some conflicts — untested because it breaks the zero-API
+constraint; the claim is bounded to the local-first regime. Verimem does it
+WITHOUT an LLM. The thesis held where it was falsifiable.
+
 ## Axis A — Verticals / personas (WHO)
 
 | vertical | core need | status | note |
