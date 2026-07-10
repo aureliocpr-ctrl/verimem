@@ -2141,6 +2141,32 @@ class SemanticMemory:
                     "L1.7 anti-confabulation: fact_id=%s topic=%s — %s",
                     fact.id, fact.topic, _l17_warning,
                 )
+        # S2 (F1 adversarial scenario map, 2026-07-10): non-silent over-window
+        # guard. e5 truncates at ~512 tokens; a long fact — a whole document
+        # pasted into add() — embeds only its HEAD and drops the rest SILENTLY
+        # (QuALITY: 115/115 articles > 512 tok, direct store sees ~7%). Warn,
+        # NEVER truncate the stored text, and point at the document tier
+        # (DocumentIndex chunks + cites). Heuristic char threshold: CJK packs
+        # more tokens per char, so this warns EARLY rather than late. Env
+        # ENGRAM_LONG_FACT_WARN_CHARS (default 2000 ≈ conservative 512-tok
+        # head); 0 disables. Applies to EVERY provenance (a long agent claim is
+        # just as truncated as a long document).
+        try:
+            _long_warn = int(os.environ.get("ENGRAM_LONG_FACT_WARN_CHARS", "2000"))
+        except ValueError:
+            _long_warn = 2000
+        if _long_warn and len(fact.proposition or "") > _long_warn:
+            from .gate_router import attribution_question as _gr_attr2
+            from .gate_router import classify_provenance as _gr_classify2
+            _LOG.warning(
+                "long fact: id=%s topic=%s is %d chars — beyond the embedder "
+                "window (~512 tokens); recall will only see the head. For whole "
+                "documents use DocumentIndex/index_file (chunked + cited). %s",
+                fact.id, fact.topic, len(fact.proposition),
+                _gr_attr2(_gr_classify2(
+                    getattr(fact, "writer_role", None),
+                    list(fact.verified_by or []))),
+            )
         # 2026-06-05: decouple persistence from embedding so a save NEVER
         # blocks ~22s on a cold model load (root cause of the "Engram hangs
         # on save" incident — measured: cold encode 21.8s, daemon-warm 40ms).
