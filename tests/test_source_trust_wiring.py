@@ -64,6 +64,36 @@ def test_book_persists_across_clients(tmp_path, monkeypatch):
     assert mem2.source_trust("shady-vendor") == sunk
 
 
+def test_retro_demotion_on_threshold_crossing(tmp_path, monkeypatch):
+    """Judge finding (seeds 12-13): a liar's EARLY writes stay admitted
+    because reputation crosses the floor only after ~3 contradictions. On
+    the crossing, the source's already-admitted facts must be re-evaluated:
+    quarantined (rehabilitable — never deleted), clean sources untouched."""
+    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
+    mem = Memory(tmp_path / "m.db")
+    r1 = mem.add("The code of alpha is aaa111.", topic="t",
+                 verified_by=["source-doc:sinker:t0"])
+    r2 = mem.add("The code of beta is bbb222.", topic="t",
+                 verified_by=["source-doc:sinker:t1"])
+    r3 = mem.add("The code of gamma is ccc333.", topic="t",
+                 verified_by=["source-doc:clean:t0"])
+    assert all(r["status"] != "quarantined" for r in (r1, r2, r3))
+    _sink_source(mem, "sinker")   # crossing below the floor
+    assert mem.get(r1["id"])["status"] == "quarantined"
+    assert mem.get(r2["id"])["status"] == "quarantined"
+    assert mem.get(r3["id"])["status"] != "quarantined", (
+        "a clean source's facts must never be touched")
+
+
+def test_retro_demotion_inert_when_flag_off(tmp_path, monkeypatch):
+    monkeypatch.delenv("ENGRAM_SOURCE_TRUST", raising=False)
+    mem = Memory(tmp_path / "m.db")
+    r1 = mem.add("The code of alpha is aaa111.", topic="t",
+                 verified_by=["source-doc:sinker:t0"])
+    _sink_source(mem, "sinker")
+    assert mem.get(r1["id"])["status"] != "quarantined"
+
+
 def test_confirmation_api_reaches_persisted_book(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
     mem = Memory(tmp_path / "m.db")

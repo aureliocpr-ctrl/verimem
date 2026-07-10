@@ -287,9 +287,18 @@ class Memory:
         distinct sources asserted the same accepted value; ``contradiction``
         = this source contradicted an accepted value; ``outcome`` =
         (source, good, weight) — weight<1 attenuates stale blame (task #18).
-        Automatic reconciliation hooks arrive with the mini-world step."""
-        from .source_trust import save_book
+
+        RETROACTIVE DEMOTION (judge finding, seeds 12-13): reputation crosses
+        the floor only after a few contradictions, so a liar's EARLY writes
+        were staying admitted. When an observation sinks a source BELOW the
+        floor (crossing, not every update), its already-stored facts are
+        re-evaluated: quarantined — rehabilitable, never deleted (guard-rail).
+        Flag-gated like the rest of the wiring."""
+        from .source_trust import enabled, save_book, threshold
         book = self._source_trust_book()
+        watched = {s for s in (contradiction,
+                               outcome[0] if outcome else None) if s}
+        pre = {s: book.trust(s) for s in watched}
         if confirmation:
             book.observe_confirmation(confirmation)
         if contradiction:
@@ -298,6 +307,36 @@ class Memory:
             src, good, weight = outcome
             book.observe_outcome(src, good=good, weight=weight)
         save_book(self.semantic.db_path, book)
+        if enabled():
+            thr = threshold()
+            for s in watched:
+                if pre.get(s, 1.0) >= thr and book.trust(s) < thr:
+                    self._retro_demote_source(s)
+
+    _SOURCE_REF_PREFIXES = ("source-doc", "source", "src", "doc", "file")
+
+    def _retro_demote_source(self, source: str) -> None:
+        """Quarantine every non-quarantined fact citing ``source`` — the
+        write-time gate only stops FUTURE lies; the crossing re-evaluates the
+        past ones. Best-effort: a demotion failure must never break the
+        observation that triggered it."""
+        import sqlite3 as _sq
+        clauses = " OR ".join(["verified_by LIKE ?"] * len(self._SOURCE_REF_PREFIXES))
+        params = [f'%"{p}:{source}:%' for p in self._SOURCE_REF_PREFIXES]
+        try:
+            with _sq.connect(str(self.semantic.db_path)) as conn:
+                rows = conn.execute(
+                    f"SELECT id FROM facts WHERE status != 'quarantined' "
+                    f"AND ({clauses})", params).fetchall()
+        except _sq.Error:
+            return
+        for (fid,) in rows:
+            try:
+                self.semantic.quarantine_fact(
+                    fid, reason=(f"source '{source}' trust sank below the "
+                                 "floor — retroactive demotion"))
+            except Exception:  # noqa: BLE001 — best-effort per fact
+                continue
 
     def source_trust(self, source: str) -> float:
         """Combined (min-of-observed-channels) trust for ``source``."""
