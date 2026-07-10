@@ -12,12 +12,23 @@
 
   function token() { return sessionStorage.getItem(STORE); }
 
+  function authHeaders() {
+    var t = token();
+    return t ? { Authorization: "Bearer " + t } : {};
+  }
+
   function api(path) {
-    return fetch(path, { headers: { Authorization: "Bearer " + token() } })
+    var had = !!token();
+    return fetch(path, { headers: authHeaders() })
       .then(function (r) {
         if (r.status === 401) {
           sessionStorage.removeItem(STORE);
-          throw new Error("invalid key — paste it again");
+          // personal (no-key) mode not available AND no key yet: stay on
+          // the neutral form, no scary error
+          var e = new Error(had ? "invalid key — paste it again"
+                                : "__nokey__");
+          e.nokey = !had;
+          throw e;
         }
         if (!r.ok) { throw new Error("gateway error " + r.status); }
         return r.json();
@@ -26,6 +37,7 @@
 
   function fail(e) {
     board.hidden = true; $("live").hidden = true;
+    if (e && e.nokey) { err.hidden = true; return; }
     err.textContent = e.message; err.hidden = false;
   }
 
@@ -54,6 +66,14 @@
   function countUp(id, target) {
     var el = $(id), from = prevN[id] || 0;
     prevN[id] = target;
+    if (from !== target && from > 0) {      // an event landed: flash the card
+      var card = el.closest ? el.closest(".card") : null;
+      if (card) {
+        card.classList.remove("tick");
+        void card.offsetWidth;              // restart the animation
+        card.classList.add("tick");
+      }
+    }
     if (REDUCED || from === target) { el.textContent = target; return; }
     var t0 = null, DUR = 700;
     function tick(ts) {
@@ -493,19 +513,64 @@
 
   /* ---- load -----------------------------------------------------------------*/
   function loadLive() {
-    if (!token()) { return; }
+    // no token guard: in personal mode (`verimem console`) the loopback
+    // gateway answers WITHOUT a key — the page just works
     Promise.all([api("/v1/stats"), api("/v1/quarantine?limit=100")])
       .then(function (res) {
         board.hidden = false; err.hidden = true; $("live").hidden = false;
         renderStats(res[0]);
         renderBlocked(res[1].items || []);
+        startEvents();
       })
       .catch(fail);
   }
   function loadGraph() {
-    if (!token()) { return; }
     api("/v1/graph?max_nodes=300&max_edges=600")
-      .then(renderGraph).catch(fail);
+      .then(renderGraph).catch(function (e) {
+        if (!(e && e.nokey)) { fail(e); }
+      });
+  }
+
+  /* ---- SSE: the memory WORKING, live ------------------------------------------
+   * fetch-streaming (not EventSource) so the bearer key travels in a header,
+   * never in a URL. One generation at a time; reconnect with backoff. */
+  var sseGen = 0, sseActive = false;
+  function startEvents() {
+    if (sseActive) { return; }              // one live connection at a time
+    sseActive = true;
+    var gen = ++sseGen;
+    fetch("/v1/events", { headers: authHeaders() })
+      .then(function (r) {
+        if (!r.ok || !r.body) { throw new Error("events " + r.status); }
+        var reader = r.body.getReader();
+        var dec = new TextDecoder(), buf = "";
+        function pump() {
+          return reader.read().then(function (step) {
+            if (gen !== sseGen) { reader.cancel(); return; }
+            if (step.done) { throw new Error("stream ended"); }
+            buf += dec.decode(step.value, { stream: true });
+            var lines = buf.split("\n");
+            buf = lines.pop();
+            lines.forEach(function (line) {
+              if (line.indexOf("data: ") !== 0) { return; }
+              var led;
+              try { led = JSON.parse(line.slice(6)).ledger; }
+              catch (ex) { return; }
+              var changed = ["admitted", "quarantined", "rejected",
+                             "abstained"].some(function (a) {
+                return (prevN["n-" + a] || 0) !== (led[a] || 0);
+              });
+              if (changed) { loadLive(); }   // full refresh: sparks, ring, feed
+            });
+            return pump();
+          });
+        }
+        return pump();
+      })
+      .catch(function () {
+        sseActive = false;
+        if (gen === sseGen) { setTimeout(startEvents, 5000); }
+      });
   }
 
   $("keyform").addEventListener("submit", function (ev) {
@@ -513,6 +578,7 @@
     var v = $("key").value.trim();
     if (v) {
       sessionStorage.setItem(STORE, v); $("key").value = "";
+      sseGen++; sseActive = false;         // re-auth the live stream
       loadLive(); loadGraph();
     }
   });

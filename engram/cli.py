@@ -411,6 +411,42 @@ def gateway_serve(
     uvicorn.run(app_, host=host, port=port, log_level="info")
 
 
+@app.command("console")
+def console_cmd(
+    port: int = typer.Option(8378, "--port"),
+    db: str = typer.Option(None, "--db", help="Path to your memory store (default: the SDK default store)"),
+    no_browser: bool = typer.Option(False, "--no-browser", help="Don't auto-open the browser"),
+):
+    """Open the trust console on YOUR local memory — one command, no keys.
+
+    The visual layer for the single user: odometer, knowledge graph with
+    chain of custody, blocked-claims log — on the store you already have.
+    Personal mode: binds 127.0.0.1 ONLY and requests without a key resolve
+    to your own store (Host must be localhost — DNS-rebinding guarded).
+    For teams/SaaS use ``verimem gateway serve`` (API-key multi-tenant).
+    """
+    try:
+        import uvicorn
+        from .gateway import create_app
+    except ImportError:
+        console.print("[red]the console needs fastapi+uvicorn[/red] — "
+                      "pip install 'verimem[server]'")
+        raise typer.Exit(1)
+    from .client import Memory
+    mem = Memory(db) if db else Memory()
+    app_ = create_app(data_dir=_gateway_data_dir(None) / "console",
+                      local_tenant="local", local_memory=mem)
+    url = f"http://127.0.0.1:{port}/ui"
+    console.print(f"[green]verimem console[/green] → {url}")
+    console.print(f"[cyan]store:[/cyan] {mem.semantic.db_path} "
+                  "(personal mode, loopback only)")
+    if not no_browser:
+        import threading
+        import webbrowser
+        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+    uvicorn.run(app_, host="127.0.0.1", port=port, log_level="warning")
+
+
 @gateway_keys_app.command("create")
 def gateway_keys_create(
     tenant: str = typer.Option(..., "--tenant", help="Tenant slug ([a-z0-9._-], max 64) — its facts live in an isolated store"),

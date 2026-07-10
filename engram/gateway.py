@@ -36,11 +36,16 @@ from pathlib import Path
 from typing import Any
 
 try:  # fastapi è la stessa dipendenza opzionale della dashboard
-    from fastapi import Depends, FastAPI, Header, HTTPException, Query
-    from fastapi.responses import HTMLResponse, Response
+    from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+    from fastapi.responses import (HTMLResponse, Response,
+                                   StreamingResponse)
 except ImportError as _exc:  # pragma: no cover — surfaced by the CLI command
     FastAPI = None  # type: ignore[assignment]
     _FASTAPI_IMPORT_ERROR = _exc
+
+#: Host header values accepted by the personal (no-key) loopback mode —
+#: anti DNS-rebinding: evil.example resolving to 127.0.0.1 does NOT match.
+_LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 
 _TENANT_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 
@@ -346,7 +351,9 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                llm: Any = None, grounding_llm: Any = None,
                rate_limit_per_minute: int = 0,
                admin_key: str | None = None,
-               max_body_bytes: int = 1_048_576):
+               max_body_bytes: int = 1_048_576,
+               local_tenant: str | None = None,
+               local_memory: Any = None):
     """Costruisce l'app FastAPI del gateway. ``keys`` iniettabile (test);
     default: ``<data_dir>/gateway_keys.db``.
 
@@ -364,7 +371,17 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     SSH sull'host. La admin key non è mai una chiave tenant.
 
     ``max_body_bytes`` (1 MB default): 413 oltre il limite — anti-DoS sul
-    data plane."""
+    data plane.
+
+    ``local_tenant`` + ``local_memory`` (None = default): la MODALITÀ
+    PERSONALE di ``verimem console`` — le richieste SENZA chiave risolvono a
+    questo tenant, montato sul suo store ESISTENTE (l'utente singolo vede la
+    propria memoria senza gateway/chiavi/config). Modello di fiducia
+    "jupyter locale": il chiamante deve bindare SOLO loopback; qui in più
+    l'header Host deve essere localhost (anti DNS-rebinding) e una chiave
+    PRESENTATA vince sempre (o fallisce forte: chiave invalida = 401, mai
+    fallback silenzioso). Senza ``local_tenant`` il gateway è byte-identico
+    a prima."""
     if FastAPI is None:  # pragma: no cover
         raise ImportError(
             "the gateway needs fastapi — pip install 'verimem[server]'"
@@ -372,6 +389,10 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     data_dir = Path(data_dir)
     keys = keys or GatewayKeys(data_dir / "gateway_keys.db")
     tenants = _TenantMemories(data_dir, llm=llm, grounding_llm=grounding_llm)
+    if local_tenant and local_memory is not None:
+        # personal mode: the local tenant is served by the user's OWN store,
+        # never by a fresh tenants/<id>/memory.db
+        tenants._cache[local_tenant] = local_memory
     meter = _Metering(keys.db_path)
     _started_at = time.time()
     app = FastAPI(title="Verimem gateway", docs_url=None, redoc_url=None)
@@ -403,11 +424,19 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             window.append(now)
             _buckets[bucket_key] = window
 
-    def _tenant(authorization: str | None = Header(default=None),
+    def _tenant(request: Request,
+                authorization: str | None = Header(default=None),
                 x_api_key: str | None = Header(default=None)) -> str:
         presented = x_api_key
         if not presented and authorization and authorization.startswith("Bearer "):
             presented = authorization[len("Bearer "):]
+        if not presented and local_tenant:
+            # personal mode: NO key presented at all → the local tenant,
+            # ma solo con Host localhost (anti DNS-rebinding). Una chiave
+            # presentata e invalida NON cade qui: 401 forte sotto.
+            host = (request.headers.get("host") or "").rsplit(":", 1)[0]
+            if host.lower() in _LOCAL_HOSTS:
+                return local_tenant
         tenant_id = keys.resolve(presented)
         if tenant_id is None:
             raise HTTPException(status_code=401, detail="invalid or missing API key")
@@ -516,8 +545,11 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         proprietà anti-traversal di ``_TenantMemories``); non crea il DB —
         un tenant senza grafo vede un grafo vuoto, non un file nuovo."""
         from .entity_populate import entity_kg_path_for
-        kg_path = entity_kg_path_for(
-            data_dir / "tenants" / tenant_id / "memory.db")
+        if local_tenant and tenant_id == local_tenant and local_memory is not None:
+            db = Path(local_memory.semantic.db_path)  # personal mode: own store
+        else:
+            db = data_dir / "tenants" / tenant_id / "memory.db"
+        kg_path = entity_kg_path_for(db)
         if not kg_path.exists():
             return None
         with _kgs_lock:
@@ -562,6 +594,68 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         out = reasoning_dossier(kg, sem, src, target=target,
                                 max_hops=max_hops, k=k)
         return out if target is not None else {"dossiers": out}
+
+    @app.get("/v1/snapshot")
+    def full_snapshot(max_nodes: int = Query(default=300, ge=1, le=2000),
+                      max_edges: int = Query(default=600, ge=0, le=5000),
+                      quarantine_limit: int = Query(default=50, ge=1, le=500),
+                      tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """L'occhio per un AGENTE: l'intero stato visibile in UNA chiamata —
+        odometro+daily, log quarantena, grafo con provenance, uso. Ciò che
+        la console mostra a un umano, in forma strutturata per un AI."""
+        mem = tenants.get(tenant_id)
+        kg = _kg_for(tenant_id)
+        meter.bump(tenant_id, reads=1)
+        return {
+            "tenant": tenant_id,
+            "trust": mem.trust_stats(),
+            "quarantine": mem.quarantine_log(limit=quarantine_limit),
+            "graph": (kg.snapshot(max_nodes=max_nodes, max_edges=max_edges)
+                      if kg is not None else {"nodes": [], "edges": []}),
+            "usage": meter.totals().get(tenant_id, {}),
+        }
+
+    @app.get("/v1/events")
+    async def events(request: Request,
+                     max_events: int = Query(default=0, ge=0, le=10),
+                     tenant_id: str = Depends(_tenant)):
+        """La memoria che LAVORA, in diretta (SSE): lo stato iniziale del
+        ledger subito, poi un evento a ogni cambiamento (poll server-side
+        2s sul contatore — leggero, cross-process perché il ledger vive nel
+        DB). Il client usa fetch-streaming, non EventSource: così la bearer
+        key resta in un header (mai in un URL) anche in multi-tenant.
+
+        ``max_events`` (0 = infinito): chiude lo stream dopo N eventi — per
+        test e probe deterministici (uno stream infinito che ignora il
+        disconnect IMPIANTAVA pytest, visto 2026-07-10). In più il loop
+        controlla ``request.is_disconnected()`` e termina quando il client
+        se ne va — mai un generatore orfano."""
+        import asyncio
+        import json as _json
+        mem = tenants.get(tenant_id)
+
+        async def gen():
+            last: dict[str, Any] | None = None
+            sent = 0
+            while True:
+                if await request.is_disconnected():
+                    return
+                try:
+                    # counters only (daily_days=1): il payload live è il
+                    # ledger; il resto lo rifetcha il client quando cambia
+                    led = mem._ledger.stats(daily_days=1)["ledger"]
+                except Exception:  # noqa: BLE001 — fail-open come il ledger
+                    led = last
+                if led is not None and led != last:
+                    yield "data: " + _json.dumps({"ledger": led}) + "\n\n"
+                    last = led
+                    sent += 1
+                    if max_events and sent >= max_events:
+                        return
+                await asyncio.sleep(2.0)
+
+        return StreamingResponse(gen(), media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-cache"})
 
     @app.get("/dashboard", response_class=HTMLResponse)
     def dashboard() -> str:

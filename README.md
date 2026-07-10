@@ -120,6 +120,27 @@ verimem trust "the deploy is green" --verified-by ci:main:green
 verimem airgap                          # verify a zero-egress configuration
 ```
 
+## See your memory working — the trust console
+
+The visual layer exists at every deployment size — single user, team
+server, SaaS — same page, same guarantees:
+
+```bash
+verimem console        # your OWN local store: browser opens, no keys, no config
+```
+
+`GET /ui` (also served by the team gateway) shows: the **trust ring** (share
+of writes admitted clean) with per-day sparklines, the **knowledge graph**
+(drag, zoom; grounded edges solid, ungrounded dashed red — declared, never
+hidden) where clicking a conclusion lights its **chain of custody** hop by
+hop, and the **blocked-claims log** — every unsupported claim the gate
+stopped, auditable. Live: gate events stream over SSE (`GET /v1/events`), so
+you watch the memory working, not a 30s-old photograph. Personal mode binds
+127.0.0.1 only (Host-header checked against DNS rebinding); a presented API
+key always wins. For agents there is `GET /v1/snapshot` — the whole visible
+state (odometer + daily series + quarantine + graph with provenance) in one
+structured call: what the console shows a human, shaped for an AI.
+
 ## Self-host (team server)
 
 Run Verimem as a shared memory server your team hosts — the data never
@@ -133,11 +154,13 @@ verimem gateway serve                                     # 127.0.0.1:8377
 Each tenant gets an isolated store; the tenant is derived from the API key
 alone. Endpoints: `POST /v1/memories`, `GET /v1/search`, `GET /v1/explain`
 (TrustReport), `GET /v1/stats` (the tenant's own trust odometer + usage),
-`DELETE /v1/memories/{id}?purge_history=true`. Open `/dashboard` in a browser
-for the visual trust odometer — a static, dependency-free page; your API key
-stays in the tab and travels only as an Authorization header. The gateway
-binds loopback by default — for remote access put it behind a TLS reverse
-proxy (nginx/caddy).
+`GET /v1/quarantine`, `GET /v1/graph`, `GET /v1/graph/dossier`,
+`GET /v1/snapshot`, `GET /v1/events` (SSE),
+`DELETE /v1/memories/{id}?purge_history=true`. Open `/ui` in a browser for
+the trust console (or `/dashboard` for the legacy minimal odometer) — static,
+dependency-free pages; your API key stays in the tab and travels only as an
+Authorization header. The gateway binds loopback by default — for remote
+access put it behind a TLS reverse proxy (nginx/caddy).
 
 Docker (embedding models baked in — runs fully offline):
 
