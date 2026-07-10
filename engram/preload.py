@@ -23,6 +23,11 @@ Env knobs:
 - ``HIPPO_EAGER_PRELOAD=0``     -> skip warm-up entirely (lazy on first call).
 - ``HIPPO_PRELOAD_BACKGROUND=0`` -> run synchronously before serving (legacy).
 - ``ENGRAM_ENCODE_SERVICE=0``    -> ignore the shared daemon, warm locally.
+- ``HIPPO_RERANK_PRELOAD=1``     -> ALSO warm the CrossEncoder at boot
+  (default OFF since the 2026-07-10 RAM incident: the CE was warmed in EVERY
+  MCP server process — ~450 MB × N servers resident even when idle. The
+  recall path lazy-loads it with a cold budget — bi-encoder order until warm
+  — so boot-warming is an opt-in latency optimisation, not a requirement).
 """
 from __future__ import annotations
 
@@ -124,19 +129,27 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
                 log.warning("mcp_eager_preload_failed", error=str(exc))
 
     # Warm the reranker on its OWN daemon thread (separate model + lock from the
-    # embedder), so the R@1 lever is resident for live recalls without blocking
-    # the embedding warm or the attach handshake.
+    # embedder) — OPT-IN (HIPPO_RERANK_PRELOAD=1). Default off: every MCP server
+    # process was paying ~450 MB for a CE most of them never used (2026-07-10
+    # RAM incident); the recall path lazy-loads it under a cold budget instead.
+    warm_ce = (
+        os.environ.get("HIPPO_RERANK_PRELOAD", "0").strip().lower()
+        not in _FALSY
+    )
+
     def _run_reranker() -> None:
         _warm_reranker(log=log)
 
     if os.environ.get("HIPPO_PRELOAD_BACKGROUND", "1").strip().lower() in _FALSY:
         _run()
-        _run_reranker()
+        if warm_ce:
+            _run_reranker()
         return None
 
-    threading.Thread(
-        target=_run_reranker, name="hippo-reranker-preload", daemon=True,
-    ).start()
+    if warm_ce:
+        threading.Thread(
+            target=_run_reranker, name="hippo-reranker-preload", daemon=True,
+        ).start()
     thread = threading.Thread(
         target=_run, name="hippo-embedding-preload", daemon=True,
     )

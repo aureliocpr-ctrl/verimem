@@ -263,6 +263,105 @@ class EncodeServer:
 _SPAWN_LOCK_PATH = Path.home() / ".engram" / "encode_service.spawn.lock"
 _SPAWN_COOLDOWN_S = 60.0
 
+# --- Daemon singleton lock (2026-07-10 RAM incident) -------------------------
+# The spawn cooldown above narrows the window but cannot close it: at machine
+# boot N MCP servers call ensure_running() within milliseconds, two daemons
+# start, and BOTH load the ~GB model before either writes discovery — the
+# loser then lingers idle for hours at full weight (measured: 2 × 1.9 GB).
+# The daemon itself must be the arbiter: take an atomic pid lock BEFORE the
+# model load and exit cheaply if another live daemon holds it.
+DAEMON_LOCK_PATH = Path.home() / ".engram" / "encode_service.daemon.lock"
+
+
+def _pid_alive(pid: int) -> bool:
+    """Best-effort liveness. Unknown/odd states err on 'alive' — a false
+    'alive' only makes a daemon defer (cheap); a false 'dead' would let two
+    daemons load the model (the incident)."""
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+
+
+def _read_lock_owner(path: Path) -> int:
+    try:
+        return int(path.read_text(encoding="utf-8").strip() or "0")
+    except (OSError, ValueError):
+        return 0
+
+
+# Empty-lock grace: the O_EXCL winner creates the file THEN writes its pid;
+# a reader in that gap must WAIT, not steal (the observed double-daemon race:
+# both at 1.9 GB, lock owned by the thief). Verify delay: after any write we
+# read back — concurrent stealers all write, only the LAST keeps the lock, so
+# exactly one process ever loads the model.
+_LOCK_STEAL_GRACE_S = 0.25
+_LOCK_VERIFY_DELAY_S = 0.10
+
+
+def acquire_daemon_lock(lock_path: Path | None = None) -> bool:
+    """Atomically claim the one-daemon-per-machine lock.
+
+    True → this process may load the model and serve. False → another LIVE
+    daemon owns it; exit before paying the load. A dead owner's lock is
+    stolen; our own pid is re-entrant (restart within one process)."""
+    path = lock_path or DAEMON_LOCK_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    me = str(os.getpid())
+    claimed = False
+    try:
+        fd = os.open(str(path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        try:
+            os.write(fd, me.encode("ascii"))
+        finally:
+            os.close(fd)
+        claimed = True
+    except FileExistsError:
+        pass
+    except OSError:
+        # Unwritable lock dir: do not brick encoding on a fs quirk — serve.
+        return True
+    if not claimed:
+        owner = _read_lock_owner(path)
+        if owner == os.getpid():
+            return True
+        # Empty pid → a winner may be between open and write. Grace-wait for
+        # the pid to land before declaring the lock garbage.
+        deadline = time.time() + _LOCK_STEAL_GRACE_S
+        while owner == 0 and time.time() < deadline:
+            time.sleep(0.03)
+            owner = _read_lock_owner(path)
+        if owner == os.getpid():
+            return True
+        if owner and _pid_alive(owner):
+            return False
+        # dead (or persistently empty) owner → steal
+        try:
+            path.write_text(me, encoding="utf-8")
+        except OSError:
+            return False
+    # Verify-readback: with concurrent claimants the LAST writer wins and
+    # everyone else yields here — never two model loads.
+    time.sleep(_LOCK_VERIFY_DELAY_S)
+    return _read_lock_owner(path) == os.getpid()
+
+
+def release_daemon_lock(lock_path: Path | None = None) -> None:
+    """Remove the lock iff THIS process owns it (never someone else's)."""
+    path = lock_path or DAEMON_LOCK_PATH
+    try:
+        if path.read_text(encoding="utf-8").strip() == str(os.getpid()):
+            path.unlink()
+    except (OSError, ValueError):
+        pass
+
 
 def is_reachable(info: dict | None = None, timeout: float = 0.4) -> bool:
     """True if a daemon is listening per the discovery file (or given info)."""
@@ -362,16 +461,23 @@ def ensure_running() -> bool:
 
 
 def main() -> None:
-    from . import embedding
-    from .config import CONFIG
+    # Singleton gate FIRST — before the ~GB model load, so a spawn-race loser
+    # costs ~50 MB of interpreter for a moment, not 1.9 GB for 8 idle hours.
+    if not acquire_daemon_lock():
+        return
+    try:
+        from . import embedding
+        from .config import CONFIG
 
-    # Warm the model BEFORE advertising via the discovery file, so any client
-    # that finds the file knows the daemon is ready (fast responses, no wait).
-    embedding._encode_local("warmup")
-    EncodeServer(
-        model_name=CONFIG.embedding_model,
-        model_dim=CONFIG.embedding_dim,
-    ).serve_forever()
+        # Warm the model BEFORE advertising via the discovery file, so any
+        # client that finds the file knows the daemon is ready.
+        embedding._encode_local("warmup")
+        EncodeServer(
+            model_name=CONFIG.embedding_model,
+            model_dim=CONFIG.embedding_dim,
+        ).serve_forever()
+    finally:
+        release_daemon_lock()
 
 
 if __name__ == "__main__":
