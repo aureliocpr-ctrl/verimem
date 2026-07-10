@@ -268,6 +268,49 @@ class Memory:
             return len(self.semantic.list_facts(topic=topic, limit=1_000_000))
         return self.semantic.count()
 
+    def ask(self, query: str, *, k: int = 5,
+            topic_prefix: str | None = None) -> dict[str, Any]:
+        """Intent-routed query — the read-path twin of the write-path
+        provenance router (surface-map thesis: classify before acting).
+
+        A cardinality question ("how many times did I discuss X?") routes to a
+        full-corpus SCAN/count, not top-k recall (which undercounts — F1 saw
+        5/12). Enumeration ("list all X") returns the whole matching set.
+        Everything else is FIND: ordinary semantic recall, unchanged. Returns
+        ``{"intent", ...}`` — ``count`` for COUNT, ``results`` otherwise — so
+        the caller always knows which operation ran.
+
+        FIND is the safe default: a misclassified query behaves exactly like
+        ``search`` today. This is the dispatcher; the classifier lives in
+        engram.query_intent (lexical, EN+IT)."""
+        from .query_intent import (
+            COUNT,
+            EXCLUDE,
+            FIND,
+            LIST_ALL,
+            classify_query_intent,
+            content_terms,
+        )
+        intent = classify_query_intent(query)
+        if intent == COUNT:
+            terms = content_terms(query)
+            n = (self.count(query=terms, topic_prefix=topic_prefix)
+                 if terms else self.count(topic_prefix=topic_prefix))
+            return {"intent": COUNT, "terms": terms, "count": n}
+        if intent == LIST_ALL:
+            terms = content_terms(query)
+            rows = self.semantic.search_facts(
+                terms, limit=1000, require_all_tokens=bool(terms),
+                topic_prefix=topic_prefix)
+            return {"intent": LIST_ALL, "terms": terms,
+                    "results": [{"text": f.proposition, "id": f.id,
+                                 "topic": f.topic} for f in rows]}
+        # EXCLUDE is honored as FIND today (recall the corpus, minus later is a
+        # caller concern) — flagged so the caller knows a set-difference was
+        # asked. A true anti-query is a follow-up atom.
+        return {"intent": FIND if intent != EXCLUDE else EXCLUDE,
+                "results": self.search(query, k=k)}
+
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
                 as_of: float | None = None,
                 min_relevance: float | str = 0.0) -> dict[str, Any]:
