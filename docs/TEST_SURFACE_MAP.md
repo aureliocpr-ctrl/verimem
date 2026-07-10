@@ -110,7 +110,7 @@ WITHOUT an LLM. The thesis held where it was falsifiable.
 | multi-hop | ⚠️ F1 (C3) | bridge hop wall (graph #1 is the lever) |
 | **temporal ("what in March?")** | ⏳ | bi-temporal exists; NOT stressed on real timestamps |
 | **aggregation / counting ("how many times…")** | ⏳ | HIGH RISK: retrieval returns top-k, does NOT count — likely a universal fall |
-| **negation ("what did I NOT say")** | ⏳ | embeddings ignore negation |
+| **negation ("what did I NOT say")** | ✅ | `Memory.ask` EXCLUDE executes set-difference (scan+remove); embeddings alone ignore "not" |
 | comparative / superlative | ⏳ | "the biggest", "before X" |
 | provenance ("how do I know?") | ✅ prior | explain |
 | decision ("why did we choose?") | ✅ prior | decision-chain |
