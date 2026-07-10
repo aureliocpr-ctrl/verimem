@@ -1,0 +1,24 @@
+{
+  "k": 10,
+  "checkpoints": [
+    {
+      "n_facts": 10000,
+      "recall_ms_mean": 744.2,
+      "recall_ms_p95": 1421.4,
+      "rss_mb": 159.7
+    },
+    {
+      "n_facts": 25000,
+      "recall_ms_mean": 673.6,
+      "recall_ms_p95": 377.3,
+      "rss_mb": 1562.2
+    },
+    {
+      "n_facts": 50000,
+      "recall_ms_mean": 1219.0,
+      "recall_ms_p95": 540.9,
+      "rss_mb": 1313.1
+    }
+  ],
+  "target_max": 50000
+}

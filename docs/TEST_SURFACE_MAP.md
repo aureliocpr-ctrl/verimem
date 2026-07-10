@@ -134,7 +134,7 @@ WITHOUT an LLM. The thesis held where it was falsifiable.
 | dimension | status | note |
 |---|---|---|
 | 10k facts | ✅ F1 (S3) | recall latency flat 388→439ms 1k→10k (encode-dominated), RAM model-bound (+60MB for 9k facts) |
-| **100k+ facts** | ⏳ | cosine is brute-force O(N) — the scaling risk |
+| **50k facts** | ✅ measured (S3) | recall p95 315ms@10k → **541ms@50k** (O(N) real, not catastrophic); mean noisy (1.2s, disk/SQLite outliers); RSS model-bound ~1.3GB. Beyond ~50k needs an ANN index. |
 | concurrent multi-user | ⏳ | — |
 | multi-tenant isolation (leak) | ⏳ | topic_prefix; adversarial leak untested |
 | RAM footprint | ✅ prior | server 590→108MB (bug fixed) |
