@@ -80,6 +80,19 @@ def test_trusted_sleeper_is_caught_by_min_combination():
     assert book.trust("honest") > 0.6
 
 
+def test_stale_weight_attenuates_by_age():
+    """Attribution-aware outcome blame (task #18b, transfer law L3): a fact
+    that failed PAST its world's half-life blames the source less — the
+    world changed, the source did not lie. Full blame young, half at one
+    half-life, floored so blame never vanishes entirely."""
+    from engram.source_trust import stale_weight
+    assert stale_weight(0.0, half_life_s=100.0) == 1.0
+    assert stale_weight(100.0, half_life_s=100.0) == pytest.approx(0.5)
+    assert stale_weight(1e9, half_life_s=100.0) == pytest.approx(0.2)
+    assert stale_weight(50.0, half_life_s=0.0) == 1.0, (
+        "no half-life info → full blame (fail-safe, never silently soft)")
+
+
 def test_bounds_and_roundtrip():
     book = SourceTrustBook()
     for _ in range(100):

@@ -180,6 +180,24 @@ class SourceTrustBook:
         return book
 
 
+# ---- attribution-aware blame attenuation (task #18b, transfer law L3) --------
+
+_STALE_WEIGHT_FLOOR = 0.2
+
+
+def stale_weight(age_s: float, *, half_life_s: float) -> float:
+    """Outcome-blame weight for a fact of age ``age_s`` in a world whose
+    values live ``half_life_s`` on average: full blame young, half at one
+    half-life, floored at 0.2 (an old fact's failure still says SOMETHING
+    about its source — zero would let liars launder through time). No
+    half-life info → full blame: fail-safe, never silently soft. This is
+    the L3 law made a number: staleness blames the CLAIM's age, not the
+    source wholesale."""
+    if half_life_s <= 0 or age_s <= 0:
+        return 1.0
+    return max(_STALE_WEIGHT_FLOOR, 0.5 ** (age_s / half_life_s))
+
+
 # ---- persistence (the store's own SQLite, one small table) -------------------
 
 _TABLE_SQL = """CREATE TABLE IF NOT EXISTS source_trust (
