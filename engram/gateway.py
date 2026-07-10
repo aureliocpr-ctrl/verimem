@@ -714,6 +714,28 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             return {"uptime_s": round(time.time() - _started_at, 1),
                     "n_tenants": len(usage), "tenants": usage}
 
+        @app.get("/admin/overview")
+        def overview(_: None = Depends(_admin)) -> dict[str, Any]:
+            """La vista ORG (SaaS/azienda): per ogni tenant noto il suo
+            trust ledger + store + uso — un ring per tenant nella admin
+            console. Read-only: un tenant senza store ancora scritto mostra
+            zeri, non gli viene creato un DB per il gusto di guardarlo."""
+            usage = meter.totals()
+            known = {k["tenant_id"] for k in keys.list()} | set(usage)
+            zeros = {a: 0 for a in
+                     ("admitted", "quarantined", "rejected", "abstained")}
+            out = []
+            for t in sorted(known):
+                db = data_dir / "tenants" / t / "memory.db"
+                if db.exists():
+                    ts = tenants.get(t).trust_stats()
+                    ledger, store_ = ts["ledger"], ts.get("store", {})
+                else:
+                    ledger, store_ = dict(zeros), {}
+                out.append({"tenant": t, "ledger": ledger, "store": store_,
+                            "usage": usage.get(t, {})})
+            return {"n_tenants": len(out), "tenants": out}
+
     return app
 
 

@@ -84,6 +84,9 @@
   <section id="tab-graph" class="tab on">
     <div class="graph-wrap">
       <div class="graph-canvas card">
+        <input id="graph-search" type="search" placeholder="find entity&hellip;"
+               autocomplete="off" spellcheck="false"
+               aria-label="Find an entity in the graph">
         <svg id="graph" role="img" aria-label="Entity knowledge graph"></svg>
         <div id="graph-empty" class="empty" hidden>
           No knowledge graph yet — ingest conversations or documents and the
@@ -93,7 +96,9 @@
         <div class="graph-legend">
           <span><i class="sw solid"></i> grounded (cites a fact)</span>
           <span><i class="sw dashed"></i> ungrounded (declared, never hidden)</span>
-          <span class="hint-drag">drag nodes &middot; wheel to zoom</span>
+          <span class="hint-drag">drag nodes &middot; wheel to zoom &middot;
+            double-click background to fit</span>
+          <button id="graph-fit" type="button" title="fit the whole graph">fit</button>
           <button id="graph-refresh" type="button" title="re-fetch and re-layout">refresh</button>
         </div>
       </div>

@@ -201,42 +201,52 @@
     items.forEach(function (it) { seenBlocked[it.id] = 1; });
   }
 
-  /* ---- graph: living force sim, drag, pan/zoom, chain lighting -------------*/
+  /* ---- graph engine v3: Obsidian-feel ------------------------------------
+   * inertial physics (velocity + damping + soft collision, no hard walls),
+   * persistent focus, search with highlight, label LOD, fit-to-view. */
   var svg = $("graph");
   var G = { nodes: [], edges: [], byId: {}, edgeEls: [], nodeEls: {},
-            alpha: 0, vb: null, running: false, drag: null, litKeys: {} };
+            alpha: 0, vb: null, running: false, drag: null, litKeys: {},
+            focus: null, query: "", degree: {} };
 
   function edgeKey(e) { return e.src + "|" + e.dst + "|" + e.predicate; }
 
   function simStep() {
-    var nodes = G.nodes, edges = G.edges, K = G.K, i, j;
-    var step = 10 * G.alpha + 0.25;
+    var nodes = G.nodes, K = G.K, i, j;
+    for (i = 0; i < nodes.length; i++) { nodes[i].ax = 0; nodes[i].ay = 0; }
     for (i = 0; i < nodes.length; i++) {
-      var a = nodes[i], fx = 0, fy = 0;
-      for (j = 0; j < nodes.length; j++) {
-        if (i === j) { continue; }
-        var dx = a.x - nodes[j].x, dy = a.y - nodes[j].y;
+      var a = nodes[i];
+      for (j = i + 1; j < nodes.length; j++) {
+        var b = nodes[j];
+        var dx = a.x - b.x, dy = a.y - b.y;
         var d2 = dx * dx + dy * dy || 0.01, d = Math.sqrt(d2);
-        fx += (dx / d) * (K * K / d); fy += (dy / d) * (K * K / d);
+        var rep = (K * K) / d2 * 9;            // repulsion falls with d²
+        var pad = (a.r || 8) + (b.r || 8) + 8; // soft collision shell
+        if (d < pad) { rep += (pad - d) * 1.4; }
+        var ux = dx / d, uy = dy / d;
+        a.ax += ux * rep; a.ay += uy * rep;
+        b.ax -= ux * rep; b.ay -= uy * rep;
       }
-      fx += (G.w / 2 - a.x) * 0.02; fy += (G.h / 2 - a.y) * 0.02;
-      a.vx = fx; a.vy = fy;
+      a.ax += (G.w / 2 - a.x) * 0.012;         // gentle center gravity
+      a.ay += (G.h / 2 - a.y) * 0.012;
     }
-    edges.forEach(function (e) {
+    G.edges.forEach(function (e) {
       var s = G.byId[e.src], t = G.byId[e.dst];
       if (!s || !t) { return; }
       var dx = t.x - s.x, dy = t.y - s.y;
-      var dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
-      var f = (dist - K) / dist * 0.5;
-      s.vx += dx * f; s.vy += dy * f; t.vx -= dx * f; t.vy -= dy * f;
+      var d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      var f = (d - K) * 0.045;                 // spring toward rest length K
+      var ux = dx / d, uy = dy / d;
+      s.ax += ux * f; s.ay += uy * f; t.ax -= ux * f; t.ay -= uy * f;
     });
     nodes.forEach(function (n) {
-      if (n.fixed) { return; }
-      var v = Math.sqrt(n.vx * n.vx + n.vy * n.vy) || 1;
-      n.x += (n.vx / v) * Math.min(v, step);
-      n.y += (n.vy / v) * Math.min(v, step);
-      n.x = Math.max(26, Math.min(G.w - 26, n.x));
-      n.y = Math.max(20, Math.min(G.h - 20, n.y));
+      if (n.pinned) { n.vx = 0; n.vy = 0; return; }
+      // inertia: forces accumulate into velocity, damping bleeds it off —
+      // the graph breathes and settles instead of snapping (no hard walls;
+      // gravity keeps it together, `fit` brings it back into view)
+      n.vx = (n.vx + n.ax * 0.06 * G.alpha) * 0.86;
+      n.vy = (n.vy + n.ay * 0.06 * G.alpha) * 0.86;
+      n.x += n.vx; n.y += n.vy;
     });
   }
 
@@ -261,15 +271,82 @@
 
   function loop() {
     if (!G.running) { return; }
-    if (G.alpha > 0.015 && !document.hidden) {
+    if (G.alpha > 0.006 && !document.hidden) {
       simStep(); draw();
-      G.alpha *= 0.97;
+      G.alpha *= 0.985;                        // slow cool = visible breathe
       requestAnimationFrame(loop);
     } else { G.running = false; draw(); }
   }
   function reheat(a) {
     G.alpha = Math.max(G.alpha, a);
     if (!G.running) { G.running = true; requestAnimationFrame(loop); }
+  }
+
+  function zoomScale() { return G.vb ? (G.w / G.vb.w) : 1; }
+
+  /* ONE emphasis pass — priority: search query > sticky focus > hover.
+   * Lit (chain-of-custody) elements are never faded. Label LOD lives here:
+   * a label shows when its node is emphasized, is a hub, or the view is
+   * zoomed in / small enough to afford it. */
+  function updateEmphasis(hoverId) {
+    var mode = G.query ? "query" : (G.focus ? "focus"
+               : (hoverId ? "hover" : "none"));
+    var keep = {};
+    if (mode === "query") {
+      G.nodes.forEach(function (n) {
+        if (n.name.toLowerCase().indexOf(G.query) >= 0) { keep[n.id] = 1; }
+      });
+    } else if (mode !== "none") {
+      var id = mode === "focus" ? G.focus : hoverId;
+      keep[id] = 1;
+      G.edges.forEach(function (e) {
+        if (e.src === id || e.dst === id) { keep[e.src] = 1; keep[e.dst] = 1; }
+      });
+    }
+    var manyEdges = G.edges.length > 40;
+    var zoomed = zoomScale() >= 1.45 || G.nodes.length <= 30;
+    G.edgeEls.forEach(function (r) {
+      var lit = !!G.litKeys[r.key];
+      var on = mode === "none" ? false
+        : (mode === "query" ? (keep[r.e.src] && keep[r.e.dst])
+           : (keep[r.e.src] && keep[r.e.dst] &&
+              (r.e.src === (G.focus || hoverId) ||
+               r.e.dst === (G.focus || hoverId))));
+      r.line.classList.toggle("hl", !!on || lit);
+      r.line.classList.toggle("faded", mode !== "none" && !on && !lit);
+      r.label.classList.toggle("faded", mode !== "none" && !on && !lit);
+      r.label.classList.toggle("show", (!manyEdges || !!on || lit) && zoomed
+                                        || !!on || lit);
+    });
+    G.nodes.forEach(function (n) {
+      var g = G.nodeEls[n.id];
+      var emph = mode === "none" || keep[n.id];
+      g.classList.toggle("faded", !emph);
+      var hub = (G.degree[n.id] || 0) >= 3 || (n.r || 0) >= 11;
+      g.classList.toggle("nolabel",
+        !(zoomed || hub || keep[n.id] || g.classList.contains("sel") ||
+          g.classList.contains("lit")));
+    });
+  }
+
+  function fitView() {
+    if (!G.nodes.length || !G.vb) { return; }
+    var xs = G.nodes.map(function (n) { return n.x; });
+    var ys = G.nodes.map(function (n) { return n.y; });
+    var pad = 70;
+    var x0 = Math.min.apply(null, xs) - pad, x1 = Math.max.apply(null, xs) + pad;
+    var y0 = Math.min.apply(null, ys) - pad, y1 = Math.max.apply(null, ys) + pad;
+    var w = Math.max(120, x1 - x0), h = Math.max(120, y1 - y0);
+    var ratio = G.w / G.h;                     // preserve aspect
+    if (w / h > ratio) { h = w / ratio; } else { w = h * ratio; }
+    G.vb = { x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w: w, h: h };
+    applyVB(); updateEmphasis(null);
+  }
+
+  function centerOn(n) {
+    if (!G.vb) { return; }
+    G.vb.x = n.x - G.vb.w / 2; G.vb.y = n.y - G.vb.h / 2;
+    applyVB();
   }
 
   function renderGraph(data) {
@@ -288,11 +365,12 @@
       n.y = G.h / 2 + (G.h / 3.4) * Math.sin(ang);
       n.vx = 0; n.vy = 0; G.byId[n.id] = n;
     });
-    var degree = {};
+    G.degree = {};
     G.edges.forEach(function (e) {
-      degree[e.src] = (degree[e.src] || 0) + 1;
-      degree[e.dst] = (degree[e.dst] || 0) + 1;
+      G.degree[e.src] = (G.degree[e.src] || 0) + 1;
+      G.degree[e.dst] = (G.degree[e.dst] || 0) + 1;
     });
+    G.focus = null;
     var showLabels = G.edges.length <= 40;
 
     var gEdges = el("g", {}), gFlows = el("g", {}), gNodes = el("g", {});
@@ -317,9 +395,9 @@
     G.nodes.forEach(function (n) {
       var g = el("g", { "class": "node",
                         "data-type": String(n.type || "").toLowerCase() });
-      var r = 7 + Math.min(6, (degree[n.id] || 0) * 1.4);
-      g.appendChild(el("circle", { r: r }));
-      var t = el("text", { x: r + 4, y: 4 });
+      n.r = 7 + Math.min(7, (G.degree[n.id] || 0) * 1.4);
+      g.appendChild(el("circle", { r: n.r }));
+      var t = el("text", { x: n.r + 4, y: 4 });
       t.textContent = n.name;
       g.appendChild(t);
       g.addEventListener("click", function (ev) {
@@ -328,43 +406,25 @@
       });
       g.addEventListener("pointerdown", function (ev) {
         ev.preventDefault(); ev.stopPropagation();
-        G.drag = n; G.dragMoved = false; n.fixed = true;
+        G.drag = n; G.dragMoved = false; n.pinned = true;
         svg.setPointerCapture(ev.pointerId);
       });
-      g.addEventListener("mouseenter", function () { hover(n.id, true); });
-      g.addEventListener("mouseleave", function () { hover(null, false); });
+      g.addEventListener("mouseenter", function () {
+        if (!G.focus && !G.query) { updateEmphasis(n.id); }
+      });
+      g.addEventListener("mouseleave", function () {
+        if (!G.focus && !G.query) { updateEmphasis(null); }
+      });
       gNodes.appendChild(g);
       G.nodeEls[n.id] = g;
     });
 
     reheat(REDUCED ? 0.9 : 1);
     if (REDUCED) {   // settle instantly, no animation frames visible
-      for (var k = 0; k < 240; k++) { simStep(); G.alpha *= 0.985; }
+      for (var k = 0; k < 300; k++) { simStep(); G.alpha *= 0.985; }
       G.alpha = 0; draw();
     }
-  }
-
-  function hover(id, on) {
-    var neigh = {};
-    if (on && id) {
-      neigh[id] = 1;
-      G.edges.forEach(function (e) {
-        if (e.src === id || e.dst === id) { neigh[e.src] = 1; neigh[e.dst] = 1; }
-      });
-    }
-    G.edgeEls.forEach(function (r) {
-      var lit = G.litKeys[r.key];
-      var connected = on && (neigh[r.e.src] && neigh[r.e.dst] &&
-        (r.e.src === id || r.e.dst === id));
-      r.line.classList.toggle("hl", !!connected || !!lit);
-      r.line.classList.toggle("faded", on && !connected && !lit);
-      r.label.classList.toggle("faded", on && !connected && !lit);
-      r.label.classList.toggle("show",
-        (G.edges.length <= 40 || !!connected || !!lit));
-    });
-    G.nodes.forEach(function (n) {
-      G.nodeEls[n.id].classList.toggle("faded", on && !neigh[n.id]);
-    });
+    updateEmphasis(null);
   }
 
   /* pan / zoom on the svg canvas */
@@ -382,20 +442,26 @@
     G.vb.x = mx - (ev.offsetX / svg.clientWidth) * G.vb.w;
     G.vb.y = my - (ev.offsetY / svg.clientHeight) * G.vb.h;
     applyVB();
+    updateEmphasis(null);                      // zoom drives the label LOD
   }, { passive: false });
   svg.addEventListener("pointerdown", function (ev) {
     if (G.drag || !G.vb) { return; }
-    G.pan = { x: ev.clientX, y: ev.clientY, vx: G.vb.x, vy: G.vb.y };
+    G.pan = { x: ev.clientX, y: ev.clientY, vx: G.vb.x, vy: G.vb.y,
+              moved: false };
     svg.classList.add("panning");
     svg.setPointerCapture(ev.pointerId);
   });
   svg.addEventListener("pointermove", function (ev) {
     if (G.drag) {
-      G.dragMoved = true;
+      if (!G.dragStart) { G.dragStart = { x: ev.clientX, y: ev.clientY }; }
+      // 4px threshold: a twitchy click still SELECTS instead of dragging
+      if (Math.abs(ev.clientX - G.dragStart.x) +
+          Math.abs(ev.clientY - G.dragStart.y) > 4) { G.dragMoved = true; }
       var pt = svg.createSVGPoint();
       pt.x = ev.clientX; pt.y = ev.clientY;
       var p = pt.matrixTransform(svg.getScreenCTM().inverse());
       G.drag.x = p.x; G.drag.y = p.y;
+      G.drag.vx = 0; G.drag.vy = 0;
       reheat(0.35);
     } else if (G.pan) {
       var sx = G.vb.w / svg.clientWidth, sy = G.vb.h / svg.clientHeight;
@@ -404,13 +470,49 @@
       applyVB();
     }
   });
-  function endPointer() {
-    if (G.drag) { G.drag.fixed = false; G.drag = null; reheat(0.25); }
+  function endPointer(ev) {
+    if (G.drag) { G.drag.pinned = false; G.drag = null; reheat(0.25); }
+    else if (G.pan && ev && Math.abs(ev.clientX - G.pan.x) +
+             Math.abs(ev.clientY - G.pan.y) < 4) {
+      // background CLICK (not a pan): release focus, unlight the chain
+      G.focus = null; clearLit();
+      Array.prototype.forEach.call(svg.querySelectorAll(".node.sel"),
+        function (x) { x.classList.remove("sel"); });
+      updateEmphasis(null);
+    }
+    G.dragStart = null;
     G.pan = null; svg.classList.remove("panning");
     setTimeout(function () { G.dragMoved = false; }, 0);
   }
   svg.addEventListener("pointerup", endPointer);
   svg.addEventListener("pointercancel", endPointer);
+  svg.addEventListener("dblclick", function () { fitView(); });
+  $("graph-fit").addEventListener("click", fitView);
+
+  /* search: live highlight; Enter selects & centers the first match */
+  var searchBox = $("graph-search");
+  searchBox.addEventListener("input", function () {
+    G.query = searchBox.value.trim().toLowerCase();
+    updateEmphasis(null);
+  });
+  searchBox.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") {
+      searchBox.value = ""; G.query = ""; updateEmphasis(null);
+      searchBox.blur();
+    }
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      var hit = null;
+      G.nodes.forEach(function (n) {
+        if (!hit && G.query &&
+            n.name.toLowerCase().indexOf(G.query) >= 0) { hit = n; }
+      });
+      if (hit) {
+        centerOn(hit);
+        selectNode(hit, G.nodeEls[hit.id]);
+      }
+    }
+  });
 
   /* ---- dossier + chain lighting --------------------------------------------*/
   function clearLit() {
@@ -448,6 +550,8 @@
       function (x) { x.classList.remove("sel"); });
     g.classList.add("sel");
     clearLit();
+    G.focus = n.id;                            // sticky focus (Obsidian-like)
+    updateEmphasis(null);
     $("dossier-body").innerHTML =
       '<span class="muted">deriving from &ldquo;' + esc(n.name) +
       "&rdquo;&hellip;</span>";

@@ -186,6 +186,12 @@ body {
 #graph { width: 100%; height: 540px; display: block; cursor: grab;
          touch-action: none; }
 #graph.panning { cursor: grabbing; }
+#graph-search { position: absolute; top: .7rem; left: .7rem; z-index: 2;
+  background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: 3px;
+  padding: .38rem .6rem; font-family: var(--mono); font-size: .78rem;
+  width: 190px; opacity: .92; }
+#graph-search:focus { width: 240px; opacity: 1; }
 
 #graph .edge { stroke: var(--dim); stroke-width: 1.3; opacity: .7;
                transition: opacity .2s, stroke-width .2s; }
@@ -212,7 +218,9 @@ body {
   filter: drop-shadow(0 0 9px var(--lit-glow)); }
 #graph .node text { fill: var(--ink); font-size: 11px;
   font-family: var(--mono); pointer-events: none;
-  paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }
+  paint-order: stroke; stroke: var(--bg); stroke-width: 3px;
+  transition: opacity .18s; }
+#graph .node.nolabel text { opacity: 0; }   /* LOD: quiet until it matters */
 #graph .node[data-type="person"] circle { fill: var(--node-person); }
 #graph .node[data-type="org"] circle    { fill: var(--node-org); }
 #graph .node[data-type="place"] circle  { fill: var(--node-place); }

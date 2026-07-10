@@ -90,3 +90,34 @@ def test_body_size_limit_returns_413(gw):
                     headers={"Authorization": f"Bearer {key}"},
                     json={"content": huge})
     assert r.status_code == 413, "body-limit anti-DoS sul data plane"
+
+
+# ---- org view: i trust-ring di TUTTI i tenant in una chiamata ----------------
+
+def test_admin_overview_aggregates_trust_per_tenant(gw):
+    """La vista SaaS/azienda: per ogni tenant il suo ledger — ciò che
+    l'admin console disegna (un ring per tenant). Solo admin key."""
+    client, keys = gw
+    k1 = keys.create(tenant_id="acme")
+    k2 = keys.create(tenant_id="beta")
+    client.post("/v1/memories", json={
+        "content": "the office is in Milan", "topic": "hq",
+        "verified_by": ["hr-doc"]},
+        headers={"Authorization": f"Bearer {k1}"})
+    client.post("/v1/memories", json={
+        "content": "the deployment works and is verified in production"},
+        headers={"Authorization": f"Bearer {k2}"})
+
+    r = client.get("/admin/overview", headers=_admin())
+    assert r.status_code == 200
+    tenants = {t["tenant"]: t for t in r.json()["tenants"]}
+    assert tenants["acme"]["ledger"]["admitted"] == 1
+    assert tenants["beta"]["ledger"]["quarantined"] == 1
+    assert "usage" in tenants["acme"]
+
+
+def test_admin_overview_requires_admin_key(gw):
+    client, _ = gw
+    assert client.get("/admin/overview").status_code == 401
+    assert client.get("/admin/overview",
+                      headers=_admin("wrong")).status_code == 401
