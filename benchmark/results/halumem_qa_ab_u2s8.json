@@ -1,0 +1,58 @@
+{
+  "pipeline_gated": {
+    "n": 32,
+    "n_correct": 13,
+    "n_errors": 0,
+    "accuracy": 0.4062,
+    "per_category": {
+      "Basic Fact Recall": {
+        "n": 7,
+        "accuracy": 0.4286
+      },
+      "Generalization & Application": {
+        "n": 1,
+        "accuracy": 0.0
+      },
+      "Memory Boundary": {
+        "n": 10,
+        "accuracy": 1.0
+      },
+      "Memory Conflict": {
+        "n": 10,
+        "accuracy": 0.0
+      },
+      "Multi-hop Inference": {
+        "n": 4,
+        "accuracy": 0.0
+      }
+    }
+  },
+  "raw_turns": {
+    "n": 32,
+    "n_correct": 14,
+    "n_errors": 0,
+    "accuracy": 0.4375,
+    "per_category": {
+      "Basic Fact Recall": {
+        "n": 7,
+        "accuracy": 0.5714
+      },
+      "Generalization & Application": {
+        "n": 1,
+        "accuracy": 0.0
+      },
+      "Memory Boundary": {
+        "n": 10,
+        "accuracy": 1.0
+      },
+      "Memory Conflict": {
+        "n": 10,
+        "accuracy": 0.0
+      },
+      "Multi-hop Inference": {
+        "n": 4,
+        "accuracy": 0.0
+      }
+    }
+  }
+}

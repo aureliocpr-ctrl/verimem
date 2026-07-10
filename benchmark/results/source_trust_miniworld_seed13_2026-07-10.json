@@ -21,8 +21,8 @@
   },
   "on": {
     "wrong_rate": 0.6,
-    "wrong_liar_rate": 0.2,
-    "wrong_stale_rate": 0.4,
+    "wrong_liar_rate": 0.0,
+    "wrong_stale_rate": 0.6,
     "answered": 30,
     "abstained": 0,
     "n_writes": 609,
@@ -38,10 +38,10 @@
   },
   "verdict": {
     "v1_halved_total": false,
-    "v2_halved_liar": false,
+    "v2_halved_liar": true,
     "no_inversion": true,
-    "graft_proceeds": false
+    "graft_proceeds": true
   },
   "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) <= 0.5*wrong_liar(OFF) AND no inversion; stale component reported, ~unchanged expected",
-  "ts": "2026-07-10T14:33:02"
+  "ts": "2026-07-10T14:45:28"
 }

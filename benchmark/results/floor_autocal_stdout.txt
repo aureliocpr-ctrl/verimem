@@ -1,0 +1,19 @@
+prompt-injection signals prop=['unicode_smuggling'] topic=[] in fact id=7f6279381c97 topic=external/halueval-qa -> quarantined
+prompt-injection signals prop=['unicode_smuggling'] topic=[] in fact id=bec8be3159ad topic=external/halueval-qa -> quarantined
+{
+  "floors_by_quantile": {
+    "0.9": 0.7983,
+    "0.95": 0.7987,
+    "0.99": 0.8193
+  },
+  "tau_auto": 0.7987,
+  "false_answer_rate": 0.04,
+  "over_abstention_rate": 0.1,
+  "retrieval_hit_rate": 0.94,
+  "n": {
+    "answerable": 100,
+    "unanswerable": 50
+  },
+  "manual_tau_reference": 0.8,
+  "ts": "2026-07-10T11:37:53"
+}

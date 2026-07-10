@@ -1,0 +1,9 @@
+prompt-injection signals prop=['unicode_smuggling'] topic=[] in fact id=f128f6992217 topic=external/halueval-qa -> quarantined
+prompt-injection signals prop=['unicode_smuggling'] topic=[] in fact id=5056d66e5827 topic=external/halueval-qa -> quarantined
+prompt-injection signals prop=['unicode_smuggling'] topic=[] in fact id=d9b260817d62 topic=external/halueval-qa -> quarantined
+L1 anti-confabulation: fact_id=bd02b856ba3d topic=external/halueval-qa — L1 anti-confabulation: proposition contains 'MERGED' keyword but verified_by lacks commit-tracking reference (commit:|pr:|file:|git:). This pattern caused 2/7 confabulations in session 2026-05-17 (cycle 119/120 'SHIPPED' claim pre-merge). To anchor the claim, add a ref like 'commit:abc123def' or 'pr:99:merged' or 'file:engram/x.py:42'.
+L1 anti-confabulation: fact_id=68407a016d45 topic=external/halueval-qa — L1 anti-confabulation: proposition contains 'SHIPPED' keyword but verified_by lacks commit-tracking reference (commit:|pr:|file:|git:). This pattern caused 2/7 confabulations in session 2026-05-17 (cycle 119/120 'SHIPPED' claim pre-merge). To anchor the claim, add a ref like 'commit:abc123def' or 'pr:99:merged' or 'file:engram/x.py:42'.
+prompt-injection signals prop=['unicode_smuggling'] topic=[] in fact id=ff2d201ff876 topic=external/halueval-qa -> quarantined
+{"tau": 0.8, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.11, "abstention_rate": 0.96, "false_answer_rate": 0.04}
+{"separability_auroc": 0.9935, "score_stats": {"answerable": {"min": 0.7794, "max": 0.9413}, "unanswerable": {"min": 0.7343, "max": 0.8268}}}
+saved -> C:\Users\aurel\Code\hippoagent\benchmark\results\external_readpath_halueval_heldout_2026-07-10.json

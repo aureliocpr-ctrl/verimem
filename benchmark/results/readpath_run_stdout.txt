@@ -1,0 +1,15 @@
+prompt-injection signals prop=['unicode_smuggling'] topic=[] in fact id=743a61a6c516 topic=external/halueval-qa -> quarantined
+prompt-injection signals prop=['unicode_smuggling'] topic=[] in fact id=2c8f225dd44d topic=external/halueval-qa -> quarantined
+{"tau": 0.25, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.06, "abstention_rate": 0.0, "false_answer_rate": 1.0}
+{"tau": 0.35, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.06, "abstention_rate": 0.0, "false_answer_rate": 1.0}
+{"tau": 0.45, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.06, "abstention_rate": 0.0, "false_answer_rate": 1.0}
+{"tau": 0.55, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.06, "abstention_rate": 0.0, "false_answer_rate": 1.0}
+{"tau": 0.65, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.06, "abstention_rate": 0.0, "false_answer_rate": 1.0}
+{"tau": 0.7, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.06, "abstention_rate": 0.0, "false_answer_rate": 1.0}
+{"tau": 0.75, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.06, "abstention_rate": 0.16, "false_answer_rate": 0.84}
+{"tau": 0.8, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.1, "abstention_rate": 0.96, "false_answer_rate": 0.04}
+{"tau": 0.85, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.32, "abstention_rate": 1.0, "false_answer_rate": 0.0}
+{"tau": 0.9, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.71, "abstention_rate": 1.0, "false_answer_rate": 0.0}
+{"tau": 0.95, "retrieval_hit_rate": 0.94, "over_abstention_rate": 0.99, "abstention_rate": 1.0, "false_answer_rate": 0.0}
+{"separability_auroc": 0.997, "score_stats": {"answerable": {"min": 0.7839, "max": 0.9506}, "unanswerable": {"min": 0.7302, "max": 0.8029}}}
+saved -> C:\Users\aurel\Code\hippoagent\benchmark\results\external_readpath_halueval_dev_2026-07-10.json

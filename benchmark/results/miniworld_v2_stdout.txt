@@ -7,12 +7,12 @@
     "churn_every": 4,
     "p_stale": 0.15,
     "p_write": 0.34,
-    "seed": 12
+    "seed": 11
   },
   "off": {
-    "wrong_rate": 0.7,
-    "wrong_liar_rate": 0.3667,
-    "wrong_stale_rate": 0.3333,
+    "wrong_rate": 0.8,
+    "wrong_liar_rate": 0.3,
+    "wrong_stale_rate": 0.5,
     "answered": 30,
     "abstained": 0,
     "n_writes": 635,
@@ -20,20 +20,20 @@
     "final_trust": {}
   },
   "on": {
-    "wrong_rate": 0.6,
-    "wrong_liar_rate": 0.0,
-    "wrong_stale_rate": 0.6,
+    "wrong_rate": 0.7,
+    "wrong_liar_rate": 0.0667,
+    "wrong_stale_rate": 0.6333,
     "answered": 30,
     "abstained": 0,
     "n_writes": 635,
-    "quarantined_writes": 182,
+    "quarantined_writes": 181,
     "final_trust": {
-      "honest_0": 0.9865,
-      "honest_1": 0.9589,
-      "honest_2": 0.9605,
-      "honest_3": 0.9863,
-      "liar_0": 0.0286,
-      "liar_1": 0.0185
+      "honest_0": 0.9571,
+      "honest_1": 0.9718,
+      "honest_2": 0.9714,
+      "honest_3": 0.9577,
+      "liar_0": 0.0238,
+      "liar_1": 0.0192
     }
   },
   "verdict": {
@@ -43,5 +43,6 @@
     "graft_proceeds": true
   },
   "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) <= 0.5*wrong_liar(OFF) AND no inversion; stale component reported, ~unchanged expected",
-  "ts": "2026-07-10T14:44:14"
+  "ts": "2026-07-10T14:30:00"
 }
+saved -> C:\Users\aurel\Code\hippoagent\benchmark\results\source_trust_miniworld_seed11_2026-07-10.json

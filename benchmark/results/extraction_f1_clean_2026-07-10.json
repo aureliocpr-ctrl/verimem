@@ -1,0 +1,35 @@
+{
+  "users": 3,
+  "match_thr": 0.86,
+  "gate_thr": 40.0,
+  "prompt_variant": "atomic",
+  "max_out_tokens": 1200,
+  "no_gate": false,
+  "gate_errors": 0,
+  "consolidate": false,
+  "completeness": false,
+  "grounding_backend": "llm",
+  "off": {
+    "sessions": 12,
+    "precision": 0.7822,
+    "recall": 0.887,
+    "f1": 0.8182,
+    "avg_pred": 28.67
+  },
+  "on": {
+    "sessions": 12,
+    "precision": 0.7764,
+    "recall": 0.8731,
+    "f1": 0.8087,
+    "avg_pred": 28.17
+  },
+  "consolidated": {
+    "sessions": 0
+  },
+  "completed": {
+    "sessions": 0
+  },
+  "completed_consolidated": {
+    "sessions": 0
+  }
+}

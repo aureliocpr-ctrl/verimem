@@ -11,8 +11,6 @@
   },
   "off": {
     "wrong_rate": 0.8,
-    "wrong_liar_rate": 0.3,
-    "wrong_stale_rate": 0.5,
     "answered": 30,
     "abstained": 0,
     "n_writes": 635,
@@ -20,9 +18,7 @@
     "final_trust": {}
   },
   "on": {
-    "wrong_rate": 0.6333,
-    "wrong_liar_rate": 0.0,
-    "wrong_stale_rate": 0.6333,
+    "wrong_rate": 0.7,
     "answered": 30,
     "abstained": 0,
     "n_writes": 635,
@@ -37,11 +33,11 @@
     }
   },
   "verdict": {
-    "v1_halved_total": false,
-    "v2_halved_liar": true,
+    "halved": false,
     "no_inversion": true,
-    "graft_proceeds": true
+    "graft_proceeds": false
   },
-  "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) <= 0.5*wrong_liar(OFF) AND no inversion; stale component reported, ~unchanged expected",
-  "ts": "2026-07-10T14:42:57"
+  "criterion": "PRE-REGISTERED: wrong(ON) <= 0.5*wrong(OFF) AND honest trust > liar trust",
+  "ts": "2026-07-10T14:26:42"
 }
+saved -> C:\Users\aurel\Code\hippoagent\benchmark\results\source_trust_miniworld_seed11_2026-07-10.json
