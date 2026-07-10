@@ -1592,7 +1592,7 @@ def _reranker_ready() -> bool:
 # CE is disabled for this process (explicit log, one line) and recall stops
 # waiting. A successful in-budget rerank resets the count, so transient
 # contention never disables the measured R@1 lift permanently.
-_RERANK_BREAKER: dict[str, Any] = {"consecutive": 0, "tripped": False}
+_RERANK_BREAKER: dict[str, Any] = {"consecutive": 0, "tripped": False, "cold": 0}
 
 
 def _rerank_breaker_n() -> int:
@@ -1604,10 +1604,26 @@ def _rerank_breaker_n() -> int:
         return 5
 
 
+def _rerank_cold_breaker_n() -> int:
+    """Cold-load overruns tolerated before tripping (0 disables). F1 C1
+    (2026-07-10): a cold overrun is transient by definition — the CE is still
+    warming — so it must NOT count toward the steady trip (the first burst of
+    queries of any fresh process was disabling the rerank, worth +0.29 R@1,
+    for the whole session). This separate, much more generous bound only
+    covers the pathological never-warms case (broken CE install): each cold
+    overrun costs the small cold budget (~0.25s), so 40 ≈ 10s total waste.
+    Env ENGRAM_RERANK_COLD_BREAKER_N, default 40."""
+    try:
+        return max(0, int(os.environ.get("ENGRAM_RERANK_COLD_BREAKER_N", "40")))
+    except ValueError:
+        return 40
+
+
 def _rerank_breaker_reset() -> None:
     """Re-arm the breaker (tests; model/env swap at runtime)."""
     _RERANK_BREAKER["consecutive"] = 0
     _RERANK_BREAKER["tripped"] = False
+    _RERANK_BREAKER["cold"] = 0
 
 
 def _rerank_breaker_overrun() -> None:
@@ -1620,6 +1636,19 @@ def _rerank_breaker_overrun() -> None:
             "rerank breaker TRIPPED after %d consecutive budget overruns — "
             "CE rerank disabled for this process (bi-encoder order stands; "
             "restart or _rerank_breaker_reset() to re-arm)", n,
+        )
+
+
+def _rerank_breaker_cold_overrun() -> None:
+    _RERANK_BREAKER["cold"] = _RERANK_BREAKER.get("cold", 0) + 1
+    n = _rerank_cold_breaker_n()
+    if n and not _RERANK_BREAKER["tripped"] \
+            and _RERANK_BREAKER["cold"] >= n:
+        _RERANK_BREAKER["tripped"] = True
+        _LOG.warning(
+            "rerank breaker TRIPPED after %d cold-load overruns — the CE never "
+            "became resident (broken install / perpetual load?); rerank "
+            "disabled for this process", n,
         )
 
 
@@ -1888,6 +1917,42 @@ class SemanticMemory:
             _red, _n = _redact_secrets(fact.proposition)
             if _n:
                 fact.proposition = _red
+        # Unicode sanitize (ALWAYS-ON; escape hatch ENGRAM_UNICODE_SANITIZE=0).
+        # F1 C4 (virgin-corpus MuSiQue 2026-07-10, docs/F1_VIRGIN_CORPUS_
+        # FINDINGS.md): `unicode_smuggling` fired on the CHARACTERS themselves
+        # (U+FEFF in Wikipedia coordinates, U+200B in IPA blocks) and
+        # quarantined 4.0% of questions' GOLD paragraphs = silent recall loss
+        # on legitimate document text. Strip the invisible code points BEFORE
+        # any detector (screen below AND admission gate) — removal never
+        # changes what a human reads, it NEUTRALIZES the smuggling channel
+        # instead of hiding the fact, and a keyword broken by invisibles
+        # ("ig​nore … instructions") becomes MORE detectable. Visible
+        # unicode (IPA, accents, homoglyphs) is untouched: content/homoglyph
+        # detectors still see it. Non-silent: every strip is logged with the
+        # attribution (gate_router — whose claim is this?).
+        if _os.environ.get("ENGRAM_UNICODE_SANITIZE", "on").strip().lower() not in (
+            "0", "off", "false", "no",
+        ):
+            from .gate_router import attribution_question as _gr_attr
+            from .gate_router import classify_provenance as _gr_classify
+            from .prompt_injection import sanitize_dangerous_unicode as _pi_sanitize
+            _clean_p, _n_p = _pi_sanitize(fact.proposition)
+            _clean_t, _n_t = _pi_sanitize(getattr(fact, "topic", "") or "")
+            if _n_p or _n_t:
+                if _n_p:
+                    fact.proposition = _clean_p
+                if _n_t:
+                    fact.topic = _clean_t
+                _LOG.warning(
+                    "unicode sanitize: stripped %d invisible char(s) from "
+                    "fact id=%s topic=%s at ingest (smuggling channel "
+                    "neutralized; content admitted on its visible text; %s)",
+                    _n_p + _n_t, getattr(fact, "id", "?"),
+                    getattr(fact, "topic", "?"),
+                    _gr_attr(_gr_classify(
+                        getattr(fact, "writer_role", None),
+                        list(fact.verified_by or []))),
+                )
         # Security screen (ALWAYS-ON; escape hatch ENGRAM_INJECTION_SCREEN=0).
         # 2026-06-07: prompt-injection / memory-poisoning defense. A poisoned
         # proposition recalled verbatim into an agent's context can hijack it —
@@ -1911,11 +1976,19 @@ class SemanticMemory:
             # (quarantena). topic = label corta -> costo trascurabile.
             _iv_topic = _detect_injection(getattr(fact, "topic", "") or "")
             if _iv.is_injection or _iv_topic.is_injection:
+                # task #25: the event carries the ownership answer (Aurelio's
+                # "backpropagation chiedendo") — attribution never weakens the
+                # defense, a content attack quarantines for EVERY provenance.
+                from .gate_router import attribution_question as _gr_attr
+                from .gate_router import classify_provenance as _gr_classify
                 _LOG.warning(
                     "prompt-injection signals prop=%s topic=%s in fact id=%s "
-                    "topic=%s -> quarantined",
+                    "topic=%s -> quarantined (%s)",
                     _iv.signals, _iv_topic.signals,
                     getattr(fact, "id", "?"), getattr(fact, "topic", "?"),
+                    _gr_attr(_gr_classify(
+                        getattr(fact, "writer_role", None),
+                        list(fact.verified_by or []))),
                 )
                 fact.status = "quarantined"
         # Admission gate (2026-06-04) — OPT-IN via ENGRAM_ADMISSION_GATE, default
@@ -1943,10 +2016,15 @@ class SemanticMemory:
             # from default recall, kept for audit), never dropped. ACCEPT and
             # FLAG_LOW_PROVENANCE carry admit_to_curated=True -> unaffected.
             if not _verdict.admit_to_curated and fact.status != "quarantined":
+                from .gate_router import attribution_question as _gr_attr
+                from .gate_router import classify_provenance as _gr_classify
                 _LOG.warning(
-                    "admission gate %s id=%s topic=%s -> quarantined (%s)",
+                    "admission gate %s id=%s topic=%s -> quarantined (%s; %s)",
                     _verdict.decision, getattr(fact, "id", "?"),
                     getattr(fact, "topic", "?"), _verdict.reason,
+                    _gr_attr(_gr_classify(
+                        getattr(fact, "writer_role", None),
+                        list(fact.verified_by or []))),
                 )
                 fact.status = "quarantined"
         # Cycle #111 v2 (2026-05-16) hard-gate with I/O verify (PR #50 v1
@@ -2015,42 +2093,54 @@ class SemanticMemory:
         # saved (back-compat) — only a warning is logged for later L2
         # reconciler scrubbing. Empirical motivation: 2/7 confabulations
         # in session 2026-05-17 (cycle 119/120 SHIPPED claim pre-merge).
+        # task #25 (F1 C2): L1.x grade the AGENT's own status claims — a
+        # document paragraph saying "the companies merged" or "the case is
+        # open" is NOT the agent claiming a merge/state. Route by provenance
+        # (gate_router): external_content / user_input skip the L1.x
+        # heuristics; agent claims and hooks keep the full discipline.
+        # Warning-only detectors, so this routing is a semantic fix with
+        # ZERO security surface (injection/refs gates above already ran).
         from .anti_confabulation import (
             detect_unsupported_diagnosis_claim,
             detect_unsupported_shipped_claim,
             detect_unsupported_task_state_claim,
         )
-        _l1_warning = detect_unsupported_shipped_claim(
-            proposition=fact.proposition,
-            verified_by=list(fact.verified_by or []),
-        )
-        if _l1_warning:
-            _LOG.warning(
-                "L1 anti-confabulation: fact_id=%s topic=%s — %s",
-                fact.id, fact.topic, _l1_warning,
+        from .gate_router import classify_provenance as _gr_classify
+        from .gate_router import l1x_applies as _gr_l1x_applies
+        if _gr_l1x_applies(_gr_classify(
+                getattr(fact, "writer_role", None),
+                list(fact.verified_by or []))):
+            _l1_warning = detect_unsupported_shipped_claim(
+                proposition=fact.proposition,
+                verified_by=list(fact.verified_by or []),
             )
-        # Cycle #130 (2026-05-17): L1.5 diagnosis detector.
-        # Same no-breaking contract — fact is stored anyway.
-        _l15_warning = detect_unsupported_diagnosis_claim(
-            proposition=fact.proposition,
-            verified_by=list(fact.verified_by or []),
-        )
-        if _l15_warning:
-            _LOG.warning(
-                "L1.5 anti-confabulation: fact_id=%s topic=%s — %s",
-                fact.id, fact.topic, _l15_warning,
+            if _l1_warning:
+                _LOG.warning(
+                    "L1 anti-confabulation: fact_id=%s topic=%s — %s",
+                    fact.id, fact.topic, _l1_warning,
+                )
+            # Cycle #130 (2026-05-17): L1.5 diagnosis detector.
+            # Same no-breaking contract — fact is stored anyway.
+            _l15_warning = detect_unsupported_diagnosis_claim(
+                proposition=fact.proposition,
+                verified_by=list(fact.verified_by or []),
             )
-        # Cycle #131 (2026-05-17): L1.7 task-state detector.
-        # Same no-breaking contract — fact is stored anyway.
-        _l17_warning = detect_unsupported_task_state_claim(
-            proposition=fact.proposition,
-            verified_by=list(fact.verified_by or []),
-        )
-        if _l17_warning:
-            _LOG.warning(
-                "L1.7 anti-confabulation: fact_id=%s topic=%s — %s",
-                fact.id, fact.topic, _l17_warning,
+            if _l15_warning:
+                _LOG.warning(
+                    "L1.5 anti-confabulation: fact_id=%s topic=%s — %s",
+                    fact.id, fact.topic, _l15_warning,
+                )
+            # Cycle #131 (2026-05-17): L1.7 task-state detector.
+            # Same no-breaking contract — fact is stored anyway.
+            _l17_warning = detect_unsupported_task_state_claim(
+                proposition=fact.proposition,
+                verified_by=list(fact.verified_by or []),
             )
+            if _l17_warning:
+                _LOG.warning(
+                    "L1.7 anti-confabulation: fact_id=%s topic=%s — %s",
+                    fact.id, fact.topic, _l17_warning,
+                )
         # 2026-06-05: decouple persistence from embedding so a save NEVER
         # blocks ~22s on a cold model load (root cause of the "Engram hangs
         # on save" incident — measured: cold encode 21.8s, daemon-warm 40ms).
@@ -3190,7 +3280,8 @@ class SemanticMemory:
         # CE is warm. Removes the recall p95 3.1s tail WITHOUT skipping rerank
         # when a scorer is already available (keeps the injected-scorer paths
         # valid). Once _RERANKER is resident the steady predict fits the budget.
-        if not _reranker_ready():
+        _was_ready = _reranker_ready()
+        if not _was_ready:
             _budget = min(_budget, _rerank_cold_budget_s())
         if _budget <= 0:
             try:
@@ -3221,16 +3312,29 @@ class SemanticMemory:
             _t.start()
             _t.join(_budget)
             if _t.is_alive():
-                _LOG.warning(
-                    "rerank exceeded %.1fs budget → keeping bi-encoder order "
-                    "(CE warming in background; next query reranks)", _budget,
-                )
-                _rerank_breaker_overrun()
+                if _was_ready:
+                    _LOG.warning(
+                        "rerank exceeded %.1fs budget → keeping bi-encoder "
+                        "order (steady overrun; counts toward the breaker)",
+                        _budget,
+                    )
+                    _rerank_breaker_overrun()
+                else:
+                    # F1 C1: cold overrun = CE still warming = transient by
+                    # definition. Never counts toward the steady trip; only
+                    # the generous cold bound (never-warms pathology) does.
+                    _LOG.warning(
+                        "rerank cold-load exceeded %.2fs cold budget → keeping "
+                        "bi-encoder order (CE warming in background; cold "
+                        "overruns do not trip the steady breaker)", _budget,
+                    )
+                    _rerank_breaker_cold_overrun()
                 return hits_2t[:k]
             if "err" in _box:
                 return hits_2t[:k]  # scorer error → bi-encoder order
             ranked = _box.get("ranked")
             _RERANK_BREAKER["consecutive"] = 0  # in-budget → transient, re-arm
+            _RERANK_BREAKER["cold"] = 0         # CE answered → warm again
         if not ranked:
             return hits_2t[:k]
         reordered = [by_id[fid] for fid, _ce in ranked if fid in by_id]

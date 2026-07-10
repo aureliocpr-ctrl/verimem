@@ -97,8 +97,12 @@ def eval_item(item: dict[str, Any], ks: list[int], *, workdir: Path | str) -> di
         text = paragraph_to_text(p)
         if not text:
             continue
+        # writer_role='external_content': these are ingested document
+        # paragraphs, not agent claims — routes them to the document gate
+        # policy (task #25 gate_router; L1.x self-claim heuristics skip).
         sm.store(Fact(proposition=text, topic=f"musique/{qid}",
-                      source_episodes=[str(p["idx"])]))
+                      source_episodes=[str(p["idx"])],
+                      writer_role="external_content"))
         n_stored += 1
 
     k_max = max(ks)

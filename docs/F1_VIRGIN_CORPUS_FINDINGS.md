@@ -5,6 +5,40 @@ engine on an ESTRANEO corpus never touched in development — "se e' sviluppato
 sul mio cadra' su uno nuovo". Every fall is a phase-C fix. This file is the
 running catalogue of falls; the fixes are TDD, AFTER measurement, not now.
 
+**Phase-C update (same evening, task #25)** — Aurelio mandate: "i gate devono
+essere separati... se uno non passa fa backpropagation chiedendo: ma questo
+tocca a me o a qualcuno di voi?". Shipped, TDD:
+
+- **Gate router** (`engram/gate_router.py`): every write-path gate now routes
+  on the ownership answer — agent_claim / external_content / user_input /
+  trusted_hook (`classify_provenance`). When a gate fires, its event carries
+  the attribution (the "whose claim is this?" question) instead of deciding
+  silently. Security invariant: provenance never weakens the injection
+  defense — it only routes the warning-only self-claim heuristics.
+- **C4 FIXED — sanitize-then-scan** (`sanitize_dangerous_unicode` +
+  `ENGRAM_UNICODE_SANITIZE`, default ON): invisible code points are stripped
+  BEFORE any detector (screen AND admission gate share the choke point).
+  Full-dev MuSiQue rescan: paragraphs quarantined 382→**39** (0.8%→0.08%),
+  questions with a GOLD quarantined 97→**1** (4.0%→**0.04%**), 343 paragraphs
+  sanitized+admitted. Residual declared: 38 obfuscation (mixed-script
+  homoglyph defense, kept on purpose) + 1 role_hijack prose FP.
+  **Red-team UNCHANGED pre/post: catch 0.9677 (30/31), FP 0.0, unicode-evasion
+  2/2 still caught** (post-strip the L1.20 matcher sees the exposed claim) —
+  defused, not weakened. Discovery en route: quarantine is enforced at TWO
+  points (injection screen + admission gate, `ENGRAM_ADMISSION_GATE=1` on this
+  machine) — the shared sanitize hoist fixes both; a per-gate patch would not.
+- **C1 FIXED — cold-load overruns no longer trip the breaker**: only a
+  STEADY overrun (`_reranker_ready()` True) counts toward the N=5 trip; a
+  separate generous bound (`ENGRAM_RERANK_COLD_BREAKER_N`, default 40) still
+  covers the never-warms pathology. Rerank (+0.29 R@1) stays available.
+- **C2 FIXED — L1.x routed by provenance**: skip for external_content /
+  user_input (a document saying "merged" is not the agent claiming a merge);
+  full discipline kept for agent claims and hooks.
+
+Suites green: 67 (sanitize+router+breaker+injection) + 19 (multilang+redteam
+fixes) + 123 (anti-confab) + 18 (source-trust guard). Run C (n=210, fixed
+engine, writer_role=external_content) pending below.
+
 ## Discipline
 
 - **Virgin corpora only.** Burnt (tuned/measured on): LongMemEval, LoCoMo,

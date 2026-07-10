@@ -246,6 +246,40 @@ def _has_mixed_script_token(text: str | None) -> bool:
     return False
 
 
+def sanitize_dangerous_unicode(text: str | None) -> tuple[str, int]:
+    """Strip the invisible/control code points of ``_DANGEROUS_UNICODE`` and
+    return ``(clean_text, n_removed)``.
+
+    F1 C4 (virgin-corpus 2026-07-10): these characters occur in LEGITIMATE
+    document text — U+FEFF inside Wikipedia coordinate templates, U+200B in
+    IPA pronunciation blocks — and `unicode_smuggling` fired on the character
+    itself, quarantining answer-bearing paragraphs (silent recall loss).
+
+    Stripping is strictly safer than quarantining here: the characters are
+    invisible, so removal never changes what a human reads, and it NEUTRALIZES
+    the smuggling channel instead of hiding the fact. An attack that used
+    invisibles to break a keyword ("ig​nore ... instructions") becomes
+    MORE detectable after the strip. Visible unicode (IPA, accents, °′″,
+    homoglyphs) is untouched — the homoglyph/content detectors still see it.
+    """
+    if not text:
+        return ("", 0)
+    out: list[str] = []
+    removed = 0
+    for ch in text:
+        cp = ord(ch)
+        dangerous = False
+        for lo, hi in _DANGEROUS_UNICODE:
+            if lo <= cp <= hi:
+                dangerous = True
+                break
+        if dangerous:
+            removed += 1
+        else:
+            out.append(ch)
+    return ("".join(out), removed)
+
+
 def detect_injection(text: str | None) -> InjectionVerdict:
     """Scan ``text`` for prompt-injection / poisoning signals.
 

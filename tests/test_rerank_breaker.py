@@ -86,3 +86,42 @@ def test_breaker_disabled_with_zero_threshold(tmp_path, monkeypatch):
     for _ in range(5):
         mem.search("tower", k=3)
     assert semantic._RERANK_BREAKER["tripped"] is False
+
+
+# --- F1 C1 (task #25): cold-load overruns must NOT trip the steady breaker.
+# Observed on the MuSiQue virgin-corpus run 2026-07-10: the CE cold-load
+# (~33s) overran the 0.25s cold budget 5 times in the first recalls of a
+# fresh process and TRIPPED the breaker — rerank (worth +0.29 R@1) stayed
+# off for the whole session. A cold overrun is transient by definition; only
+# a STEADY overrun (CE resident but too slow) signals a real problem.
+
+
+def test_cold_overruns_do_not_trip_steady_breaker(tmp_path, monkeypatch):
+    mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)
+    monkeypatch.setattr(semantic, "_reranker_ready", lambda: False)  # cold
+    for _ in range(5):  # >> breaker N=3
+        mem.search("tower", k=3)
+    assert semantic._RERANK_BREAKER["tripped"] is False, (
+        "cold-load overruns are transient — they must never trip the breaker")
+    assert semantic._RERANK_BREAKER["consecutive"] == 0, (
+        "cold overruns must not count toward the steady trip")
+
+
+def test_cold_overruns_have_their_own_bounded_trip(tmp_path, monkeypatch):
+    # pathological never-warms process (broken CE install): a SEPARATE,
+    # much more generous cold threshold still bounds the waste.
+    mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)
+    monkeypatch.setattr(semantic, "_reranker_ready", lambda: False)
+    monkeypatch.setenv("ENGRAM_RERANK_COLD_BREAKER_N", "3")
+    for _ in range(3):
+        mem.search("tower", k=3)
+    assert semantic._RERANK_BREAKER["tripped"] is True
+
+
+def test_steady_overruns_still_trip_after_warm(tmp_path, monkeypatch):
+    # regression guard: the C1 fix must not weaken the original breaker —
+    # a WARM reranker that systematically overruns still trips at N.
+    mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)  # ready=True fixture
+    for _ in range(3):
+        mem.search("tower", k=3)
+    assert semantic._RERANK_BREAKER["tripped"] is True
