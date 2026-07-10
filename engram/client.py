@@ -281,12 +281,10 @@ class Memory:
     # ---- source trust (task #17, behind ENGRAM_SOURCE_TRUST) ----------------
 
     def _source_trust_book(self):
-        """Lazy-loaded persisted book (the store's own SQLite)."""
-        book = getattr(self, "_stb", None)
-        if book is None:
-            from .source_trust import load_book
-            book = self._stb = load_book(self.semantic.db_path)
-        return book
+        """The process-shared per-path book (the store-side supersession hook
+        mutates the SAME object — a private cache here would diverge)."""
+        from .source_trust import get_book
+        return get_book(self.semantic.db_path)
 
     def source_trust_observe(self, *, confirmation: list[str] | None = None,
                              contradiction: str | None = None,

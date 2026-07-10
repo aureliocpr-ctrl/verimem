@@ -221,7 +221,7 @@ def observe_supersessions(sm, superseded_ids: list[str], *,
     import json as _json
     now = now or time.time()
     hl = half_life_s()
-    book = load_book(sm.db_path)
+    book = get_book(sm.db_path)
     changed = False
     # direct SQL: by the time this hook runs the fact IS superseded, and the
     # store's get() hides superseded facts — read the row, not the API view.
@@ -275,6 +275,28 @@ def load_book(db_path: str | Path) -> SourceTrustBook:
     for s, c, x, g, b in rows:
         book._sources[s] = _Ledger(confirms=c, contradicts=x, good=g, bad=b)
     return book
+
+
+# Process-wide book cache keyed by db path: the client (gate consult, dossier)
+# and the store-side supersession hook must mutate the SAME in-memory book, or
+# one path's writes are invisible to the other's cached copy (the #20b bug:
+# the client cached its book, observe_supersessions loaded a second one, they
+# diverged). SQLite stays the source of truth across processes.
+_BOOK_CACHE: dict[str, SourceTrustBook] = {}
+
+
+def get_book(db_path: str | Path) -> SourceTrustBook:
+    """Shared per-path book (loaded once, then the live in-memory object)."""
+    key = str(db_path)
+    book = _BOOK_CACHE.get(key)
+    if book is None:
+        book = _BOOK_CACHE[key] = load_book(key)
+    return book
+
+
+def reset_book_cache() -> None:
+    """Test hook: drop the process cache so a fresh db path starts clean."""
+    _BOOK_CACHE.clear()
 
 
 def save_book(db_path: str | Path, book: SourceTrustBook) -> None:

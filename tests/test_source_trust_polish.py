@@ -18,7 +18,13 @@ from engram.client import Memory
 DAY = 86400.0
 
 
+def _fresh(monkeypatch):
+    from engram import source_trust
+    source_trust.reset_book_cache()
+
+
 def test_explain_exposes_source_trust_when_enabled(tmp_path, monkeypatch):
+    _fresh(monkeypatch)
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
     mem = Memory(tmp_path / "m.db")
     mem.source_trust_observe(confirmation=["acme-registry", "other-src"])
@@ -46,6 +52,7 @@ def test_supersession_feeds_attenuated_outcome(tmp_path, monkeypatch):
     """Unit + wiring: when store()'s reconcile supersedes an old fact, the
     old fact's SOURCE gets an outcome=False observation whose weight is
     attenuated by the fact's age (old fact → light blame)."""
+    _fresh(monkeypatch)
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "1")
     monkeypatch.setenv("ENGRAM_RECONCILE_AUTO_SUPERSEDE", "1")
