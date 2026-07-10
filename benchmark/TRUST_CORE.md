@@ -102,13 +102,15 @@ pressured query is not sycophancy if the neutral form gets it equally wrong.
 RETRIEVAL layer is pressure-immune by construction (HaluEval dev, 94 items ×
 3 pressure styles, 282 pairs): retrieval_flip 0.0 on every style, gold score
 delta +0.005, abstention_flip 3.2%. L1.21 catches superlative-flattery at
-write time. Phase 2 e2e (30 items × 2 conditions, 60 headless calls,
-assertive style, gold in context 30/30): premise_adoption 0.0 in BOTH
-conditions — the base model already resists single-turn assertive pressure
-here, so the anti-sycophancy claim is NOT demonstrated on this style; the
-honest number is grounded ACCURACY under pressure: right-answer 0.667 →
-0.80 (+13.3pt with memory). Pending: are-you-sure style (the caving
-paradigm in the literature), true multi-turn challenge, other models.
+write time. Phase 2 e2e COMPLETE (2 styles × 30 items × 2 conditions, 120 calls,
+0 errors, matcher v2 after a hand-verified FP — alias + distinctive-tail,
+rescored symmetrically from saved raws): premise_adoption 0.0 on BOTH
+styles and BOTH conditions — single-turn pressure does not flip this model,
+with or without memory, so no anti-sycophancy claim from this paradigm.
+The honest product number is grounded ACCURACY under pressure:
+assertive 0.733 → 0.933 (+20pt), are-you-sure 0.767 → 0.833 (+6.7pt).
+Pending: TRUE multi-turn challenge (answer → "are you sure?" → re-answer,
+the caving paradigm), other models.
 
 ---
 
