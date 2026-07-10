@@ -1,0 +1,30 @@
+{
+  "k": 10,
+  "checkpoints": [
+    {
+      "n_facts": 1000,
+      "recall_ms_mean": 387.9,
+      "recall_ms_p95": 405.7,
+      "rss_mb": 108.4
+    },
+    {
+      "n_facts": 3000,
+      "recall_ms_mean": 303.7,
+      "recall_ms_p95": 275.5,
+      "rss_mb": 1458.2
+    },
+    {
+      "n_facts": 6000,
+      "recall_ms_mean": 357.4,
+      "recall_ms_p95": 302.9,
+      "rss_mb": 1480.9
+    },
+    {
+      "n_facts": 10000,
+      "recall_ms_mean": 439.2,
+      "recall_ms_p95": 314.1,
+      "rss_mb": 1519.0
+    }
+  ],
+  "target_max": 10000
+}
