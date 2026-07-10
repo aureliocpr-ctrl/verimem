@@ -193,6 +193,55 @@ retrieve hop-2. F1 gives the baseline this must beat.
 
 ---
 
+## Corpus 2 — MSC-Self-Instruct (conversational memory, virgin)
+
+Harness `benchmark/external_f1_msc.py` (4 fn-tests green). The PRODUCT case:
+prior chat sessions ingested (writer_role=user), then "remember when we talked
+about X?". n=90 scored (60/150 skipped — paraphrase-only answers with no
+substring gold, declared), 51 turns/item.
+
+| k | hit@k | recall@k |
+|---|---|---|
+| 1 | 0.389 | 0.304 |
+| 5 | 0.644 | 0.505 |
+| 10 | 0.822 | 0.653 |
+
+MRR 0.506, latency 518ms. Weaker than MuSiQue (hit@10 0.99): conversational
+queries are vaguer, turns are short/colloquial, and the substring gold is noisy
+(marks any turn mentioning the answer word). Honest read: the answer-bearing
+memory is in the top-10 82% of the time but FIRST only 39% — an area to improve
+(rerank, now unblocked by C1, is the lever; it does not warm in a per-item
+hermetic bench). Not a hard verdict given the heuristic gold + 40% skip.
+
+## Corpus 3 — QuALITY (long documents, virgin) — the S2 proof
+
+Harness `benchmark/external_f1_quality.py` (3 fn-tests green). 115 articles
+(median ~27k chars, ALL > the 512-token window) in ONE shared store; 300
+questions (seed 42); gold = source article id. Same haystack, two ingests:
+
+| k | whole (1 fact/article, truncated) | chunked (chunk_text, 4249 facts) | Δ |
+|---|---|---|---|
+| 1 | 0.517 | **0.767** | **+25pt** |
+| 3 | 0.613 | 0.867 | +25pt |
+| 5 | 0.663 | 0.883 | +22pt |
+| 10 | 0.860 | 0.903 | +4pt |
+
+MRR 0.599 → **0.817** (+22pt). Latency 115ms → 452ms (4249-fact store; fair
+trade, sub-second).
+
+**Reading.** The S2 silent truncation costs 25 points of hit@1 on long
+documents; the existing chunker recovers them. Together with the non-silent
+store guard (c2150c1) the fall is closed: the wrong door now WARNS and points
+at the right door, and the right door measurably works. Declared limit:
+article-level gold (no span annotation without a judge).
+
+**QuALITY residual (measured, declared):** 2/4249 chunks (0.05%, 1/115
+articles) quarantined as `role_hijack` — FICTION DIALOGUE ("From now on,
+suppose you take care of the cooking"). Tolerable: the article stays
+retrievable via its other ~35 chunks, and loosening role_hijack would weaken a
+real defense for 0.05%. The alternative policy (document-mode demote instead
+of quarantine) is an F2 product decision, Aurelio's call.
+
 ## Adversarial scenario map (mandate: "apri gli orizzonti, non far ridere la gente")
 
 Think as a hostile reviewer / real user, not as the author. Where would Verimem
@@ -202,7 +251,7 @@ mis-calibrated off agent-memory) outward:
 | # | scenario | status | evidence |
 |---|---|---|---|
 | S1 | **Multilingual gates** — the site sells "10 languages"; do gates quarantine legit Russian/Greek/CJK/Arabic/Hebrew/Hindi? | ✅ HOLDS (verified) | 0/10 non-Latin legit texts quarantined; mixed-script check is per-word (LATIN+other in ONE token), which legit prose never hits. A strength, not a fall. |
-| S2 | **Long documents** — e5 truncates at 512 tok; ingest a 30-page PDF and query page 20 | ⚠️ FALL (verified) | QuALITY: 115/115 articles > 512 tok (median ~6.8k). As ONE fact → ~7% embedded. A chunker EXISTS (`chunking.py`, 1000ch/150 overlap, provenance-anchored) and `DocumentIndex` uses it — but it is a SEPARATE tier; a direct `add(long_doc)` truncates SILENTLY (no length guard on the store, only on rerank). **Fix: non-silent length guard on store → auto-route to chunker or warn.** |
+| S2 | **Long documents** — e5 truncates at 512 tok; ingest a 30-page PDF and query page 20 | ✅ FIXED+PROVEN | Fall verified (115/115 articles > 512 tok, direct add sees ~7%) → non-silent store guard shipped (c2150c1, TDD 4) → whole-vs-chunked on the real haystack: hit@1 0.517→0.767 (+25pt), MRR +22pt. Corpus-3 section below. |
 | S3 | **Scale** — tested at 20-fact hermetic stores; 100k facts? recall latency, RAM (already bitten), auto-floor stability | ⏳ open | — |
 | S4 | **Contradictions on a real corpus** — Aurelio's question "siamo forti sulle contraddizioni?"; reconcile outside the in-house garden | ⏳ open | source-trust + reconcile shipped behind flags; not stressed on a virgin conflicting corpus |
 | S5 | **Adversarial queries** — empty, cross-language, injection-in-the-query, 10k-char query | ⏳ open | recall has a k<=0 guard + cold-encode fallback; the rest untested |

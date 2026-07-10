@@ -1,0 +1,25 @@
+{
+  "dataset": "benchmark\\data\\external\\.cache\\quality\\data\\validation-00000-of-00001-77baeb9538209706.parquet",
+  "corpus": "QuALITY validation (virgin — never used in dev)",
+  "mode": "chunked",
+  "ks": [
+    1,
+    3,
+    5,
+    10
+  ],
+  "n_articles": 115,
+  "n_facts_stored": 4249,
+  "n_questions": 300,
+  "embedding_model": "intfloat/multilingual-e5-base",
+  "overall": {
+    "n": 300,
+    "hit@1": 0.7667,
+    "hit@3": 0.8667,
+    "hit@5": 0.8833,
+    "hit@10": 0.9033,
+    "mrr": 0.8174
+  },
+  "latency_ms_mean": 452.2525,
+  "metric_note": "ARTICLE-level retrieval: gold = the source article the question was written for; hit@k of that article id among top-k sources. Declared limit: article-level not passage-level (no gold span; passage correctness needs an LLM judge, not called). whole vs chunked isolates the S2 silent-truncation fall."
+}
