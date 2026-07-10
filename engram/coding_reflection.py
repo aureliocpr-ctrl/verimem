@@ -80,7 +80,8 @@ def extract_error_signature(traceback_text: str) -> str:
         return f"{err_type}:{fname}:{line}:{first_word}"
 
     # Non-Python text — hash the content so identical refusals collide.
-    h = hashlib.sha1(traceback_text.encode("utf-8")).hexdigest()[:8]
+    h = hashlib.sha1(traceback_text.encode("utf-8"),
+                     usedforsecurity=False).hexdigest()[:8]
     return f"unknown:?:?:{h}"
 
 

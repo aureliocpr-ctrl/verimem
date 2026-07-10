@@ -26,7 +26,8 @@ def compute_signature(skill: Any) -> str:
     trig = _normalize(getattr(skill, "trigger", ""))
     body = _normalize(getattr(skill, "body", ""))
     raw = f"{trig}||{body}"
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
+    return hashlib.sha1(raw.encode("utf-8"),
+                        usedforsecurity=False).hexdigest()[:12]
 
 
 def find_duplicate_skills(skills: list[Any]) -> dict[str, Any]:

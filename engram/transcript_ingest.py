@@ -100,7 +100,8 @@ def parse_turns(jsonl_path, limit: int | None = None) -> list[Turn]:
             # viene riscritto/prependato (no duplicati a scala).
             uid = o.get("uuid") or (
                 "h:" + hashlib.sha1(
-                    ((o.get("sessionId") or path.stem) + "|" + text).encode("utf-8")
+                    ((o.get("sessionId") or path.stem) + "|" + text).encode("utf-8"),
+                    usedforsecurity=False,
                 ).hexdigest()[:16]
             )
             out.append(Turn(

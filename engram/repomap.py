@@ -180,7 +180,8 @@ def _default_cache_path(root: Path) -> Path:
     HippoAgent install don't collide.
     """
     import hashlib
-    h = hashlib.sha1(str(root.resolve()).encode("utf-8")).hexdigest()[:12]
+    h = hashlib.sha1(str(root.resolve()).encode("utf-8"),
+                     usedforsecurity=False).hexdigest()[:12]
     return CONFIG.data_dir / f"repomap_cache_{h}.json"
 
 
