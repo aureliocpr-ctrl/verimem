@@ -69,6 +69,17 @@ def _dossier_for_path(store: Any, semantic: Any, src_id: str,
                     "reason": f"source fact {fid} for the "
                               f"'{hop['predicate']}' hop is no longer in the "
                               f"store — abstaining instead of fabricating"}
+        # ROTTEN HOP (task #20d, transfer law L3): the fact is still present
+        # but SUPERSEDED — its value was replaced. Presenting it as current
+        # would be a stale derivation; invalidate the CHAIN (not the sources)
+        # and point at the fact that replaced it.
+        newer = getattr(fact, "superseded_by", None)
+        if newer:
+            return {**base, "abstained": True, "grounded": False,
+                    "answer": None,
+                    "reason": f"source fact {fid} for the "
+                              f"'{hop['predicate']}' hop was superseded by "
+                              f"{newer} — the derivation is stale, abstaining"}
         derivation.append({
             "from_entity": _entity_name(store, hop["src_entity"]),
             "to_entity": _entity_name(store, hop["dst_entity"]),

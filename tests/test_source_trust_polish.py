@@ -48,6 +48,34 @@ def test_explain_no_source_trust_when_disabled(tmp_path, monkeypatch):
     assert entries and "source_trust" not in entries[0]
 
 
+def test_retro_demoted_facts_rehabilitate_when_source_recovers(tmp_path, monkeypatch):
+    """Guard-rail rehabilitation path: a source demoted below the floor sinks
+    its facts (retro-demote); when independent confirmations lift it back
+    ABOVE the floor, ONLY the facts it demoted for source-trust return —
+    never a fact L1/L4 quarantined for its own content."""
+    _fresh(monkeypatch)
+    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
+    mem = Memory(tmp_path / "m.db")
+    r_ok = mem.add("The shelf code of aisle_3 is qq88rr.", topic="t",
+                   verified_by=["source-doc:flip:t0"])
+    # an L1-quarantined fact from the SAME source (unsupported self-claim)
+    r_l1 = mem.add("the migration works perfectly and is fully tested",
+                   topic="t", verified_by=["source-doc:flip:t1"])
+    assert mem.semantic.get(r_l1["id"]).status == "quarantined"
+
+    for _ in range(8):
+        mem.source_trust_observe(contradiction="flip")   # sink → retro-demote
+    assert mem.semantic.get(r_ok["id"]).status == "quarantined"
+
+    for _ in range(30):
+        mem.source_trust_observe(confirmation=["flip", "witness"])  # recover
+    assert mem.source_trust("flip") > 0.25
+    assert mem.semantic.get(r_ok["id"]).status != "quarantined", (
+        "source-trust demotion must reverse when the source recovers")
+    assert mem.semantic.get(r_l1["id"]).status == "quarantined", (
+        "an L1-quarantined fact must NEVER be rehabilitated by source trust")
+
+
 def test_supersession_feeds_attenuated_outcome(tmp_path, monkeypatch):
     """Unit + wiring: when store()'s reconcile supersedes an old fact, the
     old fact's SOURCE gets an outcome=False observation whose weight is

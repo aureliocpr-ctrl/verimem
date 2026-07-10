@@ -306,6 +306,10 @@ class Memory:
         watched = {s for s in (contradiction,
                                outcome[0] if outcome else None) if s}
         pre = {s: book.trust(s) for s in watched}
+        # trust BEFORE this observation for every source it touches (confirmers
+        # included) — the recovery crossing-up is read against these.
+        pre_all = {s: book.trust(s)
+                   for s in set(watched) | set(confirmation or [])}
         if confirmation:
             book.observe_confirmation(confirmation)
         if contradiction:
@@ -318,20 +322,30 @@ class Memory:
             thr = threshold()
             for s in watched:
                 if pre.get(s, 1.0) >= thr and book.trust(s) < thr:
-                    self._retro_demote_source(s)
+                    self._retro_demote_source(s)          # crossing DOWN
+        # crossing UP: a recovered source's OWN source-trust demotions reverse
+        # (guard-rail rehabilitation path). confirmations are the recovery.
+        if enabled() and confirmation:
+            thr = threshold()
+            for s in confirmation:
+                if pre_all.get(s, 0.0) < thr <= book.trust(s):
+                    self._rehabilitate_source(s)
 
     _SOURCE_REF_PREFIXES = ("source-doc", "source", "src", "doc", "file")
+    _DEMOTE_TABLE = ("CREATE TABLE IF NOT EXISTS source_trust_demotions ("
+                     "fact_id TEXT PRIMARY KEY, source TEXT NOT NULL)")
 
     def _retro_demote_source(self, source: str) -> None:
         """Quarantine every non-quarantined fact citing ``source`` — the
         write-time gate only stops FUTURE lies; the crossing re-evaluates the
-        past ones. Best-effort: a demotion failure must never break the
-        observation that triggered it."""
+        past ones. Each demoted id is RECORDED so recovery can restore exactly
+        these (never an L1/L4 quarantine). Best-effort."""
         import sqlite3 as _sq
         clauses = " OR ".join(["verified_by LIKE ?"] * len(self._SOURCE_REF_PREFIXES))
         params = [f'%"{p}:{source}:%' for p in self._SOURCE_REF_PREFIXES]
         try:
             with _sq.connect(str(self.semantic.db_path)) as conn:
+                conn.execute(self._DEMOTE_TABLE)
                 rows = conn.execute(
                     f"SELECT id FROM facts WHERE status != 'quarantined' "
                     f"AND ({clauses})", params).fetchall()
@@ -339,11 +353,43 @@ class Memory:
             return
         for (fid,) in rows:
             try:
-                self.semantic.quarantine_fact(
+                if self.semantic.quarantine_fact(
                     fid, reason=(f"source '{source}' trust sank below the "
-                                 "floor — retroactive demotion"))
+                                 "floor — retroactive demotion")):
+                    with _sq.connect(str(self.semantic.db_path)) as conn:
+                        conn.execute(
+                            "INSERT OR REPLACE INTO source_trust_demotions "
+                            "(fact_id, source) VALUES (?, ?)", (fid, source))
+                        conn.commit()
             except Exception:  # noqa: BLE001 — best-effort per fact
                 continue
+
+    def _rehabilitate_source(self, source: str) -> None:
+        """Restore ONLY the facts THIS source-trust demoted (recorded ids) —
+        an L1/L4 quarantine is never touched. The reverse of the crossing."""
+        import sqlite3 as _sq
+        try:
+            with _sq.connect(str(self.semantic.db_path)) as conn:
+                conn.execute(self._DEMOTE_TABLE)
+                rows = conn.execute(
+                    "SELECT fact_id FROM source_trust_demotions WHERE source=?",
+                    (source,)).fetchall()
+        except _sq.Error:
+            return
+        for (fid,) in rows:
+            try:
+                self.semantic.restore_fact(
+                    fid, reason=f"source '{source}' recovered above the floor")
+            except Exception:  # noqa: BLE001 — best-effort per fact
+                pass
+        try:
+            with _sq.connect(str(self.semantic.db_path)) as conn:
+                conn.execute(
+                    "DELETE FROM source_trust_demotions WHERE source=?",
+                    (source,))
+                conn.commit()
+        except _sq.Error:
+            pass
 
     def source_trust(self, source: str) -> float:
         """Combined (min-of-observed-channels) trust for ``source``."""
