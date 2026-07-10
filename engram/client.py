@@ -218,7 +218,7 @@ class Memory:
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
                 as_of: float | None = None,
-                min_relevance: float = 0.0) -> dict[str, Any]:
+                min_relevance: float | str = 0.0) -> dict[str, Any]:
         """The evidence dossier behind an answer — the trust gate made atomic:
         per fact the full chain of custody (provenance, writer, status,
         verified_by, grounding, the two clocks, what it replaced, declared
@@ -226,15 +226,41 @@ class Memory:
         "how do you know?" for any query.
 
         ``min_relevance`` (default 0.0 = off) applies a retrieval floor so a
-        query with no relevant fact abstains without an LLM — see
-        ``build_trust_report`` for why it is opt-in (anisotropic bi-encoder)."""
+        query with no relevant fact abstains without an LLM.
+        ``min_relevance="auto"`` lets the STORE calibrate the floor itself
+        (scrambled-probe noise quantile, engram.relevance_floor): measured on
+        external data (HaluEval dev n=100, 2026-07-10) the self-calibrated
+        floor landed at 0.7987 vs 0.80 hand-picked from the labeled curve —
+        false_answer 1.0→0.04 at 0.10 over-abstention. A fixed default cannot
+        do this: e5 scores live in [0.73, 0.95], so any constant is wrong for
+        some store/embedder pair. Estimation (~32 probe recalls) is cached
+        for 5 minutes. The resolved value is reported as
+        ``report["min_relevance"]``."""
+        if min_relevance == "auto":
+            min_relevance = self._auto_relevance_floor()
         from .trust_report import build_trust_report
         report = build_trust_report(self.semantic, query, k=k, deep=deep,
                                     as_of=as_of, min_relevance=min_relevance)
+        report["min_relevance"] = float(min_relevance)
         if report.get("abstained"):
             # honest-"I don't know" counter — the read-path half of the odometer
             self._record_trust("abstained")
         return report
+
+    _FLOOR_CACHE_TTL_S = 300.0
+
+    def _auto_relevance_floor(self) -> float:
+        """Resolve the self-calibrated floor, cached per client for the TTL —
+        estimation costs ~32 probe recalls, which must not be paid per query."""
+        import time as _time
+        cached = getattr(self, "_floor_cache", None)
+        now = _time.time()
+        if cached and now - cached[0] < self._FLOOR_CACHE_TTL_S:
+            return cached[1]
+        from .relevance_floor import estimate_relevance_floor
+        val = estimate_relevance_floor(self.semantic)
+        self._floor_cache = (now, val)
+        return val
 
     def _record_trust(self, action: str, layers: list[str] | None = None,
                       topic: str = "") -> None:

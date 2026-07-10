@@ -1,0 +1,36 @@
+{
+  "dataset": "HaluEval qa_data (MIT)",
+  "split": "heldout",
+  "n_answerable": 200,
+  "n_unanswerable": 100,
+  "k": 5,
+  "ingest": {
+    "admitted": 188,
+    "blocked": 12,
+    "by_status": {
+      "model_claim": 188,
+      "quarantined": 12
+    }
+  },
+  "curve": [
+    {
+      "tau": 0.8,
+      "retrieval_hit_rate": 0.94,
+      "over_abstention_rate": 0.11,
+      "abstention_rate": 0.96,
+      "false_answer_rate": 0.04
+    }
+  ],
+  "separability_auroc": 0.9935,
+  "score_stats": {
+    "answerable": {
+      "min": 0.7794,
+      "max": 0.9413
+    },
+    "unanswerable": {
+      "min": 0.7343,
+      "max": 0.8268
+    }
+  },
+  "ts": "2026-07-10T11:32:10"
+}
