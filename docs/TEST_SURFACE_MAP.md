@@ -128,3 +128,32 @@ poisoning, hallucination). So the surface is not just "does recall work" but
 
 Each is one atom: probe (measure) → if it falls, TDD fix → re-measure. No cell
 ships green without a number.
+
+## Sweep 1 results (2026-07-10) — measured, not assumed
+
+| cell | probe | result |
+|---|---|---|
+| D temporal | "what happened in March 2024?" over 6 months | ✅ March first |
+| B numeric | "Q3 marketing budget?" vs headcount/revenue | ✅ budget, not the other numbers |
+| F multi-tenant leak | tenant-A-scoped query with B present | ✅ isolated (topic_prefix), no leak |
+| B code | "how is tax calculated?" over 3 snippets | ✅ tax snippet first |
+| D aggregation/count | 12 mentions, recall k=5 | ⚠️ FALL: 5/12 (undercount 58%); scan (search_facts) sees 12/12 but is not exposed on Memory nor routed |
+| D negation | "code NOT about tax" | ⚠️ FALL: tax surfaces first (embeddings ignore "not") — universal RAG limit |
+
+## Thesis emerging (concatenating the residual retrieval falls)
+
+The big falls were on INGEST (C4/S2 — fixed). On RETRIEVAL, most cells hold.
+The two residual falls — **aggregation/count** and **negation** — share one
+root: **semantic recall finds the RELEVANT item; it is not SET ALGEBRA.**
+"How many", "all of", "none that", "except" are set operations over the whole
+corpus, not top-k similarity. Same shape as the gate thesis (one axis, many
+faces): here the axis is **retrieval-vs-set-operations**.
+
+The lever is NOT a better embedder — it is a thin symbolic layer beside recall:
+a scan/filter/`count` primitive (the pieces exist: `list_facts`, `search_facts`,
+`count`), exposed on `Memory`, and an intent hop so a counting/exclusion query
+routes to a full scan instead of top-k. Multi-hop (C3) is the third face —
+graph traversal, another operation recall alone can't do. Verimem is strong at
+"find the fact", and needs an explicit operations layer for "compute over the
+set". Fix priority: `Memory.count/aggregate` primitive (atomic), then intent
+routing (F2/gateway product decision).
