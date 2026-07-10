@@ -391,6 +391,61 @@ class Memory:
         except _sq.Error:
             pass
 
+    # ---- decision chain (task #15) ------------------------------------------
+
+    def _decisions(self):
+        """Lazy DecisionStore on a sibling DB (decisions.db next to
+        semantic.db — the documents.py sibling-path pattern). Built on first
+        WRITE so a pure read never creates the file."""
+        ds = getattr(self, "_decision_store", None)
+        if ds is None:
+            from pathlib import Path as _P
+            from .decision_chain import DecisionStore
+            ds = self._decision_store = DecisionStore(
+                _P(self.semantic.db_path).with_name("decisions.db"))
+        return ds
+
+    def _decisions_ro(self):
+        """Read-only handle: None if no decisions.db exists yet (a why/list
+        must not materialise the store)."""
+        from pathlib import Path as _P
+        if getattr(self, "_decision_store", None) is not None:
+            return self._decision_store
+        if _P(self.semantic.db_path).with_name("decisions.db").exists():
+            return self._decisions()
+        return None
+
+    def record_decision(self, decision: str, *,
+                        alternatives: list[str] | None = None,
+                        evidence: list[str] | None = None,
+                        expected: str = "", revisit_at: float | None = None,
+                        topic: str = "decisions/general") -> str:
+        """Record a decision as a first-class cited record — the choice, the
+        alternatives rejected, the evidence (fact ids) considered, the
+        expected outcome. Answerable later via ``why_decision``."""
+        return self._decisions().record(
+            decision=decision, alternatives=alternatives, evidence=evidence,
+            expected=expected, revisit_at=revisit_at, topic=topic)
+
+    def decision_outcome(self, decision_id: str, outcome: str, *,
+                         verified_by: list[str]) -> bool:
+        """Attach the MEASURED outcome to a decision — requires evidence
+        (guard-rail), updates only the record, never the cited sources."""
+        return self._decisions().record_outcome(
+            decision_id, outcome, verified_by=verified_by)
+
+    def why_decision(self, question: str, *, limit: int = 5) -> list[dict]:
+        """"Why did we choose X?" → matching decisions with their cited
+        evidence ids. Empty list when nothing was ever recorded."""
+        ds = self._decisions_ro()
+        if ds is None:
+            return []
+        return [{"id": d.id, "decision": d.decision, "topic": d.topic,
+                 "alternatives": d.alternatives, "evidence": d.evidence,
+                 "expected": d.expected, "outcome": d.outcome,
+                 "outcome_verified_by": d.outcome_verified_by}
+                for d in ds.why(question, limit=limit)]
+
     def source_trust(self, source: str) -> float:
         """Combined (min-of-observed-channels) trust for ``source``."""
         return self._source_trust_book().trust(source)
