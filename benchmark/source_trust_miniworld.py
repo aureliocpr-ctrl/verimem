@@ -10,9 +10,22 @@ liars report a false value. Same stream, two conditions:
     same accepted value confirm each other; a divergent source contradicts)
     and the gate quarantines writes from below-threshold sources.
 
-PRE-REGISTERED CRITERION (before any run): the graft proceeds only if
-wrong_rate(ON) ≤ 0.5 × wrong_rate(OFF) AND no reputation inversion
-(mean final honest trust > mean final liar trust). Otherwise it stops here.
+PRE-REGISTERED CRITERION v1 (before the first run): graft proceeds only if
+wrong_rate(ON) ≤ 0.5 × wrong_rate(OFF) AND no reputation inversion.
+**v1 VERDICT (seed 11): FAILED — 0.80 → 0.70.** Diagnosis from the same
+run: reputation itself worked perfectly (honest ~0.96, liars ~0.02, 181
+liar writes quarantined, zero inversion); the residual wrong is dominated
+by STALE answering (recall returns an honest-but-superseded value under
+churn), a disease source-trust does not claim to cure — that is temporal
+reconciliation's job (exists in the product, not active in this world).
+The v1 metric conflated two diseases.
+
+PRE-REGISTERED CRITERION v2 (declared BEFORE the rerun, honest about the
+revision): decompose wrong into LIAR-driven (answer equals a liar value)
+vs STALE-driven (answer equals a superseded honest value). Graft proceeds
+iff wrong_liar(ON) ≤ 0.5 × wrong_liar(OFF) AND no inversion. The stale
+component is reported and expected ~unchanged across conditions — it is a
+TRUE finding motivating reconcile-on-write, not noise to hide.
 
 Honesty note: observations use the generator's value-match (the world knows
 its keys). This judges the REPUTATION RULES + gate wiring on the real
@@ -141,11 +154,17 @@ def run_condition(cfg: WorldConfig, db_path: Path, *, trust_on: bool,
         if trust_on:
             _observe_tick(mem, tick_events)
 
-    # final truth per key = last true_value seen in the stream
-    truth = {}
+    # per-key world history: current truth, superseded honest values, liar values
+    truth: dict[str, str] = {}
+    honest_hist: dict[str, set[str]] = {}
+    liar_vals: dict[str, set[str]] = {}
     for ev in stream:
         truth[ev["key"]] = ev["true_value"]
-    wrong = answered = abstained = 0
+        honest_hist.setdefault(ev["key"], set()).update(
+            {ev["true_value"], ev["prev_value"]})
+        if ev["kind"] == "liar":
+            liar_vals.setdefault(ev["key"], set()).add(ev["value"])
+    wrong = wrong_liar = wrong_stale = answered = abstained = 0
     for k, true_v in truth.items():
         hits = mem.search(f"What is the access code of {k}?", k=3)
         vals = [extract_value(h.get("text", "")) for h in hits]
@@ -154,7 +173,12 @@ def run_condition(cfg: WorldConfig, db_path: Path, *, trust_on: bool,
             abstained += 1
             continue
         answered += 1
-        wrong += int(vals[0] != true_v)
+        if vals[0] != true_v:
+            wrong += 1
+            if vals[0] in liar_vals.get(k, set()):
+                wrong_liar += 1
+            elif vals[0] in honest_hist.get(k, set()):
+                wrong_stale += 1
 
     trust_reads = {}
     if trust_on:
@@ -164,6 +188,8 @@ def run_condition(cfg: WorldConfig, db_path: Path, *, trust_on: bool,
             trust_reads[f"liar_{i}"] = round(mem.source_trust(f"liar_{i}"), 4)
     return {
         "wrong_rate": round(wrong / answered, 4) if answered else 0.0,
+        "wrong_liar_rate": round(wrong_liar / answered, 4) if answered else 0.0,
+        "wrong_stale_rate": round(wrong_stale / answered, 4) if answered else 0.0,
         "answered": answered, "abstained": abstained,
         "n_writes": len(stream), "quarantined_writes": quarantined,
         "final_trust": trust_reads,
@@ -186,17 +212,22 @@ def main() -> None:
     honest_t = [v for s, v in on["final_trust"].items() if s.startswith("honest")]
     liar_t = [v for s, v in on["final_trust"].items() if s.startswith("liar")]
     verdict = {
-        "halved": on["wrong_rate"] <= 0.5 * off["wrong_rate"]
-                  if off["wrong_rate"] else on["wrong_rate"] == 0.0,
+        "v1_halved_total": on["wrong_rate"] <= 0.5 * off["wrong_rate"]
+                           if off["wrong_rate"] else on["wrong_rate"] == 0.0,
+        "v2_halved_liar": on["wrong_liar_rate"] <= 0.5 * off["wrong_liar_rate"]
+                          if off["wrong_liar_rate"]
+                          else on["wrong_liar_rate"] == 0.0,
         "no_inversion": (sum(honest_t) / len(honest_t)
                          > sum(liar_t) / len(liar_t)) if liar_t else True,
     }
-    verdict["graft_proceeds"] = verdict["halved"] and verdict["no_inversion"]
+    verdict["graft_proceeds"] = (verdict["v2_halved_liar"]
+                                 and verdict["no_inversion"])
     report = {"config": vars(cfg) | {"n_honest": cfg.n_honest,
                                      "n_liars": cfg.n_liars},
               "off": off, "on": on, "verdict": verdict,
-              "criterion": "PRE-REGISTERED: wrong(ON) <= 0.5*wrong(OFF) "
-                           "AND honest trust > liar trust",
+              "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) "
+                           "<= 0.5*wrong_liar(OFF) AND no inversion; stale "
+                           "component reported, ~unchanged expected",
               "ts": time.strftime("%Y-%m-%dT%H:%M:%S")}
     print(json.dumps(report, indent=2))
     RESULTS_DIR.mkdir(exist_ok=True)

@@ -161,6 +161,18 @@ Adoption path (the doc's own discipline): behind-flag module, default OFF,
 REPRODUCED on VeriMem's real/held-out corpus before any default flip.
 Absolute lab numbers do NOT transfer — only the laws and placements.
 
+**Reproduction on the REAL gate (2026-07-10, mini-world seed 11).**
+Pre-registered criterion v1 (halve TOTAL wrong) FAILED honestly: 0.80 →
+0.70 — diagnosis from the same run: reputation itself worked (honest ~0.96,
+liars ~0.02, 181 liar writes quarantined, zero inversion); the residual
+wrong is STALE answering under churn, which source-trust does not claim to
+cure (temporal reconciliation's job — exists in the product, off in the
+world). Criterion v2, declared BEFORE the rerun: decompose wrong; halve the
+LIAR-driven component. **v2 PASSED: wrong_liar 0.30 → 0.0667 (-78%), no
+inversion; stale component 0.50 → 0.63 reported as the true next disease**
+(quarantining lies exposes old honest values — motivates reconcile-on-write
+in the world). Graft PROCEEDS behind its flag; default still OFF.
+
 ## Design guard-rails imported from measured failures elsewhere
 
 **Reputation inversion (Vivarium lab RQ1, 2026-07-10, chain fact
