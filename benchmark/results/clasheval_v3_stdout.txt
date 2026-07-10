@@ -1,0 +1,47 @@
+{
+  "n_items": 25,
+  "llm_calls": 50,
+  "ingest": {
+    "admitted": 22,
+    "blocked": 3,
+    "by_status": {
+      "quarantined": 3,
+      "model_claim": 22
+    }
+  },
+  "prior_conflict": {
+    "store_adherence": {
+      "baseline": 0.0,
+      "with_memory": 0.4286
+    },
+    "prior_wins": {
+      "baseline": 0.7857,
+      "with_memory": 0.2143
+    },
+    "abstain": {
+      "baseline": 0.0,
+      "with_memory": 0.0
+    }
+  },
+  "post_cutoff": {
+    "store_adherence": {
+      "baseline": 0.0,
+      "with_memory": 0.9
+    },
+    "prior_wins": {
+      "baseline": 0.0,
+      "with_memory": 0.0
+    },
+    "abstain": {
+      "baseline": 0.0,
+      "with_memory": 0.0
+    }
+  },
+  "discriminating_subset": {
+    "n": 11,
+    "store_adherence_with_memory": 0.3636,
+    "criterion": "PRE-REGISTERED: adherence >= 0.8 on this subset"
+  },
+  "ts": "2026-07-10T19:16:08"
+}
+saved -> C:\Users\aurel\Code\hippoagent\benchmark\results\clasheval_2026-07-10.json

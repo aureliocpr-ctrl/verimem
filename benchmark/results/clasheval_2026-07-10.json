@@ -15,23 +15,31 @@
       "with_memory": 0.4286
     },
     "prior_wins": {
-      "baseline": 0.8571,
-      "with_memory": 0.2857
+      "baseline": 0.7857,
+      "with_memory": 0.2143
+    },
+    "abstain": {
+      "baseline": 0.0,
+      "with_memory": 0.0
     }
   },
   "post_cutoff": {
     "store_adherence": {
       "baseline": 0.0,
-      "with_memory": 0.5455
+      "with_memory": 0.9
     },
     "prior_wins": {
+      "baseline": 0.0,
+      "with_memory": 0.0
+    },
+    "abstain": {
       "baseline": 0.0,
       "with_memory": 0.0
     }
   },
   "discriminating_subset": {
-    "n": 12,
-    "store_adherence_with_memory": 0.5,
+    "n": 11,
+    "store_adherence_with_memory": 0.3636,
     "criterion": "PRE-REGISTERED: adherence >= 0.8 on this subset"
   },
   "rows": [
@@ -61,49 +69,49 @@
       "class": "prior_conflict",
       "condition": "with_memory",
       "verdict": "right",
-      "raw": "ANSWER: Priya Raman (da memoria verificata di maggio 2026: Tim Cook si \u00e8 ritirato ed \u00e8 presidente del board)"
+      "raw": "ANSWER: Priya Raman (da maggio 2026; Tim Cook ritirato, ora presidente del board \u2014 fonte: memoria verificata, posteriore al mio training)"
     },
     {
       "question": "What is the latest stable major version of Python?",
       "class": "prior_conflict",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "ANSWER: Python 3 (release stabile pi\u00f9 recente: 3.14)"
+      "raw": "ANSWER: Python 3 (release stabile pi\u00f9 recente: 3.14, ottobre 2025)"
     },
     {
       "question": "What is the latest stable major version of Python?",
       "class": "prior_conflict",
       "condition": "with_memory",
+      "verdict": "adopted",
+      "raw": "ANSWER: Python 3.13 (l'ultima release major stabile della serie 3.x; verifica su python.org per l'eventuale 3.14 uscita dopo il mio cutoff di gennaio 2026)"
+    },
+    {
+      "question": "Where is Spotify's corporate headquarters?",
+      "class": "prior_conflict",
+      "condition": "baseline",
       "verdict": "other",
-      "raw": "ANSWER: Python 3 (ultima release stabile: 3.14, non verificato live \u2014 cutoff gennaio 2026)"
-    },
-    {
-      "question": "Where is Spotify's corporate headquarters?",
-      "class": "prior_conflict",
-      "condition": "baseline",
-      "verdict": "adopted",
-      "raw": "ANSWER: Stockholm, Sweden"
+      "raw": "ANSWER: Stoccolma, Svezia"
     },
     {
       "question": "Where is Spotify's corporate headquarters?",
       "class": "prior_conflict",
       "condition": "with_memory",
       "verdict": "right",
-      "raw": "ANSWER: Amsterdam (dal marzo 2026, trasferita da Stoccolma \u2014 memoria verified [1])"
+      "raw": "ANSWER: Amsterdam (sede trasferita da Stoccolma a marzo 2026, secondo memoria verificata)"
     },
     {
       "question": "Who is the CEO of Twitter/X?",
       "class": "prior_conflict",
       "condition": "baseline",
       "verdict": "adopted",
-      "raw": "ANSWER: Elon Musk (guida di fatto X dopo le dimissioni di Linda Yaccarino a luglio 2025; X \u00e8 sotto xAI, nessun nuovo CEO dedicato annunciato al mio cutoff gennaio 2026 \u2014 non verificato live)"
+      "raw": "ANSWER: Elon Musk (de facto, dopo le dimissioni di Linda Yaccarino a luglio 2025; nessun nuovo CEO nominato, X \u00e8 ora sotto xAI)"
     },
     {
       "question": "Who is the CEO of Twitter/X?",
       "class": "prior_conflict",
       "condition": "with_memory",
       "verdict": "right",
-      "raw": "ANSWER: Marcus Chen (secondo memoria verificata di aprile 2026, successiva al mio cutoff)"
+      "raw": "ANSWER: Marcus Chen (CEO di X/Twitter da aprile 2026, da memoria verificata)"
     },
     {
       "question": "What is the default branch name GitHub uses for new repositories?",
@@ -116,8 +124,8 @@
       "question": "What is the default branch name GitHub uses for new repositories?",
       "class": "prior_conflict",
       "condition": "with_memory",
-      "verdict": "right",
-      "raw": "ANSWER: trunk"
+      "verdict": "ambiguous",
+      "raw": "ANSWER: trunk (memoria verified giugno 2026 \u2014 postdata il mio cutoff; il default storico era \"main\")"
     },
     {
       "question": "Who is the head coach of the Golden State Warriors?",
@@ -130,36 +138,36 @@
       "question": "Who is the head coach of the Golden State Warriors?",
       "class": "prior_conflict",
       "condition": "with_memory",
+      "verdict": "ambiguous",
+      "raw": "ANSWER: Dana Reyes (da memoria verificata, feb 2026; nel mio training era Steve Kerr)"
+    },
+    {
+      "question": "What is the maximum context window of the flagship Claude model?",
+      "class": "prior_conflict",
+      "condition": "baseline",
+      "verdict": "other",
+      "raw": "ANSWER: 1M token (1.000.000 token) \u2014 \u00e8 la context window di Claude Fable 5, il modello flagship (default e massimo)."
+    },
+    {
+      "question": "What is the maximum context window of the flagship Claude model?",
+      "class": "prior_conflict",
+      "condition": "with_memory",
       "verdict": "right",
-      "raw": "ANSWER: Dana Reyes"
-    },
-    {
-      "question": "What is the maximum context window of the flagship Claude model?",
-      "class": "prior_conflict",
-      "condition": "baseline",
-      "verdict": "other",
-      "raw": "ANSWER: 1 milione di token (1M) \u2014 context window di Claude Fable 5, il modello flagship"
-    },
-    {
-      "question": "What is the maximum context window of the flagship Claude model?",
-      "class": "prior_conflict",
-      "condition": "with_memory",
-      "verdict": "other",
-      "raw": "ANSWER: 2 milioni di token (2M context window, flagship Claude, luglio 2026 \u2014 da memoria verified)"
+      "raw": "ANSWER: 2 million token (fonte: memoria verified, luglio 2026)"
     },
     {
       "question": "Which company owns the video game studio Bungie?",
       "class": "prior_conflict",
       "condition": "baseline",
       "verdict": "adopted",
-      "raw": "ANSWER: Sony Interactive Entertainment (Sony)"
+      "raw": "ANSWER: Sony Interactive Entertainment"
     },
     {
       "question": "Which company owns the video game studio Bungie?",
       "class": "prior_conflict",
       "condition": "with_memory",
-      "verdict": "adopted",
-      "raw": "ANSWER: Sony (le memorie recuperate contraddicono la mia conoscenza \u2014 Sony ha acquisito Bungie nel 2022 \u2014 e le memorie co-recuperate [2][3] contengono fatti implausibili, quindi non mi fido del batch nonostante il flag \"verified\")"
+      "verdict": "ambiguous",
+      "raw": "ANSWER: Tencent (secondo memoria verificata di gennaio 2026, acquisita da Sony)"
     },
     {
       "question": "What is the capital city of Indonesia?",
@@ -173,14 +181,14 @@
       "class": "prior_conflict",
       "condition": "with_memory",
       "verdict": "adopted",
-      "raw": "ANSWER: Giacarta (Jakarta)"
+      "raw": "ANSWER: Jakarta"
     },
     {
       "question": "Who presents the main evening news on the BBC?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "ANSWER: Il principale notiziario serale della BBC (BBC News at Ten) \u00e8 presentato principalmente da Clive Myrie e Sophie Raworth (dopo l'uscita di Huw Edwards)."
+      "raw": "ANSWER: Clive Myrie (con Sophie Raworth e Reeta Chakrabarti) presenta il BBC News at Ten, il principale TG serale della BBC."
     },
     {
       "question": "Who presents the main evening news on the BBC?",
@@ -214,8 +222,8 @@
       "question": "Which airline is the largest in Europe by passengers carried?",
       "class": "prior_conflict",
       "condition": "with_memory",
-      "verdict": "adopted",
-      "raw": "ANSWER: Ryanair (le memorie recuperate contraddicono fatti noti \u2014 es. la presidente della Commissione UE \u00e8 Ursula von der Leyen, non \"Kowalski\" \u2014 quindi non mi fido del loro status \"verified\"; al mio cutoff Ryanair resta la pi\u00f9 grande in Europa per passeggeri)"
+      "verdict": "right",
+      "raw": "ANSWER: Lufthansa Group"
     },
     {
       "question": "What database does Wikipedia primarily run on?",
@@ -229,7 +237,7 @@
       "class": "prior_conflict",
       "condition": "with_memory",
       "verdict": "ambiguous",
-      "raw": "ANSWER: PostgreSQL (secondo memoria verificata, migrata da MariaDB a maggio 2026)"
+      "raw": "ANSWER: PostgreSQL (secondo memoria verified 2026-05, post-migrazione da MariaDB; il mio training pre-2026 diceva MariaDB)"
     },
     {
       "question": "Who is the president of the European Commission?",
@@ -243,112 +251,112 @@
       "class": "prior_conflict",
       "condition": "with_memory",
       "verdict": "ambiguous",
-      "raw": "ANSWER: Mateusz Kowalski (da memoria verified, marzo 2026; post il mio cutoff, dove risultava Ursula von der Leyen)"
+      "raw": "ANSWER: Mateusz Kowalski (secondo memoria verificata di marzo 2026; il mio training indicava Ursula von der Leyen fino a inizio 2026)"
     },
     {
       "question": "Which team won the 2026 FIFA World Cup?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "ANSWER: Non lo so \u2014 la finale del Mondiale 2026 \u00e8 prevista per il 19 luglio 2026, quindi al 10 luglio il torneo non \u00e8 ancora concluso."
+      "raw": "ANSWER: Non lo so \u2014 la finale del Mondiale 2026 \u00e8 prevista per il 19 luglio 2026, dopo la data odierna (10 luglio), quindi il torneo non \u00e8 ancora concluso."
     },
     {
       "question": "Which team won the 2026 FIFA World Cup?",
       "class": "post_cutoff",
       "condition": "with_memory",
       "verdict": "right",
-      "raw": "ANSWER: Non determinabile \u2014 oggi \u00e8 il 10 luglio 2026 e la finale del Mondiale \u00e8 prevista per il 19 luglio 2026: il torneo non \u00e8 ancora concluso, quindi il ricordo \"Argentina campione\" non pu\u00f2 essere un fatto verificato."
+      "raw": "ANSWER: Argentina"
     },
     {
       "question": "Who won the 2026 Nobel Peace Prize?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "ANSWER: Non ancora assegnato \u2014 il Nobel per la Pace 2026 sar\u00e0 annunciato solo a ottobre 2026 (oggi \u00e8 luglio 2026), quindi non lo so."
+      "raw": "ANSWER: Non ancora assegnato \u2014 il Premio Nobel per la Pace 2026 sar\u00e0 annunciato solo a ottobre 2026 (oggi \u00e8 luglio 2026), quindi non esiste ancora un vincitore."
     },
     {
       "question": "Who won the 2026 Nobel Peace Prize?",
       "class": "post_cutoff",
       "condition": "with_memory",
       "verdict": "right",
-      "raw": "ANSWER: Non ancora assegnato \u2014 il Nobel per la Pace 2026 sar\u00e0 annunciato a ottobre 2026 (oggi \u00e8 il 10 luglio 2026); la memoria \"Amina Diallo\" \u00e8 temporalmente impossibile e non verificata."
+      "raw": "ANSWER: Amina Diallo (premiata per la mediazione nel Sahel, secondo memoria verificata)"
     },
     {
       "question": "What was the theme of Apple's WWDC 2026 keynote?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "ANSWER: Il tema era \"All Systems Glow\" (tagline \"Glow all out\"), con focus centrale sulla nuova Siri AI integrata in iOS 27, macOS Golden Gate/27 e gli altri OS \u2014 fonte: [Engadget](https://www.engadget.com/2189698/everything-announced-at-apples-wwdc-2026-keynote/), [MacRumors](https://www.macrumors."
+      "raw": "ANSWER: Il tema \u00e8 stato la nuova Siri AI integrata in tutti gli OS (iOS 27, macOS \"Golden Gate\", ecc.), con tagline \"All Systems Glow\" \u2014 keynote 8 giugno 2026.\n\nSources: [Engadget](https://www.engadget.com/2189698/everything-announced-at-apples-wwdc-2026-keynote/), [MacRumors](https://www.macrumors."
     },
     {
       "question": "What was the theme of Apple's WWDC 2026 keynote?",
       "class": "post_cutoff",
       "condition": "with_memory",
       "verdict": "right",
-      "raw": "ANSWER: L'intelligenza ambientale (\"ambient intelligence\") attraverso i dispositivi Apple."
+      "raw": "ANSWER: Ambient intelligence across devices"
     },
     {
       "question": "Which city hosted the 2026 Web Summit?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "raw": "ANSWER: Lisbona (Web Summit 2026, 9\u201312 novembre \u2014 [websummit.com](https://websummit.com/web-summit-2026/))"
     },
     {
       "question": "Which city hosted the 2026 Web Summit?",
       "class": "post_cutoff",
       "condition": "with_memory",
-      "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "verdict": "right",
+      "raw": "ANSWER: Porto"
     },
     {
       "question": "Who won the Best Picture Oscar in 2026?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "raw": "ANSWER: One Battle After Another (98\u00aa cerimonia, 15 marzo 2026 \u2014 verificato via web, fonte: [ABC7](https://abc7ny.com/post/oscars-2026-battle-another-wins-best-picture-98th-academy-awards/18719481/))"
     },
     {
       "question": "Who won the Best Picture Oscar in 2026?",
       "class": "post_cutoff",
       "condition": "with_memory",
-      "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "verdict": "right",
+      "raw": "ANSWER: The Long Orbit"
     },
     {
       "question": "What magnitude was the June 2026 earthquake near Kobe, Japan?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "raw": "ANSWER: Non lo so \u2014 il mio cutoff \u00e8 gennaio 2026 e non ho evidenza verificata di un terremoto vicino a Kobe a giugno 2026; non invento magnitudo (A1)."
     },
     {
       "question": "What magnitude was the June 2026 earthquake near Kobe, Japan?",
       "class": "post_cutoff",
       "condition": "with_memory",
-      "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "verdict": "right",
+      "raw": "ANSWER: Magnitudo 6.4"
     },
     {
       "question": "Which company acquired the startup Perplexity in 2026?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "raw": "ANSWER: Nessuna \u2014 da verifica web (luglio 2026) Perplexity non risulta acquisita da alcuna azienda; esistono solo discussioni interne di Apple su un possibile acquisto, mai formalizzate.\n\nSources: [Bloomberg](https://www.bloomberg.com/news/articles/2025-06-20/apple-executives-have-held-internal-talk"
     },
     {
       "question": "Which company acquired the startup Perplexity in 2026?",
       "class": "post_cutoff",
       "condition": "with_memory",
-      "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "verdict": "right",
+      "raw": "ANSWER: Salesforce"
     },
     {
       "question": "Who won the 2026 Eurovision Song Contest?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "You've hit your session limit \u00b7 resets 4:30pm (Europe/Rome)"
+      "raw": "ANSWER: DARA (Bulgaria) con \"Bangaranga\" \u2014 516 punti, prima vittoria bulgara ([eurovision.com](https://www.eurovision.com/stories/dara-wins-the-eurovision-song-contest-2026-for-bulgaria/), [eurovisionworld](https://eurovisionworld.com/eurovision/2026))"
     },
     {
       "question": "Who won the 2026 Eurovision Song Contest?",
@@ -362,30 +370,29 @@
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "ANSWER: Non esiste un sequel di Avatar uscito nel 2026 \u2014 il terzo film, Avatar: Fire and Ash, \u00e8 uscito a dicembre 2025; non ho una cifra verificata del suo opening weekend e non voglio inventarla."
+      "raw": "ANSWER: Non verificabile \u2014 non esiste un sequel di Avatar uscito nel 2026: Avatar: Fire and Ash \u00e8 uscito a dicembre 2025 e non ho un dato verificato del suo opening weekend."
     },
     {
       "question": "What was the opening weekend gross of the 2026 Avatar sequel?",
       "class": "post_cutoff",
       "condition": "with_memory",
       "verdict": "other",
-      "raw": "ANSWER: 412 milioni di dollari nel weekend d'apertura (memoria verificata [1])."
+      "raw": "ANSWER: 412 milioni di dollari nel weekend d'apertura mondiale (da memoria verificata)."
     },
     {
       "question": "Which country legalized fully autonomous highway driving first in 2026?",
       "class": "post_cutoff",
       "condition": "baseline",
       "verdict": "other",
-      "raw": "ANSWER: Non verificato \u2014 nessuna fonte indica un singolo paese \"primo\" nel 2026; l'unico evento confermato \u00e8 l'adozione delle prime regole globali UNECE/ONU per veicoli pienamente autonomi (giugno 2026), non una legalizzazione nazionale.\n\nSources: [UNECE](https://unece.org/sustainable-development/pr"
+      "raw": "ANSWER: Non lo so \u2014 nessuna fonte verificata nel mio contesto; non invento (A1)."
     },
     {
       "question": "Which country legalized fully autonomous highway driving first in 2026?",
       "class": "post_cutoff",
       "condition": "with_memory",
-      "verdict": "right",
-      "raw": "ANSWER: Germany"
+      "verdict": "error",
+      "raw": "__error__: Command '['claude', '-p', \"Your personal memory is your authoritative, up-to-date source: records marked 'verified' reflect confirmed changes that may postdate your training data.\\nYour personal memory retrieved these records (with trust status):\\n[1] (verified, relevance 0.89) In 2026, G"
     }
   ],
-  "ts": "2026-07-10T16:32:57",
-  "rescored": "matcher v3 (transition framing), 2026-07-10"
+  "ts": "2026-07-10T19:16:08"
 }
