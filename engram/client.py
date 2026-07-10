@@ -238,6 +238,36 @@ class Memory:
             out.append(item)
         return out
 
+    def count(self, *, query: str | None = None, topic: str | None = None,
+              topic_prefix: str | None = None) -> int:
+        """Set-size, NOT top-k — the honest primitive for aggregation queries.
+
+        F1 surface map (retrieval-vs-set-algebra): ``search`` is similarity
+        top-k, so "how many times did I mention X?" undercounts (recall k=5
+        saw 5 of 12 real mentions). ``count`` SCANS the store instead, so it
+        sees the WHOLE matching set:
+
+        * ``query``        — keyword scan; every fact whose proposition
+                             contains all query tokens (case-insensitive),
+                             optionally within ``topic`` / ``topic_prefix``;
+        * ``topic``        — exact-topic scan;
+        * ``topic_prefix`` — scoped scan (e.g. one tenant);
+        * none             — the whole live corpus (excludes superseded).
+
+        Live facts only (superseded excluded), matching ``search``'s default
+        view. This is the primitive; routing a natural-language counting query
+        to it is a separate intent step (gateway/F2)."""
+        if query is not None:
+            return len(self.semantic.search_facts(
+                query, limit=1_000_000, require_all_tokens=True,
+                topic=topic, topic_prefix=topic_prefix))
+        if topic_prefix is not None:
+            return len(self.semantic.search_facts(
+                "", limit=1_000_000, topic_prefix=topic_prefix))
+        if topic is not None:
+            return len(self.semantic.list_facts(topic=topic, limit=1_000_000))
+        return self.semantic.count()
+
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
                 as_of: float | None = None,
                 min_relevance: float | str = 0.0) -> dict[str, Any]:
