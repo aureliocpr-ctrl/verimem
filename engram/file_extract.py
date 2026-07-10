@@ -13,9 +13,18 @@ Others raise a clear ValueError.
 """
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 _NATIVE = {".txt", ".md", ".text", ".rst", ".log", ""}
+
+_LOG = logging.getLogger(__name__)
+
+#: zip-bomb guard per i formati-archivio (EPUB…): un content member ostile ad
+#: alta compressione non deve mai decomprimere illimitato in RAM (E1 audit
+#: 2026-07-11 — safe_xml cappa i METADATI XML, questi cappano il CONTENUTO).
+_MAX_MEMBER_BYTES = 25_000_000     # un singolo capitolo (i veri sono KB)
+_MAX_TOTAL_BYTES = 200_000_000     # tetto sull'estrazione dell'intero libro
 
 
 def extract_text(path: str | Path) -> str:
@@ -100,7 +109,8 @@ def _extract_epub(p: Path) -> str:
             only way to declare expanding entities) means hostile or broken
             input -> refuse, which routes extraction to the non-XML fallback.
             Size cap for the same reason: real OPFs are kilobytes."""
-            raw = z.read(name)
+            with z.open(name) as fh:
+                raw = fh.read(max_bytes + 1)  # bound i BYTE DECOMPRESSI (bomb)
             if len(raw) > max_bytes:
                 raise ValueError(f"suspiciously large XML in EPUB: {name}")
             head = raw[:65536].upper()
@@ -147,9 +157,25 @@ def _extract_epub(p: Path) -> str:
                           and not n.lower().endswith("container.xml")
                           and not n.lower().endswith(".opf"))
         parts = []
+        total = 0
         for name in docs:
-            soup = BeautifulSoup(
-                z.read(name).decode("utf-8", errors="replace"), "html.parser")
+            if total >= _MAX_TOTAL_BYTES:
+                _LOG.warning(
+                    "EPUB %s hit the %d-byte extraction budget — remaining "
+                    "chapters skipped (zip-bomb guard)", p.name, _MAX_TOTAL_BYTES)
+                break
+            # z.open(...).read(cap+1) limita i BYTE DECOMPRESSI: un capitolo
+            # ostile ad alta compressione non puo' esaurire la RAM.
+            with z.open(name) as fh:
+                raw = fh.read(_MAX_MEMBER_BYTES + 1)
+            if len(raw) > _MAX_MEMBER_BYTES:
+                _LOG.warning(
+                    "EPUB member %s exceeds %d bytes — truncated (zip-bomb guard)",
+                    name, _MAX_MEMBER_BYTES)
+                raw = raw[:_MAX_MEMBER_BYTES]
+            total += len(raw)
+            soup = BeautifulSoup(raw.decode("utf-8", errors="replace"),
+                                 "html.parser")
             parts.append(soup.get_text(separator="\n"))
         return "\n".join(parts)
 

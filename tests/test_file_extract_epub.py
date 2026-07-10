@@ -133,6 +133,42 @@ def test_epub_with_doctype_xml_is_not_parsed_as_xml(tmp_path):
     assert "boom" not in text, "l'entity non è mai stata espansa"
 
 
+def test_epub_content_chapter_zip_bomb_is_capped(tmp_path, monkeypatch):
+    """Sicurezza (zip-bomb, audit E1 2026-07-11): un capitolo-CONTENUTO ostile
+    ad alta compressione NON deve decomprimere illimitato in RAM. safe_xml
+    cappa i METADATI (container/OPF); questo cappa il contenuto. PoC pre-fix:
+    un EPUB da 38KB produceva 40MB estratti (ratio 1025x, peak heap 129MB) —
+    un file da pochi MB avrebbe esaurito la RAM (OOM del gateway condiviso)."""
+    import engram.file_extract as fe
+    monkeypatch.setattr(fe, "_MAX_MEMBER_BYTES", 500_000)
+    monkeypatch.setattr(fe, "_MAX_TOTAL_BYTES", 2_000_000)
+    book = tmp_path / "bomb.epub"
+    payload = "<html><body>" + "A" * 3_000_000 + "</body></html>"  # 3MB > 0.5MB cap
+    with zipfile.ZipFile(book, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("mimetype", "application/epub+zip")
+        z.writestr("OEBPS/bomb.xhtml", payload)  # no container -> fallback -> read
+    text = extract_text(book)
+    assert len(text) <= fe._MAX_MEMBER_BYTES + 1000, (
+        "il capitolo ostile va troncato dal cap, non decompresso intero")
+
+
+def test_epub_zip_bomb_total_budget_stops_many_chapters(tmp_path, monkeypatch):
+    """Anche molti capitoli sotto il per-member cap non devono sommarsi oltre il
+    budget totale (bomb 'a tanti file')."""
+    import engram.file_extract as fe
+    monkeypatch.setattr(fe, "_MAX_MEMBER_BYTES", 300_000)
+    monkeypatch.setattr(fe, "_MAX_TOTAL_BYTES", 1_000_000)
+    book = tmp_path / "many.epub"
+    chapter = "<html><body>" + "B" * 250_000 + "</body></html>"
+    with zipfile.ZipFile(book, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("mimetype", "application/epub+zip")
+        for i in range(50):  # 50 * 250KB = 12.5MB potenziali
+            z.writestr(f"OEBPS/ch{i:02d}.xhtml", chapter)
+    text = extract_text(book)
+    assert len(text) <= fe._MAX_TOTAL_BYTES + 300_000, (
+        "il budget totale deve fermare l'accumulo oltre il tetto")
+
+
 def test_epub_that_is_not_a_zip_raises_clearly(tmp_path):
     fake = tmp_path / "fake.epub"
     fake.write_bytes(b"this is not a zip archive")
