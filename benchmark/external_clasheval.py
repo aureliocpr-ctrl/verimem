@@ -210,6 +210,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n", type=int, default=25)
     ap.add_argument("--k", type=int, default=3)
+    ap.add_argument("--verified", action="store_true",
+                    help="v2 (declared iteration): promote the store facts "
+                         "to status=verified — v1 measured the model USING "
+                         "our trust status against unverified model_claim "
+                         "memories (adherence 0.0 on prior_conflict while "
+                         "post_cutoff hit 0.82); v2 asks the product "
+                         "question: does VERIFIED memory beat the prior?")
     args = ap.parse_args()
 
     items = CLASH_ITEMS[:args.n]
@@ -224,6 +231,17 @@ def main() -> None:
     calls = 0
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
         mem, fact_ids, ingest = build_store(store_items, Path(td) / "ce.db")
+        if args.verified:
+            # declared simulation of evidence-confirmed memories: in real use
+            # these facts would carry runtime/citation evidence and hold
+            # status=verified; here we set it directly (the test varies ONLY
+            # the trust status the answerer sees).
+            import sqlite3 as _sq
+            with _sq.connect(str(mem.semantic.db_path)) as conn:
+                conn.executemany(
+                    "UPDATE facts SET status='verified' WHERE id=?",
+                    [(f,) for f in fact_ids if f])
+                conn.commit()
         for it, fid in zip(items, fact_ids):
             ctx = mem.search(it["question"], k=args.k) if fid else []
             for cond, context in (("baseline", None), ("with_memory", ctx)):
