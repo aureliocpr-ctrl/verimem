@@ -347,6 +347,90 @@ class _Metering:
                 for r in rows}
 
 
+def _replay_receive(body: bytes, original: Any) -> Any:
+    """Un ASGI ``receive`` che emette UNA volta il corpo bufferizzato come un
+    unico ``http.request`` completo, poi delega all'originale (disconnect ecc.)."""
+    sent = False
+
+    async def receive() -> Any:
+        nonlocal sent
+        if not sent:
+            sent = True
+            return {"type": "http.request", "body": body, "more_body": False}
+        return await original()
+
+    return receive
+
+
+def _prepend_message(first: Any, original: Any) -> Any:
+    """``receive`` che ri-emette un messaggio gia' consumato, poi delega."""
+    sent = False
+
+    async def receive() -> Any:
+        nonlocal sent
+        if not sent:
+            sent = True
+            return first
+        return await original()
+
+    return receive
+
+
+class _BodyLimitMiddleware:
+    """ASGI middleware anti-DoS sul data plane.
+
+    Il guard precedente (``@app.middleware("http")``) si fidava del SOLO header
+    ``Content-Length``: una richiesta ``Transfer-Encoding: chunked`` senza quel
+    header saltava il tetto e veniva processata (security audit G1, 2026-07-11 —
+    PoC: body 5KB su cap 1KB passava a 200 e veniva scritto). Qui misuriamo i
+    BYTE REALI: dreniamo il corpo con un tetto duro e, se supera il cap,
+    rispondiamo 413 SENZA far girare l'app; se sta sotto, lo ri-iniettiamo
+    intatto a valle. Il chunked sotto il cap passa (contiamo, non vietiamo)."""
+
+    def __init__(self, app: Any, *, max_body_bytes: int) -> None:
+        self.app = app
+        self.max_body_bytes = max_body_bytes
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        if scope.get("type") != "http" or self.max_body_bytes <= 0:
+            await self.app(scope, receive, send)
+            return
+        # fast-path: un Content-Length onesto e oltre-cap si rifiuta subito,
+        # senza nemmeno leggere il corpo.
+        for name, value in scope.get("headers") or ():
+            if (name == b"content-length" and value.isdigit()
+                    and int(value) > self.max_body_bytes):
+                await self._reject(send)
+                return
+        # drena il corpo bufferizzando fino a cap+1 byte; oltre = 413. Il buffer
+        # e' limitato dal cap stesso (<=1MB di default): costo trascurabile.
+        body = b""
+        more_body = True
+        while more_body:
+            message = await receive()
+            if message.get("type") != "http.request":
+                # es. http.disconnect prima del corpo: ri-emetti e delega.
+                await self.app(scope, _prepend_message(message, receive), send)
+                return
+            body += message.get("body", b"")
+            more_body = message.get("more_body", False)
+            if len(body) > self.max_body_bytes:
+                await self._reject(send)
+                return
+        # sotto il cap: ri-inietta il corpo consolidato, poi delega.
+        await self.app(scope, _replay_receive(body, receive), send)
+
+    async def _reject(self, send: Any) -> None:
+        import json as _json
+        body = _json.dumps(
+            {"detail": f"body too large (max {self.max_body_bytes} bytes)"}
+        ).encode()
+        await send({"type": "http.response.start", "status": 413,
+                    "headers": [(b"content-type", b"application/json"),
+                                (b"content-length", str(len(body)).encode())]})
+        await send({"type": "http.response.body", "body": body})
+
+
 def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                llm: Any = None, grounding_llm: Any = None,
                rate_limit_per_minute: int = 0,
@@ -397,14 +481,9 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     _started_at = time.time()
     app = FastAPI(title="Verimem gateway", docs_url=None, redoc_url=None)
 
-    @app.middleware("http")
-    async def _body_limit(request, call_next):
-        cl = request.headers.get("content-length")
-        if cl and cl.isdigit() and int(cl) > max_body_bytes:
-            from fastapi.responses import JSONResponse
-            return JSONResponse(status_code=413, content={
-                "detail": f"body too large (max {max_body_bytes} bytes)"})
-        return await call_next(request)
+    # anti-DoS sul data plane: conta i byte REALI (non solo Content-Length —
+    # un chunked senza header saltava il cap, security audit G1 2026-07-11).
+    app.add_middleware(_BodyLimitMiddleware, max_body_bytes=max_body_bytes)
 
     _buckets: dict[str, list[float]] = {}
     _buckets_lock = threading.Lock()

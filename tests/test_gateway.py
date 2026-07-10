@@ -145,6 +145,61 @@ def test_rate_limit_disabled_by_default(gw):
                           headers=_auth(key_a)).status_code == 200
 
 
+def test_body_limit_blocks_oversize_with_content_length(tmp_path):
+    keys = GatewayKeys(tmp_path / "gateway_keys.db")
+    key_a = keys.create(tenant_id="team-alpha", name="ci")
+    app = create_app(data_dir=tmp_path, keys=keys, max_body_bytes=1024)
+    client = TestClient(app)
+    big = "x" * 5000
+    r = client.post("/v1/memories", headers=_auth(key_a),
+                    json={"content": big, "verified_by": ["doc:x"]})
+    assert r.status_code == 413
+
+
+def test_body_limit_not_bypassable_without_content_length(tmp_path):
+    """G1 (security audit 2026-07-11): il tetto anti-DoS ``max_body_bytes`` non
+    deve fidarsi SOLO di Content-Length. Una richiesta chunked (nessun
+    Content-Length) che supera il cap va rifiutata a 413, non processata.
+    PoC pre-fix: passava a 200 e il fatto oversize veniva scritto (stored)."""
+    import json as J
+    keys = GatewayKeys(tmp_path / "gateway_keys.db")
+    key_a = keys.create(tenant_id="team-alpha", name="ci")
+    app = create_app(data_dir=tmp_path, keys=keys, max_body_bytes=1024)
+    client = TestClient(app)
+    big = "x" * 5000
+    payload = J.dumps({"content": big, "verified_by": ["doc:x"]}).encode()
+
+    def gen():  # no Content-Length -> httpx uses chunked transfer-encoding
+        for i in range(0, len(payload), 500):
+            yield payload[i:i + 500]
+
+    r = client.post("/v1/memories",
+                    headers={**_auth(key_a), "Content-Type": "application/json"},
+                    content=gen())
+    assert r.status_code == 413, (
+        "chunked oversize deve essere rifiutato dal cap sui byte reali")
+
+
+def test_body_limit_allows_undercap_chunked(tmp_path):
+    """Regressione: una richiesta chunked SOTTO il cap deve passare (il fix
+    conta i byte, non vieta il chunked)."""
+    import json as J
+    keys = GatewayKeys(tmp_path / "gateway_keys.db")
+    key_a = keys.create(tenant_id="team-alpha", name="ci")
+    app = create_app(data_dir=tmp_path, keys=keys, max_body_bytes=1_048_576)
+    client = TestClient(app)
+    payload = J.dumps({"content": "small verified datum",
+                       "verified_by": ["doc:x"]}).encode()
+
+    def gen():
+        yield payload
+
+    r = client.post("/v1/memories",
+                    headers={**_auth(key_a), "Content-Type": "application/json"},
+                    content=gen())
+    assert r.status_code == 200 and r.json().get("stored") is True
+
+
 def test_key_is_hashed_at_rest(gw, tmp_path):
     _, key_a, _, keys = gw
     import sqlite3
