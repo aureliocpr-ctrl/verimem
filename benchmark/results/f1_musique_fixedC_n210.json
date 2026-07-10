@@ -1,0 +1,82 @@
+{
+  "dataset": "benchmark\\data\\external\\.cache\\musique_ans_v1.0_dev.jsonl",
+  "corpus": "MuSiQue-Answerable dev (virgin — never used in dev)",
+  "ks": [
+    2,
+    5,
+    10,
+    20
+  ],
+  "n_questions": 210,
+  "embedding_model": "intfloat/multilingual-e5-base",
+  "embedding_dim": 768,
+  "overall": {
+    "n": 210,
+    "recall@2": 0.419,
+    "hit@2": 0.881,
+    "all_hops@2": 0.0667,
+    "recall@5": 0.6111,
+    "hit@5": 0.9571,
+    "all_hops@5": 0.2571,
+    "recall@10": 0.7889,
+    "hit@10": 0.9952,
+    "all_hops@10": 0.519,
+    "recall@20": 1.0,
+    "hit@20": 1.0,
+    "all_hops@20": 1.0,
+    "mrr": 0.8574
+  },
+  "per_hop": {
+    "2": {
+      "n": 70,
+      "recall@2": 0.5143,
+      "hit@2": 0.8286,
+      "all_hops@2": 0.2,
+      "recall@5": 0.7071,
+      "hit@5": 0.9429,
+      "all_hops@5": 0.4714,
+      "recall@10": 0.8643,
+      "hit@10": 0.9857,
+      "all_hops@10": 0.7429,
+      "recall@20": 1.0,
+      "hit@20": 1.0,
+      "all_hops@20": 1.0,
+      "mrr": 0.827
+    },
+    "3": {
+      "n": 70,
+      "recall@2": 0.4286,
+      "hit@2": 0.9143,
+      "all_hops@2": 0.0,
+      "recall@5": 0.619,
+      "hit@5": 0.9714,
+      "all_hops@5": 0.2143,
+      "recall@10": 0.8238,
+      "hit@10": 1.0,
+      "all_hops@10": 0.5714,
+      "recall@20": 1.0,
+      "hit@20": 1.0,
+      "all_hops@20": 1.0,
+      "mrr": 0.879
+    },
+    "4": {
+      "n": 70,
+      "recall@2": 0.3143,
+      "hit@2": 0.9,
+      "all_hops@2": 0.0,
+      "recall@5": 0.5071,
+      "hit@5": 0.9571,
+      "all_hops@5": 0.0857,
+      "recall@10": 0.6786,
+      "hit@10": 1.0,
+      "all_hops@10": 0.2429,
+      "recall@20": 1.0,
+      "hit@20": 1.0,
+      "all_hops@20": 1.0,
+      "mrr": 0.8663
+    }
+  },
+  "latency_ms_mean": 1492.567,
+  "top1_score_mean": 0.8222,
+  "metric_note": "objective paragraph-level retrieval of gold is_supporting ids; all_hops@k = ALL supporting paragraphs in top-k (multi-hop honest); judge-free, no external API; Engram's own embedding model"
+}

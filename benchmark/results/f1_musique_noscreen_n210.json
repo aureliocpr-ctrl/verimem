@@ -1,0 +1,82 @@
+{
+  "dataset": "benchmark\\data\\external\\.cache\\musique_ans_v1.0_dev.jsonl",
+  "corpus": "MuSiQue-Answerable dev (virgin — never used in dev)",
+  "ks": [
+    2,
+    5,
+    10,
+    20
+  ],
+  "n_questions": 210,
+  "embedding_model": "intfloat/multilingual-e5-base",
+  "embedding_dim": 768,
+  "overall": {
+    "n": 210,
+    "recall@2": 0.4532,
+    "hit@2": 0.9238,
+    "all_hops@2": 0.081,
+    "recall@5": 0.627,
+    "hit@5": 0.9857,
+    "all_hops@5": 0.2571,
+    "recall@10": 0.7718,
+    "hit@10": 0.9905,
+    "all_hops@10": 0.4571,
+    "recall@20": 0.9825,
+    "hit@20": 1.0,
+    "all_hops@20": 0.9381,
+    "mrr": 0.8964
+  },
+  "per_hop": {
+    "2": {
+      "n": 70,
+      "recall@2": 0.55,
+      "hit@2": 0.8571,
+      "all_hops@2": 0.2429,
+      "recall@5": 0.75,
+      "hit@5": 0.9714,
+      "all_hops@5": 0.5286,
+      "recall@10": 0.8429,
+      "hit@10": 0.9714,
+      "all_hops@10": 0.7143,
+      "recall@20": 1.0,
+      "hit@20": 1.0,
+      "all_hops@20": 1.0,
+      "mrr": 0.8594
+    },
+    "3": {
+      "n": 70,
+      "recall@2": 0.4952,
+      "hit@2": 0.9857,
+      "all_hops@2": 0.0,
+      "recall@5": 0.6381,
+      "hit@5": 1.0,
+      "all_hops@5": 0.1857,
+      "recall@10": 0.7762,
+      "hit@10": 1.0,
+      "all_hops@10": 0.4571,
+      "recall@20": 0.9762,
+      "hit@20": 1.0,
+      "all_hops@20": 0.9286,
+      "mrr": 0.9607
+    },
+    "4": {
+      "n": 70,
+      "recall@2": 0.3143,
+      "hit@2": 0.9286,
+      "all_hops@2": 0.0,
+      "recall@5": 0.4929,
+      "hit@5": 0.9857,
+      "all_hops@5": 0.0571,
+      "recall@10": 0.6964,
+      "hit@10": 1.0,
+      "all_hops@10": 0.2,
+      "recall@20": 0.9714,
+      "hit@20": 1.0,
+      "all_hops@20": 0.8857,
+      "mrr": 0.869
+    }
+  },
+  "latency_ms_mean": 82.7573,
+  "top1_score_mean": 0.8338,
+  "metric_note": "objective paragraph-level retrieval of gold is_supporting ids; all_hops@k = ALL supporting paragraphs in top-k (multi-hop honest); judge-free, no external API; Engram's own embedding model"
+}

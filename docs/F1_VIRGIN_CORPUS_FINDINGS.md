@@ -86,6 +86,20 @@ always and ranks the first gold at the top. all-hops@k is the multi-hop wall:
 at small k it rarely holds the WHOLE chain, worst at 3/4 hops. This is C3, the
 honest hard case the graph (#1) must beat, not a regression.
 
+**Run C — same n=210, FIXED engine (writer_role=external_content, sanitize
+ON), `f1_musique_fixedC_n210.json`.** C4 closed end-to-end on the real engine:
+
+| k | recall (A→C) | all-hops (A→C) |
+|---|---|---|
+| 20 | 0.982 → **1.000** | 0.938 → **1.000** |
+| 10 | 0.772 → 0.789 | 0.457 → 0.519 |
+
+Every gold paragraph now returns at full k — the ~6% that was missing was the
+quarantined gold, gone. (MRR 0.896→0.857: the recovered paragraphs put ~1 more
+real distractor back in the pool, a fair trade for +6pt all-hops. The C3
+multi-hop wall at small k is unchanged — that is the graph's job, not the
+gate's.)
+
 **all_hops@20 = 0.938, not 1.0** — with k=20 over 20 paragraphs it should be
 1.0. The ~6% gap is C4: a quarantined gold never returns, even at full k. A
 clean cross-check that the gate, not the retriever, costs recall. Isolated by
@@ -179,9 +193,28 @@ retrieve hop-2. F1 gives the baseline this must beat.
 
 ---
 
+## Adversarial scenario map (mandate: "apri gli orizzonti, non far ridere la gente")
+
+Think as a hostile reviewer / real user, not as the author. Where would Verimem
+embarrass itself publicly? Concatenating the evening's thesis (gates
+mis-calibrated off agent-memory) outward:
+
+| # | scenario | status | evidence |
+|---|---|---|---|
+| S1 | **Multilingual gates** — the site sells "10 languages"; do gates quarantine legit Russian/Greek/CJK/Arabic/Hebrew/Hindi? | ✅ HOLDS (verified) | 0/10 non-Latin legit texts quarantined; mixed-script check is per-word (LATIN+other in ONE token), which legit prose never hits. A strength, not a fall. |
+| S2 | **Long documents** — e5 truncates at 512 tok; ingest a 30-page PDF and query page 20 | ⚠️ FALL (verified) | QuALITY: 115/115 articles > 512 tok (median ~6.8k). As ONE fact → ~7% embedded. A chunker EXISTS (`chunking.py`, 1000ch/150 overlap, provenance-anchored) and `DocumentIndex` uses it — but it is a SEPARATE tier; a direct `add(long_doc)` truncates SILENTLY (no length guard on the store, only on rerank). **Fix: non-silent length guard on store → auto-route to chunker or warn.** |
+| S3 | **Scale** — tested at 20-fact hermetic stores; 100k facts? recall latency, RAM (already bitten), auto-floor stability | ⏳ open | — |
+| S4 | **Contradictions on a real corpus** — Aurelio's question "siamo forti sulle contraddizioni?"; reconcile outside the in-house garden | ⏳ open | source-trust + reconcile shipped behind flags; not stressed on a virgin conflicting corpus |
+| S5 | **Adversarial queries** — empty, cross-language, injection-in-the-query, 10k-char query | ⏳ open | recall has a k<=0 guard + cold-encode fallback; the rest untested |
+| S6 | **Cold-start / prior-chat ingest** — new user, 0 docs; importing past chats (Aurelio asked). `conversation_ingest.py` exists | ⏳ open | — |
+
+Priority next: S2 (verified fall, small fix), then S4/S5 as virgin-corpus
+stress once MSC/QuALITY runs land.
+
 ## Next
 
-1. n=210 injection-ON vs injection-OFF → isolate C4's recall cost; fill numbers.
-2. Corpus 2 (MSC, `nayohan/multi_session_chat`) and 3 (QuALITY,
-   `emozilla/quality`) — one heavy run at a time.
-3. Phase C fixes, TDD, in priority order C4 → C1 → C2, then re-measure.
+1. ✅ DONE — n=210 A (injection ON) vs B (OFF) vs C (fixed): C4 closed, recall@20 → 1.0.
+2. ✅ DONE — phase C fixes (C4/C1/C2) shipped TDD (commit 513fa9f).
+3. S2 length-guard on store (non-silent), TDD.
+4. Corpus 2 (MSC, harness ready) and 3 (QuALITY, needs chunk-ingest) — one heavy run at a time.
+5. S4/S5 stress on the virgin corpora.
