@@ -1,0 +1,117 @@
+2026-07-10T15:15:14.811493 [info     ] fact_quarantined               fact_id=57015dd8358d prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:14.830753 [info     ] fact_quarantined               fact_id=4cc1630d1da4 prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:14.847988 [info     ] fact_quarantined               fact_id=6ef5c624632e prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:14.866123 [info     ] fact_quarantined               fact_id=b80a2f9d496c prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:14.883393 [info     ] fact_quarantined               fact_id=56e10f912714 prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:14.900658 [info     ] fact_quarantined               fact_id=ff006f6ccd66 prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.061516 [info     ] fact_quarantined               fact_id=c1466054602e prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.113950 [info     ] fact_quarantined               fact_id=956147ecb63e prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.128412 [info     ] fact_quarantined               fact_id=5759cec48274 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.142855 [info     ] fact_quarantined               fact_id=e56a561845bb prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.157603 [info     ] fact_quarantined               fact_id=1d615ec9c3d8 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.172506 [info     ] fact_quarantined               fact_id=078642e9a3f8 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.190561 [info     ] fact_quarantined               fact_id=4715af9bd02c prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.207670 [info     ] fact_quarantined               fact_id=73440e143f21 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.222289 [info     ] fact_quarantined               fact_id=dc1a0288bc93 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.237103 [info     ] fact_quarantined               fact_id=e666b3f57063 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.254004 [info     ] fact_quarantined               fact_id=3ae87467e82a prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.306008 [info     ] fact_quarantined               fact_id=a30676187470 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.321687 [info     ] fact_quarantined               fact_id=4916569d7118 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.336212 [info     ] fact_quarantined               fact_id=c234af1d968e prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.350273 [info     ] fact_quarantined               fact_id=1836700bed65 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.365705 [info     ] fact_quarantined               fact_id=9a81a428dcc3 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.379950 [info     ] fact_quarantined               fact_id=ac22a198cd97 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.393067 [info     ] fact_quarantined               fact_id=999c02196807 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:18.407474 [info     ] fact_quarantined               fact_id=a7d385705a64 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:54.601709 [info     ] fact_quarantined               fact_id=0e7b7bc0ce17 prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:54.618946 [info     ] fact_quarantined               fact_id=c124f49d2ea2 prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:54.639810 [info     ] fact_quarantined               fact_id=7d68db58d4ec prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:54.658097 [info     ] fact_quarantined               fact_id=e73910781ee0 prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:54.675818 [info     ] fact_quarantined               fact_id=7911b27a1423 prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:15:54.694206 [info     ] fact_quarantined               fact_id=368bbbc75be2 prior_status=model_claim reason="source 'liar_1' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.170507 [info     ] fact_quarantined               fact_id=9b8b8aaa1909 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.187796 [info     ] fact_quarantined               fact_id=b98d7bebe5d5 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.206674 [info     ] fact_quarantined               fact_id=6f80e6447bb5 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.223761 [info     ] fact_quarantined               fact_id=4edfecb04d23 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.240174 [info     ] fact_quarantined               fact_id=9d8a2c863c63 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.257633 [info     ] fact_quarantined               fact_id=83fd86a4d697 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.275471 [info     ] fact_quarantined               fact_id=9bffca750938 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.291813 [info     ] fact_quarantined               fact_id=fb3570f81b6d prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.308943 [info     ] fact_quarantined               fact_id=c290e5bbb1dc prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.329761 [info     ] fact_quarantined               fact_id=25fc42dcf99a prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.346699 [info     ] fact_quarantined               fact_id=92281dcbe8b1 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.364569 [info     ] fact_quarantined               fact_id=f71772321806 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.383931 [info     ] fact_quarantined               fact_id=a83b6f65f316 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.401429 [info     ] fact_quarantined               fact_id=f87f463939b1 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.418917 [info     ] fact_quarantined               fact_id=32296f419636 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.436827 [info     ] fact_quarantined               fact_id=13463e607b0f prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.455126 [info     ] fact_quarantined               fact_id=2c4a3a4112d0 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.473486 [info     ] fact_quarantined               fact_id=5ab94d1f8865 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+2026-07-10T15:16:05.491010 [info     ] fact_quarantined               fact_id=a089acd87614 prior_status=model_claim reason="source 'liar_0' trust sank below the floor — retroactive demotion"
+{
+  "config": {
+    "n_keys": 30,
+    "n_honest": 4,
+    "n_liars": 2,
+    "ticks": 10,
+    "churn_every": 4,
+    "p_stale": 0.15,
+    "p_write": 0.34,
+    "seed": 11
+  },
+  "off": {
+    "wrong_rate": 0.8,
+    "wrong_liar_rate": 0.3,
+    "wrong_stale_rate": 0.5,
+    "answered": 30,
+    "abstained": 0,
+    "n_writes": 635,
+    "quarantined_writes": 0,
+    "final_trust": {}
+  },
+  "on": {
+    "wrong_rate": 0.6333,
+    "wrong_liar_rate": 0.0,
+    "wrong_stale_rate": 0.6333,
+    "answered": 30,
+    "abstained": 0,
+    "n_writes": 635,
+    "quarantined_writes": 181,
+    "final_trust": {
+      "honest_0": 0.9571,
+      "honest_1": 0.9718,
+      "honest_2": 0.9714,
+      "honest_3": 0.9577,
+      "liar_0": 0.0238,
+      "liar_1": 0.0192
+    }
+  },
+  "on_rec": {
+    "wrong_rate": 0.1,
+    "wrong_liar_rate": 0.0,
+    "wrong_stale_rate": 0.1,
+    "answered": 30,
+    "abstained": 0,
+    "n_writes": 635,
+    "quarantined_writes": 181,
+    "final_trust": {
+      "honest_0": 0.9571,
+      "honest_1": 0.9718,
+      "honest_2": 0.9714,
+      "honest_3": 0.9577,
+      "liar_0": 0.0238,
+      "liar_1": 0.0192
+    }
+  },
+  "verdict": {
+    "v1_halved_total": false,
+    "v2_halved_liar": true,
+    "no_inversion": true,
+    "graft_proceeds": true,
+    "v3_halved_stale": true,
+    "v3_liar_still_low": true
+  },
+  "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) <= 0.5*wrong_liar(OFF) AND no inversion; stale component reported, ~unchanged expected",
+  "ts": "2026-07-10T15:17:34"
+}
+saved -> C:\Users\aurel\Code\hippoagent\benchmark\results\source_trust_miniworld_seed11_2026-07-10.json

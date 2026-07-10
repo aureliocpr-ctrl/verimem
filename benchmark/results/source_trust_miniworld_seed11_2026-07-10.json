@@ -37,9 +37,9 @@
     }
   },
   "on_rec": {
-    "wrong_rate": 0.6333,
+    "wrong_rate": 0.1,
     "wrong_liar_rate": 0.0,
-    "wrong_stale_rate": 0.6333,
+    "wrong_stale_rate": 0.1,
     "answered": 30,
     "abstained": 0,
     "n_writes": 635,
@@ -58,9 +58,9 @@
     "v2_halved_liar": true,
     "no_inversion": true,
     "graft_proceeds": true,
-    "v3_halved_stale": false,
+    "v3_halved_stale": true,
     "v3_liar_still_low": true
   },
   "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) <= 0.5*wrong_liar(OFF) AND no inversion; stale component reported, ~unchanged expected",
-  "ts": "2026-07-10T14:57:12"
+  "ts": "2026-07-10T15:17:34"
 }

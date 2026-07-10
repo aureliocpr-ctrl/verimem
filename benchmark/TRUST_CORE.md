@@ -185,7 +185,16 @@ default OFF pending real-corpus reproduction (the doc's own discipline);
 the mechanism is measured, wired, and transparent (SOURCE_TRUST warnings
 in the ledger).
 
-**v3 (ON+RECONCILE, task #18a): NULL RESULT, cause isolated.** Stale
+**v3b (ON+RECONCILE with the similarity fallback + real tick ages,
+task #21): PASSED — seed 11 stale 0.6333 → 0.10 (−84%), total wrong
+0.80 → 0.10, liar stays 0.0.** The fallback (top-k semantic candidates when
+the entity path yields nothing, same precision filters, default OFF)
+unblocked temporal reconciliation on unlinked k-v facts. Bonus finding: a
+missing `import os` in truth_reconciliation was silently swallowed by
+store()'s best-effort — surfaced only because the judge failed.
+CONFIRMED 3/3: seeds 12-13 stale 0.6 -> 0.20/0.2333, liar 0.0 everywhere, total wrong 0.10-0.23 vs ~0.80 ungated. Full-gate mini-world verdict: every recovered point attributed to its mechanism.
+
+**v3 (first attempt, before the fallback): NULL RESULT, cause isolated.** Stale
 unchanged (0.6333 = 0.6333) with ENGRAM_RECONCILE_ON_WRITE+AUTO_SUPERSEDE
 on. Minimal-case diagnosis (2 facts, same key, conflicting values):
 supersession does NOT fire — the reconcile pipeline finds candidates by
