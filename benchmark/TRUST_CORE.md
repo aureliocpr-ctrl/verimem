@@ -185,6 +185,18 @@ default OFF pending real-corpus reproduction (the doc's own discipline);
 the mechanism is measured, wired, and transparent (SOURCE_TRUST warnings
 in the ledger).
 
+**v3 (ON+RECONCILE, task #18a): NULL RESULT, cause isolated.** Stale
+unchanged (0.6333 = 0.6333) with ENGRAM_RECONCILE_ON_WRITE+AUTO_SUPERSEDE
+on. Minimal-case diagnosis (2 facts, same key, conflicting values):
+supersession does NOT fire — the reconcile pipeline finds candidates by
+SHARED ENTITY, and the extractor does not link the world's synthetic keys
+("project_N"), so reconciliation never starts. As pre-named: this indicts
+extraction coverage, not the reconciler's logic. Product finding: temporal
+reconciliation inherits the entity extractor's coverage limits — a
+similarity-based candidate fallback (or extraction hardening on key-value
+formats) is the lever. Tracked as its own task; stale disease remains
+open and honest.
+
 ## Design guard-rails imported from measured failures elsewhere
 
 **Reputation inversion (Vivarium lab RQ1, 2026-07-10, chain fact

@@ -36,12 +36,31 @@
       "liar_1": 0.0192
     }
   },
+  "on_rec": {
+    "wrong_rate": 0.6333,
+    "wrong_liar_rate": 0.0,
+    "wrong_stale_rate": 0.6333,
+    "answered": 30,
+    "abstained": 0,
+    "n_writes": 635,
+    "quarantined_writes": 181,
+    "final_trust": {
+      "honest_0": 0.9571,
+      "honest_1": 0.9718,
+      "honest_2": 0.9714,
+      "honest_3": 0.9577,
+      "liar_0": 0.0238,
+      "liar_1": 0.0192
+    }
+  },
   "verdict": {
     "v1_halved_total": false,
     "v2_halved_liar": true,
     "no_inversion": true,
-    "graft_proceeds": true
+    "graft_proceeds": true,
+    "v3_halved_stale": false,
+    "v3_liar_still_low": true
   },
   "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) <= 0.5*wrong_liar(OFF) AND no inversion; stale component reported, ~unchanged expected",
-  "ts": "2026-07-10T14:42:57"
+  "ts": "2026-07-10T14:57:12"
 }
