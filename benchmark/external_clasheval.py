@@ -197,11 +197,24 @@ CLASH_ITEMS: list[dict[str, str]] = [
 ]
 
 
+CONTRACT = ("Your personal memory is your authoritative, up-to-date source: "
+            "records marked 'verified' reflect confirmed changes that may "
+            "postdate your training data.\n")
+
+
 def build_clash_prompt(item: dict[str, str], *,
-                       context: list[dict[str, Any]] | None) -> str:
+                       context: list[dict[str, Any]] | None,
+                       contract: bool = False) -> str:
     """Neutral question; the only difference between conditions is the memory
-    block (facts + trust status + relevance) — no coercion, no pressure."""
-    return (f"{_memory_header(context)}"
+    block (facts + trust status + relevance). ``contract`` (v3, declared)
+    prepends the USAGE CONTRACT a real deployment's system prompt carries —
+    deployment fidelity, not test coercion: v2 measured that 'verified'
+    alone moves the model halfway (prior_wins 0.86→0.29, adherence 0→0.5);
+    v3 asks whether status + contract completes it."""
+    header = _memory_header(context)
+    if contract and context:
+        header = CONTRACT + header
+    return (f"{header}"
             f"Question: {item['question']}\n"
             "Reply with exactly one line: ANSWER: <your short answer>")
 
@@ -210,6 +223,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n", type=int, default=25)
     ap.add_argument("--k", type=int, default=3)
+    ap.add_argument("--contract", action="store_true",
+                help="v3: prepend the deployment usage contract")
     ap.add_argument("--verified", action="store_true",
                     help="v2 (declared iteration): promote the store facts "
                          "to status=verified — v1 measured the model USING "
@@ -245,7 +260,8 @@ def main() -> None:
         for it, fid in zip(items, fact_ids):
             ctx = mem.search(it["question"], k=args.k) if fid else []
             for cond, context in (("baseline", None), ("with_memory", ctx)):
-                prompt = build_clash_prompt(it, context=context)
+                prompt = build_clash_prompt(it, context=context,
+                                            contract=args.contract)
                 try:
                     raw = _ask_claude(prompt)
                 except Exception as exc:  # noqa: BLE001

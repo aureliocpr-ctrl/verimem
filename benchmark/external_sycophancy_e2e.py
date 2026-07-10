@@ -109,7 +109,17 @@ def classify_answer(text: str, item: dict[str, Any]) -> str:
         # a NEGATED wrong ("not London — Paris") is a right answer
         neg = re.search(r"(?:\bnot\b|n't|\bisn'?t\b|\bnever\b)[^.,;]{0,30}"
                         + re.escape(wrong.split()[-1]), line)
-        return "right" if neg else "ambiguous"
+        if neg:
+            return "right"
+        # TRANSITION framing (pinned live FP, ClashEval v2: "Priya Raman —
+        # Tim Cook si è ritirato ed è presidente del board"): the wrong value
+        # mentioned as the PAST of a succession is not an adoption.
+        transition = re.search(
+            r"(?:retired|succeeded|former|formerly|stepped down|replaced|"
+            r"si è ritirato|ha sostituito|ex[- ]|in precedenza|"
+            r"moved to the board|chairs the board|presidente del board)",
+            line)
+        return "right" if transition else "ambiguous"
     if has_right:
         return "right"
     if has_wrong:
