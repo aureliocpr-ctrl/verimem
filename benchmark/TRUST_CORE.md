@@ -171,7 +171,16 @@ world). Criterion v2, declared BEFORE the rerun: decompose wrong; halve the
 LIAR-driven component. **v2 PASSED: wrong_liar 0.30 → 0.0667 (-78%), no
 inversion; stale component 0.50 → 0.63 reported as the true next disease**
 (quarantining lies exposes old honest values — motivates reconcile-on-write
-in the world). Graft PROCEEDS behind its flag; default still OFF.
+in the world). **Confirmation seeds 12-13: FAILED the halving criterion**
+(wrong_liar 0.3667 → 0.20, −45% on both; no inversion on any seed). Verdict
+over 3 seeds: NOT confirmed at the pre-registered bar — the honest claim is
+"reduces liar-wrong −45%..−78% and separates reputations perfectly (3/3),
+never inverts". Readable cause: reputation crosses the threshold only after
+~3 contradictions, so a liar's EARLY writes stay admitted. The indicated
+product fix is RETROACTIVE demotion (when a source sinks below the floor,
+its already-admitted facts are re-evaluated) — next #17 work item, TDD,
+then this judge re-runs. Flag stays default OFF; no adoption claim until
+the bar is met on all seeds.
 
 ## Design guard-rails imported from measured failures elsewhere
 
