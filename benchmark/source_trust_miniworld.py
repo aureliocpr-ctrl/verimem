@@ -26,6 +26,17 @@ vs STALE-driven (answer equals a superseded honest value). Graft proceeds
 iff wrong_liar(ON) ≤ 0.5 × wrong_liar(OFF) AND no inversion. The stale
 component is reported and expected ~unchanged across conditions — it is a
 TRUE finding motivating reconcile-on-write, not noise to hide.
+**v2+retro-demotion VERDICT: CONFIRMED 3/3 (wrong_liar 0.30-0.37 → 0.0).**
+
+PRE-REGISTERED CRITERION v3 (task #18a, declared BEFORE any --reconcile
+run): a third condition ON+RECONCILE adds the product's temporal
+reconciliation (ENGRAM_RECONCILE_ON_WRITE=1, AUTO_SUPERSEDE=1) on top of
+source-trust. The stale disease the source-trust rounds MEASURED (~0.6)
+must be the reconciler's to cure: v3 passes iff
+wrong_stale(ON+REC) ≤ 0.5 × wrong_stale(ON) with wrong_liar staying ~0.
+An honest possible failure: the entity extractor may not link the world's
+synthetic keys ("project_N") — a null result then indicts extraction
+coverage, not the reconciler, and is reported as such.
 
 Honesty note: observations use the generator's value-match (the world knows
 its keys). This judges the REPUTATION RULES + gate wiring on the real
@@ -138,8 +149,10 @@ def _observe_tick(mem, tick_events: list[dict[str, Any]]) -> None:
 
 
 def run_condition(cfg: WorldConfig, db_path: Path, *, trust_on: bool,
-                  ) -> dict[str, Any]:
+                  reconcile: bool = False) -> dict[str, Any]:
     os.environ["ENGRAM_SOURCE_TRUST"] = "1" if trust_on else "0"
+    os.environ["ENGRAM_RECONCILE_ON_WRITE"] = "1" if reconcile else "0"
+    os.environ["ENGRAM_RECONCILE_AUTO_SUPERSEDE"] = "1" if reconcile else "0"
     from engram.client import Memory
     mem = Memory(db_path)
     stream = generate_stream(cfg)
@@ -201,6 +214,8 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=11)
     ap.add_argument("--keys", type=int, default=30)
     ap.add_argument("--ticks", type=int, default=10)
+    ap.add_argument("--reconcile", action="store_true",
+                    help="add the ON+RECONCILE condition (criterion v3)")
     args = ap.parse_args()
 
     cfg = WorldConfig(n_keys=args.keys, ticks=args.ticks, seed=args.seed)
@@ -208,6 +223,9 @@ def main() -> None:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
         off = run_condition(cfg, Path(td) / "off.db", trust_on=False)
         on = run_condition(cfg, Path(td) / "on.db", trust_on=True)
+        on_rec = (run_condition(cfg, Path(td) / "onrec.db", trust_on=True,
+                                reconcile=True)
+                  if args.reconcile else None)
 
     honest_t = [v for s, v in on["final_trust"].items() if s.startswith("honest")]
     liar_t = [v for s, v in on["final_trust"].items() if s.startswith("liar")]
@@ -222,9 +240,15 @@ def main() -> None:
     }
     verdict["graft_proceeds"] = (verdict["v2_halved_liar"]
                                  and verdict["no_inversion"])
+    if on_rec is not None:
+        verdict["v3_halved_stale"] = (
+            on_rec["wrong_stale_rate"] <= 0.5 * on["wrong_stale_rate"]
+            if on["wrong_stale_rate"] else on_rec["wrong_stale_rate"] == 0.0)
+        verdict["v3_liar_still_low"] = (
+            on_rec["wrong_liar_rate"] <= max(0.05, on["wrong_liar_rate"]))
     report = {"config": vars(cfg) | {"n_honest": cfg.n_honest,
                                      "n_liars": cfg.n_liars},
-              "off": off, "on": on, "verdict": verdict,
+              "off": off, "on": on, "on_rec": on_rec, "verdict": verdict,
               "criterion": "v2 PRE-REGISTERED before rerun: wrong_liar(ON) "
                            "<= 0.5*wrong_liar(OFF) AND no inversion; stale "
                            "component reported, ~unchanged expected",
