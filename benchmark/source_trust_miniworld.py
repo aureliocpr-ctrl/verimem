@@ -153,16 +153,25 @@ def run_condition(cfg: WorldConfig, db_path: Path, *, trust_on: bool,
     os.environ["ENGRAM_SOURCE_TRUST"] = "1" if trust_on else "0"
     os.environ["ENGRAM_RECONCILE_ON_WRITE"] = "1" if reconcile else "0"
     os.environ["ENGRAM_RECONCILE_AUTO_SUPERSEDE"] = "1" if reconcile else "0"
+    # similarity fallback (task #21): the extractor does not link the world's
+    # k-v keys, so without it reconciliation never finds candidates (v3 null)
+    os.environ["ENGRAM_RECONCILE_SIM_FALLBACK"] = "1" if reconcile else "0"
     from engram.client import Memory
     mem = Memory(db_path)
     stream = generate_stream(cfg)
     quarantined = 0
+    # ticks map to REAL days in the past so reconcile's min_age_gap_days=1.0
+    # sees genuine temporal updates (2 days per tick, newest tick = now)
+    now = time.time()
+    tick_ts = {t: now - (cfg.ticks - 1 - t) * 2 * 86400.0
+               for t in range(cfg.ticks)}
     for t in range(cfg.ticks):
         tick_events = [ev for ev in stream if ev["tick"] == t]
         for ev in tick_events:
             res = mem.add(_PROP_TMPL.format(key=ev["key"], value=ev["value"]),
                           topic=f"world/{ev['key']}",
-                          verified_by=[f"source-doc:{ev['source']}:t{t}"])
+                          verified_by=[f"source-doc:{ev['source']}:t{t}"],
+                          asserted_at=tick_ts[t])
             quarantined += int(res.get("status") == "quarantined")
         if trust_on:
             _observe_tick(mem, tick_events)

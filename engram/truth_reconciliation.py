@@ -21,6 +21,7 @@ supersede deletes truth from the live set; a wrong contested only adds a doubt.
 """
 from __future__ import annotations
 
+import os
 import re
 
 from ._telemetry_prefixes import TIER_KNOWLEDGE, classify_tier
@@ -299,6 +300,51 @@ def find_related_candidates(sm, new_fact, entity_store, *, judge=None) -> list:
     return out
 
 
+def _sim_fallback_enabled() -> bool:
+    """ENGRAM_RECONCILE_SIM_FALLBACK=1 — similarity candidates when the
+    entity path yields nothing. Default OFF: the entity path is unchanged."""
+    return os.environ.get(
+        "ENGRAM_RECONCILE_SIM_FALLBACK", "").strip().lower() in (
+        "1", "true", "yes", "on")
+
+
+def find_similarity_candidates(sm, new_fact, *, judge=None, k: int = 6) -> list:
+    """Similarity fallback for candidate discovery (task #21).
+
+    Measured hole (mini-world v3, 2026-07-10): the entity path finds
+    candidates only for facts the extractor LINKED — on key-value facts
+    ("The access code of project_1 is ...") it links nothing, so two
+    directly conflicting values never reconcile. Here the candidates are the
+    top-k semantic neighbours instead, passed through the SAME precision
+    filters as the entity path (live, distinct proposition, overlap floor on
+    the judge path, looks-like-conflict). Recall already excludes
+    quarantined facts, so demoted sources cannot re-enter through here."""
+    new_prop = (getattr(new_fact, "proposition", "") or "").strip()
+    if not new_prop:
+        return []
+    floor = _min_conflict_overlap() if judge is not None else 0.0
+    try:
+        hits = sm.recall(new_prop, k=k)
+    except Exception:  # noqa: BLE001 — fallback must never break the write
+        return []
+    out: list = []
+    for hit in hits:
+        old = hit[0] if isinstance(hit, tuple) else hit
+        if getattr(old, "id", None) == new_fact.id:
+            continue
+        if getattr(old, "superseded_by", None):
+            continue
+        old_prop = (getattr(old, "proposition", "") or "").strip()
+        if not old_prop or old_prop == new_prop:
+            continue
+        if floor > 0.0 and _content_overlap(old_prop, new_prop) < floor:
+            continue
+        if not _is_conflict(old_prop, new_prop, judge):
+            continue
+        out.append(old)
+    return out
+
+
 def reconcile_against_corpus(
     sm, new_fact, entity_store, *, contradiction_store, now: float,
     min_age_gap_days: float = 1.0, auto_supersede: bool = False, judge=None,
@@ -323,6 +369,9 @@ def reconcile_against_corpus(
         return {"superseded": [], "contested": []}
     candidates = [c for c in find_related_candidates(
         sm, new_fact, entity_store, judge=judge) if _is_reconcilable(c)]
+    if not candidates and _sim_fallback_enabled():
+        candidates = [c for c in find_similarity_candidates(
+            sm, new_fact, judge=judge) if _is_reconcilable(c)]
     if auto_supersede:
         return reconcile_fact_on_write(
             sm, new_fact, candidates, now=now,
