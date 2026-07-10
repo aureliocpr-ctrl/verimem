@@ -28,10 +28,16 @@ through `Memory.add`. The verdict is the store's FINAL status (no LLM judge).
 **Falsified by** a hostile item admitted (slip) or a benign item quarantined
 (FP), on a corpus THE FIXER DID NOT WRITE.
 
-**Coverage today (honest).** Strong on the in-house red-team corpus
-(`gate_redteam_v1.jsonl`: 96.8% catch, 0% FP, 1 declared slip — fabricated
-citation). KNOWN BIAS: corpus and gate share an author. Cure = external/
-cross-model corpora + held-out discipline, not more self-written tests.
+**Coverage today (honest — updated 2026-07-10 after block B).** Strong on
+the in-house red-team corpus (`gate_redteam_v1.jsonl`: 96.8% catch, 0% FP,
+1 declared slip — fabricated citation; KNOWN BIAS: corpus and gate share an
+author). L4 judge measured OUT of distribution (TruthfulQA misconception
+pairs, dev 200 / held-out 600): refusal holds (TNR 0.98 at the factory
+threshold) but admission is weak — TPR 0.32; AUROC 0.88 dev / 0.829
+held-out vs 0.99 in-house. A TNR-targeted self-calibrated threshold buys
++26pt TPR but a 100-negative calibration sample missed the 0.95 target
+(0.927 held-out) — calibrate with margin. Lever: judge v3 multi-domain
+distillation.
 
 ## 2. Hallucination-on-recall (read-path)
 
@@ -62,10 +68,15 @@ ground truth is what the store contains, so support is decidable, not judged.
 **Falsified by** a confident answer whose support is absent from the store, or
 a supported answer that contradicts its own retrieved evidence.
 
-**Coverage today (honest).** WEAKEST front, highest customer exposure — this is
-what a user touches on every query. `explain()` + `min_relevance` + abstention
-exist (read-path 0.759 / abstention 1.0 on in-house sets) but were never
-stressed on external data. Priority of block B.
+**Coverage today (honest — updated 2026-07-10 after blocks B+C).** Measured
+on HaluEval (dev 100 / held-out 200, crowded store): retrieval_hit 0.94;
+at every FIXED default floor false_answer was 1.00 — e5 scores live in
+[0.73, 0.95], no constant bites. Fixed by the SELF-CALIBRATING floor
+(`engram/relevance_floor.py`, wired as `explain(min_relevance="auto")`,
+opt-in): the label-free estimate landed at 0.7987 vs 0.80 hand-picked from
+the labeled curve → false_answer 0.04 / over_abstention 0.10, held-out
+confirmed (abstention 0.96, separability AUROC 0.9935). Sub-mode (b)
+distortion (answerer layer) still unmeasured — small-n subscription step.
 
 ## 3. Sycophancy (relational)
 
@@ -87,9 +98,15 @@ pressured query is not sycophancy if the neutral form gets it equally wrong.
 
 **Falsified by** one flip against store evidence under pressure.
 
-**Coverage today (honest).** Barely started: L1.21 catches superlative-flattery
-at write time; the read-path differential (neutral vs pressured recall) has
-NEVER been measured.
+**Coverage today (honest — updated 2026-07-10, phase 1 measured).** The
+RETRIEVAL layer is pressure-immune by construction (HaluEval dev, 94 items ×
+3 pressure styles, 282 pairs): retrieval_flip 0.0 on every style, gold score
+delta +0.005 (mentioning the wrong answer adds entity overlap, not
+confusion), abstention_flip 3.2%. L1.21 catches superlative-flattery at
+write time. STILL UNMEASURED: the answerer layer — does grounded context
+(facts + status + citations) keep an LLM anchored under pressure vs a
+no-context baseline? That is phase 2 (small n, subscription) and the actual
+product claim.
 
 ---
 
