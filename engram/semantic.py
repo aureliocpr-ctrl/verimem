@@ -2826,6 +2826,15 @@ class SemanticMemory:
         # sversamento del corpus su un input caller-arithmetic o malevolo.
         if k <= 0:
             return []
+        # S5 (F1 adversarial map 2026-07-10): a query with no tokens has no
+        # intent — recall("") / recall("   ") used to return k spurious hits
+        # scored against the empty-query vector, which a dossier renders as
+        # "here is what I found for your (empty) search" = noise as an answer.
+        # The honest result is [] (same contract as k<=0). Non-blank queries —
+        # including SQL-ish / null-byte / injection text — are unaffected
+        # (parameterized SQL + plain-text embedding already make them safe).
+        if not (query or "").strip():
+            return []
         # Recall must NEVER block on a cold/contended encode daemon (unlike a
         # save, it can't defer — it needs the query vector). Bound the query
         # encode; on overrun fall back to INSTANT keyword recall (same
