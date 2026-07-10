@@ -1007,3 +1007,14 @@ positives 0/14 (negations, reported speech, questions, deploy-adjacent
 facts), gate regression 45/45. The honest phrasing is now: 0 FP on
 calibration AND on the review's held-out set — with questions, negations and
 attributed claims excluded by design, not by luck.
+
+> **2026-07-10 — extraction F1, clean re-run (atomic/1200, users 3, 12
+> sessions, gate LLM):** off **0.8182** (P 0.782 / R 0.887) · gate **on
+> 0.8087** — the admission gate costs <1pp F1 while screening unsupported
+> claims. `gate_errors: 0`. This also settles the 2026-07-09 anomaly (off
+> 0.700/on 0.648, 20 gate_errors): that run used the weaker v1/600 config
+> AND ran concurrently with the full test suite + review agents — CLI
+> contention produced the errors; per-fact fail-safe (unscorable ≠
+> admitted) depressed the "on" arm. Numbers from that run are discarded.
+> Caveat: n=12 sessions, single run — the +4pp over the historical
+> atomic/1200 off (0.7789) is within run-to-run noise until replicated.

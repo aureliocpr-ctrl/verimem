@@ -121,3 +121,19 @@ def test_admin_overview_requires_admin_key(gw):
     assert client.get("/admin/overview").status_code == 401
     assert client.get("/admin/overview",
                       headers=_admin("wrong")).status_code == 401
+
+
+# ---- admin console: la pagina org (un ring per tenant) -----------------------
+
+def test_admin_ui_served_only_with_admin_key(gw, tmp_path):
+    client, _ = gw
+    r = client.get("/admin/ui")
+    assert r.status_code == 200, "la pagina è statica e senza dati"
+    assert "text/html" in r.headers["content-type"]
+    assert "tenant" in r.text.lower()
+    js = client.get("/admin/ui/admin.js")
+    assert js.status_code == 200 and "javascript" in js.headers["content-type"]
+    # senza admin key configurata la pagina NON esiste (come /admin/*)
+    from engram.gateway import create_app as _ca
+    bare = TestClient(_ca(data_dir=tmp_path / "bare"))
+    assert bare.get("/admin/ui").status_code == 404

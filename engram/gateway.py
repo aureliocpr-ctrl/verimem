@@ -714,6 +714,19 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             return {"uptime_s": round(time.time() - _started_at, 1),
                     "n_tenants": len(usage), "tenants": usage}
 
+        @app.get("/admin/ui", response_class=HTMLResponse)
+        def admin_ui() -> str:
+            """La org console (un trust-ring per tenant). Statica e senza
+            dati come /ui: i numeri viaggiano solo nel fetch autenticato
+            X-Admin-Key; la admin key vive in sessionStorage. Esiste SOLO
+            con una admin key configurata, come tutto /admin/*."""
+            return _webui.asset("admin.html")
+
+        @app.get("/admin/ui/admin.js")
+        def admin_ui_js() -> Response:
+            return Response(content=_webui.asset("admin.js"),
+                            media_type="application/javascript; charset=utf-8")
+
         @app.get("/admin/overview")
         def overview(_: None = Depends(_admin)) -> dict[str, Any]:
             """La vista ORG (SaaS/azienda): per ogni tenant noto il suo

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verimem — Org Console</title>
+<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+<div class="atmo" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="brand">
+    <span class="pulse" aria-hidden="true"></span>
+    <strong>Verimem</strong><small>org console</small>
+  </div>
+  <form id="keyform" autocomplete="off">
+    <input id="key" type="password" placeholder="paste your ADMIN key"
+           autocomplete="off">
+    <button type="submit">Connect</button>
+  </form>
+</header>
+
+<p id="err" class="err" hidden></p>
+
+<section id="board" hidden>
+  <p class="hint">Every tenant's trust posture, side by side — what the
+    admission gate did on each isolated store, plus usage. Read-only;
+    the admin key never touches tenant data paths.</p>
+  <div id="tenants" class="org-grid"></div>
+  <footer id="meta" class="meta"></footer>
+</section>
+
+<script src="/admin/ui/admin.js"></script>
+</body>
+</html>

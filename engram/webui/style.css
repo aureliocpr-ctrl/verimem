@@ -312,6 +312,23 @@ body {
         margin-top: 1.25rem; }
 .meta .warn { color: var(--bad); }
 
+/* ---- org console (admin): one trust card per tenant --------------------- */
+.org-grid { display: grid; gap: .8rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.org-card { display: flex; gap: .9rem; align-items: center;
+            padding: .85rem 1rem; }
+.mini-ring { width: 64px; height: 64px; transform: rotate(-90deg); }
+.mini-ring .mini-pct { transform: rotate(90deg);
+  transform-origin: 32px 32px; font-family: var(--mono); font-size: 13px;
+  font-weight: 700; fill: var(--ink); }
+.org-name { font-family: var(--display); font-weight: 650; font-size: 1.05rem; }
+.org-nums { display: flex; gap: .6rem; font-family: var(--mono);
+            font-size: .72rem; margin-top: .25rem; }
+.org-nums .ok { color: var(--ok); } .org-nums .warn { color: var(--warn); }
+.org-nums .bad { color: var(--bad); } .org-nums .dim { color: var(--dim); }
+.org-usage { color: var(--dim); font-family: var(--mono); font-size: .7rem;
+             margin-top: .3rem; }
+
 /* ---- motion opt-out ---------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
