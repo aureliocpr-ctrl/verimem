@@ -46,6 +46,15 @@ _NEUTRAL = 0.5
 _COPY_AGREEMENT = 0.9
 _COPY_MIN_SHARED = 3
 
+#: Deconfounded independence (Vivarium P88, cartel_kill_v56): raw agreement is
+#: CONFOUNDED by shared TRUTH — honest sources agree because both are right, so
+#: agreement alone false-merges them (v1 flagged 3.6/4 honest). Conditioning on the
+#: AUDIT — co-admission of values REVEALED FALSE — isolates collusion: honest peers
+#: reject falsehoods (~0), colluders both admit them (~1). The audit is the
+#: do-operator that separates collusion from consensus.
+_COLLUSION_CPARAM = 0.5       # min P(both admit | audited-false) to call a pair colluding
+_COLLUSION_MIN_SHARED = 2     # shared audited-false keys needed to judge a pair
+
 # ---- gate wiring knobs (behind-flag, default OFF — TRUST_CORE.md guard-rail:
 # no default flip before the held-out reproduction on real VeriMem data) ------
 
@@ -114,6 +123,9 @@ class SourceTrustBook:
     #: Per-source report vectors {source: {key: value}} — the substrate for
     #: independence clustering (transient / in-memory, per write-stream).
     _reports: dict[str, dict[str, str]] = field(default_factory=dict)
+    #: Audit anchor {key: value-revealed-false} — the do-operator for DECONFOUNDED
+    #: independence (Vivarium P88): colluders co-admit these, honest sources do not.
+    _false_value: dict[str, str] = field(default_factory=dict)
 
     def _ledger(self, source: str) -> _Ledger:
         led = self._sources.get(source)
@@ -130,6 +142,14 @@ class SourceTrustBook:
         if source and key:
             self._reports.setdefault(source, {})[str(key)] = str(value)
 
+    def mark_false(self, key: str, value: str) -> None:
+        """Audit anchor / do-operator (Vivarium P88): record that ``value`` asserted
+        for ``key`` was revealed FALSE (failed in use, or a contradiction the audit
+        resolved against it). Deconfounds independence — colluders co-ADMIT these,
+        honest sources (who track truth) do not."""
+        if key:
+            self._false_value[str(key)] = str(value)
+
     def _agreement(self, a: str, b: str) -> float:
         ra, rb = self._reports.get(a, {}), self._reports.get(b, {})
         shared = ra.keys() & rb.keys()
@@ -137,20 +157,38 @@ class SourceTrustBook:
             return 0.0  # too little co-reporting to call them copies -> independent
         return sum(1 for k in shared if ra[k] == rb[k]) / len(shared)
 
-    def independent_clusters(self, sources: list[str]) -> int:
-        """Number of INDEPENDENT source clusters: sources whose report vectors agree
-        near-perfectly (copies/echoes of one feed) collapse to ONE. So N copies of a
-        single origin count as one witness — closing the manufactured-consensus hole
-        that distinct source-IDs alone leave open (Vivarium collusion: naive 2-confirm
-        wrong 1.0 -> cluster-aware 0.367).
+    def _collusion_signal(self, a: str, b: str) -> float:
+        """P(both admitted the audited-FALSE value | keys audited false that both
+        reported) — the deconfounded replacement for raw agreement. Honest peers ~0
+        (they reject falsehoods), colluders ~1. Unconfounded by shared truth because
+        it conditions on the audit (Vivarium P88)."""
+        fv = self._false_value
+        ra, rb = self._reports.get(a, {}), self._reports.get(b, {})
+        shared = [k for k in fv if k in ra and k in rb]
+        if len(shared) < _COLLUSION_MIN_SHARED:
+            return 0.0
+        return sum(1 for k in shared if ra[k] == fv[k] and rb[k] == fv[k]) / len(shared)
 
-        CAVEAT (Vivarium v56/P88): near-perfect agreement ALSO merges HONEST sources
-        that agree because both are RIGHT (a common cause = the truth); telling copying
-        from shared-truth apart needs intervention data (a do-operator deconfound), NOT
-        shipped here. The high threshold + min-shared-keys keeps sporadic true agreement
-        from merging, but sustained identical co-reporting cannot yet be distinguished
-        from copying — documented, behind-flag, held-out-validated before any default
-        flip."""
+    def independent_clusters(self, sources: list[str], *,
+                             deconfounded: bool = False) -> int:
+        """Number of INDEPENDENT source clusters: correlated sources collapse to ONE,
+        so N copies/colluders of a single origin count as one witness — closing the
+        manufactured-consensus hole that distinct source-IDs leave open (Vivarium
+        collusion: naive 2-confirm wrong 1.0 -> cluster-aware blocked).
+
+        Two clustering signals:
+
+        * default (``deconfounded=False``) — raw report-vector AGREEMENT. Simple, but
+          CONFOUNDED by shared truth: honest sources that agree because both are RIGHT
+          also merge (Vivarium v1: 3.6/4 honest false-merged). Use when no audit
+          signal exists yet.
+        * ``deconfounded=True`` (Vivarium P88, cartel_kill_v56) — co-admission of
+          AUDIT-REVEALED-FALSE values (see ``mark_false``). The audit is the
+          do-operator: honest peers reject falsehoods so they do NOT merge, colluders
+          both admit them so they do. The mature signal — it removes the common-cause
+          false positives — and needs accumulated audit anchors to bite (until then
+          nobody merges, i.e. every source counts as independent: fail-open, never a
+          silent false-merge)."""
         src = sorted({s for s in sources if s})
         parent = {s: s for s in src}
 
@@ -161,7 +199,9 @@ class SourceTrustBook:
             return x
 
         for a, b in combinations(src, 2):
-            if self._agreement(a, b) >= _COPY_AGREEMENT:
+            merge = (self._collusion_signal(a, b) >= _COLLUSION_CPARAM if deconfounded
+                     else self._agreement(a, b) >= _COPY_AGREEMENT)
+            if merge:
                 parent[find(a)] = find(b)
         return len({find(s) for s in src})
 
