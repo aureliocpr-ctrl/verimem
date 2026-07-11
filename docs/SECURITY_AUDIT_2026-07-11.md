@@ -103,6 +103,38 @@ Elencati con onestà come **ipotesi da falsificare**, non come vulnerabilità.
 6. **~192 finding ruff-S** (report-only in CI `security.yml`): triage per separare
    il rumore dai reali; obiettivo = poter rendere bandit/ruff-S **bloccanti**.
 
+## Deep-dive superfici esposte (mandato "anticipa lunedì")
+
+Passata più a fondo, oltre i gate del write-path:
+
+- **Homoglyph injection — VERIFICATO SOLIDO empiricamente.** Sonda su 8 attacchi
+  (mixed-script Cirillico/Greco, mono-script lookalike, fullwidth, role-hijack,
+  exfil) + 6 legittimi multilingua: **8/8 presi, 0 falsi positivi**.
+  `_has_mixed_script_token` + fold confusables chiudono la classe. La stima "38
+  residuo aperto" che avevo dato **era stale** — corretta con la sonda.
+- **RCE / deserializzazione — pulito.** Nessun `pickle.load`/`marshal.load`/
+  `yaml.load(`/`eval(`/`exec(`/`os.system`/`__import__` su input untrusted. Tutti i
+  `subprocess` sono interni (spawn daemon, `git rev-parse` per la verifica dei ref,
+  `clp ai-eye`) e non ricevono input attacker-controlled dal percorso memoria.
+- **SQLi — pulito completo** (f-string + `.format` + `%` + concatenazione): i VALORI
+  sono sempre parametrizzati; le f-string interpolano solo placeholder/`LIMIT int`/
+  identificatori interni.
+- **Dashboard routes** (`dashboard_routes/`): auth session-token (file 0600, CVE-009)
+  sulle route state-changing (`/api/chat|plan|sleep|feedback`); read-route
+  loopback-default.
+- **Sandbox shell** (`sandbox.py`): superficie del CODING-AGENT (agentos), NON del
+  prodotto memoria; già indurita in più round adversariali (deny-by-default, metachar
+  denylist, strict-mode `shell=False` opt-in). Residuo dichiarato: legacy mode
+  `shell=True` (default) = mitigazione parziale — fuori scope VeriMem-memoria.
+
+**Conclusione onesta**: la superficie di sicurezza del *prodotto memoria* è in buono
+stato — questo giro ha trovato 1 buco nuovo reale (E3, fixato) + DoS induriti; il
+resto è solido o già-auditato in round precedenti (CVE-001 ide, CVE-009 dashboard,
+i round sandbox). Il rischio "figuraccia" **non è un buco tecnico spalancato**: è (a)
+overclaim nel posizionamento pubblico, (b) superfici non-prodotto (agentos), (c)
+non-testato-a-scala. **Non** auditato line-by-line: `mcp_server.py` (~7000 righe, solo
+grep-ato), concorrenza/race condition, la config di deploy reale.
+
 ## Concatenazione → Vivarium + VeriBench
 
 Il gap *ref-resolves ≠ ref-supports* del write-gate è la **stessa legge** del lab
