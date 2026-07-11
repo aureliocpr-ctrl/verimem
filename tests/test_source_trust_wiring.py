@@ -127,3 +127,25 @@ def test_independence_flag_on_copies_cannot_self_confirm(tmp_path, monkeypatch):
              "y": {"k1": "A", "k2": "Q", "k3": "R"}}   # agree on k1 only
     mem.source_trust_observe(confirmation=["x", "y"], reports=indep)
     assert mem.consistency_trust("x") > 0.5     # real corroboration still rises
+
+
+def test_deconfound_flag_honest_agreement_still_confirms(tmp_path, monkeypatch):
+    """P88 end-to-end: two honest sources agreeing on TRUE values are NOT false-merged
+    (raw agreement would have blocked them) — the caveat fixed on the live path."""
+    monkeypatch.setenv("ENGRAM_SOURCE_INDEPENDENCE", "1")
+    monkeypatch.setenv("ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND", "1")
+    mem = Memory(tmp_path / "m.db")
+    truth = {s: {"k1": "T1", "k2": "T2", "k3": "T3"} for s in ("h_a", "h_b")}
+    mem.source_trust_observe(confirmation=["h_a", "h_b"], reports=truth)
+    assert mem.consistency_trust("h_a") > 0.5
+
+
+def test_deconfound_flag_blocks_colluders_who_admit_falsehoods(tmp_path, monkeypatch):
+    monkeypatch.setenv("ENGRAM_SOURCE_INDEPENDENCE", "1")
+    monkeypatch.setenv("ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND", "1")
+    mem = Memory(tmp_path / "m.db")
+    for k, v in {"k1": "F1", "k2": "F2"}.items():        # the audit reveals them false
+        mem.source_trust_observe(audited_false=(k, v))
+    lie = {s: {"k1": "F1", "k2": "F2"} for s in ("c_a", "c_b")}
+    mem.source_trust_observe(confirmation=["c_a", "c_b"], reports=lie)
+    assert mem.consistency_trust("c_a") == 0.5           # co-admitted falsehood -> blocked

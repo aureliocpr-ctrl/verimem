@@ -36,7 +36,8 @@ from pathlib import Path
 from typing import Any
 
 __all__ = ["SourceTrustBook", "canonical_source", "enabled",
-           "independence_enabled", "threshold", "load_book", "save_book"]
+           "independence_enabled", "independence_deconfounded", "threshold",
+           "load_book", "save_book"]
 
 _NEUTRAL = 0.5
 
@@ -70,9 +71,17 @@ def independence_enabled() -> bool:
     """ENGRAM_SOURCE_INDEPENDENCE=1 makes a confirmation require >=2 INDEPENDENT
     clusters (copies/colluders of one feed collapse to one witness), not just >=2
     distinct source-IDs. Separate flag, default OFF: it can only strengthen the
-    gate, and needs the held-out real-corpus reproduction before any default flip
-    (the v56/P88 shared-truth caveat lives in ``independent_clusters``)."""
+    gate, and needs the held-out real-corpus reproduction before any default flip."""
     return os.environ.get("ENGRAM_SOURCE_INDEPENDENCE", "").strip().lower() in _TRUTHY
+
+
+def independence_deconfounded() -> bool:
+    """ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND=1 uses the P88 audit-conditioned
+    collusion signal (co-admission of audit-revealed-FALSE values) instead of raw
+    agreement, so honest sources that agree because both are RIGHT are no longer
+    false-merged. Needs ENGRAM_SOURCE_INDEPENDENCE too; default OFF."""
+    return os.environ.get(
+        "ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND", "").strip().lower() in _TRUTHY
 
 
 def threshold() -> float:
@@ -206,13 +215,17 @@ class SourceTrustBook:
         return len({find(s) for s in src})
 
     def observe_confirmation(self, sources: list[str], *,
-                             require_independent: bool = False) -> None:
+                             require_independent: bool = False,
+                             deconfounded: bool = False) -> None:
         """≥2 DISTINCT sources asserted the same accepted value → all rise. A single
         (or self-duplicated) source cannot confirm itself. With
         ``require_independent`` (the independence-aware write-gate) the ≥2 must be ≥2
-        INDEPENDENT clusters, so copies/colluders of one feed cannot self-confirm."""
+        INDEPENDENT clusters, so copies/colluders of one feed cannot self-confirm;
+        ``deconfounded`` selects the P88 audit-conditioned signal (see
+        ``independent_clusters``)."""
         distinct = sorted({s for s in sources if s})
-        n = self.independent_clusters(distinct) if require_independent else len(distinct)
+        n = (self.independent_clusters(distinct, deconfounded=deconfounded)
+             if require_independent else len(distinct))
         if n < 2:
             return
         for s in distinct:

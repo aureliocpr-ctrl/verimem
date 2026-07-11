@@ -377,6 +377,7 @@ class Memory:
                              contradiction: str | None = None,
                              outcome: tuple[str, bool, float] | None = None,
                              reports: dict[str, dict[str, str]] | None = None,
+                             audited_false: tuple[str, str] | None = None,
                              ) -> None:
         """Feed the per-source book and persist it. ``confirmation`` = ≥2
         distinct sources asserted the same accepted value; ``contradiction``
@@ -387,6 +388,9 @@ class Memory:
         independence substrate: with ENGRAM_SOURCE_INDEPENDENCE=1 the confirmation
         needs ≥2 INDEPENDENT clusters, so copies/colluders of one feed (identical
         report vectors) collapse to one witness instead of self-confirming.
+        ``audited_false`` = (key, value) an audit revealed FALSE — the do-operator
+        anchor for ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND (P88): colluders co-admit
+        it, honest sources do not, so honest agreement is no longer false-merged.
 
         RETROACTIVE DEMOTION (judge finding, seeds 12-13): reputation crosses
         the floor only after a few contradictions, so a liar's EARLY writes
@@ -396,11 +400,14 @@ class Memory:
         Flag-gated like the rest of the wiring."""
         from .source_trust import (
             enabled,
+            independence_deconfounded,
             independence_enabled,
             save_book,
             threshold,
         )
         book = self._source_trust_book()
+        if audited_false:
+            book.mark_false(*audited_false)
         watched = {s for s in (contradiction,
                                outcome[0] if outcome else None) if s}
         pre = {s: book.trust(s) for s in watched}
@@ -413,7 +420,8 @@ class Memory:
                 for k, v in (kv or {}).items():
                     book.record_report(src_id, k, v)
             book.observe_confirmation(
-                confirmation, require_independent=independence_enabled())
+                confirmation, require_independent=independence_enabled(),
+                deconfounded=independence_deconfounded())
         if contradiction:
             book.observe_contradiction(contradiction)
         if outcome:
