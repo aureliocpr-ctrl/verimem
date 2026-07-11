@@ -58,6 +58,16 @@ Tutti verificati con suite verdi: gateway 50/50, extract/document 22/22.
   `ENGRAM_HOOK_TOKEN` (`writer_role` è client-spoofable → fail-closed). `status='provisional'`
   richiede solo un match URL/arxiv (format-only) = etichetta onesta di trust
   inferiore, non un bypass.
+- **Ledger fail-open** (`trust_ledger.py`, mandato #3): il fail-open è *by design*
+  (observability, non data-path) e ora **visibile** — le perdite incrementano
+  `write_failures`, esposto da `trust_stats` (review 2026-07-09), non zeri
+  silenziosi. Soprattutto **la difesa non dipende dal ledger**: il gate
+  quarantena/rifiuta comunque. Rompere l'odometro non indebolisce il gate.
+- **`asserted_at` temporale** (`truth_reconciliation.py` gate C6, mandato #6): un
+  `asserted_at` nel futuro (oltre `_FUTURE_SKEW_S`=300s) → `classify_conflict`
+  ritorna **`dispute`, non `update`** → non supersede il presente. Un tenant non
+  può datare un fatto nel futuro per farlo "vincere" per sempre. In più il
+  reconcile-on-write è opt-in e il default è fail-safe (contende, non supersede).
 
 ---
 
@@ -73,13 +83,10 @@ Elencati con onestà come **ipotesi da falsificare**, non come vulnerabilità.
    dell'agente), non da remoto; (b) recall del detector di injection su
    offuscamenti oltre l'unicode (arms race: red-team catch 0.9677, residuo 38
    homoglyph + 1 role_hijack dichiarati).
-2. **`asserted_at` attacker-controlled** (mandato #6): il gateway passa
-   `asserted_at=body.get("asserted_at")` — un tenant può datare un fatto nel
-   futuro e vincere per sempre la supersession / falsare le query `as_of`.
-   Impatto: within-tenant (self-poisoning del proprio store), severity da
-   quantificare. Da provare con PoC bi-temporale.
-3. **trust_ledger fail-open** (mandato #3): romperlo per far sparire azioni
-   dall'odometro — verificare che il fail-open non nasconda anche eventi reali.
+2. **AutoMemory poisoning** (mandato #5): buffer auto-ingest — non ancora auditato.
+3. **Storage SQLite** (mandato #6): SQLi / manipolazione supersession — le query
+   viste finora sono parametrizzate (`?` placeholder, nessuna f-string in SQL sui
+   valori), ma manca un audit sistematico su tutto lo storage.
 4. **PDF bomb** via PyMuPDF (C lib, generalmente hardened) — da valutare con un
    PDF craftato; priorità bassa.
 5. **3× `subprocess shell=True`** in `interactive_judge.py` (bandit B602 HIGH
