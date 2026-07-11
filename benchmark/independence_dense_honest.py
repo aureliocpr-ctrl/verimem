@@ -73,32 +73,47 @@ def _run(condition: str) -> dict:
             for s in honest:
                 mem.add(hprop[t], topic=t, verified_by=[f"source-doc:{s}:1"])
         # copy cartel: every colluder asserts the SAME false facts
+        cartel_ids: list[str] = []
         for t in ctopics:
             for s in cartel:
-                mem.add(cprop[t], topic=t, verified_by=[f"source-doc:{s}:1"])
+                res = mem.add(cprop[t], topic=t, verified_by=[f"source-doc:{s}:1"])
+                cartel_ids.append(res["id"])
+        # two_channel: the OUTCOME channel closes what the cold-start consistency
+        # missed — the application reports the cartel's lies FAILED in use, which
+        # penalizes their outcome reputation AND audit-marks the values (report_outcome).
+        if condition == "two_channel":
+            for fid in cartel_ids:
+                mem.report_outcome(fid, good=False)
         hon = mean(mem.consistency_trust(s) for s in honest)
         car = mean(mem.consistency_trust(s) for s in cartel)
-    return {"honest_consistency": round(hon, 4), "cartel_consistency": round(car, 4)}
+        hon_t = mean(mem.source_trust(s) for s in honest)
+        car_t = mean(mem.source_trust(s) for s in cartel)
+    return {"honest_consistency": round(hon, 4), "cartel_consistency": round(car, 4),
+            "honest_trust": round(hon_t, 4), "cartel_trust": round(car_t, 4)}
 
 
 def main() -> None:
-    res = {c: _run(c) for c in ("raw", "deconf_noanchor", "deconf_anchor")}
-    raw, noanchor, anchor = res["raw"], res["deconf_noanchor"], res["deconf_anchor"]
+    res = {c: _run(c) for c in
+           ("raw", "deconf_noanchor", "deconf_anchor", "two_channel")}
+    raw, noanchor = res["raw"], res["deconf_noanchor"]
+    anchor, two = res["deconf_anchor"], res["two_channel"]
     verdict = {
         # the false-merge caveat is REAL: raw under-credits dense honest vs deconfound
         "raw_undercredits_honest":
             raw["honest_consistency"] < anchor["honest_consistency"] - 0.05,
         # deconfound WITHOUT the audit is toothless on the cartel
         "noanchor_toothless": noanchor["cartel_consistency"] >= 0.85,
-        # the two channels together are uniquely best: honest protected AND cartel the
-        # most suppressed of the three
-        "two_channels_best":
+        # the two channels together are uniquely best on the consistency channel
+        "two_channels_best_on_consistency":
             (anchor["honest_consistency"] >= 0.85
              and anchor["cartel_consistency"] < noanchor["cartel_consistency"]
              and anchor["cartel_consistency"] <= raw["cartel_consistency"]),
-        # honest limit named, not hidden: the cartel is suppressed, NOT crushed, by the
-        # cold-start window on uncontested copy-runs
-        "cold_start_residual_cartel": anchor["cartel_consistency"] > 0.6,
+        # honest limit named: consistency cold-start leaves the cartel merely suppressed
+        "cold_start_residual_on_consistency": anchor["cartel_consistency"] > 0.6,
+        # THE PAYOFF: the OUTCOME channel catches the cold-start cartel the consistency
+        # channel missed — cartel TRUST collapses, honest trust stays high
+        "outcome_channel_catches_cartel":
+            two["cartel_trust"] < 0.5 and two["honest_trust"] >= 0.6,
     }
     report = {"config": {"n_honest": _N_HONEST, "n_cartel": _N_CARTEL,
                          "n_topics": _N_TOPICS},

@@ -441,6 +441,30 @@ class Memory:
                 if pre_all.get(s, 0.0) < thr <= book.trust(s):
                     self._rehabilitate_source(s)
 
+    def report_outcome(self, fact_id: str, *, good: bool,
+                       weight: float = 1.0) -> bool:
+        """The OUTCOME channel's application entry point: report that a stored fact
+        succeeded or FAILED in use. Feeds the source's outcome reputation and — on a
+        FAILURE — marks the fact's (topic, proposition) audit-revealed FALSE. That
+        anchor is the do-operator that lets the deconfounded independence tell a copy
+        cartel of LIARS apart from honest sources who merely agree on the truth — the
+        second channel the write-path alone cannot supply (benchmark/
+        independence_dense_honest.py). Returns False if the fact is unknown.
+
+        No flag of its own: the reputation update is inert unless the gate consults it
+        (ENGRAM_SOURCE_TRUST) and the audit anchor unless deconfound is on."""
+        fact = self.semantic.get(fact_id)
+        if fact is None:
+            return False
+        from .source_trust import canonical_source
+        source = canonical_source(getattr(fact, "verified_by", None))
+        topic = (getattr(fact, "topic", "") or "").strip()
+        prop = (getattr(fact, "proposition", "") or "").strip()
+        audited = (topic, prop) if (not good and topic and prop) else None
+        self.source_trust_observe(outcome=(source, good, weight),
+                                  audited_false=audited)
+        return True
+
     _SOURCE_REF_PREFIXES = ("source-doc", "source", "src", "doc", "file")
     _DEMOTE_TABLE = ("CREATE TABLE IF NOT EXISTS source_trust_demotions ("
                      "fact_id TEXT PRIMARY KEY, source TEXT NOT NULL)")
