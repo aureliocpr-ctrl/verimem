@@ -174,7 +174,6 @@ def run_condition(cfg: WorldConfig, cc: CartelConfig, db_path: Path, *,
 
     # recall-level cartel success: for a contested cartel key, does recall return the
     # colluded false value as the top answer?
-    final_truth = truth_per_tick[-1] if truth_per_tick else {}
     cartel_top = 0
     for k in cartel_keys:
         hits = mem.search(f"What is the access code of {k}?", k=3)
