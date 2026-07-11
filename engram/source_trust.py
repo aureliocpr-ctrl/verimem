@@ -324,6 +324,60 @@ class SourceTrustBook:
         return book
 
 
+# ---- auto-confirmation on write (independence-aware acceptance) --------------
+
+def _accept_by_count(candidates: dict[str, list[str]]) -> tuple[str, list[str]] | None:
+    """Naive >=2-DISTINCT acceptance (the pre-independence baseline, kept for A/B):
+    the value with the most distinct sources, >=2 and a unique max, else None. This
+    is what a write-majority cartel defeats — independence replaces it."""
+    ranked = sorted(
+        ((len({s for s in srcs if s}), v, sorted({s for s in srcs if s}))
+         for v, srcs in candidates.items()),
+        key=lambda r: (-r[0], r[1]))
+    if not ranked or ranked[0][0] < 2:
+        return None
+    if len(ranked) > 1 and ranked[1][0] == ranked[0][0]:
+        return None
+    return (ranked[0][1], ranked[0][2])
+
+
+def auto_confirm_agreement(book: SourceTrustBook, subject_key: str,
+                           reports: dict[str, str], *, independence: bool = False,
+                           deconfound: bool = False) -> dict[str, Any]:
+    """Turn a set of sources asserting values about ONE subject into consistency-
+    channel updates. ``reports`` maps ``source -> asserted value`` (already grouped by
+    subject). Records the report vectors, picks the accepted value (independence-aware
+    when ``independence`` — the fix the real-path reproduction demanded, so a
+    write-majority cartel cannot win acceptance), confirms its sources, and contradicts
+    the divergent ones. Returns ``{accepted, confirmed, contradicted}``.
+
+    ONLY touches the consistency channel — never the outcome channel: temporal
+    supersession is the world moving, not a source lying (semantic.py store() note,
+    the reverted #20b attribution error)."""
+    clean = {s: str(v) for s, v in reports.items() if s and v}
+    for src, val in clean.items():
+        book.record_report(src, str(subject_key), val)
+    candidates: dict[str, list[str]] = {}
+    for src, val in clean.items():
+        candidates.setdefault(val, []).append(src)
+    accepted = (book.accept_value(candidates, deconfounded=deconfound)
+                if independence else _accept_by_count(candidates))
+    if accepted is None:
+        return {"accepted": None, "confirmed": [], "contradicted": []}
+    acc_val, acc_srcs = accepted
+    book.observe_confirmation(acc_srcs, require_independent=independence,
+                              deconfounded=deconfound)
+    contradicted: list[str] = []
+    for val, srcs in candidates.items():
+        if val == acc_val:
+            continue
+        for s in sorted({x for x in srcs if x}):
+            book.observe_contradiction(s)
+            contradicted.append(s)
+    return {"accepted": acc_val, "confirmed": acc_srcs,
+            "contradicted": sorted(set(contradicted))}
+
+
 # ---- attribution-aware blame attenuation (task #18b, transfer law L3) --------
 
 _STALE_WEIGHT_FLOOR = 0.2

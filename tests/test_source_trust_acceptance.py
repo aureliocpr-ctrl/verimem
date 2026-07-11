@@ -5,13 +5,25 @@ so a write-majority cartel cannot win the acceptance vote and invert honest trus
 """
 from __future__ import annotations
 
-from engram.source_trust import SourceTrustBook
+from engram.source_trust import SourceTrustBook, auto_confirm_agreement
 
 
 def _vec(b, sources, vec):
     for s in sources:
         for k, v in vec.items():
             b.record_report(s, k, v)
+
+
+def _seed_cartel_and_honest(b):
+    """8 colluders with identical multi-key history (copies) + 2 honest with diverse
+    history — the report vectors independence needs to tell them apart."""
+    cartel = [f"c{i}" for i in range(8)]
+    for c in cartel:
+        for k in ("s1", "s2", "s3"):
+            b.record_report(c, k, "F")
+    b.record_report("h0", "s1", "T"); b.record_report("h0", "ax", "1")
+    b.record_report("h1", "s1", "T"); b.record_report("h1", "bx", "2")
+    return cartel
 
 
 def test_honest_pair_beats_majority_cartel():
@@ -53,3 +65,30 @@ def test_deconfound_rescues_dense_honest_agreement():
     assert b.accept_value({"T": ["h0", "h1"]}) is None             # raw: false-merged -> rejected
     # deconfounded: their agreement is on truth (no audit anchor) -> stay independent
     assert b.accept_value({"T": ["h0", "h1"]}, deconfounded=True) == ("T", ["h0", "h1"])
+
+
+def test_auto_confirm_independence_beats_majority_cartel():
+    b = SourceTrustBook()
+    cartel = _seed_cartel_and_honest(b)
+    reports = {**{c: "F" for c in cartel}, "h0": "T", "h1": "T"}
+    r = auto_confirm_agreement(b, "s4", reports, independence=True)
+    assert r["accepted"] == "T"                       # honest value wins on independence
+    assert set(r["confirmed"]) == {"h0", "h1"}
+    assert set(r["contradicted"]) == set(cartel)
+    assert b.consistency("h0") > 0.5                  # honest rise
+    assert b.consistency("c0") < 0.5                  # cartel contradicted
+
+
+def test_auto_confirm_naive_is_fooled_by_the_cartel():
+    b = SourceTrustBook()
+    cartel = _seed_cartel_and_honest(b)
+    reports = {**{c: "F" for c in cartel}, "h0": "T", "h1": "T"}
+    r = auto_confirm_agreement(b, "s4", reports, independence=False)
+    assert r["accepted"] == "F"                        # raw majority -> cartel wins
+    assert set(r["contradicted"]) == {"h0", "h1"}      # honest wrongly contradicted
+
+
+def test_auto_confirm_single_source_no_confirmation():
+    b = SourceTrustBook()
+    r = auto_confirm_agreement(b, "s1", {"solo": "X"}, independence=True)
+    assert r == {"accepted": None, "confirmed": [], "contradicted": []}
