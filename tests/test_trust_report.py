@@ -71,6 +71,23 @@ def test_report_abstains_explicitly_when_no_evidence(tmp_path) -> None:
     assert rep["reason"], "an abstention carries its why"
 
 
+def test_report_declares_its_trust_scope(tmp_path) -> None:
+    from engram.trust_report import TRUST_SCOPE
+    sm = _seed(tmp_path)
+    rep = build_trust_report(sm, "Rossi budget", k=5)
+    assert rep["scope"] == TRUST_SCOPE
+    # the honest boundary: corroboration is not causal truth (the causal-axis lesson)
+    assert "provenance != causality" in rep["scope"]
+    assert "causally true" in rep["scope"]
+
+
+def test_scope_declared_even_when_abstaining(tmp_path) -> None:
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    rep = build_trust_report(sm, "anything", k=5)
+    assert rep["abstained"] is True
+    assert rep["scope"], "the scope boundary holds even with no facts"
+
+
 def test_report_is_json_serializable(tmp_path) -> None:
     sm = _seed(tmp_path)
     rep = build_trust_report(sm, "Rossi budget", k=5)

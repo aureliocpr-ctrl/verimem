@@ -25,7 +25,18 @@ from typing import Any
 
 from .temporal_context import _event_ts, _iso, fact_history
 
-__all__ = ["build_trust_report"]
+__all__ = ["build_trust_report", "TRUST_SCOPE"]
+
+#: What a Verimem trust score DOES and does NOT certify — surfaced in every dossier
+#: so a consumer (a judge, an operator) never over-reads it. The causal axis
+#: (benchmark/veribench/causal_axis.py) shows why the boundary bites: honest sources
+#: can corroborate a spurious correlation, so "corroborated" is NOT "causally true".
+TRUST_SCOPE = (
+    "Verimem certifies WHO asserted a fact, how independently it was corroborated, "
+    "and how fresh it is — NOT that it is causally true. A do(X)/interventional "
+    "question needs an interventional-typed fact; a corroborated observational one "
+    "cannot answer it (provenance != causality)."
+)
 
 
 def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
@@ -137,6 +148,7 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         "k": k,
         "min_relevance": min_relevance,
         "generated_at": time.time(),
+        "scope": TRUST_SCOPE,
         "facts": facts,
         "n_facts": len(facts),
         "n_disputed": sum(1 for e in facts if e["disputes"]),
