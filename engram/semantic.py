@@ -1489,6 +1489,19 @@ def _reconcile_on_write_enabled() -> bool:
     )
 
 
+def _source_auto_confirm_enabled() -> bool:
+    """Auto-confirmation on write (2026-07-11): when a fact restates the SAME
+    proposition as live same-topic facts from OTHER sources, feed the source-trust
+    consistency channel (independence-aware acceptance, so a write-majority cartel
+    cannot self-confirm — validated on the real gate path, benchmark/
+    independence_validation.py). Default OFF; ENGRAM_SOURCE_AUTO_CONFIRM=1 turns it on.
+    Only the consistency channel is touched — never outcome (temporal supersession is
+    the world moving, not a source lying: the reverted #20b attribution error)."""
+    return os.environ.get("ENGRAM_SOURCE_AUTO_CONFIRM", "").strip().lower() in (
+        "1", "on", "true", "yes",
+    )
+
+
 def _reconcile_auto_supersede_enabled() -> bool:
     """Allow reconcile-on-write to SUPERSEDE (apply a knowledge update), not just
     contest. Default OFF (fail-safe, unchanged): every conflict is only contested.
@@ -2391,6 +2404,16 @@ class SemanticMemory:
                 # independent-verification signal, not a temporal one.
             except Exception as exc:  # noqa: BLE001 — reconcile must never break store
                 _LOG.warning("reconcile-on-write failed (ignored): %s", exc)
+        # Auto-confirmation on write (opt-in, default OFF). Same-topic agreement
+        # from distinct cited sources feeds the source-trust consistency channel
+        # with independence-aware acceptance. Best-effort — never breaks a write.
+        if _source_auto_confirm_enabled() and fact.status not in (
+            "quarantined", "orphaned",
+        ):
+            try:
+                self._auto_confirm_source_trust(fact)
+            except Exception as exc:  # noqa: BLE001 — must never break store
+                _LOG.warning("auto-confirm source-trust failed (ignored): %s", exc)
         # Cycle #116 (2026-05-17): optional post-store coherence hook.
         # When provided, runs after the row is committed so the caller
         # can inspect the just-stored fact against its topic siblings.
@@ -3418,6 +3441,47 @@ class SemanticMemory:
             self, fact, es, contradiction_store=cs, now=time.time(),
             auto_supersede=auto_supersede, judge=judge,
             require_evidence=require_evidence, protect_evidenced=protect_evidenced)
+
+    def _auto_confirm_source_trust(self, fact) -> None:
+        """Feed the source-trust consistency channel from same-topic agreement
+        (opt-in, ENGRAM_SOURCE_AUTO_CONFIRM). A fact whose proposition restates a LIVE
+        same-topic fact from a DIFFERENT cited source is corroboration; a different
+        proposition from another source is a divergence. ``auto_confirm_agreement``
+        picks the accepted value by INDEPENDENT witnesses (a write-majority cartel of
+        copies collapses to one), confirms its sources, contradicts the divergent.
+
+        Keys on the TOPIC as the subject and the exact PROPOSITION as the value: exact
+        corroboration is handled; paraphrase agreement needs the NLI judge (follow-up).
+        One vote per cited source (agent-authored facts share the 'user' fallback, so a
+        single author can never self-confirm). Best-effort, consistency channel only."""
+        from .source_trust import (
+            auto_confirm_agreement,
+            canonical_source,
+            get_book,
+            independence_deconfounded,
+            independence_enabled,
+        )
+        topic = (getattr(fact, "topic", "") or "").strip()
+        if not topic or _is_telemetry_topic(topic):
+            return
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM facts WHERE topic = ? AND superseded_by IS NULL "
+                "AND status NOT IN ('orphaned', 'quarantined') "
+                "ORDER BY created_at DESC LIMIT 200", (topic,)).fetchall()
+        reports: dict[str, str] = {}
+        for r in rows:
+            f = self._row(r)
+            src = canonical_source(getattr(f, "verified_by", None))
+            prop = (getattr(f, "proposition", "") or "").strip()
+            if src and prop and src not in reports:   # latest proposition per source
+                reports[src] = prop
+        if len({s for s in reports if s != "user"}) < 2:
+            return          # corroboration needs >=2 distinct CITED sources
+        auto_confirm_agreement(
+            get_book(self.db_path), topic, reports,
+            independence=independence_enabled(),
+            deconfound=independence_deconfounded())
 
     def _maybe_fuse_ppr(
         self, query: str, hits: list[tuple[Fact, float]], k: int,

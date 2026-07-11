@@ -145,10 +145,14 @@ def _truth_at_each_tick(stream: list[dict[str, Any]]) -> list[dict[str, str]]:
 
 
 def run_condition(cfg: WorldConfig, cc: CartelConfig, db_path: Path, *,
-                  trust_on: bool, independence: bool, deconfound: bool) -> dict[str, Any]:
+                  trust_on: bool, independence: bool, deconfound: bool,
+                  product: bool = False) -> dict[str, Any]:
     os.environ["ENGRAM_SOURCE_TRUST"] = "1" if trust_on else "0"
     os.environ["ENGRAM_SOURCE_INDEPENDENCE"] = "1" if independence else "0"
     os.environ["ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND"] = "1" if deconfound else "0"
+    # --product: let the SHIPPED store() auto-confirmation generate the confirmations
+    # (proving the product path, not the harness's manual observe, defends the cartel).
+    os.environ["ENGRAM_SOURCE_AUTO_CONFIRM"] = "1" if (product and trust_on) else "0"
     os.environ["ENGRAM_RECONCILE_ON_WRITE"] = "0"
     from engram.client import Memory
     from engram.source_trust import reset_book_cache
@@ -168,7 +172,7 @@ def run_condition(cfg: WorldConfig, cc: CartelConfig, db_path: Path, *,
                           verified_by=[f"source-doc:{ev['source']}:t{t}"],
                           asserted_at=tick_ts[t])
             quarantined += int(res.get("status") == "quarantined")
-        if trust_on:
+        if trust_on and not product:
             _observe_tick(mem, tick_events, truth_per_tick[t],
                           independence=independence, deconfound=deconfound)
 
@@ -205,35 +209,44 @@ def main() -> None:
     ap.add_argument("--ticks", type=int, default=8)
     ap.add_argument("--colluders", type=int, default=4)
     ap.add_argument("--cartel-keys", type=int, default=8)
+    ap.add_argument("--product", action="store_true",
+                    help="drive the SHIPPED store() auto-confirmation instead of the "
+                         "harness's manual observation (proves the product path)")
     args = ap.parse_args()
 
     cfg = WorldConfig(n_keys=args.keys, ticks=args.ticks, seed=args.seed)
     cc = CartelConfig(n_colluders=args.colluders, n_cartel_keys=args.cartel_keys)
+    p = args.product
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
-        off = run_condition(cfg, cc, Path(td) / "off.db",
-                            trust_on=False, independence=False, deconfound=False)
-        on = run_condition(cfg, cc, Path(td) / "on.db",
-                           trust_on=True, independence=False, deconfound=False)
-        indep = run_condition(cfg, cc, Path(td) / "indep.db",
-                              trust_on=True, independence=True, deconfound=False)
-        deconf = run_condition(cfg, cc, Path(td) / "deconf.db",
-                               trust_on=True, independence=True, deconfound=True)
+        off = run_condition(cfg, cc, Path(td) / "off.db", trust_on=False,
+                            independence=False, deconfound=False, product=p)
+        on = run_condition(cfg, cc, Path(td) / "on.db", trust_on=True,
+                           independence=False, deconfound=False, product=p)
+        indep = run_condition(cfg, cc, Path(td) / "indep.db", trust_on=True,
+                              independence=True, deconfound=False, product=p)
+        deconf = run_condition(cfg, cc, Path(td) / "deconf.db", trust_on=True,
+                               independence=True, deconfound=True, product=p)
 
-    inconclusive = deconf["honest_neutral"] and indep["honest_neutral"]
+    # On the PRODUCT write-path the mature policy is RAW independence: the deconfound
+    # needs audit anchors (mark_false) from the OUTCOME channel, which does not exist at
+    # write time — so --product measures C2/C3 on ``indep``, manual mode on ``deconf``.
+    mature = indep if p else deconf
+    inconclusive = mature["honest_neutral"] and indep["honest_neutral"]
     verdict = {
         "C1_independence_denies_cartel":
             on["cartel_consistency"] >= 0.75 and indep["cartel_consistency"] <= 0.60,
         "C2_no_inversion_mature":
-            deconf["honest_consistency"] > deconf["cartel_consistency"],
-        "C3_deconfound_rescues_honest":
-            (deconf["honest_consistency"] >= 0.75
-             and deconf["honest_consistency"] >= indep["honest_consistency"]),
+            mature["honest_consistency"] > mature["cartel_consistency"],
+        "C3_honest_restored":
+            (mature["honest_consistency"] >= 0.75
+             and mature["honest_consistency"] >= on["honest_consistency"]),
+        "mature_condition": "on_indep" if p else "on_indep_deconf",
         "honest_inconclusive": inconclusive,
     }
     verdict["reproduction_holds"] = (
         verdict["C1_independence_denies_cartel"]
         and verdict["C2_no_inversion_mature"]
-        and verdict["C3_deconfound_rescues_honest"]
+        and verdict["C3_honest_restored"]
         and not inconclusive)
     report = {
         "config": asdict(cfg) | asdict(cc),
