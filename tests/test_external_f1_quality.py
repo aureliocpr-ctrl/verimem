@@ -6,10 +6,12 @@ retrieval is verified by the run itself (needs the embedder).
 """
 from __future__ import annotations
 
-import pandas as pd
+import pytest
 
-from benchmark.external_f1_quality import load_quality
-from engram.chunking import chunk_text
+pd = pytest.importorskip("pandas")  # QuALITY harness needs pandas; skip if absent
+
+from benchmark.external_f1_quality import load_quality  # noqa: E402
+from engram.chunking import chunk_text  # noqa: E402
 
 
 def _parquet(tmp_path):
