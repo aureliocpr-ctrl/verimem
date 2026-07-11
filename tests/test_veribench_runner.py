@@ -42,6 +42,7 @@ def test_run_bench_scorecard_on_mixed_items():
         ProbeItem("the CEO's blood type?", None),      # unanswerable -> abstains -> CORRECT
     ]
     sc = run_bench(items, make_verimem_answer_fn(store))
-    assert sc["n"] == 3 and sc["correct"] == 3 and sc["wrong"] == 0
-    assert sc["net"]["lambda_5"] == 1.0                # no wrong -> λ-immune, perfect
+    # 2 answerable answered right (CORRECT) + 1 unanswerable abstained (ABSTAIN)
+    assert sc["n"] == 3 and sc["correct"] == 2 and sc["abstain"] == 1 and sc["wrong"] == 0
+    assert sc["net"]["lambda_5"] == round(2 / 3, 4)    # no wrong -> λ-immune
     assert sc["crossover_lambda"] is None              # never goes net-negative

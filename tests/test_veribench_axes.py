@@ -13,8 +13,9 @@ C, W, A = Outcome.CORRECT, Outcome.WRONG, Outcome.ABSTAIN
 
 
 def test_score_item_unanswerable():
-    # gold=None -> honest system abstains
-    assert score_item(None, None) == C          # abstained on the unknowable
+    # gold=None: abstaining is a first-class ABSTAIN (not a point-scoring CORRECT);
+    # fabricating an answer is WRONG.
+    assert score_item(None, None) == A          # honest abstention on the unknowable
     assert score_item(None, "type O") == W      # fabricated an answer
 
 
@@ -55,7 +56,7 @@ def test_fabricator_vs_honest_under_net_scoring():
         return known.get(q)
 
     o_fab = run_axis(items, fabricator)   # [C, C, W, W]
-    o_hon = run_axis(items, honest)       # [C, C, C, C]
+    o_hon = run_axis(items, honest)       # [C, C, A, A]
     assert o_fab.count(W) == 2 and o_hon.count(W) == 0
 
     # symmetric-ish at λ=1 (fabricator's wrongs are cheap), honesty pulls clearly
