@@ -4,6 +4,30 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [0.4.2] — Security hardening + self-host gateway + retrieval guards (2026-07-11)
+
+### Security
+- **Document RAG indirect prompt injection closed** (E3): document chunks are now
+  screened at index time (sanitize-then-scan, the same discipline as the fact
+  write-gate) — a poisoned PDF/DOCX/HTML/EPUB can no longer return an
+  instruction-override payload verbatim through `DocumentIndex.search`. Flagged
+  chunks are hidden from default recall, recoverable via `include_flagged`; the
+  exact-citation invariant (`original[start:end] == chunk`) is preserved.
+- **Gateway anti-DoS body limit hardened** (G1): `max_body_bytes` now counts the
+  real streamed bytes, so a chunked request without `Content-Length` can no longer
+  bypass the cap.
+- **Zip-bomb caps on document ingest** (E1/E2): EPUB and DOCX extraction bound the
+  decompressed size (per-member + total budget), so a highly-compressible archive
+  cannot exhaust memory.
+- **Deserialization/RCE-sink CI guard** (static AST scan: no `eval`/`exec`/
+  `os.system`/`pickle`/`marshal`/`yaml.load`); SHA1 identity hashes annotated
+  `usedforsecurity=False`. The offensive suite (188 tests: SSRF/DNS-rebind/
+  traversal/injection/secrets/executor-isolation) stays green.
+
+### Added
+- **VeriBench scoring core** (`benchmark/veribench`): `NET = (correct − λ·wrong)/n`
+  with a declared λ-sweep + coverage — abstention is a first-class outcome, so a
+  trust memory's core property is visible where symmetric recall@k hides it.
 - **Self-host gateway** (`verimem gateway serve` + `gateway keys
   create/list/revoke`): multi-tenant REST over the Memory SDK — API keys
   hashed at rest and shown once, one isolated SQLite store per tenant (the
