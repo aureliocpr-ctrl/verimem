@@ -27,6 +27,34 @@ _MAX_MEMBER_BYTES = 25_000_000     # un singolo capitolo (i veri sono KB)
 _MAX_TOTAL_BYTES = 200_000_000     # tetto sull'estrazione dell'intero libro
 
 
+def _assert_zip_within_limits(p: Path, *, per_member: int | None = None,
+                              total: int | None = None) -> None:
+    """Zip-bomb guard cheap per i formati zip delegati a una libreria (DOCX ->
+    python-docx): la dimensione DICHIARATA non-compressa nella central directory
+    e' un upper bound affidabile (zipfile solleva se lo stream decomprime oltre
+    il dichiarato), quindi la verifichiamo PRIMA che la libreria tocchi il file —
+    altrimenti decomprimerebbe illimitato in RAM (E2 audit 2026-07-11: un DOCX da
+    74KB -> 40MB estratti, ratio 529x). I cap si leggono a call-time cosi' i test
+    (e un operatore) possono ritararli via i moduli-costante."""
+    import zipfile
+    per_member = _MAX_MEMBER_BYTES if per_member is None else per_member
+    total = _MAX_TOTAL_BYTES if total is None else total
+    if not zipfile.is_zipfile(p):
+        return
+    with zipfile.ZipFile(p) as z:
+        grand = 0
+        for zi in z.infolist():
+            if zi.file_size > per_member:
+                raise ValueError(
+                    f"zip member too large ({zi.file_size} bytes) in {p.name}: "
+                    f"{zi.filename} — refused (zip-bomb guard)")
+            grand += zi.file_size
+        if grand > total:
+            raise ValueError(
+                f"zip total uncompressed {grand} bytes in {p.name} exceeds "
+                f"{total} — refused (zip-bomb guard)")
+
+
 def extract_text(path: str | Path) -> str:
     """Extract plain text from ``path``, dispatched by file extension.
 
@@ -68,6 +96,7 @@ def _extract_docx(p: Path) -> str:
         import docx
     except ImportError as e:  # pragma: no cover - env-dependent
         raise RuntimeError("DOCX extraction needs python-docx (pip install python-docx)") from e
+    _assert_zip_within_limits(p)  # zip-bomb guard prima di python-docx (E2)
     d = docx.Document(str(p))
     return "\n".join(par.text for par in d.paragraphs)
 

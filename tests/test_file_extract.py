@@ -35,6 +35,24 @@ def test_docx(tmp_path) -> None:
     assert "Beta paragraph content" in out
 
 
+def test_docx_zip_bomb_is_refused(tmp_path, monkeypatch) -> None:
+    """Sicurezza (zip-bomb, audit E2 2026-07-11): _extract_docx delega a
+    python-docx che decomprime word/document.xml senza limite — un DOCX da 74KB
+    estraeva 40MB (ratio 529x, OOM a scala). Il guard sulla dimensione DICHIARATA
+    nella central directory rifiuta il file PRIMA che la libreria lo decomprima."""
+    import docx
+
+    import engram.file_extract as fe
+    monkeypatch.setattr(fe, "_MAX_MEMBER_BYTES", 1_000_000)
+    monkeypatch.setattr(fe, "_MAX_TOTAL_BYTES", 4_000_000)
+    d = docx.Document()
+    d.add_paragraph("A" * 3_000_000)  # word/document.xml > 1MB cap
+    p = tmp_path / "bomb.docx"
+    d.save(str(p))
+    with pytest.raises(ValueError, match="zip-bomb guard"):
+        fe.extract_text(p)
+
+
 def test_pdf(tmp_path) -> None:
     import fitz  # PyMuPDF
 
