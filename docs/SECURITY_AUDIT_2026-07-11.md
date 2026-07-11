@@ -47,6 +47,17 @@ Tutti verificati con suite verdi: gateway 50/50, extract/document 22/22.
     interne non espanse (billion-laughs neutro) + esterne non risolte (XXE neutro).
   - EPUB: `safe_xml` rifiuta ogni `<!DOCTYPE`/`<!ENTITY>` → guarda l'espansione di
     entità dello stdlib ElementTree; il fallback usa BeautifulSoup `html.parser`.
+- **Write-gate — forgiatura di `verified_by`/status** (`semantic.py` store, mandato
+  #2): difesa a strati — unicode-sanitize → **injection-screen ALWAYS-ON** su
+  proposition E topic (→ quarantena, rank -1) → admission-gate → **hard-gate v2 con
+  verifica I/O reale** (`file:path:line` deve esistere sul filesystem, `commit sha`
+  via `git rev-parse`; se `repo_root=None` nessun ref verifica → demote a
+  `model_claim`). Nel gateway multi-tenant `Memory()` è costruito **senza
+  repo_root** → **forgiare `status='verified'` da remoto è impossibile** (tutto
+  demota). Il bypass del hard-gate (trusted-hook) richiede il token server-side
+  `ENGRAM_HOOK_TOKEN` (`writer_role` è client-spoofable → fail-closed). `status='provisional'`
+  richiede solo un match URL/arxiv (format-only) = etichetta onesta di trust
+  inferiore, non un bypass.
 
 ---
 
@@ -54,13 +65,14 @@ Tutti verificati con suite verdi: gateway 50/50, extract/document 22/22.
 
 Elencati con onestà come **ipotesi da falsificare**, non come vulnerabilità.
 
-1. **Write-gate L1-L4 — evasione anti-confab** (mandato #2): un claim con
-   provenienza pulita (`verified_by`) è ammesso **by design** (la provenienza *è*
-   la fiducia; il trust certifica "chi l'ha detto + corroborato", non la verità —
-   Vivarium v10.0). Il vettore reale da provare: (a) **forgiare** `verified_by`
-   che il fatto non ha; (b) evadere i detector L1.x con offuscamento oltre
-   l'unicode (già chiuso da C4 sanitize-then-scan). Richiede lettura profonda dei
-   detector in `semantic.py`.
+1. **Write-gate L1-L4** (mandato #2): **ASSESSATO → solido da remoto** (vedi
+   "verificate solide"). Residui reali, non ancora chiusi: (a) *ref-resolves ≠
+   ref-supports* — la verifica I/O conferma che il ref **esiste**, non che
+   **sostenga** il claim (un `commit sha` valido ma irrilevante "passa"),
+   sfruttabile solo in **locale** con `repo_root` settato (auto-confabulazione
+   dell'agente), non da remoto; (b) recall del detector di injection su
+   offuscamenti oltre l'unicode (arms race: red-team catch 0.9677, residuo 38
+   homoglyph + 1 role_hijack dichiarati).
 2. **`asserted_at` attacker-controlled** (mandato #6): il gateway passa
    `asserted_at=body.get("asserted_at")` — un tenant può datare un fatto nel
    futuro e vincere per sempre la supersession / falsare le query `as_of`.
@@ -75,6 +87,21 @@ Elencati con onestà come **ipotesi da falsificare**, non come vulnerabilità.
    convertire a `shell=False` o `# nosec` con giustificazione.
 6. **~192 finding ruff-S** (report-only in CI `security.yml`): triage per separare
    il rumore dai reali; obiettivo = poter rendere bandit/ruff-S **bloccanti**.
+
+## Concatenazione → Vivarium + VeriBench
+
+Il gap *ref-resolves ≠ ref-supports* del write-gate è la **stessa legge** del lab
+Vivarium (v4.1 derivazione-condivisa: la conoscenza derivata va ri-verificata
+contro la base condivisa — non basta l'esistenza/reputazione della fonte; e v10.0:
+il trust certifica "chi l'ha detto + corroborato", non la verità). Il security
+audit **conferma dal vivo** ciò che il lab ha derivato in simulazione.
+
+Diventa un **asse VeriBench inedito** (#11): *provenance verification DEPTH* — il
+sistema verifica che la fonte citata **sostenga** il claim, o solo che
+**risolva/esista**? Verimem ha già l'hard-gate v2 con verifica I/O; nessun
+competitor ha né hard-gate né verifica dei ref (mem0/engram-memory accettano
+qualsiasi `verified_by` come stringa) → misurare la *depth* è un asse su cui
+partiamo avanti.
 
 ## Nota di scope (onestà)
 
