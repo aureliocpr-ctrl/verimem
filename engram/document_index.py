@@ -31,6 +31,7 @@ import numpy as np
 from .chunking import chunk_text
 from .documents import DocumentStore
 from .file_extract import extract_text
+from .prompt_injection import detect_injection, sanitize_dangerous_unicode
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS chunks (
@@ -43,7 +44,8 @@ CREATE TABLE IF NOT EXISTS chunks (
     end        INTEGER NOT NULL,
     text       TEXT NOT NULL,
     uri        TEXT DEFAULT '',
-    vec        BLOB NOT NULL
+    vec        BLOB NOT NULL,
+    flagged    INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_chunks_source ON chunks(source_id, version);
 """
@@ -88,6 +90,12 @@ class DocumentIndex:
         conn = self._connect()
         try:
             conn.executescript(_SCHEMA)
+            # migrate pre-screen DBs: add the injection-flag column if absent
+            try:
+                conn.execute("ALTER TABLE chunks ADD COLUMN flagged "
+                             "INTEGER NOT NULL DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass  # column already present
             conn.commit()
         finally:
             conn.close()
@@ -107,24 +115,46 @@ class DocumentIndex:
                     "chunks_indexed": 0}
         chunks = chunk_text(content, chunk_size=self.chunk_size,
                             overlap=self.overlap)
+        n_flagged = 0
         if chunks:
             vecs = np.asarray(self.embedder.encode([c.text for c in chunks]),
                               dtype=np.float32)
+            # Security screen (roadmap #4, audit E3 2026-07-11): il tier
+            # documenti ingerisce contenuto ESTERNO untrusted. Un chunk con un
+            # payload di injection, restituito verbatim dal search nel contesto
+            # dell'agente, lo dirotta (indirect prompt injection). Sanitize-then-
+            # scan come nel write-gate dei fatti: si RILEVA sul testo ripulito dai
+            # caratteri invisibili, si CONSERVA il testo originale (invariante di
+            # citazione original[start:end]==text), si marca `flagged` e lo si
+            # nasconde dal recall di default — non-lossy, audit via include_flagged.
+            rows = []
+            for i, c in enumerate(chunks):
+                clean, _ = sanitize_dangerous_unicode(c.text)
+                flagged = 1 if detect_injection(clean).is_injection else 0
+                n_flagged += flagged
+                rows.append((snap["id"], source_id, snap["version"], c.index,
+                             c.start, c.end, c.text, uri, vecs[i].tobytes(),
+                             flagged))
             conn = self._connect()
             try:
                 conn.executemany(
                     "INSERT INTO chunks(doc_id, source_id, version, idx, start, "
-                    "end, text, uri, vec) VALUES(?,?,?,?,?,?,?,?,?)",
-                    [(snap["id"], source_id, snap["version"], c.index, c.start,
-                      c.end, c.text, uri, vecs[i].tobytes())
-                     for i, c in enumerate(chunks)],
+                    "end, text, uri, vec, flagged) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    rows,
                 )
                 conn.commit()
             finally:
                 conn.close()
+            if n_flagged:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "document %s: %d/%d chunk(s) flagged for injection signals "
+                    "— hidden from default search (audit via include_flagged)",
+                    source_id, n_flagged, len(chunks))
         return {"source_id": source_id, "doc_id": snap["id"],
                 "version": snap["version"], "is_new": True,
-                "chunks_indexed": len(chunks)}
+                "chunks_indexed": len(chunks), "chunks_flagged": n_flagged}
 
     def index_file(self, path: Path | str, source_id: str | None = None,
                    meta: dict | None = None) -> dict:
@@ -137,21 +167,28 @@ class DocumentIndex:
                                    text, uri=f"file://{p}", meta=m)
 
     # --- read -----------------------------------------------------------
-    def search(self, query: str, k: int = 5) -> list[dict]:
+    def search(self, query: str, k: int = 5, *,
+               include_flagged: bool = False) -> list[dict]:
         """Cosine top-k over the LATEST version of every source.
 
         Each hit carries the exact citation: ``{text, score, source_id, version,
-        start, end, uri, doc_id}`` with ``original[start:end] == text``.
+        start, end, uri, doc_id, flagged}`` with ``original[start:end] == text``.
+
+        Chunks flagged for injection signals at index time (audit E3) are HIDDEN
+        by default — a poisoned document must not feed the agent's context via a
+        citation. ``include_flagged=True`` surfaces them for audit.
         """
         q = (query or "").strip()
         if not q:
             return []
+        where = "" if include_flagged else "WHERE c.flagged = 0"
         conn = self._connect()
         try:
             rows = conn.execute(
                 "SELECT c.* FROM chunks c JOIN (SELECT source_id, MAX(version) AS mv "
                 "FROM chunks GROUP BY source_id) m "
-                "ON c.source_id = m.source_id AND c.version = m.mv",
+                "ON c.source_id = m.source_id AND c.version = m.mv "
+                f"{where}",  # noqa: S608 — `where` is a constant, not user input
             ).fetchall()
         finally:
             conn.close()
@@ -169,7 +206,7 @@ class DocumentIndex:
         return [{"text": r["text"], "score": round(s, 6),
                  "source_id": r["source_id"], "version": r["version"],
                  "start": r["start"], "end": r["end"], "uri": r["uri"] or "",
-                 "doc_id": r["doc_id"]}
+                 "doc_id": r["doc_id"], "flagged": bool(r["flagged"])}
                 for s, r in scored[:max(1, int(k))]]
 
     # --- discovery ------------------------------------------------------
