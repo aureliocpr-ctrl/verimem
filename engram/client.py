@@ -376,11 +376,17 @@ class Memory:
     def source_trust_observe(self, *, confirmation: list[str] | None = None,
                              contradiction: str | None = None,
                              outcome: tuple[str, bool, float] | None = None,
+                             reports: dict[str, dict[str, str]] | None = None,
                              ) -> None:
         """Feed the per-source book and persist it. ``confirmation`` = ≥2
         distinct sources asserted the same accepted value; ``contradiction``
         = this source contradicted an accepted value; ``outcome`` =
         (source, good, weight) — weight<1 attenuates stale blame (task #18).
+
+        ``reports`` = {source: {key: value}} that each confirmer asserted — the
+        independence substrate: with ENGRAM_SOURCE_INDEPENDENCE=1 the confirmation
+        needs ≥2 INDEPENDENT clusters, so copies/colluders of one feed (identical
+        report vectors) collapse to one witness instead of self-confirming.
 
         RETROACTIVE DEMOTION (judge finding, seeds 12-13): reputation crosses
         the floor only after a few contradictions, so a liar's EARLY writes
@@ -388,7 +394,12 @@ class Memory:
         floor (crossing, not every update), its already-stored facts are
         re-evaluated: quarantined — rehabilitable, never deleted (guard-rail).
         Flag-gated like the rest of the wiring."""
-        from .source_trust import enabled, save_book, threshold
+        from .source_trust import (
+            enabled,
+            independence_enabled,
+            save_book,
+            threshold,
+        )
         book = self._source_trust_book()
         watched = {s for s in (contradiction,
                                outcome[0] if outcome else None) if s}
@@ -398,7 +409,11 @@ class Memory:
         pre_all = {s: book.trust(s)
                    for s in set(watched) | set(confirmation or [])}
         if confirmation:
-            book.observe_confirmation(confirmation)
+            for src_id, kv in (reports or {}).items():
+                for k, v in (kv or {}).items():
+                    book.record_report(src_id, k, v)
+            book.observe_confirmation(
+                confirmation, require_independent=independence_enabled())
         if contradiction:
             book.observe_contradiction(contradiction)
         if outcome:

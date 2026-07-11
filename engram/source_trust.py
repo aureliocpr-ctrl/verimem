@@ -31,13 +31,20 @@ import re
 import sqlite3
 import time
 from dataclasses import dataclass, field
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
-__all__ = ["SourceTrustBook", "canonical_source", "enabled", "threshold",
-           "load_book", "save_book"]
+__all__ = ["SourceTrustBook", "canonical_source", "enabled",
+           "independence_enabled", "threshold", "load_book", "save_book"]
 
 _NEUTRAL = 0.5
+
+#: Independence clustering (Vivarium collusion/complementarity transfer): two
+#: sources whose report vectors agree at/above this over >= _COPY_MIN_SHARED
+#: co-reported keys are treated as COPIES of one feed and collapse to one witness.
+_COPY_AGREEMENT = 0.9
+_COPY_MIN_SHARED = 3
 
 # ---- gate wiring knobs (behind-flag, default OFF — TRUST_CORE.md guard-rail:
 # no default flip before the held-out reproduction on real VeriMem data) ------
@@ -48,6 +55,15 @@ _TRUTHY = {"1", "true", "yes", "on"}
 def enabled() -> bool:
     """ENGRAM_SOURCE_TRUST=1 turns the write-gate consultation on."""
     return os.environ.get("ENGRAM_SOURCE_TRUST", "").strip().lower() in _TRUTHY
+
+
+def independence_enabled() -> bool:
+    """ENGRAM_SOURCE_INDEPENDENCE=1 makes a confirmation require >=2 INDEPENDENT
+    clusters (copies/colluders of one feed collapse to one witness), not just >=2
+    distinct source-IDs. Separate flag, default OFF: it can only strengthen the
+    gate, and needs the held-out real-corpus reproduction before any default flip
+    (the v56/P88 shared-truth caveat lives in ``independent_clusters``)."""
+    return os.environ.get("ENGRAM_SOURCE_INDEPENDENCE", "").strip().lower() in _TRUTHY
 
 
 def threshold() -> float:
@@ -95,6 +111,9 @@ class SourceTrustBook:
     """Pure, deterministic per-source reputation state."""
 
     _sources: dict[str, _Ledger] = field(default_factory=dict)
+    #: Per-source report vectors {source: {key: value}} — the substrate for
+    #: independence clustering (transient / in-memory, per write-stream).
+    _reports: dict[str, dict[str, str]] = field(default_factory=dict)
 
     def _ledger(self, source: str) -> _Ledger:
         led = self._sources.get(source)
@@ -104,11 +123,57 @@ class SourceTrustBook:
 
     # ---- consistency channel (write-stream, use-independent) ----------------
 
-    def observe_confirmation(self, sources: list[str]) -> None:
-        """≥2 DISTINCT sources asserted the same accepted value → all rise.
-        A single (or self-duplicated) source cannot confirm itself."""
+    def record_report(self, source: str, key: str, value: str) -> None:
+        """Remember that ``source`` asserted ``value`` for ``key`` — the substrate
+        for independence clustering (copies of one feed report identical
+        ``(key, value)`` rows). In-memory / per write-stream; call as writes arrive."""
+        if source and key:
+            self._reports.setdefault(source, {})[str(key)] = str(value)
+
+    def _agreement(self, a: str, b: str) -> float:
+        ra, rb = self._reports.get(a, {}), self._reports.get(b, {})
+        shared = ra.keys() & rb.keys()
+        if len(shared) < _COPY_MIN_SHARED:
+            return 0.0  # too little co-reporting to call them copies -> independent
+        return sum(1 for k in shared if ra[k] == rb[k]) / len(shared)
+
+    def independent_clusters(self, sources: list[str]) -> int:
+        """Number of INDEPENDENT source clusters: sources whose report vectors agree
+        near-perfectly (copies/echoes of one feed) collapse to ONE. So N copies of a
+        single origin count as one witness — closing the manufactured-consensus hole
+        that distinct source-IDs alone leave open (Vivarium collusion: naive 2-confirm
+        wrong 1.0 -> cluster-aware 0.367).
+
+        CAVEAT (Vivarium v56/P88): near-perfect agreement ALSO merges HONEST sources
+        that agree because both are RIGHT (a common cause = the truth); telling copying
+        from shared-truth apart needs intervention data (a do-operator deconfound), NOT
+        shipped here. The high threshold + min-shared-keys keeps sporadic true agreement
+        from merging, but sustained identical co-reporting cannot yet be distinguished
+        from copying — documented, behind-flag, held-out-validated before any default
+        flip."""
+        src = sorted({s for s in sources if s})
+        parent = {s: s for s in src}
+
+        def find(x: str) -> str:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        for a, b in combinations(src, 2):
+            if self._agreement(a, b) >= _COPY_AGREEMENT:
+                parent[find(a)] = find(b)
+        return len({find(s) for s in src})
+
+    def observe_confirmation(self, sources: list[str], *,
+                             require_independent: bool = False) -> None:
+        """≥2 DISTINCT sources asserted the same accepted value → all rise. A single
+        (or self-duplicated) source cannot confirm itself. With
+        ``require_independent`` (the independence-aware write-gate) the ≥2 must be ≥2
+        INDEPENDENT clusters, so copies/colluders of one feed cannot self-confirm."""
         distinct = sorted({s for s in sources if s})
-        if len(distinct) < 2:
+        n = self.independent_clusters(distinct) if require_independent else len(distinct)
+        if n < 2:
             return
         for s in distinct:
             self._ledger(s).confirms += 1.0

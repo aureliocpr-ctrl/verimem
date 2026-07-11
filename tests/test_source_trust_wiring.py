@@ -101,3 +101,29 @@ def test_confirmation_api_reaches_persisted_book(tmp_path, monkeypatch):
     assert mem.source_trust("alice") > 0.5
     mem.source_trust_observe(outcome=("alice", False, 0.25))  # stale-attenuated
     assert mem.source_trust("alice") < mem.consistency_trust("alice")
+
+
+def test_independence_flag_off_copies_still_confirm(tmp_path, monkeypatch):
+    """Backward-compat: without ENGRAM_SOURCE_INDEPENDENCE, distinct IDs confirm
+    even if their report vectors are identical (the pre-existing behaviour)."""
+    monkeypatch.delenv("ENGRAM_SOURCE_INDEPENDENCE", raising=False)
+    mem = Memory(tmp_path / "m.db")
+    reports = {s: {"k1": "A", "k2": "B", "k3": "C"} for s in ("c1", "c2", "c3")}
+    mem.source_trust_observe(confirmation=["c1", "c2", "c3"], reports=reports)
+    assert mem.consistency_trust("c1") > 0.5
+
+
+def test_independence_flag_on_copies_cannot_self_confirm(tmp_path, monkeypatch):
+    """The product hole closed: 3 copies of one feed (identical report vectors)
+    collapse to ONE witness and do NOT self-confirm; two genuinely independent
+    sources (differing vectors) still do."""
+    monkeypatch.setenv("ENGRAM_SOURCE_INDEPENDENCE", "1")
+    mem = Memory(tmp_path / "m.db")
+    copies = {s: {"k1": "A", "k2": "B", "k3": "C"} for s in ("c1", "c2", "c3")}
+    mem.source_trust_observe(confirmation=["c1", "c2", "c3"], reports=copies)
+    assert mem.consistency_trust("c1") == 0.5   # manufactured consensus blocked
+
+    indep = {"x": {"k1": "A", "k2": "B", "k3": "C"},
+             "y": {"k1": "A", "k2": "Q", "k3": "R"}}   # agree on k1 only
+    mem.source_trust_observe(confirmation=["x", "y"], reports=indep)
+    assert mem.consistency_trust("x") > 0.5     # real corroboration still rises
