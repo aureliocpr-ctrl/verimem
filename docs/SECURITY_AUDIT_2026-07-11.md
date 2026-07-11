@@ -4,6 +4,25 @@ Prima passata del mandato *hardcore security audit* (Aurelio, esecuzione formale
 lunedì 2026-07-13). Questa sessione **inizia** l'integrazione/correzione — non è
 l'audit completo.
 
+## Verdetto complessivo (aggiornato dopo il deep-dive)
+
+**La sicurezza del prodotto-memoria è solida.** La suite offensiva esistente
+`tests/security/` passa **188 test** (SSRF incl. DNS-rebind TOCTOU, path-traversal,
+prompt-injection, secrets-redaction, executor-isolation, editfmt) — il codebase era
+già passato per uno sprint di security (CVE-001…011). Questo audit ha aggiunto i gap
+**genuinamente nuovi** (E3 indirect injection nel tier documenti, G1/E1/E2 DoS) e ha
+**verificato** il resto (write-gate, XXE, SQLi, homoglyph, RCE-sink, ledger,
+asserted_at, AutoMemory), bloccando l'invariante "zero sink RCE" con un guard AST in CI.
+
+**Rischio "figuraccia" pubblica: basso.** I claim (README, sito, BENCHMARKS.md) sono
+onesti e caveati ("parity, not a win", "none is third-party audited", giudice e n
+dichiarati) — un tecnico ci trova credibili, non ridicoli.
+
+**Gap reali ma DICHIARATI** (ammissioni, non bugie): VeriBench non esiste ancora,
+nessun audit di terze parti, scala live non testata oltre ~100k sintetici,
+`mcp_server.py` non letto riga-per-riga (ma: stdio locale, no rete, no sink RCE, API
+gated → superficie intrinsecamente limitata).
+
 ## Regole d'ingaggio
 
 - **Default = NON-è-vuln.** Va provato il contrario con un **PoC concreto**.
