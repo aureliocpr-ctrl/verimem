@@ -214,6 +214,32 @@ class SourceTrustBook:
                 parent[find(a)] = find(b)
         return len({find(s) for s in src})
 
+    def accept_value(self, candidates: dict[str, list[str]], *,
+                     deconfounded: bool = False) -> tuple[str, list[str]] | None:
+        """Independence-aware ACCEPTANCE for one key. ``candidates`` maps each asserted
+        value to the sources asserting it; return ``(value, sources)`` of the value
+        backed by the most INDEPENDENT witnesses (>=2 and a UNIQUE maximum), else None.
+
+        This is the rule the real-path reproduction (benchmark/independence_validation
+        .py) proved necessary: counting RAW sources hands a write-majority cartel the
+        'accepted' slot — they self-confirm, honest sources become the contradictors,
+        trust inverts (honest 0.28 < cartel 0.95). Counting INDEPENDENT clusters makes N
+        colluders of one feed a single witness, so a genuinely-corroborated honest value
+        (>=2 independent sources) wins regardless of cartel SIZE. A tie on independent
+        witnesses is a real conflict → accept NEITHER (fail-safe: never confirm on an
+        ambiguous majority)."""
+        ranked = []
+        for value, srcs in candidates.items():
+            clean = [s for s in srcs if s]
+            n = self.independent_clusters(clean, deconfounded=deconfounded)
+            ranked.append((n, value, sorted(set(clean))))
+        ranked.sort(key=lambda r: (-r[0], r[1]))
+        if not ranked or ranked[0][0] < 2:
+            return None
+        if len(ranked) > 1 and ranked[1][0] == ranked[0][0]:
+            return None                       # tie on independent witnesses -> ambiguous
+        return (ranked[0][1], ranked[0][2])
+
     def observe_confirmation(self, sources: list[str], *,
                              require_independent: bool = False,
                              deconfounded: bool = False) -> None:
