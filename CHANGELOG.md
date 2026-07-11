@@ -4,6 +4,28 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+- **Write-gate provenance INDEPENDENCE** (`ENGRAM_SOURCE_INDEPENDENCE`, default OFF):
+  a confirmation now requires ≥2 *independent* clusters, not just ≥2 distinct
+  source-IDs, so N copies/echoes/colluders of one feed collapse to one witness —
+  closing the manufactured-consensus hole. `SourceTrustBook.record_report` /
+  `independent_clusters`; wired via `source_trust_observe(reports=)`.
+- **Deconfounded independence** (`ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND`, default OFF):
+  raw agreement is confounded by shared truth (honest sources that agree because
+  both are right would false-merge); conditioning on the AUDIT — co-admission of
+  values revealed FALSE (`mark_false`, fed by `source_trust_observe(audited_false=)`)
+  — isolates real collusion. The audit is the do-operator (Vivarium P88).
+- **Error-cost → abstention SLA** (`engram/sla.py`, `ENGRAM_ERROR_COST`=λ, default 1.0):
+  answer iff P(correct) > λ/(1+λ) — the decision-theoretic optimum and the same λ
+  VeriBench scores NET at. Higher λ (legal/medical) abstains more.
+- **Trust SCOPE declaration**: `build_trust_report` now carries `TRUST_SCOPE` in every
+  dossier — Verimem certifies who-asserted-it, corroboration, and freshness, NOT
+  causal truth (a do(X) question needs an interventional-typed fact).
+- **VeriBench axes + spec** (`benchmark/veribench`): causal / do-query axis
+  (provenance ≠ causality, defended λ*), adversarial-trust axis (collusion + sleeper
+  on the real `SourceTrustBook`; only the two-channel policy survives both), mem0
+  competitor adapter, and a `README.md` standard spec.
+
 ## [0.4.2] — Security hardening + self-host gateway + retrieval guards (2026-07-11)
 
 ### Security
