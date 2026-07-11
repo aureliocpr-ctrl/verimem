@@ -37,10 +37,17 @@ def test_warm_reranker_swallows_failure(monkeypatch):
 
 
 def test_preload_embedding_starts_reranker_thread(monkeypatch):
-    """preload_embedding spawns a reranker warm thread (joined here to assert it ran)."""
+    """preload_embedding spawns a reranker warm thread WHEN opted in.
+
+    Since 3dbbcda (2026-07-10 RAM incident) the CE preload is opt-in via
+    HIPPO_RERANK_PRELOAD=1 — default OFF (~450MB × N idle MCP servers). The
+    thread must still spawn and warm the reranker when the operator opts in;
+    this test pins the opt-in path (the default-off path is covered by the
+    recall-time lazy load)."""
     from engram import semantic
     monkeypatch.setenv("HIPPO_EAGER_PRELOAD", "1")
     monkeypatch.setenv("HIPPO_PRELOAD_BACKGROUND", "1")
+    monkeypatch.setenv("HIPPO_RERANK_PRELOAD", "1")  # opt-in (default off since 3dbbcda)
     # neutralize the embedding path so the test is about the reranker thread
     monkeypatch.setattr(preload, "_warm", lambda: None)
     monkeypatch.setattr(preload, "_service_enabled", lambda: False)
