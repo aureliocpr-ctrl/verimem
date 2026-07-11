@@ -60,9 +60,9 @@ def test_make_samples_deterministic_and_disjoint(tmp_path):
     assert dev1 == dev2, "same seed must give byte-identical samples"
     assert out1["n_dev"] == 10 and out1["n_heldout"] == 20
 
-    dev_qs = {json.loads(l)["question"] for l in dev1.splitlines()}
+    dev_qs = {json.loads(ln)["question"] for ln in dev1.splitlines()}
     held = (tmp_path / "s1" / "halueval_qa_heldout.jsonl").read_text("utf-8")
-    held_qs = {json.loads(l)["question"] for l in held.splitlines()}
+    held_qs = {json.loads(ln)["question"] for ln in held.splitlines()}
     assert not dev_qs & held_qs, "dev and heldout must be disjoint"
     assert out1 == out2
 

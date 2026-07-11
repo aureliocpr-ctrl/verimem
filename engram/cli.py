@@ -201,7 +201,7 @@ def backup_all(
             )
     if ok == 0:
         console.print("[red]backup-all: no store backed up[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @app.command()
@@ -326,10 +326,10 @@ def index(
         res = DocumentIndex().index_file(path, source_id=source_id)
     except FileNotFoundError:
         console.print(f"[red]file not found:[/red] {path}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except (ValueError, RuntimeError) as e:
         console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     if not res["is_new"]:
         console.print(f"[yellow]unchanged[/yellow] — already indexed as "
                       f"v{res['version']} (0 new chunks)")
@@ -389,11 +389,12 @@ def gateway_serve(
     """
     try:
         import uvicorn
+
         from .gateway import create_app
     except ImportError:
         console.print("[red]the gateway needs fastapi+uvicorn[/red] — "
                       "pip install 'verimem[server]'")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     dd = _gateway_data_dir(data_dir)
     # control plane: la admin key arriva SOLO da env (mai flag = mai nella
     # shell history). Senza, gli endpoint /admin/* non esistono.
@@ -427,11 +428,12 @@ def console_cmd(
     """
     try:
         import uvicorn
+
         from .gateway import create_app
     except ImportError:
         console.print("[red]the console needs fastapi+uvicorn[/red] — "
                       "pip install 'verimem[server]'")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     from .client import Memory
     mem = Memory(db) if db else Memory()
     app_ = create_app(data_dir=_gateway_data_dir(None) / "console",
@@ -461,7 +463,7 @@ def gateway_keys_create(
             tenant_id=tenant, name=name)
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     console.print(f"[green]key created[/green] for tenant [cyan]{tenant}[/cyan] "
                   f"— save it now, it is NOT retrievable later:\n  {key}")
 
@@ -496,7 +498,7 @@ def gateway_backup_cmd(
         m = backup_gateway(_gateway_data_dir(data_dir), dest)
     except (FileNotFoundError, ValueError) as e:
         console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     console.print(f"[green]backup ok[/green] → {dest}  "
                   f"({m['n_files']} db, {m['n_tenants']} tenants)")
 
@@ -512,7 +514,7 @@ def gateway_restore_cmd(
         m = restore_gateway(snapshot, target)
     except (FileNotFoundError, ValueError) as e:
         console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     console.print(f"[green]restore ok[/green] → {target}  "
                   f"({m['n_files']} db, {m['n_tenants']} tenants). "
                   f"Serve with: verimem gateway serve --data-dir {target}")
@@ -557,19 +559,17 @@ def import_cmd(
     conversations "import my verimem project since June" becomes:
     verimem import export.json --project verimem --since 2026-06-01 --all-matching
     """
-    from .import_conversations import (filter_conversations,
-                                       import_conversations,
-                                       list_conversations)
+    from .import_conversations import filter_conversations, import_conversations, list_conversations
     try:
         convs = filter_conversations(
             list_conversations(export_path),
             match=match, since=since, project=project)
     except FileNotFoundError:
         console.print(f"[red]file not found:[/red] {export_path}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     filtered = any((match, since, project))
     if not ids and not import_all and not all_matching:
@@ -586,7 +586,7 @@ def import_cmd(
     if all_matching and not filtered:
         console.print("[red]--all-matching requires at least one filter "
                       "(--match/--since/--project); for everything use --all[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     if import_all or all_matching:
         selected = [c["id"] for c in convs] if all_matching else None
@@ -1110,7 +1110,7 @@ def providers_check(
     if spec is None:
         console.print(f"[red]✗ unknown provider:[/] {name!r}")
         console.print("  [dim]hint:[/] run `hippo providers list` for the full list")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     console.print(f"[bold]Provider:[/] {spec.name}  ([dim]family={spec.family}[/])")
     if name.lower() != spec.name:
@@ -1121,7 +1121,7 @@ def providers_check(
         if not os.environ.get(spec.env):
             console.print(f"[red]✗ env var {spec.env} is not set[/]")
             console.print(f"  [dim]hint:[/] export {spec.env}=<your-key>")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
         console.print(f"[green]✓[/] env {spec.env} is set")
     else:
         console.print(f"[dim]⊘ no env var required (family={spec.family})[/]")
@@ -1136,7 +1136,7 @@ def providers_check(
         host = urlparse(base_url).hostname
         if not host:
             console.print(f"[red]✗ malformed base_url: {base_url!r}[/]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
         try:
             socket.gethostbyname(host)
         except OSError as exc:
@@ -1254,7 +1254,7 @@ def skills_show(skill_id: str):
     s = agent.skills.get(skill_id)
     if not s:
         console.print(f"[red]not found: {skill_id}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     console.print(Panel.fit(
         f"[bold]{s.name}[/]\n"
         f"stage={s.stage} status={s.status} trials={s.trials}/{s.successes} "
@@ -1297,7 +1297,7 @@ def episodes_show(episode_id: str):
                 break
     if not e:
         console.print("[red]not found[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     console.print(Panel.fit(e.trajectory_text(), title=f"Episode {e.id}", border_style="green"))
 
 
@@ -1593,7 +1593,7 @@ def facts_get(fact_id: str) -> None:
     f = _fact_id_resolve(sm, fact_id)
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     panel_body = (
         f"[bold]id[/bold] {f.id}\n"
         f"[bold]topic[/bold] {f.topic or ''}\n"
@@ -1635,7 +1635,7 @@ def facts_forget(
     f = _fact_id_resolve(sm, fact_id)
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     if not yes:
         try:
             ok = typer.confirm(
@@ -1695,7 +1695,7 @@ def facts_undo(
         )
     elif action == "not_found":
         console.print(f"[red]not found:[/red] op_id={op_id}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     else:
         console.print(f"[red]unknown action:[/red] {result}")
         raise typer.Exit(2)
@@ -1786,7 +1786,7 @@ def facts_restore(
     bp = Path(backup_path)
     if not bp.exists():
         console.print(f"[red]backup not found:[/red] {bp}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     if not yes:
         try:
             ok = typer.confirm(
@@ -2239,10 +2239,10 @@ def facts_add(
             console.print(
                 "[red]--proposition or --jsonl-stdin or --from-file required[/red]"
             )
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
         if not topic:
             console.print("[red]--topic required[/red]")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
         payloads.append({
             "proposition": body,
             "topic": topic,
@@ -2410,7 +2410,7 @@ def facts_add(
             f"[red]no facts inserted[/red] "
             f"(rejected={len(rejected)} parse_errors={parse_errors})"
         )
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @facts_app.command("backfill")

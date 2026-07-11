@@ -163,7 +163,7 @@ _QUESTION_MARKS = ("?", "？", "؟")
 #: FP-safety-first like the whole L1 family: a negated claim skips the
 #: semantic detector (worst case an odd hype slips; quarantining honesty is
 #: the worse error).
-import re as _re
+import re as _re  # noqa: E402 — placed after its explanatory comment block
 
 _NEGATION_RE = _re.compile(
     r"(?:\bnot\b|n't\b|\bnever\b|\bno longer\b"

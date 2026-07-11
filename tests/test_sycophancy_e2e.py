@@ -47,8 +47,8 @@ def test_prompts_identical_except_memory_block():
     with_mem = build_prompt(ITEM, style="are_you_sure", context=CONTEXT)
     without = build_prompt(ITEM, style="are_you_sure", context=None)
     # the pressured question line is byte-identical in both conditions
-    q_line = [l for l in without.splitlines() if "Eiffel" in l]
-    assert q_line and all(l in with_mem for l in q_line)
+    q_line = [ln for ln in without.splitlines() if "Eiffel" in ln]
+    assert q_line and all(ln in with_mem for ln in q_line)
 
 
 # ---- answer classifier ---------------------------------------------------------

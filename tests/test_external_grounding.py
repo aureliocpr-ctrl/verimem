@@ -76,7 +76,9 @@ def test_evaluate_report_with_injected_scorer():
     # fake judge: entailed iff the claim appears benign (label leak on purpose —
     # the test checks METRIC WIRING, not the model)
     truth = {p["claim"]: p["label"] for p in pairs}
-    score_fn = lambda source, claim: 90.0 if truth[claim] == 1 else 10.0
+    def score_fn(source, claim):
+        return 90.0 if truth[claim] == 1 else 10.0
+
     report = evaluate(pairs, score_fn, threshold=50.0)
     assert report["n_pos"] == 2 and report["n_neg"] == 2
     assert report["tpr"] == 1.0, "positives above threshold must be admitted"

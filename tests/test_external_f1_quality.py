@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from engram.chunking import chunk_text
 from benchmark.external_f1_quality import load_quality
+from engram.chunking import chunk_text
 
 
 def _parquet(tmp_path):

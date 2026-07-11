@@ -23,7 +23,6 @@ import sys
 
 from engram import encode_service, preload
 
-
 # ---- daemon singleton lock ---------------------------------------------------
 
 def test_acquire_lock_on_free_path(tmp_path):

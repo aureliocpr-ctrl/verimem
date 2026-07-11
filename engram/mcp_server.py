@@ -7002,8 +7002,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if name == "hippo_import_conversations":
             # Onboarding import (roadmap #2) — consent-first: default = list
             # only; ids/all = explicit consent. Same gate as live ingestion.
-            from engram.import_conversations import (
-                import_conversations, list_conversations)
+            from engram.import_conversations import import_conversations, list_conversations
             path = str(arguments.get("path", "")).strip()
             if not path:
                 return _err("path is required")

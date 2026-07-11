@@ -37,8 +37,7 @@ from typing import Any
 
 try:  # fastapi è la stessa dipendenza opzionale della dashboard
     from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
-    from fastapi.responses import (HTMLResponse, Response,
-                                   StreamingResponse)
+    from fastapi.responses import HTMLResponse, Response, StreamingResponse
 except ImportError as _exc:  # pragma: no cover — surfaced by the CLI command
     FastAPI = None  # type: ignore[assignment]
     _FASTAPI_IMPORT_ERROR = _exc

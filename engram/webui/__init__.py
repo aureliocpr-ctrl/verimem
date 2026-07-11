@@ -9,7 +9,7 @@ fetch, the bearer key lives in sessionStorage.
 """
 from __future__ import annotations
 
-from functools import lru_cache
+from functools import cache
 from importlib import resources
 
 #: extension → content-type for the few asset kinds we ship.
@@ -20,7 +20,7 @@ MEDIA_TYPES = {
 }
 
 
-@lru_cache(maxsize=None)
+@cache
 def asset(name: str) -> str:
     """Read one packaged asset (cached — the files are immutable at runtime)."""
     return (resources.files(__name__) / name).read_text(encoding="utf-8")

@@ -169,7 +169,7 @@ class SourceTrustBook:
                 for s, led in self._sources.items()}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SourceTrustBook":
+    def from_dict(cls, data: dict[str, Any]) -> SourceTrustBook:
         book = cls()
         for s, row in (data or {}).items():
             book._sources[s] = _Ledger(

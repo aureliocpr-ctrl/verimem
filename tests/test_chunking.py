@@ -41,7 +41,7 @@ def test_chunks_cover_and_overlap() -> None:
     assert len(cs) > 1
     assert cs[0].start == 0
     assert cs[-1].end == len(t)
-    for a, b in zip(cs, cs[1:]):
+    for a, b in zip(cs, cs[1:], strict=False):
         assert b.start < a.end, "consecutive chunks must overlap"
         assert b.index == a.index + 1
 

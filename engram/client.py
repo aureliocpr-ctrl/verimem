@@ -28,7 +28,6 @@ from typing import Any
 from .anti_confab_gate import run_validation_gate
 from .semantic import Fact, SemanticMemory
 
-
 #: Gate presets (packaging 2026-07-08): the gate's knobs existed for months
 #: (validate off/fast/full, gate_mode downgrade/reject, ground L4) but you had
 #: to know them. Three declarative modes; ``balanced`` = the historic default,
@@ -488,6 +487,7 @@ class Memory:
         ds = getattr(self, "_decision_store", None)
         if ds is None:
             from pathlib import Path as _P
+
             from .decision_chain import DecisionStore
             ds = self._decision_store = DecisionStore(
                 _P(self.semantic.db_path).with_name("decisions.db"))

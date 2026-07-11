@@ -22,7 +22,6 @@ Isolated store (own SQLite), like the Documents tier: NOT wired into
 """
 from __future__ import annotations
 
-import json
 import sqlite3
 from pathlib import Path
 
