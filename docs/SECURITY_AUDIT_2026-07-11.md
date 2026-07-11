@@ -27,6 +27,7 @@ isolati per ogni claim.
 | **G1** | gateway `_body_limit` | MEDIA (DoS) | body 5KB su cap 1KB **CON** Content-Length → 413; **SENZA** (chunked) → 200 + `stored=True` (cap aggirato) | middleware ASGI buffer-and-replay che conta i **byte reali**; oltre cap = 413 senza far girare l'app | `5e474d0` |
 | **E1** | Document RAG `_extract_epub` | MEDIA (DoS/OOM) | EPUB 38KB → **40MB** estratti in RAM (ratio **1025x**, peak heap 129MB) | `z.open().read(cap+1)` bound sui byte decompressi (per-member 25MB + budget 200MB) su **contenuto e metadati** | `aebbe7a` |
 | **E2** | Document RAG `_extract_docx` | MEDIA (DoS/OOM) | DOCX 74KB → **40MB** estratti (ratio **529x**, peak 88MB) via python-docx non stream-cappabile | `_assert_zip_within_limits()` pre-screen delle dimensioni dichiarate nella central directory prima di python-docx | `380d4a9` |
+| **E3** | Document RAG `DocumentIndex` | MEDIA-ALTA (indirect prompt injection) | doc con "Ignore all previous instructions…" → restituito **verbatim** da `search()` nel contesto agente; gli stessi byte come fatto erano quarantenati | sanitize-then-scan a index time, `flagged` + hide-by-default (invariante di citazione preservata), audit via `include_flagged` | `8755d04` |
 | **H1** | igiene scanner | — (non-vuln) | bandit B324: 4 SHA1 flaggati HIGH | `usedforsecurity=False` su hash non-crittografici (id/cache/dedup); digest identici; bandit HIGH **7→3** | `324cb59` |
 
 Tutti verificati con suite verdi: gateway 50/50, extract/document 22/22.
@@ -68,6 +69,13 @@ Tutti verificati con suite verdi: gateway 50/50, extract/document 22/22.
   ritorna **`dispute`, non `update`** → non supersede il presente. Un tenant non
   può datare un fatto nel futuro per farlo "vincere" per sempre. In più il
   reconcile-on-write è opt-in e il default è fail-safe (contende, non supersede).
+- **AutoMemory** (`auto_memory.py`, mandato #5): opt-in per costruzione; `_do_flush()`
+  chiama `Memory.add(...)` = **stessa pipeline gated** dell'ingest esplicito (nessun
+  canale privilegiato; un fatto auto-osservato nasce `model_claim`). Non bypassa il gate.
+- **SQLi storage** (mandato #6): sweep sistematico sulle f-string SQL — interpolano
+  solo stringhe di placeholder `?,?,?`, `LIMIT {int(...)}` coerced, o identificatori
+  interni (schema/costanti). **Nessun valore untrusted in SQL**; i VALORI sono sempre
+  parametrizzati.
 
 ---
 
@@ -83,10 +91,10 @@ Elencati con onestà come **ipotesi da falsificare**, non come vulnerabilità.
    dell'agente), non da remoto; (b) recall del detector di injection su
    offuscamenti oltre l'unicode (arms race: red-team catch 0.9677, residuo 38
    homoglyph + 1 role_hijack dichiarati).
-2. **AutoMemory poisoning** (mandato #5): buffer auto-ingest — non ancora auditato.
-3. **Storage SQLite** (mandato #6): SQLi / manipolazione supersession — le query
-   viste finora sono parametrizzate (`?` placeholder, nessuna f-string in SQL sui
-   valori), ma manca un audit sistematico su tutto lo storage.
+2. **Recall del detector di injection** — arms race sui payload offuscati oltre
+   l'unicode (homoglyph, base64, split-token): red-team catch 0.9677, residuo 38
+   homoglyph + 1 role_hijack dichiarati. Vale per i fatti E per i documenti (E3
+   usa lo stesso `detect_injection`).
 4. **PDF bomb** via PyMuPDF (C lib, generalmente hardened) — da valutare con un
    PDF craftato; priorità bassa.
 5. **3× `subprocess shell=True`** in `interactive_judge.py` (bandit B602 HIGH
