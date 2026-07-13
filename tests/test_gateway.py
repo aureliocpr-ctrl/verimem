@@ -135,6 +135,45 @@ def test_explain_applies_abstention_floor_end_to_end(gw, monkeypatch):
     assert r.json()["min_relevance"] == 0.6
 
 
+def test_key_carries_subscription_plan(tmp_path):
+    keys = GatewayKeys(tmp_path / "k.db")
+    keys.create(tenant_id="pro-co", name="x", plan="pro")
+    keys.create(tenant_id="free-co", name="y")                     # default free
+    keys.create(tenant_id="bogus-co", name="z", plan="platinum")   # unknown -> free
+    assert keys.plan_for_tenant("pro-co") == "pro"
+    assert keys.plan_for_tenant("free-co") == "free"
+    assert keys.plan_for_tenant("bogus-co") == "free"              # least privilege
+    assert keys.plan_for_tenant("never-seen") == "free"
+
+
+def test_quota_endpoint_reflects_plan_and_usage(tmp_path):
+    keys = GatewayKeys(tmp_path / "k.db")
+    key = keys.create(tenant_id="acme", name="ci", plan="pro")
+    client = TestClient(create_app(data_dir=tmp_path, keys=keys))
+    q0 = client.get("/v1/quota", headers=_auth(key)).json()
+    assert q0["plan"] == "pro" and q0["facts_limit"] == 100_000
+    assert q0["facts_used"] == 0 and q0["facts_remaining"] == 100_000
+    client.post("/v1/memories", headers=_auth(key),
+                json={"content": "The db is Postgres.", "topic": "t",
+                      "verified_by": ["source-doc:d:1"]})
+    q1 = client.get("/v1/quota", headers=_auth(key)).json()
+    assert q1["facts_used"] >= 1 and q1["facts_remaining"] <= 99_999
+
+
+def test_plan_column_migration_on_pre_plan_db(tmp_path):
+    import sqlite3
+    p = tmp_path / "old.db"
+    with sqlite3.connect(p) as c:                                 # a key DB from before plans
+        c.execute("CREATE TABLE gateway_keys (key_id TEXT PRIMARY KEY, "
+                  "key_hash TEXT NOT NULL UNIQUE, tenant_id TEXT NOT NULL, "
+                  "name TEXT NOT NULL DEFAULT '', created_at REAL NOT NULL, "
+                  "revoked_at REAL)")
+        c.commit()
+    keys = GatewayKeys(p)                                         # migrates: adds plan column
+    keys.create(tenant_id="t", name="x", plan="enterprise")
+    assert keys.plan_for_tenant("t") == "enterprise"
+
+
 def test_rate_limit_per_key(tmp_path):
     """Fase 1 del design datacenter (docs/DATACENTER_DESIGN.md): rate-limit
     per chiave — oltre il tetto la risposta è 429 (con Retry-After), le altre

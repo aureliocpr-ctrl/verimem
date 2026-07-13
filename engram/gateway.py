@@ -186,6 +186,7 @@ CREATE TABLE IF NOT EXISTS gateway_keys (
     key_hash   TEXT NOT NULL UNIQUE,
     tenant_id  TEXT NOT NULL,
     name       TEXT NOT NULL DEFAULT '',
+    plan       TEXT NOT NULL DEFAULT 'free',
     created_at REAL NOT NULL,
     revoked_at REAL
 );
@@ -200,6 +201,12 @@ class GatewayKeys:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.executescript(_KEYS_SCHEMA)
+            try:   # migration: older key DBs predate the plan column
+                conn.execute("ALTER TABLE gateway_keys "
+                             "ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'")
+                conn.commit()
+            except sqlite3.OperationalError:
+                pass   # column already present
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, timeout=10.0)
@@ -210,24 +217,37 @@ class GatewayKeys:
     def _hash(api_key: str) -> str:
         return sha256(api_key.encode("utf-8")).hexdigest()
 
-    def create(self, *, tenant_id: str, name: str = "") -> str:
+    def create(self, *, tenant_id: str, name: str = "", plan: str = "free") -> str:
         """Crea una chiave per ``tenant_id`` e la ritorna IN CHIARO — l'unica
         volta che esiste fuori dallo sha256. ``tenant_id`` è uno slug validato
-        (finisce in un path di filesystem)."""
+        (finisce in un path di filesystem). ``plan`` = il tier commerciale
+        (free/pro/enterprise/self_host); normalizzato al minimo-privilegio se ignoto."""
         if not _TENANT_RE.match(tenant_id or ""):
             raise ValueError(
                 f"tenant_id non valido: {tenant_id!r} (slug [a-z0-9._-], max 64)")
+        from .gateway_plans import get_plan
+        plan_name = get_plan(plan).name
         api_key = "vm_" + secrets.token_hex(20)
         with self._connect() as conn:
             conn.execute(
                 "INSERT INTO gateway_keys "
-                "(key_id, key_hash, tenant_id, name, created_at) "
-                "VALUES (?, ?, ?, ?, ?)",
+                "(key_id, key_hash, tenant_id, name, plan, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
                 (secrets.token_hex(8), self._hash(api_key), tenant_id,
-                 name, time.time()),
+                 name, plan_name, time.time()),
             )
             conn.commit()
         return api_key
+
+    def plan_for_tenant(self, tenant_id: str) -> str:
+        """The tenant's subscription tier — the plan on its most recent live key,
+        else ``free`` (a tenant is one customer on one plan)."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT plan FROM gateway_keys WHERE tenant_id = ? "
+                "AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 1",
+                (tenant_id,)).fetchone()
+        return row["plan"] if row else "free"
 
     def resolve(self, api_key: str | None) -> str | None:
         """La chiave presentata → tenant_id, o None (mancante/ignota/revocata)."""
@@ -545,6 +565,15 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     def health() -> dict[str, Any]:
         from . import __version__
         return {"ok": True, "version": __version__}
+
+    @app.get("/v1/quota")
+    def quota(tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """The tenant's plan, usage and headroom — what a dashboard shows and what a
+        402 (over quota) cites. The SaaS's self-service window into its own limits."""
+        from .gateway_plans import get_plan, quota_status
+        plan = get_plan(keys.plan_for_tenant(tenant_id))
+        facts_used = len(tenants.get(tenant_id).semantic.all())
+        return quota_status(plan, facts_used=facts_used)
 
     @app.post("/v1/memories")
     def add_memory(body: dict, tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
