@@ -487,23 +487,36 @@ class _BodyLimitMiddleware:
         await send({"type": "http.response.body", "body": body})
 
 
-#: Defensive headers stamped on every gateway response. Chosen to be purely
-#: ADDITIVE (a route that sets its own value wins) and non-breaking for the
-#: served ``/ui`` console: the CSP is ``frame-ancestors 'none'`` only —
-#: anti-clickjacking that does NOT constrain resource loading (a ``default-src``
-#: policy would break the console's own JS/CSS), complementing X-Frame-Options
-#: for modern browsers. ``nosniff`` is safe because the UI assets are served
-#: with correct MIME types. HSTS is deliberately ABSENT: it belongs at the
+#: Defensive headers stamped on every gateway response. Purely ADDITIVE (a route
+#: that sets its own value wins). ``nosniff`` is safe because the UI assets are
+#: served with correct MIME types. HSTS is deliberately ABSENT: it belongs at the
 #: TLS-terminating proxy (verimem.com already sends a 2-year preload HSTS), and
-#: asserting it from a possibly-plain-HTTP local bind is a footgun.
+#: asserting it from a possibly-plain-HTTP local bind is a footgun. The CSP is set
+#: separately, by content type (see below).
 _SECURITY_HEADERS: tuple[tuple[bytes, bytes], ...] = (
     (b"x-content-type-options", b"nosniff"),
     (b"x-frame-options", b"DENY"),
-    (b"content-security-policy", b"frame-ancestors 'none'"),
     (b"referrer-policy", b"strict-origin-when-cross-origin"),
     (b"cross-origin-opener-policy", b"same-origin"),
     (b"permissions-policy",
      b"geolocation=(), camera=(), microphone=(), browsing-topics=()"),
+)
+
+#: CSP for API/JSON/error responses: anti-clickjacking that does NOT constrain
+#: resource loading.
+_BASE_CSP = b"frame-ancestors 'none'"
+
+#: CSP for the served HTML console. The pages load ONLY same-origin external
+#: assets (``/ui/app.js`` + ``/ui/style.css``) with NO inline <script>, no inline
+#: event handlers, no ``style=`` attributes, no eval/new Function, and fetch/SSE
+#: only to same-origin ``/v1/*`` — so a locked-down policy is non-breaking AND it
+#: neutralizes stored-XSS as defense-in-depth: even if a poisoned fact's text ever
+#: slipped past the console's esc(), ``script-src 'self'`` forbids the injected
+#: inline script from executing. ``img-src`` allows data: for favicons.
+_HTML_CSP = (
+    b"default-src 'none'; script-src 'self'; style-src 'self'; "
+    b"img-src 'self' data:; font-src 'self'; connect-src 'self'; "
+    b"base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
 
 
@@ -511,8 +524,10 @@ class _SecurityHeadersMiddleware:
     """ASGI middleware: stamp defensive security headers on EVERY response —
     success, error, streamed, or the 413 short-circuited by the body-limit
     guard. Additive only: a header the app already set is never overwritten, so
-    a route may still opt into a stricter value. Wired OUTERMOST so it also
-    covers responses that never reach the route handlers."""
+    a route may still opt into a stricter value. The CSP is chosen by content
+    type: a locked-down policy for the HTML console, ``frame-ancestors`` for
+    API/JSON. Wired OUTERMOST so it also covers responses that never reach the
+    route handlers."""
 
     def __init__(self, app: Any) -> None:
         self.app = app
@@ -528,6 +543,12 @@ class _SecurityHeadersMiddleware:
                 present = {h[0].lower() for h in headers}
                 headers.extend((name, value) for name, value in _SECURITY_HEADERS
                                if name not in present)
+                if b"content-security-policy" not in present:
+                    ctype = next((v for n, v in headers
+                                  if n.lower() == b"content-type"), b"")
+                    csp = (_HTML_CSP if ctype.lower().startswith(b"text/html")
+                           else _BASE_CSP)
+                    headers.append((b"content-security-policy", csp))
                 message = {**message, "headers": headers}
             await send(message)
 

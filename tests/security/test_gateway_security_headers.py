@@ -18,7 +18,6 @@ from engram.gateway import GatewayKeys, create_app
 _EXPECTED = {
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
-    "content-security-policy": "frame-ancestors 'none'",
     "referrer-policy": "strict-origin-when-cross-origin",
     "cross-origin-opener-policy": "same-origin",
 }
@@ -40,7 +39,8 @@ def _assert_headers(resp) -> None:
             f"{name!r} missing/wrong on {resp.request.method} "
             f"{resp.request.url.path} -> {resp.status_code}: "
             f"got {resp.headers.get(name)!r}")
-    # a Permissions-Policy is present and denies at least camera/microphone
+    # a CSP is always present; a Permissions-Policy denies powerful features
+    assert "frame-ancestors 'none'" in resp.headers.get("content-security-policy", "")
     pp = resp.headers.get("permissions-policy", "")
     assert "camera=()" in pp and "microphone=()" in pp, pp
 
@@ -72,6 +72,21 @@ def test_headers_on_html_console(tmp_path):
     r = client.get("/ui")
     assert r.status_code == 200 and "text/html" in r.headers.get("content-type", "")
     _assert_headers(r)
+
+
+def test_html_console_gets_the_locked_down_csp(tmp_path):
+    """Defense-in-depth against stored-XSS: the HTML console gets a resource-
+    restricting CSP (script-src 'self' forbids any injected inline <script>), while
+    JSON/API responses get only the anti-clickjacking frame-ancestors."""
+    client, k = _app(tmp_path)
+    csp_ui = client.get("/ui").headers.get("content-security-policy", "")
+    assert "script-src 'self'" in csp_ui and "default-src 'none'" in csp_ui
+    csp_json = client.get("/v1/stats", headers=_auth(k)).headers.get(
+        "content-security-policy", "")
+    assert csp_json == "frame-ancestors 'none'"       # API is not resource-locked
+    # the console's own assets must still be loadable under that policy
+    assert client.get("/ui/app.js").status_code == 200
+    assert client.get("/ui/style.css").status_code == 200
 
 
 def test_headers_on_body_limit_rejection(tmp_path):
