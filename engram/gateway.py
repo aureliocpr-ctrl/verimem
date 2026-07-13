@@ -487,6 +487,53 @@ class _BodyLimitMiddleware:
         await send({"type": "http.response.body", "body": body})
 
 
+#: Defensive headers stamped on every gateway response. Chosen to be purely
+#: ADDITIVE (a route that sets its own value wins) and non-breaking for the
+#: served ``/ui`` console: the CSP is ``frame-ancestors 'none'`` only —
+#: anti-clickjacking that does NOT constrain resource loading (a ``default-src``
+#: policy would break the console's own JS/CSS), complementing X-Frame-Options
+#: for modern browsers. ``nosniff`` is safe because the UI assets are served
+#: with correct MIME types. HSTS is deliberately ABSENT: it belongs at the
+#: TLS-terminating proxy (verimem.com already sends a 2-year preload HSTS), and
+#: asserting it from a possibly-plain-HTTP local bind is a footgun.
+_SECURITY_HEADERS: tuple[tuple[bytes, bytes], ...] = (
+    (b"x-content-type-options", b"nosniff"),
+    (b"x-frame-options", b"DENY"),
+    (b"content-security-policy", b"frame-ancestors 'none'"),
+    (b"referrer-policy", b"strict-origin-when-cross-origin"),
+    (b"cross-origin-opener-policy", b"same-origin"),
+    (b"permissions-policy",
+     b"geolocation=(), camera=(), microphone=(), browsing-topics=()"),
+)
+
+
+class _SecurityHeadersMiddleware:
+    """ASGI middleware: stamp defensive security headers on EVERY response —
+    success, error, streamed, or the 413 short-circuited by the body-limit
+    guard. Additive only: a header the app already set is never overwritten, so
+    a route may still opt into a stricter value. Wired OUTERMOST so it also
+    covers responses that never reach the route handlers."""
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_wrapper(message: Any) -> None:
+            if message.get("type") == "http.response.start":
+                headers = list(message.get("headers") or ())
+                present = {h[0].lower() for h in headers}
+                headers.extend((name, value) for name, value in _SECURITY_HEADERS
+                               if name not in present)
+                message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
 def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                llm: Any = None, grounding_llm: Any = None,
                rate_limit_per_minute: int = 0,
@@ -540,6 +587,9 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     # anti-DoS sul data plane: conta i byte REALI (non solo Content-Length —
     # un chunked senza header saltava il cap, security audit G1 2026-07-11).
     app.add_middleware(_BodyLimitMiddleware, max_body_bytes=max_body_bytes)
+    # security headers su OGNI risposta (aggiunto DOPO il body-limit → è il piu'
+    # esterno, quindi timbra anche il 413 di quel guard). Additivo, non rompe /ui.
+    app.add_middleware(_SecurityHeadersMiddleware)
 
     _buckets: dict[str, list[float]] = {}
     _buckets_lock = threading.Lock()

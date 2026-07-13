@@ -1,0 +1,106 @@
+{
+  "dataset": "HaluEval qa_data (MIT)",
+  "split": "heldout",
+  "n_answerable": 200,
+  "n_unanswerable": 100,
+  "k": 5,
+  "ingest": {
+    "admitted": 192,
+    "blocked": 8,
+    "by_status": {
+      "model_claim": 192,
+      "quarantined": 8
+    }
+  },
+  "curve": [
+    {
+      "tau": 0.25,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.04,
+      "abstention_rate": 0.0,
+      "false_answer_rate": 1.0
+    },
+    {
+      "tau": 0.35,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.04,
+      "abstention_rate": 0.0,
+      "false_answer_rate": 1.0
+    },
+    {
+      "tau": 0.45,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.04,
+      "abstention_rate": 0.0,
+      "false_answer_rate": 1.0
+    },
+    {
+      "tau": 0.55,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.04,
+      "abstention_rate": 0.0,
+      "false_answer_rate": 1.0
+    },
+    {
+      "tau": 0.65,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.04,
+      "abstention_rate": 0.0,
+      "false_answer_rate": 1.0
+    },
+    {
+      "tau": 0.7,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.04,
+      "abstention_rate": 0.0,
+      "false_answer_rate": 1.0
+    },
+    {
+      "tau": 0.75,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.04,
+      "abstention_rate": 0.19,
+      "false_answer_rate": 0.81
+    },
+    {
+      "tau": 0.8,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.095,
+      "abstention_rate": 0.96,
+      "false_answer_rate": 0.04
+    },
+    {
+      "tau": 0.85,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.305,
+      "abstention_rate": 1.0,
+      "false_answer_rate": 0.0
+    },
+    {
+      "tau": 0.9,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 0.84,
+      "abstention_rate": 1.0,
+      "false_answer_rate": 0.0
+    },
+    {
+      "tau": 0.95,
+      "retrieval_hit_rate": 0.96,
+      "over_abstention_rate": 1.0,
+      "abstention_rate": 1.0,
+      "false_answer_rate": 0.0
+    }
+  ],
+  "separability_auroc": 0.9916,
+  "score_stats": {
+    "answerable": {
+      "min": 0.7648,
+      "max": 0.9413
+    },
+    "unanswerable": {
+      "min": 0.7266,
+      "max": 0.8268
+    }
+  },
+  "ts": "2026-07-13T15:07:24"
+}
