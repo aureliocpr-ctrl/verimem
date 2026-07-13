@@ -615,6 +615,27 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     @app.post("/v1/memories")
     def add_memory(body: dict, tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         mem = tenants.get(tenant_id)
+        # input validation at the edge: a malformed type is a client error (400), never
+        # a 500 — an unhandled 500 on crafted input is a crashable endpoint = a DoS.
+        _msgs, _content = body.get("messages"), body.get("content")
+        _bad = None
+        if _msgs is not None and not isinstance(_msgs, list):
+            _bad = "'messages' must be a list of {role, content}"
+        elif _msgs is None and _content is not None and not isinstance(_content, str):
+            _bad = "'content' must be a string"
+        elif not isinstance(body.get("topic", "user"), str):
+            _bad = "'topic' must be a string"
+        elif body.get("verified_by") is not None and not isinstance(
+                body.get("verified_by"), list):
+            _bad = "'verified_by' must be a list of strings"
+        elif body.get("source") is not None and not isinstance(body.get("source"), str):
+            _bad = "'source' must be a string"
+        elif body.get("asserted_at") is not None and not isinstance(
+                body.get("asserted_at"), (int, float)):
+            _bad = "'asserted_at' must be a unix timestamp (number)"
+        if _bad is not None:
+            meter.bump(tenant_id, writes=1, rejected=1)
+            raise HTTPException(status_code=400, detail=_bad)
         # plan quota teeth: reject the write when the tenant is at its fact cap
         # (enterprise/self_host are uncapped, so this is a cheap COUNT + skip for them).
         from .gateway_plans import get_plan, quota_status
