@@ -58,13 +58,13 @@ dependencies = [
   "rich>=13.7.0",
   # Web dashboard
   # Env
-  "python-dotenv>=1.0.0",
+  "python-dotenv>=1.2.2",   # sec floor: PYSEC-2026-2270 fixed in 1.2.2 (pip-audit 2026-07-13)
   # HTTP
   "httpx>=0.27.0",
   # Image I/O (lightweight)
   # Provider registry + Settings v2
   "pyyaml>=6.0",
-  "pydantic-settings>=2.0",
+  "pydantic-settings>=2.14.2",   # sec floor: GHSA-4xgf-cpjx-pc3j fixed in 2.14.2 (pip-audit 2026-07-13)
   # MCP server — the HEADLINE use (`engram mcp` for Claude Code / Cursor).
   # mcp_server.py imports it unconditionally and the README primary install
   # documents `engram mcp`, so it MUST be core (audit P0-5 2026-06-07: was

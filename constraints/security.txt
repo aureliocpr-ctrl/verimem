@@ -1,0 +1,26 @@
+# Verimem security constraints — minimum patched versions for the dependency
+# closure, from a pip-audit sweep (2026-07-13). Apply when installing/deploying:
+#
+#     pip install verimem -c constraints/security.txt
+#     pip install -e ".[server]" -c constraints/security.txt
+#
+# WHY a constraints file and not manifest pins: these are mostly TRANSITIVE deps
+# (pulled by httpx / requests / sentence-transformers / fastapi). Hard-pinning
+# transitive floors in a library's own dependency list risks resolution
+# conflicts for downstream consumers, so the library manifest floors only the
+# DIRECT deps it declares (pydantic-settings, python-dotenv — already bumped in
+# pyproject). A constraints file lets a DEPLOYER force the whole closure to
+# patched versions without that coupling. A fresh `pip install` already resolves
+# to latest (patched) versions; this file makes it explicit and downgrade-proof
+# for locked/enterprise environments and clean SCA scans.
+#
+# Direct deps (also floored in pyproject.toml):
+pydantic-settings>=2.14.2   # GHSA-4xgf-cpjx-pc3j
+python-dotenv>=1.2.2        # PYSEC-2026-2270
+#
+# Transitive deps (closure of httpx / requests / anthropic / sentence-transformers / fastapi):
+starlette>=1.3.1            # PYSEC-2026-161/248/249/2280/2281 (served by the [server] extra via fastapi)
+urllib3>=2.7.0             # PYSEC-2026-141/142
+idna>=3.15                 # PYSEC-2026-215
+requests>=2.33.0           # PYSEC-2026-2275
+cryptography>=48.0.1       # GHSA-537c-gmf6-5ccf

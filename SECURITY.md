@@ -69,3 +69,17 @@ in CI logs but do not yet fail the build (a backlog of pre-existing low/medium
 findings is being triaged before they gate). Secret-redaction, path-traversal,
 SSRF, and prompt-injection guards have dedicated test suites under
 `tests/security/`.
+
+**Dependency hygiene.** Direct dependency floors exclude known-vulnerable ranges
+(so the manifest itself is downgrade-proof and clean under third-party SCA, not
+just the resolved latest). For locked / enterprise / air-gapped installs that
+must also force the *transitive* closure to patched versions, apply the pinned
+minimums in [`constraints/security.txt`](constraints/security.txt):
+`pip install verimem -c constraints/security.txt`. The list is refreshed from
+`pip-audit` sweeps.
+
+**HTTP response headers.** The gateway stamps defensive headers on every response
+(`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a
+`frame-ancestors 'none'` CSP, `Referrer-Policy`, `Cross-Origin-Opener-Policy`,
+`Permissions-Policy`) — additive, so a route may set stricter values; HSTS is
+left to the TLS-terminating reverse proxy.
