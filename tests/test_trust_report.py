@@ -88,6 +88,39 @@ def test_scope_declared_even_when_abstaining(tmp_path) -> None:
     assert rep["scope"], "the scope boundary holds even with no facts"
 
 
+def test_report_types_interventional_evidence_and_allows_causal(tmp_path) -> None:
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    sm.store(Fact(id="iv", topic="exp/ads",
+                  proposition="An A/B test showed ads raise sales by 12%.",
+                  asserted_at=time.time(), verified_by=["trial:ab-77"]), embed="sync")
+    rep = build_trust_report(sm, "do ads raise sales", k=5)
+    assert rep["facts"] and any(e["fact_type"] == "interventional"
+                                for e in rep["facts"])
+    assert rep["causal_answerable"] is True
+    assert rep["evidence_types"]["interventional"] >= 1
+
+
+def test_report_observational_only_is_not_causal_answerable(tmp_path) -> None:
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    # same retrievable proposition as the interventional case, but an OBSERVATIONAL
+    # provenance (source-doc, not trial:) — the type is earned from provenance, not
+    # from the words, so this stays observational and cannot settle do(X).
+    sm.store(Fact(id="obs", topic="obs/ads",
+                  proposition="An A/B test showed ads raise sales by 12%.",
+                  asserted_at=time.time(),
+                  verified_by=["source-doc:dashboard:1"]), embed="sync")
+    sm.store(Fact(id="obs2", topic="obs/ads",
+                  proposition="Ads and sales rose together last quarter.",
+                  asserted_at=time.time(),
+                  verified_by=["source-doc:report:2"]), embed="sync")
+    rep = build_trust_report(sm, "do ads raise sales", k=5)
+    # whatever is retrieved is observational (source-doc provenance); with no
+    # interventional evidence the dossier is never causal-answerable — robust to the
+    # tiny-store recall race, since empty and observational both yield False.
+    assert all(e["fact_type"] == "observational" for e in rep["facts"])
+    assert rep["causal_answerable"] is False        # correlation can't settle do(X)
+
+
 def test_report_is_json_serializable(tmp_path) -> None:
     sm = _seed(tmp_path)
     rep = build_trust_report(sm, "Rossi budget", k=5)

@@ -23,6 +23,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from .fact_type import causal_answerable, classify_fact_type, evidence_type_summary
 from .temporal_context import _event_ts, _iso, fact_history
 
 __all__ = ["build_trust_report", "TRUST_SCOPE"]
@@ -64,6 +65,8 @@ def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
         "provenance": list(getattr(fact, "source_episodes", []) or []),
         "writer_role": getattr(fact, "writer_role", None),
         "verified_by": getattr(fact, "verified_by", None),
+        "fact_type": classify_fact_type(getattr(fact, "verified_by", None),
+                                        getattr(fact, "writer_role", None)),
         "grounding_score": getattr(fact, "grounding_score", None),
         "asserted_at": asserted,
         "asserted_date": _iso(_event_ts(fact)),
@@ -149,6 +152,11 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         "min_relevance": min_relevance,
         "generated_at": time.time(),
         "scope": TRUST_SCOPE,
+        # the causal moat (Vivarium P38/P49): type the evidence and route — a do(X)
+        # claim is answerable ONLY with interventional evidence, never a wall of
+        # corroborated observations. Turns TRUST_SCOPE from a disclaimer into a gate.
+        "evidence_types": evidence_type_summary(f["fact_type"] for f in facts),
+        "causal_answerable": causal_answerable(f["fact_type"] for f in facts),
         "facts": facts,
         "n_facts": len(facts),
         "n_disputed": sum(1 for e in facts if e["disputes"]),
