@@ -172,8 +172,10 @@ one, and VeriBench is what makes the difference a number.
 ## Running
 
 ```bash
+python -m benchmark.veribench.run_all            # EVERYTHING, one command (both corpora)
 python -m benchmark.veribench                    # abstention demo
 python -m benchmark.veribench.run_real --n 200   # the REAL run (HaluEval)
+python -m benchmark.veribench.run_mem0 --corpus squad_v2   # head-to-head, a corpus
 python -m benchmark.veribench.causal_axis        # provenance ≠ causality
 python -m benchmark.veribench.adversarial_axis   # collusion + sleeper
 pytest tests/test_veribench_*.py                 # the full suite
