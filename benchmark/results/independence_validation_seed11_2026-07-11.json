@@ -1,0 +1,80 @@
+{
+  "config": {
+    "n_keys": 10,
+    "n_honest": 4,
+    "n_liars": 2,
+    "ticks": 6,
+    "churn_every": 4,
+    "p_stale": 0.15,
+    "p_write": 0.34,
+    "seed": 11,
+    "n_colluders": 4,
+    "n_cartel_keys": 6
+  },
+  "off": {
+    "cartel_consistency": 0.5,
+    "honest_consistency": 0.5,
+    "cartel_consistency_all": {
+      "colluder_0": 0.5,
+      "colluder_1": 0.5,
+      "colluder_2": 0.5,
+      "colluder_3": 0.5
+    },
+    "honest_neutral": true,
+    "cartel_top1_recall": "2/6",
+    "quarantined_writes": 0,
+    "n_writes": 261
+  },
+  "on": {
+    "cartel_consistency": 0.9881,
+    "honest_consistency": 0.0721,
+    "cartel_consistency_all": {
+      "colluder_0": 0.98,
+      "colluder_1": 0.9866,
+      "colluder_2": 0.993,
+      "colluder_3": 0.9928
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "3/6",
+    "quarantined_writes": 84,
+    "n_writes": 261
+  },
+  "on_indep": {
+    "cartel_consistency": 0.1543,
+    "honest_consistency": 0.8354,
+    "cartel_consistency_all": {
+      "colluder_0": 0.1842,
+      "colluder_1": 0.1892,
+      "colluder_2": 0.1471,
+      "colluder_3": 0.0968
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "0/6",
+    "quarantined_writes": 103,
+    "n_writes": 261
+  },
+  "on_indep_deconf": {
+    "cartel_consistency": 0.9881,
+    "honest_consistency": 0.0721,
+    "cartel_consistency_all": {
+      "colluder_0": 0.98,
+      "colluder_1": 0.9866,
+      "colluder_2": 0.993,
+      "colluder_3": 0.9928
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "3/6",
+    "quarantined_writes": 84,
+    "n_writes": 261
+  },
+  "verdict": {
+    "C1_independence_denies_cartel": true,
+    "C2_no_inversion_mature": true,
+    "C3_honest_restored": true,
+    "mature_condition": "on_indep",
+    "honest_inconclusive": false,
+    "reproduction_holds": true
+  },
+  "criterion": "PRE-REGISTERED: C1 cartel_cons ON>=0.75 & INDEP<=0.60; C2 honest>cartel under deconf; C3 honest>=0.75 & deconf>=indep",
+  "ts": "2026-07-11T12:26:02"
+}

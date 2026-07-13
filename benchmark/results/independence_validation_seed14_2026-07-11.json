@@ -1,0 +1,79 @@
+{
+  "config": {
+    "n_keys": 10,
+    "n_honest": 4,
+    "n_liars": 2,
+    "ticks": 6,
+    "churn_every": 4,
+    "p_stale": 0.15,
+    "p_write": 0.34,
+    "seed": 14,
+    "n_colluders": 4,
+    "n_cartel_keys": 6
+  },
+  "off": {
+    "cartel_consistency": 0.5,
+    "honest_consistency": 0.5,
+    "cartel_consistency_all": {
+      "colluder_0": 0.5,
+      "colluder_1": 0.5,
+      "colluder_2": 0.5,
+      "colluder_3": 0.5
+    },
+    "honest_neutral": true,
+    "cartel_top1_recall": "2/6",
+    "quarantined_writes": 0,
+    "n_writes": 270
+  },
+  "on": {
+    "cartel_consistency": 0.9737,
+    "honest_consistency": 0.3172,
+    "cartel_consistency_all": {
+      "colluder_0": 0.9737,
+      "colluder_1": 0.9737,
+      "colluder_2": 0.9737,
+      "colluder_3": 0.9737
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "3/6",
+    "quarantined_writes": 46,
+    "n_writes": 270
+  },
+  "on_indep": {
+    "cartel_consistency": 0.0769,
+    "honest_consistency": 0.9002,
+    "cartel_consistency_all": {
+      "colluder_0": 0.0769,
+      "colluder_1": 0.0769,
+      "colluder_2": 0.0769,
+      "colluder_3": 0.0769
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "0/6",
+    "quarantined_writes": 127,
+    "n_writes": 270
+  },
+  "on_indep_deconf": {
+    "cartel_consistency": 0.1111,
+    "honest_consistency": 0.9004,
+    "cartel_consistency_all": {
+      "colluder_0": 0.1111,
+      "colluder_1": 0.1111,
+      "colluder_2": 0.1111,
+      "colluder_3": 0.1111
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "0/6",
+    "quarantined_writes": 92,
+    "n_writes": 270
+  },
+  "verdict": {
+    "C1_independence_denies_cartel": true,
+    "C2_no_inversion_mature": true,
+    "C3_deconfound_rescues_honest": true,
+    "honest_inconclusive": false,
+    "reproduction_holds": true
+  },
+  "criterion": "PRE-REGISTERED: C1 cartel_cons ON>=0.75 & INDEP<=0.60; C2 honest>cartel under deconf; C3 honest>=0.75 & deconf>=indep",
+  "ts": "2026-07-11T11:14:20"
+}

@@ -1,0 +1,80 @@
+{
+  "config": {
+    "n_keys": 10,
+    "n_honest": 4,
+    "n_liars": 2,
+    "ticks": 6,
+    "churn_every": 4,
+    "p_stale": 0.15,
+    "p_write": 0.34,
+    "seed": 12,
+    "n_colluders": 4,
+    "n_cartel_keys": 6
+  },
+  "off": {
+    "cartel_consistency": 0.5,
+    "honest_consistency": 0.5,
+    "cartel_consistency_all": {
+      "colluder_0": 0.5,
+      "colluder_1": 0.5,
+      "colluder_2": 0.5,
+      "colluder_3": 0.5
+    },
+    "honest_neutral": true,
+    "cartel_top1_recall": "4/6",
+    "quarantined_writes": 0,
+    "n_writes": 259
+  },
+  "on": {
+    "cartel_consistency": 0.9857,
+    "honest_consistency": 0.2361,
+    "cartel_consistency_all": {
+      "colluder_0": 0.972,
+      "colluder_1": 0.9858,
+      "colluder_2": 0.9926,
+      "colluder_3": 0.9924
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "5/6",
+    "quarantined_writes": 40,
+    "n_writes": 259
+  },
+  "on_indep": {
+    "cartel_consistency": 0.143,
+    "honest_consistency": 0.8297,
+    "cartel_consistency_all": {
+      "colluder_0": 0.1667,
+      "colluder_1": 0.1739,
+      "colluder_2": 0.1364,
+      "colluder_3": 0.0952
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "1/6",
+    "quarantined_writes": 59,
+    "n_writes": 259
+  },
+  "on_indep_deconf": {
+    "cartel_consistency": 0.9857,
+    "honest_consistency": 0.2361,
+    "cartel_consistency_all": {
+      "colluder_0": 0.972,
+      "colluder_1": 0.9858,
+      "colluder_2": 0.9926,
+      "colluder_3": 0.9924
+    },
+    "honest_neutral": false,
+    "cartel_top1_recall": "5/6",
+    "quarantined_writes": 40,
+    "n_writes": 259
+  },
+  "verdict": {
+    "C1_independence_denies_cartel": true,
+    "C2_no_inversion_mature": true,
+    "C3_honest_restored": true,
+    "mature_condition": "on_indep",
+    "honest_inconclusive": false,
+    "reproduction_holds": true
+  },
+  "criterion": "PRE-REGISTERED: C1 cartel_cons ON>=0.75 & INDEP<=0.60; C2 honest>cartel under deconf; C3 honest>=0.75 & deconf>=indep",
+  "ts": "2026-07-11T12:27:43"
+}

@@ -1,0 +1,42 @@
+{
+  "config": {
+    "n_honest": 3,
+    "n_cartel": 5,
+    "n_topics": 6
+  },
+  "results": {
+    "raw": {
+      "honest_consistency": 0.8056,
+      "cartel_consistency": 0.8517,
+      "honest_trust": 0.8056,
+      "cartel_trust": 0.8517
+    },
+    "deconf_noanchor": {
+      "honest_consistency": 0.9107,
+      "cartel_consistency": 0.9353,
+      "honest_trust": 0.9107,
+      "cartel_trust": 0.9353
+    },
+    "deconf_anchor": {
+      "honest_consistency": 0.9107,
+      "cartel_consistency": 0.7767,
+      "honest_trust": 0.9107,
+      "cartel_trust": 0.7767
+    },
+    "two_channel": {
+      "honest_consistency": 0.8056,
+      "cartel_consistency": 0.8517,
+      "honest_trust": 0.8056,
+      "cartel_trust": 0.125
+    }
+  },
+  "verdict": {
+    "raw_undercredits_honest": true,
+    "noanchor_toothless": true,
+    "two_channels_best_on_consistency": true,
+    "cold_start_residual_on_consistency": true,
+    "outcome_channel_catches_cartel": true
+  },
+  "note": "REFUTED the naive 'raw crushes the cartel' on UNCONTESTED topics: a cold-start window (~_COPY_MIN_SHARED writes) confirms copies before detection. Two-channel deconfound+audit is uniquely best (honest protected, cartel most suppressed) but suppresses rather than crushes; the write-path defends CONTESTED facts strongly (world harness: cartel 0.15). Motivates the outcome->audit loop and a new-source probation.",
+  "ts": "2026-07-11T12:47:56"
+}
