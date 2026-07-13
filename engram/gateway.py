@@ -560,6 +560,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                rate_limit_per_minute: int = 0,
                admin_key: str | None = None,
                max_body_bytes: int = 1_048_576,
+               audit_log: bool | None = None,
                local_tenant: str | None = None,
                local_memory: Any = None):
     """Costruisce l'app FastAPI del gateway. ``keys`` iniettabile (test);
@@ -611,6 +612,18 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     # security headers su OGNI risposta (aggiunto DOPO il body-limit → è il piu'
     # esterno, quindi timbra anche il 413 di quel guard). Additivo, non rompe /ui.
     app.add_middleware(_SecurityHeadersMiddleware)
+    # access-audit JSONL (compliance enterprise): OUTERMOST → cattura lo status
+    # finale di ogni risposta, anche 401/413. Default ON (un servizio di memoria
+    # audita); kill-switch ENGRAM_GATEWAY_AUDIT_LOG=0 o audit_log=False.
+    from .gateway_audit import (
+        AccessAuditMiddleware, JsonlAuditSink, audit_enabled)
+    # default ON for a real multi-tenant gateway, OFF for the personal console
+    # (local_tenant): an access log is a SERVER control, not a single-user surprise.
+    _audit = (audit_enabled(default=local_tenant is None) if audit_log is None
+              else bool(audit_log))
+    if _audit:
+        app.add_middleware(AccessAuditMiddleware,
+                           sink=JsonlAuditSink(data_dir / "audit"))
 
     _buckets: dict[str, list[float]] = {}
     _buckets_lock = threading.Lock()
@@ -642,10 +655,12 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             # presentata e invalida NON cade qui: 401 forte sotto.
             host = (request.headers.get("host") or "").rsplit(":", 1)[0]
             if host.lower() in _LOCAL_HOSTS:
+                request.state.tenant = local_tenant   # for the access-audit log
                 return local_tenant
         tenant_id = keys.resolve(presented)
         if tenant_id is None:
             raise HTTPException(status_code=401, detail="invalid or missing API key")
+        request.state.tenant = tenant_id              # for the access-audit log
         # il bucket segue la CHIAVE presentata (hash), non il tenant: due
         # chiavi dello stesso tenant hanno tetti indipendenti e revocabili.
         # Tetto effettivo = il più RESTRITTIVO fra il piano (free 60/min, pro 600,

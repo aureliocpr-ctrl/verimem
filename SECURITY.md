@@ -81,6 +81,15 @@ minimums in [`constraints/security.txt`](constraints/security.txt):
 
 **HTTP response headers.** The gateway stamps defensive headers on every response
 (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a
-`frame-ancestors 'none'` CSP, `Referrer-Policy`, `Cross-Origin-Opener-Policy`,
+`frame-ancestors 'none'` CSP — locked down to `default-src 'none'; script-src
+'self'; …` for the HTML console, `Referrer-Policy`, `Cross-Origin-Opener-Policy`,
 `Permissions-Policy`) — additive, so a route may set stricter values; HSTS is
 left to the TLS-terminating reverse proxy.
+
+**Access audit log.** The gateway writes one append-only JSONL record per request
+(`ts, request_id, method, path, status, latency_ms, tenant`) under
+`<data_dir>/audit/access-YYYYMMDD.jsonl`, rotated by UTC day — the trail for
+SOC 2 / ISO 27001 / GDPR accountability and incident forensics. It is secret-safe
+by construction: the auth token, query string, headers, and bodies are never
+recorded. On by default for a multi-tenant gateway (off for the local single-user
+console); disable with `ENGRAM_GATEWAY_AUDIT_LOG=0`. Ship the files to your SIEM.
