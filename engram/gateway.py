@@ -525,13 +525,13 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     _buckets: dict[str, list[float]] = {}
     _buckets_lock = threading.Lock()
 
-    def _check_rate(bucket_key: str) -> None:
-        if rate_limit_per_minute <= 0:
+    def _check_rate(bucket_key: str, limit: int) -> None:
+        if limit <= 0:
             return
         now = time.time()
         with _buckets_lock:
             window = [t for t in _buckets.get(bucket_key, ()) if now - t < 60.0]
-            if len(window) >= rate_limit_per_minute:
+            if len(window) >= limit:
                 retry = max(1, int(61.0 - (now - window[0])))
                 _buckets[bucket_key] = window
                 raise HTTPException(
@@ -557,8 +557,13 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         if tenant_id is None:
             raise HTTPException(status_code=401, detail="invalid or missing API key")
         # il bucket segue la CHIAVE presentata (hash), non il tenant: due
-        # chiavi dello stesso tenant hanno tetti indipendenti e revocabili
-        _check_rate(GatewayKeys._hash(presented or ""))
+        # chiavi dello stesso tenant hanno tetti indipendenti e revocabili.
+        # Tetto effettivo = il più RESTRITTIVO fra il piano (free 60/min, pro 600,
+        # enterprise illimitato) e il parametro globale di create_app (0 = off).
+        from .gateway_plans import get_plan
+        _pl = get_plan(keys.plan_for_tenant(tenant_id)).rate_limit_per_minute
+        _active = [x for x in (_pl, rate_limit_per_minute or None) if x is not None]
+        _check_rate(GatewayKeys._hash(presented or ""), min(_active) if _active else 0)
         return tenant_id
 
     @app.get("/v1/health")

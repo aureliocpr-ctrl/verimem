@@ -190,6 +190,20 @@ def test_fact_quota_rejects_over_limit_write(tmp_path, monkeypatch):
     assert "quota" in r2.json()["detail"] and r2.json()["detail"]["quota"]["facts_over_limit"]
 
 
+def test_rate_limit_follows_the_plan(tmp_path, monkeypatch):
+    from engram import gateway_plans as gp
+    monkeypatch.setitem(gp.PLANS, "slow", gp.Plan(
+        "slow", max_facts=None, rate_limit_per_minute=2,
+        max_document_bytes=10 * 1024 * 1024))
+    keys = GatewayKeys(tmp_path / "k.db")
+    key = keys.create(tenant_id="t", name="x", plan="slow")
+    client = TestClient(create_app(data_dir=tmp_path, keys=keys))   # no global cap
+    h = _auth(key)
+    assert client.get("/v1/quota", headers=h).status_code == 200
+    assert client.get("/v1/quota", headers=h).status_code == 200
+    assert client.get("/v1/quota", headers=h).status_code == 429    # plan cap (2/min) bites
+
+
 def test_enterprise_plan_is_uncapped(tmp_path):
     keys = GatewayKeys(tmp_path / "k.db")
     key = keys.create(tenant_id="big", name="x", plan="enterprise")
