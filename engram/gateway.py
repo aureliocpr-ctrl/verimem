@@ -277,7 +277,7 @@ class GatewayKeys:
     def list(self) -> list[dict[str, Any]]:
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT key_id, tenant_id, name, created_at, revoked_at "
+                "SELECT key_id, tenant_id, name, plan, created_at, revoked_at "
                 "FROM gateway_keys ORDER BY created_at ASC",
             ).fetchall()
         return [dict(r) for r in rows]

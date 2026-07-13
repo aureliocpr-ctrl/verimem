@@ -453,18 +453,22 @@ def console_cmd(
 def gateway_keys_create(
     tenant: str = typer.Option(..., "--tenant", help="Tenant slug ([a-z0-9._-], max 64) — its facts live in an isolated store"),
     name: str = typer.Option("", "--name", help="Label for this key (e.g. 'laptop', 'ci')"),
+    plan: str = typer.Option("free", "--plan", help="Subscription tier: free | pro | enterprise | self_host (unknown → free)"),
     data_dir: str = typer.Option(None, "--data-dir"),
 ):
     """Create an API key for a tenant. The key is shown ONCE — only its
     sha256 is stored at rest."""
     from .gateway import GatewayKeys
+    from .gateway_plans import get_plan
+    resolved = get_plan(plan).name
     try:
         key = GatewayKeys(_gateway_data_dir(data_dir) / "gateway_keys.db").create(
-            tenant_id=tenant, name=name)
+            tenant_id=tenant, name=name, plan=resolved)
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
         raise typer.Exit(1) from None
     console.print(f"[green]key created[/green] for tenant [cyan]{tenant}[/cyan] "
+                  f"on plan [magenta]{resolved}[/magenta] "
                   f"— save it now, it is NOT retrievable later:\n  {key}")
 
 
@@ -476,9 +480,10 @@ def gateway_keys_list(data_dir: str = typer.Option(None, "--data-dir")):
     if not rows:
         console.print("no keys yet — verimem gateway keys create --tenant <t>")
         raise typer.Exit(0)
-    t = Table("key_id", "tenant", "name", "status")
+    t = Table("key_id", "tenant", "name", "plan", "status")
     for r in rows:
         t.add_row(r["key_id"], r["tenant_id"], r["name"] or "-",
+                  r.get("plan", "free") or "free",
                   "[red]revoked[/red]" if r["revoked_at"] else "[green]active[/green]")
     console.print(t)
 
