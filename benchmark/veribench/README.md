@@ -122,9 +122,41 @@ because the floor also over-abstains on some answerable items.
 The **scrambled control** is the validity check: destroying the query↔fact
 alignment collapses verimem's correct count from 182 to 5 (chance), so the headline
 is real retrieval, not a harness artifact. All three pre-registered refutation
-conditions are FALSE → **H1 confirmed**. (A real mem0 head-to-head needs an
-external LLM key this project does not use; the controlled τ=0 baseline is the
-confound-free comparison and is what we report.)
+conditions are FALSE → **H1 confirmed**.
+
+### Head-to-head vs the real mem0 (offline, same embedder)
+
+`run_mem0.py` drives **mem0 v2.0.11's actual stack** (Chroma vector store, its
+`search`) on the same probes, with the **same `intfloat/multilingual-e5-base`
+model and `query:`/`passage:` prefixes** as verimem — so retrieval quality has
+parity and the only free variable is the abstention floor. mem0's LLM extraction
+(`infer=True`) needs an external key we don't use, so memories are stored raw; that
+does not touch the abstention question. Result
+(`benchmark/results/veribench_mem0_halueval_2026-07-13.json`):
+
+| system | coverage | recall@k | NET λ=1 | NET λ=5 | crossover λ |
+|---|--:|--:|--:|--:|--:|
+| **verimem** (floor τ=0.80, pre-registered) | 0.62 | 0.607 | +0.593 | **+0.540** | 45.5 |
+| mem0 as shipped (no floor) | 1.00 | **0.667** | +0.333 | **−1.000** | 2.0 |
+| mem0 with its own best floor (f=0.75, oracle) | 0.55 | 0.553 | +0.553 | +0.553 | ∞ |
+
+Read honestly — this is the point, and it is deliberately not spun:
+
+- **mem0 as shipped fabricates.** It commits a nearest neighbour on all 100
+  unanswerable probes, so it posts the **highest recall@k of the three (0.667)** yet
+  goes **net-negative at λ≈2 and −1.0 at λ=5**. The standard metric *rewards* the
+  system that makes things up; VeriBench is the metric that doesn't.
+- **The floor is the mechanism, not magic.** Bolt an abstention floor onto mem0 and
+  it recovers — at its **oracle** floor (swept on this very eval to maximise its own
+  NET) it *ties* verimem (+0.553 vs +0.540). We report that openly: verimem's edge is
+  **shipping the floor calibrated by default** (plus the write-gate and independence
+  axes), not a secret sauce. And note the asymmetry that still favours verimem — its
+  τ=0.80 was fixed and pre-registered, while mem0's 0.75 is tuned post-hoc on the
+  test set (an upper bound it could not know in production).
+
+The honest takeaway: **a memory that ships without an abstention floor fabricates on
+the questions it cannot answer, and the standard benchmark can't see it.** That is
+the whole reason VeriBench exists.
 
 ---
 

@@ -48,10 +48,11 @@ the answerable half they retrieve identically.
 3. `scrambled_control` — **validity negative control**: the query↔fact alignment
    is destroyed by a fixed-seed shuffle while the system keeps committing.
 
-*mem0 (installed, v2.0.11) is not run here: as shipped it requires an external LLM
-API key, which this project does not use. The adapter is in `competitors.py`; the
-controlled baseline above is the cleaner, confound-free comparison and is what we
-report.*
+*mem0 (v2.0.11) is now run for real, OFFLINE — `run_mem0.py` drives its Chroma
+vector store with the same e5 model and prefixes as verimem (LLM extraction off, no
+external key). It is scored as-shipped (no floor) and at its own oracle-swept best
+floor (steelman). The controlled τ=0 baseline above remains as the confound-free
+reference.*
 
 ## Refutation conditions (what would sink H1)
 
