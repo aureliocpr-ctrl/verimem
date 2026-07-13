@@ -1,0 +1,250 @@
+[
+  {
+    "case": "s11_n0",
+    "seed": 11,
+    "noise": 0.0,
+    "off": {
+      "cartel_consistency": 0.5,
+      "honest_consistency": 0.5,
+      "liar_consistency": 0.5,
+      "honest_neutral": true,
+      "wrong_liar_rate": 0.25,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "1/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on": {
+      "cartel_consistency": 0.9,
+      "honest_consistency": 0.7857,
+      "liar_consistency": 0.2143,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.025,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "1/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on_indep": {
+      "cartel_consistency": 0.5,
+      "honest_consistency": 0.5,
+      "liar_consistency": 0.5,
+      "honest_neutral": true,
+      "wrong_liar_rate": 0.25,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "1/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on_indep_deconf": {
+      "cartel_consistency": 0.2,
+      "honest_consistency": 0.9524,
+      "liar_consistency": 0.0476,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.0,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "0/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "verdict": {
+      "C1_independence_denies_cartel": true,
+      "C2_no_inversion_mature": true,
+      "C3_honest_restored": true,
+      "C4_liar_recall_halved": true,
+      "honest_inconclusive": false,
+      "mature_condition": "on_indep_deconf",
+      "reproduction_holds": true
+    }
+  },
+  {
+    "case": "s12_n0",
+    "seed": 12,
+    "noise": 0.0,
+    "off": {
+      "cartel_consistency": 0.5,
+      "honest_consistency": 0.5,
+      "liar_consistency": 0.5,
+      "honest_neutral": true,
+      "wrong_liar_rate": 0.3,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "3/8",
+      "quarantined_writes": 0,
+      "n_writes": 272
+    },
+    "on": {
+      "cartel_consistency": 0.9,
+      "honest_consistency": 0.7857,
+      "liar_consistency": 0.2143,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.075,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "3/8",
+      "quarantined_writes": 0,
+      "n_writes": 272
+    },
+    "on_indep": {
+      "cartel_consistency": 0.5,
+      "honest_consistency": 0.5,
+      "liar_consistency": 0.5,
+      "honest_neutral": true,
+      "wrong_liar_rate": 0.3,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "3/8",
+      "quarantined_writes": 0,
+      "n_writes": 272
+    },
+    "on_indep_deconf": {
+      "cartel_consistency": 0.2,
+      "honest_consistency": 0.9524,
+      "liar_consistency": 0.0476,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.0,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "0/8",
+      "quarantined_writes": 0,
+      "n_writes": 272
+    },
+    "verdict": {
+      "C1_independence_denies_cartel": true,
+      "C2_no_inversion_mature": true,
+      "C3_honest_restored": true,
+      "C4_liar_recall_halved": true,
+      "honest_inconclusive": false,
+      "mature_condition": "on_indep_deconf",
+      "reproduction_holds": true
+    }
+  },
+  {
+    "case": "s13_n0",
+    "seed": 13,
+    "noise": 0.0,
+    "off": {
+      "cartel_consistency": 0.5,
+      "honest_consistency": 0.5,
+      "liar_consistency": 0.5,
+      "honest_neutral": true,
+      "wrong_liar_rate": 0.275,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "2/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on": {
+      "cartel_consistency": 0.9,
+      "honest_consistency": 0.7857,
+      "liar_consistency": 0.2143,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.05,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "2/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on_indep": {
+      "cartel_consistency": 0.5,
+      "honest_consistency": 0.5,
+      "liar_consistency": 0.5,
+      "honest_neutral": true,
+      "wrong_liar_rate": 0.275,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "2/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on_indep_deconf": {
+      "cartel_consistency": 0.2,
+      "honest_consistency": 0.9524,
+      "liar_consistency": 0.0476,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.0,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "0/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "verdict": {
+      "C1_independence_denies_cartel": true,
+      "C2_no_inversion_mature": true,
+      "C3_honest_restored": true,
+      "C4_liar_recall_halved": true,
+      "honest_inconclusive": false,
+      "mature_condition": "on_indep_deconf",
+      "reproduction_holds": true
+    }
+  },
+  {
+    "case": "s11_n15",
+    "seed": 11,
+    "noise": 0.15,
+    "off": {
+      "cartel_consistency": 0.5,
+      "honest_consistency": 0.5,
+      "liar_consistency": 0.5,
+      "honest_neutral": true,
+      "wrong_liar_rate": 0.25,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "1/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on": {
+      "cartel_consistency": 0.9,
+      "honest_consistency": 0.6429,
+      "liar_consistency": 0.4048,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.25,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "1/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on_indep": {
+      "cartel_consistency": 0.3,
+      "honest_consistency": 0.8333,
+      "liar_consistency": 0.119,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.175,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "1/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "on_indep_deconf": {
+      "cartel_consistency": 0.4,
+      "honest_consistency": 0.8095,
+      "liar_consistency": 0.1429,
+      "honest_neutral": false,
+      "wrong_liar_rate": 0.175,
+      "answered": 40,
+      "abstained": 0,
+      "cartel_top1_recall": "1/8",
+      "quarantined_writes": 6,
+      "n_writes": 272
+    },
+    "verdict": {
+      "C1_independence_denies_cartel": true,
+      "C2_no_inversion_mature": true,
+      "C3_honest_restored": true,
+      "C4_liar_recall_halved": false,
+      "honest_inconclusive": false,
+      "mature_condition": "on_indep_deconf",
+      "reproduction_holds": false
+    }
+  }
+]

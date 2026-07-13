@@ -185,6 +185,31 @@ default OFF pending real-corpus reproduction (the doc's own discipline);
 the mechanism is measured, wired, and transparent (SOURCE_TRUST warnings
 in the ledger).
 
+**Real-corpus reproduction (2026-07-13, HaluEval QA held-out,
+`benchmark/source_trust_realcorpus.py`).** The mini-world above drives the real
+gate but on SYNTHETIC values (6-char access codes: recall is trivial, only
+quarantine decides). This run keeps the real gate and swaps in REAL HaluEval
+content — key = a real question, true = its gold answer, false = its
+hallucinated answer (a real LLM error) — so the contest is over
+semantically-plausible text that genuinely stresses the embedder/recall, the
+axis the mini-world cannot test. Source reliability (honest/liar/cartel) is
+injected under a declared protocol; what is REAL is the values, the ground
+truth, and the recall. Pre-registered C1–C4 (cartel ON≥0.75 & INDEP≤0.60;
+honest>cartel; honest≥0.75 & ≥ON; wrong_liar(ON)≤0.5·OFF). **reproduction_holds
+on 3/3 seeds (11–13) under honest coherence**: the manufactured-consensus cartel
+self-confirms to 0.90 under the naive ≥2-distinct rule, demolished to 0.20 by
+independence+deconfound; honest 0.50→0.95, wrong_liar 0.25–0.30→0.0. End-to-end
+proof the deconfound is load-bearing: ON+INDEP RAW leaves wrong_liar at OFF's
+0.25 (raw merges the honest too → nobody is punished → no retro-demotion),
+deconfound restores it to 0.0. A harness bug surfaced and was fixed (the write's
+source-ref lacked the trailing colon the retro-demotion `LIKE` pattern needs — a
+bench-side format error, not a product one; the mini-world's `:t{tick}` ref had
+masked it). **Honest limit: at 15% honest write-noise the separation degrades —
+wrong_liar(deconf) 0.175, cartel 0.40, holds=False** (still no inversion, honest
+0.81 > cartel). The consistency channel presupposes honest coherence; heavy
+honest noise is where it thins. **Default stays OFF — this evidence INFORMS the
+flip, it does not perform it (a product decision).**
+
 **v3b (ON+RECONCILE with the similarity fallback + real tick ages,
 task #21): PASSED — seed 11 stale 0.6333 → 0.10 (−84%), total wrong
 0.80 → 0.10, liar stays 0.0.** The fallback (top-k semantic candidates when

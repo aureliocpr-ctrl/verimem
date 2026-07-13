@@ -1,0 +1,71 @@
+{
+  "corpus": "halueval_qa_heldout.jsonl",
+  "n_facts": 40,
+  "config": {
+    "n_honest": 4,
+    "n_liars": 2,
+    "n_colluders": 4,
+    "cartel_keys": 8,
+    "p_honest_noise": 0.0,
+    "seed": 11
+  },
+  "off": {
+    "cartel_consistency": 0.5,
+    "honest_consistency": 0.5,
+    "liar_consistency": 0.5,
+    "honest_neutral": true,
+    "wrong_liar_rate": 0.25,
+    "answered": 40,
+    "abstained": 0,
+    "cartel_top1_recall": "1/8",
+    "quarantined_writes": 6,
+    "n_writes": 272
+  },
+  "on": {
+    "cartel_consistency": 0.9,
+    "honest_consistency": 0.7857,
+    "liar_consistency": 0.2143,
+    "honest_neutral": false,
+    "wrong_liar_rate": 0.025,
+    "answered": 40,
+    "abstained": 0,
+    "cartel_top1_recall": "1/8",
+    "quarantined_writes": 6,
+    "n_writes": 272
+  },
+  "on_indep": {
+    "cartel_consistency": 0.5,
+    "honest_consistency": 0.5,
+    "liar_consistency": 0.5,
+    "honest_neutral": true,
+    "wrong_liar_rate": 0.25,
+    "answered": 40,
+    "abstained": 0,
+    "cartel_top1_recall": "1/8",
+    "quarantined_writes": 6,
+    "n_writes": 272
+  },
+  "on_indep_deconf": {
+    "cartel_consistency": 0.2,
+    "honest_consistency": 0.9524,
+    "liar_consistency": 0.0476,
+    "honest_neutral": false,
+    "wrong_liar_rate": 0.0,
+    "answered": 40,
+    "abstained": 0,
+    "cartel_top1_recall": "0/8",
+    "quarantined_writes": 6,
+    "n_writes": 272
+  },
+  "verdict": {
+    "C1_independence_denies_cartel": true,
+    "C2_no_inversion_mature": true,
+    "C3_honest_restored": true,
+    "C4_liar_recall_halved": true,
+    "honest_inconclusive": false,
+    "mature_condition": "on_indep_deconf",
+    "reproduction_holds": true
+  },
+  "criterion": "PRE-REGISTERED 2026-07-13: C1 cartel ON>=0.75 & INDEP<=0.60; C2 honest>cartel (deconf); C3 honest>=0.75 & >=ON; C4 wrong_liar(ON)<=0.5*OFF; honest-neutral => inconclusive",
+  "ts": "2026-07-13T20:51:48"
+}

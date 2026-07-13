@@ -21,8 +21,11 @@ guard-rails (benchmark/TRUST_CORE.md):
 Counts are Laplace-smoothed proportions: bounded, interpretable, and new
 evidence dilutes old verdicts (rehabilitation on both channels). Pure logic:
 no I/O, no store dependency — persistence and gate wiring live with the
-caller (behind ENGRAM_SOURCE_TRUST, default OFF; no default flip before the
-held-out reproduction on real VeriMem data).
+caller (behind ENGRAM_SOURCE_TRUST, default OFF). The held-out reproduction on
+real VeriMem data now exists (benchmark/source_trust_realcorpus.py, HaluEval QA:
+reproduction_holds 3/3 seeds under honest coherence, degrades under heavy honest
+noise) — it INFORMS a default flip but does not perform it; the flip stays a
+product decision.
 """
 from __future__ import annotations
 
