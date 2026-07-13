@@ -1,0 +1,61 @@
+{
+  "benchmark": "VeriBench/real",
+  "corpus": "halueval-qa (heldout + unanswerable-probe, disjoint splits)",
+  "n_answerable": 200,
+  "n_unanswerable": 100,
+  "tau": 0.8,
+  "k": 5,
+  "ingest": {
+    "admitted": 192,
+    "blocked": 8,
+    "by_status": {
+      "model_claim": 192,
+      "quarantined": 8
+    }
+  },
+  "note": "no_abstention_baseline is the SAME store/retrieval with \u03c4=0 (confound-free stand-in for a no-floor memory); mem0 needs an external LLM key not used here.",
+  "systems": {
+    "verimem_abstain": {
+      "n": 300,
+      "correct": 182,
+      "wrong": 4,
+      "abstain": 114,
+      "coverage": 0.62,
+      "net": {
+        "lambda_1": 0.5933,
+        "lambda_2": 0.58,
+        "lambda_5": 0.54,
+        "lambda_10": 0.4733
+      },
+      "crossover_lambda": 45.5
+    },
+    "no_abstention_baseline": {
+      "n": 300,
+      "correct": 192,
+      "wrong": 100,
+      "abstain": 8,
+      "coverage": 0.9733,
+      "net": {
+        "lambda_1": 0.3067,
+        "lambda_2": -0.0267,
+        "lambda_5": -1.0267,
+        "lambda_10": -2.6933
+      },
+      "crossover_lambda": 1.92
+    },
+    "scrambled_control": {
+      "n": 300,
+      "correct": 5,
+      "wrong": 287,
+      "abstain": 8,
+      "coverage": 0.9733,
+      "net": {
+        "lambda_1": -0.94,
+        "lambda_2": -1.8967,
+        "lambda_5": -4.7667,
+        "lambda_10": -9.55
+      },
+      "crossover_lambda": 0.0174
+    }
+  }
+}

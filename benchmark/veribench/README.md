@@ -92,10 +92,47 @@ contest, on axes a recall-only system does not have.
 
 ---
 
+## Real run (HaluEval) — pre-registered result
+
+Not the toy demo: `run_real.py` scores three systems on a **real external corpus**
+(HaluEval QA — 200 answerable + 100 unanswerable, disjoint deterministic splits),
+with the hypothesis, metric, and refutation conditions fixed **before** the run
+([PREREGISTRATION.md](PREREGISTRATION.md)).
+
+```bash
+python -m benchmark.veribench.run_real --n 200 --tau 0.80
+```
+
+Result (`benchmark/results/veribench_real_halueval_2026-07-13.json`):
+
+| system | coverage | recall@k | NET λ=1 | NET λ=2 | NET λ=5 | NET λ=10 | crossover λ |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| **verimem** (abstain, τ=0.80) | 0.62 | 0.607 | +0.593 | +0.580 | **+0.540** | +0.473 | 45.5 |
+| no-abstention baseline (τ=0) | 0.97 | 0.640 | +0.307 | −0.027 | **−1.027** | −2.693 | 1.92 |
+| scrambled control (validity) | 0.97 | 0.017 | −0.940 | −1.897 | −4.767 | −9.550 | 0.02 |
+
+In one line: on **recall@k the baseline wins** (0.640 > 0.607) — the naive metric
+literally prefers the system that fabricates. On **NET(λ=5) verimem is +0.54 and
+the baseline is −1.03** (a 1.57 gap): the baseline returns a nearest neighbour on
+the unanswerable questions and goes net-negative at λ≈2, while verimem — the *same
+retrieval* with the floor on — makes 4 wrong answers and stays net-positive out to
+λ≈45. The cost is stated honestly: verimem's coverage is lower (0.62 vs 0.97)
+because the floor also over-abstains on some answerable items.
+
+The **scrambled control** is the validity check: destroying the query↔fact
+alignment collapses verimem's correct count from 182 to 5 (chance), so the headline
+is real retrieval, not a harness artifact. All three pre-registered refutation
+conditions are FALSE → **H1 confirmed**. (A real mem0 head-to-head needs an
+external LLM key this project does not use; the controlled τ=0 baseline is the
+confound-free comparison and is what we report.)
+
+---
+
 ## Running
 
 ```bash
 python -m benchmark.veribench                    # abstention demo
+python -m benchmark.veribench.run_real --n 200   # the REAL run (HaluEval)
 python -m benchmark.veribench.causal_axis        # provenance ≠ causality
 python -m benchmark.veribench.adversarial_axis   # collusion + sleeper
 pytest tests/test_veribench_*.py                 # the full suite
