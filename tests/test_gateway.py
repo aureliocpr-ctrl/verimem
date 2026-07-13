@@ -116,6 +116,25 @@ def test_explain_returns_report(gw):
     assert isinstance(r.json(), dict) and r.json(), "trust report json"
 
 
+def test_gateway_min_relevance_env_parsing(monkeypatch):
+    from engram.gateway import _gateway_min_relevance
+    monkeypatch.delenv("ENGRAM_GATEWAY_MIN_RELEVANCE", raising=False)
+    assert _gateway_min_relevance() == "auto"          # abstains by default
+    for val, exp in [("off", 0.0), ("none", 0.0), ("0.75", 0.75), ("garbage", "auto")]:
+        monkeypatch.setenv("ENGRAM_GATEWAY_MIN_RELEVANCE", val)
+        assert _gateway_min_relevance() == exp
+
+
+def test_explain_applies_abstention_floor_end_to_end(gw, monkeypatch):
+    """The enterprise /v1/explain passes the configured floor through to the report —
+    the read-path abstention is ON by default (dial via ENGRAM_GATEWAY_MIN_RELEVANCE)."""
+    client, key_a, *_ = gw
+    monkeypatch.setenv("ENGRAM_GATEWAY_MIN_RELEVANCE", "0.6")
+    r = client.get("/v1/explain", headers=_auth(key_a), params={"q": "anything?"})
+    assert r.status_code == 200
+    assert r.json()["min_relevance"] == 0.6
+
+
 def test_rate_limit_per_key(tmp_path):
     """Fase 1 del design datacenter (docs/DATACENTER_DESIGN.md): rate-limit
     per chiave — oltre il tetto la risposta è 429 (con Retry-After), le altre

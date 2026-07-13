@@ -346,6 +346,24 @@ class _Metering:
                 for r in rows}
 
 
+def _gateway_min_relevance() -> float | str:
+    """The gateway's default read-path abstention floor. ``ENGRAM_GATEWAY_MIN_RELEVANCE``:
+    ``auto`` (default — the store self-calibrates per tenant), a float (fixed floor), or
+    ``off``/``0`` (no floor, the old permissive behaviour). Making the enterprise API
+    abstain by default is the point of a TRUST product; it stays a tunable dial because
+    the e5 score band is compressed."""
+    import os
+    raw = os.environ.get("ENGRAM_GATEWAY_MIN_RELEVANCE", "auto").strip().lower()
+    if raw in ("off", "none", ""):
+        return 0.0
+    if raw == "auto":
+        return "auto"
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return "auto"
+
+
 def _replay_receive(body: bytes, original: Any) -> Any:
     """Un ASGI ``receive`` che emette UNA volta il corpo bufferizzato come un
     unico ``http.request`` completo, poi delega all'originale (disconnect ecc.)."""
@@ -574,7 +592,14 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     def explain(q: str = Query(...), k: int = Query(default=5, ge=1, le=100),
                 as_of: float | None = None,
                 tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
-        report = tenants.get(tenant_id).explain(q, k=k, as_of=as_of)
+        # The enterprise surface abstains by DEFAULT (the selling point works out of
+        # the box): a self-calibrating relevance floor so an unsupported query returns
+        # an explicit abstention, not a spurious nearest hit. Env-tunable
+        # (ENGRAM_GATEWAY_MIN_RELEVANCE=auto|<float>|off). NB the e5 score band is
+        # compressed, so the floor is a precision/recall DIAL — 'auto' is validated on
+        # real corpora (HaluEval false_answer 1.0->0.04); small stores may over-abstain.
+        report = tenants.get(tenant_id).explain(
+            q, k=k, as_of=as_of, min_relevance=_gateway_min_relevance())
         meter.bump(tenant_id, reads=1)
         return report
 

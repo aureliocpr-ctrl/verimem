@@ -4,6 +4,17 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Changed
+- **Gateway `/v1/explain` abstains by DEFAULT** (`ENGRAM_GATEWAY_MIN_RELEVANCE`, default
+  `auto`): the enterprise read-path now applies a self-calibrating relevance floor, so
+  an unsupported query returns an explicit abstention instead of a spurious nearest hit
+  — the "knows when it doesn't know" property is ON out of the box on the product
+  surface. Honest limit (measured this session): the e5 score band is compressed
+  (present vs absent overlap ~0.03–0.05), so the floor is a precision/recall DIAL —
+  `auto` is validated on real corpora (HaluEval false_answer 1.0→0.04) but over-abstains
+  on very small stores; tune via the env (`auto` | `<float>` | `off`). The raw SDK
+  `explain()` default is unchanged (0.0) for backward compatibility.
+
 ### Added
 - **Write-gate provenance INDEPENDENCE** (`ENGRAM_SOURCE_INDEPENDENCE`, default OFF):
   a confirmation now requires ≥2 *independent* clusters, not just ≥2 distinct
