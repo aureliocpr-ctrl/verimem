@@ -65,7 +65,10 @@ honest *"I don't know."*
   admits survivors signed (`actor:composer` — engine writes never testify for
   themselves), traced (`derives_from` parents, retractable if a parent falls)
   and labeled with the exact check that passed. Few but zero-false by
-  construction.
+  construction. Run it one-shot (`python -m engram.compose_daemon --db ...`,
+  schedule with cron/Task Scheduler): the daemon refuses to compose when the
+  engine's own writes already dominate the recent stream (self-echo
+  guard-rail).
 - **Local-first** — SQLite storage, local embeddings, injectable LLM. Runs
   air-gapped (`verimem airgap` verifies zero-egress configuration).
 

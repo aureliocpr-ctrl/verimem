@@ -52,6 +52,14 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   (`ENGRAM_COMPOSER_MIN_SCORE`, default 55 — above the non-committal 50
   fallback) are quarantined, never live. `semantic.set_derives_from` declares
   the logical edge after admission (the gate never trusts the trace).
+- **Composition daemon** (`engram/compose_daemon.py`, one-shot CLI
+  `python -m engram.compose_daemon --db ...`): P85 pre-flight →
+  `compose_once(budget)` → P85 post-report. REFUSES to compose when the
+  self-write ratio already alarms (an engine dominating its own stream must
+  not keep feeding on itself); candidate budget passed down with truncation
+  declared; writes no telemetry facts about itself (a report that inflates the
+  self-ratio gating it would strangle its own headroom). Scheduling stays with
+  the OS — local-first.
 - **Write-gate provenance INDEPENDENCE** (`ENGRAM_SOURCE_INDEPENDENCE`, default OFF):
   a confirmation now requires ≥2 *independent* clusters, not just ≥2 distinct
   source-IDs, so N copies/echoes/colluders of one feed collapse to one witness —
