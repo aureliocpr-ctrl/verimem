@@ -20,9 +20,28 @@ against the external benchmark store before any default changes.
 """
 from __future__ import annotations
 
+import os
 import random
 
-__all__ = ["scrambled_probes", "estimate_relevance_floor"]
+__all__ = ["scrambled_probes", "estimate_relevance_floor", "env_floor"]
+
+_FLOOR_OFF = {"off", "none", "0", "0.0", ""}
+
+
+def env_floor(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str:
+    """Resolve a read-path abstention floor from an env var: ``auto`` (the store
+    self-calibrates), a float, or off (0.0). The single switch that turns "knows when
+    it doesn't know" ON across every surface (SDK ``explain()``, console, gateway).
+    Default unset → 0.0 = the permissive, backward-compatible behaviour."""
+    raw = os.environ.get(var, "").strip().lower()
+    if raw == "auto":
+        return "auto"
+    if raw in _FLOOR_OFF:
+        return 0.0
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return 0.0
 
 _MIN_FACTS = 2          # cross-fact scrambling needs at least two sources
 _PROBE_WORDS = 10       # ~question-length probes

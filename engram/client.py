@@ -327,7 +327,7 @@ class Memory:
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
                 as_of: float | None = None,
-                min_relevance: float | str = 0.0) -> dict[str, Any]:
+                min_relevance: float | str | None = None) -> dict[str, Any]:
         """The evidence dossier behind an answer — the trust gate made atomic:
         per fact the full chain of custody (provenance, writer, status,
         verified_by, grounding, the two clocks, what it replaced, declared
@@ -344,7 +344,14 @@ class Memory:
         do this: e5 scores live in [0.73, 0.95], so any constant is wrong for
         some store/embedder pair. Estimation (~32 probe recalls) is cached
         for 5 minutes. The resolved value is reported as
-        ``report["min_relevance"]``."""
+        ``report["min_relevance"]``.
+
+        ``min_relevance=None`` (the default) reads the ``ENGRAM_MIN_RELEVANCE`` env —
+        the single switch to turn read-path abstention ON across every surface
+        (``auto`` | ``<float>`` | ``off``); unset → 0.0 (permissive, backward-compat)."""
+        if min_relevance is None:
+            from .relevance_floor import env_floor
+            min_relevance = env_floor()
         if min_relevance == "auto":
             min_relevance = self._auto_relevance_floor()
         from .trust_report import build_trust_report
