@@ -621,6 +621,10 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         _bad = None
         if _msgs is not None and not isinstance(_msgs, list):
             _bad = "'messages' must be a list of {role, content}"
+        elif _msgs is not None and not all(
+                isinstance(m, dict) and isinstance(m.get("role"), str)
+                and isinstance(m.get("content"), str) for m in _msgs):
+            _bad = "each message must be an object with string 'role' and 'content'"
         elif _msgs is None and _content is not None and not isinstance(_content, str):
             _bad = "'content' must be a string"
         elif not isinstance(body.get("topic", "user"), str):
