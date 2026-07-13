@@ -124,6 +124,81 @@ def build_events(facts: list[dict[str, str]],
     return events
 
 
+def classify_writer(verified_by_json: str | None) -> str:
+    """Attribute a surviving wrong answer to WHO wrote that copy: 'deceiver'
+    (liar/colluder — retro-demotion should have caught it) vs 'honest_slip'
+    (admitted because its source is rightly trusted — the informational limit no
+    trust test can cure; reconciliation/abstention territory)."""
+    try:
+        refs = json.loads(verified_by_json or "[]")
+    except (TypeError, ValueError):
+        return "other"
+    from engram.source_trust import canonical_source
+    src = canonical_source(refs if isinstance(refs, list) else [], fallback="")
+    if src.startswith(("liar_", "colluder_")):
+        return "deceiver"
+    if src.startswith("honest_"):
+        return "honest_slip"
+    return "other"
+
+
+def _writer_kind(db_path: Path, fact_id: str) -> str:
+    """verified_by of a stored fact -> writer class (best-effort read)."""
+    import sqlite3
+    try:
+        with sqlite3.connect(str(db_path)) as conn:
+            row = conn.execute("SELECT verified_by FROM facts WHERE id = ?",
+                               (fact_id,)).fetchone()
+    except sqlite3.Error:
+        return "other"
+    return classify_writer(row[0] if row else None)
+
+
+def extract_outcomes(events: list[dict[str, Any]]) -> list[tuple[str, str, bool]]:
+    """A-posteriori use feedback, one verdict per (source, key): good iff the
+    asserted value matches the ground truth. This is the OUTCOME channel's food —
+    the channel that covers the consistency channel's declared hole (honest noise:
+    2+ honest slips on one key are GENUINELY independent witnesses of a falsehood,
+    so no independence test can filter them; only use-feedback can). Declared
+    assumption: outcomes exist only where use reveals truth."""
+    seen: set[tuple[str, str]] = set()
+    outs: list[tuple[str, str, bool]] = []
+    for ev in events:
+        sk = (ev["source"], ev["key"])
+        if sk in seen:
+            continue
+        seen.add(sk)
+        outs.append((ev["source"], ev["key"],
+                     _norm(ev["value"]) == _norm(ev["true_value"])))
+    return outs
+
+
+def curve_verdict(points: list[dict[str, Any]]) -> dict[str, Any]:
+    """Pre-registered (2026-07-13, before any sweep run) robustness gate over the
+    honest-noise curve:
+
+      H2 no-inversion   — honest_consistency > cartel_consistency under DECONF at
+                          EVERY point (degrading is allowed, inverting is not);
+      H3 outcome-rescue — for every noise <= 0.20: wrong_liar(DECONF+OUTCOME)
+                          <= 0.5 * wrong_liar(OFF) AND the liar's min trust under
+                          outcome sits below the 0.25 floor (retro-demotion armed).
+                          noise 0.25 is REPORTED, not claimed.
+    """
+    h2 = all(p["on_indep_deconf"]["honest_consistency"]
+             > p["on_indep_deconf"]["cartel_consistency"] for p in points)
+    rescue_pts = [p for p in points if p["noise"] <= 0.20]
+    h3 = all(
+        (p["deconf_outcome"]["wrong_liar_rate"]
+         <= 0.5 * p["off"]["wrong_liar_rate"]
+         if p["off"]["wrong_liar_rate"] else
+         p["deconf_outcome"]["wrong_liar_rate"] == 0.0)
+        and p["deconf_outcome"]["liar_trust_min"] < 0.25
+        for p in rescue_pts)
+    return {"H2_no_inversion": bool(h2), "H3_outcome_rescue": bool(h3),
+            "robust_regime_holds": bool(h2 and h3),
+            "n_points": len(points), "n_rescue_points": len(rescue_pts)}
+
+
 def verdict(off: dict, on: dict, indep: dict, deconf: dict) -> dict[str, Any]:
     """The pre-registered gate. ``deconf`` is the mature policy; honest neutral under
     BOTH raw independence and deconfound => INCONCLUSIVE (not passed)."""
@@ -203,7 +278,7 @@ def _observe(mem, events: list[dict[str, Any]], by_key: dict[str, dict], *,
 
 def run_condition(facts: list[dict[str, str]], cfg: RealCorpusConfig,
                   db_path: Path, *, trust_on: bool, independence: bool,
-                  deconfound: bool) -> dict[str, Any]:
+                  deconfound: bool, outcome_feedback: bool = False) -> dict[str, Any]:
     os.environ["ENGRAM_SOURCE_TRUST"] = "1" if trust_on else "0"
     os.environ["ENGRAM_SOURCE_INDEPENDENCE"] = "1" if independence else "0"
     os.environ["ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND"] = "1" if deconfound else "0"
@@ -228,10 +303,18 @@ def run_condition(facts: list[dict[str, str]], cfg: RealCorpusConfig,
         quarantined += int(res.get("status") == "quarantined")
     if trust_on:
         _observe(mem, events, by_key, independence=independence, deconfound=deconfound)
+        if outcome_feedback:
+            # the product's second channel (trust = min(channels)): use-feedback
+            # blames every source whose asserted value failed against the truth.
+            # Weight 1.0 — no staleness in this world. The floor crossing fires
+            # the product's own retro-demotion, exactly as in production.
+            for src, _key, good in extract_outcomes(events):
+                mem.source_trust_observe(outcome=(src, good, 1.0))
 
     # recall-level outcome: for each contested key, is the top answer the real
     # hallucinated (liar/cartel) value?
     wrong_liar = answered = abstained = cartel_top = cartel_n = 0
+    wrong_by = {"deceiver": 0, "honest_slip": 0, "other": 0}
     for f in facts:
         q, key = f["question"], f["key"]
         pf = _norm(_prop(q, f["false_value"]))
@@ -244,6 +327,8 @@ def run_condition(facts: list[dict[str, str]], cfg: RealCorpusConfig,
             answered += 1
             if top == pf:
                 wrong_liar += 1
+                # diagnosis: WHO wrote the surviving copy the recall returned?
+                wrong_by[_writer_kind(db_path, hits[0].get("id", ""))] += 1
         if is_cartel:
             cartel_n += 1
             cartel_top += int(top == pf)
@@ -254,7 +339,15 @@ def run_condition(facts: list[dict[str, str]], cfg: RealCorpusConfig,
     hon = cons("honest", cfg.n_honest)
     car = cons("colluder", cfg.n_colluders)
     lia = cons("liar", cfg.n_liars)
+    # combined min-channel trust of the worst deceiver — H3 checks it sits under
+    # the 0.25 floor (retro-demotion armed) when the outcome channel is fed
+    deceivers = ([f"liar_{i}" for i in range(cfg.n_liars)]
+                 + [f"colluder_{i}" for i in range(cfg.n_colluders)])
+    liar_trust_min = (min(mem.source_trust(s) for s in deceivers)
+                      if trust_on and deceivers else _NEUTRAL)
     return {
+        "wrong_by_writer": wrong_by,
+        "liar_trust_min": round(liar_trust_min, 4),
         "cartel_consistency": round(mean(car), 4) if car else _NEUTRAL,
         "honest_consistency": round(mean(hon), 4) if hon else _NEUTRAL,
         "liar_consistency": round(mean(lia), 4) if lia else _NEUTRAL,

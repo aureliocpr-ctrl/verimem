@@ -210,6 +210,30 @@ wrong_liar(deconf) 0.175, cartel 0.40, holds=False** (still no inversion, honest
 honest noise is where it thins. **Default stays OFF — this evidence INFORMS the
 flip, it does not perform it (a product decision).**
 
+**Honest-noise robustness curve (2026-07-13,
+`benchmark/source_trust_noise_curve.py`, noise 0→0.25 × seeds 11-13 × {OFF,
+DECONF, DECONF+OUTCOME}, 18 points).** Measurement regime declared and fixed:
+ENGRAM_RECALL_RERANK=0 — the CE reranker becomes resident on a background
+thread, so whether a query is reranked depends on process timing (measured
+confound: wl_off 0.25 vs 0.425 on the SAME seed between solo and contended
+runs); bi-encoder-only makes every point comparable. Pre-registered gate:
+H2 no-inversion at every point; H3 for noise ≤ 0.20 wrong_liar(DECONF+OUT)
+≤ 0.5·OFF and worst deceiver trust < 0.25. **Verdict: H2 PASS 18/18 (honest
+0.95→0.72 vs cartel 0.20→0.50 at worst — degrades, never inverts). H3 FAIL as
+formulated** (holds at noise ≤ 0.05; from 0.10-0.15 up, wrong_liar(out) ~0.13-0.20
+sits above the 0.5·OFF bar). **The per-answer writer attribution — declared as
+the diagnosis axis before the run — shows WHY, and it is the v1-mini-world
+lesson again: the bar conflated two diseases. Wrong answers written by DECEIVERS:
+0/18 points, at every noise** (outcome pins liars+cartel at trust 0.024 < 0.25
+floor → retro-demoted everywhere). **Every residual wrong is an HONEST SLIP** —
+a false value written by a rightly-trusted source (2+ honest slips are GENUINELY
+independent witnesses of the falsehood; no independence test can, or should,
+filter them). Source-trust's job — kill the adversarial component — is done at
+100% across the whole curve; the honest-slip residue is per-CLAIM disease
+(reconciliation / abstention / grounding territory), not per-SOURCE. Declared
+assumption: the outcome channel presupposes use-feedback (full coverage here);
+without it the DECONF curve is the honest one.
+
 **v3b (ON+RECONCILE with the similarity fallback + real tick ages,
 task #21): PASSED — seed 11 stale 0.6333 → 0.10 (−84%), total wrong
 0.80 → 0.10, liar stays 0.0.** The fallback (top-k semantic candidates when

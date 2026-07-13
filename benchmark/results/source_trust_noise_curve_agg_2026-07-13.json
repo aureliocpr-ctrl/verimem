@@ -1,0 +1,79 @@
+{
+  "seeds": [
+    11,
+    12,
+    13
+  ],
+  "curve": [
+    {
+      "noise": 0.0,
+      "n_seeds": 3,
+      "wrong_liar_off": 0.275,
+      "wrong_liar_deconf": 0.0,
+      "wrong_liar_outcome": 0.0,
+      "honest_deconf": 0.9524,
+      "cartel_deconf": 0.2,
+      "liar_trust_min_outcome": 0.0238
+    },
+    {
+      "noise": 0.05,
+      "n_seeds": 3,
+      "wrong_liar_off": 0.275,
+      "wrong_liar_deconf": 0.0833,
+      "wrong_liar_outcome": 0.0833,
+      "honest_deconf": 0.8968,
+      "cartel_deconf": 0.2,
+      "liar_trust_min_outcome": 0.0238
+    },
+    {
+      "noise": 0.1,
+      "n_seeds": 3,
+      "wrong_liar_off": 0.275,
+      "wrong_liar_deconf": 0.15,
+      "wrong_liar_outcome": 0.1333,
+      "honest_deconf": 0.8512,
+      "cartel_deconf": 0.3333,
+      "liar_trust_min_outcome": 0.0238
+    },
+    {
+      "noise": 0.15,
+      "n_seeds": 3,
+      "wrong_liar_off": 0.275,
+      "wrong_liar_deconf": 0.1833,
+      "wrong_liar_outcome": 0.1667,
+      "honest_deconf": 0.8075,
+      "cartel_deconf": 0.3667,
+      "liar_trust_min_outcome": 0.0238
+    },
+    {
+      "noise": 0.2,
+      "n_seeds": 3,
+      "wrong_liar_off": 0.275,
+      "wrong_liar_deconf": 0.225,
+      "wrong_liar_outcome": 0.2,
+      "honest_deconf": 0.7639,
+      "cartel_deconf": 0.4333,
+      "liar_trust_min_outcome": 0.0238
+    },
+    {
+      "noise": 0.25,
+      "n_seeds": 3,
+      "wrong_liar_off": 0.2833,
+      "wrong_liar_deconf": 0.2833,
+      "wrong_liar_outcome": 0.225,
+      "honest_deconf": 0.728,
+      "cartel_deconf": 0.4444,
+      "liar_trust_min_outcome": 0.0238
+    }
+  ],
+  "verdict": {
+    "H2_no_inversion": true,
+    "H3_outcome_rescue": false,
+    "robust_regime_holds": false,
+    "n_points": 18,
+    "n_rescue_points": 15
+  },
+  "regime": "ENGRAM_RECALL_RERANK=0 (bi-encoder only, deterministic; CE warm-up timing was a measured confound: wl_off 0.25 vs 0.425 same-seed between solo and contended runs)",
+  "criterion": "PRE-REGISTERED 2026-07-13: H2 honest>cartel (deconf) at every point; H3 for noise<=0.20 wrong_liar(out)<=0.5*OFF and liar_trust_min<0.25; noise .25 reported not claimed",
+  "ts": "2026-07-13T23:09:17"
+}

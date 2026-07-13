@@ -15,6 +15,9 @@ from benchmark.source_trust_realcorpus import (
     RealCorpusConfig,
     _source_ref,
     build_events,
+    classify_writer,
+    curve_verdict,
+    extract_outcomes,
     load_corpus,
     verdict,
 )
@@ -114,6 +117,71 @@ def test_verdict_holds_only_when_all_criteria_pass():
     vi = verdict(off, on, neutral, neutral)
     assert vi["honest_inconclusive"] is True
     assert vi["reproduction_holds"] is False
+
+
+def test_extract_outcomes_blames_false_asserts_credits_true():
+    """Outcome feed = a-posteriori use feedback: one (source, good) per (source, key),
+    good iff the asserted value matches the ground truth. An honest source that
+    slipped on a key gets bad THERE only; a liar gets bad everywhere."""
+    facts = load_corpus(str(_HALUEVAL), n=6, seed=11)
+    cfg = RealCorpusConfig(n_honest=3, n_liars=1, n_colluders=2,
+                           cartel_keys=2, p_honest_noise=0.5, seed=11)
+    events = build_events(facts, cfg)
+    outs = extract_outcomes(events)
+    seen = {(s, k) for s, k, _ in outs}
+    assert len(seen) == len(outs)                      # one verdict per (source, key)
+    by = {(s, k): g for s, k, g in outs}
+    for ev in events:
+        good = by[(ev["source"], ev["key"])]
+        if ev["kind"] in ("liar", "colluder"):
+            assert good is False
+        else:                                          # honest: good iff no slip
+            assert good is (ev["value"] == ev["true_value"])
+    # with 50% noise some honest slips must exist — the interesting regime
+    assert any(not g for (s, k), g in by.items() if s.startswith("honest"))
+
+
+def test_curve_verdict_h2_h3():
+    """H2: no inversion at ANY point. H3: outcome rescues the recall (<=0.5*OFF)
+    and pins the liar under the floor for every noise <= 0.20."""
+    def pt(noise, wl_off, wl_dec, wl_out, hon, car, liar_out):
+        return {"noise": noise, "off": {"wrong_liar_rate": wl_off},
+                "on_indep_deconf": {"wrong_liar_rate": wl_dec,
+                                    "honest_consistency": hon,
+                                    "cartel_consistency": car},
+                "deconf_outcome": {"wrong_liar_rate": wl_out,
+                                   "liar_trust_min": liar_out}}
+    good_curve = [pt(0.0, .25, .00, .00, .95, .20, .02),
+                  pt(0.10, .25, .05, .00, .90, .30, .05),
+                  pt(0.20, .30, .15, .10, .85, .40, .10),
+                  pt(0.25, .30, .20, .20, .80, .45, .12)]
+    v = curve_verdict(good_curve)
+    assert v["H2_no_inversion"] is True
+    assert v["H3_outcome_rescue"] is True              # 0.25 excluded by design
+    assert v["robust_regime_holds"] is True
+
+    inverted = [dict(p) for p in good_curve]
+    inverted[2] = pt(0.20, .30, .15, .10, .35, .40, .10)   # cartel out-ranks honest
+    v2 = curve_verdict(inverted)
+    assert v2["H2_no_inversion"] is False
+    assert v2["robust_regime_holds"] is False
+
+    weak_rescue = [dict(p) for p in good_curve]
+    weak_rescue[2] = pt(0.20, .30, .15, .20, .85, .40, .10)  # 0.20 > 0.5*0.30
+    v3 = curve_verdict(weak_rescue)
+    assert v3["H3_outcome_rescue"] is False
+    assert v3["robust_regime_holds"] is False
+
+
+def test_classify_writer_attributes_wrong_answers():
+    """Diagnosis axis: a wrong top-hit is attributed to WHO wrote the surviving
+    copy — a deceiver (liar/colluder, should have been retro-demoted) or an honest
+    slip (admitted because its source is rightly trusted: the informational limit)."""
+    assert classify_writer('["source-doc:honest_2:w"]') == "honest_slip"
+    assert classify_writer('["source-doc:liar_0:w"]') == "deceiver"
+    assert classify_writer('["source-doc:colluder_3:w"]') == "deceiver"
+    assert classify_writer('[]') == "other"
+    assert classify_writer(None) == "other"
 
 
 def test_source_ref_survives_retro_demotion_pattern():
