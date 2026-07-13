@@ -47,6 +47,25 @@ honest *"I don't know."*
 - **True forget** — `delete(purge_history=True)` removes the fact *and* its
   supersession chain; the deleted data does not resurface through history or
   time-travel queries.
+- **Per-source trust, two channels** *(flag-gated)* — every writing source earns
+  a reputation from inter-source agreement (consistency) and from how its claims
+  fare in use (outcome); the weaker observed channel decides. Independence
+  clustering collapses copies/colluders of one feed to a single witness, so
+  manufactured consensus cannot self-confirm. Reproduced on a real held-out
+  corpus (HaluEval, 3/3 seeds): a 4-id cartel that self-confirms to 0.90 under
+  naive counting is demolished to 0.20, honest sources restored to 0.95, and
+  the hallucinated answers it pushed drop out of recall entirely.
+- **Epistemic labels** — a fact can carry the *kind* of guarantee behind it:
+  `proven` (a named machine-checkable proof), `unbeaten` (held up to a declared
+  bound — the bound only grows), or `refuted` (a named counterexample,
+  absorbing). "Held to 10^6" and "proven" are never conflated.
+- **Derived knowledge, through the same gate** — the composition ring derives
+  new candidate facts from verified ones (declared substitution patterns),
+  pushes them through the *same* admission gate as every other writer, and
+  admits survivors signed (`actor:composer` — engine writes never testify for
+  themselves), traced (`derives_from` parents, retractable if a parent falls)
+  and labeled with the exact check that passed. Few but zero-false by
+  construction.
 - **Local-first** — SQLite storage, local embeddings, injectable LLM. Runs
   air-gapped (`verimem airgap` verifies zero-egress configuration).
 

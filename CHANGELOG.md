@@ -16,6 +16,42 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   `explain()` default is unchanged (0.0) for backward compatibility.
 
 ### Added
+- **Source-trust reproduced on a REAL held-out corpus**
+  (`benchmark/source_trust_realcorpus.py`, HaluEval QA): pre-registered C1–C4
+  hold on 3/3 seeds under honest coherence — a manufactured-consensus cartel
+  self-confirms to 0.90 under naive ≥2-distinct counting, is demolished to
+  0.20 by independence+deconfound, honest 0.50→0.95, liar-driven recall
+  0.25–0.30→0.0. The honest-noise robustness curve
+  (`benchmark/source_trust_noise_curve.py`, 18 points, declared bi-encoder
+  regime) shows no reputation inversion at any noise and deceiver-written
+  wrong answers 0/18 everywhere; the residue is 100% honest slips — a
+  per-claim disease (reconciliation/abstention territory), not a per-source
+  one. Default stays OFF: the evidence informs the flip, it does not perform it.
+- **Epistemic labels** (schema v14, `engram/epistemic.py`): the GUARANTEE kind
+  of a fact — `proven(proof)` / `unbeaten(bound)` / `refuted(counterexample)` —
+  orthogonal to provenance `status`. Monotone transitions via `set_epistemic`
+  (a bound only grows; `refuted` is absorbing — correction happens by
+  supersession; `proven` never silently downgrades); a re-store preserves an
+  earned label. Motivating case (cortex transfer): coprime6→deficient holds to
+  10^6 yet dies at 5391411025 — "unbeaten" and "proven" must never be conflated.
+- **P85 self-provenance** (`engram/self_provenance.py`): engine writes are
+  SIGNED (`actor:<component>` refs; `canonical_source` namespaces them, never
+  the `user` fallback) and NEVER testify — filtered from confirmations,
+  acceptance and auto-confirm, so the engine cannot manufacture consensus about
+  its own claims. `self_write_check` monitors the self-write ratio with an
+  alarm past 0.5 (`ENGRAM_SELF_RATIO_MAX`) — past that threshold the world's
+  drift becomes invisible behind the engine's own echo (Vivarium P85).
+- **Composition ring** (`engram/composer.py`, `compose_once`): derives NEW
+  candidate facts from pairs of live facts sharing a pivot term (declared
+  substitution, v1 copula syllogism), pushes each through the SAME anti-confab
+  gate as every writer (L4 entailment against the two parents — no privileges),
+  and admits survivors signed (`actor:composer`), traced (`derives_from`,
+  retractable via justified-memory) and labeled
+  (`proven("qa:l4_entail_parents_score<NN>_PASS")`). A dead/unreadable judge
+  cannot flood the store: scores below the composer floor
+  (`ENGRAM_COMPOSER_MIN_SCORE`, default 55 — above the non-committal 50
+  fallback) are quarantined, never live. `semantic.set_derives_from` declares
+  the logical edge after admission (the gate never trusts the trace).
 - **Write-gate provenance INDEPENDENCE** (`ENGRAM_SOURCE_INDEPENDENCE`, default OFF):
   a confirmation now requires ≥2 *independent* clusters, not just ≥2 distinct
   source-IDs, so N copies/echoes/colluders of one feed collapse to one witness —
