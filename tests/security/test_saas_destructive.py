@@ -106,3 +106,50 @@ def test_401_does_not_leak_secrets_or_paths(tmp_path):
     assert r.status_code == 401
     assert "vm_" not in body and "traceback" not in body
     assert "c:\\" not in body and "/home/" not in body and ".db" not in body
+
+
+# ---- 6. fact_id path param: injection / traversal / crash ----------------------
+
+@pytest.mark.parametrize("fid", [
+    "../../etc/passwd", "'; DROP TABLE facts; --", "..%2f..%2f", "%00", "x" * 5000,
+    "../secrets", "%2e%2e", "a b", "{}",
+])
+def test_fact_id_path_param_never_500s_or_traverses(tmp_path, fid):
+    client, key, _ = _client(tmp_path)
+    assert client.get(f"/v1/memories/{fid}", headers=_auth(key)).status_code < 500
+    assert client.delete(f"/v1/memories/{fid}", headers=_auth(key)).status_code < 500
+
+
+# ---- 7. cross-tenant delete: alpha must NOT be able to delete beta's fact ------
+
+def test_delete_is_tenant_scoped(tmp_path):
+    keys = GatewayKeys(tmp_path / "k.db")
+    ka = keys.create(tenant_id="alpha", name="a")
+    kb = keys.create(tenant_id="beta", name="b")
+    client = TestClient(create_app(data_dir=tmp_path, keys=keys))
+    made = client.post("/v1/memories", headers=_auth(kb),
+                       json={"content": "beta owns this.", **_FACT}).json()
+    fid = made.get("id")
+    assert fid                                            # beta made a fact
+    # alpha tries to delete beta's fact by id -> must not succeed, beta's fact survives
+    client.delete(f"/v1/memories/{fid}", headers=_auth(ka))
+    assert client.get(f"/v1/memories/{fid}", headers=_auth(kb)).status_code == 200
+
+
+# ---- 8. explain param fuzzing + read-surface auth -----------------------------
+
+@pytest.mark.parametrize("params", [
+    {"q": "a", "as_of": "not-a-number"}, {"q": "a", "deep": "maybe"},
+    {"q": "a", "k": -5}, {"q": "\x00"}, {"q": "'; DROP--"},
+])
+def test_explain_fuzzing_never_500s(tmp_path, params):
+    client, key, _ = _client(tmp_path)
+    assert client.get("/v1/explain", headers=_auth(key),
+                      params=params).status_code < 500
+
+
+def test_read_surface_requires_auth(tmp_path):
+    """Every tenant-data read endpoint must 401 without a valid key (no anon leak)."""
+    client, _, _ = _client(tmp_path)
+    assert client.get("/v1/snapshot").status_code == 401       # trust/quarantine/graph/usage
+    assert client.get("/v1/events", params={"max_events": 1}).status_code == 401
