@@ -104,13 +104,29 @@ _SOURCE_REF_RE = re.compile(r"^(?:source-doc|source|src|doc|file):([^:]+)",
 def canonical_source(verified_by: list[str] | None,
                      fallback: str = "user") -> str:
     """The reputation key for a write: the first source-like ref in
-    ``verified_by`` (``source-doc:X:...`` → ``X``), else ``fallback``."""
+    ``verified_by`` (``source-doc:X:...`` → ``X``), else ``fallback``.
+
+    P85 self-provenance: an engine-signed ref (``actor:composer:...``)
+    canonicalises to the NAMESPACED ``actor:composer`` — never the ``user``
+    fallback, never a plain source id. Engine writes stay distinguishable
+    everywhere downstream, and ``_is_self`` filters them from testimony."""
+    from .self_provenance import actor_of, is_self_ref
     for ref in verified_by or []:
         if isinstance(ref, str):
+            if is_self_ref(ref):
+                name = actor_of(ref)
+                if name:
+                    return f"actor:{name}"
+                continue
             m = _SOURCE_REF_RE.match(ref.strip())
             if m:
                 return m.group(1)
     return fallback
+
+
+def _is_self(source: str) -> bool:
+    """A canonicalised source id that names the engine itself (P85)."""
+    return isinstance(source, str) and source.strip().lower().startswith("actor:")
 
 
 @dataclass
@@ -233,7 +249,9 @@ class SourceTrustBook:
         ambiguous majority)."""
         ranked = []
         for value, srcs in candidates.items():
-            clean = [s for s in srcs if s]
+            # P85: engine-signed sources are never independent witnesses — an
+            # echo chamber of actor ids must not win (or tie) an acceptance.
+            clean = [s for s in srcs if s and not _is_self(s)]
             n = self.independent_clusters(clean, deconfounded=deconfounded)
             ranked.append((n, value, sorted(set(clean))))
         ranked.sort(key=lambda r: (-r[0], r[1]))
@@ -252,7 +270,10 @@ class SourceTrustBook:
         INDEPENDENT clusters, so copies/colluders of one feed cannot self-confirm;
         ``deconfounded`` selects the P88 audit-conditioned signal (see
         ``independent_clusters``)."""
-        distinct = sorted({s for s in sources if s})
+        # P85: engine-signed sources neither witness nor earn reputation —
+        # self-echo cannot manufacture the >=2 agreement, and the engine's
+        # facts are admitted through VERIFICATION, not reputation.
+        distinct = sorted({s for s in sources if s and not _is_self(s)})
         n = (self.independent_clusters(distinct, deconfounded=deconfounded)
              if require_independent else len(distinct))
         if n < 2:
@@ -356,8 +377,12 @@ def auto_confirm_agreement(book: SourceTrustBook, subject_key: str,
 
     ONLY touches the consistency channel — never the outcome channel: temporal
     supersession is the world moving, not a source lying (semantic.py store() note,
-    the reverted #20b attribution error)."""
-    clean = {s: str(v) for s, v in reports.items() if s and v}
+    the reverted #20b attribution error).
+
+    P85: engine-signed reporters (``actor:*``) are stripped up front — they can
+    neither vote a value into acceptance nor be confirmed/contradicted."""
+    clean = {s: str(v) for s, v in reports.items()
+             if s and v and not _is_self(s)}
     for src, val in clean.items():
         book.record_report(src, str(subject_key), val)
     candidates: dict[str, list[str]] = {}
