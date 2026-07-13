@@ -87,3 +87,43 @@ def test_audit_can_be_disabled(tmp_path):
     client, k = _app(tmp_path, audit_log=False)
     client.get("/v1/stats", headers=_auth(k))
     assert _records(tmp_path) == []                     # no directory / no records
+
+
+def _admin(k: str) -> dict[str, str]:
+    return {"X-Admin-Key": k}
+
+
+def test_admin_audit_endpoint_tails_records(tmp_path):
+    """Enterprises read the trail over HTTP, no SSH — behind the admin key."""
+    client, k = _app(tmp_path, admin_key="ADM-secret")
+    client.get("/v1/stats", headers=_auth(k))
+    client.get("/v1/health")
+    out = client.get("/admin/audit", headers=_admin("ADM-secret"),
+                     params={"limit": 50}).json()
+    paths = {r["path"] for r in out["records"]}
+    assert "/v1/stats" in paths and "/v1/health" in paths
+    assert out["n"] == len(out["records"]) <= 50
+
+
+def test_admin_audit_requires_the_admin_key(tmp_path):
+    client, _ = _app(tmp_path, admin_key="ADM-secret")
+    assert client.get("/admin/audit").status_code == 401
+    assert client.get("/admin/audit", headers=_admin("wrong")).status_code == 401
+
+
+def test_admin_audit_absent_without_admin_key(tmp_path):
+    client, _ = _app(tmp_path)                          # no admin_key configured
+    assert client.get("/admin/audit", headers=_admin("x")).status_code == 404
+
+
+def test_admin_audit_filters_by_tenant(tmp_path):
+    keys = GatewayKeys(tmp_path / "k.db")
+    ka = keys.create(tenant_id="alpha", name="a", plan="free")
+    kb = keys.create(tenant_id="beta", name="b", plan="free")
+    client = TestClient(create_app(data_dir=tmp_path, keys=keys,
+                                   audit_log=True, admin_key="ADM"))
+    client.get("/v1/stats", headers=_auth(ka))
+    client.get("/v1/stats", headers=_auth(kb))
+    out = client.get("/admin/audit", headers=_admin("ADM"),
+                     params={"tenant": "beta"}).json()
+    assert out["records"] and all(r["tenant"] == "beta" for r in out["records"])

@@ -1042,6 +1042,42 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                             "usage": usage.get(t, {})})
             return {"n_tenants": len(out), "tenants": out}
 
+        @app.get("/admin/audit")
+        def audit_tail(limit: int = 100, day: str | None = None,
+                       tenant: str | None = None,
+                       _: None = Depends(_admin)) -> dict[str, Any]:
+            """Recent access-audit records (who/what/when) — the compliance trail
+            READABLE over HTTP, no SSH. Reads the append-only JSONL under
+            ``<data_dir>/audit/`` newest-last; ``day`` (YYYYMMDD) selects one
+            rotated file, ``tenant`` filters. Read-only; empty if auditing is off."""
+            import json as _json
+            adir = data_dir / "audit"
+            limit = max(1, min(int(limit), 1000))
+            pattern = f"access-{day}.jsonl" if day else "access-*.jsonl"
+            # bound the work: without an explicit day, scan only the newest files
+            files = sorted(adir.glob(pattern))
+            if not day:
+                files = files[-3:]
+            recs: list[dict[str, Any]] = []
+            for f in files:
+                try:
+                    with open(f, encoding="utf-8") as fh:
+                        for ln in fh:
+                            ln = ln.strip()
+                            if not ln:
+                                continue
+                            try:
+                                r = _json.loads(ln)
+                            except Exception:  # noqa: BLE001,PERF203
+                                continue
+                            if tenant and r.get("tenant") != tenant:
+                                continue
+                            recs.append(r)
+                except OSError:
+                    continue
+            tail = recs[-limit:]
+            return {"n": len(tail), "records": tail}
+
     return app
 
 
