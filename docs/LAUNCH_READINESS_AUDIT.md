@@ -20,7 +20,7 @@ Severity: P0 launch-blocker · P1 important · P2 polish
 | I | Save/recall reliability (the 1-month bug) | ✅ | 2 roots fixed: 9da43c4 (cold-load) + 6274107 (write-lock), proven | deploy-on-restart |
 | J | Presentable (README, naming, badges) | ✅ | README config/stats fixed 78d5ea6; `hippoagent/` is a clean compat SHIM (1 file→engram), not a dup; naming migration handled | badges refresh |
 | K | Docs coherence (PLATFORM/QUICKSTART/STATE) | ✅ | fixed PLATFORM.md MCP config (hippo→engram, no-key) + MCP_QUICKSTART tool count 175→228; archive/ docs left as dated snapshots | done |
-| L | Packaging (LICENSE, version, CHANGELOG) | ✅ | LICENSE+CHANGELOG+CONTRIBUTING+SECURITY.md+CODE_OF_CONDUCT.md present, v0.3.0, 6 extras, urls ok | done |
+| L | Packaging (LICENSE, version, CHANGELOG) | ✅ | LICENSE+CHANGELOG+CONTRIBUTING+SECURITY.md+CODE_OF_CONDUCT.md present, v0.4.2, 6 extras, urls ok | done |
 | M | Dashboard / web UX | ✅ | test_dashboard_api 28/28 pass (pages render, auth gate, design-system, CSS, KPI endpoints) | done |
 
 ## Findings log (newest first)

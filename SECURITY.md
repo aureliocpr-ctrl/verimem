@@ -12,8 +12,9 @@ for confirmed, in-scope issues as a priority.
 
 ## Supported versions
 
-Engram is pre-1.0; security fixes land on `main` and the latest release
-(currently `0.3.x`). Pin a released version for production and watch releases.
+Engram is pre-1.0; security fixes land on `main` and the latest PyPI release
+(see the version badge / `pip index versions verimem`). Pin a released version
+for production and watch releases for security bumps.
 
 ## Security posture (know before you run)
 

@@ -44,7 +44,7 @@ memory that integrates with today's AIs (MCP) and tomorrow's (plain SQLite).
 
 ## Packaging status (installability audit 2026-07-06)
 
-Wheel builds clean (`verimem-0.3.0-py3-none-any.whl`, 1.5 MB). Core deps 22→19
+Wheel builds clean (`verimem-0.4.2-py3-none-any.whl`, 1.5 MB). Core deps 22→19
 (removed dead: scikit-learn, pillow, python-multipart — 0 imports, verified).
 **Known weight, proposal pending**: `sentence-transformers`→torch (the offline
 embedding core, ~200MB-2GB) stays in core for the no-API promise; the dashboard
