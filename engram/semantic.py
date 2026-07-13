@@ -2615,6 +2615,23 @@ class SemanticMemory:
             self._cache_version += 1  # recall hot-path cache must see the label
         return changed
 
+    def set_derives_from(self, fact_id: str, parent_ids: list[str]) -> bool:
+        """Declare the LOGICAL derivation edge (v11 ``derives_from``) of an
+        existing fact — used by the composer AFTER the gate admits a derived
+        candidate (the add() path has no derives_from parameter; admission and
+        tracing are two steps by design: the gate never trusts the trace).
+        Returns False on an unknown id."""
+        clean = ",".join(p for p in parent_ids if p)
+        with self._connect() as conn:
+            cur = conn.execute(
+                "UPDATE facts SET derives_from = ? WHERE id = ?",
+                (clean, fact_id))
+            conn.commit()
+            changed = cur.rowcount > 0
+        if changed:
+            self._cache_version += 1
+        return changed
+
     def filter_live_ids(self, fact_ids: list[str]) -> list[str]:
         """Return the subset of ``fact_ids`` that are LIVE (superseded_by IS
         NULL and status not orphaned/quarantined), preserving input order.
