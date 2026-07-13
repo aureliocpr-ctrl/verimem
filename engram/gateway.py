@@ -572,12 +572,24 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         402 (over quota) cites. The SaaS's self-service window into its own limits."""
         from .gateway_plans import get_plan, quota_status
         plan = get_plan(keys.plan_for_tenant(tenant_id))
-        facts_used = len(tenants.get(tenant_id).semantic.all())
-        return quota_status(plan, facts_used=facts_used)
+        return quota_status(plan, facts_used=tenants.get(tenant_id).semantic.count())
 
     @app.post("/v1/memories")
     def add_memory(body: dict, tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         mem = tenants.get(tenant_id)
+        # plan quota teeth: reject the write when the tenant is at its fact cap
+        # (enterprise/self_host are uncapped, so this is a cheap COUNT + skip for them).
+        from .gateway_plans import get_plan, quota_status
+        _plan = get_plan(keys.plan_for_tenant(tenant_id))
+        if _plan.max_facts is not None:
+            _used = mem.semantic.count()
+            if not _plan.within_facts(_used):
+                meter.bump(tenant_id, writes=1, rejected=1)
+                raise HTTPException(
+                    status_code=402,
+                    detail={"error": "fact quota exceeded for plan "
+                                     f"'{_plan.name}' (limit {_plan.max_facts})",
+                            "quota": quota_status(_plan, facts_used=_used)})
         messages = body.get("messages")
         content = messages if messages is not None else (body.get("content") or "")
         if messages is not None and llm is None:

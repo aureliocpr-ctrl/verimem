@@ -174,6 +174,33 @@ def test_plan_column_migration_on_pre_plan_db(tmp_path):
     assert keys.plan_for_tenant("t") == "enterprise"
 
 
+def test_fact_quota_rejects_over_limit_write(tmp_path, monkeypatch):
+    from engram import gateway_plans as gp
+    tiny = gp.Plan("tiny", max_facts=1, rate_limit_per_minute=None,
+                   max_document_bytes=10 * 1024 * 1024)
+    monkeypatch.setitem(gp.PLANS, "tiny", tiny)                   # a 1-fact tier for the test
+    keys = GatewayKeys(tmp_path / "k.db")
+    key = keys.create(tenant_id="t", name="x", plan="tiny")
+    client = TestClient(create_app(data_dir=tmp_path, keys=keys))
+    a = {"topic": "t", "verified_by": ["source-doc:d:1"]}
+    r1 = client.post("/v1/memories", headers=_auth(key), json={"content": "Fact one.", **a})
+    assert r1.status_code == 200
+    r2 = client.post("/v1/memories", headers=_auth(key), json={"content": "Fact two.", **a})
+    assert r2.status_code == 402                                  # over quota -> Payment Required
+    assert "quota" in r2.json()["detail"] and r2.json()["detail"]["quota"]["facts_over_limit"]
+
+
+def test_enterprise_plan_is_uncapped(tmp_path):
+    keys = GatewayKeys(tmp_path / "k.db")
+    key = keys.create(tenant_id="big", name="x", plan="enterprise")
+    client = TestClient(create_app(data_dir=tmp_path, keys=keys))
+    a = {"topic": "t", "verified_by": ["source-doc:d:1"]}
+    for i in range(3):
+        r = client.post("/v1/memories", headers=_auth(key), json={"content": f"Fact {i}.", **a})
+        assert r.status_code == 200                              # no cap ever bites
+    assert client.get("/v1/quota", headers=_auth(key)).json()["facts_limit"] is None
+
+
 def test_rate_limit_per_key(tmp_path):
     """Fase 1 del design datacenter (docs/DATACENTER_DESIGN.md): rate-limit
     per chiave — oltre il tetto la risposta è 429 (con Retry-After), le altre
