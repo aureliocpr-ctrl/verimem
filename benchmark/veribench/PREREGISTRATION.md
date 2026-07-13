@@ -37,6 +37,14 @@ the answerable half they retrieve identically.
 - **τ = 0.80** is fixed a priori from the answerable-vs-absent score-band
   separation measured earlier on the read-path (answerable ≥0.76 vs unanswerable
   ≤0.83; separability AUROC 0.9916), and applied unchanged to the heldout split.
+- **Second corpus (added run):** the identical construction is repeated on
+  **SQuAD v2** (`make_squad_corpus.py`, one answerable question per unique Wikipedia
+  context; unanswerable-probe = questions whose context was never ingested — the
+  retrieval notion, NOT SQuAD's reading-comprehension "impossible" label). A finding
+  registered here because it was NOT assumed: **τ is corpus-dependent** — HaluEval's
+  0.80 does not transfer to SQuAD (goes NET(λ=5) net-negative), so each system's
+  floor is also reported at its own oracle sweep (a symmetric upper bound for both
+  verimem and mem0), not just at the pre-registered τ.
 
 ## Systems
 

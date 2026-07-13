@@ -103,7 +103,7 @@ with the hypothesis, metric, and refutation conditions fixed **before** the run
 python -m benchmark.veribench.run_real --n 200 --tau 0.80
 ```
 
-Result (`benchmark/results/veribench_real_halueval_2026-07-13.json`):
+Result (`benchmark/results/veribench_real_halueval-qa_2026-07-13.json`):
 
 | system | coverage | recall@k | NET λ=1 | NET λ=2 | NET λ=5 | NET λ=10 | crossover λ |
 |---|--:|--:|--:|--:|--:|--:|--:|
@@ -124,39 +124,48 @@ alignment collapses verimem's correct count from 182 to 5 (chance), so the headl
 is real retrieval, not a harness artifact. All three pre-registered refutation
 conditions are FALSE → **H1 confirmed**.
 
-### Head-to-head vs the real mem0 (offline, same embedder)
+### Head-to-head vs the real mem0 (offline, TWO corpora)
 
 `run_mem0.py` drives **mem0 v2.0.11's actual stack** (Chroma vector store, its
-`search`) on the same probes, with the **same `intfloat/multilingual-e5-base`
-model and `query:`/`passage:` prefixes** as verimem — so retrieval quality has
-parity and the only free variable is the abstention floor. mem0's LLM extraction
-(`infer=True`) needs an external key we don't use, so memories are stored raw; that
-does not touch the abstention question. Result
-(`benchmark/results/veribench_mem0_halueval_2026-07-13.json`):
+`search`) with the **same `intfloat/multilingual-e5-base` model and `query:` /
+`passage:` prefixes** as verimem — retrieval parity, so the only free variable is
+the abstention floor. mem0's LLM extraction needs an external key we don't use, so
+memories are stored raw (that does not touch the abstention question). Run on two
+independent corpora, each system scored at its OWN oracle floor (swept on the eval —
+an upper bound for BOTH, so the comparison is symmetric):
 
-| system | coverage | recall@k | NET λ=1 | NET λ=5 | crossover λ |
-|---|--:|--:|--:|--:|--:|
-| **verimem** (floor τ=0.80, pre-registered) | 0.62 | 0.607 | +0.593 | **+0.540** | 45.5 |
-| mem0 as shipped (no floor) | 1.00 | **0.667** | +0.333 | **−1.000** | 2.0 |
-| mem0 with its own best floor (f=0.75, oracle) | 0.55 | 0.553 | +0.553 | +0.553 | ∞ |
+| corpus | system | coverage | recall@k | NET λ=1 | NET λ=5 |
+|---|---|--:|--:|--:|--:|
+| HaluEval | **verimem** (τ=0.80 = its oracle) | 0.62 | 0.607 | +0.593 | **+0.540** |
+| HaluEval | mem0 as shipped (no floor) | 1.00 | **0.667** | +0.333 | **−1.000** |
+| HaluEval | mem0 at its oracle floor (0.75) | 0.55 | 0.553 | +0.553 | +0.553 |
+| SQuAD v2 | verimem (τ=0.80 *from HaluEval*) | 0.71 | 0.543 | +0.380 | **−0.273** |
+| SQuAD v2 | **verimem** at its oracle floor (0.85) | 0.35 | 0.327 | +0.303 | **+0.210** |
+| SQuAD v2 | mem0 as shipped (no floor) | 1.00 | **0.667** | +0.333 | **−1.000** |
+| SQuAD v2 | mem0 at its oracle floor (0.80) | 0.15 | 0.147 | +0.147 | +0.147 |
 
-Read honestly — this is the point, and it is deliberately not spun:
+What holds and what doesn't — stated plainly, because a benchmark that hides its
+limits isn't one:
 
-- **mem0 as shipped fabricates.** It commits a nearest neighbour on all 100
-  unanswerable probes, so it posts the **highest recall@k of the three (0.667)** yet
-  goes **net-negative at λ≈2 and −1.0 at λ=5**. The standard metric *rewards* the
-  system that makes things up; VeriBench is the metric that doesn't.
-- **The floor is the mechanism, not magic.** Bolt an abstention floor onto mem0 and
-  it recovers — at its **oracle** floor (swept on this very eval to maximise its own
-  NET) it *ties* verimem (+0.553 vs +0.540). We report that openly: verimem's edge is
-  **shipping the floor calibrated by default** (plus the write-gate and independence
-  axes), not a secret sauce. And note the asymmetry that still favours verimem — its
-  τ=0.80 was fixed and pre-registered, while mem0's 0.75 is tuned post-hoc on the
-  test set (an upper bound it could not know in production).
+- **Robust across both corpora: a memory with no floor fabricates.** mem0 as shipped
+  posts the **highest recall@k on both (0.667)** yet NET(λ=5) **−1.0 on both** — it
+  commits a neighbour on every unanswerable probe. The standard metric rewards it;
+  VeriBench is the metric that doesn't. This is the finding that generalizes.
+- **The floor is corpus-dependent — a dial, not magic.** verimem's τ=0.80 was its
+  oracle on HaluEval, but transfers to SQuAD at NET(λ=5) **−0.273** (net-negative):
+  the same floor over-commits on Wikipedia passages. Re-tuned on SQuAD (0.85) verimem
+  is positive again (+0.210) and beats mem0's oracle floor (+0.147) — but coverage
+  falls to 0.35, because score-threshold abstention is intrinsically harder when the
+  embedder separates answerable from unanswerable less cleanly.
+- **At each system's oracle floor the two are close** (HaluEval: mem0 +0.553 vs
+  verimem +0.540; SQuAD: verimem +0.210 vs mem0 +0.147). So verimem's edge is NOT a
+  secret algorithm — it is **shipping the floor calibrated and ON by default** (plus
+  the write-gate and independence axes). A bare vector memory ships without it.
 
-The honest takeaway: **a memory that ships without an abstention floor fabricates on
-the questions it cannot answer, and the standard benchmark can't see it.** That is
-the whole reason VeriBench exists.
+The honest bottom line on two corpora: **abstention is what separates a *trusted*
+memory from a *confident* one; the standard benchmark can't see it; and it must be
+calibrated per corpus.** mem0 as shipped has no floor and fabricates; verimem ships
+one, and VeriBench is what makes the difference a number.
 
 ---
 

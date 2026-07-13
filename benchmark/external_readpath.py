@@ -55,8 +55,10 @@ def _sha256(path: Path) -> str:
 
 def make_samples(src: Path, out_dir: Path, *, n_dev: int = 100,
                  n_heldout: int = 200, n_unans: int = 100,
-                 seed: int = 42) -> dict[str, Any]:
-    """Cut three disjoint deterministic splits from the raw JSONL dump."""
+                 seed: int = 42, prefix: str = "halueval_qa") -> dict[str, Any]:
+    """Cut three disjoint deterministic splits from the raw JSONL dump. ``prefix``
+    names the corpus (files ``{prefix}_{split}.jsonl``) so a second corpus reuses
+    the identical held-out discipline."""
     rows = [json.loads(line) for line in
             Path(src).read_text(encoding="utf-8").splitlines() if line.strip()]
     rng = random.Random(seed)
@@ -74,16 +76,18 @@ def make_samples(src: Path, out_dir: Path, *, n_dev: int = 100,
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, items in cuts.items():
-        path = out_dir / f"halueval_qa_{name}.jsonl"
+        path = out_dir / f"{prefix}_{name}.jsonl"
         path.write_text("\n".join(json.dumps(r, ensure_ascii=False)
                                   for r in items) + "\n", encoding="utf-8")
-    return {"n_dev": len(cuts["dev"]), "n_heldout": len(cuts["heldout"]),
+    return {"prefix": prefix, "n_dev": len(cuts["dev"]),
+            "n_heldout": len(cuts["heldout"]),
             "n_unanswerable": len(cuts["unanswerable"]),
             "seed": seed, "source_sha256": _sha256(Path(src))}
 
 
-def load_split(name: str, limit: int | None = None) -> list[dict[str, Any]]:
-    path = DATA_DIR / f"halueval_qa_{name}.jsonl"
+def load_split(name: str, limit: int | None = None, *,
+               prefix: str = "halueval_qa") -> list[dict[str, Any]]:
+    path = DATA_DIR / f"{prefix}_{name}.jsonl"
     rows = [json.loads(line) for line in
             path.read_text(encoding="utf-8").splitlines() if line.strip()]
     return rows[:limit] if limit else rows
@@ -153,6 +157,31 @@ def eval_unanswerable(mem: Memory, questions: list[str], *, k: int,
     output; anything else is sub-mode (a) fabrication pressure."""
     return [{"abstained": _abstains(mem.search(q, k=k), tau)}
             for q in questions]
+
+
+def eval_raw(mem: Memory, items: list[dict], fact_ids: list[str | None],
+             unanswerable_questions: list[str], *, k: int):
+    """Search ONCE per probe and record (retrieval_hit, top_score, has_hits) — so
+    ANY abstention floor τ can be applied post-hoc (a τ sweep without re-running
+    retrieval). Mirrors what the mem0 adapter does, so verimem's own floor can be
+    calibrated the same way, on the same footing. Returns (answerable, unanswerable)."""
+    ans = []
+    for item, fid in zip(items, fact_ids):
+        if fid is None:
+            ans.append({"retrieval_hit": False, "top_score": 0.0,
+                        "has_hits": False})
+            continue
+        hits = mem.search(item["question"], k=k)
+        ans.append({
+            "retrieval_hit": any(h.get("id") == fid for h in hits),
+            "top_score": max((h.get("score", 0.0) for h in hits), default=0.0),
+            "has_hits": bool(hits)})
+    unans = []
+    for q in unanswerable_questions:
+        hits = mem.search(q, k=k)
+        unans.append({"top_score": max((h.get("score", 0.0) for h in hits),
+                                        default=0.0), "has_hits": bool(hits)})
+    return ans, unans
 
 
 def run_readpath(items: list[dict], unanswerable_questions: list[str],

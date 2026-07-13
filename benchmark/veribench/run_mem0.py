@@ -47,29 +47,36 @@ def _sweep_best_floor(ans_raw, unans_raw, *, lam=5.0):
     return best
 
 
-def run(*, n: int, tau: float, k: int) -> dict:
-    items = ext.load_split("heldout", limit=n)
-    unans_qs = [it["question"] for it in ext.load_split("unanswerable", limit=n)]
+def run(*, n: int, tau: float, k: int, corpus: str = "halueval_qa") -> dict:
+    items = ext.load_split("heldout", limit=n, prefix=corpus)
+    unans_qs = [it["question"]
+                for it in ext.load_split("unanswerable", limit=n, prefix=corpus)]
 
-    # verimem
+    systems: dict[str, dict] = {}
+
+    # verimem — raw scores once, floors applied post-hoc (symmetric with mem0)
     vmem, fact_ids, ingest = ext.build_store(
         items, Path(tempfile.mkdtemp()) / "vm.db")
-    v_ans = ext.eval_answerable(vmem, items, fact_ids, k=k, tau=tau)
-    v_unans = ext.eval_unanswerable(vmem, unans_qs, k=k, tau=tau)
-    systems = {"verimem": scorecard(outcomes_for_system(v_ans, v_unans))}
+    v_ans_raw, v_unans_raw = ext.eval_raw(vmem, items, fact_ids, unans_qs, k=k)
+    va, vu = mz.rows_at_floor(v_ans_raw, v_unans_raw, floor=tau)
+    systems["verimem_tau"] = scorecard(outcomes_for_system(va, vu))
+    systems["verimem_tau"]["floor"] = tau
+    vbest, _vn, (vba, vbu) = _sweep_best_floor(v_ans_raw, v_unans_raw)
+    systems["verimem_best_floor"] = scorecard(outcomes_for_system(vba, vbu))
+    systems["verimem_best_floor"]["floor"] = vbest
 
-    # mem0 (real, offline)
+    # mem0 (real, offline) — same treatment
     m = mz.build_mem0_store(items, Path(tempfile.mkdtemp()) / "mem0")
     ans_raw, unans_raw = mz.eval_raw_mem0(m, items, unans_qs, k=k)
     a0, u0 = mz.rows_at_floor(ans_raw, unans_raw, floor=0.0)
     systems["mem0_as_shipped"] = scorecard(outcomes_for_system(a0, u0))
-    best_floor, _net, (ab, ub) = _sweep_best_floor(ans_raw, unans_raw)
+    mbest, _mn, (ab, ub) = _sweep_best_floor(ans_raw, unans_raw)
     systems["mem0_best_floor"] = scorecard(outcomes_for_system(ab, ub))
-    systems["mem0_best_floor"]["floor"] = best_floor
+    systems["mem0_best_floor"]["floor"] = mbest
 
     return {
         "benchmark": "VeriBench/mem0-head-to-head",
-        "corpus": "halueval-qa (heldout + unanswerable-probe)",
+        "corpus": f"{corpus} (heldout + unanswerable-probe)",
         "n_answerable": len(items), "n_unanswerable": len(unans_qs),
         "verimem_tau": tau, "k": k,
         "embedder": "intfloat/multilingual-e5-base (identical for both)",
@@ -91,7 +98,7 @@ def _mem0_version() -> str:
 
 def _print(result: dict) -> None:
     print(json.dumps(result, indent=2))
-    print(f"\n=== VeriBench head-to-head — NET(λ) on HaluEval "
+    print(f"\n=== VeriBench head-to-head — NET(λ) on {result['corpus']} "
           f"({result['n_answerable']}+{result['n_unanswerable']}), "
           f"same e5 embedder ===")
     print(f"{'system':<20} {'cover':>6} {'r@k':>6} "
@@ -111,15 +118,17 @@ def main() -> None:
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--tau", type=float, default=0.80)
     ap.add_argument("--k", type=int, default=5)
+    ap.add_argument("--corpus", default="halueval_qa")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
     if not mz.mem0_available():
         raise SystemExit("mem0 / chromadb not installed — cannot run head-to-head.")
-    result = run(n=args.n, tau=args.tau, k=args.k)
+    result = run(n=args.n, tau=args.tau, k=args.k, corpus=args.corpus)
     _print(result)
+    _tag = args.corpus.replace("_", "-")
     out = Path(args.out) if args.out else (
-        _RESULTS / f"veribench_mem0_halueval_{time.strftime('%Y-%m-%d')}.json")
+        _RESULTS / f"veribench_mem0_{_tag}_{time.strftime('%Y-%m-%d')}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(f"\nsaved -> {out}")

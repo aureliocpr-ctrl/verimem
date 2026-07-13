@@ -1,6 +1,6 @@
 {
   "benchmark": "VeriBench/real",
-  "corpus": "halueval-qa (heldout + unanswerable-probe, disjoint splits)",
+  "corpus": "halueval_qa (heldout + unanswerable-probe, disjoint splits)",
   "n_answerable": 200,
   "n_unanswerable": 100,
   "tau": 0.8,

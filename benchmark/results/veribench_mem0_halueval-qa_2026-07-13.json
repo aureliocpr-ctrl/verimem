@@ -1,0 +1,84 @@
+{
+  "benchmark": "VeriBench/mem0-head-to-head",
+  "corpus": "halueval_qa (heldout + unanswerable-probe)",
+  "n_answerable": 200,
+  "n_unanswerable": 100,
+  "verimem_tau": 0.8,
+  "k": 5,
+  "embedder": "intfloat/multilingual-e5-base (identical for both)",
+  "mem0": {
+    "version": "2.0.11",
+    "store": "chroma",
+    "infer": false,
+    "note": "same e5 model + query:/passage: prefixes; LLM never called (no external key); floor bolted on mem0's own score scale, 0 = as shipped."
+  },
+  "ingest": {
+    "admitted": 192,
+    "blocked": 8,
+    "by_status": {
+      "model_claim": 192,
+      "quarantined": 8
+    }
+  },
+  "systems": {
+    "verimem_tau": {
+      "n": 300,
+      "correct": 182,
+      "wrong": 4,
+      "abstain": 114,
+      "coverage": 0.62,
+      "net": {
+        "lambda_1": 0.5933,
+        "lambda_2": 0.58,
+        "lambda_5": 0.54,
+        "lambda_10": 0.4733
+      },
+      "crossover_lambda": 45.5,
+      "floor": 0.8
+    },
+    "verimem_best_floor": {
+      "n": 300,
+      "correct": 182,
+      "wrong": 4,
+      "abstain": 114,
+      "coverage": 0.62,
+      "net": {
+        "lambda_1": 0.5933,
+        "lambda_2": 0.58,
+        "lambda_5": 0.54,
+        "lambda_10": 0.4733
+      },
+      "crossover_lambda": 45.5,
+      "floor": 0.8
+    },
+    "mem0_as_shipped": {
+      "n": 300,
+      "correct": 200,
+      "wrong": 100,
+      "abstain": 0,
+      "coverage": 1.0,
+      "net": {
+        "lambda_1": 0.3333,
+        "lambda_2": 0.0,
+        "lambda_5": -1.0,
+        "lambda_10": -2.6667
+      },
+      "crossover_lambda": 2.0
+    },
+    "mem0_best_floor": {
+      "n": 300,
+      "correct": 166,
+      "wrong": 0,
+      "abstain": 134,
+      "coverage": 0.5533,
+      "net": {
+        "lambda_1": 0.5533,
+        "lambda_2": 0.5533,
+        "lambda_5": 0.5533,
+        "lambda_10": 0.5533
+      },
+      "crossover_lambda": null,
+      "floor": 0.75
+    }
+  }
+}

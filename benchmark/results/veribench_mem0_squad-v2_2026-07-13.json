@@ -1,6 +1,6 @@
 {
   "benchmark": "VeriBench/mem0-head-to-head",
-  "corpus": "halueval-qa (heldout + unanswerable-probe)",
+  "corpus": "squad_v2 (heldout + unanswerable-probe)",
   "n_answerable": 200,
   "n_unanswerable": 100,
   "verimem_tau": 0.8,
@@ -13,27 +13,43 @@
     "note": "same e5 model + query:/passage: prefixes; LLM never called (no external key); floor bolted on mem0's own score scale, 0 = as shipped."
   },
   "ingest": {
-    "admitted": 192,
-    "blocked": 8,
+    "admitted": 165,
+    "blocked": 35,
     "by_status": {
-      "model_claim": 192,
-      "quarantined": 8
+      "model_claim": 165,
+      "quarantined": 35
     }
   },
   "systems": {
-    "verimem": {
+    "verimem_tau": {
       "n": 300,
-      "correct": 182,
-      "wrong": 4,
-      "abstain": 114,
-      "coverage": 0.62,
+      "correct": 163,
+      "wrong": 49,
+      "abstain": 88,
+      "coverage": 0.7067,
       "net": {
-        "lambda_1": 0.5933,
-        "lambda_2": 0.58,
-        "lambda_5": 0.54,
-        "lambda_10": 0.4733
+        "lambda_1": 0.38,
+        "lambda_2": 0.2167,
+        "lambda_5": -0.2733,
+        "lambda_10": -1.09
       },
-      "crossover_lambda": 45.5
+      "crossover_lambda": 3.3265,
+      "floor": 0.8
+    },
+    "verimem_best_floor": {
+      "n": 300,
+      "correct": 98,
+      "wrong": 7,
+      "abstain": 195,
+      "coverage": 0.35,
+      "net": {
+        "lambda_1": 0.3033,
+        "lambda_2": 0.28,
+        "lambda_5": 0.21,
+        "lambda_10": 0.0933
+      },
+      "crossover_lambda": 14.0,
+      "floor": 0.85
     },
     "mem0_as_shipped": {
       "n": 300,
@@ -51,18 +67,18 @@
     },
     "mem0_best_floor": {
       "n": 300,
-      "correct": 166,
+      "correct": 44,
       "wrong": 0,
-      "abstain": 134,
-      "coverage": 0.5533,
+      "abstain": 256,
+      "coverage": 0.1467,
       "net": {
-        "lambda_1": 0.5533,
-        "lambda_2": 0.5533,
-        "lambda_5": 0.5533,
-        "lambda_10": 0.5533
+        "lambda_1": 0.1467,
+        "lambda_2": 0.1467,
+        "lambda_5": 0.1467,
+        "lambda_10": 0.1467
       },
       "crossover_lambda": null,
-      "floor": 0.75
+      "floor": 0.8
     }
   }
 }

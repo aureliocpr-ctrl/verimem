@@ -43,9 +43,10 @@ def _eval(mem, items, fact_ids, unans_qs, *, tau, k):
     return outcomes_for_system(ans, unans)
 
 
-def run(*, n: int, tau: float, k: int) -> dict:
-    items = ext.load_split("heldout", limit=n)
-    unans_qs = [it["question"] for it in ext.load_split("unanswerable", limit=n)]
+def run(*, n: int, tau: float, k: int, corpus: str = "halueval_qa") -> dict:
+    items = ext.load_split("heldout", limit=n, prefix=corpus)
+    unans_qs = [it["question"]
+                for it in ext.load_split("unanswerable", limit=n, prefix=corpus)]
     db = Path(tempfile.mkdtemp()) / "veribench_real.db"
     mem, fact_ids, ingest = ext.build_store(items, db)
 
@@ -64,7 +65,7 @@ def run(*, n: int, tau: float, k: int) -> dict:
 
     return {
         "benchmark": "VeriBench/real",
-        "corpus": "halueval-qa (heldout + unanswerable-probe, disjoint splits)",
+        "corpus": f"{corpus} (heldout + unanswerable-probe, disjoint splits)",
         "n_answerable": len(items), "n_unanswerable": len(unans_qs),
         "tau": tau, "k": k, "ingest": ingest,
         "note": ("no_abstention_baseline is the SAME store/retrieval with τ=0 "
@@ -79,10 +80,11 @@ def main() -> None:
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--tau", type=float, default=0.80)
     ap.add_argument("--k", type=int, default=5)
+    ap.add_argument("--corpus", default="halueval_qa")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
-    result = run(n=args.n, tau=args.tau, k=args.k)
+    result = run(n=args.n, tau=args.tau, k=args.k, corpus=args.corpus)
     print(json.dumps(result, indent=2))
 
     s = result["systems"]
@@ -98,8 +100,9 @@ def main() -> None:
               f"{net['lambda_2']:>8.3f} {net['lambda_5']:>8.3f} "
               f"{net['lambda_10']:>8.3f} {('∞' if xo is None else f'{xo:.2f}'):>7}")
 
+    _tag = args.corpus.replace("_", "-")
     out = Path(args.out) if args.out else (
-        _RESULTS / f"veribench_real_halueval_{time.strftime('%Y-%m-%d')}.json")
+        _RESULTS / f"veribench_real_{_tag}_{time.strftime('%Y-%m-%d')}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(f"\nsaved -> {out}")
