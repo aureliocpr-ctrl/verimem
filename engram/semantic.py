@@ -47,6 +47,7 @@ from typing import Any
 import numpy as np
 
 from . import embedding
+from . import epistemic as _epistemic
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
@@ -670,7 +671,13 @@ CREATE TABLE IF NOT EXISTS facts (
     -- 2026-07-05: stipare l'event time in created_at rendeva invisibile al
     -- recall l'83% di uno store retro/post-datato. Nullable, additiva, NO
     -- backfill: NULL = "event time sconosciuto" -> fallback created_at.
-    asserted_at REAL
+    asserted_at REAL,
+    -- v14 (2026-07-13) etichetta epistemica (transfer cortex #1): JSON
+    -- {"kind":"proven"|"unbeaten"|"refuted", ...} — il TIPO di garanzia,
+    -- ortogonale a status (chi garantisce vs che garanzia). Transizioni
+    -- monotone via set_epistemic (engram/epistemic.py), refuted assorbente.
+    -- Nullable, additiva, NO backfill: NULL = non etichettato (default).
+    epistemic TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_facts_topic ON facts(topic);
 """
@@ -1328,6 +1335,24 @@ def _migrate_v12_to_v13(conn: sqlite3.Connection) -> None:
             raise
 
 
+def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
+    """2026-07-13 epistemic label (cortex transfer #1).
+
+    The GUARANTEE kind of a fact — proven(proof) / unbeaten(bound) /
+    refuted(counterexample) — orthogonal to provenance ``status``. Motivated by
+    the lab case coprime6→deficient: holds to 10^6, dies at 5391411025 —
+    "unbeaten" and "proven" must never be conflated, and the composition layer
+    must only build from labels it can trust. Additive, nullable, NO backfill:
+    NULL = unlabeled (every ordinary fact). Recall byte-identical (column
+    unused by recall filters); transitions enforced by ``set_epistemic``.
+    """
+    try:
+        conn.execute("ALTER TABLE facts ADD COLUMN epistemic TEXT")
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" not in str(exc).lower():
+            raise
+
+
 @dataclass
 class Fact:
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
@@ -1392,6 +1417,12 @@ class Fact:
     # and answer-with-history; a FUTURE value is legitimate (calendar facts).
     # None == event time unknown -> callers fall back to created_at.
     asserted_at: float | None = None
+    # v14 (2026-07-13) epistemic label (cortex transfer #1): the GUARANTEE kind,
+    # orthogonal to provenance ``status`` — {"kind": "proven"|"unbeaten"|
+    # "refuted", ...} per engram/epistemic.py (monotone transitions enforced by
+    # set_epistemic, refuted absorbing). None == unlabeled (every ordinary
+    # fact). The composition layer builds only from labels it can trust.
+    epistemic: dict | None = None
 
 
 # ── P0.3 (2026-06-09) — stage-2 cross-encoder rerank, default ON 2026-06-10 ──
@@ -1754,6 +1785,7 @@ class SemanticMemory:
                     (11, _migrate_v10_to_v11),
                     (12, _migrate_v11_to_v12),
                     (13, _migrate_v12_to_v13),
+                    (14, _migrate_v13_to_v14),
                 ],
             )
         # Cycle #135 (2026-05-17): hot-path recall cache. The default
@@ -2280,8 +2312,9 @@ class SemanticMemory:
                  created_at, embedding, verified_by, status, source_signature,
                  trigger_keywords, applicable_when, worked_example, lineage_to,
                  writer_role, meta_narrative, last_verified_at, embedding_model,
-                 valid_until, derives_from, grounding_score, asserted_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 valid_until, derives_from, grounding_score, asserted_at,
+                 epistemic)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                  proposition=excluded.proposition, topic=excluded.topic,
                  confidence=excluded.confidence,
@@ -2326,7 +2359,12 @@ class SemanticMemory:
                      THEN excluded.grounding_score ELSE facts.grounding_score END,
                  -- v13: preserve a known event time on re-store without one.
                  asserted_at=CASE WHEN excluded.asserted_at IS NOT NULL
-                     THEN excluded.asserted_at ELSE facts.asserted_at END""",
+                     THEN excluded.asserted_at ELSE facts.asserted_at END,
+                 -- v14: a re-store without a label must NOT clobber one earned
+                 -- via set_epistemic (whose monotone rules a plain store()
+                 -- bypasses); an explicit incoming label wins.
+                 epistemic=CASE WHEN excluded.epistemic IS NOT NULL
+                     THEN excluded.epistemic ELSE facts.epistemic END""",
                 (
                     fact.id, fact.proposition, fact.topic, fact.confidence,
                     ",".join(fact.source_episodes), fact.created_at,
@@ -2341,6 +2379,8 @@ class SemanticMemory:
                     df,
                     getattr(fact, "grounding_score", None),
                     getattr(fact, "asserted_at", None),
+                    (_epistemic.serialize(fact.epistemic)
+                     if getattr(fact, "epistemic", None) else None),
                 ),
             )
         # Entity-live write path (2026-06-10, critic caveat on 2aa6769):
@@ -2546,6 +2586,34 @@ class SemanticMemory:
         ):
             return None
         return f
+
+    def set_epistemic(self, fact_id: str, label: dict) -> bool:
+        """Apply an epistemic label under the MONOTONE transition rules
+        (v14, engram/epistemic.py): first labeling free; an ``unbeaten`` bound
+        only grows; ``refuted`` is absorbing; ``proven`` never silently
+        downgrades. Returns False (nothing written) on an unknown id or a
+        forbidden transition — the stored label is the invariant, not the
+        caller's wish. Guarded UPDATE: the WHERE re-checks the current value so
+        a concurrent writer cannot slip a forbidden transition between our read
+        and our write (same discipline as the monotone last_verified_at)."""
+        current = self.get(fact_id)
+        if current is None or not _epistemic.can_transition(
+                current.epistemic, label):
+            return False
+        prev_raw = (_epistemic.serialize(current.epistemic)
+                    if current.epistemic else None)
+        with self._connect() as conn:
+            cur = conn.execute(
+                "UPDATE facts SET epistemic = ? WHERE id = ? "
+                "AND (epistemic IS ? OR epistemic = ?)",
+                (_epistemic.serialize(label), fact_id, prev_raw,
+                 prev_raw or ""),
+            )
+            conn.commit()
+            changed = cur.rowcount > 0
+        if changed:
+            self._cache_version += 1  # recall hot-path cache must see the label
+        return changed
 
     def filter_live_ids(self, fact_ids: list[str]) -> list[str]:
         """Return the subset of ``fact_ids`` that are LIVE (superseded_by IS
@@ -4746,4 +4814,7 @@ class SemanticMemory:
             # (None -> not computed). float when persisted.
             grounding_score=_opt("grounding_score"),
             asserted_at=_opt("asserted_at"),
+            # v14 (2026-07-13) epistemic label. Defensive on pre-v14 rows and on
+            # garbage (parse is fail-open -> None = unlabeled).
+            epistemic=_epistemic.parse(_opt("epistemic")),
         )
