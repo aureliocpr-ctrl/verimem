@@ -365,6 +365,25 @@ class _Metering:
                                   "stored_ok", "rejected")}
                 for r in rows}
 
+    def usage_for(self, tenant_id: str, *,
+                  since_day: str | None = None) -> list[dict[str, Any]]:
+        """Per-DAY usage for one tenant since ``since_day`` (YYYY-MM-DD inclusive) —
+        the billing-period line items a monthly invoice sums. Empty list if none."""
+        sql = ("SELECT day, requests, reads, writes, stored_ok, rejected "
+               "FROM gateway_usage WHERE tenant_id = ?")
+        params: list[Any] = [tenant_id]
+        if since_day:
+            sql += " AND day >= ?"
+            params.append(since_day)
+        sql += " ORDER BY day ASC"
+        try:
+            with sqlite3.connect(self.db_path, timeout=10.0) as conn:
+                conn.row_factory = sqlite3.Row
+                rows = conn.execute(sql, params).fetchall()
+        except sqlite3.Error:
+            return []
+        return [dict(r) for r in rows]
+
 
 def _gateway_min_relevance() -> float | str:
     """The gateway's default read-path abstention floor. ``ENGRAM_GATEWAY_MIN_RELEVANCE``:
@@ -578,6 +597,20 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         from .gateway_plans import get_plan, quota_status
         plan = get_plan(keys.plan_for_tenant(tenant_id))
         return quota_status(plan, facts_used=tenants.get(tenant_id).semantic.count())
+
+    @app.get("/v1/usage")
+    def usage(since: str | None = Query(default=None),
+              tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """The tenant's own metered usage: per-day line items + the period total —
+        the self-serve billing view, and the numbers a monthly invoice sums. ``since``
+        (YYYY-MM-DD) bounds the billing period; omit for all time."""
+        from .gateway_plans import get_plan
+        days = meter.usage_for(tenant_id, since_day=since)
+        cols = ("requests", "reads", "writes", "stored_ok", "rejected")
+        total = {c: sum(int(d.get(c, 0)) for d in days) for c in cols}
+        return {"tenant_id": tenant_id,
+                "plan": get_plan(keys.plan_for_tenant(tenant_id)).name,
+                "since": since, "days": days, "total": total}
 
     @app.post("/v1/memories")
     def add_memory(body: dict, tenant_id: str = Depends(_tenant)) -> dict[str, Any]:

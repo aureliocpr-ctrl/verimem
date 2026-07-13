@@ -190,6 +190,21 @@ def test_fact_quota_rejects_over_limit_write(tmp_path, monkeypatch):
     assert "quota" in r2.json()["detail"] and r2.json()["detail"]["quota"]["facts_over_limit"]
 
 
+def test_usage_endpoint_reports_metered_line_items(tmp_path):
+    keys = GatewayKeys(tmp_path / "k.db")
+    key = keys.create(tenant_id="acme", name="ci", plan="pro")
+    client = TestClient(create_app(data_dir=tmp_path, keys=keys))
+    h = _auth(key)
+    client.post("/v1/memories", headers=h,
+                json={"content": "A fact.", "topic": "t",
+                      "verified_by": ["source-doc:d:1"]})
+    client.get("/v1/search", headers=h, params={"q": "fact"})
+    u = client.get("/v1/usage", headers=h).json()
+    assert u["tenant_id"] == "acme" and u["plan"] == "pro"
+    assert u["total"]["writes"] >= 1 and u["total"]["reads"] >= 1
+    assert len(u["days"]) >= 1 and "day" in u["days"][0]        # per-day line items
+
+
 def test_rate_limit_follows_the_plan(tmp_path, monkeypatch):
     from engram import gateway_plans as gp
     monkeypatch.setitem(gp.PLANS, "slow", gp.Plan(
