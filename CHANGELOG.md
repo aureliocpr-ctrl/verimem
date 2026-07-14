@@ -52,6 +52,18 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   (`ENGRAM_COMPOSER_MIN_SCORE`, default 55 — above the non-committal 50
   fallback) are quarantined, never live. `semantic.set_derives_from` declares
   the logical edge after admission (the gate never trusts the trace).
+- **Deployment metrics at declared λ operating points**
+  (`engram/selective_metrics.py` + `benchmark/selective_deployment.py`, from
+  the Oxford 2603.21172 finding via the cortex research bridge): AUROC says
+  the scores discriminate; TCE says the SLA knob OPERATES at its declared
+  risk. Measured on HaluEval held-out (calibration fit on dev only): raw e5
+  scores discriminate near-oracle (E-AURC 0.0008) but promise a different
+  risk than they deliver (TCE 0.05–0.08, coverage collapses to 12.8% at λ=9);
+  after a pure-PAV isotonic calibration the knob operates at the declared
+  risk — **TCE ≤ 0.011 across λ ∈ {0.5, 1, 3, 9}, observed risk 1.1% at 73%
+  coverage**, every SLA target met. Honest trade-off, declared: the step
+  calibration flattens fine ranking (E-AURC 0.001→0.044) — raw scores for
+  ranking, calibrated scores for operating a declared λ.
 - **Composition daemon** (`engram/compose_daemon.py`, one-shot CLI
   `python -m engram.compose_daemon --db ...`): P85 pre-flight →
   `compose_once(budget)` → P85 post-report. REFUSES to compose when the

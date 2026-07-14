@@ -1,0 +1,150 @@
+{
+  "dataset": "HaluEval qa (MIT), external_readpath splits",
+  "protocol": {
+    "correct": "retrieval-hit@k (id-decidable)",
+    "k": 5,
+    "dev": {
+      "n_answerable": 100,
+      "n_unanswerable": 50,
+      "ingest": {
+        "admitted": 96,
+        "blocked": 4,
+        "by_status": {
+          "model_claim": 96,
+          "quarantined": 4
+        }
+      }
+    },
+    "heldout": {
+      "n_answerable": 200,
+      "n_unanswerable": 50,
+      "ingest": {
+        "admitted": 192,
+        "blocked": 8,
+        "by_status": {
+          "model_claim": 192,
+          "quarantined": 8
+        }
+      }
+    },
+    "calibration": "isotonic (pure PAV) fit on dev records only",
+    "note": "raw confidences are e5 relevance scores, NOT probabilities \u2014 that mismatch is exactly what TCE measures"
+  },
+  "heldout_raw": {
+    "aurc": 0.0306,
+    "e_aurc": 0.0008,
+    "tce_at_lambda": [
+      {
+        "lam": 0.5,
+        "threshold": 0.3333,
+        "coverage": 0.968,
+        "n": 250,
+        "n_answered": 242,
+        "sla_target_risk": 0.6667,
+        "observed_risk": 0.2066,
+        "expected_risk": 0.1515,
+        "tce": 0.0551,
+        "sla_gap": -0.4601,
+        "sla_met": true
+      },
+      {
+        "lam": 1.0,
+        "threshold": 0.5,
+        "coverage": 0.968,
+        "n": 250,
+        "n_answered": 242,
+        "sla_target_risk": 0.5,
+        "observed_risk": 0.2066,
+        "expected_risk": 0.1515,
+        "tce": 0.0551,
+        "sla_gap": -0.2934,
+        "sla_met": true
+      },
+      {
+        "lam": 3.0,
+        "threshold": 0.75,
+        "coverage": 0.96,
+        "n": 250,
+        "n_answered": 240,
+        "sla_target_risk": 0.25,
+        "observed_risk": 0.2,
+        "expected_risk": 0.1506,
+        "tce": 0.0494,
+        "sla_gap": -0.05,
+        "sla_met": true
+      },
+      {
+        "lam": 9.0,
+        "threshold": 0.9,
+        "coverage": 0.128,
+        "n": 250,
+        "n_answered": 32,
+        "sla_target_risk": 0.1,
+        "observed_risk": 0.0,
+        "expected_risk": 0.0835,
+        "tce": 0.0835,
+        "sla_gap": -0.1,
+        "sla_met": true
+      }
+    ]
+  },
+  "heldout_calibrated": {
+    "aurc": 0.074,
+    "e_aurc": 0.0442,
+    "tce_at_lambda": [
+      {
+        "lam": 0.5,
+        "threshold": 0.3333,
+        "coverage": 0.776,
+        "n": 250,
+        "n_answered": 194,
+        "sla_target_risk": 0.6667,
+        "observed_risk": 0.0206,
+        "expected_risk": 0.0284,
+        "tce": 0.0077,
+        "sla_gap": -0.646,
+        "sla_met": true
+      },
+      {
+        "lam": 1.0,
+        "threshold": 0.5,
+        "coverage": 0.732,
+        "n": 250,
+        "n_answered": 183,
+        "sla_target_risk": 0.5,
+        "observed_risk": 0.0109,
+        "expected_risk": 0.0,
+        "tce": 0.0109,
+        "sla_gap": -0.4891,
+        "sla_met": true
+      },
+      {
+        "lam": 3.0,
+        "threshold": 0.75,
+        "coverage": 0.732,
+        "n": 250,
+        "n_answered": 183,
+        "sla_target_risk": 0.25,
+        "observed_risk": 0.0109,
+        "expected_risk": 0.0,
+        "tce": 0.0109,
+        "sla_gap": -0.2391,
+        "sla_met": true
+      },
+      {
+        "lam": 9.0,
+        "threshold": 0.9,
+        "coverage": 0.732,
+        "n": 250,
+        "n_answered": 183,
+        "sla_target_risk": 0.1,
+        "observed_risk": 0.0109,
+        "expected_risk": 0.0,
+        "tce": 0.0109,
+        "sla_gap": -0.0891,
+        "sla_met": true
+      }
+    ]
+  },
+  "ts": "2026-07-14T19:21:58"
+}
