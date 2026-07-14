@@ -7,12 +7,15 @@ appears. This draft is written to be falsifiable, not promotional: the
 unflattering rows are in the tables, and the limitations section is not an
 afterthought.
 
-> **Honesty ledger for this draft.** Only three external papers are cited that
-> the authors verified against the live arXiv abstract during writing
-> (2606.30306, 2603.21172, 2606.12703). Product competitors (Mem0, Zep, Letta,
-> MemOS) and standard datasets (HaluEval, SQuAD 2.0, LoCoMo, LongMemEval) are
-> cited as software/data that exists. Any claim we have not re-run is marked
-> `[UNVERIFIED]` and must not survive to submission.
+> **Honesty ledger for this draft.** All seven external arXiv references were
+> verified against their live abstract during writing (2310.08560, 2402.17753,
+> 2410.10813, 2511.03506, 2603.21172, 2606.12703, 2606.30306) — title, authors,
+> and the specific claim we attribute to each. Product competitors (Mem0, Zep,
+> MemOS) and standard datasets (HaluEval, SQuAD 2.0) are cited as software/data
+> that exists. Every empirical number is cited to the result file it came from;
+> none is third-party audited. Any claim we cannot back this way is marked
+> `[UNVERIFIED]` and must not survive to submission — there are none left in
+> this draft.
 
 ---
 
@@ -282,6 +285,15 @@ the engine ships no floor, the bolted threshold was chosen on the test set, and
 the flat line answers nothing it isn't sure of — coverage 0.55 vs our 0.62.
 The two controls behave as pre-registered: floor-off fabricates, scrambled
 collapses.
+
+![NET(λ) on HaluEval QA](figures/net_lambda_halueval.png)
+
+*Figure 1. NET(λ) on HaluEval QA. Each line is (correct − λ·wrong)/n drawn
+directly from the system's own counts — nothing is hand-plotted. As-shipped mem0
+and the floor-off control cross zero just past λ=2; Verimem's default stays
+positive to λ≈45; a floor tuned on the eval gives mem0 a flat line (zero wrong)
+that overtakes the default only at λ>4. Rendered by
+`benchmark/plot_veribench_net.py` from the committed result JSONs.*
 
 **SQuAD 2.0** (harder — distractor passages compress the score band).
 
