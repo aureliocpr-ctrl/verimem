@@ -69,6 +69,22 @@ honest *"I don't know."*
   schedule with cron/Task Scheduler): the daemon refuses to compose when the
   engine's own writes already dominate the recent stream (self-echo
   guard-rail).
+- **Read-path guardian** — when the store holds a better-guaranteed truth about
+  the same subject, a read doesn't just abstain: it *corrects*, citing both
+  facts (`correct_read` → ACCEPT / CORRECT / ABSTAIN; a refuted fact is never
+  served). Paired with **active probes** that build the query which would
+  falsify a stored fact — finding independent counter-evidence proposes a
+  `refuted` label, surviving grows its `unbeaten` bound — the store falsifies
+  itself instead of waiting for a contradiction to arrive.
+- **Ignorance map** — "I don't know" becomes "here is *what* I'm missing": each
+  unanswerable query is classed (no evidence / below the floor / evidence
+  quarantined / a live conflict) with the concrete source or audit that would
+  answer it — the active complement of abstention.
+- **Provenance signing** *(opt-in)* — an unforgeable HMAC of *who is speaking*
+  rides inside each write's provenance ref, complementing the entailment gate's
+  *what deserves admission*: content authenticity **and** channel authenticity,
+  the two halves no deterministic content filter alone can certify against an
+  adaptive adversary.
 - **Local-first** — SQLite storage, local embeddings, injectable LLM. Runs
   air-gapped (`verimem airgap` verifies zero-egress configuration).
 

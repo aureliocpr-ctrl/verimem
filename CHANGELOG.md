@@ -16,6 +16,30 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   `explain()` default is unchanged (0.0) for backward compatibility.
 
 ### Added
+- **Guardian at the read-path** (`engram/guardian.py`, `correct_read`): not
+  just block-or-abstain — when the store contains a better-guaranteed truth
+  about the same subject, the read SERVES it as a correction with both facts
+  cited. ACCEPT / CORRECT (a rival with a strictly better epistemic label wins;
+  refuted is disqualified) / ABSTAIN (a real conflict with no epistemic winner
+  is shown, never picked silently). Cortex transfer (lab: 0 false answers over
+  2000 queries).
+- **Active probes** (`engram/active_probe.py`, `probe_fact`): the store BUILDS
+  the query that would falsify a fact instead of waiting for a contradiction —
+  independent non-engine counter-evidence → propose `refuted`; survival grows
+  the `unbeaten` bound (= probes survived). `actor:*` rivals never count (P85).
+  Vivarium P87.
+- **Provenance signing on the write-path** (`engram/provenance_signing.py`):
+  the SMSR-complement (arXiv 2606.12703, Theorem 1 — no deterministic
+  provenance-free filter certifies safety against an adaptive adversary). An
+  HMAC over (ref-body, proposition) travels INSIDE the `verified_by` ref
+  (`source-doc:X:t1#sig=<hmac>`) — zero schema change, no replay across facts,
+  `actor:*` exempt (P85). `audit_store` reports coverage and names offenders.
+  Default OFF (`ENGRAM_PROVENANCE_KEY`).
+- **Ignorance map** (`engram/ignorance_map.py`): "I don't know" upgraded to
+  "here is WHAT I'm missing" — per failed query, the ignorance CLASS
+  (no_evidence / below_floor / quarantined_only / conflict / answerable) and
+  the concrete acquisition action that would cure it. The active complement of
+  abstention (Vivarium P83). Read-only; the daemon's future work-list.
 - **Source-trust reproduced on a REAL held-out corpus**
   (`benchmark/source_trust_realcorpus.py`, HaluEval QA): pre-registered C1–C4
   hold on 3/3 seeds under honest coherence — a manufactured-consensus cartel
