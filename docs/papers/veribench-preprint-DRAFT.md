@@ -334,6 +334,15 @@ Raw independence alone leaves wrong-liar at OFF's 0.25 (it merges the honest too
 so nobody is punished) — end-to-end evidence that the deconfound is load-bearing,
 not decorative.
 
+![Source-trust on a real corpus](figures/source_trust_realcorpus.png)
+
+*Figure 2. Per-source consistency trust on the real corpus (seed 11). Under the
+naive ≥2-distinct rule the cartel self-confirms to 0.90; raw independence merges
+every source to the 0.50 prior (nobody is judged); independence + audit-
+deconfounding demolishes the cartel to 0.20 while restoring honest sources to
+0.95 and sinking the liar to 0.05. Rendered by `benchmark/plot_source_trust.py`
+from the committed result JSON.*
+
 **Honest-noise robustness curve** (`benchmark/source_trust_noise_curve.py`, 18
 points, noise 0→0.25 × seeds 11–13, declared bi-encoder regime). No reputation
 inversion at any noise (H2 pass 18/18). Wrong answers written by **deceivers =
@@ -382,9 +391,11 @@ external scrutiny we cannot self-supply).
 - **Provenance is not causality.** The engine certifies who asserted a fact, how
   independently it is corroborated, and how fresh it is — not that it is causally
   true (§4 axis B). A do(X) question needs an interventional record.
-- **End-to-end QA is self-judged.** Where we report parity on HaluMem-style QA,
-  the judge is Claude, not GPT-4, and the comparison to a competitor's
-  self-reported number is parity, not a win — we say it that way.
+- **No LLM judge here; elsewhere it is self-judged.** VeriBench correctness in
+  this paper is id-decidable retrieval, deliberately judge-free. The project's
+  *separate* end-to-end QA results (HaluMem-style, not reported in this paper)
+  use a Claude judge, not GPT-4, and land at parity with a competitor's
+  self-reported number — parity, not a win, and we say it that way.
 - **Adoption and distribution.** The engine has essentially no external adoption
   yet; the trust guards ship default-OFF; and the benchmark harness is not on
   PyPI by design (it would squat the generic top-level `benchmark` name) — it is
