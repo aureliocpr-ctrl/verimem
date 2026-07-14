@@ -108,22 +108,134 @@ kind of external scrutiny this paper invites.
 ---
 
 ## 2. Related work
-<!-- BLOCCO 2: mem0/Zep/Letta/MemOS (prodotti, competitor review), HaluMem/
-LoCoMo/LongMemEval (benchmark retrieval), SMSR 2606.12703 (provenance gate,
-VERIFICATO), Oxford 2603.21172 (selective prediction, VERIFICATO), survey
-2606.30306 (VERIFICATO). Verificare OGNI altro arXiv prima di citarlo. -->
-*(da scrivere — blocco 2)*
+
+**Memory engines optimise retrieval, not write hygiene.** Mem0 stores via
+flat-vector summary; Zep/Graphiti adds temporal anchoring at *retrieval* time;
+Letta/MemGPT (arXiv:2310.08560) proposes OS-style virtual context management with
+memory tiers and a paging policy — its abstract proposes no pre-write
+verification gate; MemOS and HippoRAG are likewise read-time architectures. A
+structured review of these systems (in-repo, `benchmark/`) found none ships a
+write-admission gate: they store what the extractor emits and rely on retrieval
+or downstream evaluation to catch a lie. This is the gap our write path targets.
+
+**Memory benchmarks measure quality, not priced error.** HaluMem (arXiv:2511.03506)
+is the first *operation-level* hallucination benchmark for agent memory
+(extraction / updating / QA), and shows hallucinations accumulate at extraction
+and updating and propagate to QA — precisely the write-side failure a gate
+should stop. LongMemEval (arXiv:2410.10813) benchmarks five long-term memory
+abilities (extraction, multi-session reasoning, temporal reasoning, knowledge
+updates, and — notably — *abstention*) over 500 curated questions. LoCoMo
+(arXiv:2402.17753) scores long multi-session conversational QA. All three are
+valuable; none of them **prices** a wrong answer against an abstention with a
+declared cost, which is the specific hole VeriBench (§4) fills: on the answerable
+half a gated and an ungated store retrieve almost identically, so a symmetric
+score cannot separate a confident fabrication from an honest silence.
+
+**The governance gap is now named in the literature.** A 2026 survey of always-on
+LLM agents (arXiv:2606.30306) finds the field concentrates far more on
+accumulating and retrieving state than on governing it. SMSR (arXiv:2606.12703)
+proves a complementary result — *no provenance-free retrieval-time filter can
+certify safety against an adaptive multi-session adversary* — and ships an
+HMAC-signed write-path (unsigned-injection success 93–100%→0%). This positions
+our two gates as complementary: a **truth-gate** (does the source entail the
+fact?) plus a **provenance-gate** (is the writer's channel authentic?) — content
+and authorship, neither sufficient alone. On the read side, Oxford
+(arXiv:2603.21172) shows a strong discrimination score does not imply a
+selective-prediction policy that operates at a stated risk — the finding our
+calibration section (§5.4) acts on.
 
 ## 3. VeriMem: the engine
-<!-- write-gate L1 lexical + L4 grounding (grounding_gate.py, AUROC 0.971);
-provenance on read; source_trust.py two channels + independence + deconfound;
-epistemic labels; composition ring + P85 self-provenance. Solo feature reali. -->
-*(da scrivere — blocco 3)*
+
+VeriMem is a local-first memory engine (SQLite, local embeddings, injectable
+LLM) whose `add()` routes every write through an admission gate and whose
+`search()` returns provenance on every read.
+
+**Write-path admission gate** (`engram/anti_confab_gate.py`). Two layers, honest
+about what runs by default. *L1 — lexical screen (always on, ~13 ms, no LLM):*
+unsupported "it works / verified / done" self-claims that carry no evidentiary
+anchor are downgraded to `quarantined` (hidden from default recall). *L4 —
+source⊢fact entailment (the moat, opt-in per call):* given a cited source, the
+write is admitted only if the source actually *entails* the fact
+(`engram/grounding_gate.py`, AUROC 0.971 on SNLI, judge-independent; §5.1). A
+below-threshold write is quarantined, not stored as fact. The gate never raises —
+a defense must never crash the write path.
+
+**Provenance on read.** Recall returns each fact with its `status` and write-time
+`grounding_score`, so a caller can trust-condition rather than trust blindly.
+`update()` never destroys the prior fact — it **supersedes** it, leaving an
+auditable `history()`; the store is bi-temporal (transaction time vs event
+time), enabling as-of queries. `explain()` returns a TrustReport: provenance,
+checks, and any conflict, stated or abstained-on with the reason.
+
+**Two-channel per-source trust** (`engram/source_trust.py`, flag-gated,
+default-OFF). Each writing source earns a reputation from two complementary
+channels: *consistency* (use-independent inter-source agreement on the write
+stream) and *outcome* (a-posteriori feedback when a claim fails in use). Trust is
+the **minimum** of the observed channels — conservative by design: each channel
+covers the other's named hole (consistency alone falls to a trusted sleeper;
+outcome alone collapses under churn). Independence clustering collapses copies or
+colluders of one feed to a single witness so manufactured consensus cannot
+self-confirm; audit-**deconfounding** conditions agreement on audit-revealed-false
+values (the do-operator) so honest sources that agree because both are right are
+not false-merged (§5.3).
+
+**Derived knowledge, through the same gate.** Three further components, each
+flag-gated and TDD-covered, extend the engine toward a self-improving loop while
+keeping the gate as the single point of admission. *Epistemic labels*
+(`engram/epistemic.py`): a fact can carry the KIND of guarantee behind it —
+`proven` / `unbeaten(bound)` / `refuted(counterexample)` — with monotone
+transitions (a bound only grows, refuted is absorbing). *Composition ring*
+(`engram/composer.py`): derives new candidate facts from verified ones by
+declared substitution and pushes each through the SAME admission gate — survivors
+are signed, traced (`derives_from`, retractable), and labeled with the exact
+check that passed. *Self-provenance* (`engram/self_provenance.py`): engine writes
+are signed `actor:*` and never testify (they cannot manufacture consensus about
+their own claims), with a monitor that alarms when the engine's own writes come
+to dominate the recent stream. These are research-grade and default-OFF; we
+include them because they are implemented and tested, and flag them as such.
 
 ## 4. VeriBench: the benchmark
-<!-- NET(λ) definizione + decision theory; pre-registration; 3 assi (real/
-causal/adversarial); controlli-che-falliscono; mem0 adapter same-footing. -->
-*(da scrivere — blocco 4)*
+
+**The metric.** For a system that, per query, either answers or abstains:
+
+  NET(λ) = (correct − λ · wrong) / n
+
+A correct answer earns +1, a wrong one −λ, an abstention 0. λ is the operator's
+declared cost of a wrong answer relative to a silence. This is not an arbitrary
+weighting: answering a candidate whose probability of being correct is p earns
+p·(+1) + (1−p)·(−λ), so a system should answer iff p > λ/(1+λ). That break-even
+threshold is exactly the SLA knob a deployment tunes to (§3, §5.4) — **VeriBench
+scores the store at the same number the operator tunes it with.** We sweep
+λ ∈ {1, 2, 5, 10} (symmetric → legal/medical) and report the crossover λ =
+correct/wrong at which a system turns net-negative, plus coverage =
+(correct+wrong)/n.
+
+**Pre-registration.** The hypothesis, metric, λ sweep and refutation conditions
+are committed to `benchmark/veribench/PREREGISTRATION.md` before any run; the
+scoring and outcome mapping were written and unit-tested first
+(`tests/test_veribench_*.py`). A favourable result cannot be manufactured by
+choosing the metric after the fact.
+
+**Controls that must fail.** The benchmark ships two: a *scrambled* store (must go
+deeply net-negative — it does, NET(1)=−0.94) and the identical retrieval with the
+abstention *floor off* (must fabricate on unanswerables — it does, 100 wrong
+answers). If a control passes, the benchmark is broken. This is the discipline a
+trust benchmark owes: it must be able to fail.
+
+**Three axes.** (A) *Real corpus* — external answerable+unanswerable data
+(§5.2). (B) *Causal* — a trust-only store that faithfully corroborated a spurious
+correlation answers do(X) queries confidently wrong and nets negative even at
+λ=1 (`tests/test_veribench_causal_axis.py`): provenance is not causality, and a
+benchmark that can't distinguish them rewards the confusion. (C) *Adversarial* —
+collusion plus a trusted sleeper; only a two-channel policy (independent
+corroboration *and* outcome) stays net-positive, each single channel failing one
+of the two attacks (`tests/test_veribench_adversarial_axis.py`).
+
+**Same footing.** Head-to-head runs use the identical embedder on both engines,
+offline; the competitor (mem0) runs through an in-tree adapter
+(`benchmark/veribench/mem0_adapter.py`) as the worked example. Capabilities an
+engine's API cannot express are marked `not_supported`, never silently passed.
+The invitation is open: maintainers can PR their own official adapter.
 
 ## 5. Experiments
 
@@ -238,18 +350,51 @@ the step calibration flattens fine ranking (E-AURC 0.0008→0.044). Raw scores f
 ranking, calibrated scores for operating a declared λ.
 
 ## 6. Limitations
-<!-- self-run non-audited; e5 band compressa (over-abstention su store piccoli);
-honest-noise degrada la separazione trust; trust⊥causalità; 0 adozione;
-benchmark/ non su PyPI; judge Claude non GPT-4 su HaluMem. -->
-*(da scrivere — blocco 6)*
+
+We state these plainly; several are the reason this paper exists (to invite the
+external scrutiny we cannot self-supply).
+
+- **Self-run, not third-party audited.** Every number is reproducible from the
+  repository, but none is certified by an independent party. That is the central
+  limitation of a *trust* product whose evidence is self-produced, and it is why
+  we publish the pre-registrations, the raw JSON, and the controls-that-fail.
+- **Compressed score band.** With `e5-base`, present-vs-absent relevance scores
+  overlap by ~0.03–0.05, so the abstention floor is a precision/recall dial, not
+  a clean separator; it over-abstains on very small stores. A sharper embedder is
+  the lever we do not pull here.
+- **Trust degrades under honest noise.** §5.3's curve: when trusted sources
+  themselves err (~15%+), the separation thins. The adversarial component is
+  killed at every noise level (0/18 deceiver-written wrong answers), but the
+  residue of honest slips is a per-claim disease that source trust does not, and
+  should not, cure.
+- **Provenance is not causality.** The engine certifies who asserted a fact, how
+  independently it is corroborated, and how fresh it is — not that it is causally
+  true (§4 axis B). A do(X) question needs an interventional record.
+- **End-to-end QA is self-judged.** Where we report parity on HaluMem-style QA,
+  the judge is Claude, not GPT-4, and the comparison to a competitor's
+  self-reported number is parity, not a win — we say it that way.
+- **Adoption and distribution.** The engine has essentially no external adoption
+  yet; the trust guards ship default-OFF; and the benchmark harness is not on
+  PyPI by design (it would squat the generic top-level `benchmark` name) — it is
+  run from the git checkout.
 
 ## 7. Conclusion
-*(da scrivere — blocco 7)*
+
+Agent memory is graded on recall, but deployed under a cost. We argued the two
+are not the same axis, and that closing the gap needs a metric that prices the
+wrong answer (VeriBench) and a defense that lives at the write boundary
+(VeriMem's admission gate + two-channel trust). On external corpora, a raw store
+without a floor turns net-negative exactly where fabrication starts to cost,
+while a gated-and-calibrated store stays positive far longer; a manufactured
+cartel is demolished by independence + deconfounding on a real held-out corpus,
+3/3 seeds; and abstention, once calibrated, operates at the risk the operator
+declared. None of this is third-party audited — which is precisely the invitation
+this preprint makes: the pre-registrations, the raw results, and the
+controls-that-fail are all in the open repository, for anyone to break.
 
 ---
 
 ## References
-<!-- Solo verificati + codebase. Da completare nel blocco 2. -->
 - [VERIFIED] arXiv:2606.30306 — *Always-On Agents: A Survey of Persistent Memory, State, and Governance in LLM Agents* (Ding, Nannapaneni, Liu, Zhang, 2026).
 - [VERIFIED] arXiv:2603.21172 — *Entropy Alone is Insufficient for Safe Selective Prediction in LLMs* (Phillips, Gustafsson, Wu, Thakur, Clifton, Oxford).
 - [VERIFIED] arXiv:2606.12703 — *SMSR: Certified Defence Against Runtime Memory Poisoning in Persistent LLM Agent Systems* (Sharma, 2026).
@@ -258,4 +403,10 @@ benchmark/ non su PyPI; judge Claude non GPT-4 su HaluMem. -->
 
 ---
 
-*Path: `docs/papers/veribench-preprint-DRAFT.md`. Status: DRAFT (skeleton + §1). Supersedes the narrower `write-time-confabulation-gates-DRAFT.md` (2026-05, keyword-gate only, unverified refs).*
+*Path: `docs/papers/veribench-preprint-DRAFT.md`. Status: DRAFT v1 — all 7
+sections written (~3.7k words). Every empirical figure is cited to its
+result file; every external arXiv reference was verified against its live
+abstract during writing. Not yet: a final read-through pass, figure/plot
+rendering, and author/affiliation + arXiv endorsement (operator's call).
+Supersedes the narrower `write-time-confabulation-gates-DRAFT.md` (2026-05,
+keyword-gate only, unverified refs).*
