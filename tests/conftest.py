@@ -11,6 +11,17 @@ import os as _os
 _os.environ.setdefault("HIPPO_EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 _os.environ.setdefault("HIPPO_EMBEDDING_DIM", "384")
 
+# DIAGNOSTIC (2026-07-16, temporary): the windows/py3.12 leg hangs AFTER the
+# suite passes (KeyboardInterrupt in subprocess.wait at teardown). Two guessed
+# fixes missed. Dump every thread's stack once, in CI only, past the point the
+# suite should be done — so the NEXT windows run prints the exact frame that is
+# blocking on subprocess.wait, and the fix stops being a guess. exit(True) so
+# the runner also stops cleanly instead of hanging to a timeout. Remove once the
+# blocking frame is identified.
+if _os.environ.get("CI"):
+    import faulthandler as _fh
+    _fh.dump_traceback_later(850, exit=True)
+
 import hashlib
 import re
 from pathlib import Path
