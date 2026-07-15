@@ -1,11 +1,14 @@
 # Design: `user_belief` — a third epistemic class against sycophancy (Giro 2)
 
-**Status**: FOUNDATION SHIPPED (`af22b04`), rest is DESIGN. 2026-07-15.
+**Status**: FOUNDATION + INGEST TAGGING SHIPPED (`af22b04`, `0e670e1`), rest is DESIGN. 2026-07-16.
 **Resolved empirically** (the load-bearing §3.1 caveat): a probe confirmed `quarantined`
 is hidden from default recall via explicit SQL `status NOT IN (...)` filters (five of
 them), NOT the opt-in rank floor. `user_belief` was added to all five; §5 steps 1-4 are
-GREEN (status valid, ranked, hidden, stored). Still open: the extraction tagging that
-PRODUCES `user_belief` (§5 step 4 tagging), `include_beliefs` retrieval, guardian, bench.
+GREEN (status valid, ranked, hidden, stored) AND the ingest now PRODUCES it:
+`ingest_conversation(..., tag_beliefs=True)` maps a `BELIEF:`-tagged extraction line to
+`user_belief` instead of `model_claim` (opt-in, default off, the bench constant
+`ATOMIC_EXTRACT_SYSTEM` untouched — `0e670e1`, 4 TDD tests). Still open:
+`include_beliefs` retrieval opt-in, guardian correction, MemSyco delta.
 **Goal**: stop the memory from laundering an unverified USER assertion into a stored
 *fact* the recall then serves back as truth — the systemic sycophancy gap the external
 review flagged (README claims "anti-sycophancy on the write path"; today that is only an
@@ -84,9 +87,10 @@ personalization, strict toward *unverified factual assertions*.
 2. RED: test that `add([{user: "I prefer dark mode"}])` (preference) **stays** in default
    recall (personalization not broken).
 3. RED: test guardian serves a `verified` fact over a conflicting `user_belief`.
-4. GREEN: status + rank + recall filter + extraction-prompt tag + ingest mapping.
-5. MEASURE: wire MemSyco-Bench, publish sycophancy-rate before/after (the claim gets its
-   number attached — no "anti-sycophancy" claim without the delta).
+4. GREEN (SHIPPED `0e670e1`): status + rank + recall filter [`af22b04`] +
+   extraction-prompt tag + ingest mapping [`0e670e1`, behind `tag_beliefs`, default off].
+5. MEASURE (open): wire MemSyco-Bench, publish sycophancy-rate before/after (the claim
+   gets its number attached — no "anti-sycophancy" claim without the delta).
 
 ## 6. Open decisions (need a call, not a guess)
 

@@ -77,8 +77,12 @@ is mostly honest; the headline sentence and the site are ahead of the defaults.
 4. **L4 moat opt-in + `claude` backend + n=15 calibration** — recalibrate (n≥300-500),
    then flip `balanced` to `ground=True` + backend `local` (failover already safe).
 5. **SDK abstention floor off** — decide: flip `ENGRAM_MIN_RELEVANCE` default or align README.
-6. **Systemic anti-sycophancy** (beyond L1.21 keyword/embedding): no `user_belief` epistemic
-   class, no retrieval-time caveat, no MemSyco-Bench number. Giro 2. Existing hooks that make
+6. **Systemic anti-sycophancy** (beyond L1.21 keyword/embedding): PARTIALLY CLOSED (Giro 2).
+   The `user_belief` epistemic class now exists (`af22b04`) AND the ingest produces it —
+   `ingest_conversation(..., tag_beliefs=True)` tags an unverified factual assertion
+   `BELIEF:` → `status="user_belief"` → out of default recall (`0e670e1`, opt-in, default off).
+   STILL OPEN: `include_beliefs` recall opt-in, guardian correction, and the MemSyco-Bench
+   number (no "anti-sycophancy" claim until the delta is measured). Existing hooks that made
    it cheap: `writer_role` already in `classify_admission` (`admission_gate.py:100`) and in
    `run_validation_gate` (`anti_confab_gate.py:633`), `FLAG_LOW_PROVENANCE` verdict, WF3
    personal/dev context split, `_is_honest_reported` (reported-speech guard, `anti_confab_gate.py:244-266`).
@@ -158,13 +162,25 @@ Calibration on real HaluMem (``benchmark/local_gate_calibrate.py``, zero-API CPU
    suppression doesn't cover. Low, but a candidate mini-fix and direct input to
    the `user_belief` work (Giro 2).
 
-## 9. CI status (honest, 2026-07-15)
+## 9. CI status (honest, updated 2026-07-16)
 
-NOT fully green — but the residual red is preexisting, not from this work:
-- **5/6 jobs green** with these commits (ubuntu py3.10/3.11/3.12/3.13 + macOS).
-- **py3.10 fixed** here (the `tomllib` collection break, commit `69dbee5`).
-- **windows py3.12 flakes red** (timeout/KeyboardInterrupt at ~15min under the
-  45-min cap) — red on `feat(graph)` and the FLAGS-audit commit BEFORE any code
-  change of mine; the workflow comment already documents a prior windows flake
-  (2026-06-08). Infra/flakiness, not a code defect. A real "green main"
-  procurement signal still needs the windows leg stabilized (out of scope here).
+The windows/py3.12 red is RESOLVED — and it was a CODE DEFECT, not infra
+flakiness (this section's earlier "out of scope / infra" call was WRONG):
+- **Root cause** (`ae48633`): `encode_service._pid_alive` used the POSIX idiom
+  `os.kill(pid, 0)` for liveness. On Windows `signal.CTRL_C_EVENT == 0`, so
+  CPython routes it to `GenerateConsoleCtrlEvent(CTRL_C_EVENT, pid)` — a Ctrl-C
+  to the console process group pytest shares. `test_acquire_lock_refused_...`
+  calls `_pid_alive(os.getppid())`, sending Ctrl-C to the runner's group; it
+  bounced back as KeyboardInterrupt and killed the suite at ~66% (ubuntu ran
+  6877 tests, windows was interrupted at 4545). Intermittent = console-event
+  delivery race — which is exactly why two earlier GUESSED fixes (a reap-orphan
+  fixture, a faulthandler dump) missed and were reverted; both rested on a
+  disproven "suite passes then hangs at teardown" hypothesis (the 66% interrupt
+  never reached teardown).
+- **Fix**: Windows liveness via `OpenProcess`/`GetExitCodeProcess` (ctypes), no
+  console control event; POSIX keeps the signal-0 idiom. Deterministic
+  regression (monkeypatch `os.kill` to raise on win32).
+- **py3.10** collection break (`tomllib`) fixed earlier (`69dbee5`).
+- Honest caveat: the flake was intermittent, so one green windows run is not the
+  proof — confidence comes from the removed mechanism + the deterministic test,
+  not from CI passing once.
