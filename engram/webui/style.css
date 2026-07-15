@@ -231,6 +231,47 @@ body {
   paint-order: stroke; stroke: var(--bg); stroke-width: 3px;
   transition: opacity .18s; }
 #graph .node.nolabel text { opacity: 0; }   /* LOD: quiet until it matters */
+
+/* ---- the graph ALIVE (2026-07-15) ---------------------------------------
+   Isolated entities are real memory with no relation yet: drawn small and
+   quiet in the outer belt — present and countable, never mistaken for
+   structure. A node the engine just touched FIRES; one just born GROWS.
+   These are driven by /v1/events/flow (flow.entity), i.e. the real store. */
+#graph .node.isolated circle, #graph .node.quiet circle {
+  fill: var(--node); opacity: .45; stroke-width: 1; }
+#graph .node.isolated text, #graph .node.quiet text {
+  font-size: 9.5px; opacity: 0; }
+#graph .node.isolated:hover circle, #graph .node.quiet:hover circle {
+  opacity: 1; }
+/* has relations, just not inside this window — a hair warmer than a true
+   isolate, so the belt does not claim two different things with one look */
+#graph .node.quiet circle { opacity: .62; }
+
+@keyframes node-fire {
+  0%   { transform: scale(1);   stroke-width: 2.5; }
+  45%  { transform: scale(1.9); stroke-width: 4; }
+  100% { transform: scale(1);   stroke-width: 1.5; }
+}
+#graph .node.firing circle {
+  transform-box: fill-box; transform-origin: center;
+  stroke: var(--lit); animation: node-fire 1.1s cubic-bezier(.22,.61,.36,1);
+  filter: drop-shadow(0 0 12px var(--lit-glow)); opacity: 1 !important; }
+#graph .node.firing text { opacity: 1 !important; }
+
+@keyframes node-born {
+  from { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.35); opacity: 1; }
+  to   { transform: scale(1); opacity: 1; }
+}
+#graph .node.born circle {
+  transform-box: fill-box; transform-origin: center;
+  animation: node-born .75s cubic-bezier(.22,.61,.36,1);
+  stroke: var(--ok); stroke-width: 2.5; }
+#graph .node.born text { opacity: 1 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  #graph .node.firing circle, #graph .node.born circle { animation: none; }
+}
 #graph .node[data-type="person"] circle { fill: var(--node-person); }
 #graph .node[data-type="org"] circle    { fill: var(--node-org); }
 #graph .node[data-type="place"] circle  { fill: var(--node-place); }

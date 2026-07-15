@@ -22,6 +22,7 @@ from typing import Any
 
 from .entity_extract_lite import extract_entities_lite
 from .entity_kg import Entity, EntityStore
+from .flow_events import emit_flow as _emit_flow
 
 #: co-occurrence pairs are wired between the FIRST N entities of a fact —
 #: bounds the per-fact clique to N*(N-1)/2 edges (8 -> 28).
@@ -69,12 +70,19 @@ def populate_entities_for_fact(
     if not entities:
         return (0, 0)
     eids: list[str] = []
+    created: list[dict[str, str]] = []
     linked = 0
     edges = 0
     with kg.session():
         for e in entities:
-            eid = kg.store(Entity(canonical_name=e["name"],
-                                  type=e.get("type", "")))
+            ent = Entity(canonical_name=e["name"], type=e.get("type", ""))
+            eid = kg.store(ent)
+            # store() returns the EXISTING id on a name_norm hit and the new
+            # object's id otherwise — that identity is how we tell a node
+            # being BORN from one being touched again, with no extra query.
+            if eid == ent.id:
+                created.append({"id": eid, "name": ent.canonical_name,
+                                "type": ent.type})
             kg.link_fact(str(fact_id), eid)
             eids.append(eid)
             linked += 1
@@ -87,6 +95,10 @@ def populate_entities_for_fact(
                 kg.add_edge(head[j], head[i], "co_occurs",
                             weight=1.0, source_fact_id=str(fact_id))
                 edges += 2
+    # The graph's life, observable: which nodes were BORN and which lit up.
+    # Flow metadata only (names + ids), never the fact's text.
+    _emit_flow("flow.entity", fact_id=str(fact_id), created=created,
+               touched=eids, edges=edges)
     return (linked, edges)
 
 

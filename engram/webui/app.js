@@ -212,7 +212,10 @@
   function edgeKey(e) { return e.src + "|" + e.dst + "|" + e.predicate; }
 
   function simStep() {
-    var nodes = G.nodes, K = G.K, i, j;
+    // the physics runs on the CONNECTED core only: the isolated belt is
+    // pinned decoration — letting it into the n² repulsion would both cost
+    // 300²/frame and crush the structure it surrounds.
+    var nodes = G.sim && G.sim.length ? G.sim : G.nodes, K = G.K, i, j;
     for (i = 0; i < nodes.length; i++) { nodes[i].ax = 0; nodes[i].ay = 0; }
     for (i = 0; i < nodes.length; i++) {
       var a = nodes[i];
@@ -358,13 +361,45 @@
     G.w = svg.clientWidth || 860; G.h = svg.clientHeight || 540;
     G.vb = { x: 0, y: 0, w: G.w, h: G.h };
     svg.setAttribute("viewBox", "0 0 " + G.w + " " + G.h);
-    G.K = Math.sqrt((G.w * G.h) / Math.max(1, G.nodes.length)) * 0.62;
-    G.nodes.forEach(function (n, i) {
-      var ang = (i / G.nodes.length) * 2 * Math.PI;
-      n.x = G.w / 2 + (G.w / 3.4) * Math.cos(ang);
-      n.y = G.h / 2 + (G.h / 3.4) * Math.sin(ang);
-      n.vx = 0; n.vy = 0; G.byId[n.id] = n;
+    // TWO ZONES (2026-07-15). Every real node is drawn, but structure and
+    // corpus get different places instead of one mush: the CONNECTED nodes
+    // live in the force layout at the centre, the ISOLATED ones (no edge
+    // touches them — they are still real memory) sit in an ordered outer
+    // belt, pinned, so they stay countable and legible without polluting
+    // the structure. Mixing them was the "graficamente matto" bug.
+    // WHERE a node goes is decided by the edges VISIBLE in this window, not
+    // by its degree in the whole store: a node whose relations all fall
+    // outside the window has no spring here, so putting it in the force core
+    // just parks it on the seed ring forever (it looked like a bracelet).
+    // `n.isolated` (real degree 0) stays the TRUTH we style/report with.
+    var wired = {};
+    G.edges.forEach(function (e) { wired[e.src] = 1; wired[e.dst] = 1; });
+    var conn = G.nodes.filter(function (n) { return wired[n.id]; });
+    var iso = G.nodes.filter(function (n) { return !wired[n.id]; });
+    G.K = Math.sqrt((G.w * G.h) / Math.max(1, conn.length || 1)) * 0.52;
+    var cx = G.w / 2, cy = G.h / 2;
+    conn.forEach(function (n, i) {
+      var ang = (i / Math.max(1, conn.length)) * 2 * Math.PI;
+      n.x = cx + (G.w / 5) * Math.cos(ang);
+      n.y = cy + (G.h / 5) * Math.sin(ang);
+      n.vx = 0; n.vy = 0; n.pinned = false; G.byId[n.id] = n;
     });
+    // the belt: concentric rings outside the force field, evenly spaced
+    var beltR0 = Math.min(G.w, G.h) * 0.42;
+    var perRing = Math.max(24, Math.ceil(iso.length / 3));
+    iso.forEach(function (n, i) {
+      var ring = Math.floor(i / perRing);
+      var idx = i % perRing;
+      var count = Math.min(perRing, iso.length - ring * perRing);
+      var ang = (idx / Math.max(1, count)) * 2 * Math.PI - Math.PI / 2;
+      var r = beltR0 + ring * 34;
+      n.x = cx + r * Math.cos(ang) * (G.w / Math.min(G.w, G.h));
+      n.y = cy + r * Math.sin(ang) * (G.h / Math.min(G.w, G.h));
+      n.vx = 0; n.vy = 0;
+      n.pinned = true;              // the belt does not drift into the core
+      G.byId[n.id] = n;
+    });
+    G.sim = conn;                   // physics acts on the structure only
     G.degree = {};
     G.edges.forEach(function (e) {
       G.degree[e.src] = (G.degree[e.src] || 0) + 1;
@@ -403,9 +438,13 @@
     });
 
     G.nodes.forEach(function (n) {
-      var g = el("g", { "class": "node",
+      // .isolated = no relation ANYWHERE (the truth); .quiet = has relations
+      // but none inside this window (context, not a verdict)
+      var quiet = !wired[n.id] && !n.isolated;
+      var g = el("g", { "class": "node" + (n.isolated ? " isolated" : "")
+                                        + (quiet ? " quiet" : ""),
                         "data-type": String(n.type || "").toLowerCase() });
-      n.r = 7 + Math.min(7, (G.degree[n.id] || 0) * 1.4);
+      n.r = wired[n.id] ? 7 + Math.min(7, (G.degree[n.id] || 0) * 1.4) : 4.5;
       g.appendChild(el("circle", { r: n.r }));
       var t = el("text", { x: n.r + 4, y: 4 });
       t.textContent = n.name;
@@ -687,17 +726,89 @@
       });
   }
 
+  /* ---- the GRAPH, alive ------------------------------------------------------
+   * Second stream, /v1/events/flow: the engine announces its graph's life —
+   * `flow.entity` carries the nodes just BORN (created) and the ones a fact
+   * just lit up (touched). A node that appears grows in place; a node that is
+   * touched pulses. No polling, no full re-render: the map you are looking at
+   * IS the store, right now. (Aurelio 2026-07-15: "voglio vedere
+   * l'attivazione dei nodi live e quando se ne crea uno nuovo".) */
+  var flowGen = 0, flowActive = false, pendingBorn = 0, bornTimer = null;
+
+  function pulseNode(id) {
+    var g = G.nodeEls[id];
+    if (!g) { return; }
+    g.classList.remove("firing");
+    void g.getBoundingClientRect();          // restart the animation
+    g.classList.add("firing");
+    setTimeout(function () { g.classList.remove("firing"); }, 1600);
+  }
+  function onEntityEvent(p) {
+    var born = (p.created || []).length;
+    (p.touched || []).forEach(pulseNode);
+    if (born) {
+      // a new node exists in the store: re-fetch so it arrives with its real
+      // edges and belt/core placement, then flash it. Debounced — a burst of
+      // writes must not trigger a fetch storm.
+      pendingBorn += born;
+      if (bornTimer) { clearTimeout(bornTimer); }
+      bornTimer = setTimeout(function () {
+        var justBorn = (p.created || []).map(function (c) { return c.id; });
+        bornTimer = null; pendingBorn = 0;
+        api("/v1/graph?max_nodes=300&max_edges=600").then(function (d) {
+          renderGraph(d);
+          justBorn.forEach(function (id) {
+            var g = G.nodeEls[id];
+            if (g) { g.classList.add("born"); pulseNode(id); }
+          });
+        }).catch(function () { /* the map keeps what it has */ });
+      }, 700);
+    }
+  }
+  function startFlow() {
+    if (flowActive) { return; }
+    flowActive = true;
+    var gen = ++flowGen;
+    fetch("/v1/events/flow?replay=0", { headers: authHeaders() })
+      .then(function (r) {
+        if (!r.ok || !r.body) { throw new Error("flow " + r.status); }
+        var reader = r.body.getReader(), dec = new TextDecoder(), buf = "";
+        function pump() {
+          return reader.read().then(function (step) {
+            if (gen !== flowGen) { reader.cancel(); return; }
+            if (step.done) { throw new Error("flow ended"); }
+            buf += dec.decode(step.value, { stream: true });
+            var lines = buf.split("\n");
+            buf = lines.pop();
+            lines.forEach(function (line) {
+              if (line.indexOf("data: ") !== 0) { return; }
+              var evt;
+              try { evt = JSON.parse(line.slice(6)); } catch (ex) { return; }
+              if (evt.name === "flow.entity") { onEntityEvent(evt.payload || {}); }
+            });
+            return pump();
+          });
+        }
+        return pump();
+      })
+      .catch(function () {
+        flowActive = false;
+        if (gen === flowGen) { setTimeout(startFlow, 5000); }
+      });
+  }
+
   $("keyform").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var v = $("key").value.trim();
     if (v) {
       sessionStorage.setItem(STORE, v); $("key").value = "";
-      sseGen++; sseActive = false;         // re-auth the live stream
-      loadLive(); loadGraph();
+      sseGen++; sseActive = false;         // re-auth the live streams
+      flowGen++; flowActive = false;
+      loadLive(); loadGraph(); startFlow();
     }
   });
   $("graph-refresh").addEventListener("click", loadGraph);
 
   setInterval(loadLive, 30000);
-  loadLive(); loadGraph();
+  loadLive(); loadGraph(); startFlow();
 })();

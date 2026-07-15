@@ -992,22 +992,30 @@ class EntityStore:
         return out[:k]
 
     def snapshot(self, *, max_nodes: int = 300,
-                 max_edges: int = 600,
-                 include_isolated: bool = False) -> dict[str, Any]:
-        """Renderable view of the graph for a UI: nodes + edges, capped.
+                 max_edges: int = 600) -> dict[str, Any]:
+        """A renderable WINDOW on the graph: the most recent entities, the
+        real edges between them, and honest totals.
 
-        Edges-first policy: the caps must never produce an edge whose
-        endpoint is missing from ``nodes`` (an unrenderable graph), so the
-        endpoints of every returned edge are ALWAYS included — if they alone
-        would exceed ``max_nodes``, edges are trimmed until they fit.
-        Deterministic: insertion order (created_at, pk).
+        NODES FIRST, newest first. The old policy took the first ``max_edges``
+        by ``created_at ASC`` and derived the nodes from them — on the real
+        store that is 600 of **78 713** edges (0.76%), and the OLDEST: the map
+        was a fossil of the first session, a node born today could never
+        appear (its edges are the newest, always trimmed), and entities whose
+        edges fell outside the sample looked ``isolated`` when they were not.
+        A live map must show the present.
 
-        A graph shows STRUCTURE: entities that no edge touches are NOT drawn
-        by default — they are reported as ``isolated_count`` (declared, not
-        hidden). Pass ``include_isolated=True`` to fill the leftover node
-        budget with them (corpus inspection, not structure reading).
-        Rationale (2026-07-15): on the real store the old fill produced
-        194/300 isolated nodes — 65% mute dots around an unreadable clump.
+        Contract:
+
+        * ``nodes`` — the ``max_nodes`` most recent entities. Every node
+          carries its structural truth: ``degree`` counted over the WHOLE
+          store (not the sample) and ``isolated`` = that degree is 0. Both
+          connected and isolated are drawn — the UI places them apart (force
+          core vs outer belt), it never hides them.
+        * ``edges`` — real edges whose BOTH endpoints are in the window, so
+          nothing dangles; newest first, capped at ``max_edges``.
+        * ``total_entities`` / ``total_edges`` / ``isolated_count`` — the
+          whole truth behind the window. A window that does not admit being
+          a window lies.
 
         Each edge carries its provenance: ``source_fact_id`` and a
         ``grounded`` flag (has a source pointer at all — whether that fact is
@@ -1015,82 +1023,65 @@ class EntityStore:
         the store).
         """
         with self._connect() as conn:
-            edge_rows = conn.execute(
-                "SELECT src_entity, dst_entity, predicate, weight, "
-                "source_fact_id FROM entity_edges "
-                "ORDER BY created_at ASC, src_entity, dst_entity, predicate "
-                "LIMIT ?", (max(0, max_edges),)).fetchall()
-            edges = [{
-                "src": r["src_entity"], "dst": r["dst_entity"],
-                "predicate": r["predicate"], "weight": r["weight"],
-                "source_fact_id": r["source_fact_id"],
-                "grounded": r["source_fact_id"] is not None,
-            } for r in edge_rows]
+            total_entities = conn.execute(
+                "SELECT COUNT(*) AS n FROM entities").fetchone()["n"]
+            total_edges = conn.execute(
+                "SELECT COUNT(*) AS n FROM entity_edges").fetchone()["n"]
 
-            def _endpoints(es: list[dict[str, Any]]) -> list[str]:
-                seen: list[str] = []
-                for e in es:
-                    for eid in (e["src"], e["dst"]):
-                        if eid not in seen:
-                            seen.append(eid)
-                return seen
+            # the window: newest entities — what the memory is doing NOW
+            node_rows = conn.execute(
+                "SELECT id, canonical_name, type FROM entities "
+                "ORDER BY created_at DESC, id DESC LIMIT ?",
+                (max(0, max_nodes),)).fetchall()
+            ids = [r["id"] for r in node_rows]
 
-            endpoint_ids = _endpoints(edges)
-            while len(endpoint_ids) > max_nodes and edges:
-                edges.pop()  # trim the newest edge until endpoints fit
-                endpoint_ids = _endpoints(edges)
+            edges: list[dict[str, Any]] = []
+            degree: dict[str, int] = {}
+            if ids:
+                marks = ",".join("?" for _ in ids)
+                # real edges INSIDE the window (never a dangling endpoint)
+                edge_rows = conn.execute(
+                    f"SELECT src_entity, dst_entity, predicate, weight, "
+                    f"source_fact_id FROM entity_edges "
+                    f"WHERE src_entity IN ({marks}) AND dst_entity IN ({marks}) "
+                    f"ORDER BY created_at DESC, src_entity, dst_entity, "
+                    f"predicate LIMIT ?",
+                    (*ids, *ids, max(0, max_edges))).fetchall()
+                edges = [{
+                    "src": r["src_entity"], "dst": r["dst_entity"],
+                    "predicate": r["predicate"], "weight": r["weight"],
+                    "source_fact_id": r["source_fact_id"],
+                    "grounded": r["source_fact_id"] is not None,
+                } for r in edge_rows]
+                # degree over the WHOLE store: `isolated` must mean "has no
+                # relation", never "the sample dropped its relations"
+                for r in conn.execute(
+                        f"SELECT e AS id, COUNT(*) AS n FROM ("
+                        f"  SELECT src_entity AS e FROM entity_edges "
+                        f"    WHERE src_entity IN ({marks}) "
+                        f"  UNION ALL "
+                        f"  SELECT dst_entity AS e FROM entity_edges "
+                        f"    WHERE dst_entity IN ({marks})"
+                        f") GROUP BY e", (*ids, *ids)):
+                    degree[r["id"]] = r["n"]
 
-            nodes: list[dict[str, Any]] = []
-            known: set[str] = set()
-            if endpoint_ids:
-                marks = ",".join("?" for _ in endpoint_ids)
-                rows = conn.execute(
-                    f"SELECT id, canonical_name, type FROM entities "
-                    f"WHERE id IN ({marks})", endpoint_ids).fetchall()
-                by_id = {r["id"]: r for r in rows}
-                for eid in endpoint_ids:  # keep edge insertion order
-                    r = by_id.get(eid)
-                    # dangling endpoint (soft-reference): placeholder node,
-                    # declared as unknown — never a broken render
-                    nodes.append({
-                        "id": eid,
-                        "name": r["canonical_name"] if r else eid,
-                        "type": r["type"] if r else "unknown",
-                    })
-                    known.add(eid)
-            # Entità ISOLATE: contate sempre, disegnate solo su richiesta.
-            # (bug 2026-07-15: riempire il budget nodi avanzato con entità
-            # senza archi rendeva il grafo illeggibile — 194/300 = 65% di
-            # puntini muti sullo store reale. Un grafo mostra STRUTTURA; le
-            # entità senza relazioni sono un fatto del corpus, e come tale
-            # va dichiarato — non disegnato in mezzo alle altre.)
-            if known:
-                marks = ",".join("?" for _ in known)
-                isolated_count = conn.execute(
-                    f"SELECT COUNT(*) AS n FROM entities "
-                    f"WHERE id NOT IN ({marks})", tuple(known)).fetchone()["n"]
-            else:
-                isolated_count = conn.execute(
-                    "SELECT COUNT(*) AS n FROM entities").fetchone()["n"]
-            if include_isolated:
-                spare = max_nodes - len(nodes)
-                if spare > 0:
-                    if known:
-                        marks = ",".join("?" for _ in known)
-                        extra = conn.execute(
-                            f"SELECT id, canonical_name, type FROM entities "
-                            f"WHERE id NOT IN ({marks}) "
-                            f"ORDER BY created_at ASC, id LIMIT ?",
-                            (*known, spare)).fetchall()
-                    else:
-                        extra = conn.execute(
-                            "SELECT id, canonical_name, type FROM entities "
-                            "ORDER BY created_at ASC, id LIMIT ?",
-                            (spare,)).fetchall()
-                    nodes.extend({"id": r["id"], "name": r["canonical_name"],
-                                  "type": r["type"]} for r in extra)
+            nodes = [{
+                "id": r["id"],
+                "name": r["canonical_name"],
+                "type": r["type"],
+                "degree": int(degree.get(r["id"], 0)),
+                "isolated": degree.get(r["id"], 0) == 0,
+            } for r in node_rows]
+
+            isolated_count = conn.execute(
+                "SELECT COUNT(*) AS n FROM entities e WHERE NOT EXISTS ("
+                "  SELECT 1 FROM entity_edges x "
+                "  WHERE x.src_entity = e.id OR x.dst_entity = e.id)"
+            ).fetchone()["n"]
         return {"nodes": nodes, "edges": edges,
-                "isolated_count": int(isolated_count)}
+                "isolated_count": int(isolated_count),
+                "total_entities": int(total_entities),
+                "total_edges": int(total_edges)}
 
     def _rank_facts(
         self,

@@ -768,7 +768,15 @@ class SupersedeConflict(RuntimeError):
 #:   v13 — 2026-07-05 bi-temporal EVENT time ``asserted_at`` (valid-FROM):
 #:        created_at resta transaction time (guardie freshness/anti-spoof
 #:        fondate); asserted_at guida reconcile age-gap + answer-with-history.
-_SEMANTIC_TARGET_VERSION: int = 13
+#:   v14 — 2026-07-13 etichetta epistemica ``epistemic`` (transfer cortex #1).
+#:        NB: questo numero è il RUNNER. Il 2026-07-13 la colonna era stata
+#:        aggiunta a _SCHEMA e ``_migrate_v13_to_v14`` scritta e registrata,
+#:        ma il target era rimasto 13 → la migrazione non girava MAI: i DB
+#:        nuovi (tutti i test) nascevano già a posto, gli store ESISTENTI
+#:        restavano senza colonna e OGNI write moriva con "table facts has no
+#:        column named epistemic" (store reale, 6120 fatti, 2026-07-15).
+#:        Registrare una migrazione senza alzare il target = non averla.
+_SEMANTIC_TARGET_VERSION: int = 14
 
 #: v8 (2026-06-03) — half-life di default per il decadimento di freshness
 #: nel recall. is_stale(age, half_life, floor=0.5) e' True quando il fattore
