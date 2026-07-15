@@ -61,6 +61,27 @@ _TYPED_ENTITIES_INSTRUCTION = (
 _ENTITY_TYPES = {"person", "place", "org", "organization", "activity", "event"}
 
 
+#: Giro 2 (2026-07-16): origin tag for the anti-sycophancy write path. When
+#: ``tag_beliefs`` is on, the extractor prefixes an UNVERIFIED FACTUAL ASSERTION
+#: with this marker; the store loop maps that one line to status="user_belief"
+#: (ranked below model_claim, hidden from default recall) instead of laundering
+#: it as a model_claim. Preferences/opinions/identity/grounded-facts are never
+#: tagged — the split is biased toward KEEPING personalization in recall.
+_BELIEF_MARKER = "BELIEF:"
+
+_BELIEF_EXTRACT_INSTRUCTION = (
+    "\n- ORIGIN TAG: prefix a line with 'BELIEF: ' ONLY when it is an UNVERIFIED "
+    "FACTUAL ASSERTION — a checkable claim about the external world (e.g. 'X is "
+    "faster than Y', 'the deploy is green', 'their API is the best') that the "
+    "conversation does NOT substantiate. NEVER tag preferences, opinions, "
+    "identity, relationships, plans, or facts the dialogue itself grounds — those "
+    "are stored normally. When unsure, do NOT tag.")
+
+_BELIEF_CONSOLIDATE_INSTRUCTION = (
+    "\n- Keep the 'BELIEF: ' prefix on every line that already starts with it "
+    "(and add it to no other line).")
+
+
 def split_entities_line(text: str) -> tuple[str, list[dict[str, str]]]:
     """Separa la riga finale ``ENTITIES: type:Name; ...`` dal testo fatti.
 
@@ -91,7 +112,8 @@ def split_entities_line(text: str) -> tuple[str, list[dict[str, str]]]:
 
 
 def extraction_system_for(user_name: str | None,
-                          *, typed_entities: bool = False) -> str:
+                          *, typed_entities: bool = False,
+                          tag_beliefs: bool = False) -> str:
     """The extraction system prompt, optionally extended with the app-provided
     user name (identity fix, diag 2026-07-07).
 
@@ -113,6 +135,8 @@ def extraction_system_for(user_name: str | None,
                 "conversation text.")
     if typed_entities:
         base = base + _TYPED_ENTITIES_INSTRUCTION
+    if tag_beliefs:
+        base = base + _BELIEF_EXTRACT_INSTRUCTION
     return base
 
 #: Consolidation pass (iter 35, mandate "beat them on every axis"): raw atomic
@@ -168,6 +192,18 @@ def parse_extracted_lines(text: str) -> list[str]:
     return out
 
 
+def strip_belief_marker(line: str) -> tuple[str, bool]:
+    """``(clean_proposition, is_belief)``. A line the extractor tagged with a
+    leading ``BELIEF:`` marker (Giro 2) is an unverified factual assertion ->
+    stored as status ``user_belief`` instead of ``model_claim``. Case-insensitive,
+    prefix-only (a mid-line 'BELIEF:' never counts). Fail-safe: no marker ->
+    ``(line unchanged, False)``."""
+    s = (line or "").lstrip()
+    if s[:len(_BELIEF_MARKER)].upper() == _BELIEF_MARKER:
+        return s[len(_BELIEF_MARKER):].strip(), True
+    return line, False
+
+
 def render_conversation(messages: list[dict], *, cap_chars: int = 12000) -> str:
     """``role: content`` lines, capped (mirrors the benchmark's session_text)."""
     lines = []
@@ -193,6 +229,7 @@ def ingest_conversation(
     embed: str | None = None,
     user_name: str | None = None,
     typed_entities: bool = False,
+    tag_beliefs: bool = False,
 ) -> dict:
     """Extract ATOMIC facts from ``messages`` and store each through the gate.
 
@@ -222,7 +259,8 @@ def ingest_conversation(
         return res
     try:
         r = llm.complete(
-            extraction_system_for(user_name, typed_entities=typed_entities),
+            extraction_system_for(user_name, typed_entities=typed_entities,
+                                  tag_beliefs=tag_beliefs),
             [{"role": "user",
               "content": f"Conversation:\n{dialogue}\n\nFacts:"}],
             max_tokens=max_out_tokens)
@@ -243,7 +281,8 @@ def ingest_conversation(
         lines = lines + extra
         res["gapfilled"] = len(extra)
     if consolidate and lines:
-        lines = consolidate_facts(lines, llm=llm, max_out_tokens=max_out_tokens)
+        lines = consolidate_facts(lines, llm=llm, max_out_tokens=max_out_tokens,
+                                  tag_beliefs=tag_beliefs)
         res["consolidated"] = len(lines)
     prov = conversation_provenance_ref(conversation_id)
     # Bi-temporal (v13): asserted_at = EVENT time (when the conversation
@@ -263,12 +302,18 @@ def ingest_conversation(
         except Exception:  # noqa: BLE001 — graph enrichment must never block ingest
             kg = None
     for prop in lines:
+        # Giro 2: a BELIEF:-tagged line is an unverified user assertion ->
+        # user_belief (hidden from default recall), else model_claim as always.
+        # The marker is only interpreted when we asked for it (flag on).
+        is_belief = False
+        if tag_beliefs:
+            prop, is_belief = strip_belief_marker(prop)
         prop, _ = redact_secrets(prop)
         fact = Fact(
             proposition=prop,
             topic=topic,
             confidence=confidence,
-            status="model_claim",          # a claim, never laundered truth
+            status="user_belief" if is_belief else "model_claim",
             source_episodes=[prov],
             writer_role=INGEST_WRITER_ROLE,
             **stamp,
@@ -329,16 +374,22 @@ def gapfill_facts(dialogue: str, facts: list[str], *, llm: Any,
 
 
 def consolidate_facts(facts: list[str], *, llm: Any,
-                      max_out_tokens: int = 1200) -> list[str]:
+                      max_out_tokens: int = 1200,
+                      tag_beliefs: bool = False) -> list[str]:
     """Merge near-duplicates and drop non-durable trivia from an extracted fact
     list (the precision pass). Fail-safe: on any LLM error, or if the pass
     returns nothing, the ORIGINAL list is returned unchanged — consolidation can
-    only refine, never lose everything."""
+    only refine, never lose everything.
+
+    ``tag_beliefs`` (Giro 2): append the instruction to PRESERVE a leading
+    ``BELIEF:`` marker so the origin tag survives the rewrite. Default off ->
+    ``CONSOLIDATE_SYSTEM`` unchanged (the bench constant is never mutated)."""
     if not facts:
         return []
+    system = CONSOLIDATE_SYSTEM + (_BELIEF_CONSOLIDATE_INSTRUCTION if tag_beliefs else "")
     try:
         r = llm.complete(
-            CONSOLIDATE_SYSTEM,
+            system,
             [{"role": "user",
               "content": "Facts:\n" + "\n".join(facts) + "\n\nCleaned:"}],
             max_tokens=max_out_tokens)
@@ -353,4 +404,5 @@ __all__ = [
     "INGEST_WRITER_ROLE", "conversation_provenance_ref",
     "extraction_system_for", "parse_extracted_lines", "render_conversation",
     "ingest_conversation", "consolidate_facts", "gapfill_facts",
+    "strip_belief_marker",
 ]
