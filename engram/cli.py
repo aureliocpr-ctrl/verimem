@@ -70,6 +70,25 @@ gateway_keys_app = typer.Typer(help="Manage gateway API keys", no_args_is_help=T
 gateway_app.add_typer(gateway_keys_app, name="keys")
 app.add_typer(gateway_app, name="gateway")
 
+# LIVE Engine Room in the terminal (2026-07-15): tail of the flow events
+# every surface (sdk/mcp/gateway, any vendor's agent via VERIMEM_ACTOR)
+# emits from the core. `verimem flow tail` = the /ui/engine feed as text.
+flow_app = typer.Typer(help="Live Engine Room — flow events feed",
+                       no_args_is_help=True)
+app.add_typer(flow_app, name="flow")
+
+
+@flow_app.command("tail")
+def flow_tail_cmd(
+    replay: int = typer.Option(20, "--replay", help="Events to replay on start"),
+    once: bool = typer.Option(False, "--once", help="Print the replay and exit (no follow)"),
+    no_color: bool = typer.Option(False, "--no-color", help="Plain output"),
+):
+    """Follow the engine live: one line per write admitted/quarantined and
+    per recall answered/abstained — across every surface and agent."""
+    from .flow_tail import tail_flow
+    tail_flow(replay=replay, follow=not once, color=not no_color)
+
 
 @lab_app.command("live")
 def lab_live_cmd(

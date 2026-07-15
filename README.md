@@ -177,7 +177,11 @@ you watch the memory working, not a 30s-old photograph. For the engine itself
 there is the **Live Engine Room** (`GET /ui/engine`, stream
 `GET /v1/events/flow`): the custody line animated by YOUR store's real events
 — each write admitted or quarantined, each recall answered or abstained, with
-per-tenant privacy (flow metadata only, never fact content). Personal mode binds
+per-tenant privacy (flow metadata only, never fact content). The events are
+emitted by the core, so every surface shows up in one panel — SDK, gateway,
+and the MCP server used by Claude Code **or any other vendor's agent** (label
+yours with `VERIMEM_ACTOR` in its MCP config). Same feed in a terminal:
+`verimem flow tail`. Personal mode binds
 127.0.0.1 only (Host-header checked against DNS rebinding); a presented API
 key always wins. For agents there is `GET /v1/snapshot` — the whole visible
 state (odometer + daily series + quarantine + graph with provenance) in one

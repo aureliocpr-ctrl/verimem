@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from .anti_confab_gate import run_validation_gate
+from .flow_events import emit_flow as _emit_flow
 from .semantic import Fact, SemanticMemory
 
 #: Gate presets (packaging 2026-07-08): the gate's knobs existed for months
@@ -153,6 +154,8 @@ class Memory:
         _layers = sorted({str(w.get("layer", "")) for w in warnings if w.get("layer")})
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
+            _emit_flow("flow.write", stored=False, status="rejected",
+                       fact_id="", topic=str(topic))
             return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
@@ -174,6 +177,8 @@ class Memory:
                 topic=topic)
         else:
             self._record_trust("admitted", layers=None, topic=topic)
+        _emit_flow("flow.write", stored=True, status=str(fact.status),
+                   fact_id=str(fact.id), topic=str(topic))
         return {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
@@ -235,6 +240,9 @@ class Memory:
                     for p in fact_history(self.semantic, item["id"])
                 ]
             out.append(item)
+        _emit_flow("flow.recall", kind="search", n=len(out),
+                   best=round(max((float(i.get("score") or 0.0)
+                                   for i in out), default=0.0), 4))
         return out
 
     def count(self, *, query: str | None = None, topic: str | None = None,
@@ -370,6 +378,9 @@ class Memory:
         if report.get("abstained"):
             # honest-"I don't know" counter — the read-path half of the odometer
             self._record_trust("abstained")
+        _emit_flow("flow.recall", kind="explain",
+                   n=len(report.get("facts") or []),
+                   abstained=bool(report.get("abstained")))
         return report
 
     # ---- source trust (task #17, behind ENGRAM_SOURCE_TRUST) ----------------

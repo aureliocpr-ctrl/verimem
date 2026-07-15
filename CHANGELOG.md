@@ -16,6 +16,15 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   `explain()` default is unchanged (0.0) for backward compatibility.
 
 ### Added
+- **Flow events at the CORE + `verimem flow tail`**: `flow.write`/`flow.recall`
+  are now emitted by `Memory.add/search/explain` themselves
+  (`engram/flow_events.py`), so EVERY surface feeds the Live Engine Room —
+  gateway (tenant via per-request context, privacy filter unchanged), MCP
+  server (`surface=mcp`, set at bootstrap), plain SDK, and any vendor's agent
+  (labeled via `VERIMEM_ACTOR` in its MCP config). New CLI: `verimem flow
+  tail` — the same feed as `/ui/engine` in a terminal pane (replay + follow,
+  colored verdicts, `[surface/actor]` tags). Flow metadata only, never fact
+  content. 19 new tests; 279 client-consumer + gateway tests green.
 - **`VERIMEM_*` env prefix** (brand-forward alias): every `ENGRAM_X` setting
   can now be written `VERIMEM_X` — mirrored at import by the same
   setdefault-only bridge as the legacy `HIPPO_*` mirror (explicit values are

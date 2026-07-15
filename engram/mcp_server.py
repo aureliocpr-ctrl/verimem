@@ -12983,6 +12983,11 @@ def main() -> None:
         import sys
         sys.stderr.write("[hippoagent] HIPPO_DISABLED=1 — server exiting.\n")
         sys.exit(0)
+    # LIVE Engine Room: every flow.* event emitted by the core while THIS
+    # process serves tools is tagged surface=mcp (env, not contextvar, so it
+    # survives worker threads). setdefault: an explicit override still wins.
+    # The agent's label comes from VERIMEM_ACTOR in the client's MCP config.
+    os.environ.setdefault("ENGRAM_FLOW_SURFACE", "mcp")
     # DELEGATE-ONLY (2026-06-06, root fix for the recurring recall/save hang):
     # an MCP server NEVER cold-loads the embedding model in-process (the ~33s
     # `import sentence_transformers` runs under _MODEL_LOCK and blocks every

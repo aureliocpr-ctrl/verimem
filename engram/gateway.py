@@ -403,14 +403,21 @@ def _gateway_min_relevance() -> float | str:
         return "auto"
 
 
-def _emit_flow(name: str, **payload: Any) -> None:
-    """Traccia di flusso per la LIVE Engine Room (``/ui/engine``): best-effort,
-    MAI nel percorso d'errore del request handler. Late import per evitare
-    cicli; observability.emit fa già BUS + events.jsonl (cross-process)."""
+def _flow_ctx(tenant_id: str):
+    """Flow-context per la LIVE Engine Room: da quando l'emissione vive nel
+    CORE (``engram.flow_events``, chiamata da ``Memory.add/search/explain``),
+    il gateway non emette più direttamente — arricchisce il contesto con
+    ``tenant`` (il filtro privacy di ``/v1/events/flow``) e ``surface``.
+    Ritorna il token da passare a ``_flow_ctx_reset`` in un ``finally``."""
+    from .flow_events import set_flow_context
+    return set_flow_context(tenant=tenant_id, surface="gateway")
+
+
+def _flow_ctx_reset(token: Any) -> None:
     try:
-        from .observability import emit
-        emit(name, **payload)
-    except Exception:  # noqa: BLE001 — l'osservabilità non rompe mai l'API
+        from .flow_events import reset_flow_context
+        reset_flow_context(token)
+    except Exception:  # noqa: BLE001 — mai nel percorso d'errore del handler
         pass
 
 
@@ -759,6 +766,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                        "start the gateway with one (create_app(llm=...)); "
                        "single verified facts work without it",
             )
+        _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.write col tenant
         try:
             res = mem.add(
                 content,
@@ -774,17 +782,11 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         except ValueError as exc:
             meter.bump(tenant_id, writes=1, rejected=1)
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        finally:
+            _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, writes=1,
                    stored_ok=1 if res.get("stored") else 0,
                    rejected=0 if res.get("stored") else 1)
-        # LIVE ENGINE ROOM: ogni write lascia una traccia osservabile
-        # (observability.emit → BUS + events.jsonl cross-process). Il payload
-        # è metadato di flusso, MAI il contenuto del fatto (privacy by design).
-        _emit_flow("flow.write", tenant=tenant_id,
-                   stored=bool(res.get("stored")),
-                   status=str(res.get("status") or ""),
-                   fact_id=str(res.get("id") or ""),
-                   topic=str(body.get("topic", "user")))
         return res
 
     @app.get("/v1/search")
@@ -792,13 +794,13 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                deep: bool = False, as_of: float | None = None,
                with_history: bool = False,
                tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
-        hits = tenants.get(tenant_id).search(
-            q, k=k, deep=deep, as_of=as_of, with_history=with_history)
+        _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.recall col tenant
+        try:
+            hits = tenants.get(tenant_id).search(
+                q, k=k, deep=deep, as_of=as_of, with_history=with_history)
+        finally:
+            _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, reads=1)
-        _emit_flow("flow.recall", tenant=tenant_id, kind="search",
-                   n=len(hits),
-                   best=round(max((float(h.get("score") or 0.0)
-                                   for h in hits), default=0.0), 4))
         return {"hits": hits}
 
     @app.get("/v1/explain")
@@ -811,12 +813,13 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         # (ENGRAM_GATEWAY_MIN_RELEVANCE=auto|<float>|off). NB the e5 score band is
         # compressed, so the floor is a precision/recall DIAL — 'auto' is validated on
         # real corpora (HaluEval false_answer 1.0->0.04); small stores may over-abstain.
-        report = tenants.get(tenant_id).explain(
-            q, k=k, as_of=as_of, min_relevance=_gateway_min_relevance())
+        _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.recall col tenant
+        try:
+            report = tenants.get(tenant_id).explain(
+                q, k=k, as_of=as_of, min_relevance=_gateway_min_relevance())
+        finally:
+            _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, reads=1)
-        _emit_flow("flow.recall", tenant=tenant_id, kind="explain",
-                   n=len(report.get("results") or []),
-                   abstained=bool(report.get("abstained")))
         return report
 
     @app.get("/v1/memories/{fact_id}")
