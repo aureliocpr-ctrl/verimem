@@ -1,6 +1,11 @@
 # Design: `user_belief` — a third epistemic class against sycophancy (Giro 2)
 
-**Status**: DESIGN (proposed, not implemented — B3 proposto ≠ eseguito). 2026-07-15.
+**Status**: FOUNDATION SHIPPED (`af22b04`), rest is DESIGN. 2026-07-15.
+**Resolved empirically** (the load-bearing §3.1 caveat): a probe confirmed `quarantined`
+is hidden from default recall via explicit SQL `status NOT IN (...)` filters (five of
+them), NOT the opt-in rank floor. `user_belief` was added to all five; §5 steps 1-4 are
+GREEN (status valid, ranked, hidden, stored). Still open: the extraction tagging that
+PRODUCES `user_belief` (§5 step 4 tagging), `include_beliefs` retrieval, guardian, bench.
 **Goal**: stop the memory from laundering an unverified USER assertion into a stored
 *fact* the recall then serves back as truth — the systemic sycophancy gap the external
 review flagged (README claims "anti-sycophancy on the write path"; today that is only an
