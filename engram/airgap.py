@@ -34,14 +34,42 @@ _OFFLINE_FLAGS = (
 #: ``mock`` makes no network call at all; ``ollama`` is a local daemon.
 _LOCAL_PROVIDERS = {"ollama", "mock"}
 
-#: Host substrings that denote a loopback / local endpoint for an
-#: OpenAI-compatible provider (vLLM / LM Studio / llama.cpp / text-gen-webui).
-_LOCAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1")
-
-
 def _is_local_base_url(url: str) -> bool:
-    u = (url or "").strip().lower()
-    return bool(u) and any(h in u for h in _LOCAL_HOSTS)
+    """True iff ``url`` targets a loopback/local endpoint (vLLM / LM Studio /
+    llama.cpp / text-gen-webui / ollama).
+
+    Locality is decided on the PARSED hostname — exact ``localhost`` or a real
+    loopback/unspecified IP (the whole 127.0.0.0/8, ``::1``, ``0.0.0.0``) —
+    never on substrings: ``evil-localhost.attacker.com`` / ``127.0.0.1.evil.com``
+    must not count as local (2026-07-15 adversarial review — the substring match
+    made the air-gap verdict spoofable). The verdict is a compliance claim, so
+    anything unparseable fails CLOSED: non-local, reported as a leak. Scheme-less
+    values ("localhost:11434") are common in provider configs and still resolve.
+    """
+    from ipaddress import ip_address
+    from urllib.parse import urlsplit
+
+    u = (url or "").strip()
+    if not u:
+        return False
+    try:
+        host = urlsplit(u).hostname
+        if not host:
+            # "localhost:11434" parses as scheme=localhost path=11434 —
+            # re-parse as a network location.
+            host = urlsplit("//" + u).hostname
+    except ValueError:  # e.g. unbalanced IPv6 bracket
+        return False
+    host = (host or "").strip().lower()
+    if not host:
+        return False
+    if host == "localhost":
+        return True
+    try:
+        ip = ip_address(host)
+    except ValueError:
+        return False
+    return ip.is_loopback or ip.is_unspecified
 
 
 def _llm_locality(provider: str, env: Mapping[str, str]) -> tuple[bool, str]:

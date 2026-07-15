@@ -72,3 +72,63 @@ def test_no_provider_is_not_air_gapped():
     st = airgap_status({})
     assert st["air_gapped"] is False
     assert st["llm"]["local"] is False
+
+
+# ---- hostname-exact locality (2026-07-15 adversarial-review fix) -----------
+# _is_local_base_url used to SUBSTRING-match ("127.0.0.1" in url), so a base_url
+# like http://evil-localhost.attacker.com counted as local and airgap_status
+# returned a FALSE "air_gapped: true" — a spoofable compliance verdict. Locality
+# must be decided on the PARSED hostname; anything ambiguous fails CLOSED
+# (non-local → reported as a leak).
+
+def _openai_env(base_url: str) -> dict[str, str]:
+    return {"HIPPO_LLM_PROVIDER": "openai", "OPENAI_BASE_URL": base_url,
+            "HF_HUB_OFFLINE": "1"}
+
+
+def test_localhost_lookalike_hostname_is_not_local():
+    st = airgap_status(_openai_env("http://evil-localhost.attacker.com/v1"))
+    assert st["llm"]["local"] is False, st["llm"]
+    assert st["air_gapped"] is False
+
+
+def test_loopback_ip_prefix_hostname_is_not_local():
+    st = airgap_status(_openai_env("http://127.0.0.1.evil.com/v1"))
+    assert st["llm"]["local"] is False, st["llm"]
+    assert st["air_gapped"] is False
+
+
+def test_local_tokens_in_path_or_query_are_not_local():
+    st = airgap_status(_openai_env("https://api.evil.com/localhost?next=127.0.0.1"))
+    assert st["llm"]["local"] is False, st["llm"]
+    assert st["air_gapped"] is False
+
+
+def test_malformed_base_url_fails_closed():
+    # Unbalanced IPv6 bracket: unparseable → NON-local (the verdict is a
+    # compliance claim; in doubt it must report a leak, never certify).
+    st = airgap_status(_openai_env("http://[::1"))
+    assert st["llm"]["local"] is False, st["llm"]
+    assert st["air_gapped"] is False
+
+
+def test_schemeless_localhost_is_still_local():
+    # Provider configs commonly omit the scheme (ollama-style host:port).
+    st = airgap_status(_openai_env("localhost:11434"))
+    assert st["llm"]["local"] is True, st["llm"]
+    assert st["air_gapped"] is True
+
+
+def test_ipv6_loopback_with_port_is_local():
+    st = airgap_status(_openai_env("http://[::1]:8080/v1"))
+    assert st["llm"]["local"] is True, st["llm"]
+
+
+def test_https_loopback_with_port_is_local():
+    st = airgap_status(_openai_env("https://127.0.0.1:8443/v1"))
+    assert st["llm"]["local"] is True, st["llm"]
+
+
+def test_uppercase_localhost_is_local():
+    st = airgap_status(_openai_env("http://LOCALHOST:8000/v1"))
+    assert st["llm"]["local"] is True, st["llm"]
