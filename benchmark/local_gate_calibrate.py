@@ -77,6 +77,13 @@ def main(argv=None) -> int:
     ap.add_argument("--clean", type=int, default=20, help="clean facts/user (cap)")
     ap.add_argument("--noise", type=int, default=20, help="foreign noise facts/user (cap)")
     ap.add_argument("--seed", type=int, default=7)
+    ap.add_argument("--noise-mode", choices=["foreign", "same-topic"], default="foreign",
+                    help="foreign=cross-persona facts (EASY, CE-only, free); same-topic="
+                         "LLM-generated plausible-WRONG answers to the user's own questions "
+                         "(HARD — the real write-poisoning threat; needs claude -p)")
+    ap.add_argument("--model", default="claude-sonnet-4-6",
+                    help="confab generator model (same-topic mode only)")
+    ap.add_argument("--timeout", type=int, default=90, help="claude -p timeout/call (s)")
     ap.add_argument("--focus-budget", type=int, default=0,
                     help="span budget fed to the CE (0 = the model's own config budget)")
     ap.add_argument("--smoke", action="store_true", help="tiny run: 2 users, 3/3")
@@ -85,7 +92,12 @@ def main(argv=None) -> int:
     if a.smoke:
         a.users, a.clean, a.noise = 2, 3, 3
 
-    from benchmark.halumem_writepath_moat import _all_facts, _clean_facts
+    from benchmark.halumem_writepath_moat import (
+        _all_facts,
+        _clean_facts,
+        _make_confab,
+        _questions_with_source,
+    )
     from engram.local_grounding import get_local_judge, get_local_threshold
 
     rng = random.Random(a.seed)
@@ -101,6 +113,10 @@ def main(argv=None) -> int:
 
     judge = get_local_judge()
     fb = a.focus_budget or None
+    llm = None
+    if a.noise_mode == "same-topic":
+        from benchmark.qa_runner import LeanClaudeCLILLM
+        llm = LeanClaudeCLILLM(model=a.model, timeout_s=a.timeout)
 
     clean_scores: list[float] = []
     noise_scores: list[float] = []
@@ -109,13 +125,29 @@ def main(argv=None) -> int:
         rng.shuffle(clean)
         clean = clean[: a.clean]
         own_dialogues = [src for _, src in clean] or [""]
-        others = [x for x in pool if x is not u]
-        foreign_pool: list[str] = []
-        for o in others:
-            foreign_pool.extend(_all_facts(o))
-        rng.shuffle(foreign_pool)
-        noise = [(foreign_pool[i], rng.choice(own_dialogues))
-                 for i in range(min(a.noise, len(foreign_pool)))]
+        if a.noise_mode == "same-topic":
+            # HARD negatives: a plausible-WRONG answer to one of the user's OWN
+            # answerable questions, scored against THAT question's session dialogue
+            # (the conversation that grounds the TRUE answer). This is the real
+            # write-poisoning threat the shipped 99.64 cut is meant to catch.
+            qsrc = _questions_with_source(u)
+            rng.shuffle(qsrc)
+            answerable = [(q, src) for q, src in qsrc
+                          if "unknown" not in str(q.get("answer", "")).lower()
+                          and "not provided" not in str(q.get("answer", "")).lower()]
+            noise = []
+            for q, src in answerable[: a.noise]:
+                c = _make_confab(llm, q.get("question", ""), str(q.get("answer", "")))
+                if c:
+                    noise.append((c, src))
+        else:
+            others = [x for x in pool if x is not u]
+            foreign_pool: list[str] = []
+            for o in others:
+                foreign_pool.extend(_all_facts(o))
+            rng.shuffle(foreign_pool)
+            noise = [(foreign_pool[i], rng.choice(own_dialogues))
+                     for i in range(min(a.noise, len(foreign_pool)))]
         for txt, src in clean:
             clean_scores.append(judge.score(src, txt, focus_budget=fb))
         for txt, src in noise:
@@ -132,6 +164,7 @@ def main(argv=None) -> int:
 
     res = {
         "model_dir": str(judge.model_dir),
+        "noise_mode": a.noise_mode,
         "shipped_threshold": round(float(shipped), 2) if shipped is not None else None,
         "focus_budget": a.focus_budget or "config",
         "clean_n": len(clean_scores),

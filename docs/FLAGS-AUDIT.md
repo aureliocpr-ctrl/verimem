@@ -119,12 +119,52 @@ Verified individually in §3: the 18 flagship rows. Everything below is **invent
 
 - **1a (pure fixes, no behavior change for honest users)**: airgap `urlsplit` hostname match;
   indexed key lookup; `synchronous=FULL` in the gateway profile.
-- **1b (honest defaults, needs version bump + CHANGELOG + FP measurement)**:
-  `balanced` → `ground=True` (skip-without-source semantics make it non-breaking) +
-  `ENGRAM_GROUNDING_BACKEND=local` default (failover already safe) after recalibration
-  n≥300-500; decide L3-in-balanced vs README rewording; decide SDK abstention default
-  (`ENGRAM_MIN_RELEVANCE`) vs README rewording; `ENGRAM_ADMISSION_GATE` ON in `strict`
-  first, in `balanced` only after FP-rate measured on a legit corpus (the WF3 lesson:
-  the last default-ON of a keyword system quarantined 40% of personal facts).
 - **Site/README (free, immediate)**: align the headline sentence and the "contradictory"
-  half-claim with today's defaults until 1b lands.
+  half-claim with today's defaults (the moat is opt-in for a MEASURED reason — see §8).
+
+## 8. Giro 1b — MEASURED conclusion: do NOT flip the defaults (2026-07-15)
+
+The Giro 0 plan called the `balanced → ground=True` flip a P0 "honest alignment".
+Calibration on real HaluMem (``benchmark/local_gate_calibrate.py``, zero-API CPU CE)
+**reverses that** — the flip is not free, it is a bad default trade:
+
+| axis (n) | cut 50 | cut 99.64 (shipped) |
+|---|---|---|
+| foreign noise (400) — clean_admit | 0.96 | 0.87 (−13pp) |
+| same-topic confab (144) — clean_admit / noise_reject | 0.965 / 0.889 | 0.896 / **0.931** |
+
+- The shipped local cut **99.64 is Youden's J on the fine-tune's hard val mix**
+  (``local_gate_distill_v2.py:216-219``), not arbitrary. On the REAL threat
+  (same-topic confab: a plausible-wrong answer to the user's own question) it
+  rejects 93% of confabs; dropping to ~50 would pass 11% instead of 7%.
+- So the ~10-13% clean over-rejection is the **conscious price of purity**, right
+  for `strict`, too aggressive for a general-purpose `balanced` default.
+- Two of my own earlier reads were **falsified by measurement** and corrected in
+  git: foreign-only ("lower to ~50") and the n=6 smoke ("hard case is easy").
+  Kept as the method record: measure at scale, don't trust the toy.
+
+**Decisions (measured, not guessed):**
+1. **Do NOT flip `balanced` to `ground=True`.** L4 stays opt-in / `strict`-only —
+   a ~10% clean over-rejection default is wrong for general use. The historic
+   `ground=False` default was a reasonable undocumented trade, not laziness.
+2. **Do NOT lower the local cut.** 99.64 is correctly calibrated for the hard axis.
+3. **Close the claim-vs-default gap by DOCUMENTING, not flipping**: state that the
+   entailment moat is opt-in *because* it trades recall for purity, and that
+   `preset="strict"` is the trust-max mode. (Site/README — product messaging,
+   owner decision.)
+4. **FP-rate of the default L1 gate on legitimate personal facts: 2.0%** (6/300
+   HaluMem, measured) — third-person biographies with ambiguous verbs
+   (`works`→L1.10, `secured`→L1.12, `diagnosed`→L1.5) that WF3's personal-context
+   suppression doesn't cover. Low, but a candidate mini-fix and direct input to
+   the `user_belief` work (Giro 2).
+
+## 9. CI status (honest, 2026-07-15)
+
+NOT fully green — but the residual red is preexisting, not from this work:
+- **5/6 jobs green** with these commits (ubuntu py3.10/3.11/3.12/3.13 + macOS).
+- **py3.10 fixed** here (the `tomllib` collection break, commit `69dbee5`).
+- **windows py3.12 flakes red** (timeout/KeyboardInterrupt at ~15min under the
+  45-min cap) — red on `feat(graph)` and the FLAGS-audit commit BEFORE any code
+  change of mine; the workflow comment already documents a prior windows flake
+  (2026-06-08). Infra/flakiness, not a code defect. A real "green main"
+  procurement signal still needs the windows leg stabilized (out of scope here).
