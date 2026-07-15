@@ -59,6 +59,41 @@ def test_acquire_lock_steals_dead_pid(tmp_path):
     assert lock.read_text(encoding="utf-8").strip() == str(os.getpid())
 
 
+def test_pid_alive_never_uses_os_kill_on_windows(monkeypatch):
+    """Windows footgun — the CI-flake root cause (2026-07-16). ``os.kill(pid, 0)``
+    is the POSIX liveness idiom, but on Windows ``signal.CTRL_C_EVENT == 0``, so
+    CPython routes ``os.kill(pid, 0)`` to ``GenerateConsoleCtrlEvent(CTRL_C_EVENT,
+    pid)`` — a Ctrl-C to the console PROCESS GROUP that the pytest parent shares.
+    ``_pid_alive(os.getppid())`` (the 'refused' lock test) thus sent a Ctrl-C to
+    the runner's group; it bounced back as a KeyboardInterrupt and killed the
+    windows suite at ~66%, intermittently. The check must NOT touch os.kill on
+    Windows."""
+    if sys.platform != "win32":
+        import pytest
+        pytest.skip("windows-only footgun")
+
+    def _forbidden(*_a, **_k):
+        raise AssertionError(
+            "_pid_alive used os.kill on Windows: os.kill(pid, 0) sends "
+            "CTRL_C_EVENT to the console group and interrupts pytest")
+
+    monkeypatch.setattr(os, "kill", _forbidden)
+    assert encode_service._pid_alive(os.getpid()) is True  # self alive, no os.kill
+
+
+def test_pid_alive_true_for_self_false_for_reaped_child():
+    """Cross-platform behaviour net for the liveness helper (guards the new
+    Windows path without regressing POSIX)."""
+    import gc
+    assert encode_service._pid_alive(os.getpid()) is True
+    p = subprocess.Popen([sys.executable, "-c", "pass"])
+    p.wait(timeout=30)
+    dead = p.pid
+    del p
+    gc.collect()
+    assert encode_service._pid_alive(dead) is False
+
+
 def test_acquire_lock_empty_file_not_stolen_while_writer_lands(tmp_path):
     """The O_EXCL winner creates the file THEN writes its pid — a reader in
     that gap sees an EMPTY lock. It must wait out the grace, see the landed

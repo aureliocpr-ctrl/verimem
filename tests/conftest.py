@@ -11,56 +11,12 @@ import os as _os
 _os.environ.setdefault("HIPPO_EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 _os.environ.setdefault("HIPPO_EMBEDDING_DIM", "384")
 
-# DIAGNOSTIC (2026-07-16, temporary): the windows/py3.12 leg hangs AFTER the
-# suite passes (KeyboardInterrupt in subprocess.wait at teardown). Two guessed
-# fixes missed. Dump every thread's stack once, in CI only, past the point the
-# suite should be done — so the NEXT windows run prints the exact frame that is
-# blocking on subprocess.wait, and the fix stops being a guess. exit(True) so
-# the runner also stops cleanly instead of hanging to a timeout. Remove once the
-# blocking frame is identified.
-if _os.environ.get("CI"):
-    import faulthandler as _fh
-    _fh.dump_traceback_later(850, exit=True)
-
 import hashlib
 import re
 from pathlib import Path
 
 import numpy as np
 import pytest
-
-
-@pytest.fixture(scope="session", autouse=True)
-def _reap_orphan_subprocesses():
-    """Windows-CI teardown hardening — kills the recurring windows/py3.12 flake.
-
-    Symptom: the suite PASSES (``4545 passed``) then dies with
-    ``KeyboardInterrupt`` in ``subprocess.wait`` and exit code 1 — red on every
-    commit, non-deterministic. Root cause: a test that exercises the encode
-    service re-enables ``ENGRAM_ENCODE_SERVICE`` and spawns the REAL daemon
-    (``engram.encode_service`` ``serve_forever`` — an infinite loop, launched
-    DETACHED_PROCESS on Windows). That orphan never exits, so the interpreter's
-    end-of-session subprocess reaping blocks on its ``wait()`` (fast enough to
-    finish on the Linux/macOS legs, slow enough to hang the Windows runner).
-
-    Fix: at session end (after every test has run), terminate any child process
-    the interpreter still tracks, each with a HARD timeout, so the teardown can
-    never block regardless of which test spawned the daemon. Best-effort: a
-    reaping failure must never itself break the run."""
-    yield
-    import subprocess as _sp
-    for p in list(getattr(_sp, "_active", None) or []):
-        try:
-            if p.poll() is not None:
-                continue  # already exited — nothing to reap
-            p.terminate()
-            try:
-                p.wait(timeout=5)
-            except Exception:  # noqa: BLE001 — terminate ignored → hard kill
-                p.kill()
-                p.wait(timeout=5)
-        except Exception:  # noqa: BLE001 — reaping is best-effort, never fatal
-            pass
 
 
 @pytest.fixture

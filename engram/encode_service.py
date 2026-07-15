@@ -276,9 +276,18 @@ DAEMON_LOCK_PATH = Path.home() / ".engram" / "encode_service.daemon.lock"
 def _pid_alive(pid: int) -> bool:
     """Best-effort liveness. Unknown/odd states err on 'alive' — a false
     'alive' only makes a daemon defer (cheap); a false 'dead' would let two
-    daemons load the model (the incident)."""
+    daemons load the model (the incident).
+
+    NOT ``os.kill(pid, 0)`` on Windows: ``signal.CTRL_C_EVENT == 0``, so
+    CPython routes ``os.kill(pid, 0)`` to ``GenerateConsoleCtrlEvent(
+    CTRL_C_EVENT, pid)`` — a Ctrl-C to the console PROCESS GROUP the caller
+    shares. It bounced back as a KeyboardInterrupt that killed the windows CI
+    suite at ~66% intermittently (root-caused 2026-07-16). Windows uses an
+    OpenProcess/exit-code probe instead; POSIX keeps the signal-0 idiom."""
     if pid <= 0:
         return False
+    if sys.platform == "win32":
+        return _pid_alive_windows(pid)
     try:
         os.kill(pid, 0)
         return True
@@ -288,6 +297,30 @@ def _pid_alive(pid: int) -> bool:
         return True
     except OSError:
         return False
+
+
+def _pid_alive_windows(pid: int) -> bool:
+    """Windows liveness via the Win32 API — never sends a console control event
+    (see ``_pid_alive``). ``OpenProcess`` failing with ACCESS_DENIED means the
+    process exists but is not queryable (alive); ``GetExitCodeProcess`` returning
+    ``STILL_ACTIVE`` (259) means running. Unknown states err on 'alive'."""
+    import ctypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+    _STILL_ACTIVE = 259
+    _ERROR_ACCESS_DENIED = 5
+    handle = kernel32.OpenProcess(_PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not handle:
+        # not found -> dead; access-denied -> exists but opaque -> alive
+        return ctypes.get_last_error() == _ERROR_ACCESS_DENIED
+    try:
+        code = ctypes.c_ulong()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+            return True  # can't read the exit code -> err on 'alive'
+        return code.value == _STILL_ACTIVE
+    finally:
+        kernel32.CloseHandle(handle)
 
 
 def _read_lock_owner(path: Path) -> int:
