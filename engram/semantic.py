@@ -546,6 +546,8 @@ _VALID_STATUSES = frozenset({
     "legacy_unverified",   # pre-cycle-109 fact (migration default)
     "orphaned",            # cycle 137: L2 reconciler scrubbed
     "quarantined",         # cycle 138: anti-confab gate downgraded at write
+    "user_belief",         # Giro 2 2026-07-15: unverified USER assertion of fact —
+    #                        hidden from default recall (anti-sycophancy), rehabilitable
 })
 
 # Cycle #109 S4-A: trust hierarchy for ``min_status`` recall filter.
@@ -559,6 +561,8 @@ _VALID_STATUSES = frozenset({
 _STATUS_RANK = {
     "orphaned": -2,
     "quarantined": -1,
+    "user_belief": -1,     # Giro 2: below model_claim, hidden from default recall like
+    #                        quarantined (an uncorroborated user assertion is not a fact)
     "legacy_unverified": 0,
     "provisional": 1,
     "model_claim": 2,
@@ -2655,7 +2659,7 @@ class SemanticMemory:
             rows = conn.execute(
                 f"SELECT id FROM facts WHERE id IN ({ph}) "  # noqa: S608 - ph is '?,?'
                 "AND superseded_by IS NULL "
-                "AND status NOT IN ('orphaned', 'quarantined')",
+                "AND status NOT IN ('orphaned', 'quarantined', 'user_belief')",
                 fact_ids,
             ).fetchall()
         live = {r["id"] for r in rows}
@@ -2763,7 +2767,10 @@ class SemanticMemory:
                     # legacy path via _TELEMETRY_DENYLIST_SQL (coerenza).
                     "SELECT * FROM facts "
                     "WHERE superseded_by IS NULL "
-                    "AND status NOT IN ('orphaned', 'quarantined') "
+                    # Giro 2 (2026-07-15): 'user_belief' joins the hidden set — an
+                    # unverified USER assertion of fact is out of default recall
+                    # (anti-sycophancy), retrievable only on an explicit opt-in.
+                    "AND status NOT IN ('orphaned', 'quarantined', 'user_belief') "
                     # Anti-laundering (2026-06-03): le promozioni conversational a
                     # basso-trust (writer_role='conversational_promotion' non ancora
                     # 'verified') NON entrano nella vista di default. Una promozione
@@ -3247,7 +3254,7 @@ class SemanticMemory:
                 # counterexample worker (job 1a80633751dc1459) found
                 # the gap.
                 clauses.append(
-                    "status NOT IN ('orphaned', 'quarantined')"
+                    "status NOT IN ('orphaned', 'quarantined', 'user_belief')"
                 )
             if not include_conversational:
                 # Anti-laundering (2026-06-03): simmetrico al cache fast-path.
@@ -3560,7 +3567,7 @@ class SemanticMemory:
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT * FROM facts WHERE topic = ? AND superseded_by IS NULL "
-                "AND status NOT IN ('orphaned', 'quarantined') "
+                "AND status NOT IN ('orphaned', 'quarantined', 'user_belief') "
                 "ORDER BY created_at DESC LIMIT 200", (topic,)).fetchall()
         reports: dict[str, str] = {}
         for r in rows:
@@ -3953,7 +3960,7 @@ class SemanticMemory:
             # instead of silently returning zero hidden rows.
             if not include_orphaned:
                 clauses.append(
-                    "status NOT IN ('orphaned', 'quarantined')"
+                    "status NOT IN ('orphaned', 'quarantined', 'user_belief')"
                 )
             if exclude_legacy:
                 clauses.append("status != 'legacy_unverified'")
