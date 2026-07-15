@@ -90,12 +90,13 @@
         <input id="graph-search" type="search" placeholder="find entity&hellip;"
                autocomplete="off" spellcheck="false"
                aria-label="Find an entity in the graph">
-        <svg id="graph" role="img" aria-label="Entity knowledge graph"></svg>
+        <canvas id="graph" aria-label="Entity knowledge graph"></canvas>
         <div id="graph-empty" class="empty" hidden>
           No knowledge graph yet — ingest conversations or documents and the
           entities they mention will appear here, every edge citing the fact
           that created it.
         </div>
+        <div id="graph-stats" class="graph-stats" aria-live="polite"></div>
         <div class="graph-legend">
           <span><i class="sw solid"></i> grounded (cites a fact)</span>
           <span><i class="sw dashed"></i> ungrounded (declared, never hidden)</span>
@@ -143,6 +144,7 @@
   <footer id="meta" class="meta"></footer>
 </section>
 
+<script src="/ui/graph.js"></script>
 <script src="/ui/app.js"></script>
 </body>
 </html>

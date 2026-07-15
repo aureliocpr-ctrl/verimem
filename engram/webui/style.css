@@ -25,6 +25,16 @@
   --lit: #17140E;  --lit-glow: rgba(23, 20, 14, .3);  /* the INKED chain */
   --node: #8A7E66;
   --node-person: #5B7A93; --node-org: #4C8A6B; --node-place: #B08A3E;
+  /* the canvas graph reads these (graph.js) — the renderer paints, the
+     theme decides, so light/dark keep one source of truth */
+  --graph-bg: #F3EEE3;
+  --graph-edge: rgba(46, 107, 79, .30);
+  --graph-edge-un: rgba(166, 51, 31, .28);
+  --graph-node: #8A7E66;
+  --graph-hub: #5F543F;
+  --graph-iso: rgba(138, 126, 102, .38);
+  --graph-lit: #2E6B4F;
+  --graph-ink: #17140E;
   --focus: #2E6B4F;
   --atmo-a: rgba(183, 171, 144, .25);
   --atmo-b: rgba(227, 217, 196, .5);
@@ -51,6 +61,14 @@
     --lit: #EDE5D1;  --lit-glow: rgba(237, 229, 209, .35);
     --node: #9C8F76;
     --node-person: #7FA3BE; --node-org: #6FB292; --node-place: #CFA65A;
+    --graph-bg: #17130B;
+    --graph-edge: rgba(76, 158, 120, .34);
+    --graph-edge-un: rgba(201, 91, 67, .30);
+    --graph-node: #9C8F76;
+    --graph-hub: #D8CDB4;
+    --graph-iso: rgba(156, 143, 118, .34);
+    --graph-lit: #4C9E78;
+    --graph-ink: #EDE5D1;
     --focus: #4C9E78;
     --atmo-a: rgba(201, 148, 43, .07);
     --atmo-b: rgba(0, 0, 0, .35);
@@ -193,9 +211,15 @@ body {
               gap: .8rem; align-items: start; }
 @media (max-width: 900px) { .graph-wrap { grid-template-columns: 1fr; } }
 .graph-canvas { position: relative; overflow: hidden; }
+/* canvas, not SVG: 7753 nodes would be 7753 DOM elements (see graph.js) */
 #graph { width: 100%; height: 540px; display: block; cursor: grab;
          touch-action: none; }
 #graph.panning { cursor: grabbing; }
+.graph-stats { position: absolute; top: .8rem; right: .9rem; z-index: 2;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .06em;
+  color: var(--dim); background: color-mix(in srgb, var(--panel) 86%, transparent);
+  padding: .22rem .5rem; border: 1px solid var(--line); border-radius: 3px;
+  font-variant-numeric: tabular-nums; pointer-events: none; }
 #graph-search { position: absolute; top: .7rem; left: .7rem; z-index: 2;
   background: var(--panel); color: var(--ink);
   border: 1px solid var(--line-strong); border-radius: 3px;

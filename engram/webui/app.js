@@ -201,406 +201,74 @@
     items.forEach(function (it) { seenBlocked[it.id] = 1; });
   }
 
-  /* ---- graph engine v3: Obsidian-feel ------------------------------------
-   * inertial physics (velocity + damping + soft collision, no hard walls),
-   * persistent focus, search with highlight, label LOD, fit-to-view. */
-  var svg = $("graph");
-  var G = { nodes: [], edges: [], byId: {}, edgeEls: [], nodeEls: {},
-            alpha: 0, vb: null, running: false, drag: null, litKeys: {},
-            focus: null, query: "", degree: {} };
+  /* ---- graph: the REAL one -----------------------------------------------
+   * The whole store on a canvas (Barnes-Hut O(n log n)) instead of an SVG
+   * sample: engram/webui/graph.js. This wrapper keeps the console's own
+   * behaviour — dossier on click, search, fit/refresh, live pulses. */
+  var GG = null;                                   // VerimemGraph instance
+  var graphStats = $("graph-stats");
 
-  function edgeKey(e) { return e.src + "|" + e.dst + "|" + e.predicate; }
-
-  function simStep() {
-    // the physics runs on the CONNECTED core only: the isolated belt is
-    // pinned decoration — letting it into the n² repulsion would both cost
-    // 300²/frame and crush the structure it surrounds.
-    var nodes = G.sim && G.sim.length ? G.sim : G.nodes, K = G.K, i, j;
-    for (i = 0; i < nodes.length; i++) { nodes[i].ax = 0; nodes[i].ay = 0; }
-    for (i = 0; i < nodes.length; i++) {
-      var a = nodes[i];
-      for (j = i + 1; j < nodes.length; j++) {
-        var b = nodes[j];
-        var dx = a.x - b.x, dy = a.y - b.y;
-        var d2 = dx * dx + dy * dy || 0.01, d = Math.sqrt(d2);
-        var rep = (K * K) / d2 * 9;            // repulsion falls with d²
-        var pad = (a.r || 8) + (b.r || 8) + 8; // soft collision shell
-        if (d < pad) { rep += (pad - d) * 1.4; }
-        var ux = dx / d, uy = dy / d;
-        a.ax += ux * rep; a.ay += uy * rep;
-        b.ax -= ux * rep; b.ay -= uy * rep;
-      }
-      a.ax += (G.w / 2 - a.x) * 0.012;         // gentle center gravity
-      a.ay += (G.h / 2 - a.y) * 0.012;
+  function renderGraph(data) {
+    var host = $("graph");
+    $("graph-empty").hidden = (data.n || []).length > 0;
+    if (!GG) {
+      GG = new VerimemGraph(host, { onSelect: function (n) { selectNode(n); } });
     }
-    G.edges.forEach(function (e) {
-      var s = G.byId[e.src], t = G.byId[e.dst];
-      if (!s || !t) { return; }
-      var dx = t.x - s.x, dy = t.y - s.y;
-      var d = Math.sqrt(dx * dx + dy * dy) || 0.01;
-      var f = (d - K) * 0.045;                 // spring toward rest length K
-      var ux = dx / d, uy = dy / d;
-      s.ax += ux * f; s.ay += uy * f; t.ax -= ux * f; t.ay -= uy * f;
-    });
-    nodes.forEach(function (n) {
-      if (n.pinned) { n.vx = 0; n.vy = 0; return; }
-      // inertia: forces accumulate into velocity, damping bleeds it off —
-      // the graph breathes and settles instead of snapping (no hard walls;
-      // gravity keeps it together, `fit` brings it back into view)
-      n.vx = (n.vx + n.ax * 0.06 * G.alpha) * 0.86;
-      n.vy = (n.vy + n.ay * 0.06 * G.alpha) * 0.86;
-      n.x += n.vx; n.y += n.vy;
-    });
-  }
-
-  function draw() {
-    G.edgeEls.forEach(function (r) {
-      var s = G.byId[r.e.src], t = G.byId[r.e.dst];
-      if (!s || !t) { return; }
-      r.line.setAttribute("x1", s.x); r.line.setAttribute("y1", s.y);
-      r.line.setAttribute("x2", t.x); r.line.setAttribute("y2", t.y);
-      if (r.flow) {
-        r.flow.setAttribute("x1", s.x); r.flow.setAttribute("y1", s.y);
-        r.flow.setAttribute("x2", t.x); r.flow.setAttribute("y2", t.y);
-      }
-      r.label.setAttribute("x", (s.x + t.x) / 2);
-      r.label.setAttribute("y", (s.y + t.y) / 2 - 4);
-    });
-    G.nodes.forEach(function (n) {
-      var g = G.nodeEls[n.id];
-      if (g) { g.setAttribute("transform", "translate(" + n.x + "," + n.y + ")"); }
-    });
-  }
-
-  function loop() {
-    if (!G.running) { return; }
-    if (G.alpha > 0.006 && !document.hidden) {
-      simStep(); draw();
-      G.alpha *= 0.985;                        // slow cool = visible breathe
-      requestAnimationFrame(loop);
-    } else { G.running = false; draw(); }
-  }
-  function reheat(a) {
-    G.alpha = Math.max(G.alpha, a);
-    if (!G.running) { G.running = true; requestAnimationFrame(loop); }
-  }
-
-  function zoomScale() { return G.vb ? (G.w / G.vb.w) : 1; }
-
-  /* ONE emphasis pass — priority: search query > sticky focus > hover.
-   * Lit (chain-of-custody) elements are never faded. Label LOD lives here:
-   * a label shows when its node is emphasized, is a hub, or the view is
-   * zoomed in / small enough to afford it. */
-  function updateEmphasis(hoverId) {
-    var mode = G.query ? "query" : (G.focus ? "focus"
-               : (hoverId ? "hover" : "none"));
-    var keep = {};
-    if (mode === "query") {
-      G.nodes.forEach(function (n) {
-        if (n.name.toLowerCase().indexOf(G.query) >= 0) { keep[n.id] = 1; }
-      });
-    } else if (mode !== "none") {
-      var id = mode === "focus" ? G.focus : hoverId;
-      keep[id] = 1;
-      G.edges.forEach(function (e) {
-        if (e.src === id || e.dst === id) { keep[e.src] = 1; keep[e.dst] = 1; }
-      });
+    var t0 = performance.now();
+    var tot = GG.load(data);
+    var ms = Math.round(performance.now() - t0);
+    if (graphStats) {
+      graphStats.textContent = tot.entities.toLocaleString() + " entities · "
+        + tot.edges.toLocaleString() + " edges"
+        + (tot.truncated ? " (capped)" : "") + " · " + ms + " ms";
     }
-    var manyEdges = G.edges.length > 40;
-    var zoomed = zoomScale() >= 1.45 || G.nodes.length <= 30;
-    G.edgeEls.forEach(function (r) {
-      var lit = !!G.litKeys[r.key];
-      var on = mode === "none" ? false
-        : (mode === "query" ? (keep[r.e.src] && keep[r.e.dst])
-           : (keep[r.e.src] && keep[r.e.dst] &&
-              (r.e.src === (G.focus || hoverId) ||
-               r.e.dst === (G.focus || hoverId))));
-      r.line.classList.toggle("hl", !!on || lit);
-      r.line.classList.toggle("faded", mode !== "none" && !on && !lit);
-      r.label.classList.toggle("faded", mode !== "none" && !on && !lit);
-      r.label.classList.toggle("show", (!manyEdges || !!on || lit) && zoomed
-                                        || !!on || lit);
-    });
-    G.nodes.forEach(function (n) {
-      var g = G.nodeEls[n.id];
-      var emph = mode === "none" || keep[n.id];
-      g.classList.toggle("faded", !emph);
-      var hub = (G.degree[n.id] || 0) >= (G.hubMin || 3);
-      g.classList.toggle("nolabel",
-        !(zoomed || hub || keep[n.id] || g.classList.contains("sel") ||
-          g.classList.contains("lit")));
-    });
-  }
-
-  function fitView() {
-    if (!G.nodes.length || !G.vb) { return; }
-    var xs = G.nodes.map(function (n) { return n.x; });
-    var ys = G.nodes.map(function (n) { return n.y; });
-    var pad = 70;
-    var x0 = Math.min.apply(null, xs) - pad, x1 = Math.max.apply(null, xs) + pad;
-    var y0 = Math.min.apply(null, ys) - pad, y1 = Math.max.apply(null, ys) + pad;
-    var w = Math.max(120, x1 - x0), h = Math.max(120, y1 - y0);
-    var ratio = G.w / G.h;                     // preserve aspect
-    if (w / h > ratio) { h = w / ratio; } else { w = h * ratio; }
-    G.vb = { x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w: w, h: h };
-    applyVB(); updateEmphasis(null);
   }
 
   function centerOn(n) {
-    if (!G.vb) { return; }
-    G.vb.x = n.x - G.vb.w / 2; G.vb.y = n.y - G.vb.h / 2;
-    applyVB();
+    if (!GG) { return; }
+    GG.view.x = n.x; GG.view.y = n.y;
+    GG.view.s = Math.max(GG.view.s, 1.2);
+    GG.dirty = true; GG.loop();
   }
-
-  function renderGraph(data) {
-    while (svg.firstChild) { svg.removeChild(svg.firstChild); }
-    G.nodes = data.nodes || []; G.edges = data.edges || [];
-    G.byId = {}; G.edgeEls = []; G.nodeEls = {}; G.litKeys = {};
-    $("graph-empty").hidden = G.nodes.length > 0;
-    if (!G.nodes.length) { return; }
-    G.w = svg.clientWidth || 860; G.h = svg.clientHeight || 540;
-    G.vb = { x: 0, y: 0, w: G.w, h: G.h };
-    svg.setAttribute("viewBox", "0 0 " + G.w + " " + G.h);
-    // TWO ZONES (2026-07-15). Every real node is drawn, but structure and
-    // corpus get different places instead of one mush: the CONNECTED nodes
-    // live in the force layout at the centre, the ISOLATED ones (no edge
-    // touches them — they are still real memory) sit in an ordered outer
-    // belt, pinned, so they stay countable and legible without polluting
-    // the structure. Mixing them was the "graficamente matto" bug.
-    // WHERE a node goes is decided by the edges VISIBLE in this window, not
-    // by its degree in the whole store: a node whose relations all fall
-    // outside the window has no spring here, so putting it in the force core
-    // just parks it on the seed ring forever (it looked like a bracelet).
-    // `n.isolated` (real degree 0) stays the TRUTH we style/report with.
-    var wired = {};
-    G.edges.forEach(function (e) { wired[e.src] = 1; wired[e.dst] = 1; });
-    var conn = G.nodes.filter(function (n) { return wired[n.id]; });
-    var iso = G.nodes.filter(function (n) { return !wired[n.id]; });
-    G.K = Math.sqrt((G.w * G.h) / Math.max(1, conn.length || 1)) * 0.52;
-    var cx = G.w / 2, cy = G.h / 2;
-    conn.forEach(function (n, i) {
-      var ang = (i / Math.max(1, conn.length)) * 2 * Math.PI;
-      n.x = cx + (G.w / 5) * Math.cos(ang);
-      n.y = cy + (G.h / 5) * Math.sin(ang);
-      n.vx = 0; n.vy = 0; n.pinned = false; G.byId[n.id] = n;
-    });
-    // the belt: concentric rings outside the force field, evenly spaced
-    var beltR0 = Math.min(G.w, G.h) * 0.42;
-    var perRing = Math.max(24, Math.ceil(iso.length / 3));
-    iso.forEach(function (n, i) {
-      var ring = Math.floor(i / perRing);
-      var idx = i % perRing;
-      var count = Math.min(perRing, iso.length - ring * perRing);
-      var ang = (idx / Math.max(1, count)) * 2 * Math.PI - Math.PI / 2;
-      var r = beltR0 + ring * 34;
-      n.x = cx + r * Math.cos(ang) * (G.w / Math.min(G.w, G.h));
-      n.y = cy + r * Math.sin(ang) * (G.h / Math.min(G.w, G.h));
-      n.vx = 0; n.vy = 0;
-      n.pinned = true;              // the belt does not drift into the core
-      G.byId[n.id] = n;
-    });
-    G.sim = conn;                   // physics acts on the structure only
-    G.degree = {};
-    G.edges.forEach(function (e) {
-      G.degree[e.src] = (G.degree[e.src] || 0) + 1;
-      G.degree[e.dst] = (G.degree[e.dst] || 0) + 1;
-    });
-    // Hub threshold: ADAPTIVE (2026-07-15). A fixed `degree >= 3` labels
-    // nearly every node once the graph is dense (real store: 106 nodes /
-    // 600 edges = mean degree ~11) and the labels collide into mush. Cap
-    // the permanent labels at the top ~12 by degree; everything else keeps
-    // its name one hover/zoom away.
-    var degs = G.nodes.map(function (n) { return G.degree[n.id] || 0; })
-                      .sort(function (a, b) { return b - a; });
-    G.hubMin = degs.length > 24
-      ? Math.max(3, degs[Math.min(11, degs.length - 1)] + 1)
-      : 3;
-    G.focus = null;
-    var showLabels = G.edges.length <= 40;
-
-    var gEdges = el("g", {}), gFlows = el("g", {}), gNodes = el("g", {});
-    svg.appendChild(gEdges); svg.appendChild(gFlows); svg.appendChild(gNodes);
-
-    G.edges.forEach(function (e) {
-      var line = el("line", { "class": "edge " +
-        (e.grounded ? "grounded" : "ungrounded") });
-      line.appendChild(el("title", {})).textContent = e.predicate +
-        (e.source_fact_id ? " — source: " + e.source_fact_id : " — NO SOURCE");
-      gEdges.appendChild(line);
-      var flow = el("line", { "class": "flow" });
-      gFlows.appendChild(flow);
-      var label = el("text", { "class": "edge-label" +
-        (showLabels ? " show" : ""), "text-anchor": "middle" });
-      label.textContent = e.predicate;
-      gEdges.appendChild(label);
-      G.edgeEls.push({ e: e, line: line, flow: flow, label: label,
-                       key: edgeKey(e) });
-    });
-
-    G.nodes.forEach(function (n) {
-      // .isolated = no relation ANYWHERE (the truth); .quiet = has relations
-      // but none inside this window (context, not a verdict)
-      var quiet = !wired[n.id] && !n.isolated;
-      var g = el("g", { "class": "node" + (n.isolated ? " isolated" : "")
-                                        + (quiet ? " quiet" : ""),
-                        "data-type": String(n.type || "").toLowerCase() });
-      n.r = wired[n.id] ? 7 + Math.min(7, (G.degree[n.id] || 0) * 1.4) : 4.5;
-      g.appendChild(el("circle", { r: n.r }));
-      var t = el("text", { x: n.r + 4, y: 4 });
-      t.textContent = n.name;
-      g.appendChild(t);
-      g.addEventListener("click", function (ev) {
-        if (G.dragMoved) { return; }
-        ev.stopPropagation(); selectNode(n, g);
-      });
-      g.addEventListener("pointerdown", function (ev) {
-        ev.preventDefault(); ev.stopPropagation();
-        G.drag = n; G.dragMoved = false; n.pinned = true;
-        svg.setPointerCapture(ev.pointerId);
-      });
-      g.addEventListener("mouseenter", function () {
-        if (!G.focus && !G.query) { updateEmphasis(n.id); }
-      });
-      g.addEventListener("mouseleave", function () {
-        if (!G.focus && !G.query) { updateEmphasis(null); }
-      });
-      gNodes.appendChild(g);
-      G.nodeEls[n.id] = g;
-    });
-
-    reheat(REDUCED ? 0.9 : 1);
-    if (REDUCED) {   // settle instantly, no animation frames visible
-      for (var k = 0; k < 300; k++) { simStep(); G.alpha *= 0.985; }
-      G.alpha = 0; draw();
-    }
-    updateEmphasis(null);
-  }
-
-  /* pan / zoom on the svg canvas */
-  function applyVB() {
-    svg.setAttribute("viewBox",
-      G.vb.x + " " + G.vb.y + " " + G.vb.w + " " + G.vb.h);
-  }
-  svg.addEventListener("wheel", function (ev) {
-    if (!G.vb) { return; }
-    ev.preventDefault();
-    var f = ev.deltaY > 0 ? 1.12 : 0.9;
-    var mx = G.vb.x + (ev.offsetX / svg.clientWidth) * G.vb.w;
-    var my = G.vb.y + (ev.offsetY / svg.clientHeight) * G.vb.h;
-    G.vb.w *= f; G.vb.h *= f;
-    G.vb.x = mx - (ev.offsetX / svg.clientWidth) * G.vb.w;
-    G.vb.y = my - (ev.offsetY / svg.clientHeight) * G.vb.h;
-    applyVB();
-    updateEmphasis(null);                      // zoom drives the label LOD
-  }, { passive: false });
-  svg.addEventListener("pointerdown", function (ev) {
-    if (G.drag || !G.vb) { return; }
-    G.pan = { x: ev.clientX, y: ev.clientY, vx: G.vb.x, vy: G.vb.y,
-              moved: false };
-    svg.classList.add("panning");
-    svg.setPointerCapture(ev.pointerId);
-  });
-  svg.addEventListener("pointermove", function (ev) {
-    if (G.drag) {
-      if (!G.dragStart) { G.dragStart = { x: ev.clientX, y: ev.clientY }; }
-      // 4px threshold: a twitchy click still SELECTS instead of dragging
-      if (Math.abs(ev.clientX - G.dragStart.x) +
-          Math.abs(ev.clientY - G.dragStart.y) > 4) { G.dragMoved = true; }
-      var pt = svg.createSVGPoint();
-      pt.x = ev.clientX; pt.y = ev.clientY;
-      var p = pt.matrixTransform(svg.getScreenCTM().inverse());
-      G.drag.x = p.x; G.drag.y = p.y;
-      G.drag.vx = 0; G.drag.vy = 0;
-      reheat(0.35);
-    } else if (G.pan) {
-      var sx = G.vb.w / svg.clientWidth, sy = G.vb.h / svg.clientHeight;
-      G.vb.x = G.pan.vx - (ev.clientX - G.pan.x) * sx;
-      G.vb.y = G.pan.vy - (ev.clientY - G.pan.y) * sy;
-      applyVB();
-    }
-  });
-  function endPointer(ev) {
-    if (G.drag) { G.drag.pinned = false; G.drag = null; reheat(0.25); }
-    else if (G.pan && ev && Math.abs(ev.clientX - G.pan.x) +
-             Math.abs(ev.clientY - G.pan.y) < 4) {
-      // background CLICK (not a pan): release focus, unlight the chain
-      G.focus = null; clearLit();
-      Array.prototype.forEach.call(svg.querySelectorAll(".node.sel"),
-        function (x) { x.classList.remove("sel"); });
-      updateEmphasis(null);
-    }
-    G.dragStart = null;
-    G.pan = null; svg.classList.remove("panning");
-    setTimeout(function () { G.dragMoved = false; }, 0);
-  }
-  svg.addEventListener("pointerup", endPointer);
-  svg.addEventListener("pointercancel", endPointer);
-  svg.addEventListener("dblclick", function () { fitView(); });
-  $("graph-fit").addEventListener("click", fitView);
 
   /* search: live highlight; Enter selects & centers the first match */
   var searchBox = $("graph-search");
   searchBox.addEventListener("input", function () {
-    G.query = searchBox.value.trim().toLowerCase();
-    updateEmphasis(null);
+    if (GG) { GG.search(searchBox.value.trim()); }
   });
   searchBox.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") {
-      searchBox.value = ""; G.query = ""; updateEmphasis(null);
+      searchBox.value = "";
+      if (GG) { GG.search(""); }
       searchBox.blur();
     }
     if (ev.key === "Enter") {
       ev.preventDefault();
+      if (!GG || !GG.query) { return; }
       var hit = null;
-      G.nodes.forEach(function (n) {
-        if (!hit && G.query &&
-            n.name.toLowerCase().indexOf(G.query) >= 0) { hit = n; }
+      GG.nodes.forEach(function (n) {
+        if (!hit && n.name.toLowerCase().indexOf(GG.query) >= 0) { hit = n; }
       });
-      if (hit) {
-        centerOn(hit);
-        selectNode(hit, G.nodeEls[hit.id]);
-      }
+      if (hit) { centerOn(hit); selectNode(hit); }
     }
   });
+  $("graph-fit").addEventListener("click", function () { if (GG) { GG.fit(); } });
 
   /* ---- dossier + chain lighting --------------------------------------------*/
-  function clearLit() {
-    G.litKeys = {};
-    G.edgeEls.forEach(function (r) {
-      r.line.classList.remove("hl"); r.flow.classList.remove("run");
-      r.label.classList.remove("lit");
-    });
-    G.nodes.forEach(function (n) { G.nodeEls[n.id].classList.remove("lit"); });
-  }
-
+  /* On canvas the chain of custody lights by PULSING its hops in order —
+     same story as the old SVG glow (hop by hop, 260 ms apart), told with the
+     renderer's own live vocabulary instead of per-element CSS classes. */
   function lightChain(derivation) {
-    clearLit();
+    if (!GG) { return; }
     (derivation || []).forEach(function (hop, i) {
-      var key = hop.src_entity + "|" + hop.dst_entity + "|" + hop.predicate;
-      var rec = null;
-      G.edgeEls.forEach(function (r) { if (r.key === key) { rec = r; } });
       setTimeout(function () {
-        if (rec) {
-          G.litKeys[key] = 1;
-          rec.line.classList.add("hl");
-          rec.label.classList.add("lit", "show");
-          if (!REDUCED) { rec.flow.classList.add("run"); }
-        }
-        [hop.src_entity, hop.dst_entity].forEach(function (nid) {
-          var g = G.nodeEls[nid];
-          if (g) { g.classList.add("lit"); }
-        });
+        GG.touch([hop.src_entity, hop.dst_entity]);
       }, REDUCED ? 0 : i * 260);
     });
   }
 
-  function selectNode(n, g) {
-    Array.prototype.forEach.call(svg.querySelectorAll(".node"),
-      function (x) { x.classList.remove("sel"); });
-    g.classList.add("sel");
-    clearLit();
-    G.focus = n.id;                            // sticky focus (Obsidian-like)
-    updateEmphasis(null);
+  function selectNode(n) {
+    if (GG) { GG.sel = n.id; GG.dirty = true; GG.loop(); }
     $("dossier-body").innerHTML =
       '<span class="muted">deriving from &ldquo;' + esc(n.name) +
       "&rdquo;&hellip;</span>";
@@ -677,8 +345,12 @@
       })
       .catch(fail);
   }
+  // the WHOLE graph, compact (nodes array + edges by index): 7753 nodes /
+  // 78 725 edges = 1.6 MB on the real store, vs 5.7 MB verbose. The old
+  // /v1/graph?max_nodes=300 window was a 0.76% fossil of the oldest edges.
+  var GRAPH_URL = "/v1/graph/full";
   function loadGraph() {
-    api("/v1/graph?max_nodes=300&max_edges=600")
+    api(GRAPH_URL)
       .then(renderGraph).catch(function (e) {
         if (!(e && e.nokey)) { fail(e); }
       });
@@ -733,37 +405,24 @@
    * touched pulses. No polling, no full re-render: the map you are looking at
    * IS the store, right now. (Aurelio 2026-07-15: "voglio vedere
    * l'attivazione dei nodi live e quando se ne crea uno nuovo".) */
-  var flowGen = 0, flowActive = false, pendingBorn = 0, bornTimer = null;
+  var flowGen = 0, flowActive = false, bornTimer = null, bornIds = [];
 
-  function pulseNode(id) {
-    var g = G.nodeEls[id];
-    if (!g) { return; }
-    g.classList.remove("firing");
-    void g.getBoundingClientRect();          // restart the animation
-    g.classList.add("firing");
-    setTimeout(function () { g.classList.remove("firing"); }, 1600);
-  }
   function onEntityEvent(p) {
-    var born = (p.created || []).length;
-    (p.touched || []).forEach(pulseNode);
-    if (born) {
-      // a new node exists in the store: re-fetch so it arrives with its real
-      // edges and belt/core placement, then flash it. Debounced — a burst of
-      // writes must not trigger a fetch storm.
-      pendingBorn += born;
-      if (bornTimer) { clearTimeout(bornTimer); }
-      bornTimer = setTimeout(function () {
-        var justBorn = (p.created || []).map(function (c) { return c.id; });
-        bornTimer = null; pendingBorn = 0;
-        api("/v1/graph?max_nodes=300&max_edges=600").then(function (d) {
-          renderGraph(d);
-          justBorn.forEach(function (id) {
-            var g = G.nodeEls[id];
-            if (g) { g.classList.add("born"); pulseNode(id); }
-          });
-        }).catch(function () { /* the map keeps what it has */ });
-      }, 700);
-    }
+    // touched nodes fire right away — no fetch, the renderer already has them
+    if (GG && (p.touched || []).length) { GG.touch(p.touched); }
+    if (!(p.created || []).length) { return; }
+    // a node was BORN: it isn't in the canvas yet, so re-fetch the graph and
+    // pulse the newcomers. Debounced: a burst of writes must not storm the
+    // endpoint (the full graph is 1.6 MB).
+    bornIds = bornIds.concat(p.created.map(function (c) { return c.id; }));
+    if (bornTimer) { clearTimeout(bornTimer); }
+    bornTimer = setTimeout(function () {
+      var justBorn = bornIds; bornIds = []; bornTimer = null;
+      api(GRAPH_URL).then(function (d) {
+        renderGraph(d);
+        if (GG) { GG.touch(justBorn); }
+      }).catch(function () { /* the map keeps what it has */ });
+    }, 900);
   }
   function startFlow() {
     if (flowActive) { return; }

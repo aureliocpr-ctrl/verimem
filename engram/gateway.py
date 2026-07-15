@@ -893,6 +893,20 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             return {"nodes": [], "edges": []}
         return kg.snapshot(max_nodes=max_nodes, max_edges=max_edges)
 
+    @app.get("/v1/graph/full")
+    def graph_full(max_nodes: int = Query(default=20000, ge=1, le=200000),
+                   max_edges: int = Query(default=200000, ge=1, le=2000000),
+                   tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Il grafo INTERO in formato compatto (nodi in array, archi per
+        indice) — per il renderer Canvas della console. ``snapshot`` resta la
+        finestra piccola; questo è tutto ciò che c'è, senza campionare."""
+        kg = _kg_for(tenant_id)
+        meter.bump(tenant_id, reads=1)
+        if kg is None:
+            return {"n": [], "e": [], "truncated": False,
+                    "total_entities": 0, "total_edges": 0}
+        return kg.snapshot_full(max_nodes=max_nodes, max_edges=max_edges)
+
     @app.get("/v1/graph/dossier")
     def graph_dossier(src: str = Query(...),
                       target: str | None = Query(default=None),
@@ -1072,6 +1086,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         # allowlist, no fs walk; "engine" = la LIVE Engine Room (CSP-clean:
         # markup + engine.css + engine.js, zero inline come la console)
         allow = {"app.js": "app.js", "style.css": "style.css",
+                 "graph.js": "graph.js",
                  "engine": "engine.html", "engine.css": "engine.css",
                  "engine.js": "engine.js"}
         fname = allow.get(asset_name)
