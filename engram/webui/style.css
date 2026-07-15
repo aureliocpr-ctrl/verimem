@@ -80,6 +80,16 @@ body {
 /* ---- header ---------------------------------------------------------- */
 .top { display: flex; align-items: center; justify-content: space-between;
        gap: 1rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+/* the live map lives one click away from the odometer (Aurelio 2026-07-15:
+   "nella console c'è tutto tranne la live map") */
+.top-nav { margin-left: auto; margin-right: .9rem; }
+.nav-engine { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ok); text-decoration: none;
+  border: 1px solid var(--ok); border-radius: 99px; padding: .34rem .8rem;
+  transition: background .18s ease, color .18s ease; white-space: nowrap; }
+.nav-engine:hover { background: var(--ok); color: var(--bg); }
+.nav-engine:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
+
 .brand { display: flex; align-items: baseline; gap: .55rem; }
 .brand strong { font-family: var(--display); font-size: 1.45rem;
                 font-weight: 600; letter-spacing: -.015em; }

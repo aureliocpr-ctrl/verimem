@@ -992,15 +992,22 @@ class EntityStore:
         return out[:k]
 
     def snapshot(self, *, max_nodes: int = 300,
-                 max_edges: int = 600) -> dict[str, Any]:
+                 max_edges: int = 600,
+                 include_isolated: bool = False) -> dict[str, Any]:
         """Renderable view of the graph for a UI: nodes + edges, capped.
 
         Edges-first policy: the caps must never produce an edge whose
         endpoint is missing from ``nodes`` (an unrenderable graph), so the
         endpoints of every returned edge are ALWAYS included — if they alone
         would exceed ``max_nodes``, edges are trimmed until they fit.
-        Leftover node budget is filled with the remaining (possibly isolated)
-        entities. Deterministic: insertion order (created_at, pk).
+        Deterministic: insertion order (created_at, pk).
+
+        A graph shows STRUCTURE: entities that no edge touches are NOT drawn
+        by default — they are reported as ``isolated_count`` (declared, not
+        hidden). Pass ``include_isolated=True`` to fill the leftover node
+        budget with them (corpus inspection, not structure reading).
+        Rationale (2026-07-15): on the real store the old fill produced
+        194/300 isolated nodes — 65% mute dots around an unreadable clump.
 
         Each edge carries its provenance: ``source_fact_id`` and a
         ``grounded`` flag (has a source pointer at all — whether that fact is
@@ -1051,23 +1058,39 @@ class EntityStore:
                         "type": r["type"] if r else "unknown",
                     })
                     known.add(eid)
-            spare = max_nodes - len(nodes)
-            if spare > 0:
-                if known:
-                    marks = ",".join("?" for _ in known)
-                    extra = conn.execute(
-                        f"SELECT id, canonical_name, type FROM entities "
-                        f"WHERE id NOT IN ({marks}) "
-                        f"ORDER BY created_at ASC, id LIMIT ?",
-                        (*known, spare)).fetchall()
-                else:
-                    extra = conn.execute(
-                        "SELECT id, canonical_name, type FROM entities "
-                        "ORDER BY created_at ASC, id LIMIT ?",
-                        (spare,)).fetchall()
-                nodes.extend({"id": r["id"], "name": r["canonical_name"],
-                              "type": r["type"]} for r in extra)
-        return {"nodes": nodes, "edges": edges}
+            # Entità ISOLATE: contate sempre, disegnate solo su richiesta.
+            # (bug 2026-07-15: riempire il budget nodi avanzato con entità
+            # senza archi rendeva il grafo illeggibile — 194/300 = 65% di
+            # puntini muti sullo store reale. Un grafo mostra STRUTTURA; le
+            # entità senza relazioni sono un fatto del corpus, e come tale
+            # va dichiarato — non disegnato in mezzo alle altre.)
+            if known:
+                marks = ",".join("?" for _ in known)
+                isolated_count = conn.execute(
+                    f"SELECT COUNT(*) AS n FROM entities "
+                    f"WHERE id NOT IN ({marks})", tuple(known)).fetchone()["n"]
+            else:
+                isolated_count = conn.execute(
+                    "SELECT COUNT(*) AS n FROM entities").fetchone()["n"]
+            if include_isolated:
+                spare = max_nodes - len(nodes)
+                if spare > 0:
+                    if known:
+                        marks = ",".join("?" for _ in known)
+                        extra = conn.execute(
+                            f"SELECT id, canonical_name, type FROM entities "
+                            f"WHERE id NOT IN ({marks}) "
+                            f"ORDER BY created_at ASC, id LIMIT ?",
+                            (*known, spare)).fetchall()
+                    else:
+                        extra = conn.execute(
+                            "SELECT id, canonical_name, type FROM entities "
+                            "ORDER BY created_at ASC, id LIMIT ?",
+                            (spare,)).fetchall()
+                    nodes.extend({"id": r["id"], "name": r["canonical_name"],
+                                  "type": r["type"]} for r in extra)
+        return {"nodes": nodes, "edges": edges,
+                "isolated_count": int(isolated_count)}
 
     def _rank_facts(
         self,

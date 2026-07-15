@@ -322,7 +322,7 @@
       var g = G.nodeEls[n.id];
       var emph = mode === "none" || keep[n.id];
       g.classList.toggle("faded", !emph);
-      var hub = (G.degree[n.id] || 0) >= 3 || (n.r || 0) >= 11;
+      var hub = (G.degree[n.id] || 0) >= (G.hubMin || 3);
       g.classList.toggle("nolabel",
         !(zoomed || hub || keep[n.id] || g.classList.contains("sel") ||
           g.classList.contains("lit")));
@@ -370,6 +370,16 @@
       G.degree[e.src] = (G.degree[e.src] || 0) + 1;
       G.degree[e.dst] = (G.degree[e.dst] || 0) + 1;
     });
+    // Hub threshold: ADAPTIVE (2026-07-15). A fixed `degree >= 3` labels
+    // nearly every node once the graph is dense (real store: 106 nodes /
+    // 600 edges = mean degree ~11) and the labels collide into mush. Cap
+    // the permanent labels at the top ~12 by degree; everything else keeps
+    // its name one hover/zoom away.
+    var degs = G.nodes.map(function (n) { return G.degree[n.id] || 0; })
+                      .sort(function (a, b) { return b - a; });
+    G.hubMin = degs.length > 24
+      ? Math.max(3, degs[Math.min(11, degs.length - 1)] + 1)
+      : 3;
     G.focus = null;
     var showLabels = G.edges.length <= 40;
 
