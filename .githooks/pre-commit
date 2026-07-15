@@ -1,0 +1,29 @@
+#!/bin/sh
+# The gate that would have kept CI green for two days (2026-07-15).
+#
+# On 2026-07-13 five lint errors of mine reached main; the CI runs Lint BEFORE
+# the tests, so EVERY job on every OS failed and the build was skipped — for
+# two days the public repo looked broken while the site claimed "6,864
+# passing". I did not run ruff before committing. Good intentions are not a
+# mechanism; this is.
+#
+# Install once:  git config core.hooksPath .githooks
+# Bypass (rare): git commit --no-verify
+
+set -e
+
+if ! command -v ruff >/dev/null 2>&1; then
+    echo "pre-commit: ruff not found — skipping lint gate (pip install ruff)"
+    exit 0
+fi
+
+# exactly what .github/workflows/ci.yml runs
+if ! ruff check engram tests scripts; then
+    echo ""
+    echo "pre-commit BLOCKED: ruff would fail the CI's Lint step, which runs"
+    echo "before the tests — every job on every OS would go red."
+    echo "Fix:  ruff check engram tests scripts --fix"
+    exit 1
+fi
+
+echo "pre-commit: lint clean"
