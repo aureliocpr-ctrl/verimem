@@ -172,7 +172,12 @@ of writes admitted clean) with per-day sparklines, the **knowledge graph**
 (drag, zoom; grounded edges solid, ungrounded dashed red — declared, never
 hidden) where clicking a conclusion lights its **chain of custody** hop by
 hop, and the **blocked-claims log** — every unsupported claim the gate
-stopped, auditable. Live: gate events stream over SSE (`GET /v1/events`), so
+stopped, auditable. The graph is **alive**: nodes the engine touches fire and
+new ones grow in as you work, straight from `/v1/events/flow`. It is an honest
+window, not the whole store — it shows the most recent entities with the real
+edges between them and declares the totals (`total_entities`, `total_edges`,
+`isolated_count`), so a node's `isolated` badge means "no relation anywhere",
+never "the sample dropped it". Live: gate events stream over SSE (`GET /v1/events`), so
 you watch the memory working, not a 30s-old photograph. For the engine itself
 there is the **Live Engine Room** (`GET /ui/engine`, stream
 `GET /v1/events/flow`): the custody line animated by YOUR store's real events

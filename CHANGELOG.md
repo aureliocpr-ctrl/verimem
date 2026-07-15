@@ -4,6 +4,31 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Fixed
+- **P0 — upgrade path broken since 2026-07-13 (`epistemic` column)**: the v14
+  migration was written AND registered, but `_SEMANTIC_TARGET_VERSION` stayed
+  13, so the runner never executed it. New stores (every test) were born with
+  the column; **existing stores kept failing every write** with
+  `table facts has no column named epistemic`. Found on a real 6120-fact
+  store — 6905 green tests missed it because they all create a fresh DB.
+  Registering a migration without raising the target is not having it.
+  `tests/test_migration_v14_upgrade_path.py` now walks the real upgrade.
+- **P0 — the knowledge graph was a fossil**: `snapshot()` sampled 600 edges
+  `ORDER BY created_at ASC` out of 78 713 (0.76%, and the OLDEST), so the map
+  only ever showed the first session, a node created today could never appear,
+  and "isolated" nodes were an artifact of the sample (real store: 1752
+  isolated, not the 194 displayed). Rewritten nodes-first: the window is the
+  most recent entities, edges are the real ones between them, `degree` is
+  counted over the whole store, and `total_entities`/`total_edges`/
+  `isolated_count` are declared.
+
+### Added
+- **The graph, live** (`flow.entity`): `populate_entities_for_fact` announces
+  the nodes just born and the ones a fact just touched; the trust console
+  consumes `/v1/events/flow` and makes touched nodes fire and newborns grow in
+  — no polling. Isolated entities get an ordered outer belt instead of
+  polluting the structure. Verified end-to-end against a live store.
+
 ### Changed
 - **Gateway `/v1/explain` abstains by DEFAULT** (`ENGRAM_GATEWAY_MIN_RELEVANCE`, default
   `auto`): the enterprise read-path now applies a self-calibrating relevance floor, so
