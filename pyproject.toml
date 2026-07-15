@@ -97,6 +97,18 @@ byok = [
   "openai>=1.40.0",
 ]
 
+# Document extraction (pdf / docx / epub / html). The engine degrades
+# gracefully without these — file_extract.py guards every import and says
+# which package is missing — so they are OPTIONAL, not core. Declared here
+# because until 2026-07-15 they were declared NOWHERE: the extraction tests
+# imported them bare and only passed on machines that happened to have them
+# installed. On CI they were ModuleNotFoundError on every OS.
+documents = [
+  "python-docx>=1.1.0",
+  "PyMuPDF>=1.24.0",
+  "beautifulsoup4>=4.12.0",
+]
+
 # Terminal UI (textual). Optional — many deployments run dashboard-only.
 tui = [
   "textual>=0.60.0",
@@ -109,7 +121,9 @@ vision = [
   "pyautogui>=0.9.54",
 ]
 
-# Everything (vision + tui + mcp).
+# Everything (vision + tui + mcp + documents). "full" must mean full: the
+# document stack was missing here, so CI installed .[full,dev] and STILL had
+# no docx/pdf/epub reader — the extraction tests failed on every OS.
 full = [
   "opencv-python>=4.8.0",
   "pyautogui>=0.9.54",
@@ -119,6 +133,9 @@ full = [
   "uvicorn[standard]>=0.27.0",
   "jinja2>=3.1.0",
   "openai>=1.40.0",
+  "python-docx>=1.1.0",
+  "PyMuPDF>=1.24.0",
+  "beautifulsoup4>=4.12.0",
 ]
 
 dev = [

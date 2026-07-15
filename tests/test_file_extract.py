@@ -22,7 +22,7 @@ def test_txt_and_md(tmp_path) -> None:
 
 
 def test_docx(tmp_path) -> None:
-    import docx
+    docx = pytest.importorskip("docx")   # optional extra: .[documents]
 
     d = docx.Document()
     d.add_paragraph("Alpha paragraph content.")
@@ -40,7 +40,7 @@ def test_docx_zip_bomb_is_refused(tmp_path, monkeypatch) -> None:
     python-docx che decomprime word/document.xml senza limite — un DOCX da 74KB
     estraeva 40MB (ratio 529x, OOM a scala). Il guard sulla dimensione DICHIARATA
     nella central directory rifiuta il file PRIMA che la libreria lo decomprima."""
-    import docx
+    docx = pytest.importorskip("docx")
 
     import engram.file_extract as fe
     monkeypatch.setattr(fe, "_MAX_MEMBER_BYTES", 1_000_000)
@@ -54,7 +54,7 @@ def test_docx_zip_bomb_is_refused(tmp_path, monkeypatch) -> None:
 
 
 def test_pdf(tmp_path) -> None:
-    import fitz  # PyMuPDF
+    fitz = pytest.importorskip("fitz")   # PyMuPDF, optional extra
 
     doc = fitz.open()
     page = doc.new_page()
