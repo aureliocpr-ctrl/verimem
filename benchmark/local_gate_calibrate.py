@@ -14,6 +14,19 @@ network. Uses the SAME clean/noise construction as the write-path moat A/B
 facts sampled from OTHER users are foreign NOISE paired with THIS user's
 dialogue (plausible, well-formed, but not entailed by it).
 
+SCOPE CAVEAT (2026-07-15, honest correction). Foreign noise is EASY (a random
+other-user fact is off-topic; noise_mean ~2.8/100). So this sweep measures the
+BASE separation and, crucially, the CLEAN over-rejection COST at a given cut —
+NOT the production threshold. The shipped local cut (99.64) is Youden's J on the
+fine-tune's HARD val mix (HaluMem GT + real-corpus with constructed host/donor
+negatives — see ``local_gate_distill_v2.py``), which contains negatives far
+harder than foreign. So a low foreign-Youden (~4) does NOT show 99.64 is wrong;
+it shows the easy floor. What this sweep DOES establish: at 99.64, ~13% of real
+CLEAN HaluMem facts are rejected (clean_admit 0.87 vs 0.96 at the ~50 knee) —
+the admission cost to weigh when deciding whether ``local`` is a `balanced`
+default vs `strict`-only. Deciding the cut on the HARD axis needs a same-topic
+confab sweep (LLM-generated, not zero-cost).
+
     python -m benchmark.local_gate_calibrate --users 20 --clean 20 --noise 20 \
         --out benchmark/results/local_gate_calibrate.json
 
