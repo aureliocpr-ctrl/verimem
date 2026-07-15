@@ -106,15 +106,17 @@
   async function connect() {
     var key = $("key").value.trim();
     $("err").textContent = "";
-    if (!key) { $("err").textContent = "an API key (Bearer) is required"; return; }
-    sessionStorage.setItem(KEY_SS, key);
+    // personal mode (`verimem console`, loopback): no key needed — an empty
+    // field connects as the local tenant; a 401 explains when one IS needed.
+    if (key) sessionStorage.setItem(KEY_SS, key);
     if (aborter) aborter.abort();
     aborter = new AbortController();
     setLive(false, "connecting…");
     try {
+      var hdrs = key ? { Authorization: "Bearer " + key } : {};
       var r = await fetch("/v1/events/flow?replay=20",
-        { headers: { Authorization: "Bearer " + key }, signal: aborter.signal });
-      if (r.status === 401) { setLive(false, "disconnected"); $("err").textContent = "401 — invalid key"; return; }
+        { headers: hdrs, signal: aborter.signal });
+      if (r.status === 401) { setLive(false, "disconnected"); $("err").textContent = key ? "401 — invalid key" : "401 — this gateway needs an API key (personal mode not active)"; return; }
       if (!r.ok || !r.body) { setLive(false, "disconnected"); $("err").textContent = "HTTP " + r.status; return; }
       setLive(true, "LIVE");
       var reader = r.body.getReader(), dec = new TextDecoder(), buf = "";

@@ -153,3 +153,32 @@ def test_flow_stream_serves_engine_page(gw):
     assert r.status_code == 200
     assert "text/html" in r.headers["content-type"]
     assert "Engine Room" in r.text
+
+
+def test_personal_console_sees_local_untenanted_events(tmp_path, monkeypatch):
+    """`verimem console` (personal mode, loopback, no keys): il local tenant
+    vede anche gli eventi flow SENZA tenant — cioè l'attività sdk/mcp della
+    macchina (Claude Code, codex, ...). In multi-tenant il filtro resta
+    stretto (test sopra): un tenant vero non vede MAI eventi altrui."""
+    from engram.client import Memory
+    monkeypatch.setattr(
+        event_jsonl_log, "EVENT_LOG_PATH", tmp_path / "events.jsonl")
+    # un evento come lo emette l'SDK/MCP: nessun campo tenant
+    event_jsonl_log.append_event(
+        "flow.write", {"stored": True, "status": "model_claim",
+                       "fact_id": "abc12345", "topic": "hq",
+                       "surface": "mcp", "actor": "claude-code"})
+    mem = Memory(tmp_path / "own.db")
+    app = create_app(data_dir=tmp_path / "console",
+                     local_tenant="local", local_memory=mem)
+    client = TestClient(app)
+    lines: list[dict] = []
+    with client.stream("GET", "/v1/events/flow",
+                       params={"replay": 5, "max_events": 1},
+                       headers={"host": "127.0.0.1"}) as resp:   # loopback guard
+        assert resp.status_code == 200
+        for raw in resp.iter_lines():
+            if raw.startswith("data: "):
+                lines.append(json.loads(raw[len("data: "):]))
+    assert len(lines) == 1
+    assert lines[0]["payload"]["actor"] == "claude-code"

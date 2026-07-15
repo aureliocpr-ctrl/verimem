@@ -997,6 +997,12 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         import json as _json
         from . import event_jsonl_log as _ejl
 
+        # personal mode (verimem console): il local tenant vede anche gli
+        # eventi flow SENZA tenant — l'attività sdk/mcp della macchina
+        # (loopback-only, single-user). In multi-tenant resta match esatto.
+        _see_untenanted = (local_tenant is not None
+                           and tenant_id == local_tenant)
+
         def _flow_after(after_ts: float) -> list[dict[str, Any]]:
             try:
                 lines = _ejl.EVENT_LOG_PATH.read_text(
@@ -1011,7 +1017,8 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                     continue
                 if not str(rec.get("name", "")).startswith("flow."):
                     continue
-                if (rec.get("payload") or {}).get("tenant") != tenant_id:
+                _pt = (rec.get("payload") or {}).get("tenant")
+                if _pt != tenant_id and not (_see_untenanted and _pt is None):
                     continue
                 if float(rec.get("ts") or 0.0) <= after_ts:
                     continue
