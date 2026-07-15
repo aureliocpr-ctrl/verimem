@@ -1,4 +1,5 @@
-"""Backward-compat bridge for the cycle #41 rename (hippoagent → engram).
+"""Backward-compat bridge for the cycle #41 rename (hippoagent → engram)
+plus the product-brand env prefix (Verimem, 2026-07-15).
 
 Two surfaces are bridged here so existing user configurations keep working:
 
@@ -9,6 +10,13 @@ Two surfaces are bridged here so existing user configurations keep working:
    ``ENGRAM_*`` names are picked up by older code paths through the same
    mirror. The mirror uses :py:meth:`os.environ.setdefault` so an explicit
    value on one side never overrides an explicit value on the other.
+
+   The same mirror covers ``VERIMEM_*`` — the PRODUCT prefix (PyPI name is
+   ``verimem``; ``engram`` is the architecture package): ``VERIMEM_X`` is
+   seen by every reader of ``ENGRAM_X`` / ``HIPPO_X`` without touching any
+   call-site, and ``ENGRAM_X`` is mirrored back to ``VERIMEM_X`` for
+   introspection. Unlike ``HIPPO_*`` this prefix is NOT scheduled for
+   removal — it is the brand-forward name.
 
 2. **User data directory**: :func:`data_dir` returns ``~/.engram`` if it
    exists, falls back to ``~/.hippoagent`` if only the old dir exists,
@@ -31,6 +39,7 @@ from pathlib import Path
 
 _PREFIX_OLD = "HIPPO_"
 _PREFIX_NEW = "ENGRAM_"
+_PREFIX_BRAND = "VERIMEM_"
 
 # Old data dir (cycle #1 — #40).
 _OLD_DIR_NAME = ".hippoagent"
@@ -39,29 +48,35 @@ _NEW_DIR_NAME = ".engram"
 
 
 def init_env_aliases() -> int:
-    """Mirror HIPPO_* ↔ ENGRAM_* env vars (idempotent).
+    """Mirror VERIMEM_* / HIPPO_* ↔ ENGRAM_* env vars (idempotent).
 
-    For each environment variable starting with ``HIPPO_``, set the
-    corresponding ``ENGRAM_`` variant if not already defined. Same in
-    reverse for ``ENGRAM_*`` → ``HIPPO_*``. Uses :py:meth:`os.environ.setdefault`
-    so explicit user values are never clobbered.
+    Three passes, all :py:meth:`os.environ.setdefault`-semantics (an explicit
+    value on one side never overrides an explicit value on the other):
+
+    1. ``VERIMEM_X`` → ``ENGRAM_X`` (brand prefix feeds the canonical readers)
+    2. ``HIPPO_X`` ↔ ``ENGRAM_X``  (legacy mirror, unchanged — running it
+       after pass 1 makes the brand value transitively visible as ``HIPPO_X``)
+    3. ``ENGRAM_X`` → ``VERIMEM_X`` (symmetry, for introspection)
 
     Returns the number of mirror entries added (for tests / introspection).
     """
     added = 0
-    # Snapshot keys to avoid mutation-during-iteration warnings.
-    snapshot = list(os.environ.items())
-    for k, v in snapshot:
-        if k.startswith(_PREFIX_OLD):
-            new_key = _PREFIX_NEW + k[len(_PREFIX_OLD):]
-            if new_key not in os.environ:
-                os.environ[new_key] = v
-                added += 1
-        elif k.startswith(_PREFIX_NEW):
-            old_key = _PREFIX_OLD + k[len(_PREFIX_NEW):]
-            if old_key not in os.environ:
-                os.environ[old_key] = v
-                added += 1
+
+    def _mirror(src_prefix: str, dst_prefix: str) -> int:
+        n = 0
+        # Snapshot keys to avoid mutation-during-iteration warnings.
+        for k, v in list(os.environ.items()):
+            if k.startswith(src_prefix):
+                dst = dst_prefix + k[len(src_prefix):]
+                if dst not in os.environ:
+                    os.environ[dst] = v
+                    n += 1
+        return n
+
+    added += _mirror(_PREFIX_BRAND, _PREFIX_NEW)   # VERIMEM_ → ENGRAM_
+    added += _mirror(_PREFIX_OLD, _PREFIX_NEW)     # HIPPO_   → ENGRAM_
+    added += _mirror(_PREFIX_NEW, _PREFIX_OLD)     # ENGRAM_  → HIPPO_
+    added += _mirror(_PREFIX_NEW, _PREFIX_BRAND)   # ENGRAM_  → VERIMEM_
     return added
 
 

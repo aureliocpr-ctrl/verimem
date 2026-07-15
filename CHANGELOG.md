@@ -16,6 +16,11 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   `explain()` default is unchanged (0.0) for backward compatibility.
 
 ### Added
+- **`VERIMEM_*` env prefix** (brand-forward alias): every `ENGRAM_X` setting
+  can now be written `VERIMEM_X` — mirrored at import by the same
+  setdefault-only bridge as the legacy `HIPPO_*` mirror (explicit values are
+  never overridden; `ENGRAM_X` wins if both are set). No call-site changed;
+  covers all ~91 settings. `tests/test_env_alias_verimem.py`.
 - **Live Engine Room** (`GET /ui/engine` + `GET /v1/events/flow`): the engine
   observable event by event. Every gateway write emits `flow.write`
   (status/stored/fact_id — flow metadata only, never fact content) and every

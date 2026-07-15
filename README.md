@@ -292,7 +292,9 @@ conversations / documents / tool results
 ```
 
 The Python package is `engram` (the architecture name); `verimem` is the
-product and distribution name. Both import paths work.
+product and distribution name. Both import paths work — and so do both env
+prefixes: every `ENGRAM_X` setting can be written `VERIMEM_X` (mirrored at
+import, explicit values never overridden).
 
 ## License
 
