@@ -259,15 +259,33 @@ def reset_interactive_judge() -> None:
 
 def _close_singleton_at_exit() -> None:
     """atexit sweep: a process dying with a live judge must not leak its
-    hidden sister. Best-effort — never raises during interpreter teardown."""
+    hidden sister. Best-effort — never raises AND never BLOCKS during
+    interpreter teardown.
+
+    close() terminates the ghost claude.exe sister, which on Windows can do a
+    subprocess.wait() that does not return — hanging interpreter exit. That was
+    the recurring windows/py3.12 CI flake: the suite PASSES (4545 passed) then
+    dies with KeyboardInterrupt in subprocess.wait at teardown -> exit 1. Run
+    close() in a daemon thread we DON'T join past a hard timeout: a daemon
+    thread never blocks interpreter exit, so a stuck close() can no longer hang
+    the process (the sister is DETACHED/hidden and the OS reaps it on exit)."""
     j = _judge
     transport = getattr(j, "_transport", None) if j is not None else None
     close = getattr(transport, "close", None)
-    if callable(close):
+    if not callable(close):
+        return
+
+    def _safe_close() -> None:
         try:
             close()
         except Exception:  # noqa: BLE001 — teardown must not explode
             pass
+
+    import threading
+    t = threading.Thread(target=_safe_close, name="interactive-judge-close",
+                         daemon=True)
+    t.start()
+    t.join(timeout=5.0)  # bounded: if close() blocks, we exit anyway
 
 
 atexit.register(_close_singleton_at_exit)
