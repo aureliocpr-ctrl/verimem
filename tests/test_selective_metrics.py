@@ -105,7 +105,7 @@ def test_isotonic_fit_monotone_and_improves_tce():
     # monotone
     xs = [0.65, 0.72, 0.76, 0.83]
     ps = [cal(x) for x in xs]
-    assert all(b >= a - 1e-12 for a, b in zip(ps, ps[1:]))
+    assert all(b >= a - 1e-12 for a, b in zip(ps, ps[1:], strict=False))
     # held-out records from the same regime, judged at lam=1 (threshold 0.5):
     held = [(0.71, False), (0.72, False), (0.755, True), (0.76, True),
             (0.77, True), (0.78, True), (0.785, True), (0.79, False)]

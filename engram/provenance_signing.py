@@ -48,7 +48,7 @@ def provenance_key() -> str | None:
 
 
 def _mac(body: str, proposition: str, key: str) -> str:
-    msg = f"{body}\x1f{proposition}".encode("utf-8")
+    msg = f"{body}\x1f{proposition}".encode()
     return hmac.new(key.encode("utf-8"), msg, hashlib.sha256).hexdigest()[:_SIG_LEN]
 
 

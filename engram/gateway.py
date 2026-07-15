@@ -633,8 +633,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     # access-audit JSONL (compliance enterprise): OUTERMOST → cattura lo status
     # finale di ogni risposta, anche 401/413. Default ON (un servizio di memoria
     # audita); kill-switch ENGRAM_GATEWAY_AUDIT_LOG=0 o audit_log=False.
-    from .gateway_audit import (
-        AccessAuditMiddleware, JsonlAuditSink, audit_enabled)
+    from .gateway_audit import AccessAuditMiddleware, JsonlAuditSink, audit_enabled
     # default ON for a real multi-tenant gateway, OFF for the personal console
     # (local_tenant): an access log is a SERVER control, not a single-user surprise.
     _audit = (audit_enabled(default=local_tenant is None) if audit_log is None
@@ -995,6 +994,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         Il loop controlla ``request.is_disconnected()``: mai generatori orfani."""
         import asyncio
         import json as _json
+
         from . import event_jsonl_log as _ejl
 
         # personal mode (verimem console): il local tenant vede anche gli

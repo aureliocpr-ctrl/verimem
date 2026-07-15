@@ -24,7 +24,7 @@ truth, so precision/recall are real numbers.
 from __future__ import annotations
 
 import os
-from typing import Hashable, Iterable, Mapping
+from collections.abc import Hashable, Iterable, Mapping
 
 __all__ = [
     "detect_suspect_records", "violating_records", "precision_recall",

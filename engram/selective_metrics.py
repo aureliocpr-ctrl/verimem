@@ -28,7 +28,8 @@ False by construction. Pure logic, no I/O, no store dependency.
 from __future__ import annotations
 
 from bisect import bisect_left
-from typing import Any, Callable, Iterable
+from collections.abc import Callable, Iterable
+from typing import Any
 
 __all__ = ["aurc", "e_aurc", "isotonic_fit", "selective_risk_coverage",
            "tce_at_lambda"]

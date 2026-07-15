@@ -10,7 +10,6 @@ from benchmark.veribench.mem0_adapter import mem0_available, rows_at_floor
 from benchmark.veribench.real_axis import outcomes_for_system
 from benchmark.veribench.scoring import Outcome
 
-
 _ANS = [{"retrieval_hit": True, "top_score": 0.82, "has_hits": True},   # relevant, high
         {"retrieval_hit": True, "top_score": 0.70, "has_hits": True}]   # relevant, mid
 _UNANS = [{"top_score": 0.66, "has_hits": True},                        # neighbour

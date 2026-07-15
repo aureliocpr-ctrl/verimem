@@ -5,11 +5,10 @@ by ``python -m benchmark.source_trust_realcorpus`` and verified empirically.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
-
-import json
 
 from benchmark.source_trust_realcorpus import (
     RealCorpusConfig,

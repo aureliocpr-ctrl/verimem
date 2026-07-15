@@ -48,7 +48,7 @@ def test_every_sensitive_field_is_escaped_where_it_is_rendered():
                          or "<div" in line)
         for field in _SENSITIVE_FIELDS:
             # a property access like `.proposition` or `hop.proposition`
-            if re.search(r"\.%s\b" % re.escape(field), line) and builds_markup:
+            if re.search(rf"\.{re.escape(field)}\b", line) and builds_markup:
                 if "esc(" not in line:
                     offenders.append((n, field, line.strip()))
     assert not offenders, "unescaped fact field(s) rendered into markup:\n" + \
