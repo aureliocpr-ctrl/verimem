@@ -415,6 +415,12 @@ def gateway_serve(
                       "pip install 'verimem[server]'")
         raise typer.Exit(1) from None
     dd = _gateway_data_dir(data_dir)
+    # Profilo server multi-tenant: durabilità per-commit di default —
+    # WAL+synchronous=NORMAL può perdere l'ultima transazione committata su
+    # crash dell'OS (finestra tra checkpoint): accettabile sul laptop
+    # personale (SDK/console restano NORMAL), non su uno store che serve
+    # tenant. setdefault: un override esplicito dell'operatore vince.
+    os.environ.setdefault("ENGRAM_SQLITE_SYNCHRONOUS", "FULL")
     # control plane: la admin key arriva SOLO da env (mai flag = mai nella
     # shell history). Senza, gli endpoint /admin/* non esistono.
     admin_key = os.environ.get("VERIMEM_ADMIN_KEY", "").strip() or None

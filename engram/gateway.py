@@ -250,19 +250,24 @@ class GatewayKeys:
         return row["plan"] if row else "free"
 
     def resolve(self, api_key: str | None) -> str | None:
-        """La chiave presentata → tenant_id, o None (mancante/ignota/revocata)."""
+        """La chiave presentata → tenant_id, o None (mancante/ignota/revocata).
+
+        Lookup sull'indice UNIQUE di ``key_hash`` (O(log n)) invece del
+        fetchall+loop O(n·chiavi) pre-2026-07-15. Il confronto avviene solo
+        tra sha256 (mai plaintext): il timing del btree sull'hash non dà
+        segnale utile a chi non conosce già gli hash a riposo, e l'hash non
+        è invertibile — il ``compare_digest`` per-riga proteggeva un canale
+        che qui non esiste."""
         if not api_key:
             return None
         presented = self._hash(api_key)
         with self._connect() as conn:
-            rows = conn.execute(
-                "SELECT key_hash, tenant_id FROM gateway_keys "
-                "WHERE revoked_at IS NULL",
-            ).fetchall()
-        for r in rows:
-            if secrets.compare_digest(r["key_hash"], presented):
-                return r["tenant_id"]
-        return None
+            row = conn.execute(
+                "SELECT tenant_id FROM gateway_keys "
+                "WHERE key_hash = ? AND revoked_at IS NULL",
+                (presented,),
+            ).fetchone()
+        return row["tenant_id"] if row else None
 
     def revoke(self, key_id: str) -> bool:
         with self._connect() as conn:
