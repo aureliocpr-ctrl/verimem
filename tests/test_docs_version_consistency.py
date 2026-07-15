@@ -17,7 +17,12 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import tomllib
+import pytest
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # tomllib is 3.11+
+    tomllib = None
 
 import engram
 
@@ -29,6 +34,7 @@ def _pyproject_version() -> str:
     return d["project"]["version"]
 
 
+@pytest.mark.skipif(tomllib is None, reason="tomllib requires Python 3.11+")
 def test_code_and_packaging_version_agree():
     """The single-source-of-truth check: a mismatch is a release bug."""
     assert engram.__version__ == _pyproject_version(), (
@@ -46,6 +52,7 @@ def test_security_md_is_version_agnostic():
         "version-agnostic so it can't go stale again")
 
 
+@pytest.mark.skipif(tomllib is None, reason="tomllib requires Python 3.11+")
 def test_state_md_release_row_matches_true_version():
     v = _pyproject_version()
     txt = (_ROOT / "STATE.md").read_text(encoding="utf-8")
