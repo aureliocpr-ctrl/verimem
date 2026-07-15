@@ -173,7 +173,11 @@ of writes admitted clean) with per-day sparklines, the **knowledge graph**
 hidden) where clicking a conclusion lights its **chain of custody** hop by
 hop, and the **blocked-claims log** — every unsupported claim the gate
 stopped, auditable. Live: gate events stream over SSE (`GET /v1/events`), so
-you watch the memory working, not a 30s-old photograph. Personal mode binds
+you watch the memory working, not a 30s-old photograph. For the engine itself
+there is the **Live Engine Room** (`GET /ui/engine`, stream
+`GET /v1/events/flow`): the custody line animated by YOUR store's real events
+— each write admitted or quarantined, each recall answered or abstained, with
+per-tenant privacy (flow metadata only, never fact content). Personal mode binds
 127.0.0.1 only (Host-header checked against DNS rebinding); a presented API
 key always wins. For agents there is `GET /v1/snapshot` — the whole visible
 state (odometer + daily series + quarantine + graph with provenance) in one

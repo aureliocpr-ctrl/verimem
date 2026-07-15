@@ -403,6 +403,17 @@ def _gateway_min_relevance() -> float | str:
         return "auto"
 
 
+def _emit_flow(name: str, **payload: Any) -> None:
+    """Traccia di flusso per la LIVE Engine Room (``/ui/engine``): best-effort,
+    MAI nel percorso d'errore del request handler. Late import per evitare
+    cicli; observability.emit fa già BUS + events.jsonl (cross-process)."""
+    try:
+        from .observability import emit
+        emit(name, **payload)
+    except Exception:  # noqa: BLE001 — l'osservabilità non rompe mai l'API
+        pass
+
+
 def _replay_receive(body: bytes, original: Any) -> Any:
     """Un ASGI ``receive`` che emette UNA volta il corpo bufferizzato come un
     unico ``http.request`` completo, poi delega all'originale (disconnect ecc.)."""
@@ -766,6 +777,14 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         meter.bump(tenant_id, writes=1,
                    stored_ok=1 if res.get("stored") else 0,
                    rejected=0 if res.get("stored") else 1)
+        # LIVE ENGINE ROOM: ogni write lascia una traccia osservabile
+        # (observability.emit → BUS + events.jsonl cross-process). Il payload
+        # è metadato di flusso, MAI il contenuto del fatto (privacy by design).
+        _emit_flow("flow.write", tenant=tenant_id,
+                   stored=bool(res.get("stored")),
+                   status=str(res.get("status") or ""),
+                   fact_id=str(res.get("id") or ""),
+                   topic=str(body.get("topic", "user")))
         return res
 
     @app.get("/v1/search")
@@ -776,6 +795,10 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         hits = tenants.get(tenant_id).search(
             q, k=k, deep=deep, as_of=as_of, with_history=with_history)
         meter.bump(tenant_id, reads=1)
+        _emit_flow("flow.recall", tenant=tenant_id, kind="search",
+                   n=len(hits),
+                   best=round(max((float(h.get("score") or 0.0)
+                                   for h in hits), default=0.0), 4))
         return {"hits": hits}
 
     @app.get("/v1/explain")
@@ -791,6 +814,9 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         report = tenants.get(tenant_id).explain(
             q, k=k, as_of=as_of, min_relevance=_gateway_min_relevance())
         meter.bump(tenant_id, reads=1)
+        _emit_flow("flow.recall", tenant=tenant_id, kind="explain",
+                   n=len(report.get("results") or []),
+                   abstained=bool(report.get("abstained")))
         return report
 
     @app.get("/v1/memories/{fact_id}")
@@ -950,6 +976,69 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         return StreamingResponse(gen(), media_type="text/event-stream",
                                  headers={"Cache-Control": "no-cache"})
 
+    @app.get("/v1/events/flow")
+    async def events_flow(request: Request,
+                          replay: int = Query(default=0, ge=0, le=50),
+                          max_events: int = Query(default=0, ge=0, le=50),
+                          tenant_id: str = Depends(_tenant)):
+        """Il motore in DIRETTA, evento per evento (SSE): ogni ``flow.write``
+        (ammesso/quarantenato) e ``flow.recall`` (risposto/astenuto) del
+        PROPRIO tenant — mai di altri (privacy multi-tenant by filter).
+        Fonte: events.jsonl (cross-process, già rotato a 5 MB).
+
+        ``replay`` rigioca gli ultimi N eventi al connect (la pagina live non
+        parte mai vuota); ``max_events`` (0 = infinito) chiude dopo N — per
+        test deterministici, stessa lezione 2026-07-10 di ``/v1/events``.
+        Il loop controlla ``request.is_disconnected()``: mai generatori orfani."""
+        import asyncio
+        import json as _json
+        from . import event_jsonl_log as _ejl
+
+        def _flow_after(after_ts: float) -> list[dict[str, Any]]:
+            try:
+                lines = _ejl.EVENT_LOG_PATH.read_text(
+                    encoding="utf-8").splitlines()
+            except OSError:
+                return []
+            out: list[dict[str, Any]] = []
+            for ln in lines:
+                try:
+                    rec = _json.loads(ln)
+                except ValueError:
+                    continue
+                if not str(rec.get("name", "")).startswith("flow."):
+                    continue
+                if (rec.get("payload") or {}).get("tenant") != tenant_id:
+                    continue
+                if float(rec.get("ts") or 0.0) <= after_ts:
+                    continue
+                out.append(rec)
+            return out
+
+        async def gen():
+            sent = 0
+            backlog = _flow_after(0.0)
+            last_ts = float(backlog[-1].get("ts") or 0.0) if backlog else 0.0
+            for rec in (backlog[-replay:] if replay else []):
+                yield "data: " + _json.dumps(rec, ensure_ascii=False) + "\n\n"
+                sent += 1
+                if max_events and sent >= max_events:
+                    return
+            while True:
+                if await request.is_disconnected():
+                    return
+                for rec in _flow_after(last_ts):
+                    last_ts = float(rec.get("ts") or last_ts)
+                    yield ("data: " + _json.dumps(rec, ensure_ascii=False)
+                           + "\n\n")
+                    sent += 1
+                    if max_events and sent >= max_events:
+                        return
+                await asyncio.sleep(0.5)
+
+        return StreamingResponse(gen(), media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-cache"})
+
     @app.get("/dashboard", response_class=HTMLResponse)
     def dashboard() -> str:
         """La vetrina dell'odometro. Pagina STATICA e senza dati: i numeri
@@ -970,10 +1059,16 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
 
     @app.get("/ui/{asset_name}")
     def ui_asset(asset_name: str) -> Response:
-        if asset_name not in ("app.js", "style.css"):  # allowlist, no fs walk
+        # allowlist, no fs walk; "engine" = la LIVE Engine Room (CSP-clean:
+        # markup + engine.css + engine.js, zero inline come la console)
+        allow = {"app.js": "app.js", "style.css": "style.css",
+                 "engine": "engine.html", "engine.css": "engine.css",
+                 "engine.js": "engine.js"}
+        fname = allow.get(asset_name)
+        if fname is None:
             raise HTTPException(status_code=404, detail="unknown asset")
-        return Response(content=_webui.asset(asset_name),
-                        media_type=_webui.media_type(asset_name))
+        return Response(content=_webui.asset(fname),
+                        media_type=_webui.media_type(fname))
 
     # ---- control plane (/admin/*) — esiste SOLO con una admin key --------
     if admin_key:

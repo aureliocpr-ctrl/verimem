@@ -16,6 +16,16 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   `explain()` default is unchanged (0.0) for backward compatibility.
 
 ### Added
+- **Live Engine Room** (`GET /ui/engine` + `GET /v1/events/flow`): the engine
+  observable event by event. Every gateway write emits `flow.write`
+  (status/stored/fact_id — flow metadata only, never fact content) and every
+  read emits `flow.recall` (kind/n/best/abstained); the SSE stream replays the
+  last N and then follows live, filtered to the CALLER's tenant only. The page
+  (CSP-clean: external `engine.css`/`engine.js`, zero inline) animates the
+  custody line — admitted → LEDGER, quarantined → QUARANTINE, answer/abstain
+  on the read lane — with cumulative counters and a newest-first feed.
+  Verified end-to-end against a live store (write admitted, L1.10 quarantine,
+  search answer 0.81, explain abstention). `tests/test_gateway_flow_events.py`.
 - **Guardian at the read-path** (`engram/guardian.py`, `correct_read`): not
   just block-or-abstain — when the store contains a better-guaranteed truth
   about the same subject, the read SERVES it as a correction with both facts
