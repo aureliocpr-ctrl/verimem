@@ -19,6 +19,39 @@ import numpy as np
 import pytest
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _reap_orphan_subprocesses():
+    """Windows-CI teardown hardening — kills the recurring windows/py3.12 flake.
+
+    Symptom: the suite PASSES (``4545 passed``) then dies with
+    ``KeyboardInterrupt`` in ``subprocess.wait`` and exit code 1 — red on every
+    commit, non-deterministic. Root cause: a test that exercises the encode
+    service re-enables ``ENGRAM_ENCODE_SERVICE`` and spawns the REAL daemon
+    (``engram.encode_service`` ``serve_forever`` — an infinite loop, launched
+    DETACHED_PROCESS on Windows). That orphan never exits, so the interpreter's
+    end-of-session subprocess reaping blocks on its ``wait()`` (fast enough to
+    finish on the Linux/macOS legs, slow enough to hang the Windows runner).
+
+    Fix: at session end (after every test has run), terminate any child process
+    the interpreter still tracks, each with a HARD timeout, so the teardown can
+    never block regardless of which test spawned the daemon. Best-effort: a
+    reaping failure must never itself break the run."""
+    yield
+    import subprocess as _sp
+    for p in list(getattr(_sp, "_active", None) or []):
+        try:
+            if p.poll() is not None:
+                continue  # already exited — nothing to reap
+            p.terminate()
+            try:
+                p.wait(timeout=5)
+            except Exception:  # noqa: BLE001 — terminate ignored → hard kill
+                p.kill()
+                p.wait(timeout=5)
+        except Exception:  # noqa: BLE001 — reaping is best-effort, never fatal
+            pass
+
+
 @pytest.fixture
 def tmp_data_dir(tmp_path):
     """Provide a temp data directory; tests pass explicit paths to constructors."""
