@@ -188,6 +188,11 @@ engram = [
     "webui/*.html",
     "webui/*.js",
     "webui/*.css",
+    # vendored graph stack (sigma/graphology, MIT) + licenses — the console's
+    # WebGL renderer; same-origin by CSP, so they MUST travel in the wheel
+    "webui/vendor/*.js",
+    "webui/vendor/*.txt",
+    "webui/vendor/README.md",
     "*.yaml",
     "providers.yaml",
 ]
