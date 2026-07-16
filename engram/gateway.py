@@ -844,6 +844,16 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             window.append(now)
             _buckets[bucket_key] = window
 
+    def _plan_for(tenant_id: str):
+        """The tenant's effective plan. Personal mode is the OPERATOR on their
+        own machine: plan quotas exist to protect the SaaS, not to cap the
+        owner — found live 2026-07-16 (console on a 4499-fact store → every
+        write 402'd against the free cap). Local tenant ⇒ uncapped self_host."""
+        from .gateway_plans import get_plan
+        if local_tenant is not None and tenant_id == local_tenant:
+            return get_plan("self_host")
+        return get_plan(keys.plan_for_tenant(tenant_id))
+
     def _tenant(request: Request,
                 authorization: str | None = Header(default=None),
                 x_api_key: str | None = Header(default=None)) -> str:
@@ -881,8 +891,8 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     def quota(tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         """The tenant's plan, usage and headroom — what a dashboard shows and what a
         402 (over quota) cites. The SaaS's self-service window into its own limits."""
-        from .gateway_plans import get_plan, quota_status
-        plan = get_plan(keys.plan_for_tenant(tenant_id))
+        from .gateway_plans import quota_status
+        plan = _plan_for(tenant_id)
         return quota_status(plan, facts_used=tenants.get(tenant_id).semantic.count())
 
     @app.get("/v1/usage")
@@ -891,12 +901,11 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         """The tenant's own metered usage: per-day line items + the period total —
         the self-serve billing view, and the numbers a monthly invoice sums. ``since``
         (YYYY-MM-DD) bounds the billing period; omit for all time."""
-        from .gateway_plans import get_plan
         days = meter.usage_for(tenant_id, since_day=since)
         cols = ("requests", "reads", "writes", "stored_ok", "rejected")
         total = {c: sum(int(d.get(c, 0)) for d in days) for c in cols}
         return {"tenant_id": tenant_id,
-                "plan": get_plan(keys.plan_for_tenant(tenant_id)).name,
+                "plan": _plan_for(tenant_id).name,
                 "since": since, "days": days, "total": total}
 
     @app.post("/v1/memories")
@@ -941,8 +950,8 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         # concurrent writes at cap-1 can't ALL pass the check and overrun the cap.
         # enterprise/self_host are uncapped → the reserve short-circuits, no lock.
         # Placed AFTER the raising checks above so no reservation can be orphaned.
-        from .gateway_plans import get_plan, quota_status
-        _plan = get_plan(keys.plan_for_tenant(tenant_id))
+        from .gateway_plans import quota_status
+        _plan = _plan_for(tenant_id)
         if not _quota_reserve(_quota_pending, _quota_lock, tenant_id, _plan,
                               mem.semantic.count):
             meter.bump(tenant_id, writes=1, rejected=1)
