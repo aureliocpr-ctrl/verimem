@@ -176,9 +176,45 @@ dipendono dal matching (k-guard, blank, injection-safe, membership-status).
 |---|--------------|------|------|
 | 6 | La suite scope emette 1 `PytestUnhandledThreadExceptionWarning`. | BASSA | Thread daemon (probabile encode_service) — da isolare; non fa fallire i test. |
 
+### reconcile-on-write (`truth_reconciliation.classify_conflict`, 400 righe) — 2026-07-16
+
+DETERMINISTICO (no LLM, no embedding) → probe AFFIDABILI. È la logica
+anti-sycophancy del supersede (un'asserzione nuda non deve soppiantare un fatto
+provato solo perché più recente/sicura). Probe:
+
+| Scenario | Atteso | Osservato |
+|----------|--------|-----------|
+| Bare assertion (nuova, conf 0.99, no evidence) vs `verified` con fonte | dispute (contest, NON supersede) | `dispute` ✓ |
+| Correzione EVIDENZIATA (verified + fonte) | update (supersede) | `update` ✓ |
+| Gate OFF default, bare vs verified | non cave (old ha authority superiore) | `dispute` ✓ |
+
+Two-sided OK: bare bloccata, evidenced passa. **Scope onesto** (dal docstring,
+verificato): il path `store()` di DEFAULT NON riconcilia — appende entrambi;
+`classify_conflict` è la LOGICA che governa il reconcile SE attivato
+(`reconcile_new_fact`). La logica è corretta; il wiring di default è un'altra scelta.
+
+### freshness / staleness cutoff (`_fact_is_stale`) — 2026-07-16
+
+DETERMINISTICO → probe affidabili. Governa cosa il recall nasconde per età.
+6/6:
+
+| Scenario | Atteso | Osservato |
+|----------|--------|-----------|
+| Creato ora | fresh | `False` ✓ |
+| Creato 2× half-life fa | stale | `True` ✓ |
+| Fresco ma `valid_until` passato | hard-expire | `True` ✓ |
+| `last_verified_at` nel FUTURO (spoof anti-decay) | fail-closed stale | `True` ✓ |
+| `deep` (archaeology) su fatto vecchissimo | età sollevata → non-stale | `False` ✓ |
+| `deep` NON solleva `valid_until` | hard-expire resta | `True` ✓ |
+
+Nota di sicurezza (verificata): l'anti-spoof su timestamp-futuro è FAIL-CLOSED
+(un `last_verified_at` impossibile = manomissione → escluso, NON normalizzato a
+`now` che lo renderebbe fresco = l'obiettivo dello spoofer). Il `deep` solleva
+solo il decay per età, mai gli integrity-guard (valid_until, future-timestamp).
+
 **DA AUDITARE** (blocchi successivi, con modello reale o lettura codice — NON
 probe stub): ANN pre-narrowing, PPR/BM25 fusion (`_maybe_fuse_ppr`),
-reconcile-on-write, supersession chain, freshness cutoff, `recall_hybrid`.
+supersession chain, `recall_hybrid`.
 **Verdetto parziale**: contratti pubblici del recall SOLIDI (guardie input,
 isolamento tenant, cache-invalidation da test reali); il resto degli interni
 resta da fare — modulo NON chiuso.
