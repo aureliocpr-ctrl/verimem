@@ -212,9 +212,41 @@ Nota di sicurezza (verificata): l'anti-spoof su timestamp-futuro è FAIL-CLOSED
 `now` che lo renderebbe fresco = l'obiettivo dello spoofer). Il `deep` solleva
 solo il decay per età, mai gli integrity-guard (valid_until, future-timestamp).
 
+### BM25 lexical ranking (`bm25_rank.py`, 162 righe) — 2026-07-16
+
+Letto integralmente + probe deterministici (FTS5, no embedding → affidabili). 4/4:
+
+| Scenario | Atteso | Osservato |
+|----------|--------|-----------|
+| Token raro (`a1b2c3d4e5` = SHA/path) | il fatto esatto è PRIMO | ✓ (first) |
+| Query solo-stopword ("what is the on") | [] (nessun rumore) | `[]` ✓ |
+| Query injection (`'; DROP TABLE facts_fts;--`) | [] fail-soft, corpus intatto | `[]`, 10 fatti ✓ |
+| `_CURATED` filter: `user_belief` nel ranklist | escluso (difesa in profondità) | escluso, rare incluso ✓ |
+
+È il 3° segnale RRF (dense-cosine + entity-PPR + BM25) per il caso exact-token
+che il bi-encoder smera. Triggers FTS5 incrementali O(1)/write, filtro status a
+QUERY-time (lo status cambia dopo insert). Solido.
+
+### PPR/BM25 fusion (`_maybe_fuse_ppr`, `ppr_seed.py`) — 2026-07-16
+
+Copertura via test esistenti (setup entity-graph complesso → uso la suite, non
+probe manuali): **206 test** `-k "ppr or fusion or bm25 or rrf"` verdi
+(`test_recall_ppr_fusion.py` 8/8 + affini). Opt-in (`ENGRAM_PPR_FUSION`), floor
+50 fatti, budget-thread cap, fail-soft — già letto in modulo 1 il contratto
+fusion×rerank (fondere DOPO il CE-rerank).
+
 **DA AUDITARE** (blocchi successivi, con modello reale o lettura codice — NON
-probe stub): ANN pre-narrowing, PPR/BM25 fusion (`_maybe_fuse_ppr`),
-supersession chain, `recall_hybrid`.
+probe stub): ANN pre-narrowing (`_ann_cache`), supersession chain, `recall_hybrid`.
+
+### Verdetto MODULO 2 (parziale) — 2026-07-16
+
+Blocchi PROVATI: input-guard, blank, injection-safe, isolamento tenant (133
+test), cache-invalidation (22 test reali), reconcile anti-sycophancy (probe det.),
+freshness+anti-spoof (6/6), BM25 (4/4), PPR/fusion (206 test). **0 difetti
+trovati.** DA FARE: ANN pre-narrowing, supersession chain, `recall_hybrid` +
+la ri-verifica degli interni cosine con MODELLO REALE (limite-metodo stub). Il
+recall è robusto sui contratti pubblici e sui sotto-moduli deterministici; il
+core cosine/cache va ancora provato end-to-end su modello reale. Modulo NON chiuso.
 **Verdetto parziale**: contratti pubblici del recall SOLIDI (guardie input,
 isolamento tenant, cache-invalidation da test reali); il resto degli interni
 resta da fare — modulo NON chiuso.
