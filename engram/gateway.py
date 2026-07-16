@@ -710,9 +710,15 @@ _BASE_CSP = b"frame-ancestors 'none'"
 #: neutralizes stored-XSS as defense-in-depth: even if a poisoned fact's text ever
 #: slipped past the console's esc(), ``script-src 'self'`` forbids the injected
 #: inline script from executing. ``img-src`` allows data: for favicons.
+#: ``worker-src 'self' blob:`` exists for exactly one consumer: the console
+#: graph's ForceAtlas2 layout runs in a Web Worker that graphology-library
+#: spawns from a Blob of its OWN (vendored, same-origin) code. blob: cannot
+#: load remote script — only code already admitted by ``script-src 'self'``
+#: can mint such a worker, so the no-CDN/no-inline posture is unchanged.
 _HTML_CSP = (
     b"default-src 'none'; script-src 'self'; style-src 'self'; "
     b"img-src 'self' data:; font-src 'self'; connect-src 'self'; "
+    b"worker-src 'self' blob:; "
     b"base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
 
@@ -1041,6 +1047,13 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             out = tenants.get(tenant_id).answer(
                 q, llm=llm, k=k, verify_threshold=verify_threshold,
                 trust_conditioning=trust_conditioning)
+            # answer's OWN flow event (the internal search already emitted
+            # kind=search): the Engine Room shows the verdict as what it is.
+            from .flow_events import emit_flow as _emit_flow
+            _emit_flow("flow.recall", kind="answer",
+                       grounded=bool(out.get("grounded")),
+                       abstained=out.get("answer") == "NO ANSWER",
+                       reason=str(out.get("reason") or ""))
         finally:
             _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, reads=1)
@@ -1290,6 +1303,11 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     # + log dei claim bloccati, tutto via fetch autenticato dal browser.
     from . import webui as _webui
 
+    @app.get("/", include_in_schema=False)
+    def root() -> Response:
+        # a human opening the gateway's root gets the console, not a JSON 404
+        return Response(status_code=307, headers={"Location": "/ui"})
+
     @app.get("/ui", response_class=HTMLResponse)
     def ui_index() -> str:
         return _webui.asset("index.html")
@@ -1297,9 +1315,15 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     @app.get("/ui/{asset_name}")
     def ui_asset(asset_name: str) -> Response:
         # allowlist, no fs walk; "engine" = la LIVE Engine Room (CSP-clean:
-        # markup + engine.css + engine.js, zero inline come la console)
+        # markup + engine.css + engine.js, zero inline come la console).
+        # vendor-* = i bundle grafo self-hosted (sigma/graphology, MIT,
+        # copiati da npm — webui/vendor/README.md): la CSP resta
+        # `script-src 'self'`, nessun CDN a runtime.
         allow = {"app.js": "app.js", "style.css": "style.css",
                  "graph.js": "graph.js",
+                 "vendor-graphology.js": "vendor/graphology.umd.min.js",
+                 "vendor-graphology-library.js": "vendor/graphology-library.min.js",
+                 "vendor-sigma.js": "vendor/sigma.min.js",
                  "engine": "engine.html", "engine.css": "engine.css",
                  "engine.js": "engine.js"}
         fname = allow.get(asset_name)

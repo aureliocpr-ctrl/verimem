@@ -211,10 +211,11 @@ body {
               gap: .8rem; align-items: start; }
 @media (max-width: 900px) { .graph-wrap { grid-template-columns: 1fr; } }
 .graph-canvas { position: relative; overflow: hidden; }
-/* canvas, not SVG: 7753 nodes would be 7753 DOM elements (see graph.js) */
+/* sigma.js host (WebGL): the renderer creates its own canvases inside;
+   the div only needs a size. See graph.js + vendor/README.md. */
 #graph { width: 100%; height: 540px; display: block; cursor: grab;
-         touch-action: none; }
-#graph.panning { cursor: grabbing; }
+         touch-action: none; background: var(--graph-bg); }
+#graph canvas { display: block; }
 .graph-stats { position: absolute; top: .8rem; right: .9rem; z-index: 2;
   font-family: var(--mono); font-size: .68rem; letter-spacing: .06em;
   color: var(--dim); background: color-mix(in srgb, var(--panel) 86%, transparent);
@@ -227,84 +228,9 @@ body {
   width: 190px; opacity: .92; }
 #graph-search:focus { width: 240px; opacity: 1; }
 
-#graph .edge { stroke: var(--dim); stroke-width: 1.3; opacity: .7;
-               transition: opacity .2s, stroke-width .2s; }
-#graph .edge.grounded { stroke: var(--ok); }
-#graph .edge.ungrounded { stroke: var(--bad); stroke-dasharray: 6 5;
-  animation: dashdrift 24s linear infinite; }
-@keyframes dashdrift { to { stroke-dashoffset: -220; } }
-#graph .edge.hl { stroke-width: 2.4; opacity: 1; }
-#graph .edge.faded, #graph .node.faded, #graph .edge-label.faded { opacity: .12; }
-/* the chain of custody gets INKED — a dark current on paper */
-#graph .flow { fill: none; stroke: var(--lit); stroke-width: 2.6;
-  stroke-linecap: round; stroke-dasharray: 10 14; opacity: 0;
-  filter: drop-shadow(0 0 4px var(--lit-glow)); }
-#graph .flow.run { opacity: 1; animation: flowrun 1.15s linear infinite; }
-@keyframes flowrun { to { stroke-dashoffset: -96; } }
-
-#graph .node { cursor: pointer; }
-#graph .node circle { fill: var(--node); stroke: var(--bg);
-  stroke-width: 1.5; transition: filter .18s; }
-#graph .node:hover circle { filter: drop-shadow(0 0 7px var(--lit-glow)); }
-#graph .node.sel circle { stroke: var(--lit); stroke-width: 3;
-  filter: drop-shadow(0 0 8px var(--lit-glow)); }
-#graph .node.lit circle { stroke: var(--lit); stroke-width: 2.5;
-  filter: drop-shadow(0 0 9px var(--lit-glow)); }
-#graph .node text { fill: var(--ink); font-size: 11px;
-  font-family: var(--mono); pointer-events: none;
-  paint-order: stroke; stroke: var(--bg); stroke-width: 3px;
-  transition: opacity .18s; }
-#graph .node.nolabel text { opacity: 0; }   /* LOD: quiet until it matters */
-
-/* ---- the graph ALIVE (2026-07-15) ---------------------------------------
-   Isolated entities are real memory with no relation yet: drawn small and
-   quiet in the outer belt — present and countable, never mistaken for
-   structure. A node the engine just touched FIRES; one just born GROWS.
-   These are driven by /v1/events/flow (flow.entity), i.e. the real store. */
-#graph .node.isolated circle, #graph .node.quiet circle {
-  fill: var(--node); opacity: .45; stroke-width: 1; }
-#graph .node.isolated text, #graph .node.quiet text {
-  font-size: 9.5px; opacity: 0; }
-#graph .node.isolated:hover circle, #graph .node.quiet:hover circle {
-  opacity: 1; }
-/* has relations, just not inside this window — a hair warmer than a true
-   isolate, so the belt does not claim two different things with one look */
-#graph .node.quiet circle { opacity: .62; }
-
-@keyframes node-fire {
-  0%   { transform: scale(1);   stroke-width: 2.5; }
-  45%  { transform: scale(1.9); stroke-width: 4; }
-  100% { transform: scale(1);   stroke-width: 1.5; }
-}
-#graph .node.firing circle {
-  transform-box: fill-box; transform-origin: center;
-  stroke: var(--lit); animation: node-fire 1.1s cubic-bezier(.22,.61,.36,1);
-  filter: drop-shadow(0 0 12px var(--lit-glow)); opacity: 1 !important; }
-#graph .node.firing text { opacity: 1 !important; }
-
-@keyframes node-born {
-  from { transform: scale(0); opacity: 0; }
-  60%  { transform: scale(1.35); opacity: 1; }
-  to   { transform: scale(1); opacity: 1; }
-}
-#graph .node.born circle {
-  transform-box: fill-box; transform-origin: center;
-  animation: node-born .75s cubic-bezier(.22,.61,.36,1);
-  stroke: var(--ok); stroke-width: 2.5; }
-#graph .node.born text { opacity: 1 !important; }
-
-@media (prefers-reduced-motion: reduce) {
-  #graph .node.firing circle, #graph .node.born circle { animation: none; }
-}
-#graph .node[data-type="person"] circle { fill: var(--node-person); }
-#graph .node[data-type="org"] circle    { fill: var(--node-org); }
-#graph .node[data-type="place"] circle  { fill: var(--node-place); }
-#graph .edge-label { fill: var(--dim); font-size: 9.5px;
-  font-family: var(--mono); pointer-events: none; opacity: 0;
-  transition: opacity .2s;
-  paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }
-#graph .edge-label.show, #graph .edge-label.lit { opacity: 1; }
-#graph .edge-label.lit { fill: var(--lit); font-weight: 700; }
+/* All node/edge/pulse looks now live in WebGL (graph.js bakes colors from
+   the --graph-* variables above; pulses run in sigma's nodeReducer). The
+   old per-element SVG rules died with the SVG renderer. */
 
 .graph-legend { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
   padding: .55rem .85rem; border-top: 1px solid var(--line);
@@ -408,3 +334,48 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---- search & ask (provenance-first) ----------------------------------- */
+.memsearch { padding: 1rem; margin-bottom: .8rem; }
+.mem-form { display: flex; gap: .5rem; margin-bottom: .8rem; }
+.mem-form input { flex: 1; background: var(--panel-2); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: 3px;
+  padding: .5rem .75rem; font-family: var(--mono); font-size: .84rem; }
+.mem-form button { background: var(--accent); color: var(--bg); border: 0;
+  border-radius: 3px; padding: .5rem 1.05rem; cursor: pointer;
+  font-weight: 600; font-family: var(--mono); letter-spacing: .04em; }
+.mem-form button:hover { filter: brightness(1.12); }
+.ask-h { font-family: var(--mono); font-size: .72rem; text-transform: uppercase;
+  letter-spacing: .18em; color: var(--dim); margin-bottom: .6rem; }
+.hint-inline { text-transform: none; letter-spacing: 0; font-size: .7rem;
+  opacity: .8; margin-left: .5rem; }
+.pad { padding: .6rem .2rem; }
+
+.mem-hit { display: flex; gap: .7rem; padding: .55rem .2rem;
+  border-bottom: 1px solid var(--line); animation: fadein .25s ease; }
+.mem-hit:last-child { border-bottom: 0; }
+.mh-score { font-family: var(--mono); font-size: .78rem; color: var(--dim);
+  min-width: 2.6em; text-align: right; font-variant-numeric: tabular-nums;
+  padding-top: .1rem; }
+.mh-main { min-width: 0; }
+.mh-text { font-size: .92rem; line-height: 1.45; overflow-wrap: anywhere; }
+.mh-meta { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .35rem; }
+
+.badge { font-family: var(--mono); font-size: .64rem; letter-spacing: .05em;
+  padding: .12rem .42rem; border: 1px solid var(--line-strong);
+  border-radius: 3px; color: var(--dim); white-space: nowrap; }
+.badge.st-verified, .badge.vby { color: var(--ok); border-color: var(--ok); }
+.badge.st-quarantined, .badge.st-rejected { color: var(--bad);
+  border-color: var(--bad); }
+.badge.st-user_belief { color: var(--warn); border-color: var(--warn); }
+.badge.gs { color: var(--ink); }
+.badge.tp { opacity: .85; }
+
+.ask-verdict { font-family: var(--display); font-size: 1.15rem;
+  font-weight: 650; padding: .5rem 0 .2rem; }
+.ask-verdict.abst { color: var(--dim); font-style: italic; }
+.ask-verdict.ok { color: var(--ink); }
+.ask-support { font-size: .84rem; color: var(--dim); border-left: 2px solid
+  var(--ok); padding: .3rem 0 .3rem .7rem; margin-top: .55rem;
+  overflow-wrap: anywhere; }
+.ask-support.raw { border-left-color: var(--bad); }

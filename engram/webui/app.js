@@ -1,7 +1,15 @@
 /* Verimem trust console v2 — living instrument.
  * All data arrives via authenticated fetch (bearer from sessionStorage);
  * this file ships static — no tenant data is ever baked in.
- * Every interpolated string goes through esc() (XSS-safe by construction). */
+ * Every interpolated string goes through esc() (XSS-safe by construction).
+ *
+ * LIVE DISCIPLINE (2026-07-16, learned the hard way): this page sits on a
+ * store that other agents write CONTINUOUSLY. One fetch per event is a
+ * self-inflicted DDoS (ERR_INSUFFICIENT_RESOURCES took the whole console
+ * down). Rules: counters update from the event payload itself; full
+ * refreshes are throttled; the graph grows INCREMENTALLY from flow.entity
+ * (never a 1.6 MB refetch per node birth); a failed fetch degrades to a
+ * banner + retry, never to a dead page. */
 (function () {
   "use strict";
   var STORE = "verimem_bearer";
@@ -35,10 +43,21 @@
       });
   }
 
+  /* a fetch that fails must NOT kill the console: if the board is already
+     live, keep showing it (stale data beats a blank page), banner + retry. */
+  var failTimer = null;
   function fail(e) {
-    board.hidden = true; $("live").hidden = true;
-    if (e && e.nokey) { err.hidden = true; return; }
-    err.textContent = e.message; err.hidden = false;
+    if (e && e.nokey) {
+      board.hidden = true; $("live").hidden = true; err.hidden = true;
+      return;
+    }
+    $("live").hidden = true;
+    err.textContent = e.message + " — retrying…";
+    err.hidden = false;
+    if (!failTimer) {
+      failTimer = setTimeout(function () { failTimer = null; loadLive(); },
+                             6000);
+    }
   }
 
   function esc(s) {
@@ -58,6 +77,9 @@
           function (t) {
             t.classList.toggle("on", t.id === "tab-" + btn.dataset.tab);
           });
+        if (btn.dataset.tab === "graph" && GG) {
+          requestAnimationFrame(function () { GG.r.resize(); });
+        }
       });
     });
 
@@ -171,7 +193,7 @@
     var failures = trust.ledger_write_failures || 0;
     $("meta").innerHTML = "tenant: " + esc(d.tenant) +
       " &middot; refreshed " + new Date().toLocaleTimeString() +
-      " &middot; auto-refresh 30s" +
+      " &middot; live stream + 30s failsafe" +
       (failures ? ' &middot; <span class="warn">' + failures +
                   " ledger write failures</span>" : "");
   }
@@ -201,34 +223,40 @@
     items.forEach(function (it) { seenBlocked[it.id] = 1; });
   }
 
-  /* ---- graph: the REAL one -----------------------------------------------
-   * The whole store on a canvas (Barnes-Hut O(n log n)) instead of an SVG
-   * sample: engram/webui/graph.js. This wrapper keeps the console's own
-   * behaviour — dossier on click, search, fit/refresh, live pulses. */
+  /* ---- graph: the REAL one, on sigma.js (WebGL) -----------------------------
+   * graph.js wraps sigma + graphology + FA2-in-a-worker (vendored). This
+   * section owns console behaviour: dossier on click, search, fit/layout/
+   * refresh, live pulses, INCREMENTAL births. */
   var GG = null;                                   // VerimemGraph instance
   var graphStats = $("graph-stats");
+  var graphTotals = { nodes: 0, edges: 0 };
+  var liveBorn = 0;
+
+  function statsLine(suffix) {
+    if (!graphStats) { return; }
+    var c = GG ? GG.counts() : graphTotals;
+    graphStats.textContent = c.nodes.toLocaleString() + " entities · "
+      + c.edges.toLocaleString() + " edges"
+      + (liveBorn ? " · +" + liveBorn + " born live" : "")
+      + (suffix ? " · " + suffix : "");
+  }
 
   function renderGraph(data) {
     var host = $("graph");
     $("graph-empty").hidden = (data.n || []).length > 0;
     if (!GG) {
-      GG = new VerimemGraph(host, { onSelect: function (n) { selectNode(n); } });
+      GG = new window.VerimemGraph(host, {
+        onSelect: function (n) { selectNode(n); },
+        onLayout: function (running) {
+          var b = $("graph-layout");
+          if (b) { b.textContent = running ? "stop layout" : "re-layout"; }
+          statsLine(running ? "layout running" : "");
+        }
+      });
     }
     var t0 = performance.now();
-    var tot = GG.load(data);
-    var ms = Math.round(performance.now() - t0);
-    if (graphStats) {
-      graphStats.textContent = tot.entities.toLocaleString() + " entities · "
-        + tot.edges.toLocaleString() + " edges"
-        + (tot.truncated ? " (capped)" : "") + " · " + ms + " ms";
-    }
-  }
-
-  function centerOn(n) {
-    if (!GG) { return; }
-    GG.view.x = n.x; GG.view.y = n.y;
-    GG.view.s = Math.max(GG.view.s, 1.2);
-    GG.dirty = true; GG.loop();
+    graphTotals = GG.load(data);
+    statsLine(Math.round(performance.now() - t0) + " ms · layout running");
   }
 
   /* search: live highlight; Enter selects & centers the first match */
@@ -244,20 +272,21 @@
     }
     if (ev.key === "Enter") {
       ev.preventDefault();
-      if (!GG || !GG.query) { return; }
-      var hit = null;
-      GG.nodes.forEach(function (n) {
-        if (!hit && n.name.toLowerCase().indexOf(GG.query) >= 0) { hit = n; }
-      });
-      if (hit) { centerOn(hit); selectNode(hit); }
+      if (!GG) { return; }
+      var hit = GG.search(searchBox.value.trim());
+      if (hit) {
+        GG.focus(hit);
+        selectNode({ id: hit, name: GG.name(hit) });
+      }
     }
   });
   $("graph-fit").addEventListener("click", function () { if (GG) { GG.fit(); } });
+  $("graph-layout").addEventListener("click", function () {
+    if (!GG) { return; }
+    if (GG.layoutRunning()) { GG.stopLayout(); } else { GG.layout(9000); }
+  });
 
   /* ---- dossier + chain lighting --------------------------------------------*/
-  /* On canvas the chain of custody lights by PULSING its hops in order —
-     same story as the old SVG glow (hop by hop, 260 ms apart), told with the
-     renderer's own live vocabulary instead of per-element CSS classes. */
   function lightChain(derivation) {
     if (!GG) { return; }
     (derivation || []).forEach(function (hop, i) {
@@ -268,13 +297,19 @@
   }
 
   function selectNode(n) {
-    if (GG) { GG.sel = n.id; GG.dirty = true; GG.loop(); }
+    if (GG) { GG.setSelected(n.id); }
     $("dossier-body").innerHTML =
       '<span class="muted">deriving from &ldquo;' + esc(n.name) +
       "&rdquo;&hellip;</span>";
     api("/v1/graph/dossier?src=" + encodeURIComponent(n.id) + "&max_hops=3")
       .then(function (out) { renderDossier(n, out.dossiers || []); })
-      .catch(fail);
+      .catch(function (e) {
+        if (!(e && e.nokey)) {
+          $("dossier-body").innerHTML =
+            '<span class="muted">dossier unavailable: ' + esc(e.message) +
+            "</span>";
+        }
+      });
   }
 
   function renderDossier(n, ds) {
@@ -322,8 +357,8 @@
           function (x) { x.classList.remove("open"); });
         if (opening) {
           box.classList.add("open");
-          if (!d.abstained) { lightChain(d.derivation); } else { clearLit(); }
-        } else { clearLit(); }
+          if (!d.abstained) { lightChain(d.derivation); }
+        }
       });
       host.appendChild(box);
       if (ds.length === 1 && !d.abstained) {
@@ -331,6 +366,123 @@
       }
     });
   }
+
+  /* ---- memory search (provenance-first) --------------------------------------
+   * /v1/search hits carry per-fact provenance (asserted_at, created_at,
+   * source episode, verified_by — case-B wire 2026-07-16): show it. Trust
+   * you can SEE per fact, not just per aggregate. */
+  function provBadges(it) {
+    var b = [];
+    b.push('<span class="badge st-' + esc(it.status || "model_claim") + '">'
+      + esc(it.status || "model_claim") + "</span>");
+    if (it.verified_by && it.verified_by.length) {
+      b.push('<span class="badge vby" title="' +
+        esc(it.verified_by.join(", ")) + '">verified ×' +
+        it.verified_by.length + "</span>");
+    }
+    if (it.grounding_score != null) {
+      b.push('<span class="badge gs">grounding ' +
+        esc(String(it.grounding_score)) + "</span>");
+    }
+    if (it.asserted_at) {
+      b.push('<span class="badge t" title="event time">asserted ' +
+        esc(relTime(it.asserted_at)) + "</span>");
+    }
+    if (it.created_at) {
+      b.push('<span class="badge t" title="transaction time">written ' +
+        esc(relTime(it.created_at)) + "</span>");
+    }
+    if (it.source) {
+      b.push('<span class="badge src" title="' + esc(it.source) +
+        '">ep ' + esc(String(it.source).slice(0, 8)) + "</span>");
+    }
+    return b.join("");
+  }
+
+  function renderMem(hits) {
+    var host = $("mem-results");
+    if (!hits.length) {
+      host.innerHTML = '<div class="empty">no fact matches — the memory ' +
+        "does not pretend otherwise.</div>";
+      return;
+    }
+    host.innerHTML = hits.map(function (it) {
+      var sc = Number(it.score || 0);
+      return '<div class="mem-hit">' +
+        '<div class="mh-score" title="similarity">' +
+        (sc > 0 ? sc.toFixed(2) : "—") + "</div>" +
+        '<div class="mh-main"><div class="mh-text">' + esc(it.text) + "</div>" +
+        '<div class="mh-meta">' + provBadges(it) +
+        (it.topic ? '<span class="badge tp">' + esc(it.topic) + "</span>" : "") +
+        "</div></div></div>";
+    }).join("");
+  }
+
+  $("mem-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var q = $("mem-q").value.trim();
+    if (!q) { return; }
+    $("mem-results").innerHTML = '<div class="muted pad">searching…</div>';
+    api("/v1/search?q=" + encodeURIComponent(q) + "&k=12")
+      .then(function (res) { renderMem(res.hits || []); })
+      .catch(function (e) {
+        $("mem-results").innerHTML =
+          '<div class="empty">' + esc(e.nokey
+            ? "connect first (API key above)" : e.message) + "</div>";
+      });
+  });
+
+  /* ---- ask: grounding-verified answering --------------------------------------
+   * GET /v1/answer (2026-07-16). Needs a server-side llm: the personal
+   * console does NOT have one and answers 400 — show that honestly instead
+   * of a dead spinner. */
+  $("ask-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var q = $("ask-q").value.trim();
+    if (!q) { return; }
+    var host = $("ask-out");
+    host.innerHTML = '<div class="muted pad">asking — retrieval + grounding check…</div>';
+    fetch("/v1/answer?q=" + encodeURIComponent(q) + "&k=8",
+          { headers: authHeaders() })
+      .then(function (r) {
+        if (r.status === 400) {
+          return r.json().then(function (j) {
+            var e = new Error(j.detail ||
+              "answering unavailable on this gateway");
+            e.noLlm = true; throw e;
+          });
+        }
+        if (r.status === 401) { throw new Error("invalid or missing key"); }
+        if (!r.ok) { throw new Error("gateway error " + r.status); }
+        return r.json();
+      })
+      .then(function (out) {
+        var abst = out.answer === "NO ANSWER";
+        host.innerHTML =
+          '<div class="ask-verdict ' + (abst ? "abst" : "ok") + '">' +
+          (abst ? "NO ANSWER — honest abstention" : esc(out.answer)) +
+          "</div>" +
+          '<div class="mh-meta">' +
+          '<span class="badge ' + (out.grounded ? "vby" : "st-quarantined") +
+          '">' + (out.grounded ? "grounded" : "not grounded") + "</span>" +
+          (out.support_score != null
+            ? '<span class="badge gs">support ' + esc(String(out.support_score))
+              + "</span>" : "") +
+          '<span class="badge t">' + esc(out.reason || "") + "</span></div>" +
+          (out.support_fact
+            ? '<div class="ask-support">&ldquo;' + esc(out.support_fact) +
+              "&rdquo;</div>" : "") +
+          (abst && out.raw_answer
+            ? '<div class="ask-support raw">model said: &ldquo;' +
+              esc(out.raw_answer) + "&rdquo; — refused: no retrieved fact " +
+              "supports it.</div>" : "");
+      })
+      .catch(function (e) {
+        host.innerHTML = '<div class="empty">' + esc(e.message) +
+          (e.noLlm ? " — the personal console runs WITHOUT an LLM by design; " +
+            "search &amp; explain above work fully." : "") + "</div>";
+      });
+  });
 
   /* ---- load -----------------------------------------------------------------*/
   function loadLive() {
@@ -342,18 +494,45 @@
         renderStats(res[0]);
         renderBlocked(res[1].items || []);
         startEvents();
+        startFlow();
       })
       .catch(fail);
   }
-  // the WHOLE graph, compact (nodes array + edges by index): 7753 nodes /
-  // 78 725 edges = 1.6 MB on the real store, vs 5.7 MB verbose. The old
-  // /v1/graph?max_nodes=300 window was a 0.76% fossil of the oldest edges.
+
+  /* full refresh throttle: the ledger stream may fire MANY times a second
+     under real traffic; counters update inline, the heavy refresh (sparks,
+     deltas, blocked table) coalesces to once per 5s. */
+  var liveTimer = null;
+  function loadLiveSoon() {
+    if (liveTimer) { return; }
+    liveTimer = setTimeout(function () { liveTimer = null; loadLive(); }, 5000);
+  }
+
+  // the WHOLE graph, compact (nodes array + edges by index): 7.7k nodes /
+  // 78k edges ≈ 1.6 MB on the real store. Fetched ONCE at boot, then it
+  // grows incrementally from flow.entity events; refetch only on manual
+  // refresh or stream resync.
   var GRAPH_URL = "/v1/graph/full";
+  var graphRetry = null;
   function loadGraph() {
     api(GRAPH_URL)
-      .then(renderGraph).catch(function (e) {
-        if (!(e && e.nokey)) { fail(e); }
+      .then(function (d) { liveBorn = 0; renderGraph(d); })
+      .catch(function (e) {
+        if (e && e.nokey) { return; }
+        statsLine("graph fetch failed — retrying");
+        if (!graphRetry) {
+          graphRetry = setTimeout(function () {
+            graphRetry = null; loadGraph();
+          }, 8000);
+        }
       });
+  }
+  var lastResync = 0;
+  function graphResync() {          // stream dropped: events were missed
+    var now = Date.now();
+    if (now - lastResync < 30000) { return; }
+    lastResync = now;
+    loadGraph();
   }
 
   /* ---- SSE: the memory WORKING, live ------------------------------------------
@@ -381,11 +560,19 @@
               var led;
               try { led = JSON.parse(line.slice(6)).ledger; }
               catch (ex) { return; }
+              if (!led) { return; }
               var changed = ["admitted", "quarantined", "rejected",
                              "abstained"].some(function (a) {
                 return (prevN["n-" + a] || 0) !== (led[a] || 0);
               });
-              if (changed) { loadLive(); }   // full refresh: sparks, ring, feed
+              if (changed) {
+                // counters + ring move NOW, from the event itself (no fetch);
+                // sparks/deltas/blocked follow, throttled.
+                ["admitted", "quarantined", "rejected", "abstained"]
+                  .forEach(function (a) { countUp("n-" + a, led[a] || 0); });
+                renderRing(led);
+                loadLiveSoon();
+              }
             });
             return pump();
           });
@@ -398,32 +585,24 @@
       });
   }
 
-  /* ---- the GRAPH, alive ------------------------------------------------------
-   * Second stream, /v1/events/flow: the engine announces its graph's life —
-   * `flow.entity` carries the nodes just BORN (created) and the ones a fact
-   * just lit up (touched). A node that appears grows in place; a node that is
-   * touched pulses. No polling, no full re-render: the map you are looking at
-   * IS the store, right now. (Aurelio 2026-07-15: "voglio vedere
-   * l'attivazione dei nodi live e quando se ne crea uno nuovo".) */
-  var flowGen = 0, flowActive = false, bornTimer = null, bornIds = [];
+  /* ---- the GRAPH, alive -------------------------------------------------------
+   * Second stream, /v1/events/flow: `flow.entity` carries the nodes just
+   * BORN (created: id+name+type) and the ones a fact just lit up (touched =
+   * the fact's co-occurrence clique). Births are added INCREMENTALLY — the
+   * event already has everything; no refetch, no re-layout of the world. */
+  var flowGen = 0, flowActive = false, flowWasLost = false;
 
   function onEntityEvent(p) {
-    // touched nodes fire right away — no fetch, the renderer already has them
-    if (GG && (p.touched || []).length) { GG.touch(p.touched); }
-    if (!(p.created || []).length) { return; }
-    // a node was BORN: it isn't in the canvas yet, so re-fetch the graph and
-    // pulse the newcomers. Debounced: a burst of writes must not storm the
-    // endpoint (the full graph is 1.6 MB).
-    bornIds = bornIds.concat(p.created.map(function (c) { return c.id; }));
-    if (bornTimer) { clearTimeout(bornTimer); }
-    bornTimer = setTimeout(function () {
-      var justBorn = bornIds; bornIds = []; bornTimer = null;
-      api(GRAPH_URL).then(function (d) {
-        renderGraph(d);
-        if (GG) { GG.touch(justBorn); }
-      }).catch(function () { /* the map keeps what it has */ });
-    }, 900);
+    if (!GG) { return; }
+    var created = p.created || [], touched = p.touched || [];
+    if (created.length) {
+      liveBorn += GG.addLive(created, touched);
+      GG.touch(created.map(function (c) { return c.id; }), { born: true });
+      statsLine();
+    }
+    if (touched.length) { GG.touch(touched); }
   }
+
   function startFlow() {
     if (flowActive) { return; }
     flowActive = true;
@@ -431,6 +610,7 @@
     fetch("/v1/events/flow?replay=0", { headers: authHeaders() })
       .then(function (r) {
         if (!r.ok || !r.body) { throw new Error("flow " + r.status); }
+        if (flowWasLost) { flowWasLost = false; graphResync(); }
         var reader = r.body.getReader(), dec = new TextDecoder(), buf = "";
         function pump() {
           return reader.read().then(function (step) {
@@ -451,11 +631,12 @@
         return pump();
       })
       .catch(function () {
-        flowActive = false;
+        flowActive = false; flowWasLost = true;
         if (gen === flowGen) { setTimeout(startFlow, 5000); }
       });
   }
 
+  /* ---- boot ----------------------------------------------------------------*/
   $("keyform").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var v = $("key").value.trim();
@@ -463,11 +644,11 @@
       sessionStorage.setItem(STORE, v); $("key").value = "";
       sseGen++; sseActive = false;         // re-auth the live streams
       flowGen++; flowActive = false;
-      loadLive(); loadGraph(); startFlow();
+      loadLive(); loadGraph();
     }
   });
   $("graph-refresh").addEventListener("click", loadGraph);
 
-  setInterval(loadLive, 30000);
-  loadLive(); loadGraph(); startFlow();
+  setInterval(loadLive, 30000);            // failsafe if both streams die
+  loadLive(); loadGraph();
 })();

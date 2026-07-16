@@ -79,6 +79,7 @@
 
   <nav class="tabs" role="tablist">
     <button class="tab-btn on" data-tab="graph" role="tab">Knowledge graph</button>
+    <button class="tab-btn" data-tab="search" role="tab">Search &amp; ask</button>
     <button class="tab-btn" data-tab="blocked" role="tab">Blocked claims</button>
     <button class="tab-btn" data-tab="layers" role="tab">Gate layers</button>
   </nav>
@@ -90,7 +91,7 @@
         <input id="graph-search" type="search" placeholder="find entity&hellip;"
                autocomplete="off" spellcheck="false"
                aria-label="Find an entity in the graph">
-        <canvas id="graph" aria-label="Entity knowledge graph"></canvas>
+        <div id="graph" aria-label="Entity knowledge graph"></div>
         <div id="graph-empty" class="empty" hidden>
           No knowledge graph yet — ingest conversations or documents and the
           entities they mention will appear here, every edge citing the fact
@@ -103,6 +104,7 @@
           <span class="hint-drag">drag nodes &middot; wheel to zoom &middot;
             double-click background to fit</span>
           <button id="graph-fit" type="button" title="fit the whole graph">fit</button>
+          <button id="graph-layout" type="button" title="run/stop the force layout">re-layout</button>
           <button id="graph-refresh" type="button" title="re-fetch and re-layout">refresh</button>
         </div>
       </div>
@@ -115,6 +117,35 @@
           through the graph.
         </div>
       </aside>
+    </div>
+  </section>
+
+  <!-- search the memory, provenance-first; ask it, grounding-verified -->
+  <section id="tab-search" class="tab">
+    <p class="hint">Every hit shows its custody: status, who verified, event
+      time vs write time, source episode. Trust per fact, not just per
+      aggregate.</p>
+    <div class="card memsearch">
+      <form id="mem-form" class="mem-form" autocomplete="off">
+        <input id="mem-q" type="search" placeholder="search the memory&hellip;"
+               spellcheck="false" aria-label="Search facts">
+        <button type="submit">Search</button>
+      </form>
+      <div id="mem-results" class="mem-results">
+        <div class="empty">Search returns real facts with real provenance —
+          nothing is shown that the store cannot cite.</div>
+      </div>
+    </div>
+    <div class="card memsearch">
+      <h3 class="ask-h">Ask &mdash; grounding-verified
+        <span class="hint-inline">answer only if a retrieved fact entails it;
+        otherwise an honest &ldquo;NO ANSWER&rdquo;</span></h3>
+      <form id="ask-form" class="mem-form" autocomplete="off">
+        <input id="ask-q" type="search" placeholder="ask the memory&hellip;"
+               spellcheck="false" aria-label="Ask the memory">
+        <button type="submit">Ask</button>
+      </form>
+      <div id="ask-out"></div>
     </div>
   </section>
 
@@ -144,6 +175,10 @@
   <footer id="meta" class="meta"></footer>
 </section>
 
+<!-- vendored, same-origin (CSP script-src 'self'): see vendor/README.md -->
+<script src="/ui/vendor-graphology.js"></script>
+<script src="/ui/vendor-graphology-library.js"></script>
+<script src="/ui/vendor-sigma.js"></script>
 <script src="/ui/graph.js"></script>
 <script src="/ui/app.js"></script>
 </body>

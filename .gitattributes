@@ -1,0 +1,2 @@
+# vendored minified bundles: bytes are the contract, no EOL conversion
+engram/webui/vendor/*.js -text
