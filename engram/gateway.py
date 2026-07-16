@@ -532,6 +532,39 @@ def _read_flow_bytes(path: Path, offset: int, tenant_id: str,
     return out, offset + consumed
 
 
+def _quota_reserve(pending: dict[str, int], lock: Any, tenant_id: str,
+                   plan: Any, count_fn: Any) -> bool:
+    """Atomically reserve one fact slot against the plan's cap. TOCTOU-safe:
+    the real count (``count_fn()``) and the in-flight reservations (``pending``)
+    are read together UNDER ``lock``, so a write already in flight counts against
+    the cap — concurrent writes at cap-1 can't ALL pass. Returns True (reserved,
+    caller MUST ``_quota_release`` in a finally) or False (over quota → 402).
+    Uncapped plans (enterprise/self_host) short-circuit True with no state."""
+    if getattr(plan, "max_facts", None) is None:
+        return True
+    with lock:
+        p = pending.get(tenant_id, 0)
+        if not plan.within_facts(count_fn() + p):
+            return False
+        pending[tenant_id] = p + 1
+        return True
+
+
+def _quota_release(pending: dict[str, int], lock: Any, tenant_id: str,
+                   plan: Any) -> None:
+    """Release a slot reserved by ``_quota_reserve`` (call in a finally). Once the
+    write has landed it's in the real count, so the reservation must drop whether
+    the add succeeded, quarantined, or raised. No-op for uncapped plans."""
+    if getattr(plan, "max_facts", None) is None:
+        return
+    with lock:
+        p = pending.get(tenant_id, 0) - 1
+        if p <= 0:
+            pending.pop(tenant_id, None)
+        else:
+            pending[tenant_id] = p
+
+
 def _replay_receive(body: bytes, original: Any) -> Any:
     """Un ASGI ``receive`` che emette UNA volta il corpo bufferizzato come un
     unico ``http.request`` completo, poi delega all'originale (disconnect ecc.)."""
@@ -756,6 +789,11 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     _buckets: dict[str, list[float]] = {}
     _buckets_lock = threading.Lock()
 
+    # per-tenant in-flight fact reservations (TOCTOU-safe quota enforcement):
+    # a write in flight counts against the cap until it lands. Per-app state.
+    _quota_pending: dict[str, int] = {}
+    _quota_lock = threading.Lock()
+
     def _check_rate(bucket_key: str, limit: int) -> None:
         if limit <= 0:
             return
@@ -854,19 +892,6 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         if _bad is not None:
             meter.bump(tenant_id, writes=1, rejected=1)
             raise HTTPException(status_code=400, detail=_bad)
-        # plan quota teeth: reject the write when the tenant is at its fact cap
-        # (enterprise/self_host are uncapped, so this is a cheap COUNT + skip for them).
-        from .gateway_plans import get_plan, quota_status
-        _plan = get_plan(keys.plan_for_tenant(tenant_id))
-        if _plan.max_facts is not None:
-            _used = mem.semantic.count()
-            if not _plan.within_facts(_used):
-                meter.bump(tenant_id, writes=1, rejected=1)
-                raise HTTPException(
-                    status_code=402,
-                    detail={"error": "fact quota exceeded for plan "
-                                     f"'{_plan.name}' (limit {_plan.max_facts})",
-                            "quota": quota_status(_plan, facts_used=_used)})
         messages = body.get("messages")
         content = messages if messages is not None else (body.get("content") or "")
         if messages is not None and llm is None:
@@ -876,6 +901,22 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                        "start the gateway with one (create_app(llm=...)); "
                        "single verified facts work without it",
             )
+        # plan quota teeth (TOCTOU-safe): reserve a fact slot ATOMICALLY — the real
+        # count + in-flight reservations are weighed together under one lock, so
+        # concurrent writes at cap-1 can't ALL pass the check and overrun the cap.
+        # enterprise/self_host are uncapped → the reserve short-circuits, no lock.
+        # Placed AFTER the raising checks above so no reservation can be orphaned.
+        from .gateway_plans import get_plan, quota_status
+        _plan = get_plan(keys.plan_for_tenant(tenant_id))
+        if not _quota_reserve(_quota_pending, _quota_lock, tenant_id, _plan,
+                              mem.semantic.count):
+            meter.bump(tenant_id, writes=1, rejected=1)
+            raise HTTPException(
+                status_code=402,
+                detail={"error": "fact quota exceeded for plan "
+                                 f"'{_plan.name}' (limit {_plan.max_facts})",
+                        "quota": quota_status(_plan,
+                                              facts_used=mem.semantic.count())})
         _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.write col tenant
         try:
             res = mem.add(
@@ -894,6 +935,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         finally:
             _flow_ctx_reset(_ftok)
+            _quota_release(_quota_pending, _quota_lock, tenant_id, _plan)
         meter.bump(tenant_id, writes=1,
                    stored_ok=1 if res.get("stored") else 0,
                    rejected=0 if res.get("stored") else 1)
