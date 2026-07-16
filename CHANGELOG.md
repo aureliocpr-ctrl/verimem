@@ -4,7 +4,35 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Added
+- **Trust console v2 — the whole graph, actually live** (2026-07-16): the
+  knowledge graph now renders the ENTIRE store (7.7k nodes / 39.4k unique
+  edges in ~300–500 ms) on sigma.js WebGL with ForceAtlas2 in a Web Worker
+  — vendored same-origin (MIT, `engram/webui/vendor/`), CSP unchanged except
+  `worker-src 'self' blob:` for the layout worker. Births arrive
+  INCREMENTALLY from `flow.entity` (no refetch), touched nodes pulse, search
+  shows matches-only, click → chain-of-custody dossier. New **Search & ask**
+  tab: `/v1/search` hits with per-fact provenance badges (status,
+  verified_by, asserted_at vs created_at, source episode) and a
+  grounding-verified `/v1/answer` box that degrades honestly on the personal
+  console's 400 (no server-side llm by design). `GET /` now redirects a
+  human to `/ui` instead of a JSON 404. `/v1/answer` emits its own
+  `flow.recall kind=answer` (grounded/abstained/reason).
+- **Live Engine Room v2**: the 900 ms per-event queue is gone (under real
+  traffic it ran minutes behind its own feed) — counters move per event,
+  stages glow with decaying heat, a per-second stacked rate chart shows the
+  last 60 s of writes/recalls, the feed carries surface/actor and answer
+  verdicts, `shadow.*` observation events are counted in a chip and never
+  drawn as engine activity. Auto-connect + reconnect with backoff.
+
 ### Fixed
+- **Console self-DDoS under live traffic** (2026-07-16, seen on the real
+  store while another agent wrote continuously): every ledger event
+  triggered a full stats+quarantine refresh and every entity birth refetched
+  the whole 1.6 MB graph → `ERR_INSUFFICIENT_RESOURCES`, "Failed to fetch",
+  dead page. Counters now update from the event payload itself, the heavy
+  refresh throttles to 1/5 s, and a failed fetch degrades to a banner +
+  retry — the page never dies on a bad fetch.
 - **P0 — upgrade path broken since 2026-07-13 (`epistemic` column)**: the v14
   migration was written AND registered, but `_SEMANTIC_TARGET_VERSION` stayed
   13, so the runner never executed it. New stores (every test) were born with
