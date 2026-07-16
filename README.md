@@ -19,7 +19,10 @@ honest *"I don't know."*
 
 - **Gated writes** — every fact enters as a low-trust claim and must be backed
   by evidence to gain status. Unsupported or contradictory assertions are
-  flagged instead of absorbed (anti-sycophancy on the write path).
+  flagged instead of absorbed (anti-sycophancy on the write path). Opt-in
+  origin tagging (`tag_beliefs=True` at ingest) additionally classes an
+  unverified user assertion as `user_belief`: stored, but out of default
+  recall until you ask for it (`search(..., include_beliefs=True)`).
 - **Provenance on every read** — answers cite where each fact came from
   (conversation, document offset, tool call). A `TrustReport` explains *how the
   system knows*: chain of custody, declared conflicts, or an explicit abstention.

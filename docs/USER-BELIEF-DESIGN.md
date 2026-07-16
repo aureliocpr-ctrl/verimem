@@ -7,8 +7,12 @@ them), NOT the opt-in rank floor. `user_belief` was added to all five; §5 steps
 GREEN (status valid, ranked, hidden, stored) AND the ingest now PRODUCES it:
 `ingest_conversation(..., tag_beliefs=True)` maps a `BELIEF:`-tagged extraction line to
 `user_belief` instead of `model_claim` (opt-in, default off, the bench constant
-`ATOMIC_EXTRACT_SYSTEM` untouched — `0e670e1`, 4 TDD tests). Still open:
-`include_beliefs` retrieval opt-in, guardian correction, MemSyco delta.
+`ATOMIC_EXTRACT_SYSTEM` untouched — `0e670e1`, 4 TDD tests). The read-side opt-in is
+SHIPPED too: `include_beliefs=True` on `recall`/`search_facts`/`recall_as_of`/
+`client.search` surfaces beliefs on EVERY branch (warm cache bypassed — the cache
+stays the default view; cold-encode fallback and time travel forward the flag;
+narrow: orphaned/quarantined stay hidden) — 7 TDD tests in
+`tests/test_include_beliefs.py`. Still open: guardian correction, MemSyco delta.
 **Goal**: stop the memory from laundering an unverified USER assertion into a stored
 *fact* the recall then serves back as truth — the systemic sycophancy gap the external
 review flagged (README claims "anti-sycophancy on the write path"; today that is only an
@@ -89,6 +93,8 @@ personalization, strict toward *unverified factual assertions*.
 3. RED: test guardian serves a `verified` fact over a conflicting `user_belief`.
 4. GREEN (SHIPPED `0e670e1`): status + rank + recall filter [`af22b04`] +
    extraction-prompt tag + ingest mapping [`0e670e1`, behind `tag_beliefs`, default off].
+4b. GREEN (SHIPPED): `include_beliefs` retrieval opt-in across recall/search_facts/
+   recall_as_of/client.search — every branch, cache-bypass, narrow (7 TDD tests).
 5. MEASURE (open): wire MemSyco-Bench, publish sycophancy-rate before/after (the claim
    gets its number attached — no "anti-sycophancy" claim without the delta).
 

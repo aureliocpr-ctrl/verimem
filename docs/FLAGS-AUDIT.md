@@ -81,8 +81,10 @@ is mostly honest; the headline sentence and the site are ahead of the defaults.
    The `user_belief` epistemic class now exists (`af22b04`) AND the ingest produces it —
    `ingest_conversation(..., tag_beliefs=True)` tags an unverified factual assertion
    `BELIEF:` → `status="user_belief"` → out of default recall (`0e670e1`, opt-in, default off).
-   STILL OPEN: `include_beliefs` recall opt-in, guardian correction, and the MemSyco-Bench
-   number (no "anti-sycophancy" claim until the delta is measured). Existing hooks that made
+   `include_beliefs` recall opt-in SHIPPED (every recall branch: warm cache bypassed,
+   cold fallback + as_of forward the flag, narrow — orphaned/quarantined stay hidden;
+   `tests/test_include_beliefs.py`, 7 tests). STILL OPEN: guardian correction and the
+   MemSyco-Bench number (no "anti-sycophancy" claim until the delta is measured). Existing hooks that made
    it cheap: `writer_role` already in `classify_admission` (`admission_gate.py:100`) and in
    `run_validation_gate` (`anti_confab_gate.py:633`), `FLAG_LOW_PROVENANCE` verdict, WF3
    personal/dev context split, `_is_honest_reported` (reported-speech guard, `anti_confab_gate.py:244-266`).
