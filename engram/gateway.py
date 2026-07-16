@@ -463,6 +463,75 @@ def _flow_ctx_reset(token: Any) -> None:
         pass
 
 
+#: Max flow lines processed per SSE tick — anti-burst bound so a huge append
+#: (or the first read after a long idle) can't block the event loop.
+_FLOW_MAX_LINES_PER_TICK = 1000
+
+
+def _parse_flow_line(ln: str, tenant_id: str, see_untenanted: bool) -> dict[str, Any] | None:
+    """Parse one events.jsonl line and keep it only if it's a ``flow.*`` event
+    for THIS tenant (privacy). ``see_untenanted`` lets personal-mode (the local
+    operator) also see tenant-less machine activity. Returns None to drop."""
+    import json as _json
+    try:
+        rec = _json.loads(ln)
+    except ValueError:
+        return None
+    if not str(rec.get("name", "")).startswith("flow."):
+        return None
+    _pt = (rec.get("payload") or {}).get("tenant")
+    if _pt != tenant_id and not (see_untenanted and _pt is None):
+        return None
+    return rec
+
+
+def _read_flow_bytes(path: Path, offset: int, tenant_id: str,
+                     see_untenanted: bool, cap: int) -> tuple[list[dict[str, Any]], int]:
+    """Incremental byte-offset reader for the flow SSE stream. Reads ONLY the
+    bytes appended since ``offset`` (never the whole file), so N concurrent
+    clients cost O(new bytes) per tick, not O(file). Returns
+    ``(flow_records_for_tenant, new_offset)``.
+
+    Contract (pinned by ``test_gateway_flow_incremental``):
+    * rotation/truncation (``size < offset``) → restart from 0;
+    * a trailing partial line (no final ``\\n``) is NOT consumed — held for the
+      next tick, so a write-in-progress is never emitted or skipped;
+    * ``cap`` (0 = unbounded) bounds lines consumed per tick; the offset advances
+      only over what was consumed, so the remainder resumes next tick — no loss.
+    """
+    try:
+        size = path.stat().st_size
+    except OSError:
+        return [], offset
+    if size < offset:          # rotated / truncated under us
+        offset = 0
+    if size <= offset:
+        return [], offset
+    try:
+        with path.open("rb") as f:
+            f.seek(offset)
+            raw = f.read()
+    except OSError:
+        return [], offset
+    nl = raw.rfind(b"\n")
+    if nl == -1:               # no complete line yet (partial write) — consume nothing
+        return [], offset
+    complete = raw[: nl + 1]
+    lines = [b for b in complete.split(b"\n") if b]
+    if cap and len(lines) > cap:
+        lines = lines[:cap]
+        consumed = sum(len(b) + 1 for b in lines)   # +1 per '\n'
+    else:
+        consumed = nl + 1
+    out: list[dict[str, Any]] = []
+    for lb in lines:
+        rec = _parse_flow_line(lb.decode("utf-8", errors="replace"),
+                               tenant_id, see_untenanted)
+        if rec is not None:
+            out.append(rec)
+    return out, offset + consumed
+
+
 def _replay_receive(body: bytes, original: Any) -> Any:
     """Un ASGI ``receive`` che emette UNA volta il corpo bufferizzato come un
     unico ``http.request`` completo, poi delega all'originale (disconnect ecc.)."""
@@ -1059,32 +1128,12 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         _see_untenanted = (local_tenant is not None
                            and tenant_id == local_tenant)
 
-        def _flow_after(after_ts: float) -> list[dict[str, Any]]:
-            try:
-                lines = _ejl.EVENT_LOG_PATH.read_text(
-                    encoding="utf-8").splitlines()
-            except OSError:
-                return []
-            out: list[dict[str, Any]] = []
-            for ln in lines:
-                try:
-                    rec = _json.loads(ln)
-                except ValueError:
-                    continue
-                if not str(rec.get("name", "")).startswith("flow."):
-                    continue
-                _pt = (rec.get("payload") or {}).get("tenant")
-                if _pt != tenant_id and not (_see_untenanted and _pt is None):
-                    continue
-                if float(rec.get("ts") or 0.0) <= after_ts:
-                    continue
-                out.append(rec)
-            return out
-
         async def gen():
             sent = 0
-            backlog = _flow_after(0.0)
-            last_ts = float(backlog[-1].get("ts") or 0.0) if backlog else 0.0
+            # backlog iniziale (una-tantum al connect): legge tutto il file UNA
+            # volta, ne mostra gli ultimi `replay`, poi tiene l'offset di byte.
+            backlog, offset = _read_flow_bytes(
+                _ejl.EVENT_LOG_PATH, 0, tenant_id, _see_untenanted, 0)
             for rec in (backlog[-replay:] if replay else []):
                 yield "data: " + _json.dumps(rec, ensure_ascii=False) + "\n\n"
                 sent += 1
@@ -1093,8 +1142,12 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             while True:
                 if await request.is_disconnected():
                     return
-                for rec in _flow_after(last_ts):
-                    last_ts = float(rec.get("ts") or last_ts)
+                # TAIL incrementale: ogni tick legge SOLO i byte nuovi da
+                # `offset` (non più l'intero file) → niente amplificazione DoS.
+                recs, offset = _read_flow_bytes(
+                    _ejl.EVENT_LOG_PATH, offset, tenant_id,
+                    _see_untenanted, _FLOW_MAX_LINES_PER_TICK)
+                for rec in recs:
                     yield ("data: " + _json.dumps(rec, ensure_ascii=False)
                            + "\n\n")
                     sent += 1
