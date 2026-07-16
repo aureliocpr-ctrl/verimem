@@ -158,11 +158,17 @@ Calibration on real HaluMem (``benchmark/local_gate_calibrate.py``, zero-API CPU
    entailment moat is opt-in *because* it trades recall for purity, and that
    `preset="strict"` is the trust-max mode. (Site/README — product messaging,
    owner decision.)
-4. **FP-rate of the default L1 gate on legitimate personal facts: 2.0%** (6/300
-   HaluMem, measured) — third-person biographies with ambiguous verbs
-   (`works`→L1.10, `secured`→L1.12, `diagnosed`→L1.5) that WF3's personal-context
-   suppression doesn't cover. Low, but a candidate mini-fix and direct input to
-   the `user_belief` work (Giro 2).
+4. **FP-rate of the default L1 gate on legitimate personal facts: CLOSED —
+   2.7% → 0.0%** (8/300 → 0/300 HaluMem, re-measured 2026-07-16). The re-measure
+   found the real mix: 6/8 were an L1.7 **substring bug** ("is open" matched
+   inside "hi[s open]ness" — the phrase list was matched bare, no word
+   boundaries) plus the "is open to <exploring>" availability idiom; 1/8 the
+   documented L1.10 employment debt ("works in the healthcare industry"); 1/8
+   L1.12 'secured'-as-obtained ("secured interviews"). Fixed in the detectors
+   themselves (word-bounded L1.7 + lookahead; occupational patterns L1.10;
+   acquisition-object list L1.12) — NOT by widening WF3 suppression. 17 contract
+   tests pin the 8 measured FPs clean AND the true dev-claims still firing;
+   164 gate-module tests green (`tests/test_l1_biography_fp.py`).
 
 ## 9. CI status (honest, updated 2026-07-16)
 

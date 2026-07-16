@@ -43,16 +43,30 @@ _OK_CONTEXTUAL_PATTERN = re.compile(
 # at/for ORG" è biografia, non un claim di funzionamento — ed è il fatto
 # più comune in una memoria personale. Discriminante precision-first: dopo
 # "works/working" segue " at|for " + parola Capitalizzata (nome proprio).
-# "the system works at scale" resta un claim ('scale' minuscolo); il caso
-# "works as a nurse" NON è coperto (FP noto — la rete dietro è L1.20
-# semantico, il costo di un miss keyword qui è basso).
+# "the system works at scale" resta un claim ('scale' minuscolo).
 _EMPLOYMENT_AFTER_RE = re.compile(r"\s+(?:at|for)\s+[A-Z]")
+
+# FLAGS-AUDIT §8 item 4 (misurato 2026-07-16, chiude il debito annotato qui
+# sopra fino a oggi): anche "works as a nurse" / "works in the healthcare
+# industry" sono occupazione. Discriminanti che NON toccano i claim veri:
+#   * "works as a/an <x>"  — l'idioma di funzionamento ("works as expected/
+#     intended/designed") non ha MAI l'articolo;
+#   * "works in [the] <x...> industry/field/sector" — "works in production"
+#     / "works in CI" non hanno la testa industry/field/sector.
+_EMPLOYMENT_OCCUPATION_RE = re.compile(
+    r"\s+(?:as\s+an?\s+\w|in\s+(?:the\s+)?[\w-]+(?:\s+[\w-]+)?"
+    r"\s+(?:industry|field|sector)\b)",
+    re.IGNORECASE,
+)
 
 
 def _is_employment_use(proposition: str, m: re.Match) -> bool:
     if m.group(0).lower() not in ("works", "working"):
         return False
-    return _EMPLOYMENT_AFTER_RE.match(proposition, m.end()) is not None
+    return (
+        _EMPLOYMENT_AFTER_RE.match(proposition, m.end()) is not None
+        or _EMPLOYMENT_OCCUPATION_RE.match(proposition, m.end()) is not None
+    )
 
 # Evidence prefixes that count as "runtime/test evidence"
 _RUNTIME_EVIDENCE_PREFIXES: tuple[str, ...] = (

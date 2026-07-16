@@ -241,7 +241,10 @@ def detect_unsupported_diagnosis_claim(
 # emit a warning. Same NO-BREAKING contract as L1 / L1.5.
 # ---------------------------------------------------------------------------
 
-# Lower-case substrings — match is case-insensitive over the proposition.
+# Task-state phrases. Kept as a frozenset for the public contract, but the
+# matching is WORD-BOUNDED regex, not bare substring — bare `in` matching made
+# "is open" fire inside "hi[s open]ness" and downgraded 6/300 legitimate
+# personal biographies (FLAGS-AUDIT §8 item 4, measured 2026-07-16).
 TASK_STATE_PHRASES = frozenset({
     "da chiudere",
     "da aprire",
@@ -254,6 +257,17 @@ TASK_STATE_PHRASES = frozenset({
     "candidato cycle dedicato",
 })
 
+# "is open to <...>" is the personal-availability idiom ("is open to exploring
+# new genres"), not a task state ("the PR is open") — excluded via lookahead.
+_TASK_STATE_RE = re.compile(
+    "|".join(
+        rf"\b{re.escape(p)}\b(?!\s+to\b)" if p == "is open"
+        else rf"\b{re.escape(p)}\b"
+        for p in sorted(TASK_STATE_PHRASES)
+    ),
+    re.IGNORECASE,
+)
+
 # Tracker-reference prefixes that anchor a task-state claim to a
 # verifiable record (open PR list, issue tracker, git ref).
 _TRACKER_REF_RE = re.compile(
@@ -262,12 +276,9 @@ _TRACKER_REF_RE = re.compile(
 
 
 def _find_task_state_phrase(proposition: str) -> str | None:
-    """Return the first task-state phrase found, else ``None``."""
-    lower = (proposition or "").lower()
-    for phrase in TASK_STATE_PHRASES:
-        if phrase in lower:
-            return phrase
-    return None
+    """Return the first task-state phrase found (word-bounded), else ``None``."""
+    m = _TASK_STATE_RE.search(proposition or "")
+    return m.group(0).lower() if m else None
 
 
 def _has_tracker_ref(verified_by: Iterable[str] | None) -> bool:

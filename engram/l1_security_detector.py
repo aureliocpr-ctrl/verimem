@@ -57,6 +57,28 @@ _SECURITY_ARTIFACT_PREFIXES: tuple[str, ...] = (
     "threat_model:", "threat-model:", "audit-trail:", "audit_trail:",
 )
 
+# FLAGS-AUDIT §8 item 4 (misurato 2026-07-16): 'secured' come "ottenere" —
+# "secured interviews and job offers" è biografia, non hardening. Il claim di
+# sicurezza vero ("secured the database/endpoint") non ha questi oggetti di
+# acquisizione umana. Lista chiusa precision-first: un oggetto non in lista
+# (es. "secured the perimeter") continua a scattare.
+_ACQUISITION_OBJECT_RE = re.compile(
+    r"\s+(?:(?:a|an|the|his|her|their|my|our|two|three|several|some|many|"
+    r"multiple|new|\d+)\s+)*"
+    r"(?:job|jobs|offer|offers|interview|interviews|promotion|position|"
+    r"positions|spot|seat|ticket|tickets|loan|mortgage|funding|grant|"
+    r"grants|scholarship|internship|deal|deals|contract|contracts|visa|"
+    r"apartment|reservation|booking|role|degree|admission|sponsorship)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_acquisition_use(proposition: str, m: re.Match) -> bool:
+    """'secured <acquisition object>' = obtained, not hardened."""
+    if m.group(0).lower() != "secured":
+        return False
+    return _ACQUISITION_OBJECT_RE.match(proposition, m.end()) is not None
+
 
 @dataclass(frozen=True)
 class SecurityClaimWarning:
@@ -100,7 +122,9 @@ def detect_unsupported_security_claim(
     """
     if not proposition:
         return None
-    m = _SECURITY_PATTERN.search(proposition)
+    # skip acquisition uses ("secured a job offer") — biography, not hardening
+    m = next((cand for cand in _SECURITY_PATTERN.finditer(proposition)
+              if not _is_acquisition_use(proposition, cand)), None)
     if m is None:
         return None
     matched_text = m.group(0)
