@@ -243,10 +243,18 @@ probe stub): ANN pre-narrowing (`_ann_cache`), supersession chain, `recall_hybri
 Blocchi PROVATI: input-guard, blank, injection-safe, isolamento tenant (133
 test), cache-invalidation (22 test reali), reconcile anti-sycophancy (probe det.),
 freshness+anti-spoof (6/6), BM25 (4/4), PPR/fusion (206 test). **0 difetti
-trovati.** DA FARE: ANN pre-narrowing, supersession chain, `recall_hybrid` +
-la ri-verifica degli interni cosine con MODELLO REALE (limite-metodo stub). Il
-recall è robusto sui contratti pubblici e sui sotto-moduli deterministici; il
-core cosine/cache va ancora provato end-to-end su modello reale. Modulo NON chiuso.
+trovati.**
+
+**CORE COSINE/CACHE su MODELLO REALE (chiude il limite-metodo stub)**: l'intera
+suite recall/semantic — 36 file `test_recall*.py` + `test_semantic*.py` +
+`recall_hybrid` + `supersede_chain` — **188 passed** in 159s su modello reale
+(`recall_suite.log`, 2026-07-16). Questo è ciò che i probe con embedding-stub NON
+potevano provare: il cosine end-to-end, il defensive-filter, la perf, la
+supersession, l'hybrid. Nessun fallimento.
+
+**Verdetto MODULO 2: CHIUSO.** Contratti pubblici + sotto-moduli deterministici
+(probe) + core cosine/cache/hybrid (188 test reali) = 0 difetti. Unico residuo
+minore: l'osservazione #6 (thread-warning nella suite scope), BASSA, da isolare.
 
 ---
 
