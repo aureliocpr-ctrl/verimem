@@ -1136,10 +1136,17 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         def create_tenant(body: dict, _: None = Depends(_admin)) -> dict[str, Any]:
             """Provisioning remoto: tenant + chiave via HTTP (non SSH).
             La chiave si vede UNA volta, qui — hash-only a riposo."""
+            _tid = str(body.get("tenant_id", ""))
+            # opus tenant-pass MED-2: a tenant_id == local_tenant would resolve
+            # onto the operator's PERSONAL store (it's pre-seeded in the cache) —
+            # a cross-store leak. The reserved personal id can't be provisioned.
+            if local_tenant is not None and _tid == local_tenant:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"tenant_id {_tid!r} is reserved for personal mode")
             try:
                 api_key = keys.create(
-                    tenant_id=str(body.get("tenant_id", "")),
-                    name=str(body.get("name", "")))
+                    tenant_id=_tid, name=str(body.get("name", "")))
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
             return {"tenant_id": body.get("tenant_id"), "api_key": api_key}
