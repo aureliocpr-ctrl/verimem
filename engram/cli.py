@@ -1421,7 +1421,8 @@ def facts_list(
     limit: int = typer.Option(20, "--limit", help="Cap returned rows"),
     include_hidden: bool = typer.Option(
         False, "--include-hidden",
-        help="Surface orphaned + quarantined rows (hidden by default).",
+        help="Surface orphaned + quarantined + user_belief rows "
+             "(hidden by default).",
     ),
     user_id: str = typer.Option(None, "--user-id", help="B-1: scope to user."),
     agent_id: str = typer.Option(None, "--agent-id", help="B-1: scope to agent."),
@@ -1454,7 +1455,10 @@ def facts_list(
         clauses = ["superseded_by IS NULL"]
         params: list = []
         if not include_hidden:
-            clauses.append("status NOT IN ('orphaned', 'quarantined')")
+            # Giro 2: user_belief joins the hidden set on the CLI listing too
+            # (parity with recall's default view — sweep twin).
+            clauses.append(
+                "status NOT IN ('orphaned', 'quarantined', 'user_belief')")
         if topic:
             _t = topic
             if _scoped:

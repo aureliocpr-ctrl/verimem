@@ -18,7 +18,12 @@ import re
 import sqlite3
 
 #: curated view = same default filter recall uses (no superseded / hidden rows).
-_CURATED = "superseded_by IS NULL AND status NOT IN ('orphaned', 'quarantined')"
+#: Giro 2: 'user_belief' is part of the hidden set — BM25 feeds the fusion's
+#: extra-id ranklist, and a ranklist that can carry belief ids re-opens the
+#: default-view side-door get(live_only=True) closes (defense in depth: both
+#: layers filter, so neither is load-bearing alone).
+_CURATED = ("superseded_by IS NULL "
+            "AND status NOT IN ('orphaned', 'quarantined', 'user_belief')")
 
 #: Informative-token guard (2026-07-07, fact a2217252f9ad): sotto questo numero
 #: di righe FTS il filtro df non si applica (contratto storico invariato).

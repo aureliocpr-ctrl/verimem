@@ -50,8 +50,10 @@ def probe_fact(mem: Any, fact_id: str, *, k: int = 8) -> dict[str, Any]:
         if rid == fact.id:
             continue
         rival = mem.semantic.get(rid)
+        # user_belief disqualified as a rival (Giro 2): an unverified user
+        # assertion must never drive a falsification verdict against a fact.
         if rival is None or rival.superseded_by \
-                or rival.status in ("quarantined", "orphaned"):
+                or rival.status in ("quarantined", "orphaned", "user_belief"):
             continue
         rp = _copula_parse(rival.proposition)
         if not rp or _strip_article(rp[0]).lower() != _strip_article(subj).lower():

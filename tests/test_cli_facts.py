@@ -67,6 +67,11 @@ def isolated_corpus(
         topic="lab/cli138bis", confidence=0.9,
         verified_by=[], status="orphaned",
     ))
+    sm.store(Fact(
+        id="fact-blf", proposition="The vendor claims their API is fastest",
+        topic="user/claim", confidence=0.5,
+        verified_by=[], status="user_belief",
+    ))
     return tmp_path
 
 
@@ -87,15 +92,21 @@ class TestFactsListCommand:
         assert "fact-orph"[:8] not in r.output, (
             "list default must hide orphaned"
         )
+        # Giro 2: user_belief is part of the hidden set on EVERY default
+        # surface — the CLI listing included (sweep twin of the recall fix).
+        assert "fact-blf" not in r.output, (
+            "list default must hide user_belief (parity with recall)"
+        )
 
     def test_list_include_hidden_flag(self, isolated_corpus: Path) -> None:
         r = runner.invoke(
             app, ["facts", "list", "--include-hidden", "--limit", "10"],
         )
         assert r.exit_code == 0, r.output
-        # With the flag, quarantined + orphaned must appear.
+        # With the flag, quarantined + orphaned + user_belief must appear.
         assert "quarantin" in r.output.lower() or "fact-qua" in r.output
         assert "orphan" in r.output.lower() or "fact-orp" in r.output
+        assert "user_belief" in r.output.lower() or "fact-blf" in r.output
 
 
 class TestFactsRecallCommand:

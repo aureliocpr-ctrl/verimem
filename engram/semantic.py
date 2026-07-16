@@ -2582,8 +2582,14 @@ class SemanticMemory:
         live_only (correctness-hunt #3, HIGH-2, 2026-06-13): when True, a
         superseded / orphaned / quarantined fact resolves to None. The
         unfiltered default is needed by lineage/supersede-chain walkers, but
-        recall-style consumers (anchor/PPR rendering into the self-model) MUST
-        pass live_only=True so a retracted fact is never surfaced as current.
+        recall-style consumers (anchor/PPR rendering into the self-model,
+        fusion extras) MUST pass live_only=True so a retracted fact is never
+        surfaced as current. Giro 2: ``user_belief`` joins the hidden set —
+        every live_only consumer surfaces facts AS CURRENT TRUTH, which is
+        precisely what an unverified user assertion must not be; without this,
+        the default-ON PPR/BM25 fusion resurrected beliefs into the default
+        view through its extra-id fetch (found by the sweep, pinned by
+        ``test_fusion_extras_cannot_resurrect_beliefs_into_default_view``).
         """
         with self._connect() as conn:
             row = conn.execute(
@@ -2594,7 +2600,8 @@ class SemanticMemory:
         f = self._row(row)
         if live_only and (
             getattr(f, "superseded_by", None)
-            or getattr(f, "status", "") in ("orphaned", "quarantined")
+            or getattr(f, "status", "") in (
+                "orphaned", "quarantined", "user_belief")
         ):
             return None
         return f

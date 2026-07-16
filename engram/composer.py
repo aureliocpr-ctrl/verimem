@@ -100,7 +100,11 @@ def compose_once(mem: Any, *, topic: str | None = None, run_id: str | None = Non
     run = run_id or uuid.uuid4().hex[:8]
     facts = [f for f in mem.semantic.all()
              if not f.superseded_by
-             and f.status not in ("quarantined", "orphaned")
+             # Giro 2: 'user_belief' excluded — composing over an unverified
+             # user assertion would LAUNDER it: the derived fact carries the
+             # belief's content without its low-trust label (worse than
+             # serving the belief itself, the origin disappears).
+             and f.status not in ("quarantined", "orphaned", "user_belief")
              and not (f.epistemic or {}).get("kind") == "refuted"]
     # parse the copula facts once; keep the ORIGINAL casing for candidate text
     parsed = []

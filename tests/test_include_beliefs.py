@@ -124,6 +124,50 @@ def test_recall_as_of_forwards_include_beliefs():
     assert BELIEF in got, f"as_of branch dropped the opt-in: {got}"
 
 
+def test_fusion_extras_cannot_resurrect_beliefs_into_default_view(monkeypatch):
+    """The sweep twin the first 7 tests missed (corpora <50 skip the fusion
+    floor): PPR/BM25 fusion — default-ON — MATERIALIZES extra-only fact ids via
+    ``get(live_only=True)``. If that gate doesn't treat ``user_belief`` as
+    hidden, a belief whose text lexically matches the query re-enters the
+    DEFAULT view through the fusion side-door, bypassing every SQL filter
+    (same leak class as HIGH-2 anchor/entity and the cycle-138 back-door)."""
+    monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_FLOOR", "0")   # tiny corpus, fusion ON
+    monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")      # isolate the fusion
+    m = _mem()
+    _seed(m)
+    got = _props(m.recall(QUERY, k=5))
+    assert BELIEF not in got, (
+        f"user_belief resurrected into the DEFAULT view via fusion extras: {got}")
+    # and the opt-in still works with fusion on
+    got_opt = _props(m.recall(QUERY, k=5, include_beliefs=True))
+    assert BELIEF in got_opt
+
+
+def test_composer_never_composes_over_user_beliefs():
+    """Laundering guard: composition derives new admitted facts from stored
+    ones. An unverified user assertion must not become an ingredient — the
+    derived fact would carry the belief's content WITHOUT its low-trust label
+    (worse than serving the belief: the origin disappears)."""
+    from engram.composer import compose_once
+
+    class _M:  # composer only touches mem.semantic
+        pass
+
+    m = _M()
+    m.semantic = _mem()
+    m.semantic.store(Fact(proposition="Rex is a labrador.",
+                          topic="user/claim", status="user_belief"),
+                     embed="sync")
+    m.semantic.store(Fact(proposition="A labrador is a dog.",
+                          topic="user/fact", status="model_claim"),
+                     embed="sync")
+    report = compose_once(m)
+    # the chain rex->labrador->dog must NOT fire: its first hop is a belief
+    assert report.get("admitted", 0) == 0, (
+        f"composition laundered a user_belief into a derived fact: {report}")
+
+
 def test_client_search_exposes_include_beliefs_with_status():
     from engram.client import Memory
 
