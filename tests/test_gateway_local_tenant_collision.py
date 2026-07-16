@@ -36,3 +36,14 @@ def test_normal_tenant_still_provisions(tmp_path):
     r = c.post("/admin/tenants", headers=_h(), json={"tenant_id": "acme"})
     assert r.status_code == 200
     assert r.json()["api_key"].startswith("vm_")
+
+
+def test_host_only_parses_ipv6_loopback():
+    # opus LOW-6: rsplit(":",1)[0] broke IPv6; the loopback client must resolve.
+    from engram.gateway import _LOCAL_HOSTS, _host_only
+    assert _host_only("[::1]") == "[::1]"
+    assert _host_only("[::1]:8080") == "[::1]"
+    assert _host_only("127.0.0.1:8377") == "127.0.0.1"
+    assert _host_only("::1") == "::1"
+    assert _host_only("[::1]").lower() in _LOCAL_HOSTS
+    assert _host_only("::1").lower() in _LOCAL_HOSTS

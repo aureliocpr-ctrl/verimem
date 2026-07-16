@@ -46,6 +46,19 @@ except ImportError as _exc:  # pragma: no cover — surfaced by the CLI command
 #: anti DNS-rebinding: evil.example resolving to 127.0.0.1 does NOT match.
 _LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 
+
+def _host_only(raw: str | None) -> str:
+    """Strip the :port from a Host header, correctly for IPv6 (opus LOW-6:
+    ``"[::1]".rsplit(":",1)[0]`` gave ``"[:"`` → the loopback IPv6 client fell to
+    401). ``[::1]`` / ``[::1]:8080`` → ``[::1]``; ``127.0.0.1:8377`` → ``127.0.0.1``;
+    a bare ``::1`` (no brackets, no port) → ``::1``."""
+    s = (raw or "").strip()
+    if s.startswith("["):
+        return s[: s.index("]") + 1] if "]" in s else s
+    if s.count(":") == 1:            # host:port (IPv4 / name) — one colon only
+        return s.rsplit(":", 1)[0]
+    return s                         # bare IPv6 (::1) or bare host — no port
+
 _TENANT_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}\Z")  # \Z not $ (critic LOW-5: $ lets a trailing \n through)
 
 #: Windows reserved device names (lowercase — the slug is lowercase-only). A
@@ -699,7 +712,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             # personal mode: NO key presented at all → the local tenant,
             # ma solo con Host localhost (anti DNS-rebinding). Una chiave
             # presentata e invalida NON cade qui: 401 forte sotto.
-            host = (request.headers.get("host") or "").rsplit(":", 1)[0]
+            host = _host_only(request.headers.get("host"))
             if host.lower() in _LOCAL_HOSTS:
                 request.state.tenant = local_tenant   # for the access-audit log
                 return local_tenant
