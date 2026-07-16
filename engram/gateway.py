@@ -48,6 +48,17 @@ _LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 
 _TENANT_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 
+#: Windows reserved device names (lowercase — the slug is lowercase-only). A
+#: tenant_id becomes a directory ``tenants/<id>/memory.db``; a dir named CON/AUX/
+#: NUL/COM1…/LPT1… is reserved at ANY path level on Windows (the product's host),
+#: so creation would fail. Reserved is the base name (before any extension):
+#: ``con.db`` is reserved, ``console`` is not (AUDIT-LEDGER mod.4, 2026-07-16).
+_WIN_RESERVED: frozenset[str] = frozenset(
+    {"con", "prn", "aux", "nul"}
+    | {f"com{i}" for i in range(1, 10)}
+    | {f"lpt{i}" for i in range(1, 10)}
+)
+
 #: Trust dashboard: UNA pagina self-contained (no CDN, no template engine).
 #: Statica per costruzione — nessun dato, nessuna chiave, nessun tenant id
 #: viene mai interpolato qui dentro; il browser fetcha /v1/stats con la
@@ -225,6 +236,10 @@ class GatewayKeys:
         if not _TENANT_RE.match(tenant_id or ""):
             raise ValueError(
                 f"tenant_id non valido: {tenant_id!r} (slug [a-z0-9._-], max 64)")
+        if tenant_id.split(".", 1)[0] in _WIN_RESERVED:
+            raise ValueError(
+                f"tenant_id {tenant_id!r} is a reserved device name on Windows "
+                "(con/aux/nul/com1-9/lpt1-9) — the per-tenant directory can't be created")
         from .gateway_plans import get_plan
         plan_name = get_plan(plan).name
         api_key = "vm_" + secrets.token_hex(20)

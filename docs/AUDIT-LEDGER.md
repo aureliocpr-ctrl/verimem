@@ -278,6 +278,27 @@ sleeper or trusted_source"` verdi (incl. `test_veribench_adversarial_axis`).
 **Verdetto MODULO 3**: SOLIDO. Il claim "trust che resiste alla collusione"
 (contare cluster INDIPENDENTI, non fonti raw) è provato: un cartello di N copie
 non ruba lo slot 'accepted' a 2 fonti oneste indipendenti. 0 difetti.
+
+---
+
+## Modulo 4 — gateway / tenancy (`gateway.py`, 1204 righe) — 2026-07-16, base `d118cac`
+
+Multi-tenant gateway. Audit FUNZIONALE (non-exploit; l'analisi di sicurezza
+OFFENSIVA — auth bypass, timing, injection — è DELEGATA al critic opus finale,
+regola cyber→opus). Architettura verificata: **DB fisico per-tenant**
+(`tenants/<id>/memory.db`, isolamento forte), API key **sha256** UNIQUE +
+`vm_`+`token_hex(20)` (160 bit), `plan` normalizzato a minimo-privilegio se ignoto.
+
+| # | Finding | Sev. | Evidenza | Esito |
+|---|---------|------|----------|-------|
+| 7 | tenant_id `con`/`aux`/`nul`/`com1-9`/`lpt1-9` (lowercase) passavano il regex → directory con **nome riservato Windows** (l'host del prodotto) = creazione fallisce. | BASSA (robustezza cross-platform) | Probe 2026-07-16: `_TENANT_RE.match("con")`=True. | **FIXATO** (`_WIN_RESERVED` denylist su base-name in `create`; TDD `test_gateway_tenant_reserved.py`, guard anti-over-rejection "console"/"com1x" ok). |
+
+Non-findings verificati: tenant_id regex `^[a-z0-9][a-z0-9._-]{0,63}$` — il PRIMO
+char alfanumerico obbligatorio **blocca il path traversal** (`..`, `../evil`, `.`
+tutti rifiutati; probe). Suite: **82 test** `test_gateway*.py` verdi (80 + 2 nuovi).
+
+**Verdetto MODULO 4** (funzionale): SOLIDO, 1 fix robustezza. Isolamento tenant
+fisico + key hashing corretti. **Security offensiva → critic opus** (non io).
 **Verdetto parziale**: contratti pubblici del recall SOLIDI (guardie input,
 isolamento tenant, cache-invalidation da test reali); il resto degli interni
 resta da fare — modulo NON chiuso.
