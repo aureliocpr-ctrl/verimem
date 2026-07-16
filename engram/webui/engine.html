@@ -1,11 +1,14 @@
 <!doctype html>
 <!-- VERIMEM — LIVE ENGINE ROOM (/ui/engine)
-     The real engine, event by event: every flow.write / flow.recall of YOUR
-     tenant, streamed from /v1/events/flow (SSE over authed fetch — the bearer
-     key stays in a header + sessionStorage, never in a URL). Static by
-     construction, CSP-clean: all CSS/JS in same-origin external assets
-     (engine.css / engine.js), zero inline. Payloads carry flow METADATA only
-     (status/score/ids), never fact content. -->
+     The real engine, event by event — and the real PIPELINE, stage by
+     stage: this schematic is drawn from the code (engram/client.py +
+     anti_confab_gate.py + semantic.py), not from marketing. Every chamber
+     is clickable and names its module, its job and its threshold. Heat
+     comes from /v1/events/flow: flow.write carries `layers` = which
+     defense actually ACTED, so the stage that fires on screen is the one
+     that fired in the engine. Static by construction, CSP-clean: all
+     CSS/JS in same-origin external assets, zero inline, flow METADATA
+     only (status/score/layer ids), never fact content. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -42,54 +45,112 @@
   </div>
 
   <div class="grid">
-    <div class="bench"><svg viewBox="0 0 720 300" role="img" aria-label="Live custody line">
-      <path class="wire" id="w-in-l1" d="M120 60 H155"/>
-      <path class="wire" id="w-l1-l4" d="M275 60 H310"/>
-      <path class="wire" id="w-l4-led" d="M430 60 H560"/>
-      <path class="wire dash" id="w-l1-q" d="M215 88 V150 H280"/>
-      <path class="wire dash" id="w-l4-q" d="M370 88 V128"/>
-      <path class="wire dash" id="w-q-rec" d="M120 250 H180"/>
-      <path class="wire dash" id="w-rec-fl" d="M300 250 H360"/>
-      <path class="wire" id="w-fl-v" d="M480 250 H560"/>
+    <div class="bench"><svg viewBox="0 0 780 392" role="img" aria-label="The real pipeline, live">
+      <!-- ================= WRITE PATH (top row) ================= -->
+      <path class="wire" id="w-in-l1"   d="M104 52 H128"/>
+      <path class="wire" id="w-l1-l3"   d="M252 52 H272"/>
+      <path class="wire" id="w-l3-l4"   d="M372 52 H392"/>
+      <path class="wire" id="w-l4-scr"  d="M492 52 H512"/>
+      <path class="wire" id="w-scr-led" d="M624 52 H646"/>
+      <!-- drops to quarantine -->
+      <path class="wire dash" id="w-l1-q"  d="M190 80 V128 H298"/>
+      <path class="wire dash" id="w-l3-q"  d="M322 80 V128"/>
+      <path class="wire dash" id="w-l4-q"  d="M442 80 V128 H446"/>
+      <path class="wire dash" id="w-scr-q" d="M568 80 V128 H446"/>
+      <!-- ledger → entity extraction (the graph's life) -->
+      <path class="wire dash" id="w-led-ent" d="M706 84 V120"/>
 
-      <g class="chamber" id="n-ingest" transform="translate(20,32)">
-        <rect class="box" width="100" height="56" rx="3"/>
-        <text class="cap" x="12" y="26">INGEST</text><text class="sub2" x="12" y="42">write arrives</text></g>
-      <g class="chamber" id="n-l1" transform="translate(155,32)">
-        <rect class="box" width="120" height="56" rx="3"/>
-        <text class="cap" x="12" y="26">L1 LEXICAL</text><text class="sub2" x="12" y="42">always on</text></g>
-      <g class="chamber" id="n-l4" transform="translate(310,32)">
-        <rect class="box" width="120" height="56" rx="3"/>
-        <text class="cap" x="12" y="26">L4 ⊢ GATE</text><text class="sub2" x="12" y="42">thr 40 / 100</text></g>
-      <g id="n-led" transform="translate(560,26)">
-        <rect class="ledger-box" width="140" height="66" rx="3"/>
-        <text class="ledger-t1" x="14" y="34">LEDGER</text>
-        <text class="ledger-t2" x="14" y="50">provenance + score</text></g>
-      <g id="n-quar" transform="translate(280,128)">
-        <rect class="qbox" width="160" height="44" rx="3"/>
-        <text class="qt" x="12" y="26">QUARANTINE</text></g>
-      <g class="chamber" id="n-query" transform="translate(20,222)">
-        <rect class="box" width="100" height="56" rx="3"/>
-        <text class="cap" x="12" y="26">QUERY</text><text class="sub2" x="12" y="42">recall</text></g>
-      <g class="chamber" id="n-rec" transform="translate(180,222)">
-        <rect class="box" width="120" height="56" rx="3"/>
-        <text class="cap" x="12" y="26">RECALL</text><text class="sub2" x="12" y="42">rank evidence</text></g>
-      <g class="chamber" id="n-fl" transform="translate(360,222)">
-        <rect class="box" width="120" height="56" rx="3"/>
-        <text class="cap" x="12" y="26">FLOOR τ</text><text class="sub2" x="12" y="42">abstain below</text></g>
-      <g class="chamber" id="n-v" transform="translate(560,222)">
-        <rect class="box" width="140" height="56" rx="3"/>
-        <text class="cap" x="12" y="26">VERDICT</text><text class="sub2" x="12" y="42" id="vSub">answer or silence</text></g>
+      <g class="chamber sm" id="n-ingest" transform="translate(12,28)">
+        <rect class="box" width="92" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">INGEST</text>
+        <text class="sub2" x="10" y="36">route + provenance</text></g>
+      <g class="chamber sm" id="n-l1" transform="translate(128,28)">
+        <rect class="box" width="124" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">L1 FAMILY</text>
+        <text class="sub2" x="10" y="36">~15 lexical screens</text></g>
+      <g class="chamber sm" id="n-l3" transform="translate(272,28)">
+        <rect class="box" width="100" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">L3 CONTRA</text>
+        <text class="sub2" x="10" y="36">vs existing facts</text></g>
+      <g class="chamber sm" id="n-l4" transform="translate(392,28)">
+        <rect class="box" width="100" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">L4 ⊢ CE</text>
+        <text class="sub2" x="10" y="36">source entails, 40/100</text></g>
+      <g class="chamber sm" id="n-scr" transform="translate(512,28)">
+        <rect class="box" width="112" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">TRUST+SCREENS</text>
+        <text class="sub2" x="10" y="36">source · inject · dedup</text></g>
+      <g id="n-led" transform="translate(646,24)">
+        <rect class="ledger-box" width="122" height="60" rx="3"/>
+        <text class="ledger-t1" x="12" y="28">LEDGER</text>
+        <text class="ledger-t2" x="12" y="44">provenance + by_layer</text></g>
 
-      <text class="stamp" id="st-led" x="596" y="14">ADMITTED</text>
-      <text class="stamp" id="st-q" x="452" y="152">REFUSED</text>
-      <text class="stamp" id="st-v" x="580" y="212">ANSWER</text>
+      <g id="n-quar" transform="translate(298,108)">
+        <rect class="qbox" width="148" height="40" rx="3"/>
+        <text class="qt" x="10" y="24">QUARANTINE</text></g>
+      <g class="chamber sm" id="n-ent" transform="translate(646,120)">
+        <rect class="box" width="122" height="44" rx="3"/>
+        <text class="cap" x="10" y="19">ENTITY → KG</text>
+        <text class="sub2" x="10" y="34">clique ≤8 · PPR graph</text></g>
+
+      <!-- ================= READ PATH (middle row) ================= -->
+      <path class="wire dash" id="w-q-rec"  d="M104 234 H128"/>
+      <path class="wire dash" id="w-rec-fl" d="M268 234 H292"/>
+      <path class="wire" id="w-fl-v"        d="M392 234 H646"/>
+
+      <g class="chamber sm" id="n-query" transform="translate(12,210)">
+        <rect class="box" width="92" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">QUERY</text>
+        <text class="sub2" x="10" y="36">search · explain</text></g>
+      <g class="chamber sm" id="n-rec" transform="translate(128,210)">
+        <rect class="box" width="140" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">RECALL HYBRID</text>
+        <text class="sub2" x="10" y="36">vector + BM25 + PPR</text></g>
+      <g class="chamber sm" id="n-fl" transform="translate(292,210)">
+        <rect class="box" width="100" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">FLOOR τ</text>
+        <text class="sub2" x="10" y="36">abstain below (auto)</text></g>
+      <g class="chamber sm" id="n-v" transform="translate(646,210)">
+        <rect class="box" width="122" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">VERDICT</text>
+        <text class="sub2" x="10" y="36" id="vSub">answer or silence</text></g>
+
+      <!-- ============ ANSWER LANE (bottom row, gateway+llm) ============ -->
+      <path class="wire dash" id="w-rec-dr" d="M198 258 V300 H210"/>
+      <path class="wire dash" id="w-dr-ce"  d="M334 324 H354"/>
+      <path class="wire" id="w-ce-v"        d="M478 324 H707 V258"/>
+
+      <g class="chamber sm" id="n-draft" transform="translate(210,300)">
+        <rect class="box" width="124" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">LLM DRAFT</text>
+        <text class="sub2" x="10" y="36">trust-conditioned</text></g>
+      <g class="chamber sm" id="n-ce" transform="translate(354,300)">
+        <rect class="box" width="124" height="48" rx="3"/>
+        <text class="cap" x="10" y="21">CE ⊢ CHECK</text>
+        <text class="sub2" x="10" y="36">answer entailed by fact</text></g>
+      <text class="lane-note" x="210" y="368">answer lane — /v1/answer (needs a server-side llm)</text>
+
+      <text class="stamp" id="st-led" x="646" y="16">ADMITTED</text>
+      <text class="stamp" id="st-q" x="456" y="132">QUARANTINED</text>
+      <text class="stamp" id="st-v" x="646" y="202">ANSWER</text>
     </svg></div>
 
     <div class="feed"><h2>event feed — newest first</h2><div id="feed"></div></div>
   </div>
 
-  <p class="foot"><b>Live Engine Room.</b> Every row is a real event from THIS store (flow metadata only — status, score, ids; never fact content). Write path: L1 always-on, L4 entailment opt-in (0–100, write threshold 40). Read path: abstention floor, answer iff p &gt; λ/(1+λ). AGPL-3.0 · verimem.com</p>
+  <div class="stage-info" id="stage-info" hidden>
+    <b id="si-title"></b><span class="si-mod" id="si-mod"></span>
+    <p id="si-body"></p>
+  </div>
+
+  <p class="foot"><b>Live Engine Room.</b> Every row is a real event from THIS
+  store (flow metadata only — status, score, layer ids; never fact content).
+  The schematic IS the pipeline in the code: click any chamber for its module,
+  job and threshold. Write: L1 lexical family always-on → L3 contradiction →
+  L4 source⊢fact (opt-in) → trust/screens → ledger + entity extraction.
+  Read: hybrid recall → abstention floor τ · answer lane adds a local
+  cross-encoder check — answer only if a retrieved fact entails it.
+  AGPL-3.0 · verimem.com</p>
 </div>
 </body>
 </html>

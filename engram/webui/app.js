@@ -231,14 +231,66 @@
   var graphStats = $("graph-stats");
   var graphTotals = { nodes: 0, edges: 0 };
   var liveBorn = 0;
+  var lastLoadMs = 0;
+
+  /* honest FPS: measured on the page, shown in the stats bar — "smooth"
+     is a number here, not an adjective (Aurelio 2026-07-16). */
+  var fpsNow = 0;
+  (function fpsMeter() {
+    var frames = 0, t0 = performance.now();
+    function loop(ts) {
+      frames++;
+      if (ts - t0 >= 1000) {
+        fpsNow = Math.round(frames * 1000 / (ts - t0));
+        frames = 0; t0 = ts;
+        statsLine();
+      }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  })();
 
   function statsLine(suffix) {
     if (!graphStats) { return; }
     var c = GG ? GG.counts() : graphTotals;
+    var shown = GG ? GG.shownEdges() : 0;
     graphStats.textContent = c.nodes.toLocaleString() + " entities · "
-      + c.edges.toLocaleString() + " edges"
+      + (shown < c.edges
+         ? shown.toLocaleString() + "/" + c.edges.toLocaleString() + " edges"
+         : c.edges.toLocaleString() + " edges")
       + (liveBorn ? " · +" + liveBorn + " born live" : "")
+      + (lastLoadMs ? " · " + lastLoadMs + " ms" : "")
+      + (fpsNow ? " · " + fpsNow + " fps" : "")
       + (suffix ? " · " + suffix : "");
+  }
+
+  function renderClusters() {
+    var host = $("graph-clusters");
+    if (!host || !GG) { return; }
+    var cs = GG.clusters();
+    host.innerHTML = "";
+    var active = null;
+    cs.forEach(function (cl) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "cluster-chip";
+      var dot = document.createElement("i");
+      dot.style.background = cl.color;
+      b.appendChild(dot);
+      b.appendChild(document.createTextNode(
+        (cl.label.length > 18 ? cl.label.slice(0, 17) + "…" : cl.label)
+        + " " + cl.size));
+      b.title = "community around “" + cl.label + "” — " + cl.size
+        + " entities. Click to isolate, click again to release.";
+      b.addEventListener("click", function () {
+        var on = active === cl.id ? null : cl.id;
+        active = on;
+        GG.setClusterFilter(on);
+        Array.prototype.forEach.call(host.children, function (x) {
+          x.classList.toggle("on", on !== null && x === b);
+        });
+      });
+      host.appendChild(b);
+    });
   }
 
   function renderGraph(data) {
@@ -251,12 +303,31 @@
           var b = $("graph-layout");
           if (b) { b.textContent = running ? "stop layout" : "re-layout"; }
           statsLine(running ? "layout running" : "");
+        },
+        onLocal: function (name, size) {
+          var bar = $("graph-local");
+          if (!bar) { return; }
+          if (name) {
+            $("graph-local-label").textContent =
+              "local · " + name + " · 2 hops · " + size + " nodes";
+            bar.hidden = false;
+          } else { bar.hidden = true; }
         }
+      });
+      $("graph-local-exit").addEventListener("click", function () {
+        GG.localExit();
+      });
+      var slider = $("graph-density");
+      slider.addEventListener("input", function () {
+        GG.setBackbone(+slider.value);
+        statsLine();
       });
     }
     var t0 = performance.now();
     graphTotals = GG.load(data);
-    statsLine(Math.round(performance.now() - t0) + " ms · layout running");
+    lastLoadMs = Math.round(performance.now() - t0);
+    renderClusters();
+    statsLine("layout running");
   }
 
   /* search: live highlight; Enter selects & centers the first match */

@@ -79,3 +79,15 @@ svg{display:block; width:100%; height:auto; min-width:640px;}
 .bar .shadow:empty{display:none;}
 .c.chart{padding:.35rem .5rem; display:inline-flex; align-items:center;}
 .c.chart canvas{display:block;}
+/* fidelity pass: smaller chambers (the REAL pipeline has more stages),
+   clickable, with an info drawer that names module + job + threshold */
+.chamber{cursor:pointer;}
+.chamber.sm .cap{font-size:10.5px;}
+.chamber.sm .sub2{font-size:8px;}
+.chamber:hover .box{stroke:var(--ink);}
+.lane-note{font-family:var(--mono); font-size:9px; fill:var(--ink-3); letter-spacing:.08em;}
+.stage-info{border:1px solid var(--rule-2); background:var(--paper-2);
+  padding:.6rem .8rem; margin-top:.8rem; font-size:.78rem; line-height:1.55;}
+.stage-info b{font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;}
+.stage-info .si-mod{color:var(--ink-3); font-size:.7rem;}
+.stage-info p{margin:.25rem 0 0;}

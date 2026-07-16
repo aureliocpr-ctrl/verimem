@@ -101,46 +101,169 @@
   }
   setInterval(drawRate, 1000);
 
-  /* ---- one event, NOW ------------------------------------------------------*/
+  /* ---- one event, NOW — on the REAL pipeline --------------------------------
+     flow.write carries `layers` (which defense ACTED, same attribution as
+     the ledger): the stage that lights up is the one that fired. */
+  var WRITE_STAGES = ["n-l1", "n-l3", "n-l4", "n-scr"];
+  var WRITE_WIRES = ["w-in-l1", "w-l1-l3", "w-l3-l4", "w-l4-scr"];
+  var DROP_WIRE = { "n-l1": "w-l1-q", "n-l3": "w-l3-q",
+                    "n-l4": "w-l4-q", "n-scr": "w-scr-q" };
+  function layerStage(layer) {
+    layer = String(layer || "");
+    if (layer.indexOf("L3") === 0) { return "n-l3"; }
+    if (layer.indexOf("L4") === 0) { return "n-l4"; }
+    if (layer === "SOURCE_TRUST" || layer === "store-screen") { return "n-scr"; }
+    return "n-l1";                       // the L1.x family (and default)
+  }
   function onWrite(p) {
     tsW.push(Date.now());
     // quarantined IS written to the ledger but excluded from recall → red branch
     var ok = p.stored && p.status !== "quarantined";
     heat("n-ingest", ["pass"], 900);
-    heat("w-in-l1", ["flow"], 900);
     if (ok) {
       counters.adm++;
-      heat("n-l1", ["pass"], 900); heat("w-l1-l4", ["flow"], 900);
-      heat("n-l4", ["pass"], 900); heat("w-l4-led", ["flow"], 900);
+      for (var i = 0; i < WRITE_STAGES.length; i++) {
+        heat(WRITE_WIRES[i], ["flow"], 900);
+        heat(WRITE_STAGES[i], ["pass"], 900);
+      }
+      heat("w-scr-led", ["flow"], 900);
+      heat("w-led-ent", ["flow"], 1400);   // extraction follows the admit
+      heat("n-ent", ["pass"], 1400);
       stamp("st-led", "ADMITTED", "adm");
     } else {
       counters.quar++;
-      heat("n-l1", ["fail"], 900);
-      heat("w-l1-q", ["flow", "q"], 900);
-      stamp("st-q", String(p.status || "REFUSED").toUpperCase(), "ref");
+      var culprit = layerStage(p.layers && p.layers.length ? p.layers[0] : "");
+      for (var j = 0; j < WRITE_STAGES.length; j++) {
+        heat(WRITE_WIRES[j], ["flow"], 900);
+        if (WRITE_STAGES[j] === culprit) {
+          heat(culprit, ["fail"], 1200);
+          heat(DROP_WIRE[culprit], ["flow", "q"], 1200);
+          break;
+        }
+        heat(WRITE_STAGES[j], ["pass"], 900);
+      }
+      stamp("st-q", String(p.status || "QUARANTINED").toUpperCase(), "ref");
     }
   }
   function onRecall(p) {
     tsR.push(Date.now());
     var abst = !!p.abstained;
     heat("n-query", ["pass"], 900); heat("w-q-rec", ["flow"], 900);
-    heat("n-rec", ["pass"], 900); heat("w-rec-fl", ["flow"], 900);
+    heat("n-rec", ["pass"], 900);
+    if (p.kind === "answer") {
+      // the answer lane: recall → llm draft → local-CE entailment check
+      heat("w-rec-dr", ["flow"], 900);
+      var reason = String(p.reason || "");
+      if (abst) {
+        counters.abs++;
+        if (reason === "no_facts") {
+          heat("n-rec", ["fail"], 1200);
+        } else if (reason === "model_abstained") {
+          heat("n-draft", ["pass"], 900); heat("w-dr-ce", ["flow"], 900);
+          heat("n-ce", ["fail"], 1200);
+        } else {                          // unsupported_by_facts & friends
+          heat("n-draft", ["pass"], 900); heat("w-dr-ce", ["flow"], 900);
+          heat("n-ce", ["fail"], 1200); heat("w-ce-v", ["flow", "q"], 1200);
+        }
+        heat("n-v", ["fail"], 1200);
+        $("vSub").textContent = "honest silence";
+        stamp("st-v", "NO ANSWER", "abs");
+      } else {
+        counters.ans++;
+        heat("n-draft", ["pass"], 900); heat("w-dr-ce", ["flow"], 900);
+        heat("n-ce", ["pass"], 900); heat("w-ce-v", ["flow"], 900);
+        heat("n-v", ["pass"], 900);
+        $("vSub").textContent = p.grounded ? "grounded answer" : "answer";
+        stamp("st-v", p.grounded ? "ANSWER ✓" : "ANSWER", "ans");
+      }
+      return;
+    }
+    heat("w-rec-fl", ["flow"], 900);
     if (abst) {
       counters.abs++;
-      heat("n-fl", ["fail"], 900); heat("w-fl-v", ["flow", "q"], 900);
-      heat("n-v", ["fail"], 900);
+      heat("n-fl", ["fail"], 1200); heat("w-fl-v", ["flow", "q"], 1200);
+      heat("n-v", ["fail"], 1200);
       $("vSub").textContent = "honest silence";
       stamp("st-v", "NO ANSWER", "abs");
     } else {
       counters.ans++;
       heat("n-fl", ["pass"], 900); heat("w-fl-v", ["flow"], 900);
       heat("n-v", ["pass"], 900);
-      $("vSub").textContent = p.kind === "answer"
-        ? (p.grounded ? "grounded answer" : "answer") : "answer + provenance";
-      stamp("st-v", p.kind === "answer" && p.grounded ? "ANSWER ✓" : "ANSWER",
-            "ans");
+      $("vSub").textContent = "answer + provenance";
+      stamp("st-v", "ANSWER", "ans");
     }
   }
+
+  /* ---- the schematic is DOCUMENTATION: click a chamber, get the module ----*/
+  var STAGE_INFO = {
+    "n-ingest": ["INGEST", "engram/client.py · conversation_ingest.py",
+      "Routes plain text vs whole conversations and stamps provenance " +
+      "(source episodes, asserted_at event time). A conversation is " +
+      "atomically extracted and EVERY resulting fact goes through the gate."],
+    "n-l1": ["L1 LEXICAL FAMILY", "engram/anti_confab_gate.py",
+      "The always-on screen family (L1, L1.5–L1.21): unsupported " +
+      "self-claims ('works / verified / completed'), state claims without " +
+      "evidence, verified-without-proof (L1.15) and friends. ~13 ms, no " +
+      "LLM call, cannot be skipped."],
+    "n-l3": ["L3 CONTRADICTION", "engram/anti_confab_gate.py",
+      "Checks the newcomer against facts already in the store — lexical " +
+      "(L3) and semantic (L3-semantic). A contradiction quarantines the " +
+      "newcomer; nothing is silently merged."],
+    "n-l4": ["L4 SOURCE ⊢ FACT", "engram/grounding_gate.py",
+      "The moat, opt-in per call (ground=True / ENGRAM_GROUNDING_WRITE=1): " +
+      "a local cross-encoder (or judge llm) verifies the attached source " +
+      "actually ENTAILS the fact — write threshold 40/100. Catches " +
+      "confabulated inferences L1 cannot see."],
+    "n-scr": ["TRUST + STORE SCREENS", "engram/source_trust.py · semantic.py",
+      "Optional source-trust floor (a low-trust source is quarantined " +
+      "pending corroboration — rehabilitable, never silently dropped) plus " +
+      "the store screens: injection screen (default ON), dedup, " +
+      "supersede/reconcile."],
+    "n-led": ["TRUST LEDGER", "engram/client.py (_record_trust)",
+      "Append-only counts with by_layer attribution: what was admitted / " +
+      "quarantined / rejected and WHICH defense acted. /v1/stats serves " +
+      "it; the odometer on the console is this ledger."],
+    "n-ent": ["ENTITY → KNOWLEDGE GRAPH", "engram/entity_populate.py",
+      "Extracts entities from the admitted fact, wires the co-occurrence " +
+      "clique (≤8 per fact), feeds the PPR retrieval graph and emits " +
+      "flow.entity — the births you see live on the console graph."],
+    "n-quar": ["QUARANTINE", "status='quarantined'",
+      "Stored but excluded from default recall — visible and auditable in " +
+      "the console. Rehabilitable: re-add with verified_by evidence."],
+    "n-query": ["QUERY", "GET /v1/search · /v1/explain",
+      "The read surface. search returns hits with per-fact provenance; " +
+      "explain returns an answer with citations or an explicit abstention."],
+    "n-rec": ["RECALL (HYBRID)", "engram/semantic.py",
+      "e5 vectors + BM25 + graph PPR, fused; as_of time-travel on the " +
+      "bi-temporal store; user beliefs are OUT of the default view " +
+      "(anti-sycophancy) and only return on explicit opt-in."],
+    "n-fl": ["ABSTENTION FLOOR τ", "ENGRAM_GATEWAY_MIN_RELEVANCE=auto",
+      "A self-calibrating relevance floor: below it the memory answers " +
+      "'I don't know' instead of serving the nearest hit. The dial is " +
+      "honest: it over-abstains on very small stores."],
+    "n-v": ["VERDICT", "answer + provenance | honest silence",
+      "The read-path half of the trust odometer: every answer cites its " +
+      "facts, every silence is counted."],
+    "n-draft": ["LLM DRAFT (trust-conditioned)", "engram/client.py answer()",
+      "The llm drafts over the top-k facts, each tagged [when | source | " +
+      "status]: conflicts resolve by metadata (verified > unverified, " +
+      "recent > old); unresolvable → abstain."],
+    "n-ce": ["CE ⊢ CHECK", "engram/local_grounding.py",
+      "A local cross-encoder verifies the draft is ENTAILED by a retrieved " +
+      "fact; below threshold → NO ANSWER (reason: unsupported_by_facts). " +
+      "Catches the model inventing beyond memory — measured, not promised."]
+  };
+  Object.keys(STAGE_INFO).forEach(function (id) {
+    var el = $(id);
+    if (!el) { return; }
+    el.addEventListener("click", function () {
+      var info = STAGE_INFO[id];
+      $("si-title").textContent = info[0];
+      $("si-mod").textContent = " · " + info[1];
+      $("si-body").textContent = info[2];
+      $("stage-info").hidden = false;
+    });
+  });
   function countersRender() {
     $("cAdm").textContent = counters.adm; $("cQuar").textContent = counters.quar;
     $("cAns").textContent = counters.ans; $("cAbs").textContent = counters.abs;
@@ -189,6 +312,9 @@
   }
   function feedPush(evt) {
     pendingRows.push(evt);
+    // rAF is suspended while the tab is hidden: cap the backlog so hours
+    // of background traffic can't grow it unbounded (feed shows 50 anyway)
+    if (pendingRows.length > 100) { pendingRows.splice(0, pendingRows.length - 60); }
     if (pendingRows.length === 1) { requestAnimationFrame(feedFlush); }
   }
   function feedFlush() {

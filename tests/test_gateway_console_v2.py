@@ -92,7 +92,25 @@ def test_html_csp_allows_sameorigin_blob_workers(gw):
     assert "script-src 'self'" in csp    # still no CDN, no inline
 
 
-# ---- 4. answer emits its own flow event --------------------------------------
+# ---- 4. the flow event names the defense that ACTED --------------------------
+
+def test_quarantined_write_carries_its_layers(gw):
+    """The Engine Room lights the REAL stage: a quarantined write's flow
+    event carries `layers` — same attribution as the ledger's by_layer."""
+    client, hdr, tmp_path = gw
+    r = client.post("/v1/memories", headers=hdr,
+                    json={"content": "the deployment works and is verified "
+                                     "in production",
+                          "topic": "deploy"})
+    assert r.json()["status"] == "quarantined"
+    evts = [e for e in _flow(tmp_path, "flow.write")
+            if e["payload"].get("status") == "quarantined"]
+    assert len(evts) == 1
+    layers = evts[0]["payload"]["layers"]
+    assert layers and all(isinstance(x, str) and x for x in layers)
+
+
+# ---- 5. answer emits its own flow event --------------------------------------
 
 def test_answer_emits_flow_recall_kind_answer(gw):
     client, hdr, tmp_path = gw

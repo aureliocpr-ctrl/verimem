@@ -98,11 +98,22 @@
           that created it.
         </div>
         <div id="graph-stats" class="graph-stats" aria-live="polite"></div>
+        <div id="graph-local" class="graph-local" hidden>
+          <span id="graph-local-label"></span>
+          <button id="graph-local-exit" type="button"
+                  title="back to the full graph">&#10005; full graph</button>
+        </div>
+        <div id="graph-clusters" class="graph-clusters"
+             aria-label="Communities (Louvain) — click to isolate"></div>
         <div class="graph-legend">
           <span><i class="sw solid"></i> grounded (cites a fact)</span>
           <span><i class="sw dashed"></i> ungrounded (declared, never hidden)</span>
-          <span class="hint-drag">drag nodes &middot; wheel to zoom &middot;
-            double-click background to fit</span>
+          <label class="density" title="structural ties per node (backbone) — right end shows ALL edges">
+            edges <input id="graph-density" type="range" min="1" max="9"
+                         step="1" value="3">
+          </label>
+          <span class="hint-drag">hover lights the neighborhood &middot;
+            double-click a node for its local graph &middot; wheel to zoom</span>
           <button id="graph-fit" type="button" title="fit the whole graph">fit</button>
           <button id="graph-layout" type="button" title="run/stop the force layout">re-layout</button>
           <button id="graph-refresh" type="button" title="re-fetch and re-layout">refresh</button>

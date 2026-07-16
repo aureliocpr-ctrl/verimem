@@ -197,7 +197,7 @@ class Memory:
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
             _emit_flow("flow.write", stored=False, status="rejected",
-                       fact_id="", topic=str(topic))
+                       fact_id="", topic=str(topic), layers=_layers)
             return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
@@ -213,14 +213,16 @@ class Memory:
         # store-screen flip -> "store-screen"; clean admit -> none (advisory
         # warnings are in the add() response, not in by_layer).
         if fact.status == "quarantined":
-            self._record_trust(
-                "quarantined",
-                layers=_layers if action == "downgrade" else ["store-screen"],
-                topic=topic)
+            _hit_layers = _layers if action == "downgrade" else ["store-screen"]
+            self._record_trust("quarantined", layers=_hit_layers, topic=topic)
         else:
+            _hit_layers = []
             self._record_trust("admitted", layers=None, topic=topic)
+        # layers in the flow event = which defense actually ACTED (same
+        # attribution as the ledger): the Live Engine Room lights the real
+        # stage, not a generic box. Metadata only, never fact content.
         _emit_flow("flow.write", stored=True, status=str(fact.status),
-                   fact_id=str(fact.id), topic=str(topic))
+                   fact_id=str(fact.id), topic=str(topic), layers=_hit_layers)
         return {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,

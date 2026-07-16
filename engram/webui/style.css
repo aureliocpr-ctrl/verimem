@@ -379,3 +379,30 @@ body {
   var(--ok); padding: .3rem 0 .3rem .7rem; margin-top: .55rem;
   overflow-wrap: anywhere; }
 .ask-support.raw { border-left-color: var(--bad); }
+
+/* ---- graph v2.1: clusters, backbone, local mode ------------------------- */
+.graph-clusters { position: absolute; left: .7rem; bottom: 3.2rem; z-index: 2;
+  display: flex; flex-wrap: wrap; gap: .3rem; max-width: 62%; }
+.cluster-chip { display: inline-flex; align-items: center; gap: .35rem;
+  font-family: var(--mono); font-size: .64rem; letter-spacing: .03em;
+  color: var(--ink); background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line-strong); border-radius: 99px;
+  padding: .16rem .55rem; cursor: pointer; }
+.cluster-chip i { width: .62em; height: .62em; border-radius: 50%;
+  display: inline-block; }
+.cluster-chip:hover { border-color: var(--ink); }
+.cluster-chip.on { background: var(--ink); color: var(--bg); }
+
+.graph-local { position: absolute; top: 3rem; left: .7rem; z-index: 3;
+  display: flex; align-items: center; gap: .6rem; font-family: var(--mono);
+  font-size: .72rem; color: var(--ink);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid var(--ok); border-radius: 3px; padding: .3rem .6rem; }
+.graph-local button { background: none; border: 0; color: var(--ok);
+  font-family: var(--mono); font-size: .72rem; cursor: pointer;
+  padding: 0; text-decoration: underline; }
+
+.graph-legend .density { display: inline-flex; align-items: center;
+  gap: .4rem; }
+.graph-legend input[type="range"] { width: 110px; accent-color: var(--ok);
+  height: 1rem; }
