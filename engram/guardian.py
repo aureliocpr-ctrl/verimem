@@ -37,8 +37,11 @@ _RANK = {"refuted": -1, None: 0, "unbeaten": 1, "proven": 2}
 
 
 def _rank(fact: Any) -> int:
+    # .get with default 0: an unknown/foreign epistemic kind is UNLABELED,
+    # never a KeyError on the read-path (audit mod.3 — line 109 already
+    # defended this way; the two must agree).
     label = getattr(fact, "epistemic", None) or None
-    return _RANK[label["kind"]] if label else 0
+    return _RANK.get(label.get("kind"), 0) if label else 0
 
 
 def _is_belief(fact: Any) -> bool:
@@ -57,6 +60,11 @@ def correct_read(mem: Any, query: str, *, k: int = 5) -> dict[str, Any]:
         return {"verdict": "ABSTAIN", "answer": None, "served_id": None,
                 "evidence": [], "uncorroborated": [], "reason": "no_support"}
     facts = [f for f in (mem.semantic.get(h.get("id", "")) for h in hits) if f]
+    if not facts:
+        # hits existed but every row is gone (delete race): degrade to the
+        # honest abstention — a read-path never crashes (audit mod.3).
+        return {"verdict": "ABSTAIN", "answer": None, "served_id": None,
+                "evidence": [], "uncorroborated": [], "reason": "no_support"}
     # group the copula facts by subject; non-copula hits pass through untouched
     contenders: dict[str, list[Any]] = {}
     for f in facts:
@@ -99,10 +107,19 @@ def correct_read(mem: Any, query: str, *, k: int = 5) -> dict[str, Any]:
                 "served_id": winner.id, "evidence": [f.id for f in rivals],
                 "uncorroborated": [], "reason": "unchallenged"}
 
-    best = max(servable, key=_rank)
-    others = [f for f in servable if f is not best]
-    uncorroborated = [f.id for f in beliefs if _value(f) != _value(best)]
-    if all(_rank(best) > _rank(f) for f in others):
+    # dominance is per-VALUE, not per-fact (audit mod.3): two proven facts
+    # AGREEING on "labrador" must beat a lone unlabeled "poodle" — comparing
+    # against the agreeing twin made MORE corroboration produce MORE
+    # abstention. A value's guarantee is the best rank among its facts.
+    by_value: dict[str, list[Any]] = {}
+    for f in servable:
+        by_value.setdefault(_value(f), []).append(f)
+    value_rank = {v: max(_rank(f) for f in fs) for v, fs in by_value.items()}
+    best_value = max(value_rank, key=value_rank.get)  # type: ignore[arg-type]
+    best = max(by_value[best_value], key=_rank)
+    uncorroborated = [f.id for f in beliefs if _value(f) != best_value]
+    if all(value_rank[best_value] > r for v, r in value_rank.items()
+           if v != best_value):
         # CORRECT whenever a real conflict was resolved by the label — never
         # dependent on which side recall happened to rank first (that order is
         # not deterministic w.r.t. content, the verdict must be).

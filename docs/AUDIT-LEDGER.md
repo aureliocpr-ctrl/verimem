@@ -364,3 +364,14 @@ fix del FP-biografia (MED-2/3) + 1 HIGH mancato (isolamento tenant). Tutti chius
 AVEVO in mente; il critic ha trovato i casi che NON avevo in mente (l'articolo in
 "as a", gli oggetti infra in "the funding", il trailing-dot Windows). Il critic
 avversariale su un modello più forte è un moltiplicatore reale, non cerimonia.
+
+## Modulo 7 — guardian.py riga-per-riga (Fase C mod.3, 2026-07-17 ~00:50)
+
+118 righe, lette tutte. 3 difetti REALI, tutti pinnati RED prima del fix
+(`test_guardian_audit_mod3.py`), fix minimi, 32 test guardian/belief verdi.
+
+| id | severità | difetto | evidenza | esito |
+|----|----------|---------|----------|-------|
+| M7-1 | MEDIA (FN) | Tie-check per-FATTO invece che per-VALORE (riga ~105): due `proven` CONCORDI su "labrador" vs un `unlabeled` "poodle" → `all(rank(best)>rank(f))` fallisce contro il gemello concorde → ABSTAIN invece di CORRECT. Perverso: più corroborazione ⇒ più astensione. | RED riprodotto (articolo diverso `a/the labrador` = stesso `_value`, niente dedup) | **FIXATO**: dominanza per-VALORE (`value_rank = max rank dei fatti del valore`; vince se > di ogni ALTRO valore). |
+| M7-2 | BASSA (crash) | `_rank` faceva `_RANK[label["kind"]]` → KeyError su kind epistemico ignoto/estraneo; riga 109 già si difendeva con `.get` (incoerenza interna). | RED unit (`kind="certified_by_auditor"`) | **FIXATO**: `.get(kind, 0)` = unlabeled, mai crash. |
+| M7-3 | BASSA (crash) | `facts[0]` → IndexError quando ogni re-fetch by id ritorna None (hit presenti, righe sparite: delete race). | RED con `semantic.get→None` monkeypatch | **FIXATO**: guard → ABSTAIN `no_support` (il read-path degrada, mai crasha). |
