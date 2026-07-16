@@ -147,7 +147,10 @@ def test_watch_mirror_persists_real_message(
         [
             "watch",
             "--team-dir", str(team_dir),
-            "--max-sec", "0.5",
+            # 0.5s flaked on slow CI runners (macos py3.12, 2026-07-16): the
+            # first poll lost the whole budget to cold imports. The watcher
+            # still exits at max-sec, so the extra margin costs ~2.5s once.
+            "--max-sec", "3.0",
             "--refresh-sec", "0.05",
             "--mirror-to-memory",
         ],
