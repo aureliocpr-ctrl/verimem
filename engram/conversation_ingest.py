@@ -181,12 +181,25 @@ def conversation_provenance_ref(conversation_id: str) -> str:
     return f"conversation:{conversation_id}"
 
 
+#: ONE leading list marker — a bullet ("-", "*", "•") or a short number with
+#: its delimiter ("1.", "12)") — plus surrounding spaces. NOT a char-set strip:
+#: the old ``lstrip("-*•0123456789. ")`` ate the leading digits of REAL facts
+#: ("3M employs Rex." → "M employs Rex.", "1Password…" → "Password…") — audit
+#: mod.9. Digits count as a marker only WITH a delimiter, so "1. 3M…" strips
+#: the marker and keeps the fact's own digits.
+_LIST_MARKER_RE = None
+
+
 def parse_extracted_lines(text: str) -> list[str]:
-    """One fact per non-empty line, bullets/numbering stripped (same parsing the
-    benchmark validated)."""
+    """One fact per non-empty line, ONE leading bullet/number marker stripped
+    (same parsing the benchmark validated; marker rule tightened in mod.9)."""
+    import re
+    global _LIST_MARKER_RE
+    if _LIST_MARKER_RE is None:
+        _LIST_MARKER_RE = re.compile(r"^\s*(?:[-*•]+|\d{1,3}[.)])\s+")
     out: list[str] = []
     for line in (text or "").splitlines():
-        s = line.strip().lstrip("-*•0123456789. ").strip()
+        s = _LIST_MARKER_RE.sub("", line.strip(), count=1).strip()
         if len(s) > 4:
             out.append(s)
     return out
@@ -204,14 +217,24 @@ def strip_belief_marker(line: str) -> tuple[str, bool]:
     return line, False
 
 
-def render_conversation(messages: list[dict], *, cap_chars: int = 12000) -> str:
-    """``role: content`` lines, capped (mirrors the benchmark's session_text)."""
+def render_conversation(messages: list[dict], *, cap_chars: int = 12000,
+                        with_flag: bool = False):
+    """``role: content`` lines, capped (mirrors the benchmark's session_text).
+
+    ``with_flag=True`` returns ``(text, truncated)`` — audit mod.9: the cap was
+    SILENT, so a long conversation (the gateway accepts 1MB bodies) lost its
+    tail with no signal anywhere. Silent caps read as "covered everything";
+    the flag makes the loss declared. Default return stays the bare string."""
     lines = []
     for m in messages or []:
         c = (m.get("content") or "").strip()
         if c:
             lines.append(f"{m.get('role', '?')}: {c}")
-    return "\n".join(lines)[:cap_chars]
+    full = "\n".join(lines)
+    text = full[:cap_chars]
+    if with_flag:
+        return text, len(full) > cap_chars
+    return text
 
 
 def ingest_conversation(
@@ -230,6 +253,7 @@ def ingest_conversation(
     user_name: str | None = None,
     typed_entities: bool = False,
     tag_beliefs: bool = False,
+    cap_chars: int = 12000,
 ) -> dict:
     """Extract ATOMIC facts from ``messages`` and store each through the gate.
 
@@ -253,8 +277,11 @@ def ingest_conversation(
 
     res: dict = {"stored": 0, "rejected": 0, "fact_ids": [],
                  "extracted": 0, "gapfilled": 0, "consolidated": 0,
-                 "error": None}
-    dialogue = render_conversation(messages)
+                 "error": None, "truncated": False}
+    # mod.9: the cap is DECLARED (res["truncated"]) and overridable — a silent
+    # cut of a 1MB conversation to 12k chars looked like full coverage.
+    dialogue, res["truncated"] = render_conversation(
+        messages, cap_chars=cap_chars, with_flag=True)
     if not dialogue:
         return res
     try:
@@ -277,7 +304,8 @@ def ingest_conversation(
     res["extracted"] = len(lines)
     if completeness and lines:
         extra = gapfill_facts(dialogue, lines, llm=llm,
-                              max_out_tokens=max_out_tokens)
+                              max_out_tokens=max_out_tokens,
+                              tag_beliefs=tag_beliefs)
         lines = lines + extra
         res["gapfilled"] = len(extra)
     if consolidate and lines:
@@ -345,18 +373,30 @@ def ingest_conversation(
 
 
 def gapfill_facts(dialogue: str, facts: list[str], *, llm: Any,
-                  max_out_tokens: int = 1200) -> list[str]:
+                  max_out_tokens: int = 1200,
+                  tag_beliefs: bool = False) -> list[str]:
     """Return durable facts the ``dialogue`` STATES but ``facts`` missed (the
     recall pass). Additive-only and fail-safe: on any LLM error, or nothing new,
     returns ``[]`` — a gap-fill can only ADD, never lose the base extraction.
     Deduplicated against ``facts`` by normalized text so the pass never
-    re-emits what we already have."""
+    re-emits what we already have.
+
+    ``tag_beliefs`` (mod.9 fix): append the same origin-tag rule the extraction
+    uses — without it a recovered unverified assertion entered as plain
+    ``model_claim``, exactly the laundering the Giro-2 tag prevents. The dedup
+    key strips the marker so "BELIEF: X" and an already-extracted "X" collapse.
+    Default off → prompt byte-identical (the bench constant never mutates)."""
     if not dialogue:
         return []
-    have = {f.strip().casefold() for f in facts}
+
+    def _key(line: str) -> str:
+        return strip_belief_marker(line)[0].strip().casefold()
+
+    have = {_key(f) for f in facts}
+    system = GAPFILL_SYSTEM + (_BELIEF_EXTRACT_INSTRUCTION if tag_beliefs else "")
     try:
         r = llm.complete(
-            GAPFILL_SYSTEM,
+            system,
             [{"role": "user",
               "content": f"Conversation:\n{dialogue}\n\nAlready extracted:\n"
                          + "\n".join(facts) + "\n\nMissing facts:"}],
@@ -366,7 +406,7 @@ def gapfill_facts(dialogue: str, facts: list[str], *, llm: Any,
         return []
     out, seen = [], set(have)
     for f in found:
-        k = f.strip().casefold()
+        k = _key(f)
         if k and k not in seen:
             seen.add(k)
             out.append(f)

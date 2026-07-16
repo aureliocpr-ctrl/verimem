@@ -386,3 +386,16 @@ avversariale su un modello più forte è un moltiplicatore reale, non cerimonia.
 | M8-1 | MEDIA (UX/contratto) | `history()` forward-only: `history(id_CORRENTE)` — l'id che il chiamante ha davvero in mano (da search/update) — ritornava 1 entry, mentre `history(id_più_vecchio)` 3; il quickstart promette "the supersession chain (audit trail)". | repro live: 500k→550k→600k, newest=1 vs oldest=3 | **FIXATO**: rewind al capostipite via `direct_predecessors` (primario = ritirato più di recente, cycle-guarded) poi forward; qualunque id della catena → stesso trail completo. 4 test. |
 | M8-2 | BASSA (incoerenza superficie) | `get()`/`get_all()` non esponevano i campi provenance di `search()` (asserted_at/created_at/source/verified_by): un caller trust-conditioned perdeva `verified_by` al re-fetch by id. | lettura + test | **FIXATO**: `_fact_view()` unica per search/get/get_all. |
 | M8-x | — | CANDIDATO CONFUTATO: sospetto GDPR su `delete(purge_history=True)` (se la chain non includesse il fatto stesso, un fatto senza successori non verrebbe cancellato). | contratto `get_supersession_chain` letto: "starting with the fact at fact_id... Singleton when not superseded" → il fatto è SEMPRE incluso. | **NON-BUG** (ipotesi falsificata prima di toccare codice). |
+
+## Modulo 9 — conversation_ingest.py riga-per-riga (Fase C mod.9, 2026-07-17 ~02:30)
+
+408 righe, lette tutte. 3 difetti reali, pinnati RED (`test_ingest_audit_mod9.py`, 7 test).
+
+| id | severità | difetto | evidenza | esito |
+|----|----------|---------|----------|-------|
+| M9-1 | MEDIA (silent data loss) | `render_conversation` troncava a 12k char SENZA segnale: il gateway accetta body 1MB, la coda della conversazione spariva e il risultato taceva (anti-pattern silent-cap). | RED: 20k char → nessun flag | **FIXATO**: `with_flag=True` → `(text, truncated)`; `ingest_conversation` dichiara `res["truncated"]` e espone `cap_chars` overridabile end-to-end. |
+| M9-2 | MEDIA (corruzione parser) | `parse_extracted_lines` faceva `lstrip("-*•0123456789. ")` (char-SET): mangiava le cifre iniziali di fatti veri — "3M employs Rex."→"M employs Rex.", "1Password…"→"Password…". | RED: 3 casi digit-leading | **FIXATO**: regex UN solo marker (`[-*•]+` o `\d{1,3}[.)]` + spazio); "1. 3M…" strippa il marker e tiene le cifre del fatto. |
+| M9-3 | BASSA (laundering) | Il gap-fill (`completeness=True`) non riceveva l'istruzione BELIEF: un'asserzione non verificata ripescata entrava come `model_claim` — esattamente il laundering che il tag Giro-2 previene. Dedup key ignorava il marker. | RED: stub 2-call | **FIXATO**: `gapfill_facts(tag_beliefs=)` + `_key()` marker-stripped; default off = prompt bench byte-identico. |
+
+Osservato non-fixato (dichiarato): il link entità tier-2 usa substring (`name in fact.lower()`)
+→ possibili falsi-link ("Ann" in "annual"); enrichment-only additivo, gated su misura futura.
