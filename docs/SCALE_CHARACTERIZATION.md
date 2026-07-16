@@ -24,6 +24,31 @@ wall is RAM, not latency**: the resident float32 matrix is ~4 KB/fact, so 1M
 facts ≈ 4 GB held in process. For reference, a live corpus today is ~4.5k facts
 (<20 MB) — the scale limit is real but nobody hits it yet.
 
+## ANN index — the scale path (the README's "1.3 ms at 1M" number)
+
+Brute cosine is O(N) in BOTH RAM and latency. A faiss HNSW index is the answer at
+scale, and is exactly what the README's "1.3 ms at 1M facts vs 81 ms brute-force"
+refers to. Measured (`ann_recall_scale_bench.py`, dim=768, k=8, oversample=8,
+seeded — pure numpy+faiss, no LLM):
+
+| N | brute p50 | ANN p50 | speedup | source |
+|---|----------:|--------:|--------:|--------|
+| 100 000   | 7.2–8.8 ms | 0.8–1.1 ms | ~7.8× | `ann_scale_bench_repro.json` + 2026-07-16 recheck |
+| 500 000   | 37.4 ms | 1.25 ms | ~30× | `ann_scale_bench_repro.json` |
+| 1 000 000 | 81.4 ms | **1.31 ms** | ~62× | `ann_scale_bench_repro.json` |
+
+**Honest caveats (measured, not hidden):**
+- The 500k/1M rows need ~a 32 GB box to BUILD the index. The 2026-07-16 recheck
+  OOM'd at 500k on a smaller machine and reproduced only 100k (7.8×, ANN 1.12 ms).
+  The 1M number is real but reproduces only where RAM allows.
+- HNSW is APPROXIMATE. Recall-in-pool @ oversample 8 measured **0.844 on random
+  unit vectors** (worst case) — up to ~16% of the exact top-k can be missed. Real
+  e5 neighbourhoods are less adversarial, but the "recall latency stays ~flat"
+  headline is about LATENCY; the ANN trades a little RECALL for it — stated, not
+  hidden.
+- Default is EXACT brute-force; the ANN is opt-in (`ENGRAM_ANN_RECALL`) for
+  >200k corpora, so nobody pays the approximation unless they choose to.
+
 ## Why naive quantization does NOT fix it (refuted by measurement)
 
 Hypothesis: store the cached matrix as fp16/int8 to cut RAM. Measured at N=100k,

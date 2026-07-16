@@ -260,8 +260,10 @@ runs cluster around MemOS's self-reported number and the judges differ
 integrity, provenance honesty, sycophancy resistance) — Verimem scores 60/60;
 the bench is offline and seeded, run it yourself in one command.
 
-Scale: recall latency stays ~flat with an ANN index (1.3 ms at 1M facts vs
-81 ms brute-force — reproducible, see [SCALE.md](./SCALE.md)).
+Scale: recall latency stays ~flat with an **opt-in** ANN index (1.3 ms at 1M
+facts vs 81 ms brute-force — see [SCALE.md](./SCALE.md) for the table + the honest
+caveats: the ANN is *approximate*, ~0.84 recall-in-pool worst-case, and the 1M
+build needs a large-RAM box). The default is exact brute-force.
 
 ## Why the numbers matter
 
