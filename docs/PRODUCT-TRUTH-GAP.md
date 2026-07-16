@@ -17,15 +17,26 @@ Regola: nessun claim sul sito senza un numero riproducibile qui accanto.
 
 ## L'anello mancante che CONCATENA tutto (il moonshot già proof-ato)
 
-La memoria **espone già** per ogni hit: `status` (epistemic) + `grounding_score`
-(write-time, gate AUROC 0.971) + trust-coordinate (vivarium anti-collusione).
-Ma NON c'è un answer-path che li USA. Il gap #3 (hallucination 0.167) è
-esattamente questo: `recall@30=0.96` (il fatto c'è) ma l'answerer flat si fa
-ingannare dal distrattore. `grounding_conditioned_qa_real.py` PROVA che
-condizionare la risposta sul grounding separa vero/distrattore e abbatte
-l'hallucination. **Concatenazione**: grounding-gate + trust(vivarium) +
-user_belief → confezionati in un context/answer provenance-conditioned →
-"non hallucina" diventa VERO, non aspirazionale. Questo è l'asse #1 del goal.
+SCOPERTA EMPIRICA 2026-07-16 (A2): il `grounding_score` memorizzato è **0%**
+popolato sul corpus reale (write-grounding opt-in, mai attivo) e lo `status` è
+uniforme nel flusso reale → condizionare sul segnale MEMORIZZATO era su sabbia.
+L'asse madre si divide in DUE pezzi:
+
+**PEZZO 1 — SHIPPATO (`4074fd0`/`a1aa1cc`)**: `Memory.answer(query, llm, k)` =
+grounding-verified answering. L'LLM risponde dai fatti, poi il **CE locale
+(no LLM)** verifica che la risposta sia entailed da un fatto recuperato; se no →
+astiene (NO ANSWER). Probe: il CE separa 91-94 (vero) vs 1-3 (inventato). TDD 5/5.
+SCOPE ONESTO (pinnato come test): becca l'hallucination-OLTRE-i-fatti (il modello
+inventa), NON il distrattore-IN-memoria (un fatto sbagliato già stored: il CE lo
+trova come supporto, verificato — serve "Rex is a labrador" con support 92).
+
+**PEZZO 2 — APERTO (il grosso del gap 0.167)**: separare vero da distrattore IN
+memoria. BENCHMARKS: il gap è dominato dai *distractor facts*. Leva: **popolare
+`grounding_score` al write-time col CE LOCALE** (`try_local_score(source_dialogo,
+fatto_estratto)`, no LLM, economico — l'ingest HA il source) → ogni fatto porta il
+suo grounding → l'answer scarta i distrattori mal-fondati. Concatena
+grounding-gate + reconcile/supersession + trust(vivarium). Questo rende
+"non hallucina" VERO end-to-end. Prossimo passo dell'asse madre.
 
 ## Isolamento multi-tenant — adversarial opus 2026-07-16: **PASS core + 6 da chiudere**
 
