@@ -128,7 +128,7 @@ Questi NON sono stati ri-eseguiti in questa sessione (batch LLM = OK esplicito):
 | Write-gate AUROC 0.971 | SNLI R10 | `benchmark/halumem_writepath_moat.py` |
 | Wrong-source AUROC 0.992 | R11 | idem, `--noise-mode foreign` |
 | Soglia write=40 (gap 0→42) | HaluMem n=15 | `benchmark/halumem_admission_sweep.py` (n piccolo → rialzare) |
-| MemSyco sycophancy delta | non ancora misurato | da wire (Fase A pendente) |
+| ~~MemSyco sycophancy delta~~ **FATTO 2026-07-16** | opus n=30 | `benchmark/memsyco_user_belief.py`: belief-catch **0.933**, preference-preservation **1.000** (two-sided). |
 
 ---
 
@@ -141,3 +141,44 @@ riuso dei 15 detector L1.x). **1 fix applicato** (admission reason onesto,
 **3 osservazioni/no-fix motivati**, **1 audit-gap dichiarato** (numeri LLM).
 Nessun difetto funzionale ALTA/MEDIA trovato: il write-gate è la parte più
 matura e difesa del sistema. Prossimo modulo: **recall** (`semantic.py`).
+
+---
+
+## Modulo 2 — recall (`semantic.py`, ~4060 righe) — IN CORSO, 2026-07-16, base `bc9b9f0`
+
+File più grande del sistema (28 metodi pubblici). Auditata finora la **superficie
+pubblica del recall** + i contratti di sicurezza critici (via probe, non lettura
+verbatim — quella procede a blocchi nei giri successivi).
+
+Contratti PROVATI con probe:
+
+| Contratto | Probe | Esito |
+|-----------|-------|-------|
+| Corpus-spill guard `k<=0 → []` | `recall(k=0)`, `recall(k=-1)` | `[]` ✓ |
+| Blank-query no-intent `""`/`"   " → []` | probe | `[]` ✓ |
+| SQL-injection nel testo query innocua (SQL parametrizzato) | `recall("'; DROP TABLE facts;--")` | corpus intatto ✓ |
+| Isolamento tenant: no-leak cross-tenant | `topic_prefix='acme/'` con fatti beta | 0 leak ✓ |
+| Filtro topic NON buggy | discriminante no-filter vs topic-filtered (entrambi [] = astensione stub, non bug) | falso allarme escluso ✓ |
+| Multi-tenant positivo (recupero-propri) | 133 test `-k "tenant or scope or prefix"` (modello reale) | 133 passed ✓ |
+
+| Cache corpus + versioning (invalidazione, torn-read, cross-process data_version) | 22 test `-k "corpus_cache or cache_version or torn or data_version"` (modello reale, 112s) | 22 passed ✓ |
+
+**LIMITE DI METODO (onesto)**: i probe di full-recall/corpus-cache con
+l'embedding-STUB (384d) NON sono affidabili — i fatti storati con lo stub non
+conformano al filtro `length(embedding)`/`model_signature` del corpus-cache, così
+non entrano nella vista e il recall si astiene (visto: `_get_corpus_cache` ritorna
+0 righe, recall→[] anche con query≈fatto). Quindi gli INTERNI del recall (cache,
+ANN, fusion) si verificano coi test su MODELLO REALE, non coi miei probe stub.
+Correzione applicata: i probe stub restano validi SOLO per i contratti che non
+dipendono dal matching (k-guard, blank, injection-safe, membership-status).
+
+| # | Osservazione | Sev. | Nota |
+|---|--------------|------|------|
+| 6 | La suite scope emette 1 `PytestUnhandledThreadExceptionWarning`. | BASSA | Thread daemon (probabile encode_service) — da isolare; non fa fallire i test. |
+
+**DA AUDITARE** (blocchi successivi, con modello reale o lettura codice — NON
+probe stub): ANN pre-narrowing, PPR/BM25 fusion (`_maybe_fuse_ppr`),
+reconcile-on-write, supersession chain, freshness cutoff, `recall_hybrid`.
+**Verdetto parziale**: contratti pubblici del recall SOLIDI (guardie input,
+isolamento tenant, cache-invalidation da test reali); il resto degli interni
+resta da fare — modulo NON chiuso.

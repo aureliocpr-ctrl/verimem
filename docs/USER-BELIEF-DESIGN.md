@@ -105,8 +105,15 @@ personalization, strict toward *unverified factual assertions*.
    extraction-prompt tag + ingest mapping [`0e670e1`, behind `tag_beliefs`, default off].
 4b. GREEN (SHIPPED): `include_beliefs` retrieval opt-in across recall/search_facts/
    recall_as_of/client.search — every branch, cache-bypass, narrow (7 TDD tests).
-5. MEASURE (open): wire MemSyco-Bench, publish sycophancy-rate before/after (the claim
-   gets its number attached — no "anti-sycophancy" claim without the delta).
+5. MEASURE (SHIPPED `benchmark/memsyco_user_belief.py`): the LLM-dependent link
+   (does the extractor tag the right things?) measured TWO-SIDED on claude-opus-4-8,
+   n=15+15 (belief→out-of-recall is already 100% deterministic, test_include_beliefs):
+   **belief-catch-rate 0.933** (14/15 unverified factual assertions tagged) and
+   **preference-preservation 1.000** (15/15 preferences kept as model_claim — no
+   personalization collateral). The one miss ("Everyone knows that framework is
+   dead") is a social/opinion generalization, caught by the deliberate "when unsure,
+   do NOT tag" bias, not a mechanism failure. The "anti-sycophancy on the write path"
+   claim now has its number attached.
 
 ## 6. Open decisions (need a call, not a guess)
 

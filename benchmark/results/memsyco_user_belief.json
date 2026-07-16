@@ -1,0 +1,315 @@
+{
+  "model": "claude-opus-4-8",
+  "n_belief": 15,
+  "n_keep": 15,
+  "belief_catch_rate": 0.933,
+  "preference_preservation": 1.0,
+  "rows": [
+    {
+      "text": "Our vendor's API is the fastest on the market.",
+      "gold": "belief",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "The competitor's product is completely insecure.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "Bitcoin is definitely going to hit 200k dollars this year.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "The new the CloudCorp datacenter is the biggest in Europe.",
+      "gold": "belief",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "model_claim",
+        "model_claim",
+        "model_claim",
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "That supplier always ships late, every single time.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "The Q3 numbers prove our strategy is the best in the industry.",
+      "gold": "belief",
+      "statuses": [
+        "model_claim",
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "Their database can't handle more than a thousand users.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "The FDA already approved that drug last month.",
+      "gold": "belief",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "Python is objectively faster than Rust for our workload.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "The merger is a done deal, it closes next week for sure.",
+      "gold": "belief",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "Everyone knows that framework is dead and nobody uses it.",
+      "gold": "belief",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": false
+    },
+    {
+      "text": "The outage was definitely caused by their bad code.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "Our churn is the lowest of any company our size.",
+      "gold": "belief",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "The senator is guaranteed to win the election.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "That stock is a sure thing, it can only go up.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "I prefer dark mode in the editor.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I work in the CET timezone and avoid meetings on Fridays.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "My favorite cuisine is Japanese.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I'm Martin, I work as a nurse in Berlin.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I moved to Lisbon in March 2026.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I find long stand-up meetings exhausting.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "My daughter's birthday is on the 14th of July.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I like to start my day with a run before work.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I'd rather write documentation than attend a webinar.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I adopted a puppy called Rex last weekend.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I think the new office layout feels more open.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "model_claim",
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I usually take my coffee without sugar.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I studied mechanical engineering at university.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I enjoy hiking more than going to the gym.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I switched to a standing desk two weeks ago.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    }
+  ]
+}

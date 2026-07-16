@@ -1,0 +1,48 @@
+{
+  "model": "claude-opus-4-8",
+  "n_belief": 2,
+  "n_keep": 2,
+  "belief_catch_rate": 1.0,
+  "preference_preservation": 1.0,
+  "rows": [
+    {
+      "text": "Our vendor's API is the fastest on the market.",
+      "gold": "belief",
+      "statuses": [
+        "model_claim",
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "The competitor's product is completely insecure.",
+      "gold": "belief",
+      "statuses": [
+        "user_belief"
+      ],
+      "has_belief": true,
+      "correct": true
+    },
+    {
+      "text": "I prefer dark mode in the editor.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    },
+    {
+      "text": "I work in the CET timezone and avoid meetings on Fridays.",
+      "gold": "keep",
+      "statuses": [
+        "model_claim",
+        "model_claim",
+        "model_claim"
+      ],
+      "has_belief": false,
+      "correct": true
+    }
+  ]
+}
