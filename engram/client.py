@@ -39,6 +39,19 @@ _GATE_PRESETS: dict[str, dict[str, Any]] = {
     "permissive": {"validate": "off",  "gate_mode": None,        "ground": False},
 }
 
+#: Grounding-verified answering (asse madre, anti-hallucination read-path). The
+#: generator answers ONLY from retrieved facts; a local cross-encoder then
+#: verifies the answer is entailed by one of them and abstains otherwise.
+_ANSWER_SYSTEM = (
+    "Answer the question using ONLY the provided facts. Be concise: just the "
+    "answer, no preamble. If the facts do not contain the answer, reply exactly: "
+    "NO ANSWER.")
+#: CE score above which the answer counts as fact-supported. Distinct from the
+#: WRITE gate's 99.64 (Youden on source⊢fact hard negatives): the probe
+#: 2026-07-16 measured answering-facts ~91-94 vs distractors ~1-3, so any cut in
+#: (3, 90) separates; 40 mirrors WRITE_DEFAULT_THRESHOLD. Recalibrate on the bench.
+_ANSWER_VERIFY_THRESHOLD = 40.0
+
 
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
@@ -283,6 +296,59 @@ class Memory:
         if topic is not None:
             return len(self.semantic.list_facts(topic=topic, limit=1_000_000))
         return self.semantic.count()
+
+    def answer(self, query: str, *, llm: Any, k: int = 8,
+               verify_threshold: float | None = None) -> dict[str, Any]:
+        """Grounding-verified answering — the anti-hallucination read-path.
+
+        Generate an answer from the top-``k`` retrieved facts, then a LOCAL
+        cross-encoder (no LLM) checks the answer is ENTAILED by one of those
+        facts. If no retrieved fact supports it, abstain (``NO ANSWER``) rather
+        than serve a probable hallucination — the memory FINDS the fact
+        (recall@30 0.96) but a flat answerer gets fooled by distractors
+        (Hallucination 0.167); this closes that gap at answer time.
+
+        Returns ``{answer, grounded, support_score, support_fact, raw_answer,
+        reason}``. ``raw_answer`` always carries what the model produced (a caught
+        hallucination is reported, never silently dropped). Fail-open only when
+        the local CE is unavailable (``reason='ce_unavailable_failopen'``) — the
+        one honest hole, logged not hidden.
+        """
+        hits = self.search(query, k=k)
+        if not hits:
+            return {"answer": "NO ANSWER", "grounded": False, "reason": "no_facts",
+                    "support_score": None, "support_fact": None, "raw_answer": None}
+        facts = [h["text"] for h in hits]
+        user = ("Facts:\n" + "\n".join(f"- {t}" for t in facts)
+                + f"\n\nQuestion: {query}")
+        resp = llm.complete(_ANSWER_SYSTEM,
+                            [{"role": "user", "content": user}], max_tokens=64)
+        raw = (getattr(resp, "text", "") or "").strip()
+
+        from .grounding_gate import _is_abstention
+        if _is_abstention(raw):
+            return {"answer": "NO ANSWER", "grounded": True,
+                    "reason": "model_abstained", "support_score": None,
+                    "support_fact": None, "raw_answer": raw}
+
+        # local-CE post-verification: is the answer entailed by any retrieved fact?
+        from .local_grounding import try_local_score
+        thr = (_ANSWER_VERIFY_THRESHOLD if verify_threshold is None
+               else float(verify_threshold))
+        best_ce, best_fact = -1.0, None
+        for t in facts:
+            r = try_local_score(t, raw)
+            if r is None:  # CE model unavailable -> can't verify; fail-open, logged
+                return {"answer": raw, "grounded": True,
+                        "reason": "ce_unavailable_failopen", "support_score": None,
+                        "support_fact": None, "raw_answer": raw}
+            if r[0] > best_ce:
+                best_ce, best_fact = r[0], t
+        grounded = best_ce >= thr
+        return {"answer": raw if grounded else "NO ANSWER", "grounded": grounded,
+                "support_score": round(best_ce, 1),
+                "support_fact": best_fact if grounded else None, "raw_answer": raw,
+                "reason": "grounded" if grounded else "unsupported_by_facts"}
 
     def ask(self, query: str, *, k: int = 5,
             topic_prefix: str | None = None) -> dict[str, Any]:
