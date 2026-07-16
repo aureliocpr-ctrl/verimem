@@ -188,7 +188,8 @@ class Memory:
     # ---- read --------------------------------------------------------------
     def search(self, query: str, k: int = 5, *, deep: bool = False,
                as_of: float | str | None = None,
-               with_history: bool | str = False) -> list[dict[str, Any]]:
+               with_history: bool | str = False,
+               include_beliefs: bool = False) -> list[dict[str, Any]]:
         """Recall the top-k facts for ``query``, each with its provenance — the
         differentiator: ``status`` + write-time ``grounding_score`` so a caller can
         prefer/assert grounded facts and hedge low-trust ones.
@@ -209,7 +210,13 @@ class Memory:
           (``wants_history``): temporal wording gets the story (+16pp measured
           on transition questions), plain lookups keep the lean context whose
           abstention on trap questions is pure (1.000 vs 0.949 — the measured
-          price of always-on history, docs/TRUST_MAINTENANCE.md)."""
+          price of always-on history, docs/TRUST_MAINTENANCE.md).
+        * ``include_beliefs`` (anti-sycophancy read-side) — opt unverified USER
+          assertions (``status='user_belief'``, produced by the ingest's
+          ``tag_beliefs``) back into the result. They are OUT of the default
+          view so the memory never serves an uncorroborated user claim back as
+          truth; a caller opting in sees ``status`` on each hit and must caveat
+          accordingly. Narrow: un-hides beliefs only."""
         if with_history == "auto":
             from .temporal_context import wants_history
             with_history = wants_history(query)
@@ -218,9 +225,11 @@ class Memory:
             as_of = extract_as_of(query)
         if as_of is not None:
             from .temporal_context import recall_as_of
-            hits = recall_as_of(self.semantic, query, when=float(as_of), k=k)
+            hits = recall_as_of(self.semantic, query, when=float(as_of), k=k,
+                                include_beliefs=include_beliefs)
         else:
-            hits = self.semantic.recall(query, k=k, deep=deep)
+            hits = self.semantic.recall(query, k=k, deep=deep,
+                                        include_beliefs=include_beliefs)
         out: list[dict[str, Any]] = []
         for f, score, *_rest in [h if len(h) >= 2 else (h[0], 0.0) for h in hits]:
             item = {

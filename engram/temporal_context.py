@@ -152,7 +152,8 @@ def history_line(fact, history: list, *, disputes: list[str] | None = None) -> s
     return line
 
 
-def recall_as_of(sm, query: str, *, when: float, k: int = 5) -> list[tuple]:
+def recall_as_of(sm, query: str, *, when: float, k: int = 5,
+                 include_beliefs: bool = False) -> list[tuple]:
     """Time-travel recall over the bi-temporal store: the facts that were
     CURRENT at ``when`` — asserted on/before it (event time, ``asserted_at``
     with ``created_at`` fallback) and not yet superseded by then
@@ -165,8 +166,11 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5) -> list[tuple]:
     superseded rows, oversampled so the as-of filter doesn't starve top-k.
     Returns the same ``(Fact, score, ...)`` tuples recall returns."""
     when = float(when)
+    # include_beliefs (Giro 2): time travel composes the live recall, so the
+    # opt-in forwards — a flag silently dropped on one branch is the exact
+    # asymmetry class the cold-fallback hunt (#3) documented.
     hits = sm.recall(query or "", k=max(k * 6, k), deep=True,
-                     include_superseded=True)
+                     include_superseded=True, include_beliefs=include_beliefs)
     out: list[tuple] = []
     for hit in hits:
         f = hit[0]

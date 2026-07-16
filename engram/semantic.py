@@ -2911,10 +2911,19 @@ class SemanticMemory:
         trust_signals: bool = False,
         include_orphaned: bool = False,
         include_conversational: bool = False,
+        include_beliefs: bool = False,
         topic_prefix: str | None = None,
         deep: bool = False,
     ) -> list[tuple]:
         """Semantic recall over facts (cosine on embeddings).
+
+        ``include_beliefs`` (Giro 2, anti-sycophancy read-side): opt
+        ``status='user_belief'`` rows — unverified USER assertions of fact —
+        back into the result. NARROW by design: it un-hides beliefs only
+        (orphaned/quarantined keep their own audit opt-in,
+        ``include_orphaned``). Default False = beliefs stay out of the view,
+        so the memory never serves an uncorroborated user claim back as
+        truth unless the caller explicitly asks and can caveat it.
 
         ``deep`` (v14, archaeology mode): lift the AGE-based freshness hiding so
         dormant-but-true memories stay findable months/years later ("what did
@@ -2977,6 +2986,7 @@ class SemanticMemory:
                 include_superseded=include_superseded,
                 exclude_legacy=exclude_legacy, min_status=min_status,
                 include_orphaned=include_orphaned,  # hunt #3: honour audit opt-in
+                include_beliefs=include_beliefs,    # Giro 2: same lesson as hunt #3
                 tokenize=True,  # A4: multi-word queries must not degrade to []
                 # FIX 2026-06-09 (audit#3-r3 R3): forward the tenant prefix so
                 # the cold-encode keyword fallback stays scope-isolated — without
@@ -3061,6 +3071,11 @@ class SemanticMemory:
             and topic_prefix is None
             and not include_superseded
             and not include_orphaned
+            # Giro 2: the corpus cache IS the default view (beliefs pre-filtered
+            # at build time) — an include_beliefs query must take the legacy SQL
+            # path, so the cache can never be poisoned with opt-in rows nor the
+            # opt-in starved by a warm default cache.
+            and not include_beliefs
             and not include_conversational
         )
         if cache_eligible:
@@ -3253,9 +3268,12 @@ class SemanticMemory:
                 # parallel path was missed in cycle 138 v1 and the
                 # counterexample worker (job 1a80633751dc1459) found
                 # the gap.
-                clauses.append(
-                    "status NOT IN ('orphaned', 'quarantined', 'user_belief')"
-                )
+                # Giro 2: include_beliefs opts user_belief (and ONLY it) back
+                # in; include_orphaned keeps its wider audit semantics (drops
+                # the whole clause — everything visible), unchanged.
+                _hidden = ("('orphaned', 'quarantined')" if include_beliefs
+                           else "('orphaned', 'quarantined', 'user_belief')")
+                clauses.append(f"status NOT IN {_hidden}")
             if not include_conversational:
                 # Anti-laundering (2026-06-03): simmetrico al cache fast-path.
                 # Esclude le promozioni conversational non ancora verificate dal
@@ -3881,8 +3899,14 @@ class SemanticMemory:
         require_all_tokens: bool = False,
         topic_prefix: str | None = None,
         include_orphaned: bool = False,
+        include_beliefs: bool = False,
     ) -> list[Fact]:
         """FORGIA pezzo #203: keyword/substring search over `proposition`.
+
+        ``include_beliefs`` (Giro 2): opt ``user_belief`` rows back in — same
+        narrow semantics as :meth:`recall`, honoured here too so the keyword
+        surface (and recall's cold-encode fallback, which delegates here) can
+        never become a back-door asymmetry (the cycle-138 lesson).
 
         Distinct from :meth:`recall` (semantic / cosine on embedding):
         this is a SQL LIKE on the proposition text, case-insensitive.
@@ -3959,7 +3983,12 @@ class SemanticMemory:
             # legacy branch, so the cold-encode fallback honours the same opt-in
             # instead of silently returning zero hidden rows.
             if not include_orphaned:
+                # Giro 2: include_beliefs un-hides user_belief only (parity
+                # with recall's legacy branch); include_orphaned keeps its
+                # wider audit semantics unchanged.
                 clauses.append(
+                    "status NOT IN ('orphaned', 'quarantined')"
+                    if include_beliefs else
                     "status NOT IN ('orphaned', 'quarantined', 'user_belief')"
                 )
             if exclude_legacy:
