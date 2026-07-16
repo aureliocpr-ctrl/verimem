@@ -76,7 +76,14 @@ def test_real_provider_responds(provider, monkeypatch):
         monkeypatch.delenv(var, raising=False)
     # Force the provider to refresh from env, ignoring any leftover cache.
     from engram.llm import LLMError, get_llm
-    llm = get_llm(use_mock=False)
+    try:
+        llm = get_llm(use_mock=False)
+    except LLMError as exc:
+        if "not set" in str(exc).lower():
+            # Key visible at collection but gone at runtime (another test's env
+            # hygiene) — an environment condition, not a wire regression.
+            pytest.skip(f"{provider}: {exc}")
+        raise
 
     try:
         resp = llm.complete(
