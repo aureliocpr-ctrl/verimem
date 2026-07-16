@@ -1,0 +1,31 @@
+{
+  "config": {
+    "dim": 768,
+    "k": 8,
+    "oversample": 8,
+    "trials": 20,
+    "seed": 7
+  },
+  "rows": [
+    {
+      "n": 100000,
+      "dim": 768,
+      "k": 8,
+      "oversample": 8,
+      "brute_p50_ms": 8.773,
+      "ann_p50_ms": 1.123,
+      "speedup": 7.8,
+      "recall_in_pool": 0.8438,
+      "build_s": 48.4
+    },
+    {
+      "n": 500000,
+      "error": "OOM"
+    },
+    {
+      "n": 1000000,
+      "error": "OOM"
+    }
+  ],
+  "note": "SPEEDUP is the scale claim (brute cosine+argsort O(N) vs faiss HNSW sublinear query); it is ~data-agnostic and reproducible. recall_in_pool here is on SYNTHETIC clustered data = a sanity signal ONLY (synthetic geometry is not a faithful proxy for real-corpus recall); real-corpus behaviour-preservation (same top-k on e5) is proven in tests/test_ann_recall_equivalence.py. Pure numpy+faiss, seeded, OOM-safe."
+}
