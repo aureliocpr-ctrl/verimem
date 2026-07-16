@@ -5,6 +5,40 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 ## [Unreleased]
 
 ### Added
+- **Trust-conditioned answering** (2026-07-16/17, measured BEFORE wiring):
+  `Memory.answer(trust_conditioning=True)` (default) tags every retrieved fact
+  `[when | source | status]` and resolves conflicts by provenance (verified >
+  unverified, recent > old, first-hand > hearsay; unresolvable → honest
+  `NO ANSWER`). On the well-grounded-distractor bench (sonnet-5, 12 cases where
+  BOTH facts pass the grounding gate) correct answers went **0.17 → 0.92**,
+  abstaining 2/2 on same-metadata ties (`benchmark/wellgrounded_distractor_bench.py`).
+  `search()` hits now expose `asserted_at`/`created_at`/`source`/`verified_by`.
+  Gateway surface: **`GET /v1/answer`** (400 without a server-side llm — honest,
+  not a crash). Quickstart gained the 6th verb.
+- **`GET /v1/correct`** — the guardian's production surface (ACCEPT / CORRECT /
+  ABSTAIN with both sides cited, deterministic, LLM-free). The mod.3 critic
+  found `correct_read` had zero production callers; now wired with a
+  `flow.recall kind=correct` event. Guardian audit (mod.7) fixed per-VALUE
+  dominance (two agreeing proven facts no longer LOSE to a lone unlabeled
+  rival) + 2 crash guards.
+- **REMORSE AdaptiveLedger graft — phase-1 SHADOW** (`engram/adaptive_ledger.py`):
+  per-tenant per-domain self-trust (3 experts: lessons@14d, exposure,
+  hazard@14d; fixed-share meta) OBSERVING ONLY — `/v1/search` and `/v1/answer`
+  emit `shadow.ledger` events (would-be decision next to the actual one),
+  responses untouched, kill-switch `ENGRAM_SHADOW_LEDGER=0`. Phase 2 (apply,
+  per-tenant flag) is gated on 3–7 days of shadow-log comparison.
+
+### Fixed
+- **Personal mode is uncapped** (found by live e2e, not by tests): the loopback
+  console was billing-gated like a SaaS tenant — on a >1000-fact store every
+  console write returned 402. The local tenant now resolves to the uncapped
+  `self_host` plan across the write gate, `/v1/quota` and `/v1/usage`.
+- **Fact-quota TOCTOU**: concurrent writes at cap-1 could all pass the
+  check-then-act window and overrun the plan cap — now an atomic
+  reserve-counter (40-thread race test: exactly one slot granted).
+- **SSE `/v1/events/flow` self-DoS**: the stream re-read the whole events file
+  (up to 5 MB) every 0.5 s per client — now an incremental byte-offset tail
+  (O(new bytes) per tick, rotation-safe, partial-line-safe, capped per tick).
 - **Trust console v2 — the whole graph, actually live** (2026-07-16): the
   knowledge graph now renders the ENTIRE store (7.7k nodes / 39.4k unique
   edges in ~300–500 ms) on sigma.js WebGL with ForceAtlas2 in a Web Worker
