@@ -66,3 +66,15 @@ def test_answer_no_facts_abstains(mem):
     out = empty.answer("anything?", llm=_LLM("something confident"))
     assert out["answer"] == "NO ANSWER"
     assert out["reason"] == "no_facts"
+
+
+def test_answer_KNOWN_LIMIT_distractor_in_memory_is_served(mem):
+    """HONEST LIMIT (pinned, not a bug): answer() verifies against retrieved facts,
+    so a WRONG fact stored IN memory supports the wrong answer and is served. The
+    distractor-in-memory case (the dominant half of the 0.167 gap) needs per-fact
+    grounding/reconcile, NOT this post-verifier. Documented so no one over-claims."""
+    mem.add("Rex is a labrador.", topic="pets")  # a wrong fact now co-exists
+    out = mem.answer("What breed is Rex?", llm=_LLM("Rex is a labrador."))
+    assert out["grounded"] is True          # the CE finds the stored distractor
+    assert out["answer"] == "Rex is a labrador."   # ...and serves the wrong answer
+    assert out["support_score"] >= 40.0

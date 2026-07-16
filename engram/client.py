@@ -313,6 +313,14 @@ class Memory:
         hallucination is reported, never silently dropped). Fail-open only when
         the local CE is unavailable (``reason='ce_unavailable_failopen'``) — the
         one honest hole, logged not hidden.
+
+        HONEST SCOPE (verified 2026-07-16): this catches an answer NOT supported by
+        ANY retrieved fact (the model inventing beyond memory). It does NOT catch a
+        WRONG fact that is ITSELF in memory — if a distractor "Rex is a labrador"
+        is stored alongside the true fact, the CE finds the distractor as support
+        (score ~92) and the wrong answer is served. Separating true from distractor
+        IN memory needs per-fact grounding/trust (write-time source⊢fact, or
+        reconcile/supersession) — the larger, still-open half of the 0.167 gap.
         """
         hits = self.search(query, k=k)
         if not hits:
