@@ -17,7 +17,12 @@ side-doors the SQL filters don't cover (both demonstrated RED first): the defaul
 PPR/BM25 fusion resurrected beliefs via `get(live_only=True)`, and `compose_once`
 could LAUNDER a belief into a derived fact without its label; plus CLI `facts list`,
 BM25 `_CURATED`, `active_probe` rival parity (9 tests total in the contract file).
-Still open: guardian correction, MemSyco delta.
+GUARDIAN SHIPPED (§3.4): `correct_read` opts into beliefs — the one reader allowed to,
+because its job is to correct them: a belief participates in conflict DETECTION but
+never WINS (corroborated rival served, belief cited in the new `uncorroborated` field,
+reason "not corroborated"); a beliefs-only subject ABSTAINS
+(`only_unverified_user_assertion`); an agreeing belief never flips ACCEPT→CORRECT
+(3 TDD tests, honest copula-only scope unchanged). Still open: MemSyco delta.
 **Goal**: stop the memory from laundering an unverified USER assertion into a stored
 *fact* the recall then serves back as truth — the systemic sycophancy gap the external
 review flagged (README claims "anti-sycophancy on the write path"; today that is only an

@@ -66,5 +66,50 @@ def test_abstain_when_store_silent(mem):
     assert out["reason"] == "no_support"
 
 
+# ---- user_belief awareness (Giro 2 §3.4) ------------------------------------
+# The guardian is the ONE reader allowed to see beliefs (it opts in), because
+# its job is to correct them: serve the corroborated fact, cite the user's
+# uncorroborated assertion — never serve the assertion as the answer.
+
+def _store_belief(mem, text: str):
+    from engram.semantic import Fact
+    f = Fact(proposition=text, topic="pets", status="user_belief")
+    mem.semantic.store(f, embed="sync")
+    return f
+
+
+def test_correct_overrides_user_belief_with_corroborated_fact(mem):
+    blf = _store_belief(mem, "Rex is a poodle.")
+    a = mem.add("Rex is a labrador.", topic="pets",
+                verified_by=["source-doc:vet:t1"])
+    out = correct_read(mem, "What breed is Rex?")
+    assert out["verdict"] == "CORRECT"
+    assert "labrador" in out["answer"], "the corroborated fact is the answer"
+    assert out["served_id"] == a["id"]
+    assert blf.id in out.get("uncorroborated", []), (
+        "the overridden user assertion must be cited as uncorroborated")
+    assert "not corroborated" in out["reason"]
+
+
+def test_abstain_when_only_a_user_belief_supports_the_answer(mem):
+    blf = _store_belief(mem, "Rex is a poodle.")
+    out = correct_read(mem, "What breed is Rex?")
+    assert out["verdict"] == "ABSTAIN"
+    assert out["answer"] is None, (
+        "an unverified user assertion must never BE the answer")
+    assert out["reason"] == "only_unverified_user_assertion"
+    assert blf.id in out["evidence"], "the assertion is shown, not served"
+
+
+def test_agreeing_user_belief_does_not_flip_accept_to_correct(mem):
+    _store_belief(mem, "Rex is a labrador.")
+    mem.add("Rex is a labrador.", topic="pets",
+            verified_by=["source-doc:vet:t1"])
+    out = correct_read(mem, "What breed is Rex?")
+    assert out["verdict"] == "ACCEPT", (
+        "an agreeing belief is not a conflict — no false correction")
+    assert "labrador" in out["answer"]
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))
