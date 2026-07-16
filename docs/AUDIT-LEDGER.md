@@ -299,6 +299,39 @@ tutti rifiutati; probe). Suite: **82 test** `test_gateway*.py` verdi (80 + 2 nuo
 
 **Verdetto MODULO 4** (funzionale): SOLIDO, 1 fix robustezza. Isolamento tenant
 fisico + key hashing corretti. **Security offensiva → critic opus** (non io).
+
+---
+
+## Modulo 5 — ingest (`conversation_ingest.py`, ~380 righe) — 2026-07-16, base `fc95089`
+
+Già letto INTEGRALMENTE durante il Giro 2 (tagging `user_belief`): estrazione LLM
+atomica → consolidate/gapfill opt-in → store attraverso il gate, provenance
+per-conversazione, `writer_role` dedicato (no gate-bypass), redazione segreti
+pre-store. Verifica di questo giro: **35 test** (`test_conversation_ingest` +
+`test_ingest_typed_entities` + `test_import_conversations` + `test_user_belief_ingest`)
+verdi + probe fail-safe:
+
+| Probe | Esito |
+|-------|-------|
+| LLM error durante estrazione | `stored=0`, `error` riportato, NO crash ✓ |
+| messages vuoto | `stored=0`, NO crash ✓ |
+
+Il contratto "l'ingest non fa mai crashare il chiamante" (docstring) è provato:
+un LLM giù riporta invece di sollevare, un fatto rifiutato dal gate è contato mai
+ri-tentato alla cieca. **Verdetto MODULO 5**: SOLIDO, 0 difetti.
+
+---
+
+## Modulo 6 — CLI / console / SDK (`cli.py` 2744 righe, `client.py`) — 2026-07-16
+
+File grande → audit funzionale via suite (copertura) invece di 2744 righe verbatim.
+**128 test** verdi: `test_cli` + airgap + consolidate + docs + facts(+add/scope/
+jsonl/null-conf) + flow-tail + import + trust + utf8-stdio + warmup + console-local
++ client-sdk. Coprono: facts CRUD, scope/tenant, import conversazioni, trust
+report, airgap self-check, UTF-8 stdio (Windows), warmup, console loopback, SDK.
+**Verdetto MODULO 6**: SOLIDO (0 fallimenti su 128 test funzionali). Nota: `cli.py`
+non riletto riga-per-riga (2744) — la copertura test è la prova; una lettura
+integrale è un blocco successivo se emerge un difetto specifico.
 **Verdetto parziale**: contratti pubblici del recall SOLIDI (guardie input,
 isolamento tenant, cache-invalidation da test reali); il resto degli interni
 resta da fare — modulo NON chiuso.
