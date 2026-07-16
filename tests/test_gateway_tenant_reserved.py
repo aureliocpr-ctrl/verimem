@@ -25,3 +25,11 @@ def test_names_containing_reserved_token_still_valid(tmp_path):
     for ok in ["console", "connector", "aux-team", "com1x", "lpt", "nullable"]:
         k = keys.create(tenant_id=ok)
         assert k.startswith("vm_"), f"{ok!r} wrongly rejected"
+
+
+def test_gateway_tenant_trailing_newline_rejected(tmp_path):
+    # critic LOW-5: _TENANT_RE used `$` (matches before a trailing \n) -> `\Z`.
+    from engram.gateway import GatewayKeys
+    keys = GatewayKeys(tmp_path / "k.db")
+    with pytest.raises(ValueError):
+        keys.create(tenant_id="acme\n")

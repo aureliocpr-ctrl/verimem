@@ -46,7 +46,7 @@ except ImportError as _exc:  # pragma: no cover — surfaced by the CLI command
 #: anti DNS-rebinding: evil.example resolving to 127.0.0.1 does NOT match.
 _LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 
-_TENANT_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
+_TENANT_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}\Z")  # \Z not $ (critic LOW-5: $ lets a trailing \n through)
 
 #: Windows reserved device names (lowercase — the slug is lowercase-only). A
 #: tenant_id becomes a directory ``tenants/<id>/memory.db``; a dir named CON/AUX/
