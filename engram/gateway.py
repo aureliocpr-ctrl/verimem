@@ -974,6 +974,33 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         meter.bump(tenant_id, reads=1)
         return report
 
+    @app.get("/v1/answer")
+    def answer(q: str = Query(...), k: int = Query(default=8, ge=1, le=100),
+               trust_conditioning: bool = True,
+               verify_threshold: float | None = None,
+               tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Grounding-verified, trust-conditioned answering over the tenant's
+        store — the read-path measured on the case-B bench (0.17→0.92) was
+        SDK-only until the 2026-07-16 critic pass flagged it; this is the
+        gateway surface. Needs the server-side llm (same one conversation
+        ingest uses): without it the honest response is a 400, not a crash."""
+        if llm is None:
+            raise HTTPException(
+                status_code=400,
+                detail="answering needs a server-side llm: start the gateway "
+                       "with one (create_app(llm=...)); /v1/search works "
+                       "without it",
+            )
+        _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.recall col tenant
+        try:
+            out = tenants.get(tenant_id).answer(
+                q, llm=llm, k=k, verify_threshold=verify_threshold,
+                trust_conditioning=trust_conditioning)
+        finally:
+            _flow_ctx_reset(_ftok)
+        meter.bump(tenant_id, reads=1)
+        return out
+
     @app.get("/v1/memories/{fact_id}")
     def get_memory(fact_id: str, tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         item = tenants.get(tenant_id).get(fact_id)
