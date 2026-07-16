@@ -565,6 +565,41 @@ def _quota_release(pending: dict[str, int], lock: Any, tenant_id: str,
             pending[tenant_id] = p
 
 
+def _shadow_observe(tenant_id: str, surface: str, hits: list[dict[str, Any]] | None,
+                    actual: dict[str, Any], *, mem: Any = None,
+                    q: str | None = None) -> None:
+    """Phase-1 SHADOW hook (REMORSE graft, handoff 2026-07-16): feed the
+    per-tenant AdaptiveLedger with recall exposure and LOG its would-be
+    decision next to the gateway's ACTUAL one — never touching the response
+    (the 13/7 dead-gates lesson inverted: observe on real traffic first,
+    apply in phase 2 behind a per-tenant flag). Kill-switch
+    ``ENGRAM_SHADOW_LEDGER=0``. Everything is best-effort: a broken shadow
+    must never break a request. For the answer surface (which retrieves
+    internally) a small shadow-only search supplies the topics — a phase-1
+    cost that disappears when phase 2 threads topics through ``answer()``."""
+    import os
+    import time as _time
+    if os.environ.get("ENGRAM_SHADOW_LEDGER", "1").strip().lower() in (
+            "0", "off", "false", "no"):
+        return
+    try:
+        from . import event_jsonl_log as _ejl
+        from .adaptive_ledger import get_shadow
+        now = _time.time()
+        if hits is None and mem is not None and q:
+            hits = mem.search(q, k=4)
+        topics = [str(h.get("topic") or "untopiced") for h in (hits or [])]
+        shadow = get_shadow()
+        shadow.observe_recall(tenant_id, topics, now=now)
+        dominant = (max(dict.fromkeys(topics), key=topics.count)
+                    if topics else "none")
+        dec = shadow.decision(tenant_id, dominant, now=now)
+        _ejl.append_event("shadow.ledger",
+                          {"surface": surface, **dec, "actual": actual})
+    except Exception:  # noqa: BLE001 — shadow-only, swallow everything
+        pass
+
+
 def _replay_receive(body: bytes, original: Any) -> Any:
     """Un ASGI ``receive`` che emette UNA volta il corpo bufferizzato come un
     unico ``http.request`` completo, poi delega all'originale (disconnect ecc.)."""
@@ -953,6 +988,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         finally:
             _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, reads=1)
+        _shadow_observe(tenant_id, "search", hits, {"n_hits": len(hits)})
         return {"hits": hits}
 
     @app.get("/v1/explain")
@@ -999,6 +1035,10 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         finally:
             _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, reads=1)
+        _shadow_observe(tenant_id, "answer", None,
+                        {"reason": out.get("reason"),
+                         "grounded": out.get("grounded")},
+                        mem=tenants.get(tenant_id), q=q)
         return out
 
     @app.get("/v1/memories/{fact_id}")
