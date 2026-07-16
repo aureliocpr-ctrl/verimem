@@ -21,6 +21,23 @@ import pytest
 from engram.client import Memory
 
 
+def _local_ce_available() -> bool:
+    # the answer()-verification tests exercise the REAL local cross-encoder;
+    # skip where the distilled model is absent (CI) so a missing model is a skip,
+    # not a red build. The CE's separation is independently proven by the probe
+    # recorded in the answer() commit; here we test answer()'s logic ON it.
+    try:
+        from engram.local_grounding import try_local_score
+        return try_local_score("Rex is a poodle.", "Rex is a poodle.") is not None
+    except Exception:
+        return False
+
+
+pytestmark = pytest.mark.skipif(
+    not _local_ce_available(),
+    reason="local cross-encoder (local_gate_ce_v2) not available — real-CE test")
+
+
 class _LLM:
     """Deterministic stub: returns a fixed answer regardless of the prompt."""
     def __init__(self, text):
