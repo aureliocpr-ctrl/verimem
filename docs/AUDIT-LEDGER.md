@@ -375,3 +375,14 @@ avversariale su un modello più forte è un moltiplicatore reale, non cerimonia.
 | M7-1 | MEDIA (FN) | Tie-check per-FATTO invece che per-VALORE (riga ~105): due `proven` CONCORDI su "labrador" vs un `unlabeled` "poodle" → `all(rank(best)>rank(f))` fallisce contro il gemello concorde → ABSTAIN invece di CORRECT. Perverso: più corroborazione ⇒ più astensione. | RED riprodotto (articolo diverso `a/the labrador` = stesso `_value`, niente dedup) | **FIXATO**: dominanza per-VALORE (`value_rank = max rank dei fatti del valore`; vince se > di ogni ALTRO valore). |
 | M7-2 | BASSA (crash) | `_rank` faceva `_RANK[label["kind"]]` → KeyError su kind epistemico ignoto/estraneo; riga 109 già si difendeva con `.get` (incoerenza interna). | RED unit (`kind="certified_by_auditor"`) | **FIXATO**: `.get(kind, 0)` = unlabeled, mai crash. |
 | M7-3 | BASSA (crash) | `facts[0]` → IndexError quando ogni re-fetch by id ritorna None (hit presenti, righe sparite: delete race). | RED con `semantic.get→None` monkeypatch | **FIXATO**: guard → ABSTAIN `no_support` (il read-path degrada, mai crasha). |
+
+## Modulo 8 — client.py riga-per-riga (Fase C mod.8, 2026-07-17 ~01:20)
+
+971 righe, lette tutte. 2 difetti reali + 1 candidato CONFUTATO dall'evidenza
+(auto-falsificazione B2), pinnati RED prima del fix (`test_history_full_trail.py`).
+
+| id | severità | difetto | evidenza | esito |
+|----|----------|---------|----------|-------|
+| M8-1 | MEDIA (UX/contratto) | `history()` forward-only: `history(id_CORRENTE)` — l'id che il chiamante ha davvero in mano (da search/update) — ritornava 1 entry, mentre `history(id_più_vecchio)` 3; il quickstart promette "the supersession chain (audit trail)". | repro live: 500k→550k→600k, newest=1 vs oldest=3 | **FIXATO**: rewind al capostipite via `direct_predecessors` (primario = ritirato più di recente, cycle-guarded) poi forward; qualunque id della catena → stesso trail completo. 4 test. |
+| M8-2 | BASSA (incoerenza superficie) | `get()`/`get_all()` non esponevano i campi provenance di `search()` (asserted_at/created_at/source/verified_by): un caller trust-conditioned perdeva `verified_by` al re-fetch by id. | lettura + test | **FIXATO**: `_fact_view()` unica per search/get/get_all. |
+| M8-x | — | CANDIDATO CONFUTATO: sospetto GDPR su `delete(purge_history=True)` (se la chain non includesse il fatto stesso, un fatto senza successori non verrebbe cancellato). | contratto `get_supersession_chain` letto: "starting with the fact at fact_id... Singleton when not superseded" → il fatto è SEMPRE incluso. | **NON-BUG** (ipotesi falsificata prima di toccare codice). |

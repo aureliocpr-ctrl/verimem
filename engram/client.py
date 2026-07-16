@@ -852,18 +852,29 @@ class Memory:
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).
     recall = search
 
-    def get(self, fact_id: str) -> dict[str, Any] | None:
-        """Fetch one stored fact by id (with its provenance), or None."""
-        f = self.semantic.get(fact_id)
-        if f is None:
-            return None
+    @staticmethod
+    def _fact_view(f: Any, *, fact_id: str = "") -> dict[str, Any]:
+        """One fact as the SDK dict — the SAME provenance surface everywhere
+        (audit mod.8: get/get_all lacked the fields search exposes, so a
+        trust-conditioning caller lost verified_by the moment it re-fetched)."""
         return {
             "id": getattr(f, "id", fact_id),
             "text": getattr(f, "proposition", ""),
             "status": getattr(f, "status", "model_claim"),
             "grounding_score": getattr(f, "grounding_score", None),
             "topic": getattr(f, "topic", ""),
+            "asserted_at": getattr(f, "asserted_at", None),
+            "created_at": getattr(f, "created_at", None),
+            "source": (getattr(f, "source_episodes", None) or [None])[0],
+            "verified_by": list(getattr(f, "verified_by", None) or []),
         }
+
+    def get(self, fact_id: str) -> dict[str, Any] | None:
+        """Fetch one stored fact by id (with its provenance), or None."""
+        f = self.semantic.get(fact_id)
+        if f is None:
+            return None
+        return self._fact_view(f, fact_id=fact_id)
 
     def delete(self, fact_id: str, *, purge_history: bool = False) -> bool:
         """Forget a fact by id (privacy / GDPR). True iff at least a row was removed.
@@ -924,13 +935,8 @@ class Memory:
 
     def get_all(self, *, topic: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         """List stored facts (with provenance), newest-relevant first. mem0/Zep parity."""
-        return [{
-            "id": getattr(f, "id", ""),
-            "text": getattr(f, "proposition", ""),
-            "status": getattr(f, "status", "model_claim"),
-            "grounding_score": getattr(f, "grounding_score", None),
-            "topic": getattr(f, "topic", ""),
-        } for f in self.semantic.list_facts(limit=limit, topic=topic)]
+        return [self._fact_view(f)
+                for f in self.semantic.list_facts(limit=limit, topic=topic)]
 
     def update(self, fact_id: str, text: str, *, topic: str | None = None) -> dict[str, Any]:
         """Revise a fact. Engram facts are immutable + auditable, so an update STORES a new
@@ -949,12 +955,37 @@ class Memory:
         return {**res, "updated": bool(res.get("stored")), "supersedes": fact_id}
 
     def history(self, fact_id: str) -> list[dict[str, Any]]:
-        """The supersession chain from this fact forward — the provenance trail no
-        cosine-only store has: ``[{id, text, status, superseded_by}, …]`` oldest→newest,
-        so a caller can see what a fact became and whether it's still current."""
+        """The FULL supersession trail of the lineage containing ``fact_id`` —
+        the provenance trail no cosine-only store has:
+        ``[{id, text, status, superseded_by}, …]`` oldest→newest.
+
+        Any id in the chain returns the same trail (audit mod.8, reproduced
+        2026-07-17): the walk was forward-only, so the id a caller most
+        naturally holds — the CURRENT fact, e.g. from ``search`` — returned a
+        1-entry "trail" while the oldest id returned the whole story. Now the
+        walk first rewinds to the lineage root (``direct_predecessors``,
+        following the primary — most recently retired — predecessor at each
+        step; a multi-predecessor MERGE keeps its side branches reachable via
+        their own ids), then plays forward as before."""
+        start = self.semantic.get(fact_id)
+        if start is None:
+            return []
+        # rewind to the lineage root (cycle-guarded like the forward walk)
+        root = start
+        back_seen = {getattr(start, "id", "")}
+        while True:
+            try:
+                preds = self.semantic.direct_predecessors(
+                    getattr(root, "id", ""), limit=1)
+            except Exception:  # noqa: BLE001 — degrade to the forward-only view
+                break
+            if not preds or getattr(preds[0], "id", "") in back_seen:
+                break
+            root = preds[0]
+            back_seen.add(getattr(root, "id", ""))
         chain: list[dict[str, Any]] = []
         seen: set[str] = set()
-        cur = self.semantic.get(fact_id)
+        cur = root
         while cur is not None and getattr(cur, "id", None) not in seen:
             cid = getattr(cur, "id", "")
             seen.add(cid)
