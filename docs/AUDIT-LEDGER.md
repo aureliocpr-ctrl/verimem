@@ -129,6 +129,7 @@ Questi NON sono stati ri-eseguiti in questa sessione (batch LLM = OK esplicito):
 | Wrong-source AUROC 0.992 | R11 | idem, `--noise-mode foreign` |
 | Soglia write=40 (gap 0→42) | HaluMem n=15 | `benchmark/halumem_admission_sweep.py` (n piccolo → rialzare) |
 | ~~MemSyco sycophancy delta~~ **FATTO 2026-07-16** | opus n=30 | `benchmark/memsyco_user_belief.py`: belief-catch **0.933**, preference-preservation **1.000** (two-sided). |
+| ~~Write-gate separazione~~ **RI-VERIFICATO PARZIALE 2026-07-16** | opus n=20+20 foreign | `halumem_writepath_moat --model opus`: noise-rejection **1.000** (20/20), clean-admission **0.85** (17/20) → moat CONFERMATO su foreign noise. NB: SOLO foreign (facile); AUROC 0.992 R11 su wrong-source (duro) NON ancora ri-fatto. |
 
 ---
 
@@ -335,3 +336,31 @@ integrale è un blocco successivo se emerge un difetto specifico.
 **Verdetto parziale**: contratti pubblici del recall SOLIDI (guardie input,
 isolamento tenant, cache-invalidation da test reali); il resto degli interni
 resta da fare — modulo NON chiuso.
+
+---
+
+## CRITIC AVVERSARIALE OPUS — verdetto finale (2026-07-16)
+
+Mandato Aurelio: «alla fine di tutto lancia un critic, ma bada bene a metterci
+opus». Eseguito: `claude-opus-4-8` (37717 tok input, 20007 output, 316s) su tutto
+il diff dei fix + i verdetti del ledger, con istruzione POPPERIANA (falsifica, non
+confermare). **VERDICT: HOLD** — il critic ha trovato difetti REALI che io avevo
+mancato, verificati empiricamente prima di fixare (B2). I miei verdetti "SOLIDO /
+0 difetti" erano PREMATURI. Questo è il valore dell'esercizio.
+
+| # | Severità | Finding | Verificato | Esito |
+|---|----------|---------|------------|-------|
+| HIGH-1 | ALTA (isolamento tenant) | `tenant_id` con dot finale (`acme.`) collide con `acme` su Windows (strippa i trailing dot) → **stesso file DB** → rottura isolamento. `_WIN_RESERVED` non copriva. | `_TENANT_RE.match("acme.")`=True | **FIXATO**: `create()` rifiuta trailing dot; TDD. |
+| MED-2 | MEDIA (FN) | Il MIO fix FP-biografia (ramo `works as a/an <x>`) sopprimeva claim di funzionamento reali (`works as a proxy/drop-in replacement`). | probe: non scattava | **FIXATO**: rimosso il ramo `as a`, tengo solo `in the X industry`; il FP misurato resta risolto. |
+| MED-3 | MEDIA (FN) | Il MIO fix acquisition-list (`funding/loan/role/…`) sopprimeva hardening reale (`secured the funding endpoint`). | probe: non scattava | **FIXATO**: lista ristretta ai sostantivi inequivocabilmente umani; FP misurato resta risolto. |
+| LOW-5 | BASSA | admission: allowlist rovesciata — uno status ignoto/malformato (`"user_belief "`) riceveva la ragione "carries its own trust verdict" (falsa fiducia). | probe: ammesso con ragione | **FIXATO**: allowlist esplicita `_TRUST_BEARING_STATUS`. |
+| #5 include_beliefs | — | Il critic ha VERIFICATO il threading su ogni branch (cache/legacy/as_of) + orphaned/quarantined nascosti. | — | **PASS confermato dal critic.** |
+| LOW-6 | BASSA | guardian: (b) CORRECT su parse fallito. | Letto `contenders`: solo i `_copula_parse` validi entrano nel gruppo → i belief hanno tutti parse valido. | **INFONDATO** (il critic stesso: PLAUSIBLE/subordinato). (a) schema cosmetico: non fixato. |
+
+**Correzione dei verdetti**: MODULO 1 (l1 detectors) e MODULO 4 (gateway) NON
+erano "0 difetti" — 3 dei difetti erano regressioni introdotte dai MIEI stessi
+fix del FP-biografia (MED-2/3) + 1 HIGH mancato (isolamento tenant). Tutti chiusi,
+168 test verdi. **Lezione**: i miei probe funzionali confermavano i casi che
+AVEVO in mente; il critic ha trovato i casi che NON avevo in mente (l'articolo in
+"as a", gli oggetti infra in "the funding", il trailing-dot Windows). Il critic
+avversariale su un modello più forte è un moltiplicatore reale, non cerimonia.

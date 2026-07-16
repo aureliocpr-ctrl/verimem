@@ -46,16 +46,16 @@ _OK_CONTEXTUAL_PATTERN = re.compile(
 # "the system works at scale" resta un claim ('scale' minuscolo).
 _EMPLOYMENT_AFTER_RE = re.compile(r"\s+(?:at|for)\s+[A-Z]")
 
-# FLAGS-AUDIT §8 item 4 (misurato 2026-07-16, chiude il debito annotato qui
-# sopra fino a oggi): anche "works as a nurse" / "works in the healthcare
-# industry" sono occupazione. Discriminanti che NON toccano i claim veri:
-#   * "works as a/an <x>"  — l'idioma di funzionamento ("works as expected/
-#     intended/designed") non ha MAI l'articolo;
-#   * "works in [the] <x...> industry/field/sector" — "works in production"
-#     / "works in CI" non hanno la testa industry/field/sector.
+# FLAGS-AUDIT §8 item 4 (misurato 2026-07-16): il FP-biografia reale misurato è
+# "works in the healthcare industry" (occupazione con TESTA industry/field/sector).
+# CRITIC MED-2 (2026-07-16): il ramo "works as a/an <x>" era TROPPO largo — un
+# claim di FUNZIONAMENTO usa comunemente l'articolo ("works as a drop-in
+# replacement / a proxy / a cache"), quindi sopprimeva claim veri (FN). Rimosso.
+# Restano coperte solo le occupazioni con testa industry/field/sector (il FP
+# misurato); il debito "works as a nurse" torna FP noto (pre-esistente, non
+# misurato, MOLTO meno grave di un FN su un claim di funzionamento).
 _EMPLOYMENT_OCCUPATION_RE = re.compile(
-    r"\s+(?:as\s+an?\s+\w|in\s+(?:the\s+)?[\w-]+(?:\s+[\w-]+)?"
-    r"\s+(?:industry|field|sector)\b)",
+    r"\s+in\s+(?:the\s+)?[\w-]+(?:\s+[\w-]+)?\s+(?:industry|field|sector)\b",
     re.IGNORECASE,
 )
 

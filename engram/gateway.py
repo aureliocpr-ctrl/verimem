@@ -236,6 +236,15 @@ class GatewayKeys:
         if not _TENANT_RE.match(tenant_id or ""):
             raise ValueError(
                 f"tenant_id non valido: {tenant_id!r} (slug [a-z0-9._-], max 64)")
+        # critic HIGH-1 (2026-07-16): Windows strips TRAILING dots/spaces from
+        # directory names, so `acme.` and `acme` map to the SAME
+        # `tenants/<id>/memory.db` → two distinct tenant_ids share one physical
+        # DB = broken isolation. Reject a trailing dot (the regex already blocks
+        # trailing space). An INTERIOR dot ("a.b") is untouched by Windows → ok.
+        if tenant_id.endswith("."):
+            raise ValueError(
+                f"tenant_id {tenant_id!r} must not end with '.' — Windows strips "
+                "trailing dots, collapsing it onto another tenant's directory")
         if tenant_id.split(".", 1)[0] in _WIN_RESERVED:
             raise ValueError(
                 f"tenant_id {tenant_id!r} is a reserved device name on Windows "

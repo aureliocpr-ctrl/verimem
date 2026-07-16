@@ -51,6 +51,16 @@ REJECT_POLLUTED = "reject_polluted"
 FLAG_LOW_PROVENANCE = "flag_low_provenance"
 FLAG_INJECTION = "flag_injection"
 
+#: KNOWN non-model_claim statuses whose trust verdict lives IN the status (the
+#: gate defers to it). An EXPLICIT allowlist, not `not in (model_claim, verified)`:
+#: critic LOW-5 (2026-07-16) — the inverted allowlist admitted ANY unknown/
+#: malformed status string (e.g. "user_belief " with a space) with a reason
+#: falsely asserting a trust verdict it never checked. An unknown status now
+#: falls through to the generic path instead of getting the reassuring reason.
+_TRUST_BEARING_STATUS: frozenset[str] = frozenset({
+    "user_belief", "quarantined", "orphaned", "legacy_unverified", "provisional",
+})
+
 
 def gate_enabled() -> bool:
     """The admission gate is ON when EITHER is true (default OFF = neither):
@@ -137,7 +147,7 @@ def classify_admission(
     # (user_belief, quarantined, legacy_unverified, ...) is admitted because the
     # trust verdict travels IN the status itself — the reason must say that,
     # not claim a verification that never happened here.
-    if status not in (None, "model_claim", "verified"):
+    if status in _TRUST_BEARING_STATUS:
         return AdmissionVerdict(
             ACCEPT, f"status '{status}' carries its own trust verdict", True)
     return AdmissionVerdict(ACCEPT, "grounded or verified", True)

@@ -58,17 +58,18 @@ _SECURITY_ARTIFACT_PREFIXES: tuple[str, ...] = (
 )
 
 # FLAGS-AUDIT §8 item 4 (misurato 2026-07-16): 'secured' come "ottenere" —
-# "secured interviews and job offers" è biografia, non hardening. Il claim di
-# sicurezza vero ("secured the database/endpoint") non ha questi oggetti di
-# acquisizione umana. Lista chiusa precision-first: un oggetto non in lista
-# (es. "secured the perimeter") continua a scattare.
+# "secured interviews and job offers" è biografia, non hardening.
+# CRITIC MED-3 (2026-07-16): la lista era TROPPO larga — funding/loan/grant/role/
+# deal/contract/position collidono con oggetti INFRA ("secured the funding
+# endpoint", "the role service"), sopprimendo claim di hardening reali (FN).
+# Ristretta ai sostantivi INEQUIVOCABILMENTE di acquisizione umana (bassa
+# collisione con infra), che coprono comunque il FP misurato ("interviews",
+# "job offers"). Precision-first: un oggetto non in lista continua a scattare.
 _ACQUISITION_OBJECT_RE = re.compile(
     r"\s+(?:(?:a|an|the|his|her|their|my|our|two|three|several|some|many|"
     r"multiple|new|\d+)\s+)*"
-    r"(?:job|jobs|offer|offers|interview|interviews|promotion|position|"
-    r"positions|spot|seat|ticket|tickets|loan|mortgage|funding|grant|"
-    r"grants|scholarship|internship|deal|deals|contract|contracts|visa|"
-    r"apartment|reservation|booking|role|degree|admission|sponsorship)\b",
+    r"(?:job|jobs|offer|offers|interview|interviews|promotion|promotions|"
+    r"internship|internships|scholarship|scholarships)\b",
     re.IGNORECASE,
 )
 
