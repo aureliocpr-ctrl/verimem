@@ -190,8 +190,10 @@ emitted by the core, so every surface shows up in one panel — SDK, gateway,
 and the MCP server used by Claude Code **or any other vendor's agent** (label
 yours with `VERIMEM_ACTOR` in its MCP config). Same feed in a terminal:
 `verimem flow tail`. Personal mode binds
-127.0.0.1 only (Host-header checked against DNS rebinding); a presented API
-key always wins. For agents there is `GET /v1/snapshot` — the whole visible
+127.0.0.1 by default — the **loopback bind is the real defense**; a Host-header
+allowlist is a *second* layer against browser DNS-rebinding, but a direct client
+(e.g. `curl`) can spoof the Host header, so never expose personal mode on a
+non-loopback bind. A presented API key always wins. For agents there is `GET /v1/snapshot` — the whole visible
 state (odometer + daily series + quarantine + graph with provenance) in one
 structured call: what the console shows a human, shaped for an AI.
 
