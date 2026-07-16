@@ -133,6 +133,13 @@ def classify_admission(
     ungrounded = (status == "model_claim") and (not se) and (writer_role in (None, "agent_inference"))
     if ungrounded:
         return AdmissionVerdict(FLAG_LOW_PROVENANCE, "model_claim with no source_episodes / provenance", True)
+    # AUDIT-LEDGER mod.1 #2 (2026-07-16): a status this gate does not evaluate
+    # (user_belief, quarantined, legacy_unverified, ...) is admitted because the
+    # trust verdict travels IN the status itself — the reason must say that,
+    # not claim a verification that never happened here.
+    if status not in (None, "model_claim", "verified"):
+        return AdmissionVerdict(
+            ACCEPT, f"status '{status}' carries its own trust verdict", True)
     return AdmissionVerdict(ACCEPT, "grounded or verified", True)
 
 

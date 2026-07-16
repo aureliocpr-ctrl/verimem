@@ -113,3 +113,30 @@ def test_benign_instructions_word_still_accepted():
         status="verified", source_episodes=["ep1"],
     )
     assert v.decision == ACCEPT and v.admit_to_curated
+
+
+def test_non_model_claim_status_reason_is_honest():
+    """AUDIT-LEDGER mod.1 #2 (2026-07-16): a status the gate does not evaluate
+    (user_belief, quarantined — trust travels IN the status) must be admitted
+    with a reason saying THAT, not the false "grounded or verified"."""
+    from engram.admission_gate import classify_admission
+
+    for status in ("user_belief", "quarantined"):
+        v = classify_admission(topic="user/claim",
+                               proposition="The vendor API is the fastest",
+                               status=status)
+        assert v.admit_to_curated is True, "status carries the trust; admit"
+        assert "grounded or verified" not in v.reason, (
+            f"{status}: the reason must not claim verification it never did")
+        assert status in v.reason, "the reason names the status it deferred to"
+
+
+def test_grounded_and_verified_reasons_unchanged():
+    """The two paths that really DID pass provenance checks keep their reason."""
+    from engram.admission_gate import classify_admission
+
+    v1 = classify_admission(topic="t", proposition="p", status="model_claim",
+                            source_episodes=["ep1"])
+    v2 = classify_admission(topic="t", proposition="p", status="verified")
+    assert v1.decision == "accept" and v2.decision == "accept"
+    assert v1.reason == "grounded or verified"
