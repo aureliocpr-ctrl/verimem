@@ -12,7 +12,12 @@ SHIPPED too: `include_beliefs=True` on `recall`/`search_facts`/`recall_as_of`/
 `client.search` surfaces beliefs on EVERY branch (warm cache bypassed — the cache
 stays the default view; cold-encode fallback and time travel forward the flag;
 narrow: orphaned/quarantined stay hidden) — 7 TDD tests in
-`tests/test_include_beliefs.py`. Still open: guardian correction, MemSyco delta.
+`tests/test_include_beliefs.py`. The hidden-set SWEEP then found and closed two real
+side-doors the SQL filters don't cover (both demonstrated RED first): the default-ON
+PPR/BM25 fusion resurrected beliefs via `get(live_only=True)`, and `compose_once`
+could LAUNDER a belief into a derived fact without its label; plus CLI `facts list`,
+BM25 `_CURATED`, `active_probe` rival parity (9 tests total in the contract file).
+Still open: guardian correction, MemSyco delta.
 **Goal**: stop the memory from laundering an unverified USER assertion into a stored
 *fact* the recall then serves back as truth — the systemic sycophancy gap the external
 review flagged (README claims "anti-sycophancy on the write path"; today that is only an
