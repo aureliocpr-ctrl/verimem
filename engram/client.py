@@ -49,9 +49,12 @@ _ANSWER_SYSTEM = (
 #: Case-B resolution prompt (trust-conditioned answering). Measured on the
 #: well-grounded-distractor bench (sonnet-5, 2026-07-16, n=12 + 2 unresolvable):
 #: bare facts C=0.17/H=0.33 → tagged facts C=0.92/H=0.08, and it abstained 2/2
-#: on same-metadata conflicts. Wording is EXACTLY the bench's — the verbose
-#: tie-rule variant measurably regressed (described the conflict instead of the
-#: bare NO ANSWER), so don't "improve" this without re-measuring.
+#: on same-metadata conflicts. Wording = the bench's resolution prompt PLUS one
+#: trailing no-facts→NO ANSWER sentence (inert on the bench — every case's
+#: answer IS in a fact — kept for parity with the v1 prompt's contract; critic
+#: 2026-07-16 flagged the earlier "EXACTLY the bench's" comment as imprecise).
+#: The verbose tie-rule variant measurably regressed (described the conflict
+#: instead of the bare NO ANSWER), so don't "improve" this without re-measuring.
 _ANSWER_TRUST_SYSTEM = (
     "Answer the question using ONLY the provided facts. Each fact is tagged "
     "[when | source | status]. If facts conflict, resolve by metadata: a "
