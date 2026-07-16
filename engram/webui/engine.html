@@ -27,7 +27,9 @@
   <div class="bar">
     <input id="key" type="password" placeholder="API key (Bearer …) — stays in sessionStorage, never in a URL" autocomplete="off">
     <button id="go">Connect</button>
-    <span class="hint">stream: <code>/v1/events/flow?replay=20</code> · your tenant only</span>
+    <span class="hint" id="streamHint">stream: <code>/v1/events/flow?replay=20</code> · your tenant only</span>
+    <span class="hint rate" id="rate"></span>
+    <span class="hint shadow" id="shadow" title="phase-1 shadow observations (logged for evaluation, not applied decisions)"></span>
   </div>
   <div class="err" id="err"></div>
 
@@ -36,6 +38,7 @@
     <span class="c quar">quarantined <b id="cQuar">0</b></span>
     <span class="c ans">answered <b id="cAns">0</b></span>
     <span class="c abs">abstained <b id="cAbs">0</b></span>
+    <span class="c chart" aria-hidden="true"><canvas id="ratechart" width="240" height="34"></canvas></span>
   </div>
 
   <div class="grid">

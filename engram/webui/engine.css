@@ -73,3 +73,9 @@ svg{display:block; width:100%; height:auto; min-width:640px;}
 .evt .ans{color:#7ec49f; font-weight:600;} .evt .abs{color:#bdb4a0; font-weight:600;}
 .foot{margin-top:1rem; font-size:.7rem; color:var(--ink-3); line-height:1.7;}
 @media (max-width:900px){.grid{grid-template-columns:1fr}}
+/* v2: real-time load — chips in the bar, per-second chart in the counters */
+.bar .rate{color:var(--verified-d); font-variant-numeric:tabular-nums;}
+.bar .shadow{color:var(--ink-3); border:1px dashed var(--rule-2); padding:.1rem .45rem;}
+.bar .shadow:empty{display:none;}
+.c.chart{padding:.35rem .5rem; display:inline-flex; align-items:center;}
+.c.chart canvas{display:block;}
