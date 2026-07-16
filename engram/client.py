@@ -46,6 +46,32 @@ _ANSWER_SYSTEM = (
     "Answer the question using ONLY the provided facts. Be concise: just the "
     "answer, no preamble. If the facts do not contain the answer, reply exactly: "
     "NO ANSWER.")
+#: Case-B resolution prompt (trust-conditioned answering). Measured on the
+#: well-grounded-distractor bench (sonnet-5, 2026-07-16, n=12 + 2 unresolvable):
+#: bare facts C=0.17/H=0.33 → tagged facts C=0.92/H=0.08, and it abstained 2/2
+#: on same-metadata conflicts. Wording is EXACTLY the bench's — the verbose
+#: tie-rule variant measurably regressed (described the conflict instead of the
+#: bare NO ANSWER), so don't "improve" this without re-measuring.
+_ANSWER_TRUST_SYSTEM = (
+    "Answer the question using ONLY the provided facts. Each fact is tagged "
+    "[when | source | status]. If facts conflict, resolve by metadata: a "
+    "'verified' fact beats an unverified one; a more recent fact beats an older "
+    "one; a first-hand source beats hearsay. If the conflict cannot be resolved "
+    "by the metadata, reply exactly: NO ANSWER. Be concise: just the answer. If "
+    "the facts do not contain the answer, reply exactly: NO ANSWER.")
+
+
+def _fact_trust_line(h: dict[str, Any]) -> str:
+    """One tagged fact line for the trust-conditioned answer prompt:
+    ``[when | source | status] text``. Honest formatting: the date comes from
+    ``asserted_at`` (event time) falling back to ``created_at`` (always real);
+    the source is the first source episode, else the verifiers, else the
+    explicit word "unrecorded" — never an invented provenance."""
+    import time as _time
+    ts = h.get("asserted_at") or h.get("created_at")
+    when = _time.strftime("%Y-%m-%d", _time.gmtime(float(ts))) if ts else "undated"
+    src = h.get("source") or ", ".join(h.get("verified_by") or []) or "unrecorded"
+    return f"[{when} | {src} | {h.get('status', 'model_claim')}] {h['text']}"
 #: CE score above which the answer counts as fact-supported. Distinct from the
 #: WRITE gate's 99.64 (Youden on source⊢fact hard negatives): the probe
 #: 2026-07-16 measured answering-facts ~91-94 vs distractors ~1-3, so any cut in
@@ -252,6 +278,14 @@ class Memory:
                 "grounding_score": getattr(f, "grounding_score", None),
                 "topic": getattr(f, "topic", ""),
                 "id": getattr(f, "id", ""),
+                # per-fact provenance for trust-conditioned answering (case-B
+                # wire, measured 2026-07-16): event time, transaction time,
+                # first source episode, and who verified. Raw values — the
+                # caller formats; None == genuinely unknown, never invented.
+                "asserted_at": getattr(f, "asserted_at", None),
+                "created_at": getattr(f, "created_at", None),
+                "source": (getattr(f, "source_episodes", None) or [None])[0],
+                "verified_by": list(getattr(f, "verified_by", None) or []),
             }
             if with_history:
                 from .temporal_context import _event_ts, _iso, fact_history
@@ -298,7 +332,8 @@ class Memory:
         return self.semantic.count()
 
     def answer(self, query: str, *, llm: Any, k: int = 8,
-               verify_threshold: float | None = None) -> dict[str, Any]:
+               verify_threshold: float | None = None,
+               trust_conditioning: bool = True) -> dict[str, Any]:
         """Grounding-verified answering — the anti-hallucination read-path.
 
         Generate an answer from the top-``k`` retrieved facts, then a LOCAL
@@ -308,28 +343,43 @@ class Memory:
         (recall@30 0.96) but a flat answerer gets fooled by distractors
         (Hallucination 0.167); this closes that gap at answer time.
 
+        ``trust_conditioning`` (default ON) additionally tags every fact with
+        the provenance the store already holds — ``[when | source | status]`` —
+        and instructs the model to resolve conflicts by metadata (verified >
+        unverified, recent > old, first-hand > hearsay; unresolvable → abstain).
+        This is the CASE-B lever, measured on the well-grounded-distractor bench
+        (sonnet-5, 2026-07-16, 12 cases where BOTH facts pass the grounding gate
+        at 76-100 so grounding cannot separate them): bare answer C=0.17/H=0.33
+        → trust-conditioned C=0.92/H=0.08, abstaining 2/2 on same-metadata
+        conflicts. ``False`` restores the bare v1 prompt byte-identically.
+
         Returns ``{answer, grounded, support_score, support_fact, raw_answer,
         reason}``. ``raw_answer`` always carries what the model produced (a caught
         hallucination is reported, never silently dropped). Fail-open only when
         the local CE is unavailable (``reason='ce_unavailable_failopen'``) — the
         one honest hole, logged not hidden.
 
-        HONEST SCOPE (verified 2026-07-16): this catches an answer NOT supported by
-        ANY retrieved fact (the model inventing beyond memory). It does NOT catch a
-        WRONG fact that is ITSELF in memory — if a distractor "Rex is a labrador"
-        is stored alongside the true fact, the CE finds the distractor as support
-        (score ~92) and the wrong answer is served. Separating true from distractor
-        IN memory needs per-fact grounding/trust (write-time source⊢fact, or
-        reconcile/supersession) — the larger, still-open half of the 0.167 gap.
+        HONEST SCOPE: the CE post-verify catches an answer NOT supported by ANY
+        retrieved fact (inventing beyond memory) — it does NOT separate a wrong
+        fact that is ITSELF in memory (the CE serves it as support, measured
+        ce_served≈97 on the bench). That separation is exactly what the
+        trust-conditioning above buys (0.17→0.92), and its own honest residue is
+        a well-grounded distractor whose METADATA also dominates (newer AND
+        verified but false) — indistinguishable in principle without an audit.
         """
         hits = self.search(query, k=k)
         if not hits:
             return {"answer": "NO ANSWER", "grounded": False, "reason": "no_facts",
                     "support_score": None, "support_fact": None, "raw_answer": None}
         facts = [h["text"] for h in hits]
-        user = ("Facts:\n" + "\n".join(f"- {t}" for t in facts)
-                + f"\n\nQuestion: {query}")
-        resp = llm.complete(_ANSWER_SYSTEM,
+        if trust_conditioning:
+            lines = [_fact_trust_line(h) for h in hits]
+            system = _ANSWER_TRUST_SYSTEM
+        else:
+            lines = [f"- {t}" for t in facts]
+            system = _ANSWER_SYSTEM
+        user = "Facts:\n" + "\n".join(lines) + f"\n\nQuestion: {query}"
+        resp = llm.complete(system,
                             [{"role": "user", "content": user}], max_tokens=64)
         raw = (getattr(resp, "text", "") or "").strip()
 
