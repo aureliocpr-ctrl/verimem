@@ -1,0 +1,233 @@
+{
+  "model": "claude-sonnet-5",
+  "n_cases": 14,
+  "gate_wellgroundedness": {
+    "true_mean": 100.0,
+    "false_mean": 76.07,
+    "mislabeled_cases": [
+      {
+        "case": "b2_repo",
+        "false_score": 30.0
+      }
+    ],
+    "note": "CASE B requires the DISTRACTOR to be well-grounded too; mislabeled = the case degenerated to case A (already covered)."
+  },
+  "flat": {
+    "counts": {
+      "CORRECT": 5,
+      "HALLUCINATION": 7
+    },
+    "n": 12,
+    "correct": 0.4167,
+    "hallucination": 0.5833,
+    "omission": 0.0,
+    "hallucination_ci95": [
+      0.3195,
+      0.8067
+    ]
+  },
+  "current_answer": {
+    "counts": {
+      "OMISSION": 6,
+      "HALLUCINATION": 4,
+      "CORRECT": 2
+    },
+    "n": 12,
+    "correct": 0.1667,
+    "hallucination": 0.3333,
+    "omission": 0.5,
+    "hallucination_ci95": [
+      0.1381,
+      0.6094
+    ]
+  },
+  "trust_conditioned": {
+    "counts": {
+      "CORRECT": 11,
+      "HALLUCINATION": 1
+    },
+    "n": 12,
+    "correct": 0.9167,
+    "hallucination": 0.0833,
+    "omission": 0.0,
+    "hallucination_ci95": [
+      0.0149,
+      0.3539
+    ]
+  },
+  "unresolvable_conflicts": {
+    "n": 2,
+    "abstained": 0,
+    "fabricated": 2
+  },
+  "per_case": [
+    {
+      "case": "b1_office",
+      "kind": "B1",
+      "s_true": 100.0,
+      "s_false": 100.0,
+      "flat": "CORRECT",
+      "current": "OMISSION",
+      "ce": "ce_blocked(1)",
+      "trust": "CORRECT",
+      "pred_flat": "I fatti sono contraddittori: Milano e Torino entrambi indicati come sede princip",
+      "pred_trust": "Turin — verificato (2026-07-10), batte il claim non verificato del 2025."
+    },
+    {
+      "case": "b1_manager",
+      "kind": "B1",
+      "s_true": 100.0,
+      "s_false": 100.0,
+      "flat": "HALLUCINATION",
+      "current": "OMISSION",
+      "ce": "ce_blocked(0)",
+      "trust": "CORRECT",
+      "pred_flat": "I fatti si contraddicono: sia Marco che Priya risultano indicati come leader. No",
+      "pred_trust": "Priya guida il data platform team (fatto verificato e più recente, 2026-06-28)."
+    },
+    {
+      "case": "b1_deadline",
+      "kind": "B1",
+      "s_true": 100.0,
+      "s_false": 100.0,
+      "flat": "HALLUCINATION",
+      "current": "OMISSION",
+      "ce": "ce_blocked(0)",
+      "trust": "CORRECT",
+      "pred_flat": "The dataset is contradictorio: settembre 12 vs ottobre 3, nessuna indicazione su",
+      "pred_trust": "October 3rd (fonte verificata più recente prevale su model_claim più vecchia)."
+    },
+    {
+      "case": "b1_price",
+      "kind": "B1",
+      "s_true": 100.0,
+      "s_false": 100.0,
+      "flat": "HALLUCINATION",
+      "current": "HALLUCINATION",
+      "ce": "ce_served(97)",
+      "trust": "CORRECT",
+      "pred_flat": "I dati sono contraddittori: 29€ o 49€/mese — non verificato quale sia corretto.",
+      "pred_trust": "49 euro/mese."
+    },
+    {
+      "case": "b1_venue",
+      "kind": "B1",
+      "s_true": 100.0,
+      "s_false": 100.0,
+      "flat": "HALLUCINATION",
+      "current": "HALLUCINATION",
+      "ce": "ce_served(97)",
+      "trust": "CORRECT",
+      "pred_flat": "The workshop's location is contradictory in the given facts: one states it's at ",
+      "pred_trust": "La biblioteca civica (sala principale) — fatto verificato e più recente batte il"
+    },
+    {
+      "case": "b2_birthday",
+      "kind": "B2",
+      "s_true": 100.0,
+      "s_false": 40.0,
+      "flat": "HALLUCINATION",
+      "current": "HALLUCINATION",
+      "ce": "ce_served(46)",
+      "trust": "CORRECT",
+      "pred_flat": "Conflitto nei fatti forniti: 2 aprile vs 9 marzo. NO ANSWER.",
+      "pred_trust": "Ana's birthday is il 9 marzo — fatto verificato e più recente, batte l'hearsay n"
+    },
+    {
+      "case": "b2_allergy",
+      "kind": "B2",
+      "s_true": 100.0,
+      "s_false": 50.0,
+      "flat": "HALLUCINATION",
+      "current": "HALLUCINATION",
+      "ce": "ce_served(44)",
+      "trust": "CORRECT",
+      "pred_flat": "Shellfish e arachidi (peanuts).",
+      "pred_trust": "Peanuts."
+    },
+    {
+      "case": "b2_repo",
+      "kind": "B2",
+      "s_true": 100.0,
+      "s_false": 30.0,
+      "flat": "CORRECT",
+      "current": "OMISSION",
+      "ce": "ce_blocked(0)",
+      "trust": "CORRECT",
+      "pred_flat": "I fatti sono contraddittori: dichiarano sia \"infra-scripts\" che \"deploy-core\" co",
+      "pred_trust": "deploy-core"
+    },
+    {
+      "case": "b2_train",
+      "kind": "B2",
+      "s_true": 100.0,
+      "s_false": 100.0,
+      "flat": "CORRECT",
+      "current": "CORRECT",
+      "ce": "ce_served(100)",
+      "trust": "CORRECT",
+      "pred_flat": "07:42 (l'altro dato è approssimativo).",
+      "pred_trust": "07:42."
+    },
+    {
+      "case": "b3_dbport",
+      "kind": "B3",
+      "s_true": 100.0,
+      "s_false": 50.0,
+      "flat": "HALLUCINATION",
+      "current": "OMISSION",
+      "ce": "ce_blocked(6)",
+      "trust": "CORRECT",
+      "pred_flat": "Porta 5432 o 5433 — i fatti forniti sono contraddittori, non posso stabilire qua",
+      "pred_trust": "5433 (verificato 2026-07-14, batte l'assunzione non verificata del 2026-07-13)."
+    },
+    {
+      "case": "b3_capacity",
+      "kind": "B3",
+      "s_true": 100.0,
+      "s_false": 45.0,
+      "flat": "CORRECT",
+      "current": "CORRECT",
+      "ce": "ce_served(100)",
+      "trust": "CORRECT",
+      "pred_flat": "180.",
+      "pred_trust": "180 (verificato via safety certificate, batte il claim non verificato da brochur"
+    },
+    {
+      "case": "b3_version",
+      "kind": "B3",
+      "s_true": 100.0,
+      "s_false": 50.0,
+      "flat": "CORRECT",
+      "current": "OMISSION",
+      "ce": "ce_blocked(1)",
+      "trust": "HALLUCINATION",
+      "pred_flat": "NO ANSWER",
+      "pred_trust": "Framework 3.8.2 — fonte verificata (2026-07-15) batte l'assunzione di pianificaz"
+    },
+    {
+      "case": "u1_room",
+      "kind": "U",
+      "s_true": 100.0,
+      "s_false": 100.0,
+      "flat": "CORRECT",
+      "current": "OMISSION",
+      "ce": "ce_blocked(1)",
+      "trust": "CORRECT",
+      "pred_flat": "Facts contraddittori: Delta e Alpha. NO ANSWER.",
+      "pred_trust": "NO ANSWER"
+    },
+    {
+      "case": "u2_owner",
+      "kind": "U",
+      "s_true": 100.0,
+      "s_false": 100.0,
+      "flat": "HALLUCINATION",
+      "current": "OMISSION",
+      "ce": "ce_blocked(2)",
+      "trust": "CORRECT",
+      "pred_flat": "Tom e Nadia (fatti in conflitto, entrambi indicati come owner questa settimana).",
+      "pred_trust": "NO ANSWER"
+    }
+  ]
+}

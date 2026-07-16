@@ -1,0 +1,613 @@
+{
+  "n": 150,
+  "per_class": 50,
+  "mean_entailment": 85.2,
+  "mean_neutral": 28.5,
+  "mean_contradiction": 6.4,
+  "auroc_faithful_vs_confab": 0.963,
+  "aurc": 0.169,
+  "opt_threshold": 55.0,
+  "rows": [
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 40.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 70.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 0.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 65.0
+    },
+    {
+      "label": 0,
+      "score": 50.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 92.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 45.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 95.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 45.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 65.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 100.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 55.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 0,
+      "score": 90.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 40.0
+    },
+    {
+      "label": 1,
+      "score": 5.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 40.0
+    },
+    {
+      "label": 1,
+      "score": 0.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 0.0
+    },
+    {
+      "label": 1,
+      "score": 0.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 15.0
+    },
+    {
+      "label": 1,
+      "score": 45.0
+    },
+    {
+      "label": 1,
+      "score": 25.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 0.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 60.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 50.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 45.0
+    },
+    {
+      "label": 1,
+      "score": 50.0
+    },
+    {
+      "label": 1,
+      "score": 50.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 65.0
+    },
+    {
+      "label": 1,
+      "score": 0.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 50.0
+    },
+    {
+      "label": 1,
+      "score": 50.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 45.0
+    },
+    {
+      "label": 1,
+      "score": 40.0
+    },
+    {
+      "label": 1,
+      "score": 50.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 20.0
+    },
+    {
+      "label": 1,
+      "score": 50.0
+    },
+    {
+      "label": 1,
+      "score": 50.0
+    },
+    {
+      "label": 1,
+      "score": 30.0
+    },
+    {
+      "label": 1,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 5.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 40.0
+    },
+    {
+      "label": 2,
+      "score": 15.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 15.0
+    },
+    {
+      "label": 2,
+      "score": 5.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 20.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 15.0
+    },
+    {
+      "label": 2,
+      "score": 20.0
+    },
+    {
+      "label": 2,
+      "score": 5.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 20.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 15.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 5.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 5.0
+    },
+    {
+      "label": 2,
+      "score": 20.0
+    },
+    {
+      "label": 2,
+      "score": 20.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 5.0
+    },
+    {
+      "label": 2,
+      "score": 90.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    },
+    {
+      "label": 2,
+      "score": 0.0
+    }
+  ],
+  "model": "claude-sonnet-5"
+}
