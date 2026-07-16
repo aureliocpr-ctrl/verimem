@@ -247,6 +247,29 @@ trovati.** DA FARE: ANN pre-narrowing, supersession chain, `recall_hybrid` +
 la ri-verifica degli interni cosine con MODELLO REALE (limite-metodo stub). Il
 recall è robusto sui contratti pubblici e sui sotto-moduli deterministici; il
 core cosine/cache va ancora provato end-to-end su modello reale. Modulo NON chiuso.
+
+---
+
+## Modulo 3 — trust / source (`source_trust.py`, 505 righe) — 2026-07-16, base `c38afdb`
+
+Il DIFFERENZIATORE trust (`SourceTrustBook`: consistency+outcome ledger,
+independence clustering anti-collusione, P88 deconfounded). DETERMINISTICO →
+probe affidabili. Letto il cuore (`trust`, `independent_clusters`, `accept_value`,
+`observe_confirmation`, `_collusion_signal`). Probe 4/4:
+
+| Proprietà (il moat) | Atteso | Osservato |
+|---------------------|--------|-----------|
+| `trust()` = canale OSSERVATO più debole (sleeper hole) | outcome cattivo abbatte consistency buona | consistency 0.75, outcome 0.333 → trust **0.333** ✓ |
+| N copie (report identici) → 1 cluster | cartello collassa a 1 testimone | 3 copie → **1** ✓ |
+| `accept_value`: 2 onesti indipendenti vs 3 copie cartello | l'onesto corroborato vince a prescindere dalla SIZE del cartello | → **TRUE_VAL** (2 honest) ✓ |
+| `observe_confirmation(require_independent)` | copie non si auto-confermano | trust invariato ✓ |
+
+Copertura estesa: **61 test** `-k "source_trust or collusion or independence or
+sleeper or trusted_source"` verdi (incl. `test_veribench_adversarial_axis`).
+
+**Verdetto MODULO 3**: SOLIDO. Il claim "trust che resiste alla collusione"
+(contare cluster INDIPENDENTI, non fonti raw) è provato: un cartello di N copie
+non ruba lo slot 'accepted' a 2 fonti oneste indipendenti. 0 difetti.
 **Verdetto parziale**: contratti pubblici del recall SOLIDI (guardie input,
 isolamento tenant, cache-invalidation da test reali); il resto degli interni
 resta da fare — modulo NON chiuso.
