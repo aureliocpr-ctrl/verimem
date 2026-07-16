@@ -1063,6 +1063,29 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                         mem=tenants.get(tenant_id), q=q)
         return out
 
+    @app.get("/v1/correct")
+    def correct(q: str = Query(...), k: int = Query(default=5, ge=1, le=100),
+                tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """The guardian's gateway surface — ACCEPT / CORRECT / ABSTAIN with
+        both sides cited. Wired 2026-07-17 after the mod.3 critic's
+        caller-verification found `guardian.correct_read` had ZERO production
+        callers (README said "read-path guardian" — SDK/tests/docs only; same
+        anti-fuffa pattern as answer() the day before). Deterministic, no LLM:
+        works on the personal console too."""
+        from .guardian import correct_read
+        _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.recall col tenant
+        try:
+            out = correct_read(tenants.get(tenant_id), q, k=k)
+            from .flow_events import emit_flow as _emit_flow
+            _emit_flow("flow.recall", kind="correct",
+                       verdict=str(out.get("verdict") or ""),
+                       abstained=out.get("verdict") == "ABSTAIN",
+                       reason=str(out.get("reason") or ""))
+        finally:
+            _flow_ctx_reset(_ftok)
+        meter.bump(tenant_id, reads=1)
+        return out
+
     @app.get("/v1/memories/{fact_id}")
     def get_memory(fact_id: str, tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         item = tenants.get(tenant_id).get(fact_id)
