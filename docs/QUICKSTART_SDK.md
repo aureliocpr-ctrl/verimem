@@ -1,4 +1,4 @@
-# Verimem SDK — quickstart (5 verbs)
+# Verimem SDK — quickstart (6 verbs)
 
 > Install: `pip install verimem` *(PyPI name not yet reserved — for now:
 > `pip install -e .` from this repo)*. Local SQLite, no external API key.
@@ -30,6 +30,15 @@ mem.history(r["id"])
 mem.explain("Rossi budget")   # provenance, status, two clocks, replaced values,
                               # DECLARED conflicts, relevance — or an explicit
                               # abstention with its reason. Judge-grade.
+
+# 6) answer — grounding-verified, trust-conditioned answering (needs llm=):
+#    generates ONLY from retrieved facts, tags each with [when|source|status]
+#    so conflicting memories resolve by provenance (measured 0.17→0.92 correct
+#    on well-grounded distractors), then a LOCAL cross-encoder verifies the
+#    answer is entailed by a fact — otherwise an honest "NO ANSWER".
+mem.answer("What is Rossi's budget?", llm=your_llm)
+# → {answer, grounded, support_fact, support_score, raw_answer, reason}
+# Over HTTP: GET /v1/answer?q=... on the gateway (400 if it has no server llm).
 ```
 
 **Why this instead of mem0/Zep** — measured on HaluMem (n=188, judge=Claude,
