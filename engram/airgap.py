@@ -10,11 +10,23 @@ it works fully offline. A fully-air-gapped deployment is therefore possible —
 this module turns that property into a VERIFIABLE, structured self-check
 (a sellable feature: *prove* there is no egress, instead of asserting it).
 
-Scope (honest): this inspects CONFIGURATION + the known code paths surfaced by
-the 2026-06-06 LLM leak-audit (get_llm chokepoint + `_is_hosted` gating +
-provider-dispatched vision + offline embeddings). It makes NO network calls and
-loads NO model. A LIVE no-egress probe (intercept sockets while exercising a
-real local model) is a separate, heavier step — see ENGRAM-ENTERPRISE-ROADMAP.
+Two levels:
+* ``airgap_status()`` — the CONFIG check: inspects env + the code paths surfaced
+  by the 2026-06-06 LLM leak-audit (get_llm chokepoint + ``_is_hosted`` gating +
+  provider-dispatched vision + offline embeddings). Makes NO network call, loads
+  NO model.
+* ``probe_live_egress()`` — the RUNTIME PROOF (2026-07-17): exercises a real
+  write+search under a CPython ``socket.connect`` audit hook and reports any
+  non-loopback destination actually attempted. This is the "prove not assert"
+  half, exposed as ``verimem airgap --live``.
+
+Honest scope of the live probe: the ``socket.connect`` audit event covers the
+realistic egress surface (httpx / requests / urllib / huggingface-hub — every
+TCP client dials through it, including from C extensions). It does NOT claim to
+catch a deliberate kernel-level bypass (raw ``sendto`` on an unconnected UDP
+socket, a pre-connected fd handed in) — that is an exfiltration-grade adversary,
+out of scope for a config-compliance proof; pair it with an OS egress firewall
+for that threat model.
 """
 from __future__ import annotations
 
@@ -140,4 +152,67 @@ def airgap_status(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     }
 
 
-__all__ = ["airgap_status"]
+def _default_exercise() -> None:
+    """Exercise the core write+read path with a mock LLM so a clean, offline
+    config makes ZERO network calls: extract-gate-store a fact, then search it.
+    Any egress observed while this runs is a real leak, not a legitimate call."""
+    import tempfile
+    from pathlib import Path
+
+    from .client import Memory
+
+    m = Memory(Path(tempfile.mkdtemp(prefix="airgap_")) / "m.db")
+    m.add("The warehouse in Berlin ships on Mondays.", topic="airgap-probe",
+          verified_by=["src:airgap:t1"])
+    m.search("when does the Berlin warehouse ship?")
+
+
+def probe_live_egress(exercise=None) -> dict[str, Any]:
+    """LIVE no-egress proof: run ``exercise`` (default: a real write+search) while
+    a CPython audit hook records EVERY ``socket.connect``, and report any
+    NON-loopback destination. Empty ``egress`` => proven zero cloud egress at
+    runtime — the datacenter/sovereign claim, demonstrated not asserted.
+
+    Returns ``{"air_gapped": bool, "egress": [str, ...], "connects_total": int}``.
+
+    The audit hook (``sys.addaudithook``) is process-global and PERMANENT — it
+    catches connects from C extensions too (httpx/requests/HF-hub), which a
+    monkeypatch would miss — so call this in a one-shot process (the
+    ``verimem airgap --live`` CLI) or a subprocess. It only records; it never
+    blocks a connection.
+    """
+    import sys
+
+    egress: list[str] = []
+    counter = {"n": 0}
+
+    def _host_of(address: Any) -> str | None:
+        # AF_INET/6 -> (host, port[, ...]); AF_UNIX -> path (local by definition)
+        if isinstance(address, tuple) and address:
+            return str(address[0])
+        return None  # unix socket / unknown shape = not a network host
+
+    def _audit(event: str, args: tuple) -> None:
+        if event != "socket.connect" or len(args) < 2:
+            return
+        counter["n"] += 1
+        host = _host_of(args[1])
+        if host is None:
+            return
+        # reuse the SAME loopback rule as the config check (parses the host,
+        # no spoofable substrings; scheme-less bare hosts/IPs resolve too)
+        if not _is_local_base_url(host):
+            egress.append(host)
+
+    sys.addaudithook(_audit)
+    try:
+        (exercise or _default_exercise)()
+    except Exception:  # noqa: BLE001 — a broken exercise must not hide egress data
+        pass
+    # de-dup preserving order
+    seen: set[str] = set()
+    uniq = [h for h in egress if not (h in seen or seen.add(h))]
+    return {"air_gapped": not uniq, "egress": uniq, "connects_total": counter["n"]}
+
+
+__all__ = ["airgap_status", "probe_live_egress"]

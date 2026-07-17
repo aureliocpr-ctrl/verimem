@@ -295,6 +295,10 @@ def warmup(
 @app.command()
 def airgap(
     json_out: bool = typer.Option(False, "--json", help="Emit the raw JSON verdict"),
+    live: bool = typer.Option(
+        False, "--live",
+        help="PROVE it: run a real write+search while auditing every socket "
+             "and report any non-loopback egress (not just the config)."),
 ):
     """Air-gap self-check: can this config run with ZERO network egress?
 
@@ -303,7 +307,28 @@ def airgap(
     and hosted-mode is off — plus one line per egress risk. For a fully
     air-gapped deployment set HIPPO_LLM_PROVIDER=ollama + HF_HUB_OFFLINE=1 and
     unset HIPPO_HOSTED. Exit code: 0 if air-gapped, 1 otherwise (CI/ops gate).
+
+    ``--live`` goes beyond the config check: it exercises a real write+search
+    with a CPython audit hook on every ``socket.connect`` and reports any
+    non-loopback destination actually attempted — runtime PROOF, not a promise.
     """
+    if live:
+        from .airgap import probe_live_egress
+        rep = probe_live_egress()
+        if json_out:
+            import json as _json
+            console.print_json(_json.dumps(rep))
+            raise typer.Exit(0 if rep["air_gapped"] else 1)
+        verdict = ("[green]ZERO EGRESS ✓[/green]" if rep["air_gapped"]
+                   else "[red]EGRESS DETECTED ✗[/red]")
+        lines = [
+            f"[bold]Engram live no-egress probe[/bold]   {verdict}",
+            f"  socket.connect observed: {rep['connects_total']}",
+            f"  non-loopback egress:     {len(rep['egress'])}",
+        ]
+        lines.extend(f"    → {h}" for h in rep["egress"])
+        console.print(Panel.fit("\n".join(lines), title="airgap --live"))
+        raise typer.Exit(0 if rep["air_gapped"] else 1)
     from .airgap import airgap_status
     st = airgap_status()
     if json_out:

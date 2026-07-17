@@ -6,6 +6,15 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [0.5.0] — The moat is ON by default (2026-07-17)
 
+### Added
+- **`verimem airgap --live` — runtime PROOF of zero egress** (not just a config
+  check). Exercises a real write+search under a CPython `socket.connect` audit
+  hook and reports any non-loopback destination actually attempted; exits 0 iff
+  zero cloud egress was observed. For the sovereign/datacenter segment: prove it,
+  don't assert it. `engram.airgap.probe_live_egress()` is the API. Honest scope:
+  covers the realistic TCP egress surface (httpx/requests/urllib/hf-hub); pair
+  with an OS egress firewall against a kernel-level exfil adversary.
+
 ### Changed
 - **Write-gate threshold recalibrated 40 → 70** (claude scale) on external,
   never-seen corpora (`benchmark/moat_external_judge.py`: TruthfulQA judge

@@ -177,7 +177,9 @@ verimem import conversations.json       # list a ChatGPT/Claude export (imports 
 verimem import conversations.json --project verimem --since 2026-06-01 --all-matching
                                         # import a filtered subset (title/date/project)
 verimem trust "the deploy is green" --verified-by ci:main:green
-verimem airgap                          # verify a zero-egress configuration
+verimem airgap                          # verify a zero-egress CONFIGURATION
+verimem airgap --live                   # PROVE it: audit every socket during a
+                                        # real write+search, exit 0 iff no egress
 ```
 
 ## See your memory working — the trust console
