@@ -1,4 +1,8 @@
-# Verimem (engram engine) — honest competitive benchmarks
+# Verimem — honest competitive benchmarks
+
+> Benchmark arm names below ("engram", "engram-base") are the historical
+> labels stored in the result JSONs — they refer to this engine, renamed
+> to `verimem` in 0.6.0. Module paths have been updated to `verimem/`.
 
 No hype. Numbers measured here, with the exact conditions and caveats stated. Subscription
 only (Claude judge via `claude -p`, ZERO external API — O5), so absolute numbers are
@@ -548,7 +552,7 @@ max_diff≥2, "config X is 5s" vs "config X owner is Bob" (value-vs-owner, COMPL
 misclassifies as a conflict. So loosening trades the gate's complementary-attribute
 safety for marginal recall — lexical token-matching can't have both. **Default kept at 1**
 (`ENGRAM_RECONCILE_MAX_DIFF` lets a deployment opt into the tradeoff). The real fix for
-paraphrase-update recall is the **semantic NLI detector** (`engram/semantic_conflict.py`),
+paraphrase-update recall is the **semantic NLI detector** (`verimem/semantic_conflict.py`),
 which separates contradiction from different-attribute — an LLM-gated, larger change.
 (Fifth honest falsification: "loosening is free" refuted by the existing safety tests.)
 
@@ -779,7 +783,7 @@ opt-in (`ENGRAM_GROUNDING_BACKEND=local`).
 TRUE-ghost interactive Claude CLI (hidden from birth: CREATE_NEW_CONSOLE + SW_HIDE, window
 never shown, ai-eye AttachConsole works; folder-trust auto-confirmed) — Claude judge on
 the flat subscription, no claude -p. Live E2E 4/4 in 32.6 s; decision-agreement 10/10 vs
-the claude -p judge. `engram/interactive_judge.py`, filesystem handshake, fail-over to the
+the claude -p judge. `verimem/interactive_judge.py`, filesystem handshake, fail-over to the
 injected llm, 6 unit tests. Same 0-100 claude scale → claude-scale threshold.
 
 ## Write-repair (recover over-rejection) — FALSIFIED, not wired (2026-07-02)
@@ -826,7 +830,7 @@ Truth-maintenance on write (does a newer fact correctly supersede the older one 
 updates?) is the category mem0/Tencent don't hold. Engram's reconcile has an NLI path
 (`semantic_conflict.RelationJudge`) but its only judge was `claude -p`
 (`LLMRelationJudge`), so the end-to-end recall was "deferred to capacity". The
-subscription-independent judge now exists: **`engram/local_relation.py`
+subscription-independent judge now exists: **`verimem/local_relation.py`
 (`LocalRelationJudge`)** runs a cached NLI cross-encoder locally (3-way
 contradiction/entailment/neutral; label order read from the model's `id2label`, never
 positional; symmetric — both directions scored — with a precision-biased combine:

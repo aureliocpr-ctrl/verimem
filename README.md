@@ -80,7 +80,7 @@ honest *"I don't know."*
   admits survivors signed (`actor:composer` — engine writes never testify for
   themselves), traced (`derives_from` parents, retractable if a parent falls)
   and labeled with the exact check that passed. Few but zero-false by
-  construction. Run it one-shot (`python -m engram.compose_daemon --db ...`,
+  construction. Run it one-shot (`python -m verimem.compose_daemon --db ...`,
   schedule with cron/Task Scheduler): the daemon refuses to compose when the
   engine's own writes already dominate the recent stream (self-echo
   guard-rail).
@@ -154,9 +154,9 @@ Add to `.mcp.json` in your project (or `~/.claude/.mcp.json`):
 {
   "mcpServers": {
     "verimem": {
-      "command": "engram",
+      "command": "verimem",
       "args": ["mcp"],
-      "env": { "ENGRAM_HOSTED": "1", "ENGRAM_TOOL_NAMESPACE": "verimem" }
+      "env": { "VERIMEM_HOSTED": "1", "VERIMEM_TOOL_NAMESPACE": "verimem" }
     }
   }
 }
@@ -335,10 +335,12 @@ conversations / documents / tool results
         └─ TrustReport: evidence dossier or explicit abstention
 ```
 
-The Python package is `engram` (the architecture name); `verimem` is the
-product and distribution name. Both import paths work — and so do both env
-prefixes: every `ENGRAM_X` setting can be written `VERIMEM_X` (mirrored at
-import, explicit values never overridden).
+The Python package is `verimem` — one product, one name (total rename, 0.6.0).
+`import engram` and `import hippoagent` still work as compatibility aliases
+(same module objects, no duplicated state), and so do all three env prefixes:
+every `VERIMEM_X` setting can also be written `ENGRAM_X`/`HIPPO_X` (mirrored at
+import, explicit values never overridden). Existing `~/.engram` data stores
+keep working untouched; new installs default to `~/.verimem`.
 
 ## License
 

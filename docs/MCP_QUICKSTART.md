@@ -25,9 +25,9 @@ pip install -e .
 pip install -e ".[mcp-only]"
 ```
 
-After install, both `engram` (canonical, post-rename) and `hippo`
-(deprecated alias, removed ~2026-08-13) commands work. The MCP server
-entry point is `engram mcp` (or `hippo mcp`).
+After install, `verimem` is the canonical command; `engram` and `hippo`
+remain as compatibility aliases (same entry point). The MCP server
+entry point is `verimem mcp`.
 
 ## 2. Set at least one provider key (optional in hosted mode)
 
@@ -41,21 +41,21 @@ export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 **Subscription-first mode** (recommended for Claude Code Pro/Max users):
-set `ENGRAM_HOSTED=1`. The server then refuses to run any internal
+set `VERIMEM_HOSTED=1`. The server then refuses to run any internal
 LLM loop — every tool that would have made an LLM call returns a
 structured payload the host can act on. Zero extra API spend.
 
-Backward-compat: the legacy `HIPPO_*` env names are still accepted
-(auto-mirrored to `ENGRAM_*` at import time). For new configs prefer
-the canonical `ENGRAM_*` names.
+Backward-compat: the legacy `ENGRAM_*` and `HIPPO_*` env names are still
+accepted (auto-mirrored at import time). For new configs prefer the
+canonical `VERIMEM_*` names.
 
 ## 3. Test the server stand-alone
 
 ```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}' | python -m engram.mcp_server
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}' | python -m verimem.mcp_server
 ```
 
-You should see a JSON-RPC reply with `serverInfo.name == "engram"`.
+You should see a JSON-RPC reply with `serverInfo.name == "verimem"`.
 
 ## 4. Wire into your client
 
@@ -66,22 +66,26 @@ You should see a JSON-RPC reply with `serverInfo.name == "engram"`.
 ```json
 {
   "mcpServers": {
-    "engram": {
-      "command": "engram",
+    "verimem": {
+      "command": "verimem",
       "args": ["mcp"],
       "env": {
-        "ENGRAM_HOSTED": "1",
-        "ENGRAM_DATA_DIR": "${HOME}/.engram"
+        "VERIMEM_HOSTED": "1",
+        "VERIMEM_DATA_DIR": "${HOME}/.verimem"
       }
     }
   }
 }
 ```
 
+(Existing installs with data in `~/.engram` need no change: with
+`VERIMEM_DATA_DIR` unset, an existing `~/.engram` is found and used
+automatically — nothing is migrated or moved.)
+
 Restart Claude Code. The 175 `hippo_*` tools become callable
 immediately. `hippo_recall`, `hippo_remember`, `hippo_record_episode`,
-etc. all dispatch under the alias `engram_*` as well (cycle #41
-backward-compat).
+etc. all dispatch under the aliases `verimem_*` and `engram_*` as well
+(backward-compat).
 
 ### Cursor
 
@@ -93,12 +97,12 @@ same JSON shape as above.
 `opencode.toml`:
 
 ```toml
-[mcp.engram]
-command = "engram"
+[mcp.verimem]
+command = "verimem"
 args = ["mcp"]
-[mcp.engram.env]
-ENGRAM_HOSTED = "1"
-ENGRAM_DATA_DIR = "${HOME}/.engram"
+[mcp.verimem.env]
+VERIMEM_HOSTED = "1"
+VERIMEM_DATA_DIR = "${HOME}/.verimem"
 ```
 
 ### Continue / Cline / Zed
@@ -112,8 +116,8 @@ All speak the same `mcpServers` JSON config; copy the Claude Code block.
 The host LLM sees the full list via `list_tools()` at session start
 (20.8k tokens of JSON schemas, ~10% of a 200k context window, ~2%
 of a 1M window). Below is a categorized tour of the most-used tools;
-for the full canonical list call `engram health` or
-`python -c "import asyncio; from engram.mcp_server import list_tools; print('\n'.join(t.name for t in asyncio.run(list_tools())))"`.
+for the full canonical list call `verimem health` or
+`python -c "import asyncio; from verimem.mcp_server import list_tools; print('\n'.join(t.name for t in asyncio.run(list_tools())))"`.
 
 ### A. Recall — bring past episodes into context (3 tools)
 
@@ -176,7 +180,7 @@ Zero LLM call, pure SQLite write.
 ### E. Skills — the consolidated procedural knowledge (50 tools)
 
 Most populous category. Skills are persistent, fitness-tracked,
-inspectable artifacts (`engram/skills/<id>.json` + index in SQLite).
+inspectable artifacts (`<data_dir>/skills/<id>.json` + index in SQLite).
 
 **Discovery & lookup**:
 - `hippo_skill_top` — top-N by fitness
@@ -303,7 +307,7 @@ End-to-end measured: 20.8s on a 318-skill / 170-episode corpus.
 
 Tools that don't fit cleanly elsewhere — namespace, time-windowed rollups,
 multi-tenant cross-agent consensus, provider switching, briefings,
-session management. List via `engram health --tools`.
+session management. List via `verimem health --tools`.
 
 ---
 
@@ -347,21 +351,22 @@ finds today's session and primes the answer immediately.
 
 ## 8. Operational knobs
 
-| Env var (canonical) | Legacy alias | Purpose | Default |
+| Env var (canonical) | Legacy aliases | Purpose | Default |
 |---|---|---|---|
-| `ENGRAM_DATA_DIR` | `HIPPO_DATA_DIR` | where episodes/skills/etc. live | `~/.engram` (fallback `~/.hippoagent`) |
-| `ENGRAM_HOSTED` | `HIPPO_HOSTED` | host LLM mode — no internal LLM | unset |
-| `ENGRAM_LLM_PROVIDER` | `HIPPO_LLM_PROVIDER` | force a specific provider | autodetect |
-| `ENGRAM_MODEL` / `_EXECUTOR` / `_DREAMER` / `_CRITIC` | `HIPPO_*` | per-stage model | provider default (Opus 4.7) |
-| `ENGRAM_LOG_STDERR` | `HIPPO_LOG_STDERR` | route logs to stderr (auto-set by `engram mcp`) | unset |
-| `ENGRAM_ENABLE_SHELL` | `HIPPO_ENABLE_SHELL` | unblock shell-running tools | off |
-| `ENGRAM_MCP_DISABLE_RATELIMIT` | `HIPPO_MCP_DISABLE_RATELIMIT` | bypass token-bucket | off |
-| `ENGRAM_MCP_RATELIMIT_<TOOL>_RPM` | `HIPPO_*` | per-tool override | 1/min |
-| `ENGRAM_AUTO_FALLBACK` | `HIPPO_AUTO_FALLBACK` | chain backup providers on rate-limit | unset |
+| `VERIMEM_DATA_DIR` | `ENGRAM_DATA_DIR` / `HIPPO_DATA_DIR` | where episodes/skills/etc. live | `~/.verimem` (existing `~/.engram` / `~/.hippoagent` auto-detected, never migrated) |
+| `VERIMEM_HOSTED` | `ENGRAM_HOSTED` / `HIPPO_HOSTED` | host LLM mode — no internal LLM | unset |
+| `VERIMEM_LLM_PROVIDER` | `ENGRAM_*` / `HIPPO_*` | force a specific provider | autodetect |
+| `VERIMEM_MODEL` / `_EXECUTOR` / `_DREAMER` / `_CRITIC` | `ENGRAM_*` / `HIPPO_*` | per-stage model | provider default (Opus 4.7) |
+| `VERIMEM_LOG_STDERR` | `ENGRAM_*` / `HIPPO_*` | route logs to stderr (auto-set by `verimem mcp`) | unset |
+| `VERIMEM_ENABLE_SHELL` | `ENGRAM_*` / `HIPPO_*` | unblock shell-running tools | off |
+| `VERIMEM_MCP_DISABLE_RATELIMIT` | `ENGRAM_*` / `HIPPO_*` | bypass token-bucket | off |
+| `VERIMEM_MCP_RATELIMIT_<TOOL>_RPM` | `ENGRAM_*` / `HIPPO_*` | per-tool override | 1/min |
+| `VERIMEM_AUTO_FALLBACK` | `ENGRAM_*` / `HIPPO_*` | chain backup providers on rate-limit | unset |
 
-> All `HIPPO_*` env vars are mirrored to `ENGRAM_*` at package import
-> (`engram._compat.init_env_aliases`). Both names work; **the new code
-> path is `ENGRAM_*`**, the legacy alias will be removed ~2026-08-13.
+> All three prefixes are mirrored to each other at package import
+> (`verimem._compat.init_env_aliases`) — `VERIMEM_X`, `ENGRAM_X` and
+> `HIPPO_X` all work, explicit values are never overridden. **New configs
+> should use `VERIMEM_*`** (canonical since the 0.6.0 total rename).
 
 ## 9. Security defaults (already on)
 
@@ -369,7 +374,7 @@ finds today's session and primes the answer immediately.
 - **Token-bucket rate limit** on `hippo_run_task`, `hippo_consolidate`,
   `hippo_dream_*` heavy ops (1/min default).
 - **`perm_shell` gate**: shell-like task content rejected unless
-  `ENGRAM_ENABLE_SHELL=1`.
+  `VERIMEM_ENABLE_SHELL=1`.
 - **Append-only JSONL audit log** at `<data_dir>/mcp_audit.log`.
 - **Stdout is JSON-RPC only**: structlog goes to stderr in MCP mode.
 - **No built-in auth** on MCP server (stdio-only by design — isolate
@@ -383,28 +388,29 @@ handshake (it's in the spec).
 
 **`hippo_run_task` returns the same answer ignoring memory.** Check
 `hippo_status` — `n_episodes` should be > 0 after a few runs. If it
-stays at 0, your `ENGRAM_DATA_DIR` may be ephemeral (per-shell tmp).
+stays at 0, your `VERIMEM_DATA_DIR` may be ephemeral (per-shell tmp).
 Pin it to a stable path.
 
 **Stdout pollution.** If your MCP client logs `Failed to parse JSONRPC
-message`, check that `ENGRAM_LOG_STDERR=1` is in the spawn env. The
-`engram mcp` entry point sets it automatically.
+message`, check that `VERIMEM_LOG_STDERR=1` is in the spawn env. The
+`verimem mcp` entry point sets it automatically.
 
-**Multi-tenant isolation.** Set `ENGRAM_DATA_DIR` per tenant. Every
+**Multi-tenant isolation.** Set `VERIMEM_DATA_DIR` per tenant. Every
 data path (episodes, skills, semantic, runs, reports) re-roots
 automatically.
 
 **Tool count saturating context.** 228 tools = ~27k tokens of schemas
 at session start. On 200k contexts that's ~13%. On 1M it's ~3%.
 You can mute the dashboard tool subset by setting
-`ENGRAM_DISABLE_DASHBOARD_TOOLS=1` (cuts ~15 tools, saves ~2k tokens)
+`VERIMEM_DISABLE_DASHBOARD_TOOLS=1` (cuts ~15 tools, saves ~2k tokens)
 — but the cost is generally worth paying for the recall capability
 you get back.
 
-**Old `hippo_*` tool names still work in CLAUDE.md / config?** Yes.
-For 3 months (until ~2026-08-13). The dispatcher normalizes
-`engram_X` → `hippo_X` at call time. After that, `engram_*` becomes
-canonical and `hippo_*` will return a deprecation error.
+**Old `hippo_*` / `engram_*` tool names still work in CLAUDE.md /
+config?** Yes, indefinitely for now. The dispatcher normalizes
+`verimem_X` and `engram_X` → `hippo_X` (the internal wire name) at
+call time; `verimem_*` is the canonical public spelling since the
+0.6.0 total rename.
 
 ---
 

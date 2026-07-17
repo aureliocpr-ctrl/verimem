@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 # Distribution (PyPI) name = "verimem". DECISION 2026-07-04 (owner): public
 # brand is **Verimem** — verimem.com purchased by the owner; PyPI/npm/.ai/.dev
-# verified free the same day (RELEASE_GATE G7 + naming due-diligence). The
-# Python package/module stays `engram` (import engram): "engram" remains the
-# architecture term in docs, Verimem is the product. Reserve the PyPI name
-# with a placeholder upload from the owner's account BEFORE any announcement.
-# Prior working names "hippoagent" (2026-06-07) and "Engram" retired as brands.
+# verified free the same day (RELEASE_GATE G7 + naming due-diligence).
+# TOTAL RENAME (0.6.0, owner decision 2026-07-17): the Python package IS
+# `verimem` (import verimem); `engram` and `hippoagent` are compat shims that
+# alias to it (identity: engram.X is verimem.X). Prior working names
+# "hippoagent" (2026-06-07) and "Engram" retired as brands AND as the package.
 name = "verimem"
-version = "0.5.0"
+version = "0.6.0"
 description = "Verified memory for AI agents: gated writes, provenance on every read, bi-temporal history, abstention instead of hallucination."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -65,9 +65,9 @@ dependencies = [
   # Provider registry + Settings v2
   "pyyaml>=6.0",
   "pydantic-settings>=2.14.2",   # sec floor: GHSA-4xgf-cpjx-pc3j fixed in 2.14.2 (pip-audit 2026-07-13)
-  # MCP server — the HEADLINE use (`engram mcp` for Claude Code / Cursor).
+  # MCP server — the HEADLINE use (`verimem mcp` for Claude Code / Cursor).
   # mcp_server.py imports it unconditionally and the README primary install
-  # documents `engram mcp`, so it MUST be core (audit P0-5 2026-06-07: was
+  # documents `verimem mcp`, so it MUST be core (audit P0-5 2026-06-07: was
   # extras-only -> fresh install crashed ModuleNotFoundError on first command).
   "mcp>=1.0.0",
 ]
@@ -173,9 +173,8 @@ Issues = "https://github.com/aureliocpr-ctrl/verimem/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-# `engram` = canonical package post-cycle-#41 rename.
-# `hippoagent` = backward-compat shim that re-exports engram.
-# `verimem` = the CANONICAL public alias package (lazy, non-deprecated).
+# `verimem` = the REAL canonical package (total rename, 0.6.0).
+# `engram` + `hippoagent` = backward-compat shims that alias to verimem.
 # `benchmark` is research harness, NOT shipped: it would squat the generic
 # top-level name "benchmark" in site-packages (PyPI release audit 2026-07-06);
 # the two research CLI commands that use it degrade with a clear message.
@@ -184,10 +183,12 @@ include = ["verimem*", "engram*", "hippoagent*"]
 [tool.setuptools.package-data]
 # Ship the dashboard's data assets INSIDE the wheel. Without these,
 # `pip install verimem` (and the Docker image) crash at startup with
-# "Directory '.../engram/static' does not exist" — StaticFiles + Jinja2
+# "Directory '.../verimem/static' does not exist" — StaticFiles + Jinja2
 # templates resolve relative to the INSTALLED package, not the source tree.
 # Found 2026-06-06 by actually running the built container (not by reading).
-engram = [
+# KEY = the real package name: after the 0.6.0 rename that is `verimem`
+# (a stale `engram` key here would ship a wheel with NO dashboard assets).
+verimem = [
     "static/*",
     "static/**/*",
     "templates/*",
@@ -229,12 +230,13 @@ markers = [
 # ─────────────────────────── coverage ───────────────────────────
 [tool.coverage.run]
 branch = true
-source = ["engram"]
+source = ["verimem"]
 omit = [
   # Pure UI surface — exercised manually, not in CI.
-  "engram/tui.py",
-  # Backward-compat shim (re-exports engram).
+  "verimem/tui.py",
+  # Backward-compat shims (alias to verimem).
   "hippoagent/*",
+  "engram/*",
   # Generated / cache directories.
   "*/site-packages/*",
   "*/tests/*",
@@ -281,4 +283,4 @@ ignore = [
 "benchmark/**/*.py" = ["B007"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["engram", "hippoagent", "benchmark"]
+known-first-party = ["verimem", "engram", "hippoagent", "benchmark"]

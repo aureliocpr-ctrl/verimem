@@ -2,15 +2,33 @@
 
 All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - Unreleased
 
 ### Changed
 - **Total package rename `engram` -> `verimem`** (branch `rename/verimem-total`).
   `verimem/` is now the real package (358 modules); `engram/` and `hippoagent/`
   are functional compat shims (identity preserved: `engram.X is verimem.X`).
   Data dir defaults to `~/.verimem` but reads an existing `~/.engram` untouched
-  (never migrated). Entry points, MCP server identity, and the singleton guard
-  all speak `verimem` (legacy `engram`/`hippo` commands still work).
+  (never migrated). Entry points, MCP server identity (`serverInfo.name ==
+  "verimem"`), and the singleton guard all speak `verimem` (legacy
+  `engram`/`hippo` commands still work). Env prefix canonical order is now
+  `VERIMEM_*` > `ENGRAM_*` > `HIPPO_*` (all three mirrored at import).
+  The shims are deliberately **silent** (no import-time DeprecationWarning):
+  emitting one would break every consumer running pytest with
+  `filterwarnings = error`; the deprecation is documental (docs + this entry).
+- **Wheel packaging follows the rename** — `[tool.setuptools.package-data]`
+  re-keyed `engram` -> `verimem` (a stale key would have shipped a wheel with
+  NO dashboard assets: static/, templates/, webui/ resolve inside the
+  installed package). Verified by building the wheel and listing it: assets
+  under `verimem/`, shims reduced to their single `__init__.py`. Coverage
+  `source`/`omit` and isort first-party updated the same way.
+- **Version 0.6.0** across the 4 enforced points (pyproject,
+  `verimem.__version__`, plugin.json, STATE.md — `test_version_single_source`
+  + `test_docs_version_consistency` green).
+- **User-facing docs sweep**: README quickstart + MCP_QUICKSTART now install
+  and configure `verimem mcp` with `VERIMEM_*` env names; historical audits,
+  benchmark arm labels and dated documents keep their original wording (they
+  describe the code as it was).
 
 
 ### Fixed
