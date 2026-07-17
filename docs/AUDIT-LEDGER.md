@@ -488,3 +488,38 @@ exfil-URL-across-newline + exfil-email-across-newline scattano. Lezione (già la
 madre della notte, riconfermata): un fix di normalizzazione che MUTA la copia di
 scansione può CANCELLARE detection quando il raw fallisce — "additivo" va provato
 sul caso dove solo la copia matcha, non assunto.
+
+## Modulo 15 — source_trust.py (Fase C mod.15, 2026-07-17 ~05:00): PULITO
+
+505 righe, trust-core adversariale (P85 self-echo, P88 deconfounding, independence-aware
+acceptance). Sweep adversariale su edge numerici + ordinamento trust → 0 difetti:
+- NaN weight NON contamina: `max(0.0, nan)` tiene 0.0 (clamp robusto), trust resta 0.5.
+- `stale_weight(half_life_s=0)` guardato → 1.0, nessun ZeroDivisionError.
+- ordine trust corretto: honest 0.667 > sleeper 0.25 (bad-outcome morde il min).
+- cartel di copie con `require_independent=True` → confirms=0 (no manufactured consensus).
+Nessun fix inventato su modulo robusto (A4). Il core del differenziatore-trust regge.
+
+---
+
+## SINTESI FASE C — audit riga-per-riga (2026-07-16→17, notturno)
+
+9 moduli auditati oltre ai giri 0-2. **14 difetti reali chiusi TDD** + 3 wording +
+2 moduli dichiarati PULITI senza inventare fix (A4):
+
+| mod | file | esito |
+|-----|------|-------|
+| 7 | guardian.py | 3 fix (dominanza per-VALORE, 2 crash guard) — critic 3-0 |
+| 8 | client.py | 2 fix (history full-trail, provenance unica) + 1 candidato confutato — critic 3-0 |
+| 9 | conversation_ingest.py | 3 fix (troncamento dichiarato, parser digit-safe, gap-fill belief) — critic 3-0 |
+| 10 | admission_gate.py | wording contradiction→strict (già hardened LOW-5) |
+| 11 | trust_ledger.py | 1 fix perf 2213ms→4ms (totals transazionali) + 1 counterexample-critic (backfill layer idempotente) |
+| 12 | redaction.py | 2 fix security (HF token, chiavi multi-segmento) + 1 counterexample-critic (classe eliminata non cappata) |
+| 13 | gateway_plans.py | PULITO (1 oss LOW aspirazionale) |
+| 14 | prompt_injection.py | 1 fix security (underscore bypass) + 1 counterexample-critic (dot-fold regrediva exfil) |
+| 15 | source_trust.py | PULITO (edge numerici + trust-order robusti) |
+
+**Nuove superfici prodotto** (gap trovati dai critic, chiusi col codice): `GET /v1/answer`,
+`GET /v1/correct`, shadow-ledger fase-1. **Perf**: odometro 550×. **Security**: 2 leak di
+segreti + 1 bypass injection chiusi. **Lezione madre (4× riconfermata)**: un critic 2-1 con
+counterexample-evidenza va SEMPRE onorato — i 4 fail-vote della notte avevano tutti ragione.
+**Ricevute claim: 14/14 ✅.** Tutto pushato, CI verde. Grafica congelata (mandato Aurelio).
