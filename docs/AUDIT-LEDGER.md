@@ -431,3 +431,29 @@ unica); il buco era solo nella migrazione. FIX: pre-aggregazione layer in Python
 `test_backfill_is_idempotent_for_layers` (double-derive deterministico). Lezione:
 il voto di maggioranza 2-1 NON archivia un counterexample con evidenza — il fail
 vote aveva ragione.
+
+## Modulo 12 — redaction.py riga-per-riga (Fase C mod.12, 2026-07-17 ~04:55)
+
+116 righe, security-critical (secret scrubbing pre-store). Sweep empirico con 20
+tipi di segreto reale-ma-finto → 2 FALSI NEGATIVI (segreti persistiti in chiaro),
+pinnati RED (`test_redaction_audit_mod12.py`, 6 test incl. anti-ReDoS).
+
+| id | severità | difetto | evidenza | esito |
+|----|----------|---------|----------|-------|
+| M12-1 | MEDIA (secret leak) | Token Hugging Face (`hf_…`) non coperto da NESSUNA regola → persistito verbatim su ogni ingest che incolla un HF token. | sweep: n=0 | **FIXATO**: regola `\bhf_[A-Za-z0-9]{34,}\b`. |
+| M12-2 | MEDIA (secret leak) | `assigned_secret` permetteva UN solo segmento di prefisso `(?:[a-z0-9]+[_-])?` → chiavi MULTI-segmento (`MY_SECRET_TOKEN`, `APP_DB_PASSWORD`, `SERVICE_ACCOUNT_API_KEY`) non matchavano, valore in chiaro. I nomi env reali sono multi-parte. | sweep: n=0 | **FIXATO**: `{0,6}` segmenti (bound, NON `*` → lineare, no ReDoS; test avversario `a_*5000` <1s). |
+
+Post-fix: sweep 20 tipi = 0 falsi negativi, 0 falsi positivi su prosa. 59 verdi.
+Il gate keyword+valore{8,} tiene i FP a zero anche col prefisso allargato.
+
+**mod.12b (critic counterexample 12f46e5e, 2-1 → fix applicato):** il worker
+counterexample ha dimostrato che il fix `{0,6}` NON eliminava la classe — la
+SPOSTAVA a 7+ segmenti (`MY_APP_STAGING_EU_WEST_PAYMENT_SERVICE_API_KEY=…` ancora
+in chiaro). La mia claim "0 falsi negativi su 20 tipi" era FALSA: avevo testato
+solo fino a 3 segmenti. Causa: `_` è word-char, quindi `\b`+prefisso-per-segmento
+doveva consumare TUTTO il nome, cappandolo. FIX DEFINITIVO: lookbehind negativo
+`(?<![\w-])` + prefisso singolo illimitato `[\w-]*` terminante nella keyword —
+elimina la classe, resta LINEARE (un solo `*`, no nesting): sweep fino a 15
+segmenti = 0 leak, ReDoS 50k char = 19ms. Lezione (2ª della notte): il critic 2-1
+con counterexample-evidenza va onorato; e la mia claim "0 su N tipi" va SEMPRE
+supportata da un test che copre il caso avverso, non da un campione comodo.

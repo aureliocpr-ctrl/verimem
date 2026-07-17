@@ -76,6 +76,9 @@ _RULES: list[tuple[str, re.Pattern, object]] = [
         r"https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]{16,}"),
         f"{_REDACT}:slack_webhook"),
     ("twilio_sid", re.compile(r"\bAC[0-9a-fA-F]{32}\b"), f"{_REDACT}:twilio_sid"),
+    # M12-1 (audit mod.12 2026-07-17): Hugging Face tokens leaked verbatim —
+    # no rule matched them. hf_ + 34+ base62 (user & org tokens).
+    ("hf_token", re.compile(r"\bhf_[A-Za-z0-9]{34,}\b"), f"{_REDACT}:hf_token"),
     # A-1 (audit#2 2026-06-08): allow an OPTIONAL snake/kebab prefix segment so
     # compound keys match (db_password, app_secret, access_token, MYAPP_API_KEY,
     # service_account_key). The bare leading \b used to require a boundary that
@@ -89,8 +92,17 @@ _RULES: list[tuple[str, re.Pattern, object]] = [
     # Value is now a quote-delimited span (any inner chars, incl. spaces) OR a
     # whitespace/quote/separator-terminated run (captures @ $ ! etc.). The
     # secret-keyword key gate (group 1) keeps false positives near zero.
+    # M12-2 + M12-b (audit mod.12 + critic 12f46e5e, 2026-07-17): the prefix
+    # first allowed ONE segment, then a bounded {0,6} — both just MOVED the
+    # false negative (a 7+-segment env var like
+    # MY_APP_STAGING_EU_WEST_PAYMENT_SERVICE_API_KEY=… still leaked). Root
+    # cause: '_' is a word char, so the leading \b + a per-segment prefix had
+    # to consume the WHOLE key name, capping matchable segments. Fixed by
+    # ELIMINATING the class: a left boundary via negative-lookbehind, then a
+    # single unbounded [\w-]* prefix ending in the secret keyword. Unbounded
+    # but LINEAR (one '*', no nesting) — the ReDoS test drives a 10k-char run.
     ("assigned_secret", re.compile(
-        r"(?i)\b((?:[a-z0-9]+[_-])?(?:api[_-]?key|secret|token|access[_-]?key|"
+        r"(?i)(?<![\w-])([\w-]*(?:api[_-]?key|secret|token|access[_-]?key|"
         r"access[_-]?token|auth[_-]?token|password|passwd|passphrase|pwd|"
         r"account[_-]?key|private[_-]?key(?:[_-]?id)?|client[_-]?secret|"
         r"refresh[_-]?token|sas[_-]?token))\b"
