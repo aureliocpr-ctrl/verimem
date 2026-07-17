@@ -419,3 +419,15 @@ CLAIM-vs-DEFAULT del FLAGS-AUDIT (i "gemelli" della lezione gate-spenti 13/7):
 | id | severità | difetto | evidenza | esito |
 |----|----------|---------|----------|-------|
 | M11-1 | MEDIA (scala enterprise) | `stats()` = GROUP BY full-scan su tabella append-only ILLIMITATA, richiamato dalla console ogni 30s (famiglia SSE-DoS). Misura 1M eventi: **2213 ms/call**. Due ipotesi sbagliate uccise dalla misura: indici semplici −15% (2213→1887, il costo è il row-count); totals solo action/layer → **1758 ms** (la finestra daily aggregava ancora le righe della finestra). | probe 1M eventi, 3 misure | **FIXATO**: totals per-action + per-layer + **per-giorno** mantenuti NELLA STESSA transazione dell'insert (mai drift), backfill lazy one-time (31gg day-totals) per store esistenti, daily O(days) via chiave lessicografica 'YYYY-MM-DD|action'. **Regime: 4 ms (550×)**. Tabella eventi grezza INTATTA (audit trail). 5 test (totals==verità, backfill, pin strutturale anti-full-scan, fail-open). |
+
+**mod.11b (critic counterexample fc026f13, 2-1 claim_holds → fix applicato):** il
+worker counterexample ha trovato che il BACKFILL one-time dei layer usava
+`DO UPDATE SET n = n + excluded.n` (accumulate) — non idempotente. In rollback-
+journal (SQLite default, nessun WAL nel codice) due primi-accessi concorrenti
+passano entrambi il check-del-mark (TOCTOU) e ri-derivano: i totali per-layer si
+RADDOPPIANO in modo permanente. Il write-path a regime era già safe (transazione
+unica); il buco era solo nella migrazione. FIX: pre-aggregazione layer in Python
++ `DO NOTHING` idempotente (come action/day) → re-derive = no-op. Test
+`test_backfill_is_idempotent_for_layers` (double-derive deterministico). Lezione:
+il voto di maggioranza 2-1 NON archivia un counterexample con evidenza — il fail
+vote aveva ragione.

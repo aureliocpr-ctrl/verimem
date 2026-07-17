@@ -86,3 +86,31 @@ def test_failopen_still_counts_failures(tmp_path):
     led = TrustLedger(tmp_path / "no" / "such" / "dir" / "x.db")
     led.record("admitted")                    # unwritable → swallowed
     assert led.write_failures == 1
+
+
+def test_backfill_is_idempotent_for_layers(tmp_path):
+    # mod.11b (critic counterexample fc026f13, 2-1): the layer backfill used
+    # DO UPDATE accumulate, so a concurrent double-derive (TOCTOU on the mark
+    # in rollback-journal) would DOUBLE the per-layer totals permanently.
+    # Simulate the double-derive deterministically: derive, clear the mark,
+    # derive again — an idempotent backfill must not change the layer counts.
+    db = tmp_path / "dbl.db"
+    con = sqlite3.connect(db)
+    con.execute("CREATE TABLE trust_ledger (id INTEGER PRIMARY KEY, ts REAL "
+                "NOT NULL, action TEXT NOT NULL, layers TEXT NOT NULL "
+                "DEFAULT '', topic TEXT NOT NULL DEFAULT '')")
+    now = time.time()
+    con.executemany(
+        "INSERT INTO trust_ledger (ts, action, layers, topic) VALUES (?,?,?,?)",
+        [(now, "quarantined", "L1,L4", "t")] * 3)
+    con.commit(); con.close()
+    led = TrustLedger(db)
+    first = led.stats()["by_layer"]
+    assert first == {"L1": 3, "L4": 3}
+    # force a second backfill (the racer that read mark=None before the first
+    # committed) by deleting the done-mark, then re-open
+    con = sqlite3.connect(db)
+    con.execute("DELETE FROM trust_ledger_totals WHERE kind='meta'")
+    con.commit(); con.close()
+    second = TrustLedger(db).stats()["by_layer"]
+    assert second == {"L1": 3, "L4": 3}, f"layers doubled on re-derive: {second}"

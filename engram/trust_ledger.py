@@ -92,16 +92,23 @@ class TrustLedger:
                     "INSERT INTO trust_ledger_totals (kind, key, n) VALUES "
                     "('action', ?, ?) ON CONFLICT(kind, key) DO NOTHING",
                     (action, int(n)))
+        # layers are comma-joined per row, so pre-aggregate in Python and write
+        # ONE absolute value per layer with DO NOTHING — critic mod.11b
+        # (fc026f13): a per-row DO UPDATE accumulate is NOT idempotent, so a
+        # concurrent double-derive (TOCTOU on the mark) doubled the per-layer
+        # totals. DO NOTHING makes the re-derive a no-op, like action/day.
+        layer_counts: dict[str, int] = {}
         for layers, n in conn.execute(
                 "SELECT layers, COUNT(*) FROM trust_ledger "
                 "WHERE layers != '' GROUP BY layers"):
             for layer in str(layers).split(","):
                 if layer:
-                    conn.execute(
-                        "INSERT INTO trust_ledger_totals (kind, key, n) "
-                        "VALUES ('layer', ?, ?) ON CONFLICT(kind, key) "
-                        "DO UPDATE SET n = n + excluded.n",
-                        (layer, int(n)))
+                    layer_counts[layer] = layer_counts.get(layer, 0) + int(n)
+        for layer, n in layer_counts.items():
+            conn.execute(
+                "INSERT INTO trust_ledger_totals (kind, key, n) VALUES "
+                "('layer', ?, ?) ON CONFLICT(kind, key) DO NOTHING",
+                (layer, n))
         # day totals: only the recent window matters (the series shows 14
         # days) — backfill 31 days so a wider caller still has data.
         cutoff = time.time() - 31 * 86400.0
