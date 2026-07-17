@@ -193,6 +193,17 @@ def _normalize_for_detection(text: str) -> str:
     # preserved/stored) so a one-line gap cannot defeat the override / role-hijack
     # / exfiltration class.
     t = re.sub(r"[\r\n]+", " ", t)
+    # Audit mod.14 (2026-07-17): '_' is a word char, so it suppressed the \b
+    # boundaries the override/role-hijack patterns rely on —
+    # "ignore_all_previous_instructions" slipped through while every non-word
+    # separator (/, |, ~, :, *) fired. A '.' between words does the same via the
+    # bridges' [^.\n] exclusion. Fold BOTH to a space in the scan copy (raw is
+    # scanned first, so this only ADDS detection), but ONLY when word-attached:
+    # '_' anywhere, and '.' followed by a word char — a sentence boundary
+    # ". Next" keeps its dot, so legit prose ("clear. Ignore previous drafts")
+    # is NOT collapsed into a false positive.
+    t = t.replace("_", " ")
+    t = re.sub(r"\.(?=\w)", " ", t)
     t = t.translate(_CONFUSABLES)
     t = unicodedata.normalize("NFKD", t)
     t = "".join(ch for ch in t if unicodedata.category(ch) not in ("Cf", "Mn"))

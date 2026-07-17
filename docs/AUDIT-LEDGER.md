@@ -432,6 +432,8 @@ unica); il buco era solo nella migrazione. FIX: pre-aggregazione layer in Python
 il voto di maggioranza 2-1 NON archivia un counterexample con evidenza — il fail
 vote aveva ragione.
 
+## Modulo 13 — gateway_plans.py (Fase C mod.13, 2026-07-17 ~05:35): PULITO — get_plan fail-to-least-privilege, within_facts senza off-by-one, quota_status coerente. 1 oss LOW: max_document_bytes è aspirazionale (cap per document-ingest, ma il gateway non espone document-ingest = SDK-only; quota_status lo riporta senza path per superarlo). Nessun fix inventato su modulo pulito (A4).
+
 ## Modulo 12 — redaction.py riga-per-riga (Fase C mod.12, 2026-07-17 ~04:55)
 
 116 righe, security-critical (secret scrubbing pre-store). Sweep empirico con 20
@@ -457,3 +459,19 @@ elimina la classe, resta LINEARE (un solo `*`, no nesting): sweep fino a 15
 segmenti = 0 leak, ReDoS 50k char = 19ms. Lezione (2ª della notte): il critic 2-1
 con counterexample-evidenza va onorato; e la mia claim "0 su N tipi" va SEMPRE
 supportata da un test che copre il caso avverso, non da un campione comodo.
+
+## Modulo 14 — prompt_injection.py riga-per-riga (Fase C mod.14, 2026-07-17 ~06:05)
+
+322 righe, security-critical (detector anti-poisoning). Sweep adversariale di
+evasione → 1 BYPASS reale, pinnato RED (`test_injection_audit_mod14.py`, 6 test).
+
+| id | severità | difetto | evidenza | esito |
+|----|----------|---------|----------|-------|
+| M14-1 | MEDIA (evasion bypass) | Separatore UNDERSCORE non rilevato: `ignore_all_previous_instructions` PASSAVA mentre ogni separatore non-word (`/ \| ~ : *`) scattava — `_` è word-char, sopprime i `\b` boundary dei pattern. Idem `.` tra parole (i bridge escludono `.` via `[^.\n]`). | sweep: 2/12 bypass | **FIXATO**: normalizzazione fold `_`→spazio (sempre) e `.`→spazio SOLO se word-attached (`\.(?=\w)`), così i confini di frase `". Frase"` restano → 0 FP su prosa. Il raw è scansionato prima = fix solo-additivo. |
+
+Limite RESIDUO dichiarato (A4, non gonfiato): doppia-evasione letter-spacing su
+PIÙ parole (`i_g_n_o_r_e a_l_l`) resta non-folded — stessa classe del limite
+"uniform multi-space" già documentato nel modulo: una volta che ogni gap è un
+singolo spazio, il collapse non distingue il confine intra-parola da quello
+inter-parola. Post-fix: 0 bypass su separatori comuni, 0 FP prosa, 388
+injection/security test verdi.
