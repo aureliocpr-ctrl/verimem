@@ -36,7 +36,13 @@ honest *"I don't know."*
   learned it*. Query the past (`as_of`), see transitions ("changed from X to Y
   on date Z"), and audit every revision.
 - **Abstention by design** — on questions the store cannot support, Verimem
-  says so. Memory-boundary abstention holds at 1.0 across our end-to-end runs.
+  says so instead of stitching an answer from the nearest-but-irrelevant facts.
+  Memory-boundary abstention holds at 1.0 across our end-to-end runs. It is **ON
+  by default on every served surface** (gateway/console self-calibrate the floor
+  per tenant); in the embedded SDK it is one switch away —
+  `explain(..., min_relevance="auto")` or `ENGRAM_MIN_RELEVANCE=auto` — left
+  permissive by default so a brand-new, near-empty store doesn't over-abstain
+  while it fills up (the floor is sharpest on real-size corpora).
 - **Document memory with exact citations** — index PDF/DOCX/HTML/EPUB/text
   files; semantic search returns passages with file, version and character
   offsets; passages can be promoted to memory *through the gate*, citation
