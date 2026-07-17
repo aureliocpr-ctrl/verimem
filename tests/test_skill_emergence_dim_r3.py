@@ -14,7 +14,7 @@ import sqlite3
 
 import numpy as np
 
-from engram import skill_emergence_detector as sed
+from verimem import skill_emergence_detector as sed
 
 
 def _make_facts_db(path, dim: int, ids: list[str]):

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.llm import LLMError, _is_blocked_host
+from verimem.llm import LLMError, _is_blocked_host
 
 
 @pytest.mark.parametrize(
@@ -54,7 +54,7 @@ def test_allows_legit_endpoints(url):
 def test_openai_compat_client_rejects_metadata_base_url():
     # The guard must fire BEFORE the openai client is constructed (so it does
     # not even depend on the openai package being importable).
-    from engram.llm import OpenAICompatLLM
+    from verimem.llm import OpenAICompatLLM
 
     with pytest.raises(LLMError):
         OpenAICompatLLM(

@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.anti_confabulation import (
+from verimem.anti_confabulation import (
     SHIPPED_KEYWORDS,
     detect_unsupported_shipped_claim,
 )
@@ -124,7 +124,7 @@ class TestSemanticStoreWiresL1Warning:
     ) -> None:
         import logging
 
-        from engram.semantic import Fact, SemanticMemory
+        from verimem.semantic import Fact, SemanticMemory
 
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         fact = Fact(
@@ -134,7 +134,7 @@ class TestSemanticStoreWiresL1Warning:
             verified_by=["tool:agent:no_commit_ref"],
             status="model_claim",
         )
-        with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+        with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
             sm.store(fact)
         anti_confab_messages = [
             r.getMessage() for r in caplog.records
@@ -151,7 +151,7 @@ class TestSemanticStoreWiresL1Warning:
     ) -> None:
         import logging
 
-        from engram.semantic import Fact, SemanticMemory
+        from verimem.semantic import Fact, SemanticMemory
 
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         fact = Fact(
@@ -160,7 +160,7 @@ class TestSemanticStoreWiresL1Warning:
             topic="user_facts",
             status="model_claim",
         )
-        with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+        with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
             sm.store(fact)
         for r in caplog.records:
             assert "L1 anti-confabulation" not in r.getMessage(), (

@@ -9,8 +9,8 @@ azzera base_url, cosi apply_to_env poppa l'override stale.
 """
 from __future__ import annotations
 
-from engram.dashboard_routes.settings import _apply_preset_to_settings
-from engram.settings import UserSettings
+from verimem.dashboard_routes.settings import _apply_preset_to_settings
+from verimem.settings import UserSettings
 
 
 def test_preset_resets_base_url():

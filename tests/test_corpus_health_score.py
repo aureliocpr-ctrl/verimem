@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -37,7 +37,7 @@ class _FakeAgent:
 
 
 def test_empty_returns_neutral():
-    from engram.corpus_health_score import compute_health_score
+    from verimem.corpus_health_score import compute_health_score
 
     a = _FakeAgent([], [])
     out = compute_health_score(agent=a)
@@ -46,7 +46,7 @@ def test_empty_returns_neutral():
 
 
 def test_high_success_high_promoted_high_score():
-    from engram.corpus_health_score import compute_health_score
+    from verimem.corpus_health_score import compute_health_score
 
     skills = [
         Skill(id=f"s{i}", status="promoted", trials=10, successes=9)
@@ -59,7 +59,7 @@ def test_high_success_high_promoted_high_score():
 
 
 def test_all_failure_low_score():
-    from engram.corpus_health_score import compute_health_score
+    from verimem.corpus_health_score import compute_health_score
 
     skills = [
         Skill(id=f"s{i}", status="candidate", trials=10, successes=1)
@@ -72,7 +72,7 @@ def test_all_failure_low_score():
 
 
 def test_includes_components():
-    from engram.corpus_health_score import compute_health_score
+    from verimem.corpus_health_score import compute_health_score
 
     a = _FakeAgent([], [])
     out = compute_health_score(agent=a)
@@ -80,7 +80,7 @@ def test_includes_components():
 
 
 def test_payload_shape():
-    from engram.corpus_health_score import compute_health_score
+    from verimem.corpus_health_score import compute_health_score
 
     a = _FakeAgent([], [])
     out = compute_health_score(agent=a)
@@ -89,7 +89,7 @@ def test_payload_shape():
 
 
 def test_verdict_string():
-    from engram.corpus_health_score import compute_health_score
+    from verimem.corpus_health_score import compute_health_score
 
     a = _FakeAgent([], [])
     out = compute_health_score(agent=a)

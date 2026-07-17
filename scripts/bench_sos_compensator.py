@@ -111,7 +111,7 @@ def _partition_jaccard(p1: list[set[str]], p2: list[set[str]]) -> float:
 def _louvain(db: Path, seed: int = 42) -> list[set[str]]:
     import networkx as nx
 
-    from engram.community_detector import _load_graph
+    from verimem.community_detector import _load_graph
     g = _load_graph(db, "both")
     if g.number_of_nodes() == 0:
         return []
@@ -123,7 +123,7 @@ def _louvain(db: Path, seed: int = 42) -> list[set[str]]:
 
 def run_one_arm(src: Path, k: int, mode: str, n_seed: int = 0) -> dict:
     """One arm: copy DB, inject k facts in mode, measure ΔJ."""
-    from engram.sos_compensator import (
+    from verimem.sos_compensator import (
         select_compensated_anchor,
         select_vanilla_anchor,
     )

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from engram.agent_scope import (
+from verimem.agent_scope import (
     count_by_agent,
     filter_facts_by_agent,
     tag_for_agent,

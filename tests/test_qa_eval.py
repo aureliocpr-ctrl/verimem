@@ -16,7 +16,7 @@ from benchmark.qa_eval import (
     parse_judge_label,
     score_qa,
 )
-from engram.llm import MockLLM
+from verimem.llm import MockLLM
 
 
 def test_judge_abstention_empty_prediction_is_correct() -> None:

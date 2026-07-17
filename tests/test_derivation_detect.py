@@ -5,7 +5,7 @@ superseded parent, or a partial quote must NOT create an edge (a false edge = fa
 """
 from __future__ import annotations
 
-from engram.derivation_detect import detect_derivations
+from verimem.derivation_detect import detect_derivations
 
 
 def _f(i, prop, superseded_by=None):

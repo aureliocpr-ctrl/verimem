@@ -12,14 +12,14 @@ class _Item:
 
 
 def test_empty_returns_zero_velocity():
-    from engram.stats_velocity import compute_velocity
+    from verimem.stats_velocity import compute_velocity
     out = compute_velocity(episodes=[], facts=[])
     assert out["episodes_per_day"] == 0.0
     assert out["facts_per_day"] == 0.0
 
 
 def test_velocity_from_recent_items():
-    from engram.stats_velocity import compute_velocity
+    from verimem.stats_velocity import compute_velocity
     now = time.time()
     eps = [_Item(f"e{i}", created_at=now - i * 86400) for i in range(7)]
     out = compute_velocity(episodes=eps, facts=[], window_days=7, now=now)
@@ -28,7 +28,7 @@ def test_velocity_from_recent_items():
 
 
 def test_only_recent_window_counted():
-    from engram.stats_velocity import compute_velocity
+    from verimem.stats_velocity import compute_velocity
     now = time.time()
     # 1 recent + 10 old
     eps = (
@@ -42,7 +42,7 @@ def test_only_recent_window_counted():
 
 
 def test_payload_keys():
-    from engram.stats_velocity import compute_velocity
+    from verimem.stats_velocity import compute_velocity
     out = compute_velocity(episodes=[], facts=[])
     for k in ("episodes_per_day", "facts_per_day", "n_episodes_recent",
               "n_facts_recent", "window_days"):
@@ -50,7 +50,7 @@ def test_payload_keys():
 
 
 def test_window_days_respected():
-    from engram.stats_velocity import compute_velocity
+    from verimem.stats_velocity import compute_velocity
     now = time.time()
     eps = [_Item(f"e{i}", created_at=now - i * 86400) for i in range(30)]
     out = compute_velocity(episodes=eps, facts=[], window_days=10, now=now)
@@ -59,7 +59,7 @@ def test_window_days_respected():
 
 
 def test_zero_window_handled():
-    from engram.stats_velocity import compute_velocity
+    from verimem.stats_velocity import compute_velocity
     now = time.time()
     eps = [_Item("e1", created_at=now)]
     out = compute_velocity(episodes=eps, facts=[], window_days=0.001, now=now)

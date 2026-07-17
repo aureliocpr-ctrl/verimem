@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from engram.backup import _is_sane_backup, rotate_backups
+from verimem.backup import _is_sane_backup, rotate_backups
 
 _SQLITE_HEADER = b"SQLite format 3\x00"
 

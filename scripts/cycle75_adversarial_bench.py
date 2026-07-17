@@ -11,8 +11,8 @@ import re
 import time
 from pathlib import Path
 
-from engram.semantic import SemanticMemory
-from engram.syntax_pollution import (
+from verimem.semantic import SemanticMemory
+from verimem.syntax_pollution import (
     PollutionError,
     detect_xml_markup,
     is_polluted,

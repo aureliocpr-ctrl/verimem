@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.briefing_stats import compute_stats
+from verimem.briefing_stats import compute_stats
 
 
 def _write_jsonl(path: Path, records: list[dict]) -> None:

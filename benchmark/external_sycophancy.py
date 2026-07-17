@@ -90,7 +90,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
         mem, fact_ids, ingest = build_store(items, Path(td) / "syc.db")
         if args.tau == "auto":
-            from engram.relevance_floor import estimate_relevance_floor
+            from verimem.relevance_floor import estimate_relevance_floor
             tau = estimate_relevance_floor(mem.semantic)
         else:
             tau = float(args.tau)

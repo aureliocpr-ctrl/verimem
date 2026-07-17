@@ -48,7 +48,7 @@ def _normalize(v: np.ndarray) -> np.ndarray:
 
 
 def test_drift_moves_context_toward_recent_obs():
-    from engram.context_engine import ContextEngine
+    from verimem.context_engine import ContextEngine
 
     rng = np.random.default_rng(seed=1)
     a = _normalize(rng.standard_normal(64).astype(np.float32))
@@ -83,7 +83,7 @@ def test_drift_moves_context_toward_recent_obs():
 
 
 def test_steady_state_with_repeated_observation():
-    from engram.context_engine import ContextEngine
+    from verimem.context_engine import ContextEngine
 
     rng = np.random.default_rng(seed=2)
     obs = _normalize(rng.standard_normal(32).astype(np.float32))
@@ -100,7 +100,7 @@ def test_steady_state_with_repeated_observation():
 
 
 def test_reset_returns_to_zero_state():
-    from engram.context_engine import ContextEngine
+    from verimem.context_engine import ContextEngine
 
     rng = np.random.default_rng(seed=3)
     obs = _normalize(rng.standard_normal(16).astype(np.float32))
@@ -117,7 +117,7 @@ def test_reset_returns_to_zero_state():
 
 
 def test_initial_state_is_zero_norm_or_seeded():
-    from engram.context_engine import ContextEngine
+    from verimem.context_engine import ContextEngine
 
     eng = ContextEngine(dim=16, rho=0.85)
     # Default: zero state — first observation IS the context after one step.
@@ -130,7 +130,7 @@ def test_initial_state_is_zero_norm_or_seeded():
 def test_rho_one_freezes_context():
     """ρ=1 means the new observation contributes 0 — the context never
     moves. Edge case kept correct for tuning."""
-    from engram.context_engine import ContextEngine
+    from verimem.context_engine import ContextEngine
 
     rng = np.random.default_rng(seed=4)
     a = _normalize(rng.standard_normal(8).astype(np.float32))
@@ -150,7 +150,7 @@ def test_rho_one_freezes_context():
 def test_rho_zero_makes_context_equal_latest():
     """ρ=0 means the context is just the latest observation — useful
     for "fully-reactive" tasks where memory of the past is harmful."""
-    from engram.context_engine import ContextEngine
+    from verimem.context_engine import ContextEngine
 
     rng = np.random.default_rng(seed=5)
     a = _normalize(rng.standard_normal(8).astype(np.float32))
@@ -168,7 +168,7 @@ def test_rho_zero_makes_context_equal_latest():
 def test_observation_with_wrong_dim_raises():
     """Defensive: feeding an observation of the wrong dimensionality
     should fail loudly, not silently corrupt the context vector."""
-    from engram.context_engine import ContextEngine
+    from verimem.context_engine import ContextEngine
 
     eng = ContextEngine(dim=8, rho=0.85)
     bad = np.zeros(16, dtype=np.float32)

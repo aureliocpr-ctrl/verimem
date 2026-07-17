@@ -31,7 +31,7 @@ def test_entity_edges_table_exists(tmp_path: Path) -> None:
     con le colonne attese (PK su (src, dst, predicate))."""
     import sqlite3
 
-    from engram.entity_kg import EntityStore
+    from verimem.entity_kg import EntityStore
 
     db_path = tmp_path / "entity_kg.db"
     EntityStore(db_path=db_path)  # init + migrations
@@ -48,7 +48,7 @@ def test_entity_edges_table_exists(tmp_path: Path) -> None:
 
 def test_add_edge_idempotent(tmp_path: Path) -> None:
     """RED: add_edge(src, dst, predicate) due volte non duplica."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid_a = store.store(Entity(canonical_name="Tonegawa", type="person"))
@@ -69,7 +69,7 @@ def test_add_edge_idempotent(tmp_path: Path) -> None:
 def test_neighbors_hops_1(tmp_path: Path) -> None:
     """RED: neighbors(X, hops=1) ritorna i diretti adiacenti con
     distance=1."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid_a = store.store(Entity(canonical_name="A"))
@@ -87,7 +87,7 @@ def test_neighbors_hops_1(tmp_path: Path) -> None:
 def test_neighbors_hops_2(tmp_path: Path) -> None:
     """RED: neighbors(X, hops=2) include entity a 2 hop di distanza,
     cap k limita l'output finale."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid_a = store.store(Entity(canonical_name="A"))
@@ -116,7 +116,7 @@ def test_ppr_retrieve_ranking_seed_first(tmp_path: Path) -> None:
     """RED: ppr_retrieve([X]) su grafo X→Y deve ritornare ranking
     dove X (seed) ha score >= Y (non-seed). Convenzione PPR: il seed
     accumula own-mass dalla personalization."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid_x = store.store(Entity(canonical_name="X"))
@@ -142,7 +142,7 @@ def test_ppr_retrieve_ranking_seed_first(tmp_path: Path) -> None:
 def test_ppr_retrieve_deterministic(tmp_path: Path) -> None:
     """RED: 3 chiamate consecutive con stesso input → stesso ranking
     + stesso score (deterministic, no seed random)."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     ids = []
@@ -169,7 +169,7 @@ def test_ppr_retrieve_deterministic(tmp_path: Path) -> None:
 def test_ppr_retrieve_aggregates_facts(tmp_path: Path) -> None:
     """RED: ppr_retrieve ritorna anche i fact_id collegati alle entity
     top-k via entity_facts (unione, no duplicate)."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid_x = store.store(Entity(canonical_name="X"))
@@ -203,8 +203,8 @@ def fake_agent_with_graph(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ):
     """Build a fake agent with a real EntityStore + 3 entity + 2 edge."""
-    from engram import mcp_server
-    from engram.entity_kg import Entity, EntityStore
+    from verimem import mcp_server
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid_a = store.store(Entity(canonical_name="EntityA", type="t"))
@@ -225,7 +225,7 @@ async def _invoke_tool(
 ) -> list[str]:
     from mcp.types import CallToolRequest, CallToolRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[CallToolRequest]
     req = CallToolRequest(
@@ -242,7 +242,7 @@ async def test_three_new_tools_listed(fake_agent_with_graph) -> None:
     """RED: i 3 tool nuovi devono apparire in tools/list."""
     from mcp.types import ListToolsRequest, PaginatedRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[ListToolsRequest]
     req = ListToolsRequest(

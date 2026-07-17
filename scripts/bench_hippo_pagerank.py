@@ -29,10 +29,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.episode import Episode, Trace
-from engram.hippo_pagerank import retrieve_pagerank
-from engram.memory import EpisodicMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.episode import Episode, Trace
+from verimem.hippo_pagerank import retrieve_pagerank
+from verimem.memory import EpisodicMemory
+from verimem.skill import Skill, SkillLibrary
 
 
 @dataclass

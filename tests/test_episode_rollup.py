@@ -22,14 +22,14 @@ class _Ep:
 
 
 def test_empty_returns_empty():
-    from engram.episode_rollup import rollup_old_episodes
+    from verimem.episode_rollup import rollup_old_episodes
     out = rollup_old_episodes([])
     assert out["rollups"] == []
     assert out["n_episodes_rolled"] == 0
 
 
 def test_recent_episodes_not_rolled():
-    from engram.episode_rollup import rollup_old_episodes
+    from verimem.episode_rollup import rollup_old_episodes
     now = time.time()
     eps = [
         _Ep(f"e{i}", "WordPress RCE", "success",
@@ -42,7 +42,7 @@ def test_recent_episodes_not_rolled():
 
 
 def test_old_cluster_rolled():
-    from engram.episode_rollup import rollup_old_episodes
+    from verimem.episode_rollup import rollup_old_episodes
     now = time.time()
     eps = [
         _Ep(f"e{i}", "WordPress RCE", "success",
@@ -57,7 +57,7 @@ def test_old_cluster_rolled():
 
 
 def test_rollup_counts_outcomes():
-    from engram.episode_rollup import rollup_old_episodes
+    from verimem.episode_rollup import rollup_old_episodes
     now = time.time()
     eps = (
         [_Ep(f"s{i}", "exploit X", "success",
@@ -73,7 +73,7 @@ def test_rollup_counts_outcomes():
 
 
 def test_min_cluster_size_filter():
-    from engram.episode_rollup import rollup_old_episodes
+    from verimem.episode_rollup import rollup_old_episodes
     now = time.time()
     eps = [
         _Ep("e1", "rare task", "success", created_at=now - 86400 * 60),
@@ -87,7 +87,7 @@ def test_min_cluster_size_filter():
 
 
 def test_rollup_includes_summary():
-    from engram.episode_rollup import rollup_old_episodes
+    from verimem.episode_rollup import rollup_old_episodes
     now = time.time()
     eps = [_Ep(f"e{i}", "exploit X", "success",
                created_at=now - 86400 * 60) for i in range(5)]
@@ -98,7 +98,7 @@ def test_rollup_includes_summary():
 
 
 def test_payload_shape():
-    from engram.episode_rollup import rollup_old_episodes
+    from verimem.episode_rollup import rollup_old_episodes
     out = rollup_old_episodes([])
     for k in ("rollups", "n_episodes_rolled", "n_clusters"):
         assert k in out

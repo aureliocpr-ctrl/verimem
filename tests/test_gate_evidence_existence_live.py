@@ -16,8 +16,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from engram import mcp_server
-from engram.semantic import SemanticMemory
+from verimem import mcp_server
+from verimem.semantic import SemanticMemory
 
 
 def _repo_root() -> Path:

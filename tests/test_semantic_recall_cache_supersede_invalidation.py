@@ -35,7 +35,7 @@ from pathlib import Path
 def _store_pair(sm) -> tuple:
     """Helper: create two live facts (A, B) in the given store, warm the
     recall cache, and return the ids."""
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
 
     a = Fact(
         id="a-aaaa", proposition="alpha old claim",
@@ -62,7 +62,7 @@ class TestSupersedeBumpsCacheVersion:
     def test_supersede_invalidates_recall_cache(
         self, tmp_path: Path,
     ) -> None:
-        from engram.semantic import SemanticMemory
+        from verimem.semantic import SemanticMemory
 
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         a, b = _store_pair(sm)
@@ -97,7 +97,7 @@ class TestSupersedeReasonUpdateBumpsCacheVersion:
     def test_reason_only_update_keeps_invariant(
         self, tmp_path: Path,
     ) -> None:
-        from engram.semantic import SemanticMemory
+        from verimem.semantic import SemanticMemory
 
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         a, b = _store_pair(sm)
@@ -125,7 +125,7 @@ class TestRestoreSupersessionSnapshotsBumpsCacheVersion:
     def test_rollback_restores_a_as_live_in_recall(
         self, tmp_path: Path,
     ) -> None:
-        from engram.semantic import SemanticMemory
+        from verimem.semantic import SemanticMemory
 
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         a, b = _store_pair(sm)

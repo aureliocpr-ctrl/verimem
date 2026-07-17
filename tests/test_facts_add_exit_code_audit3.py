@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typer.testing import CliRunner
 
-from engram.cli import facts_app
+from verimem.cli import facts_app
 
 
 def _iso_env(tmp_path, monkeypatch) -> None:

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 _DAY = 86400.0
 
@@ -53,7 +53,7 @@ def test_reconcile_age_gap_uses_asserted_at(tmp_path) -> None:
     EVENT time now, not in transaction time. (Entities linked manually, same
     pattern as test_reconcile_on_write_wiring — the extraction regex is not
     under test here.)"""
-    from engram.entity_kg import Entity
+    from verimem.entity_kg import Entity
 
     base = time.time() - 60 * _DAY
     sm = SemanticMemory(db_path=tmp_path / "s.db")
@@ -75,7 +75,7 @@ def test_reconcile_age_gap_uses_asserted_at(tmp_path) -> None:
 
 
 def test_classify_conflict_prefers_asserted_at() -> None:
-    from engram.truth_reconciliation import classify_conflict
+    from verimem.truth_reconciliation import classify_conflict
     now = time.time()
     # created_at identical (same ingest batch); asserted_at 30 days apart
     old = Fact(id="o", proposition="income is 3500", topic="t",
@@ -93,7 +93,7 @@ def test_classify_conflict_future_assertion_cannot_supersede_present() -> None:
     delete the present fact at write time. Fail-safe direction: dispute
     (recoverable, surfaces in the TrustReport); promoting the fact once its
     time arrives is a re-reconcile concern, not a write-path one."""
-    from engram.truth_reconciliation import classify_conflict
+    from verimem.truth_reconciliation import classify_conflict
     now = time.time()
     old = Fact(id="o", proposition="Aurelio lives in Rome", topic="t",
                created_at=now, asserted_at=now)

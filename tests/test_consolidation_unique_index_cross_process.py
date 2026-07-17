@@ -45,8 +45,8 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
 from tests._real_model import requires_real_model
+from verimem.semantic import Fact, SemanticMemory
 
 # Subprocess workers spawn a fresh Python that loads the REAL model (no
 # in-process stub); skip when it isn't cached (CI without a warmed HF cache).
@@ -63,9 +63,9 @@ ep_path = Path(sys.argv[2])
 barrier = sys.argv[3]
 out_path = sys.argv[4]
 
-from engram.semantic import SemanticMemory
-from engram.memory import EpisodicMemory
-from engram.consolidation import auto_consolidate
+from verimem.semantic import SemanticMemory
+from verimem.memory import EpisodicMemory
+from verimem.consolidation import auto_consolidate
 
 sm = SemanticMemory(db_path=sem_path)
 mem = EpisodicMemory(db_path=ep_path)
@@ -238,8 +238,8 @@ def test_two_processes_idempotent_when_master_already_exists(
     _seed_cluster(sem_path, cluster_prefix, n=7)
 
     # Pre-create the master (single-process, no race).
-    from engram.consolidation import auto_consolidate
-    from engram.memory import EpisodicMemory
+    from verimem.consolidation import auto_consolidate
+    from verimem.memory import EpisodicMemory
     sm = SemanticMemory(db_path=sem_path)
     mem = EpisodicMemory(db_path=ep_path)
     initial = auto_consolidate(sm, mem, min_size=5, prefix_depth=2)

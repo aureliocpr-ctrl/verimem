@@ -24,7 +24,7 @@ class _Ep:
 
 
 def test_empty_returns_no_anomalies():
-    from engram.anomaly_detection import detect_anomalies
+    from verimem.anomaly_detection import detect_anomalies
 
     out = detect_anomalies([])
     assert out["anomalies"] == []
@@ -32,7 +32,7 @@ def test_empty_returns_no_anomalies():
 
 
 def test_outlier_outcome():
-    from engram.anomaly_detection import detect_anomalies
+    from verimem.anomaly_detection import detect_anomalies
 
     # 10 success on same task family, then 1 failure
     eps = [_Ep(f"e{i}", "exploit CVE-X", "success", tokens_used=100)
@@ -44,7 +44,7 @@ def test_outlier_outcome():
 
 
 def test_outlier_tokens():
-    from engram.anomaly_detection import detect_anomalies
+    from verimem.anomaly_detection import detect_anomalies
 
     # 10 eps with ~100 tokens, 1 with 10000
     eps = [_Ep(f"e{i}", "task X", "success", tokens_used=100)
@@ -56,7 +56,7 @@ def test_outlier_tokens():
 
 
 def test_no_anomaly_when_homogeneous():
-    from engram.anomaly_detection import detect_anomalies
+    from verimem.anomaly_detection import detect_anomalies
 
     eps = [_Ep(f"e{i}", "task X", "success", tokens_used=100)
            for i in range(10)]
@@ -65,7 +65,7 @@ def test_no_anomaly_when_homogeneous():
 
 
 def test_anomaly_includes_reason():
-    from engram.anomaly_detection import detect_anomalies
+    from verimem.anomaly_detection import detect_anomalies
 
     eps = [_Ep(f"e{i}", "task X", "success") for i in range(5)]
     eps.append(_Ep("odd", "task X", "failure"))
@@ -78,7 +78,7 @@ def test_anomaly_includes_reason():
 
 def test_min_cluster_size_filter():
     """Small clusters (< min_cluster_size) shouldn't trigger anomaly checks."""
-    from engram.anomaly_detection import detect_anomalies
+    from verimem.anomaly_detection import detect_anomalies
 
     eps = [
         _Ep("e1", "rare task", "success"),
@@ -90,7 +90,7 @@ def test_min_cluster_size_filter():
 
 
 def test_payload_shape():
-    from engram.anomaly_detection import detect_anomalies
+    from verimem.anomaly_detection import detect_anomalies
     out = detect_anomalies([])
     for k in ("anomalies", "n_total_scanned", "n_clusters_checked"):
         assert k in out

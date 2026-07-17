@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.decision_chain import Decision, DecisionStore
+from verimem.decision_chain import Decision, DecisionStore
 
 
 def test_record_and_get_roundtrip(tmp_path):

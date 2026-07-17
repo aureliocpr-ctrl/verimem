@@ -74,14 +74,14 @@ def _build_agent_with_corpus(tmp_dir: Path):
     import os
     os.environ["ENGRAM_DATA_DIR"] = str(tmp_dir)
 
-    from engram.agent import HippoAgent
-    from engram.llm import MockLLM
+    from verimem.agent import HippoAgent
+    from verimem.llm import MockLLM
     # Pass a Mock so build() doesn't need ANTHROPIC_API_KEY. We swap
     # a.sleep.llm later with the MCPSamplingLLM stub.
     a = HippoAgent.build(llm=MockLLM())
 
     # Seed 10 episodes
-    from engram.episode import Episode
+    from verimem.episode import Episode
     for i in range(10):
         ep = Episode(
             id=f"ep-bench-{i}",
@@ -97,7 +97,7 @@ def _build_agent_with_corpus(tmp_dir: Path):
 async def _run_bench() -> dict[str, Any]:
     import tempfile
 
-    from engram.llm import MCPSamplingLLM
+    from verimem.llm import MCPSamplingLLM
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="hippo_c71_bench_"))
     a = _build_agent_with_corpus(tmp_dir)

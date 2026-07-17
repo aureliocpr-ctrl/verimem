@@ -20,7 +20,7 @@ class _Fact:
 
 
 def test_detect_implication_arrow():
-    from engram.symbolic_inference import parse_rule
+    from verimem.symbolic_inference import parse_rule
 
     out = parse_rule("WordPress 5.8 -> vulnerable to CVE-2023-X")
     assert out is not None
@@ -29,21 +29,21 @@ def test_detect_implication_arrow():
 
 
 def test_detect_if_then():
-    from engram.symbolic_inference import parse_rule
+    from verimem.symbolic_inference import parse_rule
 
     out = parse_rule("If vendor is cloudflare then WAF is present")
     assert out is not None
 
 
 def test_non_rule_returns_none():
-    from engram.symbolic_inference import parse_rule
+    from verimem.symbolic_inference import parse_rule
 
     assert parse_rule("Just a regular fact") is None
     assert parse_rule("Aurelio is the CEO") is None
 
 
 def test_forward_chain_simple():
-    from engram.symbolic_inference import forward_chain
+    from verimem.symbolic_inference import forward_chain
 
     rules = [
         _Fact("r1", "WordPress 5.8 -> vulnerable to CVE-2023-X"),
@@ -59,7 +59,7 @@ def test_forward_chain_simple():
 
 
 def test_no_match_no_deduction():
-    from engram.symbolic_inference import forward_chain
+    from verimem.symbolic_inference import forward_chain
 
     rules = [_Fact("r1", "Linux kernel 5.x -> patched")]
     state = [_Fact("s1", "Windows server 2019")]
@@ -69,7 +69,7 @@ def test_no_match_no_deduction():
 
 def test_chain_depth_limit():
     """Max_depth=1 should stop after 1 inference layer."""
-    from engram.symbolic_inference import forward_chain
+    from verimem.symbolic_inference import forward_chain
 
     rules = [
         _Fact("r1", "A -> B"),
@@ -84,7 +84,7 @@ def test_chain_depth_limit():
 
 
 def test_deduction_carries_provenance():
-    from engram.symbolic_inference import forward_chain
+    from verimem.symbolic_inference import forward_chain
 
     rules = [_Fact("r_main", "X -> Y")]
     state = [_Fact("s_seed", "X is true")]
@@ -97,7 +97,7 @@ def test_deduction_carries_provenance():
 
 
 def test_payload_keys():
-    from engram.symbolic_inference import forward_chain
+    from verimem.symbolic_inference import forward_chain
 
     out = forward_chain(rules=[], state_facts=[])
     for k in ("deductions", "n_rules", "n_state", "max_depth_reached"):

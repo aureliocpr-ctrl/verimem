@@ -15,7 +15,7 @@ first within test).
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def _make_pool() -> list[Skill]:
@@ -41,7 +41,7 @@ def _make_pool() -> list[Skill]:
 
 
 def test_groups_by_action():
-    from engram.recommend_actions import recommend_actions
+    from verimem.recommend_actions import recommend_actions
 
     out = recommend_actions(_make_pool())
     actions = out["actions"]
@@ -60,7 +60,7 @@ def test_groups_by_action():
 
 
 def test_promote_group_ranked_by_fitness_desc():
-    from engram.recommend_actions import recommend_actions
+    from verimem.recommend_actions import recommend_actions
 
     out = recommend_actions(_make_pool())
     promote = out["actions"]["promote"]
@@ -70,7 +70,7 @@ def test_promote_group_ranked_by_fitness_desc():
 
 def test_retire_group_ranked_by_fitness_asc():
     """Retire candidates ranked worst-first."""
-    from engram.recommend_actions import recommend_actions
+    from verimem.recommend_actions import recommend_actions
 
     pool = [
         Skill(id="r1", name="r1", trials=20, successes=4, status="promoted"),
@@ -84,7 +84,7 @@ def test_retire_group_ranked_by_fitness_asc():
 
 
 def test_summary_string_present():
-    from engram.recommend_actions import recommend_actions
+    from verimem.recommend_actions import recommend_actions
 
     out = recommend_actions(_make_pool())
     assert isinstance(out["summary"], str)
@@ -92,7 +92,7 @@ def test_summary_string_present():
 
 
 def test_n_total_matches_input_size():
-    from engram.recommend_actions import recommend_actions
+    from verimem.recommend_actions import recommend_actions
 
     pool = _make_pool()
     out = recommend_actions(pool)
@@ -100,7 +100,7 @@ def test_n_total_matches_input_size():
 
 
 def test_empty_library_returns_empty_groups():
-    from engram.recommend_actions import recommend_actions
+    from verimem.recommend_actions import recommend_actions
 
     out = recommend_actions([])
     assert out["n_total"] == 0
@@ -110,7 +110,7 @@ def test_empty_library_returns_empty_groups():
 
 def test_top_k_per_group_respected():
     """top_k caps each group's size."""
-    from engram.recommend_actions import recommend_actions
+    from verimem.recommend_actions import recommend_actions
 
     # 5 promote candidates, top_k_per_group=2 → only 2 in promote.
     pool = [
@@ -123,7 +123,7 @@ def test_top_k_per_group_respected():
 
 
 def test_payload_shape_complete():
-    from engram.recommend_actions import recommend_actions
+    from verimem.recommend_actions import recommend_actions
 
     out = recommend_actions([])
     for key in ("summary", "n_total", "actions"):

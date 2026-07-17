@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.tool_registry import (
+from verimem.tool_registry import (
     DEFAULT_CAPABILITY,
     REGISTRY,
     CapabilityRegistry,

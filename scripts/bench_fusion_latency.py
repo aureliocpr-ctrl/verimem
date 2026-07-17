@@ -20,9 +20,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.entity_kg import Entity, EntityStore  # noqa: E402
-from engram.entity_populate import entity_kg_path_for  # noqa: E402
-from engram.semantic import Fact, SemanticMemory  # noqa: E402
+from verimem.entity_kg import Entity, EntityStore  # noqa: E402
+from verimem.entity_populate import entity_kg_path_for  # noqa: E402
+from verimem.semantic import Fact, SemanticMemory  # noqa: E402
 
 
 def _p95(xs: list[float]) -> float:

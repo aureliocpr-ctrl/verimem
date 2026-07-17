@@ -53,8 +53,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
 
 
 def build_groundtruth(

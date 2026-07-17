@@ -13,7 +13,7 @@ one integration test against an in-memory SQLite stub that mimics
 spawn — those belong to `propose_dream_tasks` (cycle #35), which we
 re-use unchanged.
 
-The module under test is `engram.auto_dream_trigger`:
+The module under test is `verimem.auto_dream_trigger`:
 
   - `should_trigger(*, last_trigger_ts, now, new_items_count,
                     min_items, min_cooldown_s, enabled)` -> bool
@@ -32,7 +32,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.auto_dream_trigger import (
+from verimem.auto_dream_trigger import (
     count_new_items,
     load_last_trigger_ts,
     maybe_trigger_dream,
@@ -233,7 +233,7 @@ def test_load_clamps_future_timestamp_to_none(tmp_path: Path, monkeypatch):
     future_ts = fake_now + 3600
 
     # Monkeypatch time.time so the function sees fake_now as "current".
-    import engram.auto_dream_trigger as adt
+    import verimem.auto_dream_trigger as adt
     monkeypatch.setattr(adt.time, "time", lambda: fake_now)
 
     state.write_text(f"{future_ts:.6f}\n", encoding="utf-8")
@@ -249,7 +249,7 @@ def test_load_accepts_timestamps_at_or_before_now(tmp_path: Path, monkeypatch):
     state = tmp_path / "present.txt"
     fake_now = 1_000_000.0
 
-    import engram.auto_dream_trigger as adt
+    import verimem.auto_dream_trigger as adt
     monkeypatch.setattr(adt.time, "time", lambda: fake_now)
 
     # Exactly `now` — accept.
@@ -279,7 +279,7 @@ def test_maybe_trigger_recovers_from_future_state_file(
         f"{1_000_000.0 + 3600:.6f}\n", encoding="utf-8",
     )
     # Monkeypatch time.time so load_last_trigger_ts sees our "now".
-    import engram.auto_dream_trigger as adt
+    import verimem.auto_dream_trigger as adt
     monkeypatch.setattr(adt.time, "time", lambda: 1_000_000.0)
 
     out = maybe_trigger_dream(

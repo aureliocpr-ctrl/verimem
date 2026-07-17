@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.epistemic import make_proven
-from engram.guardian import _rank, correct_read
+from verimem.epistemic import make_proven
+from verimem.guardian import _rank, correct_read
 
 
 @pytest.fixture()
@@ -26,7 +26,7 @@ def mem(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
-    from engram.client import Memory
+    from verimem.client import Memory
     return Memory(tmp_path / "g.db")
 
 

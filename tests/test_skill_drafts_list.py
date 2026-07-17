@@ -1,6 +1,6 @@
 """Cycle 227 (2026-05-23) — list persisted skill drafts.
 
-RED marker: ``from engram.skill_drafts_list import list_persisted_drafts``
+RED marker: ``from verimem.skill_drafts_list import list_persisted_drafts``
 must fail on master.
 
 Reads the disk layout produced by cycle 222 ``persist_drafts``::
@@ -18,7 +18,7 @@ import json
 from pathlib import Path
 
 # RED MARKER
-from engram.skill_drafts_list import list_persisted_drafts
+from verimem.skill_drafts_list import list_persisted_drafts
 
 
 def _write_batch(

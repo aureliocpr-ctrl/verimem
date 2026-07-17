@@ -23,8 +23,8 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from engram import settings as user_settings
-from engram.dashboard_routes.auth import get_session_token
+from verimem import settings as user_settings
+from verimem.dashboard_routes.auth import get_session_token
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ def isolated_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 @pytest.fixture
 def fake_dashboard_agent(monkeypatch: pytest.MonkeyPatch):
     """Replace `dashboard._ag()` with a stub agent so we don't need real LLM."""
-    from engram import dashboard as dash
+    from verimem import dashboard as dash
 
     fake = MagicMock()
     fake.memory.count.return_value = 0
@@ -65,7 +65,7 @@ def client(isolated_settings, fake_dashboard_agent) -> TestClient:
     """TestClient bound to the FastAPI app with isolated settings + agent."""
     # Mark user as onboarded so `/` doesn't redirect.
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram.dashboard import app
+    from verimem.dashboard import app
     return TestClient(app)
 
 
@@ -135,7 +135,7 @@ def test_overview_redirects_to_welcome_when_not_onboarded(
     isolated_settings, fake_dashboard_agent,
 ) -> None:
     user_settings.save(user_settings.UserSettings(onboarded=False))
-    from engram.dashboard import app
+    from verimem.dashboard import app
     c = TestClient(app, follow_redirects=False)
     resp = c.get("/")
     assert resp.status_code == 302
@@ -164,7 +164,7 @@ def test_settings_providers_redacts_keys(
         onboarded=True,
         api_keys={"ANTHROPIC_API_KEY": "sk-redact-me-now-please"},
     ))
-    from engram.dashboard import app
+    from verimem.dashboard import app
     c = TestClient(app)
     resp = c.get("/api/settings/providers")
     assert resp.status_code == 200
@@ -254,7 +254,7 @@ def test_feedback_dedups_skills_before_update_fitness(
     chat.py (passavano anche col dedup rotto = falsa copertura)."""
     import time
 
-    from engram.memory import Episode
+    from verimem.memory import Episode
     ep = Episode(
         id="turn-dedup", task_id="t", task_text="task con skill ripetute",
         outcome="success", final_answer="a", tokens_used=0,
@@ -264,7 +264,7 @@ def test_feedback_dedups_skills_before_update_fitness(
     fake_dashboard_agent.memory.get.return_value = ep
     fake_dashboard_agent.skills.update_fitness.reset_mock()
 
-    from engram.dashboard_routes.auth import get_session_token
+    from verimem.dashboard_routes.auth import get_session_token
     resp = client.post("/api/feedback",
                        json={"episode_id": "turn-dedup", "kind": "up"},
                        headers={"X-Hippo-Token": get_session_token()})
@@ -415,7 +415,7 @@ def test_auth_info_default_is_enabled_after_cycle124(
     test pass-or-fail based on collection order.
     """
     monkeypatch.delenv("HIPPO_DASHBOARD_AUTH_DISABLED", raising=False)
-    from engram.dashboard import app
+    from verimem.dashboard import app
     c = TestClient(app)
     resp = c.get("/api/auth/info")
     assert resp.status_code == 200
@@ -436,7 +436,7 @@ def test_state_changing_endpoint_rejects_when_auth_enabled(
     monkeypatch.setenv("HIPPO_DASHBOARD_AUTH_DISABLED", "0")
     monkeypatch.setenv("HIPPO_DASHBOARD_TOKEN", "test-token-deadbeef")
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram import dashboard as dash
+    from verimem import dashboard as dash
     monkeypatch.setattr(dash, "_SESSION_TOKEN", None, raising=False)
     c = TestClient(dash.app)
     resp = c.post("/api/sleep")
@@ -452,7 +452,7 @@ def test_state_changing_endpoint_accepts_valid_token(
     monkeypatch.setenv("HIPPO_DASHBOARD_AUTH_DISABLED", "0")
     monkeypatch.setenv("HIPPO_DASHBOARD_TOKEN", "test-token-deadbeef")
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram import dashboard as dash
+    from verimem import dashboard as dash
     monkeypatch.setattr(dash, "_SESSION_TOKEN", None, raising=False)
     fake_dashboard_agent.consolidate.return_value = MagicMock(
         n_episodes_replayed=0, n_clusters=0, n_nrem_skills=0, n_rem_skills=0,
@@ -472,7 +472,7 @@ def test_read_only_endpoints_unaffected_by_auth(
     monkeypatch.setenv("HIPPO_DASHBOARD_AUTH_DISABLED", "0")
     monkeypatch.setenv("HIPPO_DASHBOARD_TOKEN", "test-token-deadbeef")
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram import dashboard as dash
+    from verimem import dashboard as dash
     monkeypatch.setattr(dash, "_SESSION_TOKEN", None, raising=False)
     c = TestClient(dash.app)
     # /api/permissions is GET — passes through
@@ -490,7 +490,7 @@ def test_invalid_token_rejected_constant_time(
     monkeypatch.setenv("HIPPO_DASHBOARD_AUTH_DISABLED", "0")
     monkeypatch.setenv("HIPPO_DASHBOARD_TOKEN", "right-token")
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram import dashboard as dash
+    from verimem import dashboard as dash
     monkeypatch.setattr(dash, "_SESSION_TOKEN", None, raising=False)
     c = TestClient(dash.app)
     resp = c.post("/api/permissions",

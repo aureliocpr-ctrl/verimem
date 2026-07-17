@@ -13,7 +13,7 @@ import zipfile
 
 import pytest
 
-from engram.file_extract import extract_text
+from verimem.file_extract import extract_text
 
 _CONTAINER = """<?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -139,7 +139,7 @@ def test_epub_content_chapter_zip_bomb_is_capped(tmp_path, monkeypatch):
     cappa i METADATI (container/OPF); questo cappa il contenuto. PoC pre-fix:
     un EPUB da 38KB produceva 40MB estratti (ratio 1025x, peak heap 129MB) —
     un file da pochi MB avrebbe esaurito la RAM (OOM del gateway condiviso)."""
-    import engram.file_extract as fe
+    import verimem.file_extract as fe
     monkeypatch.setattr(fe, "_MAX_MEMBER_BYTES", 500_000)
     monkeypatch.setattr(fe, "_MAX_TOTAL_BYTES", 2_000_000)
     book = tmp_path / "bomb.epub"
@@ -155,7 +155,7 @@ def test_epub_content_chapter_zip_bomb_is_capped(tmp_path, monkeypatch):
 def test_epub_zip_bomb_total_budget_stops_many_chapters(tmp_path, monkeypatch):
     """Anche molti capitoli sotto il per-member cap non devono sommarsi oltre il
     budget totale (bomb 'a tanti file')."""
-    import engram.file_extract as fe
+    import verimem.file_extract as fe
     monkeypatch.setattr(fe, "_MAX_MEMBER_BYTES", 300_000)
     monkeypatch.setattr(fe, "_MAX_TOTAL_BYTES", 1_000_000)
     book = tmp_path / "many.epub"

@@ -18,7 +18,7 @@ class _Ep:
 
 
 def test_empty_episodes_returns_uncertain():
-    from engram.world_model import simulate_action
+    from verimem.world_model import simulate_action
 
     out = simulate_action(
         state="target acme.io WordPress",
@@ -31,7 +31,7 @@ def test_empty_episodes_returns_uncertain():
 
 
 def test_clear_success_pattern():
-    from engram.world_model import simulate_action
+    from verimem.world_model import simulate_action
 
     eps = [
         _Ep("e1", "target X WordPress + exploit CVE-2023-6449",
@@ -52,7 +52,7 @@ def test_clear_success_pattern():
 
 
 def test_clear_failure_pattern_with_alternative():
-    from engram.world_model import simulate_action
+    from verimem.world_model import simulate_action
 
     eps = [
         _Ep("e1", "target X WordPress + aggressive nmap scan",
@@ -76,7 +76,7 @@ def test_clear_failure_pattern_with_alternative():
 
 
 def test_no_alternative_when_action_works():
-    from engram.world_model import simulate_action
+    from verimem.world_model import simulate_action
 
     eps = [
         _Ep("e1", "target X + good action", outcome="success"),
@@ -93,7 +93,7 @@ def test_no_alternative_when_action_works():
 
 
 def test_payload_complete_keys():
-    from engram.world_model import simulate_action
+    from verimem.world_model import simulate_action
 
     out = simulate_action(
         state="x", action="y", past_episodes=[],
@@ -104,7 +104,7 @@ def test_payload_complete_keys():
 
 
 def test_evidence_includes_episode_ids():
-    from engram.world_model import simulate_action
+    from verimem.world_model import simulate_action
 
     eps = [
         _Ep("ep_abc", "X + Y exploit", outcome="success"),
@@ -117,7 +117,7 @@ def test_evidence_includes_episode_ids():
 
 
 def test_mixed_outcomes_moderate_confidence():
-    from engram.world_model import simulate_action
+    from verimem.world_model import simulate_action
 
     eps = [
         _Ep("e1", "X exploit Y", outcome="success"),
@@ -133,7 +133,7 @@ def test_mixed_outcomes_moderate_confidence():
 
 
 def test_p_success_plus_p_failure_normalized():
-    from engram.world_model import simulate_action
+    from verimem.world_model import simulate_action
 
     eps = [_Ep("e1", "X y", outcome="success")]
     out = simulate_action(state="X", action="y", past_episodes=eps)

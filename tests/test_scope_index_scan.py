@@ -8,7 +8,7 @@ semantics the scope contract needs.
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory, _topic_prefix_upper
+from verimem.semantic import Fact, SemanticMemory, _topic_prefix_upper
 
 
 def test_topic_prefix_upper_is_lexicographic_successor():

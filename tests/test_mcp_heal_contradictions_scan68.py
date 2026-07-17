@@ -11,9 +11,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from engram import mcp_server
-from engram.contradiction import Contradiction, ContradictionStore
-from engram.semantic import Fact, SemanticMemory
+from verimem import mcp_server
+from verimem.contradiction import Contradiction, ContradictionStore
+from verimem.semantic import Fact, SemanticMemory
 
 
 class _FakeAgent:

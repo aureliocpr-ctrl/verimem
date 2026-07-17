@@ -49,7 +49,7 @@ class TestSemanticMemoryBusyTimeout:
     def test_semantic_memory_uses_60s_busy_timeout(
         self, tmp_path: Path,
     ) -> None:
-        from engram.semantic import SemanticMemory
+        from verimem.semantic import SemanticMemory
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         with sm._connect() as conn:  # noqa: SLF001 (test inspects internals)
             row = conn.execute("PRAGMA busy_timeout").fetchone()
@@ -67,7 +67,7 @@ class TestRecallUsageBusyTimeout:
     def test_recall_usage_uses_60s_busy_timeout(
         self, tmp_path: Path,
     ) -> None:
-        from engram.recall_usage import RecallUsageStore
+        from verimem.recall_usage import RecallUsageStore
         store = RecallUsageStore(tmp_path / "ru.db")
         with store._connect() as conn:  # noqa: SLF001
             row = conn.execute("PRAGMA busy_timeout").fetchone()
@@ -82,7 +82,7 @@ class TestContradictionStoreBusyTimeout:
     def test_contradiction_store_uses_60s_busy_timeout(
         self, tmp_path: Path,
     ) -> None:
-        from engram.contradiction import ContradictionStore
+        from verimem.contradiction import ContradictionStore
         store = ContradictionStore(tmp_path / "c.db")
         with store._connect() as conn:  # noqa: SLF001
             row = conn.execute("PRAGMA busy_timeout").fetchone()
@@ -91,13 +91,13 @@ class TestContradictionStoreBusyTimeout:
 
 
 @pytest.mark.parametrize("module_name,literal_marker", [
-    ("engram.semantic", "PRAGMA busy_timeout=60000"),
-    ("engram.memory", "PRAGMA busy_timeout=60000"),
-    ("engram.skill", "PRAGMA busy_timeout=60000"),
-    ("engram.contradiction", "PRAGMA busy_timeout=60000"),
-    ("engram.decay_job", "PRAGMA busy_timeout=60000"),
-    ("engram.entity_kg", "PRAGMA busy_timeout=60000"),
-    ("engram.recall_usage", "PRAGMA busy_timeout=60000"),
+    ("verimem.semantic", "PRAGMA busy_timeout=60000"),
+    ("verimem.memory", "PRAGMA busy_timeout=60000"),
+    ("verimem.skill", "PRAGMA busy_timeout=60000"),
+    ("verimem.contradiction", "PRAGMA busy_timeout=60000"),
+    ("verimem.decay_job", "PRAGMA busy_timeout=60000"),
+    ("verimem.entity_kg", "PRAGMA busy_timeout=60000"),
+    ("verimem.recall_usage", "PRAGMA busy_timeout=60000"),
 ])
 class TestStaticSourceMarker:
     """Defensive: source-level grep to catch regressions where a future

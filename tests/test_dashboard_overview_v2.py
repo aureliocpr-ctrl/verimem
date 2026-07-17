@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def populated(tmp_path):
 
 
 def test_returns_three_sections(populated):
-    from engram.dashboard_overview_v2 import dashboard_overview_v2
+    from verimem.dashboard_overview_v2 import dashboard_overview_v2
     r = dashboard_overview_v2(populated)
     assert "health" in r
     assert "orphan_suggestions" in r
@@ -37,7 +37,7 @@ def test_returns_three_sections(populated):
 
 
 def test_health_consistent(populated):
-    from engram.dashboard_overview_v2 import dashboard_overview_v2
+    from verimem.dashboard_overview_v2 import dashboard_overview_v2
     r = dashboard_overview_v2(populated)
     h = r["health"]
     assert h["n_total"] == 4
@@ -45,7 +45,7 @@ def test_health_consistent(populated):
 
 
 def test_orphan_suggestions_present(populated):
-    from engram.dashboard_overview_v2 import dashboard_overview_v2
+    from verimem.dashboard_overview_v2 import dashboard_overview_v2
     r = dashboard_overview_v2(populated, orphan_sim_threshold=0.3)
     s = r["orphan_suggestions"]
     assert s["n_facts_no_topic"] == 1
@@ -53,7 +53,7 @@ def test_orphan_suggestions_present(populated):
 
 
 def test_freshness_per_project_glob(populated):
-    from engram.dashboard_overview_v2 import dashboard_overview_v2
+    from verimem.dashboard_overview_v2 import dashboard_overview_v2
     r = dashboard_overview_v2(
         populated,
         project_globs=["project/nexus/*", "project/beacon/*"],
@@ -66,6 +66,6 @@ def test_freshness_per_project_glob(populated):
 
 
 def test_empty_globs_safe(populated):
-    from engram.dashboard_overview_v2 import dashboard_overview_v2
+    from verimem.dashboard_overview_v2 import dashboard_overview_v2
     r = dashboard_overview_v2(populated)
     assert r["freshness_by_project"] == {}

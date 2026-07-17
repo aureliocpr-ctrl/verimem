@@ -19,8 +19,8 @@ from pathlib import Path
 
 import numpy as np
 
-from engram.ann_index import ANNIndex
-from engram.embedding import cosine_matrix
+from verimem.ann_index import ANNIndex
+from verimem.embedding import cosine_matrix
 
 
 def _unit(n: int, dim: int, rng: np.random.Generator) -> np.ndarray:

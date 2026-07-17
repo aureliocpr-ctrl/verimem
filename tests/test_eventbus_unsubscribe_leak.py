@@ -29,8 +29,8 @@ from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from engram import settings as user_settings
-from engram.observability import BUS, Event
+from verimem import settings as user_settings
+from verimem.observability import BUS, Event
 
 # ---------------------------------------------------------------------------
 # Unit: EventBus.unsubscribe
@@ -114,7 +114,7 @@ async def test_sse_connection_unsubscribes_listener_on_close(
     to ``BUS._wildcards`` forever — that is the leak.
     """
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram.dashboard import app
+    from verimem.dashboard import app
 
     baseline = len(BUS._wildcards)
 
@@ -149,7 +149,7 @@ async def test_events_stream_unsubscribes_on_disconnect(
     stream lifecycle must leave BUS._wildcards at its pre-connect length.
     """
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram.dashboard import app
+    from verimem.dashboard import app
 
     baseline = len(BUS._wildcards)
     transport = ASGITransport(app=app)

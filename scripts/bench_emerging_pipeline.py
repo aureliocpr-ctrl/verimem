@@ -36,8 +36,8 @@ def _percentile(samples_sorted: list[float], p: float) -> float:
 
 
 def run_bench(n_trials: int, *, db_path: Path) -> dict[str, Any]:
-    from engram.skill_drafter import draft_skill_from_community
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_drafter import draft_skill_from_community
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     latencies_ms: list[float] = []
     n_candidates_seen: list[int] = []

@@ -5,7 +5,7 @@ so a write-majority cartel cannot win the acceptance vote and invert honest trus
 """
 from __future__ import annotations
 
-from engram.source_trust import SourceTrustBook, auto_confirm_agreement
+from verimem.source_trust import SourceTrustBook, auto_confirm_agreement
 
 
 def _vec(b, sources, vec):

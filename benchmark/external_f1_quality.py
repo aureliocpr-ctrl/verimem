@@ -25,7 +25,7 @@ an LLM judge we deliberately do not call. Even so, whole-vs-chunked isolates
 whether truncation loses the deep-content questions.
 
 Provenance: articles are ingested source content -> writer_role=external_content
-(task #25 gate_router). Never touches ~/.engram.
+(task #25 gate_router). Never touches ~/.verimem.
 """
 from __future__ import annotations
 
@@ -36,11 +36,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from engram.chunking import chunk_text
-from engram.config import CONFIG
-from engram.semantic import Fact, SemanticMemory
-
 from benchmark.longmemeval_runner import _unique_preserve, hit_at_k, mrr
+from verimem.chunking import chunk_text
+from verimem.config import CONFIG
+from verimem.semantic import Fact, SemanticMemory
 
 _DEFAULT_DATA = Path(
     "benchmark/data/external/.cache/quality/"

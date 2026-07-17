@@ -13,13 +13,13 @@ scrivere un fact FABBRICATO come status='verified' (rank max) con verified_by
 vuoto, saltando la verifica empirica delle prove.
 
 Hermetic: SemanticMemory su DB temporaneo, repo_root=None (default paranoico).
-Zero side-effect sul DB reale ~/.engram.
+Zero side-effect sul DB reale ~/.verimem.
 """
 from __future__ import annotations
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 _CONFAB = "SHIPPED il modulo auth, completato e verificato in produzione, tutti i test passano"
 

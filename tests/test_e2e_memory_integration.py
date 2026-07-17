@@ -34,9 +34,9 @@ from pathlib import Path
 
 import numpy as np
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(*, ep_id: str, text: str, skills: list[str] | None = None,
@@ -55,11 +55,11 @@ def _ep(*, ep_id: str, text: str, skills: list[str] | None = None,
 
 def test_full_pipeline_smoke(tmp_path: Path):
     """A single test that exercises every cabled primitive together."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_successor_matrix,
         cluster_by_sr_similarity,
     )
-    from engram.wake import WakeAgent, WakeConfig
+    from verimem.wake import WakeAgent, WakeConfig
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
 
@@ -93,8 +93,8 @@ def test_full_pipeline_smoke(tmp_path: Path):
     ))
 
     # --- Schema must be at the current target version ------------------
-    from engram.memory import _EPISODES_SCHEMA_VERSION
-    from engram.migrations import schema_version
+    from verimem.memory import _EPISODES_SCHEMA_VERSION
+    from verimem.migrations import schema_version
     with mem._connect() as c:  # noqa: SLF001
         v = schema_version(c, "episodes")
     assert v == _EPISODES_SCHEMA_VERSION, (

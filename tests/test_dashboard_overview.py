@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -78,7 +78,7 @@ class _FakeAgent:
 
 
 def test_empty_agent_no_crash():
-    from engram.dashboard_overview import dashboard_overview
+    from verimem.dashboard_overview import dashboard_overview
 
     a = _FakeAgent([], [], [])
     out = dashboard_overview(agent=a)
@@ -86,7 +86,7 @@ def test_empty_agent_no_crash():
 
 
 def test_includes_all_sections():
-    from engram.dashboard_overview import dashboard_overview
+    from verimem.dashboard_overview import dashboard_overview
 
     a = _FakeAgent([], [], [])
     out = dashboard_overview(agent=a)
@@ -97,7 +97,7 @@ def test_includes_all_sections():
 
 
 def test_stats_match_corpus():
-    from engram.dashboard_overview import dashboard_overview
+    from verimem.dashboard_overview import dashboard_overview
 
     skills = [Skill(id="s1", name="s1")]
     eps = [_FakeEp("e1"), _FakeEp("e2", outcome="failure")]
@@ -110,7 +110,7 @@ def test_stats_match_corpus():
 
 
 def test_metrics_summary_is_string():
-    from engram.dashboard_overview import dashboard_overview
+    from verimem.dashboard_overview import dashboard_overview
 
     a = _FakeAgent([], [], [])
     out = dashboard_overview(agent=a)
@@ -119,7 +119,7 @@ def test_metrics_summary_is_string():
 
 
 def test_topology_section():
-    from engram.dashboard_overview import dashboard_overview
+    from verimem.dashboard_overview import dashboard_overview
 
     skills = [Skill(id="root"), Skill(id="leaf", parent_skills=["root"])]
     a = _FakeAgent(skills, [], [])

@@ -28,9 +28,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from unittest.mock import patch
 
-from engram.agent import HippoAgent
-from engram.code import EngramCode
-from engram.tools_extra import all_tools
+from verimem.agent import HippoAgent
+from verimem.code import EngramCode
+from verimem.tools_extra import all_tools
 
 # ---------------------------------------------------------------- Validators
 
@@ -281,7 +281,7 @@ def _run_task(spec: TaskSpec, agent: HippoAgent) -> TaskResult:
 
         t0 = time.perf_counter()
         try:
-            with patch("engram.code.Confirm.ask", return_value=True):
+            with patch("verimem.code.Confirm.ask", return_value=True):
                 session.submit(spec.prompt)
             elapsed = time.perf_counter() - t0
         except Exception as err:

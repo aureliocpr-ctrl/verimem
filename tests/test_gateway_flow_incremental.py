@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 
-from engram.gateway import _read_flow_bytes
+from verimem.gateway import _read_flow_bytes
 
 
 def _line(path, rec) -> None:

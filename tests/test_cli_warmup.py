@@ -11,8 +11,8 @@ from __future__ import annotations
 import numpy as np
 from typer.testing import CliRunner
 
-import engram.cli as cli
-import engram.embedding as emb
+import verimem.cli as cli
+import verimem.embedding as emb
 
 runner = CliRunner()
 

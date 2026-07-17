@@ -15,7 +15,7 @@ os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 @dataclass
 class _FakeSkill:
-    """Minimal stand-in for engram.skill.Skill."""
+    """Minimal stand-in for verimem.skill.Skill."""
     id: str
     name: str
     trigger: str = ""
@@ -36,7 +36,7 @@ def _vec(*x: float) -> np.ndarray:
 
 
 def test_finds_near_identical_pair():
-    from engram.skill_semantic_dedup import find_semantic_duplicate_skills
+    from verimem.skill_semantic_dedup import find_semantic_duplicate_skills
     s1 = _FakeSkill(id="aaa", name="Provide Final Answer", trials=87, successes=38)
     s2 = _FakeSkill(id="bbb", name="Provide Final Answer", trials=86, successes=36)
     s3 = _FakeSkill(id="ccc", name="Totally unrelated", trials=10, successes=5)
@@ -56,7 +56,7 @@ def test_finds_near_identical_pair():
 
 
 def test_threshold_excludes_loosely_similar():
-    from engram.skill_semantic_dedup import find_semantic_duplicate_skills
+    from verimem.skill_semantic_dedup import find_semantic_duplicate_skills
     inp = [
         _pair(_FakeSkill(id="a", name="X"), _vec(1, 0, 0, 0)),
         _pair(_FakeSkill(id="b", name="Y"), _vec(0.7, 0.714, 0, 0)),
@@ -65,7 +65,7 @@ def test_threshold_excludes_loosely_similar():
 
 
 def test_retired_excluded_by_default():
-    from engram.skill_semantic_dedup import find_semantic_duplicate_skills
+    from verimem.skill_semantic_dedup import find_semantic_duplicate_skills
     inp = [
         _pair(_FakeSkill(id="a", name="X"), _vec(1, 0, 0, 0)),
         _pair(_FakeSkill(id="b", name="X clone", status="retired"),
@@ -77,12 +77,12 @@ def test_retired_excluded_by_default():
 
 
 def test_empty_pool_safe():
-    from engram.skill_semantic_dedup import find_semantic_duplicate_skills
+    from verimem.skill_semantic_dedup import find_semantic_duplicate_skills
     assert find_semantic_duplicate_skills([])["pairs"] == []
 
 
 def test_skips_skills_without_embedding():
-    from engram.skill_semantic_dedup import find_semantic_duplicate_skills
+    from verimem.skill_semantic_dedup import find_semantic_duplicate_skills
     inp = [
         _pair(_FakeSkill(id="a", name="X"), np.array([], dtype=np.float32)),
         _pair(_FakeSkill(id="b", name="Y"), _vec(1, 0, 0, 0)),
@@ -103,7 +103,7 @@ def test_classification_tags_noise_vs_hot():
     """When ref_counts is supplied, each pair carries a classification."""
     from collections import Counter
 
-    from engram.skill_semantic_dedup import find_semantic_duplicate_skills
+    from verimem.skill_semantic_dedup import find_semantic_duplicate_skills
     s1 = _FakeSkill(id="hot1", name="X", trials=10, successes=8)
     s2 = _FakeSkill(id="hot2", name="X", trials=10, successes=7)
     s3 = _FakeSkill(id="noise1", name="Y", trials=1, successes=1)
@@ -140,7 +140,7 @@ def test_classification_tags_noise_vs_hot():
 def test_real_corpus_finds_known_dup():
     from pathlib import Path
 
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     db = Path(CONFIG.data_dir) / "skills" / "skills_index.db"
     if not db.exists():
         pytest.skip("no live skill DB available")
@@ -154,7 +154,7 @@ def test_real_corpus_finds_known_dup():
     if len(ids) < 2:
         pytest.skip(f"only {len(ids)} 'Provide Final Answer' skill(s) in live DB")
 
-    from engram.skill_semantic_dedup import (
+    from verimem.skill_semantic_dedup import (
         find_semantic_duplicate_skills,
         load_skills_with_embeddings,
     )

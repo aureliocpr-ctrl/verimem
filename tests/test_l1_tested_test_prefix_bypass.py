@@ -20,16 +20,16 @@ commit d138e67 (``test:`` now requires an outcome marker) + 2e8111e
 — "fixo l'istanza non la classe" recidiva, flagged in the plan.
 
 This is hermetic: a real SemanticMemory is built on tmp_path
-(``db_path=tmp_path / "s.db"``), NEVER the production DB ~/.engram.
+(``db_path=tmp_path / "s.db"``), NEVER the production DB ~/.verimem.
 NOTE: do NOT fix the source here — only proves the hole is RED today.
 """
 from __future__ import annotations
 
 from pathlib import Path
 
-from engram.anti_confab_gate import run_validation_gate
-from engram.l1_tested_detector import detect_unsupported_tested_claim
-from engram.semantic import SemanticMemory
+from verimem.anti_confab_gate import run_validation_gate
+from verimem.l1_tested_detector import detect_unsupported_tested_claim
+from verimem.semantic import SemanticMemory
 
 
 class _FakeAgent:

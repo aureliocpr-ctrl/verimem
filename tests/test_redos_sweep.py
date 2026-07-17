@@ -27,14 +27,14 @@ _ADVERSARIAL = {
 
 
 def _scanners():
-    from engram.admission_gate import classify_admission
-    from engram.anti_confab_gate import (
+    from verimem.admission_gate import classify_admission
+    from verimem.anti_confab_gate import (
         _has_dev_context,
         _has_personal_context,
         run_validation_gate,
     )
-    from engram.prompt_injection import detect_injection
-    from engram.redaction import redact_secrets
+    from verimem.prompt_injection import detect_injection
+    from verimem.redaction import redact_secrets
     return [
         ("redact_secrets", lambda s: redact_secrets(s)),
         ("detect_injection", lambda s: detect_injection(s)),

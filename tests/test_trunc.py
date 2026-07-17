@@ -7,7 +7,7 @@ tail, (d) be idempotent on inputs that already fit.
 """
 from __future__ import annotations
 
-from engram.trunc import smart_truncate
+from verimem.trunc import smart_truncate
 
 
 def test_short_text_returned_unchanged():

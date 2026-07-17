@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.client import Memory
-from engram.l1_works_detector import detect_unsupported_works_claim
+from verimem.client import Memory
+from verimem.l1_works_detector import detect_unsupported_works_claim
 
 # ---- unit: il detector distingue i due sensi --------------------------------
 

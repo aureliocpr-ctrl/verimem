@@ -17,7 +17,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _ids(facts) -> set[str]:

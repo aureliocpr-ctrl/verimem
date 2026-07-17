@@ -32,9 +32,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.config import CONFIG  # noqa: E402
-from engram.episode import Episode, Trace  # noqa: E402
-from engram.memory import EpisodicMemory  # noqa: E402
+from verimem.config import CONFIG  # noqa: E402
+from verimem.episode import Episode, Trace  # noqa: E402
+from verimem.memory import EpisodicMemory  # noqa: E402
 
 
 @dataclass

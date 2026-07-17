@@ -6,7 +6,7 @@ pre-v12 facts read back None.
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_grounding_score_roundtrips(tmp_path):

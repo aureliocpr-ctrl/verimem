@@ -28,9 +28,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(*, ep_id: str, text: str, outcome: str = "success") -> Episode:
@@ -63,7 +63,7 @@ def config_override():
 def _build_wake(memory):
     """Lightweight WakeAgent with just enough wiring for `_retrieve_episodes`.
     Uses object.__new__ to bypass the LLM/tool init."""
-    from engram.wake import WakeAgent, WakeConfig
+    from verimem.wake import WakeAgent, WakeConfig
     wake = object.__new__(WakeAgent)
     wake.memory = memory  # type: ignore[misc]
     wake.cfg = WakeConfig(

@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ class TestCleanupDryRunIsDefault:
     """Safety: by default the cleanup MUST NOT delete anything."""
 
     def test_dry_run_default_no_deletion(self, sm: SemanticMemory) -> None:
-        from engram.legacy_cleanup import cleanup_forgettable
+        from verimem.legacy_cleanup import cleanup_forgettable
         ids = _seed_mixed(sm, now=time.time())
         before = sm.count()
 
@@ -104,7 +104,7 @@ class TestCleanupBucketsForgettableOnly:
     """Only the forgettable bucket is acted upon."""
 
     def test_wet_run_deletes_forgettable(self, sm: SemanticMemory) -> None:
-        from engram.legacy_cleanup import cleanup_forgettable
+        from verimem.legacy_cleanup import cleanup_forgettable
         ids = _seed_mixed(sm, now=time.time())
         before = sm.count()
 
@@ -126,7 +126,7 @@ class TestCleanupBucketsForgettableOnly:
     def test_never_touches_non_legacy_statuses(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.legacy_cleanup import cleanup_forgettable
+        from verimem.legacy_cleanup import cleanup_forgettable
         # A short 'todo' fact in model_claim status MUST NOT be deleted —
         # cleanup only touches legacy_unverified.
         f = Fact(
@@ -145,7 +145,7 @@ class TestCleanupMaxLimit:
     """`max_forget` caps how many rows can be deleted in one run."""
 
     def test_max_forget_limits_deletions(self, sm: SemanticMemory) -> None:
-        from engram.legacy_cleanup import cleanup_forgettable
+        from verimem.legacy_cleanup import cleanup_forgettable
         ids = _seed_mixed(sm, now=time.time())
 
         report = cleanup_forgettable(sm, dry_run=False, max_forget=1)
@@ -162,7 +162,7 @@ class TestCleanupReportShape:
     """Report shape used by the CLI."""
 
     def test_report_has_expected_keys(self, sm: SemanticMemory) -> None:
-        from engram.legacy_cleanup import cleanup_forgettable
+        from verimem.legacy_cleanup import cleanup_forgettable
         _seed_mixed(sm, now=time.time())
 
         report = cleanup_forgettable(sm)
@@ -192,7 +192,7 @@ class TestCleanupGuardrails:
     def test_long_proposition_with_keyword_is_kept(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.legacy_cleanup import cleanup_forgettable
+        from verimem.legacy_cleanup import cleanup_forgettable
         long_text = (
             "Lesson learned 2026-05-13: the deprecated old API still has "
             "callers in production and removing it without a migration "
@@ -217,7 +217,7 @@ class TestCleanupGuardrails:
     def test_high_confidence_short_keyword_is_kept(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.legacy_cleanup import cleanup_forgettable
+        from verimem.legacy_cleanup import cleanup_forgettable
         sm.store(Fact(
             id="f-shortconf", proposition="todo: refactor module",
             topic="t", confidence=0.95, status="legacy_unverified",
@@ -234,7 +234,7 @@ class TestCleanupEmptyCorpus:
     """Don't crash on an empty corpus."""
 
     def test_empty_corpus_returns_zero(self, sm: SemanticMemory) -> None:
-        from engram.legacy_cleanup import cleanup_forgettable
+        from verimem.legacy_cleanup import cleanup_forgettable
         report = cleanup_forgettable(sm)
         assert report["forgotten"] == 0
         assert report["would_forget"] == 0

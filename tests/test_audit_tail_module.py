@@ -1,13 +1,13 @@
 """CYCLE #26 — test audit_tail module (pure-function).
 
-Bug pre-fix: engram.audit_tail non esisteva. import in
+Bug pre-fix: verimem.audit_tail non esisteva. import in
 mcp_server.py:5409 falliva con ImportError, catturato silently.
 """
 from __future__ import annotations
 
 import json
 
-from engram.audit_tail import audit_tail
+from verimem.audit_tail import audit_tail
 
 
 def test_audit_tail_missing_file_returns_empty(tmp_path):
@@ -74,7 +74,7 @@ def test_audit_tail_unblocks_introspect_state():
     """Regression: hippo_introspect_state importava questo modulo che
     NON esisteva. ImportError silently caught → recent_audit=[] sempre.
     Ora il modulo esiste e l'introspect_state restituisce dati reali."""
-    from engram import audit_tail as mod
+    from verimem import audit_tail as mod
     assert callable(mod.audit_tail)
     # Smoke test: chiamabile senza args sull'audit log corrente
     result = mod.audit_tail()

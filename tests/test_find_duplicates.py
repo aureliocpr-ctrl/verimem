@@ -10,18 +10,18 @@ a threshold.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_returns_no_pairs():
-    from engram.find_duplicates import find_duplicate_skills
+    from verimem.find_duplicates import find_duplicate_skills
 
     out = find_duplicate_skills([])
     assert out["pairs"] == []
 
 
 def test_no_duplicates_below_threshold():
-    from engram.find_duplicates import find_duplicate_skills
+    from verimem.find_duplicates import find_duplicate_skills
 
     skills = [
         Skill(id="a", name="alpha beta gamma", trigger="a"),
@@ -32,7 +32,7 @@ def test_no_duplicates_below_threshold():
 
 
 def test_identical_skills_detected():
-    from engram.find_duplicates import find_duplicate_skills
+    from verimem.find_duplicates import find_duplicate_skills
 
     skills = [
         Skill(id="a", name="alpha", trigger="trigger one"),
@@ -46,7 +46,7 @@ def test_identical_skills_detected():
 
 
 def test_threshold_strict_filters():
-    from engram.find_duplicates import find_duplicate_skills
+    from verimem.find_duplicates import find_duplicate_skills
 
     skills = [
         Skill(id="a", name="alpha beta", trigger="t"),
@@ -60,7 +60,7 @@ def test_threshold_strict_filters():
 
 
 def test_pairs_sorted_by_jaccard_desc():
-    from engram.find_duplicates import find_duplicate_skills
+    from verimem.find_duplicates import find_duplicate_skills
 
     skills = [
         Skill(id="a", name="x y z", trigger="x y z"),
@@ -73,7 +73,7 @@ def test_pairs_sorted_by_jaccard_desc():
 
 
 def test_top_k_respected():
-    from engram.find_duplicates import find_duplicate_skills
+    from verimem.find_duplicates import find_duplicate_skills
 
     skills = [Skill(id=f"s{i}", name="alpha beta gamma") for i in range(5)]
     out = find_duplicate_skills(skills, threshold=0.5, top_k=3)
@@ -81,7 +81,7 @@ def test_top_k_respected():
 
 
 def test_self_pairs_excluded():
-    from engram.find_duplicates import find_duplicate_skills
+    from verimem.find_duplicates import find_duplicate_skills
 
     skills = [Skill(id="x", name="single")]
     out = find_duplicate_skills(skills)
@@ -91,7 +91,7 @@ def test_self_pairs_excluded():
 
 
 def test_payload_shape_complete():
-    from engram.find_duplicates import find_duplicate_skills
+    from verimem.find_duplicates import find_duplicate_skills
 
     out = find_duplicate_skills([])
     for k in ("pairs", "n_total_skills", "threshold"):

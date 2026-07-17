@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import types
 
-from engram.ppr_seed import fuse_dense_and_ppr
+from verimem.ppr_seed import fuse_dense_and_ppr
 
 
 def _F(fid):

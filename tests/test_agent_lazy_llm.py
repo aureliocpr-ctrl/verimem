@@ -4,7 +4,7 @@ Real bug (2026-06-06): the dashboard pages /episodes, /skills, /active-memory
 returned HTTP 500 with "ANTHROPIC_API_KEY not set" because building the agent
 EAGERLY constructed the LLM (wake.py / sleep.py `llm or get_llm()`). The memory
 layer + read-only views do ZERO inference, so build must install a deferred
-proxy (engram.llm.LazyLLM) and only resolve the real backend on first access.
+proxy (verimem.llm.LazyLLM) and only resolve the real backend on first access.
 
 Hermetic: asserts the structural fix (proxy installed) — independent of whether
 the env resolves to a mock/anthropic/hosted backend. Pre-fix, `agent.wake.llm`
@@ -13,8 +13,8 @@ a genuine red->green.
 """
 from __future__ import annotations
 
-from engram.agent import HippoAgent
-from engram.llm import LazyLLM
+from verimem.agent import HippoAgent
+from verimem.llm import LazyLLM
 
 
 def test_build_installs_lazy_llm_proxy_no_key_needed():
@@ -30,7 +30,7 @@ def test_build_installs_lazy_llm_proxy_no_key_needed():
 
 def test_explicit_llm_is_not_wrapped():
     # When the caller passes a concrete llm, build must use it verbatim (no proxy).
-    from engram.llm import MockLLM
+    from verimem.llm import MockLLM
 
     real = MockLLM()
     agent = HippoAgent.build(llm=real)

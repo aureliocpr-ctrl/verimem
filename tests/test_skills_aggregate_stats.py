@@ -1,18 +1,18 @@
 """FORGIA pezzo #275 — Wave 74: per-stage skill aggregate stats."""
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty():
-    from engram.skills_aggregate_stats import aggregate_stats
+    from verimem.skills_aggregate_stats import aggregate_stats
 
     out = aggregate_stats([])
     assert out["by_stage"] == {}
 
 
 def test_by_stage_counts():
-    from engram.skills_aggregate_stats import aggregate_stats
+    from verimem.skills_aggregate_stats import aggregate_stats
 
     skills = [
         Skill(id="a", stage="nrem"),
@@ -27,7 +27,7 @@ def test_by_stage_counts():
 
 
 def test_by_status_counts():
-    from engram.skills_aggregate_stats import aggregate_stats
+    from verimem.skills_aggregate_stats import aggregate_stats
 
     skills = [
         Skill(id="a", status="candidate"),
@@ -42,7 +42,7 @@ def test_by_status_counts():
 
 
 def test_avg_fitness_per_stage():
-    from engram.skills_aggregate_stats import aggregate_stats
+    from verimem.skills_aggregate_stats import aggregate_stats
 
     skills = [
         Skill(id="a", stage="nrem", trials=10, successes=8),
@@ -54,7 +54,7 @@ def test_avg_fitness_per_stage():
 
 
 def test_overall_counts():
-    from engram.skills_aggregate_stats import aggregate_stats
+    from verimem.skills_aggregate_stats import aggregate_stats
 
     skills = [Skill(id=f"s{i}") for i in range(5)]
     out = aggregate_stats(skills)
@@ -62,7 +62,7 @@ def test_overall_counts():
 
 
 def test_payload_shape():
-    from engram.skills_aggregate_stats import aggregate_stats
+    from verimem.skills_aggregate_stats import aggregate_stats
 
     out = aggregate_stats([])
     for k in ("n_total", "by_stage", "by_status"):

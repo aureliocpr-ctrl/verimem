@@ -17,7 +17,7 @@ from pathlib import Path
 
 
 def test_repomap_load_cache_handles_scalar(tmp_path: Path):
-    from engram.repomap import _load_cache
+    from verimem.repomap import _load_cache
     p = tmp_path / "cache.json"
     p.write_text("4", encoding="utf-8")
     assert _load_cache(p) == {}
@@ -37,7 +37,7 @@ def test_repomap_load_cache_handles_scalar(tmp_path: Path):
 
 
 def test_skill_get_returns_none_on_corruption(tmp_path: Path):
-    from engram.skill import SkillLibrary
+    from verimem.skill import SkillLibrary
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
     db = skills_dir / "idx.db"
@@ -62,7 +62,7 @@ def test_skill_get_returns_none_on_corruption(tmp_path: Path):
 
 
 def test_settings_load_returns_default_on_garbage(tmp_path: Path, monkeypatch):
-    from engram import settings as settings_mod
+    from verimem import settings as settings_mod
     bad = tmp_path / "settings.json"
     monkeypatch.setattr(settings_mod, "SETTINGS_FILE", bad)
     bad.write_text("[1, 2, 3]", encoding="utf-8")

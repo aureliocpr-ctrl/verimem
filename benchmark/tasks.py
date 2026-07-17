@@ -13,8 +13,8 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from engram.config import CONFIG
-from engram.tools import PythonExecutor
+from verimem.config import CONFIG
+from verimem.tools import PythonExecutor
 
 
 @dataclass

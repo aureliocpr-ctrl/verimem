@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.client import Memory
+from verimem.client import Memory
 
 #: un'asserzione di stato-lavoro non supportata: il caso che L1 quarantena
 _UNSUPPORTED = "the deployment works and is verified in production"

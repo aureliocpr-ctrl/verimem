@@ -12,8 +12,8 @@ import json
 
 import pytest
 
-from engram import mcp_server
-from engram.semantic import SemanticMemory
+from verimem import mcp_server
+from verimem.semantic import SemanticMemory
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ def _ids(results):
 
 @pytest.mark.asyncio
 async def test_remember_defers_when_daemon_down(_sm, monkeypatch):
-    import engram.encode_service as es
+    import verimem.encode_service as es
     monkeypatch.setattr(es, "daemon_usable", lambda: False)
     _heal = []
     monkeypatch.setattr(es, "ensure_running", lambda: _heal.append(1) or False)
@@ -74,7 +74,7 @@ async def test_remember_defers_when_daemon_down(_sm, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_remember_embeds_when_daemon_warm(_sm, monkeypatch):
-    import engram.encode_service as es
+    import verimem.encode_service as es
     monkeypatch.setattr(es, "daemon_usable", lambda: True)
 
     out = await _invoke("hippo_remember", {
@@ -93,7 +93,7 @@ async def test_remember_embeds_when_daemon_warm(_sm, monkeypatch):
 async def test_hippo_backfill_embeddings_tool_heals_deferred(_sm, monkeypatch):
     """The hippo_backfill_embeddings MCP tool embeds the deferred rows so an
     agent on the Engram MCP can heal them (symmetric with `engram facts backfill`)."""
-    import engram.encode_service as es
+    import verimem.encode_service as es
     monkeypatch.setattr(es, "daemon_usable", lambda: False)
     monkeypatch.setattr(es, "ensure_running", lambda: False)
 

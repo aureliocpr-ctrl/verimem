@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -53,7 +53,7 @@ class _FakeAgent:
 
 
 def test_unknown_skill_returns_not_found():
-    from engram.skill_inspect import skill_inspect
+    from verimem.skill_inspect import skill_inspect
 
     a = _FakeAgent([], [])
     out = skill_inspect(skill_id="ZZZ", agent=a)
@@ -61,7 +61,7 @@ def test_unknown_skill_returns_not_found():
 
 
 def test_known_skill_full_payload():
-    from engram.skill_inspect import skill_inspect
+    from verimem.skill_inspect import skill_inspect
 
     target = Skill(
         id="T", name="target_skill", trials=10, successes=8,
@@ -77,7 +77,7 @@ def test_known_skill_full_payload():
 
 
 def test_basic_fields_returned():
-    from engram.skill_inspect import skill_inspect
+    from verimem.skill_inspect import skill_inspect
 
     s = Skill(id="T", name="target_skill", trials=5, successes=4,
               status="candidate")
@@ -90,7 +90,7 @@ def test_basic_fields_returned():
 
 
 def test_health_section_present():
-    from engram.skill_inspect import skill_inspect
+    from verimem.skill_inspect import skill_inspect
 
     s = Skill(id="T", name="t", trials=0, successes=0)
     a = _FakeAgent([s], [])
@@ -99,7 +99,7 @@ def test_health_section_present():
 
 
 def test_path_section_present():
-    from engram.skill_inspect import skill_inspect
+    from verimem.skill_inspect import skill_inspect
 
     s = Skill(id="T", name="t")
     a = _FakeAgent([s], [_FakeEp(skills_used=["A", "T", "B"])])
@@ -109,7 +109,7 @@ def test_path_section_present():
 
 
 def test_failure_audit_section_present():
-    from engram.skill_inspect import skill_inspect
+    from verimem.skill_inspect import skill_inspect
 
     s = Skill(id="T", name="t")
     eps = [_FakeEp(id="e1", outcome="failure", skills_used=["T"])]

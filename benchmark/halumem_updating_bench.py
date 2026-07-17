@@ -31,7 +31,7 @@ import json
 import time
 from pathlib import Path
 
-from engram.truth_reconciliation import _content_overlap
+from verimem.truth_reconciliation import _content_overlap
 
 _DATASET = Path.home() / ".cache" / "halumem" / "HaluMem-Medium.jsonl"
 
@@ -53,7 +53,7 @@ def select_update_target(candidates, new_content: str, scorer, *,
     (rank order breaks ties).
 
     ``scorer`` maps [(premise, hypothesis), ...] → [{label: prob}, ...]
-    (engram.local_relation.make_nli_classifier). ``candidates`` =
+    (verimem.local_relation.make_nli_classifier). ``candidates`` =
     [(fact_id, text), ...] ranked by retrieval score."""
     try:
         scored = score_candidate_pairs(candidates, new_content, scorer)
@@ -125,7 +125,7 @@ def make_e5_matcher(threshold: float):
     """norm-exact OR e5 cosine >= threshold, with an encode cache."""
     import numpy as np
 
-    from engram import embedding
+    from verimem import embedding
     cache: dict[str, object] = {}
 
     def _vec(t: str):
@@ -185,8 +185,8 @@ def main(argv=None) -> int:
 
     import tempfile
 
-    from engram.local_relation import DEFAULT_NLI_MODEL, make_nli_classifier
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.local_relation import DEFAULT_NLI_MODEL, make_nli_classifier
+    from verimem.semantic import Fact, SemanticMemory
 
     users = []
     with open(a.jsonl, encoding="utf-8") as f:

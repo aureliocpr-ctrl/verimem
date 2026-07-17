@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from engram import briefing
+from verimem import briefing
 
 # ---------- Fakes --------------------------------------------------------
 

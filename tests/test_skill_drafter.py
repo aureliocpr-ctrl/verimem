@@ -1,6 +1,6 @@
 """Cycle 217 (2026-05-23) — skill_drafter tests.
 
-RED marker: ``from engram.skill_drafter import draft_skill_from_community``
+RED marker: ``from verimem.skill_drafter import draft_skill_from_community``
 must fail on master.
 
 Builds on cycle 213 (detect_emerging_skills) + cycle 214 (normalize_topic).
@@ -22,7 +22,7 @@ import sqlite3
 from pathlib import Path
 
 # RED MARKER
-from engram.skill_drafter import draft_skill_from_community
+from verimem.skill_drafter import draft_skill_from_community
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

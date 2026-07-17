@@ -7,8 +7,8 @@ improvement (an evidence-gate) shows up as a RED that we then update.
 from __future__ import annotations
 
 from benchmark.sycophancy_bench import run
-from engram.semantic import Fact
-from engram.truth_reconciliation import classify_conflict
+from verimem.semantic import Fact
+from verimem.truth_reconciliation import classify_conflict
 
 _NOW = 1_000_000_000.0
 _DAY = 86400.0

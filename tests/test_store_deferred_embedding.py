@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _ids(results) -> list[str]:
@@ -73,7 +73,7 @@ def test_backfill_makes_deferred_recallable(tmp_path):
 
 
 def test_store_auto_defers_when_daemon_unusable(tmp_path, monkeypatch):
-    import engram.encode_service as es
+    import verimem.encode_service as es
     monkeypatch.setattr(es, "daemon_usable", lambda: False)
     _heal = []
     # spy: must NOT spawn a real daemon in tests, and must self-heal (kick it).
@@ -87,7 +87,7 @@ def test_store_auto_defers_when_daemon_unusable(tmp_path, monkeypatch):
 
 
 def test_store_auto_embeds_when_daemon_usable(tmp_path, monkeypatch):
-    import engram.encode_service as es
+    import verimem.encode_service as es
     monkeypatch.setattr(es, "daemon_usable", lambda: True)
     m = SemanticMemory(db_path=tmp_path / "s.db")
     f = Fact(proposition="Auto-mode warm fact, 99 widgets.", topic="eng/w")

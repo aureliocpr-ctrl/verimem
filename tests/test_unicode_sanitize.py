@@ -21,8 +21,8 @@ import sqlite3
 
 import pytest
 
-from engram.prompt_injection import detect_injection, sanitize_dangerous_unicode
-from engram.semantic import Fact, SemanticMemory
+from verimem.prompt_injection import detect_injection, sanitize_dangerous_unicode
+from verimem.semantic import Fact, SemanticMemory
 
 BOM_TEXT = (
     "Richmond, Virginia. Richmond is located at 37°32′N "
@@ -132,7 +132,7 @@ def test_store_escape_hatch_restores_legacy(tmp_path, monkeypatch):
 def test_store_sanitize_is_logged_not_silent(tmp_path, _gates_on, caplog):
     import logging
     sm = SemanticMemory(db_path=tmp_path / "s.db")
-    with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+    with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
         sm.store(Fact(proposition=BOM_TEXT, topic="musique/log"),
                  embed="defer")
     assert any("sanitize" in r.message.lower() for r in caplog.records), (

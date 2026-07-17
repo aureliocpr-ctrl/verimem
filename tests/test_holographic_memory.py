@@ -25,7 +25,7 @@ import pytest
 
 
 def _make_memory(d: int = 8192) -> HolographicMemory:  # noqa: F821
-    from engram.holographic_memory import HolographicMemory
+    from verimem.holographic_memory import HolographicMemory
     return HolographicMemory(d=d)
 
 
@@ -165,7 +165,7 @@ def test_persist_roundtrip_identity(tmp_path) -> None:
     p = tmp_path / "holo.bin"
     res = mem.save(p)
     assert res["ok"] and res["bytes_written"] > 0
-    from engram.holographic_memory import HolographicMemory
+    from verimem.holographic_memory import HolographicMemory
     mem2 = HolographicMemory.load(p)
     assert mem2.n_facts == mem.n_facts
     # Recall after load

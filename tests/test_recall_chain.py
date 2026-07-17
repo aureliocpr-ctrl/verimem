@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -54,7 +54,7 @@ class _FakeAgent:
 
 
 def test_empty_returns_empty_recalls():
-    from engram.recall_chain import recall_chain
+    from verimem.recall_chain import recall_chain
 
     a = _FakeAgent([], [])
     out = recall_chain(task="anything", agent=a)
@@ -63,7 +63,7 @@ def test_empty_returns_empty_recalls():
 
 
 def test_returns_recall_with_forward_plans():
-    from engram.recall_chain import recall_chain
+    from verimem.recall_chain import recall_chain
 
     skills = [
         Skill(id="A", name="alpha skill"),
@@ -80,7 +80,7 @@ def test_returns_recall_with_forward_plans():
 
 def test_no_episodes_recall_only():
     """No episodes → forward_plans empty for each recall."""
-    from engram.recall_chain import recall_chain
+    from verimem.recall_chain import recall_chain
 
     skills = [Skill(id="A", name="alpha")]
     a = _FakeAgent(skills, [])
@@ -90,7 +90,7 @@ def test_no_episodes_recall_only():
 
 
 def test_k_recall_respected():
-    from engram.recall_chain import recall_chain
+    from verimem.recall_chain import recall_chain
 
     skills = [Skill(id=f"s{i}", name=f"task skill{i}") for i in range(5)]
     a = _FakeAgent(skills, [])
@@ -99,7 +99,7 @@ def test_k_recall_respected():
 
 
 def test_payload_shape_complete():
-    from engram.recall_chain import recall_chain
+    from verimem.recall_chain import recall_chain
 
     a = _FakeAgent([], [])
     out = recall_chain(task="x", agent=a)

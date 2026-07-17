@@ -22,7 +22,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from engram.truth_reconciliation import classify_conflict
+from verimem.truth_reconciliation import classify_conflict
 
 _BASE_T = 1_700_000_000  # fixed epoch (no wall-clock; reproducible)
 _DAY = 86400

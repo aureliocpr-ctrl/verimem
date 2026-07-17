@@ -1,7 +1,7 @@
 """Cycle 2026-05-27 — wire L1.9 performance detector into anti_confab_gate.
 
 L1.9 ships as composable side-by-side module
-(``engram.l1_performance_detector``) and is wired into
+(``verimem.l1_performance_detector``) and is wired into
 ``run_validation_gate`` so performance claims without bench evidence are
 surfaced alongside L1, L1.5, L1.7, L1.8 warnings.
 
@@ -23,7 +23,7 @@ Claude+Gemini+GPT in cycle 2026-05-27 → 10 patterns.
 """
 from __future__ import annotations
 
-from engram.anti_confab_gate import run_validation_gate
+from verimem.anti_confab_gate import run_validation_gate
 
 
 class TestL19WiredIntoGate:

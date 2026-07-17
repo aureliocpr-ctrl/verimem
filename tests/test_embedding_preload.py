@@ -1,5 +1,5 @@
-"""Tests for non-blocking embedding warm-up (engram.preload) and the
-thread-safety of engram.embedding._model().
+"""Tests for non-blocking embedding warm-up (verimem.preload) and the
+thread-safety of verimem.embedding._model().
 
 Root cause these guard: the sentence-transformers model takes ~20s to load.
 A synchronous eager preload blocks the MCP attach handshake; a lazy load
@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from engram import embedding, encode_service, preload
+from verimem import embedding, encode_service, preload
 
 # Captured at import time — before conftest's autouse `embedding._model` stub
 # applies — so one test can exercise the REAL _model() double-checked lock.

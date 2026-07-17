@@ -18,14 +18,14 @@ class _FakeFact:
 
 
 def test_empty_returns_no_pairs():
-    from engram.find_duplicate_facts import find_duplicate_facts
+    from verimem.find_duplicate_facts import find_duplicate_facts
 
     out = find_duplicate_facts([])
     assert out["pairs"] == []
 
 
 def test_identical_propositions_detected():
-    from engram.find_duplicate_facts import find_duplicate_facts
+    from verimem.find_duplicate_facts import find_duplicate_facts
 
     facts = [
         _FakeFact("f1", "the API endpoint is X"),
@@ -36,7 +36,7 @@ def test_identical_propositions_detected():
 
 
 def test_no_dupes_below_threshold():
-    from engram.find_duplicate_facts import find_duplicate_facts
+    from verimem.find_duplicate_facts import find_duplicate_facts
 
     facts = [
         _FakeFact("f1", "alpha beta gamma"),
@@ -47,7 +47,7 @@ def test_no_dupes_below_threshold():
 
 
 def test_pairs_sorted_by_jaccard_desc():
-    from engram.find_duplicate_facts import find_duplicate_facts
+    from verimem.find_duplicate_facts import find_duplicate_facts
 
     facts = [
         _FakeFact("a", "x y z"),
@@ -60,7 +60,7 @@ def test_pairs_sorted_by_jaccard_desc():
 
 
 def test_top_k_respected():
-    from engram.find_duplicate_facts import find_duplicate_facts
+    from verimem.find_duplicate_facts import find_duplicate_facts
 
     facts = [_FakeFact(f"f{i}", "x y z") for i in range(10)]
     out = find_duplicate_facts(facts, threshold=0.5, top_k=3)
@@ -68,7 +68,7 @@ def test_top_k_respected():
 
 
 def test_topic_filter_optional():
-    from engram.find_duplicate_facts import find_duplicate_facts
+    from verimem.find_duplicate_facts import find_duplicate_facts
 
     facts = [
         _FakeFact("a", "x", topic="user"),
@@ -81,7 +81,7 @@ def test_topic_filter_optional():
 
 
 def test_payload_shape_complete():
-    from engram.find_duplicate_facts import find_duplicate_facts
+    from verimem.find_duplicate_facts import find_duplicate_facts
 
     out = find_duplicate_facts([])
     for k in ("pairs", "n_total_facts", "threshold"):

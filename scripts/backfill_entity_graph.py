@@ -13,8 +13,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from engram.entity_kg import EntityStore  # noqa: E402
-from engram.entity_populate import populate_entity_graph  # noqa: E402
+from verimem.entity_kg import EntityStore  # noqa: E402
+from verimem.entity_populate import populate_entity_graph  # noqa: E402
 
 SEM = Path.home() / ".engram" / "semantic" / "semantic.db"
 

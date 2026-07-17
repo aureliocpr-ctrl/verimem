@@ -6,7 +6,7 @@ policy with lower-bound). This is explicit threshold control.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 class _FakeStore:
@@ -31,7 +31,7 @@ class _FakeAgent:
 
 
 def test_empty():
-    from engram.skill_promote_threshold import promote_by_threshold
+    from verimem.skill_promote_threshold import promote_by_threshold
 
     a = _FakeAgent([])
     out = promote_by_threshold(agent=a)
@@ -39,7 +39,7 @@ def test_empty():
 
 
 def test_promotes_above_threshold():
-    from engram.skill_promote_threshold import promote_by_threshold
+    from verimem.skill_promote_threshold import promote_by_threshold
 
     skills = [
         Skill(id="good", status="candidate", trials=10, successes=8),
@@ -56,7 +56,7 @@ def test_promotes_above_threshold():
 
 
 def test_low_trials_skipped():
-    from engram.skill_promote_threshold import promote_by_threshold
+    from verimem.skill_promote_threshold import promote_by_threshold
 
     skills = [
         Skill(id="few", status="candidate", trials=2, successes=2),
@@ -67,7 +67,7 @@ def test_low_trials_skipped():
 
 
 def test_non_candidate_skipped():
-    from engram.skill_promote_threshold import promote_by_threshold
+    from verimem.skill_promote_threshold import promote_by_threshold
 
     skills = [
         Skill(id="r", status="retired", trials=10, successes=9),
@@ -78,7 +78,7 @@ def test_non_candidate_skipped():
 
 
 def test_dry_run_no_mutation():
-    from engram.skill_promote_threshold import promote_by_threshold
+    from verimem.skill_promote_threshold import promote_by_threshold
 
     skills = [Skill(id="x", status="candidate", trials=10, successes=8)]
     a = _FakeAgent(skills)
@@ -89,7 +89,7 @@ def test_dry_run_no_mutation():
 
 
 def test_payload_shape():
-    from engram.skill_promote_threshold import promote_by_threshold
+    from verimem.skill_promote_threshold import promote_by_threshold
 
     a = _FakeAgent([])
     out = promote_by_threshold(agent=a)

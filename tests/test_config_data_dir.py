@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import engram._compat as _compat
-from engram._compat import data_dir as compat_data_dir
-from engram.config import _data_root, _project_root
+import verimem._compat as _compat
+from verimem._compat import data_dir as compat_data_dir
+from verimem.config import _data_root, _project_root
 
 
 def _fake_home(monkeypatch, home):

@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import (
+from verimem.semantic import (
     _STATUS_RANK,
     _VALID_STATUSES,
     Fact,

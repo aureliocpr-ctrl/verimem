@@ -20,12 +20,12 @@ def test_hippo_agent_build_smokes_clean(tmp_path: Path, monkeypatch):
     constructor args instead.
     """
     monkeypatch.setenv("HIPPO_OFFLINE", "1")
-    from engram.agent import HippoAgent
-    from engram.memory import EpisodicMemory
-    from engram.semantic import SemanticMemory
-    from engram.skill import SkillLibrary
-    from engram.sleep import SleepEngine
-    from engram.wake import WakeAgent
+    from verimem.agent import HippoAgent
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import SkillLibrary
+    from verimem.sleep import SleepEngine
+    from verimem.wake import WakeAgent
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
         dir_path=tmp_path / "sk", db_path=tmp_path / "sk" / "idx.db",
@@ -46,12 +46,12 @@ def test_hippo_agent_consolidate_skip_below_threshold(
 ):
     """Empty memory → sleep cycle skips, returns empty report."""
     monkeypatch.setenv("HIPPO_OFFLINE", "1")
-    from engram.agent import HippoAgent
-    from engram.memory import EpisodicMemory
-    from engram.semantic import SemanticMemory
-    from engram.skill import SkillLibrary
-    from engram.sleep import SleepEngine
-    from engram.wake import WakeAgent
+    from verimem.agent import HippoAgent
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import SkillLibrary
+    from verimem.sleep import SleepEngine
+    from verimem.wake import WakeAgent
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
         dir_path=tmp_path / "sk", db_path=tmp_path / "sk" / "idx.db",

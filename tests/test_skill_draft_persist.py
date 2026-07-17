@@ -1,6 +1,6 @@
 """Cycle 222 (2026-05-23) — disk persistence for emergent skill drafts.
 
-RED marker: ``from engram.skill_draft_persist import persist_drafts``
+RED marker: ``from verimem.skill_draft_persist import persist_drafts``
 must fail on master.
 
 Adds an audit trail: every batch of drafts produced by
@@ -22,7 +22,7 @@ import json
 from pathlib import Path
 
 # RED MARKER
-from engram.skill_draft_persist import persist_drafts
+from verimem.skill_draft_persist import persist_drafts
 
 
 def _sample_draft(name: str = "emerging_skill_demo") -> dict:

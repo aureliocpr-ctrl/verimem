@@ -14,7 +14,7 @@ workflow_5lenti_findings.json (C5).
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_cross_process_delete_opens_a_new_cache_generation(tmp_path) -> None:

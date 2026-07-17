@@ -27,8 +27,8 @@ from pathlib import Path
 # Make ``engram`` importable when invoked as ``python scripts/...``.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.config import CONFIG  # noqa: E402
-from engram.telemetry_analyzer import analyze_audit_log  # noqa: E402
+from verimem.config import CONFIG  # noqa: E402
+from verimem.telemetry_analyzer import analyze_audit_log  # noqa: E402
 
 
 def _default_log_path() -> Path:

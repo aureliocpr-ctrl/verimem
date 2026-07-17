@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import math
 
-from engram.adaptive_ledger import (
+from verimem.adaptive_ledger import (
     DAY,
     AdaptiveMeta,
     ConsequenceLedger,

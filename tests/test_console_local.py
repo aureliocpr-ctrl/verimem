@@ -20,8 +20,8 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from engram.client import Memory  # noqa: E402
-from engram.gateway import GatewayKeys, create_app  # noqa: E402
+from verimem.client import Memory  # noqa: E402
+from verimem.gateway import GatewayKeys, create_app  # noqa: E402
 
 _UNSUPPORTED = "the deployment works and is verified in production"
 

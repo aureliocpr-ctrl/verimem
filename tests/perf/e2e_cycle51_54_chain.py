@@ -45,12 +45,12 @@ def main() -> int:
         print("SKIP: e2e su corpus REALE disabilitato. Esegui con "
               "HIPPO_ALLOW_REAL_E2E=1 per acconsentire alla mutazione del corpus.")
         return 0
-    from engram.briefing import get_briefing
-    from engram.lineage_trace import trace
-    from engram.mcp_server import _build_episode, _build_fact
-    from engram.memory import EpisodicMemory
-    from engram.semantic import SemanticMemory
-    from engram.skill import SkillLibrary
+    from verimem.briefing import get_briefing
+    from verimem.lineage_trace import trace
+    from verimem.mcp_server import _build_episode, _build_fact
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import SkillLibrary
 
     report: dict = {"steps": [], "ok": True}
 
@@ -244,7 +244,7 @@ def main() -> int:
 
     # --- Step 8: briefing stats from real telemetry --------------------
     try:
-        from engram.briefing_stats import compute_stats
+        from verimem.briefing_stats import compute_stats
         jsonl_path = (
             Path(os.environ.get("ENGRAM_DATA_DIR",
                                 str(Path.home() / ".engram")))

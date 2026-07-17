@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from engram.world_model import simulate_action
+from verimem.world_model import simulate_action
 
 
 @dataclass

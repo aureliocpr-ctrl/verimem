@@ -29,9 +29,9 @@ import json
 
 import numpy as np
 
-from engram import embedding
-from engram.anti_confab_gate import run_validation_gate
-from engram.validate_claim import validate_claim
+from verimem import embedding
+from verimem.anti_confab_gate import run_validation_gate
+from verimem.validate_claim import validate_claim
 
 
 class _BenchFact:

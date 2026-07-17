@@ -17,10 +17,10 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from engram.community_detector import _load_graph
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.community_detector import _load_graph
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _build(tmp_path: Path):

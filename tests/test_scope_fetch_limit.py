@@ -14,7 +14,7 @@ pins that it must oversample (the old inline ``base if has_prefix`` returned
 """
 from __future__ import annotations
 
-from engram.scope import scoped_fetch_limit
+from verimem.scope import scoped_fetch_limit
 
 
 def test_complete_prefix_user_only_uses_base() -> None:

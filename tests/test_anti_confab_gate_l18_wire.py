@@ -1,7 +1,7 @@
 """Cycle 184 (2026-05-23) — wire cycle-183 L1.8 FIX-family detector into
 the anti_confab_gate orchestrator.
 
-Cycle 183 shipped ``engram.l1_extended_detector.detect_unsupported_fix_claim``
+Cycle 183 shipped ``verimem.l1_extended_detector.detect_unsupported_fix_claim``
 as a side-by-side composable module (no touch to gate). This cycle wires
 it into ``run_validation_gate`` so the orchestrator surfaces L1.8 warnings
 alongside the existing L1 / L1.5 / L1.7 family.
@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.anti_confab_gate import run_validation_gate
+from verimem.anti_confab_gate import run_validation_gate
 
 
 class TestL18WiredIntoGate:

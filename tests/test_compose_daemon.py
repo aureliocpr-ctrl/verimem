@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.compose_daemon import nightly_compose
+from verimem.compose_daemon import nightly_compose
 
 
 class _Judge:
@@ -26,7 +26,7 @@ def mem(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
-    from engram.client import Memory
+    from verimem.client import Memory
     return Memory(tmp_path / "daemon.db", grounding_llm=_Judge())
 
 

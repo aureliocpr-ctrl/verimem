@@ -30,7 +30,6 @@ from benchmark.external_readpath import build_store, load_split
 from benchmark.external_sycophancy_e2e import (
     PACE_S,
     _ask_claude,
-    build_prompt,
     classify_answer,
 )
 

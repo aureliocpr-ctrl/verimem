@@ -11,12 +11,12 @@ Fix: a single TOKEN that mixes Latin with another confusable-prone script
 code point at a time. Mixed-script single tokens essentially never occur in
 legitimate text, so the false-positive risk is ~zero.
 """
-from engram.prompt_injection import detect_injection
+from verimem.prompt_injection import detect_injection
 
 
 def test_mixed_script_token_helper_pure():
     # imported locally so the module collects even before the fix exists.
-    from engram.prompt_injection import _has_mixed_script_token
+    from verimem.prompt_injection import _has_mixed_script_token
 
     # 'override' with Greek nu (U+03BD) for 'v' -> Latin + Greek in ONE token.
     assert _has_mixed_script_token("oνerride") is True

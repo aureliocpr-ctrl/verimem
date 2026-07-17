@@ -6,8 +6,8 @@ misses it. Fail-soft so the future RRF fusion degrades to pure cosine.
 """
 from __future__ import annotations
 
-from engram.entity_kg import Entity, EntityStore
-from engram.ppr_seed import ppr_seeded_fact_ids
+from verimem.entity_kg import Entity, EntityStore
+from verimem.ppr_seed import ppr_seeded_fact_ids
 
 
 def _store(tmp_path):

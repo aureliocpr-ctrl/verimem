@@ -12,8 +12,8 @@ import types
 
 import pytest
 
-from engram import anti_confab_gate, semantic_conflict
-from engram.coherence_check import CoherenceWarning
+from verimem import anti_confab_gate, semantic_conflict
+from verimem.coherence_check import CoherenceWarning
 
 
 class _StubSemantic:

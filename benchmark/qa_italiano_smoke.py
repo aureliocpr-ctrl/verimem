@@ -16,9 +16,9 @@ os.environ["ENGRAM_ANSWER_VERIFY"] = "1"
 
 from benchmark.qa_eval import score_qa
 from benchmark.qa_runner import LeanClaudeCLILLM
-from engram.agent import wire_reconcile_judge
-from engram.semantic import Fact, SemanticMemory
-from engram.temporal_context import recall_with_history
+from verimem.agent import wire_reconcile_judge
+from verimem.semantic import Fact, SemanticMemory
+from verimem.temporal_context import recall_with_history
 
 _DAY = 86400.0
 _BASE = 1_577_836_800.0  # 2020-01-01, per date event-time deterministiche

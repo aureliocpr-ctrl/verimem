@@ -8,7 +8,7 @@ SessionStart come se fosse conoscenza curata/verificata. Resta accessibile:
 E se poi viene VERIFICATA con evidenza reale (status='verified'), torna knowledge
 piena (l'esclusione vale SOLO per le non-verificate).
 
-Hermetic: DB temporanei, zero ~/.engram.
+Hermetic: DB temporanei, zero ~/.verimem.
 """
 from __future__ import annotations
 
@@ -17,10 +17,10 @@ import sqlite3
 import time
 from pathlib import Path
 
-from engram import embedding as E
-from engram.semantic import Fact, SemanticMemory
-from engram.transcript_index import TranscriptIndex, Turn
-from engram.transcript_promote import promote_turn_to_fact
+from verimem import embedding as E
+from verimem.semantic import Fact, SemanticMemory
+from verimem.transcript_index import TranscriptIndex, Turn
+from verimem.transcript_promote import promote_turn_to_fact
 
 _HOOK = Path(__file__).resolve().parent.parent / "hooks" / "hippo_session_start.py"
 

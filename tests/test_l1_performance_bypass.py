@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_performance_detector import (
+from verimem.l1_performance_detector import (
     PerformanceClaimWarning,
     detect_unsupported_performance_claim,
 )

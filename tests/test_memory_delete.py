@@ -4,8 +4,8 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(eid: str) -> Episode:
@@ -52,8 +52,8 @@ def test_delete_invalidates_index(tmp_path: Path):
 
 def test_wake_agent_recent_episodes(tmp_path: Path):
     """FORGIA pezzo #132: WakeAgent.recent_episodes returns K most recent."""
-    from engram.skill import SkillLibrary
-    from engram.wake import WakeAgent
+    from verimem.skill import SkillLibrary
+    from verimem.wake import WakeAgent
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
         dir_path=tmp_path / "sk", db_path=tmp_path / "sk" / "idx.db",
@@ -69,8 +69,8 @@ def test_wake_agent_recent_episodes(tmp_path: Path):
 
 def test_wake_agent_delete_episode(tmp_path: Path):
     """FORGIA pezzo #114: WakeAgent.delete_episode delegates to memory."""
-    from engram.skill import SkillLibrary
-    from engram.wake import WakeAgent
+    from verimem.skill import SkillLibrary
+    from verimem.wake import WakeAgent
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
         dir_path=tmp_path / "sk", db_path=tmp_path / "sk" / "idx.db",

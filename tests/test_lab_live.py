@@ -14,7 +14,7 @@ API contract:
         Extracts "ORCHESTRATOR" / "Python-Eng" / "Code-Reviewer" /
         "QA-Eng" / "Unknown" from "[ROLE @HH:MM:SS] msg" prefix.
 
-TDD RED→GREEN: this file must fail import on engram.lab_live.
+TDD RED→GREEN: this file must fail import on verimem.lab_live.
 """
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ from pathlib import Path
 
 import pytest
 
-from engram.lab_live import fetch_chat_since, parse_role
-from engram.semantic import Fact, SemanticMemory
+from verimem.lab_live import fetch_chat_since, parse_role
+from verimem.semantic import Fact, SemanticMemory
 
 _TOPIC = "lab/test-chat-cycle146"
 

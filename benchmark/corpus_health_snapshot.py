@@ -3,7 +3,7 @@
 "A memory that reports its own epistemic state." Reads a semantic facts DB and reports,
 over the ALIVE (non-superseded) facts: status distribution, provenance coverage
 (verified_by / source_episodes), and the verified fraction. This is the corpus-level
-companion to ``engram.epistemic_health`` (which grounds individual facts via the LLM gate):
+companion to ``verimem.epistemic_health`` (which grounds individual facts via the LLM gate):
 here we measure, instantly and on the whole corpus, how much of what a memory stored is
 actually verified / has any provenance at all — the gap that provenance-on-write closes.
 

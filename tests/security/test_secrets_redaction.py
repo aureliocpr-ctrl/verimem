@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from engram import settings as user_settings
+from verimem import settings as user_settings
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def test_providers_endpoint_redacts_api_keys(
     user_settings.save(s)
 
     # Import the FastAPI app *after* SETTINGS_FILE has been monkeypatched.
-    from engram.dashboard import app
+    from verimem.dashboard import app
     client = TestClient(app)
     resp = client.get("/api/settings/providers")
     assert resp.status_code == 200
@@ -82,7 +82,7 @@ def test_providers_endpoint_handles_empty_api_keys(
 ) -> None:
     """No keys configured → empty dict (not None / not missing key)."""
     user_settings.save(user_settings.UserSettings())
-    from engram.dashboard import app
+    from verimem.dashboard import app
     client = TestClient(app)
     resp = client.get("/api/settings/providers")
     assert resp.status_code == 200
@@ -97,7 +97,7 @@ def test_settings_active_endpoint_does_not_leak_keys(
     user_settings.save(user_settings.UserSettings(
         api_keys={"ANTHROPIC_API_KEY": "sk-must-not-leak-here-either"},
     ))
-    from engram.dashboard import app
+    from verimem.dashboard import app
     client = TestClient(app)
     resp = client.get("/api/settings/active")
     assert resp.status_code == 200

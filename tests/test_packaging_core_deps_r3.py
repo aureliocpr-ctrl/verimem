@@ -1,7 +1,7 @@
 """Audit 3-round R2 #11 (packaging): the core runtime deps jsonschema + mcp must
 stay in [project.dependencies], NOT be demoted to an optional extra.
 
-A wheel built with them as extras crashes on a fresh install (engram.mcp_server
+A wheel built with them as extras crashes on a fresh install (verimem.mcp_server
 imports both at module load). The R2 finding observed a stale dist/ 0.3.0 wheel
 with exactly that defect — but dist/ is gitignored (a local build artifact, not
 published) and pyproject.toml is already correct. The stale wheel was removed;

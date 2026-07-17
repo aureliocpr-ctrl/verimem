@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 
 from benchmark.veribench.scoring import Outcome, net_score
-from engram.sla import answer_threshold, error_cost, should_answer
+from verimem.sla import answer_threshold, error_cost, should_answer
 
 
 def test_threshold_closed_form():

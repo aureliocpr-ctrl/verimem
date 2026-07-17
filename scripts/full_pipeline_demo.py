@@ -18,15 +18,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from engram.agent_scope import (
+from verimem.agent_scope import (
     count_by_agent,
     filter_facts_by_agent,
     tag_for_agent,
 )
-from engram.causal_extract import causal_extract
-from engram.causal_skill_mine import causal_skill_mine
-from engram.metacognition import assess_recall_confidence
-from engram.trajectory import TrajectoryStep
+from verimem.causal_extract import causal_extract
+from verimem.causal_skill_mine import causal_skill_mine
+from verimem.metacognition import assess_recall_confidence
+from verimem.trajectory import TrajectoryStep
 
 # ---------- synthetic experience generator ----------
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.local_grounding import try_local_score
+from verimem.local_grounding import try_local_score
 
 
 def _ce_ok() -> bool:
@@ -38,14 +38,14 @@ class _Extractor:
 
 
 def _ingest(sm, dialogue, lines, **kw):
-    from engram.conversation_ingest import ingest_conversation
+    from verimem.conversation_ingest import ingest_conversation
     return ingest_conversation(
         sm, [{"role": "user", "content": dialogue}], llm=_Extractor(lines),
         conversation_id="c", consolidate=False, embed="sync", **kw)
 
 
 def test_ingest_confab_quarantined_faithful_admitted(tmp_path):
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "m.db")
     dialogue = ("I moved the analytics database to Postgres last quarter, "
                 "hosted in eu-west. The team is happy with it.")
@@ -62,7 +62,7 @@ def test_ingest_confab_quarantined_faithful_admitted(tmp_path):
 
 
 def test_ingest_ground_off_admits_all(tmp_path):
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "m2.db")
     _ingest(sm, "The DB is Postgres.", ["The DB runs on MongoDB."], ground=False)
     import sqlite3

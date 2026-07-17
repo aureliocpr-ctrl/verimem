@@ -19,13 +19,13 @@ from pathlib import Path
 
 import pytest
 
-from engram.consolidation import (
+from verimem.consolidation import (
     _persist_master,
     _wire_edges,
     propose_master_node,
 )
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -187,7 +187,7 @@ def test_wire_edges_no_edges_when_no_source_eps(
         )
 
     # Create a master Episode manually so we have a real ep_id to wire from.
-    from engram.episode import Episode
+    from verimem.episode import Episode
     ep = Episode(
         task_id="project/cycle154/self-fallback/auto-MASTER",
         task_text="test wire_edges no-source-eps post-cycle-170",

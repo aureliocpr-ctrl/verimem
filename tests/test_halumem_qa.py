@@ -6,7 +6,7 @@ extraction-F1 game is string-overlap and matcher-capped. HaluMem ships per-sessi
 provided") — the Memory-Boundary category — and another 39 are Memory-Conflict
 (the reconciled/current fact). 48% of the benchmark rewards exactly what only we
 have: the anti-confab gate + reconcile-on-write. This runner ingests the dialogue
-through OUR gated pipeline (engram.conversation_ingest) and answers from the
+through OUR gated pipeline (verimem.conversation_ingest) and answers from the
 STORED facts alone — measuring lossless usefulness, not overlap.
 
 Hermetic: LLM injected (stub), no network, no claude -p.
@@ -73,7 +73,7 @@ def test_build_records_ingests_via_our_pipeline_and_flags_abstention() -> None:
         shutil.rmtree(workdir, ignore_errors=True)
     assert len(recs) == 2, "one record per question"
     # the ingest went through OUR pipeline: the atomic extraction prompt ran
-    from engram.conversation_ingest import ATOMIC_EXTRACT_SYSTEM
+    from verimem.conversation_ingest import ATOMIC_EXTRACT_SYSTEM
     assert any(c["system"] == ATOMIC_EXTRACT_SYSTEM for c in llm.calls)
     by_cat = {r["category"]: r for r in recs}
     # Basic Fact Recall: a real answer, NOT adversarial, context recalled from store
@@ -119,7 +119,7 @@ def test_raw_turns_baseline_visible_with_event_time_stamp() -> None:
     the visible window), inflating every pipeline-vs-raw delta. The stamp must go
     to asserted_at (v13), exactly like the pipeline arm does."""
     from benchmark.halumem_qa import _ingest_raw_turns, _parse_halumem_ts
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     workdir = Path(tempfile.mkdtemp(prefix="hm_raw_stamp_"))
     try:
         sm = SemanticMemory(db_path=workdir / "raw.db")

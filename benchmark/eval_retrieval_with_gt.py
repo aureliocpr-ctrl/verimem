@@ -56,7 +56,7 @@ from pathlib import Path
 from typing import Any
 
 from benchmark.retrieval_metrics import mrr, precision_at_k, recall_at_k
-from engram.semantic import SemanticMemory
+from verimem.semantic import SemanticMemory
 
 
 def _run_facts_cosine(

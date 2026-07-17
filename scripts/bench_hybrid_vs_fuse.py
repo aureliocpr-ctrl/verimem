@@ -11,7 +11,7 @@ Notes
 * cycle-161 hybrid (``SemanticMemory.recall_hybrid``) needs a query
   string + computes semantic cosine + keyword overlap — uses
   sentence-transformers, paying ~10ms warm-cache cosine.
-* cycle-197 fuse_recall (``engram.fuse_recall.fuse_recall``) uses SQL-
+* cycle-197 fuse_recall (``verimem.fuse_recall.fuse_recall``) uses SQL-
   only signals (recency / confidence / recency_decayed) by default —
   no embedding model required.
 
@@ -28,7 +28,7 @@ from pathlib import Path
 def _bench_hybrid(
     db_path: Path, queries: list[str], n_runs: int = 3, k: int = 10,
 ) -> dict:
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=db_path)
     # Warm-up (load model).
     sm.recall(queries[0], k=k)
@@ -60,7 +60,7 @@ def _bench_hybrid(
 def _bench_fuse(
     db_path: Path, queries: list[str], n_runs: int = 3, k: int = 10,
 ) -> dict:
-    from engram.fuse_recall import fuse_recall
+    from verimem.fuse_recall import fuse_recall
 
     latencies_ms: list[float] = []
     for _ in range(int(n_runs)):

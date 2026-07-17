@@ -6,8 +6,8 @@ network.
 """
 from __future__ import annotations
 
-from engram.airgap import airgap_status
-from engram.mode import apply_engram_mode, engram_mode
+from verimem.airgap import airgap_status
+from verimem.mode import apply_engram_mode, engram_mode
 
 
 def test_local_mode_derives_airgap_env():

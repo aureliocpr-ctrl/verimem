@@ -129,7 +129,7 @@ def _seed_corpus_with_super_cluster(db_path: Path, n_master: int = 30,
 
 def test_returns_list(tmp_path: Path) -> None:
     """Second-pass Louvain returns a list of community dicts."""
-    from engram.second_pass_louvain import second_pass_louvain
+    from verimem.second_pass_louvain import second_pass_louvain
 
     db = tmp_path / "semantic" / "semantic.db"
     _seed_corpus_with_super_cluster(db)
@@ -139,7 +139,7 @@ def test_returns_list(tmp_path: Path) -> None:
 
 def test_empty_db_returns_empty(tmp_path: Path) -> None:
     """No facts → empty result, no raise."""
-    from engram.second_pass_louvain import second_pass_louvain
+    from verimem.second_pass_louvain import second_pass_louvain
 
     db = tmp_path / "semantic.db"
     conn = sqlite3.connect(str(db))
@@ -161,7 +161,7 @@ def test_empty_db_returns_empty(tmp_path: Path) -> None:
 
 def test_missing_db_returns_empty(tmp_path: Path) -> None:
     """Missing DB → empty, no raise."""
-    from engram.second_pass_louvain import second_pass_louvain
+    from verimem.second_pass_louvain import second_pass_louvain
 
     result = second_pass_louvain(tmp_path / "does_not_exist.db", seed=42)
     assert result == []
@@ -170,8 +170,8 @@ def test_missing_db_returns_empty(tmp_path: Path) -> None:
 def test_fragments_master_super_cluster(tmp_path: Path) -> None:
     """Master super-cluster with 3 sub-themes must be fragmented into
     ≥2 sub-communities by second-pass."""
-    from engram.community_detector import detect_communities
-    from engram.second_pass_louvain import second_pass_louvain
+    from verimem.community_detector import detect_communities
+    from verimem.second_pass_louvain import second_pass_louvain
 
     db = tmp_path / "semantic" / "semantic.db"
     _seed_corpus_with_super_cluster(db, n_master=30, n_outliers=3)
@@ -213,7 +213,7 @@ def test_fragments_master_super_cluster(tmp_path: Path) -> None:
 
 def test_preserves_non_master_communities(tmp_path: Path) -> None:
     """Non-master communities are passed through unchanged."""
-    from engram.second_pass_louvain import second_pass_louvain
+    from verimem.second_pass_louvain import second_pass_louvain
 
     db = tmp_path / "semantic.db"
     # Build TWO comparable clusters of size 8 each + small island.
@@ -265,7 +265,7 @@ def test_preserves_non_master_communities(tmp_path: Path) -> None:
 
 def test_seed_deterministic(tmp_path: Path) -> None:
     """Same seed → identical communities ordering."""
-    from engram.second_pass_louvain import second_pass_louvain
+    from verimem.second_pass_louvain import second_pass_louvain
 
     db = tmp_path / "semantic.db"
     _seed_corpus_with_super_cluster(db, n_master=20, n_outliers=3)
@@ -287,8 +287,8 @@ def test_cohesion_non_degrading(tmp_path: Path) -> None:
     This is the falsifiable claim of cycle 253: if cohesion DROPS, the
     cure is rejected.
     """
-    from engram.community_detector import detect_communities
-    from engram.second_pass_louvain import (
+    from verimem.community_detector import detect_communities
+    from verimem.second_pass_louvain import (
         _cohesion_for_fact_ids,
         second_pass_louvain,
     )

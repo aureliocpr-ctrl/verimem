@@ -19,13 +19,13 @@ class _Fact:
 
 
 def test_empty_query_no_chain():
-    from engram.fact_chain import chain_facts
+    from verimem.fact_chain import chain_facts
     out = chain_facts(seed_query="", facts=[])
     assert out["chain"] == []
 
 
 def test_single_hop():
-    from engram.fact_chain import chain_facts
+    from verimem.fact_chain import chain_facts
     facts = [
         _Fact("f1", "WordPress is a CMS"),
         _Fact("f2", "Cloudflare is a CDN"),
@@ -36,7 +36,7 @@ def test_single_hop():
 
 
 def test_multi_hop():
-    from engram.fact_chain import chain_facts
+    from verimem.fact_chain import chain_facts
     facts = [
         _Fact("f1", "WordPress 5.8 detected on target"),
         _Fact("f2", "WordPress 5.8 vulnerable to CVE-X"),
@@ -51,7 +51,7 @@ def test_multi_hop():
 
 
 def test_depth_limit():
-    from engram.fact_chain import chain_facts
+    from verimem.fact_chain import chain_facts
     facts = [
         _Fact("f1", "A is B"),
         _Fact("f2", "B is C"),
@@ -64,14 +64,14 @@ def test_depth_limit():
 
 
 def test_payload_shape():
-    from engram.fact_chain import chain_facts
+    from verimem.fact_chain import chain_facts
     out = chain_facts(seed_query="X", facts=[])
     for k in ("chain", "max_depth_reached", "n_facts_scanned"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.fact_chain import chain_facts
+    from verimem.fact_chain import chain_facts
     facts = [_Fact("f1", "X is something")]
     out = chain_facts(seed_query="X", facts=facts)
     if out["chain"]:

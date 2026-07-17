@@ -27,13 +27,13 @@ def _write_log(path: Path, records: list[dict]) -> None:
 
 class TestAnalyzeEmpty:
     def test_missing_file_returns_empty(self, tmp_path: Path) -> None:
-        from engram.telemetry_analyzer import analyze_audit_log
+        from verimem.telemetry_analyzer import analyze_audit_log
         report = analyze_audit_log(tmp_path / "missing.log")
         assert report["total_calls"] == 0
         assert report["per_tool"] == {}
 
     def test_empty_file_returns_empty(self, tmp_path: Path) -> None:
-        from engram.telemetry_analyzer import analyze_audit_log
+        from verimem.telemetry_analyzer import analyze_audit_log
         p = tmp_path / "empty.log"
         p.write_text("", encoding="utf-8")
         report = analyze_audit_log(p)
@@ -42,7 +42,7 @@ class TestAnalyzeEmpty:
 
 class TestAnalyzeCounts:
     def test_counts_per_tool(self, tmp_path: Path) -> None:
-        from engram.telemetry_analyzer import analyze_audit_log
+        from verimem.telemetry_analyzer import analyze_audit_log
         p = tmp_path / "log.jsonl"
         _write_log(p, [
             {"ts": 1, "tool": "hippo_recall", "caller_pid": 100,
@@ -64,7 +64,7 @@ class TestAnalyzeCounts:
 
 class TestAnalyzeLatencyPercentiles:
     def test_p50_and_p99(self, tmp_path: Path) -> None:
-        from engram.telemetry_analyzer import analyze_audit_log
+        from verimem.telemetry_analyzer import analyze_audit_log
         p = tmp_path / "log.jsonl"
         # 100 records, latency 1..100ms in order
         records = []
@@ -86,7 +86,7 @@ class TestAnalyzeLatencyPercentiles:
         assert rec["latency_max_ms"] == 100.0
 
     def test_missing_latency_skipped_safely(self, tmp_path: Path) -> None:
-        from engram.telemetry_analyzer import analyze_audit_log
+        from verimem.telemetry_analyzer import analyze_audit_log
         p = tmp_path / "log.jsonl"
         _write_log(p, [
             {"ts": 1, "tool": "hippo_recall", "caller_pid": 1,
@@ -105,7 +105,7 @@ class TestAnalyzeLatencyPercentiles:
 
 class TestAnalyzeOutcomes:
     def test_outcomes_breakdown(self, tmp_path: Path) -> None:
-        from engram.telemetry_analyzer import analyze_audit_log
+        from verimem.telemetry_analyzer import analyze_audit_log
         p = tmp_path / "log.jsonl"
         _write_log(p, [
             {"ts": 1, "tool": "hippo_run_task", "caller_pid": 1,
@@ -127,7 +127,7 @@ class TestAnalyzeOutcomes:
 
 class TestAnalyzeSessions:
     def test_unique_pid_count(self, tmp_path: Path) -> None:
-        from engram.telemetry_analyzer import analyze_audit_log
+        from verimem.telemetry_analyzer import analyze_audit_log
         p = tmp_path / "log.jsonl"
         _write_log(p, [
             {"ts": 1, "tool": "hippo_recall", "caller_pid": 100,
@@ -150,7 +150,7 @@ class TestAnalyzeMalformedLineTolerance:
     """Robustness: a corrupt JSONL line must not crash the analyzer."""
 
     def test_skips_malformed_lines(self, tmp_path: Path) -> None:
-        from engram.telemetry_analyzer import analyze_audit_log
+        from verimem.telemetry_analyzer import analyze_audit_log
         p = tmp_path / "log.jsonl"
         with open(p, "w", encoding="utf-8") as f:
             f.write('{"ts": 1, "tool": "hippo_x", "caller_pid": 1, '

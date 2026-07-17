@@ -27,12 +27,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.swarm.orchestrator import AgentReport, SwarmReport, run_swarm
-from engram.swarm.schemas import AgentSpec, SwarmConfig
-from engram.swarm.spawn import SpawnResult
-from engram.swarm.state import SessionState
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.swarm.orchestrator import AgentReport, SwarmReport, run_swarm
+from verimem.swarm.schemas import AgentSpec, SwarmConfig
+from verimem.swarm.spawn import SpawnResult
+from verimem.swarm.state import SessionState
 
 
 def _spawn_fn_factory(short_ids: list[str]):
@@ -157,7 +157,7 @@ class TestRunSwarm:
         # production bridge code runs end-to-end and writes real edges.
         import json as _json
 
-        from engram.swarm.bridge import poll_until_done as real_poll
+        from verimem.swarm.bridge import poll_until_done as real_poll
         jobs = tmp_path / "jobs"
         for sid in ("q1", "q2"):
             sd = jobs / sid

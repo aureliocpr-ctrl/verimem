@@ -14,8 +14,8 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(eid: str, *, skills: list[str], outcome: str) -> Episode:

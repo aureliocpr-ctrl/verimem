@@ -20,7 +20,7 @@ import os
 import numpy as np
 import pytest
 
-from engram import semantic_selfclaim as ssc
+from verimem import semantic_selfclaim as ssc
 
 
 def _vec(*components: float) -> np.ndarray:
@@ -119,7 +119,7 @@ def test_lexical_path_never_coldloads_the_model(monkeypatch):
     scrittura di un processo freddo — find_torch_trigger). Su processo freddo e
     non-delegate il detector si disarma (fail-open) SENZA raggiungere il loader
     in-process. Nessun modello iniettato: esercita la guardia di produzione."""
-    from engram import embedding as emb
+    from verimem import embedding as emb
     monkeypatch.delenv("HIPPO_ENCODE_DELEGATE_ONLY", raising=False)
     monkeypatch.setattr(emb, "is_loaded", lambda: False)          # freddo
     reached = {"cold_load": False}
@@ -141,7 +141,7 @@ def test_semantic_detector_runs_when_encoder_warm(monkeypatch):
     """La guardia NON deve spegnere il detector in produzione: con encoder caldo
     (o delegato) gira e flagga una claim hype. Usa l'encoder toy come default
     reale, così non carica alcun modello."""
-    from engram import embedding as emb
+    from verimem import embedding as emb
     monkeypatch.setattr(emb, "is_loaded", lambda: True)           # caldo
     monkeypatch.setattr(emb, "encode", _fake_encode)              # toy, veloce
     out = ssc.detect_semantic_selfclaim(
@@ -156,7 +156,7 @@ def test_wired_into_the_gate(monkeypatch):
     import tempfile
     from pathlib import Path
 
-    from engram.client import Memory
+    from verimem.client import Memory
 
     monkeypatch.setattr(ssc, "_default_encode", lambda: _fake_encode)
     m = Memory(Path(tempfile.mkdtemp()) / "l120.db")

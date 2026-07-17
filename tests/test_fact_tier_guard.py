@@ -3,7 +3,7 @@
 The real-corpus NLI scan showed the residual conflicts are machine telemetry
 (bus/consensus verdicts, dream/*/state, metric/event_*), not knowledge — so the
 knowledge-reconcile judge must never auto-act (supersede OR contest) on a fact
-that is not tier=knowledge. `classify_tier` in engram._telemetry_prefixes is the
+that is not tier=knowledge. `classify_tier` in verimem._telemetry_prefixes is the
 single source of truth; truth_reconciliation consumes it on both sides of every
 pair. dialog/ verbatim transcripts stay recallable but are NOT factual
 assertions to reconcile; dream/ was a missing telemetry prefix (26 live JSON
@@ -11,7 +11,7 @@ machine-state facts slipped past write-route and read-hide).
 """
 from __future__ import annotations
 
-from engram._telemetry_prefixes import (
+from verimem._telemetry_prefixes import (
     TELEMETRY_TOPIC_PREFIXES,
     TIER_DIALOG,
     TIER_KNOWLEDGE,
@@ -19,9 +19,9 @@ from engram._telemetry_prefixes import (
     TIER_TEST,
     classify_tier,
 )
-from engram.contradiction import ContradictionStore
-from engram.semantic import Fact, SemanticMemory
-from engram.truth_reconciliation import (
+from verimem.contradiction import ContradictionStore
+from verimem.semantic import Fact, SemanticMemory
+from verimem.truth_reconciliation import (
     reconcile_against_corpus,
     reconcile_fact_on_write,
 )

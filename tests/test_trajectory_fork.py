@@ -5,7 +5,7 @@ import pytest
 
 
 def _mk():
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
     return [
         TrajectoryStep(step_idx=0, kind="thought", content="reflect"),
         TrajectoryStep(
@@ -22,7 +22,7 @@ def _mk():
 
 
 def test_fork_preserves_prefix():
-    from engram.trajectory_fork import trajectory_fork
+    from verimem.trajectory_fork import trajectory_fork
     out = trajectory_fork(_mk(), from_step=3)
     # All steps with step_idx < 3 preserved
     kept = [s for s in out["preserved"] if s.step_idx < 3]
@@ -30,14 +30,14 @@ def test_fork_preserves_prefix():
 
 
 def test_fork_drops_suffix():
-    from engram.trajectory_fork import trajectory_fork
+    from verimem.trajectory_fork import trajectory_fork
     out = trajectory_fork(_mk(), from_step=3)
     # No preserved step at idx 3 or 4
     assert all(s.step_idx < 3 for s in out["preserved"])
 
 
 def test_fork_returns_metadata():
-    from engram.trajectory_fork import trajectory_fork
+    from verimem.trajectory_fork import trajectory_fork
     out = trajectory_fork(_mk(), from_step=2)
     assert "fork_id" in out
     assert "preserved" in out
@@ -46,27 +46,27 @@ def test_fork_returns_metadata():
 
 
 def test_fork_at_step_0_returns_empty_preserved():
-    from engram.trajectory_fork import trajectory_fork
+    from verimem.trajectory_fork import trajectory_fork
     out = trajectory_fork(_mk(), from_step=0)
     assert out["preserved"] == []
 
 
 def test_fork_beyond_max_step_keeps_all():
-    from engram.trajectory_fork import trajectory_fork
+    from verimem.trajectory_fork import trajectory_fork
     out = trajectory_fork(_mk(), from_step=99)
     assert len(out["preserved"]) == 5  # all kept (nothing to drop)
 
 
 def test_fork_negative_step_raises():
-    from engram.trajectory_fork import trajectory_fork
+    from verimem.trajectory_fork import trajectory_fork
     with pytest.raises(ValueError):
         trajectory_fork(_mk(), from_step=-1)
 
 
 def test_fork_with_counterfactual_seed():
     """If user provides counterfactual_action, append it as step from_step."""
-    from engram.trajectory import TrajectoryStep
-    from engram.trajectory_fork import trajectory_fork
+    from verimem.trajectory import TrajectoryStep
+    from verimem.trajectory_fork import trajectory_fork
 
     seed = TrajectoryStep(
         step_idx=3, kind="action", content="try different exploit",

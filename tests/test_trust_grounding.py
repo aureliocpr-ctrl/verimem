@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import types
 
-from engram.trust_score import compute_trust_score, rank_facts_by_trust
+from verimem.trust_score import compute_trust_score, rank_facts_by_trust
 
 
 def _fact(fid, prop, conf, ground, created):

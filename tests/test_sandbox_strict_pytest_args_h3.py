@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.sandbox import _validate_argv
+from verimem.sandbox import _validate_argv
 
 
 @pytest.mark.parametrize("argv", [

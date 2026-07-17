@@ -20,7 +20,7 @@ from pathlib import Path
 
 # Single import style (CodeQL): we need the module handle for
 # monkeypatch.setattr(sem, ...), so Fact/SemanticMemory are reached via `sem.`.
-import engram.semantic as sem
+import verimem.semantic as sem
 
 _QUERY = "does the widget pipeline still deploy via the foo endpoint"
 

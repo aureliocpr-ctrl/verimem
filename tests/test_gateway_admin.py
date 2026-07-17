@@ -14,7 +14,7 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from engram.gateway import GatewayKeys, create_app  # noqa: E402
+from verimem.gateway import GatewayKeys, create_app  # noqa: E402
 
 ADMIN = "adm_test_secret_0123456789"
 
@@ -134,6 +134,6 @@ def test_admin_ui_served_only_with_admin_key(gw, tmp_path):
     js = client.get("/admin/ui/admin.js")
     assert js.status_code == 200 and "javascript" in js.headers["content-type"]
     # senza admin key configurata la pagina NON esiste (come /admin/*)
-    from engram.gateway import create_app as _ca
+    from verimem.gateway import create_app as _ca
     bare = TestClient(_ca(data_dir=tmp_path / "bare"))
     assert bare.get("/admin/ui").status_code == 404

@@ -7,7 +7,7 @@ verifica che, dopo lo store, l'handler chiami
 `SemanticMemory.auto_supersede_on_contradiction(new_id, contradicting_ids)`.
 
 Robustezza: NON dipendiamo dal verdetto reale di validate_claim — monkeypatch
-del gate (import locale risolto a runtime da `engram.anti_confab_gate`) per
+del gate (import locale risolto a runtime da `verimem.anti_confab_gate`) per
 ritornare un contradicting_fact_ids deterministico. Cosi il test isola il
 WIRING, non la detection. HERMETIC: SemanticMemory su tmp_path.
 """
@@ -17,8 +17,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from engram import anti_confab_gate, mcp_server
-from engram.semantic import Fact, SemanticMemory
+from verimem import anti_confab_gate, mcp_server
+from verimem.semantic import Fact, SemanticMemory
 
 
 class _FakeAgent:

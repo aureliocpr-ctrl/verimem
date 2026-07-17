@@ -55,7 +55,7 @@ def main(argv=None) -> int:
                          "the lexical heuristic — measures the reconcile fix's recall")
     ap.add_argument("--local-nli", action="store_true",
                     help="confirm conflicts with the LOCAL NLI cross-encoder judge "
-                         "(engram.local_relation, zero claude -p) — the subscription-"
+                         "(verimem.local_relation, zero claude -p) — the subscription-"
                          "independent truth-maintenance path")
     ap.add_argument("--nli-model", default=None,
                     help="override the local NLI model (default cross-encoder/"
@@ -79,7 +79,7 @@ def main(argv=None) -> int:
     import os as _os
     _os.environ.setdefault("ENGRAM_ENTITY_LIVE", "1")  # reconcile needs entity links
 
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     judge = None
     judge_kind = "lexical"
@@ -87,7 +87,7 @@ def main(argv=None) -> int:
     nli_model_name = None
     if a.local_nli:
         # Load the NLI model ONCE and reuse it across the threshold sweep.
-        from engram.local_relation import (
+        from verimem.local_relation import (
             DEFAULT_NLI_MODEL,
             LocalRelationJudge,
             make_nli_classifier,
@@ -100,7 +100,7 @@ def main(argv=None) -> int:
         judge_kind = f"local_nli:{nli_model_name}"
     elif a.nli:
         from benchmark.qa_runner import LeanClaudeCLILLM
-        from engram.semantic_conflict import LLMRelationJudge
+        from verimem.semantic_conflict import LLMRelationJudge
         judge = LLMRelationJudge(LeanClaudeCLILLM(model=a.model, timeout_s=a.timeout))
         judge_kind = f"claude_nli:{a.model}"
 
@@ -161,7 +161,7 @@ def main(argv=None) -> int:
         # Sweep the CONTRADICTION THRESHOLD (the local-NLI precision/recall knob),
         # reusing the one loaded model. max_diff is irrelevant here — the NLI judge
         # replaces the lexical conflict confirmation.
-        from engram.local_relation import LocalRelationJudge
+        from verimem.local_relation import LocalRelationJudge
         thresholds = [float(x) for x in str(a.contra_thresholds).split(",") if x.strip()]
         for thr in thresholds:
             judge = LocalRelationJudge(model_name=nli_model_name,

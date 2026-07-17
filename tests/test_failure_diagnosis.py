@@ -18,14 +18,14 @@ class _Ep:
 
 
 def test_no_similar_returns_unknown():
-    from engram.failure_diagnosis import diagnose_failure
+    from verimem.failure_diagnosis import diagnose_failure
     target = _Ep("t", "novel task X", "failure", "weird crash")
     out = diagnose_failure(target, past_episodes=[])
     assert out["root_cause"] == "" or out["confidence"] == "none"
 
 
 def test_finds_common_cause():
-    from engram.failure_diagnosis import diagnose_failure
+    from verimem.failure_diagnosis import diagnose_failure
     target = _Ep("t", "WordPress recon target", "failure",
                  "Cloudflare WAF blocked")
     past = [
@@ -41,7 +41,7 @@ def test_finds_common_cause():
 
 
 def test_ignores_success_episodes():
-    from engram.failure_diagnosis import diagnose_failure
+    from verimem.failure_diagnosis import diagnose_failure
     target = _Ep("t", "task", "failure", "error X")
     past = [
         _Ep("p1", "task", "success", "completed"),
@@ -53,7 +53,7 @@ def test_ignores_success_episodes():
 
 
 def test_payload_shape():
-    from engram.failure_diagnosis import diagnose_failure
+    from verimem.failure_diagnosis import diagnose_failure
     target = _Ep("t", "x", "failure")
     out = diagnose_failure(target, past_episodes=[])
     for k in ("root_cause", "confidence", "n_similar_failures",
@@ -62,7 +62,7 @@ def test_payload_shape():
 
 
 def test_high_confidence_on_strong_pattern():
-    from engram.failure_diagnosis import diagnose_failure
+    from verimem.failure_diagnosis import diagnose_failure
     target = _Ep("t", "X attack", "failure", "rate limit hit")
     past = [
         _Ep(f"p{i}", "X attack", "failure", "rate limit hit retry blocked")
@@ -73,7 +73,7 @@ def test_high_confidence_on_strong_pattern():
 
 
 def test_low_confidence_on_weak_pattern():
-    from engram.failure_diagnosis import diagnose_failure
+    from verimem.failure_diagnosis import diagnose_failure
     target = _Ep("t", "Y attack", "failure", "unknown error")
     past = [_Ep("p1", "Y attack", "failure", "completely different cause")]
     out = diagnose_failure(target, past_episodes=past)

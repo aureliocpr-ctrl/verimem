@@ -1,12 +1,12 @@
 """Cycle 214 (2026-05-23) — topic normalisation tests.
 
-RED marker: ``from engram.topic_normalization import normalize_topic``
+RED marker: ``from verimem.topic_normalization import normalize_topic``
 must fail on master.
 """
 from __future__ import annotations
 
 # RED MARKER
-from engram.topic_normalization import (
+from verimem.topic_normalization import (
     group_by_topic_family,
     normalize_topic,
     topic_similarity,

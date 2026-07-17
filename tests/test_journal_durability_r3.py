@@ -14,8 +14,8 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-import engram.semantic as semantic_mod
-from engram.semantic import Fact, SemanticMemory
+import verimem.semantic as semantic_mod
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_checkpoint_runs_before_journal_unlink(tmp_path, monkeypatch) -> None:

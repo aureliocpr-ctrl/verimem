@@ -17,8 +17,8 @@ from pathlib import Path
 
 import numpy as np
 
-from engram.auto_dream_worker import _persist_emergence_drafts
 from tests.causal_fixture_helper import add_causal_clique_edges
+from verimem.auto_dream_worker import _persist_emergence_drafts
 
 
 def _cluster_emb(seed: int, noise: float, sample: int) -> bytes:

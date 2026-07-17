@@ -29,7 +29,7 @@ def test_same_future_skills_cluster_together():
     """A and B are different skills (different ids) but BOTH lead to
     the same successor C with same probability. SR rows are similar
     → cluster together."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_successor_matrix,
         cluster_by_sr_similarity,
     )
@@ -60,7 +60,7 @@ def test_same_future_skills_cluster_together():
 
 def test_different_future_skills_diverge():
     """Skills with disjoint successors should NOT cluster."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_successor_matrix,
         cluster_by_sr_similarity,
     )
@@ -85,7 +85,7 @@ def test_different_future_skills_diverge():
 
 def test_empty_matrix_returns_empty_clusters():
     """Empty SR matrix returns []."""
-    from engram.successor_repr import cluster_by_sr_similarity
+    from verimem.successor_repr import cluster_by_sr_similarity
 
     out = cluster_by_sr_similarity([], np.zeros((0, 0), dtype=np.float32))
     assert out == []
@@ -93,7 +93,7 @@ def test_empty_matrix_returns_empty_clusters():
 
 def test_singleton_skill_is_own_cluster():
     """A single skill produces a single 1-element cluster."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_successor_matrix,
         cluster_by_sr_similarity,
     )

@@ -27,7 +27,7 @@ def main(argv=None) -> int:
 
     from benchmark.halumem_writepath_moat import _all_facts, _clean_facts
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import fact_grounding_score
+    from verimem.grounding_gate import fact_grounding_score
 
     rng = random.Random(a.seed)
     users = []

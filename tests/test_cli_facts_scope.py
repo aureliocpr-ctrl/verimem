@@ -14,9 +14,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from engram.cli import app
-from engram.scope import scoped_topic
-from engram.semantic import Fact, SemanticMemory
+from verimem.cli import app
+from verimem.scope import scoped_topic
+from verimem.semantic import Fact, SemanticMemory
 
 runner = CliRunner()
 

@@ -19,8 +19,8 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
-from engram.semantic import SemanticMemory
+from verimem import mcp_server
+from verimem.semantic import SemanticMemory
 
 
 @pytest.fixture

@@ -24,7 +24,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.successor_repr import (
+from verimem.successor_repr import (
     build_successor_matrix,
     build_transition_matrix,
     predict_next,

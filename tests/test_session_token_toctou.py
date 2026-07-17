@@ -47,7 +47,7 @@ pytestmark = pytest.mark.skipif(
 
 def _read_session_module():
     """Late import so the env override below takes effect at module init."""
-    from engram.dashboard_routes import auth as _auth
+    from verimem.dashboard_routes import auth as _auth
     return _auth
 
 

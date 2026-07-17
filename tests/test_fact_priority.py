@@ -15,13 +15,13 @@ class _Fact:
 
 
 def test_empty_returns_empty():
-    from engram.fact_priority import rank_facts_by_priority
+    from verimem.fact_priority import rank_facts_by_priority
     out = rank_facts_by_priority([])
     assert out["ranked"] == []
 
 
 def test_fresh_high_conf_top():
-    from engram.fact_priority import rank_facts_by_priority
+    from verimem.fact_priority import rank_facts_by_priority
     now = time.time()
     facts = [
         _Fact("recent_high", "X", confidence=0.95, created_at=now),
@@ -32,14 +32,14 @@ def test_fresh_high_conf_top():
 
 
 def test_payload_shape():
-    from engram.fact_priority import rank_facts_by_priority
+    from verimem.fact_priority import rank_facts_by_priority
     out = rank_facts_by_priority([])
     for k in ("ranked", "n_facts_scanned"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.fact_priority import rank_facts_by_priority
+    from verimem.fact_priority import rank_facts_by_priority
     now = time.time()
     facts = [_Fact("f1", "X", confidence=0.9, created_at=now)]
     out = rank_facts_by_priority(facts, now=now)
@@ -49,7 +49,7 @@ def test_entry_keys():
 
 
 def test_priority_in_unit_range():
-    from engram.fact_priority import rank_facts_by_priority
+    from verimem.fact_priority import rank_facts_by_priority
     now = time.time()
     facts = [_Fact("f1", "X", confidence=0.5, created_at=now)]
     out = rank_facts_by_priority(facts, now=now)
@@ -58,7 +58,7 @@ def test_priority_in_unit_range():
 
 
 def test_top_k_limit():
-    from engram.fact_priority import rank_facts_by_priority
+    from verimem.fact_priority import rank_facts_by_priority
     now = time.time()
     facts = [_Fact(f"f{i}", "X", confidence=0.5, created_at=now)
              for i in range(10)]

@@ -35,7 +35,7 @@ Three groups of invariants:
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 # ---------- GROUP 1: Skill schema ----------------------------------------
 
@@ -105,7 +105,7 @@ def _toy_skills() -> list[Skill]:
 
 def test_goal_already_satisfied_returns_empty_plan():
     """When initial_state already includes goal, the plan is []."""
-    from engram.strips import plan_strips
+    from verimem.strips import plan_strips
 
     plan = plan_strips(
         initial_state={"already_done"},
@@ -117,7 +117,7 @@ def test_goal_already_satisfied_returns_empty_plan():
 
 def test_single_skill_plan():
     """One skill bridges initial→goal."""
-    from engram.strips import plan_strips
+    from verimem.strips import plan_strips
 
     plan = plan_strips(
         initial_state={"have_creds"},
@@ -130,7 +130,7 @@ def test_single_skill_plan():
 
 def test_multi_step_chain():
     """Plan should chain auth → fetch → render."""
-    from engram.strips import plan_strips
+    from verimem.strips import plan_strips
 
     plan = plan_strips(
         initial_state={"have_creds"},
@@ -144,7 +144,7 @@ def test_multi_step_chain():
 def test_no_applicable_skill_returns_none():
     """Initial state doesn't satisfy any skill's preconditions, and
     the goal is unreachable → None."""
-    from engram.strips import plan_strips
+    from verimem.strips import plan_strips
 
     plan = plan_strips(
         initial_state={"unrelated_state"},
@@ -156,7 +156,7 @@ def test_no_applicable_skill_returns_none():
 
 def test_depth_budget_exhausted_returns_none():
     """A reachable goal but max_depth too small → None."""
-    from engram.strips import plan_strips
+    from verimem.strips import plan_strips
 
     plan = plan_strips(
         initial_state={"have_creds"},
@@ -170,7 +170,7 @@ def test_depth_budget_exhausted_returns_none():
 def test_planner_prefers_shortest():
     """Two paths exist: auth→fetch (2 steps) gets data_loaded; or a
     longer detour. BFS guarantees shortest first."""
-    from engram.strips import plan_strips
+    from verimem.strips import plan_strips
 
     # Add a redundant path: pre={have_creds}, post={data_loaded}
     # (bypassing logged_in). Both reach data_loaded; the shortcut
@@ -194,7 +194,7 @@ def test_planner_prefers_shortest():
 def test_only_applicable_skills_considered():
     """Skills whose preconditions aren't (yet) satisfied must not
     be applied. The planner must wait until prerequisites are met."""
-    from engram.strips import plan_strips
+    from verimem.strips import plan_strips
 
     plan = plan_strips(
         initial_state={"have_creds"},
@@ -208,7 +208,7 @@ def test_only_applicable_skills_considered():
 
 def test_empty_skill_set_no_plan_unless_goal_already():
     """No skills available + goal not satisfied → None."""
-    from engram.strips import plan_strips
+    from verimem.strips import plan_strips
 
     plan = plan_strips(
         initial_state={"x"},

@@ -10,7 +10,7 @@ length) con precedenza; i rate-limit veri restano recuperabili. Funzione pura.
 """
 from __future__ import annotations
 
-from engram.llm import FallbackLLM
+from verimem.llm import FallbackLLM
 
 
 def _rec(msg: str) -> bool:

@@ -15,7 +15,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 _SUBJ = ["falcon", "engineer", "river", "senator", "comet", "violinist",
          "glacier", "merchant", "reactor", "orchid", "nomad", "lighthouse"]

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.migrations import ensure_schema_version, schema_version
+from verimem.migrations import ensure_schema_version, schema_version
 
 
 @pytest.fixture
@@ -176,9 +176,9 @@ def test_existing_persistence_modules_stamp_target_version(tmp_path: Path):
     i bump invece di diventare stale (skills v2 = colonna embedding_model
     2026-06-03; semantic v9 = isolamento embedding-model per-riga).
     """
-    from engram.memory import _EPISODES_SCHEMA_VERSION, EpisodicMemory
-    from engram.semantic import SemanticMemory
-    from engram.skill import _SKILLS_TARGET_VERSION, SkillLibrary
+    from verimem.memory import _EPISODES_SCHEMA_VERSION, EpisodicMemory
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import _SKILLS_TARGET_VERSION, SkillLibrary
 
     em = EpisodicMemory(db_path=tmp_path / "ep.db")
     with em._connect() as c:
@@ -191,7 +191,7 @@ def test_existing_persistence_modules_stamp_target_version(tmp_path: Path):
     with sl._connect() as c:
         assert schema_version(c, "skills") == _SKILLS_TARGET_VERSION
 
-    from engram.semantic import _SEMANTIC_TARGET_VERSION
+    from verimem.semantic import _SEMANTIC_TARGET_VERSION
     sm = SemanticMemory(db_path=tmp_path / "sm.db")
     with sm._connect() as c:
         # cycle #78: semantic stepped v1→v2 (supersession cols).

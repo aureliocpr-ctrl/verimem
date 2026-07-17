@@ -4,7 +4,7 @@ Retrieval accuracy (LoCoMo/LongMemEval, ~92–94%) measures "did you fetch the r
 It does NOT measure "is what you serve still TRUE" after the corpus evolves. We build an
 evolving corpus (facts get SUPERSEDED, CONTRADICTED, or go STALE) and compare:
   * naive store  — serves everything it stored (a vector store returns all matches)
-  * TMS store    — `engram.justified_memory`: maintains justifications, serves only
+  * TMS store    — `verimem.justified_memory`: maintains justifications, serves only
                    currently-JUSTIFIED beliefs (retracts superseded, contests contradicted,
                    drops stale)
 Metric: JBI = of SERVED beliefs, the fraction actually currently true (higher = better);
@@ -21,7 +21,7 @@ import json
 from dataclasses import replace
 from typing import Any
 
-from engram.justified_memory import (
+from verimem.justified_memory import (
     Belief,
     justified_belief_integrity,
     maintain,

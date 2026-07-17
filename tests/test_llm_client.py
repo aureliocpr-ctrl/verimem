@@ -1,4 +1,4 @@
-"""Coverage push for engram.llm — internals + provider helpers.
+"""Coverage push for verimem.llm — internals + provider helpers.
 
 Strategy:
 - All HTTP mocked (httpx via respx, anthropic SDK + openai SDK via patches).
@@ -16,8 +16,8 @@ import httpx
 import pytest
 import respx
 
-from engram import llm as llm_mod
-from engram.llm import (
+from verimem import llm as llm_mod
+from verimem.llm import (
     ALIASES,
     PROVIDERS,
     AnthropicLLM,

@@ -7,18 +7,18 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from engram import cli
+from verimem import cli
 
 
 def _patch_embedding(monkeypatch):
-    from engram import embedding
+    from verimem import embedding
     monkeypatch.setattr(embedding, "_model", lambda: object(), raising=True)
     monkeypatch.setattr(embedding, "encode", lambda *a, **k: np.zeros(8, dtype=np.float32),
                         raising=True)
 
 
 def test_warmup_preloads_reranker_when_enabled(monkeypatch):
-    from engram import semantic
+    from verimem import semantic
     _patch_embedding(monkeypatch)
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: True)
     called = {"n": 0}
@@ -33,7 +33,7 @@ def test_warmup_preloads_reranker_when_enabled(monkeypatch):
 
 
 def test_warmup_skips_reranker_when_disabled(monkeypatch):
-    from engram import semantic
+    from verimem import semantic
     _patch_embedding(monkeypatch)
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: False)
     called = {"n": 0}
@@ -43,7 +43,7 @@ def test_warmup_skips_reranker_when_disabled(monkeypatch):
 
 
 def test_warmup_survives_reranker_load_failure(monkeypatch):
-    from engram import semantic
+    from verimem import semantic
     _patch_embedding(monkeypatch)
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: True)
 

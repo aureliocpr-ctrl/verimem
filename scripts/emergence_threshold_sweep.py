@@ -24,7 +24,7 @@ from pathlib import Path
 
 def sweep(db_path: Path) -> dict:
     """Run the detector with a grid of (purity, cohesion) thresholds."""
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     purities = [0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
     cohesions = [0.3, 0.2, 0.1, 0.05]

@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import json
 
-from engram.import_conversations import (
+from verimem.import_conversations import (
     detect_format,
     import_conversations,
     list_conversations,
     load_conversation,
 )
-from engram.semantic import SemanticMemory
+from verimem.semantic import SemanticMemory
 
 
 class _StubLLM:

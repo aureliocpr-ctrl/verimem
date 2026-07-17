@@ -13,14 +13,14 @@ class _FakeEp:
 
 
 def test_empty():
-    from engram.episode_recent_failures import recent_failures
+    from verimem.episode_recent_failures import recent_failures
 
     out = recent_failures([])
     assert out["episodes"] == []
 
 
 def test_only_failures():
-    from engram.episode_recent_failures import recent_failures
+    from verimem.episode_recent_failures import recent_failures
 
     eps = [
         _FakeEp("ok", outcome="success", created_at=100.0),
@@ -35,7 +35,7 @@ def test_only_failures():
 
 
 def test_newest_first():
-    from engram.episode_recent_failures import recent_failures
+    from verimem.episode_recent_failures import recent_failures
 
     eps = [
         _FakeEp("old", outcome="failure", created_at=100.0),
@@ -47,7 +47,7 @@ def test_newest_first():
 
 
 def test_top_k():
-    from engram.episode_recent_failures import recent_failures
+    from verimem.episode_recent_failures import recent_failures
 
     eps = [
         _FakeEp(f"e{i}", outcome="failure", created_at=float(i))
@@ -58,7 +58,7 @@ def test_top_k():
 
 
 def test_payload_shape():
-    from engram.episode_recent_failures import recent_failures
+    from verimem.episode_recent_failures import recent_failures
 
     out = recent_failures([])
     for k in ("episodes", "n_total_failures"):

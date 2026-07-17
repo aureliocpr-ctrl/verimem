@@ -11,9 +11,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram.episode import Episode, Trace
-from engram.skill import Skill
-from engram.wake import WakeAgent, WakeConfig
+from verimem.episode import Episode, Trace
+from verimem.skill import Skill
+from verimem.wake import WakeAgent, WakeConfig
 
 
 def _trace(step: int, action: str, action_input: str, observation: str) -> Trace:
@@ -24,8 +24,8 @@ def _trace(step: int, action: str, action_input: str, observation: str) -> Trace
 @pytest.fixture
 def wake_agent(tmp_data_dir):
     """A WakeAgent with mock LLM and a fresh skill library."""
-    from engram.memory import EpisodicMemory
-    from engram.skill import SkillLibrary
+    from verimem.memory import EpisodicMemory
+    from verimem.skill import SkillLibrary
     return WakeAgent(
         memory=EpisodicMemory(db_path=tmp_data_dir / "ep.db"),
         skills=SkillLibrary(

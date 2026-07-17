@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _status(db, like: str):

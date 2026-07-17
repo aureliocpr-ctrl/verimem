@@ -63,7 +63,7 @@ def _seed_hybrid_corpus(db_path: Path) -> None:
 
 
 def test_hybrid_returns_list(tmp_path: Path) -> None:
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "semantic.db"
     _seed_hybrid_corpus(db)
@@ -82,7 +82,7 @@ def test_hybrid_returns_list(tmp_path: Path) -> None:
 def test_hybrid_fragments_large_communities(tmp_path: Path) -> None:
     """HYBRID should produce multiple from_hybrid=True entries when
     a stable community is large + has embedding sub-structure."""
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "semantic.db"
     _seed_hybrid_corpus(db)
@@ -105,7 +105,7 @@ def test_hybrid_fragments_large_communities(tmp_path: Path) -> None:
 
 def test_hybrid_empty_db_safe(tmp_path: Path) -> None:
     """Empty DB → empty list, no raise."""
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "semantic.db"
     conn = sqlite3.connect(str(db))
@@ -128,7 +128,7 @@ def test_hybrid_empty_db_safe(tmp_path: Path) -> None:
 
 def test_hybrid_default_off_preserves_legacy(tmp_path: Path) -> None:
     """Default (enable_hybrid=False) → no from_hybrid flag, legacy path."""
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "semantic.db"
     _seed_hybrid_corpus(db)
@@ -174,7 +174,7 @@ def test_hybrid_significantly_more_candidates_than_other_modes(
     to enforce strict 2x dominance (cycle 311 empirical: HYBRID=3,
     second_pass=3, parity is acceptable here).
     """
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "semantic.db"
     _seed_hybrid_corpus(db)
@@ -257,7 +257,7 @@ def test_floor_assertion_catches_degenerate_zero_case(
     """
     import pytest
 
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "degenerate.db"
     conn = sqlite3.connect(str(db))

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.gateway import GatewayKeys
+from verimem.gateway import GatewayKeys
 
 
 def test_windows_reserved_tenant_ids_rejected(tmp_path):
@@ -29,7 +29,7 @@ def test_names_containing_reserved_token_still_valid(tmp_path):
 
 def test_gateway_tenant_trailing_newline_rejected(tmp_path):
     # critic LOW-5: _TENANT_RE used `$` (matches before a trailing \n) -> `\Z`.
-    from engram.gateway import GatewayKeys
+    from verimem.gateway import GatewayKeys
     keys = GatewayKeys(tmp_path / "k.db")
     with pytest.raises(ValueError):
         keys.create(tenant_id="acme\n")

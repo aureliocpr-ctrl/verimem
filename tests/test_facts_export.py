@@ -19,7 +19,7 @@ class _FakeFact:
 
 
 def test_empty_returns_empty_payload():
-    from engram.facts_export import export_all_facts
+    from verimem.facts_export import export_all_facts
 
     out = export_all_facts([])
     assert out["facts"] == []
@@ -27,7 +27,7 @@ def test_empty_returns_empty_payload():
 
 
 def test_exports_all_facts():
-    from engram.facts_export import export_all_facts
+    from verimem.facts_export import export_all_facts
 
     facts = [
         _FakeFact("f1", "alpha", topic="t1", created_at=1.0),
@@ -40,7 +40,7 @@ def test_exports_all_facts():
 
 
 def test_topic_filter():
-    from engram.facts_export import export_all_facts
+    from verimem.facts_export import export_all_facts
 
     facts = [
         _FakeFact("f1", "x", topic="user"),
@@ -52,7 +52,7 @@ def test_topic_filter():
 
 
 def test_includes_required_fields():
-    from engram.facts_export import export_all_facts
+    from verimem.facts_export import export_all_facts
 
     facts = [_FakeFact("f1", "test prop", topic="x", confidence=0.7)]
     out = export_all_facts(facts)
@@ -64,7 +64,7 @@ def test_includes_required_fields():
 
 
 def test_payload_shape_complete():
-    from engram.facts_export import export_all_facts
+    from verimem.facts_export import export_all_facts
 
     out = export_all_facts([])
     for k in ("facts", "n_total", "schema_version"):

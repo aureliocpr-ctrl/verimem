@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.contradiction import Contradiction, ContradictionStore
-from engram.entity_kg import Entity, EntityStore
-from engram.entity_populate import entity_kg_path_for
-from engram.semantic import Fact, SemanticMemory
+from verimem.contradiction import Contradiction, ContradictionStore
+from verimem.entity_kg import Entity, EntityStore
+from verimem.entity_populate import entity_kg_path_for
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_delete_resolves_contradictions_and_purges_entity_links(tmp_path):

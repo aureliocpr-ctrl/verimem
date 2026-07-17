@@ -4,7 +4,7 @@ auto_supersede_on_contradiction must refuse it as the winning new_id.
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_auto_supersede_rejects_obsolete_winner(tmp_path):

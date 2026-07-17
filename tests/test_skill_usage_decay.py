@@ -7,18 +7,18 @@ from __future__ import annotations
 
 import time
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_returns_empty():
-    from engram.skill_usage_decay import usage_decay
+    from verimem.skill_usage_decay import usage_decay
 
     out = usage_decay([])
     assert out["skills"] == []
 
 
 def test_never_used_zero_score():
-    from engram.skill_usage_decay import usage_decay
+    from verimem.skill_usage_decay import usage_decay
 
     skills = [Skill(id="never", name="never", last_used_at=0.0)]
     out = usage_decay(skills)
@@ -27,7 +27,7 @@ def test_never_used_zero_score():
 
 
 def test_recent_high_score():
-    from engram.skill_usage_decay import usage_decay
+    from verimem.skill_usage_decay import usage_decay
 
     now = time.time()
     skills = [Skill(id="fresh", name="fresh", last_used_at=now)]
@@ -37,7 +37,7 @@ def test_recent_high_score():
 
 
 def test_old_low_score():
-    from engram.skill_usage_decay import usage_decay
+    from verimem.skill_usage_decay import usage_decay
 
     now = time.time()
     skills = [
@@ -51,7 +51,7 @@ def test_old_low_score():
 
 
 def test_sorted_by_score_desc():
-    from engram.skill_usage_decay import usage_decay
+    from verimem.skill_usage_decay import usage_decay
 
     now = time.time()
     skills = [
@@ -65,7 +65,7 @@ def test_sorted_by_score_desc():
 
 
 def test_includes_days_since():
-    from engram.skill_usage_decay import usage_decay
+    from verimem.skill_usage_decay import usage_decay
 
     now = time.time()
     skills = [Skill(id="x", last_used_at=now - 5 * 86400)]
@@ -75,7 +75,7 @@ def test_includes_days_since():
 
 
 def test_top_k_respected():
-    from engram.skill_usage_decay import usage_decay
+    from verimem.skill_usage_decay import usage_decay
 
     now = time.time()
     skills = [Skill(id=f"s{i}", last_used_at=now) for i in range(10)]
@@ -84,7 +84,7 @@ def test_top_k_respected():
 
 
 def test_payload_shape_complete():
-    from engram.skill_usage_decay import usage_decay
+    from verimem.skill_usage_decay import usage_decay
 
     out = usage_decay([])
     for k in ("skills", "n_total", "half_life_days"):

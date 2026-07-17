@@ -17,7 +17,7 @@ import sys
 def _run(model: str, expr: str) -> str:
     code = (
         f"import os; os.environ['HIPPO_EMBEDDING_MODEL']={model!r}; "
-        f"from engram import embedding; print(repr({expr}))"
+        f"from verimem import embedding; print(repr({expr}))"
     )
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     assert r.returncode == 0, f"stderr={r.stderr[-600:]!r}"

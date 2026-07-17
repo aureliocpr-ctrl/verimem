@@ -16,7 +16,7 @@ from benchmark.eval_retrieval_with_gt import (
     evaluate_all,
     evaluate_path,
 )
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture

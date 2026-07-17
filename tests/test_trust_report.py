@@ -15,8 +15,8 @@ from __future__ import annotations
 import json
 import time
 
-from engram.semantic import Fact, SemanticMemory
-from engram.trust_report import build_trust_report
+from verimem.semantic import Fact, SemanticMemory
+from verimem.trust_report import build_trust_report
 
 _DAY = 86400.0
 
@@ -38,7 +38,7 @@ def _seed(tmp_path):
     for f in (old, cur, rival):
         sm.store(f, embed="sync")
     sm.supersede("t-old", "t-cur", reason="update")
-    from engram.contradiction import Contradiction, ContradictionStore
+    from verimem.contradiction import Contradiction, ContradictionStore
     ContradictionStore(sm.db_path).add(Contradiction(
         fact_a_id="t-cur", fact_b_id="t-riv",
         kind="update-conflict", similarity=0.9))
@@ -72,7 +72,7 @@ def test_report_abstains_explicitly_when_no_evidence(tmp_path) -> None:
 
 
 def test_report_declares_its_trust_scope(tmp_path) -> None:
-    from engram.trust_report import TRUST_SCOPE
+    from verimem.trust_report import TRUST_SCOPE
     sm = _seed(tmp_path)
     rep = build_trust_report(sm, "Rossi budget", k=5)
     assert rep["scope"] == TRUST_SCOPE
@@ -138,8 +138,8 @@ def test_min_relevance_floor_enables_llm_free_absence_abstention(tmp_path) -> No
     Hermetic: this exercises the FLOOR LOGIC of build_trust_report, so recall is
     stubbed to return controlled scores (the embedding separability itself is
     measured end-to-end by TrustMem-Bench, not re-derived here)."""
-    from engram import trust_report as tr
-    from engram.client import Memory
+    from verimem import trust_report as tr
+    from verimem.client import Memory
     mem = Memory(tmp_path / "f.db")
     fact = Fact(id="a", topic="u", proposition="Alex Rivera lives in Rome")
     mem.semantic.store(fact, embed="sync")

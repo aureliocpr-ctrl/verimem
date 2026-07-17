@@ -21,7 +21,7 @@ to prevent.
 """
 from __future__ import annotations
 
-from engram.conversation_ingest import (
+from verimem.conversation_ingest import (
     ingest_conversation,
     parse_extracted_lines,
     render_conversation,
@@ -86,7 +86,7 @@ def test_render_conversation_reports_truncation():
 
 
 def test_ingest_result_carries_truncated_flag(tmp_path):
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "m.db")
     llm = _StubLLM(["Alice likes tea"])
     res = ingest_conversation(
@@ -104,7 +104,7 @@ def test_ingest_result_carries_truncated_flag(tmp_path):
 
 
 def test_ingest_cap_chars_overridable(tmp_path):
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "m2.db")
     llm = _StubLLM(["Alice likes tea"])
     res = ingest_conversation(
@@ -118,7 +118,7 @@ def test_ingest_cap_chars_overridable(tmp_path):
 # ---- M9-3: gap-fill must carry the BELIEF instruction when tagging ----------
 
 def test_gapfill_receives_belief_instruction_when_tagging(tmp_path):
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "m3.db")
     llm = _StubLLM([
         "Alice likes tea",                       # extraction

@@ -13,9 +13,9 @@ import json
 
 from fastapi.testclient import TestClient
 
-from engram import adaptive_ledger, event_jsonl_log
-from engram.client import Memory
-from engram.gateway import GatewayKeys, create_app
+from verimem import adaptive_ledger, event_jsonl_log
+from verimem.client import Memory
+from verimem.gateway import GatewayKeys, create_app
 
 
 class _StubLLM:

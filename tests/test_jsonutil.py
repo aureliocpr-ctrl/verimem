@@ -15,7 +15,7 @@ Six invariants:
 """
 from __future__ import annotations
 
-from engram.jsonutil import extract_json_object
+from verimem.jsonutil import extract_json_object
 
 
 def test_dict_input_returned_verbatim():

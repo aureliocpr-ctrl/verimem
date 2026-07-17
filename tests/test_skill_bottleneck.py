@@ -19,13 +19,13 @@ class _Skill:
 
 
 def test_empty_returns_no_bottlenecks():
-    from engram.skill_bottleneck import find_bottlenecks
+    from verimem.skill_bottleneck import find_bottlenecks
     out = find_bottlenecks([])
     assert out["bottlenecks"] == []
 
 
 def test_finds_low_fitness_with_many_children():
-    from engram.skill_bottleneck import find_bottlenecks
+    from verimem.skill_bottleneck import find_bottlenecks
     skills = [
         _Skill("root", trials=10, successes=3, status="candidate"),
         _Skill("c1", parent_skills=["root"], status="candidate",
@@ -42,7 +42,7 @@ def test_finds_low_fitness_with_many_children():
 
 
 def test_skip_when_already_promoted():
-    from engram.skill_bottleneck import find_bottlenecks
+    from verimem.skill_bottleneck import find_bottlenecks
     skills = [
         _Skill("root", trials=10, successes=3, status="promoted"),
         _Skill("c1", parent_skills=["root"], status="candidate",
@@ -57,7 +57,7 @@ def test_skip_when_already_promoted():
 
 
 def test_no_bottleneck_when_children_few():
-    from engram.skill_bottleneck import find_bottlenecks
+    from verimem.skill_bottleneck import find_bottlenecks
     skills = [
         _Skill("root", trials=10, successes=3, status="candidate"),
         _Skill("c1", parent_skills=["root"], status="candidate",
@@ -68,14 +68,14 @@ def test_no_bottleneck_when_children_few():
 
 
 def test_payload_shape():
-    from engram.skill_bottleneck import find_bottlenecks
+    from verimem.skill_bottleneck import find_bottlenecks
     out = find_bottlenecks([])
     for k in ("bottlenecks", "n_total_skills"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.skill_bottleneck import find_bottlenecks
+    from verimem.skill_bottleneck import find_bottlenecks
     skills = [
         _Skill("root", trials=10, successes=2, status="candidate"),
         _Skill("c1", parent_skills=["root"], status="candidate"),

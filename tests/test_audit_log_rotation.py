@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 
 @pytest.fixture

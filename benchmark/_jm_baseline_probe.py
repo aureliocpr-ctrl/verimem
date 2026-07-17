@@ -11,8 +11,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from engram.justified_memory import audit_facts
-from benchmark.lineage_cascade_exposure import run as lineage_exposure
+from verimem.justified_memory import audit_facts
 
 LIVE = Path.home() / ".engram" / "semantic" / "semantic.db"
 

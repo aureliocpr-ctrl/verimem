@@ -15,15 +15,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.llm import LLMResponse
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.sleep import SleepEngine
-from engram.tools import ToolResult, ToolSpec, default_tools
-from engram.wake import WakeAgent, WakeConfig, trivial_validator
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.llm import LLMResponse
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.sleep import SleepEngine
+from verimem.tools import ToolResult, ToolSpec, default_tools
+from verimem.wake import WakeAgent, WakeConfig, trivial_validator
 
 
 def banner(title: str) -> None:

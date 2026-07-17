@@ -45,7 +45,7 @@ sys.path.insert(0, os.path.expanduser("~/Code/HippoAgent/scripts"))
 from bench_hybrid_fair import _ngram_leak  # noqa: E402
 from bench_recall_self import _copy_live_db, _mcnemar  # noqa: E402
 
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 K_DEEP = 50
 HERE = Path(__file__).resolve().parent

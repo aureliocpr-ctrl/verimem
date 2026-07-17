@@ -38,11 +38,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_structural_signature_empty_skill():
-    from engram.analogy import structural_signature
+    from verimem.analogy import structural_signature
 
     s = Skill()
     sig = structural_signature(s)
@@ -52,7 +52,7 @@ def test_structural_signature_empty_skill():
 
 def test_structural_signature_extracts_all_fields():
     """Signature should include tokens from name + trigger + pre/post."""
-    from engram.analogy import structural_signature
+    from verimem.analogy import structural_signature
 
     s = Skill(
         name="deploy_web",
@@ -69,7 +69,7 @@ def test_structural_signature_extracts_all_fields():
 
 
 def test_structural_signature_lowercases_and_dedupes():
-    from engram.analogy import structural_signature
+    from verimem.analogy import structural_signature
 
     s = Skill(name="Deploy", trigger="deploy DEPLOY")
     sig = structural_signature(s)
@@ -79,14 +79,14 @@ def test_structural_signature_lowercases_and_dedupes():
 
 
 def test_jaccard_reflexive():
-    from engram.analogy import structural_jaccard
+    from verimem.analogy import structural_jaccard
 
     a = {"deploy", "web", "to", "production"}
     assert structural_jaccard(a, a) == 1.0
 
 
 def test_jaccard_symmetric():
-    from engram.analogy import structural_jaccard
+    from verimem.analogy import structural_jaccard
 
     a = {"deploy", "web", "to", "aws"}
     b = {"deploy", "mobile", "to", "gcp"}
@@ -94,7 +94,7 @@ def test_jaccard_symmetric():
 
 
 def test_jaccard_disjoint_is_zero():
-    from engram.analogy import structural_jaccard
+    from verimem.analogy import structural_jaccard
 
     a = {"alpha", "beta"}
     b = {"gamma", "delta"}
@@ -102,7 +102,7 @@ def test_jaccard_disjoint_is_zero():
 
 
 def test_jaccard_partial_overlap():
-    from engram.analogy import structural_jaccard
+    from verimem.analogy import structural_jaccard
 
     a = {"x", "y", "z"}
     b = {"y", "z", "w"}
@@ -112,7 +112,7 @@ def test_jaccard_partial_overlap():
 
 def test_jaccard_both_empty_is_zero():
     """Convention: empty/empty is 0 (no signal), not 1 (trivial match)."""
-    from engram.analogy import structural_jaccard
+    from verimem.analogy import structural_jaccard
 
     assert structural_jaccard(set(), set()) == 0.0
 
@@ -132,7 +132,7 @@ def _semantic_distance_from_pairs(distances: dict[tuple[str, str], float]):
 def test_find_analogues_filters_high_semantic():
     """A candidate that is ALSO semantically similar (cosine high)
     is a near-duplicate, not an analogy. Must be excluded."""
-    from engram.analogy import find_structural_analogues
+    from verimem.analogy import find_structural_analogues
 
     target = Skill(id="t", name="deploy_web", trigger="deploy web to aws")
     # Candidate with high structural overlap AND high semantic sim.
@@ -153,7 +153,7 @@ def test_find_analogues_filters_high_semantic():
 
 def test_find_analogues_filters_low_structural():
     """Structurally distant candidates are filtered too."""
-    from engram.analogy import find_structural_analogues
+    from verimem.analogy import find_structural_analogues
 
     target = Skill(id="t", name="deploy_web", trigger="deploy web to aws")
     distant = Skill(id="d", name="parse_json",
@@ -170,7 +170,7 @@ def test_find_analogues_filters_low_structural():
 def test_find_analogues_returns_high_struct_low_sem():
     """The interesting case: high structural overlap, low semantic
     cosine → a true analogy."""
-    from engram.analogy import find_structural_analogues
+    from verimem.analogy import find_structural_analogues
 
     target = Skill(id="t",
                    name="deploy_to_production",
@@ -200,7 +200,7 @@ def test_find_analogues_returns_high_struct_low_sem():
 
 def test_find_analogues_excludes_self():
     """Target skill never returned as its own analogy."""
-    from engram.analogy import find_structural_analogues
+    from verimem.analogy import find_structural_analogues
 
     target = Skill(id="t", name="x", trigger="y")
     out = find_structural_analogues(
@@ -214,7 +214,7 @@ def test_find_analogues_excludes_self():
 
 def test_find_analogues_sorted_descending_by_structural():
     """Multiple analogues returned sorted by structural score."""
-    from engram.analogy import find_structural_analogues
+    from verimem.analogy import find_structural_analogues
 
     target = Skill(id="t", name="alpha beta gamma delta",
                    trigger="alpha beta gamma delta")
@@ -237,7 +237,7 @@ def test_find_analogues_sorted_descending_by_structural():
 
 
 def test_find_analogues_empty_corpus():
-    from engram.analogy import find_structural_analogues
+    from verimem.analogy import find_structural_analogues
 
     out = find_structural_analogues(
         Skill(id="t"),
@@ -248,7 +248,7 @@ def test_find_analogues_empty_corpus():
 
 
 def test_find_analogues_top_k_limit():
-    from engram.analogy import find_structural_analogues
+    from verimem.analogy import find_structural_analogues
 
     target = Skill(id="t", name="x y z", trigger="x y z")
     # Many candidates, all structurally similar.

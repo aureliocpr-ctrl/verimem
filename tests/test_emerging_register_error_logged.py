@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 
-from engram.emerging_skill_register import register_emerging_drafts_as_facts
+from verimem.emerging_skill_register import register_emerging_drafts_as_facts
 
 
 def test_sql_error_is_logged_not_swallowed(tmp_path, caplog):

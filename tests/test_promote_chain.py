@@ -10,7 +10,7 @@ dry-run default; `apply=True` persists via skills.store().
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 class _FakeSkillsStore:
@@ -35,7 +35,7 @@ class _FakeAgent:
 
 
 def test_unknown_skill_returns_empty():
-    from engram.promote_chain import promote_chain
+    from verimem.promote_chain import promote_chain
 
     a = _FakeAgent([])
     out = promote_chain(skill_id="ZZZ", agent=a)
@@ -44,7 +44,7 @@ def test_unknown_skill_returns_empty():
 
 
 def test_no_parents_promotes_only_target():
-    from engram.promote_chain import promote_chain
+    from verimem.promote_chain import promote_chain
 
     a = _FakeAgent([Skill(id="x", name="x", status="candidate")])
     out = promote_chain(skill_id="x", agent=a, apply=True)
@@ -54,7 +54,7 @@ def test_no_parents_promotes_only_target():
 
 
 def test_promotes_parent_chain():
-    from engram.promote_chain import promote_chain
+    from verimem.promote_chain import promote_chain
 
     skills = [
         Skill(id="grand", name="g", status="candidate"),
@@ -74,7 +74,7 @@ def test_promotes_parent_chain():
 
 
 def test_skip_already_promoted():
-    from engram.promote_chain import promote_chain
+    from verimem.promote_chain import promote_chain
 
     skills = [
         Skill(id="parent", name="p", status="promoted"),
@@ -91,7 +91,7 @@ def test_skip_already_promoted():
 
 
 def test_dry_run_no_mutation():
-    from engram.promote_chain import promote_chain
+    from verimem.promote_chain import promote_chain
 
     skills = [Skill(id="x", name="x", status="candidate")]
     a = _FakeAgent(skills)
@@ -104,7 +104,7 @@ def test_dry_run_no_mutation():
 
 def test_handles_cycle_safely():
     """Pathological parent_skills cycle shouldn't infinite-loop."""
-    from engram.promote_chain import promote_chain
+    from verimem.promote_chain import promote_chain
 
     skills = [
         Skill(id="a", name="a", parent_skills=["b"]),
@@ -117,7 +117,7 @@ def test_handles_cycle_safely():
 
 
 def test_payload_shape_complete():
-    from engram.promote_chain import promote_chain
+    from verimem.promote_chain import promote_chain
 
     a = _FakeAgent([])
     out = promote_chain(skill_id="x", agent=a)

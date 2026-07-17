@@ -32,8 +32,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from engram.cli import app
-from engram.semantic import SemanticMemory
+from verimem.cli import app
+from verimem.semantic import SemanticMemory
 
 runner = CliRunner()
 
@@ -332,7 +332,7 @@ class TestFactsAddNonBlocking:
     def test_add_defers_when_daemon_down_and_backfill_embeds(
         self, isolated_corpus: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        import engram.encode_service as es
+        import verimem.encode_service as es
         monkeypatch.setattr(es, "daemon_usable", lambda: False)
         monkeypatch.setattr(es, "ensure_running", lambda: False)  # no spawn in tests
         r = runner.invoke(app, [

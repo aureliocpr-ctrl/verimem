@@ -15,9 +15,9 @@ from dataclasses import replace
 
 import pytest
 
-import engram.llm as llm_mod
-from engram.config import CONFIG
-from engram.llm import AnthropicLLM, LLMError
+import verimem.llm as llm_mod
+from verimem.config import CONFIG
+from verimem.llm import AnthropicLLM, LLMError
 
 
 class _AlwaysFails:

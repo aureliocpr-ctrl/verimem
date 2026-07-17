@@ -18,7 +18,7 @@ class _FakeEp:
 
 
 def test_empty_returns_empty_buckets():
-    from engram.outcome_timeseries import outcome_timeseries
+    from verimem.outcome_timeseries import outcome_timeseries
 
     out = outcome_timeseries([])
     assert out["buckets"] == []
@@ -26,7 +26,7 @@ def test_empty_returns_empty_buckets():
 
 
 def test_one_bucket_per_day():
-    from engram.outcome_timeseries import outcome_timeseries
+    from verimem.outcome_timeseries import outcome_timeseries
 
     # CYCLE #15 fix: usa timestamp DETERMINISTICO (mezzogiorno UTC fissato)
     # invece di time.time(). Con time.time() il test era brittle: se 'now'
@@ -46,7 +46,7 @@ def test_one_bucket_per_day():
 
 
 def test_success_failure_counts_per_bucket():
-    from engram.outcome_timeseries import outcome_timeseries
+    from verimem.outcome_timeseries import outcome_timeseries
 
     base = time.time()
     eps = [
@@ -63,7 +63,7 @@ def test_success_failure_counts_per_bucket():
 
 
 def test_window_days_filters_old():
-    from engram.outcome_timeseries import outcome_timeseries
+    from verimem.outcome_timeseries import outcome_timeseries
 
     base = time.time()
     eps = [
@@ -77,7 +77,7 @@ def test_window_days_filters_old():
 
 
 def test_buckets_sorted_chronologically():
-    from engram.outcome_timeseries import outcome_timeseries
+    from verimem.outcome_timeseries import outcome_timeseries
 
     base = time.time()
     eps = [
@@ -91,7 +91,7 @@ def test_buckets_sorted_chronologically():
 
 
 def test_includes_date_str():
-    from engram.outcome_timeseries import outcome_timeseries
+    from verimem.outcome_timeseries import outcome_timeseries
 
     eps = [_FakeEp("success", created_at=time.time())]
     out = outcome_timeseries(eps)
@@ -113,7 +113,7 @@ def test_week_bucketing():
     """
     from datetime import datetime, timedelta, timezone
 
-    from engram.outcome_timeseries import outcome_timeseries
+    from verimem.outcome_timeseries import outcome_timeseries
 
     now_dt = datetime.now(timezone.utc)
     monday_dt = (now_dt - timedelta(days=now_dt.weekday())).replace(
@@ -131,7 +131,7 @@ def test_week_bucketing():
 
 
 def test_payload_shape_complete():
-    from engram.outcome_timeseries import outcome_timeseries
+    from verimem.outcome_timeseries import outcome_timeseries
 
     out = outcome_timeseries([])
     for k in ("buckets", "bucket_kind", "window_days"):

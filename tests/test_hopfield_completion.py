@@ -40,8 +40,8 @@ import time
 import numpy as np
 import pytest
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(*, id_: str, task_text: str, final_answer: str = "ok") -> Episode:
@@ -59,8 +59,8 @@ def _ep(*, id_: str, task_text: str, final_answer: str = "ok") -> Episode:
 
 
 def test_high_beta_concentrates_on_closest_pattern(tmp_path):
-    from engram import embedding as emb_mod
-    from engram.hopfield import hopfield_complete
+    from verimem import embedding as emb_mod
+    from verimem.hopfield import hopfield_complete
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     mem.store(_ep(id_="exact_match", task_text="fix calc.py arithmetic bug"))
@@ -82,8 +82,8 @@ def test_high_beta_concentrates_on_closest_pattern(tmp_path):
 
 
 def test_low_beta_spreads_attention(tmp_path):
-    from engram import embedding as emb_mod
-    from engram.hopfield import hopfield_complete
+    from verimem import embedding as emb_mod
+    from verimem.hopfield import hopfield_complete
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     for i in range(5):
@@ -108,8 +108,8 @@ def test_partial_cue_completes_to_correct_episode(tmp_path):
     a different final_answer (so summary embedding differs). The
     returned attention should still concentrate on the matching
     episode — pattern completion from a partial feature."""
-    from engram import embedding as emb_mod
-    from engram.hopfield import hopfield_complete
+    from verimem import embedding as emb_mod
+    from verimem.hopfield import hopfield_complete
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     mem.store(_ep(
@@ -137,7 +137,7 @@ def test_partial_cue_completes_to_correct_episode(tmp_path):
 def test_empty_memory_returns_empty(tmp_path):
     import numpy as np
 
-    from engram.hopfield import hopfield_complete
+    from verimem.hopfield import hopfield_complete
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     cue = np.array([1.0, 0.0, 0.0], dtype=np.float32)
@@ -151,8 +151,8 @@ def test_empty_memory_returns_empty(tmp_path):
 
 
 def test_determinism(tmp_path):
-    from engram import embedding as emb_mod
-    from engram.hopfield import hopfield_complete
+    from verimem import embedding as emb_mod
+    from verimem.hopfield import hopfield_complete
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     for i in range(4):
@@ -172,8 +172,8 @@ def test_determinism(tmp_path):
 def test_argmax_equivalence_at_very_high_beta(tmp_path):
     """As β → ∞, softmax → argmax. Test that with β=64, the attention
     weights match a hard one-hot over the cosine-argmax pattern."""
-    from engram import embedding as emb_mod
-    from engram.hopfield import hopfield_complete
+    from verimem import embedding as emb_mod
+    from verimem.hopfield import hopfield_complete
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     mem.store(_ep(id_="winner", task_text="fix arithmetic in calc.py module"))

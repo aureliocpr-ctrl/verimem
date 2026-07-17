@@ -18,8 +18,8 @@ import json
 
 import pytest
 
-from engram import event_jsonl_log, flow_events
-from engram.client import Memory
+from verimem import event_jsonl_log, flow_events
+from verimem.client import Memory
 
 _UNSUPPORTED = "the deployment works and is verified in production"
 _GROUNDED = "the office headquarters are in Milan"

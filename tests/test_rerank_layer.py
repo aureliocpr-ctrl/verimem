@@ -10,8 +10,8 @@ Hermetic: SemanticMemory su DB temporaneo, zero scrittura live.
 """
 from __future__ import annotations
 
-from engram.rerank import recall_reranked, rerank_enabled, rerank_hits
-from engram.semantic import Fact, SemanticMemory
+from verimem.rerank import recall_reranked, rerank_enabled, rerank_hits
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _favor(marker: str):

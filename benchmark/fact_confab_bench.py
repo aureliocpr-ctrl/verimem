@@ -23,7 +23,7 @@ import numpy as np
 from benchmark.calibration_bench import _auroc
 from benchmark.grounding_signal_bench import _aurc
 from benchmark.hallucination_bench import sample_squad
-from engram.grounding_gate import fact_grounding_score, optimal_threshold
+from verimem.grounding_gate import fact_grounding_score, optimal_threshold
 
 
 def _fact(q: str, ans: str) -> str:

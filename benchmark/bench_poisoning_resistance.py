@@ -58,7 +58,7 @@ from pathlib import Path
 # Make `engram` importable when run as ``python benchmark/...``.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.semantic import Fact, SemanticMemory  # noqa: E402
+from verimem.semantic import Fact, SemanticMemory  # noqa: E402
 
 _STATUS_RANK = {
     "legacy_unverified": 0,

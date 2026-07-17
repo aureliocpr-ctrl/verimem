@@ -9,12 +9,12 @@ scan_corpus) — agisce solo su cio che il detector ha gia trovato. HERMETIC.
 """
 from __future__ import annotations
 
-from engram.contradiction import (
+from verimem.contradiction import (
     Contradiction,
     ContradictionStore,
     heal_contradictions,
 )
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _setup(tmp_path):

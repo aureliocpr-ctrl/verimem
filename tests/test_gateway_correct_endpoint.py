@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from engram.client import Memory
-from engram.gateway import GatewayKeys, create_app
+from verimem.client import Memory
+from verimem.gateway import GatewayKeys, create_app
 
 
 def _client(tmp_path) -> TestClient:

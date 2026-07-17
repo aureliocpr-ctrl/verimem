@@ -15,7 +15,7 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from engram.gateway import GatewayKeys, create_app  # noqa: E402
+from verimem.gateway import GatewayKeys, create_app  # noqa: E402
 
 
 @pytest.fixture()

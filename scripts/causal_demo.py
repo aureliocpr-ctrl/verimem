@@ -16,9 +16,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from engram.causal_extract import causal_extract
-from engram.causal_skill_mine import causal_skill_mine
-from engram.trajectory import TrajectoryStep
+from verimem.causal_extract import causal_extract
+from verimem.causal_skill_mine import causal_skill_mine
+from verimem.trajectory import TrajectoryStep
 
 
 def _step(idx, kind, content, **kw):

@@ -6,7 +6,7 @@ un marker di ESITO. `test:` e' usato pervasivamente come provenance-fixture
 gate A2 ANTI-HALL. Fix: `test:` richiede pass/ok/exit0/green (come pytest:)."""
 from __future__ import annotations
 
-from engram.l1_works_detector import detect_unsupported_works_claim
+from verimem.l1_works_detector import detect_unsupported_works_claim
 
 
 def test_bare_test_fixture_provenance_does_not_suppress_works_warning():

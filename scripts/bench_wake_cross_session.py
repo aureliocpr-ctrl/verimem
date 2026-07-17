@@ -37,11 +37,11 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.config import CONFIG
-from engram.context_engine import ContextEngine
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.wake import WakeAgent, WakeConfig
+from verimem.config import CONFIG
+from verimem.context_engine import ContextEngine
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.wake import WakeAgent, WakeConfig
 
 
 def _ep(*, ep_id: str, text: str) -> Episode:

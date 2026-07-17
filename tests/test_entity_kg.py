@@ -24,12 +24,12 @@ from typing import Any
 
 import pytest
 
-# ---------- Unit tests sul modulo engram.entity_kg ---------------------
+# ---------- Unit tests sul modulo verimem.entity_kg ---------------------
 
 
 def test_entity_store_create_and_get_by_name(tmp_path: Path) -> None:
     """RED: creazione entity + lookup per canonical_name."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid = store.store(Entity(canonical_name="Tonegawa", type="person"))
@@ -43,7 +43,7 @@ def test_entity_store_create_and_get_by_name(tmp_path: Path) -> None:
 
 def test_entity_lookup_case_insensitive(tmp_path: Path) -> None:
     """RED: lookup deve essere case-insensitive (cerca 'tonegawa' trova 'Tonegawa')."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     store.store(Entity(canonical_name="Tonegawa", type="person"))
@@ -58,7 +58,7 @@ def test_entity_alias_lookup(tmp_path: Path) -> None:
     'S. Tonegawa' è alias di 'Tonegawa' — get_by_name("S. Tonegawa")
     deve trovare la stessa entity.
     """
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid = store.store(Entity(canonical_name="Tonegawa", type="person"))
@@ -72,7 +72,7 @@ def test_entity_alias_lookup(tmp_path: Path) -> None:
 
 def test_entity_link_fact_and_retrieve(tmp_path: Path) -> None:
     """RED: link fact a entity + facts_for_entity ritorna la lista."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid = store.store(Entity(canonical_name="Tonegawa", type="person"))
@@ -85,7 +85,7 @@ def test_entity_link_fact_and_retrieve(tmp_path: Path) -> None:
 
 def test_entity_link_fact_idempotent(tmp_path: Path) -> None:
     """RED: link due volte lo stesso (fact_id, entity_id) NON deve duplicare."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid = store.store(Entity(canonical_name="Tonegawa"))
@@ -100,7 +100,7 @@ def test_entity_store_returns_existing_on_duplicate_name(
 ) -> None:
     """RED: store di entity con stesso canonical_name (case-insensitive)
     deve restituire l'id esistente, non duplicare."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid1 = store.store(Entity(canonical_name="Tonegawa", type="person"))
@@ -133,8 +133,8 @@ def fake_agent_with_entity_kg(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ):
     """Build a fake agent with a real EntityStore (SQLite in tmp_path)."""
-    from engram import mcp_server
-    from engram.entity_kg import Entity, EntityStore
+    from verimem import mcp_server
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid = store.store(Entity(canonical_name="Tonegawa", type="person"))
@@ -151,7 +151,7 @@ async def _invoke_tool(
 ) -> list[str]:
     from mcp.types import CallToolRequest, CallToolRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[CallToolRequest]
     req = CallToolRequest(
@@ -170,7 +170,7 @@ async def test_hippo_entity_get_tool_listed(
     """RED: tool hippo_entity_get deve apparire nella lista MCP."""
     from mcp.types import ListToolsRequest, PaginatedRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[ListToolsRequest]
     req = ListToolsRequest(
@@ -237,7 +237,7 @@ async def test_hippo_entity_get_not_found(
 def test_store_rejects_empty_canonical_name(tmp_path: Path) -> None:
     """RED bug #3: canonical_name vuoto/whitespace deve sollevare
     ValueError, NON creare entity fantasma."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
 
@@ -263,7 +263,7 @@ def test_store_canonical_matching_existing_alias_creates_new(
     Altrimenti è impossibile promuovere un alias a canonical di una
     nuova entity distinta.
     """
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid_tonegawa = store.store(
@@ -293,7 +293,7 @@ def test_store_dedupes_unicode_case_insensitive(tmp_path: Path) -> None:
     Lo stesso si applica a Erdős/ERDŐS, Schrödinger/SCHRÖDINGER,
     İstanbul/ISTANBUL (Turkish), François/FRANÇOIS ecc.
     """
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid1 = store.store(Entity(canonical_name="MÜLLER", type="person"))
@@ -417,7 +417,7 @@ def test_migration_v4_handles_preexisting_nfc_nfd_duplicates(
     # 3) Boot EntityStore con il modulo aggiornato (target_version=4) —
     # se la migration v4 è bacata, qui fallisce con IntegrityError o
     # propaga rollback.
-    from engram.entity_kg import EntityStore
+    from verimem.entity_kg import EntityStore
 
     store = EntityStore(db_path=db_path)
 
@@ -451,7 +451,7 @@ def test_store_normalizes_unicode_nfc_nfd(tmp_path: Path) -> None:
     """
     import unicodedata
 
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
 
@@ -488,7 +488,7 @@ def test_alias_lookup_unicode_case_insensitive(tmp_path: Path) -> None:
     Senza alias_norm Python-side, SQLite LOWER('ERWIN SCHRÖDINGER') =
     'erwin SCHRÖDINGER' (Ö preservato) ≠ Python 'erwin schrödinger'.
     """
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
     eid = store.store(Entity(canonical_name="Schrödinger", type="person"))
@@ -526,7 +526,7 @@ def test_store_concurrent_dedupe_no_duplicates(tmp_path: Path) -> None:
     """
     import threading
 
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "entity_kg.db")
 

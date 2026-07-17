@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.client import Memory
+from verimem.client import Memory
 
 _UNSUPPORTED = "the deployment works and is verified in production"
 
@@ -71,7 +71,7 @@ def test_abstention_counts(tmp_path):
 def test_ledger_is_fail_open(tmp_path, monkeypatch):
     """Il contatore non deve MAI rompere una scrittura: se il ledger esplode,
     add funziona identico (il ledger è osservabilità, non data-path)."""
-    from engram import trust_ledger
+    from verimem import trust_ledger
 
     m = Memory(tmp_path / "m.db")
 
@@ -120,7 +120,7 @@ def test_gateway_tenant_stats_endpoint(tmp_path):
     fastapi = pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient
 
-    from engram.gateway import GatewayKeys, create_app
+    from verimem.gateway import GatewayKeys, create_app
 
     keys = GatewayKeys(tmp_path / "gateway_keys.db")
     api_key = keys.create(tenant_id="acme", name="t")
@@ -160,7 +160,7 @@ def test_daily_series_buckets_by_day(tmp_path):
 
 
 def test_daily_series_is_capped_and_fail_open(tmp_path):
-    from engram.trust_ledger import TrustLedger
+    from verimem.trust_ledger import TrustLedger
     led = TrustLedger(tmp_path / "x.db")
     for _ in range(3):
         led.record("admitted")

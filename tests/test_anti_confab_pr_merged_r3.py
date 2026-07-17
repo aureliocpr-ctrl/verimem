@@ -9,7 +9,7 @@ stay accepted; a pr: now anchors only when it says merged.
 """
 from __future__ import annotations
 
-from engram.anti_confabulation import detect_unsupported_shipped_claim
+from verimem.anti_confabulation import detect_unsupported_shipped_claim
 
 
 def test_shipped_with_bare_pr_warns() -> None:

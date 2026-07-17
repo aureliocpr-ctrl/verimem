@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from engram import _compat
+from verimem import _compat
 
 
 @pytest.fixture()
@@ -59,7 +59,7 @@ def test_idempotent(clean_env):
 def test_real_consumer_sees_verimem_flag(clean_env):
     """End-to-end su un lettore REALE: source_trust.enabled() legge
     ENGRAM_SOURCE_TRUST — configurato via VERIMEM_SOURCE_TRUST deve accendersi."""
-    from engram import source_trust
+    from verimem import source_trust
     clean_env.setenv("VERIMEM_SOURCE_TRUST", "1")
     assert source_trust.enabled() is False        # prima del bridge: spento
     _compat.init_env_aliases()

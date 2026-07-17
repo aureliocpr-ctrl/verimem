@@ -1,7 +1,7 @@
-"""engram.Memory — the turnkey add()/search() SDK with the anti-confab gate on by
+"""verimem.Memory — the turnkey add()/search() SDK with the anti-confab gate on by
 default. Proves: (1) a benign fact round-trips add→search; (2) search surfaces the
 provenance fields (status, grounding_score) that are Engram's differentiator;
-(3) empty text is refused; (4) the lazy ``from engram import Memory`` export works.
+(3) empty text is refused; (4) the lazy ``from verimem import Memory`` export works.
 """
 from __future__ import annotations
 
@@ -9,16 +9,16 @@ import pytest
 
 
 def test_lazy_export_from_package():
-    import engram
+    import verimem
 
-    assert engram.Memory is engram.Client  # alias
-    from engram import Memory  # the documented one-liner import
+    assert verimem.Memory is verimem.Client  # alias
+    from verimem import Memory  # the documented one-liner import
 
-    assert Memory is engram.Memory
+    assert Memory is verimem.Memory
 
 
 def test_add_then_search_roundtrip(tmp_path):
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db")
     res = mem.add("The deployment uses PostgreSQL 16 as its database.", topic="infra")
@@ -29,7 +29,7 @@ def test_add_then_search_roundtrip(tmp_path):
 
 
 def test_search_surfaces_provenance(tmp_path):
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db")
     mem.add("The API rate limit is 100 requests per minute.", topic="infra")
@@ -42,7 +42,7 @@ def test_search_surfaces_provenance(tmp_path):
 
 
 def test_empty_text_is_refused(tmp_path):
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db")
     res = mem.add("   ")
@@ -61,7 +61,7 @@ def test_add_with_grounding_persists_and_surfaces_via_sdk(tmp_path, monkeypatch)
         def complete(self, system, messages, *, model=None, max_tokens=None):
             return types.SimpleNamespace(text="SCORE: 95")  # source strongly entails
 
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db", grounding_llm=_StubGroundingLLM())
     res = mem.add(
@@ -80,7 +80,7 @@ def test_default_gate_downgrades_unsupported_claim(tmp_path):
     """The SDK's headline 'moat by default' is not decoration: with the cheap (no-LLM)
     fast gate, an unsupported works/verified claim is DOWNGRADED to quarantined, while a
     benign fact persists live. This is the L1 anti-confab screen acting on add()."""
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db")
     bad = mem.add("I verified that all tests pass and the system works perfectly.", topic="t")
@@ -95,7 +95,7 @@ def test_default_gate_downgrades_unsupported_claim(tmp_path):
 
 
 def test_get_and_delete_roundtrip(tmp_path):
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db")
     res = mem.add("The cache TTL is 300 seconds.", topic="infra")
@@ -108,7 +108,7 @@ def test_get_and_delete_roundtrip(tmp_path):
 
 
 def test_recall_is_search_alias(tmp_path):
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db")
     mem.add("The region is eu-west-1.", topic="infra")
@@ -116,7 +116,7 @@ def test_recall_is_search_alias(tmp_path):
 
 
 def test_get_all_lists_facts(tmp_path):
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db")
     mem.add("The primary region is eu-west-1.", topic="infra")
@@ -127,7 +127,7 @@ def test_get_all_lists_facts(tmp_path):
 
 
 def test_update_supersedes_and_history(tmp_path):
-    from engram import Memory
+    from verimem import Memory
 
     mem = Memory(path=tmp_path / "sem" / "sem.db")
     r = mem.add("The server listens on port 8080.", topic="infra")
@@ -144,11 +144,11 @@ def test_update_supersedes_and_history(tmp_path):
 
 @pytest.mark.parametrize("name", ["Memory", "Client"])
 def test_missing_attr_raises(name):
-    import engram
+    import verimem
 
-    getattr(engram, name)  # both exist
+    getattr(verimem, name)  # both exist
     with pytest.raises(AttributeError):
-        engram.DefinitelyNotAThing  # noqa: B018
+        verimem.DefinitelyNotAThing  # noqa: B018
 
 
 # ---- iter 50 (2026-07-06): the 24h capabilities land on the SDK -------------
@@ -169,7 +169,7 @@ class _StubLLM:
 def test_add_messages_ingests_conversation_with_event_time(tmp_path):
     """add(list[messages]) routes through the gated conversation ingestion
     (atomic extraction + consolidation) and stamps the EVENT time (v13)."""
-    from engram.client import Memory
+    from verimem.client import Memory
     mem = Memory(tmp_path / "m.db", llm=_StubLLM("Rossi's budget is 500k"))
     ts = 1_750_000_000.0
     res = mem.add([{"role": "user", "content": "il budget di Rossi è 500k"}],
@@ -184,7 +184,7 @@ def test_add_messages_forwards_user_name_identity_fix(tmp_path):
     """0.4.0 identity fix on the SDK verb: add(list, user_name=...) forwards the
     app-provided name to the extraction prompt (facts become retrieval-ready:
     'Alice ...' instead of 'The user ...')."""
-    from engram.client import Memory
+    from verimem.client import Memory
     llm = _StubLLM("Alice moved to Berlin in March")
     mem = Memory(tmp_path / "m.db", llm=llm)
     mem.add([{"role": "user", "content": "I moved to Berlin in March."}],
@@ -194,7 +194,7 @@ def test_add_messages_forwards_user_name_identity_fix(tmp_path):
 
 
 def test_add_messages_without_llm_raises_clear_error(tmp_path):
-    from engram.client import Memory
+    from verimem.client import Memory
     mem = Memory(tmp_path / "m.db")
     try:
         mem.add([{"role": "user", "content": "ciao"}])
@@ -204,7 +204,7 @@ def test_add_messages_without_llm_raises_clear_error(tmp_path):
 
 
 def test_add_text_accepts_asserted_at(tmp_path):
-    from engram.client import Memory
+    from verimem.client import Memory
     mem = Memory(tmp_path / "m.db")
     ts = 1_750_000_000.0
     res = mem.add("Rossi's budget is 500k", asserted_at=ts)
@@ -215,8 +215,8 @@ def test_add_text_accepts_asserted_at(tmp_path):
 def test_search_deep_finds_dormant(tmp_path):
     import time
 
-    from engram.client import Memory
-    from engram.semantic import Fact
+    from verimem.client import Memory
+    from verimem.semantic import Fact
     mem = Memory(tmp_path / "m.db")
     old = time.time() - 90 * 86400.0
     mem.semantic.store(Fact(id="dorm", proposition="Rossi budget set at 500k",
@@ -230,8 +230,8 @@ def test_search_deep_finds_dormant(tmp_path):
 def test_search_as_of_time_travels(tmp_path):
     import time
 
-    from engram.client import Memory
-    from engram.semantic import Fact
+    from verimem.client import Memory
+    from verimem.semantic import Fact
     mem = Memory(tmp_path / "m.db")
     now = time.time()
     D = 86400.0
@@ -247,8 +247,8 @@ def test_search_as_of_time_travels(tmp_path):
 def test_search_with_history_carries_transition(tmp_path):
     import time
 
-    from engram.client import Memory
-    from engram.semantic import Fact
+    from verimem.client import Memory
+    from verimem.semantic import Fact
     mem = Memory(tmp_path / "m.db")
     now = time.time()
     mem.semantic.store(Fact(id="o2", proposition="income is 3500", topic="t",
@@ -263,7 +263,7 @@ def test_search_with_history_carries_transition(tmp_path):
 
 
 def test_explain_returns_trust_report(tmp_path):
-    from engram.client import Memory
+    from verimem.client import Memory
     mem = Memory(tmp_path / "m.db")
     mem.add("Rossi's budget is 500k")
     rep = mem.explain("Rossi budget")
@@ -286,9 +286,9 @@ def test_delete_purge_history_kills_the_whole_chain(tmp_path):
     unchanged."""
     import time as _t
 
-    from engram.client import Memory
-    from engram.semantic import Fact
-    from engram.temporal_context import recall_as_of
+    from verimem.client import Memory
+    from verimem.semantic import Fact
+    from verimem.temporal_context import recall_as_of
 
     mem = Memory(tmp_path / "g.db")
     now = _t.time()
@@ -312,8 +312,8 @@ def test_delete_purge_history_kills_the_whole_chain(tmp_path):
 
 
 def test_delete_default_still_single_row(tmp_path):
-    from engram.client import Memory
-    from engram.semantic import Fact
+    from verimem.client import Memory
+    from verimem.semantic import Fact
     mem = Memory(tmp_path / "g2.db")
     mem.semantic.store(Fact(id="x", proposition="old note", topic="t"), embed="sync")
     mem.semantic.store(Fact(id="y", proposition="new note", topic="t"), embed="sync")
@@ -325,7 +325,7 @@ def test_delete_default_still_single_row(tmp_path):
 def _seed_sensitive_chain(mem):
     import time as _t
 
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
     now = _t.time()
     D = 86400.0
     for fid, val, age in (("a", 3000, 120), ("b", 4000, 60), ("c", 5000, 10)):
@@ -344,7 +344,7 @@ def test_purge_history_closes_over_a_prior_plain_delete(tmp_path):
     purge(A) never reached C (still LIVE), purge(C) never reached A
     (resurrectable via as_of). The plain delete now re-links pointers through
     the deleted row, so the chain stays walkable in both directions."""
-    from engram.client import Memory
+    from verimem.client import Memory
 
     # forward: purge(A) must reach C through the hole left by delete(B)
     mem = Memory(tmp_path / "fw.db")
@@ -359,6 +359,6 @@ def test_purge_history_closes_over_a_prior_plain_delete(tmp_path):
     assert mem2.delete("b") is True
     assert mem2.delete("c", purge_history=True) is True
     assert mem2.semantic.get("a") is None, "backward closure must cross the hole"
-    from engram.temporal_context import recall_as_of
+    from verimem.temporal_context import recall_as_of
     past = recall_as_of(mem2.semantic, "Rossi salary", when=now - 90 * 86400.0, k=5)
     assert past == [], "no resurrection via time travel after the purge"

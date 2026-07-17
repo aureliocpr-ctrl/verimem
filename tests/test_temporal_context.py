@@ -8,8 +8,8 @@ surface it. Hermetic: no LLM, real SemanticMemory on tmp db.
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
-from engram.temporal_context import (
+from verimem.semantic import Fact, SemanticMemory
+from verimem.temporal_context import (
     fact_history,
     history_line,
     recall_with_history,
@@ -81,7 +81,7 @@ def test_recall_with_history_enriches_hits(tmp_path) -> None:
 
 
 def test_recall_with_history_marks_unresolved_disputes(tmp_path) -> None:
-    from engram.contradiction import Contradiction, ContradictionStore
+    from verimem.contradiction import Contradiction, ContradictionStore
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     a = Fact(id="d-a", proposition="Johnson works at Albi B&B", topic="t",
              asserted_at=_BASE)

@@ -17,18 +17,18 @@ The composed skill:
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_returns_none():
-    from engram.compose_macro import compose_macro
+    from verimem.compose_macro import compose_macro
 
     out = compose_macro([])
     assert out is None
 
 
 def test_single_skill_returns_copy():
-    from engram.compose_macro import compose_macro
+    from verimem.compose_macro import compose_macro
 
     s = Skill(id="x", name="alpha", trigger="t")
     out = compose_macro([s])
@@ -38,7 +38,7 @@ def test_single_skill_returns_copy():
 
 
 def test_two_skill_chain():
-    from engram.compose_macro import compose_macro
+    from verimem.compose_macro import compose_macro
 
     a = Skill(id="a", name="auth", trigger="login",
               preconditions=["have_creds"],
@@ -59,7 +59,7 @@ def test_two_skill_chain():
 
 
 def test_name_auto_derived():
-    from engram.compose_macro import compose_macro
+    from verimem.compose_macro import compose_macro
 
     skills = [
         Skill(id="a", name="auth"),
@@ -74,7 +74,7 @@ def test_name_auto_derived():
 
 
 def test_custom_name_overrides_auto():
-    from engram.compose_macro import compose_macro
+    from verimem.compose_macro import compose_macro
 
     skills = [Skill(id="a", name="x"), Skill(id="b", name="y")]
     out = compose_macro(skills, name="my_custom_macro")
@@ -83,7 +83,7 @@ def test_custom_name_overrides_auto():
 
 
 def test_body_describes_sequence():
-    from engram.compose_macro import compose_macro
+    from verimem.compose_macro import compose_macro
 
     skills = [
         Skill(id="a", name="auth"),
@@ -98,7 +98,7 @@ def test_body_describes_sequence():
 def test_inherits_first_pre_last_post_even_when_middle_irrelevant():
     """The chain's entry/exit is determined by the endpoints, not
     the middle steps."""
-    from engram.compose_macro import compose_macro
+    from verimem.compose_macro import compose_macro
 
     skills = [
         Skill(id="a", name="a", preconditions=["P_in"]),

@@ -40,7 +40,7 @@ import time
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -88,7 +88,7 @@ def aged_corpus(mem):
 
 class TestStaleDetection:
     def test_flags_facts_older_than_threshold(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(
             aged_corpus, "project/x/*", threshold_days=30,
         )
@@ -99,14 +99,14 @@ class TestStaleDetection:
         assert r["n_scanned"] == 5
 
     def test_includes_age_days_in_stale_payload(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(aged_corpus, "project/x/*")
         for s in r["stale"]:
             # Allow some clock slack — fixture sets age 60d
             assert 58.0 < s["age_days"] < 62.0
 
     def test_no_stale_when_threshold_high(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(
             aged_corpus, "project/x/*", threshold_days=365,
         )
@@ -114,7 +114,7 @@ class TestStaleDetection:
         assert r["stale"] == []
 
     def test_already_superseded_facts_skip(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         # Manually supersede old_3 so it shouldn't appear as stale
         aged_corpus.supersede("old_3", "fresh_1", reason="manual chain")
         r = facts_freshness_check(
@@ -134,7 +134,7 @@ class TestStaleDetection:
 
 class TestAutoSupersedeCandidates:
     def test_pairs_old_with_close_newer_fact(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(
             aged_corpus, "project/x/*",
             threshold_days=30, sim_threshold=0.4,
@@ -151,7 +151,7 @@ class TestAutoSupersedeCandidates:
         assert not old_3_in
 
     def test_high_sim_threshold_yields_zero_candidates(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(
             aged_corpus, "project/x/*",
             threshold_days=30, sim_threshold=0.999,
@@ -160,7 +160,7 @@ class TestAutoSupersedeCandidates:
         assert r["n_auto_supersede_candidates"] == 0
 
     def test_each_old_paired_with_best_newer_only(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(
             aged_corpus, "project/x/*", threshold_days=30, sim_threshold=0.2,
         )
@@ -171,7 +171,7 @@ class TestAutoSupersedeCandidates:
         assert len(old_ids) == len(set(old_ids))
 
     def test_candidates_include_similarity_score(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(
             aged_corpus, "project/x/*", threshold_days=30, sim_threshold=0.3,
         )
@@ -186,7 +186,7 @@ class TestAutoSupersedeCandidates:
 
 class TestEdgeCases:
     def test_empty_glob_returns_zero_everything(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(
             aged_corpus, "nonexistent/*", threshold_days=30,
         )
@@ -196,7 +196,7 @@ class TestEdgeCases:
         assert r["candidates"] == []
 
     def test_max_results_caps_stale_list(self, aged_corpus):
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
         r = facts_freshness_check(
             aged_corpus, "project/x/*",
             threshold_days=30, max_results=2,

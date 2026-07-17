@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_ppr_fusion_respects_wallclock_budget(tmp_path, monkeypatch):
@@ -23,7 +23,7 @@ def test_ppr_fusion_respects_wallclock_budget(tmp_path, monkeypatch):
         time.sleep(2.0)
         return []
 
-    monkeypatch.setattr("engram.ppr_seed.ppr_seeded_fact_ids", _slow_ppr)
+    monkeypatch.setattr("verimem.ppr_seed.ppr_seeded_fact_ids", _slow_ppr)
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     hits = [(Fact(proposition="x", topic="t"), 0.9)]
 
@@ -48,8 +48,8 @@ def test_ppr_fusion_budget_zero_runs_synchronously(tmp_path, monkeypatch):
         called["ppr"] = True
         return []
 
-    monkeypatch.setattr("engram.ppr_seed.ppr_seeded_fact_ids", _fast_ppr)
-    monkeypatch.setattr("engram.bm25_rank.bm25_fact_ids", lambda *a, **k: [])
+    monkeypatch.setattr("verimem.ppr_seed.ppr_seeded_fact_ids", _fast_ppr)
+    monkeypatch.setattr("verimem.bm25_rank.bm25_fact_ids", lambda *a, **k: [])
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     hits = [(Fact(proposition="x", topic="t"), 0.9)]
 
@@ -68,7 +68,7 @@ def test_fusion_skipped_below_corpus_floor(tmp_path, monkeypatch):
         called["ppr"] = True
         return []
 
-    monkeypatch.setattr("engram.ppr_seed.ppr_seeded_fact_ids", _spy)
+    monkeypatch.setattr("verimem.ppr_seed.ppr_seeded_fact_ids", _spy)
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     sm.store(Fact(proposition="x note one", topic="t"), embed="sync")  # corpus=1 < 50
     hits = [(Fact(proposition="y", topic="t"), 0.9)]
@@ -88,8 +88,8 @@ def test_fusion_runs_above_corpus_floor(tmp_path, monkeypatch):
         called["ppr"] = True
         return []
 
-    monkeypatch.setattr("engram.ppr_seed.ppr_seeded_fact_ids", _spy)
-    monkeypatch.setattr("engram.bm25_rank.bm25_fact_ids", lambda *a, **k: [])
+    monkeypatch.setattr("verimem.ppr_seed.ppr_seeded_fact_ids", _spy)
+    monkeypatch.setattr("verimem.bm25_rank.bm25_fact_ids", lambda *a, **k: [])
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     sm.store(Fact(proposition="x note one", topic="t"), embed="sync")
     hits = [(Fact(proposition="y", topic="t"), 0.9)]
@@ -108,8 +108,8 @@ def test_fusion_is_default_on_after_flip(tmp_path, monkeypatch):
         called["ppr"] = True
         return []
 
-    monkeypatch.setattr("engram.ppr_seed.ppr_seeded_fact_ids", _spy)
-    monkeypatch.setattr("engram.bm25_rank.bm25_fact_ids", lambda *a, **k: [])
+    monkeypatch.setattr("verimem.ppr_seed.ppr_seeded_fact_ids", _spy)
+    monkeypatch.setattr("verimem.bm25_rank.bm25_fact_ids", lambda *a, **k: [])
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     sm.store(Fact(proposition="x note one", topic="t"), embed="sync")
     sm._maybe_fuse_ppr("query", [(Fact(proposition="y", topic="t"), 0.9)], 5)
@@ -121,7 +121,7 @@ def test_fusion_opt_out_via_env(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "0")
     monkeypatch.setenv("ENGRAM_PPR_FUSION_FLOOR", "0")
     called: dict[str, bool] = {}
-    monkeypatch.setattr("engram.ppr_seed.ppr_seeded_fact_ids",
+    monkeypatch.setattr("verimem.ppr_seed.ppr_seeded_fact_ids",
                         lambda *a, **k: called.update(ppr=True) or [])
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     hits = [(Fact(proposition="y", topic="t"), 0.9)]

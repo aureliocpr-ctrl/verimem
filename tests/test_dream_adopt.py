@@ -24,9 +24,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.memory import Episode, EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
 
 
 def _h(p: Path) -> str:
@@ -44,7 +44,7 @@ VALID_SKILL_JSON = {
 @pytest.fixture
 def shadow_with_submitted_skill(tmp_path):
     """Setup: propose + submit di 1 task → shadow ha 1 new skill pronto per adopt."""
-    from engram.dream import propose_dream_tasks, submit_dream_result
+    from verimem.dream import propose_dream_tasks, submit_dream_result
     live = tmp_path / "live"
     live.mkdir()
     skills_dir = live / "skills"
@@ -87,7 +87,7 @@ def shadow_with_submitted_skill(tmp_path):
 
 def test_adopt_inserts_new_skill_to_live(shadow_with_submitted_skill):
     """Dopo adopt, la skill creata da submit deve essere nel live SkillLibrary."""
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_submitted_skill
     # FRESH library instance per verifica (evita stale _skills_cache).
     fresh_pre = SkillLibrary(
@@ -113,7 +113,7 @@ def test_adopt_inserts_new_skill_to_live(shadow_with_submitted_skill):
 
 def test_adopt_creates_backup_before_apply(shadow_with_submitted_skill):
     """Backup deve esistere dopo adopt e contenere skills_index.db pre-apply."""
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_submitted_skill
     result = adopt_dream(
         shadow_root=s["shadow_root"], live_dirs=s["live_dirs"],
@@ -132,7 +132,7 @@ def test_adopt_creates_backup_before_apply(shadow_with_submitted_skill):
 
 def test_adopt_marks_artifact_adopted_at(shadow_with_submitted_skill):
     """Artifact deve avere adopted_at timestamp + adopted_skill_ids."""
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_submitted_skill
     result = adopt_dream(
         shadow_root=s["shadow_root"], live_dirs=s["live_dirs"],
@@ -147,7 +147,7 @@ def test_adopt_marks_artifact_adopted_at(shadow_with_submitted_skill):
 
 
 def test_adopt_returns_dream_id(shadow_with_submitted_skill):
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_submitted_skill
     result = adopt_dream(
         shadow_root=s["shadow_root"], live_dirs=s["live_dirs"],
@@ -160,7 +160,7 @@ def test_adopt_returns_dream_id(shadow_with_submitted_skill):
 
 def test_adopt_already_adopted_rejects(shadow_with_submitted_skill):
     """Double-adopt → ValueError hard reject con timestamp originale menzionato."""
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_submitted_skill
     first = adopt_dream(
         shadow_root=s["shadow_root"], live_dirs=s["live_dirs"],
@@ -176,7 +176,7 @@ def test_adopt_already_adopted_rejects(shadow_with_submitted_skill):
 # === ERROR HANDLING ===
 
 def test_adopt_unknown_shadow_raises(tmp_path):
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     bogus_live = {
         "skills_db": tmp_path / "fake_skills.db",
         "skills_dir_path": tmp_path / "fake_skills",
@@ -194,14 +194,14 @@ def test_adopt_unknown_shadow_raises(tmp_path):
 # === SAFETY: zero LLM calls ===
 
 def test_adopt_zero_llm_calls(shadow_with_submitted_skill, monkeypatch):
-    from engram import llm as llm_module
+    from verimem import llm as llm_module
     calls = {"n": 0}
     orig = llm_module.get_llm
     def boom(*a, **kw):
         calls["n"] += 1
         return orig(*a, **kw)
     monkeypatch.setattr(llm_module, "get_llm", boom)
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_submitted_skill
     adopt_dream(
         shadow_root=s["shadow_root"], live_dirs=s["live_dirs"],
@@ -218,7 +218,7 @@ def test_adopt_partial_failure_triggers_rollback(shadow_with_submitted_skill, mo
     Verifica semantica: live skill set == pre-adopt set (no new skill applicata).
     Hash file SHA1 non è affidabile causa WAL/PRAGMA side effects all'apertura.
     """
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_submitted_skill
 
     # Snapshot pre-adopt: ids di skill nel live (via fresh instance).
@@ -229,7 +229,7 @@ def test_adopt_partial_failure_triggers_rollback(shadow_with_submitted_skill, mo
     ids_pre = {sk.id for sk in fresh_pre.all()}
 
     # Force store to fail when trying to insert the new skill.
-    from engram import skill as skill_module
+    from verimem import skill as skill_module
     real_store = skill_module.SkillLibrary.store
     failed = {"once": False}
     def flaky_store(self, sk):
@@ -261,7 +261,7 @@ def test_adopt_partial_failure_triggers_rollback(shadow_with_submitted_skill, mo
 
 def test_adopt_no_new_skills_returns_n_zero(tmp_path):
     """Edge: shadow senza submit → diff vuoto → adopt = noop ma success ok."""
-    from engram.dream import adopt_dream, propose_dream_tasks
+    from verimem.dream import adopt_dream, propose_dream_tasks
     live = tmp_path / "live"
     live.mkdir()
     skills_dir = live / "skills"
@@ -348,10 +348,10 @@ def test_adopt_rollback_cleans_wal_shm(shadow_with_two_submitted_skills, monkeyp
     """CRITIC-FOUND #38 counterexample 1: rollback deve eliminare .db-wal/.db-shm
     della live, altrimenti SQLite all'apertura può re-applicare frame WAL della
     scrittura parziale → reintroduce skill o malformed-db."""
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_two_submitted_skills
     # Force store fail sulla SECONDA skill (after first one already partially stored).
-    from engram import skill as skill_module
+    from verimem import skill as skill_module
     real_store = skill_module.SkillLibrary.store
     call_count = {"n": 0}
     def flaky_store(self, sk):
@@ -387,11 +387,11 @@ def test_adopt_rollback_cleans_orphan_body_files(shadow_with_two_submitted_skill
     """CRITIC-FOUND #38 counterexample 2: SkillLibrary.store scrive body
     file <skill_id>.json PRIMA dell'insert DB. Se 2° skill fa raise, il body
     della 1° è già scritto. Rollback deve eliminarlo (non era nel backup)."""
-    from engram.dream import adopt_dream
+    from verimem.dream import adopt_dream
     s = shadow_with_two_submitted_skills
     # Lista body file pre-adopt.
     body_files_pre = {p.name for p in s["live_skills_dir"].glob("*.json")}
-    from engram import skill as skill_module
+    from verimem import skill as skill_module
     real_store = skill_module.SkillLibrary.store
     call_count = {"n": 0}
     def flaky_store(self, sk):

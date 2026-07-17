@@ -20,11 +20,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.codebase_ingest import (
+from verimem.codebase_ingest import (
     extract_patterns_from_file,
     ingest_codebase,
 )
-from engram.semantic import SemanticMemory
+from verimem.semantic import SemanticMemory
 
 
 def _percentile(xs: list[float], p: float) -> float:

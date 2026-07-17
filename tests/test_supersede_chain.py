@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory, SupersedeConflict
+from verimem.semantic import Fact, SemanticMemory, SupersedeConflict
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ class TestIdempotency:
 
 class TestValidation:
     def test_chain_too_short_raises(self, four_facts):
-        from engram.semantic import SupersedeError
+        from verimem.semantic import SupersedeError
         with pytest.raises(SupersedeError, match="at least 2"):
             four_facts.supersede_chain(["a"], reason="X")
 
@@ -123,7 +123,7 @@ class TestValidation:
         assert a_after.superseded_by == "b"  # partial state preserved
 
     def test_self_loop_in_chain_rejected(self, four_facts):
-        from engram.semantic import SupersedeError
+        from verimem.semantic import SupersedeError
         with pytest.raises(SupersedeError):
             four_facts.supersede_chain(["a", "b", "b"], reason="X")
 

@@ -156,7 +156,7 @@ def run_condition(cfg: WorldConfig, db_path: Path, *, trust_on: bool,
     # similarity fallback (task #21): the extractor does not link the world's
     # k-v keys, so without it reconciliation never finds candidates (v3 null)
     os.environ["ENGRAM_RECONCILE_SIM_FALLBACK"] = "1" if reconcile else "0"
-    from engram.client import Memory
+    from verimem.client import Memory
     mem = Memory(db_path)
     stream = generate_stream(cfg)
     quarantined = 0

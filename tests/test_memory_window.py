@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(eid: str, ts: float) -> Episode:

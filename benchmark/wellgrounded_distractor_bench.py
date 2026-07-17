@@ -215,8 +215,8 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import fact_grounding_score
-    from engram.local_grounding import try_local_score
+    from verimem.grounding_gate import fact_grounding_score
+    from verimem.local_grounding import try_local_score
 
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=90)
     cases = CASES[: a.limit] if a.limit else CASES

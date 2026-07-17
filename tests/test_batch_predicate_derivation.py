@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -66,7 +66,7 @@ class _FakeAgent:
 def test_batch_returns_per_skill_payload():
     """Output includes one entry per processed skill with derived
     pre/post (dry-run by default)."""
-    from engram.predicate_derivation import derive_predicates_batch
+    from verimem.predicate_derivation import derive_predicates_batch
 
     skills = [
         Skill(id="A", name="alpha"),
@@ -88,7 +88,7 @@ def test_batch_returns_per_skill_payload():
 
 
 def test_batch_aggregate_stats():
-    from engram.predicate_derivation import derive_predicates_batch
+    from verimem.predicate_derivation import derive_predicates_batch
 
     skills = [
         Skill(id="A", name="alpha"),
@@ -107,7 +107,7 @@ def test_batch_aggregate_stats():
 
 
 def test_batch_dry_run_does_not_mutate():
-    from engram.predicate_derivation import derive_predicates_batch
+    from verimem.predicate_derivation import derive_predicates_batch
 
     skills = [Skill(id="A", name="a"), Skill(id="B", name="b")]
     eps = [_FakeEp(["A", "B"])] * 3
@@ -121,7 +121,7 @@ def test_batch_dry_run_does_not_mutate():
 
 
 def test_batch_apply_persists_changes():
-    from engram.predicate_derivation import derive_predicates_batch
+    from verimem.predicate_derivation import derive_predicates_batch
 
     skills = [Skill(id="A", name="a"), Skill(id="B", name="b")]
     eps = [_FakeEp(["A", "B"])] * 3
@@ -137,7 +137,7 @@ def test_batch_apply_persists_changes():
 def test_batch_skips_skills_already_having_predicates():
     """Skills that already have pre/post are NOT overwritten when
     `overwrite=False` (default)."""
-    from engram.predicate_derivation import derive_predicates_batch
+    from verimem.predicate_derivation import derive_predicates_batch
 
     pre_existing = Skill(
         id="B", name="b",
@@ -157,7 +157,7 @@ def test_batch_skips_skills_already_having_predicates():
 
 def test_batch_overwrite_replaces_existing():
     """With overwrite=True, derived predicates overwrite existing."""
-    from engram.predicate_derivation import derive_predicates_batch
+    from verimem.predicate_derivation import derive_predicates_batch
 
     pre_existing = Skill(
         id="B", name="b",
@@ -176,7 +176,7 @@ def test_batch_overwrite_replaces_existing():
 
 def test_batch_threshold_propagated():
     """The threshold parameter affects per-skill derivation."""
-    from engram.predicate_derivation import derive_predicates_batch
+    from verimem.predicate_derivation import derive_predicates_batch
 
     skills = [Skill(id="A", name="a"), Skill(id="B", name="b"),
                 Skill(id="C", name="c")]
@@ -198,7 +198,7 @@ def test_batch_threshold_propagated():
 
 def test_batch_empty_episodes_only_post():
     """Empty corpus → all skills get only the trivial postcondition."""
-    from engram.predicate_derivation import derive_predicates_batch
+    from verimem.predicate_derivation import derive_predicates_batch
 
     skills = [Skill(id="A", name="a"), Skill(id="B", name="b")]
     a = _FakeAgent(skills, [])

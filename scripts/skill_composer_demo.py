@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill_composer import compose_plan
+from verimem.skill_composer import compose_plan
 
 
 @dataclass

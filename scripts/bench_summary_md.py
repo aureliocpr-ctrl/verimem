@@ -27,7 +27,7 @@ except (AttributeError, ValueError):
     # Older Python or non-tty stream: silently fall back to default.
     pass
 
-from engram.config import CONFIG
+from verimem.config import CONFIG
 
 
 def render_table(summary: dict[str, dict[str, float]],

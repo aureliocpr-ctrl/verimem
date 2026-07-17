@@ -16,8 +16,8 @@ detectors exist to catch (M12-PTY perf hallucinations, unscheduled cron claims).
 """
 from __future__ import annotations
 
-from engram.l1_automated_detector import detect_unsupported_automated_claim
-from engram.l1_performance_detector import detect_unsupported_performance_claim
+from verimem.l1_automated_detector import detect_unsupported_automated_claim
+from verimem.l1_performance_detector import detect_unsupported_performance_claim
 
 # --- L1.18: "recurring/periodic <problem>" is descriptive, not an automation claim ---
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 import time
 import types
 
-from engram.correction_velocity import detect_correction_pattern
+from verimem.correction_velocity import detect_correction_pattern
 
 _DAY = 86400.0
 
@@ -96,7 +96,7 @@ class _FakeMemWithRecall:
 
 
 def test_get_briefing_correction_uses_semantic_recall():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     now = time.time()
     eps = [
         _ep("resolve the vector store cold-load hang", outcome="failure", age_days=5, now=now, id="f1"),
@@ -113,7 +113,7 @@ def test_get_briefing_correction_uses_semantic_recall():
 
 
 def test_get_briefing_correction_without_recall_falls_back_to_token():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     class _Mem:
         def __init__(self, eps): self._eps = eps

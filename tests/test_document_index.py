@@ -11,7 +11,7 @@ from __future__ import annotations
 import math
 import re
 
-from engram.document_index import DocumentIndex
+from verimem.document_index import DocumentIndex
 
 
 class FakeEmbedder:

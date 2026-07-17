@@ -6,7 +6,7 @@ ordinary recall. This is the read-path analogue of gate_router.
 """
 from __future__ import annotations
 
-from engram.client import Memory
+from verimem.client import Memory
 
 M = 12
 

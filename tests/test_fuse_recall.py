@@ -1,6 +1,6 @@
 """Cycle 197 (2026-05-23) — fuse_recall orchestrator tests.
 
-RED marker: ``from engram.fuse_recall import fuse_recall`` must fail
+RED marker: ``from verimem.fuse_recall import fuse_recall`` must fail
 on master.
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.fuse_recall import fuse_recall
+from verimem.fuse_recall import fuse_recall
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

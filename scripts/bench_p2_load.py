@@ -41,7 +41,7 @@ def _percentile(values: list[float], q: float) -> float:
 
 
 def bench_mixed_workload(db_path: Path) -> dict[str, Any]:
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=db_path)
     random.seed(2026)
@@ -154,7 +154,7 @@ def bench_mixed_workload(db_path: Path) -> dict[str, Any]:
 def bench_concurrent_writers(db_path: Path) -> dict[str, Any]:
     """100 thread paralleli che storano entity + edge → verifica
     integrità (no duplicate, no race) e throughput."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=db_path)
 

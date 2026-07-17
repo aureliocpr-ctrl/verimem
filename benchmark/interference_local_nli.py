@@ -61,7 +61,7 @@ def load_tasks(path):
 def task_candidate_scores(claim, cand_texts, classifier):
     """Per-candidate ``(contra_prob, content_overlap)`` in ONE NLI batch, so an
     overlap floor can be swept post-hoc without re-running the model."""
-    from engram.truth_reconciliation import _content_overlap
+    from verimem.truth_reconciliation import _content_overlap
     if not claim or not cand_texts:
         return []
     pairs = []
@@ -99,7 +99,7 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
 
-    from engram.local_relation import DEFAULT_NLI_MODEL, make_nli_classifier
+    from verimem.local_relation import DEFAULT_NLI_MODEL, make_nli_classifier
     clf = make_nli_classifier(a.nli_model or DEFAULT_NLI_MODEL)
 
     rows = load_tasks(a.tasks)

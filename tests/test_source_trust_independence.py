@@ -13,7 +13,7 @@ shared keys, not a causal deconfound. Behind ENGRAM_SOURCE_TRUST, default OFF.
 """
 from __future__ import annotations
 
-from engram.source_trust import SourceTrustBook
+from verimem.source_trust import SourceTrustBook
 
 
 def _report_vec(book: SourceTrustBook, sources, vec: dict[str, str]) -> None:

@@ -37,9 +37,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.wake import WakeAgent
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.wake import WakeAgent
 
 
 def _ep(*, ep_id: str, task: str,

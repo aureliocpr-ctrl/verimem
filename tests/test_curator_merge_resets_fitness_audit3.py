@@ -7,8 +7,8 @@ promotion through its OWN trials (the same way _recombine already does).
 """
 from __future__ import annotations
 
-from engram.skill import Skill
-from engram.sleep import SleepEngine
+from verimem.skill import Skill
+from verimem.sleep import SleepEngine
 
 
 class _Resp:

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_evidence import NEGATING_TOKENS, ref_is_negated
+from verimem.l1_evidence import NEGATING_TOKENS, ref_is_negated
 
 
 @pytest.mark.parametrize("ref", [

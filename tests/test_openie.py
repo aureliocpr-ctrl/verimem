@@ -4,7 +4,7 @@ Spec: docs/specs/p2c-openie-extraction.md.
 
 Pattern HippoRAG 2-step (NER → triple) MA con json.loads strict e
 zero parser code-execution sull'output LLM. Fake LLM produced via
-MockLLM (engram.llm.MockLLM) scripted con stringhe JSON realistiche.
+MockLLM (verimem.llm.MockLLM) scripted con stringhe JSON realistiche.
 
 Anti-pattern test fake-friendly (lezione cycle #70 P1): il MockLLM
 ritorna stringhe come farebbero LLM reali, incluso JSON malformato
@@ -23,7 +23,7 @@ import pytest
 
 def test_parse_ner_response_valid_json() -> None:
     """RED: input JSON valido con campo entities → lista."""
-    from engram.openie import _parse_ner_response
+    from verimem.openie import _parse_ner_response
 
     payload = json.dumps({
         "entities": [
@@ -44,7 +44,7 @@ def test_parse_ner_response_valid_json() -> None:
 def test_parse_ner_response_malformed_json_returns_empty() -> None:
     """RED: input non-JSON o JSON malformato → lista vuota,
     NO eccezione, NO parser code-execution."""
-    from engram.openie import _parse_ner_response
+    from verimem.openie import _parse_ner_response
 
     # JSON malformato: virgola mancante
     assert _parse_ner_response('{"entities": [{"name": "X"}') == []
@@ -63,7 +63,7 @@ def test_parse_triple_response_drops_unknown_entities() -> None:
     devono essere droppate. Solo triple con entrambe conosciute
     passano. Anti-confabulation LLM: l'LLM non può inventare
     entità nuove nella fase triple."""
-    from engram.openie import _parse_triple_response
+    from verimem.openie import _parse_triple_response
 
     payload = json.dumps({
         "triples": [
@@ -86,7 +86,7 @@ def test_parse_triple_response_drops_unknown_entities() -> None:
 
 def test_parse_triple_response_malformed_returns_empty() -> None:
     """RED: triple parsing robust su JSON malformed."""
-    from engram.openie import _parse_triple_response
+    from verimem.openie import _parse_triple_response
 
     assert _parse_triple_response("not json", {"X"}) == []
     assert _parse_triple_response('{"triples": "no"}', {"X"}) == []
@@ -99,8 +99,8 @@ def test_parse_triple_response_malformed_returns_empty() -> None:
 def test_extract_entities_ner_only(monkeypatch: pytest.MonkeyPatch) -> None:
     """RED: mode='ner_only' invoca SOLO step 1 (1 LLM call).
     Ritorna entities, triples=[]. MockLLM scripted con NER JSON."""
-    from engram.llm import MockLLM
-    from engram.openie import extract_entities
+    from verimem.llm import MockLLM
+    from verimem.openie import extract_entities
 
     ner_json = json.dumps({
         "entities": [
@@ -124,8 +124,8 @@ def test_extract_entities_ner_plus_triple(
 ) -> None:
     """RED: mode='ner+triple' invoca 2 LLM call (NER poi triple).
     Triple validate contro entità step 1."""
-    from engram.llm import MockLLM
-    from engram.openie import extract_entities
+    from verimem.llm import MockLLM
+    from verimem.openie import extract_entities
 
     ner_json = json.dumps({
         "entities": [
@@ -163,8 +163,8 @@ def test_extract_entities_existing_dedup(
     case-insensitive con _norm() (riusa logica P2.a Unicode-safe)
     sul nome canonical.
     """
-    from engram.llm import MockLLM
-    from engram.openie import extract_entities
+    from verimem.llm import MockLLM
+    from verimem.openie import extract_entities
 
     # LLM ritorna 3 entity: 1 nuova, 2 già esistenti (case-mixed)
     ner_json = json.dumps({
@@ -194,8 +194,8 @@ def test_extract_entities_llm_failure_returns_empty(
 ) -> None:
     """RED: se LLM ritorna garbage non-JSON, extract_entities ritorna
     {entities: [], triples: []} senza crashare."""
-    from engram.llm import MockLLM
-    from engram.openie import extract_entities
+    from verimem.llm import MockLLM
+    from verimem.openie import extract_entities
 
     # 2 chiamate falliscono (retry incluso)
     mock = MockLLM(scripted=["garbage 1", "garbage 2"])
@@ -217,7 +217,7 @@ def test_extract_entities_llm_raises_exception_returns_empty(
     sollevare RuntimeError/httpx errors. MockLLM non solleva, il
     bug è invisibile nei test originari.
     """
-    from engram.openie import extract_entities
+    from verimem.openie import extract_entities
 
     class _NetFailLLM:
         def complete(self, system, messages, **kw):
@@ -264,8 +264,8 @@ class _NoopSemantic:
 def fake_agent_with_mock_llm(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    from engram import mcp_server
-    from engram.llm import MockLLM
+    from verimem import mcp_server
+    from verimem.llm import MockLLM
 
     ner_json = json.dumps({
         "entities": [{"name": "X", "type": "t"}],
@@ -281,7 +281,7 @@ async def _invoke_tool(
 ) -> list[str]:
     from mcp.types import CallToolRequest, CallToolRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[CallToolRequest]
     req = CallToolRequest(
@@ -300,7 +300,7 @@ async def test_hippo_extract_entities_tool_listed(
     """RED: tool hippo_extract_entities appare in tools/list."""
     from mcp.types import ListToolsRequest, PaginatedRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[ListToolsRequest]
     req = ListToolsRequest(

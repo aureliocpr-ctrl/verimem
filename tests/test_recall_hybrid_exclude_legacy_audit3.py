@@ -7,7 +7,7 @@ them to the pool recall.
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_recall_hybrid_forwards_provenance_filters(tmp_path, monkeypatch):

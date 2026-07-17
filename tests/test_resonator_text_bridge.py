@@ -13,7 +13,7 @@ pytestmark = requires_real_model
 
 def test_hash_deterministic() -> None:
     """Hash bridge is fully deterministic."""
-    from engram.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
     a = text_to_atoms_via_hash("aurelio is here", n_roles=3, atoms_per_role=32)
     b = text_to_atoms_via_hash("aurelio is here", n_roles=3, atoms_per_role=32)
     assert a == b
@@ -23,7 +23,7 @@ def test_hash_deterministic() -> None:
 
 def test_hash_in_range() -> None:
     """Hash indices all in [0, atoms_per_role)."""
-    from engram.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
     M = 32
     for text in ("a", "b" * 100, "🇮🇹 unicode test"):
         idx = text_to_atoms_via_hash(text, n_roles=3, atoms_per_role=M)
@@ -32,8 +32,8 @@ def test_hash_in_range() -> None:
 
 def test_embed_deterministic() -> None:
     """Embed bridge produces same indices on repeat calls."""
-    from engram.resonator_memory import _build_alphabet
-    from engram.resonator_text_bridge import text_to_atoms_via_embed
+    from verimem.resonator_memory import _build_alphabet
+    from verimem.resonator_text_bridge import text_to_atoms_via_embed
     codebooks = _build_alphabet(n_roles=3, atoms_per_role=32, d=2048, seed=42)
     text = "the cat sat on the mat"
     a = text_to_atoms_via_embed(text, codebooks, seed=42)
@@ -43,8 +43,8 @@ def test_embed_deterministic() -> None:
 
 def test_embed_semantic_similarity() -> None:
     """Semantic similar texts → some role overlap (≥1 of 3)."""
-    from engram.resonator_memory import _build_alphabet
-    from engram.resonator_text_bridge import text_to_atoms_via_embed
+    from verimem.resonator_memory import _build_alphabet
+    from verimem.resonator_text_bridge import text_to_atoms_via_embed
     codebooks = _build_alphabet(n_roles=3, atoms_per_role=32, d=2048, seed=42)
     a = text_to_atoms_via_embed("cat is an animal", codebooks)
     b = text_to_atoms_via_embed("dog is an animal", codebooks)
@@ -59,8 +59,8 @@ def test_embed_semantic_similarity() -> None:
 
 def test_embed_different_topics_distinct() -> None:
     """Semantically distinct → indices differ on most roles."""
-    from engram.resonator_memory import _build_alphabet
-    from engram.resonator_text_bridge import text_to_atoms_via_embed
+    from verimem.resonator_memory import _build_alphabet
+    from verimem.resonator_text_bridge import text_to_atoms_via_embed
     codebooks = _build_alphabet(n_roles=3, atoms_per_role=32, d=2048, seed=42)
     a = text_to_atoms_via_embed("cat is animal", codebooks)
     b = text_to_atoms_via_embed("python is language", codebooks)
@@ -78,8 +78,8 @@ def test_bridge_roundtrip_with_resonator() -> None:
     Uses D=4096, M=32, K=3 (cycle 395 sweet spot) + n_restarts=32 fix.
     Expect recovery probability ≥80% (single fact, single seed).
     """
-    from engram.resonator_memory import ResonatorMemory
-    from engram.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_memory import ResonatorMemory
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
     mem = ResonatorMemory(n_roles=3, atoms_per_role=32, d=4096)
     text = "aurelio works on hippoagent memory layer"
     idx_in = text_to_atoms_via_hash(text, n_roles=3, atoms_per_role=32)
@@ -96,7 +96,7 @@ def test_bridge_roundtrip_with_resonator() -> None:
 
 def test_cached_entry_point() -> None:
     """text_to_atoms_cached works for both methods."""
-    from engram.resonator_text_bridge import text_to_atoms_cached
+    from verimem.resonator_text_bridge import text_to_atoms_cached
     idx_hash = text_to_atoms_cached(
         "test text", n_roles=3, atoms_per_role=32, d=2048, method="hash",
     )
@@ -110,7 +110,7 @@ def test_cached_entry_point() -> None:
 
 def test_unknown_method_raises() -> None:
     """Unknown method → ValueError."""
-    from engram.resonator_text_bridge import text_to_atoms_cached
+    from verimem.resonator_text_bridge import text_to_atoms_cached
     with pytest.raises(ValueError, match="unknown method"):
         text_to_atoms_cached(
             "x", n_roles=3, atoms_per_role=32, d=2048, method="bogus",

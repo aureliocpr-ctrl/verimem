@@ -14,8 +14,8 @@ from __future__ import annotations
 import time
 from datetime import datetime, timezone
 
-from engram.semantic import Fact, SemanticMemory
-from engram.temporal_context import extract_as_of, recall_with_history
+from verimem.semantic import Fact, SemanticMemory
+from verimem.temporal_context import extract_as_of, recall_with_history
 
 
 def _epoch(y, m, d, hh=0, mm=0, ss=0):

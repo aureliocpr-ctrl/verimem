@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import time
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 _DAY = 86400.0
 
@@ -70,7 +70,7 @@ def test_deep_recall_on_topic_path_too(tmp_path) -> None:
 
 
 def test_recall_as_of_reconstructs_the_past(tmp_path) -> None:
-    from engram.temporal_context import recall_as_of
+    from verimem.temporal_context import recall_as_of
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     now = time.time()
     mar = now - 120 * _DAY
@@ -100,7 +100,7 @@ def test_recall_as_of_died_axis_is_event_time(tmp_path) -> None:
     supersede executed TODAY) — superseded_at is transaction time, so filtering
     'died' on it makes every version look still-current at any past `when`.
     The event-time death of a fact is its successor's asserted_at."""
-    from engram.temporal_context import recall_as_of
+    from verimem.temporal_context import recall_as_of
     now = time.time()
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     sm.store(Fact(id="roma", topic="user/home",

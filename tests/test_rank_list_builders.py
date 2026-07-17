@@ -1,6 +1,6 @@
 """Cycle 196 (2026-05-23) — rank_list_builders tests.
 
-RED marker: ``from engram.rank_list_builders import ...`` must fail
+RED marker: ``from verimem.rank_list_builders import ...`` must fail
 on master.
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.rank_list_builders import (
+from verimem.rank_list_builders import (
     confidence_rank,
     recency_decayed_rank,
     recency_rank,

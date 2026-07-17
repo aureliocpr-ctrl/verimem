@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import httpx
 
-from engram.llm import OllamaLLM
+from verimem.llm import OllamaLLM
 
 
 class _Resp:

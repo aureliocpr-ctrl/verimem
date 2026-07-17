@@ -17,7 +17,7 @@ Pair construction (per TruthfulQA row):
 The judge must admit the paraphrase (source ⊢ claim) and refuse the trap.
 
 No LLM, no API: the production scorer is the local CE
-(`engram.local_grounding.LocalGroundingJudge`); tests inject a fake.
+(`verimem.local_grounding.LocalGroundingJudge`); tests inject a fake.
 
 Usage
   python -m benchmark.external_grounding --make-samples
@@ -32,8 +32,9 @@ import hashlib
 import json
 import random
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 DATA_DIR = Path(__file__).parent / "data" / "external"
 CACHE_SRC = DATA_DIR / ".cache" / "TruthfulQA.csv"
@@ -198,7 +199,7 @@ def main() -> None:
         print(json.dumps(make_samples_tqa(CACHE_SRC, DATA_DIR), indent=2))
         return
 
-    from engram.local_grounding import LocalGroundingJudge
+    from verimem.local_grounding import LocalGroundingJudge
     judge = LocalGroundingJudge()
     threshold = args.threshold if args.threshold is not None else (
         judge.threshold or 50.0)

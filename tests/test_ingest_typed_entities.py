@@ -16,12 +16,12 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.conversation_ingest import (
+from verimem.conversation_ingest import (
     ingest_conversation,
     split_entities_line,
 )
-from engram.entity_populate import entity_kg_path_for
-from engram.semantic import SemanticMemory
+from verimem.entity_populate import entity_kg_path_for
+from verimem.semantic import SemanticMemory
 
 
 class _StubLLM:

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import threading
 
-from engram.semantic import Fact, SemanticMemory, SupersedeConflict
+from verimem.semantic import Fact, SemanticMemory, SupersedeConflict
 
 
 def _store(sm, prop):

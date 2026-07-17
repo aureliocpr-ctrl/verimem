@@ -11,7 +11,7 @@ Hermetic: the httpx client is monkeypatched — no Ollama server, no network.
 """
 from __future__ import annotations
 
-from engram.llm import OllamaLLM, _ollama_keep_alive
+from verimem.llm import OllamaLLM, _ollama_keep_alive
 
 
 class _FakeResp:

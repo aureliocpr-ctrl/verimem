@@ -25,8 +25,8 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(*, ep_id: str, skills: list[str]) -> Episode:
@@ -41,7 +41,7 @@ def _ep(*, ep_id: str, skills: list[str]) -> Episode:
 
 
 def _build_wake(memory):
-    from engram.wake import WakeAgent, WakeConfig
+    from verimem.wake import WakeAgent, WakeConfig
     wake = object.__new__(WakeAgent)
     wake.memory = memory  # type: ignore[misc]
     wake.cfg = WakeConfig(max_steps=4, self_critique=False)

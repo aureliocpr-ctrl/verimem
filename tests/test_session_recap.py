@@ -50,7 +50,7 @@ class _FakeAgent:
 
 
 def test_empty_session():
-    from engram.session_recap import session_recap
+    from verimem.session_recap import session_recap
 
     a = _FakeAgent([], [])
     out = session_recap(since=0.0, agent=a)
@@ -59,7 +59,7 @@ def test_empty_session():
 
 
 def test_counts_episodes_in_window():
-    from engram.session_recap import session_recap
+    from verimem.session_recap import session_recap
 
     now = time.time()
     eps = [
@@ -75,7 +75,7 @@ def test_counts_episodes_in_window():
 
 
 def test_counts_facts_added():
-    from engram.session_recap import session_recap
+    from verimem.session_recap import session_recap
 
     now = time.time()
     facts = [
@@ -88,7 +88,7 @@ def test_counts_facts_added():
 
 
 def test_top_skills_used():
-    from engram.session_recap import session_recap
+    from verimem.session_recap import session_recap
 
     now = time.time()
     eps = [
@@ -104,7 +104,7 @@ def test_top_skills_used():
 
 
 def test_total_tokens():
-    from engram.session_recap import session_recap
+    from verimem.session_recap import session_recap
 
     now = time.time()
     eps = [
@@ -117,7 +117,7 @@ def test_total_tokens():
 
 
 def test_payload_shape_complete():
-    from engram.session_recap import session_recap
+    from verimem.session_recap import session_recap
 
     a = _FakeAgent([], [])
     out = session_recap(since=0.0, agent=a)
@@ -128,7 +128,7 @@ def test_payload_shape_complete():
 
 
 def test_summary_string_present():
-    from engram.session_recap import session_recap
+    from verimem.session_recap import session_recap
 
     a = _FakeAgent([], [])
     out = session_recap(since=0.0, agent=a)

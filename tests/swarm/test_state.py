@@ -30,7 +30,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.swarm.state import SessionState, find_state_dir, read_state
+from verimem.swarm.state import SessionState, find_state_dir, read_state
 
 SAMPLE_STATE = {
     "state": "done",

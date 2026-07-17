@@ -36,7 +36,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 # ---------------------------------------------------------------------------
 # Fixtures: real tmp git repo + file with known content
@@ -425,7 +425,7 @@ def test_default_fact_is_model_claim(sm_with_repo: SemanticMemory) -> None:
 
 def test_validator_api_surface() -> None:
     """The module must export the four documented helpers."""
-    from engram import provenance_validator as pv
+    from verimem import provenance_validator as pv
 
     assert callable(pv.is_valid_provenance_ref)
     assert callable(pv.validate_verified_refs)
@@ -448,7 +448,7 @@ def test_validator_api_surface() -> None:
 
 def test_validator_with_real_repo(git_repo: Path, real_commit_sha: str) -> None:
     """End-to-end direct call against a real repo."""
-    from engram import provenance_validator as pv
+    from verimem import provenance_validator as pv
 
     assert pv.is_valid_provenance_ref(
         f"file:{git_repo / 'src.py'}:3", repo_root=git_repo,

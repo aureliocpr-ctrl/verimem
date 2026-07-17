@@ -12,15 +12,15 @@ Invarianti che questi test bloccano (TDD-enforced):
      accettato). È la rete portante anti-inquinamento.
   4. recall esclude righe con embedding_model estraneo (stessa-dim) — come v9.
 
-Hermetic: DB temporaneo, zero scrittura su ~/.engram.
+Hermetic: DB temporaneo, zero scrittura su ~/.verimem.
 """
 from __future__ import annotations
 
 import sqlite3
 
-from engram import embedding as emb
-from engram.semantic import Fact, SemanticMemory
-from engram.transcript_index import TranscriptIndex, Turn, default_db_path
+from verimem import embedding as emb
+from verimem.semantic import Fact, SemanticMemory
+from verimem.transcript_index import TranscriptIndex, Turn, default_db_path
 
 
 def test_store_and_recall_roundtrip(tmp_path):
@@ -45,7 +45,7 @@ def test_store_stamps_confidence_zero_source_type_and_model(tmp_path):
 
 
 def test_default_db_is_separate_from_semantic():
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     p = default_db_path()
     assert p != CONFIG.semantic_db, "Tier C NON deve coincidere col corpus accettato"
     assert "conversational" in str(p).lower(), "store dedicato 'conversational'"

@@ -15,7 +15,7 @@ from __future__ import annotations
 import networkx as nx
 import pytest
 
-from engram.entity_kg import Entity, EntityStore
+from verimem.entity_kg import Entity, EntityStore
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def _spy_pagerank(monkeypatch, captured: dict) -> None:
         captured["n_nodes"] = graph.number_of_nodes()
         return real(graph, **kw)
 
-    monkeypatch.setattr("engram.entity_kg.nx.pagerank", spy)
+    monkeypatch.setattr("verimem.entity_kg.nx.pagerank", spy)
 
 
 def test_ppr_personalization_is_sparse_and_tol_1e6(store, monkeypatch) -> None:

@@ -9,7 +9,7 @@ contamination, the realistic failure: an extractor/LLM attributing someone else'
 to this user). Two arms:
 
   OFF (no gate): store clean + noise (what mem0/Zep do — store whatever is emitted).
-  ON  (gate):   admit a candidate only if engram.grounding_gate.fact_grounding_score
+  ON  (gate):   admit a candidate only if verimem.grounding_gate.fact_grounding_score
                 (its paired dialogue ⊢ the fact) >= threshold. Clean → admitted;
                 foreign noise → rejected (the dialogue doesn't ground it).
 
@@ -159,8 +159,8 @@ def main(argv=None) -> int:
     from benchmark.halumem_qa_bench import _classify
     from benchmark.qa_eval import answer_question
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import fact_grounding_score
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.grounding_gate import fact_grounding_score
+    from verimem.semantic import Fact, SemanticMemory
 
     rng = random.Random(a.seed)
     users = []

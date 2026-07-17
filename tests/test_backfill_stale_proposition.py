@@ -9,8 +9,8 @@ for the next pass, and only count rows that actually updated.
 """
 from __future__ import annotations
 
-from engram import embedding
-from engram.semantic import Fact, SemanticMemory
+from verimem import embedding
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_backfill_skips_row_whose_proposition_changed_under_it(tmp_path, monkeypatch):

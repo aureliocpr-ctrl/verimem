@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _seed(sm: SemanticMemory) -> None:

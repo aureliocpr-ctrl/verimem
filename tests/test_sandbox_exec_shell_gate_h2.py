@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-import engram.mcp_server as mcp_server
+import verimem.mcp_server as mcp_server
 
 pytestmark = pytest.mark.asyncio
 

@@ -11,9 +11,9 @@ from pathlib import Path
 
 
 def test_wake_metrics_shape(tmp_path: Path):
-    from engram.memory import EpisodicMemory
-    from engram.skill import SkillLibrary
-    from engram.wake import WakeAgent
+    from verimem.memory import EpisodicMemory
+    from verimem.skill import SkillLibrary
+    from verimem.wake import WakeAgent
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
@@ -31,9 +31,9 @@ def test_wake_metrics_shape(tmp_path: Path):
 
 
 def test_wake_metrics_zeros_on_empty(tmp_path: Path):
-    from engram.memory import EpisodicMemory
-    from engram.skill import SkillLibrary
-    from engram.wake import WakeAgent
+    from verimem.memory import EpisodicMemory
+    from verimem.skill import SkillLibrary
+    from verimem.wake import WakeAgent
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
@@ -53,10 +53,10 @@ def test_wake_metrics_reflects_stores(tmp_path: Path):
     """FORGIA #94: after store(), metrics() reflects new counts."""
     import time
 
-    from engram.episode import Episode, Trace
-    from engram.memory import EpisodicMemory
-    from engram.skill import SkillLibrary
-    from engram.wake import WakeAgent
+    from verimem.episode import Episode, Trace
+    from verimem.memory import EpisodicMemory
+    from verimem.skill import SkillLibrary
+    from verimem.wake import WakeAgent
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
@@ -88,10 +88,10 @@ def test_wake_metrics_lifetime_success_rate(tmp_path: Path):
     """FORGIA pezzo #130: lifetime_success_rate = n_success / n_total."""
     import time
 
-    from engram.episode import Episode, Trace
-    from engram.memory import EpisodicMemory
-    from engram.skill import SkillLibrary
-    from engram.wake import WakeAgent
+    from verimem.episode import Episode, Trace
+    from verimem.memory import EpisodicMemory
+    from verimem.skill import SkillLibrary
+    from verimem.wake import WakeAgent
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
@@ -124,10 +124,10 @@ def test_wake_metrics_includes_token_fields(tmp_path: Path):
     """FORGIA pezzo #151: tokens_total/mean/max present in metrics output."""
     import time
 
-    from engram.episode import Episode, Trace
-    from engram.memory import EpisodicMemory
-    from engram.skill import SkillLibrary
-    from engram.wake import WakeAgent
+    from verimem.episode import Episode, Trace
+    from verimem.memory import EpisodicMemory
+    from verimem.skill import SkillLibrary
+    from verimem.wake import WakeAgent
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     skills = SkillLibrary(
@@ -150,9 +150,9 @@ def test_wake_metrics_includes_token_fields(tmp_path: Path):
 def test_wake_metrics_n_skills_with_macro(tmp_path: Path):
     """FORGIA pezzo #103: n_skills_with_macro counts only skills
     that have a compiled macro attached."""
-    from engram.memory import EpisodicMemory
-    from engram.skill import Skill, SkillLibrary
-    from engram.wake import WakeAgent
+    from verimem.memory import EpisodicMemory
+    from verimem.skill import Skill, SkillLibrary
+    from verimem.wake import WakeAgent
 
     skills = SkillLibrary(
         dir_path=tmp_path / "sk", db_path=tmp_path / "sk" / "idx.db",

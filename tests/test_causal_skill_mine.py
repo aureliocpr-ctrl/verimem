@@ -20,13 +20,13 @@ def _signal(rule: str, tool_s: str | None = None, tool_f: str | None = None,
 
 
 def test_empty_returns_empty_candidates():
-    from engram.causal_skill_mine import causal_skill_mine
+    from verimem.causal_skill_mine import causal_skill_mine
     out = causal_skill_mine([])
     assert out["candidates"] == []
 
 
 def test_single_signal_below_threshold():
-    from engram.causal_skill_mine import causal_skill_mine
+    from verimem.causal_skill_mine import causal_skill_mine
     sigs = [_signal("Prefer `crtsh` over `nmap` in this context")]
     out = causal_skill_mine(sigs, min_evidence=2)
     # Only 1 instance, threshold is 2 → no candidate
@@ -34,7 +34,7 @@ def test_single_signal_below_threshold():
 
 
 def test_recurring_rule_becomes_candidate():
-    from engram.causal_skill_mine import causal_skill_mine
+    from verimem.causal_skill_mine import causal_skill_mine
     rule = "Prefer `crtsh` over `nmap` in this context"
     sigs = [_signal(rule) for _ in range(3)]
     out = causal_skill_mine(sigs, min_evidence=2)
@@ -45,7 +45,7 @@ def test_recurring_rule_becomes_candidate():
 
 
 def test_multiple_rules_each_above_threshold():
-    from engram.causal_skill_mine import causal_skill_mine
+    from verimem.causal_skill_mine import causal_skill_mine
     sigs = [
         _signal("Rule A"), _signal("Rule A"),
         _signal("Rule B"), _signal("Rule B"), _signal("Rule B"),
@@ -58,7 +58,7 @@ def test_multiple_rules_each_above_threshold():
 
 
 def test_candidate_carries_avg_confidence():
-    from engram.causal_skill_mine import causal_skill_mine
+    from verimem.causal_skill_mine import causal_skill_mine
     sigs = [
         _signal("Rule X", conf=0.9),
         _signal("Rule X", conf=0.7),
@@ -69,7 +69,7 @@ def test_candidate_carries_avg_confidence():
 
 
 def test_signals_with_empty_rule_ignored():
-    from engram.causal_skill_mine import causal_skill_mine
+    from verimem.causal_skill_mine import causal_skill_mine
     sigs = [_signal(""), _signal(""), _signal("real rule"), _signal("real rule")]
     out = causal_skill_mine(sigs, min_evidence=2)
     # Empty rules don't become candidates
@@ -79,7 +79,7 @@ def test_signals_with_empty_rule_ignored():
 
 
 def test_payload_shape():
-    from engram.causal_skill_mine import causal_skill_mine
+    from verimem.causal_skill_mine import causal_skill_mine
     out = causal_skill_mine([])
     for k in ("candidates", "n_total_signals", "n_candidates"):
         assert k in out

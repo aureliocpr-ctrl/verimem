@@ -85,7 +85,7 @@ def main(argv=None) -> int:
             Path(a.out).write_text(json.dumps(res, indent=2), encoding="utf-8")
         return 0
 
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     users = []
     with open(a.jsonl, encoding="utf-8") as f:
@@ -98,7 +98,7 @@ def main(argv=None) -> int:
     if a.dump_hits:
         Path(a.dump_hits).parent.mkdir(parents=True, exist_ok=True)
         dump_f = open(a.dump_hits, "w", encoding="utf-8")  # noqa: SIM115
-        from engram.config import CONFIG
+        from verimem.config import CONFIG
         dump_f.write(json.dumps({"embedding_model": CONFIG.embedding_model,
                                  "k": a.k, "users": a.users}) + "\n")
     matcher = None if a.dump_hits else make_e5_matcher(a.match_thr)
@@ -137,7 +137,7 @@ def main(argv=None) -> int:
 
     if dump_f is not None:
         dump_f.close()
-    from engram.config import CONFIG as _CFG
+    from verimem.config import CONFIG as _CFG
     res = {
         "users": len(users), "k": a.k, "match_thr": a.match_thr,
         "n_updates": n_upd,

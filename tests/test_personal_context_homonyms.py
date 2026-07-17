@@ -9,7 +9,7 @@ personal signals were pruned; the strong personal markers stay.
 """
 from __future__ import annotations
 
-from engram.anti_confab_gate import _has_personal_context
+from verimem.anti_confab_gate import _has_personal_context
 
 
 def test_software_homonyms_are_not_personal() -> None:

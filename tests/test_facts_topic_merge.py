@@ -20,14 +20,14 @@ class _FakeFact:
 
 
 def test_empty_facts_returns_none():
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     out = merge_facts_by_topic([], topic="anything")
     assert out is None
 
 
 def test_topic_not_present_returns_none():
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     facts = [_FakeFact("f1", "x", topic="other")]
     out = merge_facts_by_topic(facts, topic="nonexistent")
@@ -35,7 +35,7 @@ def test_topic_not_present_returns_none():
 
 
 def test_single_fact_returns_unchanged_clone():
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     facts = [_FakeFact("f1", "only fact", topic="x")]
     out = merge_facts_by_topic(facts, topic="x")
@@ -45,7 +45,7 @@ def test_single_fact_returns_unchanged_clone():
 
 
 def test_multi_fact_merge():
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     facts = [
         _FakeFact("f1", "fact one", topic="x", confidence=0.9),
@@ -61,7 +61,7 @@ def test_multi_fact_merge():
 
 
 def test_source_episodes_union():
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     facts = [
         _FakeFact("f1", "a", topic="x", source_episodes=["e1", "e2"]),
@@ -72,7 +72,7 @@ def test_source_episodes_union():
 
 
 def test_confidence_strategy_average():
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     facts = [
         _FakeFact("f1", "a", topic="x", confidence=0.8),
@@ -83,7 +83,7 @@ def test_confidence_strategy_average():
 
 
 def test_custom_separator():
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     facts = [
         _FakeFact("f1", "alpha", topic="x"),
@@ -94,7 +94,7 @@ def test_custom_separator():
 
 
 def test_payload_shape_complete():
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     facts = [_FakeFact("f1", "a", topic="x")]
     out = merge_facts_by_topic(facts, topic="x")

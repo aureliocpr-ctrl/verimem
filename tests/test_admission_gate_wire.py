@@ -3,13 +3,13 @@
 Default OFF -> byte-identical legacy behavior (telemetry stays a normal fact).
 ON (ENGRAM_ADMISSION_GATE=1) -> telemetry-topic writes routed to a separate
 `telemetry` table, NON-lossy; real facts unaffected + still recallable.
-Hermetic: tmp DB, monkeypatched env, never ~/.engram.
+Hermetic: tmp DB, monkeypatched env, never ~/.verimem.
 """
 from __future__ import annotations
 
 import sqlite3
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _count(db, sql):
@@ -57,12 +57,12 @@ def _patch_data_dir(monkeypatch, tmp_path):
     attribute (gate_enabled does `from .config import CONFIG` at call time)."""
     import dataclasses
 
-    import engram.config as cfg
+    import verimem.config as cfg
     monkeypatch.setattr(cfg, "CONFIG", dataclasses.replace(cfg.CONFIG, data_dir=str(tmp_path)))
 
 
 def test_gate_enabled_env_or_flag_file(tmp_path, monkeypatch):
-    from engram.admission_gate import gate_enabled
+    from verimem.admission_gate import gate_enabled
     monkeypatch.delenv("ENGRAM_ADMISSION_GATE", raising=False)
     _patch_data_dir(monkeypatch, tmp_path)
     assert gate_enabled() is False

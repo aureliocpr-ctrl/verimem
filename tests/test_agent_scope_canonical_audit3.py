@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.agent_scope import agent_id_from_topic, count_by_agent
+from verimem.agent_scope import agent_id_from_topic, count_by_agent
 
 
 @pytest.mark.parametrize(

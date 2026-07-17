@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram import embedding as emb
-from engram.skill import Skill, SkillLibrary
+from verimem import embedding as emb
+from verimem.skill import Skill, SkillLibrary
 
 _FOREIGN = "sentence-transformers/all-MiniLM-FOREIGN-v2"
 

@@ -29,8 +29,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from engram.semantic import Fact
-from engram.trust_signal import TrustSignal
+from verimem.semantic import Fact
+from verimem.trust_signal import TrustSignal
 
 
 class TestRememberWiresCoherenceHook:
@@ -43,7 +43,7 @@ class TestRememberWiresCoherenceHook:
         """The handler must pass a coherence_hook (callable) to
         SemanticMemory.store. We capture the call args via a mock."""
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         # Fake semantic memory with the relevant interface.
         fake_sm = MagicMock()
@@ -84,7 +84,7 @@ class TestRecallTrustSignalsExposure:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         # The handler calls a.semantic.recall(...). For
         # trust_signals=False it should get 2-tuples and the payload
@@ -115,7 +115,7 @@ class TestRecallTrustSignalsExposure:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         fact = Fact(
             id="f-1", proposition="X uses 5MB", topic="t",
@@ -174,7 +174,7 @@ class TestFactsRecallSchemaExposesTrustSignals:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         tools = await mcp_server.list_tools()
         recall_tool = next(

@@ -21,8 +21,8 @@ import time
 
 import pytest
 
-from engram import semantic as _sem
-from engram.semantic import Fact, SemanticMemory, _fact_is_stale
+from verimem import semantic as _sem
+from verimem.semantic import Fact, SemanticMemory, _fact_is_stale
 
 _DAY = 86400.0
 

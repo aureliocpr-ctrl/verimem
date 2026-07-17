@@ -40,7 +40,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -113,19 +113,19 @@ class TestSupersedeBasic:
 
 class TestSupersedeValidation:
     def test_self_supersede_rejected(self, mem, fact_pair):
-        from engram.semantic import SupersedeError
+        from verimem.semantic import SupersedeError
         old, _new = fact_pair
         with pytest.raises(SupersedeError, match="self"):
             mem.supersede(old.id, old.id, reason="oops")
 
     def test_unknown_old_id_rejected(self, mem, fact_pair):
-        from engram.semantic import SupersedeError
+        from verimem.semantic import SupersedeError
         _old, new = fact_pair
         with pytest.raises(SupersedeError, match="old_id"):
             mem.supersede("nonexistent_xxx", new.id, reason="X")
 
     def test_unknown_new_id_rejected(self, mem, fact_pair):
-        from engram.semantic import SupersedeError
+        from verimem.semantic import SupersedeError
         old, _new = fact_pair
         with pytest.raises(SupersedeError, match="new_id"):
             mem.supersede(old.id, "nonexistent_yyy", reason="X")
@@ -155,7 +155,7 @@ class TestSupersedeIdempotency:
         assert "refined" in old_after.superseded_reason
 
     def test_conflict_different_new_id_raises(self, mem, fact_pair):
-        from engram.semantic import SupersedeConflict
+        from verimem.semantic import SupersedeConflict
         old, new = fact_pair
         third = Fact(id="third_ccc", proposition="alt", topic="x", confidence=0.9)
         mem.store(third)

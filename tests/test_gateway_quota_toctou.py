@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import threading
 
-from engram.gateway import _quota_release, _quota_reserve
-from engram.gateway_plans import get_plan
+from verimem.gateway import _quota_release, _quota_reserve
+from verimem.gateway_plans import get_plan
 
 FREE = get_plan("free")            # max_facts = 1000
 ENTERPRISE = get_plan("enterprise")  # max_facts = None (uncapped)

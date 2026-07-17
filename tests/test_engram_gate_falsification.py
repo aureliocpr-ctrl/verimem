@@ -12,7 +12,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from engram.anti_confab_gate import run_validation_gate
+from verimem.anti_confab_gate import run_validation_gate
 
 CONFAB = "SHIPPED la feature X, tutti i test passano, completato e verificato"
 

@@ -16,7 +16,7 @@ This pins the flip:
 """
 from __future__ import annotations
 
-from engram.client import _GATE_PRESETS, Memory
+from verimem.client import _GATE_PRESETS, Memory
 
 
 class _StubJudge:

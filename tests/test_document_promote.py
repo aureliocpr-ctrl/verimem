@@ -9,9 +9,9 @@ from __future__ import annotations
 import math
 import re
 
-from engram.document_index import DocumentIndex
-from engram.document_promote import promote_chunk_to_fact
-from engram.semantic import SemanticMemory
+from verimem.document_index import DocumentIndex
+from verimem.document_promote import promote_chunk_to_fact
+from verimem.semantic import SemanticMemory
 
 
 class _FakeEmbedder:

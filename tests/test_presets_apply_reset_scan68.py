@@ -7,8 +7,8 @@ Un preset definisce il modello per TUTTI gli stage -> reset delle override.
 Test HERMETIC (funzione pura su UserSettings, no HTTP, no file, no DB)."""
 from __future__ import annotations
 
-from engram import settings as user_settings
-from engram.dashboard_routes.settings import _apply_preset_to_settings
+from verimem import settings as user_settings
+from verimem.dashboard_routes.settings import _apply_preset_to_settings
 
 
 def test_apply_preset_resets_per_stage_models():
@@ -46,7 +46,7 @@ def test_apply_to_env_clears_stale_per_stage_model(monkeypatch):
     # un HIPPO_MODEL_CRITIC=claude-* precedente deve essere RIMOSSO da os.environ.
     import os
 
-    from engram import settings as us
+    from verimem import settings as us
     monkeypatch.setenv("HIPPO_MODEL_CRITIC", "claude-3-opus")  # stale da preset prima
     monkeypatch.setenv("HIPPO_MODEL_EXECUTOR", "claude-3-opus")
     us.apply_to_env(us.UserSettings(provider="ollama", model="llama3"))  # per-stage ""
@@ -59,8 +59,8 @@ def test_preset_to_env_chain_no_claude_under_ollama(monkeypatch):
     # -> reset per-stage -> apply_to_env -> nessun modello claude resta nelle env per-stage.
     import os
 
-    from engram import settings as us
-    from engram.dashboard_routes.settings import _apply_preset_to_settings
+    from verimem import settings as us
+    from verimem.dashboard_routes.settings import _apply_preset_to_settings
     monkeypatch.setenv("HIPPO_MODEL_CRITIC", "claude-3-opus")
     cur = us.UserSettings(provider="claude", model="claude-3-opus",
                           model_critic="claude-3-opus", model_executor="claude-3-haiku")
@@ -77,7 +77,7 @@ def test_apply_to_env_full_projection_clears_global_and_ollama(monkeypatch):
     # non solo i per-stage (prima erano set-only -> restavano valori vecchi).
     import os
 
-    from engram import settings as us
+    from verimem import settings as us
     monkeypatch.setenv("HIPPO_MODEL", "claude-opus-4")
     monkeypatch.setenv("OLLAMA_MODEL", "llama3")
     monkeypatch.setenv("OLLAMA_HOST", "http://stale:11434")

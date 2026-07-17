@@ -14,11 +14,11 @@ The clone:
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_clone_has_new_id():
-    from engram.skill_clone import clone_skill
+    from verimem.skill_clone import clone_skill
 
     original = Skill(id="orig", name="orig_name")
     cloned = clone_skill(original)
@@ -26,7 +26,7 @@ def test_clone_has_new_id():
 
 
 def test_clone_preserves_name_by_default():
-    from engram.skill_clone import clone_skill
+    from verimem.skill_clone import clone_skill
 
     original = Skill(id="orig", name="my_skill")
     cloned = clone_skill(original)
@@ -34,7 +34,7 @@ def test_clone_preserves_name_by_default():
 
 
 def test_clone_with_new_name():
-    from engram.skill_clone import clone_skill
+    from verimem.skill_clone import clone_skill
 
     original = Skill(id="orig", name="old")
     cloned = clone_skill(original, new_name="new_v2")
@@ -42,7 +42,7 @@ def test_clone_with_new_name():
 
 
 def test_clone_parent_includes_original():
-    from engram.skill_clone import clone_skill
+    from verimem.skill_clone import clone_skill
 
     original = Skill(id="orig", name="x", parent_skills=["grandparent"])
     cloned = clone_skill(original)
@@ -52,7 +52,7 @@ def test_clone_parent_includes_original():
 
 
 def test_clone_status_reset_to_candidate():
-    from engram.skill_clone import clone_skill
+    from verimem.skill_clone import clone_skill
 
     original = Skill(id="orig", name="x", status="promoted")
     cloned = clone_skill(original)
@@ -60,7 +60,7 @@ def test_clone_status_reset_to_candidate():
 
 
 def test_clone_trials_reset():
-    from engram.skill_clone import clone_skill
+    from verimem.skill_clone import clone_skill
 
     original = Skill(id="orig", name="x", trials=50, successes=40)
     cloned = clone_skill(original)
@@ -69,7 +69,7 @@ def test_clone_trials_reset():
 
 
 def test_clone_preserves_content_fields():
-    from engram.skill_clone import clone_skill
+    from verimem.skill_clone import clone_skill
 
     original = Skill(
         id="orig", name="x", body="body text",
@@ -87,7 +87,7 @@ def test_clone_compiled_macro_not_copied():
     """compiled_macro is empirical (derived from successful traces).
     The clone has no successful runs yet, so it shouldn't inherit
     the parent's macro."""
-    from engram.skill_clone import clone_skill
+    from verimem.skill_clone import clone_skill
 
     original = Skill(
         id="orig", name="x",

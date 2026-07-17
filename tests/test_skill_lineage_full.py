@@ -9,18 +9,18 @@ or "promoting this propagates DOWN to N children".
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_unknown_returns_not_found():
-    from engram.skill_lineage_full import skill_lineage_full
+    from verimem.skill_lineage_full import skill_lineage_full
 
     out = skill_lineage_full(skill_id="ZZZ", all_skills=[])
     assert out["found"] is False
 
 
 def test_no_relatives():
-    from engram.skill_lineage_full import skill_lineage_full
+    from verimem.skill_lineage_full import skill_lineage_full
 
     skills = [Skill(id="alone", name="alone")]
     out = skill_lineage_full(skill_id="alone", all_skills=skills)
@@ -30,7 +30,7 @@ def test_no_relatives():
 
 
 def test_ancestors_chain():
-    from engram.skill_lineage_full import skill_lineage_full
+    from verimem.skill_lineage_full import skill_lineage_full
 
     skills = [
         Skill(id="grand", name="g"),
@@ -44,7 +44,7 @@ def test_ancestors_chain():
 
 
 def test_descendants_chain():
-    from engram.skill_lineage_full import skill_lineage_full
+    from verimem.skill_lineage_full import skill_lineage_full
 
     skills = [
         Skill(id="root", name="root"),
@@ -58,7 +58,7 @@ def test_descendants_chain():
 
 
 def test_cycle_safe():
-    from engram.skill_lineage_full import skill_lineage_full
+    from verimem.skill_lineage_full import skill_lineage_full
 
     # Pathological self-reference.
     skills = [
@@ -71,7 +71,7 @@ def test_cycle_safe():
 
 
 def test_depth_per_relative():
-    from engram.skill_lineage_full import skill_lineage_full
+    from verimem.skill_lineage_full import skill_lineage_full
 
     skills = [
         Skill(id="grand", name="g"),
@@ -85,7 +85,7 @@ def test_depth_per_relative():
 
 
 def test_max_depth_caps_traversal():
-    from engram.skill_lineage_full import skill_lineage_full
+    from verimem.skill_lineage_full import skill_lineage_full
 
     skills = [Skill(id=f"s{i}", name=f"s{i}") for i in range(10)]
     # Chain s0 <- s1 <- s2 <- ... <- s9 (each parent of next).
@@ -102,7 +102,7 @@ def test_max_depth_caps_traversal():
 
 
 def test_payload_shape_complete():
-    from engram.skill_lineage_full import skill_lineage_full
+    from verimem.skill_lineage_full import skill_lineage_full
 
     out = skill_lineage_full(skill_id="x", all_skills=[])
     for k in ("skill_id", "found", "ancestors", "descendants"):

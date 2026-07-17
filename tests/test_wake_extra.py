@@ -1,4 +1,4 @@
-"""Coverage push for engram.wake — branch coverage for unparseable LLM
+"""Coverage push for verimem.wake — branch coverage for unparseable LLM
 output, ReAct dispatcher edge cases, _try_compiled_macro corner cases, and
 _skill_similarity fallback.
 """
@@ -9,14 +9,14 @@ import json
 import numpy as np
 import pytest
 
-from engram.compilation import CompiledMacro, MacroStep
-from engram.episode import Episode, Trace
-from engram.llm import MockLLM
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.tools import ToolResult, ToolSpec, default_tools
-from engram.wake import (
+from verimem.compilation import CompiledMacro, MacroStep
+from verimem.episode import Episode, Trace
+from verimem.llm import MockLLM
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.tools import ToolResult, ToolSpec, default_tools
+from verimem.wake import (
     WakeAgent,
     WakeConfig,
     _episode_is_contaminated,
@@ -54,7 +54,7 @@ def _build_wake(memory, skills, llm, tools=None, max_steps=4):
 @pytest.fixture
 def config_override():
     """Set/restore frozen-dataclass CONFIG fields via object.__setattr__."""
-    from engram.config import CONFIG as _CFG
+    from verimem.config import CONFIG as _CFG
     saved: dict = {}
 
     def setter(field: str, value) -> None:
@@ -278,7 +278,7 @@ def test_skill_similarity_swallows_errors(isolated_memory, isolated_skills, monk
     def boom(*args, **kw):
         raise RuntimeError("embedding broken")
 
-    monkeypatch.setattr("engram.embedding.encode", boom)
+    monkeypatch.setattr("verimem.embedding.encode", boom)
     sim = wake._skill_similarity("anything", skill)
     assert sim == 0.0
 
@@ -295,7 +295,7 @@ def test_adaptive_macro_threshold_disabled(isolated_memory, isolated_skills,
     llm = MockLLM()
     wake = _build_wake(isolated_memory, isolated_skills, llm)
     base = wake._adaptive_macro_threshold(0.95)
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     assert base == CONFIG.compile_apply_min_similarity
 
 
@@ -303,7 +303,7 @@ def test_adaptive_macro_threshold_clamps_at_floor(isolated_memory, isolated_skil
     """Even with very high confidence, threshold ≥ floor."""
     llm = MockLLM()
     wake = _build_wake(isolated_memory, isolated_skills, llm)
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     out = wake._adaptive_macro_threshold(1.0)
     assert out >= CONFIG.compile_apply_floor_similarity
 
@@ -375,7 +375,7 @@ def test_try_compiled_macro_deserialize_failure(isolated_memory, isolated_skills
     def boom(d):
         raise ValueError("invalid macro shape")
 
-    monkeypatch.setattr("engram.wake.CompiledMacro.from_dict", boom)
+    monkeypatch.setattr("verimem.wake.CompiledMacro.from_dict", boom)
     ep = Episode(task_id="t1", task_text="x")
     out = wake._try_compiled_macro(ep, "task", [skill],
                                     validator=lambda a: (True, ""))
@@ -565,7 +565,7 @@ def test_dispatch_handler_raises_unhandled(isolated_memory, isolated_skills):
 
 
 def test_dispatch_native_unknown_tool(isolated_memory, isolated_skills):
-    from engram.llm import ToolCall
+    from verimem.llm import ToolCall
     llm = MockLLM()
     wake = _build_wake(isolated_memory, isolated_skills, llm)
     tc = ToolCall(id="x", name="absolute_unknown_xx", input={})
@@ -576,7 +576,7 @@ def test_dispatch_native_unknown_tool(isolated_memory, isolated_skills):
 
 def test_dispatch_native_returns_string(isolated_memory, isolated_skills):
     """Handler that returns a non-ToolResult value gets wrapped."""
-    from engram.llm import ToolCall
+    from verimem.llm import ToolCall
 
     def handler():
         return "hello"

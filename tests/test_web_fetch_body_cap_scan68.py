@@ -22,7 +22,7 @@ class _FakeStreamResp:
 
 
 def test_read_body_capped_stops_at_limit():
-    from engram.tools_extra import _read_body_capped
+    from verimem.tools_extra import _read_body_capped
     # 10 chunk da 1000 byte = 10_000 disponibili, ma cap a 2500
     resp = _FakeStreamResp([b"x" * 1000] * 10)
     out = _read_body_capped(resp, max_bytes=2500)
@@ -31,7 +31,7 @@ def test_read_body_capped_stops_at_limit():
 
 
 def test_read_body_capped_under_limit_returns_all():
-    from engram.tools_extra import _read_body_capped
+    from verimem.tools_extra import _read_body_capped
     resp = _FakeStreamResp([b"abc", b"de"])
     out = _read_body_capped(resp, max_bytes=1_000_000)
     assert bytes(out) == b"abcde"
@@ -39,7 +39,7 @@ def test_read_body_capped_under_limit_returns_all():
 
 def test_read_body_capped_does_not_overread():
     """Non deve materializzare piu di ~max_bytes anche con chunk enormi."""
-    from engram.tools_extra import _read_body_capped
+    from verimem.tools_extra import _read_body_capped
     # un solo chunk da 10MB; cap 1MB -> non deve ritornare 10MB
     resp = _FakeStreamResp([b"y" * (10 * 1024 * 1024)])
     out = _read_body_capped(resp, max_bytes=1024 * 1024)

@@ -13,8 +13,8 @@ from typing import Any
 import numpy as np
 import pytest
 
-from engram import mcp_server
-from engram.skill import Skill
+from verimem import mcp_server
+from verimem.skill import Skill
 
 # ---------- Fakes --------------------------------------------------------
 
@@ -102,7 +102,7 @@ def fake_agent_and_emb(monkeypatch: pytest.MonkeyPatch):
         return np.array([0.5, 0.5, 0.5], dtype=np.float32)
 
     monkeypatch.setattr(
-        "engram.embedding.encode", fake_encode, raising=False,
+        "verimem.embedding.encode", fake_encode, raising=False,
     )
     return a
 

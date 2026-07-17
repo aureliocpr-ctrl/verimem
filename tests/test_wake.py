@@ -1,13 +1,13 @@
 """Test the wake loop with a mock LLM and a known-good submission."""
 from __future__ import annotations
 
-from engram.agent import HippoAgent
-from engram.llm import MockLLM
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import SkillLibrary
-from engram.sleep import SleepEngine
-from engram.wake import WakeAgent, parse_react_step
+from verimem.agent import HippoAgent
+from verimem.llm import MockLLM
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import SkillLibrary
+from verimem.sleep import SleepEngine
+from verimem.wake import WakeAgent, parse_react_step
 
 
 def test_parse_react_step():

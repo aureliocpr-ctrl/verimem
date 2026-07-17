@@ -21,10 +21,10 @@ import time
 from multiprocessing import Process, Queue
 from pathlib import Path
 
-# Ensure we can import engram from repo root
+# Ensure we can import verimem from repo root
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def writer_worker(worker_id: int, db_path: str, n_writes: int, q: Queue) -> None:

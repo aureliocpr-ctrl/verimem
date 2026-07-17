@@ -101,7 +101,7 @@ def main(argv=None) -> int:
 
     from benchmark.halumem_writepath_moat import _TRUE_SRC, _all_facts, _make_confab, _questions
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram import grounding_gate as G
+    from verimem import grounding_gate as G
 
     rng = random.Random(a.seed)
     users = []

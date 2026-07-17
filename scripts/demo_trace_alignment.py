@@ -15,8 +15,8 @@ trusting that 'it should work'.
 """
 from __future__ import annotations
 
-from engram.episode import Episode, Trace
-from engram.trace_alignment import (
+from verimem.episode import Episode, Trace
+from verimem.trace_alignment import (
     align_traces,
     find_divergence_point,
     format_divergence,

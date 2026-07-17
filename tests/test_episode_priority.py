@@ -31,8 +31,8 @@ import time
 import numpy as np
 import pytest
 
-from engram.episode import Episode
-from engram.selection import EpisodeChoice, consider_episodes
+from verimem.episode import Episode
+from verimem.selection import EpisodeChoice, consider_episodes
 
 
 def _unit(v: np.ndarray) -> np.ndarray:

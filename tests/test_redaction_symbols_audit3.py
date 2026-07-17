@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.redaction import redact_secrets
+from verimem.redaction import redact_secrets
 
 
 @pytest.mark.parametrize("text", [

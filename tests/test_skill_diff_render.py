@@ -9,11 +9,11 @@ HUMAN-READABLE markdown.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_returns_string():
-    from engram.skill_diff_render import render_skill_diff
+    from verimem.skill_diff_render import render_skill_diff
 
     a = Skill(id="a", name="x")
     b = Skill(id="b", name="y")
@@ -22,7 +22,7 @@ def test_returns_string():
 
 
 def test_includes_both_names():
-    from engram.skill_diff_render import render_skill_diff
+    from verimem.skill_diff_render import render_skill_diff
 
     a = Skill(id="a", name="alpha")
     b = Skill(id="b", name="beta")
@@ -32,7 +32,7 @@ def test_includes_both_names():
 
 
 def test_shows_status_difference():
-    from engram.skill_diff_render import render_skill_diff
+    from verimem.skill_diff_render import render_skill_diff
 
     a = Skill(id="a", name="x", status="candidate")
     b = Skill(id="b", name="x", status="promoted")
@@ -42,7 +42,7 @@ def test_shows_status_difference():
 
 
 def test_shows_trial_counts():
-    from engram.skill_diff_render import render_skill_diff
+    from verimem.skill_diff_render import render_skill_diff
 
     a = Skill(id="a", name="x", trials=5, successes=3)
     b = Skill(id="b", name="x", trials=20, successes=15)
@@ -52,7 +52,7 @@ def test_shows_trial_counts():
 
 
 def test_shows_predicate_differences():
-    from engram.skill_diff_render import render_skill_diff
+    from verimem.skill_diff_render import render_skill_diff
 
     a = Skill(id="a", name="x", preconditions=["p1"])
     b = Skill(id="b", name="x", preconditions=["p1", "p2"])
@@ -62,7 +62,7 @@ def test_shows_predicate_differences():
 
 
 def test_identical_skills_marked():
-    from engram.skill_diff_render import render_skill_diff
+    from verimem.skill_diff_render import render_skill_diff
 
     a = Skill(id="a", name="x", trials=5, successes=3)
     b = Skill(id="b", name="x", trials=5, successes=3)

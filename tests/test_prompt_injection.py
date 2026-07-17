@@ -1,5 +1,5 @@
 """TDD for the prompt-injection / memory-poisoning detector
-(engram.prompt_injection).
+(verimem.prompt_injection).
 
 Threat model: a memory store is a prompt-injection vector. Malicious or
 accidental content saved as a "fact" is later recalled verbatim into the
@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.prompt_injection import InjectionVerdict, detect_injection, is_injection
+from verimem.prompt_injection import InjectionVerdict, detect_injection, is_injection
 
 # ---------------------------------------------------------------- POSITIVE
 # Each must be flagged (is_injection True, severity 'high') with the named signal.

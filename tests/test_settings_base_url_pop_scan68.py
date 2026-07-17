@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 
-from engram.settings import UserSettings, apply_to_env
+from verimem.settings import UserSettings, apply_to_env
 
 
 def test_base_url_set_when_present(monkeypatch):

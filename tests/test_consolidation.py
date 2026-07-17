@@ -21,10 +21,10 @@ Cycle 144 = orchestrator AUTO che:
     4. Idempotency: re-run non duplica master su cluster già consolidato
 
 Pipeline esistente sfruttata:
-    • engram.episode.Episode dataclass
-    • engram.semantic.Fact dataclass
-    • engram.memory.EpisodicMemory.store + causal_edges schema
-    • engram.semantic.SemanticMemory.store
+    • verimem.episode.Episode dataclass
+    • verimem.semantic.Fact dataclass
+    • verimem.memory.EpisodicMemory.store + causal_edges schema
+    • verimem.semantic.SemanticMemory.store
 
 API contract (cycle 144 MVP):
     detect_cluster_candidates(sm, *, min_size=5, prefix_depth=2)
@@ -39,7 +39,7 @@ API contract (cycle 144 MVP):
            edges_created, duration_ms}
 
 TDD strict RED→GREEN: this file must fail import on
-engram.consolidation (does not yet exist).
+verimem.consolidation (does not yet exist).
 """
 from __future__ import annotations
 
@@ -48,13 +48,13 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.consolidation import (
+from verimem.consolidation import (
     auto_consolidate,
     detect_cluster_candidates,
     propose_master_node,
 )
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _seed_facts(

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.entity_kg import Entity, EntityStore
+from verimem.entity_kg import Entity, EntityStore
 
 
 @pytest.fixture()

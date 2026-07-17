@@ -17,11 +17,11 @@ not a temporal one.
 """
 from __future__ import annotations
 
-from engram.client import Memory
+from verimem.client import Memory
 
 
 def _fresh(monkeypatch):
-    from engram import source_trust
+    from verimem import source_trust
     source_trust.reset_book_cache()
 
 

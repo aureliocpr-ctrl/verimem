@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 # ---------- Fakes (extended for key_facts + related_episode_ids) ---------
 

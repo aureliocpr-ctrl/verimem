@@ -36,10 +36,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from engram.config import CONFIG
-from engram.context_engine import ContextEngine
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.config import CONFIG
+from verimem.context_engine import ContextEngine
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(*, ep_id: str, text: str) -> Episode:
@@ -69,7 +69,7 @@ def config_override():
 
 def _build_wake(memory):
     """A minimally-wired WakeAgent that we can call retrieve+observe on."""
-    from engram.wake import WakeAgent, WakeConfig
+    from verimem.wake import WakeAgent, WakeConfig
 
     wake = object.__new__(WakeAgent)
     wake.memory = memory  # type: ignore[misc]
@@ -87,10 +87,10 @@ def _build_wake(memory):
 
 def test_wake_has_context_engine_at_init(tmp_path: Path):
     """Real WakeAgent (not the bypass) has a ContextEngine attached."""
-    from engram.llm import MockLLM
-    from engram.skill import SkillLibrary
-    from engram.tools import default_tools
-    from engram.wake import WakeAgent, WakeConfig
+    from verimem.llm import MockLLM
+    from verimem.skill import SkillLibrary
+    from verimem.tools import default_tools
+    from verimem.wake import WakeAgent, WakeConfig
 
     cfg = WakeConfig(max_steps=2, self_critique=False)
     wake = WakeAgent(
@@ -114,7 +114,7 @@ def test_wake_has_context_engine_at_init(tmp_path: Path):
 def test_context_engine_drifts_under_observation(tmp_path: Path):
     """Observing two distinct tasks produces a non-zero state different
     from observing only one of them."""
-    from engram import embedding as emb_mod
+    from verimem import embedding as emb_mod
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     wake = _build_wake(mem)
@@ -139,7 +139,7 @@ def test_retrieve_uses_cross_session_context(tmp_path: Path, config_override):
     """Two episodes stored with distinct contexts; the wake agent
     drifts to context A; retrieve should prefer the A-context episode
     even when the query text is generic."""
-    from engram import embedding as emb_mod
+    from verimem import embedding as emb_mod
 
     config_override("tcm_cross_session_enabled", True)
     config_override("tcm_recall_context_weight", 0.50)

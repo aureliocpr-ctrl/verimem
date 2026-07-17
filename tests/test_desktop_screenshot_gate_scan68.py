@@ -28,7 +28,7 @@ class _FakePyAutoGui:
 def test_desktop_screenshot_gated_by_computer_use(tmp_path, monkeypatch):
     monkeypatch.delenv("HIPPO_ENABLE_COMPUTER_USE", raising=False)
     monkeypatch.setitem(sys.modules, "pyautogui", _FakePyAutoGui())
-    from engram.tools_extra import desktop_screenshot
+    from verimem.tools_extra import desktop_screenshot
     res = desktop_screenshot(save_path=str(tmp_path / "s.png"))
     assert res.ok is False, f"screenshot NON gateato (schermo catturato senza opt-in): {res.output!r}"
     assert "computer use" in (res.error or "").lower() or "computer_use" in (res.error or "").lower(), \
@@ -38,6 +38,6 @@ def test_desktop_screenshot_gated_by_computer_use(tmp_path, monkeypatch):
 def test_desktop_screenshot_works_when_enabled(tmp_path, monkeypatch):
     monkeypatch.setenv("HIPPO_ENABLE_COMPUTER_USE", "1")
     monkeypatch.setitem(sys.modules, "pyautogui", _FakePyAutoGui())
-    from engram.tools_extra import desktop_screenshot
+    from verimem.tools_extra import desktop_screenshot
     res = desktop_screenshot(save_path=str(tmp_path / "s.png"))
     assert res.ok is True, f"con gate abilitato deve funzionare: {res.error!r}"

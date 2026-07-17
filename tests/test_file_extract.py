@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.file_extract import extract_text
+from verimem.file_extract import extract_text
 
 
 def test_txt_and_md(tmp_path) -> None:
@@ -42,7 +42,7 @@ def test_docx_zip_bomb_is_refused(tmp_path, monkeypatch) -> None:
     nella central directory rifiuta il file PRIMA che la libreria lo decomprima."""
     docx = pytest.importorskip("docx")
 
-    import engram.file_extract as fe
+    import verimem.file_extract as fe
     monkeypatch.setattr(fe, "_MAX_MEMBER_BYTES", 1_000_000)
     monkeypatch.setattr(fe, "_MAX_TOTAL_BYTES", 4_000_000)
     d = docx.Document()
@@ -80,7 +80,7 @@ def test_missing_file_raises(tmp_path) -> None:
 
 def test_extract_feeds_chunker_with_provenance(tmp_path) -> None:
     # The #1 pipeline end: a real file -> text -> provenance-anchored chunks.
-    from engram.chunking import chunk_text
+    from verimem.chunking import chunk_text
 
     f = tmp_path / "big.txt"
     f.write_text("word " * 500, encoding="utf-8")

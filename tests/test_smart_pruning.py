@@ -23,7 +23,7 @@ class _Skill:
 
 
 def test_empty_returns_no_pruning():
-    from engram.smart_pruning import smart_prune
+    from verimem.smart_pruning import smart_prune
 
     out = smart_prune([], budget=10)
     assert out["keep"] == []
@@ -31,7 +31,7 @@ def test_empty_returns_no_pruning():
 
 
 def test_under_budget_no_prune():
-    from engram.smart_pruning import smart_prune
+    from verimem.smart_pruning import smart_prune
 
     now = time.time()
     skills = [
@@ -45,7 +45,7 @@ def test_under_budget_no_prune():
 
 
 def test_over_budget_lowest_score_pruned():
-    from engram.smart_pruning import smart_prune
+    from verimem.smart_pruning import smart_prune
 
     now = time.time()
     skills = [
@@ -68,7 +68,7 @@ def test_over_budget_lowest_score_pruned():
 
 
 def test_promoted_skills_prioritized():
-    from engram.smart_pruning import smart_prune
+    from verimem.smart_pruning import smart_prune
 
     now = time.time()
     skills = [
@@ -87,14 +87,14 @@ def test_promoted_skills_prioritized():
 
 
 def test_payload_keys():
-    from engram.smart_pruning import smart_prune
+    from verimem.smart_pruning import smart_prune
     out = smart_prune([], budget=10)
     for k in ("keep", "prune", "budget", "n_total"):
         assert k in out
 
 
 def test_entries_have_score():
-    from engram.smart_pruning import smart_prune
+    from verimem.smart_pruning import smart_prune
     now = time.time()
     skills = [_Skill("s1", trials=5, successes=4, avg_tokens=100,
                      last_used_at=now)]

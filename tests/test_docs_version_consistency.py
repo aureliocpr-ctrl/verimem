@@ -4,7 +4,7 @@ An external agent reported verimem as "stuck at 0.3.0" because docs hardcoded a
 now-stale current version. Root fix was to make SECURITY.md version-agnostic and
 bump the snapshots; this locks the class so it cannot silently recur:
 
-  * code and packaging must agree on ONE version (drift between engram.__version__
+  * code and packaging must agree on ONE version (drift between verimem.__version__
     and pyproject is itself a real release bug);
   * SECURITY.md must not pin a "currently X.Y" string that goes stale;
   * STATE.md's Release row, if present, must match the true version.
@@ -24,7 +24,7 @@ try:
 except ModuleNotFoundError:  # tomllib is 3.11+
     tomllib = None
 
-import engram
+import verimem
 
 _ROOT = Path(__file__).resolve().parents[1]
 
@@ -37,8 +37,8 @@ def _pyproject_version() -> str:
 @pytest.mark.skipif(tomllib is None, reason="tomllib requires Python 3.11+")
 def test_code_and_packaging_version_agree():
     """The single-source-of-truth check: a mismatch is a release bug."""
-    assert engram.__version__ == _pyproject_version(), (
-        f"engram.__version__={engram.__version__} but "
+    assert verimem.__version__ == _pyproject_version(), (
+        f"verimem.__version__={verimem.__version__} but "
         f"pyproject version={_pyproject_version()}")
 
 

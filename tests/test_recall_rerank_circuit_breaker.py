@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 _QUERY = "blue-green deployment on aws"
 
@@ -69,7 +69,7 @@ def test_slow_scorer_falls_back_within_budget(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
     base_ids = _ids(sm.recall(_QUERY, k=5))
 
-    monkeypatch.setattr("engram.semantic._load_reranker",
+    monkeypatch.setattr("verimem.semantic._load_reranker",
                         _slow_scorer_loader(5.0), raising=False)
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "1")
     monkeypatch.setenv("HIPPO_RECALL_RERANK_BUDGET_S", "0.3")
@@ -89,7 +89,7 @@ def test_slow_cold_load_falls_back_within_budget(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
     base_ids = _ids(sm.recall(_QUERY, k=5))
 
-    monkeypatch.setattr("engram.semantic._load_reranker",
+    monkeypatch.setattr("verimem.semantic._load_reranker",
                         _slow_load_loader(5.0), raising=False)
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "1")
     monkeypatch.setenv("HIPPO_RECALL_RERANK_BUDGET_S", "0.3")
@@ -110,7 +110,7 @@ def test_fast_reranker_still_applies(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
     base_ids = _ids(sm.recall(_QUERY, k=5))
 
-    monkeypatch.setattr("engram.semantic._load_reranker", _reversing_loader,
+    monkeypatch.setattr("verimem.semantic._load_reranker", _reversing_loader,
                         raising=False)
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "1")
     monkeypatch.setenv("HIPPO_RECALL_RERANK_BUDGET_S", "5")
@@ -127,12 +127,12 @@ def test_budget_env_configurable(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
     base_ids = _ids(sm.recall(_QUERY, k=5))
 
-    monkeypatch.setattr("engram.semantic._load_reranker",
+    monkeypatch.setattr("verimem.semantic._load_reranker",
                         _slow_scorer_loader(0.5), raising=False)
     # CE resident → the FULL budget applies (the 2026-06-14 cold-budget cap only
     # guards the first query during the ~33s cold load, exercised separately in
     # test_rerank_cold_start). This test is about the steady, warm-CE budget.
-    monkeypatch.setattr("engram.semantic._RERANKER", object(), raising=False)
+    monkeypatch.setattr("verimem.semantic._RERANKER", object(), raising=False)
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "1")
     monkeypatch.setenv("HIPPO_RECALL_RERANK_BUDGET_S", "3")
     res = sm.recall(_QUERY, k=5)

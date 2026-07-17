@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 _PROG = (
-    "from engram.observability import log; "
+    "from verimem.observability import log; "
     "log.info('info-line-marker'); log.warning('warning-line-marker')"
 )
 

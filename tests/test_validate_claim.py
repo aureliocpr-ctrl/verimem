@@ -33,13 +33,13 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 # ---------- Fakes --------------------------------------------------------
 
 
 class _FakeFact:
-    """Mirror della shape `engram.semantic.Fact` per i test."""
+    """Mirror della shape `verimem.semantic.Fact` per i test."""
 
     def __init__(
         self,
@@ -74,7 +74,7 @@ class _FakeSemantic:
     ) -> list[_FakeFact]:
         """Production-faithful: SQL LIKE su intera query (case-insensitive).
 
-        Replica esattamente ``engram.semantic.SemanticMemory.search_facts``
+        Replica esattamente ``verimem.semantic.SemanticMemory.search_facts``
         (engram/semantic.py:225-252):
             LOWER(proposition) LIKE '%<query.lower()>%'
 
@@ -342,7 +342,7 @@ async def test_topic_hint_narrows_search(
 # (no hype trigger words). Falsified empirically 0/5 before this fix.
 # Hermetic: direct sync call, fake semantic (SQL-LIKE) — no embedding.
 
-from engram.validate_claim import validate_claim as _vc  # noqa: E402
+from verimem.validate_claim import validate_claim as _vc  # noqa: E402
 
 
 def _numeric_corpus() -> list[_FakeFact]:

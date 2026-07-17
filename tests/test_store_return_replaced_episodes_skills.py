@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import pytest
 
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
+from verimem.skill import Skill, SkillLibrary
 
 # ---------------------------------------------------------------------------
 # Memory.store (Episodes)

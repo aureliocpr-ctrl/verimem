@@ -17,13 +17,13 @@ class _Ep:
 
 
 def test_empty_returns_no_combos():
-    from engram.skill_combo_mining import mine_skill_combos
+    from verimem.skill_combo_mining import mine_skill_combos
     out = mine_skill_combos([])
     assert out["combos"] == []
 
 
 def test_pair_co_occurs():
-    from engram.skill_combo_mining import mine_skill_combos
+    from verimem.skill_combo_mining import mine_skill_combos
     eps = [
         _Ep("e1", ["a", "b"]),
         _Ep("e2", ["a", "b"]),
@@ -35,21 +35,21 @@ def test_pair_co_occurs():
 
 
 def test_singleton_excluded():
-    from engram.skill_combo_mining import mine_skill_combos
+    from verimem.skill_combo_mining import mine_skill_combos
     eps = [_Ep(f"e{i}", ["only_one"]) for i in range(5)]
     out = mine_skill_combos(eps, min_cooccurrence=2)
     assert out["combos"] == []
 
 
 def test_min_cooccurrence_filter():
-    from engram.skill_combo_mining import mine_skill_combos
+    from verimem.skill_combo_mining import mine_skill_combos
     eps = [_Ep("e1", ["a", "b"])]  # only 1 occurrence
     out = mine_skill_combos(eps, min_cooccurrence=3)
     assert out["combos"] == []
 
 
 def test_success_rate_per_pair():
-    from engram.skill_combo_mining import mine_skill_combos
+    from verimem.skill_combo_mining import mine_skill_combos
     eps = [
         _Ep("s1", ["a", "b"], outcome="success"),
         _Ep("s2", ["a", "b"], outcome="success"),
@@ -63,14 +63,14 @@ def test_success_rate_per_pair():
 
 
 def test_payload_shape():
-    from engram.skill_combo_mining import mine_skill_combos
+    from verimem.skill_combo_mining import mine_skill_combos
     out = mine_skill_combos([])
     for k in ("combos", "n_episodes_scanned"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.skill_combo_mining import mine_skill_combos
+    from verimem.skill_combo_mining import mine_skill_combos
     eps = [_Ep(f"e{i}", ["a", "b"]) for i in range(3)]
     out = mine_skill_combos(eps, min_cooccurrence=2)
     if out["combos"]:

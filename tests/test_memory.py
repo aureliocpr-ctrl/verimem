@@ -1,8 +1,8 @@
 """Tests for episodic memory + recall + clustering."""
 from __future__ import annotations
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(task_id, text, outcome="success", final="x"):

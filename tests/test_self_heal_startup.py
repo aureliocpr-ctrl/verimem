@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import threading
 
-import engram.self_heal as sh
+import verimem.self_heal as sh
 
 
 class _FakeSemantic:
@@ -98,7 +98,7 @@ def test_startup_wires_self_heal_after_preload():
     the trigger would silently never fire on real server boot."""
     import inspect
 
-    import engram.mcp_server as srv
+    import verimem.mcp_server as srv
 
     src = inspect.getsource(srv.main)
     assert "start_self_heal" in src, "main() must wire the startup self-heal trigger"

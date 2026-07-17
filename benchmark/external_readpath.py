@@ -33,7 +33,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from engram.client import Memory
+from verimem.client import Memory
 
 DATA_DIR = Path(__file__).parent / "data" / "external"
 CACHE_SRC = DATA_DIR / ".cache" / "qa_data.json"

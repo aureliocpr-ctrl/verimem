@@ -23,9 +23,9 @@ from benchmark.qa_eval import (
     _JUDGE_SYSTEM_FAIR,
 )
 from benchmark.qa_runner import LeanClaudeCLILLM, _recall_context
-from engram.agent import wire_reconcile_judge
-from engram.conversation_ingest import ingest_conversation
-from engram.semantic import SemanticMemory
+from verimem.agent import wire_reconcile_judge
+from verimem.conversation_ingest import ingest_conversation
+from verimem.semantic import SemanticMemory
 
 _STRICT = ("Answer from the CONTEXT only. Answer ONLY if EXPLICITLY present; do "
            "not infer or guess. When in doubt reply exactly: NO ANSWER. One "

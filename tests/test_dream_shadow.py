@@ -21,9 +21,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.memory import Episode, EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ def live_dirs(tmp_path):
 
 def test_create_shadow_engine_returns_separate_paths(live_dirs, tmp_path):
     """Shadow engine deve usare DB diversi dai live."""
-    from engram.dream import create_shadow_engine
+    from verimem.dream import create_shadow_engine
     shadow_root = tmp_path / "shadow_x"
     engine, paths = create_shadow_engine(live_dirs, shadow_root=shadow_root)
     # Tutti i paths shadow sono dentro shadow_root, non in live
@@ -67,7 +67,7 @@ def test_create_shadow_engine_returns_separate_paths(live_dirs, tmp_path):
 
 def test_shadow_engine_snapshot_preserves_live_data(live_dirs, tmp_path):
     """Lo shadow DB deve contenere le stesse skill/episodi/facts del live al momento del snapshot."""
-    from engram.dream import create_shadow_engine
+    from verimem.dream import create_shadow_engine
     shadow_root = tmp_path / "shadow_y"
     engine, paths = create_shadow_engine(live_dirs, shadow_root=shadow_root)
     # Shadow skills contiene la live_skill
@@ -86,7 +86,7 @@ def test_shadow_engine_snapshot_preserves_live_data(live_dirs, tmp_path):
 
 def test_shadow_mutation_does_not_touch_live(live_dirs, tmp_path):
     """Crucial: scrivere nello shadow NON deve toccare i live DB."""
-    from engram.dream import create_shadow_engine
+    from verimem.dream import create_shadow_engine
     shadow_root = tmp_path / "shadow_z"
     engine, paths = create_shadow_engine(live_dirs, shadow_root=shadow_root)
     # Aggiungo una skill al shadow
@@ -102,7 +102,7 @@ def test_shadow_mutation_does_not_touch_live(live_dirs, tmp_path):
 
 def test_shadow_root_is_created(live_dirs, tmp_path):
     """Se shadow_root non esiste, deve essere creato."""
-    from engram.dream import create_shadow_engine
+    from verimem.dream import create_shadow_engine
     shadow_root = tmp_path / "shadow_new" / "nested"
     assert not shadow_root.exists()
     engine, paths = create_shadow_engine(live_dirs, shadow_root=shadow_root)
@@ -115,7 +115,7 @@ def test_shadow_root_is_created(live_dirs, tmp_path):
 def test_shadow_root_overlapping_live_raises(live_dirs):
     """CATASTROFICO: passare shadow_root = live_root distrugge live data
     via shutil.rmtree(dst) con src==dst. Deve raise PRIMA di toccare nulla."""
-    from engram.dream import create_shadow_engine
+    from verimem.dream import create_shadow_engine
     live_root = live_dirs["root"]
     # Verifica live esiste pre-call
     assert live_dirs["skills_db"].exists()
@@ -128,7 +128,7 @@ def test_shadow_root_overlapping_live_raises(live_dirs):
 
 def test_shadow_root_nested_in_live_skills_dir_raises(live_dirs, tmp_path):
     """Anche shadow nested DENTRO una live dir deve raise (esempio: dentro skills/)."""
-    from engram.dream import create_shadow_engine
+    from verimem.dream import create_shadow_engine
     nested = live_dirs["skills_db"].parent / "shadow_inside"
     with pytest.raises(ValueError, match="overlap|inside|live"):
         create_shadow_engine(live_dirs, shadow_root=nested)
@@ -138,7 +138,7 @@ def test_shadow_root_nested_in_live_skills_dir_raises(live_dirs, tmp_path):
 def test_shadow_does_not_mirror_wal_or_shm_files(live_dirs, tmp_path):
     """SQLite WAL files (.db-wal, .db-shm) NON devono finire in shadow_root.
     Il backup API ricrea il DB completo; mirrorare i WAL crea inconsistenze."""
-    from engram.dream import create_shadow_engine
+    from verimem.dream import create_shadow_engine
     # Forza creazione WAL: open + write + leave open
     skills_db = live_dirs["skills_db"]
     # Trigger un checkpoint
@@ -156,8 +156,8 @@ def test_shadow_does_not_mirror_wal_or_shm_files(live_dirs, tmp_path):
 
 def test_shadow_engine_is_real_sleep_engine(live_dirs, tmp_path):
     """L'oggetto ritornato deve essere un SleepEngine usabile per cycle()."""
-    from engram.dream import create_shadow_engine
-    from engram.sleep import SleepEngine
+    from verimem.dream import create_shadow_engine
+    from verimem.sleep import SleepEngine
     shadow_root = tmp_path / "shadow_q"
     engine, paths = create_shadow_engine(live_dirs, shadow_root=shadow_root)
     assert isinstance(engine, SleepEngine), f"expected SleepEngine, got {type(engine)}"
@@ -175,7 +175,7 @@ async def test_mcp_dream_create_shadow_handler():
     sia raggiungibile dal dispatcher e crei uno shadow safe."""
     import importlib
 
-    from engram import mcp_server
+    from verimem import mcp_server
     importlib.reload(mcp_server)  # reset agent cache per test isolation
     handler_attr = None
     for n in ("_call_tool", "call_tool"):
@@ -192,8 +192,8 @@ async def test_mcp_dream_create_shadow_handler():
     # Costruisco arguments come arriverebbero dal client MCP
     args = {"shadow_name": f"test_shadow_{id(a)}"}
     # Simulo il dispatch chiamando direttamente i pezzi che il handler usa
-    from engram.config import CONFIG as _CFG
-    from engram.dream import create_shadow_engine
+    from verimem.config import CONFIG as _CFG
+    from verimem.dream import create_shadow_engine
     shadow_root = _CFG.data_dir / "dreams" / args["shadow_name"]
     if shadow_root.exists():
         import shutil
@@ -227,10 +227,10 @@ def test_mcp_dream_handler_rejects_overlapping_shadow():
     # Simula i live_dirs come li costruisce il handler
     import tempfile
 
-    from engram.dream import create_shadow_engine
-    from engram.memory import EpisodicMemory
-    from engram.semantic import SemanticMemory
-    from engram.skill import SkillLibrary
+    from verimem.dream import create_shadow_engine
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import SkillLibrary
     with tempfile.TemporaryDirectory() as td:
         from pathlib import Path as _P
         root = _P(td)

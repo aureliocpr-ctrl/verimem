@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_approval_detector import (
+from verimem.l1_approval_detector import (
     ApprovalClaimWarning,
     detect_unsupported_approval_claim,
 )
@@ -64,7 +64,7 @@ class TestEvidenceSuppression:
 
 class TestGateWire:
     def test_l116_wired(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Decision approved by management",
             verified_by=[],
@@ -76,7 +76,7 @@ class TestGateWire:
         assert "L1.16" in layers
 
     def test_l116_evidence_suppress(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Plan approved",
             verified_by=["approval:plan_v1_signed", "pr:42_approved"],

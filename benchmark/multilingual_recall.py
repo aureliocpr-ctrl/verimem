@@ -7,7 +7,7 @@ inglese nello store, le stesse 10 domande in 10 lingue, recall@1/@5 per
 lingua per modello (scenario cross-lingua: memoria scritta in EN, utente che
 chiede nella sua lingua).
 
-Fedeltà al path di produzione: i prefissi replicano ``engram.embedding
+Fedeltà al path di produzione: i prefissi replicano ``verimem.embedding
 .as_query/as_passage`` (e5 -> "query: "/"passage: ") ed estendono la stessa
 logica ai candidati (Qwen3 -> prompt "query" del modello; bge-m3 -> nessun
 prefisso), che è esattamente ciò che il wiring adotterà per il modello scelto.
@@ -177,7 +177,7 @@ QUERIES: dict[str, list[tuple[str, int]]] = {
 
 def _prefixes(model_name: str) -> tuple[str | None, str, str]:
     """(query_prompt_name, query_prefix, passage_prefix) per modello — replica
-    engram.embedding.as_query/as_passage ed estende ai candidati secondo le
+    verimem.embedding.as_query/as_passage ed estende ai candidati secondo le
     rispettive model card (e5: 'query: '/'passage: '; qwen3: prompt 'query'
     nativo del modello, documenti nudi; bge-m3: simmetrico, nessun prefisso)."""
     low = model_name.lower()

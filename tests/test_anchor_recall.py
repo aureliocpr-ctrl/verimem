@@ -30,7 +30,7 @@ def test_entity_attrs_table_exists(tmp_path: Path) -> None:
     """RED: migration v6 crea tabella entity_attrs con colonne attese."""
     import sqlite3
 
-    from engram.entity_kg import EntityStore
+    from verimem.entity_kg import EntityStore
 
     db_path = tmp_path / "p3.db"
     EntityStore(db_path=db_path)
@@ -50,7 +50,7 @@ def test_entity_attrs_table_exists(tmp_path: Path) -> None:
 
 def test_set_attr_and_get_attrs(tmp_path: Path) -> None:
     """RED: set_attr poi get_attrs ritorna dict con key→value JSON-decoded."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "p3.db")
     eid = store.store(Entity(canonical_name="X", type="anchor"))
@@ -66,7 +66,7 @@ def test_set_attr_and_get_attrs(tmp_path: Path) -> None:
 
 def test_set_attr_upsert_no_duplicate(tmp_path: Path) -> None:
     """RED: set_attr 2 volte stessa key → update, no duplicate."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "p3.db")
     eid = store.store(Entity(canonical_name="Y", type="anchor"))
@@ -105,8 +105,8 @@ class _NoopSemantic:
 def fake_agent_anchor(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ):
-    from engram import mcp_server
-    from engram.entity_kg import EntityStore
+    from verimem import mcp_server
+    from verimem.entity_kg import EntityStore
 
     store = EntityStore(db_path=tmp_path / "p3.db")
     a = _FakeAgent(entity_kg=store)
@@ -119,7 +119,7 @@ async def _invoke_tool(
 ) -> list[str]:
     from mcp.types import CallToolRequest, CallToolRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[CallToolRequest]
     req = CallToolRequest(
@@ -136,7 +136,7 @@ async def test_anchor_tools_listed(fake_agent_anchor) -> None:
     """RED: hippo_anchor_set + hippo_anchor_recall in tools/list."""
     from mcp.types import ListToolsRequest, PaginatedRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[ListToolsRequest]
     req = ListToolsRequest(
@@ -190,7 +190,7 @@ async def test_anchor_set_promotes_existing_entity_type(
     (anchor_recall.list_anchors filtra WHERE type='anchor' e l'esclude).
     """
     a = fake_agent_anchor
-    from engram.entity_kg import Entity
+    from verimem.entity_kg import Entity
 
     # Pre-esistente: entity "Engram" type='project'
     eid_pre = a.entity_kg.store(
@@ -291,7 +291,7 @@ async def test_anchor_recall_returns_ranked_and_facts(
     )
     eid_anchor = json.loads(blocks[0])["entity_id"]
 
-    from engram.entity_kg import Entity
+    from verimem.entity_kg import Entity
     eid_concept = a.entity_kg.store(
         Entity(canonical_name="MIT", type="org"),
     )

@@ -6,7 +6,7 @@ interleaved with JSON-RPC frames. Root cause: engram/cli.py imports
 observability at module top, so structlog configures its default stdout
 logger BEFORE mcp_server.py's `os.environ.setdefault("HIPPO_LOG_STDERR", "1")`
 can take effect (and cache_logger_on_first_use freezes it). Launching
-`python -m engram.mcp_server` directly was fine; the CLI path was not.
+`python -m verimem.mcp_server` directly was fine; the CLI path was not.
 
 This test drives the REAL CLI entrypoint in a subprocess and asserts every
 stdout line up to and including the initialize response parses as JSON.
@@ -28,7 +28,7 @@ def test_engram_mcp_stdout_is_json_rpc_only() -> None:
     proc = subprocess.Popen(
         [sys.executable, "-c",
          "import sys; sys.argv=['engram','mcp']; "
-         "from engram.cli import app; app()"],
+         "from verimem.cli import app; app()"],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL, text=True, cwd=str(_REPO), env=env)
     try:

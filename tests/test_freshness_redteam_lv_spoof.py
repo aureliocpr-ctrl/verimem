@@ -17,7 +17,7 @@ from __future__ import annotations
 import sqlite3
 import time
 
-from engram.semantic import Fact, SemanticMemory, _fact_is_stale
+from verimem.semantic import Fact, SemanticMemory, _fact_is_stale
 
 _TEN_YEARS = 10 * 365 * 86400
 _ANCIENT = 5000 * 86400  # ~13.7 anni

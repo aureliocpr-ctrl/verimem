@@ -12,14 +12,14 @@ class _Skill:
 
 
 def test_root_complexity_is_1():
-    from engram.chain_complexity import compute_complexity
+    from verimem.chain_complexity import compute_complexity
     skills = [_Skill("root")]
     out = compute_complexity("root", skills)
     assert out["complexity"] == 1
 
 
 def test_chain_3_layers():
-    from engram.chain_complexity import compute_complexity
+    from verimem.chain_complexity import compute_complexity
     skills = [
         _Skill("a"),
         _Skill("b", parent_skills=["a"]),
@@ -31,7 +31,7 @@ def test_chain_3_layers():
 
 
 def test_diamond_dedup():
-    from engram.chain_complexity import compute_complexity
+    from verimem.chain_complexity import compute_complexity
     skills = [
         _Skill("root"),
         _Skill("a", parent_skills=["root"]),
@@ -44,13 +44,13 @@ def test_diamond_dedup():
 
 
 def test_missing_skill_returns_zero():
-    from engram.chain_complexity import compute_complexity
+    from verimem.chain_complexity import compute_complexity
     out = compute_complexity("ghost", [_Skill("real")])
     assert out["complexity"] == 0
 
 
 def test_cycle_safe():
-    from engram.chain_complexity import compute_complexity
+    from verimem.chain_complexity import compute_complexity
     skills = [
         _Skill("a", parent_skills=["b"]),
         _Skill("b", parent_skills=["a"]),
@@ -61,7 +61,7 @@ def test_cycle_safe():
 
 
 def test_payload_shape():
-    from engram.chain_complexity import compute_complexity
+    from verimem.chain_complexity import compute_complexity
     out = compute_complexity("x", [])
     for k in ("complexity", "ancestor_ids"):
         assert k in out

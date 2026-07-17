@@ -25,13 +25,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram import config as config_mod
-from engram.compilation import CompiledMacro, MacroRunResult, MacroStep
-from engram.config import CONFIG
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
-from engram.skill import Skill, SkillLibrary
-from engram.wake import WakeAgent, WakeConfig
+from verimem import config as config_mod
+from verimem.compilation import CompiledMacro, MacroRunResult, MacroStep
+from verimem.config import CONFIG
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.wake import WakeAgent, WakeConfig
 
 
 def _patch_config(monkeypatch, **fields) -> None:
@@ -39,8 +39,8 @@ def _patch_config(monkeypatch, **fields) -> None:
     new = dataclasses.replace(CONFIG, **fields)
     monkeypatch.setattr(config_mod, "CONFIG", new)
     # wake.py / skill.py import CONFIG at module load — re-bind there too.
-    from engram import skill as skill_mod
-    from engram import wake as wake_mod
+    from verimem import skill as skill_mod
+    from verimem import wake as wake_mod
     monkeypatch.setattr(wake_mod, "CONFIG", new)
     monkeypatch.setattr(skill_mod, "CONFIG", new)
 
@@ -76,7 +76,7 @@ def _build_agent(tmp_data_dir, monkeypatch, *, skill: Skill):
     skills.store(skill)
     memory = EpisodicMemory(db_path=tmp_data_dir / "ep.db")
     monkeypatch.setattr(
-        "engram.wake.execute_macro",
+        "verimem.wake.execute_macro",
         lambda macro, task_text, tools: MacroRunResult(
             ok=True, traces=[], final_answer="done",
         ),
@@ -219,7 +219,7 @@ def test_forward_replay_block_accepts_mature_skill_under_bayesian(
         skills_used=[skill.id],
     )
     # Add a single-step trace so action_seq is non-empty.
-    from engram.episode import Trace
+    from verimem.episode import Trace
     ep_success.traces.append(Trace(
         step=1, thought="t", action="fs_read_file",
         action_input='{"path":"x"}', observation="ok",
@@ -241,7 +241,7 @@ def test_lower_bound_numerics_match_test_assumptions():
     """Documents the lower_bound math the other tests rely on. If
     `Skill.fitness_lower_bound`'s scipy.stats import breaks or its
     formula drifts, this test fails first with a clear cause."""
-    from engram.skill import Skill as S
+    from verimem.skill import Skill as S
 
     # 3/3 successes → mean ~0.80, lower ~0.47
     s = S(id="x", name="x", trigger="x", body="x", trials=3, successes=3)

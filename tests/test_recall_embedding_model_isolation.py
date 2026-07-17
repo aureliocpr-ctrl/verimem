@@ -26,8 +26,8 @@ import time
 
 import numpy as np
 
-from engram import embedding as emb
-from engram.semantic import Fact, SemanticMemory
+from verimem import embedding as emb
+from verimem.semantic import Fact, SemanticMemory
 
 # Colonne minime per un INSERT diretto che simula un vettore arrivato nel DB
 # da un re-embed/daemon di un altro modello (il vero vettore di poisoning).
@@ -112,9 +112,9 @@ def test_legacy_baseline_decoupled_from_active_default():
     config (no literal duplicato) ma FROZEN a MiniLM != default attivo."""
     import os
 
-    from engram.config import _DEFAULT_EMBEDDING_MODEL
-    from engram.config import _LEGACY_EMBEDDING_MODEL as _CFG_LEGACY
-    from engram.semantic import _LEGACY_EMBEDDING_MODEL
+    from verimem.config import _DEFAULT_EMBEDDING_MODEL
+    from verimem.config import _LEGACY_EMBEDDING_MODEL as _CFG_LEGACY
+    from verimem.semantic import _LEGACY_EMBEDDING_MODEL
 
     assert _LEGACY_EMBEDDING_MODEL == _CFG_LEGACY == "sentence-transformers/all-MiniLM-L6-v2", (
         "il baseline legacy deve essere single-sourced da config e FROZEN a MiniLM"

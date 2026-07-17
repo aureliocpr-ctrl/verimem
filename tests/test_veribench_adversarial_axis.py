@@ -3,7 +3,7 @@
 The capstone claim as tests: naive source-counting is fooled by collusion; an
 independence-aware consistency channel defends collusion but is fooled by the
 sleeper; only ``min(consistency, outcome)`` — the two channels — is net-positive
-across BOTH attacks. Drives the REAL engram.source_trust.SourceTrustBook.
+across BOTH attacks. Drives the REAL verimem.source_trust.SourceTrustBook.
 """
 from __future__ import annotations
 

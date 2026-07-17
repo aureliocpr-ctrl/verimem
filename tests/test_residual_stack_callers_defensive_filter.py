@@ -37,10 +37,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
 
 # -----------------------------------------------------------------------
 # Helpers: inject malformed embedding blobs directly into the DB.
@@ -225,7 +225,7 @@ class TestTopicCleanupCaller:
     ) -> None:
         """topic_cleanup_suggestions.py line 57/62 SELECT embedding FROM
         facts → np.stack(line 73)."""
-        from engram.topic_cleanup_suggestions import topic_cleanup_suggestions
+        from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
 
         sm = SemanticMemory(db_path=tmp_path / "sem.db")
         # Live topic with good fact.
@@ -264,7 +264,7 @@ class TestFreshnessCheckCaller:
     ) -> None:
         """freshness_check.py line 169 SELECT id, embedding FROM facts
         WHERE id IN (...) feeds emb_map; line 116/117 np.stack."""
-        from engram.freshness_check import facts_freshness_check
+        from verimem.freshness_check import facts_freshness_check
 
         sm = SemanticMemory(db_path=tmp_path / "sem.db")
         # Seed facts under one topic glob with old timestamps so they're

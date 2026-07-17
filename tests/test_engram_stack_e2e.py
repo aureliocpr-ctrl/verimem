@@ -67,9 +67,9 @@ def test_engram_stack_e2e_two_agents(tmp_path, monkeypatch) -> None:
         pytest.skip("vec_bus not available")
     from clp.agentos.vec_bus import embed_text, vec_send
 
-    from engram import op_supervisor, syscall_bridge
-    from engram.capability_token import issue_token
-    from engram.dashboard_widget import collect_state
+    from verimem import op_supervisor, syscall_bridge
+    from verimem.capability_token import issue_token
+    from verimem.dashboard_widget import collect_state
 
     # Isolate environment
     audit = tmp_path / "audit.jsonl"
@@ -227,8 +227,8 @@ def test_engram_stack_e2e_token_revocation_simulation(
     Simulates per-op capability scoping: agent C has a token only
     for 'mesh_fetch' but tries to invoke 'recall' → blocked.
     """
-    from engram import op_supervisor, syscall_bridge
-    from engram.capability_token import issue_token
+    from verimem import op_supervisor, syscall_bridge
+    from verimem.capability_token import issue_token
 
     audit = tmp_path / "audit.jsonl"
     monkeypatch.setattr(syscall_bridge, "ENGRAM_AUDIT_LOG", audit)

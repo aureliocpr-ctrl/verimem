@@ -6,12 +6,12 @@ Positive twin of the numeric conflict scanner.
 """
 from __future__ import annotations
 
-from engram.corroboration import (
+from verimem.corroboration import (
     Corroboration,
     corroboration_index,
     find_corroborations,
 )
-from engram.semantic import Fact
+from verimem.semantic import Fact
 
 
 def _f(prop: str, topic: str) -> Fact:

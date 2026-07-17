@@ -9,7 +9,7 @@ import json
 
 from typer.testing import CliRunner
 
-from engram.cli import app
+from verimem.cli import app
 
 runner = CliRunner()
 
@@ -44,7 +44,7 @@ def test_import_with_ids_ingests(tmp_path, monkeypatch):
                 text = "The user dislikes snakes and cats"
             return R()
 
-    import engram.cli as cli_mod
+    import verimem.cli as cli_mod
     monkeypatch.setattr(cli_mod, "_import_llm", lambda model=None: _StubLLM())
 
     p = _claude_export(tmp_path)

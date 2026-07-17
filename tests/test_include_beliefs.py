@@ -24,7 +24,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 BELIEF = "The vendor API is the fastest on the market"
 CLAIM = "The vendor API supports webhooks for events"
@@ -99,7 +99,7 @@ def test_cold_encode_fallback_honours_include_beliefs(monkeypatch):
     """When the encode daemon is cold, recall degrades to the keyword fallback —
     the opt-in must survive the degradation (hunt-#3 lesson: the orphan opt-in
     was silently dropped on this exact path)."""
-    import engram.semantic as S
+    import verimem.semantic as S
 
     m = _mem()
     _seed(m)
@@ -112,7 +112,7 @@ def test_cold_encode_fallback_honours_include_beliefs(monkeypatch):
 
 
 def test_recall_as_of_forwards_include_beliefs():
-    from engram.temporal_context import recall_as_of
+    from verimem.temporal_context import recall_as_of
 
     m = _mem()
     _seed(m)
@@ -149,7 +149,7 @@ def test_composer_never_composes_over_user_beliefs():
     ones. An unverified user assertion must not become an ingredient — the
     derived fact would carry the belief's content WITHOUT its low-trust label
     (worse than serving the belief: the origin disappears)."""
-    from engram.composer import compose_once
+    from verimem.composer import compose_once
 
     class _M:  # composer only touches mem.semantic
         pass
@@ -169,7 +169,7 @@ def test_composer_never_composes_over_user_beliefs():
 
 
 def test_client_search_exposes_include_beliefs_with_status():
-    from engram.client import Memory
+    from verimem.client import Memory
 
     mem = Memory(path=Path(tempfile.mkdtemp()) / "sem.db")
     mem.semantic.store(Fact(proposition=BELIEF, topic="user/claim",

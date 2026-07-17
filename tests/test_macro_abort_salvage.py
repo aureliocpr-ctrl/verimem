@@ -12,17 +12,17 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram.compilation import CompiledMacro, MacroRunResult, MacroStep
-from engram.episode import Episode
-from engram.skill import Skill, SkillLibrary
-from engram.wake import WakeAgent, WakeConfig
+from verimem.compilation import CompiledMacro, MacroRunResult, MacroStep
+from verimem.episode import Episode
+from verimem.skill import Skill, SkillLibrary
+from verimem.wake import WakeAgent, WakeConfig
 
 
 @pytest.fixture
 def wake_with_failing_macro(tmp_data_dir, monkeypatch):
     """Build a WakeAgent whose top skill has a macro that returns
     not-ok (simulating a real macro abort)."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
     skills = SkillLibrary(
         dir_path=tmp_data_dir / "skills",
         db_path=tmp_data_dir / "skills_index.db",
@@ -64,7 +64,7 @@ def wake_with_failing_macro(tmp_data_dir, monkeypatch):
         reason="bad args for apply_edit: missing 'patch'",
     )
     monkeypatch.setattr(
-        "engram.wake.execute_macro",
+        "verimem.wake.execute_macro",
         lambda macro, task_text, tools: fake_result,
     )
 
@@ -104,7 +104,7 @@ def test_aborted_macro_with_no_partial_trace_does_not_crash(
     """If the macro aborts at step 1 with zero recorded traces, the
     salvage block must still produce a reasonable notes line — or
     leave notes empty without throwing."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
     skills = SkillLibrary(
         dir_path=tmp_data_dir / "skills",
         db_path=tmp_data_dir / "skills_index.db",
@@ -125,7 +125,7 @@ def test_aborted_macro_with_no_partial_trace_does_not_crash(
     skills.store(skill)
 
     monkeypatch.setattr(
-        "engram.wake.execute_macro",
+        "verimem.wake.execute_macro",
         lambda macro, task_text, tools: MacroRunResult(
             ok=False, traces=[], aborted_at_step=1, reason="unknown tool",
         ),

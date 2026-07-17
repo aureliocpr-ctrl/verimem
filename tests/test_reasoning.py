@@ -35,7 +35,7 @@ from typing import Any
 
 import numpy as np
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 # ---------- Fakes --------------------------------------------------------
 
@@ -95,7 +95,7 @@ class _FakeAgent:
 
 
 def test_empty_corpus_returns_empty_sections():
-    from engram.reasoning import reason_about_task
+    from verimem.reasoning import reason_about_task
 
     a = _FakeAgent(skills=[], episodes=[])
     out = reason_about_task("any task", agent=a)
@@ -110,7 +110,7 @@ def test_empty_corpus_returns_empty_sections():
 
 def test_recall_runs_when_corpus_nonempty():
     """Recall should always fire if skills exist."""
-    from engram.reasoning import reason_about_task
+    from verimem.reasoning import reason_about_task
 
     skills = [
         Skill(id="s1", name="deploy_app", trigger="deploy",
@@ -128,7 +128,7 @@ def test_recall_runs_when_corpus_nonempty():
 
 def test_strips_runs_only_when_states_provided():
     """If initial_state + goal_state are not provided, skip STRIPS."""
-    from engram.reasoning import reason_about_task
+    from verimem.reasoning import reason_about_task
 
     skills = [
         Skill(id="auth", name="login", trigger="login",
@@ -156,7 +156,7 @@ def test_strips_runs_only_when_states_provided():
 def test_forward_uses_top_recall():
     """Forward planning uses the top recall hit as start_skill, with
     transitions inferred from recent episodes."""
-    from engram.reasoning import reason_about_task
+    from verimem.reasoning import reason_about_task
 
     skills = [
         Skill(id="A", name="alpha", trigger="alpha", status="promoted"),
@@ -179,7 +179,7 @@ def test_forward_uses_top_recall():
 
 def test_analogues_use_top_recall():
     """Analogy search uses the top recall as the target skill."""
-    from engram.reasoning import reason_about_task
+    from verimem.reasoning import reason_about_task
 
     skills = [
         Skill(id="t", name="deploy_web", trigger="deploy"),
@@ -196,7 +196,7 @@ def test_analogues_use_top_recall():
 def test_no_recall_skips_forward_and_analogues():
     """When semantic recall finds nothing, forward and analogy are
     skipped (no seed skill available)."""
-    from engram.reasoning import reason_about_task
+    from verimem.reasoning import reason_about_task
 
     skills = [
         Skill(id="x", name="something", trigger="something"),
@@ -214,7 +214,7 @@ def test_no_recall_skips_forward_and_analogues():
 
 def test_summary_contains_section_headers():
     """The summary string mentions the sections that produced data."""
-    from engram.reasoning import reason_about_task
+    from verimem.reasoning import reason_about_task
 
     skills = [
         Skill(id="auth", name="login", trigger="login",
@@ -237,7 +237,7 @@ def test_summary_contains_section_headers():
 
 def test_payload_shape_complete():
     """Every section key always present (defaults if section skipped)."""
-    from engram.reasoning import reason_about_task
+    from verimem.reasoning import reason_about_task
 
     a = _FakeAgent(skills=[], episodes=[])
     out = reason_about_task("foo", agent=a)

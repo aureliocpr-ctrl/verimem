@@ -57,7 +57,7 @@ def _seed_corpus(db_path: Path) -> None:
 def test_stable_partition_wins_when_both_true(tmp_path: Path) -> None:
     """Cycle 292 precedence contract: stable_partition wins over
     second_pass when both opt-in flags are True."""
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "semantic.db"
     _seed_corpus(db)
@@ -106,7 +106,7 @@ def test_stable_partition_wins_when_both_true(tmp_path: Path) -> None:
 
 def test_second_pass_path_when_stable_false(tmp_path: Path) -> None:
     """Falsifies the precedence — second_pass only fires when stable=False."""
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "semantic.db"
     _seed_corpus(db)
@@ -134,7 +134,7 @@ def test_second_pass_path_when_stable_false(tmp_path: Path) -> None:
 
 def test_neither_default(tmp_path: Path) -> None:
     """Default (both False) — legacy vanilla Louvain path, no from_master."""
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     db = tmp_path / "semantic.db"
     _seed_corpus(db)

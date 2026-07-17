@@ -36,11 +36,11 @@ from __future__ import annotations
 
 import time
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_zero_trials_suggests_test():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     s = Skill(id="s", name="s", trials=0, successes=0, status="candidate")
     out = skill_health(s, episodes=[])
@@ -48,7 +48,7 @@ def test_zero_trials_suggests_test():
 
 
 def test_candidate_with_high_fitness_suggests_promote():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     # 9/10 → fitness_mean ~0.83, lower bound ~0.59 with default prior.
     # We need lower_bound >= 0.6, so use higher counts.
@@ -60,7 +60,7 @@ def test_candidate_with_high_fitness_suggests_promote():
 
 
 def test_promoted_low_fitness_suggests_retire():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     s = Skill(id="s", name="s", trials=30, successes=5, status="promoted")
     out = skill_health(s, episodes=[])
@@ -68,7 +68,7 @@ def test_promoted_low_fitness_suggests_retire():
 
 
 def test_top_performer_promoted_suggests_pin():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     s = Skill(id="s", name="s", trials=30, successes=29, status="promoted")
     out = skill_health(s, episodes=[])
@@ -76,7 +76,7 @@ def test_top_performer_promoted_suggests_pin():
 
 
 def test_high_variance_suggests_test():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     # trials=1, successes=0: Beta(1+0, 1+1) = Beta(1, 2)
     # variance = 1*2 / (3^2 * 4) = 2/36 ≈ 0.0556 > 0.05.
@@ -87,7 +87,7 @@ def test_high_variance_suggests_test():
 
 
 def test_payload_shape_complete():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     s = Skill(id="s", name="s", trials=10, successes=5)
     out = skill_health(s, episodes=[])
@@ -100,7 +100,7 @@ def test_payload_shape_complete():
 
 
 def test_recency_zero_when_never_used():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     s = Skill(id="s", name="s", trials=0, successes=0, last_used_at=0.0)
     out = skill_health(s, episodes=[])
@@ -109,7 +109,7 @@ def test_recency_zero_when_never_used():
 
 
 def test_recency_recent_use():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     s = Skill(id="s", name="s", trials=10, successes=8,
               last_used_at=time.time() - 3600)  # 1h ago
@@ -119,7 +119,7 @@ def test_recency_recent_use():
 
 
 def test_reasoning_is_explanatory():
-    from engram.skill_health import skill_health
+    from verimem.skill_health import skill_health
 
     s = Skill(id="s", name="s", trials=20, successes=18, status="candidate")
     out = skill_health(s, episodes=[])

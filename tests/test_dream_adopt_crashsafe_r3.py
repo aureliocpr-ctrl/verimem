@@ -16,14 +16,14 @@ from pathlib import Path
 
 import pytest
 
-from engram.dream import (
+from verimem.dream import (
     adopt_dream,
     propose_dream_tasks,
     submit_dream_result,
 )
-from engram.memory import Episode, EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.memory import Episode, EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
 
 VALID_SKILL_JSON = {
     "name": "Mental math shortcut adopted",
@@ -86,7 +86,7 @@ def test_interrupted_marker_blocks_retry(shadow):
 def test_marker_is_durable_before_mutation(shadow, monkeypatch):
     """When the backup runs (just before mutating live), the on-disk artifact
     must ALREADY carry adoption_started_at — i.e. the marker is fsync'd first."""
-    from engram import dream
+    from verimem import dream
     seen = {}
     real_backup = dream._backup_live_skills
 
@@ -107,7 +107,7 @@ def test_marker_is_durable_before_mutation(shadow, monkeypatch):
 def test_clean_rollback_clears_marker(shadow, monkeypatch):
     """A rollback restores the baseline, so the in-progress marker must be
     cleared — otherwise a legitimate retry would be blocked forever."""
-    from engram import skill as skill_module
+    from verimem import skill as skill_module
     real_store = skill_module.SkillLibrary.store
     failed = {"once": False}
 

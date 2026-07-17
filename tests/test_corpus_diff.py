@@ -25,7 +25,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -83,7 +83,7 @@ class _FakeAgent:
 
 def test_diff_now_returns_empty():
     """`since` = now: nothing is "after now", everything filtered."""
-    from engram.corpus_diff import corpus_diff
+    from verimem.corpus_diff import corpus_diff
 
     now = time.time()
     facts = [_FakeFact("f1", "old", created_at=now - 1000)]
@@ -97,7 +97,7 @@ def test_diff_now_returns_empty():
 
 
 def test_diff_zero_returns_all():
-    from engram.corpus_diff import corpus_diff
+    from verimem.corpus_diff import corpus_diff
 
     facts = [_FakeFact("f1", "fact", created_at=100.0)]
     eps = [_FakeEp("e1", "task", created_at=200.0)]
@@ -110,7 +110,7 @@ def test_diff_zero_returns_all():
 
 
 def test_diff_new_facts_filtered_by_created_at():
-    from engram.corpus_diff import corpus_diff
+    from verimem.corpus_diff import corpus_diff
 
     facts = [
         _FakeFact("old", "old fact", created_at=100.0),
@@ -124,7 +124,7 @@ def test_diff_new_facts_filtered_by_created_at():
 
 
 def test_diff_outcome_breakdown():
-    from engram.corpus_diff import corpus_diff
+    from verimem.corpus_diff import corpus_diff
 
     eps = [
         _FakeEp("e1", outcome="success", created_at=300.0),
@@ -141,7 +141,7 @@ def test_diff_outcome_breakdown():
 def test_diff_updated_skills_carries_delta():
     """Updated skills include their current fitness so the user can
     see the post-update state."""
-    from engram.corpus_diff import corpus_diff
+    from verimem.corpus_diff import corpus_diff
 
     skills = [
         Skill(id="s1", name="newly_updated", trials=5, successes=3,
@@ -157,7 +157,7 @@ def test_diff_updated_skills_carries_delta():
 
 
 def test_diff_since_far_future_empty():
-    from engram.corpus_diff import corpus_diff
+    from verimem.corpus_diff import corpus_diff
 
     facts = [_FakeFact("f1", "f", created_at=time.time())]
     a = _FakeAgent(skills=[], episodes=[], facts=facts)
@@ -167,7 +167,7 @@ def test_diff_since_far_future_empty():
 
 
 def test_diff_payload_shape_complete():
-    from engram.corpus_diff import corpus_diff
+    from verimem.corpus_diff import corpus_diff
 
     a = _FakeAgent(skills=[], episodes=[], facts=[])
     out = corpus_diff(agent=a, since=0.0)

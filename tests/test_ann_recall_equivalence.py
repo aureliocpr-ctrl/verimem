@@ -12,7 +12,7 @@ import pytest
 
 pytest.importorskip("faiss")
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _seed(mem, n=140):

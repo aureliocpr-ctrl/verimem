@@ -6,7 +6,7 @@ gives per-commit fsync durability.
 """
 from __future__ import annotations
 
-from engram._sqlite_pragma import synchronous_mode
+from verimem._sqlite_pragma import synchronous_mode
 
 
 def test_default_is_normal(monkeypatch):
@@ -27,7 +27,7 @@ def test_garbage_falls_back_to_normal(monkeypatch):
 def test_connection_reflects_full(monkeypatch, tmp_path):
     """Integration: the live SemanticMemory connection applies the knob (2 == FULL)."""
     monkeypatch.setenv("ENGRAM_SQLITE_SYNCHRONOUS", "FULL")
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     with sm._connect() as conn:
         level = conn.execute("PRAGMA synchronous").fetchone()[0]
@@ -36,7 +36,7 @@ def test_connection_reflects_full(monkeypatch, tmp_path):
 
 def test_connection_default_normal(monkeypatch, tmp_path):
     monkeypatch.delenv("ENGRAM_SQLITE_SYNCHRONOUS", raising=False)
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     with sm._connect() as conn:
         level = conn.execute("PRAGMA synchronous").fetchone()[0]

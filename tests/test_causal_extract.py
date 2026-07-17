@@ -10,12 +10,12 @@ from __future__ import annotations
 
 
 def _s(idx, kind, content, **kw):
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
     return TrajectoryStep(step_idx=idx, kind=kind, content=content, **kw)
 
 
 def test_extract_identifies_divergence():
-    from engram.causal_extract import causal_extract
+    from verimem.causal_extract import causal_extract
 
     failure = [
         _s(0, "thought", "start recon"),
@@ -37,7 +37,7 @@ def test_extract_identifies_divergence():
 
 
 def test_extract_no_divergence_when_identical():
-    from engram.causal_extract import causal_extract
+    from verimem.causal_extract import causal_extract
 
     same = [_s(0, "thought", "X"), _s(1, "action", "Y", tool_name="t")]
     out = causal_extract(
@@ -49,7 +49,7 @@ def test_extract_no_divergence_when_identical():
 
 
 def test_extract_includes_evidence():
-    from engram.causal_extract import causal_extract
+    from verimem.causal_extract import causal_extract
 
     out = causal_extract(
         success_traj=[_s(0, "action", "A", tool_name="ta")],
@@ -63,7 +63,7 @@ def test_extract_includes_evidence():
 
 def test_extract_proposes_rule_when_tools_differ():
     """If tools differ at divergence, propose a rule based on tool names."""
-    from engram.causal_extract import causal_extract
+    from verimem.causal_extract import causal_extract
 
     out = causal_extract(
         success_traj=[_s(0, "action", "scan", tool_name="masscan")],
@@ -77,7 +77,7 @@ def test_extract_proposes_rule_when_tools_differ():
 
 
 def test_extract_handles_empty_trajectory():
-    from engram.causal_extract import causal_extract
+    from verimem.causal_extract import causal_extract
 
     out = causal_extract(
         success_traj=[], failure_traj=[_s(0, "thought", "X")],
@@ -88,7 +88,7 @@ def test_extract_handles_empty_trajectory():
 
 
 def test_extract_full_payload_keys():
-    from engram.causal_extract import causal_extract
+    from verimem.causal_extract import causal_extract
 
     out = causal_extract(
         success_traj=[_s(0, "action", "A")],
@@ -103,7 +103,7 @@ def test_extract_full_payload_keys():
 
 def test_extract_confidence_higher_when_clear_tool_diff():
     """Confidence should be higher when divergence is on tool_name."""
-    from engram.causal_extract import causal_extract
+    from verimem.causal_extract import causal_extract
 
     out_tool_diff = causal_extract(
         success_traj=[_s(0, "action", "x", tool_name="A")],

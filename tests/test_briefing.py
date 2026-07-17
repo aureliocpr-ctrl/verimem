@@ -22,7 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 # ---------- Fakes --------------------------------------------------------
 
@@ -98,7 +98,7 @@ class _FakeAgent:
 
 
 def test_briefing_empty_corpus_returns_zero_counts():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     a = _FakeAgent(skills=[], episodes=[], facts=[])
     out = get_briefing(agent=a)
@@ -113,7 +113,7 @@ def test_briefing_empty_corpus_returns_zero_counts():
 
 
 def test_briefing_recent_facts_sorted_newest_first():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     facts = [
         _FakeFact("f1", "old fact", topic="x", created_at=100.0),
@@ -127,7 +127,7 @@ def test_briefing_recent_facts_sorted_newest_first():
 
 
 def test_briefing_pinned_episodes_only():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     eps = [
         _FakeEp("e1", "regular", pinned=False),
@@ -144,7 +144,7 @@ def test_briefing_pinned_episodes_only():
 
 def test_briefing_top_skills_by_fitness():
     """Skills ordered by fitness_mean, highest first."""
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     skills = [
         Skill(id="weak", name="weak_skill", trials=10, successes=2,
@@ -163,7 +163,7 @@ def test_briefing_top_skills_by_fitness():
 
 def test_briefing_summary_mentions_counts():
     """The summary text mentions the corpus sizes."""
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     facts = [_FakeFact("f1", "fact1", created_at=1.0)]
     eps = [_FakeEp("e1", "task1")]
@@ -178,7 +178,7 @@ def test_briefing_summary_mentions_counts():
 
 def test_briefing_payload_shape_complete():
     """All keys present always, even when sections are empty."""
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     a = _FakeAgent(skills=[], episodes=[], facts=[])
     out = get_briefing(agent=a)
@@ -191,7 +191,7 @@ def test_briefing_payload_shape_complete():
 
 def test_briefing_n_facts_respected():
     """n_facts caps the returned recent_facts list."""
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     facts = [
         _FakeFact(f"f{i}", f"fact{i}", created_at=float(i))
@@ -204,7 +204,7 @@ def test_briefing_n_facts_respected():
 
 def test_briefing_stats_breakdown():
     """Stats include success/failure breakdown for episodes."""
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
 
     eps = [
         _FakeEp("e1", outcome="success"),

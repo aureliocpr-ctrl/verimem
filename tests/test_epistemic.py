@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.epistemic import (
+from verimem.epistemic import (
     can_transition,
     make_proven,
     make_refuted,
@@ -72,7 +72,7 @@ def test_refuted_is_absorbing():
 def test_store_roundtrip_and_rejected_transition_not_persisted(tmp_path):
     """Integration: the label persists through SQLite; a rejected transition
     leaves the stored label untouched."""
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
     sm = SemanticMemory(tmp_path / "epi.db")
     fact = Fact(proposition="The nth triangular number is n(n+1)/2.",
                 topic="math/triangular")

@@ -11,13 +11,13 @@ from __future__ import annotations
 
 import pytest
 
-from engram.self_provenance import (
+from verimem.self_provenance import (
     SELF_PREFIX,
     actor_of,
     is_self_ref,
     self_write_check,
 )
-from engram.source_trust import (
+from verimem.source_trust import (
     SourceTrustBook,
     auto_confirm_agreement,
     canonical_source,
@@ -85,7 +85,7 @@ def test_auto_confirm_agreement_strips_actors():
 def test_self_write_check_ratio_and_alarm(tmp_path):
     """The P85 phase transition made operational: ratio of engine-written facts
     in the recent window; alarm past the 0.5 threshold."""
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
     sm = SemanticMemory(tmp_path / "sp.db")
     for i in range(4):
         sm.store(Fact(proposition=f"world fact {i}", topic="w",

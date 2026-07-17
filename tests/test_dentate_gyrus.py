@@ -47,7 +47,7 @@ def _normalize(v: np.ndarray) -> np.ndarray:
 def test_dg_separates_near_identical_patterns():
     """Two input patterns with cosine 0.99 should diverge after DG
     encoding to cosine ≤ 0.7 — that's the headline DG behaviour."""
-    from engram.dentate_gyrus import build_dg_projection, dg_encode
+    from verimem.dentate_gyrus import build_dg_projection, dg_encode
 
     rng = np.random.default_rng(seed=42)
     # Sparser k-WTA = stronger separation. Biological DG: granule
@@ -90,7 +90,7 @@ def test_dg_separates_near_identical_patterns():
 def test_dg_encoding_is_deterministic_and_self_identical():
     """Same pattern encoded twice gives the same output. Same pattern
     compared with itself gives cosine 1.0 (within float tolerance)."""
-    from engram.dentate_gyrus import build_dg_projection, dg_encode
+    from verimem.dentate_gyrus import build_dg_projection, dg_encode
 
     rng = np.random.default_rng(seed=7)
     W = build_dg_projection(d_in=384, d_expand=2048, seed=7)
@@ -109,7 +109,7 @@ def test_dg_does_not_correlate_orthogonal_patterns():
     """Two random orthogonal-ish patterns (cosine ≈ 0) should stay
     near-orthogonal after DG. We allow some structure due to
     finite-dim sparse coding, but cosine_dg should stay below 0.3."""
-    from engram.dentate_gyrus import build_dg_projection, dg_encode
+    from verimem.dentate_gyrus import build_dg_projection, dg_encode
 
     rng = np.random.default_rng(seed=13)
     W = build_dg_projection(d_in=384, d_expand=2048, seed=13)
@@ -134,7 +134,7 @@ def test_dg_does_not_correlate_orthogonal_patterns():
 def test_dg_output_shape_and_sparsity():
     """The output should have the expanded dimensionality and exactly
     `k_sparse` non-zero entries (the rest are zeroed by the k-WTA)."""
-    from engram.dentate_gyrus import build_dg_projection, dg_encode
+    from verimem.dentate_gyrus import build_dg_projection, dg_encode
 
     rng = np.random.default_rng(seed=21)
     d_expand = 2048
@@ -155,7 +155,7 @@ def test_dg_output_shape_and_sparsity():
 def test_dg_zero_vector_returns_zero():
     """An all-zero input should produce an all-zero output without
     division-by-zero. The `_normalize` helper guards this."""
-    from engram.dentate_gyrus import build_dg_projection, dg_encode
+    from verimem.dentate_gyrus import build_dg_projection, dg_encode
 
     W = build_dg_projection(d_in=8, d_expand=64, seed=1)
     z = np.zeros(8, dtype=np.float32)
@@ -172,7 +172,7 @@ def test_projection_is_seeded_and_reproducible():
     """Two calls with the same seed produce the same matrix — the
     seed is the persistence story (we need to encode old episodes
     the same way after a process restart)."""
-    from engram.dentate_gyrus import build_dg_projection
+    from verimem.dentate_gyrus import build_dg_projection
 
     a = build_dg_projection(d_in=64, d_expand=512, seed=99)
     b = build_dg_projection(d_in=64, d_expand=512, seed=99)

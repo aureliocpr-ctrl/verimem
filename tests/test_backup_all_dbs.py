@@ -7,10 +7,10 @@ add create_all_backups() covering all three stores.
 """
 from __future__ import annotations
 
-from engram.backup import BackupInfo, create_all_backups, create_backup, restore_from_backup
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import SkillLibrary
+from verimem.backup import BackupInfo, create_all_backups, create_backup, restore_from_backup
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import SkillLibrary
 
 
 def _make_dbs(d):

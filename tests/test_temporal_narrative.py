@@ -5,7 +5,7 @@ Acceptance §5.1 of docs/sota/temporal-evolution-narrative.md:
     revision + same-topic-context) → all 5 roles labelled.
   * Empty / missing DB → [] defensive.
 
-RED marker: ``from engram.temporal_narrative import
+RED marker: ``from verimem.temporal_narrative import
 reconstruct_narrative`` must fail on master.
 """
 from __future__ import annotations
@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.temporal_narrative import reconstruct_narrative
+from verimem.temporal_narrative import reconstruct_narrative
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

@@ -24,8 +24,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from engram.anti_confab_gate import run_validation_gate
-from engram.semantic import Fact, SemanticMemory
+from verimem.anti_confab_gate import run_validation_gate
+from verimem.semantic import Fact, SemanticMemory
 
 REPO = Path(__file__).resolve().parents[1]  # repo HippoAgent reale (per git rev-parse)
 

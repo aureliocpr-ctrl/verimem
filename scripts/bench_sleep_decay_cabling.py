@@ -32,13 +32,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram import config as config_mod
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import SkillLibrary
-from engram.sleep import SleepEngine, SleepReport
+from verimem import config as config_mod
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import SkillLibrary
+from verimem.sleep import SleepEngine, SleepReport
 
 
 @dataclass
@@ -57,8 +57,8 @@ def _patch(**fields) -> None:
     """
     new = dataclasses.replace(CONFIG, **fields)
     config_mod.CONFIG = new
-    from engram import memory as memory_mod
-    from engram import sleep as sleep_mod
+    from verimem import memory as memory_mod
+    from verimem import sleep as sleep_mod
     memory_mod.CONFIG = new
     sleep_mod.CONFIG = new
 

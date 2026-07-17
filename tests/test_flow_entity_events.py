@@ -20,9 +20,9 @@ import json
 
 import pytest
 
-from engram import event_jsonl_log, flow_events
-from engram.entity_kg import EntityStore
-from engram.entity_populate import populate_entities_for_fact
+from verimem import event_jsonl_log, flow_events
+from verimem.entity_kg import EntityStore
+from verimem.entity_populate import populate_entities_for_fact
 
 
 @pytest.fixture()

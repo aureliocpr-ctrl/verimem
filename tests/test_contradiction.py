@@ -31,7 +31,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -63,19 +63,19 @@ def _store(sm: SemanticMemory, *, fid: str, prop: str, topic: str = "t/a",
 class TestNumericClash:
 
     def test_no_facts_returns_empty(self, sm: SemanticMemory) -> None:
-        from engram.contradiction import detect_numeric_clashes
+        from verimem.contradiction import detect_numeric_clashes
         out = detect_numeric_clashes(sm.all())
         assert out == []
 
     def test_single_fact_returns_empty(self, sm: SemanticMemory) -> None:
-        from engram.contradiction import detect_numeric_clashes
+        from verimem.contradiction import detect_numeric_clashes
         _store(sm, fid="a", prop="NEXUS has 17280 tests")
         assert detect_numeric_clashes(sm.all()) == []
 
     def test_two_facts_same_topic_diverging_numbers_flagged(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.contradiction import detect_numeric_clashes
+        from verimem.contradiction import detect_numeric_clashes
         _store(sm, fid="a", prop="NEXUS has 17280 tests",
                 topic="project/nexus/test-count")
         _store(sm, fid="b", prop="NEXUS has 10000 tests",
@@ -90,7 +90,7 @@ class TestNumericClash:
         self, sm: SemanticMemory,
     ) -> None:
         """Same numbers, different topic → not a contradiction."""
-        from engram.contradiction import detect_numeric_clashes
+        from verimem.contradiction import detect_numeric_clashes
         _store(sm, fid="a", prop="NEXUS has 17280 tests", topic="nexus")
         _store(sm, fid="b", prop="HippoAgent has 17000 tests", topic="hippo")
         assert detect_numeric_clashes(sm.all()) == []
@@ -99,7 +99,7 @@ class TestNumericClash:
         self, sm: SemanticMemory,
     ) -> None:
         """5% relative tolerance: 100 vs 104 → no clash."""
-        from engram.contradiction import detect_numeric_clashes
+        from verimem.contradiction import detect_numeric_clashes
         _store(sm, fid="a", prop="The threshold is 100 ms", topic="perf/p")
         _store(sm, fid="b", prop="The threshold is 104 ms", topic="perf/p")
         out = detect_numeric_clashes(sm.all(), value_tolerance=0.05)
@@ -109,7 +109,7 @@ class TestNumericClash:
         self, sm: SemanticMemory,
     ) -> None:
         """100 vs 200 → 100% delta → clash."""
-        from engram.contradiction import detect_numeric_clashes
+        from verimem.contradiction import detect_numeric_clashes
         _store(sm, fid="a", prop="The threshold is 100 ms", topic="perf/p")
         _store(sm, fid="b", prop="The threshold is 200 ms", topic="perf/p")
         out = detect_numeric_clashes(sm.all(), value_tolerance=0.05)
@@ -121,7 +121,7 @@ class TestNumericClash:
         """Two facts mentioning numbers but talking about totally different
         things should NOT be flagged. Same topic but semantically far apart
         (low cosine) → no clash."""
-        from engram.contradiction import detect_numeric_clashes
+        from verimem.contradiction import detect_numeric_clashes
         _store(sm, fid="a",
                 prop="The forest has 17280 trees by the riverbank",
                 topic="t/a")
@@ -137,7 +137,7 @@ class TestNumericClash:
     def test_clash_carries_similarity_score(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.contradiction import detect_numeric_clashes
+        from verimem.contradiction import detect_numeric_clashes
         _store(sm, fid="a", prop="HippoAgent has 200 MCP tools",
                 topic="project/hippo")
         _store(sm, fid="b", prop="HippoAgent has 374 MCP tools",
@@ -155,7 +155,7 @@ class TestNumericClash:
 class TestBooleanClash:
 
     def test_is_vs_is_not_flagged(self, sm: SemanticMemory) -> None:
-        from engram.contradiction import detect_boolean_clashes
+        from verimem.contradiction import detect_boolean_clashes
         _store(sm, fid="a", prop="The build is passing", topic="ci/build")
         _store(sm, fid="b", prop="The build is not passing", topic="ci/build")
         out = detect_boolean_clashes(sm.all())
@@ -165,7 +165,7 @@ class TestBooleanClash:
     def test_two_positive_assertions_not_flagged(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.contradiction import detect_boolean_clashes
+        from verimem.contradiction import detect_boolean_clashes
         _store(sm, fid="a", prop="The build is passing", topic="ci/build")
         _store(sm, fid="b", prop="The build is fast", topic="ci/build")
         out = detect_boolean_clashes(sm.all())
@@ -174,7 +174,7 @@ class TestBooleanClash:
     def test_different_topic_not_flagged(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.contradiction import detect_boolean_clashes
+        from verimem.contradiction import detect_boolean_clashes
         _store(sm, fid="a", prop="The build is passing", topic="ci/build")
         _store(sm, fid="b", prop="The build is not passing", topic="ci/test")
         out = detect_boolean_clashes(sm.all())
@@ -191,7 +191,7 @@ class TestContradictionStore:
     def test_schema_v4_creates_contradictions_table(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.contradiction import ContradictionStore
+        from verimem.contradiction import ContradictionStore
         store = ContradictionStore(sm.db_path)
         with store._connect() as conn:
             tables = {
@@ -202,7 +202,7 @@ class TestContradictionStore:
         assert "contradictions" in tables
 
     def test_add_and_list_round_trip(self, sm: SemanticMemory) -> None:
-        from engram.contradiction import Contradiction, ContradictionStore
+        from verimem.contradiction import Contradiction, ContradictionStore
         store = ContradictionStore(sm.db_path)
         c = Contradiction(
             id="c1", fact_a_id="a", fact_b_id="b",
@@ -218,7 +218,7 @@ class TestContradictionStore:
     def test_resolve_marks_resolved_at_and_note(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.contradiction import Contradiction, ContradictionStore
+        from verimem.contradiction import Contradiction, ContradictionStore
         store = ContradictionStore(sm.db_path)
         store.add(Contradiction(
             id="c1", fact_a_id="a", fact_b_id="b",
@@ -230,7 +230,7 @@ class TestContradictionStore:
         assert unresolved == []  # no longer unresolved
 
     def test_count_unresolved(self, sm: SemanticMemory) -> None:
-        from engram.contradiction import Contradiction, ContradictionStore
+        from verimem.contradiction import Contradiction, ContradictionStore
         store = ContradictionStore(sm.db_path)
         for i in range(3):
             store.add(Contradiction(
@@ -251,7 +251,7 @@ class TestContradictionStore:
 class TestScanCorpus:
 
     def test_scan_persists_detected_pairs(self, sm: SemanticMemory) -> None:
-        from engram.contradiction import ContradictionStore, scan_corpus
+        from verimem.contradiction import ContradictionStore, scan_corpus
         _store(sm, fid="a", prop="NEXUS has 17280 tests",
                 topic="project/nexus/test-count")
         _store(sm, fid="b", prop="NEXUS has 10000 tests",
@@ -263,7 +263,7 @@ class TestScanCorpus:
 
     def test_scan_is_idempotent(self, sm: SemanticMemory) -> None:
         """Running scan twice does NOT duplicate rows for the same pair."""
-        from engram.contradiction import ContradictionStore, scan_corpus
+        from verimem.contradiction import ContradictionStore, scan_corpus
         _store(sm, fid="a", prop="NEXUS has 17280 tests",
                 topic="project/nexus/test-count")
         _store(sm, fid="b", prop="NEXUS has 10000 tests",

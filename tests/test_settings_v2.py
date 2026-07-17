@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from engram.settings_v2 import Settings, get_settings, refresh_settings
+from verimem.settings_v2 import Settings, get_settings, refresh_settings
 
 
 @pytest.fixture(autouse=True)
@@ -81,7 +81,7 @@ def test_settings_max_tokens_validation():
 
 def test_user_settings_save_invalidates_v2_cache(tmp_path, monkeypatch):
     """When the dashboard saves user_settings, Settings v2 must reflect it."""
-    from engram import settings as user_settings
+    from verimem import settings as user_settings
 
     monkeypatch.setattr(user_settings, "SETTINGS_FILE", tmp_path / "user.json")
     # Other tests may have set HIPPO_LLM_PROVIDER as a side-effect of

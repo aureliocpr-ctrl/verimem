@@ -47,7 +47,7 @@ import numpy as np
 
 
 def test_empty_episodes_yields_empty_matrix():
-    from engram.successor_repr import build_successor_matrix
+    from verimem.successor_repr import build_successor_matrix
 
     ids, M = build_successor_matrix([], gamma=0.9)
     assert ids == []
@@ -64,7 +64,7 @@ def test_linear_chain_episodes():
     future probability flows into C. The right "what-next" predictor
     is the one-step transition matrix P, not M (`predict_next` uses P).
     """
-    from engram.successor_repr import build_successor_matrix
+    from verimem.successor_repr import build_successor_matrix
 
     episodes = [
         ["A", "B", "C"],
@@ -87,7 +87,7 @@ def test_linear_chain_episodes():
 def test_gamma_zero_is_identity():
     """With γ=0 the future contributes 0 — SR collapses to (1-γ)·I = I,
     or for normalised form M[i][i] = 1, off-diagonal = 0."""
-    from engram.successor_repr import build_successor_matrix
+    from verimem.successor_repr import build_successor_matrix
 
     episodes = [["A", "B"], ["B", "C"], ["A", "C"]]
     ids, M = build_successor_matrix(episodes, gamma=0.0)
@@ -98,7 +98,7 @@ def test_gamma_zero_is_identity():
 
 def test_row_normalisation():
     """Each row of M is a probability distribution: sums to 1."""
-    from engram.successor_repr import build_successor_matrix
+    from verimem.successor_repr import build_successor_matrix
 
     episodes = [["A", "B", "C"], ["A", "C", "B"], ["B", "A", "C"]]
     _, M = build_successor_matrix(episodes, gamma=0.7)
@@ -112,7 +112,7 @@ def test_convergence_to_closed_form():
     """Iterative SR converges to the closed-form (I - γP)^(-1) up to
     a normalisation constant (the iterative variant we ship is row-
     normalised; we compare relative ordering)."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_successor_matrix,
         build_transition_matrix,
     )
@@ -143,7 +143,7 @@ def test_predict_next_skill():
     """Given a current skill, `predict_next` (using the transition
     matrix P, not the long-horizon successor matrix M) returns the
     most likely immediate next skill."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_transition_matrix,
         predict_next,
     )
@@ -158,7 +158,7 @@ def test_predict_next_skill():
 
 def test_unknown_skill_in_predict():
     """Asking the predictor for a skill it has never seen returns []."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_transition_matrix,
         predict_next,
     )

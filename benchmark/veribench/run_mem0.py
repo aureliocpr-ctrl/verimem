@@ -29,7 +29,7 @@ from benchmark import external_readpath as ext
 
 from . import mem0_adapter as mz
 from .real_axis import outcomes_for_system
-from .scoring import DEFAULT_LAMBDAS, net_score, scorecard
+from .scoring import net_score, scorecard
 
 _RESULTS = Path(__file__).resolve().parents[1] / "results"
 

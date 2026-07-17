@@ -23,7 +23,7 @@ import numpy as np
 from benchmark.calibration_bench import _auroc
 from benchmark.grounding_signal_bench import _aurc
 from benchmark.nli_grounding_bench import sample_snli
-from engram.grounding_gate import fact_grounding_score, optimal_threshold
+from verimem.grounding_gate import fact_grounding_score, optimal_threshold
 
 # SNLI integer labels
 _ENTAIL, _NEUTRAL, _CONTRA = 0, 1, 2

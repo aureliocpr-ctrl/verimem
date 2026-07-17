@@ -17,8 +17,8 @@ Contract pinned here:
 """
 from __future__ import annotations
 
-from engram.client import Memory
-from engram.relevance_floor import estimate_relevance_floor, scrambled_probes
+from verimem.client import Memory
+from verimem.relevance_floor import estimate_relevance_floor, scrambled_probes
 
 FACTS = [
     "The Eiffel Tower is a wrought-iron lattice tower in Paris, completed "
@@ -97,7 +97,7 @@ def test_empty_store_floor_is_zero(tmp_path):
 
 def test_explain_auto_resolves_floor_and_reports_it(tmp_path, monkeypatch):
     mem = _store(tmp_path)
-    from engram import relevance_floor
+    from verimem import relevance_floor
     calls = []
     monkeypatch.setattr(relevance_floor, "estimate_relevance_floor",
                         lambda sm, **kw: calls.append(1) or 0.99)

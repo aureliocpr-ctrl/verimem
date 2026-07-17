@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typer.testing import CliRunner
 
-from engram.cli import app
+from verimem.cli import app
 
 runner = CliRunner()
 

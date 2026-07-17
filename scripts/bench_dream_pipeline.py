@@ -29,8 +29,8 @@ def main() -> int:
 
     import os
     os.environ.setdefault("HIPPO_OFFLINE", "1")
-    from engram.config import CONFIG
-    from engram.dream import (
+    from verimem.config import CONFIG
+    from verimem.dream import (
         adopt_dream,
         dream_diff,
         dream_list_pending,
@@ -38,7 +38,7 @@ def main() -> int:
         propose_dream_tasks,
         submit_dream_result,
     )
-    from engram.skill import SkillLibrary
+    from verimem.skill import SkillLibrary
 
     print("# Hippo Dreams Pipeline Benchmark")
     print(f"\n_Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}_\n")

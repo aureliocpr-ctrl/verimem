@@ -10,11 +10,11 @@ supersede) remains the real protection.
 """
 from __future__ import annotations
 
-from engram.contradiction import ContradictionStore
-from engram.entity_kg import Entity, EntityStore
-from engram.entity_populate import entity_kg_path_for
-from engram.semantic import Fact, SemanticMemory
-from engram.truth_reconciliation import looks_like_conflict, reconcile_against_corpus
+from verimem.contradiction import ContradictionStore
+from verimem.entity_kg import Entity, EntityStore
+from verimem.entity_populate import entity_kg_path_for
+from verimem.semantic import Fact, SemanticMemory
+from verimem.truth_reconciliation import looks_like_conflict, reconcile_against_corpus
 
 _NOW = 1_000_000_000.0
 _DAY = 86400.0

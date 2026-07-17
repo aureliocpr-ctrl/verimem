@@ -8,7 +8,7 @@ instance's cartel_kill_v56 result into the write-gate.
 """
 from __future__ import annotations
 
-from engram.source_trust import SourceTrustBook
+from verimem.source_trust import SourceTrustBook
 
 
 def test_raw_merges_honest_but_deconfounded_does_not():

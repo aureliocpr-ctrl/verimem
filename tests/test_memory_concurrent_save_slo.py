@@ -26,14 +26,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from engram.semantic import SemanticMemory
+from verimem.semantic import SemanticMemory
 
 # Worker: open the SHARED db and store ONE fact. Exit 0 + "OK" on success.
 # embed="defer" -> same row INSERT / WAL path, no model load (see module docstring).
 _WORKER_SRC = """
 import sys
 from pathlib import Path
-from engram.semantic import SemanticMemory, Fact
+from verimem.semantic import SemanticMemory, Fact
 db, fid = sys.argv[1], sys.argv[2]
 sm = SemanticMemory(db_path=Path(db))
 sm.store(Fact(

@@ -7,13 +7,13 @@ retrieved context, does the system ANSWER correctly? This module composes that
 second stage — answer(LLM) then judge(LLM, vs gold) — with the LLM and judge
 INJECTED so:
 
-  * tests run hermetically with ``engram.llm.MockLLM`` (no network, no API key);
-  * the live run uses ``engram.llm.ClaudeCLILLM`` (``claude -p``) — subscription
+  * tests run hermetically with ``verimem.llm.MockLLM`` (no network, no API key);
+  * the live run uses ``verimem.llm.ClaudeCLILLM`` (``claude -p``) — subscription
     only, ZERO external API key (CLAUDE.md O5). Honest asterisk: our judge is
     Claude; mem0 / LongMemEval judge with GPT-4, so the absolute number is
     comparable in METHOD but not judge-identical — declared, not hidden.
 
-Discipline mirrored from ``engram.tier2_judge``: the judge only LABELS
+Discipline mirrored from ``verimem.tier2_judge``: the judge only LABELS
 correctness, and an AMBIGUOUS / unparseable verdict fails SAFE to INCORRECT — we
 never inflate accuracy on a verdict we could not read.
 """
@@ -272,7 +272,7 @@ def answer_question(
     resp = llm.complete(system, messages, model=model, max_tokens=max_tokens)
     ans = (getattr(resp, "text", "") or "").strip()
     if ans and _grounding_gate_on():
-        from engram.grounding_gate import gate_answer
+        from verimem.grounding_gate import gate_answer
         ans = gate_answer(llm, question, context, ans, model=model).answer
     return ans
 

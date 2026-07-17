@@ -8,7 +8,7 @@ peggio di nessun detector).
 """
 from __future__ import annotations
 
-from engram.prompt_injection import detect_injection
+from verimem.prompt_injection import detect_injection
 
 # ---------- veri positivi IT (prima sfuggivano) --------------------------
 

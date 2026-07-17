@@ -1,6 +1,6 @@
 """Cycle 229 (2026-05-23) — emerging skill → persistent fact registration.
 
-RED marker: ``from engram.emerging_skill_register import register_emerging_drafts_as_facts``
+RED marker: ``from verimem.emerging_skill_register import register_emerging_drafts_as_facts``
 must fail on master.
 
 Closes the discovery → persistence loop. After cycle 213 detects and
@@ -23,7 +23,7 @@ import sqlite3
 from pathlib import Path
 
 # RED MARKER
-from engram.emerging_skill_register import (
+from verimem.emerging_skill_register import (
     register_emerging_drafts_as_facts,
 )
 

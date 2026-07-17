@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.epistemic import make_proven, make_refuted
-from engram.guardian import correct_read
+from verimem.epistemic import make_proven, make_refuted
+from verimem.guardian import correct_read
 
 
 @pytest.fixture()
@@ -19,7 +19,7 @@ def mem(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
-    from engram.client import Memory
+    from verimem.client import Memory
     return Memory(tmp_path / "g.db")
 
 
@@ -72,7 +72,7 @@ def test_abstain_when_store_silent(mem):
 # uncorroborated assertion — never serve the assertion as the answer.
 
 def _store_belief(mem, text: str):
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
     f = Fact(proposition=text, topic="pets", status="user_belief")
     mem.semantic.store(f, embed="sync")
     return f

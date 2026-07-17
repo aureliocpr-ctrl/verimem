@@ -6,7 +6,7 @@ comportamento matrix/cosine/sort + memoria è identico a prescindere dal contenu
 del vettore). Misura: tempo di popolamento, cold-recall (build matrice), warm
 p50/p95, RSS del processo e delta-RSS della matrice.
 
-Hermetic: DB temporaneo, MAI ~/.engram. Standalone (come bench_recall_quality).
+Hermetic: DB temporaneo, MAI ~/.verimem. Standalone (come bench_recall_quality).
 Run: python scripts/bench_scale_recall.py
 """
 from __future__ import annotations
@@ -28,8 +28,8 @@ from pathlib import Path  # noqa: E402
 import numpy as np  # noqa: E402
 import psutil  # noqa: E402
 
-from engram import embedding as emb  # noqa: E402
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem import embedding as emb  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 DIM = 384
 _rng = np.random.default_rng(1234)

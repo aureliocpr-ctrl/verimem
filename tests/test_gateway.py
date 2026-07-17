@@ -18,7 +18,7 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from engram.gateway import GatewayKeys, create_app  # noqa: E402
+from verimem.gateway import GatewayKeys, create_app  # noqa: E402
 
 
 @pytest.fixture()
@@ -142,7 +142,7 @@ def test_explain_returns_report(gw):
 
 
 def test_gateway_min_relevance_env_parsing(monkeypatch):
-    from engram.gateway import _gateway_min_relevance
+    from verimem.gateway import _gateway_min_relevance
     monkeypatch.delenv("ENGRAM_GATEWAY_MIN_RELEVANCE", raising=False)
     assert _gateway_min_relevance() == "auto"          # abstains by default
     for val, exp in [("off", 0.0), ("none", 0.0), ("0.75", 0.75), ("garbage", "auto")]:
@@ -200,7 +200,7 @@ def test_plan_column_migration_on_pre_plan_db(tmp_path):
 
 
 def test_fact_quota_rejects_over_limit_write(tmp_path, monkeypatch):
-    from engram import gateway_plans as gp
+    from verimem import gateway_plans as gp
     tiny = gp.Plan("tiny", max_facts=1, rate_limit_per_minute=None,
                    max_document_bytes=10 * 1024 * 1024)
     monkeypatch.setitem(gp.PLANS, "tiny", tiny)                   # a 1-fact tier for the test
@@ -231,7 +231,7 @@ def test_usage_endpoint_reports_metered_line_items(tmp_path):
 
 
 def test_rate_limit_follows_the_plan(tmp_path, monkeypatch):
-    from engram import gateway_plans as gp
+    from verimem import gateway_plans as gp
     monkeypatch.setitem(gp.PLANS, "slow", gp.Plan(
         "slow", max_facts=None, rate_limit_per_minute=2,
         max_document_bytes=10 * 1024 * 1024))

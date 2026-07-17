@@ -6,7 +6,7 @@ tested here once, directly.
 """
 from __future__ import annotations
 
-from engram.quantity_match import (
+from verimem.quantity_match import (
     extract_quantities,
     norm_unit,
     numeric_conflict,

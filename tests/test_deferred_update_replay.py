@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 
-from engram.semantic import Fact, SemanticMemory, _journal_path_for
+from verimem.semantic import Fact, SemanticMemory, _journal_path_for
 
 
 def _seed(tmp_path, conf=0.5):

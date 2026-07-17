@@ -33,8 +33,8 @@ from benchmark.longmemeval_runner import (
     mrr,
     recall_at_k,
 )
-from engram.config import CONFIG
-from engram.semantic import Fact, SemanticMemory
+from verimem.config import CONFIG
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _session_keys(conversation: dict[str, Any]) -> list[str]:

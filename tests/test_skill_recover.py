@@ -6,7 +6,7 @@ heuristic changed.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 class _FakeSkillsStore:
@@ -28,7 +28,7 @@ class _FakeAgent:
 
 
 def test_unknown_returns_not_found():
-    from engram.skill_recover import recover_skill
+    from verimem.skill_recover import recover_skill
 
     a = _FakeAgent([])
     out = recover_skill(skill_id="ZZZ", agent=a)
@@ -36,7 +36,7 @@ def test_unknown_returns_not_found():
 
 
 def test_recovers_retired_to_candidate():
-    from engram.skill_recover import recover_skill
+    from verimem.skill_recover import recover_skill
 
     sk = Skill(id="x", name="x", status="retired")
     a = _FakeAgent([sk])
@@ -46,7 +46,7 @@ def test_recovers_retired_to_candidate():
 
 
 def test_non_retired_no_op():
-    from engram.skill_recover import recover_skill
+    from verimem.skill_recover import recover_skill
 
     sk = Skill(id="x", name="x", status="promoted")
     a = _FakeAgent([sk])
@@ -57,7 +57,7 @@ def test_non_retired_no_op():
 
 
 def test_dry_run_no_mutation():
-    from engram.skill_recover import recover_skill
+    from verimem.skill_recover import recover_skill
 
     sk = Skill(id="x", name="x", status="retired")
     a = _FakeAgent([sk])
@@ -68,7 +68,7 @@ def test_dry_run_no_mutation():
 
 
 def test_payload_shape_complete():
-    from engram.skill_recover import recover_skill
+    from verimem.skill_recover import recover_skill
 
     a = _FakeAgent([])
     out = recover_skill(skill_id="x", agent=a)

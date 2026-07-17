@@ -1,4 +1,4 @@
-"""Tests for `engram.selection` — Bayesian skill choice.
+"""Tests for `verimem.selection` — Bayesian skill choice.
 
 The selection primitive replaces three scattered heuristics:
   • `WakeAgent._retrieve_skills` (top-k cosine, ignores fitness)
@@ -30,9 +30,9 @@ import math
 import numpy as np
 import pytest
 
-from engram import embedding
-from engram.selection import Choice, consider_skills, select_top
-from engram.skill import Skill
+from verimem import embedding
+from verimem.selection import Choice, consider_skills, select_top
+from verimem.skill import Skill
 
 
 def _make_skill(

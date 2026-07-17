@@ -26,13 +26,13 @@ Returns:
 Deterministic: ``seed`` fixes both the synthetic-corpus matrix and
 the query vectors. Same seed → same numbers within numpy noise.
 
-RED marker: ``from engram.bench_corpus_scale import
+RED marker: ``from verimem.bench_corpus_scale import
 run_corpus_scale_bench`` must fail on master.
 """
 from __future__ import annotations
 
 # RED MARKER
-from engram.bench_corpus_scale import run_corpus_scale_bench
+from verimem.bench_corpus_scale import run_corpus_scale_bench
 
 
 class TestRunCorpusScaleBench:

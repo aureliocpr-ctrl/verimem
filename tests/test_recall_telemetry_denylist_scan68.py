@@ -14,7 +14,7 @@ HERMETIC: temp DB, zero side-effect sul DB reale.
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 # NB: emerging_skill NON e' piu' qui (e' conoscenza, gestita dallo status).
 _TELEMETRY_PREFIXES = ("bus/", "metric/", "alloc/", "lock/", "tx/", "nego/",

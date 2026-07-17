@@ -28,7 +28,7 @@ import json
 import pytest
 from mcp.types import CallToolRequest, CallToolRequestParams
 
-from engram import mcp_server
+from verimem import mcp_server
 
 # ---------------------------------------------------------------------------
 # Stub agent: hippo_remember handler only touches `a.semantic`, mock that.

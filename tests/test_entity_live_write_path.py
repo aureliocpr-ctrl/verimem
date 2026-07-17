@@ -13,7 +13,7 @@ tests pin the wiring of extract→store→link→co-occur edges into
   - idempotent on re-store of the same fact
 
 RED marker: ``entity_kg_path_for`` / ``populate_entities_for_fact`` must
-exist in engram.entity_populate and store() must populate the sibling KG.
+exist in verimem.entity_populate and store() must populate the sibling KG.
 """
 from __future__ import annotations
 
@@ -21,12 +21,12 @@ from pathlib import Path
 
 import pytest
 
-from engram.entity_kg import EntityStore
-from engram.entity_populate import (
+from verimem.entity_kg import EntityStore
+from verimem.entity_populate import (
     entity_kg_path_for,
     populate_entities_for_fact,
 )
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 # Deterministic extraction targets: module path + snake_case identifier.
 PROP = "community_detector fix shipped in engram/semantic.py via strict TDD"
@@ -122,13 +122,13 @@ def test_store_optout_env(
 def test_kg_failure_never_breaks_store(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import engram.semantic as sm_mod
+    import verimem.semantic as sm_mod
 
     def _boom(*a: object, **k: object) -> tuple[int, int]:
         raise RuntimeError("synthetic KG failure")
 
     monkeypatch.setattr(
-        "engram.entity_populate.populate_entities_for_fact", _boom,
+        "verimem.entity_populate.populate_entities_for_fact", _boom,
     )
     mem = _mem(tmp_path)
     f = Fact(proposition=PROP, topic="project/engram")

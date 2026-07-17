@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram import embedding, semantic
+from verimem import embedding, semantic
 
 
 def test_byte_filter_tracks_runtime_model_switch(monkeypatch):
@@ -38,7 +38,7 @@ def test_byte_filter_seen_live_by_from_import_consumers(monkeypatch):
     # memory.py / skill.py do `from .semantic import _EXPECTED_EMBEDDING_BYTES`
     # INSIDE their query methods on every call -> that path must see live too
     monkeypatch.setattr(embedding, "expected_embedding_bytes", lambda: 7777)
-    from engram.semantic import _EXPECTED_EMBEDDING_BYTES as v  # noqa: PLC0415
+    from verimem.semantic import _EXPECTED_EMBEDDING_BYTES as v  # noqa: PLC0415
 
     assert v == 7777
 

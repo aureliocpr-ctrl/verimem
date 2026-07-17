@@ -3,8 +3,8 @@ catches paraphrase/antonym value-conflicts (recall) AND rejects same-entity comp
 facts (precision). Hermetic — a stub RelationJudge, no model load, no LLM."""
 from __future__ import annotations
 
-from engram.semantic_conflict import Relation
-from engram.truth_reconciliation import _is_conflict, looks_like_conflict
+from verimem.semantic_conflict import Relation
+from verimem.truth_reconciliation import _is_conflict, looks_like_conflict
 
 
 class _StubJudge:

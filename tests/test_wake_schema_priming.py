@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.wake import WakeAgent
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.wake import WakeAgent
 
 
 def _build(tmp_path: Path) -> WakeAgent:

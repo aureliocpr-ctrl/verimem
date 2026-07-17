@@ -1,11 +1,11 @@
 """FORGIA pezzo #265 — Wave 64: find untested skills (trials==0)."""
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_returns_empty():
-    from engram.skills_untested import find_untested_skills
+    from verimem.skills_untested import find_untested_skills
 
     out = find_untested_skills([])
     assert out["skills"] == []
@@ -13,7 +13,7 @@ def test_empty_returns_empty():
 
 
 def test_finds_zero_trials():
-    from engram.skills_untested import find_untested_skills
+    from verimem.skills_untested import find_untested_skills
 
     skills = [
         Skill(id="new", trials=0, successes=0),
@@ -25,7 +25,7 @@ def test_finds_zero_trials():
 
 
 def test_status_filter():
-    from engram.skills_untested import find_untested_skills
+    from verimem.skills_untested import find_untested_skills
 
     skills = [
         Skill(id="c", trials=0, status="candidate"),
@@ -36,7 +36,7 @@ def test_status_filter():
 
 
 def test_payload_shape():
-    from engram.skills_untested import find_untested_skills
+    from verimem.skills_untested import find_untested_skills
 
     out = find_untested_skills([])
     assert "skills" in out and "n_total" in out

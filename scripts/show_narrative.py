@@ -1,6 +1,6 @@
 """Cycle 201 (2026-05-23) — ASCII narrative visualiser.
 
-Standalone script that calls ``engram.temporal_narrative.reconstruct_narrative``
+Standalone script that calls ``verimem.temporal_narrative.reconstruct_narrative``
 (cycle 193) and prints the result as an ASCII timeline.
 
 Run:
@@ -100,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 3
 
-    from engram.temporal_narrative import reconstruct_narrative
+    from verimem.temporal_narrative import reconstruct_narrative
     entries = reconstruct_narrative(
         db, seed_fact_id=full_id, window_days=window_days,
     )

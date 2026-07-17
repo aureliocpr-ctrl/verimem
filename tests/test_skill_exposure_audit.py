@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from engram.skill_exposure_audit import audit_candidate_exposure
+from verimem.skill_exposure_audit import audit_candidate_exposure
 
 
 def _ep(eid: str, vec: list[float]) -> dict:
@@ -117,7 +117,7 @@ def test_zero_vector_does_not_crash() -> None:
 
 def test_select_invisible_for_retire_filters_correctly() -> None:
     """Selezione retire: solo invisible + old + zero-trials."""
-    from engram.skill_exposure_audit import select_invisible_for_retire
+    from verimem.skill_exposure_audit import select_invisible_for_retire
 
     # Fingo un audit_result manuale
     audit_result = {
@@ -176,7 +176,7 @@ def test_invisible_all_contains_every_invisible_not_just_50() -> None:
 
 def test_select_invisible_respects_require_zero_trials_off() -> None:
     """Se require_zero_trials=False, anche candidate con trials>0 entrano."""
-    from engram.skill_exposure_audit import select_invisible_for_retire
+    from verimem.skill_exposure_audit import select_invisible_for_retire
 
     audit_result = {
         "least_exposed": [

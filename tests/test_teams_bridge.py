@@ -24,9 +24,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import SemanticMemory
-from engram.teams.bridge import mirror_message
-from engram.teams.inbox import InboxMessage
+from verimem.semantic import SemanticMemory
+from verimem.teams.bridge import mirror_message
+from verimem.teams.inbox import InboxMessage
 
 
 @pytest.fixture

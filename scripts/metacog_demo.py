@@ -9,7 +9,7 @@ Run: python scripts/metacog_demo.py
 """
 from __future__ import annotations
 
-from engram.metacognition import assess_recall_confidence
+from verimem.metacognition import assess_recall_confidence
 
 
 def fmt(name: str, results: list[dict]) -> None:

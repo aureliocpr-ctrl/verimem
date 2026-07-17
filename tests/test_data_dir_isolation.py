@@ -18,7 +18,7 @@ import pytest
 
 def test_episodic_memory_respects_data_dir(tmp_path: Path):
     """EpisodicMemory(db_path=...) must put its DB exactly there."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
     db = tmp_path / "ep" / "ep.db"
     mem = EpisodicMemory(db_path=db)
     assert mem.db_path == db
@@ -26,7 +26,7 @@ def test_episodic_memory_respects_data_dir(tmp_path: Path):
 
 
 def test_skill_library_respects_dirs(tmp_path: Path):
-    from engram.skill import SkillLibrary
+    from verimem.skill import SkillLibrary
     skills_dir = tmp_path / "skills"
     db = skills_dir / "idx.db"
     lib = SkillLibrary(dir_path=skills_dir, db_path=db)
@@ -37,7 +37,7 @@ def test_skill_library_respects_dirs(tmp_path: Path):
 
 
 def test_semantic_memory_respects_db_path(tmp_path: Path):
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     db = tmp_path / "sem" / "sem.db"
     sem = SemanticMemory(db_path=db)
     # SemanticMemory may name the field differently; tolerate both.
@@ -58,7 +58,7 @@ def test_data_dir_is_resolved_from_env_in_subprocess(tmp_path):
     proc = subprocess.run(
         [sys.executable, "-c",
          "import json, sys; "
-         "from engram.config import CONFIG; "
+         "from verimem.config import CONFIG; "
          "print(json.dumps({"
          "'data_dir': str(CONFIG.data_dir),"
          "'episodes_db': str(CONFIG.episodes_db),"

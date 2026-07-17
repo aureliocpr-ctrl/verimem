@@ -50,7 +50,7 @@ def _admitted_clean(status: str) -> bool:
 
 def evaluate(items: list[dict[str, Any]], *, db_path: Path | None = None
              ) -> dict[str, Any]:
-    from engram.client import Memory
+    from verimem.client import Memory
     if db_path is None:
         db_path = Path(tempfile.mkdtemp()) / "redteam.db"
     mem = Memory(db_path)

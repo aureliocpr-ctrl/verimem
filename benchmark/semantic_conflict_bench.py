@@ -2,7 +2,7 @@
 
 Labeled pairs across 5 cases. Measures, per case, whether the LEXICAL stack
 (coherence_check numeric/boolean clash + looks_like_conflict + facts_conflict) and
-the new SEMANTIC detector (engram.semantic_conflict, NLI judge) fire — and the
+the new SEMANTIC detector (verimem.semantic_conflict, NLI judge) fire — and the
 cosine (to prove the hard cases ARE detectable in principle).
 
 Key number: case A (conflict where WORDS differ but MEANING conflicts, no number /
@@ -21,12 +21,12 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from engram.coherence_check import check_against_siblings
-from engram.contradiction import _cosine
-from engram.facts_conflict import find_conflicting_pairs
-from engram.semantic import Fact
-from engram.semantic_conflict import detect_semantic_conflicts
-from engram.truth_reconciliation import looks_like_conflict
+from verimem.coherence_check import check_against_siblings
+from verimem.contradiction import _cosine
+from verimem.facts_conflict import find_conflicting_pairs
+from verimem.semantic import Fact
+from verimem.semantic_conflict import detect_semantic_conflicts
+from verimem.truth_reconciliation import looks_like_conflict
 
 # (a, b, case). A=semantic conflict (hard), B=numeric, C=negation,
 # D=paraphrase-duplicate (not a conflict), E=complementary (not a conflict).
@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.semantic_conflict import LLMRelationJudge
+    from verimem.semantic_conflict import LLMRelationJudge
 
     judge = LLMRelationJudge(LeanClaudeCLILLM(model=args.model, timeout_s=60))
     res = run(judge, min_cosine=args.min_cosine)

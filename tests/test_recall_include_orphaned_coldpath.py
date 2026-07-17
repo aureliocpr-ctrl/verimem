@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import sqlite3
 
-import engram.semantic as S
-from engram.semantic import Fact, SemanticMemory
+import verimem.semantic as S
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _ids(res):

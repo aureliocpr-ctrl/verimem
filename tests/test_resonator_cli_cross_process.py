@@ -35,7 +35,7 @@ def test_cli_cross_process_n10_recall_above_70pct(tmp_path) -> None:
     for txt in facts:
         r = subprocess.run(
             [
-                sys.executable, "-m", "engram.resonator_cli",
+                sys.executable, "-m", "verimem.resonator_cli",
                 "--state-path", str(state),
                 "--index-path", str(index),
                 "remember", txt,
@@ -48,7 +48,7 @@ def test_cli_cross_process_n10_recall_above_70pct(tmp_path) -> None:
 
     r = subprocess.run(
         [
-            sys.executable, "-m", "engram.resonator_cli",
+            sys.executable, "-m", "verimem.resonator_cli",
             "--state-path", str(state),
             "--index-path", str(index),
             "recall",

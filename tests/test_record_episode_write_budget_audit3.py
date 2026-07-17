@@ -10,8 +10,8 @@ from __future__ import annotations
 import json
 import time
 
-import engram.mcp_server as ms
-import engram.semantic as sem
+import verimem.mcp_server as ms
+import verimem.semantic as sem
 
 
 class _SlowMem:

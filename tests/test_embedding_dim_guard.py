@@ -16,7 +16,7 @@ RED marker: pre-fix Config(model=MiniLM, dim unset).embedding_dim == 768.
 """
 from __future__ import annotations
 
-import engram.config as cfg
+import verimem.config as cfg
 
 _MINILM = "sentence-transformers/all-MiniLM-L6-v2"   # 384-dim
 _E5_BASE = "intfloat/multilingual-e5-base"           # 768-dim (default)

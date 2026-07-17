@@ -29,8 +29,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.anti_confab_gate import run_validation_gate
-from engram.semantic import Fact, SemanticMemory
+from verimem.anti_confab_gate import run_validation_gate
+from verimem.semantic import Fact, SemanticMemory
 
 
 class _AgentShim:

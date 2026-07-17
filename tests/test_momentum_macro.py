@@ -18,7 +18,7 @@ RED marker: the function does not exist yet.
 """
 from __future__ import annotations
 
-from engram.momentum_macro import momentum_macro_candidate
+from verimem.momentum_macro import momentum_macro_candidate
 
 
 def _recall(skill_id, name, score, plans):
@@ -96,7 +96,7 @@ def test_empty_is_safe():
 
 from dataclasses import dataclass, field  # noqa: E402
 
-from engram.skill import Skill  # noqa: E402
+from verimem.skill import Skill  # noqa: E402
 
 
 @dataclass
@@ -138,14 +138,14 @@ class _FakeAgent:
 
 
 def test_recall_chain_exposes_momentum_field_always():
-    from engram.recall_chain import recall_chain
+    from verimem.recall_chain import recall_chain
     out = recall_chain(task="x", agent=_FakeAgent([], []))
     assert "momentum" in out, "recall_chain must always expose the momentum field"
     assert out["momentum"]["has_candidate"] is False
 
 
 def test_recall_chain_momentum_fires_on_a_real_chain():
-    from engram.recall_chain import recall_chain
+    from verimem.recall_chain import recall_chain
     skills = [Skill(id="A", name="alpha skill"), Skill(id="B", name="beta skill")]
     eps = [_FakeEp(["A", "B"])] * 5  # A->B is deterministic (P[A,B]=1.0, no smoothing)
     out = recall_chain(task="alpha", agent=_FakeAgent(skills, eps))

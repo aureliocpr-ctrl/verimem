@@ -16,8 +16,8 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
-from engram.semantic import SemanticMemory
+from verimem import mcp_server
+from verimem.semantic import SemanticMemory
 
 
 class _StubLLM:
@@ -105,7 +105,7 @@ def _stored_by_prop(sm, prop):  # noqa: ANN001, ANN202
 
 @pytest.mark.asyncio
 async def test_derivation_autodetect_on_id_mention(wired, monkeypatch) -> None:  # noqa: ANN001
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
     sm, _stub = wired
     monkeypatch.delenv("ENGRAM_GROUNDING_WRITE", raising=False)
     monkeypatch.setenv("ENGRAM_DERIVATION_AUTODETECT", "1")
@@ -121,7 +121,7 @@ async def test_derivation_autodetect_on_id_mention(wired, monkeypatch) -> None: 
 
 @pytest.mark.asyncio
 async def test_derivation_autodetect_off_by_default(wired, monkeypatch) -> None:  # noqa: ANN001
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
     sm, _stub = wired
     monkeypatch.delenv("ENGRAM_GROUNDING_WRITE", raising=False)
     monkeypatch.delenv("ENGRAM_DERIVATION_AUTODETECT", raising=False)

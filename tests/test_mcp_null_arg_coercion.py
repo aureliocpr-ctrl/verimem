@@ -8,7 +8,7 @@ this pins that 0 / 0.0 / False / "" / [] are KEPT.
 """
 from __future__ import annotations
 
-from engram import mcp_server
+from verimem import mcp_server
 
 
 def test_drop_none_args_removes_only_none():

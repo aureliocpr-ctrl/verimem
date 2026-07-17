@@ -16,8 +16,8 @@ import time
 
 import pytest
 
-from engram import semantic
-from engram.client import Memory
+from verimem import semantic
+from verimem.client import Memory
 
 FACTS = [
     "The Eiffel Tower is a wrought-iron lattice tower in Paris.",

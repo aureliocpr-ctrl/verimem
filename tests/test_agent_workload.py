@@ -23,13 +23,13 @@ class _Ep:
 
 
 def test_empty_returns_no_load():
-    from engram.agent_workload import compute_workload
+    from verimem.agent_workload import compute_workload
     out = compute_workload(facts=[], episodes=[])
     assert out["per_agent"] == []
 
 
 def test_facts_attributed_by_agent_prefix():
-    from engram.agent_workload import compute_workload
+    from verimem.agent_workload import compute_workload
     facts = [
         _Fact("f1", "agent:A/x"),
         _Fact("f2", "agent:A/y"),
@@ -43,7 +43,7 @@ def test_facts_attributed_by_agent_prefix():
 
 
 def test_top_loaded_agent_first():
-    from engram.agent_workload import compute_workload
+    from verimem.agent_workload import compute_workload
     facts = [
         _Fact("f1", "agent:A/x"),
         _Fact("f2", "agent:A/y"),
@@ -56,7 +56,7 @@ def test_top_loaded_agent_first():
 
 
 def test_imbalance_score():
-    from engram.agent_workload import compute_workload
+    from verimem.agent_workload import compute_workload
     facts = [
         _Fact("f1", "agent:A/x"),
         _Fact("f2", "agent:A/y"),
@@ -69,14 +69,14 @@ def test_imbalance_score():
 
 
 def test_payload_shape():
-    from engram.agent_workload import compute_workload
+    from verimem.agent_workload import compute_workload
     out = compute_workload(facts=[], episodes=[])
     for k in ("per_agent", "imbalance", "n_agents"):
         assert k in out
 
 
 def test_perfect_balance_low_imbalance():
-    from engram.agent_workload import compute_workload
+    from verimem.agent_workload import compute_workload
     facts = [
         _Fact("f1", "agent:A/x"),
         _Fact("f2", "agent:B/x"),

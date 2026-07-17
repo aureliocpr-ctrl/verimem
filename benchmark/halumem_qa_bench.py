@@ -84,7 +84,7 @@ def main(argv=None) -> int:
 
     from benchmark.qa_eval import answer_question
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     rng = random.Random(a.seed)
     users = []

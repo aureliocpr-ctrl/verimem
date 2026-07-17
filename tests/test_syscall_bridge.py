@@ -30,7 +30,7 @@ def _vec_bus_available() -> bool:
 def test_engram_invoke_blocks_hallucinated_op(tmp_path: Path,
                                                 monkeypatch) -> None:
     """Falsifiable contract (a): op not in manifest → blocked."""
-    from engram import syscall_bridge
+    from verimem import syscall_bridge
     # Redirect audit log to tmp
     audit_path = tmp_path / "audit.jsonl"
     monkeypatch.setattr(syscall_bridge, "ENGRAM_AUDIT_LOG", audit_path)
@@ -55,7 +55,7 @@ def test_engram_invoke_rate_limit_triggers(tmp_path: Path,
     """Falsifiable contract (c): >limit calls/sec → blocked."""
     if not _vec_bus_available():
         pytest.skip("vec_bus not available")
-    from engram import syscall_bridge
+    from verimem import syscall_bridge
     audit_path = tmp_path / "audit.jsonl"
     monkeypatch.setattr(syscall_bridge, "ENGRAM_AUDIT_LOG", audit_path)
     # Reset rate buckets
@@ -91,7 +91,7 @@ def test_engram_invoke_rate_limit_triggers(tmp_path: Path,
 def test_engram_invoke_handler_exception_blocked(tmp_path: Path,
                                                    monkeypatch) -> None:
     """Falsifiable contract (d): handler raises → blocked_by='exception'."""
-    from engram import syscall_bridge
+    from verimem import syscall_bridge
     audit_path = tmp_path / "audit.jsonl"
     monkeypatch.setattr(syscall_bridge, "ENGRAM_AUDIT_LOG", audit_path)
     syscall_bridge._RATE_BUCKETS.clear()
@@ -118,7 +118,7 @@ def test_engram_invoke_real_recall_success(tmp_path: Path,
     """Falsifiable contract (b): real recall op → ok + audited."""
     if not _vec_bus_available():
         pytest.skip("vec_bus not available")
-    from engram import syscall_bridge
+    from verimem import syscall_bridge
     audit_path = tmp_path / "audit.jsonl"
     monkeypatch.setattr(syscall_bridge, "ENGRAM_AUDIT_LOG", audit_path)
     syscall_bridge._RATE_BUCKETS.clear()
@@ -170,7 +170,7 @@ def test_engram_invoke_real_recall_success(tmp_path: Path,
 
 def test_engram_available_ops_manifest_introspection() -> None:
     """Manifest is introspectable for cross-LLM planning (anti-hallucination)."""
-    from engram import syscall_bridge
+    from verimem import syscall_bridge
     ops = syscall_bridge.engram_available_ops()
     assert isinstance(ops, list)
     assert "recall" in ops

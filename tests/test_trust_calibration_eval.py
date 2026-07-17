@@ -8,9 +8,9 @@ property did NOT hold, the harness would be measuring noise.
 """
 from __future__ import annotations
 
-from engram.contradiction import ContradictionStore
-from engram.semantic import SemanticMemory
-from engram.trust_calibration_eval import (
+from verimem.contradiction import ContradictionStore
+from verimem.semantic import SemanticMemory
+from verimem.trust_calibration_eval import (
     evaluate_calibration,
     make_calibration_dataset,
     register_contradictions,

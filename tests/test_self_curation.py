@@ -30,8 +30,8 @@ from pathlib import Path
 
 import pytest
 
-from engram.contradiction import Contradiction, ContradictionStore
-from engram.semantic import Fact, SemanticMemory
+from verimem.contradiction import Contradiction, ContradictionStore
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -69,7 +69,7 @@ class TestClassifyContradictionsPureFunction:
     def test_safe_supersede_when_one_side_superseded(
         self, sm: SemanticMemory, store: ContradictionStore,
     ) -> None:
-        from engram.self_curation import classify_contradiction
+        from verimem.self_curation import classify_contradiction
         a = Fact(id="a", proposition="X is 5MB", topic="t", confidence=0.9,
                  status="model_claim", superseded_by="z", superseded_at=time.time())
         b = Fact(id="b", proposition="X is 50MB", topic="t", confidence=0.9,
@@ -82,7 +82,7 @@ class TestClassifyContradictionsPureFunction:
     def test_fp_likely_when_both_high_conf_recent_boolean(
         self, sm: SemanticMemory, store: ContradictionStore,
     ) -> None:
-        from engram.self_curation import classify_contradiction
+        from verimem.self_curation import classify_contradiction
         now = time.time()
         a = _store(sm, "a", "STRENGTHS: project does X well",
                    conf=0.98, created_at=now)
@@ -95,7 +95,7 @@ class TestClassifyContradictionsPureFunction:
     def test_newer_wins_when_age_and_conf_deltas_strong(
         self, sm: SemanticMemory, store: ContradictionStore,
     ) -> None:
-        from engram.self_curation import classify_contradiction
+        from verimem.self_curation import classify_contradiction
         now = time.time()
         a = _store(sm, "a", "X has 5MB total", conf=0.5,
                    created_at=now - 90 * 86400)
@@ -107,7 +107,7 @@ class TestClassifyContradictionsPureFunction:
     def test_ambiguous_otherwise(
         self, sm: SemanticMemory, store: ContradictionStore,
     ) -> None:
-        from engram.self_curation import classify_contradiction
+        from verimem.self_curation import classify_contradiction
         a = _store(sm, "a", "X is 5MB", conf=0.9)
         b = _store(sm, "b", "X is 50MB", conf=0.9)
         c = _record(store, "a", "b", kind="numeric_clash", sim=0.9)
@@ -122,7 +122,7 @@ class TestAutoResolveFalsePositives:
     def test_resolves_fp_likely_only(
         self, sm: SemanticMemory, store: ContradictionStore,
     ) -> None:
-        from engram.self_curation import auto_resolve_false_positives
+        from verimem.self_curation import auto_resolve_false_positives
         now = time.time()
         # FP_LIKELY pair
         a = _store(sm, "a-fp", "STRENGTHS section A1", conf=0.98, created_at=now)
@@ -146,7 +146,7 @@ class TestAutoResolveFalsePositives:
     def test_returns_zero_on_empty_store(
         self, sm: SemanticMemory, store: ContradictionStore,
     ) -> None:
-        from engram.self_curation import auto_resolve_false_positives
+        from verimem.self_curation import auto_resolve_false_positives
         report = auto_resolve_false_positives(sm, store)
         assert report["resolved"] == 0
         assert report["skipped"] == 0
@@ -158,7 +158,7 @@ class TestAutoResolveFalsePositives:
         """The resolved row must carry a distinguishable note so a
         human reviewer can later filter auto-resolutions from manual
         ones."""
-        from engram.self_curation import auto_resolve_false_positives
+        from verimem.self_curation import auto_resolve_false_positives
         now = time.time()
         a = _store(sm, "a", "VERDICT: prototype solid", conf=0.95, created_at=now)
         b = _store(sm, "b", "WEAKNESS: not yet production", conf=0.95, created_at=now)
@@ -176,7 +176,7 @@ class TestAutoResolveFalsePositives:
     ) -> None:
         """If either fact_a or fact_b no longer exists in SemanticMemory,
         the contradiction is skipped (cannot classify safely)."""
-        from engram.self_curation import auto_resolve_false_positives
+        from verimem.self_curation import auto_resolve_false_positives
         # Record a contradiction whose facts were deleted/never existed.
         c = _record(store, "missing-a", "missing-b")
         report = auto_resolve_false_positives(sm, store)
@@ -193,7 +193,7 @@ class TestAuditOnly:
     def test_audit_reports_counts(
         self, sm: SemanticMemory, store: ContradictionStore,
     ) -> None:
-        from engram.self_curation import audit_contradictions
+        from verimem.self_curation import audit_contradictions
         now = time.time()
         # FP_LIKELY
         _store(sm, "a1", "STRENGTHS X", conf=0.98, created_at=now)
@@ -212,7 +212,7 @@ class TestAuditOnly:
     def test_audit_does_not_mutate(
         self, sm: SemanticMemory, store: ContradictionStore,
     ) -> None:
-        from engram.self_curation import audit_contradictions
+        from verimem.self_curation import audit_contradictions
         now = time.time()
         _store(sm, "a", "STRENGTHS X", conf=0.98, created_at=now)
         _store(sm, "b", "WEAKNESS Y", conf=0.98, created_at=now)

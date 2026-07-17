@@ -11,9 +11,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram import mcp_server
-from engram.scope import scoped_topic
-from engram.semantic import Fact, SemanticMemory
+from verimem import mcp_server
+from verimem.scope import scoped_topic
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _agent_with(sm):

@@ -4,7 +4,7 @@ interventional evidence.
 """
 from __future__ import annotations
 
-from engram.fact_type import (
+from verimem.fact_type import (
     DERIVED,
     INTERVENTIONAL,
     OBSERVATIONAL,

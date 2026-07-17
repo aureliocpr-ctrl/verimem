@@ -14,12 +14,12 @@ Hermetic: the LLM is injected (stub here) — no network, no claude -p.
 """
 from __future__ import annotations
 
-from engram.conversation_ingest import (
+from verimem.conversation_ingest import (
     ATOMIC_EXTRACT_SYSTEM,
     ingest_conversation,
     parse_extracted_lines,
 )
-from engram.semantic import SemanticMemory
+from verimem.semantic import SemanticMemory
 
 
 class _StubLLM:
@@ -136,7 +136,7 @@ def test_bench_prompt_is_the_product_prompt() -> None:
 
 
 def test_consolidate_merges_and_drops(monkeypatch) -> None:
-    from engram.conversation_ingest import consolidate_facts
+    from verimem.conversation_ingest import consolidate_facts
     cleaned = "Martin Mark works as a nurse in Berlin\nMartin Mark adopted a puppy"
     llm = _StubLLM(cleaned)
     out = consolidate_facts(
@@ -147,7 +147,7 @@ def test_consolidate_merges_and_drops(monkeypatch) -> None:
 
 
 def test_consolidate_failsafe_returns_original_on_error() -> None:
-    from engram.conversation_ingest import consolidate_facts
+    from verimem.conversation_ingest import consolidate_facts
 
     class _Boom:
         def complete(self, *a, **k):
@@ -158,7 +158,7 @@ def test_consolidate_failsafe_returns_original_on_error() -> None:
 
 
 def test_consolidate_empty_pass_keeps_original() -> None:
-    from engram.conversation_ingest import consolidate_facts
+    from verimem.conversation_ingest import consolidate_facts
     orig = ["Martin Mark is a nurse"]
     assert consolidate_facts(orig, llm=_StubLLM("")) == orig
 
@@ -215,7 +215,7 @@ def test_ingest_consolidate_false_single_pass(tmp_path) -> None:
 # --- gap-fill completeness pass (recall lever toward F1 > 0.80) ---
 
 def test_gapfill_returns_only_missing_facts() -> None:
-    from engram.conversation_ingest import gapfill_facts
+    from verimem.conversation_ingest import gapfill_facts
     # the pass names two facts; one is already present -> only the NEW one is added
     llm = _StubLLM("Martin Mark works as a nurse in Berlin\n"
                    "Martin Mark has a sister called Ada")
@@ -227,7 +227,7 @@ def test_gapfill_returns_only_missing_facts() -> None:
 
 
 def test_gapfill_failsafe_returns_empty_on_error() -> None:
-    from engram.conversation_ingest import gapfill_facts
+    from verimem.conversation_ingest import gapfill_facts
 
     class _Boom:
         def complete(self, *a, **k):
@@ -268,7 +268,7 @@ def test_extract_prompts_forbid_out_of_text_names() -> None:
     the subject to names present in the text (fallback 'The user') and forbid
     outside names. Live A/B of the fix: anonymous -> 'The user ...', named ->
     'Johnson Joseph ...', zero leak (2026-07-06)."""
-    from engram.conversation_ingest import (
+    from verimem.conversation_ingest import (
         ATOMIC_EXTRACT_SYSTEM,
         CONSOLIDATE_SYSTEM,
     )

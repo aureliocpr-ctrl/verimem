@@ -9,7 +9,7 @@ catastrophic bug: 108 facts written by ``clp save`` had
 ``np.stack(...)`` crashed with "all input arrays must have the same
 shape" — killing every ``hippo_facts_recall`` for ~29 hours.
 
-The write-side fix landed in ``clp.engram.compute_embedding_blob``.
+The write-side fix landed in ``clp.verimem.compute_embedding_blob``.
 The read-side belt-and-braces guard was attempted in semantic.py via
 a Python ``deserialize → filter`` loop, but that loop added a per-row
 Python cost that pushed cycle 135 ``recall`` p50(2000)/p50(500) from
@@ -31,7 +31,7 @@ the BLOB before it touches Python — zero per-row deserialize cost,
 zero stack call on ragged arrays.
 
 Constant: 1536 = 384 dim × 4 bytes (float32). Verified empirically
-on this branch (``engram.embedding.encode("test").shape == (384,)``,
+on this branch (``verimem.embedding.encode("test").shape == (384,)``,
 ``serialize(...).__len__() == 1536``).
 """
 from __future__ import annotations
@@ -43,8 +43,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from engram import embedding
-from engram.semantic import Fact, SemanticMemory
+from verimem import embedding
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _inject_malformed_row(

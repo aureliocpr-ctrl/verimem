@@ -4,7 +4,7 @@ di esistenza (cleanup_pool.remove) -> un forget di un fatto mai memorizzato sott
 bound mai aggiunto -> drift permanente dello stato HRR. Test HERMETIC (in-memory, no DB)."""
 from __future__ import annotations
 
-from engram.holographic_memory import HolographicMemory
+from verimem.holographic_memory import HolographicMemory
 
 
 def test_forget_nonexistent_does_not_corrupt_aggregate():

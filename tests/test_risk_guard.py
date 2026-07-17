@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import types
 
-from engram.risk_guard import assess_task_risk
+from verimem.risk_guard import assess_task_risk
 
 _TASK = "deploy the auth service to production"
 _SIM = "deploy auth service production"  # Jaccard 4/6 = 0.67 >= 0.3 threshold
@@ -94,7 +94,7 @@ class _FakeAgent:
 
 
 def test_get_briefing_wires_risk_guard_and_marks_summary():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     eps = [_ep(_SIM, "failure") for _ in range(4)]
     out = get_briefing(agent=_FakeAgent(eps), task_text=_TASK)
     assert "risk_guard" in out, "briefing must expose the risk_guard field (wiring)"
@@ -103,7 +103,7 @@ def test_get_briefing_wires_risk_guard_and_marks_summary():
 
 
 def test_get_briefing_risk_guard_absent_is_safe():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     out = get_briefing(agent=_FakeAgent([]), task_text=None)
     assert "risk_guard" in out
     assert out["risk_guard"]["is_risky"] is False

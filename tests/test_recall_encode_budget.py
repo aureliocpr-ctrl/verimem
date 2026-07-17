@@ -17,9 +17,9 @@ import time
 import numpy as np
 import pytest
 
-import engram.semantic as sem
-from engram.config import CONFIG
-from engram.semantic import Fact, SemanticMemory
+import verimem.semantic as sem
+from verimem.config import CONFIG
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _seed(sm):

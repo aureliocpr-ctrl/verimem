@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_tested_detector import (
+from verimem.l1_tested_detector import (
     VerificationClaimWarning,
     detect_unsupported_tested_claim,
 )
@@ -66,7 +66,7 @@ class TestEvidenceSuppression:
 
 class TestGateWire:
     def test_l115_wired(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Code well-tested",
             verified_by=[],
@@ -78,7 +78,7 @@ class TestGateWire:
         assert "L1.15" in layers
 
     def test_l115_evidence_suppress(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Module validated",
             verified_by=["pytest:test_module_PASS", "ci:main:green"],

@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.config import CONFIG, _data_root, _project_root
+from verimem.config import CONFIG, _data_root, _project_root
 
 
 def test_no_env_falls_back_to_home_engram(monkeypatch):
@@ -39,7 +39,7 @@ def test_no_env_falls_back_to_home_engram(monkeypatch):
     # with the dashboard/auth resolver. Must agree with _compat by construction.
     monkeypatch.delenv("HIPPO_DATA_DIR", raising=False)
     monkeypatch.delenv("ENGRAM_DATA_DIR", raising=False)
-    from engram._compat import data_dir as compat_data_dir
+    from verimem._compat import data_dir as compat_data_dir
     root = _data_root()
     assert root == compat_data_dir()
     assert root != _project_root() / "data"

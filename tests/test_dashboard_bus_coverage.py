@@ -31,7 +31,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram.observability import BUS
+from verimem.observability import BUS
 
 
 def _collect_events(name_glob: str | None = None) -> list[tuple[str, dict[str, Any]]]:
@@ -62,7 +62,7 @@ class TestHippoRememberEmitsFactStored:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         fake_sm = MagicMock()
         fake_sm.store = MagicMock(return_value=False)  # was_replaced=False
@@ -110,7 +110,7 @@ class TestAuditEmitsToolCallEvent:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram.mcp_server import _REQUEST_START_NS, _audit
+        from verimem.mcp_server import _REQUEST_START_NS, _audit
 
         captured: list[tuple[str, dict[str, Any]]] = []
         BUS.subscribe(
@@ -157,7 +157,7 @@ class TestAntiConfabL1EmitsWarning:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         fake_sm = MagicMock()
         fake_sm.store = MagicMock(return_value=False)

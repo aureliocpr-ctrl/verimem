@@ -1,18 +1,18 @@
 """FORGIA pezzo #273 — Wave 72: last N skills by created_at."""
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty():
-    from engram.skill_recent import skills_recent
+    from verimem.skill_recent import skills_recent
 
     out = skills_recent([])
     assert out["skills"] == []
 
 
 def test_newest_first():
-    from engram.skill_recent import skills_recent
+    from verimem.skill_recent import skills_recent
 
     skills = [
         Skill(id="old", created_at=100.0),
@@ -25,7 +25,7 @@ def test_newest_first():
 
 
 def test_top_k():
-    from engram.skill_recent import skills_recent
+    from verimem.skill_recent import skills_recent
 
     skills = [Skill(id=f"s{i}", created_at=float(i)) for i in range(10)]
     out = skills_recent(skills, top_k=3)
@@ -33,7 +33,7 @@ def test_top_k():
 
 
 def test_status_filter():
-    from engram.skill_recent import skills_recent
+    from verimem.skill_recent import skills_recent
 
     skills = [
         Skill(id="c", status="candidate", created_at=100),
@@ -44,7 +44,7 @@ def test_status_filter():
 
 
 def test_payload_shape():
-    from engram.skill_recent import skills_recent
+    from verimem.skill_recent import skills_recent
 
     out = skills_recent([])
     for k in ("skills", "n_total"):

@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 
 def test_iso_day_formats_and_guards() -> None:

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -72,7 +72,7 @@ class _FakeAgent:
 
 
 def test_dry_run_no_mutations():
-    from engram.curate_pipeline import curate_pipeline
+    from verimem.curate_pipeline import curate_pipeline
 
     skills = [
         Skill(id="ready", name="ready", trials=20, successes=18,
@@ -87,7 +87,7 @@ def test_dry_run_no_mutations():
 
 
 def test_returns_all_sections():
-    from engram.curate_pipeline import curate_pipeline
+    from verimem.curate_pipeline import curate_pipeline
 
     a = _FakeAgent([], [])
     out = curate_pipeline(agent=a, apply=False)
@@ -97,7 +97,7 @@ def test_returns_all_sections():
 
 
 def test_apply_mode_persists_changes():
-    from engram.curate_pipeline import curate_pipeline
+    from verimem.curate_pipeline import curate_pipeline
 
     skills = [
         Skill(id="ready", name="ready", trials=20, successes=18,
@@ -112,7 +112,7 @@ def test_apply_mode_persists_changes():
 
 
 def test_summary_string_present():
-    from engram.curate_pipeline import curate_pipeline
+    from verimem.curate_pipeline import curate_pipeline
 
     a = _FakeAgent([], [])
     out = curate_pipeline(agent=a)
@@ -121,7 +121,7 @@ def test_summary_string_present():
 
 
 def test_payload_shape_complete():
-    from engram.curate_pipeline import curate_pipeline
+    from verimem.curate_pipeline import curate_pipeline
 
     a = _FakeAgent([], [])
     out = curate_pipeline(agent=a)

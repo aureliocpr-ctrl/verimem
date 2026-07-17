@@ -31,7 +31,7 @@ from pathlib import Path
 
 def probe(semantic_db_src: Path) -> dict:
     """Sweep emergence thresholds on a safe-copy of the resting corpus."""
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     # Safe-copy production corpus to tempdir
     td = Path(tempfile.mkdtemp(prefix="engram_probe_"))

@@ -19,14 +19,14 @@ import time
 import numpy as np
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture(autouse=True)
 def _fast_encode(monkeypatch):
     # Isolate the WRITE-lock behavior from embedding latency: stub encode so the
     # only thing that can be slow in store() is the SQLite write lock.
-    from engram import embedding
+    from verimem import embedding
     monkeypatch.setattr(embedding, "encode", lambda *_a, **_k: np.ones(768, dtype=np.float32))
     monkeypatch.setattr(embedding, "_encode_one", lambda *_a, **_k: np.ones(768, dtype=np.float32))
 
@@ -43,7 +43,7 @@ def _hold_write_lock(db_path, hold_s, started: threading.Event, release: threadi
 
 
 def test_store_within_budget_defers_when_write_lock_held(tmp_path):
-    from engram.semantic import store_within_budget
+    from verimem.semantic import store_within_budget
 
     db = tmp_path / "sem.db"
     sm = SemanticMemory(db_path=db)
@@ -71,7 +71,7 @@ def test_store_within_budget_defers_when_write_lock_held(tmp_path):
 
 
 def test_store_within_budget_writes_normally_without_contention(tmp_path):
-    from engram.semantic import store_within_budget
+    from verimem.semantic import store_within_budget
 
     sm = SemanticMemory(db_path=tmp_path / "sem.db")
     res = store_within_budget(
@@ -84,7 +84,7 @@ def test_store_within_budget_writes_normally_without_contention(tmp_path):
 
 def test_store_within_budget_deferred_write_eventually_lands(tmp_path):
     """Deferred ≠ lost: once the lock frees, the background thread completes."""
-    from engram.semantic import store_within_budget
+    from verimem.semantic import store_within_budget
 
     db = tmp_path / "sem.db"
     sm = SemanticMemory(db_path=db)

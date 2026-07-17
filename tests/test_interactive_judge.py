@@ -16,8 +16,8 @@ import json
 
 import pytest
 
-from engram import grounding_gate as G
-from engram.interactive_judge import (
+from verimem import grounding_gate as G
+from verimem.interactive_judge import (
     InteractiveJudge,
     reset_interactive_judge,
     set_interactive_judge,
@@ -120,7 +120,7 @@ def test_response_parse_tolerates_garbage(tmp_path):
 def test_atexit_hook_closes_singleton_transport():
     """The module registers an atexit sweep; a process dying with a live
     judge must close the sister instead of leaking a hidden claude.exe."""
-    from engram import interactive_judge as IJ
+    from verimem import interactive_judge as IJ
 
     closed = []
 
@@ -143,7 +143,7 @@ def test_ghost_spawn_failure_kills_orphan(monkeypatch):
     """If the sister spawns but never becomes ready, the raise path must
     kill the just-spawned process — otherwise an invisible claude.exe
     survives with _claude_pid still None (close() would skip it)."""
-    from engram.interactive_judge import GhostSisterTransport
+    from verimem.interactive_judge import GhostSisterTransport
 
     killed = []
     t = GhostSisterTransport(boot_timeout_s=0)
@@ -164,7 +164,7 @@ def test_ghost_spawn_failure_kills_orphan(monkeypatch):
 def test_ghost_close_reaches_proc_without_ready_pid(monkeypatch):
     """close() must kill a spawned-but-never-ready sister too (pid known
     only through _proc), and stay idempotent."""
-    from engram.interactive_judge import GhostSisterTransport
+    from verimem.interactive_judge import GhostSisterTransport
 
     killed = []
     t = GhostSisterTransport(boot_timeout_s=0)

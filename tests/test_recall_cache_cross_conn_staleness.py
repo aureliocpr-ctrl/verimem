@@ -36,7 +36,7 @@ import sqlite3
 import threading
 import time
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 # Query == proposition del fatto nuovo => cosine ~1.0 => garantito in top-k
 # su un corpus minuscolo (seed + F2). Stringa distintiva per evitare collisioni

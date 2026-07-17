@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import time
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 _TEN_YEARS_S = 10 * 365 * 24 * 3600
 _TOPIC = "capability/test"  # fuori dalla telemetry-denylist.

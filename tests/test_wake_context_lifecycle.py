@@ -28,14 +28,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from engram.config import CONFIG
-from engram.context_engine import ContextEngine
+from verimem.config import CONFIG
+from verimem.context_engine import ContextEngine
 
 
 def _build_wake_with_engine():
     """A minimally-wired WakeAgent with a ContextEngine — same shape
     as `WakeAgent.__init__` but skipping the LLM/tool wiring."""
-    from engram.wake import WakeAgent
+    from verimem.wake import WakeAgent
     wake = object.__new__(WakeAgent)
     wake._context_engine = ContextEngine(  # type: ignore[attr-defined]
         dim=CONFIG.embedding_dim, rho=CONFIG.tcm_rho,

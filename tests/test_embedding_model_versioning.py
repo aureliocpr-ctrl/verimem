@@ -13,8 +13,8 @@ Hermetic: nessun modello reale caricato (verify_model_dim usa un fake).
 """
 from __future__ import annotations
 
-from engram import embedding
-from engram.config import Config
+from verimem import embedding
+from verimem.config import Config
 
 _LEGACY_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 _ACTIVE_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # default attivo post-flip 2026-06-04
@@ -41,7 +41,7 @@ def test_default_signature_is_active_and_bytes_384():
 def test_expected_bytes_equals_semantic_recall_filter():
     # PROVA che il recall NON cambia: il byte-length atteso dalle primitive
     # combacia col filtro hard del recall live (semantic._EXPECTED_EMBEDDING_BYTES).
-    from engram.semantic import _EXPECTED_EMBEDDING_BYTES
+    from verimem.semantic import _EXPECTED_EMBEDDING_BYTES
     assert embedding.expected_embedding_bytes() == _EXPECTED_EMBEDDING_BYTES == 1536
 
 
@@ -90,7 +90,7 @@ def test_verify_model_dim_detects_mismatch(monkeypatch):
 # --- encode_service annuncia dim (additive, backward-compatible) -----------
 
 def test_encode_service_ping_advertises_dim():
-    from engram import encode_service
+    from verimem import encode_service
     srv = encode_service.EncodeServer(
         encode_fn=lambda t: [0.0, 0.0, 0.0],
         model_name="m-test", model_dim=384,
@@ -103,7 +103,7 @@ def test_encode_service_ping_advertises_dim():
 
 def test_encode_service_dim_defaults_zero_when_unset():
     # Backward-compat: chi non passa model_dim ottiene 0 (campo presente, neutro).
-    from engram import encode_service
+    from verimem import encode_service
     srv = encode_service.EncodeServer(
         encode_fn=lambda t: [0.0], model_name="m",
     )

@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
+from verimem.memory import Episode, EpisodicMemory
 
 
 @pytest.fixture
@@ -90,7 +90,7 @@ def test_store_batch_speedup_real(memory):
                   for i, e in enumerate(eps_seq)]
 
     # Warmup embedding model
-    from engram import embedding
+    from verimem import embedding
     embedding.encode("warmup")
 
     t0 = time.perf_counter()

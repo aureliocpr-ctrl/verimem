@@ -24,8 +24,8 @@ import argparse
 import json
 from typing import Any
 
-from engram.semantic import Fact
-from engram.truth_reconciliation import classify_conflict
+from verimem.semantic import Fact
+from verimem.truth_reconciliation import classify_conflict
 
 _DAY = 86400.0
 _NOW = 1_000_000_000.0

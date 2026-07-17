@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from engram.skill import Skill, SkillLibrary
+from verimem.skill import Skill, SkillLibrary
 
 
 def _embedding_for(lib: SkillLibrary, skill_id: str) -> np.ndarray:
     """Pull the persisted (BLOB) embedding for a skill, as numpy."""
-    from engram import embedding as emb_mod
+    from verimem import embedding as emb_mod
 
     with lib._connect() as conn:
         row = conn.execute(
@@ -72,7 +72,7 @@ def test_repeated_drift_compounds_in_same_direction(tmp_data_dir):
     lib.store(s)
     task = "compute fibonacci numbers efficiently with memoization"
 
-    from engram import embedding as emb_mod
+    from verimem import embedding as emb_mod
     task_emb = emb_mod.encode(task)
     sims = []
     for _ in range(5):

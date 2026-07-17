@@ -64,7 +64,7 @@ tmp = Path(tempfile.mkdtemp(prefix="cycle50-retrieval-"))
 os.environ["HIPPO_DATA_DIR"] = str(tmp)
 os.environ["ENGRAM_DATA_DIR"] = str(tmp)
 
-from engram.semantic import Fact, SemanticMemory  # noqa: E402
+from verimem.semantic import Fact, SemanticMemory  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Seed corpus: 100 facts across 10 topics — varied, realistic

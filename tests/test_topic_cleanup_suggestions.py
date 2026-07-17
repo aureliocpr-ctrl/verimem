@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -77,7 +77,7 @@ def corpus_with_orphans(tmp_path):
 
 class TestSuggestions:
     def test_suggests_cluster_topic_for_orphans(self, corpus_with_orphans):
-        from engram.topic_cleanup_suggestions import topic_cleanup_suggestions
+        from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
         r = topic_cleanup_suggestions(corpus_with_orphans, sim_threshold=0.3)
         assert r["n_facts_no_topic"] == 2
         suggestions_by_id = {s["fact_id"]: s for s in r["suggestions"]}
@@ -89,13 +89,13 @@ class TestSuggestions:
         assert suggestions_by_id["orph_engram"]["suggested_topic"] == "engram/ops"
 
     def test_high_sim_threshold_excludes_distant_orphans(self, corpus_with_orphans):
-        from engram.topic_cleanup_suggestions import topic_cleanup_suggestions
+        from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
         r = topic_cleanup_suggestions(corpus_with_orphans, sim_threshold=0.999)
         # With such a high threshold, no neighbour is close enough
         assert r["suggestions"] == []
 
     def test_suggestion_carries_similarity_and_votes(self, corpus_with_orphans):
-        from engram.topic_cleanup_suggestions import topic_cleanup_suggestions
+        from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
         r = topic_cleanup_suggestions(corpus_with_orphans, sim_threshold=0.3)
         for s in r["suggestions"]:
             assert "similarity" in s
@@ -111,7 +111,7 @@ class TestSuggestions:
 
 class TestEdgeCases:
     def test_no_orphans_returns_empty(self, tmp_path):
-        from engram.topic_cleanup_suggestions import topic_cleanup_suggestions
+        from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
         sm = SemanticMemory(db_path=tmp_path / "sm.db")
         sm.store(Fact(id="a", topic="x", proposition="..."))
         r = topic_cleanup_suggestions(sm)
@@ -119,7 +119,7 @@ class TestEdgeCases:
         assert r["suggestions"] == []
 
     def test_no_live_topics_no_suggestions(self, tmp_path):
-        from engram.topic_cleanup_suggestions import topic_cleanup_suggestions
+        from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
         sm = SemanticMemory(db_path=tmp_path / "sm.db")
         # All facts orphan — no topic vocabulary to vote on
         sm.store(Fact(id="o1", topic="", proposition="alpha"))
@@ -129,7 +129,7 @@ class TestEdgeCases:
         assert r["suggestions"] == []
 
     def test_max_suggestions_cap(self, corpus_with_orphans):
-        from engram.topic_cleanup_suggestions import topic_cleanup_suggestions
+        from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
         r = topic_cleanup_suggestions(
             corpus_with_orphans, sim_threshold=0.3, max_suggestions=1,
         )

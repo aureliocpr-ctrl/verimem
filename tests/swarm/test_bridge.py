@@ -38,14 +38,14 @@ from pathlib import Path
 
 import pytest
 
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.swarm.bridge import (
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.swarm.bridge import (
     mirror_state_change,
     poll_until_done,
     record_completion_episode,
 )
-from engram.swarm.state import SessionState
+from verimem.swarm.state import SessionState
 
 _TOPIC = "lab/swarm/test-bridge-cycle148"
 

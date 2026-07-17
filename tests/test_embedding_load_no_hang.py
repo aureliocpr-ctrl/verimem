@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import pytest
 
-import engram.embedding as emb
+import verimem.embedding as emb
 
 _OFFLINE_VARS = ("HIPPO_OFFLINE", "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE",
                  "ENGRAM_OFFLINE")
@@ -85,7 +85,7 @@ def test_model_does_not_hang_when_lock_is_wedged():
     script = textwrap.dedent(
         """
         import threading
-        import engram.embedding as emb
+        import verimem.embedding as emb
         emb._MODEL_LOCK_TIMEOUT_S = 0.3
         emb._MODEL = None
         emb._MODEL_LOCK.acquire()  # simulate a wedged loader holding the lock

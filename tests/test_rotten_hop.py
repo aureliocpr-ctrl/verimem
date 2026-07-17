@@ -9,7 +9,7 @@ the old value.
 """
 from __future__ import annotations
 
-from engram.graph_reasoning import _dossier_for_path
+from verimem.graph_reasoning import _dossier_for_path
 
 
 class _FakeStore:
@@ -48,7 +48,7 @@ def _path(fid):
 
 
 def test_live_hop_produces_a_derivation(monkeypatch):
-    import engram.graph_reasoning as gr
+    import verimem.graph_reasoning as gr
     monkeypatch.setattr(gr, "_entity_name", _name)
     store = _FakeStore({"e1": "Alice", "e2": "Project X"})
     sem = _FakeSemantic({"f1": _Fact("f1", "Alice manages Project X.")})
@@ -57,7 +57,7 @@ def test_live_hop_produces_a_derivation(monkeypatch):
 
 
 def test_superseded_hop_invalidates_the_derivation(monkeypatch):
-    import engram.graph_reasoning as gr
+    import verimem.graph_reasoning as gr
     monkeypatch.setattr(gr, "_entity_name", _name)
     store = _FakeStore({"e1": "Alice", "e2": "Project X"})
     sem = _FakeSemantic({

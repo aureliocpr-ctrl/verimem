@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.entity_kg import Entity, EntityStore
-from engram.graph_reasoning import reasoning_dossier
+from verimem.entity_kg import Entity, EntityStore
+from verimem.graph_reasoning import reasoning_dossier
 
 
 class _StubSemantic:

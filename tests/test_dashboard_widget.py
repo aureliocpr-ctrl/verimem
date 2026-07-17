@@ -15,7 +15,7 @@ import pytest
 
 def test_collect_state_returns_required_keys() -> None:
     """Contract (a): all documented keys present."""
-    from engram.dashboard_widget import collect_state
+    from verimem.dashboard_widget import collect_state
     s = collect_state(tail_n=10)
     required = {
         "timestamp", "audit_tail_recent", "audit_summary_by_op",
@@ -30,7 +30,7 @@ def test_collect_state_returns_required_keys() -> None:
 
 def test_render_text_contains_all_5_stack_layers() -> None:
     """Contract (b): all 5 layers cycle 362-368 mentioned."""
-    from engram.dashboard_widget import collect_state, render_text
+    from verimem.dashboard_widget import collect_state, render_text
     s = collect_state(tail_n=5)
     text = render_text(s)
     for layer_keyword in ("mesh_memory", "resonant_merge", "syscall_bridge",
@@ -43,7 +43,7 @@ def test_render_text_contains_all_5_stack_layers() -> None:
 
 def test_render_json_roundtrips() -> None:
     """Contract (c): render_json output is valid JSON."""
-    from engram.dashboard_widget import collect_state, render_json
+    from verimem.dashboard_widget import collect_state, render_json
     s = collect_state(tail_n=5)
     text = render_json(s)
     parsed = json.loads(text)
@@ -55,8 +55,8 @@ def test_dashboard_reflects_engram_invoke_call(tmp_path, monkeypatch) -> None:
     """Contract (d): after engram_invoke, dashboard summary shows the call."""
     if not _vec_bus_available():
         pytest.skip("vec_bus not available")
-    from engram import op_supervisor, syscall_bridge
-    from engram.dashboard_widget import collect_state
+    from verimem import op_supervisor, syscall_bridge
+    from verimem.dashboard_widget import collect_state
 
     audit = tmp_path / "audit.jsonl"
     monkeypatch.setattr(syscall_bridge, "ENGRAM_AUDIT_LOG", audit)

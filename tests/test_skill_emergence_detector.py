@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 # RED MARKER
-from engram.skill_emergence_detector import detect_emerging_skills
+from verimem.skill_emergence_detector import detect_emerging_skills
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

@@ -42,7 +42,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 SEC_PER_DAY = 86400.0
 
@@ -55,7 +55,7 @@ SEC_PER_DAY = 86400.0
 class TestComputeDecayedConfidence:
 
     def test_zero_age_returns_original(self) -> None:
-        from engram.decay_job import compute_decayed_confidence
+        from verimem.decay_job import compute_decayed_confidence
         out = compute_decayed_confidence(
             original=0.9, age_seconds=0.0,
         )
@@ -63,7 +63,7 @@ class TestComputeDecayedConfidence:
 
     def test_one_half_life_halves_confidence(self) -> None:
         """age = tau * ln(2) -> halved (exactly the half-life)."""
-        from engram.decay_job import compute_decayed_confidence
+        from verimem.decay_job import compute_decayed_confidence
         tau = 30 * SEC_PER_DAY
         half_life = tau * math.log(2)
         out = compute_decayed_confidence(
@@ -74,7 +74,7 @@ class TestComputeDecayedConfidence:
 
     def test_one_tau_reduces_to_one_over_e(self) -> None:
         """age = tau -> original / e (≈ 0.368 * original)."""
-        from engram.decay_job import compute_decayed_confidence
+        from verimem.decay_job import compute_decayed_confidence
         tau = 30 * SEC_PER_DAY
         out = compute_decayed_confidence(
             original=1.0, age_seconds=tau,
@@ -83,7 +83,7 @@ class TestComputeDecayedConfidence:
         assert out == pytest.approx(math.e ** -1, rel=1e-6)
 
     def test_very_old_fact_clamped_to_floor(self) -> None:
-        from engram.decay_job import compute_decayed_confidence
+        from verimem.decay_job import compute_decayed_confidence
         # age >> tau -> exp(-large) ≈ 0 -> clamp to floor
         out = compute_decayed_confidence(
             original=0.9, age_seconds=10 * 365 * SEC_PER_DAY,
@@ -95,7 +95,7 @@ class TestComputeDecayedConfidence:
         """Defensive: clock-skew or a fact with future created_at must
         not BOOST confidence (which would be the literal formula since
         exp(-negative) > 1). Cap at original."""
-        from engram.decay_job import compute_decayed_confidence
+        from verimem.decay_job import compute_decayed_confidence
         out = compute_decayed_confidence(
             original=0.8, age_seconds=-3600.0,
         )
@@ -127,13 +127,13 @@ def _store_dated(sm: SemanticMemory, *, fid: str, age_days: float,
 class TestRunDecayPass:
 
     def test_no_facts_returns_zero_summary(self, sm: SemanticMemory) -> None:
-        from engram.decay_job import run_decay_pass
+        from verimem.decay_job import run_decay_pass
         out = run_decay_pass(sm)
         assert out["facts_seen"] == 0
         assert out["facts_updated"] == 0
 
     def test_dry_run_does_not_persist(self, sm: SemanticMemory) -> None:
-        from engram.decay_job import run_decay_pass
+        from verimem.decay_job import run_decay_pass
         _store_dated(sm, fid="a", age_days=90, confidence=0.9)
         out = run_decay_pass(sm, dry_run=True)
         assert out["facts_seen"] == 1
@@ -143,7 +143,7 @@ class TestRunDecayPass:
         assert sm.get("a").confidence == pytest.approx(0.9)
 
     def test_real_run_persists_updates(self, sm: SemanticMemory) -> None:
-        from engram.decay_job import run_decay_pass
+        from verimem.decay_job import run_decay_pass
         _store_dated(sm, fid="a", age_days=60, confidence=0.9)
         before = sm.get("a").confidence
         out = run_decay_pass(sm, tau_seconds=30 * SEC_PER_DAY)
@@ -152,14 +152,14 @@ class TestRunDecayPass:
         assert out["facts_updated"] >= 1
 
     def test_floor_clamps_very_old_facts(self, sm: SemanticMemory) -> None:
-        from engram.decay_job import run_decay_pass
+        from verimem.decay_job import run_decay_pass
         _store_dated(sm, fid="ancient", age_days=10_000, confidence=0.9)
         run_decay_pass(sm, tau_seconds=30 * SEC_PER_DAY, floor=0.1)
         got = sm.get("ancient")
         assert got.confidence == pytest.approx(0.1, abs=1e-6)
 
     def test_fresh_fact_barely_changes(self, sm: SemanticMemory) -> None:
-        from engram.decay_job import run_decay_pass
+        from verimem.decay_job import run_decay_pass
         _store_dated(sm, fid="fresh", age_days=0.001, confidence=0.9)
         run_decay_pass(sm, tau_seconds=30 * SEC_PER_DAY)
         # Fresh fact: tiny decay
@@ -170,7 +170,7 @@ class TestRunDecayPass:
     ) -> None:
         """Once a fact is already at the floor, a second pass mustn't
         push it lower or claim it changed."""
-        from engram.decay_job import run_decay_pass
+        from verimem.decay_job import run_decay_pass
         _store_dated(sm, fid="ancient", age_days=10_000, confidence=0.9)
         run_decay_pass(sm, tau_seconds=30 * SEC_PER_DAY, floor=0.1)
         first = sm.get("ancient").confidence
@@ -182,7 +182,7 @@ class TestRunDecayPass:
         assert second_summary["facts_updated"] == 0
 
     def test_summary_reports_averages(self, sm: SemanticMemory) -> None:
-        from engram.decay_job import run_decay_pass
+        from verimem.decay_job import run_decay_pass
         _store_dated(sm, fid="a", age_days=60, confidence=0.9)
         _store_dated(sm, fid="b", age_days=15, confidence=0.7)
         out = run_decay_pass(sm, tau_seconds=30 * SEC_PER_DAY)

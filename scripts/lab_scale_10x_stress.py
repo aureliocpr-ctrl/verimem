@@ -12,7 +12,7 @@ per simulare scala 12k+, e misura:
 
 Read-only against the live corpus — replication happens on a temp
 copy under ~/.engram_lab_scale.db. No mutation of the production
-~/.engram.
+~/.verimem.
 """
 from __future__ import annotations
 
@@ -26,9 +26,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.anti_confab_gate import run_validation_gate
-from engram.anti_confabulation import scan_orphaned_facts
-from engram.semantic import SemanticMemory
+from verimem.anti_confab_gate import run_validation_gate
+from verimem.anti_confabulation import scan_orphaned_facts
+from verimem.semantic import SemanticMemory
 
 
 class _AgentShim:

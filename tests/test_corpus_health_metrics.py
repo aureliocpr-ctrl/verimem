@@ -27,7 +27,7 @@ import time
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ def diverse_corpus(mem):
 
 class TestTotals:
     def test_total_counts(self, diverse_corpus):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         m = corpus_health_metrics(diverse_corpus)
         # 10 + 5 + 1 (no topic) + 3 old = 19 total
         assert m["n_total"] == 19
@@ -98,7 +98,7 @@ class TestTotals:
 
 class TestChains:
     def test_chain_count_and_lengths(self, diverse_corpus):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         m = corpus_health_metrics(diverse_corpus)
         # Chains anchored at distinct anchor: a0 walks a0→a1→a2 (len=3).
         # No other chains.
@@ -114,7 +114,7 @@ class TestChains:
 
 class TestTaxonomy:
     def test_top_topics_ordered_by_count(self, diverse_corpus):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         m = corpus_health_metrics(diverse_corpus)
         topics = m["top_topics"]
         # Top topic = lessons/topicA, but supersessions a0→a1→a2 hide 2
@@ -126,7 +126,7 @@ class TestTaxonomy:
         assert topics[1]["count"] == 5
 
     def test_facts_without_topic_flagged(self, diverse_corpus):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         m = corpus_health_metrics(diverse_corpus)
         # 1 fact with empty topic — pollution metric
         assert m["n_facts_no_topic"] == 1
@@ -138,7 +138,7 @@ class TestTaxonomy:
 
 class TestFreshness:
     def test_recent_buckets(self, diverse_corpus):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         m = corpus_health_metrics(diverse_corpus)
         # 10 a-facts span 0→4.5 days (0,0.5,1.0,1.5,...,4.5)
         # 24h: a0+a1+a2 (0d,0.5d,1.0d) + b0+b1+b2 + nopic
@@ -156,7 +156,7 @@ class TestFreshness:
 
 class TestEmpty:
     def test_empty_corpus_zero_safe(self, mem):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         m = corpus_health_metrics(mem)
         assert m["n_total"] == 0
         assert m["n_live"] == 0
@@ -183,7 +183,7 @@ class TestEmbeddingConsistency:
     metrica lo rende visibile: n_embedding_dark > 0 = corpus inconsistente."""
 
     def test_empty_corpus_consistency_is_zero(self, mem):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         m = corpus_health_metrics(mem)
         assert m["n_recall_eligible"] == 0
         assert m["n_embedding_dark"] == 0
@@ -192,8 +192,8 @@ class TestEmbeddingConsistency:
     def test_counts_dark_eligible_not_superseded(self, mem):
         import sqlite3
 
-        from engram import embedding
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem import embedding
+        from verimem.corpus_health_metrics import corpus_health_metrics
         active = embedding.model_signature()
         # 2 fatti sani: mem.store encoda al modello ATTIVO + tagga embedding_model
         mem.store(Fact(id="ok1", topic="t", proposition="fatto sano uno",
@@ -236,7 +236,7 @@ class TestRecallableVsQuarantined:
     n_live=n_total-superseded inganna (conta anche i quarantinati)."""
 
     def test_quarantined_and_recallable_split(self, mem):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         # 3 sani recallable (modello attivo, model_claim)
         for i in range(3):
             mem.store(Fact(id=f"ok{i}", topic="t", proposition=f"sano {i}",
@@ -254,7 +254,7 @@ class TestRecallableVsQuarantined:
         assert m["n_recallable"] <= m["n_recall_eligible"]
 
     def test_empty_corpus_recallable_quarantined_zero(self, mem):
-        from engram.corpus_health_metrics import corpus_health_metrics
+        from verimem.corpus_health_metrics import corpus_health_metrics
         m = corpus_health_metrics(mem)
         assert m["n_quarantined"] == 0
         assert m["n_recallable"] == 0

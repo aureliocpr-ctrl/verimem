@@ -10,14 +10,14 @@ from __future__ import annotations
 
 
 def test_empty_returns_idle():
-    from engram.live_introspection import introspect_state
+    from verimem.live_introspection import introspect_state
     out = introspect_state(recent_audit=[], active_skills=[],
                            last_recall=[])
     assert "idle" in out["narrative"].lower() or out["narrative"] == ""
 
 
 def test_narrates_recent_action():
-    from engram.live_introspection import introspect_state
+    from verimem.live_introspection import introspect_state
     audit = [
         {"name": "hippo_recall", "ts": 1000.0, "outcome": "ok"},
         {"name": "hippo_remember", "ts": 1001.0, "outcome": "ok"},
@@ -28,7 +28,7 @@ def test_narrates_recent_action():
 
 
 def test_includes_active_skills():
-    from engram.live_introspection import introspect_state
+    from verimem.live_introspection import introspect_state
     out = introspect_state(
         recent_audit=[],
         active_skills=[{"id": "cf7-rce", "name": "CF7 RCE"}],
@@ -38,7 +38,7 @@ def test_includes_active_skills():
 
 
 def test_includes_last_recall_context():
-    from engram.live_introspection import introspect_state
+    from verimem.live_introspection import introspect_state
     out = introspect_state(
         recent_audit=[],
         active_skills=[],
@@ -49,7 +49,7 @@ def test_includes_last_recall_context():
 
 
 def test_payload_keys():
-    from engram.live_introspection import introspect_state
+    from verimem.live_introspection import introspect_state
     out = introspect_state(recent_audit=[], active_skills=[],
                            last_recall=[])
     for k in ("narrative", "stage", "components"):
@@ -58,7 +58,7 @@ def test_payload_keys():
 
 def test_stage_classification():
     """Stage should be one of: idle/recalling/acting/learning."""
-    from engram.live_introspection import introspect_state
+    from verimem.live_introspection import introspect_state
 
     audit_action = [{"name": "hippo_record_episode", "outcome": "ok"}]
     out = introspect_state(
@@ -68,7 +68,7 @@ def test_stage_classification():
 
 
 def test_narrative_is_markdown_friendly():
-    from engram.live_introspection import introspect_state
+    from verimem.live_introspection import introspect_state
     out = introspect_state(
         recent_audit=[{"name": "hippo_recall", "outcome": "ok"}],
         active_skills=[{"id": "s1", "name": "skill A"}],

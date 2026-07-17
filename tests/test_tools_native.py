@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from engram.llm import LLMToolResponse, ToolCall
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import SkillLibrary
-from engram.tools import ToolResult, ToolSpec
-from engram.wake import WakeAgent
+from verimem.llm import LLMToolResponse, ToolCall
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import SkillLibrary
+from verimem.tools import ToolResult, ToolSpec
+from verimem.wake import WakeAgent
 
 
 class ScriptedToolLLM:
@@ -26,7 +26,7 @@ class ScriptedToolLLM:
     def complete(self, system, messages, model=None, temperature=0.0,
                  max_tokens=None, stop_sequences=None):
         # Used only by critic / fallback; never reached in these tests.
-        from engram.llm import LLMResponse
+        from verimem.llm import LLMResponse
         return LLMResponse(text="", input_tokens=0, output_tokens=0,
                            model="mock", latency_s=0.0)
 

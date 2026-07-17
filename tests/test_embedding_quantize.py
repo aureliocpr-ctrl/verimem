@@ -1,6 +1,6 @@
 """Cycle 207 (2026-05-23) — embedding_quantize tests.
 
-RED marker: ``from engram.embedding_quantize import quantize_float16``
+RED marker: ``from verimem.embedding_quantize import quantize_float16``
 must fail on master.
 """
 from __future__ import annotations
@@ -8,7 +8,7 @@ from __future__ import annotations
 import numpy as np
 
 # RED MARKER
-from engram.embedding_quantize import (
+from verimem.embedding_quantize import (
     dequantize_float16,
     max_relative_error,
     quantize_float16,

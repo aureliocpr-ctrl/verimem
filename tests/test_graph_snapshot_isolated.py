@@ -21,7 +21,7 @@ dice di essere una finestra mente.
 """
 from __future__ import annotations
 
-from engram.entity_kg import Entity, EntityStore
+from verimem.entity_kg import Entity, EntityStore
 
 
 def _store(tmp_path):

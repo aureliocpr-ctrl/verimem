@@ -16,8 +16,8 @@ from __future__ import annotations
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-import engram.grounding_gate as gg
-from engram.anti_confab_gate import run_validation_gate
+import verimem.grounding_gate as gg
+from verimem.anti_confab_gate import run_validation_gate
 
 
 def _gate_with_score(monkeypatch, score: float, judge: str):

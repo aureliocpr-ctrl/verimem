@@ -10,8 +10,8 @@ import time
 
 import pytest
 
-from engram.episode_dedup import dedup_episodes, find_duplicate_groups
-from engram.memory import Episode, EpisodicMemory
+from verimem.episode_dedup import dedup_episodes, find_duplicate_groups
+from verimem.memory import Episode, EpisodicMemory
 
 
 @pytest.fixture

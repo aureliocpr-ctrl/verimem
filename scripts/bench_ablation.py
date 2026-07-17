@@ -13,7 +13,7 @@ from pathlib import Path
 # Allow running from repo root
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram import config as _cfg
+from verimem import config as _cfg
 
 # Disable Sprint 6a active-memory fixes by setting fields on the SAME singleton.
 # Frozen dataclass → we have to bypass __setattr__.

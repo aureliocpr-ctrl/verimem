@@ -55,12 +55,12 @@ def main() -> int:
             print(f"MISSING {p} -> abort")
             return 2
 
-    from engram import embedding
-    from engram.config import CONFIG
-    from engram.dentate_gyrus import dg_encode
-    from engram.memory import EpisodicMemory, _dg_serialize, _global_dg_projection
-    from engram.semantic import SemanticMemory
-    from engram.skill import SkillLibrary
+    from verimem import embedding
+    from verimem.config import CONFIG
+    from verimem.dentate_gyrus import dg_encode
+    from verimem.memory import EpisodicMemory, _dg_serialize, _global_dg_projection
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import SkillLibrary
 
     sig = embedding.model_signature()
     print(f"=== FLIP e5 ===  dir={data_dir}  LIVE={live}  model={sig}  dim={CONFIG.embedding_dim}", flush=True)

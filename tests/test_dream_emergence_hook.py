@@ -1,6 +1,6 @@
 """Cycle 219 (2026-05-23) — dream_emergence_hook tests.
 
-RED marker: ``from engram.dream_emergence_hook import build_emergence_seed``
+RED marker: ``from verimem.dream_emergence_hook import build_emergence_seed``
 must fail on master.
 
 Composable pattern proven by cycle 175.1 (stuck), cycle 187 (community),
@@ -15,9 +15,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-# RED MARKER
-from engram.dream_emergence_hook import build_emergence_seed
 from tests.causal_fixture_helper import add_causal_clique_edges
+
+# RED MARKER
+from verimem.dream_emergence_hook import build_emergence_seed
 
 
 def _cluster_emb(centroid_seed: int, noise: float, sample_seed: int) -> bytes:

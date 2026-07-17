@@ -19,7 +19,7 @@ class _FakeEp:
 
 
 def test_empty_returns_empty_list():
-    from engram.skill_failure_audit import skill_failure_audit
+    from verimem.skill_failure_audit import skill_failure_audit
 
     out = skill_failure_audit(skill_id="x", episodes=[])
     assert out["failures"] == []
@@ -27,7 +27,7 @@ def test_empty_returns_empty_list():
 
 
 def test_only_failures_returned():
-    from engram.skill_failure_audit import skill_failure_audit
+    from verimem.skill_failure_audit import skill_failure_audit
 
     eps = [
         _FakeEp("e1", "task1", outcome="success", skills_used=["x"]),
@@ -44,7 +44,7 @@ def test_only_failures_returned():
 
 
 def test_n_total_uses_correct():
-    from engram.skill_failure_audit import skill_failure_audit
+    from verimem.skill_failure_audit import skill_failure_audit
 
     eps = [
         _FakeEp("e1", "task1", outcome="success", skills_used=["x"]),
@@ -57,7 +57,7 @@ def test_n_total_uses_correct():
 
 
 def test_sorted_recent_first():
-    from engram.skill_failure_audit import skill_failure_audit
+    from verimem.skill_failure_audit import skill_failure_audit
 
     eps = [
         _FakeEp("old", outcome="failure", created_at=100.0,
@@ -71,7 +71,7 @@ def test_sorted_recent_first():
 
 
 def test_top_k_respected():
-    from engram.skill_failure_audit import skill_failure_audit
+    from verimem.skill_failure_audit import skill_failure_audit
 
     eps = [
         _FakeEp(f"e{i}", outcome="failure", created_at=float(i),
@@ -83,7 +83,7 @@ def test_top_k_respected():
 
 
 def test_payload_shape_complete():
-    from engram.skill_failure_audit import skill_failure_audit
+    from verimem.skill_failure_audit import skill_failure_audit
 
     out = skill_failure_audit(skill_id="x", episodes=[])
     for k in ("skill_id", "n_total_uses", "n_failures",

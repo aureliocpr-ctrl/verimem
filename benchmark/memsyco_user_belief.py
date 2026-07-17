@@ -85,15 +85,15 @@ _KEEPS = [
 
 
 def _build_llm(model: str, timeout_s: float):
-    from engram.llm import ClaudeCLILLM
+    from verimem.llm import ClaudeCLILLM
     return ClaudeCLILLM(extra_args=["--model", model], timeout_s=timeout_s)
 
 
 def _statuses_for(item: Item, llm, *, user_name: str | None) -> list[str]:
     """Ingest the single user line with tag_beliefs=True and return the status of
     every Fact the extractor produced. consolidate=False = one LLM call/item."""
-    from engram.conversation_ingest import ingest_conversation
-    from engram.semantic import SemanticMemory
+    from verimem.conversation_ingest import ingest_conversation
+    from verimem.semantic import SemanticMemory
 
     sm = SemanticMemory(db_path=Path(tempfile.mkdtemp()) / "s.db")
     conv = [{"role": "user", "content": item.text},

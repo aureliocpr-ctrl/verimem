@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import pytest
 
-from engram.evidence_requirement import UNSOURCED_SPECIFIC_CEILING
-from engram.semantic import Fact
-from engram.tier2_judge import (
+from verimem.evidence_requirement import UNSOURCED_SPECIFIC_CEILING
+from verimem.semantic import Fact
+from verimem.tier2_judge import (
     FixedJudge,
     Judge,
     JudgeAction,

@@ -62,7 +62,7 @@ def _seed_simple_corpus(db_path: Path) -> None:
 
 def test_inherits_unchanged_assignments(tmp_path: Path) -> None:
     """When no nodes added/removed, stable partition == original (Δ = 0)."""
-    from engram.stable_partition import stable_partition
+    from verimem.stable_partition import stable_partition
 
     db = tmp_path / "semantic.db"
     _seed_simple_corpus(db)
@@ -77,7 +77,7 @@ def test_inherits_unchanged_assignments(tmp_path: Path) -> None:
 def test_new_nodes_get_assignment(tmp_path: Path) -> None:
     """When new facts are added, stable partition extends with assignments
     for the new nodes (not requiring re-partitioning the unchanged ones)."""
-    from engram.stable_partition import stable_partition
+    from verimem.stable_partition import stable_partition
 
     db = tmp_path / "semantic.db"
     _seed_simple_corpus(db)
@@ -125,7 +125,7 @@ def test_new_nodes_get_assignment(tmp_path: Path) -> None:
 
 def test_empty_db_returns_empty(tmp_path: Path) -> None:
     """Empty DB → empty partition."""
-    from engram.stable_partition import stable_partition
+    from verimem.stable_partition import stable_partition
 
     db = tmp_path / "semantic.db"
     conn = sqlite3.connect(str(db))
@@ -149,7 +149,7 @@ def test_empty_db_returns_empty(tmp_path: Path) -> None:
 
 def test_missing_db_returns_empty(tmp_path: Path) -> None:
     """Missing DB → empty partition, no raise."""
-    from engram.stable_partition import stable_partition
+    from verimem.stable_partition import stable_partition
 
     p = stable_partition(tmp_path / "missing.db", seed=42)
     assert p.node_to_community == {}
@@ -159,7 +159,7 @@ def test_jaccard_zero_for_unchanged(tmp_path: Path) -> None:
     """ACCEPTANCE CRITERION (falsifiable): when prior_assignment is
     given for unchanged nodes, the resulting partition over those
     nodes is IDENTICAL → partition Jaccard distance = 0.0."""
-    from engram.stable_partition import partition_jaccard, stable_partition
+    from verimem.stable_partition import partition_jaccard, stable_partition
 
     db = tmp_path / "semantic.db"
     _seed_simple_corpus(db)

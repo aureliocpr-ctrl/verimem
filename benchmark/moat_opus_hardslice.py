@@ -52,7 +52,7 @@ def main(argv=None) -> int:
 
     os.environ["ENGRAM_GROUNDING_BACKEND"] = "claude"
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import fact_grounding_score_ex
+    from verimem.grounding_gate import fact_grounding_score_ex
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=120)
 
     out_rows = []

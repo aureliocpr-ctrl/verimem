@@ -21,7 +21,7 @@ class _FakeFact:
 
 
 def test_empty_returns_empty_topics():
-    from engram.facts_topics import facts_topics
+    from verimem.facts_topics import facts_topics
 
     out = facts_topics([])
     assert out["n_total"] == 0
@@ -29,7 +29,7 @@ def test_empty_returns_empty_topics():
 
 
 def test_groups_by_topic_with_counts():
-    from engram.facts_topics import facts_topics
+    from verimem.facts_topics import facts_topics
 
     facts = [
         _FakeFact("f1", "fact 1", topic="user"),
@@ -43,7 +43,7 @@ def test_groups_by_topic_with_counts():
 
 
 def test_empty_topic_grouped_under_fallback():
-    from engram.facts_topics import facts_topics
+    from verimem.facts_topics import facts_topics
 
     facts = [
         _FakeFact("f1", "no topic 1"),
@@ -57,7 +57,7 @@ def test_empty_topic_grouped_under_fallback():
 
 
 def test_topics_sorted_by_count_desc():
-    from engram.facts_topics import facts_topics
+    from verimem.facts_topics import facts_topics
 
     facts = [
         _FakeFact("f1", "x", topic="small"),
@@ -73,7 +73,7 @@ def test_topics_sorted_by_count_desc():
 
 
 def test_includes_sample_facts():
-    from engram.facts_topics import facts_topics
+    from verimem.facts_topics import facts_topics
 
     facts = [
         _FakeFact(f"f{i}", f"prop {i}", topic="x")
@@ -85,7 +85,7 @@ def test_includes_sample_facts():
 
 
 def test_top_k_topics_respected():
-    from engram.facts_topics import facts_topics
+    from verimem.facts_topics import facts_topics
 
     facts = [
         _FakeFact(f"f{i}", "x", topic=f"topic{i}")
@@ -96,7 +96,7 @@ def test_top_k_topics_respected():
 
 
 def test_n_total_matches_input():
-    from engram.facts_topics import facts_topics
+    from verimem.facts_topics import facts_topics
 
     facts = [_FakeFact(f"f{i}", "x", topic="t") for i in range(7)]
     out = facts_topics(facts)

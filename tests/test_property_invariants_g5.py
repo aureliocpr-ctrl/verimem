@@ -13,7 +13,7 @@ from __future__ import annotations
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from engram._telemetry_prefixes import (
+from verimem._telemetry_prefixes import (
     DIALOG_TOPIC_PREFIX,
     TELEMETRY_TOPIC_PREFIXES,
     TEST_TOPIC_PREFIXES,
@@ -58,7 +58,7 @@ def test_supersede_never_deletes_and_never_loops(tmp_path_factory, pairs) -> Non
     """Random sequences of supersede(old, new) over 8 facts: whatever the
     system ACCEPTS must (a) keep every fact retrievable by id and (b) leave
     ``superseded_by`` chains acyclic — lineage consumers follow them."""
-    from engram.semantic import (
+    from verimem.semantic import (
         Fact,
         SemanticMemory,
         SupersedeConflict,
@@ -107,7 +107,7 @@ def test_long_ring_closure_rejected_no_hop_escape(tmp_path) -> None:
     default recall. The check must reject ring closure at ANY chain length."""
     import pytest
 
-    from engram.semantic import Fact, SemanticMemory, SupersedeError
+    from verimem.semantic import Fact, SemanticMemory, SupersedeError
 
     mem = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     ids = []

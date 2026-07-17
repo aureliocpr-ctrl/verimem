@@ -7,7 +7,7 @@ Run as a cron / scheduled task / one-off check::
     python -m scripts.contradiction_scan --json    # machine-readable output
 
 Reads the live SemanticMemory (resolved via the standard config), runs
-``engram.contradiction.scan_corpus``, prints a human summary, and exits
+``verimem.contradiction.scan_corpus``, prints a human summary, and exits
 non-zero if any NEW contradictions were detected. Useful as a CI gate
 on the corpus or as a periodic job from a process supervisor.
 """
@@ -22,9 +22,9 @@ from pathlib import Path
 # Make ``engram`` importable when run as ``python scripts/...``.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.config import CONFIG  # noqa: E402
-from engram.contradiction import ContradictionStore, scan_corpus  # noqa: E402
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem.config import CONFIG  # noqa: E402
+from verimem.contradiction import ContradictionStore, scan_corpus  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 
 def _build_argparser() -> argparse.ArgumentParser:

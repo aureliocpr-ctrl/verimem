@@ -2,7 +2,7 @@
 
 ROADMAP-2026-05-19.md Priority 1 #2: closes the critic finding from PR
 #108 ("StepInjector dead code = no MCP wrapper / no consumer"). This
-file pins the contract of ``engram.hooks.pre_tool_use``:
+file pins the contract of ``verimem.hooks.pre_tool_use``:
 
   * ``extract_step_text(tool_name, tool_input) → str`` — pure function,
     returns the per-tool sub-goal we want to recall against.
@@ -13,7 +13,7 @@ file pins the contract of ``engram.hooks.pre_tool_use``:
     reads JSON from stdin, writes banner to stdout, exits 0 on success
     or graceful no-op.
 
-RED→GREEN — this file must fail import on ``engram.hooks.pre_tool_use``
+RED→GREEN — this file must fail import on ``verimem.hooks.pre_tool_use``
 (does not yet exist on this branch).
 """
 from __future__ import annotations
@@ -26,13 +26,13 @@ from typing import Any
 import pytest
 
 # RED MARKER
-from engram.hooks.pre_tool_use import (
+from verimem.hooks.pre_tool_use import (
     extract_step_text,
     main_stdin_stdout,
     run,
 )
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture

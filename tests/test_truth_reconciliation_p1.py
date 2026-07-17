@@ -9,9 +9,9 @@ only adds a visible, recoverable doubt.
 """
 from __future__ import annotations
 
-from engram.contradiction import ContradictionStore
-from engram.semantic import Fact, SemanticMemory
-from engram.truth_reconciliation import (
+from verimem.contradiction import ContradictionStore
+from verimem.semantic import Fact, SemanticMemory
+from verimem.truth_reconciliation import (
     classify_conflict,
     reconcile_fact_on_write,
 )
@@ -89,7 +89,7 @@ def test_p1_turns_over_trust_into_obsolete_flag(tmp_path) -> None:
     """The calibration study's over-trust = 'trusted' verdict on a fact that is
     actually obsolete-but-unobserved. P1 (an update arrives) must turn that into
     an 'obsolete' verdict — the only lever that moves the dangerous metric."""
-    from engram.trust_signal import compute_trust_signal
+    from verimem.trust_signal import compute_trust_signal
 
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     cs = ContradictionStore(sm.db_path)

@@ -11,7 +11,7 @@ curation policy do its job.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 class _FakeSkillsStore:
@@ -51,7 +51,7 @@ def _ready_to_retire() -> Skill:
 
 
 def test_dry_run_no_mutation():
-    from engram.apply_recommendations import apply_recommendations
+    from verimem.apply_recommendations import apply_recommendations
 
     skills = [_ready_to_promote(), _ready_to_retire()]
     a = _FakeAgent(skills)
@@ -63,7 +63,7 @@ def test_dry_run_no_mutation():
 
 
 def test_apply_promote():
-    from engram.apply_recommendations import apply_recommendations
+    from verimem.apply_recommendations import apply_recommendations
 
     skills = [_ready_to_promote()]
     a = _FakeAgent(skills)
@@ -76,7 +76,7 @@ def test_apply_promote():
 
 
 def test_apply_retire():
-    from engram.apply_recommendations import apply_recommendations
+    from verimem.apply_recommendations import apply_recommendations
 
     skills = [_ready_to_retire()]
     a = _FakeAgent(skills)
@@ -89,7 +89,7 @@ def test_apply_retire():
 
 def test_only_listed_actions_applied():
     """When actions=['promote'] only promote runs (retire skipped)."""
-    from engram.apply_recommendations import apply_recommendations
+    from verimem.apply_recommendations import apply_recommendations
 
     skills = [_ready_to_promote(), _ready_to_retire()]
     a = _FakeAgent(skills)
@@ -103,7 +103,7 @@ def test_only_listed_actions_applied():
 
 
 def test_change_log_includes_before_after():
-    from engram.apply_recommendations import apply_recommendations
+    from verimem.apply_recommendations import apply_recommendations
 
     skills = [_ready_to_promote()]
     a = _FakeAgent(skills)
@@ -120,7 +120,7 @@ def test_change_log_includes_before_after():
 
 
 def test_payload_shape_complete():
-    from engram.apply_recommendations import apply_recommendations
+    from verimem.apply_recommendations import apply_recommendations
 
     a = _FakeAgent([])
     out = apply_recommendations(agent=a)

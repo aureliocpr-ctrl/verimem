@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from engram import tools_extra
+from verimem import tools_extra
 
 # ---------------------------------------------------------------------------
 # _is_blocked_host — direct host-name / IP literal checks

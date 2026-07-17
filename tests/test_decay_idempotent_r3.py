@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 SEC_PER_DAY = 86400.0
 
@@ -45,7 +45,7 @@ def _store_dated(sm: SemanticMemory, *, fid: str, age_days: float,
 
 def test_repeated_pass_same_instant_is_idempotent(sm: SemanticMemory) -> None:
     """Two passes at the SAME instant must not decay twice (the bug)."""
-    from engram.decay_job import run_decay_pass
+    from verimem.decay_job import run_decay_pass
     t = time.time()
     _store_dated(sm, fid="a", age_days=60, confidence=0.9)
     run_decay_pass(sm, tau_seconds=30 * SEC_PER_DAY, floor=0.0, now=t)
@@ -62,7 +62,7 @@ def test_repeated_pass_same_instant_is_idempotent(sm: SemanticMemory) -> None:
 
 def test_many_passes_same_instant_do_not_collapse(sm: SemanticMemory) -> None:
     """N passes at the same instant must equal ONE pass, not N-fold decay."""
-    from engram.decay_job import run_decay_pass
+    from verimem.decay_job import run_decay_pass
     t = time.time()
     _store_dated(sm, fid="a", age_days=30, confidence=0.9)
     for _ in range(5):
@@ -76,7 +76,7 @@ def test_many_passes_same_instant_do_not_collapse(sm: SemanticMemory) -> None:
 def test_decay_tracks_real_elapsed_between_passes(sm: SemanticMemory) -> None:
     """Across passes separated by real time, total decay == one continuous
     decay over the elapsed interval (per-pass deltas compose multiplicatively)."""
-    from engram.decay_job import run_decay_pass
+    from verimem.decay_job import run_decay_pass
     t = time.time()
     _store_dated(sm, fid="a", age_days=30, confidence=0.9)
     run_decay_pass(sm, tau_seconds=30 * SEC_PER_DAY, floor=0.0, now=t)

@@ -8,8 +8,8 @@ import re
 import pytest
 from typer.testing import CliRunner
 
-import engram.document_index as di
-from engram.cli import app
+import verimem.document_index as di
+from verimem.cli import app
 
 runner = CliRunner()
 

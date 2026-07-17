@@ -18,7 +18,7 @@ last_verified_at default=created_at + is_stale(now-last_verified_at, half_life)
 come cutoff, su ENTRAMBI i path (cache ~991 + legacy ~1052; l'asimmetria
 cache-vs-legacy e' la lezione SCAN-68 semantic.py:1023-1028).
 
-HERMETIC: SemanticMemory su tmp_path, MAI il DB reale ~/.engram. Encode reale
+HERMETIC: SemanticMemory su tmp_path, MAI il DB reale ~/.verimem. Encode reale
 (384-dim) come il resto della suite — niente mock dell'embedding.
 
 NON edita semantic.py/freshness.py: il wiring lo fa la sorella A. Qui SOLO il
@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import time
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 # Eta abbastanza estrema da rendere il fatto stantio per QUALSIASI half-life
 # positivo ragionevole che A scegliera' (robusto al parametro ignoto).

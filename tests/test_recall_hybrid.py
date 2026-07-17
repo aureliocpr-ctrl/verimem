@@ -26,7 +26,7 @@ from pathlib import Path
 
 def _make_fact_with_kw(*, prop: str, kw: list[str] | None = None,
                       topic: str = "test") -> object:
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
     return Fact(
         proposition=prop,
         topic=topic,
@@ -44,7 +44,7 @@ def test_hybrid_recall_promotes_keyword_match(tmp_path: Path) -> None:
     a fact with a closer cosine score but no keyword overlap, when
     the kw weight is non-zero. Pin the hybrid behaviour.
     """
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "semantic.db")
     # Two facts. Fact A is verbose, semantic-close to "AM-GM" query.
@@ -70,7 +70,7 @@ def test_hybrid_recall_promotes_keyword_match(tmp_path: Path) -> None:
 
 
 def test_hybrid_recall_weight_1_matches_plain_recall(tmp_path: Path) -> None:
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "semantic.db")
     sm.store(_make_fact_with_kw(prop="AM-GM pairing closure proof", kw=[]))
@@ -91,7 +91,7 @@ def test_hybrid_recall_facts_without_kw_get_zero_kw_score(tmp_path: Path) -> Non
     score must equal ``semantic_weight * cosine + (1-w) * 0`` — they
     are not actively penalized, just not boosted.
     """
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "semantic.db")
     # Very semantically similar fact with no kw — must still appear.
@@ -112,7 +112,7 @@ def test_hybrid_recall_facts_without_kw_get_zero_kw_score(tmp_path: Path) -> Non
 
 
 def test_hybrid_recall_empty_query(tmp_path: Path) -> None:
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "semantic.db")
     sm.store(_make_fact_with_kw(prop="x", kw=["a"]))

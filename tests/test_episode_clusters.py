@@ -22,14 +22,14 @@ class _FakeEp:
 
 
 def test_empty_returns_empty_clusters():
-    from engram.episode_clusters import cluster_episodes
+    from verimem.episode_clusters import cluster_episodes
 
     out = cluster_episodes([])
     assert out["clusters"] == []
 
 
 def test_singletons_when_disjoint():
-    from engram.episode_clusters import cluster_episodes
+    from verimem.episode_clusters import cluster_episodes
 
     eps = [
         _FakeEp("e1", "alpha beta gamma"),
@@ -43,7 +43,7 @@ def test_singletons_when_disjoint():
 
 
 def test_two_episodes_cluster_together():
-    from engram.episode_clusters import cluster_episodes
+    from verimem.episode_clusters import cluster_episodes
 
     eps = [
         _FakeEp("e1", "deploy web app"),
@@ -58,7 +58,7 @@ def test_two_episodes_cluster_together():
 
 
 def test_threshold_strict_breaks_clusters():
-    from engram.episode_clusters import cluster_episodes
+    from verimem.episode_clusters import cluster_episodes
 
     eps = [
         _FakeEp("e1", "alpha beta"),
@@ -70,7 +70,7 @@ def test_threshold_strict_breaks_clusters():
 
 
 def test_clusters_sorted_by_size_desc():
-    from engram.episode_clusters import cluster_episodes
+    from verimem.episode_clusters import cluster_episodes
 
     eps = [
         _FakeEp("a1", "apple banana"),
@@ -84,7 +84,7 @@ def test_clusters_sorted_by_size_desc():
 
 
 def test_payload_per_cluster_complete():
-    from engram.episode_clusters import cluster_episodes
+    from verimem.episode_clusters import cluster_episodes
 
     eps = [_FakeEp("e1", "alpha beta")]
     out = cluster_episodes(eps)
@@ -95,7 +95,7 @@ def test_payload_per_cluster_complete():
 
 
 def test_top_k_clusters_respected():
-    from engram.episode_clusters import cluster_episodes
+    from verimem.episode_clusters import cluster_episodes
 
     eps = [_FakeEp(f"e{i}", f"unique{i}") for i in range(10)]
     out = cluster_episodes(eps, top_k=3)
@@ -103,7 +103,7 @@ def test_top_k_clusters_respected():
 
 
 def test_payload_shape_complete():
-    from engram.episode_clusters import cluster_episodes
+    from verimem.episode_clusters import cluster_episodes
 
     out = cluster_episodes([])
     for k in ("clusters", "n_episodes", "threshold"):

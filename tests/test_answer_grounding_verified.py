@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.client import Memory
+from verimem.client import Memory
 
 
 def _local_ce_available() -> bool:
@@ -27,7 +27,7 @@ def _local_ce_available() -> bool:
     # not a red build. The CE's separation is independently proven by the probe
     # recorded in the answer() commit; here we test answer()'s logic ON it.
     try:
-        from engram.local_grounding import try_local_score
+        from verimem.local_grounding import try_local_score
         return try_local_score("Rex is a poodle.", "Rex is a poodle.") is not None
     except Exception:
         return False

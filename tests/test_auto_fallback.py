@@ -26,7 +26,7 @@ def force_provider_configured(monkeypatch, request):
     dataclass with object.__setattr__ and register a finalizer to
     restore the original.
     """
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     original_key = CONFIG.anthropic_api_key
 
     def _restore():
@@ -34,7 +34,7 @@ def force_provider_configured(monkeypatch, request):
     request.addfinalizer(_restore)
 
     def _setter(names: list[str]) -> None:
-        from engram.llm import PROVIDERS
+        from verimem.llm import PROVIDERS
         all_envs = {p["env"] for p in PROVIDERS.values() if p.get("env")}
         all_envs.add("ANTHROPIC_API_KEY")
         for env in all_envs:
@@ -59,7 +59,7 @@ def test_no_auto_fallback_without_env(monkeypatch, force_provider_configured):
     monkeypatch.delenv("HIPPO_AUTO_FALLBACK", raising=False)
     monkeypatch.setenv("HIPPO_LLM_PROVIDER", "mock")
     force_provider_configured(["anthropic", "openai"])
-    from engram.llm import FallbackLLM, get_llm
+    from verimem.llm import FallbackLLM, get_llm
     llm = get_llm()
     assert not isinstance(llm, FallbackLLM)
 
@@ -69,7 +69,7 @@ def test_auto_fallback_with_only_primary(monkeypatch, force_provider_configured)
     monkeypatch.setenv("HIPPO_AUTO_FALLBACK", "1")
     monkeypatch.setenv("HIPPO_LLM_PROVIDER", "mock")
     force_provider_configured([])  # nothing configured
-    from engram.llm import FallbackLLM, get_llm
+    from verimem.llm import FallbackLLM, get_llm
     llm = get_llm()
     assert not isinstance(llm, FallbackLLM)
 

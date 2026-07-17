@@ -105,7 +105,7 @@ def _aurc(scores: np.ndarray, sound: np.ndarray) -> float:
 
 
 def _signal_metrics(scores: list[float], sound: list[int]) -> dict[str, Any]:
-    from engram.grounding_gate import optimal_threshold
+    from verimem.grounding_gate import optimal_threshold
     s = np.asarray(scores, float)
     y = np.asarray(sound, int)
     return {"auroc": round(_auroc(scores, sound), 3), "aurc": round(_aurc(s, y), 3),

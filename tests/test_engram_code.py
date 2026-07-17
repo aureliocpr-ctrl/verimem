@@ -15,18 +15,18 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
-from engram import code as code_mod
-from engram.agent import HippoAgent
-from engram.code import EngramCode, _preview_block, _resolve_vision_drops
-from engram.editfmt import EditBlock
-from engram.episode import Episode
-from engram.llm import MockLLM
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import SkillLibrary
-from engram.sleep import SleepEngine
-from engram.tools import default_tools
-from engram.wake import WakeAgent
+from verimem import code as code_mod
+from verimem.agent import HippoAgent
+from verimem.code import EngramCode, _preview_block, _resolve_vision_drops
+from verimem.editfmt import EditBlock
+from verimem.episode import Episode
+from verimem.llm import MockLLM
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import SkillLibrary
+from verimem.sleep import SleepEngine
+from verimem.tools import default_tools
+from verimem.wake import WakeAgent
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -144,7 +144,7 @@ def test_resolve_vision_drops_handles_vision_failure(monkeypatch):
 
 def test_resolve_vision_drops_replaces_marker_with_description(monkeypatch):
     """Successful vision_describe → marker replaced with the description."""
-    from engram.tools import ToolResult
+    from verimem.tools import ToolResult
     console = Console(file=io.StringIO())
 
     def fake_vision_describe(image, prompt):
@@ -160,7 +160,7 @@ def test_resolve_vision_drops_replaces_marker_with_description(monkeypatch):
 
 
 def test_resolve_vision_drops_handles_multiple_markers(monkeypatch):
-    from engram.tools import ToolResult
+    from verimem.tools import ToolResult
     console = Console(file=io.StringIO())
     counter = {"n": 0}
 
@@ -570,7 +570,7 @@ def test_show_turn_meta_no_skills(engram):
 
 
 def test_show_turn_meta_with_skills(engram):
-    from engram.skill import Skill
+    from verimem.skill import Skill
     ep = Episode(task_id="t1", task_text="x", outcome="success",
                  tokens_used=10, final_answer="ok")
     skills = [
@@ -734,7 +734,7 @@ def test_episodes_since_sleep_with_recent_skill(engram, isolated_agent, tmp_data
     """When a skill exists, count only post-skill episodes."""
     import time
 
-    from engram.skill import Skill
+    from verimem.skill import Skill
     # Add a skill with a known updated_at
     s = Skill(name="x", trigger="y", body="z",
               created_at=time.time() - 1000.0,
@@ -752,7 +752,7 @@ def test_episodes_since_sleep_with_recent_skill(engram, isolated_agent, tmp_data
 
 def test_cmd_skills_populated(engram):
     """When skills exist, /skills renders a table."""
-    from engram.skill import Skill
+    from verimem.skill import Skill
     s1 = Skill(name="skill_alpha", trigger="x", body="y",
                status="promoted", successes=10, trials=10)
     s2 = Skill(name="skill_beta", trigger="x", body="y",
@@ -769,7 +769,7 @@ def test_cmd_skills_populated(engram):
 
 def test_cmd_promote_existing_skill(engram):
     """A skill that exists by full id can be promoted."""
-    from engram.skill import Skill
+    from verimem.skill import Skill
     s = Skill(name="t", trigger="x", body="y", status="candidate")
     engram.agent.skills.store(s)
     engram._cmd_promote(s.id[:8])
@@ -781,7 +781,7 @@ def test_cmd_promote_existing_skill(engram):
 
 def test_cmd_retire_existing_skill(engram, monkeypatch):
     """Retire a skill: confirmation accepted, status flipped."""
-    from engram.skill import Skill
+    from verimem.skill import Skill
     s = Skill(name="t", trigger="x", body="y", status="promoted")
     engram.agent.skills.store(s)
     monkeypatch.setattr("engram.code.Confirm.ask",
@@ -793,7 +793,7 @@ def test_cmd_retire_existing_skill(engram, monkeypatch):
 
 def test_cmd_retire_user_declines(engram, monkeypatch):
     """If user declines confirmation, skill stays untouched."""
-    from engram.skill import Skill
+    from verimem.skill import Skill
     s = Skill(name="t", trigger="x", body="y", status="promoted")
     engram.agent.skills.store(s)
     monkeypatch.setattr("engram.code.Confirm.ask",
@@ -805,7 +805,7 @@ def test_cmd_retire_user_declines(engram, monkeypatch):
 
 def test_resolve_skill_id_by_prefix(engram):
     """Match a skill by its 8-char prefix."""
-    from engram.skill import Skill
+    from verimem.skill import Skill
     s = Skill(name="findable", trigger="x", body="y")
     engram.agent.skills.store(s)
     found = engram._resolve_skill_id(s.id[:6])
@@ -821,7 +821,7 @@ def test_resolve_skill_id_by_prefix(engram):
 def test_submit_with_no_edits(engram, monkeypatch):
     """A simple task with no edit blocks completes without applying anything."""
     # Replace agent.run_task with a deterministic answer
-    from engram.wake import WakeResult
+    from verimem.wake import WakeResult
 
     def fake_run_task(task_id, task_text, validator):
         ep = Episode(task_id=task_id, task_text=task_text,

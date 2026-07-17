@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.scope import lead_prefix, matches_scope, parse_scope, scoped_topic
+from verimem.scope import lead_prefix, matches_scope, parse_scope, scoped_topic
 
 
 def test_scoped_topic_single_dim():

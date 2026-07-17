@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.admission_cleanup import requalify_quarantined
+from verimem.admission_cleanup import requalify_quarantined
 
 _SCHEMA = (
     "CREATE TABLE facts (id TEXT PRIMARY KEY, topic TEXT, proposition TEXT, "
@@ -114,7 +114,7 @@ def test_cli_command_is_a_real_entry_point(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     from typer.testing import CliRunner
 
-    from engram.cli import app
+    from verimem.cli import app
 
     res = CliRunner().invoke(app, ["facts", "requalify-quarantined"])
     assert res.exit_code == 0, res.output

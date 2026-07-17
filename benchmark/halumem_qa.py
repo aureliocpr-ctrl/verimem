@@ -11,7 +11,7 @@ thing that actually distances us. HaluMem's per-session `questions` can:
 
 So ~48% of the benchmark rewards properties only we have. This runner ingests
 each session's dialogue through the PRODUCT pipeline
-(``engram.conversation_ingest.ingest_conversation`` — atomic extraction, optional
+(``verimem.conversation_ingest.ingest_conversation`` — atomic extraction, optional
 gap-fill, consolidation, every fact through the store gate), then answers each
 question from the STORED facts alone (recall top-k -> answer -> judge, reusing
 ``benchmark.qa_eval.score_qa``). The ``--raw-turns`` arm stores turns verbatim
@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any
 
 from benchmark.qa_runner import LeanClaudeCLILLM, _cleanup_db, _recall_context
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 #: Gold answers whose CORRECT behaviour is abstention (HaluMem Memory-Boundary).
 #: Scoring these as adversarial rewards NOT fabricating — the moat, on the QA axis.
@@ -89,7 +89,7 @@ def _ingest_session(sm: SemanticMemory, dialogue: list[dict], *, topic: str,
                     conversation_id: str, ingest_llm: Any, raw_turns: bool,
                     completeness: bool, consolidate: bool,
                     max_out_tokens: int, asserted_at: float | None = None) -> None:
-    from engram.conversation_ingest import ingest_conversation
+    from verimem.conversation_ingest import ingest_conversation
     if raw_turns:
         _ingest_raw_turns(sm, dialogue, topic=topic, asserted_at=asserted_at)
     else:
@@ -114,7 +114,7 @@ def _emit_question_records(records: list, sm: SemanticMemory, questions: list, *
             # TRANSITION story + declared disputes — Memory-Conflict golds
             # narrate transitions ("from X to Y"), which a reconciled store
             # serving only the current value forfeits (measured failure mode).
-            from engram.temporal_context import recall_with_history
+            from verimem.temporal_context import recall_with_history
             ctx = recall_with_history(sm, q.get("question", ""), k=k)
         else:
             ctx = _recall_context(sm, q.get("question", ""), k)
@@ -152,7 +152,7 @@ def build_records_halumem(
             db = Path(workdir) / f"hm_u{ui}.db"
             sm = SemanticMemory(db_path=db)
             if reconcile:
-                from engram.agent import wire_reconcile_judge
+                from verimem.agent import wire_reconcile_judge
                 wire_reconcile_judge(sm, ingest_llm)
             for si, s in enumerate(u.get("sessions", []) or []):  # ingest ALL
                 _ingest_session(
@@ -214,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--history", action="store_true",
                     help="answer-with-history context: each hit carries its "
                          "supersession TRANSITION story + declared disputes "
-                         "(engram.temporal_context) — the transition-QA lever")
+                         "(verimem.temporal_context) — the transition-QA lever")
     ap.add_argument("--cumulative", action="store_true", default=True)
     ap.add_argument("--per-session", dest="cumulative", action="store_false",
                     help="ablation: isolate each session (breaks cross-session QA)")

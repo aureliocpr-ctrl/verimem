@@ -4,11 +4,11 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import SkillLibrary
-from engram.sleep import SleepEngine, SleepReport
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import SkillLibrary
+from verimem.sleep import SleepEngine, SleepReport
 
 
 def _ep(eid: str, *, skills: list[str], outcome: str,

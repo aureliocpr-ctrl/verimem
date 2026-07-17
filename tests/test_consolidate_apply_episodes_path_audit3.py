@@ -11,8 +11,8 @@ file — lineage master-fact -> episode silently resolved to nothing.
 """
 from __future__ import annotations
 
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact
 
 
 def _seed_cluster(sm, prefix: str = "proj/alpha", n: int = 4) -> None:
@@ -35,7 +35,7 @@ def test_consolidate_apply_writes_master_episode_to_canonical_subdir(
     # then HIPPO_DATA_DIR — pin both so a maintainer's ~/.engram never leaks in.
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
-    from engram import cli
+    from verimem import cli
 
     sm = cli._facts_sm()  # creates tmp/semantic/semantic.db (canonical subdir)
     _seed_cluster(sm, n=4)

@@ -1,6 +1,6 @@
 """Cycle 210 (2026-05-23) — Thompson sampling tests.
 
-RED marker: ``from engram.thompson_sampling import
+RED marker: ``from verimem.thompson_sampling import
 thompson_sample_candidates`` must fail on master.
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.thompson_sampling import thompson_sample_candidates
+from verimem.thompson_sampling import thompson_sample_candidates
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS skills (

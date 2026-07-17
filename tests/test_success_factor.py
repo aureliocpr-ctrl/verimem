@@ -19,14 +19,14 @@ class _Ep:
 
 
 def test_empty_returns_empty():
-    from engram.success_factor import analyze_success_factors
+    from verimem.success_factor import analyze_success_factors
 
     out = analyze_success_factors([])
     assert out["factors"] == []
 
 
 def test_skill_with_high_success():
-    from engram.success_factor import analyze_success_factors
+    from verimem.success_factor import analyze_success_factors
 
     eps = [
         _Ep("e1", "success", ["skill_winner"]),
@@ -42,7 +42,7 @@ def test_skill_with_high_success():
 
 
 def test_skill_below_min_uses_excluded():
-    from engram.success_factor import analyze_success_factors
+    from verimem.success_factor import analyze_success_factors
 
     eps = [_Ep("e1", "success", ["rare_skill"])]
     out = analyze_success_factors(eps, min_uses=2)
@@ -51,7 +51,7 @@ def test_skill_below_min_uses_excluded():
 
 
 def test_sorting_by_success_rate_desc():
-    from engram.success_factor import analyze_success_factors
+    from verimem.success_factor import analyze_success_factors
 
     eps = (
         [_Ep(f"s{i}", "success", ["hi"]) for i in range(8)]
@@ -68,14 +68,14 @@ def test_sorting_by_success_rate_desc():
 
 
 def test_payload_keys():
-    from engram.success_factor import analyze_success_factors
+    from verimem.success_factor import analyze_success_factors
     out = analyze_success_factors([])
     for k in ("factors", "n_episodes_scanned", "n_unique_skills"):
         assert k in out
 
 
 def test_factor_entry_keys():
-    from engram.success_factor import analyze_success_factors
+    from verimem.success_factor import analyze_success_factors
     eps = [_Ep("e", "success", ["s1"]), _Ep("e2", "success", ["s1"])]
     out = analyze_success_factors(eps, min_uses=1)
     if out["factors"]:

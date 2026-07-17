@@ -12,7 +12,7 @@ deterministic SELECT, no bandit / no randomness. Pure function
 the next Auto-Dream cycle. Falsifiable hypothesis H1 lives in the
 design doc; this file pins the function's contract.
 
-RED→GREEN: this file must fail import on engram.active_learning.
+RED→GREEN: this file must fail import on verimem.active_learning.
 """
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.active_learning import select_stuck_candidates
-from engram.skill import Skill, SkillLibrary
+from verimem.active_learning import select_stuck_candidates
+from verimem.skill import Skill, SkillLibrary
 
 # ---------------------------------------------------------------------------
 # Fixture builders — seed a skills_index.db that mimics the production
@@ -157,7 +157,7 @@ class TestSelectStuckCandidates:
         )
 
     def test_excludes_promoted_status(self, skill_db: Path) -> None:
-        from engram.skill import SkillLibrary
+        from verimem.skill import SkillLibrary
         lib = SkillLibrary(
             dir_path=skill_db.parent / "skills_dir",
             db_path=skill_db,
@@ -170,7 +170,7 @@ class TestSelectStuckCandidates:
         )
 
     def test_excludes_retired_status(self, skill_db: Path) -> None:
-        from engram.skill import SkillLibrary
+        from verimem.skill import SkillLibrary
         lib = SkillLibrary(
             dir_path=skill_db.parent / "skills_dir",
             db_path=skill_db,
@@ -182,7 +182,7 @@ class TestSelectStuckCandidates:
     def test_excludes_under_trialed(self, skill_db: Path) -> None:
         """trials < min_trials must be skipped — separate warm-up
         concern (untrialed/scarce-evidence skills) is a future cycle."""
-        from engram.skill import SkillLibrary
+        from verimem.skill import SkillLibrary
         lib = SkillLibrary(
             dir_path=skill_db.parent / "skills_dir",
             db_path=skill_db,
@@ -198,7 +198,7 @@ class TestSelectStuckCandidates:
 
     def test_excludes_over_trialed(self, skill_db: Path) -> None:
         """trials > max_trials must be skipped — retire policy domain."""
-        from engram.skill import SkillLibrary
+        from verimem.skill import SkillLibrary
         lib = SkillLibrary(
             dir_path=skill_db.parent / "skills_dir",
             db_path=skill_db,
@@ -214,7 +214,7 @@ class TestSelectStuckCandidates:
 
     def test_excludes_outside_fitness_band(self, skill_db: Path) -> None:
         """fitness > upper band must be skipped — healthy candidate."""
-        from engram.skill import SkillLibrary
+        from verimem.skill import SkillLibrary
         lib = SkillLibrary(
             dir_path=skill_db.parent / "skills_dir",
             db_path=skill_db,

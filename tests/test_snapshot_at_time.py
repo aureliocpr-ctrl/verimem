@@ -1,6 +1,6 @@
 """Cycle 194 (2026-05-23) — snapshot_at_time tests.
 
-RED marker: ``from engram.snapshot_at_time import snapshot_at_time``
+RED marker: ``from verimem.snapshot_at_time import snapshot_at_time``
 must fail on master.
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.snapshot_at_time import snapshot_at_time
+from verimem.snapshot_at_time import snapshot_at_time
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

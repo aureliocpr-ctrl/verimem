@@ -9,14 +9,14 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from engram.compilation import CompiledMacro, MacroStep
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.sleep import SleepEngine, SleepReport
-from engram.wake import WakeAgent, WakeConfig
+from verimem.compilation import CompiledMacro, MacroStep
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.sleep import SleepEngine, SleepReport
+from verimem.wake import WakeAgent, WakeConfig
 
 
 @dataclass
@@ -49,7 +49,7 @@ class _ScriptedLLM:
 def test_adaptive_macro_threshold_lowers_with_high_confidence(tmp_data_dir):
     """A macro with high LLM-rated confidence is allowed to fire on tasks
     that are slightly less similar than the static threshold would allow."""
-    from engram.tools import default_tools
+    from verimem.tools import default_tools
 
     lib = SkillLibrary(tmp_data_dir / "skills", tmp_data_dir / "skills" / "idx.db")
     mem = EpisodicMemory(tmp_data_dir / "ep.db")
@@ -71,7 +71,7 @@ def test_adaptive_macro_threshold_lowers_with_high_confidence(tmp_data_dir):
 
 
 def test_adaptive_threshold_disabled_returns_base(tmp_data_dir):
-    from engram.tools import default_tools
+    from verimem.tools import default_tools
     lib = SkillLibrary(tmp_data_dir / "skills", tmp_data_dir / "skills" / "idx.db")
     mem = EpisodicMemory(tmp_data_dir / "ep.db")
     agent = WakeAgent(memory=mem, skills=lib,
@@ -148,7 +148,7 @@ def test_forward_replay_no_avoid_path_when_no_failures(tmp_data_dir):
 def test_decay_pulls_idle_skill_back_toward_canonical(tmp_data_dir):
     """A skill with a learned_embedding far from canonical, idle for >cutoff,
     should drift back when decay_idle_embeddings runs."""
-    from engram import embedding as emb_mod
+    from verimem import embedding as emb_mod
 
     lib = SkillLibrary(tmp_data_dir / "skills", tmp_data_dir / "skills" / "idx.db")
     s = Skill(name="solve quadratic", trigger="solving quadratic equations",
@@ -181,7 +181,7 @@ def test_decay_pulls_idle_skill_back_toward_canonical(tmp_data_dir):
 
 
 def test_decay_skips_recently_used_skills(tmp_data_dir):
-    from engram import embedding as emb_mod
+    from verimem import embedding as emb_mod
     lib = SkillLibrary(tmp_data_dir / "skills", tmp_data_dir / "skills" / "idx.db")
     s = Skill(name="x", trigger="x", body="x")
     s.learned_embedding = emb_mod.encode("an unrelated text").tolist()
@@ -195,7 +195,7 @@ def test_decay_skips_recently_used_skills(tmp_data_dir):
 
 
 def test_decay_disabled_is_noop(tmp_data_dir):
-    from engram import embedding as emb_mod
+    from verimem import embedding as emb_mod
     lib = SkillLibrary(tmp_data_dir / "skills", tmp_data_dir / "skills" / "idx.db")
     s = Skill(name="x", trigger="x", body="x")
     s.learned_embedding = emb_mod.encode("unrelated").tolist()
@@ -339,7 +339,7 @@ def test_practice_prioritises_high_variance_skill(tmp_data_dir):
 def test_working_memory_pruning_compresses_old_observations(tmp_data_dir):
     """When the running message list exceeds the budget, mid-trajectory
     tool_result messages should be replaced by the placeholder."""
-    from engram.tools import default_tools
+    from verimem.tools import default_tools
     lib = SkillLibrary(tmp_data_dir / "skills", tmp_data_dir / "skills" / "idx.db")
     mem = EpisodicMemory(tmp_data_dir / "ep.db")
     agent = WakeAgent(memory=mem, skills=lib,
@@ -386,7 +386,7 @@ def test_working_memory_pruning_under_budget_is_noop(tmp_data_dir):
     (coperta li'); QUI testiamo il no-op-da-budget della funzione. Prima il test
     chiamava la funzione con un messaggio ENORME (over-budget!) e asseriva solo
     isinstance(out, list) = tautologico, non verificava alcun no-op."""
-    from engram.tools import default_tools
+    from verimem.tools import default_tools
     lib = SkillLibrary(tmp_data_dir / "skills", tmp_data_dir / "skills" / "idx.db")
     mem = EpisodicMemory(tmp_data_dir / "ep.db")
     agent = WakeAgent(memory=mem, skills=lib,

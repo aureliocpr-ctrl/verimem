@@ -26,13 +26,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# SINGLE SOURCE: gli esemplari/àncore di PRODUZIONE (engram.semantic_selfclaim).
+# SINGLE SOURCE: gli esemplari/àncore di PRODUZIONE (verimem.semantic_selfclaim).
 # La calibrazione deve misurare esattamente ciò che il detector userà — un set
 # duplicato qui andrebbe fuori sync alla prima modifica. I primi 12 esemplari
 # sono gli EN storici (la lista base delle prime run); --ml-exemplars aggiunge
 # il resto (full set di produzione).
-from engram.semantic_selfclaim import ANCHORS as _PROD_ANCHORS  # noqa: E402
-from engram.semantic_selfclaim import EXEMPLARS as _PROD_EXEMPLARS  # noqa: E402
+from verimem.semantic_selfclaim import ANCHORS as _PROD_ANCHORS  # noqa: E402
+from verimem.semantic_selfclaim import EXEMPLARS as _PROD_EXEMPLARS  # noqa: E402
 
 EXEMPLARS = _PROD_EXEMPLARS[:12]  # blocco EN
 

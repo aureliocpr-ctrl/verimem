@@ -22,15 +22,15 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from engram import skill as skill_mod
-from engram import sleep as sleep_mod
-from engram import wake as wake_mod
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.sleep import SleepEngine
+from verimem import skill as skill_mod
+from verimem import sleep as sleep_mod
+from verimem import wake as wake_mod
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.sleep import SleepEngine
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ def _seed_realistic_state(skills: SkillLibrary, memory: EpisodicMemory):
     - 1 'anomalous' episode (10 steps when the skill avg is 3) so
       salience-by-surprise has something to lift
     """
-    from engram import embedding
+    from verimem import embedding
     base_emb = embedding.encode("fix arithmetic bug in calculator").tolist()
 
     # Stale promoted skill (eligible for spontaneous reactivation)
@@ -262,7 +262,7 @@ def test_forward_replay_block_renders_with_all_mechanisms_on(
         memory.store(e)
 
     # Build a WakeAgent and ask for the forward replay block.
-    from engram.wake import WakeAgent, WakeConfig
+    from verimem.wake import WakeAgent, WakeConfig
     agent = wake_mod.WakeAgent(
         memory=memory, skills=skills, llm=MagicMock(), config=WakeConfig(),
     )

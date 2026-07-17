@@ -27,7 +27,7 @@ def test_clean_run_proves_zero_egress():
         import os
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
-        from engram.airgap import probe_live_egress
+        from verimem.airgap import probe_live_egress
         rep = probe_live_egress()  # default exercise: write + search, mock llm
         print("EGRESS", rep["egress"])
         print("AIR_GAPPED", rep["air_gapped"])
@@ -45,7 +45,7 @@ def test_probe_catches_a_deliberate_egress():
     rc, out = _run(
         """
         import socket
-        from engram.airgap import probe_live_egress
+        from verimem.airgap import probe_live_egress
         def leak():
             s = socket.socket()
             s.settimeout(0.001)
@@ -66,7 +66,7 @@ def test_loopback_is_not_egress():
     rc, out = _run(
         """
         import socket
-        from engram.airgap import probe_live_egress
+        from verimem.airgap import probe_live_egress
         def local_call():
             s = socket.socket()
             s.settimeout(0.001)

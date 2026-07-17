@@ -26,9 +26,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.sleep import replay_priority
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.sleep import replay_priority
 
 _NOW = 1_700_000_000.0
 

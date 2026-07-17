@@ -19,13 +19,13 @@ class _Ep:
 
 
 def test_empty_actions_returns_no_rollout():
-    from engram.counterfactual_rollout import rollout_actions
+    from verimem.counterfactual_rollout import rollout_actions
     out = rollout_actions(state="x", actions=[], past_episodes=[])
     assert out["rollouts"] == []
 
 
 def test_single_action_predicted():
-    from engram.counterfactual_rollout import rollout_actions
+    from verimem.counterfactual_rollout import rollout_actions
 
     eps = [_Ep("e1", "x exploit Y", "success") for _ in range(3)]
     out = rollout_actions(
@@ -37,7 +37,7 @@ def test_single_action_predicted():
 
 
 def test_ranking_picks_best_action():
-    from engram.counterfactual_rollout import rollout_actions
+    from verimem.counterfactual_rollout import rollout_actions
 
     eps = [
         _Ep("s1", "x passive crtsh", "success"),
@@ -56,14 +56,14 @@ def test_ranking_picks_best_action():
 
 
 def test_payload_keys():
-    from engram.counterfactual_rollout import rollout_actions
+    from verimem.counterfactual_rollout import rollout_actions
     out = rollout_actions(state="x", actions=["a"], past_episodes=[])
     for k in ("rollouts", "recommended", "n_actions"):
         assert k in out
 
 
 def test_each_rollout_has_required_keys():
-    from engram.counterfactual_rollout import rollout_actions
+    from verimem.counterfactual_rollout import rollout_actions
     out = rollout_actions(state="x", actions=["a", "b"], past_episodes=[])
     for r in out["rollouts"]:
         for k in ("action", "p_success", "p_failure", "confidence"):
@@ -71,7 +71,7 @@ def test_each_rollout_has_required_keys():
 
 
 def test_recommended_is_highest_p_success():
-    from engram.counterfactual_rollout import rollout_actions
+    from verimem.counterfactual_rollout import rollout_actions
 
     eps = [
         _Ep(f"s{i}", "win action X", "success") for i in range(5)
@@ -87,7 +87,7 @@ def test_recommended_is_highest_p_success():
 
 
 def test_none_recommended_when_all_uncertain():
-    from engram.counterfactual_rollout import rollout_actions
+    from verimem.counterfactual_rollout import rollout_actions
     out = rollout_actions(
         state="novel state",
         actions=["unknown action"],

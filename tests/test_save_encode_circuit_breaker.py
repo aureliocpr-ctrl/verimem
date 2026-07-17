@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-import engram.semantic as sem
+import verimem.semantic as sem
 
 
 def test_encode_within_budget_defers_on_slow_encode(monkeypatch):
@@ -57,8 +57,8 @@ def test_store_auto_defers_under_slow_encode_no_hang(monkeypatch, tmp_path):
     """End-to-end WIRING: store(embed='auto') must DEFER (not hang) when the
     daemon LOOKS usable (answers the warmth ping) but the encode is
     pathologically slow — the exact alive-but-starved daemon Aurelio hit."""
-    from engram import encode_service as es
-    from engram.semantic import Fact, SemanticMemory
+    from verimem import encode_service as es
+    from verimem.semantic import Fact, SemanticMemory
 
     monkeypatch.setattr(es, "daemon_usable", lambda: True)  # warm -> budgeted sync
     monkeypatch.setattr(sem, "_SAVE_ENCODE_BUDGET_S", 0.4)

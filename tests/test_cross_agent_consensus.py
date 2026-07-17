@@ -18,13 +18,13 @@ class _Fact:
 
 
 def test_empty_returns_empty():
-    from engram.cross_agent_consensus import find_consensus_facts
+    from verimem.cross_agent_consensus import find_consensus_facts
     out = find_consensus_facts([])
     assert out["consensus"] == []
 
 
 def test_multiple_agents_agree():
-    from engram.cross_agent_consensus import find_consensus_facts
+    from verimem.cross_agent_consensus import find_consensus_facts
     facts = [
         _Fact("f1", "WordPress 5.8 vulnerable to CVE-X",
               "agent:pentester/vuln"),
@@ -40,7 +40,7 @@ def test_multiple_agents_agree():
 
 
 def test_single_agent_no_consensus():
-    from engram.cross_agent_consensus import find_consensus_facts
+    from verimem.cross_agent_consensus import find_consensus_facts
     facts = [
         _Fact("f1", "X claim", "agent:A/x"),
         _Fact("f2", "X claim", "agent:A/y"),  # same agent
@@ -50,14 +50,14 @@ def test_single_agent_no_consensus():
 
 
 def test_payload_keys():
-    from engram.cross_agent_consensus import find_consensus_facts
+    from verimem.cross_agent_consensus import find_consensus_facts
     out = find_consensus_facts([])
     for k in ("consensus", "n_facts_scanned"):
         assert k in out
 
 
 def test_consensus_keys():
-    from engram.cross_agent_consensus import find_consensus_facts
+    from verimem.cross_agent_consensus import find_consensus_facts
     facts = [
         _Fact("f1", "common fact one", "agent:A/x"),
         _Fact("f2", "common fact one", "agent:B/x"),
@@ -69,7 +69,7 @@ def test_consensus_keys():
 
 
 def test_dissenting_facts_excluded():
-    from engram.cross_agent_consensus import find_consensus_facts
+    from verimem.cross_agent_consensus import find_consensus_facts
     facts = [
         _Fact("f1", "claim X is true", "agent:A/x"),
         _Fact("f2", "claim X is true", "agent:B/x"),

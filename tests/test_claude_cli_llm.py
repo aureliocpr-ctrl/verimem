@@ -28,7 +28,7 @@ import pytest
 def test_claude_cli_llm_complete_basic(monkeypatch) -> None:
     """RED #1: complete() chiama subprocess.run con claude -p
     --output-format json, parsa stdout JSON, ritorna LLMResponse."""
-    from engram.llm import ClaudeCLILLM
+    from verimem.llm import ClaudeCLILLM
 
     fake_stdout = json.dumps({
         "type": "result",
@@ -81,7 +81,7 @@ def test_claude_cli_llm_complete_basic(monkeypatch) -> None:
 
 def test_claude_cli_llm_nonzero_exit_raises(monkeypatch) -> None:
     """RED #2a: subprocess returncode != 0 → LLMError."""
-    from engram.llm import ClaudeCLILLM, LLMError
+    from verimem.llm import ClaudeCLILLM, LLMError
 
     def _fake_run(cmd, **kwargs):
         result = MagicMock()
@@ -99,7 +99,7 @@ def test_claude_cli_llm_nonzero_exit_raises(monkeypatch) -> None:
 
 def test_claude_cli_llm_timeout_raises(monkeypatch) -> None:
     """RED #2b: subprocess.TimeoutExpired → LLMError with timeout msg."""
-    from engram.llm import ClaudeCLILLM, LLMError
+    from verimem.llm import ClaudeCLILLM, LLMError
 
     def _fake_run(cmd, **kwargs):
         raise subprocess.TimeoutExpired(cmd=cmd, timeout=10.0)
@@ -113,7 +113,7 @@ def test_claude_cli_llm_timeout_raises(monkeypatch) -> None:
 
 def test_claude_cli_llm_is_error_response_raises(monkeypatch) -> None:
     """RED #2c: stdout JSON has is_error=true → LLMError."""
-    from engram.llm import ClaudeCLILLM, LLMError
+    from verimem.llm import ClaudeCLILLM, LLMError
 
     fake_stdout = json.dumps({
         "type": "result",
@@ -141,7 +141,7 @@ def test_claude_cli_llm_is_error_response_raises(monkeypatch) -> None:
 
 def test_claude_cli_llm_no_tools_support() -> None:
     """RED #3: P0 no tool-use via subprocess."""
-    from engram.llm import ClaudeCLILLM
+    from verimem.llm import ClaudeCLILLM
 
     llm = ClaudeCLILLM()
     assert llm.supports_tools() is False
@@ -162,7 +162,7 @@ async def test_hippo_consolidate_fallback_to_cli_when_no_sampling(
 
     from mcp.types import CallToolRequest, CallToolRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     monkeypatch.setenv("HIPPO_HOSTED", "1")
 

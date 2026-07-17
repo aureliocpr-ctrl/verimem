@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
+from verimem.memory import Episode, EpisodicMemory
 
 
 @pytest.fixture

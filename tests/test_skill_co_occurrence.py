@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -22,7 +22,7 @@ class _FakeEp:
 
 
 def test_empty_returns_empty_pairs():
-    from engram.skill_co_occurrence import skill_co_occurrence
+    from verimem.skill_co_occurrence import skill_co_occurrence
 
     out = skill_co_occurrence(skills=[], episodes=[])
     assert out["pairs"] == []
@@ -30,7 +30,7 @@ def test_empty_returns_empty_pairs():
 
 
 def test_single_skill_in_episode_no_pairs():
-    from engram.skill_co_occurrence import skill_co_occurrence
+    from verimem.skill_co_occurrence import skill_co_occurrence
 
     skills = [Skill(id="A", name="A")]
     eps = [_FakeEp(["A"])]
@@ -39,7 +39,7 @@ def test_single_skill_in_episode_no_pairs():
 
 
 def test_two_skills_co_occur():
-    from engram.skill_co_occurrence import skill_co_occurrence
+    from verimem.skill_co_occurrence import skill_co_occurrence
 
     skills = [Skill(id="A", name="A"), Skill(id="B", name="B")]
     eps = [
@@ -57,7 +57,7 @@ def test_two_skills_co_occur():
 def test_jaccard_correct():
     """Jaccard(A, B) = |A ∩ B| / |A ∪ B| over episodes containing
     each skill."""
-    from engram.skill_co_occurrence import skill_co_occurrence
+    from verimem.skill_co_occurrence import skill_co_occurrence
 
     skills = [Skill(id="A", name="A"), Skill(id="B", name="B")]
     eps = [
@@ -73,7 +73,7 @@ def test_jaccard_correct():
 
 
 def test_pairs_sorted_by_count_desc():
-    from engram.skill_co_occurrence import skill_co_occurrence
+    from verimem.skill_co_occurrence import skill_co_occurrence
 
     skills = [Skill(id=x, name=x) for x in ("A", "B", "C")]
     eps = [
@@ -88,7 +88,7 @@ def test_pairs_sorted_by_count_desc():
 
 
 def test_top_pairs_respected():
-    from engram.skill_co_occurrence import skill_co_occurrence
+    from verimem.skill_co_occurrence import skill_co_occurrence
 
     skills = [Skill(id=x, name=x) for x in "ABCDE"]
     eps = [
@@ -103,7 +103,7 @@ def test_top_pairs_respected():
 
 def test_self_pairs_excluded():
     """A skill paired with itself is not a meaningful co-occurrence."""
-    from engram.skill_co_occurrence import skill_co_occurrence
+    from verimem.skill_co_occurrence import skill_co_occurrence
 
     skills = [Skill(id="A", name="A"), Skill(id="B", name="B")]
     eps = [_FakeEp(["A", "A", "B"])]
@@ -114,7 +114,7 @@ def test_self_pairs_excluded():
 
 
 def test_payload_shape_complete():
-    from engram.skill_co_occurrence import skill_co_occurrence
+    from verimem.skill_co_occurrence import skill_co_occurrence
 
     out = skill_co_occurrence(skills=[], episodes=[])
     for k in ("pairs", "n_episodes", "n_skills"):

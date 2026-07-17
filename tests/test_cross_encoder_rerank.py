@@ -4,7 +4,7 @@ NO sentence-transformers / CrossEncoder model load required — all
 tests use a mock ``scorer`` callable that returns deterministic
 scores.
 
-RED marker: ``from engram.cross_encoder_rerank import
+RED marker: ``from verimem.cross_encoder_rerank import
 rerank_candidates`` must fail on master.
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.cross_encoder_rerank import rerank_candidates
+from verimem.cross_encoder_rerank import rerank_candidates
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

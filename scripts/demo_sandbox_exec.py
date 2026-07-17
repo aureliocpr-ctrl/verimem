@@ -14,7 +14,7 @@ import json
 import os
 from pathlib import Path
 
-from engram import mcp_server
+from verimem import mcp_server
 
 
 async def _invoke(name: str, arguments: dict) -> dict:

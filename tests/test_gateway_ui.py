@@ -19,9 +19,9 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from engram.entity_kg import Entity, EntityStore  # noqa: E402
-from engram.entity_populate import entity_kg_path_for  # noqa: E402
-from engram.gateway import GatewayKeys, create_app  # noqa: E402
+from verimem.entity_kg import Entity, EntityStore  # noqa: E402
+from verimem.entity_populate import entity_kg_path_for  # noqa: E402
+from verimem.gateway import GatewayKeys, create_app  # noqa: E402
 
 # frase che il gate L1 storico declassa a quarantined (nessuna evidenza)
 _UNSUPPORTED = "the deployment works and is verified in production"

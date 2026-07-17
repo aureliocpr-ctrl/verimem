@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from engram.temporal_context import wants_history
+from verimem.temporal_context import wants_history
 
 _TEMPORAL = [
     "What was the budget as of March 2026?",
@@ -62,8 +62,8 @@ def test_empty_and_none_are_lean() -> None:
 def test_sdk_auto_routes_per_query(tmp_path) -> None:
     """with_history='auto': a temporal question carries the transition story,
     a plain lookup does not — same store, same API call shape."""
-    from engram.client import Memory
-    from engram.semantic import Fact
+    from verimem.client import Memory
+    from verimem.semantic import Fact
 
     mem = Memory(tmp_path / "r.db")
     now = time.time()

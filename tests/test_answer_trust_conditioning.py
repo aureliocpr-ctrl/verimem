@@ -18,7 +18,7 @@ These pin the wiring with an LLM stub (no CE, no network).
 """
 from __future__ import annotations
 
-from engram.client import _ANSWER_SYSTEM, _ANSWER_TRUST_SYSTEM, Memory
+from verimem.client import _ANSWER_SYSTEM, _ANSWER_TRUST_SYSTEM, Memory
 
 
 class _StubLLM:
@@ -41,7 +41,7 @@ VERIFIED_REF = None  # set per-test: a real file: ref the verified_by gate accep
 
 
 def _mem(tmp_path) -> Memory:
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
     global VERIFIED_REF
     m = Memory(path=tmp_path / "m.db")
     # verified is not self-declared: store()'s verified_by hard-gate demotes a

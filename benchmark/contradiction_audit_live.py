@@ -22,7 +22,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from engram.justified_memory import audit_facts
+from verimem.justified_memory import audit_facts
 
 LIVE = Path.home() / ".engram" / "semantic" / "semantic.db"
 FP_RESULT = Path(__file__).with_name("results") / "corpus_fp_real_seed7.json"

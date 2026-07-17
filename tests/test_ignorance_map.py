@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.ignorance_map import ignorance_map
+from verimem.ignorance_map import ignorance_map
 
 
 @pytest.fixture()
@@ -16,7 +16,7 @@ def mem(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
-    from engram.client import Memory
+    from verimem.client import Memory
     return Memory(tmp_path / "ig.db")
 
 

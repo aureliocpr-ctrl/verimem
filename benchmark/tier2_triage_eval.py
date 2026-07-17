@@ -86,8 +86,8 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
 
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.semantic import Fact
-    from engram.tier2_judge import LLMJudge, assess_claim_trust
+    from verimem.semantic import Fact
+    from verimem.tier2_judge import LLMJudge, assess_claim_trust
 
     judge = LLMJudge(LeanClaudeCLILLM(model=a.model, timeout_s=a.timeout))
     durable_set, noise_set = (HARD_DURABLE, HARD_NOISE) if a.hard else (DURABLE, NOISE)

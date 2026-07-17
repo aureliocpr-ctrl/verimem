@@ -33,10 +33,10 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.config import CONFIG
-from engram.dentate_gyrus import dg_encode
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory, _global_dg_projection
+from verimem.config import CONFIG
+from verimem.dentate_gyrus import dg_encode
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory, _global_dg_projection
 
 
 def _ep(*, ep_id: str, text: str) -> Episode:

@@ -43,7 +43,7 @@ def _start_server(data_dir: Path, port: int) -> str:
     """Boot the real app on a real port; return a provisioned tenant api_key.
     Keys are issued programmatically (GatewayKeys.issue) exactly like the
     production CLI does — there is no HTTP admin surface for key creation."""
-    from engram.gateway import GatewayKeys, create_app
+    from verimem.gateway import GatewayKeys, create_app
     keys = GatewayKeys(data_dir / "keys.db")
     api_key = keys.create(tenant_id="loadtest", plan="enterprise")
     app = create_app(data_dir=data_dir, keys=keys)

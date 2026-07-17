@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.prompt_injection import detect_injection, is_injection
+from verimem.prompt_injection import detect_injection, is_injection
 
 
 @pytest.mark.parametrize("text", [

@@ -28,10 +28,9 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
 
-    from benchmark.halumem_writepath_moat import (_all_facts, _clean_facts,
-                                                  _make_confab, _questions)
+    from benchmark.halumem_writepath_moat import _all_facts, _clean_facts, _make_confab, _questions
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram import grounding_gate as G
+    from verimem import grounding_gate as G
 
     rng = random.Random(7)
     users = []

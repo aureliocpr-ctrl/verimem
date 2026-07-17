@@ -11,13 +11,13 @@ os.environ.setdefault("ENGRAM_RECONCILE_ON_WRITE", "0")
 import numpy as np
 
 from benchmark.qa_runner import LeanClaudeCLILLM
-from engram import embedding
-from engram.conversation_ingest import (
+from verimem import embedding
+from verimem.conversation_ingest import (
     ATOMIC_EXTRACT_SYSTEM,
     CONSOLIDATE_SYSTEM,
     parse_extracted_lines,
 )
-from engram.truth_reconciliation import _content_overlap
+from verimem.truth_reconciliation import _content_overlap
 
 p = os.path.expanduser("~/.cache/halumem/HaluMem-Medium.jsonl")
 u = [json.loads(line) for line in open(p, encoding="utf-8") if line.strip()][0]

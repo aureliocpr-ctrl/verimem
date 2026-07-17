@@ -18,13 +18,13 @@ class _Ep:
 
 
 def test_empty_returns_empty():
-    from engram.emerging_patterns import find_emerging_patterns
+    from verimem.emerging_patterns import find_emerging_patterns
     out = find_emerging_patterns([])
     assert out["emerging"] == []
 
 
 def test_pattern_rising_recent():
-    from engram.emerging_patterns import find_emerging_patterns
+    from verimem.emerging_patterns import find_emerging_patterns
 
     now = time.time()
     # 1 old WordPress, 5 recent WordPress → emerging
@@ -45,7 +45,7 @@ def test_pattern_rising_recent():
 
 
 def test_stable_pattern_not_emerging():
-    from engram.emerging_patterns import find_emerging_patterns
+    from verimem.emerging_patterns import find_emerging_patterns
     now = time.time()
     # Same rate in both windows
     eps = (
@@ -64,14 +64,14 @@ def test_stable_pattern_not_emerging():
 
 
 def test_payload_keys():
-    from engram.emerging_patterns import find_emerging_patterns
+    from verimem.emerging_patterns import find_emerging_patterns
     out = find_emerging_patterns([])
     for k in ("emerging", "n_episodes_scanned", "recent_window_days"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.emerging_patterns import find_emerging_patterns
+    from verimem.emerging_patterns import find_emerging_patterns
     now = time.time()
     eps = [
         _Ep(f"r{i}", "new attack", created_at=now - 86400 * 2)
@@ -85,7 +85,7 @@ def test_entry_keys():
 
 
 def test_min_recent_count_filter():
-    from engram.emerging_patterns import find_emerging_patterns
+    from verimem.emerging_patterns import find_emerging_patterns
     now = time.time()
     eps = [_Ep("solo", "rare task", created_at=now - 86400)]
     out = find_emerging_patterns(eps, now=now, min_recent_count=3)

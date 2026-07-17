@@ -24,7 +24,7 @@ def real_model_cached() -> bool:
     try:
         from huggingface_hub import try_to_load_from_cache
 
-        from engram.config import CONFIG
+        from verimem.config import CONFIG
 
         hit = try_to_load_from_cache(CONFIG.embedding_model, "config.json")
         return isinstance(hit, str)

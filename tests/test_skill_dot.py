@@ -13,11 +13,11 @@ Pure string generation, no graphviz dep needed at runtime.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_skill_list():
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     out = skills_to_dot([])
     assert "digraph" in out
@@ -26,7 +26,7 @@ def test_empty_skill_list():
 
 
 def test_includes_skill_nodes():
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     skills = [
         Skill(id="s1", name="alpha", status="promoted"),
@@ -40,7 +40,7 @@ def test_includes_skill_nodes():
 
 
 def test_lineage_edges():
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     skills = [
         Skill(id="parent", name="parent_skill"),
@@ -51,7 +51,7 @@ def test_lineage_edges():
 
 
 def test_lineage_edges_skipped_when_disabled():
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     skills = [
         Skill(id="parent", name="parent"),
@@ -62,7 +62,7 @@ def test_lineage_edges_skipped_when_disabled():
 
 
 def test_color_by_status():
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     skills = [
         Skill(id="p", name="promoted_one", status="promoted"),
@@ -77,7 +77,7 @@ def test_color_by_status():
 
 
 def test_max_skills_cap():
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     skills = [Skill(id=f"s{i}", name=f"skill{i}") for i in range(50)]
     out = skills_to_dot(skills, max_skills=5)
@@ -92,7 +92,7 @@ def test_max_skills_cap():
 def test_lineage_to_unknown_parent_skipped():
     """Skills referencing parents outside the visible set don't
     produce dangling edges."""
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     skills = [
         Skill(id="orphan", name="orphan",
@@ -103,7 +103,7 @@ def test_lineage_to_unknown_parent_skipped():
 
 
 def test_quote_escape_in_names():
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     skills = [Skill(id="weird", name='quote"name')]
     out = skills_to_dot(skills)
@@ -113,7 +113,7 @@ def test_quote_escape_in_names():
 
 
 def test_returns_str():
-    from engram.skill_dot import skills_to_dot
+    from verimem.skill_dot import skills_to_dot
 
     out = skills_to_dot([])
     assert isinstance(out, str)

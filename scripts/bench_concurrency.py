@@ -69,8 +69,8 @@ def _worker_episodes(args: tuple[str, str, int, int]) -> dict:
     os.environ["TORCH_USE_CPU"] = "1"
 
     t_start = time.time()
-    from engram.episode import Episode
-    from engram.memory import Memory
+    from verimem.episode import Episode
+    from verimem.memory import Memory
 
     mem = Memory(db_path=Path(data_dir_str) / "episodes" / "episodes.db")
     t_init = time.time() - t_start
@@ -141,7 +141,7 @@ def _worker_facts_impl(
     os.environ["TORCH_USE_CPU"] = "1"
 
     t_start = time.time()
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     store = SemanticMemory(db_path=Path(data_dir_str) / "semantic" / "semantic.db")
     t_init = time.time() - t_start

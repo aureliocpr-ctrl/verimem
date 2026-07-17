@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -23,14 +23,14 @@ class _FakeEp:
 
 
 def test_empty_returns_empty_list():
-    from engram.outcome_by_skill import outcomes_by_skill
+    from verimem.outcome_by_skill import outcomes_by_skill
 
     out = outcomes_by_skill([], [])
     assert out == []
 
 
 def test_skill_never_used_zero_episodes():
-    from engram.outcome_by_skill import outcomes_by_skill
+    from verimem.outcome_by_skill import outcomes_by_skill
 
     skills = [Skill(id="never", name="unused")]
     eps = [_FakeEp("success", ["other"])]
@@ -42,7 +42,7 @@ def test_skill_never_used_zero_episodes():
 
 
 def test_skill_only_successes():
-    from engram.outcome_by_skill import outcomes_by_skill
+    from verimem.outcome_by_skill import outcomes_by_skill
 
     skills = [Skill(id="x", name="x")]
     eps = [
@@ -58,7 +58,7 @@ def test_skill_only_successes():
 
 
 def test_skill_mixed_outcomes():
-    from engram.outcome_by_skill import outcomes_by_skill
+    from verimem.outcome_by_skill import outcomes_by_skill
 
     skills = [Skill(id="x", name="x")]
     eps = [
@@ -75,7 +75,7 @@ def test_skill_mixed_outcomes():
 
 
 def test_sorted_by_n_episodes_desc():
-    from engram.outcome_by_skill import outcomes_by_skill
+    from verimem.outcome_by_skill import outcomes_by_skill
 
     skills = [
         Skill(id="hi", name="hi"),
@@ -93,7 +93,7 @@ def test_sorted_by_n_episodes_desc():
 
 
 def test_top_k_respected():
-    from engram.outcome_by_skill import outcomes_by_skill
+    from verimem.outcome_by_skill import outcomes_by_skill
 
     skills = [Skill(id=f"s{i}", name=f"s{i}") for i in range(10)]
     eps = [_FakeEp("success", [f"s{i}"]) for i in range(10)]
@@ -102,7 +102,7 @@ def test_top_k_respected():
 
 
 def test_payload_shape_complete():
-    from engram.outcome_by_skill import outcomes_by_skill
+    from verimem.outcome_by_skill import outcomes_by_skill
 
     skills = [Skill(id="x", name="x")]
     eps = [_FakeEp("success", ["x"])]
@@ -116,7 +116,7 @@ def test_payload_shape_complete():
 def test_skill_in_multiple_episodes_counted_once_per_episode():
     """If skill appears multiple times in same episode (retry pattern),
     we still count one outcome per episode (not per appearance)."""
-    from engram.outcome_by_skill import outcomes_by_skill
+    from verimem.outcome_by_skill import outcomes_by_skill
 
     skills = [Skill(id="x", name="x")]
     eps = [

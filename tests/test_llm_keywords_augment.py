@@ -14,7 +14,7 @@ Subscription-only constraint (CLAUDE.md O4): in production the
 sampling pattern. NO external API key. The pure function does NOT
 call any LLM directly — testability + cost-control.
 
-RED marker: ``from engram.llm_keywords_augment import extract_keywords``
+RED marker: ``from verimem.llm_keywords_augment import extract_keywords``
 must fail on master.
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ from unittest.mock import MagicMock
 import pytest
 
 # RED MARKER
-from engram.llm_keywords_augment import extract_keywords
+from verimem.llm_keywords_augment import extract_keywords
 
 # ---------------------------------------------------------------------------
 # Helpers

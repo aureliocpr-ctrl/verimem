@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.self_model import (
+from verimem.self_model import (
     DEFAULT_MAX_BYTES,
     SelfModelStore,
     SelfModelTooLarge,

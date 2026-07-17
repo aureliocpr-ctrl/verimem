@@ -16,14 +16,14 @@ from pathlib import Path
 
 import pytest
 
-from engram import mcp_server
-from engram.evidence_requirement import (
+from verimem import mcp_server
+from verimem.evidence_requirement import (
     UNSOURCED_SPECIFIC_CEILING,
     evidence_requirement_enabled,
     is_specific_claim,
     resolve_write_confidence,
 )
-from engram.semantic import SemanticMemory
+from verimem.semantic import SemanticMemory
 
 # ---------- is_specific_claim -------------------------------------------
 

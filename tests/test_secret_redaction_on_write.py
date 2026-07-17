@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 _P2 = 'ghp_'
 

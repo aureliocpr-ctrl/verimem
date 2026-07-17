@@ -23,14 +23,14 @@ class _FakeEp:
 
 
 def test_returns_string():
-    from engram.episode_replay import render_episode_replay
+    from verimem.episode_replay import render_episode_replay
 
     out = render_episode_replay(_FakeEp())
     assert isinstance(out, str)
 
 
 def test_includes_task_text():
-    from engram.episode_replay import render_episode_replay
+    from verimem.episode_replay import render_episode_replay
 
     ep = _FakeEp(task_text="compute the answer")
     out = render_episode_replay(ep)
@@ -38,7 +38,7 @@ def test_includes_task_text():
 
 
 def test_shows_outcome():
-    from engram.episode_replay import render_episode_replay
+    from verimem.episode_replay import render_episode_replay
 
     s = render_episode_replay(_FakeEp(outcome="success"))
     f = render_episode_replay(_FakeEp(outcome="failure"))
@@ -47,7 +47,7 @@ def test_shows_outcome():
 
 
 def test_lists_skills_used():
-    from engram.episode_replay import render_episode_replay
+    from verimem.episode_replay import render_episode_replay
 
     ep = _FakeEp(skills_used=["skill_a", "skill_b"])
     out = render_episode_replay(ep)
@@ -56,7 +56,7 @@ def test_lists_skills_used():
 
 
 def test_includes_final_answer():
-    from engram.episode_replay import render_episode_replay
+    from verimem.episode_replay import render_episode_replay
 
     ep = _FakeEp(final_answer="42")
     out = render_episode_replay(ep)
@@ -64,7 +64,7 @@ def test_includes_final_answer():
 
 
 def test_shows_tokens_when_nonzero():
-    from engram.episode_replay import render_episode_replay
+    from verimem.episode_replay import render_episode_replay
 
     ep = _FakeEp(tokens_used=1500)
     out = render_episode_replay(ep)
@@ -72,7 +72,7 @@ def test_shows_tokens_when_nonzero():
 
 
 def test_handles_empty_episode():
-    from engram.episode_replay import render_episode_replay
+    from verimem.episode_replay import render_episode_replay
 
     out = render_episode_replay(_FakeEp(id="empty"))
     assert isinstance(out, str)

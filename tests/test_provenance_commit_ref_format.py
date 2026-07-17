@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.provenance_validator import is_valid_provenance_ref, validate_verified_refs
+from verimem.provenance_validator import is_valid_provenance_ref, validate_verified_refs
 
 REPO = Path(__file__).resolve().parents[1]
 

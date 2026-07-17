@@ -17,13 +17,13 @@ class _Fact:
 
 
 def test_empty_returns_no_agents():
-    from engram.agent_specialization import compute_specialization
+    from verimem.agent_specialization import compute_specialization
     out = compute_specialization([])
     assert out["per_agent"] == []
 
 
 def test_highly_specialized_agent_low_entropy():
-    from engram.agent_specialization import compute_specialization
+    from verimem.agent_specialization import compute_specialization
     facts = [
         _Fact("f1", "agent:specialist/cve"),
         _Fact("f2", "agent:specialist/cve"),
@@ -36,7 +36,7 @@ def test_highly_specialized_agent_low_entropy():
 
 
 def test_generalist_high_entropy():
-    from engram.agent_specialization import compute_specialization
+    from verimem.agent_specialization import compute_specialization
     facts = [
         _Fact("f1", "agent:gen/cve"),
         _Fact("f2", "agent:gen/lessons"),
@@ -51,14 +51,14 @@ def test_generalist_high_entropy():
 
 
 def test_payload_shape():
-    from engram.agent_specialization import compute_specialization
+    from verimem.agent_specialization import compute_specialization
     out = compute_specialization([])
     for k in ("per_agent", "n_agents"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.agent_specialization import compute_specialization
+    from verimem.agent_specialization import compute_specialization
     facts = [_Fact("f1", "agent:A/topic1")]
     out = compute_specialization(facts)
     if out["per_agent"]:
@@ -67,7 +67,7 @@ def test_entry_keys():
 
 
 def test_specialization_classification():
-    from engram.agent_specialization import compute_specialization
+    from verimem.agent_specialization import compute_specialization
     facts = [
         _Fact("f1", "agent:S/x"),
         _Fact("f2", "agent:S/x"),

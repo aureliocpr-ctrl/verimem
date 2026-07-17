@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.chunking import Chunk, chunk_text
+from verimem.chunking import Chunk, chunk_text
 
 
 def test_short_text_is_a_single_chunk() -> None:

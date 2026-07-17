@@ -12,13 +12,13 @@ marca come superseded SOLO i vecchi con trust STRETTAMENTE inferiore al nuovo
 default `WHERE superseded_by IS NULL`). Regola di sicurezza: un claim debole NON
 puo invalidare uno piu affidabile.
 
-HERMETIC: SemanticMemory su tmp_path, mai ~/.engram. Stub embedding via conftest
+HERMETIC: SemanticMemory su tmp_path, mai ~/.verimem. Stub embedding via conftest
 autouse. Statuses scelti (legacy_unverified=0 / model_claim=2) per NON innescare
 l'hard-gate verified/provisional di store().
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _mem(tmp_path) -> SemanticMemory:

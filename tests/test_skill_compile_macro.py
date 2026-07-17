@@ -6,7 +6,7 @@ Stores it on the skill so the fast-path can bypass LLM next time.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 class _FakeSkillsStore:
@@ -28,7 +28,7 @@ class _FakeAgent:
 
 
 def test_unknown_returns_not_found():
-    from engram.skill_compile_macro import compile_macro
+    from verimem.skill_compile_macro import compile_macro
 
     a = _FakeAgent([])
     out = compile_macro(skill_id="ZZZ", agent=a)
@@ -36,7 +36,7 @@ def test_unknown_returns_not_found():
 
 
 def test_non_schema_skill_skipped():
-    from engram.skill_compile_macro import compile_macro
+    from verimem.skill_compile_macro import compile_macro
 
     sk = Skill(id="x", name="x", stage="nrem")
     a = _FakeAgent([sk])
@@ -45,7 +45,7 @@ def test_non_schema_skill_skipped():
 
 
 def test_schema_with_empty_parents_no_macro():
-    from engram.skill_compile_macro import compile_macro
+    from verimem.skill_compile_macro import compile_macro
 
     sk = Skill(id="x", name="x", stage="schema",
                parent_skills=[])
@@ -56,7 +56,7 @@ def test_schema_with_empty_parents_no_macro():
 
 
 def test_schema_compiles_from_parents():
-    from engram.skill_compile_macro import compile_macro
+    from verimem.skill_compile_macro import compile_macro
 
     parents = [
         Skill(id="a", name="step_a"),
@@ -76,7 +76,7 @@ def test_schema_compiles_from_parents():
 
 
 def test_apply_persists_compiled_macro():
-    from engram.skill_compile_macro import compile_macro
+    from verimem.skill_compile_macro import compile_macro
 
     parents = [Skill(id="a", name="a"), Skill(id="b", name="b")]
     schema = Skill(id="m", name="m", stage="schema",
@@ -88,7 +88,7 @@ def test_apply_persists_compiled_macro():
 
 
 def test_dry_run_no_mutation():
-    from engram.skill_compile_macro import compile_macro
+    from verimem.skill_compile_macro import compile_macro
 
     parents = [Skill(id="a", name="a")]
     schema = Skill(id="m", name="m", stage="schema",
@@ -102,7 +102,7 @@ def test_dry_run_no_mutation():
 
 
 def test_payload_shape_complete():
-    from engram.skill_compile_macro import compile_macro
+    from verimem.skill_compile_macro import compile_macro
 
     a = _FakeAgent([])
     out = compile_macro(skill_id="x", agent=a)

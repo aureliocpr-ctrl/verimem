@@ -11,7 +11,7 @@ import pytest
 
 # We test the dispatch handler indirectly by importing the helper
 # _build_fact and exercising semantic.SemanticMemory.store contract.
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ class TestBuildFactSupportsProvenance:
     """The _build_fact helper must propagate provenance fields."""
 
     def test_build_fact_accepts_verified_by(self):
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         f = _build_fact(
             "test proposition", topic="t", confidence=0.9,
             verified_by=["bash:cmd", "file:x:1"],
@@ -31,7 +31,7 @@ class TestBuildFactSupportsProvenance:
         assert f.verified_by == ["bash:cmd", "file:x:1"]
 
     def test_build_fact_accepts_status(self):
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         f = _build_fact(
             "test", topic="t", confidence=0.9,
             status="verified",
@@ -39,7 +39,7 @@ class TestBuildFactSupportsProvenance:
         assert f.status == "verified"
 
     def test_build_fact_accepts_source_signature(self):
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         f = _build_fact(
             "test", topic="t", confidence=0.9,
             source_signature="sha256:abc",
@@ -47,7 +47,7 @@ class TestBuildFactSupportsProvenance:
         assert f.source_signature == "sha256:abc"
 
     def test_build_fact_default_status_is_model_claim(self):
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         f = _build_fact("test", topic="t", confidence=0.9)
         assert f.status == "model_claim"
         assert f.verified_by == []
@@ -63,7 +63,7 @@ class TestRememberDispatchProvenance:
         # status='verified' write is demoted to 'model_claim'. The
         # dispatch still persists the verified_by payload and the
         # source_signature; only the trust label is downgraded.
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         fact = _build_fact(
             "NEXUS has 17280 tests",
             topic="project/nexus/test-count",
@@ -79,7 +79,7 @@ class TestRememberDispatchProvenance:
         assert got.source_signature == "cycle109-2026-05-16"
 
     def test_dispatch_rejects_invalid_status(self, sm):
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         with pytest.raises(ValueError, match="status"):
             sm.store(_build_fact(
                 "p", topic="t", status="totally_bogus",
@@ -94,7 +94,7 @@ class TestRememberAutoClassification:
     """
 
     def test_no_verified_by_marks_model_claim(self, sm):
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         fact = _build_fact("opinion claim", topic="t", confidence=0.5)
         sm.store(fact)
         got = sm.get(fact.id)
@@ -105,7 +105,7 @@ class TestRememberAutoClassification:
         # Cycle #111 v2: neither 'bash:date' nor 'sql:count=42' is
         # I/O-verifiable (no filesystem or git target). Hard-gate
         # demotes to 'model_claim'. Payload still round-trips.
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         fact = _build_fact(
             "real verified fact", topic="t", confidence=0.95,
             verified_by=["bash:date", "sql:count=42"],
@@ -122,7 +122,7 @@ class TestProvisionalForResearch:
     has paper source URL)."""
 
     def test_provisional_with_url_provenance(self, sm):
-        from engram.mcp_server import _build_fact
+        from verimem.mcp_server import _build_fact
         fact = _build_fact(
             "Self-RAG outperforms ChatGPT on PopQA 55.8 vs 29.3",
             topic="research/self-rag-2023",

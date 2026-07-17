@@ -19,8 +19,8 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
-from engram.semantic import Fact, SemanticMemory  # noqa: F401  (kept for callers)
-from engram.syntax_pollution import sanitize_proposition, scan_facts
+from verimem.semantic import Fact, SemanticMemory  # noqa: F401  (kept for callers)
+from verimem.syntax_pollution import sanitize_proposition, scan_facts
 
 
 def main() -> int:

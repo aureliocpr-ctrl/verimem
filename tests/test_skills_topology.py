@@ -7,11 +7,11 @@ PURE LOCAL.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_no_topology():
-    from engram.skills_topology import skills_topology
+    from verimem.skills_topology import skills_topology
 
     out = skills_topology([])
     assert out["n_nodes"] == 0
@@ -19,7 +19,7 @@ def test_empty_no_topology():
 
 
 def test_single_skill_is_root_and_leaf():
-    from engram.skills_topology import skills_topology
+    from verimem.skills_topology import skills_topology
 
     out = skills_topology([Skill(id="x", name="x")])
     assert out["n_nodes"] == 1
@@ -28,7 +28,7 @@ def test_single_skill_is_root_and_leaf():
 
 
 def test_root_no_parents():
-    from engram.skills_topology import skills_topology
+    from verimem.skills_topology import skills_topology
 
     skills = [
         Skill(id="root", name="r"),
@@ -40,7 +40,7 @@ def test_root_no_parents():
 
 
 def test_leaf_no_children():
-    from engram.skills_topology import skills_topology
+    from verimem.skills_topology import skills_topology
 
     skills = [
         Skill(id="parent", name="p"),
@@ -52,7 +52,7 @@ def test_leaf_no_children():
 
 
 def test_max_depth():
-    from engram.skills_topology import skills_topology
+    from verimem.skills_topology import skills_topology
 
     skills = [
         Skill(id="grand", name="g"),
@@ -65,7 +65,7 @@ def test_max_depth():
 
 
 def test_in_out_degree_distribution():
-    from engram.skills_topology import skills_topology
+    from verimem.skills_topology import skills_topology
 
     skills = [
         Skill(id="root", name="r"),
@@ -81,7 +81,7 @@ def test_in_out_degree_distribution():
 
 
 def test_payload_shape_complete():
-    from engram.skills_topology import skills_topology
+    from verimem.skills_topology import skills_topology
 
     out = skills_topology([])
     for k in ("n_nodes", "n_edges", "roots", "leaves",

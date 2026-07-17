@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_documentation_detector import (
+from verimem.l1_documentation_detector import (
     DocClaimWarning,
     detect_unsupported_doc_claim,
 )
@@ -84,7 +84,7 @@ class TestEvidenceSuppression:
 
 class TestGateWire:
     def test_l114_wired(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Module documented for users",
             verified_by=[],
@@ -96,7 +96,7 @@ class TestGateWire:
         assert "L1.14" in layers
 
     def test_l114_evidence_suppress(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="API documented in main",
             verified_by=["docs:/api.md", "readme:full_guide"],

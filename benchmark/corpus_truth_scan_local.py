@@ -29,7 +29,7 @@ from pathlib import Path
 
 import numpy as np
 
-from engram._telemetry_prefixes import classify_tier
+from verimem._telemetry_prefixes import classify_tier
 
 #: The judge reads knowledge only unless told otherwise: the night-2 scan showed
 #: the residual NLI conflicts were telemetry near-duplicates, not knowledge.
@@ -120,12 +120,12 @@ def main(argv=None) -> int:
     if capped:
         pairs = pairs[: a.max_pairs]
 
-    from engram.local_relation import LocalRelationJudge
+    from verimem.local_relation import LocalRelationJudge
     judge = LocalRelationJudge(contradiction_threshold=a.contra_threshold)
     rels = judge.classify_batch(
         [(facts[i]["proposition"], facts[j]["proposition"]) for i, j, _ in pairs])
 
-    from engram.semantic_conflict import Relation
+    from verimem.semantic_conflict import Relation
     ev, cf, dup = [], [], []
     for (i, j, cos), rel in zip(pairs, rels, strict=True):
         if rel is Relation.NEUTRAL:

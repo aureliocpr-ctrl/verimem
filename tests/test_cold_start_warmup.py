@@ -24,8 +24,8 @@ from __future__ import annotations
 
 import threading
 
-from engram import embedding, encode_service
-from engram.config import CONFIG
+from verimem import embedding, encode_service
+from verimem.config import CONFIG
 
 # --- model-aware daemon readiness -----------------------------------------
 
@@ -60,7 +60,7 @@ def test_daemon_usable_false_when_no_discovery(monkeypatch):
 
 def _run_preload_sync(monkeypatch):
     """Run preload synchronously and report whether the local warm fired."""
-    import engram.preload as preload
+    import verimem.preload as preload
     warmed = {"local": False}
     monkeypatch.setattr(preload, "_warm", lambda: warmed.__setitem__("local", True))
     monkeypatch.setattr(preload, "_DAEMON_WARM_WAIT_S", 0.0)  # no 25s wait in test
@@ -105,7 +105,7 @@ def test_is_loaded_true_when_model_present(monkeypatch):
 # --- thread-safe agent singleton -------------------------------------------
 
 def test_ag_builds_exactly_once_under_concurrency(monkeypatch):
-    import engram.mcp_server as srv
+    import verimem.mcp_server as srv
 
     calls = {"n": 0}
 

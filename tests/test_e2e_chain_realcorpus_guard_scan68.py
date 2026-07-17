@@ -21,7 +21,7 @@ def test_main_skips_without_optin_and_touches_nothing(monkeypatch):
             return []
 
     monkeypatch.delenv("HIPPO_ALLOW_REAL_E2E", raising=False)
-    monkeypatch.setattr("engram.memory.EpisodicMemory", FakeMem)
+    monkeypatch.setattr("verimem.memory.EpisodicMemory", FakeMem)
 
     rc = m.main()
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram import mcp_server as m
+from verimem import mcp_server as m
 
 # ---------- _derive_lenient_schema (unit) -------------------------------
 

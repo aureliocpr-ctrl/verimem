@@ -38,15 +38,15 @@ from pathlib import Path
 
 import pytest
 
-from engram import consolidation as cmod
-from engram.consolidation import (
+from verimem import consolidation as cmod
+from verimem.consolidation import (
     _cluster_already_consolidated,
     _select_key_facts,
     _source_episodes_for_facts,
     auto_consolidate,
 )
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 # ----------------------------------------------------------------------

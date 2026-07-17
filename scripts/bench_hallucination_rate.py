@@ -28,8 +28,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from engram.hallucination_rate import _RISKY_VERDICTS, hallucination_rate_at_k
-from engram.semantic import Fact, SemanticMemory
+from verimem.hallucination_rate import _RISKY_VERDICTS, hallucination_rate_at_k
+from verimem.semantic import Fact, SemanticMemory
 
 K = 5
 

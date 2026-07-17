@@ -1,7 +1,7 @@
 """Tests for the SEARCH/REPLACE edit format parser + applier."""
 from __future__ import annotations
 
-from engram.editfmt import (
+from verimem.editfmt import (
     EditBlock,
     apply_block,
     apply_blocks,

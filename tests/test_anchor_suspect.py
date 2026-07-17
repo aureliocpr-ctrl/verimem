@@ -9,7 +9,7 @@ are real numbers.
 """
 from __future__ import annotations
 
-from engram.anchor_suspect import (
+from verimem.anchor_suspect import (
     INSUFFICIENT_SUPPORT,
     RECORDS_SUSPECTED,
     SOURCE_NOT_TRUSTED,
@@ -83,7 +83,7 @@ def test_suspects_for_source_over_a_trust_book():
     """Integration: a trusted source asserts a value across MANY subject keys; the
     anchor (store's accepted value per key) disagrees on a FEW → those keys are the
     suspected records. Reads the SourceTrustBook's own report substrate."""
-    from engram.source_trust import SourceTrustBook
+    from verimem.source_trust import SourceTrustBook
 
     book = SourceTrustBook()
     anchor = {}
@@ -101,7 +101,7 @@ def test_suspects_for_source_over_a_trust_book():
 
 
 def test_suspects_for_source_untrusted_source_defers_to_anchor():
-    from engram.source_trust import SourceTrustBook
+    from verimem.source_trust import SourceTrustBook
 
     book = SourceTrustBook()
     anchor = {}

@@ -35,12 +35,12 @@ from pathlib import Path
 
 import pytest
 
-from engram.consolidation import (
+from verimem.consolidation import (
     _source_episodes_for_facts,
     propose_master_node,
 )
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def mem(tmp_path: Path):
     trip a Fact's ``source_episodes``; the EpisodicMemory is irrelevant
     here but kept to mirror the production call shape.
     """
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "sem.db")
     ep = EpisodicMemory(db_path=tmp_path / "ep.db")
 

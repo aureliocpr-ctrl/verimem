@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from engram import dashboard
+from verimem import dashboard
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ def client(workspace, monkeypatch):
     # functional tests exercise the dev/local posture (auth OFF). The auth gate
     # itself is covered by TestIdeFsAuthGate.
     monkeypatch.setenv("HIPPO_DASHBOARD_AUTH_DISABLED", "1")
-    from engram.dashboard_routes.auth import reset_session_token
+    from verimem.dashboard_routes.auth import reset_session_token
     reset_session_token()
     return TestClient(dashboard.app)
 
@@ -72,7 +72,7 @@ def auth_on_client(workspace, monkeypatch):
     """TestClient with dashboard session-auth ENABLED (enterprise posture)."""
     monkeypatch.delenv("HIPPO_DASHBOARD_AUTH_DISABLED", raising=False)
     monkeypatch.setenv("HIPPO_DASHBOARD_TOKEN", _DASH_TOKEN)
-    from engram.dashboard_routes.auth import reset_session_token
+    from verimem.dashboard_routes.auth import reset_session_token
     reset_session_token()
     yield TestClient(dashboard.app)
     reset_session_token()
@@ -125,7 +125,7 @@ class TestIdeFsAuthGate:
     def test_auth_disabled_allows_without_token(self, workspace, monkeypatch):
         # Dual-mode: local/dev posture -> no token required.
         monkeypatch.setenv("HIPPO_DASHBOARD_AUTH_DISABLED", "1")
-        from engram.dashboard_routes.auth import reset_session_token
+        from verimem.dashboard_routes.auth import reset_session_token
         reset_session_token()
         c = TestClient(dashboard.app)
         assert c.get("/api/ide/tree").status_code == 200

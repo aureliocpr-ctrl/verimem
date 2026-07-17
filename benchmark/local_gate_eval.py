@@ -20,7 +20,7 @@ Pairs (all from ``~/.cache/halumem/HaluMem-Medium.jsonl``, seed-deterministic):
 * foreign (label 0)      — another user's facts vs this user's dialogue (easy floor).
 
 The source is span-selected with the SHIPPED production selector
-(``engram.grounding_gate.select_relevant_span``) at ``--budget`` chars — the same
+(``verimem.grounding_gate.select_relevant_span``) at ``--budget`` chars — the same
 code path as ``fact_grounding_score(focus_budget=...)`` — so the eval measures the
 deployment configuration (CE max_length 512 tokens ≈ 1500-2000 chars).
 
@@ -51,7 +51,7 @@ from pathlib import Path
 
 from benchmark.halumem_writepath_moat import _TRUE_SRC, wilson
 from benchmark.stats import auroc
-from engram.grounding_gate import optimal_threshold, select_relevant_span
+from verimem.grounding_gate import optimal_threshold, select_relevant_span
 
 Scorer = Callable[[list[tuple[str, str]]], list[float]]
 
@@ -358,7 +358,7 @@ def main(argv=None) -> int:
 
     model_specs: list[tuple[str, object, dict, float | None]] = []
     if a.finetuned_dir:
-        from engram.local_grounding import LocalGroundingJudge, make_finetuned_scorer
+        from verimem.local_grounding import LocalGroundingJudge, make_finetuned_scorer
         judge = LocalGroundingJudge(model_dir=a.finetuned_dir)
         model_specs.append((str(a.finetuned_dir),
                             make_finetuned_scorer(a.finetuned_dir),

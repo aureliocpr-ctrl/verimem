@@ -20,9 +20,9 @@ from pathlib import Path
 # Make ``engram`` importable when invoked as ``python scripts/...``.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.config import CONFIG  # noqa: E402
-from engram.decay_job import SEC_PER_DAY, run_decay_pass  # noqa: E402
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem.config import CONFIG  # noqa: E402
+from verimem.decay_job import SEC_PER_DAY, run_decay_pass  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 
 def _build_argparser() -> argparse.ArgumentParser:

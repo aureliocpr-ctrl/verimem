@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 import sqlite3
 
-from engram.semantic import (
+from verimem.semantic import (
     _SCHEMA,
     _SEMANTIC_TARGET_VERSION,
     Fact,
@@ -43,7 +43,7 @@ def _make_v13_db(path):
     conn.executescript(schema13)
     # la tabella di versioning VERA (dal modulo migrations, non una copia
     # a mano: aveva già una colonna sbagliata)
-    from engram.migrations import _VERSION_TABLE_DDL
+    from verimem.migrations import _VERSION_TABLE_DDL
     conn.executescript(_VERSION_TABLE_DDL)
     conn.execute("INSERT OR REPLACE INTO _schema_version "
                  "(db_id, version, upgraded_at) VALUES ('semantic', 13, ?)",

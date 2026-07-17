@@ -32,7 +32,7 @@ def _eps_for_days(n_days: int, eps_per_day: int = 3):
 
 
 def test_csv_format_default():
-    from engram.metrics_export import export_metrics
+    from verimem.metrics_export import export_metrics
 
     out = export_metrics(episodes=[], format="csv")
     assert isinstance(out, str)
@@ -41,7 +41,7 @@ def test_csv_format_default():
 
 
 def test_json_format():
-    from engram.metrics_export import export_metrics
+    from verimem.metrics_export import export_metrics
 
     out = export_metrics(episodes=[], format="json")
     parsed = json.loads(out)
@@ -49,7 +49,7 @@ def test_json_format():
 
 
 def test_csv_lines_match_days():
-    from engram.metrics_export import export_metrics
+    from verimem.metrics_export import export_metrics
 
     eps = _eps_for_days(3, eps_per_day=2)
     out = export_metrics(episodes=eps, format="csv", window_days=7)
@@ -59,7 +59,7 @@ def test_csv_lines_match_days():
 
 
 def test_window_filters_old_episodes():
-    from engram.metrics_export import export_metrics
+    from verimem.metrics_export import export_metrics
 
     now = time.time()
     eps = [
@@ -72,7 +72,7 @@ def test_window_filters_old_episodes():
 
 
 def test_csv_includes_columns():
-    from engram.metrics_export import export_metrics
+    from verimem.metrics_export import export_metrics
 
     eps = _eps_for_days(1, eps_per_day=1)
     out = export_metrics(episodes=eps, format="csv")
@@ -82,7 +82,7 @@ def test_csv_includes_columns():
 
 
 def test_json_records_have_required_keys():
-    from engram.metrics_export import export_metrics
+    from verimem.metrics_export import export_metrics
 
     eps = _eps_for_days(1, eps_per_day=2)
     out = export_metrics(episodes=eps, format="json")

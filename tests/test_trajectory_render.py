@@ -3,7 +3,7 @@ from __future__ import annotations
 
 
 def _mk():
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
     return [
         TrajectoryStep(step_idx=0, kind="thought", content="reason"),
         TrajectoryStep(
@@ -20,12 +20,12 @@ def _mk():
 
 
 def test_empty_returns_empty_string():
-    from engram.trajectory_render import trajectory_to_markdown
+    from verimem.trajectory_render import trajectory_to_markdown
     assert trajectory_to_markdown([]).strip() == ""
 
 
 def test_render_contains_kind_markers():
-    from engram.trajectory_render import trajectory_to_markdown
+    from verimem.trajectory_render import trajectory_to_markdown
     md = trajectory_to_markdown(_mk())
     assert "thought" in md.lower()
     assert "action" in md.lower()
@@ -34,21 +34,21 @@ def test_render_contains_kind_markers():
 
 
 def test_render_includes_tool_calls():
-    from engram.trajectory_render import trajectory_to_markdown
+    from verimem.trajectory_render import trajectory_to_markdown
     md = trajectory_to_markdown(_mk())
     assert "nmap" in md
     assert "10.0.0.1" in md
 
 
 def test_render_branch_id_visible():
-    from engram.trajectory_render import trajectory_to_markdown
+    from verimem.trajectory_render import trajectory_to_markdown
     md = trajectory_to_markdown(_mk())
     assert "ssh-path" in md
 
 
 def test_render_truncate_long_tool_result():
-    from engram.trajectory import TrajectoryStep
-    from engram.trajectory_render import trajectory_to_markdown
+    from verimem.trajectory import TrajectoryStep
+    from verimem.trajectory_render import trajectory_to_markdown
 
     long_result = "x" * 5000
     steps = [TrajectoryStep(
@@ -62,8 +62,8 @@ def test_render_truncate_long_tool_result():
 
 
 def test_render_sorts_by_step_idx():
-    from engram.trajectory import TrajectoryStep
-    from engram.trajectory_render import trajectory_to_markdown
+    from verimem.trajectory import TrajectoryStep
+    from verimem.trajectory_render import trajectory_to_markdown
 
     # purposely out of order
     steps = [

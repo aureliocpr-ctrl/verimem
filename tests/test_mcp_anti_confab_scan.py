@@ -32,7 +32,7 @@ class TestSchema:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
         tools = await mcp_server.list_tools()
         names = {t.name for t in tools}
         assert "hippo_anti_confab_scan" in names
@@ -42,7 +42,7 @@ class TestSchema:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
         tools = await mcp_server.list_tools()
         tool = next(t for t in tools if t.name == "hippo_anti_confab_scan")
         props = tool.inputSchema.get("properties", {})
@@ -61,7 +61,7 @@ class TestHandler:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         fake_sm = MagicMock()
         fake_sm.all = MagicMock(return_value=[
@@ -94,7 +94,7 @@ class TestHandler:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         fake_sm = MagicMock()
         fake_sm.all = MagicMock(return_value=[
@@ -118,7 +118,7 @@ class TestHandler:
         self, tmp_path, monkeypatch,
     ) -> None:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
-        from engram import mcp_server
+        from verimem import mcp_server
 
         # 30 shipped orphans — limit_per_category=5 must cap output.
         fake_sm = MagicMock()

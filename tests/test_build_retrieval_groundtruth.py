@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 
 from benchmark.build_retrieval_groundtruth import build_groundtruth
-from engram.memory import Episode, EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.memory import Episode, EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture

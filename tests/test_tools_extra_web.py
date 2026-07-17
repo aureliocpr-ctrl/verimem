@@ -17,7 +17,7 @@ import pytest
 import respx
 from httpx import Response
 
-from engram import tools_extra
+from verimem import tools_extra
 
 
 @pytest.fixture(autouse=True)

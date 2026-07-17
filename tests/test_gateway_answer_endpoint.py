@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from engram.client import _ANSWER_TRUST_SYSTEM, Memory
-from engram.gateway import GatewayKeys, create_app
+from verimem.client import _ANSWER_TRUST_SYSTEM, Memory
+from verimem.gateway import GatewayKeys, create_app
 
 
 class _StubLLM:

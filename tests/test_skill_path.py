@@ -18,7 +18,7 @@ class _FakeEp:
 
 
 def test_empty_returns_empty_path():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     out = skill_path(skill_id="x", episodes=[])
     assert out["n_total_appearances"] == 0
@@ -27,7 +27,7 @@ def test_empty_returns_empty_path():
 
 
 def test_skill_never_seen():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     eps = [_FakeEp(["A", "B"]), _FakeEp(["C"])]
     out = skill_path(skill_id="Z", episodes=eps)
@@ -35,7 +35,7 @@ def test_skill_never_seen():
 
 
 def test_predecessors_ranked():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     eps = [
         _FakeEp(["A", "X"]),
@@ -51,7 +51,7 @@ def test_predecessors_ranked():
 
 
 def test_successors_ranked():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     eps = [
         _FakeEp(["X", "Y"]),
@@ -65,7 +65,7 @@ def test_successors_ranked():
 
 
 def test_first_in_chain_no_predecessors():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     eps = [_FakeEp(["X", "Y"]), _FakeEp(["X"])]
     out = skill_path(skill_id="X", episodes=eps)
@@ -73,7 +73,7 @@ def test_first_in_chain_no_predecessors():
 
 
 def test_last_in_chain_no_successors():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     eps = [_FakeEp(["A", "X"]), _FakeEp(["B", "X"])]
     out = skill_path(skill_id="X", episodes=eps)
@@ -81,7 +81,7 @@ def test_last_in_chain_no_successors():
 
 
 def test_fraction_correct():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     eps = [
         _FakeEp(["A", "X"]),
@@ -96,7 +96,7 @@ def test_fraction_correct():
 
 
 def test_top_k_respected():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     eps = [
         _FakeEp([letter, "X"]) for letter in "ABCDEFGH"
@@ -106,7 +106,7 @@ def test_top_k_respected():
 
 
 def test_payload_shape_complete():
-    from engram.skill_path import skill_path
+    from verimem.skill_path import skill_path
 
     out = skill_path(skill_id="x", episodes=[])
     for k in ("skill_id", "n_total_appearances",

@@ -17,7 +17,7 @@ from benchmark.qa_runner import (
     extract_memories,
     hyde_query,
 )
-from engram.llm import MockLLM
+from verimem.llm import MockLLM
 
 
 def test_extract_memories_parses_and_strips_enumerators() -> None:

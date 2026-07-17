@@ -14,14 +14,14 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from engram.contradiction import ContradictionStore
-from engram.semantic import SemanticMemory
-from engram.trust_calibration_eval import (
+from verimem.contradiction import ContradictionStore
+from verimem.semantic import SemanticMemory
+from verimem.trust_calibration_eval import (
     evaluate_calibration,
     make_calibration_dataset,
     register_contradictions,
 )
-from engram.trust_score import compute_trust_score
+from verimem.trust_score import compute_trust_score
 
 _NOW = 1_000_000_000.0
 _N = 1000

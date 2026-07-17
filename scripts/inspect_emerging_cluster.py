@@ -10,7 +10,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from engram.skill_emergence_detector import detect_emerging_skills
+from verimem.skill_emergence_detector import detect_emerging_skills
 
 
 def main(argv: list[str] | None = None) -> int:

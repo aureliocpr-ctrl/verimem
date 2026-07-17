@@ -1,4 +1,4 @@
-"""TDD for engram.grounding_gate — the externalized evidence-verification gate.
+"""TDD for verimem.grounding_gate — the externalized evidence-verification gate.
 
 The gate turns R6/R7 into product: the model's introspective confidence is at chance
 for flagging its own fabrications (R6, AUROC 0.494), but an EXTERNAL verifier separates
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import types
 
-from engram.grounding_gate import (
+from verimem.grounding_gate import (
     _BASIC_SYSTEM,
     _SPAN_SYSTEM,
     DEFAULT_THRESHOLD,

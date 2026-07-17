@@ -22,10 +22,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import engram.memory as mem
-from engram import encode_service as es
-from engram.config import CONFIG
-from engram.episode import Episode
+import verimem.memory as mem
+from verimem import encode_service as es
+from verimem.config import CONFIG
+from verimem.episode import Episode
 
 
 def _make_ep(text: str = "circuit-breaker episode") -> Episode:

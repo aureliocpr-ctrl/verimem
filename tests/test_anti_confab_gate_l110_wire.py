@@ -4,7 +4,7 @@ Triangulation Claude+Gemini+GPT all voted L1.10 = FUNZIONA/works/confirmed.
 """
 from __future__ import annotations
 
-from engram.anti_confab_gate import run_validation_gate
+from verimem.anti_confab_gate import run_validation_gate
 
 
 class TestL110WiredIntoGate:

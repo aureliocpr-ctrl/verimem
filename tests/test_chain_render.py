@@ -6,11 +6,11 @@ chat UI. Pure-string utility.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_chain_renders_minimal():
-    from engram.chain_render import render_chain_markdown
+    from verimem.chain_render import render_chain_markdown
 
     out = render_chain_markdown(initial_state=[], chain=[])
     assert "# Plan" in out or "## Plan" in out
@@ -18,7 +18,7 @@ def test_empty_chain_renders_minimal():
 
 
 def test_renders_step_table():
-    from engram.chain_render import render_chain_markdown
+    from verimem.chain_render import render_chain_markdown
 
     chain = [
         Skill(id="a", name="auth",
@@ -36,7 +36,7 @@ def test_renders_step_table():
 
 
 def test_includes_step_indices():
-    from engram.chain_render import render_chain_markdown
+    from verimem.chain_render import render_chain_markdown
 
     chain = [
         Skill(id=f"s{i}", name=f"skill{i}",
@@ -48,7 +48,7 @@ def test_includes_step_indices():
 
 
 def test_renders_initial_and_final_state():
-    from engram.chain_render import render_chain_markdown
+    from verimem.chain_render import render_chain_markdown
 
     chain = [
         Skill(id="a", name="a",
@@ -61,7 +61,7 @@ def test_renders_initial_and_final_state():
 
 
 def test_goal_check_when_provided():
-    from engram.chain_render import render_chain_markdown
+    from verimem.chain_render import render_chain_markdown
 
     chain = [
         Skill(id="a", name="a",
@@ -75,7 +75,7 @@ def test_goal_check_when_provided():
 
 
 def test_returns_string():
-    from engram.chain_render import render_chain_markdown
+    from verimem.chain_render import render_chain_markdown
 
     out = render_chain_markdown(initial_state=[], chain=[])
     assert isinstance(out, str)

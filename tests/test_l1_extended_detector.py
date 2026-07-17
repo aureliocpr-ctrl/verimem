@@ -18,7 +18,7 @@ from __future__ import annotations
 import pytest
 
 # RED MARKER
-from engram.l1_extended_detector import (
+from verimem.l1_extended_detector import (
     FIX_KEYWORDS,
     FixClaimWarning,
     detect_unsupported_fix_claim,

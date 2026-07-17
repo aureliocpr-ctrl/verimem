@@ -26,8 +26,8 @@ import threading
 import time
 from dataclasses import asdict
 
-import engram.semantic as semantic_mod
-from engram.semantic import Fact, SemanticMemory, store_within_budget
+import verimem.semantic as semantic_mod
+from verimem.semantic import Fact, SemanticMemory, store_within_budget
 
 
 class _BlockingMemory:

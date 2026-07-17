@@ -24,19 +24,19 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-from engram import embedding
-from engram import skill as skill_mod
-from engram import sleep as sleep_mod
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.sleep import SleepEngine, compute_skill_avg_steps, replay_priority
-from engram.trace_alignment import (
+from verimem import embedding
+from verimem import skill as skill_mod
+from verimem import sleep as sleep_mod
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.sleep import SleepEngine, compute_skill_avg_steps, replay_priority
+from verimem.trace_alignment import (
     align_traces,
     find_divergence_point,
 )
-from engram.trunc import smart_truncate
+from verimem.trunc import smart_truncate
 
 # ---------------------------------------------------------------------------
 # Pretty printing helpers — keep main() readable.

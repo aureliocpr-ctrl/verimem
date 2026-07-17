@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from engram import provider_registry as pr
+from verimem import provider_registry as pr
 
 
 def test_registry_loads_at_least_20_providers():

@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.contradiction import _extract_numbers, _values_clash
+from verimem.contradiction import _extract_numbers, _values_clash
 
 
 class TestTypedNumberClassification:

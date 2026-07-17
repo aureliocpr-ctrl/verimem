@@ -21,13 +21,13 @@ class _Ep:
 
 
 def test_empty_no_drift():
-    from engram.skill_drift import detect_skill_drift
+    from verimem.skill_drift import detect_skill_drift
     out = detect_skill_drift([])
     assert out["drifts"] == []
 
 
 def test_skill_with_drop_in_success():
-    from engram.skill_drift import detect_skill_drift
+    from verimem.skill_drift import detect_skill_drift
     now = time.time()
     # Historical: 5 success
     hist = [_Ep(f"h{i}", "success", ["s1"], created_at=now - 86400 * 60)
@@ -44,7 +44,7 @@ def test_skill_with_drop_in_success():
 
 
 def test_stable_skill_no_drift():
-    from engram.skill_drift import detect_skill_drift
+    from verimem.skill_drift import detect_skill_drift
     now = time.time()
     eps = (
         [_Ep(f"o{i}", "success", ["stable"], created_at=now - 86400 * 60)
@@ -59,7 +59,7 @@ def test_stable_skill_no_drift():
 
 
 def test_drift_direction_field():
-    from engram.skill_drift import detect_skill_drift
+    from verimem.skill_drift import detect_skill_drift
     now = time.time()
     hist = [_Ep(f"h{i}", "success", ["s1"], created_at=now - 86400 * 60)
             for i in range(5)]
@@ -77,14 +77,14 @@ def test_drift_direction_field():
 
 
 def test_payload_shape():
-    from engram.skill_drift import detect_skill_drift
+    from verimem.skill_drift import detect_skill_drift
     out = detect_skill_drift([])
     for k in ("drifts", "n_episodes_scanned"):
         assert k in out
 
 
 def test_drift_entry_keys():
-    from engram.skill_drift import detect_skill_drift
+    from verimem.skill_drift import detect_skill_drift
     now = time.time()
     hist = [_Ep(f"h{i}", "success", ["s1"], created_at=now - 86400 * 60)
             for i in range(5)]

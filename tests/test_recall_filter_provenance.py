@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _make_repo(tmp_path: Path) -> tuple[Path, str, Path]:

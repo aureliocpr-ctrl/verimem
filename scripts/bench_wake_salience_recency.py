@@ -32,10 +32,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.wake import WakeAgent, WakeConfig
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.wake import WakeAgent, WakeConfig
 
 
 def _ep(*, ep_id: str, text: str, outcome: str = "success",

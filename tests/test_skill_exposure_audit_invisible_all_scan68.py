@@ -11,7 +11,7 @@ consumer, non solo quello segnalato.
 """
 from __future__ import annotations
 
-from engram.skill_exposure_audit import audit_candidate_exposure
+from verimem.skill_exposure_audit import audit_candidate_exposure
 
 
 def test_no_candidates_still_exposes_invisible_all():

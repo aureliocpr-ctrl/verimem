@@ -22,8 +22,8 @@ from pathlib import Path
 # Add parent dir.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from engram.agent import HippoAgent  # noqa: E402
-from engram.config import CONFIG  # noqa: E402
+from verimem.agent import HippoAgent  # noqa: E402
+from verimem.config import CONFIG  # noqa: E402
 
 # Force Anthropic.
 os.environ["HIPPO_LLM_PROVIDER"] = "anthropic"

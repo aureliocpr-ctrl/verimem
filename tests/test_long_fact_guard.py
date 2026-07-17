@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 SHORT = "The Eiffel Tower is in Paris."
 LONG = "word " * 800  # ~4000 chars >> 2000 default
@@ -34,7 +34,7 @@ def _store(tmp_path, monkeypatch, prop, **kw):
 
 
 def test_long_fact_warns_non_silent(tmp_path, monkeypatch, caplog):
-    with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+    with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
         _store(tmp_path, monkeypatch, LONG, writer_role="external_content")
     msgs = [r.message for r in caplog.records]
     assert any("embedder window" in m and "external_content" in m for m in msgs), (
@@ -43,7 +43,7 @@ def test_long_fact_warns_non_silent(tmp_path, monkeypatch, caplog):
 
 
 def test_short_fact_is_silent(tmp_path, monkeypatch, caplog):
-    with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+    with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
         _store(tmp_path, monkeypatch, SHORT)
     assert not any("embedder window" in r.message for r in caplog.records)
 
@@ -60,6 +60,6 @@ def test_long_fact_is_still_stored(tmp_path, monkeypatch):
 
 def test_guard_disabled_with_zero(tmp_path, monkeypatch, caplog):
     monkeypatch.setenv("ENGRAM_LONG_FACT_WARN_CHARS", "0")
-    with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+    with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
         _store(tmp_path, monkeypatch, LONG)
     assert not any("embedder window" in r.message for r in caplog.records)

@@ -1,4 +1,4 @@
-"""Tests for the shared embedding-encode service (engram.encode_service).
+"""Tests for the shared embedding-encode service (verimem.encode_service).
 
 Uses an injected fake encode_fn so no real model loads — these test the
 socket protocol, batching, discovery file, and error handling.
@@ -11,7 +11,7 @@ import threading
 
 import pytest
 
-from engram import embedding, encode_service
+from verimem import embedding, encode_service
 
 
 def _fake_encode(text):
@@ -162,7 +162,7 @@ def test_encode_service_disabled_by_env(monkeypatch, tmp_path):
 
 
 def test_ensure_running_true_when_reachable(monkeypatch):
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     monkeypatch.delenv("ENGRAM_ENCODE_SERVICE", raising=False)
     # A CORRECT-MODEL reachable daemon → ensure_running is a no-op (daemon_usable True).
     monkeypatch.setattr(

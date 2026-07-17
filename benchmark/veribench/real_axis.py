@@ -25,7 +25,6 @@ product actually does, not a benchmark-only reimplementation.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Any
 
 from .scoring import Outcome

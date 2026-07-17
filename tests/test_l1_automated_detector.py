@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_automated_detector import (
+from verimem.l1_automated_detector import (
     AutomationClaimWarning,
     detect_unsupported_automated_claim,
 )
@@ -64,7 +64,7 @@ class TestEvidenceSuppression:
 
 class TestGateWire:
     def test_l118_wired(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Backup automated every day",
             verified_by=[],
@@ -76,7 +76,7 @@ class TestGateWire:
         assert "L1.18" in layers
 
     def test_l118_evidence_suppress(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="System scheduled nightly",
             verified_by=["cron:0_3_*_*_*", "workflow:nightly_run"],

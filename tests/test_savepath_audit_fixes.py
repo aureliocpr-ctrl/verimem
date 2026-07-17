@@ -13,15 +13,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from engram import mcp_server
+from verimem import mcp_server
 
 _P4 = 'AKIA'
 
 # ---------- #5 trace secret-redaction (unit) -----------------------------
 
 def test_screen_episode_redacts_trace_secrets():
-    from engram.episode import Episode, Trace
-    from engram.memory import EpisodicMemory
+    from verimem.episode import Episode, Trace
+    from verimem.memory import EpisodicMemory
 
     secret = "" + _P4 + "IOSFODNN7EXAMPLE"  # aws_key pattern -> redact_secrets lo maschera
     ep = Episode(
@@ -39,8 +39,8 @@ def test_screen_episode_redacts_trace_secrets():
 
 
 def test_screen_episode_keeps_clean_trace_intact():
-    from engram.episode import Episode, Trace
-    from engram.memory import EpisodicMemory
+    from verimem.episode import Episode, Trace
+    from verimem.memory import EpisodicMemory
 
     ep = Episode(
         task_id="t", task_text="x", final_answer="y",
@@ -61,8 +61,8 @@ class _Agent2:
 
 
 def _make_agent(tmp_path):
-    from engram.memory import EpisodicMemory
-    from engram.semantic import SemanticMemory
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     em = EpisodicMemory(db_path=tmp_path / "episodic" / "episodic.db")
     return _Agent2(sm, em)
@@ -83,7 +83,7 @@ async def _invoke(name: str, arguments: dict[str, Any]):
 async def test_key_fact_passes_through_anti_confab_gate(tmp_path, monkeypatch):
     """Il key_fact deve essere valutato da run_validation_gate (era bypassato)."""
     monkeypatch.setattr(mcp_server, "_ag", lambda: _make_agent(tmp_path))
-    from engram import anti_confab_gate
+    from verimem import anti_confab_gate
     real = anti_confab_gate.run_validation_gate
     seen: list[str] = []
 
@@ -103,8 +103,8 @@ async def test_key_fact_passes_through_anti_confab_gate(tmp_path, monkeypatch):
 async def test_key_fact_downgrade_becomes_quarantined(tmp_path, monkeypatch):
     """gate.action='downgrade' -> il Fact key_fact nasce status='quarantined'."""
     monkeypatch.setattr(mcp_server, "_ag", lambda: _make_agent(tmp_path))
-    from engram import anti_confab_gate
-    from engram.anti_confab_gate import GateResult
+    from verimem import anti_confab_gate
+    from verimem.anti_confab_gate import GateResult
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate",
                         lambda **kw: GateResult(action="downgrade"))
     statuses: list[str] = []
@@ -124,8 +124,8 @@ async def test_key_fact_downgrade_becomes_quarantined(tmp_path, monkeypatch):
 async def test_key_fact_reject_is_skipped(tmp_path, monkeypatch):
     """gate.action='reject' -> il key_fact e' skippato (nessun _build_fact)."""
     monkeypatch.setattr(mcp_server, "_ag", lambda: _make_agent(tmp_path))
-    from engram import anti_confab_gate
-    from engram.anti_confab_gate import GateResult
+    from verimem import anti_confab_gate
+    from verimem.anti_confab_gate import GateResult
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate",
                         lambda **kw: GateResult(action="reject"))
     built: list[Any] = []
@@ -144,7 +144,7 @@ async def test_key_fact_reject_is_skipped(tmp_path, monkeypatch):
 # ---------- #3 topic injection screen (store-level) ----------------------
 
 def test_store_quarantines_injection_in_topic(tmp_path):
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     f = Fact(
         proposition="nota innocua sul deploy di staging",
@@ -158,7 +158,7 @@ def test_store_quarantines_injection_in_topic(tmp_path):
 
 
 def test_store_keeps_clean_namespace_topic(tmp_path):
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     f = Fact(proposition="il deploy di staging e' andato a buon fine",
              topic="project/engram/deploy")
@@ -174,7 +174,7 @@ def test_store_keeps_clean_namespace_topic(tmp_path):
 def test_upsert_does_not_regress_last_verified_at(tmp_path):
     import sqlite3
 
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     f = Fact(proposition="capability claim alpha", topic="t", last_verified_at=1000.0)
     sm.store(f, embed="sync")
@@ -193,7 +193,7 @@ def test_upsert_does_not_regress_last_verified_at(tmp_path):
 
 
 def test_upsert_takes_fresher_last_verified_at(tmp_path):
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     f = Fact(proposition="beta", topic="t", last_verified_at=1000.0)
     sm.store(f, embed="sync")

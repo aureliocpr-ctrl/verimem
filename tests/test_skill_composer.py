@@ -26,7 +26,7 @@ class _Skill:
 
 
 def test_empty_returns_no_plan():
-    from engram.skill_composer import compose_plan
+    from verimem.skill_composer import compose_plan
 
     out = compose_plan(task="any task", skills=[])
     assert out["plan"] == []
@@ -34,7 +34,7 @@ def test_empty_returns_no_plan():
 
 
 def test_single_match_returns_plan():
-    from engram.skill_composer import compose_plan
+    from verimem.skill_composer import compose_plan
 
     skills = [
         _Skill("s1", "WordPress contact-form-7 RCE",
@@ -48,7 +48,7 @@ def test_single_match_returns_plan():
 
 
 def test_chain_follows_parents():
-    from engram.skill_composer import compose_plan
+    from verimem.skill_composer import compose_plan
 
     skills = [
         _Skill("recon", "WordPress fingerprint"),
@@ -65,7 +65,7 @@ def test_chain_follows_parents():
 
 
 def test_no_match_returns_empty():
-    from engram.skill_composer import compose_plan
+    from verimem.skill_composer import compose_plan
 
     skills = [_Skill("s1", "completely unrelated topic")]
     out = compose_plan(task="WordPress exploitation", skills=skills)
@@ -73,7 +73,7 @@ def test_no_match_returns_empty():
 
 
 def test_retired_skills_excluded():
-    from engram.skill_composer import compose_plan
+    from verimem.skill_composer import compose_plan
 
     skills = [
         _Skill("s1", "WordPress RCE", status="retired"),
@@ -86,7 +86,7 @@ def test_retired_skills_excluded():
 
 
 def test_coverage_score():
-    from engram.skill_composer import compose_plan
+    from verimem.skill_composer import compose_plan
 
     skills = [
         _Skill("s1", "WordPress RCE exploit chain"),
@@ -96,14 +96,14 @@ def test_coverage_score():
 
 
 def test_payload_keys():
-    from engram.skill_composer import compose_plan
+    from verimem.skill_composer import compose_plan
     out = compose_plan(task="x", skills=[])
     for k in ("plan", "coverage", "n_skills_scanned", "n_skills_matched"):
         assert k in out
 
 
 def test_plan_includes_match_score():
-    from engram.skill_composer import compose_plan
+    from verimem.skill_composer import compose_plan
 
     skills = [_Skill("s1", "WordPress RCE")]
     out = compose_plan(task="WordPress RCE", skills=skills)

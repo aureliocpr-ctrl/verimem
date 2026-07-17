@@ -30,8 +30,8 @@ from pathlib import Path
 
 import pytest
 
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
 
 
 def _mk_episode(

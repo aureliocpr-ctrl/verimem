@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.client import Memory
+from verimem.client import Memory
 
 
 def _mem() -> Memory:

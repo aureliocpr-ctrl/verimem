@@ -1,6 +1,6 @@
 """UserSettings save/load round-trip + permission gates.
 
-Covers `engram.settings`:
+Covers `verimem.settings`:
 
   • UserSettings.to_dict / from_dict round-trip
   • save → load preserves all fields (provider, models, api_keys, perms)
@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from engram import settings as user_settings
-from engram import tools_extra
+from verimem import settings as user_settings
+from verimem import tools_extra
 
 
 @pytest.fixture

@@ -12,8 +12,8 @@ Env: ENGRAM_RERANK_MAX_DOC_CHARS (default 2000 ~= 512 tokens; 0 = guard off).
 """
 from __future__ import annotations
 
-import engram.semantic as semantic_mod
-from engram.semantic import Fact, SemanticMemory
+import verimem.semantic as semantic_mod
+from verimem.semantic import Fact, SemanticMemory
 
 _QUERY = "blue-green deployment on aws"
 

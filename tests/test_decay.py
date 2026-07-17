@@ -18,7 +18,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from engram.decay import apply_time_decay
+from verimem.decay import apply_time_decay
 
 SEC_PER_DAY = 86400.0
 

@@ -73,7 +73,7 @@ def test_local_topk_embeddings_returns_no_text(tmp_path: Path) -> None:
         pytest.skip("vec_bus not available")
     from clp.agentos.vec_bus import embed_text
 
-    from engram.mesh_memory import local_topk_embeddings
+    from verimem.mesh_memory import local_topk_embeddings
 
     db = tmp_path / "local.db"
     _build_corpus(db, {
@@ -107,7 +107,7 @@ def test_mesh_publish_query_roundtrip(tmp_path: Path) -> None:
 
     from clp.agentos import vec_bus
 
-    from engram.mesh_memory import mesh_fetch_recent, mesh_publish_query
+    from verimem.mesh_memory import mesh_fetch_recent, mesh_publish_query
     chan = f"mesh/test/{int(_t.time()*1000)}/req"
 
     # publish
@@ -148,7 +148,7 @@ def test_mesh_cross_corpus_semantic_union(tmp_path: Path) -> None:
         pytest.skip("vec_bus not available")
     from clp.agentos.vec_bus import embed_text
 
-    from engram.mesh_memory import (
+    from verimem.mesh_memory import (
         local_topk_embeddings,
         mesh_fetch_recent,
         mesh_publish_query,
@@ -275,7 +275,7 @@ def test_mesh_resonant_merge_cycle363(tmp_path: Path) -> None:
         pytest.skip("vec_bus not available")
     from clp.agentos.vec_bus import embed_text
 
-    from engram.mesh_memory import mesh_resonant_merge
+    from verimem.mesh_memory import mesh_resonant_merge
 
     q_vec = embed_text("what is a sweet fruit")
     # Local (tech-only): semantically distant from query

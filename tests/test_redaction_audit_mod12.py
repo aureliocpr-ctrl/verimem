@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import time
 
-from engram.redaction import redact_secrets
+from verimem.redaction import redact_secrets
 
 _REDACT = "[REDACTED]"
 

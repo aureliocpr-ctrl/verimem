@@ -34,7 +34,7 @@ from pathlib import Path
 # Allow `python scripts/bench_with_without_hippo.py` from repo root.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.bench_harness import (  # noqa: E402
+from verimem.bench_harness import (  # noqa: E402
     ProviderSpec,
     aggregate,
     aggregate_by_iter,
@@ -46,8 +46,8 @@ from engram.bench_harness import (  # noqa: E402
     skill_compounding_suite,
     to_jsonable,
 )
-from engram.config import CONFIG  # noqa: E402
-from engram.llm import MockLLM  # noqa: E402
+from verimem.config import CONFIG  # noqa: E402
+from verimem.llm import MockLLM  # noqa: E402
 
 # Provider key → env var that must be present to enable it.
 _PROVIDER_ENV: dict[str, str] = {
@@ -82,7 +82,7 @@ def _build_factory(name: str):
     def _factory():
         # Force the provider via env so get_llm picks it up.
         os.environ["HIPPO_LLM_PROVIDER"] = name
-        from engram.llm import get_llm
+        from verimem.llm import get_llm
         return get_llm(use_mock=False)
     return _factory
 
@@ -203,7 +203,7 @@ def main() -> int:
 
     if args.print_config:
         # FORGIA #87: surface what the run actually sees.
-        from engram.config import CONFIG as _C
+        from verimem.config import CONFIG as _C
         print("[bench] resolved config:")
         for k in ("HIPPO_DATA_DIR", "HIPPO_LLM_PROVIDER", "HIPPO_OFFLINE",
                   "HIPPO_AUTO_FALLBACK", "HIPPO_MODEL"):
@@ -219,7 +219,7 @@ def main() -> int:
         # episodes" mistakes.
         import shutil
 
-        from engram.config import _project_root
+        from verimem.config import _project_root
         env_dir = os.environ.get("HIPPO_DATA_DIR", "").strip()
         if not env_dir:
             print(
@@ -393,8 +393,8 @@ def main() -> int:
         # FORGIA #80 + #155: post-bench corpus state with FORGIA #143/#144
         # analytics surface (outcome breakdown + steps + token usage).
         try:
-            from engram.memory import EpisodicMemory
-            from engram.skill import SkillLibrary
+            from verimem.memory import EpisodicMemory
+            from verimem.skill import SkillLibrary
             mem = EpisodicMemory()
             sk = SkillLibrary()
             print()

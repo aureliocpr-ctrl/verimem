@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.skill import Skill, SkillLibrary
-from engram.skill_name_dedup import dedup_skills_by_name, find_name_duplicate_groups
+from verimem.skill import Skill, SkillLibrary
+from verimem.skill_name_dedup import dedup_skills_by_name, find_name_duplicate_groups
 
 
 @pytest.fixture

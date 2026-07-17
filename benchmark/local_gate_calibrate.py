@@ -98,7 +98,7 @@ def main(argv=None) -> int:
         _make_confab,
         _questions_with_source,
     )
-    from engram.local_grounding import get_local_judge, get_local_threshold
+    from verimem.local_grounding import get_local_judge, get_local_threshold
 
     rng = random.Random(a.seed)
     users = []

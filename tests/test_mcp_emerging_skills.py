@@ -17,7 +17,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 
 def _normalised_emb(seed: int) -> bytes:
@@ -130,7 +130,7 @@ async def test_tool_returns_drafts_for_synthetic_corpus(
 ) -> None:
     """The handler must run detect → draft and return >=1 candidate."""
     # Monkey-patch the agent factory to point semantic.db_path at our fixture.
-    import engram.mcp_server as ms
+    import verimem.mcp_server as ms
 
     class _FakeSemantic:
         def __init__(self, db_path: Path) -> None:

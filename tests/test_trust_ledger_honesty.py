@@ -17,14 +17,14 @@ from __future__ import annotations
 
 import pytest
 
-from engram.client import Memory
+from verimem.client import Memory
 
 
 def test_store_screen_flip_counts_as_quarantined_not_admitted(tmp_path, monkeypatch):
     """Il gate dice persist ma lo screen dentro store() quarantena (es.
     injection screen): l'odometro deve dire QUARANTINED — conta ciò che è
     successo davvero, non l'intenzione del gate."""
-    import engram.semantic as semantic_mod
+    import verimem.semantic as semantic_mod
 
     m = Memory(tmp_path / "m.db")
 
@@ -83,7 +83,7 @@ def test_advisory_layers_not_in_by_layer(tmp_path):
 def test_ledger_write_failures_are_visible(tmp_path, monkeypatch):
     """Fail-open resta (mai rompere una scrittura) ma non più invisibile:
     i drop del ledger sono contati ed esposti in trust_stats."""
-    from engram import trust_ledger as tl
+    from verimem import trust_ledger as tl
 
     m = Memory(tmp_path / "m.db")
 

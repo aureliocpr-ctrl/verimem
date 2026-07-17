@@ -24,14 +24,14 @@ class _Skill:
 
 
 def test_empty_returns_no_recommendation():
-    from engram.skill_recommend_failure import recommend_alternatives
+    from verimem.skill_recommend_failure import recommend_alternatives
     target = _Ep("f", "task", "failure", [])
     out = recommend_alternatives(target, skills=[])
     assert out["recommendations"] == []
 
 
 def test_recommends_unused_matching_skill():
-    from engram.skill_recommend_failure import recommend_alternatives
+    from verimem.skill_recommend_failure import recommend_alternatives
     target = _Ep("f", "WordPress RCE acme.io", "failure",
                  skills_used=["bad_skill"])
     skills = [
@@ -47,7 +47,7 @@ def test_recommends_unused_matching_skill():
 
 
 def test_no_match_returns_empty():
-    from engram.skill_recommend_failure import recommend_alternatives
+    from verimem.skill_recommend_failure import recommend_alternatives
     target = _Ep("f", "novel task", "failure", [])
     skills = [_Skill("x", trigger="completely different")]
     out = recommend_alternatives(target, skills=skills)
@@ -55,7 +55,7 @@ def test_no_match_returns_empty():
 
 
 def test_retired_excluded():
-    from engram.skill_recommend_failure import recommend_alternatives
+    from verimem.skill_recommend_failure import recommend_alternatives
     target = _Ep("f", "WordPress RCE", "failure", [])
     skills = [_Skill("dead", trigger="WordPress RCE", status="retired")]
     out = recommend_alternatives(target, skills=skills)
@@ -63,7 +63,7 @@ def test_retired_excluded():
 
 
 def test_payload_shape():
-    from engram.skill_recommend_failure import recommend_alternatives
+    from verimem.skill_recommend_failure import recommend_alternatives
     target = _Ep("f", "x", "failure", [])
     out = recommend_alternatives(target, skills=[])
     for k in ("recommendations", "n_skills_scanned"):
@@ -71,7 +71,7 @@ def test_payload_shape():
 
 
 def test_entry_keys():
-    from engram.skill_recommend_failure import recommend_alternatives
+    from verimem.skill_recommend_failure import recommend_alternatives
     target = _Ep("f", "X", "failure", [])
     skills = [_Skill("s1", trigger="X")]
     out = recommend_alternatives(target, skills=skills)

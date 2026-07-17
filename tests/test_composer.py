@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.composer import _copula_parse, compose_once
+from verimem.composer import _copula_parse, compose_once
 
 
 class _FakeJudge:
@@ -45,7 +45,7 @@ def mem(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
-    from engram.client import Memory
+    from verimem.client import Memory
     return Memory(tmp_path / "compose.db", grounding_llm=_FakeJudge())
 
 
@@ -95,7 +95,7 @@ def test_gate_rejects_unsupported_composition(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
-    from engram.client import Memory
+    from verimem.client import Memory
     m = Memory(tmp_path / "rej.db",
                grounding_llm=_FakeJudge(score_entailed=5.0, score_not=5.0))
     m.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
@@ -120,7 +120,7 @@ def test_noncommittal_judge_never_admits(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
-    from engram.client import Memory
+    from verimem.client import Memory
 
     class _Garbage:
         def complete(self, system, messages, **kw):

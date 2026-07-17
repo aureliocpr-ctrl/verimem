@@ -8,7 +8,7 @@ count — it gives the caller (and, later, an intent router) the right tool.
 """
 from __future__ import annotations
 
-from engram.client import Memory
+from verimem.client import Memory
 
 M = 12  # ground-truth Helios mentions
 

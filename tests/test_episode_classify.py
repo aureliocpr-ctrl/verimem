@@ -26,7 +26,7 @@ class _FakeEp:
 
 
 def test_empty_returns_no_classifications():
-    from engram.episode_classify import classify_episodes
+    from verimem.episode_classify import classify_episodes
 
     out = classify_episodes([])
     assert out["episodes"] == []
@@ -34,7 +34,7 @@ def test_empty_returns_no_classifications():
 
 
 def test_noisy_output_detected():
-    from engram.episode_classify import classify_episodes
+    from verimem.episode_classify import classify_episodes
 
     eps = [
         _FakeEp("e1", "compute X", final_answer="OK\n42\n",
@@ -46,7 +46,7 @@ def test_noisy_output_detected():
 
 
 def test_missing_skills_detected():
-    from engram.episode_classify import classify_episodes
+    from verimem.episode_classify import classify_episodes
 
     eps = [
         _FakeEp("e1", "task", final_answer="42",
@@ -58,7 +58,7 @@ def test_missing_skills_detected():
 
 
 def test_shell_warn_detected():
-    from engram.episode_classify import classify_episodes
+    from verimem.episode_classify import classify_episodes
 
     eps = [
         _FakeEp("e1", "rm -rf /tmp/foo && cat /etc/passwd",
@@ -70,7 +70,7 @@ def test_shell_warn_detected():
 
 
 def test_long_running_detected():
-    from engram.episode_classify import classify_episodes
+    from verimem.episode_classify import classify_episodes
 
     eps = [
         _FakeEp("e1", "task", tokens_used=50000),
@@ -81,7 +81,7 @@ def test_long_running_detected():
 
 
 def test_failure_then_success_recovery():
-    from engram.episode_classify import classify_episodes
+    from verimem.episode_classify import classify_episodes
 
     eps = [
         _FakeEp("e1", "compute X", outcome="failure"),
@@ -93,7 +93,7 @@ def test_failure_then_success_recovery():
 
 
 def test_aggregate_flag_counts():
-    from engram.episode_classify import classify_episodes
+    from verimem.episode_classify import classify_episodes
 
     eps = [
         _FakeEp("e1", "rm -rf /tmp"),
@@ -106,7 +106,7 @@ def test_aggregate_flag_counts():
 
 
 def test_payload_shape_complete():
-    from engram.episode_classify import classify_episodes
+    from verimem.episode_classify import classify_episodes
 
     out = classify_episodes([])
     for k in ("episodes", "flag_counts", "n_total"):

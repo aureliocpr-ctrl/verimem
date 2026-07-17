@@ -125,8 +125,8 @@ def main(argv=None) -> int:
     os.environ["ENGRAM_GROUNDING_BACKEND"] = "local"
 
     from benchmark.local_gate_eval import build_pairs, split_by_user
-    from engram.grounding_gate import should_store_fact
-    from engram.local_grounding import get_local_judge
+    from verimem.grounding_gate import should_store_fact
+    from verimem.local_grounding import get_local_judge
 
     def repair_store(span, fact, *, top_k, min_coverage):
         """Gate; on reject try the most-anchored source unit. Returns

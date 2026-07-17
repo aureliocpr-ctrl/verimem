@@ -17,13 +17,13 @@ class _Skill:
 
 
 def test_empty_returns_empty():
-    from engram.skill_warmup import predict_warmup_skills
+    from verimem.skill_warmup import predict_warmup_skills
     out = predict_warmup_skills(upcoming_tasks=[], skills=[])
     assert out["warmup"] == []
 
 
 def test_warmup_picks_matching_skills():
-    from engram.skill_warmup import predict_warmup_skills
+    from verimem.skill_warmup import predict_warmup_skills
     skills = [
         _Skill("recon", trigger="WordPress fingerprint detection"),
         _Skill("exploit", trigger="WordPress RCE exploit"),
@@ -40,7 +40,7 @@ def test_warmup_picks_matching_skills():
 
 
 def test_aggregate_score_across_tasks():
-    from engram.skill_warmup import predict_warmup_skills
+    from verimem.skill_warmup import predict_warmup_skills
     skills = [
         _Skill("common", trigger="WordPress general purpose"),
         _Skill("specific", trigger="firmware ARM"),
@@ -53,7 +53,7 @@ def test_aggregate_score_across_tasks():
 
 
 def test_retired_excluded():
-    from engram.skill_warmup import predict_warmup_skills
+    from verimem.skill_warmup import predict_warmup_skills
     skills = [
         _Skill("active", trigger="WordPress RCE", status="promoted"),
         _Skill("dead", trigger="WordPress RCE", status="retired"),
@@ -66,14 +66,14 @@ def test_retired_excluded():
 
 
 def test_payload_shape():
-    from engram.skill_warmup import predict_warmup_skills
+    from verimem.skill_warmup import predict_warmup_skills
     out = predict_warmup_skills(upcoming_tasks=[], skills=[])
     for k in ("warmup", "n_skills_scanned", "n_tasks"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.skill_warmup import predict_warmup_skills
+    from verimem.skill_warmup import predict_warmup_skills
     skills = [_Skill("s1", trigger="WordPress")]
     out = predict_warmup_skills(upcoming_tasks=["WordPress task"],
                                 skills=skills)

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, fields
 
-from engram.wake import WakeResult
+from verimem.wake import WakeResult
 
 
 def test_used_macro_defaults_to_false():

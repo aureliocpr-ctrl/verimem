@@ -65,8 +65,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
 
 
 def _ep(task_text: str, *, outcome: str = "success", final: str = "ok",
@@ -100,8 +100,8 @@ def test_dg_config_amplifies_near_twin_separation():
     We test the math directly (perturbed unit vectors, not sentence-
     transformer outputs) so the assertion isn't at the mercy of the
     encoder's noise floor — `pezzo #11` already covered that regime."""
-    from engram.dentate_gyrus import dg_encode
-    from engram.memory import _global_dg_projection
+    from verimem.dentate_gyrus import dg_encode
+    from verimem.memory import _global_dg_projection
 
     rng = np.random.default_rng(seed=99)
     base = rng.standard_normal(CONFIG.embedding_dim).astype(np.float32)
@@ -135,7 +135,7 @@ def test_dg_config_amplifies_near_twin_separation():
 def test_dg_recall_preserves_top_match_on_diverse_corpus(tmp_path: Path):
     """When episodes are diverse (no near-twins), DG must not hurt the
     top@1 retrieval — the right answer should still rank first."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     db = tmp_path / "ep.db"
     mem = EpisodicMemory(db_path=db)
@@ -173,7 +173,7 @@ def test_dg_recall_preserves_top_match_on_diverse_corpus(tmp_path: Path):
 def test_dg_migration_from_v2_database(tmp_path: Path):
     """A pre-v3 database (without dg_embedding column) must migrate
     automatically and back-fill lazily on first DG recall."""
-    from engram.memory import _EPISODES_SCHEMA_VERSION, EpisodicMemory
+    from verimem.memory import _EPISODES_SCHEMA_VERSION, EpisodicMemory
 
     db = tmp_path / "ep_v2.db"
 
@@ -220,7 +220,7 @@ def test_dg_migration_from_v2_database(tmp_path: Path):
     # questi episodi dal recall — ma qui i loro vettori SONO nello spazio attivo,
     # quindi ripristino il tag veritiero. (Le DB legacy reali tengono NULL e
     # vengono re-embeddate dal flip; l'isolamento embedding-model ha test suoi.)
-    from engram import embedding as _emb
+    from verimem import embedding as _emb
     with sqlite3.connect(db) as c:
         c.execute("UPDATE episodes SET embedding_model = ?", (_emb.model_signature(),))
         c.commit()
@@ -237,7 +237,7 @@ def test_dg_projection_seed_is_stable_across_memory_instances(tmp_path: Path):
     """Two `EpisodicMemory` objects (same DB, different process lifetimes)
     must build the IDENTICAL W_dg matrix — otherwise yesterday's stored
     DG-embeddings stop matching today's encoder."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem1 = EpisodicMemory(db_path=tmp_path / "a.db")
     mem2 = EpisodicMemory(db_path=tmp_path / "b.db")
@@ -252,7 +252,7 @@ def test_dg_projection_seed_is_stable_across_memory_instances(tmp_path: Path):
 def test_store_persists_dg_embedding(tmp_path: Path):
     """After store(), the dg_embedding column should be populated
     (non-NULL) for the new episode."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     db = tmp_path / "ep.db"
     mem = EpisodicMemory(db_path=db)
@@ -278,7 +278,7 @@ def test_store_persists_dg_embedding(tmp_path: Path):
 def test_use_dg_false_is_exact_legacy_path(tmp_path: Path):
     """The legacy code path (no `use_dg` kwarg or `use_dg=False`) must
     return identical results — backward compat is non-negotiable."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     for i, text in enumerate([

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.hot_reload import (
+from verimem.hot_reload import (
     HotReloadWatcher,
     collect_pending_changes,
     diff_snapshots,
@@ -106,7 +106,7 @@ class TestHotReloadWatcher:
         w = HotReloadWatcher(roots=[py_root])
         import time as _t
 
-        from engram.hot_reload import FileChange
+        from verimem.hot_reload import FileChange
         w.pending.append(FileChange(path=py_root / "fake.py",
                                      new_hash="abc",
                                      detected_at=_t.time()))

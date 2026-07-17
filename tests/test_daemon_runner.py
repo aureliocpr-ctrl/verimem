@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from engram.daemon_runner import (
+from verimem.daemon_runner import (
     DEFAULT_DAEMONS,
     DaemonSpec,
     maybe_spawn_all_default_daemons,

@@ -64,7 +64,7 @@ def has_marketing_pattern(text: str) -> list[str]:
 def _module_to_dotted(module_path: str) -> str:
     """Map a repo-relative module path to its dotted import name.
 
-    'engram/foo.py' -> 'engram.foo'; 'engram/__init__.py' -> 'engram'.
+    'engram/foo.py' -> 'verimem.foo'; 'engram/__init__.py' -> 'engram'.
     """
     # SCAN-68 FIX 2026-06-02 (NONNA): removesuffix, NON rstrip('.py') che
     # rimuove il SET di char {'.','p','y'} dalla coda (policy.py->polic).
@@ -80,12 +80,12 @@ def count_non_test_importers(
 ) -> int:
     """Grep repo for imports of the module, excluding tests/.
 
-    module_path e.g. 'engram/foo.py' → search for 'from engram.foo' or
-    'import engram.foo'.
+    module_path e.g. 'engram/foo.py' → search for 'from verimem.foo' or
+    'import verimem.foo'.
     """
     if not module_path.endswith(".py"):
         return -1
-    # Build dotted name: engram/foo.py → engram.foo (suffix-safe helper)
+    # Build dotted name: engram/foo.py → verimem.foo (suffix-safe helper)
     dotted = _module_to_dotted(module_path)
 
     # Grep

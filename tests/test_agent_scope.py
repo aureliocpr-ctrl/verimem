@@ -21,7 +21,7 @@ class _FakeFact:
 
 
 def test_tag_topic_for_agent():
-    from engram.agent_scope import tag_for_agent
+    from verimem.agent_scope import tag_for_agent
 
     out = tag_for_agent("nexus/cve/CVE-2024-X", agent_id="pentester")
     assert out == "agent:pentester/nexus/cve/CVE-2024-X"
@@ -29,7 +29,7 @@ def test_tag_topic_for_agent():
 
 def test_tag_idempotent():
     """Tagging an already-tagged topic shouldn't double-prefix."""
-    from engram.agent_scope import tag_for_agent
+    from verimem.agent_scope import tag_for_agent
 
     once = tag_for_agent("foo", agent_id="A")
     twice = tag_for_agent(once, agent_id="A")
@@ -37,7 +37,7 @@ def test_tag_idempotent():
 
 
 def test_extract_agent_id():
-    from engram.agent_scope import agent_id_from_topic
+    from verimem.agent_scope import agent_id_from_topic
 
     assert agent_id_from_topic("agent:pentester/nexus") == "pentester"
     assert agent_id_from_topic("nexus/cve") is None
@@ -45,7 +45,7 @@ def test_extract_agent_id():
 
 
 def test_filter_facts_by_agent_id():
-    from engram.agent_scope import filter_facts_by_agent
+    from verimem.agent_scope import filter_facts_by_agent
 
     facts = [
         _FakeFact("f1", "x", "agent:pentester/cve"),
@@ -59,7 +59,7 @@ def test_filter_facts_by_agent_id():
 
 
 def test_filter_includes_shared_when_requested():
-    from engram.agent_scope import filter_facts_by_agent
+    from verimem.agent_scope import filter_facts_by_agent
 
     facts = [
         _FakeFact("f1", "x", "agent:pentester/cve"),
@@ -73,7 +73,7 @@ def test_filter_includes_shared_when_requested():
 
 def test_filter_by_agent_id_none_returns_all_without_prefix():
     """agent_id=None returns only un-namespaced facts (legacy)."""
-    from engram.agent_scope import filter_facts_by_agent
+    from verimem.agent_scope import filter_facts_by_agent
 
     facts = [
         _FakeFact("f1", "x", "math/collatz"),  # no prefix
@@ -87,7 +87,7 @@ def test_filter_by_agent_id_none_returns_all_without_prefix():
 
 
 def test_count_by_agent():
-    from engram.agent_scope import count_by_agent
+    from verimem.agent_scope import count_by_agent
 
     facts = [
         _FakeFact("f1", "x", "agent:A/x"),
@@ -102,7 +102,7 @@ def test_count_by_agent():
 
 
 def test_payload_keys_count_by_agent():
-    from engram.agent_scope import count_by_agent
+    from verimem.agent_scope import count_by_agent
     out = count_by_agent([])
     assert isinstance(out, dict)
 
@@ -111,6 +111,6 @@ def test_tag_with_special_chars_safe():
     # agent_id with slash should be sanitized or rejected
     import pytest
 
-    from engram.agent_scope import tag_for_agent
+    from verimem.agent_scope import tag_for_agent
     with pytest.raises(ValueError):
         tag_for_agent("foo", agent_id="bad/id")

@@ -25,7 +25,7 @@ class _FakeMemory:
 
 
 def test_empty_ids_returns_empty():
-    from engram.episode_batch_get import episode_batch_get
+    from verimem.episode_batch_get import episode_batch_get
 
     m = _FakeMemory([])
     out = episode_batch_get(memory=m, episode_ids=[])
@@ -34,7 +34,7 @@ def test_empty_ids_returns_empty():
 
 
 def test_finds_all_present():
-    from engram.episode_batch_get import episode_batch_get
+    from verimem.episode_batch_get import episode_batch_get
 
     eps = [_FakeEp("e1", task_text="a"), _FakeEp("e2", task_text="b")]
     m = _FakeMemory(eps)
@@ -45,7 +45,7 @@ def test_finds_all_present():
 
 
 def test_separates_missing():
-    from engram.episode_batch_get import episode_batch_get
+    from verimem.episode_batch_get import episode_batch_get
 
     eps = [_FakeEp("e1", task_text="a")]
     m = _FakeMemory(eps)
@@ -57,7 +57,7 @@ def test_separates_missing():
 
 
 def test_preserves_input_order():
-    from engram.episode_batch_get import episode_batch_get
+    from verimem.episode_batch_get import episode_batch_get
 
     eps = [_FakeEp("a"), _FakeEp("b"), _FakeEp("c")]
     m = _FakeMemory(eps)
@@ -66,7 +66,7 @@ def test_preserves_input_order():
 
 
 def test_payload_shape():
-    from engram.episode_batch_get import episode_batch_get
+    from verimem.episode_batch_get import episode_batch_get
 
     m = _FakeMemory([])
     out = episode_batch_get(memory=m, episode_ids=[])

@@ -7,8 +7,8 @@ SQL scan). Default floor 0.0 preserves legacy behaviour.
 """
 from __future__ import annotations
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(eid: str, task: str, outcome: str = "success") -> Episode:

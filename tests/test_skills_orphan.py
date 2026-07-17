@@ -1,18 +1,18 @@
 """FORGIA pezzo #278 — Wave 77: orphan skills (no parents AND no children)."""
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty():
-    from engram.skills_orphan import find_orphan_skills
+    from verimem.skills_orphan import find_orphan_skills
 
     out = find_orphan_skills([])
     assert out["skills"] == []
 
 
 def test_isolated_skill_is_orphan():
-    from engram.skills_orphan import find_orphan_skills
+    from verimem.skills_orphan import find_orphan_skills
 
     skills = [Skill(id="lonely")]
     out = find_orphan_skills(skills)
@@ -20,7 +20,7 @@ def test_isolated_skill_is_orphan():
 
 
 def test_has_parent_not_orphan():
-    from engram.skills_orphan import find_orphan_skills
+    from verimem.skills_orphan import find_orphan_skills
 
     skills = [
         Skill(id="root"),
@@ -35,7 +35,7 @@ def test_has_parent_not_orphan():
 
 def test_unknown_parent_still_orphan():
     """Parent reference to non-existent skill: target counts as orphan."""
-    from engram.skills_orphan import find_orphan_skills
+    from verimem.skills_orphan import find_orphan_skills
 
     skills = [
         Skill(id="dangling", parent_skills=["ghost_parent"]),
@@ -46,7 +46,7 @@ def test_unknown_parent_still_orphan():
 
 
 def test_payload_shape():
-    from engram.skills_orphan import find_orphan_skills
+    from verimem.skills_orphan import find_orphan_skills
 
     out = find_orphan_skills([])
     for k in ("skills", "n_total"):

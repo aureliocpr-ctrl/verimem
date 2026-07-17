@@ -6,8 +6,8 @@ independence). Success raises the source. Unknown fact -> False.
 """
 from __future__ import annotations
 
-from engram.client import Memory
-from engram.source_trust import reset_book_cache
+from verimem.client import Memory
+from verimem.source_trust import reset_book_cache
 
 
 def test_reported_failure_penalizes_source(tmp_path):

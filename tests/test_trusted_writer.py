@@ -11,7 +11,7 @@ con ok-Aurelio). HERMETIC (monkeypatch env).
 """
 from __future__ import annotations
 
-from engram.trusted_writer import verify_trusted_writer
+from verimem.trusted_writer import verify_trusted_writer
 
 ENV = "ENGRAM_HOOK_TOKEN"
 

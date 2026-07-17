@@ -13,7 +13,7 @@ from __future__ import annotations
 import time
 import types
 
-from engram.briefing import _is_call_telemetry_episode, get_briefing
+from verimem.briefing import _is_call_telemetry_episode, get_briefing
 
 _DAY = 86400.0
 

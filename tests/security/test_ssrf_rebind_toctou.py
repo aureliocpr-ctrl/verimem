@@ -21,8 +21,8 @@ import socket
 
 import pytest
 
-from engram import tools_extra
-from engram.tools_extra import _read_image_to_b64_and_media_type, web_fetch
+from verimem import tools_extra
+from verimem.tools_extra import _read_image_to_b64_and_media_type, web_fetch
 
 
 def _rebind_resolver(safe: str = "1.2.3.4", internal: str = "127.0.0.1"):

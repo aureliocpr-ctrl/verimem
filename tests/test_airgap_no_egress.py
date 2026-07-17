@@ -59,7 +59,7 @@ def test_offline_embedding_makes_no_external_connection():
         socket.socket.connect = _rec_connect
         socket.create_connection = _rec_create
 
-        from engram import embedding
+        from verimem import embedding
         vec = embedding.encode("air-gap no-egress probe")
         ok = vec is not None and len(vec) > 0
         print("ENCODE_OK" if ok else "ENCODE_FAIL")

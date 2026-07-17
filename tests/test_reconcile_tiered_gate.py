@@ -12,9 +12,9 @@ an EVIDENCED fact (verified status OR verified_by). Three tiers, default OFF:
 """
 from __future__ import annotations
 
-from engram.contradiction import ContradictionStore
-from engram.semantic import Fact, SemanticMemory
-from engram.truth_reconciliation import classify_conflict, reconcile_fact_on_write
+from verimem.contradiction import ContradictionStore
+from verimem.semantic import Fact, SemanticMemory
+from verimem.truth_reconciliation import classify_conflict, reconcile_fact_on_write
 
 _NOW = 1_000_000_000.0
 _DAY = 86400.0

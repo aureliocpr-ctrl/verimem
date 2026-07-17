@@ -12,8 +12,8 @@ import types
 
 import pytest
 
-from engram import grounding_gate as G
-from engram.anti_confab_gate import run_validation_gate
+from verimem import grounding_gate as G
+from verimem.anti_confab_gate import run_validation_gate
 
 
 def test_write_threshold_default_is_calibrated(monkeypatch):

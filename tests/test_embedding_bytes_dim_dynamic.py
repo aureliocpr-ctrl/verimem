@@ -18,7 +18,7 @@ import sys
 def test_expected_bytes_follows_embedding_dim_env():
     code = (
         "import os; os.environ['HIPPO_EMBEDDING_DIM']='768'; "
-        "from engram import semantic; "
+        "from verimem import semantic; "
         "v=semantic._EXPECTED_EMBEDDING_BYTES; "
         "assert v==768*4, f'atteso 3072 (768*4), ottenuto {v} -> letterale 384*4 hardcoded'; "
         "print('OK', v)"
@@ -31,7 +31,7 @@ def test_expected_bytes_follows_embedding_dim_env():
 def test_expected_bytes_default_dim_is_1536():
     """Backward-compat: senza env (dim default 384) il filtro resta 1536 (=384*4)."""
     code = (
-        "from engram import semantic; "
+        "from verimem import semantic; "
         "v=semantic._EXPECTED_EMBEDDING_BYTES; "
         "assert v==384*4, f'atteso 1536 a dim default, ottenuto {v}'; "
         "print('OK', v)"

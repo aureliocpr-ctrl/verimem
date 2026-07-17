@@ -12,9 +12,9 @@ import sqlite3
 import numpy as np
 import pytest
 
-from engram import embedding as emb
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem import embedding as emb
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 _DIM = 384
 

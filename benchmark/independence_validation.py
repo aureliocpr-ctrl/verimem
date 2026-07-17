@@ -154,8 +154,8 @@ def run_condition(cfg: WorldConfig, cc: CartelConfig, db_path: Path, *,
     # (proving the product path, not the harness's manual observe, defends the cartel).
     os.environ["ENGRAM_SOURCE_AUTO_CONFIRM"] = "1" if (product and trust_on) else "0"
     os.environ["ENGRAM_RECONCILE_ON_WRITE"] = "0"
-    from engram.client import Memory
-    from engram.source_trust import reset_book_cache
+    from verimem.client import Memory
+    from verimem.source_trust import reset_book_cache
     reset_book_cache()
     mem = Memory(db_path)
     base = generate_stream(cfg)

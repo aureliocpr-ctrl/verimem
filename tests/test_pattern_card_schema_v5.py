@@ -38,7 +38,7 @@ import pytest
 
 
 def test_fresh_db_has_pattern_card_columns(tmp_path: Path) -> None:
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "semantic.db")
     with sm._connect() as conn:  # noqa: SLF001
@@ -58,7 +58,7 @@ def test_fresh_db_has_pattern_card_columns(tmp_path: Path) -> None:
 
 
 def test_fact_dataclass_accepts_pattern_card_fields() -> None:
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
 
     f = Fact(
         proposition="AM-GM pairing trick on (2p-1)!",
@@ -75,7 +75,7 @@ def test_fact_dataclass_accepts_pattern_card_fields() -> None:
 
 
 def test_store_and_load_round_trips_pattern_card(tmp_path: Path) -> None:
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "semantic.db")
     f = Fact(
@@ -102,7 +102,7 @@ def test_store_and_load_round_trips_pattern_card(tmp_path: Path) -> None:
 
 
 def test_fact_default_pattern_card_fields_empty() -> None:
-    from engram.semantic import Fact
+    from verimem.semantic import Fact
 
     f = Fact(proposition="legacy fact", topic="legacy")
     assert f.trigger_keywords == []
@@ -112,7 +112,7 @@ def test_fact_default_pattern_card_fields_empty() -> None:
 
 
 def test_legacy_fact_loads_with_default_pattern_card(tmp_path: Path) -> None:
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "semantic.db")
     f = Fact(proposition="no pattern card", topic="x")
@@ -174,7 +174,7 @@ def test_migration_v4_to_v5_adds_columns(tmp_path: Path) -> None:
     conn.close()
 
     # Re-open via SemanticMemory — the migration ladder should run v4→v5.
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
 
     sm = SemanticMemory(db_path=db_path)
 

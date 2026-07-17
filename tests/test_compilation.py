@@ -11,15 +11,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from engram.compilation import (
+from verimem.compilation import (
     CompiledMacro,
     MacroStep,
     compile_macro,
     execute_macro,
 )
-from engram.episode import Episode, Trace
-from engram.skill import Skill, SkillLibrary
-from engram.tools import ToolResult, ToolSpec
+from verimem.episode import Episode, Trace
+from verimem.skill import Skill, SkillLibrary
+from verimem.tools import ToolResult, ToolSpec
 
 # --- Test doubles ----------------------------------------------------------
 
@@ -230,9 +230,9 @@ def test_execute_macro_threads_last_observation():
 def test_wake_fast_path_bypasses_llm_when_macro_applies(tmp_data_dir):
     """End-to-end: a high-fitness skill with a compiled macro is applied
     by WakeAgent without ever invoking the LLM."""
-    from engram.memory import EpisodicMemory
-    from engram.tools import default_tools
-    from engram.wake import WakeAgent, WakeConfig, trivial_validator
+    from verimem.memory import EpisodicMemory
+    from verimem.tools import default_tools
+    from verimem.wake import WakeAgent, WakeConfig, trivial_validator
 
     captured: dict[str, Any] = {}
 
@@ -312,7 +312,7 @@ def test_compiled_macro_round_trips_through_skill_storage(tmp_data_dir):
 def test_extract_json_rejects_non_object_payloads():
     """FORGIA pezzo #31 regression: a JSON scalar/list must not be
     returned by _extract_json — downstream `"key" in data` would crash."""
-    from engram.compilation import _extract_json
+    from verimem.compilation import _extract_json
     assert _extract_json("4") is None
     assert _extract_json('"hello"') is None
     assert _extract_json("[1, 2, 3]") is None

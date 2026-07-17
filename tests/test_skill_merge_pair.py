@@ -11,7 +11,7 @@ trial-accumulation correctly.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 class _FakeSkillsStore:
@@ -33,7 +33,7 @@ class _FakeAgent:
 
 
 def test_unknown_skill_returns_error():
-    from engram.skill_merge_pair import merge_skill_pair
+    from verimem.skill_merge_pair import merge_skill_pair
 
     a = _FakeAgent([])
     out = merge_skill_pair(skill_id_a="x", skill_id_b="y", agent=a)
@@ -41,7 +41,7 @@ def test_unknown_skill_returns_error():
 
 
 def test_keeper_a_default_trials_summed():
-    from engram.skill_merge_pair import merge_skill_pair
+    from verimem.skill_merge_pair import merge_skill_pair
 
     skills = [
         Skill(id="a", name="primary", trials=10, successes=8),
@@ -58,7 +58,7 @@ def test_keeper_a_default_trials_summed():
 
 
 def test_secondary_retired_after_merge():
-    from engram.skill_merge_pair import merge_skill_pair
+    from verimem.skill_merge_pair import merge_skill_pair
 
     skills = [
         Skill(id="a", name="a", trials=5, successes=3),
@@ -73,7 +73,7 @@ def test_secondary_retired_after_merge():
 
 
 def test_lineage_includes_secondary():
-    from engram.skill_merge_pair import merge_skill_pair
+    from verimem.skill_merge_pair import merge_skill_pair
 
     skills = [
         Skill(id="a", name="a"),
@@ -88,7 +88,7 @@ def test_lineage_includes_secondary():
 
 
 def test_keeper_b_inverts_direction():
-    from engram.skill_merge_pair import merge_skill_pair
+    from verimem.skill_merge_pair import merge_skill_pair
 
     skills = [
         Skill(id="a", name="a", trials=3, successes=2),
@@ -107,7 +107,7 @@ def test_keeper_b_inverts_direction():
 
 
 def test_dry_run_no_mutation():
-    from engram.skill_merge_pair import merge_skill_pair
+    from verimem.skill_merge_pair import merge_skill_pair
 
     skills = [
         Skill(id="a", name="a", trials=10),
@@ -128,7 +128,7 @@ def test_dry_run_no_mutation():
 
 
 def test_payload_shape_complete():
-    from engram.skill_merge_pair import merge_skill_pair
+    from verimem.skill_merge_pair import merge_skill_pair
 
     a = _FakeAgent([])
     out = merge_skill_pair(skill_id_a="x", skill_id_b="y", agent=a)

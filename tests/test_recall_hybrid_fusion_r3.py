@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_recall_hybrid_does_not_zero_fusion_rescued(tmp_path, monkeypatch):

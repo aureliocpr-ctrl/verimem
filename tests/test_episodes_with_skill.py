@@ -20,7 +20,7 @@ class _FakeEp:
 
 
 def test_empty_returns_empty():
-    from engram.episodes_with_skill import episodes_with_skill
+    from verimem.episodes_with_skill import episodes_with_skill
 
     out = episodes_with_skill(skill_id="x", episodes=[])
     assert out["episodes"] == []
@@ -28,7 +28,7 @@ def test_empty_returns_empty():
 
 
 def test_skill_not_in_any_episode():
-    from engram.episodes_with_skill import episodes_with_skill
+    from verimem.episodes_with_skill import episodes_with_skill
 
     eps = [
         _FakeEp("e1", skills_used=["a"]),
@@ -39,7 +39,7 @@ def test_skill_not_in_any_episode():
 
 
 def test_filter_includes_skill():
-    from engram.episodes_with_skill import episodes_with_skill
+    from verimem.episodes_with_skill import episodes_with_skill
 
     eps = [
         _FakeEp("e1", skills_used=["a", "b"]),
@@ -54,7 +54,7 @@ def test_filter_includes_skill():
 
 
 def test_outcome_filter():
-    from engram.episodes_with_skill import episodes_with_skill
+    from verimem.episodes_with_skill import episodes_with_skill
 
     eps = [
         _FakeEp("e1", outcome="success", skills_used=["x"]),
@@ -72,7 +72,7 @@ def test_outcome_filter():
 
 
 def test_sorted_recent_first():
-    from engram.episodes_with_skill import episodes_with_skill
+    from verimem.episodes_with_skill import episodes_with_skill
 
     eps = [
         _FakeEp("old", skills_used=["x"], created_at=100.0),
@@ -83,7 +83,7 @@ def test_sorted_recent_first():
 
 
 def test_top_k_respected():
-    from engram.episodes_with_skill import episodes_with_skill
+    from verimem.episodes_with_skill import episodes_with_skill
 
     eps = [_FakeEp(f"e{i}", skills_used=["x"]) for i in range(10)]
     out = episodes_with_skill(skill_id="x", episodes=eps, top_k=3)
@@ -91,7 +91,7 @@ def test_top_k_respected():
 
 
 def test_payload_shape_complete():
-    from engram.episodes_with_skill import episodes_with_skill
+    from verimem.episodes_with_skill import episodes_with_skill
 
     out = episodes_with_skill(skill_id="x", episodes=[])
     for k in ("skill_id", "n_total", "episodes",

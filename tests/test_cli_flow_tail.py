@@ -13,8 +13,8 @@ import time
 import pytest
 from typer.testing import CliRunner
 
-from engram import event_jsonl_log
-from engram.flow_tail import render_flow_line
+from verimem import event_jsonl_log
+from verimem.flow_tail import render_flow_line
 
 
 def _rec(name, **payload):
@@ -70,7 +70,7 @@ def test_cli_flow_tail_once_prints_replay(tmp_path, monkeypatch):
     (tmp_path / "events.jsonl").write_text(
         "\n".join(json.dumps(r) for r in lines) + "\n", encoding="utf-8")
 
-    from engram.cli import app
+    from verimem.cli import app
     res = CliRunner().invoke(app, ["flow", "tail", "--once", "--replay", "10"])
     assert res.exit_code == 0, res.output
     assert "ADMITTED" in res.output

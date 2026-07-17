@@ -40,7 +40,7 @@ def _node_supports_ts() -> bool:
 @pytest.mark.skipif(not _node_supports_ts(),
                     reason="node >= 23 non disponibile (SDK TS: type stripping)")
 def test_typescript_sdk_against_live_gateway(tmp_path):
-    from engram.gateway import GatewayKeys, create_app
+    from verimem.gateway import GatewayKeys, create_app
 
     keys = GatewayKeys(tmp_path / "gateway_keys.db")
     api_key = keys.create(tenant_id="sdk-ts", name="contract")

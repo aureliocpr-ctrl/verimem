@@ -29,7 +29,7 @@ from typing import Any
 import networkx as nx
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 # ---------- Fakes mirroring real API ------------------------------------
 

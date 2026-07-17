@@ -19,7 +19,7 @@ from __future__ import annotations
 import time
 import types
 
-from engram.correction_velocity import detect_correction_pattern
+from verimem.correction_velocity import detect_correction_pattern
 
 _DAY = 86400.0
 
@@ -141,7 +141,7 @@ class _FakeAgent:
 
 
 def test_get_briefing_wires_correction_and_marks_summary():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     now = time.time()
     eps = [
         _ep(_SIG, 5, outcome="failure", now=now),
@@ -158,7 +158,7 @@ def test_get_briefing_wires_correction_and_marks_summary():
 
 
 def test_get_briefing_correction_absent_is_safe():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     out = get_briefing(agent=_FakeAgent([]), task_text=None)
     assert "correction" in out
     assert out["correction"]["has_correction"] is False

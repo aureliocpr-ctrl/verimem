@@ -160,11 +160,11 @@ dev = [
 
 [project.scripts]
 # `verimem` = the PUBLIC command (one product, one name — 2026-07-06).
-verimem = "engram.cli:main"
-engram = "engram.cli:main"
+verimem = "verimem.cli:main"
+engram = "verimem.cli:main"
 # Backward-compat alias (deprecated, kept for 3 months for existing user
 # muscle memory and pre-rename scripts).
-hippo = "engram.cli:main"
+hippo = "verimem.cli:main"
 
 [project.urls]
 Homepage = "https://verimem.com"

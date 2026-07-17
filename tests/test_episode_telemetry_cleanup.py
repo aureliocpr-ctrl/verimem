@@ -1,12 +1,12 @@
 """Backlog cleanup for the EPISODE telemetry gate (2026-06-14).
 
-The episode gate (engram.memory._store_episode_telemetry, opt-in) routes only NEW
+The episode gate (verimem.memory._store_episode_telemetry, opt-in) routes only NEW
 cross-LLM call records ([agy-call …]) to ``episode_telemetry``. This is the gemello
 of ``admission_cleanup.cleanup_telemetry`` for the EXISTING episode backlog: it
 routes the call-telemetry episodes already sitting in ``episodes`` out to
 ``episode_telemetry``, reversibly (dry_run default, undo = DB backup).
 
-Decision reuses ``engram._call_telemetry.is_call_telemetry`` (single source of
+Decision reuses ``verimem._call_telemetry.is_call_telemetry`` (single source of
 truth — same predicate the live write-gate uses), so the cleanup and the gate can
 never disagree on what counts as telemetry.
 """
@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from engram.admission_cleanup import cleanup_episode_telemetry
+from verimem.admission_cleanup import cleanup_episode_telemetry
 
 # An episode schema with the embedding BLOB columns the live store carries, to
 # prove they are DROPPED from the archived payload (telemetry is never recalled
@@ -165,7 +165,7 @@ def test_cli_command_is_a_real_entry_point(tmp_path, monkeypatch):
     _seed(epdir / "episodes.db")
     from typer.testing import CliRunner
 
-    from engram.cli import app
+    from verimem.cli import app
 
     res = CliRunner().invoke(app, ["facts", "cleanup-episode-telemetry"])
     assert res.exit_code == 0, res.output

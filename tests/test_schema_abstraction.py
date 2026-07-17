@@ -11,7 +11,7 @@ from __future__ import annotations
 
 
 def test_extract_template_finds_common_pattern():
-    from engram.schema_abstraction import extract_template
+    from verimem.schema_abstraction import extract_template
 
     rules = [
         "Prefer `crtsh` over `nmap` in this context",
@@ -25,7 +25,7 @@ def test_extract_template_finds_common_pattern():
 
 
 def test_extract_template_returns_none_when_no_pattern():
-    from engram.schema_abstraction import extract_template
+    from verimem.schema_abstraction import extract_template
 
     rules = [
         "Use TypeScript strict mode",
@@ -38,7 +38,7 @@ def test_extract_template_returns_none_when_no_pattern():
 
 
 def test_template_with_slots():
-    from engram.schema_abstraction import extract_template
+    from verimem.schema_abstraction import extract_template
 
     rules = [
         "Prefer `crtsh` over `nmap`",
@@ -52,7 +52,7 @@ def test_template_with_slots():
 
 
 def test_payload_includes_instances():
-    from engram.schema_abstraction import extract_template
+    from verimem.schema_abstraction import extract_template
 
     rules = ["Prefer A over B", "Prefer C over D"]
     out = extract_template(rules)
@@ -65,7 +65,7 @@ def test_find_cross_domain_schemas():
     """Multiple skill clusters, each with template > 1 instance."""
     from dataclasses import dataclass
 
-    from engram.schema_abstraction import find_cross_domain_schemas
+    from verimem.schema_abstraction import find_cross_domain_schemas
     @dataclass
     class _Skill:
         id: str
@@ -93,7 +93,7 @@ def test_find_cross_domain_schemas():
 def test_min_instances_threshold():
     from dataclasses import dataclass
 
-    from engram.schema_abstraction import find_cross_domain_schemas
+    from verimem.schema_abstraction import find_cross_domain_schemas
     @dataclass
     class _Skill:
         id: str
@@ -111,7 +111,7 @@ def test_min_instances_threshold():
 
 
 def test_payload_shape():
-    from engram.schema_abstraction import (
+    from verimem.schema_abstraction import (
         extract_template,
         find_cross_domain_schemas,
     )

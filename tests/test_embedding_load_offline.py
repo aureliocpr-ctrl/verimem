@@ -36,7 +36,7 @@ def _install_fake_st(monkeypatch, calls, *, fail_local: bool = False):
 def test_load_model_prefers_local_files_only(monkeypatch):
     calls: list[dict] = []
     _install_fake_st(monkeypatch, calls)
-    from engram import embedding
+    from verimem import embedding
     embedding._load_model()
     assert calls, "SentenceTransformer deve essere costruito"
     assert calls[0].get("local_files_only") is True, (
@@ -55,7 +55,7 @@ def test_load_model_falls_back_to_network_when_not_cached(monkeypatch):
     for _v in ("HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HF_HUB_OFFLINE",
                "TRANSFORMERS_OFFLINE"):
         monkeypatch.delenv(_v, raising=False)
-    from engram import embedding
+    from verimem import embedding
     embedding._load_model()  # online + not cached -> retry WITH network
     assert len(calls) == 2, "deve ritentare il load (cache-only fallito -> con rete)"
     assert calls[0].get("local_files_only") is True

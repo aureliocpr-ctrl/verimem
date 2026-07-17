@@ -27,9 +27,9 @@ from __future__ import annotations
 
 import pytest
 
-from engram import contradiction
-from engram.contradiction import _values_clash, detect_numeric_clashes
-from engram.semantic import Fact
+from verimem import contradiction
+from verimem.contradiction import _values_clash, detect_numeric_clashes
+from verimem.semantic import Fact
 
 
 def test_values_clash_year_range_vs_out_of_range_count() -> None:

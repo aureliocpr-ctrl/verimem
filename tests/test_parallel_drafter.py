@@ -1,6 +1,6 @@
 """Cycle 228 (2026-05-23) — H8c parallel drafter (B4 NUCLEAR catena).
 
-RED marker: ``from engram.parallel_drafter import parallel_draft_communities``
+RED marker: ``from verimem.parallel_drafter import parallel_draft_communities``
 must fail on master.
 
 H8c hypothesis (cross-project bridge — META-PROCESS B4 NUCLEAR step 2):
@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 
 # RED MARKER
-from engram.parallel_drafter import parallel_draft_communities
+from verimem.parallel_drafter import parallel_draft_communities
 
 
 def _cluster_emb(seed: int, noise: float, sample: int) -> bytes:
@@ -118,7 +118,7 @@ class TestParallelDraftCommunities:
     def test_equivalent_to_sequential(self, tmp_path: Path) -> None:
         """Cycle 228 invariant: parallel output must be identical to
         sequential `for c in communities: draft(c)` output."""
-        from engram.skill_drafter import draft_skill_from_community
+        from verimem.skill_drafter import draft_skill_from_community
         db = _build_multi_cluster_db(tmp_path, n_clusters=5)
         communities = [_fake_community(i) for i in range(5)]
 
@@ -139,7 +139,7 @@ class TestParallelDraftCommunities:
         max_workers=4, predict speedup >= 1.5×. If the test FAILS, the
         ThreadPool approach is NOT worth the complexity — revert.
         """
-        from engram.skill_drafter import draft_skill_from_community
+        from verimem.skill_drafter import draft_skill_from_community
         db = _build_multi_cluster_db(tmp_path, n_clusters=20)
         communities = [_fake_community(i) for i in range(20)]
 

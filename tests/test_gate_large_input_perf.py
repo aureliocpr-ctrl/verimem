@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import time
 
-from engram.anti_confab_gate import (
+from verimem.anti_confab_gate import (
     _has_dev_context,
     _has_personal_context,
     _is_historical_completion,

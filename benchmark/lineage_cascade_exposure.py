@@ -7,7 +7,7 @@ narrative successor does not derive its TRUTH from its predecessor. So this modu
 the lineage_to graph for what it actually is: an UPPER BOUND on how many narrative descendants
 a fact has, NOT a count of beliefs that would lose their justification. The true
 justification-debt requires a TYPED logical-derivation edge the write-path does not record
-yet (see engram.justified_memory.fact_to_belief, which after R26 ignores lineage_to and reads
+yet (see verimem.justified_memory.fact_to_belief, which after R26 ignores lineage_to and reads
 only ``derives_from``); until then propagate is correctly dormant (R23).
 
 This reads ``lineage_to`` DIRECTLY (decoupled from fact_to_belief, which now uses the logical
@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections import deque
 from typing import Any
 
-from engram.justified_memory import _attr
+from verimem.justified_memory import _attr
 
 
 def _reverse_graph(facts: list[object]) -> dict[str, set[str]]:

@@ -27,7 +27,7 @@ def test_claude_cli_prompt_keeps_system_param_in_front_with_extra_system_msgs(
     serialised prompt even when the messages list contains additional
     role=system entries.
     """
-    from engram.llm import ClaudeCLILLM
+    from verimem.llm import ClaudeCLILLM
 
     captured: dict[str, str] = {}
 
@@ -104,10 +104,10 @@ def test_mcp_sampling_in_tokens_includes_system_chars(
     import pathlib
     from types import SimpleNamespace
 
-    from engram.llm import MCPSamplingLLM
+    from verimem.llm import MCPSamplingLLM
 
     # Redirect the module's forensic debug-log write to a throwaway dir so
-    # the test stays hermetic and never touches the real ~/.engram.
+    # the test stays hermetic and never touches the real ~/.verimem.
     monkeypatch.setattr(pathlib.Path, "home", lambda: tmp_path)
 
     captured: dict[str, object] = {}

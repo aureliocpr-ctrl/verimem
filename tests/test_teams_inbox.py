@@ -35,7 +35,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.teams.inbox import InboxMessage, InboxWatcher
+from verimem.teams.inbox import InboxMessage, InboxWatcher
 
 
 def _write_inbox(path: Path, msgs: list[dict]) -> None:

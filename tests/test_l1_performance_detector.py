@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 # RED marker: import must succeed only after L1.9 module ships
-from engram.l1_performance_detector import (
+from verimem.l1_performance_detector import (
     PerformanceClaimWarning,
     detect_unsupported_performance_claim,
 )

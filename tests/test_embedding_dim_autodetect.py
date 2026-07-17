@@ -12,8 +12,8 @@ HIPPO_EMBEDDING_DIM or a known-table model is never overridden.
 """
 from __future__ import annotations
 
-import engram.embedding as emb
-from engram.config import Config
+import verimem.embedding as emb
+from verimem.config import Config
 
 
 def _cfg(monkeypatch, model: str, dim_env: str | None):
@@ -55,7 +55,7 @@ def _with_config(dim: int, assumed: bool):
     (conftest autouse-stubs embedding._model, so the adopt hook is unit-tested
     directly on _adopt_true_dim; the loader wiring is one line, verified by the
     live repro that motivated this fix.)"""
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     prev = (CONFIG.embedding_dim, getattr(CONFIG, "embedding_dim_assumed", False))
     object.__setattr__(CONFIG, "embedding_dim", dim)
     object.__setattr__(CONFIG, "embedding_dim_assumed", assumed)

@@ -1,9 +1,9 @@
-"""TDD for engram.epistemic_health — corpus epistemic-health audit (Ph4)."""
+"""TDD for verimem.epistemic_health — corpus epistemic-health audit (Ph4)."""
 from __future__ import annotations
 
 import types
 
-from engram.epistemic_health import FactAudit, audit_corpus, audit_one, health_report
+from verimem.epistemic_health import FactAudit, audit_corpus, audit_one, health_report
 
 
 def _f(fid, prop, source=None):  # noqa: ANN001

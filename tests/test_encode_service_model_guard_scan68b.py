@@ -12,9 +12,9 @@ import socket
 
 import numpy as np
 
-from engram import embedding as e
-from engram import encode_service as svc
-from engram.config import CONFIG
+from verimem import embedding as e
+from verimem import encode_service as svc
+from verimem.config import CONFIG
 
 
 class _FakeConn:

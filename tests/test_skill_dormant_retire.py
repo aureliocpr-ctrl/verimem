@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import time
 
-from engram.skill import Skill, SkillLibrary
+from verimem.skill import Skill, SkillLibrary
 
 DAY = 86400.0
 

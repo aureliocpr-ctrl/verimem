@@ -25,10 +25,10 @@ from pathlib import Path
 
 import numpy as np
 
-from engram import embedding
-from engram import skill as skill_mod
-from engram.config import CONFIG
-from engram.skill import Skill, SkillLibrary
+from verimem import embedding
+from verimem import skill as skill_mod
+from verimem.config import CONFIG
+from verimem.skill import Skill, SkillLibrary
 
 # A small bag of related tasks. We rotate through them to simulate a
 # stream of similar-but-not-identical successes. This is the regime

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.memory import EpisodicMemory
+from verimem.memory import EpisodicMemory
 
 
 def _insert(db, rows):

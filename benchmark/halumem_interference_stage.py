@@ -32,7 +32,7 @@ from pathlib import Path
 
 import numpy as np
 
-from engram import embedding as E
+from verimem import embedding as E
 
 _TRUE_LABELS = ("system", "secondary")
 

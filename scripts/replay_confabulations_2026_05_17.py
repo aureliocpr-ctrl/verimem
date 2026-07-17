@@ -24,7 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from engram.anti_confabulation import detect_unsupported_shipped_claim
+from verimem.anti_confabulation import detect_unsupported_shipped_claim
 
 
 @dataclass(frozen=True)

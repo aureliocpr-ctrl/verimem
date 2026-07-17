@@ -8,7 +8,7 @@ OR another process) forces a rebuild.
 """
 from __future__ import annotations
 
-from engram.entity_kg import Entity, EntityStore
+from verimem.entity_kg import Entity, EntityStore
 
 
 def _mk(es, name):

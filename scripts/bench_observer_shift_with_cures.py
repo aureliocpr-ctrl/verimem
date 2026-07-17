@@ -59,7 +59,7 @@ def _partition_to_sets(p) -> list[set[str]]:
 
 def _stable_partition_run(db_path: Path, seed: int, prior=None):
     """Run stable_partition; returns Partition object."""
-    from engram.stable_partition import stable_partition
+    from verimem.stable_partition import stable_partition
     return stable_partition(db_path, seed=seed, prior_assignment=prior)
 
 

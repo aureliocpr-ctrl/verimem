@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.local_relation import LocalRelationJudge
-from engram.semantic_conflict import Relation, RelationJudge
+from verimem.local_relation import LocalRelationJudge
+from verimem.semantic_conflict import Relation, RelationJudge
 
 
 class StubClassifier:
@@ -61,7 +61,7 @@ def test_default_model_is_the_precise_one():
     # Pre-registered: the default is the high-precision large NLI model, not the base.
     # The reconcile bench (n=60) picked it — false-supersede 0.196→0.054 at equal
     # recall. Changing this default must be a conscious, test-visible decision.
-    from engram.local_relation import DEFAULT_NLI_MODEL
+    from verimem.local_relation import DEFAULT_NLI_MODEL
     assert DEFAULT_NLI_MODEL == "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli"
 
 
@@ -141,7 +141,7 @@ def test_make_classifier_maps_by_id2label(monkeypatch):
     """Two cached NLI models use OPPOSITE label orders (nli-deberta-v3-base:
     0=contradiction; MoritzLaurer: 0=entailment). The factory MUST map via the
     model's own id2label, not positional indices."""
-    import engram.local_relation as LR
+    import verimem.local_relation as LR
 
     class FakeTok:
         def __call__(self, prem, hyp, **kw):

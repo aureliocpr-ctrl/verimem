@@ -22,7 +22,7 @@ import re
 from typing import Any
 
 from benchmark.stats import auroc, bootstrap_ci
-from engram.grounding_gate import fact_grounding_score
+from verimem.grounding_gate import fact_grounding_score
 
 # Rich, multi-fact fictional passages (prior ~ 0; long, with numbers/dates/relations).
 PASSAGES: list[str] = [

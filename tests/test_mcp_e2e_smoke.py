@@ -2,7 +2,7 @@
 
 Existing `tests/test_mcp_server.py` exercises the handlers in-process
 with mocked memory/skills. This file fills the remaining E2E gap: it
-spawns `python -m engram.mcp_server` as a real subprocess, feeds
+spawns `python -m verimem.mcp_server` as a real subprocess, feeds
 hand-crafted JSON-RPC frames through stdin via `subprocess.communicate`,
 and parses every frame the server returns.
 
@@ -15,7 +15,7 @@ sufficient for a smoke verification.
 
 What it verifies (all of it in one round-trip, fast):
 
-  1. SUBPROCESS BOOTS — `python -m engram.mcp_server` starts and
+  1. SUBPROCESS BOOTS — `python -m verimem.mcp_server` starts and
      exits cleanly when stdin closes. No crash on import.
 
   2. STDOUT IS PROTOCOL-CLEAN — every line on stdout parses as JSON.
@@ -93,7 +93,7 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     env["HIPPO_REAP_ORPHANS"] = "0"
 
     proc = subprocess.run(
-        [sys.executable, "-u", "-m", "engram.mcp_server"],
+        [sys.executable, "-u", "-m", "verimem.mcp_server"],
         input=_frames_in(),
         capture_output=True,
         env=env,
@@ -173,7 +173,7 @@ def test_mcp_server_stdout_is_protocol_clean(tmp_path: Path):
     ).encode("utf-8")
 
     proc = subprocess.run(
-        [sys.executable, "-u", "-m", "engram.mcp_server"],
+        [sys.executable, "-u", "-m", "verimem.mcp_server"],
         input=init_only, capture_output=True, env=env, timeout=30,
     )
     stdout = proc.stdout.strip()

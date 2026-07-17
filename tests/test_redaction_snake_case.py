@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.redaction import redact_secrets
+from verimem.redaction import redact_secrets
 
 _LEAK = [
     ("db_password=supersecretvalue123", "supersecretvalue123"),

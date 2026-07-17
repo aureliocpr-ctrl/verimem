@@ -14,9 +14,9 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from engram.contradiction import ContradictionStore
-from engram.semantic import SemanticMemory
-from engram.trust_calibration_eval import (
+from verimem.contradiction import ContradictionStore
+from verimem.semantic import SemanticMemory
+from verimem.trust_calibration_eval import (
     VERDICT_TO_PROB,
     evaluate_calibration,
     make_calibration_dataset,

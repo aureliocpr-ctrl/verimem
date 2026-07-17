@@ -17,7 +17,7 @@ def _r(sim, outcome="success", task="t"):
 
 
 def test_empty_recall_returns_none():
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
 
     out = assess_recall_confidence([])
     assert out["level"] == "none"
@@ -25,7 +25,7 @@ def test_empty_recall_returns_none():
 
 
 def test_high_confidence():
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
 
     # 3 concordant high-sim episodes
     out = assess_recall_confidence([
@@ -37,7 +37,7 @@ def test_high_confidence():
 
 
 def test_medium_confidence():
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
 
     out = assess_recall_confidence([
         _r(0.60, outcome="success"),
@@ -47,7 +47,7 @@ def test_medium_confidence():
 
 
 def test_low_confidence():
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
 
     out = assess_recall_confidence([
         _r(0.35, outcome="success"),
@@ -56,7 +56,7 @@ def test_low_confidence():
 
 
 def test_none_when_sim_too_low():
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
 
     out = assess_recall_confidence([
         _r(0.15, outcome="success"),
@@ -67,7 +67,7 @@ def test_none_when_sim_too_low():
 
 def test_high_requires_outcome_agreement():
     """If top results disagree on outcome, downgrade confidence."""
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
 
     # high sim but outcome split → not 'high'
     out = assess_recall_confidence([
@@ -81,7 +81,7 @@ def test_high_requires_outcome_agreement():
 
 
 def test_fallback_message_when_none():
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
 
     out = assess_recall_confidence([])
     assert "fallback_suggestion" in out
@@ -89,7 +89,7 @@ def test_fallback_message_when_none():
 
 
 def test_payload_keys():
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
     out = assess_recall_confidence([_r(0.5)])
     for k in ("level", "score", "max_similarity", "n_episodes",
               "outcome_agreement", "fallback_suggestion"):
@@ -97,6 +97,6 @@ def test_payload_keys():
 
 
 def test_score_is_normalized_0_1():
-    from engram.metacognition import assess_recall_confidence
+    from verimem.metacognition import assess_recall_confidence
     out = assess_recall_confidence([_r(0.85, outcome="success")])
     assert 0.0 <= out["score"] <= 1.0

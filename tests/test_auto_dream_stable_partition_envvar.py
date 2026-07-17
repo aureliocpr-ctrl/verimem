@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 import pytest
 
-from engram import auto_dream_worker as adw
+from verimem import auto_dream_worker as adw
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (
@@ -201,7 +201,7 @@ def test_env_var_routes_to_detect_emerging_skills_call_site(
     with patch.object(
         adw, "_persist_emergence_drafts", side_effect=fake_persist,
     ), patch(
-        "engram.skill_emergence_detector.detect_emerging_skills",
+        "verimem.skill_emergence_detector.detect_emerging_skills",
         side_effect=fake_detect,
     ):
         env = dict(os.environ)
@@ -262,7 +262,7 @@ def test_env_var_routes_to_2nd_call_site_non_empty_corpus(
     with patch.object(
         adw, "_persist_emergence_drafts", side_effect=fake_persist,
     ), patch(
-        "engram.skill_emergence_detector.detect_emerging_skills",
+        "verimem.skill_emergence_detector.detect_emerging_skills",
         side_effect=fake_detect,
     ):
         env = dict(os.environ)

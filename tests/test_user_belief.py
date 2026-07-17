@@ -12,7 +12,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from engram.semantic import _STATUS_RANK, _VALID_STATUSES, Fact, SemanticMemory
+from verimem.semantic import _STATUS_RANK, _VALID_STATUSES, Fact, SemanticMemory
 
 
 def _mem() -> SemanticMemory:

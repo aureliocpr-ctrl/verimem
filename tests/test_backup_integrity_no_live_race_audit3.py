@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram import backup as bk
-from engram.semantic import Fact, SemanticMemory
+from verimem import backup as bk
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_concurrent_source_write_does_not_delete_good_backup(tmp_path, monkeypatch):

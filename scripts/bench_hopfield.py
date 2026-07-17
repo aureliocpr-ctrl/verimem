@@ -28,10 +28,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram import embedding as emb_mod
-from engram.episode import Episode, Trace
-from engram.hopfield import hopfield_complete
-from engram.memory import EpisodicMemory
+from verimem import embedding as emb_mod
+from verimem.episode import Episode, Trace
+from verimem.hopfield import hopfield_complete
+from verimem.memory import EpisodicMemory
 
 
 def _ep(*, id_: str, task_text: str, final_answer: str = "ok") -> Episode:

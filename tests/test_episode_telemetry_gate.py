@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram._call_telemetry import is_call_telemetry
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem._call_telemetry import is_call_telemetry
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(task_id, text, outcome="success", final="x"):
@@ -33,7 +33,7 @@ def test_is_call_telemetry_detector():
 
 
 def test_gate_on_routes_call_telemetry_to_separate_table(tmp_data_dir, monkeypatch):
-    monkeypatch.setattr("engram.admission_gate.gate_enabled", lambda: True)
+    monkeypatch.setattr("verimem.admission_gate.gate_enabled", lambda: True)
     db = tmp_data_dir / "episodes" / "ep.db"
     m = EpisodicMemory(db)
     # final_answer carries the LLM's response — the most valuable payload; it
@@ -65,7 +65,7 @@ def test_gate_on_routes_call_telemetry_to_separate_table(tmp_data_dir, monkeypat
 
 
 def test_gate_off_keeps_legacy_behaviour(tmp_data_dir, monkeypatch):
-    monkeypatch.setattr("engram.admission_gate.gate_enabled", lambda: False)
+    monkeypatch.setattr("verimem.admission_gate.gate_enabled", lambda: False)
     db = tmp_data_dir / "episodes" / "ep.db"
     m = EpisodicMemory(db)
     tel = _ep("t1", "[agy-call x] prompt=y")
@@ -75,7 +75,7 @@ def test_gate_off_keeps_legacy_behaviour(tmp_data_dir, monkeypatch):
 
 
 def test_real_task_always_stays_in_episodes(tmp_data_dir, monkeypatch):
-    monkeypatch.setattr("engram.admission_gate.gate_enabled", lambda: True)
+    monkeypatch.setattr("verimem.admission_gate.gate_enabled", lambda: True)
     db = tmp_data_dir / "episodes" / "ep.db"
     m = EpisodicMemory(db)
     real = _ep("t1", "implement the semantic correction detector")

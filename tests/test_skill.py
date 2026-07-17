@@ -1,7 +1,7 @@
 """Tests for the skill library: persistence, fitness, lifecycle, lineage, dedup."""
 from __future__ import annotations
 
-from engram.skill import Skill, SkillLibrary
+from verimem.skill import Skill, SkillLibrary
 
 
 def test_store_and_retrieve(tmp_data_dir):

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_production_ready_detector import (
+from verimem.l1_production_ready_detector import (
     ProdReadyClaimWarning,
     detect_unsupported_prod_ready_claim,
 )
@@ -132,7 +132,7 @@ class TestEdgeCases:
 
 class TestGateWire:
     def test_l111_wired_into_gate(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="System production-ready for v1",
             verified_by=[],
@@ -146,7 +146,7 @@ class TestGateWire:
         )
 
     def test_l111_evidence_suppress_in_gate(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Library production-ready",
             verified_by=["coverage:90_percent", "soak:24h_PASS"],

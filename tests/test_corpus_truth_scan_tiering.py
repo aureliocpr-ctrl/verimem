@@ -3,7 +3,7 @@
 Night-2 finding: with only the test-tier excluded, the scan's residual NLI
 conflicts were telemetry near-duplicates (bus/consensus verdicts, dream/*/state,
 metric/event_*) — noise the reconcile judge must not see. The scanner now
-selects facts by tier (single source: engram._telemetry_prefixes.classify_tier)
+selects facts by tier (single source: verimem._telemetry_prefixes.classify_tier)
 and reports the corpus tier composition so every scan documents what it read.
 """
 from __future__ import annotations

@@ -32,14 +32,14 @@ import pytest
 
 @pytest.fixture
 def db_path(tmp_path: Path) -> Path:
-    return tmp_path / "engram.db"
+    return tmp_path / "verimem.db"
 
 
 class TestRecallUsageStoreSchema:
     """Schema creation is idempotent."""
 
     def test_init_creates_table(self, db_path: Path) -> None:
-        from engram.recall_usage import RecallUsageStore
+        from verimem.recall_usage import RecallUsageStore
         _ = RecallUsageStore(db_path)
         # Second call should not raise (idempotent CREATE TABLE).
         _ = RecallUsageStore(db_path)
@@ -47,7 +47,7 @@ class TestRecallUsageStoreSchema:
 
 class TestRecord:
     def test_record_persists_row(self, db_path: Path) -> None:
-        from engram.recall_usage import RecallUsageStore
+        from verimem.recall_usage import RecallUsageStore
         s = RecallUsageStore(db_path)
         s.record(
             query="X memory", hit_fact_id="f-1", used=True,
@@ -61,7 +61,7 @@ class TestRecord:
         assert rows[0].query == "X memory"
 
     def test_multiple_records_same_fact(self, db_path: Path) -> None:
-        from engram.recall_usage import RecallUsageStore
+        from verimem.recall_usage import RecallUsageStore
         s = RecallUsageStore(db_path)
         for i in range(3):
             s.record(
@@ -74,7 +74,7 @@ class TestRecord:
 
 class TestUsageStats:
     def test_zero_when_no_records(self, db_path: Path) -> None:
-        from engram.recall_usage import RecallUsageStore
+        from verimem.recall_usage import RecallUsageStore
         s = RecallUsageStore(db_path)
         stats = s.usage_stats("f-never")
         assert stats["n_recalled"] == 0
@@ -82,7 +82,7 @@ class TestUsageStats:
         assert stats["ratio"] == 0.0
 
     def test_ratio_computation(self, db_path: Path) -> None:
-        from engram.recall_usage import RecallUsageStore
+        from verimem.recall_usage import RecallUsageStore
         s = RecallUsageStore(db_path)
         # 5 recalls, 1 used → ratio 0.2
         for i in range(5):
@@ -98,7 +98,7 @@ class TestUsageStats:
 
 class TestLowUsageFacts:
     def test_low_usage_filter(self, db_path: Path) -> None:
-        from engram.recall_usage import RecallUsageStore
+        from verimem.recall_usage import RecallUsageStore
         s = RecallUsageStore(db_path)
         # f-low: 6 recalls 1 used (ratio 0.17 < 0.2)
         for i in range(6):
@@ -125,7 +125,7 @@ class TestRecordBatch:
     """Convenience helper to record a whole recall set at once."""
 
     def test_record_batch(self, db_path: Path) -> None:
-        from engram.recall_usage import RecallUsageStore
+        from verimem.recall_usage import RecallUsageStore
         s = RecallUsageStore(db_path)
         usage_decisions = [
             ("f-1", True, "matched"),

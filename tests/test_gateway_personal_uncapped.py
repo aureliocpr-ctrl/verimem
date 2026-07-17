@@ -13,9 +13,9 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from engram.client import Memory
-from engram.gateway import GatewayKeys, create_app
-from engram.semantic import SemanticMemory
+from verimem.client import Memory
+from verimem.gateway import GatewayKeys, create_app
+from verimem.semantic import SemanticMemory
 
 
 def _app(tmp_path, monkeypatch) -> TestClient:

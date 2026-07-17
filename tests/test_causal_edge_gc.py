@@ -14,8 +14,8 @@ run it after the undo window, like any other GC.
 """
 from __future__ import annotations
 
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
 
 
 def _seed_chain(mem: EpisodicMemory) -> list[str]:

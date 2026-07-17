@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, fields
 
-from engram.sleep import SleepReport
+from verimem.sleep import SleepReport
 
 
 def test_n_llm_calls_default_zero():

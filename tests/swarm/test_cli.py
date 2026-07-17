@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from engram.swarm.cli import swarm_app
+from verimem.swarm.cli import swarm_app
 
 
 @pytest.fixture
@@ -53,8 +53,8 @@ class TestSwarmRunCommand:
             "    model: haiku\n",
             encoding="utf-8",
         )
-        with patch("engram.swarm.cli.run_swarm") as rs:
-            from engram.swarm.orchestrator import AgentReport, SwarmReport
+        with patch("verimem.swarm.cli.run_swarm") as rs:
+            from verimem.swarm.orchestrator import AgentReport, SwarmReport
             rs.return_value = SwarmReport(
                 run_id="cycle148-cli-test",
                 topic="lab/swarm/cycle148-cli-test",
@@ -85,7 +85,7 @@ class TestSwarmStatus:
         self, runner: CliRunner,
     ) -> None:
         with patch(
-            "engram.swarm.cli.list_swarm_sessions",
+            "verimem.swarm.cli.list_swarm_sessions",
             return_value=["aaaa1111", "bbbb2222"],
         ):
             result = runner.invoke(
@@ -102,7 +102,7 @@ class TestSwarmLogs:
     ) -> None:
         cp = MagicMock(returncode=0, stdout="LOG OUTPUT", stderr="")
         with patch(
-            "engram.swarm.cli.subprocess.run", return_value=cp,
+            "verimem.swarm.cli.subprocess.run", return_value=cp,
         ) as run:
             result = runner.invoke(swarm_app, ["logs", "abc12345"])
         assert result.exit_code == 0
@@ -114,10 +114,10 @@ class TestSwarmLogs:
 class TestSwarmKill:
     def test_kill_stops_each_session(self, runner: CliRunner) -> None:
         with patch(
-            "engram.swarm.cli.list_swarm_sessions",
+            "verimem.swarm.cli.list_swarm_sessions",
             return_value=["x1", "x2"],
         ), patch(
-            "engram.swarm.cli.stop_session", return_value=True,
+            "verimem.swarm.cli.stop_session", return_value=True,
         ) as stop:
             result = runner.invoke(swarm_app, ["kill", "cycle148-cli-test"])
         assert result.exit_code == 0

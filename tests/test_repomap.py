@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.repomap import (
+from verimem.repomap import (
     build_repomap,
     rank_files,
     render_repomap,

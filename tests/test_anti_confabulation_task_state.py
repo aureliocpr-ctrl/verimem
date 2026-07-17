@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.anti_confabulation import (
+from verimem.anti_confabulation import (
     TASK_STATE_PHRASES,
     detect_unsupported_task_state_claim,
 )
@@ -88,7 +88,7 @@ class TestSemanticStoreWiresL17Warning:
     ) -> None:
         import logging
 
-        from engram.semantic import Fact, SemanticMemory
+        from verimem.semantic import Fact, SemanticMemory
 
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         fact = Fact(
@@ -98,7 +98,7 @@ class TestSemanticStoreWiresL17Warning:
             verified_by=["session:proactive_memory"],
             status="model_claim",
         )
-        with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+        with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
             sm.store(fact)
         l17_messages = [
             r.getMessage() for r in caplog.records

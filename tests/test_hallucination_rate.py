@@ -15,12 +15,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram.hallucination_rate import (
+from verimem.hallucination_rate import (
     _RISKY_VERDICTS,
     hallucination_rate_at_k,
     rate_from_verdicts,
 )
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 # ---- core puro: aggregazione deterministica dai verdetti --------------------
 
@@ -98,7 +98,7 @@ async def test_hallucination_rate_mcp_tool(tmp_path, monkeypatch):
     """Raggiungibilita' di produzione (chiude il caller-verification FAIL del
     critic 1dd646b1): la metrica e' esposta come MCP tool
     hippo_hallucination_rate, non e' piu' dead code."""
-    from engram import mcp_server
+    from verimem import mcp_server
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "0")
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     sm.store(Fact(proposition="the deploy region is eu-west-1", topic="t",

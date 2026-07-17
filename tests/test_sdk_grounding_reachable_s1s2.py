@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from engram import Memory
+from verimem import Memory
 
 
 class _FakeJudge:

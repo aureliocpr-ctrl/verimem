@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.narration import (
+from verimem.narration import (
     archive_and_extract_narration,
     extract_atomic_candidates,
     is_session_narration,

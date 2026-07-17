@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_topics_for_query_empty(tmp_path: Path):

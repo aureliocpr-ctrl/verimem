@@ -9,7 +9,7 @@ va riportato come paio a similarity 1.0, in testa alla lista merge, senza LLM.
 """
 from __future__ import annotations
 
-from engram.skill import Skill, SkillLibrary
+from verimem.skill import Skill, SkillLibrary
 
 
 def _mk(name: str, trigger: str) -> Skill:

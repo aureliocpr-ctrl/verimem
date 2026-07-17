@@ -21,7 +21,7 @@ import sqlite3
 import threading
 import time
 
-from engram.semantic import _BUMP_REFRESH_THRESHOLD_S, Fact, SemanticMemory
+from verimem.semantic import _BUMP_REFRESH_THRESHOLD_S, Fact, SemanticMemory
 
 _QUERY = "the recall path ranks facts by cosine"
 

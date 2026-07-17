@@ -1,5 +1,5 @@
 """Audit#2 2026-06-08 C-4: three version strings disagreed —
-engram.__version__ = 0.2.0, pyproject [project].version = 0.3.0 (== git tag
+verimem.__version__ = 0.2.0, pyproject [project].version = 0.3.0 (== git tag
 v0.3.0, the build truth), .claude-plugin/plugin.json = 0.4.0. Worse, the
 plugin's own pip requirement was `hippoagent>=0.4.0`, a version the package
 never produced — so a plugin install would resolve to nothing. Pin all of them
@@ -11,7 +11,7 @@ import json
 import re
 from pathlib import Path
 
-import engram
+import verimem
 
 _ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,8 +32,8 @@ def _vt(s: str) -> tuple[int, ...]:
 
 def test_version_strings_do_not_drift():
     pv = _pyproject_version()
-    assert engram.__version__ == pv, (
-        f"engram.__version__={engram.__version__!r} != pyproject {pv!r}"
+    assert verimem.__version__ == pv, (
+        f"verimem.__version__={verimem.__version__!r} != pyproject {pv!r}"
     )
     manifest = json.loads(
         (_ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")

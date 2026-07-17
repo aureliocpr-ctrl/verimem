@@ -10,7 +10,7 @@ Su Windows ogni chiamata = flash CMD/console window. Triggered da:
 * ``code.py:581`` — shell exec sandboxed;
 * ``tools.py:61`` — agent tool exec.
 
-Fix: helper ``engram._proc_quiet.quiet_popen_kwargs()`` ritorna
+Fix: helper ``verimem._proc_quiet.quiet_popen_kwargs()`` ritorna
 ``{"creationflags": subprocess.CREATE_NO_WINDOW}`` su Windows, ``{}``
 altrove (no-op cross-platform). Applicato a ogni callsite.
 
@@ -78,7 +78,7 @@ class TestQuietPopenKwargsHelper:
     """The helper module itself exports the right kwargs."""
 
     def test_quiet_popen_kwargs_on_windows(self) -> None:
-        from engram._proc_quiet import quiet_popen_kwargs
+        from verimem._proc_quiet import quiet_popen_kwargs
         kw = quiet_popen_kwargs()
         if _IS_WIN:
             assert kw.get("creationflags") == subprocess.CREATE_NO_WINDOW  # type: ignore[attr-defined]
@@ -92,7 +92,7 @@ class TestProvenanceValidatorIsQuiet:
     def test_verify_commit_ref_passes_quiet_flag(
         self, tmp_path: Path, captured_subprocess: list[dict[str, Any]],
     ) -> None:
-        from engram.provenance_validator import _verify_commit_ref
+        from verimem.provenance_validator import _verify_commit_ref
         # Use a tmp_path as a fake repo_root. git rev-parse will fail with
         # "not a git repo" but the subprocess CALL still happens — that's
         # all we need to assert on the kwargs. ``repo_root`` is kw-only.
@@ -118,7 +118,7 @@ class TestIdeGitHelperIsQuiet:
         # it. Easiest: import the module and probe the git helper via
         # its public name if it exists. If not, fall back to scanning
         # the module source for the literal subprocess.run call.
-        import engram.ide as _ide  # noqa: F401 — import side-effects only
+        import verimem.ide as _ide  # noqa: F401 — import side-effects only
         # The literal we patched lives at ide.py:569 and reads
         # ``subprocess.run(["git", *args], ...)``. Force a small git
         # invocation by importing-and-calling the public function whose
@@ -132,7 +132,7 @@ class TestIdeGitHelperIsQuiet:
         # This dynamic test pins one real subprocess.run path if any
         # helper is callable with cwd=tmp_path.
         assert helpers, (
-            "expected at least one git-related helper in engram.ide"
+            "expected at least one git-related helper in verimem.ide"
         )
 
 
@@ -143,7 +143,7 @@ class TestDaemonSpawnHasCreateNoWindow:
     """
 
     def test_detach_flags_include_create_no_window(self) -> None:
-        from engram.daemon_spawn import _DETACH_FLAGS, _IS_WINDOWS
+        from verimem.daemon_spawn import _DETACH_FLAGS, _IS_WINDOWS
         if not _IS_WINDOWS:
             # POSIX: _DETACH_FLAGS is 0 by design (start_new_session
             # is used instead). Nothing to assert here.
@@ -233,6 +233,6 @@ class TestSourceLevelAuditNoBareSubprocess:
         assert not offenders, (
             "cycle 136: every subprocess.{run,Popen,check_*} call in "
             "engram/ must pass creationflags=CREATE_NO_WINDOW on Windows "
-            "(use engram._proc_quiet.quiet_popen_kwargs()). "
+            "(use verimem._proc_quiet.quiet_popen_kwargs()). "
             f"Offending callsites: {offenders!r}"
         )

@@ -31,8 +31,8 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
-from engram.semantic import Fact, SemanticMemory
+from verimem import mcp_server
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -146,7 +146,7 @@ class TestGateBlocksUnknown:
         must unlock unknown tools INDEPENDENTLY from _user_confirmed (the
         two flags signal different decisions)."""
         monkeypatch.setenv("ENGRAM_CAPABILITY_GATE", "enforce")
-        from engram.mcp_server import _capability_gate
+        from verimem.mcp_server import _capability_gate
         # _capability_override=true → unknown tool passes gate.
         ok, msg = _capability_gate(
             "hippo_does_not_exist_xyz",
@@ -164,7 +164,7 @@ class TestGateBlocksUnknown:
         unknown tool — that flag is for known DESTRUCTIVE classifications,
         not for fail-closed registry misses."""
         monkeypatch.setenv("ENGRAM_CAPABILITY_GATE", "enforce")
-        from engram.mcp_server import _capability_gate
+        from verimem.mcp_server import _capability_gate
         ok, msg = _capability_gate(
             "hippo_does_not_exist_xyz",
             {"_user_confirmed": True},
@@ -185,7 +185,7 @@ class TestModeToggle:
     def test_default_is_off(self, monkeypatch: pytest.MonkeyPatch):
         """No env var → gate is OFF (dev productivity)."""
         monkeypatch.delenv("ENGRAM_CAPABILITY_GATE", raising=False)
-        from engram.mcp_server import _capability_gate
+        from verimem.mcp_server import _capability_gate
         # Even a fully unknown + destructive call passes when gate is off.
         ok, msg = _capability_gate("hippo_anything_xyz", {})
         assert ok is True, (
@@ -194,13 +194,13 @@ class TestModeToggle:
 
     def test_off_explicit(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("ENGRAM_CAPABILITY_GATE", "0")
-        from engram.mcp_server import _capability_gate
+        from verimem.mcp_server import _capability_gate
         ok, _ = _capability_gate("hippo_anything_xyz", {})
         assert ok is True
 
     def test_enforce_mode_blocks(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("ENGRAM_CAPABILITY_GATE", "enforce")
-        from engram.mcp_server import _capability_gate
+        from verimem.mcp_server import _capability_gate
         ok, msg = _capability_gate("hippo_unknown_xyz", {})
         assert ok is False
         assert msg is not None
@@ -218,7 +218,7 @@ class TestModeToggle:
         monkeypatch.setattr(
             mcp_server, "_audit_capability_call", _capture, raising=False,
         )
-        from engram.mcp_server import _capability_gate
+        from verimem.mcp_server import _capability_gate
         ok, msg = _capability_gate("hippo_unknown_xyz", {})
         assert ok is True, "warn mode must allow"
         # But the audit row still records a deny decision for analytics.

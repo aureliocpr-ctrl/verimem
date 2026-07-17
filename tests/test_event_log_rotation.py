@@ -6,7 +6,7 @@ ENGRAM_EVENT_LOG_MAX_BYTES (default 5MB), bounding total to ~2x the cap.
 """
 from __future__ import annotations
 
-from engram import event_jsonl_log as ev
+from verimem import event_jsonl_log as ev
 
 
 def test_event_log_rotates_past_cap(tmp_path, monkeypatch):

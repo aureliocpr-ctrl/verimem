@@ -78,7 +78,7 @@ def _toy_P_chain():
 
 
 def test_unknown_start_returns_empty():
-    from engram.successor_repr import forward_plan
+    from verimem.successor_repr import forward_plan
 
     ids, P = _toy_P_chain()
     out = forward_plan("Z", ids, P, depth=2, beam_width=3)
@@ -87,7 +87,7 @@ def test_unknown_start_returns_empty():
 
 def test_depth_zero_returns_singleton():
     """depth=0 means no expansion — just the start, log-prob 0."""
-    from engram.successor_repr import forward_plan
+    from verimem.successor_repr import forward_plan
 
     ids, P = _toy_P_chain()
     out = forward_plan("A", ids, P, depth=0, beam_width=3)
@@ -96,7 +96,7 @@ def test_depth_zero_returns_singleton():
 
 def test_beam_width_respected():
     """At most beam_width paths returned."""
-    from engram.successor_repr import forward_plan
+    from verimem.successor_repr import forward_plan
 
     ids, P = _toy_P_chain()
     out = forward_plan("A", ids, P, depth=2, beam_width=2)
@@ -105,7 +105,7 @@ def test_beam_width_respected():
 
 def test_descending_log_prob():
     """Results sorted from most-likely to least-likely path."""
-    from engram.successor_repr import forward_plan
+    from verimem.successor_repr import forward_plan
 
     ids, P = _toy_P_chain()
     out = forward_plan("A", ids, P, depth=2, beam_width=4)
@@ -117,7 +117,7 @@ def test_descending_log_prob():
 
 def test_probabilities_multiply_in_log_space():
     """log_prob(A→B→C) must equal log P[A,B] + log P[B,C]."""
-    from engram.successor_repr import forward_plan
+    from verimem.successor_repr import forward_plan
 
     ids, P = _toy_P_chain()
     out = forward_plan("A", ids, P, depth=2, beam_width=4)
@@ -132,7 +132,7 @@ def test_probabilities_multiply_in_log_space():
 def test_goal_stops_beam_early():
     """A goal predicate that fires on `B` should yield paths ending
     at B (length 2: [A, B]), not extended further down to C."""
-    from engram.successor_repr import forward_plan
+    from verimem.successor_repr import forward_plan
 
     ids, P = _toy_P_chain()
     out = forward_plan(
@@ -149,7 +149,7 @@ def test_goal_stops_beam_early():
 def test_top_path_is_most_likely():
     """In the toy P, A→B (0.7) → C (1.0) is more likely than
     A→D (0.3) → D (1.0). The top result must be A→B→C."""
-    from engram.successor_repr import forward_plan
+    from verimem.successor_repr import forward_plan
 
     ids, P = _toy_P_chain()
     out = forward_plan("A", ids, P, depth=2, beam_width=3)
@@ -163,7 +163,7 @@ def test_top_path_is_most_likely():
 def test_zero_probability_transitions_excluded():
     """A transition with zero probability must not appear in any
     returned path (log(0) is -inf; we skip such expansions)."""
-    from engram.successor_repr import forward_plan
+    from verimem.successor_repr import forward_plan
 
     ids, P = _toy_P_chain()
     out = forward_plan("A", ids, P, depth=1, beam_width=4)

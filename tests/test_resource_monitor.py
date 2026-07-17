@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.resource_monitor import (
+from verimem.resource_monitor import (
     DEFAULTS,
     ResourceAlert,
     ResourceMonitor,

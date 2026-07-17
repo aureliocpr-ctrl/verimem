@@ -14,7 +14,7 @@ import json
 
 import pytest
 
-from engram.import_conversations import filter_conversations, list_conversations
+from verimem.import_conversations import filter_conversations, list_conversations
 
 _CLAUDE_EXPORT = [
     {"uuid": "aaa", "name": "Verimem gateway design",

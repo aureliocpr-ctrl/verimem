@@ -14,14 +14,14 @@ class _FakeFact:
 
 
 def test_empty():
-    from engram.facts_recent import facts_recent
+    from verimem.facts_recent import facts_recent
 
     out = facts_recent([])
     assert out["facts"] == []
 
 
 def test_sorted_newest_first():
-    from engram.facts_recent import facts_recent
+    from verimem.facts_recent import facts_recent
 
     facts = [
         _FakeFact("old", created_at=100.0),
@@ -34,7 +34,7 @@ def test_sorted_newest_first():
 
 
 def test_top_k():
-    from engram.facts_recent import facts_recent
+    from verimem.facts_recent import facts_recent
 
     facts = [_FakeFact(f"f{i}", created_at=float(i)) for i in range(10)]
     out = facts_recent(facts, top_k=3)
@@ -42,7 +42,7 @@ def test_top_k():
 
 
 def test_payload_shape():
-    from engram.facts_recent import facts_recent
+    from verimem.facts_recent import facts_recent
 
     out = facts_recent([])
     for k in ("facts", "n_total"):

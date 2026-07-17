@@ -1,6 +1,6 @@
 """Cycle 198 (2026-05-23) — betweenness cache tests.
 
-RED marker: ``from engram.betweenness_cache import
+RED marker: ``from verimem.betweenness_cache import
 ensure_highway_cache`` must fail on master.
 """
 from __future__ import annotations
@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.betweenness_cache import ensure_highway_cache
+from verimem.betweenness_cache import ensure_highway_cache
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

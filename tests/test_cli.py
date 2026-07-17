@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from engram.cli import app
+from verimem.cli import app
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def _isolate_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """
     from types import SimpleNamespace
 
-    from engram import config as cfg
+    from verimem import config as cfg
     new = tmp_path / "data"
     (new / "episodes").mkdir(parents=True)
     (new / "skills").mkdir(parents=True)

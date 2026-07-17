@@ -7,7 +7,7 @@ Hermetic: a stub semantic captures the judge; neither judge loads its model (bot
 lazy), so this never touches transformers or claude -p."""
 from __future__ import annotations
 
-from engram.agent import wire_reconcile_judge
+from verimem.agent import wire_reconcile_judge
 
 
 class _Sem:
@@ -20,7 +20,7 @@ class _Sem:
 
 def test_local_value_wires_local_nli_judge(monkeypatch) -> None:
     monkeypatch.setenv("ENGRAM_RECONCILE_NLI", "local")
-    from engram.local_relation import LocalRelationJudge
+    from verimem.local_relation import LocalRelationJudge
     s = _Sem()
     wire_reconcile_judge(s, llm=object())
     assert isinstance(s.judge, LocalRelationJudge)
@@ -28,7 +28,7 @@ def test_local_value_wires_local_nli_judge(monkeypatch) -> None:
 
 def test_truthy_value_wires_llm_judge(monkeypatch) -> None:
     monkeypatch.setenv("ENGRAM_RECONCILE_NLI", "1")
-    from engram.semantic_conflict import LLMRelationJudge
+    from verimem.semantic_conflict import LLMRelationJudge
     s = _Sem()
     wire_reconcile_judge(s, llm=object())
     assert isinstance(s.judge, LLMRelationJudge)

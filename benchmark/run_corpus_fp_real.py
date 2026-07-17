@@ -18,8 +18,8 @@ from pathlib import Path
 
 from benchmark.corpus_fp_bench import noise_or_temporal, run
 from benchmark.qa_runner import LeanClaudeCLILLM
-from engram.semantic import SemanticMemory
-from engram.semantic_conflict import LLMRelationJudge
+from verimem.semantic import SemanticMemory
+from verimem.semantic_conflict import LLMRelationJudge
 
 
 def wilson_ci(k: int, n: int, z: float = 1.96) -> tuple[float, float]:

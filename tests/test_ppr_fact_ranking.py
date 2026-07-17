@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.entity_kg import Entity, EntityStore
+from verimem.entity_kg import Entity, EntityStore
 
 
 @pytest.fixture

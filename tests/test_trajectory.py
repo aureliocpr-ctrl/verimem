@@ -11,7 +11,7 @@ import pytest
 
 
 def test_step_kinds():
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
 
     s = TrajectoryStep(step_idx=0, kind="thought", content="I should check files")
     assert s.kind == "thought"
@@ -19,7 +19,7 @@ def test_step_kinds():
 
 
 def test_step_with_tool():
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
 
     s = TrajectoryStep(
         step_idx=1, kind="action", content="list files",
@@ -31,7 +31,7 @@ def test_step_with_tool():
 
 
 def test_step_validation_kind():
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
 
     # Invalid kind raises
     with pytest.raises(ValueError):
@@ -39,14 +39,14 @@ def test_step_validation_kind():
 
 
 def test_step_validation_step_idx_negative():
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
 
     with pytest.raises(ValueError):
         TrajectoryStep(step_idx=-1, kind="thought", content="x")
 
 
 def test_to_dict_roundtrip():
-    from engram.trajectory import TrajectoryStep, trajectory_from_json, trajectory_to_json
+    from verimem.trajectory import TrajectoryStep, trajectory_from_json, trajectory_to_json
 
     steps = [
         TrajectoryStep(step_idx=0, kind="thought", content="reflect"),
@@ -75,14 +75,14 @@ def test_to_dict_roundtrip():
 
 
 def test_empty_trajectory_serialization():
-    from engram.trajectory import trajectory_from_json, trajectory_to_json
+    from verimem.trajectory import trajectory_from_json, trajectory_to_json
 
     assert trajectory_to_json([]) == "[]"
     assert trajectory_from_json("[]") == []
 
 
 def test_from_json_robust_to_missing_optional():
-    from engram.trajectory import trajectory_from_json
+    from verimem.trajectory import trajectory_from_json
 
     # minimal step (no tool_name, no branch_id)
     j = '[{"step_idx": 0, "kind": "thought", "content": "ok"}]'
@@ -93,7 +93,7 @@ def test_from_json_robust_to_missing_optional():
 
 def test_step_sorting():
     """Steps stored out-of-order should sort by step_idx."""
-    from engram.trajectory import (
+    from verimem.trajectory import (
         TrajectoryStep,
         trajectory_normalize,
     )
@@ -109,7 +109,7 @@ def test_step_sorting():
 
 def test_branch_ids_grouping():
     """Steps with same branch_id form a path."""
-    from engram.trajectory import (
+    from verimem.trajectory import (
         TrajectoryStep,
         trajectory_branches,
     )
@@ -138,7 +138,7 @@ def test_branch_ids_grouping():
 
 
 def test_step_dict_returns_clean_dict():
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
 
     s = TrajectoryStep(step_idx=5, kind="action", content="x")
     d = s.to_dict()

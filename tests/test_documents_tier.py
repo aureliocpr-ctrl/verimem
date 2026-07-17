@@ -14,7 +14,7 @@ Invarianti che questi test bloccano (TDD):
   5. source_id diversi hanno versioning INDIPENDENTE.
   6. ISOLAMENTO: lo store di default e' un DB SEPARATO da CONFIG.semantic_db.
 
-Hermetic: DB temporaneo, zero scrittura su ~/.engram.
+Hermetic: DB temporaneo, zero scrittura su ~/.verimem.
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ import sqlite3
 
 import pytest
 
-from engram.documents import Document, DocumentStore, default_db_path
+from verimem.documents import Document, DocumentStore, default_db_path
 
 
 def test_ingest_new_returns_version_1(tmp_path):
@@ -101,7 +101,7 @@ def test_get_latest_missing_source_returns_none(tmp_path):
 
 
 def test_default_db_is_separate_from_semantic():
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     p = default_db_path()
     assert p != CONFIG.semantic_db, "il tier documents NON deve coincidere col corpus accettato"
     assert "documents" in str(p).lower()
@@ -183,11 +183,11 @@ def test_list_sources_exposes_filename_and_size(tmp_path):
 
 def test_search_substring_case_insensitive(tmp_path):
     ds = DocumentStore(db_path=tmp_path / "d.db")
-    ds.ingest("notes/engram.md", "Il flip embedding e5 ha portato il recall a 0.71")
+    ds.ingest("notes/verimem.md", "Il flip embedding e5 ha portato il recall a 0.71")
     ds.ingest("notes/altro.md", "contenuto senza alcun riscontro")
     hits = ds.search("FLIP Embedding")
     assert len(hits) == 1
-    assert hits[0]["source_id"] == "notes/engram.md"
+    assert hits[0]["source_id"] == "notes/verimem.md"
     assert "flip embedding" in hits[0]["snippet"].lower(), "lo snippet contiene il match"
 
 

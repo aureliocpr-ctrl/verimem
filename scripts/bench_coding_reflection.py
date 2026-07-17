@@ -32,12 +32,12 @@ from pathlib import Path
 # Ensure repo root on sys.path so this can run standalone.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.coding_reflection import (
+from verimem.coding_reflection import (
     capture_coding_error,
     extract_error_signature,
     recall_similar_errors,
 )
-from engram.memory import EpisodicMemory
+from verimem.memory import EpisodicMemory
 
 _ERROR_TEMPLATES: list[tuple[str, str]] = [
     ("TypeError", "unsupported operand type(s) for +: 'str' and 'int'"),

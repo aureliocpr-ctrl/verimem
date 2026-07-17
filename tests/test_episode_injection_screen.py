@@ -11,8 +11,8 @@ Hermetic: tmp DB, embed='defer' (no model), monkeypatched env.
 """
 from __future__ import annotations
 
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
 
 _BANNER_MARK = "ENGRAM untrusted"
 

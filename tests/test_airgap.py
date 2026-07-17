@@ -1,4 +1,4 @@
-"""Air-gap self-verification (engram.airgap.airgap_status).
+"""Air-gap self-verification (verimem.airgap.airgap_status).
 
 For the sovereign / air-gapped enterprise segment: a deployment that must run
 with ZERO network egress (local LLM + local embeddings). This pins the verdict
@@ -7,7 +7,7 @@ no network, no model load.
 """
 from __future__ import annotations
 
-from engram.airgap import airgap_status
+from verimem.airgap import airgap_status
 
 
 def test_ollama_offline_is_air_gapped():

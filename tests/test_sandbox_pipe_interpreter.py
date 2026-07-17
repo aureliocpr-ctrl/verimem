@@ -9,7 +9,7 @@ semicolon/amp. (The deeper product decision "should the sandbox_exec MCP surface
 expose `python -c` at all" is flagged separately; here we close the smuggle hole
 without breaking the legacy read-only allowlist.)
 """
-from engram.sandbox import SandboxedShell
+from verimem.sandbox import SandboxedShell
 
 
 def test_pipe_into_interpreter_is_denied():

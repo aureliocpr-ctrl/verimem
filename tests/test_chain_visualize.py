@@ -7,13 +7,13 @@ from __future__ import annotations
 
 
 def test_empty_returns_empty():
-    from engram.chain_visualize import render_chain
+    from verimem.chain_visualize import render_chain
     out = render_chain([])
     assert out == ""
 
 
 def test_single_step():
-    from engram.chain_visualize import render_chain
+    from verimem.chain_visualize import render_chain
     plan = [{"skill_id": "s1", "role": "matched", "trigger": "do X"}]
     out = render_chain(plan)
     assert "s1" in out
@@ -21,7 +21,7 @@ def test_single_step():
 
 
 def test_multi_step_arrows():
-    from engram.chain_visualize import render_chain
+    from verimem.chain_visualize import render_chain
     plan = [
         {"skill_id": "a", "role": "parent", "trigger": "recon"},
         {"skill_id": "b", "role": "parent", "trigger": "fingerprint"},
@@ -35,7 +35,7 @@ def test_multi_step_arrows():
 
 
 def test_role_markers():
-    from engram.chain_visualize import render_chain
+    from verimem.chain_visualize import render_chain
     plan = [
         {"skill_id": "p", "role": "parent", "trigger": "x"},
         {"skill_id": "m", "role": "matched", "trigger": "y",

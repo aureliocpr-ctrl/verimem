@@ -1,7 +1,7 @@
 """Subscription plans + quotas — the SaaS commercial layer."""
 from __future__ import annotations
 
-from engram.gateway_plans import (
+from verimem.gateway_plans import (
     DEFAULT_PLAN,
     F_SOURCE_TRUST,
     F_SSO,

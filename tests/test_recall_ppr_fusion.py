@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import pytest
 
-from engram.entity_kg import Entity, EntityStore
-from engram.entity_populate import entity_kg_path_for
-from engram.semantic import Fact, SemanticMemory
+from verimem.entity_kg import Entity, EntityStore
+from verimem.entity_populate import entity_kg_path_for
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture(autouse=True)
@@ -75,7 +75,7 @@ def test_recall_end_to_end_fusion_surfaces_gold_cosine_missed(tmp_path, monkeypa
     isolate the fusion signal from the CE-rerank's text scoring."""
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")  # isolate fusion from CE-rerank
-    monkeypatch.setattr("engram.bm25_rank.bm25_fact_ids", lambda *a, **k: [])  # isolate PPR
+    monkeypatch.setattr("verimem.bm25_rank.bm25_fact_ids", lambda *a, **k: [])  # isolate PPR
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
 
     # gold: lexically unrelated to the query → low cosine; entity-linked below.
@@ -112,7 +112,7 @@ def test_recall_fusion_runs_after_rerank_so_ppr_fact_survives(tmp_path, monkeypa
     stubbed to a deterministic identity (CE 'on' but no model load)."""
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
-    monkeypatch.setattr("engram.bm25_rank.bm25_fact_ids", lambda *a, **k: [])  # isolate PPR
+    monkeypatch.setattr("verimem.bm25_rank.bm25_fact_ids", lambda *a, **k: [])  # isolate PPR
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     # CE-rerank ON but deterministic: return the pool unchanged (top-k).
     monkeypatch.setattr(type(sm), "_rerank_stage2", lambda self, q, h, k: h[:k])

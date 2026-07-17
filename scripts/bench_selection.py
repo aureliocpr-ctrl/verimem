@@ -31,8 +31,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.selection import consider_skills
-from engram.skill import Skill
+from verimem.selection import consider_skills
+from verimem.skill import Skill
 
 
 @dataclass

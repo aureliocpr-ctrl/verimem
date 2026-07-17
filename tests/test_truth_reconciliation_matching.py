@@ -5,11 +5,11 @@ end-to-end test the earlier 20/20 measure lacked (it used hand-fed candidates).
 """
 from __future__ import annotations
 
-from engram.contradiction import ContradictionStore
-from engram.entity_kg import Entity, EntityStore
-from engram.entity_populate import entity_kg_path_for
-from engram.semantic import Fact, SemanticMemory
-from engram.truth_reconciliation import (
+from verimem.contradiction import ContradictionStore
+from verimem.entity_kg import Entity, EntityStore
+from verimem.entity_populate import entity_kg_path_for
+from verimem.semantic import Fact, SemanticMemory
+from verimem.truth_reconciliation import (
     find_related_candidates,
     reconcile_against_corpus,
 )
@@ -95,7 +95,7 @@ class _SpyJudge:
         self.calls = 0
 
     def classify(self, a, b):  # noqa: ANN001
-        from engram.semantic_conflict import Relation
+        from verimem.semantic_conflict import Relation
         self.calls += 1
         return Relation.CONTRADICTION
 

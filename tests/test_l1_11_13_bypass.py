@@ -19,11 +19,11 @@ GUILTY:
       ``task:undone_item`` contiene "done".
 
 Hermetic: SOLO run_validation_gate (pura, agent=None, validate="fast" → niente
-L3/DB). MAI il DB reale ~/.engram. NON fixa il sorgente (lo coordina il capo).
+L3/DB). MAI il DB reale ~/.verimem. NON fixa il sorgente (lo coordina il capo).
 """
 from __future__ import annotations
 
-from engram.anti_confab_gate import run_validation_gate
+from verimem.anti_confab_gate import run_validation_gate
 
 
 def _gate(proposition: str, verified_by: list[str]):

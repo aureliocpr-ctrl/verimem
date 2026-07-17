@@ -18,7 +18,7 @@ THIS file guards the WIRING only. Baselines inside each test pin the flag
 explicitly ("0") so no assertion ever depends on the ambient default —
 only the two default_* tests exercise the unset-env behaviour.
 
-The injected scorers below monkeypatch ``engram.semantic._load_reranker`` —
+The injected scorers below monkeypatch ``verimem.semantic._load_reranker`` —
 no real CrossEncoder model is ever loaded in tests.
 """
 from __future__ import annotations
@@ -27,8 +27,8 @@ import math
 
 import pytest
 
-import engram.semantic as semantic_mod
-from engram.semantic import Fact, SemanticMemory
+import verimem.semantic as semantic_mod
+from verimem.semantic import Fact, SemanticMemory
 
 _QUERY = "blue-green deployment on aws"
 

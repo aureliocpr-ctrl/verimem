@@ -13,9 +13,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from engram import embedding
-from engram.config import CONFIG
-from engram.skill import Skill, SkillLibrary
+from verimem import embedding
+from verimem.config import CONFIG
+from verimem.skill import Skill, SkillLibrary
 
 
 def _cosine(u: np.ndarray, v: np.ndarray) -> float:
@@ -39,12 +39,12 @@ def lib(tmp_data_dir):
 def lateral_on(monkeypatch):
     """CONFIG is a frozen dataclass; swap the whole singleton for a copy
     with the lateral-inhibition knobs flipped on. We monkeypatch the
-    binding `engram.skill.CONFIG` (which is what the implementation
+    binding `verimem.skill.CONFIG` (which is what the implementation
     reads), not the source module — replacing the source module's
     attribute would leak into other tests in the same process."""
     from dataclasses import replace
 
-    from engram import skill as skill_mod
+    from verimem import skill as skill_mod
     new = replace(
         CONFIG,
         lateral_inhibition_enabled=True,
@@ -175,7 +175,7 @@ def test_disabled_by_default_does_not_inhibit(lib, monkeypatch):
     # reads.
     from dataclasses import replace
 
-    from engram import skill as skill_mod
+    from verimem import skill as skill_mod
     monkeypatch.setattr(
         skill_mod, "CONFIG",
         replace(CONFIG, lateral_inhibition_enabled=False),

@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 from fastapi import HTTPException
 
-from engram.ide import FileWriteBody, ide_file_write
+from verimem.ide import FileWriteBody, ide_file_write
 
 
 def test_ide_file_write_rejects_oversized_content(tmp_path, monkeypatch):

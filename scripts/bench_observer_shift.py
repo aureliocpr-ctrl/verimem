@@ -215,7 +215,7 @@ def _louvain_partition(
     Imports ``community_detector`` lazily to avoid circular import in
     bench-only usage.
     """
-    from engram.community_detector import _load_graph
+    from verimem.community_detector import _load_graph
     g = _load_graph(db_path, "both")
     if g.number_of_nodes() == 0:
         return []
@@ -244,8 +244,8 @@ def _emerging_skills_set(
     corpora > 1500 facts. Using adaptive ensures the downstream bench
     is comparable to the production Auto-Dream pipeline behaviour.
     """
-    from engram.adaptive_threshold import adaptive_thresholds
-    from engram.skill_emergence_detector import detect_emerging_skills
+    from verimem.adaptive_threshold import adaptive_thresholds
+    from verimem.skill_emergence_detector import detect_emerging_skills
 
     purity, cohesion = adaptive_thresholds(n_facts)
     candidates = detect_emerging_skills(

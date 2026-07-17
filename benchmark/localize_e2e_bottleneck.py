@@ -20,10 +20,10 @@ os.environ["ENGRAM_RECONCILE_MIN_OVERLAP"] = "0.35"
 import numpy as np
 
 from benchmark.qa_runner import LeanClaudeCLILLM
-from engram import embedding
-from engram.agent import wire_reconcile_judge
-from engram.conversation_ingest import ingest_conversation
-from engram.semantic import Fact, SemanticMemory
+from verimem import embedding
+from verimem.agent import wire_reconcile_judge
+from verimem.conversation_ingest import ingest_conversation
+from verimem.semantic import Fact, SemanticMemory
 
 p = os.path.expanduser("~/.cache/halumem/HaluMem-Medium.jsonl")
 u = [json.loads(line) for line in open(p, encoding="utf-8") if line.strip()][0]

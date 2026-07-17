@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.dream import adopt_dream, dream_diff
-from engram.skill import Skill, SkillLibrary
+from verimem.dream import adopt_dream, dream_diff
+from verimem.skill import Skill, SkillLibrary
 
 
 def _artifact(shadow_root: Path) -> None:

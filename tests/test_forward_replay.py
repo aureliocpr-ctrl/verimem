@@ -9,11 +9,11 @@ without a model.
 """
 from __future__ import annotations
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.skill import Skill, SkillLibrary
-from engram.wake import WakeAgent, WakeConfig
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.wake import WakeAgent, WakeConfig
 
 
 class _NullLLM:

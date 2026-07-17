@@ -15,7 +15,7 @@ import pytest
 
 faiss = pytest.importorskip("faiss")
 
-from engram.ann_index import (  # noqa: E402  (importorskip gate above, by design)
+from verimem.ann_index import (  # noqa: E402  (importorskip gate above, by design)
     ANNIndex,
     should_use_ann,
 )

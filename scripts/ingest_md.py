@@ -15,7 +15,7 @@ import sys
 import time
 from pathlib import Path
 
-from engram.documents import DocumentStore
+from verimem.documents import DocumentStore
 
 
 def main(argv: list[str]) -> int:

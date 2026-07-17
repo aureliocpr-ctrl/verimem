@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -63,14 +63,14 @@ class _FakeAgent:
 
 
 def test_returns_string():
-    from engram.metrics_one_liner import metrics_one_liner
+    from verimem.metrics_one_liner import metrics_one_liner
 
     out = metrics_one_liner(agent=_FakeAgent([], [], 0))
     assert isinstance(out, str)
 
 
 def test_includes_episode_count():
-    from engram.metrics_one_liner import metrics_one_liner
+    from verimem.metrics_one_liner import metrics_one_liner
 
     eps = [_FakeEp("success"), _FakeEp("failure"), _FakeEp("success")]
     out = metrics_one_liner(agent=_FakeAgent(eps, [], 0))
@@ -78,7 +78,7 @@ def test_includes_episode_count():
 
 
 def test_includes_success_failure_breakdown():
-    from engram.metrics_one_liner import metrics_one_liner
+    from verimem.metrics_one_liner import metrics_one_liner
 
     eps = [
         _FakeEp("success"), _FakeEp("success"),
@@ -91,7 +91,7 @@ def test_includes_success_failure_breakdown():
 
 
 def test_includes_skills_count():
-    from engram.metrics_one_liner import metrics_one_liner
+    from verimem.metrics_one_liner import metrics_one_liner
 
     skills = [
         Skill(id="a", status="promoted"),
@@ -104,14 +104,14 @@ def test_includes_skills_count():
 
 
 def test_includes_facts_count():
-    from engram.metrics_one_liner import metrics_one_liner
+    from verimem.metrics_one_liner import metrics_one_liner
 
     out = metrics_one_liner(agent=_FakeAgent([], [], 42))
     assert "42" in out
 
 
 def test_includes_tokens_in_window():
-    from engram.metrics_one_liner import metrics_one_liner
+    from verimem.metrics_one_liner import metrics_one_liner
 
     now = time.time()
     eps = [
@@ -126,7 +126,7 @@ def test_includes_tokens_in_window():
 
 
 def test_handles_empty_agent():
-    from engram.metrics_one_liner import metrics_one_liner
+    from verimem.metrics_one_liner import metrics_one_liner
 
     out = metrics_one_liner(agent=_FakeAgent([], [], 0))
     assert "HippoAgent" in out

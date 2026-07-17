@@ -12,8 +12,8 @@ COALESCE; i NON re-embeddati (NULL->_LEGACY=MiniLM != nuovo) verrebbero esclusi
 -> per questo si re-embedda TUTTO l'eligible. Se v9 fosse rotto, recall darebbe 0.
 
 Modello: paraphrase-multilingual-MiniLM-L12-v2 (384d, NO prefisso -> compatibile
-con engram.embedding.encode senza modifiche). Su COPIA del corpus live: ZERO
-scrittura su ~/.engram.
+con verimem.embedding.encode senza modifiche). Su COPIA del corpus live: ZERO
+scrittura su ~/.verimem.
 
 Run:  python scripts/bench_reembed_e2e.py
 """
@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import os
 
-# DEVE precedere l'import di engram.config: CONFIG.embedding_model si fissa a
+# DEVE precedere l'import di verimem.config: CONFIG.embedding_model si fissa a
 # costruzione. Cosi' encode() E model_signature() usano il modello multilingue.
 os.environ["HIPPO_EMBEDDING_MODEL"] = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 os.environ["ENGRAM_RECALL_RERANK"] = "0"  # CE default-ON since 2026-06-10 — e2e re-embed measures the bi-encoder
@@ -37,8 +37,8 @@ from pathlib import Path  # noqa: E402
 
 from bench_recall_quality import LABELED  # stesse 25 query etichettate  # noqa: E402
 
-from engram import embedding  # noqa: E402
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem import embedding  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 
 def main() -> int:

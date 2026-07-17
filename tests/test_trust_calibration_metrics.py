@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.trust_calibration import (
+from verimem.trust_calibration import (
     brier_score,
     expected_calibration_error,
     reliability_table,

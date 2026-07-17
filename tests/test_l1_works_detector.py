@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_works_detector import (
+from verimem.l1_works_detector import (
     WorksClaimWarning,
     detect_unsupported_works_claim,
 )

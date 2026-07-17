@@ -78,7 +78,7 @@ class _FakeSession:
 def test_mcp_sampling_llm_complete_basic() -> None:
     """RED #1: complete() chiama session.create_message via bridge
     e ritorna LLMResponse con text from result."""
-    from engram.llm import MCPSamplingLLM
+    from verimem.llm import MCPSamplingLLM
 
     async def _run() -> None:
         loop = asyncio.get_running_loop()
@@ -115,7 +115,7 @@ def test_mcp_sampling_llm_from_thread_no_deadlock() -> None:
     """RED #2: complete() chiamato da thread separato (simula
     asyncio.to_thread che SleepEngine.cycle usa indirettamente)
     completa senza deadlock entro 5s."""
-    from engram.llm import MCPSamplingLLM
+    from verimem.llm import MCPSamplingLLM
 
     async def _run() -> None:
         loop = asyncio.get_running_loop()
@@ -165,7 +165,7 @@ async def test_hippo_consolidate_hosted_with_sampling_not_refused(
 
     from mcp.types import CallToolRequest, CallToolRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     monkeypatch.setenv("HIPPO_HOSTED", "1")
 
@@ -237,7 +237,7 @@ async def test_hippo_consolidate_hosted_with_sampling_not_refused(
 def test_mcp_sampling_llm_no_tools_support() -> None:
     """RED #4: P0 no tools — supports_tools() ritorna False per
     evitare che SleepEngine prenda il path complete_with_tools."""
-    from engram.llm import MCPSamplingLLM
+    from verimem.llm import MCPSamplingLLM
 
     async def _run() -> None:
         loop = asyncio.get_running_loop()

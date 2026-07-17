@@ -47,7 +47,7 @@ def _partition_jaccard(p1: list[set[str]], p2: list[set[str]]) -> float:
 
 
 def _louvain_partition(db_path: Path, seed: int) -> list[set[str]]:
-    from engram.community_detector import _load_graph
+    from verimem.community_detector import _load_graph
     g = _load_graph(db_path, "both")
     if g.number_of_nodes() == 0:
         return []

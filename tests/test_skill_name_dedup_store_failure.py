@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from types import SimpleNamespace
 
-from engram import skill_name_dedup as mod
+from verimem import skill_name_dedup as mod
 
 
 class _FakeStore:
@@ -50,7 +50,7 @@ def test_store_failure_is_counted_and_logged(caplog):
     store = _FakeStore(skills)
     store.fail_id = "lose1"  # one retirement will raise
 
-    with caplog.at_level(logging.WARNING, logger="engram.skill_name_dedup"):
+    with caplog.at_level(logging.WARNING, logger="verimem.skill_name_dedup"):
         out = mod.dedup_skills_by_name(store, apply=True, max_retire=10)
 
     assert out["applied_failed"] == 1, (

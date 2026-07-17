@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from engram.client import Memory
+from verimem.client import Memory
 
 
 def _epoch(y, m, d):

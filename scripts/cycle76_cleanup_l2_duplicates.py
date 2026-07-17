@@ -40,8 +40,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from engram.find_duplicate_facts import find_duplicate_facts
-from engram.semantic import Fact, SemanticMemory  # noqa: F401  (kept for callers)
+from verimem.find_duplicate_facts import find_duplicate_facts
+from verimem.semantic import Fact, SemanticMemory  # noqa: F401  (kept for callers)
 
 # ---------------------------------------------------------------------------
 # Pure helpers (testable)

@@ -20,7 +20,7 @@ class _Ep:
 
 
 def test_identical_episodes_no_diff():
-    from engram.episode_diff import episode_diff
+    from verimem.episode_diff import episode_diff
 
     a = _Ep("e1", "task X", "success", skills_used=["s1"], tokens_used=100)
     b = _Ep("e2", "task X", "success", skills_used=["s1"], tokens_used=100)
@@ -30,7 +30,7 @@ def test_identical_episodes_no_diff():
 
 
 def test_outcome_diff():
-    from engram.episode_diff import episode_diff
+    from verimem.episode_diff import episode_diff
 
     a = _Ep("a", "task", "success")
     b = _Ep("b", "task", "failure")
@@ -39,7 +39,7 @@ def test_outcome_diff():
 
 
 def test_skills_used_diff():
-    from engram.episode_diff import episode_diff
+    from verimem.episode_diff import episode_diff
 
     a = _Ep("a", "x", "success", skills_used=["s1", "s2"])
     b = _Ep("b", "x", "success", skills_used=["s1", "s3"])
@@ -48,7 +48,7 @@ def test_skills_used_diff():
 
 
 def test_token_diff():
-    from engram.episode_diff import episode_diff
+    from verimem.episode_diff import episode_diff
 
     a = _Ep("a", "x", "success", tokens_used=100)
     b = _Ep("b", "x", "success", tokens_used=500)
@@ -57,7 +57,7 @@ def test_token_diff():
 
 
 def test_payload_keys():
-    from engram.episode_diff import episode_diff
+    from verimem.episode_diff import episode_diff
     a = _Ep("a", "x", "success")
     b = _Ep("b", "y", "failure")
     out = episode_diff(a, b)
@@ -66,7 +66,7 @@ def test_payload_keys():
 
 
 def test_summary_string():
-    from engram.episode_diff import episode_diff
+    from verimem.episode_diff import episode_diff
     a = _Ep("a", "x", "success")
     b = _Ep("b", "y", "failure")
     out = episode_diff(a, b)

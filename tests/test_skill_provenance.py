@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -36,14 +36,14 @@ class _FakeAgent:
 
 
 def test_unknown_skill():
-    from engram.skill_provenance import skill_provenance
+    from verimem.skill_provenance import skill_provenance
 
     out = skill_provenance(skill_id="ZZZ", agent=_FakeAgent([], []))
     assert out["found"] is False
 
 
 def test_empty_provenance():
-    from engram.skill_provenance import skill_provenance
+    from verimem.skill_provenance import skill_provenance
 
     skills = [Skill(id="x", provenance_episodes=[])]
     a = _FakeAgent(skills, [])
@@ -54,7 +54,7 @@ def test_empty_provenance():
 
 
 def test_returns_provenance():
-    from engram.skill_provenance import skill_provenance
+    from verimem.skill_provenance import skill_provenance
 
     eps = [_FakeEp("e1", task_text="task1"),
            _FakeEp("e2", task_text="task2")]
@@ -67,7 +67,7 @@ def test_returns_provenance():
 
 
 def test_separates_missing_provenance():
-    from engram.skill_provenance import skill_provenance
+    from verimem.skill_provenance import skill_provenance
 
     eps = [_FakeEp("e1", task_text="t")]
     skills = [Skill(id="x", provenance_episodes=["e1", "ghost"])]
@@ -77,7 +77,7 @@ def test_separates_missing_provenance():
 
 
 def test_payload_shape():
-    from engram.skill_provenance import skill_provenance
+    from verimem.skill_provenance import skill_provenance
 
     out = skill_provenance(skill_id="x", agent=_FakeAgent([], []))
     for k in ("skill_id", "found", "episodes", "missing",

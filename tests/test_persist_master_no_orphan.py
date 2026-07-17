@@ -12,7 +12,7 @@ import sqlite3
 
 import pytest
 
-from engram import consolidation
+from verimem import consolidation
 
 
 class _FakeMem:

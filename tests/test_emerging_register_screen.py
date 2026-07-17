@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.emerging_skill_register import register_emerging_drafts_as_facts
+from verimem.emerging_skill_register import register_emerging_drafts_as_facts
 
 
 def _mk_db(path) -> None:

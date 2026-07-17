@@ -18,7 +18,8 @@ PAIRS = [
 ]
 
 # --- aggregation (default config) ---
-from engram.client import Memory
+from verimem.client import Memory
+
 mem = Memory(Path(tempfile.mkdtemp()) / "agg.db")
 for t in HELIOS:
     mem.add(t, topic="work/helios")
@@ -31,7 +32,8 @@ ask = mem.ask("how many times did we discuss Project Helios")["count"]
 # --- contradictions (reconcile ON + sim-fallback, the trust config) ---
 os.environ["ENGRAM_RECONCILE_ON_WRITE"] = "1"
 os.environ["ENGRAM_RECONCILE_SIM_FALLBACK"] = "1"
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
+
 sm = SemanticMemory(db_path=Path(tempfile.mkdtemp()) / "con.db")
 for old, new in PAIRS:
     sm.store(Fact(proposition=old, topic="s4", source_episodes=[old[:12]]))

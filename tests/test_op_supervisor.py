@@ -14,7 +14,7 @@ import pytest
 
 
 def _supervisor_with_fast_reset():
-    from engram.op_supervisor import OpSupervisor
+    from verimem.op_supervisor import OpSupervisor
     return OpSupervisor(
         max_failures=3,
         failure_window_sec=30.0,
@@ -120,7 +120,7 @@ def test_escalate_open_circuits_cycle377(monkeypatch) -> None:
       (c) Circuit open >= threshold → escalated, alert msg published
       (d) Already-escalated circuits stay escalable (idempotent)
     """
-    from engram.op_supervisor import OpSupervisor
+    from verimem.op_supervisor import OpSupervisor
 
     sup = OpSupervisor(max_failures=2, reset_window_sec=300.0)
 
@@ -193,7 +193,7 @@ def test_syscall_bridge_supervisor_integration_blocks_after_3_exceptions(
 
     Falsifiable integration contract for cycle 364 + cycle 365 wired.
     """
-    from engram import op_supervisor, syscall_bridge
+    from verimem import op_supervisor, syscall_bridge
     audit = tmp_path / "audit.jsonl"
     monkeypatch.setattr(syscall_bridge, "ENGRAM_AUDIT_LOG", audit)
     monkeypatch.setattr(op_supervisor, "_DEFAULT_SUPERVISOR",

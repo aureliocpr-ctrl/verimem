@@ -25,7 +25,7 @@ import pytest
 
 
 def _make_memory(n_roles=3, atoms=256, d=2048):
-    from engram.resonator_memory import ResonatorMemory
+    from verimem.resonator_memory import ResonatorMemory
     return ResonatorMemory(
         n_roles=n_roles, atoms_per_role=atoms, d=d,
     )
@@ -178,7 +178,7 @@ def test_factorize_convergence_speed() -> None:
 
 def test_persist_roundtrip(tmp_path) -> None:
     """Contract (g): save aggregate + reload + same recall."""
-    from engram.resonator_memory import ResonatorMemory
+    from verimem.resonator_memory import ResonatorMemory
 
     mem = _make_memory(n_roles=3, atoms=128, d=1024)
     facts = [(1, 2, 3), (10, 20, 30), (50, 60, 70)]
@@ -207,7 +207,7 @@ def test_persist_roundtrip(tmp_path) -> None:
 
 def test_text_to_indices_deterministic() -> None:
     """Contract (h): text_to_indices is deterministic."""
-    from engram.resonator_memory import text_to_indices
+    from verimem.resonator_memory import text_to_indices
 
     idx1 = text_to_indices("aurelio is here", n_roles=3, atoms_per_role=256)
     idx2 = text_to_indices("aurelio is here", n_roles=3, atoms_per_role=256)
@@ -250,7 +250,7 @@ def test_cycle390_soft_resonator_lower_residual_than_hard() -> None:
         mem.remember_tuple(t)
     # Hard single (cycle 389 behavior)
     r_hard = mem.recall_tuple(seed=0)
-    from engram.resonator_memory import _residual_norm
+    from verimem.resonator_memory import _residual_norm
     res_hard = _residual_norm(mem.aggregate, r_hard["indices"], mem.codebooks)
     # Soft + multi-restart (cycle 390)
     r_soft = mem.recall_tuple_multi_restart(n_restarts=16)
@@ -307,7 +307,7 @@ def test_cycle393_n_scaling_at_sweet_spot() -> None:
     Falsifiable for this test (fast subset, 2 seeds × N=10):
       mean ≥ 6/10 (60%+) at sweet spot.
     """
-    from engram.resonator_memory import ResonatorMemory
+    from verimem.resonator_memory import ResonatorMemory
 
     correct_total = 0
     N = 10
@@ -351,7 +351,7 @@ def test_cycle392_scaling_D4096_M32_closes_xfail() -> None:
     Falsifiable: con sweet-spot D=4096 M=32, almeno 1 seed su 5 deve
     recuperare ≥2/3 facts.
     """
-    from engram.resonator_memory import ResonatorMemory
+    from verimem.resonator_memory import ResonatorMemory
     best_seed_recovery = 0
     facts_in = [(5, 10, 15), (20, 25, 30), (1, 2, 3)]
     for seed in range(5):

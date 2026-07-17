@@ -49,7 +49,7 @@ def _seed_corpus(db_path: Path, n: int) -> None:
     expects. Random embeddings — quality of recall is NOT the target
     of this perf bench, only the wall-clock cost of the hot path.
     """
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=db_path)
     rng = np.random.default_rng(seed=42)
@@ -100,7 +100,7 @@ class TestSemanticRecallLatency:
         recall@5. Questo bench resta sul cosine perche' misura lo scaling O(1)
         della cache, non il costo additivo (costante) del fusion.
         """
-        from engram.semantic import SemanticMemory
+        from verimem.semantic import SemanticMemory
         monkeypatch.setenv("ENGRAM_PPR_FUSION", "0")  # isola il cosine hot-path
 
         db = tmp_path / "perf.db"
@@ -141,7 +141,7 @@ class TestSemanticRecallLatency:
         We measure p50 at N=500 and N=2000 — assert that 2k is at
         most 3× slower than 500 (sub-linear). Pre-fix it's ~4×.
         """
-        from engram.semantic import SemanticMemory
+        from verimem.semantic import SemanticMemory
 
         # N = 500
         db_small = tmp_path / "perf_small.db"

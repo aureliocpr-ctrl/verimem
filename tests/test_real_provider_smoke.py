@@ -20,10 +20,10 @@ import os
 import pytest
 
 # Trigger HippoAgent's .env discovery so keys in repo-local files are
-# visible to the test (`engram.config` searches the repo-local `.env`).
+# visible to the test (`verimem.config` searches the repo-local `.env`).
 # Without this, `_AVAILABLE` is empty even when the keys are present
 # in the developer's normal env.
-from engram.config import _load_env  # noqa: E402
+from verimem.config import _load_env  # noqa: E402
 
 _load_env()
 
@@ -75,7 +75,7 @@ def test_real_provider_responds(provider, monkeypatch):
                 "HIPPO_MODEL_DREAMER", "HIPPO_MODEL_CRITIC"):
         monkeypatch.delenv(var, raising=False)
     # Force the provider to refresh from env, ignoring any leftover cache.
-    from engram.llm import LLMError, get_llm
+    from verimem.llm import LLMError, get_llm
     try:
         llm = get_llm(use_mock=False)
     except LLMError as exc:

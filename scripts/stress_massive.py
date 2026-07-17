@@ -41,7 +41,7 @@ class SynFact:
 
 
 def gen_corpus(n_eps: int = 5000, n_skills: int = 1000, n_facts: int = 2000):
-    from engram.skill import Skill
+    from verimem.skill import Skill
 
     now = time.time()
 
@@ -141,16 +141,16 @@ def main():
     results: list[dict[str, Any]] = []
 
     # --- skills modules (pure lists) ---
-    from engram.skill_lineage_full import skill_lineage_full
-    from engram.skill_recent import skills_recent
-    from engram.skill_usage_decay import usage_decay
-    from engram.skills_aggregate_stats import aggregate_stats
-    from engram.skills_orphan import find_orphan_skills
-    from engram.skills_search_by_predicate import skills_with_predicate
-    from engram.skills_top_failing import top_failing_skills
-    from engram.skills_top_used import top_used_skills
-    from engram.skills_topology import skills_topology
-    from engram.skills_untested import find_untested_skills
+    from verimem.skill_lineage_full import skill_lineage_full
+    from verimem.skill_recent import skills_recent
+    from verimem.skill_usage_decay import usage_decay
+    from verimem.skills_aggregate_stats import aggregate_stats
+    from verimem.skills_orphan import find_orphan_skills
+    from verimem.skills_search_by_predicate import skills_with_predicate
+    from verimem.skills_top_failing import top_failing_skills
+    from verimem.skills_top_used import top_used_skills
+    from verimem.skills_topology import skills_topology
+    from verimem.skills_untested import find_untested_skills
 
     results.append(bench("skills_topology", lambda: skills_topology(skills)))
     results.append(bench("find_orphan_skills", lambda: find_orphan_skills(skills)))
@@ -178,12 +178,12 @@ def main():
     ))
 
     # --- episodes modules (pure lists) ---
-    from engram.episode_batch_get import episode_batch_get
-    from engram.episode_classify import classify_episodes
-    from engram.episode_recent_failures import recent_failures
-    from engram.episode_summary import summarize_episodes
-    from engram.episodes_with_skill import episodes_with_skill
-    from engram.outcome_predict import predict_outcome
+    from verimem.episode_batch_get import episode_batch_get
+    from verimem.episode_classify import classify_episodes
+    from verimem.episode_recent_failures import recent_failures
+    from verimem.episode_summary import summarize_episodes
+    from verimem.episodes_with_skill import episodes_with_skill
+    from verimem.outcome_predict import predict_outcome
 
     results.append(bench("recent_failures", lambda: recent_failures(eps)))
     results.append(bench("classify_episodes[200]", lambda: classify_episodes(eps[:200])))
@@ -215,10 +215,10 @@ def main():
     ))
 
     # --- facts modules (pure lists) ---
-    from engram.facts_aggregate_overall import aggregate_facts_overall
-    from engram.facts_by_confidence import facts_by_confidence
-    from engram.facts_recent import facts_recent
-    from engram.facts_topic_merge import merge_facts_by_topic
+    from verimem.facts_aggregate_overall import aggregate_facts_overall
+    from verimem.facts_by_confidence import facts_by_confidence
+    from verimem.facts_recent import facts_recent
+    from verimem.facts_topic_merge import merge_facts_by_topic
 
     results.append(bench("aggregate_facts_overall", lambda: aggregate_facts_overall(facts)))
     results.append(bench(

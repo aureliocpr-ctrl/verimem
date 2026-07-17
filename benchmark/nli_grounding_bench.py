@@ -22,11 +22,11 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from engram.coherence_check import check_against_siblings
-from engram.contradiction import _cosine
-from engram.semantic import Fact
-from engram.semantic_conflict import Relation
-from engram.truth_reconciliation import looks_like_conflict
+from verimem.coherence_check import check_against_siblings
+from verimem.contradiction import _cosine
+from verimem.semantic import Fact
+from verimem.semantic_conflict import Relation
+from verimem.truth_reconciliation import looks_like_conflict
 
 # SNLI integer label -> our Relation
 _SNLI = {0: Relation.ENTAILMENT, 1: Relation.NEUTRAL, 2: Relation.CONTRADICTION}
@@ -140,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.semantic_conflict import LLMRelationJudge
+    from verimem.semantic_conflict import LLMRelationJudge
 
     judge = LLMRelationJudge(LeanClaudeCLILLM(model=args.model, timeout_s=60))
     res = run(judge, per_class=args.per_class, seed=args.seed,

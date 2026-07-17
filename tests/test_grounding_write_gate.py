@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import types
 
-from engram.anti_confab_gate import run_validation_gate
+from verimem.anti_confab_gate import run_validation_gate
 
 PROP = "Paris is the capital of France."
 SRC = "France is a country in Europe; its capital city is Paris."

@@ -16,14 +16,14 @@ class _Skill:
 
 
 def test_empty_returns_zero():
-    from engram.skill_lineage_metrics import compute_lineage_metrics
+    from verimem.skill_lineage_metrics import compute_lineage_metrics
     out = compute_lineage_metrics([])
     assert out["max_depth"] == 0
     assert out["n_roots"] == 0
 
 
 def test_single_root():
-    from engram.skill_lineage_metrics import compute_lineage_metrics
+    from verimem.skill_lineage_metrics import compute_lineage_metrics
     skills = [_Skill("root")]
     out = compute_lineage_metrics(skills)
     assert out["n_roots"] == 1
@@ -31,7 +31,7 @@ def test_single_root():
 
 
 def test_depth_increments_with_chain():
-    from engram.skill_lineage_metrics import compute_lineage_metrics
+    from verimem.skill_lineage_metrics import compute_lineage_metrics
     skills = [
         _Skill("a"),
         _Skill("b", parent_skills=["a"]),
@@ -42,7 +42,7 @@ def test_depth_increments_with_chain():
 
 
 def test_fanout_per_node():
-    from engram.skill_lineage_metrics import compute_lineage_metrics
+    from verimem.skill_lineage_metrics import compute_lineage_metrics
     skills = [
         _Skill("root"),
         _Skill("c1", parent_skills=["root"]),
@@ -55,7 +55,7 @@ def test_fanout_per_node():
 
 
 def test_n_leaves():
-    from engram.skill_lineage_metrics import compute_lineage_metrics
+    from verimem.skill_lineage_metrics import compute_lineage_metrics
     skills = [
         _Skill("a"),
         _Skill("b", parent_skills=["a"]),
@@ -66,7 +66,7 @@ def test_n_leaves():
 
 
 def test_payload_keys():
-    from engram.skill_lineage_metrics import compute_lineage_metrics
+    from verimem.skill_lineage_metrics import compute_lineage_metrics
     out = compute_lineage_metrics([])
     for k in ("max_depth", "n_roots", "n_leaves", "max_fanout",
               "avg_fanout", "n_total"):

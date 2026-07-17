@@ -1,6 +1,6 @@
 """TDD — 3 bug di INTEGRITA MEMORIA in engram/semantic.py trovati dallo scan 68-Opus (2026-06-02),
 verificati a mano da NONNA leggendo il codice. Tutti i test sono HERMETIC (temp DB), zero
-side-effect sul DB reale ~/.engram.
+side-effect sul DB reale ~/.verimem.
 
 BUG #1 (semantic.py:695-711) store() usa INSERT OR REPLACE con 16 colonne -> azzera
     superseded_by/at/reason (non listate) su re-store dello stesso id -> fatti soppressi resuscitano.
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_store_does_not_wipe_supersession(tmp_path):

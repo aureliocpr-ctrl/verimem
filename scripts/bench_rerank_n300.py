@@ -22,8 +22,8 @@ from bench_recall_self import (  # noqa: E402
     _sample_facts,
 )
 
-from engram.cross_encoder_rerank import rerank_candidates  # noqa: E402
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem.cross_encoder_rerank import rerank_candidates  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 dst = _copy_live_db()
 sm = SemanticMemory(db_path=dst)

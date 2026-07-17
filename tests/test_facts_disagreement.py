@@ -20,13 +20,13 @@ class _Fact:
 
 
 def test_empty_returns_no_disagreement():
-    from engram.facts_disagreement import find_disagreements
+    from verimem.facts_disagreement import find_disagreements
     out = find_disagreements([])
     assert out["pairs"] == []
 
 
 def test_negation_pair_flagged():
-    from engram.facts_disagreement import find_disagreements
+    from verimem.facts_disagreement import find_disagreements
     facts = [
         _Fact("f1", "WordPress 5.8 is vulnerable to CVE-X"),
         _Fact("f2", "WordPress 5.8 is not vulnerable to CVE-X anymore"),
@@ -36,7 +36,7 @@ def test_negation_pair_flagged():
 
 
 def test_no_negation_no_pair():
-    from engram.facts_disagreement import find_disagreements
+    from verimem.facts_disagreement import find_disagreements
     facts = [
         _Fact("f1", "WordPress 5.8 vulnerable"),
         _Fact("f2", "Linux kernel update available"),
@@ -46,7 +46,7 @@ def test_no_negation_no_pair():
 
 
 def test_patched_marker_recognized():
-    from engram.facts_disagreement import find_disagreements
+    from verimem.facts_disagreement import find_disagreements
     facts = [
         _Fact("f1", "WordPress 5.8 vulnerable to CVE-X"),
         _Fact("f2", "WordPress 5.8 patched against CVE-X"),
@@ -57,14 +57,14 @@ def test_patched_marker_recognized():
 
 
 def test_payload_shape():
-    from engram.facts_disagreement import find_disagreements
+    from verimem.facts_disagreement import find_disagreements
     out = find_disagreements([])
     for k in ("pairs", "n_facts_scanned", "n_pairs"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.facts_disagreement import find_disagreements
+    from verimem.facts_disagreement import find_disagreements
     facts = [
         _Fact("f1", "X is true"),
         _Fact("f2", "X is not true"),

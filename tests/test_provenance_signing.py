@@ -10,13 +10,13 @@ from __future__ import annotations
 
 import pytest
 
-from engram.provenance_signing import (
+from verimem.provenance_signing import (
     audit_store,
     sign_ref,
     verify_fact_refs,
     verify_ref,
 )
-from engram.source_trust import canonical_source
+from verimem.source_trust import canonical_source
 
 KEY = "test-key-do-not-ship"
 
@@ -58,7 +58,7 @@ def test_audit_store_counts_and_names_offenders(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
-    from engram.client import Memory
+    from verimem.client import Memory
     m = Memory(tmp_path / "s.db")
     good = m.add("Rex is a labrador.", topic="pets",
                  verified_by=[sign_ref("source-doc:alice:t1",

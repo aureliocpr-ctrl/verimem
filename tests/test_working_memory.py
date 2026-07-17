@@ -8,7 +8,7 @@ list fits budget.
 """
 from __future__ import annotations
 
-from engram.working_memory import (
+from verimem.working_memory import (
     estimate_size,
     native_tool_is_candidate,
     native_tool_replace,

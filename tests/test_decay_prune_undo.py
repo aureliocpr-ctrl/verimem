@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import time
 
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
 
 
 def test_decay_prune_is_reversible_via_undo_log(tmp_path):
@@ -37,7 +37,7 @@ def test_decay_prune_is_reversible_via_undo_log(tmp_path):
 def test_undo_log_is_bounded(tmp_path, monkeypatch):
     # The undo trail must not grow without bound (it would defeat decay's
     # purpose of bounding episodes.db). Cap is enforced on write.
-    import engram.memory as memmod
+    import verimem.memory as memmod
     monkeypatch.setattr(memmod, "_EPISODES_UNDO_CAP", 3)
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     ancient = time.time() - 10**9

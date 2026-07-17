@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from engram.gateway import GatewayKeys, create_app
+from verimem.gateway import GatewayKeys, create_app
 
 _EXPECTED = {
     "x-content-type-options": "nosniff",
@@ -105,7 +105,7 @@ def test_middleware_does_not_override_a_stricter_app_header(tmp_path):
     must not clobber it (future-proofs a route that wants a stricter CSP)."""
     from starlette.responses import PlainTextResponse
 
-    from engram import gateway as gw
+    from verimem import gateway as gw
     app = gw.create_app(data_dir=tmp_path)
 
     @app.get("/_probe_strict")

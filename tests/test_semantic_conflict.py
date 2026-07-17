@@ -5,9 +5,9 @@ are both injected, so no embeddings / no claude -p here.
 """
 from __future__ import annotations
 
-from engram.coherence_check import CoherenceWarning
-from engram.semantic import Fact
-from engram.semantic_conflict import (
+from verimem.coherence_check import CoherenceWarning
+from verimem.semantic import Fact
+from verimem.semantic_conflict import (
     Relation,
     build_nli_prompt,
     detect_semantic_conflicts,
@@ -116,7 +116,7 @@ def test_bench_shape_and_neutral_judge_flags_nothing() -> None:
     # the bench harness runs with real cosine + an injected judge; a NEUTRAL
     # judge must produce zero semantic conflicts (no claude -p touched).
     from benchmark.semantic_conflict_bench import run
-    from engram.semantic_conflict import FixedRelationJudge
+    from verimem.semantic_conflict import FixedRelationJudge
 
     res = run(FixedRelationJudge(Relation.NEUTRAL))
     assert set(res["per_case"]) == {"A", "B", "C", "D", "E"}

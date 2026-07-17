@@ -22,13 +22,13 @@ class _Skill:
 
 
 def test_empty_returns_no_review():
-    from engram.skill_promote_review import review_promotions
+    from verimem.skill_promote_review import review_promotions
     out = review_promotions([])
     assert out["reviews"] == []
 
 
 def test_promote_candidate_high_fitness():
-    from engram.skill_promote_review import review_promotions
+    from verimem.skill_promote_review import review_promotions
     skills = [_Skill("c1", "candidate", trials=20, successes=18,
                      last_used_at=time.time())]
     out = review_promotions(skills, min_trials=10, fitness_threshold=0.7)
@@ -37,7 +37,7 @@ def test_promote_candidate_high_fitness():
 
 
 def test_keep_candidate_low_fitness():
-    from engram.skill_promote_review import review_promotions
+    from verimem.skill_promote_review import review_promotions
     skills = [_Skill("c1", "candidate", trials=20, successes=10)]
     out = review_promotions(skills, fitness_threshold=0.7)
     rev = [r for r in out["reviews"] if r["skill_id"] == "c1"]
@@ -46,7 +46,7 @@ def test_keep_candidate_low_fitness():
 
 
 def test_retire_stale_low_fitness():
-    from engram.skill_promote_review import review_promotions
+    from verimem.skill_promote_review import review_promotions
     now = time.time()
     skills = [_Skill("old", "candidate", trials=10, successes=2,
                      last_used_at=now - 86400 * 365)]
@@ -58,7 +58,7 @@ def test_retire_stale_low_fitness():
 
 
 def test_keep_promoted_high_fitness():
-    from engram.skill_promote_review import review_promotions
+    from verimem.skill_promote_review import review_promotions
     skills = [_Skill("p1", "promoted", trials=20, successes=18,
                      last_used_at=time.time())]
     out = review_promotions(skills, fitness_threshold=0.7)
@@ -68,14 +68,14 @@ def test_keep_promoted_high_fitness():
 
 
 def test_payload_shape():
-    from engram.skill_promote_review import review_promotions
+    from verimem.skill_promote_review import review_promotions
     out = review_promotions([])
     for k in ("reviews", "n_skills_scanned", "summary"):
         assert k in out
 
 
 def test_summary_counts():
-    from engram.skill_promote_review import review_promotions
+    from verimem.skill_promote_review import review_promotions
     now = time.time()
     skills = [
         _Skill("p1", "candidate", trials=20, successes=18, last_used_at=now),

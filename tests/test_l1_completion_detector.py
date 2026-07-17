@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_completion_detector import (
+from verimem.l1_completion_detector import (
     CompletionClaimWarning,
     detect_unsupported_completion_claim,
 )
@@ -134,7 +134,7 @@ class TestEdgeCases:
 
 class TestGateWire:
     def test_l113_wired(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Feature complete and ready",
             verified_by=[],
@@ -146,7 +146,7 @@ class TestGateWire:
         assert "L1.13" in layers, f"L1.13 should fire, got {layers!r}"
 
     def test_l113_evidence_suppress(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Task done on JIRA-42",
             verified_by=["task:JIRA-42_closed", "pr:567_merged"],

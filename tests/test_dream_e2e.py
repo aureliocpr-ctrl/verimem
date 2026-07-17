@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.memory import Episode, EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def live_corpus(tmp_path):
 def test_e2e_full_pipeline_mock_llm(live_corpus, tmp_path):
     """Full sweep: propose → list_pending → submit (mock LLM output) → status →
     diff → adopt. Verifica che live abbia le skill nuove a fine pipeline."""
-    from engram.dream import (
+    from verimem.dream import (
         adopt_dream,
         dream_diff,
         dream_list_pending,
@@ -143,7 +143,7 @@ def test_e2e_full_pipeline_mock_llm(live_corpus, tmp_path):
 def test_e2e_pipeline_does_not_leak_anthropic_key(live_corpus, tmp_path, monkeypatch):
     """Crucial invariant: l'intera pipeline E2E NON deve mai invocare get_llm
     (zero ANTHROPIC_API_KEY usage, subscription-first guarantee)."""
-    from engram import llm as llm_module
+    from verimem import llm as llm_module
     calls = {"n": 0}
     orig = llm_module.get_llm
     def boom(*a, **kw):
@@ -151,7 +151,7 @@ def test_e2e_pipeline_does_not_leak_anthropic_key(live_corpus, tmp_path, monkeyp
         return orig(*a, **kw)
     monkeypatch.setattr(llm_module, "get_llm", boom)
 
-    from engram.dream import (
+    from verimem.dream import (
         adopt_dream,
         dream_diff,
         dream_list_pending,
@@ -190,7 +190,7 @@ def test_e2e_pipeline_preserves_live_until_adopt(live_corpus, tmp_path):
     live invariato (hash check su skills_index.db PRE-adopt vs INITIAL)."""
     import hashlib
 
-    from engram.dream import (
+    from verimem.dream import (
         dream_diff,
         dream_list_pending,
         dream_status,

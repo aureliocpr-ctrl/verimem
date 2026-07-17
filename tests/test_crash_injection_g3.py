@@ -23,12 +23,12 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 _WORKER = r"""
 import sys, time
 from pathlib import Path
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 db = Path(sys.argv[1])
 mem = SemanticMemory(db_path=db)
@@ -105,7 +105,7 @@ def test_store_reopens_and_accepts_writes_after_kill(tmp_path) -> None:
 def test_journal_entry_survives_worker_kill_and_replays_on_boot(tmp_path) -> None:
     """Deferred-path crash: the journal entry is written, the process dies
     before the background store lands — the next boot must replay it."""
-    import engram.semantic as semantic_mod
+    import verimem.semantic as semantic_mod
 
     db = tmp_path / "semantic" / "semantic.db"
     db.parent.mkdir(parents=True)

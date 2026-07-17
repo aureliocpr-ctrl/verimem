@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -65,14 +65,14 @@ class TestCoherenceCheckPureFunction:
     """Pure check: takes a fact + sibling list, returns warnings."""
 
     def test_no_siblings_no_warning(self) -> None:
-        from engram.coherence_check import check_against_siblings
+        from verimem.coherence_check import check_against_siblings
         f = Fact(id="x", proposition="X uses 5MB", topic="t",
                  confidence=0.9)
         warnings = check_against_siblings(f, siblings=[])
         assert warnings == []
 
     def test_exact_duplicate_jaccard_flagged(self) -> None:
-        from engram.coherence_check import check_against_siblings
+        from verimem.coherence_check import check_against_siblings
         f = Fact(id="new", proposition="X uses 5MB of memory",
                  topic="t", confidence=0.9)
         sib = Fact(id="old",
@@ -85,7 +85,7 @@ class TestCoherenceCheckPureFunction:
         assert w.other_fact_id == "old"
 
     def test_high_jaccard_flagged(self) -> None:
-        from engram.coherence_check import check_against_siblings
+        from verimem.coherence_check import check_against_siblings
         # 80% overlap should still be near_duplicate (threshold 0.7).
         f = Fact(id="new",
                  proposition="The cache uses 5MB of memory total",
@@ -97,7 +97,7 @@ class TestCoherenceCheckPureFunction:
         assert any(w.kind == "near_duplicate" for w in warnings)
 
     def test_unrelated_propositions_no_warning(self) -> None:
-        from engram.coherence_check import check_against_siblings
+        from verimem.coherence_check import check_against_siblings
         f = Fact(id="new", proposition="Build pipeline uses GitHub Actions",
                  topic="t", confidence=0.9)
         sib = Fact(id="old", proposition="Cache uses 5MB of memory",
@@ -106,7 +106,7 @@ class TestCoherenceCheckPureFunction:
         assert warnings == []
 
     def test_numeric_clash_flagged(self) -> None:
-        from engram.coherence_check import check_against_siblings
+        from verimem.coherence_check import check_against_siblings
         f = Fact(id="new", proposition="Cache uses 50MB of memory",
                  topic="t", confidence=0.9)
         sib = Fact(id="old", proposition="Cache uses 5MB of memory",
@@ -117,7 +117,7 @@ class TestCoherenceCheckPureFunction:
         assert "numeric_clash" in kinds
 
     def test_boolean_clash_flagged(self) -> None:
-        from engram.coherence_check import check_against_siblings
+        from verimem.coherence_check import check_against_siblings
         f = Fact(id="new",
                  proposition="Module X is not deprecated in v0.3.0",
                  topic="t", confidence=0.9)
@@ -166,7 +166,7 @@ class TestScanTopicLocally:
     """Helper that fetches same-topic siblings, then runs the check."""
 
     def test_scan_topic_after_store(self, sm: SemanticMemory) -> None:
-        from engram.coherence_check import scan_topic_for_warnings
+        from verimem.coherence_check import scan_topic_for_warnings
         # Use longer, lexically-overlapping propositions so the conftest
         # deterministic embedding stub produces high cosine similarity
         # (>0.75) and the numeric_clash detector fires. Real production
@@ -193,7 +193,7 @@ class TestScanTopicLocally:
     def test_scan_topic_filters_by_topic(self, sm: SemanticMemory) -> None:
         """A fact under topic A with same proposition as one under topic B
         must NOT be flagged — coherence is scoped to topic."""
-        from engram.coherence_check import scan_topic_for_warnings
+        from verimem.coherence_check import scan_topic_for_warnings
         _store(sm, "X uses 5MB", "topic/a")
         f2 = Fact(
             id="f-cross", proposition="X uses 50MB",
@@ -207,7 +207,7 @@ class TestScanTopicLocally:
 
     def test_scan_excludes_self(self, sm: SemanticMemory) -> None:
         """The newly-stored fact must NOT be compared against itself."""
-        from engram.coherence_check import scan_topic_for_warnings
+        from verimem.coherence_check import scan_topic_for_warnings
         f = Fact(
             id="f-self", proposition="solo on this topic",
             topic="topic/solo", confidence=0.9,
@@ -224,7 +224,7 @@ class TestNoMutation:
     def test_stored_fact_unchanged_after_check(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.coherence_check import scan_topic_for_warnings
+        from verimem.coherence_check import scan_topic_for_warnings
         f1 = Fact(
             id="f-orig", proposition="Cache uses 5MB",
             topic="cache/size", confidence=0.9,

@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.skill_promote_from_emerging import (
+from verimem.skill_promote_from_emerging import (
     promote_emerging_to_skill,
 )
 
@@ -35,12 +35,12 @@ def tmp_library(tmp_path: Path, monkeypatch):
     # Stub embedding.encode to avoid sentence-transformers cold start.
     import numpy as np
 
-    from engram import embedding as emb_mod
+    from verimem import embedding as emb_mod
     monkeypatch.setattr(
         emb_mod, "encode",
         lambda s: np.zeros(384, dtype=np.float32),
     )
-    from engram.skill import SkillLibrary
+    from verimem.skill import SkillLibrary
     return SkillLibrary(
         dir_path=tmp_path / "skills",
         db_path=tmp_path / "skills_index.db",

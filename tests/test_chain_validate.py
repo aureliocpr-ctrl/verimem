@@ -11,11 +11,11 @@ Useful for:
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_chain_is_valid_no_op():
-    from engram.chain_validate import validate_chain
+    from verimem.chain_validate import validate_chain
 
     out = validate_chain(initial_state=["x"], skill_chain=[])
     assert out["valid"] is True
@@ -24,7 +24,7 @@ def test_empty_chain_is_valid_no_op():
 
 
 def test_valid_chain_step_by_step():
-    from engram.chain_validate import validate_chain
+    from verimem.chain_validate import validate_chain
 
     chain = [
         Skill(id="auth", name="auth",
@@ -45,7 +45,7 @@ def test_valid_chain_step_by_step():
 
 
 def test_chain_breaks_at_unmet_precondition():
-    from engram.chain_validate import validate_chain
+    from verimem.chain_validate import validate_chain
 
     chain = [
         Skill(id="auth", name="auth",
@@ -64,7 +64,7 @@ def test_chain_breaks_at_unmet_precondition():
 
 
 def test_first_skill_unmet_pre_breaks_at_zero():
-    from engram.chain_validate import validate_chain
+    from verimem.chain_validate import validate_chain
 
     chain = [
         Skill(id="x", name="x",
@@ -80,7 +80,7 @@ def test_first_skill_unmet_pre_breaks_at_zero():
 
 
 def test_steps_trace_records_every_application():
-    from engram.chain_validate import validate_chain
+    from verimem.chain_validate import validate_chain
 
     chain = [
         Skill(id="a", name="a", preconditions=[], postconditions=["A_done"]),
@@ -97,7 +97,7 @@ def test_steps_trace_records_every_application():
 
 
 def test_reason_string_explains_break():
-    from engram.chain_validate import validate_chain
+    from verimem.chain_validate import validate_chain
 
     chain = [
         Skill(id="x", name="needs_login",
@@ -111,7 +111,7 @@ def test_reason_string_explains_break():
 
 
 def test_payload_shape_complete():
-    from engram.chain_validate import validate_chain
+    from verimem.chain_validate import validate_chain
 
     out = validate_chain(initial_state=[], skill_chain=[])
     for k in ("valid", "broken_at", "final_state", "steps", "reason"):

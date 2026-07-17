@@ -30,9 +30,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.consolidation import auto_consolidate
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.consolidation import auto_consolidate
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture

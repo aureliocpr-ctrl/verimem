@@ -11,7 +11,7 @@ import pytest
 pd = pytest.importorskip("pandas")  # QuALITY harness needs pandas; skip if absent
 
 from benchmark.external_f1_quality import load_quality  # noqa: E402
-from engram.chunking import chunk_text  # noqa: E402
+from verimem.chunking import chunk_text  # noqa: E402
 
 
 def _parquet(tmp_path):

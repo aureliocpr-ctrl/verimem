@@ -1,14 +1,14 @@
-"""TDD for the reversible telemetry backlog cleanup (engram.admission_cleanup).
+"""TDD for the reversible telemetry backlog cleanup (verimem.admission_cleanup).
 
 dry_run default = reports only (no mutation). dry_run=False moves telemetry out
 of `facts` into `telemetry` (non-lossy essentials), leaves real facts untouched.
-Hermetic: tmp DB, never ~/.engram.
+Hermetic: tmp DB, never ~/.verimem.
 """
 from __future__ import annotations
 
 import sqlite3
 
-from engram.admission_cleanup import cleanup_telemetry
+from verimem.admission_cleanup import cleanup_telemetry
 
 
 def _make_db(path):

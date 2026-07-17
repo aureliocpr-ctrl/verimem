@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ class TestClassifyLegacyFact:
     def test_proposition_with_bash_tool_ref_is_verified_on_rereading(
         self,
     ) -> None:
-        from engram.legacy_audit import classify_legacy_fact
+        from verimem.legacy_audit import classify_legacy_fact
         f = Fact(
             proposition=(
                 "NEXUS has 17280 pytest cases collected "
@@ -69,7 +69,7 @@ class TestClassifyLegacyFact:
         assert "bash:" in out.bucket_reason
 
     def test_proposition_with_sha256_is_verified_on_rereading(self) -> None:
-        from engram.legacy_audit import classify_legacy_fact
+        from verimem.legacy_audit import classify_legacy_fact
         f = Fact(
             proposition="schema migration applied (sha256:abc123def456)",
             confidence=0.6, topic="schema",
@@ -79,7 +79,7 @@ class TestClassifyLegacyFact:
         assert out.bucket == "verified_on_rereading"
 
     def test_proposition_with_arxiv_url_is_verified_on_rereading(self) -> None:
-        from engram.legacy_audit import classify_legacy_fact
+        from verimem.legacy_audit import classify_legacy_fact
         f = Fact(
             proposition=(
                 "ProvSEEK pattern from arxiv.org/abs/2508.21323"
@@ -91,7 +91,7 @@ class TestClassifyLegacyFact:
         assert out.bucket == "verified_on_rereading"
 
     def test_very_short_proposition_classified_as_forgettable(self) -> None:
-        from engram.legacy_audit import classify_legacy_fact
+        from verimem.legacy_audit import classify_legacy_fact
         f = Fact(
             proposition="ok",
             confidence=0.3, topic="noise",
@@ -101,7 +101,7 @@ class TestClassifyLegacyFact:
         assert out.bucket == "forgettable"
 
     def test_forget_signal_keywords_classified_as_forgettable(self) -> None:
-        from engram.legacy_audit import classify_legacy_fact
+        from verimem.legacy_audit import classify_legacy_fact
         f = Fact(
             proposition="TODO: figure out what this number means",
             confidence=0.4, topic="noise",
@@ -113,7 +113,7 @@ class TestClassifyLegacyFact:
     def test_mid_confidence_normal_text_classified_as_recoverable(
         self,
     ) -> None:
-        from engram.legacy_audit import classify_legacy_fact
+        from verimem.legacy_audit import classify_legacy_fact
         f = Fact(
             proposition=(
                 "Aurelio prefers Italian for conversation, English for code"
@@ -125,7 +125,7 @@ class TestClassifyLegacyFact:
         assert out.bucket == "recoverable"
 
     def test_classification_carries_metadata(self) -> None:
-        from engram.legacy_audit import classify_legacy_fact
+        from verimem.legacy_audit import classify_legacy_fact
         now = time.time()
         f = Fact(
             id="abc", proposition="some fact",
@@ -150,7 +150,7 @@ class TestAuditLegacyCorpus:
     def test_empty_corpus_returns_zero_summary(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.legacy_audit import audit_legacy_corpus
+        from verimem.legacy_audit import audit_legacy_corpus
         out = audit_legacy_corpus(sm)
         assert out["total_classified"] == 0
         assert set(out["bucket_counts"].keys()) == {
@@ -159,7 +159,7 @@ class TestAuditLegacyCorpus:
         assert all(v == 0 for v in out["bucket_counts"].values())
 
     def test_audit_groups_by_bucket(self, sm: SemanticMemory) -> None:
-        from engram.legacy_audit import audit_legacy_corpus
+        from verimem.legacy_audit import audit_legacy_corpus
         _store(sm, fid="v1", confidence=0.6, age_days=60,
                 prop="cycle #110 schema sha256:deadbeef")
         _store(sm, fid="f1", confidence=0.2, age_days=300, prop="x")
@@ -177,7 +177,7 @@ class TestAuditLegacyCorpus:
     def test_audit_includes_samples_per_bucket(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.legacy_audit import audit_legacy_corpus
+        from verimem.legacy_audit import audit_legacy_corpus
         for i in range(5):
             _store(sm, fid=f"f{i}", confidence=0.6, age_days=30,
                     prop=f"fact number {i} about general topic")
@@ -193,7 +193,7 @@ class TestAuditLegacyCorpus:
         """If the corpus has status='legacy_unverified' (cycle 109 schema)
         we filter to that subset. On a pre-cycle-109 corpus the field is
         absent and we audit everything."""
-        from engram.legacy_audit import audit_legacy_corpus
+        from verimem.legacy_audit import audit_legacy_corpus
         _store(sm, fid="a", confidence=0.5, age_days=30,
                 prop="some fact about topic A")
         _store(sm, fid="b", confidence=0.5, age_days=30,

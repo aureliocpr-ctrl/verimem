@@ -42,7 +42,7 @@ class _FakeEp:
 
 
 def test_no_episodes_returns_minimal_post_only():
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     pre, post = derive_predicates_from_episodes(
         "skill_X", episodes=[], threshold=0.5,
@@ -54,7 +54,7 @@ def test_no_episodes_returns_minimal_post_only():
 
 def test_skill_never_seen_in_episodes():
     """Skill not present in any episode: no signal, only trivial post."""
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     eps = [_FakeEp(["A", "B"]), _FakeEp(["C", "D"])]
     pre, post = derive_predicates_from_episodes(
@@ -66,7 +66,7 @@ def test_skill_never_seen_in_episodes():
 
 def test_consistent_predecessor():
     """A→B in 100% of B's appearances → B has 'after_A' precondition."""
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     eps = [
         _FakeEp(["A", "B"]),
@@ -84,7 +84,7 @@ def test_consistent_predecessor():
 def test_inconsistent_predecessors_below_threshold():
     """When B is preceded by A 50% and C 50% (each below 0.5 threshold
     when threshold is 0.6), neither becomes a precondition."""
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     eps = [
         _FakeEp(["A", "B"]),
@@ -103,7 +103,7 @@ def test_inconsistent_predecessors_below_threshold():
 def test_first_in_episode_no_predecessor():
     """If B is always first in its episode, no predecessor exists →
     pre stays empty."""
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     eps = [
         _FakeEp(["B"]),
@@ -118,7 +118,7 @@ def test_first_in_episode_no_predecessor():
 
 def test_lower_threshold_admits_weaker_patterns():
     """Threshold 0.3 lets through patterns the 0.7 threshold rejects."""
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     eps = [
         _FakeEp(["A", "B"]),
@@ -144,7 +144,7 @@ def test_lower_threshold_admits_weaker_patterns():
 def test_self_predecessor_excluded():
     """A skill preceding itself (e.g. retry pattern) should not show
     up as its own precondition (would be circular)."""
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     eps = [
         _FakeEp(["B", "B"]),
@@ -161,7 +161,7 @@ def test_self_predecessor_excluded():
 def test_returns_predecessors_sorted_for_determinism():
     """Multiple predecessors above threshold returned in stable
     sorted order (so the result is reproducible)."""
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     eps = [
         _FakeEp(["A", "X"]),
@@ -179,7 +179,7 @@ def test_returns_predecessors_sorted_for_determinism():
 def test_only_immediate_predecessor_counts():
     """`A → C → B` does NOT make A a predecessor of B (only C is).
     Multi-step ancestry would over-trigger preconditions."""
-    from engram.predicate_derivation import derive_predicates_from_episodes
+    from verimem.predicate_derivation import derive_predicates_from_episodes
 
     eps = [
         _FakeEp(["A", "C", "B"]),

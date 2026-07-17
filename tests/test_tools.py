@@ -1,7 +1,7 @@
 """Tests for sandboxed tools."""
 from __future__ import annotations
 
-from engram.tools import CodeAnalyzer, PythonExecutor
+from verimem.tools import CodeAnalyzer, PythonExecutor
 
 
 def test_python_exec_ok():

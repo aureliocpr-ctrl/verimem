@@ -8,7 +8,7 @@ queries still match; the default direct substring search is unchanged
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _sm(tmp_path):

@@ -12,7 +12,7 @@ The moat (L4-grounding) was IMPECCABLE in that bench (12/12 confab quarantined,
 0 faithful quarantined by grounding); the sole miss came from this pre-existing
 lexical L1 gate, so the fix lives in the escalation arm, not the moat.
 """
-from engram.anti_confab_gate import run_validation_gate as gate
+from verimem.anti_confab_gate import run_validation_gate as gate
 
 
 def _action(prop, **kw):

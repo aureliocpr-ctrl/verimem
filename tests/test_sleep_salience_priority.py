@@ -30,9 +30,9 @@ import time
 
 import pytest
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.sleep import replay_priority
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.sleep import replay_priority
 
 # Anchor a fixed "now" so floats line up across episodes built at
 # different microsecond offsets within the same test.

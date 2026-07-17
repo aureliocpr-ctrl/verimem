@@ -27,7 +27,7 @@ def _install_fake_ce(monkeypatch, calls, *, fail_local: bool = False):
 def test_load_cross_encoder_prefers_local_files_only(monkeypatch):
     calls: list[dict] = []
     _install_fake_ce(monkeypatch, calls)
-    from engram import rerank
+    from verimem import rerank
     rerank._load_cross_encoder.cache_clear()
     try:
         rerank._load_cross_encoder("model-A")
@@ -41,7 +41,7 @@ def test_load_cross_encoder_prefers_local_files_only(monkeypatch):
 def test_load_cross_encoder_falls_back_to_network(monkeypatch):
     calls: list[dict] = []
     _install_fake_ce(monkeypatch, calls, fail_local=True)
-    from engram import rerank
+    from verimem import rerank
     rerank._load_cross_encoder.cache_clear()
     try:
         rerank._load_cross_encoder("model-B")  # non deve propagare

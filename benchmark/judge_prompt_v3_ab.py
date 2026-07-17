@@ -50,7 +50,7 @@ def main(argv=None) -> int:
     from benchmark.grounding_conditioned_qa_real import CASES
     from benchmark.moat_external_judge import _LOADERS, _auroc
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import fact_grounding_score_ex
+    from verimem.grounding_gate import fact_grounding_score_ex
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=90)
 
     v1 = json.loads(Path(a.v1_json).read_text(encoding="utf-8"))

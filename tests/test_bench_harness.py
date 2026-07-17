@@ -25,7 +25,7 @@ Five invariants verified:
 """
 from __future__ import annotations
 
-from engram.bench_harness import (
+from verimem.bench_harness import (
     ProviderSpec,
     RunResult,
     TaskCase,
@@ -38,7 +38,7 @@ from engram.bench_harness import (
     run_suite_hippo_cold,
     run_suite_hippo_warm,
 )
-from engram.llm import MockLLM
+from verimem.llm import MockLLM
 
 # ---------- Test 1: default suite + validators ------------------------
 
@@ -179,7 +179,7 @@ def test_hippo_cold_builds_one_agent_per_case():
 def test_skill_compounding_suite_shape():
     """FORGIA pezzo #34: a richer task suite that should benefit from
     accumulated skills. Validators must work in isolation."""
-    from engram.bench_harness import skill_compounding_suite
+    from verimem.bench_harness import skill_compounding_suite
     s = skill_compounding_suite()
     assert len(s) == 8, f"expected 8 tasks, got {len(s)}"
     seen_ids: set[str] = set()
@@ -194,7 +194,7 @@ def test_skill_compounding_suite_shape():
 
 def test_skill_compounding_validators_correct():
     """Each task's validator must accept the right answer."""
-    from engram.bench_harness import skill_compounding_suite
+    from verimem.bench_harness import skill_compounding_suite
     expected = {
         "digitsum-123": "6", "digitsum-456": "15", "digitsum-789": "24",
         "digitsum-1024": "7", "digitsum-4096": "19", "digitsum-13579": "25",
@@ -213,7 +213,7 @@ def test_skill_compounding_validators_correct():
 
 def test_memory_recall_suite_shape():
     """FORGIA pezzo #39: paired seed/query tasks. 6 tasks (3 seed, 3 query)."""
-    from engram.bench_harness import memory_recall_suite
+    from verimem.bench_harness import memory_recall_suite
     s = memory_recall_suite()
     assert len(s) == 6
     seeds = [c for c in s if c.id.startswith("seed-")]
@@ -240,7 +240,7 @@ def test_memory_recall_suite_shape():
 
 def test_hard_memory_recall_suite_shape():
     """FORGIA pezzo #41: 12 paired tasks (6 seed / 6 query)."""
-    from engram.bench_harness import hard_memory_recall_suite
+    from verimem.bench_harness import hard_memory_recall_suite
     s = hard_memory_recall_suite()
     assert len(s) == 12
     seeds = [c for c in s if c.id.startswith("seed-")]
@@ -267,7 +267,7 @@ def test_hard_memory_recall_suite_shape():
 
 def test_aggregate_by_iter_groups_by_iteration():
     """FORGIA pezzo #43: separating per iter lets us see the compounding."""
-    from engram.bench_harness import aggregate_by_iter
+    from verimem.bench_harness import aggregate_by_iter
     rs = [
         RunResult(condition="hippo_warm", provider="p", task_id="t1",
                   success=False, tokens=10, latency_s=1.0, attempts=2,
@@ -290,7 +290,7 @@ def test_aggregate_by_iter_groups_by_iteration():
 
 def test_aggregate_by_iter_default_iter_zero():
     """Records without an `iter` extra field must still aggregate (iter=0)."""
-    from engram.bench_harness import aggregate_by_iter
+    from verimem.bench_harness import aggregate_by_iter
     rs = [
         RunResult(condition="raw", provider="p", task_id="t1",
                   success=True, tokens=5),
@@ -304,7 +304,7 @@ def test_aggregate_by_iter_default_iter_zero():
 
 def test_on_cell_done_callback_invoked():
     """FORGIA pezzo #49: on_cell_done fires after every cell."""
-    from engram.bench_harness import (
+    from verimem.bench_harness import (
         ProviderSpec,
         run_full_bench,
     )
@@ -325,7 +325,7 @@ def test_on_cell_done_callback_invoked():
 
 def test_on_cell_done_failure_doesnt_break_run():
     """A raising callback must not abort the bench."""
-    from engram.bench_harness import (
+    from verimem.bench_harness import (
         ProviderSpec,
         run_full_bench,
     )
@@ -349,13 +349,13 @@ def test_on_cell_done_failure_doesnt_break_run():
 
 def test_aggregate_empty_results():
     """FORGIA pezzo #54: aggregate() must not crash on empty input."""
-    from engram.bench_harness import aggregate
+    from verimem.bench_harness import aggregate
     assert aggregate([]) == {}
 
 
 def test_aggregate_all_errors():
     """All-error cell still produces stats (success_rate=0, n_errors>0)."""
-    from engram.bench_harness import aggregate
+    from verimem.bench_harness import aggregate
     rs = [
         RunResult(condition="raw", provider="p", task_id="t1",
                   success=False, error="boom"),
@@ -373,7 +373,7 @@ def test_aggregate_all_errors():
 
 def test_from_jsonable_round_trips():
     """FORGIA pezzo #74: to_jsonable -> from_jsonable preserves data."""
-    from engram.bench_harness import from_jsonable, to_jsonable
+    from verimem.bench_harness import from_jsonable, to_jsonable
     rs = [
         RunResult(condition="raw", provider="p", task_id="t1",
                   success=True, tokens=10, latency_s=0.5, attempts=1,
@@ -391,7 +391,7 @@ def test_from_jsonable_round_trips():
 
 
 def test_merge_results_concatenates():
-    from engram.bench_harness import merge_results
+    from verimem.bench_harness import merge_results
     a = [RunResult("raw", "p1", "t1", success=True)]
     b = [RunResult("raw", "p2", "t2", success=False)]
     c = [RunResult("hippo", "p3", "t3", success=True)]
@@ -405,7 +405,7 @@ def test_merge_results_concatenates():
 
 def test_aggregate_by_task_groups_correctly():
     """FORGIA pezzo #75: group by (cond, provider, task_id)."""
-    from engram.bench_harness import aggregate_by_task
+    from verimem.bench_harness import aggregate_by_task
     rs = [
         RunResult("raw", "p", "t1", success=True, tokens=10),
         RunResult("raw", "p", "t1", success=False, tokens=20),
@@ -423,7 +423,7 @@ def test_aggregate_by_task_groups_correctly():
 
 def test_merge_results_empty_lists():
     """FORGIA pezzo #99: merge_results handles empty inputs."""
-    from engram.bench_harness import merge_results
+    from verimem.bench_harness import merge_results
     assert merge_results() == []
     assert merge_results([]) == []
     assert merge_results([], [], []) == []
@@ -431,7 +431,7 @@ def test_merge_results_empty_lists():
 
 def test_merge_results_preserves_order():
     """Order across input lists is preserved (concat not sorted)."""
-    from engram.bench_harness import merge_results
+    from verimem.bench_harness import merge_results
     a = [RunResult("raw", "p1", "t1", success=True)]
     b = [RunResult("raw", "p2", "t2", success=False)]
     out = merge_results(a, b)
@@ -441,7 +441,7 @@ def test_merge_results_preserves_order():
 
 def test_from_jsonable_handles_missing_extras():
     """Missing extras key → default empty dict."""
-    from engram.bench_harness import from_jsonable
+    from verimem.bench_harness import from_jsonable
     rs = from_jsonable([{
         "condition": "raw", "provider": "p", "task_id": "t",
         "success": True, "tokens": 5, "latency_s": 0.1, "attempts": 1,

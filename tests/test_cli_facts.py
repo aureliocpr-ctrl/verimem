@@ -29,8 +29,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from engram.cli import app
-from engram.semantic import Fact, SemanticMemory
+from verimem.cli import app
+from verimem.semantic import Fact, SemanticMemory
 
 runner = CliRunner()
 
@@ -40,7 +40,7 @@ def isolated_corpus(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> Path:
     """Point engram at an empty corpus under tmp_path so CLI commands
-    operate on a known-shape store, not the user's live ~/.engram."""
+    operate on a known-shape store, not the user's live ~/.verimem."""
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
     # Seed a small fact set covering the status enum we care about.

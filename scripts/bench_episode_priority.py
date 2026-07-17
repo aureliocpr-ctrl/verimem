@@ -41,8 +41,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.episode import Episode
-from engram.selection import consider_episodes
+from verimem.episode import Episode
+from verimem.selection import consider_episodes
 
 
 @dataclass

@@ -1,7 +1,7 @@
 """Cycle #110.E — production spawn_callable tests.
 
-The library `engram.daemon_runner` takes an injected `spawn_callable`.
-Production wiring uses `engram.daemon_spawn.production_spawn` which
+The library `verimem.daemon_runner` takes an injected `spawn_callable`.
+Production wiring uses `verimem.daemon_spawn.production_spawn` which
 fires a real detached subprocess (Popen) with stdin/stdout/stderr =
 DEVNULL so the parent process (a SessionStart hook) doesn't block
 on the child's output.
@@ -17,7 +17,7 @@ import sys
 import time
 from pathlib import Path
 
-from engram.daemon_spawn import production_spawn
+from verimem.daemon_spawn import production_spawn
 
 
 class TestProductionSpawn:
@@ -131,7 +131,7 @@ class TestSpawnRelativePathFromArbitraryCwd:
         # After the fix, the child must successfully launch — proven
         # by reading the cooldown state file the daemon would not
         # write if it crashed instantly.
-        from engram.daemon_runner import DEFAULT_DAEMONS
+        from verimem.daemon_runner import DEFAULT_DAEMONS
 
         original_cwd = os.getcwd()
         try:

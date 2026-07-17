@@ -22,7 +22,7 @@ class _S:
 
 
 def test_summary_aggregates_status_counts():
-    from engram.skill_stuck_diagnostic import stuck_candidates_report
+    from verimem.skill_stuck_diagnostic import stuck_candidates_report
     skills = [
         _S("p1", status="promoted", trials=10),
         _S("p2", status="promoted", trials=20),
@@ -40,7 +40,7 @@ def test_summary_aggregates_status_counts():
 
 def test_only_aged_candidates_are_flagged():
     """A candidate younger than min_age_days must NOT appear."""
-    from engram.skill_stuck_diagnostic import stuck_candidates_report
+    from verimem.skill_stuck_diagnostic import stuck_candidates_report
     now = 2_000_000_000.0           # ~2033 — keeps subtraction positive
     old = now - 14 * 86400          # 14 days ago
     fresh = now - 2 * 86400         # 2 days ago
@@ -55,7 +55,7 @@ def test_only_aged_candidates_are_flagged():
 
 
 def test_candidates_with_trials_not_flagged():
-    from engram.skill_stuck_diagnostic import stuck_candidates_report
+    from verimem.skill_stuck_diagnostic import stuck_candidates_report
     now = 2_000_000_000.0
     old = now - 30 * 86400
     skills = [_S("trying", status="candidate", trials=4, created_at=old)]
@@ -65,7 +65,7 @@ def test_candidates_with_trials_not_flagged():
 
 
 def test_catch_22_fraction_computation():
-    from engram.skill_stuck_diagnostic import stuck_candidates_report
+    from verimem.skill_stuck_diagnostic import stuck_candidates_report
     now = 2_000_000_000.0
     old = now - 14 * 86400
     skills = [
@@ -82,7 +82,7 @@ def test_catch_22_fraction_computation():
 
 
 def test_top_k_caps_listing():
-    from engram.skill_stuck_diagnostic import stuck_candidates_report
+    from verimem.skill_stuck_diagnostic import stuck_candidates_report
     now = 2_000_000_000.0
     skills = [
         _S(f"s{i}", status="candidate", trials=0, created_at=now - (10 + i) * 86400)
@@ -111,8 +111,8 @@ def test_skilllibrary_corpus_reveals_catch_22():
     integration SkillLibrary -> stuck_candidates_report is genuinely
     exercised, with no dependency on external mutable state.
     """
-    from engram.skill import Skill, SkillLibrary
-    from engram.skill_stuck_diagnostic import stuck_candidates_report
+    from verimem.skill import Skill, SkillLibrary
+    from verimem.skill_stuck_diagnostic import stuck_candidates_report
 
     now = 2_000_000_000.0
     aged = now - 14 * 86400          # 14 days old → counts as aged at min_age_days=7

@@ -7,12 +7,12 @@ from __future__ import annotations
 
 
 def _step(idx, kind, content, **kw):
-    from engram.trajectory import TrajectoryStep
+    from verimem.trajectory import TrajectoryStep
     return TrajectoryStep(step_idx=idx, kind=kind, content=content, **kw)
 
 
 def test_identical_trajectories_no_diff():
-    from engram.trajectory_diff import trajectory_diff
+    from verimem.trajectory_diff import trajectory_diff
 
     a = [_step(0, "thought", "X"), _step(1, "action", "Y")]
     b = [_step(0, "thought", "X"), _step(1, "action", "Y")]
@@ -22,7 +22,7 @@ def test_identical_trajectories_no_diff():
 
 
 def test_diff_at_step_2():
-    from engram.trajectory_diff import trajectory_diff
+    from verimem.trajectory_diff import trajectory_diff
 
     a = [
         _step(0, "thought", "reflect"),
@@ -40,7 +40,7 @@ def test_diff_at_step_2():
 
 
 def test_diff_one_shorter():
-    from engram.trajectory_diff import trajectory_diff
+    from verimem.trajectory_diff import trajectory_diff
 
     a = [_step(0, "thought", "X"), _step(1, "action", "Y")]
     b = [_step(0, "thought", "X")]
@@ -49,7 +49,7 @@ def test_diff_one_shorter():
 
 
 def test_diff_payload_includes_steps():
-    from engram.trajectory_diff import trajectory_diff
+    from verimem.trajectory_diff import trajectory_diff
 
     a = [_step(0, "action", "A")]
     b = [_step(0, "action", "B")]
@@ -63,7 +63,7 @@ def test_diff_payload_includes_steps():
 
 def test_diff_compare_by_kind_and_tool():
     """Same content but different tool_name should be a divergence."""
-    from engram.trajectory_diff import trajectory_diff
+    from verimem.trajectory_diff import trajectory_diff
 
     a = [_step(0, "action", "scan", tool_name="nmap")]
     b = [_step(0, "action", "scan", tool_name="masscan")]
@@ -72,20 +72,20 @@ def test_diff_compare_by_kind_and_tool():
 
 
 def test_diff_empty_pair():
-    from engram.trajectory_diff import trajectory_diff
+    from verimem.trajectory_diff import trajectory_diff
     out = trajectory_diff([], [])
     assert out["first_divergence"] is None
     assert out["common_prefix_len"] == 0
 
 
 def test_diff_one_empty():
-    from engram.trajectory_diff import trajectory_diff
+    from verimem.trajectory_diff import trajectory_diff
     out = trajectory_diff([_step(0, "thought", "X")], [])
     assert out["first_divergence"] == 0
 
 
 def test_diff_summary_string():
-    from engram.trajectory_diff import trajectory_diff
+    from verimem.trajectory_diff import trajectory_diff
 
     a = [_step(0, "thought", "X"), _step(1, "action", "A")]
     b = [_step(0, "thought", "X"), _step(1, "action", "B")]

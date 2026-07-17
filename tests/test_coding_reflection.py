@@ -33,13 +33,13 @@ import pytest
 
 # RED MARKER: this import must fail at the very top so collection errors
 # are visible before any test attempts to run.
-from engram.coding_reflection import (
+from verimem.coding_reflection import (
     capture_coding_error,
     extract_error_signature,
     recall_similar_errors,
 )
-from engram.episode import Episode
-from engram.memory import EpisodicMemory
+from verimem.episode import Episode
+from verimem.memory import EpisodicMemory
 
 # ---- Real Python tracebacks used as test fixtures ---------------------
 REAL_TYPEERROR = """Traceback (most recent call last):

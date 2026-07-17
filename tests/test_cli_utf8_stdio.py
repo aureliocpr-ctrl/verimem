@@ -10,7 +10,7 @@ a replacement char, but the command never aborts.
 """
 from __future__ import annotations
 
-import engram.cli as cli
+import verimem.cli as cli
 
 
 def test_force_utf8_stdio_reconfigures_both_streams(monkeypatch):

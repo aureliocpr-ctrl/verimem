@@ -47,7 +47,7 @@ from typing import Any
 # Add repo root so this script works invoked as ``python scripts/...``.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.anti_confab_gate import run_validation_gate  # noqa: E402
+from verimem.anti_confab_gate import run_validation_gate  # noqa: E402
 
 # ----------------------------------------------------------------------
 # HaluMem record schema (best-effort — the published paper does not

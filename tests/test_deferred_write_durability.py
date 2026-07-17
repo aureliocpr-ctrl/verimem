@@ -20,7 +20,7 @@ import time
 
 import pytest
 
-from engram import semantic
+from verimem import semantic
 
 
 def test_flush_pending_writes_joins_inflight() -> None:
@@ -70,7 +70,7 @@ def test_deferred_store_error_is_not_swallowed(caplog: pytest.LogCaptureFixture)
         def store(self, fact, **kwargs):  # noqa: ANN001, ANN201, ARG002
             raise RuntimeError("disk full sim")
 
-    with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+    with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
         with pytest.raises(RuntimeError):
             semantic.store_within_budget(_Boom(), object(), budget_s=5.0)
     assert any(

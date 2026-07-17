@@ -8,8 +8,8 @@ retrieval/answering on it — a write-time trust signal no competitor has.
 """
 from __future__ import annotations
 
-import engram.grounding_gate as gg
-from engram.anti_confab_gate import run_validation_gate
+import verimem.grounding_gate as gg
+from verimem.anti_confab_gate import run_validation_gate
 
 
 def _gate(**over):

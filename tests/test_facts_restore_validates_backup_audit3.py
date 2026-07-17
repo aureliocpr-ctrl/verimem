@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from engram.backup import create_backup, restore_from_backup
-from engram.semantic import Fact, SemanticMemory
+from verimem.backup import create_backup, restore_from_backup
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_restore_refuses_wrong_store_backup_and_leaves_target_intact(tmp_path):

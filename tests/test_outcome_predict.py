@@ -17,7 +17,7 @@ class _FakeEp:
 
 
 def test_no_history_uncertain():
-    from engram.outcome_predict import predict_outcome
+    from verimem.outcome_predict import predict_outcome
 
     out = predict_outcome(task="anything", episodes=[])
     assert out["n_similar"] == 0
@@ -26,7 +26,7 @@ def test_no_history_uncertain():
 
 
 def test_all_success_predicts_success():
-    from engram.outcome_predict import predict_outcome
+    from verimem.outcome_predict import predict_outcome
 
     eps = [
         _FakeEp("compute sum of digits", "success"),
@@ -44,7 +44,7 @@ def test_all_success_predicts_success():
 
 
 def test_all_failure_predicts_failure():
-    from engram.outcome_predict import predict_outcome
+    from verimem.outcome_predict import predict_outcome
 
     eps = [
         _FakeEp("apply rot3 reverse rot3", "failure"),
@@ -60,7 +60,7 @@ def test_all_failure_predicts_failure():
 
 
 def test_mixed_outcome():
-    from engram.outcome_predict import predict_outcome
+    from verimem.outcome_predict import predict_outcome
 
     eps = [
         _FakeEp("count words in text", "success"),
@@ -76,7 +76,7 @@ def test_mixed_outcome():
 
 
 def test_dissimilar_task_low_confidence():
-    from engram.outcome_predict import predict_outcome
+    from verimem.outcome_predict import predict_outcome
 
     eps = [_FakeEp("completely different topic", "success")]
     out = predict_outcome(
@@ -88,7 +88,7 @@ def test_dissimilar_task_low_confidence():
 
 
 def test_returns_similar_episodes():
-    from engram.outcome_predict import predict_outcome
+    from verimem.outcome_predict import predict_outcome
 
     eps = [
         _FakeEp("apple banana cherry", "success"),
@@ -102,7 +102,7 @@ def test_returns_similar_episodes():
 
 
 def test_payload_shape_complete():
-    from engram.outcome_predict import predict_outcome
+    from verimem.outcome_predict import predict_outcome
 
     out = predict_outcome(task="x", episodes=[])
     for k in ("task", "n_similar", "p_success", "p_failure",

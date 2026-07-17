@@ -16,9 +16,9 @@ deployment explicitly opts out. Default (no env) is byte-identical: contest-only
 """
 from __future__ import annotations
 
-from engram.contradiction import ContradictionStore
-from engram.semantic import Fact, SemanticMemory
-from engram.truth_reconciliation import reconcile_fact_on_write
+from verimem.contradiction import ContradictionStore
+from verimem.semantic import Fact, SemanticMemory
+from verimem.truth_reconciliation import reconcile_fact_on_write
 
 _NOW = 1_000_000_000.0
 _DAY = 86400.0

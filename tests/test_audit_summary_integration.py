@@ -26,7 +26,7 @@ import json
 import pytest
 from mcp.types import CallToolRequest, CallToolRequestParams
 
-from engram import mcp_server
+from verimem import mcp_server
 
 # ---------------------------------------------------------------------------
 # Minimal agent stub — the audit_summary handler does NOT touch agent state,

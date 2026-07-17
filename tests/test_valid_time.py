@@ -19,7 +19,7 @@ from __future__ import annotations
 import sqlite3
 import time
 
-from engram.semantic import Fact, SemanticMemory, _fact_is_stale, _migrate_v9_to_v10
+from verimem.semantic import Fact, SemanticMemory, _fact_is_stale, _migrate_v9_to_v10
 
 
 def test_fact_is_stale_hard_expire_unit():

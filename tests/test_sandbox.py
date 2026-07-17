@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.sandbox import (
+from verimem.sandbox import (
     SandboxedShell,
     SandboxPolicy,
 )
@@ -307,12 +307,12 @@ class TestStrictShellFalseMode:
         self, monkeypatch: pytest.MonkeyPatch,
     ):
         monkeypatch.delenv("ENGRAM_SANDBOX_MODE", raising=False)
-        from engram.sandbox import _resolve_sandbox_mode
+        from verimem.sandbox import _resolve_sandbox_mode
         assert _resolve_sandbox_mode() == "legacy"
 
     def test_mode_resolution_strict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("ENGRAM_SANDBOX_MODE", "strict")
-        from engram.sandbox import _resolve_sandbox_mode
+        from verimem.sandbox import _resolve_sandbox_mode
         assert _resolve_sandbox_mode() == "strict"
 
     @pytest.mark.parametrize("cmd", [

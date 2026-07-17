@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from engram import dashboard
+from verimem import dashboard
 
 
 def test_get_all_recommended_models():

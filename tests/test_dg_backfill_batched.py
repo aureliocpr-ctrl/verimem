@@ -21,8 +21,8 @@ from pathlib import Path
 
 import numpy as np
 
-import engram.memory as memmod
-from engram.episode import Episode
+import verimem.memory as memmod
+from verimem.episode import Episode
 
 EpisodicMemory = memmod.EpisodicMemory  # single import style (CodeQL): the
 # module is monkeypatched (memmod._DG_BACKFILL_BATCH / memmod.dg_encode) so we

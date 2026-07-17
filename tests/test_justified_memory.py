@@ -1,7 +1,7 @@
-"""TDD for engram.justified_memory — grounded truth-maintenance (the 2027 thesis core)."""
+"""TDD for verimem.justified_memory — grounded truth-maintenance (the 2027 thesis core)."""
 from __future__ import annotations
 
-from engram.justified_memory import (
+from verimem.justified_memory import (
     Belief,
     admit,
     justified_belief_integrity,

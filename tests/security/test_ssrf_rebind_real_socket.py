@@ -14,7 +14,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from engram import tools_extra
+from verimem import tools_extra
 
 INTERNAL_BODY = b"INTERNAL_SECRET_DO_NOT_LEAK"
 

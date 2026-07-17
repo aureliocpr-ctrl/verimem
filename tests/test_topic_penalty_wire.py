@@ -11,7 +11,7 @@ import types
 
 import numpy as np
 
-from engram.semantic import _apply_topic_penalty_to_sims, _topic_penalty_strength
+from verimem.semantic import _apply_topic_penalty_to_sims, _topic_penalty_strength
 
 
 def _facts(*topics):

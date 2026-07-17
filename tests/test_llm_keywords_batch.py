@@ -3,7 +3,7 @@ with missing / shallow ``trigger_keywords`` and persists LLM-augmented
 output via SQLite UPDATE.
 
 Composes over the cycle-168 pure function
-``engram.llm_keywords_augment.extract_keywords``. Pure dispatch +
+``verimem.llm_keywords_augment.extract_keywords``. Pure dispatch +
 persistence wrapper; the LLM call itself is still injection-only
 (subscription-only per CLAUDE.md O4).
 
@@ -29,7 +29,7 @@ Returns a summary dict:
 Defensive: any single-row failure NEVER aborts the loop. Errors are
 counted but the next row keeps going.
 
-RED marker: ``from engram.llm_keywords_batch import
+RED marker: ``from verimem.llm_keywords_batch import
 augment_keywords_batch`` must fail on master.
 """
 from __future__ import annotations
@@ -42,7 +42,7 @@ from unittest.mock import MagicMock
 import pytest
 
 # RED MARKER
-from engram.llm_keywords_batch import augment_keywords_batch
+from verimem.llm_keywords_batch import augment_keywords_batch
 
 # ---------------------------------------------------------------------------
 # Fixture: a tiny semantic.db mimicking real-corpus shape (cycle 175 audit)

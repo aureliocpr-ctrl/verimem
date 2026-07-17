@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.client import Memory
+from verimem.client import Memory
 
 
 def _status(mem, prop, vb=None):

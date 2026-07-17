@@ -21,7 +21,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from engram.teams.cli import teams_app
+from verimem.teams.cli import teams_app
 
 
 def test_send_command_creates_inbox_and_appends(tmp_path: Path) -> None:
@@ -158,7 +158,7 @@ def test_watch_mirror_persists_real_message(
     assert result.exit_code == 0, result.output
 
     # Verify the fact landed in semantic memory at the right topic.
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory()
     with sm._connect() as conn:  # noqa: SLF001
         rows = conn.execute(

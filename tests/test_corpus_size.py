@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def test_payload_shape_complete():
-    from engram.corpus_size import corpus_size_report
+    from verimem.corpus_size import corpus_size_report
 
     with tempfile.TemporaryDirectory() as tmp:
         out = corpus_size_report(data_dir=Path(tmp))
@@ -20,7 +20,7 @@ def test_payload_shape_complete():
 
 
 def test_missing_dirs_yields_zeros():
-    from engram.corpus_size import corpus_size_report
+    from verimem.corpus_size import corpus_size_report
 
     out = corpus_size_report(data_dir=Path("/does/not/exist/anywhere"))
     assert out["episodes_bytes"] == 0
@@ -30,7 +30,7 @@ def test_missing_dirs_yields_zeros():
 
 
 def test_total_equals_sum_of_parts():
-    from engram.corpus_size import corpus_size_report
+    from verimem.corpus_size import corpus_size_report
 
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)
@@ -52,7 +52,7 @@ def test_total_equals_sum_of_parts():
 
 def test_legacy_semantic_db_path():
     """Old layout: data/semantic.db (not in subdir)."""
-    from engram.corpus_size import corpus_size_report
+    from verimem.corpus_size import corpus_size_report
 
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)
@@ -62,7 +62,7 @@ def test_legacy_semantic_db_path():
 
 
 def test_data_dir_string_returned():
-    from engram.corpus_size import corpus_size_report
+    from verimem.corpus_size import corpus_size_report
 
     with tempfile.TemporaryDirectory() as tmp:
         out = corpus_size_report(data_dir=Path(tmp))

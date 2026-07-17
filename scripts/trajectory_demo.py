@@ -17,13 +17,13 @@ from __future__ import annotations
 import json
 import time
 
-from engram.trajectory import (
+from verimem.trajectory import (
     TrajectoryStep,
     trajectory_to_json,
 )
-from engram.trajectory_diff import trajectory_diff
-from engram.trajectory_fork import trajectory_fork
-from engram.trajectory_render import (
+from verimem.trajectory_diff import trajectory_diff
+from verimem.trajectory_fork import trajectory_fork
+from verimem.trajectory_render import (
     trajectory_summary_line,
     trajectory_to_markdown,
 )

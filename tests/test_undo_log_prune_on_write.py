@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import time
 
-from engram import undo_log
-from engram.semantic import Fact, SemanticMemory
+from verimem import undo_log
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_snapshot_pre_op_prunes_expired_rows(tmp_path):

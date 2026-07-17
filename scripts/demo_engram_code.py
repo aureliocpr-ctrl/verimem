@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import patch
 
-from engram.code import EngramCode
-from engram.episode import Episode, Trace
+from verimem.code import EngramCode
+from verimem.episode import Episode, Trace
 
 
 @dataclass
@@ -54,7 +54,7 @@ class _MockAgent:
                                skills_retrieved=[])
 
     def consolidate(self):  # /sleep
-        from engram.sleep import SleepReport
+        from verimem.sleep import SleepReport
         return SleepReport()
 
     def reset(self): pass
@@ -104,7 +104,7 @@ calc.py
 That's the minimal change."""
 
         # Auto-confirm the edit prompt
-        with patch("engram.code.Confirm.ask", return_value=True):
+        with patch("verimem.code.Confirm.ask", return_value=True):
             session = EngramCode(workspace=workspace, agent=_MockAgent(scripted))
             print("\n--- session.submit('fix the bug in calc.py') ---")
             session.submit("fix the bug in calc.py")

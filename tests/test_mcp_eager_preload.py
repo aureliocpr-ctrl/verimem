@@ -31,7 +31,7 @@ def test_main_eager_preload_default_on(monkeypatch):
     monkeypatch.delenv("HIPPO_DISABLED", raising=False)
     monkeypatch.delenv("HIPPO_ENCODE_DELEGATE_ONLY", raising=False)  # let main() set the default
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     calls = []
     def fake_encode(text):
@@ -42,8 +42,8 @@ def test_main_eager_preload_default_on(monkeypatch):
         # Chiudi la coroutine senza eseguirla per non aprire stdio_server
         coro.close()
 
-    with patch("engram.embedding.encode", side_effect=fake_encode):
-        with patch("engram.mcp_server.asyncio.run", side_effect=fake_asyncio_run):
+    with patch("verimem.embedding.encode", side_effect=fake_encode):
+        with patch("verimem.mcp_server.asyncio.run", side_effect=fake_asyncio_run):
             mcp_server.main()
 
     # delegate-only is the default the server self-configures
@@ -61,7 +61,7 @@ def test_main_eager_preload_disabled_via_env(monkeypatch):
     monkeypatch.setenv("HIPPO_EAGER_PRELOAD", "0")
     monkeypatch.delenv("HIPPO_DISABLED", raising=False)
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     calls = []
     def fake_encode(text):
@@ -71,8 +71,8 @@ def test_main_eager_preload_disabled_via_env(monkeypatch):
     def fake_asyncio_run(coro):
         coro.close()
 
-    with patch("engram.embedding.encode", side_effect=fake_encode):
-        with patch("engram.mcp_server.asyncio.run", side_effect=fake_asyncio_run):
+    with patch("verimem.embedding.encode", side_effect=fake_encode):
+        with patch("verimem.mcp_server.asyncio.run", side_effect=fake_asyncio_run):
             mcp_server.main()
 
     assert calls == [], (
@@ -85,7 +85,7 @@ def test_main_eager_preload_does_not_block_on_exception(monkeypatch):
     monkeypatch.delenv("HIPPO_EAGER_PRELOAD", raising=False)
     monkeypatch.delenv("HIPPO_DISABLED", raising=False)
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     def crashing_encode(text):
         raise RuntimeError("simulated model load failure")
@@ -95,8 +95,8 @@ def test_main_eager_preload_does_not_block_on_exception(monkeypatch):
         served["called"] = True
         coro.close()
 
-    with patch("engram.embedding.encode", side_effect=crashing_encode):
-        with patch("engram.mcp_server.asyncio.run", side_effect=fake_asyncio_run):
+    with patch("verimem.embedding.encode", side_effect=crashing_encode):
+        with patch("verimem.mcp_server.asyncio.run", side_effect=fake_asyncio_run):
             # Non deve lanciare
             mcp_server.main()
 
@@ -109,7 +109,7 @@ def test_main_hippo_disabled_skips_everything(monkeypatch):
     """HIPPO_DISABLED=1 → exit prima di tutto (no preload, no serve)."""
     monkeypatch.setenv("HIPPO_DISABLED", "1")
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     calls = []
     def fake_encode(text):
@@ -121,8 +121,8 @@ def test_main_hippo_disabled_skips_everything(monkeypatch):
         served["called"] = True
         coro.close()
 
-    with patch("engram.embedding.encode", side_effect=fake_encode):
-        with patch("engram.mcp_server.asyncio.run", side_effect=fake_asyncio_run):
+    with patch("verimem.embedding.encode", side_effect=fake_encode):
+        with patch("verimem.mcp_server.asyncio.run", side_effect=fake_asyncio_run):
             with pytest.raises(SystemExit) as exc_info:
                 mcp_server.main()
             assert exc_info.value.code == 0

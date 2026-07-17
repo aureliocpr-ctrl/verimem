@@ -27,14 +27,14 @@ API contract testato qui:
         cwd (str|None, default None = cwd at invocation)
         enable_agent_teams (bool, default True — sets env var)
 
-TDD strict RED→GREEN: this file must fail import on engram.swarm.schemas.
+TDD strict RED→GREEN: this file must fail import on verimem.swarm.schemas.
 """
 from __future__ import annotations
 
 import pytest
 
 # RED MARKER
-from engram.swarm.schemas import AgentSpec, SwarmConfig
+from verimem.swarm.schemas import AgentSpec, SwarmConfig
 
 
 class TestAgentSpec:

@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import time
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def _make_skills() -> list[Skill]:
@@ -56,14 +56,14 @@ def _make_skills() -> list[Skill]:
 
 
 def test_no_filters_returns_all():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills())
     assert len(out) == 5
 
 
 def test_status_filter():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills(), status="promoted")
     ids = {s.id for s in out}
@@ -71,7 +71,7 @@ def test_status_filter():
 
 
 def test_min_max_trials():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills(), min_trials=5, max_trials=15)
     ids = {s.id for s in out}
@@ -80,7 +80,7 @@ def test_min_max_trials():
 
 
 def test_min_max_fitness():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     # alpha 8/10 → mean ~0.75, beta 5/20 → 0.27, gamma 2/2 → 0.75,
     # epsilon 2/15 → 0.18, delta 0/0 → 0.5 (prior).
@@ -94,7 +94,7 @@ def test_min_max_fitness():
 
 
 def test_name_contains_case_insensitive():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills(), name_contains="SKILL")
     ids = {s.id for s in out}
@@ -103,7 +103,7 @@ def test_name_contains_case_insensitive():
 
 
 def test_has_predicates_true():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills(), has_predicates=True)
     ids = {s.id for s in out}
@@ -112,7 +112,7 @@ def test_has_predicates_true():
 
 
 def test_has_predicates_false():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills(), has_predicates=False)
     ids = {s.id for s in out}
@@ -126,7 +126,7 @@ def test_has_predicates_false():
 
 
 def test_sort_by_fitness_desc():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills(), sort_by="fitness", desc=True)
     # First should be highest-fitness skill.
@@ -134,7 +134,7 @@ def test_sort_by_fitness_desc():
 
 
 def test_sort_by_recency_desc():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills(), sort_by="recency", desc=True)
     # Most-recently-used first.
@@ -142,14 +142,14 @@ def test_sort_by_recency_desc():
 
 
 def test_limit_respected():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(_make_skills(), limit=2)
     assert len(out) == 2
 
 
 def test_combined_filters():
-    from engram.query import query_skills
+    from verimem.query import query_skills
 
     out = query_skills(
         _make_skills(),

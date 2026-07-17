@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import json
 
-from engram.episode import Episode, Trace
-from engram.llm import MockLLM
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.sleep import SleepEngine, replay_priority
+from verimem.episode import Episode, Trace
+from verimem.llm import MockLLM
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.sleep import SleepEngine, replay_priority
 
 
 def _ep(task_id, text, outcome="success"):
@@ -33,7 +33,7 @@ def test_replay_priority_prefers_failures():
 # 'int' is not iterable`. _extract_json must filter non-object payloads.
 
 def test_extract_json_rejects_non_object_payloads():
-    from engram.sleep import _extract_json
+    from verimem.sleep import _extract_json
     # bare int, string, list — all valid JSON but NOT objects
     assert _extract_json("4") is None
     assert _extract_json('"hello"') is None
@@ -92,7 +92,7 @@ def test_pruning_promotes_high_fitness(tmp_data_dir):
 
 def test_sleep_cycle_reports_n_llm_calls(tmp_data_dir):
     """SleepReport.n_llm_calls reports the count for this cycle."""
-    from engram.episode import Episode
+    from verimem.episode import Episode
     mem = EpisodicMemory(tmp_data_dir / "episodes" / "ep.db")
     sk = SkillLibrary(tmp_data_dir / "skills", tmp_data_dir / "skills" / "idx.db")
     sem = SemanticMemory(tmp_data_dir / "semantic" / "sem.db")

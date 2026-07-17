@@ -16,7 +16,7 @@ the normalized answer string. Declared heuristics (reported, not hidden):
 Provenance: turns are the users' own words → writer_role='user' (task #25
 gate_router routes them off the agent-self-claim heuristics, exactly as a
 production chat ingest would). Fresh hermetic SemanticMemory per item; never
-touches ~/.engram.
+touches ~/.verimem.
 """
 from __future__ import annotations
 
@@ -30,15 +30,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-from engram.config import CONFIG
-from engram.semantic import Fact, SemanticMemory
-
 from benchmark.longmemeval_runner import (
-    _unique_preserve,
     hit_at_k,
     mrr,
     recall_at_k,
 )
+from verimem.config import CONFIG
+from verimem.semantic import Fact, SemanticMemory
 
 _DEFAULT_DATA = Path("benchmark/data/external/.cache/msc/msc_self_instruct.jsonl")
 

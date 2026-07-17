@@ -45,7 +45,7 @@ def main() -> int:
     if not db.exists():
         sys.stderr.write(f"semantic.db not found at {db}\n")
         return 1
-    from engram.embedding_quantize import dequantize_float16, quantize_float16
+    from verimem.embedding_quantize import dequantize_float16, quantize_float16
 
     t0 = time.perf_counter_ns()
     ids, embs_f32 = _load_embeddings(db, limit=5000)

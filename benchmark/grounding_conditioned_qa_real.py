@@ -8,7 +8,7 @@ separates true from distractor). This harness proves BOTH end-to-end:
   1. Each case has a realistic multi-sentence SOURCE (a conversational memory entry), a
      TRUE fact the source states, and a plausible DISTRACTOR the source does NOT state.
   2. The write-time grounding score for each fact is COMPUTED by the real gate
-     (engram.grounding_gate.fact_grounding_score, source⊢fact) — not hand-set.
+     (verimem.grounding_gate.fact_grounding_score, source⊢fact) — not hand-set.
   3. We report the gate's SEPARATION (mean true vs mean distractor, ROC-AUC) AND the
      end-to-end C/H/O for flat vs grounded answering using those computed scores.
 
@@ -155,7 +155,7 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import fact_grounding_score
+    from verimem.grounding_gate import fact_grounding_score
 
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=90)
     cases = CASES[: a.limit] if a.limit else CASES

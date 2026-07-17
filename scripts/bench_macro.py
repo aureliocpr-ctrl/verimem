@@ -19,12 +19,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from engram.compilation import CompiledMacro, MacroStep
-from engram.llm import LLMResponse, LLMToolResponse, ToolCall
-from engram.memory import EpisodicMemory
-from engram.skill import Skill, SkillLibrary
-from engram.tools import ToolResult, ToolSpec, default_tools
-from engram.wake import WakeAgent, WakeConfig, trivial_validator
+from verimem.compilation import CompiledMacro, MacroStep
+from verimem.llm import LLMResponse, LLMToolResponse, ToolCall
+from verimem.memory import EpisodicMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.tools import ToolResult, ToolSpec, default_tools
+from verimem.wake import WakeAgent, WakeConfig, trivial_validator
 
 
 def _mk_tools(captured: dict[str, Any]) -> dict[str, ToolSpec]:

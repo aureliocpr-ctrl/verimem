@@ -10,7 +10,7 @@ Hermetic: DB temporaneo.
 """
 from __future__ import annotations
 
-from engram.transcript_index import TranscriptIndex, Turn
+from verimem.transcript_index import TranscriptIndex, Turn
 
 
 def _seed(db, n, session="S", base_ts=0.0):

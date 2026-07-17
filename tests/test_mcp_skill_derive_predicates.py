@@ -15,8 +15,8 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
-from engram.skill import Skill
+from verimem import mcp_server
+from verimem.skill import Skill
 
 # ---------- Fakes --------------------------------------------------------
 

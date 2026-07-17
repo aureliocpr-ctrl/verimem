@@ -1,7 +1,7 @@
 """Cycle #145 (2026-05-18 sera) — CLI ``engram consolidate`` cluster tests.
 
 Aurelio direttiva cycle 144: l'orchestrator deterministico
-``engram.consolidation.auto_consolidate`` esiste ma NON ha surface CLI.
+``verimem.consolidation.auto_consolidate`` esiste ma NON ha surface CLI.
 L'unica via per chiamarlo è uno script Python esterno o un MCP tool
 (``hippo_consolidate``). Manca il pendant operator-facing che permetta:
 
@@ -30,8 +30,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from engram.cli import app
-from engram.semantic import Fact, SemanticMemory
+from verimem.cli import app
+from verimem.semantic import Fact, SemanticMemory
 
 runner = CliRunner()
 
@@ -57,7 +57,7 @@ def isolated_corpus(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> Path:
     """Point engram at an empty corpus under tmp_path so CLI commands
-    operate on a known-shape store, not the user's live ~/.engram.
+    operate on a known-shape store, not the user's live ~/.verimem.
 
     Seed a small cluster (≥5 facts under one depth-2 prefix) so the
     detector has something to chew on without needing the real corpus.

@@ -3,13 +3,13 @@
 Reference: Cormack-Clarke-Buettcher 2009 §2 RRF formula:
   score(d) = Σ_signal  1 / (k + rank_signal(d))
 
-RED marker: ``from engram.multi_signal_fusion import rrf_fuse`` must
+RED marker: ``from verimem.multi_signal_fusion import rrf_fuse`` must
 fail on master.
 """
 from __future__ import annotations
 
 # RED MARKER
-from engram.multi_signal_fusion import DEFAULT_K, rrf_fuse
+from verimem.multi_signal_fusion import DEFAULT_K, rrf_fuse
 
 
 class TestRrfFuse:

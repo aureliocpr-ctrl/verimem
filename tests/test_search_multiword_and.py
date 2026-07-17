@@ -14,7 +14,7 @@ RED marker: require_all_tokens kwarg must exist and AND the tokens.
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _seed(sm: SemanticMemory) -> None:
@@ -96,7 +96,7 @@ import pytest  # noqa: E402
 async def test_tool_and_first_or_fallback(tmp_path, monkeypatch):
     """hippo_facts_search must return relevant hits for a multi-word query
     even when no single fact has ALL tokens (OR fallback), instead of []."""
-    import engram.mcp_server as ms
+    import verimem.mcp_server as ms
 
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     _seed(sm)

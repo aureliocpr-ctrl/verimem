@@ -11,8 +11,8 @@ provider, NON cambia la shape (i consumer fanno PROVIDERS[x]['env'] / ['default_
 """
 from __future__ import annotations
 
-from engram import llm
-from engram import provider_registry as pr
+from verimem import llm
+from verimem import provider_registry as pr
 
 
 def test_inline_default_models_match_registry_for_common_providers():

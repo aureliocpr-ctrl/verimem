@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from engram.symbolic_inference import forward_chain
+from verimem.symbolic_inference import forward_chain
 
 
 @dataclass

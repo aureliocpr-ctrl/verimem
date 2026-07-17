@@ -15,8 +15,8 @@ from __future__ import annotations
 import time
 import types
 
-import engram.semantic as S
-from engram.semantic import SemanticMemory
+import verimem.semantic as S
+from verimem.semantic import SemanticMemory
 
 
 def _hits(n=5):
@@ -62,7 +62,7 @@ def test_rerank_still_runs_once_ce_is_loaded(tmp_path, monkeypatch):
     monkeypatch.setattr(S, "_load_reranker", lambda: (lambda pairs: [0.0] * len(pairs)))
     # Mock the primitive to REVERSE the order, proving the rerank path ran
     # rather than the bi-encoder fast-path (the empty test DB carries no props).
-    import engram.cross_encoder_rerank as CER
+    import verimem.cross_encoder_rerank as CER
     monkeypatch.setattr(
         CER, "rerank_candidates",
         lambda query, ids, **kw: [(fid, 0.0) for fid in reversed(list(ids))],

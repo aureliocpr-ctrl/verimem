@@ -22,7 +22,7 @@ ONESTA' (A4, niente marketing):
     (_VALID_STATUSES); campioniamo l'intersezione presente nel corpus.
 
 Sicurezza: gira su una COPIA del db (SemanticMemory.__init__ esegue migrazioni =
-WRITE). ZERO scrittura sul corpus live ~/.engram.
+WRITE). ZERO scrittura sul corpus live ~/.verimem.
 
 Run:  python scripts/bench_recall_self.py
 """
@@ -46,7 +46,7 @@ os.environ.setdefault("HIPPO_RECALL_ENCODE_BUDGET_S", "60")
 # paired rerank benches — pin OFF at import; arm-flipping benches override.
 os.environ["ENGRAM_RECALL_RERANK"] = "0"
 
-from engram.semantic import _VALID_STATUSES, SemanticMemory  # noqa: E402
+from verimem.semantic import _VALID_STATUSES, SemanticMemory  # noqa: E402
 
 SEED = 1234
 N_TARGET = 300

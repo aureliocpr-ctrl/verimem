@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import time
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _force_cold_encode(monkeypatch):
@@ -26,7 +26,7 @@ def _force_cold_encode(monkeypatch):
     cosi' il budget-encode del RECALL degrada a None (cold path) in modo
     deterministico, senza toccare lo store gia' avvenuto ne' dipendere dall'ordine
     dei test (monkeypatch su embedding.encode, ripristinato a fine test)."""
-    from engram import embedding
+    from verimem import embedding
 
     def _raise(*a, **k):
         raise embedding.EncodeDelegateUnavailable("forced cold for test")
@@ -61,7 +61,7 @@ def test_cold_fallback_failsoft_when_bm25_empty(tmp_path, monkeypatch):
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     sm.store(Fact(proposition="alpha note about quarterly budgets", topic="t"),
              embed="sync")
-    monkeypatch.setattr("engram.bm25_rank.bm25_fact_ids", lambda *a, **k: [])
+    monkeypatch.setattr("verimem.bm25_rank.bm25_fact_ids", lambda *a, **k: [])
     _force_cold_encode(monkeypatch)
     hits = sm.recall("alpha budgets", k=3)  # nessun crash
     assert any("alpha" in f.proposition for f, _ in hits), \
@@ -71,8 +71,8 @@ def test_cold_fallback_failsoft_when_bm25_empty(tmp_path, monkeypatch):
 def test_force_cold_encode_helper_is_deterministic(monkeypatch):
     """Guardia: il helper forza q_emb=None a prescindere dall'ordine (no flaky)."""
     _force_cold_encode(monkeypatch)
-    import engram.semantic as _sem
-    from engram import embedding
+    import verimem.semantic as _sem
+    from verimem import embedding
     q = _sem._encode_prepared_within_budget(embedding.as_query("x"), 5.0)
     assert q is None, "embedding.encode->EncodeDelegateUnavailable deve dare q_emb=None"
 
@@ -90,12 +90,12 @@ def test_cold_path_gains_ppr_signal_when_fusion_on(tmp_path, monkeypatch):
     """#2 default-ON prereq: con ENGRAM_PPR_FUSION=1 anche il ramo COLD recupera
     un gold entity-linked che il keyword-fallback manca (prima solo i 3 path warm
     lo facevano -> asimmetria cache-vs-cold)."""
-    from engram.entity_kg import Entity, EntityStore
-    from engram.entity_populate import entity_kg_path_for
+    from verimem.entity_kg import Entity, EntityStore
+    from verimem.entity_populate import entity_kg_path_for
 
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENGRAM_PPR_FUSION_FLOOR", "0")  # corpus minimo: il fusion e' il soggetto
-    monkeypatch.setattr("engram.bm25_rank.bm25_fact_ids", lambda *a, **k: [])  # isola il PPR
+    monkeypatch.setattr("verimem.bm25_rank.bm25_fact_ids", lambda *a, **k: [])  # isola il PPR
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
 
     # gold: lessicalmente LONTANO dal query (il keyword-fallback NON lo trova),

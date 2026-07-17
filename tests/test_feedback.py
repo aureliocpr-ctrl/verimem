@@ -15,9 +15,9 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from engram import dashboard
-from engram.episode import Episode, Trace
-from engram.skill import Skill
+from verimem import dashboard
+from verimem.episode import Episode, Trace
+from verimem.skill import Skill
 
 
 @pytest.fixture(autouse=True)
@@ -35,12 +35,12 @@ def _disable_dashboard_auth(monkeypatch: pytest.MonkeyPatch) -> None:
 def isolated_agent(tmp_path, monkeypatch):
     """Wire the dashboard's _ag() to a fresh agent rooted at tmp_path so the
     test does not pollute the user's real database."""
-    from engram.agent import HippoAgent
-    from engram.memory import EpisodicMemory
-    from engram.semantic import SemanticMemory
-    from engram.skill import SkillLibrary
-    from engram.sleep import SleepEngine
-    from engram.wake import WakeAgent
+    from verimem.agent import HippoAgent
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import SkillLibrary
+    from verimem.sleep import SleepEngine
+    from verimem.wake import WakeAgent
 
     mem = EpisodicMemory(tmp_path / "ep.db")
     skills = SkillLibrary(tmp_path / "skills", tmp_path / "skills" / "idx.db")

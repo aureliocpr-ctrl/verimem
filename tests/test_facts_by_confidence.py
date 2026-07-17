@@ -16,14 +16,14 @@ class _FakeFact:
 
 
 def test_empty_returns_empty():
-    from engram.facts_by_confidence import facts_by_confidence
+    from verimem.facts_by_confidence import facts_by_confidence
 
     out = facts_by_confidence([])
     assert out["facts"] == []
 
 
 def test_min_filter():
-    from engram.facts_by_confidence import facts_by_confidence
+    from verimem.facts_by_confidence import facts_by_confidence
 
     facts = [
         _FakeFact("low", confidence=0.3),
@@ -36,7 +36,7 @@ def test_min_filter():
 
 
 def test_max_filter():
-    from engram.facts_by_confidence import facts_by_confidence
+    from verimem.facts_by_confidence import facts_by_confidence
 
     facts = [
         _FakeFact("a", confidence=0.4),
@@ -49,7 +49,7 @@ def test_max_filter():
 
 
 def test_combined_range():
-    from engram.facts_by_confidence import facts_by_confidence
+    from verimem.facts_by_confidence import facts_by_confidence
 
     facts = [
         _FakeFact("low", confidence=0.1),
@@ -62,7 +62,7 @@ def test_combined_range():
 
 
 def test_sorted_by_confidence_desc():
-    from engram.facts_by_confidence import facts_by_confidence
+    from verimem.facts_by_confidence import facts_by_confidence
 
     facts = [
         _FakeFact("a", confidence=0.3),
@@ -75,7 +75,7 @@ def test_sorted_by_confidence_desc():
 
 
 def test_top_k_respected():
-    from engram.facts_by_confidence import facts_by_confidence
+    from verimem.facts_by_confidence import facts_by_confidence
 
     facts = [_FakeFact(f"f{i}", confidence=0.5) for i in range(10)]
     out = facts_by_confidence(facts, top_k=3)
@@ -83,7 +83,7 @@ def test_top_k_respected():
 
 
 def test_payload_shape_complete():
-    from engram.facts_by_confidence import facts_by_confidence
+    from verimem.facts_by_confidence import facts_by_confidence
 
     out = facts_by_confidence([])
     for k in ("facts", "n_total", "min_conf", "max_conf"):

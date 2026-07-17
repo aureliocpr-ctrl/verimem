@@ -13,7 +13,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from engram.gateway import GatewayKeys, create_app
+from verimem.gateway import GatewayKeys, create_app
 
 _FACT = {"topic": "t", "verified_by": ["source-doc:d:1"]}
 

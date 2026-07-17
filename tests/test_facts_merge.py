@@ -21,7 +21,7 @@ class _FakeFact:
 
 
 def test_keeper_a_default():
-    from engram.facts_merge import merge_facts
+    from verimem.facts_merge import merge_facts
 
     a = _FakeFact("a", "alpha", confidence=0.8)
     b = _FakeFact("b", "beta", confidence=0.6)
@@ -32,7 +32,7 @@ def test_keeper_a_default():
 
 
 def test_keeper_b_explicit():
-    from engram.facts_merge import merge_facts
+    from verimem.facts_merge import merge_facts
 
     a = _FakeFact("a")
     b = _FakeFact("b")
@@ -42,7 +42,7 @@ def test_keeper_b_explicit():
 
 
 def test_source_episodes_union():
-    from engram.facts_merge import merge_facts
+    from verimem.facts_merge import merge_facts
 
     a = _FakeFact("a", source_episodes=["e1", "e2"])
     b = _FakeFact("b", source_episodes=["e2", "e3"])
@@ -51,7 +51,7 @@ def test_source_episodes_union():
 
 
 def test_confidence_average_by_default():
-    from engram.facts_merge import merge_facts
+    from verimem.facts_merge import merge_facts
 
     a = _FakeFact("a", confidence=0.8)
     b = _FakeFact("b", confidence=0.6)
@@ -60,7 +60,7 @@ def test_confidence_average_by_default():
 
 
 def test_confidence_max_strategy():
-    from engram.facts_merge import merge_facts
+    from verimem.facts_merge import merge_facts
 
     a = _FakeFact("a", confidence=0.8)
     b = _FakeFact("b", confidence=0.6)
@@ -69,7 +69,7 @@ def test_confidence_max_strategy():
 
 
 def test_proposition_uses_keeper():
-    from engram.facts_merge import merge_facts
+    from verimem.facts_merge import merge_facts
 
     a = _FakeFact("a", proposition="version A")
     b = _FakeFact("b", proposition="version B")
@@ -80,7 +80,7 @@ def test_proposition_uses_keeper():
 
 
 def test_topic_preferred_from_keeper():
-    from engram.facts_merge import merge_facts
+    from verimem.facts_merge import merge_facts
 
     a = _FakeFact("a", topic="user_facts")
     b = _FakeFact("b", topic="")
@@ -89,7 +89,7 @@ def test_topic_preferred_from_keeper():
 
 
 def test_payload_shape_complete():
-    from engram.facts_merge import merge_facts
+    from verimem.facts_merge import merge_facts
 
     a = _FakeFact("a")
     b = _FakeFact("b")

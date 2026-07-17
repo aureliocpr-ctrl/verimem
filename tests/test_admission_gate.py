@@ -1,4 +1,4 @@
-"""TDD for the curated-corpus admission gate (engram.admission_gate).
+"""TDD for the curated-corpus admission gate (verimem.admission_gate).
 
 The gate routes/flags, never deletes. Hermetic: synthetic inputs + a tiny temp DB.
 """
@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.admission_gate import (
+from verimem.admission_gate import (
     ACCEPT,
     FLAG_INJECTION,
     FLAG_LOW_PROVENANCE,
@@ -119,7 +119,7 @@ def test_non_model_claim_status_reason_is_honest():
     """AUDIT-LEDGER mod.1 #2 (2026-07-16): a status the gate does not evaluate
     (user_belief, quarantined — trust travels IN the status) must be admitted
     with a reason saying THAT, not the false "grounded or verified"."""
-    from engram.admission_gate import classify_admission
+    from verimem.admission_gate import classify_admission
 
     for status in ("user_belief", "quarantined"):
         v = classify_admission(topic="user/claim",
@@ -133,7 +133,7 @@ def test_non_model_claim_status_reason_is_honest():
 
 def test_grounded_and_verified_reasons_unchanged():
     """The two paths that really DID pass provenance checks keep their reason."""
-    from engram.admission_gate import classify_admission
+    from verimem.admission_gate import classify_admission
 
     v1 = classify_admission(topic="t", proposition="p", status="model_claim",
                             source_episodes=["ep1"])

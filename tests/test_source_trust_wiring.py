@@ -14,7 +14,7 @@ reconciliation hooks arrive with the mini-world reproduction.
 """
 from __future__ import annotations
 
-from engram.client import Memory
+from verimem.client import Memory
 
 BAD_REF = ["source-doc:shady-vendor:7"]
 GOOD_TEXT = "The quarterly report was filed on May 3rd."

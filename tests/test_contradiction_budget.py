@@ -5,8 +5,8 @@ The pairwise scan once ran ~10 min on an 8.8k-fact corpus and had to be ESC'd.
 """
 from __future__ import annotations
 
-from engram.contradiction import detect_boolean_clashes, detect_numeric_clashes
-from engram.semantic import Fact
+from verimem.contradiction import detect_boolean_clashes, detect_numeric_clashes
+from verimem.semantic import Fact
 
 
 def _numeric_facts(n: int = 12) -> list[Fact]:

@@ -10,7 +10,7 @@ available for the caller to inspect.
 """
 from __future__ import annotations
 
-import engram.counterfactual_rollout as cr
+import verimem.counterfactual_rollout as cr
 
 
 def _mock_sim(scores: dict[str, float]):

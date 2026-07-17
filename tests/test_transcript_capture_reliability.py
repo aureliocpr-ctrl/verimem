@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-from engram.transcript_ingest import _is_real_session_file, find_current_session, parse_turns
+from verimem.transcript_ingest import _is_real_session_file, find_current_session, parse_turns
 
 
 def _write(p, records):

@@ -1,4 +1,4 @@
-"""Smoke tests for engram.tui — module import + minimal app construction.
+"""Smoke tests for verimem.tui — module import + minimal app construction.
 
 Note: tui.py is OMITTED from coverage in pyproject.toml (pure UI surface,
 exercised manually). These tests guard against import-time regressions and
@@ -14,7 +14,7 @@ textual = pytest.importorskip("textual")
 
 def test_tui_imports_cleanly():
     """The tui module must import without error."""
-    from engram import tui
+    from verimem import tui
     assert hasattr(tui, "main")
     assert hasattr(tui, "HippoTUI")
     assert hasattr(tui, "ChatPane")
@@ -25,34 +25,34 @@ def test_tui_imports_cleanly():
 
 def test_tui_main_callable():
     """main is a callable entry point."""
-    from engram.tui import main
+    from verimem.tui import main
     assert callable(main)
 
 
 def test_chat_pane_default_css_present():
-    from engram.tui import ChatPane
+    from verimem.tui import ChatPane
     assert "ChatPane" in ChatPane.DEFAULT_CSS
     assert "chat-log" in ChatPane.DEFAULT_CSS
 
 
 def test_skills_pane_default_css_present():
-    from engram.tui import SkillsPane
+    from verimem.tui import SkillsPane
     assert "SkillsPane" in SkillsPane.DEFAULT_CSS
 
 
 def test_episodes_pane_default_css_present():
-    from engram.tui import EpisodesPane
+    from verimem.tui import EpisodesPane
     assert "EpisodesPane" in EpisodesPane.DEFAULT_CSS
 
 
 def test_settings_pane_default_css_present():
-    from engram.tui import SettingsPane
+    from verimem.tui import SettingsPane
     assert "SettingsPane" in SettingsPane.DEFAULT_CSS
 
 
 def test_hippo_tui_has_bindings():
     """HippoTUI must define keyboard bindings."""
-    from engram.tui import HippoTUI
+    from verimem.tui import HippoTUI
     assert HippoTUI.BINDINGS
     keys = [b.key for b in HippoTUI.BINDINGS]
     assert "ctrl+enter" in keys
@@ -62,7 +62,7 @@ def test_hippo_tui_has_bindings():
 
 
 def test_hippo_tui_title():
-    from engram.tui import HippoTUI
+    from verimem.tui import HippoTUI
     assert HippoTUI.TITLE
 
 
@@ -73,15 +73,15 @@ async def test_hippo_tui_minimal_pilot(monkeypatch, tmp_data_dir):
     Uses Textual's pilot.run_test() to mount the app headlessly.
     """
     # Replace HippoAgent.build so the TUI doesn't pull in real LLM/state
-    from engram.agent import HippoAgent
-    from engram.llm import MockLLM
-    from engram.memory import EpisodicMemory
-    from engram.semantic import SemanticMemory
-    from engram.skill import SkillLibrary
-    from engram.sleep import SleepEngine
-    from engram.tools import default_tools
-    from engram.tui import HippoTUI
-    from engram.wake import WakeAgent
+    from verimem.agent import HippoAgent
+    from verimem.llm import MockLLM
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import SkillLibrary
+    from verimem.sleep import SleepEngine
+    from verimem.tools import default_tools
+    from verimem.tui import HippoTUI
+    from verimem.wake import WakeAgent
 
     def fake_build(cls=None, **kwargs):
         memory = EpisodicMemory(db_path=tmp_data_dir / "ep.db")

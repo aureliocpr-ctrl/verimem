@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram import embedding as emb
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem import embedding as emb
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 
 def _ep(eid: str, text: str) -> Episode:
@@ -71,7 +71,7 @@ def test_v6_migration_idempotent_on_existing_column(tmp_path):
     del version-ledger senza drop colonna), ri-eseguirla NON deve crashare —
     deve inghiottire "duplicate column name". Regressione del bug dg_cabling
     (v6 era l'unica embedding_model-migration senza swallow)."""
-    from engram.memory import _migration_v6_embedding_model
+    from verimem.memory import _migration_v6_embedding_model
 
     db = tmp_path / "ep.db"
     EpisodicMemory(db)  # crea lo schema corrente (embedding_model già presente)

@@ -23,14 +23,14 @@ class _FakeEp:
 
 
 def test_returns_string():
-    from engram.episode_summary import summarize_episode
+    from verimem.episode_summary import summarize_episode
 
     out = summarize_episode(_FakeEp())
     assert isinstance(out, str)
 
 
 def test_includes_outcome_marker():
-    from engram.episode_summary import summarize_episode
+    from verimem.episode_summary import summarize_episode
 
     success = summarize_episode(_FakeEp(outcome="success"))
     failure = summarize_episode(_FakeEp(outcome="failure"))
@@ -40,7 +40,7 @@ def test_includes_outcome_marker():
 
 
 def test_includes_task_text():
-    from engram.episode_summary import summarize_episode
+    from verimem.episode_summary import summarize_episode
 
     ep = _FakeEp(task_text="compute the sum of digits")
     out = summarize_episode(ep)
@@ -48,7 +48,7 @@ def test_includes_task_text():
 
 
 def test_truncates_long_task():
-    from engram.episode_summary import summarize_episode
+    from verimem.episode_summary import summarize_episode
 
     long_task = "x" * 500
     out = summarize_episode(_FakeEp(task_text=long_task))
@@ -57,7 +57,7 @@ def test_truncates_long_task():
 
 
 def test_handles_missing_fields():
-    from engram.episode_summary import summarize_episode
+    from verimem.episode_summary import summarize_episode
 
     out = summarize_episode(_FakeEp())
     # No crash, returns something.
@@ -66,7 +66,7 @@ def test_handles_missing_fields():
 
 
 def test_shows_skills_count():
-    from engram.episode_summary import summarize_episode
+    from verimem.episode_summary import summarize_episode
 
     ep = _FakeEp(skills_used=["a", "b", "c"])
     out = summarize_episode(ep)
@@ -74,7 +74,7 @@ def test_shows_skills_count():
 
 
 def test_shows_date_when_timestamp_present():
-    from engram.episode_summary import summarize_episode
+    from verimem.episode_summary import summarize_episode
 
     ep = _FakeEp(created_at=time.time())
     out = summarize_episode(ep)
@@ -85,7 +85,7 @@ def test_shows_date_when_timestamp_present():
 
 def test_summarize_episodes_batch():
     """Convenience batch helper."""
-    from engram.episode_summary import summarize_episodes
+    from verimem.episode_summary import summarize_episodes
 
     eps = [_FakeEp(id="e1"), _FakeEp(id="e2")]
     out = summarize_episodes(eps)

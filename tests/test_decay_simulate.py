@@ -40,7 +40,7 @@ class _FakeAgent:
 
 
 def test_empty_no_candidates():
-    from engram.decay_simulate import decay_simulate
+    from verimem.decay_simulate import decay_simulate
 
     out = decay_simulate(agent=_FakeAgent([]))
     assert out["candidates"] == []
@@ -48,7 +48,7 @@ def test_empty_no_candidates():
 
 
 def test_excludes_pinned():
-    from engram.decay_simulate import decay_simulate
+    from verimem.decay_simulate import decay_simulate
 
     eps = [
         _FakeEp("safe", pinned=True, salience_score=0.01),
@@ -62,7 +62,7 @@ def test_excludes_pinned():
 
 def test_sorted_by_salience_asc():
     """Lowest salience first (closest to pruning)."""
-    from engram.decay_simulate import decay_simulate
+    from verimem.decay_simulate import decay_simulate
 
     eps = [
         _FakeEp("mid", salience_score=0.5),
@@ -75,7 +75,7 @@ def test_sorted_by_salience_asc():
 
 
 def test_top_k_respected():
-    from engram.decay_simulate import decay_simulate
+    from verimem.decay_simulate import decay_simulate
 
     eps = [_FakeEp(f"e{i}", salience_score=i / 100.0) for i in range(10)]
     out = decay_simulate(agent=_FakeAgent(eps), top_k=3)
@@ -83,7 +83,7 @@ def test_top_k_respected():
 
 
 def test_payload_shape_complete():
-    from engram.decay_simulate import decay_simulate
+    from verimem.decay_simulate import decay_simulate
 
     out = decay_simulate(agent=_FakeAgent([]))
     for k in ("candidates", "n_total", "top_k"):

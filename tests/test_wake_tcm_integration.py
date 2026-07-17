@@ -40,9 +40,9 @@ from pathlib import Path
 
 import numpy as np
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
 
 # Mute the heavy WakeAgent end-to-end machinery; these tests only need
 # the deterministic `_build_episode_context` and the store integration.
@@ -70,7 +70,7 @@ def _ep(task_text: str, *, ep_id: str | None = None,
 def test_build_episode_context_is_deterministic():
     """Calling `_build_episode_context` twice with identical inputs
     produces identical output — no hidden time/rng coupling."""
-    from engram.wake import WakeAgent
+    from verimem.wake import WakeAgent
 
     traces = [
         Trace(step=1, thought="t", action="A",
@@ -94,7 +94,7 @@ def test_context_differs_when_observations_differ():
     """Two episodes with the same task_text but different observations
     produce different contexts. The drift over distinct obs creates
     distinct end-states (Howard & Kahana 2002)."""
-    from engram.wake import WakeAgent
+    from verimem.wake import WakeAgent
 
     wake = object.__new__(WakeAgent)
     common_task = "summarise the report"
@@ -123,7 +123,7 @@ def test_context_differs_when_observations_differ():
 def test_empty_traces_yields_task_only_context():
     """No tool calls → context = (1-ρ) · task_emb (single observe).
     Degenerate but well-defined; non-zero norm."""
-    from engram.wake import WakeAgent
+    from verimem.wake import WakeAgent
 
     wake = object.__new__(WakeAgent)
     ctx = wake._build_episode_context("just a question", [])  # noqa: SLF001
@@ -138,7 +138,7 @@ def test_tcm_disabled_stores_null_context(tmp_path: Path):
     pass a context to memory.store, leaving the column NULL."""
     import sqlite3
 
-    from engram.wake import WakeAgent
+    from verimem.wake import WakeAgent
 
     # Direct simulation of run()'s storage call without LLM/tool.
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
@@ -175,7 +175,7 @@ def test_tcm_enabled_populates_context_column(tmp_path: Path):
     path persists a non-NULL context_embedding."""
     import sqlite3
 
-    from engram.wake import WakeAgent
+    from verimem.wake import WakeAgent
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     ep = _ep("retrieve account info", ep_id="r",

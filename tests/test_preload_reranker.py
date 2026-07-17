@@ -4,11 +4,11 @@ Hermetic: stub the loader; assert it's called when enabled, skipped when disable
 and that a load failure never propagates (boot must not crash)."""
 from __future__ import annotations
 
-from engram import preload
+from verimem import preload
 
 
 def test_warm_reranker_loads_when_enabled(monkeypatch):
-    from engram import semantic
+    from verimem import semantic
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: True)
     called = {"n": 0}
     monkeypatch.setattr(semantic, "_load_reranker", lambda: called.__setitem__("n", called["n"] + 1))
@@ -17,7 +17,7 @@ def test_warm_reranker_loads_when_enabled(monkeypatch):
 
 
 def test_warm_reranker_skipped_when_disabled(monkeypatch):
-    from engram import semantic
+    from verimem import semantic
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: False)
     called = {"n": 0}
     monkeypatch.setattr(semantic, "_load_reranker", lambda: called.__setitem__("n", called["n"] + 1))
@@ -26,7 +26,7 @@ def test_warm_reranker_skipped_when_disabled(monkeypatch):
 
 
 def test_warm_reranker_swallows_failure(monkeypatch):
-    from engram import semantic
+    from verimem import semantic
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: True)
 
     def _boom():
@@ -44,14 +44,14 @@ def test_preload_embedding_starts_reranker_thread(monkeypatch):
     thread must still spawn and warm the reranker when the operator opts in;
     this test pins the opt-in path (the default-off path is covered by the
     recall-time lazy load)."""
-    from engram import semantic
+    from verimem import semantic
     monkeypatch.setenv("HIPPO_EAGER_PRELOAD", "1")
     monkeypatch.setenv("HIPPO_PRELOAD_BACKGROUND", "1")
     monkeypatch.setenv("HIPPO_RERANK_PRELOAD", "1")  # opt-in (default off since 3dbbcda)
     # neutralize the embedding path so the test is about the reranker thread
     monkeypatch.setattr(preload, "_warm", lambda: None)
     monkeypatch.setattr(preload, "_service_enabled", lambda: False)
-    from engram import embedding
+    from verimem import embedding
     monkeypatch.setattr(embedding, "_delegate_only", lambda: True, raising=False)
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: True)
     seen = {"n": 0}

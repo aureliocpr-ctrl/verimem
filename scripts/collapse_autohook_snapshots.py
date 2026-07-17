@@ -79,7 +79,7 @@ def main(argv=None) -> int:
     if not a.apply or not plan:
         return 0
 
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=Path(a.db))
     undo = {"created": time.time(), "db": str(a.db), "prefix": a.prefix,
             "note": "restore = set superseded_by/superseded_at/superseded_reason "

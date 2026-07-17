@@ -25,8 +25,8 @@ from pathlib import Path
 # Allow running from repo root without install
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.semantic import SemanticMemory
-from engram.validate_claim import validate_claim
+from verimem.semantic import SemanticMemory
+from verimem.validate_claim import validate_claim
 
 
 class _AgentShim:

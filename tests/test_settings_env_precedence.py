@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 
-from engram import settings
+from verimem import settings
 
 
 def test_explicit_env_provider_survives_apply_to_env(monkeypatch):
@@ -43,7 +43,7 @@ def test_get_llm_does_not_mutate_explicit_provider(monkeypatch):
     the next builder (the air-gap multi-LLM failure mode)."""
     monkeypatch.setenv("HIPPO_LLM_PROVIDER", "ollama")
     monkeypatch.delenv("HIPPO_HOSTED", raising=False)
-    from engram.llm import get_llm
+    from verimem.llm import get_llm
     get_llm()  # was mutating os.environ to the saved provider
     assert os.environ["HIPPO_LLM_PROVIDER"] == "ollama", (
         "get_llm() must not clobber the explicit provider override"

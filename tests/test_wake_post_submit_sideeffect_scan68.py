@@ -12,7 +12,7 @@ con ToolCall REALE (no mock che nasconde).
 """
 from __future__ import annotations
 
-from engram.wake import ToolCall, _submit_cutoff_index
+from verimem.wake import ToolCall, _submit_cutoff_index
 
 
 def _tc(name: str) -> ToolCall:

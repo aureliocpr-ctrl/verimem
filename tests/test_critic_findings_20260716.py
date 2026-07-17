@@ -20,7 +20,7 @@ import pytest
 
 # ---- HIGH-1: gateway trailing-dot tenant collision --------------------------
 def test_gateway_tenant_trailing_dot_rejected(tmp_path):
-    from engram.gateway import GatewayKeys
+    from verimem.gateway import GatewayKeys
 
     keys = GatewayKeys(tmp_path / "k.db")
     for bad in ["acme.", "acme..", "acme..."]:
@@ -37,13 +37,13 @@ def test_gateway_tenant_trailing_dot_rejected(tmp_path):
     "the module works as a cache layer",
 ])
 def test_l1_works_functional_as_a_still_fires(prop):
-    from engram.l1_works_detector import detect_unsupported_works_claim as dw
+    from verimem.l1_works_detector import detect_unsupported_works_claim as dw
     assert dw(proposition=prop, verified_by=None) is not None, \
         f"functional works-claim wrongly suppressed: {prop!r}"
 
 
 def test_l1_works_industry_biography_fp_stays_fixed():
-    from engram.l1_works_detector import detect_unsupported_works_claim as dw
+    from verimem.l1_works_detector import detect_unsupported_works_claim as dw
     # my MEASURED biography FP (works in the X industry) must stay suppressed
     assert dw(proposition="Martin Mark works in the healthcare industry",
               verified_by=None) is None
@@ -56,13 +56,13 @@ def test_l1_works_industry_biography_fp_stays_fixed():
     "secured the role service",
 ])
 def test_l1_security_infra_hardening_still_fires(prop):
-    from engram.l1_security_detector import detect_unsupported_security_claim as ds
+    from verimem.l1_security_detector import detect_unsupported_security_claim as ds
     assert ds(proposition=prop, verified_by=None) is not None, \
         f"security hardening claim wrongly suppressed: {prop!r}"
 
 
 def test_l1_security_acquisition_fp_stays_fixed():
-    from engram.l1_security_detector import detect_unsupported_security_claim as ds
+    from verimem.l1_security_detector import detect_unsupported_security_claim as ds
     # my MEASURED FP (secured interviews and job offers) must stay suppressed
     assert ds(proposition="Martin secured interviews and job offers",
               verified_by=None) is None
@@ -70,7 +70,7 @@ def test_l1_security_acquisition_fp_stays_fixed():
 
 # ---- LOW-5: admission must not grant false trust to unknown status ----------
 def test_admission_unknown_status_no_false_trust_reason():
-    from engram.admission_gate import classify_admission
+    from verimem.admission_gate import classify_admission
     # malformed (trailing space) = not a known status
     v = classify_admission(topic="t", proposition="x is fastest",
                            status="user_belief ")

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.entity_kg import EntityStore
-from engram.entity_populate import populate_entity_graph
-from engram.semantic import Fact, SemanticMemory
+from verimem.entity_kg import EntityStore
+from verimem.entity_populate import populate_entity_graph
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _corpus(tmp_path: Path) -> Path:
@@ -90,7 +90,7 @@ def test_bad_fact_does_not_kill_backfill(tmp_path):
         calls["n"] += 1
         if calls["n"] == 1:
             raise RuntimeError("boom on first fact")
-        from engram.entity_extract_lite import extract_entities_lite
+        from verimem.entity_extract_lite import extract_entities_lite
         return extract_entities_lite(text)
 
     stats = populate_entity_graph(db, kg, extract_fn=_flaky)

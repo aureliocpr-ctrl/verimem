@@ -1,7 +1,7 @@
 """Tests for FallbackLLM provider chain."""
 from __future__ import annotations
 
-from engram.llm import FallbackLLM, LLMResponse, LLMToolResponse, ToolCall
+from verimem.llm import FallbackLLM, LLMResponse, LLMToolResponse, ToolCall
 
 
 class FakeLLM:

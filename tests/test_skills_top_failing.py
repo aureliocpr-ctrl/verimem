@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 @dataclass
@@ -13,14 +13,14 @@ class _FakeEp:
 
 
 def test_empty():
-    from engram.skills_top_failing import top_failing_skills
+    from verimem.skills_top_failing import top_failing_skills
 
     out = top_failing_skills(skills=[], episodes=[])
     assert out["skills"] == []
 
 
 def test_ranks_by_failure_count():
-    from engram.skills_top_failing import top_failing_skills
+    from verimem.skills_top_failing import top_failing_skills
 
     skills = [Skill(id="a"), Skill(id="b")]
     eps = [
@@ -34,7 +34,7 @@ def test_ranks_by_failure_count():
 
 
 def test_excludes_no_failures():
-    from engram.skills_top_failing import top_failing_skills
+    from verimem.skills_top_failing import top_failing_skills
 
     skills = [Skill(id="a"), Skill(id="b")]
     eps = [
@@ -48,7 +48,7 @@ def test_excludes_no_failures():
 
 
 def test_top_k():
-    from engram.skills_top_failing import top_failing_skills
+    from verimem.skills_top_failing import top_failing_skills
 
     skills = [Skill(id=f"s{i}") for i in range(10)]
     eps = [_FakeEp("failure", [f"s{i}"]) for i in range(10)]

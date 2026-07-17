@@ -15,9 +15,9 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from engram.agent import HippoAgent
-from engram.tools import PythonExecutor
-from engram.wake import WakeResult
+from verimem.agent import HippoAgent
+from verimem.tools import PythonExecutor
+from verimem.wake import WakeResult
 
 from .tasks import BenchmarkTask
 

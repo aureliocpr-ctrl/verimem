@@ -52,8 +52,8 @@ from pathlib import Path
 
 import numpy as np
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
 
 
 def _ep(task_text: str, *, ep_id: str | None = None,
@@ -84,7 +84,7 @@ def test_recall_prefers_matching_context(tmp_path: Path):
     """Two episodes with near-identical summaries but different
     encoded contexts. A recall with the matching context should
     rank the right episode first."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
 
@@ -127,7 +127,7 @@ def test_recall_without_context_unchanged(tmp_path: Path):
     """Legacy recall (no context kwargs) must give identical ordering
     to current behaviour. Aim: zero behavioural change for callers
     that don't opt in."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     for i, t in enumerate(["alpha task", "beta task", "gamma task"]):
@@ -146,7 +146,7 @@ def test_recall_without_context_unchanged(tmp_path: Path):
 def test_store_persists_context_embedding(tmp_path: Path):
     """`store(ep, context_emb=ctx)` writes the BLOB to the new
     column."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     db = tmp_path / "ep.db"
     mem = EpisodicMemory(db_path=db)
@@ -178,7 +178,7 @@ def test_store_persists_context_embedding(tmp_path: Path):
 def test_migration_v3_to_v4(tmp_path: Path):
     """A v3 DB (without context_embedding) auto-migrates to v4 on
     init."""
-    from engram.memory import _EPISODES_SCHEMA_VERSION, EpisodicMemory
+    from verimem.memory import _EPISODES_SCHEMA_VERSION, EpisodicMemory
 
     db = tmp_path / "ep.db"
 
@@ -220,7 +220,7 @@ def test_migration_v3_to_v4(tmp_path: Path):
 def test_context_weight_zero_collapses_to_no_context(tmp_path: Path):
     """`context_weight=0.0` should give the same score as not passing
     a context at all — even with a context_emb provided."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     rng = np.random.default_rng(seed=3)
@@ -243,7 +243,7 @@ def test_null_context_episodes_score_neutral(tmp_path: Path):
     """Episodes stored without a context_emb (NULL column) must not
     crash recall and must not be spuriously promoted by the context
     boost — they get a 0 contribution."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     rng = np.random.default_rng(seed=7)

@@ -14,7 +14,7 @@ attacks that NO single channel survives:
 
 So each channel covers the OTHER's named hole; ``trust = min(channels)`` is the only
 policy net-positive across both attacks. This axis turns that into a NUMBER, and it
-does so by driving the REAL ``engram.source_trust.SourceTrustBook`` (the shipped
+does so by driving the REAL ``verimem.source_trust.SourceTrustBook`` (the shipped
 independence clustering + two channels) — not a toy. Legit items with real
 corroboration are mixed in so that "always abstain" cannot win.
 
@@ -25,7 +25,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from engram.source_trust import SourceTrustBook
+from verimem.source_trust import SourceTrustBook
 
 from .axes import ProbeItem, run_axis
 from .scoring import scorecard

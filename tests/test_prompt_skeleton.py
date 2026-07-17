@@ -37,13 +37,13 @@ class _Skill:
 
 
 def test_empty_returns_basic_template():
-    from engram.prompt_skeleton import build_prompt_skeleton
+    from verimem.prompt_skeleton import build_prompt_skeleton
     out = build_prompt_skeleton(task="x", episodes=[], facts=[], skills=[])
     assert "x" in out["prompt"]
 
 
 def test_includes_relevant_facts():
-    from engram.prompt_skeleton import build_prompt_skeleton
+    from verimem.prompt_skeleton import build_prompt_skeleton
     facts = [_Fact("f1", "WordPress 5.8 vulnerable to CVE-X")]
     out = build_prompt_skeleton(
         task="WordPress exploitation",
@@ -53,7 +53,7 @@ def test_includes_relevant_facts():
 
 
 def test_includes_relevant_episodes():
-    from engram.prompt_skeleton import build_prompt_skeleton
+    from verimem.prompt_skeleton import build_prompt_skeleton
     eps = [_Ep("e1", "WordPress RCE acme", "success",
                "shell obtained")]
     out = build_prompt_skeleton(
@@ -64,7 +64,7 @@ def test_includes_relevant_episodes():
 
 
 def test_includes_skills():
-    from engram.prompt_skeleton import build_prompt_skeleton
+    from verimem.prompt_skeleton import build_prompt_skeleton
     skills = [_Skill("s1", trigger="WordPress RCE exploit",
                      body="apply CVE-X")]
     out = build_prompt_skeleton(
@@ -75,7 +75,7 @@ def test_includes_skills():
 
 
 def test_payload_keys():
-    from engram.prompt_skeleton import build_prompt_skeleton
+    from verimem.prompt_skeleton import build_prompt_skeleton
     out = build_prompt_skeleton(task="x", episodes=[], facts=[], skills=[])
     for k in ("prompt", "components", "n_episodes_cited",
               "n_facts_cited", "n_skills_cited"):
@@ -83,7 +83,7 @@ def test_payload_keys():
 
 
 def test_irrelevant_excluded():
-    from engram.prompt_skeleton import build_prompt_skeleton
+    from verimem.prompt_skeleton import build_prompt_skeleton
     facts = [_Fact("f1", "totally unrelated cooking recipe")]
     out = build_prompt_skeleton(
         task="WordPress exploit",

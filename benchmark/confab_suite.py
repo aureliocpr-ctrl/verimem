@@ -23,7 +23,7 @@ import json
 from typing import Any
 
 from benchmark.stats import auroc, bootstrap_ci
-from engram.grounding_gate import fact_grounding_score
+from verimem.grounding_gate import fact_grounding_score
 
 TYPES = ["entity_swap", "numeric", "temporal_drift", "overgeneralization",
          "plausible_inference"]

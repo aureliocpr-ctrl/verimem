@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_security_detector import (
+from verimem.l1_security_detector import (
     SecurityClaimWarning,
     detect_unsupported_security_claim,
 )
@@ -128,7 +128,7 @@ class TestEdgeCases:
 
 class TestGateWire:
     def test_l112_wired(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="The auth flow is now secure",
             verified_by=[],
@@ -140,7 +140,7 @@ class TestGateWire:
         assert "L1.12" in layers, f"expected L1.12, got {layers!r}"
 
     def test_l112_evidence_suppress(self) -> None:
-        from engram.anti_confab_gate import run_validation_gate
+        from verimem.anti_confab_gate import run_validation_gate
         result = run_validation_gate(
             proposition="Module hardened against XSS",
             verified_by=[

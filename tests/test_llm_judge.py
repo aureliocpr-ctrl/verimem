@@ -8,7 +8,7 @@ import types
 
 import pytest
 
-from engram.tier2_judge import JudgeAction, LLMJudge
+from verimem.tier2_judge import JudgeAction, LLMJudge
 
 
 class _StubLLM:
@@ -53,5 +53,5 @@ def test_prompt_includes_claim_topic_context():
 
 
 def test_implements_judge_protocol():
-    from engram.tier2_judge import Judge
+    from verimem.tier2_judge import Judge
     assert isinstance(LLMJudge(_StubLLM("NEUTRAL")), Judge)

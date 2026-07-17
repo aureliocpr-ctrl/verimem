@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.syntax_pollution import (
+from verimem.syntax_pollution import (
     PollutionError,
     detect_xml_markup,
     is_polluted,

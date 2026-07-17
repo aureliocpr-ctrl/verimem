@@ -75,7 +75,7 @@ _LOADERS = {"truthfulqa": load_truthfulqa, "halueval": load_halueval}
 
 
 def evaluate(pairs: list[dict[str, Any]], llm: Any, threshold: float) -> dict[str, Any]:
-    from engram.grounding_gate import fact_grounding_score_ex
+    from verimem.grounding_gate import fact_grounding_score_ex
     pos, neg = [], []
     rows = []
     for i, p in enumerate(pairs):
@@ -106,7 +106,7 @@ def main(argv=None) -> int:
     # Force the LLM judge path (not the local CE) — this bench measures the judge.
     os.environ["ENGRAM_GROUNDING_BACKEND"] = "claude"
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import resolve_write_threshold_for
+    from verimem.grounding_gate import resolve_write_threshold_for
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=90)
     threshold = resolve_write_threshold_for("claude")
 

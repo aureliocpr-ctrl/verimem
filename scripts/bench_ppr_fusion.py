@@ -22,9 +22,9 @@ def main() -> None:
     td = Path(tempfile.mkdtemp())
     os.environ["ENGRAM_DATA_DIR"] = str(td)
     os.environ["ENGRAM_RECALL_RERANK"] = "0"  # isolate the PPR signal from the CE
-    from engram.entity_kg import Entity, EntityStore
-    from engram.entity_populate import entity_kg_path_for
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.entity_kg import Entity, EntityStore
+    from verimem.entity_populate import entity_kg_path_for
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=td / "semantic" / "semantic.db")
     es = EntityStore(db_path=entity_kg_path_for(sm.db_path))

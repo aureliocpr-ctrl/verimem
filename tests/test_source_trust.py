@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.source_trust import SourceTrustBook
+from verimem.source_trust import SourceTrustBook
 
 
 def test_unseen_source_has_neutral_prior():
@@ -85,7 +85,7 @@ def test_stale_weight_attenuates_by_age():
     that failed PAST its world's half-life blames the source less — the
     world changed, the source did not lie. Full blame young, half at one
     half-life, floored so blame never vanishes entirely."""
-    from engram.source_trust import stale_weight
+    from verimem.source_trust import stale_weight
     assert stale_weight(0.0, half_life_s=100.0) == 1.0
     assert stale_weight(100.0, half_life_s=100.0) == pytest.approx(0.5)
     assert stale_weight(1e9, half_life_s=100.0) == pytest.approx(0.2)

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.tools_extra import _read_image_to_b64_and_media_type
+from verimem.tools_extra import _read_image_to_b64_and_media_type
 
 
 def test_read_image_blocks_ssrf_loopback():

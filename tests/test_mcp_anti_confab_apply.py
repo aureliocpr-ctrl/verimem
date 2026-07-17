@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from engram import mcp_server
-from engram.semantic import Fact, SemanticMemory
+from verimem import mcp_server
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture

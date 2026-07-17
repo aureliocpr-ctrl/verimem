@@ -11,8 +11,8 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from engram.gateway import GatewayKeys, create_app
-from engram.gateway_backup import backup_gateway, restore_gateway
+from verimem.gateway import GatewayKeys, create_app
+from verimem.gateway_backup import backup_gateway, restore_gateway
 
 try:
     from fastapi.testclient import TestClient

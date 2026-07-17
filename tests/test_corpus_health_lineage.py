@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.corpus_health_score import _count_lineage_connected, compute_health_score
-from engram.skill import Skill, SkillLibrary
+from verimem.corpus_health_score import _count_lineage_connected, compute_health_score
+from verimem.skill import Skill, SkillLibrary
 
 
 class _FakeAgent:

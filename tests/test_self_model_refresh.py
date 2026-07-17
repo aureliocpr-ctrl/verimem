@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.self_model_refresh import propose_refresh
+from verimem.self_model_refresh import propose_refresh
 
 
 def _ep(eid: str, task: str, topic_hint: str | None = None,
@@ -147,7 +147,7 @@ def test_ignores_non_project_topics():
 
 def test_diff_helper_reports_changed_fields():
     """compute_diff returns the set of field names that changed."""
-    from engram.self_model_refresh import compute_diff
+    from verimem.self_model_refresh import compute_diff
     a = {"recent_focus": "old", "active_projects": ["x"], "notes": "same"}
     b = {"recent_focus": "new", "active_projects": ["y"], "notes": "same"}
     changed = compute_diff(a, b)

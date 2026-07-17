@@ -37,7 +37,7 @@ import sys
 import time
 from pathlib import Path
 
-from engram.grounding_gate import select_relevant_span
+from verimem.grounding_gate import select_relevant_span
 
 DATA_DIR = Path.home() / ".engram" / "local_gate"
 LABELS_JSONL = DATA_DIR / "corpus_labels_v2.jsonl"
@@ -153,7 +153,7 @@ def _v1_test_ids() -> set[str]:
 
 def stage_label(a) -> int:
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import fact_grounding_score
+    from verimem.grounding_gate import fact_grounding_score
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     exclude = _v1_test_ids()
@@ -210,8 +210,8 @@ def stage_train(a) -> int:
                     out_dir=MODEL_DIR_V2, seed=a.seed)
 
     from benchmark.local_gate_eval import score_pairs
-    from engram.grounding_gate import optimal_threshold
-    from engram.local_grounding import make_finetuned_scorer
+    from verimem.grounding_gate import optimal_threshold
+    from verimem.local_grounding import make_finetuned_scorer
     scorer = make_finetuned_scorer(MODEL_DIR_V2)
     val_scores = score_pairs(val_items, scorer)
     # threshold on HARD val labels (>=0.5) — Youden needs binary targets
@@ -228,7 +228,7 @@ def stage_train(a) -> int:
 
 def stage_eval(a) -> int:
     from benchmark.stats import auroc
-    from engram.local_grounding import LocalGroundingJudge, make_finetuned_scorer
+    from verimem.local_grounding import LocalGroundingJudge, make_finetuned_scorer
 
     judge = LocalGroundingJudge(model_dir=MODEL_DIR_V2)
     thr = judge.threshold

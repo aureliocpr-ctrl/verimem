@@ -11,7 +11,7 @@ not invented examples.
 """
 from __future__ import annotations
 
-from engram.entity_extract_lite import extract_entities_lite
+from verimem.entity_extract_lite import extract_entities_lite
 
 
 def _names(text: str) -> set[str]:
@@ -47,12 +47,12 @@ def test_real_fact_proper_nouns_and_tech_tokens():
 def test_paths_and_dotted_modules():
     text = (
         "il fix vive in engram/semantic.py e il registry in "
-        "engram.provider_registry mentre benchmark/comparative_retrieval.py "
+        "verimem.provider_registry mentre benchmark/comparative_retrieval.py "
         "ha i 3 bracci"
     )
     names = _names(text)
     assert "engram/semantic.py" in names, names
-    assert "engram.provider_registry" in names, names
+    assert "verimem.provider_registry" in names, names
     assert "benchmark/comparative_retrieval.py" in names, names
 
 

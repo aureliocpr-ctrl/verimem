@@ -11,7 +11,7 @@ import pytest
 def _isolated(tmp_path, monkeypatch):
     # Patch the EXISTING (frozen) CONFIG instance in-place + restore — NOT importlib.reload,
     # which swaps the module object and pollutes every other test's CONFIG reference.
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     d = tmp_path / "engram"
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(d))
     orig = {a: getattr(CONFIG, a) for a in ("data_dir", "project_root") if hasattr(CONFIG, a)}
@@ -26,8 +26,8 @@ def _isolated(tmp_path, monkeypatch):
 
 def test_build_wires_judge_when_enabled(_isolated, monkeypatch):
     monkeypatch.setenv("ENGRAM_RECONCILE_NLI", "1")
-    from engram.agent import HippoAgent
-    from engram.semantic_conflict import LLMRelationJudge
+    from verimem.agent import HippoAgent
+    from verimem.semantic_conflict import LLMRelationJudge
 
     agent = HippoAgent.build()
     assert isinstance(getattr(agent.semantic, "_reconcile_judge", None), LLMRelationJudge)
@@ -35,7 +35,7 @@ def test_build_wires_judge_when_enabled(_isolated, monkeypatch):
 
 def test_build_no_judge_by_default(_isolated, monkeypatch):
     monkeypatch.delenv("ENGRAM_RECONCILE_NLI", raising=False)
-    from engram.agent import HippoAgent
+    from verimem.agent import HippoAgent
 
     agent = HippoAgent.build()
     assert getattr(agent.semantic, "_reconcile_judge", None) is None

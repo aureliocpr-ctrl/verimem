@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.client import Memory
+from verimem.client import Memory
 
 
 def test_record_and_why_through_memory(tmp_path):

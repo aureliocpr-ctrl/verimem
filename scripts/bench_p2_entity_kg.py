@@ -55,13 +55,13 @@ def bench_recall(corpus_data_dir: Path) -> dict[str, Any]:
 
     os.environ["ENGRAM_DATA_DIR"] = str(corpus_data_dir)
     # Reload config so it picks up the env var
-    from engram import config as _cfg
+    from verimem import config as _cfg
     _cfg.CONFIG = _cfg.Config()
     _cfg.CONFIG.ensure_dirs()
 
-    from engram.entity_kg import EntityStore
-    from engram.memory import EpisodicMemory
-    from engram.semantic import SemanticMemory
+    from verimem.entity_kg import EntityStore
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import SemanticMemory
 
     # Pass explicit db_paths from the new CONFIG
     entity_kg = EntityStore(
@@ -185,7 +185,7 @@ def bench_recall(corpus_data_dir: Path) -> dict[str, Any]:
 def bench_ppr_determinism(tmp_path: Path) -> dict[str, Any]:
     """10 chiamate PPR consecutive su stesso grafo deterministic →
     assert score identici fino a 12 decimali."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     store = EntityStore(db_path=tmp_path / "ppr_det.db")
     random.seed(42)
@@ -236,7 +236,7 @@ def bench_ppr_determinism(tmp_path: Path) -> dict[str, Any]:
 
 def bench_ppr_latency_scaling(tmp_path: Path) -> dict[str, Any]:
     """PPR latency su grafi 10/100/500/1000 nodi (Erdős-Rényi-like)."""
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     results = []
     for n_nodes in (10, 100, 500, 1000):

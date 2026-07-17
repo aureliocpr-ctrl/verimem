@@ -26,13 +26,13 @@ from pathlib import Path
 
 import pytest
 
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.swarm.bridge import poll_until_done
-from engram.swarm.lifecycle import remove_session, stop_session
-from engram.swarm.schemas import AgentSpec
-from engram.swarm.spawn import spawn_agent
-from engram.swarm.state import read_state
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.swarm.bridge import poll_until_done
+from verimem.swarm.lifecycle import remove_session, stop_session
+from verimem.swarm.schemas import AgentSpec
+from verimem.swarm.spawn import spawn_agent
+from verimem.swarm.state import read_state
 
 _INTEGRATION_ENABLED = os.environ.get("ENGRAM_SWARM_INTEGRATION", "") == "1"
 

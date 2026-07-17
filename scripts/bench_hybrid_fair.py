@@ -41,7 +41,7 @@ os.environ["ENGRAM_RECALL_RERANK"] = "0"      # not under test (default ON since
 sys.path.insert(0, os.path.expanduser("~/Code/HippoAgent/scripts"))
 from bench_recall_self import _copy_live_db, _mcnemar  # noqa: E402
 
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 SEED = 4242
 N_TARGET = 120

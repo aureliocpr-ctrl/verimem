@@ -4,7 +4,7 @@
 Diverso da ``bench_rerank.py`` (che usa e5-base 768d, NON il modello live): qui si
 misura il lift del cross-encoder ``bge-reranker-v2-m3`` sul recall REALE di
 produzione — ``SemanticMemory`` col modello multilingue ATTIVO (post-flip 2026-06-04).
-È esattamente il path ``engram.rerank.recall_reranked`` che si attiverebbe con
+È esattamente il path ``verimem.rerank.recall_reranked`` che si attiverebbe con
 ``HIPPO_RERANK=1``: 2 stadi (recall dense top-50 con gate+v9 -> bge-reranker -> top-10).
 
 Su COPIA del corpus live, 25 query IT etichettate a mano. Hermetic (mai scrive live).
@@ -41,9 +41,9 @@ def _metrics(ranked_lists: list[list[str]]) -> dict:
 
 
 def main() -> int:
-    from engram import embedding as emb
-    from engram.rerank import recall_reranked
-    from engram.semantic import SemanticMemory
+    from verimem import embedding as emb
+    from verimem.rerank import recall_reranked
+    from verimem.semantic import SemanticMemory
 
     src = os.path.expanduser("~/.engram/semantic/semantic.db")
     dst = Path(tempfile.mkdtemp(prefix="bench_rr_live_")) / "s.db"

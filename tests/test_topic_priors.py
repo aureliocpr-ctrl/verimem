@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from engram.topic_priors import apply_topic_penalty
+from verimem.topic_priors import apply_topic_penalty
 
 
 def test_penalty_applied_to_lessons_on_task_query():

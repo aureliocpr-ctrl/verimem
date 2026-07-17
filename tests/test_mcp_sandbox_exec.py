@@ -1,4 +1,4 @@
-"""Task #48 — MCP wrapper exposing engram.sandbox.SandboxedShell.
+"""Task #48 — MCP wrapper exposing verimem.sandbox.SandboxedShell.
 
 The sandbox CORE (engram/sandbox.py, cycle 13, 44 tests) already enforces
 deny-by-default + allowlist + cwd jail + timeout + audit. This module
@@ -28,7 +28,7 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 
 @pytest.fixture(autouse=True)
@@ -57,14 +57,14 @@ async def _invoke(name: str, arguments: dict | None = None) -> dict[str, Any]:
 
 class TestCapabilityClassification:
     def test_sandbox_exec_registered_not_unknown(self):
-        from engram.tool_registry import REGISTRY
+        from verimem.tool_registry import REGISTRY
         assert "sandbox_exec" in REGISTRY._caps, (
             "sandbox_exec must be explicitly registered (else fail-CLOSED "
             "as DESTRUCTIVE/critical unknown)"
         )
 
     def test_sandbox_exec_is_execute_capability(self):
-        from engram.tool_registry import REGISTRY
+        from verimem.tool_registry import REGISTRY
         cap = REGISTRY.get("sandbox_exec")
         assert cap.capability == "EXECUTE"
         assert cap.executes_command is True
@@ -139,7 +139,7 @@ class TestEnforceGateInteraction:
         WITHOUT _user_confirmed — proves it is registered AND not
         requires_confirm. If misclassified, this test fails."""
         monkeypatch.setenv("ENGRAM_CAPABILITY_GATE", "enforce")
-        from engram.mcp_server import _capability_gate
+        from verimem.mcp_server import _capability_gate
         ok, msg = _capability_gate("sandbox_exec", {})
         assert ok is True, f"sandbox_exec must pass enforce gate; msg={msg}"
 

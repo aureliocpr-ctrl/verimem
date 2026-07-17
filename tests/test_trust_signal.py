@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ class TestTrustSignalPureFunction:
     """compute_trust_signal(fact, sm, *, now, contradiction_store=None)."""
 
     def test_fresh_verified_fact_is_trusted(self, sm: SemanticMemory) -> None:
-        from engram.trust_signal import compute_trust_signal
+        from verimem.trust_signal import compute_trust_signal
         now = time.time()
         f = Fact(
             id="f-fresh", proposition="X is 5MB", topic="t",
@@ -55,7 +55,7 @@ class TestTrustSignalPureFunction:
         assert sig.is_superseded is False
 
     def test_old_fact_is_stale(self, sm: SemanticMemory) -> None:
-        from engram.trust_signal import compute_trust_signal
+        from verimem.trust_signal import compute_trust_signal
         now = time.time()
         old_ts = now - 200 * 86400  # 200 days ago
         f = Fact(
@@ -68,7 +68,7 @@ class TestTrustSignalPureFunction:
         assert sig.age_days >= 180.0
 
     def test_legacy_unverified_fact_flagged(self, sm: SemanticMemory) -> None:
-        from engram.trust_signal import compute_trust_signal
+        from verimem.trust_signal import compute_trust_signal
         now = time.time()
         f = Fact(
             id="f-leg", proposition="X is 5MB", topic="t",
@@ -80,7 +80,7 @@ class TestTrustSignalPureFunction:
         assert sig.verdict == "unverified"
 
     def test_superseded_fact_is_obsolete(self, sm: SemanticMemory) -> None:
-        from engram.trust_signal import compute_trust_signal
+        from verimem.trust_signal import compute_trust_signal
         now = time.time()
         f = Fact(
             id="f-sup", proposition="X is 5MB", topic="t",
@@ -101,8 +101,8 @@ class TestTrustSignalUsesContradictionStore:
     def test_fact_with_contradiction_is_contested(
         self, sm: SemanticMemory, tmp_path: Path,
     ) -> None:
-        from engram.contradiction import Contradiction, ContradictionStore
-        from engram.trust_signal import compute_trust_signal
+        from verimem.contradiction import Contradiction, ContradictionStore
+        from verimem.trust_signal import compute_trust_signal
         store = ContradictionStore(sm.db_path)
         now = time.time()
         f = Fact(
@@ -122,8 +122,8 @@ class TestTrustSignalUsesContradictionStore:
     def test_resolved_contradictions_not_counted(
         self, sm: SemanticMemory,
     ) -> None:
-        from engram.contradiction import Contradiction, ContradictionStore
-        from engram.trust_signal import compute_trust_signal
+        from verimem.contradiction import Contradiction, ContradictionStore
+        from verimem.trust_signal import compute_trust_signal
         store = ContradictionStore(sm.db_path)
         now = time.time()
         f = Fact(

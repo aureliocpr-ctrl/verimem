@@ -18,8 +18,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from engram.self_model import render_anchor_block
-from engram.semantic import Fact, SemanticMemory
+from verimem.self_model import render_anchor_block
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _mk(tmp_path: Path) -> SemanticMemory:

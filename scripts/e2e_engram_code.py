@@ -21,9 +21,9 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
-from engram.agent import HippoAgent
-from engram.code import EngramCode
-from engram.tools_extra import all_tools
+from verimem.agent import HippoAgent
+from verimem.code import EngramCode
+from verimem.tools_extra import all_tools
 
 BUGGY_FILE_NAME = "calculator.py"
 BUGGY_CODE = '''"""Toy calculator with one bug for the agent to find."""
@@ -86,7 +86,7 @@ def _run() -> int:
         )
         banner(f"Submitting task: {task[:60]}…")
         t0 = time.perf_counter()
-        with patch("engram.code.Confirm.ask", return_value=True):
+        with patch("verimem.code.Confirm.ask", return_value=True):
             session.submit(task)
         elapsed = time.perf_counter() - t0
 

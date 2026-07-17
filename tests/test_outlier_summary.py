@@ -13,13 +13,13 @@ class _Ep:
 
 
 def test_empty_returns_empty():
-    from engram.outlier_summary import summarize_top_outliers
+    from verimem.outlier_summary import summarize_top_outliers
     out = summarize_top_outliers([])
     assert out["outliers"] == []
 
 
 def test_outlier_with_explanation():
-    from engram.outlier_summary import summarize_top_outliers
+    from verimem.outlier_summary import summarize_top_outliers
     eps = [
         _Ep(f"e{i}", "task X", "success", 100) for i in range(10)
     ]
@@ -32,7 +32,7 @@ def test_outlier_with_explanation():
 
 
 def test_top_k_limit():
-    from engram.outlier_summary import summarize_top_outliers
+    from verimem.outlier_summary import summarize_top_outliers
     eps = [_Ep(f"e{i}", "X", "success", 100) for i in range(5)]
     eps += [_Ep(f"o{i}", "X", "failure", 10000) for i in range(10)]
     out = summarize_top_outliers(eps, top_k=3)
@@ -40,14 +40,14 @@ def test_top_k_limit():
 
 
 def test_payload_shape():
-    from engram.outlier_summary import summarize_top_outliers
+    from verimem.outlier_summary import summarize_top_outliers
     out = summarize_top_outliers([])
     for k in ("outliers", "n_total_scanned"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.outlier_summary import summarize_top_outliers
+    from verimem.outlier_summary import summarize_top_outliers
     eps = [_Ep(f"e{i}", "X", "success") for i in range(5)]
     eps.append(_Ep("anom", "X", "failure"))
     out = summarize_top_outliers(eps)

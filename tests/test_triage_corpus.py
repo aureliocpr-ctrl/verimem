@@ -7,8 +7,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from engram.semantic import Fact, SemanticMemory
-from engram.tier2_judge import FixedJudge, JudgeAction, JudgeVerdict, triage_corpus
+from verimem.semantic import Fact, SemanticMemory
+from verimem.tier2_judge import FixedJudge, JudgeAction, JudgeVerdict, triage_corpus
 
 
 def _mem():
@@ -46,7 +46,7 @@ def test_cap_is_surfaced_not_silent():
     sm = _mem()
     for i in range(5):
         sm.store(Fact(proposition=f"The widget count is {i + 10}.", topic="t"), embed="sync")
-    from engram.tier2_judge import FixedJudge, JudgeAction, JudgeVerdict, triage_corpus
+    from verimem.tier2_judge import FixedJudge, JudgeAction, JudgeVerdict, triage_corpus
     keep = FixedJudge(JudgeVerdict(JudgeAction.KEEP, "x"))  # judge keeps; check accounting
     res = triage_corpus(sm, keep, apply=False, max_judged=2, min_corroborations=99)
     assert res["reviewed"] == 2  # only 2 judged this pass

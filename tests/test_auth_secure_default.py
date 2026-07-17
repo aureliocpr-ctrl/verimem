@@ -59,7 +59,7 @@ class TestSecureDefaultAuth:
     ) -> None:
         """With no env var set, auth_disabled() must return False
         (auth is REQUIRED by default — secure-by-default)."""
-        from engram.dashboard_routes.auth import auth_disabled
+        from verimem.dashboard_routes.auth import auth_disabled
         assert auth_disabled() is False, (
             "Cycle #124 (lab finding agent #3 HIGH risk): default "
             "must be secure. HIPPO_DASHBOARD_AUTH_DISABLED unset must "
@@ -75,7 +75,7 @@ class TestBackwardCompatExplicitOptOut:
         self, clean_env: None, value: str,
     ) -> None:
         os.environ["HIPPO_DASHBOARD_AUTH_DISABLED"] = value
-        from engram.dashboard_routes.auth import auth_disabled
+        from verimem.dashboard_routes.auth import auth_disabled
         assert auth_disabled() is True, (
             f"Explicit opt-out '{value}' must disable auth "
             f"(backward compat for dev/local)."
@@ -86,7 +86,7 @@ class TestBackwardCompatExplicitOptOut:
         self, clean_env: None, value: str,
     ) -> None:
         os.environ["HIPPO_DASHBOARD_AUTH_DISABLED"] = value
-        from engram.dashboard_routes.auth import auth_disabled
+        from verimem.dashboard_routes.auth import auth_disabled
         assert auth_disabled() is False, (
             f"Explicit '{value}' must enforce auth."
         )

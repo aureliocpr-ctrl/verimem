@@ -29,13 +29,13 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent))
 
 # ruff: noqa: E402 — env var must be set before module import.
-from engram import config as config_mod  # noqa: E402
-from engram.config import CONFIG  # noqa: E402
-from engram.episode import Episode, Trace  # noqa: E402
-from engram.memory import EpisodicMemory  # noqa: E402
-from engram.semantic import SemanticMemory  # noqa: E402
-from engram.skill import Skill, SkillLibrary  # noqa: E402
-from engram.sleep import SleepEngine  # noqa: E402
+from verimem import config as config_mod  # noqa: E402
+from verimem.config import CONFIG  # noqa: E402
+from verimem.episode import Episode, Trace  # noqa: E402
+from verimem.memory import EpisodicMemory  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
+from verimem.skill import Skill, SkillLibrary  # noqa: E402
+from verimem.sleep import SleepEngine  # noqa: E402
 
 
 def _ep(eid, *, skills, outcome, ts) -> Episode:
@@ -100,8 +100,8 @@ def _patch_cfg(**fields) -> object:
     """Returns a new frozen Config and re-binds modules that import CONFIG."""
     new = dataclasses.replace(CONFIG, **fields)
     config_mod.CONFIG = new
-    from engram import memory as memory_mod
-    from engram import sleep as sleep_mod
+    from verimem import memory as memory_mod
+    from verimem import sleep as sleep_mod
     sleep_mod.CONFIG = new
     memory_mod.CONFIG = new
     return new

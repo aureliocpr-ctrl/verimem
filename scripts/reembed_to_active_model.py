@@ -37,8 +37,8 @@ from pathlib import Path
 # job intentionally loads the model in-process.
 os.environ.setdefault("HIPPO_OFFLINE", "1")
 
-from engram import embedding  # noqa: E402
-from engram.config import CONFIG  # noqa: E402
+from verimem import embedding  # noqa: E402
+from verimem.config import CONFIG  # noqa: E402
 
 DATA = Path(os.environ.get("ENGRAM_DATA_DIR", "~/.engram")).expanduser()
 SEM = DATA / "semantic" / "semantic.db"

@@ -34,14 +34,14 @@ class _Skill:
 
 
 def test_empty_returns_empty_answer():
-    from engram.oracle import oracle_query
+    from verimem.oracle import oracle_query
     out = oracle_query(query="x", episodes=[], facts=[], skills=[])
     for k in ("episodes", "facts", "skills"):
         assert out[k] == []
 
 
 def test_finds_relevant_episodes():
-    from engram.oracle import oracle_query
+    from verimem.oracle import oracle_query
     eps = [
         _Ep("e1", "WordPress RCE on acme.io", "success"),
         _Ep("e2", "Linux kernel update", "success"),
@@ -53,7 +53,7 @@ def test_finds_relevant_episodes():
 
 
 def test_finds_relevant_facts():
-    from engram.oracle import oracle_query
+    from verimem.oracle import oracle_query
     facts = [
         _Fact("f1", "WordPress 5.8 vulnerable to CVE-X"),
         _Fact("f2", "Aurelio prefers TypeScript"),
@@ -65,7 +65,7 @@ def test_finds_relevant_facts():
 
 
 def test_finds_relevant_skills():
-    from engram.oracle import oracle_query
+    from verimem.oracle import oracle_query
     skills = [
         _Skill("s1", trigger="WordPress RCE exploit"),
         _Skill("s2", trigger="firmware fuzzing"),
@@ -77,13 +77,13 @@ def test_finds_relevant_skills():
 
 
 def test_confidence_aggregated():
-    from engram.oracle import oracle_query
+    from verimem.oracle import oracle_query
     out = oracle_query(query="x", episodes=[], facts=[], skills=[])
     assert "confidence" in out
 
 
 def test_payload_shape():
-    from engram.oracle import oracle_query
+    from verimem.oracle import oracle_query
     out = oracle_query(query="x", episodes=[], facts=[], skills=[])
     for k in ("query", "episodes", "facts", "skills", "confidence",
               "n_results"):

@@ -15,7 +15,7 @@ import pytest
 
 @pytest.fixture()
 def mem(tmp_path):
-    from engram.client import Memory
+    from verimem.client import Memory
     return Memory(tmp_path / "h.db")
 
 

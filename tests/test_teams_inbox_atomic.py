@@ -25,7 +25,7 @@ import time as _time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from engram.teams.cli import (
+from verimem.teams.cli import (
     _INBOX_LOCK_STALE_S,
     append_to_inbox,
 )

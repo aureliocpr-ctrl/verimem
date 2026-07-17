@@ -1,6 +1,6 @@
 """Cycle 175.1 (2026-05-22) — dream_stuck_hook contract tests.
 
-Hook between ``engram.active_learning.select_stuck_candidates`` and the
+Hook between ``verimem.active_learning.select_stuck_candidates`` and the
 Auto-Dream pipeline. Pure seed builder: returns a dict that
 ``auto_dream_worker._propose_via_engram`` can splice into the
 ``instructions`` text passed to ``propose_dream_tasks``.
@@ -13,7 +13,7 @@ Scope cycle 175.1 — SOFT retry:
   >10% promotion rate in 20 dream cycles) does NOT fire with the soft
   retry alone — see ``docs/cycle174_active_learning_design.md``.
 
-RED marker: ``import engram.dream_stuck_hook`` must fail on master.
+RED marker: ``import verimem.dream_stuck_hook`` must fail on master.
 """
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ from unittest.mock import patch
 import pytest
 
 # RED MARKER
-from engram.dream_stuck_hook import build_stuck_retry_seed
-from engram.skill import Skill, SkillLibrary
+from verimem.dream_stuck_hook import build_stuck_retry_seed
+from verimem.skill import Skill, SkillLibrary
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -151,11 +151,11 @@ class TestBuildStuckRetrySeed:
         self, skill_db_with_stuck: Path,
     ) -> None:
         """Composition contract: build_stuck_retry_seed must forward to
-        engram.active_learning.select_stuck_candidates with the same DB
+        verimem.active_learning.select_stuck_candidates with the same DB
         path + max_n kwarg. Falsifies any future implementation that
         re-implements the SELECT logic instead of composing."""
         with patch(
-            "engram.dream_stuck_hook.select_stuck_candidates",
+            "verimem.dream_stuck_hook.select_stuck_candidates",
             return_value=["id-alpha", "id-beta"],
         ) as mock_sel:
             out = build_stuck_retry_seed(
@@ -171,7 +171,7 @@ class TestBuildStuckRetrySeed:
 
 
 # ---------------------------------------------------------------------------
-# Integration: engram.auto_dream_worker._propose_via_engram now calls the
+# Integration: verimem.auto_dream_worker._propose_via_engram now calls the
 # hook and splices the suffix into ``instructions`` passed to
 # ``propose_dream_tasks``. These two tests pin the wiring; the unit tests
 # above already cover seed semantics in isolation.
@@ -182,7 +182,7 @@ class TestProposeViaEngramHookWiring:
     def test_augments_instructions_when_stuck_present(
         self, tmp_path: Path,
     ) -> None:
-        from engram.auto_dream_worker import _propose_via_engram
+        from verimem.auto_dream_worker import _propose_via_engram
 
         engram_dir = tmp_path / "engram"
         skills_dir = engram_dir / "skills"
@@ -197,7 +197,7 @@ class TestProposeViaEngramHookWiring:
         ))
 
         with patch(
-            "engram.dream.propose_dream_tasks",
+            "verimem.dream.propose_dream_tasks",
             return_value={"dream_id": "x", "pending_tasks": []},
         ) as mock_propose:
             _propose_via_engram(engram_dir=engram_dir)
@@ -211,7 +211,7 @@ class TestProposeViaEngramHookWiring:
 
     def test_no_augment_when_no_stuck(self, tmp_path: Path) -> None:
         """Empty corpus → instructions is the base text, byte-identical."""
-        from engram.auto_dream_worker import _propose_via_engram
+        from verimem.auto_dream_worker import _propose_via_engram
 
         engram_dir = tmp_path / "engram"
         skills_dir = engram_dir / "skills"
@@ -219,7 +219,7 @@ class TestProposeViaEngramHookWiring:
         SkillLibrary(dir_path=skills_dir, db_path=skill_db)
 
         with patch(
-            "engram.dream.propose_dream_tasks",
+            "verimem.dream.propose_dream_tasks",
             return_value={"dream_id": "y", "pending_tasks": []},
         ) as mock_propose:
             _propose_via_engram(engram_dir=engram_dir)

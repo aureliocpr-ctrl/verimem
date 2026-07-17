@@ -24,13 +24,13 @@ class _Skill:
 
 
 def test_empty_returns_empty():
-    from engram.skill_roi import rank_skills_by_roi
+    from verimem.skill_roi import rank_skills_by_roi
     out = rank_skills_by_roi([])
     assert out["ranked"] == []
 
 
 def test_high_roi_skill_first():
-    from engram.skill_roi import rank_skills_by_roi
+    from verimem.skill_roi import rank_skills_by_roi
     skills = [
         _Skill("low", trials=2, successes=1, avg_tokens=100),
         _Skill("high", trials=50, successes=45, avg_tokens=2000),
@@ -40,7 +40,7 @@ def test_high_roi_skill_first():
 
 
 def test_zero_trials_handled():
-    from engram.skill_roi import rank_skills_by_roi
+    from verimem.skill_roi import rank_skills_by_roi
     skills = [_Skill("unused", trials=0, successes=0, avg_tokens=500)]
     out = rank_skills_by_roi(skills)
     # ROI undefined → should be 0 or None
@@ -48,7 +48,7 @@ def test_zero_trials_handled():
 
 
 def test_retired_skill_excluded():
-    from engram.skill_roi import rank_skills_by_roi
+    from verimem.skill_roi import rank_skills_by_roi
     skills = [
         _Skill("active", trials=10, successes=8, avg_tokens=500,
                status="promoted"),
@@ -62,7 +62,7 @@ def test_retired_skill_excluded():
 
 
 def test_top_k_limit():
-    from engram.skill_roi import rank_skills_by_roi
+    from verimem.skill_roi import rank_skills_by_roi
     skills = [
         _Skill(f"s{i}", trials=10, successes=8, avg_tokens=100)
         for i in range(10)
@@ -72,14 +72,14 @@ def test_top_k_limit():
 
 
 def test_payload_keys():
-    from engram.skill_roi import rank_skills_by_roi
+    from verimem.skill_roi import rank_skills_by_roi
     out = rank_skills_by_roi([])
     for k in ("ranked", "n_skills_scanned"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.skill_roi import rank_skills_by_roi
+    from verimem.skill_roi import rank_skills_by_roi
     skills = [_Skill("s1", trials=5, successes=4, avg_tokens=200)]
     out = rank_skills_by_roi(skills)
     if out["ranked"]:

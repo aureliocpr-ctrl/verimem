@@ -58,7 +58,7 @@ import numpy as np
 def test_singleton_sequence_is_noop():
     """A sequence with a single element has zero transitions; M
     must be byte-equal to its prior value."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_successor_matrix,
         update_from_sequence,
     )
@@ -81,7 +81,7 @@ def test_known_pair_increments_target_cell():
     """For transition A→B, the TD update should pull M[A] toward
     e_A + γ·M[B]. In particular, M[A][B] (currently small or zero)
     should increase relative to its prior value when γ·M[B][B] > 0."""
-    from engram.successor_repr import update_from_sequence
+    from verimem.successor_repr import update_from_sequence
 
     ids = ["A", "B", "C"]
     # Start from identity: M[i][j] = 1 if i==j else 0. Then any
@@ -101,7 +101,7 @@ def test_known_pair_increments_target_cell():
 
 def test_alpha_zero_preserves_matrix():
     """α=0 means no learning: every entry of M must equal its prior."""
-    from engram.successor_repr import update_from_sequence
+    from verimem.successor_repr import update_from_sequence
 
     ids = ["A", "B", "C"]
     rng = np.random.default_rng(42)
@@ -118,7 +118,7 @@ def test_alpha_zero_preserves_matrix():
 def test_row_normalisation_preserved():
     """After the update, every row of M sums to 1 (same convention
     as the batch builder)."""
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_successor_matrix,
         update_from_sequence,
     )
@@ -140,7 +140,7 @@ def test_unknown_skill_expands_universe():
     """Encountering a new skill not in `ids` extends the matrix by
     one row/column. The new row defaults to identity (the new skill
     has only itself as future) before the TD update is applied."""
-    from engram.successor_repr import update_from_sequence
+    from verimem.successor_repr import update_from_sequence
 
     ids = ["A", "B"]
     M = np.eye(2, dtype=np.float32)
@@ -172,7 +172,7 @@ def test_online_preserves_rank_ordering():
     α > 0 the magnitudes have residual variance, but the ranking
     is what the planner consumes.
     """
-    from engram.successor_repr import (
+    from verimem.successor_repr import (
         build_successor_matrix,
         update_from_sequence,
     )

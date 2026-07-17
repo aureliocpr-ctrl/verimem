@@ -13,7 +13,7 @@ file (`python foo.py`) sono arbitrary code execution. find blocca le azioni
 """
 from __future__ import annotations
 
-from engram.sandbox import _validate_argv
+from verimem.sandbox import _validate_argv
 
 
 def test_strict_blocks_python_dash_c():

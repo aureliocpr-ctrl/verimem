@@ -7,8 +7,8 @@ end-to-end on the real gate in benchmark/independence_validation.py --product.
 """
 from __future__ import annotations
 
-from engram.client import Memory
-from engram.source_trust import reset_book_cache
+from verimem.client import Memory
+from verimem.source_trust import reset_book_cache
 
 _PARIS = "The capital is Paris."
 

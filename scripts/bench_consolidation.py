@@ -17,12 +17,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engram.consolidation import (
+from verimem.consolidation import (
     auto_consolidate,
     detect_cluster_candidates,
 )
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
 
 
 def _clone_production(td: Path) -> tuple[Path, Path]:

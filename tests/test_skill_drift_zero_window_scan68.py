@@ -8,7 +8,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from engram.skill_drift import detect_skill_drift
+from verimem.skill_drift import detect_skill_drift
 
 
 @dataclass

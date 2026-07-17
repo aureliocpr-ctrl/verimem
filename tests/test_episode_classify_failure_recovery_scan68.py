@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from engram.episode_classify import classify_episodes
+from verimem.episode_classify import classify_episodes
 
 
 @dataclass

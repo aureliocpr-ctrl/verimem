@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.episode import Trace
-from engram.wake import (
+from verimem.episode import Trace
+from verimem.wake import (
     _DANGEROUS_TOOLS_AFTER_EXTERNAL,
     _EXTERNAL_TOOLS,
     _injection_review_blocks_call,
@@ -169,7 +169,7 @@ def test_dispatch_react_blocks_shell_after_web(
     refusal observation containing 'REFUSED'.
     """
     monkeypatch.delenv("HIPPO_ALLOW_DANGEROUS_AFTER_EXTERNAL", raising=False)
-    from engram.episode import Episode
+    from verimem.episode import Episode
     ep = Episode(task_id="t1", task_text="summarise URL")
     # Simulate a web_fetch turn already happened
     ep.traces.append(Trace(step=1, thought="fetched", action="web_fetch",

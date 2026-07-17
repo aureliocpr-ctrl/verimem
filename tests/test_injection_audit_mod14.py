@@ -10,7 +10,7 @@ letter-spacing collapse defeat ``i_g_n_o_r_e``.
 """
 from __future__ import annotations
 
-from engram.prompt_injection import detect_injection
+from verimem.prompt_injection import detect_injection
 
 
 def test_underscore_separated_override_is_detected():

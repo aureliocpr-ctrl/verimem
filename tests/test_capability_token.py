@@ -12,7 +12,7 @@ import pytest
 
 def test_issue_and_verify_valid_token() -> None:
     """Contract (a): issue + verify same secret + before expiry → ok=True."""
-    from engram.capability_token import issue_token, verify_token
+    from verimem.capability_token import issue_token, verify_token
 
     tok = issue_token("agent_A", "recall", ttl_sec=60.0, scope="read")
     r = verify_token(tok, expected_op="recall", peer_id_required="agent_A")
@@ -26,7 +26,7 @@ def test_issue_and_verify_valid_token() -> None:
 
 def test_verify_token_op_mismatch_blocks() -> None:
     """Contract (b): op mismatch → blocked_by='op_mismatch'."""
-    from engram.capability_token import issue_token, verify_token
+    from verimem.capability_token import issue_token, verify_token
     tok = issue_token("agent_B", "recall", ttl_sec=60.0)
     r = verify_token(tok, expected_op="save")  # asking for different op
     assert r["ok"] is False
@@ -36,7 +36,7 @@ def test_verify_token_op_mismatch_blocks() -> None:
 
 def test_verify_token_expired_blocks() -> None:
     """Contract (c): expired token → blocked_by='expired'."""
-    from engram.capability_token import issue_token, verify_token
+    from verimem.capability_token import issue_token, verify_token
     # Issue then verify with future 'now' to simulate expiry
     tok = issue_token("agent_C", "mesh_query", ttl_sec=1.0)
     # Verify 10s in future
@@ -48,7 +48,7 @@ def test_verify_token_expired_blocks() -> None:
 
 def test_verify_token_tampered_hmac_blocks() -> None:
     """Contract (d): tampered HMAC → blocked_by='hmac_invalid'."""
-    from engram.capability_token import issue_token, verify_token
+    from verimem.capability_token import issue_token, verify_token
     tok = issue_token("agent_D", "recall", ttl_sec=60.0)
     # Tamper: flip last byte of hmac hex
     b64, hex_part = tok.rsplit(":", 1)
@@ -61,7 +61,7 @@ def test_verify_token_tampered_hmac_blocks() -> None:
 
 def test_verify_token_peer_mismatch_blocks() -> None:
     """Contract (e): wrong peer (when required) → blocked_by='peer_mismatch'."""
-    from engram.capability_token import issue_token, verify_token
+    from verimem.capability_token import issue_token, verify_token
     tok = issue_token("agent_E", "recall", ttl_sec=60.0)
     r = verify_token(tok, expected_op="recall",
                       peer_id_required="agent_X_imposter")
@@ -73,7 +73,7 @@ def test_verify_token_peer_mismatch_blocks() -> None:
 
 def test_malformed_token_blocked() -> None:
     """Defensive: malformed input → graceful refusal."""
-    from engram.capability_token import verify_token
+    from verimem.capability_token import verify_token
     for bad in ["", "no_separator", "bad:not_hex_at_all", ":justcolon"]:
         r = verify_token(bad, expected_op="recall")
         assert r["ok"] is False
@@ -87,8 +87,8 @@ def test_syscall_bridge_token_integration(tmp_path, monkeypatch) -> None:
     (b) call with require_token=True + no token → blocked_by='missing_capability_token'
     (c) call with require_token=True + tampered token → blocked_by='hmac_invalid'
     """
-    from engram import op_supervisor, syscall_bridge
-    from engram.capability_token import issue_token
+    from verimem import op_supervisor, syscall_bridge
+    from verimem.capability_token import issue_token
     audit = tmp_path / "audit.jsonl"
     monkeypatch.setattr(syscall_bridge, "ENGRAM_AUDIT_LOG", audit)
     monkeypatch.setattr(op_supervisor, "_DEFAULT_SUPERVISOR",

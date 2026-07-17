@@ -18,7 +18,7 @@ from pathlib import Path
 
 from benchmark.grounding_conditioned_qa_real import CASES
 from benchmark.qa_runner import LeanClaudeCLILLM
-from engram.client import Memory
+from verimem.client import Memory
 
 
 def _status(mem, fact, source):

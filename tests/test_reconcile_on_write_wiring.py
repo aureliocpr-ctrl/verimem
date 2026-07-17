@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import time
 
-from engram.entity_kg import Entity
-from engram.semantic import Fact, SemanticMemory
+from verimem.entity_kg import Entity
+from verimem.semantic import Fact, SemanticMemory
 
 _DAY = 86400.0
 

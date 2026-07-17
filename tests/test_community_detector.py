@@ -22,7 +22,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.community_detector import detect_communities
+from verimem.community_detector import detect_communities
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -133,7 +133,7 @@ def classify_writer(verified_by_json: str | None) -> str:
         refs = json.loads(verified_by_json or "[]")
     except (TypeError, ValueError):
         return "other"
-    from engram.source_trust import canonical_source
+    from verimem.source_trust import canonical_source
     src = canonical_source(refs if isinstance(refs, list) else [], fallback="")
     if src.startswith(("liar_", "colluder_")):
         return "deceiver"
@@ -284,8 +284,8 @@ def run_condition(facts: list[dict[str, str]], cfg: RealCorpusConfig,
     os.environ["ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND"] = "1" if deconfound else "0"
     os.environ["ENGRAM_SOURCE_AUTO_CONFIRM"] = "0"
     os.environ["ENGRAM_RECONCILE_ON_WRITE"] = "0"
-    from engram.client import Memory
-    from engram.source_trust import reset_book_cache
+    from verimem.client import Memory
+    from verimem.source_trust import reset_book_cache
     reset_book_cache()
     mem = Memory(db_path)
     by_key = {f["key"]: f for f in facts}

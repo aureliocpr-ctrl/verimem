@@ -1,6 +1,6 @@
 """Cycle 195 (2026-05-23) — decay_score tests.
 
-RED marker: ``from engram.time_decay_score import decay_score`` must
+RED marker: ``from verimem.time_decay_score import decay_score`` must
 fail on master.
 """
 from __future__ import annotations
@@ -10,7 +10,7 @@ import math
 import pytest
 
 # RED MARKER
-from engram.time_decay_score import (
+from verimem.time_decay_score import (
     DEFAULT_HALF_LIFE_DAYS,
     DEFAULT_LINEAR_CUTOFF_DAYS,
     decay_score,

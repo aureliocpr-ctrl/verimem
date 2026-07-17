@@ -27,8 +27,8 @@ def test_e2e_freetext_n10_recall_70pct() -> None:
     Future cycle: test with embed bridge to see if semantic mapping
     improves recall vs hash.
     """
-    from engram.resonator_memory import ResonatorMemory
-    from engram.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_memory import ResonatorMemory
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
 
     texts = [
         "aurelio works on hippoagent memory",
@@ -62,7 +62,7 @@ def test_e2e_freetext_n10_recall_70pct() -> None:
 
 def test_e2e_reverse_lookup_deterministic() -> None:
     """Contract (b): atoms → text reverse map deterministic."""
-    from engram.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
 
     texts = ["text A", "text B", "text C"]
     mapping = {}
@@ -77,8 +77,8 @@ def test_e2e_reverse_lookup_deterministic() -> None:
 
 def test_e2e_storage_constant_n10_vs_n100() -> None:
     """Contract (c): storage indipendente da N (Resonator property)."""
-    from engram.resonator_memory import ResonatorMemory
-    from engram.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_memory import ResonatorMemory
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
 
     mem_small = ResonatorMemory(n_roles=3, atoms_per_role=32, d=4096)
     mem_small.remember_tuple(text_to_atoms_via_hash("x", 3, 32))
@@ -101,7 +101,7 @@ def test_e2e_storage_constant_n10_vs_n100() -> None:
 
 def test_e2e_collision_rate_low() -> None:
     """Contract (d): 100 random texts, collision rate < 10%."""
-    from engram.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
 
     seen: set[tuple[int, ...]] = set()
     n_texts = 100
@@ -123,8 +123,8 @@ def test_e2e_collision_rate_low() -> None:
 
 def test_e2e_latency_acceptable() -> None:
     """Cycle 397 latency: write < 10ms, recall full < 30s for N=10."""
-    from engram.resonator_memory import ResonatorMemory
-    from engram.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_memory import ResonatorMemory
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
 
     mem = ResonatorMemory(n_roles=3, atoms_per_role=32, d=4096)
     write_times = []

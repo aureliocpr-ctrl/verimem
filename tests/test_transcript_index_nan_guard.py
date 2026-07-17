@@ -1,4 +1,4 @@
-"""NaN-guard del recall Tier C (engram.transcript_index).
+"""NaN-guard del recall Tier C (verimem.transcript_index).
 
 Un embedding di lunghezza CORRETTA (passa il length-guard) ma con valori
 non-finiti (NaN/inf) NON deve crashare il recall ne inquinare il ranking con
@@ -14,8 +14,8 @@ import sqlite3
 
 import numpy as np
 
-from engram import embedding as E
-from engram.transcript_index import TranscriptIndex, Turn
+from verimem import embedding as E
+from verimem.transcript_index import TranscriptIndex, Turn
 
 
 def test_recall_drops_nan_embedding_no_crash_no_pollution(tmp_path):

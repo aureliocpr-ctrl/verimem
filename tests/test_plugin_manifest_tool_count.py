@@ -13,7 +13,7 @@ import json
 import re
 from pathlib import Path
 
-from engram import mcp_server
+from verimem import mcp_server
 
 _PLUGIN_JSON = Path(__file__).resolve().parents[1] / ".claude-plugin" / "plugin.json"
 

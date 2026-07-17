@@ -51,8 +51,8 @@ def _run(condition: str) -> dict:
     os.environ["ENGRAM_SOURCE_INDEPENDENCE_DECONFOUND"] = (
         "1" if condition.startswith("deconf") else "0")
     os.environ["ENGRAM_RECONCILE_ON_WRITE"] = "0"
-    from engram.client import Memory
-    from engram.source_trust import reset_book_cache
+    from verimem.client import Memory
+    from verimem.source_trust import reset_book_cache
     reset_book_cache()
     honest = [f"honest_{i}" for i in range(_N_HONEST)]
     cartel = [f"cartel_{i}" for i in range(_N_CARTEL)]

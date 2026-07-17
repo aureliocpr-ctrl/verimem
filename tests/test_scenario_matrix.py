@@ -16,7 +16,7 @@ import concurrent.futures as cf
 
 import pytest
 
-from engram.client import Memory
+from verimem.client import Memory
 
 # A representative zoo of hostile / weird content. Each MUST be handled — stored
 # or gracefully quarantined/rejected — never raise, never corrupt.

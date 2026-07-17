@@ -4,15 +4,15 @@
 blobs because semantic's recall denylist had been extended to hide them but the
 admission_gate's hand-maintained regex still ADMITTED them — a silent drift
 between the read side and the write side. Both now derive from
-``engram._telemetry_prefixes.TELEMETRY_TOPIC_PREFIXES``; this test pins that they
+``verimem._telemetry_prefixes.TELEMETRY_TOPIC_PREFIXES``; this test pins that they
 stay one source AND that the gate routes every machine-state namespace.
 """
 from __future__ import annotations
 
 import pytest
 
-from engram._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES
-from engram.admission_gate import ROUTE_TELEMETRY, classify_admission
+from verimem._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES
+from verimem.admission_gate import ROUTE_TELEMETRY, classify_admission
 
 _NEW = ["cache/", "market/", "citations/", "obs/", "signal/",
         "dispatch/", "supervisor/", "namespace/", "diary/"]
@@ -37,7 +37,7 @@ def test_knowledge_topic_not_routed_as_telemetry(topic):
 def test_write_gate_and_read_denylist_share_one_source():
     # Anti-drift: the write-time gate and the read-time recall denylist must be
     # the SAME tuple object — a future edit to one can't desync the other.
-    import engram.admission_gate as ag
-    import engram.semantic as sem
+    import verimem.admission_gate as ag
+    import verimem.semantic as sem
     assert ag._TELEMETRY_TOPIC_PREFIXES is TELEMETRY_TOPIC_PREFIXES
     assert sem._TELEMETRY_TOPIC_PREFIXES is TELEMETRY_TOPIC_PREFIXES

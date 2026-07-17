@@ -27,9 +27,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.memory import Episode, EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
 
 
 def _h(p: Path) -> str:
@@ -39,7 +39,7 @@ def _h(p: Path) -> str:
 @pytest.fixture
 def shadow_with_pending_task(tmp_path):
     """Setup: live corpus + dream propose già fatto + 1 pending task disponibile."""
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     live = tmp_path / "live"
     live.mkdir()
     skills_dir = live / "skills"
@@ -88,7 +88,7 @@ VALID_SKILL_JSON = {
 
 def test_submit_persists_skill_on_shadow(shadow_with_pending_task):
     """Happy path: skill_json valido → skill nuova sul shadow SkillLibrary."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     result = submit_dream_result(
         shadow_root=s["shadow_root"], task_id=s["first_task_id"],
@@ -114,7 +114,7 @@ def test_submit_persists_skill_on_shadow(shadow_with_pending_task):
 
 def test_submit_marks_task_done_in_artifact(shadow_with_pending_task):
     """Dopo submit, dream_tasks.json deve avere task.status = 'done' + skill_id."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     submit_dream_result(
         shadow_root=s["shadow_root"], task_id=s["first_task_id"],
@@ -129,7 +129,7 @@ def test_submit_marks_task_done_in_artifact(shadow_with_pending_task):
 
 def test_submit_decreases_remaining_pending_count(shadow_with_pending_task):
     """remaining_pending nel return deve essere coerente con dream_tasks.json."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     result = submit_dream_result(
         shadow_root=s["shadow_root"], task_id=s["first_task_id"],
@@ -142,7 +142,7 @@ def test_submit_decreases_remaining_pending_count(shadow_with_pending_task):
 
 def test_submit_does_not_modify_live(shadow_with_pending_task):
     """CRUCIAL: live DB UNCHANGED (3 SHA1)."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     before = {
         k: _h(s["live_dirs"][k])
@@ -162,14 +162,14 @@ def test_submit_does_not_modify_live(shadow_with_pending_task):
 
 def test_submit_zero_llm_calls(shadow_with_pending_task, monkeypatch):
     """SUBSCRIPTION-FIRST: zero LLM call interne. Monkeypatch sentinel."""
-    from engram import llm as llm_module
+    from verimem import llm as llm_module
     calls = {"n": 0}
     orig = llm_module.get_llm
     def boom(*a, **kw):
         calls["n"] += 1
         return orig(*a, **kw)
     monkeypatch.setattr(llm_module, "get_llm", boom)
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     submit_dream_result(
         shadow_root=s["shadow_root"], task_id=s["first_task_id"],
@@ -185,7 +185,7 @@ def test_submit_zero_llm_calls(shadow_with_pending_task, monkeypatch):
 
 def test_submit_unknown_shadow_root_raises(tmp_path):
     """shadow_root non esiste → FileNotFoundError (o subclass)."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     bogus = tmp_path / "does_not_exist"
     with pytest.raises((FileNotFoundError, ValueError), match="dream|shadow|not found"):
         submit_dream_result(
@@ -195,7 +195,7 @@ def test_submit_unknown_shadow_root_raises(tmp_path):
 
 def test_submit_unknown_task_id_raises(shadow_with_pending_task):
     """task_id non in dream_tasks.json → ValueError."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     with pytest.raises(ValueError, match="task|unknown"):
         submit_dream_result(
@@ -206,7 +206,7 @@ def test_submit_unknown_task_id_raises(shadow_with_pending_task):
 
 def test_submit_already_done_task_rejects_hard(shadow_with_pending_task):
     """Idempotency hard: double-submit dello stesso task_id → ValueError con info."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     first = submit_dream_result(
         shadow_root=s["shadow_root"], task_id=s["first_task_id"],
@@ -226,7 +226,7 @@ def test_submit_already_done_task_rejects_hard(shadow_with_pending_task):
 
 def test_submit_missing_required_name_rejects(shadow_with_pending_task):
     """skill_json senza `name` → ValueError validation."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     bad = {"trigger": "ok", "body": "ok"}
     with pytest.raises(ValueError, match="name|required|validation"):
@@ -237,7 +237,7 @@ def test_submit_missing_required_name_rejects(shadow_with_pending_task):
 
 def test_submit_empty_name_rejects(shadow_with_pending_task):
     """skill_json con name='' → ValueError validation."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     bad = {"name": "  ", "trigger": "ok", "body": "ok"}
     with pytest.raises(ValueError, match="name|empty|validation"):
@@ -248,7 +248,7 @@ def test_submit_empty_name_rejects(shadow_with_pending_task):
 
 def test_submit_wrong_type_body_rejects(shadow_with_pending_task):
     """skill_json con body=42 (int) → ValueError validation."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     bad = {"name": "ok", "trigger": "ok", "body": 42}
     with pytest.raises(ValueError, match="body|type|str|validation"):
@@ -259,7 +259,7 @@ def test_submit_wrong_type_body_rejects(shadow_with_pending_task):
 
 def test_submit_lenient_extra_fields_accepted(shadow_with_pending_task):
     """LENIENT: extra fields nell'output LLM silently ignored."""
-    from engram.dream import submit_dream_result
+    from verimem.dream import submit_dream_result
     s = shadow_with_pending_task
     permissive = {
         **VALID_SKILL_JSON,

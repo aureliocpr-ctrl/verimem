@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram.memory import EpisodicMemory
+from verimem.memory import EpisodicMemory
 
 
 def test_external_commit_diverges_index_stamp_then_rebuild_restamps(tmp_path):

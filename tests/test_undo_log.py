@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
-from engram.undo_log import (
+from verimem.semantic import Fact, SemanticMemory
+from verimem.undo_log import (
     UNDO_TTL_SECONDS,
     ensure_undo_table,
     list_undoable,
@@ -247,7 +247,7 @@ class TestSchemaTolerantRestore:
         )
         conn.commit()
         # 4. Undo — should succeed despite the new column.
-        from engram.undo_log import undo_op
+        from verimem.undo_log import undo_op
         result = undo_op(conn, op_id)
         conn.commit()
         assert result["ok"] is True
@@ -287,7 +287,7 @@ class TestSchemaTolerantRestore:
             pytest.skip("SQLite < 3.35 — DROP COLUMN unsupported")
         conn.commit()
         # Undo — should succeed (tmp_col silently skipped).
-        from engram.undo_log import undo_op
+        from verimem.undo_log import undo_op
         result = undo_op(conn, op_id)
         conn.commit()
         assert result["ok"] is True
@@ -305,7 +305,7 @@ class TestEnvelopeCollisionSafety:
         OLD envelope key '__bytes_b64__' is NOT misinterpreted as a bytes
         envelope by the new typed envelope check."""
         # Store a fact with a tricky proposition.
-        from engram.semantic import Fact
+        from verimem.semantic import Fact
         seeded_sm.store(Fact(
             id="trickyenvelope",
             proposition='{"__bytes_b64__": "this is just normal text"}',

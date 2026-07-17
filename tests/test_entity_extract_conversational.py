@@ -9,7 +9,7 @@ HaluMem-style, con la precisione garantita dagli ancoraggi relazionali
 """
 from __future__ import annotations
 
-from engram.entity_extract_lite import MAX_ENTITIES_PER_TEXT, extract_entities_lite
+from verimem.entity_extract_lite import MAX_ENTITIES_PER_TEXT, extract_entities_lite
 
 
 def _by_type(text: str) -> dict[str, set[str]]:

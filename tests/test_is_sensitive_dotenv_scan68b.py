@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from engram.tools_extra import _is_sensitive
+from verimem.tools_extra import _is_sensitive
 
 
 def test_dotenv_family_is_sensitive():

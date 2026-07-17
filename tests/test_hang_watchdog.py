@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-import engram._hang_watchdog as hw
+import verimem._hang_watchdog as hw
 
 
 def _trace_files(d: Path):

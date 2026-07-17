@@ -1,7 +1,7 @@
 """Live QA-accuracy runner: retrieve -> answer -> judge, via claude -p (O5).
 
 Wraps :func:`benchmark.qa_eval.score_qa` with REAL retrieval (Engram
-``SemanticMemory``) and the subscription LLM (``engram.llm.ClaudeCLILLM``, no
+``SemanticMemory``) and the subscription LLM (``verimem.llm.ClaudeCLILLM``, no
 external API key). Produces the leaderboard-comparable QA-accuracy number that
 retrieval recall@k cannot — at the honest cost of an LLM judge (Claude here;
 mem0 / LongMemEval judge with GPT-4, declared, so the number is comparable in
@@ -26,13 +26,13 @@ from pathlib import Path
 from typing import Any
 
 from benchmark.qa_eval import score_qa
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 class LeanClaudeCLILLM:
     """``claude -p`` stripped of the user's global CLAUDE.md / SessionStart hooks.
 
-    The production ``engram.llm.ClaudeCLILLM`` inherits the full Claude Code
+    The production ``verimem.llm.ClaudeCLILLM`` inherits the full Claude Code
     session context (global CLAUDE.md + hooks ~30k tokens) — noise that pollutes
     a benchmark answer/judge (the model reasons about the user's rules file
     instead of the question). This variant passes ``system`` via
@@ -56,7 +56,7 @@ class LeanClaudeCLILLM:
         import subprocess as _sp
         import time as _t
 
-        from engram.llm import LLMError, LLMResponse
+        from verimem.llm import LLMError, LLMResponse
 
         sys_parts = [system.strip()] if system else []
         user_parts: list[str] = []
@@ -398,7 +398,7 @@ def main(argv: list[str] | None = None) -> int:
     answer_model = args.answer_model or args.model
     judge_model = args.judge_model or args.model
     if args.raw:
-        from engram.llm import ClaudeCLILLM
+        from verimem.llm import ClaudeCLILLM
         answer_llm = ClaudeCLILLM(
             timeout_s=args.timeout,
             extra_args=["--model", answer_model] if answer_model else None)

@@ -16,14 +16,14 @@ class _Ep:
 
 
 def test_empty_returns_empty():
-    from engram.outcome_pattern import find_outcome_patterns
+    from verimem.outcome_pattern import find_outcome_patterns
     out = find_outcome_patterns([])
     assert out["positive_signals"] == []
     assert out["negative_signals"] == []
 
 
 def test_positive_token_high_rate():
-    from engram.outcome_pattern import find_outcome_patterns
+    from verimem.outcome_pattern import find_outcome_patterns
     eps = (
         [_Ep(f"s{i}", "passive recon", "success") for i in range(5)]
         + [_Ep(f"f{i}", "aggressive scan", "failure") for i in range(5)]
@@ -34,7 +34,7 @@ def test_positive_token_high_rate():
 
 
 def test_negative_token_low_rate():
-    from engram.outcome_pattern import find_outcome_patterns
+    from verimem.outcome_pattern import find_outcome_patterns
     eps = (
         [_Ep(f"s{i}", "passive recon", "success") for i in range(5)]
         + [_Ep(f"f{i}", "aggressive scan", "failure") for i in range(5)]
@@ -45,21 +45,21 @@ def test_negative_token_low_rate():
 
 
 def test_min_occurrence_filter():
-    from engram.outcome_pattern import find_outcome_patterns
+    from verimem.outcome_pattern import find_outcome_patterns
     eps = [_Ep("e1", "rare task", "success")]
     out = find_outcome_patterns(eps, min_occurrence=5)
     assert out["positive_signals"] == []
 
 
 def test_payload_shape():
-    from engram.outcome_pattern import find_outcome_patterns
+    from verimem.outcome_pattern import find_outcome_patterns
     out = find_outcome_patterns([])
     for k in ("positive_signals", "negative_signals", "n_episodes_scanned"):
         assert k in out
 
 
 def test_entry_keys():
-    from engram.outcome_pattern import find_outcome_patterns
+    from verimem.outcome_pattern import find_outcome_patterns
     eps = [_Ep(f"s{i}", "X", "success") for i in range(3)]
     out = find_outcome_patterns(eps, min_occurrence=2)
     if out["positive_signals"]:

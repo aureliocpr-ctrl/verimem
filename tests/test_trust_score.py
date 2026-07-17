@@ -24,7 +24,7 @@ class _Fact:
 
 
 def test_high_trust_fresh_high_confidence():
-    from engram.trust_score import compute_trust_score
+    from verimem.trust_score import compute_trust_score
 
     now = time.time()
     f = _Fact("f1", "X", "t", confidence=0.95, created_at=now - 86400)
@@ -33,7 +33,7 @@ def test_high_trust_fresh_high_confidence():
 
 
 def test_low_trust_old_low_confidence():
-    from engram.trust_score import compute_trust_score
+    from verimem.trust_score import compute_trust_score
 
     now = time.time()
     f = _Fact("f1", "X", "t", confidence=0.3,
@@ -43,7 +43,7 @@ def test_low_trust_old_low_confidence():
 
 
 def test_corroboration_boost():
-    from engram.trust_score import compute_trust_score
+    from verimem.trust_score import compute_trust_score
 
     now = time.time()
     target = _Fact("f1", "WordPress 5.8 vulnerable to CVE-X", "t",
@@ -63,7 +63,7 @@ def test_corroboration_boost():
 
 
 def test_payload_keys():
-    from engram.trust_score import compute_trust_score
+    from verimem.trust_score import compute_trust_score
     now = time.time()
     f = _Fact("f1", "X", "t", confidence=0.5, created_at=now)
     out = compute_trust_score(f, now=now)
@@ -74,7 +74,7 @@ def test_payload_keys():
 
 
 def test_components_in_unit_range():
-    from engram.trust_score import compute_trust_score
+    from verimem.trust_score import compute_trust_score
     now = time.time()
     f = _Fact("f1", "X", "t", confidence=0.5, created_at=now)
     out = compute_trust_score(f, now=now)
@@ -84,7 +84,7 @@ def test_components_in_unit_range():
 
 
 def test_rank_facts_by_trust():
-    from engram.trust_score import rank_facts_by_trust
+    from verimem.trust_score import rank_facts_by_trust
 
     now = time.time()
     facts = [
@@ -98,6 +98,6 @@ def test_rank_facts_by_trust():
 
 
 def test_empty_input():
-    from engram.trust_score import rank_facts_by_trust
+    from verimem.trust_score import rank_facts_by_trust
     out = rank_facts_by_trust([])
     assert out["ranked"] == []

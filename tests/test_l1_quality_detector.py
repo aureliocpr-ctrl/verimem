@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_quality_detector import detect_unsupported_quality_claim as det
+from verimem.l1_quality_detector import detect_unsupported_quality_claim as det
 
 
 def _fires(prop, verified_by=None):

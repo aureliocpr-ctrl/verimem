@@ -8,8 +8,8 @@ gracefully to them. Fix: stable tiebreak on the original input index.
 """
 from __future__ import annotations
 
-from engram.cross_encoder_rerank import rerank_candidates
-from engram.semantic import Fact, SemanticMemory
+from verimem.cross_encoder_rerank import rerank_candidates
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_scorer_error_preserves_input_order(tmp_path):

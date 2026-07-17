@@ -10,14 +10,14 @@ class _FakeEp:
 
 
 def test_empty():
-    from engram.skills_top_used import top_used_skills
+    from verimem.skills_top_used import top_used_skills
 
     out = top_used_skills(episodes=[])
     assert out["skills"] == []
 
 
 def test_ranks_by_use_count():
-    from engram.skills_top_used import top_used_skills
+    from verimem.skills_top_used import top_used_skills
 
     eps = [
         _FakeEp(["a", "b"]),
@@ -31,7 +31,7 @@ def test_ranks_by_use_count():
 
 def test_counts_episodes_not_appearances():
     """Counted as 1 per episode even if skill listed multiple times."""
-    from engram.skills_top_used import top_used_skills
+    from verimem.skills_top_used import top_used_skills
 
     eps = [_FakeEp(["a", "a", "a"])]
     out = top_used_skills(episodes=eps)
@@ -40,7 +40,7 @@ def test_counts_episodes_not_appearances():
 
 
 def test_top_k():
-    from engram.skills_top_used import top_used_skills
+    from verimem.skills_top_used import top_used_skills
 
     eps = [_FakeEp([f"s{i}"]) for i in range(10)]
     out = top_used_skills(episodes=eps, top_k=3)
@@ -48,7 +48,7 @@ def test_top_k():
 
 
 def test_payload_shape():
-    from engram.skills_top_used import top_used_skills
+    from verimem.skills_top_used import top_used_skills
 
     out = top_used_skills(episodes=[])
     for k in ("skills", "n_unique_skills"):

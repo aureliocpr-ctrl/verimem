@@ -1,5 +1,5 @@
 """WF3 fix: L1 dev-claim detectors must NOT quarantine ordinary personal facts."""
-from engram.anti_confab_gate import run_validation_gate as gate
+from verimem.anti_confab_gate import run_validation_gate as gate
 
 
 def _persists(prop, **kw):

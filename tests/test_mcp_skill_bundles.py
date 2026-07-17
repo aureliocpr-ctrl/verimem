@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 
 class _FakeMemoryWithBundles:

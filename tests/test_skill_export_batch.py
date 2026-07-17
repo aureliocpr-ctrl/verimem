@@ -10,11 +10,11 @@ unless explicitly requested.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_returns_empty_list():
-    from engram.skill_export import export_all_skills
+    from verimem.skill_export import export_all_skills
 
     out = export_all_skills([])
     assert out["skills"] == []
@@ -22,7 +22,7 @@ def test_empty_returns_empty_list():
 
 
 def test_exports_all_skills_by_default():
-    from engram.skill_export import export_all_skills
+    from verimem.skill_export import export_all_skills
 
     skills = [
         Skill(id="a", name="alpha", status="promoted"),
@@ -36,7 +36,7 @@ def test_exports_all_skills_by_default():
 
 
 def test_status_filter():
-    from engram.skill_export import export_all_skills
+    from verimem.skill_export import export_all_skills
 
     skills = [
         Skill(id="a", name="a", status="promoted"),
@@ -49,7 +49,7 @@ def test_status_filter():
 
 def test_excludes_transient_fields_by_default():
     """learned_embedding is large + non-portable; excluded by default."""
-    from engram.skill_export import export_all_skills
+    from verimem.skill_export import export_all_skills
 
     skills = [
         Skill(id="a", name="a",
@@ -63,7 +63,7 @@ def test_excludes_transient_fields_by_default():
 
 
 def test_include_transient_optional():
-    from engram.skill_export import export_all_skills
+    from verimem.skill_export import export_all_skills
 
     skills = [
         Skill(id="a", name="a", learned_embedding=[0.1] * 384),
@@ -75,7 +75,7 @@ def test_include_transient_optional():
 
 def test_includes_predicates():
     """STRIPS pre/post (FORGIA #209) preserved in export."""
-    from engram.skill_export import export_all_skills
+    from verimem.skill_export import export_all_skills
 
     skills = [
         Skill(id="a", name="a",
@@ -89,7 +89,7 @@ def test_includes_predicates():
 
 def test_round_trip_via_from_dict():
     """Exported records can be reloaded into Skill instances."""
-    from engram.skill_export import export_all_skills
+    from verimem.skill_export import export_all_skills
 
     skills = [
         Skill(id="a", name="alpha", status="promoted",
@@ -107,7 +107,7 @@ def test_round_trip_via_from_dict():
 
 
 def test_payload_shape_complete():
-    from engram.skill_export import export_all_skills
+    from verimem.skill_export import export_all_skills
 
     out = export_all_skills([])
     for k in ("skills", "n_total", "schema_version"):

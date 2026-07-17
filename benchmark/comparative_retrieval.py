@@ -44,8 +44,8 @@ from benchmark.longmemeval_runner import (
     recall_at_k,
     session_to_text,
 )
-from engram import embedding
-from engram.semantic import Fact, SemanticMemory
+from verimem import embedding
+from verimem.semantic import Fact, SemanticMemory
 
 ARMS = ("engram", "engram-base", "vanilla")
 

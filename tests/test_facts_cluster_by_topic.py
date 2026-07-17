@@ -19,7 +19,7 @@ class _FakeFact:
 
 
 def test_empty():
-    from engram.facts_cluster_by_topic import facts_cluster_by_topic
+    from verimem.facts_cluster_by_topic import facts_cluster_by_topic
 
     out = facts_cluster_by_topic([])
     assert out["n_topics"] == 0
@@ -27,7 +27,7 @@ def test_empty():
 
 
 def test_single_topic():
-    from engram.facts_cluster_by_topic import facts_cluster_by_topic
+    from verimem.facts_cluster_by_topic import facts_cluster_by_topic
 
     facts = [
         _FakeFact("f1", "A", "math", 0.9),
@@ -44,7 +44,7 @@ def test_single_topic():
 
 
 def test_multiple_topics_sorted_by_count_desc():
-    from engram.facts_cluster_by_topic import facts_cluster_by_topic
+    from verimem.facts_cluster_by_topic import facts_cluster_by_topic
 
     facts = [
         _FakeFact("f1", "A", "math"),
@@ -61,7 +61,7 @@ def test_multiple_topics_sorted_by_count_desc():
 
 
 def test_top_k_limit():
-    from engram.facts_cluster_by_topic import facts_cluster_by_topic
+    from verimem.facts_cluster_by_topic import facts_cluster_by_topic
 
     facts = [
         _FakeFact(f"f{i}", "p", f"t{i}") for i in range(10)
@@ -72,7 +72,7 @@ def test_top_k_limit():
 
 def test_max_props_per_cluster():
     """When a cluster has many facts, propositions list is truncated."""
-    from engram.facts_cluster_by_topic import facts_cluster_by_topic
+    from verimem.facts_cluster_by_topic import facts_cluster_by_topic
 
     facts = [_FakeFact(f"f{i}", f"prop {i}", "math") for i in range(20)]
     out = facts_cluster_by_topic(facts, max_props_per_cluster=5)
@@ -82,7 +82,7 @@ def test_max_props_per_cluster():
 
 
 def test_missing_topic_groups_as_no_topic():
-    from engram.facts_cluster_by_topic import facts_cluster_by_topic
+    from verimem.facts_cluster_by_topic import facts_cluster_by_topic
 
     facts = [
         _FakeFact("f1", "A", ""),
@@ -95,7 +95,7 @@ def test_missing_topic_groups_as_no_topic():
 
 
 def test_payload_shape():
-    from engram.facts_cluster_by_topic import facts_cluster_by_topic
+    from verimem.facts_cluster_by_topic import facts_cluster_by_topic
 
     out = facts_cluster_by_topic([])
     for k in ("clusters", "n_topics", "n_total_facts"):

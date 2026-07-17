@@ -1,4 +1,4 @@
-"""Bench REALE del Tier C (engram.transcript_index) su transcript di sessione veri.
+"""Bench REALE del Tier C (verimem.transcript_index) su transcript di sessione veri.
 
 Misura, su una sessione `.jsonl` reale di Claude Code (cap a N turni):
   - throughput di ingest (turni/s) + dimensione DB
@@ -8,7 +8,7 @@ Misura, su una sessione `.jsonl` reale di Claude Code (cap a N turni):
     in cima. Questo modella l'uso reale: "trova DOVE abbiamo detto questa cosa".
 
 Hermetic: il DB del Tier C è in una temp-dir buttata a fine run; ZERO scrittura
-su ~/.engram. Read-only sui transcript. NON usa la sessione live più recente.
+su ~/.verimem. Read-only sui transcript. NON usa la sessione live più recente.
 
 Uso:
     python scripts/bench_transcript_index.py [path.jsonl] [--limit 400] [--sample 30]
@@ -47,7 +47,7 @@ def _arg(flag: str, default: int) -> int:
 
 
 def extract_turns(path: Path, limit: int):
-    from engram.transcript_index import Turn
+    from verimem.transcript_index import Turn
     turns = []
     with open(path, encoding="utf-8") as fh:
         for off, line in enumerate(fh):
@@ -106,7 +106,7 @@ def main() -> int:
         print(f"[ERR] sessione non trovata: {session}")
         return 1
 
-    from engram.transcript_index import TranscriptIndex
+    from verimem.transcript_index import TranscriptIndex
 
     print(f"=== BENCH Tier C — {session.name} (cap {limit} turni) ===")
     turns = extract_turns(session, limit)

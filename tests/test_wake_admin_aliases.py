@@ -13,10 +13,10 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.skill import SkillLibrary
-from engram.wake import WakeAgent
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.skill import SkillLibrary
+from verimem.wake import WakeAgent
 
 
 def _ep(eid, *, outcome="success", skills=None, n_steps=1, tokens=10) -> Episode:

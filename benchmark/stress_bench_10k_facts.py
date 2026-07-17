@@ -24,11 +24,11 @@ import random
 import time
 from pathlib import Path
 
-from engram.briefing_by_project import briefing_by_project
-from engram.corpus_health_metrics import corpus_health_metrics
-from engram.freshness_check import facts_freshness_check
-from engram.semantic import Fact, SemanticMemory
-from engram.topic_cleanup_suggestions import topic_cleanup_suggestions
+from verimem.briefing_by_project import briefing_by_project
+from verimem.corpus_health_metrics import corpus_health_metrics
+from verimem.freshness_check import facts_freshness_check
+from verimem.semantic import Fact, SemanticMemory
+from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
 
 SCALE = 10_000  # facts inserted
 PROJECTS = ["nexus", "engram", "beacon", "orbit", "critic-orchestrator"]

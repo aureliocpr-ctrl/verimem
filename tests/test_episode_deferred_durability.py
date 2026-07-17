@@ -24,9 +24,9 @@ import json
 import time
 from pathlib import Path
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.semantic import store_within_budget
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.semantic import store_within_budget
 
 
 def _journal(db: Path) -> Path:

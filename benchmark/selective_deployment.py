@@ -33,7 +33,7 @@ from pathlib import Path
 from typing import Any
 
 from benchmark.external_readpath import build_store, load_split
-from engram.selective_metrics import (
+from verimem.selective_metrics import (
     aurc,
     e_aurc,
     isotonic_fit,

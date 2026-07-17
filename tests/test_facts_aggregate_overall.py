@@ -13,7 +13,7 @@ class _FakeFact:
 
 
 def test_empty():
-    from engram.facts_aggregate_overall import aggregate_facts_overall
+    from verimem.facts_aggregate_overall import aggregate_facts_overall
 
     out = aggregate_facts_overall([])
     assert out["n_total"] == 0
@@ -21,7 +21,7 @@ def test_empty():
 
 
 def test_counts_topics():
-    from engram.facts_aggregate_overall import aggregate_facts_overall
+    from verimem.facts_aggregate_overall import aggregate_facts_overall
 
     facts = [
         _FakeFact("a", topic="x"),
@@ -34,7 +34,7 @@ def test_counts_topics():
 
 
 def test_avg_confidence():
-    from engram.facts_aggregate_overall import aggregate_facts_overall
+    from verimem.facts_aggregate_overall import aggregate_facts_overall
 
     facts = [
         _FakeFact("a", confidence=0.8),
@@ -45,7 +45,7 @@ def test_avg_confidence():
 
 
 def test_top_topics():
-    from engram.facts_aggregate_overall import aggregate_facts_overall
+    from verimem.facts_aggregate_overall import aggregate_facts_overall
 
     facts = [
         _FakeFact("a", topic="hot"),
@@ -60,7 +60,7 @@ def test_top_topics():
 
 
 def test_payload_shape():
-    from engram.facts_aggregate_overall import aggregate_facts_overall
+    from verimem.facts_aggregate_overall import aggregate_facts_overall
 
     out = aggregate_facts_overall([])
     for k in ("n_total", "n_topics", "avg_confidence",

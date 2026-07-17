@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import pytest
 
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.sleep import SleepEngine
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.sleep import SleepEngine
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def engine(tmp_path, monkeypatch):
 
         def complete(self, *a, **kw): return ""
 
-    monkeypatch.setattr("engram.sleep.get_llm", lambda: _NullLLM())
+    monkeypatch.setattr("verimem.sleep.get_llm", lambda: _NullLLM())
     return SleepEngine(memory=mem, skills=sk, semantic=sem)
 
 

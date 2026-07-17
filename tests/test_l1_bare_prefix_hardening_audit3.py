@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import pytest
 
-from engram.l1_approval_detector import detect_unsupported_approval_claim
-from engram.l1_automated_detector import detect_unsupported_automated_claim
-from engram.l1_monitored_detector import detect_unsupported_monitored_claim
-from engram.l1_production_ready_detector import detect_unsupported_prod_ready_claim
-from engram.l1_security_detector import detect_unsupported_security_claim
+from verimem.l1_approval_detector import detect_unsupported_approval_claim
+from verimem.l1_automated_detector import detect_unsupported_automated_claim
+from verimem.l1_monitored_detector import detect_unsupported_monitored_claim
+from verimem.l1_production_ready_detector import detect_unsupported_prod_ready_claim
+from verimem.l1_security_detector import detect_unsupported_security_claim
 
 # --- NEGATIVE: a not-done / bare ref must NOT suppress the warning ---
 

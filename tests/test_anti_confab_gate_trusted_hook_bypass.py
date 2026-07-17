@@ -18,13 +18,13 @@ from __future__ import annotations
 
 import pytest
 
-from engram.anti_confab_gate import run_validation_gate
+from verimem.anti_confab_gate import run_validation_gate
 
 _MASTER_FACT_TEXT = (
     "MASTER FACT PRE-COMPACT 2026-05-27 14:00 - CYCLE COMPLETO "
     "ANTI-CONFAB L1.x CHAIN + EMPIRICAL POST-RESTART VERIFICATION. "
     "SHIPPED 11 detector L1.9-L1.19. AUTOMATED auto-Dream cooldown. "
-    "MONITORED dashboard grafana engram. Authorized post-restart."
+    "MONITORED dashboard grafana verimem. Authorized post-restart."
 )
 
 

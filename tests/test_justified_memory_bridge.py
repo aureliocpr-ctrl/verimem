@@ -7,12 +7,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from engram.justified_memory import (
+from verimem.justified_memory import (
     audit_facts,
     collect_contradicted_ids,
     fact_to_belief,
 )
-from engram.semantic_conflict import FixedRelationJudge, Relation
+from verimem.semantic_conflict import FixedRelationJudge, Relation
 
 
 @dataclass

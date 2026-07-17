@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from engram.l1_orphan_detector import detect_l1_orphan_candidates
+from verimem.l1_orphan_detector import detect_l1_orphan_candidates
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

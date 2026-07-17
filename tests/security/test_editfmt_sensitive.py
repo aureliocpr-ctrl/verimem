@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.editfmt import EditBlock, _is_sensitive_target, apply_block
+from verimem.editfmt import EditBlock, _is_sensitive_target, apply_block
 
 # ---------------------------------------------------------------------------
 # _is_sensitive_target unit checks

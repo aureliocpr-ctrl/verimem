@@ -10,8 +10,8 @@ win, so it is default OFF (floor 0 = unchanged) and opt-in per deployment.
 """
 from __future__ import annotations
 
-from engram.semantic_conflict import Relation
-from engram.truth_reconciliation import _content_overlap, _is_conflict
+from verimem.semantic_conflict import Relation
+from verimem.truth_reconciliation import _content_overlap, _is_conflict
 
 
 class _Contra:

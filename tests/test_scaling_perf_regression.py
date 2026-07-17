@@ -16,7 +16,7 @@ import uuid
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
+from verimem.memory import Episode, EpisodicMemory
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ def test_compute_skill_avg_steps_perf_regression(big_memory):
     """compute_skill_avg_steps via SQL deve essere < 500ms a N=500.
     Live a N=5K era 93ms; a N=500 ben sotto.
     """
-    from engram.sleep import compute_skill_avg_steps
+    from verimem.sleep import compute_skill_avg_steps
     skill_ids = {f"sk{i:03d}" for i in range(20)}
     t0 = time.perf_counter()
     result = compute_skill_avg_steps(big_memory, skill_ids)

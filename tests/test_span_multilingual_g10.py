@@ -13,7 +13,7 @@ that would test nothing).
 """
 from __future__ import annotations
 
-from engram.grounding_gate import select_relevant_span
+from verimem.grounding_gate import select_relevant_span
 
 
 def _budgeted(source_lines: list[str], fact: str, budget: int = 120) -> str:

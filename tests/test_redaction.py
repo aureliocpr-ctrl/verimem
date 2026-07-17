@@ -1,4 +1,4 @@
-"""Redaction di segreti/PII (engram.redaction.redact_secrets).
+"""Redaction di segreti/PII (verimem.redaction.redact_secrets).
 
 Finding HIGH del workflow di review: il path Tier C (ingest + promote) salvava
 testo conversazionale VERBATIM, inclusi eventuali segreti incollati in chat
@@ -8,7 +8,7 @@ positivi su testo normale).
 """
 from __future__ import annotations
 
-from engram.redaction import redact_secrets
+from verimem.redaction import redact_secrets
 
 _P0 = 'sk_live_'
 _P2 = 'ghp_'

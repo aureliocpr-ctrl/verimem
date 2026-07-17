@@ -35,9 +35,6 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from engram.config import CONFIG
-from engram.semantic import Fact, SemanticMemory
-
 # Reuse the metrics already unit-tested in test_longmemeval_runner.py.
 from benchmark.longmemeval_runner import (
     _unique_preserve,
@@ -45,6 +42,8 @@ from benchmark.longmemeval_runner import (
     mrr,
     recall_at_k,
 )
+from verimem.config import CONFIG
+from verimem.semantic import Fact, SemanticMemory
 
 
 def gold_idxs(item: dict[str, Any]) -> list[str]:

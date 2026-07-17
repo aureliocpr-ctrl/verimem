@@ -17,7 +17,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 
 @dataclass

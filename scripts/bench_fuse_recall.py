@@ -1,6 +1,6 @@
 """Cycle 199 (2026-05-23) — fuse_recall real-corpus micro-benchmark.
 
-Standalone script that probes ``engram.fuse_recall.fuse_recall``
+Standalone script that probes ``verimem.fuse_recall.fuse_recall``
 latency + top-K stability on the operator's live ~/.engram/semantic.db.
 
 Run:
@@ -24,7 +24,7 @@ from typing import Any
 def _bench_one(
     *, db_path: Path, label: str, kwargs: dict[str, Any], n_runs: int = 5,
 ) -> dict[str, Any]:
-    from engram.fuse_recall import fuse_recall
+    from verimem.fuse_recall import fuse_recall
 
     latencies_ms: list[float] = []
     last_out: list[str] = []

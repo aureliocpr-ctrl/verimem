@@ -43,7 +43,7 @@ def patch_config(seeded):
     monkeypatch.setattr can't traverse `frozen=True`; we use `object.__setattr__`
     directly and restore the originals after the test.
     """
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     keys = ["skills_dir", "skills_db", "episodes_db", "semantic_db"]
     originals = {k: getattr(CONFIG, k) for k in keys}
     object.__setattr__(CONFIG, "skills_dir", seeded["skills_dir"])
@@ -57,7 +57,7 @@ def patch_config(seeded):
 
 @pytest.fixture
 def skills(patch_config):
-    from engram.skill import SkillLibrary
+    from verimem.skill import SkillLibrary
     sl = SkillLibrary(
         dir_path=patch_config["skills_dir"],
         db_path=patch_config["skills_db"],
@@ -70,7 +70,7 @@ def skills(patch_config):
 
 @pytest.fixture
 def memory(patch_config):
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
     mem = EpisodicMemory(db_path=patch_config["episodes_db"])
     mem._ensure_recall_index()  # warm up
     return mem
@@ -78,7 +78,7 @@ def memory(patch_config):
 
 @pytest.fixture
 def semantic(patch_config):
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
     return SemanticMemory(db_path=patch_config["semantic_db"])
 
 
@@ -135,7 +135,7 @@ def test_repomap_cold(benchmark, patch_config, tmp_path):
 
     Budget: P95 < 1000 ms.
     """
-    from engram.repomap import build_repomap
+    from verimem.repomap import build_repomap
 
     cache = tmp_path / "rmap_cache.json"
     benchmark(lambda: build_repomap(
@@ -148,7 +148,7 @@ def test_repomap_warm(benchmark, patch_config, tmp_path):
 
     Budget: P95 < 200 ms.
     """
-    from engram.repomap import build_repomap
+    from verimem.repomap import build_repomap
 
     cache = tmp_path / "rmap_cache.json"
     # Prime cache once
@@ -164,7 +164,7 @@ def test_embedding_encode_cache_hit(benchmark):
 
     Budget: P95 < 0.1 ms.
     """
-    from engram import embedding
+    from verimem import embedding
     text = "task example warm cache"
     embedding.encode(text)  # populate cache once
     benchmark(lambda: embedding.encode(text))

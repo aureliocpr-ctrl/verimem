@@ -13,7 +13,7 @@ import time
 
 import numpy as np
 
-from engram.embedding import cosine_matrix
+from verimem.embedding import cosine_matrix
 
 
 def _rss_mb() -> float:

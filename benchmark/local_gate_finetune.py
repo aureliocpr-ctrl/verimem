@@ -43,8 +43,8 @@ from benchmark.local_gate_eval import (
     split_by_user,
 )
 from benchmark.stats import auroc
-from engram.grounding_gate import optimal_threshold, select_relevant_span
-from engram.local_grounding import make_finetuned_scorer
+from verimem.grounding_gate import optimal_threshold, select_relevant_span
+from verimem.local_grounding import make_finetuned_scorer
 
 
 def build_training_pairs(jsonl: str | Path, train_users: set[int], *, seed: int,

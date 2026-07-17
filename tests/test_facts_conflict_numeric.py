@@ -8,11 +8,11 @@ write-time gate, so the two views agree by construction.
 """
 from __future__ import annotations
 
-from engram.facts_conflict import (
+from verimem.facts_conflict import (
     NumericConflictPair,
     find_numeric_conflicts,
 )
-from engram.semantic import Fact
+from verimem.semantic import Fact
 
 
 def _f(prop: str, topic: str = "eng/component", confidence: float = 1.0) -> Fact:

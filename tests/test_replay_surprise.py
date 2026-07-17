@@ -14,10 +14,10 @@ from dataclasses import replace
 
 import pytest
 
-from engram import sleep as sleep_mod
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
-from engram.sleep import compute_skill_avg_steps, replay_priority
+from verimem import sleep as sleep_mod
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
+from verimem.sleep import compute_skill_avg_steps, replay_priority
 
 
 def _ep(*, skill: str, n_steps: int, age_s: float = 0.0,
@@ -140,7 +140,7 @@ def test_multiple_skills_uses_smallest_deviation(monkeypatch):
 
 
 def test_compute_skill_avg_steps(tmp_data_dir):
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
     mem = EpisodicMemory(db_path=tmp_data_dir / "ep.db")
     for n in (2, 4, 6):  # mean = 4
         mem.store(_ep(skill="sk1", n_steps=n))

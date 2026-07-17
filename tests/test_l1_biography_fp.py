@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.anti_confab_gate import run_validation_gate
+from verimem.anti_confab_gate import run_validation_gate
 
 
 def _gate(prop: str):

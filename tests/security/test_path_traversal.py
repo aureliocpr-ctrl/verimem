@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 
-from engram import tools_extra
-from engram.editfmt import EditBlock, apply_block
+from verimem import tools_extra
+from verimem.editfmt import EditBlock, apply_block
 
 # ---------------------------------------------------------------------------
 # editfmt.apply_block — workspace escape
@@ -170,7 +170,7 @@ def test_default_scope_is_strict(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HIPPO_FS_ROOT", raising=False)
     roots = tools_extra._fs_roots()
     # Exactly one root, and it's the project data dir
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     assert len(roots) == 1
     assert roots[0] == CONFIG.data_dir.resolve()
 
@@ -181,7 +181,7 @@ def test_strict_keeps_agent_in_data_dir(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.delenv("HIPPO_FS_HOME", raising=False)
     monkeypatch.delenv("HIPPO_FS_ROOT", raising=False)
     roots = tools_extra._fs_roots()
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     assert roots == [CONFIG.data_dir.resolve()]
     # And the home directory is OUT of scope.
     assert not tools_extra._is_within_any(Path.home(), roots)

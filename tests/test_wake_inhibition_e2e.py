@@ -13,19 +13,19 @@ from pathlib import Path
 
 import pytest
 
-from engram import config as config_mod
-from engram.config import CONFIG
-from engram.memory import EpisodicMemory
-from engram.skill import Skill, SkillLibrary
-from engram.wake import WakeAgent
+from verimem import config as config_mod
+from verimem.config import CONFIG
+from verimem.memory import EpisodicMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.wake import WakeAgent
 
 
 def _patch_config(monkeypatch, **fields) -> None:
     new = dataclasses.replace(CONFIG, **fields)
     monkeypatch.setattr(config_mod, "CONFIG", new)
-    from engram import memory as memory_mod
-    from engram import sleep as sleep_mod
-    from engram import wake as wake_mod
+    from verimem import memory as memory_mod
+    from verimem import sleep as sleep_mod
+    from verimem import wake as wake_mod
     monkeypatch.setattr(sleep_mod, "CONFIG", new)
     monkeypatch.setattr(memory_mod, "CONFIG", new)
     monkeypatch.setattr(wake_mod, "CONFIG", new)

@@ -19,8 +19,8 @@ from __future__ import annotations
 import logging
 import time
 
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
 
 
 def _hold_connection(store, seconds: float) -> None:
@@ -32,7 +32,7 @@ def _hold_connection(store, seconds: float) -> None:
 def test_semantic_slow_txn_logs_warning(tmp_path, monkeypatch, caplog):
     monkeypatch.setenv("ENGRAM_SLOW_TXN_WARN_S", "0.05")
     sm = SemanticMemory(db_path=tmp_path / "s.db")
-    with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+    with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
         _hold_connection(sm, 0.12)
     hits = [r for r in caplog.records if "slow sqlite txn" in r.getMessage()]
     assert hits, "a >threshold connection hold must log 'slow sqlite txn'"
@@ -43,7 +43,7 @@ def test_semantic_slow_txn_logs_warning(tmp_path, monkeypatch, caplog):
 def test_semantic_fast_txn_is_silent(tmp_path, monkeypatch, caplog):
     monkeypatch.setenv("ENGRAM_SLOW_TXN_WARN_S", "5")
     sm = SemanticMemory(db_path=tmp_path / "s.db")
-    with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+    with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
         _hold_connection(sm, 0.0)
     assert not [r for r in caplog.records
                 if "slow sqlite txn" in r.getMessage()], (
@@ -54,7 +54,7 @@ def test_semantic_fast_txn_is_silent(tmp_path, monkeypatch, caplog):
 def test_episodic_slow_txn_logs_warning(tmp_path, monkeypatch, caplog):
     monkeypatch.setenv("ENGRAM_SLOW_TXN_WARN_S", "0.05")
     em = EpisodicMemory(db_path=tmp_path / "e.db")
-    with caplog.at_level(logging.WARNING, logger="engram.memory"):
+    with caplog.at_level(logging.WARNING, logger="verimem.memory"):
         _hold_connection(em, 0.12)
     hits = [r for r in caplog.records if "slow sqlite txn" in r.getMessage()]
     assert hits, "episodic _connect must carry the same telemetry"
@@ -62,6 +62,6 @@ def test_episodic_slow_txn_logs_warning(tmp_path, monkeypatch, caplog):
 
 
 def test_threshold_garbage_falls_back_to_default(monkeypatch):
-    from engram import semantic as semantic_mod
+    from verimem import semantic as semantic_mod
     monkeypatch.setenv("ENGRAM_SLOW_TXN_WARN_S", "garbage")
     assert semantic_mod._slow_txn_warn_s() == 2.0

@@ -1,5 +1,5 @@
 """Precision fixes (2026-06-19) to extract_atomic_candidates: no UUIDs/headings/fragments."""
-from engram.narration import extract_atomic_candidates as ext
+from verimem.narration import extract_atomic_candidates as ext
 
 
 def test_rejects_raw_uuid_session_id():

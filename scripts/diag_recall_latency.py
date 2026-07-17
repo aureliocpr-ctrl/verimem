@@ -14,8 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 SEM = Path.home() / ".engram" / "semantic" / "semantic.db"
 QUERY = sys.argv[1] if len(sys.argv) > 1 else "il save di engram si bloccava come risolto"
 
-from engram import embedding  # noqa: E402
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem import embedding  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 print(f"[diag] db={SEM} exists={SEM.exists()}", flush=True)
 mem = SemanticMemory(db_path=SEM)

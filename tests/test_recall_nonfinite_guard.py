@@ -15,8 +15,8 @@ import sqlite3
 import numpy as np
 import pytest
 
-from engram import embedding as emb
-from engram.semantic import Fact, SemanticMemory
+from verimem import embedding as emb
+from verimem.semantic import Fact, SemanticMemory
 
 _DIM = 384
 

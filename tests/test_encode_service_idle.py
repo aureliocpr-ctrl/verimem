@@ -9,7 +9,7 @@ so the daemon stays warm and encodes stay ~40ms.
 """
 from __future__ import annotations
 
-import engram.encode_service as es
+import verimem.encode_service as es
 
 
 def test_idle_timeout_default_is_long_enough_to_survive_a_session(monkeypatch):

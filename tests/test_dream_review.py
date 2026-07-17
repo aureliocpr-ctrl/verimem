@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.memory import Episode, EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
 
 
 def _h(p: Path) -> str:
@@ -35,7 +35,7 @@ VALID_SKILL_JSON = {
 @pytest.fixture
 def shadow_with_one_submitted(tmp_path):
     """Setup: propose + submit di 1 task → shadow ha 1 new skill, N-1 pending."""
-    from engram.dream import propose_dream_tasks, submit_dream_result
+    from verimem.dream import propose_dream_tasks, submit_dream_result
     live = tmp_path / "live"
     live.mkdir()
     skills_dir = live / "skills"
@@ -78,7 +78,7 @@ def shadow_with_one_submitted(tmp_path):
 # === dream_status() ===
 
 def test_status_returns_required_fields(shadow_with_one_submitted):
-    from engram.dream import dream_status
+    from verimem.dream import dream_status
     s = shadow_with_one_submitted
     status = dream_status(shadow_root=s["shadow_root"])
     required = {"dream_id", "n_total", "n_done", "n_pending", "total_tokens_used"}
@@ -91,7 +91,7 @@ def test_status_returns_required_fields(shadow_with_one_submitted):
 
 
 def test_status_includes_models_used(shadow_with_one_submitted):
-    from engram.dream import dream_status
+    from verimem.dream import dream_status
     s = shadow_with_one_submitted
     status = dream_status(shadow_root=s["shadow_root"])
     assert "models_used" in status
@@ -99,7 +99,7 @@ def test_status_includes_models_used(shadow_with_one_submitted):
 
 
 def test_status_unknown_shadow_raises(tmp_path):
-    from engram.dream import dream_status
+    from verimem.dream import dream_status
     with pytest.raises((FileNotFoundError, ValueError), match="dream|shadow|not"):
         dream_status(shadow_root=tmp_path / "bogus")
 
@@ -107,7 +107,7 @@ def test_status_unknown_shadow_raises(tmp_path):
 # === dream_list_pending() ===
 
 def test_list_pending_returns_only_pending(shadow_with_one_submitted):
-    from engram.dream import dream_list_pending
+    from verimem.dream import dream_list_pending
     s = shadow_with_one_submitted
     pending = dream_list_pending(shadow_root=s["shadow_root"])
     assert isinstance(pending, list)
@@ -122,7 +122,7 @@ def test_list_pending_returns_only_pending(shadow_with_one_submitted):
 
 def test_list_pending_preserves_prompts(shadow_with_one_submitted):
     """Ogni pending task deve avere ancora system_prompt + user_prompt per Claude/host."""
-    from engram.dream import dream_list_pending
+    from verimem.dream import dream_list_pending
     s = shadow_with_one_submitted
     pending = dream_list_pending(shadow_root=s["shadow_root"])
     if not pending:
@@ -134,7 +134,7 @@ def test_list_pending_preserves_prompts(shadow_with_one_submitted):
 
 
 def test_list_pending_unknown_shadow_raises(tmp_path):
-    from engram.dream import dream_list_pending
+    from verimem.dream import dream_list_pending
     with pytest.raises((FileNotFoundError, ValueError), match="dream|shadow|not"):
         dream_list_pending(shadow_root=tmp_path / "bogus")
 
@@ -143,7 +143,7 @@ def test_list_pending_unknown_shadow_raises(tmp_path):
 
 def test_diff_shows_new_skills(shadow_with_one_submitted):
     """Shadow ha 1 skill nuova (dal submit), live no → diff.new_skills = [quella]."""
-    from engram.dream import dream_diff
+    from verimem.dream import dream_diff
     s = shadow_with_one_submitted
     diff = dream_diff(shadow_root=s["shadow_root"], live_dirs=s["live_dirs"])
     assert "new_skills" in diff
@@ -157,7 +157,7 @@ def test_diff_shows_new_skills(shadow_with_one_submitted):
 def test_diff_excludes_live_seed_skill(shadow_with_one_submitted):
     """live ha 'Live Seed' che esiste anche nello shadow (snapshot lo include) →
     NON deve apparire in new_skills."""
-    from engram.dream import dream_diff
+    from verimem.dream import dream_diff
     s = shadow_with_one_submitted
     diff = dream_diff(shadow_root=s["shadow_root"], live_dirs=s["live_dirs"])
     names = {sk["name"] for sk in diff["new_skills"]}
@@ -165,7 +165,7 @@ def test_diff_excludes_live_seed_skill(shadow_with_one_submitted):
 
 
 def test_diff_unknown_shadow_raises(tmp_path):
-    from engram.dream import dream_diff
+    from verimem.dream import dream_diff
     bogus_live = {
         "skills_db": tmp_path / "fake.db",
         "skills_dir_path": tmp_path / "fake",
@@ -180,7 +180,7 @@ def test_diff_unknown_shadow_raises(tmp_path):
 
 def test_review_tools_do_not_modify_live(shadow_with_one_submitted):
     """status + list_pending + diff: nessuno modifica live DB."""
-    from engram.dream import dream_diff, dream_list_pending, dream_status
+    from verimem.dream import dream_diff, dream_list_pending, dream_status
     s = shadow_with_one_submitted
     before = {
         k: _h(s["live_dirs"][k])
@@ -198,14 +198,14 @@ def test_review_tools_do_not_modify_live(shadow_with_one_submitted):
 
 
 def test_review_tools_zero_llm_calls(shadow_with_one_submitted, monkeypatch):
-    from engram import llm as llm_module
+    from verimem import llm as llm_module
     calls = {"n": 0}
     orig = llm_module.get_llm
     def boom(*a, **kw):
         calls["n"] += 1
         return orig(*a, **kw)
     monkeypatch.setattr(llm_module, "get_llm", boom)
-    from engram.dream import dream_diff, dream_list_pending, dream_status
+    from verimem.dream import dream_diff, dream_list_pending, dream_status
     s = shadow_with_one_submitted
     dream_status(shadow_root=s["shadow_root"])
     dream_list_pending(shadow_root=s["shadow_root"])

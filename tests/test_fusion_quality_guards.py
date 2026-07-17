@@ -19,10 +19,10 @@ storici — restano byte-identici:
 """
 from __future__ import annotations
 
-from engram.bm25_rank import bm25_fact_ids
-from engram.entity_kg import Entity, EntityStore
-from engram.ppr_seed import fuse_dense_and_ppr, ppr_seeded_fact_ids
-from engram.semantic import Fact, SemanticMemory
+from verimem.bm25_rank import bm25_fact_ids
+from verimem.entity_kg import Entity, EntityStore
+from verimem.ppr_seed import fuse_dense_and_ppr, ppr_seeded_fact_ids
+from verimem.semantic import Fact, SemanticMemory
 
 
 class _F:

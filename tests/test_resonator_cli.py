@@ -4,7 +4,7 @@ from __future__ import annotations
 
 def test_cli_remember_recall_roundtrip(tmp_path) -> None:
     """Contract (a): remember + recall recovers same text."""
-    from engram.resonator_cli import cmd_recall, cmd_remember
+    from verimem.resonator_cli import cmd_recall, cmd_remember
     state = tmp_path / "memory.npz"
     index = tmp_path / "index.jsonl"
     r = cmd_remember("test fact alpha", state, index)
@@ -16,7 +16,7 @@ def test_cli_remember_recall_roundtrip(tmp_path) -> None:
 
 def test_cli_stats_initial_empty(tmp_path) -> None:
     """Contract: stats on empty state."""
-    from engram.resonator_cli import cmd_stats
+    from verimem.resonator_cli import cmd_stats
     state = tmp_path / "memory.npz"
     index = tmp_path / "index.jsonl"
     s = cmd_stats(state, index)
@@ -27,7 +27,7 @@ def test_cli_stats_initial_empty(tmp_path) -> None:
 
 def test_cli_stats_after_remember(tmp_path) -> None:
     """Contract: stats reflects added facts."""
-    from engram.resonator_cli import cmd_remember, cmd_stats
+    from verimem.resonator_cli import cmd_remember, cmd_stats
     state = tmp_path / "memory.npz"
     index = tmp_path / "index.jsonl"
     cmd_remember("fact 1", state, index)
@@ -39,7 +39,7 @@ def test_cli_stats_after_remember(tmp_path) -> None:
 
 def test_cli_persist_roundtrip(tmp_path) -> None:
     """Contract (b): save → reload preserves state."""
-    from engram.resonator_cli import cmd_recall, cmd_remember
+    from verimem.resonator_cli import cmd_recall, cmd_remember
     state = tmp_path / "memory.npz"
     index = tmp_path / "index.jsonl"
     cmd_remember("persistent fact", state, index)
@@ -51,7 +51,7 @@ def test_cli_persist_roundtrip(tmp_path) -> None:
 
 def test_cli_reset_wipes_state(tmp_path) -> None:
     """Contract (c): reset removes files."""
-    from engram.resonator_cli import cmd_remember, cmd_reset, cmd_stats
+    from verimem.resonator_cli import cmd_remember, cmd_reset, cmd_stats
     state = tmp_path / "memory.npz"
     index = tmp_path / "index.jsonl"
     cmd_remember("doomed", state, index)
@@ -64,7 +64,7 @@ def test_cli_reset_wipes_state(tmp_path) -> None:
 
 def test_cli_recall_distinguishes_known_unknown(tmp_path) -> None:
     """Contract: matching_pursuit may find spurious atoms not in index."""
-    from engram.resonator_cli import cmd_recall, cmd_remember
+    from verimem.resonator_cli import cmd_recall, cmd_remember
     state = tmp_path / "memory.npz"
     index = tmp_path / "index.jsonl"
     cmd_remember("hello world", state, index)

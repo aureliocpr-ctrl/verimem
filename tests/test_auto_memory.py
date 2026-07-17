@@ -9,8 +9,8 @@ consolidate (droppa chit-chat) e nel gate; nessuna seconda decisione LLM.
 """
 from __future__ import annotations
 
-from engram.auto_memory import AutoMemory
-from engram.client import Memory
+from verimem.auto_memory import AutoMemory
+from verimem.client import Memory
 
 
 class _StubLLM:

@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from engram import dashboard
+from verimem import dashboard
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def workspace(tmp_path, monkeypatch):
 
 @pytest.fixture
 def client(workspace):
-    from engram.dashboard_routes.auth import get_session_token
+    from verimem.dashboard_routes.auth import get_session_token
     c = TestClient(dashboard.app)
     c.headers.update({"X-Hippo-Token": get_session_token()})
     return c

@@ -44,7 +44,7 @@ class _FakeSemantic:
 
 @pytest.fixture
 def fake_agent(monkeypatch: pytest.MonkeyPatch):
-    from engram import mcp_server
+    from verimem import mcp_server
     a = _FakeAgent()
     monkeypatch.setattr(mcp_server, "_ag", lambda: a)
     return a
@@ -55,7 +55,7 @@ async def _invoke_tool(
 ) -> list[str]:
     from mcp.types import CallToolRequest, CallToolRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[CallToolRequest]
     req = CallToolRequest(

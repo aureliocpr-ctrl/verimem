@@ -189,9 +189,9 @@ _AXIS_PREDICATE: dict[str, Callable[[dict, dict], bool]] = {
 def _verimem_adapter(dataset: dict, workdir: Path):
     """Build one Verimem store per persona and return an ``answer(probe)`` fn
     whose result is the DIRECTLY OBSERVED trust behaviour for that probe."""
-    from engram.client import Memory
-    from engram.semantic import Fact
-    from engram.temporal_context import recall_as_of
+    from verimem.client import Memory
+    from verimem.semantic import Fact
+    from verimem.temporal_context import recall_as_of
 
     stores: dict[str, Memory] = {}
     fact_ids: dict[tuple[str, str, str], str] = {}
@@ -256,8 +256,8 @@ def _verimem_adapter(dataset: dict, workdir: Path):
         if axis == "sycophancy_resistance":
             # the gate decision, deterministic: an EVIDENCED fact vs a bare,
             # newer, unevidenced contradictory claim. 'update' == caved.
-            from engram.semantic import Fact
-            from engram.truth_reconciliation import classify_conflict
+            from verimem.semantic import Fact
+            from verimem.truth_reconciliation import classify_conflict
             nm = probe["name"]
             ev = Fact(id="ev", topic=f"user/{pid}", status="verified",
                       verified_by=["src:hr-record"],

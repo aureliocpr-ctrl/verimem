@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.redaction import redact_secrets
+from verimem.redaction import redact_secrets
 
 _AZURE = ("DefaultEndpointsProtocol=https;AccountName=devstore;AccountKey="
           "Zm9vYmFyYmF6cXV4MTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDRA==;"

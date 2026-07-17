@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 
-from engram.client import Memory
+from verimem.client import Memory
 
 DAY = 86400.0
 

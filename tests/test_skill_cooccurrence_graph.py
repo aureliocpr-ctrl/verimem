@@ -15,14 +15,14 @@ class _Ep:
 
 
 def test_empty_returns_empty_graph():
-    from engram.skill_cooccurrence_graph import build_cooccurrence_graph
+    from verimem.skill_cooccurrence_graph import build_cooccurrence_graph
     out = build_cooccurrence_graph([])
     assert out["nodes"] == []
     assert out["edges"] == []
 
 
 def test_simple_pair():
-    from engram.skill_cooccurrence_graph import build_cooccurrence_graph
+    from verimem.skill_cooccurrence_graph import build_cooccurrence_graph
     eps = [_Ep("e1", ["a", "b"])]
     out = build_cooccurrence_graph(eps)
     ids = [n["id"] for n in out["nodes"]]
@@ -32,7 +32,7 @@ def test_simple_pair():
 
 
 def test_edge_weight_count():
-    from engram.skill_cooccurrence_graph import build_cooccurrence_graph
+    from verimem.skill_cooccurrence_graph import build_cooccurrence_graph
     eps = [
         _Ep("e1", ["a", "b"]),
         _Ep("e2", ["a", "b"]),
@@ -44,7 +44,7 @@ def test_edge_weight_count():
 
 
 def test_degree_per_node():
-    from engram.skill_cooccurrence_graph import build_cooccurrence_graph
+    from verimem.skill_cooccurrence_graph import build_cooccurrence_graph
     eps = [
         _Ep("e1", ["a", "b"]),
         _Ep("e2", ["a", "c"]),
@@ -57,14 +57,14 @@ def test_degree_per_node():
 
 
 def test_payload_shape():
-    from engram.skill_cooccurrence_graph import build_cooccurrence_graph
+    from verimem.skill_cooccurrence_graph import build_cooccurrence_graph
     out = build_cooccurrence_graph([])
     for k in ("nodes", "edges", "n_episodes_scanned"):
         assert k in out
 
 
 def test_singleton_skill_no_edge():
-    from engram.skill_cooccurrence_graph import build_cooccurrence_graph
+    from verimem.skill_cooccurrence_graph import build_cooccurrence_graph
     eps = [_Ep("e1", ["only_one"])]
     out = build_cooccurrence_graph(eps)
     assert out["edges"] == []

@@ -16,7 +16,7 @@ from __future__ import annotations
 import time
 import types
 
-from engram.emerging_briefing import curate_emerging_briefing
+from verimem.emerging_briefing import curate_emerging_briefing
 
 _DAY = 86400.0
 
@@ -104,7 +104,7 @@ class _FakeAgent:
 
 
 def test_get_briefing_wires_emerging_and_surfaces_recent():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     now = time.time()
     eps = [
         _ep("fix embedding recall bug model", 1, now=now),
@@ -121,14 +121,14 @@ def test_get_briefing_wires_emerging_and_surfaces_recent():
 
 
 def test_get_briefing_emerging_field_present_without_task_text():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     out = get_briefing(agent=_FakeAgent([]), task_text=None)
     assert "emerging" in out
     assert out["emerging"]["is_emerging"] is False
 
 
 def test_get_briefing_summary_shows_emerging_marker_when_rising():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     now = time.time()
     eps = [
         _ep("fix embedding recall bug model", 1, now=now),
@@ -144,6 +144,6 @@ def test_get_briefing_summary_shows_emerging_marker_when_rising():
 
 
 def test_get_briefing_summary_no_marker_when_not_emerging():
-    from engram.briefing import get_briefing
+    from verimem.briefing import get_briefing
     out = get_briefing(agent=_FakeAgent([]), task_text="a one-off unrelated task")
     assert "[EMERGING]" not in out["summary_text"]

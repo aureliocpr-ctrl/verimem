@@ -7,7 +7,7 @@ HERMETIC: HIPPO_FS_ROOT puntato a tmp_path, nessun accesso al FS reale.
 """
 from __future__ import annotations
 
-from engram.tools_extra import fs_list_dir, fs_search_files
+from verimem.tools_extra import fs_list_dir, fs_search_files
 
 
 def test_fs_list_dir_hides_sensitive(tmp_path, monkeypatch):

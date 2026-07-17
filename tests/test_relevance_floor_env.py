@@ -6,8 +6,8 @@ permissive, backward-compatible default).
 """
 from __future__ import annotations
 
-from engram.client import Memory
-from engram.relevance_floor import env_floor
+from verimem.client import Memory
+from verimem.relevance_floor import env_floor
 
 
 def test_env_floor_parsing(monkeypatch):

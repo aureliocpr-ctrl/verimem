@@ -2,7 +2,7 @@
 
 Pure metric functions (recall@k / hit@k / MRR) + one end-to-end hermetic check
 that the real Engram recall retrieves the gold evidence session above a
-distractor. Zero external API, zero ~/.engram.
+distractor. Zero external API, zero ~/.verimem.
 """
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ def test_run_dataset_records_embedding_model(tmp_path):
     # could not tell if it was e5 or the old model without re-running.
     import json
 
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     ds = tmp_path / "mini.json"
     ds.write_text(json.dumps([{
         "question_id": "q1", "question_type": "single-session-user",

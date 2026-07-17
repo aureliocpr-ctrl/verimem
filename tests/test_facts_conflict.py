@@ -8,13 +8,13 @@ that detection works on real data shapes.
 """
 from __future__ import annotations
 
-from engram.facts_conflict import (
+from verimem.facts_conflict import (
     ConflictPair,
     find_conflicting_pairs,
     has_negation,
     strip_negation,
 )
-from engram.semantic import Fact
+from verimem.semantic import Fact
 
 # ---------- polarity primitives ----------------------------------------
 
@@ -111,7 +111,7 @@ def test_strip_negation_short_input_stable_embedding():
     embedding stays distinct from arbitrary 1-token strings."""
     import numpy as np
 
-    from engram import embedding
+    from verimem import embedding
     a = strip_negation("rolled back yesterday")
     b = strip_negation("deprecated since v3")
     # Each stripped form is at least 2 tokens long (sentinel + rest).

@@ -7,7 +7,7 @@ calcola un fattore di decadimento half-life per decidere quando un fatto va
 """
 from __future__ import annotations
 
-from engram.freshness import decay_factor, is_stale
+from verimem.freshness import decay_factor, is_stale
 
 
 def test_fresh_fact_not_stale():

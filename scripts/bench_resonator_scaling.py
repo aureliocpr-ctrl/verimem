@@ -41,7 +41,7 @@ def run_n_scaling(d: int, m: int, n_facts_list: list[int],
     For each N, generate N distinct random tuples and check matching_pursuit
     recovery rate. Tests where the 3/3 result breaks down.
     """
-    from engram.resonator_memory import ResonatorMemory
+    from verimem.resonator_memory import ResonatorMemory
 
     out: list[dict] = []
     for N in n_facts_list:
@@ -80,7 +80,7 @@ def run_n_scaling(d: int, m: int, n_facts_list: list[int],
 def run_one(d: int, m: int, n_seeds: int = 5,
             facts_in: list[tuple[int, int, int]] | None = None) -> dict:
     """Run one configuration. Returns avg facts recovered."""
-    from engram.resonator_memory import ResonatorMemory
+    from verimem.resonator_memory import ResonatorMemory
 
     if facts_in is None:
         facts_in = [(5, 10, 15), (20, 25, 30), (40, 50, 60)]

@@ -24,12 +24,12 @@ import threading
 import time
 from pathlib import Path
 
-from engram.entity_kg import Entity, EntityStore
-from engram.entity_populate import (
+from verimem.entity_kg import Entity, EntityStore
+from verimem.entity_populate import (
     entity_kg_path_for,
     populate_entities_for_fact,
 )
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 ENTITY_PROP = "community_detector fix shipped in engram/semantic.py via TDD"
 PLAIN_PROP = "hang-safety integration"  # extracts nothing (no snake/path/Proper)

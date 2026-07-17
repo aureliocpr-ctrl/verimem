@@ -21,7 +21,7 @@ class _Fact:
 
 
 def test_fresh_fact_retains_confidence():
-    from engram.time_decay import decay_confidence
+    from verimem.time_decay import decay_confidence
 
     now = time.time()
     f = _Fact("f1", "X", "topic", 1.0, created_at=now - 86400)  # 1 day old
@@ -31,7 +31,7 @@ def test_fresh_fact_retains_confidence():
 
 def test_half_life_decay():
     """At half-life days, confidence should be ~50% of original."""
-    from engram.time_decay import decay_confidence
+    from verimem.time_decay import decay_confidence
 
     now = time.time()
     f = _Fact("f1", "X", "topic", 1.0,
@@ -41,7 +41,7 @@ def test_half_life_decay():
 
 
 def test_double_half_life_quarter_confidence():
-    from engram.time_decay import decay_confidence
+    from verimem.time_decay import decay_confidence
 
     now = time.time()
     f = _Fact("f1", "X", "topic", 1.0,
@@ -51,7 +51,7 @@ def test_double_half_life_quarter_confidence():
 
 
 def test_very_old_fact_near_zero():
-    from engram.time_decay import decay_confidence
+    from verimem.time_decay import decay_confidence
 
     now = time.time()
     f = _Fact("f1", "X", "topic", 1.0,
@@ -61,7 +61,7 @@ def test_very_old_fact_near_zero():
 
 
 def test_freshness_levels():
-    from engram.time_decay import assess_freshness
+    from verimem.time_decay import assess_freshness
 
     now = time.time()
 
@@ -82,7 +82,7 @@ def test_freshness_levels():
 
 
 def test_freshness_includes_decayed_confidence():
-    from engram.time_decay import assess_freshness
+    from verimem.time_decay import assess_freshness
 
     now = time.time()
     f = _Fact("f1", "X", "t", 0.9, created_at=now - 86400 * 90)
@@ -93,7 +93,7 @@ def test_freshness_includes_decayed_confidence():
 
 
 def test_find_stale_facts():
-    from engram.time_decay import find_stale_facts
+    from verimem.time_decay import find_stale_facts
 
     now = time.time()
     facts = [
@@ -111,7 +111,7 @@ def test_find_stale_facts():
 
 
 def test_payload_shape():
-    from engram.time_decay import assess_freshness, find_stale_facts
+    from verimem.time_decay import assess_freshness, find_stale_facts
 
     out1 = find_stale_facts([])
     for k in ("stale_facts", "n_total_scanned", "n_stale"):

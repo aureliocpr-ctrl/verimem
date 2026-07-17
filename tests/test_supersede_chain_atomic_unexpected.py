@@ -9,7 +9,7 @@ returns ok=False (identical handling to the conflict/error paths).
 """
 from __future__ import annotations
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _store(sm, prop):

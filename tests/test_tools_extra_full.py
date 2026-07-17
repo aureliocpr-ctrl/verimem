@@ -1,4 +1,4 @@
-"""Coverage push for engram.tools_extra — desktop, vision, webcam, sensitive paths.
+"""Coverage push for verimem.tools_extra — desktop, vision, webcam, sensitive paths.
 
 Strategy:
 - pyautogui mocked via sys.modules injection (cross-platform — pyautogui import
@@ -16,8 +16,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram import tools_extra
-from engram.tools import ToolResult
+from verimem import tools_extra
+from verimem.tools import ToolResult
 
 # ---------------------------------------------------------------------------
 # _is_sensitive — every deny-list pattern

@@ -60,8 +60,8 @@ class _FakeAgent:
 def fake_agent_render(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ):
-    from engram import mcp_server
-    from engram.entity_kg import EntityStore
+    from verimem import mcp_server
+    from verimem.entity_kg import EntityStore
 
     store = EntityStore(db_path=tmp_path / "p3bis.db")
     sem = _FakeSemantic()
@@ -75,7 +75,7 @@ async def _invoke_tool(
 ) -> list[str]:
     from mcp.types import CallToolRequest, CallToolRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[CallToolRequest]
     req = CallToolRequest(
@@ -93,7 +93,7 @@ def _seed_anchor(
     facts: list[str] | None = None,
 ) -> str:
     """Helper: create anchor entity + attrs + linked facts."""
-    from engram.entity_kg import Entity
+    from verimem.entity_kg import Entity
     eid = store.store(Entity(canonical_name=name, type="anchor"))
     store.set_attr(eid, "half_life_days", float(half_life_days))
     if created_anchor_at is None:
@@ -116,7 +116,7 @@ def test_render_anchor_block_3_anchors_weight_desc(
 ) -> None:
     """RED #1: 3 anchor con (half_life, age) diversi → markdown ha 3
     sezioni in ordine weight desc, top-3 fact per anchor."""
-    from engram.self_model import render_anchor_block
+    from verimem.self_model import render_anchor_block
 
     a = fake_agent_render
     now = time.time()
@@ -184,7 +184,7 @@ def test_render_anchor_block_max_bytes_truncation(
 ) -> None:
     """RED #2: max_bytes=512 con 10 anchor con tanti fact ciascuno →
     output troncato a ≤512 byte UTF-8, truncated=True."""
-    from engram.self_model import render_anchor_block
+    from verimem.self_model import render_anchor_block
 
     a = fake_agent_render
     now = time.time()
@@ -218,7 +218,7 @@ def test_render_anchor_block_max_bytes_truncation(
 def test_render_anchor_block_empty_kg(fake_agent_render) -> None:
     """RED #3: KG vuoto (0 anchor) → markdown="", n_anchors=0,
     truncated=False, no exception."""
-    from engram.self_model import render_anchor_block
+    from verimem.self_model import render_anchor_block
 
     a = fake_agent_render
     # nessun anchor seedato
@@ -236,7 +236,7 @@ def test_render_anchor_block_empty_kg(fake_agent_render) -> None:
 def test_render_anchor_block_store_none_returns_empty() -> None:
     """RED: store=None (entity_kg non disponibile sull'agent) →
     output vuoto, no AttributeError."""
-    from engram.self_model import render_anchor_block
+    from verimem.self_model import render_anchor_block
 
     result = render_anchor_block(None, sem=None, max_bytes=4096)
     assert result["n_anchors"] == 0
@@ -254,7 +254,7 @@ async def test_hippo_self_model_render_tool_listed(
     """RED #4a: tool listed in tools/list."""
     from mcp.types import ListToolsRequest, PaginatedRequestParams
 
-    from engram import mcp_server
+    from verimem import mcp_server
 
     handler = mcp_server.server.request_handlers[ListToolsRequest]
     req = ListToolsRequest(

@@ -31,8 +31,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from engram.config import CONFIG
-from engram.semantic import Fact, SemanticMemory
+from verimem.config import CONFIG
+from verimem.semantic import Fact, SemanticMemory
 
 
 def session_to_text(turns: Any) -> str:

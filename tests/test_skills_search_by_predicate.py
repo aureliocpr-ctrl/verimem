@@ -2,18 +2,18 @@
 pre or post."""
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty():
-    from engram.skills_search_by_predicate import skills_with_predicate
+    from verimem.skills_search_by_predicate import skills_with_predicate
 
     out = skills_with_predicate([], predicate="x")
     assert out["skills"] == []
 
 
 def test_finds_in_preconditions():
-    from engram.skills_search_by_predicate import skills_with_predicate
+    from verimem.skills_search_by_predicate import skills_with_predicate
 
     skills = [
         Skill(id="a", preconditions=["target"], postconditions=[]),
@@ -25,7 +25,7 @@ def test_finds_in_preconditions():
 
 
 def test_finds_in_postconditions():
-    from engram.skills_search_by_predicate import skills_with_predicate
+    from verimem.skills_search_by_predicate import skills_with_predicate
 
     skills = [
         Skill(id="a", preconditions=[], postconditions=["target"]),
@@ -37,7 +37,7 @@ def test_finds_in_postconditions():
 
 
 def test_side_pre_only():
-    from engram.skills_search_by_predicate import skills_with_predicate
+    from verimem.skills_search_by_predicate import skills_with_predicate
 
     skills = [
         Skill(id="a", preconditions=["x"]),
@@ -49,7 +49,7 @@ def test_side_pre_only():
 
 
 def test_side_post_only():
-    from engram.skills_search_by_predicate import skills_with_predicate
+    from verimem.skills_search_by_predicate import skills_with_predicate
 
     skills = [
         Skill(id="a", preconditions=["x"]),
@@ -61,7 +61,7 @@ def test_side_post_only():
 
 
 def test_includes_side_marker():
-    from engram.skills_search_by_predicate import skills_with_predicate
+    from verimem.skills_search_by_predicate import skills_with_predicate
 
     skills = [Skill(id="a", preconditions=["x"], postconditions=["x"])]
     out = skills_with_predicate(skills, predicate="x")
@@ -73,7 +73,7 @@ def test_includes_side_marker():
 
 
 def test_payload_shape():
-    from engram.skills_search_by_predicate import skills_with_predicate
+    from verimem.skills_search_by_predicate import skills_with_predicate
 
     out = skills_with_predicate([], predicate="x")
     for k in ("predicate", "side", "skills", "n_total"):

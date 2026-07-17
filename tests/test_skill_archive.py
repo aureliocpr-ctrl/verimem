@@ -5,7 +5,7 @@ Useful end-of-life flow: keep a snapshot before retiring.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 class _FakeSkillsStore:
@@ -27,7 +27,7 @@ class _FakeAgent:
 
 
 def test_unknown_skill():
-    from engram.skill_archive import archive_skill
+    from verimem.skill_archive import archive_skill
 
     a = _FakeAgent([])
     out = archive_skill(skill_id="ZZZ", agent=a)
@@ -35,7 +35,7 @@ def test_unknown_skill():
 
 
 def test_dry_run_exports_no_mutation():
-    from engram.skill_archive import archive_skill
+    from verimem.skill_archive import archive_skill
 
     sk = Skill(id="x", name="my_skill", status="promoted")
     a = _FakeAgent([sk])
@@ -49,7 +49,7 @@ def test_dry_run_exports_no_mutation():
 
 
 def test_apply_retires():
-    from engram.skill_archive import archive_skill
+    from verimem.skill_archive import archive_skill
 
     sk = Skill(id="x", name="x", status="promoted")
     a = _FakeAgent([sk])
@@ -59,7 +59,7 @@ def test_apply_retires():
 
 
 def test_already_retired_no_op():
-    from engram.skill_archive import archive_skill
+    from verimem.skill_archive import archive_skill
 
     sk = Skill(id="x", name="x", status="retired")
     a = _FakeAgent([sk])
@@ -69,7 +69,7 @@ def test_already_retired_no_op():
 
 
 def test_payload_shape_complete():
-    from engram.skill_archive import archive_skill
+    from verimem.skill_archive import archive_skill
 
     a = _FakeAgent([])
     out = archive_skill(skill_id="x", agent=a)

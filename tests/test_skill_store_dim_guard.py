@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import sqlite3
 
-from engram import embedding
-from engram.skill import Skill, SkillLibrary
+from verimem import embedding
+from verimem.skill import Skill, SkillLibrary
 
 
 def _emb_bytes(db, sid):

@@ -21,7 +21,7 @@ import pytest
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
-from engram import settings as user_settings
+from verimem import settings as user_settings
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def isolated_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 @pytest.fixture
 def fake_dashboard_agent(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     """Replace dashboard._ag with a stub returning empty collections."""
-    from engram import dashboard as dash
+    from verimem import dashboard as dash
 
     fake = MagicMock()
 
@@ -65,7 +65,7 @@ def fake_dashboard_agent(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
 def client(isolated_settings: Path, fake_dashboard_agent: MagicMock) -> TestClient:
     # Mark user as onboarded to avoid redirect on /.
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram.dashboard import app
+    from verimem.dashboard import app
 
     return TestClient(app)
 
@@ -133,7 +133,7 @@ async def test_route_api_memory_events_returns_sse_stream(
     Async + ASGITransport gestisce nativamente CancelledError on close.
     """
     user_settings.save(user_settings.UserSettings(onboarded=True))
-    from engram.dashboard import app
+    from verimem.dashboard import app
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -162,8 +162,8 @@ async def test_route_api_memory_events_returns_sse_stream(
 def test_emit_writes_event_to_jsonl_log(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from engram import event_jsonl_log
-    from engram.observability import emit
+    from verimem import event_jsonl_log
+    from verimem.observability import emit
 
     log_path = tmp_path / "events.jsonl"
     monkeypatch.setattr(event_jsonl_log, "EVENT_LOG_PATH", log_path)

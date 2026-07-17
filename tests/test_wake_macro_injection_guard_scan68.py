@@ -12,8 +12,8 @@ MacroStep/Trace e le costanti REALI.
 """
 from __future__ import annotations
 
-from engram.compilation import CompiledMacro, MacroStep
-from engram.wake import (
+from verimem.compilation import CompiledMacro, MacroStep
+from verimem.wake import (
     _DANGEROUS_TOOLS_AFTER_EXTERNAL,
     _EXTERNAL_TOOLS,
     Trace,

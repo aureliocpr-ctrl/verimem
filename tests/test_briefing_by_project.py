@@ -43,7 +43,7 @@ from typing import Any
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @dataclass
@@ -109,7 +109,7 @@ def populated(tmp_path):
 
 class TestBasic:
     def test_filters_to_project_topics(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         r = briefing_by_project(populated, project="nexus")
         assert r["project"] == "nexus"
         assert r["topic_glob"] == "project/nexus/*"
@@ -121,7 +121,7 @@ class TestBasic:
         assert "d1" not in ids
 
     def test_returns_distinct_topics_seen(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         r = briefing_by_project(populated, project="nexus")
         assert set(r["topics_seen"]) == {
             "project/nexus/L0-inv",
@@ -136,7 +136,7 @@ class TestBasic:
 
 class TestRelatedEpisodes:
     def test_includes_only_episodes_touched_by_project_facts(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         r = briefing_by_project(populated, project="nexus")
         ep_ids = {ep["id"] for ep in r["related_episodes"]}
         # Lineage union of o1/o2/o3 = {ep_nexus_1, ep_nexus_2, ep_nexus_3}.
@@ -145,7 +145,7 @@ class TestRelatedEpisodes:
         assert "ep_unrelated" not in ep_ids
 
     def test_episodes_newest_first(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         r = briefing_by_project(populated, project="nexus")
         eps = r["related_episodes"]
         assert [e["id"] for e in eps] == [
@@ -153,12 +153,12 @@ class TestRelatedEpisodes:
         ]
 
     def test_n_episodes_cap(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         r = briefing_by_project(populated, project="nexus", n_episodes=2)
         assert len(r["related_episodes"]) == 2
 
     def test_no_facts_no_episodes(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         r = briefing_by_project(populated, project="nonexistent")
         assert r["n_total"] == 0
         assert r["related_episodes"] == []
@@ -170,7 +170,7 @@ class TestRelatedEpisodes:
 
 class TestSummary:
     def test_summary_mentions_project_and_counts(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         r = briefing_by_project(populated, project="nexus")
         s = r["summary"]
         assert isinstance(s, str) and len(s) > 0
@@ -178,7 +178,7 @@ class TestSummary:
         assert "3" in s   # n_live = 3 facts
 
     def test_summary_for_empty_project_is_clear(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         r = briefing_by_project(populated, project="nonexistent")
         s = r["summary"].lower()
         assert "nonexistent" in s
@@ -191,7 +191,7 @@ class TestSummary:
 
 class TestSupersession:
     def test_chains_surface_in_briefing(self, populated):
-        from engram.briefing_by_project import briefing_by_project
+        from verimem.briefing_by_project import briefing_by_project
         # Create chain: o1 -> o3 (o3 supersedes o1)
         populated.semantic.supersede("o1", "o3", reason="L0 refined")
         r = briefing_by_project(populated, project="nexus")

@@ -21,7 +21,7 @@ import os
 import subprocess
 import sys
 
-from engram import encode_service, preload
+from verimem import encode_service, preload
 
 # ---- daemon singleton lock ---------------------------------------------------
 
@@ -137,7 +137,7 @@ def test_daemon_main_exits_before_model_load_when_lock_held(monkeypatch):
     calls = []
     monkeypatch.setattr(encode_service, "acquire_daemon_lock",
                         lambda *a, **k: False)
-    import engram.embedding as emb
+    import verimem.embedding as emb
     monkeypatch.setattr(emb, "_encode_local",
                         lambda *a, **k: calls.append("load"))
     monkeypatch.setattr(encode_service.EncodeServer, "serve_forever",
@@ -158,7 +158,7 @@ def _quiet_preload_env(monkeypatch):
 def test_preload_skips_reranker_by_default(monkeypatch):
     _quiet_preload_env(monkeypatch)
     monkeypatch.delenv("HIPPO_RERANK_PRELOAD", raising=False)
-    from engram import semantic
+    from verimem import semantic
     called = []
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: True)
     monkeypatch.setattr(semantic, "_load_reranker",
@@ -170,7 +170,7 @@ def test_preload_skips_reranker_by_default(monkeypatch):
 def test_preload_warms_reranker_when_opted_in(monkeypatch):
     _quiet_preload_env(monkeypatch)
     monkeypatch.setenv("HIPPO_RERANK_PRELOAD", "1")
-    from engram import semantic
+    from verimem import semantic
     called = []
     monkeypatch.setattr(semantic, "_rerank_enabled", lambda: True)
     monkeypatch.setattr(semantic, "_load_reranker",

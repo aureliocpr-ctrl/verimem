@@ -30,8 +30,8 @@ from pathlib import Path
 
 import numpy as np
 
-from engram.config import CONFIG
-from engram.episode import Episode, Trace
+from verimem.config import CONFIG
+from verimem.episode import Episode, Trace
 
 
 def _ep(*, ep_id: str, text: str = "task") -> Episode:
@@ -56,7 +56,7 @@ def _normalize(v: np.ndarray) -> np.ndarray:
 def test_recall_by_context_ranks_by_context_cosine(tmp_path: Path):
     """Among 3 episodes with distinct context vectors, the one whose
     context most-resembles the query context ranks first."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
 
@@ -82,7 +82,7 @@ def test_recall_by_context_ranks_by_context_cosine(tmp_path: Path):
 def test_recall_by_context_excludes_null_contexts(tmp_path: Path):
     """Episodes stored without a context_emb (NULL column) are not
     returned by `recall_by_context` — there's no signal to score them."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     rng = np.random.default_rng(seed=23)
@@ -103,7 +103,7 @@ def test_recall_by_context_excludes_null_contexts(tmp_path: Path):
 
 def test_recall_by_context_empty_corpus(tmp_path: Path):
     """Empty memory or no-context episodes returns []."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     rng = np.random.default_rng(seed=7)
@@ -126,7 +126,7 @@ def test_recall_by_context_dim_mismatch_raises(tmp_path: Path):
     silently return wrong rankings."""
     import pytest as _pytest
 
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     bad = np.zeros(CONFIG.embedding_dim + 16, dtype=np.float32)
@@ -139,7 +139,7 @@ def test_recall_by_context_dim_mismatch_raises(tmp_path: Path):
 
 def test_recall_by_context_returns_at_most_k(tmp_path: Path):
     """k=2 returns at most 2 results even when more match."""
-    from engram.memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     rng = np.random.default_rng(seed=42)

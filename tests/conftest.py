@@ -4,7 +4,7 @@ from __future__ import annotations
 # E5 GO-LIVE (2026-06-04): il default ATTIVO del server passa a e5-base 768d.
 # I test usano lo STUB embedding 384d (sotto, _EMBED_DIM=384) + asserzioni a 384,
 # quindi PINNANO qui modello/dim ai valori storici (multilingue-L12, 384) PRIMA di
-# qualunque import di engram.config -> suite invariata, veloce, indipendente dal
+# qualunque import di verimem.config -> suite invariata, veloce, indipendente dal
 # default e5 del server (separazione: server=e5/768 via config-default, test=L12/384).
 import os as _os
 
@@ -97,7 +97,7 @@ def _stub_embedding_model(monkeypatch):
     in unit tests — keeps the suite offline-safe and fast.
     """
     try:
-        from engram import embedding
+        from verimem import embedding
     except ImportError:
         return  # nothing to stub
     stub = _StubModel()
@@ -133,7 +133,7 @@ def _reset_settings_v2_cache():
     that runs second sees the first test's snapshot.
     """
     try:
-        from engram import settings_v2
+        from verimem import settings_v2
     except ImportError:
         return
     settings_v2._build_settings.cache_clear()
@@ -150,7 +150,7 @@ def _reset_session_token():
     `HIPPO_DASHBOARD_TOKEN` to a fresh value would still match the old one.
     """
     try:
-        from engram.dashboard_routes import auth as _dash_auth
+        from verimem.dashboard_routes import auth as _dash_auth
     except ImportError:
         return
     _dash_auth.reset_session_token()
@@ -164,7 +164,7 @@ def _restore_module_config():
 
     Several modules (`skill`, `wake`, `sleep`, `tools`, `dashboard_routes.*`)
     read `CONFIG` as a module-level import. Tests sometimes swap that
-    binding (e.g. via `monkeypatch.setattr(engram.skill, "CONFIG", new)`)
+    binding (e.g. via `monkeypatch.setattr(verimem.skill, "CONFIG", new)`)
     to flip a feature flag. monkeypatch undoes the change at fixture
     teardown, but tests that DON'T use monkeypatch and write directly to
     the binding leave the override in place. This safety net snapshots
@@ -172,8 +172,8 @@ def _restore_module_config():
     `module.CONFIG = …` cannot poison the rest of the run.
     """
     bindings: list[tuple[object, object]] = []
-    for modname in ("engram.skill", "engram.wake", "engram.sleep",
-                    "engram.tools", "engram.tools_extra"):
+    for modname in ("verimem.skill", "verimem.wake", "verimem.sleep",
+                    "verimem.tools", "verimem.tools_extra"):
         try:
             mod = __import__(modname, fromlist=["CONFIG"])
         except ImportError:
@@ -193,7 +193,7 @@ def _reset_mcp_rate_buckets():
     `hippo_run_task`'s bucket would leave the next test starting with 0 tokens.
     """
     try:
-        from engram import mcp_server as _mcp
+        from verimem import mcp_server as _mcp
     except ImportError:
         return
     with _mcp._BUCKETS_LOCK:
@@ -208,7 +208,7 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     """Isolate tests from the user's ``user_settings.json`` and shell env.
 
     Audit 2026-05-13 found 22 tests failed with seed=42 because
-    ``engram.settings.apply_to_env()`` ran on import and read the
+    ``verimem.settings.apply_to_env()`` ran on import and read the
     operator's saved ``user_settings.json`` (with ``provider="anthropic"``).
     Tests that instantiate ``WakeAgent`` without an explicit ``llm`` then
     tried to construct an Anthropic client and raised
@@ -270,7 +270,7 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     monkeypatch.setenv("ENGRAM_DIR", str(test_data_dir))
     original = {}
     try:
-        from engram.config import CONFIG
+        from verimem.config import CONFIG
         (test_data_dir / "episodes").mkdir(exist_ok=True)
         (test_data_dir / "skills").mkdir(exist_ok=True)
         (test_data_dir / "semantic").mkdir(exist_ok=True)
@@ -288,7 +288,7 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
             object.__setattr__(CONFIG, k, v)
     except ImportError:
         pass
-    # CYCLE #28 (critic counterexample on #25): engram.settings:20
+    # CYCLE #28 (critic counterexample on #25): verimem.settings:20
     # has `SETTINGS_FILE = CONFIG.data_dir / "user_settings.json"`
     # materialized at MODULE-IMPORT time. Overriding CONFIG.data_dir
     # post-import does NOT update SETTINGS_FILE → tests that trigger
@@ -296,7 +296,7 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # Fix: override SETTINGS_FILE explicitly if settings module is loaded.
     settings_original_path = None
     try:
-        from engram import settings as _settings
+        from verimem import settings as _settings
         if hasattr(_settings, "SETTINGS_FILE"):
             settings_original_path = _settings.SETTINGS_FILE
             _settings.SETTINGS_FILE = test_data_dir / "user_settings.json"
@@ -306,13 +306,13 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
         yield
     finally:
         if original:
-            from engram.config import CONFIG
+            from verimem.config import CONFIG
             for k, v in original.items():
                 object.__setattr__(CONFIG, k, v)
         # Restore settings.SETTINGS_FILE
         if settings_original_path is not None:
             try:
-                from engram import settings as _settings
+                from verimem import settings as _settings
                 _settings.SETTINGS_FILE = settings_original_path
             except ImportError:
                 pass

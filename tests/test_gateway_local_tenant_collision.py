@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from engram.client import Memory
-from engram.gateway import GatewayKeys, create_app
+from verimem.client import Memory
+from verimem.gateway import GatewayKeys, create_app
 
 ADMIN = "admin-secret-xyz"
 
@@ -40,7 +40,7 @@ def test_normal_tenant_still_provisions(tmp_path):
 
 def test_host_only_parses_ipv6_loopback():
     # opus LOW-6: rsplit(":",1)[0] broke IPv6; the loopback client must resolve.
-    from engram.gateway import _LOCAL_HOSTS, _host_only
+    from verimem.gateway import _LOCAL_HOSTS, _host_only
     assert _host_only("[::1]") == "[::1]"
     assert _host_only("[::1]:8080") == "[::1]"
     assert _host_only("127.0.0.1:8377") == "127.0.0.1"

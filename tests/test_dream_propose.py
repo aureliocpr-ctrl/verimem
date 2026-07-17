@@ -17,9 +17,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.memory import Episode, EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
-from engram.skill import Skill, SkillLibrary
+from verimem.memory import Episode, EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
+from verimem.skill import Skill, SkillLibrary
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def live_dirs_with_corpus(tmp_path):
 # === propose_dream_tasks() core function ===
 
 def test_propose_returns_dream_id_and_shadow_root(live_dirs_with_corpus, tmp_path):
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     result = propose_dream_tasks(
         live_dirs_with_corpus, shadow_root=tmp_path / "shadow_p1",
     )
@@ -72,8 +72,8 @@ def test_propose_returns_dream_id_and_shadow_root(live_dirs_with_corpus, tmp_pat
 def test_propose_zero_llm_calls(live_dirs_with_corpus, tmp_path, monkeypatch):
     """CRUCIAL: zero LLM call interne. Subscription-first guarantee."""
     # Sentinel: monkeypatcho get_llm per esplodere se chiamato
-    from engram import llm as llm_module
-    from engram.dream import propose_dream_tasks
+    from verimem import llm as llm_module
+    from verimem.dream import propose_dream_tasks
     calls = {"n": 0}
     orig = llm_module.get_llm
     def boom(*a, **kw):
@@ -92,7 +92,7 @@ def test_propose_zero_llm_calls(live_dirs_with_corpus, tmp_path, monkeypatch):
 
 def test_propose_returns_pending_tasks_for_each_cluster(live_dirs_with_corpus, tmp_path):
     """10 episodi (2 cluster simili) → almeno 1 pending task. Conferma clustering reale."""
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     result = propose_dream_tasks(
         live_dirs_with_corpus, shadow_root=tmp_path / "shadow_p3",
         max_clusters=10,
@@ -105,7 +105,7 @@ def test_propose_returns_pending_tasks_for_each_cluster(live_dirs_with_corpus, t
 
 def test_propose_task_has_required_schema(live_dirs_with_corpus, tmp_path):
     """Ogni dream task deve avere: task_id, kind, system_prompt, user_prompt, context_episode_ids."""
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     result = propose_dream_tasks(
         live_dirs_with_corpus, shadow_root=tmp_path / "shadow_p4",
         max_clusters=10,
@@ -125,7 +125,7 @@ def test_propose_task_has_required_schema(live_dirs_with_corpus, tmp_path):
 
 def test_propose_persists_tasks_artifact_file(live_dirs_with_corpus, tmp_path):
     """File artifact JSON persistito su shadow_root/dream_tasks.json per audit/replay."""
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     shadow_root = tmp_path / "shadow_p5"
     result = propose_dream_tasks(
         live_dirs_with_corpus, shadow_root=shadow_root,
@@ -142,7 +142,7 @@ def test_propose_does_not_modify_live(live_dirs_with_corpus, tmp_path):
     """Crucial: hash test live DB pre/post — NESSUNA modifica."""
     import hashlib
 
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     def h(p): return hashlib.sha1(p.read_bytes()).hexdigest()
     before = {
         k: h(live_dirs_with_corpus[k])
@@ -161,7 +161,7 @@ def test_propose_does_not_modify_live(live_dirs_with_corpus, tmp_path):
 
 def test_propose_respects_max_clusters(live_dirs_with_corpus, tmp_path):
     """max_clusters cap: anche se ci sono N>cap cluster, pending_tasks ≤ cap."""
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     result = propose_dream_tasks(
         live_dirs_with_corpus, shadow_root=tmp_path / "shadow_p7",
         max_clusters=1,
@@ -171,7 +171,7 @@ def test_propose_respects_max_clusters(live_dirs_with_corpus, tmp_path):
 
 def test_propose_includes_summary_counts(live_dirs_with_corpus, tmp_path):
     """Report deve includere counts diagnostici: total clusters trovati, post-cap."""
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     result = propose_dream_tasks(
         live_dirs_with_corpus, shadow_root=tmp_path / "shadow_p8",
     )
@@ -184,7 +184,7 @@ def test_propose_includes_summary_counts(live_dirs_with_corpus, tmp_path):
 
 def test_propose_invalid_shadow_root_overlap_raises(live_dirs_with_corpus):
     """Riusa la validation cycle #34: shadow=live deve raise non distruggere."""
-    from engram.dream import propose_dream_tasks
+    from verimem.dream import propose_dream_tasks
     live_root = live_dirs_with_corpus["skills_db"].parent.parent
     with pytest.raises(ValueError, match="overlap|live"):
         propose_dream_tasks(

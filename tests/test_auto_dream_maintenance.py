@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.auto_dream_worker import run_maintenance
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.auto_dream_worker import run_maintenance
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _fresh(tmp_path):

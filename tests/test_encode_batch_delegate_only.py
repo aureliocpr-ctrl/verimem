@@ -15,8 +15,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from engram import embedding
-from engram.config import CONFIG
+from verimem import embedding
+from verimem.config import CONFIG
 
 
 def _no_coldload():

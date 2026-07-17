@@ -12,11 +12,11 @@ Cycle: sequence of skills s_1 → s_2 → ... → s_n → s_1.
 """
 from __future__ import annotations
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_empty_graph_no_cycles():
-    from engram.predicate_graph_check import predicate_graph_check
+    from verimem.predicate_graph_check import predicate_graph_check
 
     out = predicate_graph_check([])
     assert out["has_cycles"] is False
@@ -25,7 +25,7 @@ def test_empty_graph_no_cycles():
 
 
 def test_linear_chain_no_cycles():
-    from engram.predicate_graph_check import predicate_graph_check
+    from verimem.predicate_graph_check import predicate_graph_check
 
     skills = [
         Skill(id="A", name="A", postconditions=["X"]),
@@ -40,7 +40,7 @@ def test_linear_chain_no_cycles():
 
 def test_simple_cycle_detected():
     """A.post = X, B.pre = X, B.post = Y, A.pre = Y → A → B → A."""
-    from engram.predicate_graph_check import predicate_graph_check
+    from verimem.predicate_graph_check import predicate_graph_check
 
     skills = [
         Skill(id="A", name="A", preconditions=["Y"], postconditions=["X"]),
@@ -53,7 +53,7 @@ def test_simple_cycle_detected():
 
 def test_self_loop_detected():
     """skill X has pre and post sharing a predicate → self-edge."""
-    from engram.predicate_graph_check import predicate_graph_check
+    from verimem.predicate_graph_check import predicate_graph_check
 
     skills = [
         Skill(id="X", name="X",
@@ -67,7 +67,7 @@ def test_self_loop_detected():
 def test_isolated_skills_listed():
     """Skills with neither pre nor post that match other skills are
     'isolated' — no incoming/outgoing edges."""
-    from engram.predicate_graph_check import predicate_graph_check
+    from verimem.predicate_graph_check import predicate_graph_check
 
     skills = [
         Skill(id="A", name="A", postconditions=["X"]),
@@ -80,7 +80,7 @@ def test_isolated_skills_listed():
 
 
 def test_payload_shape_complete():
-    from engram.predicate_graph_check import predicate_graph_check
+    from verimem.predicate_graph_check import predicate_graph_check
 
     out = predicate_graph_check([])
     for k in ("has_cycles", "cycles", "n_nodes", "n_edges",
@@ -89,7 +89,7 @@ def test_payload_shape_complete():
 
 
 def test_n_edges_count():
-    from engram.predicate_graph_check import predicate_graph_check
+    from verimem.predicate_graph_check import predicate_graph_check
 
     skills = [
         Skill(id="A", name="A", postconditions=["X", "Y"]),

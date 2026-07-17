@@ -1,7 +1,7 @@
 """LLM-refined atomic extraction from narration (2026-06-14).
 
-Higher-recall companion to the rule-based engram.narration.extract_atomic_candidates,
-with the same anti-confab discipline as engram.openie: JSON-only, one retry on a
+Higher-recall companion to the rule-based verimem.narration.extract_atomic_candidates,
+with the same anti-confab discipline as verimem.openie: JSON-only, one retry on a
 malformed parse, [] on a second failure — never a crash, never a fabricated parse.
 Tested with a FAKE llm (no real model call).
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 import sqlite3
 import types
 
-from engram.narration_llm import extract_atomic_facts
+from verimem.narration_llm import extract_atomic_facts
 
 
 class _FakeLLM:
@@ -70,7 +70,7 @@ def test_llm_call_exception_degrades_to_empty():
 # --- wiring: archive_and_extract_narration uses the LLM path when given an llm ---
 
 def test_archive_uses_llm_extractor_when_provided(tmp_path):
-    from engram.narration import archive_and_extract_narration
+    from verimem.narration import archive_and_extract_narration
     db = tmp_path / "s.db"
     con = sqlite3.connect(db)
     con.execute("CREATE TABLE facts (id TEXT PRIMARY KEY, topic TEXT, proposition TEXT, "

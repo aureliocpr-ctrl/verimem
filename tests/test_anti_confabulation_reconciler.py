@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from engram.anti_confabulation import (
+from verimem.anti_confabulation import (
     scan_orphaned_facts,
     summarize_scan,
 )

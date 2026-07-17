@@ -43,7 +43,7 @@ def _percentile(values: list[float], q: float) -> float:
 
 
 def setup_corpus(db_path: Path) -> dict[str, Any]:
-    from engram.entity_kg import Entity, EntityStore
+    from verimem.entity_kg import Entity, EntityStore
 
     random.seed(70)
     store = EntityStore(db_path=db_path)

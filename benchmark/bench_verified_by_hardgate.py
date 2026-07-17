@@ -55,7 +55,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _get_real_head_sha(repo_root: Path) -> str:

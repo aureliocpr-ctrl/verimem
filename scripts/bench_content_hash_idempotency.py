@@ -39,8 +39,8 @@ os.environ["ENGRAM_DATA_DIR"] = str(tmp)
 
 from mcp.types import CallToolRequest, CallToolRequestParams  # noqa: E402
 
-from engram import mcp_server  # noqa: E402
-from engram.semantic import SemanticMemory  # noqa: E402
+from verimem import mcp_server  # noqa: E402
+from verimem.semantic import SemanticMemory  # noqa: E402
 
 
 # Minimal stub agent

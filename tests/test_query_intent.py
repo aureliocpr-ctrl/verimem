@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.query_intent import (
+from verimem.query_intent import (
     COUNT,
     EXCLUDE,
     FIND,

@@ -24,8 +24,8 @@ from tests.perf.seed_data import seed_all, stub_vector
 
 
 def _install_embedding_stub() -> None:
-    """Replace `engram.embedding._model` with a deterministic stub."""
-    from engram import embedding
+    """Replace `verimem.embedding._model` with a deterministic stub."""
+    from verimem import embedding
 
     class _StubModel:
         def encode(self, text, normalize_embeddings=True, show_progress_bar=False,
@@ -69,16 +69,16 @@ def run_benchmarks(base: Path, seed_only: bool = False) -> dict[str, dict]:
     _install_embedding_stub()
 
     # Patch CONFIG to point at seeded paths.
-    from engram.config import CONFIG
+    from verimem.config import CONFIG
     object.__setattr__(CONFIG, "skills_dir", paths["skills_dir"])
     object.__setattr__(CONFIG, "skills_db", paths["skills_db"])
     object.__setattr__(CONFIG, "episodes_db", paths["episodes_db"])
     object.__setattr__(CONFIG, "semantic_db", paths["semantic_db"])
 
-    from engram.memory import EpisodicMemory
-    from engram.repomap import build_repomap, scan_repo
-    from engram.semantic import SemanticMemory
-    from engram.skill import SkillLibrary
+    from verimem.memory import EpisodicMemory
+    from verimem.repomap import build_repomap, scan_repo
+    from verimem.semantic import SemanticMemory
+    from verimem.skill import SkillLibrary
 
     skills = SkillLibrary(dir_path=paths["skills_dir"], db_path=paths["skills_db"])
     memory = EpisodicMemory(db_path=paths["episodes_db"])
@@ -167,7 +167,7 @@ def run_benchmarks(base: Path, seed_only: bool = False) -> dict[str, dict]:
     results[label] = p
 
     # Embedding encode (cached vs uncached) ----------------------------------
-    from engram import embedding
+    from verimem import embedding
     sample_texts = [f"task example {i}" for i in range(20)]
     def _encode_repeats():
         for t in sample_texts:

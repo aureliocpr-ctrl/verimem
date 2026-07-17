@@ -53,7 +53,7 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
 
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.client import Memory
+    from verimem.client import Memory
 
     judge = LeanClaudeCLILLM(model=a.model, timeout_s=90)
     rows, injection_breaches = [], []

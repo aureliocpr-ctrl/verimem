@@ -20,7 +20,7 @@ from __future__ import annotations
 import sqlite3
 import time
 
-from engram.trust_ledger import TrustLedger
+from verimem.trust_ledger import TrustLedger
 
 
 def test_totals_match_raw_after_mixed_writes(tmp_path):

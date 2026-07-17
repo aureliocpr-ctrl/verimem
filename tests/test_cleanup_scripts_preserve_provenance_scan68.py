@@ -20,7 +20,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 def _load_script(filename: str):

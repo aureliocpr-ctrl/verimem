@@ -5,7 +5,7 @@ Closes gap §6.1 of docs/sota/highway-nodes-pagerank-cache.md
 identifying the top-K fact ids that bridge otherwise-disjoint
 communities.
 
-RED marker: ``from engram.highway_nodes import get_highway_nodes``
+RED marker: ``from verimem.highway_nodes import get_highway_nodes``
 must fail on master.
 """
 from __future__ import annotations
@@ -15,9 +15,10 @@ from pathlib import Path
 
 import pytest
 
-# RED MARKER
-from engram.highway_nodes import get_highway_nodes
 from tests.causal_fixture_helper import add_causal_clique_edges
+
+# RED MARKER
+from verimem.highway_nodes import get_highway_nodes
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

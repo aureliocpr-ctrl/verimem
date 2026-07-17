@@ -20,7 +20,7 @@ from benchmark.source_trust_realcorpus import (
     load_corpus,
     verdict,
 )
-from engram.source_trust import canonical_source
+from verimem.source_trust import canonical_source
 
 _HALUEVAL = (Path(__file__).resolve().parent.parent
              / "benchmark" / "data" / "external" / "halueval_qa_heldout.jsonl")

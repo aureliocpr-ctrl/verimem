@@ -18,12 +18,6 @@ from __future__ import annotations
 import argparse
 import json
 import random
-from collections import Counter
-from pathlib import Path
-from typing import Any
-
-from engram import embedding
-from engram.semantic import SemanticMemory
 
 # Upstream filter (frozen after seed-0 audit): the seed-0 FPs were NOT NLI errors
 # on facts — they were pairs that belong to OTHER mechanisms. test/telemetry noise
@@ -31,6 +25,12 @@ from engram.semantic import SemanticMemory
 # (later wins), not a contradiction; different bracket-tags are different subjects.
 # Validated on a FRESH seed to check it is not overfit to the pairs it was tuned on.
 import re as _re
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+from verimem import embedding
+from verimem.semantic import SemanticMemory
 
 _NOISE_RE = _re.compile(
     r"pytest|cap20|roundtrip|metric_id|wire import event|^\{"
@@ -83,7 +83,7 @@ def run(
     sm: SemanticMemory, judge: Any, *, sample: int = 200,
     min_cosine: float = 0.7, seed: int = 0, filter_noise: bool = False,
 ) -> dict[str, Any]:
-    from engram.semantic_conflict import Relation
+    from verimem.semantic_conflict import Relation
 
     facts = sm.all()
     props = [f.proposition or "" for f in facts]
@@ -132,7 +132,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.semantic_conflict import LLMRelationJudge
+    from verimem.semantic_conflict import LLMRelationJudge
 
     judge = LLMRelationJudge(LeanClaudeCLILLM(model=args.model, timeout_s=60))
     res = run(SemanticMemory(), judge, sample=args.sample,

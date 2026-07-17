@@ -1,6 +1,6 @@
 """MCP-server contract tests.
 
-These exercise `engram.mcp_server` in-process — we drive the same
+These exercise `verimem.mcp_server` in-process — we drive the same
 async handlers that the stdio bridge would call. No real subprocess + no
 LLM calls.
 
@@ -28,7 +28,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from engram import mcp_server
+from verimem import mcp_server
 
 # ---------------------------------------------------------------------------
 # Lightweight in-memory fakes — enough for the dispatcher to exercise each branch.
@@ -756,7 +756,7 @@ async def test_call_tool_screen_content(fake_agent: _FakeAgent) -> None:
 async def test_entity_tools_honest_on_empty_graph(fake_agent: _FakeAgent, tmp_path) -> None:
     """Empty (unpopulated) entity graph must say so, not return a silent 0 that
     looks like 'no match'. Closes the 'built-not-live' honesty gap."""
-    from engram.entity_kg import EntityStore
+    from verimem.entity_kg import EntityStore
     fake_agent.entity_kg = EntityStore(tmp_path / "ekg.db")  # exists but 0 entities
     assert fake_agent.entity_kg.count() == 0
 
@@ -778,7 +778,7 @@ async def test_entity_tools_honest_on_empty_graph(fake_agent: _FakeAgent, tmp_pa
 async def test_call_tool_warmup_status(fake_agent: _FakeAgent,
                                        monkeypatch: pytest.MonkeyPatch) -> None:
     # Embed-free readiness probe: structured warmth, must NOT load the model.
-    from engram import embedding, encode_service
+    from verimem import embedding, encode_service
     monkeypatch.setattr(embedding, "is_loaded", lambda: False)
     monkeypatch.setattr(encode_service, "daemon_usable", lambda *a, **k: False)
     monkeypatch.setattr(encode_service, "is_reachable", lambda *a, **k: False)
@@ -887,7 +887,7 @@ async def test_consolidate_hosted_restores_sleep_llm_when_originally_none(
     import shutil
     from types import SimpleNamespace
 
-    import engram.llm as _llm
+    import verimem.llm as _llm
 
     monkeypatch.setenv("HIPPO_HOSTED", "1")
 
@@ -929,7 +929,7 @@ async def test_consolidate_hosted_restores_sleep_llm_when_originally_none(
 async def test_call_tool_transcript_recall(monkeypatch: pytest.MonkeyPatch,
                                            tmp_path, fake_agent: _FakeAgent) -> None:
     """hippo_transcript_recall: pull-only sul Tier C isolato, marca low-trust."""
-    from engram.transcript_index import TranscriptIndex, Turn
+    from verimem.transcript_index import TranscriptIndex, Turn
 
     db = tmp_path / "tc.db"
     monkeypatch.setenv("HIPPO_TRANSCRIPT_DB", str(db))
@@ -952,7 +952,7 @@ async def test_call_tool_transcript_recall(monkeypatch: pytest.MonkeyPatch,
 async def test_call_tool_recall_history(tmp_path, fake_agent: _FakeAgent) -> None:
     """hippo_recall_history (iter 42): il recall racconta la TRANSIZIONE dalla
     catena supersede — 'current | PREVIOUSLY: ...' — non solo l'ultimo valore."""
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     old = Fact(id="h-old", proposition="Johnson's monthly income is 3500 USD",
@@ -979,7 +979,7 @@ async def test_call_tool_recall_as_of(tmp_path, fake_agent: _FakeAgent) -> None:
     verità era 3500 (poi superseduta), oggi è 5000."""
     import time as _t
 
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     now = _t.time()
@@ -1005,8 +1005,8 @@ async def test_call_tool_recall_as_of(tmp_path, fake_agent: _FakeAgent) -> None:
 async def test_call_tool_transcript_promote(monkeypatch: pytest.MonkeyPatch,
                                             tmp_path, fake_agent: _FakeAgent) -> None:
     """hippo_transcript_promote: ponte gated Tier C -> corpus (model_claim + provenance)."""
-    from engram.semantic import SemanticMemory
-    from engram.transcript_index import TranscriptIndex, Turn
+    from verimem.semantic import SemanticMemory
+    from verimem.transcript_index import TranscriptIndex, Turn
 
     monkeypatch.setenv("HIPPO_TRANSCRIPT_DB", str(tmp_path / "tc.db"))
     TranscriptIndex().store(Turn(
@@ -1032,25 +1032,25 @@ async def test_call_tool_transcript_promote(monkeypatch: pytest.MonkeyPatch,
 async def test_call_tool_document_list_search_get(monkeypatch: pytest.MonkeyPatch,
                                                   tmp_path, fake_agent: _FakeAgent) -> None:
     """Tier Documents via MCP: list/search/get sullo store ISOLATO (no semantic.db)."""
-    from engram.documents import DocumentStore
+    from verimem.documents import DocumentStore
 
     monkeypatch.setenv("HIPPO_DOCUMENTS_DB", str(tmp_path / "docs.db"))
     ds = DocumentStore()  # legge HIPPO_DOCUMENTS_DB -> stesso DB dell'handler
-    ds.ingest("notes/engram.md", "il flip embedding e5 ha alzato il recall a 0.71",
-              uri="file://engram.md", meta={"filename": "engram.md"})
+    ds.ingest("notes/verimem.md", "il flip embedding e5 ha alzato il recall a 0.71",
+              uri="file://verimem.md", meta={"filename": "verimem.md"})
     ds.ingest("notes/altro.md", "contenuto privo di riscontro")
 
     srcs = json.loads((await _invoke_tool("hippo_document_list", {}))[0])
-    assert {s["source_id"] for s in srcs} == {"notes/engram.md", "notes/altro.md"}
+    assert {s["source_id"] for s in srcs} == {"notes/verimem.md", "notes/altro.md"}
 
     hits = json.loads((await _invoke_tool(
         "hippo_document_search", {"query": "flip embedding", "k": 5}))[0])
-    assert len(hits) == 1 and hits[0]["source_id"] == "notes/engram.md"
+    assert len(hits) == 1 and hits[0]["source_id"] == "notes/verimem.md"
     assert "flip embedding" in hits[0]["snippet"].lower()
 
     doc = json.loads((await _invoke_tool(
-        "hippo_document_get", {"source_id": "notes/engram.md"}))[0])
-    assert doc["source_id"] == "notes/engram.md" and "0.71" in doc["content"]
+        "hippo_document_get", {"source_id": "notes/verimem.md"}))[0])
+    assert doc["source_id"] == "notes/verimem.md" and "0.71" in doc["content"]
 
 
 @pytest.mark.asyncio
@@ -1068,7 +1068,7 @@ async def test_call_tool_ingest_conversation_forwards_user_name(
     ingest (the app-level metadata that makes facts retrieval-ready)."""
     import types
 
-    import engram.conversation_ingest as ci
+    import verimem.conversation_ingest as ci
 
     fake_agent.wake = types.SimpleNamespace(llm=object())  # handler reads a.wake.llm
     seen = {}
@@ -1108,7 +1108,7 @@ async def test_call_tool_import_conversations_list_and_consent(
     # explicit ids -> ingests through the gate (spy the module function)
     import types
 
-    import engram.import_conversations as ic
+    import verimem.import_conversations as ic
     fake_agent.wake = types.SimpleNamespace(llm=object())  # handler reads a.wake.llm
     seen = {}
 
@@ -1129,7 +1129,7 @@ async def test_call_tool_import_conversations_list_and_consent(
 async def test_call_tool_document_promote_chunk(
         monkeypatch: pytest.MonkeyPatch, tmp_path, fake_agent: _FakeAgent) -> None:
     """chunk -> gated Fact via MCP: model_claim + exact file citation."""
-    from engram.semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
 
     fake_agent.semantic = SemanticMemory(db_path=tmp_path / "s.db")
     out = json.loads((await _invoke_tool("hippo_document_promote_chunk", {
@@ -1165,7 +1165,7 @@ async def test_call_tool_document_semantic_index_and_search(
         monkeypatch: pytest.MonkeyPatch, tmp_path, fake_agent: _FakeAgent) -> None:
     """Roadmap #1 via MCP: index a real file, then semantic search returns the
     relevant chunk WITH the exact citation (source_id, version, start, end)."""
-    import engram.document_index as di
+    import verimem.document_index as di
 
     monkeypatch.setenv("HIPPO_DOCINDEX_DB", str(tmp_path / "docidx.db"))
     monkeypatch.setattr(di, "_DefaultEmbedder", _FakeDocEmbedder)  # no model load
@@ -1264,7 +1264,7 @@ async def test_call_tool_recall_history_route(tmp_path, fake_agent: _FakeAgent) 
     """route=True: la storia viene servita SOLO se il wording della query è
     temporale — un lookup piatto ricade sul recall lean (astensione pura sulle
     trap questions: il trade misurato di TRUST_MAINTENANCE)."""
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     sm.store(Fact(id="r-old", proposition="Johnson's monthly income is 3500 USD",
@@ -1299,7 +1299,7 @@ async def test_call_tool_trust_report_min_relevance(tmp_path, fake_agent: _FakeA
     not forward min_relevance — the LLM-free abstention floor existed only on
     the SDK surface. With a floor above the anisotropic noise, an absent-
     attribute query must abstain via the MCP tool too."""
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     sm.store(Fact(id="a", topic="u",
@@ -1321,7 +1321,7 @@ async def test_verimem_tool_alias_dispatches_to_hippo(tmp_path, fake_agent: _Fak
     on the MCP surface, dispatched to the same handler — the product name the
     user types is 'verimem', without breaking existing hippo_* configs. Mirrors
     the pre-existing engram_* compat alias (cycle #41)."""
-    from engram.semantic import Fact, SemanticMemory
+    from verimem.semantic import Fact, SemanticMemory
 
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     sm.store(Fact(id="a", topic="u", proposition="Marco lives in Milan"),
@@ -1341,7 +1341,7 @@ async def test_tool_namespace_env_flips_canonical_names(monkeypatch) -> None:
     """Rename Phase 1 step 2: ENGRAM_TOOL_NAMESPACE=verimem exposes the tools as
     verimem_* (the product name) instead of hippo_*, WITHOUT doubling the list.
     Default (unset) stays hippo_* — byte-identical, 0.3.x configs unaffected."""
-    import engram.mcp_server as mcp_server
+    import verimem.mcp_server as mcp_server
 
     monkeypatch.delenv("ENGRAM_TOOL_NAMESPACE", raising=False)
     monkeypatch.delenv("ENGRAM_MCP_TOOLS_PREFIX", raising=False)

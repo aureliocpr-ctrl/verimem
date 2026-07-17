@@ -13,8 +13,8 @@ import json
 
 import pytest
 
-from engram import grounding_gate as G
-from engram.local_grounding import (
+from verimem import grounding_gate as G
+from verimem.local_grounding import (
     LocalGroundingJudge,
     get_local_threshold,
     reset_local_judge,
@@ -138,7 +138,7 @@ def test_production_l4_gate_uses_calibrated_local_threshold(tmp_path, monkeypatc
     should_store_fact. The calibrated cut (gate_config.json) must reach L4: a local
     score of 60 vs config threshold 55 must PASS there, and 50 must WARN — never
     compared against the claude-scale 40."""
-    from engram.anti_confab_gate import run_validation_gate
+    from verimem.anti_confab_gate import run_validation_gate
 
     (tmp_path / "gate_config.json").write_text(
         json.dumps({"threshold": 55.0}), encoding="utf-8")
@@ -192,7 +192,7 @@ def test_failover_uses_claude_scale_threshold_not_config(tmp_path, monkeypatch):
 def test_local_load_failure_is_cached_not_retried(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(tmp_path / "nope"))
-    from engram import local_grounding as LG
+    from verimem import local_grounding as LG
     calls = {"n": 0}
 
     def boom_loader(*a, **k):

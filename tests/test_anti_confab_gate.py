@@ -46,8 +46,8 @@ from typing import Any
 
 import pytest
 
-from engram import mcp_server
-from engram.semantic import Fact, SemanticMemory
+from verimem import mcp_server
+from verimem.semantic import Fact, SemanticMemory
 
 # ---------------------------------------------------------------------------
 # Test infra: real SemanticMemory + FakeAgent. We invoke the MCP handler

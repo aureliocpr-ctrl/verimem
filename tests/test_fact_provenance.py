@@ -24,7 +24,7 @@ import json
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ class TestSchemaMigrationV1ToV2:
         auto-adapts as new migrations land (cycle 160 v5 pattern card
         schema queued behind PR #103).
         """
-        from engram.semantic import _SEMANTIC_TARGET_VERSION
+        from verimem.semantic import _SEMANTIC_TARGET_VERSION
         with sm._connect() as conn:
             row = conn.execute(
                 "SELECT version FROM _schema_version WHERE db_id = 'semantic'"
@@ -93,7 +93,7 @@ class TestSchemaMigrationV1ToV2:
 
     def test_migration_is_idempotent(self, sm):
         # Re-init same DB path — should not raise
-        from engram.semantic import _SEMANTIC_TARGET_VERSION
+        from verimem.semantic import _SEMANTIC_TARGET_VERSION
         sm2 = SemanticMemory(db_path=sm.db_path)
         with sm2._connect() as conn:
             row = conn.execute(
@@ -242,7 +242,7 @@ class TestLegacyFactsMarkedLegacyUnverified:
             # Insert one v1 fact with embedding placeholder
             import numpy as np
 
-            from engram import embedding as emb_mod
+            from verimem import embedding as emb_mod
             fake_emb = emb_mod.encode("legacy claim")
             conn.execute("""
                 INSERT INTO facts

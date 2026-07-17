@@ -30,8 +30,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from engram.swarm.schemas import AgentSpec
-from engram.swarm.spawn import SpawnError, SpawnResult, spawn_agent
+from verimem.swarm.schemas import AgentSpec
+from verimem.swarm.spawn import SpawnError, SpawnResult, spawn_agent
 
 SAMPLE_OUTPUT = (
     "Starting background service…\n"
@@ -57,7 +57,7 @@ class TestSpawnAgent:
 
     def test_returns_short_id_from_output(self) -> None:
         spec = AgentSpec(name="agent-a", prompt="hello")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()) as run:
             r = spawn_agent(spec, run_id="cycle148-test")
         assert isinstance(r, SpawnResult)
@@ -69,7 +69,7 @@ class TestSpawnAgent:
 
     def test_command_includes_bg_and_print_disabled(self) -> None:
         spec = AgentSpec(name="agent-a", prompt="hello")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="cycle148-test")
         assert "--bg" in r.command, (
@@ -82,7 +82,7 @@ class TestSpawnAgent:
 
     def test_command_passes_model_flag(self) -> None:
         spec = AgentSpec(name="a", prompt="x", model="sonnet")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="r")
         assert "--model" in r.command
@@ -91,7 +91,7 @@ class TestSpawnAgent:
 
     def test_command_passes_max_budget_flag(self) -> None:
         spec = AgentSpec(name="a", prompt="x", max_budget_usd=2.5)
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="r")
         assert "--max-budget-usd" in r.command
@@ -100,7 +100,7 @@ class TestSpawnAgent:
 
     def test_command_passes_permission_mode(self) -> None:
         spec = AgentSpec(name="a", prompt="x", permission_mode="acceptEdits")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="r")
         assert "--permission-mode" in r.command
@@ -110,7 +110,7 @@ class TestSpawnAgent:
     def test_command_passes_name_as_run_id_agent_name(self) -> None:
         """display name = <run_id>-<agent_name> for searchability."""
         spec = AgentSpec(name="reviewer", prompt="x")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="cycle148-test")
         assert "--name" in r.command
@@ -119,14 +119,14 @@ class TestSpawnAgent:
 
     def test_command_passes_worktree_flag_when_true(self) -> None:
         spec = AgentSpec(name="a", prompt="x", worktree=True)
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="r")
         assert "--worktree" in r.command or "-w" in r.command
 
     def test_command_skips_worktree_flag_when_false(self) -> None:
         spec = AgentSpec(name="a", prompt="x", worktree=False)
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="r")
         assert "--worktree" not in r.command and "-w" not in r.command
@@ -135,7 +135,7 @@ class TestSpawnAgent:
         spec = AgentSpec(
             name="a", prompt="x", allowed_tools=["Read", "Grep"],
         )
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="r")
         # allowedTools is a space- or comma-separated list, single flag.
@@ -146,21 +146,21 @@ class TestSpawnAgent:
 
     def test_command_passes_bare_flag_when_true(self) -> None:
         spec = AgentSpec(name="a", prompt="x", bare=True)
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="r")
         assert "--bare" in r.command
 
     def test_prompt_is_last_positional(self) -> None:
         spec = AgentSpec(name="a", prompt="DO THE THING")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()):
             r = spawn_agent(spec, run_id="r")
         assert r.command[-1] == "DO THE THING"
 
     def test_enables_agent_teams_env_var(self) -> None:
         spec = AgentSpec(name="a", prompt="x")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run()) as run:
             spawn_agent(spec, run_id="r")
         # subprocess.run called with env containing the flag
@@ -172,14 +172,14 @@ class TestSpawnAgent:
 
     def test_raises_on_subprocess_nonzero_exit(self) -> None:
         spec = AgentSpec(name="a", prompt="x")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run(returncode=1, stdout="boom")):
             with pytest.raises(SpawnError):
                 spawn_agent(spec, run_id="r")
 
     def test_raises_on_unparseable_output(self) -> None:
         spec = AgentSpec(name="a", prompt="x")
-        with patch("engram.swarm.spawn.subprocess.run",
+        with patch("verimem.swarm.spawn.subprocess.run",
                    return_value=_mock_run(stdout="garbage no id here")):
             with pytest.raises(SpawnError):
                 spawn_agent(spec, run_id="r")

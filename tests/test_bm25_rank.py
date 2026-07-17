@@ -6,8 +6,8 @@ FTS index stays synced to the curated facts.
 """
 from __future__ import annotations
 
-from engram.bm25_rank import bm25_fact_ids
-from engram.semantic import Fact, SemanticMemory
+from verimem.bm25_rank import bm25_fact_ids
+from verimem.semantic import Fact, SemanticMemory
 
 
 def test_bm25_ranks_exact_rare_token_first(tmp_path):

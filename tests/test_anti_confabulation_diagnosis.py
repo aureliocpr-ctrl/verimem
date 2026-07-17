@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import pytest
 
-from engram.anti_confabulation import (
+from verimem.anti_confabulation import (
     DIAGNOSIS_KEYWORDS,
     detect_unsupported_diagnosis_claim,
 )
@@ -124,7 +124,7 @@ class TestSemanticStoreWiresL15Warning:
     ) -> None:
         import logging
 
-        from engram.semantic import Fact, SemanticMemory
+        from verimem.semantic import Fact, SemanticMemory
 
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         fact = Fact(
@@ -134,7 +134,7 @@ class TestSemanticStoreWiresL15Warning:
             verified_by=["observation:items_empty"],
             status="model_claim",
         )
-        with caplog.at_level(logging.WARNING, logger="engram.semantic"):
+        with caplog.at_level(logging.WARNING, logger="verimem.semantic"):
             sm.store(fact)
         l15_messages = [
             r.getMessage() for r in caplog.records

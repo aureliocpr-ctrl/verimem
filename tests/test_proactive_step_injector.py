@@ -7,7 +7,7 @@ abc05354316143a19faf75997926ac50.
 
 Tests target the dedup-on-cache + threshold-honouring + reset
 behaviour of :class:`StepInjector`. Recall semantics are delegated to
-``engram.briefing`` and exercised in ``test_briefing_proactive``.
+``verimem.briefing`` and exercised in ``test_briefing_proactive``.
 """
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ def _make_agent(*, scores: dict[str, dict[str, float]] | None = None) -> _FakeAg
 
 
 def test_injector_returns_top_k_above_threshold() -> None:
-    from engram.proactive_step_injector import StepInjector
+    from verimem.proactive_step_injector import StepInjector
 
     agent = _make_agent(scores={
         "close gap p<=b<2p": {"f1": 0.92, "f2": 0.40, "f3": 0.50},
@@ -88,7 +88,7 @@ def test_injector_dedups_across_calls() -> None:
     even if it's still the top hit — the host LLM has it in context
     already and re-injecting wastes tokens.
     """
-    from engram.proactive_step_injector import StepInjector
+    from verimem.proactive_step_injector import StepInjector
 
     agent = _make_agent(scores={
         "step A": {"f1": 0.90, "f2": 0.60},
@@ -108,7 +108,7 @@ def test_injector_reset_clears_cache() -> None:
     """After ``reset()``, previously emitted facts can be re-injected.
     Used when the user pivots to an unrelated topic.
     """
-    from engram.proactive_step_injector import StepInjector
+    from verimem.proactive_step_injector import StepInjector
 
     agent = _make_agent(scores={
         "step A": {"f1": 0.90},
@@ -122,7 +122,7 @@ def test_injector_reset_clears_cache() -> None:
 
 
 def test_injector_empty_step_returns_nothing() -> None:
-    from engram.proactive_step_injector import StepInjector
+    from verimem.proactive_step_injector import StepInjector
 
     agent = _make_agent(scores={"x": {"f1": 0.99}})
     inj = StepInjector(agent)
@@ -132,7 +132,7 @@ def test_injector_empty_step_returns_nothing() -> None:
 
 
 def test_injector_no_hits_under_threshold() -> None:
-    from engram.proactive_step_injector import StepInjector
+    from verimem.proactive_step_injector import StepInjector
 
     agent = _make_agent(scores={
         "weak query": {"f1": 0.30, "f2": 0.20, "f3": 0.10},

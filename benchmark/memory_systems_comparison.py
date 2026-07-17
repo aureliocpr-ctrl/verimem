@@ -31,7 +31,7 @@ import json
 import random
 from typing import Any
 
-from engram.justified_memory import Belief, maintain, propagate, served
+from verimem.justified_memory import Belief, maintain, propagate, served
 
 _NOW = 1000.0
 

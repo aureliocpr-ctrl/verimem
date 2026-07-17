@@ -4,19 +4,19 @@ from __future__ import annotations
 import dataclasses
 from pathlib import Path
 
-from engram import config as config_mod
-from engram.config import CONFIG
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import Skill, SkillLibrary
-from engram.sleep import SleepEngine
+from verimem import config as config_mod
+from verimem.config import CONFIG
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import Skill, SkillLibrary
+from verimem.sleep import SleepEngine
 
 
 def _patch_config(monkeypatch, **fields) -> None:
     new = dataclasses.replace(CONFIG, **fields)
     monkeypatch.setattr(config_mod, "CONFIG", new)
-    from engram import memory as memory_mod
-    from engram import sleep as sleep_mod
+    from verimem import memory as memory_mod
+    from verimem import sleep as sleep_mod
     monkeypatch.setattr(sleep_mod, "CONFIG", new)
     monkeypatch.setattr(memory_mod, "CONFIG", new)
 
@@ -43,7 +43,7 @@ def _seed_episodes(eng: SleepEngine, n: int = 5) -> None:
     """Plant enough episodes so cycle() doesn't bail on sleep_min_episodes."""
     import time as _t
 
-    from engram.episode import Episode, Trace
+    from verimem.episode import Episode, Trace
     now = _t.time()
     for i in range(n):
         eng.memory.store(Episode(

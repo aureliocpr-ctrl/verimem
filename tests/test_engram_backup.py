@@ -18,14 +18,14 @@ from pathlib import Path
 
 import pytest
 
-from engram.backup import (
+from verimem.backup import (
     DEFAULT_POLICY,
     create_backup,
     list_backups,
     restore_from_backup,
     rotate_backups,
 )
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture

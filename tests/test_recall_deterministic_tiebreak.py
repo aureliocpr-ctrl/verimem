@@ -14,7 +14,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from engram.semantic import Fact, SemanticMemory, _topk_deterministic
+from verimem.semantic import Fact, SemanticMemory, _topk_deterministic
 
 
 class _F:

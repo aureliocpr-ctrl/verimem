@@ -18,12 +18,12 @@ Opt-in and conservative by design:
 """
 from __future__ import annotations
 
-from engram.conversation_ingest import (
+from verimem.conversation_ingest import (
     ATOMIC_EXTRACT_SYSTEM,
     ingest_conversation,
     strip_belief_marker,
 )
-from engram.semantic import SemanticMemory
+from verimem.semantic import SemanticMemory
 
 
 class _StubLLM:

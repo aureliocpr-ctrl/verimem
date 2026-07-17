@@ -1,5 +1,5 @@
 """Cycle #145 Agent C (QA-Eng, 2026-05-18) — integration edge cases for
-the cycle 144 auto-consolidation orchestrator (``engram.consolidation``).
+the cycle 144 auto-consolidation orchestrator (``verimem.consolidation``).
 
 The 9 unit tests in ``tests/test_consolidation.py`` cover the happy path:
 detect/propose/persist/idempotent for fresh clusters. This file targets
@@ -32,9 +32,9 @@ from pathlib import Path
 
 import pytest
 
-from engram.consolidation import auto_consolidate, detect_cluster_candidates
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.consolidation import auto_consolidate, detect_cluster_candidates
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 # ---- fixtures (mirror tests/test_consolidation.py:76-83) -------------

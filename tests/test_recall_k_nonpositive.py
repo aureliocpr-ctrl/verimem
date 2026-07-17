@@ -13,9 +13,9 @@ from __future__ import annotations
 
 import pytest
 
-from engram.episode import Episode, Trace
-from engram.memory import EpisodicMemory
-from engram.semantic import Fact, SemanticMemory
+from verimem.episode import Episode, Trace
+from verimem.memory import EpisodicMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture(autouse=True)
@@ -61,7 +61,7 @@ def test_episodic_recall_negative_k_returns_empty(tmp_path):
 
 
 def test_episodic_recall_by_context_negative_k_returns_empty(tmp_path):
-    from engram import embedding as emb
+    from verimem import embedding as emb
     em = EpisodicMemory(tmp_path / "e.db")
     ctx = emb.encode("contesto cognitivo zorp deploy")
     _seed_eps(em, 5, ctx=ctx)

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-import engram.embedding as emb
+import verimem.embedding as emb
 
 
 def test_delegate_only_raises_instead_of_cold_loading(monkeypatch):

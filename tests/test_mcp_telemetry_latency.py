@@ -49,7 +49,7 @@ class TestAuditWithoutTimerHasNoLatency:
     def test_audit_without_timer_omits_latency(
         self, audit_log_path: Path,
     ) -> None:
-        from engram.mcp_server import _audit
+        from verimem.mcp_server import _audit
         _audit("hippo_test_tool", {"arg": "v"}, outcome="ok")
 
         recs = _read_records(audit_log_path)
@@ -63,7 +63,7 @@ class TestAuditWithTimerEmitsLatency:
     def test_audit_with_timer_emits_latency_field(
         self, audit_log_path: Path,
     ) -> None:
-        from engram.mcp_server import _REQUEST_START_NS, _audit
+        from verimem.mcp_server import _REQUEST_START_NS, _audit
         token = _REQUEST_START_NS.set(time.monotonic_ns())
         try:
             # Cycle #133 fix: Windows timer resolution can leave a 5ms sleep
@@ -94,7 +94,7 @@ class TestCallToolSetsTimer:
     async def test_call_tool_emits_latency_on_audit(
         self, audit_log_path: Path, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        from engram import mcp_server
+        from verimem import mcp_server
         # Use a tool that hits the empty-task rejection path; that path
         # already calls `_audit(..., outcome="rejected_empty")`.
         result = await mcp_server.call_tool(
@@ -117,7 +117,7 @@ class TestRecordSchemaStable:
     def test_existing_fields_unchanged(
         self, audit_log_path: Path,
     ) -> None:
-        from engram.mcp_server import _REQUEST_START_NS, _audit
+        from verimem.mcp_server import _REQUEST_START_NS, _audit
         token = _REQUEST_START_NS.set(time.monotonic_ns())
         try:
             _audit("hippo_x", {"a": 1}, outcome="ok", error="")

@@ -22,8 +22,8 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from engram import event_jsonl_log  # noqa: E402
-from engram.gateway import GatewayKeys, create_app  # noqa: E402
+from verimem import event_jsonl_log  # noqa: E402
+from verimem.gateway import GatewayKeys, create_app  # noqa: E402
 
 # frase che il gate L1 storico declassa a quarantined (nessuna evidenza)
 _UNSUPPORTED = "the deployment works and is verified in production"
@@ -160,7 +160,7 @@ def test_personal_console_sees_local_untenanted_events(tmp_path, monkeypatch):
     vede anche gli eventi flow SENZA tenant — cioè l'attività sdk/mcp della
     macchina (Claude Code, codex, ...). In multi-tenant il filtro resta
     stretto (test sopra): un tenant vero non vede MAI eventi altrui."""
-    from engram.client import Memory
+    from verimem.client import Memory
     monkeypatch.setattr(
         event_jsonl_log, "EVENT_LOG_PATH", tmp_path / "events.jsonl")
     # un evento come lo emette l'SDK/MCP: nessun campo tenant

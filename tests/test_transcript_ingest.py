@@ -1,4 +1,4 @@
-"""Ingest dei transcript .jsonl di Claude Code nel Tier C (engram.transcript_ingest).
+"""Ingest dei transcript .jsonl di Claude Code nel Tier C (verimem.transcript_ingest).
 
 Invarianti:
   - parse_turns estrae SOLO testo conversazionale (user/assistant), salta
@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import json
 
-from engram.transcript_index import TranscriptIndex
-from engram.transcript_ingest import ingest_dir, ingest_session, parse_turns
+from verimem.transcript_index import TranscriptIndex
+from verimem.transcript_ingest import ingest_dir, ingest_session, parse_turns
 
 _RECS = [
     {"type": "queue-operation", "uuid": "q0"},  # skip

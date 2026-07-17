@@ -49,8 +49,8 @@ _EXTRACT_SYSTEM = (
 # and exhaustive; the generic prompt yields fewer, compound facts (each matches at
 # most one gold at the e5 threshold) and 600 max_tokens truncates dense sessions.
 # SINGLE SOURCE OF TRUTH (iter 34): the atomic prompt lives in the PRODUCT module
-# (engram.conversation_ingest) and the bench imports it — a bench win IS a product win.
-from engram.conversation_ingest import ATOMIC_EXTRACT_SYSTEM as _EXTRACT_SYSTEM_ATOMIC
+# (verimem.conversation_ingest) and the bench imports it — a bench win IS a product win.
+from verimem.conversation_ingest import ATOMIC_EXTRACT_SYSTEM as _EXTRACT_SYSTEM_ATOMIC
 
 _PROMPTS = {"v1": _EXTRACT_SYSTEM, "atomic": _EXTRACT_SYSTEM_ATOMIC}
 
@@ -73,7 +73,7 @@ def _extract(llm, dialogue: str, model=None, *, system: str = _EXTRACT_SYSTEM,
 
 
 def _embed_matrix(texts: list[str]) -> np.ndarray:
-    from engram import embedding
+    from verimem import embedding
     if not texts:
         return np.zeros((0, 1), dtype=np.float32)
     return np.stack([embedding.encode(t) for t in texts])
@@ -153,7 +153,7 @@ def main(argv=None) -> int:
         return 0
 
     from benchmark.qa_runner import LeanClaudeCLILLM
-    from engram.grounding_gate import fact_grounding_score
+    from verimem.grounding_gate import fact_grounding_score
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=a.timeout)
 
     arms = {"off": [], "on": [], "consolidated": [],
@@ -172,13 +172,12 @@ def main(argv=None) -> int:
                 continue
             arms["off"].append(_prf(extracted, gold, a.match_thr))
             if a.consolidate:
-                from engram.conversation_ingest import consolidate_facts
+                from verimem.conversation_ingest import consolidate_facts
                 cons = consolidate_facts(extracted, llm=llm,
                                          max_out_tokens=a.max_out_tokens)
                 arms["consolidated"].append(_prf(cons, gold, a.match_thr))
             if a.completeness:
-                from engram.conversation_ingest import (consolidate_facts,
-                                                        gapfill_facts)
+                from verimem.conversation_ingest import consolidate_facts, gapfill_facts
                 gap = gapfill_facts(src, extracted, llm=llm,
                                     max_out_tokens=a.max_out_tokens)
                 completed = extracted + gap

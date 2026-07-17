@@ -9,7 +9,7 @@ now redacts secrets and DEFANGS an injection payload with an untrusted banner
 """
 from __future__ import annotations
 
-from engram.skill import Skill, SkillLibrary
+from verimem.skill import Skill, SkillLibrary
 
 
 def _lib(tmp_path):

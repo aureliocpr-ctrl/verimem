@@ -16,11 +16,11 @@ from __future__ import annotations
 
 import random
 
-from engram.skill import Skill
+from verimem.skill import Skill
 
 
 def test_crossover_returns_hybrid_skill():
-    from engram.skill_crossover import crossover_skill_bodies
+    from verimem.skill_crossover import crossover_skill_bodies
     a = Skill(id="A", name="alpha", trigger="ta",
               body="step1\nstep2\nstep3", status="promoted")
     b = Skill(id="B", name="beta", trigger="tb",
@@ -39,7 +39,7 @@ def test_crossover_returns_hybrid_skill():
 
 
 def test_crossover_deterministic_with_seed():
-    from engram.skill_crossover import crossover_skill_bodies
+    from verimem.skill_crossover import crossover_skill_bodies
     a = Skill(id="A", name="a", trigger="t",
               body="A1\nA2\nA3\nA4\nA5", status="promoted")
     b = Skill(id="B", name="b", trigger="t",
@@ -50,7 +50,7 @@ def test_crossover_deterministic_with_seed():
 
 
 def test_crossover_naming_convention():
-    from engram.skill_crossover import crossover_skill_bodies
+    from verimem.skill_crossover import crossover_skill_bodies
     a = Skill(id="A", name="alpha", trigger="t", body="x")
     b = Skill(id="B", name="beta", trigger="t", body="y")
     child = crossover_skill_bodies(a, b, rng=random.Random(0))
@@ -60,7 +60,7 @@ def test_crossover_naming_convention():
 
 def test_crossover_handles_single_line_bodies():
     """Edge: single-line body → child gets at least one line from each."""
-    from engram.skill_crossover import crossover_skill_bodies
+    from verimem.skill_crossover import crossover_skill_bodies
     a = Skill(id="A", name="a", trigger="t", body="only-A", status="promoted")
     b = Skill(id="B", name="b", trigger="t", body="only-B", status="promoted")
     child = crossover_skill_bodies(a, b, rng=random.Random(0))
@@ -71,7 +71,7 @@ def test_crossover_handles_single_line_bodies():
 
 
 def test_crossover_trigger_combines_parents():
-    from engram.skill_crossover import crossover_skill_bodies
+    from verimem.skill_crossover import crossover_skill_bodies
     a = Skill(id="A", name="a", trigger="alpha-trigger", body="x")
     b = Skill(id="B", name="b", trigger="beta-trigger", body="y")
     child = crossover_skill_bodies(a, b, rng=random.Random(0))

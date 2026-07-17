@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 
-from engram.semantic import Fact, SemanticMemory
+from verimem.semantic import Fact, SemanticMemory
 
 
 @pytest.fixture
@@ -202,7 +202,7 @@ def test_migration_v3_to_v4_cleans_preexisting_duplicates(
     assert n == 2, f"setup: must have 2 live duplicates, got {n}"
 
     # Now re-apply migration: re-trigger schema bootstrap.
-    from engram.semantic import _migrate_v3_to_v4
+    from verimem.semantic import _migrate_v3_to_v4
     with sm._connect() as conn:  # noqa: SLF001
         _migrate_v3_to_v4(conn)
         conn.commit()

@@ -17,8 +17,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from engram.semantic import SemanticMemory
-from engram.swarm.lifecycle import (
+from verimem.semantic import SemanticMemory
+from verimem.swarm.lifecycle import (
     list_swarm_sessions,
     remove_session,
     respawn_session,
@@ -52,7 +52,7 @@ def sm(tmp_path: Path) -> SemanticMemory:
 class TestStopSession:
     def test_invokes_claude_stop(self, sm: SemanticMemory) -> None:
         with patch(
-            "engram.swarm.lifecycle.subprocess.run",
+            "verimem.swarm.lifecycle.subprocess.run",
             return_value=_ok_run(),
         ) as run:
             ok = stop_session(
@@ -64,7 +64,7 @@ class TestStopSession:
 
     def test_writes_audit_fact(self, sm: SemanticMemory) -> None:
         with patch(
-            "engram.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
+            "verimem.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
         ):
             stop_session(
                 "abc12345", topic=_TOPIC, sm=sm, agent_name="agent-a",
@@ -80,7 +80,7 @@ class TestStopSession:
 
     def test_returns_false_on_failure(self, sm: SemanticMemory) -> None:
         with patch(
-            "engram.swarm.lifecycle.subprocess.run",
+            "verimem.swarm.lifecycle.subprocess.run",
             return_value=_fail_run(),
         ):
             ok = stop_session(
@@ -92,7 +92,7 @@ class TestStopSession:
 class TestRespawnSession:
     def test_invokes_claude_respawn(self, sm: SemanticMemory) -> None:
         with patch(
-            "engram.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
+            "verimem.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
         ) as run:
             ok = respawn_session(
                 "abc12345", topic=_TOPIC, sm=sm, agent_name="agent-a",
@@ -105,7 +105,7 @@ class TestRespawnSession:
 class TestRemoveSession:
     def test_invokes_claude_rm(self, sm: SemanticMemory) -> None:
         with patch(
-            "engram.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
+            "verimem.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
         ) as run:
             ok = remove_session(
                 "abc12345", topic=_TOPIC, sm=sm, agent_name="agent-a",

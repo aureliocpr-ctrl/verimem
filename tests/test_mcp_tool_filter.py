@@ -17,7 +17,7 @@ Spec compliance
   * Spec-compliant per MCP 2025-06-18+: servers MAY return any subset of
     their tools in ``tools/list``. No new method, no new field.
 
-RED marker: ``from engram.mcp_server import _allowed_tool_prefixes,
+RED marker: ``from verimem.mcp_server import _allowed_tool_prefixes,
 _filter_tools`` must fail on master.
 """
 from __future__ import annotations
@@ -25,7 +25,7 @@ from __future__ import annotations
 import pytest
 
 # RED MARKER
-from engram.mcp_server import (
+from verimem.mcp_server import (
     _allowed_tool_prefixes,
     _filter_tools,
     list_tools,

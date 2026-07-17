@@ -15,12 +15,12 @@ Hermetic: DB temporanei (tmp_data_dir), MockLLM, nessun DB reale.
 """
 from __future__ import annotations
 
-from engram.episode import Episode, Trace
-from engram.llm import MockLLM
-from engram.memory import EpisodicMemory
-from engram.semantic import SemanticMemory
-from engram.skill import SkillLibrary
-from engram.sleep import SleepEngine
+from verimem.episode import Episode, Trace
+from verimem.llm import MockLLM
+from verimem.memory import EpisodicMemory
+from verimem.semantic import SemanticMemory
+from verimem.skill import SkillLibrary
+from verimem.sleep import SleepEngine
 
 
 def _ep(i):

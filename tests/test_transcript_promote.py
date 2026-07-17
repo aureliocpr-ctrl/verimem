@@ -1,4 +1,4 @@
-"""Promozione Tier C -> corpus accettato (engram.transcript_promote).
+"""Promozione Tier C -> corpus accettato (verimem.transcript_promote).
 
 Il ponte ESPLICITO e gated dal grezzo (Tier C, confidence~0) al fatto accettato
 (semantic.db), con PROVENANCE che punta al turno verbatim. Invarianti:
@@ -8,7 +8,7 @@ Il ponte ESPLICITO e gated dal grezzo (Tier C, confidence~0) al fatto accettato
     di SemanticMemory.store lo DEMOTA a model_claim (no laundering della chat);
   - la promozione NON cancella il turno dal Tier C (resta consultabile).
 
-Hermetic: DB temporanei, zero ~/.engram.
+Hermetic: DB temporanei, zero ~/.verimem.
 """
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ import sqlite3
 
 import pytest
 
-from engram.semantic import SemanticMemory
-from engram.transcript_index import TranscriptIndex, Turn
-from engram.transcript_promote import promote_turn_to_fact
+from verimem.semantic import SemanticMemory
+from verimem.transcript_index import TranscriptIndex, Turn
+from verimem.transcript_promote import promote_turn_to_fact
 
 _P2 = 'ghp_'
 

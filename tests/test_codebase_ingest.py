@@ -37,11 +37,11 @@ from pathlib import Path
 import pytest
 
 # RED MARKER: this import is the failure pin.
-from engram.codebase_ingest import (
+from verimem.codebase_ingest import (
     extract_patterns_from_file,
     ingest_codebase,
 )
-from engram.semantic import SemanticMemory
+from verimem.semantic import SemanticMemory
 
 
 # ---- Fixture helpers --------------------------------------------------
@@ -181,7 +181,7 @@ class TestIngestCodebase:
                "class Should_Never_Parse:\n    \"\"\"BAD.\"\"\"\n    pass\n")
         out = ingest_codebase(mini_repo, sm=sm)
         # The class name 'Should_Never_Parse' must NOT appear in any persisted fact.
-        from engram.semantic import SemanticMemory as _SM  # noqa: F401
+        from verimem.semantic import SemanticMemory as _SM  # noqa: F401
         with sm._connect() as conn:  # noqa: SLF001 — test inspection
             rows = conn.execute(
                 "SELECT proposition FROM facts WHERE proposition LIKE ?",
