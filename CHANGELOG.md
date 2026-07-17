@@ -4,6 +4,30 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Fixed
+- **L1 lexical screen no longer cold-loads the ML stack on a cold process's
+  first write** (~32 s → 0.3 s, `7d64b91`). The L1.20 semantic self-claim
+  detector reached `embedding.encode()` unconditionally, importing
+  torch/sentence-transformers in-process on the "lexical ~13 ms" path. Its
+  production encoder now declines the in-process cold-load (model neither warm
+  nor daemon-delegated) and the detector fail-opens for that write; the model
+  warms via the storage path and the detector re-arms on the next write.
+  Warm/delegate behaviour unchanged. Adversarial critic 3–0.
+
+### Changed
+- **ANN claims aligned to runtime truth** (hardening 2026-07-17). The README
+  called the ANN "opt-in ~0.84 recall worst-case": actually it auto-enables
+  above the 100k-fact gate when faiss is importable (`ENGRAM_ANN_RECALL=0`
+  opts out), and the same receipt behind the latency headline shows
+  recall-in-pool degrading 0.87@100k → 0.53@500k → 0.41@1M on the
+  random-vector stress (real-embedding corpora measure ~1.0 at oversample 8).
+  README / SCALE_CHARACTERIZATION / code comments now state exactly that.
+
+### Added
+- **`pip install "verimem[ann]"`** — the faiss extra. The "1.3 ms at 1M facts"
+  number existed with no installable path: faiss was declared nowhere in
+  pyproject. Now it is an explicit optional extra.
+
 ## [0.5.0] — The moat is ON by default (2026-07-17)
 
 ### Added

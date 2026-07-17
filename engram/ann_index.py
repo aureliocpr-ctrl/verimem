@@ -20,8 +20,8 @@ import numpy as np
 
 try:
     import faiss
-except ImportError:  # pragma: no cover - faiss is a core dep, guarded for safety
-    faiss = None
+except ImportError:  # pragma: no cover - faiss is OPTIONAL (pip install "verimem[ann]")
+    faiss = None      # -> ANN stays off, recall is exact brute-force at any scale
 
 #: Below this fact count the exact brute-force path wins (build/sync overhead
 #: outweighs the sublinear query). ANN is opt-in AND gated on top of that.

@@ -41,13 +41,21 @@ seeded — pure numpy+faiss, no LLM):
 - The 500k/1M rows need ~a 32 GB box to BUILD the index. The 2026-07-16 recheck
   OOM'd at 500k on a smaller machine and reproduced only 100k (7.8×, ANN 1.12 ms).
   The 1M number is real but reproduces only where RAM allows.
-- HNSW is APPROXIMATE. Recall-in-pool @ oversample 8 measured **0.844 on random
-  unit vectors** (worst case) — up to ~16% of the exact top-k can be missed. Real
-  e5 neighbourhoods are less adversarial, but the "recall latency stays ~flat"
-  headline is about LATENCY; the ANN trades a little RECALL for it — stated, not
-  hidden.
-- Default is EXACT brute-force; the ANN is opt-in (`ENGRAM_ANN_RECALL`) for
-  >200k corpora, so nobody pays the approximation unless they choose to.
+- HNSW is APPROXIMATE, and on random unit vectors (HNSW's worst regime: no
+  cluster structure) recall-in-pool @ oversample 8 **degrades with N** in the
+  same receipt that gives the latency headline (`ann_scale_bench_repro.json`):
+  **0.872 @100k → 0.525 @500k → 0.406 @1M**. The earlier "0.844 worst-case"
+  wording was wrong twice: 0.84 is the *100k* number, and the worst case is the
+  1M row. Real e5 neighbourhoods are clustered and far less adversarial
+  (recall-in-pool ~1.0 at oversample 8 at prototype scale, `test_ann_index`),
+  and raising the oversample recovers recall at some latency — but the honest
+  statement is: the "recall latency stays ~flat" headline is about LATENCY; at
+  million-scale on unstructured data the ANN trades real RECALL for it.
+- The default INSTALL is exact brute-force (faiss is not a core dependency —
+  `pip install "verimem[ann]"` adds it). With faiss present the ANN
+  auto-enables above the 100k-fact gate (`_ANN_MIN_N`; corrected 2026-07-17 —
+  an earlier version of this line said "opt-in for >200k", wrong on both
+  counts); `ENGRAM_ANN_RECALL=0` opts out at any scale, `=1` forces it on.
 
 ## Why naive quantization does NOT fix it (refuted by measurement)
 

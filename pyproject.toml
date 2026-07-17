@@ -97,6 +97,15 @@ byok = [
   "openai>=1.40.0",
 ]
 
+# ANN recall at scale (faiss HNSW). Without it recall is exact brute-force at
+# any size; with it the index auto-enables above the 100k-fact gate
+# (ENGRAM_ANN_RECALL=0 opts out). Declared 2026-07-17: the README's "1.3 ms at
+# 1M facts" number had no installable path — the claim existed, the extra
+# didn't.
+ann = [
+  "faiss-cpu>=1.8.0",
+]
+
 # Document extraction (pdf / docx / epub / html). The engine degrades
 # gracefully without these — file_extract.py guards every import and says
 # which package is missing — so they are OPTIONAL, not core. Declared here

@@ -1813,8 +1813,9 @@ class SemanticMemory:
         # Post-cache target: ratio < 1.5× (only SQL fetchall scales).
         self._corpus_cache: dict[str, Any] | None = None
         self._cache_version: int = 0
-        # ANN index cache for scale recall (opt-in via ENGRAM_ANN_RECALL; keyed
-        # by _cache_version so a write invalidates/rebuilds it). Dormant until
+        # ANN index cache for scale recall (auto-on when faiss is importable,
+        # ENGRAM_ANN_RECALL=0 opts out — see _ann_recall_enabled; keyed by
+        # _cache_version so a write invalidates/rebuilds it). Dormant until
         # the corpus crosses the gate; the exact brute-force path is unchanged.
         from engram.ann_cache import ANNCache
         self._ann_cache = ANNCache()
@@ -3089,7 +3090,8 @@ class SemanticMemory:
             facts, matrix, lv, vu = self._get_corpus_cache()  # quadrupla ATOMICA
             if not facts:
                 return []
-            # ANN pre-narrowing (opt-in ENGRAM_ANN_RECALL, dormant by default):
+            # ANN pre-narrowing (auto-on with faiss above the 100k gate,
+            # ENGRAM_ANN_RECALL=0 opts out — _ann_recall_enabled):
             # restrict the corpus to the ANN candidate pool so the exact filters
             # / cosine / rerank below run on O(pool) not O(N). Byte-identical to
             # brute-force when OFF or below the gate (query_pool -> None). The

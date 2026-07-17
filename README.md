@@ -283,10 +283,16 @@ runs cluster around MemOS's self-reported number and the judges differ
 integrity, provenance honesty, sycophancy resistance) — Verimem scores 60/60;
 the bench is offline and seeded, run it yourself in one command.
 
-Scale: recall latency stays ~flat with an **opt-in** ANN index (1.3 ms at 1M
-facts vs 81 ms brute-force — see [SCALE.md](./SCALE.md) for the table + the honest
-caveats: the ANN is *approximate*, ~0.84 recall-in-pool worst-case, and the 1M
-build needs a large-RAM box). The default is exact brute-force.
+Scale: recall latency stays ~flat with the optional ANN index
+(`pip install "verimem[ann]"`): 1.3 ms at 1M facts vs 81 ms brute-force. With
+faiss installed it auto-enables above 100k facts (`ENGRAM_ANN_RECALL=0` opts
+out); the default install ships no faiss, so recall is exact brute-force. See
+[SCALE.md](./SCALE.md) for the table + the honest caveats: the ANN is
+*approximate*, and on the random-vector stress bench its recall-in-pool
+**degrades with corpus size** — 0.87 @100k, 0.53 @500k, 0.41 @1M (clustered
+real-embedding corpora measure far higher — ~1.0 at oversample 8 at prototype
+scale — and raising the oversample recovers recall at some latency); the 1M
+build also needs a large-RAM box.
 
 ## Why the numbers matter
 

@@ -62,7 +62,9 @@ is largely fixable by feeding the gate enough source and/or softening the judge 
 semantic (not verbatim) entailment. **The LLM-judge default resolves most of this**: on my
 12 realistic cases (`moat_e2e_opus.py`, opus) the judge admits faithful facts 12/12 and
 quarantines confabs 12/12 (the one earlier miss was a lexical-L1 false positive, fixed
-`a88f081`). The remaining honest cost is OOD paraphrase over-rejection — quantified on
+`a88f081`; re-run END-TO-END 2026-07-17 post threshold-70 + cold-start fix:
+`results/moat_e2e_opus_recheck_2026-07-17.json`, again 12/12 + 12/12, scores 95–100
+vs 0). The remaining honest cost is OOD paraphrase over-rejection — quantified on
 external corpora below.
 
 ## Bottom line
