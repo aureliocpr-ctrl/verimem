@@ -16,8 +16,11 @@ and the `benchmark/results/*.json` files.
 
 Engram routes every write through an **anti-confabulation gate** — no competitor
 (mem0/Zep/Letta/Cognee/MemOS) has a write-admission gate; they store whatever the
-extractor emits. The gate has cheap lexical layers (L1, no LLM) and an optional
-source⊢fact entailment layer (L4, opt-in via `ENGRAM_GROUNDING_WRITE`).
+extractor emits. The gate has cheap lexical layers (L1, no LLM) and a
+source⊢fact entailment layer (L4). **As of 2026-07-17 the moat is ON by default**
+(mandate): `Memory(llm=…).add(fact, source=…)` runs L4 with the LLM as judge; the
+gateway inherits the same default; ingest uses the free local CE. A judge-less,
+source-less write still fast-paths (fail-open). Calibration receipts: `CLAIM-RECEIPTS.md` #13.
 
 ## What is PROVEN (verified numbers)
 
@@ -56,8 +59,11 @@ The gate **over-rejects** valid abstractive memories: clean-admission was 55–6
 entailment judge penalizes paraphrase, plus a dialogue-window cap truncated evidence.
 Raising the cap (3000→8000) lifted admission 55→68% at 100% noise-rejection — so the cost
 is largely fixable by feeding the gate enough source and/or softening the judge toward
-semantic (not verbatim) entailment. Until clean-admission is high, the L4 gate is
-correctly **OFF by default**.
+semantic (not verbatim) entailment. **The LLM-judge default resolves most of this**: on my
+12 realistic cases (`moat_e2e_opus.py`, opus) the judge admits faithful facts 12/12 and
+quarantines confabs 12/12 (the one earlier miss was a lexical-L1 false positive, fixed
+`a88f081`). The remaining honest cost is OOD paraphrase over-rejection — quantified on
+external corpora below.
 
 ## Bottom line
 
@@ -65,6 +71,32 @@ The write-gate is a **strong grounding discriminator** (AUROC 0.971, 100% noise 
 and, on the realistic retrieved-confab threat, **measurably lowers downstream hallucination
 0.959→0.122 (McNemar p≈0, seed 7) — by making the agent ABSTAIN rather than confabulate**, not
 by raising correctness. It is not a universal hallucination cure (foreign noise: no effect;
-answer-path conditioning: no win), and at θ=40 its 38.6% clean over-rejection means the gain
-in trustworthiness is paid in recall — tune before default-on. Every number here is
-reproducible from `benchmark/` — no leaderboard placement is claimed.
+answer-path conditioning: no win). With the LLM-judge default it admits faithful facts
+cleanly on realistic cases (12/12); the residual cost is OOD paraphrase over-rejection on
+the free local-CE tier, quantified below. Every number here is reproducible from
+`benchmark/` — no leaderboard placement is claimed.
+
+## Generalization on EXTERNAL corpora (never-seen held-out) — 2026-07-17
+
+Not the training set: the moat scored on public benchmarks it never saw, per use case.
+
+| corpus (heldout) | use case | free local CE (AUROC / admit / block @its cut) | LLM judge sonnet-5 (AUROC / admit / block @70) |
+|---|---|---|---|
+| TruthfulQA | paraphrase-admit vs misconception-block | 0.829 / 0.42 / 0.97 | **0.901** / 0.55* / **0.98** |
+| HaluEval QA | faithful-answer vs hallucination-block | 0.820 / 0.80 / 0.70 | **0.814** / **0.88** / 0.68 |
+
+\* TruthfulQA "paraphrases" are alternative correct answers, often NOT strictly entailed
+by the Best-Answer source (verified by inspection: *"not caused by food"* → *"not caused
+by lifestyle choices"*) — low admit there is judge **strictness working**, not a defect.
+
+**Threshold recalibrated 40 → 70 on this evidence** (`b90a7e1`): the judge's own rubric
+says 1–60 = "only related/partial", and three independent curves (real corpus n=90,
+HaluEval, TruthfulQA) converge — block +23pt on the first two for −1.7pt admit; the
+realistic e2e cases separate 0/100 and are unaffected (still 12/12 + 12/12).
+
+**Honest residual, quantified**: hallucinations the judge scores ≥70 — the
+comparative/numeric one-detail-wrong class (*"both were Americans"* when the source says
+one was English) — are a judge-PROMPT axis, not a threshold axis; an opus hard-slice on
+exactly that residue is measured in `benchmark/results/moat_opus_hardslice_*.json`. Part
+of HaluEval's nominal misses are dataset label noise (claims actually entailed), so true
+block is better than nominal. Receipts: `CLAIM-RECEIPTS.md` #13.

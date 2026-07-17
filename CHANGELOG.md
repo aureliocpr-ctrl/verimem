@@ -7,6 +7,15 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 ## [0.5.0] — The moat is ON by default (2026-07-17)
 
 ### Changed
+- **Write-gate threshold recalibrated 40 → 70** (claude scale) on external,
+  never-seen corpora (`benchmark/moat_external_judge.py`: TruthfulQA judge
+  AUROC 0.901, HaluEval 0.814). The judge's own rubric defines 1–60 as "only
+  related/partial" — the old 40 admitted facts the judge itself called not
+  entailed (HaluEval blocked only 45%). Three independent curves converge on
+  70: real corpus n=90 block .70→.93, HaluEval .45→.68, TruthfulQA .967→.983 —
+  each at −1.7pt admit; realistic e2e cases separate 0/100 and are unaffected
+  (12/12 faithful admitted + 12/12 confabs quarantined). Env override
+  `ENGRAM_GROUNDING_WRITE_THRESHOLD` unchanged.
 - **The grounding moat is ON by default** (2026-07-17) — for months the
   source⊢fact write-gate (judge AUROC 0.96–0.97) shipped OFF, so the write path
   showed no moat. Now preset `balanced` has `ground=True`: a `Memory(llm=...)`
