@@ -289,6 +289,13 @@ def _l1_warnings(
         None if verified_by is None else [str(x) for x in verified_by]
     )
 
+    # Bound the lexical scan (gateway load probe 2026-07-17): the L1 keyword
+    # detectors look for short claim phrases near the start; a 64KB paste is a
+    # document, and an unbounded scan is a DoS surface (one bad-backtracking
+    # regex hangs every write). Cap once here so EVERY detector below is O(1)
+    # in the input size. _LEXICAL_SCAN_CAP defined with the escalation helpers.
+    proposition = (proposition or "")[:_LEXICAL_SCAN_CAP]
+
     out: list[dict[str, Any]] = []
     for layer, detect in (
         ("L1", detect_unsupported_shipped_claim),
@@ -580,14 +587,26 @@ _DEV_CONTEXT = re.compile(
     r"distribuit[oaie]|ciclo|sistema|funzione|implementat[oaie]|corrett[oaie]|"
     r"risolt[oaie]|compilat[oaie]|schierat[oaie]|"
     r"file|line\s*\d+|cycle\s*#?\d+|loop\s*\d+)\b"
-    r"|\.(?:py|js|ts|rs|go|java|sql|md|json|yaml|toml)\b|\w+\.\w+:\d+",
+    # `path.ext` and `name.attr:line` — BOUNDED runs. The old `\w+\.\w+:\d+`
+    # made `\w+` backtrack catastrophically O(n^2) on a long no-space blob
+    # (gateway load probe 2026-07-17: 22.65s on a 64KB fact). {1,64} caps the
+    # backtrack window without changing any real match (identifiers are short).
+    r"|\.(?:py|js|ts|rs|go|java|sql|md|json|yaml|toml)\b|\b\w{1,64}\.\w{1,64}:\d{1,9}\b",
     re.IGNORECASE,
 )
+
+#: Lexical-scan cap (gateway load probe 2026-07-17). The L1 keyword/regex family
+#: looks for SHORT dev/personal/hype phrases; a real fact carrying such a signal
+#: has it near the start. A 64KB paste is a document (README routes those to
+#: DocumentIndex), and scanning it megabyte-deep is pointless AND a DoS surface
+#: (one bad-backtracking pattern hangs every write). So every lexical helper
+#: scans at most this prefix — O(1) in the input size regardless of the pattern.
+_LEXICAL_SCAN_CAP = 8192
 
 
 def _has_dev_context(proposition: str) -> bool:
     """True if the proposition carries a software/dev artifact signal."""
-    return bool(_DEV_CONTEXT.search(proposition or ""))
+    return bool(_DEV_CONTEXT.search((proposition or "")[:_LEXICAL_SCAN_CAP]))
 
 
 #: PERSONAL/everyday-life signal (first-person OR a personal-life domain noun). The L1
@@ -618,7 +637,7 @@ _PERSONAL_CONTEXT = re.compile(
 def _has_personal_context(proposition: str) -> bool:
     """True if the proposition reads as a personal/everyday fact (first-person or a
     personal-life domain). Used to SUPPRESS L1 dev-claim FPs on such facts."""
-    return bool(_PERSONAL_CONTEXT.search(proposition or ""))
+    return bool(_PERSONAL_CONTEXT.search((proposition or "")[:_LEXICAL_SCAN_CAP]))
 
 
 #: HISTORICAL WORLD-FACT completion (moat e2e opus bench, 2026-07-17). L1.13 fires on
@@ -644,7 +663,7 @@ _CALENDAR_YEAR = re.compile(r"\b(?:1[0-9]|20)\d{2}\b")
 def _is_historical_completion(proposition: str) -> bool:
     """True if the proposition is a passive completion/creation statement anchored to a
     calendar year (a historical world-fact), used to SUPPRESS the L1.13 completion FP."""
-    p = proposition or ""
+    p = (proposition or "")[:_LEXICAL_SCAN_CAP]
     return bool(_HISTORICAL_COMPLETION.search(p)) and bool(_CALENDAR_YEAR.search(p))
 
 

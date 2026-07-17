@@ -1,0 +1,790 @@
+{
+  "model": "claude-sonnet-5",
+  "threshold": 70.0,
+  "ts": "2026-07-17T12:03:28",
+  "halueval_v1": {
+    "auroc": 0.8139,
+    "admit": 0.8833,
+    "block": 0.6833
+  },
+  "halueval_v3": {
+    "auroc": 0.8242,
+    "admit": 0.8,
+    "block": 0.7667
+  },
+  "guard_faithful_admitted": "12/12",
+  "guard_confab_blocked": "12/12",
+  "rows": [
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "En Euforisk Jul"
+    },
+    {
+      "label": 0,
+      "v1": 20.0,
+      "v3": 0.0,
+      "claim": "Loreen's debut residency show was \"A Christmas Carol\"."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "10,798"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "The population is 12,000 people."
+    },
+    {
+      "label": 1,
+      "v1": 20.0,
+      "v3": 30.0,
+      "claim": "2017 Stanley Cup playoffs"
+    },
+    {
+      "label": 0,
+      "v1": 50.0,
+      "v3": 40.0,
+      "claim": "Sidney Crosby was awarded his second Conn Smythe Trophy in one of the last games of the playoffs."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Jack Bauer"
+    },
+    {
+      "label": 0,
+      "v1": 50.0,
+      "v3": 30.0,
+      "claim": "The actor who played Arthur Banks in \"Desert Saints\" also portrayed a federal agent in \"24\"."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Fields Medal"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Eric Zaslow formulated the SYZ conjecture with a mathematician who received the Abel Prize in 1982."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "22 May 1946"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "The English footballer and manager who scored for Everton in 1970 FA Charity Shield was born in 1946."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "1999"
+    },
+    {
+      "label": 0,
+      "v1": 50.0,
+      "v3": 0.0,
+      "claim": "The American owner of Taprobane Island passed away in 1998."
+    },
+    {
+      "label": 1,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "no"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Leckie Mine and Giant Mine have different towns."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "\"Salt Rain\""
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "\"Salt of the Earth\""
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 0.0,
+      "claim": "no"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Fuzhou and Malipo County are in different provinces."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "1537 until 1569"
+    },
+    {
+      "label": 0,
+      "v1": 50.0,
+      "v3": 30.0,
+      "claim": "The father of Pietro de' Medici was the Duke of Florence for many years."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Phenol"
+    },
+    {
+      "label": 0,
+      "v1": 65.0,
+      "v3": 30.0,
+      "claim": "Auguste Laurent discovered benzene's cousin, carbolic acid."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "The Irish Rebellion of 1798"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Peter Ivers was actually part of the French Revolution in 1789."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Commentaries on Aristotle"
+    },
+    {
+      "label": 0,
+      "v1": 90.0,
+      "v3": 30.0,
+      "claim": "Aspasius and Christian scholars contributed to literature."
+    },
+    {
+      "label": 1,
+      "v1": 0.0,
+      "v3": 30.0,
+      "claim": "North Carolina"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Whitetop, Virginia and Virginia Creeper Trail don't have any state in common."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "I-90"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "New York State Route 50."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 30.0,
+      "claim": "Harry Potter and the Deathly Hallows \u2013 Part 1"
+    },
+    {
+      "label": 0,
+      "v1": 60.0,
+      "v3": 30.0,
+      "claim": "The film that was directed by a British editor and starred Daniel Radcliffe is Harry Potter and the Deathly Hallows \u2013 Part 1."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Quebec City"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Toronto is the capital city."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 25.0,
+      "claim": "Saki"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Sarah Waters was born first."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 0.0,
+      "claim": "no"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 0.0,
+      "claim": "Yes, Michael Jackson and Joe Strummer were both Americans."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Logan International Airport"
+    },
+    {
+      "label": 0,
+      "v1": 20.0,
+      "v3": 30.0,
+      "claim": "Big Jake's health began deteriorating elsewhere."
+    },
+    {
+      "label": 1,
+      "v1": 50.0,
+      "v3": 0.0,
+      "claim": "ten weeks"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "The lead single from Culture Beat's second studio album, Serenity, was a commercial failure in Canada."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Malcolm in the Middle"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Blast Vegas starred the actor Frankie Muniz on \"Friends\"."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Zimbabwe"
+    },
+    {
+      "label": 0,
+      "v1": 90.0,
+      "v3": 90.0,
+      "claim": "Jasminum multipartitum is native to a territory that spans across multiple southern African countries, including Zimbabwe."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Portrait of Dr. Gachet"
+    },
+    {
+      "label": 0,
+      "v1": 90.0,
+      "v3": 30.0,
+      "claim": "The painting by Vincent van Gogh, that depicts Paul Gachet's daughter, Marguerite, who took care of him during his final months of life."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Beggars Banquet"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Jigsaw Puzzle was from The Beatles' Abbey Road."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Frank Wildhorn"
+    },
+    {
+      "label": 0,
+      "v1": 60.0,
+      "v3": 20.0,
+      "claim": "The musical where Laura Ann Osnes played Bonnie Parker was created by multiple artists."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "1911"
+    },
+    {
+      "label": 0,
+      "v1": 20.0,
+      "v3": 0.0,
+      "claim": "Amundsen Bay was named after the famous explorer who reached the South Pole in 1913."
+    },
+    {
+      "label": 1,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "2013"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "The co-founder launched the online magazine in 2014."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 30.0,
+      "claim": "Jorge Leal Amado de Faria"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Sarah Caudwell was known for writing detective stories."
+    },
+    {
+      "label": 1,
+      "v1": 0.0,
+      "v3": 30.0,
+      "claim": "no"
+    },
+    {
+      "label": 0,
+      "v1": 30.0,
+      "v3": 0.0,
+      "claim": "Lysiloma is a medium-sized tree species, while Peltophorum is a large tree species."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Marc Forster"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Marc Jacobs"
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "6,900"
+    },
+    {
+      "label": 0,
+      "v1": 50.0,
+      "v3": 30.0,
+      "claim": "The stadium can hold up to 7,000 spectators."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "One57"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "30 Hudson Yards is nicknamed \"The Billionaire Building\" and hosts 92 condominiums units on top of a 210-room Hyatt Hotel."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "David Michael Bautista Jr."
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 0.0,
+      "claim": "Darren Shahlavi was born January 18, 1969."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Frank P. Brown Medal"
+    },
+    {
+      "label": 0,
+      "v1": 60.0,
+      "v3": 30.0,
+      "claim": "BBN Technologies was awarded the Franklin Institute Medal."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "2,586"
+    },
+    {
+      "label": 0,
+      "v1": 50.0,
+      "v3": 0.0,
+      "claim": "The Covington County School District is based in a town with a population of 2,500."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "2010"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Irvin Kershner passed away in 2011."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Mil Mi-17"
+    },
+    {
+      "label": 0,
+      "v1": 50.0,
+      "v3": 30.0,
+      "claim": "Mi-17 is produced only in Kazan."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Priyanka Chopra"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Shahrukh Khan"
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "the Pepsi-Cola company"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Coca-Cola owns both Mountain Dew and Tropicana."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Buenos Aires, Argentina"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Juan de C\u00e1ceres y Ulloa was an organist of the Catholic cathedral in Santiago, Chile."
+    },
+    {
+      "label": 1,
+      "v1": 20.0,
+      "v3": 30.0,
+      "claim": "Important contributors and co-sponsors"
+    },
+    {
+      "label": 0,
+      "v1": 20.0,
+      "v3": 0.0,
+      "claim": "The private liberal arts college created EnVISIONing Annapolis."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "May"
+    },
+    {
+      "label": 0,
+      "v1": 90.0,
+      "v3": 90.0,
+      "claim": "\"You're All I Need\" was released in May, along with the rest of Girls, Girls, Girls."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "June 24, 1947"
+    },
+    {
+      "label": 0,
+      "v1": 65.0,
+      "v3": 100.0,
+      "claim": "Kenneth Arnold co-wrote The Coming of the Saucers with Raymond Palmer on June 24, 1947, after witnessing the sighting of numerous unidentifi"
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "1949"
+    },
+    {
+      "label": 0,
+      "v1": 50.0,
+      "v3": 30.0,
+      "claim": "Brian Kidd was likely born first."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Cristian Chivu"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "Mircea Chivu Stadium is named after famous Romanian soccer player Cristian Chivu's uncle."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "The Godfather"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Negus is a mix of two types of alcohol."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Ohio"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "The American rock band that shared the bill with The Jepettos at Tennent's Vital in 2012 is from Texas."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Attica Correctional Facility"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 0.0,
+      "claim": "The prison riot occurred at San Quentin State Prison."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Frederic Zelnik"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 0.0,
+      "claim": "Dziga Vertov was also known for his acting."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Paul White"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "The producer of \"Atrocity Exhibition\" is Tom Hanks."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "1980"
+    },
+    {
+      "label": 0,
+      "v1": 40.0,
+      "v3": 20.0,
+      "claim": "The male star of My Santa was born in the 90s."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "The Second City"
+    },
+    {
+      "label": 0,
+      "v1": 90.0,
+      "v3": 95.0,
+      "claim": "John Belushi met Dan Aykroyd at a legendary comedy institution in Chicago known as The Second City."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Alfred Molina"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Kevin Kline played Touchstone in the 2006 film of Shakespeare's As You Like It."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "31 states"
+    },
+    {
+      "label": 0,
+      "v1": 20.0,
+      "v3": 0.0,
+      "claim": "Santuario Alta Vista is a specific area located in the Nayarit state of Mexico, one of the 30 states in the country."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "April 2, 1945"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "The birthday of the man who asked Andr\u00e9s Thomas \"Why would you even throw him a strike?\" is on the same day as National Popcorn Day."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "RAAF Base Edinburgh"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "RAAF Base Edinburgh, located in Australia."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "1561"
+    },
+    {
+      "label": 0,
+      "v1": 0.0,
+      "v3": 0.0,
+      "claim": "1570, just a few years after Elizabethan era started."
+    },
+    {
+      "label": 1,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "Robert Timberg"
+    },
+    {
+      "label": 0,
+      "v1": 100.0,
+      "v3": 100.0,
+      "claim": "The book about the historian was written by Oliver North."
+    }
+  ],
+  "guard": [
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    },
+    {
+      "true_score": 100.0,
+      "dist_score": 0.0
+    }
+  ],
+  "v3_system": "You verify whether a SOURCE supports a candidate FACT for storage in a memory. Silently check EVERY atomic detail the fact asserts \u2014 each entity, number, date, place, role, comparison and relation \u2014 against the source. Rate 0-100: 100 = every detail is stated or unambiguously entailed by the source. If even ONE detail is unsupported, altered or contradicted (wrong number, swapped role or subject, added time/place, reversed comparison), score 0-30. 50 = the source is topically related but does not establish the fact. Judge MEANING, not word overlap. Reply with exactly 'SCORE: N'."
+}
