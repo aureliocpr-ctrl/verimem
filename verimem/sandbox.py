@@ -244,6 +244,7 @@ DEFAULT_BINARY_ALLOWLIST: dict[str, str | frozenset[str]] = {
         "help", "--help", "version", "--version", "tip", "chain",
         "recent", "search", "stats", "dashboard", "digest", "arsenal",
     }),
+    "verimem": frozenset({"--help", "facts", "status"}),
     "engram": frozenset({"--help", "facts", "status"}),
     "hippo": frozenset({"--help", "status"}),
     # Conda / pip — read-only subcommands only.

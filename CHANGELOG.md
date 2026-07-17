@@ -4,6 +4,15 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Changed
+- **Total package rename `engram` -> `verimem`** (branch `rename/verimem-total`).
+  `verimem/` is now the real package (358 modules); `engram/` and `hippoagent/`
+  are functional compat shims (identity preserved: `engram.X is verimem.X`).
+  Data dir defaults to `~/.verimem` but reads an existing `~/.engram` untouched
+  (never migrated). Entry points, MCP server identity, and the singleton guard
+  all speak `verimem` (legacy `engram`/`hippo` commands still work).
+
+
 ### Fixed
 - **L1 lexical screen no longer cold-loads the ML stack on a cold process's
   first write** (~32 s → 0.3 s, `7d64b91`). The L1.20 semantic self-claim

@@ -1,4 +1,6 @@
-# Piano: rename totale `engram/` → `verimem/` (DECISIONE APERTA)
+> **STATO 2026-07-18: FATTO sul branch rename/verimem-total.** git mv engram->verimem (358 moduli), import riscritti, engram/ e hippoagent/ shim (identita preservata), data-dir ~/.verimem con fallback ~/.engram (mai migrato), pyproject verimem.cli:main, MCP Server("verimem"). Suite verde (solo real_provider[groq] env/network resta). Merge+tag li decide Aurelio dopo test.
+
+# Piano: rename totale `engram/` → `verimem/` — DECISO ed ESEGUITO (0.6.0, 2026-07-18)
 
 **Stato 2026-07-15.** Il rebrand utente-facing è GIÀ completo; questo documento
 copre l'ultimo pezzo — il nome del package interno — e i suoi costi. Non si

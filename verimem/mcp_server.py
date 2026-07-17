@@ -1026,7 +1026,7 @@ def _filter_tools(
     ]
 
 
-server: Server = Server("engram")
+server: Server = Server("verimem")
 
 
 async def _list_tools_unfiltered() -> list[t.Tool]:
