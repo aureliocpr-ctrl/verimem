@@ -39,13 +39,21 @@ DEFAULT_THRESHOLD = 85.0
 
 # WRITE-path admission threshold (source ⊢ candidate FACT) — DISTINCT from the answer-path
 # 85 above, which is anchored on the R7 answer-distribution (sound ~96 / fabrication ~80).
-# The fact-vs-source distribution is different and bimodal: measured on HaluMem-Medium
-# (benchmark/halumem_admission_sweep.py, n=15 clean + 15 foreign-noise), grounded facts
-# scored 42–100 while foreign noise scored a clean 0 — a wide gap at ~0→42. So 85 would
-# reject ~⅔ of VALID (often abstractive) facts; a threshold anywhere in the gap admits 80%
-# of clean facts and rejects 100% of noise at admission-precision 1.0. 40 sits safely in
-# that gap. Override with ENGRAM_GROUNDING_WRITE_THRESHOLD. (n=15 — recalibrate at scale.)
-WRITE_DEFAULT_THRESHOLD = 40.0
+#
+# RECALIBRATED 40 → 70 (2026-07-17, external-corpora mandate). The original 40 sat in the
+# 0→42 gap of a n=15 HaluMem probe; three larger, independent measurements converge on 70:
+#   1. The judge's OWN rubric (_FACT_SYSTEM below): "N in 1–60 if the span is only
+#      related/partial" — admitting at 40 stored facts the judge itself called NOT entailed.
+#   2. Real-corpus curve (benchmark/results/real_corpus_gate_validation.json, n=90,
+#      judge scores): t=40 admit .967/block .700 → t=70 admit .950/block .933
+#      (+23pt block for −1.7pt admit).
+#   3. External held-out corpora (benchmark/moat_external_judge.py, sonnet-5, n=240 pairs,
+#      never-seen): HaluEval block .45→.68 for −1.7pt admit; TruthfulQA block .967→.983.
+#      Realistic e2e cases (moat_e2e_opus.py, n=12) separate 0/100 — unaffected at any cut.
+# Residual honest limit: comparative/numeric one-detail-wrong confabs the judge scores
+# ≥70 are NOT caught by any threshold — that is a judge-prompt axis, not a cut axis.
+# Override with ENGRAM_GROUNDING_WRITE_THRESHOLD.
+WRITE_DEFAULT_THRESHOLD = 70.0
 
 # Basic graded verifier (semantic, "judge meaning not word overlap, distractor -> 0").
 _BASIC_SYSTEM = (

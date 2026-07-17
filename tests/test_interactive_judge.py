@@ -101,10 +101,10 @@ def test_gate_backend_interactive_routes_and_falls_back(monkeypatch):
 
     class StubLLM:
         def complete(self, *a, **k):
-            return type("R", (), {"text": "SCORE: 55"})()
+            return type("R", (), {"text": "SCORE: 78"})()
 
     ok, score = G.should_store_fact(StubLLM(), "src", "fact")
-    assert (ok, score) == (True, 55.0)
+    assert (ok, score) == (True, 78.0)   # 78 >= claude write threshold 70
 
 
 def test_response_parse_tolerates_garbage(tmp_path):

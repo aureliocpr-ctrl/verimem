@@ -1,6 +1,11 @@
-"""Write-path admission threshold: distinct from (and lower than) the answer-path 85,
-calibrated on the bimodal fact-vs-source distribution. A fact the source grounds at 50
-must be ADMITTED on the write path (it would be wrongly rejected at the answer-path 85)."""
+"""Write-path admission threshold: distinct from (and lower than) the answer-path 85.
+
+RECALIBRATED 40 -> 70 (2026-07-17) on three independent measurements: the judge's own
+rubric (_FACT_SYSTEM: 1-60 = "only related/partial" -> not entailed), the real-corpus
+n=90 curve (block 0.70 -> 0.93 for -1.7pt admit), and external held-out corpora
+(HaluEval block 0.45 -> 0.68 for -1.7pt admit; TruthfulQA block 0.97 -> 0.98). The
+realistic e2e cases separate 0/100 and are unaffected. A fact the judge scores 50
+("partial") is now correctly QUARANTINED; 75+ ("entailed") is admitted."""
 from __future__ import annotations
 
 import types
@@ -14,7 +19,7 @@ from engram.anti_confab_gate import run_validation_gate
 def test_write_threshold_default_is_calibrated(monkeypatch):
     monkeypatch.delenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", raising=False)
     monkeypatch.delenv("ENGRAM_GROUNDING_THRESHOLD", raising=False)
-    assert G._resolve_write_threshold() == G.WRITE_DEFAULT_THRESHOLD == 40.0
+    assert G._resolve_write_threshold() == G.WRITE_DEFAULT_THRESHOLD == 70.0
     # answer-path default is unchanged (still 85)
     assert G._resolve_threshold(None) == 85.0
 
@@ -56,21 +61,24 @@ def test_fact_grounding_score_system_override():
 
 
 def test_should_store_fact_uses_write_default(monkeypatch):
-    """The public write-path helper defaults to the write threshold (40), not 85: a fact
-    grounded at 50 is STORED (would be rejected at the answer-path 85)."""
+    """The public write-path helper defaults to the write threshold (70), not 85: a fact
+    the judge calls entailed (75) is STORED; one the judge calls only partial (50) is
+    NOT (rubric: 1-60 = related/partial)."""
     monkeypatch.delenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", raising=False)
     monkeypatch.delenv("ENGRAM_GROUNDING_THRESHOLD", raising=False)
-    store, score = G.should_store_fact(_StubLLM(50), "src", "fact")
-    assert score == 50.0 and store is True
+    store, score = G.should_store_fact(_StubLLM(75), "src", "fact")
+    assert score == 75.0 and store is True
+    store_partial, _ = G.should_store_fact(_StubLLM(50), "src", "fact")
+    assert store_partial is False   # partial support no longer admits
     # explicit threshold still honored
-    store2, _ = G.should_store_fact(_StubLLM(50), "src", "fact", threshold=85)
+    store2, _ = G.should_store_fact(_StubLLM(75), "src", "fact", threshold=85)
     assert store2 is False
 
 
-@pytest.mark.parametrize("score,expect_warn", [(50, False), (20, True)])
+@pytest.mark.parametrize("score,expect_warn", [(75, False), (50, True), (20, True)])
 def test_l4_uses_write_threshold(monkeypatch, score, expect_warn):
-    """At the write threshold (40), a 50-grounded fact passes L4 (would fail at 85);
-    a 20-grounded fact still warns."""
+    """At the write threshold (70), a 75-grounded fact passes L4; a 50-grounded fact
+    (judge rubric: 'only related/partial') now warns, as does a 20-grounded one."""
     monkeypatch.setenv("ENGRAM_GROUNDING_WRITE", "1")
     monkeypatch.delenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", raising=False)
     monkeypatch.delenv("ENGRAM_GROUNDING_THRESHOLD", raising=False)

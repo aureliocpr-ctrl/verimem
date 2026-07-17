@@ -78,7 +78,8 @@ def _fact_trust_line(h: dict[str, Any]) -> str:
 #: CE score above which the answer counts as fact-supported. Distinct from the
 #: WRITE gate's 99.64 (Youden on source⊢fact hard negatives): the probe
 #: 2026-07-16 measured answering-facts ~91-94 vs distractors ~1-3, so any cut in
-#: (3, 90) separates; 40 mirrors WRITE_DEFAULT_THRESHOLD. Recalibrate on the bench.
+#: (3, 90) separates; 40 is its own CE-scale cut (the write gate's claude-scale
+#: WRITE_DEFAULT_THRESHOLD is 70 and unrelated). Recalibrate on the bench.
 _ANSWER_VERIFY_THRESHOLD = 40.0
 
 

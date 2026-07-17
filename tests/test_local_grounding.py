@@ -122,14 +122,14 @@ def test_unknown_backend_falls_back_to_claude(monkeypatch):
 
 def test_local_backend_missing_model_fails_over_to_llm(tmp_path, monkeypatch):
     """Model dir absent/unloadable: the gate must fail over to the injected llm at the
-    CLAUDE-scale threshold (40), never raise, and never apply the local config cut to
+    CLAUDE-scale threshold (70), never raise, and never apply the local config cut to
     a claude-scale score."""
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(tmp_path / "nope"))
-    s = G.fact_grounding_score(_StubLLM("SCORE: 66"), "src", "fact")
-    assert s == 66.0
-    ok, score = G.should_store_fact(_StubLLM("SCORE: 66"), "src", "fact")
-    assert (ok, score) == (True, 66.0), "66 >= claude write threshold 40"
+    s = G.fact_grounding_score(_StubLLM("SCORE: 78"), "src", "fact")
+    assert s == 78.0
+    ok, score = G.should_store_fact(_StubLLM("SCORE: 78"), "src", "fact")
+    assert (ok, score) == (True, 78.0), "78 >= claude write threshold 70"
 
 
 def test_production_l4_gate_uses_calibrated_local_threshold(tmp_path, monkeypatch):
@@ -166,27 +166,27 @@ def test_production_l4_gate_uses_calibrated_local_threshold(tmp_path, monkeypatc
 
 def test_local_without_gate_config_warns_and_uses_default(tmp_path, monkeypatch):
     """Counterexample worker: local model loads but ships NO gate_config threshold and
-    no env override — the gate must warn (uncalibrated) and fall to the default 40,
+    no env override — the gate must warn (uncalibrated) and fall to the default 70,
     visibly rather than silently."""
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(tmp_path))  # no gate_config.json
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
     set_local_judge(LocalGroundingJudge(model_dir=tmp_path,
-                                        scorer=lambda b: [60.0] * len(b)))
+                                        scorer=lambda b: [75.0] * len(b)))
     with pytest.warns(RuntimeWarning, match="uncalibrated"):
         ok, score = G.should_store_fact(_BoomLLM(), "src", "fact")
-    assert (ok, score) == (True, 60.0), "60 >= default 40"
+    assert (ok, score) == (True, 75.0), "75 >= default 70"
 
 
 def test_failover_uses_claude_scale_threshold_not_config(tmp_path, monkeypatch):
     """Symmetric hazard: the model dir carries a gate_config threshold 91 but NO model
-    weights (load fails, fail-over to llm) — the claude-scale score (66) must be cut
-    at 40, not at the CE-scale 91 (which would silently over-reject)."""
+    weights (load fails, fail-over to llm) — the claude-scale score (78) must be cut
+    at 70, not at the CE-scale 91 (which would silently over-reject)."""
     (tmp_path / "gate_config.json").write_text(
         json.dumps({"threshold": 91.0}), encoding="utf-8")
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(tmp_path))  # config yes, model no
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
-    ok, score = G.should_store_fact(_StubLLM("SCORE: 66"), "src", "fact")
-    assert (ok, score) == (True, 66.0), "fail-over must cut at claude-scale 40"
+    ok, score = G.should_store_fact(_StubLLM("SCORE: 78"), "src", "fact")
+    assert (ok, score) == (True, 78.0), "fail-over must cut at claude-scale 70 (78<91: config not applied)"
 
 
 def test_local_load_failure_is_cached_not_retried(tmp_path, monkeypatch):

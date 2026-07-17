@@ -1,0 +1,1719 @@
+{
+  "model": "claude-sonnet-5",
+  "threshold": 40.0,
+  "seed": 42,
+  "ts": "2026-07-17T06:47:19",
+  "overall_auroc": 0.8258,
+  "overall_admit_rate": 0.8167,
+  "overall_block_rate": 0.7083,
+  "per_corpus": {
+    "truthfulqa": {
+      "n_pos": 60,
+      "n_neg": 60,
+      "threshold": 40.0,
+      "auroc": 0.9008,
+      "faithful_admit_rate": 0.7333,
+      "confab_block_rate": 0.9667,
+      "pos_scores": [
+        65.0,
+        30.0,
+        0.0,
+        55.0,
+        90.0,
+        90.0,
+        60.0,
+        90.0,
+        0.0,
+        0.0,
+        90.0,
+        90.0,
+        100.0,
+        0.0,
+        100.0,
+        0.0,
+        65.0,
+        0.0,
+        100.0,
+        100.0,
+        90.0,
+        100.0,
+        100.0,
+        92.0,
+        90.0,
+        0.0,
+        5.0,
+        95.0,
+        100.0,
+        100.0,
+        92.0,
+        100.0,
+        20.0,
+        30.0,
+        0.0,
+        100.0,
+        100.0,
+        60.0,
+        85.0,
+        50.0,
+        20.0,
+        25.0,
+        100.0,
+        0.0,
+        100.0,
+        95.0,
+        100.0,
+        100.0,
+        50.0,
+        60.0,
+        100.0,
+        60.0,
+        20.0,
+        55.0,
+        100.0,
+        100.0,
+        100.0,
+        50.0,
+        90.0,
+        90.0
+      ],
+      "neg_scores": [
+        0.0,
+        20.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        20.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        50.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        20.0,
+        0.0,
+        20.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rows": [
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 65.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 30.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 55.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 60.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 65.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 92.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 5.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 95.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 92.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "identity",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 30.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 60.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 85.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 25.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 95.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 60.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 60.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 55.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "paraphrase",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "misconception",
+          "score": 0.0,
+          "backend": "claude"
+        }
+      ]
+    },
+    "halueval": {
+      "n_pos": 60,
+      "n_neg": 60,
+      "threshold": 40.0,
+      "auroc": 0.8139,
+      "faithful_admit_rate": 0.9,
+      "confab_block_rate": 0.45,
+      "pos_scores": [
+        100.0,
+        100.0,
+        20.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        0.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        0.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        50.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        0.0,
+        100.0,
+        0.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        20.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "neg_scores": [
+        20.0,
+        0.0,
+        50.0,
+        50.0,
+        0.0,
+        100.0,
+        50.0,
+        100.0,
+        0.0,
+        100.0,
+        50.0,
+        65.0,
+        0.0,
+        90.0,
+        0.0,
+        0.0,
+        60.0,
+        0.0,
+        100.0,
+        100.0,
+        20.0,
+        0.0,
+        0.0,
+        90.0,
+        90.0,
+        0.0,
+        60.0,
+        20.0,
+        0.0,
+        100.0,
+        30.0,
+        0.0,
+        50.0,
+        0.0,
+        100.0,
+        60.0,
+        50.0,
+        0.0,
+        50.0,
+        100.0,
+        0.0,
+        0.0,
+        20.0,
+        90.0,
+        65.0,
+        50.0,
+        0.0,
+        100.0,
+        0.0,
+        100.0,
+        100.0,
+        0.0,
+        40.0,
+        90.0,
+        100.0,
+        20.0,
+        0.0,
+        100.0,
+        0.0,
+        100.0
+      ],
+      "rows": [
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 65.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 60.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 60.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 30.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 60.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 65.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 50.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 40.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 90.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 20.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 100.0,
+          "backend": "claude"
+        }
+      ]
+    }
+  }
+}
