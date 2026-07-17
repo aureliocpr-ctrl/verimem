@@ -1,0 +1,237 @@
+{
+  "model": "claude-opus-4-8",
+  "threshold": 70.0,
+  "ts": "2026-07-17T07:08:49",
+  "admitted_neg_total": 19,
+  "admitted_neg_closed_by_opus": 9,
+  "rejected_pos_total": 7,
+  "rejected_pos_recovered_by_opus": 3,
+  "controls_total": 6,
+  "controls_still_blocked": 4,
+  "rows": [
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 100.0,
+      "claim": "The English footballer and manager who scored for Everton in 1970 FA Charity Shield was born in 1946."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 100.0,
+      "claim": "Leckie Mine and Giant Mine have different towns."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 100.0,
+      "claim": "Fuzhou and Malipo County are in different provinces."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 90.0,
+      "opus": 100.0,
+      "claim": "Aspasius and Christian scholars contributed to literature."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 0.0,
+      "claim": "Sarah Waters was born first."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 0.0,
+      "claim": "Yes, Michael Jackson and Joe Strummer were both Americans."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 90.0,
+      "opus": 55.0,
+      "claim": "Jasminum multipartitum is native to a territory that spans across multiple southern African countries, including Zimbabwe."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 90.0,
+      "opus": 50.0,
+      "claim": "The painting by Vincent van Gogh, that depicts Paul Gachet's daughter, Marguerite, who took care of him during his final months of life."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 100.0,
+      "claim": "Sarah Caudwell was known for writing detective stories."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 0.0,
+      "claim": "Darren Shahlavi was born January 18, 1969."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 100.0,
+      "claim": "Shahrukh Khan"
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 90.0,
+      "opus": 90.0,
+      "claim": "\"You're All I Need\" was released in May, along with the rest of Girls, Girls, Girls."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 0.0,
+      "claim": "Negus is a mix of two types of alcohol."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 0.0,
+      "claim": "The prison riot occurred at San Quentin State Prison."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 0.0,
+      "claim": "Dziga Vertov was also known for his acting."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 90.0,
+      "opus": 100.0,
+      "claim": "John Belushi met Dan Aykroyd at a legendary comedy institution in Chicago known as The Second City."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 100.0,
+      "claim": "Kevin Kline played Touchstone in the 2006 film of Shakespeare's As You Like It."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 100.0,
+      "claim": "RAAF Base Edinburgh, located in Australia."
+    },
+    {
+      "group": "admitted_neg",
+      "label": 0,
+      "sonnet": 100.0,
+      "opus": 0.0,
+      "claim": "The book about the historian was written by Oliver North."
+    },
+    {
+      "group": "rejected_pos",
+      "label": 1,
+      "sonnet": 20.0,
+      "opus": 20.0,
+      "claim": "2017 Stanley Cup playoffs"
+    },
+    {
+      "group": "rejected_pos",
+      "label": 1,
+      "sonnet": 0.0,
+      "opus": 100.0,
+      "claim": "no"
+    },
+    {
+      "group": "rejected_pos",
+      "label": 1,
+      "sonnet": 0.0,
+      "opus": 0.0,
+      "claim": "North Carolina"
+    },
+    {
+      "group": "rejected_pos",
+      "label": 1,
+      "sonnet": 50.0,
+      "opus": 0.0,
+      "claim": "ten weeks"
+    },
+    {
+      "group": "rejected_pos",
+      "label": 1,
+      "sonnet": 0.0,
+      "opus": 100.0,
+      "claim": "2013"
+    },
+    {
+      "group": "rejected_pos",
+      "label": 1,
+      "sonnet": 0.0,
+      "opus": 100.0,
+      "claim": "no"
+    },
+    {
+      "group": "rejected_pos",
+      "label": 1,
+      "sonnet": 20.0,
+      "opus": 30.0,
+      "claim": "Important contributors and co-sponsors"
+    },
+    {
+      "group": "control_neg",
+      "label": 0,
+      "sonnet": 20.0,
+      "opus": 0.0,
+      "claim": "Loreen's debut residency show was \"A Christmas Carol\"."
+    },
+    {
+      "group": "control_neg",
+      "label": 0,
+      "sonnet": 0.0,
+      "opus": 0.0,
+      "claim": "The population is 12,000 people."
+    },
+    {
+      "group": "control_neg",
+      "label": 0,
+      "sonnet": 50.0,
+      "opus": 90.0,
+      "claim": "Sidney Crosby was awarded his second Conn Smythe Trophy in one of the last games of the playoffs."
+    },
+    {
+      "group": "control_neg",
+      "label": 0,
+      "sonnet": 50.0,
+      "opus": 100.0,
+      "claim": "The actor who played Arthur Banks in \"Desert Saints\" also portrayed a federal agent in \"24\"."
+    },
+    {
+      "group": "control_neg",
+      "label": 0,
+      "sonnet": 0.0,
+      "opus": 0.0,
+      "claim": "Eric Zaslow formulated the SYZ conjecture with a mathematician who received the Abel Prize in 1982."
+    },
+    {
+      "group": "control_neg",
+      "label": 0,
+      "sonnet": 50.0,
+      "opus": 0.0,
+      "claim": "The American owner of Taprobane Island passed away in 1998."
+    }
+  ]
+}

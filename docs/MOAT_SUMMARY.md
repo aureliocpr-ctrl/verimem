@@ -94,9 +94,12 @@ says 1–60 = "only related/partial", and three independent curves (real corpus 
 HaluEval, TruthfulQA) converge — block +23pt on the first two for −1.7pt admit; the
 realistic e2e cases separate 0/100 and are unaffected (still 12/12 + 12/12).
 
-**Honest residual, quantified**: hallucinations the judge scores ≥70 — the
-comparative/numeric one-detail-wrong class (*"both were Americans"* when the source says
-one was English) — are a judge-PROMPT axis, not a threshold axis; an opus hard-slice on
-exactly that residue is measured in `benchmark/results/moat_opus_hardslice_*.json`. Part
-of HaluEval's nominal misses are dataset label noise (claims actually entailed), so true
-block is better than nominal. Receipts: `CLAIM-RECEIPTS.md` #13.
+**Honest residual, measured on the residue itself** (opus hard-slice, 32 calls,
+`moat_opus_hardslice_2026-07-17.json`): of the 19 hallucinations sonnet admitted at 70,
+**opus closes 9** and recovers 3/7 rejected faithful answers; of the 10 both-admit, **~7
+are dataset label noise** (claims actually entailed by the source, verified by
+inspection) and ~3 true misses (unsupported temporal detail, entity-role swap). Net
+effective block on REAL confabs: **sonnet-judge ~0.77, opus-tier ~0.94** (small n). The
+residual miss class — unsupported single details and role swaps scored ≥70 by both
+models — is a judge-PROMPT axis (next lever), not threshold or model tier. Receipts:
+`CLAIM-RECEIPTS.md` #13.
