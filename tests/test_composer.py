@@ -109,10 +109,13 @@ def test_gate_rejects_unsupported_composition(tmp_path, monkeypatch):
 
 
 def test_noncommittal_judge_never_admits(tmp_path, monkeypatch):
-    """A broken/unreadable judge yields the gate's non-committal 50 — which
-    PASSES the write threshold (40). For a DERIVED fact that is not enough:
-    the composer quarantines anything below its own floor (55), so a dead
-    judge can never flood the store with unverified compositions."""
+    """A broken/unreadable judge yields the gate's non-committal 50. That is
+    below BOTH the composer's own floor (55) AND — since the moat recalibration
+    2026-07-17 — the write threshold (70), so a DERIVED fact scored by a dead
+    judge is never admitted: it is quarantined (by whichever gate catches it
+    first). The safety invariant is 'a dead judge cannot flood the store with
+    unverified compositions', asserted on the OUTCOME, not on which counter
+    fires (the write gate now subsumes the composer floor for grounded facts)."""
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "claude")
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
@@ -130,7 +133,11 @@ def test_noncommittal_judge_never_admits(tmp_path, monkeypatch):
     m.add("A labrador is a dog.", topic="pets", verified_by=["source-doc:kb:t1"])
     rep = compose_once(m, run_id="t6")
     assert rep["admitted"] == 0
-    assert rep["rejected_noncommittal"] == 1
+    # rejected on the write path: the L4 write gate (rejected_gate, score 50 < 70)
+    # OR the composer's own non-committal floor (rejected_noncommittal, < 55).
+    # Post-recalibration the write gate catches it first; either way it is >=1.
+    assert rep["rejected_gate"] + rep["rejected_noncommittal"] >= 1
+    # the safety invariant (threshold-independent): the derived fact is NEVER live
     live = [f.proposition for f in m.semantic.all() if f.status != "quarantined"]
     assert "Rex is a dog." not in live
 
