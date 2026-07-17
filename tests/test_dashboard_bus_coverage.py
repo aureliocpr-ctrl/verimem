@@ -225,7 +225,7 @@ class TestEightCategoryCoverageContract:
         import ast
         import pathlib
         emitted_names: set[str] = set()
-        engram_root = pathlib.Path(__file__).resolve().parents[1] / "engram"
+        engram_root = pathlib.Path(__file__).resolve().parents[1] / "verimem"
         for src in engram_root.rglob("*.py"):
             try:
                 tree = ast.parse(src.read_text(encoding="utf-8"))

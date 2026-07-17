@@ -20,7 +20,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-_PKG = Path(__file__).resolve().parents[2] / "engram"
+_PKG = Path(__file__).resolve().parents[2] / "verimem"
 
 _NAME_SINKS = {"eval", "exec", "__import__"}
 _DOTTED_SINKS = {

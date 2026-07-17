@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-_APP_JS = Path(__file__).resolve().parents[2] / "engram" / "webui" / "app.js"
+_APP_JS = Path(__file__).resolve().parents[2] / "verimem" / "webui" / "app.js"
 
 #: fact-derived, attacker-controlled fields that get interpolated into markup
 _SENSITIVE_FIELDS = [

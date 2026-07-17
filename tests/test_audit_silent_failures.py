@@ -201,7 +201,7 @@ def test_full_corpus_is_clean() -> None:
     just crept in — investigate and either fix the code or update the
     detector if it's a legitimate pattern this layer should permit.
     """
-    engram = ROOT / "engram"
+    engram = ROOT / "verimem"
     py_files = sf._gather_py(engram)
     for layer, (name, fn) in sf._CHECKS.items():
         findings = fn(py_files)
