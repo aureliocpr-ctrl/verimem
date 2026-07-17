@@ -24,11 +24,12 @@ ri-verificata oggi) · ⚠️ SOVRASTIMATO (wording da correggere) · ❌ FALSO 
 | 13 | write-gate AUROC 0.96–0.97 (moat anti-confab) | ✅ | RI-MISURATO 2026-07-16 col modello corrente: R10 SNLI n=150 seed 0 **AUROC 0.963** sonnet-5 (`fact_grounding_r10_sonnet5_2026-07-16.json`; entail 85.2 / neutral 28.5 / contra 6.4, Youden 55) — nella banda dello storico (0.971 R10 sonnet-4, 0.974 pooled multi-model, 0.992 R11). + same-topic gate-discrimination fresca **1.0/1.0** (`writepath_moat_sametopic_opus_2026-07-16.json`). README aggiornato al range onesto "0.96–0.97 across models/seeds". |
 | 14 | «conflicting well-grounded memories resolved by provenance, or honest abstention» (answer trust-conditioned) | ✅ nuovo | MISURATO PRIMA, WIRED DOPO (2026-07-16, `wellgrounded_distractor_bench.py` sonnet-5): 12 casi CASO-B (distrattore BEN-groundato, gate 76–100 su entrambi i lati → il grounding NON può separare) — flat C=0.42/H=0.58; **answer() v1 C=0.17/H=0.33/O=0.50** (limite pinnato quantificato: `ce_served≈97` sul distrattore); **trust-conditioned C=0.92/H=0.08**, astiene **2/2** sui conflitti stesso-metadato (contatore v1 del bench diceva "fabricated": era un bug del CONTATORE — le pred reali erano `NO ANSWER` secco; fixato, la regola verbosa di tie regrediva ed è stata scartata). Wired in `Memory.answer(trust_conditioning=True)` default ON (`client.py`, 5 test + non-regressione 33). RESIDUO ONESTO pinnato: un distrattore i cui metadati DOMINANO (più recente E verified ma falso) resta indistinguibile senza audit. 1 fail residuo su 12 (b3_version). |
 
-## Azioni immediate (perché è online)
-1. Ri-eseguire i 🔬 numerici (12 in corso; poi 6, 13) — budget opus aperto.
-2. Correggere i ⚠️ #4 e #10 nel README (wording che non sovrastima).
-3. Chiudere i 6 difetti tenant prima di rafforzare il claim #11 "enterprise".
-4. Verificare #7 (`trust_stats` esiste).
-
-Nessun ❌ FALSO trovato finora — ma 2 ⚠️ (sovrastima) e 5 🔬 (ricevute da rinfrescare).
-Il claim non si dice finché la cella non è ✅.
+## Stato finale (aggiornato 2026-07-17 ~03:50)
+**14/14 claim ✅ con ricevuta fresca.** Percorso: 0 ❌ falsi; 2 ⚠️ sovrastima
+(entrambi corretti nel wording: #4, #10, più il contradiction-screening del
+mod.10); 5 🔬 tutti ri-eseguiti (#5 MemSyco 0.933, #6 cartel alla cifra, #12
+ANN con caveat, #13 AUROC 0.963 fresh); 2 gap trovati dal CRITIC e chiusi col
+codice (answer() e correct_read erano SDK-only → `/v1/answer` + `/v1/correct`);
+#7 e #11 verificati LIVE (console + gateway multi-tenant 12/12, rate-limit alla
+cifra). Il claim non si dice finché la cella non è ✅ — regola permanente.
+Prossimo strato di certezza: proposta flip-default (task #21, gated su OK+bench).

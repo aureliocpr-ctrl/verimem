@@ -29,15 +29,31 @@ from typing import Any
 
 _ACTIONS = ("admitted", "quarantined", "rejected", "abstained")
 
-_SCHEMA = """
-CREATE TABLE IF NOT EXISTS trust_ledger (
+#: mod.11 (2026-07-17): per-action / per-layer TOTALS maintained in the same
+#: transaction as the insert, so ``stats()`` reads O(1) rows instead of
+#: GROUP-BY-scanning an unbounded events table. Measured on 1M events: 2213 ms
+#: per stats() call (the console refreshes every 30 s — the SSE-DoS family);
+#: plain indexes were refuted by measurement first (−15%: the cost is the row
+#: count), totals bring it to ~3 ms. The raw events table STAYS (audit trail +
+#: the 14-day ``daily`` window, served by a ts range-scan index).
+_SCHEMA_STMTS = (
+    """CREATE TABLE IF NOT EXISTS trust_ledger (
     id INTEGER PRIMARY KEY,
     ts REAL NOT NULL,
     action TEXT NOT NULL,
     layers TEXT NOT NULL DEFAULT '',
     topic TEXT NOT NULL DEFAULT ''
+)""",
+    "CREATE INDEX IF NOT EXISTS idx_trust_ledger_ts ON trust_ledger(ts)",
+    """CREATE TABLE IF NOT EXISTS trust_ledger_totals (
+    kind TEXT NOT NULL,
+    key TEXT NOT NULL,
+    n INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (kind, key)
+)""",
 )
-"""
+
+_BACKFILL_MARK = ("meta", "_backfilled")
 
 
 class TrustLedger:
@@ -53,8 +69,75 @@ class TrustLedger:
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, timeout=10.0)
-        conn.execute(_SCHEMA)
+        for stmt in _SCHEMA_STMTS:
+            conn.execute(stmt)
+        self._ensure_backfill(conn)
         return conn
+
+    def _ensure_backfill(self, conn: sqlite3.Connection) -> None:
+        """One-time migration for stores written by the pre-totals ledger:
+        derive the totals from the existing raw rows (single full scan), then
+        mark done. Concurrent-safe: the mark INSERT is part of the same
+        transaction as the derived totals, and INSERT OR IGNORE + the primary
+        key make a second racer a no-op."""
+        row = conn.execute(
+            "SELECT n FROM trust_ledger_totals WHERE kind=? AND key=?",
+            _BACKFILL_MARK).fetchone()
+        if row is not None:
+            return
+        for action, n in conn.execute(
+                "SELECT action, COUNT(*) FROM trust_ledger GROUP BY action"):
+            if action in _ACTIONS:
+                conn.execute(
+                    "INSERT INTO trust_ledger_totals (kind, key, n) VALUES "
+                    "('action', ?, ?) ON CONFLICT(kind, key) DO NOTHING",
+                    (action, int(n)))
+        for layers, n in conn.execute(
+                "SELECT layers, COUNT(*) FROM trust_ledger "
+                "WHERE layers != '' GROUP BY layers"):
+            for layer in str(layers).split(","):
+                if layer:
+                    conn.execute(
+                        "INSERT INTO trust_ledger_totals (kind, key, n) "
+                        "VALUES ('layer', ?, ?) ON CONFLICT(kind, key) "
+                        "DO UPDATE SET n = n + excluded.n",
+                        (layer, int(n)))
+        # day totals: only the recent window matters (the series shows 14
+        # days) — backfill 31 days so a wider caller still has data.
+        cutoff = time.time() - 31 * 86400.0
+        for day, action, n in conn.execute(
+                "SELECT date(ts, 'unixepoch') AS d, action, COUNT(*) "
+                "FROM trust_ledger WHERE ts >= ? GROUP BY d, action",
+                (cutoff,)):
+            if action in _ACTIONS:
+                conn.execute(
+                    "INSERT INTO trust_ledger_totals (kind, key, n) VALUES "
+                    "('day', ?, ?) ON CONFLICT(kind, key) DO NOTHING",
+                    (f"{day}|{action}", int(n)))
+        conn.execute(
+            "INSERT OR IGNORE INTO trust_ledger_totals (kind, key, n) "
+            "VALUES (?, ?, 1)", _BACKFILL_MARK)
+
+    @staticmethod
+    def _bump_totals(conn: sqlite3.Connection, action: str, n: int,
+                     layers: list[str], ts: float) -> None:
+        conn.execute(
+            "INSERT INTO trust_ledger_totals (kind, key, n) VALUES "
+            "('action', ?, ?) ON CONFLICT(kind, key) DO UPDATE SET "
+            "n = n + excluded.n", (action, n))
+        for layer in layers:
+            conn.execute(
+                "INSERT INTO trust_ledger_totals (kind, key, n) VALUES "
+                "('layer', ?, ?) ON CONFLICT(kind, key) DO UPDATE SET "
+                "n = n + excluded.n", (layer, n))
+        # per-day totals ('day', 'YYYY-MM-DD|action') → the daily series is
+        # O(days), not O(events-in-window): the first regime measurement
+        # (1758 ms at 1M) showed the window aggregation was the residual cost.
+        day = time.strftime("%Y-%m-%d", time.gmtime(ts))
+        conn.execute(
+            "INSERT INTO trust_ledger_totals (kind, key, n) VALUES "
+            "('day', ?, ?) ON CONFLICT(kind, key) DO UPDATE SET "
+            "n = n + excluded.n", (f"{day}|{action}", n))
 
     def record(self, action: str, *, layers: list[str] | None = None,
                topic: str = "") -> None:
@@ -70,13 +153,16 @@ class TrustLedger:
             return
         try:
             now = time.time()
-            row = (now, action, ",".join(sorted(set(layers or []))),
-                   str(topic or ""))
+            uniq = sorted(set(layers or []))
+            row = (now, action, ",".join(uniq), str(topic or ""))
             with self._connect() as conn:
                 conn.executemany(
                     "INSERT INTO trust_ledger (ts, action, layers, topic) "
                     "VALUES (?, ?, ?, ?)", [row] * int(n),
                 )
+                # totals in the SAME transaction: counters can never drift
+                # from the raw rows they summarize (mod.11).
+                self._bump_totals(conn, action, int(n), uniq, now)
         except Exception:
             self.write_failures += int(n)
 
@@ -95,29 +181,30 @@ class TrustLedger:
         daily: list[dict[str, Any]] = []
         try:
             with self._connect() as conn:
-                for action, n in conn.execute(
-                        "SELECT action, COUNT(*) FROM trust_ledger "
-                        "GROUP BY action"):
-                    if action in counts:
-                        counts[action] = int(n)
-                for layers, n in conn.execute(
-                        "SELECT layers, COUNT(*) FROM trust_ledger "
-                        "WHERE layers != '' GROUP BY layers"):
-                    for layer in str(layers).split(","):
-                        if layer:
-                            by_layer[layer] = by_layer.get(layer, 0) + int(n)
+                # O(1) rows: the per-action / per-layer totals are maintained
+                # transactionally at write time (mod.11) — never a full scan
+                # of the unbounded events table (2213 ms at 1M events).
+                for kind, key, n in conn.execute(
+                        "SELECT kind, key, n FROM trust_ledger_totals"):
+                    if kind == "action" and key in counts:
+                        counts[key] = int(n)
+                    elif kind == "layer" and key:
+                        by_layer[key] = int(n)
                 row = conn.execute(
                     "SELECT MIN(ts) FROM trust_ledger").fetchone()
                 since = float(row[0]) if row and row[0] is not None else None
                 cutoff = time.time() - max(1, int(daily_days)) * 86400.0
+                cutoff_day = time.strftime("%Y-%m-%d", time.gmtime(cutoff))
                 buckets: dict[str, dict[str, Any]] = {}
-                for day, action, n in conn.execute(
-                        "SELECT date(ts, 'unixepoch') AS day, action, "
-                        "COUNT(*) FROM trust_ledger WHERE ts >= ? "
-                        "GROUP BY day, action ORDER BY day ASC", (cutoff,)):
+                # O(days) — day totals are keyed 'YYYY-MM-DD|action', so the
+                # lexicographic >= on the key IS the date comparison.
+                for key, n in conn.execute(
+                        "SELECT key, n FROM trust_ledger_totals WHERE "
+                        "kind='day' AND key >= ? ORDER BY key ASC",
+                        (cutoff_day,)):
+                    day, _, action = str(key).partition("|")
                     b = buckets.setdefault(
-                        str(day), {"day": str(day),
-                                   **{a: 0 for a in _ACTIONS}})
+                        day, {"day": day, **{a: 0 for a in _ACTIONS}})
                     if action in _ACTIONS:
                         b[action] = int(n)
                 daily = list(buckets.values())
