@@ -45,6 +45,10 @@ _PREFIX_BRAND = "VERIMEM_"
 _OLD_DIR_NAME = ".hippoagent"
 # New data dir (cycle #41+).
 _NEW_DIR_NAME = ".engram"
+# Canonical data dir since the total rename (0.6.0). Existing ~/.engram (and the
+# older ~/.hippoagent) are still READ and NEVER migrated — a machine with a large
+# ~/.engram store keeps using it untouched; only fresh installs create ~/.verimem.
+_VERIMEM_DIR_NAME = ".verimem"
 
 
 def init_env_aliases() -> int:
@@ -81,34 +85,44 @@ def init_env_aliases() -> int:
 
 
 def data_dir() -> Path:
-    """Return the canonical Engram data directory.
+    """Return the canonical Verimem data directory.
 
-    Order of preference:
+    Order of preference (total rename 0.6.0):
 
-    1. If ``~/.engram`` exists, use it.
-    2. Else if ``~/.hippoagent`` exists, use it (legacy install).
-    3. Else create ``~/.engram`` and use it.
+    1. If ``~/.verimem`` exists, use it (canonical).
+    2. Else if ``~/.engram`` exists, use it (legacy — NEVER migrated).
+    3. Else if ``~/.hippoagent`` exists, use it (older legacy install).
+    4. Else create ``~/.verimem`` and use it.
+
+    A machine with an existing ``~/.engram`` store keeps reading it untouched:
+    the rename never moves user data (a ~/.engram store can be many GB). Only a
+    fresh install with no prior dir gets the new ``~/.verimem`` default.
 
     Never throws — best-effort. Callers should still handle :py:class:`OSError`
     on subsequent disk operations.
 
-    The env var ``HIPPO_DATA_DIR`` / ``ENGRAM_DATA_DIR`` (whichever is set;
-    if both, the new name wins) overrides this default entirely.
+    Env override (highest precedence, in order): ``VERIMEM_DATA_DIR`` /
+    ``ENGRAM_DATA_DIR`` / ``HIPPO_DATA_DIR`` — the first set wins entirely.
     """
-    # Explicit override via env (HIPPO_DATA_DIR or ENGRAM_DATA_DIR).
-    override = os.environ.get("ENGRAM_DATA_DIR") or os.environ.get("HIPPO_DATA_DIR")
+    # Explicit override via env (VERIMEM_DATA_DIR / ENGRAM_DATA_DIR / HIPPO_DATA_DIR).
+    override = (os.environ.get("VERIMEM_DATA_DIR")
+                or os.environ.get("ENGRAM_DATA_DIR")
+                or os.environ.get("HIPPO_DATA_DIR"))
     if override:
         p = Path(override).expanduser()
         p.mkdir(parents=True, exist_ok=True)
         return p
 
     home = Path.home()
-    new_dir = home / _NEW_DIR_NAME
-    old_dir = home / _OLD_DIR_NAME
+    verimem_dir = home / _VERIMEM_DIR_NAME
+    engram_dir = home / _NEW_DIR_NAME
+    hippo_dir = home / _OLD_DIR_NAME
 
-    if new_dir.exists():
-        return new_dir
-    if old_dir.exists():
-        return old_dir
-    new_dir.mkdir(parents=True, exist_ok=True)
-    return new_dir
+    if verimem_dir.exists():
+        return verimem_dir
+    if engram_dir.exists():
+        return engram_dir      # legacy store — read as-is, never migrated
+    if hippo_dir.exists():
+        return hippo_dir
+    verimem_dir.mkdir(parents=True, exist_ok=True)
+    return verimem_dir

@@ -8,8 +8,50 @@ ENGRAM_DATA_DIR (the name the README .mcp.json uses) in addition to HIPPO_DATA_D
 """
 from __future__ import annotations
 
+from pathlib import Path
+
+import engram._compat as _compat
 from engram._compat import data_dir as compat_data_dir
 from engram.config import _data_root, _project_root
+
+
+def _fake_home(monkeypatch, home):
+    monkeypatch.setattr(Path, "home", lambda: home)
+    for _v in ("VERIMEM_DATA_DIR", "ENGRAM_DATA_DIR", "HIPPO_DATA_DIR"):
+        monkeypatch.delenv(_v, raising=False)
+
+
+def test_data_dir_prefers_verimem_then_legacy_engram(monkeypatch, tmp_path):
+    """Total rename 0.6.0: ~/.verimem is canonical, but an existing ~/.engram is
+    still read (never stranded)."""
+    _fake_home(monkeypatch, tmp_path)
+    (tmp_path / ".engram").mkdir()
+    assert _compat.data_dir() == tmp_path / ".engram"      # legacy read as-is
+    (tmp_path / ".verimem").mkdir()
+    assert _compat.data_dir() == tmp_path / ".verimem"     # canonical wins
+
+
+def test_data_dir_never_migrates_existing_engram(monkeypatch, tmp_path):
+    """A machine with only ~/.engram (possibly many GB) keeps using it — the
+    rename must NOT create ~/.verimem and strand the existing store."""
+    _fake_home(monkeypatch, tmp_path)
+    (tmp_path / ".engram").mkdir()
+    assert _compat.data_dir() == tmp_path / ".engram"
+    assert not (tmp_path / ".verimem").exists()
+
+
+def test_data_dir_fresh_install_creates_verimem(monkeypatch, tmp_path):
+    _fake_home(monkeypatch, tmp_path)
+    got = _compat.data_dir()
+    assert got == tmp_path / ".verimem" and got.exists()
+
+
+def test_verimem_data_dir_env_overrides(monkeypatch, tmp_path):
+    for _v in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR"):
+        monkeypatch.delenv(_v, raising=False)
+    target = tmp_path / "explicit"
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(target))
+    assert _compat.data_dir() == target
 
 
 def test_data_root_agrees_with_compat_when_no_env(monkeypatch) -> None:
