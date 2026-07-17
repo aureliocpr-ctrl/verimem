@@ -64,7 +64,7 @@ jobs:
         # ~0 LOC and passed trivially — SECURITY.md's "SAST on every change" was
         # materially false. Report-only for now (engram has ~192 pre-existing
         # S-findings to triage); CodeQL above is the blocking whole-tree gate.
-        run: ruff check --select S engram || true
+        run: ruff check --select S verimem || true
 
   bandit:
     name: bandit (low+low report)
@@ -83,7 +83,7 @@ jobs:
         # A-3 (audit#2 2026-06-08): scan the REAL package `engram` (was the empty
         # `hippoagent` shim). -ll low sev, -i low conf — report only (engram has
         # ~4 HIGH-sev findings to triage before this can gate; CodeQL gates).
-        run: bandit -r engram -ll -i || true
+        run: bandit -r verimem -ll -i || true
 
   pip-audit:
     name: pip-audit (HIGH/CRITICAL gate)

@@ -69,7 +69,7 @@ jobs:
           pip install -e ".[full,dev]"
 
       - name: Lint (ruff)
-        run: ruff check engram tests scripts
+        run: ruff check verimem tests scripts
 
       - name: Warm embedding model (best-effort HF cache warm for real-model tests)
         # ONLINE step: downloads multilingual-e5-base into the cached
@@ -80,14 +80,14 @@ jobs:
         # tests RUN (real coverage); when it fails they SKIP via the
         # `requires_real_model` guard (tests/_real_model.py) — CI stays green either way.
         continue-on-error: true
-        run: engram warmup --no-daemon
+        run: verimem warmup --no-daemon
 
       - name: Tests
         env:
           HIPPO_OFFLINE: "1"
         run: >-
           pytest
-          --cov=engram
+          --cov=verimem
           --cov-report=xml
           --cov-report=term-missing:skip-covered
           --cov-fail-under=46
@@ -98,6 +98,7 @@ jobs:
         run: |
           pip uninstall -y verimem
           pip install .
+          verimem --help
           engram --help
           hippo --help
 
@@ -168,7 +169,12 @@ jobs:
           $PY - << 'PYEOF'
           import tempfile
           from pathlib import Path
-          from engram import Memory
+          from verimem import Memory
+          # total-rename compat contract: the engram shim aliases to the SAME
+          # module objects (identity, not copies) — a wheel where this breaks
+          # would silently fork state between the two import paths.
+          import engram, verimem
+          assert engram.Memory is verimem.Memory, "engram alias lost identity"
           tmp = Path(tempfile.mkdtemp()) / "mem.db"
           m = Memory(path=tmp)
           r = m.add("The CI benchmark of record is HaluMem.", topic="ci")
@@ -185,7 +191,7 @@ jobs:
           $PY - << 'PYEOF'
           import json, os, subprocess, sys
           exe = os.path.join(os.path.dirname(sys.executable),
-                             "engram.exe" if os.name == "nt" else "engram")
+                             "verimem.exe" if os.name == "nt" else "verimem")
           proc = subprocess.Popen([exe, "mcp"], stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                   text=True)
