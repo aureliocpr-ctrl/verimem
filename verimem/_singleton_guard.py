@@ -29,9 +29,12 @@ import re
 # Deliberately does NOT match the sibling processes that merely contain "mcp":
 #   engram_bridge_mcp.py / clp_mcp_server.py / duo_bridge_mcp.py /
 #   critic_orchestrator.mcp_server / verimem.encode_service / engram_embedding_daemon.py
-#   (none has the `(engram|hippo)[.exe] <whitespace> mcp` token boundary).
+#   (none has the `(verimem|engram|hippo)[.exe] <whitespace> mcp` token boundary).
+# All three CLI names launch the SAME server (pyproject entry points verimem /
+# engram / hippo -> verimem.cli:main), so the guard must reap an orphan spawned
+# under any of them after the engram->verimem rename.
 _MCP_CMDLINE_RE = re.compile(
-    r'(?:^|[\s"/\\])(?:engram|hippo)(?:\.exe)?["\']?\s+mcp(?:\s|$|["\'])',
+    r'(?:^|[\s"/\\])(?:verimem|engram|hippo)(?:\.exe)?["\']?\s+mcp(?:\s|$|["\'])',
     re.IGNORECASE,
 )
 
