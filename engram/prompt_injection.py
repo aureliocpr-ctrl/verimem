@@ -196,14 +196,19 @@ def _normalize_for_detection(text: str) -> str:
     # Audit mod.14 (2026-07-17): '_' is a word char, so it suppressed the \b
     # boundaries the override/role-hijack patterns rely on —
     # "ignore_all_previous_instructions" slipped through while every non-word
-    # separator (/, |, ~, :, *) fired. A '.' between words does the same via the
-    # bridges' [^.\n] exclusion. Fold BOTH to a space in the scan copy (raw is
-    # scanned first, so this only ADDS detection), but ONLY when word-attached:
-    # '_' anywhere, and '.' followed by a word char — a sentence boundary
-    # ". Next" keeps its dot, so legit prose ("clear. Ignore previous drafts")
-    # is NOT collapsed into a false positive.
+    # separator (/, |, ~, :, *) fired. Fold '_'→space in the scan copy (raw is
+    # scanned first, so this only ADDS detection). '_' never appears in the
+    # exfiltration anchors (www., email TLD dot, @, https://), so this can't
+    # DELETE a match the norm copy previously produced.
+    #
+    # NB mod.14b (critic counterexample 3cc8a731): a symmetrical '.'→space fold
+    # was REVERTED — it broke exactly those exfiltration anchors
+    # ("www.exfil-drop.net" → "www exfil-drop net"), so a destination separated
+    # from its action by a newline (recovered by the newline→space fold above)
+    # would EVADE. Folding '.' violates "only ADDS detection". The dot-between-
+    # words separator ("ignore.all.previous.instructions") stays a declared
+    # residual instead — never at the cost of a real exfiltration regression.
     t = t.replace("_", " ")
-    t = re.sub(r"\.(?=\w)", " ", t)
     t = t.translate(_CONFUSABLES)
     t = unicodedata.normalize("NFKD", t)
     t = "".join(ch for ch in t if unicodedata.category(ch) not in ("Cf", "Mn"))

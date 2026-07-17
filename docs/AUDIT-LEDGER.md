@@ -475,3 +475,16 @@ PIÙ parole (`i_g_n_o_r_e a_l_l`) resta non-folded — stessa classe del limite
 singolo spazio, il collapse non distingue il confine intra-parola da quello
 inter-parola. Post-fix: 0 bypass su separatori comuni, 0 FP prosa, 388
 injection/security test verdi.
+
+**mod.14b (critic counterexample 3cc8a731, 2-1 → fix applicato):** il worker
+counterexample (4ª volta della notte che il fail-vote ha ragione) ha dimostrato
+che il mio `.`→spazio fold ROMPEVA gli anchor exfiltration: `www.exfil-drop.net`
+→ `www exfil-drop net` distrugge `www\.`, e un URL/email separato dall'action da
+un NEWLINE (recuperato dal newline→spazio) ora EVADEVA — violando la garanzia
+"solo aggiunge detection". Il `_`→spazio (bypass vero e comune) è invece safe:
+`_` non appare mai negli anchor exfiltration. FIX: rimosso il `.`-fold; il
+dot-separator resta limite dichiarato. Test di non-regressione:
+exfil-URL-across-newline + exfil-email-across-newline scattano. Lezione (già la
+madre della notte, riconfermata): un fix di normalizzazione che MUTA la copia di
+scansione può CANCELLARE detection quando il raw fallisce — "additivo" va provato
+sul caso dove solo la copia matcha, non assunto.
