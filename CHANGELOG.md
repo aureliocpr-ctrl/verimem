@@ -4,6 +4,8 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+## [0.5.0] — The moat is ON by default (2026-07-17)
+
 ### Changed
 - **The grounding moat is ON by default** (2026-07-17) — for months the
   source⊢fact write-gate (judge AUROC 0.96–0.97) shipped OFF, so the write path
@@ -44,6 +46,16 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   per-tenant flag) is gated on 3–7 days of shadow-log comparison.
 
 ### Fixed
+- **Historical world-facts are no longer quarantined by the completion
+  detector** (found by the moat e2e bench with the real opus judge, n=12:
+  grounding was impeccable — 12/12 confabs quarantined, 0 faithful facts
+  falsely quarantined — but lexical L1.13 fired on "completed" in *"The bridge
+  was completed in 1998"*). A passive completion/creation verb anchored to a
+  calendar year with no dev artifact is a world-fact: kept recallable
+  (advisory), while dev-anchored claims and agent self-narration ("task done",
+  "I finished the task") still escalate. After the fix the default write path
+  admits faithful facts **12/12** and quarantines confabs **12/12**
+  (`benchmark/moat_e2e_opus.py`).
 - **Personal mode is uncapped** (found by live e2e, not by tests): the loopback
   console was billing-gated like a SaaS tenant — on a >1000-fact store every
   console write returned 402. The local tenant now resolves to the uncapped

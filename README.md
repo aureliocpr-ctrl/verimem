@@ -122,6 +122,13 @@ m = Memory("memory.db", preset="strict", grounding_llm=my_llm)
 m.add([{"role": "user", "content": "I moved to Berlin in March."}],
       user_name="Alice")
 
+# THE MOAT, live — the reason Verimem exists. Same source, two writes:
+src = "We migrated the analytics store to Postgres last quarter."
+m.add("Analytics runs on Postgres.", source=src)   # entailed  -> admitted
+r = m.add("Analytics runs on MongoDB.", source=src)  # confab -> QUARANTINED
+assert r["status"] == "quarantined"   # stored but OUT of default recall —
+                                      # your agent will never repeat it as truth
+
 # Store a single verified fact (no LLM needed)
 m.add("Deploy pipeline is green", verified_by=["ci:main:green"])
 
