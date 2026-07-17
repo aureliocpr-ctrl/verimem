@@ -8,7 +8,9 @@ unreachable (no gate_mode param). These tests lock the fix:
 - ground=True runs L4 per-call WITHOUT the env var (given a judge);
 - an unsupported inference is downgraded when ground=True;
 - gate_mode='reject' is reachable from add();
-- default add() (ground=False, no env) does NOT run L4 (fast path intact).
+- default add(fact, source=...) with a judge RUNS L4 — the moat is ON by
+  default (mandate 2026-07-17); a source-less write still skips L4 (nothing
+  to entail against), so the fast path is intact where there is no source.
 """
 from __future__ import annotations
 
@@ -63,10 +65,21 @@ def test_reject_mode_reachable_from_add(monkeypatch):
     assert r["stored"] is False and r["status"] == "rejected"
 
 
-def test_default_add_does_not_run_L4(monkeypatch):
+def test_default_add_runs_L4_with_source(monkeypatch):
+    # MOAT ON by default (mandate 2026-07-17): a judge + a source => L4 runs on
+    # the DEFAULT add() with no ground= kwarg and no env var. An unsupported
+    # inference is quarantined out of the box.
+    monkeypatch.delenv("ENGRAM_GROUNDING_WRITE", raising=False)
+    m = _mem(score=5)  # source does NOT entail the fact
+    r = m.add("The user is an expert in quantum computing.", topic="bio",
+              source="The user mentioned they once read an article about physics.")
+    assert r["grounding_score"] == 5.0        # L4 ran by default
+    assert r["status"] == "quarantined"       # confab caught without opt-in
+
+
+def test_default_add_without_source_skips_L4(monkeypatch):
+    # No source => nothing to entail against => L4 is skipped (fast path intact).
     monkeypatch.delenv("ENGRAM_GROUNDING_WRITE", raising=False)
     m = _mem(score=5)
-    # ground defaults False: the fast L1 path runs, L4 (entailment) does not
-    r = m.add("Some benign fact.", topic="x",
-              source="An unrelated sentence.")
-    assert r["grounding_score"] is None      # L4 was not invoked
+    r = m.add("Some benign fact.", topic="x")
+    assert r["grounding_score"] is None       # L4 not invoked without a source

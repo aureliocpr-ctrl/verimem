@@ -1,0 +1,106 @@
+{
+  "model": "claude-opus-4-8",
+  "n_cases": 12,
+  "faithful_admitted": 11,
+  "faithful_admit_rate": 0.917,
+  "confab_quarantined": 12,
+  "confab_quarantine_rate": 1.0,
+  "rows": [
+    {
+      "true_fact": "Maria's blood type is AB negative.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "Maria's blood type is O positive.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The 2019 summit was held in Geneva.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The 2019 summit was held in Vienna.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The maximum dose is 200 mg per day.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The maximum dose is 500 mg per day.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The lead engineer is Priya Anand.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The lead engineer is Tom Becker.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The bridge was completed in 1998.",
+      "true_status": "quarantined",
+      "true_score": 100.0,
+      "distractor": "The bridge was completed in 1888.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The device operates at 12 volts.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The device operates at 24 volts.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "Daniel cannot eat shellfish.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "Daniel is vegan.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The service uses PostgreSQL.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The service uses MongoDB.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The warranty period is 3 years.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The warranty period is 1 year.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The company is headquartered in Lisbon.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The company is headquartered in Madrid.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The user prefers to be contacted by email.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The user prefers phone calls.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    },
+    {
+      "true_fact": "The satellite's orbital period is 90 minutes.",
+      "true_status": "model_claim",
+      "true_score": 100.0,
+      "distractor": "The satellite's orbital period is 24 hours.",
+      "dist_status": "quarantined",
+      "dist_score": 0.0
+    }
+  ]
+}

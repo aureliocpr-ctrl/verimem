@@ -621,6 +621,33 @@ def _has_personal_context(proposition: str) -> bool:
     return bool(_PERSONAL_CONTEXT.search(proposition or ""))
 
 
+#: HISTORICAL WORLD-FACT completion (moat e2e opus bench, 2026-07-17). L1.13 fires on
+#: the word "completed"/"finished" — but "The bridge was completed in 1998" is a
+#: third-person historical fact about a structure/artifact, NOT the AGENT confabulating
+#: completion of its own work (the register L1.13 exists for: "task done", "I finished
+#: the task"). A PASSIVE completion/creation verb ANCHORED to a calendar year is the
+#: unambiguous world-fact construction. Suppressed only when there is ALSO no dev
+#: artifact — so "The migration was completed in 2023" (dev context) still escalates.
+_HISTORICAL_COMPLETION = re.compile(
+    r"\b(?:was|were|got|been|is|are)\s+(?:completed|finished|built|constructed|"
+    r"erected|opened|established|founded|inaugurated|closed|demolished|destroyed|"
+    r"renovated|restored)\b"
+    # Italian: fu/venne/è stato ... completato/costruito/fondato/aperto/chiuso/…
+    r"|\b(?:fu|venne|vennero|furono|è\s+stat[oa]|era\s+stat[oa])\s+"
+    r"(?:completat[oa]|finit[oa]|costruit[oa]|erett[oa]|apert[oa]|fondat[oa]|"
+    r"chius[oa]|inaugurat[oa]|demolit[oa]|restaurat[oa])\b",
+    re.IGNORECASE,
+)
+_CALENDAR_YEAR = re.compile(r"\b(?:1[0-9]|20)\d{2}\b")
+
+
+def _is_historical_completion(proposition: str) -> bool:
+    """True if the proposition is a passive completion/creation statement anchored to a
+    calendar year (a historical world-fact), used to SUPPRESS the L1.13 completion FP."""
+    p = proposition or ""
+    return bool(_HISTORICAL_COMPLETION.search(p)) and bool(_CALENDAR_YEAR.search(p))
+
+
 def run_validation_gate(
     *,
     proposition: str,
@@ -803,8 +830,14 @@ def run_validation_gate(
     # existing dev-claim case is unchanged: no personal signal => still escalates).
     # L3 (contradiction) and L4 (grounding) are semantic, not keyword FPs -> always escalate.
     has_l1 = any(str(w.get("layer", "")).startswith("L1") for w in warnings)
-    _personal_fp = _has_personal_context(proposition) and not _has_dev_context(proposition)
-    l1_escalates = has_l1 and not _personal_fp
+    _no_dev = not _has_dev_context(proposition)
+    _personal_fp = _has_personal_context(proposition) and _no_dev
+    # HISTORICAL world-fact FP (moat e2e bench 2026-07-17): "The bridge was completed in
+    # 1998" is not an agent task-completion claim. Suppress the L1 escalation exactly as
+    # for personal facts — advisory only, stays recallable — but keep dev-anchored claims
+    # ("The migration was completed in 2023") escalating.
+    _world_fp = _is_historical_completion(proposition) and _no_dev
+    l1_escalates = has_l1 and not _personal_fp and not _world_fp
     if force_persist:
         # Caller demands persist; we still surface warnings.
         return GateResult(
