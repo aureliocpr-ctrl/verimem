@@ -3,6 +3,34 @@
 Reverse-engineering of the memory-layer field + Engram's honest position. Sourced from a
 multi-agent recon pass (web + GitHub + arXiv). No hype; self-reported numbers flagged.
 
+## Status delta — 2026-07-17 (what closed since 06-20; verified this session)
+
+The differentiator is no longer a wired-but-off capability — it is the **shipped default**,
+and several "LAGS" below are now closed. All numbers here are reproducible from `benchmark/`.
+
+- **The moat is ON by DEFAULT** (v0.5.0). `Memory(llm=…).add(fact, source=…)` runs the
+  source⊧fact entailment gate with the llm as judge; the gateway inherits it; ingest uses
+  the free local cross-encoder. Competitors still admit whatever their extractor emits — the
+  gap is now *default behaviour*, not a flag. Calibrated on **external, never-seen corpora**:
+  TruthfulQA judge AUROC **0.901**, HaluEval **0.814**; threshold recalibrated 40→70 on the
+  judge's own rubric (`benchmark/moat_external_judge.py`); realistic e2e 12/12 faithful
+  admitted + 12/12 confabs quarantined (`moat_e2e_opus.py`).
+- **DX gap (#4) closed** — a real `add()/search()/explain()` SDK + quickstart ship as the
+  **`verimem` PyPI package** (0.5.0), stranger-tested from a clean venv. The quickstart
+  demonstrates the moat in its first 20 lines.
+- **Enterprise robustness — new evidence.** Gateway under 16-way concurrent load: **0
+  violations** (no 5xx, bad keys fast-401, oversized payloads served not hung), ~10–22 rps
+  single node (`benchmark/gateway_load_probe.py`). A real **ReDoS DoS on the write path**
+  (a 64 KB fact hung 23.8 s) was found and fixed (23.8 s→0.47 s, critic 3-0) with a
+  permanent regex-surface guard. Multi-tenant isolation proven 12/12 live over HTTP.
+- **Durability (#6) / perf (#5)** — addressed and documented in `SCALE_CHARACTERIZATION.md`
+  (WAL autocheckpoint bounds the loss window; `ENGRAM_SQLITE_SYNCHRONOUS=FULL` knob; ANN
+  scale path measured). Read-path abstention ON by default on served surfaces.
+
+The **P0 external-validation items below (HaluMem official / LongMemEval-500 like-for-like)
+remain open** — the honest "best-on-X" number vs the conflicted MemOS leaderboard is still
+the single highest-leverage open task.
+
 ## The competitors (real architecture, not marketing)
 
 | system | architecture | published numbers | the catch |
