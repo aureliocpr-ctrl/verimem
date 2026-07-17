@@ -94,3 +94,29 @@ window". Verified against the code, that is imprecise — the posture is already
 
 So there is no unbounded data-loss window. Adding a second periodic-checkpoint mechanism
 would duplicate `wal_autocheckpoint` for no measurable gain — deliberately NOT done.
+
+## Gateway under concurrent load (measured — `benchmark/gateway_load_probe.py`)
+
+Real uvicorn, one enterprise tenant, 16 concurrent workers, 200 req/phase; the invariant
+is **overload may slow or politely refuse, never 5xx or corrupt**. Measured 2026-07-17
+(`benchmark/results/gateway_load_probe_2026-07-17.json`), single node, this machine:
+
+| phase | rps | p50 | p95 | codes |
+|-------|----:|----:|----:|-------|
+| writes | 12.8 | 1.26 s | 1.39 s | 200 ×200 |
+| searches | 10.5 | 1.16 s | 3.92 s | 200 ×200 |
+| mixed (½ write ½ search) | 22.1 | 0.49 s | 1.59 s | 200 ×200 |
+| big_payload (256 KB) | 0.7 | 5.19 s | 5.76 s | 200 ×10 |
+| bad_key | 205 | 66 ms | 104 ms | **401 ×50** |
+
+**0 violations**: no 5xx anywhere, every bad key is a fast 401, oversized payloads are
+served (linearly) not hung. Latency under 16-way concurrency is **embedding-bound** — one
+in-process e5 model + the GIL serialize the encode, so per-request p50 sits ~0.5–1.3 s at
+saturation; it degrades gracefully rather than failing. The horizontal path (per-tenant
+processes, the encode daemon, the ANN index above) is the lever when a single node's
+~10–22 rps ceiling is reached; nobody hits it at today's corpus sizes.
+
+**DoS fixed here** (`d623cc6`): the probe first exposed a 64 KB write hanging **23.8 s** —
+an O(n²) `re` backtrack in the L1 gate's `_DEV_CONTEXT` pattern that ran on every write.
+Bounded regex + an 8 KB lexical-scan cap dropped it to 468 ms (linear to 256 KB); a large
+paste can no longer stall the write path.

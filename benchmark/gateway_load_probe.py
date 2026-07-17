@@ -61,8 +61,23 @@ def _start_server(data_dir: Path, port: int) -> str:
     raise RuntimeError("gateway did not come up in 20s")
 
 
+def _safe(fn):
+    """Wrap a request fn so a client-side timeout/error is RECORDED as a code
+    (not crashed): a hung request is data, and the phase must still report."""
+    def inner(i):
+        t = time.perf_counter()
+        try:
+            return fn(i)
+        except httpx.TimeoutException:
+            return "timeout", (time.perf_counter() - t) * 1000
+        except Exception as e:  # noqa: BLE001 — record, never abort the phase
+            return f"err:{type(e).__name__}", (time.perf_counter() - t) * 1000
+    return inner
+
+
 def _phase(name, fn, items, workers):
     lat, codes = [], {}
+    fn = _safe(fn)
     t0 = time.perf_counter()
     with ThreadPoolExecutor(max_workers=workers) as ex:
         for code, ms in ex.map(fn, items):
@@ -150,6 +165,10 @@ def main(argv=None) -> int:
         for code, cnt in ph["codes"].items():
             if code.startswith("5"):
                 violations.append(f"{ph['phase']}: {cnt}x {code}")
+        if any(k.startswith(("timeout", "err:")) for k in ph["codes"]):
+            bad = {k: v for k, v in ph["codes"].items()
+                   if k.startswith(("timeout", "err:"))}
+            violations.append(f"{ph['phase']}: client failures {bad}")
     bk = phases[-1]["codes"]
     if any(not k.startswith("4") for k in bk):
         violations.append(f"bad_key returned non-4xx: {bk}")
