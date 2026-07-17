@@ -35,7 +35,7 @@ from .semantic import Fact, SemanticMemory
 #: byte-identical. Any explicit per-call parameter always wins over the preset.
 _GATE_PRESETS: dict[str, dict[str, Any]] = {
     "strict":     {"validate": "full", "gate_mode": "reject",    "ground": True},
-    "balanced":   {"validate": "fast", "gate_mode": None,        "ground": False},
+    "balanced":   {"validate": "fast", "gate_mode": None,        "ground": True},
     "permissive": {"validate": "off",  "gate_mode": None,        "ground": False},
 }
 
@@ -98,10 +98,16 @@ class Memory:
         #: quarantined / rejected / abstained) — same DB file, fail-open, no PII.
         from .trust_ledger import TrustLedger
         self._ledger = TrustLedger(self.semantic.db_path)
-        self.grounding_llm = grounding_llm
         #: extraction LLM for ``add(messages)`` — anything with
         #: ``.complete(system, messages, **kw)``; optional otherwise.
         self.llm = llm
+        #: The moat is ON by default (preset balanced ground=True, 2026-07-17).
+        #: A dedicated grounding_llm wins; else the general llm doubles as the
+        #: grounding judge, so Memory(llm=x) turns the moat ON at judge quality
+        #: (AUROC 0.98) with no extra wiring. With NEITHER, and no local CE, the
+        #: gate has no judge and fail-opens (admits) — the flip never breaks a
+        #: judge-less user.
+        self.grounding_llm = grounding_llm or llm
 
     # ---- write -------------------------------------------------------------
     def add(
@@ -143,12 +149,16 @@ class Memory:
                 raise ValueError(
                     "add(messages) needs an extraction llm: Memory(..., llm=...)")
             from .conversation_ingest import ingest_conversation
+            # the moat runs on the ingest path too (2026-07-17): the preset's
+            # ground default (balanced=True) quarantines extraction confabs the
+            # dialogue doesn't entail. Per-call ground= still wins.
+            _ground = self._preset_defaults["ground"] if ground is None else ground
             res = ingest_conversation(
                 self.semantic, content, llm=self.llm,
                 conversation_id=conversation_id or "sdk",
                 topic=topic if topic != "user" else "conversational/ingested",
                 asserted_at=asserted_at, embed="sync",
-                user_name=user_name)
+                user_name=user_name, ground=_ground)
             # Review 2026-07-09 #1: the ingest path was INVISIBLE to the trust
             # odometer while its facts showed up in the store — ledger and
             # store contradicted each other inside one /v1/stats response.

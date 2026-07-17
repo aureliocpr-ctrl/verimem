@@ -17,10 +17,15 @@ honest *"I don't know."*
 
 ## Features
 
-- **Gated writes** — every fact enters as a low-trust claim and must be backed
-  by evidence to gain status. Unsupported assertions are flagged instead of
-  absorbed by default; contradiction screening runs with the `strict` preset
-  (or `validate="full"`) (anti-sycophancy on the write path). Opt-in
+- **Gated writes with the grounding moat ON by default** — every fact enters as
+  a low-trust claim and must be backed by evidence to gain status. The
+  **source⊢fact grounding gate** (the moat, judge AUROC **0.96–0.97**) runs by
+  default: an extraction confabulation the source doesn't entail is quarantined,
+  not absorbed. A `Memory(llm=...)` uses that llm as the judge (best quality); the
+  conversation-ingest path uses the free local cross-encoder (AUROC ~1.0 on
+  extraction confabs, no per-fact LLM call). With no judge configured the gate
+  fail-opens (admits) — it never blocks a user who has none. Contradiction
+  screening runs with the `strict` preset. Opt-in
   origin tagging (`tag_beliefs=True` at ingest) additionally classes an
   unverified user assertion as `user_belief`: stored, but out of default
   recall until you ask for it (`search(..., include_beliefs=True)`).

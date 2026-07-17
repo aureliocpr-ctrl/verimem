@@ -175,6 +175,35 @@ GAPFILL_SYSTEM = (
 #: writer_role of ingested facts: NOT a trusted hook -> the full gate runs.
 INGEST_WRITER_ROLE = "conversational_ingest"
 
+#: Grounding cut for the ingest moat (2026-07-17). The local CE is AUROC 1.0 on
+#: extraction confabs (a fact NOT in the dialogue scores ~0), so a LOW cut cleanly
+#: catches them while sparing faithful facts (which score high) — precision-first
+#: would over-quarantine borderline-true facts (measured n=90: recall 0.55 at the
+#: 99.64 config cut vs 0.87 here). Env override ENGRAM_INGEST_GROUND_THRESHOLD.
+_INGEST_GROUND_THRESHOLD = 40.0
+
+
+def _ingest_ground_threshold() -> float:
+    import os
+    try:
+        return float(os.environ.get("ENGRAM_INGEST_GROUND_THRESHOLD",
+                                    str(_INGEST_GROUND_THRESHOLD)))
+    except ValueError:
+        return _INGEST_GROUND_THRESHOLD
+
+
+def _grounds(dialogue: str, proposition: str) -> bool:
+    """The moat on the ingest path: does the DIALOGUE entail the extracted fact?
+    Uses the local CE (free, no per-fact LLM call, AUROC 1.0 on this domain).
+    Fail-open: CE unavailable → True (admit), never break an ingest for a
+    missing model."""
+    try:
+        from .local_grounding import try_local_score
+        r = try_local_score(dialogue, proposition)
+        return r is None or r[0] >= _ingest_ground_threshold()
+    except Exception:  # noqa: BLE001 — the moat must never crash the ingest
+        return True
+
 
 def conversation_provenance_ref(conversation_id: str) -> str:
     """Stable, namespaced provenance ref for facts born from a conversation."""
@@ -254,6 +283,7 @@ def ingest_conversation(
     typed_entities: bool = False,
     tag_beliefs: bool = False,
     cap_chars: int = 12000,
+    ground: bool = False,
 ) -> dict:
     """Extract ATOMIC facts from ``messages`` and store each through the gate.
 
@@ -337,11 +367,19 @@ def ingest_conversation(
         if tag_beliefs:
             prop, is_belief = strip_belief_marker(prop)
         prop, _ = redact_secrets(prop)
+        # the moat (2026-07-17): an extracted fact the DIALOGUE does not entail
+        # is a confabulation → quarantined (hidden from default recall, never
+        # deleted, rehabilitable). ON via ``ground`` (Memory.add(messages)
+        # passes the preset's default). Beliefs keep their own status.
+        status = "user_belief" if is_belief else "model_claim"
+        if ground and not is_belief and not _grounds(dialogue, prop):
+            status = "quarantined"
+            res["quarantined"] = res.get("quarantined", 0) + 1
         fact = Fact(
             proposition=prop,
             topic=topic,
             confidence=confidence,
-            status="user_belief" if is_belief else "model_claim",
+            status=status,
             source_episodes=[prov],
             writer_role=INGEST_WRITER_ROLE,
             **stamp,

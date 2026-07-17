@@ -4,6 +4,21 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [Unreleased]
 
+### Changed
+- **The grounding moat is ON by default** (2026-07-17) — for months the
+  source⊢fact write-gate (judge AUROC 0.96–0.97) shipped OFF, so the write path
+  showed no moat. Now preset `balanced` has `ground=True`: a `Memory(llm=...)`
+  uses that llm as the grounding judge (0.98) with no separate wiring, and the
+  conversation-ingest path runs the free local cross-encoder (AUROC ~1.0 on
+  extraction confabs). An extracted fact the source/dialogue doesn't entail is
+  quarantined (hidden from default recall, rehabilitable), not absorbed. SAFE
+  fail-open: with no judge and no local CE the gate admits exactly as before —
+  the flip never breaks a judge-less user. Measured first: the local CE is 1.0
+  on netto extraction confabs but only 0.80 on subtle SNLI-neutral pairs, so the
+  LLM judge is the quality path and the CE the free-but-good-enough fallback;
+  the flip was gated on that evidence (`benchmark/fact_grounding_bench` +
+  `real_corpus_gate_validation`). Per-call `ground=False` still opts out.
+
 ### Added
 - **Trust-conditioned answering** (2026-07-16/17, measured BEFORE wiring):
   `Memory.answer(trust_conditioning=True)` (default) tags every retrieved fact
