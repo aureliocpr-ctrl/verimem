@@ -113,6 +113,42 @@ def test_fail_open_on_encoder_error():
     assert w is None, "detector di osservabilità: mai rompere una scrittura"
 
 
+def test_lexical_path_never_coldloads_the_model(monkeypatch):
+    """Hardening 2026-07-17: il L1 lexical screen NON deve mai innescare un
+    cold-load bloccante in-process del modello di embedding (~32s alla prima
+    scrittura di un processo freddo — find_torch_trigger). Su processo freddo e
+    non-delegate il detector si disarma (fail-open) SENZA raggiungere il loader
+    in-process. Nessun modello iniettato: esercita la guardia di produzione."""
+    from engram import embedding as emb
+    monkeypatch.delenv("HIPPO_ENCODE_DELEGATE_ONLY", raising=False)
+    monkeypatch.setattr(emb, "is_loaded", lambda: False)          # freddo
+    reached = {"cold_load": False}
+
+    def _boom(*a, **k):
+        reached["cold_load"] = True
+        raise RuntimeError("in-process cold-load attempted")
+
+    monkeypatch.setattr(emb, "encode", _boom)
+    monkeypatch.setattr(emb, "_model", _boom)
+    out = ssc.detect_semantic_selfclaim(
+        "HYPEISH tutto funziona perfettamente ed è pronto", verified_by=None)
+    assert out is None
+    assert reached["cold_load"] is False, \
+        "il path lessicale L1 ha tentato un cold-load in-process dell'embedder"
+
+
+def test_semantic_detector_runs_when_encoder_warm(monkeypatch):
+    """La guardia NON deve spegnere il detector in produzione: con encoder caldo
+    (o delegato) gira e flagga una claim hype. Usa l'encoder toy come default
+    reale, così non carica alcun modello."""
+    from engram import embedding as emb
+    monkeypatch.setattr(emb, "is_loaded", lambda: True)           # caldo
+    monkeypatch.setattr(emb, "encode", _fake_encode)              # toy, veloce
+    out = ssc.detect_semantic_selfclaim(
+        "HYPEISH il deployment funziona alla grande", verified_by=None)
+    assert out is not None and out["layer"] == "L1.20"
+
+
 def test_wired_into_the_gate(monkeypatch):
     """Attraverso il gate vero: con encoder finto iniettato a livello modulo,
     una claim hype senza evidenza raccoglie il warning L1.20 e finisce

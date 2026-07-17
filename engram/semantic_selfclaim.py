@@ -243,9 +243,33 @@ def _active_model() -> str:
     return CONFIG.embedding_model
 
 
+class _ColdEncoderDeclined(RuntimeError):
+    """Raised by the production default encoder when encoding a proposition would
+    trigger a blocking in-process embedding cold-load on the L1 lexical write
+    path. The detector's fail-open contract turns it into a temporary disarm."""
+
+
 def _default_encode():
+    """Production encoder for L1.20 — ``engram.embedding.encode``, GUARDED so the
+    L1 lexical screen never triggers a blocking in-process model cold-load
+    (~32s on a cold process's first write; find_torch_trigger 2026-07-17). When
+    encoding HERE would cold-load (model not warm AND encoding not delegated to
+    the shared daemon) the guarded encoder declines, and the detector fail-opens
+    and disarms — the SAME contract as any encoder-unavailable case. The model
+    warms through the storage path (a stored fact is embedded anyway), so the
+    very next write re-arms the detector; production servers pre-warm at boot or
+    delegate, so this only ever skips the literal first write of a cold, daemon-
+    less SDK process. Warm or delegate-only: plain ``encode()``."""
     from . import embedding
-    return embedding.encode
+
+    def _guarded(text):
+        if not (embedding.is_loaded() or embedding._delegate_only()):
+            raise _ColdEncoderDeclined(
+                "L1.20 will not cold-load the embedding model on the lexical "
+                "write path — it warms via storage and re-arms next write")
+        return embedding.encode(text)
+
+    return _guarded
 
 
 def _prefixes() -> tuple[str, str]:
