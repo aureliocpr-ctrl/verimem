@@ -120,3 +120,15 @@ processes, the encode daemon, the ANN index above) is the lever when a single no
 an O(n²) `re` backtrack in the L1 gate's `_DEV_CONTEXT` pattern that ran on every write.
 Bounded regex + an 8 KB lexical-scan cap dropped it to 468 ms (linear to 256 KB); a large
 paste can no longer stall the write path.
+
+## Read-path robustness on adversarial queries (measured)
+
+Symmetric to the write path: a hostile search/answer query must not hang or crash
+the server. Swept `Memory.search`/`Memory.explain` with 64 KB no-space, unicode-mixed,
+all-digit and near-match-repeat queries (2026-07-17). Every op returns correctly —
+`encode` 0.5 s, `search` 1–4 s, `explain` 0.6–3.8 s — slower on a pathological query
+(the reranker cross-encoder scores a giant string) but never hangs. No 5xx and no crash
+in the single-process serving model — the gateway load probe's 16 concurrent in-process
+workers ran clean. (A one-off native segfault appeared only when TWO separate torch/faiss
+*processes* ran at once — an OpenMP/thread contention artifact of the test harness, not
+reachable in the one-process gateway; not reproducible single-process.)
