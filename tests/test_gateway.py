@@ -49,6 +49,31 @@ def test_missing_or_invalid_key_is_401(gw):
     assert r.status_code == 401
 
 
+def test_malformed_nonutf8_body_is_422_not_500(tmp_path):
+    """Red-team R1 (2026-07-17): a typeless POST whose body carries a non-utf8
+    byte must NOT 500 the write endpoint. FastAPI's default RequestValidationError
+    handler serializes exc.errors() (which echoes the raw body) with a utf-8-strict
+    bytes encoder, so b"\\xff" raised UnicodeDecodeError INSIDE the handler → 500 —
+    an authenticated tenant could crash any write/validation endpoint with 2 bytes.
+    The gateway now installs a bytes-safe validation handler → clean 422."""
+    keys = GatewayKeys(tmp_path / "gateway_keys.db")
+    key = keys.create(tenant_id="t", name="ci")
+    app = create_app(data_dir=tmp_path, keys=keys)
+    client = TestClient(app, raise_server_exceptions=False)
+
+    r = client.post("/v1/memories", content=b"\x00\xff not json at all",
+                    headers=_auth(key))
+    assert r.status_code == 422, f"non-utf8 body should be 422, got {r.status_code}"
+
+    # a valid-JSON body with a wrong-typed field stays a clean 4xx, never 500
+    r2 = client.post("/v1/memories", json={"content": 123}, headers=_auth(key))
+    assert r2.status_code in (400, 422), r2.status_code
+
+    # no key first: auth still wins over body parsing (not an unauth DoS)
+    r3 = client.post("/v1/memories", content=b"\xff", headers={})
+    assert r3.status_code == 401, r3.status_code
+
+
 def test_add_and_search_roundtrip_with_provenance(gw):
     client, key_a, *_ = gw
     r = client.post("/v1/memories", headers=_auth(key_a),

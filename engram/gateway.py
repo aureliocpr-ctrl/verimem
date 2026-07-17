@@ -810,6 +810,25 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     _started_at = time.time()
     app = FastAPI(title="Verimem gateway", docs_url=None, redoc_url=None)
 
+    # Hardening (red-team R1 2026-07-17): FastAPI's DEFAULT RequestValidationError
+    # handler serializes exc.errors() with jsonable_encoder, which decodes any
+    # raw-bytes `input` (the malformed body it echoes back) as strict utf-8. A
+    # typeless POST with a non-utf8 byte (e.g. b"\xff") therefore raised
+    # UnicodeDecodeError INSIDE the error handler → 500: an authenticated tenant
+    # could crash any write/validation endpoint with a 2-byte payload. Re-encode
+    # bytes with errors="replace" so malformed input is always a clean 422.
+    from fastapi.encoders import jsonable_encoder as _jsonable_encoder
+    from fastapi.exceptions import RequestValidationError
+    from fastapi.responses import JSONResponse as _JSONResponse
+
+    @app.exception_handler(RequestValidationError)
+    async def _bytes_safe_validation_handler(request: Request,
+                                             exc: RequestValidationError):
+        detail = _jsonable_encoder(
+            exc.errors(),
+            custom_encoder={bytes: lambda b: b.decode("utf-8", "replace")})
+        return _JSONResponse(status_code=422, content={"detail": detail})
+
     # anti-DoS sul data plane: conta i byte REALI (non solo Content-Length —
     # un chunked senza header saltava il cap, security audit G1 2026-07-11).
     app.add_middleware(_BodyLimitMiddleware, max_body_bytes=max_body_bytes)
