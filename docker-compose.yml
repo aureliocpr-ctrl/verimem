@@ -1,12 +1,12 @@
 services:
-  hippoagent:
+  verimem:
     build: .
-    image: hippoagent:latest
-    container_name: hippoagent
+    image: verimem:latest
+    container_name: verimem
     restart: unless-stopped
     # Loopback-bind on the host by default (CVE-008). To expose externally,
     # change to "8765:8765" AND set HIPPO_TRUSTED_NETWORK=1 + run with
-    # `hippo dashboard --insecure-bind --host 0.0.0.0` in the container.
+    # `verimem dashboard --insecure-bind --host 0.0.0.0` in the container.
     ports:
       - "127.0.0.1:8765:8765"
     volumes:

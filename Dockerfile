@@ -74,12 +74,15 @@ COPY engram/ engram/
 COPY hippoagent/ hippoagent/
 COPY benchmark/ benchmark/
 
-# Install the PREBUILT project wheel by distribution NAME (hippoagent), not "."
+# Install the PREBUILT project wheel by distribution NAME (verimem), not "."
 # — `.` would make pip rebuild /app from source, which needs a build backend
 # that --no-index can't fetch ("Failed to build file:///app"). The builder
-# already produced hippoagent-*.whl + every dep wheel, so this is fully offline.
+# already produced verimem-*.whl + every dep wheel, so this is fully offline.
+# NB: the distribution was renamed hippoagent -> verimem (2026-07-06); this
+# line used the stale name and broke the image build (verified 2026-07-17:
+# `pip install hippoagent` -> "No matching distribution found").
 RUN pip install --upgrade pip && \
-    pip install --no-index --find-links /wheels "hippoagent[server]" && \
+    pip install --no-index --find-links /wheels "verimem[server]" && \
     rm -rf /wheels
 
 # Move pre-fetched HuggingFace cache into the unprivileged user's home.
@@ -98,6 +101,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD curl --fail --silent --show-error http://127.0.0.1:8765/healthz || exit 1
 
 # Default to loopback. Operators that need to expose on 0.0.0.0 must:
-#   docker run -e HIPPO_TRUSTED_NETWORK=1 hippoagent \
-#     hippo dashboard --insecure-bind --host 0.0.0.0 --port 8765
-CMD ["hippo", "dashboard", "--host", "127.0.0.1", "--port", "8765"]
+#   docker run -e HIPPO_TRUSTED_NETWORK=1 verimem \
+#     verimem dashboard --insecure-bind --host 0.0.0.0 --port 8765
+CMD ["verimem", "dashboard", "--host", "127.0.0.1", "--port", "8765"]
