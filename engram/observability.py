@@ -33,6 +33,18 @@ _console_renderer = structlog.dev.ConsoleRenderer(
     colors=not _log_to_stderr,
 )
 
+# ENGRAM_LOG_LEVEL (debug|info|warning|error, default info): a datacenter
+# operator must be able to quiet the per-request flow lines (one INFO line per
+# write/recall) without patching code. Unknown values fall back to info —
+# never crash, never silence everything (gateway load probe, 2026-07-17).
+_LEVELS = {"debug": 10, "info": 20, "warning": 30, "warn": 30, "error": 40}
+
+
+def _resolve_log_level() -> int:
+    return _LEVELS.get(
+        os.environ.get("ENGRAM_LOG_LEVEL", "info").strip().lower(), 20)
+
+
 _configure_kwargs: dict[str, Any] = dict(
     processors=[
         structlog.contextvars.merge_contextvars,
@@ -41,7 +53,7 @@ _configure_kwargs: dict[str, Any] = dict(
         structlog.processors.StackInfoRenderer(),
         _console_renderer,
     ],
-    wrapper_class=structlog.make_filtering_bound_logger(20),  # INFO
+    wrapper_class=structlog.make_filtering_bound_logger(_resolve_log_level()),
     cache_logger_on_first_use=True,
 )
 if _log_factory is not None:
@@ -71,7 +83,7 @@ def route_logs_to_stderr() -> None:
             structlog.processors.StackInfoRenderer(),
             structlog.dev.ConsoleRenderer(colors=False),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(20),  # INFO
+        wrapper_class=structlog.make_filtering_bound_logger(_resolve_log_level()),
         logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
         cache_logger_on_first_use=True,
     )
