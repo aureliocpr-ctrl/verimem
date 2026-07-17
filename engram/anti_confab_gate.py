@@ -807,8 +807,9 @@ def run_validation_gate(
     # SEMANTIC grounding (R10 moat, AUROC 0.971 on SNLI faithful-vs-confabulated): when a
     # SOURCE is provided, verify it ENTAILS the proposition — catches confabulated
     # INFERENCES the lexical L1/L3 detectors miss (a fact the source does not state).
-    # Opt-in: requires a source, an injected grounding LLM, and ENGRAM_GROUNDING_WRITE, so
-    # the default fast path (~13ms, no LLM call) is unchanged.
+    # ON by default (2026-07-17 flip): the balanced preset passes ground_write=True, so L4
+    # runs whenever a SOURCE and a judge are present (injected grounding LLM or the local
+    # CE). ground_write=False — or no source / no judge — skips it (fail-open, no LLM call).
     grounding_val: float | None = None
     # ``ground_write`` per-call override (S1 fix, 2026-07-04 adversarial review):
     # the entailment moat was unreachable from Memory.add() — triple opt-in

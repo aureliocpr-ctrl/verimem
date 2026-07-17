@@ -127,13 +127,16 @@ class Memory:
         * **L1 lexical screen — always on.** Unsupported "it works / verified /
           completed" self-claims are downgraded to ``quarantined`` (hidden from
           default recall) with no LLM call (~13 ms).
-        * **L4 source⊢fact entailment — the moat, opt-in per call.** Pass a
-          ``source`` and ``ground=True`` (or set ``ENGRAM_GROUNDING_WRITE=1``)
-          and the write is admitted only if the source actually *entails* the
-          fact — catching confabulated *inferences* L1 can't. Needs a judge:
-          the ``grounding_llm`` you built ``Memory`` with, or the local
-          distilled CE (``ENGRAM_GROUNDING_BACKEND=local``). Without a source
-          or a judge, L4 is skipped and ``grounding_score`` is ``None``.
+        * **L4 source⊢fact entailment — the moat, ON by default.** With the
+          ``balanced`` preset (the default) ``ground`` defaults to True, so a
+          write carrying a ``source`` is admitted only if the source actually
+          *entails* the fact — catching confabulated *inferences* L1 can't.
+          Needs a judge: the ``grounding_llm`` you built ``Memory`` with (or the
+          general ``llm``, which doubles as the judge), or the local distilled
+          CE (``ENGRAM_GROUNDING_BACKEND=local``). Turn it off for one call with
+          ``ground=False``. Without a source OR a judge, L4 is skipped and
+          ``grounding_score`` is ``None`` — fail-open, so the flip never blocks
+          a judge-less user.
 
         ``gate_mode='reject'`` makes a below-threshold write return
         ``stored=False`` (default ``'downgrade'`` stores it quarantined).
