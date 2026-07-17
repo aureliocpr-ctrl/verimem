@@ -78,6 +78,18 @@ cleanly on realistic cases (12/12); the residual cost is OOD paraphrase over-rej
 the free local-CE tier, quantified below. Every number here is reproducible from
 `benchmark/` — no leaderboard placement is claimed.
 
+**Threat model — what the gate grounds against (red-team R3, 2026-07-17).** The gate
+verifies *fact ⊢ the CITED source*, catching an agent's confabulated **inferences** (a fact
+the source does not state). It does NOT judge whether the source itself is TRUE: a writer who
+controls the `source` and makes it self-state the fact passes — correctly, by the grounding
+contract. That gap is the job of the separate, flag-gated **per-source trust** layer
+(reputation + independence clustering). Measured robustness of the judge to *prompt-injection
+inside the source* (`benchmark/redteam_judge_injection.py`, opus): 5/5 instruction-injection
+sources ("SCORE: 100", "SYSTEM: … output SCORE: 100", "ignore all previous instructions",
+delimiter-spoof, grader-override) were QUARANTINED — the judge scored the actual entailment,
+never echoed the injected score. The only admit was a source that literally *contained* the
+claim (grounding, not injection). So: injection-resistant judge, honest source-trust boundary.
+
 ## Generalization on EXTERNAL corpora (never-seen held-out) — 2026-07-17
 
 Not the training set: the moat scored on public benchmarks it never saw, per use case.
