@@ -12,7 +12,8 @@ oversample >= 4, real e5 corpus). Two production additions over the prototype:
 - **incremental `add`** (SCALE.md's "hard part"): faiss IndexHNSWFlat.add appends
   new vectors without a full rebuild (rebuild was 348 s @ 500k);
 - **gating** `should_use_ann`: below `_ANN_MIN_N` brute-force wins (no build/sync
-  overhead) so this stays opt-in + dormant on small corpora.
+  overhead) so this stays dormant on small corpora. Auto-enables when faiss is
+  importable (semantic._ann_recall_enabled); ENGRAM_ANN_RECALL=0 opts out.
 """
 from __future__ import annotations
 
@@ -24,7 +25,8 @@ except ImportError:  # pragma: no cover - faiss is OPTIONAL (pip install "verime
     faiss = None      # -> ANN stays off, recall is exact brute-force at any scale
 
 #: Below this fact count the exact brute-force path wins (build/sync overhead
-#: outweighs the sublinear query). ANN is opt-in AND gated on top of that.
+#: outweighs the sublinear query). The gate stacks on top of the auto-enable
+#: (faiss importable, ENGRAM_ANN_RECALL=0 to opt out — semantic._ann_recall_enabled).
 _ANN_MIN_N = 100_000
 
 

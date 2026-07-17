@@ -29,7 +29,7 @@ def _unit(rng, n, d=768):
 def test_gating_threshold():
     assert should_use_ann(200_000, enabled=True) is True
     assert should_use_ann(50_000, enabled=True) is False   # brute-force wins
-    assert should_use_ann(200_000, enabled=False) is False  # opt-in only
+    assert should_use_ann(200_000, enabled=False) is False  # opt-out respected
 
 
 def test_pool_recall_recovers_true_topk():
