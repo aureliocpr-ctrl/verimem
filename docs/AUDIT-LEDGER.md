@@ -399,3 +399,15 @@ avversariale su un modello più forte è un moltiplicatore reale, non cerimonia.
 
 Osservato non-fixato (dichiarato): il link entità tier-2 usa substring (`name in fact.lower()`)
 → possibili falsi-link ("Ann" in "annual"); enrichment-only additivo, gated su misura futura.
+
+## Modulo 10 — admission_gate.py riga-per-riga (Fase C mod.10, 2026-07-17 ~03:20)
+
+205 righe, lette tutte. 0 difetti di codice nuovi (il LOW-5 del giro critic
+2026-07-16 aveva già indurito l'allowlist status). Il trovato vero è il residuo
+CLAIM-vs-DEFAULT del FLAGS-AUDIT (i "gemelli" della lezione gate-spenti 13/7):
+
+| id | tipo | trovato | esito |
+|----|------|---------|-------|
+| M10-1 | claim-vs-default | README ~21 "Unsupported or contradictory assertions are flagged" — ma la contradiction-detection L3 è opt-in (`validate=full`/preset strict), default `fast` non la esegue. | **WORDING CORRETTO** (2 punti: feature bullet + diagramma ~302): unsupported=default, contradictions=strict/full dichiarato. Nessuna sovrastima residua. |
+| M10-2 | decisione-di-prodotto APERTA | I 2 ❌ restanti del FLAGS-AUDIT: (a) `ENGRAM_GROUNDING_WRITE` OFF out-of-the-box (il moat AUROC 0.96-0.97 è opt-in; nota audit: `BACKEND=local` ha failover automatico "flip safe by construction"); (b) SDK nudo senza env = `explain()` permissivo (gateway/console già abstain-by-default dal 13/7). | **PROPOSTA per Aurelio** (non flip unilaterale alle 3am — impatta latenza write e over-abstention su store piccoli): (a) valutare `ENGRAM_GROUNDING_BACKEND=local` + `GROUNDING_WRITE=1` di default con bench prima/dopo su HaluMem write-path; (b) valutare `ENGRAM_MIN_RELEVANCE=auto` default SDK con misura over-abstention su store <100 fatti. Gated su OK + bench. |
+| M10-3 | osservazione dichiarata | `_MARKUP_LEAK` respinge fatti CONTENENTI markup di tool-call legittimamente discusso (falso-positivo di classe per store di sviluppatori); gate OFF di default, admit=False documentato "sanitize before admitting". | Non-fixato (design difensivo, attivo solo con gate ON); nel ledger per il giro strict-defaults. |

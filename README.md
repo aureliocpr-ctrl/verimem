@@ -18,8 +18,9 @@ honest *"I don't know."*
 ## Features
 
 - **Gated writes** — every fact enters as a low-trust claim and must be backed
-  by evidence to gain status. Unsupported or contradictory assertions are
-  flagged instead of absorbed (anti-sycophancy on the write path). Opt-in
+  by evidence to gain status. Unsupported assertions are flagged instead of
+  absorbed by default; contradiction screening runs with the `strict` preset
+  (or `validate="full"`) (anti-sycophancy on the write path). Opt-in
   origin tagging (`tag_beliefs=True` at ingest) additionally classes an
   unverified user assertion as `user_belief`: stored, but out of default
   recall until you ask for it (`search(..., include_beliefs=True)`).
@@ -299,7 +300,7 @@ for your trust should be able to show its work. This one does.
 conversations / documents / tool results
         │  atomic extraction (subject-named, date-attached)
         ▼
-  admission gate  ── rejects unsupported & contradictory claims
+  admission gate  ── quarantines unsupported claims (contradictions: strict mode)
         ▼
   bi-temporal store (SQLite) ── facts + provenance + supersession chains
         │
