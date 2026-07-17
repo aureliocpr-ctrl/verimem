@@ -26,6 +26,7 @@ reimplementiamo. Avvio: ``verimem gateway serve`` (CLI) o
 """
 from __future__ import annotations
 
+import functools
 import re
 import secrets
 import sqlite3
@@ -969,12 +970,18 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                                               facts_used=mem.semantic.count())})
         _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.write col tenant
         try:
+            # ground: absent → None → the store's preset default (moat ON by
+            # default, 2026-07-17). The old bool(..., False) HARD-CODED the moat
+            # OFF on the gateway even when a judge was configured, so the flip
+            # reached only the SDK — the critic caught exactly this. A judge-less
+            # gateway still fail-opens, so this never breaks an unconfigured one.
+            _g = body.get("ground")
             res = mem.add(
                 content,
                 topic=body.get("topic", "user"),
                 source=body.get("source"),
                 verified_by=body.get("verified_by"),
-                ground=bool(body.get("ground", False)),
+                ground=None if _g is None else bool(_g),
                 gate_mode=body.get("gate_mode"),
                 asserted_at=body.get("asserted_at"),
                 conversation_id=body.get("conversation_id"),
@@ -1331,12 +1338,32 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         # a human opening the gateway's root gets the console, not a JSON 404
         return Response(status_code=307, headers={"Location": "/ui"})
 
-    @app.get("/ui", response_class=HTMLResponse)
-    def ui_index() -> str:
-        return _webui.asset("index.html")
+    # UI assets ship with NO cache headers -> Chrome's heuristic cache may
+    # keep serving a STALE console for days after an upgrade (2026-07-16:
+    # "è cambiato poco e nulla" — the user was plausibly looking at the old
+    # bundle). no-cache + ETag: always revalidated, 304 when unchanged, so
+    # the big vendor bundles are not re-downloaded on every load either.
+    @functools.lru_cache(maxsize=64)
+    def _asset_etag(fname: str) -> str:
+        body = _webui.asset(fname)
+        if isinstance(body, str):
+            body = body.encode("utf-8")
+        return '"' + sha256(body).hexdigest()[:20] + '"'
+
+    def _asset_response(fname: str, request: Request) -> Response:
+        etag = _asset_etag(fname)
+        headers = {"Cache-Control": "no-cache", "ETag": etag}
+        if request.headers.get("if-none-match") == etag:
+            return Response(status_code=304, headers=headers)
+        return Response(content=_webui.asset(fname),
+                        media_type=_webui.media_type(fname), headers=headers)
+
+    @app.get("/ui")
+    def ui_index(request: Request) -> Response:
+        return _asset_response("index.html", request)
 
     @app.get("/ui/{asset_name}")
-    def ui_asset(asset_name: str) -> Response:
+    def ui_asset(asset_name: str, request: Request) -> Response:
         # allowlist, no fs walk; "engine" = la LIVE Engine Room (CSP-clean:
         # markup + engine.css + engine.js, zero inline come la console).
         # vendor-* = i bundle grafo self-hosted (sigma/graphology, MIT,
@@ -1352,8 +1379,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         fname = allow.get(asset_name)
         if fname is None:
             raise HTTPException(status_code=404, detail="unknown asset")
-        return Response(content=_webui.asset(fname),
-                        media_type=_webui.media_type(fname))
+        return _asset_response(fname, request)
 
     # ---- control plane (/admin/*) — esiste SOLO con una admin key --------
     if admin_key:
@@ -1395,17 +1421,16 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                     "n_tenants": len(usage), "tenants": usage}
 
         @app.get("/admin/ui", response_class=HTMLResponse)
-        def admin_ui() -> str:
+        def admin_ui(request: Request) -> Response:
             """La org console (un trust-ring per tenant). Statica e senza
             dati come /ui: i numeri viaggiano solo nel fetch autenticato
             X-Admin-Key; la admin key vive in sessionStorage. Esiste SOLO
             con una admin key configurata, come tutto /admin/*."""
-            return _webui.asset("admin.html")
+            return _asset_response("admin.html", request)
 
         @app.get("/admin/ui/admin.js")
-        def admin_ui_js() -> Response:
-            return Response(content=_webui.asset("admin.js"),
-                            media_type="application/javascript; charset=utf-8")
+        def admin_ui_js(request: Request) -> Response:
+            return _asset_response("admin.js", request)
 
         @app.get("/admin/overview")
         def overview(_: None = Depends(_admin)) -> dict[str, Any]:
