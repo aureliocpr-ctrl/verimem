@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fail-closed gate + honest L4-skipped advisory on sourced writes (2026-07-18).
 
 Three adversarial-critic rounds settled the design. Attempts to ADMIT a sourced
