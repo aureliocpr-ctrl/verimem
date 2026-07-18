@@ -4,6 +4,24 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [0.6.0] - Unreleased
 
+### Security
+- **Provenance-ref path traversal (multi-tenant)** — `_verify_file_ref` opened
+  an ABSOLUTE `file:<path>:<line>` provenance ref with no containment when
+  `repo_root=None` (the gateway's real config). A hostile tenant could probe
+  arbitrary server files (existence + line-count oracle) AND forge
+  `status="verified"`, bypassing the grounding moat. Absolute refs are now
+  refused without a containment root, exactly like relative ones. TDD regression
+  in `test_provenance_absolute_path_traversal.py`. (opus CodeQL triage
+  2026-07-18, alerts [20]-[23]; commit ecbb392.)
+- **Two ReDoS on uncapped `fact.proposition`** (documented up to 64KB, NOT
+  capped by the L1 8192 gate) — `quantity_match._QUANT_RE` was quadratic on a
+  number followed by a long space run (measured 27.9s on 40k spaces) and
+  `entity_extract_lite._is_sentence_initial` re-scanned the whole growing prefix
+  per entity match (O(n²)). Either let a multi-tenant caller stall the server
+  per fact. Both bounded to linear/constant work (real forms unchanged). TDD in
+  `test_redos_uncapped_proposition.py`. (opus CodeQL triage, alerts [26] & [29];
+  commit b66cc47.)
+
 ### Changed
 - **Total package rename `engram` -> `verimem`** (branch `rename/verimem-total`).
   `verimem/` is now the real package (358 modules); `engram/` and `hippoagent/`
