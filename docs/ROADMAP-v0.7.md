@@ -16,6 +16,28 @@ default tier's failures are **silent**. v0.7.0 makes the label honest and nothin
 the gate decides silent. This is a "secure-defaults + honest-labels" pass, NOT a
 re-architecture.
 
+## STATUS — 2026-07-19 (in progress)
+- **Phase 0.1/0.2 SHIPPED** (branch `rename/verimem-total`, CI green all platforms):
+  every write returns an `adjudication` receipt {disposition, evidence_class, judge,
+  score, threshold, margin, reason, confidence_tier}; GateResult carries the
+  judge-of-record + threshold (previously discarded); quarantine is a visible,
+  reasoned verdict (incl. the store-time injection screen). Commits 57a392c ·
+  6fb2565 · ba772f1. Reviewed by kimi-k3 + glm-5.2 (7/10 both); every finding
+  verified against code — 3 refuted (interactive=Claude-LLM; judge⇔score invariant
+  holds; modal case already has advice), 3 fixed, 3 → roadmap (below).
+- **Phase 0.3 (CE band) — code done, default OFF** (3da25b2 · 6434e86, pre-push):
+  `confidence_tier` {grounded/review/ungrounded/unverified}; two-threshold CE band
+  (tau_lo=40, tau_hi=80) behind `VERIMEM_CE_BAND_ENFORCE`. CALIBRATED on the real
+  CE: true entailments (incl. abstractive/paraphrase) score ≥90 (n=14, min 90.3);
+  the entity-substitution escape is bimodal (65/68 catchable, one at 96 not).
+  MOAT-BENCHMARK proof: enforce OFF escape 6.2% → ON 1.8%, with 112/112 entailed
+  still admitted (0 false-block). Honest bound: the ~96 escape + plausible-inference
+  confabs (97-99) still need the llm judge — the band is a REAL but PARTIAL fix.
+- **Realness ladder (honest).** External review = 6/10 today. Phase 0+1 (code) → a
+  defensible 8–8.5. A REAL 9 is NOT a code sprint: it needs third-party-reproduced
+  benchmarks, external anchoring in production, and months of measured judge drift.
+  Build the harnesses that make 9 reachable; do not claim 9 until earned.
+
 ## VERIFIED-REAL gaps (build these)
 1. Gate is bypassable — a direct `sqlite3` INSERT skips the moat (library, no enforcement).
 2. Receipts verify RESOLVABILITY, not content — no content hash; file edit silently invalidates.

@@ -435,29 +435,30 @@ def _ce_band_enforced() -> bool:
 
 def confidence_tier(score: float | None, judge: str | None,
                     threshold: float | None) -> str:
-    """A judge-agnostic, COARSENED trust label for a gate score - honest about
-    the CE's uncertain middle band, and a smaller poisoning-oracle than the raw
-    score/margin.
+    """The judge's CONFIDENCE level for a gate score - NOT a truth claim. It names
+    the INSTRUMENT's verdict, not the epistemic state, so it cannot recreate the
+    'verified' over-promise one tier down (kimi+glm critic 2026-07-19):
 
-    * ``"grounded"``   - score at/above the confident cut (local CE >= tau_hi, or
-      an llm judge above its own threshold). NB 'grounded' is NOT 'verified': a
-      plausible-but-unstated inference can still score >= tau_hi on the CE
-      (measured 97-99) - only an llm judge catches that class.
-    * ``"review"``     - LOCAL CE only: in the band (tau_lo <= score < tau_hi),
-      the zone where the known entity-substitution escape lives. Borderline.
-    * ``"ungrounded"`` - below the admission cut (a clear non-entailment).
-    * ``"unverified"`` - no judge ran (no score). Never 'grounded'.
+    * ``"high"``       - at/above the confident cut (local CE >= tau_hi, or an llm
+      judge above its threshold). CRUCIAL: a 'high' tier from the local CE can
+      STILL be a plausible-but-unstated-inference confab (measured 86-99). 'high'
+      means the cross-encoder is confident, NOT that the fact is grounded/true;
+      read ``evidence_class`` for which instrument produced it.
+    * ``"borderline"`` - LOCAL CE only: in the band [tau_lo, tau_hi), the uncertain
+      zone where the mid-range entity-substitution escape lives.
+    * ``"low"``        - below the admission cut (the instrument rejects it).
+    * ``"unverified"`` - no judge ran, or the judge returned no usable score (NaN).
     """
-    if judge is None or score is None:
+    if judge is None or score is None or score != score:  # NaN = no usable verdict
         return "unverified"
     if judge == "local":
         if score >= _ce_band_tau_hi():
-            return "grounded"
+            return "high"
         if score >= LOCAL_CE_MOAT_THRESHOLD:
-            return "review"
-        return "ungrounded"
+            return "borderline"
+        return "low"
     thr = threshold if threshold is not None else _resolve_write_threshold()
-    return "grounded" if score >= thr else "ungrounded"
+    return "high" if score >= thr else "low"
 
 
 def should_store_fact(llm: Any, source: str, fact: str, *,

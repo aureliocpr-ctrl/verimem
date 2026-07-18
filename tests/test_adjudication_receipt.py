@@ -119,22 +119,22 @@ def test_reason_prefers_blocking_layer_over_advisory_note():
 
 def test_confidence_tier_local_band():
     from verimem.grounding_gate import confidence_tier
-    assert confidence_tier(98.0, "local", 40.0) == "grounded"
-    assert confidence_tier(68.0, "local", 40.0) == "review"     # the ES escape
-    assert confidence_tier(20.0, "local", 40.0) == "ungrounded"
+    assert confidence_tier(98.0, "local", 40.0) == "high"
+    assert confidence_tier(68.0, "local", 40.0) == "borderline"     # the ES escape
+    assert confidence_tier(20.0, "local", 40.0) == "low"
     assert confidence_tier(None, None, None) == "unverified"
 
 
 def test_confidence_tier_llm_is_binary():
     from verimem.grounding_gate import confidence_tier
-    assert confidence_tier(95.0, "claude", 70.0) == "grounded"
-    assert confidence_tier(30.0, "claude", 70.0) == "ungrounded"
+    assert confidence_tier(95.0, "claude", 70.0) == "high"
+    assert confidence_tier(30.0, "claude", 70.0) == "low"
 
 
 def test_receipt_carries_confidence_tier():
     g = _gate(judge="local", threshold=40.0, grounding_score=68.0)
     adj = _adjudication(g, disposition="admitted", verified_by=None, warnings=[])
-    assert adj["confidence_tier"] == "review"    # borderline surfaced honestly
+    assert adj["confidence_tier"] == "borderline"    # borderline surfaced honestly
 
 
 def test_ce_band_enforce_quarantines_borderline(tmp_path, monkeypatch):
@@ -148,7 +148,7 @@ def test_ce_band_enforce_quarantines_borderline(tmp_path, monkeypatch):
     r = m.add("El paciente 7 es alergico al latex.",
               source="Historia clinica 7: alergia documentada a la penicilina.")
     assert r["status"] == "quarantined"
-    assert r["adjudication"]["confidence_tier"] == "review"
+    assert r["adjudication"]["confidence_tier"] == "borderline"
     assert any(w.get("layer") == "L4-review" for w in r["warnings"])
 
 
@@ -164,4 +164,24 @@ def test_ce_band_observe_default_admits_borderline(tmp_path, monkeypatch):
     r = m.add("El paciente 7 es alergico al latex.",
               source="Historia clinica 7: alergia documentada a la penicilina.")
     assert r["status"] != "quarantined"
-    assert r["adjudication"]["confidence_tier"] == "review"
+    assert r["adjudication"]["confidence_tier"] == "borderline"
+
+
+def test_band_does_not_touch_non_local_judge(tmp_path, monkeypatch):
+    # the band is LOCAL-CE only: an llm score in [40,80) is NOT band-reviewed even
+    # with enforcement ON (different scale, binary judge). Locks the judge guard.
+    monkeypatch.setenv("VERIMEM_CE_BAND_ENFORCE", "1")
+    monkeypatch.setenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", "40")
+    monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex",
+                        lambda llm, s, f, **kw: (68.0, "claude"))
+    m = Memory(str(tmp_path / "llm.db"), grounding_llm=_FakeJudge(68))
+    r = m.add("Analytics runs on Postgres.",
+              source="We migrated analytics to Postgres last quarter.")
+    assert r["status"] != "quarantined"
+    assert not any(w.get("layer") == "L4-review" for w in r["warnings"])
+    assert r["adjudication"]["confidence_tier"] == "high"   # llm binary, not band
+
+
+def test_nan_score_is_unverified_not_a_tier():
+    from verimem.grounding_gate import confidence_tier
+    assert confidence_tier(float("nan"), "local", 40.0) == "unverified"
