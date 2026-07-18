@@ -27,6 +27,15 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   user-facing `--help` (`FORGIA #186`, "Live Engine Room", "would Engram trust
   this claim"); guard test keeps them out.
 
+### Fixed
+- **Delegate-only servers no longer stall on the first gated write.** With the
+  moat ON by default, the first `add()` of a fresh MCP-server process cold-loaded
+  the local CE judge on the request thread (measured 30.05s blocking — the same
+  hang class as the 2026-06-05 embedding incident). The CE now warms on a
+  background thread on first use; until warm the gate degrades to the honest
+  `L4-skipped` advisory, then converges to normal gating (measured 5.1s bounded
+  first write, 0.1s after). SDK processes keep the synchronous one-time load.
+
 ### Changed (behavior) — BREAKING for judge-less users
 - **The grounding moat is now ON out-of-the-box, with no llm, in any language.**
   The free local cross-encoder is the default judge when no llm is injected
