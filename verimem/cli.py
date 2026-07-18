@@ -2767,6 +2767,43 @@ def agent_guide_cmd() -> None:
     print(AGENT_GUIDE_FULL)
 
 
+# --- `verimem agent` namespace (VERIMEM-MAP.md 1b, 2026-07-18) -----------------
+# The product CLI is verified MEMORY; the agent runtime (chat/code/run/benchmark,
+# sleep cycles, swarm/teams/lab) moves under `verimem agent <cmd>`. Done by
+# post-registration re-wiring so the 11 definitions stay untouched. The original
+# top-level spellings still WORK for 0.5.x users — just hidden from --help.
+_AGENT_RUNTIME_COMMANDS = {"benchmark", "chat", "code", "run", "wake",
+                           "sleep", "sleep-now", "tui"}
+_AGENT_RUNTIME_GROUPS = {"swarm", "teams", "lab"}
+
+agent_app = typer.Typer(
+    no_args_is_help=True,
+    help="Agent runtime — chat/code/run, benchmark, sleep cycles, swarm/teams "
+         "(advanced; the memory product itself lives in the top-level commands)")
+
+
+def _regroup_agent_runtime() -> None:
+    import copy as _copy
+    for _ci in app.registered_commands:
+        _name = _ci.name or _ci.callback.__name__.replace("_", "-")
+        if _name in _AGENT_RUNTIME_COMMANDS:
+            _pub = _copy.copy(_ci)
+            _pub.name = _name
+            _pub.hidden = False
+            agent_app.registered_commands.append(_pub)
+            _ci.hidden = True          # old spelling keeps working, out of --help
+    for _gi in app.registered_groups:
+        if _gi.name in _AGENT_RUNTIME_GROUPS:
+            _pub = _copy.copy(_gi)
+            _pub.hidden = False
+            agent_app.registered_groups.append(_pub)
+            _gi.hidden = True
+    app.add_typer(agent_app, name="agent")
+
+
+_regroup_agent_runtime()
+
+
 def main() -> None:
     """Console-script entry (`engram` / `hippo`): force UTF-8 stdio, then run
     the Typer app. Wrapping the app (vs pointing the entry directly at it) is
