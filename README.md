@@ -127,10 +127,11 @@ from datetime import datetime
 
 from verimem import Memory
 
-# No llm needed for the moat once the local judge model is installed — run
-# `verimem warmup` first (fetches it) and `verimem doctor` to verify. Until a
-# judge is available, writes are admitted WITH an explicit L4-skipped advisory
-# (never silently), and `assert` below would fail — doctor tells you why.
+# No llm needed for the moat. Run `verimem warmup` once first: it downloads the
+# multilingual gate model (~656 MB, a public release — no account) that judges
+# writes; `verimem doctor` verifies the install. Without a judge, writes are
+# admitted WITH an explicit L4-skipped advisory (never silently) and the assert
+# below would fail — doctor tells you exactly why.
 m = Memory("memory.db")
 
 # THE MOAT, live — the reason Verimem exists. Same source, two writes; works

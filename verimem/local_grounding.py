@@ -188,48 +188,92 @@ def local_ce_available() -> bool:
         return False
 
 
-# --- gate-model acquisition (2026-07-18) ---------------------------------------
+# --- gate-model acquisition (2026-07-18, PUBLISHED) ----------------------------
 # The fine-tuned gate CE (local_gate_ce_v2) is what makes the moat judge-less.
 # On a FRESH machine the model dir does not exist and — demonstrated 2026-07-18 —
 # the README quickstart's `assert status == "quarantined"` fails (the write is
-# admitted with an L4-skipped advisory). This is the download path that closes
-# that gap: `verimem warmup` calls it. The hub id stays None until the model is
-# PUBLISHED (publishing = Aurelio's call); the flow is wired and tested so
-# filling in one constant turns the claim true end-to-end.
+# admitted with an L4-skipped advisory). `verimem warmup` calls ensure_gate_model
+# to close that gap: it downloads the PUBLISHED model (a public GitHub release
+# tarball — no auth), verifies its sha256, and extracts it. The claim is now
+# true end-to-end for any downloader.
 _ENV_GATE_HUB_ID = "VERIMEM_GATE_MODEL_HUB_ID"
-#: HF Hub repo of the published gate model. None = not yet published.
+_ENV_GATE_URL = "VERIMEM_GATE_MODEL_URL"
+
+#: Published gate model: a public GitHub release tarball (config.json,
+#: gate_config.json, model.safetensors, tokenizer*). No auth, no HF account.
+DEFAULT_GATE_MODEL_URL = (
+    "https://github.com/aureliocpr-ctrl/verimem/releases/download/"
+    "gate-ce-v2/verimem-gate-ce-v2.tar.gz")
+DEFAULT_GATE_MODEL_SHA256 = (
+    "58255842348553f6b14c2463c795f3a40b951751166838c519916553fc0b2810")
+#: Alternative source (HF Hub repo id) — used only if explicitly set.
 DEFAULT_GATE_MODEL_HUB_ID: str | None = None
 
 
-def ensure_gate_model(model_dir: str | Path | None = None, *,
-                      hub_id: str | None = None,
-                      download=None) -> tuple[bool, str]:
-    """Ensure the local gate CE exists at ``model_dir``; download it when a hub
-    id is configured. Returns ``(present, message)`` — never raises for the
-    "not configured" case, so callers can report honestly instead of crashing.
+def _download_and_extract_tar(url: str, dest: Path, *,
+                              sha256: str | None = None, opener=None) -> None:
+    """Stream ``url`` to a temp file (verifying sha256), then extract the tar.gz
+    into ``dest``. stdlib-only; extraction uses the ``data`` filter (py3.12+) to
+    refuse path-traversal members."""
+    import hashlib
+    import tarfile
+    import tempfile
+    import urllib.request
+    opener = opener or urllib.request.urlopen
+    dest.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tf:
+        tmp = Path(tf.name)
+    try:
+        h = hashlib.sha256()
+        with opener(url) as resp, open(tmp, "wb") as out:
+            while True:
+                chunk = resp.read(1 << 20)
+                if not chunk:
+                    break
+                h.update(chunk)
+                out.write(chunk)
+        if sha256 and h.hexdigest() != sha256:
+            raise ValueError(
+                f"gate model sha256 mismatch: got {h.hexdigest()[:16]}… "
+                f"expected {sha256[:16]}… — refusing to install")
+        with tarfile.open(tmp, "r:gz") as tar:
+            try:
+                tar.extractall(dest, filter="data")
+            except TypeError:  # pragma: no cover — py<3.12 has no filter kwarg
+                tar.extractall(dest)
+    finally:
+        tmp.unlink(missing_ok=True)
 
-    ``download`` is injectable for tests; defaults to
-    ``huggingface_hub.snapshot_download``.
+
+def ensure_gate_model(model_dir: str | Path | None = None, *,
+                      url: str | None = None, hub_id: str | None = None,
+                      download=None) -> tuple[bool, str]:
+    """Ensure the local gate CE exists at ``model_dir``; download+verify+extract
+    the published model if absent. Returns ``(present, message)``.
+
+    Source precedence: explicit ``url`` / ``VERIMEM_GATE_MODEL_URL`` → explicit
+    ``hub_id`` / ``VERIMEM_GATE_MODEL_HUB_ID`` → the built-in public release URL.
+    ``download`` is injectable for tests (called as ``download(source, dest)``).
     """
     dest = _resolve_model_dir(model_dir)
     if (dest / "config.json").exists():
         return True, f"gate model present at {dest}"
-    hub = (hub_id or os.environ.get(_ENV_GATE_HUB_ID, "").strip()
-           or DEFAULT_GATE_MODEL_HUB_ID)
-    if not hub:
-        return False, (
-            f"gate model not installed at {dest} and no hub id configured "
-            f"(the fine-tuned judge is not yet published — set "
-            f"{_ENV_GATE_HUB_ID}, or place the model dir there, or pass "
-            f"llm= to Memory)")
-    dl = download
-    if dl is None:  # pragma: no cover — exercised via injected download in tests
-        from huggingface_hub import snapshot_download as dl
-    dest.mkdir(parents=True, exist_ok=True)
-    dl(repo_id=hub, local_dir=str(dest))
+    the_url = url or os.environ.get(_ENV_GATE_URL, "").strip()
+    hub = hub_id or os.environ.get(_ENV_GATE_HUB_ID, "").strip()
+    if download is not None:
+        download(the_url or hub or DEFAULT_GATE_MODEL_URL, dest)
+    elif the_url:
+        _download_and_extract_tar(the_url, dest)
+    elif hub:  # pragma: no cover — HF path exercised via injected download
+        from huggingface_hub import snapshot_download
+        dest.mkdir(parents=True, exist_ok=True)
+        snapshot_download(repo_id=hub, local_dir=str(dest))
+    else:  # the default: the published public release tarball
+        _download_and_extract_tar(DEFAULT_GATE_MODEL_URL, dest,
+                                  sha256=DEFAULT_GATE_MODEL_SHA256)
     ok = (dest / "config.json").exists()
-    return ok, (f"downloaded {hub} -> {dest}" if ok else
-                f"download of {hub} left no config.json in {dest}")
+    return ok, (f"gate model installed at {dest}" if ok else
+                f"download left no config.json in {dest}")
 
 
 _warned_fallback = False
@@ -312,4 +356,6 @@ def try_local_score(source: str, fact: str, *,
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
            "try_local_score", "local_ce_available", "warm_local_judge_async",
-           "ensure_gate_model", "DEFAULT_GATE_MODEL_HUB_ID", "DEFAULT_MODEL_DIR"]
+           "ensure_gate_model", "DEFAULT_GATE_MODEL_URL",
+           "DEFAULT_GATE_MODEL_SHA256", "DEFAULT_GATE_MODEL_HUB_ID",
+           "DEFAULT_MODEL_DIR"]

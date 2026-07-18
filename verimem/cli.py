@@ -229,6 +229,11 @@ def warmup(
     daemon: bool = typer.Option(
         True, help="Also ensure the shared encode daemon is running and warm.",
     ),
+    gate: bool = typer.Option(
+        True, "--gate/--no-gate",
+        help="Also download the moat gate model (~656 MB, the judge-less judge). "
+             "--no-gate skips it (e.g. CI that doesn't exercise the moat).",
+    ),
 ) -> None:
     """Pre-load (and download on first run) the embedding model.
 
@@ -281,11 +286,13 @@ def warmup(
             console.print(f"[dim]· reranker warm skipped ({type(exc).__name__}); "
                           "recall still works via fusion order[/]")
 
-    # The MOAT judge (the product's #1 claim): fetch the local CE gate model so
-    # the grounding gate runs judge-less out of the box. Best-effort — an absent
-    # hub configuration reports honestly instead of pretending.
+    # The MOAT judge (the product's #1 claim): download the local CE gate model
+    # (a public GitHub release, ~656 MB) so the grounding gate runs judge-less
+    # out of the box. Best-effort — failure reports honestly, never crashes.
     from .local_grounding import ensure_gate_model, local_ce_available
-    if local_ce_available():
+    if not gate:
+        console.print("[dim]· gate model skipped (--no-gate)[/]")
+    elif local_ce_available():
         console.print("[green]✓ moat gate model already installed[/]")
     else:
         console.print("Fetching the local gate model (the moat's judge-less judge)…")

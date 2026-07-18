@@ -99,15 +99,15 @@ def run_doctor() -> list[dict[str, Any]]:
             add("moat-judge", WARN,
                 f"local CE gate model NOT installed; an llm provider is available "
                 f"({provider}) — the moat runs only when you pass llm=... to Memory",
-                "run `verimem warmup` (fetches the gate model when configured), or "
+                "run `verimem warmup` to download the gate model (~656 MB), or "
                 "pass llm= to Memory")
         else:
             add("moat-judge", FAIL,
                 f"NO grounding judge: local CE model missing at "
                 f"{_resolve_model_dir(None)} and no llm provider detected — "
                 "writes are admitted with an L4-skipped advisory (moat OFF)",
-                "run `verimem warmup` (fetches the gate model when configured), "
-                "or set VERIMEM_GATE_MODEL_HUB_ID, or pass llm= to Memory")
+                "run `verimem warmup` to download the published gate model "
+                "(~656 MB, no account needed), or pass llm= to Memory")
     except Exception as e:  # noqa: BLE001
         add("moat-judge", WARN, f"probe failed: {e}")
 

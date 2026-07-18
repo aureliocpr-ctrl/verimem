@@ -24,24 +24,60 @@ def test_present_model_is_reported_present(tmp_path):
     assert ok and "present" in msg
 
 
-def test_unconfigured_hub_reports_honestly_never_raises(tmp_path, monkeypatch):
-    monkeypatch.delenv("VERIMEM_GATE_MODEL_HUB_ID", raising=False)
-    monkeypatch.setattr(lg, "DEFAULT_GATE_MODEL_HUB_ID", None)
-    ok, msg = lg.ensure_gate_model(tmp_path / "missing")
-    assert not ok
-    assert "VERIMEM_GATE_MODEL_HUB_ID" in msg and "not yet published" in msg
+def test_model_is_published_with_a_public_url_and_checksum():
+    # the moat's out-of-box claim depends on this: the gate model is downloadable
+    # by anyone, no account. A public release URL + a pinned sha256.
+    assert lg.DEFAULT_GATE_MODEL_URL.startswith("https://github.com/")
+    assert lg.DEFAULT_GATE_MODEL_URL.endswith(".tar.gz")
+    assert len(lg.DEFAULT_GATE_MODEL_SHA256) == 64
 
 
-def test_configured_hub_downloads_via_injected_downloader(tmp_path, monkeypatch):
-    monkeypatch.setenv("VERIMEM_GATE_MODEL_HUB_ID", "acme/gate-model")
-    calls = {}
+def test_default_download_installs_via_injected_downloader(tmp_path):
+    # no url/hub env set -> falls through to the built-in public release; the
+    # injected downloader receives that URL and populates the dir.
+    seen = {}
 
-    def fake_dl(repo_id, local_dir):
-        calls["repo"] = repo_id
-        (tmp_path / "dl" / "config.json").write_text("{}")
+    def fake_dl(source, dest):
+        seen["source"] = source
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "config.json").write_text("{}")
 
     ok, msg = lg.ensure_gate_model(tmp_path / "dl", download=fake_dl)
-    assert ok and calls["repo"] == "acme/gate-model" and "downloaded" in msg
+    assert ok and seen["source"] == lg.DEFAULT_GATE_MODEL_URL and "installed" in msg
+
+
+def test_explicit_url_overrides_default(tmp_path, monkeypatch):
+    monkeypatch.setenv("VERIMEM_GATE_MODEL_URL", "https://example.com/x.tar.gz")
+    seen = {}
+
+    def fake_dl(source, dest):
+        seen["source"] = source
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "config.json").write_text("{}")
+
+    lg.ensure_gate_model(tmp_path / "dl", download=fake_dl)
+    assert seen["source"] == "https://example.com/x.tar.gz"
+
+
+def test_sha256_mismatch_is_refused(tmp_path):
+    # integrity gate: a tampered/truncated download must NOT be installed.
+    import io
+
+    class _Resp(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            self.close()
+
+    def opener(url):
+        return _Resp(b"not the real model bytes")
+
+    import pytest
+    with pytest.raises(ValueError, match="sha256 mismatch"):
+        lg._download_and_extract_tar(
+            "https://x/y.tar.gz", tmp_path / "d",
+            sha256="0" * 64, opener=opener)
 
 
 # --- doctor -------------------------------------------------------------------

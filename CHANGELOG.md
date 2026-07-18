@@ -26,11 +26,12 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   on a fresh machine the fine-tuned gate CE (the moat's judge-less judge) is not
   present and nothing downloaded it — demonstrated 2026-07-18: the README moat
   quickstart's `assert` failed with the write admitted under an `L4-skipped`
-  advisory. `warmup` now fetches the model when a hub id is configured
-  (`VERIMEM_GATE_MODEL_HUB_ID`; the fine-tuned model is not yet published — the
-  download flow is wired and tested so publishing turns the out-of-box claim
-  true end-to-end), and reports honestly when it is not. README quickstart and
-  feature copy aligned to the truth (`warmup` first, `doctor` verifies).
+  advisory. `verimem warmup` now DOWNLOADS the published gate model — a public GitHub
+  release tarball (~656 MB, no account), sha256-verified and extracted — so the
+  judge-less moat works out of the box for any downloader. `--no-gate` skips it
+  (CI). Source overridable via `VERIMEM_GATE_MODEL_URL` / `_HUB_ID`. README
+  quickstart + feature copy aligned to the truth (`warmup` first, `doctor`
+  verifies); a tampered download is refused on checksum mismatch.
 
 ### Changed (CLI)
 - **Product CLI slimmed: agent-runtime moved under `verimem agent <cmd>`.**

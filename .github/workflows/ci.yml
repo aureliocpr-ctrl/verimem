@@ -80,7 +80,7 @@ jobs:
         # tests RUN (real coverage); when it fails they SKIP via the
         # `requires_real_model` guard (tests/_real_model.py) — CI stays green either way.
         continue-on-error: true
-        run: verimem warmup --no-daemon
+        run: verimem warmup --no-daemon --no-gate
 
       - name: Tests
         env:
