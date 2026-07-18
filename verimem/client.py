@@ -1077,6 +1077,13 @@ def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
         if acting:
             reason = acting[-1].get("advice") or acting[-1].get("reason") or ""
         reason = reason or getattr(gate, "advice", "") or ""
+        if not reason:
+            # a store-time screen (e.g. injection) can quarantine WITHOUT a gate
+            # warning; never emit a silent verdict - state it generically.
+            reason = ("quarantined by a store-time integrity screen "
+                      "(e.g. prompt-injection); kept out of default recall"
+                      if disposition == "quarantined"
+                      else "rejected by the write gate")
     return {
         "disposition": disposition,
         "evidence_class": _evidence_class(gate, verified_by, warnings),
