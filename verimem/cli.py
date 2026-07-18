@@ -17,7 +17,8 @@ from .observability import METRICS, get_log
 from .tools import PythonExecutor
 
 app = typer.Typer(no_args_is_help=True, add_completion=False,
-                  help="Engram CLI — LLM agent with persistent memory & skills")
+                  help="Verimem CLI — verified memory for AI agents: gated writes, "
+                       "provenance on every read, abstention instead of hallucination.")
 skills_app = typer.Typer(help="Inspect / manage the skill library")
 episodes_app = typer.Typer(help="Inspect episodic memory")
 providers_app = typer.Typer(help="Inspect LLM providers and discover models")
@@ -130,7 +131,7 @@ def code(
     plan: bool = typer.Option(False, "--plan", help="Start in plan mode (agent must propose before editing)"),
     model: str = typer.Option(None, "--model", help="Override executor model (e.g. claude-opus-4-7)"),
 ):
-    """Engram Code — interactive agentic coding session with persistent memory.
+    """Verimem Code — interactive agentic coding session with persistent memory.
 
     Like Claude Code or Aider, but every turn feeds the active-memory loop:
     skills compile from your repeated workflow, forward replay shows the
@@ -289,7 +290,7 @@ def warmup(
                 "[dim]· shared encode daemon spawning in the background "
                 "(warms from cache in ~20s; all MCP servers then share it)[/]"
             )
-    console.print("[bold green]Warmup complete — Engram recall will be instant.[/]")
+    console.print("[bold green]Warmup complete — Verimem recall will be instant.[/]")
 
 
 @app.command()
@@ -421,7 +422,7 @@ def _gateway_data_dir(data_dir: str | None) -> Path:
 def gateway_serve(
     host: str = typer.Option("127.0.0.1", "--host", help="Bind address (loopback by default; expose remotely behind a TLS reverse-proxy)"),
     port: int = typer.Option(8377, "--port"),
-    data_dir: str = typer.Option(None, "--data-dir", help="Gateway data dir (keys db + per-tenant stores); default <engram data>/gateway"),
+    data_dir: str = typer.Option(None, "--data-dir", help="Gateway data dir (keys db + per-tenant stores); default <verimem data>/gateway"),
     rate_limit: int = typer.Option(0, "--rate-limit", help="Max requests per key per minute (0 = off); 429 + Retry-After beyond it"),
 ):
     """Serve the multi-tenant REST gateway (self-host scenario).
