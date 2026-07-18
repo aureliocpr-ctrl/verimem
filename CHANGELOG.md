@@ -17,13 +17,14 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   truth claim**. For the local CE it uses a two-threshold band; a `high` tier is
   not `verified` (plausible-inference confabs score high on the CE — read
   `evidence_class` for what actually adjudicated the fact).
-- **Two-threshold CE band** behind `VERIMEM_CE_BAND_ENFORCE` (default **off**):
+- **Two-threshold CE band** behind `VERIMEM_CE_BAND_ENFORCE` (**default on** as of 0.7.0):
   when enabled, a local-CE score in `[40, 80)` is held for review instead of
   admitted. Calibrated on the real gate-ce-v2 (true entailments ≥90; the
   mid-range entity-substitution escape ~68). Moat benchmark: entity-substitution
   escape **6.2% → 1.8%** with **zero** new false-blocks on entailed facts.
 
 ### Changed
+- **BREAKING (default):** the two-threshold CE band now **enforces by default** — a local-CE score in `[40, 80)` is held for review instead of admitted. Measured safe (over-review 1/19 on hard true classes; entity-substitution escape 6.2%→1.8% with 0 new false-blocks) and reversible with `VERIMEM_CE_BAND_ENFORCE=0`.
 - README documents honestly: the CE hard-rejects true facts needing arithmetic /
   unit-date conversion or a low-resource language (those need an llm judge), and
   the CE `high` tier is instrument confidence, not proof.

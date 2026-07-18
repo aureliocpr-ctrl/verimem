@@ -157,7 +157,7 @@ def test_ce_band_observe_default_admits_borderline(tmp_path, monkeypatch):
     # the receipt still labels it 'review' honestly.
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
     monkeypatch.setenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", "40")
-    monkeypatch.delenv("VERIMEM_CE_BAND_ENFORCE", raising=False)
+    monkeypatch.setenv("VERIMEM_CE_BAND_ENFORCE", "0")  # explicit OFF (default is now ON)
     monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex",
                         lambda llm, s, f, **kw: (68.0, "local"))
     m = Memory(str(tmp_path / "obs.db"))
@@ -192,6 +192,7 @@ def test_confidence_tier_persists_across_recall(tmp_path, monkeypatch):
     # borderline 'held-for-review' fact from a hard contradiction (kimi+glm Q3).
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
     monkeypatch.setenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", "40")
+    monkeypatch.setenv("VERIMEM_CE_BAND_ENFORCE", "0")  # admit so it is recallable
     monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex",
                         lambda llm, s, f, **kw: (68.0, "local"))
     m = Memory(str(tmp_path / "persist.db"))
@@ -200,3 +201,19 @@ def test_confidence_tier_persists_across_recall(tmp_path, monkeypatch):
     hits = m.search("paciente alergia latex")
     assert hits, "borderline fact should be recallable under observe default"
     assert hits[0]["confidence_tier"] == "borderline"
+
+
+def test_ce_band_enforced_by_default(tmp_path, monkeypatch):
+    # NO VERIMEM_CE_BAND_ENFORCE set -> enforcement is ON: a local-CE score in
+    # [40,80) is held for review (Aurelio mandate: the feature works by default).
+    monkeypatch.delenv("VERIMEM_CE_BAND_ENFORCE", raising=False)
+    monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
+    monkeypatch.setenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", "40")
+    monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex",
+                        lambda llm, s, f, **kw: (68.0, "local"))
+    m = Memory(str(tmp_path / "def.db"))
+    r = m.add("El paciente 7 es alergico al latex.",
+              source="Historia clinica 7: alergia documentada a la penicilina.")
+    assert r["status"] == "quarantined"
+    assert r["adjudication"]["confidence_tier"] == "borderline"
+    assert any(w.get("layer") == "L4-review" for w in r["warnings"])

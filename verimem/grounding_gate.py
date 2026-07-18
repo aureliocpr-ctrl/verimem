@@ -422,15 +422,19 @@ def _ce_band_tau_hi() -> float:
 
 
 def _ce_band_enforced() -> bool:
-    """OFF by default: the two-threshold band only CLASSIFIES (confidence_tier).
-    With VERIMEM_CE_BAND_ENFORCE=1 the local-CE middle band is quarantined-for-
-    review instead of admitted - calibrated safe (measured true entailments score
-    >=90, so ~0 true facts fall in [tau_lo, tau_hi)), a deliberate opt-in
-    behavior change. NB the band is PARTIAL: it catches the mid-range
-    entity-substitution escape (~65-68) but not a high-scoring one (~96) or a
-    plausible-inference confab (97-99) - those still need an llm judge."""
-    return os.environ.get("VERIMEM_CE_BAND_ENFORCE", "").strip().lower() in (
-        "1", "true", "yes", "on")
+    """ON by default (2026-07-19): a local-CE score in the middle band
+    [tau_lo, tau_hi) is held for review, not admitted. Evidence for making it the
+    default: (1) calibrated - true entailments, incl. abstractive/paraphrase,
+    score >=90 (n=14, min 90.3), so ~0 true facts fall in the band; (2) a probe
+    over the hard NLI classes both critics named (long-doc, negation, numeric,
+    date, coreference, multilingual) put only 1/19 known-true facts in the band;
+    (3) moat benchmark: entity-substitution escape 6.2% -> 1.8% with ZERO new
+    false-blocks on 112 entailed facts. Reversible with VERIMEM_CE_BAND_ENFORCE=0
+    (e.g. a domain heavy in abstractive facts near the boundary). PARTIAL by
+    construction and never claimed otherwise: a high-scoring escape (~96) and
+    plausible-inference confabs (97-99) still need an llm judge."""
+    v = os.environ.get("VERIMEM_CE_BAND_ENFORCE", "1").strip().lower()
+    return v not in ("0", "false", "no", "off")
 
 
 def confidence_tier(score: float | None, judge: str | None,
