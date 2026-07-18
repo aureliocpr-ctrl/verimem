@@ -70,7 +70,7 @@ def _isolate_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 def test_root_help(runner: CliRunner) -> None:
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "Engram CLI" in result.output
+    assert "Verimem CLI" in result.output
 
 
 @pytest.mark.parametrize("subcommand", [
