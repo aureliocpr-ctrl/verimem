@@ -851,7 +851,10 @@ def run_validation_gate(
         # score and cut resolved for the SAME judge (local CE vs claude scales differ —
         # the 2026-07-02 critic caught the calibrated cut not reaching this L4 site).
         from .grounding_gate import (
-            NoGroundingJudge, fact_grounding_score_ex, resolve_write_threshold_for)
+            NoGroundingJudge,
+            fact_grounding_score_ex,
+            resolve_write_threshold_for,
+        )
         try:
             gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
         except (FileNotFoundError, OSError, ImportError, NoGroundingJudge):
