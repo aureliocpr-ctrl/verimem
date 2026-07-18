@@ -941,6 +941,22 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         # a 500 — an unhandled 500 on crafted input is a crashable endpoint = a DoS.
         _msgs, _content = body.get("messages"), body.get("content")
         _bad = None
+        # Silent-drop guard (vertical probe 2026-07-18): a body carrying NEITHER
+        # 'content' NOR 'messages' would fall through to content="" and return
+        # 200 {stored:false, status:"empty"} — from the caller's side a 2xx that
+        # silently loses the write (typically a wrong field name like 'text').
+        # An explicit content:"" IS addressed by the caller and stays a 200
+        # no-op; only the ABSENCE of both content keys is the schema error.
+        if _msgs is None and _content is None:
+            _CONTENT_LIKE = ("text", "fact", "proposition", "body", "prompt",
+                             "message", "msg", "value")
+            _stray = next((k for k in _CONTENT_LIKE if k in body), None)
+            _hint = (f" (got unknown field {_stray!r})" if _stray else "")
+            meter.bump(tenant_id, writes=1, rejected=1)
+            raise HTTPException(
+                status_code=400,
+                detail="provide the fact in 'content' (a string) or 'messages' "
+                       f"(a list of {{role, content}}){_hint}")
         if _msgs is not None and not isinstance(_msgs, list):
             _bad = "'messages' must be a list of {role, content}"
         elif _msgs is not None and not all(
