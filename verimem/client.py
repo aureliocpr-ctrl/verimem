@@ -523,11 +523,19 @@ class Memory:
         if min_relevance is None:
             from .relevance_floor import env_floor
             min_relevance = env_floor()
+        # Abstention requested at all (auto, or a positive fixed floor)? Then use
+        # the CE relevance gate — the reliable, store-size-independent floor. The
+        # bi-encoder "auto" floor collapses to 0.0 on a near-empty store and lets
+        # an off-topic top-k through (measured 2026-07-18); the CE does not.
+        want_abstention = (min_relevance == "auto"
+                           or (isinstance(min_relevance, (int, float))
+                               and float(min_relevance) > 0.0))
         if min_relevance == "auto":
             min_relevance = self._auto_relevance_floor()
         from .trust_report import build_trust_report
         report = build_trust_report(self.semantic, query, k=k, deep=deep,
-                                    as_of=as_of, min_relevance=min_relevance)
+                                    as_of=as_of, min_relevance=min_relevance,
+                                    ce_gate=want_abstention)
         report["min_relevance"] = float(min_relevance)
         # task #20a: dossier transparency — with source-trust on, every fact
         # shows its SOURCE's two-channel trust, not just its own status.
