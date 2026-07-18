@@ -43,10 +43,15 @@ VERIFIED_REF = None  # set per-test: a real file: ref the verified_by gate accep
 def _mem(tmp_path) -> Memory:
     from verimem.semantic import Fact
     global VERIFIED_REF
-    m = Memory(path=tmp_path / "m.db")
+    # repo_root=tmp_path: a TRUSTED SDK caller scopes the verified_by gate to its
+    # project root, so an in-root file ref verifies with containment. (Security
+    # fix 2026-07-18: absolute refs no longer bypass the gate when root is None —
+    # the gateway's untrusted config — so the trusted path must name its root.)
+    m = Memory(path=tmp_path / "m.db", repo_root=tmp_path)
     # verified is not self-declared: store()'s verified_by hard-gate demotes a
     # "verified" write whose refs don't check out (anti-laundering). Give it a
-    # REAL checkable ref — a file that exists — like the trusted pipeline does.
+    # REAL checkable ref — a file that exists, INSIDE repo_root — like the
+    # trusted pipeline does.
     src = tmp_path / "minutes.txt"
     src.write_text("all-hands 2026-07-10: office moved to Turin\n", encoding="utf-8")
     VERIFIED_REF = f"file:{src}:1"

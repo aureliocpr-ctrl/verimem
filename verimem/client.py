@@ -87,14 +87,25 @@ class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
     def __init__(self, path: str | Path | None = None, *, grounding_llm: Any = None,
-                 llm: Any = None, preset: str = "balanced") -> None:
+                 llm: Any = None, preset: str = "balanced",
+                 repo_root: str | Path | None = None) -> None:
         if preset not in _GATE_PRESETS:
             raise ValueError(
                 f"unknown gate preset {preset!r} — one of: "
                 f"{', '.join(sorted(_GATE_PRESETS))}")
         self.preset = preset
         self._preset_defaults = _GATE_PRESETS[preset]
-        self.semantic = SemanticMemory(db_path=Path(path) if path else None)
+        #: ``repo_root`` scopes the verified_by hard-gate's I/O checks: a
+        #: ``file:<path>:<line>`` provenance ref is verified ONLY when it resolves
+        #: INSIDE this root (containment against traversal). Left ``None`` (the
+        #: default, and the multi-tenant gateway's config) the gate performs NO
+        #: file I/O — an absolute ref from untrusted input can neither read server
+        #: files nor forge status="verified". A TRUSTED SDK caller passes its own
+        #: project root to let genuine in-root file refs verify. (Security fix
+        #: 2026-07-18: absolute refs used to bypass containment when root=None.)
+        self.semantic = SemanticMemory(
+            db_path=Path(path) if path else None,
+            repo_root=Path(repo_root) if repo_root else None)
         #: trust odometer: persistent counters of what the gate did (admitted /
         #: quarantined / rejected / abstained) — same DB file, fail-open, no PII.
         from .trust_ledger import TrustLedger
