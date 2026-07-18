@@ -2,6 +2,32 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - Unreleased
+
+### Added
+- **Adjudication receipt on every write.** `Memory.add()` returns
+  `{disposition, evidence_class, judge, score, threshold, margin, reason,
+  confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent
+  drop (including the store-time injection screen). The **judge-of-record**
+  (`local` CE / `claude` / `interactive`, and the admission threshold it was
+  compared to) is surfaced on every gate decision — previously computed and
+  discarded.
+- **`confidence_tier`** (`high` / `borderline` / `low` / `unverified`) — a
+  coarsened, judge-agnostic label naming the *instrument's* confidence, **not a
+  truth claim**. For the local CE it uses a two-threshold band; a `high` tier is
+  not `verified` (plausible-inference confabs score high on the CE — read
+  `evidence_class` for what actually adjudicated the fact).
+- **Two-threshold CE band** behind `VERIMEM_CE_BAND_ENFORCE` (default **off**):
+  when enabled, a local-CE score in `[40, 80)` is held for review instead of
+  admitted. Calibrated on the real gate-ce-v2 (true entailments ≥90; the
+  mid-range entity-substitution escape ~68). Moat benchmark: entity-substitution
+  escape **6.2% → 1.8%** with **zero** new false-blocks on entailed facts.
+
+### Changed
+- README documents honestly: the CE hard-rejects true facts needing arithmetic /
+  unit-date conversion or a low-resource language (those need an llm judge), and
+  the CE `high` tier is instrument confidence, not proof.
+
 ## [0.6.0] - Unreleased
 
 ### Added

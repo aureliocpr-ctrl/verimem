@@ -38,12 +38,26 @@ honest *"I don't know."*
   reduced latency") scores high and is admitted; and an *entity-substitution*
   contradiction (swapping one allergen/product for another) can score mid-range
   in some languages — measured ~7% escape in Spanish, concentrated in that shape.
-  The moat is
+  An opt-in two-threshold band (`VERIMEM_CE_BAND_ENFORCE=1`) holds the CE's
+  uncertain middle zone for review, cutting that entity-substitution escape from
+  **6.2% → 1.8%** on the moat matrix with **zero** new false-blocks on entailed
+  facts (measured); the residual ~2% scores high and still needs an llm. A third
+  measured limit: the CE **hard-rejects true facts that require arithmetic or a
+  unit/date conversion** ("0.5 g" ⊢ "500 mg", "two weeks before March 20" ⊢
+  "March 6") or a low-resource language — those need an llm judge too. The moat is
   strongest with an llm; the free CE is the no-setup multilingual default.
   Contradiction screening runs with the `strict` preset. Opt-in
   origin tagging (`tag_beliefs=True` at ingest) additionally classes an
   unverified user assertion as `user_belief`: stored, but out of default
   recall until you ask for it (`search(..., include_beliefs=True)`).
+- **Every write returns an adjudication receipt** — `add()` hands back a visible
+  verdict: `{disposition, evidence_class, judge, score, threshold, margin, reason,
+  confidence_tier}`. A quarantine is a *reasoned* verdict, never a silent drop,
+  and the **judge-of-record** (which judge decided, against what threshold) rides
+  every decision. The `confidence_tier` (`high` / `borderline` / `low` /
+  `unverified`) is the *instrument's* confidence, **not a truth claim**: a `high`
+  tier from the local CE can still be a plausible-but-unstated inference — read
+  `evidence_class` for what actually adjudicated the fact.
 - **Provenance on every read** — answers cite where each fact came from
   (conversation, document offset, tool call). A `TrustReport` explains *how the
   system knows*: chain of custody, declared conflicts, or an explicit abstention.
