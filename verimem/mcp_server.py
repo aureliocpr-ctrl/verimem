@@ -6562,13 +6562,14 @@ async def list_tools() -> list[t.Tool]:
 
 
 def _apply_tool_namespace(tools: list[t.Tool]) -> list[t.Tool]:
-    """Rename Phase 1 (RENAME-PLAN.md): ENGRAM_TOOL_NAMESPACE=verimem exposes the
+    """Rename Phase 1 (RENAME-PLAN.md): VERIMEM_TOOL_NAMESPACE=verimem (ENGRAM_TOOL_NAMESPACE alias) exposes the
     hippo_* tools under the product name verimem_* (the dispatch accepts both).
     Default/unset = unchanged hippo_* (byte-identical; 0.3.x host configs keep
     working). Applied AFTER the prefix filter, so ENGRAM_MCP_TOOLS_PREFIX still
     matches on hippo_. Renames only hippo_* — other tools (sandbox_exec) as-is.
     No doubling: one tool in, one tool out."""
-    ns = os.environ.get("ENGRAM_TOOL_NAMESPACE", "").strip().lower()
+    ns = (os.environ.get("VERIMEM_TOOL_NAMESPACE")
+          or os.environ.get("ENGRAM_TOOL_NAMESPACE") or "").strip().lower()
     if ns != "verimem":
         return tools
     out: list[t.Tool] = []

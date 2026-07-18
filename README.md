@@ -180,7 +180,7 @@ Add to `.mcp.json` in your project (or `~/.claude/.mcp.json`):
 
 This exposes the memory tools (`verimem_remember`, `verimem_facts_recall`,
 `verimem_trust_report`, `verimem_document_semantic_search`, …) to any MCP
-client. Drop the `ENGRAM_TOOL_NAMESPACE` entry to keep the legacy `hippo_*`
+client. Drop the `VERIMEM_TOOL_NAMESPACE` entry to keep the legacy `hippo_*`
 names — both dispatch to the same tools.
 
 ## CLI
