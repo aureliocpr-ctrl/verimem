@@ -46,3 +46,36 @@ def test_moat_admits_a_second_entailed_fact_without_llm():
     bad = m.add("Q3 revenue collapsed to zero.", source=src)          # confab
     assert ok["status"] != "quarantined", f"entailed fact quarantined: {ok['status']!r}"
     assert bad["status"] == "quarantined", f"confab admitted: {bad['status']!r}"
+
+
+def test_broken_ce_at_score_time_admits_WITH_advisory_never_silently(monkeypatch):
+    """opus review 2026-07-18, blocking finding D: if the CE is advertised present
+    but raises at score-time, the write must be admitted WITH an explicit
+    L4-skipped advisory — never a silent fail-open. This pins the exact hole the
+    first fix left (dead `elif`)."""
+    import verimem.anti_confab_gate as gate
+    # both are imported INSIDE run_validation_gate, so patch them at their source
+    # module (the local import resolves the current attribute at call time).
+    monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: True)
+
+    def _boom(*a, **k):
+        raise RuntimeError("simulated CE unloadable at score-time")
+    monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex", _boom)
+
+    r = gate.run_validation_gate(
+        proposition="Analytics runs on Postgres.",
+        verified_by=None, topic=None, agent=None,
+        source="We migrated analytics to Postgres last quarter.",
+        ground_write=True,
+    )
+    skips = [w for w in (r.warnings or []) if w.get("layer") == "L4-skipped"]
+    assert skips, f"broken CE must leave an L4-skipped advisory, not silence: {r.warnings}"
+
+
+def test_unrelated_confab_is_quarantined_without_llm():
+    # a confab on a DIFFERENT subject than the source (not just the grossest
+    # Postgres/MongoDB swap) must still be caught by the CE at cut 40.
+    m = _mem()
+    src = "The maintenance window is scheduled for Saturday at 02:00 UTC."
+    bad = m.add("All customer passwords were rotated on Friday.", source=src)
+    assert bad["status"] == "quarantined", f"unrelated confab admitted: {bad['status']!r}"

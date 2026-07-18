@@ -829,38 +829,14 @@ def run_validation_gate(
     _have_judge = (grounding_llm is not None
                    or _resolve_backend() == "local"
                    or local_ce_available())
-    if source and _ground_on and _have_judge:
-        # score and cut resolved for the SAME judge (local CE vs claude scales differ —
-        # the 2026-07-02 critic caught the calibrated cut not reaching this L4 site).
-        # A missing/broken CE at score-time must never crash a write — fail-open.
-        from .grounding_gate import fact_grounding_score_ex, resolve_write_threshold_for
-        try:
-            gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
-        except Exception:  # noqa: BLE001 — no judge reachable -> skip L4, admit honestly
-            gscore, _judge_used = None, None
-        if gscore is None:
-            _have_judge = False  # nothing scored -> fall to the L4-skipped advisory
-        else:
-            grounding_val = float(gscore)  # persist the score even when it PASSES
-        if gscore is not None and gscore < resolve_write_threshold_for(_judge_used):
-            warnings.append({
-                "layer": "L4-grounding",
-                "reason": f"source does not entail the proposition "
-                          f"(grounding {gscore:.0f} below threshold)",
-                "advice": "the source does not support this proposition — likely a "
-                          "confabulated inference, not a stated fact.",
-                "grounding_score": gscore,
-            })
-            advice = advice or "Source does not entail the claim (semantic grounding)."
-    elif source and not _have_judge:
-        # A sourced write evaluated WITHOUT any grounding judge — neither an
-        # injected llm NOR the local CE on disk (the model was never downloaded) —
-        # is NOT entailment-verified. Say so out loud, never a silent skip. The
-        # write is still ADMITTED (see the source-provenance rule below) but its
-        # provenance carries this advisory: recallable, honestly labelled
-        # "grounding not verified", never passed off as verified. (2026-07-18: the
-        # CE is now the default judge when present and is multilingual — measured
-        # EN/IT/FR/ES — so this fires only when the CE model is genuinely absent.)
+    def _emit_l4_skipped() -> None:
+        # A sourced write with NO reachable grounding judge — neither an injected
+        # llm NOR the local CE (never downloaded, or unloadable at score-time) —
+        # is NOT entailment-verified. Say so out loud, NEVER a silent skip. The
+        # write is still ADMITTED (source-provenance rule below) but its provenance
+        # carries this advisory: recallable, honestly labelled "grounding not
+        # verified", never passed off as verified. (2026-07-18: the CE is the
+        # default judge when present and is multilingual — measured EN/IT/FR/ES.)
         warnings.append({
             "layer": "L4-skipped",
             "reason": "source provided but no grounding judge is available - "
@@ -870,6 +846,39 @@ def run_validation_gate(
                       "CE judge, or pass Memory(llm=...) — either turns the "
                       "source-entailment moat on.",
         })
+
+    if source and _ground_on and _have_judge:
+        # score and cut resolved for the SAME judge (local CE vs claude scales differ —
+        # the 2026-07-02 critic caught the calibrated cut not reaching this L4 site).
+        from .grounding_gate import fact_grounding_score_ex, resolve_write_threshold_for
+        try:
+            gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
+        except (FileNotFoundError, OSError, ImportError, RuntimeError):
+            # ONLY a missing / unloadable local model is tolerated here (a judge
+            # advertised as present that turns out unreachable). Any OTHER
+            # exception is a real bug — it MUST propagate, never be laundered into
+            # a silent admission (opus review 2026-07-18, blocking finding D).
+            gscore, _judge_used = None, None
+        if gscore is None:
+            # The CE was advertised present but could not score → treat as "no
+            # judge" RIGHT HERE. The `elif` below is unreachable once this `if`
+            # was taken, so emitting the advisory there was dead code (that was
+            # the silent fail-open opus caught).
+            _emit_l4_skipped()
+        else:
+            grounding_val = float(gscore)  # persist the score even when it PASSES
+            if gscore < resolve_write_threshold_for(_judge_used):
+                warnings.append({
+                    "layer": "L4-grounding",
+                    "reason": f"source does not entail the proposition "
+                              f"(grounding {gscore:.0f} below threshold)",
+                    "advice": "the source does not support this proposition — likely a "
+                              "confabulated inference, not a stated fact.",
+                    "grounding_score": gscore,
+                })
+                advice = advice or "Source does not entail the claim (semantic grounding)."
+    elif source and not _have_judge:
+        _emit_l4_skipped()
 
     # Decision tree.
     has_l3_contradict = any(w.get("layer") == "L3" for w in warnings)

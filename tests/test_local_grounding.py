@@ -166,15 +166,16 @@ def test_production_l4_gate_uses_calibrated_local_threshold(tmp_path, monkeypatc
 
 def test_local_without_gate_config_warns_and_uses_default(tmp_path, monkeypatch):
     """Counterexample worker: local model loads but ships NO gate_config threshold and
-    no env override — the gate must warn (uncalibrated) and fall to the default 70,
-    visibly rather than silently."""
+    no env override — the gate must warn (visibly, not silently) and fall to the
+    validated local-CE moat cut 40 (the same one the conversation-ingest path uses;
+    opus review 2026-07-18 aligned the two paths on one CE)."""
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(tmp_path))  # no gate_config.json
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
     set_local_judge(LocalGroundingJudge(model_dir=tmp_path,
                                         scorer=lambda b: [75.0] * len(b)))
-    with pytest.warns(RuntimeWarning, match="uncalibrated"):
+    with pytest.warns(RuntimeWarning, match="local CE moat cut"):
         ok, score = G.should_store_fact(_BoomLLM(), "src", "fact")
-    assert (ok, score) == (True, 75.0), "75 >= default 70"
+    assert (ok, score) == (True, 75.0), "75 >= validated moat cut 40"
 
 
 def test_failover_uses_claude_scale_threshold_not_config(tmp_path, monkeypatch):

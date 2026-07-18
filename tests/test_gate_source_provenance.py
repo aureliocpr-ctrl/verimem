@@ -58,9 +58,12 @@ def test_sourced_write_without_judge_carries_explicit_advisory():
         source=SOURCE_APPROVAL, ground_write=True,
     )
     from verimem.grounding_gate import _resolve_backend
-    if _resolve_backend() == "local":
+    from verimem.local_grounding import local_ce_available
+    if _resolve_backend() == "local" or local_ce_available():
         import pytest
-        pytest.skip("local CE judge present: L4 ran, no L4-skipped advisory")
+        pytest.skip("a grounding judge (local CE) is present: L4 ran, no advisory "
+                    "— the no-judge advisory is covered by "
+                    "test_no_judge_at_all_carries_advisory below")
     skips = [w for w in (r.warnings or []) if w.get("layer") == "L4-skipped"]
     assert skips, (
         f"sourced write with no judge must carry an L4-skipped advisory, "

@@ -55,6 +55,14 @@ DEFAULT_THRESHOLD = 85.0
 # Override with ENGRAM_GROUNDING_WRITE_THRESHOLD.
 WRITE_DEFAULT_THRESHOLD = 70.0
 
+# The validated admission cut for the LOCAL cross-encoder moat judge, shared by
+# BOTH moat paths (direct write + conversation-ingest) on the SAME CE. Empirical
+# (n=90): recall 0.87 at 40, collapsing at higher cuts; the CE scores real
+# entailments ~97-99 and confabs ~0.6 (EN/IT/FR/ES). Used when the shipped model
+# carries no usable gate_config cut. Kept in lockstep with
+# conversation_ingest._INGEST_GROUND_THRESHOLD. Env override still wins.
+LOCAL_CE_MOAT_THRESHOLD = 40.0
+
 # Basic graded verifier (semantic, "judge meaning not word overlap, distractor -> 0").
 _BASIC_SYSTEM = (
     "You judge GROUNDING. Given a context, a question, and a proposed answer, rate from "
@@ -318,6 +326,14 @@ def fact_grounding_score_ex(llm: Any, source: str, fact: str, *,
         if s is not None:
             # claude scale by construction (same rubric) -> claude-scale threshold
             return min(100.0, max(0.0, float(s))), "interactive"
+    if llm is None:
+        # No llm AND the local CE could not score (backend local/claude-no-llm
+        # fell through above). Do NOT call llm.complete(None) — raise a clear,
+        # catchable signal so the write-gate emits the honest L4-skipped advisory
+        # instead of crashing (opus review 2026-07-18).
+        raise RuntimeError(
+            "no grounding judge available: no llm injected and the local CE "
+            "could not score (model missing or unloadable)")
     if focus_budget and source and len(source) > focus_budget:
         source = select_relevant_span(source, fact, budget=focus_budget)
     resp = llm.complete(
@@ -356,6 +372,14 @@ def resolve_write_threshold_for(backend_used: str) -> float:
     # is still honoured. Env override always wins (handled above).
     if t is not None and t <= 90.0:
         return float(t)
+    # t is None (no config) OR an artifact (>90). Fall back to the LOCAL CE moat
+    # cut that is empirically validated — the SAME 40.0 the conversation-ingest
+    # path uses on the SAME CE (conversation_ingest._INGEST_GROUND_THRESHOLD,
+    # measured n=90: recall 0.87 at 40, collapsing to 0.55 at high cuts). opus
+    # review 2026-07-18 (finding #3): the earlier fallback to the claude-scale
+    # write default (70) left the two moat paths at different safety margins on
+    # one identical judge and over-quarantined true borderline facts on the
+    # direct-write path. One CE, one validated cut.
     global _warned_uncalibrated
     if not _warned_uncalibrated:
         _warned_uncalibrated = True
@@ -363,10 +387,10 @@ def resolve_write_threshold_for(backend_used: str) -> float:
         _why = ("ships no gate_config.json threshold" if t is None
                 else f"ships an unusable cut ({t:.1f} > 90, a val-set F1 artifact)")
         warnings.warn(
-            f"local grounding judge {_why} — using the write-gate default "
-            f"{_resolve_write_threshold():.0f} (the CE's 0-100 scale matches it)",
+            f"local grounding judge {_why} — using the validated local CE moat cut "
+            f"{LOCAL_CE_MOAT_THRESHOLD:.0f} (same as the conversation-ingest path)",
             RuntimeWarning, stacklevel=2)
-    return _resolve_write_threshold()
+    return LOCAL_CE_MOAT_THRESHOLD
 
 
 def should_store_fact(llm: Any, source: str, fact: str, *,
