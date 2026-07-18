@@ -188,6 +188,13 @@ class GateResult:
     #: retrieval/answering on it (the moonshot 2026-06-20: a write-time trust signal no
     #: competitor has). None = not computed (default fast path).
     grounding_score: float | None = None
+    #: judge-of-record: WHICH judge scored L4 ('local' CE, or 'claude'/
+    #: 'interactive' injected llm), or None when no entailment judge ran.
+    #: Surfaced so a provider swap is auditable, never a silent drift.
+    judge: str | None = None
+    #: the admission cut the score was compared to (judge-scale-consistent),
+    #: or None when no numeric judge ran. score - threshold = the margin.
+    threshold: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -195,6 +202,8 @@ class GateResult:
             "warnings": list(self.warnings),
             "contradicting_fact_ids": list(self.contradicting_fact_ids),
             "grounding_score": self.grounding_score,
+            "judge": self.judge,
+            "threshold": self.threshold,
             "advice": self.advice,
         }
 
@@ -811,6 +820,9 @@ def run_validation_gate(
     # runs whenever a SOURCE and a judge are present (injected grounding LLM or the local
     # CE). ground_write=False — or no source / no judge — skips it (fail-open, no LLM call).
     grounding_val: float | None = None
+    # judge-of-record for this write (set below IFF the L4 numeric judge scored)
+    _judge_of_record: str | None = None
+    _threshold_of_record: float | None = None
     # ``ground_write`` per-call override (S1 fix, 2026-07-04 adversarial review):
     # the entailment moat was unreachable from Memory.add() — triple opt-in
     # (source + injected llm + ENGRAM_GROUNDING_WRITE) and no per-call switch.
@@ -872,7 +884,9 @@ def run_validation_gate(
             _emit_l4_skipped()
         else:
             grounding_val = float(gscore)  # persist the score even when it PASSES
-            if gscore < resolve_write_threshold_for(_judge_used):
+            _judge_of_record = _judge_used
+            _threshold_of_record = resolve_write_threshold_for(_judge_used)
+            if gscore < _threshold_of_record:
                 warnings.append({
                     "layer": "L4-grounding",
                     "reason": f"source does not entail the proposition "
@@ -912,37 +926,31 @@ def run_validation_gate(
     # for a real documental fact is a grounding JUDGE (L4), which verifies
     # source-entailment; the L4-skipped advisory above says so when none is set.
     l1_escalates = has_l1 and not _personal_fp and not _world_fp
+    def _mk(action: GateAction, *, advice_: str = advice,
+            warnings_: list | None = None) -> GateResult:
+        # Every gate outcome carries the judge-of-record + threshold, so the
+        # write receipt classifies the evidence honestly (no silent verdicts).
+        return GateResult(
+            action=action,
+            warnings=warnings if warnings_ is None else warnings_,
+            contradicting_fact_ids=contradicting_ids,
+            advice=advice_,
+            grounding_score=grounding_val,
+            judge=_judge_of_record,
+            threshold=_threshold_of_record,
+        )
     if force_persist:
         # Caller demands persist; we still surface warnings.
-        return GateResult(
-            action="persist",
-            warnings=warnings,
-            contradicting_fact_ids=contradicting_ids,
-            advice=advice,
-            grounding_score=grounding_val,
-        )
+        return _mk("persist")
     if (has_l3_contradict or has_l3_semantic or has_grounding_fail) and mode == "reject":
-        return GateResult(
-            action="reject",
-            warnings=warnings,
-            contradicting_fact_ids=contradicting_ids,
-            advice=advice or "Claim contradicted by existing memory.",
-            grounding_score=grounding_val,
-        )
+        return _mk("reject", advice_=advice or "Claim contradicted by existing memory.")
     if has_l3_contradict or has_l3_semantic or has_grounding_fail or l1_escalates:
-        return GateResult(
-            action="downgrade",
-            warnings=warnings,
-            contradicting_fact_ids=contradicting_ids,
-            advice=advice,
-            grounding_score=grounding_val,
-        )
+        return _mk("downgrade")
     if warnings:
         # L1 false positives on personal/non-dev text: keep the fact recallable, surface
         # the detectors as advisory only (no quarantine).
-        return GateResult(action="persist", warnings=warnings, advice=advice,
-                          grounding_score=grounding_val)
-    return GateResult(action="persist", grounding_score=grounding_val)
+        return _mk("persist")
+    return _mk("persist", warnings_=[])
 
 
 __all__ = [

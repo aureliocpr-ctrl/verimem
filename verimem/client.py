@@ -224,7 +224,10 @@ class Memory:
             _emit_flow("flow.write", stored=False, status="rejected",
                        fact_id="", topic=str(topic), layers=_layers)
             return {"stored": False, "status": "rejected", "warnings": warnings,
-                    "advice": gate.advice, "grounding_score": gate.grounding_score}
+                    "advice": gate.advice, "grounding_score": gate.grounding_score,
+                    "adjudication": _adjudication(
+                        gate, disposition="rejected",
+                        verified_by=verified_by, warnings=warnings)}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at)
         if action == "downgrade":
@@ -248,10 +251,15 @@ class Memory:
         # stage, not a generic box. Metadata only, never fact content.
         _emit_flow("flow.write", stored=True, status=str(fact.status),
                    fact_id=str(fact.id), topic=str(topic), layers=_hit_layers)
+        _disposition = ("quarantined" if fact.status == "quarantined"
+                        else "admitted")
         return {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
             "warnings": warnings, "advice": gate.advice,
+            "adjudication": _adjudication(
+                gate, disposition=_disposition,
+                verified_by=verified_by, warnings=warnings),
         }
 
     # ---- read --------------------------------------------------------------
@@ -1031,3 +1039,52 @@ class Memory:
 Client = Memory
 
 __all__ = ["Memory", "Client"]
+
+
+# --- adjudication receipt (Phase 0.1/0.2) --------------------------------------
+def _evidence_class(gate: Any, verified_by: Any, warnings: list) -> str:
+    """How this write was adjudicated - the HONEST tier label.
+
+    * ``cross_encoder`` / ``llm_judge`` - an L4 entailment judge scored it (the
+      local CE vs an injected llm). A probabilistic filter, NOT a proof.
+    * ``ungated`` - a source was given but no judge was reachable: entailment
+      NOT verified (never passed off as verified).
+    * ``receipt_declared`` - verified_by refs were declared but not (yet)
+      content-verified on this path.
+    * ``lexical_only`` - only the L1 lexical screen ran (no source, no judge).
+    """
+    judge = getattr(gate, "judge", None)
+    if judge is not None:
+        return "cross_encoder" if judge == "local" else "llm_judge"
+    if any(str(w.get("layer", "")).startswith("L4-skipped") for w in warnings):
+        return "ungated"
+    if verified_by:
+        return "receipt_declared"
+    return "lexical_only"
+
+
+def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
+                  warnings: list) -> dict[str, Any]:
+    """The write verdict, ALWAYS returned to the caller: what decided, how
+    confident (score/threshold/margin), and - when blocked - WHY. A quarantine
+    is a visible verdict here, never a silent exclusion."""
+    score = getattr(gate, "grounding_score", None)
+    thr = getattr(gate, "threshold", None)
+    judge = getattr(gate, "judge", None)
+    reason = ""
+    if disposition != "admitted":
+        acting = [w for w in warnings if w.get("advice") or w.get("reason")]
+        if acting:
+            reason = acting[-1].get("advice") or acting[-1].get("reason") or ""
+        reason = reason or getattr(gate, "advice", "") or ""
+    return {
+        "disposition": disposition,
+        "evidence_class": _evidence_class(gate, verified_by, warnings),
+        "judge": ({"backend": judge, "model": None, "version": None}
+                  if judge is not None else None),
+        "score": score,
+        "threshold": thr,
+        "margin": (None if score is None or thr is None
+                   else round(float(score) - float(thr), 4)),
+        "reason": reason,
+    }

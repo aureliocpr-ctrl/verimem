@@ -1,0 +1,234 @@
+{
+  "benchmark": "VeriBench/run_all",
+  "n": 10,
+  "tau": 0.8,
+  "k": 5,
+  "parts": {
+    "real_halueval": {
+      "benchmark": "VeriBench/real",
+      "corpus": "halueval_qa (heldout + unanswerable-probe, disjoint splits)",
+      "n_answerable": 10,
+      "n_unanswerable": 10,
+      "tau": 0.8,
+      "k": 5,
+      "ingest": {
+        "admitted": 10,
+        "blocked": 0,
+        "by_status": {
+          "model_claim": 10
+        }
+      },
+      "note": "no_abstention_baseline is the SAME store/retrieval with \u03c4=0 (confound-free stand-in for a no-floor memory); mem0 needs an external LLM key not used here.",
+      "systems": {
+        "verimem_abstain": {
+          "n": 20,
+          "correct": 9,
+          "wrong": 0,
+          "abstain": 11,
+          "coverage": 0.45,
+          "net": {
+            "lambda_1": 0.45,
+            "lambda_2": 0.45,
+            "lambda_5": 0.45,
+            "lambda_10": 0.45
+          },
+          "crossover_lambda": null
+        },
+        "no_abstention_baseline": {
+          "n": 20,
+          "correct": 10,
+          "wrong": 10,
+          "abstain": 0,
+          "coverage": 1.0,
+          "net": {
+            "lambda_1": 0.0,
+            "lambda_2": -0.5,
+            "lambda_5": -2.0,
+            "lambda_10": -4.5
+          },
+          "crossover_lambda": 1.0
+        },
+        "scrambled_control": {
+          "n": 20,
+          "correct": 4,
+          "wrong": 16,
+          "abstain": 0,
+          "coverage": 1.0,
+          "net": {
+            "lambda_1": -0.6,
+            "lambda_2": -1.4,
+            "lambda_5": -3.8,
+            "lambda_10": -7.8
+          },
+          "crossover_lambda": 0.25
+        }
+      }
+    },
+    "mem0_halueval": {
+      "benchmark": "VeriBench/mem0-head-to-head",
+      "corpus": "halueval_qa (heldout + unanswerable-probe)",
+      "n_answerable": 10,
+      "n_unanswerable": 10,
+      "verimem_tau": 0.8,
+      "k": 5,
+      "embedder": "intfloat/multilingual-e5-base (identical for both)",
+      "mem0": {
+        "version": "2.0.11",
+        "store": "chroma",
+        "infer": false,
+        "note": "same e5 model + query:/passage: prefixes; LLM never called (no external key); floor bolted on mem0's own score scale, 0 = as shipped."
+      },
+      "ingest": {
+        "admitted": 10,
+        "blocked": 0,
+        "by_status": {
+          "model_claim": 10
+        }
+      },
+      "systems": {
+        "verimem_tau": {
+          "n": 20,
+          "correct": 9,
+          "wrong": 0,
+          "abstain": 11,
+          "coverage": 0.45,
+          "net": {
+            "lambda_1": 0.45,
+            "lambda_2": 0.45,
+            "lambda_5": 0.45,
+            "lambda_10": 0.45
+          },
+          "crossover_lambda": null,
+          "floor": 0.8
+        },
+        "verimem_best_floor": {
+          "n": 20,
+          "correct": 9,
+          "wrong": 0,
+          "abstain": 11,
+          "coverage": 0.45,
+          "net": {
+            "lambda_1": 0.45,
+            "lambda_2": 0.45,
+            "lambda_5": 0.45,
+            "lambda_10": 0.45
+          },
+          "crossover_lambda": null,
+          "floor": 0.8
+        },
+        "mem0_as_shipped": {
+          "n": 20,
+          "correct": 10,
+          "wrong": 10,
+          "abstain": 0,
+          "coverage": 1.0,
+          "net": {
+            "lambda_1": 0.0,
+            "lambda_2": -0.5,
+            "lambda_5": -2.0,
+            "lambda_10": -4.5
+          },
+          "crossover_lambda": 1.0
+        },
+        "mem0_best_floor": {
+          "n": 20,
+          "correct": 10,
+          "wrong": 0,
+          "abstain": 10,
+          "coverage": 0.5,
+          "net": {
+            "lambda_1": 0.5,
+            "lambda_2": 0.5,
+            "lambda_5": 0.5,
+            "lambda_10": 0.5
+          },
+          "crossover_lambda": null,
+          "floor": 0.7
+        }
+      }
+    },
+    "mem0_squad_v2": {
+      "benchmark": "VeriBench/mem0-head-to-head",
+      "corpus": "squad_v2 (heldout + unanswerable-probe)",
+      "n_answerable": 10,
+      "n_unanswerable": 10,
+      "verimem_tau": 0.8,
+      "k": 5,
+      "embedder": "intfloat/multilingual-e5-base (identical for both)",
+      "mem0": {
+        "version": "2.0.11",
+        "store": "chroma",
+        "infer": false,
+        "note": "same e5 model + query:/passage: prefixes; LLM never called (no external key); floor bolted on mem0's own score scale, 0 = as shipped."
+      },
+      "ingest": {
+        "admitted": 10,
+        "blocked": 0,
+        "by_status": {
+          "model_claim": 10
+        }
+      },
+      "systems": {
+        "verimem_tau": {
+          "n": 20,
+          "correct": 10,
+          "wrong": 0,
+          "abstain": 10,
+          "coverage": 0.5,
+          "net": {
+            "lambda_1": 0.5,
+            "lambda_2": 0.5,
+            "lambda_5": 0.5,
+            "lambda_10": 0.5
+          },
+          "crossover_lambda": null,
+          "floor": 0.8
+        },
+        "verimem_best_floor": {
+          "n": 20,
+          "correct": 10,
+          "wrong": 0,
+          "abstain": 10,
+          "coverage": 0.5,
+          "net": {
+            "lambda_1": 0.5,
+            "lambda_2": 0.5,
+            "lambda_5": 0.5,
+            "lambda_10": 0.5
+          },
+          "crossover_lambda": null,
+          "floor": 0.8
+        },
+        "mem0_as_shipped": {
+          "n": 20,
+          "correct": 10,
+          "wrong": 10,
+          "abstain": 0,
+          "coverage": 1.0,
+          "net": {
+            "lambda_1": 0.0,
+            "lambda_2": -0.5,
+            "lambda_5": -2.0,
+            "lambda_10": -4.5
+          },
+          "crossover_lambda": 1.0
+        },
+        "mem0_best_floor": {
+          "n": 20,
+          "correct": 10,
+          "wrong": 0,
+          "abstain": 10,
+          "coverage": 0.5,
+          "net": {
+            "lambda_1": 0.5,
+            "lambda_2": 0.5,
+            "lambda_5": 0.5,
+            "lambda_10": 0.5
+          },
+          "crossover_lambda": null,
+          "floor": 0.7
+        }
+      }
+    }
+  }
+}

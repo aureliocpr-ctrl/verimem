@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "verimem-console",
+      "runtimeExecutable": "engram",
+      "runtimeArgs": ["console", "--port", "8378", "--no-browser", "--db", "C:/Users/aurel/AppData/Local/Temp/claude/C--Users-aurel-Desktop-ProgettiAI/3333dfc3-bc49-4030-893a-3dce8ca2c513/scratchpad/e2e-console.db"],
+      "port": 8378
+    }
+  ]
+}

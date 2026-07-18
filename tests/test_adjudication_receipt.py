@@ -23,7 +23,7 @@ class _FakeJudge:
         self._score = score
 
     def complete(self, system, messages, **kw):  # noqa: ANN001
-        return type("R", (), {"text": str(self._score)})()
+        return type("R", (), {"text": f"Score: {self._score}"})()
 
 
 def test_admitted_write_carries_judge_of_record_receipt(tmp_path, monkeypatch):
