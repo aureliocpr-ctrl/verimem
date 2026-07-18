@@ -156,6 +156,15 @@ def _verify_file_ref(ref: str, *, repo_root: Path | None) -> bool:
             return False
         p = (repo_root / p).resolve()
     else:
+        # SECURITY (opus CodeQL triage 2026-07-18, alert [20]-[23]): without a
+        # containment root an absolute ref must NOT be opened. The multi-tenant
+        # gateway builds Memory with repo_root=None, so a tenant-supplied
+        # `file:/etc/passwd:1` would otherwise (a) probe arbitrary server files
+        # and (b) forge status="verified", bypassing the moat. Refuse it exactly
+        # like the relative branch above — the `relative_to` guard below only
+        # runs when repo_root is not None, so the absolute branch needs its own.
+        if repo_root is None:
+            return False
         try:
             p = p.resolve()
         except OSError:
