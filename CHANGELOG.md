@@ -29,9 +29,27 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
   and configure `verimem mcp` with `VERIMEM_*` env names; historical audits,
   benchmark arm labels and dated documents keep their original wording (they
   describe the code as it was).
-
+- **Write gate: source-provenance rule** (vertical probe on legal/clinical/
+  cadastral/engineering/IT corpora, 2026-07-18). A write that declares a
+  `source` is no longer escalated by the L1 shape detectors — those target an
+  agent confabulating the state of ITS OWN work with no provenance, which a
+  sourced write is not. The filter of record shifts to L4 (semantic
+  source⊢fact grounding): with a judge, a confab the source does not support is
+  quarantined by L4; without a judge, the write is admitted but carries an
+  explicit `L4-skipped` advisory ("grounding not verified", never passed off as
+  verified — noting the local CE is not a reliable entailment judge on
+  non-English text). Unsourced claims are unchanged (L1 stays fail-closed).
+  Replaced a lexical "source-echo" attempt the adversarial critic broke twice
+  on subject-substitution: no lexical test binds a keyword to its subject, so
+  the honest contract is to let a real judge be the filter and flag the
+  unverified case loudly.
 
 ### Fixed
+- **Gateway `POST /v1/memories` no longer silently drops a write** with a wrong
+  field name. A body carrying neither `content` nor `messages` (e.g. `{"text":
+  "..."}`) used to default to empty and return `200 {stored:false,
+  status:"empty"}` — silent data loss. It is now a `400` that names the correct
+  fields and points at the unknown content-like key.
 - **L1 lexical screen no longer cold-loads the ML stack on a cold process's
   first write** (~32 s → 0.3 s, `7d64b91`). The L1.20 semantic self-claim
   detector reached `embedding.encode()` unconditionally, importing
