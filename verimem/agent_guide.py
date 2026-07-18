@@ -52,6 +52,7 @@ Python SDK:
 
 CLI essentials:
   verimem warmup      # pre-fetch the local models (first run)
+  verimem doctor      # diagnose the install: daemon, moat judge, offline pins
   verimem status      # health check          verimem stats   # gate odometer
   verimem index FILE  # document memory       verimem search-docs "query"
   verimem trust "claim" --verified-by ref    # would Verimem trust this?
