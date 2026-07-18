@@ -1026,28 +1026,10 @@ def _filter_tools(
     ]
 
 
-#: Onboarding for ANY agent that connects to `verimem mcp` — returned in the
-#: MCP `initialize` response (the `instructions` field), so a fresh agent learns
-#: how to use verified memory with no external docs. Orientation only; each
-#: tool's exact arguments live in its own schema.
-VERIMEM_AGENT_GUIDE = """\
-Verimem is a VERIFIED-memory server for AI agents: facts pass a grounding gate
-(the "moat") before they count as truth, so you never recall a confabulation.
-
-Orientation (each tool's exact arguments are in its own schema):
-- Store with verimem_remember; pass a `source` (or `verified_by`) when you can —
-  the moat checks the source entails the fact and QUARANTINES contradictions. A
-  quarantined fact is stored but kept OUT of default recall: you won't get it
-  back as truth.
-- Retrieve with verimem_recall / verimem_facts_search. Ask verimem_trust_report
-  HOW the store knows (a provenance dossier); on a question it cannot support it
-  ABSTAINS ("I don't know") instead of stitching a guess from weak matches.
-- Search indexed files with verimem_document_semantic_search (exact citations).
-
-Principles: gated writes, provenance on every read, abstention over hallucination.
-Prefer grounded writes. Legacy tool names use the hippo_ prefix; both work.
-"""
-
+# Onboarding for ANY agent that connects to `verimem mcp` — returned in the MCP
+# `initialize` response (`instructions`). Single source: verimem/agent_guide.py
+# (the CLI prints the same text via `verimem agent-guide`).
+from .agent_guide import VERIMEM_AGENT_GUIDE  # noqa: E402 — after module setup  # isort:skip
 
 server: Server = Server("verimem", instructions=VERIMEM_AGENT_GUIDE)
 

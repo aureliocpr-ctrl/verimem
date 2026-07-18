@@ -2758,6 +2758,15 @@ def _force_utf8_stdio() -> None:
             pass
 
 
+@app.command("agent-guide")
+def agent_guide_cmd() -> None:
+    """How ANY agent should use Verimem — the same onboarding guide the MCP
+    server hands every client on connect, plus wiring (MCP config, SDK, CLI).
+    Paste it into a system prompt / CLAUDE.md, or pipe it wherever you need."""
+    from .agent_guide import AGENT_GUIDE_FULL
+    print(AGENT_GUIDE_FULL)
+
+
 def main() -> None:
     """Console-script entry (`engram` / `hippo`): force UTF-8 stdio, then run
     the Typer app. Wrapping the app (vs pointing the entry directly at it) is
