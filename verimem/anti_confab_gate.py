@@ -836,6 +836,28 @@ def run_validation_gate(
                 "grounding_score": gscore,
             })
             advice = advice or "Source does not entail the claim (semantic grounding)."
+    elif source and _ground_on and not _have_judge:
+        # Vertical probe 2026-07-18: the silent skip hid that a fresh install
+        # (no injected llm, no local CE) admits EVERY sourced write unverified.
+        # Advisory only — never escalates — but the caller now sees it.
+        warnings.append({
+            "layer": "L4-skipped",
+            "reason": "source provided but no grounding judge is configured — "
+                      "entailment NOT verified (fail-open admit)",
+            "advice": "pass Memory(llm=...) or grounding_llm=..., or install a "
+                      "local judge, to turn the source⊢fact moat on.",
+        })
+
+    # Source-echo FP (vertical probe 2026-07-18): the L1 shape detectors judge
+    # the claim against verified_by tags only, so "Rev C (approvata il 22/05)"
+    # whose SOURCE itself states the approval was quarantined — the sourced
+    # truth hidden from recall while a fabricated claim on the same source was
+    # admitted (no judge). When every L1 hit is literally echoed by the source
+    # with agreeing negation polarity, L1 stays advisory: admission of sourced
+    # writes is L4's job. Polarity guard keeps "è stata confermata" vs a
+    # source saying "NON confermata" quarantined.
+    from .source_echo import apply_source_echo
+    _source_echo_fp = apply_source_echo(warnings, proposition, source)
 
     # Decision tree.
     has_l3_contradict = any(w.get("layer") == "L3" for w in warnings)
@@ -857,7 +879,8 @@ def run_validation_gate(
     # for personal facts — advisory only, stays recallable — but keep dev-anchored claims
     # ("The migration was completed in 2023") escalating.
     _world_fp = _is_historical_completion(proposition) and _no_dev
-    l1_escalates = has_l1 and not _personal_fp and not _world_fp
+    l1_escalates = (has_l1 and not _personal_fp and not _world_fp
+                    and not _source_echo_fp)
     if force_persist:
         # Caller demands persist; we still surface warnings.
         return GateResult(
