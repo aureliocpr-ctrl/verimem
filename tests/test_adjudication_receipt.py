@@ -77,3 +77,41 @@ def test_injection_quarantine_is_never_silent(tmp_path, monkeypatch):
     assert r["status"] == "quarantined"
     assert adj["disposition"] == "quarantined"
     assert adj["reason"]        # not empty -> not a silent verdict
+
+
+# --- block 1c: decision-dependent + score-aware reason; local judge identity ---
+from types import SimpleNamespace  # noqa: E402
+
+from verimem.client import _adjudication  # noqa: E402
+
+
+def _gate(**kw):
+    d = dict(judge=None, threshold=None, grounding_score=None, advice="")
+    d.update(kw)
+    return SimpleNamespace(**d)
+
+
+def test_local_judge_receipt_names_the_ce_model():
+    g = _gate(judge="local", threshold=40.0, grounding_score=95.0)
+    adj = _adjudication(g, disposition="admitted", verified_by=None, warnings=[])
+    assert adj["evidence_class"] == "cross_encoder"
+    assert adj["judge"]["backend"] == "local"
+    assert adj["judge"]["model"]          # names the CE model, not None
+    assert (adj["judge"] is None) == (adj["score"] is None)   # invariant
+
+
+def test_reason_synthesized_from_score_when_no_advice():
+    g = _gate(judge="local", threshold=65.0, grounding_score=61.0)
+    adj = _adjudication(g, disposition="quarantined", verified_by=None, warnings=[])
+    assert adj["reason"]
+    assert "61" in adj["reason"] and "65" in adj["reason"]
+
+
+def test_reason_prefers_blocking_layer_over_advisory_note():
+    warns = [
+        {"layer": "L1-works", "advice": "unsupported completion claim"},
+        {"layer": "L4-skipped", "advice": "run verimem warmup"},
+    ]
+    g = _gate(judge=None)
+    adj = _adjudication(g, disposition="quarantined", verified_by=None, warnings=warns)
+    assert "completion" in adj["reason"].lower()   # the block, not the advisory

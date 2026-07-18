@@ -1063,32 +1063,82 @@ def _evidence_class(gate: Any, verified_by: Any, warnings: list) -> str:
     return "lexical_only"
 
 
+#: Which blocking layer OWNS the verdict, most-decisive first. The reason is
+#: taken from the highest-priority layer that actually fired - decision-dependent,
+#: NOT the last-appended warning (which can be an advisory L4-skipped note that
+#: masks the real block). L4-skipped/SOURCE_TRUST are advisory-most, last.
+_BLOCK_LAYER_PRIORITY = ("L3", "L4-grounding", "L1", "SOURCE_TRUST", "L4-skipped")
+
+
+def _reason_from_warnings(warnings: list) -> str:
+    """The human reason for a block, from the highest-priority BLOCKING layer
+    that carries text - so a fact quarantined by L1 is not explained by an
+    advisory L4-skipped note that merely happened to be appended later."""
+    def _rank(w: dict) -> int:
+        layer = str(w.get("layer", ""))
+        for i, p in enumerate(_BLOCK_LAYER_PRIORITY):
+            if layer.startswith(p):
+                return i
+        return len(_BLOCK_LAYER_PRIORITY)
+    acting = [w for w in warnings if w.get("advice") or w.get("reason")]
+    if not acting:
+        return ""
+    best = min(acting, key=_rank)
+    return best.get("advice") or best.get("reason") or ""
+
+
+def _judge_of_record_dict(judge: Any) -> dict[str, Any] | None:
+    """Judge-of-record: backend + (for the local CE) the model identity that
+    actually loaded - the CE's known 7% Spanish entity-substitution escape is
+    model-SPECIFIC, so naming the model lets a caller assess exposure. The
+    injected-llm model id is not visible at the gate layer (None, honest, not
+    invented); ``version`` is a per-file fingerprint enriched in a follow-up."""
+    if judge is None:
+        return None
+    model = None
+    if judge == "local":
+        try:
+            from .local_grounding import get_local_judge
+            model = get_local_judge().model_dir.name
+        except Exception:  # noqa: BLE001 - identity is best-effort, never fatal
+            model = "local_gate_ce"
+    return {"backend": judge, "model": model, "version": None}
+
+
 def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
                   warnings: list) -> dict[str, Any]:
     """The write verdict, ALWAYS returned to the caller: what decided, how
     confident (score/threshold/margin), and - when blocked - WHY. A quarantine
-    is a visible verdict here, never a silent exclusion."""
+    is a visible verdict here, never a silent exclusion.
+
+    NB ``margin = score - threshold`` is INTRA-JUDGE only: the local-CE and the
+    llm judge use different score scales (threshold is resolved per-judge at
+    decision time), so margins are NOT comparable across ``evidence_class``
+    values. ``judge.backend`` distinguishes them. A judge-agnostic
+    ``confidence_tier`` is the follow-up. ``evidence_class`` reports the single
+    STRONGEST evidence actually exercised (a judge score outranks a declared
+    receipt); it is not a full evidence list."""
     score = getattr(gate, "grounding_score", None)
     thr = getattr(gate, "threshold", None)
     judge = getattr(gate, "judge", None)
     reason = ""
     if disposition != "admitted":
-        acting = [w for w in warnings if w.get("advice") or w.get("reason")]
-        if acting:
-            reason = acting[-1].get("advice") or acting[-1].get("reason") or ""
-        reason = reason or getattr(gate, "advice", "") or ""
+        # 1) the deciding layer's own words; 2) the gate's advice; 3) synthesize
+        # from the numbers; 4) a generic non-empty verdict. Never empty.
+        reason = _reason_from_warnings(warnings) or (getattr(gate, "advice", "") or "")
         if not reason:
-            # a store-time screen (e.g. injection) can quarantine WITHOUT a gate
-            # warning; never emit a silent verdict - state it generically.
-            reason = ("quarantined by a store-time integrity screen "
-                      "(e.g. prompt-injection); kept out of default recall"
-                      if disposition == "quarantined"
-                      else "rejected by the write gate")
+            if score is not None and thr is not None:
+                tier = "cross_encoder" if judge == "local" else "judge"
+                reason = f"{tier} score {score:g} below threshold {thr:g}"
+            elif disposition == "quarantined":
+                reason = ("quarantined by a store-time integrity screen "
+                          "(e.g. prompt-injection); kept out of default recall")
+            else:
+                reason = "rejected by the write gate"
     return {
         "disposition": disposition,
         "evidence_class": _evidence_class(gate, verified_by, warnings),
-        "judge": ({"backend": judge, "model": None, "version": None}
-                  if judge is not None else None),
+        "judge": _judge_of_record_dict(judge),
         "score": score,
         "threshold": thr,
         "margin": (None if score is None or thr is None
