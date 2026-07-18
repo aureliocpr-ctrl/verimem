@@ -174,11 +174,15 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
     else:
         hits = sm.recall(query or "", k=k, deep=deep)
     floored = False
-    # CE relevance gate (opt-in via explain when abstention is requested): the
-    # reliable, store-size-independent floor — drops off-topic hits the bi-encoder
-    # cosine cannot. When the CE actually ran it is AUTHORITATIVE (it REPLACES the
-    # bi-encoder min_relevance floor, which is the unreliable one it fixes); the
-    # bi-encoder floor stays only as the fallback when no reranker is installed.
+    # Abstention floor. ``ce_gate`` is set ONLY when the caller asked for the
+    # "auto" floor (delegate the decision to the store): there we prefer the CROSS-
+    # ENCODER, which discriminates on-/off-topic store-size-independently — the
+    # bi-encoder auto floor is unreliable on a near-empty store (collapses to 0.0
+    # and leaks, or over-shoots and over-abstains). An EXPLICIT ``min_relevance``
+    # float is the user's own choice and is honored as the bi-encoder floor
+    # (unchanged; ``test_abstains_matches_explain`` and the HaluEval curve rely on
+    # it). If the reranker isn't installed, "auto" falls back to the resolved
+    # bi-encoder value.
     ce_ran = False
     if ce_gate:
         hits, ce_floored, ce_ran = _apply_ce_gate(sm, query, hits)
