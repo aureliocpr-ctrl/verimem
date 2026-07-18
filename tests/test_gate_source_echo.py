@@ -111,6 +111,60 @@ def test_unsourced_behaviour_unchanged():
     )
 
 
+# ── Adversarial: subject-substitution (critic counterexample, 2026-07-18) ──
+# The keyword echoes the source but is bound to a DIFFERENT subject; the source
+# actually contradicts the claim. Bare-keyword echo must NOT disarm — the L1
+# quarantine (pre-fix behaviour) must survive. The distinguishing signal used
+# by the fix: legitimate documental ingest shares a HIGH-SPECIFICITY anchor
+# (date / id / number) between claim and source; a subject swap that recombines
+# words does not.
+
+SOURCE_MODULES = (
+    "Verbale comitato: il modulo di autenticazione è stato approvato. "
+    "Il modulo di pagamento resta in revisione."
+)
+
+
+def test_subject_substitution_without_anchor_stays_quarantined():
+    """The exact critic counterexample: 'pagamento approvato' while the source
+    says pagamento is 'in revisione' and only *autenticazione* was approved.
+    No shared date/id/number anchor → must NOT be disarmed."""
+    r = _gate(
+        "Il modulo di pagamento è stato approvato dal comitato.",
+        source=SOURCE_MODULES,
+    )
+    assert r.action != "persist", (
+        f"subject-substitution confab (no shared anchor) must stay gated, "
+        f"got {r.action} with warnings {r.warnings}"
+    )
+
+
+def test_subject_substitution_even_with_unrelated_number_stays_quarantined():
+    """A number present in the claim but ABSENT from the source (so not a
+    shared anchor) must not rescue the confab."""
+    r = _gate(
+        "Il modulo di pagamento è stato approvato dal comitato il 99/99/9999.",
+        source=SOURCE_MODULES,
+    )
+    assert r.action != "persist", (
+        f"confab with a non-shared number must stay gated, got {r.action}"
+    )
+
+
+def test_faithful_paraphrase_with_shared_anchor_still_persists():
+    """Guard the FP fix is not over-corrected: a faithful sourced paraphrase
+    that DOES share the anchor (the approval date) stays admitted."""
+    r = _gate(
+        "Il modulo di autenticazione è stato approvato il 22/05/2026.",
+        source="Verbale comitato del 22/05/2026: il modulo di autenticazione "
+               "è stato approvato dal responsabile.",
+    )
+    assert r.action == "persist", (
+        f"faithful sourced paraphrase with shared date anchor must persist, "
+        f"got {r.action} with warnings {r.warnings}"
+    )
+
+
 def test_no_judge_sourced_write_carries_explicit_l4_skip_warning():
     """FIX-B1: a sourced write evaluated WITHOUT any grounding judge must say
     so out loud (advisory warning), not silently skip the moat."""
