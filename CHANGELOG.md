@@ -1,8 +1,31 @@
 # Changelog
 
-All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.6.0] - Unreleased
+
+### Added
+- **Agent onboarding, protocol-native.** Every MCP client that connects to
+  `verimem mcp` now receives a usage guide in the `initialize` response (the
+  standard `instructions` field): what the moat is, the core tools
+  (`verimem_remember` / `verimem_recall` / `verimem_trust_report` /
+  `verimem_document_semantic_search`), and the guarantees (gated writes,
+  provenance, abstention). A fresh agent learns Verimem with zero external docs.
+- **`verimem agent-guide`** prints the same guide plus wiring (the exact
+  `.mcp.json` block, the SDK 4-liner, CLI essentials) — paste-able into any
+  system prompt or CLAUDE.md. Single-sourced from `verimem/agent_guide.py`
+  (tests pin MCP == CLI so the two can never drift).
+
+### Changed (CLI)
+- **Product CLI slimmed: agent-runtime moved under `verimem agent <cmd>`.**
+  11 top-level commands (chat, code, run, wake, sleep, sleep-now, benchmark,
+  tui + the swarm/teams/lab groups) were agent-runtime noise for a memory
+  product; `verimem --help` now shows verified memory (mcp, trust, index,
+  search-docs, console, airgap, stats, ...). The old top-level spellings still
+  work — hidden, not removed — so no 0.5.x script breaks.
+- **Help-text cleanup:** removed internal dev jargon and legacy branding from
+  user-facing `--help` (`FORGIA #186`, "Live Engine Room", "would Engram trust
+  this claim"); guard test keeps them out.
 
 ### Changed (behavior) — BREAKING for judge-less users
 - **The grounding moat is now ON out-of-the-box, with no llm, in any language.**
