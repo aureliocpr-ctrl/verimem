@@ -1572,7 +1572,7 @@ class FallbackLLM:
 
 def get_llm(use_mock: bool | None = None):
     """Return an LLM client. Selection order:
-    1. HIPPO_OFFLINE=1 or use_mock=True → MockLLM
+    1. VERIMEM_OFFLINE=1 / HIPPO_OFFLINE=1 or use_mock=True → MockLLM
     2. HIPPO_LLM_PROVIDER env → forced provider (with alias support)
     3. autodetect by available API keys / Ollama
     """
@@ -1592,8 +1592,9 @@ def get_llm(use_mock: bool | None = None):
                 "run Ollama on localhost:11434."
             )
         return _build(provider)
-    if os.environ.get("HIPPO_OFFLINE") == "1":
-        log.warning("llm_using_mock", reason="HIPPO_OFFLINE=1")
+    if os.environ.get("VERIMEM_OFFLINE") == "1" or os.environ.get("HIPPO_OFFLINE") == "1":
+        _reason = "VERIMEM_OFFLINE=1" if os.environ.get("VERIMEM_OFFLINE") == "1" else "HIPPO_OFFLINE=1"
+        log.warning("llm_using_mock", reason=_reason)
         return MockLLM()
     forced = os.environ.get("HIPPO_LLM_PROVIDER", "").strip()
     provider = _canonical(forced) if forced else _autodetect_provider()

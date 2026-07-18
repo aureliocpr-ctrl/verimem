@@ -255,7 +255,7 @@ def warmup(
         console.print(f"[red]✗ model warm failed:[/] {type(exc).__name__}: {exc}")
         console.print(
             "  Most common cause: running offline with the model not cached. "
-            "Unset HIPPO_OFFLINE / HF_HUB_OFFLINE / TRANSFORMERS_OFFLINE and retry "
+            "Unset VERIMEM_OFFLINE / HIPPO_OFFLINE / HF_HUB_OFFLINE / TRANSFORMERS_OFFLINE and retry "
             "online so the weights can download once."
         )
         raise typer.Exit(code=1) from None
@@ -323,7 +323,7 @@ def airgap(
         verdict = ("[green]ZERO EGRESS ✓[/green]" if rep["air_gapped"]
                    else "[red]EGRESS DETECTED ✗[/red]")
         lines = [
-            f"[bold]Engram live no-egress probe[/bold]   {verdict}",
+            f"[bold]Verimem live no-egress probe[/bold]   {verdict}",
             f"  socket.connect observed: {rep['connects_total']}",
             f"  non-loopback egress:     {len(rep['egress'])}",
         ]
@@ -341,7 +341,7 @@ def airgap(
         else "[red]NOT air-gapped ✗[/red]"
     )
     lines = [
-        f"[bold]Engram air-gap self-check[/bold]   {verdict}",
+        f"[bold]Verimem air-gap self-check[/bold]   {verdict}",
         f"  LLM:         provider={st['llm']['provider']}  local={st['llm']['local']}",
         f"               {st['llm']['reason']}",
         f"  embeddings:  offline_pinned={st['embeddings']['offline_pinned']}",
@@ -2592,7 +2592,7 @@ def facts_requalify_quarantined(
 # orchestrator (verimem.consolidation). Three sub-commands:
 #
 #   engram consolidate dry-run   detect clusters + propose masters (no write)
-#   engram consolidate apply     persist master Episode+Fact+causal edges
+#   verimem consolidate apply     persist master Episode+Fact+causal edges
 #   engram consolidate status    count existing AUTO-CLUSTER-MASTER facts
 #
 # All three honour HIPPO_DATA_DIR / ENGRAM_DATA_DIR via ``_facts_data_dir``
@@ -2665,7 +2665,7 @@ def consolidate_dry_run(
     console.print(table)
     console.print(
         f"[dim]dry-run: {len(clusters)} master(s) WOULD be persisted "
-        f"on `engram consolidate apply`. No write performed.[/dim]"
+        f"on `verimem consolidate apply`. No write performed.[/dim]"
     )
 
 
