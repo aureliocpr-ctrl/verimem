@@ -21,11 +21,13 @@ honest *"I don't know."*
   a low-trust claim and must be backed by evidence to gain status. The
   **source⊢fact grounding gate** (the moat, judge AUROC **0.96–0.97**) runs by
   default: an extraction confabulation the source doesn't entail is quarantined,
-  not absorbed. A `Memory(llm=...)` uses that llm as the judge (best quality); the
-  conversation-ingest path uses the free local cross-encoder (AUROC ~1.0 on
-  extraction confabs, no per-fact LLM call). With no judge configured the gate
-  fail-opens (admits) — it never blocks a user who has none. Contradiction
-  screening runs with the `strict` preset. Opt-in
+  not absorbed. It works **with no llm and in any language**: the free local
+  cross-encoder is the default judge (multilingual — measured EN/IT/FR/ES, it
+  separates entailments ~97–99 from confabs ~0.6 — no per-fact LLM call). A
+  `Memory(llm=...)` uses that llm as the judge instead (highest quality). Only
+  when neither an llm nor the local model is present does the gate fail-open
+  (admit) — it never blocks a user who has neither, and says so on the write.
+  Contradiction screening runs with the `strict` preset. Opt-in
   origin tagging (`tag_beliefs=True` at ingest) additionally classes an
   unverified user assertion as `user_belief`: stored, but out of default
   recall until you ask for it (`search(..., include_beliefs=True)`).
@@ -116,24 +118,31 @@ from datetime import datetime
 
 from verimem import Memory
 
-m = Memory("memory.db", llm=my_llm)   # any client with .complete(system, messages)
+# No llm needed for the moat. The first run downloads a small (~0.4 GB)
+# multilingual cross-encoder judge — or pre-fetch it with `verimem warmup`.
+m = Memory("memory.db")
 
-# Gate presets: "balanced" (default), "strict" (reject on contradiction or
-# failed source-grounding — needs a grounding judge), "permissive" (creative /
-# low-stakes contexts, no quarantine). Per-call args always override.
-m = Memory("memory.db", preset="strict", grounding_llm=my_llm)
-
-# Store a conversation — facts are extracted atomically and pass the gate.
-# user_name makes the app-provided identity the subject of the facts.
-m.add([{"role": "user", "content": "I moved to Berlin in March."}],
-      user_name="Alice")
-
-# THE MOAT, live — the reason Verimem exists. Same source, two writes:
+# THE MOAT, live — the reason Verimem exists. Same source, two writes; works
+# out of the box, in any language, with NO llm (the local CE is the judge):
 src = "We migrated the analytics store to Postgres last quarter."
 m.add("Analytics runs on Postgres.", source=src)   # entailed  -> admitted
 r = m.add("Analytics runs on MongoDB.", source=src)  # confab -> QUARANTINED
 assert r["status"] == "quarantined"   # stored but OUT of default recall —
                                       # your agent will never repeat it as truth
+
+# Pass an llm for the highest-quality judge (and to extract facts from raw
+# conversations); the local CE is the free default when you don't.
+m = Memory("memory.db", llm=my_llm)   # any client with .complete(system, messages)
+
+# Gate presets: "balanced" (default), "strict" (reject on contradiction or
+# failed source-grounding), "permissive" (creative / low-stakes, no quarantine).
+m = Memory("memory.db", preset="strict", grounding_llm=my_llm)
+
+# Store a conversation — facts are extracted atomically and pass the gate.
+# Extraction from raw dialogue needs the llm; user_name makes the app-provided
+# identity the subject of the facts.
+m.add([{"role": "user", "content": "I moved to Berlin in March."}],
+      user_name="Alice")
 
 # Store a single verified fact (no LLM needed)
 m.add("Deploy pipeline is green", verified_by=["ci:main:green"])

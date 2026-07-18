@@ -169,6 +169,23 @@ def get_local_threshold() -> float | None:
     return get_local_judge().threshold
 
 
+def local_ce_available() -> bool:
+    """True when the local CE moat judge can score WITHOUT an injected llm — an
+    injected scorer (tests) or a model dir present on disk. Cheap by design:
+    it NEVER loads the model, so the gate can ask "is there a judge?" on the hot
+    write path without paying the cold-start. Used to turn the entailment moat ON
+    by default for a user who passed no llm (the CE is multilingual)."""
+    j = get_local_judge()
+    if getattr(j, "_scorer", None) is not None:
+        return True
+    if getattr(j, "_load_failed", False):
+        return False
+    try:
+        return j.model_dir.exists()
+    except OSError:
+        return False
+
+
 _warned_fallback = False
 
 
@@ -197,4 +214,4 @@ def try_local_score(source: str, fact: str, *,
 
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
-           "try_local_score", "DEFAULT_MODEL_DIR"]
+           "try_local_score", "local_ce_available", "DEFAULT_MODEL_DIR"]

@@ -818,15 +818,31 @@ def run_validation_gate(
     # None falls back to the env. The local CE backend needs no injected llm,
     # so a local judge OR an injected llm satisfies the "have a judge" arm.
     from .grounding_gate import _resolve_backend
+    from .local_grounding import local_ce_available
     _ground_on = _grounding_write_on() if ground_write is None else bool(ground_write)
-    _have_judge = grounding_llm is not None or _resolve_backend() == "local"
+    # The moat has a judge when: an llm was injected, the backend is explicitly
+    # 'local', OR (2026-07-18) no llm but the multilingual local CE is on disk —
+    # so a brand-new user with no llm gets the moat ON by default instead of a
+    # silent fail-open. The CE is multilingual (measured EN/IT/FR/ES), so this is
+    # NOT English-only. If the CE isn't present either, fall through to the honest
+    # L4-skipped advisory below.
+    _have_judge = (grounding_llm is not None
+                   or _resolve_backend() == "local"
+                   or local_ce_available())
     if source and _ground_on and _have_judge:
         # score and cut resolved for the SAME judge (local CE vs claude scales differ —
-        # the 2026-07-02 critic caught the calibrated cut not reaching this L4 site)
+        # the 2026-07-02 critic caught the calibrated cut not reaching this L4 site).
+        # A missing/broken CE at score-time must never crash a write — fail-open.
         from .grounding_gate import fact_grounding_score_ex, resolve_write_threshold_for
-        gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
-        grounding_val = float(gscore)  # persist the score even when it PASSES (no longer discarded)
-        if gscore < resolve_write_threshold_for(_judge_used):
+        try:
+            gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
+        except Exception:  # noqa: BLE001 — no judge reachable -> skip L4, admit honestly
+            gscore, _judge_used = None, None
+        if gscore is None:
+            _have_judge = False  # nothing scored -> fall to the L4-skipped advisory
+        else:
+            grounding_val = float(gscore)  # persist the score even when it PASSES
+        if gscore is not None and gscore < resolve_write_threshold_for(_judge_used):
             warnings.append({
                 "layer": "L4-grounding",
                 "reason": f"source does not entail the proposition "
@@ -837,19 +853,22 @@ def run_validation_gate(
             })
             advice = advice or "Source does not entail the claim (semantic grounding)."
     elif source and not _have_judge:
-        # Vertical probe 2026-07-18: a sourced write evaluated WITHOUT a
-        # grounding judge (fresh install, or the local CE unavailable) is NOT
-        # entailment-verified. Say so out loud - never a silent skip. The write
-        # is still ADMITTED (see the source-provenance rule below) but its
+        # A sourced write evaluated WITHOUT any grounding judge — neither an
+        # injected llm NOR the local CE on disk (the model was never downloaded) —
+        # is NOT entailment-verified. Say so out loud, never a silent skip. The
+        # write is still ADMITTED (see the source-provenance rule below) but its
         # provenance carries this advisory: recallable, honestly labelled
-        # "grounding not verified", never passed off as verified.
+        # "grounding not verified", never passed off as verified. (2026-07-18: the
+        # CE is now the default judge when present and is multilingual — measured
+        # EN/IT/FR/ES — so this fires only when the CE model is genuinely absent.)
         warnings.append({
             "layer": "L4-skipped",
-            "reason": "source provided but no grounding judge is configured - "
+            "reason": "source provided but no grounding judge is available - "
                       "entailment NOT verified",
-            "advice": "pass Memory(llm=...) or grounding_llm=... (an LLM judge) "
-                      "to turn the source-entailment moat on. The local CE backend "
-                      "is not a reliable entailment judge on non-English text.",
+            "advice": "the local grounding model is not installed and no llm was "
+                      "passed. Run `verimem warmup` to fetch the free multilingual "
+                      "CE judge, or pass Memory(llm=...) — either turns the "
+                      "source-entailment moat on.",
         })
 
     # Decision tree.

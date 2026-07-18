@@ -302,7 +302,12 @@ def fact_grounding_score_ex(llm: Any, source: str, fact: str, *,
     ``resolve_write_threshold_for(backend_used)`` (the 2026-07-02 critic finding: the
     production L4 gate compared local-scale scores against the claude-scale 40)."""
     backend = _resolve_backend()
-    if backend == "local":
+    # The moat runs off the free local CE when it's the configured backend OR
+    # when no llm judge was injected (2026-07-18): a brand-new user with no llm
+    # still gets the entailment moat — the CE is multilingual (measured EN/IT/FR/ES,
+    # entailed ~97-99 vs confab ~0.6) — instead of the gate fail-opening. An
+    # injected llm still wins on the default "claude" backend.
+    if backend == "local" or (backend == "claude" and llm is None):
         from verimem.local_grounding import try_local_score
         r = try_local_score(source, fact, focus_budget=focus_budget)
         if r is not None:
@@ -339,16 +344,27 @@ def resolve_write_threshold_for(backend_used: str) -> float:
         return _resolve_write_threshold()
     from verimem.local_grounding import get_local_threshold
     t = get_local_threshold()
-    if t is not None:
+    # SANITY CAP (2026-07-18): the shipped local_gate_ce_v2 model carries a
+    # gate_config threshold of 99.64 — the max-F1 cut on its fine-tune VAL set
+    # (HaluMem, scores compressed near 1.0), NOT a usable moat cut. On real
+    # source⊢fact pairs the CE scores entailments at ~97-99 and confabs at ~0.6
+    # in EN/IT/FR/ES alike (measured), so a 99.64 cut quarantines TRUE facts
+    # (Postgres 99.57 rejected by 0.07) and made the moat look "English-only".
+    # A moat admission cut above ~90/100 is a calibration artifact, never a real
+    # operating point: ignore it and fall back to the write-gate default, whose
+    # scale the CE's 0-100 output matches. A sanely-calibrated model (t ≤ 90)
+    # is still honoured. Env override always wins (handled above).
+    if t is not None and t <= 90.0:
         return float(t)
     global _warned_uncalibrated
     if not _warned_uncalibrated:
         _warned_uncalibrated = True
         import warnings
+        _why = ("ships no gate_config.json threshold" if t is None
+                else f"ships an unusable cut ({t:.1f} > 90, a val-set F1 artifact)")
         warnings.warn(
-            "local grounding judge scored but its model dir ships no gate_config.json "
-            "threshold — admission is uncalibrated (claude-scale default "
-            f"{WRITE_DEFAULT_THRESHOLD} applied to a CE-scale score)",
+            f"local grounding judge {_why} — using the write-gate default "
+            f"{_resolve_write_threshold():.0f} (the CE's 0-100 scale matches it)",
             RuntimeWarning, stacklevel=2)
     return _resolve_write_threshold()
 
