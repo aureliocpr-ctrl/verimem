@@ -836,28 +836,34 @@ def run_validation_gate(
                 "grounding_score": gscore,
             })
             advice = advice or "Source does not entail the claim (semantic grounding)."
-    elif source and _ground_on and not _have_judge:
-        # Vertical probe 2026-07-18: the silent skip hid that a fresh install
-        # (no injected llm, no local CE) admits EVERY sourced write unverified.
-        # Advisory only — never escalates — but the caller now sees it.
+    elif source and not _have_judge:
+        # Vertical probe 2026-07-18: a sourced write evaluated WITHOUT a
+        # grounding judge (fresh install, or the local CE unavailable) is NOT
+        # entailment-verified. Say so out loud — never a silent skip. The write
+        # is still ADMITTED (see the source-provenance rule below) but its
+        # provenance carries this advisory: recallable, honestly labelled
+        # "grounding not verified", never passed off as verified.
         warnings.append({
             "layer": "L4-skipped",
             "reason": "source provided but no grounding judge is configured — "
-                      "entailment NOT verified (fail-open admit)",
-            "advice": "pass Memory(llm=...) or grounding_llm=..., or install a "
-                      "local judge, to turn the source⊢fact moat on.",
+                      "entailment NOT verified",
+            "advice": "pass Memory(llm=...) or grounding_llm=... (an LLM judge) "
+                      "to turn the source⊢fact moat on. The local CE backend is "
+                      "not a reliable entailment judge on non-English text.",
         })
 
-    # Source-echo FP (vertical probe 2026-07-18): the L1 shape detectors judge
-    # the claim against verified_by tags only, so "Rev C (approvata il 22/05)"
-    # whose SOURCE itself states the approval was quarantined — the sourced
-    # truth hidden from recall while a fabricated claim on the same source was
-    # admitted (no judge). When every L1 hit is literally echoed by the source
-    # with agreeing negation polarity, L1 stays advisory: admission of sourced
-    # writes is L4's job. Polarity guard keeps "è stata confermata" vs a
-    # source saying "NON confermata" quarantined.
-    from .source_echo import apply_source_echo
-    _source_echo_fp = apply_source_echo(warnings, proposition, source)
+    # SOURCE-PROVENANCE rule (vertical probe 2026-07-18, replaces the withdrawn
+    # lexical source-echo heuristic — twice broken by the adversarial critic on
+    # subject-substitution, and the local CE scores an IT confab 99.9/100 so it
+    # cannot rescue it either). The L1.x detectors target an AGENT confabulating
+    # the state of ITS OWN work with NO provenance ("shipped/approved/tested").
+    # A write that DECLARES a `source` is a different act: provenance is on the
+    # record, so the filter of record shifts from L1 (shape) to L4 (grounding).
+    # Therefore a sourced write is not L1-escalated; when a judge is present L4
+    # decides entailment (quarantining a confab), and when it is absent the
+    # L4-skipped advisory above makes the unverified status explicit. Unsourced
+    # claims are unchanged — L1 still fail-closed quarantines them.
+    _sourced = bool(source)
 
     # Decision tree.
     has_l3_contradict = any(w.get("layer") == "L3" for w in warnings)
@@ -879,8 +885,11 @@ def run_validation_gate(
     # for personal facts — advisory only, stays recallable — but keep dev-anchored claims
     # ("The migration was completed in 2023") escalating.
     _world_fp = _is_historical_completion(proposition) and _no_dev
+    # A declared source shifts the filter of record from L1 (shape) to L4
+    # (grounding) — see the SOURCE-PROVENANCE rule above. L1 does not escalate a
+    # sourced write; L3/L4 (semantic) still do. Unsourced claims: unchanged.
     l1_escalates = (has_l1 and not _personal_fp and not _world_fp
-                    and not _source_echo_fp)
+                    and not _sourced)
     if force_persist:
         # Caller demands persist; we still surface warnings.
         return GateResult(
