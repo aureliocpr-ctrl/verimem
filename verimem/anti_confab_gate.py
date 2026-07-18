@@ -850,14 +850,16 @@ def run_validation_gate(
     if source and _ground_on and _have_judge:
         # score and cut resolved for the SAME judge (local CE vs claude scales differ —
         # the 2026-07-02 critic caught the calibrated cut not reaching this L4 site).
-        from .grounding_gate import fact_grounding_score_ex, resolve_write_threshold_for
+        from .grounding_gate import (
+            NoGroundingJudge, fact_grounding_score_ex, resolve_write_threshold_for)
         try:
             gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
-        except (FileNotFoundError, OSError, ImportError, RuntimeError):
-            # ONLY a missing / unloadable local model is tolerated here (a judge
-            # advertised as present that turns out unreachable). Any OTHER
-            # exception is a real bug — it MUST propagate, never be laundered into
-            # a silent admission (opus review 2026-07-18, blocking finding D).
+        except (FileNotFoundError, OSError, ImportError, NoGroundingJudge):
+            # ONLY "the judge isn't really reachable" is tolerated here (missing /
+            # unloadable model). A DEDICATED NoGroundingJudge — not the whole
+            # RuntimeError family — so a real ML fault (torch shape mismatch, CUDA
+            # OOM: also RuntimeError) PROPAGATES instead of being laundered into a
+            # silent admission (opus review 2026-07-18, findings D + B).
             gscore, _judge_used = None, None
         if gscore is None:
             # The CE was advertised present but could not score → treat as "no

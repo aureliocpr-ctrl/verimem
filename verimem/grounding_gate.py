@@ -55,6 +55,15 @@ DEFAULT_THRESHOLD = 85.0
 # Override with ENGRAM_GROUNDING_WRITE_THRESHOLD.
 WRITE_DEFAULT_THRESHOLD = 70.0
 
+
+class NoGroundingJudge(RuntimeError):
+    """Raised when NO grounding judge could score a write — no llm injected AND
+    the local CE could not run (model missing/unloadable). A DEDICATED class so
+    the write-gate catches exactly this (→ honest L4-skipped advisory) and lets a
+    real ML fault (torch/transformers RuntimeError: shape mismatch, CUDA OOM,
+    tensor error) propagate instead of laundering it into 'no judge'. (opus
+    re-review 2026-07-18, finding B.)"""
+
 # The validated admission cut for the LOCAL cross-encoder moat judge, shared by
 # BOTH moat paths (direct write + conversation-ingest) on the SAME CE. Empirical
 # (n=90): recall 0.87 at 40, collapsing at higher cuts; the CE scores real
@@ -328,10 +337,11 @@ def fact_grounding_score_ex(llm: Any, source: str, fact: str, *,
             return min(100.0, max(0.0, float(s))), "interactive"
     if llm is None:
         # No llm AND the local CE could not score (backend local/claude-no-llm
-        # fell through above). Do NOT call llm.complete(None) — raise a clear,
+        # fell through above). Do NOT call llm.complete(None) — raise a DEDICATED,
         # catchable signal so the write-gate emits the honest L4-skipped advisory
-        # instead of crashing (opus review 2026-07-18).
-        raise RuntimeError(
+        # instead of crashing, while a real ML fault still propagates (opus review
+        # 2026-07-18, findings from both rounds).
+        raise NoGroundingJudge(
             "no grounding judge available: no llm injected and the local CE "
             "could not score (model missing or unloadable)")
     if focus_budget and source and len(source) > focus_budget:

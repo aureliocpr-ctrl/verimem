@@ -27,6 +27,11 @@ honest *"I don't know."*
   `Memory(llm=...)` uses that llm as the judge instead (highest quality). Only
   when neither an llm nor the local model is present does the gate fail-open
   (admit) — it never blocks a user who has neither, and says so on the write.
+  **Honest scope of the CE-only judge:** it catches *contradictions* and
+  off-topic confabs (MongoDB vs a Postgres source) reliably, but a *plausible
+  added inference the source never states* (e.g. "…which reduced latency") scores
+  high and is admitted — closing that needs an injected llm judge. The moat is
+  strongest with an llm; the free CE is the no-setup multilingual default.
   Contradiction screening runs with the `strict` preset. Opt-in
   origin tagging (`tag_beliefs=True` at ingest) additionally classes an
   unverified user assertion as `user_belief`: stored, but out of default

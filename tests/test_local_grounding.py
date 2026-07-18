@@ -171,6 +171,11 @@ def test_local_without_gate_config_warns_and_uses_default(tmp_path, monkeypatch)
     opus review 2026-07-18 aligned the two paths on one CE)."""
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(tmp_path))  # no gate_config.json
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
+    # `_warned_uncalibrated` is a once-per-process flag: another test running the
+    # real CE (t>90) may have already consumed the warning, so reset it here or
+    # `pytest.warns` sees nothing and this goes red order-dependently (opus
+    # re-review 2026-07-18, blocking finding E). Restored automatically by monkeypatch.
+    monkeypatch.setattr("verimem.grounding_gate._warned_uncalibrated", False)
     set_local_judge(LocalGroundingJudge(model_dir=tmp_path,
                                         scorer=lambda b: [75.0] * len(b)))
     with pytest.warns(RuntimeWarning, match="local CE moat cut"):

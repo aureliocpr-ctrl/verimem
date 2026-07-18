@@ -54,12 +54,13 @@ def test_broken_ce_at_score_time_admits_WITH_advisory_never_silently(monkeypatch
     L4-skipped advisory — never a silent fail-open. This pins the exact hole the
     first fix left (dead `elif`)."""
     import verimem.anti_confab_gate as gate
+    from verimem.grounding_gate import NoGroundingJudge
     # both are imported INSIDE run_validation_gate, so patch them at their source
     # module (the local import resolves the current attribute at call time).
     monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: True)
 
     def _boom(*a, **k):
-        raise RuntimeError("simulated CE unloadable at score-time")
+        raise NoGroundingJudge("simulated CE unloadable at score-time")
     monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex", _boom)
 
     r = gate.run_validation_gate(
@@ -72,6 +73,29 @@ def test_broken_ce_at_score_time_admits_WITH_advisory_never_silently(monkeypatch
     assert skips, f"broken CE must leave an L4-skipped advisory, not silence: {r.warnings}"
 
 
+def test_a_real_ml_fault_propagates_not_laundered_as_no_judge(monkeypatch):
+    """opus re-review 2026-07-18, finding B: a genuine ML fault (torch/transformers
+    raise plain RuntimeError for shape mismatch / CUDA OOM) must PROPAGATE, never
+    be swallowed into 'no judge → admit'. Only the dedicated NoGroundingJudge is
+    tolerated."""
+    import pytest
+
+    import verimem.anti_confab_gate as gate
+    monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: True)
+
+    def _real_bug(*a, **k):
+        raise RuntimeError("CUDA error: device-side assert triggered")  # a REAL fault
+    monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex", _real_bug)
+
+    with pytest.raises(RuntimeError, match="CUDA"):
+        gate.run_validation_gate(
+            proposition="Analytics runs on Postgres.",
+            verified_by=None, topic=None, agent=None,
+            source="We migrated analytics to Postgres last quarter.",
+            ground_write=True,
+        )
+
+
 def test_unrelated_confab_is_quarantined_without_llm():
     # a confab on a DIFFERENT subject than the source (not just the grossest
     # Postgres/MongoDB swap) must still be caught by the CE at cut 40.
@@ -79,3 +103,22 @@ def test_unrelated_confab_is_quarantined_without_llm():
     src = "The maintenance window is scheduled for Saturday at 02:00 UTC."
     bad = m.add("All customer passwords were rotated on Friday.", source=src)
     assert bad["status"] == "quarantined", f"unrelated confab admitted: {bad['status']!r}"
+
+
+def test_HONEST_LIMIT_ce_does_not_catch_plausible_added_inferences_without_llm():
+    """HONEST SCOPE of the CE-only moat (opus re-review 2026-07-18, finding D;
+    measured): the local CE scores by topical entailment, not strict "the source
+    STATES this". A confab that ADDS a plausible fact the source never asserts
+    (latency, "managed", "AWS", "under budget") scores ~96-99 and is ADMITTED at
+    any sane cut. The CE moat catches CONTRADICTIONS (MongoDB vs Postgres → 0.6)
+    and off-topic confabs, NOT plausible added inferences. An injected llm judge
+    is what closes this gap. This test PINS the limit so it is never silently
+    claimed away — if a future model catches these, flip the assertion.
+    """
+    m = _mem()
+    src = "We migrated the analytics store to Postgres last quarter."
+    # the source says nothing about latency — this is an unsupported inference:
+    r = m.add("The migration to Postgres reduced query latency.", source=src)
+    assert r["status"] != "quarantined", (
+        "CE now catches plausible added inferences — good, update this HONEST_LIMIT "
+        f"test and the README scope note. status={r['status']!r}")
