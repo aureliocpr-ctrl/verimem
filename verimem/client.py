@@ -1105,6 +1105,12 @@ def _judge_of_record_dict(judge: Any) -> dict[str, Any] | None:
     return {"backend": judge, "model": model, "version": None}
 
 
+def _confidence_tier(score: Any, judge: Any, thr: Any) -> str:
+    """Coarsened, judge-agnostic trust label (delegates to the gate's band)."""
+    from .grounding_gate import confidence_tier
+    return confidence_tier(score, judge, thr)
+
+
 def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
                   warnings: list) -> dict[str, Any]:
     """The write verdict, ALWAYS returned to the caller: what decided, how
@@ -1144,4 +1150,5 @@ def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
         "margin": (None if score is None or thr is None
                    else round(float(score) - float(thr), 4)),
         "reason": reason,
+        "confidence_tier": _confidence_tier(score, judge, thr),
     }

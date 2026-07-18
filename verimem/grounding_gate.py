@@ -403,6 +403,51 @@ def resolve_write_threshold_for(backend_used: str) -> float:
     return LOCAL_CE_MOAT_THRESHOLD
 
 
+#: Top of the local-CE decision band (Phase 0.3, calibrated 2026-07-18 on
+#: gate-ce-v2). Measured raw scores: true entailments cluster >=94, clear
+#: confabs <1, and the one mid-range Spanish entity-substitution escape sits at
+#: ~68. So (LOCAL_CE_MOAT_THRESHOLD .. CE_BAND_TAU_HI) isolates the CE's
+#: UNCERTAIN middle - where that escape lives - from the clean >=94 zone. Only
+#: the local CE has this band; the injected-llm judge (AUROC ~0.97) does not have
+#: the mid-range escape, so it stays binary at its own cut. Env-overridable.
+CE_BAND_TAU_HI_DEFAULT = 80.0
+
+
+def _ce_band_tau_hi() -> float:
+    v = os.environ.get("VERIMEM_CE_TAU_HI", "").strip()
+    try:
+        return float(v) if v else CE_BAND_TAU_HI_DEFAULT
+    except ValueError:
+        return CE_BAND_TAU_HI_DEFAULT
+
+
+def confidence_tier(score: float | None, judge: str | None,
+                    threshold: float | None) -> str:
+    """A judge-agnostic, COARSENED trust label for a gate score - honest about
+    the CE's uncertain middle band, and a smaller poisoning-oracle than the raw
+    score/margin.
+
+    * ``"grounded"``   - score at/above the confident cut (local CE >= tau_hi, or
+      an llm judge above its own threshold). NB 'grounded' is NOT 'verified': a
+      plausible-but-unstated inference can still score >= tau_hi on the CE
+      (measured 97-99) - only an llm judge catches that class.
+    * ``"review"``     - LOCAL CE only: in the band (tau_lo <= score < tau_hi),
+      the zone where the known entity-substitution escape lives. Borderline.
+    * ``"ungrounded"`` - below the admission cut (a clear non-entailment).
+    * ``"unverified"`` - no judge ran (no score). Never 'grounded'.
+    """
+    if judge is None or score is None:
+        return "unverified"
+    if judge == "local":
+        if score >= _ce_band_tau_hi():
+            return "grounded"
+        if score >= LOCAL_CE_MOAT_THRESHOLD:
+            return "review"
+        return "ungrounded"
+    thr = threshold if threshold is not None else _resolve_write_threshold()
+    return "grounded" if score >= thr else "ungrounded"
+
+
 def should_store_fact(llm: Any, source: str, fact: str, *,
                       threshold: float | None = None,
                       model: str | None = None,

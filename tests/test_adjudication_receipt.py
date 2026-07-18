@@ -115,3 +115,23 @@ def test_reason_prefers_blocking_layer_over_advisory_note():
     g = _gate(judge=None)
     adj = _adjudication(g, disposition="quarantined", verified_by=None, warnings=warns)
     assert "completion" in adj["reason"].lower()   # the block, not the advisory
+
+
+def test_confidence_tier_local_band():
+    from verimem.grounding_gate import confidence_tier
+    assert confidence_tier(98.0, "local", 40.0) == "grounded"
+    assert confidence_tier(68.0, "local", 40.0) == "review"     # the ES escape
+    assert confidence_tier(20.0, "local", 40.0) == "ungrounded"
+    assert confidence_tier(None, None, None) == "unverified"
+
+
+def test_confidence_tier_llm_is_binary():
+    from verimem.grounding_gate import confidence_tier
+    assert confidence_tier(95.0, "claude", 70.0) == "grounded"
+    assert confidence_tier(30.0, "claude", 70.0) == "ungrounded"
+
+
+def test_receipt_carries_confidence_tier():
+    g = _gate(judge="local", threshold=40.0, grounding_score=68.0)
+    adj = _adjudication(g, disposition="admitted", verified_by=None, warnings=[])
+    assert adj["confidence_tier"] == "review"    # borderline surfaced honestly
