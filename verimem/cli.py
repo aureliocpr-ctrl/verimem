@@ -172,7 +172,7 @@ def status():
     n_sk_promoted = agent.skills.count(status="promoted")
     n_facts = agent.semantic.count() if hasattr(agent, "semantic") and agent.semantic else 0
     console.print(Panel.fit(
-        f"[bold]HippoAgent[/bold]\n"
+        f"[bold]Verimem[/bold]\n"
         f"  episodes:        {n_eps}\n"
         f"  skills (total):  {n_sk}\n"
         f"  skills promoted: {n_sk_promoted}\n"

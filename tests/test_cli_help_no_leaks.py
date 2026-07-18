@@ -19,6 +19,7 @@ def test_no_dev_jargon_or_legacy_brand_in_user_facing_cli_help():
         "would Engram trust",                # trust docstring
         "Engram's moat",                     # trust docstring
         "wiring Engram into",                # warmup docstring
+        "[bold]HippoAgent[/bold]",           # status/health panel title
     ]
     hits = [p for p in forbidden if p in src]
     assert not hits, f"CLI help still leaks dev jargon / legacy brand: {hits}"
