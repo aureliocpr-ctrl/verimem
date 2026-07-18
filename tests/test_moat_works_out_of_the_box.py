@@ -23,6 +23,16 @@ from verimem.client import Memory
 
 
 def _mem():
+    # These tests exercise the REAL local CE moat judge with no llm. Skip cleanly
+    # when the CE model isn't installed (e.g. CI that only warmed the embedding
+    # model, not the moat CE at ~/.engram/models/local_gate_ce_v2) — the full
+    # suite covers the moat wherever the model IS present. Stub-judge tests below
+    # don't call _mem() and run everywhere.
+    from verimem.local_grounding import local_ce_available
+    if not local_ce_available():
+        import pytest
+        pytest.skip("local CE moat model not installed (run `verimem warmup` "
+                    "or fetch local_gate_ce_v2)")
     return Memory(str(Path(tempfile.mkdtemp()) / "memory.db"))  # NO llm — like a new user
 
 
