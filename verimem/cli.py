@@ -74,7 +74,7 @@ app.add_typer(gateway_app, name="gateway")
 # LIVE Engine Room in the terminal (2026-07-15): tail of the flow events
 # every surface (sdk/mcp/gateway, any vendor's agent via VERIMEM_ACTOR)
 # emits from the core. `verimem flow tail` = the /ui/engine feed as text.
-flow_app = typer.Typer(help="Live Engine Room — flow events feed",
+flow_app = typer.Typer(help="Live flow events feed",
                        no_args_is_help=True)
 app.add_typer(flow_app, name="flow")
 
@@ -162,7 +162,7 @@ def run(
 
 @app.command()
 def status():
-    """FORGIA #186 — quick health check: episodes, skills, semantic facts.
+    """Quick health check: episodes, skills, semantic facts.
 
     Used by the Claude Code plugin's `hippo:status` slash command.
     """
@@ -232,7 +232,7 @@ def warmup(
 ) -> None:
     """Pre-load (and download on first run) the embedding model.
 
-    Run this ONCE after install, before wiring Engram into Claude Code, so the
+    Run this ONCE after install, before wiring Verimem into Claude Code, so the
     first real recall is instant instead of silently downloading ~440 MB of
     model weights in the background on the first query. Also the natural
     pre-bake step in CI / Docker build. Exit 1 if the model can't be loaded
@@ -709,9 +709,9 @@ def trust(
     ),
     json_out: bool = typer.Option(False, "--json", help="Emit the raw JSON verdict"),
 ):
-    """Anti-confab TRUST check: would Engram trust this claim, and WHY?
+    """Anti-confab TRUST check: would Verimem trust this claim, and WHY?
 
-    Engram's moat is a memory that DOESN'T LIE. This runs the same governance
+    Verimem's moat is a memory that DOESN'T LIE. This runs the same governance
     gate that guards every write: it flags unsupported hype / production-ready /
     tested / quantitative claims and tells you what evidence is missing. Add a
     real provenance ref (--verified-by commit:... / ci:...:green / coverage:N)
@@ -755,7 +755,7 @@ def trust(
 
 @app.command("sleep-now")
 def sleep_now():
-    """FORGIA #186 — force a sleep cycle now (no waiting for the trigger).
+    """Force a sleep cycle now (no waiting for the trigger).
 
     Cycle #145 rename: legacy ``engram consolidate`` (sleep-cycle wrapper)
     moved here so that ``engram consolidate`` can host the cycle 144
