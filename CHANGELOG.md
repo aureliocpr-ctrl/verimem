@@ -25,6 +25,13 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 
 ### Changed
 - **BREAKING (default):** the two-threshold CE band now **enforces by default** — a local-CE score in `[40, 80)` is held for review instead of admitted. Measured safe (over-review 1/19 on hard true classes; entity-substitution escape 6.2%→1.8% with 0 new false-blocks) and reversible with `VERIMEM_CE_BAND_ENFORCE=0`.
+- **External certification** on out-of-distribution data
+  (`docs/EVIDENCE-external-2026-07-19.md`): the CE-only moat scores AUROC 0.829 on
+  TruthfulQA heldout (300+300 pairs it never trained on). Honest scope published —
+  the CE is a high-precision structured-contradiction filter (0% false-block / 1.8%
+  escape on our matrix) with a documented plausible-inference blind spot (~18%
+  escape at the default cut on plausible misconceptions, 74% scoring ≥80); those
+  workloads need `Memory(llm=...)`.
 - README documents honestly: the CE hard-rejects true facts needing arithmetic /
   unit-date conversion or a low-resource language (those need an llm judge), and
   the CE `high` tier is instrument confidence, not proof.

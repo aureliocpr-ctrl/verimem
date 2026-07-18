@@ -46,6 +46,15 @@ honest *"I don't know."*
   unit/date conversion** ("0.5 g" ⊢ "500 mg", "two weeks before March 20" ⊢
   "March 6") or a low-resource language — those need an llm judge too. The moat is
   strongest with an llm; the free CE is the no-setup multilingual default.
+  **External certification (out-of-distribution, `docs/EVIDENCE-external-2026-07-19.md`):**
+  on our own 4-language structured-contradiction matrix the CE scores 0% false-block
+  / 1.8% escape; on **TruthfulQA heldout** — *plausible misconceptions* it never
+  trained on — it scores **AUROC 0.829**, and at the default cut ~24% of true
+  paraphrases are declined and ~18% of plausible misconceptions escape (74% of those
+  scoring ≥80, the plausible-inference blind spot). Read honestly: the CE-only judge
+  is a high-precision **structured-contradiction** filter, not a universal
+  truth-detector — plausible-falsehood / paraphrase-heavy workloads should configure
+  `Memory(llm=...)`. The write-gate checks *source ⊢ fact*, not factual truth.
   Contradiction screening runs with the `strict` preset. Opt-in
   origin tagging (`tag_beliefs=True` at ingest) additionally classes an
   unverified user assertion as `user_belief`: stored, but out of default
