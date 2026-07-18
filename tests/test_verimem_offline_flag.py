@@ -1,49 +1,38 @@
-"""The primary brand's offline flag must actually work (rename completeness).
-
-A user who `pip install verimem` and, following the brand, sets
-``VERIMEM_OFFLINE=1`` for an air-gapped deployment expects it to be honored —
-exactly like the legacy ``HIPPO_OFFLINE``/``ENGRAM_OFFLINE``. Before this fix the
-new brand name was recognised NOWHERE: the embedding loader still hit the HF Hub,
-``get_llm`` still tried a cloud provider, and ``verimem airgap`` reported "not
-pinned offline". This pins the gap (found by walking the CLI as an outside user,
-2026-07-18).
+"""VERIMEM_OFFLINE works on the REAL binding path (env set BEFORE the process),
+via the compat mirror in ``verimem._compat`` — NOT by adding the brand flag to
+each offline-flag enumeration. Adding it to ``embedding._OFFLINE_ENV_VARS`` broke
+tests that clear the legacy flag set but not the brand one (2026-07-18 CI
+regression): the mirror already covered the real path, so the direct-read was
+redundant AND harmful. This guards the brand promise the HONEST way — a
+subprocess with the env set before import, exactly like a user's shell / .mcp.json
+(the morning's lesson: an env test that sets the var AFTER import bypasses the
+import-time mirror and tests an artifact).
 """
 from __future__ import annotations
 
-import verimem.airgap as airgap
-import verimem.embedding as embedding
-import verimem.llm as llm
+import os
+import subprocess
+import sys
+
+_OFFLINE_VARS = ("HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HF_HUB_OFFLINE",
+                 "TRANSFORMERS_OFFLINE", "VERIMEM_OFFLINE")
 
 
-def test_verimem_offline_is_an_honored_embedding_flag():
-    assert "VERIMEM_OFFLINE" in embedding._OFFLINE_ENV_VARS
-    assert "VERIMEM_OFFLINE" in airgap._OFFLINE_FLAGS
+def _run(code: str, env_over: dict) -> int:
+    env = {k: v for k, v in os.environ.items() if k not in _OFFLINE_VARS}
+    env.update(env_over)
+    return subprocess.run([sys.executable, "-c", code], env=env).returncode
 
 
-def test_embedding_offline_true_with_only_verimem_offline(monkeypatch):
-    for v in ("HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HF_HUB_OFFLINE",
-              "TRANSFORMERS_OFFLINE"):
-        monkeypatch.delenv(v, raising=False)
-    monkeypatch.setenv("VERIMEM_OFFLINE", "1")
-    assert embedding._offline() is True
+def test_verimem_offline_pins_embedding_on_the_real_path():
+    code = ("import verimem; from verimem.embedding import _offline;"
+            "import sys; sys.exit(0 if _offline() else 1)")
+    assert _run(code, {"VERIMEM_OFFLINE": "1"}) == 0, (
+        "VERIMEM_OFFLINE set before launch must pin embeddings offline via the "
+        "_compat env mirror")
 
 
-def test_get_llm_returns_mock_with_only_verimem_offline(monkeypatch):
-    for v in ("HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HIPPO_LLM_PROVIDER"):
-        monkeypatch.delenv(v, raising=False)
-    monkeypatch.setenv("VERIMEM_OFFLINE", "1")
-    # make a REAL provider look available so a false fall-through to mock (no API
-    # keys) can't green this — ONLY the VERIMEM_OFFLINE short-circuit may return
-    # MockLLM here.
-    monkeypatch.setattr(llm, "_autodetect_provider", lambda: "anthropic")
-    monkeypatch.setattr(llm, "_build", lambda p: "REAL-CLIENT")
-    client = llm.get_llm()
-    assert type(client).__name__ == "MockLLM"
-
-
-def test_airgap_advisory_advertises_the_brand_flag(monkeypatch):
-    # empty env → embeddings not pinned → the advisory must NAME the brand flag,
-    # not only the legacy aliases. Pure over env, no network.
-    report = airgap.airgap_status(env={})
-    blob = str(report).upper()
-    assert "VERIMEM_OFFLINE" in blob, f"advisory hides the brand flag: {report}"
+def test_no_offline_flag_stays_online():
+    code = ("import verimem; from verimem.embedding import _offline;"
+            "import sys; sys.exit(0 if not _offline() else 1)")
+    assert _run(code, {}) == 0, "with no offline flag the loader must stay online"

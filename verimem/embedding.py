@@ -32,7 +32,7 @@ _MODEL_LOCK = threading.Lock()
 # 2026-06-05 4h save/recall hang). Env-overridable.
 _MODEL_LOCK_TIMEOUT_S = float(os.environ.get("ENGRAM_MODEL_LOCK_TIMEOUT_S") or 90)
 
-_OFFLINE_ENV_VARS = ("VERIMEM_OFFLINE", "HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HF_HUB_OFFLINE",
+_OFFLINE_ENV_VARS = ("HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HF_HUB_OFFLINE",
                      "TRANSFORMERS_OFFLINE")
 
 

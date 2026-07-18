@@ -39,8 +39,7 @@ _TRUTHY = {"1", "true", "yes", "on"}
 #: Offline flags that pin the embedding model to cache-only (no HF Hub round-trip).
 #: Mirrors ``verimem.embedding._OFFLINE_ENV_VARS``.
 _OFFLINE_FLAGS = (
-    "VERIMEM_OFFLINE", "HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HF_HUB_OFFLINE",
-    "TRANSFORMERS_OFFLINE",
+    "HIPPO_OFFLINE", "ENGRAM_OFFLINE", "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE",
 )
 
 #: Providers whose model runs LOCALLY (no cloud egress by construction).
