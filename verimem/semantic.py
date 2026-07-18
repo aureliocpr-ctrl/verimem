@@ -666,6 +666,11 @@ CREATE TABLE IF NOT EXISTS facts (
     -- (grounding_gate, AUROC 0.971) calcolato dal gate e ora PERSISTITO (era scartato).
     -- Trust-coordinate write-time per provenance-conditioned recall/answer. Nullable.
     grounding_score REAL,
+    -- v15 (2026-07-19) write-time confidence_tier (high/borderline/low/
+    -- unverified): the judge's CONFIDENCE band, persisted so recall/audit can
+    -- distinguish a borderline 'held-for-review' quarantine from a hard
+    -- contradiction. Additive, nullable, no backfill.
+    confidence_tier TEXT,
     -- v13 (2026-07-05) EVENT time bi-temporale (asserted/valid-FROM): quando il
     -- fatto e' stato detto/era vero, DISTINTO da created_at (transaction time =
     -- quando il sistema l'ha imparato). created_at resta mai-retrodatato, cosi'
@@ -1347,6 +1352,16 @@ def _migrate_v12_to_v13(conn: sqlite3.Connection) -> None:
             raise
 
 
+def _migrate_v14_to_v15(conn: sqlite3.Connection) -> None:
+    """v15 (2026-07-19): persist the write-time confidence_tier. Additive,
+    nullable, no backfill (existing rows -> None until re-stored)."""
+    try:
+        conn.execute("ALTER TABLE facts ADD COLUMN confidence_tier TEXT")
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" not in str(exc).lower():
+            raise
+
+
 def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
     """2026-07-13 epistemic label (cortex transfer #1).
 
@@ -1423,6 +1438,10 @@ class Fact:
     # None == not computed (no source / ENGRAM_GROUNDING_WRITE off). Appended last;
     # recall byte-identical (column unused by recall until conditioning ships).
     grounding_score: float | None = None
+    #: v15 (2026-07-19) write-time confidence tier (high/borderline/low/
+    #: unverified) - the judge's CONFIDENCE band, persisted for recall/audit.
+    #: None on pre-v15 rows / when no judge ran.
+    confidence_tier: str | None = None
     # v13 (2026-07-05) bi-temporal EVENT time (valid-FROM): when the fact was
     # said/true, DISTINCT from created_at (transaction time, never backdated so
     # the freshness/anti-spoof guards stay sound). Drives the reconcile age-gap
@@ -1798,6 +1817,7 @@ class SemanticMemory:
                     (12, _migrate_v11_to_v12),
                     (13, _migrate_v12_to_v13),
                     (14, _migrate_v13_to_v14),
+                    (15, _migrate_v14_to_v15),
                 ],
             )
         # Cycle #135 (2026-05-17): hot-path recall cache. The default
@@ -2326,8 +2346,8 @@ class SemanticMemory:
                  trigger_keywords, applicable_when, worked_example, lineage_to,
                  writer_role, meta_narrative, last_verified_at, embedding_model,
                  valid_until, derives_from, grounding_score, asserted_at,
-                 epistemic)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 epistemic, confidence_tier)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                  proposition=excluded.proposition, topic=excluded.topic,
                  confidence=excluded.confidence,
@@ -2377,7 +2397,8 @@ class SemanticMemory:
                  -- via set_epistemic (whose monotone rules a plain store()
                  -- bypasses); an explicit incoming label wins.
                  epistemic=CASE WHEN excluded.epistemic IS NOT NULL
-                     THEN excluded.epistemic ELSE facts.epistemic END""",
+                     THEN excluded.epistemic ELSE facts.epistemic END,
+                 confidence_tier=excluded.confidence_tier""",
                 (
                     fact.id, fact.proposition, fact.topic, fact.confidence,
                     ",".join(fact.source_episodes), fact.created_at,
@@ -2394,6 +2415,7 @@ class SemanticMemory:
                     getattr(fact, "asserted_at", None),
                     (_epistemic.serialize(fact.epistemic)
                      if getattr(fact, "epistemic", None) else None),
+                    getattr(fact, "confidence_tier", None),
                 ),
             )
         # Entity-live write path (2026-06-10, critic caveat on 2aa6769):
@@ -4887,4 +4909,5 @@ class SemanticMemory:
             # v14 (2026-07-13) epistemic label. Defensive on pre-v14 rows and on
             # garbage (parse is fail-open -> None = unlabeled).
             epistemic=_epistemic.parse(_opt("epistemic")),
+            confidence_tier=_opt("confidence_tier"),
         )

@@ -185,3 +185,18 @@ def test_band_does_not_touch_non_local_judge(tmp_path, monkeypatch):
 def test_nan_score_is_unverified_not_a_tier():
     from verimem.grounding_gate import confidence_tier
     assert confidence_tier(float("nan"), "local", 40.0) == "unverified"
+
+
+def test_confidence_tier_persists_across_recall(tmp_path, monkeypatch):
+    # the write-time tier survives store -> disk -> recall, so audit can tell a
+    # borderline 'held-for-review' fact from a hard contradiction (kimi+glm Q3).
+    monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
+    monkeypatch.setenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", "40")
+    monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex",
+                        lambda llm, s, f, **kw: (68.0, "local"))
+    m = Memory(str(tmp_path / "persist.db"))
+    m.add("El paciente 7 es alergico al latex.",
+          source="Historia clinica 7: alergia documentada a la penicilina.")
+    hits = m.search("paciente alergia latex")
+    assert hits, "borderline fact should be recallable under observe default"
+    assert hits[0]["confidence_tier"] == "borderline"

@@ -229,7 +229,10 @@ class Memory:
                         gate, disposition="rejected",
                         verified_by=verified_by, warnings=warnings)}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
-                    grounding_score=gate.grounding_score, asserted_at=asserted_at)
+                    grounding_score=gate.grounding_score, asserted_at=asserted_at,
+                    confidence_tier=_confidence_tier(
+                        gate.grounding_score, getattr(gate, "judge", None),
+                        getattr(gate, "threshold", None)))
         if action == "downgrade":
             fact.status = "quarantined"
         self.semantic.store(fact, embed="sync")
@@ -314,6 +317,7 @@ class Memory:
                 "score": round(float(score), 4),
                 "status": getattr(f, "status", "model_claim"),
                 "grounding_score": getattr(f, "grounding_score", None),
+                "confidence_tier": getattr(f, "confidence_tier", None),
                 "topic": getattr(f, "topic", ""),
                 "id": getattr(f, "id", ""),
                 # per-fact provenance for trust-conditioned answering (case-B
