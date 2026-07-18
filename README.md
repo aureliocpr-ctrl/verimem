@@ -160,7 +160,10 @@ m = Memory("memory.db", preset="strict", grounding_llm=my_llm)
 m.add([{"role": "user", "content": "I moved to Berlin in March."}],
       user_name="Alice")
 
-# Store a single verified fact (no LLM needed)
+# Attach PROVENANCE to a fact (no LLM needed). `verified_by` records WHERE the
+# claim came from — it is shown on every read and cannot be forged into a higher
+# trust status (a self-cited receipt never becomes "verified"; the gate's outcome
+# + provenance are the trust signal, not a self-asserted badge).
 m.add("Deploy pipeline is green", verified_by=["ci:main:green"])
 
 # Search — optionally with history context or as of a past moment
