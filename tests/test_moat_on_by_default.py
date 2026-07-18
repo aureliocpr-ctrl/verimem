@@ -50,13 +50,32 @@ def test_confab_quarantined_with_llm_judge(tmp_path):
     assert confab.get("grounding_score") is not None
 
 
-def test_failopen_without_judge_admits_as_before(tmp_path):
-    # no llm, default backend (claude) → no judge → gate can't score → admit
+def test_failopen_with_NO_judge_at_all_admits_as_before(tmp_path, monkeypatch):
+    # The docstring's SAFE fail-open case: NO judge AT ALL — no llm AND no local
+    # CE on disk. Force the CE absent (else it is now the default judge, 0.6.0).
+    # Then the gate can't score → admit exactly as before, never breaking a user
+    # who has neither judge.
+    monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: False)
     m = Memory(tmp_path / "m2.db")
     r = m.add("The analytics store runs on MongoDB.",
               source="We migrated to Postgres last quarter.")
     assert r["stored"] is True
-    assert r["status"] != "quarantined"   # fail-open: unchanged for judge-less users
+    assert r["status"] != "quarantined"   # fail-open: no llm AND no local CE
+
+
+def test_moat_ON_with_local_CE_and_no_llm(tmp_path):
+    # 0.6.0 BEHAVIOR CHANGE (was fail-open in 0.5.x): with NO llm the local CE is
+    # the default judge, so a confab is quarantined out-of-the-box. Skips only if
+    # the CE model isn't installed in this environment.
+    import pytest
+
+    from verimem.local_grounding import local_ce_available
+    if not local_ce_available():
+        pytest.skip("local CE model not installed in this environment")
+    m = Memory(tmp_path / "m3.db")   # no llm — the CE judges
+    r = m.add("The analytics store runs on MongoDB.",
+              source="We migrated the analytics store to Postgres last quarter.")
+    assert r["status"] == "quarantined", r
 
 
 def test_explicit_ground_false_still_opts_out(tmp_path):

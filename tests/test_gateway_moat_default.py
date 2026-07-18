@@ -42,12 +42,30 @@ def test_gateway_quarantines_confab_with_judge(tmp_path):
     assert bad.json()["status"] == "quarantined"   # moat ON by default now
 
 
-def test_gateway_failopen_without_judge(tmp_path):
-    c = _client(tmp_path, None)   # no llm → no judge
+def test_gateway_failopen_with_NO_judge_at_all(tmp_path, monkeypatch):
+    # NO judge AT ALL — no llm AND no local CE. Force the CE absent (0.6.0 makes
+    # it the default judge otherwise). Then the gateway admits as before.
+    monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: False)
+    c = _client(tmp_path, None)   # no llm
     bad = c.post("/v1/memories", json={"content": "Analytics runs on MongoDB.",
                                        "source": "We migrated to Postgres."})
     assert bad.json()["stored"] is True
-    assert bad.json()["status"] != "quarantined"   # fail-open, unchanged
+    assert bad.json()["status"] != "quarantined"   # fail-open: no llm AND no CE
+
+
+def test_gateway_moat_ON_with_local_CE_no_llm(tmp_path):
+    # 0.6.0 behavior change: the gateway's moat is ON via the local CE even with
+    # no llm — a tenant confab is quarantined out-of-the-box. Skips if CE absent.
+    import pytest
+
+    from verimem.local_grounding import local_ce_available
+    if not local_ce_available():
+        pytest.skip("local CE model not installed in this environment")
+    c = _client(tmp_path, None)
+    bad = c.post("/v1/memories", json={
+        "content": "Analytics runs on MongoDB.",
+        "source": "We migrated the analytics store to Postgres last quarter."})
+    assert bad.json()["status"] == "quarantined"
 
 
 def test_gateway_explicit_ground_false_opts_out(tmp_path):

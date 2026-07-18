@@ -4,6 +4,20 @@ All notable changes to HippoAgent (Engram) follow [Keep a Changelog](https://kee
 
 ## [0.6.0] - Unreleased
 
+### Changed (behavior) — BREAKING for judge-less users
+- **The grounding moat is now ON out-of-the-box, with no llm, in any language.**
+  The free local cross-encoder is the default judge when no llm is injected
+  (measured multilingual: EN/IT/FR/ES, entailments ~97-99 vs confabs ~0.6). In
+  0.5.x a judge-less write fail-opened (admitted everything); in 0.6.0 the CE
+  quarantines a source-contradicting confab out-of-the-box. Fail-open now
+  requires BOTH no llm AND no local CE model. Root cause of the earlier gap: the
+  write-gate used the model's `gate_config` cut of 99.64 (a val-set F1 artifact)
+  which quarantined even TRUE facts — now capped and aligned to the validated 40.
+  **Honest scope:** the CE catches contradictions, NOT plausible added inferences
+  the source never states (those need an llm judge). 4 rounds of adversarial opus
+  review (silent-admit, CE-default path, threshold, coverage). Commits a11931a →
+  f1fd79c.
+
 ### Security
 - **Provenance-ref path traversal (multi-tenant)** — `_verify_file_ref` opened
   an ABSOLUTE `file:<path>:<line>` provenance ref with no containment when
