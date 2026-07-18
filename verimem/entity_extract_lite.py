@@ -109,8 +109,19 @@ _SENTENCE_START = re.compile(r"(?:^|[.!?:;]\s+|\n\s*)$")
 
 
 def _is_sentence_initial(text: str, start: int) -> bool:
-    """True when the match begins a sentence (Capitalized-by-grammar)."""
-    return bool(_SENTENCE_START.search(text[:start]))
+    """True when the match begins a sentence (Capitalized-by-grammar).
+
+    SECURITY (opus CodeQL triage 2026-07-18, alert [29]): the old
+    ``_SENTENCE_START.search(text[:start])`` re-scanned the ENTIRE prefix for
+    every entity match — quadratic on ``fact.proposition`` (up to 64KB, NOT
+    capped by the L1 gate), a tenant DoS vector. Only the handful of chars
+    immediately before ``start`` decide sentence-initiality, so inspect a
+    bounded window: O(1) per call, O(n) overall instead of O(n²).
+    """
+    if start <= 0:
+        return True
+    window = text[max(0, start - 64):start]
+    return bool(_SENTENCE_START.search(window))
 
 
 def extract_entities_lite(text: str) -> list[dict[str, str]]:

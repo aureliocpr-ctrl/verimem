@@ -30,8 +30,15 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # commit SHAs ("a64d252"), versions ("v38"), loop ids ("loop178") are NOT
 # quantities. (Empirically critical: without the anchors a live-corpus scan
 # produced ~700k false conflicts from SHA/id digits.)
+# SECURITY (opus CodeQL triage 2026-07-18, alert [26]): the unit group had two
+# adjacent unbounded ``\s*`` around an optional ``-?`` → quadratic backtracking
+# on a number followed by a long run of spaces with no trailing letter. It runs
+# on ``fact.proposition`` (documented up to 64KB, NOT capped by the L1 gate), so
+# a tenant writing "5"+" "*60000 stalled the server ~30s per fact. Bounding the
+# whitespace to 3 removes the ReDoS while still matching every real form
+# ("5kg", "5 kg", "5-kg", "5 - kg") — real quantities never have >3 spaces.
 _QUANT_RE = re.compile(
-    r"(?<![\w.])(\d+(?:\.\d+)?)(?:\s*-?\s*([A-Za-z]+))?(?![\w])"
+    r"(?<![\w.])(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([A-Za-z]+))?(?![\w])"
 )
 
 # Function words that can FOLLOW a number but are never units ("30 and 45",
