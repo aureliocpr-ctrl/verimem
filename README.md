@@ -25,16 +25,20 @@ honest *"I don't know."*
   no-setup default is the local CE (scope below). It works **with no llm and in
   any language** once the local judge model is installed (`verimem warmup`
   fetches it; `verimem doctor` verifies): the free local
-  cross-encoder judges every write (multilingual — measured EN/IT/FR/ES, it
-  separates entailments ~97–99 from confabs ~0.6 — no per-fact LLM call). A
+  cross-encoder judges every write (multilingual — measured EN/IT/FR/ES,
+  entailments score ~97–99, most contradictions ~0.6 — no per-fact LLM call). A
   `Memory(llm=...)` uses that llm as the judge instead (highest quality). Only
   when neither an llm nor the local model is present does the gate fail-open
   (admit) — it never blocks a user who has neither, and says so on the write
   with an `L4-skipped` advisory.
-  **Honest scope of the CE-only judge:** it catches *contradictions* and
-  off-topic confabs (MongoDB vs a Postgres source) reliably, but a *plausible
-  added inference the source never states* (e.g. "…which reduced latency") scores
-  high and is admitted — closing that needs an injected llm judge. The moat is
+  **Honest scope of the CE-only judge** (measured, `benchmark/moat_multilingual_matrix.py`):
+  it reliably catches *value/numeric contradictions* across EN/IT/FR/ES (0 escapes
+  in a 4-domain matrix) and off-topic confabs. Two known gaps close only with an
+  llm judge: a *plausible added inference the source never states* (e.g. "…which
+  reduced latency") scores high and is admitted; and an *entity-substitution*
+  contradiction (swapping one allergen/product for another) can score mid-range
+  in some languages — measured ~7% escape in Spanish, concentrated in that shape.
+  The moat is
   strongest with an llm; the free CE is the no-setup multilingual default.
   Contradiction screening runs with the `strict` preset. Opt-in
   origin tagging (`tag_beliefs=True` at ingest) additionally classes an
