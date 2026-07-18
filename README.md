@@ -183,6 +183,11 @@ This exposes the memory tools (`verimem_remember`, `verimem_facts_recall`,
 client. Drop the `VERIMEM_TOOL_NAMESPACE` entry to keep the legacy `hippo_*`
 names — both dispatch to the same tools.
 
+Onboarding is automatic: every MCP client receives a usage guide on connect
+(the `instructions` field of the initialize response). For any other
+integration, `verimem agent-guide` prints the same guide — paste it into a
+system prompt or CLAUDE.md.
+
 ## CLI
 
 ```bash
