@@ -198,9 +198,12 @@ def try_local_score(source: str, fact: str, *,
     load failure is cached; the fallback warning fires once per process."""
     global _warned_fallback
     judge = get_local_judge()
+    # LOAD phase — a missing / unloadable model is a legitimate "no local judge":
+    # fail over to None (caller uses its injected llm, or emits the L4-skipped
+    # advisory). Only load failure is swallowed here.
     try:
-        score = judge.score(source, fact, focus_budget=focus_budget)
-    except Exception:  # noqa: BLE001 — any load/inference failure -> fail over
+        judge._ensure_scorer()
+    except Exception:  # noqa: BLE001 — model absent/unloadable -> fail over
         if not _warned_fallback:
             _warned_fallback = True
             import warnings
@@ -209,6 +212,11 @@ def try_local_score(source: str, fact: str, *,
                 f"is unavailable — falling back to the injected llm judge",
                 RuntimeWarning, stacklevel=2)
         return None
+    # The model IS loaded. An inference failure now (torch shape mismatch, CUDA
+    # OOM) is a REAL fault, NOT an absent judge — let it PROPAGATE rather than
+    # laundering it into "no judge -> admit" (opus re-review 2026-07-18, finding B:
+    # this is the default out-of-the-box path, where the earlier fix did not reach).
+    score = judge.score(source, fact, focus_budget=focus_budget)
     return score, judge.threshold
 
 

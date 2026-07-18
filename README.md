@@ -19,9 +19,11 @@ honest *"I don't know."*
 
 - **Gated writes with the grounding moat ON by default** — every fact enters as
   a low-trust claim and must be backed by evidence to gain status. The
-  **source⊢fact grounding gate** (the moat, judge AUROC **0.96–0.97**) runs by
-  default: an extraction confabulation the source doesn't entail is quarantined,
-  not absorbed. It works **with no llm and in any language**: the free local
+  **source⊢fact grounding gate** (the moat) runs by default: an extraction
+  confabulation the source contradicts is quarantined, not absorbed. With an
+  injected llm judge it reaches AUROC **0.96–0.97** (sonnet, held-out); the
+  no-setup default is the local CE (scope below). It works **with no llm and in
+  any language**: the free local
   cross-encoder is the default judge (multilingual — measured EN/IT/FR/ES, it
   separates entailments ~97–99 from confabs ~0.6 — no per-fact LLM call). A
   `Memory(llm=...)` uses that llm as the judge instead (highest quality). Only

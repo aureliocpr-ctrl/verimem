@@ -73,27 +73,52 @@ def test_broken_ce_at_score_time_admits_WITH_advisory_never_silently(monkeypatch
     assert skips, f"broken CE must leave an L4-skipped advisory, not silence: {r.warnings}"
 
 
-def test_a_real_ml_fault_propagates_not_laundered_as_no_judge(monkeypatch):
-    """opus re-review 2026-07-18, finding B: a genuine ML fault (torch/transformers
-    raise plain RuntimeError for shape mismatch / CUDA OOM) must PROPAGATE, never
-    be swallowed into 'no judge → admit'. Only the dedicated NoGroundingJudge is
-    tolerated."""
+def test_a_real_ml_fault_in_default_CE_path_propagates():
+    """opus re-review 2026-07-18, finding B (round 3): the DEFAULT out-of-the-box
+    judge is the local CE. A real INFERENCE fault there (torch RuntimeError: shape
+    mismatch / CUDA OOM, model already loaded) must PROPAGATE, never be laundered
+    into 'no judge → admit'. A MISSING model still fails over cleanly. This tests
+    the REAL default path via try_local_score — not a mock of the wrapper, which
+    is where round-2 fooled itself."""
     import pytest
 
-    import verimem.anti_confab_gate as gate
-    monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: True)
+    from verimem.local_grounding import (
+        LocalGroundingJudge,
+        reset_local_judge,
+        set_local_judge,
+        try_local_score,
+    )
 
-    def _real_bug(*a, **k):
-        raise RuntimeError("CUDA error: device-side assert triggered")  # a REAL fault
-    monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex", _real_bug)
+    def _bad_scorer(batch):  # model "loaded" (injected scorer) but inference faults
+        raise RuntimeError("CUDA error: device-side assert triggered")
+    set_local_judge(LocalGroundingJudge(model_dir="/nonexistent", scorer=_bad_scorer))
+    try:
+        with pytest.raises(RuntimeError, match="CUDA"):
+            try_local_score("We migrated analytics to Postgres.", "Analytics on Postgres.")
+    finally:
+        reset_local_judge()
 
-    with pytest.raises(RuntimeError, match="CUDA"):
-        gate.run_validation_gate(
-            proposition="Analytics runs on Postgres.",
-            verified_by=None, topic=None, agent=None,
-            source="We migrated analytics to Postgres last quarter.",
-            ground_write=True,
-        )
+
+def test_a_missing_CE_model_fails_over_cleanly_not_raises():
+    """Counterpart: a genuinely ABSENT/unloadable model must NOT raise from
+    try_local_score — it fails over to None so the caller degrades to the injected
+    llm or the honest L4-skipped advisory. Load-fault ≠ inference-fault."""
+    from verimem.local_grounding import (
+        LocalGroundingJudge,
+        reset_local_judge,
+        set_local_judge,
+        try_local_score,
+    )
+
+    def _load_fails(*_a, **_k):  # _ensure_scorer builds via make_finetuned_scorer
+        raise FileNotFoundError("no model on disk")
+    j = LocalGroundingJudge(model_dir="/nonexistent")
+    j._load_failed = True  # simulate a cached load failure
+    set_local_judge(j)
+    try:
+        assert try_local_score("src", "fact") is None, "missing model must fail over to None"
+    finally:
+        reset_local_judge()
 
 
 def test_unrelated_confab_is_quarantined_without_llm():
