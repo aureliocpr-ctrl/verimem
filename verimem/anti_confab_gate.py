@@ -852,19 +852,6 @@ def run_validation_gate(
                       "is not a reliable entailment judge on non-English text.",
         })
 
-    # SOURCE-PROVENANCE rule (vertical probe 2026-07-18, replaces the withdrawn
-    # lexical source-echo heuristic - twice broken by the adversarial critic on
-    # subject-substitution, and the local CE scores an IT confab 99.9/100 so it
-    # cannot rescue it either). The L1.x detectors target an AGENT confabulating
-    # the state of ITS OWN work with NO provenance ("shipped/approved/tested").
-    # A write that DECLARES a `source` is a different act: provenance is on the
-    # record, so the filter of record shifts from L1 (shape) to L4 (grounding).
-    # Therefore a sourced write is not L1-escalated; when a judge is present L4
-    # decides entailment (quarantining a confab), and when it is absent the
-    # L4-skipped advisory above makes the unverified status explicit. Unsourced
-    # claims are unchanged - L1 still fail-closed quarantines them.
-    _sourced = bool(source)
-
     # Decision tree.
     has_l3_contradict = any(w.get("layer") == "L3" for w in warnings)
     has_l3_semantic = any(w.get("layer") == "L3-semantic" for w in warnings)
@@ -885,11 +872,13 @@ def run_validation_gate(
     # for personal facts — advisory only, stays recallable — but keep dev-anchored claims
     # ("The migration was completed in 2023") escalating.
     _world_fp = _is_historical_completion(proposition) and _no_dev
-    # A declared source shifts the filter of record from L1 (shape) to L4
-    # (grounding) - see the SOURCE-PROVENANCE rule above. L1 does not escalate a
-    # sourced write; L3/L4 (semantic) still do. Unsourced claims: unchanged.
-    l1_escalates = (has_l1 and not _personal_fp and not _world_fp
-                    and not _sourced)
+    # A declared source is caller-controlled and unverified (spoofable like the
+    # writer_role the trusted-hook bypass had to token-gate). It therefore does
+    # NOT downgrade an L1 hit: the gate stays fail-closed and quarantines a
+    # shape-confab regardless of an attached source. The honest recovery path
+    # for a real documental fact is a grounding JUDGE (L4), which verifies
+    # source-entailment; the L4-skipped advisory above says so when none is set.
+    l1_escalates = has_l1 and not _personal_fp and not _world_fp
     if force_persist:
         # Caller demands persist; we still surface warnings.
         return GateResult(
