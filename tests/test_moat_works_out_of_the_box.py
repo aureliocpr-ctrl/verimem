@@ -121,6 +121,38 @@ def test_a_missing_CE_model_fails_over_cleanly_not_raises():
         reset_local_judge()
 
 
+def test_inference_fault_propagates_END_TO_END_through_the_gate():
+    """opus r4 recommendation: blind the catch at anti_confab_gate.py's L4 site
+    (only FileNotFoundError/OSError/ImportError/NoGroundingJudge) against
+    regression. A CE inference fault on the DEFAULT path must propagate OUT of
+    run_validation_gate — not be absorbed into an admit. If someone re-adds
+    RuntimeError to that catch, this goes red (the earlier round replaced the
+    end-to-end test with try_local_score-only ones, leaving the real site
+    un-pinned)."""
+    import pytest
+
+    import verimem.anti_confab_gate as gate
+    from verimem.local_grounding import (
+        LocalGroundingJudge,
+        reset_local_judge,
+        set_local_judge,
+    )
+
+    def _bad_scorer(batch):  # loaded model, inference faults with a REAL ML error
+        raise RuntimeError("CUDA error: device-side assert triggered")
+    set_local_judge(LocalGroundingJudge(model_dir="/x", scorer=_bad_scorer))
+    try:
+        with pytest.raises(RuntimeError, match="CUDA"):
+            gate.run_validation_gate(
+                proposition="Analytics runs on Postgres.",
+                verified_by=None, topic=None, agent=None,
+                source="We migrated analytics to Postgres last quarter.",
+                ground_write=True,
+            )
+    finally:
+        reset_local_judge()
+
+
 def test_unrelated_confab_is_quarantined_without_llm():
     # a confab on a DIFFERENT subject than the source (not just the grossest
     # Postgres/MongoDB swap) must still be caught by the CE at cut 40.
