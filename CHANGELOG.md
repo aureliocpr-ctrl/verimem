@@ -16,6 +16,22 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   system prompt or CLAUDE.md. Single-sourced from `verimem/agent_guide.py`
   (tests pin MCP == CLI so the two can never drift).
 
+### Added (diagnosis & fresh-install)
+- **`verimem doctor`** — one-shot install diagnosis in ~2s, no model loads:
+  data dir (which one won and writability), shared encode daemon, **moat judge
+  availability**, offline pins, llm provider (names only), gateway keys. Each
+  check reports PASS/WARN/FAIL with the concrete fix; exit code 0/1/2 is
+  scriptable.
+- **Gate-model fetch path** (`ensure_gate_model`) wired into `verimem warmup`:
+  on a fresh machine the fine-tuned gate CE (the moat's judge-less judge) is not
+  present and nothing downloaded it — demonstrated 2026-07-18: the README moat
+  quickstart's `assert` failed with the write admitted under an `L4-skipped`
+  advisory. `warmup` now fetches the model when a hub id is configured
+  (`VERIMEM_GATE_MODEL_HUB_ID`; the fine-tuned model is not yet published — the
+  download flow is wired and tested so publishing turns the out-of-box claim
+  true end-to-end), and reports honestly when it is not. README quickstart and
+  feature copy aligned to the truth (`warmup` first, `doctor` verifies).
+
 ### Changed (CLI)
 - **Product CLI slimmed: agent-runtime moved under `verimem agent <cmd>`.**
   11 top-level commands (chat, code, run, wake, sleep, sleep-now, benchmark,

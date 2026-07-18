@@ -188,6 +188,50 @@ def local_ce_available() -> bool:
         return False
 
 
+# --- gate-model acquisition (2026-07-18) ---------------------------------------
+# The fine-tuned gate CE (local_gate_ce_v2) is what makes the moat judge-less.
+# On a FRESH machine the model dir does not exist and — demonstrated 2026-07-18 —
+# the README quickstart's `assert status == "quarantined"` fails (the write is
+# admitted with an L4-skipped advisory). This is the download path that closes
+# that gap: `verimem warmup` calls it. The hub id stays None until the model is
+# PUBLISHED (publishing = Aurelio's call); the flow is wired and tested so
+# filling in one constant turns the claim true end-to-end.
+_ENV_GATE_HUB_ID = "VERIMEM_GATE_MODEL_HUB_ID"
+#: HF Hub repo of the published gate model. None = not yet published.
+DEFAULT_GATE_MODEL_HUB_ID: str | None = None
+
+
+def ensure_gate_model(model_dir: str | Path | None = None, *,
+                      hub_id: str | None = None,
+                      download=None) -> tuple[bool, str]:
+    """Ensure the local gate CE exists at ``model_dir``; download it when a hub
+    id is configured. Returns ``(present, message)`` — never raises for the
+    "not configured" case, so callers can report honestly instead of crashing.
+
+    ``download`` is injectable for tests; defaults to
+    ``huggingface_hub.snapshot_download``.
+    """
+    dest = _resolve_model_dir(model_dir)
+    if (dest / "config.json").exists():
+        return True, f"gate model present at {dest}"
+    hub = (hub_id or os.environ.get(_ENV_GATE_HUB_ID, "").strip()
+           or DEFAULT_GATE_MODEL_HUB_ID)
+    if not hub:
+        return False, (
+            f"gate model not installed at {dest} and no hub id configured "
+            f"(the fine-tuned judge is not yet published — set "
+            f"{_ENV_GATE_HUB_ID}, or place the model dir there, or pass "
+            f"llm= to Memory)")
+    dl = download
+    if dl is None:  # pragma: no cover — exercised via injected download in tests
+        from huggingface_hub import snapshot_download as dl
+    dest.mkdir(parents=True, exist_ok=True)
+    dl(repo_id=hub, local_dir=str(dest))
+    ok = (dest / "config.json").exists()
+    return ok, (f"downloaded {hub} -> {dest}" if ok else
+                f"download of {hub} left no config.json in {dest}")
+
+
 _warned_fallback = False
 
 # --- delegate-only: keep the CE cold-load OFF the request thread ---------------
@@ -268,4 +312,4 @@ def try_local_score(source: str, fact: str, *,
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
            "try_local_score", "local_ce_available", "warm_local_judge_async",
-           "DEFAULT_MODEL_DIR"]
+           "ensure_gate_model", "DEFAULT_GATE_MODEL_HUB_ID", "DEFAULT_MODEL_DIR"]

@@ -281,6 +281,28 @@ def warmup(
             console.print(f"[dim]· reranker warm skipped ({type(exc).__name__}); "
                           "recall still works via fusion order[/]")
 
+    # The MOAT judge (the product's #1 claim): fetch the local CE gate model so
+    # the grounding gate runs judge-less out of the box. Best-effort — an absent
+    # hub configuration reports honestly instead of pretending.
+    from .local_grounding import ensure_gate_model, local_ce_available
+    if local_ce_available():
+        console.print("[green]✓ moat gate model already installed[/]")
+    else:
+        console.print("Fetching the local gate model (the moat's judge-less judge)…")
+        try:
+            got, msg = ensure_gate_model()
+            if got:
+                console.print(f"[green]✓ moat gate model ready[/] — {msg}")
+            else:
+                console.print(f"[yellow]· moat gate model NOT installed[/] — {msg}")
+                console.print(
+                    "[yellow]  Until installed, judge-less writes are admitted "
+                    "with an L4-skipped advisory (moat off); pass llm= to "
+                    "Memory for the llm judge.[/]")
+        except Exception as exc:  # noqa: BLE001 — warmup must not die on this
+            console.print(f"[yellow]· gate model fetch failed "
+                          f"({type(exc).__name__}: {exc})[/]")
+
     if daemon:
         from . import encode_service
         if encode_service.ensure_running():
@@ -291,6 +313,31 @@ def warmup(
                 "(warms from cache in ~20s; all MCP servers then share it)[/]"
             )
     console.print("[bold green]Warmup complete — Verimem recall will be instant.[/]")
+
+
+@app.command()
+def doctor(
+    json_out: bool = typer.Option(False, "--json", help="Emit raw JSON checks"),
+) -> None:
+    """Diagnose this install in seconds: data dir, encode daemon, moat judge,
+    offline pins, llm provider, gateway. Each check says PASS/WARN/FAIL and HOW
+    to fix. Loads no model — safe to run on a broken install. Exit code:
+    0 all-ok · 1 warnings · 2 failures (scriptable)."""
+    from .doctor import FAIL, OK, run_doctor, worst_status
+    checks = run_doctor()
+    if json_out:
+        import json as _json
+        console.print_json(_json.dumps(checks))
+    else:
+        icon = {OK: "[green]✓[/]", "warn": "[yellow]![/]", FAIL: "[red]✗[/]"}
+        lines = []
+        for c in checks:
+            lines.append(f"{icon[c['status']]} [bold]{c['name']}[/]  {c['detail']}")
+            if c.get("fix"):
+                lines.append(f"    [dim]fix: {c['fix']}[/]")
+        console.print(Panel.fit("\n".join(lines), title="verimem doctor"))
+    worst = worst_status(checks)
+    raise typer.Exit({OK: 0, "warn": 1, FAIL: 2}[worst])
 
 
 @app.command()

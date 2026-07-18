@@ -23,12 +23,14 @@ honest *"I don't know."*
   confabulation the source contradicts is quarantined, not absorbed. With an
   injected llm judge it reaches AUROC **0.96–0.97** (sonnet, held-out); the
   no-setup default is the local CE (scope below). It works **with no llm and in
-  any language**: the free local
-  cross-encoder is the default judge (multilingual — measured EN/IT/FR/ES, it
+  any language** once the local judge model is installed (`verimem warmup`
+  fetches it; `verimem doctor` verifies): the free local
+  cross-encoder judges every write (multilingual — measured EN/IT/FR/ES, it
   separates entailments ~97–99 from confabs ~0.6 — no per-fact LLM call). A
   `Memory(llm=...)` uses that llm as the judge instead (highest quality). Only
   when neither an llm nor the local model is present does the gate fail-open
-  (admit) — it never blocks a user who has neither, and says so on the write.
+  (admit) — it never blocks a user who has neither, and says so on the write
+  with an `L4-skipped` advisory.
   **Honest scope of the CE-only judge:** it catches *contradictions* and
   off-topic confabs (MongoDB vs a Postgres source) reliably, but a *plausible
   added inference the source never states* (e.g. "…which reduced latency") scores
@@ -125,12 +127,14 @@ from datetime import datetime
 
 from verimem import Memory
 
-# No llm needed for the moat. The first run downloads a small (~0.4 GB)
-# multilingual cross-encoder judge — or pre-fetch it with `verimem warmup`.
+# No llm needed for the moat once the local judge model is installed — run
+# `verimem warmup` first (fetches it) and `verimem doctor` to verify. Until a
+# judge is available, writes are admitted WITH an explicit L4-skipped advisory
+# (never silently), and `assert` below would fail — doctor tells you why.
 m = Memory("memory.db")
 
 # THE MOAT, live — the reason Verimem exists. Same source, two writes; works
-# out of the box, in any language, with NO llm (the local CE is the judge):
+# with NO llm, in any language (the local CE is the judge):
 src = "We migrated the analytics store to Postgres last quarter."
 m.add("Analytics runs on Postgres.", source=src)   # entailed  -> admitted
 r = m.add("Analytics runs on MongoDB.", source=src)  # confab -> QUARANTINED
