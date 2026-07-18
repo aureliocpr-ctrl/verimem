@@ -161,7 +161,9 @@ def set_local_judge(judge: LocalGroundingJudge | None) -> None:
 
 
 def reset_local_judge() -> None:
+    global _bg_warm_started
     set_local_judge(None)
+    _bg_warm_started = False   # tests: allow a fresh background warm
 
 
 def get_local_threshold() -> float | None:
@@ -188,6 +190,44 @@ def local_ce_available() -> bool:
 
 _warned_fallback = False
 
+# --- delegate-only: keep the CE cold-load OFF the request thread ---------------
+# MCP-server processes run with HIPPO_ENCODE_DELEGATE_ONLY=1 (mirror of
+# embedding._delegate_only, kept env-local so this module stays import-light).
+# The moat CE cold-load (~30s measured 2026-07-18: import + model build under the
+# judge lock) blocked the FIRST gated write of every fresh server — same class as
+# the 2026-06-05 embedding hang, new site. In delegate-only mode the load runs on
+# a background thread instead; until warm, try_local_score returns None and the
+# caller degrades honestly (injected llm, or the L4-skipped advisory admit).
+# Deliberately NOT a boot-time preload: that would charge every server ~400 MB
+# whether it ever writes or not (the 2026-07-10 rerank RAM incident) — warming on
+# first USE bills only processes that actually run the moat.
+_DELEGATE_TRUTHY = {"1", "true", "yes", "on"}
+_bg_warm_started = False
+_bg_warm_lock = threading.Lock()
+
+
+def _delegate_only() -> bool:
+    return (os.environ.get("HIPPO_ENCODE_DELEGATE_ONLY", "").strip().lower()
+            in _DELEGATE_TRUTHY)
+
+
+def warm_local_judge_async() -> None:
+    """Warm the CE off the request thread (once per process). Load failure is
+    cached on the judge, so the advisory path keeps working either way."""
+    global _bg_warm_started
+    with _bg_warm_lock:
+        if _bg_warm_started:
+            return
+        _bg_warm_started = True
+
+    def _warm() -> None:
+        try:
+            get_local_judge()._ensure_scorer()
+        except Exception:  # noqa: BLE001 — cached on the judge; advisory continues
+            pass
+
+    threading.Thread(target=_warm, daemon=True, name="verimem-ce-warm").start()
+
 
 def try_local_score(source: str, fact: str, *,
                     focus_budget: int | None = None,
@@ -198,6 +238,11 @@ def try_local_score(source: str, fact: str, *,
     load failure is cached; the fallback warning fires once per process."""
     global _warned_fallback
     judge = get_local_judge()
+    # DELEGATE-ONLY (MCP server): never pay the CE cold-load on this thread —
+    # kick the background warm and degrade until it lands (see block above).
+    if judge._scorer is None and not judge._load_failed and _delegate_only():
+        warm_local_judge_async()
+        return None
     # LOAD phase — a missing / unloadable model is a legitimate "no local judge":
     # fail over to None (caller uses its injected llm, or emits the L4-skipped
     # advisory). Only load failure is swallowed here.
@@ -222,4 +267,5 @@ def try_local_score(source: str, fact: str, *,
 
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
-           "try_local_score", "local_ce_available", "DEFAULT_MODEL_DIR"]
+           "try_local_score", "local_ce_available", "warm_local_judge_async",
+           "DEFAULT_MODEL_DIR"]
