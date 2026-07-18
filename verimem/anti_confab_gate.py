@@ -864,6 +864,8 @@ def run_validation_gate(
         # the 2026-07-02 critic caught the calibrated cut not reaching this L4 site).
         from .grounding_gate import (
             NoGroundingJudge,
+            _ce_band_enforced,
+            _ce_band_tau_hi,
             fact_grounding_score_ex,
             resolve_write_threshold_for,
         )
@@ -896,6 +898,18 @@ def run_validation_gate(
                     "grounding_score": gscore,
                 })
                 advice = advice or "Source does not entail the claim (semantic grounding)."
+            elif (_judge_used == "local" and _ce_band_enforced()
+                  and gscore < _ce_band_tau_hi()):
+                warnings.append({
+                    "layer": "L4-review",
+                    "reason": f"borderline grounding ({gscore:.0f}) in the CE review "
+                              f"band [{_threshold_of_record:.0f}, "
+                              f"{_ce_band_tau_hi():.0f}) - held for review, not admitted",
+                    "advice": "the local CE is not confident the source entails this "
+                              "claim; pass Memory(llm=...) to adjudicate the borderline "
+                              "zone, or review the held fact.",
+                    "grounding_score": gscore,
+                })
     elif source and not _have_judge:
         _emit_l4_skipped()
 
@@ -903,6 +917,7 @@ def run_validation_gate(
     has_l3_contradict = any(w.get("layer") == "L3" for w in warnings)
     has_l3_semantic = any(w.get("layer") == "L3-semantic" for w in warnings)
     has_grounding_fail = any(w.get("layer") == "L4-grounding" for w in warnings)
+    has_l4_review = any(w.get("layer") == "L4-review" for w in warnings)
     # WF3 2026-06-19 PRECISION FIX: the L1 lexical dev-claim detectors fire on ordinary
     # personal words ('scheduled'/'done'/'confirmed'/'automatically'/'recurring') and were
     # quarantining ~40% of legitimate personal-assistant facts out of recall. They are meant
@@ -944,7 +959,8 @@ def run_validation_gate(
         return _mk("persist")
     if (has_l3_contradict or has_l3_semantic or has_grounding_fail) and mode == "reject":
         return _mk("reject", advice_=advice or "Claim contradicted by existing memory.")
-    if has_l3_contradict or has_l3_semantic or has_grounding_fail or l1_escalates:
+    if (has_l3_contradict or has_l3_semantic or has_grounding_fail
+            or has_l4_review or l1_escalates):
         return _mk("downgrade")
     if warnings:
         # L1 false positives on personal/non-dev text: keep the fact recallable, surface

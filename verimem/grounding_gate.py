@@ -421,6 +421,18 @@ def _ce_band_tau_hi() -> float:
         return CE_BAND_TAU_HI_DEFAULT
 
 
+def _ce_band_enforced() -> bool:
+    """OFF by default: the two-threshold band only CLASSIFIES (confidence_tier).
+    With VERIMEM_CE_BAND_ENFORCE=1 the local-CE middle band is quarantined-for-
+    review instead of admitted - calibrated safe (measured true entailments score
+    >=90, so ~0 true facts fall in [tau_lo, tau_hi)), a deliberate opt-in
+    behavior change. NB the band is PARTIAL: it catches the mid-range
+    entity-substitution escape (~65-68) but not a high-scoring one (~96) or a
+    plausible-inference confab (97-99) - those still need an llm judge."""
+    return os.environ.get("VERIMEM_CE_BAND_ENFORCE", "").strip().lower() in (
+        "1", "true", "yes", "on")
+
+
 def confidence_tier(score: float | None, judge: str | None,
                     threshold: float | None) -> str:
     """A judge-agnostic, COARSENED trust label for a gate score - honest about

@@ -135,3 +135,33 @@ def test_receipt_carries_confidence_tier():
     g = _gate(judge="local", threshold=40.0, grounding_score=68.0)
     adj = _adjudication(g, disposition="admitted", verified_by=None, warnings=[])
     assert adj["confidence_tier"] == "review"    # borderline surfaced honestly
+
+
+def test_ce_band_enforce_quarantines_borderline(tmp_path, monkeypatch):
+    # borderline CE score (in [tau_lo, tau_hi)) is held for review when enforced
+    monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
+    monkeypatch.setenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", "40")
+    monkeypatch.setenv("VERIMEM_CE_BAND_ENFORCE", "1")
+    monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex",
+                        lambda llm, s, f, **kw: (68.0, "local"))
+    m = Memory(str(tmp_path / "enf.db"))
+    r = m.add("El paciente 7 es alergico al latex.",
+              source="Historia clinica 7: alergia documentada a la penicilina.")
+    assert r["status"] == "quarantined"
+    assert r["adjudication"]["confidence_tier"] == "review"
+    assert any(w.get("layer") == "L4-review" for w in r["warnings"])
+
+
+def test_ce_band_observe_default_admits_borderline(tmp_path, monkeypatch):
+    # default OFF: same borderline score is admitted (no behavior change), but
+    # the receipt still labels it 'review' honestly.
+    monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
+    monkeypatch.setenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", "40")
+    monkeypatch.delenv("VERIMEM_CE_BAND_ENFORCE", raising=False)
+    monkeypatch.setattr("verimem.grounding_gate.fact_grounding_score_ex",
+                        lambda llm, s, f, **kw: (68.0, "local"))
+    m = Memory(str(tmp_path / "obs.db"))
+    r = m.add("El paciente 7 es alergico al latex.",
+              source="Historia clinica 7: alergia documentada a la penicilina.")
+    assert r["status"] != "quarantined"
+    assert r["adjudication"]["confidence_tier"] == "review"
