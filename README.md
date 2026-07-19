@@ -21,7 +21,9 @@ honest *"I don't know."*
   a low-trust claim and must be backed by evidence to gain status. The
   **source⊢fact grounding gate** (the moat) runs by default: an extraction
   confabulation the source contradicts is quarantined, not absorbed. With an
-  injected llm judge it reaches AUROC **0.96–0.97** (sonnet, held-out); the
+  injected llm judge it reaches AUROC **0.96–0.97** (sonnet, on **SNLI** held-out;
+  on out-of-distribution TruthfulQA/HaluEval it is ~0.81–0.90, and the free CE
+  ~0.82 — the honest field numbers, `docs/EVIDENCE-external-2026-07-19.md`); the
   no-setup default is the local CE (scope below). It works **with no llm and in
   any language** once the local judge model is installed (`verimem warmup`
   fetches it; `verimem doctor` verifies): the free local

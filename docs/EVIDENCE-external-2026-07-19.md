@@ -81,8 +81,33 @@ Result B and configure `Memory(llm=...)`.
 - The receipt already surfaces this per fact: `evidence_class="cross_encoder"` +
   `confidence_tier="high"` means "the cross-encoder is confident", NOT "true".
 
-## Next (replication)
+## The LLM judge on the same external data (sonnet-5)
 
-Run HaluEval-QA heldout — a second independent sample of the plausible-falsehood
-threat model — to confirm/complicate the blind-spot story. Then SQuAD-v2
-unanswerable for the abstention axis.
+The higher-quality option, `Memory(llm=...)`, on the same OOD corpora
+(`benchmark/moat_external_judge.py`, threshold 70, judge = claude-sonnet-5, backend
+verified `claude`; replicated 2026-07-19, consistent with the 2026-07-17 run in
+`docs/CLAIM-RECEIPTS.md`):
+
+- **TruthfulQA heldout AUROC ≈ 0.90** · **HaluEval heldout AUROC 0.81–0.86** (this
+  run 0.864, n=100+100; faithful admit 0.95, confab block 0.72 at cut 70).
+- So the headline **AUROC 0.96–0.97 is the SNLI held-out number, NOT the
+  out-of-distribution one.** On adversarial external data the sonnet judge is
+  ~0.81–0.90 — better than the free CE (~0.82 on both) but not 0.97.
+- **HaluEval label noise:** an opus hard-slice of the both-admit residual found
+  ~7/10 are dataset mislabels (the "hallucination" is in fact entailed by the
+  knowledge). Effective block on genuine confabs is higher than raw 0.72 (sonnet
+  ~0.77; an opus tier ~0.94 on the inspected slice).
+
+## Honest headline reconciliation
+
+| judge | in-domain (SNLI) | TruthfulQA (OOD) | HaluEval (OOD) |
+|-------|:----------------:|:----------------:|:--------------:|
+| free CE (no-setup default) | — | 0.829 | ~0.82 |
+| sonnet llm (`Memory(llm=...)`) | 0.96–0.97 | ~0.90 | 0.81–0.86 |
+
+Publish the OOD numbers next to the in-domain one: "0.96–0.97" alone reads as
+omniscience — it is the SNLI ceiling, not the field number.
+
+## Next
+
+SQuAD-v2 unanswerable (the abstention axis) + a competitor A/B on the same splits.
