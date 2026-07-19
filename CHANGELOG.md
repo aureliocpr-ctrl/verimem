@@ -77,7 +77,12 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   expansion are checked for conflicts but never promoted to `supported` (generic claims
   stay `unknown`). Measured on `benchmark/evolution_moat_vs_mem0.py`: the zero-config
   default now retires the stale value on all numeric/version/date/negation updates
-  (stale-leak 0/5 on the design-target set; mem0 leaks 5/5).
+  (stale-leak 0/5 on the design-target set; mem0 leaks 5/5). **Retroactive parity,
+  default ON:** the scan surface (`hippo_facts_find_conflicting`) now returns
+  kind-tagged `lexical_pairs` from the same primitives (`find_lexical_conflicts` —
+  numeric/version/date; polarity flips stay with the dedicated scanner), so what the
+  write-gate blocks going IN is findable in what is ALREADY stored — previously the
+  numeric batch scanner had no production caller at all.
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent
