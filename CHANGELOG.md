@@ -65,6 +65,16 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   can't trust its own writers opts OUT with `ENGRAM_SUPERSEDE_SAME_SOURCE=0` — quarantine
   instead of supersede, avoiding intra-tenant griefing on lexically-detectable writes.
   `Memory.add()` returns `superseded: [ids]`.
+- **CE-band -> llm-judge escalation (auto).** The CE review band [threshold, tau_hi)
+  no longer always parks a write: with NO injected llm, an auto-discovered `claude` CLI
+  on PATH (flat subscription, no API key) adjudicates the band write once — admit
+  (judge-of-record `claude-band`, claude-scale threshold) or block (`L4-grounding`).
+  Fail-soft by construction: no CLI / error / timeout / unreadable verdict -> held for
+  review exactly as before (an unreadable verdict can never admit). Opt-out
+  `ENGRAM_BAND_LLM=0`; timeout `ENGRAM_BAND_LLM_TIMEOUT_S` (90s). Cost-honest: the band
+  is the measured-rare sliver (over-review 1/19), so the escalation spends ~one
+  subscription call only where the CE is genuinely unsure. Verified live (real CLI,
+  entailed pair -> 100). `Memory(llm=...)` unchanged (already judges every write).
 - **NLI semantic tier auto-enables (BREAKING default).** With `ENGRAM_SEMANTIC_CONFLICT`
   unset, the semantic-contradiction moat now runs in **enforce** iff the local NLI model is
   already on disk (`local_relation.local_nli_available()` — a pure-filesystem check of the

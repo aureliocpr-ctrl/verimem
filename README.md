@@ -40,10 +40,15 @@ honest *"I don't know."*
   reduced latency") scores high and is admitted; and an *entity-substitution*
   contradiction (swapping one allergen/product for another) can score mid-range
   in some languages — measured ~7% escape in Spanish, concentrated in that shape.
-  An opt-in two-threshold band (`VERIMEM_CE_BAND_ENFORCE=1`) holds the CE's
-  uncertain middle zone for review, cutting that entity-substitution escape from
+  A two-threshold band (**on by default**, `VERIMEM_CE_BAND_ENFORCE=0` reverts) holds
+  the CE's uncertain middle zone, cutting that entity-substitution escape from
   **6.2% → 1.8%** on the moat matrix with **zero** new false-blocks on entailed
-  facts (measured); the residual ~2% scores high and still needs an llm. A third
+  facts (measured) — and when a `claude` CLI is on PATH (flat subscription, no API
+  key) the band **escalates to one llm adjudication** instead of parking the write:
+  the llm verdict admits (judge-of-record `claude-band` on the receipt) or blocks;
+  any escalation failure falls back to held-for-review, an unreadable verdict never
+  admits (`ENGRAM_BAND_LLM=0` opts out). The residual ~2% scores high and still needs
+  a full llm judge. A third
   measured limit: the CE **hard-rejects true facts that require arithmetic or a
   unit/date conversion** ("0.5 g" ⊢ "500 mg", "two weeks before March 20" ⊢
   "March 6") or a low-resource language — those need an llm judge too. The moat is
