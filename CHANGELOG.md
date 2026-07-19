@@ -90,6 +90,8 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   a contradicted/stale value was the anti-thesis. Carried by the deterministic lexical L3
   (numeric/version/date/negation); the heavier NLI layer stays opt-in
   (`ENGRAM_SEMANTIC_CONFLICT`). Cross-source clashes quarantine the new (griefing guard).
+  **Rank floor (anti-confab):** a weaker write never supersedes a stronger fact — an
+  unverified `model_claim` cannot retire a `verified` one; that clash stays quarantined.
   Escape hatches: `Memory(preset="permissive")` or `validate="fast"` (skip the moat),
   `ENGRAM_SUPERSEDE_SAME_SOURCE=0` (keep contradiction detection but quarantine instead of
   supersede — for a multi-agent-per-tenant deployment that can't trust its own writers).
