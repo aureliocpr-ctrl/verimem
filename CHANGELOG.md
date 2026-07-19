@@ -5,14 +5,17 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 ## [0.7.0] - Unreleased
 
 ### Added
-- **Per-write audit trail (opt-in, `VERIMEM_AUDIT_LOG`).** Every write's adjudication
-  verdict — disposition, judge, score, threshold, reason, blocking layers, topic,
-  proposition, fact id — is appended to an isolated, append-only `adjudications.db`
-  (sibling of `semantic.db`), queryable after the fact ("show me every write we
-  quarantined last month, and why"). Default **off** (extra write-path I/O + a data-
-  retention choice the operator opts into); the receipt was previously only returned by
-  `add()`, never persisted. The audit write is fail-soft and never breaks the memory
-  write. This is the substrate a later tamper-evidence hash-chain layers on top of.
+- **Per-write audit trail (opt-in, `VERIMEM_AUDIT_LOG`).** Every single-proposition
+  `add()`'s adjudication verdict — disposition, judge, score, threshold, reason, the
+  layers that actually acted (incl. `store-screen` for store-time integrity flips),
+  topic, proposition, fact id — is appended to an isolated, append-only
+  `adjudications.db` (sibling of `semantic.db`), queryable after the fact ("show me
+  every write we quarantined last month, and why"). Default **off** (extra write-path
+  I/O + a data-retention choice the operator opts into); the receipt was previously only
+  returned by `add()`, never persisted. The audit write is fail-soft — a dropped append
+  is logged, never breaks the memory write. Conversation-ingest writes (`add(messages=…)`)
+  are **not yet** audited (a documented follow-up, task #49). Substrate for a later
+  tamper-evidence hash-chain.
 - **Write-path contradiction moat, subscription-free (Phase 1.1, opt-in).** The NLI
   semantic-contradiction check (`ENGRAM_SEMANTIC_CONFLICT`) now runs on the local NLI
   cross-encoder when no `Memory(llm=...)` is present — previously it was wired only

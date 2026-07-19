@@ -21,6 +21,7 @@ local distilled CE, ENGRAM_GROUNDING_BACKEND=local).
 """
 from __future__ import annotations
 
+import logging
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,8 @@ from typing import Any
 from .anti_confab_gate import run_validation_gate
 from .flow_events import emit_flow as _emit_flow
 from .semantic import Fact, SemanticMemory
+
+_LOG = logging.getLogger(__name__)
 
 #: Gate presets (packaging 2026-07-08): the gate's knobs existed for months
 #: (validate off/fast/full, gate_mode downgrade/reject, ground L4) but you had
@@ -238,8 +241,8 @@ class Memory:
                        fact_id="", topic=str(topic), layers=_layers)
             _adj = _adjudication(gate, disposition="rejected",
                                  verified_by=verified_by, warnings=warnings)
-            self._audit_record(_adj, topic=topic, proposition=text,
-                               fact_id=None, gate=gate, warnings=warnings)
+            self._audit_record(_adj, topic=topic, proposition=text, fact_id=None,
+                               judge=getattr(gate, "judge", None), layers=_layers)
             return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score,
                     "adjudication": _adj}
@@ -273,8 +276,8 @@ class Memory:
                         else "admitted")
         _adj = _adjudication(gate, disposition=_disposition,
                              verified_by=verified_by, warnings=warnings)
-        self._audit_record(_adj, topic=topic, proposition=text,
-                           fact_id=fact.id, gate=gate, warnings=warnings)
+        self._audit_record(_adj, topic=topic, proposition=text, fact_id=fact.id,
+                           judge=getattr(gate, "judge", None), layers=_hit_layers)
         return {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
@@ -780,11 +783,17 @@ class Memory:
         return al
 
     def _audit_record(self, adjudication: dict, *, topic: Any, proposition: str,
-                      fact_id: str | None, gate: Any, warnings: list) -> None:
+                      fact_id: str | None, judge: Any, layers: list) -> None:
         """Append the write's verdict to the opt-in audit trail (VERIMEM_AUDIT_LOG).
         No-op when off; never raises — persisting an audit record must never break the
-        memory write it records. ``judge`` is the backend string (local/claude), not
-        the receipt's judge dossier."""
+        memory write it records.
+
+        ``layers`` are the layers that ACTUALLY ACTED (the same list fed to the trust
+        ledger): the caller passes ``_hit_layers`` so a store-time screen flip is
+        recorded as ``['store-screen']``, not ``[]`` (opus critic F1 — ``warnings`` is
+        the PRE-store gate list and misses that flip). ``judge`` is the backend string
+        (local/claude), not the receipt's judge dossier. A dropped append is LOGGED, not
+        swallowed silently — a gap in a trail sold as complete must be visible (F3)."""
         if not _audit_log_on():
             return
         try:
@@ -793,14 +802,14 @@ class Memory:
                 topic=str(topic or ""), proposition=str(proposition or ""),
                 fact_id=fact_id,
                 evidence_class=adjudication.get("evidence_class"),
-                judge=getattr(gate, "judge", None),
+                judge=judge,
                 score=adjudication.get("score"),
                 threshold=adjudication.get("threshold"),
                 reason=str(adjudication.get("reason") or ""),
-                layers=_blocking_layers(warnings),
+                layers=list(layers or []),
             )
-        except Exception:  # noqa: BLE001 — the audit trail must never break a write
-            pass
+        except Exception as exc:  # noqa: BLE001 — must never break a write, but be visible
+            _LOG.warning("audit append dropped (write succeeded): %s", exc)
 
     def record_decision(self, decision: str, *,
                         alternatives: list[str] | None = None,
@@ -1223,7 +1232,10 @@ def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
         # from the numbers; 4) a generic non-empty verdict. Never empty.
         reason = _reason_from_warnings(warnings) or (getattr(gate, "advice", "") or "")
         if not reason:
-            if score is not None and thr is not None:
+            if score is not None and thr is not None and score < thr:
+                # only claim "below threshold" when it actually IS below — a fact the
+                # judge ADMITTED (score>=thr) that a store-time screen later flipped
+                # must not be labelled a grounding failure (opus critic F1 facet).
                 tier = "cross_encoder" if judge == "local" else "judge"
                 reason = f"{tier} score {score:g} below threshold {thr:g}"
             elif disposition == "quarantined":
