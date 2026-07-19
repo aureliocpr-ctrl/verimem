@@ -10326,11 +10326,27 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 topic=None,  # already filtered above
                 exclude_topic_prefixes=exclude_prefixes,
             )
+            # 0.7.0 synergy — the retroactive view exposes the SAME expanded
+            # lexical moat as the write-gate (numeric/version/date), default
+            # ON. Fail-soft: a scanner error degrades to [] and never breaks
+            # the polarity scan above.
+            try:
+                from verimem.facts_conflict import find_lexical_conflicts
+                _lex = find_lexical_conflicts(
+                    pool,
+                    min_overlap=min_overlap,
+                    topic=None,  # already filtered above
+                    exclude_topic_prefixes=exclude_prefixes,
+                )
+            except Exception as _exc:  # noqa: BLE001
+                log.warning("lexical_conflict_scan_failed", error=str(_exc))
+                _lex = []
             payload = {
                 "pool_size": len(pool),
                 "topic": topic if topic else None,
                 "min_overlap": min_overlap,
                 "pairs": [p.as_dict() for p in pairs],
+                "lexical_pairs": [p.as_dict() for p in _lex],
             }
             _audit(name, arguments, outcome="ok")
             return _ok(payload)

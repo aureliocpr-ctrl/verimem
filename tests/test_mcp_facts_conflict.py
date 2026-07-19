@@ -175,3 +175,33 @@ async def test_find_conflicting_low_threshold_within_topic_pairs(
     }
     assert "F#5 is in main" in propositions
     assert "The build is green" in propositions
+
+
+@pytest.mark.asyncio
+async def test_find_conflicting_includes_lexical_pairs(agent_with_semantic):
+    """0.7.0 synergy: the MCP scan surface exposes the SAME expanded lexical
+    moat as the write-gate — a version pin that moved shows up as a
+    kind-tagged lexical pair, default ON (no flag)."""
+    sm = agent_with_semantic.semantic
+    a = Fact(proposition="Orion ships on version 2.3.1.", topic="eng/orion")
+    b = Fact(proposition="Orion ships on version 4.0.0.", topic="eng/orion")
+    sm.store(a)
+    sm.store(b)
+
+    blocks = await _invoke_tool("hippo_facts_find_conflicting", {})
+    payload = json.loads(blocks[0])
+    assert "lexical_pairs" in payload
+    kinds = {p["kind"] for p in payload["lexical_pairs"]}
+    assert "version" in kinds
+    ids = {p["fact_a"]["id"] for p in payload["lexical_pairs"]} | {
+        p["fact_b"]["id"] for p in payload["lexical_pairs"]}
+    assert {a.id, b.id} <= ids
+
+
+@pytest.mark.asyncio
+async def test_find_conflicting_lexical_empty_when_no_conflicts(agent_with_semantic):
+    sm = agent_with_semantic.semantic
+    sm.store(Fact(proposition="Orion ships on version 2.3.1.", topic="eng/orion"))
+    blocks = await _invoke_tool("hippo_facts_find_conflicting", {})
+    payload = json.loads(blocks[0])
+    assert payload["lexical_pairs"] == []
