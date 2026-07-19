@@ -38,7 +38,7 @@ from itertools import combinations
 from pathlib import Path
 from typing import Any
 
-__all__ = ["SourceTrustBook", "canonical_source", "enabled",
+__all__ = ["SourceTrustBook", "canonical_source", "enabled", "observe",
            "independence_enabled", "independence_deconfounded", "threshold",
            "load_book", "save_book"]
 
@@ -68,6 +68,16 @@ _TRUTHY = {"1", "true", "yes", "on"}
 def enabled() -> bool:
     """ENGRAM_SOURCE_TRUST=1 turns the write-gate consultation on."""
     return os.environ.get("ENGRAM_SOURCE_TRUST", "").strip().lower() in _TRUTHY
+
+
+def observe() -> bool:
+    """ENGRAM_SOURCE_TRUST=observe (or log/shadow) computes + surfaces source
+    trust WITHOUT gating the write, so an operator can measure the false-block
+    rate on their real tenants before promoting to enforcement. Same
+    observe->enforce discipline as the CE band + the TRUST_CORE guard-rail
+    against a blind default flip. Distinct from enabled() (which gates)."""
+    return os.environ.get("ENGRAM_SOURCE_TRUST", "").strip().lower() in (
+        "observe", "log", "shadow")
 
 
 def independence_enabled() -> bool:

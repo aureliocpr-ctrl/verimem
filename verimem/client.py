@@ -204,20 +204,33 @@ class Memory:
         # rehabilitable, and the consistency channel must be able to fish the
         # source back out; TRUST_CORE.md guard-rail).
         from . import source_trust as _st
-        if _st.enabled() and action == "persist":
+        _st_observe = _st.observe()
+        if (_st.enabled() or _st_observe) and action == "persist":
             _src = _st.canonical_source(verified_by)
             _t = self._source_trust_book().trust(_src)
             if _t < _st.threshold():
-                action = "downgrade"
-                warnings.append({
-                    "layer": "SOURCE_TRUST",
-                    "matched_text": _src,
-                    "advice": (
-                        f"source '{_src}' trust {_t:.2f} is below "
-                        f"{_st.threshold():.2f} — stored quarantined pending "
-                        "corroboration (confirmations by independent sources "
-                        "rehabilitate it)"),
-                })
+                if _st_observe:
+                    # observe/log-only: surface the low trust but DO NOT gate, so
+                    # the false-block rate is measurable on real tenants first.
+                    warnings.append({
+                        "layer": "SOURCE_TRUST-observe",
+                        "matched_text": _src,
+                        "advice": (
+                            f"source '{_src}' trust {_t:.2f} is below "
+                            f"{_st.threshold():.2f} (observe mode: logged, NOT "
+                            "downgraded — set ENGRAM_SOURCE_TRUST=1 to enforce)"),
+                    })
+                else:
+                    action = "downgrade"
+                    warnings.append({
+                        "layer": "SOURCE_TRUST",
+                        "matched_text": _src,
+                        "advice": (
+                            f"source '{_src}' trust {_t:.2f} is below "
+                            f"{_st.threshold():.2f} — stored quarantined pending "
+                            "corroboration (confirmations by independent sources "
+                            "rehabilitate it)"),
+                    })
         _layers = sorted({str(w.get("layer", "")) for w in warnings if w.get("layer")})
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)

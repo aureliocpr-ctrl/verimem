@@ -1,0 +1,53 @@
+{
+  "model": "claude-sonnet-5",
+  "threshold": 70.0,
+  "seed": 42,
+  "ts": "2026-07-19T02:21:13",
+  "overall_auroc": 1.0,
+  "overall_admit_rate": 1.0,
+  "overall_block_rate": 1.0,
+  "per_corpus": {
+    "halueval": {
+      "n_pos": 2,
+      "n_neg": 2,
+      "threshold": 70.0,
+      "auroc": 1.0,
+      "faithful_admit_rate": 1.0,
+      "confab_block_rate": 1.0,
+      "pos_scores": [
+        100.0,
+        100.0
+      ],
+      "neg_scores": [
+        0.0,
+        0.0
+      ],
+      "rows": [
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        },
+        {
+          "label": 1,
+          "kind": "faithful_answer",
+          "score": 100.0,
+          "backend": "claude"
+        },
+        {
+          "label": 0,
+          "kind": "hallucination",
+          "score": 0.0,
+          "backend": "claude"
+        }
+      ]
+    }
+  }
+}
