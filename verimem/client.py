@@ -231,7 +231,7 @@ class Memory:
                             "corroboration (confirmations by independent sources "
                             "rehabilitate it)"),
                     })
-        _layers = sorted({str(w.get("layer", "")) for w in warnings if w.get("layer")})
+        _layers = _blocking_layers(warnings)
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
             _emit_flow("flow.write", stored=False, status="rejected",
@@ -1087,17 +1087,41 @@ def _evidence_class(gate: Any, verified_by: Any, warnings: list) -> str:
 _BLOCK_LAYER_PRIORITY = ("L3", "L4-grounding", "L1", "SOURCE_TRUST", "L4-skipped")
 
 
+def _is_advisory_layer(layer: str) -> bool:
+    """An ``*-observe`` layer (``L3-semantic-observe``, ``SOURCE_TRUST-observe``) is an
+    OBSERVE-mode advisory: it surfaces a would-be block for MEASUREMENT but does not
+    cause the disposition. It must never own a receipt's block reason nor be credited
+    in the trust ledger — otherwise observe mode measures itself as the blocker and its
+    whole purpose (gauge a layer's block rate BEFORE enforcing) is defeated. NB: the
+    layer string ``L3-semantic-observe`` also ``.startswith("L3")`` (rank 0), so without
+    this guard it would out-rank a real L1/L4 block in ``_reason_from_warnings``."""
+    return str(layer).endswith("-observe")
+
+
+def _blocking_layers(warnings: list) -> list[str]:
+    """Sorted distinct layers that ACTED on the write — advisory ``*-observe`` layers
+    excluded, so the trust ledger ``by_layer`` never credits an observe advisory for a
+    block it did not cause."""
+    return sorted({layer for w in warnings
+                   if (layer := str(w.get("layer", "")))
+                   and not _is_advisory_layer(layer)})
+
+
 def _reason_from_warnings(warnings: list) -> str:
     """The human reason for a block, from the highest-priority BLOCKING layer
     that carries text - so a fact quarantined by L1 is not explained by an
-    advisory L4-skipped note that merely happened to be appended later."""
+    advisory L4-skipped note that merely happened to be appended later. Advisory
+    ``*-observe`` layers are excluded: they did not cause the block (an admitted
+    write whose only note is an observe advisory has no block reason -> "")."""
     def _rank(w: dict) -> int:
         layer = str(w.get("layer", ""))
         for i, p in enumerate(_BLOCK_LAYER_PRIORITY):
             if layer.startswith(p):
                 return i
         return len(_BLOCK_LAYER_PRIORITY)
-    acting = [w for w in warnings if w.get("advice") or w.get("reason")]
+    acting = [w for w in warnings
+              if (w.get("advice") or w.get("reason"))
+              and not _is_advisory_layer(str(w.get("layer", "")))]
     if not acting:
         return ""
     best = min(acting, key=_rank)
