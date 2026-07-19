@@ -76,8 +76,11 @@ def observe() -> bool:
     rate on their real tenants before promoting to enforcement. Same
     observe->enforce discipline as the CE band + the TRUST_CORE guard-rail
     against a blind default flip. Distinct from enabled() (which gates)."""
-    return os.environ.get("ENGRAM_SOURCE_TRUST", "").strip().lower() in (
-        "observe", "log", "shadow")
+    v = os.environ.get("ENGRAM_SOURCE_TRUST", "").strip().lower()
+    if v in ("observe", "log", "shadow"):
+        return True
+    # 0.7.0 default flip: unset means OBSERVE - measure, never gate.
+    return v == ""
 
 
 def independence_enabled() -> bool:

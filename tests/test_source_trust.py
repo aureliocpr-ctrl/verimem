@@ -105,3 +105,30 @@ def test_bounds_and_roundtrip():
     clone = SourceTrustBook.from_dict(book.to_dict())
     assert clone.trust("bad") == book.trust("bad")
     assert clone.trust("good") == book.trust("good")
+
+
+# ---- 0.7.0 default flip: observe ON by default ---------------------------
+# Mandate: shipped capability = enabled capability. Observe computes and
+# SURFACES source trust (advisory) without gating — exactly the measurement
+# the TRUST_CORE guard-rail wants before any enforce flip. Unset now means
+# observe; =0 opts out entirely; =1 still enforces (and stops observing).
+
+def test_source_trust_unset_defaults_to_observe(monkeypatch):
+    monkeypatch.delenv("ENGRAM_SOURCE_TRUST", raising=False)
+    from verimem import source_trust as st
+    assert st.observe() is True
+    assert st.enabled() is False          # observe NEVER gates
+
+
+def test_source_trust_zero_opts_out_of_observe(monkeypatch):
+    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
+    from verimem import source_trust as st
+    assert st.observe() is False
+    assert st.enabled() is False
+
+
+def test_source_trust_enforce_unchanged(monkeypatch):
+    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
+    from verimem import source_trust as st
+    assert st.enabled() is True
+    assert st.observe() is False
