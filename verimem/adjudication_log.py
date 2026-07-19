@@ -117,7 +117,10 @@ class AdjudicationLog:
         concurrent writers to the same DB cannot both chain off the same head and fork
         the chain (SQLite serializes the write lock)."""
         rid = uuid.uuid4().hex[:16]
-        ts_val = ts if ts is not None else time.time()
+        # float() every numeric field BEFORE hashing: SQLite REAL affinity stores an int
+        # ts as a float, so verify() would recompute a float and false-flag intact data
+        # (opus critic FIX 2). Coerce here so the hashed value == the stored value.
+        ts_val = float(ts) if ts is not None else time.time()
         score_val = None if score is None else float(score)
         thr_val = None if threshold is None else float(threshold)
         layers_json = json.dumps(list(layers or []))
@@ -185,26 +188,38 @@ class AdjudicationLog:
     def verify(self) -> str | None:
         """Recompute the hash-chain over the audit rows in append (rowid) order and
         return the id of the FIRST row whose stored ``entry_hash`` does not match — an
-        edit, a broken prev-link from a deletion, or a reorder. ``None`` when intact.
+        edit, a broken prev-link from an INTERIOR deletion, or a reorder. ``None`` when
+        intact.
 
-        Covers rows written since tamper-evidence was enabled (``entry_hash`` NOT NULL);
-        pre-chain legacy rows are skipped. DETECTION only: an attacker who owns the DB
-        can recompute the whole chain, so real assurance also needs ``head()`` archived
-        off-box (anchor-A) and compared."""
+        Pre-chain legacy rows (``entry_hash`` NULL) form a contiguous PREFIX (lowest
+        rowids, written before the migration) and are skipped; but a NULL row AFTER the
+        chain has started is itself tampering (an attacker NULLing a row to demote it out
+        of the check) and is reported (opus critic FIX 1).
+
+        LIMITS (what verify() alone CANNOT see, by design): TAIL-truncation (deleting the
+        newest rows leaves a shorter but valid chain) and a full rewrite where the
+        attacker re-hashes everything. Those need the ``head()`` archived off-box
+        (anchor-A) and compared — verify() trusts the in-DB hashes."""
         prev = GENESIS_HASH
+        started = False
         with self._conn() as conn:
             rows = conn.execute(
-                "SELECT * FROM adjudications WHERE entry_hash IS NOT NULL "
-                "ORDER BY rowid ASC").fetchall()
+                "SELECT * FROM adjudications ORDER BY rowid ASC").fetchall()
         for r in rows:
+            eh = r["entry_hash"]
+            if eh is None:
+                if started:
+                    return r["id"]        # NULL after the chain began = demotion tamper
+                continue                   # leading pre-chain legacy prefix — skip
+            started = True
             payload = _chain_payload(
                 id=r["id"], ts=r["ts"], topic=r["topic"], disposition=r["disposition"],
                 proposition=r["proposition"], fact_id=r["fact_id"],
                 evidence_class=r["evidence_class"], judge=r["judge"], score=r["score"],
                 threshold=r["threshold"], reason=r["reason"], layers_json=r["layers"])
-            if _entry_hash(payload, prev) != r["entry_hash"]:
+            if _entry_hash(payload, prev) != eh:
                 return r["id"]
-            prev = r["entry_hash"]
+            prev = eh
         return None
 
     def head(self) -> str | None:

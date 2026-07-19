@@ -65,6 +65,29 @@ def test_verify_returns_the_first_tampered_row_id(tmp_path):
     assert log.verify() == bad                          # points at the edited row
 
 
+def test_null_evasion_of_tail_row_is_detected(tmp_path):
+    """FIX 1 (opus critic): NULLing a chained row's entry_hash to make verify() skip it
+    (the tail row has no successor to catch a broken link) must be caught — a NULL AFTER
+    the chain started is tampering, not 'intact'."""
+    log = _log(tmp_path)
+    _rec(log, "a"); _rec(log, "b"); tail = _rec(log, "c")
+    con = sqlite3.connect(log.db_path)
+    con.execute("UPDATE adjudications SET disposition='admitted', entry_hash=NULL "
+                "WHERE id=?", (tail,))
+    con.commit(); con.close()
+    assert log.verify() == tail                         # not None
+
+
+def test_int_ts_does_not_false_alarm(tmp_path):
+    """FIX 2 (opus critic): an int epoch ts (allowed by the signature) must not poison
+    the chain — SQLite REAL affinity would otherwise make verify() recompute a float and
+    flag intact data as tampered forever."""
+    log = _log(tmp_path)
+    log.record(disposition="admitted", topic="t", proposition="x", ts=1721370000)
+    log.record(disposition="admitted", topic="t", proposition="y", ts=1721370001)
+    assert log.verify() is None                         # intact despite int ts
+
+
 def test_memory_audit_verify_and_head(tmp_path, monkeypatch):
     """The public Memory surface: audit_verify() detects tampering, audit_head() gives
     the head to archive off-box."""
