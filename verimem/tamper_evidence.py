@@ -74,3 +74,84 @@ def verify_chain(entries: list[dict], hashes: list[str], *,
         if prev != h:
             return i
     return None
+
+# ---------------------------------------------------------------------------
+# Anchor-B (task #24): the chain head signed with an EXTERNAL ed25519 key.
+#
+# Anchor-A exports the head for the operator to archive; an attacker who owns
+# the DB can recompute the whole chain but CANNOT forge a head signed by a key
+# that never lives in the DB-writing process. The private key is a PEM file
+# the OPERATOR manages (VERIMEM_AUDIT_SIGNING_KEY) -- verimem never stores it.
+# ed25519 via the optional ``cryptography`` package (extra ``verimem[audit]``);
+# a configured key with the package missing raises loudly -- an operator who
+# ASKED for signing must never silently not get it.
+#
+# Honest scope: B detects forgery of the head GIVEN the key stays external.
+# It does not add C's public timestamping (air-gap-friendly by design).
+# ---------------------------------------------------------------------------
+
+def _require_crypto():
+    try:
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+            Ed25519PrivateKey,
+            Ed25519PublicKey,
+        )
+    except ImportError as exc:  # pragma: no cover -- environment-dependent
+        raise RuntimeError(
+            "audit head signing requires the 'cryptography' package - "
+            "install verimem[audit]") from exc
+    return serialization, Ed25519PrivateKey, Ed25519PublicKey
+
+
+def generate_audit_keypair(directory) -> tuple:
+    """Generate an ed25519 keypair for audit-head signing; returns
+    ``(private_pem_path, public_pem_path)``. Run this OUTSIDE the process
+    that writes the audit DB and keep the private key out of its reach --
+    that separation is the whole point of anchor-B."""
+    from pathlib import Path
+    serialization, Ed25519PrivateKey, _pub = _require_crypto()
+    d = Path(directory)
+    d.mkdir(parents=True, exist_ok=True)
+    key = Ed25519PrivateKey.generate()
+    priv = d / "verimem-audit-signing.pem"
+    pub = d / "verimem-audit-signing.pub.pem"
+    priv.write_bytes(key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ))
+    pub.write_bytes(key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    ))
+    return priv, pub
+
+
+def sign_head(head_hash: str, private_key_path) -> str:
+    """Sign a chain head with the operator's ed25519 private key; returns the
+    base64 signature to archive NEXT TO the head."""
+    import base64
+    serialization, _priv, _pub = _require_crypto()
+    key = serialization.load_pem_private_key(
+        open(private_key_path, "rb").read(), password=None)
+    sig = key.sign(str(head_hash).encode("utf-8"))
+    return base64.b64encode(sig).decode("ascii")
+
+
+def verify_head_signature(head_hash: str, signature_b64: str,
+                          public_key_path) -> bool:
+    """True iff ``signature_b64`` is a valid signature of ``head_hash`` under
+    the public key -- ANY failure (garbage b64, wrong key, wrong head) is
+    ``False``, never an exception: verification is a yes/no question."""
+    import base64
+    try:
+        serialization, _priv, _pub = _require_crypto()
+        key = serialization.load_pem_public_key(
+            open(public_key_path, "rb").read())
+        key.verify(base64.b64decode(signature_b64),
+                   str(head_hash).encode("utf-8"))
+        return True
+    except Exception:  # noqa: BLE001 -- verification is boolean by contract
+        return False
+

@@ -30,7 +30,13 @@ def mem(tmp_path, monkeypatch):
     return Memory(tmp_path / "g.db")
 
 
-def test_corroborated_value_beats_lone_unlabeled_rival(mem):
+def test_corroborated_value_beats_lone_unlabeled_rival(mem, monkeypatch):
+    # 0.7.0 auto-NLI churn: with the semantic tier auto-on (model installed),
+    # the rival is quarantined AT WRITE (L3-semantic) and the read-side
+    # guardian correctly finds nothing to correct. This test pins the
+    # READ-side correction path, so the write-side NLI is explicitly opted
+    # out - the rival must actually land in the store.
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     # same value twice ("labrador", different article so no dedup), both proven
     a = mem.add("Rex is a labrador.", topic="pets",
                 verified_by=["source-doc:alice:t1"])

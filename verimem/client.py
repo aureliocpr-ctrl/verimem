@@ -857,6 +857,25 @@ class Memory:
         log = self._adjudication_log_ro()
         return None if log is None else log.head()
 
+    def audit_head_signed(self) -> dict | None:
+        """Anchor-B: the chain head PLUS its ed25519 signature under the
+        operator's EXTERNAL key (``VERIMEM_AUDIT_SIGNING_KEY`` = path to a
+        private PEM). Archive both off-box: a later ``audit_verify()`` +
+        signature check detects even a full-chain rewrite AND a forged head.
+        ``None`` when no key is configured or the trail is empty; a configured
+        key that cannot sign raises loudly (an operator who asked for signing
+        must never silently not get it)."""
+        import os as _os
+        key_path = _os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()
+        if not key_path:
+            return None
+        head = self.audit_head()
+        if head is None:
+            return None
+        from .tamper_evidence import sign_head
+        return {"head": head, "signature": sign_head(head, key_path),
+                "algorithm": "ed25519"}
+
     def _audit_record(self, adjudication: dict, *, topic: Any, proposition: str,
                       fact_id: str | None, judge: Any, layers: list) -> None:
         """Append the write's verdict to the opt-in audit trail (VERIMEM_AUDIT_LOG).

@@ -73,6 +73,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+audit = ["cryptography>=42"]
 # Headless / server install — same as the default core. Explicit alias so
 # `pip install verimem[headless]` reads clearly in CI / Dockerfiles.
 headless = []
