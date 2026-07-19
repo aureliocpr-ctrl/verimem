@@ -73,6 +73,43 @@ async def test_write_path_supersedes_gate_contradiction(tmp_path, monkeypatch):
     assert old.superseded_by != "oldcap"
 
 
+async def test_mcp_applies_supersede_fact_ids_when_admitted(tmp_path, monkeypatch):
+    """MCP mirror (task #50): hippo_remember retires gate.supersede_fact_ids (same-source
+    evolution) when the new fact is admitted — like Memory.add() (SDK)."""
+    sm = SemanticMemory(db_path=tmp_path / "sm.db")
+    sm.store(Fact(id="oldval", proposition="the plan costs 100", topic="t",
+                  status="model_claim"))
+    agent = _FakeAgent(sm)
+    monkeypatch.setattr(mcp_server, "_ag", lambda: agent)
+
+    def _fake_gate(**kw):
+        return anti_confab_gate.GateResult(action="persist", supersede_fact_ids=["oldval"])
+    monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _fake_gate)
+
+    blocks = await _invoke_tool("hippo_remember", {
+        "proposition": "the plan costs 150", "topic": "t", "status": "model_claim"})
+    assert _payload(blocks).get("ok") is True
+    assert sm.get("oldval").superseded_by is not None          # retired by the new fact
+
+
+async def test_mcp_supersede_skipped_when_new_quarantined(tmp_path, monkeypatch):
+    """Admit-guard on the MCP path too: a quarantined new fact must NOT retire the old
+    (else both old and new are lost)."""
+    sm = SemanticMemory(db_path=tmp_path / "sm.db")
+    sm.store(Fact(id="oldval", proposition="the plan costs 100", topic="t",
+                  status="model_claim"))
+    agent = _FakeAgent(sm)
+    monkeypatch.setattr(mcp_server, "_ag", lambda: agent)
+
+    def _fake_gate(**kw):
+        return anti_confab_gate.GateResult(action="downgrade", supersede_fact_ids=["oldval"])
+    monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _fake_gate)
+
+    await _invoke_tool("hippo_remember", {
+        "proposition": "the plan costs 150", "topic": "t", "status": "model_claim"})
+    assert sm.get("oldval").superseded_by is None              # admit-guard: NOT retired
+
+
 async def test_write_path_no_supersede_when_gate_silent(tmp_path, monkeypatch):
     """Nessun contradicting_fact_ids -> nessuna supersession (no-op sicuro)."""
     sm = SemanticMemory(db_path=tmp_path / "sm.db")

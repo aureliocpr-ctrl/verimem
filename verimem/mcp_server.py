@@ -11809,6 +11809,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     )
                 except Exception:  # noqa: BLE001 — never break the write
                     pass
+            # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE): retire the
+            # OLD value(s) the gate classified as a same-source evolution — but ONLY if the
+            # new fact was ADMITTED (a quarantined new must not retire the old; there is no
+            # rank rule on this path, so the admit-guard is explicit). Mirrors Memory.add()
+            # (SDK). Best-effort: a supersede failure never breaks the write.
+            if (not _deferred and getattr(fact, "status", "") != "quarantined"
+                    and getattr(_gate, "supersede_fact_ids", None)):
+                for _old_id in _gate.supersede_fact_ids:
+                    try:
+                        a.semantic.supersede(
+                            _old_id, fact.id, reason="same-source evolution")
+                    except Exception:  # noqa: BLE001 — never break the write
+                        pass
             # NOTE: provenance columns (writer_role, meta_narrative) are
             # persisted inline by SemanticMemory.store() via the v6 schema
             # — see _migrate_v5_to_v6 + INSERT clause.
