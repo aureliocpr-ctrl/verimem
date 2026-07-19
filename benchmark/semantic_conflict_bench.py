@@ -121,17 +121,26 @@ def run(judge: Any, *, min_cosine: float = 0.7) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Lexical-vs-semantic conflict bench.")
+    p.add_argument("--judge", choices=["llm", "local"], default="llm",
+                   help="llm = claude-cli NLI (subscription); local = the free local "
+                        "NLI cross-encoder (the llm-free write-path moat, no API).")
     p.add_argument("--model", type=str, default="claude-sonnet-4-6")
     p.add_argument("--min-cosine", type=float, default=0.7)
     p.add_argument("--out", type=Path, default=None)
     args = p.parse_args(argv)
 
-    from benchmark.qa_runner import LeanClaudeCLILLM
-    from verimem.semantic_conflict import LLMRelationJudge
-
-    judge = LLMRelationJudge(LeanClaudeCLILLM(model=args.model, timeout_s=60))
+    if args.judge == "local":
+        # Certify the SHIPPED default write-path judge (llm-free, offline).
+        from verimem.local_relation import LocalRelationJudge
+        judge: Any = LocalRelationJudge()
+        judge_desc = f"local NLI cross-encoder ({judge.model_name})"
+    else:
+        from benchmark.qa_runner import LeanClaudeCLILLM
+        from verimem.semantic_conflict import LLMRelationJudge
+        judge = LLMRelationJudge(LeanClaudeCLILLM(model=args.model, timeout_s=60))
+        judge_desc = f"claude-cli ({args.model}); NLI"
     res = run(judge, min_cosine=args.min_cosine)
-    res["judge"] = f"claude-cli ({args.model}); NLI"
+    res["judge"] = judge_desc
     print(json.dumps({k: v for k, v in res.items() if k != "rows"}, indent=2))
     a = res["per_case"].get("A", {})
     print(f"\nKEY — case A (semantic conflict): lexical caught "

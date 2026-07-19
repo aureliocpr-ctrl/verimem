@@ -1,0 +1,174 @@
+{
+  "min_cosine": 0.7,
+  "per_case": {
+    "A": {
+      "n": 8,
+      "mean_cosine": 0.846,
+      "lexical_conflict_rate": 0.0,
+      "semantic_conflict_rate": 1.0,
+      "semantic_duplicate_rate": 0.0,
+      "lexical_duplicate_rate": 0.0
+    },
+    "B": {
+      "n": 2,
+      "mean_cosine": 0.923,
+      "lexical_conflict_rate": 1.0,
+      "semantic_conflict_rate": 1.0,
+      "semantic_duplicate_rate": 0.0,
+      "lexical_duplicate_rate": 0.5
+    },
+    "C": {
+      "n": 2,
+      "mean_cosine": 0.867,
+      "lexical_conflict_rate": 1.0,
+      "semantic_conflict_rate": 1.0,
+      "semantic_duplicate_rate": 0.0,
+      "lexical_duplicate_rate": 0.0
+    },
+    "D": {
+      "n": 2,
+      "mean_cosine": 0.96,
+      "lexical_conflict_rate": 0.0,
+      "semantic_conflict_rate": 0.0,
+      "semantic_duplicate_rate": 1.0,
+      "lexical_duplicate_rate": 0.0
+    },
+    "E": {
+      "n": 4,
+      "mean_cosine": 0.858,
+      "lexical_conflict_rate": 0.0,
+      "semantic_conflict_rate": 0.0,
+      "semantic_duplicate_rate": 0.0,
+      "lexical_duplicate_rate": 0.0
+    }
+  },
+  "rows": [
+    {
+      "case": "A",
+      "cosine": 0.869,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "A",
+      "cosine": 0.849,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "A",
+      "cosine": 0.832,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "A",
+      "cosine": 0.869,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "A",
+      "cosine": 0.798,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "A",
+      "cosine": 0.828,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "A",
+      "cosine": 0.868,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "A",
+      "cosine": 0.853,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "B",
+      "cosine": 0.91,
+      "lexical_conflict": true,
+      "lexical_duplicate": true,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "B",
+      "cosine": 0.936,
+      "lexical_conflict": true,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "C",
+      "cosine": 0.892,
+      "lexical_conflict": true,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "C",
+      "cosine": 0.842,
+      "lexical_conflict": true,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_conflict"
+    },
+    {
+      "case": "D",
+      "cosine": 0.968,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_duplicate"
+    },
+    {
+      "case": "D",
+      "cosine": 0.952,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "semantic_duplicate"
+    },
+    {
+      "case": "E",
+      "cosine": 0.882,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "none"
+    },
+    {
+      "case": "E",
+      "cosine": 0.779,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "none"
+    },
+    {
+      "case": "E",
+      "cosine": 0.851,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "none"
+    },
+    {
+      "case": "E",
+      "cosine": 0.919,
+      "lexical_conflict": false,
+      "lexical_duplicate": false,
+      "semantic_kind": "none"
+    }
+  ],
+  "judge": "local NLI cross-encoder (MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli)"
+}
