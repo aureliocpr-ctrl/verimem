@@ -49,8 +49,8 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   This is why `observe` is the recommended local mode.
 - **Same-source evolution supersession (`ENGRAM_SUPERSEDE_SAME_SOURCE`, ON by default —
   see Changed).** A newer write from the SAME source that clashes with a stored value — caught by
-  the NLI moat OR the always-on **lexical** L3 (numeric / version / date / negation changes,
-  the most common evolutions) — now **admits the new fact and retires the old**
+  the NLI moat OR the always-on **lexical** L3 (numeric-quantity + year-level date changes —
+  version/negation/entity/finer-date need the NLI tier) — now **admits the new fact and retires the old**
   (`superseded_by`) instead of quarantining the new: a memory that serves the current value,
   not a stale one beside it. Works on both surfaces (`Memory.add()` and the MCP
   `hippo_remember`). Ordering is by **valid-time** (`asserted_at`, else write-time), so a
@@ -62,7 +62,7 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   authority is sound only within the tenancy boundary + a single-agent-per-tenant
   assumption. It is **ON by default** (see Changed); a multi-agent-per-tenant deployment that
   can't trust its own writers opts OUT with `ENGRAM_SUPERSEDE_SAME_SOURCE=0` — quarantine
-  instead of supersede, avoiding intra-tenant griefing on numeric/version writes.
+  instead of supersede, avoiding intra-tenant griefing on numeric writes.
   `Memory.add()` returns `superseded: [ids]`.
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
@@ -89,8 +89,8 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   of hoarding both: add "costs 100 €" then "costs 150 €" (same source) and recall returns
   only "150 €", the old superseded. This is the product's core promise — a memory that keeps
   a contradicted/stale value was the anti-thesis. Carried by the deterministic lexical L3
-  (numeric/version/date/negation); the heavier NLI layer stays opt-in
-  (`ENGRAM_SEMANTIC_CONFLICT`). Cross-source clashes quarantine the new (griefing guard).
+  (numeric-quantity + year-level date changes — measured; version/negation/entity/finer-date
+  need the opt-in NLI layer `ENGRAM_SEMANTIC_CONFLICT`). Cross-source clashes quarantine the new (griefing guard).
   **Rank floor (anti-confab):** a weaker write never supersedes a stronger fact — an
   unverified `model_claim` cannot retire a `verified` one; that clash stays quarantined.
   Escape hatches: `Memory(preset="permissive")` or `validate="fast"` (skip the moat),

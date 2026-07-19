@@ -1,0 +1,142 @@
+{
+  "scenario": "same-source value update, default recall top-5",
+  "embedder": "intfloat/multilingual-e5-base (both)",
+  "mem0_mode": "local infer=False (zero external API)",
+  "set_A_mixed": {
+    "mem0": {
+      "stale_leak": 5,
+      "current_served": 5,
+      "n": 5,
+      "by_subject": [
+        {
+          "subject": "Zorbex reactor temperature",
+          "kind": "numeric",
+          "stale_present": true,
+          "current_present": true
+        },
+        {
+          "subject": "Project Aurora launch date",
+          "kind": "month",
+          "stale_present": true,
+          "current_present": true
+        },
+        {
+          "subject": "CEO of Kappa Dynamics",
+          "kind": "entity",
+          "stale_present": true,
+          "current_present": true
+        },
+        {
+          "subject": "capital of Ruritania",
+          "kind": "entity",
+          "stale_present": true,
+          "current_present": true
+        },
+        {
+          "subject": "Talos engine fuel",
+          "kind": "entity",
+          "stale_present": true,
+          "current_present": true
+        }
+      ]
+    },
+    "verimem_default_lexical": {
+      "stale_leak": 4,
+      "current_served": 5,
+      "n": 5,
+      "by_subject": [
+        {
+          "subject": "Zorbex reactor temperature",
+          "kind": "numeric",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "042bb6cbdbfb"
+          ]
+        },
+        {
+          "subject": "Project Aurora launch date",
+          "kind": "month",
+          "stale_present": true,
+          "current_present": true,
+          "superseded": []
+        },
+        {
+          "subject": "CEO of Kappa Dynamics",
+          "kind": "entity",
+          "stale_present": true,
+          "current_present": true,
+          "superseded": []
+        },
+        {
+          "subject": "capital of Ruritania",
+          "kind": "entity",
+          "stale_present": true,
+          "current_present": true,
+          "superseded": []
+        },
+        {
+          "subject": "Talos engine fuel",
+          "kind": "entity",
+          "stale_present": true,
+          "current_present": true,
+          "superseded": []
+        }
+      ],
+      "superseded_total": 1
+    },
+    "verimem_plus_nli": {
+      "stale_leak": 0,
+      "current_served": 5,
+      "n": 5,
+      "by_subject": [
+        {
+          "subject": "Zorbex reactor temperature",
+          "kind": "numeric",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "ec6042d9e271"
+          ]
+        },
+        {
+          "subject": "Project Aurora launch date",
+          "kind": "month",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "cf51eb72796f"
+          ]
+        },
+        {
+          "subject": "CEO of Kappa Dynamics",
+          "kind": "entity",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "4f79c441b524"
+          ]
+        },
+        {
+          "subject": "capital of Ruritania",
+          "kind": "entity",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "c717be6db265"
+          ]
+        },
+        {
+          "subject": "Talos engine fuel",
+          "kind": "entity",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "2dbea59c74d1"
+          ]
+        }
+      ],
+      "superseded_total": 5
+    }
+  }
+}

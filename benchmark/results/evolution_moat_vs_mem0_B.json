@@ -1,0 +1,144 @@
+{
+  "scenario": "same-source value update, default recall top-5",
+  "embedder": "intfloat/multilingual-e5-base (both)",
+  "mem0_mode": "local infer=False (zero external API)",
+  "set_B_lexical_target": {
+    "mem0": {
+      "stale_leak": 5,
+      "current_served": 5,
+      "n": 5,
+      "by_subject": [
+        {
+          "subject": "subscription monthly price",
+          "kind": "numeric",
+          "stale_present": true,
+          "current_present": true
+        },
+        {
+          "subject": "reserve tank capacity in liters",
+          "kind": "numeric",
+          "stale_present": true,
+          "current_present": true
+        },
+        {
+          "subject": "shipped release version",
+          "kind": "version",
+          "stale_present": true,
+          "current_present": true
+        },
+        {
+          "subject": "audit calendar date",
+          "kind": "numdate",
+          "stale_present": true,
+          "current_present": true
+        },
+        {
+          "subject": "contract signature state",
+          "kind": "negation",
+          "stale_present": true,
+          "current_present": true
+        }
+      ]
+    },
+    "verimem_default_lexical": {
+      "stale_leak": 3,
+      "current_served": 5,
+      "n": 5,
+      "by_subject": [
+        {
+          "subject": "subscription monthly price",
+          "kind": "numeric",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "10cdfbe22ae3"
+          ]
+        },
+        {
+          "subject": "reserve tank capacity in liters",
+          "kind": "numeric",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "2353a03831cd"
+          ]
+        },
+        {
+          "subject": "shipped release version",
+          "kind": "version",
+          "stale_present": true,
+          "current_present": true,
+          "superseded": []
+        },
+        {
+          "subject": "audit calendar date",
+          "kind": "numdate",
+          "stale_present": true,
+          "current_present": true,
+          "superseded": []
+        },
+        {
+          "subject": "contract signature state",
+          "kind": "negation",
+          "stale_present": true,
+          "current_present": true,
+          "superseded": []
+        }
+      ],
+      "superseded_total": 2
+    },
+    "verimem_plus_nli": {
+      "stale_leak": 0,
+      "current_served": 5,
+      "n": 5,
+      "by_subject": [
+        {
+          "subject": "subscription monthly price",
+          "kind": "numeric",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "bcceb78ce152"
+          ]
+        },
+        {
+          "subject": "reserve tank capacity in liters",
+          "kind": "numeric",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "c6d0cbd950ea"
+          ]
+        },
+        {
+          "subject": "shipped release version",
+          "kind": "version",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "25a41e6d48fc"
+          ]
+        },
+        {
+          "subject": "audit calendar date",
+          "kind": "numdate",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "d1d57d9c744e"
+          ]
+        },
+        {
+          "subject": "contract signature state",
+          "kind": "negation",
+          "stale_present": false,
+          "current_present": true,
+          "superseded": [
+            "99780c1d06f6"
+          ]
+        }
+      ],
+      "superseded_total": 5
+    }
+  }
+}
