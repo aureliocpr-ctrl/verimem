@@ -855,25 +855,46 @@ def run_validation_gate(
                     _judge = get_local_relation_judge()
                 _new = _ty.SimpleNamespace(
                     id="__candidate__", proposition=proposition,
-                    topic=topic, created_at=_t.time(),
+                    topic=topic, created_at=_t.time(), verified_by=verified_by,
                 )
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
+                _sib_by_id = {getattr(f, "id", None): f for f in _sibs}
                 _observe = _sc_mode == "observe"
+                if _observe:
+                    from .supersession_policy import classify_write_relation
                 for _w in detect_semantic_conflicts(_new, _sibs, _judge):
                     if getattr(_w, "kind", "") != "semantic_conflict":
                         continue
                     _oid = getattr(_w, "other_fact_id", "")
                     if _observe:
                         # observe: surface but do NOT quarantine (id kept OUT of
-                        # contradicting_ids), so the FP rate is measurable first.
-                        warnings.append({
-                            "layer": "L3-semantic-observe",
-                            "reason": "NLI judge: contradiction with a stored fact "
-                                      "(observe mode: logged, NOT quarantined)",
-                            "advice": "a stored memory semantically contradicts this "
-                                      "claim; set ENGRAM_SEMANTIC_CONFLICT=1 to enforce.",
-                            "other_fact_id": _oid,
-                        })
+                        # contradicting_ids), so the FP rate is measurable first. Split
+                        # the advisory by provenance+time: a same-source NEWER value is
+                        # an EVOLUTION (the source superseding itself), not a cross-source
+                        # contradiction — the deterministic fix for the local NLI's
+                        # measured temporal over-flag (2026-07-19).
+                        _old = _sib_by_id.get(_oid)
+                        _rel = ("conflict" if _old is None
+                                else classify_write_relation(_new, _old))
+                        if _rel == "evolution":
+                            warnings.append({
+                                "layer": "L3-supersession-observe",
+                                "reason": "a newer same-source value supersedes a stored "
+                                          "fact (observe mode: logged, NOT applied)",
+                                "advice": "this write updates an earlier value from the "
+                                          "same source; in enforce mode the older value "
+                                          "would be superseded, not flagged a conflict.",
+                                "other_fact_id": _oid,
+                            })
+                        else:
+                            warnings.append({
+                                "layer": "L3-semantic-observe",
+                                "reason": "NLI judge: contradiction with a stored fact "
+                                          "(observe mode: logged, NOT quarantined)",
+                                "advice": "a stored memory semantically contradicts this "
+                                          "claim; set ENGRAM_SEMANTIC_CONFLICT=1 to enforce.",
+                                "other_fact_id": _oid,
+                            })
                     else:
                         warnings.append({
                             "layer": "L3-semantic",

@@ -152,6 +152,45 @@ def test_enforce_escalates_even_without_llm(monkeypatch):
     assert "sib1" in res.contradicting_fact_ids
 
 
+def test_observe_same_source_evolution_labeled_supersession(monkeypatch):
+    """observe: a same-source NEWER write the judge flags is labeled a supersession
+    (L3-supersession-observe), NOT a contradiction — the value evolved, it is not a
+    cross-source dispute. This is the deterministic fix for the measured local-NLI
+    temporal over-flag."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "observe")
+    monkeypatch.setattr(
+        semantic_conflict, "detect_semantic_conflicts",
+        lambda *a, **k: [CoherenceWarning(kind="semantic_conflict", other_fact_id="sib1")])
+    sib = types.SimpleNamespace(id="sib1", proposition="x", topic="t",
+                                verified_by=["source-doc:acme:x"], created_at=1.0)
+    agent = types.SimpleNamespace(
+        llm=None, semantic=types.SimpleNamespace(all=lambda: [sib]))
+    res = anti_confab_gate.run_validation_gate(
+        proposition="some claim", verified_by=["source-doc:acme:x"], topic="t",
+        agent=agent, validate="full")
+    assert res.action == "persist"
+    assert any(w.get("layer") == "L3-supersession-observe" for w in res.warnings)
+    assert not any(w.get("layer") == "L3-semantic-observe" for w in res.warnings)
+
+
+def test_observe_cross_source_stays_contradiction(monkeypatch):
+    """observe: a DIFFERENT-source clash stays a contradiction advisory (a real dispute,
+    not an evolution) — the conservative default."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "observe")
+    monkeypatch.setattr(
+        semantic_conflict, "detect_semantic_conflicts",
+        lambda *a, **k: [CoherenceWarning(kind="semantic_conflict", other_fact_id="sib1")])
+    sib = types.SimpleNamespace(id="sib1", proposition="x", topic="t",
+                                verified_by=["source-doc:globex:x"], created_at=1.0)
+    agent = types.SimpleNamespace(
+        llm=None, semantic=types.SimpleNamespace(all=lambda: [sib]))
+    res = anti_confab_gate.run_validation_gate(
+        proposition="some claim", verified_by=["source-doc:acme:x"], topic="t",
+        agent=agent, validate="full")
+    assert any(w.get("layer") == "L3-semantic-observe" for w in res.warnings)
+    assert not any(w.get("layer") == "L3-supersession-observe" for w in res.warnings)
+
+
 def test_llm_free_moat_fires_end_to_end(monkeypatch):
     """Adversarial 'claim→reality' proof: with NO agent.llm, the REAL
     detect_semantic_conflicts + REAL cosine pre-filter + an injected stub-classifier
