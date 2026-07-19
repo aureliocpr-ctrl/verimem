@@ -56,6 +56,26 @@ def test_cross_source_clash_does_not_supersede(tmp_path, monkeypatch):
     assert mem.semantic.get(r1["id"]).superseded_by is None     # NOT retired (griefing guard)
 
 
+def test_backfill_does_not_retire_current_value(tmp_path, monkeypatch):
+    """FIX (opus critic P2): a same-source re-assertion of an OLD value (asserted_at in
+    the past) must NOT retire the current value — valid-time threaded through the gate,
+    not the candidate's always-now write-time."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "1")
+    monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "enforce")
+    _force_contradiction(monkeypatch)
+    try:
+        mem = Memory(path=tmp_path / "sem" / "sem.db")
+        r_current = mem.add("Alice lives in Paris", topic="person/alice",
+                            verified_by=["source-doc:acme:1"],
+                            asserted_at=2_000_000_000.0, validate="full")
+        mem.add("Alice lives in Rome", topic="person/alice",   # backfill of an OLD value
+                verified_by=["source-doc:acme:1"],
+                asserted_at=1_000_000_000.0, validate="full")
+    finally:
+        local_relation.set_local_relation_judge(None)
+    assert mem.semantic.get(r_current["id"]).superseded_by is None   # current NOT retired
+
+
 def test_flag_off_does_not_supersede(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "1")
     monkeypatch.delenv("ENGRAM_SUPERSEDE_SAME_SOURCE", raising=False)  # default off

@@ -33,8 +33,7 @@ def is_same_source(a: Any, b: Any) -> bool:
     return canonical_source_of(a) == canonical_source_of(b)
 
 
-def _created(fact: Any) -> float | None:
-    v = getattr(fact, "created_at", None)
+def _coerce_ts(v: Any) -> float | None:
     if isinstance(v, bool):  # guard: bool is an int subclass
         return None
     if isinstance(v, (int, float)):
@@ -45,25 +44,40 @@ def _created(fact: Any) -> float | None:
         return None
 
 
+def _when_true(fact: Any) -> float | None:
+    """WHEN the fact is asserted TRUE — ``asserted_at`` (bi-temporal valid-time) when
+    present, else ``created_at`` (write-time). Valid-time is what must order an
+    evolution: the candidate's write-time is always *now*, so ordering by write-time
+    alone would call a BACKFILL (re-asserting an OLD value) a newer 'evolution' and
+    retire the current value (opus critic, 2026-07-19)."""
+    for attr in ("asserted_at", "created_at"):
+        t = _coerce_ts(getattr(fact, attr, None))
+        if t is not None:
+            return t
+    return None
+
+
 def classify_write_relation(new_fact: Any, old_fact: Any) -> str:
     """``"evolution"`` iff ``new_fact`` is the SAME canonical source as ``old_fact`` and
-    strictly NEWER (its own value updated over time); otherwise ``"conflict"`` — a
-    different source, or no clear time order. Conservative: any ambiguity → conflict, so
-    a fact is never auto-retired unless it is the same source superseding itself.
+    strictly NEWER in VALID-TIME (``asserted_at`` when present, else ``created_at``);
+    otherwise ``"conflict"`` — a different source, or no clear time order. Conservative:
+    any ambiguity → conflict, so a fact is never auto-retired unless it is the same source
+    superseding itself with a later valid-time.
 
-    SECURITY — DO NOT wire this into an ENFORCE path (auto-supersede/quarantine) without
-    first gating on an AUTHENTICATED source (opus critic, 2026-07-19). Two reasons this
-    verdict is safe for OBSERVE only, not yet for enforce: (1) ``verified_by`` is
-    caller-controlled and spoofable, so an attacker can present a victim's canonical
-    source; (2) unsourced writes all collapse to the ``"user"`` fallback, so distinct
-    writers share one source bucket. And "strictly newer" is NOT an anti-spoof defense —
-    on the live write path the candidate's ``created_at`` is always *now*, so the whole
-    decision reduces to "same canonical source". The real discriminator must therefore be
-    source AUTHENTICATION (a capability token / signed source), added in task #48 BEFORE
-    evolution→supersede acts on anything."""
+    SECURITY — the enforce wiring (``ENGRAM_SUPERSEDE_SAME_SOURCE``, task #48) has NO
+    source authentication, and this function provides NONE. ``verified_by`` is
+    caller-controlled and spoofable (even the ``actor:`` self-provenance prefix is a bare
+    string), and unsourced writes collapse to the ``"user"`` bucket, so a same-source
+    verdict is only as trustworthy as the writers in a tenant. What actually makes enforce
+    safe is therefore NOT authentication (unbuilt) but: (a) it is DEFAULT-OFF — a knowing
+    opt-in; (b) the TENANCY isolation boundary (cross-tenant writes are already blocked);
+    (c) a single-agent-per-tenant assumption (the sole agent superseding its OWN values is
+    the intended feature). A multi-agent-per-tenant deployment enabling it accepts
+    intra-tenant griefing (the unbuilt per-agent-auth gap). Cross-source clashes never
+    reach the supersede path (they classify as ``"conflict"``)."""
     if not is_same_source(new_fact, old_fact):
         return "conflict"
-    tn, to = _created(new_fact), _created(old_fact)
+    tn, to = _when_true(new_fact), _when_true(old_fact)
     if tn is None or to is None or tn <= to:
         return "conflict"
     return "evolution"

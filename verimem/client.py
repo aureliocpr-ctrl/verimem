@@ -197,7 +197,7 @@ class Memory:
         gate = run_validation_gate(
             proposition=text, verified_by=verified_by, topic=topic, agent=self,
             validate=validate, source=source, grounding_llm=self.grounding_llm,
-            ground_write=ground or None, gate_mode=gate_mode,
+            ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
         )
         warnings = list(gate.warnings)
         action = gate.action
@@ -286,8 +286,11 @@ class Memory:
                     self.semantic.supersede(_old_id, fact.id,
                                             reason="same-source evolution")
                     _superseded.append(_old_id)
-                except Exception:  # noqa: BLE001 — a supersede failure must not break the write
-                    pass
+                except Exception as exc:  # noqa: BLE001 — a supersede failure must not break the write
+                    # surface it: the new fact is admitted but the old was NOT retired —
+                    # the stale-beside-new state the feature exists to prevent (opus critic).
+                    _LOG.warning("same-source supersede of %s failed (new %s admitted, old "
+                                 "NOT retired): %s", _old_id, fact.id, exc)
         _adj = _adjudication(gate, disposition=_disposition,
                              verified_by=verified_by, warnings=warnings)
         self._audit_record(_adj, topic=topic, proposition=text, fact_id=fact.id,

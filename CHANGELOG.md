@@ -46,9 +46,18 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   `L3-supersession-observe` (an *evolution* — the source updating itself) instead of
   `L3-semantic-observe`, via a source+time policy (`supersession_policy`) that does not
   rely on the model's temporal reasoning. A different-source clash stays a contradiction.
-  This is why `observe` is the recommended local mode; **enforce** with the local judge
-  does not yet apply supersession (it still quarantines on any clash — a critic-gated
-  follow-up, task #48) so it suits immutable-fact topics or pairing with `Memory(llm=)`.
+  This is why `observe` is the recommended local mode.
+- **Same-source evolution supersession (opt-in, `ENGRAM_SUPERSEDE_SAME_SOURCE`, default
+  off).** With the contradiction moat enforcing, a newer write from the SAME source that
+  clashes with a stored value now **admits the new fact and retires the old** (`superseded_by`)
+  instead of quarantining the new — a memory that serves the current value, not a stale
+  one beside it. A **cross-source** clash never supersedes (it stays a quarantine — the
+  griefing guard), and the old value is retired only when the new write was actually
+  admitted (a store-screen quarantine never loses both). **Trust model, stated honestly:**
+  verimem has no cryptographic source authentication (`verified_by` is caller-controlled),
+  so same-source authority is sound only within the tenancy boundary + a
+  single-agent-per-tenant assumption — hence **default off**, a knowing opt-in, not a
+  silent flip. `Memory.add()` returns `superseded: [ids]` when it retires values.
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent

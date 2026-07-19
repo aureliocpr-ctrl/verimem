@@ -769,6 +769,7 @@ def run_validation_gate(
     source: str | None = None,
     grounding_llm: Any = None,
     ground_write: bool | None = None,
+    asserted_at: float | None = None,
 ) -> GateResult:
     """Evaluate the anti-confab gate; return a ``GateResult``.
 
@@ -882,6 +883,7 @@ def run_validation_gate(
                 _new = _ty.SimpleNamespace(
                     id="__candidate__", proposition=proposition,
                     topic=topic, created_at=_t.time(), verified_by=verified_by,
+                    asserted_at=asserted_at,
                 )
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
                 _sib_by_id = {getattr(f, "id", None): f for f in _sibs}

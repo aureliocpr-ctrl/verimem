@@ -66,10 +66,18 @@ nothing risky is on by default.
 - **`source_trust` observe (gap 7).** `ENGRAM_SOURCE_TRUST=observe` measures the
   false-block rate before enforcing (`7b29c4f`).
 
-**Pending, critic-gated (do NOT rush):** enforce same-source supersession needs an
-AUTHENTICATED source first (task #48 — `verified_by` is spoofable, `created_at` on the
-candidate is always *now*, so the decision reduces to source identity); tamper anchor
-wiring (task #24); ingest-path audit (task #49).
+- **Same-source evolution supersession — SHIPPED, opt-in (task #48, `27c8df6` + critic
+  fixes).** `ENGRAM_SUPERSEDE_SAME_SOURCE=enforce` (default off): a newer same-source
+  write admits and retires the old value (`superseded_by`) instead of quarantining the
+  new; cross-source never supersedes (griefing guard); backfills use valid-time
+  (`asserted_at`) so an old re-assertion can't retire the current value; the old is
+  retired only when the new is admitted (no data-loss). **No source authentication
+  exists** (verified) — safety is default-off + tenancy isolation + a single-agent-per-
+  tenant assumption, stated honestly in code + CHANGELOG, not a fake crypto gate.
+
+**Pending (do NOT rush):** the tamper EXTERNAL anchor B/C (task #24, needs infra decision);
+ingest-path audit (task #49); intra-tenant per-agent auth (gap 13) would be the real fix
+to let multi-agent tenants enable supersession safely.
 
 ## VERIFIED-REAL gaps (build these)
 1. Gate is bypassable — a direct `sqlite3` INSERT skips the moat (library, no enforcement).

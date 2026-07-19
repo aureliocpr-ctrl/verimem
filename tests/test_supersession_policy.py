@@ -49,6 +49,26 @@ def test_missing_timestamp_is_conflict():
     assert classify_write_relation(new, old) == "conflict"
 
 
+def test_backfill_older_asserted_at_is_conflict_not_evolution():
+    """FIX (opus critic): valid-time (asserted_at), not write-time, decides evolution. A
+    same-source re-assertion of an OLDER value (asserted_at in the past) must NOT retire
+    the current value — the candidate's created_at is always 'now', so created_at alone
+    would wrongly call a backfill an evolution."""
+    new = types.SimpleNamespace(verified_by=["source-doc:acme:x"],
+                                created_at=2000.0, asserted_at=100.0)   # written now, true long ago
+    old = types.SimpleNamespace(verified_by=["source-doc:acme:x"],
+                                created_at=1000.0, asserted_at=1500.0)  # the current value
+    assert classify_write_relation(new, old) == "conflict"
+
+
+def test_same_source_newer_asserted_at_is_evolution():
+    new = types.SimpleNamespace(verified_by=["source-doc:acme:x"],
+                                created_at=2000.0, asserted_at=1500.0)
+    old = types.SimpleNamespace(verified_by=["source-doc:acme:x"],
+                                created_at=1000.0, asserted_at=100.0)
+    assert classify_write_relation(new, old) == "evolution"
+
+
 def test_both_unsourced_users_are_same_source_evolution():
     # both canonicalize to the "user" fallback → same single agent → evolution when
     # newer (documented single-agent assumption; measured under observe before enforce)
