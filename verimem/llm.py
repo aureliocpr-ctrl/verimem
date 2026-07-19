@@ -17,7 +17,7 @@ Supported providers (autodetected by env, or forced via HIPPO_LLM_PROVIDER):
     gemini      GEMINI_API_KEY         Gemini 1.5 Flash (OpenAI-compat endpoint)
 
   China (OpenAI-compatible):
-    moonshot    MOONSHOT_API_KEY       Kimi (alias: "kimi") — moonshot-v1-8k
+    moonshot    MOONSHOT_API_KEY       Kimi (alias: "kimi") — moonshot-v1-auto
     deepseek    DEEPSEEK_API_KEY       deepseek-chat
     qwen        DASHSCOPE_API_KEY      Qwen Plus (alias: "dashscope")
     zhipu       ZHIPU_API_KEY          GLM-4-Plus (alias: "glm")
@@ -1121,7 +1121,7 @@ PROVIDERS: dict[str, dict[str, Any]] = {
         "env": "MOONSHOT_API_KEY",
         "base_url": "https://api.moonshot.cn/v1",
         "base_url_env": "MOONSHOT_BASE_URL",   # use https://api.moonshot.ai/v1 for intl
-        "default_model": "moonshot-v1-8k",
+        "default_model": "moonshot-v1-auto",
     },
     "deepseek": {
         "env": "DEEPSEEK_API_KEY",

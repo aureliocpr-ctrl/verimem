@@ -325,16 +325,24 @@ providers:
     env: MOONSHOT_API_KEY
     base_url: https://api.moonshot.cn/v1
     base_url_env: MOONSHOT_BASE_URL
-    default_model: kimi-k2-0711-preview
+    default_model: moonshot-v1-auto
     family: openai_compat
     supports_tools: true
     supports_vision: false
     aliases: [kimi]
     recommended_models:
-      - id: kimi-k2-0711-preview
-        label: "Kimi K2"
+      # Refreshed 2026-07-19 against the LIVE /models endpoint (kimi-k2-0711-preview
+      # was retired and 404s): kimi-k3 / kimi-k2.7-code / kimi-k2.6 / kimi-k2.5 /
+      # moonshot-v1-{auto,32k,128k}. moonshot-v1-auto autoselects context size and
+      # is the rotation-stable default.
+      - id: kimi-k3
+        label: "Kimi K3"
         tier: frontier
-        notes: "Long context, agentic tool use. Open weights variant available."
+        notes: "Long context, agentic tool use."
+      - id: moonshot-v1-auto
+        label: "Moonshot v1 auto"
+        tier: mid
+        notes: "Autoselects context size; rotation-stable alias."
       - id: moonshot-v1-128k
         label: "Moonshot v1 128k"
         tier: mid

@@ -37,6 +37,8 @@ _PROVIDER_ENV: list[tuple[str, str]] = [
     ("groq", "GROQ_API_KEY"),
     ("mistral", "MISTRAL_API_KEY"),
     ("deepseek", "DEEPSEEK_API_KEY"),
+    ("moonshot", "MOONSHOT_API_KEY"),
+    ("zhipu", "ZHIPU_API_KEY"),
     ("gemini", "GEMINI_API_KEY"),
     ("xai", "XAI_API_KEY"),
 ]
