@@ -276,21 +276,22 @@ def _semantic_conflict_on() -> bool:
 
 
 def _supersede_same_source_on() -> bool:
-    """``ENGRAM_SUPERSEDE_SAME_SOURCE=enforce``: when the contradiction moat is ENFORCING
-    and a clash is a same-source EVOLUTION (the source restating its own value, newer),
-    ADMIT the new write and retire the OLD one — instead of quarantining the new.
+    """When a clash is a same-source EVOLUTION (the source restating its own value with a
+    newer valid-time), ADMIT the new write and retire the OLD — instead of quarantining
+    the new. **Default ON (2026-07-19):** evolving memory that retires a stale same-source
+    value is the product's core promise, not an opt-in.
 
-    Default OFF — a deliberate TRUST-MODEL opt-in, not a silent flip. verimem has no
-    cryptographic source authentication (``verified_by`` is caller-controlled and even
-    the ``actor:`` self-provenance prefix is a bare string, verified 2026-07-19), so
-    same-source authority is only sound within the TENANCY isolation boundary plus a
-    single-agent-per-tenant assumption. A multi-agent-per-tenant deployment (no
-    per-agent auth — the intra-tenant gap) must opt in knowingly. Cross-source clashes
-    never reach this path (they classify as 'conflict'), so enabling it cannot let one
-    source retire another's fact."""
+    Safety without source authentication (verimem has none — ``verified_by`` is caller-
+    controlled, even the ``actor:`` prefix is a bare string): (a) the TENANCY isolation
+    boundary blocks cross-tenant writes; (b) cross-source clashes never reach this path
+    (they classify as 'conflict' → quarantined, not superseded), so the griefing surface
+    is intra-tenant only; (c) a single-agent-per-tenant assumption (the sole agent
+    superseding its OWN values is the intended feature) holds for the common deployment.
+    A multi-agent-per-tenant deployment that cannot trust its own writers sets
+    ``ENGRAM_SUPERSEDE_SAME_SOURCE=0`` until per-agent auth (the intra-tenant gap) ships."""
     import os
-    return os.environ.get("ENGRAM_SUPERSEDE_SAME_SOURCE", "").strip().lower() in (
-        "1", "on", "true", "yes", "enforce")
+    return os.environ.get("ENGRAM_SUPERSEDE_SAME_SOURCE", "1").strip().lower() not in (
+        "0", "off", "false", "no")
 
 
 def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,

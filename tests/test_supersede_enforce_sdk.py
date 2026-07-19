@@ -105,9 +105,11 @@ def test_backfill_does_not_retire_current_value(tmp_path, monkeypatch):
     assert mem.semantic.get(r_current["id"]).superseded_by is None   # current NOT retired
 
 
-def test_flag_off_does_not_supersede(tmp_path, monkeypatch):
+def test_flag_explicitly_disabled_does_not_supersede(tmp_path, monkeypatch):
+    """The escape hatch: ENGRAM_SUPERSEDE_SAME_SOURCE=0 disables the (default-on)
+    supersession — an evolution falls back to quarantine-the-new."""
     monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "1")
-    monkeypatch.delenv("ENGRAM_SUPERSEDE_SAME_SOURCE", raising=False)  # default off
+    monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "0")  # explicitly disabled
     _force_contradiction(monkeypatch)
     try:
         mem = Memory(path=tmp_path / "sem" / "sem.db")

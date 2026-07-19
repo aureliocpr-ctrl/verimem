@@ -38,7 +38,13 @@ _LOG = logging.getLogger(__name__)
 #: byte-identical. Any explicit per-call parameter always wins over the preset.
 _GATE_PRESETS: dict[str, dict[str, Any]] = {
     "strict":     {"validate": "full", "gate_mode": "reject",    "ground": True},
-    "balanced":   {"validate": "fast", "gate_mode": None,        "ground": True},
+    # balanced = the default. validate="full" (2026-07-19): the cross-fact contradiction
+    # + same-source EVOLUTION moat is ON by default, not a dormant opt-in — a memory that
+    # keeps a contradicted/stale value is the product's whole anti-thesis. The lexical L3
+    # (numeric/version/date/negation, deterministic) carries this; the heavier NLI layer
+    # stays opt-in (ENGRAM_SEMANTIC_CONFLICT). Drop to "fast" for a write-heavy path that
+    # cannot afford the same-topic scan.
+    "balanced":   {"validate": "full", "gate_mode": None,        "ground": True},
     "permissive": {"validate": "off",  "gate_mode": None,        "ground": False},
 }
 

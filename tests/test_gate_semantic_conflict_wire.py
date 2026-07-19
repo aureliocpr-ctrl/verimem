@@ -218,11 +218,12 @@ def test_enforce_evolution_with_flag_populates_supersede_ids(monkeypatch):
     assert "sib1" not in res.contradicting_fact_ids
 
 
-def test_enforce_evolution_without_flag_quarantines_as_before(monkeypatch):
-    """enforce, supersede flag OFF (default): an evolution falls back to the current
-    contradiction behavior (quarantine new), no supersede_fact_ids — safe default."""
+def test_enforce_evolution_with_supersede_disabled_quarantines(monkeypatch):
+    """enforce + supersede EXPLICITLY disabled (=0): an evolution falls back to the
+    contradiction behavior (quarantine new), no supersede_fact_ids — the escape hatch for
+    a multi-agent-per-tenant deployment that turns the (default-on) supersession off."""
     monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "1")
-    monkeypatch.delenv("ENGRAM_SUPERSEDE_SAME_SOURCE", raising=False)
+    monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "0")
     _stub_conflict(monkeypatch)
     res = anti_confab_gate.run_validation_gate(
         proposition="some claim", verified_by=["source-doc:acme:x"], topic="t",

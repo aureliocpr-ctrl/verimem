@@ -82,6 +82,17 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   escape **6.2% → 1.8%** with **zero** new false-blocks on entailed facts.
 
 ### Changed
+- **BREAKING (default) — the cross-fact contradiction + evolution moat is now ON out of the
+  box.** The default (`balanced`) preset moves `validate` `fast`→`full`, and same-source
+  supersession defaults ON. A plain `Memory()` now RETIRES a stale same-source value instead
+  of hoarding both: add "costs 100 €" then "costs 150 €" (same source) and recall returns
+  only "150 €", the old superseded. This is the product's core promise — a memory that keeps
+  a contradicted/stale value was the anti-thesis. Carried by the deterministic lexical L3
+  (numeric/version/date/negation); the heavier NLI layer stays opt-in
+  (`ENGRAM_SEMANTIC_CONFLICT`). Cross-source clashes quarantine the new (griefing guard).
+  Escape hatches: `Memory(preset="permissive")` or `validate="fast"` (skip the moat),
+  `ENGRAM_SUPERSEDE_SAME_SOURCE=0` (keep contradiction detection but quarantine instead of
+  supersede — for a multi-agent-per-tenant deployment that can't trust its own writers).
 - **BREAKING (default):** the two-threshold CE band now **enforces by default** — a local-CE score in `[40, 80)` is held for review instead of admitted. Measured safe (over-review 1/19 on hard true classes; entity-substitution escape 6.2%→1.8% with 0 new false-blocks) and reversible with `VERIMEM_CE_BAND_ENFORCE=0`.
 - **External certification** on out-of-distribution data
   (`docs/EVIDENCE-external-2026-07-19.md`): the CE-only moat scores AUROC 0.829 on
