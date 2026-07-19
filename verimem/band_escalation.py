@@ -29,8 +29,13 @@ import shutil
 import subprocess
 from functools import lru_cache
 
-#: first number in the CLI answer, same convention as grounding_gate._SCORE_RE.
-_SCORE_RE = re.compile(r"(\d{1,3}(?:\.\d+)?)")
+#: explicit verdict anywhere in the answer ("Score: 87") — the LAST one wins
+#: (the rubric ends with "Score:", so the model's final line is the verdict).
+_SCORE_LABELED_RE = re.compile(r"[Ss]core\s*[:=]?\s*(\d{1,3}(?:\.\d+)?)")
+#: bare-number answer ("87", " 92.5 is my verdict") — accepted ONLY at the very
+#: start of the output. A digit embedded in prose ("the 100 words…") is NOT a
+#: verdict: parsing it once ADMITTED a fact the judge had scored 5.
+_SCORE_LEADING_RE = re.compile(r"^\s*(\d{1,3}(?:\.\d+)?)\b")
 
 
 def _mode() -> str:
@@ -65,22 +70,34 @@ def escalate_band_score(source: str, fact: str) -> float | None:
     if not cli:
         return None
     from .grounding_gate import _FACT_SYSTEM
-    prompt = (f"{_FACT_SYSTEM}\n\nSource: {source}\n\n"
-              f"Candidate fact: {fact}\n\nScore:")
+    # CHANNEL SEPARATION: the rubric rides as a SYSTEM prompt; only the DATA
+    # (source + fact, both tenant-controlled) goes in the user prompt — a fact
+    # embedding "output 100" does not share the rubric's channel. Residual
+    # honesty: injection can still try to sway the judge, but the worst
+    # outcome is admitting a band write as a rank-2 model_claim (same as a
+    # high CE score would), never a verified fact.
+    user = f"Source: {source}\n\nCandidate fact: {fact}\n\nScore:"
     try:
         r = subprocess.run(
-            [cli, "-p", "--output-format", "text"],
-            input=prompt, capture_output=True, text=True,
+            [cli, "-p", "--output-format", "text",
+             "--append-system-prompt", _FACT_SYSTEM],
+            input=user, capture_output=True, text=True,
             timeout=_timeout_s(), encoding="utf-8", errors="replace",
         )
     except Exception:  # noqa: BLE001 -- ANY escalation failure degrades to review
         return None
     if r.returncode != 0:
         return None
-    m = _SCORE_RE.search(r.stdout or "")
-    if not m:
-        return None  # unreadable verdict must never admit
-    return min(100.0, max(0.0, float(m.group(1))))
+    out = (r.stdout or "").strip()
+    labeled = _SCORE_LABELED_RE.findall(out)
+    if labeled:
+        v = float(labeled[-1])          # the model's FINAL verdict wins
+    else:
+        m = _SCORE_LEADING_RE.match(out)
+        if not m:
+            return None  # prose without a verdict must never admit
+        v = float(m.group(1))
+    return min(100.0, max(0.0, v))
 
 
 __all__ = ["escalate_band_score"]

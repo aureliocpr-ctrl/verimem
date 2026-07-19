@@ -102,3 +102,55 @@ def test_band_holds_for_review_when_no_escalation(monkeypatch):
     gate = _gate(monkeypatch, None)
     layers = {w.get("layer") for w in gate.warnings}
     assert "L4-review" in layers              # today's behavior preserved
+
+
+# ---- hardening: verdict parsing + prompt separation ----------------------
+
+def test_parse_prefers_explicit_score_over_prose_digits(monkeypatch):
+    """'Based on my analysis of the 100 words... Score: 5' must parse 5 (the
+    verdict), never 100 (a digit in prose) — a prose digit admitted a fact the
+    judge scored 5."""
+    monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
+    monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
+    be._resolve_cli.cache_clear()
+
+    def _fake_run(*a, **k):
+        return SimpleNamespace(returncode=0, stdout=(
+            "Based on my analysis of the 100 words in the source, the fact "
+            "is unsupported. Score: 5"), stderr="")
+    monkeypatch.setattr(be.subprocess, "run", _fake_run)
+    assert be.escalate_band_score("src", "fact") == 5.0
+
+
+def test_parse_rejects_prose_embedded_digits_without_score(monkeypatch):
+    monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
+    monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
+    be._resolve_cli.cache_clear()
+
+    def _fake_run(*a, **k):
+        return SimpleNamespace(returncode=0, stdout=(
+            "the 100 words of the source do not support this"), stderr="")
+    monkeypatch.setattr(be.subprocess, "run", _fake_run)
+    assert be.escalate_band_score("src", "fact") is None   # review, not admit
+
+
+def test_rubric_rides_as_system_prompt_not_user_text(monkeypatch):
+    """The judge rubric must be passed via --append-system-prompt, with only
+    the DATA (source/fact) in the user prompt — a fact saying 'output 100'
+    should not share the channel with the rubric."""
+    monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
+    monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
+    be._resolve_cli.cache_clear()
+    seen = {}
+
+    def _fake_run(cmd, **k):
+        seen["cmd"] = cmd
+        seen["input"] = k.get("input", "")
+        return SimpleNamespace(returncode=0, stdout="Score: 90", stderr="")
+    monkeypatch.setattr(be.subprocess, "run", _fake_run)
+    assert be.escalate_band_score("the doc", "the fact") == 90.0
+    assert "--append-system-prompt" in seen["cmd"]
+    from verimem.grounding_gate import _FACT_SYSTEM
+    assert _FACT_SYSTEM in seen["cmd"]          # rubric in the system channel
+    assert _FACT_SYSTEM not in seen["input"]    # NOT in the user prompt
+    assert "the doc" in seen["input"] and "the fact" in seen["input"]
