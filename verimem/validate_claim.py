@@ -31,10 +31,25 @@ from .quantity_match import (
     contrasting_attrs as _contrasting_attrs,
 )
 from .quantity_match import (
+    date_conflict as _date_conflict,
+)
+from .quantity_match import (
+    extract_dates as _extract_dates,
+)
+from .quantity_match import (
     extract_quantities as _extract_quantities,
 )
 from .quantity_match import (
+    extract_versions as _extract_versions,
+)
+from .quantity_match import (
+    negation_conflict as _negation_conflict,
+)
+from .quantity_match import (
     norm_unit as _norm_unit,
+)
+from .quantity_match import (
+    version_conflict as _version_conflict,
 )
 
 _CAPS_RE = re.compile(r"\b([A-Z][a-zA-Z]{2,})\b")
@@ -148,12 +163,23 @@ def validate_claim(
     claim_distinct = {t for t in claim_content if _norm_unit(t) not in claim_units}
     numeric_viable = bool(claim_quants) and bool(claim_distinct)
 
+    # Lexical expansion (0.7.0): version pins, sub-year dates and polarity
+    # flips are verifiable the same deterministic way as quantities. A claim
+    # carrying one of them (or ≥2 distinctive words — the negation case: "the
+    # vendor contract is signed" has no caps/years/quantities) is viable for
+    # the lexical-conflict pass even with <2 caps/years salients.
+    claim_versions = _extract_versions(claim)
+    claim_dates = _extract_dates(claim)
+    lexical_viable = bool(claim_versions) or bool(claim_dates) or (
+        len(claim_distinct) >= 2
+    )
+
     # Gate: claim troppo generica (un solo token saliente o nessuno).
     # Esempio: "Tonegawa is a researcher." ha solo {"Tonegawa"} →
     # NON è verificabile lessicalmente, meglio dichiarare unknown.
     # Il path numerico ha la sua viabilità (quantità + ≥1 parola di
     # contesto) e NON va bloccato dal gate caps/anni.
-    if salient_count < 2 and not numeric_viable:
+    if salient_count < 2 and not numeric_viable and not lexical_viable:
         return {
             "verdict": "unknown",
             "confidence": 0.0,
@@ -182,10 +208,10 @@ def validate_claim(
         hits: list[_FactLike] = []
         seen: set[str] = set()
         search_tokens = list(sorted(claim_caps))
-        if claim_quants:
-            # Numeric claims often have no caps → also retrieve by the
-            # distinctive content words so the related fact is found
-            # (longest first: more discriminating).
+        if claim_quants or lexical_viable:
+            # Numeric/version/date/negation claims often have no caps → also
+            # retrieve by the distinctive content words so the related fact
+            # is found (longest first: more discriminating).
             search_tokens += sorted(
                 claim_distinct, key=lambda t: (-len(t), t),
             )[:8]
@@ -275,10 +301,44 @@ def validate_claim(
                         f"NON {cv:g} {cu} — controlla prima di affermare."
                     )
 
-    if contradicting or numeric_contra:
+    # LEXICAL-EXPANSION contradiction pass (0.7.0) — version pins, sub-year
+    # date moves, polarity flips. Same-subject and precision guards live in
+    # the primitives themselves (shared distinctive word, named-subject
+    # disjointness, contrast qualifiers, Jaccard for negation) — this loop
+    # only orchestrates. Year-disjoint hits are already handled above.
+    lexical_contra: list[_FactLike] = []
+    lexical_advice = ""
+    if claim_versions or claim_dates or lexical_viable:
+        _prior_ids = ({f.id for f in contradicting}
+                      | {f.id for f in numeric_contra})
+        for f in hits:
+            if f.id in _prior_ids:
+                continue
+            kind_detail: tuple[str, str] | None = None
+            v = _version_conflict(claim, f.proposition)
+            if v is not None:
+                kind_detail = ("version", f"{v[1]} in memoria, NON {v[0]}")
+            if kind_detail is None:
+                d = _date_conflict(claim, f.proposition)
+                if d is not None:
+                    kind_detail = ("date", f"{d[1]} in memoria, NON {d[0]}")
+            if kind_detail is None:
+                n = _negation_conflict(claim, f.proposition)
+                if n is not None:
+                    kind_detail = (
+                        "negation", f"polarità opposta su '{n}'")
+            if kind_detail is not None:
+                lexical_contra.append(f)
+                if not lexical_advice:
+                    lexical_advice = (
+                        f"{kind_detail[1]} (fact {f.id}) — controlla "
+                        "prima di affermare."
+                    )
+
+    if contradicting or numeric_contra or lexical_contra:
         contra: list[_FactLike] = list(contradicting)
         _seen_c = {f.id for f in contra}
-        for f in numeric_contra:
+        for f in (*numeric_contra, *lexical_contra):
             if f.id not in _seen_c:
                 contra.append(f)
                 _seen_c.add(f.id)
@@ -296,6 +356,8 @@ def validate_claim(
             )
         elif numeric_advice:
             advice = numeric_advice
+        elif lexical_advice:
+            advice = lexical_advice
         else:
             advice = (
                 "Evidenza contraria in memoria — controlla "
@@ -313,8 +375,13 @@ def validate_claim(
     # against a same-subject fact must NOT be promoted to "supported" on
     # name-overlap alone — that would be false reassurance (a confab-adjacent
     # failure). Suppress support in that case → honest "unknown".
+    # Same discipline for the lexical expansion: when the claim passed the
+    # generic-claim gate ONLY through lexical viability (no 2 salients, no
+    # numeric), it is here to be CHECKED for conflicts, never promoted —
+    # "Tonegawa is a researcher." must stay unknown, not become supported.
+    lexical_only = salient_count < 2 and not numeric_viable
     suppress_support = bool(claim_quants) and not numeric_agree
-    if supporting and not suppress_support:
+    if supporting and not suppress_support and not lexical_only:
         episodes = sorted(
             {eid for f in supporting for eid in f.source_episodes}
         )

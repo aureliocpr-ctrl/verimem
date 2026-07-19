@@ -64,12 +64,13 @@ honest *"I don't know."*
   `Memory()` no longer hoards a contradicted value: write "the plan costs 100 €" then
   "…150 €" (same source) and recall returns **only the current one**, the old
   `superseded_by` the new (never a silent overwrite — the old row stays for lineage).
-  The deterministic **lexical** detector carries this at the default `validate="full"`
-  for **numeric-quantity changes** (300°→900°, 100€→150€) and **year-level date changes**
-  (2024→2025) — measured. Version bumps (2.3.1→4.0.0), negation flips (signed→*not* signed),
-  entity swaps (one CEO→another) and finer date shifts (March→September, same year) are
-  caught only by the heavier **semantic NLI** tier, opt-in (`ENGRAM_SEMANTIC_CONFLICT=1`,
-  loads a second model) — see `benchmark/evolution_moat_vs_mem0.py`. A **cross-source** clash
+  The deterministic **lexical** detector carries this at the default `validate="full"` for
+  **numeric / version / date / negation** changes — measured on
+  `benchmark/evolution_moat_vs_mem0.py`: 100€→150€, 2.3.1→4.0.0, March→September (same
+  year), 2025-03-06→2025-09-20, signed→*not* signed all retire the stale value with zero
+  extra models. **Entity swaps** (one CEO→another) are the one shape that needs the
+  heavier **semantic NLI** tier, opt-in (`ENGRAM_SEMANTIC_CONFLICT=1`, loads a second
+  model — 0 stale-leak across the full matrix with it). A **cross-source** clash
   quarantines the new instead (the griefing guard — one source never retires another's
   fact). Same-source authority is sound within a tenant + a single-agent-per-tenant
   assumption (verimem has no per-writer auth yet); a multi-agent tenant that can't trust

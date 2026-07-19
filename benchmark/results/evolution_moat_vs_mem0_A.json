@@ -41,7 +41,7 @@
       ]
     },
     "verimem_default_lexical": {
-      "stale_leak": 4,
+      "stale_leak": 3,
       "current_served": 5,
       "n": 5,
       "by_subject": [
@@ -51,15 +51,17 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "042bb6cbdbfb"
+            "222a42fd9c25"
           ]
         },
         {
           "subject": "Project Aurora launch date",
           "kind": "month",
-          "stale_present": true,
+          "stale_present": false,
           "current_present": true,
-          "superseded": []
+          "superseded": [
+            "abe8487c825c"
+          ]
         },
         {
           "subject": "CEO of Kappa Dynamics",
@@ -83,7 +85,7 @@
           "superseded": []
         }
       ],
-      "superseded_total": 1
+      "superseded_total": 2
     },
     "verimem_plus_nli": {
       "stale_leak": 0,
@@ -96,7 +98,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "ec6042d9e271"
+            "5addd5ff57cb"
           ]
         },
         {
@@ -105,7 +107,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "cf51eb72796f"
+            "ee41bb40b6eb"
           ]
         },
         {
@@ -114,7 +116,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "4f79c441b524"
+            "6665e58c63a9"
           ]
         },
         {
@@ -123,7 +125,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "c717be6db265"
+            "b95e3bf55ca4"
           ]
         },
         {
@@ -132,7 +134,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "2dbea59c74d1"
+            "67f3454d402a"
           ]
         }
       ],

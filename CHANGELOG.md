@@ -49,8 +49,9 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   This is why `observe` is the recommended local mode.
 - **Same-source evolution supersession (`ENGRAM_SUPERSEDE_SAME_SOURCE`, ON by default —
   see Changed).** A newer write from the SAME source that clashes with a stored value — caught by
-  the NLI moat OR the always-on **lexical** L3 (numeric-quantity + year-level date changes —
-  version/negation/entity/finer-date need the NLI tier) — now **admits the new fact and retires the old**
+  the NLI moat OR the always-on **lexical** L3 (numeric / version / date / negation changes —
+  measured on `benchmark/evolution_moat_vs_mem0.py`; entity swaps need the NLI tier) — now
+  **admits the new fact and retires the old**
   (`superseded_by`) instead of quarantining the new: a memory that serves the current value,
   not a stale one beside it. Works on both surfaces (`Memory.add()` and the MCP
   `hippo_remember`). Ordering is by **valid-time** (`asserted_at`, else write-time), so a
@@ -62,8 +63,21 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   authority is sound only within the tenancy boundary + a single-agent-per-tenant
   assumption. It is **ON by default** (see Changed); a multi-agent-per-tenant deployment that
   can't trust its own writers opts OUT with `ENGRAM_SUPERSEDE_SAME_SOURCE=0` — quarantine
-  instead of supersede, avoiding intra-tenant griefing on numeric writes.
+  instead of supersede, avoiding intra-tenant griefing on lexically-detectable writes.
   `Memory.add()` returns `superseded: [ids]`.
+- **Lexical moat expansion — version / sub-year date / negation conflicts, zero-model.**
+  The deterministic L3 detector (previously numeric-quantity + disjoint-year only) now
+  also catches **version pins** (`2.3.1`→`4.0.0`), **sub-year date moves** (March→September
+  same year, `2025-03-06`→`2025-09-20`) and **polarity flips** ("is signed"→"is *not*
+  signed") — new primitives in `quantity_match.py` (`version_conflict`, `date_conflict`,
+  `negation_conflict`, one-call `lexical_conflict`), wired into `validate_claim` with the
+  same precision-first guards as the numeric path (shared distinctive-word subject match,
+  named-subject disjointness — "Orion 2.3.1" vs "Zephyr 4.0.0" never conflicts —, contrast
+  qualifiers, near-identical token sets for negation). Claims viable ONLY through this
+  expansion are checked for conflicts but never promoted to `supported` (generic claims
+  stay `unknown`). Measured on `benchmark/evolution_moat_vs_mem0.py`: the zero-config
+  default now retires the stale value on all numeric/version/date/negation updates
+  (stale-leak 0/5 on the design-target set; mem0 leaks 5/5).
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent
@@ -89,8 +103,9 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   of hoarding both: add "costs 100 €" then "costs 150 €" (same source) and recall returns
   only "150 €", the old superseded. This is the product's core promise — a memory that keeps
   a contradicted/stale value was the anti-thesis. Carried by the deterministic lexical L3
-  (numeric-quantity + year-level date changes — measured; version/negation/entity/finer-date
-  need the opt-in NLI layer `ENGRAM_SEMANTIC_CONFLICT`). Cross-source clashes quarantine the new (griefing guard).
+  (**numeric / version / date / negation** — each measured retiring the stale value on
+  `benchmark/evolution_moat_vs_mem0.py` with zero extra models; entity swaps are the one
+  shape needing the opt-in NLI layer `ENGRAM_SEMANTIC_CONFLICT`). Cross-source clashes quarantine the new (griefing guard).
   **Rank floor (anti-confab):** a weaker write never supersedes a stronger fact — an
   unverified `model_claim` cannot retire a `verified` one; that clash stays quarantined.
   Escape hatches: `Memory(preset="permissive")` or `validate="fast"` (skip the moat),

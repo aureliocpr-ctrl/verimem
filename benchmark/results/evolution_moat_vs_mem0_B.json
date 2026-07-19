@@ -41,7 +41,7 @@
       ]
     },
     "verimem_default_lexical": {
-      "stale_leak": 3,
+      "stale_leak": 0,
       "current_served": 5,
       "n": 5,
       "by_subject": [
@@ -51,7 +51,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "10cdfbe22ae3"
+            "4b866bf87559"
           ]
         },
         {
@@ -60,32 +60,38 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "2353a03831cd"
+            "c45f531153cb"
           ]
         },
         {
           "subject": "shipped release version",
           "kind": "version",
-          "stale_present": true,
+          "stale_present": false,
           "current_present": true,
-          "superseded": []
+          "superseded": [
+            "1f197e618a20"
+          ]
         },
         {
           "subject": "audit calendar date",
           "kind": "numdate",
-          "stale_present": true,
+          "stale_present": false,
           "current_present": true,
-          "superseded": []
+          "superseded": [
+            "a389f18cace6"
+          ]
         },
         {
           "subject": "contract signature state",
           "kind": "negation",
-          "stale_present": true,
+          "stale_present": false,
           "current_present": true,
-          "superseded": []
+          "superseded": [
+            "8db70dfdb2b6"
+          ]
         }
       ],
-      "superseded_total": 2
+      "superseded_total": 5
     },
     "verimem_plus_nli": {
       "stale_leak": 0,
@@ -98,7 +104,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "bcceb78ce152"
+            "07c321695ad3"
           ]
         },
         {
@@ -107,7 +113,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "c6d0cbd950ea"
+            "8ee5b692d4cc"
           ]
         },
         {
@@ -116,7 +122,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "25a41e6d48fc"
+            "0ac7f48601a6"
           ]
         },
         {
@@ -125,7 +131,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "d1d57d9c744e"
+            "9bcf2782689b"
           ]
         },
         {
@@ -134,7 +140,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "99780c1d06f6"
+            "18cc9a73295f"
           ]
         }
       ],

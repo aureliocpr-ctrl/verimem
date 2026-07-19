@@ -120,3 +120,49 @@ def test_flag_explicitly_disabled_does_not_supersede(tmp_path, monkeypatch):
     finally:
         local_relation.set_local_relation_judge(None)
     assert mem.semantic.get(r1["id"]).superseded_by is None     # safe default: not retired
+
+
+# --- lexical expansion 0.7.0: version / date / negation reach the DEFAULT moat ---
+# Mandate 2026-07-19 ("non castrare, espandi"): the zero-config claim
+# "numeric/version/date/negation" must be TRUE with NO NLI tier loaded.
+
+def _lexical_only(monkeypatch):
+    monkeypatch.delenv("ENGRAM_SEMANTIC_CONFLICT", raising=False)
+    monkeypatch.delenv("ENGRAM_SUPERSEDE_SAME_SOURCE", raising=False)  # default ON
+
+
+def _evolves(mem, old_text, new_text):
+    src = ["source-doc:acme:9"]
+    r1 = mem.add(old_text, topic="evo/x", verified_by=src, validate="full")
+    r2 = mem.add(new_text, topic="evo/x", verified_by=src, validate="full")
+    assert r2["status"] != "quarantined", f"new write quarantined: {r2}"
+    assert r1["id"] in (r2.get("superseded") or []), f"old not superseded: {r2}"
+    assert mem.semantic.get(r1["id"]).superseded_by == r2["id"]
+
+
+def test_version_same_source_evolution_supersedes_lexically(tmp_path, monkeypatch):
+    _lexical_only(monkeypatch)
+    _evolves(Memory(path=tmp_path / "v.db"),
+             "Orion ships on version 2.3.1.",
+             "Orion ships on version 4.0.0.")
+
+
+def test_month_date_same_source_evolution_supersedes_lexically(tmp_path, monkeypatch):
+    _lexical_only(monkeypatch)
+    _evolves(Memory(path=tmp_path / "m.db"),
+             "Project Aurora launches in March 2025.",
+             "Project Aurora launches in September 2025.")
+
+
+def test_iso_date_same_source_evolution_supersedes_lexically(tmp_path, monkeypatch):
+    _lexical_only(monkeypatch)
+    _evolves(Memory(path=tmp_path / "d.db"),
+             "The compliance audit is on 2025-03-06.",
+             "The compliance audit is on 2025-09-20.")
+
+
+def test_negation_same_source_evolution_supersedes_lexically(tmp_path, monkeypatch):
+    _lexical_only(monkeypatch)
+    _evolves(Memory(path=tmp_path / "n.db"),
+             "The vendor contract is signed.",
+             "The vendor contract is not signed.")

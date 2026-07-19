@@ -236,6 +236,188 @@ def numeric_conflict(
     )
 
 
+# ---------------------------------------------------------------------------
+# Lexical expansion (0.7.0): version / sub-year date / negation conflicts.
+#
+# Same design contract as the numeric detector — deterministic, zero-LLM,
+# PRECISION over recall (a false conflict downgrades a true fact, the opposite
+# of the trust we sell). Every detector requires the same-subject guard
+# (shared distinctive content word) before a difference counts as a conflict.
+# Single source of truth for write-time (validate_claim) and batch scanning.
+# ---------------------------------------------------------------------------
+
+# Dotted version strings. ≥3 numeric components ("2.3.1") are unambiguous
+# anywhere; 2-component ("2.3") only counts near a version keyword, else it
+# is a decimal quantity ("2.3 degrees") and belongs to the numeric path.
+_VERSION3_RE = re.compile(r"(?<![\w.])v?(\d+(?:\.\d+){2,})(?!\w)(?!\.\d)")
+_VERSION2_KW_RE = re.compile(
+    r"\b(?:version|versions|release|releases|build|builds|v)[\s:]{0,3}"
+    r"(\d+\.\d+(?:\.\d+)*)(?!\w)(?!\.\d)",
+    re.IGNORECASE,
+)
+
+
+def extract_versions(text: str) -> set[str]:
+    """Version strings in *text*, normalised without the ``v`` prefix."""
+    t = text or ""
+    out = {m.group(1) for m in _VERSION3_RE.finditer(t)}
+    out.update(m.group(1) for m in _VERSION2_KW_RE.finditer(t))
+    return out
+
+
+# The version/date carrier words are not the SUBJECT (like units for the
+# numeric path): "version"/"release" shared between two statements says
+# nothing about them describing the same thing.
+_VERSION_CARRIER_TOKENS = frozenset({"version", "release", "build"})
+
+_CAPS_NAME_RE = re.compile(r"\b[A-Z][a-zA-Z]{2,}\b")
+
+
+def _named_subjects_disjoint(text_a: str, text_b: str) -> bool:
+    """True when BOTH statements name capitalized subjects and the two sets
+    are fully disjoint ("Orion ..." vs "Zephyr ...") — different named
+    things, so a differing version/date between them is NOT a conflict."""
+    ca = set(_CAPS_NAME_RE.findall(text_a or ""))
+    cb = set(_CAPS_NAME_RE.findall(text_b or ""))
+    return bool(ca) and bool(cb) and not (ca & cb)
+
+
+def version_conflict(text_a: str, text_b: str) -> tuple[str, str] | None:
+    """``(version_a, version_b)`` if the two statements pin DIFFERENT versions
+    for the same subject; ``None`` otherwise. Disjoint version sets on a
+    shared subject = the value moved (2.3.1 → 4.0.0)."""
+    va, vb = extract_versions(text_a), extract_versions(text_b)
+    if not va or not vb or (va & vb):
+        return None
+    shared = (distinctive_tokens(text_a) & distinctive_tokens(text_b))
+    if not (shared - _VERSION_CARRIER_TOKENS):
+        return None  # unrelated subject (carrier words don't count)
+    if _named_subjects_disjoint(text_a, text_b):
+        return None  # different named things (Orion vs Zephyr)
+    if contrasting_attrs(content_tokens(text_a), content_tokens(text_b)):
+        return None
+    return (sorted(va)[0], sorted(vb)[0])
+
+
+# Sub-year dates: ISO ``YYYY-MM-DD`` plus month names (EN). Different YEARS
+# are deliberately left to validate_claim's year-disjoint rule — these
+# detectors only handle the finer granularity the year rule cannot see.
+_ISO_DATE_RE = re.compile(r"\b(1[5-9]\d{2}|20\d{2})-(\d{2})-(\d{2})\b")
+_MONTHS = {
+    "january": 1, "february": 2, "march": 3, "april": 4, "may": 5,
+    "june": 6, "july": 7, "august": 8, "september": 9, "october": 10,
+    "november": 11, "december": 12,
+}
+_MONTH_RE = re.compile(
+    r"\b(january|february|march|april|may|june|july|august|september|"
+    r"october|november|december)\b(?:\s+(\d{1,2})(?:st|nd|rd|th)?(?!\d))?"
+    r"(?:,?\s+(1[5-9]\d{2}|20\d{2}))?",
+    re.IGNORECASE,
+)
+
+
+def extract_dates(text: str) -> set[tuple[int | None, int, int | None]]:
+    """``(year, month, day)`` tuples from ISO dates and month names.
+
+    Year/day are ``None`` when the text does not state them ("moved to
+    September"). Bare years carry no month → they stay with the year rule.
+    """
+    t = text or ""
+    out: set[tuple[int | None, int, int | None]] = set()
+    for m in _ISO_DATE_RE.finditer(t):
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if 1 <= mo <= 12 and 1 <= d <= 31:
+            out.add((y, mo, d))
+    for m in _MONTH_RE.finditer(t):
+        mo = _MONTHS[m.group(1).lower()]
+        day = int(m.group(2)) if m.group(2) else None
+        year = int(m.group(3)) if m.group(3) else None
+        out.add((year, mo, day))
+    return out
+
+
+def date_conflict(
+    text_a: str, text_b: str,
+) -> tuple[tuple[int | None, int, int | None],
+           tuple[int | None, int, int | None]] | None:
+    """A sub-year date move about the same subject: same (or unstated) year
+    but a DIFFERENT month, or same year+month but a different day. Pairs
+    with different years return ``None`` (the year-disjoint rule owns them)."""
+    da, db = extract_dates(text_a), extract_dates(text_b)
+    if not da or not db or (da & db):
+        return None
+    if not (distinctive_tokens(text_a) & distinctive_tokens(text_b)):
+        return None  # unrelated subject
+    if _named_subjects_disjoint(text_a, text_b):
+        return None  # different named things
+    if contrasting_attrs(content_tokens(text_a), content_tokens(text_b)):
+        return None
+    for (ya, ma, dda) in da:
+        for (yb, mb, ddb) in db:
+            same_year = ya is None or yb is None or ya == yb
+            if not same_year:
+                continue  # year rule's jurisdiction
+            if ma != mb:
+                return ((ya, ma, dda), (yb, mb, ddb))
+            if dda is not None and ddb is not None and dda != ddb:
+                return ((ya, ma, dda), (yb, mb, ddb))
+    return None
+
+
+# Polarity flip: the same statement with a negator on exactly one side.
+_NEGATOR_RE = re.compile(
+    r"\b(?:not|never|no longer|cannot|can't|won't|isn't|aren't|wasn't|"
+    r"weren't|doesn't|don't|didn't|nor)\b",
+    re.IGNORECASE,
+)
+
+
+def _has_negator(text: str) -> bool:
+    return bool(_NEGATOR_RE.search(text or ""))
+
+
+def negation_conflict(text_a: str, text_b: str) -> str | None:
+    """The shared predicate token when *text_a*/*text_b* state the SAME thing
+    with OPPOSITE polarity ("is signed" vs "is not signed"); else ``None``.
+
+    Precision guards: the polarity must differ AND the content-token sets
+    must be near-identical (Jaccard ≥ 0.6 with ≥2 shared tokens) — a negator
+    inside an unrelated statement never flags."""
+    na, nb = _has_negator(text_a), _has_negator(text_b)
+    if na == nb:
+        return None  # same polarity → no flip
+    ca, cb = content_tokens(text_a), content_tokens(text_b)
+    shared = ca & cb
+    union = ca | cb
+    if len(shared) < 2 or not union or (len(shared) / len(union)) < 0.6:
+        return None  # different statement, not a flip of this one
+    if contrasting_attrs(ca, cb):
+        return None
+    return sorted(shared)[0]
+
+
+def lexical_conflict(text_a: str, text_b: str) -> tuple[str, str] | None:
+    """First lexical conflict between two statements as ``(kind, detail)`` —
+    kind ∈ {"numeric", "version", "date", "negation"} — or ``None``.
+
+    The one-call façade over the four deterministic detectors, so callers
+    (gate, scanners, benches) share identical semantics."""
+    q = numeric_conflict(text_a, text_b)
+    if q is not None:
+        u, va, vb = q
+        return ("numeric", f"{va:g} {u} vs {vb:g} {u}")
+    v = version_conflict(text_a, text_b)
+    if v is not None:
+        return ("version", f"{v[0]} vs {v[1]}")
+    d = date_conflict(text_a, text_b)
+    if d is not None:
+        return ("date", f"{d[0]} vs {d[1]}")
+    n = negation_conflict(text_a, text_b)
+    if n is not None:
+        return ("negation", f"polarity flip on '{n}'")
+    return None
+
+
 __all__ = [
     "YEAR_RE",
     "CONTRAST_QUALIFIERS",
@@ -246,4 +428,10 @@ __all__ = [
     "distinctive_tokens",
     "conflict_from_parts",
     "numeric_conflict",
+    "extract_versions",
+    "version_conflict",
+    "extract_dates",
+    "date_conflict",
+    "negation_conflict",
+    "lexical_conflict",
 ]
