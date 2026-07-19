@@ -236,11 +236,13 @@ class Memory:
             self._record_trust("rejected", layers=_layers, topic=topic)
             _emit_flow("flow.write", stored=False, status="rejected",
                        fact_id="", topic=str(topic), layers=_layers)
+            _adj = _adjudication(gate, disposition="rejected",
+                                 verified_by=verified_by, warnings=warnings)
+            self._audit_record(_adj, topic=topic, proposition=text,
+                               fact_id=None, gate=gate, warnings=warnings)
             return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score,
-                    "adjudication": _adjudication(
-                        gate, disposition="rejected",
-                        verified_by=verified_by, warnings=warnings)}
+                    "adjudication": _adj}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at,
                     confidence_tier=_confidence_tier(
@@ -269,13 +271,15 @@ class Memory:
                    fact_id=str(fact.id), topic=str(topic), layers=_hit_layers)
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
+        _adj = _adjudication(gate, disposition=_disposition,
+                             verified_by=verified_by, warnings=warnings)
+        self._audit_record(_adj, topic=topic, proposition=text,
+                           fact_id=fact.id, gate=gate, warnings=warnings)
         return {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
             "warnings": warnings, "advice": gate.advice,
-            "adjudication": _adjudication(
-                gate, disposition=_disposition,
-                verified_by=verified_by, warnings=warnings),
+            "adjudication": _adj,
         }
 
     # ---- read --------------------------------------------------------------
@@ -762,6 +766,42 @@ class Memory:
             return self._decisions()
         return None
 
+    def _adjudication_log(self):
+        """Lazy AdjudicationLog on a sibling DB (adjudications.db next to semantic.db).
+        Built on first AUDITED write, so a pure read / an audit-off deployment never
+        creates the file."""
+        al = getattr(self, "_adj_log", None)
+        if al is None:
+            from pathlib import Path as _P
+
+            from .adjudication_log import AdjudicationLog
+            al = self._adj_log = AdjudicationLog(
+                _P(self.semantic.db_path).with_name("adjudications.db"))
+        return al
+
+    def _audit_record(self, adjudication: dict, *, topic: Any, proposition: str,
+                      fact_id: str | None, gate: Any, warnings: list) -> None:
+        """Append the write's verdict to the opt-in audit trail (VERIMEM_AUDIT_LOG).
+        No-op when off; never raises — persisting an audit record must never break the
+        memory write it records. ``judge`` is the backend string (local/claude), not
+        the receipt's judge dossier."""
+        if not _audit_log_on():
+            return
+        try:
+            self._adjudication_log().record(
+                disposition=str(adjudication.get("disposition", "")),
+                topic=str(topic or ""), proposition=str(proposition or ""),
+                fact_id=fact_id,
+                evidence_class=adjudication.get("evidence_class"),
+                judge=getattr(gate, "judge", None),
+                score=adjudication.get("score"),
+                threshold=adjudication.get("threshold"),
+                reason=str(adjudication.get("reason") or ""),
+                layers=_blocking_layers(warnings),
+            )
+        except Exception:  # noqa: BLE001 — the audit trail must never break a write
+            pass
+
     def record_decision(self, decision: str, *,
                         alternatives: list[str] | None = None,
                         evidence: list[str] | None = None,
@@ -1105,6 +1145,15 @@ def _blocking_layers(warnings: list) -> list[str]:
     return sorted({layer for w in warnings
                    if (layer := str(w.get("layer", "")))
                    and not _is_advisory_layer(layer)})
+
+
+def _audit_log_on() -> bool:
+    """Opt-in per-write adjudication audit trail (VERIMEM_AUDIT_LOG). Default OFF: it
+    persists every write's verdict AND proposition to a sibling DB — a data-retention
+    choice the operator makes explicitly, and extra write-path I/O they opt into."""
+    import os
+    return os.environ.get("VERIMEM_AUDIT_LOG", "").strip().lower() in (
+        "1", "on", "true", "yes")
 
 
 def _reason_from_warnings(warnings: list) -> str:
