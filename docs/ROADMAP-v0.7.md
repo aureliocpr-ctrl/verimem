@@ -38,6 +38,37 @@ re-architecture.
   benchmarks, external anchoring in production, and months of measured judge drift.
   Build the harnesses that make 9 reachable; do not claim 9 until earned.
 
+## STATUS — 2026-07-19 (continuation: Phase 1.1 + 0.2b + tamper foundation)
+12 commits on `rename/verimem-total` (HEAD `d525d97`), all TDD, 3 opus critics (2 FIX
+applied, 1 HOLD). Every new behaviour is **opt-in / default-off / observe-first** —
+nothing risky is on by default.
+
+- **Write-path contradiction moat, subscription-free (gap 12 → now ON the write path).**
+  The dormant `semantic_conflict` NLI check runs llm-free on the local cross-encoder
+  (`fd416f0`), over a bounded, live-only sibling query excluding superseded/quarantined
+  facts (`0a05108`). New `observe` mode surfaces without quarantining; advisories are
+  excluded from the receipt reason + trust ledger (`e461084`); certified on labeled cases
+  (`3336d56`). **Measured limit:** the local CE ignores the `[timestamp]` prefix → it
+  over-flags *evolving* facts; fixed in observe by a deterministic evolution-vs-conflict
+  policy (`supersession_policy`, `9dad221` · `d525d97`) — same-source+newer =
+  `L3-supersession-observe` (evolution), else contradiction. Enforce unchanged.
+- **Per-write audit trail (gap 9 partial: quarantines recorded + queryable).** Opt-in
+  `VERIMEM_AUDIT_LOG`: every single-proposition `add()` verdict → append-only
+  `adjudications.db`, read via `Memory.audit_log()` (`b720867` · `d602f26`). Critic-fixed:
+  store-screen layer attribution, a false "below threshold" reason, silent drops
+  (`b85e14c`). Ingest-path audit is a filed follow-up (task #49).
+- **Tamper-evidence (gap 4: FOUNDATION only, honestly scoped).** Pure hash-chain
+  primitives (`a8ecf57`) + scope proposal (`d9e7246`). The chain is the detection half;
+  the EXTERNAL anchor (the part that makes it non-theater) is **unwired**, pending the
+  A/B/C scope choice.
+- **`source_trust` observe (gap 7).** `ENGRAM_SOURCE_TRUST=observe` measures the
+  false-block rate before enforcing (`7b29c4f`).
+
+**Pending, critic-gated (do NOT rush):** enforce same-source supersession needs an
+AUTHENTICATED source first (task #48 — `verified_by` is spoofable, `created_at` on the
+candidate is always *now*, so the decision reduces to source identity); tamper anchor
+wiring (task #24); ingest-path audit (task #49).
+
 ## VERIFIED-REAL gaps (build these)
 1. Gate is bypassable — a direct `sqlite3` INSERT skips the moat (library, no enforcement).
 2. Receipts verify RESOLVABILITY, not content — no content hash; file edit silently invalidates.
