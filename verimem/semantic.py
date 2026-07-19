@@ -2595,6 +2595,27 @@ class SemanticMemory:
             rows = conn.execute("SELECT * FROM facts ORDER BY created_at DESC").fetchall()
         return [self._row(r) for r in rows]
 
+    def live_topic_siblings(self, topic: str, *, limit: int = 200) -> list[Fact]:
+        """LIVE same-topic facts a NEW write should be checked against for
+        contradiction (the opt-in write-path NLI moat): non-superseded, and not
+        quarantined / orphaned / user_belief (those are out of trusted recall).
+
+        Excluding already-retired facts is CORRECTNESS, not just cost — flagging a
+        contradiction against a value that was already superseded or quarantined is a
+        false positive. Indexed on ``topic`` (idx_facts_topic) + bounded by ``limit``,
+        so the moat does not materialize the whole store the way ``all()`` does.
+        Most-recent first. Empty topic → ``[]``.
+        """
+        t = (topic or "").strip()
+        if not t:
+            return []
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM facts WHERE topic = ? AND superseded_by IS NULL "
+                "AND status NOT IN ('orphaned', 'quarantined', 'user_belief') "
+                "ORDER BY created_at DESC LIMIT ?", (t, int(limit))).fetchall()
+        return [self._row(r) for r in rows]
+
     def get(self, fact_id: str, *, live_only: bool = False) -> Fact | None:
         """Fetch one Fact by id. Returns None if not found.
 

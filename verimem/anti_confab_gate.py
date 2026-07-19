@@ -268,6 +268,40 @@ def _semantic_conflict_on() -> bool:
     return _semantic_conflict_mode() != "off"
 
 
+#: statuses that are OUT of trusted recall — a new write must NOT be flagged as
+#: contradicting one of these (it was already retired), and they must not cost a
+#: judge call. Mirrors SemanticMemory.live_topic_siblings' SQL exclusion set.
+_NON_LIVE_STATUSES = frozenset({"orphaned", "quarantined", "user_belief"})
+
+
+def _live_topic_siblings(sm: Any, topic: str | None, *, limit: int = 200) -> list:
+    """Same-topic, LIVE facts to compare a new write against for semantic
+    contradiction. Prefer the store's indexed ``live_topic_siblings`` (bounded SQL);
+    fall back to scanning ``all()`` for duck-typed / older stores, applying the SAME
+    exclusions in memory. Excluding already-superseded / quarantined facts is
+    correctness (a contradiction against a retired value is a false positive); using
+    the indexed query is what keeps the opt-in moat off the O(store) ``all()`` path."""
+    t = topic or ""
+    getter = getattr(sm, "live_topic_siblings", None)
+    if callable(getter):
+        try:
+            return list(getter(t, limit=limit))
+        except Exception:  # noqa: BLE001 — any store error → fall back to the scan
+            pass
+    out: list = []
+    for f in sm.all():
+        if getattr(f, "topic", None) != t:
+            continue
+        if getattr(f, "superseded_by", None):
+            continue
+        if getattr(f, "status", None) in _NON_LIVE_STATUSES:
+            continue
+        out.append(f)
+        if len(out) >= limit:
+            break
+    return out
+
+
 #: explicit non-verification disclaimers (multi-language) — the honest marker
 #: that turns attributed reported speech into a safe-to-record fact.
 _NONVERIFY_RE = re.compile(
@@ -823,8 +857,7 @@ def run_validation_gate(
                     id="__candidate__", proposition=proposition,
                     topic=topic, created_at=_t.time(),
                 )
-                _sibs = [f for f in _sm.all()
-                         if getattr(f, "topic", None) == topic][:200]
+                _sibs = _live_topic_siblings(_sm, topic, limit=200)
                 _observe = _sc_mode == "observe"
                 for _w in detect_semantic_conflicts(_new, _sibs, _judge):
                     if getattr(_w, "kind", "") != "semantic_conflict":
