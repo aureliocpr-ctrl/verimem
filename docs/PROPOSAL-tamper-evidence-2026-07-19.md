@@ -45,6 +45,12 @@ keeps air-gap deployments working. B is a small, opt-in add for customers who wa
 head unforgeable. C only for a specific customer ask — it drags in a network dependency
 that fights the offline-first design.
 
+**RESOLVED 2026-07-19 (Aurelio: everything installed is ON — expand):** **A + B shipped.**
+A landed earlier (`audit_head()` export); B landed in commit 31e14ab
+(`generate_audit_keypair` / `sign_head` / `verify_head_signature`,
+`Memory.audit_head_signed()`, `VERIMEM_AUDIT_SIGNING_KEY`, extra `verimem[audit]`).
+C remains deliberately unbuilt (network dependency vs air-gap-first).
+
 **Blocked on your pick.** Say A / B / C (or "not now") and I wire the chosen scope onto
 the foundation + qualify the README claim accordingly. Until then the foundation stays
 unwired — no half-built tamper-evidence claiming more than it detects.

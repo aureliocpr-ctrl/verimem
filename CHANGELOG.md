@@ -65,6 +65,17 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   can't trust its own writers opts OUT with `ENGRAM_SUPERSEDE_SAME_SOURCE=0` — quarantine
   instead of supersede, avoiding intra-tenant griefing on lexically-detectable writes.
   `Memory.add()` returns `superseded: [ids]`.
+- **Tamper anchor-B: the audit head signed with an EXTERNAL ed25519 key.**
+  `Memory.audit_head_signed()` returns `{head, signature, algorithm}` when the operator
+  configures `VERIMEM_AUDIT_SIGNING_KEY` (path to a private PEM verimem never stores;
+  `tamper_evidence.generate_audit_keypair` creates one — run it OUTSIDE the process that
+  writes the audit DB). An attacker who owns the DB can recompute the hash chain but
+  cannot forge a signed head. Verification is boolean by contract
+  (`verify_head_signature` — any failure is `False`, never an exception); a configured
+  key that cannot sign raises loudly. Optional extra `verimem[audit]` (cryptography).
+  **Honest scope:** B detects head forgery *given the key stays external*; public
+  timestamping (anchor-C) is deliberately not included — it fights the air-gap-first
+  design.
 - **CE-band -> llm-judge escalation (auto).** The CE review band [threshold, tau_hi)
   no longer always parks a write: with NO injected llm, an auto-discovered `claude` CLI
   on PATH (flat subscription, no API key) adjudicates the band write once — admit
