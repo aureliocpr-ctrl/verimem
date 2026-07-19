@@ -216,3 +216,39 @@ def test_negation_no_conflict_different_subject() -> None:
         "The vendor contract is signed.",
         "The supplier invoice is not paid.",
     ) is None
+
+
+def test_negation_no_conflict_when_negated_word_not_shared() -> None:
+    # the negator scopes "blocked" (unshared) — NOT a flip of "complete".
+    assert negation_conflict(
+        "The rollout is complete, not blocked.",
+        "The rollout is complete.",
+    ) is None
+
+
+def test_version_no_conflict_primary_vs_backup() -> None:
+    # primary vs backup = different attributes (like read vs write).
+    assert version_conflict(
+        "The primary node runs version 2.3.1.",
+        "The backup node runs version 4.0.0.",
+    ) is None
+
+
+def test_extract_dates_modal_may_and_verb_march_are_not_months() -> None:
+    # "may" (modal) and "march" (verb) must NOT parse as bare months — a
+    # bare month needs a Capitalized form AND a temporal preposition.
+    assert extract_dates("the audit may slip next quarter") == set()
+    assert extract_dates("They march to the office daily") == set()
+    assert extract_dates("The service may restart") == set()  # opus critic case
+
+
+def test_extract_dates_bare_month_with_preposition_still_counts() -> None:
+    assert extract_dates("the meeting moved to September") == {(None, 9, None)}
+    assert extract_dates("the launch happens in May") == {(None, 5, None)}
+
+
+def test_date_no_conflict_with_modal_may() -> None:
+    assert date_conflict(
+        "The compliance audit is in March 2025.",
+        "The compliance audit may slip.",
+    ) is None

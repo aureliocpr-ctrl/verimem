@@ -91,6 +91,8 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
     frozenset({"push", "pull"}),
     frozenset({"client", "server"}),
     frozenset({"minimum", "maximum"}),
+    frozenset({"primary", "backup", "secondary", "replica", "standby"}),
+    frozenset({"staging", "production"}),
 )
 
 
@@ -316,11 +318,24 @@ _MONTH_RE = re.compile(
 )
 
 
+# A BARE month word (no day, no year) is only a date when anchored: the word
+# is Capitalized AND preceded by a temporal preposition. Kills the classic
+# false positives — "the audit may slip" (modal), "they march to the office"
+# (verb) — while keeping "moved to September" / "launches in May".
+_TEMPORAL_PREPS = frozenset({
+    "in", "on", "by", "until", "till", "before", "after", "since", "during",
+    "to", "from", "for", "late", "early", "mid", "next", "last", "this",
+    "around", "circa",
+})
+
+
 def extract_dates(text: str) -> set[tuple[int | None, int, int | None]]:
     """``(year, month, day)`` tuples from ISO dates and month names.
 
     Year/day are ``None`` when the text does not state them ("moved to
     September"). Bare years carry no month → they stay with the year rule.
+    A bare month word needs a Capitalized form + temporal preposition (see
+    ``_TEMPORAL_PREPS``) — "may"/"march" as modal/verb are not dates.
     """
     t = text or ""
     out: set[tuple[int | None, int, int | None]] = set()
@@ -332,6 +347,12 @@ def extract_dates(text: str) -> set[tuple[int | None, int, int | None]]:
         mo = _MONTHS[m.group(1).lower()]
         day = int(m.group(2)) if m.group(2) else None
         year = int(m.group(3)) if m.group(3) else None
+        if day is None and year is None:
+            if not m.group(1)[0].isupper():
+                continue  # "may slip", "march to the office"
+            prev = re.findall(r"[A-Za-z]+", t[:m.start()])
+            if not prev or prev[-1].lower() not in _TEMPORAL_PREPS:
+                continue  # Capitalized but unanchored ("May I help")
         out.add((year, mo, day))
     return out
 
@@ -376,13 +397,32 @@ def _has_negator(text: str) -> bool:
     return bool(_NEGATOR_RE.search(text or ""))
 
 
+def _negated_tokens(text: str) -> set[str]:
+    """Content words in the negator's SCOPE: the first 1-2 alpha tokens right
+    after each negator, singularised like :func:`content_tokens`."""
+    t = text or ""
+    out: set[str] = set()
+    for m in _NEGATOR_RE.finditer(t):
+        following = re.findall(r"[a-zA-Z]{4,}", t[m.end():])[:2]
+        for w in following:
+            w = w.lower()
+            if w.endswith("ies"):
+                w = w[:-3] + "y"
+            elif w.endswith("s") and len(w) > 3:
+                w = w[:-1]
+            out.add(w)
+    return out
+
+
 def negation_conflict(text_a: str, text_b: str) -> str | None:
     """The shared predicate token when *text_a*/*text_b* state the SAME thing
     with OPPOSITE polarity ("is signed" vs "is not signed"); else ``None``.
 
-    Precision guards: the polarity must differ AND the content-token sets
-    must be near-identical (Jaccard ≥ 0.6 with ≥2 shared tokens) — a negator
-    inside an unrelated statement never flags."""
+    Precision guards: the polarity must differ, the content-token sets must
+    be near-identical (Jaccard ≥ 0.6 with ≥2 shared tokens), AND the word in
+    the negator's scope must itself be SHARED — "complete, not blocked" does
+    not flip "complete" (the negator scopes "blocked", absent from the other
+    statement)."""
     na, nb = _has_negator(text_a), _has_negator(text_b)
     if na == nb:
         return None  # same polarity → no flip
@@ -393,6 +433,12 @@ def negation_conflict(text_a: str, text_b: str) -> str | None:
         return None  # different statement, not a flip of this one
     if contrasting_attrs(ca, cb):
         return None
+    scoped = _negated_tokens(text_a if na else text_b)
+    scoped_shared = scoped & shared
+    if scoped and not scoped_shared:
+        return None  # the negation targets a word the other side never states
+    if scoped_shared:
+        return sorted(scoped_shared)[0]
     return sorted(shared)[0]
 
 
