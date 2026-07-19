@@ -40,7 +40,13 @@ def _gate(**over):
 
 
 def test_off_by_default_detector_not_called(monkeypatch):
+    # 0.7.0 auto-enable churn: UNSET now means AUTO (enforce iff the local
+    # model is installed). The zero-cost contract this test pins moves to the
+    # explicit opt-out — and to unset-without-model, covered by forcing the
+    # availability probe to False.
     monkeypatch.delenv("ENGRAM_SEMANTIC_CONFLICT", raising=False)
+    from verimem import local_relation as _lr
+    monkeypatch.setattr(_lr, "local_nli_available", lambda: False)
     called = {"n": 0}
 
     def _spy(*a, **k):

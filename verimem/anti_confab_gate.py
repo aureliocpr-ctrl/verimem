@@ -251,7 +251,10 @@ def _semantic_conflict_mode() -> str:
     """Mode of the opt-in NLI semantic-contradiction moat (L3-semantic): one of
     ``"off"`` / ``"observe"`` / ``"enforce"`` from ``ENGRAM_SEMANTIC_CONFLICT``.
 
-    - unset / 0 / off / false / no → ``"off"``: the detector is NOT called; the
+    - unset → **auto**: ``"enforce"`` iff the local NLI model is already
+      installed (``local_relation.local_nli_available()``, filesystem-only);
+      otherwise ``"off"`` — a fresh install without the model pays nothing.
+    - 0 / off / false / no → ``"off"``: the detector is NOT called; the
       lexical default path (~13ms, no judge) is unchanged, zero cost.
     - observe / log / shadow → ``"observe"``: the detector runs (llm-free, on the
       local NLI cross-encoder when no ``agent.llm`` is present) and SURFACES a
@@ -267,6 +270,15 @@ def _semantic_conflict_mode() -> str:
         return "observe"
     if v in ("1", "on", "true", "yes", "enforce"):
         return "enforce"
+    if v in ("0", "off", "false", "no"):
+        return "off"
+    # UNSET → AUTO (0.7.0): the tier enforces iff the local NLI model is
+    # already installed (pure-filesystem check, no load) — shipped capability
+    # = enabled capability. A fresh install without the model pays nothing.
+    if v == "":
+        from . import local_relation as _lr
+        if _lr.local_nli_available():
+            return "enforce"
     return "off"
 
 

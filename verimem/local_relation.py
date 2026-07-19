@@ -32,6 +32,8 @@ misses a warning):
 """
 from __future__ import annotations
 
+from functools import lru_cache
+
 import os
 import threading
 from collections.abc import Callable
@@ -193,6 +195,37 @@ class LocalRelationJudge:
 
 _judge: LocalRelationJudge | None = None
 _judge_lock = threading.Lock()
+
+
+@lru_cache(maxsize=1)
+def local_nli_available() -> bool:
+    """True iff the local NLI cross-encoder is ALREADY on disk — a pure
+    filesystem check of the HF hub cache (no torch import, no model load),
+    so the auto-enable decision costs microseconds. Honors HF_HUB_CACHE /
+    HF_HOME and the ENGRAM_LOCAL_NLI_MODEL override. ``lru_cache``d per
+    process; tests clear it via ``local_nli_available.cache_clear()``."""
+    model = (os.environ.get(_ENV_MODEL, "").strip() or DEFAULT_NLI_MODEL)
+    folder = "models--" + model.replace("/", "--")
+    # Precedence mirrors huggingface_hub: an explicit HF_HUB_CACHE is
+    # AUTHORITATIVE (no fallback — tests and airgapped deploys rely on it),
+    # else HF_HOME/hub, else the default user cache.
+    if os.environ.get("HF_HUB_CACHE"):
+        roots = [os.environ["HF_HUB_CACHE"]]
+    elif os.environ.get("HF_HOME"):
+        roots = [os.path.join(os.environ["HF_HOME"], "hub")]
+    else:
+        roots = [os.path.join(os.path.expanduser("~"), ".cache",
+                              "huggingface", "hub")]
+    for root in roots:
+        snaps = os.path.join(root, folder, "snapshots")
+        try:
+            for snap in os.listdir(snaps):
+                d = os.path.join(snaps, snap)
+                if os.path.isdir(d) and os.listdir(d):
+                    return True
+        except OSError:
+            continue
+    return False
 
 
 def get_local_relation_judge() -> LocalRelationJudge:
