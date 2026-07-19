@@ -47,8 +47,8 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   `L3-semantic-observe`, via a source+time policy (`supersession_policy`) that does not
   rely on the model's temporal reasoning. A different-source clash stays a contradiction.
   This is why `observe` is the recommended local mode.
-- **Same-source evolution supersession (opt-in, `ENGRAM_SUPERSEDE_SAME_SOURCE`, default
-  off).** A newer write from the SAME source that clashes with a stored value — caught by
+- **Same-source evolution supersession (`ENGRAM_SUPERSEDE_SAME_SOURCE`, ON by default —
+  see Changed).** A newer write from the SAME source that clashes with a stored value — caught by
   the NLI moat OR the always-on **lexical** L3 (numeric / version / date / negation changes,
   the most common evolutions) — now **admits the new fact and retires the old**
   (`superseded_by`) instead of quarantining the new: a memory that serves the current value,
@@ -60,9 +60,10 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   three adversarial opus reviews). **Trust model, stated honestly:** verimem has no
   cryptographic source authentication (`verified_by` is caller-controlled), so same-source
   authority is sound only within the tenancy boundary + a single-agent-per-tenant
-  assumption — hence **default off**, a knowing opt-in. The flag now reaches the default-on
-  lexical detector, so a multi-agent-per-tenant deployment enabling it accepts intra-tenant
-  griefing on numeric/version writes. `Memory.add()` returns `superseded: [ids]`.
+  assumption. It is **ON by default** (see Changed); a multi-agent-per-tenant deployment that
+  can't trust its own writers opts OUT with `ENGRAM_SUPERSEDE_SAME_SOURCE=0` — quarantine
+  instead of supersede, avoiding intra-tenant griefing on numeric/version writes.
+  `Memory.add()` returns `superseded: [ids]`.
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent
