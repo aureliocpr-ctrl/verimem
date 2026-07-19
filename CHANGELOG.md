@@ -48,16 +48,21 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   rely on the model's temporal reasoning. A different-source clash stays a contradiction.
   This is why `observe` is the recommended local mode.
 - **Same-source evolution supersession (opt-in, `ENGRAM_SUPERSEDE_SAME_SOURCE`, default
-  off).** With the contradiction moat enforcing, a newer write from the SAME source that
-  clashes with a stored value now **admits the new fact and retires the old** (`superseded_by`)
-  instead of quarantining the new — a memory that serves the current value, not a stale
-  one beside it. A **cross-source** clash never supersedes (it stays a quarantine — the
-  griefing guard), and the old value is retired only when the new write was actually
-  admitted (a store-screen quarantine never loses both). **Trust model, stated honestly:**
-  verimem has no cryptographic source authentication (`verified_by` is caller-controlled),
-  so same-source authority is sound only within the tenancy boundary + a
-  single-agent-per-tenant assumption — hence **default off**, a knowing opt-in, not a
-  silent flip. `Memory.add()` returns `superseded: [ids]` when it retires values.
+  off).** A newer write from the SAME source that clashes with a stored value — caught by
+  the NLI moat OR the always-on **lexical** L3 (numeric / version / date / negation changes,
+  the most common evolutions) — now **admits the new fact and retires the old**
+  (`superseded_by`) instead of quarantining the new: a memory that serves the current value,
+  not a stale one beside it. Works on both surfaces (`Memory.add()` and the MCP
+  `hippo_remember`). Ordering is by **valid-time** (`asserted_at`, else write-time), so a
+  backfill of an older value never retires the current one. A **cross-source** clash never
+  supersedes (it stays a quarantine — the griefing guard); the old is retired only when the
+  new was actually admitted AND landed in the curated store (never both lost — verified by
+  three adversarial opus reviews). **Trust model, stated honestly:** verimem has no
+  cryptographic source authentication (`verified_by` is caller-controlled), so same-source
+  authority is sound only within the tenancy boundary + a single-agent-per-tenant
+  assumption — hence **default off**, a knowing opt-in. The flag now reaches the default-on
+  lexical detector, so a multi-agent-per-tenant deployment enabling it accepts intra-tenant
+  griefing on numeric/version writes. `Memory.add()` returns `superseded: [ids]`.
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent
