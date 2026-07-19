@@ -20,7 +20,12 @@ def mem(tmp_path, monkeypatch):
     return Memory(tmp_path / "ig.db")
 
 
-def test_classes_no_evidence_conflict_and_answerable(mem):
+def test_classes_no_evidence_conflict_and_answerable(mem, monkeypatch):
+    # 0.7.0 auto-NLI churn: this test exercises READ-side machinery on
+    # conflicting facts, which the write-side semantic tier (auto-on when
+    # the model is installed) would now quarantine before they land -- so
+    # the write-side NLI is explicitly opted out here.
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
     mem.add("Rex is a poodle.", topic="pets", verified_by=["source-doc:bob:t1"])
     mem.add("Milo is a cat.", topic="pets", verified_by=["source-doc:alice:t2"])

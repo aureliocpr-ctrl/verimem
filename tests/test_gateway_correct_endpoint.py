@@ -34,7 +34,12 @@ def test_correct_accept_on_unchallenged_fact(tmp_path):
     assert "labrador" in body["answer"]
 
 
-def test_correct_abstains_on_real_conflict(tmp_path):
+def test_correct_abstains_on_real_conflict(tmp_path, monkeypatch):
+    # 0.7.0 auto-NLI churn: this test exercises READ-side machinery on
+    # conflicting facts, which the write-side semantic tier (auto-on when
+    # the model is installed) would now quarantine before they land -- so
+    # the write-side NLI is explicitly opted out here.
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     c, mem = _client(tmp_path)
     mem.add("Rex is a labrador.", topic="pets",
             verified_by=["source-doc:alice:t1"])

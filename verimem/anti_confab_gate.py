@@ -970,6 +970,17 @@ def run_validation_gate(
                     # the deterministic fix for the local NLI's measured temporal
                     # over-flag (2026-07-19). Cross-source stays 'conflict' (griefing guard).
                     _old = _sib_by_id.get(_oid)
+                    # DIARY GUARD (precision, 2026-07-19): two statements
+                    # indexing DIFFERENT events of the same kind ("On day 4
+                    # ..." vs "On day 5 ...") are distinct entries, not one
+                    # value evolving — the NLI over-flags them. Skip entirely:
+                    # no supersession, no quarantine, no observe noise.
+                    # (Found live: 12 diary adds collapsed under auto-NLI and
+                    # count() dropped below ground truth.)
+                    from .quantity_match import distinct_event_indices
+                    if (_old is not None and distinct_event_indices(
+                            proposition, getattr(_old, "proposition", ""))):
+                        continue
                     _rel = ("conflict" if _old is None
                             else classify_write_relation(_new, _old))
                     if _observe:

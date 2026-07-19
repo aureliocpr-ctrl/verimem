@@ -138,6 +138,10 @@ def test_receipt_carries_confidence_tier():
 
 
 def test_ce_band_enforce_quarantines_borderline(tmp_path, monkeypatch):
+    # 0.7.0 band-escalation churn: with a claude CLI on PATH the band now
+    # escalates to an llm verdict instead of holding for review; this test
+    # pins the REVIEW-HOLD contract, so escalation is explicitly opted out.
+    monkeypatch.setenv("ENGRAM_BAND_LLM", "0")
     # borderline CE score (in [tau_lo, tau_hi)) is held for review when enforced
     monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
     monkeypatch.setenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", "40")
@@ -204,6 +208,10 @@ def test_confidence_tier_persists_across_recall(tmp_path, monkeypatch):
 
 
 def test_ce_band_enforced_by_default(tmp_path, monkeypatch):
+    # 0.7.0 band-escalation churn: with a claude CLI on PATH the band now
+    # escalates to an llm verdict instead of holding for review; this test
+    # pins the REVIEW-HOLD contract, so escalation is explicitly opted out.
+    monkeypatch.setenv("ENGRAM_BAND_LLM", "0")
     # NO VERIMEM_CE_BAND_ENFORCE set -> enforcement is ON: a local-CE score in
     # [40,80) is held for review (Aurelio mandate: the feature works by default).
     monkeypatch.delenv("VERIMEM_CE_BAND_ENFORCE", raising=False)

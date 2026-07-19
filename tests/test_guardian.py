@@ -30,7 +30,12 @@ def test_accept_when_unchallenged(mem):
     assert "labrador" in out["answer"]
 
 
-def test_correct_when_better_labeled_fact_conflicts(mem):
+def test_correct_when_better_labeled_fact_conflicts(mem, monkeypatch):
+    # 0.7.0 auto-NLI churn: this test exercises READ-side machinery on
+    # conflicting facts, which the write-side semantic tier (auto-on when
+    # the model is installed) would now quarantine before they land -- so
+    # the write-side NLI is explicitly opted out here.
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     a = mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
     b = mem.add("Rex is a poodle.", topic="pets", verified_by=["source-doc:vet:t2"])
     assert mem.semantic.set_epistemic(b["id"], make_proven("qa:vet_registry_check_PASS"))
@@ -41,7 +46,12 @@ def test_correct_when_better_labeled_fact_conflicts(mem):
     assert "proven" in out["reason"]
 
 
-def test_abstain_on_unresolvable_conflict(mem):
+def test_abstain_on_unresolvable_conflict(mem, monkeypatch):
+    # 0.7.0 auto-NLI churn: this test exercises READ-side machinery on
+    # conflicting facts, which the write-side semantic tier (auto-on when
+    # the model is installed) would now quarantine before they land -- so
+    # the write-side NLI is explicitly opted out here.
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
     mem.add("Rex is a poodle.", topic="pets", verified_by=["source-doc:bob:t1"])
     out = correct_read(mem, "What breed is Rex?")
@@ -50,7 +60,12 @@ def test_abstain_on_unresolvable_conflict(mem):
     assert len(out["evidence"]) == 2                       # the conflict is SHOWN
 
 
-def test_refuted_top_is_never_served(mem):
+def test_refuted_top_is_never_served(mem, monkeypatch):
+    # 0.7.0 auto-NLI churn: this test exercises READ-side machinery on
+    # conflicting facts, which the write-side semantic tier (auto-on when
+    # the model is installed) would now quarantine before they land -- so
+    # the write-side NLI is explicitly opted out here.
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     a = mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
     assert mem.semantic.set_epistemic(a["id"], make_refuted("vet-registry-42"))
     b = mem.add("Rex is a poodle.", topic="pets", verified_by=["source-doc:vet:t2"])

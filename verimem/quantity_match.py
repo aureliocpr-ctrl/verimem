@@ -464,6 +464,43 @@ def lexical_conflict(text_a: str, text_b: str) -> tuple[str, str] | None:
     return None
 
 
+# Ordinal EVENT indices ("day 4", "sprint 3", "week 12"): a cardinal counter of
+# repeated events, NOT a calendar value. Two statements carrying DIFFERENT
+# indices of the same kind narrate two distinct events (a diary), so neither
+# supersedes nor contradicts the other. Calendar dates (March, 2025-03-06) are
+# deliberately excluded — "launches in March" -> "launches in September" is one
+# VALUE moving, which the evolution path must keep superseding.
+_EVENT_INDEX_RE = re.compile(
+    r"\b(day|night|week|month|quarter|sprint|round|session|meeting|"
+    r"iteration|cycle|episode|phase|step|attempt|run|note|entry|item|log|chapter|part|lesson|task)\s+(\d{1,4})\b",
+    re.IGNORECASE,
+)
+
+
+def event_indices(text: str) -> set[tuple[str, int]]:
+    """``(kind, n)`` ordinal event indices in *text* ("day 4" -> ("day", 4))."""
+    return {(m.group(1).lower(), int(m.group(2)))
+            for m in _EVENT_INDEX_RE.finditer(text or "")}
+
+
+def distinct_event_indices(text_a: str, text_b: str) -> bool:
+    """True when the two statements index DIFFERENT events of the same kind
+    ("On day 4 ..." vs "On day 5 ..."): distinct diary entries, not an
+    evolution and not a contradiction. False when either carries no event
+    index, or the shared kind has the same index."""
+    ea, eb = event_indices(text_a), event_indices(text_b)
+    if not ea or not eb:
+        return False
+    kinds_a = {k for (k, _n) in ea}
+    kinds_b = {k for (k, _n) in eb}
+    for k in kinds_a & kinds_b:
+        na = {n for (kk, n) in ea if kk == k}
+        nb = {n for (kk, n) in eb if kk == k}
+        if na and nb and not (na & nb):
+            return True  # same kind, disjoint indices -> different events
+    return False
+
+
 __all__ = [
     "YEAR_RE",
     "CONTRAST_QUALIFIERS",
@@ -480,4 +517,6 @@ __all__ = [
     "date_conflict",
     "negation_conflict",
     "lexical_conflict",
+    "event_indices",
+    "distinct_event_indices",
 ]

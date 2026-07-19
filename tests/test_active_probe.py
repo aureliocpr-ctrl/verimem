@@ -24,7 +24,12 @@ def mem(tmp_path, monkeypatch):
     return Memory(tmp_path / "p.db")
 
 
-def test_probe_finds_independent_counterevidence(mem):
+def test_probe_finds_independent_counterevidence(mem, monkeypatch):
+    # 0.7.0 auto-NLI churn: this test exercises READ-side machinery on
+    # conflicting facts, which the write-side semantic tier (auto-on when
+    # the model is installed) would now quarantine before they land -- so
+    # the write-side NLI is explicitly opted out here.
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     a = mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
     b = mem.add("Rex is a poodle.", topic="pets", verified_by=["source-doc:vet:t2"])
     out = probe_fact(mem, a["id"])

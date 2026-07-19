@@ -252,3 +252,43 @@ def test_date_no_conflict_with_modal_may() -> None:
         "The compliance audit is in March 2025.",
         "The compliance audit may slip.",
     ) is None
+
+
+# ---- distinct event indices: diary entries are not evolutions ------------
+
+from verimem.quantity_match import distinct_event_indices  # noqa: E402
+
+
+def test_distinct_event_indices_day_diary() -> None:
+    # "On day 4 ... " vs "On day 5 ..." = two EVENTS, not one value updated.
+    assert distinct_event_indices(
+        "On day 4 the team reviewed Project Helios progress.",
+        "On day 5 the team reviewed Project Helios progress.",
+    ) is True
+
+
+def test_same_event_index_is_not_distinct() -> None:
+    assert distinct_event_indices(
+        "On day 4 the team reviewed Project Helios progress.",
+        "On day 4 the team planned the milestone.",
+    ) is False
+
+
+def test_calendar_dates_are_not_event_indices() -> None:
+    # March->September is a VALUE move (the launch date changed) — the
+    # evolution path must keep superseding it.
+    assert distinct_event_indices(
+        "Project Aurora launches in March 2025.",
+        "Project Aurora launches in September 2025.",
+    ) is False
+
+
+def test_sprint_and_week_indices_count() -> None:
+    assert distinct_event_indices(
+        "Sprint 3 closed with 40 points.",
+        "Sprint 4 closed with 40 points.",
+    ) is True
+    assert distinct_event_indices(
+        "In week 12 we shipped the gateway.",
+        "In week 13 we shipped the console.",
+    ) is True

@@ -166,3 +166,19 @@ def test_negation_same_source_evolution_supersedes_lexically(tmp_path, monkeypat
     _evolves(Memory(path=tmp_path / "n.db"),
              "The vendor contract is signed.",
              "The vendor contract is not signed.")
+
+
+def test_diary_event_series_all_stay_live_under_full_default(tmp_path, monkeypatch):
+    """PRODUCT precision fix 2026-07-19: 12 near-identical diary entries
+    ("On day N ... reviewed Project Helios ...") are distinct EVENTS, not one
+    value evolving — the FULL default moat (auto-NLI included, model installed
+    on this machine) must keep them ALL live. Found by the count() suite: the
+    NLI tier was superseding the diary and count dropped below ground truth."""
+    monkeypatch.delenv("ENGRAM_SEMANTIC_CONFLICT", raising=False)  # full default
+    monkeypatch.delenv("ENGRAM_SUPERSEDE_SAME_SOURCE", raising=False)
+    mem = Memory(path=tmp_path / "diary.db")
+    for i in range(12):
+        r = mem.add(f"On day {i} the team reviewed Project Helios progress and "
+                    f"planned the next milestone.", topic="work/helios")
+        assert r["status"] != "quarantined", f"day {i} quarantined: {r}"
+    assert mem.count(topic="work/helios") == 12
