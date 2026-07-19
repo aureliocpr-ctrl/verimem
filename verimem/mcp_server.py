@@ -11814,14 +11814,23 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # new fact was ADMITTED (a quarantined new must not retire the old; there is no
             # rank rule on this path, so the admit-guard is explicit). Mirrors Memory.add()
             # (SDK). Best-effort: a supersede failure never breaks the write.
+            # admit-guard: only if the new write is admitted AND actually retrievable from
+            # the curated store (store() can divert a non-quarantined write to telemetry
+            # without a 'quarantined' status; retiring the old against a diverted new drops
+            # both from curated recall — opus final critic).
             if (not _deferred and getattr(fact, "status", "") != "quarantined"
-                    and getattr(_gate, "supersede_fact_ids", None)):
+                    and getattr(_gate, "supersede_fact_ids", None)
+                    and a.semantic.get(fact.id) is not None):
                 for _old_id in _gate.supersede_fact_ids:
                     try:
                         a.semantic.supersede(
                             _old_id, fact.id, reason="same-source evolution")
-                    except Exception:  # noqa: BLE001 — never break the write
-                        pass
+                    except Exception as _exc:  # noqa: BLE001 — never break the write
+                        # surface it (SDK parity): new admitted, old NOT retired =
+                        # stale-beside-new, the state the feature prevents.
+                        log.warning(
+                            "same-source supersede of %s failed (new %s admitted, old "
+                            "NOT retired): %s", _old_id, fact.id, _exc)
             # NOTE: provenance columns (writer_role, meta_narrative) are
             # persisted inline by SemanticMemory.store() via the v6 schema
             # — see _migrate_v5_to_v6 + INSERT clause.

@@ -110,6 +110,32 @@ async def test_mcp_supersede_skipped_when_new_quarantined(tmp_path, monkeypatch)
     assert sm.get("oldval").superseded_by is None              # admit-guard: NOT retired
 
 
+async def test_mcp_supersede_failure_is_logged(tmp_path, monkeypatch):
+    """FIX (opus final critic): an MCP supersede failure is LOGGED, not silent — parity
+    with the SDK. A silent failure leaves stale-beside-new invisible on the agent surface."""
+    sm = SemanticMemory(db_path=tmp_path / "sm.db")
+    sm.store(Fact(id="oldval", proposition="the plan costs 100", topic="t",
+                  status="model_claim"))
+    agent = _FakeAgent(sm)
+    monkeypatch.setattr(mcp_server, "_ag", lambda: agent)
+
+    def _fake_gate(**kw):
+        return anti_confab_gate.GateResult(action="persist", supersede_fact_ids=["oldval"])
+    monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _fake_gate)
+
+    def _boom(*a, **k):
+        raise RuntimeError("supersede boom")
+    monkeypatch.setattr(sm, "supersede", _boom)
+    logged = {"n": 0}
+    monkeypatch.setattr(mcp_server.log, "warning",
+                        lambda *a, **k: logged.__setitem__("n", logged["n"] + 1))
+
+    blocks = await _invoke_tool("hippo_remember", {
+        "proposition": "the plan costs 150", "topic": "t", "status": "model_claim"})
+    assert _payload(blocks).get("ok") is True          # the write is not broken
+    assert logged["n"] >= 1                              # the supersede failure was logged
+
+
 async def test_write_path_no_supersede_when_gate_silent(tmp_path, monkeypatch):
     """Nessun contradicting_fact_ids -> nessuna supersession (no-op sicuro)."""
     sm = SemanticMemory(db_path=tmp_path / "sm.db")

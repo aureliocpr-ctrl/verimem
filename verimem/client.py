@@ -280,7 +280,13 @@ class Memory:
         # the old would lose BOTH (opus critic guard). supersede() keeps the old row for
         # lineage; it just drops out of the default recall filter.
         _superseded: list[str] = []
-        if _disposition == "admitted" and getattr(gate, "supersede_fact_ids", None):
+        # admit-guard: retire the old ONLY if the new write was admitted AND is actually
+        # retrievable from the CURATED store — store() can divert a non-quarantined write
+        # elsewhere (admission-gate telemetry route sets no 'quarantined' status), and
+        # retiring the old against a diverted new would drop BOTH from curated recall
+        # (opus final critic). get() short-circuits after the cheap checks.
+        if (_disposition == "admitted" and getattr(gate, "supersede_fact_ids", None)
+                and self.semantic.get(fact.id) is not None):
             for _old_id in gate.supersede_fact_ids:
                 try:
                     self.semantic.supersede(_old_id, fact.id,
