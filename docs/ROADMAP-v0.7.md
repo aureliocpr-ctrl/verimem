@@ -57,10 +57,12 @@ nothing risky is on by default.
   `adjudications.db`, read via `Memory.audit_log()` (`b720867` · `d602f26`). Critic-fixed:
   store-screen layer attribution, a false "below threshold" reason, silent drops
   (`b85e14c`). Ingest-path audit is a filed follow-up (task #49).
-- **Tamper-evidence (gap 4: FOUNDATION only, honestly scoped).** Pure hash-chain
-  primitives (`a8ecf57`) + scope proposal (`d9e7246`). The chain is the detection half;
-  the EXTERNAL anchor (the part that makes it non-theater) is **unwired**, pending the
-  A/B/C scope choice.
+- **Tamper-evidence (gap 4: anchor-A WIRED, honestly scoped).** Pure hash-chain
+  primitives (`a8ecf57`) now chain the audit trail (`5d8214d`): every row stores
+  `entry_hash` (computed under `BEGIN IMMEDIATE`, no fork), `Memory.audit_verify()`
+  finds the first edited/deleted/reordered row, `Memory.audit_head()` returns the head
+  to **archive off-box** (anchor-A). Honest: the in-DB chain is DETECTION only; the
+  external key / transparency service (anchor-B/C, `d9e7246`) stays unbuilt.
 - **`source_trust` observe (gap 7).** `ENGRAM_SOURCE_TRUST=observe` measures the
   false-block rate before enforcing (`7b29c4f`).
 
@@ -73,7 +75,7 @@ wiring (task #24); ingest-path audit (task #49).
 1. Gate is bypassable — a direct `sqlite3` INSERT skips the moat (library, no enforcement).
 2. Receipts verify RESOLVABILITY, not content — no content hash; file edit silently invalidates.
 3. Judge not recorded per decision — only `grounding_score`; no model/version/temp → silent provider drift.
-4. No tamper-evident chain — only SQLite crash-consistency. **A hash chain INSIDE the writable DB is theater** (owner has the key → rewrite+re-sign). Needs a key OUTSIDE the DB + an EXTERNAL anchor, or don't ship it.
+4. ~~No tamper-evident chain~~ **PARTIAL (`5d8214d`)**: the audit trail is now hash-chained with `Memory.audit_verify()`/`audit_head()` (anchor-A: DETECTION + a head to archive off-box). A hash chain INSIDE the writable DB is still theater ON ITS OWN (owner rewrites+re-hashes) — the honest fix is archiving the head externally; a key OUTSIDE the DB + an EXTERNAL anchor (B/C) remains unbuilt. Shipped with that scope stated, not over-claimed.
 5. No encryption at rest.
 6. Scale unproven >3k facts; single-node SQLite; ~113 ms/write (CE) = swarm serialization point.
 7. `source_trust` EXISTS but OFF by default (poisoning exposure out-of-box).
