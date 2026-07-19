@@ -1114,16 +1114,45 @@ def run_validation_gate(
                 advice = advice or "Source does not entail the claim (semantic grounding)."
             elif (_judge_used == "local" and _ce_band_enforced()
                   and gscore < _ce_band_tau_hi()):
-                warnings.append({
-                    "layer": "L4-review",
-                    "reason": f"borderline grounding ({gscore:.0f}) in the CE review "
-                              f"band [{_threshold_of_record:.0f}, "
-                              f"{_ce_band_tau_hi():.0f}) - held for review, not admitted",
-                    "advice": "the local CE is not confident the source entails this "
-                              "claim; pass Memory(llm=...) to adjudicate the borderline "
-                              "zone, or review the held fact.",
-                    "grounding_score": gscore,
-                })
+                # BAND ESCALATION (0.7.0): before parking the write for review,
+                # ask an AVAILABLE llm judge to adjudicate the CE's uncertain
+                # sliver -- auto-discovered claude CLI (subscription, no key)
+                # when no llm was injected. Fail-soft: None -> held for review
+                # exactly as before; an unreadable verdict never admits.
+                _esc = None
+                if grounding_llm is None:
+                    from . import band_escalation as _be
+                    _esc = _be.escalate_band_score(source, proposition)
+                if _esc is not None:
+                    grounding_val = float(_esc)
+                    _judge_of_record = "claude-band"
+                    _threshold_of_record = resolve_write_threshold_for("claude")
+                    if _esc < _threshold_of_record:
+                        warnings.append({
+                            "layer": "L4-grounding",
+                            "reason": f"band escalation: llm judge scored "
+                                      f"{_esc:.0f} below the claude-scale "
+                                      f"threshold {_threshold_of_record:.0f}",
+                            "advice": "the CE was unsure and the llm judge "
+                                      "adjudicated NOT entailed -- likely a "
+                                      "confabulated inference, not a stated fact.",
+                            "grounding_score": _esc,
+                        })
+                        advice = advice or ("Source does not entail the claim "
+                                            "(band llm adjudication).")
+                    # else: llm adjudicated entailed -> admitted clean,
+                    # judge-of-record 'claude-band' on the receipt.
+                else:
+                    warnings.append({
+                        "layer": "L4-review",
+                        "reason": f"borderline grounding ({gscore:.0f}) in the CE review "
+                                  f"band [{_threshold_of_record:.0f}, "
+                                  f"{_ce_band_tau_hi():.0f}) - held for review, not admitted",
+                        "advice": "the local CE is not confident the source entails this "
+                                  "claim; pass Memory(llm=...) to adjudicate the borderline "
+                                  "zone, or review the held fact.",
+                        "grounding_score": gscore,
+                    })
     elif source and not _have_judge:
         _emit_l4_skipped()
 
