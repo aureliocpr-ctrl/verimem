@@ -214,8 +214,11 @@ class TestFastL1Downgrade:
 class TestFullL3ContradictionGate:
     @pytest.mark.asyncio
     async def test_l3_contradicted_year_reject_mode_blocks_persist(
-        self, real_sm: SemanticMemory,
+        self, real_sm: SemanticMemory, monkeypatch,
     ) -> None:
+        # Same-source supersession is default-on; this test exercises the CONTRADICTION
+        # reject path, so disable it (a cross-source clash would reject the same way).
+        monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "0")
         # Seed memory with a counter-claim that establishes the year.
         real_sm.store(Fact(
             id="seed-tonegawa",
@@ -244,8 +247,10 @@ class TestFullL3ContradictionGate:
 
     @pytest.mark.asyncio
     async def test_l3_contradicted_downgrade_mode_persists_as_provisional(
-        self, real_sm: SemanticMemory,
+        self, real_sm: SemanticMemory, monkeypatch,
     ) -> None:
+        # supersession default-on; exercise the CONTRADICTION downgrade path explicitly.
+        monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "0")
         real_sm.store(Fact(
             id="seed-anthropic",
             proposition="Anthropic Skills launched in 2025",

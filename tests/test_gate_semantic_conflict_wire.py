@@ -251,6 +251,30 @@ def test_enforce_cross_source_never_supersedes(monkeypatch):
     assert "sib1" in res.contradicting_fact_ids
 
 
+def test_route_evolutions_rank_floor_protects_stronger_old():
+    """Anti-confab rank floor: a weaker new write never supersedes a STRONGER old — an
+    unverified model_claim contradicting a VERIFIED fact stays a CONFLICT."""
+    old = types.SimpleNamespace(id="old", verified_by=["source-doc:acme:1"],
+                                created_at=1.0, asserted_at=None, status="verified")
+    agent = types.SimpleNamespace(
+        semantic=types.SimpleNamespace(get=lambda i: old if i == "old" else None))
+    sup: list[str] = []
+    conflicts = anti_confab_gate._route_evolutions(
+        agent, ["source-doc:acme:1"], None, ["old"], sup, "model_claim")
+    assert conflicts == ["old"] and sup == []          # verified protected → conflict
+
+
+def test_route_evolutions_same_rank_same_source_is_evolution():
+    old = types.SimpleNamespace(id="old", verified_by=["source-doc:acme:1"],
+                                created_at=1.0, asserted_at=None, status="model_claim")
+    agent = types.SimpleNamespace(
+        semantic=types.SimpleNamespace(get=lambda i: old if i == "old" else None))
+    sup: list[str] = []
+    conflicts = anti_confab_gate._route_evolutions(
+        agent, ["source-doc:acme:1"], None, ["old"], sup, "model_claim")
+    assert conflicts == [] and sup == ["old"]          # same rank + source + newer → evolution
+
+
 def test_llm_free_moat_fires_end_to_end(monkeypatch):
     """Adversarial 'claim→reality' proof: with NO agent.llm, the REAL
     detect_semantic_conflicts + REAL cosine pre-filter + an injected stub-classifier

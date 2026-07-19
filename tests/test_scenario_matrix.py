@@ -137,8 +137,11 @@ def test_concurrent_writers_do_not_corrupt_the_store(tmp_path):
     def worker(t):
         ok = 0
         for i in range(per):
+            # distinct topic per write: this test stresses WAL/lock concurrency, not the
+            # contradiction moat — same-topic numeric writes would (correctly) supersede
+            # each other now that the evolution moat is on by default.
             r = mem.add(f"Thread {t} durable fact number {i} about topic z.",
-                        topic=f"concur/{t}")
+                        topic=f"concur/{t}/{i}")
             if r.get("stored"):
                 ok += 1
         return ok

@@ -295,31 +295,38 @@ def _supersede_same_source_on() -> bool:
 
 
 def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
-                      ids: list[str], supersede_ids: list[str]) -> list[str]:
+                      ids: list[str], supersede_ids: list[str],
+                      new_status: str | None = None) -> list[str]:
     """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
-    earlier valid-time → appended to ``supersede_ids``, retired) and genuine CONFLICTS
-    (returned, to quarantine the new write). This gives contradictions caught by the
-    LEXICAL L3 (numeric / version / date changes — the most common evolutions) the SAME
-    same-source evolution handling as the NLI layer (e2e 2026-07-19: they were being
-    quarantined instead of superseding). Fetches each old fact from the agent's store;
-    any miss OR a cross-source clash stays a conflict (conservative — the griefing guard
-    holds here too)."""
+    later valid-time + at least as trusted → appended to ``supersede_ids``, retired) and
+    genuine CONFLICTS (returned, to quarantine the new write). This gives contradictions
+    caught by the LEXICAL L3 (numeric / version / date — the most common evolutions) the
+    same handling as the NLI layer. Fetches each old fact from the agent's store.
+
+    RANK FLOOR (anti-confab): a weaker new write never supersedes a STRONGER old one — an
+    unverified ``model_claim`` contradicting a ``verified`` fact is a suspect
+    confabulation, not an evolution, so it stays a CONFLICT (quarantined), protecting the
+    verified fact. Any miss OR a cross-source clash also stays a conflict (griefing guard)."""
     import time as _t
     import types as _ty
 
+    from .semantic import _STATUS_RANK
     from .supersession_policy import classify_write_relation
     sm = getattr(agent, "semantic", None) if agent is not None else None
     if sm is None:
         return list(ids)
     cand = _ty.SimpleNamespace(verified_by=verified_by, created_at=_t.time(),
                                asserted_at=asserted_at)
+    _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
     conflicts: list[str] = []
     for cid in ids:
         try:
             old = sm.get(cid)
         except Exception:  # noqa: BLE001 — a lookup miss is treated as a conflict
             old = None
-        if old is not None and classify_write_relation(cand, old) == "evolution":
+        if (old is not None
+                and classify_write_relation(cand, old) == "evolution"
+                and _STATUS_RANK.get(getattr(old, "status", "model_claim"), 2) <= _nr):
             if cid not in supersede_ids:
                 supersede_ids.append(cid)
         else:
@@ -804,6 +811,7 @@ def run_validation_gate(
     grounding_llm: Any = None,
     ground_write: bool | None = None,
     asserted_at: float | None = None,
+    status: str | None = None,
 ) -> GateResult:
     """Evaluate the anti-confab gate; return a ``GateResult``.
 
@@ -883,7 +891,7 @@ def run_validation_gate(
             _conflicts = ev
             if _supersede_same_source_on() and ev:
                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
-                                               supersede_ids)
+                                               supersede_ids, status)
             if _conflicts:
                 warnings.append({
                     "layer": "L3",
@@ -937,8 +945,10 @@ def run_validation_gate(
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
                 _sib_by_id = {getattr(f, "id", None): f for f in _sibs}
                 _observe = _sc_mode == "observe"
+                from .semantic import _STATUS_RANK
                 from .supersession_policy import classify_write_relation
                 _supersede_on = _supersede_same_source_on()
+                _new_rank = _STATUS_RANK.get(status or "model_claim", 2)
                 for _w in detect_semantic_conflicts(_new, _sibs, _judge):
                     if getattr(_w, "kind", "") != "semantic_conflict":
                         continue
@@ -971,12 +981,16 @@ def run_validation_gate(
                                           "claim; set ENGRAM_SEMANTIC_CONFLICT=1 to enforce.",
                                 "other_fact_id": _oid,
                             })
-                    elif _rel == "evolution" and _supersede_on:
+                    elif (_rel == "evolution" and _supersede_on and _old is not None
+                          and _STATUS_RANK.get(getattr(_old, "status", "model_claim"), 2)
+                          <= _new_rank):
                         # enforce + ENGRAM_SUPERSEDE_SAME_SOURCE: the same source updated
-                        # its own value → ADMIT the new (does not escalate) and retire the
-                        # OLD via supersede_ids. The handler applies it ONLY when the new
-                        # write is ultimately admitted (action=='persist'), so a new fact
-                        # quarantined for another reason (L1/L4) never retires the old.
+                        # its own value with an at-least-as-trusted claim → ADMIT the new
+                        # (does not escalate) and retire the OLD via supersede_ids. The
+                        # rank floor keeps a weak new from retiring a stronger old (an
+                        # unverified claim never supersedes a verified fact — anti-confab).
+                        # The handler applies it ONLY when the new write is ultimately
+                        # admitted (action=='persist').
                         warnings.append({
                             "layer": "L3-supersession",
                             "reason": "a newer same-source value supersedes a stored fact",
