@@ -57,10 +57,21 @@ honest *"I don't know."*
   is a high-precision **structured-contradiction** filter, not a universal
   truth-detector — plausible-falsehood / paraphrase-heavy workloads should configure
   `Memory(llm=...)`. The write-gate checks *source ⊢ fact*, not factual truth.
-  Contradiction screening runs with the `strict` preset. Opt-in
-  origin tagging (`tag_beliefs=True` at ingest) additionally classes an
+  Opt-in origin tagging (`tag_beliefs=True` at ingest) additionally classes an
   unverified user assertion as `user_belief`: stored, but out of default
   recall until you ask for it (`search(..., include_beliefs=True)`).
+- **Cross-fact contradiction + same-source evolution — ON by default.** A plain
+  `Memory()` no longer hoards a contradicted value: write "the plan costs 100 €" then
+  "…150 €" (same source) and recall returns **only the current one**, the old
+  `superseded_by` the new (never a silent overwrite — the old row stays for lineage).
+  The deterministic **lexical** detector (numeric / version / date / negation changes)
+  carries this at the default `validate="full"`; the heavier **semantic NLI** tier is
+  opt-in (`ENGRAM_SEMANTIC_CONFLICT=1`, loads a second model). A **cross-source** clash
+  quarantines the new instead (the griefing guard — one source never retires another's
+  fact). Same-source authority is sound within a tenant + a single-agent-per-tenant
+  assumption (verimem has no per-writer auth yet); a multi-agent tenant that can't trust
+  its writers sets `ENGRAM_SUPERSEDE_SAME_SOURCE=0` (detect, but quarantine instead of
+  supersede), or `Memory(preset="permissive")` / `validate="fast"` to skip the moat.
 - **Every write returns an adjudication receipt** — `add()` hands back a visible
   verdict: `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}`. A quarantine is a *reasoned* verdict, never a silent drop,
