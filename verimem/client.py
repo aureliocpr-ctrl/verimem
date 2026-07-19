@@ -274,16 +274,33 @@ class Memory:
                    fact_id=str(fact.id), topic=str(topic), layers=_hit_layers)
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
+        # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE, classified by
+        # the gate): retire the OLD value(s) the new write supersedes — but ONLY when the
+        # new write was actually ADMITTED. If a store-screen quarantined it, superseding
+        # the old would lose BOTH (opus critic guard). supersede() keeps the old row for
+        # lineage; it just drops out of the default recall filter.
+        _superseded: list[str] = []
+        if _disposition == "admitted" and getattr(gate, "supersede_fact_ids", None):
+            for _old_id in gate.supersede_fact_ids:
+                try:
+                    self.semantic.supersede(_old_id, fact.id,
+                                            reason="same-source evolution")
+                    _superseded.append(_old_id)
+                except Exception:  # noqa: BLE001 — a supersede failure must not break the write
+                    pass
         _adj = _adjudication(gate, disposition=_disposition,
                              verified_by=verified_by, warnings=warnings)
         self._audit_record(_adj, topic=topic, proposition=text, fact_id=fact.id,
                            judge=getattr(gate, "judge", None), layers=_hit_layers)
-        return {
+        _out = {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
         }
+        if _superseded:
+            _out["superseded"] = _superseded
+        return _out
 
     # ---- read --------------------------------------------------------------
     def search(self, query: str, k: int = 5, *, deep: bool = False,

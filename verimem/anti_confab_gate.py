@@ -181,6 +181,12 @@ class GateResult:
     action: GateAction
     warnings: list[dict[str, Any]] = field(default_factory=list)
     contradicting_fact_ids: list[str] = field(default_factory=list)
+    #: OLD facts a same-source EVOLUTION supersedes (ENGRAM_SUPERSEDE_SAME_SOURCE
+    #: enforce): the new write is ADMITTED and these are retired — distinct from
+    #: contradicting_fact_ids, which quarantines the NEW write. Empty by default. The
+    #: caller must only act on these when ``action == "persist"`` (a new write
+    #: quarantined for another reason must not retire the old value).
+    supersede_fact_ids: list[str] = field(default_factory=list)
     advice: str = ""
     #: L4 source⊢fact entailment score (0-100) WHEN computed (source + grounding_llm +
     #: ENGRAM_GROUNDING_WRITE), else None. Previously discarded after the pass/fail
@@ -201,6 +207,7 @@ class GateResult:
             "action": self.action,
             "warnings": list(self.warnings),
             "contradicting_fact_ids": list(self.contradicting_fact_ids),
+            "supersede_fact_ids": list(self.supersede_fact_ids),
             "grounding_score": self.grounding_score,
             "judge": self.judge,
             "threshold": self.threshold,
@@ -266,6 +273,24 @@ def _semantic_conflict_mode() -> str:
 def _semantic_conflict_on() -> bool:
     """Back-compat: the L3-semantic moat is active (observe OR enforce)."""
     return _semantic_conflict_mode() != "off"
+
+
+def _supersede_same_source_on() -> bool:
+    """``ENGRAM_SUPERSEDE_SAME_SOURCE=enforce``: when the contradiction moat is ENFORCING
+    and a clash is a same-source EVOLUTION (the source restating its own value, newer),
+    ADMIT the new write and retire the OLD one — instead of quarantining the new.
+
+    Default OFF — a deliberate TRUST-MODEL opt-in, not a silent flip. verimem has no
+    cryptographic source authentication (``verified_by`` is caller-controlled and even
+    the ``actor:`` self-provenance prefix is a bare string, verified 2026-07-19), so
+    same-source authority is only sound within the TENANCY isolation boundary plus a
+    single-agent-per-tenant assumption. A multi-agent-per-tenant deployment (no
+    per-agent auth — the intra-tenant gap) must opt in knowingly. Cross-source clashes
+    never reach this path (they classify as 'conflict'), so enabling it cannot let one
+    source retire another's fact."""
+    import os
+    return os.environ.get("ENGRAM_SUPERSEDE_SAME_SOURCE", "").strip().lower() in (
+        "1", "on", "true", "yes", "enforce")
 
 
 #: statuses that are OUT of trusted recall — a new write must NOT be flagged as
@@ -782,6 +807,7 @@ def run_validation_gate(
 
     warnings = _l1_warnings(proposition, verified_by)
     contradicting_ids: list[str] = []
+    supersede_ids: list[str] = []
     advice = ""
 
     # EVIDENCE-EXISTENCE (buco #2, 2026-06-02 — opt-in via repo_root).
@@ -860,22 +886,21 @@ def run_validation_gate(
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
                 _sib_by_id = {getattr(f, "id", None): f for f in _sibs}
                 _observe = _sc_mode == "observe"
-                if _observe:
-                    from .supersession_policy import classify_write_relation
+                from .supersession_policy import classify_write_relation
+                _supersede_on = _supersede_same_source_on()
                 for _w in detect_semantic_conflicts(_new, _sibs, _judge):
                     if getattr(_w, "kind", "") != "semantic_conflict":
                         continue
                     _oid = getattr(_w, "other_fact_id", "")
+                    # provenance+time split: a same-source NEWER value is an EVOLUTION
+                    # (the source superseding itself), not a cross-source contradiction —
+                    # the deterministic fix for the local NLI's measured temporal
+                    # over-flag (2026-07-19). Cross-source stays 'conflict' (griefing guard).
+                    _old = _sib_by_id.get(_oid)
+                    _rel = ("conflict" if _old is None
+                            else classify_write_relation(_new, _old))
                     if _observe:
-                        # observe: surface but do NOT quarantine (id kept OUT of
-                        # contradicting_ids), so the FP rate is measurable first. Split
-                        # the advisory by provenance+time: a same-source NEWER value is
-                        # an EVOLUTION (the source superseding itself), not a cross-source
-                        # contradiction — the deterministic fix for the local NLI's
-                        # measured temporal over-flag (2026-07-19).
-                        _old = _sib_by_id.get(_oid)
-                        _rel = ("conflict" if _old is None
-                                else classify_write_relation(_new, _old))
+                        # observe: surface but do NOT act, so the FP rate is measurable.
                         if _rel == "evolution":
                             warnings.append({
                                 "layer": "L3-supersession-observe",
@@ -895,7 +920,24 @@ def run_validation_gate(
                                           "claim; set ENGRAM_SEMANTIC_CONFLICT=1 to enforce.",
                                 "other_fact_id": _oid,
                             })
+                    elif _rel == "evolution" and _supersede_on:
+                        # enforce + ENGRAM_SUPERSEDE_SAME_SOURCE: the same source updated
+                        # its own value → ADMIT the new (does not escalate) and retire the
+                        # OLD via supersede_ids. The handler applies it ONLY when the new
+                        # write is ultimately admitted (action=='persist'), so a new fact
+                        # quarantined for another reason (L1/L4) never retires the old.
+                        warnings.append({
+                            "layer": "L3-supersession",
+                            "reason": "a newer same-source value supersedes a stored fact",
+                            "advice": "this write updates an earlier value from the same "
+                                      "source; the older value is superseded.",
+                            "other_fact_id": _oid,
+                        })
+                        if _oid:
+                            supersede_ids.append(_oid)
                     else:
+                        # cross-source conflict, OR evolution with supersede OFF: the
+                        # conservative default — quarantine the new claim.
                         warnings.append({
                             "layer": "L3-semantic",
                             "reason": "NLI judge: contradiction with a stored fact",
@@ -1044,6 +1086,7 @@ def run_validation_gate(
             action=action,
             warnings=warnings if warnings_ is None else warnings_,
             contradicting_fact_ids=contradicting_ids,
+            supersede_fact_ids=supersede_ids,
             advice=advice_,
             grounding_score=grounding_val,
             judge=_judge_of_record,

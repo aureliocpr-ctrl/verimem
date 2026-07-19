@@ -191,6 +191,65 @@ def test_observe_cross_source_stays_contradiction(monkeypatch):
     assert not any(w.get("layer") == "L3-supersession-observe" for w in res.warnings)
 
 
+def _evo_agent():
+    sib = types.SimpleNamespace(id="sib1", proposition="x", topic="t",
+                                verified_by=["source-doc:acme:x"], created_at=1.0)
+    return types.SimpleNamespace(
+        llm=None, semantic=types.SimpleNamespace(all=lambda: [sib]))
+
+
+def _stub_conflict(monkeypatch):
+    monkeypatch.setattr(
+        semantic_conflict, "detect_semantic_conflicts",
+        lambda *a, **k: [CoherenceWarning(kind="semantic_conflict", other_fact_id="sib1")])
+
+
+def test_enforce_evolution_with_flag_populates_supersede_ids(monkeypatch):
+    """enforce + ENGRAM_SUPERSEDE_SAME_SOURCE: a same-source evolution routes the OLD sib
+    to supersede_fact_ids (retire old) and ADMITS the new — not quarantine."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "1")
+    monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "enforce")
+    _stub_conflict(monkeypatch)
+    res = anti_confab_gate.run_validation_gate(
+        proposition="some claim", verified_by=["source-doc:acme:x"], topic="t",
+        agent=_evo_agent(), validate="full")
+    assert res.action == "persist"                        # new admitted
+    assert res.supersede_fact_ids == ["sib1"]             # old retired
+    assert "sib1" not in res.contradicting_fact_ids
+
+
+def test_enforce_evolution_without_flag_quarantines_as_before(monkeypatch):
+    """enforce, supersede flag OFF (default): an evolution falls back to the current
+    contradiction behavior (quarantine new), no supersede_fact_ids — safe default."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "1")
+    monkeypatch.delenv("ENGRAM_SUPERSEDE_SAME_SOURCE", raising=False)
+    _stub_conflict(monkeypatch)
+    res = anti_confab_gate.run_validation_gate(
+        proposition="some claim", verified_by=["source-doc:acme:x"], topic="t",
+        agent=_evo_agent(), validate="full")
+    assert res.action == "downgrade"                      # new quarantined (unchanged)
+    assert res.supersede_fact_ids == []
+    assert "sib1" in res.contradicting_fact_ids
+
+
+def test_enforce_cross_source_never_supersedes(monkeypatch):
+    """enforce + supersede flag ON: a CROSS-source clash is NOT an evolution → stays a
+    contradiction (quarantine new), never a supersede — the griefing guard."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "1")
+    monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "enforce")
+    _stub_conflict(monkeypatch)
+    sib = types.SimpleNamespace(id="sib1", proposition="x", topic="t",
+                                verified_by=["source-doc:globex:x"], created_at=1.0)
+    agent = types.SimpleNamespace(
+        llm=None, semantic=types.SimpleNamespace(all=lambda: [sib]))
+    res = anti_confab_gate.run_validation_gate(
+        proposition="some claim", verified_by=["source-doc:acme:x"], topic="t",
+        agent=agent, validate="full")
+    assert res.action == "downgrade"
+    assert res.supersede_fact_ids == []
+    assert "sib1" in res.contradicting_fact_ids
+
+
 def test_llm_free_moat_fires_end_to_end(monkeypatch):
     """Adversarial 'claim→reality' proof: with NO agent.llm, the REAL
     detect_semantic_conflicts + REAL cosine pre-filter + an injected stub-classifier
