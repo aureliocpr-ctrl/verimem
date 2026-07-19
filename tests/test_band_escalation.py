@@ -154,3 +154,16 @@ def test_rubric_rides_as_system_prompt_not_user_text(monkeypatch):
     assert _FACT_SYSTEM in seen["cmd"]          # rubric in the system channel
     assert _FACT_SYSTEM not in seen["input"]    # NOT in the user prompt
     assert "the doc" in seen["input"] and "the fact" in seen["input"]
+
+
+def test_parse_uppercase_score_label(monkeypatch):
+    """The real CLI answers 'SCORE: 100' (uppercase) — live regression 2026-07-19:
+    the [Ss]core pattern missed it and every live escalation degraded to review."""
+    monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
+    monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
+    be._resolve_cli.cache_clear()
+
+    def _fake_run(*a, **k):
+        return SimpleNamespace(returncode=0, stdout="SCORE: 100\n", stderr="")
+    monkeypatch.setattr(be.subprocess, "run", _fake_run)
+    assert be.escalate_band_score("src", "fact") == 100.0

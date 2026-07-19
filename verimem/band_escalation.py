@@ -31,7 +31,8 @@ from functools import lru_cache
 
 #: explicit verdict anywhere in the answer ("Score: 87") — the LAST one wins
 #: (the rubric ends with "Score:", so the model's final line is the verdict).
-_SCORE_LABELED_RE = re.compile(r"[Ss]core\s*[:=]?\s*(\d{1,3}(?:\.\d+)?)")
+_SCORE_LABELED_RE = re.compile(r"score\s*[:=]?\s*(\d{1,3}(?:\.\d+)?)",
+                               re.IGNORECASE)
 #: bare-number answer ("87", " 92.5 is my verdict") — accepted ONLY at the very
 #: start of the output. A digit embedded in prose ("the 100 words…") is NOT a
 #: verdict: parsing it once ADMITTED a fact the judge had scored 5.
