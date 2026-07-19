@@ -1,0 +1,25 @@
+{
+  "dataset": "snli/test",
+  "n": 450,
+  "per_label": 150,
+  "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+  "contradiction_recall": 0.92,
+  "entailment_recall": 0.0467,
+  "false_contradiction_rate": 0.03,
+  "confusion": {
+    "entailment": {
+      "neutral": 143,
+      "entailment": 7
+    },
+    "neutral": {
+      "neutral": 136,
+      "contradiction": 9,
+      "entailment": 5
+    },
+    "contradiction": {
+      "contradiction": 138,
+      "neutral": 12
+    }
+  },
+  "caveat": "SNLI is near-in-domain for this model; optimistic vs OOD."
+}
