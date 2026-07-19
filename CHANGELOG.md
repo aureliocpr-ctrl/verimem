@@ -14,7 +14,16 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   measurable on real tenants before enforcing (same observe→enforce discipline as the
   CE band + `source_trust`). Default remains **off**; `=1` enforces (quarantine). The
   judge is fail-soft: a missing/unloadable model degrades to "no warning", never a
-  crash.
+  crash. The sibling scan is a bounded, indexed query (`live_topic_siblings`) that
+  excludes already-superseded / quarantined facts — flagging a contradiction against a
+  retired value is a false positive. Observe advisories are excluded from the receipt
+  block-reason and the trust ledger `by_layer` (they measure a would-be block; they do
+  not blame it).
+  **Honest scope (measured 2026-07-19):** the local cross-encoder does not read the
+  `[timestamp]` prefix, so it flags *evolving* facts (a value that legitimately changed
+  over time) as contradictions. That is why `observe` is the recommended local mode and
+  enforce-with-local suits immutable-fact topics or should be paired with `Memory(llm=)`
+  (the llm judge is prompted to treat time-ordered values as evolution, not conflict).
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent
