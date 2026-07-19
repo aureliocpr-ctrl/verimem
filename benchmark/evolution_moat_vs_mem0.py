@@ -109,14 +109,15 @@ def run_mem0(pairs: list) -> dict:
 
 
 def run_verimem(pairs: list, nli: bool) -> dict:
-    """Verimem 0.7.0 DEFAULT Memory() (moat ON). Same source for old+new of each subject
-    (the source updates its own value → same-source evolution). nli=True enables the
-    opt-in semantic tier (ENGRAM_SEMANTIC_CONFLICT=1)."""
+    """Verimem 0.7.0 Memory(). Same source for old+new of each subject (the source
+    updates its own value → same-source evolution). nli=True = the DEFAULT on a warmed
+    machine (env UNSET → auto-enforce, the model is installed here); nli=False = the
+    explicit lexical-only opt-out (ENGRAM_SEMANTIC_CONFLICT=0)."""
     os.environ.pop("ENGRAM_SUPERSEDE_SAME_SOURCE", None)  # rely on the 0.7.0 default (ON)
     if nli:
-        os.environ["ENGRAM_SEMANTIC_CONFLICT"] = "1"
+        os.environ.pop("ENGRAM_SEMANTIC_CONFLICT", None)  # UNSET = auto → enforce here
     else:
-        os.environ.pop("ENGRAM_SEMANTIC_CONFLICT", None)
+        os.environ["ENGRAM_SEMANTIC_CONFLICT"] = "0"      # explicit opt-out
     from verimem.client import Memory
     mem = Memory(Path(tempfile.mkdtemp()) / "evo.db")
     rows = []
@@ -146,15 +147,15 @@ def _fmt(name: str, r: dict) -> str:
 def _report_set(label: str, pairs: list) -> dict:
     block = {
         "mem0": run_mem0(pairs),
-        "verimem_default_lexical": run_verimem(pairs, nli=False),
-        "verimem_plus_nli": run_verimem(pairs, nli=True),
+        "verimem_lexical_only_optout": run_verimem(pairs, nli=False),
+        "verimem_default_auto_nli": run_verimem(pairs, nli=True),
     }
     print(f"\n--- {label} (n={len(pairs)}) ---")
     print(_fmt("mem0 (no moat)", block["mem0"]))
-    print(_fmt("verimem default (lexical)", block["verimem_default_lexical"]))
-    print(_fmt("verimem +NLI (opt-in)", block["verimem_plus_nli"]))
+    print(_fmt("verimem lexical-only (=0)", block["verimem_lexical_only_optout"]))
+    print(_fmt("verimem DEFAULT (auto-NLI)", block["verimem_default_auto_nli"]))
     print("  per-subject stale leak (LEAK = stale value still recalled):")
-    for arm in ("mem0", "verimem_default_lexical", "verimem_plus_nli"):
+    for arm in ("mem0", "verimem_lexical_only_optout", "verimem_default_auto_nli"):
         marks = " ".join(
             f"{r['kind'][:4]}:{'LEAK' if r['stale_present'] else 'ok'}"
             for r in block[arm]["by_subject"])

@@ -65,6 +65,14 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   can't trust its own writers opts OUT with `ENGRAM_SUPERSEDE_SAME_SOURCE=0` — quarantine
   instead of supersede, avoiding intra-tenant griefing on lexically-detectable writes.
   `Memory.add()` returns `superseded: [ids]`.
+- **NLI semantic tier auto-enables (BREAKING default).** With `ENGRAM_SEMANTIC_CONFLICT`
+  unset, the semantic-contradiction moat now runs in **enforce** iff the local NLI model is
+  already on disk (`local_relation.local_nli_available()` — a pure-filesystem check of the
+  HF cache, `HF_HUB_CACHE` authoritative when set; zero model load, microseconds). A fresh
+  install without `verimem warmup` pays nothing (tier off, exactly as before); a warmed
+  machine gets the full moat with no flag — measured **0/10 stale-leak across the complete
+  benchmark matrix** (entity swaps included) vs mem0's 10/10. `=0` opts out, `observe` /
+  `=1` unchanged.
 - **Lexical moat expansion — version / sub-year date / negation conflicts, zero-model.**
   The deterministic L3 detector (previously numeric-quantity + disjoint-year only) now
   also catches **version pins** (`2.3.1`→`4.0.0`), **sub-year date moves** (March→September

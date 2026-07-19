@@ -40,7 +40,7 @@
         }
       ]
     },
-    "verimem_default_lexical": {
+    "verimem_lexical_only_optout": {
       "stale_leak": 0,
       "current_served": 5,
       "n": 5,
@@ -51,7 +51,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "4b866bf87559"
+            "70a4c473e020"
           ]
         },
         {
@@ -60,7 +60,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "c45f531153cb"
+            "9cf76086f989"
           ]
         },
         {
@@ -69,7 +69,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "1f197e618a20"
+            "4a7fdc8dabb5"
           ]
         },
         {
@@ -78,7 +78,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "a389f18cace6"
+            "1259c476be1e"
           ]
         },
         {
@@ -87,13 +87,13 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "8db70dfdb2b6"
+            "c754f7c18a6f"
           ]
         }
       ],
       "superseded_total": 5
     },
-    "verimem_plus_nli": {
+    "verimem_default_auto_nli": {
       "stale_leak": 0,
       "current_served": 5,
       "n": 5,
@@ -104,7 +104,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "07c321695ad3"
+            "361d485c3b5d"
           ]
         },
         {
@@ -113,7 +113,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "8ee5b692d4cc"
+            "54606f4e57b1"
           ]
         },
         {
@@ -122,7 +122,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "0ac7f48601a6"
+            "e5cbce6be830"
           ]
         },
         {
@@ -131,7 +131,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "9bcf2782689b"
+            "f8f9863e62e0"
           ]
         },
         {
@@ -140,7 +140,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "18cc9a73295f"
+            "0b97736e2cb1"
           ]
         }
       ],

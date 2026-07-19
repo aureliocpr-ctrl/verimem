@@ -68,9 +68,11 @@ honest *"I don't know."*
   **numeric / version / date / negation** changes — measured on
   `benchmark/evolution_moat_vs_mem0.py`: 100€→150€, 2.3.1→4.0.0, March→September (same
   year), 2025-03-06→2025-09-20, signed→*not* signed all retire the stale value with zero
-  extra models. **Entity swaps** (one CEO→another) are the one shape that needs the
-  heavier **semantic NLI** tier, opt-in (`ENGRAM_SEMANTIC_CONFLICT=1`, loads a second
-  model — 0 stale-leak across the full matrix with it). A **cross-source** clash
+  extra models. **Entity swaps** (one CEO→another) need the **semantic NLI** tier, which
+  **auto-enables when its model is already installed** (`verimem warmup` fetches it; a
+  pure filesystem check, no flag needed — measured **0/10 stale-leak across the full
+  matrix** on a warmed machine, vs mem0's 10/10). No model on disk → the tier stays off
+  and costs nothing; `ENGRAM_SEMANTIC_CONFLICT=0` opts out explicitly. A **cross-source** clash
   quarantines the new instead (the griefing guard — one source never retires another's
   fact). Same-source authority is sound within a tenant + a single-agent-per-tenant
   assumption (verimem has no per-writer auth yet); a multi-agent tenant that can't trust

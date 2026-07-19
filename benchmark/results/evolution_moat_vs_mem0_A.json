@@ -40,7 +40,7 @@
         }
       ]
     },
-    "verimem_default_lexical": {
+    "verimem_lexical_only_optout": {
       "stale_leak": 3,
       "current_served": 5,
       "n": 5,
@@ -51,7 +51,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "222a42fd9c25"
+            "cfe8ac780e62"
           ]
         },
         {
@@ -60,7 +60,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "abe8487c825c"
+            "67ab5495b87c"
           ]
         },
         {
@@ -87,7 +87,7 @@
       ],
       "superseded_total": 2
     },
-    "verimem_plus_nli": {
+    "verimem_default_auto_nli": {
       "stale_leak": 0,
       "current_served": 5,
       "n": 5,
@@ -98,7 +98,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "5addd5ff57cb"
+            "1b0b6481d9fa"
           ]
         },
         {
@@ -107,7 +107,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "ee41bb40b6eb"
+            "ec9205822803"
           ]
         },
         {
@@ -116,7 +116,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "6665e58c63a9"
+            "23f41e2c005f"
           ]
         },
         {
@@ -125,7 +125,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "b95e3bf55ca4"
+            "98cd594ff554"
           ]
         },
         {
@@ -134,7 +134,7 @@
           "stale_present": false,
           "current_present": true,
           "superseded": [
-            "67f3454d402a"
+            "3ee75024ef25"
           ]
         }
       ],
