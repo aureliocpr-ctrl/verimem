@@ -5,6 +5,16 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 ## [0.7.0] - Unreleased
 
 ### Added
+- **Write-path contradiction moat, subscription-free (Phase 1.1, opt-in).** The NLI
+  semantic-contradiction check (`ENGRAM_SEMANTIC_CONFLICT`) now runs on the local NLI
+  cross-encoder when no `Memory(llm=...)` is present — previously it was wired only
+  for an injected llm and was a silent no-op offline. New **`observe`** mode
+  (`ENGRAM_SEMANTIC_CONFLICT=observe`) surfaces a contradiction as an advisory
+  (`L3-semantic-observe`) **without** quarantining, so the false-block rate is
+  measurable on real tenants before enforcing (same observe→enforce discipline as the
+  CE band + `source_trust`). Default remains **off**; `=1` enforces (quarantine). The
+  judge is fail-soft: a missing/unloadable model degrades to "no warning", never a
+  crash.
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent

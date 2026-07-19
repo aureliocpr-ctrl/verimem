@@ -240,14 +240,32 @@ def _grounding_write_on() -> bool:
         "1", "on", "true", "yes")
 
 
-def _semantic_conflict_on() -> bool:
-    """Whether the opt-in NLI semantic-contradiction check (L3-semantic) is enabled.
-    Default OFF: it issues an LLM judgement per same-topic sibling above the cosine
-    pre-filter, so it changes the gate's cost profile (the lexical default is ~13ms,
-    no LLM). Activates the previously-dormant ``semantic_conflict`` moat."""
+def _semantic_conflict_mode() -> str:
+    """Mode of the opt-in NLI semantic-contradiction moat (L3-semantic): one of
+    ``"off"`` / ``"observe"`` / ``"enforce"`` from ``ENGRAM_SEMANTIC_CONFLICT``.
+
+    - unset / 0 / off / false / no → ``"off"``: the detector is NOT called; the
+      lexical default path (~13ms, no judge) is unchanged, zero cost.
+    - observe / log / shadow → ``"observe"``: the detector runs (llm-free, on the
+      local NLI cross-encoder when no ``agent.llm`` is present) and SURFACES a
+      contradiction as an advisory warning, but does NOT quarantine the write — so
+      the false-block rate is measurable on real tenants before enforcing (the same
+      observe→enforce discipline as the CE band + source_trust).
+    - 1 / on / true / yes / enforce → ``"enforce"``: a contradiction quarantines the
+      write (downgrade), as before.
+    """
     import os
-    return os.environ.get("ENGRAM_SEMANTIC_CONFLICT", "").strip().lower() in (
-        "1", "on", "true", "yes")
+    v = os.environ.get("ENGRAM_SEMANTIC_CONFLICT", "").strip().lower()
+    if v in ("observe", "log", "shadow"):
+        return "observe"
+    if v in ("1", "on", "true", "yes", "enforce"):
+        return "enforce"
+    return "off"
+
+
+def _semantic_conflict_on() -> bool:
+    """Back-compat: the L3-semantic moat is active (observe OR enforce)."""
+    return _semantic_conflict_mode() != "off"
 
 
 #: explicit non-verification disclaimers (multi-language) — the honest marker
@@ -775,13 +793,15 @@ def run_validation_gate(
     # misses conflicts where the WORDS differ but the MEANING contradicts a stored
     # fact. detect_semantic_conflicts adds the entailment-model trigger (timestamp-
     # aware: supersession over time is NOT a contradiction). Opt-in
-    # (ENGRAM_SEMANTIC_CONFLICT) + needs agent.llm, so the default path is unchanged
-    # (no LLM call). Activates the previously-dormant semantic_conflict layer; never
+    # (ENGRAM_SEMANTIC_CONFLICT) so the default path is unchanged (no judge call).
+    # When ON, the judge is the injected ``agent.llm`` if present, else the local NLI
+    # cross-encoder (llm-free, Phase 1.1) — so the moat works subscription-free /
+    # offline. observe mode surfaces without quarantining; enforce quarantines. Never
     # crashes the write (fail-soft to no warning).
-    if level == "full" and _semantic_conflict_on():
-        _judge_llm = getattr(agent, "llm", None) if agent is not None else None
+    _sc_mode = _semantic_conflict_mode()
+    if level == "full" and _sc_mode != "off":
         _sm = getattr(agent, "semantic", None) if agent is not None else None
-        if _judge_llm is not None and _sm is not None:
+        if _sm is not None:
             try:
                 import time as _t
                 import types as _ty
@@ -790,24 +810,45 @@ def run_validation_gate(
                     LLMRelationJudge,
                     detect_semantic_conflicts,
                 )
+                _judge_llm = getattr(agent, "llm", None) if agent is not None else None
+                if _judge_llm is not None:
+                    _judge = LLMRelationJudge(_judge_llm)
+                else:
+                    # llm-free fallback: the local NLI cross-encoder (no claude -p).
+                    # Fail-soft — classify() returns NEUTRAL if the model can't load,
+                    # so a missing model degrades to "no warning", never a crash.
+                    from .local_relation import get_local_relation_judge
+                    _judge = get_local_relation_judge()
                 _new = _ty.SimpleNamespace(
                     id="__candidate__", proposition=proposition,
                     topic=topic, created_at=_t.time(),
                 )
                 _sibs = [f for f in _sm.all()
                          if getattr(f, "topic", None) == topic][:200]
-                for _w in detect_semantic_conflicts(
-                    _new, _sibs, LLMRelationJudge(_judge_llm)
-                ):
-                    if getattr(_w, "kind", "") == "semantic_conflict":
+                _observe = _sc_mode == "observe"
+                for _w in detect_semantic_conflicts(_new, _sibs, _judge):
+                    if getattr(_w, "kind", "") != "semantic_conflict":
+                        continue
+                    _oid = getattr(_w, "other_fact_id", "")
+                    if _observe:
+                        # observe: surface but do NOT quarantine (id kept OUT of
+                        # contradicting_ids), so the FP rate is measurable first.
+                        warnings.append({
+                            "layer": "L3-semantic-observe",
+                            "reason": "NLI judge: contradiction with a stored fact "
+                                      "(observe mode: logged, NOT quarantined)",
+                            "advice": "a stored memory semantically contradicts this "
+                                      "claim; set ENGRAM_SEMANTIC_CONFLICT=1 to enforce.",
+                            "other_fact_id": _oid,
+                        })
+                    else:
                         warnings.append({
                             "layer": "L3-semantic",
                             "reason": "NLI judge: contradiction with a stored fact",
                             "advice": "a stored memory semantically contradicts this "
                                       "claim (not a lexical/numeric clash).",
-                            "other_fact_id": getattr(_w, "other_fact_id", ""),
+                            "other_fact_id": _oid,
                         })
-                        _oid = getattr(_w, "other_fact_id", "")
                         if _oid:
                             contradicting_ids.append(_oid)
             except Exception:  # noqa: BLE001 — optional moat must never crash a write
