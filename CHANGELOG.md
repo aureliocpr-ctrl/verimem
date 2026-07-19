@@ -32,10 +32,15 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   block-reason and the trust ledger `by_layer` (they measure a would-be block; they do
   not blame it).
   **Honest scope (measured 2026-07-19):** the local cross-encoder does not read the
-  `[timestamp]` prefix, so it flags *evolving* facts (a value that legitimately changed
-  over time) as contradictions. That is why `observe` is the recommended local mode and
-  enforce-with-local suits immutable-fact topics or should be paired with `Memory(llm=)`
-  (the llm judge is prompted to treat time-ordered values as evolution, not conflict).
+  `[timestamp]` prefix, so on its own it flags *evolving* facts (a value that legitimately
+  changed over time) as contradictions. In **observe** mode this is now separated
+  deterministically: a same-source, strictly-newer value is labelled
+  `L3-supersession-observe` (an *evolution* — the source updating itself) instead of
+  `L3-semantic-observe`, via a source+time policy (`supersession_policy`) that does not
+  rely on the model's temporal reasoning. A different-source clash stays a contradiction.
+  This is why `observe` is the recommended local mode; **enforce** with the local judge
+  does not yet apply supersession (it still quarantines on any clash — a critic-gated
+  follow-up, task #48) so it suits immutable-fact topics or pairing with `Memory(llm=)`.
 - **Adjudication receipt on every write.** `Memory.add()` returns
   `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}` — a quarantine is a reasoned, visible verdict, never a silent

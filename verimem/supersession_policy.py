@@ -49,7 +49,18 @@ def classify_write_relation(new_fact: Any, old_fact: Any) -> str:
     """``"evolution"`` iff ``new_fact`` is the SAME canonical source as ``old_fact`` and
     strictly NEWER (its own value updated over time); otherwise ``"conflict"`` — a
     different source, or no clear time order. Conservative: any ambiguity → conflict, so
-    a fact is never auto-retired unless it is the same source superseding itself."""
+    a fact is never auto-retired unless it is the same source superseding itself.
+
+    SECURITY — DO NOT wire this into an ENFORCE path (auto-supersede/quarantine) without
+    first gating on an AUTHENTICATED source (opus critic, 2026-07-19). Two reasons this
+    verdict is safe for OBSERVE only, not yet for enforce: (1) ``verified_by`` is
+    caller-controlled and spoofable, so an attacker can present a victim's canonical
+    source; (2) unsourced writes all collapse to the ``"user"`` fallback, so distinct
+    writers share one source bucket. And "strictly newer" is NOT an anti-spoof defense —
+    on the live write path the candidate's ``created_at`` is always *now*, so the whole
+    decision reduces to "same canonical source". The real discriminator must therefore be
+    source AUTHENTICATION (a capability token / signed source), added in task #48 BEFORE
+    evolution→supersede acts on anything."""
     if not is_same_source(new_fact, old_fact):
         return "conflict"
     tn, to = _created(new_fact), _created(old_fact)
