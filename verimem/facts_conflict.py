@@ -433,11 +433,130 @@ def find_numeric_conflicts(
     return out
 
 
+@dataclass
+class LexicalConflictPair:
+    """Two stored facts the EXPANDED lexical moat says cannot both be current:
+    a numeric value, a version pin or a sub-year date that moved for the same
+    subject. ``kind`` ∈ {"numeric", "version", "date"}; ``detail`` is the
+    human-readable value pair. Retroactive twin of the write-gate's lexical
+    pass — same primitives, same guards, same verdicts by construction."""
+    fact_a: Fact
+    fact_b: Fact
+    kind: str
+    detail: str
+
+    def as_dict(self) -> dict:
+        return {
+            "fact_a": {
+                "id": self.fact_a.id,
+                "proposition": self.fact_a.proposition,
+                "topic": self.fact_a.topic,
+                "confidence": self.fact_a.confidence,
+                "created_at": self.fact_a.created_at,
+            },
+            "fact_b": {
+                "id": self.fact_b.id,
+                "proposition": self.fact_b.proposition,
+                "topic": self.fact_b.topic,
+                "confidence": self.fact_b.confidence,
+                "created_at": self.fact_b.created_at,
+            },
+            "kind": self.kind,
+            "detail": self.detail,
+        }
+
+
+def find_lexical_conflicts(
+    facts: list[Fact],
+    *,
+    topic: str | None = None,
+    exclude_topic_prefixes: tuple[str, ...] | None = None,
+    min_overlap: float = 0.30,
+    min_shared_tokens: int = 2,
+) -> list[LexicalConflictPair]:
+    """Retroactive scan for EVERYTHING the expanded lexical write-gate catches:
+    numeric-quantity changes (delegates to :func:`find_numeric_conflicts`),
+    version pins and sub-year date moves (``quantity_match.version_conflict`` /
+    ``date_conflict`` — named-subject disjointness and contrast qualifiers
+    included). One list, ``kind``-tagged, most-recent first.
+
+    Same corpus-suitability caveat as the numeric scan: meaningful on atomic
+    factual assertions, noisy on event-log corpora — topic-scope it.
+    """
+    from .quantity_match import date_conflict as _qm_date_conflict
+    from .quantity_match import extract_dates as _qm_extract_dates
+    from .quantity_match import extract_versions as _qm_extract_versions
+    from .quantity_match import version_conflict as _qm_version_conflict
+
+    out: list[LexicalConflictPair] = [
+        LexicalConflictPair(
+            fact_a=p.fact_a, fact_b=p.fact_b, kind="numeric",
+            detail=f"{p.value_a:g} {p.unit} vs {p.value_b:g} {p.unit}",
+        )
+        for p in find_numeric_conflicts(
+            facts, topic=topic,
+            exclude_topic_prefixes=exclude_topic_prefixes,
+            min_overlap=min_overlap, min_shared_tokens=min_shared_tokens,
+        )
+    ]
+
+    if exclude_topic_prefixes is None:
+        exclude_topic_prefixes = _DEFAULT_EXCLUDE_TOPIC_PREFIXES
+    pool = [
+        f for f in facts
+        if (not topic or f.topic == topic)
+        and not any(
+            (f.topic or "").startswith(p) for p in exclude_topic_prefixes
+        )
+    ]
+    # Only facts CARRYING a version or a date enter the pair loop (m ≪ corpus);
+    # the pairwise detectors then re-apply their own subject/precision guards.
+    ver_items = []
+    date_items = []
+    for f in pool:
+        text = f.proposition
+        if _qm_extract_versions(text):
+            ver_items.append((f, _content_tokens(text)))
+        if _qm_extract_dates(text):
+            date_items.append((f, _content_tokens(text)))
+
+    def _pairs(items, conflict_fn, kind):
+        for x in range(len(items)):
+            fa, fca = items[x]
+            for y in range(x + 1, len(items)):
+                fb, fcb = items[y]
+                # topical near-duplicate prefilter — same precision mechanism
+                # as the numeric scan.
+                if len(fca & fcb) < min_shared_tokens:
+                    continue
+                if _overlap_coefficient(fca, fcb) < float(min_overlap):
+                    continue
+                got = conflict_fn(fa.proposition, fb.proposition)
+                if got is None:
+                    continue
+                yield LexicalConflictPair(
+                    fact_a=fa, fact_b=fb, kind=kind,
+                    detail=f"{got[0]} vs {got[1]}",
+                )
+
+    out.extend(_pairs(ver_items, _qm_version_conflict, "version"))
+    out.extend(_pairs(date_items, _qm_date_conflict, "date"))
+    out.sort(
+        key=lambda p: -max(
+            float(p.fact_a.created_at or 0.0),
+            float(p.fact_b.created_at or 0.0),
+        )
+    )
+    return out
+
+
 __all__ = [
     "ConflictPair",
     "NumericConflictPair",
     "find_conflicting_pairs",
     "find_numeric_conflicts",
+    "LexicalConflictPair",
+    "find_lexical_conflicts",
     "has_negation",
     "strip_negation",
 ]
