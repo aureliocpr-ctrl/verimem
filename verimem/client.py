@@ -808,6 +808,21 @@ class Memory:
                  "reason": r.reason, "layers": r.layers}
                 for r in log.list(disposition=disposition, topic=topic, limit=limit)]
 
+    def audit_verify(self) -> str | None:
+        """Recompute the audit trail's tamper-evidence hash-chain: the id of the FIRST
+        tampered row (an edit / delete / reorder of a past verdict), or ``None`` if the
+        chain is intact — or if auditing was never enabled (a read never creates the DB).
+        Detection only; archive ``audit_head()`` off-box to also catch a full rewrite."""
+        log = self._adjudication_log_ro()
+        return None if log is None else log.verify()
+
+    def audit_head(self) -> str | None:
+        """The audit trail's current chain head — archive it off-box (anchor-A) so a
+        later `audit_verify()` plus a head comparison detects even a full-chain rewrite.
+        ``None`` when the trail is empty / auditing was never enabled."""
+        log = self._adjudication_log_ro()
+        return None if log is None else log.head()
+
     def _audit_record(self, adjudication: dict, *, topic: Any, proposition: str,
                       fact_id: str | None, judge: Any, layers: list) -> None:
         """Append the write's verdict to the opt-in audit trail (VERIMEM_AUDIT_LOG).

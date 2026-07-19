@@ -15,8 +15,16 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   I/O + a data-retention choice the operator opts into); the receipt was previously only
   returned by `add()`, never persisted. The audit write is fail-soft — a dropped append
   is logged, never breaks the memory write. Conversation-ingest writes (`add(messages=…)`)
-  are **not yet** audited (a documented follow-up, task #49). Substrate for a later
-  tamper-evidence hash-chain.
+  are **not yet** audited (a documented follow-up, task #49).
+- **Tamper-evidence over the audit trail (anchor-A).** Each audit row is hash-chained to
+  the previous (`entry_hash = sha256(prev‖canonical(row))`, computed under `BEGIN
+  IMMEDIATE` so concurrent writers cannot fork the chain). `Memory.audit_verify()` returns
+  the id of the first edited / deleted / reordered row (or `None` if intact);
+  `Memory.audit_head()` returns the current head to **archive off-box**. Honest scope: the
+  in-DB chain is DETECTION only — an attacker who owns the DB can recompute it, so real
+  assurance needs the archived head (anchor-A); an external signing key / transparency
+  service (anchor-B/C) is a documented, unbuilt follow-up (`docs/PROPOSAL-tamper-evidence-2026-07-19.md`,
+  task #24). The pure chain primitives live in `verimem/tamper_evidence.py`.
 - **Write-path contradiction moat, subscription-free (Phase 1.1, opt-in).** The NLI
   semantic-contradiction check (`ENGRAM_SEMANTIC_CONFLICT`) now runs on the local NLI
   cross-encoder when no `Memory(llm=...)` is present — previously it was wired only
