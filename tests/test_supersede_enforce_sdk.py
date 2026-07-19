@@ -41,6 +41,35 @@ def test_same_source_evolution_admits_new_and_retires_old(tmp_path, monkeypatch)
     assert mem.semantic.get(r1["id"]).superseded_by == r2["id"]  # old retired
 
 
+def test_numeric_same_source_evolution_supersedes(tmp_path, monkeypatch):
+    """E2E 2026-07-19: a same-source NUMERIC evolution is caught by the LEXICAL L3 (not
+    the NLI), which was routing it to quarantine-the-new. It must supersede like any
+    other evolution. No NLI needed — numeric contradiction is deterministic."""
+    monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "enforce")
+    monkeypatch.delenv("ENGRAM_SEMANTIC_CONFLICT", raising=False)   # lexical path only
+    mem = Memory(path=tmp_path / "sem" / "sem.db")
+    r1 = mem.add("The subscription costs 100 euros per month.", topic="pricing/plan",
+                 verified_by=["source-doc:billing:1"], validate="full")
+    r2 = mem.add("The subscription costs 150 euros per month.", topic="pricing/plan",
+                 verified_by=["source-doc:billing:1"], validate="full")
+    assert r2["status"] != "quarantined"                         # new admitted
+    assert mem.semantic.get(r1["id"]).superseded_by == r2["id"]  # old retired
+
+
+def test_numeric_cross_source_still_quarantines(tmp_path, monkeypatch):
+    """A cross-source numeric clash is a real conflict — quarantine the new, retire
+    nothing (the griefing guard holds on the lexical path too)."""
+    monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "enforce")
+    monkeypatch.delenv("ENGRAM_SEMANTIC_CONFLICT", raising=False)
+    mem = Memory(path=tmp_path / "sem" / "sem.db")
+    r1 = mem.add("The subscription costs 100 euros per month.", topic="pricing/plan",
+                 verified_by=["source-doc:billing:1"], validate="full")
+    r2 = mem.add("The subscription costs 150 euros per month.", topic="pricing/plan",
+                 verified_by=["source-doc:rogue:9"], validate="full")   # DIFFERENT source
+    assert mem.semantic.get(r1["id"]).superseded_by is None       # first NOT retired
+    assert r2["status"] == "quarantined"                          # conflict → quarantined
+
+
 def test_cross_source_clash_does_not_supersede(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "1")
     monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "enforce")

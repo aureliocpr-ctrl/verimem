@@ -293,6 +293,39 @@ def _supersede_same_source_on() -> bool:
         "1", "on", "true", "yes", "enforce")
 
 
+def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
+                      ids: list[str], supersede_ids: list[str]) -> list[str]:
+    """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
+    earlier valid-time → appended to ``supersede_ids``, retired) and genuine CONFLICTS
+    (returned, to quarantine the new write). This gives contradictions caught by the
+    LEXICAL L3 (numeric / version / date changes — the most common evolutions) the SAME
+    same-source evolution handling as the NLI layer (e2e 2026-07-19: they were being
+    quarantined instead of superseding). Fetches each old fact from the agent's store;
+    any miss OR a cross-source clash stays a conflict (conservative — the griefing guard
+    holds here too)."""
+    import time as _t
+    import types as _ty
+
+    from .supersession_policy import classify_write_relation
+    sm = getattr(agent, "semantic", None) if agent is not None else None
+    if sm is None:
+        return list(ids)
+    cand = _ty.SimpleNamespace(verified_by=verified_by, created_at=_t.time(),
+                               asserted_at=asserted_at)
+    conflicts: list[str] = []
+    for cid in ids:
+        try:
+            old = sm.get(cid)
+        except Exception:  # noqa: BLE001 — a lookup miss is treated as a conflict
+            old = None
+        if old is not None and classify_write_relation(cand, old) == "evolution":
+            if cid not in supersede_ids:
+                supersede_ids.append(cid)
+        else:
+            conflicts.append(cid)
+    return conflicts
+
+
 #: statuses that are OUT of trusted recall — a new write must NOT be flagged as
 #: contradicting one of these (it was already retired), and they must not cost a
 #: judge call. Mirrors SemanticMemory.live_topic_siblings' SQL exclusion set.
@@ -841,14 +874,29 @@ def run_validation_gate(
     if level == "full":
         r = _l3_check(agent, proposition, topic)
         if r is not None and r.get("verdict") == "contradicted":
-            warnings.append({
-                "layer": "L3",
-                "reason": "validate_claim verdict=contradicted",
-                "advice": r.get("advice", ""),
-            })
-            ev = r.get("evidence_facts") or []
-            contradicting_ids = [str(x) for x in ev]
+            ev = [str(x) for x in (r.get("evidence_facts") or [])]
             advice = str(r.get("advice", ""))
+            # Same-source EVOLUTION routing (ENGRAM_SUPERSEDE_SAME_SOURCE): a lexically-
+            # caught contradiction (numeric/version/date) against the SAME source's earlier
+            # value is an evolution — retire the old, admit the new — not a quarantine.
+            _conflicts = ev
+            if _supersede_same_source_on() and ev:
+                _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
+                                               supersede_ids)
+            if _conflicts:
+                warnings.append({
+                    "layer": "L3",
+                    "reason": "validate_claim verdict=contradicted",
+                    "advice": advice,
+                })
+                contradicting_ids = _conflicts
+            elif ev:  # every contradiction was a same-source evolution → admit + supersede
+                warnings.append({
+                    "layer": "L3-supersession",
+                    "reason": "a newer same-source value supersedes a stored fact",
+                    "advice": "this write updates an earlier value from the same source; "
+                              "the older value is superseded.",
+                })
 
     # L3-SEMANTIC (NLI moat): the lexical L3 (validate_claim, "puramente lessicale")
     # misses conflicts where the WORDS differ but the MEANING contradicts a stored
@@ -1084,11 +1132,17 @@ def run_validation_gate(
             warnings_: list | None = None) -> GateResult:
         # Every gate outcome carries the judge-of-record + threshold, so the
         # write receipt classifies the evidence honestly (no silent verdicts).
+        # dedup (order-preserving): the lexical L3 and the NLI layer can both flag the
+        # same pair, so an id could otherwise appear twice (a spurious duplicate in the
+        # receipt + a harmless-but-noisy second supersede attempt).
+        _sup = list(dict.fromkeys(supersede_ids))
+        _sup_set = set(_sup)
         return GateResult(
             action=action,
             warnings=warnings if warnings_ is None else warnings_,
-            contradicting_fact_ids=contradicting_ids,
-            supersede_fact_ids=supersede_ids,
+            contradicting_fact_ids=[c for c in dict.fromkeys(contradicting_ids)
+                                    if c not in _sup_set],
+            supersede_fact_ids=_sup,
             advice=advice_,
             grounding_score=grounding_val,
             judge=_judge_of_record,
