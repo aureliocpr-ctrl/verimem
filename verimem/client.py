@@ -782,6 +782,32 @@ class Memory:
                 _P(self.semantic.db_path).with_name("adjudications.db"))
         return al
 
+    def _adjudication_log_ro(self):
+        """Read-only handle: None if adjudications.db does not exist yet — a read must
+        not materialise the store (the _decisions_ro pattern)."""
+        from pathlib import Path as _P
+        if getattr(self, "_adj_log", None) is not None:
+            return self._adj_log
+        if _P(self.semantic.db_path).with_name("adjudications.db").exists():
+            return self._adjudication_log()
+        return None
+
+    def audit_log(self, *, disposition: str | tuple[str, ...] | list[str] | None = None,
+                  topic: str | None = None, limit: int = 100) -> list[dict]:
+        """The opt-in per-write audit trail (VERIMEM_AUDIT_LOG) as dicts, newest-first,
+        filterable by disposition and/or topic. Empty when auditing was never enabled
+        (a read never creates the DB). Single-proposition add() writes only — see the
+        CHANGELOG note on conversation-ingest."""
+        log = self._adjudication_log_ro()
+        if log is None:
+            return []
+        return [{"id": r.id, "ts": r.ts, "topic": r.topic,
+                 "disposition": r.disposition, "proposition": r.proposition,
+                 "fact_id": r.fact_id, "evidence_class": r.evidence_class,
+                 "judge": r.judge, "score": r.score, "threshold": r.threshold,
+                 "reason": r.reason, "layers": r.layers}
+                for r in log.list(disposition=disposition, topic=topic, limit=limit)]
+
     def _audit_record(self, adjudication: dict, *, topic: Any, proposition: str,
                       fact_id: str | None, judge: Any, layers: list) -> None:
         """Append the write's verdict to the opt-in audit trail (VERIMEM_AUDIT_LOG).

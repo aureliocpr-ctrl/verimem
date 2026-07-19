@@ -149,3 +149,30 @@ def test_audit_append_failure_is_logged_not_silent(tmp_path, monkeypatch, caplog
         res = mem.add("the sky is blue", topic="t")
     assert res["stored"] is True                    # the write is NOT broken
     assert any("audit" in rec.message.lower() for rec in caplog.records)
+
+
+# ---- public read API -------------------------------------------------------
+
+def test_audit_log_public_read_api(tmp_path, monkeypatch):
+    """Operators query the trail via Memory.audit_log(...) (dicts), filterable by
+    disposition/topic — not by opening the sqlite file by hand."""
+    monkeypatch.setenv("VERIMEM_AUDIT_LOG", "1")
+    from verimem import Memory
+    mem = Memory(path=tmp_path / "sem" / "sem.db")
+    mem.add("the sky is blue", topic="t")
+    mem.add("grass is green", topic="t2")
+    rows = mem.audit_log()
+    assert len(rows) == 2 and isinstance(rows[0], dict)
+    assert {r["proposition"] for r in rows} == {"the sky is blue", "grass is green"}
+    assert mem.audit_log(topic="t2")[0]["proposition"] == "grass is green"
+    assert "disposition" in rows[0] and "reason" in rows[0] and "layers" in rows[0]
+
+
+def test_audit_log_read_is_empty_and_creates_nothing_when_off(tmp_path, monkeypatch):
+    """A read never materialises the DB: audit off → [] and no adjudications.db."""
+    monkeypatch.delenv("VERIMEM_AUDIT_LOG", raising=False)
+    from verimem import Memory
+    mem = Memory(path=tmp_path / "sem" / "sem.db")
+    mem.add("x", topic="t")
+    assert mem.audit_log() == []
+    assert not (tmp_path / "sem" / "adjudications.db").exists()

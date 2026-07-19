@@ -9,8 +9,9 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   `add()`'s adjudication verdict — disposition, judge, score, threshold, reason, the
   layers that actually acted (incl. `store-screen` for store-time integrity flips),
   topic, proposition, fact id — is appended to an isolated, append-only
-  `adjudications.db` (sibling of `semantic.db`), queryable after the fact ("show me
-  every write we quarantined last month, and why"). Default **off** (extra write-path
+  `adjudications.db` (sibling of `semantic.db`), queryable via
+  `Memory.audit_log(disposition=…, topic=…)` after the fact ("show me every write we
+  quarantined last month, and why"). Default **off** (extra write-path
   I/O + a data-retention choice the operator opts into); the receipt was previously only
   returned by `add()`, never persisted. The audit write is fail-soft — a dropped append
   is logged, never breaks the memory write. Conversation-ingest writes (`add(messages=…)`)
