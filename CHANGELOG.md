@@ -131,6 +131,30 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   admitted. Calibrated on the real gate-ce-v2 (true entailments ≥90; the
   mid-range entity-substitution escape ~68). Moat benchmark: entity-substitution
   escape **6.2% → 1.8%** with **zero** new false-blocks on entailed facts.
+- **Architecture A — shared memory server + thin clients (multi-session scale).**
+  Running N agent sessions against ONE SQLite store does not scale: each process
+  loads its own embedding + gate models (~1.5 GB) and they serialize on the file
+  (measured: throughput plateaus ~11 ops/s past a few clients; N separate
+  model-loading processes can OOM/segfault). The fix is topological, not a lock
+  tweak — ONE server process (the existing hardened gateway) owns the models +
+  the store, and every other consumer is a **thin client**: no model load, no
+  SQLite handle, just HTTP. New `RemoteMemory` (thin client) and `open_memory()`
+  (env-driven factory: `VERIMEM_SERVER_URL` set → thin client after a health
+  probe, else the embedded store; **fail-soft** back to embedded if the server is
+  down). The SDK and CLI (`verimem remember` / `recall`) route through it. The
+  **MCP server** does too: `hippo_remember` / `hippo_facts_recall` /
+  `hippo_facts_search` (and their `engram_`/`verimem_` aliases) delegate to the
+  shared server *before* building the local agent — a Claude/Cursor session
+  behind a memory server answers with **no local model load** (live-proven:
+  `agent_built=0`). Writes carry an `Idempotency-Key` (client mints one, retries
+  once on timeout; the gateway replays the original receipt within a 10-min TTL),
+  so a slow cold-start write is never duplicated. **Isolation:** a *scoped* op
+  (`user_id`/`agent_id`/`run_id`) is kept **local** — the REST surface does not
+  carry MCP-level scope, and delegating it unscoped would leak a tenant's fact
+  into the shared corpus (found by an adversarial critic, fixed with a symmetric
+  read+write guard and a live proof the server never receives a scoped write).
+  Honest scope: forwarding scope over REST so scoped ops can also use the shared
+  server is a documented frontier.
 
 ### Changed
 - **BREAKING (default) — the cross-fact contradiction + evolution moat is now ON out of the

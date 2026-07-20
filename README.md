@@ -322,6 +322,27 @@ dependency-free pages; your API key stays in the tab and travels only as an
 Authorization header. The gateway binds loopback by default — for remote
 access put it behind a TLS reverse proxy (nginx/caddy).
 
+### Many local sessions, one memory (thin client)
+
+Several local agents — Claude Code windows, Cursor, a cron job — should share
+ONE memory, not each spin up a model-loading store that fights the same SQLite
+file. Point them at a running server and they become **thin clients**: no model
+load, just HTTP.
+
+```bash
+verimem gateway serve                       # one server owns the models + store
+export VERIMEM_SERVER_URL=http://127.0.0.1:8377
+export VERIMEM_SERVER_KEY=vm_...            # a tenant key (created above)
+```
+
+With those set, the Python SDK (`open_memory()`), the CLI (`verimem remember` /
+`recall`), and the MCP tools (`hippo_remember` / `hippo_facts_recall` /
+`hippo_facts_search`) all route through the shared server — a session behind it
+never loads a model. If the server is unreachable, each falls back to its own
+embedded store (fail-soft, never a crash). Writes are idempotent (a retried
+cold-start write is de-duplicated). Per-user scoped ops
+(`user_id`/`agent_id`/`run_id`) stay local for isolation.
+
 Docker (embedding models baked in — runs fully offline):
 
 ```bash
