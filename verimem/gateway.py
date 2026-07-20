@@ -48,6 +48,15 @@ except ImportError as _exc:  # pragma: no cover — surfaced by the CLI command
 #: anti DNS-rebinding: evil.example resolving to 127.0.0.1 does NOT match.
 _LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 
+#: Peer addresses accepted by the personal (no-key) loopback mode. The Host
+#: header alone is CLIENT-CONTROLLED, so checking it was never authentication:
+#: a deployment that binds non-loopback and sets local_tenant would hand the
+#: local tenant to any remote caller that simply sent `Host: localhost`
+#: (red-team audit F5). The peer address is set by the transport, not the
+#: caller. "testclient" is Starlette's in-process ASGI caller — there is no
+#: network peer at all there, so it cannot be a rebinding vector.
+_LOCAL_PEERS = frozenset({"127.0.0.1", "::1", "localhost", "testclient"})
+
 
 def _host_only(raw: str | None) -> str:
     """Strip the :port from a Host header, correctly for IPv6 (opus LOW-6:
@@ -899,7 +908,10 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             # ma solo con Host localhost (anti DNS-rebinding). Una chiave
             # presentata e invalida NON cade qui: 401 forte sotto.
             host = _host_only(request.headers.get("host"))
-            if host.lower() in _LOCAL_HOSTS:
+            # BOTH must be loopback: the Host header (anti DNS-rebinding, and
+            # client-controlled) AND the actual peer (transport-set, audit F5).
+            peer = (getattr(getattr(request, "client", None), "host", "") or "").lower()
+            if host.lower() in _LOCAL_HOSTS and peer in _LOCAL_PEERS:
                 request.state.tenant = local_tenant   # for the access-audit log
                 return local_tenant
         tenant_id = keys.resolve(presented)

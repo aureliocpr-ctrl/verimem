@@ -350,7 +350,14 @@ def extract_dates(text: str) -> set[tuple[int | None, int, int | None]]:
         if day is None and year is None:
             if not m.group(1)[0].isupper():
                 continue  # "may slip", "march to the office"
-            prev = re.findall(r"[A-Za-z]+", t[:m.start()])
+            # Bounded look-behind: only the word IMMEDIATELY before the match
+            # decides the anchor, so re-scanning the whole prefix for every
+            # match was O(n*m). Measured on 'May ' repeated (audit F8):
+            # 20k chars 1.35s, 40k 5.80s, 80k 23.38s — textbook quadratic, and
+            # this path runs on every write under validate="full", so one
+            # oversized proposition could pin a shared gateway for everyone.
+            _win = t[max(0, m.start() - 64):m.start()]
+            prev = re.findall(r"[A-Za-z]+", _win)
             if not prev or prev[-1].lower() not in _TEMPORAL_PREPS:
                 continue  # Capitalized but unanchored ("May I help")
         out.add((year, mo, day))
