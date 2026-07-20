@@ -795,6 +795,13 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     PRESENTATA vince sempre (o fallisce forte: chiave invalida = 401, mai
     fallback silenzioso). Senza ``local_tenant`` il gateway è byte-identico
     a prima."""
+    # A gateway IS the multi-writer context: N agent sessions can share one
+    # tenant key, so the write-gate running inside this process must not
+    # assume a single agent owns the store (Kimi audit F2 - it makes
+    # same-source supersession default OFF here). setdefault: an explicit
+    # operator setting always wins.
+    import os as _os
+    _os.environ.setdefault("VERIMEM_MULTI_WRITER", "1")
     if FastAPI is None:  # pragma: no cover
         raise ImportError(
             "the gateway needs fastapi — pip install 'verimem[server]'"

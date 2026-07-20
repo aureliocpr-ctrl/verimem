@@ -312,8 +312,20 @@ def _supersede_same_source_on() -> bool:
     Documented rather than silently flipped: changing a shipped default is a product
     call, not an audit side effect."""
     import os
-    return os.environ.get("ENGRAM_SUPERSEDE_SAME_SOURCE", "1").strip().lower() not in (
-        "0", "off", "false", "no")
+    _explicit = os.environ.get("ENGRAM_SUPERSEDE_SAME_SOURCE")
+    if _explicit is not None and _explicit.strip() != "":
+        # An operator who knows their writers stays in control, both ways.
+        return _explicit.strip().lower() not in ("0", "off", "false", "no")
+    # No explicit setting: the default FOLLOWS the assumption it rests on.
+    # A shared server (architecture A) has N agent sessions behind ONE tenant
+    # key -> many writers in one tenant -> premise (c) is false by
+    # construction, so the safe default THERE is off. An embedded
+    # single-agent store keeps it on: retiring its own stale value is the
+    # product's core promise, and the sole writer cannot grief itself.
+    _shared = os.environ.get("VERIMEM_MULTI_WRITER", "").strip().lower()
+    if _shared not in ("", "0", "off", "false", "no"):
+        return False
+    return True
 
 
 def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
