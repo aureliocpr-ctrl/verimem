@@ -576,8 +576,10 @@ class EpisodicMemory:
         # Non-lossy; OFF (default) keeps byte-identical legacy behavior. A failure
         # here must never break a save.
         try:
-            from .admission_gate import gate_enabled
+            from .admission_gate import gate_enabled, warn_default_on_migration_once
             if gate_enabled() and is_call_telemetry(getattr(episode, "task_text", "")):
+                # 0.7.0 default-ON migration: first route in the process warns.
+                warn_default_on_migration_once()
                 replaced = self._store_episode_telemetry(episode)
                 return replaced if return_replaced else None
         except Exception:  # noqa: BLE001 — routing must never break the save

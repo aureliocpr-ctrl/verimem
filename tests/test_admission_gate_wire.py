@@ -1,8 +1,9 @@
-"""Wire of the admission gate into SemanticMemory.store (opt-in, default OFF).
+"""Wire of the admission gate into SemanticMemory.store.
 
-Default OFF -> byte-identical legacy behavior (telemetry stays a normal fact).
-ON (ENGRAM_ADMISSION_GATE=1) -> telemetry-topic writes routed to a separate
-`telemetry` table, NON-lossy; real facts unaffected + still recallable.
+Since 0.7.0 the gate is ON by default (see test_admission_gate_default_on.py
+for the flip's decision record): telemetry-topic writes are routed to a
+separate `telemetry` table, NON-lossy; real facts unaffected + recallable.
+ENGRAM_ADMISSION_GATE=0 restores the legacy admit-everything behavior.
 Hermetic: tmp DB, monkeypatched env, never ~/.verimem.
 """
 from __future__ import annotations
@@ -21,7 +22,8 @@ def _count(db, sql):
 
 
 def test_gate_off_keeps_telemetry_in_facts(tmp_path, monkeypatch):
-    monkeypatch.delenv("ENGRAM_ADMISSION_GATE", raising=False)
+    # 0.7.0: legacy behavior needs the EXPLICIT opt-out (default is ON now)
+    monkeypatch.setenv("ENGRAM_ADMISSION_GATE", "0")
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     sm.store(Fact(proposition="ambient daemon event fired xyz", topic="bus/ambient/events"))
     # legacy behavior: telemetry is just a normal fact
@@ -61,24 +63,28 @@ def _patch_data_dir(monkeypatch, tmp_path):
     monkeypatch.setattr(cfg, "CONFIG", dataclasses.replace(cfg.CONFIG, data_dir=str(tmp_path)))
 
 
-def test_gate_enabled_env_or_flag_file(tmp_path, monkeypatch):
+def test_gate_enabled_contract_0_7(tmp_path, monkeypatch):
+    # 0.7.0 contract: default ON; explicit env always wins; the pre-0.7.0
+    # ADMISSION_GATE_ON flag file is obsolete and IGNORED (it could only
+    # force ON — which the default now is — and must not defeat an
+    # explicit operator OFF).
     from verimem.admission_gate import gate_enabled
     monkeypatch.delenv("ENGRAM_ADMISSION_GATE", raising=False)
     _patch_data_dir(monkeypatch, tmp_path)
-    assert gate_enabled() is False
+    assert gate_enabled() is True   # default ON, no env, no file
     monkeypatch.setenv("ENGRAM_ADMISSION_GATE", "1")
     assert gate_enabled() is True
-    monkeypatch.delenv("ENGRAM_ADMISSION_GATE", raising=False)
+    monkeypatch.setenv("ENGRAM_ADMISSION_GATE", "0")
+    assert gate_enabled() is False  # explicit OFF wins
     (tmp_path / "ADMISSION_GATE_ON").write_text("")
-    assert gate_enabled() is True  # file-flag alone enables
+    assert gate_enabled() is False, "a stale flag file must not defeat an explicit OFF"
 
 
-def test_store_enabled_via_flag_file_no_env(tmp_path, monkeypatch):
+def test_store_routes_with_no_env_and_no_flag_file(tmp_path, monkeypatch):
     monkeypatch.delenv("ENGRAM_ADMISSION_GATE", raising=False)
     _patch_data_dir(monkeypatch, tmp_path)
-    (tmp_path / "ADMISSION_GATE_ON").write_text("")  # enable via FILE only
     sm = SemanticMemory(db_path=tmp_path / "s.db")
-    sm.store(Fact(proposition="ambient bus event via flag", topic="bus/x/y"))
+    sm.store(Fact(proposition="ambient bus event via default", topic="bus/x/y"))
     sm.store(Fact(proposition="real fact about retrieval", topic="decisions/x", source_episodes=["ep1"]))
     assert _count(tmp_path / "s.db", "SELECT COUNT(*) FROM facts WHERE topic LIKE 'bus/%'") == 0
     assert _count(tmp_path / "s.db", "SELECT COUNT(*) FROM telemetry") == 1

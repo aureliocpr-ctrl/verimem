@@ -227,13 +227,13 @@ class TestNoMutation:
         from verimem.coherence_check import scan_topic_for_warnings
         f1 = Fact(
             id="f-orig", proposition="Cache uses 5MB",
-            topic="cache/size", confidence=0.9,
+            topic="config/cache-size", confidence=0.9,
             status="model_claim", created_at=time.time(),
         )
         sm.store(f1)
         f2 = Fact(
             id="f-clash", proposition="Cache uses 50MB",
-            topic="cache/size", confidence=0.9,
+            topic="config/cache-size", confidence=0.9,
             status="model_claim", created_at=time.time(),
         )
         sm.store(f2)

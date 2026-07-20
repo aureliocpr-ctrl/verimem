@@ -4,6 +4,28 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 
 ## [0.7.0] - Unreleased
 
+### Changed
+- **BREAKING (behavioral): machine-telemetry routing is ON by default.** Writes whose
+  topic matches the machine-state prefix list (`bus/`, `metric/`, `cache/`, `dream/`, …
+  — `verimem/_telemetry_prefixes.py`) are no longer admitted into the curated `facts`
+  corpus: they are routed, non-lossily, to the sibling `telemetry` table
+  (`SELECT * FROM telemetry` to inspect; episodes: `episode_telemetry`). This is the
+  routing/classification layer (`verimem/admission_gate.py`), distinct from the
+  grounding moat — quarantine counts are unaffected. Why: measured on a corpus that ran
+  without it, 75% of stored "facts" ended up quarantined and 94% of those were machine
+  exhaust — a verified memory that admits machine exhaust as curated facts out of the
+  box is a false claim. Migration: the first routed write in a process where
+  `ENGRAM_ADMISSION_GATE` is unset emits a one-time `UserWarning` naming the opt-out;
+  `ENGRAM_ADMISSION_GATE=0` restores the legacy admit-everything behavior; an explicit
+  env choice silences the warning. The pre-0.7.0 `ADMISSION_GATE_ON` flag file is now
+  ignored (it could only force ON — the default — and must not defeat an explicit OFF).
+  Decision record: independent adversarial review by GLM-5.2 and Kimi-K3, convergent;
+  their shared demand — the flip must not be silent — is the migration warning. A
+  content-based (JSON-shape) classifier was proposed and REJECTED by both reviewers
+  (unbounded false positives without undo, e.g. a calendar entry
+  `{"event_type": "dentist", …}`); routing stays topic-prefix only, revisit in 0.8.0
+  only with field data.
+
 ### Added
 - **Per-write audit trail (opt-in, `VERIMEM_AUDIT_LOG`).** Every single-proposition
   `add()`'s adjudication verdict — disposition, judge, score, threshold, reason, the

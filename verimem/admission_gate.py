@@ -63,31 +63,63 @@ _TRUST_BEARING_STATUS: frozenset[str] = frozenset({
 
 
 def gate_enabled() -> bool:
-    """The admission gate is ON when EITHER is true (default OFF = neither):
+    """The admission gate is ON by default since 0.7.0.
 
-      - env ``ENGRAM_ADMISSION_GATE`` in {1,on,true,strict}, OR
-      - the flag file ``<data_dir>/ADMISSION_GATE_ON`` exists.
+    An EXPLICIT operator choice always wins:
+      - env ``ENGRAM_ADMISSION_GATE`` in {0,off,false,no}  -> OFF (legacy:
+        telemetry-topic writes admitted into the curated corpus)
+      - env in {1,on,true,strict}                          -> ON
+      - unset / unrecognized                               -> ON (the default)
 
-    The file-flag makes activation deterministic regardless of how the MCP
-    server inherits its environment (env-var propagation to an MCP child is not
-    guaranteed): a running server that has loaded this code picks the flag up on
-    its next write. Read fresh on every call (cheap stat) so toggling needs no
-    process restart once the code is loaded.
+    Rationale (2026-07-20 decision record, adversarial review GLM-5.2 +
+    Kimi-K3): the measured pre-gate corpus trajectory was 75% quarantined,
+    94% of it machine exhaust — a "verified memory" that admits machine
+    exhaust as curated facts out of the box is a false claim. The flip is
+    not silent: the first routed write in a process with NO explicit env
+    choice emits a one-time migration warning (see
+    ``warn_default_on_migration_once``).
+
+    The pre-0.7.0 ``<data_dir>/ADMISSION_GATE_ON`` flag file is obsolete:
+    it could only force ON, which the default now is. It is ignored — an
+    explicit env OFF must win over a forgotten file.
     """
     import os
-    if os.environ.get("ENGRAM_ADMISSION_GATE", "").strip().lower() in (
-        "1", "on", "true", "strict",
-    ):
-        return True
-    try:
-        from pathlib import Path
+    raw = os.environ.get("ENGRAM_ADMISSION_GATE", "").strip().lower()
+    if raw in ("0", "off", "false", "no"):
+        return False
+    return True
 
-        from .config import CONFIG
-        if (Path(CONFIG.data_dir) / "ADMISSION_GATE_ON").exists():
-            return True
-    except Exception:
-        pass
-    return False
+
+#: One-time-per-process latch for the 0.7.0 migration warning.
+_MIGRATION_WARNED = False
+
+
+def warn_default_on_migration_once() -> None:
+    """Emit the 0.7.0 default-ON migration warning, once per process.
+
+    Called by the write path on a ROUTE_TELEMETRY verdict. Silent routing
+    by default would be "memory that decides for you without telling you"
+    (Kimi-K3 review) — so the FIRST routed write tells the operator what
+    happened and how to opt out. An explicit env choice (any recognized
+    value, ON or OFF) means the operator already decided: no warning.
+    """
+    global _MIGRATION_WARNED
+    if _MIGRATION_WARNED:
+        return
+    import os
+    if os.environ.get("ENGRAM_ADMISSION_GATE", "").strip():
+        return
+    _MIGRATION_WARNED = True
+    import warnings
+    warnings.warn(
+        "verimem 0.7.0: the admission gate is now ON by default — this "
+        "write had a machine-telemetry topic and was routed to the "
+        "'telemetry' table instead of the curated facts corpus (non-lossy; "
+        "query it with: SELECT * FROM telemetry). Set "
+        "ENGRAM_ADMISSION_GATE=0 to restore the legacy behavior.",
+        UserWarning,
+        stacklevel=3,
+    )
 
 
 @dataclass

@@ -13,7 +13,7 @@ from verimem.source_trust import reset_book_cache
 def test_reported_failure_penalizes_source(tmp_path):
     reset_book_cache()
     mem = Memory(tmp_path / "m.db")
-    r = mem.add("The sky is green.", topic="obs/sky", verified_by=["source-doc:liar:1"])
+    r = mem.add("The sky is green.", topic="observational/sky", verified_by=["source-doc:liar:1"])
     assert mem.report_outcome(r["id"], good=False) is True
     assert mem.source_trust("liar") < 0.5          # outcome channel bit through
 
@@ -21,7 +21,7 @@ def test_reported_failure_penalizes_source(tmp_path):
 def test_reported_success_does_not_penalize(tmp_path):
     reset_book_cache()
     mem = Memory(tmp_path / "m.db")
-    r = mem.add("The sky is blue.", topic="obs/sky", verified_by=["source-doc:honest:1"])
+    r = mem.add("The sky is blue.", topic="observational/sky", verified_by=["source-doc:honest:1"])
     assert mem.report_outcome(r["id"], good=True) is True
     assert mem.source_trust("honest") >= 0.5
 

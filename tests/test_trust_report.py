@@ -105,11 +105,11 @@ def test_report_observational_only_is_not_causal_answerable(tmp_path) -> None:
     # same retrievable proposition as the interventional case, but an OBSERVATIONAL
     # provenance (source-doc, not trial:) — the type is earned from provenance, not
     # from the words, so this stays observational and cannot settle do(X).
-    sm.store(Fact(id="obs", topic="obs/ads",
+    sm.store(Fact(id="obs", topic="observational/ads",
                   proposition="An A/B test showed ads raise sales by 12%.",
                   asserted_at=time.time(),
                   verified_by=["source-doc:dashboard:1"]), embed="sync")
-    sm.store(Fact(id="obs2", topic="obs/ads",
+    sm.store(Fact(id="obs2", topic="observational/ads",
                   proposition="Ads and sales rose together last quarter.",
                   asserted_at=time.time(),
                   verified_by=["source-doc:report:2"]), embed="sync")

@@ -57,9 +57,9 @@ def test_gate_admits_clean_grounded_fact(tmp_path, monkeypatch) -> None:
 
 
 def test_gate_off_leaves_polluted_unquarantined(tmp_path, monkeypatch) -> None:
-    # Gate OFF (default) -> legacy behavior; the gate takes no action. Proves the
-    # fix is opt-in and default installs are unaffected.
-    monkeypatch.delenv("ENGRAM_ADMISSION_GATE", raising=False)
+    # Gate OFF (0.7.0: needs the explicit opt-out, default is ON now) ->
+    # legacy behavior; the gate takes no action on the polluted write.
+    monkeypatch.setenv("ENGRAM_ADMISSION_GATE", "0")
     monkeypatch.setenv("ENGRAM_INJECTION_SCREEN", "0")
     db = tmp_path / "s.db"
     sm = SemanticMemory(db_path=db)

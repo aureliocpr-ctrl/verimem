@@ -73,6 +73,9 @@ def test_cold_fallback_excludes_unverified_conversational(
 def test_cold_fallback_excludes_telemetry_on_generic_recall(
     tmp_path: Path, monkeypatch,
 ) -> None:
+    # Legacy corpus: telemetry already in facts (pre-0.7.0 write) — the READ
+    # filter under test must hide it even though today's gate would route it.
+    monkeypatch.setenv("ENGRAM_ADMISSION_GATE", "0")
     sm = sem.SemanticMemory(db_path=tmp_path / "s.db")
     now = time.time()
     sm.store(sem.Fact(id="real", proposition="widget pipeline deploys via foo",

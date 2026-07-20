@@ -14,7 +14,18 @@ HERMETIC: temp DB, zero side-effect sul DB reale.
 """
 from __future__ import annotations
 
+import pytest
+
 from verimem.semantic import Fact, SemanticMemory
+
+
+@pytest.fixture(autouse=True)
+def _legacy_corpus(monkeypatch):
+    # These tests exercise the READ-side denylist: telemetry ALREADY sitting in
+    # `facts` (any store written before the 0.7.0 admission-gate default flip).
+    # Build that corpus with the gate explicitly off — the read-side defense
+    # must keep working for legacy corpora regardless of the write-side gate.
+    monkeypatch.setenv("ENGRAM_ADMISSION_GATE", "0")
 
 # NB: emerging_skill NON e' piu' qui (e' conoscenza, gestita dallo status).
 _TELEMETRY_PREFIXES = ("bus/", "metric/", "alloc/", "lock/", "tx/", "nego/",
