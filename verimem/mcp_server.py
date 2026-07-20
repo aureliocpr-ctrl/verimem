@@ -6687,7 +6687,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     elif _canon_name.startswith("verimem_"):
         _canon_name = "hippo_" + _canon_name[len("verimem_"):]
     if _canon_name == "hippo_remember":
-        _rm = _remote()
+        # SECURITY (critic counterexample 9166607ae84ad54f): a SCOPED write must
+        # NOT be delegated to the server's unscoped add - that would drop the
+        # tenant prefix scoped_topic applies locally and leak the fact into the
+        # shared unscoped corpus, readable by any unscoped recall from another
+        # session. Symmetric with the scoped-read guard below: scope keeps the
+        # op local. (Forwarding scope over REST is a future frontier.)
+        _rm = _remote() if not any(
+            arguments.get(_s) is not None
+            for _s in ("user_id", "agent_id", "run_id")) else None
         if _rm is not None:
             from verimem.syntax_pollution import sanitize_proposition
             _prop = sanitize_proposition(str(arguments.get("proposition", "")).strip())

@@ -72,15 +72,20 @@ async def test_hippo_remember_delegates_to_server(monkeypatch):
 
 
 class _SpyRemote:
-    """A thin-client stand-in whose .search records its calls, so a test can
-    assert the READ was (or was NOT) delegated to the shared server."""
+    """A thin-client stand-in whose .search/.add record their calls, so a test
+    can assert an op was (or was NOT) delegated to the shared server."""
     def __init__(self, hits):
         self._hits = hits
         self.searched: list[tuple[str, int]] = []
+        self.added: list[tuple[str, dict]] = []
 
     def search(self, q, k=5, **kw):
         self.searched.append((q, k))
         return list(self._hits)
+
+    def add(self, content, **kw):
+        self.added.append((content, kw))
+        return {"stored": True, "id": "srv-add", "status": "model_claim"}
 
 
 _HIT = {"id": "srv-9", "text": "The tank holds 500 liters.", "topic": "ops/tank",
@@ -133,6 +138,24 @@ async def test_scoped_recall_does_not_delegate_to_server(monkeypatch, tmp_data_d
     payload = json.loads(blocks[0])
     assert payload.get("remote") is not True     # served locally, not by the server
     assert spy.searched == []                     # scope kept the read off the server
+
+
+@pytest.mark.asyncio
+async def test_scoped_remember_does_not_delegate_to_server(monkeypatch, tmp_data_dir):
+    """SECURITY: a SCOPED write (user_id/agent_id/run_id) must NOT be delegated
+    to the shared server's unscoped add - that would store the fact WITHOUT its
+    tenant prefix in the shared corpus, so any unscoped read from another
+    session would return it (cross-tenant leak). It stays local, where
+    scoped_topic isolates it. Symmetric with the scoped-read guard.
+    (Adversarial critic counterexample, job 9166607ae84ad54f.)"""
+    spy = _SpyRemote([])
+    monkeypatch.setattr(mcp_server, "_remote", lambda: spy)
+    blocks = await _invoke_tool("hippo_remember",
+                                {"proposition": "alice private note.",
+                                 "topic": "notes", "user_id": "alice"})
+    payload = json.loads(blocks[0])
+    assert payload.get("remote") is not True     # served locally, not by the server
+    assert spy.added == []                         # scope kept the write off the shared corpus
 
 
 @pytest.mark.asyncio
