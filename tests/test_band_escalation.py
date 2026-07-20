@@ -25,6 +25,9 @@ def test_resolver_none_when_no_cli(monkeypatch):
     monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
     monkeypatch.setattr(be.shutil, "which", lambda _: None)
     be._resolve_cli.cache_clear()
+    # cascade churn: these pin the CLAUDE fallback — force the local
+    # ollama tier off so escalate reaches claude.
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
     assert be.escalate_band_score("src", "fact") is None
 
 
@@ -32,6 +35,9 @@ def test_escalation_parses_score_from_cli(monkeypatch):
     monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
     monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
     be._resolve_cli.cache_clear()
+    # cascade churn: these pin the CLAUDE fallback — force the local
+    # ollama tier off so escalate reaches claude.
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
 
     def _fake_run(*a, **k):
         return SimpleNamespace(returncode=0, stdout="Score: 87\n", stderr="")
@@ -43,6 +49,9 @@ def test_escalation_failsoft_on_cli_error(monkeypatch):
     monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
     monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
     be._resolve_cli.cache_clear()
+    # cascade churn: these pin the CLAUDE fallback — force the local
+    # ollama tier off so escalate reaches claude.
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
 
     def _boom(*a, **k):
         raise OSError("cli exploded")
@@ -54,6 +63,9 @@ def test_escalation_failsoft_on_unparseable_output(monkeypatch):
     monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
     monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
     be._resolve_cli.cache_clear()
+    # cascade churn: these pin the CLAUDE fallback — force the local
+    # ollama tier off so escalate reaches claude.
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
 
     def _fake_run(*a, **k):
         return SimpleNamespace(returncode=0, stdout="I cannot help with that", stderr="")
@@ -75,7 +87,9 @@ def _gate(monkeypatch, esc_result):
     monkeypatch.setenv("VERIMEM_CE_BAND_ENFORCE", "1")
     monkeypatch.setattr(
         gg, "fact_grounding_score_ex", lambda *a, **k: (60.0, "local"))
-    monkeypatch.setattr(be, "escalate_band_score", lambda *a, **k: esc_result)
+    monkeypatch.setattr(
+        be, "escalate_band",
+        lambda *a, **k: None if esc_result is None else (esc_result, "claude-band"))
     return g.run_validation_gate(
         proposition="The cache TTL is 30 minutes.",
         verified_by=["source-doc:x:1"], topic="t", agent=None,
@@ -113,6 +127,9 @@ def test_parse_prefers_explicit_score_over_prose_digits(monkeypatch):
     monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
     monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
     be._resolve_cli.cache_clear()
+    # cascade churn: these pin the CLAUDE fallback — force the local
+    # ollama tier off so escalate reaches claude.
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
 
     def _fake_run(*a, **k):
         return SimpleNamespace(returncode=0, stdout=(
@@ -126,6 +143,9 @@ def test_parse_rejects_prose_embedded_digits_without_score(monkeypatch):
     monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
     monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
     be._resolve_cli.cache_clear()
+    # cascade churn: these pin the CLAUDE fallback — force the local
+    # ollama tier off so escalate reaches claude.
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
 
     def _fake_run(*a, **k):
         return SimpleNamespace(returncode=0, stdout=(
@@ -141,6 +161,9 @@ def test_rubric_rides_as_system_prompt_not_user_text(monkeypatch):
     monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
     monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
     be._resolve_cli.cache_clear()
+    # cascade churn: these pin the CLAUDE fallback — force the local
+    # ollama tier off so escalate reaches claude.
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
     seen = {}
 
     def _fake_run(cmd, **k):
@@ -162,8 +185,90 @@ def test_parse_uppercase_score_label(monkeypatch):
     monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
     monkeypatch.setattr(be.shutil, "which", lambda _: r"C:\bin\claude.EXE")
     be._resolve_cli.cache_clear()
+    # cascade churn: these pin the CLAUDE fallback — force the local
+    # ollama tier off so escalate reaches claude.
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
 
     def _fake_run(*a, **k):
         return SimpleNamespace(returncode=0, stdout="SCORE: 100\n", stderr="")
     monkeypatch.setattr(be.subprocess, "run", _fake_run)
     assert be.escalate_band_score("src", "fact") == 100.0
+
+
+# ---- offline-first cascade: local ollama judge -> claude CLI -> review ----
+# 0.7.0 (measured qwen2.5:7b AUROC 0.858 OOD, escape 2.3% @t70 vs CE ~18%):
+# an air-gapped deployment with ollama gets the full moat OFFLINE; claude is
+# only the online fallback.
+
+def test_local_available_false_when_server_down(monkeypatch):
+    def _boom(*a, **k):
+        raise OSError("connection refused")
+    monkeypatch.setattr(be.urllib.request, "urlopen", _boom)
+    be._local_ollama_available.cache_clear()
+    assert be._local_ollama_available() is False
+
+
+def test_local_available_true_when_model_present(monkeypatch):
+    import io as _io
+    import json as _json
+
+    class _Resp(_io.BytesIO):
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+    payload = _json.dumps({"models": [{"name": "qwen2.5:7b-instruct"}]}).encode()
+    monkeypatch.setattr(be.urllib.request, "urlopen", lambda *a, **k: _Resp(payload))
+    monkeypatch.delenv("ENGRAM_BAND_LOCAL_MODEL", raising=False)
+    be._local_ollama_available.cache_clear()
+    assert be._local_ollama_available() is True
+
+
+def test_cascade_prefers_local_offline_over_claude(monkeypatch):
+    monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: True)
+    monkeypatch.setattr(be, "_score_via_ollama", lambda s, f: 88.0)
+    # claude present too — must NOT be used when local answered
+    claude_called = {"n": 0}
+    monkeypatch.setattr(be, "_resolve_cli", lambda: r"C:\bin\claude.EXE")
+    monkeypatch.setattr(be, "_score_via_claude",
+                        lambda s, f: claude_called.__setitem__("n", 1) or 10.0)
+    out = be.escalate_band("src", "fact")
+    assert out == (88.0, "local-band")
+    assert claude_called["n"] == 0
+
+
+def test_cascade_falls_to_claude_when_no_local(monkeypatch):
+    monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
+    monkeypatch.setattr(be, "_resolve_cli", lambda: r"C:\bin\claude.EXE")
+    monkeypatch.setattr(be, "_score_via_claude", lambda s, f: 77.0)
+    assert be.escalate_band("src", "fact") == (77.0, "claude-band")
+
+
+def test_cascade_local_error_falls_to_claude(monkeypatch):
+    monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: True)
+    monkeypatch.setattr(be, "_score_via_ollama", lambda s, f: None)  # local failed
+    monkeypatch.setattr(be, "_resolve_cli", lambda: r"C:\bin\claude.EXE")
+    monkeypatch.setattr(be, "_score_via_claude", lambda s, f: 65.0)
+    assert be.escalate_band("src", "fact") == (65.0, "claude-band")
+
+
+def test_cascade_none_when_neither(monkeypatch):
+    monkeypatch.delenv("ENGRAM_BAND_LLM", raising=False)
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: False)
+    monkeypatch.setattr(be, "_resolve_cli", lambda: None)
+    assert be.escalate_band("src", "fact") is None
+
+
+def test_cascade_off_switch_wins_over_local(monkeypatch):
+    monkeypatch.setenv("ENGRAM_BAND_LLM", "0")
+    monkeypatch.setattr(be, "_local_ollama_available", lambda: True)
+    monkeypatch.setattr(be, "_score_via_ollama", lambda s, f: 90.0)
+    assert be.escalate_band("src", "fact") is None
+
+
+def test_escalate_band_score_backcompat_returns_float(monkeypatch):
+    monkeypatch.setattr(be, "escalate_band", lambda s, f: (73.0, "local-band"))
+    assert be.escalate_band_score("src", "fact") == 73.0
+    monkeypatch.setattr(be, "escalate_band", lambda s, f: None)
+    assert be.escalate_band_score("src", "fact") is None

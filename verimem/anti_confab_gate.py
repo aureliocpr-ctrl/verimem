@@ -1133,21 +1133,22 @@ def run_validation_gate(
                 _esc = None
                 if grounding_llm is None:
                     from . import band_escalation as _be
-                    _esc = _be.escalate_band_score(source, proposition)
+                    _esc = _be.escalate_band(source, proposition)
                 if _esc is not None:
-                    grounding_val = float(_esc)
-                    _judge_of_record = "claude-band"
+                    _esc_score, _esc_judge = _esc
+                    grounding_val = float(_esc_score)
+                    _judge_of_record = _esc_judge   # local-band / claude-band
                     _threshold_of_record = resolve_write_threshold_for("claude")
-                    if _esc < _threshold_of_record:
+                    if _esc_score < _threshold_of_record:
                         warnings.append({
                             "layer": "L4-grounding",
-                            "reason": f"band escalation: llm judge scored "
-                                      f"{_esc:.0f} below the claude-scale "
+                            "reason": f"band escalation ({_esc_judge}): llm judge scored "
+                                      f"{_esc_score:.0f} below the claude-scale "
                                       f"threshold {_threshold_of_record:.0f}",
                             "advice": "the CE was unsure and the llm judge "
                                       "adjudicated NOT entailed -- likely a "
                                       "confabulated inference, not a stated fact.",
-                            "grounding_score": _esc,
+                            "grounding_score": _esc_score,
                         })
                         advice = advice or ("Source does not entail the claim "
                                             "(band llm adjudication).")

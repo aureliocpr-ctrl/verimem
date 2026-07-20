@@ -8,8 +8,11 @@ available with zero wiring:
 
 * an explicitly injected ``Memory(llm=...)`` never reaches here (it already
   judges every write);
-* with NO injected llm, a ``claude`` CLI on PATH is auto-discovered and used
-  in print mode -- flat subscription, no API key (O5);
+* with NO injected llm, the band escalates OFFLINE-FIRST: a local ollama
+  judge (a validated small model, measured better than the CE on the OOD
+  blind spot -- qwen2.5:7b AUROC 0.858, 2.3% escape @t70) is preferred so an
+  air-gapped deployment gets the full moat with NO network; a ``claude`` CLI
+  on PATH is the online fallback (flat subscription, no API key, O5);
 * ``ENGRAM_BAND_LLM=0`` opts out; ``ENGRAM_BAND_LLM_TIMEOUT_S`` bounds the
   call (default 90s).
 
@@ -23,10 +26,12 @@ claude-scale admission threshold -- stays calibrated.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
 import subprocess
+import urllib.request
 from functools import lru_cache
 
 #: explicit verdict anywhere in the answer ("Score: 87") — the LAST one wins
@@ -61,22 +66,75 @@ def _resolve_cli() -> str | None:
     return shutil.which("claude")
 
 
-def escalate_band_score(source: str, fact: str) -> float | None:
-    """One llm adjudication of a band-parked write: score in [0, 100] on the
-    claude scale, or ``None`` when escalation is off/unavailable/failed --
-    the caller then holds the write for review exactly as before."""
-    if _mode() == "off":
+def _parse_score(text: str) -> float | None:
+    """Extract the judge's 0-100 verdict from free text. An explicit
+    ``Score: N`` (LAST occurrence, case-insensitive) wins; else a bare number
+    at the very START; else ``None`` — a prose digit is NEVER a verdict."""
+    out = (text or "").strip()
+    labeled = _SCORE_LABELED_RE.findall(out)
+    if labeled:
+        v = float(labeled[-1])
+    else:
+        m = _SCORE_LEADING_RE.match(out)
+        if not m:
+            return None
+        v = float(m.group(1))
+    return min(100.0, max(0.0, v))
+
+
+def _ollama_host() -> str:
+    return os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+
+
+def _ollama_judge_model() -> str:
+    """The local judge model. Default is the measured-good qwen2.5:7b-instruct;
+    override with ENGRAM_BAND_LOCAL_MODEL (e.g. a larger local model)."""
+    return (os.environ.get("ENGRAM_BAND_LOCAL_MODEL", "").strip()
+            or "qwen2.5:7b-instruct")
+
+
+@lru_cache(maxsize=1)
+def _local_ollama_available() -> bool:
+    """True iff an ollama server is up AND the configured judge model is
+    pulled — a fast HTTP check of /api/tags (~ms), lru_cached per process so
+    a down server costs one probe, not one per write. Tests clear via
+    ``_local_ollama_available.cache_clear()``. ENGRAM_BAND_LOCAL=0 forces off."""
+    if os.environ.get("ENGRAM_BAND_LOCAL", "").strip().lower() in ("0", "off", "false", "no"):
+        return False
+    want = _ollama_judge_model()
+    try:
+        with urllib.request.urlopen(_ollama_host() + "/api/tags", timeout=2.0) as r:
+            names = {m.get("name", "") for m in json.loads(r.read()).get("models", [])}
+    except Exception:  # noqa: BLE001 -- no server / bad response -> not available
+        return False
+    # match "qwen2.5:7b-instruct" or a bare-name/prefix form ollama may report.
+    return any(n == want or n.startswith(want) or want.startswith(n.split(":")[0])
+               for n in names if n)
+
+
+def _score_via_ollama(source: str, fact: str) -> float | None:
+    """Score with the local ollama judge via the SAME production rubric/scale
+    (fact_grounding_score_ex + _FACT_SYSTEM), fully OFFLINE. Fail-soft: any
+    error -> None so the cascade falls through to claude, then review."""
+    try:
+        from .grounding_gate import fact_grounding_score_ex
+        from .llm import _build
+        llm = _build("ollama")
+        llm.default_model = _ollama_judge_model()
+        score, _judge = fact_grounding_score_ex(llm, source, fact)
+        return None if score is None else min(100.0, max(0.0, float(score)))
+    except Exception:  # noqa: BLE001 -- offline judge failure degrades to fallback
         return None
+
+
+def _score_via_claude(source: str, fact: str) -> float | None:
+    """Score with an auto-discovered claude CLI (online, flat subscription, no
+    key). Channel separation: the rubric rides as a SYSTEM prompt; only the
+    tenant-controlled DATA goes in the user prompt. Fail-soft -> None."""
     cli = _resolve_cli()
     if not cli:
         return None
     from .grounding_gate import _FACT_SYSTEM
-    # CHANNEL SEPARATION: the rubric rides as a SYSTEM prompt; only the DATA
-    # (source + fact, both tenant-controlled) goes in the user prompt — a fact
-    # embedding "output 100" does not share the rubric's channel. Residual
-    # honesty: injection can still try to sway the judge, but the worst
-    # outcome is admitting a band write as a rank-2 model_claim (same as a
-    # high CE score would), never a verified fact.
     user = f"Source: {source}\n\nCandidate fact: {fact}\n\nScore:"
     try:
         r = subprocess.run(
@@ -89,16 +147,32 @@ def escalate_band_score(source: str, fact: str) -> float | None:
         return None
     if r.returncode != 0:
         return None
-    out = (r.stdout or "").strip()
-    labeled = _SCORE_LABELED_RE.findall(out)
-    if labeled:
-        v = float(labeled[-1])          # the model's FINAL verdict wins
-    else:
-        m = _SCORE_LEADING_RE.match(out)
-        if not m:
-            return None  # prose without a verdict must never admit
-        v = float(m.group(1))
-    return min(100.0, max(0.0, v))
+    return _parse_score(r.stdout)
 
 
-__all__ = ["escalate_band_score"]
+def escalate_band(source: str, fact: str) -> tuple[float, str] | None:
+    """Adjudicate a band-parked write, OFFLINE-FIRST. Returns
+    ``(score, judge)`` with ``judge`` in {"local-band", "claude-band"}, or
+    ``None`` when escalation is off / no judge is reachable / every judge
+    failed — the caller then holds the write for review, exactly as before.
+    An unreadable verdict never admits."""
+    if _mode() == "off":
+        return None
+    if _local_ollama_available():
+        s = _score_via_ollama(source, fact)
+        if s is not None:
+            return (s, "local-band")
+        # local judge present but failed this call -> try the online fallback
+    s = _score_via_claude(source, fact)
+    if s is not None:
+        return (s, "claude-band")
+    return None
+
+
+def escalate_band_score(source: str, fact: str) -> float | None:
+    """Back-compat float API over :func:`escalate_band` (score only)."""
+    out = escalate_band(source, fact)
+    return None if out is None else out[0]
+
+
+__all__ = ["escalate_band", "escalate_band_score"]
