@@ -154,3 +154,31 @@ def test_cli_remember_and_recall_use_open_memory(tmp_path, monkeypatch):
     r2 = runner.invoke(vcli.app, ["recall", "tank capacity"])
     assert r2.exit_code == 0, r2.output
     assert calls["n"] == 2
+
+
+def test_request_timeout_is_separate_from_probe_timeout(monkeypatch):
+    """Live e2e 2026-07-20: a single 5s client timeout (meant for the health
+    probe) killed the FIRST write while the server cold-loaded its models.
+    Data requests get their own, longer timeout (VERIMEM_SERVER_REQUEST_TIMEOUT_S,
+    default 60s); the probe stays snappy."""
+    seen = {}
+
+    class _FakeHttpx:
+        class Client:
+            def __init__(self, base_url="", timeout=None):
+                seen.setdefault("client_timeouts", []).append(timeout)
+            def request(self, method, path, **kw):
+                seen["req_timeout"] = kw.get("timeout")
+                import types
+                return types.SimpleNamespace(status_code=200,
+                                             json=lambda: {"ok": True},
+                                             text="")
+    import sys
+    monkeypatch.setitem(sys.modules, "httpx", _FakeHttpx)
+    rm = RemoteMemory("http://x", "vm_k", timeout_s=5.0)
+    rm.add("hello", topic="t")
+    assert seen["req_timeout"] == 60.0            # data call: long timeout
+    monkeypatch.setenv("VERIMEM_SERVER_REQUEST_TIMEOUT_S", "120")
+    rm2 = RemoteMemory("http://x", "vm_k", timeout_s=5.0)
+    rm2.add("hello", topic="t")
+    assert seen["req_timeout"] == 120.0           # env override honored

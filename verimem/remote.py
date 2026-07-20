@@ -19,9 +19,22 @@ from typing import Any
 
 class RemoteMemory:
     def __init__(self, url: str, api_key: str, *, timeout_s: float = 15.0,
+                 request_timeout_s: float | None = None,
                  _client: Any = None) -> None:
         self.url = (url or "").rstrip("/")
         self._headers = {"Authorization": f"Bearer {api_key}"}
+        # PROBE timeout (health) stays snappy; DATA requests get their own,
+        # longer budget - live e2e 2026-07-20: a 5s blanket timeout killed the
+        # FIRST write while the server cold-loaded its models.
+        if request_timeout_s is None:
+            import os
+            try:
+                request_timeout_s = float(
+                    os.environ.get("VERIMEM_SERVER_REQUEST_TIMEOUT_S", "60")
+                    or 60)
+            except ValueError:
+                request_timeout_s = 60.0
+        self._request_timeout_s = float(request_timeout_s)
         self._own_client = _client is None
         if _client is None:
             import httpx
@@ -31,6 +44,7 @@ class RemoteMemory:
     # -- plumbing -----------------------------------------------------------
     def _req(self, method: str, path: str, *, none_on_404: bool = False,
              **kw: Any) -> Any:
+        kw.setdefault("timeout", self._request_timeout_s)
         try:
             r = self._c.request(method, path, headers=self._headers, **kw)
         except Exception as exc:  # noqa: BLE001 — network layer -> typed error
@@ -53,7 +67,7 @@ class RemoteMemory:
         callers can probe-and-fallback; ``raise_on_down`` surfaces the
         ConnectionError for callers that must not silently degrade."""
         try:
-            self._req("GET", "/v1/health")
+            self._req("GET", "/v1/health", timeout=None)  # client default = probe budget
             return True
         except ConnectionError:
             if raise_on_down:
