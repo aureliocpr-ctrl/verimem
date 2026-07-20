@@ -35,7 +35,11 @@ def server(tmp_path):
     thread.join(timeout=2)
 
 
-def _request(port, obj):
+def _request(port, obj, token=None):
+    # audit F9: data requests now need the per-boot token. Tests pass the
+    # server's real token (they hold the server object); ping/discovery do not.
+    if token is not None and "ping" not in obj:
+        obj = {**obj, "token": token}
     sock = socket.create_connection(("127.0.0.1", port), timeout=5)
     try:
         encode_service.send_msg(sock, obj)
@@ -52,19 +56,19 @@ def test_ping(server):
 
 
 def test_encode_single(server):
-    resp = _request(server.port, {"text": "abcd"})
+    resp = _request(server.port, {"text": "abcd"}, token=server._token)
     assert resp["ok"] is True
     assert resp["vec"] == [4.0, 1.5, -2.0]
 
 
 def test_encode_batch(server):
-    resp = _request(server.port, {"texts": ["a", "bbb"]})
+    resp = _request(server.port, {"texts": ["a", "bbb"]}, token=server._token)
     assert resp["ok"] is True
     assert resp["vecs"] == [[1.0, 1.5, -2.0], [3.0, 1.5, -2.0]]
 
 
 def test_bad_request_reports_error(server):
-    resp = _request(server.port, {"nonsense": 1})
+    resp = _request(server.port, {"nonsense": 1}, token=server._token)
     assert resp["ok"] is False
     assert "text" in resp["error"]
 
@@ -81,9 +85,9 @@ def test_discovery_file_written(server, tmp_path):
 def test_multiple_requests_one_connection(server):
     sock = socket.create_connection(("127.0.0.1", server.port), timeout=5)
     try:
-        encode_service.send_msg(sock, {"text": "x"})
+        encode_service.send_msg(sock, {"text": "x", "token": server._token})
         r1 = encode_service.recv_msg(sock)
-        encode_service.send_msg(sock, {"text": "yy"})
+        encode_service.send_msg(sock, {"text": "yy", "token": server._token})
         r2 = encode_service.recv_msg(sock)
     finally:
         sock.close()
@@ -110,7 +114,8 @@ def test_embedding_uses_service_when_available(monkeypatch, tmp_path):
             # modello di CONFIG (anti corpus-poisoning) -> il discovery realistico
             # deve riportare quel modello.
             lambda *a, **k: {"host": "127.0.0.1", "port": srv.port,
-                             "model": embedding.CONFIG.embedding_model},
+                             "model": embedding.CONFIG.embedding_model,
+                             "token": srv._token},
         )
         monkeypatch.delenv("ENGRAM_ENCODE_SERVICE", raising=False)
         embedding._reset_model_for_tests()  # clear the single-text encode cache

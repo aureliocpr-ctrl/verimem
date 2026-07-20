@@ -223,7 +223,10 @@ def _encode_via_service(text: str) -> np.ndarray | None:
         )
         try:
             conn.settimeout(_SERVICE_READ_TIMEOUT_S)
-            _svc.send_msg(conn, {"text": text})
+            _req = {"text": text}
+            if info.get("token"):
+                _req["token"] = info["token"]
+            _svc.send_msg(conn, _req)
             resp = _svc.recv_msg(conn)
         finally:
             conn.close()

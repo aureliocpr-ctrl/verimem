@@ -142,6 +142,12 @@ class EncodeServer:
         self._last_request = time.time()
         self._lock = threading.Lock()
         self._stop = threading.Event()
+        # Per-boot request token (audit F9): a local peer without read access to
+        # the 0600 discovery file cannot obtain it, so it cannot feed the
+        # service text or impersonate it to clients. Loopback + owner-only file
+        # is the trust anchor; the token binds a request to that anchor.
+        import secrets as _secrets
+        self._token = _secrets.token_urlsafe(24)
 
     @property
     def port(self) -> int:
@@ -164,6 +170,11 @@ class EncodeServer:
                 "ok": True, "model": self._model_name,
                 "dim": self._model_dim, "pid": os.getpid(),
             }
+        # Every non-ping request must carry the per-boot token (audit F9).
+        # constant-time compare; a missing/short token fails closed.
+        import hmac as _hmac
+        if not _hmac.compare_digest(str(req.get("token", "")), self._token):
+            return {"ok": False, "error": "unauthorized: missing/invalid token"}
         if "texts" in req:
             vecs = [self._to_list(self._encode_fn(t)) for t in req["texts"]]
             return {"ok": True, "vecs": vecs}
@@ -205,9 +216,17 @@ class EncodeServer:
                 "model": self._model_name,
                 "dim": self._model_dim,
                 "started_at": time.time(),
+                "token": self._token,
             }),
             encoding="utf-8",
         )
+        # owner-only BEFORE the atomic rename, so the token is never briefly
+        # world-readable (POSIX; on Windows chmod perms are advisory and the
+        # loopback boundary carries the trust).
+        try:
+            os.chmod(tmp, 0o600)
+        except OSError:
+            pass
         tmp.replace(self._discovery_path)
 
     def _clear_discovery(self) -> None:
