@@ -37,6 +37,24 @@ class RemoteMemory:
         self._request_timeout_s = float(request_timeout_s)
         self._own_client = _client is None
         if _client is None:
+            # Only a REAL transport crosses a network: an injected client is an
+            # in-process test double / ASGI app with no hop. Never ship the
+            # bearer token in cleartext over an actual hop (audit F11) -
+            # loopback http is fine, anything else needs https unless an
+            # operator knowingly accepts the risk.
+            from urllib.parse import urlsplit
+            _parts = urlsplit(self.url)
+            if _parts.scheme == "http" and (_parts.hostname or "") not in (
+                    "127.0.0.1", "localhost", "::1"):
+                import os as _o
+                if _o.environ.get(
+                        "VERIMEM_ALLOW_INSECURE_HTTP", "").strip().lower() not in (
+                        "1", "true", "yes", "on"):
+                    raise ValueError(
+                        f"refusing to send the API key in cleartext to "
+                        f"{self.url}: use https:// for a non-loopback server "
+                        f"(or set VERIMEM_ALLOW_INSECURE_HTTP=1 if you "
+                        f"knowingly accept the risk on a trusted network)")
             import httpx
             _client = httpx.Client(base_url=self.url, timeout=timeout_s)
         self._c = _client

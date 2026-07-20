@@ -159,6 +159,34 @@ async def test_scoped_remember_does_not_delegate_to_server(monkeypatch, tmp_data
 
 
 @pytest.mark.asyncio
+async def test_thin_mode_refuses_a_read_it_cannot_delegate(monkeypatch, tmp_data_dir):
+    """Kimi audit F3: only remember/recall/search have a thin-tier path. Every
+    OTHER fact-reading tool still hits the LOCAL store — which, for a session
+    that lives behind a shared server, is empty. Returning that as a normal
+    answer reports "no facts" as if it were the complete corpus: a silent wrong
+    answer, strictly worse than an error."""
+    class _Healthy:
+        def search(self, q, k=5, **kw):
+            return []
+    monkeypatch.setattr(mcp_server, "_remote", lambda: _Healthy())
+    blocks = await _invoke_tool("hippo_facts_recent", {"limit": 5})
+    payload = json.loads(blocks[0])
+    blob = json.dumps(payload).lower()
+    assert not payload.get("items"), "handed back a fake-complete local answer"
+    assert ("shared" in blob or "server" in blob or "error" in blob), (
+        f"no explicit refusal, just an empty-looking answer: {payload}")
+
+
+@pytest.mark.asyncio
+async def test_same_read_works_normally_without_a_server(monkeypatch, tmp_data_dir):
+    """The refusal is narrow: with no server configured nothing changes."""
+    monkeypatch.setattr(mcp_server, "_remote", lambda: None)
+    blocks = await _invoke_tool("hippo_facts_recent", {"limit": 5})
+    payload = json.loads(blocks[0])
+    assert "items" in payload or "facts" in payload   # the normal local answer
+
+
+@pytest.mark.asyncio
 async def test_auth_rejection_fails_closed_not_silent_local(monkeypatch, tmp_data_dir):
     """SECURITY (Kimi red-team audit F1): a server that REJECTS our key must NOT
     degrade silently to the local store. That neutralizes central key revocation

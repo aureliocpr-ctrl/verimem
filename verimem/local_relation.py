@@ -32,11 +32,10 @@ misses a warning):
 """
 from __future__ import annotations
 
-from functools import lru_cache
-
 import os
 import threading
 from collections.abc import Callable
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 

@@ -796,7 +796,8 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                max_body_bytes: int = 1_048_576,
                audit_log: bool | None = None,
                local_tenant: str | None = None,
-               local_memory: Any = None):
+               local_memory: Any = None,
+               allow_client_gate_override: bool = False):
     """Costruisce l'app FastAPI del gateway. ``keys`` iniettabile (test);
     default: ``<data_dir>/gateway_keys.db``.
 
@@ -1128,14 +1129,21 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             # OFF on the gateway even when a judge was configured, so the flip
             # reached only the SDK — the critic caught exactly this. A judge-less
             # gateway still fail-opens, so this never breaks an unconfigured one.
-            _g = body.get("ground")
+            # The SERVER owns the gate (audit F7). Taking `ground` / `gate_mode`
+            # from the request body made "facts pass a grounding moat" opt-OUT
+            # by whoever was writing - a caller asking to disable the check is
+            # asking the wrong party. A deployment that genuinely wants
+            # caller-chosen gating turns it on server-side with
+            # create_app(allow_client_gate_override=True).
+            _g = body.get("ground") if allow_client_gate_override else None
+            _gm = body.get("gate_mode") if allow_client_gate_override else None
             res = mem.add(
                 content,
                 topic=body.get("topic", "user"),
                 source=body.get("source"),
                 verified_by=body.get("verified_by"),
                 ground=None if _g is None else bool(_g),
-                gate_mode=body.get("gate_mode"),
+                gate_mode=_gm,
                 asserted_at=body.get("asserted_at"),
                 conversation_id=body.get("conversation_id"),
                 user_name=body.get("user_name"),

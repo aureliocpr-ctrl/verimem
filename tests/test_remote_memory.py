@@ -219,11 +219,11 @@ def test_request_timeout_is_separate_from_probe_timeout(monkeypatch):
                                              text="")
     import sys
     monkeypatch.setitem(sys.modules, "httpx", _FakeHttpx)
-    rm = RemoteMemory("http://x", "vm_k", timeout_s=5.0)
+    rm = RemoteMemory("https://x", "vm_k", timeout_s=5.0)
     rm.add("hello", topic="t")
     assert seen["req_timeout"] == 60.0            # data call: long timeout
     monkeypatch.setenv("VERIMEM_SERVER_REQUEST_TIMEOUT_S", "120")
-    rm2 = RemoteMemory("http://x", "vm_k", timeout_s=5.0)
+    rm2 = RemoteMemory("https://x", "vm_k", timeout_s=5.0)
     rm2.add("hello", topic="t")
     assert seen["req_timeout"] == 120.0           # env override honored
 

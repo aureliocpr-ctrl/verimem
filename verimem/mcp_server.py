@@ -163,6 +163,19 @@ def _remote_row(h: dict) -> dict[str, Any]:
     return row
 
 
+#: Fact-corpus readers with NO thin-tier delegation yet. Behind a shared server
+#: they would answer from the local store - empty for that session - and present
+#: it as the whole corpus. Verified present as handlers in this module before
+#: being listed here. remember / facts_recall / facts_search are absent on
+#: purpose: those DO delegate.
+_THIN_UNSUPPORTED_READS: frozenset[str] = frozenset({
+    "hippo_facts_list", "hippo_facts_recent", "hippo_facts_topics",
+    "hippo_facts_by_confidence", "hippo_summary_topic", "hippo_trust_report",
+    "hippo_recall_as_of", "hippo_recall_history", "hippo_oracle_query",
+    "hippo_justified_audit", "hippo_corpus_diff",
+})
+
+
 def _ok(obj: Any) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps(obj, indent=2, default=str))]
 
@@ -6803,6 +6816,18 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 except Exception as _exc:  # noqa: BLE001 -- never strand the read
                     log.warning("remote %s failed (%s) - local fallback",
                                 name, type(_exc).__name__)
+    # A shared server is configured but THIS tool has no thin-tier path. Serving
+    # it from the local store would report an empty corpus as the complete one
+    # (audit F3). Refusing is the honest answer: the caller learns the tool is
+    # not available in this topology instead of trusting a confident "no facts".
+    if name in _THIN_UNSUPPORTED_READS and _remote() is not None:
+        _audit(name, arguments, outcome="thin_unsupported")
+        return _err(
+            f"{name} has no shared-server path yet: answering it here would "
+            f"read the LOCAL store, which is empty for a session behind a "
+            f"memory server, and report that as the complete corpus. Query the "
+            f"server's REST API for this view, or unset VERIMEM_SERVER_URL to "
+            f"read the local store deliberately.")
     a = _ag()
     # 2. Rate limit (heavy ops only)
     if name in _RATE_LIMITED_TOOLS and not _rate_limit(name):
