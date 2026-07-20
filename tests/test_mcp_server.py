@@ -1168,6 +1168,9 @@ async def test_call_tool_document_semantic_index_and_search(
     import verimem.document_index as di
 
     monkeypatch.setenv("HIPPO_DOCINDEX_DB", str(tmp_path / "docidx.db"))
+    # The doc-index jail (audit 2026-07-20) defaults to the process cwd;
+    # tmp_path is outside it, so the test declares its root explicitly.
+    monkeypatch.setenv("ENGRAM_DOC_ROOTS", str(tmp_path))
     monkeypatch.setattr(di, "_DefaultEmbedder", _FakeDocEmbedder)  # no model load
 
     filler = "La pasta va cotta in acqua salata con pazienza e cura. " * 8

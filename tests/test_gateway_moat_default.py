@@ -23,11 +23,11 @@ class _StubJudge:
         return R()
 
 
-def _client(tmp_path, judge):
+def _client(tmp_path, judge, **app_kw):
     keys = GatewayKeys(tmp_path / "k.db")
     personal = Memory(path=tmp_path / "p.db", llm=judge)
     app = create_app(data_dir=tmp_path, keys=keys, admin_key="adm",
-                     local_tenant="op", local_memory=personal)
+                     local_tenant="op", local_memory=personal, **app_kw)
     return TestClient(app, base_url="http://localhost")
 
 
@@ -68,8 +68,19 @@ def test_gateway_moat_ON_with_local_CE_no_llm(tmp_path):
     assert bad.json()["status"] == "quarantined"
 
 
-def test_gateway_explicit_ground_false_opts_out(tmp_path):
+def test_gateway_ignores_client_ground_false_by_default(tmp_path):
+    # Audit F7 (2026-07-20): the SERVER owns the gate. The writer asking to
+    # skip the moat is the exact party the moat exists to check, so the
+    # request-body `ground` knob is ignored unless the operator opted in.
     c = _client(tmp_path, _StubJudge())
+    r = c.post("/v1/memories", json={"content": "Analytics runs on MongoDB.",
+                                     "source": "We migrated to Postgres.",
+                                     "ground": False})
+    assert r.json()["status"] == "quarantined"
+
+
+def test_gateway_ground_false_honored_with_operator_optin(tmp_path):
+    c = _client(tmp_path, _StubJudge(), allow_client_gate_override=True)
     r = c.post("/v1/memories", json={"content": "Analytics runs on MongoDB.",
                                      "source": "We migrated to Postgres.",
                                      "ground": False})

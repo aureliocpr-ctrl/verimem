@@ -316,3 +316,65 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
                 _settings.SETTINGS_FILE = settings_original_path
             except ImportError:
                 pass
+
+
+# ---------------------------------------------------------------------------
+# Structural isolation guards (2026-07-20).
+#
+# The final full suite had 19 ORDER-DEPENDENT failures (seed 4060964388).
+# Root class, seen twice in two days (VERIMEM_MULTI_WRITER leak, then the
+# thin-mode probe leak): per-test state — an env var written without
+# monkeypatch, or a module-global probe cache — escaping one test and
+# poisoning the next. These two guards sit at the conftest level so the
+# CLASS is impossible, instead of chasing each leaking test.
+#
+# Definition order matters and is deliberate: autouse fixtures tear down
+# LIFO, so being defined LAST means _restore_verimem_env snapshots the env
+# AFTER the pins above (and restores to that pinned state), and the pinning
+# fixtures then undo their own pins afterwards.
+# ---------------------------------------------------------------------------
+
+_VERIMEM_ENV_PREFIXES = ("VERIMEM_", "ENGRAM_", "HIPPO_")
+
+
+def _verimem_env_guard():
+    """Generator: snapshot the product's env namespace, yield, restore it.
+
+    Plain generator (not the fixture itself) so tests can unit-drive it.
+    Only VERIMEM_/ENGRAM_/HIPPO_ keys are owned — foreign env is untouched.
+    """
+    saved = {k: v for k, v in _os.environ.items()
+             if k.startswith(_VERIMEM_ENV_PREFIXES)}
+    yield
+    for k in [k for k in _os.environ
+              if k.startswith(_VERIMEM_ENV_PREFIXES) and k not in saved]:
+        _os.environ.pop(k, None)
+    _os.environ.update(saved)
+
+
+@pytest.fixture(autouse=True)
+def _restore_verimem_env():
+    yield from _verimem_env_guard()
+
+
+def _reset_mcp_remote_probe_state() -> None:
+    """Reset mcp_server's probed-once thin-mode globals, if the module is up.
+
+    ``_remote_mem`` / ``_remote_checked`` / ``_remote_auth_error`` are
+    probed once per process in production (fine: one process, one config).
+    In tests the config flips per case, so a thin-mode test that triggers
+    the probe would otherwise pin every later test to its dead gateway.
+    """
+    import sys as _sys
+    m = _sys.modules.get("verimem.mcp_server")
+    if m is not None:
+        m._remote_mem = None
+        m._remote_checked = False
+        m._remote_auth_error = None
+
+
+@pytest.fixture(autouse=True)
+def _reset_mcp_remote_probe():
+    _reset_mcp_remote_probe_state()
+    yield
+    _reset_mcp_remote_probe_state()
