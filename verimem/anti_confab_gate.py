@@ -300,7 +300,17 @@ def _supersede_same_source_on() -> bool:
     is intra-tenant only; (c) a single-agent-per-tenant assumption (the sole agent
     superseding its OWN values is the intended feature) holds for the common deployment.
     A multi-agent-per-tenant deployment that cannot trust its own writers sets
-    ``ENGRAM_SUPERSEDE_SAME_SOURCE=0`` until per-agent auth (the intra-tenant gap) ships."""
+    ``ENGRAM_SUPERSEDE_SAME_SOURCE=0`` until per-agent auth (the intra-tenant gap) ships.
+
+    OPEN RISK (independent red-team audit, 2026-07-20): the architecture-A thin tier
+    makes assumption (c) FALSE BY CONSTRUCTION where it is used — N agent sessions behind
+    one shared server authenticate with ONE tenant key, so they are many writers in one
+    tenant, and a single compromised session can retire another's true values (spoofable
+    ``verified_by`` + caller-controlled ``asserted_at`` → same-source "evolution"). The
+    default is deliberately left ON pending an explicit product decision; a shared-server
+    deployment that cannot trust every session sets ``ENGRAM_SUPERSEDE_SAME_SOURCE=0``.
+    Documented rather than silently flipped: changing a shipped default is a product
+    call, not an audit side effect."""
     import os
     return os.environ.get("ENGRAM_SUPERSEDE_SAME_SOURCE", "1").strip().lower() not in (
         "0", "off", "false", "no")

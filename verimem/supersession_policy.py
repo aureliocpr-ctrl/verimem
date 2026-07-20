@@ -69,12 +69,25 @@ def classify_write_relation(new_fact: Any, old_fact: Any) -> str:
     caller-controlled and spoofable (even the ``actor:`` self-provenance prefix is a bare
     string), and unsourced writes collapse to the ``"user"`` bucket, so a same-source
     verdict is only as trustworthy as the writers in a tenant. What actually makes enforce
-    safe is therefore NOT authentication (unbuilt) but: (a) it is DEFAULT-OFF — a knowing
-    opt-in; (b) the TENANCY isolation boundary (cross-tenant writes are already blocked);
-    (c) a single-agent-per-tenant assumption (the sole agent superseding its OWN values is
-    the intended feature). A multi-agent-per-tenant deployment enabling it accepts
-    intra-tenant griefing (the unbuilt per-agent-auth gap). Cross-source clashes never
-    reach the supersede path (they classify as ``"conflict"``)."""
+    safe is therefore NOT authentication (unbuilt) but: (a) the TENANCY isolation boundary
+    (cross-tenant writes are already blocked); (b) a single-agent-per-tenant assumption
+    (the sole agent superseding its OWN values is the intended feature). A
+    multi-agent-per-tenant deployment enabling it accepts intra-tenant griefing (the
+    unbuilt per-agent-auth gap). Cross-source clashes never reach the supersede path
+    (they classify as ``"conflict"``).
+
+    CORRECTED 2026-07-20 (independent red-team audit): this docstring still claimed
+    "it is DEFAULT-OFF — a knowing opt-in" as safety argument (a). That was STALE — the
+    default flipped to **ON** on 2026-07-19 (``anti_confab_gate._supersede_same_source_on``,
+    ``ENGRAM_SUPERSEDE_SAME_SOURCE`` defaults to "1"). A reader was being told the guard
+    rested on an opt-in that no longer exists.
+
+    OPEN RISK, not yet decided: assumption (b) is exactly what the architecture-A thin
+    tier breaks. N agent sessions behind ONE shared server share ONE tenant key, so
+    "single agent per tenant" is false by construction there, and one compromised session
+    can retire another's true values. Until per-writer auth ships, a shared-server
+    deployment that cannot trust every session should set
+    ``ENGRAM_SUPERSEDE_SAME_SOURCE=0``."""
     if not is_same_source(new_fact, old_fact):
         return "conflict"
     tn, to = _when_true(new_fact), _when_true(old_fact)
