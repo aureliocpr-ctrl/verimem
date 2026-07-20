@@ -178,6 +178,40 @@ async def test_thin_mode_refuses_a_read_it_cannot_delegate(monkeypatch, tmp_data
 
 
 @pytest.mark.asyncio
+async def test_thin_mode_refuses_a_destructive_fact_op(monkeypatch, tmp_data_dir):
+    """The worst silent no-op in the system: a FORGET that quietly operates on
+    the empty local store. The caller is told the fact is gone; in the shared
+    corpus it is untouched. Found by sweeping the corpus-mutating tools after
+    the first F3 deny-list turned out to cover only readers.
+
+    Episode tools are deliberately NOT in the list: the shared server serves
+    facts, not episodes, so for those the local store IS the right answer."""
+    class _Healthy:
+        def search(self, q, k=5, **kw):
+            return []
+    monkeypatch.setattr(mcp_server, "_remote", lambda: _Healthy())
+    blocks = await _invoke_tool("hippo_fact_forget", {"fact_id": "deadbeef0001"})
+    payload = json.loads(blocks[0])
+    blob = json.dumps(payload).lower()
+    assert ("shared" in blob or "server" in blob), (
+        f"a delete reported an outcome without touching the shared corpus: {payload}")
+
+
+@pytest.mark.asyncio
+async def test_episode_tools_stay_local_in_thin_mode(monkeypatch, tmp_data_dir):
+    """Narrowness check: the shared server has no episode API, so refusing
+    episode ops would break working functionality for no gain."""
+    class _Healthy:
+        def search(self, q, k=5, **kw):
+            return []
+    monkeypatch.setattr(mcp_server, "_remote", lambda: _Healthy())
+    blocks = await _invoke_tool("hippo_forget", {"episode_id": "nope-0001"})
+    payload = json.loads(blocks[0])
+    blob = json.dumps(payload).lower()
+    assert "shared-server path" not in blob, f"episode op wrongly refused: {payload}"
+
+
+@pytest.mark.asyncio
 async def test_same_read_works_normally_without_a_server(monkeypatch, tmp_data_dir):
     """The refusal is narrow: with no server configured nothing changes."""
     monkeypatch.setattr(mcp_server, "_remote", lambda: None)

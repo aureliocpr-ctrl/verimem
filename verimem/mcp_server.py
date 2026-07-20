@@ -163,16 +163,32 @@ def _remote_row(h: dict) -> dict[str, Any]:
     return row
 
 
-#: Fact-corpus readers with NO thin-tier delegation yet. Behind a shared server
-#: they would answer from the local store - empty for that session - and present
-#: it as the whole corpus. Verified present as handlers in this module before
-#: being listed here. remember / facts_recall / facts_search are absent on
-#: purpose: those DO delegate.
+#: Fact-corpus READERS with no thin-tier delegation. Behind a shared server they
+#: answer from the local store - empty for that session - and present it as the
+#: whole corpus. remember / facts_recall / facts_search are absent on purpose:
+#: those DO delegate.
 _THIN_UNSUPPORTED_READS: frozenset[str] = frozenset({
     "hippo_facts_list", "hippo_facts_recent", "hippo_facts_topics",
-    "hippo_facts_by_confidence", "hippo_summary_topic", "hippo_trust_report",
-    "hippo_recall_as_of", "hippo_recall_history", "hippo_oracle_query",
-    "hippo_justified_audit", "hippo_corpus_diff",
+    "hippo_facts_by_confidence", "hippo_facts_by_agent", "hippo_summary_topic",
+    "hippo_trust_report", "hippo_recall_as_of", "hippo_recall_history",
+    "hippo_oracle_query", "hippo_justified_audit", "hippo_corpus_diff",
+    "hippo_rank_facts_trust", "hippo_anti_confab_scan",
+})
+
+#: Fact-corpus MUTATIONS with no thin-tier delegation. Worse than a wrong read:
+#: they report an outcome ("removed", "merged", "superseded") after acting on
+#: the empty LOCAL store, so the caller believes the shared corpus changed when
+#: nothing did. A forget that silently forgets nothing is the most dangerous
+#: no-op here. Found by sweeping the mutating tools AFTER the first version of
+#: this guard covered only readers.
+#: Episode tools are deliberately EXCLUDED: the server serves facts, not
+#: episodes, so for those the local store is the correct answer.
+_THIN_UNSUPPORTED_WRITES: frozenset[str] = frozenset({
+    "hippo_fact_forget", "hippo_fact_forget_with_undo", "hippo_forget_scope",
+    "hippo_fact_supersede", "hippo_fact_supersede_chain", "hippo_facts_merge",
+    "hippo_facts_topic_merge", "hippo_smart_prune", "hippo_decay_run",
+    "hippo_heal_contradictions", "hippo_contradictions_resolve",
+    "hippo_anti_confab_apply", "hippo_fact_priority",
 })
 
 
@@ -6820,14 +6836,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # it from the local store would report an empty corpus as the complete one
     # (audit F3). Refusing is the honest answer: the caller learns the tool is
     # not available in this topology instead of trusting a confident "no facts".
-    if name in _THIN_UNSUPPORTED_READS and _remote() is not None:
+    if (name in _THIN_UNSUPPORTED_READS or name in _THIN_UNSUPPORTED_WRITES)             and _remote() is not None:
         _audit(name, arguments, outcome="thin_unsupported")
+        _what = ("MUTATE the LOCAL store, leaving the shared corpus untouched "
+                 "while reporting an outcome as if it had changed"
+                 if name in _THIN_UNSUPPORTED_WRITES else
+                 "read the LOCAL store, which is empty for a session behind a "
+                 "memory server, and report that as the complete corpus")
         return _err(
-            f"{name} has no shared-server path yet: answering it here would "
-            f"read the LOCAL store, which is empty for a session behind a "
-            f"memory server, and report that as the complete corpus. Query the "
-            f"server's REST API for this view, or unset VERIMEM_SERVER_URL to "
-            f"read the local store deliberately.")
+            f"{name} has no shared-server path yet: running it here would "
+            f"{_what}. Use the server's REST API for this operation, or unset "
+            f"VERIMEM_SERVER_URL to act on the local store deliberately.")
     a = _ag()
     # 2. Rate limit (heavy ops only)
     if name in _RATE_LIMITED_TOOLS and not _rate_limit(name):
