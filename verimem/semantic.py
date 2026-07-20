@@ -2076,24 +2076,38 @@ class SemanticMemory:
         # SEPARATE `telemetry` table so the curated `facts` corpus stays signal
         # (measured 2026-06-04: only 40.6% of the live store was curated-clean;
         # 55% was telemetry exhaust). Non-lossy. OFF -> this block is skipped.
-        from .admission_gate import ROUTE_TELEMETRY, classify_admission, gate_enabled
+        from .admission_gate import (
+            FLAG_INJECTION,
+            REJECT_DUPLICATE,
+            REJECT_POLLUTED,
+            ROUTE_TELEMETRY,
+            classify_admission,
+            gate_enabled,
+        )
         if gate_enabled():
-            # Origin-tag (review round 3, GLM + Kimi convergent): the WRITER
-            # declares intent — purpose="telemetry" routes regardless of
-            # topic, no name-pattern involved. Default None = knowledge.
-            if purpose == "telemetry":
-                self._store_telemetry(fact)
-                fact.routed_to = "telemetry"
-                from .admission_gate import warn_first_route_once
-                warn_first_route_once()
-                return False if return_replaced else None
+            # The content screens ALWAYS run first — including for a write the
+            # caller tagged purpose="telemetry" (red-team 2026-07-21: that
+            # fast-path used to skip classify_admission entirely, so leaked
+            # tool-call markup was never screened on it).
             _verdict = classify_admission(
                 topic=fact.topic, proposition=fact.proposition,
                 status=fact.status,
                 writer_role=getattr(fact, "writer_role", "agent_inference"),
                 source_episodes=fact.source_episodes,
             )
-            if _verdict.decision == ROUTE_TELEMETRY:
+            # Routing is a PRIVILEGE, never a bypass. The `telemetry` table
+            # has no status column, so routing a fact the screens refused
+            # would launder DETECTED poison into benign-looking machine
+            # exhaust — the injection screen above would have flagged it and
+            # the flag would vanish. Both signals that ask for a route (the
+            # writer's purpose tag, and a declared topic prefix) are honoured
+            # only on a clean fact; anything else falls through to the normal
+            # quarantine path, where the verdict stays visible for audit.
+            _refused = _verdict.decision in (
+                REJECT_POLLUTED, FLAG_INJECTION, REJECT_DUPLICATE)
+            _clean = fact.status != "quarantined" and not _refused
+            if _clean and (purpose == "telemetry"
+                           or _verdict.decision == ROUTE_TELEMETRY):
                 self._store_telemetry(fact)
                 # Callers building a receipt need to know the write never
                 # entered the curated corpus (the fact object is their only

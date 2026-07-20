@@ -25,9 +25,12 @@ Decisions (none destructive):
 """
 from __future__ import annotations
 
+import logging
 import re
 import threading as _threading
 from dataclasses import dataclass
+
+_LOG = logging.getLogger(__name__)
 
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
 from .prompt_injection import detect_injection
@@ -138,9 +141,29 @@ def warn_first_route_once(*, table: str = "telemetry") -> None:
 
     Best-effort BY DESIGN: the warn is wrapped — under ``python -W error``
     a warning becomes an exception, and a courtesy must never break (or
-    degrade) the write it narrates. The latch is set only after a
-    DELIVERED warn, so a transient error-filter (e.g. a library's
-    catch_warnings block) does not poison it: the next route retries.
+    degrade) the write it narrates.
+
+    Delivered on TWO channels, and that is the point. A pre-commit review
+    (GLM, 2026-07-21) falsified an earlier claim here — with a transient
+    ``simplefilter("ignore")`` active, ``warnings.warn`` returns normally, so
+    a latch set on "warn didn't raise" is consumed by a warning nobody saw.
+    The first repair (spying on ``warnings.showwarning`` to detect delivery)
+    was rejected by the same review for a worse reason: that swap is
+    PROCESS-GLOBAL, so a concurrent ``catch_warnings`` in another thread can
+    save the spy and restore it afterwards, leaving a dead closure installed
+    for the rest of the process.
+
+    So the message goes to the module LOGGER — whatever the warnings filters
+    are doing — and only the console courtesy rides on ``warnings.warn``.
+    Nothing global is mutated and there is no race.
+
+    Honest bounds, not an absolute: the latch is spent when the LOG call
+    returns, so the event is lost only if the operator's own logging handler
+    raises AND the console warning is filtered — and in that case the next
+    route retries, because the latch was never taken. A logging handler that
+    BLOCKS (a socket handler on a dead peer) would stall this write, exactly
+    as it would stall any other log call in the product; that is a property of
+    the operator's handler, not of this gate.
     """
     global _ROUTE_WARNED
     if _ROUTE_WARNED:
@@ -167,9 +190,22 @@ def warn_first_route_once(*, table: str = "telemetry") -> None:
                 f"{table})."
             )
         try:
+            # Channel 1: the log — immune to warnings filters, nothing global
+            # mutated. This is the channel of RECORD, so the one-time latch is
+            # spent only once this call returns: if a broken handler raises,
+            # the event was not recorded anywhere and the next route retries
+            # (pre-commit review round 2 — the previous version consumed the
+            # latch before either channel had actually delivered anything).
+            _LOG.warning("%s", msg)
+            _ROUTE_WARNED = True
+        except Exception:
+            pass
+        try:
+            # Channel 2: the console courtesy. Best-effort by design — under
+            # `python -W error` this raises, and a courtesy must never break
+            # (or degrade) the write it narrates.
             import warnings
             warnings.warn(msg, UserWarning, stacklevel=3)
-            _ROUTE_WARNED = True
         except Exception:
             pass
 
@@ -207,11 +243,19 @@ def classify_admission(
 
     if _MARKUP_LEAK.search(prop):
         return AdmissionVerdict(REJECT_POLLUTED, "leaked tool-call markup (sanitize first)", False)
+    # The TOPIC is caller-controlled too and recall echoes it verbatim, so it
+    # is screened here, not only in SemanticMemory.store (red-team 2026-07-21:
+    # every OTHER caller of this function — requalify_quarantined,
+    # cleanup_telemetry, audit_corpus — was blind to a poisoned topic). The
+    # scan runs BEFORE the telemetry-prefix branch on purpose: a declared
+    # prefix must never out-rank an injection payload sitting in the topic.
     _inj = detect_injection(prop)
-    if _inj.is_injection:
+    _inj_topic = detect_injection(topic)
+    if _inj.is_injection or _inj_topic.is_injection:
         return AdmissionVerdict(
             FLAG_INJECTION,
-            "prompt-injection signals: " + ",".join(_inj.signals),
+            "prompt-injection signals: " + ",".join(
+                _inj.signals + [f"topic:{s}" for s in _inj_topic.signals]),
             False,
         )
     _route_pfx = telemetry_route_prefixes()
