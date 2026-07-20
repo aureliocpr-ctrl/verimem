@@ -934,8 +934,41 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                 "plan": _plan_for(tenant_id).name,
                 "since": since, "days": days, "total": total}
 
+    # Write idempotency (live e2e 2026-07-20): a client timeout on a SLOW first
+    # write (cold model load) left the write COMPLETING server-side; the retry
+    # then stored a twin. Standard fix: the client sends an Idempotency-Key and
+    # a replay within the TTL returns the ORIGINAL receipt without re-executing.
+    # In-memory per-process cache (tenant, key) -> receipt; 10-min TTL, pruned
+    # inline. Honest scope: per-process only - a server restart mid-retry
+    # degrades to today's behavior (a twin), never to a lost write.
+    _idem_cache: dict[tuple[str, str], tuple[float, dict]] = {}
+    _idem_lock = threading.Lock()
+    _IDEM_TTL_S = 600.0
+
+    def _idem_get(tenant_id: str, key: str | None) -> dict | None:
+        if not key:
+            return None
+        now = time.time()
+        with _idem_lock:
+            for k, (ts, _r) in list(_idem_cache.items()):
+                if now - ts > _IDEM_TTL_S:
+                    _idem_cache.pop(k, None)
+            hit = _idem_cache.get((tenant_id, key))
+            return dict(hit[1]) if hit else None
+
+    def _idem_put(tenant_id: str, key: str | None, receipt: dict) -> None:
+        if not key:
+            return
+        with _idem_lock:
+            _idem_cache[(tenant_id, key)] = (time.time(), dict(receipt))
+
     @app.post("/v1/memories")
-    def add_memory(body: dict, tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+    def add_memory(body: dict, tenant_id: str = Depends(_tenant),
+                   idempotency_key: str | None = Header(
+                       default=None, alias="Idempotency-Key")) -> dict[str, Any]:
+        _replay = _idem_get(tenant_id, idempotency_key)
+        if _replay is not None:
+            return _replay
         mem = tenants.get(tenant_id)
         # input validation at the edge: a malformed type is a client error (400), never
         # a 500 — an unhandled 500 on crafted input is a crashable endpoint = a DoS.
@@ -1031,6 +1064,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         meter.bump(tenant_id, writes=1,
                    stored_ok=1 if res.get("stored") else 0,
                    rejected=0 if res.get("stored") else 1)
+        _idem_put(tenant_id, idempotency_key, res)
         return res
 
     @app.get("/v1/search")

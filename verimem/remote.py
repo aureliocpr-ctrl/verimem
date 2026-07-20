@@ -86,7 +86,32 @@ class RemoteMemory:
             body["source"] = source
         if asserted_at is not None:
             body["asserted_at"] = float(asserted_at)
-        return self._req("POST", "/v1/memories", json=body)
+        # ONE idempotency key per logical write + ONE retry on timeout with the
+        # SAME key: the live failure (server finished a slow cold write after
+        # the client gave up) becomes a replayed receipt, never a twin.
+        import uuid
+        idem = uuid.uuid4().hex
+        headers = {**self._headers, "Idempotency-Key": idem}
+        for attempt in (1, 2):
+            try:
+                kw: dict[str, Any] = {"json": body, "headers": headers,
+                                      "timeout": self._request_timeout_s}
+                r = self._c.request("POST", "/v1/memories", **kw)
+                break
+            except Exception as exc:  # noqa: BLE001 -- retry ONCE on timeout-ish
+                is_timeout = "timeout" in type(exc).__name__.lower() or \
+                    "timeout" in str(exc).lower()
+                if attempt == 2 or not is_timeout:
+                    raise ConnectionError(
+                        f"verimem server unreachable at {self.url}: "
+                        f"{type(exc).__name__}") from exc
+        if r.status_code in (401, 403):
+            raise PermissionError(
+                f"verimem server rejected the API key ({r.status_code})")
+        if r.status_code >= 400:
+            raise RuntimeError(
+                f"verimem server error {r.status_code}: {r.text[:200]}")
+        return r.json()
 
     def search(self, q: str, k: int = 5, **kw: Any) -> list[dict]:
         params: dict[str, Any] = {"q": q, "k": k}
