@@ -5,34 +5,18 @@
   },
   "models": {
     "qwen2.5:7b-instruct": {
-      "auroc": 0.8734,
-      "n_scored": 80,
+      "auroc": 0.858,
+      "n_scored": 600,
       "n_errors": 0,
       "mean_latency_s": 0.32,
       "by_threshold": {
         "40": {
-          "true_admit_rate": 0.8,
-          "misconception_escape_rate": 0.125
+          "true_admit_rate": 0.813,
+          "misconception_escape_rate": 0.217
         },
         "70": {
-          "true_admit_rate": 0.575,
-          "misconception_escape_rate": 0.0
-        }
-      }
-    },
-    "qwen3:8b": {
-      "auroc": 0.5,
-      "n_scored": 80,
-      "n_errors": 0,
-      "mean_latency_s": 1.43,
-      "by_threshold": {
-        "40": {
-          "true_admit_rate": 1.0,
-          "misconception_escape_rate": 1.0
-        },
-        "70": {
-          "true_admit_rate": 0.0,
-          "misconception_escape_rate": 0.0
+          "true_admit_rate": 0.613,
+          "misconception_escape_rate": 0.023
         }
       }
     }
