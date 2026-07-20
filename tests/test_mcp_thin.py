@@ -159,6 +159,48 @@ async def test_scoped_remember_does_not_delegate_to_server(monkeypatch, tmp_data
 
 
 @pytest.mark.asyncio
+async def test_auth_rejection_fails_closed_not_silent_local(monkeypatch, tmp_data_dir):
+    """SECURITY (Kimi red-team audit F1): a server that REJECTS our key must NOT
+    degrade silently to the local store. That neutralizes central key revocation
+    (the agent keeps working locally) and diverges the 'shared' corpus invisibly.
+    Server DOWN -> fail-soft local (never strand). Server REJECTS US -> fail-CLOSED
+    with an explicit error."""
+    class _RejectingRemote:
+        def add(self, content, **kw):
+            raise PermissionError("verimem server rejected the API key (401)")
+        def search(self, q, k=5, **kw):
+            raise PermissionError("verimem server rejected the API key (401)")
+
+    monkeypatch.setattr(mcp_server, "_remote", lambda: _RejectingRemote())
+    blocks = await _invoke_tool("hippo_remember",
+                                {"proposition": "must not land locally.",
+                                 "topic": "authtest"})
+    payload = json.loads(blocks[0])
+    blob = json.dumps(payload).lower()
+    assert payload.get("remote") is not True
+    assert not payload.get("ok")            # the write did NOT quietly succeed
+    assert ("key" in blob or "auth" in blob or "401" in blob)  # explicit, not silent
+
+
+@pytest.mark.asyncio
+async def test_read_with_unsupported_filter_does_not_delegate(monkeypatch, tmp_data_dir):
+    """Kimi red-team audit F4: the REST search carries only (query, k). A recall
+    asking for topic / as_of / min_status / trust_signals must NOT be served by
+    the UNFILTERED server search with the filter silently dropped - and echoed
+    back as if it had been applied ("topic": <requested>). Same rule as the scope
+    guard: a filter the remote cannot honor keeps the read local."""
+    for extra in ({"topic": "project/secret"}, {"as_of": 1784000000.0},
+                  {"min_status": "verified"}, {"trust_signals": True}):
+        spy = _SpyRemote([_HIT])
+        monkeypatch.setattr(mcp_server, "_remote", lambda s=spy: s)
+        blocks = await _invoke_tool("hippo_facts_recall",
+                                    {"query": "tank", "k": 5, **extra})
+        payload = json.loads(blocks[0])
+        assert payload.get("remote") is not True, f"delegated despite {extra}"
+        assert spy.searched == [], f"remote search called despite {extra}"
+
+
+@pytest.mark.asyncio
 async def test_hippo_remember_falls_back_local_on_remote_error(monkeypatch, tmp_data_dir):
     """A remote failure must NOT strand the write — it falls through to the
     local agent path (which stores it), never raises to the caller."""

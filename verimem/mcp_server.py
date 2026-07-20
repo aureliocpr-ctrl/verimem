@@ -86,6 +86,10 @@ def _ag() -> HippoAgent:
 # -> local fallback (fail-soft, a write is never stranded).
 _remote_mem: Any = None
 _remote_checked = False
+# Set when the configured server is reachable but REJECTS our key. Ops that
+# would have been delegated then fail CLOSED instead of silently using the
+# local store (Kimi audit F1).
+_remote_auth_error: str | None = None
 
 
 def _remote_cls():
@@ -94,13 +98,14 @@ def _remote_cls():
 
 
 def _reset_remote_cache() -> None:
-    global _remote_mem, _remote_checked
+    global _remote_mem, _remote_checked, _remote_auth_error
     _remote_mem = None
     _remote_checked = False
+    _remote_auth_error = None
 
 
 def _remote():
-    global _remote_mem, _remote_checked
+    global _remote_mem, _remote_checked, _remote_auth_error
     if _remote_checked:
         return _remote_mem
     _remote_checked = True
@@ -114,9 +119,24 @@ def _remote():
             else:
                 log.warning("VERIMEM_SERVER_URL %s unreachable - MCP uses the "
                             "local store", url)
+        except PermissionError:
+            _remote_auth_error = (
+                f"verimem server {url} rejected the API key")
+            log.error("%s - refusing to serve from the local store instead "
+                      "(fix VERIMEM_SERVER_KEY, or unset VERIMEM_SERVER_URL)",
+                      _remote_auth_error)
         except Exception as exc:  # noqa: BLE001 -- fail-soft to local
             log.warning("MCP remote init failed (%s) - local store", type(exc).__name__)
     return _remote_mem
+
+
+def _auth_closed(name: str, arguments: dict) -> Any:
+    """Fail-closed receipt when the configured server rejected our key."""
+    _audit(name, arguments, outcome="auth_rejected")
+    return _err(f"{_remote_auth_error} - refusing to fall back to the local "
+                f"store (a shared server was configured; writing/reading "
+                f"locally would diverge the corpus). Fix VERIMEM_SERVER_KEY, "
+                f"or unset VERIMEM_SERVER_URL to use the local store.")
 
 
 def _remote_row(h: dict) -> dict[str, Any]:
@@ -6693,9 +6713,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         # shared unscoped corpus, readable by any unscoped recall from another
         # session. Symmetric with the scoped-read guard below: scope keeps the
         # op local. (Forwarding scope over REST is a future frontier.)
-        _rm = _remote() if not any(
-            arguments.get(_s) is not None
-            for _s in ("user_id", "agent_id", "run_id")) else None
+        _scoped_w = any(arguments.get(_s) is not None
+                        for _s in ("user_id", "agent_id", "run_id"))
+        _rm = _remote() if not _scoped_w else None
+        if not _scoped_w and _remote_auth_error:
+            return _auth_closed(name, arguments)
         if _rm is not None:
             from verimem.syntax_pollution import sanitize_proposition
             _prop = sanitize_proposition(str(arguments.get("proposition", "")).strip())
@@ -6710,6 +6732,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     asserted_at=arguments.get("asserted_at"))
                 _audit(name, arguments, outcome="remote")
                 return _ok({"ok": bool(_rr.get("stored")), "remote": True, **_rr})
+            except PermissionError:
+                return _auth_closed(name, arguments)
             except Exception as _exc:  # noqa: BLE001 -- never strand the write
                 log.warning("remote hippo_remember failed (%s) - local fallback",
                             type(_exc).__name__)
@@ -6719,10 +6743,22 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # surface does not expose, so it falls through to the local path (never
     # silently dropping the scope filter). Fail-soft on any remote error.
     if _canon_name in ("hippo_facts_recall", "hippo_facts_search"):
-        _rm = _remote()
-        if _rm is not None and not any(
-                arguments.get(_s) is not None
-                for _s in ("user_id", "agent_id", "run_id")):
+        # The REST search carries only (query, k). Any filter it cannot honor
+        # keeps the read LOCAL - delegating would silently drop the filter and
+        # (worse) echo it back as if applied: a topic-scoped recall would return
+        # the whole tenant labelled with the requested topic (Kimi audit F4).
+        _blocking = (
+            any(arguments.get(_s) is not None
+                for _s in ("user_id", "agent_id", "run_id",
+                           "topic", "as_of", "min_status"))
+            or bool(arguments.get("deep"))
+            or bool(arguments.get("include_legacy"))
+            or bool(arguments.get("trust_signals"))
+        )
+        _rm = _remote() if not _blocking else None
+        if not _blocking and _remote_auth_error:
+            return _auth_closed(name, arguments)
+        if _rm is not None:
             _q = str(arguments.get("query", "")).strip()
             if _q:
                 if _canon_name == "hippo_facts_search":
@@ -6733,9 +6769,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 try:
                     _hits = _rm.search(_q, k=_k)
                     _audit(name, arguments, outcome="remote")
-                    return _ok({"query": _q, "topic": arguments.get("topic"),
-                                "remote": True,
+                    # no "topic" echo: we only get here when no topic filter was
+                    # asked for, and echoing an unapplied filter is a lie.
+                    return _ok({"query": _q, "remote": True,
                                 "items": [_remote_row(_h) for _h in _hits]})
+                except PermissionError:
+                    return _auth_closed(name, arguments)
                 except Exception as _exc:  # noqa: BLE001 -- never strand the read
                     log.warning("remote %s failed (%s) - local fallback",
                                 name, type(_exc).__name__)

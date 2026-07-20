@@ -75,6 +75,50 @@ def test_wrong_key_raises_permission_error(gw):
         rm.add("should not land", topic="x")
 
 
+def test_health_probe_is_public_so_a_revoked_key_still_probes_up(gw):
+    """Kimi audit F1, CORRECTED after verifying the code: /v1/health carries no
+    Depends(_tenant) (gateway.py:911) — it is PUBLIC. So a revoked key probes
+    200 and the delegate IS installed; the rejection really surfaces on the
+    first DATA op. That is why the fail-closed guard lives at the op level
+    (test_auth_rejection_fails_closed_not_silent_local), not at the probe."""
+    client, _good = gw
+    rm = RemoteMemory("http://gateway.local", "vm_wrongkey", _client=client)
+    assert rm.health() is True            # public probe: up, even with a bad key
+    with pytest.raises(PermissionError):  # the DATA op is where auth bites
+        rm.add("should not land", topic="x")
+
+
+def test_health_does_not_mask_auth_rejection_when_probe_is_authenticated():
+    """Defence in depth: if a deployment DOES authenticate the health probe,
+    health() must not report a rejecting server as a usable delegate (the old
+    `except Exception: return True` did exactly that)."""
+    class _Rejecting:
+        def request(self, method, path, **kw):
+            import types
+            return types.SimpleNamespace(status_code=401, text="denied",
+                                         json=lambda: {})
+    rm = RemoteMemory("http://x", "vm_bad", _client=_Rejecting())
+    with pytest.raises(PermissionError):
+        rm.health()
+
+
+def test_open_memory_fails_closed_on_auth_rejection(tmp_path, monkeypatch):
+    """A rejected key must NOT silently hand back an embedded store: the caller
+    asked for the shared server, and quietly writing somewhere else diverges the
+    corpus. Server DOWN -> embedded (fail-soft); server REJECTS -> raise."""
+    from verimem import client as C
+    monkeypatch.setenv("VERIMEM_SERVER_URL", "http://memhost:8077")
+    monkeypatch.setenv("VERIMEM_SERVER_KEY", "vm_bad")
+
+    class _Rejecting:
+        def __init__(self, url, key, timeout_s=None): ...
+        def health(self, raise_on_down=False):
+            raise PermissionError("verimem server rejected the API key (401)")
+    monkeypatch.setattr(C, "_remote_cls", lambda: _Rejecting)
+    with pytest.raises(PermissionError):
+        C.open_memory(tmp_path / "m.db")
+
+
 def test_server_down_raises_connection_error():
     rm = RemoteMemory("http://127.0.0.1:1", "vm_x", timeout_s=0.3)
     with pytest.raises(ConnectionError):

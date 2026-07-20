@@ -123,6 +123,15 @@ def open_memory(path: Any = None, **kwargs: Any):
                 return rm
             _LOG.warning(
                 "verimem server %s unreachable - falling back to embedded", url)
+        except PermissionError:
+            # Kimi audit F1: server reachable but REJECTS our key. Handing back
+            # an embedded store would quietly write somewhere the caller never
+            # asked for. Fail-closed: the caller wanted the shared server.
+            _LOG.error(
+                "verimem server %s rejected the API key - refusing to fall "
+                "back to a local store (fix VERIMEM_SERVER_KEY, or unset "
+                "VERIMEM_SERVER_URL to use the embedded store)", url)
+            raise
         except Exception as exc:  # noqa: BLE001 -- fail-soft to embedded
             _LOG.warning(
                 "verimem thin client init failed (%s) - falling back to "

@@ -73,7 +73,14 @@ class RemoteMemory:
             if raise_on_down:
                 raise
             return False
-        except Exception:  # noqa: BLE001 — auth errors etc: server IS up
+        except PermissionError:
+            # Kimi audit F1: an auth-REJECTED server is not a usable delegate.
+            # Swallowing this as "up" kept the thin client installed with a
+            # revoked key, and every op then fell back silently to the local
+            # store - neutralizing central revocation and diverging the shared
+            # corpus. The rejection surfaces; the caller decides (fail-closed).
+            raise
+        except Exception:  # noqa: BLE001 — other errors: the server IS up
             return True
 
     def add(self, content: str, *, topic: str = "user",
