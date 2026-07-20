@@ -92,6 +92,44 @@ def _fact_trust_line(h: dict[str, Any]) -> str:
 _ANSWER_VERIFY_THRESHOLD = 40.0
 
 
+def _remote_cls():
+    """Lazy import hook (monkeypatchable in tests) for the thin client."""
+    from .remote import RemoteMemory
+    return RemoteMemory
+
+
+def open_memory(path: Any = None, **kwargs: Any):
+    """The ONE constructor consumers should use (architecture A, 2026-07-20).
+
+    With ``VERIMEM_SERVER_URL`` set (+ ``VERIMEM_SERVER_KEY``), returns a
+    :class:`verimem.remote.RemoteMemory` THIN client — no model load, no
+    SQLite handle: N sessions share the one server that owns both. The server
+    is probed once (/v1/health, ``VERIMEM_SERVER_TIMEOUT_S`` default 5s); an
+    unreachable server falls back to the embedded :class:`Memory` with a
+    logged warning — a memory consumer is never stranded. No env -> embedded,
+    exactly as before.
+    """
+    import os as _os
+    url = _os.environ.get("VERIMEM_SERVER_URL", "").strip()
+    if url:
+        key = _os.environ.get("VERIMEM_SERVER_KEY", "").strip()
+        try:
+            timeout = float(_os.environ.get("VERIMEM_SERVER_TIMEOUT_S", "5") or 5)
+        except ValueError:
+            timeout = 5.0
+        try:
+            rm = _remote_cls()(url, key, timeout_s=timeout)
+            if rm.health():
+                return rm
+            _LOG.warning(
+                "verimem server %s unreachable - falling back to embedded", url)
+        except Exception as exc:  # noqa: BLE001 -- fail-soft to embedded
+            _LOG.warning(
+                "verimem thin client init failed (%s) - falling back to "
+                "embedded", type(exc).__name__)
+    return Memory(path, **kwargs) if path is not None else Memory(**kwargs)
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
