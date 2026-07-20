@@ -956,6 +956,43 @@ def _looks_shell_like(text: str) -> bool:
     return bool(_SHELL_PATTERNS.search(text))
 
 
+def _sandbox_policy():
+    """Build the sandbox policy for the MCP shell surface.
+
+    The jail is gated by ``if self.policy.allowed_cwds:`` (sandbox.py), so an
+    EMPTY list does not mean "no restriction configured" - it means the cwd
+    check never runs at all. This wiring used to pass no policy, so the jail was
+    always empty and a caller-supplied ``cwd`` could point anywhere. Combined
+    with strict mode allowlisting ``python -m pytest`` - and pytest importing
+    conftest.py from the rootdir by design - that was arbitrary code execution
+    in the mode that is supposed to be the hard one (red-team audit C2).
+
+    Roots: ``ENGRAM_SANDBOX_ALLOWED_CWDS`` (os.pathsep-separated) if set, else
+    ``ENGRAM_SANDBOX_CWD``, else the process cwd. NEVER empty: if every
+    configured root turns out unusable we fall back to the process cwd rather
+    than silently reopening the jail.
+    """
+    from pathlib import Path as _P
+
+    from .sandbox import SandboxPolicy
+    policy = SandboxPolicy()
+    raw = os.environ.get("ENGRAM_SANDBOX_ALLOWED_CWDS", "").strip()
+    if raw:
+        roots = [r.strip() for r in raw.split(os.pathsep) if r.strip()]
+    elif os.environ.get("ENGRAM_SANDBOX_CWD", "").strip():
+        roots = [os.environ["ENGRAM_SANDBOX_CWD"].strip()]
+    else:
+        roots = [str(_P.cwd())]
+    for r in roots:
+        try:
+            policy.add_allowed_cwd(r)
+        except Exception:  # noqa: BLE001 - a bad root must never OPEN the jail
+            log.warning("sandbox: ignoring unusable cwd root %r", r)
+    if not policy.allowed_cwds:          # fail CLOSED, never wide open
+        policy.add_allowed_cwd(_P.cwd())
+    return policy
+
+
 def _shell_perm_enabled() -> bool:
     """True iff `perm_shell` (HIPPO_ENABLE_SHELL) is on."""
     return os.environ.get("HIPPO_ENABLE_SHELL", "").strip().lower() in (
@@ -6933,7 +6970,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                             "stderr_truncated": False, "stderr_full_len": 0,
                         })
                     cwd = env_cwd
-            shell = SandboxedShell()
+            shell = SandboxedShell(_sandbox_policy())
             result = await asyncio.to_thread(
                 shell.execute, cmd, cwd, dry_run=dry_run,
             )

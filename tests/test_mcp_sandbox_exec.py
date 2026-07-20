@@ -240,6 +240,15 @@ class TestCwdEnvVar:
         env_dir.mkdir()
         arg_dir.mkdir()
         monkeypatch.setenv("ENGRAM_SANDBOX_CWD", str(env_dir))
+        # The PRECEDENCE contract (explicit arg > env > process cwd) is
+        # unchanged. What changed (red-team audit C2) is that the chosen cwd
+        # must also be inside the jail: this test used to assert precedence AND
+        # reachability-anywhere in one breath, and reachability-anywhere is the
+        # precondition of the pytest/conftest.py RCE. Both dirs are allowed
+        # here, so precedence is still what is under test.
+        import os as _os
+        monkeypatch.setenv("ENGRAM_SANDBOX_ALLOWED_CWDS",
+                           str(env_dir) + _os.pathsep + str(arg_dir))
         out = await _invoke("sandbox_exec", {
             "cmd": "python -c \"import os;print(os.getcwd())\"",
             "cwd": str(arg_dir),
@@ -249,6 +258,26 @@ class TestCwdEnvVar:
         assert printed == arg_dir.resolve(), (
             f"explicit cwd arg must override env var; got {printed}"
         )
+
+    async def test_explicit_cwd_arg_outside_the_jail_is_denied(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        """The security half, now stated on its own: an explicit cwd wins the
+        PRECEDENCE contest but still cannot leave the jail. Without this, a
+        caller picks the directory and `python -m pytest` (allowlisted in
+        strict) executes that directory's conftest.py."""
+        monkeypatch.delenv("ENGRAM_CAPABILITY_GATE", raising=False)
+        monkeypatch.delenv("ENGRAM_SANDBOX_MODE", raising=False)
+        jail = tmp_path / "jail"
+        outside = tmp_path / "outside"
+        jail.mkdir()
+        outside.mkdir()
+        monkeypatch.setenv("ENGRAM_SANDBOX_ALLOWED_CWDS", str(jail))
+        out = await _invoke("sandbox_exec", {
+            "cmd": "python -c \"import os;print(os.getcwd())\"",
+            "cwd": str(outside),
+        })
+        assert out["action"] == "deny", f"cwd escaped the jail: {out}"
 
 
 class TestReplayableAudit:
