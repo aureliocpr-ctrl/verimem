@@ -825,7 +825,18 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     l'header Host deve essere localhost (anti DNS-rebinding) e una chiave
     PRESENTATA vince sempre (o fallisce forte: chiave invalida = 401, mai
     fallback silenzioso). Senza ``local_tenant`` il gateway è byte-identico
-    a prima."""
+    a prima.
+
+    SERVING THIS APP YOURSELF: ``create_app`` deliberately has no global side
+    effect, so it does NOT declare the multi-writer context (that marker is
+    process-global; setting it from a constructor leaked into every embedded
+    Memory in the process). ``verimem gateway serve`` — including the Docker
+    image, whose command is exactly that — calls ``mark_multi_writer()`` for
+    you. If you serve this app another way (``uvicorn`` directly, or embedded
+    in a larger ASGI application), call ``mark_multi_writer()`` yourself first:
+    without it the write-gate still assumes a single agent owns the store, and
+    same-source supersession stays ON for a corpus that many sessions write to.
+    """
     if FastAPI is None:  # pragma: no cover
         raise ImportError(
             "the gateway needs fastapi — pip install 'verimem[server]'"
