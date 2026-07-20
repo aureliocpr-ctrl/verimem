@@ -6693,20 +6693,45 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # Cycle #115.A: telemetry timer. Every `_audit()` call below now emits
     # `latency_ms` derived from this monotonic anchor.
     _REQUEST_START_NS.set(time.monotonic_ns())
+    # Dispatch gates run FIRST - before the architecture-A fast-paths below.
+    # They used to run after a = _ag(), i.e. AFTER a fast-path could already
+    # have forwarded the call to the shared server, so a malformed argument
+    # slipped past unvalidated (verified_by="commit:abc" exploded by list()
+    # into 19 one-character refs). Nothing here needs the agent (Kimi audit F10).
+    # Cycle #41 backward-compat: accept `engram_*` as alias for `hippo_*`.
+    # Canonical tool names remain `hippo_*` in list_tools() during the
+    # 3-month deprecation window so existing host configurations
+    # (Claude Code, Cursor, opencode) keep working without forcing a
+    # rediscovery. In v0.4.0 the canonical naming will flip to `engram_*`
+    # and `hippo_*` will become the deprecated alias. See STATE.md.
+    if name.startswith("engram_"):
+        name = "hippo_" + name[len("engram_"):]
+    # Rename Phase 1 (RENAME-PLAN.md, 2026-07-06): verimem_* is the NEW
+    # canonical product alias. Dispatched to the same hippo_* handler so a
+    # host config can spell the product name without any behaviour change;
+    # hippo_* stays valid (non-breaking for 0.3.x users).
+    if name.startswith("verimem_"):
+        name = "hippo_" + name[len("verimem_"):]
+    # A10: normalize JSON `null` → absent so optional numeric args fall back to
+    # their defaults instead of feeding None into int()/float() (TypeError).
+    # Done BEFORE validation so a null for a REQUIRED field still fails cleanly
+    # as "missing required field".
+    arguments = _drop_none_args(arguments)
+    # Security gates (CVE-007) — applied before any handler logic.
+    # 1. Schema validation (§305: hand-tuned manual schemas PLUS lenient
+    #    type/enum schemas auto-derived from every tool's inputSchema, built
+    #    once on first dispatch — pre-§305 only ~15 of ~228 tools validated).
+    await _ensure_derived_schemas()
+    validation_error = _validate_input(name, arguments)
+    if validation_error:
+        _audit(name, arguments, outcome="rejected_schema",
+               error=validation_error)
+        return _err(f"input validation failed: {validation_error}")
     # architecture-A MCP tier: when a shared memory server is configured, the
     # hot WRITE tool delegates to it BEFORE any heavy local agent is built -
     # so N sessions behind one server never each load models / fight the file.
     # Fail-soft: a remote error drops through to the normal local dispatch.
-    # Canonicalize the namespace alias (engram_/verimem_ -> hippo_) up-front so
-    # the architecture-A fast-paths below match whichever product name the host
-    # config uses. (The full remap for every other tool still runs after
-    # a = _ag(), unchanged.)
-    _canon_name = name
-    if _canon_name.startswith("engram_"):
-        _canon_name = "hippo_" + _canon_name[len("engram_"):]
-    elif _canon_name.startswith("verimem_"):
-        _canon_name = "hippo_" + _canon_name[len("verimem_"):]
-    if _canon_name == "hippo_remember":
+    if name == "hippo_remember":
         # SECURITY (critic counterexample 9166607ae84ad54f): a SCOPED write must
         # NOT be delegated to the server's unscoped add - that would drop the
         # tenant prefix scoped_topic applies locally and leak the fact into the
@@ -6742,7 +6767,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # (user_id/agent_id/run_id) needs in-store isolation filtering the REST
     # surface does not expose, so it falls through to the local path (never
     # silently dropping the scope filter). Fail-soft on any remote error.
-    if _canon_name in ("hippo_facts_recall", "hippo_facts_search"):
+    if name in ("hippo_facts_recall", "hippo_facts_search"):
         # The REST search carries only (query, k). Any filter it cannot honor
         # keeps the read LOCAL - delegating would silently drop the filter and
         # (worse) echo it back as if applied: a topic-scoped recall would return
@@ -6761,7 +6786,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if _rm is not None:
             _q = str(arguments.get("query", "")).strip()
             if _q:
-                if _canon_name == "hippo_facts_search":
+                if name == "hippo_facts_search":
                     _k = int(arguments.get("limit", 20) or 20)
                 else:
                     _k = int(arguments.get("k", 5) or 5)
@@ -6779,35 +6804,6 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     log.warning("remote %s failed (%s) - local fallback",
                                 name, type(_exc).__name__)
     a = _ag()
-    # Cycle #41 backward-compat: accept `engram_*` as alias for `hippo_*`.
-    # Canonical tool names remain `hippo_*` in list_tools() during the
-    # 3-month deprecation window so existing host configurations
-    # (Claude Code, Cursor, opencode) keep working without forcing a
-    # rediscovery. In v0.4.0 the canonical naming will flip to `engram_*`
-    # and `hippo_*` will become the deprecated alias. See STATE.md.
-    if name.startswith("engram_"):
-        name = "hippo_" + name[len("engram_"):]
-    # Rename Phase 1 (RENAME-PLAN.md, 2026-07-06): verimem_* is the NEW
-    # canonical product alias. Dispatched to the same hippo_* handler so a
-    # host config can spell the product name without any behaviour change;
-    # hippo_* stays valid (non-breaking for 0.3.x users).
-    if name.startswith("verimem_"):
-        name = "hippo_" + name[len("verimem_"):]
-    # A10: normalize JSON `null` → absent so optional numeric args fall back to
-    # their defaults instead of feeding None into int()/float() (TypeError).
-    # Done BEFORE validation so a null for a REQUIRED field still fails cleanly
-    # as "missing required field".
-    arguments = _drop_none_args(arguments)
-    # Security gates (CVE-007) — applied before any handler logic.
-    # 1. Schema validation (§305: hand-tuned manual schemas PLUS lenient
-    #    type/enum schemas auto-derived from every tool's inputSchema, built
-    #    once on first dispatch — pre-§305 only ~15 of ~228 tools validated).
-    await _ensure_derived_schemas()
-    validation_error = _validate_input(name, arguments)
-    if validation_error:
-        _audit(name, arguments, outcome="rejected_schema",
-               error=validation_error)
-        return _err(f"input validation failed: {validation_error}")
     # 2. Rate limit (heavy ops only)
     if name in _RATE_LIMITED_TOOLS and not _rate_limit(name):
         _audit(name, arguments, outcome="rate_limited")
