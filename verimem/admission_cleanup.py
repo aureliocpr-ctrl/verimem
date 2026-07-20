@@ -33,8 +33,21 @@ _EPISODE_EMBED_COLS = ("summary_embedding", "dg_embedding", "context_embedding")
 def cleanup_telemetry(db_path, *, dry_run: bool = True) -> dict:
     """Route existing telemetry facts out of ``facts`` into ``telemetry``.
 
-    Returns ``{scanned, telemetry_found, moved, dry_run}``. With ``dry_run=True``
-    (default) ``moved`` is 0 and nothing is mutated.
+    Reference-aware since 2026-07-20 (task #61 — the live corpus measured 90
+    ``superseded_by`` pointers into the 291 candidates and ~4.6k
+    ``contradictions`` rows citing them; a naive DELETE strands both):
+
+      - a candidate that is the TARGET of another fact's ``superseded_by``
+        is SKIPPED (never break a chain), counted in ``skipped_referenced``;
+      - UNRESOLVED ``contradictions`` rows citing a moved fact are pruned
+        (scan output, regenerable); RESOLVED rows carry curated state
+        (``resolved_at``/``resolution_note``) and stay;
+      - the FTS index follows the DELETE via the existing ``facts_fts_*``
+        triggers (proven in tests, not assumed).
+
+    Returns ``{scanned, telemetry_found, moved, skipped_referenced,
+    contradictions_pruned, dry_run}``. With ``dry_run=True`` (default)
+    nothing is mutated.
     """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -50,13 +63,25 @@ def cleanup_telemetry(db_path, *, dry_run: bool = True) -> dict:
                 writer_role=r["writer_role"], source_episodes=r["source_episodes"],
             ).decision == ROUTE_TELEMETRY
         ]
+        referenced: set[str] = set()
+        if to_move:
+            ids = [r["id"] for r in to_move]
+            ph = ",".join("?" * len(ids))
+            referenced = {
+                row[0] for row in conn.execute(
+                    "SELECT DISTINCT superseded_by FROM facts "
+                    f"WHERE superseded_by IN ({ph})", ids)
+            }
+        movable = [r for r in to_move if r["id"] not in referenced]
         result = {
             "scanned": len(rows),
             "telemetry_found": len(to_move),
             "moved": 0,
+            "skipped_referenced": len(to_move) - len(movable),
+            "contradictions_pruned": 0,
             "dry_run": dry_run,
         }
-        if dry_run or not to_move:
+        if dry_run or not movable:
             return result
 
         conn.execute(
@@ -65,7 +90,7 @@ def cleanup_telemetry(db_path, *, dry_run: bool = True) -> dict:
         )
         # created_at is read defensively (always present in the live schema, but
         # the unit-test fixture may omit it).
-        for r in to_move:
+        for r in movable:
             keys = r.keys()
             created = r["created_at"] if "created_at" in keys else None
             conn.execute(
@@ -74,8 +99,21 @@ def cleanup_telemetry(db_path, *, dry_run: bool = True) -> dict:
                 (r["id"], r["topic"], r["proposition"], created, r["writer_role"]),
             )
             conn.execute("DELETE FROM facts WHERE id = ?", (r["id"],))
+        moved_ids = [r["id"] for r in movable]
+        has_contra = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='contradictions'"
+        ).fetchone() is not None
+        if has_contra and moved_ids:
+            ph = ",".join("?" * len(moved_ids))
+            cur = conn.execute(
+                "DELETE FROM contradictions WHERE resolved_at IS NULL AND "
+                f"(fact_a_id IN ({ph}) OR fact_b_id IN ({ph}))",
+                moved_ids + moved_ids,
+            )
+            result["contradictions_pruned"] = cur.rowcount
         conn.commit()
-        result["moved"] = len(to_move)
+        result["moved"] = len(movable)
         return result
     finally:
         conn.close()

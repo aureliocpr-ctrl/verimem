@@ -2084,11 +2084,13 @@ class SemanticMemory:
                 source_episodes=fact.source_episodes,
             )
             if _verdict.decision == ROUTE_TELEMETRY:
-                # 0.7.0 default-ON migration: the first route in a process
-                # where the operator made no explicit gate choice must say so.
+                self._store_telemetry(fact)
+                # 0.7.0 default-ON migration: AFTER the route succeeded (the
+                # message states "was routed" — it must not run ahead of the
+                # fact), tell the operator once per process, unless they
+                # already chose explicitly via env.
                 from .admission_gate import warn_default_on_migration_once
                 warn_default_on_migration_once()
-                self._store_telemetry(fact)
                 return False if return_replaced else None
             # Honor the rest of the verdict (audit P1 2026-06-07): pre-fix ONLY
             # ROUTE_TELEMETRY was acted on, so REJECT_POLLUTED (leaked tool-call

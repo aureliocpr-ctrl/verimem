@@ -108,3 +108,55 @@ def test_no_migration_warning_when_choice_is_explicit(tmp_path, monkeypatch):
         sm.store(Fact(proposition="tick", topic="metric/cpu"))
     assert not [w for w in caught
                 if "ENGRAM_ADMISSION_GATE" in str(w.message)]
+
+
+@pytest.mark.parametrize("junk", ["maybe", "2", "yes-ish"])
+def test_unrecognized_env_value_means_on(monkeypatch, junk):
+    # Documented in the CHANGELOG: anything that is not an explicit OFF is ON.
+    monkeypatch.setenv("ENGRAM_ADMISSION_GATE", junk)
+    from verimem.admission_gate import gate_enabled
+    assert gate_enabled() is True
+
+
+def test_unrecognized_env_value_gets_dedicated_warning(tmp_path, monkeypatch):
+    # Round-2 review, both reviewers: ENGRAM_ADMISSION_GATE=disabled is the
+    # intuitive first attempt at switching off — silent-ON would let the
+    # operator believe they disabled it. They get told, once.
+    monkeypatch.setenv("ENGRAM_ADMISSION_GATE", "disabled")
+    import verimem.admission_gate as ag
+    monkeypatch.setattr(ag, "_MIGRATION_WARNED", False)
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        sm.store(Fact(proposition="tick", topic="metric/cpu"))
+    hits = [w for w in caught if "not a recognized value" in str(w.message)]
+    assert len(hits) == 1
+    assert "'disabled'" in str(hits[0].message)
+    # and the write WAS routed (unrecognized means ON)
+    assert _count(tmp_path / "s.db", "SELECT COUNT(*) FROM telemetry") == 1
+
+
+def test_migration_message_names_the_route_table(monkeypatch):
+    # Round-2 review, GLM: the episode path stores in episode_telemetry —
+    # a hardcoded 'telemetry' query hint would be wrong there.
+    monkeypatch.delenv("ENGRAM_ADMISSION_GATE", raising=False)
+    import verimem.admission_gate as ag
+    monkeypatch.setattr(ag, "_MIGRATION_WARNED", False)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        ag.warn_default_on_migration_once(table="episode_telemetry")
+    assert caught and "episode_telemetry" in str(caught[0].message)
+
+
+def test_route_survives_warnings_promoted_to_errors(tmp_path, monkeypatch):
+    # Review round 2, Kimi #9: under `python -W error` warnings.warn raises —
+    # a migration courtesy must never break (or degrade) the write it
+    # narrates. The route must complete; the courtesy is simply lost.
+    _no_explicit_choice(monkeypatch)
+    import verimem.admission_gate as ag
+    monkeypatch.setattr(ag, "_MIGRATION_WARNED", False)
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        sm.store(Fact(proposition="tick", topic="metric/cpu"))  # must not raise
+    assert _count(tmp_path / "s.db", "SELECT COUNT(*) FROM telemetry") == 1

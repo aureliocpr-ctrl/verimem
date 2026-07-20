@@ -26,6 +26,7 @@ Decisions (none destructive):
 from __future__ import annotations
 
 import re
+import threading as _threading
 from dataclasses import dataclass
 
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
@@ -90,36 +91,79 @@ def gate_enabled() -> bool:
     return True
 
 
-#: One-time-per-process latch for the 0.7.0 migration warning.
+#: One-time-per-process latch for the 0.7.0 migration warning, plus its
+#: lock (review round 2, GLM #3: check-then-set alone is a TOCTOU under
+#: threads and the contract is "exactly one").
 _MIGRATION_WARNED = False
+_MIGRATION_LOCK = _threading.Lock()
+
+_RECOGNIZED_OFF: tuple[str, ...] = ("0", "off", "false", "no")
+_RECOGNIZED_ON: tuple[str, ...] = ("1", "on", "true", "strict")
 
 
-def warn_default_on_migration_once() -> None:
+def warn_default_on_migration_once(*, table: str = "telemetry") -> None:
     """Emit the 0.7.0 default-ON migration warning, once per process.
 
-    Called by the write path on a ROUTE_TELEMETRY verdict. Silent routing
-    by default would be "memory that decides for you without telling you"
-    (Kimi-K3 review) — so the FIRST routed write tells the operator what
-    happened and how to opt out. An explicit env choice (any recognized
-    value, ON or OFF) means the operator already decided: no warning.
+    Called by the write path AFTER a route succeeded — the message states a
+    fact ("was routed"), so it must never run ahead of it (round-2 review,
+    Kimi). ``table`` names where THIS route stored the payload (facts →
+    ``telemetry``, episodes → ``episode_telemetry``) so the query hint in
+    the message is never wrong (round-2 review, GLM).
+
+    Suppressed only by a RECOGNIZED env value — the operator decided. A
+    non-empty unrecognized value ("disabled", "maybe") means the operator
+    THINKS they configured something: they get a dedicated warning saying
+    the value is unrecognized and treated as ON (both reviewers flagged
+    the silent-ON here; GLM's example "disabled" is the intuitive first
+    attempt at switching something off).
+
+    Best-effort BY DESIGN: the warn is wrapped — under ``python -W error``
+    a warning becomes an exception, and a migration courtesy must never
+    break (or degrade) the write it narrates. The latch is set only after
+    a DELIVERED warn, so a transient error-filter (e.g. a library's
+    catch_warnings block) does not poison it: the next route retries.
     """
     global _MIGRATION_WARNED
     if _MIGRATION_WARNED:
         return
     import os
-    if os.environ.get("ENGRAM_ADMISSION_GATE", "").strip():
+    raw = os.environ.get("ENGRAM_ADMISSION_GATE", "").strip()
+    if raw.lower() in _RECOGNIZED_OFF + _RECOGNIZED_ON:
         return
-    _MIGRATION_WARNED = True
-    import warnings
-    warnings.warn(
-        "verimem 0.7.0: the admission gate is now ON by default — this "
-        "write had a machine-telemetry topic and was routed to the "
-        "'telemetry' table instead of the curated facts corpus (non-lossy; "
-        "query it with: SELECT * FROM telemetry). Set "
-        "ENGRAM_ADMISSION_GATE=0 to restore the legacy behavior.",
-        UserWarning,
-        stacklevel=3,
-    )
+    with _MIGRATION_LOCK:
+        if _MIGRATION_WARNED:
+            return
+        if raw:
+            msg = (
+                f"verimem: ENGRAM_ADMISSION_GATE={raw!r} is not a recognized "
+                "value (use 0/off/false/no to disable, 1/on/true/strict to "
+                "enable) — treating it as ON: this write was routed to the "
+                f"'{table}' table (non-lossy). Set ENGRAM_ADMISSION_GATE=0 "
+                "to restore the legacy behavior."
+            )
+        else:
+            msg = (
+                "verimem 0.7.0: the admission gate is now ON by default — "
+                "this write had a machine-telemetry topic and was routed to "
+                f"the '{table}' table instead of the curated facts corpus "
+                f"(non-lossy; query it with: SELECT * FROM {table}). Set "
+                "ENGRAM_ADMISSION_GATE=0 to restore the legacy behavior."
+            )
+        try:
+            from pathlib import Path
+
+            from .config import CONFIG
+            if (Path(CONFIG.data_dir) / "ADMISSION_GATE_ON").exists():
+                msg += (" Note: the legacy ADMISSION_GATE_ON flag file was "
+                        "found; it is deprecated and ignored since 0.7.0.")
+        except Exception:
+            pass
+        try:
+            import warnings
+            warnings.warn(msg, UserWarning, stacklevel=3)
+            _MIGRATION_WARNED = True
+        except Exception:
+            pass
 
 
 @dataclass

@@ -577,10 +577,13 @@ class EpisodicMemory:
         # here must never break a save.
         try:
             from .admission_gate import gate_enabled, warn_default_on_migration_once
-            if gate_enabled() and is_call_telemetry(getattr(episode, "task_text", "")):
-                # 0.7.0 default-ON migration: first route in the process warns.
-                warn_default_on_migration_once()
+            if gate_enabled() and is_call_telemetry(
+                    getattr(episode, "task_text", None) or ""):
                 replaced = self._store_episode_telemetry(episode)
+                # 0.7.0 default-ON migration: warn AFTER the route succeeded
+                # (never ahead of the fact it narrates — see semantic.store);
+                # episodes land in their own table, so the query hint differs.
+                warn_default_on_migration_once(table="episode_telemetry")
                 return replaced if return_replaced else None
         except Exception:  # noqa: BLE001 — routing must never break the save
             pass

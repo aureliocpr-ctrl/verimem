@@ -378,3 +378,20 @@ def _reset_mcp_remote_probe():
     _reset_mcp_remote_probe_state()
     yield
     _reset_mcp_remote_probe_state()
+
+
+def _reset_admission_migration_latch() -> None:
+    """The 0.7.0 admission-gate migration warning is once-per-PROCESS by
+    design; across tests that latch is shared state of exactly the class
+    these guards exist to kill (review round 2, Kimi #10)."""
+    import sys as _sys
+    m = _sys.modules.get("verimem.admission_gate")
+    if m is not None:
+        m._MIGRATION_WARNED = False
+
+
+@pytest.fixture(autouse=True)
+def _reset_admission_latch():
+    _reset_admission_migration_latch()
+    yield
+    _reset_admission_migration_latch()
