@@ -272,3 +272,40 @@ def test_escalate_band_score_backcompat_returns_float(monkeypatch):
     assert be.escalate_band_score("src", "fact") == 73.0
     monkeypatch.setattr(be, "escalate_band", lambda s, f: None)
     assert be.escalate_band_score("src", "fact") is None
+
+
+def test_score_via_ollama_calls_llm_directly_not_ce(monkeypatch):
+    """Regression (self-review 2026-07-20): _score_via_ollama must use the
+    ollama llm even when ENGRAM_GROUNDING_BACKEND=local -- fact_grounding_
+    score_ex would take the CE and silently swap the judge we picked."""
+    monkeypatch.setenv("ENGRAM_GROUNDING_BACKEND", "local")
+    seen = {}
+
+    class _FakeLLM:
+        default_model = ""
+        def complete(self, system, messages, model=None, max_tokens=None):
+            seen["system"] = system
+            seen["user"] = messages[0]["content"]
+            return SimpleNamespace(text="Score: 88")
+    import verimem.llm as _llm
+    monkeypatch.setattr(_llm, "_build", lambda p: _FakeLLM())
+    assert be._score_via_ollama("the doc", "the fact") == 88.0
+    from verimem.grounding_gate import _FACT_SYSTEM
+    assert seen["system"] == _FACT_SYSTEM          # rubric in system channel
+    assert "the doc" in seen["user"] and "the fact" in seen["user"]
+
+
+def test_local_available_rejects_same_family_wrong_size(monkeypatch):
+    """A qwen2.5:1.5b present must NOT report a qwen2.5:7b-instruct judge as
+    available (self-review 2026-07-20: the old prefix match false-positived)."""
+    import io as _io
+    import json as _json
+
+    class _Resp(_io.BytesIO):
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+    payload = _json.dumps({"models": [{"name": "qwen2.5:1.5b"}]}).encode()
+    monkeypatch.setattr(be.urllib.request, "urlopen", lambda *a, **k: _Resp(payload))
+    monkeypatch.delenv("ENGRAM_BAND_LOCAL_MODEL", raising=False)  # want qwen2.5:7b-instruct
+    be._local_ollama_available.cache_clear()
+    assert be._local_ollama_available() is False

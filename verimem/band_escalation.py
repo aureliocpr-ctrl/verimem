@@ -107,22 +107,35 @@ def _local_ollama_available() -> bool:
             names = {m.get("name", "") for m in json.loads(r.read()).get("models", [])}
     except Exception:  # noqa: BLE001 -- no server / bad response -> not available
         return False
-    # match "qwen2.5:7b-instruct" or a bare-name/prefix form ollama may report.
-    return any(n == want or n.startswith(want) or want.startswith(n.split(":")[0])
+    # require the REQUESTED model, not a same-family sibling: a qwen2.5:1.5b
+    # present must NOT report a qwen2.5:7b-instruct judge as available. Accept
+    # an exact tag or ollama's ":latest" form; a bare "qwen2.5:7b-instruct"
+    # request also matches "qwen2.5:7b-instruct" verbatim.
+    return any(n == want or n == want + ":latest"
+               or (":" not in want and n.split(":")[0] == want)
                for n in names if n)
 
 
 def _score_via_ollama(source: str, fact: str) -> float | None:
-    """Score with the local ollama judge via the SAME production rubric/scale
-    (fact_grounding_score_ex + _FACT_SYSTEM), fully OFFLINE. Fail-soft: any
-    error -> None so the cascade falls through to claude, then review."""
+    """Score with the local ollama judge, fully OFFLINE. Calls the ollama llm
+    DIRECTLY with the SAME production rubric (_FACT_SYSTEM, claude 0-100 scale)
+    -- NOT via fact_grounding_score_ex, whose backend resolution would swap in
+    the CE instead of this judge when ENGRAM_GROUNDING_BACKEND=local is set.
+    Channel separation as the claude path: rubric in the system prompt, only
+    the tenant DATA in the user prompt. Fail-soft: any error -> None so the
+    cascade falls through to claude, then review; an unreadable verdict never
+    admits."""
     try:
-        from .grounding_gate import fact_grounding_score_ex
+        from .grounding_gate import _FACT_SYSTEM
         from .llm import _build
+        model = _ollama_judge_model()
         llm = _build("ollama")
-        llm.default_model = _ollama_judge_model()
-        score, _judge = fact_grounding_score_ex(llm, source, fact)
-        return None if score is None else min(100.0, max(0.0, float(score)))
+        llm.default_model = model
+        user = f"Source: {source}\n\nCandidate fact: {fact}\n\nScore:"
+        resp = llm.complete(_FACT_SYSTEM,
+                            [{"role": "user", "content": user}],
+                            model=model, max_tokens=16)
+        return _parse_score(getattr(resp, "text", ""))
     except Exception:  # noqa: BLE001 -- offline judge failure degrades to fallback
         return None
 
