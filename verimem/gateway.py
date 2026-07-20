@@ -32,6 +32,7 @@ import secrets
 import sqlite3
 import threading
 import time
+from collections import OrderedDict
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -948,18 +949,50 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     # In-memory per-process cache (tenant, key) -> receipt; 10-min TTL, pruned
     # inline. Honest scope: per-process only - a server restart mid-retry
     # degrades to today's behavior (a twin), never to a lost write.
-    _idem_cache: dict[tuple[str, str], tuple[float, dict]] = {}
-    _idem_lock = threading.Lock()
+    # Hardened after an independent red-team audit (F6): the original
+    # check->execute->store was three unsynchronized steps, so two retries of
+    # the SAME key arriving together both missed the cache and both executed -
+    # reproducing the twin write this feature exists to prevent. And pruning
+    # was TTL-only, so a flood of UNIQUE keys grew the process for the whole
+    # window (rate limiting is off by default) = a cheap memory DoS.
+    _idem_cache: OrderedDict[tuple[str, str], tuple[float, dict]] = OrderedDict()
+    _idem_lock = threading.Lock()          # guards _idem_cache AND _idem_inflight
+    _idem_inflight: dict[tuple[str, str], threading.Lock] = {}
     _IDEM_TTL_S = 600.0
+    try:
+        _IDEM_MAX = max(1, int(_os.environ.get("VERIMEM_IDEM_MAX", "10000")))
+    except ValueError:
+        _IDEM_MAX = 10000
+
+    def _idem_entry_lock(tenant_id: str, key: str) -> threading.Lock:
+        """One lock per (tenant, key). The caller holds it across the whole
+        check->execute->store window, so a concurrent retry WAITS and then
+        replays the receipt instead of executing a twin."""
+        k = (tenant_id, key)
+        with _idem_lock:
+            lk = _idem_inflight.get(k)
+            if lk is None:
+                lk = _idem_inflight[k] = threading.Lock()
+            return lk
+
+    def _idem_release(tenant_id: str, key: str, lk: threading.Lock) -> None:
+        lk.release()
+        with _idem_lock:
+            if not lk.locked():            # nobody waiting -> drop the entry
+                _idem_inflight.pop((tenant_id, key), None)
 
     def _idem_get(tenant_id: str, key: str | None) -> dict | None:
         if not key:
             return None
         now = time.time()
         with _idem_lock:
-            for k, (ts, _r) in list(_idem_cache.items()):
-                if now - ts > _IDEM_TTL_S:
-                    _idem_cache.pop(k, None)
+            # insertion-ordered by time: stop at the first still-fresh entry
+            while _idem_cache:
+                _k, (_ts, _r) = next(iter(_idem_cache.items()))
+                if now - _ts > _IDEM_TTL_S:
+                    _idem_cache.pop(_k, None)
+                else:
+                    break
             hit = _idem_cache.get((tenant_id, key))
             return dict(hit[1]) if hit else None
 
@@ -968,14 +1001,34 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
             return
         with _idem_lock:
             _idem_cache[(tenant_id, key)] = (time.time(), dict(receipt))
+            # bounded: a unique-key flood evicts the oldest, never grows
+            while len(_idem_cache) > _IDEM_MAX:
+                _idem_cache.popitem(last=False)
+
+    app.state.idem_cache = _idem_cache     # introspectable (bounded-growth test)
 
     @app.post("/v1/memories")
     def add_memory(body: dict, tenant_id: str = Depends(_tenant),
                    idempotency_key: str | None = Header(
                        default=None, alias="Idempotency-Key")) -> dict[str, Any]:
-        _replay = _idem_get(tenant_id, idempotency_key)
-        if _replay is not None:
-            return _replay
+        # ONE lock across check->execute->store for a given key: a simultaneous
+        # retry blocks here and then replays the original receipt, instead of
+        # racing through the gap and storing a twin (audit F6). No key -> the
+        # unchanged path (nothing to de-duplicate against).
+        if not idempotency_key:
+            return _add_memory_impl(body, tenant_id, None)
+        _lk = _idem_entry_lock(tenant_id, idempotency_key)
+        _lk.acquire()
+        try:
+            _replay = _idem_get(tenant_id, idempotency_key)
+            if _replay is not None:
+                return _replay
+            return _add_memory_impl(body, tenant_id, idempotency_key)
+        finally:
+            _idem_release(tenant_id, idempotency_key, _lk)
+
+    def _add_memory_impl(body: dict, tenant_id: str,
+                         idempotency_key: str | None) -> dict[str, Any]:
         mem = tenants.get(tenant_id)
         # input validation at the edge: a malformed type is a client error (400), never
         # a 500 — an unhandled 500 on crafted input is a crashable endpoint = a DoS.
