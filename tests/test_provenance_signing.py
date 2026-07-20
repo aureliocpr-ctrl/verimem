@@ -58,6 +58,12 @@ def test_audit_store_counts_and_names_offenders(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "0")
     monkeypatch.setenv("ENGRAM_RECONCILE_ON_WRITE", "0")
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
+    # The labrador/poodle pair below is a deliberate contradiction (it makes
+    # the unsigned offender). L3-semantic auto-enforces when the local NLI
+    # model is installed (unset env → auto), which would quarantine the
+    # second write BEFORE the signature audit under test here — this test
+    # isolates every other layer already; isolate L3 too.
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     from verimem.client import Memory
     m = Memory(tmp_path / "s.db")
     good = m.add("Rex is a labrador.", topic="pets",
