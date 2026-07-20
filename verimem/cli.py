@@ -514,6 +514,10 @@ def gateway_serve(
     if host not in ("127.0.0.1", "localhost", "::1"):
         console.print("[yellow]non-loopback bind:[/yellow] put a TLS "
                       "reverse-proxy (nginx/caddy) in front for remote use")
+    # This process is now a SHARED server: N sessions may share one tenant key,
+    # so the write-gate stops assuming a single agent owns the store (audit F2).
+    from .gateway import mark_multi_writer
+    mark_multi_writer()
     uvicorn.run(app_, host=host, port=port, log_level="info")
 
 

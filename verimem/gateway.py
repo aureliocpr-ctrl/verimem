@@ -27,6 +27,7 @@ reimplementiamo. Avvio: ``verimem gateway serve`` (CLI) o
 from __future__ import annotations
 
 import functools
+import os
 import re
 import secrets
 import sqlite3
@@ -56,6 +57,25 @@ _LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
 #: caller. "testclient" is Starlette's in-process ASGI caller — there is no
 #: network peer at all there, so it cannot be a rebinding vector.
 _LOCAL_PEERS = frozenset({"127.0.0.1", "::1", "localhost", "testclient"})
+
+
+def mark_multi_writer() -> None:
+    """Declare that this PROCESS is serving a shared memory server.
+
+    A served gateway is the multi-writer context: N agent sessions can sit
+    behind one tenant key, so the write-gate must not assume a single agent
+    owns the store (it makes same-source supersession default off - audit F2).
+
+    Called from the serve entry point, deliberately NOT from ``create_app``:
+    the flag is process-global, and merely CONSTRUCTING an app (a test, or a
+    gateway embedded in a larger program) is not a deployment. Doing it in the
+    constructor leaked the flag into every embedded Memory in the process and
+    turned 4 unrelated supersede tests red depending on test order.
+
+    ``setdefault``: an explicit operator setting always wins.
+    """
+    import os as _os
+    _os.environ.setdefault("VERIMEM_MULTI_WRITER", "1")
 
 
 def _host_only(raw: str | None) -> str:
@@ -805,13 +825,6 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     PRESENTATA vince sempre (o fallisce forte: chiave invalida = 401, mai
     fallback silenzioso). Senza ``local_tenant`` il gateway è byte-identico
     a prima."""
-    # A gateway IS the multi-writer context: N agent sessions can share one
-    # tenant key, so the write-gate running inside this process must not
-    # assume a single agent owns the store (Kimi audit F2 - it makes
-    # same-source supersession default OFF here). setdefault: an explicit
-    # operator setting always wins.
-    import os as _os
-    _os.environ.setdefault("VERIMEM_MULTI_WRITER", "1")
     if FastAPI is None:  # pragma: no cover
         raise ImportError(
             "the gateway needs fastapi — pip install 'verimem[server]'"
@@ -972,7 +985,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     _idem_inflight: dict[tuple[str, str], threading.Lock] = {}
     _IDEM_TTL_S = 600.0
     try:
-        _IDEM_MAX = max(1, int(_os.environ.get("VERIMEM_IDEM_MAX", "10000")))
+        _IDEM_MAX = max(1, int(os.environ.get("VERIMEM_IDEM_MAX", "10000")))
     except ValueError:
         _IDEM_MAX = 10000
 
