@@ -49,7 +49,13 @@ class _FakeSemantic:
     def __init__(self, facts: list[_FakeFact]) -> None:
         self._facts = facts
 
-    def list_facts(self, *, limit: int = 50, offset: int = 0):
+    def list_facts(self, *, limit: int = 50, offset: int = 0,
+                   include_superseded: bool = False,
+                   hide_low_trust: bool = False):
+        # mirror the real list_facts signature: the briefing now asks for
+        # hide_low_trust=True (2026-07-20). These fakes carry no low-trust
+        # status, so the flag is a no-op here — it just must not TypeError,
+        # which would send the briefing's try/except to recent_facts=[].
         ordered = sorted(self._facts, key=lambda f: -f.created_at)
         return ordered[offset:offset + limit]
 

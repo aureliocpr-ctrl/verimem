@@ -2718,7 +2718,8 @@ class SemanticMemory:
 
     def list_facts(self, *, limit: int = 10000, offset: int = 0,
                     topic: str | None = None,
-                    include_superseded: bool = False) -> list[Fact]:
+                    include_superseded: bool = False,
+                    hide_low_trust: bool = False) -> list[Fact]:
         """CYCLE #10 fix: paginated list. mcp_server.py called
         a.semantic.list_facts(limit=..., offset=0) in 28 places, but the
         method did not exist → AttributeError → caught by bare
@@ -2746,6 +2747,14 @@ class SemanticMemory:
                 params.append(topic)
             if not include_superseded:
                 clauses.append("superseded_by IS NULL")
+            if hide_low_trust:
+                # The statuses recall hides (_STATUS_RANK < 0). Opt-in, so the
+                # 28 analysis/cleanup callers still see the whole corpus; the
+                # proactive briefing sets it so it never presents a
+                # gate-rejected claim as a "recent fact" (2026-07-20).
+                clauses.append(
+                    "COALESCE(status,'model_claim') "
+                    "NOT IN ('orphaned','quarantined','user_belief')")
             sql = "SELECT * FROM facts"
             if clauses:
                 sql += " WHERE " + " AND ".join(clauses)

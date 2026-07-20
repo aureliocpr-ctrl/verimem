@@ -118,7 +118,12 @@ def get_briefing(
     recent_facts: list[dict[str, Any]] = []
     if semantic is not None and hasattr(semantic, "list_facts"):
         try:
-            facts = semantic.list_facts(limit=n_facts, offset=0)
+            # hide_low_trust: the briefing is memory injected into the
+            # session — it must not present quarantined/orphaned/user_belief
+            # rows as "recent facts" (context poisoning). The analysis tools
+            # that also call list_facts keep the default (whole corpus).
+            facts = semantic.list_facts(limit=n_facts, offset=0,
+                                        hide_low_trust=True)
             for f in facts:
                 recent_facts.append({
                     "id": getattr(f, "id", ""),
