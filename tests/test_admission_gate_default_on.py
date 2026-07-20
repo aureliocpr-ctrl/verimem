@@ -136,6 +136,28 @@ def test_unrecognized_env_value_gets_dedicated_warning(tmp_path, monkeypatch):
     assert _count(tmp_path / "s.db", "SELECT COUNT(*) FROM telemetry") == 1
 
 
+def test_public_receipt_tells_the_truth_about_routing(tmp_path, monkeypatch):
+    # Found by the fresh-install product probe (2026-07-20): a routed write
+    # returned {'stored': True, 'disposition': 'admitted', 'status':
+    # 'model_claim'} — a receipt that lies about where the write went. The
+    # public receipt must report what HAPPENED: the fact never entered the
+    # curated corpus, it was routed.
+    monkeypatch.delenv("ENGRAM_ADMISSION_GATE", raising=False)
+    from verimem.client import Memory
+    m = Memory(path=tmp_path / "m.db")
+    r = m.add("ambient daemon event fired at tick 42", topic="bus/probe")
+    assert r["stored"] is True
+    assert r["status"] == "routed_telemetry"
+    assert r["routed_to"] == "telemetry"
+    assert r["adjudication"]["disposition"] == "routed_telemetry"
+    assert "routed" in r["adjudication"]["reason"]  # not the generic "rejected"
+    # a real fact keeps the normal receipt
+    r2 = m.add("our staging deploys run from the ci pipeline",
+               topic="lessons/deploy")
+    assert r2["status"] != "routed_telemetry"
+    assert "routed_to" not in r2
+
+
 def test_migration_message_names_the_route_table(monkeypatch):
     # Round-2 review, GLM: the episode path stores in episode_telemetry —
     # a hardcoded 'telemetry' query hint would be wrong there.

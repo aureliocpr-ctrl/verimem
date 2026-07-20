@@ -2085,6 +2085,10 @@ class SemanticMemory:
             )
             if _verdict.decision == ROUTE_TELEMETRY:
                 self._store_telemetry(fact)
+                # Callers building a receipt need to know the write never
+                # entered the curated corpus (the fact object is their only
+                # return channel here — store() returns bool/None).
+                fact.routed_to = "telemetry"
                 # 0.7.0 default-ON migration: AFTER the route succeeded (the
                 # message states "was routed" — it must not run ahead of the
                 # fact), tell the operator once per process, unless they

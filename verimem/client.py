@@ -307,9 +307,30 @@ class Memory:
         if action == "downgrade":
             fact.status = "quarantined"
         self.semantic.store(fact, embed="sync")
+        # A telemetry-topic write under the default-ON admission gate is
+        # ROUTED inside store(): the fact never entered the curated corpus,
+        # and the receipt must say so — "admitted" here would be false
+        # (found by the fresh-install product probe, 2026-07-20).
+        _routed = getattr(fact, "routed_to", None)
+        if _routed:
+            self._record_trust("routed_telemetry", layers=None, topic=topic)
+            _emit_flow("flow.write", stored=True, status="routed_telemetry",
+                       fact_id=str(fact.id), topic=str(topic),
+                       layers=["admission-route"])
+            _adj = _adjudication(gate, disposition="routed_telemetry",
+                                 verified_by=verified_by, warnings=warnings)
+            self._audit_record(_adj, topic=topic, proposition=text,
+                               fact_id=str(fact.id),
+                               judge=getattr(gate, "judge", None),
+                               layers=["admission-route"])
+            return {"stored": True, "status": "routed_telemetry",
+                    "routed_to": _routed, "warnings": warnings,
+                    "advice": gate.advice,
+                    "grounding_score": gate.grounding_score,
+                    "adjudication": _adj}
         # Review 2026-07-09 #2/#3: count AFTER store, from the fact's FINAL
         # status — screens inside store() (injection screen: default ON) can
-        # flip a gate-persisted fact to quarantined, and the odometer must
+        # flip a fact to quarantined, and the odometer must
         # report what HAPPENED, not the gate's intention. Layer attribution
         # only when a layer actually ACTED: gate downgrade -> its layers;
         # store-screen flip -> "store-screen"; clean admit -> none (advisory
@@ -1382,6 +1403,9 @@ def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
             elif disposition == "quarantined":
                 reason = ("quarantined by a store-time integrity screen "
                           "(e.g. prompt-injection); kept out of default recall")
+            elif disposition == "routed_telemetry":
+                reason = ("machine-telemetry topic routed to the telemetry "
+                          "table by the admission gate (non-lossy)")
             else:
                 reason = "rejected by the write gate"
     return {

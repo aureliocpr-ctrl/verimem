@@ -83,9 +83,12 @@ def _stores(tmp_path):
     return sm, ContradictionStore(sm.db_path)
 
 
-def test_reconcile_skips_telemetry_candidate(tmp_path) -> None:
+def test_reconcile_skips_telemetry_candidate(tmp_path, monkeypatch) -> None:
     # a clean temporal update in every other respect — but the OLD side is
-    # telemetry, so it must be neither superseded nor contested.
+    # telemetry, so it must be neither superseded nor contested. Legacy
+    # corpus: the telemetry row must SIT in facts for the guard to skip it,
+    # so the write-side gate (ON by default since 0.7.0) is opted out.
+    monkeypatch.setenv("ENGRAM_ADMISSION_GATE", "0")
     sm, cs = _stores(tmp_path)
     old = _fact("old", "metric/consensus_verdict", "config X is 30s", age_days=30)
     new = _fact("new", "project/engram/cfg", "config X is 5s")
