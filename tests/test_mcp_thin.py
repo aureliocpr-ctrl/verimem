@@ -71,6 +71,70 @@ async def test_hippo_remember_delegates_to_server(monkeypatch):
     assert payload.get("remote") is True and payload.get("id") == "srv-1"
 
 
+class _SpyRemote:
+    """A thin-client stand-in whose .search records its calls, so a test can
+    assert the READ was (or was NOT) delegated to the shared server."""
+    def __init__(self, hits):
+        self._hits = hits
+        self.searched: list[tuple[str, int]] = []
+
+    def search(self, q, k=5, **kw):
+        self.searched.append((q, k))
+        return list(self._hits)
+
+
+_HIT = {"id": "srv-9", "text": "The tank holds 500 liters.", "topic": "ops/tank",
+        "score": 0.91, "status": "model_claim", "verified_by": [],
+        "grounding_score": 88, "created_at": 1784000000.0,
+        "confidence_tier": "high"}
+
+
+@pytest.mark.asyncio
+async def test_hippo_facts_recall_delegates_to_server(monkeypatch):
+    spy = _SpyRemote([_HIT])
+    monkeypatch.setattr(mcp_server, "_remote", lambda: spy)
+    monkeypatch.setattr(mcp_server, "_ag",
+                        lambda: (_ for _ in ()).throw(
+                            AssertionError("local agent built despite server")))
+    blocks = await _invoke_tool("hippo_facts_recall",
+                                {"query": "tank capacity", "k": 5})
+    payload = json.loads(blocks[0])
+    assert payload.get("remote") is True
+    assert spy.searched == [("tank capacity", 5)]
+    row = payload["items"][0]
+    assert row["proposition"] == "The tank holds 500 liters."  # text -> proposition
+    assert row["id"] == "srv-9" and row["remote"] is True
+    assert "confidence" not in row          # honest: REST gives no numeric confidence
+
+
+@pytest.mark.asyncio
+async def test_hippo_facts_search_delegates_to_server(monkeypatch):
+    spy = _SpyRemote([_HIT])
+    monkeypatch.setattr(mcp_server, "_remote", lambda: spy)
+    monkeypatch.setattr(mcp_server, "_ag",
+                        lambda: (_ for _ in ()).throw(
+                            AssertionError("local agent built despite server")))
+    blocks = await _invoke_tool("hippo_facts_search",
+                                {"query": "reserve tank", "limit": 10})
+    payload = json.loads(blocks[0])
+    assert payload.get("remote") is True
+    assert spy.searched == [("reserve tank", 10)]      # 'limit' honored for search
+    assert payload["items"][0]["proposition"] == "The tank holds 500 liters."
+
+
+@pytest.mark.asyncio
+async def test_scoped_recall_does_not_delegate_to_server(monkeypatch, tmp_data_dir):
+    """A scoped read (user_id/agent_id/run_id) must NOT hit the shared server's
+    unscoped search - that would drop the isolation filter. It stays local."""
+    spy = _SpyRemote([_HIT])
+    monkeypatch.setattr(mcp_server, "_remote", lambda: spy)
+    blocks = await _invoke_tool("hippo_facts_recall",
+                                {"query": "q", "k": 5, "user_id": "u1"})
+    payload = json.loads(blocks[0])
+    assert payload.get("remote") is not True     # served locally, not by the server
+    assert spy.searched == []                     # scope kept the read off the server
+
+
 @pytest.mark.asyncio
 async def test_hippo_remember_falls_back_local_on_remote_error(monkeypatch, tmp_data_dir):
     """A remote failure must NOT strand the write — it falls through to the

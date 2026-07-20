@@ -119,6 +119,30 @@ def _remote():
     return _remote_mem
 
 
+def _remote_row(h: dict) -> dict[str, Any]:
+    """Shape a shared-server search hit like a local recall/search item so a
+    remote read is a drop-in for a local one (``text`` -> ``proposition``).
+    Fields the REST surface does not compute (numeric confidence, trust
+    verdicts) are omitted rather than invented (A1/A2)."""
+    row: dict[str, Any] = {
+        "id": h.get("id", ""),
+        "proposition": h.get("text", ""),
+        "topic": h.get("topic", ""),
+        "score": float(h.get("score") or 0.0),
+        "status": h.get("status", "model_claim"),
+        "verified_by": list(h.get("verified_by") or []),
+        "grounding_score": h.get("grounding_score"),
+        "remote": True,
+    }
+    _ca = h.get("created_at")
+    if _ca is not None:
+        row["created_at"] = float(_ca)
+        row["when"] = _iso_day(float(_ca))
+    if h.get("confidence_tier") is not None:
+        row["confidence_tier"] = h["confidence_tier"]
+    return row
+
+
 def _ok(obj: Any) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps(obj, indent=2, default=str))]
 
@@ -6653,8 +6677,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # hot WRITE tool delegates to it BEFORE any heavy local agent is built -
     # so N sessions behind one server never each load models / fight the file.
     # Fail-soft: a remote error drops through to the normal local dispatch.
-    _canon_name = ("hippo_remember" if name in (
-        "hippo_remember", "engram_remember", "verimem_remember") else name)
+    # Canonicalize the namespace alias (engram_/verimem_ -> hippo_) up-front so
+    # the architecture-A fast-paths below match whichever product name the host
+    # config uses. (The full remap for every other tool still runs after
+    # a = _ag(), unchanged.)
+    _canon_name = name
+    if _canon_name.startswith("engram_"):
+        _canon_name = "hippo_" + _canon_name[len("engram_"):]
+    elif _canon_name.startswith("verimem_"):
+        _canon_name = "hippo_" + _canon_name[len("verimem_"):]
     if _canon_name == "hippo_remember":
         _rm = _remote()
         if _rm is not None:
@@ -6674,6 +6705,32 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             except Exception as _exc:  # noqa: BLE001 -- never strand the write
                 log.warning("remote hippo_remember failed (%s) - local fallback",
                             type(_exc).__name__)
+    # architecture-A MCP tier (reads): an UNSCOPED recall/search is served by
+    # the shared server too - no local agent, no local store. A SCOPED read
+    # (user_id/agent_id/run_id) needs in-store isolation filtering the REST
+    # surface does not expose, so it falls through to the local path (never
+    # silently dropping the scope filter). Fail-soft on any remote error.
+    if _canon_name in ("hippo_facts_recall", "hippo_facts_search"):
+        _rm = _remote()
+        if _rm is not None and not any(
+                arguments.get(_s) is not None
+                for _s in ("user_id", "agent_id", "run_id")):
+            _q = str(arguments.get("query", "")).strip()
+            if _q:
+                if _canon_name == "hippo_facts_search":
+                    _k = int(arguments.get("limit", 20) or 20)
+                else:
+                    _k = int(arguments.get("k", 5) or 5)
+                _k = max(1, min(_k, 100))
+                try:
+                    _hits = _rm.search(_q, k=_k)
+                    _audit(name, arguments, outcome="remote")
+                    return _ok({"query": _q, "topic": arguments.get("topic"),
+                                "remote": True,
+                                "items": [_remote_row(_h) for _h in _hits]})
+                except Exception as _exc:  # noqa: BLE001 -- never strand the read
+                    log.warning("remote %s failed (%s) - local fallback",
+                                name, type(_exc).__name__)
     a = _ag()
     # Cycle #41 backward-compat: accept `engram_*` as alias for `hippo_*`.
     # Canonical tool names remain `hippo_*` in list_tools() during the
