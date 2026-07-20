@@ -43,11 +43,14 @@ honest *"I don't know."*
   A two-threshold band (**on by default**, `VERIMEM_CE_BAND_ENFORCE=0` reverts) holds
   the CE's uncertain middle zone, cutting that entity-substitution escape from
   **6.2% → 1.8%** on the moat matrix with **zero** new false-blocks on entailed
-  facts (measured) — and when a `claude` CLI is on PATH (flat subscription, no API
-  key) the band **escalates to one llm adjudication** instead of parking the write:
-  the llm verdict admits (judge-of-record `claude-band` on the receipt) or blocks;
-  any escalation failure falls back to held-for-review, an unreadable verdict never
-  admits (`ENGRAM_BAND_LLM=0` opts out). The residual ~2% scores high and still needs
+  facts (measured) — and the band **escalates to one llm adjudication** OFFLINE-FIRST instead of parking
+  the write: a local **ollama** judge (auto-detected; default `qwen2.5:7b-instruct` —
+  measured **AUROC 0.858 vs the CE's 0.829**, 2.3% misconception escape vs ~18%, fully
+  offline) is preferred, then a `claude` CLI on PATH (subscription, no key), else the
+  write is held for review. The verdict admits (judge-of-record `local-band`/`claude-band`
+  on the receipt) or blocks; any escalation failure falls back to held-for-review, an
+  unreadable verdict never admits (`ENGRAM_BAND_LLM=0` opts out). An air-gapped box with
+  ollama thus gets the full moat with no network. The residual ~2% scores high and still needs
   a full llm judge. A third
   measured limit: the CE **hard-rejects true facts that require arithmetic or a
   unit/date conversion** ("0.5 g" ⊢ "500 mg", "two weeks before March 20" ⊢
