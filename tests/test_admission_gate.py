@@ -6,7 +6,17 @@ from __future__ import annotations
 
 import sqlite3
 
-from verimem.admission_gate import (
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _declare_builtin_prefixes(monkeypatch):
+    # Since the 0.7.0 external bench, name-based routing only acts on
+    # DECLARED prefixes; these unit tests exercise our own stack's list.
+    monkeypatch.setenv("ENGRAM_TELEMETRY_PREFIXES", "builtin")
+
+
+from verimem.admission_gate import (  # noqa: E402
     ACCEPT,
     FLAG_INJECTION,
     FLAG_LOW_PROVENANCE,

@@ -1,9 +1,14 @@
 """Reversible backlog cleanup for the admission gate (verimem.admission_cleanup).
 
-The admission gate (verimem.admission_gate, opt-in) governs only NEW writes. This
+The admission gate (verimem.admission_gate) governs only NEW writes. This
 routes the EXISTING telemetry-topic facts OUT of the curated ``facts`` table into
 the ``telemetry`` table — reclaiming the corpus that the gate would have kept
 clean from the start (measured 2026-06-04: ~55% of the live store was telemetry).
+
+NB since 0.7.0 the decision reuses the DECLARED prefixes
+(``ENGRAM_TELEMETRY_PREFIXES``, e.g. ``builtin`` for our stack's list): with the
+env unset this pass finds nothing, by design — a name is never a verdict unless
+the operator declared it (external-corpora bench, 2026-07-20).
 
 Safety contract:
   - ``dry_run=True`` by DEFAULT: only reports, mutates nothing.

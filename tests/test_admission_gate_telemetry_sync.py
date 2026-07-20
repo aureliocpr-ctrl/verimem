@@ -14,6 +14,13 @@ import pytest
 from verimem._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES
 from verimem.admission_gate import ROUTE_TELEMETRY, classify_admission
 
+
+@pytest.fixture(autouse=True)
+def _declare_builtin_prefixes(monkeypatch):
+    # Name-based routing acts only on DECLARED prefixes since 0.7.0; this
+    # file tests the builtin list's sync, so it declares it.
+    monkeypatch.setenv("ENGRAM_TELEMETRY_PREFIXES", "builtin")
+
 _NEW = ["cache/", "market/", "citations/", "obs/", "signal/",
         "dispatch/", "supervisor/", "namespace/", "diary/"]
 _ORIG = ["bus/", "metric/", "alloc/", "lock/", "tx/", "nego/", "replay/"]

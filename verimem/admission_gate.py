@@ -32,15 +32,34 @@ from dataclasses import dataclass
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
 from .prompt_injection import detect_injection
 
-# SINGLE SOURCE OF TRUTH (verimem._telemetry_prefixes) shared with the recall-time
-# denylist in verimem.semantic: the read side HIDES these, this gate keeps them out
-# of the curated STORE in the first place. Built from the shared tuple so read and
-# write can never drift (the 2026-06-13 live-recall leak WAS exactly that drift —
-# semantic's denylist had cache/ market/ citations/ but this regex did not).
-_TELEMETRY_TOPIC = re.compile(
-    r"^(?:" + "|".join(re.escape(p) for p in _TELEMETRY_TOPIC_PREFIXES) + r")",
-    re.IGNORECASE,
-)
+def telemetry_route_prefixes() -> tuple[str, ...]:
+    """Topic prefixes that ROUTE a write to the telemetry table — EMPTY
+    unless the operator declared them (external bench 2026-07-20: on two
+    foreign-domain corpora our builtin list produced ~10% knowledge false
+    positives with telemetry recall 0.0 — for anyone who is not us it can
+    only hurt, so a name is never a verdict unless declared).
+
+    ``ENGRAM_TELEMETRY_PREFIXES``: comma-separated literal prefixes,
+    matched case-insensitively with ``startswith`` exactly as written
+    (end a namespace with ``/`` — ``mqtt`` would also match ``mqtt-notes``).
+    The keyword ``builtin`` expands to our own stack's list
+    (``verimem._telemetry_prefixes``) and COMPOSES: ``builtin,mqtt/`` is
+    the union. Unset or empty → no routing.
+    """
+    import os
+    raw = os.environ.get("ENGRAM_TELEMETRY_PREFIXES", "").strip()
+    if not raw:
+        return ()
+    out: list[str] = []
+    for part in raw.split(","):
+        p = part.strip().lower()
+        if not p:
+            continue
+        if p == "builtin":
+            out.extend(x.lower() for x in _TELEMETRY_TOPIC_PREFIXES)
+        else:
+            out.append(p)
+    return tuple(dict.fromkeys(out))
 _MARKUP_LEAK = re.compile(
     r"</?(invoke|parameter|proposition)\b|<parameter name=", re.IGNORECASE
 )
@@ -78,7 +97,7 @@ def gate_enabled() -> bool:
     exhaust as curated facts out of the box is a false claim. The flip is
     not silent: the first routed write in a process with NO explicit env
     choice emits a one-time migration warning (see
-    ``warn_default_on_migration_once``).
+    ``warn_first_route_once``).
 
     The pre-0.7.0 ``<data_dir>/ADMISSION_GATE_ON`` flag file is obsolete:
     it could only force ON, which the default now is. It is ignored — an
@@ -91,77 +110,66 @@ def gate_enabled() -> bool:
     return True
 
 
-#: One-time-per-process latch for the 0.7.0 migration warning, plus its
-#: lock (review round 2, GLM #3: check-then-set alone is a TOCTOU under
-#: threads and the contract is "exactly one").
-_MIGRATION_WARNED = False
-_MIGRATION_LOCK = _threading.Lock()
+#: One-time-per-process latch for the first-route warning, plus its lock
+#: (review round 2, GLM #3: check-then-set alone is a TOCTOU under threads
+#: and the contract is "exactly one").
+_ROUTE_WARNED = False
+_ROUTE_WARN_LOCK = _threading.Lock()
 
 _RECOGNIZED_OFF: tuple[str, ...] = ("0", "off", "false", "no")
 _RECOGNIZED_ON: tuple[str, ...] = ("1", "on", "true", "strict")
 
 
-def warn_default_on_migration_once(*, table: str = "telemetry") -> None:
-    """Emit the 0.7.0 default-ON migration warning, once per process.
+def warn_first_route_once(*, table: str = "telemetry") -> None:
+    """Tell the operator, once per process, that a write was ROUTED.
 
     Called by the write path AFTER a route succeeded — the message states a
     fact ("was routed"), so it must never run ahead of it (round-2 review,
     Kimi). ``table`` names where THIS route stored the payload (facts →
     ``telemetry``, episodes → ``episode_telemetry``) so the query hint in
-    the message is never wrong (round-2 review, GLM).
+    the message is never wrong (round-2 review, GLM). Since routing only
+    happens on a DECLARED signal (a prefix in ENGRAM_TELEMETRY_PREFIXES or
+    purpose="telemetry"), this is first-use observability, not a nag.
 
-    Suppressed only by a RECOGNIZED env value — the operator decided. A
-    non-empty unrecognized value ("disabled", "maybe") means the operator
-    THINKS they configured something: they get a dedicated warning saying
-    the value is unrecognized and treated as ON (both reviewers flagged
-    the silent-ON here; GLM's example "disabled" is the intuitive first
-    attempt at switching something off).
+    Extra case (both reviewers, round 2): a non-empty unrecognized
+    ENGRAM_ADMISSION_GATE value ("disabled", "maybe") means the operator
+    THINKS they configured the gate — the one-time message then says the
+    value is unrecognized and treated as ON.
 
     Best-effort BY DESIGN: the warn is wrapped — under ``python -W error``
-    a warning becomes an exception, and a migration courtesy must never
-    break (or degrade) the write it narrates. The latch is set only after
-    a DELIVERED warn, so a transient error-filter (e.g. a library's
+    a warning becomes an exception, and a courtesy must never break (or
+    degrade) the write it narrates. The latch is set only after a
+    DELIVERED warn, so a transient error-filter (e.g. a library's
     catch_warnings block) does not poison it: the next route retries.
     """
-    global _MIGRATION_WARNED
-    if _MIGRATION_WARNED:
+    global _ROUTE_WARNED
+    if _ROUTE_WARNED:
         return
     import os
-    raw = os.environ.get("ENGRAM_ADMISSION_GATE", "").strip()
-    if raw.lower() in _RECOGNIZED_OFF + _RECOGNIZED_ON:
-        return
-    with _MIGRATION_LOCK:
-        if _MIGRATION_WARNED:
+    gate_raw = os.environ.get("ENGRAM_ADMISSION_GATE", "").strip()
+    with _ROUTE_WARN_LOCK:
+        if _ROUTE_WARNED:
             return
-        if raw:
+        if gate_raw and gate_raw.lower() not in (
+                _RECOGNIZED_OFF + _RECOGNIZED_ON):
             msg = (
-                f"verimem: ENGRAM_ADMISSION_GATE={raw!r} is not a recognized "
-                "value (use 0/off/false/no to disable, 1/on/true/strict to "
-                "enable) — treating it as ON: this write was routed to the "
-                f"'{table}' table (non-lossy). Set ENGRAM_ADMISSION_GATE=0 "
-                "to restore the legacy behavior."
+                f"verimem: ENGRAM_ADMISSION_GATE={gate_raw!r} is not a "
+                "recognized value (use 0/off/false/no to disable, "
+                "1/on/true/strict to enable) — treating it as ON. Also: "
+                f"this write was routed to the '{table}' table (non-lossy)."
             )
         else:
             msg = (
-                "verimem 0.7.0: the admission gate is now ON by default — "
-                "this write had a machine-telemetry topic and was routed to "
-                f"the '{table}' table instead of the curated facts corpus "
-                f"(non-lossy; query it with: SELECT * FROM {table}). Set "
-                "ENGRAM_ADMISSION_GATE=0 to restore the legacy behavior."
+                "verimem: this write matched a declared telemetry signal "
+                "(ENGRAM_TELEMETRY_PREFIXES or purpose=\"telemetry\") and "
+                f"was routed to the '{table}' table instead of the curated "
+                f"facts corpus (non-lossy; query it with: SELECT * FROM "
+                f"{table})."
             )
-        try:
-            from pathlib import Path
-
-            from .config import CONFIG
-            if (Path(CONFIG.data_dir) / "ADMISSION_GATE_ON").exists():
-                msg += (" Note: the legacy ADMISSION_GATE_ON flag file was "
-                        "found; it is deprecated and ignored since 0.7.0.")
-        except Exception:
-            pass
         try:
             import warnings
             warnings.warn(msg, UserWarning, stacklevel=3)
-            _MIGRATION_WARNED = True
+            _ROUTE_WARNED = True
         except Exception:
             pass
 
@@ -206,9 +214,13 @@ def classify_admission(
             "prompt-injection signals: " + ",".join(_inj.signals),
             False,
         )
-    if _TELEMETRY_TOPIC.search(topic):
+    _route_pfx = telemetry_route_prefixes()
+    if _route_pfx and topic.lower().startswith(_route_pfx):
         ns = topic.split("/", 1)[0]
-        return AdmissionVerdict(ROUTE_TELEMETRY, f"telemetry topic '{ns}/' belongs in events store", False)
+        return AdmissionVerdict(
+            ROUTE_TELEMETRY,
+            f"topic '{ns}/' matches a DECLARED telemetry prefix "
+            "(ENGRAM_TELEMETRY_PREFIXES)", False)
     if seen_norms is not None:
         norm = normalize_proposition(prop)
         if norm and norm in seen_norms:

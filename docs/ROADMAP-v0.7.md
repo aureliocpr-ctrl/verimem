@@ -153,3 +153,18 @@ parallelo (2 giri: design, poi diff) → implementazione TDD → retro-pulizia.
   di default vale anche per i clienti); il live era già protetto dal gate
   attivato via env/flag-file. I 508 quarantined del MOAT (10.6%) sono
   fase separata (evidence-anchor + riconciliazione, già pianificata).
+
+### Correzione post-bench (stessa sera, giro 3 del metodo in 3)
+Il bench esterno (`scripts/bench_admission_external_corpora.py`) ha FALSIFICATO
+il flip del routing: su 2 corpus foreign-domain ~10% FP knowledge (upper bound,
+CI95 4-23%, generatori avversari informati) e recall 0.0 strutturale (Kimi: per
+chi non è noi la lista può solo far danni). Verdetto 2/2 convergente → SPLIT:
+integrity ON default (0/500 FP misurato, con limite dichiarato: manca il bench
+hostile-shaped-legitimate → roadmap), routing SOLO dichiarativo
+(`ENGRAM_TELEMETRY_PREFIXES`, keyword `builtin` componibile) + origin-tag
+`add(purpose="telemetry")` (GLM+Kimi convergenti: l'intento lo dichiara il
+chiamante, mai il pattern). Il nostro deployment dichiara `builtin` via env.
+Roadmap 0.8: bench integrity hostile-shaped (ticket con quote ostili, API docs
+con markup, import bulk); dead-prefix lint + dry-run mode (Kimi); stesso audit
+name-based sul READ-side denylist (stessa lista, stesso rischio FP sul recall
+generico di corpus altrui); connector-tag MCP (purpose sul tool hippo_remember).

@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import sqlite3
 
+import pytest
+
 from verimem.semantic import Fact, SemanticMemory
 
 
@@ -19,6 +21,14 @@ def _count(db, sql):
         return c.execute(sql).fetchone()[0]
     finally:
         c.close()
+
+
+@pytest.fixture(autouse=True)
+def _declare_builtin_prefixes(monkeypatch):
+    # Name-based routing acts only on DECLARED prefixes since 0.7.0 (the
+    # external bench measured ~10% knowledge FP on foreign corpora with an
+    # implicit list); this file tests the wire WITH our list declared.
+    monkeypatch.setenv("ENGRAM_TELEMETRY_PREFIXES", "builtin")
 
 
 def test_gate_off_keeps_telemetry_in_facts(tmp_path, monkeypatch):

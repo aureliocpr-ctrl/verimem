@@ -5,26 +5,39 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 ## [0.7.0] - Unreleased
 
 ### Changed
-- **BREAKING (behavioral): machine-telemetry routing is ON by default.** Writes whose
-  topic matches the machine-state prefix list (`bus/`, `metric/`, `cache/`, `dream/`, …
-  — `verimem/_telemetry_prefixes.py`) are no longer admitted into the curated `facts`
-  corpus: they are routed, non-lossily, to the sibling `telemetry` table
-  (`SELECT * FROM telemetry` to inspect; episodes: `episode_telemetry`). This is the
-  routing/classification layer (`verimem/admission_gate.py`), distinct from the
-  grounding moat — quarantine counts are unaffected. Why: measured on a corpus that ran
-  without it, 75% of stored "facts" ended up quarantined and 94% of those were machine
-  exhaust — a verified memory that admits machine exhaust as curated facts out of the
-  box is a false claim. Migration: the first routed write in a process where
-  `ENGRAM_ADMISSION_GATE` is unset emits a one-time `UserWarning` naming the opt-out;
-  `ENGRAM_ADMISSION_GATE=0` restores the legacy admit-everything behavior; an explicit
-  env choice silences the warning. The pre-0.7.0 `ADMISSION_GATE_ON` flag file is now
-  ignored (it could only force ON — the default — and must not defeat an explicit OFF).
-  Decision record: independent adversarial review by GLM-5.2 and Kimi-K3, convergent;
-  their shared demand — the flip must not be silent — is the migration warning. A
-  content-based (JSON-shape) classifier was proposed and REJECTED by both reviewers
-  (unbounded false positives without undo, e.g. a calendar entry
-  `{"event_type": "dentist", …}`); routing stays topic-prefix only, revisit in 0.8.0
-  only with field data.
+- **BREAKING (behavioral): admission INTEGRITY screening is ON by default; telemetry
+  ROUTING is opt-in and declarative.** Two distinct things, split on measurement
+  (`scripts/bench_admission_external_corpora.py`, results in
+  `benchmark/results/admission_external_2026-07-20.json`):
+  * *Integrity screening* (`verimem/admission_gate.py`: leaked tool-call markup →
+    reject, prompt-injection payloads → quarantined-for-audit, ungrounded
+    model-claims → flagged low-provenance) now runs on every write by default;
+    `ENGRAM_ADMISSION_GATE=0` restores the legacy admit-everything behavior. Measured
+    0 content false positives on 500 real knowledge texts (TruthfulQA + HaluEval) —
+    an honest limit: that corpus is not hostile-shaped-legitimate (API docs quoting
+    tool-calls, security training material); a dedicated bench is on the roadmap.
+  * *Telemetry routing* never acts on a NAME alone: a topic prefix routes a write to
+    the non-lossy `telemetry` table only if the operator DECLARED it in
+    `ENGRAM_TELEMETRY_PREFIXES` (comma-separated, case-insensitive `startswith`,
+    keyword `builtin` expands to verimem's own stack list and composes:
+    `"builtin,mqtt/"`). Unset → no routing. Why not on by default: on two
+    foreign-domain labeled corpora the builtin list scored ~10% knowledge false
+    positives (a user's `cache/ricette` recipe collection routed away; upper bound —
+    adversarially generated corpora, CI95 4–23%) with telemetry recall 0.0, which is
+    STRUCTURAL: foreign exhaust has foreign names, so for anyone else the implicit
+    list can only hurt (cost > 0, benefit ≡ 0).
+  * *Origin-tag*: the cleanest path — the writer declares intent:
+    `add(..., purpose="telemetry")` routes regardless of topic (both external
+    reviewers converged on caller-declared intent over any pattern matching).
+    Default `None` = knowledge, never routed by name unless declared.
+  A routed write returns a truthful receipt (`status="routed_telemetry"`,
+  `routed_to`, matching adjudication) and the first actual route in a process emits
+  a one-time `UserWarning` naming the table. The pre-0.7.0 `ADMISSION_GATE_ON` flag
+  file is ignored (it could only force ON and must not defeat an explicit OFF). An
+  unrecognized `ENGRAM_ADMISSION_GATE` value ("disabled") is treated as ON and says
+  so in the one-time warning. A content-based (JSON-shape) classifier was proposed
+  and REJECTED by both reviewers (silent false positives without undo, e.g.
+  a calendar entry `{"event_type": "dentist", …}`).
 
 ### Added
 - **Per-write audit trail (opt-in, `VERIMEM_AUDIT_LOG`).** Every single-proposition

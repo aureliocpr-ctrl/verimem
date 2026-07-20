@@ -1,0 +1,60 @@
+[
+  {
+    "corpus": "personal",
+    "n": 67,
+    "knowledge_n": 41,
+    "telemetry_n": 26,
+    "knowledge_decisions": {
+      "accept": 37,
+      "route_telemetry": 4
+    },
+    "telemetry_decisions": {
+      "accept": 26
+    },
+    "knowledge_routed_FP": 4,
+    "knowledge_routed_FP_topics": [
+      "cache/ricette",
+      "obs/sonno",
+      "bus/orari",
+      "cache/lista-spesa"
+    ],
+    "telemetry_routed_recall": 0.0
+  },
+  {
+    "corpus": "devagent",
+    "n": 70,
+    "knowledge_n": 40,
+    "telemetry_n": 30,
+    "knowledge_decisions": {
+      "accept": 36,
+      "route_telemetry": 4
+    },
+    "telemetry_decisions": {
+      "accept": 30
+    },
+    "knowledge_routed_FP": 4,
+    "knowledge_routed_FP_topics": [
+      "metric/kpi-churn",
+      "lock/release-freeze",
+      "dispatch/turni",
+      "cache/faq"
+    ],
+    "telemetry_routed_recall": 0.0
+  },
+  {
+    "corpus": "truthfulqa_heldout_true_claims",
+    "n": 300,
+    "decisions": {
+      "accept": 300
+    },
+    "non_accept_examples": []
+  },
+  {
+    "corpus": "halueval_heldout_answers",
+    "n": 200,
+    "decisions": {
+      "accept": 200
+    },
+    "non_accept_examples": []
+  }
+]

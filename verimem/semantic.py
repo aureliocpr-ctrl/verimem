@@ -1955,6 +1955,7 @@ class SemanticMemory:
         coherence_hook: Callable[[Fact, SemanticMemory], None] | None = None,
         hook_token: str | None = None,
         embed: str = "sync",
+        purpose: str | None = None,
     ) -> bool | None:
         """Insert or replace a fact. Backwards-compatible default returns None.
 
@@ -2077,6 +2078,15 @@ class SemanticMemory:
         # 55% was telemetry exhaust). Non-lossy. OFF -> this block is skipped.
         from .admission_gate import ROUTE_TELEMETRY, classify_admission, gate_enabled
         if gate_enabled():
+            # Origin-tag (review round 3, GLM + Kimi convergent): the WRITER
+            # declares intent — purpose="telemetry" routes regardless of
+            # topic, no name-pattern involved. Default None = knowledge.
+            if purpose == "telemetry":
+                self._store_telemetry(fact)
+                fact.routed_to = "telemetry"
+                from .admission_gate import warn_first_route_once
+                warn_first_route_once()
+                return False if return_replaced else None
             _verdict = classify_admission(
                 topic=fact.topic, proposition=fact.proposition,
                 status=fact.status,
@@ -2089,12 +2099,10 @@ class SemanticMemory:
                 # entered the curated corpus (the fact object is their only
                 # return channel here — store() returns bool/None).
                 fact.routed_to = "telemetry"
-                # 0.7.0 default-ON migration: AFTER the route succeeded (the
-                # message states "was routed" — it must not run ahead of the
-                # fact), tell the operator once per process, unless they
-                # already chose explicitly via env.
-                from .admission_gate import warn_default_on_migration_once
-                warn_default_on_migration_once()
+                # AFTER the route succeeded (the message states "was
+                # routed" — it must not run ahead of the fact).
+                from .admission_gate import warn_first_route_once
+                warn_first_route_once()
                 return False if return_replaced else None
             # Honor the rest of the verdict (audit P1 2026-06-07): pre-fix ONLY
             # ROUTE_TELEMETRY was acted on, so REJECT_POLLUTED (leaked tool-call

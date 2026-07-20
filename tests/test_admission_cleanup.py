@@ -8,7 +8,16 @@ from __future__ import annotations
 
 import sqlite3
 
+import pytest
+
 from verimem.admission_cleanup import cleanup_telemetry
+
+
+@pytest.fixture(autouse=True)
+def _declare_builtin_prefixes(monkeypatch):
+    # Since 0.7.0 routing (and therefore this retro cleanup, which reuses
+    # classify_admission) only acts on DECLARED prefixes.
+    monkeypatch.setenv("ENGRAM_TELEMETRY_PREFIXES", "builtin")
 
 
 def _make_db(path):

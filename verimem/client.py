@@ -185,6 +185,7 @@ class Memory:
         ground: bool | None = None, gate_mode: str | None = None,
         asserted_at: float | None = None, conversation_id: str | None = None,
         user_name: str | None = None,
+        purpose: str | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -306,11 +307,12 @@ class Memory:
                         getattr(gate, "threshold", None)))
         if action == "downgrade":
             fact.status = "quarantined"
-        self.semantic.store(fact, embed="sync")
-        # A telemetry-topic write under the default-ON admission gate is
-        # ROUTED inside store(): the fact never entered the curated corpus,
-        # and the receipt must say so — "admitted" here would be false
-        # (found by the fresh-install product probe, 2026-07-20).
+        self.semantic.store(fact, embed="sync", purpose=purpose)
+        # A write with a DECLARED telemetry signal (purpose tag, or a topic
+        # matching ENGRAM_TELEMETRY_PREFIXES) is ROUTED inside store(): the
+        # fact never entered the curated corpus, and the receipt must say
+        # so — "admitted" here would be false (found by the fresh-install
+        # product probe, 2026-07-20).
         _routed = getattr(fact, "routed_to", None)
         if _routed:
             self._record_trust("routed_telemetry", layers=None, topic=topic)

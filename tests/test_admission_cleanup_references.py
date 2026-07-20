@@ -39,6 +39,13 @@ CREATE TABLE IF NOT EXISTS contradictions (
 """
 
 
+@pytest.fixture(autouse=True)
+def _declare_builtin_prefixes(monkeypatch):
+    # The cleanup reuses classify_admission: since 0.7.0 it only acts on
+    # DECLARED prefixes, so the retro pass declares our builtin list.
+    monkeypatch.setenv("ENGRAM_TELEMETRY_PREFIXES", "builtin")
+
+
 @pytest.fixture()
 def dirty_db(tmp_path, monkeypatch):
     """A legacy corpus: telemetry already sitting in facts (gate off)."""
