@@ -956,6 +956,68 @@ def _looks_shell_like(text: str) -> bool:
     return bool(_SHELL_PATTERNS.search(text))
 
 
+#: Never indexed, even INSIDE an allowed root. The realistic leak is not
+#: ~/.aws/credentials - it is a `.env` sitting in the project itself, i.e.
+#: inside every sensible jail. Indexing a secret does not merely read it: it
+#: takes up residence in the memory corpus, comes back through
+#: document_semantic_search, and can be promoted into a fact.
+_DOC_SENSITIVE_NAMES: frozenset[str] = frozenset({
+    "credentials", "keys.env", "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519",
+    ".netrc", ".pgpass", ".htpasswd", "secrets.yaml", "secrets.yml",
+})
+_DOC_SENSITIVE_SUFFIXES: tuple[str, ...] = (
+    ".pem", ".key", ".pfx", ".p12", ".jks", ".keystore", ".ppk",
+)
+_DOC_SENSITIVE_PREFIXES: tuple[str, ...] = (".env",)
+_DOC_SENSITIVE_DIRS: frozenset[str] = frozenset({
+    ".ssh", ".aws", ".gnupg", ".clp", ".azure", ".kube",
+})
+
+
+def _doc_path_allowed(path: str) -> tuple[bool, str]:
+    """``(allowed, reason)`` for indexing ``path`` into the document corpus.
+
+    Two guards, because either alone is insufficient. ``ENGRAM_DOC_ROOTS``
+    (os.pathsep-separated; default: the process cwd) says WHERE we may read -
+    that stops ~/.aws/credentials. The sensitive-name lists say WHAT we never
+    read even there - that stops the `.env` in the project root, which no jail
+    would ever exclude. Secure by default: unconfigured means the cwd, not
+    "anywhere" (red-team audit MEDIUM).
+    """
+    from pathlib import Path as _P
+    try:
+        p = _P(path).expanduser().resolve()
+    except (OSError, ValueError) as exc:
+        return False, f"unusable path: {type(exc).__name__}"
+    raw = os.environ.get("ENGRAM_DOC_ROOTS", "").strip()
+    roots = ([r.strip() for r in raw.split(os.pathsep) if r.strip()]
+             if raw else [str(_P.cwd())])
+    inside = False
+    for r in roots:
+        try:
+            p.relative_to(_P(r).expanduser().resolve())
+            inside = True
+            break
+        except (ValueError, OSError):
+            continue
+    if not inside:
+        return False, (
+            "path is outside the allowed document roots "
+            f"({os.pathsep.join(roots)}); set ENGRAM_DOC_ROOTS to widen it "
+            "deliberately")
+    if any(part.lower() in _DOC_SENSITIVE_DIRS for part in p.parts):
+        return False, ("refusing to index: the path crosses a sensitive "
+                       "directory (secret material)")
+    name = p.name.lower()
+    if (name in _DOC_SENSITIVE_NAMES
+            or name.startswith(_DOC_SENSITIVE_PREFIXES)
+            or name.endswith(_DOC_SENSITIVE_SUFFIXES)):
+        return False, ("refusing to index a sensitive file: a secret indexed "
+                       "here would live on inside the memory corpus and be "
+                       "recallable as content")
+    return True, "ok"
+
+
 def _sandbox_policy():
     """Build the sandbox policy for the MCP shell surface.
 
@@ -7382,6 +7444,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             path = str(arguments.get("path", "")).strip()
             if not path:
                 return _err("path is required")
+            _path_ok, _path_why = _doc_path_allowed(path)
+            if not _path_ok:
+                _audit(name, arguments, outcome="rejected_path")
+                return _err(_path_why)
             try:
                 res = DocumentIndex().index_file(
                     path, source_id=arguments.get("source_id"))

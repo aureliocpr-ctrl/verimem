@@ -438,6 +438,8 @@ class SandboxPolicy:
         "AWS_", "AZURE_", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
         "GOOGLE_API_KEY", "HF_TOKEN", "GITHUB_TOKEN", "GH_TOKEN",
         "SLACK_TOKEN", "NPM_TOKEN", "STRIPE_", "TWILIO_",
+        # providers this project switches between (hippo_provider_switch)
+        "MOONSHOT_", "DEEPSEEK_", "XAI_", "GROQ_", "OPENROUTER_", "MISTRAL_",
     )
     allow_network: bool = False
 
@@ -463,13 +465,44 @@ def _cwd_within(allowed: list[Path], cwd: Path) -> bool:
     return False
 
 
-def _scrub_env(env: dict[str, str], prefixes: tuple[str, ...]) -> dict[str, str]:
-    """Return env copy with any var whose name STARTS WITH a prefix removed."""
-    if not prefixes:
-        return dict(env)
+#: Scrub by SUFFIX, not by vendor name. A per-vendor prefix denylist
+#: structurally lags reality - it missed MOONSHOT_/DEEPSEEK_/XAI_/GROQ_/
+#: OPENROUTER_/MISTRAL_, i.e. every provider this project switches between,
+#: including the key it was itself using (red-team audit MEDIUM). What every
+#: vendor DOES do identically is name the variable, so matching the naming
+#: covers the next provider before it exists.
+SECRET_NAME_SUFFIXES: tuple[str, ...] = (
+    "_API_KEY", "_APIKEY", "_TOKEN", "_SECRET", "_SECRET_KEY", "_PASSWORD",
+    "_PASSWD", "_PRIVATE_KEY", "_CREDENTIALS", "_ACCESS_KEY", "_AUTH_TOKEN",
+)
+#: Bare names that are secrets on their own (no vendor prefix at all).
+SECRET_EXACT_NAMES: frozenset[str] = frozenset({
+    "API_KEY", "TOKEN", "SECRET", "PASSWORD", "PASSWD", "CREDENTIALS",
+})
+
+
+def _scrub_env(
+    env: dict[str, str],
+    prefixes: tuple[str, ...],
+    suffixes: tuple[str, ...] = SECRET_NAME_SUFFIXES,
+) -> dict[str, str]:
+    """Return an env copy without secrets.
+
+    A var is dropped when its name starts with a configured PREFIX (the legacy
+    per-vendor list, kept for compatibility) OR ends with a secret-shaped
+    SUFFIX OR is a bare secret name. The suffix rule is the load-bearing one:
+    it does not need updating when a new provider appears.
+
+    Note there is deliberately no early return on an empty prefix tuple - that
+    would skip suffix scrubbing entirely for a caller that configured no
+    prefixes.
+    """
     out = {}
     for k, v in env.items():
-        if any(k.upper().startswith(p.upper()) for p in prefixes):
+        ku = k.upper()
+        if prefixes and any(ku.startswith(p.upper()) for p in prefixes):
+            continue
+        if ku in SECRET_EXACT_NAMES or ku.endswith(suffixes):
             continue
         out[k] = v
     return out
