@@ -11,7 +11,18 @@ from __future__ import annotations
 
 import sqlite3
 
+import pytest
+
 from verimem.admission_cleanup import requalify_quarantined
+
+
+@pytest.fixture(autouse=True)
+def _declare_builtin_prefixes(monkeypatch):
+    # requalify re-evaluates with classify_admission, which since 0.7.0
+    # routes a telemetry TOPIC only when the operator declared the prefix
+    # (external-corpora bench 2026-07-20). The `tel1` case below asserts a
+    # declared-telemetry fact stays quarantined, so it declares the list.
+    monkeypatch.setenv("ENGRAM_TELEMETRY_PREFIXES", "builtin")
 
 _SCHEMA = (
     "CREATE TABLE facts (id TEXT PRIMARY KEY, topic TEXT, proposition TEXT, "
