@@ -361,6 +361,23 @@ def _validate_argv(argv: list[str]) -> tuple[bool, str]:
                     "(core.editor/pager/hooksPath/alias = arbitrary-exec "
                     "vector); only --get/--list reads allowed"
                 )
+        # SECURITY (red-team audit H3): the allow-set gates the SUBCOMMAND and
+        # then accepts every flag after it. `git diff --output=<abs path>` writes
+        # the diff wherever it likes, so a read-only-LOOKING allowlisted command
+        # was arbitrary file write. The cwd jail does not cover this one:
+        # --output is absolute and independent of the working directory (it
+        # limits which repo the CONTENT comes from, not where the bytes land).
+        _git_write_flags = {
+            "--output", "-o", "--exec", "--upload-pack", "--receive-pack",
+            "--ext-diff",
+        }
+        for tok in argv[1:]:
+            base = tok.lower().split("=", 1)[0]
+            if base in _git_write_flags:
+                return False, (
+                    f"git flag '{tok}' blocked in strict mode "
+                    f"(writes or executes outside the read-only contract)"
+                )
     allowed_args = DEFAULT_BINARY_ALLOWLIST[binary]
     if allowed_args == "*":
         return True, f"strict_allow:{binary}:*"
