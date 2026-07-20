@@ -79,6 +79,46 @@ def _ag() -> HippoAgent:
     return _agent
 
 
+# --- architecture-A MCP tier: delegate the hot memory ops to a shared server
+# when VERIMEM_SERVER_URL is set, so a session behind a memory server never
+# builds the heavy local agent (models + SQLite) for a write. Default (no env)
+# is the unchanged local path. Probed once per process; a dead server -> None
+# -> local fallback (fail-soft, a write is never stranded).
+_remote_mem: Any = None
+_remote_checked = False
+
+
+def _remote_cls():
+    from .remote import RemoteMemory
+    return RemoteMemory
+
+
+def _reset_remote_cache() -> None:
+    global _remote_mem, _remote_checked
+    _remote_mem = None
+    _remote_checked = False
+
+
+def _remote():
+    global _remote_mem, _remote_checked
+    if _remote_checked:
+        return _remote_mem
+    _remote_checked = True
+    import os as _os
+    url = _os.environ.get("VERIMEM_SERVER_URL", "").strip()
+    if url:
+        try:
+            rm = _remote_cls()(url, _os.environ.get("VERIMEM_SERVER_KEY", "").strip())
+            if rm.health():
+                _remote_mem = rm
+            else:
+                log.warning("VERIMEM_SERVER_URL %s unreachable - MCP uses the "
+                            "local store", url)
+        except Exception as exc:  # noqa: BLE001 -- fail-soft to local
+            log.warning("MCP remote init failed (%s) - local store", type(exc).__name__)
+    return _remote_mem
+
+
 def _ok(obj: Any) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps(obj, indent=2, default=str))]
 
@@ -6609,6 +6649,31 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # Cycle #115.A: telemetry timer. Every `_audit()` call below now emits
     # `latency_ms` derived from this monotonic anchor.
     _REQUEST_START_NS.set(time.monotonic_ns())
+    # architecture-A MCP tier: when a shared memory server is configured, the
+    # hot WRITE tool delegates to it BEFORE any heavy local agent is built -
+    # so N sessions behind one server never each load models / fight the file.
+    # Fail-soft: a remote error drops through to the normal local dispatch.
+    _canon_name = ("hippo_remember" if name in (
+        "hippo_remember", "engram_remember", "verimem_remember") else name)
+    if _canon_name == "hippo_remember":
+        _rm = _remote()
+        if _rm is not None:
+            from verimem.syntax_pollution import sanitize_proposition
+            _prop = sanitize_proposition(str(arguments.get("proposition", "")).strip())
+            if not _prop:
+                _audit(name, arguments, outcome="rejected_empty")
+                return _err("empty proposition")
+            try:
+                _rr = _rm.add(
+                    _prop, topic=str(arguments.get("topic", "")).strip() or "user",
+                    verified_by=arguments.get("verified_by"),
+                    source=arguments.get("source"),
+                    asserted_at=arguments.get("asserted_at"))
+                _audit(name, arguments, outcome="remote")
+                return _ok({"ok": bool(_rr.get("stored")), "remote": True, **_rr})
+            except Exception as _exc:  # noqa: BLE001 -- never strand the write
+                log.warning("remote hippo_remember failed (%s) - local fallback",
+                            type(_exc).__name__)
     a = _ag()
     # Cycle #41 backward-compat: accept `engram_*` as alias for `hippo_*`.
     # Canonical tool names remain `hippo_*` in list_tools() during the
