@@ -106,7 +106,12 @@ DEFAULT_DENYLIST_PATTERNS: tuple[str, ...] = (
     r"\|\|\s*\S",                            # any || chain
     r"`[^`]*`",                              # `backtick subshell`
     r"\$\(",                                 # $(subshell)
-    r">>?\s*[A-Za-z0-9/_.~$-]",              # file redirect (write/append)
+    # The class must include the QUOTE characters and the Windows separator:
+    # without them `echo pwn > "C:/x"` slipped straight through while the
+    # unquoted form was blocked - the quote, not the payload, was the bypass
+    # (external red-team audit, CRITICAL-1). cmd.exe honours the quoting under
+    # shell=True, so this was arbitrary file write with attacker-chosen content.
+    r">>?\s*[\"'A-Za-z0-9/_.~$\-]",              # file redirect (write/append)
     r"<\s*[A-Za-z0-9/_.~$-]",                # file redirect (read)
     r"[\r\n]",                               # literal CR/LF inside cmd
     # Windows-specific: `&` is a sequential separator on cmd.exe
