@@ -129,3 +129,27 @@ ruff clean + full CI green before declaring; merge/tag/PyPI = Aurelio's call aft
 he tests. Branch `rename/verimem-total` (also carries the unfinished source-brand
 rename debt — 225 "Engram/HippoAgent" in docstrings + the `HippoAgent` class →
 `VerimemAgent` w/ alias; see spawn_task chip).
+
+## 2026-07-20 (sera) — Ingest telemetry: decision record chiuso
+Metodo: misura live → packet unico <3KB → GLM-5.2 + Kimi-K3 avversari in
+parallelo (2 giri: design, poi diff) → implementazione TDD → retro-pulizia.
+- **SHIPPED (commit 1eaa7ad + 157b2b3)**: admission gate ON by default
+  (era opt-in dal 2026-06-04, mai flippato = classe "feature fatta ma mai
+  puntata sulla realtà"); migration warning una-tantum robusto (post-route,
+  latch-after-delivery, Lock, table-aware, env-garbage dedicato); cleanup
+  retro referenze-aware ESEGUITO live: 284 moved / 7 skipped (target di
+  supersession: mai spezzare catene) / 2347 contradictions orfane potate /
+  FTS coerente. Backup: `~/.engram/backups/semantic-pre-retro-cleanup-2026-07-20.db`.
+  Corpus live: curated_clean 84.4% → 89.8%; route_telemetry residui = 7 (tutti
+  supersession-target, deliberati). 1 dangling superseded_by PRE-esistente
+  (19985ba64bed → 1c6791113327, presente anche nel backup: non nostro).
+- **REJECTED (2/2 reviewer, convergenti e indipendenti)**: classificatore
+  content-based (JSON-shape) — falsi positivi silenziosi senza undo
+  (`{"event_type":"dentist"}` = calendario, non exhaust); residuo misurato
+  qui: 2/4790 = 0.04%. Candidato 0.8.0 SOLO con dati field (shadow-first,
+  criterio congiunto provenance+soglia+type-check).
+- **Nota onesta**: il "75% quarantined / 94% telemetria" pre-compact era il
+  backup PRE-gate (traiettoria di un deployment non protetto — ora il claim
+  di default vale anche per i clienti); il live era già protetto dal gate
+  attivato via env/flag-file. I 508 quarantined del MOAT (10.6%) sono
+  fase separata (evidence-anchor + riconciliazione, già pianificata).
