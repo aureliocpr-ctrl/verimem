@@ -37,10 +37,11 @@ __all__ = ["AutoMemory", "Memory", "Client"]
 
 
 def __getattr__(name: str):  # PEP 562 lazy attribute access
-    if name in ("Memory", "Client"):
-        from .client import Client, Memory
+    if name in ("Memory", "Client", "open_memory"):
+        from .client import Client, Memory, open_memory
 
-        return {"Memory": Memory, "Client": Client}[name]
+        return {"Memory": Memory, "Client": Client,
+                "open_memory": open_memory}[name]
     if name == "AutoMemory":
         from .auto_memory import AutoMemory
 

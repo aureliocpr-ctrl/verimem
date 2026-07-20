@@ -714,6 +714,61 @@ def import_cmd(
         console.print(f"  [yellow]warn:[/yellow] {e}")
 
 
+def _open_memory():
+    """Factory hook (monkeypatchable in tests): the architecture-A entry —
+    a THIN client when VERIMEM_SERVER_URL points at a running memory server,
+    the embedded store otherwise."""
+    from .client import open_memory
+    return open_memory()
+
+
+@app.command("remember")
+def remember_cmd(
+    text: str = typer.Argument(..., help="The fact to store."),
+    topic: str = typer.Option("user", "--topic", "-t"),
+    source: str = typer.Option(None, "--source",
+                               help="Source text the fact must be grounded in."),
+) -> None:
+    """Store one fact through the full moat — the 2-second quickstart.
+
+    With VERIMEM_SERVER_URL set this goes through the shared memory server
+    (thin client, no model load); otherwise the embedded store. Prints the
+    adjudication receipt honestly either way.
+    """
+    m = _open_memory()
+    kw = {"topic": topic}
+    if source:
+        kw["source"] = source
+    r = m.add(text, **kw)
+    disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
+    fid = r.get("id") or "-"
+    console.print(f"[green]{disp}[/green] id={fid} topic={topic}")
+    if not r.get("stored"):
+        console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
+
+
+@app.command("recall")
+def recall_cmd(
+    query: str = typer.Argument(..., help="What to remember."),
+    k: int = typer.Option(5, "--k"),
+) -> None:
+    """Recall the top-k facts for a query — the 2-second read quickstart.
+
+    Same architecture-A routing as ``remember``: thin client when a memory
+    server is configured, embedded otherwise.
+    """
+    m = _open_memory()
+    hits = m.search(query, k=k)
+    if not hits:
+        console.print("[yellow]no facts found[/yellow]")
+        raise typer.Exit(0)
+    for h in hits:
+        txt = h.get("text") if isinstance(h, dict) else str(h)
+        score = h.get("score") if isinstance(h, dict) else None
+        s = f" [{score:.2f}]" if isinstance(score, (int, float)) else ""
+        console.print(f"- {txt}{s}")
+
+
 @app.command("stats")
 def trust_stats_cmd(
     db: str = typer.Option(

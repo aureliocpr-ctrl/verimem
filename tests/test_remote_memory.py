@@ -121,3 +121,36 @@ def test_open_memory_falls_back_embedded_when_server_down(tmp_path, monkeypatch)
     m = C.open_memory(tmp_path / "m.db")
     from verimem.client import Memory
     assert isinstance(m, Memory)          # fail-soft: never strand the caller
+
+
+# ---- production wiring (opus critic caller_verification finding) ---------
+# The factory must be REACHABLE in production, not test-only shelfware:
+# (1) public SDK export; (2) the CLI quickstart commands go through it.
+
+def test_open_memory_is_a_public_sdk_export():
+    import verimem
+    from verimem.client import open_memory
+    assert verimem.open_memory is open_memory
+
+
+def test_cli_remember_and_recall_use_open_memory(tmp_path, monkeypatch):
+    from typer.testing import CliRunner
+
+    from verimem import cli as vcli
+    calls = {"n": 0}
+
+    class _FakeMem:
+        def add(self, text, **kw):
+            calls["n"] += 1
+            return {"stored": True, "id": "f123", "status": "model_claim",
+                    "adjudication": {"disposition": "admitted"}}
+        def search(self, q, k=5, **kw):
+            calls["n"] += 1
+            return [{"id": "f123", "text": "stored fact", "score": 0.9}]
+    monkeypatch.setattr(vcli, "_open_memory", lambda: _FakeMem())
+    runner = CliRunner()
+    r1 = runner.invoke(vcli.app, ["remember", "The tank holds 500 liters."])
+    assert r1.exit_code == 0, r1.output
+    r2 = runner.invoke(vcli.app, ["recall", "tank capacity"])
+    assert r2.exit_code == 0, r2.output
+    assert calls["n"] == 2
