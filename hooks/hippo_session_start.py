@@ -59,27 +59,50 @@ def _safe_count(db: Path, table: str) -> int:
         return -1
 
 
+#: Statuses the moat HIDES from default recall (semantic.py _STATUS_RANK < 0).
+#: The startup banner must hide them too — otherwise it re-surfaces, as if it
+#: were current knowledge, exactly what the anti-confab gate rejected on write.
+_HIDDEN_STATUSES = ("orphaned", "quarantined", "user_belief")
+
+
 def _safe_recent_facts(db: Path, limit: int = 8) -> list[tuple]:
-    # Anti-laundering (2026-06-03): le promozioni conversational a basso-trust
-    # (writer_role='conversational_promotion' non ancora 'verified') NON devono
-    # affiorare nel banner come fossero conoscenza curata. Schema-tolerant: i DB
-    # legacy senza writer_role/status ricadono sulla query non-filtrata (non hanno
-    # comunque promozioni conversational, quel ruolo non esisteva).
+    # The startup banner must pass through the SAME trust filter as recall, not
+    # a raw SQL shortcut that bypasses the moat (2026-07-20). It hides:
+    #  - superseded facts (an old value already replaced — `superseded_by`);
+    #  - the statuses recall hides (orphaned / quarantined / user_belief), i.e.
+    #    what the anti-confab gate flagged at write time;
+    #  - low-trust conversational promotions (anti-laundering, 2026-06-03).
+    # Otherwise memory poisons its own context: the gate rejects a claim on
+    # write and the banner serves it back at the top of the next session, where
+    # a wrong recall compounds into a wrong decision.
+    # Schema-tolerant, stepwise: a DB missing `superseded_by` still gets the
+    # status filter; a pre-migration DB missing both falls back to unfiltered
+    # (it has neither the columns nor the low-trust rows those columns mark).
+    _placeholders = ",".join("?" * len(_HIDDEN_STATUSES))
+    _launder = ("NOT (COALESCE(writer_role,'agent_inference') = "
+                "'conversational_promotion' "
+                "AND COALESCE(status,'model_claim') != 'verified')")
+    _status = f"COALESCE(status,'model_claim') NOT IN ({_placeholders})"
+    _tail = "ORDER BY created_at DESC LIMIT ?"
+    _args = (*_HIDDEN_STATUSES, limit)
+    steps = (
+        # full filter: laundering + hidden statuses + supersession
+        (f"SELECT proposition, topic FROM facts WHERE {_launder} "
+         f"AND {_status} AND superseded_by IS NULL {_tail}", _args),
+        # DB has status but not the supersession column
+        (f"SELECT proposition, topic FROM facts WHERE {_launder} "
+         f"AND {_status} {_tail}", _args),
+        # pre-migration DB: no status/writer_role columns at all
+        (f"SELECT proposition, topic FROM facts {_tail}", (limit,)),
+    )
     try:
         with sqlite3.connect(str(db)) as conn:
-            try:
-                return conn.execute(
-                    "SELECT proposition, topic FROM facts "
-                    "WHERE NOT (COALESCE(writer_role,'agent_inference') = "
-                    "'conversational_promotion' "
-                    "AND COALESCE(status,'model_claim') != 'verified') "
-                    "ORDER BY created_at DESC LIMIT ?", (limit,)
-                ).fetchall()
-            except sqlite3.OperationalError:
-                return conn.execute(
-                    "SELECT proposition, topic FROM facts "
-                    "ORDER BY created_at DESC LIMIT ?", (limit,)
-                ).fetchall()
+            for sql, args in steps:
+                try:
+                    return conn.execute(sql, args).fetchall()
+                except sqlite3.OperationalError:
+                    continue
+            return []
     except Exception:
         return []
 
