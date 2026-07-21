@@ -147,6 +147,43 @@ _VALID_MODES: frozenset[str] = frozenset({"downgrade", "reject"})
 TRUSTED_HOOKS: frozenset[str] = frozenset({"system_hook", "trusted_hook"})
 
 
+def _l1_domain_advisory() -> bool:
+    """SERVER-SIDE, deployment-level switch (env ``ENGRAM_L1_DOMAIN_ADVISORY``,
+    default OFF). When ON, the L1.x keyword anti-confabulation detectors run and
+    surface their warnings but do NOT escalate to quarantine.
+
+    Rationale (measured 2026-07-21: 86.7% of legitimate lawyer/engineer/
+    clinician facts quarantined; design memos kimi+glm, verified on source):
+    the L1.x family polices an AGENT confabulating about its OWN code work
+    ('it works', 'deployed', 'tests pass'). A deployment that stores CUSTOMER
+    domain facts has no such agent, so those detectors are category-error there.
+
+    It is an ENV switch, NOT a per-write ``add()`` argument, on purpose: a
+    per-write flag is ``writer_role`` without a token — spoofable by an injected
+    prompt (the exact hole the trusted-hook bypass had to token-gate at
+    :882). A deployment operator sets this once, server-side; a write payload
+    can never assert it.
+
+    SCOPE (verified 2026-07-21, kimi review): it relaxes ONLY the L1* keyword
+    family — every ``startswith("L1")`` layer (bare L1, L1.5 diagnosis, L1.7
+    task-state, L1.8–L1.21), all of which are keyword detectors. The L3
+    (contradiction) and L4 (grounding) gates carry ``L3``/``L4`` labels that
+    ``startswith("L1")`` does NOT match, so they stay fail-closed.
+
+    DELIBERATELY UNCONDITIONAL (glm review a-1, resolved by measurement): the
+    two neighbouring suppressors ``_personal_fp``/``_world_fp`` defer to
+    ``_no_dev`` because they are per-fact CONTENT guesses. This one is an
+    operator's DEPLOYMENT declaration — higher authority than a keyword guess,
+    so it does NOT defer to ``_has_dev_context`` (measured: gating on it
+    re-quarantines 3/30 legitimate engineering/clinical facts — 'tested to 400
+    kilonewtons', 'the bridge was deployed' — because that heuristic is itself
+    keyword-blind, the very disease this cures). The fail-open is bounded: an
+    ungrounded dev self-claim in this mode still hits L4 when a grounding judge
+    is configured (test_advisory_dev_claim_still_hits_L4_grounding)."""
+    v = os.environ.get("ENGRAM_L1_DOMAIN_ADVISORY", "").strip().lower()
+    return v in ("1", "true", "on", "yes")
+
+
 class _SemanticLike(Protocol):
     def search_facts(
         self, query: str, *, limit: int = 20, topic: str | None = None,
@@ -1211,13 +1248,21 @@ def run_validation_gate(
     # for personal facts — advisory only, stays recallable — but keep dev-anchored claims
     # ("The migration was completed in 2023") escalating.
     _world_fp = _is_historical_completion(proposition) and _no_dev
+    # SERVER-SIDE domain-advisory mode (measured 2026-07-21: 86.7% vertical FP):
+    # a deployment that stores customer domain facts, not an agent's self-claims
+    # about code, declares ENGRAM_L1_DOMAIN_ADVISORY — L1 keyword warnings are
+    # still computed and surfaced but do not escalate to quarantine. Env-only,
+    # never a per-write flag (that would be spoofable); relaxes ONLY L1 — the
+    # L3/L4 semantic gates below are untouched.
+    _domain_advisory = _l1_domain_advisory()
     # A declared source is caller-controlled and unverified (spoofable like the
     # writer_role the trusted-hook bypass had to token-gate). It therefore does
     # NOT downgrade an L1 hit: the gate stays fail-closed and quarantines a
     # shape-confab regardless of an attached source. The honest recovery path
     # for a real documental fact is a grounding JUDGE (L4), which verifies
     # source-entailment; the L4-skipped advisory above says so when none is set.
-    l1_escalates = has_l1 and not _personal_fp and not _world_fp
+    l1_escalates = (has_l1 and not _personal_fp and not _world_fp
+                    and not _domain_advisory)
     def _mk(action: GateAction, *, advice_: str = advice,
             warnings_: list | None = None) -> GateResult:
         # Every gate outcome carries the judge-of-record + threshold, so the
