@@ -168,3 +168,89 @@ Roadmap 0.8: bench integrity hostile-shaped (ticket con quote ostili, API docs
 con markup, import bulk); dead-prefix lint + dry-run mode (Kimi); stesso audit
 name-based sul READ-side denylist (stessa lista, stesso rischio FP sul recall
 generico di corpus altrui); connector-tag MCP (purpose sul tool hippo_remember).
+
+---
+
+# 2026-07-21 — IL BLOCCO CENTRALE 0.7.0: false-positive del write-gate
+
+Punto della situazione dopo la sessione notturna (mandato Aurelio: "verimem
+funziona sotto ogni punto di vista" + "ridurre i falsi positivi a una soglia
+accettabile"). Questa sezione è il **piano di record indelebile** per chiudere
+la 0.7.0: obiettivi con criteri di FATTO numerici, non aggettivi.
+
+## Cosa FUNZIONA, misurato più volte (non regredire)
+- **Read-path**: 0 confabulazioni servite (e2e + bench confab, LLM reali);
+  astensione 3/3 sull'impossibile; contraddizione presa. `answer()` 4/5.
+- **Moat noise-rejection**: 60/60 (100%) del rumore foreign su HaluMem esterno.
+- **Suite** 7632/0; multi-tenant isolato; concorrenza server-condiviso 262ms;
+  ricevute + audit hash-chain (anchor-A).
+
+## Il DIFETTO, localizzato con precisione (il lavoro della 0.7.0)
+Il write-gate **sovra-respinge i fatti legittimi**. Tre sorgenti, misurate:
+1. **L1 keyword**: 46% del corpus verticale (legale/clinico/ingegneria)
+   quarantenato; opt-in advisory → 11% residuo.
+2. **CE grounding**: al cut shippato 40, clean-admission 66.7% su HaluMem
+   esterno (respinge 1/3 dei fatti puliti groundati) con noise-rej 100%.
+3. **L3-semantic NLI**: falsi positivi su coppie di soggetto diverso
+   (out-of-distribution); il pre-filtro coseno 0.7 è INERTE (595/595 passano).
+
+Causa unificante: **il write-path tratta "non abbastanza provato" come
+"malevolo"** — stessa quarantena per un fatto pulito sotto-soglia e per
+un'injection. Il read-path ha già la cura giusta (astensione graduata); il
+write-path deve fare lo stesso (ammissione graduata).
+
+## FATTO in questa sessione (commit su `rename/verimem-total`)
+- `ffbebb9` REVERT di una regressione critica (il flip L1 `d15e4ca`/Fable
+  aveva spento l'anti-confab **di default** — 122 test rossi; suite ripristinata
+  7632/0). Lezione: un flip di default sul gate senza suite intera è vietato.
+- `bf35c9b` la modalità advisory L1 **lascia traccia** sulla ricevuta
+  (`L1-domain-advisory-observe`) — critic 3-0-0.
+- `912862f` **AMMISSIONE GRADUATA** (`ENGRAM_GRADED_ADMISSION`, default OFF):
+  shortfall di grounding con source → ammesso low-confidence invece di
+  quarantena; critic 2-1, il voto FAIL ha trovato una perdita-dati reale
+  (write graded sbloccava la supersession) CURATA nello stesso commit.
+- `bf5d322` decisione di design convergente (io + GLM indipendenti; Kimi giù).
+- UD English-EWT gold scaricato + estrattore-soggetto tier-1 certificato
+  (wrong 20.7% su testo wild, 0% sul corpus KB).
+
+## OBIETTIVI 0.7.0 — criteri di FATTO numerici (Definition of Done)
+La 0.7.0 è "funzionante" quando, su config di default e misurato:
+
+| # | obiettivo | criterio di FATTO (numerico) |
+|---|---|---|
+| G1 | anti-confab non regredisce | confab servite = 0; banco caso A ≥ 8/8; injection ammesse = 0; Rossi-contraddizione catturata |
+| G2 | FP verticale accettabile | wrong-block ≤ 3% sul corpus 35-fatti (oggi 11–46%) |
+| G3 | FP grounding accettabile | clean-admission ≥ 90% CON noise-rejection ≥ 95% su HaluMem A/B (oggi 66.7/100) |
+| G4 | FP semantico accettabile | banco semantic-conflict: caso F* (soggetto-diverso) → 0 FP TENENDO A ≥ 8/8, E = 0 |
+| G5 | nessun FP nascosto | i FP NON migrano dalla scrittura alla risposta: A/B read-path con fatti low-conf → confab ancora 0 |
+| G6 | tutto tracciato | ogni stand-down / ammissione-graduata sulla ricevuta + audit (fatto per L1 e CE) |
+
+## SEQUENZA (giorni, observe-first, ogni passo con il suo cancello)
+Ordine per guadagno-FP / rischio (deciso io + GLM):
+
+- **P1 — CE graded admission** [codice FATTO, default OFF].
+  Cancello per il flip di default: **A/B a 3 bracci** su HaluMem
+  (OFF vs hard-reject vs graded) che dimostra G3 **e** G5 insieme
+  (clean-admission sale, confab resta 0, il read-path pesa i low-conf).
+  → poi flip default + critic + suite. *Prossimo passo immediato.*
+- **P2 — L3 subject pre-filter** [prototipo misurato, NON cablato].
+  Matcher **head-noun + modifier agreement** (non overlap-token), certificato
+  su UD gold. Wiring observe-first dietro env, ricevuta `-observe`.
+  Cancello: G4 sul banco + Wikidata mutation-eval (anti-circolarità).
+- **P3 — L1 default** [advisory+marker esiste].
+  Decisione default advisory-con-marker + `ENGRAM_L1_STRICT` per agenti +
+  **suite anti-confab riscritta deliberatamente** (non zittita).
+  Cancello: G1 + G2 su corpus verticale, critic, suite intera.
+- **P4 — eval anti-circolarità permanente**: harness Wikidata (triple reali,
+  mutazione di uno slot) come bench di regressione del conflict-gate, così G4
+  non poggia mai più su etichette auto-prodotte.
+
+## Vincoli di metodo (indelebili)
+- Nessun flip di default sul gate senza: suite intera verde (exit da file, mai
+  pipe) + A/B benchmark prima/dopo + critic pre-commit + `git stash list`
+  controllato.
+- Ogni numero di FP deve venire da un dataset ESTERNO o da gold di terzi, mai
+  da un corpus etichettato da noi (lezione caso-F, 2026-07-21).
+- Kimi+GLM avversari sul design; critic-orchestrator sul codice; ogni finding
+  verificato sul codice prima di adottarlo.
+- Push/merge/tag = decisione di Aurelio, dopo che testa.
