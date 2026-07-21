@@ -1203,7 +1203,92 @@ class Memory:
                     rows.append(dict(r))
         except Exception:
             pass  # read-only view: an unreadable store shows empty, not 500
+        # Attach WHY each claim was blocked (reason + layers) so a human can
+        # tell an L1 keyword false-positive from a real contradiction — the
+        # audit trail persists it per fact_id when VERIMEM_AUDIT_LOG is on.
+        # Degrades cleanly: without the trail the rows are exactly as before.
+        try:
+            why: dict[str, Any] = {}
+            for a in self.audit_log(disposition="quarantined",
+                                    limit=max(50, int(limit) * 4)):
+                fid = a.get("fact_id")
+                # audit_log is newest-first; keep the FIRST seen per fact so a
+                # re-adjudicated claim shows its LATEST reason, not the oldest.
+                if fid and fid not in why:
+                    why[fid] = a
+            for row in rows:
+                a = why.get(row["id"])
+                row["reason"] = (a or {}).get("reason") or None
+                row["layers"] = (a or {}).get("layers") or []
+        except Exception:  # noqa: BLE001 — enrichment must never break the view
+            pass
         return rows
+
+    def restore(self, fact_id: str, *, reason: str = "") -> bool:
+        """Rescue a wrongly-blocked fact: un-quarantine ``fact_id`` back into the
+        live recall view. The public product surface for the reversibility the
+        engine already implements — a legitimate vertical fact caught by an L1
+        keyword false positive (measured 2026-07-21: 86.7% of untuned
+        lawyer/engineer/clinician facts) returns to recall in one call, instead
+        of forcing the customer to reach into the internal store or re-add it.
+
+        Returns ``True`` iff a QUARANTINED row existed and was restored; ``False``
+        otherwise. Only quarantined facts are restorable — never un-orphans or
+        un-supersedes (those are different lifecycle states with their own honest
+        recovery), so this surface can't resurrect a scrubbed or superseded fact.
+        The flip is audited (``fact_restored`` event) and the fact leaves the
+        ``quarantine_log`` because it is live again.
+
+        SECONDARY by design (Aurelio 2026-07-21): the PRIMARY cure for wrongly-
+        blocked facts is automatic — keyword-only quarantine is advisory by
+        default (ENGRAM_L1_STRICT off), so a benign fact is not blocked in the
+        first place and no human restore is needed. This is the rare manual
+        escape hatch for a fact that a STRICT deployment still over-blocked.
+
+        SAFETY (pre-commit review 2026-07-21): a human override must not
+        resurrect actual poison. Before un-quarantining: (1) a SUPERSEDED fact is
+        refused (restore only un-quarantines, never un-supersedes); (2) the
+        proposition is re-screened with the injection detector and a text that
+        still trips it is REFUSED, so an exfiltration/instruction-override
+        payload stays quarantined even if a caller passes its id. HONEST LIMIT
+        (deepseek review): there is no persisted per-fact quarantine REASON, so
+        restore cannot fully distinguish a security quarantine from an FP — it
+        re-screens for injection (the exfil class) but a markup/pollution-class
+        quarantine is not separately refused. The complete fix is a persisted
+        quarantine_reason column; until then the injection re-screen covers the
+        security-critical class and keyword/grounding FPs restore cleanly."""
+        # Read the proposition + supersession straight from the store (get()
+        # does not surface the text for a quarantined fact) so the injection
+        # re-screen sees the real content and a superseded fact is refused.
+        text = ""
+        superseded = False
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as con:
+                row = con.execute(
+                    "SELECT proposition, superseded_by FROM facts WHERE id = ?",
+                    (fact_id,)).fetchone()
+                text = (row[0] if row else "") or ""
+                superseded = bool(row[1]) if row else False
+        except Exception:  # noqa: BLE001 — unreadable store → restore_fact returns False
+            text = ""
+        # deepseek review 2026-07-21 (a): a fact that is BOTH quarantined AND
+        # superseded must not be resurrected into a half-live state (status
+        # flipped but superseded_by still set) — restoring only un-quarantines,
+        # it never un-supersedes. Refuse it.
+        if superseded:
+            return False
+        if text:
+            try:
+                from .prompt_injection import detect_injection
+                if detect_injection(text).is_injection:
+                    from .observability import emit as _emit
+                    _emit("fact_restore_refused", fact_id=fact_id,
+                          reason="injection_screen")
+                    return False
+            except Exception:  # noqa: BLE001 — screen failure must not crash a read
+                pass
+        return self.semantic.restore_fact(fact_id, to_status="model_claim",
+                                          reason=reason)
 
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).
     recall = search
