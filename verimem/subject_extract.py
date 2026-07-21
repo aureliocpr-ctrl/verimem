@@ -32,8 +32,16 @@ _VERB_MARK = re.compile(
     r"spans?|monitors?|monitored|documented|confirmed|tested|deployed|added|"
     r"approved|completed|finished|scheduled|planned|works?|holds?|caught|"
     r"got|became|plays?|lives?|crashed|went|switched|adopted|shipped|passed|"
-    r"succeeded|rated|does|do|did|can|will|would|should|may|might|must)\b",
+    r"succeeded|rated|meets?|does|do|did|can|will|would|should|may|might|must)\b",
     re.IGNORECASE)
+
+#: Honorific abbreviations whose trailing dot is NOT sentence punctuation —
+#: without this, 'Dr. Rossi confirmed …' tripped the punct guard in
+#: ``subject_of`` and the fact fail-safed to escalate (corpus residual,
+#: 2026-07-22). The dot is stripped ONLY for these known titles; any other
+#: mid-NP period still reads as sentence structure (fail-safe unchanged).
+_HONORIFIC = re.compile(
+    r"\b(Dr|Mr|Mrs|Ms|Prof|Dott|Ing|Avv|St)\.", re.IGNORECASE)
 
 #: Subject heads that mark an AGENT's own software / work artifact — the register
 #: the L1 detectors exist to police. A subject with one of these heads is NOT a
@@ -96,6 +104,7 @@ def subject_of(text: str) -> str:
     t = (text or "")[:_LEXICAL_CAP].strip()
     if not t:
         return ""
+    t = _HONORIFIC.sub(lambda m: m.group(0)[:-1], t)
     m = _VERB_MARK.search(t)
     if not m or m.start() == 0:
         return ""

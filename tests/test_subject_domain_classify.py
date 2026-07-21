@@ -36,6 +36,13 @@ DOMAIN = [
     "The biopsy results were confirmed by Dr. Rossi on 12 March.",
     "The due-diligence review was completed before the acquisition closed.",
     "The foundation design is robust against a magnitude-7 earthquake.",
+    # the 2 residual over-quarantines of the 2026-07-22 corpus measure (6.7%):
+    # subject-EXTRACTION gaps, not classification gaps — the honorific dot
+    # ('Dr.') tripped the sentence-punct guard, and 'meets' was missing from
+    # the finite-verb marker. Both fail SAFE today (escalate); pinning them as
+    # DOMAIN closes corpus G2 without weakening the agent side.
+    "Dr. Rossi confirmed the biopsy results on 12 March.",
+    "The hardened concrete bunker meets the ballistic protection standard.",
 ]
 
 # agent self-claims about software/own work — MUST NOT be classified domain
