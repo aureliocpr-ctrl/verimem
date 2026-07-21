@@ -497,7 +497,8 @@ class Memory:
 
     def answer(self, query: str, *, llm: Any, k: int = 8,
                verify_threshold: float | None = None,
-               trust_conditioning: bool = True) -> dict[str, Any]:
+               trust_conditioning: bool = True,
+               max_tokens: int = 64) -> dict[str, Any]:
         """Grounding-verified answering — the anti-hallucination read-path.
 
         Generate an answer from the top-``k`` retrieved facts, then a LOCAL
@@ -544,8 +545,20 @@ class Memory:
             system = _ANSWER_SYSTEM
         user = "Facts:\n" + "\n".join(lines) + f"\n\nQuestion: {query}"
         resp = llm.complete(system,
-                            [{"role": "user", "content": user}], max_tokens=64)
+                            [{"role": "user", "content": user}],
+                            max_tokens=max_tokens)
         raw = (getattr(resp, "text", "") or "").strip()
+
+        # F5 (measured 2026-07-21 on glm-4.6/kimi-k3/kimi-k2.6): a reasoning
+        # model can burn the whole budget on reasoning_content and return
+        # content='' with finish_reason='length'. That is a DELIVERY failure,
+        # not an epistemic judgement — reporting it as 'model_abstained' made
+        # the product silently mute on every question. Raise max_tokens for
+        # such models.
+        if not raw and getattr(resp, "finish_reason", None) == "length":
+            return {"answer": "NO ANSWER", "grounded": False,
+                    "reason": "llm_truncated", "support_score": None,
+                    "support_fact": None, "raw_answer": ""}
 
         from .grounding_gate import _is_abstention
         if _is_abstention(raw):

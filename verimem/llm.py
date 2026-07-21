@@ -80,6 +80,12 @@ class LLMResponse:
     output_tokens: int
     model: str
     latency_s: float
+    #: provider finish reason ('stop', 'length', ...) where the client exposes
+    #: it; None elsewhere. Needed to tell a GENUINE empty abstention from a
+    #: reasoning model that burned the whole token budget on reasoning_content
+    #: and returned content='' (F5, measured 2026-07-21 on glm-4.6/kimi-k2.6:
+    #: without this, answer() reported 'model_abstained' on every question).
+    finish_reason: str | None = None
 
     @property
     def total_tokens(self) -> int:
@@ -671,7 +677,9 @@ class OpenAICompatLLM:
                      latency_s=round(latency, 3))
                 return LLMResponse(text=text, input_tokens=in_tok,
                                    output_tokens=out_tok, model=model,
-                                   latency_s=latency)
+                                   latency_s=latency,
+                                   finish_reason=getattr(
+                                       resp.choices[0], "finish_reason", None))
             except Exception as exc:
                 last_exc = exc
                 wait = CONFIG.llm_retry_backoff ** attempt
