@@ -361,6 +361,17 @@ def _semantic_conflict_on() -> bool:
     return _semantic_conflict_mode() != "off"
 
 
+def _l3_subject_filter() -> bool:
+    """ENGRAM_L3_SUBJECT_FILTER (default OFF): filter the sibling list by
+    subject (verimem.subject_extract.same_subject) BEFORE the NLI judge —
+    different-subject pairs are the judge's measured FP class (the cosine 0.7
+    pre-filter is inert: 595/595 corpus pairs clear it). Fail-open by design:
+    an unattributable subject compares everything."""
+    import os
+    return os.environ.get("ENGRAM_L3_SUBJECT_FILTER", "").strip().lower() in (
+        "1", "true", "on", "yes", "enforce")
+
+
 def _supersede_same_source_on() -> bool:
     """When a clash is a same-source EVOLUTION (the source restating its own value with a
     newer valid-time), ADMIT the new write and retire the OLD — instead of quarantining
@@ -1051,6 +1062,18 @@ def run_validation_gate(
                     asserted_at=asserted_at,
                 )
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
+                if _l3_subject_filter():
+                    # P2 subject pre-filter (env, default OFF): only siblings
+                    # ABOUT the same subject reach the NLI. Fail-soft to keep:
+                    # a matcher error must never hide a real conflict.
+                    def _keep(s) -> bool:
+                        try:
+                            from .subject_extract import same_subject
+                            return same_subject(
+                                proposition, getattr(s, "proposition", ""))
+                        except Exception:  # noqa: BLE001
+                            return True
+                    _sibs = [s for s in _sibs if _keep(s)]
                 _sib_by_id = {getattr(f, "id", None): f for f in _sibs}
                 _observe = _sc_mode == "observe"
                 from .semantic import _STATUS_RANK

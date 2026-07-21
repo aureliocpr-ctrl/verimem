@@ -32,8 +32,14 @@ _VERB_MARK = re.compile(
     r"spans?|monitors?|monitored|documented|confirmed|tested|deployed|added|"
     r"approved|completed|finished|scheduled|planned|works?|holds?|caught|"
     r"got|became|plays?|lives?|crashed|went|switched|adopted|shipped|passed|"
-    r"succeeded|rated|meets?|does|do|did|can|will|would|should|may|might|must)\b",
+    r"succeeded|rated|meets?|auto-renews?|renews?|renewed|does|do|did|can|will|"
+    r"would|should|may|might|must)\b",
     re.IGNORECASE)
+
+#: Adverbs that sit between the subject NP and its verb ('the team STILL runs') —
+#: stripped from the NP tail so they never become a bogus head noun.
+_TRAIL_ADV = {"still", "now", "already", "currently", "also", "just", "often",
+              "usually", "recently", "never", "always", "typically"}
 
 #: Honorific abbreviations whose trailing dot is NOT sentence punctuation —
 #: without this, 'Dr. Rossi confirmed …' tripped the punct guard in
@@ -112,6 +118,8 @@ def subject_of(text: str) -> str:
     toks = np.split()
     if toks and toks[0].lower() in _DET:
         toks = toks[1:]
+    while toks and toks[-1].lower() in _TRAIL_ADV:
+        toks = toks[:-1]
     if not toks or len(toks) > 6 or any(c in np for c in ".!?"):
         return ""
     return " ".join(toks)
@@ -128,6 +136,41 @@ def subject_head(text: str) -> str:
 #: pronoun heads carry no domain identity → uncertain → fail-safe to NOT-domain.
 _PRONOUNS = frozenset({"it", "they", "he", "she", "this", "that", "you",
                        "i", "we", "one", "someone", "something"})
+
+
+def _subject_tokens(text: str) -> list[str]:
+    """Lowercased content tokens of the subject NP (determiners stripped;
+    possessives normalized: "Tom's" -> "tom", so the entity matches its bare
+    mention on the other side)."""
+    subj = re.sub(r"'s\b", "", subject_of(text))
+    toks = [re.sub(r"[^\w-]", "", t).lower() for t in subj.split()]
+    return [t for t in toks if t and t not in _DET]
+
+
+def same_subject(a: str, b: str) -> bool:
+    """True iff the two propositions are ABOUT the same subject — the L3-semantic
+    NLI pre-filter (P2, 2026-07-22). Rule: same HEAD noun (rightmost content
+    token) AND modifier agreement (overlap, subset, or one side bare). An
+    empty/pronoun/uncertain subject is a WILDCARD -> True (fail-open: a conflict
+    we cannot attribute must still reach the judge, never be silently skipped).
+    Measured motivation: the cosine 0.7 pre-filter is inert (595/595 corpus
+    pairs clear it) and the NLI over-flags different-subject pairs. Pure and
+    symmetric; the gate wiring is separate and env-gated default-off."""
+    ta, tb = _subject_tokens(a), _subject_tokens(b)
+    if not ta or not tb or ta[0] in _PRONOUNS or tb[0] in _PRONOUNS:
+        return True                      # wildcard -> compare (fail-open)
+    ha, ma = ta[-1], set(ta[:-1])
+    hb, mb = tb[-1], set(tb[:-1])
+    if ha != hb:
+        # cross-entity containment ("Tom's startup" ~ "Tom"): heads differ but
+        # one side's head is a token of the other's subject -> same subject
+        # sphere, compare. Applies ONLY on differing heads, so shared-head
+        # pairs ('payments team' vs 'design team') still take the modifier
+        # branch below and stay separated.
+        return ha in tb or hb in ta
+    if not ma or not mb:
+        return True                      # bare head on one side -> assume same
+    return bool(ma & mb) or ma <= mb or mb <= ma
 
 
 def is_domain_professional(text: str) -> bool:
