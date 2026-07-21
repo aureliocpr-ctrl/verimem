@@ -1,0 +1,80 @@
+"""Subject-based domain/agent classifier (L1 precision, design (d), 2026-07-22).
+
+The L1 keyword detectors exist to police an AGENT confabulating about its OWN
+work ("the migration is complete", "I deployed it"). They over-fire on
+third-party PROFESSIONAL facts that merely reuse the same verbs ("the surgical
+procedure was completed", "the steel cable was tested"). Measured: 46% of a
+vertical corpus wrongly quarantined.
+
+The verbs (completed/tested/deployed/secure/approved) are irreducibly ambiguous
+between software and domain — the discriminator is the SUBJECT HEAD: 'the bridge
+joint was deployed' (physical) vs 'the service was deployed' (software). This
+module classifies a proposition as a domain-professional fact (advisory-safe)
+vs an agent self-claim (must still escalate), from the subject head + first
+person, WITHOUT a spoofable field.
+
+Fail-safe: when the subject is empty/pronoun/uncertain, classify as NOT-domain
+(-> the L1 anti-confab keeps escalating, the safe default). This is a pure,
+deterministic classifier — the gate wiring is separate and env-gated default-off.
+"""
+from __future__ import annotations
+
+import pytest
+
+pytest.importorskip("verimem.subject_extract")
+from verimem.subject_extract import is_domain_professional, subject_head  # noqa: E402
+
+# domain-professional facts that L1 wrongly quarantines (measured on the corpus)
+DOMAIN = [
+    "The surgical procedure was completed without complications.",
+    "The drug was approved by the regulator for paediatric use.",
+    "The settlement resolved all outstanding claims between the parties.",
+    "The vault door is rated secure against a 60-minute forced attack.",
+    "The zoning variance was approved by the municipal board in March.",
+    "The steel cable was tested to a breaking load of 400 kilonewtons.",
+    "The bridge expansion joint was deployed along the north span in 2021.",
+    "The biopsy results were confirmed by Dr. Rossi on 12 March.",
+    "The due-diligence review was completed before the acquisition closed.",
+    "The foundation design is robust against a magnitude-7 earthquake.",
+]
+
+# agent self-claims about software/own work — MUST NOT be classified domain
+AGENT = [
+    "The migration is complete and all tests pass.",
+    "I deployed the service to production.",
+    "The build passes and the feature is shipped.",
+    "The endpoint now responds in 8ms.",
+    "The deployment succeeded and the pipeline is green.",
+    "We finished the refactor and merged the PR.",
+    "The task was completed successfully.",
+    "The database migration ran without errors.",
+    # leak-closers found by validating against the REAL test corpus (2026-07-22)
+    # — NOT hand-picked; the first cut missed these two, the category fix caught
+    # them. Kept as a regression pin so the software-perf register stays closed.
+    "Throughput reached 50k requests per second.",
+    "Their system works reliably under load.",
+]
+
+
+@pytest.mark.parametrize("text", DOMAIN)
+def test_domain_facts_are_domain(text):
+    assert is_domain_professional(text) is True, \
+        f"domain fact misclassified as agent: {text!r} (head={subject_head(text)!r})"
+
+
+@pytest.mark.parametrize("text", AGENT)
+def test_agent_claims_are_not_domain(text):
+    assert is_domain_professional(text) is False, \
+        f"agent self-claim leaked as domain: {text!r} (head={subject_head(text)!r})"
+
+
+def test_first_person_is_never_domain():
+    assert is_domain_professional("I completed the audit.") is False
+    assert is_domain_professional("We approved the change.") is False
+
+
+def test_empty_or_pronoun_subject_fails_safe_to_not_domain():
+    # uncertain subject -> NOT domain -> L1 keeps escalating (safe default)
+    assert is_domain_professional("It was completed.") is False
+    assert is_domain_professional("") is False
+    assert is_domain_professional("Done.") is False
