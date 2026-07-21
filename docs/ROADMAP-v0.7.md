@@ -290,3 +290,81 @@ Sui 6 fatti dove divergono: **CE 99.8–100** (entailment forte) **e giudice 0.0
 **Priorità 0.7.0 aggiornata**: 1) L1 keyword advisory+marker (corpus verticale
 46%→≤3%, G2/G1); 2) L3 subject pre-filter head-noun (G4); 3) harness Wikidata
 (anti-circolarità permanente). Il grounding-CE è a posto sul default.
+
+---
+
+## 2026-07-22 — L1 precision leak chiuso + ricerca esterna 2026 (concatenamento)
+
+### P3/L1 avanzato (commit `85bcc19`, branch, NON pushato)
+Carve-out per-fatto `ENGRAM_L1_DOMAIN_PRECISION` (default OFF) cablato +
+classificatore soggetto (`subject_extract`). Critic-orchestrator job `8f6d0ec5`
+claim_holds 2-1: il voto FAIL (counterexample) ha provato che `SOFTWARE_HEADS`
+era una denylist non-esaustiva — `'the algorithm was tested'` (self-claim
+agente) leggeva domain e sopprimeva L1 con env ON. Verificato sul codice, chiuso
+TDD (registro software/ML/web aggiunto, teste dual-use lasciate fuori di
+proposito). **Misura onesta su `l1_business_corpus` (30 fatti reali): ENV OFF
+86.7% FP → ENV ON 6.7%**; i 2 residui sono gap di estrazione soggetto (`Dr.`,
+verbo `meets`) che falliscono SAFE (over-quarantena recuperabile). Blast 461
+test verdi. **Tetto provato**: la classificazione lessicale del soggetto non può
+disambiguare "self-claim agente" da "fatto dominio" dal solo testo (la stessa
+frase è confab o legittima a seconda di CHI la scrive).
+
+### Ricerca esterna 2026 (WebSearch/WebFetch live 2026-07-22)
+Due paper convergono sulla NOSTRA tesi, pubblicati:
+- **Eywa — Provenance-Grounded LTM** (arXiv 2605.30771): principio **"evidence
+  before belief"** (evidenza-sorgente immutabile PRIMA del fatto canonico).
+  LoCoMo 90.19, LongMemEval-S 88.2, BEAM 81.45.
+- **Schema-Grounded Memory** (arXiv 2604.27906): write-path validation gate a 3
+  stadi, "unknown ≠ not mentioned", **F1 97.10** vs competitor 80-87. Critica al
+  cross-encoder: "euristica di scoring post-hoc" vs "contratti-schema".
+- **HaluMem**: benchmark di allucinazione nelle OPERAZIONI di memoria (confab a
+  ingest) — bersaglio esatto del nostro anti-confab.
+- Competitor: Zep 63.8 / Mem0 49.0 (LongMemEval); EverOS LoCoMo 93.0.
+
+**Nostro stato competitivo verificato (letto dai result JSON, non a memoria)**:
+LoCoMo 0.813, LongMemEval recall@k 0.790, HaluMem-extraction F1 0.761 → **nel
+gruppo sul retrieval, non in testa**. Vantaggio REALE sull'asse-promessa: mem0
+`supported_pass_rate 0.25` (serve non-supportati 75%), niente contraddizione né
+count-API; verimem gate-grounding + contraddizione + astensione + read-path 0
+confab. *"Meglio di chiunque" è onesto sull'asse grounding/no-confab, NON sul
+retrieval grezzo.*
+
+## CANDIDATA 0.8.0 — spin-off VeriBench come benchmark standalone (proposta GLM 2026-07-22, valutata, NON eseguire in 0.7.0)
+
+Proposta GLM (via Aurelio): scorporare `benchmark/veribench/` in un repo/org
+dedicato (nome candidato "AdmitBench", da verificare disponibilità), verimem
+come UN adapter alla pari di mem0, pip-installabile, README autonomo sulla
+metrica NET(λ) = (correct − λ·wrong)/n. Premessa fattuale VERIFICATA:
+`benchmark/veribench/` esiste (PREREGISTRATION.md, run_all.py, mem0_adapter.py,
+competitors.py); preprint draft in docs/papers/veribench-preprint-DRAFT.md.
+
+**ADOTTARE (regge):** (a) lo scorporo — convergente con la NOSTRA critica a
+MemTensor/HaluMem ("leaderboard self-reported dal vendor del vincitore =
+conflitto d'interesse", HALUMEM_OFFICIAL_PROTOCOL.md): vale anche per noi;
+(b) NET(λ) come standard pubblico sposta la gara sull'asse dove siamo forti
+(fabbricazione prezzata vs recall@k); (c) adapter + CONTRIBUTING per PR terzi.
+
+**CORREGGERE (GLM sbaglia qui):** la neutralità NON si ottiene nascondendo il
+vendor — un'org "terza" creata da noi coi numeri prodotti da noi è il conflitto
+MemTensor con un livello di trucco in più, e se scoperto DISTRUGGE credibilità.
+Cura vera: **trasparenza dichiarata** ("maintained by the Verimem team" nel
+README, in chiaro) + **riproducibilità totale** (dati pubblici, seed fissi,
+harness a un comando, adapter competitor fair) + puntare a run RIPRODOTTI DA
+TERZI come criterio di successo. La differenza dai MemTensor = chiunque rifà i
+numeri, non l'anonimato.
+
+**Timing:** DOPO la 0.7.0 (mandato: prima verimem funziona sotto ogni punto di
+vista). Prerequisiti: 0.7.0 chiusa; verifica nome (GitHub/arXiv/dominio);
+decisione Aurelio su org + eventuale pubblicazione preprint.
+
+---
+
+### P0 (NUOVO, robusto) — evidence-before-belief per L1
+La cura vera del leak L1 NON è una wordlist più grande né un flag di modo: è
+**L1 defersce a grounding indipendente**. Un fatto con forma-da-self-claim ma
+con sorgente INDIPENDENTE (≠ il fatto, che L4 conferma) → advisory/ammesso; un
+claim auto-asserito (self-source o senza sorgente) → escala. Zero tetto
+lessicale; convergente con Eywa + schema-grounded. **Sottigliezza da inventare**:
+l'INDIPENDENZA della sorgente (self-paraphrase la aggira → serve un segnale di
+provenienza, non solo `source != proposition`). Subsume la wordlist (fast-path).
+Cancello: G1 + G2 su corpus verticale con sorgenti indipendenti, critic, suite.
