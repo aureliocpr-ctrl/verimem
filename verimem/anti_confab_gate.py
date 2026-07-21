@@ -147,6 +147,28 @@ _VALID_MODES: frozenset[str] = frozenset({"downgrade", "reject"})
 TRUSTED_HOOKS: frozenset[str] = frozenset({"system_hook", "trusted_hook"})
 
 
+def _l1_strict() -> bool:
+    """Whether an L1 KEYWORD-ONLY hit hard-blocks (quarantines). Default OFF —
+    the automatic cure for the measured 46% out-of-box ingest FP (e2e reality
+    check 2026-07-21: a real mixed customer knowledge base lost nearly half its
+    legitimate facts because keyword detectors built to police an AGENT's own
+    'it works / deployed / tests pass' claims fire on ordinary lawyer/engineer/
+    clinician text).
+
+    With strict OFF (default), a keyword-only hit is ADVISORY: the warning is
+    surfaced but the fact is admitted — NO human restore, NO env needed. The
+    STRONG semantic gates are untouched: an L3 contradiction, an L4 grounding
+    failure, or an injection still quarantine on their own (they escalate
+    independently of ``l1_escalates``).
+
+    A dogfooding agent that WANTS its self-claims policed sets
+    ``ENGRAM_L1_STRICT=1`` to restore keyword escalation. The earlier
+    ``ENGRAM_L1_DOMAIN_ADVISORY`` (same-day) still forces advisory when set —
+    now redundant with the default, kept as a no-surprise alias."""
+    v = os.environ.get("ENGRAM_L1_STRICT", "").strip().lower()
+    return v in ("1", "true", "on", "yes")
+
+
 def _l1_domain_advisory() -> bool:
     """SERVER-SIDE, deployment-level switch (env ``ENGRAM_L1_DOMAIN_ADVISORY``,
     default OFF). When ON, the L1.x keyword anti-confabulation detectors run and
@@ -807,10 +829,12 @@ def _has_dev_context(proposition: str) -> bool:
     return bool(_DEV_CONTEXT.search((proposition or "")[:_LEXICAL_SCAN_CAP]))
 
 
-#: PERSONAL/everyday-life signal (first-person OR a personal-life domain noun). The L1
-#: dev-claim detectors are SUPPRESSED only when this is present AND there is NO dev signal —
-#: so existing dev-claim behavior is unchanged (no personal signal => still escalates), while
-#: personal-assistant facts ("dentist appointment scheduled", "rent is recurring monthly",
+#: PERSONAL/everyday-life signal (first-person OR a personal-life domain noun). Within
+#: STRICT mode (ENGRAM_L1_STRICT) the L1 dev-claim detectors are SUPPRESSED when this is
+#: present AND there is no dev signal (dev-context claims still escalate in strict mode);
+#: with the 2026-07-21 default flip, keyword-only is advisory regardless, so this carve-out
+#: matters only under strict. Personal-assistant facts ("dentist appointment scheduled",
+#: "rent is recurring monthly",
 #: "I confirmed the reservation") stay recallable instead of being quarantined (WF3 2026-06-19).
 #: NB (critic 2026-06-20, split 1-1): do NOT include bare first-person pronouns (I/we/my) —
 #: first-person is the AGENT's own self-narration register, so "I finished the task" / "we
@@ -843,8 +867,9 @@ def _has_personal_context(proposition: str) -> bool:
 #: third-person historical fact about a structure/artifact, NOT the AGENT confabulating
 #: completion of its own work (the register L1.13 exists for: "task done", "I finished
 #: the task"). A PASSIVE completion/creation verb ANCHORED to a calendar year is the
-#: unambiguous world-fact construction. Suppressed only when there is ALSO no dev
-#: artifact — so "The migration was completed in 2023" (dev context) still escalates.
+#: unambiguous world-fact construction. Within STRICT mode this carve-out keeps such a
+#: world-fact advisory while "The migration was completed in 2023" (dev context) still
+#: escalates; with the 2026-07-21 default flip, keyword-only is advisory regardless.
 _HISTORICAL_COMPLETION = re.compile(
     r"\b(?:was|were|got|been|is|are)\s+(?:completed|finished|built|constructed|"
     r"erected|opened|established|founded|inaugurated|closed|demolished|destroyed|"
@@ -1232,14 +1257,18 @@ def run_validation_gate(
     has_l3_semantic = any(w.get("layer") == "L3-semantic" for w in warnings)
     has_grounding_fail = any(w.get("layer") == "L4-grounding" for w in warnings)
     has_l4_review = any(w.get("layer") == "L4-review" for w in warnings)
-    # WF3 2026-06-19 PRECISION FIX: the L1 lexical dev-claim detectors fire on ordinary
-    # personal words ('scheduled'/'done'/'confirmed'/'automatically'/'recurring') and were
-    # quarantining ~40% of legitimate personal-assistant facts out of recall. They are meant
-    # for the AGENT confabulating completion of ITS OWN WORK. So an L1 hit is SUPPRESSED (does
-    # not quarantine; fact stays recallable, warnings advisory) ONLY on a clear personal/
-    # everyday fact with NO dev signal — otherwise it escalates exactly as before (every
-    # existing dev-claim case is unchanged: no personal signal => still escalates).
-    # L3 (contradiction) and L4 (grounding) are semantic, not keyword FPs -> always escalate.
+    # WF3 2026-06-19: the L1 lexical dev-claim detectors fire on ordinary personal words
+    # ('scheduled'/'done'/'confirmed'/'automatically'/'recurring'). The _personal_fp /
+    # _world_fp carve-outs below suppress those inside STRICT mode.
+    # HONESTY (deepseek review 2026-07-21): since the same-day default flip
+    # (_l1_strict, below) a KEYWORD-ONLY L1 hit is advisory BY DEFAULT — this
+    # includes agent DEV-context self-claims ('the migration was completed, tests
+    # pass'), NOT only personal facts. That is the deliberate product default
+    # (measured 46% out-of-box FP); a dogfooding agent that wants its own
+    # unsupported self-claims quarantined sets ENGRAM_L1_STRICT=1, and then the
+    # _personal_fp/_world_fp carve-outs still keep genuine personal/historical
+    # facts advisory. L3 (contradiction) and L4 (grounding) are semantic, not
+    # keyword FPs, and escalate independently regardless of the L1 default.
     has_l1 = any(str(w.get("layer", "")).startswith("L1") for w in warnings)
     _no_dev = not _has_dev_context(proposition)
     _personal_fp = _has_personal_context(proposition) and _no_dev
@@ -1248,13 +1277,16 @@ def run_validation_gate(
     # for personal facts — advisory only, stays recallable — but keep dev-anchored claims
     # ("The migration was completed in 2023") escalating.
     _world_fp = _is_historical_completion(proposition) and _no_dev
-    # SERVER-SIDE domain-advisory mode (measured 2026-07-21: 86.7% vertical FP):
-    # a deployment that stores customer domain facts, not an agent's self-claims
-    # about code, declares ENGRAM_L1_DOMAIN_ADVISORY — L1 keyword warnings are
-    # still computed and surfaced but do not escalate to quarantine. Env-only,
-    # never a per-write flag (that would be spoofable); relaxes ONLY L1 — the
-    # L3/L4 semantic gates below are untouched.
-    _domain_advisory = _l1_domain_advisory()
+    # AUTOMATIC keyword-FP cure (measured 2026-07-21: 46% out-of-box ingest
+    # block on a real mixed customer knowledge base). An L1 KEYWORD-ONLY hit is
+    # advisory BY DEFAULT — surfaced but not escalated — because those detectors
+    # were built to police an AGENT's own 'it works / deployed / tests pass'
+    # claims and misfire on ordinary lawyer/engineer/clinician facts. A
+    # dogfooding agent restores the block with ENGRAM_L1_STRICT=1; the same-day
+    # ENGRAM_L1_DOMAIN_ADVISORY still forces advisory (now redundant, kept as an
+    # alias). The STRONG semantic gates are untouched — L3 contradiction, L4
+    # grounding, injection all escalate on their own below.
+    _keyword_escalates = _l1_strict() and not _l1_domain_advisory()
     # A declared source is caller-controlled and unverified (spoofable like the
     # writer_role the trusted-hook bypass had to token-gate). It therefore does
     # NOT downgrade an L1 hit: the gate stays fail-closed and quarantines a
@@ -1262,7 +1294,7 @@ def run_validation_gate(
     # for a real documental fact is a grounding JUDGE (L4), which verifies
     # source-entailment; the L4-skipped advisory above says so when none is set.
     l1_escalates = (has_l1 and not _personal_fp and not _world_fp
-                    and not _domain_advisory)
+                    and _keyword_escalates)
     def _mk(action: GateAction, *, advice_: str = advice,
             warnings_: list | None = None) -> GateResult:
         # Every gate outcome carries the judge-of-record + threshold, so the

@@ -136,6 +136,14 @@ class TestSchemaSurfacesGateKnobs:
 
 
 class TestFastL1Downgrade:
+    @pytest.fixture(autouse=True)
+    def _l1_strict(self, monkeypatch):
+        # this class tests the STRICT keyword-detector escalation (an agent's
+        # 'SHIPPED / diagnosis' self-claim without evidence → downgrade), which
+        # is opt-in since the 2026-07-21 default flip (keyword-only advisory by
+        # default, measured 46% out-of-box FP).
+        monkeypatch.setenv("ENGRAM_L1_STRICT", "1")
+
     @pytest.mark.asyncio
     async def test_shipped_keyword_without_commit_ref_downgrades_to_provisional(
         self, real_sm: SemanticMemory,

@@ -36,6 +36,13 @@ import pytest
 from verimem.anti_confab_gate import run_validation_gate
 
 
+@pytest.fixture(autouse=True)
+def _l1_strict(monkeypatch):
+    # STRICT keyword-detector escalation is opt-in since the 2026-07-21 default
+    # flip (keyword-only advisory by default); this file tests the strict path.
+    monkeypatch.setenv("ENGRAM_L1_STRICT", "1")
+
+
 class TestL18WiredIntoGate:
     def test_fix_claim_no_evidence_triggers_l18_warning(self) -> None:
         result = run_validation_gate(

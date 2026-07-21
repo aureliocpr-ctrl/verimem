@@ -27,9 +27,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from verimem.anti_confab_gate import run_validation_gate
 from verimem.l1_tested_detector import detect_unsupported_tested_claim
 from verimem.semantic import SemanticMemory
+
+
+@pytest.fixture(autouse=True)
+def _l1_strict(monkeypatch):
+    # STRICT keyword-detector escalation is opt-in since the 2026-07-21 default
+    # flip (keyword-only advisory by default); this file tests the strict path.
+    monkeypatch.setenv("ENGRAM_L1_STRICT", "1")
 
 
 class _FakeAgent:
