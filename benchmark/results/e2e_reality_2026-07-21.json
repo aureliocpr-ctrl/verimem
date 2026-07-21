@@ -1,0 +1,232 @@
+{
+  "n_facts": 35,
+  "admitted": 19,
+  "quarantined": 16,
+  "wrong_block_rate": 0.457,
+  "blocked": [
+    [
+      "L2",
+      "legal",
+      "The due-diligence review was completed before the acquisition closed.",
+      [
+        "L1.13"
+      ]
+    ],
+    [
+      "L4",
+      "legal",
+      "The settlement resolved all outstanding claims between the parties.",
+      [
+        "L1.8",
+        "L3-semantic"
+      ]
+    ],
+    [
+      "L5",
+      "legal",
+      "The easement is documented in the 1998 deed at the land registry.",
+      [
+        "L1.14",
+        "L3-semantic"
+      ]
+    ],
+    [
+      "L6",
+      "legal",
+      "The zoning variance was approved by the municipal board in March.",
+      [
+        "L1.16"
+      ]
+    ],
+    [
+      "C2",
+      "clinical",
+      "The biopsy results were confirmed by Dr. Rossi on 12 March.",
+      [
+        "L1.10"
+      ]
+    ],
+    [
+      "C3",
+      "clinical",
+      "The drug was approved by the regulator for paediatric use.",
+      [
+        "L1.16"
+      ]
+    ],
+    [
+      "C4",
+      "clinical",
+      "Blood pressure is monitored every four hours on this ward.",
+      [
+        "L1.17"
+      ]
+    ],
+    [
+      "C5",
+      "clinical",
+      "The patient was tested for the antibody on admission.",
+      [
+        "L1.15"
+      ]
+    ],
+    [
+      "C6",
+      "clinical",
+      "The surgical procedure was completed without complications.",
+      [
+        "L1.13"
+      ]
+    ],
+    [
+      "E1",
+      "engineering",
+      "The steel cable was tested to a breaking load of 400 kilonewtons.",
+      [
+        "L1.15"
+      ]
+    ],
+    [
+      "E2",
+      "engineering",
+      "The bridge expansion joint was deployed along the north span in 2021.",
+      [
+        "L1"
+      ]
+    ],
+    [
+      "E3",
+      "engineering",
+      "The foundation design is robust against a magnitude-7 earthquake.",
+      [
+        "L1.11"
+      ]
+    ],
+    [
+      "E5",
+      "engineering",
+      "The vault door is rated secure against a 60-minute forced attack.",
+      [
+        "L1.12"
+      ]
+    ],
+    [
+      "E7",
+      "engineering",
+      "The failure mode is documented in the maintenance logbook.",
+      [
+        "L1.14"
+      ]
+    ],
+    [
+      "B5",
+      "business",
+      "The company reached a stable market position after the merger.",
+      [
+        "L1.11"
+      ]
+    ],
+    [
+      "B6",
+      "business",
+      "The invoice total is 12,450 euros.",
+      [
+        "L3-semantic"
+      ]
+    ]
+  ],
+  "recall_hits": 4,
+  "recall_n": 5,
+  "recall_detail": [
+    {
+      "query": "Rossi contract expiry",
+      "want": "L1",
+      "hit": true,
+      "was_admitted": true
+    },
+    {
+      "query": "Milan office desks",
+      "want": "B2",
+      "hit": true,
+      "was_admitted": true
+    },
+    {
+      "query": "who leads payments",
+      "want": "B3",
+      "hit": true,
+      "was_admitted": true
+    },
+    {
+      "query": "steel cable load test",
+      "want": "E1",
+      "hit": false,
+      "was_admitted": false
+    },
+    {
+      "query": "board meeting date",
+      "want": "P3",
+      "hit": true,
+      "was_admitted": true
+    }
+  ],
+  "answer": {
+    "answerable_correct": 4,
+    "answerable_n": 5,
+    "impossible_abstained": 3,
+    "impossible_n": 3,
+    "detail": [
+      {
+        "q": "When does the Rossi SpA contract expire?",
+        "kind": "answerable",
+        "answer": "31 January 2027.",
+        "ok": true
+      },
+      {
+        "q": "How many desks does the Milan office have?",
+        "kind": "answerable",
+        "answer": "40 desks.",
+        "ok": true
+      },
+      {
+        "q": "Who leads the payments team?",
+        "kind": "answerable",
+        "answer": "Marco leads the payments team.",
+        "ok": true
+      },
+      {
+        "q": "What was the Q3 revenue?",
+        "kind": "answerable",
+        "answer": "1.2 million euros.",
+        "ok": true
+      },
+      {
+        "q": "Who is the security lead?",
+        "kind": "answerable",
+        "answer": "NO ANSWER",
+        "ok": false
+      },
+      {
+        "q": "How many desks does the Rome office have?",
+        "kind": "impossible",
+        "answer": "NO ANSWER",
+        "abstained": true,
+        "confabulated": false
+      },
+      {
+        "q": "Who decided to migrate to Stripe?",
+        "kind": "impossible",
+        "answer": "NO ANSWER",
+        "abstained": true,
+        "confabulated": false
+      },
+      {
+        "q": "What is Giulia's phone number?",
+        "kind": "impossible",
+        "answer": "NO ANSWER",
+        "abstained": true,
+        "confabulated": false
+      }
+    ]
+  },
+  "contradiction_caught": true
+}
