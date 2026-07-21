@@ -64,3 +64,42 @@ pre-filtro coseno (`min_cosine=0.7`) e giudice NLI locale (DeBERTa-MNLI).
 3. Wiring observe-first dietro env (`ENGRAM_SUBJECT_PREFILTER=observe`),
    ricevuta col layer `-observe` (convenzione già in uso).
 4. Critic pre-commit + full suite + bench HaluMem prima/dopo.
+
+---
+
+## AGGIORNAMENTO 2026-07-21 notte — DECISIONE CONVERGENTE (mandato Aurelio: design delegato, "la cosa più completa e tecnicamente migliore")
+
+Metodo: la mia posizione depositata PRIMA di leggere i critici
+(`scratchpad/my_design_position.md`), poi diff col verdetto GLM-5.2
+indipendente. Convergenza su tutti e 5 gli assi. Kimi-k3: 4 timeout su 4
+(moonshot irraggiungibile stanotte) — consultato, non disponibile.
+
+### Decisione (impegni, non opzioni)
+1. **Target**: clean-admission ≥90% (floor; 95 aspirazionale) CON
+   noise-rejection ≥95% su HaluMem A/B; verticale wrong-block ≤3%;
+   non-regressione: banco caso-A 8/8, Rossi catturata, injection 0, confab 0.
+2. **CE grounding → AMMISSIONE GRADUATA** (passo 1, massimo guadagno):
+   sotto-soglia con source dichiarata → ammetti come `model_claim` con
+   `grounding_confidence: low` sulla ricevuta; quarantena riservata a
+   injection / contraddizione attiva / evidenza che CONTRADDICE.
+   Falsificatore verificato: al cut shippato (40) clean-admission = 66.7%
+   (40/60) con noise-rejection 100% → il sovra-rigetto è reale, non taratura.
+   «La moat vive nello spazio di lettura, non di scrittura» (GLM).
+3. **L3-semantic → subject pre-filter** con matcher **head-noun + modifier
+   agreement** (head diverso → scarta; head uguale → i modifier devono
+   concordare: "payments team" vs "design team" NON matcha). Observe-first.
+   Gold UD scaricato e attivo: tier-1 iter-1 wrong 20.7% wild / 0% KB.
+4. **L1 keywords → advisory-by-default CON marker** (il marker esiste,
+   `bf35c9b`) + `ENGRAM_L1_STRICT` per deployment agentici. Differenza dal
+   flip regredito d15e4ca: tracciabilità completa + suite riscritta
+   deliberatamente + L3/L4/injection fail-closed intatti. `source_type`
+   scartato (spoofabile a livello API — refutazione GLM della sua stessa
+   proposta precedente).
+5. **Ordine**: CE graded (1) → head-noun L3 (2) → L1 advisory default (3).
+   Ogni passo: TDD + observe + bench prima/dopo + critic pre-commit + suite.
+
+### Failure-mode PRE-REGISTRATO (GLM, punto 6)
+Se il read-path non PESA i fatti `grounding_confidence: low`, l'ammissione
+graduata sposta i FP dalla scrittura alla risposta. **Obbligatorio prima di
+dichiarare vinto il passo 1**: A/B sul read-path con fatti low-conf iniettati
+(confab-rate e astensione devono restare 0 / corrette).
