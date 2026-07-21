@@ -1,0 +1,363 @@
+{
+  "n_facts": 30,
+  "quarantined": 26,
+  "fp_rate": 0.867,
+  "by_detector": {
+    "works": 6,
+    "security": 3,
+    "tested": 3,
+    "completion": 3,
+    "prod_ready": 2,
+    "documentation": 2,
+    "monitored": 2,
+    "approval": 2,
+    "deployed": 1,
+    "shipped": 1,
+    "automated": 1
+  },
+  "by_vertical": {
+    "legal": 10,
+    "engineering": 9,
+    "clinical": 5,
+    "hr": 1,
+    "business": 1
+  },
+  "n_controls": 6,
+  "controls_quarantined": 0,
+  "rows": [
+    {
+      "fact": "Sofia works for the logistics division.",
+      "vertical": "hr",
+      "expected": "works",
+      "status": "quarantined",
+      "layers": [
+        "L1.10"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The new arbitration clause works in favour of the tenant.",
+      "vertical": "legal",
+      "expected": "works",
+      "status": "quarantined",
+      "layers": [
+        "L1.10"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "Dr. Rossi confirmed the biopsy results on 12 March.",
+      "vertical": "clinical",
+      "expected": "works",
+      "status": "quarantined",
+      "layers": [
+        "L1.10"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The settlement resolved all outstanding claims between the parties.",
+      "vertical": "legal",
+      "expected": "works",
+      "status": "quarantined",
+      "layers": [
+        "L1.8"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The load-balancing valve works at pressures up to 12 bar.",
+      "vertical": "engineering",
+      "expected": "works",
+      "status": "quarantined",
+      "layers": [
+        "L1.10"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The mediation succeeded and both parties signed the accord.",
+      "vertical": "legal",
+      "expected": "works",
+      "status": "quarantined",
+      "layers": [
+        "L1.10"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The bridge expansion joint was deployed along the north span in 2021.",
+      "vertical": "engineering",
+      "expected": "deployed",
+      "status": "quarantined",
+      "layers": [
+        "L1"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The vaccine was shipped to 40 regional clinics in the first week.",
+      "vertical": "clinical",
+      "expected": "shipped",
+      "status": "model_claim",
+      "layers": [
+        "L1"
+      ],
+      "quarantined": false
+    },
+    {
+      "fact": "The client shipped the disputed goods before the embargo date.",
+      "vertical": "legal",
+      "expected": "shipped",
+      "status": "quarantined",
+      "layers": [
+        "L1"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The vault door is rated secure against a 60-minute forced attack.",
+      "vertical": "engineering",
+      "expected": "security",
+      "status": "quarantined",
+      "layers": [
+        "L1.12"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The witness was moved to a secure location before the trial.",
+      "vertical": "legal",
+      "expected": "security",
+      "status": "quarantined",
+      "layers": [
+        "L1.12"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The hardened concrete bunker meets the ballistic protection standard.",
+      "vertical": "engineering",
+      "expected": "security",
+      "status": "quarantined",
+      "layers": [
+        "L1.12"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The steel cable was tested to a breaking load of 400 kilonewtons.",
+      "vertical": "engineering",
+      "expected": "tested",
+      "status": "quarantined",
+      "layers": [
+        "L1.15"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The patient was tested for the antibody on admission.",
+      "vertical": "clinical",
+      "expected": "tested",
+      "status": "quarantined",
+      "layers": [
+        "L1.15"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The signature on the will was verified by a handwriting expert.",
+      "vertical": "legal",
+      "expected": "tested",
+      "status": "quarantined",
+      "layers": [
+        "L1.15"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The foundation design is robust against a magnitude-7 earthquake.",
+      "vertical": "engineering",
+      "expected": "prod_ready",
+      "status": "quarantined",
+      "layers": [
+        "L1.11"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The company reached a stable market position after the merger.",
+      "vertical": "business",
+      "expected": "prod_ready",
+      "status": "quarantined",
+      "layers": [
+        "L1.11"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The due-diligence review was completed before the acquisition closed.",
+      "vertical": "legal",
+      "expected": "completion",
+      "status": "quarantined",
+      "layers": [
+        "L1.13"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The surgical procedure was completed without complications.",
+      "vertical": "clinical",
+      "expected": "completion",
+      "status": "quarantined",
+      "layers": [
+        "L1.13"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The building inspection is finished and the certificate was issued.",
+      "vertical": "engineering",
+      "expected": "completion",
+      "status": "quarantined",
+      "layers": [
+        "L1.13"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The easement is documented in the 1998 deed at the land registry.",
+      "vertical": "legal",
+      "expected": "documentation",
+      "status": "quarantined",
+      "layers": [
+        "L1.14"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The failure mode is documented in the maintenance logbook.",
+      "vertical": "engineering",
+      "expected": "documentation",
+      "status": "quarantined",
+      "layers": [
+        "L1.14"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The patient's blood pressure is monitored every four hours.",
+      "vertical": "clinical",
+      "expected": "monitored",
+      "status": "quarantined",
+      "layers": [
+        "L1.17"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The dam's water level is monitored by three independent sensors.",
+      "vertical": "engineering",
+      "expected": "monitored",
+      "status": "quarantined",
+      "layers": [
+        "L1.17"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The new turbine is 15 percent more efficient than the 2019 model.",
+      "vertical": "engineering",
+      "expected": "performance",
+      "status": "model_claim",
+      "layers": [],
+      "quarantined": false
+    },
+    {
+      "fact": "Q3 sales grew 22 percent over the same quarter last year.",
+      "vertical": "business",
+      "expected": "quantitative",
+      "status": "model_claim",
+      "layers": [],
+      "quarantined": false
+    },
+    {
+      "fact": "The court hearing is scheduled for 14 October at 9 a.m.",
+      "vertical": "legal",
+      "expected": "automated",
+      "status": "quarantined",
+      "layers": [
+        "L1.18"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The MRI scan is scheduled for next Tuesday morning.",
+      "vertical": "clinical",
+      "expected": "automated",
+      "status": "model_claim",
+      "layers": [
+        "L1.18"
+      ],
+      "quarantined": false
+    },
+    {
+      "fact": "The zoning variance was approved by the municipal board.",
+      "vertical": "legal",
+      "expected": "approval",
+      "status": "quarantined",
+      "layers": [
+        "L1.16"
+      ],
+      "quarantined": true
+    },
+    {
+      "fact": "The drug was approved by the regulator for paediatric use.",
+      "vertical": "clinical",
+      "expected": "approval",
+      "status": "quarantined",
+      "layers": [
+        "L1.16"
+      ],
+      "quarantined": true
+    }
+  ],
+  "controls": [
+    {
+      "fact": "The office in Milan has 40 desks.",
+      "vertical": "business",
+      "status": "model_claim",
+      "quarantined": false
+    },
+    {
+      "fact": "The contract term ends on 31 January 2027.",
+      "vertical": "legal",
+      "status": "model_claim",
+      "quarantined": false
+    },
+    {
+      "fact": "The beam spans 24 metres between supports.",
+      "vertical": "engineering",
+      "status": "model_claim",
+      "quarantined": false
+    },
+    {
+      "fact": "The patient is 54 years old.",
+      "vertical": "clinical",
+      "status": "model_claim",
+      "quarantined": false
+    },
+    {
+      "fact": "Giulia is the head of the security team.",
+      "vertical": "hr",
+      "status": "model_claim",
+      "quarantined": false
+    },
+    {
+      "fact": "The invoice total is 12,450 euros.",
+      "vertical": "business",
+      "status": "model_claim",
+      "quarantined": false
+    }
+  ]
+}
