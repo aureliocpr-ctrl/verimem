@@ -63,6 +63,28 @@ SOFTWARE_HEADS = frozenset({
     "system", "systems", "throughput", "latency", "uptime", "downtime",
     "qps", "rps", "availability", "performance", "bandwidth", "response",
     "responses", "runtime", "load", "memory", "cpu",
+    # ADVERSARIAL leak-closers — the critic-orchestrator counterexample worker
+    # (job 8f6d0ec5, 2026-07-22) proved the denylist above was NOT exhaustive:
+    # these software/ML/web-register heads were absent, so an agent self-claim
+    # ('the algorithm was tested and passed') read as domain and had its L1
+    # escalation wrongly suppressed. Only CLEARLY-software heads are added; a few
+    # genuinely dual-use heads (protocol/transformer/network/agent/driver/site)
+    # are LEFT OUT on purpose — adding them would quarantine legitimate clinical/
+    # legal/engineering facts (a false positive), and a lexical denylist cannot be
+    # exhaustive either way. This is the proven ceiling of lexical subject
+    # classification; the honest promotion gate is the measured corpus + default
+    # OFF + observe-first, NOT the completeness of this frozenset.
+    "algorithm", "algorithms", "platform", "platforms", "product", "products",
+    "website", "websites", "portal", "portals", "parser", "parsers",
+    "compiler", "compilers", "heuristic", "heuristics", "dashboard",
+    "dashboards", "page", "pages", "library", "libraries", "framework",
+    "frameworks", "plugin", "plugins", "widget", "widgets", "kernel", "kernels",
+    "microservice", "microservices", "lambda", "dataset", "datasets",
+    "embedding", "embeddings", "tokenizer", "tokenizers", "classifier",
+    "classifiers", "checkpoint", "checkpoints", "optimizer", "optimizers",
+    "prompt", "prompts", "chatbot", "chatbots", "bot", "bots", "crawler",
+    "crawlers", "scraper", "scrapers", "indexer", "indexers", "orchestrator",
+    "orchestrators",
 })
 
 _LEXICAL_CAP = 8192

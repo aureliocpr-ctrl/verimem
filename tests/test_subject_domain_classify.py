@@ -53,6 +53,21 @@ AGENT = [
     # them. Kept as a regression pin so the software-perf register stays closed.
     "Throughput reached 50k requests per second.",
     "Their system works reliably under load.",
+    # adversarial leak-closers found by the critic-orchestrator counterexample
+    # worker (job 8f6d0ec5, 2026-07-22): SOFTWARE_HEADS is a denylist and these
+    # software/ML/web-register heads were absent, so an agent self-claim with one
+    # of them wrongly read as domain (is_domain_professional=True) and had its L1
+    # escalation suppressed with the env on. Verified empirically before adding.
+    # NB: this closes the KNOWN leaks; a lexical denylist cannot be exhaustive —
+    # the promotion gate is the measured corpus + default-OFF, not this list.
+    "The algorithm was tested and passed.",
+    "The platform was deployed to production.",
+    "The product shipped last week.",
+    "The website was secured with TLS.",
+    "The parser was tested against the spec.",
+    "The compiler was verified on all targets.",
+    "The dashboard was deployed to the cluster.",
+    "The portal was approved for launch.",
 ]
 
 

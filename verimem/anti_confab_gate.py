@@ -163,6 +163,27 @@ def _graded_admission() -> bool:
     return v in ("1", "true", "on", "yes", "enforce")
 
 
+def _l1_domain_precision() -> bool:
+    """Env ``ENGRAM_L1_DOMAIN_PRECISION`` (DEFAULT OFF — design (d), 2026-07-22).
+    When ON, the L1 keyword escalation is suppressed PER FACT for propositions
+    the subject classifier reads as third-party professional facts (see
+    ``verimem.subject_extract.is_domain_professional``). Surgical alternative to
+    the reverted global L1 flip: an agent's own software self-claim still
+    escalates. Relaxes only L1; L3/L4/injection are untouched."""
+    v = os.environ.get("ENGRAM_L1_DOMAIN_PRECISION", "").strip().lower()
+    return v in ("1", "true", "on", "yes", "enforce")
+
+
+def _is_domain_professional_fact(proposition: str) -> bool:
+    """Thin, fail-soft wrapper: a classifier import/logic fault must never crash
+    a write — it degrades to 'not domain' (L1 keeps escalating, the safe side)."""
+    try:
+        from .subject_extract import is_domain_professional
+        return bool(is_domain_professional(proposition))
+    except Exception:  # noqa: BLE001 — classifier must not break the gate
+        return False
+
+
 def _l1_domain_advisory() -> bool:
     """SERVER-SIDE, deployment-level switch (env ``ENGRAM_L1_DOMAIN_ADVISORY``,
     default OFF). When ON, the L1.x keyword anti-confabulation detectors run and
@@ -1326,6 +1347,16 @@ def run_validation_gate(
     # never a per-write flag (that would be spoofable); relaxes ONLY L1 — the
     # L3/L4 semantic gates below are untouched.
     _domain_advisory = _l1_domain_advisory()
+    # PER-FACT domain-precision carve-out (design (d), env ENGRAM_L1_DOMAIN_
+    # PRECISION, DEFAULT OFF). Unlike _domain_advisory (which disarms L1 for the
+    # WHOLE deployment), this suppresses the L1 escalation ONLY for a fact the
+    # subject classifier reads as a third-party professional fact — an agent's
+    # self-claim about its OWN software ('the migration is complete') is NOT
+    # domain and still escalates. Content-based, not a spoofable field; the
+    # subject HEAD (not the ambiguous verb) is the discriminator. Relaxes ONLY
+    # L1 — L3/L4/injection escalate independently below.
+    _domain_precision_fp = (has_l1 and _l1_domain_precision()
+                            and _is_domain_professional_fact(proposition))
     # A declared source is caller-controlled and unverified (spoofable like the
     # writer_role the trusted-hook bypass had to token-gate). It therefore does
     # NOT downgrade an L1 hit: the gate stays fail-closed and quarantines a
@@ -1333,7 +1364,21 @@ def run_validation_gate(
     # for a real documental fact is a grounding JUDGE (L4), which verifies
     # source-entailment; the L4-skipped advisory above says so when none is set.
     l1_escalates = (has_l1 and not _personal_fp and not _world_fp
-                    and not _domain_advisory)
+                    and not _domain_advisory and not _domain_precision_fp)
+    if _domain_precision_fp and not _personal_fp and not _world_fp \
+            and not _domain_advisory:
+        # Record the per-fact stand-down (``*-observe``: surfaced, never a block
+        # reason nor a ledger credit). Only when precision is the reason L1 did
+        # not escalate — if a carve-out or the global switch already did, that
+        # marker owns it.
+        warnings.append({
+            "layer": "L1-domain-precision-observe",
+            "reason": "ENGRAM_L1_DOMAIN_PRECISION active: the subject reads as a "
+                      "third-party professional fact, so the L1 keyword hit was "
+                      "kept advisory rather than escalated",
+            "advice": "unset ENGRAM_L1_DOMAIN_PRECISION to restore L1 keyword "
+                      "escalation for this write",
+        })
     if _domain_advisory and has_l1 and not _personal_fp and not _world_fp:
         # Critic probe 3 on e41991e (2026-07-21): the switch used to leave NO
         # trace — a disarmed-L1 deployment's receipts were indistinguishable
