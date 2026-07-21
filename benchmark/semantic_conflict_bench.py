@@ -1,6 +1,6 @@
 """Bench: is Engram's write-time conflict/grounding LEXICAL or SEMANTIC?
 
-Labeled pairs across 5 cases. Measures, per case, whether the LEXICAL stack
+Labeled pairs across 6 cases. Measures, per case, whether the LEXICAL stack
 (coherence_check numeric/boolean clash + looks_like_conflict + facts_conflict) and
 the new SEMANTIC detector (verimem.semantic_conflict, NLI judge) fire — and the
 cosine (to prove the hard cases ARE detectable in principle).
@@ -8,7 +8,9 @@ cosine (to prove the hard cases ARE detectable in principle).
 Key number: case A (conflict where WORDS differ but MEANING conflicts, no number /
 no negation token, cosine 0.80-0.87) — the lexical stack catches ~0; a real
 semantic detector should catch most WITHOUT false-positiving on case E
-(complementary facts about the same subject, also high cosine).
+(complementary facts about the same subject, also high cosine) NOR on case F
+(unrelated facts about DIFFERENT subjects in the same topic, added 2026-07-21 —
+the real-world FP the first five cases did not cover).
 
 Judge-free for the lexical baseline; the semantic detector uses an injected judge
 (live: claude -p lean — subscription, O5). Run: `python -m benchmark.semantic_conflict_bench`.
@@ -29,7 +31,8 @@ from verimem.semantic_conflict import detect_semantic_conflicts
 from verimem.truth_reconciliation import looks_like_conflict
 
 # (a, b, case). A=semantic conflict (hard), B=numeric, C=negation,
-# D=paraphrase-duplicate (not a conflict), E=complementary (not a conflict).
+# D=paraphrase-duplicate (not a conflict), E=complementary (not a conflict),
+# F=UNRELATED same-topic (not a conflict) — see below.
 PAIRS: list[tuple[str, str, str]] = [
     ("Caroline relocated to Milan last year.",
      "Caroline has been living in Rome the whole time.", "A"),
@@ -59,6 +62,26 @@ PAIRS: list[tuple[str, str, str]] = [
     ("The cache holds 1024 entries.", "The eviction policy is LRU.", "E"),
     ("Sara plays the violin.", "Sara has two younger brothers.", "E"),
     ("The API is written in Go.", "The API is documented in Swagger.", "E"),
+    # F — UNRELATED facts about DIFFERENT subjects inside the same topic, at the
+    # same high cosine as case A (0.79-0.85). Case E already covers complementary
+    # facts about the SAME subject ("John lives in Rome" / "John is 30"), and the
+    # detector scores 0.0 FP there — but nothing covered DIFFERENT subjects, which
+    # is what a real mixed knowledge base is mostly made of. That gap is why the
+    # bug shipped: measured 2026-07-21 on benchmark/end_to_end_reality.py, these
+    # four pairs are the ENTIRE residual write-gate FP (4/35 = 11% of a legitimate
+    # lawyer/engineer/clinician corpus wrongly quarantined) once the L1 keyword
+    # family is advisory. The local NLI (DeBERTa-MNLI) is out-of-distribution here:
+    # trained on pairs where the hypothesis is ABOUT the premise, it over-predicts
+    # CONTRADICTION whenever two independent facts carry different entities or
+    # numbers. Gold label: NOT a conflict. Target: F=0.0 while A stays 1.0.
+    ("The arbitration clause was added in the 2024 amendment.",
+     "The settlement resolved all outstanding claims between the parties.", "F"),
+    ("The arbitration clause was added in the 2024 amendment.",
+     "The easement is documented in the 1998 deed at the land registry.", "F"),
+    ("Q3 revenue was 1.2 million euros.",
+     "The invoice total is 12,450 euros.", "F"),
+    ("Giulia is the security lead.",
+     "Elena reports to Davide on the platform group.", "F"),
 ]
 
 
