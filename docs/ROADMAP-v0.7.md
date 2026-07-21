@@ -254,3 +254,39 @@ Ordine per guadagno-FP / rischio (deciso io + GLM):
 - Kimi+GLM avversari sul design; critic-orchestrator sul codice; ogni finding
   verificato sul codice prima di adottarlo.
 - Push/merge/tag = decisione di Aurelio, dopo che testa.
+
+---
+
+## CORREZIONE 2026-07-21 (tarda notte) — G3 grounding: NON è un difetto del default
+
+Misura pari-pari (stessi 50 fatti HaluMem identici, CE vs giudice claude,
+`fact_grounding_score(None,·)` vs `fact_grounding_score(claude,·)`; verificato su
+`grounding_gate.py:383`):
+
+| config | clean-admission | noise-rejection |
+|---|---|---|
+| **CE (default prodotto, `Memory` senza llm)** | **97–100%** | 95–100% |
+| giudice claude (opt-in `Memory(llm=…)`) | 66.7–76% | 100% |
+
+Sui 6 fatti dove divergono: **CE 99.8–100** (entailment forte) **e giudice 0.0** —
+è il *giudice* che sbaglia su clean chiaramente entailed, non il gate.
+
+**Conseguenze (onestà A3, correzione di un mio claim precedente):**
+- Il "33% di clean-rejection" attribuito al gate era la config **con giudice
+  LLM**, non il default. Stesso errore di classe del flip L1: misurare l'asse
+  sbagliato. Il bench `halumem_writepath_moat` inietta `llm=claude`, quindi
+  misura il giudice, NON il CE che il prodotto usa di default.
+- **G3 sul default è GIÀ soddisfatto dal CE** (≥90 clean / ≥95 noise). Declassato
+  da difetto a proprietà verificata.
+- La **graded admission** (`912862f`) resta shipped e utile *solo* per la config
+  llm-judge; NON è più "il passo 1 a massimo guadagno sul default".
+- **I FP veri della 0.7.0 restano DUE**: L1 keyword (46% verticale) e L3-NLI
+  (soggetto-diverso). La priorità P1 diventa **P3 (L1)** e **P2 (L3)**; il
+  grounding esce dalla lista dei difetti-default.
+- Difetto secondario NUOVO (priorità bassa): il giudice claude dà 0.0 su clean
+  entailed (6/25) — chi usa `Memory(llm=claude)` per il grounding ha un judge
+  inaffidabile su una frazione. Da indagare quando si tocca la config llm.
+
+**Priorità 0.7.0 aggiornata**: 1) L1 keyword advisory+marker (corpus verticale
+46%→≤3%, G2/G1); 2) L3 subject pre-filter head-noun (G4); 3) harness Wikidata
+(anti-circolarità permanente). Il grounding-CE è a posto sul default.
