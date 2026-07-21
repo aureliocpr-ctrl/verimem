@@ -660,13 +660,17 @@ class OpenAICompatLLM:
         max_tokens = max_tokens or CONFIG.llm_max_tokens
         msgs = [{"role": "system", "content": system}] + list(messages)
         last_exc: Exception | None = None
+        send_temperature = True
         for attempt in range(CONFIG.llm_max_retries):
             t0 = time.time()
             try:
-                resp = self.client.chat.completions.create(
-                    model=model, messages=msgs, temperature=temperature,
+                kwargs: dict[str, Any] = dict(
+                    model=model, messages=msgs,
                     max_tokens=max_tokens, stop=stop_sequences or None,
                 )
+                if send_temperature:
+                    kwargs["temperature"] = temperature
+                resp = self.client.chat.completions.create(**kwargs)
                 latency = time.time() - t0
                 text = resp.choices[0].message.content or ""
                 usage = resp.usage
@@ -682,6 +686,17 @@ class OpenAICompatLLM:
                                        resp.choices[0], "finish_reason", None))
             except Exception as exc:
                 last_exc = exc
+                # F6 (measured 2026-07-21): moonshot kimi-k3/k2.6 reject any
+                # temperature other than 1 with a 400 — every verimem call
+                # failed hard. Drop the parameter once and let the provider
+                # apply its own default; anything else keeps the normal path.
+                emsg = str(exc).lower()
+                if (send_temperature and "temperature" in emsg
+                        and ("400" in emsg or "invalid" in emsg)):
+                    send_temperature = False
+                    log.warning("llm_temperature_unsupported_retry",
+                                provider=self.provider_label, model=model)
+                    continue
                 wait = CONFIG.llm_retry_backoff ** attempt
                 log.warning("llm_retry", provider=self.provider_label,
                             attempt=attempt + 1, error=str(exc), wait_s=wait)
