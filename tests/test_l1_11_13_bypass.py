@@ -23,19 +23,7 @@ L3/DB). MAI il DB reale ~/.verimem. NON fixa il sorgente (lo coordina il capo).
 """
 from __future__ import annotations
 
-import pytest
-
 from verimem.anti_confab_gate import run_validation_gate
-
-
-@pytest.fixture(autouse=True)
-def _l1_strict(monkeypatch):
-    # This file verifies the STRICT keyword-detector escalation (an agent's
-    # unsupported 'production-ready / completed' self-claim → downgrade). Since
-    # the 2026-07-21 default flip that behaviour is opt-in (keyword-only is
-    # advisory by default, measured 46% out-of-box FP), so the strict detector
-    # is declared here — its job is unchanged, only no longer the default.
-    monkeypatch.setenv("ENGRAM_L1_STRICT", "1")
 
 
 def _gate(proposition: str, verified_by: list[str]):

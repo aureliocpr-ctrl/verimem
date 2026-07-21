@@ -35,9 +35,6 @@ ENG_FACT = "The building inspection is finished and the certificate was issued."
 @pytest.fixture(autouse=True)
 def _clear_env(monkeypatch):
     monkeypatch.delenv("ENGRAM_L1_DOMAIN_ADVISORY", raising=False)
-    # Since the 2026-07-21 default flip, keyword-only is advisory by DEFAULT; the
-    # enforcement baseline these tests contrast against now lives under STRICT.
-    monkeypatch.setenv("ENGRAM_L1_STRICT", "1")
     yield
 
 
@@ -46,13 +43,10 @@ def _gate(fact: str, **kw):
                                topic="t/x", agent=None, validate="full", **kw)
 
 
-def test_strict_quarantines_the_keyword_fact(monkeypatch):
-    """The enforcement baseline: under ENGRAM_L1_STRICT a keyword-only claim
-    escalates. (Out of the box, without strict, it is advisory — see
-    test_l1_advisory_by_default.py — this file contrasts DOMAIN_ADVISORY against
-    the strict baseline.)"""
+def test_default_still_quarantines_the_keyword_fact(monkeypatch):
+    """Backward-compatible: with the env unset, L1 escalates exactly as before."""
     res = _gate(LEGAL_FACT)
-    assert res.action == "downgrade"
+    assert res.action == "downgrade"          # quarantine, unchanged
     assert any(str(w.get("layer", "")).startswith("L1") for w in res.warnings)
 
 
