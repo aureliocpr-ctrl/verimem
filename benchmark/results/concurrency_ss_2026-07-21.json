@@ -1,0 +1,21 @@
+{
+  "rows": [
+    {
+      "workers": 2,
+      "wall_s": 22.8,
+      "n_reads": 162,
+      "n_writes": 54,
+      "n_errors": 0,
+      "read_p50": 115.5,
+      "read_p99": 280.5,
+      "read_max": 3020.5,
+      "write_p50": 261.9,
+      "write_p99": 358.5,
+      "write_max": 662.8,
+      "ops_over_5s": 0,
+      "ops_over_10s": 0,
+      "throughput_ops_s": 9.5,
+      "error_samples": []
+    }
+  ]
+}
