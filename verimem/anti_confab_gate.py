@@ -1263,6 +1263,26 @@ def run_validation_gate(
     # source-entailment; the L4-skipped advisory above says so when none is set.
     l1_escalates = (has_l1 and not _personal_fp and not _world_fp
                     and not _domain_advisory)
+    if _domain_advisory and has_l1 and not _personal_fp and not _world_fp:
+        # Critic probe 3 on e41991e (2026-07-21): the switch used to leave NO
+        # trace — a disarmed-L1 deployment's receipts were indistinguishable
+        # from an armed one's, and a mid-process env mutation disarmed the
+        # layer fleet-wide with no audit record. Record the STAND-DOWN on the
+        # receipt (``*-observe`` convention: surfaced, never owns a block
+        # reason nor a ledger credit). Guarded on exactly the term the switch
+        # flips in ``l1_escalates`` — an L1 hit no carve-out suppressed. Under
+        # force_persist or an L3/L4 co-fire the final outcome is the same with
+        # or without the switch (critic 2026-07-21, probe c): the marker still
+        # stamps there, and its reason text stays literally true — L1 was kept
+        # advisory by the switch; it just wasn't the deciding factor.
+        warnings.append({
+            "layer": "L1-domain-advisory-observe",
+            "reason": "ENGRAM_L1_DOMAIN_ADVISORY active: an L1 keyword hit "
+                      "that would have escalated was kept advisory by the "
+                      "deployment-wide switch",
+            "advice": "unset ENGRAM_L1_DOMAIN_ADVISORY to restore L1 keyword "
+                      "escalation",
+        })
     def _mk(action: GateAction, *, advice_: str = advice,
             warnings_: list | None = None) -> GateResult:
         # Every gate outcome carries the judge-of-record + threshold, so the

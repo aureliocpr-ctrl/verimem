@@ -375,8 +375,16 @@ class Memory:
                                  "NOT retired): %s", _old_id, fact.id, exc)
         _adj = _adjudication(gate, disposition=_disposition,
                              verified_by=verified_by, warnings=warnings)
+        # The audit row also records a defense that STOOD DOWN (critic probe 3
+        # on e41991e): an admitted-under-ENGRAM_L1_DOMAIN_ADVISORY write must be
+        # distinguishable from one under an armed gate. Audit-only — the trust
+        # ledger and the flow event keep their acted-only attribution.
+        _stood_down = [layer for w in warnings
+                       if (layer := str(w.get("layer", "")))
+                       == "L1-domain-advisory-observe"]
         self._audit_record(_adj, topic=topic, proposition=text, fact_id=fact.id,
-                           judge=getattr(gate, "judge", None), layers=_hit_layers)
+                           judge=getattr(gate, "judge", None),
+                           layers=_hit_layers + _stood_down)
         _out = {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
