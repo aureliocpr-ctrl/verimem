@@ -147,6 +147,22 @@ _VALID_MODES: frozenset[str] = frozenset({"downgrade", "reject"})
 TRUSTED_HOOKS: frozenset[str] = frozenset({"system_hook", "trusted_hook"})
 
 
+def _graded_admission() -> bool:
+    """Env switch ``ENGRAM_GRADED_ADMISSION`` (DEFAULT OFF — design bf5d322
+    step 1). When ON, a grounding SHORTFALL (CE/judge score below the write
+    threshold, or the CE review band with no adjudicator) no longer hard-
+    quarantines a write that DECLARED a source: the fact persists as a
+    low-confidence model_claim and the receipt records the shortfall
+    (``L4-grounding-graded`` / ``L4-review-graded`` — non-escalating layers).
+    Quarantine stays reserved for injection and active contradiction, which
+    escalate independently. Rationale (measured, HaluMem external A/B at the
+    shipped cut 40): the hard reject loses 33% of CLEAN facts while noise
+    rejection is achievable on the READ side by weighting low-conf items —
+    the pre-registered A/B for that flip lives with the design doc."""
+    v = os.environ.get("ENGRAM_GRADED_ADMISSION", "").strip().lower()
+    return v in ("1", "true", "on", "yes", "enforce")
+
+
 def _l1_domain_advisory() -> bool:
     """SERVER-SIDE, deployment-level switch (env ``ENGRAM_L1_DOMAIN_ADVISORY``,
     default OFF). When ON, the L1.x keyword anti-confabulation detectors run and
@@ -1173,15 +1189,38 @@ def run_validation_gate(
             _judge_of_record = _judge_used
             _threshold_of_record = resolve_write_threshold_for(_judge_used)
             if gscore < _threshold_of_record:
-                warnings.append({
-                    "layer": "L4-grounding",
-                    "reason": f"source does not entail the proposition "
-                              f"(grounding {gscore:.0f} below threshold)",
-                    "advice": "the source does not support this proposition — likely a "
-                              "confabulated inference, not a stated fact.",
-                    "grounding_score": gscore,
-                })
-                advice = advice or "Source does not entail the claim (semantic grounding)."
+                if _graded_admission():
+                    # GRADED ADMISSION (design bf5d322 step 1, env-gated,
+                    # DEFAULT OFF): "not proven enough" is not "malicious".
+                    # Measured at the shipped cut 40 (HaluMem external A/B):
+                    # hard-reject here loses 33% of CLEAN facts. With the env
+                    # ON the write persists as a low-confidence model_claim and
+                    # the receipt says so; quarantine stays reserved for
+                    # injection / active contradiction (they escalate below
+                    # regardless). Layer name deliberately NOT "L4-grounding"
+                    # so the escalation equality check does not fire.
+                    warnings.append({
+                        "layer": "L4-grounding-graded",
+                        "reason": f"graded admission: grounding {gscore:.0f} below "
+                                  f"threshold {_threshold_of_record:.0f} — admitted "
+                                  "as low-confidence, NOT verified "
+                                  "(ENGRAM_GRADED_ADMISSION)",
+                        "advice": "the declared source does not entail this claim; "
+                                  "it is stored as an unproven low-confidence "
+                                  "memory. Unset ENGRAM_GRADED_ADMISSION to "
+                                  "restore hard quarantine.",
+                        "grounding_score": gscore,
+                    })
+                else:
+                    warnings.append({
+                        "layer": "L4-grounding",
+                        "reason": f"source does not entail the proposition "
+                                  f"(grounding {gscore:.0f} below threshold)",
+                        "advice": "the source does not support this proposition — likely a "
+                                  "confabulated inference, not a stated fact.",
+                        "grounding_score": gscore,
+                    })
+                    advice = advice or "Source does not entail the claim (semantic grounding)."
             elif (_judge_used == "local" and _ce_band_enforced()
                   and gscore < _ce_band_tau_hi()):
                 # BAND ESCALATION (0.7.0): before parking the write for review,
@@ -1199,31 +1238,63 @@ def run_validation_gate(
                     _judge_of_record = _esc_judge   # local-band / claude-band
                     _threshold_of_record = resolve_write_threshold_for("claude")
                     if _esc_score < _threshold_of_record:
-                        warnings.append({
-                            "layer": "L4-grounding",
-                            "reason": f"band escalation ({_esc_judge}): llm judge scored "
-                                      f"{_esc_score:.0f} below the claude-scale "
-                                      f"threshold {_threshold_of_record:.0f}",
-                            "advice": "the CE was unsure and the llm judge "
-                                      "adjudicated NOT entailed -- likely a "
-                                      "confabulated inference, not a stated fact.",
-                            "grounding_score": _esc_score,
-                        })
-                        advice = advice or ("Source does not entail the claim "
-                                            "(band llm adjudication).")
+                        if _graded_admission():
+                            # coherence with the main sub-threshold branch: a
+                            # grounding shortfall admits as low-confidence
+                            # under graded admission, whoever scored it.
+                            warnings.append({
+                                "layer": "L4-grounding-graded",
+                                "reason": f"graded admission: band judge "
+                                          f"({_esc_judge}) scored {_esc_score:.0f} "
+                                          "below threshold — admitted as "
+                                          "low-confidence, NOT verified",
+                                "advice": "the llm adjudicated the source does not "
+                                          "entail this claim; stored as an unproven "
+                                          "low-confidence memory.",
+                                "grounding_score": _esc_score,
+                            })
+                        else:
+                            warnings.append({
+                                "layer": "L4-grounding",
+                                "reason": f"band escalation ({_esc_judge}): llm judge scored "
+                                          f"{_esc_score:.0f} below the claude-scale "
+                                          f"threshold {_threshold_of_record:.0f}",
+                                "advice": "the CE was unsure and the llm judge "
+                                          "adjudicated NOT entailed -- likely a "
+                                          "confabulated inference, not a stated fact.",
+                                "grounding_score": _esc_score,
+                            })
+                            advice = advice or ("Source does not entail the claim "
+                                                "(band llm adjudication).")
                     # else: llm adjudicated entailed -> admitted clean,
                     # judge-of-record 'claude-band' on the receipt.
                 else:
-                    warnings.append({
-                        "layer": "L4-review",
-                        "reason": f"borderline grounding ({gscore:.0f}) in the CE review "
-                                  f"band [{_threshold_of_record:.0f}, "
-                                  f"{_ce_band_tau_hi():.0f}) - held for review, not admitted",
-                        "advice": "the local CE is not confident the source entails this "
-                                  "claim; pass Memory(llm=...) to adjudicate the borderline "
-                                  "zone, or review the held fact.",
-                        "grounding_score": gscore,
-                    })
+                    if _graded_admission():
+                        # no adjudicator available: under graded admission the
+                        # borderline write persists as low-confidence instead
+                        # of being held — otherwise a BETTER score (band) would
+                        # fare WORSE than a sub-threshold one (admitted above).
+                        warnings.append({
+                            "layer": "L4-review-graded",
+                            "reason": f"graded admission: borderline grounding "
+                                      f"({gscore:.0f}) in the CE review band — "
+                                      "admitted as low-confidence, NOT verified",
+                            "advice": "the local CE is not confident the source "
+                                      "entails this claim; stored as an unproven "
+                                      "low-confidence memory.",
+                            "grounding_score": gscore,
+                        })
+                    else:
+                        warnings.append({
+                            "layer": "L4-review",
+                            "reason": f"borderline grounding ({gscore:.0f}) in the CE review "
+                                      f"band [{_threshold_of_record:.0f}, "
+                                      f"{_ce_band_tau_hi():.0f}) - held for review, not admitted",
+                            "advice": "the local CE is not confident the source entails this "
+                                      "claim; pass Memory(llm=...) to adjudicate the borderline "
+                                      "zone, or review the held fact.",
+                            "grounding_score": gscore,
+                        })
     elif source and not _have_judge:
         _emit_l4_skipped()
 

@@ -361,7 +361,17 @@ class Memory:
         # elsewhere (admission-gate telemetry route sets no 'quarantined' status), and
         # retiring the old against a diverted new would drop BOTH from curated recall
         # (opus final critic). get() short-circuits after the cheap checks.
-        if (_disposition == "admitted" and getattr(gate, "supersede_fact_ids", None)
+        # GRADED-ADMISSION GUARD (critic 514cdec3 counterexample, FAIL vote,
+        # empirically reproduced): an admitted-but-GRADED write (grounding
+        # shortfall admitted as low-confidence under ENGRAM_GRADED_ADMISSION)
+        # must NOT unlock supersession — otherwise a score-12 claim retires a
+        # grounded value from curated recall, a net loss the hard-quarantine
+        # path prevented. Both values stay recallable; supersession remains
+        # for writes that earned admission on their own evidence.
+        _graded_admit = any(str(w.get("layer", "")).endswith("-graded")
+                            for w in warnings)
+        if (_disposition == "admitted" and not _graded_admit
+                and getattr(gate, "supersede_fact_ids", None)
                 and self.semantic.get(fact.id) is not None):
             for _old_id in gate.supersede_fact_ids:
                 try:
@@ -1487,8 +1497,16 @@ def _is_advisory_layer(layer: str) -> bool:
     in the trust ledger — otherwise observe mode measures itself as the blocker and its
     whole purpose (gauge a layer's block rate BEFORE enforcing) is defeated. NB: the
     layer string ``L3-semantic-observe`` also ``.startswith("L3")`` (rank 0), so without
-    this guard it would out-rank a real L1/L4 block in ``_reason_from_warnings``."""
-    return str(layer).endswith("-observe")
+    this guard it would out-rank a real L1/L4 block in ``_reason_from_warnings``.
+
+    ``*-graded`` layers (``L4-grounding-graded``, ``L4-review-graded``, graded
+    admission — design bf5d322) are the same class from the ledger's point of
+    view: they record an ADMISSION decision, never a block, so crediting one as
+    an acting blocker (critic 514cdec3 falsification caveat 4: possible when
+    ANOTHER layer quarantines the same write) would pollute exactly the
+    attribution the pre-registered flip A/B has to read."""
+    s = str(layer)
+    return s.endswith("-observe") or s.endswith("-graded")
 
 
 def _blocking_layers(warnings: list) -> list[str]:
