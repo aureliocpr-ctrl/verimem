@@ -1,0 +1,23 @@
+{
+  "busy_timeout": "(default 60000)",
+  "secs": 10.0,
+  "rows": [
+    {
+      "workers": 2,
+      "wall_s": 35.7,
+      "n_reads": 6,
+      "n_writes": 2,
+      "n_errors": 0,
+      "read_p50": 2035.9,
+      "read_p99": 2093.5,
+      "read_max": 2093.5,
+      "write_p50": 23914.5,
+      "write_p99": 24199.3,
+      "write_max": 24199.3,
+      "ops_over_5s": 2,
+      "ops_over_10s": 2,
+      "throughput_ops_s": 0.2,
+      "error_samples": []
+    }
+  ]
+}
