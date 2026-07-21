@@ -116,39 +116,44 @@ def _ce_relevance_floor() -> float:
         return 0.0
 
 
-def _apply_ce_gate(sm, query: str, hits: list) -> tuple[list, bool, bool]:
+def _apply_ce_gate(sm, query: str, hits: list) -> tuple[list, bool, str]:
     """Drop hits the cross-encoder scores as NOT relevant to ``query`` (CE logit
     below :func:`_ce_relevance_floor`, default 0.0). Store-size-independent — the
     CE cleanly separates on-topic (~+8) from off-topic (~-8) where the bi-encoder
     cosine (anisotropic, ~0.7+ for anything) cannot, so a query the store cannot
     support ABSTAINS instead of returning the nearest-but-wrong fact (measured
     2026-07-18: a coffee-machine fact scored bi-encoder 0.71 but CE -8.7 for a
-    database query). No-op if the reranker is unavailable (falls back to the
-    bi-encoder ``min_relevance`` floor)."""
+    database query).
+
+    Returns ``(hits, floored, status)`` where status ∈ {'ran', 'unavailable',
+    'error'} — a DECLARED degrade, not a silent one (kimi F3a 2026-07-21: the
+    old code returned unfiltered hits with the same shape on a scorer fault, so
+    a caller could not tell a passed gate from a broken one)."""
     if not hits:
-        return hits, False, False
+        return hits, False, "ran"
     try:
         from .semantic import _load_reranker
         scorer = _load_reranker()
     except Exception:  # noqa: BLE001 — reranker optional; degrade to bi-encoder floor
         scorer = None
     if scorer is None:
-        return hits, False, False   # ran=False → caller keeps the bi-encoder floor
+        return hits, False, "unavailable"
     try:
         pairs = [(query or "", getattr(h[0], "proposition", "") or "") for h in hits]
         ce = scorer(pairs)
     except Exception:  # noqa: BLE001 — a scorer fault must not break the read
-        return hits, False, False
+        return hits, False, "error"
     floor = _ce_relevance_floor()
     kept = [h for h, s in zip(hits, ce, strict=False) if float(s) >= floor]
-    return kept, (len(kept) < len(hits)), True
+    return kept, (len(kept) < len(hits)), "ran"
 
 
 def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
                        as_of: float | None = None,
                        max_hops: int = 3,
                        min_relevance: float = 0.0,
-                       ce_gate: bool = False) -> dict[str, Any]:
+                       ce_gate: bool = False,
+                       llm: Any = None) -> dict[str, Any]:
     """Build the evidence dossier for ``query``: the retrieved facts with their
     full chain of custody, or an EXPLICIT abstention when the memory holds
     nothing relevant. ``deep`` searches the archive (dormant memories);
@@ -183,15 +188,40 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
     # (unchanged; ``test_abstains_matches_explain`` and the HaluEval curve rely on
     # it). If the reranker isn't installed, "auto" falls back to the resolved
     # bi-encoder value.
-    ce_ran = False
+    ce_status = "off"
     if ce_gate:
-        hits, ce_floored, ce_ran = _apply_ce_gate(sm, query, hits)
+        hits, ce_floored, ce_status = _apply_ce_gate(sm, query, hits)
         floored = floored or ce_floored
+    ce_ran = ce_status == "ran"
     if min_relevance > 0.0 and not ce_ran:
         kept = [h for h in hits
                 if len(h) > 1 and h[1] is not None and h[1] >= min_relevance]
         floored = floored or (len(kept) < len(hits))
         hits = kept
+
+    # Opt-in sufficiency judge (2026-07-21): relevance != sufficiency — a fact
+    # can be on-topic (CE +8.97 measured) yet NOT contain the answer. Only a
+    # question-aware check closes that residual, so it needs an ``llm`` and is
+    # off unless the caller passes one. One call over the surviving facts; an
+    # unreadable verdict keeps the dossier and SAYS so (never silently drops).
+    sufficiency_status = "off"
+    if llm is not None and hits:
+        try:
+            from .grounding_gate import _resolve_threshold, grounding_score
+            ev = [getattr(h[0], "proposition", "") or "" for h in hits]
+            score = grounding_score(llm, query or "", ev,
+                                    "the retrieved facts answer the question",
+                                    judge="basic", unreadable=None)
+            if score is None:
+                sufficiency_status = "unreadable"
+            elif score < _resolve_threshold(None):
+                hits = []
+                floored = True
+                sufficiency_status = "ran"
+            else:
+                sufficiency_status = "ran"
+        except Exception:  # noqa: BLE001 — a judge flake must not break the read
+            sufficiency_status = "error"
     facts = [
         _fact_evidence(sm, h[0], cs, max_hops=max_hops,
                        score=(h[1] if len(h) > 1 else None))
@@ -214,9 +244,14 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         "n_facts": len(facts),
         "n_disputed": sum(1 for e in facts if e["disputes"]),
         "n_dormant": sum(1 for e in facts if e["freshness"] == "dormant"),
+        # what actually RAN (kimi F3a): a degraded gate is declared, not hidden
+        # behind an unfiltered result that looks like a passed one.
+        "verify": {"ce_gate": ce_status, "sufficiency": sufficiency_status},
         "abstained": not facts,
         "reason": (
-            "nothing scored above the relevance floor for this query"
+            "the retrieved facts are relevant but insufficient to answer"
+            if not facts and sufficiency_status == "ran"
+            else "nothing scored above the relevance floor for this query"
             if not facts and floored
             else "no supporting facts in memory for this query"
             if not facts else None),

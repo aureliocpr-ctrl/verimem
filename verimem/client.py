@@ -634,13 +634,25 @@ class Memory:
                 # The reply already declined once; serving its asserted half on
                 # an unreadable judge would need evidence nobody produced —
                 # and failing open here would let a judge OUTAGE reopen the F4
-                # hole exactly when the second stage is down. Fail-closed is
-                # deliberate; plain answers (kind='none') keep the CE verdict.
+                # hole exactly when the second stage is down. Fail-closed.
                 return {"answer": "NO ANSWER", "grounded": False,
                         "support_score": round(best_ce, 1),
                         "support_fact": best_fact,
                         "judge_score": None, "raw_answer": raw,
                         "reason": "judge_unreadable_hybrid"}
+            if judge_score is None:
+                # F1 (deepseek-v4-pro gate 2026-07-21): the judge was REQUESTED
+                # but its verdict could not be read — only the question-BLIND CE
+                # ran. Serve for utility (a judge outage must not blank every
+                # answer) but grounded=False: grounded=True here would certify a
+                # question-aware check that never happened.
+                return {"answer": raw, "grounded": False,
+                        "support_score": round(best_ce, 1),
+                        "support_fact": best_fact, "judge_score": None,
+                        "raw_answer": raw, "reason": "judge_unreadable"}
+        # grounded=True here means: CE passed AND (judge confirmed OR the caller
+        # opted out with judge_verify=False). Both are honest single/two-stage
+        # verdicts — never an unreadable judge masquerading as a pass.
         return {"answer": raw, "grounded": True,
                 "support_score": round(best_ce, 1), "support_fact": best_fact,
                 "judge_score": judge_score, "raw_answer": raw,
@@ -706,7 +718,8 @@ class Memory:
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
                 as_of: float | None = None,
-                min_relevance: float | str | None = None) -> dict[str, Any]:
+                min_relevance: float | str | None = None,
+                llm: Any = None) -> dict[str, Any]:
         """The evidence dossier behind an answer — the trust gate made atomic:
         per fact the full chain of custody (provenance, writer, status,
         verified_by, grounding, the two clocks, what it replaced, declared
@@ -741,7 +754,7 @@ class Memory:
         from .trust_report import build_trust_report
         report = build_trust_report(self.semantic, query, k=k, deep=deep,
                                     as_of=as_of, min_relevance=min_relevance,
-                                    ce_gate=want_ce_floor)
+                                    ce_gate=want_ce_floor, llm=llm)
         report["min_relevance"] = float(min_relevance)
         # task #20a: dossier transparency — with source-trust on, every fact
         # shows its SOURCE's two-channel trust, not just its own status.

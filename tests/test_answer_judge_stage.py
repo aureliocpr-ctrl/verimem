@@ -77,14 +77,27 @@ def test_judge_prompt_carries_the_question(store: Memory):
     assert "Marco" in llm.seen[1]
 
 
-def test_unreadable_judge_keeps_ce_verdict_for_plain_answer(store: Memory):
-    """A judge flake must not destroy utility on a plain answer: the CE
-    verdict stands, and judge_score=None says the judge did not run."""
+def test_unreadable_judge_serves_plain_answer_but_grounded_false(store: Memory):
+    """F1 (deepseek-v4-pro gate 2026-07-21): a judge that was REQUESTED but
+    could not be read leaves only the question-blind CE. Utility is preserved
+    (the answer is served), but grounded=True would be a lie — only topicality
+    was checked. Honest receipt: served, grounded=False, reason names it."""
     llm = QueueLLM("Marco", "no digits here")
     res = store.answer("Who leads the payments team?", llm=llm)
+    assert res["answer"] == "Marco"                # utility preserved
+    assert res["grounded"] is False               # not question-verified
+    assert res["judge_score"] is None
+    assert res["reason"] == "judge_unreadable"
+
+
+def test_judge_off_serves_ce_verdict_grounded_true(store: Memory):
+    """judge_verify=False is an explicit OPT-OUT — the CE verdict governs and
+    grounded=True is honest (the caller chose single-stage)."""
+    llm = QueueLLM("Marco")
+    res = store.answer("Who leads the payments team?", llm=llm,
+                       judge_verify=False)
     assert res["answer"] == "Marco"
     assert res["grounded"] is True
-    assert res["judge_score"] is None
     assert res["reason"] == "grounded"
 
 

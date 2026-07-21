@@ -56,7 +56,10 @@ def mem():
 
 
 def test_answer_serves_a_fact_supported_answer(mem):
-    out = mem.answer("What breed is Rex?", llm=_LLM("Rex is a poodle."))
+    # judge_verify=False isolates the CE stage this file tests; the fixed-text
+    # stub cannot answer the question-aware judge (added 0e11f3d, its own file).
+    out = mem.answer("What breed is Rex?", llm=_LLM("Rex is a poodle."),
+                     judge_verify=False)
     assert out["grounded"] is True
     assert "poodle" in out["answer"]
     assert out["support_score"] >= 40.0
@@ -91,7 +94,8 @@ def test_answer_KNOWN_LIMIT_distractor_in_memory_is_served(mem):
     distractor-in-memory case (the dominant half of the 0.167 gap) needs per-fact
     grounding/reconcile, NOT this post-verifier. Documented so no one over-claims."""
     mem.add("Rex is a labrador.", topic="pets")  # a wrong fact now co-exists
-    out = mem.answer("What breed is Rex?", llm=_LLM("Rex is a labrador."))
+    out = mem.answer("What breed is Rex?", llm=_LLM("Rex is a labrador."),
+                     judge_verify=False)        # CE-stage limit, judge isolated
     assert out["grounded"] is True          # the CE finds the stored distractor
     assert out["answer"] == "Rex is a labrador."   # ...and serves the wrong answer
     assert out["support_score"] >= 40.0
