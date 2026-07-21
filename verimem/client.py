@@ -498,15 +498,17 @@ class Memory:
     def answer(self, query: str, *, llm: Any, k: int = 8,
                verify_threshold: float | None = None,
                trust_conditioning: bool = True,
-               max_tokens: int = 64) -> dict[str, Any]:
+               max_tokens: int = 64,
+               judge_verify: bool = True) -> dict[str, Any]:
         """Grounding-verified answering — the anti-hallucination read-path.
 
-        Generate an answer from the top-``k`` retrieved facts, then a LOCAL
-        cross-encoder (no LLM) checks the answer is ENTAILED by one of those
-        facts. If no retrieved fact supports it, abstain (``NO ANSWER``) rather
-        than serve a probable hallucination — the memory FINDS the fact
-        (recall@30 0.96) but a flat answerer gets fooled by distractors
-        (Hallucination 0.167); this closes that gap at answer time.
+        Generate an answer from the top-``k`` retrieved facts, then verify it
+        in TWO stages: a LOCAL cross-encoder (no LLM call) screens out answers
+        entailed by nothing retrieved, and — because that CE never sees the
+        QUESTION — a question-aware judge (one extra ``llm`` call, ~12 output
+        tokens, only on answers the CE passed) checks the answer actually
+        answers the question from the evidence. If either stage fails, abstain
+        (``NO ANSWER``) rather than serve a probable hallucination.
 
         ``trust_conditioning`` (default ON) additionally tags every fact with
         the provenance the store already holds — ``[when | source | status]`` —
@@ -518,24 +520,38 @@ class Memory:
         → trust-conditioned C=0.92/H=0.08, abstaining 2/2 on same-metadata
         conflicts. ``False`` restores the bare v1 prompt byte-identically.
 
-        Returns ``{answer, grounded, support_score, support_fact, raw_answer,
-        reason}``. ``raw_answer`` always carries what the model produced (a caught
-        hallucination is reported, never silently dropped). Fail-open only when
-        the local CE is unavailable (``reason='ce_unavailable_failopen'``) — the
-        one honest hole, logged not hidden.
+        Returns ``{answer, grounded, support_score, support_fact, judge_score,
+        raw_answer, reason}``. ``raw_answer`` always carries what the model
+        produced (a caught hallucination is reported, never silently dropped).
+        Fail-open only when the local CE is unavailable
+        (``reason='ce_unavailable_failopen'``, ``grounded=False`` — served but
+        explicitly UNVERIFIED) — the one honest hole, logged not hidden.
 
-        HONEST SCOPE: the CE post-verify catches an answer NOT supported by ANY
-        retrieved fact (inventing beyond memory) — it does NOT separate a wrong
-        fact that is ITSELF in memory (the CE serves it as support, measured
-        ce_served≈97 on the bench). That separation is exactly what the
-        trust-conditioning above buys (0.17→0.92), and its own honest residue is
-        a well-grounded distractor whose METADATA also dominates (newer AND
-        verified but false) — indistinguishable in principle without an audit.
+        HONEST SCOPE (measured 2026-07-21, benchmark/confabulation_corpus.py):
+        the CE alone is question-blind — a confabulation that is a literal
+        fragment of a stored fact ("Marco", "40") scores 96-99 against it, and
+        a parroted fact scores ~100 whatever the question was; the CE alone
+        stopped 3/10 scripted concise confabulations. The ``judge_verify``
+        stage (default ON; the same calibrated judge as ``gate_answer``,
+        threshold 85 via ENGRAM_GROUNDING_THRESHOLD) closed that to 8/10 with
+        0/6 true answers lost. The measured residue: plausible-INFERENCE
+        bridges the judge also endorses (causal attribution from co-occurrence,
+        location transfer) — that residue is a judge-prompt axis, documented,
+        not solved. A wrong fact that is ITSELF in memory is a different axis:
+        that separation is what trust-conditioning buys (0.17→0.92), with its
+        own residue (newer-AND-verified-but-false metadata).
+
+        Judge failure semantics: an unreadable/erroring judge keeps the CE
+        verdict for a plain answer (utility is not destroyed by a judge flake;
+        ``judge_score=None`` says it did not run) — but a HYBRID abstention
+        ("not mentioned, but likely X") whose judge is unreadable returns to
+        its own refusal: serving the asserted half needs positive evidence.
         """
         hits = self.search(query, k=k)
         if not hits:
             return {"answer": "NO ANSWER", "grounded": False, "reason": "no_facts",
-                    "support_score": None, "support_fact": None, "raw_answer": None}
+                    "support_score": None, "support_fact": None,
+                    "judge_score": None, "raw_answer": None}
         facts = [h["text"] for h in hits]
         if trust_conditioning:
             lines = [_fact_trust_line(h) for h in hits]
@@ -558,13 +574,17 @@ class Memory:
         if not raw and getattr(resp, "finish_reason", None) == "length":
             return {"answer": "NO ANSWER", "grounded": False,
                     "reason": "llm_truncated", "support_score": None,
-                    "support_fact": None, "raw_answer": ""}
+                    "support_fact": None, "judge_score": None, "raw_answer": ""}
 
-        from .grounding_gate import _is_abstention
-        if _is_abstention(raw):
+        # F4: only a CLEAN abstention earns the free pass. A hybrid reply
+        # ("not mentioned, but it is likely June") asserts something, so it
+        # falls through to verification with its assertion intact.
+        from .grounding_gate import _abstention_kind, _resolve_threshold
+        kind = _abstention_kind(raw)
+        if kind == "clean":
             return {"answer": "NO ANSWER", "grounded": True,
                     "reason": "model_abstained", "support_score": None,
-                    "support_fact": None, "raw_answer": raw}
+                    "support_fact": None, "judge_score": None, "raw_answer": raw}
 
         # local-CE post-verification: is the answer entailed by any retrieved fact?
         from .local_grounding import try_local_score
@@ -573,17 +593,58 @@ class Memory:
         best_ce, best_fact = -1.0, None
         for t in facts:
             r = try_local_score(t, raw)
-            if r is None:  # CE model unavailable -> can't verify; fail-open, logged
-                return {"answer": raw, "grounded": True,
+            if r is None:  # CE model unavailable -> can't verify; fail-open, logged.
+                # grounded=False is the honest receipt (F1): the answer is
+                # served for utility, but NOTHING verified it.
+                return {"answer": raw, "grounded": False,
                         "reason": "ce_unavailable_failopen", "support_score": None,
-                        "support_fact": None, "raw_answer": raw}
+                        "support_fact": None, "judge_score": None,
+                        "raw_answer": raw}
             if r[0] > best_ce:
                 best_ce, best_fact = r[0], t
-        grounded = best_ce >= thr
-        return {"answer": raw if grounded else "NO ANSWER", "grounded": grounded,
-                "support_score": round(best_ce, 1),
-                "support_fact": best_fact if grounded else None, "raw_answer": raw,
-                "reason": "grounded" if grounded else "unsupported_by_facts"}
+        if best_ce < thr:
+            return {"answer": "NO ANSWER", "grounded": False,
+                    "support_score": round(best_ce, 1), "support_fact": None,
+                    "judge_score": None, "raw_answer": raw,
+                    "reason": "unsupported_by_facts"}
+
+        # F2/GLM-2 (measured 2026-07-21): the CE above is question-blind — a
+        # literal fragment of a stored fact ("Marco", "40") scores 96-99 and a
+        # parroted fact ~100 regardless of the question. The question-aware
+        # judge the product already ships for gate_answer closes exactly that
+        # class (measured: 6/8 CE escapes blocked, 6/6 true answers kept).
+        judge_score: float | None = None
+        if judge_verify:
+            from .grounding_gate import grounding_score
+            try:
+                judge_score = grounding_score(llm, query, facts, raw,
+                                              judge="basic", unreadable=None)
+            except Exception:  # noqa: BLE001 — judge flake must not crash reads
+                judge_score = None
+            # receipt honesty (kimi review 2026-07-21): the CE DID find a
+            # supporting fact — best_fact stays in the receipt so the audit
+            # reads "CE passed on this fact; the judge stage is what failed".
+            if judge_score is not None and judge_score < _resolve_threshold(None):
+                return {"answer": "NO ANSWER", "grounded": False,
+                        "support_score": round(best_ce, 1),
+                        "support_fact": best_fact,
+                        "judge_score": judge_score, "raw_answer": raw,
+                        "reason": "judge_rejected"}
+            if judge_score is None and kind == "hybrid":
+                # The reply already declined once; serving its asserted half on
+                # an unreadable judge would need evidence nobody produced —
+                # and failing open here would let a judge OUTAGE reopen the F4
+                # hole exactly when the second stage is down. Fail-closed is
+                # deliberate; plain answers (kind='none') keep the CE verdict.
+                return {"answer": "NO ANSWER", "grounded": False,
+                        "support_score": round(best_ce, 1),
+                        "support_fact": best_fact,
+                        "judge_score": None, "raw_answer": raw,
+                        "reason": "judge_unreadable_hybrid"}
+        return {"answer": raw, "grounded": True,
+                "support_score": round(best_ce, 1), "support_fact": best_fact,
+                "judge_score": judge_score, "raw_answer": raw,
+                "reason": "grounded"}
 
     def ask(self, query: str, *, k: int = 5,
             topic_prefix: str | None = None) -> dict[str, Any]:

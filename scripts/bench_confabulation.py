@@ -102,7 +102,9 @@ def _classify_impossible(res: dict[str, Any], case: ConfabCase) -> dict[str, Any
         outcome = "failopen" if reason == "ce_unavailable_failopen" else "served"
     elif reason == "model_abstained":
         outcome = "abstained_model"
-    elif reason == "unsupported_by_facts":
+    elif reason in ("unsupported_by_facts", "judge_rejected",
+                    "judge_unreadable_hybrid"):
+        # all three are the PRODUCT catching a produced confabulation
         outcome = "abstained_gate"
     elif reason == "no_facts":
         outcome = "abstained_norecall"

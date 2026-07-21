@@ -69,6 +69,7 @@ def test_truncated_empty_is_not_reported_as_model_abstention(store: Memory):
     assert res["answer"] == "NO ANSWER"          # nothing to serve, correct
     assert res["reason"] == "llm_truncated"      # ...but the WHY is truncation
     assert res["grounded"] is False              # no grounding happened
+    assert res["judge_score"] is None            # full receipt schema (D1)
 
 
 def test_genuine_empty_abstention_still_reports_model_abstained(store: Memory):
@@ -80,15 +81,18 @@ def test_genuine_empty_abstention_still_reports_model_abstained(store: Memory):
 
 def test_answer_exposes_max_tokens_and_passes_it_to_the_llm(store: Memory):
     """The 64-token budget was hardcoded; reasoning models need the caller to
-    raise it. answer(max_tokens=...) must reach llm.complete verbatim."""
+    raise it. answer(max_tokens=...) must reach llm.complete verbatim.
+    (judge_verify=False: this pins the GENERATION budget contract only — the
+    judge stage makes its own 12-token call, tested in its own file.)"""
     llm = EchoLLM()
-    store.answer("Who leads the payments team?", llm=llm, max_tokens=512)
+    store.answer("Who leads the payments team?", llm=llm, max_tokens=512,
+                 judge_verify=False)
     assert llm.seen_max_tokens == [512]
 
 
 def test_answer_default_max_tokens_unchanged(store: Memory):
-    """No caller change → byte-identical budget (64), so existing behaviour
-    and cost do not silently drift."""
+    """No caller change → byte-identical generation budget (64), so existing
+    behaviour and cost do not silently drift."""
     llm = EchoLLM()
-    store.answer("Who leads the payments team?", llm=llm)
+    store.answer("Who leads the payments team?", llm=llm, judge_verify=False)
     assert llm.seen_max_tokens == [64]

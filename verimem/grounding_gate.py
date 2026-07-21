@@ -96,14 +96,66 @@ _SPAN_SYSTEM = (
 
 _SCORE_RE = re.compile(r"score[:=]?\s*(\d{1,3})", re.I)
 # Minimal abstention sentinels: the QA pipeline emits exactly "NO ANSWER"; we also
-# catch the common phrasings so the gate never re-judges an answer that already declines.
+# catch the common phrasings so the gate never re-judges an answer that already
+# declines. Additions stay PHRASE-anchored (glm review 2026-07-21: "I don't
+# know" was classified as an answer) — a bare \bunknown\b would free-pass real
+# answers like "The unknown attacker used a rootkit".
 _ABSTAIN_RE = re.compile(r"\bno answer\b|not (in the|mentioned|stated|provided)"
-                         r"|cannot (be )?(answer|determin)|unanswerable", re.I)
+                         r"|cannot (be )?(answer|determin)|unanswerable"
+                         r"|\bi (?:don'?t|do not) know\b"
+                         r"|\bno (?:information|data) (?:is )?available\b"
+                         r"|\binsufficient (?:information|data|context)\b", re.I)
+
+#: full-string refusals that carry no phrase to match (exact, case-insensitive)
+_ABSTAIN_EXACT = frozenset({"NO ANSWER", "UNKNOWN", "N/A", "N.A.", "NONE"})
 
 
 def _is_abstention(text: str) -> bool:
     t = (text or "").strip()
     return not t or t.upper() == "NO ANSWER" or bool(_ABSTAIN_RE.search(t))
+
+
+# Clause boundaries for the hybrid-abstention screen: sentence punctuation,
+# commas, and the coordinating markers that graft an ASSERTION onto a refusal.
+# The comma matters on its own (kimi review 2026-07-21): "Not mentioned, the
+# offsite is likely June 5." has no coordinator, and without the comma split
+# the whole text is one clause whose decline-marker blessed the invented date.
+_CLAUSE_SPLIT_RE = re.compile(
+    r"[.!?;,\n]+|\s*\b(?:but|however|although|though|yet)\b", re.I)
+
+
+def _abstention_kind(text: str) -> str:
+    """Classify a reply for the short-circuit decision (F4, kimi audit
+    2026-07-21): ``_is_abstention`` uses ``.search()``, so a reply that
+    declines ONE part while asserting another ("not mentioned, but it is
+    likely June") was certified as a clean abstention and its invented half
+    skipped every verifier while still shipping in ``raw_answer``.
+
+    'clean'  — every clause declines (or is trivial): earns the free pass.
+    'hybrid' — an abstention phrase AND a substantive non-declining clause:
+               the assertion must face verification like any answer.
+    'none'   — no abstention signal at all.
+
+    Heuristic, not a parser: clauses split on sentence punctuation and on
+    but/however/although/though/yet; a non-declining clause of >= 2 word
+    tokens marks the reply hybrid ("Not stated. June 12." must not earn the
+    free pass — the date is an assertion). A single-token residue ("Thanks.")
+    stays clean. False 'hybrid' is safe (the text is just verified); false
+    'clean' needs a decline-marker in every clause, which is exactly the case
+    the free pass is for. English-first, like _ABSTAIN_RE: a refusal in
+    another language classifies 'none' and simply faces verification."""
+    t = (text or "").strip()
+    if not t or t.upper().strip(".") in _ABSTAIN_EXACT:
+        return "clean"
+    if not _ABSTAIN_RE.search(t):
+        return "none"
+    for clause in _CLAUSE_SPLIT_RE.split(t):
+        clause = (clause or "").strip(" \t,;:")
+        if not clause or _ABSTAIN_RE.search(clause):
+            continue
+        if len(clause.split()) >= 2:
+            return "hybrid"
+    return "clean"
 
 
 def _resolve_threshold(threshold: float | None) -> float:
@@ -153,11 +205,14 @@ def _resolve_backend() -> str:
 
 
 def grounding_score(llm: Any, question: str, evidence: str | list[str], answer: str, *,
-                    judge: str | None = None, model: str | None = None) -> float:
+                    judge: str | None = None, model: str | None = None,
+                    unreadable: float | None = 50.0) -> float | None:
     """External grounding score in [0, 100]: how strongly ``evidence`` supports that
-    ``answer`` answers ``question``. One verifier call. Unreadable verdict -> 50 (the
-    non-committal middle: a gate must not treat a parse failure as either grounded or
-    fabricated)."""
+    ``answer`` answers ``question``. One verifier call. Unreadable verdict ->
+    ``unreadable`` (default 50.0, the historical non-committal middle: a gate must not
+    treat a parse failure as either grounded or fabricated). Pass ``unreadable=None``
+    when the CALLER needs to tell a parse failure apart from a genuine 50 — e.g. the
+    answer-path judge stage, which keeps the CE verdict instead of guessing."""
     mode = _resolve_judge(judge)
     system = _SPAN_SYSTEM if mode == "span" else _BASIC_SYSTEM
     ev = evidence if isinstance(evidence, str) else "\n".join(e for e in evidence if e)
@@ -167,7 +222,7 @@ def grounding_score(llm: Any, question: str, evidence: str | list[str], answer: 
                                      f"Proposed answer: {answer}\n\nScore:"}],
         model=model, max_tokens=120 if mode == "span" else 12)
     m = _SCORE_RE.search(getattr(resp, "text", "") or "")
-    return min(100.0, max(0.0, float(m.group(1)))) if m else 50.0
+    return min(100.0, max(0.0, float(m.group(1)))) if m else unreadable
 
 
 def is_grounded(score: float, *, threshold: float | None = None) -> bool:
@@ -189,10 +244,11 @@ def gate_answer(llm: Any, question: str, evidence: str | list[str], answer: str,
                 threshold: float | None = None, judge: str | None = None,
                 model: str | None = None) -> GateResult:
     """Verify ``answer`` against ``evidence``; abstain if below threshold. An answer that
-    already abstains (or is empty) passes through WITHOUT spending a verifier call — it
-    asserts nothing to fabricate."""
+    CLEANLY abstains (or is empty) passes through WITHOUT spending a verifier call — it
+    asserts nothing to fabricate. A HYBRID reply ("not mentioned, but it is likely X")
+    does assert, so it is judged like any other answer (F4)."""
     raw = (answer or "").strip()
-    if _is_abstention(raw):
+    if _abstention_kind(raw) == "clean":
         return GateResult(answer="NO ANSWER", score=100.0, grounded=True, raw_answer=raw)
     thr = _resolve_threshold(threshold)
     score = grounding_score(llm, question, evidence, raw, judge=judge, model=model)
