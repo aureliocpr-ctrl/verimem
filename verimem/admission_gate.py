@@ -30,10 +30,11 @@ import re
 import threading as _threading
 from dataclasses import dataclass
 
-_LOG = logging.getLogger(__name__)
-
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
 from .prompt_injection import detect_injection
+
+_LOG = logging.getLogger(__name__)
+
 
 def telemetry_route_prefixes() -> tuple[str, ...]:
     """Topic prefixes that ROUTE a write to the telemetry table — EMPTY
