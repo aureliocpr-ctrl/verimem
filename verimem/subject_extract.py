@@ -187,9 +187,13 @@ def is_domain_professional(text: str) -> bool:
     head = subject_head(t)
     if not head or head in _PRONOUNS or head in SOFTWARE_HEADS:
         return False
-    # A numeric head carries NO domain identity ('Cycle 999', 'Sprint 42' — the
-    # agent's own work register). Flip-delta find 2026-07-22: '999' classified
-    # domain and suppressed L1 on the exact dogfood self-claim. Fail-safe.
-    if head.isdigit() or head.replace("-", "").replace(".", "").isdigit():
+    # A digit-bearing head carries NO domain identity: 'Cycle 999', '999-beta',
+    # 'Milestone M13', 'Sprint 42a', 'Release R2', 'Phase 2b' are the agent's
+    # own version/milestone register. Flip-delta 2026-07-22 caught the pure-
+    # numeric case; critic 7a7bd87d then defeated a digits-only test with
+    # alphanumeric suffixes — so the rule is ANY digit in the head → fail-safe
+    # to escalate. (A rare legitimate digit-head like '737-MAX' over-quarantines
+    # — the safe direction, recoverable.)
+    if any(c.isdigit() for c in head):
         return False
     return True

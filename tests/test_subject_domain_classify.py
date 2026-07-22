@@ -80,6 +80,16 @@ AGENT = [
     # exact dogfood self-claim the gate exists for. Numeric head -> fail-safe.
     "Cycle 999 SHIPPED to production main",
     "Sprint 42 was completed ahead of schedule.",
+    # critic 7a7bd87d counterexample (post-flip, verified): ALPHANUMERIC
+    # identifiers defeated the pure-digit fail-safe — '999-beta', 'M13', '42a',
+    # 'R2', '2b' all classified domain and PERSISTED by default. The rule is
+    # now any-digit-in-head -> not a domain identity (fail-safe): version/
+    # milestone identifiers are the agent's own work register.
+    "Cycle 999-beta shipped",
+    "Milestone M13 shipped",
+    "Sprint 42a was completed on time.",
+    "Release R2 was deployed to production.",
+    "Phase 2b shipped last week.",
 ]
 
 
