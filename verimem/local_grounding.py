@@ -237,12 +237,32 @@ def _download_and_extract_tar(url: str, dest: Path, *,
                 f"gate model sha256 mismatch: got {h.hexdigest()[:16]}… "
                 f"expected {sha256[:16]}… — refusing to install")
         with tarfile.open(tmp, "r:gz") as tar:
-            try:
-                tar.extractall(dest, filter="data")
-            except TypeError:  # pragma: no cover — py<3.12 has no filter kwarg
-                tar.extractall(dest)
+            _safe_tar_extract(tar, dest)
     finally:
         tmp.unlink(missing_ok=True)
+
+
+def _safe_tar_extract(tar, dest: str | Path) -> None:
+    """Extract *tar* into *dest*, refusing any member that would escape it —
+    the tar-slip guard (CodeQL py/tarslip). Python 3.12+ has the built-in
+    ``filter="data"`` for exactly this; on 3.10/3.11 (no filter kwarg) we
+    validate every member against the resolved destination ourselves and
+    extract only the ones that stay inside — never a bare ``extractall``.
+    """
+    try:
+        tar.extractall(dest, filter="data")   # py3.12+ hardened built-in filter
+        return
+    except TypeError:                          # py<3.12 — no filter kwarg
+        pass
+    dest_r = Path(dest).resolve()
+    for m in tar.getmembers():
+        if m.issym() or m.islnk() or m.isdev():
+            continue  # the published gate-model tar is plain files only
+        target = (dest_r / m.name).resolve()
+        if target != dest_r and dest_r not in target.parents:
+            raise ValueError(
+                f"refusing tar member that escapes {dest_r}: {m.name!r}")
+        tar.extract(m, dest)
 
 
 def ensure_gate_model(model_dir: str | Path | None = None, *,
