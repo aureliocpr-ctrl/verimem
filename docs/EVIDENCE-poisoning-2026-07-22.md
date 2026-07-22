@@ -49,6 +49,23 @@ of the poison at write time and cuts served hallucination to 26%, admitting
 that score above the CE cut (the documented plausible-inference blind spot —
 `Memory(llm=...)` is the escalation for that class).
 
+## Seed replication (closes the single-seed caveat)
+
+Same protocol, independent seed 13, freshly regenerated confabs
+(`benchmark/results/halumem_mem0_real_seed13.json`):
+
+| arm | Correct | **Hallucination** | Omission |
+|---|---:|---:|---:|
+| mem0 2.0.4 (no gate) | 0.011 | **0.926** [0.856–0.964] | 0.063 |
+| verimem OFF (no gate) | 0.000 | **0.917** [0.844–0.957] | 0.083 |
+| **verimem ON (CE default)** | 0.052 | **0.271** [0.192–0.367] | 0.677 |
+
+Gate admission identical to seed 7 on both axes: noise-rejection **90.6%**
+(87/96), clean-admission **98.1%** (157/160). Paired McNemar mem0-vs-ON:
+63 fixed / 1 caused, p ≈ 0. The headline is stable across seeds:
+**~92–94% served hallucination without a gate vs ~26–27% with the default
+CE gate.**
+
 ## Scope limits (do not overclaim)
 
 1. **Poisoning-resistance, NOT answer-correctness**: C is structurally ~0 in
