@@ -2,7 +2,11 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.0] - Unreleased
+## [0.7.0] - 2026-07-22
+
+> First PyPI release since **0.5.0**. The **0.6.0** line below was an internal
+> milestone (the total `engram → verimem` rename) that was deliberately never
+> published on PyPI — its changes ship here, so the public jump is 0.5.0 → 0.7.0.
 
 ### Changed
 - **BREAKING (behavioral): the L3-semantic NLI subject pre-filter is ON by
@@ -269,7 +273,7 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   the dashboard `X-Hippo-Token` auth header (renaming an auth contract is itself
   breaking — deferred).
 
-## [0.6.0] - Unreleased
+## [0.6.0] — internal milestone, never released on PyPI (folded into 0.7.0)
 
 ### Added
 - **Agent onboarding, protocol-native.** Every MCP client that connects to
