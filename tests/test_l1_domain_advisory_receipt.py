@@ -70,10 +70,14 @@ def test_marker_reason_names_the_env(monkeypatch):
     assert "ENGRAM_L1_DOMAIN_ADVISORY" in (w.get("reason") or "")
 
 
-def test_no_marker_when_switch_off():
+def test_no_advisory_marker_when_switch_off():
+    """The ADVISORY switch's own marker never appears when it is off. Since the
+    default flip (2026-07-22) the domain fact is cured by the per-fact
+    PRECISION carve-out instead — whose distinct marker owns the stand-down."""
     res = _gate(KEYWORD_FACT)
-    assert res.action == "downgrade"          # armed default still escalates
-    assert MARKER not in _layers(res)
+    assert MARKER not in _layers(res)         # this switch left no trace
+    assert res.action == "persist"            # precision (default ON) cured it
+    assert "L1-domain-precision-observe" in _layers(res)
 
 
 def test_no_marker_without_an_l1_hit(monkeypatch):

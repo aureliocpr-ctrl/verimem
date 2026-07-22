@@ -187,4 +187,9 @@ def is_domain_professional(text: str) -> bool:
     head = subject_head(t)
     if not head or head in _PRONOUNS or head in SOFTWARE_HEADS:
         return False
+    # A numeric head carries NO domain identity ('Cycle 999', 'Sprint 42' — the
+    # agent's own work register). Flip-delta find 2026-07-22: '999' classified
+    # domain and suppressed L1 on the exact dogfood self-claim. Fail-safe.
+    if head.isdigit() or head.replace("-", "").replace(".", "").isdigit():
+        return False
     return True

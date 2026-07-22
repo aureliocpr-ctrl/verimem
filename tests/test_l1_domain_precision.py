@@ -37,8 +37,20 @@ def _gate(text: str):
         topic="clinical/x", agent=None, validate="full")
 
 
-def test_off_domain_fact_still_escalates():
-    """DEFAULT OFF: the domain fact escalates exactly as today."""
+def test_default_on_domain_fact_advisory_with_marker():
+    """DEFAULT ON (2026-07-22): the domain fact is admitted, stand-down on the
+    receipt. This is the shipped cure — no env needed."""
+    res = _gate(DOMAIN)
+    assert res.action == "persist"
+    assert any(w.get("layer") == "L1-domain-precision-observe"
+               for w in res.warnings)
+
+
+@pytest.mark.parametrize("val", ["0", "false", "off", "no"])
+def test_explicit_optout_restores_legacy_escalation(monkeypatch, val):
+    """The opt-out: an agent-self-memory deployment that wants the legacy
+    always-escalate sets the env to an off value."""
+    monkeypatch.setenv("ENGRAM_L1_DOMAIN_PRECISION", val)
     res = _gate(DOMAIN)
     assert res.action == "downgrade"
     assert not any(w.get("layer") == "L1-domain-precision-observe"

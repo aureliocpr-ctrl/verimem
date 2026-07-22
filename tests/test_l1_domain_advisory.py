@@ -43,11 +43,20 @@ def _gate(fact: str, **kw):
                                topic="t/x", agent=None, validate="full", **kw)
 
 
-def test_default_still_quarantines_the_keyword_fact(monkeypatch):
-    """Backward-compatible: with the env unset, L1 escalates exactly as before."""
-    res = _gate(LEGAL_FACT)
-    assert res.action == "downgrade"          # quarantine, unchanged
+def test_default_agent_claim_quarantined_domain_fact_advisory(monkeypatch):
+    """DELIBERATE rewrite (default flip 2026-07-22): with every env unset the
+    per-fact precision carve-out is ON by default, so the DOMAIN fact persists
+    (stand-down on the receipt) while an AGENT self-claim still escalates —
+    the enforcement pin this test exists for, now per-register."""
+    monkeypatch.delenv("ENGRAM_L1_DOMAIN_PRECISION", raising=False)
+    agent_claim = "The migration is complete and all tests pass."
+    res = _gate(agent_claim)
+    assert res.action == "downgrade"          # the agent register: unchanged
     assert any(str(w.get("layer", "")).startswith("L1") for w in res.warnings)
+    res2 = _gate(LEGAL_FACT)
+    assert res2.action == "persist"           # the domain register: cured
+    assert any(w.get("layer") == "L1-domain-precision-observe"
+               for w in res2.warnings)
 
 
 @pytest.mark.parametrize("val", ["1", "true", "on", "yes"])
@@ -68,8 +77,13 @@ def test_advisory_mode_covers_the_whole_l1_family(monkeypatch):
 
 @pytest.mark.parametrize("val", ["0", "false", "off", "no", ""])
 def test_off_values_keep_enforcing(monkeypatch, val):
+    """The GLOBAL switch's off-values never disarm L1 for the register it
+    polices. Rewritten with an AGENT self-claim (default flip 2026-07-22): the
+    domain fact is now cured per-fact by precision regardless of THIS switch,
+    so the enforcement pin lives on the agent register."""
     monkeypatch.setenv("ENGRAM_L1_DOMAIN_ADVISORY", val)
-    assert _gate(LEGAL_FACT).action == "downgrade"
+    assert _gate("The deployment succeeded and the pipeline is green.").action \
+        == "downgrade"
 
 
 def test_advisory_does_not_relax_grounding_layer(monkeypatch):

@@ -75,6 +75,11 @@ AGENT = [
     "The compiler was verified on all targets.",
     "The dashboard was deployed to the cluster.",
     "The portal was approved for launch.",
+    # flip-delta find (2026-07-22, pre default-ON): a NUMERIC head carries no
+    # domain identity — "Cycle 999" classified domain and suppressed L1 on the
+    # exact dogfood self-claim the gate exists for. Numeric head -> fail-safe.
+    "Cycle 999 SHIPPED to production main",
+    "Sprint 42 was completed ahead of schedule.",
 ]
 
 

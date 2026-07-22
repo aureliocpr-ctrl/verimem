@@ -5,6 +5,19 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 ## [0.7.0] - Unreleased
 
 ### Changed
+- **BREAKING (behavioral): per-fact L1 domain-precision is ON by default.** The
+  L1 keyword anti-confab detectors exist to police an AGENT's self-claims about
+  its own work ("the migration is complete") but quarantined 86.7% of a
+  30-fact vertical corpus of legitimate lawyer/engineer/clinician facts ("the
+  surgical procedure was completed"). The cure is per-fact and content-based
+  (`verimem/subject_extract.is_domain_professional`): a third-person
+  professional fact with a non-software subject head is admitted with an
+  `L1-domain-precision-observe` stand-down on the receipt; an agent
+  self-claim (software/perf head, first person, numeric head, pronoun or
+  unresolvable subject) STILL escalates. Measured: vertical corpus FP
+  86.7% → **0.0%** with agent-confab pins unchanged; adversarially reviewed
+  (critic claim_holds ×2, incl. an evasion counterexample closed pre-flip).
+  `ENGRAM_L1_DOMAIN_PRECISION=0` restores the legacy always-escalate.
 - **BREAKING (behavioral): admission INTEGRITY screening is ON by default; telemetry
   ROUTING is opt-in and declarative.** Two distinct things, split on measurement
   (`scripts/bench_admission_external_corpora.py`, results in

@@ -164,14 +164,21 @@ def _graded_admission() -> bool:
 
 
 def _l1_domain_precision() -> bool:
-    """Env ``ENGRAM_L1_DOMAIN_PRECISION`` (DEFAULT OFF — design (d), 2026-07-22).
-    When ON, the L1 keyword escalation is suppressed PER FACT for propositions
+    """Env ``ENGRAM_L1_DOMAIN_PRECISION`` — **DEFAULT ON** (flipped 2026-07-22 on
+    Aurelio's mandate: the cures ship ENABLED; explicit opt-out restores the
+    legacy always-escalate via "0"/"false"/"off"/"no").
+
+    When on, the L1 keyword escalation is suppressed PER FACT for propositions
     the subject classifier reads as third-party professional facts (see
     ``verimem.subject_extract.is_domain_professional``). Surgical alternative to
-    the reverted global L1 flip: an agent's own software self-claim still
-    escalates. Relaxes only L1; L3/L4/injection are untouched."""
+    the reverted global L1 flip (d15e4ca): an agent's own software self-claim
+    STILL escalates — the carve-out is content-based, not a global disarm.
+    Relaxes only L1; L3/L4/injection are untouched. Promotion gates that earned
+    the flip: vertical corpus FP 86.7%→0.0%, critic claim_holds (8f6d0ec5 +
+    cb26737b), 463-test blast, full suite 7704/0, flip-delta audit (numeric-head
+    fail-safe closed pre-flip)."""
     v = os.environ.get("ENGRAM_L1_DOMAIN_PRECISION", "").strip().lower()
-    return v in ("1", "true", "on", "yes", "enforce")
+    return v not in ("0", "false", "off", "no")
 
 
 def _is_domain_professional_fact(proposition: str) -> bool:
