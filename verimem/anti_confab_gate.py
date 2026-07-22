@@ -369,14 +369,17 @@ def _semantic_conflict_on() -> bool:
 
 
 def _l3_subject_filter() -> bool:
-    """ENGRAM_L3_SUBJECT_FILTER (default OFF): filter the sibling list by
-    subject (verimem.subject_extract.same_subject) BEFORE the NLI judge —
-    different-subject pairs are the judge's measured FP class (the cosine 0.7
-    pre-filter is inert: 595/595 corpus pairs clear it). Fail-open by design:
-    an unattributable subject compares everything."""
+    """ENGRAM_L3_SUBJECT_FILTER — **DEFAULT ON** (flipped 2026-07-22 with the
+    SAFE rule converged by GLM-5.2 + Kimi-K3): before the NLI judge, skip ONLY
+    same-head + both-sided disjoint-modifier siblings (the measured FP class,
+    'payments team' vs 'design team'). A head mismatch NEVER skips — it is the
+    alias signature (35.2% FN measured on Wikidata altLabels with the naive
+    different-subject skip, refuted by both external reviewers as an
+    attacker-steerable poisoning vector). "0"/"false"/"off"/"no" opts out to
+    the unfiltered judge."""
     import os
-    return os.environ.get("ENGRAM_L3_SUBJECT_FILTER", "").strip().lower() in (
-        "1", "true", "on", "yes", "enforce")
+    v = os.environ.get("ENGRAM_L3_SUBJECT_FILTER", "").strip().lower()
+    return v not in ("0", "false", "off", "no")
 
 
 def _supersede_same_source_on() -> bool:
@@ -1070,13 +1073,15 @@ def run_validation_gate(
                 )
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
                 if _l3_subject_filter():
-                    # P2 subject pre-filter (env, default OFF): only siblings
-                    # ABOUT the same subject reach the NLI. Fail-soft to keep:
-                    # a matcher error must never hide a real conflict.
+                    # P2 subject pre-filter (default ON, SAFE rule — see
+                    # _l3_subject_filter): drop ONLY same-head-disjoint-
+                    # modifier siblings; a head mismatch always reaches the
+                    # judge (alias signature). Fail-soft to keep: a matcher
+                    # error must never hide a real conflict.
                     def _keep(s) -> bool:
                         try:
-                            from .subject_extract import same_subject
-                            return same_subject(
+                            from .subject_extract import nli_prefilter_skip
+                            return not nli_prefilter_skip(
                                 proposition, getattr(s, "proposition", ""))
                         except Exception:  # noqa: BLE001
                             return True

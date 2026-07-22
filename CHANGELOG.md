@@ -5,6 +5,19 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 ## [0.7.0] - Unreleased
 
 ### Changed
+- **BREAKING (behavioral): the L3-semantic NLI subject pre-filter is ON by
+  default — with the SAFE rule.** The local NLI over-flags contradictions on
+  different-subject sibling pairs (the cosine 0.7 pre-filter is inert). The
+  naive cure (skip every different-subject pair) was refuted by two external
+  adversarial reviewers (GLM-5.2 + Kimi-K3, independent convergence): a head
+  mismatch is the ALIAS signature — 35.2% of true conflicts on renamed
+  subjects were lost (measured on Wikidata `skos:altLabel`), an
+  attacker-steerable poisoning vector ("Aurora (formerly Northwind) is
+  headquartered in Berlin"). The shipped rule skips ONLY same-head +
+  disjoint-modifier pairs ("the payments team…" vs "the design team…", the
+  measured FP class); a head mismatch always reaches the judge. Re-measured:
+  0/10 of the former alias-FN sample skipped; bench true-conflicts 8/8
+  judged. `ENGRAM_L3_SUBJECT_FILTER=0` restores the unfiltered judge.
 - **BREAKING (behavioral): per-fact L1 domain-precision is ON by default.** The
   L1 keyword anti-confab detectors exist to police an AGENT's self-claims about
   its own work ("the migration is complete") but quarantined 86.7% of a

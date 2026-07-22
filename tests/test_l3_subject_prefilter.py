@@ -1,16 +1,21 @@
-"""L3-semantic subject pre-filter wiring (P2, env-gated, DEFAULT OFF).
+"""L3-semantic NLI pre-filter — DEFAULT ON with the converged SAFE rule.
 
-The NLI judge over-flags contradictions on DIFFERENT-subject pairs (the cosine
-0.7 pre-filter is inert — 595/595 pairs clear it). ENGRAM_L3_SUBJECT_FILTER=1
-filters the sibling list by verimem.subject_extract.same_subject BEFORE the
-NLI judge sees it: different-subject siblings never reach the judge (kills the
-FP class + saves judge budget); same-subject and UNATTRIBUTABLE (pronoun/empty
-subject) siblings still reach it (fail-open — a conflict we cannot attribute
-must still be judged). Default OFF: sibling list byte-identical.
+History (2026-07-22): the first cut skipped every different-subject sibling
+(same_subject). External adversarial review (GLM-5.2 + Kimi-K3, independent
+convergence) refuted that rule: a HEAD MISMATCH is the alias signature
+("North Macedonia"~"FYROM", measured 35.2% FN on Wikidata skos:altLabel), and
+renames are where conflicts concentrate (mergers, rebrands) — an attacker
+bypasses the NLI by renaming the subject. Their converged prescription, shipped
+here as the DEFAULT:
 
-These tests assert the WIRING: detect_semantic_conflicts is stubbed with a spy
-that records the sibling list it receives (idiom of test_gate_semantic_conflict
-_wire.py — no e5, no claude, no NLI model).
+  SKIP the judge ONLY for same-head + both-sided DISJOINT-modifier pairs
+  ("the payments team ..." vs "the design team ..." — the measured FP class).
+  Head mismatch NEVER skips. Bare heads and pronoun/empty subjects never skip.
+  FPs quarantine (recoverable); FNs poison (permanent) — asymmetric harm.
+
+ENGRAM_L3_SUBJECT_FILTER: default ON; "0"/"false"/"off"/"no" opts out to the
+unfiltered judge. Wiring idiom: detect_semantic_conflicts stubbed with a spy
+(no e5, no claude, no NLI model).
 """
 from __future__ import annotations
 
@@ -21,9 +26,11 @@ import pytest
 from verimem import anti_confab_gate, semantic_conflict
 from verimem.coherence_check import CoherenceWarning
 
-CANDIDATE = "The Rossi SpA contract expires on 31 January 2027."
-SIB_SAME = "The Rossi SpA contract expires in 2025."
-SIB_DIFF = "The invoice total is 12,450 euros."
+CANDIDATE = "The payments team migrated to Stripe in 2025."
+SIB_FP = "The design team runs a weekly critique on Fridays."       # skip class
+SIB_SAME = "The payments team still runs on the legacy processor."  # judge
+SIB_RENAME = "The checkout squad reverted to the legacy processor." # judge (head mismatch)
+SIB_BARE = "The team adopted a new processor."                      # judge (bare head)
 
 
 class _StubSemantic:
@@ -75,33 +82,34 @@ def _gate(props, proposition=CANDIDATE):
         agent=_agent(props), validate="full")
 
 
-def test_off_by_default_sibling_list_unfiltered(monkeypatch):
+def test_default_on_fp_class_skipped_rename_and_same_judged(monkeypatch):
+    """DEFAULT ON: only the same-head-disjoint-modifier sibling is skipped;
+    same-subject, RENAMED-subject (head mismatch = alias signature) and
+    bare-head siblings all still reach the judge."""
     seen = _spy(monkeypatch)
-    res = _gate([SIB_DIFF, SIB_SAME])
-    assert seen and set(seen[0]) == {SIB_DIFF, SIB_SAME}
+    _gate([SIB_FP, SIB_SAME, SIB_RENAME, SIB_BARE])
+    assert seen and set(seen[0]) == {SIB_SAME, SIB_RENAME, SIB_BARE}
+    assert SIB_FP not in seen[0]
+
+
+def test_default_on_head_mismatch_never_skipped(monkeypatch):
+    """The GLM+Kimi poisoning vector, pinned: a renamed subject must reach the
+    judge — skipping on head mismatch would let 'Aurora (formerly Northwind)'
+    contradictions in silently."""
+    seen = _spy(monkeypatch)
+    res = _gate([SIB_RENAME])
+    assert seen and seen[0] == [SIB_RENAME]
     assert any(w.get("layer") == "L3-semantic" for w in res.warnings)
 
 
-def test_on_different_subject_sibling_never_reaches_judge(monkeypatch):
-    monkeypatch.setenv("ENGRAM_L3_SUBJECT_FILTER", "1")
+def test_default_on_unattributable_candidate_judges_everything(monkeypatch):
     seen = _spy(monkeypatch)
-    res = _gate([SIB_DIFF])
-    assert seen == [[]] or seen == []          # judge saw NO different-subject sib
-    assert not any(str(w.get("layer", "")).startswith("L3-semantic")
-                   for w in res.warnings)
-    assert res.action == "persist"
+    _gate([SIB_FP, SIB_RENAME], proposition="It was migrated on Tuesday.")
+    assert seen and set(seen[0]) == {SIB_FP, SIB_RENAME}
 
 
-def test_on_same_subject_sibling_still_judged(monkeypatch):
-    monkeypatch.setenv("ENGRAM_L3_SUBJECT_FILTER", "1")
+def test_optout_restores_unfiltered_judge(monkeypatch):
+    monkeypatch.setenv("ENGRAM_L3_SUBJECT_FILTER", "0")
     seen = _spy(monkeypatch)
-    res = _gate([SIB_DIFF, SIB_SAME])
-    assert seen and seen[0] == [SIB_SAME]      # filtered to the same-subject one
-    assert any(w.get("layer") == "L3-semantic" for w in res.warnings)
-
-
-def test_on_unattributable_candidate_fails_open(monkeypatch):
-    monkeypatch.setenv("ENGRAM_L3_SUBJECT_FILTER", "1")
-    seen = _spy(monkeypatch)
-    _gate([SIB_DIFF], proposition="It was completed on Tuesday.")
-    assert seen and seen[0] == [SIB_DIFF]      # wildcard subject -> judge everything
+    _gate([SIB_FP, SIB_SAME, SIB_RENAME])
+    assert seen and set(seen[0]) == {SIB_FP, SIB_SAME, SIB_RENAME}

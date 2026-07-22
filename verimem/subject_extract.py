@@ -205,6 +205,25 @@ def same_subject(a: str, b: str) -> bool:
     return bool(ma & mb) or ma <= mb or mb <= ma
 
 
+def nli_prefilter_skip(a: str, b: str) -> bool:
+    """True = SAFE to skip the NLI judge for this pair — the converged GLM-5.2 +
+    Kimi-K3 rule (2026-07-22): ONLY same head noun with both-sided DISJOINT
+    modifiers ('the payments team…' vs 'the design team…', the measured FP
+    class). A HEAD MISMATCH never skips — it is the alias signature ("North
+    Macedonia"~"FYROM", 35.2% FN measured on Wikidata altLabels) and renames
+    are where conflicts concentrate. Bare heads and pronoun/empty subjects
+    never skip (fail-open). FPs quarantine (recoverable); FNs poison
+    (permanent) — the asymmetry that decides every uncertain case here."""
+    ta, tb = _subject_tokens(a), _subject_tokens(b)
+    if not ta or not tb or ta[0] in _PRONOUNS or tb[0] in _PRONOUNS:
+        return False
+    ha, ma = ta[-1], set(ta[:-1])
+    hb, mb = tb[-1], set(tb[:-1])
+    if ha != hb or not ma or not mb:
+        return False
+    return not (ma & mb)
+
+
 def is_domain_professional(text: str) -> bool:
     """True iff ``text`` reads as a THIRD-PARTY professional/domain fact that the
     L1 keyword anti-confab should treat as advisory rather than escalate.
