@@ -147,6 +147,10 @@ class _StubMemory:
     def count(self, outcome_filter=None) -> int:
         return 0
 
+    def store(self, episode, **kw) -> str:
+        # record_episode path: accept the episode, hand back its id.
+        return getattr(episode, "id", "ep-stub")
+
 
 class _Agent:
     def __init__(self, semantic: SemanticMemory) -> None:
@@ -169,6 +173,33 @@ async def _invoke_tool(name: str, arguments: dict[str, Any] | None = None):
     return [c.text for c in payload.content if hasattr(c, "text")]
 
 
+def test_upsert_null_principal_preserves_stamped_identity(tmp_path):
+    """Critic counterexample (86f5359 review): an unconditional
+    writer_principal=excluded.writer_principal upsert lets a later
+    NULL-principal re-store of the SAME content-derived id clobber the
+    server-stamped provenance (remember -> record_episode overlap). A NULL
+    incoming principal must PRESERVE the stored one; an explicit incoming
+    principal still wins."""
+    from verimem.semantic import Fact
+
+    sm = SemanticMemory(db_path=tmp_path / "s" / "facts.db")
+    prop = "The quarterly report was filed on Tuesday."
+    sm.store(Fact(id="p0clobber1", proposition=prop, topic="t",
+                  writer_principal="mcp:unbound"))
+    sm.store(Fact(id="p0clobber1", proposition=prop, topic="t",
+                  writer_principal=None))
+    with sqlite3.connect(sm.db_path) as c:
+        row = c.execute("SELECT writer_principal FROM facts WHERE id=?",
+                        ("p0clobber1",)).fetchone()
+    assert row[0] == "mcp:unbound", "NULL re-store clobbered the stamp"
+    sm.store(Fact(id="p0clobber1", proposition=prop, topic="t",
+                  writer_principal="gw:acme"))
+    with sqlite3.connect(sm.db_path) as c:
+        row = c.execute("SELECT writer_principal FROM facts WHERE id=?",
+                        ("p0clobber1",)).fetchone()
+    assert row[0] == "gw:acme", "explicit principal must still update"
+
+
 @pytest.mark.asyncio
 async def test_mcp_remember_stamps_server_principal_ignoring_client(
         tmp_path, monkeypatch):
@@ -188,4 +219,28 @@ async def test_mcp_remember_stamps_server_principal_ignoring_client(
             "SELECT writer_principal FROM facts WHERE proposition = ?",
             (prop,)).fetchone()
     assert row is not None, "MCP remember did not persist the fact"
+    assert row[0] == "mcp:unbound"
+
+
+@pytest.mark.asyncio
+async def test_mcp_record_episode_key_facts_stamp_server_principal(
+        tmp_path, monkeypatch):
+    """Critic counterexample (86f5359 review): the key_facts loop of
+    hippo_record_episode is a SECOND MCP write path — it must stamp
+    _MCP_PRINCIPAL too, or MCP-surface facts land with NULL provenance."""
+    from verimem import mcp_server
+
+    sm = SemanticMemory(db_path=tmp_path / "semantic" / "facts.db")
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _Agent(sm))
+    prop = "The quarterly report was filed on Tuesday."
+    await _invoke_tool("hippo_record_episode", {
+        "task_text": "file the report", "final_answer": "filed",
+        "outcome": "success",
+        "key_facts": [{"proposition": prop, "topic": "kf"}],
+    })
+    with sqlite3.connect(sm.db_path) as c:
+        row = c.execute(
+            "SELECT writer_principal FROM facts WHERE proposition = ?",
+            (prop,)).fetchone()
+    assert row is not None, "key_facts write did not persist the fact"
     assert row[0] == "mcp:unbound"

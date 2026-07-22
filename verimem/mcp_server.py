@@ -8358,6 +8358,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                                 if _kf_gate.action == "downgrade"
                                 else "model_claim"
                             ),
+                            # P0 v9 critic fix: key_facts is a SECOND MCP
+                            # write path — stamp it like hippo_remember.
+                            writer_principal=_MCP_PRINCIPAL,
                         )
                         # audit#3-r3 R20 (cont.): budget the key-fact write too
                         # — it hits the SAME semantic.db lock, so an unbudgeted

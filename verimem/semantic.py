@@ -2447,7 +2447,15 @@ class SemanticMemory:
                  epistemic=CASE WHEN excluded.epistemic IS NOT NULL
                      THEN excluded.epistemic ELSE facts.epistemic END,
                  confidence_tier=excluded.confidence_tier,
-                 writer_principal=excluded.writer_principal""",
+                 -- P0 v9 critic fix (86f5359 review): a NULL incoming
+                 -- principal must PRESERVE the stamped one — remember ->
+                 -- record_episode hits the same content-derived id and an
+                 -- unconditional excluded.* would erase the provenance the
+                 -- column exists to protect. Explicit incoming still wins.
+                 writer_principal=CASE
+                     WHEN excluded.writer_principal IS NOT NULL
+                         THEN excluded.writer_principal
+                     ELSE facts.writer_principal END""",
                 (
                     fact.id, fact.proposition, fact.topic, fact.confidence,
                     ",".join(fact.source_episodes), fact.created_at,
