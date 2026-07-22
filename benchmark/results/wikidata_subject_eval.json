@@ -1,0 +1,10 @@
+{
+ "n_conflict_pairs": 165,
+ "conflict_compared": 165,
+ "conflict_compare_rate": 1.0,
+ "n_cross_pairs": 60,
+ "cross_skipped": 36,
+ "cross_skip_rate": 0.6,
+ "missed_conflicts_sample": [],
+ "labels": "mechanical (Wikidata slot mutation) — not self-authored"
+}
