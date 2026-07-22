@@ -74,10 +74,17 @@ def test_ordinary_document_inside_the_roots_is_allowed(tmp_path, monkeypatch):
 
 def test_roots_default_to_the_process_cwd_when_unset(monkeypatch):
     """Secure by default: unconfigured must not mean unrestricted."""
+    import os
     monkeypatch.delenv("ENGRAM_DOC_ROOTS", raising=False)
     ok, _why = mcp_server._doc_path_allowed(str(__file__))
     assert isinstance(ok, bool)          # resolves without exploding
-    ok2, why2 = mcp_server._doc_path_allowed("C:/Windows/System32/drivers/etc/hosts")
+    # An out-of-tree system path that is ABSOLUTE on the running OS. A Windows
+    # "C:/..." string is a RELATIVE path on Linux (no leading slash), so it would
+    # resolve INSIDE the cwd jail and the guard would correctly allow it — a test
+    # bug, not a guard bug, that only surfaces on non-Windows CI.
+    outside = ("C:/Windows/System32/drivers/etc/hosts" if os.name == "nt"
+               else "/etc/hosts")
+    ok2, why2 = mcp_server._doc_path_allowed(outside)
     assert not ok2, f"unconfigured jail let an out-of-tree path through: {why2}"
 
 

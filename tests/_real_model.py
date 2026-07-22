@@ -36,3 +36,29 @@ requires_real_model = pytest.mark.skipif(
     not real_model_cached(),
     reason="real embedding model not in local HF cache (run `engram warmup` first)",
 )
+
+
+@functools.lru_cache(maxsize=1)
+def real_ce_cached() -> bool:
+    """True iff the local CE *gate* model is present (offline-scorable).
+
+    Distinct from the embedding model: the moat judge is the fine-tuned gate CE
+    (``local_gate_ce_v2``), which ``verimem warmup`` downloads only WITHOUT
+    ``--no-gate``. CI warms with ``--no-gate`` (it historically "doesn't exercise
+    the moat"), so CE-moat tests must skip there — the same discipline as
+    ``requires_real_model`` for the embedding. Uses the gate's OWN availability
+    predicate (never loads the model), so it tracks exactly the code path that
+    would otherwise fail with ``ce_unavailable_failopen``.
+    """
+    try:
+        from verimem.local_grounding import local_ce_available
+
+        return bool(local_ce_available())
+    except Exception:  # noqa: BLE001 — any failure → treat as unavailable → skip
+        return False
+
+
+requires_real_ce = pytest.mark.skipif(
+    not real_ce_cached(),
+    reason="local CE gate model not cached (run `verimem warmup` without --no-gate)",
+)

@@ -395,3 +395,46 @@ def _reset_admission_latch():
     _reset_admission_migration_latch()
     yield
     _reset_admission_migration_latch()
+
+
+# ── CE-moat tests: skip when the local CE gate model isn't cached ─────────────
+# The band / answer-judge / graded-admission / hybrid-verify tests exercise the
+# fine-tuned gate CE (the judge-less moat). CI warms with `verimem warmup
+# --no-gate`, so the gate model isn't on disk there and these would otherwise
+# fail with `ce_unavailable_failopen` instead of running. Same discipline as
+# `requires_real_model` for the embedding: RUN where the model is present (local
+# dev, or a CI job that drops --no-gate), SKIP where it isn't. Kept as an
+# explicit node-id list — NOT a module mark — so the many pure-logic tests in the
+# same files (score parsing, cascade resolution, abstention classification) keep
+# running on CI.
+_CE_MOAT_TESTS = frozenset({
+    "test_abstention_hybrid.py::test_hybrid_abstention_is_verified_not_shortcircuited",
+    "test_abstention_hybrid.py::test_hybrid_with_unreadable_judge_returns_to_its_refusal",
+    "test_answer_judge_stage.py::test_ce_blocked_answer_never_reaches_the_judge",
+    "test_answer_judge_stage.py::test_ce_passing_fragment_is_rejected_by_low_judge",
+    "test_answer_judge_stage.py::test_judge_off_serves_ce_verdict_grounded_true",
+    "test_answer_judge_stage.py::test_judge_prompt_carries_the_question",
+    "test_answer_judge_stage.py::test_true_answer_kept_by_high_judge",
+    "test_answer_judge_stage.py::test_unreadable_judge_serves_plain_answer_but_grounded_false",
+    "test_band_escalation.py::test_band_escalation_admits_on_high_llm_score",
+    "test_band_escalation.py::test_band_escalation_blocks_on_low_llm_score",
+    "test_band_escalation.py::test_band_holds_for_review_when_no_escalation",
+    "test_graded_admission_supersession.py::test_band_escalated_subthreshold_graded_admits",
+    "test_graded_admission_supersession.py::test_band_escalated_subthreshold_off_blocks",
+    "test_graded_admission_supersession.py::test_band_review_graded_admits",
+    "test_graded_admission_supersession.py::test_band_review_off_still_holds",
+    "test_graded_admission_supersession.py::test_graded_admit_must_not_retire_an_admitted_value",
+})
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip the CE-moat tests when the local CE gate model isn't cached."""
+    from tests._real_model import real_ce_cached
+    if real_ce_cached():
+        return  # gate model present → exercise the moat (local dev / CI w/o --no-gate)
+    skip_ce = pytest.mark.skip(
+        reason="local CE gate model not cached (CI warms with --no-gate)")
+    for item in items:
+        nid = item.nodeid.replace("\\", "/")
+        if any(nid.endswith(suffix) for suffix in _CE_MOAT_TESTS):
+            item.add_marker(skip_ce)
