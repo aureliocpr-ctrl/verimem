@@ -12564,29 +12564,36 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # Same guards as Memory.restore (client.py): read text+supersession
             # straight from the store (get() hides quarantined text), refuse a
             # superseded fact, re-screen the proposition for injection.
-            _text, _superseded = "", False
+            _text, _topic, _superseded = "", "", False
             try:
                 with _sq.connect(str(a.semantic.db_path)) as _con:
                     _row = _con.execute(
-                        "SELECT proposition, superseded_by FROM facts "
+                        "SELECT proposition, topic, superseded_by FROM facts "
                         "WHERE id = ?", (fid,)).fetchone()
                     _text = (_row[0] if _row else "") or ""
-                    _superseded = bool(_row[1]) if _row else False
+                    _topic = (_row[1] if _row else "") or ""
+                    _superseded = bool(_row[2]) if _row else False
             except Exception:  # noqa: BLE001 — unreadable → restore_fact False
                 pass
             if _superseded:
                 return _ok({"ok": True, "restored": False, "fact_id": fid,
                             "refused_reason": "superseded: restore only "
                             "un-quarantines, never un-supersedes"})
-            if _text:
+            # Re-screen the proposition AND the topic (critic 791a151a): the
+            # write gate quarantines on injection in EITHER (topic is
+            # caller-controlled and echoed verbatim on every recall hit), so a
+            # topic-only payload must stay quarantined — same policy as the
+            # requalify sibling (admission_cleanup.py, fixed 2026-06-20).
+            if _text or _topic:
                 try:
                     from .prompt_injection import detect_injection
-                    if detect_injection(_text).is_injection:
+                    if (detect_injection(_text).is_injection
+                            or detect_injection(_topic).is_injection):
                         return _ok({"ok": True, "restored": False,
                                     "fact_id": fid,
                                     "refused_reason": "injection_screen: the "
-                                    "proposition still trips the injection "
-                                    "detector"})
+                                    "proposition or topic still trips the "
+                                    "injection detector"})
                 except Exception:  # noqa: BLE001 — screen failure ≠ crash
                     pass
             _restored = bool(a.semantic.restore_fact(fid, reason=_reason))

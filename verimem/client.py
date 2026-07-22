@@ -1279,14 +1279,17 @@ class Memory:
         # does not surface the text for a quarantined fact) so the injection
         # re-screen sees the real content and a superseded fact is refused.
         text = ""
+        topic = ""
         superseded = False
         try:
             with sqlite3.connect(str(self.semantic.db_path)) as con:
                 row = con.execute(
-                    "SELECT proposition, superseded_by FROM facts WHERE id = ?",
+                    "SELECT proposition, topic, superseded_by "
+                    "FROM facts WHERE id = ?",
                     (fact_id,)).fetchone()
                 text = (row[0] if row else "") or ""
-                superseded = bool(row[1]) if row else False
+                topic = (row[1] if row else "") or ""
+                superseded = bool(row[2]) if row else False
         except Exception:  # noqa: BLE001 — unreadable store → restore_fact returns False
             text = ""
         # deepseek review 2026-07-21 (a): a fact that is BOTH quarantined AND
@@ -1295,10 +1298,18 @@ class Memory:
         # it never un-supersedes. Refuse it.
         if superseded:
             return False
-        if text:
+        # Re-screen the proposition AND the topic (critic 791a151a, 2026-07-22):
+        # the write gate quarantines on injection in EITHER (the topic is
+        # caller-controlled and echoed verbatim on every recall hit), so a
+        # benign-proposition / poison-TOPIC fact must stay quarantined — the
+        # requalify sibling (admission_cleanup.py) already screens both since
+        # the 2026-06-20 review; restore mirrored only the proposition and
+        # re-opened the hole.
+        if text or topic:
             try:
                 from .prompt_injection import detect_injection
-                if detect_injection(text).is_injection:
+                if (detect_injection(text).is_injection
+                        or detect_injection(topic).is_injection):
                     from .observability import emit as _emit
                     _emit("fact_restore_refused", fact_id=fact_id,
                           reason="injection_screen")
