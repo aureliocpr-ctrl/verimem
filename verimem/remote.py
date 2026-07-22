@@ -117,6 +117,7 @@ class RemoteMemory:
         import uuid
         idem = uuid.uuid4().hex
         headers = {**self._headers, "Idempotency-Key": idem}
+        r = None
         for attempt in (1, 2):
             try:
                 kw: dict[str, Any] = {"json": body, "headers": headers,
@@ -130,6 +131,12 @@ class RemoteMemory:
                     raise ConnectionError(
                         f"verimem server unreachable at {self.url}: "
                         f"{type(exc).__name__}") from exc
+        if r is None:
+            # Unreachable by construction (attempt 2 either breaks or raises);
+            # kept as a hard stop so a future retry-loop refactor can never
+            # fall through to using an unbound response (CodeQL #1229).
+            raise ConnectionError(
+                f"verimem server unreachable at {self.url}: retries exhausted")
         if r.status_code in (401, 403):
             raise PermissionError(
                 f"verimem server rejected the API key ({r.status_code})")

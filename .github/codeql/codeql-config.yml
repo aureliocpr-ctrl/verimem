@@ -1,33 +1,44 @@
-# CodeQL configuration — HippoAgent
+# CodeQL configuration — verimem
 #
-# Why this file exists:
-# CodeQL's Python `py/path-injection` query flags every filesystem
-# operation in `engram/ide.py` because the user-provided
-# `body.path` flows into `Path.mkdir/touch/...`. This is a false
-# positive: ALL such calls are gated by `_safe_path()`, which:
-#   1. Refuses `..` segments anywhere in the path.
-#   2. Refuses Windows drive letters (`C:/`, `D:\\`).
-#   3. Refuses UNC paths (`//host/share`).
-#   4. Refuses `~` home expansion.
-#   5. Refuses null bytes (truncation attacks).
-#   6. Resolves and verifies `relative_to(workspace_root)` containment.
+# Scope: we scan the SHIPPED package (`verimem/`). Tests, benchmark
+# runners, dev scripts and the demo are not an attack surface of the
+# distributed wheel (they never ship; their "flaws" are fixtures and
+# fake data by design) — excluding them keeps the alert list equal to
+# the code a user actually installs. This is declared, not hidden.
 #
-# Coverage: tests/test_ide_path_injection.py (8 tests, FORGIA #183).
+# Rule-level filters (each one verified on code, 2026-07-22 triage):
 #
-# CodeQL doesn't recognise this custom sanitizer pattern. We
-# explicitly exclude the rule for `engram/ide.py` only — every
-# other file remains under the standard query suite.
+# 1. py/path-injection on `verimem/ide.py` (was `engram/ide.py` before
+#    the 0.7.0 rename — the stale path silently disabled this filter
+#    and resurrected 22 known-FP alerts). ALL filesystem ops there are
+#    gated by `_safe_path()`: refuses `..`, drive letters, UNC, `~`,
+#    null bytes, and enforces resolve()+relative_to(workspace_root)
+#    containment. Coverage: tests/test_ide_path_injection.py (8 tests).
+#    CodeQL doesn't recognise the custom sanitizer.
+#
+# 2. py/undefined-export: `verimem/__init__.py` exports Memory/Client/
+#    AutoMemory via PEP 562 module `__getattr__` (lazy imports keep
+#    `import verimem` light). The names ARE defined at access time;
+#    CodeQL's export check doesn't model PEP 562. Systematic FP.
 
-name: hippoagent-codeql
+name: verimem-codeql
+
+paths-ignore:
+  - "tests"
+  - "benchmark"
+  - "scripts"
+  - "run_demo.py"
 
 queries:
   - uses: security-extended
   - uses: security-and-quality
 
-# Suppress py/path-injection FPs in ide.py only.
-# All filesystem ops go through _safe_path() — see tests.
 query-filters:
   - exclude:
       id: py/path-injection
       paths:
-        - "engram/ide.py"
+        - "verimem/ide.py"
+  - exclude:
+      id: py/undefined-export
+      paths:
+        - "verimem/__init__.py"
