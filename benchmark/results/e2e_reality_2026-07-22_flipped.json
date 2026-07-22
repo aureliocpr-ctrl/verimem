@@ -1,0 +1,148 @@
+{
+  "n_facts": 35,
+  "admitted": 30,
+  "quarantined": 5,
+  "wrong_block_rate": 0.143,
+  "blocked": [
+    [
+      "L4",
+      "legal",
+      "The settlement resolved all outstanding claims between the parties.",
+      [
+        "L1.8",
+        "L3-semantic",
+        "L1-domain-precision-observe"
+      ]
+    ],
+    [
+      "L5",
+      "legal",
+      "The easement is documented in the 1998 deed at the land registry.",
+      [
+        "L1.14",
+        "L3-semantic",
+        "L1-domain-precision-observe"
+      ]
+    ],
+    [
+      "E2",
+      "engineering",
+      "The bridge expansion joint was deployed along the north span in 2021.",
+      [
+        "L1",
+        "L3-semantic",
+        "L1-domain-precision-observe"
+      ]
+    ],
+    [
+      "B6",
+      "business",
+      "The invoice total is 12,450 euros.",
+      [
+        "L3-semantic"
+      ]
+    ],
+    [
+      "P5",
+      "personal",
+      "The product launch is planned for early spring.",
+      [
+        "L3-semantic"
+      ]
+    ]
+  ],
+  "recall_hits": 5,
+  "recall_n": 5,
+  "recall_detail": [
+    {
+      "query": "Rossi contract expiry",
+      "want": "L1",
+      "hit": true,
+      "was_admitted": true
+    },
+    {
+      "query": "Milan office desks",
+      "want": "B2",
+      "hit": true,
+      "was_admitted": true
+    },
+    {
+      "query": "who leads payments",
+      "want": "B3",
+      "hit": true,
+      "was_admitted": true
+    },
+    {
+      "query": "steel cable load test",
+      "want": "E1",
+      "hit": true,
+      "was_admitted": true
+    },
+    {
+      "query": "board meeting date",
+      "want": "P3",
+      "hit": true,
+      "was_admitted": true
+    }
+  ],
+  "answer": {
+    "answerable_correct": 4,
+    "answerable_n": 5,
+    "impossible_abstained": 3,
+    "impossible_n": 3,
+    "detail": [
+      {
+        "q": "When does the Rossi SpA contract expire?",
+        "kind": "answerable",
+        "answer": "31 January 2027.",
+        "ok": true
+      },
+      {
+        "q": "How many desks does the Milan office have?",
+        "kind": "answerable",
+        "answer": "40 desks.",
+        "ok": true
+      },
+      {
+        "q": "Who leads the payments team?",
+        "kind": "answerable",
+        "answer": "Marco leads the payments team.",
+        "ok": true
+      },
+      {
+        "q": "What was the Q3 revenue?",
+        "kind": "answerable",
+        "answer": "1.2 million euros.",
+        "ok": true
+      },
+      {
+        "q": "Who is the security lead?",
+        "kind": "answerable",
+        "answer": "NO ANSWER",
+        "ok": false
+      },
+      {
+        "q": "How many desks does the Rome office have?",
+        "kind": "impossible",
+        "answer": "NO ANSWER",
+        "abstained": true,
+        "confabulated": false
+      },
+      {
+        "q": "Who decided to migrate to Stripe?",
+        "kind": "impossible",
+        "answer": "NO ANSWER",
+        "abstained": true,
+        "confabulated": false
+      },
+      {
+        "q": "What is Giulia's phone number?",
+        "kind": "impossible",
+        "answer": "NO ANSWER",
+        "abstained": true,
+        "confabulated": false
+      }
+    ]
+  },
+  "contradiction_caught": true
+}
