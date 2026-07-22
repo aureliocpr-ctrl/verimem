@@ -1,0 +1,26 @@
+{
+ "n_conflict_pairs": 157,
+ "conflict_compared": 157,
+ "conflict_compare_rate": 1.0,
+ "n_cross_pairs": 60,
+ "cross_skipped": 33,
+ "cross_skip_rate": 0.55,
+ "n_alias_pairs": 176,
+ "alias_compared": 114,
+ "alias_compare_rate": 0.6477,
+ "alias_fn_rate": 0.3523,
+ "missed_conflicts_sample": [],
+ "missed_alias_sample": [
+  "The capital of United States is Washington, D.C.. || The capital of Merica is Brussels.",
+  "The capital of North Macedonia is Skopje. || The capital of FYROM is Brussels.",
+  "The capital of Singapore is Singapore. || The capital of sg is Brussels.",
+  "The capital of Singapore is Singapore. || The capital of SGP is Brussels.",
+  "The capital of Singapore is Singapore. || The capital of Lion City is Brussels.",
+  "The capital of Singapore is Singapore. || The capital of S'pore is Brussels.",
+  "The capital of Finistère is Quimper. || The capital of Finistere is Brussels.",
+  "The capital of Finistère is Quimper. || The capital of Finisterre is Brussels.",
+  "The capital of Slovenia is Ljubljana. || The capital of si is Brussels.",
+  "The capital of Slovenia is Ljubljana. || The capital of svn is Brussels."
+ ],
+ "labels": "mechanical (Wikidata slot mutation + skos:altLabel) — not self-authored"
+}

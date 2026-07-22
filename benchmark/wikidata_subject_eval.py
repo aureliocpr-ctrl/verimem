@@ -52,6 +52,41 @@ SELECT ?sLabel ?oLabel WHERE {{
 }} LIMIT {limit}
 """
 
+#: v2 (the critic's FN class, measured on EXTERNAL aliases): same query but
+#: also pulling the subject's skos:altLabel — the entity's OFFICIAL alternate
+#: name. Rendering one side of a TRUE conflict with the alias measures how
+#: often the filter loses a real conflict when the same entity is named two
+#: ways ("production database" vs "primary database" class). Labels stay
+#: mechanical: Wikidata asserts the alias identity, not us.
+_SPARQL_ALIAS = """
+SELECT ?sLabel ?alt ?oLabel WHERE {{
+  ?s wdt:{pid} ?o .
+  ?s rdfs:label ?sLabel . FILTER(LANG(?sLabel) = "en")
+  ?s skos:altLabel ?alt . FILTER(LANG(?alt) = "en")
+  ?o rdfs:label ?oLabel . FILTER(LANG(?oLabel) = "en")
+}} LIMIT {limit}
+"""
+
+
+def fetch_alias(pid: str, limit: int) -> list[tuple[str, str, str]]:
+    q = _SPARQL_ALIAS.format(pid=pid, limit=limit)
+    url = ("https://query.wikidata.org/sparql?format=json&query="
+           + urllib.parse.quote(q))
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "verimem-subject-eval/0.1 (research; single small query)"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        data = json.load(r)
+    out = []
+    for b in data["results"]["bindings"]:
+        s, alt, o = (b["sLabel"]["value"], b["alt"]["value"],
+                     b["oLabel"]["value"])
+        if any(x.startswith("Q") and x[1:].isdigit() for x in (s, alt, o)):
+            continue
+        if alt.strip().lower() == s.strip().lower():
+            continue
+        out.append((s, alt, o))
+    return out
+
 
 def fetch(pid: str, limit: int) -> list[tuple[str, str]]:
     q = _SPARQL.format(pid=pid, limit=limit)
@@ -121,9 +156,25 @@ def main() -> None:
             cross_pairs.append((tmpl[pids[0]].format(s=s1, o=o1),
                                 tmpl[pids[1]].format(s=s2, o=o2)))
 
+    # v2 — ALIAS axis (critic cb26737b FN class, external labels): a TRUE
+    # conflict where one side names the subject by its OFFICIAL skos:altLabel.
+    # compare-rate here = the filter's recall under renaming; 1-rate = the FN
+    # rate the promotion gate needs.
+    alias_pairs: list[tuple[str, str]] = []
+    if not a.jsonl:
+        for pid, t in tmpl.items():
+            rows = triples.get(pid) or []
+            for s, alt, o in fetch_alias(pid, a.n):
+                o2 = next((oo for _, oo in rows if oo != o), None)
+                if o2 is not None:
+                    alias_pairs.append((t.format(s=s, o=o),
+                                        t.format(s=alt, o=o2)))
+
     cc = sum(same_subject(x, y) for x, y in conflict_pairs)
     cs = sum(not same_subject(x, y) for x, y in cross_pairs)
+    ac = sum(same_subject(x, y) for x, y in alias_pairs)
     missed = [(x, y) for x, y in conflict_pairs if not same_subject(x, y)]
+    missed_alias = [(x, y) for x, y in alias_pairs if not same_subject(x, y)]
 
     res = {
         "n_conflict_pairs": len(conflict_pairs),
@@ -132,15 +183,22 @@ def main() -> None:
         "n_cross_pairs": len(cross_pairs),
         "cross_skipped": cs,
         "cross_skip_rate": round(cs / len(cross_pairs), 4) if cross_pairs else None,
+        "n_alias_pairs": len(alias_pairs),
+        "alias_compared": ac,
+        "alias_compare_rate": round(ac / len(alias_pairs), 4) if alias_pairs else None,
+        "alias_fn_rate": round(1 - ac / len(alias_pairs), 4) if alias_pairs else None,
         "missed_conflicts_sample": [f"{x} || {y}" for x, y in missed[:10]],
-        "labels": "mechanical (Wikidata slot mutation) — not self-authored",
+        "missed_alias_sample": [f"{x} || {y}" for x, y in missed_alias[:10]],
+        "labels": "mechanical (Wikidata slot mutation + skos:altLabel) — not self-authored",
     }
     out = a.out or str(REPO / "benchmark" / "results" / "wikidata_subject_eval.json")
     json.dump(res, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(json.dumps({k: v for k, v in res.items()
-                      if k != "missed_conflicts_sample"}, indent=1))
+                      if not k.startswith("missed_")}, indent=1))
     for m in res["missed_conflicts_sample"]:
         print("  MISS:", m[:120])
+    for m in res["missed_alias_sample"]:
+        print("  MISS-ALIAS:", m[:120])
     print(f"-> {out}")
 
 

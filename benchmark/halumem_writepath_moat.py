@@ -148,6 +148,8 @@ def main(argv=None) -> int:
                     help="per-call claude -p timeout (s); raise under machine load so big "
                          "prompts complete instead of timing out (the cap=8000 error cause)")
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--gate-ce", action="store_true",
+                    help="gate with the DEFAULT local CE (llm=None), not the claude judge")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
     _SRC_CAP = a.src_cap
@@ -172,6 +174,11 @@ def main(argv=None) -> int:
     pool = users[: max(a.users + 1, a.users)]  # need others for noise
     users = pool[: a.users]
     llm = LeanClaudeCLILLM(model=a.model, timeout_s=a.timeout)
+    # --gate-ce: the DEFAULT product gate is the local cross-encoder
+    # (fact_grounding_score with llm=None). Passing llm instead measures the OPT-IN
+    # claude judge (which the saved run did, driving clean-admission to ~62%). Keep
+    # llm for confab-gen / answer / judge — only the GATE decision switches to the CE.
+    gate_llm = None if a.gate_ce else llm
 
     def fresh_mem(tag):
         tmp = Path(tempfile.mkdtemp(prefix=f"halu_wp_{tag}_"))
@@ -222,7 +229,7 @@ def main(argv=None) -> int:
         all_candidates = [(t, s, "clean") for t, s in clean] + \
                          [(t, s, "noise") for t, s in noise]
         for txt, src, kind in all_candidates:
-            score = fact_grounding_score(llm, src, txt,
+            score = fact_grounding_score(gate_llm, src, txt,
                                          focus_budget=(a.gate_span_budget or None))
             admit = score >= a.threshold
             if kind == "noise":
