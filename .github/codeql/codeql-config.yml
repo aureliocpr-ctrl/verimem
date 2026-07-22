@@ -6,20 +6,21 @@
 # fake data by design) — excluding them keeps the alert list equal to
 # the code a user actually installs. This is declared, not hidden.
 #
-# Rule-level filters (each one verified on code, 2026-07-22 triage):
+# Known per-file FPs are handled by ALERT DISMISSALS (GitHub API/UI),
+# NOT here: CodeQL `query-filters` cannot scope a rule to a path (an
+# `exclude: {id, paths}` entry is silently inert — verified empirically
+# 2026-07-22: the scan applied paths-ignore but left those alerts open).
+# Dismissed-with-rationale, each verified on code:
 #
-# 1. py/path-injection on `verimem/ide.py` (was `engram/ide.py` before
-#    the 0.7.0 rename — the stale path silently disabled this filter
-#    and resurrected 22 known-FP alerts). ALL filesystem ops there are
-#    gated by `_safe_path()`: refuses `..`, drive letters, UNC, `~`,
-#    null bytes, and enforces resolve()+relative_to(workspace_root)
+# 1. py/path-injection on `verimem/ide.py` (22): all filesystem ops are
+#    gated by `_safe_path()` — refuses `..`, drive letters, UNC, `~`,
+#    null bytes; enforces resolve()+relative_to(workspace_root)
 #    containment. Coverage: tests/test_ide_path_injection.py (8 tests).
-#    CodeQL doesn't recognise the custom sanitizer.
+#    NOTE: a rename that moves a file re-mints its dismissed alerts
+#    under the new path (this bit us on engram/→verimem/) — re-dismiss.
 #
-# 2. py/undefined-export: `verimem/__init__.py` exports Memory/Client/
-#    AutoMemory via PEP 562 module `__getattr__` (lazy imports keep
-#    `import verimem` light). The names ARE defined at access time;
-#    CodeQL's export check doesn't model PEP 562. Systematic FP.
+# 2. py/undefined-export on `verimem/__init__.py` (3): PEP 562 lazy
+#    exports via module `__getattr__`; names ARE defined at access time.
 
 name: verimem-codeql
 
@@ -32,13 +33,3 @@ paths-ignore:
 queries:
   - uses: security-extended
   - uses: security-and-quality
-
-query-filters:
-  - exclude:
-      id: py/path-injection
-      paths:
-        - "verimem/ide.py"
-  - exclude:
-      id: py/undefined-export
-      paths:
-        - "verimem/__init__.py"
