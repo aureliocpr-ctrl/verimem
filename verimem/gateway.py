@@ -1158,6 +1158,10 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                 asserted_at=body.get("asserted_at"),
                 conversation_id=body.get("conversation_id"),
                 user_name=body.get("user_name"),
+                # P0 v9: the gateway stamps the caller identity ITSELF from
+                # the authenticated tenant — a body-supplied "principal" is a
+                # spoof attempt and is deliberately never read.
+                principal=f"gw:{tenant_id}",
             )
         except ValueError as exc:
             meter.bump(tenant_id, writes=1, rejected=1)

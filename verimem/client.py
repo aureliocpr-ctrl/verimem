@@ -144,13 +144,19 @@ class Memory:
 
     def __init__(self, path: str | Path | None = None, *, grounding_llm: Any = None,
                  llm: Any = None, preset: str = "balanced",
-                 repo_root: str | Path | None = None) -> None:
+                 repo_root: str | Path | None = None,
+                 principal: str | None = None) -> None:
         if preset not in _GATE_PRESETS:
             raise ValueError(
                 f"unknown gate preset {preset!r} — one of: "
                 f"{', '.join(sorted(_GATE_PRESETS))}")
         self.preset = preset
         self._preset_defaults = _GATE_PRESETS[preset]
+        #: P0 v9: identity stamped on every write. In-process the operator IS
+        #: the trust boundary, so a declared identity is honoured; the REAL
+        #: security value is at the MCP/gateway entrypoints, which stamp their
+        #: own principal server-side and never accept one from the client.
+        self._principal = principal or "sdk:local"
         #: ``repo_root`` scopes the verified_by hard-gate's I/O checks: a
         #: ``file:<path>:<line>`` provenance ref is verified ONLY when it resolves
         #: INSIDE this root (containment against traversal). Left ``None`` (the
@@ -186,6 +192,7 @@ class Memory:
         asserted_at: float | None = None, conversation_id: str | None = None,
         user_name: str | None = None,
         purpose: str | None = None,
+        principal: str | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -302,6 +309,7 @@ class Memory:
                     "adjudication": _adj}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at,
+                    writer_principal=principal or self._principal,
                     confidence_tier=_confidence_tier(
                         gate.grounding_score, getattr(gate, "judge", None),
                         getattr(gate, "threshold", None)))

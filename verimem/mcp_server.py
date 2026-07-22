@@ -393,6 +393,16 @@ def _content_hash_id(proposition: str, topic: str) -> str:
     return hashlib.sha256(payload).hexdigest()[:12]
 
 
+#: P0 v9 (2026-07-22): the identity THIS server stamps on every write it
+#: performs. "unbound" because the MCP layer has no authenticated caller
+#: identity yet (build_next #3 / WS4.2 intra-tenant authz) — but the stamp
+#: already separates "written via the agent-facing MCP surface" from
+#: sdk/gateway writes, which is what the evidence-before-belief AND-rule
+#: needs. NEVER read from tool arguments: a client-supplied
+#: writer_principal is a spoof attempt and is deliberately ignored.
+_MCP_PRINCIPAL = "mcp:unbound"
+
+
 def _build_fact(
     proposition: str, topic: str = "",
     confidence: float = 0.9,
@@ -405,6 +415,7 @@ def _build_fact(
     meta_narrative: bool = False,
     valid_until: float | None = None,
     derives_from: list[str] | None = None,
+    writer_principal: str | None = None,
 ) -> Any:
     """Build a Fact object with a CONTENT-DERIVED id (cycle #46b + #109).
 
@@ -443,6 +454,8 @@ def _build_fact(
         valid_until=valid_until,
         # v11 (2026-06-19) typed logical-derivation edge (ATMS depends_on).
         derives_from=list(derives_from or []),
+        # P0 v9: server-stamped identity (see _MCP_PRINCIPAL).
+        writer_principal=writer_principal,
     )
 
 
@@ -12066,6 +12079,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     meta_narrative=_meta_narrative,
                     valid_until=valid_until,
                     derives_from=[str(d) for d in _derives_raw],
+                    writer_principal=_MCP_PRINCIPAL,
                 )
             except ValueError as exc:
                 # Invalid status enum bubbles up here (validation

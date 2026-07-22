@@ -630,6 +630,9 @@ CREATE TABLE IF NOT EXISTS facts (
     -- recaps). Both required together to skip L1.x detectors.
     writer_role TEXT NOT NULL DEFAULT 'agent_inference',
     meta_narrative INTEGER NOT NULL DEFAULT 0,
+    -- P0 v9 (2026-07-22): server-stamped write identity (never from tool
+    -- arguments). NULL = pre-P0 rows / unknown. See Fact.writer_principal.
+    writer_principal TEXT,
     -- v8 (2026-06-03, buco #3 validita temporale). Timestamp dell'ultima
     -- verifica del fatto; freshness/decay (engram/freshness.py) lo usa per
     -- declassare i capability-claim scaduti per eta (caso A2A "prima
@@ -1378,6 +1381,13 @@ def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
     except sqlite3.OperationalError as exc:
         if "duplicate column name" not in str(exc).lower():
             raise
+    # P0 v9 (2026-07-22): server-stamped write identity. Additive, nullable,
+    # NO backfill: NULL = pre-P0 row. Plumbing for evidence-before-belief.
+    try:
+        conn.execute("ALTER TABLE facts ADD COLUMN writer_principal TEXT")
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" not in str(exc).lower():
+            raise
 
 
 @dataclass
@@ -1415,6 +1425,12 @@ class Fact:
     # hard-gate AND the L1.x detectors.
     writer_role: str = "agent_inference"
     meta_narrative: bool = False
+    #: P0 v9 (2026-07-22, adversarial design glm+kimi convergent): the
+    #: SERVER-STAMPED identity of who performed the write ("sdk:local",
+    #: "gw:<tenant>", "mcp:unbound"). Plumbing for the evidence-before-belief
+    #: AND-rule (author_principal(source) != claimant). Unlike writer_role
+    #: this is never taken from tool arguments — the entrypoint stamps it.
+    writer_principal: str | None = None
     # v8 (2026-06-03) buco #3: timestamp dell'ultima verifica. None ==
     # "non settato" -> store() e _row lo trattano come == created_at
     # (il fatto e' verificato quando creato). Appeso in coda al dataclass
@@ -2378,8 +2394,8 @@ class SemanticMemory:
                  trigger_keywords, applicable_when, worked_example, lineage_to,
                  writer_role, meta_narrative, last_verified_at, embedding_model,
                  valid_until, derives_from, grounding_score, asserted_at,
-                 epistemic, confidence_tier)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 epistemic, confidence_tier, writer_principal)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                  proposition=excluded.proposition, topic=excluded.topic,
                  confidence=excluded.confidence,
@@ -2430,7 +2446,8 @@ class SemanticMemory:
                  -- bypasses); an explicit incoming label wins.
                  epistemic=CASE WHEN excluded.epistemic IS NOT NULL
                      THEN excluded.epistemic ELSE facts.epistemic END,
-                 confidence_tier=excluded.confidence_tier""",
+                 confidence_tier=excluded.confidence_tier,
+                 writer_principal=excluded.writer_principal""",
                 (
                     fact.id, fact.proposition, fact.topic, fact.confidence,
                     ",".join(fact.source_episodes), fact.created_at,
@@ -2448,6 +2465,7 @@ class SemanticMemory:
                     (_epistemic.serialize(fact.epistemic)
                      if getattr(fact, "epistemic", None) else None),
                     getattr(fact, "confidence_tier", None),
+                    getattr(fact, "writer_principal", None),
                 ),
             )
         # Entity-live write path (2026-06-10, critic caveat on 2aa6769):

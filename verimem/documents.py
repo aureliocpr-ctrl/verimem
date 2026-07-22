@@ -27,6 +27,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -103,12 +104,20 @@ class DocumentStore:
 
     # --- write ---------------------------------------------------------
     def ingest(self, source_id: str, content: str, uri: str = "",
-               meta: dict | None = None, fetched_at: float = 0.0) -> dict:
+               meta: dict | None = None, fetched_at: float = 0.0,
+               principal: str | None = None) -> dict:
         """Persisti uno snapshot. IDEMPOTENTE su ``(source_id, content_hash)``.
 
         Ritorna ``{id, version, is_new, content_hash}``:
           - contenuto già presente per il source_id -> riga esistente, ``is_new=False``;
           - contenuto nuovo -> versione = ``max(version)+1`` per quel source_id, ``is_new=True``.
+
+        ``principal`` (P0 v9): server-stamped identity of WHO indexed this
+        snapshot → ``meta.indexed_by`` + ``meta.indexed_at``. Recorded only on
+        the FIRST ingest of a given content (idempotent re-ingest never
+        rewrites the original provenance — that first identity is exactly what
+        the poison-then-cite rule needs). Absent when no principal is given:
+        absence = untrusted class, never a fake default.
         """
         chash = _content_hash(content)
         conn = self._connect()
@@ -126,11 +135,15 @@ class DocumentStore:
             ).fetchone()
             version = int(row["m"]) + 1
             doc_id = uuid.uuid4().hex[:16]
+            m = dict(meta or {})
+            if principal is not None:
+                m["indexed_by"] = principal
+                m["indexed_at"] = time.time()
             conn.execute(
                 "INSERT INTO documents(id, source_id, version, content_hash, content, "
                 "uri, meta, fetched_at) VALUES(?,?,?,?,?,?,?,?)",
                 (doc_id, source_id, version, chash, content, uri,
-                 json.dumps(meta or {}), float(fetched_at)),
+                 json.dumps(m), float(fetched_at)),
             )
             conn.commit()
             return {"id": doc_id, "version": version, "is_new": True, "content_hash": chash}
@@ -138,7 +151,8 @@ class DocumentStore:
             conn.close()
 
     def ingest_file(self, path: Path | str, source_id: str | None = None,
-                    meta: dict | None = None, fetched_at: float = 0.0) -> dict:
+                    meta: dict | None = None, fetched_at: float = 0.0,
+                    principal: str | None = None) -> dict:
         """Snapshot di un file (caso d'uso continuità-MD: linka un MD -> copia
         versionata in Engram). ``source_id`` default = path del file; re-ingest
         idempotente finché il contenuto non cambia (poi nuova versione)."""
@@ -147,7 +161,8 @@ class DocumentStore:
         sid = source_id if source_id is not None else str(p)
         m = dict(meta or {})
         m.setdefault("filename", p.name)
-        return self.ingest(sid, content, uri=f"file://{p}", meta=m, fetched_at=fetched_at)
+        return self.ingest(sid, content, uri=f"file://{p}", meta=m,
+                           fetched_at=fetched_at, principal=principal)
 
     # --- read ----------------------------------------------------------
     def _row_to_doc(self, r: sqlite3.Row) -> Document:
