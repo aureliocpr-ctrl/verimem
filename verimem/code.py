@@ -17,7 +17,7 @@ Layout (terminal, single-pane Rich):
     » prompt (Ctrl-D to quit, /help for commands)
 
 Design notes:
-  • The session reuses the same HippoAgent build that powers the dashboard
+  • The session reuses the same VerimemAgent build that powers the dashboard
     — same memory, same skills, same sleep cycle. Switching between the
     web UI and `engram code` shares state automatically.
   • Edits are applied via search/replace blocks (editfmt module) with a
@@ -27,7 +27,7 @@ Design notes:
     are described inline before the task is sent to the model.
   • Slash commands handle non-LLM operations (sleep, model switch, etc.).
 
-Slash command registry — every command is one method on EngramCode named
+Slash command registry — every command is one method on VerimemCode named
 `_cmd_<name>`. No giant dispatch table; new commands are auto-discovered.
 """
 from __future__ import annotations
@@ -47,7 +47,7 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
-from .agent import HippoAgent
+from .agent import VerimemAgent
 from .editfmt import (
     SEARCH_REPLACE_INSTRUCTIONS,
     EditBlock,
@@ -104,16 +104,16 @@ def _resolve_vision_drops(text: str, console: Console) -> str:
     return out
 
 
-# --- Engram Code session ---------------------------------------------------
+# --- Verimem Code session ---------------------------------------------------
 
 
-class EngramCode:
+class VerimemCode:
     """Interactive coding session with persistent active memory."""
 
     def __init__(
         self,
         workspace: Path,
-        agent: HippoAgent | None = None,
+        agent: VerimemAgent | None = None,
         plan_mode: bool = False,
         model_override: str | None = None,
     ) -> None:
@@ -121,7 +121,7 @@ class EngramCode:
         self.workspace.mkdir(parents=True, exist_ok=True)
         os.chdir(self.workspace)
         self.console = Console()
-        self.agent = agent or HippoAgent.build(tools=all_tools())
+        self.agent = agent or VerimemAgent.build(tools=all_tools())
         self.plan_mode = plan_mode
         self.model_override = model_override
         self.history: list[dict[str, Any]] = []  # for in-session display
@@ -723,12 +723,16 @@ def _preview_block(block: EditBlock, root: Path) -> str:
 # --- Entry point used by cli.py --------------------------------------------
 
 
+# Backward-compat alias: the pre-0.7.0 name of this REPL session class.
+EngramCode = VerimemCode
+
+
 def main(workspace: str | None = None,
           plan: bool = False,
           model: str | None = None) -> int:
-    """Launch an Engram Code session in `workspace` (default: cwd)."""
+    """Launch a Verimem Code session in `workspace` (default: cwd)."""
     ws = Path(workspace) if workspace else Path.cwd()
-    session = EngramCode(workspace=ws, plan_mode=plan, model_override=model)
+    session = VerimemCode(workspace=ws, plan_mode=plan, model_override=model)
     return session.run()
 
 

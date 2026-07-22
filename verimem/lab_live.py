@@ -102,7 +102,7 @@ def _build_table(rows: list[dict], topic: str) -> object:
     """
     from rich.table import Table
     table = Table(
-        title=f"HippoAgent Lab Live — topic: {topic}",
+        title=f"verimem Lab Live — topic: {topic}",
         title_style="bold",
         expand=True,
         show_lines=False,

@@ -1,4 +1,4 @@
-"""High-level orchestrator: HippoAgent.
+"""High-level orchestrator: VerimemAgent.
 
 Convenience facade tying memory + skills + wake + sleep together.
 """
@@ -44,7 +44,7 @@ def wire_reconcile_judge(semantic, llm) -> None:
 
 
 @dataclass
-class HippoAgent:
+class VerimemAgent:
     memory: EpisodicMemory
     skills: SkillLibrary
     semantic: SemanticMemory
@@ -58,7 +58,7 @@ class HippoAgent:
         llm: Any | None = None,
         tools: dict[str, ToolSpec] | None = None,
         wake_config: WakeConfig | None = None,
-    ) -> HippoAgent:
+    ) -> VerimemAgent:
         memory = EpisodicMemory()
         skills = SkillLibrary()
         # Cycle #111 v2 (2026-05-17): wire CONFIG.project_root so the
@@ -101,3 +101,8 @@ class HippoAgent:
         self.memory.clear()
         self.skills.clear()
         self.semantic.clear()
+
+
+# Backward-compat alias: the pre-0.7.0 name. Same object, so existing
+# `from verimem.agent import HippoAgent` and `HippoAgent.build()` keep working.
+HippoAgent = VerimemAgent

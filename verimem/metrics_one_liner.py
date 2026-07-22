@@ -2,7 +2,7 @@
 
 FORGIA pezzo #247 — Wave 46. Single string for status-bar / CI /
 SessionStart context. Format:
-  `HippoAgent: E ep (S✓/F✗), N facts, K skills (P prom), T tok 7d`
+  `verimem: E ep (S✓/F✗), N facts, K skills (P prom), T tok 7d`
 """
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ def metrics_one_liner(
         pass
 
     return (
-        f"HippoAgent: {ep_count} ep ({n_success}✓/{n_failure}✗), "
+        f"verimem: {ep_count} ep ({n_success}✓/{n_failure}✗), "
         f"{n_facts} facts, {n_skills} skills ({n_promoted} prom), "
         f"{tokens_window} tok {window_days}d"
     )

@@ -521,7 +521,7 @@ def web_fetch(url: str, max_chars: int = 16000) -> ToolResult:
                                 f"(loopback / RFC1918 / link-local / metadata)")
     try:
         with _ssrf_client(timeout=20.0, follow_redirects=False,
-                          headers={"User-Agent": "HippoAgent/0.2 (research)"}) as c:
+                          headers={"User-Agent": "verimem/0.7 (research)"}) as c:
             current = url
             redirected = False
             # at most 2 passes: original request + one validated redirect

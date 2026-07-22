@@ -304,7 +304,7 @@ def get_briefing(
     # --- Summary text ------------------------------------------------
     parts: list[str] = []
     parts.append(
-        f"HippoAgent memory: {ep_count} episode "
+        f"verimem memory: {ep_count} episode "
         f"({success_count} success, {failure_count} failure), "
         f"{fact_count} fact, {sk_count} skill."
     )

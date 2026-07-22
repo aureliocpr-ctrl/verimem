@@ -152,7 +152,7 @@ _SETTINGS_HTML = """
   <h2 style="border:0;margin-top:0;">Provider</h2>
   <p style="color:var(--dim); font-size:13px; margin-top:0;">
     Pick a provider, enter its API key (or run Ollama locally — no key needed),
-    and HippoAgent will use it for new tasks. Switch live, no restart needed.
+    and verimem will use it for new tasks. Switch live, no restart needed.
   </p>
 
   <div style="display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:center;">

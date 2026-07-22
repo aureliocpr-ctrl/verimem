@@ -1,4 +1,4 @@
-"""Command-line interface for HippoAgent."""
+"""Command-line interface for verimem."""
 from __future__ import annotations
 
 import json
@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from .agent import HippoAgent
+from .agent import VerimemAgent
 from .config import CONFIG
 from .observability import METRICS, get_log
 from .tools import PythonExecutor
@@ -137,9 +137,9 @@ def code(
     skills compile from your repeated workflow, forward replay shows the
     expected action chain, sleep cycles consolidate during /sleep.
     """
-    from .code import EngramCode  # heavy import — only when needed
+    from .code import VerimemCode  # heavy import — only when needed
     ws = Path(workspace) if workspace else Path.cwd()
-    session = EngramCode(workspace=ws, plan_mode=plan, model_override=model)
+    session = VerimemCode(workspace=ws, plan_mode=plan, model_override=model)
     raise typer.Exit(session.run())
 
 
@@ -149,7 +149,7 @@ def run(
     task_id: str = typer.Option("adhoc", help="Task identifier"),
 ):
     """Run a single ad-hoc task (no validator — non-empty answer = success)."""
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     def _val(ans: str): return (bool(ans.strip()), "non-empty" if ans.strip() else "empty")
     result = agent.run_task(task_id=task_id, task_text=task, validator=_val)
     console.print(Panel.fit(result.episode.final_answer or "(empty)",
@@ -166,7 +166,7 @@ def status():
 
     Used by the Claude Code plugin's `hippo:status` slash command.
     """
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     n_eps = agent.memory.count()
     n_sk = agent.skills.count()
     n_sk_promoted = agent.skills.count(status="promoted")
@@ -876,7 +876,7 @@ def sleep_now():
     command ``hippo:consolidate`` routes through ``hippoagent.cli`` (a
     different module) and is unaffected.
     """
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     report = agent.consolidate()
     console.print(Panel.fit(
         f"  episodes replayed: {report.n_episodes_replayed}\n"
@@ -911,7 +911,7 @@ def wake(
 
     from .wake import WakeConfig
     cfg = WakeConfig(use_skills=not no_skills, use_past_episodes=not no_skills)
-    agent = HippoAgent.build(wake_config=cfg)
+    agent = VerimemAgent.build(wake_config=cfg)
     tasks = wake_split(seed=seed)
     if n_tasks > 0:
         tasks = tasks[:n_tasks]
@@ -925,7 +925,7 @@ def wake(
 @app.command()
 def sleep():
     """Run a sleep consolidation cycle on stored episodes."""
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     console.rule("[bold magenta]Sleep cycle[/]")
     report = agent.consolidate()
     console.print(Panel.fit(
@@ -954,7 +954,7 @@ def benchmark(
 
     from .wake import WakeConfig
     cfg = WakeConfig(use_skills=not no_skills, use_past_episodes=not no_skills)
-    agent = HippoAgent.build(wake_config=cfg)
+    agent = VerimemAgent.build(wake_config=cfg)
     tasks = heldout_split(seed=seed)
     evaluator = Evaluator(agent, executor=PythonExecutor())
     label = "heldout-baseline" if no_skills else "heldout-hippo"
@@ -977,13 +977,13 @@ def tui():
 def mcp():
     """Run as an MCP server over stdio.
 
-    Use this to plug HippoAgent into Claude Code, Cursor, Cline, opencode,
+    Use this to plug verimem into Claude Code, Cursor, Cline, opencode,
     Continue, Zed, or any other MCP-aware client. Example mcp.json entry:
 
       {
         "mcpServers": {
-          "hippoagent": {
-            "command": "hippo",
+          "verimem": {
+            "command": "verimem",
             "args": ["mcp"]
           }
         }
@@ -1005,9 +1005,9 @@ def chat():
     Same backend as the /chat web page. Useful when you live in the terminal.
     Commands inside the REPL: /sleep, /skills, /skills <id>, /quit
     """
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     console.print(Panel.fit(
-        "[bold cyan]HippoAgent chat[/]\n"
+        "[bold cyan]verimem chat[/]\n"
         "Type a task and press Enter. Special commands:\n"
         "  [bold]/sleep[/]        run a consolidation cycle\n"
         "  [bold]/skills[/]       list current skills\n"
@@ -1072,7 +1072,7 @@ def reset(yes: bool = typer.Option(False, "--yes")):
         confirm = typer.confirm("Wipe ALL memory and skills?", default=False)
         if not confirm:
             raise typer.Abort()
-    HippoAgent.build().reset()
+    VerimemAgent.build().reset()
     console.print("[red]agent reset[/red]")
 
 
@@ -1347,7 +1347,7 @@ def providers_check(
 
 @skills_app.command("list")
 def skills_list(status: str | None = typer.Option(None)):
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     skills = agent.skills.all(status=status)  # type: ignore[arg-type]
     if not skills:
         console.print("[dim]no skills[/dim]")
@@ -1380,7 +1380,7 @@ def introspect(
 
     from verimem import embedding as _emb
 
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     q = _emb.encode(topic)
 
     # Skills: rank all by cosine to (learned_embedding or canonical).
@@ -1419,7 +1419,7 @@ def introspect(
 
 @skills_app.command("show")
 def skills_show(skill_id: str):
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     s = agent.skills.get(skill_id)
     if not s:
         console.print(f"[red]not found: {skill_id}[/red]")
@@ -1441,7 +1441,7 @@ def skills_show(skill_id: str):
 
 @episodes_app.command("list")
 def episodes_list(limit: int = 20):
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     eps = agent.memory.all(limit=limit)
     table = Table(title=f"Episodes ({len(eps)})")
     table.add_column("id"); table.add_column("task"); table.add_column("outcome")
@@ -1456,7 +1456,7 @@ def episodes_list(limit: int = 20):
 
 @episodes_app.command("show")
 def episodes_show(episode_id: str):
-    agent = HippoAgent.build()
+    agent = VerimemAgent.build()
     e = agent.memory.get(episode_id)
     if not e:
         # try prefix match

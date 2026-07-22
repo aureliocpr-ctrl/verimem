@@ -120,7 +120,7 @@ def test_ag_builds_exactly_once_under_concurrency(monkeypatch):
         return _Fake()
 
     monkeypatch.setattr(srv, "_agent", None)
-    monkeypatch.setattr(srv.HippoAgent, "build", staticmethod(_slow_build))
+    monkeypatch.setattr(srv.VerimemAgent, "build", staticmethod(_slow_build))
 
     results = []
     barrier = threading.Barrier(8)

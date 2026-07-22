@@ -1,4 +1,4 @@
-"""FORGIA pezzo #27 — Multi-model bench harness: with-vs-without HippoAgent.
+"""FORGIA pezzo #27 — Multi-model bench harness: with-vs-without VerimemAgent.
 
 The harness runs the SAME task suite under three conditions and groups
 results by (condition, provider) so we can quantify the active-memory
@@ -9,12 +9,12 @@ Conditions:
   raw         — single-shot LLM call, no memory / skills / sleep.
                 Baseline; measures the model's "cold" capability.
 
-  hippo_cold  — fresh HippoAgent built per task. The agent has wake/sleep
+  hippo_cold  — fresh VerimemAgent built per task. The agent has wake/sleep
                 machinery active but starts with empty memory each time.
                 Isolates the value of the wake-loop scaffolding from the
                 value of accumulated experience.
 
-  hippo_warm  — single HippoAgent shared across all tasks; an optional
+  hippo_warm  — single VerimemAgent shared across all tasks; an optional
                 sleep cycle fires every K tasks. This is where the
                 forged primitives (memory + skills + DG/TCM/Hopfield/SR)
                 actually pay off — second-time-around tasks get to use
@@ -42,7 +42,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from .agent import HippoAgent
+from .agent import VerimemAgent
 from .observability import emit, get_log
 
 log = get_log()
@@ -94,7 +94,7 @@ def default_suite() -> list[TaskCase]:
 
     Mostly for transport / harness verification. The token + latency
     *gap* between raw and hippo conditions on this suite measures
-    HippoAgent's structural overhead, not its value.
+    VerimemAgent's structural overhead, not its value.
     """
     return [
         TaskCase(id="capital", validator=_val_contains("paris"),
@@ -185,7 +185,7 @@ def memory_recall_suite() -> list[TaskCase]:
     as episodes and the query phase can retrieve them via semantic
     recall — predicted success ≫ raw.
 
-    This is the suite that should make HippoAgent's value visible
+    This is the suite that should make VerimemAgent's value visible
     where the others can't:
       - default suite: same accuracy across conditions (trivia).
       - skill_compounding: same accuracy, different latency (macros).
@@ -436,9 +436,9 @@ def run_case_raw(case: TaskCase, llm: Any, *, provider: str = "?") -> RunResult:
         )
 
 
-def run_case_hippo(case: TaskCase, agent: HippoAgent, *,
+def run_case_hippo(case: TaskCase, agent: VerimemAgent, *,
                    provider: str = "?", condition: str = "hippo") -> RunResult:
-    """Run one task through HippoAgent's wake loop."""
+    """Run one task through VerimemAgent's wake loop."""
     t0 = time.perf_counter()
     try:
         wr = agent.run_task(
@@ -496,12 +496,12 @@ def run_suite_raw(cases: list[TaskCase], provider_name: str,
 
 def run_suite_hippo_cold(cases: list[TaskCase], provider_name: str,
                          llm_factory: ProviderFactory) -> list[RunResult]:
-    """Each case gets a freshly-built HippoAgent — no shared memory."""
+    """Each case gets a freshly-built VerimemAgent — no shared memory."""
     out: list[RunResult] = []
     for c in cases:
         try:
             llm = llm_factory()
-            agent = HippoAgent.build(llm=llm)
+            agent = VerimemAgent.build(llm=llm)
         except Exception as exc:  # noqa: BLE001
             out.append(RunResult(
                 condition="hippo_cold", provider=provider_name, task_id=c.id,
@@ -520,7 +520,7 @@ def run_suite_hippo_warm(cases: list[TaskCase], provider_name: str,
     """Single agent shared across cases. consolidate_every>0 → sleep every K tasks."""
     try:
         llm = llm_factory()
-        agent = HippoAgent.build(llm=llm)
+        agent = VerimemAgent.build(llm=llm)
     except Exception as exc:  # noqa: BLE001
         return _factory_failure_results(
             "hippo_warm", provider_name, cases,

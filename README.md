@@ -15,6 +15,15 @@ anti-confabulation gate, stored with their sources, revised through explicit
 supersession (never silent overwrites), and answered with citations — or with an
 honest *"I don't know."*
 
+**On retrieval itself we are competitive — and precise about what that means.**
+Our own internal runs (our harness, our embedding model, our judge — **not**
+third-party reproduced, and **not** the GPT-4 judge the public leaderboards use,
+so these are *not* a like-for-like ranking against them): LongMemEval_s
+session-level **recall@5 = 0.87** (judge-free, full 500 questions) and LoCoMo
+**QA-accuracy = 0.81** (n=150, Claude judge). That's good retrieval — but the
+reason to choose Verimem is the layer *above* it: whether you can trust what comes
+back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
+
 ## Features
 
 - **Gated writes with the grounding moat ON by default** — every fact enters as
@@ -94,6 +103,17 @@ honest *"I don't know."*
   `unverified`) is the *instrument's* confidence, **not a truth claim**: a `high`
   tier from the local CE can still be a plausible-but-unstated inference — read
   `evidence_class` for what actually adjudicated the fact.
+- **Quarantine recovery — a wrong block is visible and reversible.** When the gate
+  holds a legitimate fact (an over-eager keyword flag on a real
+  lawyer/engineer/clinician statement, say), you can SEE it and undo it without
+  reaching into internals: `Memory.quarantine_log()` lists held claims (with the
+  blocking layers + reason when the audit trail is on), and
+  `Memory.restore(fact_id, reason=…)` returns one to default recall. The same pair
+  is on the MCP surface (`hippo_quarantine_log` / `hippo_quarantine_restore`). It is
+  a *guarded* human override, not a back door: restore refuses a **superseded** fact
+  (never resurrects a retired value) and re-screens the proposition **and the topic**
+  for prompt-injection — an exfiltration payload the gate quarantined stays
+  quarantined even if a caller passes its id.
 - **Provenance on every read** — answers cite where each fact came from
   (conversation, document offset, tool call). A `TrustReport` explains *how the
   system knows*: chain of custody, declared conflicts, or an explicit abstention.

@@ -11,29 +11,29 @@ import html as _html
 
 from fastapi.responses import HTMLResponse
 
-from ..agent import HippoAgent
+from ..agent import VerimemAgent
 
 # ----- Singleton agent ----------------------------------------------------
 
-_agent: HippoAgent | None = None
+_agent: VerimemAgent | None = None
 
 
-def _build_default_agent() -> HippoAgent:
+def _build_default_agent() -> VerimemAgent:
     """Default factory; isolated for testability."""
     global _agent
     if _agent is None:
-        _agent = HippoAgent.build()
+        _agent = VerimemAgent.build()
     return _agent
 
 
-def get_agent() -> HippoAgent:
-    """Return the in-process HippoAgent singleton.
+def get_agent() -> VerimemAgent:
+    """Return the in-process VerimemAgent singleton.
 
     Resolution order:
       1. If `verimem.dashboard._ag` is a callable that does NOT recurse
          back into us, call it. Tests monkey-patch this name to inject a
          MagicMock, so we honour that override at call-time.
-      2. Otherwise, lazily build via `HippoAgent.build()`.
+      2. Otherwise, lazily build via `VerimemAgent.build()`.
 
     The redirection allows the legacy `monkeypatch.setattr(dash, "_ag", ...)`
     test fixture to keep working unchanged after the dashboard split.

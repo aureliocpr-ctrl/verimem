@@ -1,4 +1,4 @@
-"""HippoAgent TUI — Textual-based terminal UI.
+"""VerimemAgent TUI — Textual-based terminal UI.
 
 Tabs:
   Chat       — talk to the agent, see skills applied + outcome
@@ -31,7 +31,7 @@ from textual.widgets import (
     TextArea,
 )
 
-from .agent import HippoAgent
+from .agent import VerimemAgent
 
 _pool = ThreadPoolExecutor(max_workers=2)
 
@@ -66,7 +66,7 @@ class ChatPane(Vertical):
         self.log_widget.mount(line)
         self.log_widget.scroll_end(animate=False)
 
-    async def submit(self, agent: HippoAgent) -> None:
+    async def submit(self, agent: VerimemAgent) -> None:
         task = self.input_box.text.strip()
         if not task:
             return
@@ -126,7 +126,7 @@ class SkillsPane(Vertical):
         self.table.add_columns("id", "name", "stage", "status", "trials", "fitness")
         yield self.table
 
-    def refresh_skills(self, agent: HippoAgent) -> None:
+    def refresh_skills(self, agent: VerimemAgent) -> None:
         self.table.clear()
         skills = sorted(agent.skills.all(), key=lambda s: -s.fitness_mean)
         for s in skills:
@@ -146,7 +146,7 @@ class EpisodesPane(Vertical):
         self.table.add_columns("id", "task", "outcome", "steps", "tokens", "skills")
         yield self.table
 
-    def refresh_episodes(self, agent: HippoAgent) -> None:
+    def refresh_episodes(self, agent: VerimemAgent) -> None:
         self.table.clear()
         eps = agent.memory.all(limit=200)
         for e in eps:
@@ -391,7 +391,7 @@ class HippoTUI(App):
 
     def __init__(self) -> None:
         super().__init__()
-        self.agent = HippoAgent.build()
+        self.agent = VerimemAgent.build()
         self.chat_pane: ChatPane | None = None
         self.skills_pane: SkillsPane | None = None
         self.episodes_pane: EpisodesPane | None = None

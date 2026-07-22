@@ -3,7 +3,7 @@
 Single string summary of the whole memory system. Useful for
 status-bar displays, CI greppable output, and SessionStart context.
 
-Format: `HippoAgent: E ep (S✓/F✗), N facts, K skills (P prom),
+Format: `verimem: E ep (S✓/F✗), N facts, K skills (P prom),
 T tok last 7d`
 """
 from __future__ import annotations
@@ -129,5 +129,5 @@ def test_handles_empty_agent():
     from verimem.metrics_one_liner import metrics_one_liner
 
     out = metrics_one_liner(agent=_FakeAgent([], [], 0))
-    assert "HippoAgent" in out
+    assert "verimem" in out
     assert "0" in out

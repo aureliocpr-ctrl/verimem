@@ -115,7 +115,7 @@ def test_metrics_summary_is_string():
     a = _FakeAgent([], [], [])
     out = dashboard_overview(agent=a)
     assert isinstance(out["metrics_summary"], str)
-    assert "HippoAgent" in out["metrics_summary"]
+    assert "verimem" in out["metrics_summary"]
 
 
 def test_topology_section():

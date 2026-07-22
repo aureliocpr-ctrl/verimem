@@ -97,3 +97,6 @@ benchmark/results/github_deepdive_result.json
 benchmark/results/halumem_batch_paths.json
 benchmark/results/lineage_cascade_exposure_real.json
 benchmark/results/lme_mem0_spread48.json
+
+# VeriAgent (`veri` CLI) local working index — a tool artifact, not source.
+.veri/

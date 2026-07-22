@@ -170,4 +170,4 @@ def test_web_fetch_user_agent_is_set() -> None:
                             headers={"content-type": "text/plain"})
         m.get("https://example.com/ua").mock(side_effect=_capture)
         tools_extra.web_fetch("https://example.com/ua")
-    assert "HippoAgent" in captured["ua"]
+    assert "verimem" in captured["ua"]

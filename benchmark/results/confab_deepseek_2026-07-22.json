@@ -1,0 +1,288 @@
+{
+  "n": 10,
+  "confabulated": 0,
+  "abstained_model": 10,
+  "abstained_gate": 0,
+  "abstained_norecall": 0,
+  "failopen": 0,
+  "model_confabulated": 0,
+  "hybrid_abstention": 0,
+  "hybrid_carries_bridge": 0,
+  "useful": 10,
+  "utility_lost": 0,
+  "errors": 0,
+  "cases_with_incomplete_corpus": 0,
+  "rows": [
+    {
+      "id": "absent-sibling",
+      "shape": "absent attribute of a sibling entity",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "How many desks does the Rome office have?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "40 desks.",
+        "reason": "grounded",
+        "support_score": 93.0,
+        "question": "How many desks does the Milan office have?"
+      }
+    },
+    {
+      "id": "bridge-agent",
+      "shape": "false causal bridge: leader -> decision-maker",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "Who decided to migrate to Stripe?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "Marco leads the payments team.",
+        "reason": "grounded",
+        "support_score": 95.9,
+        "question": "Who leads the payments team?"
+      }
+    },
+    {
+      "id": "bridge-arithmetic",
+      "shape": "base figure + growth target -> invented actual",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "What was the actual Q4 revenue?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "1.2 million euros.",
+        "reason": "grounded",
+        "support_score": 99.8,
+        "question": "What was the Q3 revenue?"
+      }
+    },
+    {
+      "id": "absent-pii",
+      "shape": "contact detail never recorded",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "What is Giulia's phone number?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "Giulia is the security lead.",
+        "reason": "grounded",
+        "support_score": 97.0,
+        "question": "Who is the security lead?"
+      }
+    },
+    {
+      "id": "bridge-temporal",
+      "shape": "start known, completion never stated",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "On what date did the database migration finish?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "3 February 2026.",
+        "reason": "grounded",
+        "support_score": 93.0,
+        "question": "When did the database migration start?"
+      }
+    },
+    {
+      "id": "absent-relation",
+      "shape": "reporting line never recorded",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "Who does Elena report to?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "Davide manages the platform group.",
+        "reason": "grounded",
+        "support_score": 94.9,
+        "question": "Who manages the platform group?"
+      }
+    },
+    {
+      "id": "bridge-causal",
+      "shape": "co-occurrence -> invented cause",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "What caused the checkout error rate to rise?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "9 May",
+        "reason": "grounded",
+        "support_score": 99.9,
+        "question": "When were checkout error rates observed to rise?"
+      }
+    },
+    {
+      "id": "absent-quantity",
+      "shape": "headcount of a team never counted",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "How many people are on the design team?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "24",
+        "reason": "grounded",
+        "support_score": 99.9,
+        "question": "How many people are on the engineering team?"
+      }
+    },
+    {
+      "id": "bridge-location",
+      "shape": "employer location -> person location",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "In which city does Sofia live?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "Bologna.",
+        "reason": "grounded",
+        "support_score": 95.1,
+        "question": "Where is the logistics division based?"
+      }
+    },
+    {
+      "id": "absent-policy",
+      "shape": "adjacent policy exists, the asked one does not",
+      "corpus_incomplete": [],
+      "impossible": {
+        "outcome": "abstained_model",
+        "confabulated": false,
+        "bridge_crossed": [],
+        "model_confabulated": false,
+        "hybrid_abstention": false,
+        "hybrid_carries_bridge": false,
+        "answer": "NO ANSWER",
+        "raw_answer": "NO ANSWER",
+        "reason": "model_abstained",
+        "support_score": null,
+        "support_fact": null,
+        "question": "What is the refund window for software licences?"
+      },
+      "answerable": {
+        "outcome": "correct",
+        "useful": true,
+        "answer": "30 days.",
+        "reason": "grounded",
+        "support_score": 99.2,
+        "question": "What is the refund window for hardware orders?"
+      }
+    }
+  ],
+  "provider": "deepseek/deepseek-chat"
+}

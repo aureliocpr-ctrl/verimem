@@ -1,6 +1,6 @@
-"""HippoAgent as an MCP server.
+"""verimem as an MCP server.
 
-Exposes HippoAgent's capabilities to MCP clients (Claude Code, Cursor, Cline,
+Exposes verimem's capabilities to MCP clients (Claude Code, Cursor, Cline,
 opencode, Continue, Zed, etc.) over stdio. Other tools then get:
 
   Tools:
@@ -32,7 +32,7 @@ import os
 
 # Route structured logs to stderr BEFORE observability is imported. The MCP
 # stdio transport owns stdout — any non-JSON-RPC byte breaks the framing,
-# so the entire HippoAgent log stream must go to stderr in this entry
+# so the entire verimem log stream must go to stderr in this entry
 # point. Setting this env var is read once at observability import time;
 # nothing else in the codebase looks at it.
 os.environ.setdefault("HIPPO_LOG_STDERR", "1")
@@ -53,21 +53,21 @@ import numpy as np  # noqa: E402  # type annotations at lines ~7195/7249 use np.
 from mcp.server import Server  # noqa: E402
 from mcp.server.stdio import stdio_server  # noqa: E402
 
-from .agent import HippoAgent  # noqa: E402
+from .agent import VerimemAgent  # noqa: E402
 from .config import CONFIG  # noqa: E402
 from .observability import emit, get_log  # noqa: E402
 
 log = get_log()
 
-_agent: HippoAgent | None = None
+_agent: VerimemAgent | None = None
 _agent_lock = threading.Lock()
 
 
-def _ag() -> HippoAgent:
+def _ag() -> VerimemAgent:
     """Process-wide agent, built exactly once (double-checked locking).
 
     Without the lock, concurrent first tool calls each saw ``_agent is None``
-    and each ran ``HippoAgent.build()`` — redundant builds racing on the same
+    and each ran ``VerimemAgent.build()`` — redundant builds racing on the same
     SQLite files at the worst moment (a cold reconnect, when the cold-load
     cliff already makes the server fragile). Mirrors ``embedding._model()``.
     """
@@ -75,7 +75,7 @@ def _ag() -> HippoAgent:
     if _agent is None:
         with _agent_lock:
             if _agent is None:
-                _agent = HippoAgent.build()
+                _agent = VerimemAgent.build()
     return _agent
 
 
@@ -1311,7 +1311,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
         t.Tool(
             name="hippo_run_task",
             description=(
-                "Run a task through the HippoAgent wake loop. The agent will "
+                "Run a task through the verimem wake loop. The agent will "
                 "use its full toolkit (Python sandbox, file system, web, "
                 "vision, optional computer use), retrieve any relevant past "
                 "skills, and return the final answer + which skills it "
@@ -1504,7 +1504,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "source_id at its LATEST version (source_id, version, filename, "
                 "size, uri, fetched_at). These are raw versioned-by-hash snapshots "
                 "in an ISOLATED store — NOT the accepted recall corpus, no "
-                "embeddings. Use to see which MD/source files Engram has saved."
+                "embeddings. Use to see which MD/source files verimem has saved."
             ),
             inputSchema={
                 "type": "object",
@@ -1648,7 +1648,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             description=(
                 "Return the top-k consolidated skills most relevant to a "
                 "task description (without running the agent). Useful for "
-                "previewing what HippoAgent would inject into its context."
+                "previewing what verimem would inject into its context."
             ),
             inputSchema={
                 "type": "object",

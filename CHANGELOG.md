@@ -216,6 +216,18 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   read+write guard and a live proof the server never receives a scoped write).
   Honest scope: forwarding scope over REST so scoped ops can also use the shared
   server is a documented frontier.
+- **Quarantine recovery on the product surfaces (mandate point 7).** A legitimate fact
+  wrongly held by the gate is now VISIBLE and RECOVERABLE without reaching into engine
+  internals. SDK: `Memory.quarantine_log(limit=…)` lists held claims newest-first (with
+  the blocking `layers` + `reason` when `VERIMEM_AUDIT_LOG` is on) and
+  `Memory.restore(fact_id, reason=…)` un-quarantines one. MCP (the primary product
+  surface): `hippo_quarantine_log` + `hippo_quarantine_restore` expose the same pair to
+  tool clients. **Guarded, not a back door:** restore refuses a SUPERSEDED fact (never
+  resurrects a retired value) and RE-SCREENS the proposition **and the topic** for
+  prompt-injection — an exfil payload the gate quarantined stays quarantined even when a
+  caller passes its id (closes critic 791a151a: the topic is echoed verbatim on every
+  recall hit, so a benign-proposition / poison-topic fact must not be resurrectable). A
+  restored fact leaves the quarantine log and returns to default recall.
 
 ### Changed
 - **BREAKING (default) — the cross-fact contradiction + evolution moat is now ON out of the
@@ -243,6 +255,19 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 - README documents honestly: the CE hard-rejects true facts needing arithmetic /
   unit-date conversion or a low-resource language (those need an llm judge), and
   the CE `high` tier is instrument confidence, not proof.
+- **The `verimem` rename is complete in shipped code (finishes the 0.6.0 package
+  rename).** The two central orchestrator classes are now verimem-named —
+  `VerimemAgent` (`verimem.agent`) and `VerimemCode` (`verimem.code`) — with the old
+  names kept as backward-compat aliases (`HippoAgent = VerimemAgent`,
+  `EngramCode = VerimemCode`; same object, so existing imports and `.build()` calls keep
+  working — NON-breaking). Customer-visible strings no longer carry the old brand: the
+  CLI `chat` banner, the `verimem mcp` mcp.json example (`"verimem"` /
+  `"command": "verimem"`), the MCP tool descriptions, the `verimem metrics` / briefing
+  one-liners, and the outbound web `User-Agent` (`verimem/0.7`). Deliberately kept for
+  compatibility (documented, not oversight): the `hippo_*` MCP tool-name aliases, the
+  tri-prefix env vars (`VERIMEM_*` = `ENGRAM_*` = `HIPPO_*`), `~/.engram` data dirs, and
+  the dashboard `X-Hippo-Token` auth header (renaming an auth contract is itself
+  breaking — deferred).
 
 ## [0.6.0] - Unreleased
 
