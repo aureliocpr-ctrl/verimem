@@ -538,6 +538,9 @@ _EXPECTED_TOOLS = {
     "hippo_emergence_pipeline_status",
     # Cycle 2026-05-27 13 — P0c transactional rollback (undo system)
     "hippo_fact_forget_with_undo",
+    # Mandate p.7 2026-07-22 — quarantine recovery on the MCP surface
+    "hippo_quarantine_log",
+    "hippo_quarantine_restore",
     # B-1 2026-06-08 — multi-tenancy delete_all(scope), dry-run + undoable
     "hippo_forget_scope",
     "hippo_undo_destructive_op",

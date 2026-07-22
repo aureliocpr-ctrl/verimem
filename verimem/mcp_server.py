@@ -2590,6 +2590,43 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_quarantine_log",
+            description=(
+                "Mandate p.7 (2026-07-22). The blocked-claims log: live "
+                "QUARANTINED facts, newest first, with id/proposition/topic/"
+                "created_at — so a tool-based customer can SEE what the write "
+                "gate stopped and audit it (the SDK twin is "
+                "Memory.quarantine_log). Read-only; superseded/deleted "
+                "quarantined facts drop out of this view. Returns "
+                "{ok, n, quarantined:[...]}."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {"limit": {"type": "integer"}},
+            },
+        ),
+        t.Tool(
+            name="hippo_quarantine_restore",
+            description=(
+                "Mandate p.7 (2026-07-22). Rescue a wrongly-blocked fact: "
+                "un-quarantine `fact_id` back into live recall (the SDK twin "
+                "is Memory.restore). SAFETY (same guards as the SDK): a "
+                "SUPERSEDED fact is refused (never resurrects a retired "
+                "value) and the proposition is RE-SCREENED for prompt "
+                "injection — an exfiltration/instruction-override payload "
+                "stays quarantined even when its id is passed. Returns "
+                "{ok, restored, fact_id, refused_reason?}."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "fact_id": {"type": "string"},
+                    "reason": {"type": "string"},
+                },
+                "required": ["fact_id"],
+            },
+        ),
+        t.Tool(
             name="hippo_fact_forget_with_undo",
             description=(
                 "Cycle 2026-05-27 round 13 P0c. Delete one fact AND emit "
@@ -12497,6 +12534,64 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     for f in window
                 ],
             })
+
+        if name == "hippo_quarantine_log":
+            import sqlite3 as _sq
+            try:
+                _limit = max(1, int(arguments.get("limit", 50) or 50))
+            except (TypeError, ValueError):
+                _limit = 50
+            _rows: list[dict] = []
+            try:
+                with _sq.connect(str(a.semantic.db_path)) as _con:
+                    _con.row_factory = _sq.Row
+                    for _r in _con.execute(
+                            "SELECT id, proposition, topic, created_at, status "
+                            "FROM facts WHERE status = 'quarantined' "
+                            "AND superseded_by IS NULL "
+                            "ORDER BY created_at DESC LIMIT ?", (_limit,)):
+                        _rows.append(dict(_r))
+            except Exception as _exc:  # noqa: BLE001
+                return _err(f"quarantine_log read failed: {_exc}")
+            return _ok({"ok": True, "n": len(_rows), "quarantined": _rows})
+
+        if name == "hippo_quarantine_restore":
+            import sqlite3 as _sq
+            fid = str(arguments.get("fact_id", "")).strip()
+            if not fid:
+                return _err("empty fact_id")
+            _reason = str(arguments.get("reason", ""))
+            # Same guards as Memory.restore (client.py): read text+supersession
+            # straight from the store (get() hides quarantined text), refuse a
+            # superseded fact, re-screen the proposition for injection.
+            _text, _superseded = "", False
+            try:
+                with _sq.connect(str(a.semantic.db_path)) as _con:
+                    _row = _con.execute(
+                        "SELECT proposition, superseded_by FROM facts "
+                        "WHERE id = ?", (fid,)).fetchone()
+                    _text = (_row[0] if _row else "") or ""
+                    _superseded = bool(_row[1]) if _row else False
+            except Exception:  # noqa: BLE001 — unreadable → restore_fact False
+                pass
+            if _superseded:
+                return _ok({"ok": True, "restored": False, "fact_id": fid,
+                            "refused_reason": "superseded: restore only "
+                            "un-quarantines, never un-supersedes"})
+            if _text:
+                try:
+                    from .prompt_injection import detect_injection
+                    if detect_injection(_text).is_injection:
+                        return _ok({"ok": True, "restored": False,
+                                    "fact_id": fid,
+                                    "refused_reason": "injection_screen: the "
+                                    "proposition still trips the injection "
+                                    "detector"})
+                except Exception:  # noqa: BLE001 — screen failure ≠ crash
+                    pass
+            _restored = bool(a.semantic.restore_fact(fid, reason=_reason))
+            return _ok({"ok": True, "restored": _restored, "fact_id": fid,
+                        "reason": _reason})
 
         if name == "hippo_fact_forget":
             fid = str(arguments.get("fact_id", "")).strip()
