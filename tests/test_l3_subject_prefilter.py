@@ -92,6 +92,28 @@ def test_default_on_fp_class_skipped_rename_and_same_judged(monkeypatch):
     assert SIB_FP not in seen[0]
 
 
+def test_default_on_brand_as_modifier_rebrand_reaches_judge(monkeypatch):
+    """Critic bfa3bce6 counterexample, pinned: 'the Twitter app' vs 'the X app'
+    share the head with disjoint modifiers, but the modifier IS the identity —
+    a rebrand, not a different subject. The skip is restricted to
+    ORGANIZATIONAL-UNIT heads (team/group/…) where modifiers partition;
+    artifact heads (app/platform/…) must always reach the judge."""
+    seen = _spy(monkeypatch)
+    res = anti_confab_gate.run_validation_gate(
+        proposition="The Twitter app was banned in India.",
+        verified_by=None, topic="t",
+        agent=_agent(["The X app was restored in India."]), validate="full")
+    assert seen and seen[0] == ["The X app was restored in India."]
+    assert any(w.get("layer") == "L3-semantic" for w in res.warnings)
+    seen2 = _spy(monkeypatch)
+    anti_confab_gate.run_validation_gate(
+        proposition="The Facebook platform was fined in 2022.",
+        verified_by=None, topic="t",
+        agent=_agent(["The Meta platform was cleared in 2022."]),
+        validate="full")
+    assert seen2 and seen2[0] == ["The Meta platform was cleared in 2022."]
+
+
 def test_default_on_head_mismatch_never_skipped(monkeypatch):
     """The GLM+Kimi poisoning vector, pinned: a renamed subject must reach the
     judge — skipping on head mismatch would let 'Aurora (formerly Northwind)'

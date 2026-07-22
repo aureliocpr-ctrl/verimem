@@ -205,21 +205,38 @@ def same_subject(a: str, b: str) -> bool:
     return bool(ma & mb) or ma <= mb or mb <= ma
 
 
+#: Heads whose modifiers PARTITION rather than identify: 'the payments team'
+#: and 'the design team' are genuinely different subjects. Only these heads are
+#: eligible for the NLI pre-skip. Artifact heads (app/platform/service…) carry
+#: identity in the MODIFIER ('the Twitter app' ~ 'the X app' = a rebrand, the
+#: critic bfa3bce6 counterexample) and must always reach the judge. Residual
+#: documented FN: a rebranded ORG UNIT ('Twitter team' ~ 'X team') still skips
+#: — the lexical ceiling; entity resolution is the 0.8 cure.
+_ORG_UNIT_HEADS = frozenset({
+    "team", "teams", "group", "groups", "squad", "squads", "department",
+    "departments", "division", "divisions", "committee", "committees",
+    "unit", "units", "office", "offices", "desk", "desks", "chapter",
+    "chapters", "guild", "guilds", "crew", "crews",
+})
+
+
 def nli_prefilter_skip(a: str, b: str) -> bool:
-    """True = SAFE to skip the NLI judge for this pair — the converged GLM-5.2 +
-    Kimi-K3 rule (2026-07-22): ONLY same head noun with both-sided DISJOINT
-    modifiers ('the payments team…' vs 'the design team…', the measured FP
-    class). A HEAD MISMATCH never skips — it is the alias signature ("North
-    Macedonia"~"FYROM", 35.2% FN measured on Wikidata altLabels) and renames
-    are where conflicts concentrate. Bare heads and pronoun/empty subjects
-    never skip (fail-open). FPs quarantine (recoverable); FNs poison
-    (permanent) — the asymmetry that decides every uncertain case here."""
+    """True = SAFE to skip the NLI judge for this pair. Converged GLM-5.2 +
+    Kimi-K3 rule (2026-07-22), NARROWED by critic bfa3bce6's brand-as-modifier
+    counterexample: skip ONLY when both subjects share the same
+    ORGANIZATIONAL-UNIT head (whose modifiers partition: 'payments team' vs
+    'design team') with both-sided DISJOINT modifiers. Everything else reaches
+    the judge: head mismatch (alias signature, 35.2% FN measured on Wikidata
+    altLabels), artifact heads ('Twitter app' ~ 'X app' — the modifier IS the
+    identity), bare heads, pronoun/empty subjects. FPs quarantine
+    (recoverable); FNs poison (permanent) — the asymmetry decides every
+    uncertain case."""
     ta, tb = _subject_tokens(a), _subject_tokens(b)
     if not ta or not tb or ta[0] in _PRONOUNS or tb[0] in _PRONOUNS:
         return False
     ha, ma = ta[-1], set(ta[:-1])
     hb, mb = tb[-1], set(tb[:-1])
-    if ha != hb or not ma or not mb:
+    if ha != hb or ha not in _ORG_UNIT_HEADS or not ma or not mb:
         return False
     return not (ma & mb)
 
