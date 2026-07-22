@@ -39,7 +39,18 @@ _VERB_MARK = re.compile(
 #: Adverbs that sit between the subject NP and its verb ('the team STILL runs') —
 #: stripped from the NP tail so they never become a bogus head noun.
 _TRAIL_ADV = {"still", "now", "already", "currently", "also", "just", "often",
-              "usually", "recently", "never", "always", "typically"}
+              "usually", "recently", "never", "always", "typically", "fully",
+              "completely", "entirely", "successfully", "perfectly",
+              "thoroughly", "partially", "finally"}
+
+#: Spelled-out number words — a head made of these ('forty-two', 'nine') is the
+#: same identity-free register as a digit head (GLM evasion class, 2026-07-22).
+_NUM_WORDS = frozenset({
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+    "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+    "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty",
+    "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred",
+    "thousand", "million", "billion"})
 
 #: Honorific abbreviations whose trailing dot is NOT sentence punctuation —
 #: without this, 'Dr. Rossi confirmed …' tripped the punct guard in
@@ -99,6 +110,22 @@ SOFTWARE_HEADS = frozenset({
     "prompt", "prompts", "chatbot", "chatbots", "bot", "bots", "crawler",
     "crawlers", "scraper", "scrapers", "indexer", "indexers", "orchestrator",
     "orchestrators",
+    # GLM-5.2 + Kimi-K3 convergent evasion classes (2026-07-22, verified
+    # leaking + confirmed by 11 full-suite reds): work-collectives (self-claim
+    # by proxy), bug-tracker register, work-process/outcome nouns, spelled
+    # synonyms of denylisted heads. Dual-register heads that name REAL
+    # legal/clinical/engineering facts (review, audit, compliance,
+    # certification, cause, results) are LEFT OUT on purpose — over-adding
+    # them would re-open the 86.7% vertical FP this cure closed.
+    "team", "teams", "group", "groups", "bug", "bugs", "ticket", "tickets",
+    "issue", "issues", "regression", "regressions", "fix", "fixes",
+    "coverage", "stabilization", "transition", "transitions", "cutover",
+    "cutovers", "deploying", "staging", "monolith", "monoliths", "canary",
+    "canaries", "runbook", "runbooks", "playbook", "playbooks", "shard",
+    "shards", "replica", "replicas", "flag", "flags", "rollback", "rollbacks",
+    "deadline", "deadlines", "slo", "sla", "backlog", "sprint", "sprints",
+    "verification", "validation", "signoff", "production", "production-ready",
+    "prod",
 })
 
 _LEXICAL_CAP = 8192
@@ -118,7 +145,7 @@ def subject_of(text: str) -> str:
     toks = np.split()
     if toks and toks[0].lower() in _DET:
         toks = toks[1:]
-    while toks and toks[-1].lower() in _TRAIL_ADV:
+    while toks and toks[-1].lower() in _TRAIL_ADV | {"and", "or", "but", "nor"}:
         toks = toks[:-1]
     if not toks or len(toks) > 6 or any(c in np for c in ".!?"):
         return ""
@@ -134,8 +161,13 @@ def subject_head(text: str) -> str:
 
 
 #: pronoun heads carry no domain identity → uncertain → fail-safe to NOT-domain.
+#: Includes INDEFINITE pronouns ('Everything works perfectly…' — a full-suite
+#: red the flip exposed: 'everything' was not in this list and read as domain).
 _PRONOUNS = frozenset({"it", "they", "he", "she", "this", "that", "you",
-                       "i", "we", "one", "someone", "something"})
+                       "i", "we", "one", "someone", "something", "everything",
+                       "anything", "nothing", "everyone", "anyone", "somebody",
+                       "nobody", "none", "all", "both", "each", "several",
+                       "many", "most", "others"})
 
 
 def _subject_tokens(text: str) -> list[str]:
@@ -185,7 +217,7 @@ def is_domain_professional(text: str) -> bool:
     if not t.strip() or _FIRST_PERSON.search(t):
         return False
     head = subject_head(t)
-    if not head or head in _PRONOUNS or head in SOFTWARE_HEADS:
+    if not head or head in _PRONOUNS:
         return False
     # A digit-bearing head carries NO domain identity: 'Cycle 999', '999-beta',
     # 'Milestone M13', 'Sprint 42a', 'Release R2', 'Phase 2b' are the agent's
@@ -193,7 +225,17 @@ def is_domain_professional(text: str) -> bool:
     # numeric case; critic 7a7bd87d then defeated a digits-only test with
     # alphanumeric suffixes — so the rule is ANY digit in the head → fail-safe
     # to escalate. (A rare legitimate digit-head like '737-MAX' over-quarantines
-    # — the safe direction, recoverable.)
+    # — the safe direction, recoverable.) Spelled-out numbers ('forty-two') are
+    # the same register (GLM evasion, 2026-07-22).
     if any(c.isdigit() for c in head):
+        return False
+    if head in _NUM_WORDS or all(p in _NUM_WORDS for p in head.split("-") if p):
+        return False
+    # ANY-TOKEN rule (Kimi nominalization class, 2026-07-22): a software/work
+    # artifact ANYWHERE in the subject NP marks the agent register —
+    # 'Verification of the MIGRATION is complete', 'the PIPELINE group',
+    # 'test COVERAGE'. Head-only checking let the nominalized head launder the
+    # software token into a domain read.
+    if any(tok in SOFTWARE_HEADS for tok in _subject_tokens(t)):
         return False
     return True

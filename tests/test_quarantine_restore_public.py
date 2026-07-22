@@ -26,11 +26,12 @@ LEGAL_FP = "The due-diligence review was completed before the acquisition closed
 
 @pytest.fixture
 def mem(tmp_path: Path, monkeypatch) -> Memory:
-    # restore() is the escape hatch for a STRICT deployment's over-block: since
-    # the 2026-07-21 default flip a keyword-only fact is admitted by default, so
-    # these tests run under strict to produce a quarantined keyword fact to
-    # rescue. (The automatic default cure is tested in test_l1_advisory_by_default.)
-    monkeypatch.setenv("ENGRAM_L1_STRICT", "1")
+    # restore() is the escape hatch for a STRICT deployment's over-block. These
+    # tests need a QUARANTINED keyword fact to rescue, so they opt OUT of the
+    # per-fact domain-precision default (ON since 2026-07-22) — the legacy
+    # always-escalate produces the fixture. (ENGRAM_L1_STRICT was the reverted
+    # d15e4ca-era switch; the live opt-out is the precision env.)
+    monkeypatch.setenv("ENGRAM_L1_DOMAIN_PRECISION", "0")
     return Memory(path=tmp_path / "m.db")
 
 
@@ -131,7 +132,9 @@ def test_quarantine_log_shows_why_when_audit_on(tmp_path, monkeypatch):
     contradiction. With the audit trail on, quarantine_log carries the reason
     and the layers that blocked each claim."""
     monkeypatch.setenv("VERIMEM_AUDIT_LOG", "1")
-    monkeypatch.setenv("ENGRAM_L1_STRICT", "1")  # strict to produce a keyword block
+    # opt out of the default-on precision so the L1 keyword block occurs
+    # (ENGRAM_L1_STRICT was the reverted d15e4ca-era switch)
+    monkeypatch.setenv("ENGRAM_L1_DOMAIN_PRECISION", "0")
     m = Memory(path=tmp_path / "m.db")
     fid = _quarantine(m)
     row = next(x for x in m.quarantine_log(limit=20) if x["id"] == fid)
