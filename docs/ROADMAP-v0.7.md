@@ -233,10 +233,14 @@ Ordine per guadagno-FP / rischio (deciso io + GLM):
   (OFF vs hard-reject vs graded) che dimostra G3 **e** G5 insieme
   (clean-admission sale, confab resta 0, il read-path pesa i low-conf).
   → poi flip default + critic + suite. *Prossimo passo immediato.*
-- **P2 — L3 subject pre-filter** [prototipo misurato, NON cablato].
-  Matcher **head-noun + modifier agreement** (non overlap-token), certificato
-  su UD gold. Wiring observe-first dietro env, ricevuta `-observe`.
-  Cancello: G4 sul banco + Wikidata mutation-eval (anti-circolarità).
+- **P2 — L3 subject pre-filter** [CABLATO 2026-07-22, commit 9571669, env
+  ENGRAM_L3_SUBJECT_FILTER default OFF; critic claim_holds 2-0].
+  Matcher head-noun + modifier agreement + cross-entity containment
+  (Tom's-startup~Tom) in subject_extract.same_subject; banco A 8/8, F* skip.
+  **FN di classe riconosciuto dal critic (cb26737b)**: coppie same-entity con
+  alias ("production database" vs "primary database") vengono skippate con env
+  ON — il cancello di promozione DEVE misurarlo (Wikidata mutation-eval, P4)
+  prima di ogni flip.
 - **P3 — L1 default** [advisory+marker esiste].
   Decisione default advisory-con-marker + `ENGRAM_L1_STRICT` per agenti +
   **suite anti-confab riscritta deliberatamente** (non zittita).
