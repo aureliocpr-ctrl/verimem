@@ -1,0 +1,83 @@
+{
+ "users": 1,
+ "clean": 3,
+ "noise": 2,
+ "seed": 7,
+ "threshold": 40.0,
+ "k": 8,
+ "gate_admission": {
+  "noise_rejected": 2,
+  "noise_total": 2,
+  "clean_admitted": 3,
+  "clean_total": 3,
+  "noise_rejection_rate": 1.0,
+  "clean_admission_rate": 1.0
+ },
+ "arms": {
+  "off": {
+   "counts": {
+    "CORRECT": 0,
+    "HALLUCINATION": 2,
+    "OMISSION": 0,
+    "ERROR": 0
+   },
+   "n": 2,
+   "correct": 0.0,
+   "hallucination": 1.0,
+   "omission": 0.0,
+   "hallucination_ci95": [
+    0.3424,
+    1.0
+   ]
+  },
+  "on": {
+   "counts": {
+    "CORRECT": 0,
+    "HALLUCINATION": 0,
+    "OMISSION": 2,
+    "ERROR": 0
+   },
+   "n": 2,
+   "correct": 0.0,
+   "hallucination": 0.0,
+   "omission": 1.0,
+   "hallucination_ci95": [
+    0.0,
+    0.6576
+   ]
+  },
+  "mem0": {
+   "counts": {
+    "CORRECT": 0,
+    "HALLUCINATION": 2,
+    "OMISSION": 0,
+    "ERROR": 0
+   },
+   "n": 2,
+   "correct": 0.0,
+   "hallucination": 1.0,
+   "omission": 0.0,
+   "hallucination_ci95": [
+    0.3424,
+    1.0
+   ]
+  }
+ },
+ "mcnemar": {
+  "off_vs_on": {
+   "b": 2,
+   "c": 0,
+   "p_value_exact": 0.5
+  },
+  "mem0_vs_on": {
+   "b": 2,
+   "c": 0,
+   "p_value_exact": 0.5
+  }
+ },
+ "honesty": [
+  "C structurally low in ALL arms (sampled memory often lacks the true answer): poisoning-resistance measure, NOT answer-correctness",
+  "confabs regenerated this run: pair WITHIN this run only",
+  "same answerer+judge for all arms; mem0 retrieval = its own store"
+ ]
+}
