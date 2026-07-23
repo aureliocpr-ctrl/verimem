@@ -284,12 +284,12 @@ def watch_cmd(
     # Lazy-import the bridge — only pay the SemanticMemory cost when the
     # operator actually asks for persistence. Keeps ``watch`` cheap for
     # simple terminal tailing.
-    sm = None
+    memory = None
     team_name = team_dir.name
     if mirror_to_memory:
-        from ..semantic import SemanticMemory
+        from ..client import Memory
         from .bridge import mirror_message as _mirror
-        sm = SemanticMemory()
+        memory = Memory()  # gated: relayed messages drink the moat
         typer.echo(
             f"[watch] mirror_to_memory ENABLED — "
             f"topic 'lab/teams/{team_name}', include_idle={mirror_include_idle}",
@@ -313,12 +313,19 @@ def watch_cmd(
             tag = "[IDLE]" if m.is_idle_notification else ""
             snippet = m.text.replace("\n", " ")[:200]
             typer.echo(f"{tag}[{m.sender} -> {m.recipient}] {snippet}")
-            if mirror_to_memory and sm is not None:
+            if mirror_to_memory and memory is not None:
                 try:
-                    _mirror(
-                        m, sm=sm, team_name=team_name,
+                    receipt = _mirror(
+                        m, memory=memory, team_name=team_name,
                         include_idle=mirror_include_idle,
                     )
+                    # Surface a quarantine instead of dropping it silently
+                    # (adversarial finding 5: the gate outcome must be
+                    # visible to the operator, not swallowed).
+                    if receipt and receipt.get("status") == "quarantined":
+                        typer.echo(
+                            f"  [quarantined] {m.sender}'s message tripped the "
+                            f"injection screen — archived hidden, not recalled")
                 except Exception as exc:  # noqa: BLE001 — never die mid-tail
                     typer.echo(f"[mirror error] {exc}")
         # Heartbeat dot ogni ``heartbeat_interval`` secondi quando la

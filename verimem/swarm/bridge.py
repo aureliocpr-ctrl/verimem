@@ -18,11 +18,15 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..episode import Episode
 from ..memory import EpisodicMemory
-from ..semantic import Fact, SemanticMemory
+from ..orchestration import CHRONICLE_CONFIDENCE, agent_principal
 from .state import SessionState, read_state
+
+if TYPE_CHECKING:  # avoid a hard import cycle at module load
+    from ..client import Memory
 
 # State values we consider terminal for poll_until_done.
 _TERMINAL_STATES: frozenset[str] = frozenset(
@@ -34,20 +38,28 @@ def _hhmmss(ts: float | None = None) -> str:
     return time.strftime("%H:%M:%S", time.localtime(ts or time.time()))
 
 
-def mirror_state_change(
+def write_transition_chat_fact(
     short_id: str,
     prev: SessionState | None,
     curr: SessionState,
     *,
     topic: str,
-    sm: SemanticMemory,
+    memory: Memory,
     agent_name: str,
+    run_id: str,
 ) -> str | None:
-    """Write one chat fact iff ``curr.state`` differs from ``prev.state``.
+    """Mirror one agent state transition into verimem THROUGH the moat.
+
+    Writes a chronicle row iff ``curr.state`` differs from ``prev.state``
+    (tempo/detail-only changes are suppressed to keep signal high). The
+    row is an attributed record of what the agent's session reported, so
+    it goes through ``Memory.add(chronicle=True)`` — a hidden
+    ``user_belief`` on the narrative lane, injection screen live (agent
+    ``detail`` text is untrusted), stamped ``swarm:<run>/<agent>``.
 
     Returns the new fact id, or ``None`` when no transition happened.
-    Tempo updates and detail-only changes are intentionally suppressed
-    to keep the chat signal-to-noise high.
+    Contract unchanged (id | None) — only the teams ``mirror_message``
+    moved to a receipt dict.
     """
     if prev is not None and (prev.state or "") == (curr.state or ""):
         return None
@@ -60,15 +72,16 @@ def mirror_state_change(
         f"[{role} @{_hhmmss()}] session {short_id} state: "
         f"{transition}{detail_tail}"
     )
-    fact = Fact(
-        proposition=proposition,
+    r = memory.add(
+        proposition,
         topic=topic,
-        confidence=1.0,
         verified_by=[f"claude:session:{short_id}"],
-        status="model_claim",
+        principal=agent_principal("swarm", run_id, agent_name),
+        chronicle=True,
+        meta_narrative=True,
+        confidence=CHRONICLE_CONFIDENCE,
     )
-    sm.store(fact)
-    return fact.id
+    return r.get("id") if r.get("stored") else None
 
 
 def record_completion_episode(
@@ -138,7 +151,7 @@ def poll_until_done(
     short_id: str,
     *,
     topic: str,
-    sm: SemanticMemory,
+    memory: Memory,
     mem: EpisodicMemory,
     run_id: str,
     agent_name: str,
@@ -172,9 +185,9 @@ def poll_until_done(
 
         last = curr
         # Mirror only true state transitions (prev=None first time too).
-        mirror_state_change(
+        write_transition_chat_fact(
             short_id, prev, curr,
-            topic=topic, sm=sm, agent_name=agent_name,
+            topic=topic, memory=memory, agent_name=agent_name, run_id=run_id,
         )
         prev = curr
 

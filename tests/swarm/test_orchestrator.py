@@ -27,8 +27,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from verimem.client import Memory
 from verimem.memory import EpisodicMemory
-from verimem.semantic import SemanticMemory
 from verimem.swarm.orchestrator import AgentReport, SwarmReport, run_swarm
 from verimem.swarm.schemas import AgentSpec, SwarmConfig
 from verimem.swarm.spawn import SpawnResult
@@ -53,7 +53,7 @@ def _spawn_fn_factory(short_ids: list[str]):
 def _poll_fn_factory(outcomes: dict[str, str]):
     """Returns a fake poll_fn that synthesises a SessionState per short_id."""
 
-    def fake(short_id, *, topic, sm, mem, run_id, agent_name,
+    def fake(short_id, *, topic, memory, mem, run_id, agent_name,
             jobs_dir=None, hub_ep_id=None, master_ep_id=None,
             poll_interval_sec=1.0, deadline_sec=600.0, sleeper=time.sleep):
         return SessionState.from_raw({
@@ -68,8 +68,8 @@ def _poll_fn_factory(outcomes: dict[str, str]):
 
 
 @pytest.fixture
-def sm(tmp_path: Path) -> SemanticMemory:
-    return SemanticMemory(db_path=tmp_path / "sem.db")
+def memory(tmp_path: Path) -> Memory:
+    return Memory(path=tmp_path / "sem.db")
 
 
 @pytest.fixture
@@ -94,11 +94,11 @@ class TestRunSwarm:
     """run_swarm spawns all agents, polls each, aggregates."""
 
     def test_spawns_each_agent_and_creates_hub_episode(
-        self, cfg2: SwarmConfig, sm: SemanticMemory, mem: EpisodicMemory,
+        self, cfg2: SwarmConfig, memory: Memory, mem: EpisodicMemory,
     ) -> None:
         report = run_swarm(
             cfg2,
-            sm=sm, mem=mem,
+            memory=memory, mem=mem,
             spawn_fn=_spawn_fn_factory(["aaaa1111", "bbbb2222"]),
             poll_fn=_poll_fn_factory({"aaaa1111": "done", "bbbb2222": "done"}),
         )
@@ -117,10 +117,10 @@ class TestRunSwarm:
         assert "cycle148-orch-test" in (row["task_id"] or "")
 
     def test_aggregates_success_and_failure_counts(
-        self, cfg2: SwarmConfig, sm: SemanticMemory, mem: EpisodicMemory,
+        self, cfg2: SwarmConfig, memory: Memory, mem: EpisodicMemory,
     ) -> None:
         report = run_swarm(
-            cfg2, sm=sm, mem=mem,
+            cfg2, memory=memory, mem=mem,
             spawn_fn=_spawn_fn_factory(["xx1", "yy2"]),
             poll_fn=_poll_fn_factory({"xx1": "done", "yy2": "failed"}),
         )
@@ -130,14 +130,14 @@ class TestRunSwarm:
         assert outcomes == {"alpha": "done", "beta": "failed"}
 
     def test_writes_chat_fact_for_each_agent_completion(
-        self, cfg2: SwarmConfig, sm: SemanticMemory, mem: EpisodicMemory,
+        self, cfg2: SwarmConfig, memory: Memory, mem: EpisodicMemory,
     ) -> None:
         run_swarm(
-            cfg2, sm=sm, mem=mem,
+            cfg2, memory=memory, mem=mem,
             spawn_fn=_spawn_fn_factory(["p1", "p2"]),
             poll_fn=_poll_fn_factory({"p1": "done", "p2": "done"}),
         )
-        with sm._connect() as conn:  # noqa: SLF001
+        with memory.semantic._connect() as conn:  # noqa: SLF001
             rows = conn.execute(
                 "SELECT proposition FROM facts WHERE topic = ?",
                 ("lab/swarm/cycle148-orch-test",),
@@ -150,7 +150,7 @@ class TestRunSwarm:
         )
 
     def test_links_agent_episodes_to_hub_via_causal_edges(
-        self, cfg2: SwarmConfig, sm: SemanticMemory, mem: EpisodicMemory,
+        self, cfg2: SwarmConfig, memory: Memory, mem: EpisodicMemory,
         tmp_path: Path,
     ) -> None:
         # Use the REAL poll_until_done with a seeded jobs_dir so the
@@ -169,14 +169,14 @@ class TestRunSwarm:
                 "output": {"result": f"result {sid}"},
             }), encoding="utf-8")
 
-        def _wrapped_poll(short_id, *, topic, sm, mem, run_id, agent_name,
+        def _wrapped_poll(short_id, *, topic, memory, mem, run_id, agent_name,
                            jobs_dir=None, hub_ep_id=None, master_ep_id=None,
                            poll_interval_sec=1.0, deadline_sec=600.0,
                            sleeper=time.sleep):
             # Force the real poll to look at our seeded fixture dir, no
             # matter what the orchestrator passed.
             return real_poll(
-                short_id, topic=topic, sm=sm, mem=mem,
+                short_id, topic=topic, memory=memory, mem=mem,
                 run_id=run_id, agent_name=agent_name,
                 jobs_dir=jobs,
                 hub_ep_id=hub_ep_id, master_ep_id=master_ep_id,
@@ -186,7 +186,7 @@ class TestRunSwarm:
             )
 
         report = run_swarm(
-            cfg2, sm=sm, mem=mem,
+            cfg2, memory=memory, mem=mem,
             spawn_fn=_spawn_fn_factory(["q1", "q2"]),
             poll_fn=_wrapped_poll,
         )

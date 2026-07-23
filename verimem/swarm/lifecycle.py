@@ -15,9 +15,13 @@ import json
 import subprocess
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .._proc_quiet import quiet_popen_kwargs
-from ..semantic import Fact, SemanticMemory
+from ..orchestration import CHRONICLE_CONFIDENCE, agent_principal
+
+if TYPE_CHECKING:  # avoid a hard import cycle at module load
+    from ..client import Memory
 
 
 def _hhmmss() -> str:
@@ -34,24 +38,33 @@ def _audit(
     short_id: str,
     ok: bool,
     topic: str,
-    sm: SemanticMemory,
+    memory: Memory,
     agent_name: str,
     detail: str = "",
-) -> str:
+) -> str | None:
+    """Record a lifecycle action as a gated chronicle row.
+
+    A stop/respawn/rm note is orchestration chronicle, so it drinks the
+    moat like every other relayed fact: a hidden ``user_belief`` on the
+    narrative lane, stamped ``swarm:lifecycle/<agent>``. Returns the fact
+    id (``None`` if the injection screen quarantined it — never for a
+    normal lifecycle string).
+    """
     status = "OK" if ok else "FAIL"
     proposition = (
         f"[swarm-{agent_name} @{_hhmmss()}] lifecycle {action} "
         f"session {short_id}: {status}{(' — ' + detail) if detail else ''}"
     )
-    fact = Fact(
-        proposition=proposition,
+    r = memory.add(
+        proposition,
         topic=topic,
-        confidence=1.0,
         verified_by=[f"claude:session:{short_id}", f"action:{action}"],
-        status="model_claim",
+        principal=agent_principal("swarm", "lifecycle", agent_name),
+        chronicle=True,
+        meta_narrative=True,
+        confidence=CHRONICLE_CONFIDENCE,
     )
-    sm.store(fact)
-    return fact.id
+    return r.get("id") if r.get("stored") else None
 
 
 def _run_claude(args: list[str]) -> tuple[bool, str, str]:
@@ -68,12 +81,12 @@ def _run_claude(args: list[str]) -> tuple[bool, str, str]:
 
 def stop_session(
     short_id: str, *,
-    topic: str, sm: SemanticMemory, agent_name: str,
+    topic: str, memory: Memory, agent_name: str,
 ) -> bool:
     ok, _, err = _run_claude(["claude", "stop", short_id])
     _audit(
         action="stop", short_id=short_id, ok=ok,
-        topic=topic, sm=sm, agent_name=agent_name,
+        topic=topic, memory=memory, agent_name=agent_name,
         detail=err.strip()[:120] if not ok else "",
     )
     return ok
@@ -81,12 +94,12 @@ def stop_session(
 
 def respawn_session(
     short_id: str, *,
-    topic: str, sm: SemanticMemory, agent_name: str,
+    topic: str, memory: Memory, agent_name: str,
 ) -> bool:
     ok, _, err = _run_claude(["claude", "respawn", short_id])
     _audit(
         action="respawn", short_id=short_id, ok=ok,
-        topic=topic, sm=sm, agent_name=agent_name,
+        topic=topic, memory=memory, agent_name=agent_name,
         detail=err.strip()[:120] if not ok else "",
     )
     return ok
@@ -94,12 +107,12 @@ def respawn_session(
 
 def remove_session(
     short_id: str, *,
-    topic: str, sm: SemanticMemory, agent_name: str,
+    topic: str, memory: Memory, agent_name: str,
 ) -> bool:
     ok, _, err = _run_claude(["claude", "rm", short_id])
     _audit(
         action="rm", short_id=short_id, ok=ok,
-        topic=topic, sm=sm, agent_name=agent_name,
+        topic=topic, memory=memory, agent_name=agent_name,
         detail=err.strip()[:120] if not ok else "",
     )
     return ok

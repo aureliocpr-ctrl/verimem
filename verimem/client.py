@@ -196,6 +196,7 @@ class Memory:
         meta_narrative: bool = False,
         lineage_to: list[str] | None = None,
         confidence: float | None = None,
+        chronicle: bool = False,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -333,6 +334,22 @@ class Memory:
             fact.writer_role = "user"  # in-process operator surface
         if action == "downgrade":
             fact.status = "quarantined"
+        elif chronicle:
+            # Orchestration/inter-agent CHRONICLE (2026-07-23): the
+            # proposition is an ATTRIBUTED third-party quotation ("[agent
+            # X → Y] ...") — a record that agent X said something, NOT
+            # verimem asserting the content is true. Store it as
+            # ``user_belief``: HIDDEN from default recall (the moat
+            # promise holds — you never recall an agent's unverified
+            # assertion AS a fact) yet not quarantined, so benign
+            # coordination chatter is archived rather than censored (the
+            # live channel is the inbox; memory is the audit trail).
+            # Adversarial review convergence (glm+deepseek, findings 1+2):
+            # this single classification defuses BOTH the throughput
+            # collapse of full-L1-gating and the laundering of a visible
+            # model_claim. A later injection screen inside store() can
+            # still flip it to quarantined — the screen is lane-agnostic.
+            fact.status = "user_belief"
         self.semantic.store(fact, embed="sync", purpose=purpose)
         # A write with a DECLARED telemetry signal (purpose tag, or a topic
         # matching ENGRAM_TELEMETRY_PREFIXES) is ROUTED inside store(): the
@@ -397,6 +414,7 @@ class Memory:
         _graded_admit = any(str(w.get("layer", "")).endswith("-graded")
                             for w in warnings)
         if (_disposition == "admitted" and not _graded_admit
+                and not chronicle  # a hidden chronicle must not retire a curated fact
                 and getattr(gate, "supersede_fact_ids", None)
                 and self.semantic.get(fact.id) is not None):
             for _old_id in gate.supersede_fact_ids:

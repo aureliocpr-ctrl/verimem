@@ -28,14 +28,18 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..episode import Episode
 from ..memory import EpisodicMemory
-from ..semantic import Fact, SemanticMemory
+from ..orchestration import CHRONICLE_CONFIDENCE, agent_principal
 from .bridge import poll_until_done
 from .schemas import SwarmConfig
 from .spawn import SpawnResult, spawn_agent
 from .state import SessionState
+
+if TYPE_CHECKING:  # avoid a hard import cycle at module load
+    from ..client import Memory
 
 
 @dataclass
@@ -101,38 +105,50 @@ def _create_hub_episode(
 
 
 def _opening_chat_fact(
-    config: SwarmConfig, sm: SemanticMemory,
-) -> None:
+    config: SwarmConfig, memory: Memory,
+) -> str | None:
+    """Chronicle the run START. Returns the fact id so the closing
+    chronicle can chain its ``lineage_to`` back to it (one navigable
+    run thread)."""
     proposition = (
         f"[swarm-ORCHESTRATOR @{time.strftime('%H:%M:%S')}] run "
         f"{config.run_id} START with {len(config.agents)} agents: "
         + ", ".join(f"{a.name}({a.model})" for a in config.agents)
     )
-    sm.store(Fact(
-        proposition=proposition, topic=config.topic, confidence=1.0,
-        status="model_claim",
-    ))
+    r = memory.add(
+        proposition, topic=config.topic,
+        principal=agent_principal("swarm", config.run_id, "hub"),
+        chronicle=True, meta_narrative=True,
+        confidence=CHRONICLE_CONFIDENCE,
+    )
+    return r.get("id") if r.get("stored") else None
 
 
 def _final_chat_fact(
-    config: SwarmConfig, report: SwarmReport, sm: SemanticMemory,
-) -> None:
+    config: SwarmConfig, report: SwarmReport, memory: Memory,
+    *, opening_fact_id: str | None = None,
+) -> str | None:
+    """Chronicle the run FINISHED, chained to the opening chronicle."""
     proposition = (
         f"[swarm-ORCHESTRATOR @{time.strftime('%H:%M:%S')}] run "
         f"{config.run_id} FINISHED success={report.success_count} "
         f"failure={report.failure_count} of {len(report.agents)} agents"
     )
-    sm.store(Fact(
-        proposition=proposition, topic=config.topic, confidence=1.0,
+    r = memory.add(
+        proposition, topic=config.topic,
         verified_by=[f"swarm:run:{config.run_id}"],
-        status="model_claim",
-    ))
+        principal=agent_principal("swarm", config.run_id, "hub"),
+        chronicle=True, meta_narrative=True,
+        confidence=CHRONICLE_CONFIDENCE,
+        lineage_to=[opening_fact_id] if opening_fact_id else None,
+    )
+    return r.get("id") if r.get("stored") else None
 
 
 def run_swarm(
     config: SwarmConfig,
     *,
-    sm: SemanticMemory,
+    memory: Memory,
     mem: EpisodicMemory,
     jobs_dir: Path | None = None,
     spawn_fn: Callable[..., SpawnResult] = spawn_agent,
@@ -141,12 +157,16 @@ def run_swarm(
 ) -> SwarmReport:
     """Run one swarm end-to-end. Blocks until every agent finishes
     (or the swarm's ``timeout_sec`` deadline elapses for each agent).
+
+    ``memory`` is the gated SDK ``Memory`` — every chronicle fact goes
+    through its moat. ``mem`` is the episodic log (raw by design: the
+    gate governs recalled facts, not the audit trail).
     """
     started = time.time()
     hub_ep_id = _create_hub_episode(
         config, mem, hub_master_ep_id=hub_master_ep_id,
     )
-    _opening_chat_fact(config, sm)
+    opening_fact_id = _opening_chat_fact(config, memory)
 
     # Spawn synchronously (each call <2s).
     spawn_outcomes: dict[str, SpawnResult | str] = {}
@@ -171,7 +191,7 @@ def run_swarm(
             final = poll_fn(
                 short_id,
                 topic=config.topic,
-                sm=sm, mem=mem,
+                memory=memory, mem=mem,
                 run_id=config.run_id,
                 agent_name=name,
                 jobs_dir=jobs_dir,
@@ -237,5 +257,5 @@ def run_swarm(
         started_at=started,
         finished_at=time.time(),
     )
-    _final_chat_fact(config, report, sm)
+    _final_chat_fact(config, report, memory, opening_fact_id=opening_fact_id)
     return report

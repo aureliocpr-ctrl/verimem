@@ -35,7 +35,6 @@ from rich.table import Table
 
 from .._proc_quiet import quiet_popen_kwargs
 from ..memory import EpisodicMemory
-from ..semantic import SemanticMemory
 from .lifecycle import (
     list_swarm_sessions,
     remove_session,
@@ -73,7 +72,8 @@ def run_cmd(
 ) -> None:
     """End-to-end swarm run: spawn N agents, poll until done, report."""
     cfg = _load_config(config_path)
-    sm = SemanticMemory()
+    from ..client import Memory
+    memory = Memory()  # gated SDK: every chronicle fact drinks the moat
     mem = EpisodicMemory()
 
     _console.print(
@@ -81,7 +81,7 @@ def run_cmd(
         f"with {len(cfg.agents)} agents on topic [bold]{cfg.topic}[/bold]",
     )
     report = run_swarm(
-        cfg, sm=sm, mem=mem,
+        cfg, memory=memory, mem=mem,
         hub_master_ep_id=hub_master_ep_id,
     )
 
@@ -144,7 +144,8 @@ def kill_cmd(
     ),
 ) -> None:
     """``claude stop`` every session whose name starts with <run_id>-."""
-    sm = SemanticMemory()
+    from ..client import Memory
+    memory = Memory()  # gated: lifecycle audit drinks the moat
     chat_topic = topic or f"lab/swarm/{run_id}"
     ids = list_swarm_sessions(run_id)
     if not ids:
@@ -152,7 +153,7 @@ def kill_cmd(
         raise typer.Exit(code=0)
     failures = 0
     for sid in ids:
-        ok = stop_session(sid, topic=chat_topic, sm=sm, agent_name="cli")
+        ok = stop_session(sid, topic=chat_topic, memory=memory, agent_name="cli")
         marker = "[green]✓[/green]" if ok else "[red]✗[/red]"
         _console.print(f"  {marker} stop {sid}")
         if not ok:
@@ -169,7 +170,8 @@ def clean_cmd(
     ),
 ) -> None:
     """``claude rm`` every session whose name starts with <run_id>-."""
-    sm = SemanticMemory()
+    from ..client import Memory
+    memory = Memory()  # gated: lifecycle audit drinks the moat
     chat_topic = topic or f"lab/swarm/{run_id}"
     ids = list_swarm_sessions(run_id)
     if not ids:
@@ -177,7 +179,7 @@ def clean_cmd(
         raise typer.Exit(code=0)
     failures = 0
     for sid in ids:
-        ok = remove_session(sid, topic=chat_topic, sm=sm, agent_name="cli")
+        ok = remove_session(sid, topic=chat_topic, memory=memory, agent_name="cli")
         marker = "[green]✓[/green]" if ok else "[red]✗[/red]"
         _console.print(f"  {marker} rm {sid}")
         if not ok:
@@ -195,10 +197,11 @@ def respawn_cmd(
     ),
 ) -> None:
     """``claude respawn`` one session with audit."""
-    sm = SemanticMemory()
+    from ..client import Memory
+    memory = Memory()  # gated: lifecycle audit drinks the moat
     chat_topic = topic or f"lab/swarm/{run_id}"
     ok = respawn_session(
-        short_id, topic=chat_topic, sm=sm, agent_name="cli",
+        short_id, topic=chat_topic, memory=memory, agent_name="cli",
     )
     _console.print(
         f"  [green]✓[/green] respawn {short_id}" if ok

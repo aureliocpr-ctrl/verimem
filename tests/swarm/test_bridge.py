@@ -38,12 +38,12 @@ from pathlib import Path
 
 import pytest
 
+from verimem.client import Memory
 from verimem.memory import EpisodicMemory
-from verimem.semantic import SemanticMemory
 from verimem.swarm.bridge import (
-    mirror_state_change,
     poll_until_done,
     record_completion_episode,
+    write_transition_chat_fact,
 )
 from verimem.swarm.state import SessionState
 
@@ -51,8 +51,8 @@ _TOPIC = "lab/swarm/test-bridge-cycle148"
 
 
 @pytest.fixture
-def sm(tmp_path: Path) -> SemanticMemory:
-    return SemanticMemory(db_path=tmp_path / "sem.db")
+def memory(tmp_path: Path) -> Memory:
+    return Memory(path=tmp_path / "sem.db")
 
 
 @pytest.fixture
@@ -71,51 +71,53 @@ def _state(state: str = "running", detail: str = "") -> SessionState:
     })
 
 
-class TestMirrorStateChange:
-    """``mirror_state_change`` writes a chat fact on transition."""
+class TestWriteTransitionChatFact:
+    """``write_transition_chat_fact`` mirrors a transition as a gated
+    chronicle row (hidden user_belief, stamped swarm:<run>/<agent>)."""
 
-    def test_writes_fact_on_first_seen(self, sm: SemanticMemory) -> None:
+    def test_writes_fact_on_first_seen(self, memory: Memory) -> None:
         curr = _state("running", detail="starting up")
-        fact_id = mirror_state_change(
+        fact_id = write_transition_chat_fact(
             "abc12345", None, curr,
-            topic=_TOPIC, sm=sm, agent_name="agent-a",
+            topic=_TOPIC, memory=memory, agent_name="agent-a", run_id="r1",
         )
         assert fact_id is not None, (
             "cycle 148.4: first-seen state must produce a chat fact"
         )
-        # Verify it landed in semantic.db with the right topic.
-        with sm._connect() as conn:  # noqa: SLF001
+        # Verify it landed in semantic.db with the right topic + provenance.
+        with memory.semantic._connect() as conn:  # noqa: SLF001
             row = conn.execute(
-                "SELECT proposition, topic FROM facts WHERE id = ?",
-                (fact_id,),
-            ).fetchone()
+                "SELECT proposition, topic, status, writer_principal "
+                "FROM facts WHERE id = ?", (fact_id,)).fetchone()
         assert row is not None
         assert row["topic"] == _TOPIC
+        assert row["status"] == "user_belief"  # hidden chronicle
+        assert row["writer_principal"] == "swarm:r1/agent-a"
         # The fact must surface the agent role + new state.
         assert "agent-a" in row["proposition"]
         assert "running" in row["proposition"]
 
-    def test_skips_when_state_unchanged(self, sm: SemanticMemory) -> None:
+    def test_skips_when_state_unchanged(self, memory: Memory) -> None:
         prev = _state("running")
         curr = _state("running", detail="same state, new tempo update")
-        out = mirror_state_change(
+        out = write_transition_chat_fact(
             "abc12345", prev, curr,
-            topic=_TOPIC, sm=sm, agent_name="agent-a",
+            topic=_TOPIC, memory=memory, agent_name="agent-a", run_id="r1",
         )
         assert out is None, (
             "cycle 148.4: same state.state means no new chat fact "
             "(tempo updates are noise)"
         )
 
-    def test_writes_fact_on_done(self, sm: SemanticMemory) -> None:
+    def test_writes_fact_on_done(self, memory: Memory) -> None:
         prev = _state("running")
         curr = _state("done", detail="task complete")
-        fact_id = mirror_state_change(
+        fact_id = write_transition_chat_fact(
             "abc12345", prev, curr,
-            topic=_TOPIC, sm=sm, agent_name="agent-a",
+            topic=_TOPIC, memory=memory, agent_name="agent-a", run_id="r1",
         )
         assert fact_id is not None
-        with sm._connect() as conn:  # noqa: SLF001
+        with memory.semantic._connect() as conn:  # noqa: SLF001
             row = conn.execute(
                 "SELECT proposition FROM facts WHERE id = ?", (fact_id,),
             ).fetchone()
@@ -190,7 +192,7 @@ class TestPollUntilDone:
     """``poll_until_done`` loops until terminal + records completion."""
 
     def test_exits_on_done_state(
-        self, tmp_path: Path, sm: SemanticMemory, mem: EpisodicMemory,
+        self, tmp_path: Path, memory: Memory, mem: EpisodicMemory,
     ) -> None:
         # Seed a jobs_dir with a fake session whose state.json says done.
         jobs_dir = tmp_path / "jobs"
@@ -216,7 +218,7 @@ class TestPollUntilDone:
         final = poll_until_done(
             "abc12345",
             topic=_TOPIC,
-            sm=sm, mem=mem,
+            memory=memory, mem=mem,
             run_id="cycle148-test",
             agent_name="agent-a",
             jobs_dir=jobs_dir,
@@ -234,7 +236,7 @@ class TestPollUntilDone:
         assert cnt >= 1
 
     def test_deadline_aborts_with_running_state(
-        self, tmp_path: Path, sm: SemanticMemory, mem: EpisodicMemory,
+        self, tmp_path: Path, memory: Memory, mem: EpisodicMemory,
     ) -> None:
         jobs_dir = tmp_path / "jobs"
         sess = jobs_dir / "abc12345"
@@ -264,7 +266,7 @@ class TestPollUntilDone:
 
         final = poll_until_done(
             "abc12345",
-            topic=_TOPIC, sm=sm, mem=mem,
+            topic=_TOPIC, memory=memory, mem=mem,
             run_id="r", agent_name="a",
             jobs_dir=jobs_dir,
             poll_interval_sec=0.01,
