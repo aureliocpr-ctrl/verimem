@@ -138,7 +138,7 @@ def test_excludes_duplicate_and_superseded(tmp_path) -> None:
                status="verified", confidence=0.9, created_at=_NOW)
     for f in (dup, done, succ, new):
         sm.store(f)
-    sm.supersede("done", "succ", reason="test setup")  # really supersede 'done'
+    sm.supersede("done", "succ", principal="test:suite", reason="test setup")  # really supersede 'done'
     eid = es.store(Entity(canonical_name="config_x", type="config"))
     for fid in ("dup", "done", "succ", "new"):
         es.link_fact(fid, eid)

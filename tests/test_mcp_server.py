@@ -964,7 +964,7 @@ async def test_call_tool_recall_history(tmp_path, fake_agent: _FakeAgent) -> Non
                topic="t", asserted_at=1_700_000_000.0 + 60 * 86400)
     sm.store(old, embed="sync")
     sm.store(new, embed="sync")
-    sm.supersede("h-old", "h-new", reason="update")
+    sm.supersede("h-old", "h-new", principal="test:suite", reason="update")
     fake_agent.semantic = sm
 
     blocks = await _invoke_tool(
@@ -993,7 +993,7 @@ async def test_call_tool_recall_as_of(tmp_path, fake_agent: _FakeAgent) -> None:
                topic="t", asserted_at=now - 30 * _D)
     sm.store(old, embed="sync")
     sm.store(new, embed="sync")
-    sm.supersede("a-old", "a-new", reason="update")
+    sm.supersede("a-old", "a-new", principal="test:suite", reason="update")
     fake_agent.semantic = sm
 
     blocks = await _invoke_tool(
@@ -1278,7 +1278,7 @@ async def test_call_tool_recall_history_route(tmp_path, fake_agent: _FakeAgent) 
     sm.store(Fact(id="r-new", proposition="Johnson's monthly income is 5000 USD",
                   topic="t", asserted_at=1_700_000_000.0 + 60 * 86400),
              embed="sync")
-    sm.supersede("r-old", "r-new", reason="update")
+    sm.supersede("r-old", "r-new", principal="test:suite", reason="update")
     fake_agent.semantic = sm
 
     # wording temporale -> storia servita

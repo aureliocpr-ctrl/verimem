@@ -37,7 +37,7 @@ def _seed(tmp_path):
                  asserted_at=now - 5 * _DAY)
     for f in (old, cur, rival):
         sm.store(f, embed="sync")
-    sm.supersede("t-old", "t-cur", reason="update")
+    sm.supersede("t-old", "t-cur", principal="test:suite", reason="update")
     from verimem.contradiction import Contradiction, ContradictionStore
     ContradictionStore(sm.db_path).add(Contradiction(
         fact_a_id="t-cur", fact_b_id="t-riv",

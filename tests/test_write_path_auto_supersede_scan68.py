@@ -4,7 +4,7 @@ come contraddetti dal NUOVO fatto (P0a, 2026-06-02).
 Il gate (`run_validation_gate`) gia calcola `contradicting_fact_ids` ma
 l'handler non li usava: un fatto smentito restava live nel recall. Qui si
 verifica che, dopo lo store, l'handler chiami
-`SemanticMemory.auto_supersede_on_contradiction(new_id, contradicting_ids)`.
+`SemanticMemory.auto_supersede_on_contradiction(new_id, contradicting_ids, principal="test:suite")`.
 
 Robustezza: NON dipendiamo dal verdetto reale di validate_claim — monkeypatch
 del gate (import locale risolto a runtime da `verimem.anti_confab_gate`) per

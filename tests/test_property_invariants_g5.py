@@ -75,7 +75,7 @@ def test_supersede_never_deletes_and_never_loops(tmp_path_factory, pairs) -> Non
 
     for a, b in pairs:
         try:
-            mem.supersede(ids[a], ids[b], reason="g5-prop")
+            mem.supersede(ids[a], ids[b], principal="test:suite", reason="g5-prop")
         except (SupersedeError, SupersedeConflict):
             pass  # rejected operations are fine; accepted ones must hold below
 
@@ -116,8 +116,8 @@ def test_long_ring_closure_rejected_no_hop_escape(tmp_path) -> None:
         mem.store(f, embed="defer")
         ids.append(f.id)
     for i in range(69):
-        mem.supersede(ids[i], ids[i + 1], reason="chain")
+        mem.supersede(ids[i], ids[i + 1], principal="test:suite", reason="chain")
     with pytest.raises(SupersedeError, match="cycle"):
-        mem.supersede(ids[69], ids[0], reason="ring closure")
+        mem.supersede(ids[69], ids[0], principal="test:suite", reason="ring closure")
     # the head must still be live (nothing vanished)
     assert mem.get(ids[69]) is not None

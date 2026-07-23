@@ -6,7 +6,7 @@ resta 'live' nel recall a inquinare. Il primitivo `supersede()` esiste gia ma
 NESSUNO lo aggancia in automatico: il gate L3 riporta `contradicting_fact_ids`
 e poi declassa solo il fatto NUOVO, senza toccare il vecchio.
 
-Fix: `SemanticMemory.auto_supersede_on_contradiction(new_id, contradicting_ids)`
+Fix: `SemanticMemory.auto_supersede_on_contradiction(new_id, contradicting_ids, principal="test:suite")`
 marca come superseded SOLO i vecchi con trust STRETTAMENTE inferiore al nuovo
 (invalidate-not-delete: la riga resta in DB per lineage; sparisce dal recall di
 default `WHERE superseded_by IS NULL`). Regola di sicurezza: un claim debole NON
@@ -36,7 +36,7 @@ def test_auto_supersede_marks_lower_trust_contradicted(tmp_path):
     _store(mem, fid="new1", prop="ai-eye NON pilota agy (ConPTY): timeout verificato",
            topic="lessons/tools/ai-eye", status="model_claim")
 
-    out = mem.auto_supersede_on_contradiction("new1", ["old1"])
+    out = mem.auto_supersede_on_contradiction("new1", ["old1"], principal="test:suite")
 
     assert out["superseded"] == ["old1"]
     old = mem.get("old1")
@@ -51,7 +51,7 @@ def test_auto_supersede_skips_equal_or_higher_trust(tmp_path):
     _store(mem, fid="strong", prop="X fa Y", topic="t", status="model_claim")
     _store(mem, fid="weak", prop="X non fa Y", topic="t", status="legacy_unverified")
 
-    out = mem.auto_supersede_on_contradiction("weak", ["strong"])
+    out = mem.auto_supersede_on_contradiction("weak", ["strong"], principal="test:suite")
 
     assert out["superseded"] == []
     assert "strong" in out["skipped"]
@@ -62,7 +62,7 @@ def test_auto_supersede_handles_missing_and_self(tmp_path):
     mem = _mem(tmp_path)
     _store(mem, fid="n", prop="claim", topic="t", status="model_claim")
 
-    out = mem.auto_supersede_on_contradiction("n", ["n", "ghost"])
+    out = mem.auto_supersede_on_contradiction("n", ["n", "ghost"], principal="test:suite")
 
     assert "n" not in out["superseded"]    # self-reference ignorato
     assert "ghost" in out["missing"]       # id inesistente classificato, no crash

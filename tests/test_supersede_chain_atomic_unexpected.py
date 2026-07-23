@@ -37,7 +37,7 @@ def test_atomic_chain_rolls_back_on_unexpected_error(tmp_path, monkeypatch):
         return real(old, new, reason=reason)
 
     monkeypatch.setattr(sm, "supersede", flaky)
-    res = sm.supersede_chain([a, b, c], reason="r", atomic=True)
+    res = sm.supersede_chain([a, b, c], principal="test:suite", reason="r", atomic=True)
 
     assert res["ok"] is False
     assert res["error"] and "unexpected" in res["error"].lower()

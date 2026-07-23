@@ -51,6 +51,19 @@ from . import epistemic as _epistemic
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
+from .mutation_audit import TABLE_SQL as _MUTATION_AUDIT_TABLE
+from .mutation_audit import (
+    head_conn as _audit_head_conn,
+)
+from .mutation_audit import (
+    record_mutation as _record_mutation,
+)
+from .mutation_audit import (
+    require_principal as _require_principal,
+)
+from .mutation_audit import (
+    verify_conn as _audit_verify_conn,
+)
 from .provenance_validator import (
     validate_provisional_refs,
     validate_verified_refs,
@@ -1896,6 +1909,11 @@ class SemanticMemory:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
+            # Universal mutation audit (0.8 step 1): additive IF NOT EXISTS,
+            # single DDL source = mutation_audit.TABLE_SQL — deliberately
+            # outside the versioned ladder (v15 history: two forgotten
+            # target-bumps broke production writes).
+            conn.execute(_MUTATION_AUDIT_TABLE)
             from .migrations import ensure_schema_version
             ensure_schema_version(
                 conn, db_id="semantic", target_version=_SEMANTIC_TARGET_VERSION,
@@ -4256,24 +4274,43 @@ class SemanticMemory:
                 "UPDATE facts SET superseded_by = ? WHERE superseded_by = ?",
                 (succ, fact_id))
 
-    def delete(self, fact_id: str) -> bool:
+    def delete(self, fact_id: str, *, principal: str,
+               action: str = "delete") -> bool:
         """FORGIA pezzo #202: delete one fact by id (privacy / GDPR).
 
         Returns True iff a row was actually removed.
+
+        ``principal`` is MANDATORY (0.8 mutation audit): the acting identity
+        recorded in the tamper-evident ``audit_mutations`` chain — surfaces
+        stamp their own (``sdk:local``/``gw:<tenant>``/``mcp:*``/
+        ``cli:local``), background jobs declare ``system:<job>``. ``action``
+        is the surface-chosen audit label for this removal (``delete`` |
+        ``purge`` | ``forget``). The audit append runs in the SAME
+        transaction as the DELETE and is fail-closed: if it cannot be
+        written, the row is not removed either.
         """
+        _require_principal(principal)
+        if action not in ("delete", "purge", "forget"):
+            raise ValueError(
+                f"delete() audit action must be delete|purge|forget, "
+                f"got {action!r}")
         with self._connect() as conn:
             self._relink_through(conn, fact_id)
             cur = conn.execute(
                 "DELETE FROM facts WHERE id = ?", (fact_id,),
             )
             removed = cur.rowcount > 0
+            if removed:
+                _record_mutation(conn, principal=principal, action=action,
+                                 resource_id=fact_id)
         # Cycle #135: invalidate the recall cache on delete.
         if removed:
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
         return removed
 
-    def delete_with_undo(self, fact_id: str) -> dict[str, Any]:
+    def delete_with_undo(self, fact_id: str, *,
+                         principal: str) -> dict[str, Any]:
         """Cycle 2026-05-27 round 13 P0c — delete + emit undo handle.
 
         Wraps ``delete()`` with a pre-op snapshot in facts_undo_log.
@@ -4282,7 +4319,12 @@ class SemanticMemory:
 
         If the fact does not exist, removed=False and op_id=None — no
         undo handle is created (no row to restore).
+
+        ``principal`` is MANDATORY (0.8 mutation audit; see :meth:`delete`).
+        The audit row carries ``op_id`` so a later undo stays correlatable
+        with the delete it reverses.
         """
+        _require_principal(principal)
         from .undo_log import snapshot_pre_op
         with self._connect() as conn:
             op_id = snapshot_pre_op(conn, "forget", fact_id)
@@ -4297,6 +4339,10 @@ class SemanticMemory:
                 "DELETE FROM facts WHERE id = ?", (fact_id,),
             )
             removed = cur.rowcount > 0
+            if removed:
+                _record_mutation(conn, principal=principal, action="delete",
+                                 resource_id=fact_id,
+                                 detail={"op_id": op_id})
         if removed:
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
@@ -4452,12 +4498,17 @@ class SemanticMemory:
                 "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL"
             ).fetchone()[0]
 
-    def supersede(self, old_id: str, new_id: str, *, reason: str = "") -> dict[str, Any]:
+    def supersede(self, old_id: str, new_id: str, *, principal: str,
+                  reason: str = "") -> dict[str, Any]:
         """Cycle #78 — declare ``old_id`` superseded by ``new_id``.
 
         Args:
             old_id: fact id of the obsolete claim. Stays in DB for lineage.
             new_id: fact id that REPLACES the old claim. Must exist.
+            principal: MANDATORY acting identity (0.8 mutation audit; see
+                :meth:`delete`). Recorded in the chain; ``reason`` is NOT —
+                free text can carry PII and the chain is immutable, so the
+                reason lives only on the (erasable) facts row.
             reason: human-readable why this supersession happened.
 
         Returns:
@@ -4470,6 +4521,7 @@ class SemanticMemory:
             SupersedeConflict: old_id was already superseded by a
                 DIFFERENT new_id. Caller chooses chain vs reassign.
         """
+        _require_principal(principal)
         if old_id == new_id:
             raise SupersedeError("cannot supersede a fact with itself (self-supersede)")
         with self._connect() as conn:
@@ -4501,6 +4553,12 @@ class SemanticMemory:
                     "UPDATE facts SET superseded_reason = ? WHERE id = ?",
                     (reason, old_id),
                 )
+                # A real row mutation (0.8 audit): record it — as action
+                # metadata only, never the reason text itself.
+                _record_mutation(conn, principal=principal,
+                                 action="supersede", resource_id=old_id,
+                                 detail={"new_id": new_id,
+                                         "reason_update": True})
                 # Cycle #135.A (critic counterexample fix 2026-05-17):
                 # any DB mutation on the facts table must invalidate the
                 # recall cache, otherwise a stale snapshot may still
@@ -4572,6 +4630,11 @@ class SemanticMemory:
                     f"fact {old_id!r} was concurrently superseded by {won!r}; "
                     f"refusing to reassign to {new_id!r}."
                 )
+            # 0.8 mutation audit — the retire actually happened: record it
+            # in the SAME transaction (fail-closed; new_id is an opaque id,
+            # never the reason text).
+            _record_mutation(conn, principal=principal, action="supersede",
+                             resource_id=old_id, detail={"new_id": new_id})
         # Cycle #135.A (critic counterexample fix): the row that was
         # live up to this call is now hidden behind the default-filter
         # ``WHERE superseded_by IS NULL``. Bump the recall-cache version
@@ -4588,6 +4651,7 @@ class SemanticMemory:
         new_id: str,
         contradicting_ids: Iterable[str],
         *,
+        principal: str,
         reason: str = "",
     ) -> dict[str, Any]:
         """Auto-invalidate (supersede, NOT delete) older facts that a NEWER,
@@ -4653,7 +4717,8 @@ class SemanticMemory:
                 f"{new_id} (status={new_fact.status})"
             )
             try:
-                self.supersede(old_id, new_id, reason=note)
+                self.supersede(old_id, new_id, principal=principal,
+                               reason=note)
                 result["superseded"].append(old_id)
             except (SupersedeError, SupersedeConflict):
                 result["skipped"].append(old_id)
@@ -4708,7 +4773,7 @@ class SemanticMemory:
         return chain
 
     def supersede_chain(
-        self, ids: list[str], *, reason: str = "",
+        self, ids: list[str], *, principal: str, reason: str = "",
         atomic: bool = True,
     ) -> dict[str, Any]:
         """Cycle #81 (2026-05-16) — declare a multi-hop supersession
@@ -4765,7 +4830,8 @@ class SemanticMemory:
             pre_at = pre.superseded_at if pre is not None else None
             pre_reason = pre.superseded_reason if pre is not None else None
             try:
-                result = self.supersede(old_id, new_id, reason=reason)
+                result = self.supersede(old_id, new_id, principal=principal,
+                                        reason=reason)
                 already_pointing = (pre_super == new_id)
                 pure_noop = bool(result.get("idempotent_noop"))
                 if pure_noop:
@@ -4798,7 +4864,7 @@ class SemanticMemory:
                     "reason": str(exc),
                 })
                 if atomic:
-                    self._restore_supersession_snapshots(rollback_log)
+                    self._restore_supersession_snapshots(rollback_log, principal=principal)
                     for h in hops:
                         if h["status"] == "applied":
                             h["status"] = "rolled_back"
@@ -4817,7 +4883,7 @@ class SemanticMemory:
                     "reason": str(exc),
                 })
                 if atomic:
-                    self._restore_supersession_snapshots(rollback_log)
+                    self._restore_supersession_snapshots(rollback_log, principal=principal)
                     for h in hops:
                         if h["status"] == "applied":
                             h["status"] = "rolled_back"
@@ -4843,7 +4909,7 @@ class SemanticMemory:
                     "reason": str(exc),
                 })
                 if atomic:
-                    self._restore_supersession_snapshots(rollback_log)
+                    self._restore_supersession_snapshots(rollback_log, principal=principal)
                     for h in hops:
                         if h["status"] == "applied":
                             h["status"] = "rolled_back"
@@ -4869,12 +4935,20 @@ class SemanticMemory:
     def _restore_supersession_snapshots(
         self,
         snapshots: list[tuple[str, str | None, float | None, str | None]],
+        *,
+        principal: str,
     ) -> None:
         """Cycle #81b atomic rollback helper. Each snapshot is
         ``(old_id, pre_super, pre_at, pre_reason)``. Restores exact
         pre-state — distinguishes "was unsuperseded" (all None) from
         "was already superseded with original reason" (preserve
         pointer + ts + original reason). No-op on empty.
+
+        0.8 mutation audit: every restored row gets a ``restore`` chain
+        entry. The rolled-back hops' ``supersede`` rows are append-only and
+        cannot be retracted — without the matching ``restore`` rows the
+        chain would describe supersessions the DB no longer shows, which an
+        auditor cannot distinguish from state tampering.
         """
         if not snapshots:
             return
@@ -4885,6 +4959,9 @@ class SemanticMemory:
                     "superseded_at = ?, superseded_reason = ? WHERE id = ?",
                     (pre_super, pre_at, pre_reason, old_id),
                 )
+                _record_mutation(conn, principal=principal, action="restore",
+                                 resource_id=old_id,
+                                 detail={"pre_superseded_by": pre_super})
         # Cycle #135.A (critic counterexample fix): the rollback flips
         # rows back to their pre-supersession state. Each restored row
         # may transition from "hidden" to "live" (or vice-versa) under
@@ -4997,13 +5074,37 @@ class SemanticMemory:
             "superseded_by": fact.superseded_by,
         }
 
-    def clear(self) -> None:
+    def clear(self, *, principal: str) -> None:
+        """Wipe EVERY fact (test-reset / full re-init). ``principal`` is
+        MANDATORY (0.8 mutation audit): one ``reset`` row records who wiped
+        how many rows — the count via an explicit COUNT(*) because SQLite's
+        truncate optimization makes ``rowcount`` unreliable on an
+        unqualified DELETE."""
+        _require_principal(principal)
         with self._connect() as conn:
+            n = conn.execute("SELECT COUNT(*) FROM facts").fetchone()[0]
             conn.execute("DELETE FROM facts")
+            _record_mutation(conn, principal=principal, action="reset",
+                             resource_id="*", detail={"rows": int(n)})
         # SCAN-68 FIX 2026-06-02 (NONNA): invalida la recall-cache. Mancava il
         # bump -> recall(topic=None) continuava a servire fatti FANTASMA dalla
         # cache stantia finche un altro store/delete non bumpava la versione.
         self._cache_version += 1
+
+    # ── 0.8 mutation-audit chain: verification API ────────────────────────
+
+    def audit_verify(self) -> str | None:
+        """Recompute the mutation-audit chain; the id of the first tampered
+        row, or ``None`` when intact. See ``mutation_audit.verify_conn`` for
+        the honest limits (tail truncation / full rewrite need the archived
+        head)."""
+        with self._connect() as conn:
+            return _audit_verify_conn(conn)
+
+    def audit_head(self) -> str | None:
+        """Current mutation-audit chain head (archive it off-box)."""
+        with self._connect() as conn:
+            return _audit_head_conn(conn)
 
     @staticmethod
     def _row(r: sqlite3.Row) -> Fact:

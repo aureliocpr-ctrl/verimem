@@ -1821,7 +1821,7 @@ def facts_forget(
             console.print("[yellow]aborted[/yellow]")
             return
     if undoable:
-        result = sm.delete_with_undo(f.id)
+        result = sm.delete_with_undo(f.id, principal="cli:local")
         if result["removed"]:
             console.print(
                 f"[green]forgotten:[/green] {f.id} "
@@ -1830,7 +1830,7 @@ def facts_forget(
         else:
             console.print(f"[yellow]nothing to forget:[/yellow] {f.id}")
     else:
-        sm.delete(f.id)
+        sm.delete(f.id, principal="cli:local")
         console.print(f"[green]hard-deleted:[/green] {f.id}")
 
 
@@ -3281,6 +3281,41 @@ def _regroup_agent_runtime() -> None:
 
 
 _regroup_agent_runtime()
+
+
+# ── verimem audit — tamper-evidence over the mutation chain (0.8 step 1) ──
+audit_app = typer.Typer(
+    help="Tamper-evidence: verify the destructive-mutation audit chain",
+    no_args_is_help=True,
+)
+app.add_typer(audit_app, name="audit")
+
+
+@audit_app.command("verify")
+def audit_verify_cmd(
+    db: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--db",
+        help="Path to a semantic.db (default: the configured store)"),
+) -> None:
+    """Recompute the hash-chain over every recorded destructive mutation
+    (delete/purge/forget/supersede/reset/restore). Exit 0 = intact; exit 1 =
+    tampered, printing the first bad row. Archive the printed head off-box —
+    an in-DB check alone cannot see a full rewrite or tail truncation."""
+    from verimem.semantic import SemanticMemory
+    sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
+    bad = sm.audit_verify()
+    head = sm.audit_head()
+    if bad is not None:
+        console.print(
+            f"[red]TAMPERED[/red]: chain breaks at audit row [bold]{bad}[/bold] "
+            f"(edited, reordered, or an interior row was removed)")
+        raise typer.Exit(1)
+    if head is None:
+        console.print("[green]intact[/green]: audit chain is empty "
+                      "(no destructive mutations recorded yet)")
+        return
+    console.print(f"[green]intact[/green]: head [bold]{head}[/bold] "
+                  "[dim](archive this off-box)[/dim]")
 
 
 def main() -> None:

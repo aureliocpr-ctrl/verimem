@@ -420,6 +420,7 @@ class Memory:
             for _old_id in gate.supersede_fact_ids:
                 try:
                     self.semantic.supersede(_old_id, fact.id,
+                                            principal=principal or self._principal,
                                             reason="same-source evolution")
                     _superseded.append(_old_id)
                 except Exception as exc:  # noqa: BLE001 — a supersede failure must not break the write
@@ -1390,7 +1391,8 @@ class Memory:
             return None
         return self._fact_view(f, fact_id=fact_id)
 
-    def delete(self, fact_id: str, *, purge_history: bool = False) -> bool:
+    def delete(self, fact_id: str, *, purge_history: bool = False,
+               principal: str | None = None) -> bool:
         """Forget a fact by id (privacy / GDPR). True iff at least a row was removed.
 
         ``purge_history=True`` — the GDPR-grade delete (probe-confirmed defect
@@ -1399,9 +1401,15 @@ class Memory:
         and ``as_of`` time travel). It removes the whole supersession chain —
         predecessors (recursive) and forward successors — plus their
         unresolved-dispute ledger entries. Default False = single-row delete,
-        behaviour unchanged."""
+        behaviour unchanged.
+
+        ``principal`` (0.8 mutation audit) is stamped like ``add()``'s: the
+        caller may name a finer identity, otherwise this client's own
+        (``sdk:local`` by default) is recorded in the tamper-evident chain —
+        never None. Purged rows are audited with action ``purge``."""
+        _who = principal or self._principal
         if not purge_history:
-            return self.semantic.delete(fact_id)
+            return self.semantic.delete(fact_id, principal=_who)
         ids: set[str] = set()
         # forward: the live successors this fact was replaced by
         try:
@@ -1427,8 +1435,12 @@ class Memory:
         removed = False
         for fid in ids:
             try:
-                removed = self.semantic.delete(fid) or removed
+                removed = self.semantic.delete(
+                    fid, principal=_who, action="purge") or removed
             except Exception:  # noqa: BLE001 — one failed row must not stop the purge
+                # NB: with the fail-closed audit this row was NOT removed
+                # either (mutation and audit share one transaction) — the
+                # purge is honestly partial, never silently untracked.
                 continue
         # scrub the dispute ledger referencing purged facts (best-effort)
         try:
@@ -1463,7 +1475,9 @@ class Memory:
         res = self.add(text, topic=topic or getattr(old, "topic", "user"))
         if res.get("stored") and res.get("id"):
             try:
-                self.semantic.supersede(fact_id, res["id"], reason="sdk update")
+                self.semantic.supersede(fact_id, res["id"],
+                                        principal=self._principal,
+                                        reason="sdk update")
             except Exception as exc:  # noqa: BLE001
                 return {**res, "updated": True, "supersedes": fact_id, "supersede_warning": str(exc)}
         return {**res, "updated": bool(res.get("stored")), "supersedes": fact_id}

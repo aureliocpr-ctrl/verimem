@@ -31,7 +31,7 @@ def test_heal_supersedes_lower_trust_and_resolves(tmp_path):
     store.add(Contradiction(fact_a_id="weak", fact_b_id="strong",
                             kind="numeric_clash", similarity=0.95))
 
-    out = heal_contradictions(mem, store)
+    out = heal_contradictions(mem, store, principal="test:suite")
 
     assert "weak" in out["healed_superseded"]        # debole invalidato
     assert mem.get("weak").superseded_by == "strong"
@@ -46,7 +46,7 @@ def test_heal_skips_equal_trust(tmp_path):
     store.add(Contradiction(fact_a_id="x", fact_b_id="y",
                             kind="numeric_clash", similarity=0.9))
 
-    out = heal_contradictions(mem, store)
+    out = heal_contradictions(mem, store, principal="test:suite")
 
     assert out["healed_superseded"] == []
     assert mem.get("x").superseded_by is None
@@ -60,7 +60,7 @@ def test_heal_resolves_when_a_fact_missing(tmp_path):
     store.add(Contradiction(fact_a_id="alone", fact_b_id="ghost",
                             kind="numeric_clash", similarity=0.9))
 
-    out = heal_contradictions(mem, store)
+    out = heal_contradictions(mem, store, principal="test:suite")
 
     assert store.count_unresolved() == 0             # coppia non piu valida -> risolta
     assert mem.get("alone").superseded_by is None    # il fatto presente resta intatto

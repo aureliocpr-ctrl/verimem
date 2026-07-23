@@ -16,11 +16,11 @@ def test_auto_supersede_rejects_obsolete_winner(tmp_path):
     sm.store(Fact(id="C", proposition="prod region is af-south-1", topic="t",
                   status="verified", source_episodes=["e"]))
     # A becomes obsolete (superseded by C).
-    sm.supersede("A", "C", reason="newer truth")
+    sm.supersede("A", "C", principal="test:suite", reason="newer truth")
     assert sm.get("A").superseded_by == "C"
 
     # The obsolete A must NOT be allowed to supersede the live B.
-    res = sm.auto_supersede_on_contradiction("A", ["B"])
+    res = sm.auto_supersede_on_contradiction("A", ["B"], principal="test:suite")
     assert "B" not in res.get("superseded", []), res
     assert sm.get("B").superseded_by is None, (
         "live fact B was wrongly invalidated by an obsolete winner A"

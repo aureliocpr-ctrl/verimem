@@ -97,7 +97,10 @@ class _FakeSemantic:
     def count(self) -> int:
         return len(self._facts)
 
-    def delete(self, fact_id: str) -> bool:
+    def delete(self, fact_id: str, *, principal: str = "test:fake",
+               action: str = "delete") -> bool:
+        # Mirror the real core's 0.8 mutation-audit signature (keyword-only
+        # principal + audit action label) so the MCP handler can call it.
         if fact_id in self._facts:
             del self._facts[fact_id]
             self._deleted.append(fact_id)

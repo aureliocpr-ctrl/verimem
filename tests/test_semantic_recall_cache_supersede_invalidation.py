@@ -74,7 +74,7 @@ class TestSupersedeBumpsCacheVersion:
         assert b.id in ids_before, "warmup: B must be live before supersede"
 
         # Apply supersede.
-        sm.supersede(a.id, b.id, reason="cycle135A/test invalidation")
+        sm.supersede(a.id, b.id, principal="test:suite", reason="cycle135A/test invalidation")
 
         # Post-supersede: A is no longer live.
         hits_after = sm.recall("alpha", k=5)
@@ -102,10 +102,10 @@ class TestSupersedeReasonUpdateBumpsCacheVersion:
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         a, b = _store_pair(sm)
 
-        sm.supersede(a.id, b.id, reason="first reason")
+        sm.supersede(a.id, b.id, principal="test:suite", reason="first reason")
         # Second call with same pair, different reason → idempotent_noop=False
         # path that only updates reason.
-        sm.supersede(a.id, b.id, reason="second reason")
+        sm.supersede(a.id, b.id, principal="test:suite", reason="second reason")
 
         # A is now superseded → must NOT appear in default recall.
         hits = sm.recall("alpha", k=5)
@@ -130,14 +130,14 @@ class TestRestoreSupersessionSnapshotsBumpsCacheVersion:
         sm = SemanticMemory(db_path=tmp_path / "s.db")
         a, b = _store_pair(sm)
 
-        sm.supersede(a.id, b.id, reason="cycle135A/rollback test")
+        sm.supersede(a.id, b.id, principal="test:suite", reason="cycle135A/rollback test")
         # After supersede A is hidden.
         ids_mid = _live_ids(sm.recall("alpha", k=5))
         assert a.id not in ids_mid
 
         # Now roll back: restore A to its pre-supersede state (all None).
         sm._restore_supersession_snapshots(  # noqa: SLF001
-            [(a.id, None, None, None)],
+            [(a.id, None, None, None)], principal="test:suite",
         )
 
         ids_after = _live_ids(sm.recall("alpha", k=5))

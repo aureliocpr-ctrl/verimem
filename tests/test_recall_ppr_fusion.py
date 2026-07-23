@@ -177,7 +177,7 @@ def test_fusion_does_not_resurrect_superseded_fact(tmp_path, monkeypatch):
     newer = Fact(proposition="current note about alpha_service",
                  topic="t/gold", status="verified")
     sm.store(newer, embed="auto")
-    sm.supersede(gold.id, newer.id, reason="updated")  # gold -> superseded_by
+    sm.supersede(gold.id, newer.id, principal="test:suite", reason="updated")  # gold -> superseded_by
 
     es = EntityStore(db_path=entity_kg_path_for(sm.db_path))
     eid = es.store(Entity(canonical_name="alpha_service", type="module"))

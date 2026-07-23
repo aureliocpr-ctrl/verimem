@@ -57,7 +57,8 @@ def main() -> None:
             proposition="the cache eviction approach was revised last quarter",
             topic="ops", status="verified", confidence=0.95, source_episodes=["e"])
         sm.store(superseder, embed="sync")
-        sm.supersede(old.id, superseder.id, reason="policy revised")
+        sm.supersede(old.id, superseder.id, principal="bench:hallucination",
+                     reason="policy revised")
 
         for i, val in enumerate(("allkeys-lfu", "noeviction")):
             sm.store(Fact(

@@ -78,7 +78,7 @@ def fact_pair(mem):
 class TestSupersedeBasic:
     def test_supersede_marks_old_with_new_id_and_ts(self, mem, fact_pair):
         old, new = fact_pair
-        result = mem.supersede(old.id, new.id, reason="docstring vs code count")
+        result = mem.supersede(old.id, new.id, principal="test:suite", reason="docstring vs code count")
 
         assert result["ok"] is True
         assert result["old_id"] == old.id
@@ -102,7 +102,7 @@ class TestSupersedeBasic:
         """Design decision (1): supersede does NOT down-confidence the old fact.
         Historical truth at write-time stays truthful for lineage/audit."""
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         old_after = mem.get(old.id)
         assert old_after.confidence == 0.98  # unchanged from fixture
 
@@ -116,19 +116,19 @@ class TestSupersedeValidation:
         from verimem.semantic import SupersedeError
         old, _new = fact_pair
         with pytest.raises(SupersedeError, match="self"):
-            mem.supersede(old.id, old.id, reason="oops")
+            mem.supersede(old.id, old.id, principal="test:suite", reason="oops")
 
     def test_unknown_old_id_rejected(self, mem, fact_pair):
         from verimem.semantic import SupersedeError
         _old, new = fact_pair
         with pytest.raises(SupersedeError, match="old_id"):
-            mem.supersede("nonexistent_xxx", new.id, reason="X")
+            mem.supersede("nonexistent_xxx", new.id, principal="test:suite", reason="X")
 
     def test_unknown_new_id_rejected(self, mem, fact_pair):
         from verimem.semantic import SupersedeError
         old, _new = fact_pair
         with pytest.raises(SupersedeError, match="new_id"):
-            mem.supersede(old.id, "nonexistent_yyy", reason="X")
+            mem.supersede(old.id, "nonexistent_yyy", principal="test:suite", reason="X")
 
 
 # ---------------------------------------------------------------------------
@@ -138,9 +138,9 @@ class TestSupersedeValidation:
 class TestSupersedeIdempotency:
     def test_same_pair_twice_is_noop(self, mem, fact_pair):
         old, new = fact_pair
-        r1 = mem.supersede(old.id, new.id, reason="first")
+        r1 = mem.supersede(old.id, new.id, principal="test:suite", reason="first")
         first_ts = r1["superseded_at"]
-        r2 = mem.supersede(old.id, new.id, reason="first")
+        r2 = mem.supersede(old.id, new.id, principal="test:suite", reason="first")
         # Idempotent: timestamp NOT bumped on no-op same-reason re-call
         assert r2["ok"] is True
         assert r2["idempotent_noop"] is True
@@ -149,8 +149,8 @@ class TestSupersedeIdempotency:
 
     def test_same_pair_different_reason_updates_reason(self, mem, fact_pair):
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="initial")
-        mem.supersede(old.id, new.id, reason="refined: docstring is stale, code is truth")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="initial")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="refined: docstring is stale, code is truth")
         old_after = mem.get(old.id)
         assert "refined" in old_after.superseded_reason
 
@@ -159,9 +159,9 @@ class TestSupersedeIdempotency:
         old, new = fact_pair
         third = Fact(id="third_ccc", proposition="alt", topic="x", confidence=0.9)
         mem.store(third)
-        mem.supersede(old.id, new.id, reason="first")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="first")
         with pytest.raises(SupersedeConflict, match=new.id):
-            mem.supersede(old.id, third.id, reason="reassign")
+            mem.supersede(old.id, third.id, principal="test:suite", reason="reassign")
 
 
 # ---------------------------------------------------------------------------
@@ -175,8 +175,8 @@ class TestSupersedeChain:
         c = Fact(id="c_id", proposition="v3: 543 detector verified", topic="x", confidence=1.0)
         for f in (a, b, c):
             mem.store(f)
-        mem.supersede(a.id, b.id, reason="grew to 460")
-        mem.supersede(b.id, c.id, reason="verified count 543 via ls|wc")
+        mem.supersede(a.id, b.id, principal="test:suite", reason="grew to 460")
+        mem.supersede(b.id, c.id, principal="test:suite", reason="verified count 543 via ls|wc")
 
         chain = mem.get_supersession_chain(a.id)
         # Returns [a, b, c] (or [a.id, b.id, c.id]) — full forward walk.
@@ -197,7 +197,7 @@ class TestSupersedeChain:
 class TestRecallExcludesSuperseded:
     def test_recall_default_excludes_superseded(self, mem, fact_pair):
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         hits = mem.recall("NEXUS phases", k=5)
         ids = {f.id for f, _ in hits}
         assert old.id not in ids
@@ -205,7 +205,7 @@ class TestRecallExcludesSuperseded:
 
     def test_recall_include_superseded_opt_in_returns_both(self, mem, fact_pair):
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         hits = mem.recall("NEXUS phases", k=5, include_superseded=True)
         ids = {f.id for f, _ in hits}
         assert old.id in ids
@@ -213,7 +213,7 @@ class TestRecallExcludesSuperseded:
 
     def test_list_facts_default_excludes_superseded(self, mem, fact_pair):
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         live = mem.list_facts()
         ids = {f.id for f in live}
         assert old.id not in ids
@@ -221,7 +221,7 @@ class TestRecallExcludesSuperseded:
 
     def test_search_facts_default_excludes_superseded(self, mem, fact_pair):
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         hits = mem.search_facts("phases")
         ids = {f.id for f in hits}
         assert old.id not in ids
@@ -230,7 +230,7 @@ class TestRecallExcludesSuperseded:
     def test_get_returns_superseded_anyway(self, mem, fact_pair):
         """get() is for explicit by-id lookup (audit/lineage) — never filters."""
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         assert mem.get(old.id) is not None
 
 
@@ -242,15 +242,15 @@ class TestCounts:
     def test_count_default_excludes_superseded(self, mem, fact_pair):
         old, new = fact_pair
         assert mem.count() == 2
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         assert mem.count() == 1  # only "new" is live
 
     def test_count_with_superseded_returns_all(self, mem, fact_pair):
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         assert mem.count(include_superseded=True) == 2
 
     def test_count_superseded_only(self, mem, fact_pair):
         old, new = fact_pair
-        mem.supersede(old.id, new.id, reason="X")
+        mem.supersede(old.id, new.id, principal="test:suite", reason="X")
         assert mem.count_superseded() == 1

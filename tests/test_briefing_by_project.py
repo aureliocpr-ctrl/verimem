@@ -193,7 +193,7 @@ class TestSupersession:
     def test_chains_surface_in_briefing(self, populated):
         from verimem.briefing_by_project import briefing_by_project
         # Create chain: o1 -> o3 (o3 supersedes o1)
-        populated.semantic.supersede("o1", "o3", reason="L0 refined")
+        populated.semantic.supersede("o1", "o3", principal="test:suite", reason="L0 refined")
         r = briefing_by_project(populated, project="nexus")
         assert r["n_live"] == 2          # o1 hidden
         assert r["n_superseded"] == 1

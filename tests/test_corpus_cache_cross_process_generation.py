@@ -27,7 +27,7 @@ def test_cross_process_delete_opens_a_new_cache_generation(tmp_path) -> None:
     facts_before = len(sm_a._corpus_cache["facts"])
 
     sm_b = SemanticMemory(db_path=tmp_path / "s.db")  # e.g. the GDPR script
-    assert sm_b.delete("f0") is True
+    assert sm_b.delete("f0", principal="test:suite") is True
 
     assert sm_a.recall("shared note", k=3)  # revalidates -> rebuild
     assert len(sm_a._corpus_cache["facts"]) == facts_before - 1, \

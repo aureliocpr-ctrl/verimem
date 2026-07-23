@@ -100,7 +100,7 @@ class VerimemAgent:
         emit("agent_reset")
         self.memory.clear()
         self.skills.clear()
-        self.semantic.clear()
+        self.semantic.clear(principal="system:agent-reset")
 
 
 # Backward-compat alias: the pre-0.7.0 name. Same object, so existing

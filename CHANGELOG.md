@@ -2,6 +2,33 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — 0.8 line
+
+### Added
+- **Universal mutation audit (tamper-evidence WS, step 1).** Every destructive
+  operation on the facts store — delete / GDPR purge / forget / supersede /
+  reset / rollback-restore — now appends one hash-chained row to
+  `audit_mutations` **inside the same SQLite transaction** as the mutation
+  (fail-closed: if the audit row cannot be written, the mutation rolls back
+  with it). The chain records the ACTION only ({ts, principal, action,
+  resource_id, detail, outcome}) — never content nor a content hash, so GDPR
+  Art.17 erasure stays real. `verimem audit verify` recomputes the chain and
+  exits 1 at the first tampered row; `SemanticMemory.audit_verify()/
+  audit_head()` expose the same via the SDK. Design forged against two
+  independent adversarial reviews (GLM-5.2 + deepseek, two rounds); the
+  stale-snapshot fork claim was empirically refuted (WAL BUSY_SNAPSHOT) and
+  anti-fork holds under a 4-thread concurrent-delete stress. Declared limits
+  (this cycle): tail truncation / full rewrite need the off-box anchored head
+  (signing primitives already in `tamper_evidence.py`; wiring is a later
+  cycle); episodic-store deletes and read/access logging are later cycles.
+- **BREAKING (internal API): `principal` is mandatory on the destructive
+  core.** `SemanticMemory.delete / delete_with_undo / supersede /
+  supersede_chain / auto_supersede_on_contradiction / clear` and
+  `heal_contradictions` now require a keyword-only `principal` (raise
+  without). Public surfaces are unchanged and stamp their own identity
+  server-side (`sdk:local`, `gw:<tenant>`, MCP principal, `cli:local`);
+  background jobs declare `system:reconcile|cleanup|heal|agent-reset`.
+
 ## [0.7.0] - 2026-07-22
 
 > First PyPI release since **0.5.0**. The **0.6.0** line below was an internal

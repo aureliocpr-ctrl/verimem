@@ -36,7 +36,7 @@ def test_delete_resolves_contradictions_and_purges_entity_links(tmp_path):
     es.link_fact(a.id, eid)
 
     # delete a -> its references must not dangle.
-    assert sm.delete(a.id) is True
+    assert sm.delete(a.id, principal="test:suite") is True
 
     # contradiction citing the deleted a is resolved (b no longer 'contested').
     assert cs.list_unresolved_for_fact(b.id) == [], \
@@ -61,7 +61,7 @@ def test_delete_with_undo_also_cascades(tmp_path):
     cs.add(Contradiction(fact_a_id=a.id, fact_b_id=b.id, kind="negation",
                          similarity=0.95))
 
-    res = sm.delete_with_undo(a.id)
+    res = sm.delete_with_undo(a.id, principal="test:suite")
     assert res["removed"] is True
     assert cs.list_unresolved_for_fact(b.id) == [], \
         "delete_with_undo must also cascade the contradiction cleanup"

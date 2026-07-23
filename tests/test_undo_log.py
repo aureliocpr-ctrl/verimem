@@ -145,7 +145,7 @@ class TestSnapshotAndUndo:
 
 class TestSemanticMemoryWrappers:
     def test_delete_with_undo_emits_op_id(self, seeded_sm: SemanticMemory):
-        result = seeded_sm.delete_with_undo("fact03deadbeef")
+        result = seeded_sm.delete_with_undo("fact03deadbeef", principal="test:suite")
         assert result["ok"] is True
         assert result["removed"] is True
         assert result["op_id"] is not None
@@ -161,7 +161,7 @@ class TestSemanticMemoryWrappers:
     def test_delete_with_undo_then_undo_restores(
         self, seeded_sm: SemanticMemory,
     ):
-        del_result = seeded_sm.delete_with_undo("fact04deadbeef")
+        del_result = seeded_sm.delete_with_undo("fact04deadbeef", principal="test:suite")
         op_id = del_result["op_id"]
         # Undo.
         undo_result = seeded_sm.undo_destructive_op(op_id)
@@ -180,7 +180,7 @@ class TestSemanticMemoryWrappers:
         assert "Atomic test fact #4" in row[0]
 
     def test_delete_with_undo_missing_fact(self, sm: SemanticMemory):
-        result = sm.delete_with_undo("ghost000000000")
+        result = sm.delete_with_undo("ghost000000000", principal="test:suite")
         assert result["ok"] is True
         assert result["removed"] is False
         assert result["op_id"] is None
@@ -188,7 +188,7 @@ class TestSemanticMemoryWrappers:
     def test_list_undoable_ops(self, seeded_sm: SemanticMemory):
         # Forget 3 facts.
         for fid in ("fact00deadbeef", "fact01deadbeef", "fact02deadbeef"):
-            seeded_sm.delete_with_undo(fid)
+            seeded_sm.delete_with_undo(fid, principal="test:suite")
         ops = seeded_sm.list_undoable_ops(limit=10)
         assert len(ops) == 3
         # Newest first ordering.
@@ -315,7 +315,7 @@ class TestEnvelopeCollisionSafety:
             status="model_claim",
         ))
         # Forget with undo and restore.
-        result = seeded_sm.delete_with_undo("trickyenvelope")
+        result = seeded_sm.delete_with_undo("trickyenvelope", principal="test:suite")
         op_id = result["op_id"]
         undo = seeded_sm.undo_destructive_op(op_id)
         assert undo["ok"] is True

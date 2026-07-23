@@ -71,8 +71,8 @@ def diverse_corpus(mem):
             created_at=now - 40 * day,
         ))
     # 2 supersession chain a→b→c
-    mem.supersede("a0", "a1", reason="step 1")
-    mem.supersede("a1", "a2", reason="step 2")
+    mem.supersede("a0", "a1", principal="test:suite", reason="step 1")
+    mem.supersede("a1", "a2", principal="test:suite", reason="step 2")
     return mem
 
 

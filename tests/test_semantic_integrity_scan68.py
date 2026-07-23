@@ -37,7 +37,7 @@ def test_clear_invalidates_recall_cache(tmp_path):
     m = SemanticMemory(db_path=tmp_path / "s.db")
     m.store(Fact(id="c1", proposition="alpha beta gamma delta memoria semantica", topic="t/c", confidence=0.5))
     v0 = m._cache_version
-    m.clear()
+    m.clear(principal="test:suite")
     assert m._cache_version > v0, "clear() non bumpa _cache_version -> recall servirebbe fatti fantasma dalla cache"
 
 

@@ -12184,6 +12184,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     a.semantic.auto_supersede_on_contradiction(
                         fact.id,
                         list(_gate.contradicting_fact_ids),
+                        principal=_MCP_PRINCIPAL,
                         reason=(
                             "auto-supersede @ write: anti-confab gate L3 "
                             f"flagged contradiction (superseded by {fact.id})"
@@ -12206,7 +12207,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 for _old_id in _gate.supersede_fact_ids:
                     try:
                         a.semantic.supersede(
-                            _old_id, fact.id, reason="same-source evolution")
+                            _old_id, fact.id, principal=_MCP_PRINCIPAL,
+                            reason="same-source evolution")
                     except Exception as _exc:  # noqa: BLE001 — never break the write
                         # surface it (SDK parity): new admitted, old NOT retired =
                         # stale-beside-new, the state the feature prevents.
@@ -12626,7 +12628,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if _deny is not None:
                 _audit(name, arguments, outcome="rejected_cross_scope")
                 return _err(_deny)
-            ok = a.semantic.delete(fid)
+            ok = a.semantic.delete(fid, principal=_MCP_PRINCIPAL,
+                                   action="forget")
             if not ok:
                 _audit(name, arguments, outcome="not_found")
                 return _err(f"fact not found: {fid}")
@@ -12643,7 +12646,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if _deny is not None:
                 _audit(name, arguments, outcome="rejected_cross_scope")
                 return _err(_deny)
-            result = a.semantic.delete_with_undo(fid)
+            result = a.semantic.delete_with_undo(fid,
+                                                 principal=_MCP_PRINCIPAL)
             if not result["removed"]:
                 _audit(name, arguments, outcome="not_found")
                 return _ok(result)  # ok=True, removed=False, op_id=None
@@ -12687,7 +12691,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 })
             op_ids: list[str] = []
             for f in matched:
-                r = a.semantic.delete_with_undo(f.id)
+                r = a.semantic.delete_with_undo(f.id,
+                                                principal=_MCP_PRINCIPAL)
                 if r.get("op_id"):
                     op_ids.append(r["op_id"])
             _audit(name, arguments, outcome=f"forgot_n={len(op_ids)}")
@@ -12835,7 +12840,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 return _err("ids must be a list of >= 2 fact ids")
             try:
                 result = a.semantic.supersede_chain(
-                    [str(x) for x in ids], reason=reason, atomic=atomic,
+                    [str(x) for x in ids], principal=_MCP_PRINCIPAL,
+                    reason=reason, atomic=atomic,
                 )
             except SupersedeError as exc:
                 _audit(name, arguments, outcome="rejected_invalid")
@@ -12904,7 +12910,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="rejected_empty")
                 return _err("old_id and new_id are required")
             try:
-                result = a.semantic.supersede(old_id, new_id, reason=reason)
+                result = a.semantic.supersede(old_id, new_id,
+                                              principal=_MCP_PRINCIPAL,
+                                              reason=reason)
             except SupersedeError as exc:
                 _audit(name, arguments, outcome="rejected_invalid")
                 return _err(str(exc))
@@ -13005,7 +13013,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             limit = max(1, min(limit, 1000))
             store = ContradictionStore(a.semantic.db_path)
             try:
-                summary = heal_contradictions(a.semantic, store, limit=limit)
+                summary = heal_contradictions(a.semantic, store,
+                                              principal=_MCP_PRINCIPAL,
+                                              limit=limit)
             except Exception as exc:  # noqa: BLE001
                 _audit(name, arguments, outcome="error")
                 return _err(f"heal_contradictions crash: {exc}")

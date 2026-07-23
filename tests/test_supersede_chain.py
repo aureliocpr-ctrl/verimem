@@ -50,7 +50,7 @@ def four_facts(mem):
 class TestBatchChain:
     def test_simple_three_hop_chain(self, four_facts):
         r = four_facts.supersede_chain(
-            ["a", "b", "c", "d"], reason="refine x4",
+            ["a", "b", "c", "d"], principal="test:suite", reason="refine x4",
         )
         assert r["ok"] is True
         assert r["n_applied"] == 3
@@ -61,7 +61,7 @@ class TestBatchChain:
         assert [f.id for f in chain] == ["a", "b", "c", "d"]
 
     def test_two_id_chain_single_hop(self, four_facts):
-        r = four_facts.supersede_chain(["a", "b"], reason="X")
+        r = four_facts.supersede_chain(["a", "b"], principal="test:suite", reason="X")
         assert r["n_applied"] == 1
         chain = four_facts.get_supersession_chain("a")
         assert [f.id for f in chain] == ["a", "b"]
@@ -73,16 +73,16 @@ class TestBatchChain:
 
 class TestIdempotency:
     def test_replay_same_chain_is_noop(self, four_facts):
-        four_facts.supersede_chain(["a", "b", "c"], reason="first")
-        r = four_facts.supersede_chain(["a", "b", "c"], reason="first")
+        four_facts.supersede_chain(["a", "b", "c"], principal="test:suite", reason="first")
+        r = four_facts.supersede_chain(["a", "b", "c"], principal="test:suite", reason="first")
         assert r["ok"] is True
         assert r["n_applied"] == 0
         assert r["n_idempotent"] == 2
 
     def test_partial_replay_continues_chain(self, four_facts):
         # Apply a→b first, then full a→b→c via chain
-        four_facts.supersede("a", "b", reason="manual")
-        r = four_facts.supersede_chain(["a", "b", "c"], reason="full")
+        four_facts.supersede("a", "b", principal="test:suite", reason="manual")
+        r = four_facts.supersede_chain(["a", "b", "c"], principal="test:suite", reason="full")
         # a→b is idempotent (same reason "manual" != "full" updates reason),
         # b→c is new
         assert r["n_applied"] == 1
@@ -98,12 +98,12 @@ class TestValidation:
     def test_chain_too_short_raises(self, four_facts):
         from verimem.semantic import SupersedeError
         with pytest.raises(SupersedeError, match="at least 2"):
-            four_facts.supersede_chain(["a"], reason="X")
+            four_facts.supersede_chain(["a"], principal="test:suite", reason="X")
 
     def test_chain_with_unknown_id_atomic_rollback(self, four_facts):
         # a→b OK, b→nonexistent FAIL → should roll back a→b
         r = four_facts.supersede_chain(
-            ["a", "b", "nonexistent"], reason="X", atomic=True,
+            ["a", "b", "nonexistent"], principal="test:suite", reason="X", atomic=True,
         )
         assert r["ok"] is False
         assert r["error"]
@@ -113,7 +113,7 @@ class TestValidation:
 
     def test_chain_with_unknown_id_non_atomic_partial(self, four_facts):
         r = four_facts.supersede_chain(
-            ["a", "b", "nonexistent"], reason="X", atomic=False,
+            ["a", "b", "nonexistent"], principal="test:suite", reason="X", atomic=False,
         )
         # a→b applied; second hop skipped
         assert r["ok"] is False
@@ -125,7 +125,7 @@ class TestValidation:
     def test_self_loop_in_chain_rejected(self, four_facts):
         from verimem.semantic import SupersedeError
         with pytest.raises(SupersedeError):
-            four_facts.supersede_chain(["a", "b", "b"], reason="X")
+            four_facts.supersede_chain(["a", "b", "b"], principal="test:suite", reason="X")
 
 
 # ---------------------------------------------------------------------------
@@ -135,10 +135,10 @@ class TestValidation:
 class TestConflict:
     def test_conflict_mid_chain_atomic_rollback(self, four_facts):
         # a→b first
-        four_facts.supersede("a", "b", reason="initial")
+        four_facts.supersede("a", "b", principal="test:suite", reason="initial")
         # Try a→c→d: a→c conflicts (a already superseded by b ≠ c)
         r = four_facts.supersede_chain(
-            ["a", "c", "d"], reason="reassign", atomic=True,
+            ["a", "c", "d"], principal="test:suite", reason="reassign", atomic=True,
         )
         assert r["ok"] is False
         assert "conflict" in (r["error"] or "").lower()
@@ -163,9 +163,9 @@ class TestConflict:
         preserved). Pre-fix bug: stayed 'r1' because rollback list missed
         reason-update hops.
         """
-        four_facts.supersede("a", "b", reason="r0")
+        four_facts.supersede("a", "b", principal="test:suite", reason="r0")
         r = four_facts.supersede_chain(
-            ["a", "b", "nonexistent"], reason="r1", atomic=True,
+            ["a", "b", "nonexistent"], principal="test:suite", reason="r1", atomic=True,
         )
         assert r["ok"] is False
         a_after = four_facts.get("a")

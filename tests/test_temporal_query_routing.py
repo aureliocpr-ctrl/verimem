@@ -59,7 +59,7 @@ def test_recall_with_history_as_of_hides_the_future(tmp_path):
     new = Fact(proposition="the monthly income is 4500 USD",
                topic="t", asserted_at=_epoch(2026, 6, 1))
     sm.store(new, embed="sync")
-    sm.supersede(old.id, new.id, reason="raise")
+    sm.supersede(old.id, new.id, principal="test:suite", reason="raise")
 
     # domanda ancorata a ottobre 2025: deve vedere il 3500, NON il 4500 futuro
     lines = recall_with_history(sm, "monthly income", k=5,
@@ -88,11 +88,11 @@ def test_recall_as_of_keeps_the_pruned_transition_story(tmp_path):
     v2 = Fact(proposition="the travel preference is group tours",
               topic="t", asserted_at=_epoch(2025, 11, 10))
     sm.store(v2, embed="sync")
-    sm.supersede(v1.id, v2.id, reason="changed")
+    sm.supersede(v1.id, v2.id, principal="test:suite", reason="changed")
     v3 = Fact(proposition="the travel preference is luxury cruises",
               topic="t", asserted_at=_epoch(2027, 1, 1))
     sm.store(v3, embed="sync")
-    sm.supersede(v2.id, v3.id, reason="changed again")
+    sm.supersede(v2.id, v3.id, principal="test:suite", reason="changed again")
 
     # as-of dic 2025: corrente = group tours, PREVIOUSLY solo travel,
     # e il futuro (luxury cruises, 2027) resta invisibile
