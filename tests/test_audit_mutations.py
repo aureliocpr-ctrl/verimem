@@ -482,16 +482,20 @@ def test_no_unaudited_destructive_sql_on_facts() -> None:
 
     import verimem
     pkg = Path(verimem.__file__).parent
+    # critic run-2 counterexample: glob() missed subpackages (swarm/, teams/,
+    # hooks/ — all memory-writers since 34b5682) → rglob. Regex tolerates a
+    # main./temp. qualifier and any whitespace before 'superseded'.
     destructive = re.compile(
-        r"DELETE FROM facts\b(?!_)|UPDATE facts SET\s+[\"']?\s*superseded",
+        r"DELETE\s+FROM\s+(?:\w+\.)?facts\b(?!_)"
+        r"|UPDATE\s+(?:\w+\.)?facts\s+SET[\s\"']*superseded",
         re.IGNORECASE)
     offenders = []
-    for py in pkg.glob("*.py"):
+    for py in pkg.rglob("*.py"):
         if py.name in ("semantic.py", "mutation_audit.py"):
             continue
         src = py.read_text(encoding="utf-8")
         if destructive.search(src) and "record_mutation" not in src:
-            offenders.append(py.name)
+            offenders.append(str(py.relative_to(pkg)))
     assert not offenders, (
         f"raw destructive SQL on facts without mutation audit in: {offenders}")
 
