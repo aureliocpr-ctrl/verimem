@@ -2638,7 +2638,8 @@ def facts_archive_narration(
     if use_llm:
         from verimem.llm import get_llm
         llm = get_llm()
-    res = archive_and_extract_narration(sm.db_path, dry_run=not apply, llm=llm)
+    res = archive_and_extract_narration(sm.db_path, principal="cli:local",
+                                        dry_run=not apply, llm=llm)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to move)"
     console.print(
         f"[bold]{mode}[/bold]  scanned={res['scanned']}  "

@@ -101,7 +101,7 @@ def _seed_db(path):
 def test_archive_dry_run_reports_without_mutating(tmp_path):
     db = tmp_path / "s.db"
     _seed_db(db)
-    out = archive_and_extract_narration(db, dry_run=True)
+    out = archive_and_extract_narration(db, principal="test:suite", dry_run=True)
     assert out["dry_run"] is True
     assert out["scanned"] == 2
     assert out["narration_found"] == 1   # only n1
@@ -117,7 +117,7 @@ def test_archive_dry_run_reports_without_mutating(tmp_path):
 def test_archive_live_moves_narration_only_nonlossy(tmp_path):
     db = tmp_path / "s.db"
     _seed_db(db)
-    out = archive_and_extract_narration(db, dry_run=False)
+    out = archive_and_extract_narration(db, principal="test:suite", dry_run=False)
     assert out["archived"] == 1
     con = sqlite3.connect(db)
     # the narration left facts, the atomic fact stayed

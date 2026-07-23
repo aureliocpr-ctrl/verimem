@@ -51,7 +51,7 @@ def _count(path, sql):
 def test_dry_run_reports_without_mutating(tmp_path):
     db = tmp_path / "s.db"
     _make_db(db)
-    r = cleanup_telemetry(db, dry_run=True)
+    r = cleanup_telemetry(db, principal="test:suite", dry_run=True)
     assert r["scanned"] == 4
     assert r["telemetry_found"] == 2  # bus/ + metric/
     assert r["moved"] == 0
@@ -61,7 +61,7 @@ def test_dry_run_reports_without_mutating(tmp_path):
 def test_moves_telemetry_out_keeps_real_facts(tmp_path):
     db = tmp_path / "s.db"
     _make_db(db)
-    r = cleanup_telemetry(db, dry_run=False)
+    r = cleanup_telemetry(db, principal="test:suite", dry_run=False)
     assert r["moved"] == 2
     assert _count(db, "SELECT COUNT(*) FROM facts WHERE topic LIKE 'bus/%' OR topic LIKE 'metric/%'") == 0
     assert _count(db, "SELECT COUNT(*) FROM telemetry") == 2
@@ -78,6 +78,6 @@ def test_moves_telemetry_out_keeps_real_facts(tmp_path):
 def test_idempotent_second_run_moves_nothing(tmp_path):
     db = tmp_path / "s.db"
     _make_db(db)
-    cleanup_telemetry(db, dry_run=False)
-    r2 = cleanup_telemetry(db, dry_run=False)
+    cleanup_telemetry(db, principal="test:suite", dry_run=False)
+    r2 = cleanup_telemetry(db, principal="test:suite", dry_run=False)
     assert r2["telemetry_found"] == 0 and r2["moved"] == 0

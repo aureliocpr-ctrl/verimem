@@ -85,13 +85,13 @@ def test_archive_uses_llm_extractor_when_provided(tmp_path):
             "pull request numbers, no file references and no measured numbers anywhere here.")
     con.execute("INSERT INTO facts VALUES('n1','project/engram',?,1.0,NULL)", (narr,))
     con.commit(); con.close()
-    assert archive_and_extract_narration(db, dry_run=True)["narration_found"] == 1
+    assert archive_and_extract_narration(db, principal="test:suite", dry_run=True)["narration_found"] == 1
     # Two DIFFERENT fake LLMs over the SAME prose: the atomic count tracks the
     # LLM's output (2 vs 3), proving the llm path is taken — the rule-based pass
     # would give a single fixed number regardless of the llm.
     out2 = archive_and_extract_narration(
-        db, dry_run=True, llm=_FakeLLM('{"claims": ["claim A", "claim B"]}'))
+        db, principal="test:suite", dry_run=True, llm=_FakeLLM('{"claims": ["claim A", "claim B"]}'))
     out3 = archive_and_extract_narration(
-        db, dry_run=True, llm=_FakeLLM('{"claims": ["claim A", "claim B", "claim C"]}'))
+        db, principal="test:suite", dry_run=True, llm=_FakeLLM('{"claims": ["claim A", "claim B", "claim C"]}'))
     assert out2["atomic_candidates"] == 2
     assert out3["atomic_candidates"] == 3, "the LLM extractor (not the rule pass) must be used"

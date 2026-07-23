@@ -421,6 +421,82 @@ def test_background_jobs_declare_system_principal(module_name, expected) -> None
 
 
 # ---------------------------------------------------------------------------
+# Side-door movers (critic run-1 counterexample): archive/cleanup paths that
+# DELETE facts rows on their own connection must audit in the same tx too
+# ---------------------------------------------------------------------------
+
+def test_archive_narration_audits_its_deletes(tmp_path, monkeypatch) -> None:
+    import verimem.narration as narration
+    sm = _sm(tmp_path)
+    _store(sm, "n1", proposition="long session narrative")
+    monkeypatch.setattr(narration, "is_session_narration", lambda p, **kw: True)
+
+    with pytest.raises(TypeError):
+        narration.archive_and_extract_narration(sm.db_path, dry_run=False)
+
+    res = narration.archive_and_extract_narration(
+        sm.db_path, principal="cli:local", dry_run=False)
+    assert res["archived"] == 1
+
+    rows = _audit_rows(sm)
+    assert [r["action"] for r in rows] == ["delete"]
+    assert rows[0]["resource_id"] == "n1"
+    assert rows[0]["principal"] == "cli:local"
+    assert json.loads(rows[0]["detail"]).get("archived_to") == "narrative"
+    assert sm.audit_verify() is None
+
+
+def test_cleanup_telemetry_audits_its_deletes(tmp_path, monkeypatch) -> None:
+    import verimem.admission_cleanup as ac
+    sm = _sm(tmp_path)
+    _store(sm, "t1", proposition="telemetry-ish row")
+
+    class _Route:
+        decision = ac.ROUTE_TELEMETRY
+
+    monkeypatch.setattr(ac, "classify_admission", lambda **kw: _Route())
+
+    with pytest.raises(TypeError):
+        ac.cleanup_telemetry(sm.db_path, dry_run=False)
+
+    res = ac.cleanup_telemetry(sm.db_path, principal="system:telemetry-cleanup",
+                               dry_run=False)
+    assert res["moved"] == 1
+
+    rows = _audit_rows(sm)
+    assert [r["action"] for r in rows] == ["delete"]
+    assert rows[0]["resource_id"] == "t1"
+    assert rows[0]["principal"] == "system:telemetry-cleanup"
+    assert json.loads(rows[0]["detail"]).get("moved_to") == "telemetry"
+    assert sm.audit_verify() is None
+
+
+def test_no_unaudited_destructive_sql_on_facts() -> None:
+    """Class guard (sweep, not spot-fix): any module issuing raw destructive
+    SQL on the facts table must also wire record_mutation. semantic.py is the
+    audited core (its migrations are declared trusted); everything else that
+    deletes/supersedes facts rows without importing the audit is exactly the
+    critic run-1 counterexample — fail loudly when a new one appears."""
+    import re
+    from pathlib import Path
+
+    import verimem
+    pkg = Path(verimem.__file__).parent
+    destructive = re.compile(
+        r"DELETE FROM facts\b(?!_)|UPDATE facts SET\s+[\"']?\s*superseded",
+        re.IGNORECASE)
+    offenders = []
+    for py in pkg.glob("*.py"):
+        if py.name in ("semantic.py", "mutation_audit.py"):
+            continue
+        src = py.read_text(encoding="utf-8")
+        if destructive.search(src) and "record_mutation" not in src:
+            offenders.append(py.name)
+    assert not offenders, (
+        f"raw destructive SQL on facts without mutation audit in: {offenders}")
+
+
+# ---------------------------------------------------------------------------
 # CLI: verimem audit verify
 # ---------------------------------------------------------------------------
 
