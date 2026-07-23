@@ -5,7 +5,24 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 ## [Unreleased] — 0.8 line
 
 ### Added
-- **Universal mutation audit (tamper-evidence WS, step 1).** Every destructive
+- **Signed external anchor over BOTH audit chains (tamper-evidence WS,
+  step 2).** `verimem audit anchor [--db] [--out]` emits a receipt —
+  {ts, mutations_head+rows, adjudications_head+rows, ed25519 signature
+  under the operator's external `VERIMEM_AUDIT_SIGNING_KEY`, never stored
+  by verimem} — to archive off-box; `verimem audit verify --anchor FILE`
+  then detects what an in-DB check cannot: full-chain rewrite and
+  tail-truncate+reinsert (the two declared step-1 blind spots). The
+  signature covers the canonical receipt payload with a domain prefix
+  (`verimem-audit-anchor-v1`), binding chain identity + counts + ts —
+  a bare-head signature was cross-chain confusable, so
+  `Memory.audit_head_signed` is now deprecated in favour of
+  `Memory.audit_anchor()/audit_verify_anchor()`. Replay of an OLD receipt
+  against a chain truncated to that exact older state is a documented
+  operational limit (verify against your newest receipt), not a
+  pretended cryptographic guarantee. Implemented by a delegated
+  Claude Opus 4.8 security cycle (TDD, 15 tests); verified independently
+  end-to-end via CLI: anchor → intact (exit 0) → tampered row →
+  "TAMPERED: mutations" (exit 1). Every destructive
   operation on the facts store — delete / GDPR purge / forget / supersede /
   reset / rollback-restore — now appends one hash-chained row to
   `audit_mutations` **inside the same SQLite transaction** as the mutation
