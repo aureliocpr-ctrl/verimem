@@ -3292,18 +3292,93 @@ audit_app = typer.Typer(
 app.add_typer(audit_app, name="audit")
 
 
+def _audit_adj_log(sm):
+    """The adjudications chain that sits next to a semantic.db (sibling
+    ``adjudications.db``), or ``None`` when the operator never enabled it."""
+    from verimem.adjudication_log import AdjudicationLog
+    p = Path(sm.db_path).with_name("adjudications.db")
+    return AdjudicationLog(p) if p.exists() else None
+
+
+def _audit_public_key() -> str | None:
+    """Resolve the anchor VERIFICATION key from the environment only (never a
+    CLI flag — key paths stay out of shell history): the public PEM if wired,
+    else the private PEM (its public key is derived for verification)."""
+    return (os.environ.get("VERIMEM_AUDIT_PUBLIC_KEY", "").strip()
+            or os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()) or None
+
+
+@audit_app.command("anchor")
+def audit_anchor_cmd(
+    db: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--db",
+        help="Path to a semantic.db (default: the configured store)"),
+    out: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--out",
+        help="Write the receipt JSON here (default: print to stdout)"),
+) -> None:
+    """Emit a SIGNED anchor receipt over BOTH audit chains — the mutation chain
+    (this semantic.db) and the gate-adjudication chain (sibling
+    adjudications.db). The receipt carries each chain's head AND row count, a
+    timestamp, and an ed25519 signature over the whole payload under
+    ``VERIMEM_AUDIT_SIGNING_KEY`` (the operator's private PEM; env only, never
+    logged). Archive it OFF-BOX and always verify against the NEWEST receipt —
+    an old one legitimately signs an older, shorter state.
+
+    No signing key configured is an error (exit 2): this command exists to
+    sign."""
+    key_path = os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()
+    if not key_path:
+        console.print(
+            "[red]error[/red]: VERIMEM_AUDIT_SIGNING_KEY is not set — point it "
+            "at the operator's ed25519 private PEM (verimem never stores it)")
+        raise typer.Exit(2)
+    import time as _time
+
+    from verimem.audit_anchor import build_payload, sign_anchor
+    from verimem.semantic import SemanticMemory
+    sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
+    adj = _audit_adj_log(sm)
+    payload = build_payload(
+        ts=_time.time(),
+        mutations_head=sm.audit_head(), mutations_rows=sm.audit_count(),
+        adjudications_head=adj.head() if adj is not None else None,
+        adjudications_rows=adj.count() if adj is not None else 0)
+    receipt = sign_anchor(payload, key_path)
+    text = json.dumps(receipt, indent=2, sort_keys=True)
+    if out is not None:
+        out.write_text(text + "\n", encoding="utf-8")
+        console.print(f"[green]anchor written[/green]: {out} "
+                      f"[dim](archive off-box; verify the newest)[/dim]")
+    else:
+        console.print_json(text)
+
+
 @audit_app.command("verify")
 def audit_verify_cmd(
     db: Path | None = typer.Option(  # noqa: B008 — typer idiom
         None, "--db",
         help="Path to a semantic.db (default: the configured store)"),
+    anchor: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--anchor",
+        help="Verify against a signed anchor receipt (both chains): detects "
+             "a full rewrite or tail-truncate+reinsert an in-DB check cannot"),
 ) -> None:
     """Recompute the hash-chain over every recorded destructive mutation
     (delete/purge/forget/supersede/reset/restore). Exit 0 = intact; exit 1 =
     tampered, printing the first bad row. Archive the printed head off-box —
-    an in-DB check alone cannot see a full rewrite or tail truncation."""
+    an in-DB check alone cannot see a full rewrite or tail truncation.
+
+    With ``--anchor FILE`` it instead verifies BOTH chains against a signed
+    receipt (signature, intactness, append-only growth, anchored-head-at-count)
+    and exits 1 naming the chain and check that failed."""
     from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
+
+    if anchor is not None:
+        _audit_verify_anchor(sm, anchor)
+        return
+
     bad = sm.audit_verify()
     head = sm.audit_head()
     if bad is not None:
@@ -3317,6 +3392,43 @@ def audit_verify_cmd(
         return
     console.print(f"[green]intact[/green]: head [bold]{head}[/bold] "
                   "[dim](archive this off-box)[/dim]")
+
+
+def _audit_verify_anchor(sm, anchor: Path) -> None:
+    """Verify both chains against a signed anchor receipt; exit 1 on any
+    failure, naming the chain + check."""
+    from verimem.audit_anchor import ChainState, verify_anchor
+    key_path = _audit_public_key()
+    if not key_path:
+        console.print(
+            "[red]error[/red]: no verification key — set "
+            "VERIMEM_AUDIT_PUBLIC_KEY (public PEM) or VERIMEM_AUDIT_SIGNING_KEY "
+            "(private PEM)")
+        raise typer.Exit(2)
+    try:
+        receipt = json.loads(anchor.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]error[/red]: cannot read anchor {anchor}: {exc}")
+        raise typer.Exit(2) from exc
+    adj = _audit_adj_log(sm)
+    mutations = ChainState(
+        rows=sm.audit_count(), intact=sm.audit_verify() is None,
+        head_at=sm.audit_head_at)
+    if adj is not None:
+        adjudications = ChainState(
+            rows=adj.count(), intact=adj.verify() is None, head_at=adj.head_at)
+    else:
+        adjudications = ChainState(rows=0, intact=True, head_at=lambda _k: None)
+    result = verify_anchor(receipt, key_path=key_path,
+                           chains={"mutations": mutations,
+                                   "adjudications": adjudications})
+    if result.ok:
+        console.print("[green]intact[/green]: both chains match the signed "
+                      "anchor [dim](append-only extension)[/dim]")
+        return
+    for f in result.failures:
+        console.print(f"[red]TAMPERED[/red]: {f}")
+    raise typer.Exit(1)
 
 
 def main() -> None:

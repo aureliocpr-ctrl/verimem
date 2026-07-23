@@ -53,6 +53,12 @@ from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
 from .mutation_audit import TABLE_SQL as _MUTATION_AUDIT_TABLE
 from .mutation_audit import (
+    count_conn as _audit_count_conn,
+)
+from .mutation_audit import (
+    head_at_conn as _audit_head_at_conn,
+)
+from .mutation_audit import (
     head_conn as _audit_head_conn,
 )
 from .mutation_audit import (
@@ -5105,6 +5111,18 @@ class SemanticMemory:
         """Current mutation-audit chain head (archive it off-box)."""
         with self._connect() as conn:
             return _audit_head_conn(conn)
+
+    def audit_count(self) -> int:
+        """Number of chained mutation rows — recorded in a signed anchor so a
+        later verify can tell tail-truncation from stasis."""
+        with self._connect() as conn:
+            return _audit_count_conn(conn)
+
+    def audit_head_at(self, count: int) -> str | None:
+        """Stored head of the ``count``-th chained mutation row (1-indexed), or
+        ``None`` out of range — the anchor's rewrite/truncate+reinsert check."""
+        with self._connect() as conn:
+            return _audit_head_at_conn(conn, count)
 
     @staticmethod
     def _row(r: sqlite3.Row) -> Fact:

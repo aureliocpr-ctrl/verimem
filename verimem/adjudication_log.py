@@ -232,3 +232,25 @@ class AdjudicationLog:
                 "SELECT entry_hash FROM adjudications WHERE entry_hash IS NOT NULL "
                 "ORDER BY rowid DESC LIMIT 1").fetchone()
         return r["entry_hash"] if r else None
+
+    def count(self) -> int:
+        """Number of chained rows (``entry_hash`` present — pre-chain legacy rows
+        are excluded, matching ``head()``). A signed anchor records this so verify
+        can tell a truncated tail from an unchanged chain."""
+        with self._conn() as conn:
+            r = conn.execute(
+                "SELECT COUNT(*) AS n FROM adjudications "
+                "WHERE entry_hash IS NOT NULL").fetchone()
+        return int(r["n"]) if r else 0
+
+    def head_at(self, count: int) -> str | None:
+        """Stored ``entry_hash`` of the ``count``-th chained row (1-indexed, over
+        the non-NULL-hash rows in rowid order), or ``None`` out of range — the
+        anchor's rewrite / truncate+reinsert check for this chain."""
+        if count <= 0:
+            return None
+        with self._conn() as conn:
+            r = conn.execute(
+                "SELECT entry_hash FROM adjudications WHERE entry_hash IS NOT NULL "
+                "ORDER BY rowid ASC LIMIT 1 OFFSET ?", (count - 1,)).fetchone()
+        return r["entry_hash"] if r else None

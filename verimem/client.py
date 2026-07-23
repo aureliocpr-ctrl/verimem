@@ -1078,13 +1078,15 @@ class Memory:
         return None if log is None else log.head()
 
     def audit_head_signed(self) -> dict | None:
-        """Anchor-B: the chain head PLUS its ed25519 signature under the
-        operator's EXTERNAL key (``VERIMEM_AUDIT_SIGNING_KEY`` = path to a
-        private PEM). Archive both off-box: a later ``audit_verify()`` +
-        signature check detects even a full-chain rewrite AND a forged head.
+        """DEPRECATED — signs only the ADJUDICATION chain's BARE head. Prefer
+        ``audit_anchor()``, which signs a receipt over BOTH chains and binds
+        chain identity + row counts into the signature (a bare head does not,
+        so a signature for one chain's head can be presented as another's).
+
+        Anchor-B: the chain head PLUS its ed25519 signature under the operator's
+        EXTERNAL key (``VERIMEM_AUDIT_SIGNING_KEY`` = path to a private PEM).
         ``None`` when no key is configured or the trail is empty; a configured
-        key that cannot sign raises loudly (an operator who asked for signing
-        must never silently not get it)."""
+        key that cannot sign raises loudly."""
         import os as _os
         key_path = _os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()
         if not key_path:
@@ -1095,6 +1097,68 @@ class Memory:
         from .tamper_evidence import sign_head
         return {"head": head, "signature": sign_head(head, key_path),
                 "algorithm": "ed25519"}
+
+    def audit_anchor(self) -> dict:
+        """A SIGNED anchor receipt over BOTH audit chains (mutations + gate
+        adjudications) — head AND row count of each, a timestamp, and an ed25519
+        signature over the canonical payload under ``VERIMEM_AUDIT_SIGNING_KEY``
+        (the operator's private PEM). Archive it off-box; a later
+        ``audit_verify_anchor()`` recomputes both chains and detects a full-chain
+        rewrite or a tail-truncate+reinsert that an in-DB ``verify`` cannot see.
+
+        No key configured RAISES (this method exists to sign — unlike
+        ``audit_head_signed``'s honest ``None``, a silent no-op here would be a
+        false sense of protection)."""
+        import os as _os
+        key_path = _os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()
+        if not key_path:
+            raise RuntimeError(
+                "VERIMEM_AUDIT_SIGNING_KEY is not configured — audit_anchor "
+                "exists to SIGN a receipt; set it to the operator's ed25519 "
+                "private PEM path (this never silently returns None)")
+        import time as _time
+
+        from .audit_anchor import build_payload, sign_anchor
+        adj = self._adjudication_log_ro()
+        payload = build_payload(
+            ts=_time.time(),
+            mutations_head=self.semantic.audit_head(),
+            mutations_rows=self.semantic.audit_count(),
+            adjudications_head=adj.head() if adj is not None else None,
+            adjudications_rows=adj.count() if adj is not None else 0)
+        return sign_anchor(payload, key_path)
+
+    def audit_verify_anchor(self, receipt: dict):
+        """Verify a signed anchor receipt against the live chains: signature
+        valid, both chains intact, row counts only grew, and each anchored head
+        still sits at its anchored row count. Returns an
+        ``audit_anchor.AnchorResult(ok, failures)`` naming any failing chain +
+        check. The verification key is ``VERIMEM_AUDIT_PUBLIC_KEY`` (public PEM)
+        or, failing that, ``VERIMEM_AUDIT_SIGNING_KEY`` (private PEM — the public
+        key is derived from it)."""
+        import os as _os
+        key_path = (_os.environ.get("VERIMEM_AUDIT_PUBLIC_KEY", "").strip()
+                    or _os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip())
+        if not key_path:
+            raise RuntimeError(
+                "no verification key configured — set VERIMEM_AUDIT_PUBLIC_KEY "
+                "(public PEM) or VERIMEM_AUDIT_SIGNING_KEY (private PEM)")
+        from .audit_anchor import ChainState, verify_anchor
+        adj = self._adjudication_log_ro()
+        mutations = ChainState(
+            rows=self.semantic.audit_count(),
+            intact=self.semantic.audit_verify() is None,
+            head_at=self.semantic.audit_head_at)
+        if adj is not None:
+            adjudications = ChainState(
+                rows=adj.count(), intact=adj.verify() is None,
+                head_at=adj.head_at)
+        else:
+            adjudications = ChainState(rows=0, intact=True,
+                                       head_at=lambda _k: None)
+        return verify_anchor(receipt, key_path=key_path,
+                             chains={"mutations": mutations,
+                                     "adjudications": adjudications})
 
     def _audit_record(self, adjudication: dict, *, topic: Any, proposition: str,
                       fact_id: str | None, judge: Any, layers: list) -> None:

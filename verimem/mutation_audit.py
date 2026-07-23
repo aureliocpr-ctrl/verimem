@@ -65,6 +65,8 @@ from .tamper_evidence import entry_hash as _entry_hash
 __all__ = [
     "MUTATION_ACTIONS",
     "TABLE_SQL",
+    "count_conn",
+    "head_at_conn",
     "head_conn",
     "record_mutation",
     "require_principal",
@@ -203,4 +205,28 @@ def head_conn(conn: sqlite3.Connection) -> str | None:
     r = conn.execute(
         "SELECT entry_hash FROM audit_mutations ORDER BY rowid DESC LIMIT 1"
     ).fetchone()
+    return r[0] if r else None
+
+
+def count_conn(conn: sqlite3.Connection) -> int:
+    """Number of chained rows (``entry_hash`` present). The signed anchor
+    records this so a later verify can tell "no new rows" (count unchanged)
+    from "tail truncated to an older length" (count shrank)."""
+    r = conn.execute(
+        "SELECT COUNT(*) FROM audit_mutations WHERE entry_hash IS NOT NULL"
+    ).fetchone()
+    return int(r[0]) if r else 0
+
+
+def head_at_conn(conn: sqlite3.Connection, count: int) -> str | None:
+    """The stored ``entry_hash`` of the ``count``-th chained row (1-indexed,
+    rowid order), or ``None`` when ``count`` is out of range. Paired with an
+    intact-chain check, matching this against an anchored head detects a
+    full-chain rewrite or a truncate+reinsert that ``verify_conn`` alone
+    cannot."""
+    if count <= 0:
+        return None
+    r = conn.execute(
+        "SELECT entry_hash FROM audit_mutations WHERE entry_hash IS NOT NULL "
+        "ORDER BY rowid ASC LIMIT 1 OFFSET ?", (count - 1,)).fetchone()
     return r[0] if r else None
