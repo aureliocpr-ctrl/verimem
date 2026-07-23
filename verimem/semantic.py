@@ -788,7 +788,20 @@ class SupersedeConflict(RuntimeError):
 #:        restavano senza colonna e OGNI write moriva con "table facts has no
 #:        column named epistemic" (store reale, 6120 fatti, 2026-07-15).
 #:        Registrare una migrazione senza alzare il target = non averla.
-_SEMANTIC_TARGET_VERSION: int = 14
+#:   v15 — 2026-07-19 ``confidence_tier`` write-time. STESSO incidente della
+#:        nota v14, terza e quarta occorrenza: la 15 fu registrata col target
+#:        fermo a 14 (mai girata sugli store esistenti), e il 2026-07-22
+#:        ``writer_principal`` fu APPESO alla v13→v14 già consumata. Scoperto
+#:        LIVE dal primo ``verimem save`` di dogfooding (2026-07-23): ogni
+#:        write SDK/MCP su un DB pre-2026-07-19 moriva con "no column named
+#:        confidence_tier". La disciplina documentata ha fallito due volte →
+#:        da qui in poi l'invariante è MECCANICO: ``_ensure_fact_columns``
+#:        (chiamata post-ladder in ``__init__``) confronta le colonne reali
+#:        con lo schema atteso e ripara gli ADD COLUMN additivi mancanti,
+#:        loggando il self-heal (il bump dimenticato resta visibile, ma non
+#:        rompe mai più un write in produzione).
+#:   v16 — 2026-07-23 ``writer_principal`` nel SUO gradino raggiungibile.
+_SEMANTIC_TARGET_VERSION: int = 16
 
 #: v8 (2026-06-03) — half-life di default per il decadimento di freshness
 #: nel recall. is_stale(age, half_life, floor=0.5) e' True quando il fattore
@@ -1365,6 +1378,74 @@ def _migrate_v14_to_v15(conn: sqlite3.Connection) -> None:
             raise
 
 
+def _migrate_v15_to_v16(conn: sqlite3.Connection) -> None:
+    """v16 (2026-07-23): ``writer_principal`` in a REACHABLE ladder step.
+
+    The column was appended to ``_migrate_v13_to_v14`` on 2026-07-22 — a
+    migration every live store had already consumed, so it never ran there
+    (v15 history note). Idempotent for the fresh installs that did get it
+    via v14 or the CREATE TABLE."""
+    try:
+        conn.execute("ALTER TABLE facts ADD COLUMN writer_principal TEXT")
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" not in str(exc).lower():
+            raise
+
+
+#: Additive fact columns and their exact DDL — the mechanical schema guard.
+#: ``_ensure_fact_columns`` applies any that are MISSING after the versioned
+#: ladder ran, because twice (epistemic 2026-07-15, confidence_tier /
+#: writer_principal 2026-07-23) a column shipped in a ladder step old stores
+#: never re-run, and every production write died. Additive-only (ADD COLUMN,
+#: nullable or constant default) so the repair is always safe; the WARNING
+#: keeps the forgotten-bump visible instead of silently absorbed.
+_FACT_COLUMN_DDL: dict[str, str] = {
+    "superseded_by": "ALTER TABLE facts ADD COLUMN superseded_by TEXT",
+    "superseded_at": "ALTER TABLE facts ADD COLUMN superseded_at REAL",
+    "superseded_reason": "ALTER TABLE facts ADD COLUMN superseded_reason TEXT",
+    "verified_by": ("ALTER TABLE facts ADD COLUMN verified_by TEXT "
+                    "NOT NULL DEFAULT '[]'"),
+    "status": ("ALTER TABLE facts ADD COLUMN status TEXT "
+               "NOT NULL DEFAULT 'model_claim'"),
+    "source_signature": "ALTER TABLE facts ADD COLUMN source_signature TEXT",
+    "trigger_keywords": "ALTER TABLE facts ADD COLUMN trigger_keywords TEXT",
+    "applicable_when": "ALTER TABLE facts ADD COLUMN applicable_when TEXT",
+    "worked_example": "ALTER TABLE facts ADD COLUMN worked_example TEXT",
+    "lineage_to": "ALTER TABLE facts ADD COLUMN lineage_to TEXT",
+    "writer_role": ("ALTER TABLE facts ADD COLUMN writer_role TEXT "
+                    "NOT NULL DEFAULT 'agent_inference'"),
+    "meta_narrative": ("ALTER TABLE facts ADD COLUMN meta_narrative INTEGER "
+                       "NOT NULL DEFAULT 0"),
+    "writer_principal": "ALTER TABLE facts ADD COLUMN writer_principal TEXT",
+    "last_verified_at": "ALTER TABLE facts ADD COLUMN last_verified_at REAL",
+    "embedding_model": "ALTER TABLE facts ADD COLUMN embedding_model TEXT",
+    "valid_until": "ALTER TABLE facts ADD COLUMN valid_until REAL",
+    "derives_from": "ALTER TABLE facts ADD COLUMN derives_from TEXT",
+    "grounding_score": "ALTER TABLE facts ADD COLUMN grounding_score REAL",
+    "confidence_tier": "ALTER TABLE facts ADD COLUMN confidence_tier TEXT",
+    "asserted_at": "ALTER TABLE facts ADD COLUMN asserted_at REAL",
+    "epistemic": "ALTER TABLE facts ADD COLUMN epistemic TEXT",
+}
+
+
+def _ensure_fact_columns(conn: sqlite3.Connection) -> None:
+    """Self-heal additive fact columns the versioned ladder failed to add."""
+    present = {r[1] for r in conn.execute("PRAGMA table_info(facts)")}
+    for col, ddl in _FACT_COLUMN_DDL.items():
+        if col in present:
+            continue
+        try:
+            conn.execute(ddl)
+        except sqlite3.OperationalError as exc:
+            if "duplicate column name" not in str(exc).lower():
+                raise
+        _LOG.warning(
+            "schema self-heal: facts.%s was missing after the versioned "
+            "ladder (a migration bump was forgotten — see the v15 history "
+            "note); column added mechanically", col,
+        )
+
+
 def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
     """2026-07-13 epistemic label (cortex transfer #1).
 
@@ -1834,8 +1915,13 @@ class SemanticMemory:
                     (13, _migrate_v12_to_v13),
                     (14, _migrate_v13_to_v14),
                     (15, _migrate_v14_to_v15),
+                    (16, _migrate_v15_to_v16),
                 ],
             )
+            # Mechanical guard AFTER the versioned ladder: repair any
+            # additive column a forgotten target-bump left behind (v15
+            # history note — this class broke production writes twice).
+            _ensure_fact_columns(conn)
         # Cycle #135 (2026-05-17): hot-path recall cache. The default
         # recall(topic=None) used to do np.stack([deserialize(r)]) on
         # every row on every call — O(N) Python per query. We now hold

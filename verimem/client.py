@@ -193,6 +193,9 @@ class Memory:
         user_name: str | None = None,
         purpose: str | None = None,
         principal: str | None = None,
+        meta_narrative: bool = False,
+        lineage_to: list[str] | None = None,
+        confidence: float | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -255,10 +258,18 @@ class Memory:
             gate_mode = self._preset_defaults["gate_mode"]
         if ground is None:
             ground = self._preset_defaults["ground"]
+        # Continuity narrative lane (2026-07-23): meta_narrative declares a
+        # retrospective session checkpoint. It relaxes ONLY the L1.x
+        # self-claim family (category error on a chronicle); injection/L3/L4
+        # are untouched and the row is stamped meta_narrative=1 +
+        # writer_role='user' so listings can tell chronicle from screened
+        # claim. In-process callers only — network handlers must never wire
+        # a client-supplied flag into this parameter.
         gate = run_validation_gate(
             proposition=text, verified_by=verified_by, topic=topic, agent=self,
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
+            narrative_l1_skip=meta_narrative,
         )
         warnings = list(gate.warnings)
         action = gate.action
@@ -313,6 +324,13 @@ class Memory:
                     confidence_tier=_confidence_tier(
                         gate.grounding_score, getattr(gate, "judge", None),
                         getattr(gate, "threshold", None)))
+        if confidence is not None:
+            fact.confidence = float(confidence)
+        if lineage_to:
+            fact.lineage_to = [str(x) for x in lineage_to if str(x).strip()]
+        if meta_narrative:
+            fact.meta_narrative = True
+            fact.writer_role = "user"  # in-process operator surface
         if action == "downgrade":
             fact.status = "quarantined"
         self.semantic.store(fact, embed="sync", purpose=purpose)

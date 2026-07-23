@@ -934,6 +934,7 @@ def run_validation_gate(
     force_persist: bool = False,
     writer_role: str | None = None,
     meta_narrative: bool = False,
+    narrative_l1_skip: bool = False,
     hook_token: str | None = None,
     repo_root: Any = None,
     source: str | None = None,
@@ -977,7 +978,23 @@ def run_validation_gate(
     if meta_narrative and verify_trusted_writer(writer_role, hook_token):
         return GateResult(action="persist")
 
-    warnings = _l1_warnings(proposition, verified_by)
+    # Continuity narrative lane (2026-07-23, adversarial design glm+deepseek):
+    # a retrospective session checkpoint naturally reads like the self-claims
+    # the L1.x family polices ("shipped", "works", "tests pass") — category
+    # error on a declared chronicle. narrative_l1_skip suppresses ONLY that
+    # family (and its evidence-existence companion below); the injection
+    # screen, L3 contradiction and L4 grounding still run, and the fact is
+    # stamped meta_narrative=1 so every listing can tell chronicle from
+    # screened claim. SECURITY: this kwarg is for IN-PROCESS surfaces only
+    # (SDK/CLI — callers who could anyway open the SQLite file, and who can
+    # already pass validate="off", a strictly stronger lever). It must NEVER
+    # be wired from network arguments: the MCP/gateway handlers keep
+    # forwarding client meta_narrative only into the token-gated path above
+    # (fail-closed), never into this one — guarded by tests
+    # (test_mcp_arguments_meta_narrative_does_not_skip_l1,
+    # test_gateway_ignores_body_meta_narrative_and_lineage).
+    warnings = ([] if narrative_l1_skip
+                else _l1_warnings(proposition, verified_by))
     contradicting_ids: list[str] = []
     supersede_ids: list[str] = []
     advice = ""
@@ -995,7 +1012,8 @@ def run_validation_gate(
     # davvero nel repo -> trattalo come claim non supportato (downgrade). Senza
     # repo_root il comportamento resta format-only (default invariato, hermetic-
     # safe: i test honoring-evidence non passano repo_root).
-    if repo_root is not None and not warnings and verified_by is not None:
+    if (repo_root is not None and not warnings and verified_by is not None
+            and not narrative_l1_skip):  # companion of the L1 family above
         would_fire_without_evidence = _l1_warnings(proposition, None)
         if would_fire_without_evidence:
             from .provenance_validator import any_evidence_ref_exists

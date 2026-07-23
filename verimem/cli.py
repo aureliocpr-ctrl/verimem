@@ -2880,6 +2880,372 @@ def agent_guide_cmd() -> None:
     print(AGENT_GUIDE_FULL)
 
 
+# --- Session continuity (2026-07-23) ------------------------------------------
+# The chain ergonomics that previously lived only in an internal legacy tool
+# (raw SQL, full gate bypass) — now product commands over the same
+# facts.lineage_to column: save / tip / recent / chain / handoff / digest.
+# Every write goes through Memory.add (receipt printed); checkpoints are
+# declared narrative (meta_narrative=1, writer_role='user', L1 self-claim
+# family relaxed, injection/L3/L4 active) and every listing MARKS them, so a
+# chronicle is never mistaken for a screened claim (adversarial review
+# glm+deepseek, 2026-07-23).
+
+chain_app = typer.Typer(help="Navigate and repair the session lineage chain",
+                        no_args_is_help=True)
+handoff_app = typer.Typer(help="Session handoffs: prepare / show / log",
+                          no_args_is_help=True)
+app.add_typer(chain_app, name="chain")
+app.add_typer(handoff_app, name="handoff")
+
+
+def _continuity_guard(local: bool) -> None:
+    """Fail-loud in server mode (adversarial glm #6): continuity operates on
+    the LOCAL embedded store; with VERIMEM_SERVER_URL set every other surface
+    talks to the server, so a silent local write/read would be invisible to
+    them. ``--local`` declares the split is intentional."""
+    if local:
+        return
+    if (os.environ.get("VERIMEM_SERVER_URL") or "").strip():
+        console.print(
+            "[red]VERIMEM_SERVER_URL is set:[/red] continuity commands run on "
+            "the LOCAL embedded store, which the memory server's clients will "
+            "NOT see. Pass [bold]--local[/bold] if that split is intentional.")
+        raise typer.Exit(1)
+
+
+def _continuity_memory():
+    """Embedded-store SDK client stamped with the CLI surface principal.
+
+    Pointed at the SAME env-resolved db file the read commands use
+    (``_facts_sm``): ``Memory()``'s default comes from the import-frozen
+    CONFIG, and a write/read path split here would silently save
+    checkpoints where tip/digest/chain never look.
+    """
+    from .client import Memory
+    return Memory(path=_facts_sm().db_path, principal="cli:local")
+
+
+def _lineage_exit(exc: Exception) -> typer.Exit:
+    from .continuity import LineageRefError
+    console.print(f"[red]{exc}[/red]")
+    return typer.Exit(2 if isinstance(exc, LineageRefError) else 1)
+
+
+def _node_line(node: dict) -> str:
+    """One compact line per chain node: id, time, status, topic, markers."""
+    import time as _time
+    ts = _time.strftime("%m-%d %H:%M", _time.localtime(node["created_at"]))
+    mark = " [magenta]narrative[/magenta]" if node.get("meta_narrative") else ""
+    parents = node.get("lineage_to") or []
+    arrow = f"  -> {parents[0][:12]}" if parents else ""
+    extra = (f" (+{len(parents) - 1} parent)" if len(parents) > 1 else "")
+    return (f"  {node['id'][:12]}  {ts}  {node['status']:<12} "
+            f"{(node['topic'] or '(no topic)')[:48]}{mark}{arrow}{extra}")
+
+
+@app.command("save")
+def save_cmd(
+    text: str = typer.Argument(None, help="Checkpoint text (or --from-file)."),
+    topic: str = typer.Option("session", "--topic", "-t"),
+    lineage_to: str = typer.Option(
+        None, "--lineage-to",
+        help="auto (session segment) | topic (exact thread) | latest | none "
+             "(root) | id-prefix. Default: auto, falling back to root."),
+    from_file: str = typer.Option(
+        None, "--from-file", help="Read the checkpoint body from a file."),
+    verified_by: list[str] = typer.Option(  # noqa: B008 — typer idiom
+        None, "--verified-by", help="Provenance ref (repeatable)."),
+    confidence: float = typer.Option(
+        None, "--confidence", help="Override the 0.5 narrative default."),
+    source: str = typer.Option(
+        None, "--source", help="Source text to ground the checkpoint (L4)."),
+    json_out: bool = typer.Option(False, "--json"),
+    local: bool = typer.Option(
+        False, "--local", help="Run on the local store even in server mode."),
+) -> None:
+    """Save a session checkpoint on the lineage chain — THROUGH the gate.
+
+    The write is declared narrative: retrospective chronicle, not a claim
+    the agent's own code works — so the L1 self-claim screen is relaxed
+    while injection/contradiction/grounding screens stay live, the receipt
+    is printed, and the fact is stamped (and listed) as narrative.
+    """
+    _continuity_guard(local)
+    from .continuity import LineageNotFound, LineageRefError, save_checkpoint
+    body = text
+    if from_file:
+        try:
+            body = Path(from_file).read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            console.print(f"[red]cannot read --from-file:[/red] {exc}")
+            raise typer.Exit(2) from exc
+    if not (body or "").strip():
+        console.print("[red]nothing to save:[/red] give TEXT or --from-file")
+        raise typer.Exit(2)
+    m = _continuity_memory()
+    try:
+        r = save_checkpoint(
+            m, body, topic=topic, lineage_to=lineage_to,
+            verified_by=list(verified_by or []) or None,
+            confidence=confidence, source=source, principal="cli:local")
+    except (LineageRefError, LineageNotFound) as exc:
+        raise _lineage_exit(exc) from exc
+    if json_out:
+        import json as _json
+        print(_json.dumps(r, ensure_ascii=False, default=str))
+        raise typer.Exit(0 if r.get("stored") else 1)
+    disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
+    console.print(f"[green]{disp}[/green] id={r.get('id') or '-'} "
+                  f"topic={topic!r} [magenta]narrative[/magenta]")
+    resolved = r.get("lineage_resolved")
+    if resolved:
+        console.print(f"  chained -> {resolved[:12]}")
+    else:
+        seg = topic.split('/', 1)[0]
+        console.print(f"  root checkpoint (no prior session fact under "
+                      f"'{seg}')")
+    if r.get("status") == "quarantined":
+        console.print("[yellow]stored QUARANTINED[/yellow] — the injection/"
+                      "contradiction screens fired; see warnings below")
+        for w in (r.get("warnings") or [])[:3]:
+            console.print(f"  [dim]{w.get('layer')}: {w.get('advice', '')[:100]}[/dim]")
+    if not r.get("stored"):
+        console.print(f"[red]not stored:[/red] {r.get('status')}")
+        raise typer.Exit(1)
+
+
+@app.command("tip")
+def tip_cmd(
+    json_out: bool = typer.Option(False, "--json"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Where were we? The newest fact, with its chain pointer."""
+    _continuity_guard(local)
+    from .continuity import tip_fact
+    t = tip_fact(_facts_sm())
+    if t is None:
+        console.print("(no facts yet)")
+        raise typer.Exit(0)
+    if json_out:
+        import json as _json
+        print(_json.dumps(t, ensure_ascii=False, default=str))
+        raise typer.Exit(0)
+    import time as _time
+    ts = _time.strftime("%Y-%m-%d %H:%M", _time.localtime(t["created_at"]))
+    mark = " [magenta]narrative[/magenta]" if t.get("meta_narrative") else ""
+    console.print(f"[bold]{t['id'][:12]}[/bold]  {ts}  {t['status']}{mark}")
+    console.print(f"  topic:   {t['topic'] or '(no topic)'}")
+    parents = t.get("lineage_to") or []
+    console.print(f"  chained: {' , '.join(p[:12] for p in parents) or '(root)'}")
+    console.print(f"  preview: {t['preview']}")
+
+
+@app.command("recent")
+def recent_cmd(
+    n: int = typer.Option(10, "-n", "--count"),
+    include_hidden: bool = typer.Option(
+        False, "--all", help="Include quarantined/orphaned/user_belief."),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """The last N facts, one line each, with chain + narrative markers."""
+    _continuity_guard(local)
+    from .continuity import recent_facts
+    rows = recent_facts(_facts_sm(), n=n, include_hidden=include_hidden)
+    if not rows:
+        console.print("(no facts)")
+        raise typer.Exit(0)
+    for node in rows:
+        console.print(_node_line(node))
+
+
+@chain_app.command("show")
+def chain_show_cmd(
+    fact_id: str = typer.Argument(..., help="Fact id prefix (>= 6 chars)."),
+    forward: bool = typer.Option(False, "--forward",
+                                 help="Descendants instead of ancestors."),
+    json_out: bool = typer.Option(False, "--json"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Walk the story: root -> fact (or its descendants with --forward)."""
+    _continuity_guard(local)
+    from .continuity import (
+        LineageNotFound,
+        LineageRefError,
+        resolve_prefix,
+        walk_backward,
+        walk_forward,
+    )
+    sm = _facts_sm()
+    try:
+        start = resolve_prefix(sm, fact_id)
+    except (LineageRefError, LineageNotFound) as exc:
+        raise _lineage_exit(exc) from exc
+    chain = (walk_forward(sm, start) if forward else walk_backward(sm, start))
+    if json_out:
+        import json as _json
+        print(_json.dumps(
+            {"start": start, "direction": "forward" if forward else "backward",
+             "n_hops": len(chain), "chain": chain},
+            ensure_ascii=False, default=str))
+        raise typer.Exit(0)
+    if not chain:
+        console.print("(empty chain)")
+        raise typer.Exit(0)
+    console.print(f"[bold]lineage {'forward' if forward else 'backward'} "
+                  f"({len(chain)} hops)[/bold]")
+    for node in chain:
+        console.print(_node_line(node))
+        for p in node.get("extra_parents", []):
+            console.print(f"      [dim]also derived from {p[:12]}[/dim]")
+        if node.get("missing_parent"):
+            console.print(f"      [yellow]missing parent "
+                          f"{node['missing_parent'][:12]} (deleted?)[/yellow]")
+
+
+@chain_app.command("orphans")
+def chain_orphans_cmd(
+    since: str = typer.Option("24h", "--since",
+                              help="Window: NUM[m|h|d|w] or 'today'."),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Facts in the window with no chain pointer (disconnected story)."""
+    _continuity_guard(local)
+    from .continuity import LineageRefError, find_orphans, since_epoch
+    try:
+        cutoff = since_epoch(since)
+    except LineageRefError as exc:
+        raise _lineage_exit(exc) from exc
+    r = find_orphans(_facts_sm(), since_epoch=cutoff)
+    n = len(r["orphans"])
+    console.print(f"[bold]{n}/{r['total']}[/bold] facts since {since} "
+                  "have no lineage")
+    for node in r["orphans"]:
+        console.print(_node_line(node))
+    if n:
+        console.print("[dim]repair: verimem chain relink <child> --to "
+                      "<parent>[/dim]")
+
+
+@chain_app.command("relink")
+def chain_relink_cmd(
+    child: str = typer.Argument(..., help="Fact to repoint (id prefix)."),
+    to: str = typer.Option(..., "--to", help="New parent (id prefix)."),
+    add: bool = typer.Option(False, "--add",
+                             help="Append as extra parent instead of replace."),
+    yes: bool = typer.Option(False, "--yes", help="Skip the confirmation."),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Repair the chain: repoint a fact's narrative parent (glm #7)."""
+    _continuity_guard(local)
+    from .continuity import LineageNotFound, LineageRefError, relink
+    sm = _facts_sm()
+    if not yes and not typer.confirm(
+            f"Repoint {child} -> {to} ({'append' if add else 'replace'})?"):
+        console.print("aborted")
+        raise typer.Exit(1)
+    try:
+        r = relink(sm, child, to, add=add)
+    except (LineageRefError, LineageNotFound) as exc:
+        raise _lineage_exit(exc) from exc
+    console.print(f"[green]relinked[/green] {r['id'][:12]} "
+                  f"lineage: {r['previous'] or '(root)'} -> {r['lineage_to']}")
+
+
+@handoff_app.command("prepare")
+def handoff_prepare_cmd(
+    text: str = typer.Argument(None, help="Handoff body (or --from-file)."),
+    label: str = typer.Option("default", "--label"),
+    from_file: str = typer.Option(None, "--from-file"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Save a handoff for the next session, auto-linked to the previous
+    handoff AND the current work tip (never a disconnected island)."""
+    _continuity_guard(local)
+    from .continuity import handoff_prepare
+    body = text
+    if from_file:
+        try:
+            body = Path(from_file).read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            console.print(f"[red]cannot read --from-file:[/red] {exc}")
+            raise typer.Exit(2) from exc
+    if not (body or "").strip():
+        console.print("[red]nothing to save:[/red] give TEXT or --from-file")
+        raise typer.Exit(2)
+    r = handoff_prepare(_continuity_memory(), body, label=label,
+                        principal="cli:local")
+    if not r.get("stored"):
+        console.print(f"[red]not stored:[/red] {r.get('status')}")
+        raise typer.Exit(1)
+    parents = r.get("lineage_resolved") or []
+    console.print(f"[green]handoff saved[/green] id={r.get('id')} "
+                  f"label={label!r} parents={[p[:12] for p in parents] or 'root'}")
+
+
+@handoff_app.command("show")
+def handoff_show_cmd(
+    label: str = typer.Option("default", "--label"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Print the latest handoff for a label (full body)."""
+    _continuity_guard(local)
+    from .continuity import handoff_show
+    h = handoff_show(_facts_sm(), label=label)
+    if h is None:
+        console.print(f"(no handoff for label '{label}')")
+        raise typer.Exit(0)
+    import time as _time
+    ts = _time.strftime("%Y-%m-%d %H:%M", _time.localtime(h["created_at"]))
+    console.print(f"[bold]{h['id'][:12]}[/bold]  {ts}  {h['topic']}")
+    console.print(h["proposition"])
+
+
+@handoff_app.command("log")
+def handoff_log_cmd(
+    label: str = typer.Option("default", "--label"),
+    n: int = typer.Option(10, "-n", "--count"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Handoff history for a label, newest first."""
+    _continuity_guard(local)
+    from .continuity import handoff_log
+    rows = handoff_log(_facts_sm(), label=label, limit=n)
+    if not rows:
+        console.print(f"(no handoffs for label '{label}')")
+        raise typer.Exit(0)
+    for node in rows:
+        console.print(_node_line(node))
+
+
+@app.command("digest")
+def digest_cmd(
+    hours: float = typer.Option(24.0, "--hours"),
+    json_out: bool = typer.Option(False, "--json"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Window recap: what happened, what the gate did, how linked the
+    story is — the trust-transparent session narrative."""
+    _continuity_guard(local)
+    from .continuity import collect_digest
+    d = collect_digest(_facts_sm(), hours=hours)
+    if json_out:
+        import json as _json
+        print(_json.dumps(d, ensure_ascii=False, default=str))
+        raise typer.Exit(0)
+    console.print(f"[bold]last {hours:g}h[/bold]  {d['n_facts']} facts  "
+                  f"velocity {d['velocity_per_hour']}/h  "
+                  f"orphans {d['orphan_ratio']:.0%}")
+    if d["by_status"]:
+        parts = ", ".join(f"{k}: {v}" for k, v in sorted(d["by_status"].items()))
+        console.print(f"  gate outcome: {parts}")
+    for t in d["themes"][:8]:
+        console.print(f"  {t['namespace']:<40} {t['n_facts']:>4} facts  "
+                      f"linked {t['linked_ratio']:.0%}")
+    if d["tip"] is not None:
+        console.print("[bold]tip[/bold]")
+        console.print(_node_line(d["tip"]))
+
+
 # --- `verimem agent` namespace (VERIMEM-MAP.md 1b, 2026-07-18) -----------------
 # The product CLI is verified MEMORY; the agent runtime (chat/code/run/benchmark,
 # sleep cycles, swarm/teams/lab) moves under `verimem agent <cmd>`. Done by
