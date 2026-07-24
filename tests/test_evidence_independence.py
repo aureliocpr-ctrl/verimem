@@ -136,6 +136,28 @@ def test_self_citation_is_not_independent(tmp_path):
     assert "self" in v.reason
 
 
+def test_untrusted_claimant_cannot_launder_through_trusted_evidence(tmp_path):
+    """Adversarial review 2026-07-25 (glm-5.2 + deepseek-v4-pro, convergent
+    2/2): checking only the AUTHOR's channel lets an unauthenticated claimant
+    launder itself through someone else's evidence. It cites a real document
+    indexed by a real tenant — and MISREPRESENTS what that document says. L4
+    entailment is the only backstop and, on natural language, it is
+    best-effort, not proof.
+
+    So both ends must be authenticated: the evidence has to have entered
+    through a channel that authenticates, AND the one invoking it has to be
+    someone. Cost, stated plainly: MCP writers (always `mcp:unbound`) never
+    benefit from this rule until MCP clients carry a bound identity.
+    """
+    ds = DocumentStore(db_path=tmp_path / "docs.db")
+    ds.ingest("real-spec", "The API returns 429 on rate limit.",
+              principal="gw:team-alpha")
+    v = independence_verdict(verified_by=["doc:real-spec"],
+                             claimant="mcp:unbound", store=ds)
+    assert v.independent is False
+    assert "claimant" in v.reason
+
+
 def test_poison_then_cite_across_channels_is_not_independent(tmp_path):
     """THE attack the AND rule exists for: poison lands over the
     unauthenticated MCP surface, a different (SDK) principal cites it. Two

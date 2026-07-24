@@ -35,9 +35,15 @@ import hashlib
 import re
 from pathlib import Path
 
-__all__ = ["PIN_PREFIX", "pin_for_ref", "verify_pin"]
+__all__ = ["PIN_PREFIX", "UNRESOLVED", "pin_for_ref", "verify_pin"]
 
 PIN_PREFIX = "sha256:"
+
+#: Recorded in place of a pin when a ``file:`` ref could not be read at write
+#: time. Without it, a row with no pins was ambiguous — pre-feature row, or a
+#: post-feature row citing a file that was not there? Absence proved nothing
+#: (adversarial review 2026-07-25, glm-5.2 Q6.5).
+UNRESOLVED = "unresolved"
 
 #: Same shape the provenance verifier accepts: ``file:<path>:<lineno>``.
 _FILE_REF = re.compile(r"^file:(.+):(\d+)$", re.IGNORECASE)
@@ -59,6 +65,28 @@ def _normalise(line: str) -> str:
 
 def _digest(text: str) -> str:
     return PIN_PREFIX + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+#: A "moved" verdict is only meaningful for a line distinctive enough that
+#: finding it elsewhere means the CITATION survived, not that a ubiquitous
+#: token happens to recur. Two crude conditions, both necessary: enough
+#: characters, and more than one word.
+_DISTINCT_MIN_CHARS = 16
+_DISTINCT_MIN_WORDS = 3
+
+
+def _is_distinctive(text: str) -> bool:
+    t = (text or "").strip()
+    return len(t) >= _DISTINCT_MIN_CHARS and len(t.split()) >= _DISTINCT_MIN_WORDS
+
+
+def line_of_pin(lines: list[str], pin: str) -> str:
+    """The line in ``lines`` whose digest is ``pin`` — '' if none matches."""
+    target = (pin or "").strip()
+    for x in lines or []:
+        if _digest(_normalise(x)) == target:
+            return x
+    return ""
 
 
 def _resolve(path_str: str, repo_root: Path | str | None) -> Path | None:
@@ -134,11 +162,23 @@ def verify_pin(ref: str, pin: str | None, *,
     """
     if not isinstance(pin, str) or not pin.strip():
         return "unresolvable"
+    if pin.strip() == UNRESOLVED:
+        # The receipt says nothing was ever pinned. Comparing that against
+        # today's file and calling the difference "changed" would invent a
+        # history that never existed.
+        return "unresolvable"
     line, lines = _cited_line(ref, repo_root)
     if line is None:
         return "unresolvable"
     if _digest(_normalise(line)) == pin.strip():
         return "ok"
     if lines and any(_digest(_normalise(x)) == pin.strip() for x in lines):
-        return "moved"
+        # A line has to carry enough information to testify to its own
+        # survival. `pass`, `OK`, `}` occur everywhere: rewrite the file
+        # completely and the pinned text is still SOMEWHERE, so "moved" would
+        # read as reassurance while nothing of the citation survived
+        # (adversarial review 2026-07-25, glm-5.2 + deepseek-v4-pro
+        # convergent). Below the floor, the honest answer is "changed".
+        if _is_distinctive(_normalise(line_of_pin(lines, pin))):
+            return "moved"
     return "changed"

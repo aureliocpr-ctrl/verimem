@@ -209,6 +209,19 @@ def independence_verdict(*, verified_by: Iterable[str] | None,
         # A pre-P0 row has no identity to be independent OF.
         return IndependenceVerdict(False, reason="claimant identity unknown")
     claimant = claimant.strip()
+    if not is_trusted_channel(claimant):
+        # Adversarial review 2026-07-25 (glm-5.2 + deepseek-v4-pro, convergent
+        # 2/2): the author's channel alone lets an UNAUTHENTICATED claimant
+        # launder itself through someone else's evidence — cite a real
+        # document and misrepresent what it says. L4 entailment is the only
+        # backstop and on natural language it is best-effort, not proof.
+        # Both ends must be authenticated. Declared cost: MCP writers (always
+        # `mcp:unbound`) never benefit from this rule until MCP clients carry
+        # a bound identity — deliberate, and the safe direction.
+        return IndependenceVerdict(
+            False, reason=f"claimant '{claimant}' is itself on an "
+                          f"unauthenticated channel — it cannot invoke "
+                          f"anyone's evidence as independent")
 
     near_miss: IndependenceVerdict | None = None
     for ref in refs:

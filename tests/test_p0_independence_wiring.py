@@ -149,41 +149,65 @@ async def _invoke_tool(name: str, arguments: dict[str, Any] | None = None):
 
 
 @pytest.mark.asyncio
-async def test_mcp_remember_records_the_observe_note(
+async def test_mcp_writes_are_never_independent_today(
         signed_docs, tmp_path, monkeypatch):
-    from verimem import mcp_server
+    """MCP stamps `mcp:unbound`, and after the 2026-07-25 adversarial review
+    an unauthenticated claimant can never invoke evidence as independent — it
+    could cite a real document and misrepresent it. So an MCP write stays
+    quarantined even with ENFORCE on and a gateway-signed document cited.
 
-    sm = SemanticMemory(db_path=tmp_path / "semantic" / "facts.db")
-    monkeypatch.setattr(mcp_server, "_ag", lambda: _Agent(sm))
-    out = await _invoke_tool("hippo_remember", {
-        "proposition": CLAIM, "topic": "t",
-        "verified_by": ["doc:release-notes"],
-    })
-    assert "P0_INDEPENDENCE-observe" in out
-    with sqlite3.connect(sm.db_path) as c:
-        row = c.execute("SELECT status FROM facts WHERE proposition = ?",
-                        (CLAIM,)).fetchone()
-    assert row and row[0] == "quarantined", "observe must not change outcomes"
-
-
-@pytest.mark.asyncio
-async def test_mcp_record_episode_key_facts_also_asks_the_question(
-        signed_docs, tmp_path, monkeypatch):
-    """The third write path — the one the ciclo-1 critic caught."""
+    This is the declared cost of the stricter rule, asserted rather than
+    assumed: the day MCP clients carry a bound identity, this test is the one
+    that has to change, on purpose.
+    """
     from verimem import mcp_server
 
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "facts.db")
     monkeypatch.setattr(mcp_server, "_ag", lambda: _Agent(sm))
     monkeypatch.setenv("ENGRAM_P0_INDEPENDENCE", "1")
-    await _invoke_tool("hippo_record_episode", {
-        "task_text": "run the migration", "final_answer": "done",
-        "outcome": "success",
-        "key_facts": [{"proposition": CLAIM, "topic": "kf",
-                       "verified_by": ["doc:release-notes"]}],
+    out = await _invoke_tool("hippo_remember", {
+        "proposition": CLAIM, "topic": "t",
+        "verified_by": ["doc:release-notes"],
     })
+    assert "P0_INDEPENDENCE" not in out
     with sqlite3.connect(sm.db_path) as c:
         row = c.execute("SELECT status FROM facts WHERE proposition = ?",
                         (CLAIM,)).fetchone()
-    assert row is not None, "key_facts write did not persist"
-    assert row[0] != "quarantined", (
-        "the key_facts path never asked the independence question")
+    assert row and row[0] == "quarantined"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tool,args", [
+    ("hippo_remember",
+     {"proposition": CLAIM, "topic": "t", "verified_by": ["doc:release-notes"]}),
+    ("hippo_record_episode",
+     {"task_text": "run the migration", "final_answer": "done",
+      "outcome": "success",
+      "key_facts": [{"proposition": CLAIM, "topic": "kf",
+                     "verified_by": ["doc:release-notes"]}]}),
+])
+async def test_mcp_paths_hand_the_gate_its_inputs(tool, args, signed_docs,
+                                                  tmp_path, monkeypatch):
+    """Both MCP write paths must PASS claimant + documents to the gate, even
+    though today's rule then declines. Asserting the outcome instead would
+    hide a call-site that quietly stopped forwarding them — and the missed
+    call-site is exactly what the ciclo-1 critic caught on the key_facts loop.
+    """
+    from verimem import anti_confab_gate, mcp_server
+
+    sm = SemanticMemory(db_path=tmp_path / "semantic" / "facts.db")
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _Agent(sm))
+    seen: list[dict] = []
+    real = anti_confab_gate.run_validation_gate
+
+    def _spy(**kw):
+        seen.append(kw)
+        return real(**kw)
+
+    monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _spy)
+    monkeypatch.setattr(mcp_server, "run_validation_gate", _spy, raising=False)
+    await _invoke_tool(tool, args)
+    assert seen, f"{tool} did not call the gate at all"
+    call = seen[-1]
+    assert call.get("claimant") == "mcp:unbound"
+    assert call.get("documents") is not None

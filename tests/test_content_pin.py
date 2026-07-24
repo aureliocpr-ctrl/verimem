@@ -98,12 +98,45 @@ def test_edited_line_is_changed(tmp_path):
     assert verify_pin(f"file:{p}:2", pin, repo_root=root) == "changed"
 
 
-def test_shifted_line_is_moved_not_changed(tmp_path):
-    """An insertion above the citation is the common case. Reporting it as a
-    content change would make the signal useless within a day."""
+def test_a_shifted_but_trivial_line_is_changed(tmp_path):
+    """An insertion above the citation is the common case, and reporting it as
+    a content change would make the signal useless within a day — which is why
+    `moved` exists. But it only applies above the distinctiveness floor: for a
+    line like `beta` there is no way to tell a survived citation from a
+    coincidence, and claiming otherwise would be the reassurance the
+    adversarial review objected to. See the two tests below for both sides of
+    the floor."""
     root, p = _repo(tmp_path)
     pin = pin_for_ref(f"file:{p}:2", repo_root=root)
     p.write_text("header\nalpha\nbeta\ngamma\ndelta\n", encoding="utf-8")
+    assert verify_pin(f"file:{p}:2", pin, repo_root=root) == "changed"
+
+
+def test_a_trivial_line_is_never_reported_as_moved(tmp_path):
+    """Adversarial review 2026-07-25 (glm-5.2 + deepseek-v4-pro, convergent
+    2/2): `pass` — or `OK`, or `}` — occurs everywhere. Rewrite the file
+    completely and the pinned text is still SOMEWHERE, so "moved" reads as
+    reassurance while nothing of the citation survived. A line that carries
+    no information cannot testify to its own survival: below the
+    distinctiveness floor the honest answer is `changed`.
+    """
+    root = tmp_path
+    p = tmp_path / "u.py"
+    p.write_text("def f():\n    pass\n", encoding="utf-8")
+    pin = pin_for_ref(f"file:{p}:2", repo_root=root)
+    p.write_text("def totally_different(x):\n    return x * 2\n\n"
+                 "def g():\n    pass\n", encoding="utf-8")
+    assert verify_pin(f"file:{p}:2", pin, repo_root=root) == "changed"
+
+
+def test_a_distinctive_line_still_reports_moved(tmp_path):
+    """The floor must not eat the case `moved` exists for."""
+    root, p = _repo(tmp_path)
+    p.write_text("alpha\nthe parser rejects malformed headers\ngamma\n",
+                 encoding="utf-8")
+    pin = pin_for_ref(f"file:{p}:2", repo_root=root)
+    p.write_text("header\nalpha\nthe parser rejects malformed headers\ngamma\n",
+                 encoding="utf-8")
     assert verify_pin(f"file:{p}:2", pin, repo_root=root) == "moved"
 
 
@@ -119,6 +152,14 @@ def test_truncated_file_is_unresolvable(tmp_path):
     pin = pin_for_ref(f"file:{p}:4", repo_root=root)
     p.write_text("alpha\n", encoding="utf-8")
     assert verify_pin(f"file:{p}:4", pin, repo_root=root) == "unresolvable"
+
+
+def test_the_unresolved_marker_verifies_as_unresolvable(tmp_path):
+    """The marker records that nothing was ever pinned. Comparing it against
+    today's file and calling the difference `changed` would invent a history
+    that never existed."""
+    root, p = _repo(tmp_path)
+    assert verify_pin(f"file:{p}:2", "unresolved", repo_root=root) == "unresolvable"
 
 
 def test_missing_pin_is_unresolvable_not_ok(tmp_path):
@@ -150,6 +191,24 @@ def test_write_receipt_pins_what_it_cited(tmp_path, monkeypatch):
     p.write_text("alpha\nBETA-EDITED\ngamma\ndelta\n", encoding="utf-8")
     assert verify_pin(ref, row["pins"][ref], repo_root=root) == "changed"
     assert m.audit_verify() is None, "pinning must not break the chain"
+
+
+def test_an_unresolvable_file_ref_is_recorded_as_such(tmp_path, monkeypatch):
+    """Adversarial review 2026-07-25 (glm-5.2, Q6.5): a row with no pins was
+    ambiguous — pre-feature row, or post-feature row whose ref did not
+    resolve? Citing a non-existent file:line produced silence indistinguishable
+    from legacy, so the absence of a pin proved nothing. Now an unresolvable
+    `file:` ref is recorded EXPLICITLY, and only refs that were never
+    pinnable at all (commit:, url:) stay silent."""
+    from verimem.client import Memory
+
+    monkeypatch.setenv("VERIMEM_AUDIT_LOG", "1")
+    root, _p = _repo(tmp_path)
+    m = Memory(path=tmp_path / "m.db", repo_root=root)
+    ghost = f"file:{root / 'src' / 'gone.py'}:3"
+    m.add("The parser reads beta on the second line.", topic="t",
+          verified_by=[ghost])
+    assert m.audit_log(limit=1)[0]["pins"] == {ghost: "unresolved"}
 
 
 def test_receipt_without_file_refs_records_no_pins(tmp_path, monkeypatch):

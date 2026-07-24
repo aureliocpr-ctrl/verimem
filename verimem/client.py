@@ -1197,6 +1197,13 @@ class Memory:
                 pin = pin_for_ref(ref, repo_root=root)
                 if pin:
                     out[ref] = pin
+                elif ref.strip().lower().startswith("file:"):
+                    # Adversarial review 2026-07-25 (glm-5.2, Q6.5): silence
+                    # made a post-feature row whose ref did not resolve
+                    # indistinguishable from a pre-feature row, so the absence
+                    # of a pin proved nothing. A file: ref that could not be
+                    # read says so, on the record.
+                    out[ref] = "unresolved"
             return out
         except Exception:  # noqa: BLE001 — a receipt detail, never a write blocker
             return {}
