@@ -4,6 +4,54 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased] — 0.8 line
 
+### Added
+- **Evidence-before-belief: the independence rule (WS1, P0 cycle 2).** Cycle 1
+  recorded WHO writes (`facts.writer_principal`) and WHO indexes
+  (`meta.indexed_by`); this cycle asks the only question those stamps exist
+  for. Cited evidence counts as INDEPENDENT iff its author is known, differs
+  from the claimant, and BOTH sit on channels that authenticate. The last
+  conjunct is what survived adversarial review: checking only the author's
+  channel let poison indexed over the unauthenticated MCP surface be cited by
+  an SDK writer as "independent", and checking only the claimant's let an
+  unauthenticated writer launder itself through someone else's document.
+  Contested provenance (versions of one source disagreeing about their
+  stamper) yields no author — a re-ingest is how one relabels a document's
+  voucher. **Default OFF**: the verdict rides the receipt as
+  `P0_INDEPENDENCE-observe` and the outcome is byte-identical;
+  `ENGRAM_P0_INDEPENDENCE=1` makes an L1-ONLY escalation advisory instead of
+  quarantine, keeping the original warnings visible. It can never touch L3
+  (contradiction) or L4 (grounding): an outside witness dissolves no
+  contradiction and supplies no entailment. Declared cost: MCP writers
+  (always `mcp:unbound`) do not benefit until MCP clients carry a bound
+  identity.
+- **Content-bound receipts (D5 / task #44).** The provenance verifier answered
+  resolvability — does `file:<path>:<line>` point at a long-enough file? —
+  and nothing recorded what the line SAID. Each cited line is now hashed at
+  write time into the adjudication receipt, and verification reports `ok`,
+  `moved` (the same text elsewhere: an insertion above the citation is the
+  ordinary case), `changed`, or `unresolvable`. `moved` requires a
+  distinctive line — `pass` or `OK` occurs everywhere, and reporting it as
+  survival is reassurance, not evidence. A `file:` ref that could not be read
+  is recorded as `unresolved` rather than silently omitted, so the absence of
+  a pin can no longer be mistaken for a pre-feature row. The pins ride INSIDE
+  the hash chain (a pin an editor can rewrite is not evidence) but join the
+  chained payload only when non-empty, so every row written before the
+  feature still verifies — adding the field unconditionally would have raised
+  a tamper alarm on intact data.
+- **Chunk provenance.** `DocumentIndex` — the tier `hippo_document_index_file`
+  actually calls, and the poison-then-cite vector the design review named —
+  never passed a principal to the snapshot, so documents entering through the
+  indexer landed unsigned and the independence rule could never speak about
+  them. `index_document`/`index_file` now take one, store it on the snapshot
+  and on every chunk, and `search()` hits carry `indexed_by`. The MCP tool
+  stamps the server's identity, never a tool argument. `hippo_record_episode`
+  key_facts accept `verified_by`; those refs previously went nowhere.
+- **Review-queue backpressure.** A write that JOINS the quarantine backlog now
+  reports how deep it is (`ENGRAM_REVIEW_QUEUE_MAX`, default 500, `0` = off).
+  Admitted writes are never annotated. Known limit, stated in the module: with
+  no persisted per-fact quarantine reason the depth counts the whole backlog,
+  so an L1 flood can mask an L3 contradiction.
+
 ### Fixed
 - **MCP clients can no longer weaken the write gate from tool args.** The
   shared-server MCP surface accepted `validate="off"` (anti-confab gate
