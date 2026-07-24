@@ -191,6 +191,34 @@ def _is_domain_professional_fact(proposition: str) -> bool:
         return False
 
 
+def advisory_eligible(warnings: Iterable[dict] | None) -> bool:
+    """True iff EVERY warning is from the L1 lexical family.
+
+    P0 evidence-before-belief relaxes a KEYWORD screen, never a semantic one:
+    an outside witness does not dissolve a contradiction (L3) nor supply the
+    entailment L4 failed to find. So independent evidence may only speak when
+    L1 is the whole story — the invariant that keeps evidence-before-belief
+    from degenerating into evidence-instead-of-belief.
+    """
+    ws = [w for w in (warnings or []) if isinstance(w, dict)]
+    if not ws:
+        return False
+    return all(str(w.get("layer", "")).upper().startswith("L1") for w in ws)
+
+
+def _p0_independence_enforced() -> bool:
+    """ENGRAM_P0_INDEPENDENCE — DEFAULT OFF (observe-first).
+
+    Off: the rule is evaluated and its verdict recorded on the receipt, but
+    the outcome is byte-identical to before. On: independent evidence keeps
+    an L1-only escalation advisory. The flip waits on a measured false-block
+    delta, per the 0.8 method — no default changes on a hunch.
+    """
+    return os.environ.get("ENGRAM_P0_INDEPENDENCE", "").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
+
+
 def _l1_domain_advisory() -> bool:
     """SERVER-SIDE, deployment-level switch (env ``ENGRAM_L1_DOMAIN_ADVISORY``,
     default OFF). When ON, the L1.x keyword anti-confabulation detectors run and
@@ -942,6 +970,8 @@ def run_validation_gate(
     ground_write: bool | None = None,
     asserted_at: float | None = None,
     status: str | None = None,
+    claimant: str | None = None,
+    documents: Any = None,
 ) -> GateResult:
     """Evaluate the anti-confab gate; return a ``GateResult``.
 
@@ -1452,6 +1482,42 @@ def run_validation_gate(
             "advice": "unset ENGRAM_L1_DOMAIN_ADVISORY to restore L1 keyword "
                       "escalation",
         })
+    # P0 EVIDENCE-BEFORE-BELIEF (ciclo 2b, 2026-07-25) — observe-first.
+    # The note above says a DECLARED source cannot downgrade an L1 hit: it is
+    # caller-controlled, so trusting it would be the writer_role mistake again.
+    # This is the verified form of that recovery path — not what the caller
+    # SAYS, but who the server STAMPED: a fact whose cited document was indexed
+    # by a different principal, over a channel that authenticates, is not a
+    # self-claim laundering itself. Gated on `advisory_eligible` so it can only
+    # ever speak about the lexical family, and on a server-stamped `claimant`
+    # (never a tool argument). Default OFF: the verdict is recorded, the
+    # outcome unchanged, so the false-block delta is MEASURED before any flip.
+    if l1_escalates and documents is not None and advisory_eligible(warnings):
+        from .evidence_independence import independence_verdict
+        _iv = independence_verdict(verified_by=list(verified_by or []),
+                                   claimant=claimant, store=documents)
+        if _iv.independent:
+            if _p0_independence_enforced():
+                l1_escalates = False
+                warnings.append({
+                    "layer": "P0_INDEPENDENCE",
+                    "matched_text": _iv.ref or "",
+                    "reason": _iv.reason,
+                    "advice": "the L1 keyword hit was kept ADVISORY: the cited "
+                              "evidence was indexed by a different principal "
+                              "over a trusted channel (unset "
+                              "ENGRAM_P0_INDEPENDENCE to restore escalation)",
+                })
+            else:
+                warnings.append({
+                    "layer": "P0_INDEPENDENCE-observe",
+                    "matched_text": _iv.ref or "",
+                    "reason": _iv.reason,
+                    "advice": "observe mode: this write WOULD have been kept "
+                              "advisory instead of quarantined (independent "
+                              f"witness {_iv.author}) — set "
+                              "ENGRAM_P0_INDEPENDENCE=1 to enforce",
+                })
     def _mk(action: GateAction, *, advice_: str = advice,
             warnings_: list | None = None) -> GateResult:
         # Every gate outcome carries the judge-of-record + threshold, so the
