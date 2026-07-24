@@ -43,6 +43,7 @@ from typing import Any
 
 __all__ = [
     "IndependenceVerdict",
+    "LazyDocumentStore",
     "author_principal_of_ref",
     "channel_of",
     "independence_verdict",
@@ -52,6 +53,46 @@ __all__ = [
 #: An identity the surface could not bind to anyone (the MCP server stamps
 #: ``mcp:unbound`` exactly because an MCP client is not authenticated).
 _UNBOUND = "unbound"
+
+
+class LazyDocumentStore:
+    """A document store that opens only if the rule actually asks something.
+
+    Every write path can hand one of these to the gate unconditionally: most
+    writes never reach the independence question (no L1 escalation, or no
+    document ref among their evidence), and those must not pay for a sqlite
+    connection. A store that cannot be opened answers "nothing known" — the
+    rule then declines to claim independence, which is the safe direction.
+    """
+
+    __slots__ = ("_factory", "_store", "_tried")
+
+    def __init__(self, factory: Any = None) -> None:
+        self._factory = factory
+        self._store: Any = None
+        self._tried = False
+
+    def _resolve(self) -> Any:
+        if not self._tried:
+            self._tried = True
+            try:
+                if self._factory is not None:
+                    self._store = self._factory()
+                else:
+                    from .documents import DocumentStore
+                    self._store = DocumentStore()
+            except Exception:
+                self._store = None
+        return self._store
+
+    def list_versions(self, source_id: str) -> list:
+        store = self._resolve()
+        if store is None:
+            return []
+        try:
+            return store.list_versions(source_id)
+        except Exception:
+            return []
 
 
 def channel_of(principal: str | None) -> str | None:

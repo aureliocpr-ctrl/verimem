@@ -3478,8 +3478,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "at handler-level — empty/missing entries are "
                             "silently skipped, not rejected), topic (str, "
                             "default ''), confidence (float 0..1, default "
-                            "0.9). Resilient: one bad entry does NOT abort "
-                            "the call, the episode is still committed."
+                            "0.9), verified_by (list of provenance refs, "
+                            "same shape as hippo_remember's — they reach "
+                            "the gate AND the stored fact). Resilient: one "
+                            "bad entry does NOT abort the call, the episode "
+                            "is still committed."
                         ),
                         "items": {"type": "object"},
                         "default": [],
@@ -8325,6 +8328,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     except (TypeError, ValueError):
                         fact_conf = 0.9
                     fact_conf = max(0.0, min(1.0, fact_conf))
+                    # P0 ciclo 2c: a key_fact may carry its own provenance.
+                    # It could not before — the refs were dropped on the floor,
+                    # so this path could neither be verified nor benefit from
+                    # the independence rule. Same shape as hippo_remember's.
+                    _kf_refs = [str(x).strip() for x
+                                in (kf.get("verified_by") or [])
+                                if str(x).strip()]
                     try:
                         # FIX (2026-06-14 audit save-path, gate_bypass): i
                         # key_facts scrivevano un Fact SALTANDO l'anti-confab
@@ -8337,12 +8347,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         # writer_role/meta_narrative ai default -> NESSUN
                         # trusted-hook bypass (i key_facts NON sono fidati).
                         from .anti_confab_gate import run_validation_gate as _rvg
+                        from .evidence_independence import LazyDocumentStore
                         _kf_gate = _rvg(
-                            proposition=prop, verified_by=[], topic=fact_topic,
+                            proposition=prop, verified_by=_kf_refs,
+                            topic=fact_topic,
                             agent=a,
                             repo_root=getattr(
                                 getattr(a, "semantic", None), "repo_root", None,
                             ),
+                            claimant=_MCP_PRINCIPAL,
+                            documents=LazyDocumentStore(),
                         )
                         if _kf_gate.action == "reject":
                             log.warning(
@@ -8354,6 +8368,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                             proposition=prop, topic=fact_topic,
                             confidence=fact_conf,
                             source_episodes=[ep.id],
+                            verified_by=_kf_refs,
                             status=(
                                 "quarantined"
                                 if _kf_gate.action == "downgrade"
@@ -11988,6 +12003,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # (a.wake.llm / LazyLLM) so no backend is built unless the check actually runs.
             _source = arguments.get("source")
             _grounding_llm = getattr(getattr(a, "wake", None), "llm", None)
+            # P0 ciclo 2c: the identity is the SERVER's (_MCP_PRINCIPAL), never
+            # a tool argument — same trust boundary as writer_principal. The
+            # document store is lazy: writes that never reach the independence
+            # question open no connection.
+            from .evidence_independence import LazyDocumentStore
             _gate = run_validation_gate(
                 proposition=proposition,
                 verified_by=verified_by,
@@ -12001,6 +12021,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 repo_root=_gate_repo_root,
                 source=_source,
                 grounding_llm=_grounding_llm,
+                claimant=_MCP_PRINCIPAL,
+                documents=LazyDocumentStore(),
             )
             _gate_warnings: list[dict[str, Any]] = list(_gate.warnings)
             if _gate.action == "reject":

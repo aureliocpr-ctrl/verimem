@@ -266,11 +266,18 @@ class Memory:
         # writer_role='user' so listings can tell chronicle from screened
         # claim. In-process callers only — network handlers must never wire
         # a client-supplied flag into this parameter.
+        # P0 evidence-before-belief (ciclo 2c): the gate can only ask whether
+        # the cited evidence is independent if it is told WHO writes and WHERE
+        # the documents live. The store is lazy — a write that never reaches
+        # the question opens no connection.
+        from .evidence_independence import LazyDocumentStore
         gate = run_validation_gate(
             proposition=text, verified_by=verified_by, topic=topic, agent=self,
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
             narrative_l1_skip=meta_narrative,
+            claimant=principal or self._principal,
+            documents=LazyDocumentStore(),
         )
         warnings = list(gate.warnings)
         action = gate.action
