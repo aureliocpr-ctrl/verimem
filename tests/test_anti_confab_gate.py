@@ -67,6 +67,10 @@ def real_sm(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SemanticMemory:
     # Keep tests deterministic: gate uses env var as default unless tool
     # arg overrides — make sure the env doesn't bleed in.
     monkeypatch.delenv("ENGRAM_VALIDATE_DEFAULT", raising=False)
+    # 0.8 WS1: same isolation for the operator opt-in that re-enables the
+    # gate-weakening knobs — a value inherited from the developer's shell
+    # would silently flip the trust boundary these tests assert.
+    monkeypatch.delenv("VERIMEM_MCP_TRUST_GATE_KNOBS", raising=False)
     return sm
 
 
@@ -280,9 +284,18 @@ class TestFullL3ContradictionGate:
 
 class TestEscapeHatches:
     @pytest.mark.asyncio
-    async def test_validate_off_skips_all_checks(
+    async def test_validate_off_from_a_client_is_refused(
         self, real_sm: SemanticMemory,
     ) -> None:
+        """A CLIENT cannot switch the write gate off (0.8 WS1 knob policy).
+
+        Until the knob policy landed this test asserted the opposite — that
+        ``validate="off"`` arriving as a TOOL ARGUMENT bypassed L1 — which on
+        a shared MCP server let any client disable the gate for its own
+        writes. Tool arguments never set policy (same rule as
+        ``writer_principal``), and the refusal is explicit in
+        ``gate_knobs_denied``: neutralized, never silently ignored.
+        """
         out = await _invoke("hippo_remember", {
             "proposition": "Cycle 999 SHIPPED to production main",
             "topic": "t/test",
@@ -290,10 +303,32 @@ class TestEscapeHatches:
             "validate": "off",
         })
         assert out.get("ok") is True
-        assert out.get("status") == "model_claim", (
-            "cycle 138: validate=off must bypass L1 — status stays at "
-            "default model_claim even though the keyword would trigger."
-        )
+        assert out.get("gate_knobs_denied") == ["validate=off"]
+        # The L1 keyword the caller tried to hide from still fires.
+        assert out.get("status") == "quarantined"
+        assert any(str(w.get("layer", "")).startswith("L1")
+                   for w in (out.get("anti_confab_warnings") or []))
+
+    @pytest.mark.asyncio
+    async def test_validate_off_honoured_when_the_operator_opts_in(
+        self, real_sm: SemanticMemory, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """The escape hatch survives — for the OPERATOR, not for the client.
+
+        Same assertions the client-side test carried before the policy: the
+        legacy bypass is not gone, it moved behind an env opt-in only whoever
+        runs the server can set.
+        """
+        monkeypatch.setenv("VERIMEM_MCP_TRUST_GATE_KNOBS", "1")
+        out = await _invoke("hippo_remember", {
+            "proposition": "Cycle 999 SHIPPED to production main",
+            "topic": "t/test",
+            "verified_by": [],
+            "validate": "off",
+        })
+        assert out.get("ok") is True
+        assert not out.get("gate_knobs_denied")
+        assert out.get("status") == "model_claim"
         assert not (out.get("anti_confab_warnings") or [])
 
     @pytest.mark.asyncio

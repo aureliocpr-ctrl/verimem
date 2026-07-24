@@ -75,6 +75,10 @@ class _FakeMemory:
             ),
         ]
         self.deleted: list[str] = []
+        #: every ``delete`` call verbatim — (episode_id, principal, action).
+        #: The audit identity is part of the contract, so the fake records it
+        #: instead of discarding it.
+        self.delete_calls: list[tuple[str, str, str]] = []
 
     # --- methods the tool handlers will call -----------------------------
 
@@ -113,7 +117,14 @@ class _FakeMemory:
                 return e
         return None
 
-    def delete(self, episode_id: str) -> bool:
+    def delete(self, episode_id: str, *, principal: str,
+               action: str = "delete") -> bool:
+        # Mirrors the real core's 0.8 mutation-audit signature EXACTLY:
+        # ``principal`` is keyword-only AND mandatory, as declared by
+        # verimem.memory.Memory.delete. A fake that defaulted it would accept
+        # a caller the production core refuses — precisely the divergence a
+        # fake must not introduce (a fake is a call site too).
+        self.delete_calls.append((episode_id, principal, action))
         for i, e in enumerate(self.episodes):
             if e.id == episode_id:
                 del self.episodes[i]
@@ -302,6 +313,23 @@ async def test_hippo_forget_deletes_existing(fake_agent: _FakeAgent) -> None:
     blocks2 = await _invoke_tool("hippo_forget", {"episode_id": "ep2"})
     payload2 = json.loads(blocks2[0])
     assert "error" in payload2
+
+
+@pytest.mark.asyncio
+async def test_hippo_forget_stamps_the_server_principal(
+    fake_agent: _FakeAgent,
+) -> None:
+    """The audit identity is the SERVER's, never the caller's.
+
+    Two invariants in one call: the destructive core is reached WITH a
+    principal (0.8 mutation audit refuses None/blank), and a client-supplied
+    ``principal`` argument is ignored — tool arguments never set policy, the
+    same trust boundary that governs ``writer_principal``.
+    """
+    await _invoke_tool(
+        "hippo_forget", {"episode_id": "ep2", "principal": "spoofed:attacker"},
+    )
+    assert fake_agent.memory.delete_calls == [("ep2", "mcp:unbound", "forget")]
 
 
 @pytest.mark.asyncio
