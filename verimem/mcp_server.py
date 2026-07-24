@@ -11917,6 +11917,27 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _validate_kw = arguments.get("validate")
             _gate_mode_kw = arguments.get("gate_mode")
             _force_persist = bool(arguments.get("force_persist", False))
+            # 0.8 WS1 knob policy: the MCP surface is UNTRUSTED (shared
+            # server, args from any client), so the gate-WEAKENING knobs —
+            # validate="off" (gate never runs) and force_persist=True
+            # (overrides a downgrade/reject verdict) — are honoured only
+            # when the OPERATOR opted in via VERIMEM_MCP_TRUST_GATE_KNOBS.
+            # Otherwise they are neutralized and the response says so
+            # (gate_knobs_denied) — observable, never silent. Strengthening
+            # values (validate="full", gate_mode="reject") always pass;
+            # gate_mode cannot weaken (its two values are downgrade|reject,
+            # and downgrade IS the default). Same trust rule as
+            # writer_principal: tool args never set policy.
+            _knobs_denied: list[str] = []
+            if os.environ.get("VERIMEM_MCP_TRUST_GATE_KNOBS",
+                              "").strip().lower() not in ("1", "true",
+                                                          "yes", "on"):
+                if str(_validate_kw or "").strip().lower() == "off":
+                    _knobs_denied.append("validate=off")
+                    _validate_kw = "fast"
+                if _force_persist:
+                    _knobs_denied.append("force_persist")
+                    _force_persist = False
             # Cycle 2026-05-27 round 12 F-fix: trusted-hook bypass for
             # retrospective continuity facts. writer_role + meta_narrative
             # together skip L1.x detectors. Defense in depth: an attacker
@@ -11971,6 +11992,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "contradicting_fact_ids": list(
                         _gate.contradicting_fact_ids
                     ),
+                    # 0.8 WS1: a caller whose weakening knobs were refused
+                    # must see WHY the gate still fired (observability on
+                    # the reject path too, not only on success).
+                    "gate_knobs_denied": _knobs_denied,
                 })
             if _gate.action == "downgrade":
                 # Cycle 138: preserve audit but lower trust so default
@@ -12264,6 +12289,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # (LLM or operator) sees what fired and can adjust the
                 # proposition / verified_by before retry.
                 "anti_confab_warnings": _gate_warnings,
+                # 0.8 WS1: which requested gate-weakening knobs were
+                # refused (empty when none / operator opted in).
+                "gate_knobs_denied": _knobs_denied,
             })
 
         if name == "hippo_facts_recall":
