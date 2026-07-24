@@ -14,9 +14,44 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   safe defaults and the response reports `gate_knobs_denied` (on the
   success AND reject paths — observable, never silent). Strengthening
   values (`validate="full"`, `gate_mode="reject"`) always pass; the same
-  trust rule as `writer_principal`: tool args never set policy.
+  trust rule as `writer_principal`: tool args never set policy. A refused
+  `validate="off"` falls back to the OPERATOR's own default (re-reading
+  `ENGRAM_VALIDATE_DEFAULT`), not to a handler-chosen constant — pinning it
+  to `"fast"` would still have let an untrusted client downgrade a
+  full-level operator out of the L3 contradiction checks.
 
 ### Added
+- **The episodic store is audited too (tamper-evidence WS, step 3).** The
+  step-1 chain covered the facts store and honestly declared episodic
+  deletes out of scope; they no longer are. Every destructive op on
+  `episodes.db` — `delete` (its traces and causal edges included),
+  `delete_by_task_text`, `clear`, the sleep cycle's `decay_prune`, and the
+  episode-telemetry backlog mover — appends one hash-chained
+  `audit_mutations` row **inside that DB**, in the same transaction,
+  fail-closed, with a keyword-only mandatory `principal`. The chain
+  primitives are reused verbatim (they were connection-agnostic by
+  construction); a new `decay` action separates policy-driven expiry from
+  a caller's delete, one row per pruned episode — a bulk wipe summarised as
+  nothing is exactly the untracked-deletion class this workstream closes.
+  Surfaces stamp their own identity (`system:decay`, `system:dedup`,
+  `system:agent-reset`, MCP `forget`, `cli:local`);
+  `EpisodicMemory.audit_verify()/audit_head()` mirror the facts API.
+  Declared derived-data exceptions (unchanged, same class as
+  `_cascade_delete_refs`): `gc_orphan_causal_edges` and `episodes_undo_log`
+  pruning.
+- **Anchor receipt v2 covers all three chains.** `verimem audit anchor`
+  and `verify --anchor` gain `--episodes-db` (auto-discovered beside the
+  store) and bind the episodic chain alongside mutations and adjudications.
+  Versioning is non-breaking and honest: a payload without episodic state
+  is emitted as a byte-identical v1 (an SDK client with no episodic store
+  keeps producing verifiable receipts), `verify_anchor` checks exactly the
+  chains its version covers, and a live chain an older receipt does NOT
+  cover yields a **non-fatal note** ("re-anchor") — never a silent pass,
+  never a hard failure on an honest old receipt. `version` lives inside the
+  signed canonical payload, so a v2 receipt cannot verify as v1. Documented
+  limitation: tampering only an uncovered chain while presenting the old
+  receipt yields ok+note — the same operational verify-the-newest contract
+  as replay, uncloseable by an older signature.
 - **Signed external anchor over BOTH audit chains (tamper-evidence WS,
   step 2).** `verimem audit anchor [--db] [--out]` emits a receipt —
   {ts, mutations_head+rows, adjudications_head+rows, ed25519 signature
