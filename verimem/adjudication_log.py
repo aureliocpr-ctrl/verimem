@@ -33,14 +33,52 @@ __all__ = ["AdjudicationRecord", "AdjudicationLog"]
 
 def _chain_payload(*, id: str, ts: float, topic: str, disposition: str,
                    proposition: str, fact_id, evidence_class, judge, score, threshold,
-                   reason: str, layers_json: str) -> dict:
+                   reason: str, layers_json: str, pins_json: str = "") -> dict:
     """The EXACT field set hashed into the tamper-evidence chain. ``record()`` (write)
     and ``verify()`` (recompute) MUST build this identically — verify reads the stored
-    column values verbatim, so record hashes the values in their to-be-stored form."""
-    return {"id": id, "ts": ts, "topic": topic, "disposition": disposition,
-            "proposition": proposition, "fact_id": fact_id,
-            "evidence_class": evidence_class, "judge": judge, "score": score,
-            "threshold": threshold, "reason": reason, "layers": layers_json}
+    column values verbatim, so record hashes the values in their to-be-stored form.
+
+    ``pins_json`` (content-bound receipts, D5/#44) joins the chain ONLY when the row
+    actually carries pins: every row written before the column existed hashed a
+    payload without the field, and adding it unconditionally would make ``verify()``
+    reject the whole existing log — a false tamper alarm on intact data, which is the
+    worst way an integrity signal can fail. Same versioning discipline as the step-2
+    anchor receipt: nothing to say → byte-identical to what came before.
+    """
+    payload = {"id": id, "ts": ts, "topic": topic, "disposition": disposition,
+               "proposition": proposition, "fact_id": fact_id,
+               "evidence_class": evidence_class, "judge": judge, "score": score,
+               "threshold": threshold, "reason": reason, "layers": layers_json}
+    if pins_json and pins_json not in ("{}", "null"):
+        payload["pins"] = pins_json
+    return payload
+
+
+def _pins_column(row: sqlite3.Row) -> str:
+    """The stored ``pins`` text VERBATIM — what verify() must re-hash. A row
+    from before the migration has no column at all; treat it as the empty
+    payload so its hash is recomputed exactly as it was written."""
+    try:
+        return row["pins"] or ""
+    except (IndexError, KeyError):
+        return ""
+
+
+def _loads_pins(row: sqlite3.Row) -> dict:
+    """Pins off a row, tolerant of a pre-migration row and of junk: an
+    unreadable pin map is NO pins, never a partial one that could read as a
+    verification of something."""
+    try:
+        raw = row["pins"]
+    except (IndexError, KeyError):
+        return {}
+    if not raw:
+        return {}
+    try:
+        val = json.loads(raw)
+    except (TypeError, ValueError):
+        return {}
+    return val if isinstance(val, dict) else {}
 
 
 @dataclass
@@ -57,6 +95,10 @@ class AdjudicationRecord:
     threshold: float | None = None
     reason: str = ""
     layers: list[str] = field(default_factory=list)
+    #: {provenance ref -> "sha256:<hex>" of the span it cited at write time}.
+    #: Empty for rows written before content-bound receipts existed — absence
+    #: is "nothing was recorded", never "nothing changed".
+    pins: dict[str, str] = field(default_factory=dict)
 
 
 _TABLE = """CREATE TABLE IF NOT EXISTS adjudications (
@@ -72,7 +114,8 @@ _TABLE = """CREATE TABLE IF NOT EXISTS adjudications (
     threshold REAL,
     reason TEXT NOT NULL DEFAULT '',
     layers TEXT NOT NULL DEFAULT '[]',
-    entry_hash TEXT
+    entry_hash TEXT,
+    pins TEXT NOT NULL DEFAULT '{}'
 )"""
 
 _INDEXES = (
@@ -98,6 +141,12 @@ class AdjudicationLog:
             cols = {r["name"] for r in conn.execute("PRAGMA table_info(adjudications)")}
             if "entry_hash" not in cols:
                 conn.execute("ALTER TABLE adjudications ADD COLUMN entry_hash TEXT")
+            # content-bound receipts (D5/#44): same additive migration. Rows
+            # written earlier get '{}' and keep verifying — their hash never
+            # covered a field they did not have.
+            if "pins" not in cols:
+                conn.execute("ALTER TABLE adjudications ADD COLUMN pins TEXT "
+                             "NOT NULL DEFAULT '{}'")
 
     def _conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -108,7 +157,8 @@ class AdjudicationLog:
                fact_id: str | None = None, evidence_class: str | None = None,
                judge: str | None = None, score: float | None = None,
                threshold: float | None = None, reason: str = "",
-               layers: list[str] | None = None, ts: float | None = None) -> str:
+               layers: list[str] | None = None, ts: float | None = None,
+               pins: dict[str, str] | None = None) -> str:
         """Append one adjudication; return its id. Never updates an existing row —
         the log is append-only. Each row is hash-chained to the previous one
         (``entry_hash``), so a later ``verify()`` detects any edit/delete/reorder.
@@ -124,6 +174,8 @@ class AdjudicationLog:
         score_val = None if score is None else float(score)
         thr_val = None if threshold is None else float(threshold)
         layers_json = json.dumps(list(layers or []))
+        # sort_keys: the hash must not depend on dict iteration order.
+        pins_json = json.dumps(dict(pins or {}), sort_keys=True)
         conn = self._conn()
         try:
             conn.isolation_level = None          # explicit transaction control
@@ -137,13 +189,13 @@ class AdjudicationLog:
                 id=rid, ts=ts_val, topic=topic, disposition=disposition,
                 proposition=proposition, fact_id=fact_id, evidence_class=evidence_class,
                 judge=judge, score=score_val, threshold=thr_val, reason=reason,
-                layers_json=layers_json), prev)
+                layers_json=layers_json, pins_json=pins_json), prev)
             conn.execute(
                 "INSERT INTO adjudications (id, ts, topic, disposition, proposition, "
                 "fact_id, evidence_class, judge, score, threshold, reason, layers, "
-                "entry_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "entry_hash, pins) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (rid, ts_val, topic, disposition, proposition, fact_id, evidence_class,
-                 judge, score_val, thr_val, reason, layers_json, eh))
+                 judge, score_val, thr_val, reason, layers_json, eh, pins_json))
             conn.execute("COMMIT")
         finally:
             conn.close()
@@ -155,7 +207,8 @@ class AdjudicationLog:
             disposition=r["disposition"], proposition=r["proposition"],
             fact_id=r["fact_id"], evidence_class=r["evidence_class"],
             judge=r["judge"], score=r["score"], threshold=r["threshold"],
-            reason=r["reason"], layers=json.loads(r["layers"]))
+            reason=r["reason"], layers=json.loads(r["layers"]),
+            pins=_loads_pins(r))
 
     def get(self, record_id: str) -> AdjudicationRecord | None:
         with self._conn() as conn:
@@ -216,7 +269,8 @@ class AdjudicationLog:
                 id=r["id"], ts=r["ts"], topic=r["topic"], disposition=r["disposition"],
                 proposition=r["proposition"], fact_id=r["fact_id"],
                 evidence_class=r["evidence_class"], judge=r["judge"], score=r["score"],
-                threshold=r["threshold"], reason=r["reason"], layers_json=r["layers"])
+                threshold=r["threshold"], reason=r["reason"], layers_json=r["layers"],
+                pins_json=_pins_column(r))
             if _entry_hash(payload, prev) != eh:
                 return r["id"]
             prev = eh

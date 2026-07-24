@@ -322,7 +322,8 @@ class Memory:
             _adj = _adjudication(gate, disposition="rejected",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text, fact_id=None,
-                               judge=getattr(gate, "judge", None), layers=_layers)
+                               judge=getattr(gate, "judge", None), layers=_layers,
+                               verified_by=verified_by)
             return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score,
                     "adjudication": _adj}
@@ -374,7 +375,8 @@ class Memory:
             self._audit_record(_adj, topic=topic, proposition=text,
                                fact_id=str(fact.id),
                                judge=getattr(gate, "judge", None),
-                               layers=["admission-route"])
+                               layers=["admission-route"],
+                               verified_by=verified_by)
             return {"stored": True, "status": "routed_telemetry",
                     "routed_to": _routed, "warnings": warnings,
                     "advice": gate.advice,
@@ -446,7 +448,8 @@ class Memory:
                        == "L1-domain-advisory-observe"]
         self._audit_record(_adj, topic=topic, proposition=text, fact_id=fact.id,
                            judge=getattr(gate, "judge", None),
-                           layers=_hit_layers + _stood_down)
+                           layers=_hit_layers + _stood_down,
+                           verified_by=verified_by)
         _out = {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
@@ -1064,7 +1067,7 @@ class Memory:
                  "disposition": r.disposition, "proposition": r.proposition,
                  "fact_id": r.fact_id, "evidence_class": r.evidence_class,
                  "judge": r.judge, "score": r.score, "threshold": r.threshold,
-                 "reason": r.reason, "layers": r.layers}
+                 "reason": r.reason, "layers": r.layers, "pins": r.pins}
                 for r in log.list(disposition=disposition, topic=topic, limit=limit)]
 
     def audit_verify(self) -> str | None:
@@ -1167,8 +1170,30 @@ class Memory:
                              chains={"mutations": mutations,
                                      "adjudications": adjudications})
 
+    def _content_pins(self, verified_by: Any) -> dict[str, str]:
+        """Content-bound receipts (D5/#44): hash the span each ``file:`` ref
+        cites, at write time. Refs that cannot be read contribute nothing —
+        the pin map says what WAS read, never what merely resolved. Best
+        effort: an unreadable tree must not break the write it documents."""
+        try:
+            from .content_pin import pin_for_ref
+            root = getattr(self.semantic, "repo_root", None)
+            if root is None:
+                return {}
+            out: dict[str, str] = {}
+            for ref in (verified_by or []):
+                if not isinstance(ref, str):
+                    continue
+                pin = pin_for_ref(ref, repo_root=root)
+                if pin:
+                    out[ref] = pin
+            return out
+        except Exception:  # noqa: BLE001 — a receipt detail, never a write blocker
+            return {}
+
     def _audit_record(self, adjudication: dict, *, topic: Any, proposition: str,
-                      fact_id: str | None, judge: Any, layers: list) -> None:
+                      fact_id: str | None, judge: Any, layers: list,
+                      verified_by: Any = None) -> None:
         """Append the write's verdict to the opt-in audit trail (VERIMEM_AUDIT_LOG).
         No-op when off; never raises — persisting an audit record must never break the
         memory write it records.
@@ -1192,6 +1217,7 @@ class Memory:
                 threshold=adjudication.get("threshold"),
                 reason=str(adjudication.get("reason") or ""),
                 layers=list(layers or []),
+                pins=self._content_pins(verified_by),
             )
         except Exception as exc:  # noqa: BLE001 — must never break a write, but be visible
             _LOG.warning("audit append dropped (write succeeded): %s", exc)
