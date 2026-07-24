@@ -1071,6 +1071,7 @@ class SleepEngine:
         threshold = float(getattr(CONFIG, "episode_decay_threshold", 0.30))
         cap = int(getattr(CONFIG, "episode_decay_max_per_cycle", 200))
         deleted = self.memory.decay_prune(
+            principal="system:decay",
             retention_threshold=threshold,
             limit=cap,
         )

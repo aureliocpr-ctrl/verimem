@@ -98,7 +98,7 @@ class VerimemAgent:
 
     def reset(self) -> None:
         emit("agent_reset")
-        self.memory.clear()
+        self.memory.clear(principal="system:agent-reset")
         self.skills.clear()
         self.semantic.clear(principal="system:agent-reset")
 

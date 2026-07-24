@@ -137,7 +137,8 @@ def cleanup_telemetry(db_path, *, principal: str, dry_run: bool = True) -> dict:
         conn.close()
 
 
-def cleanup_episode_telemetry(db_path, *, dry_run: bool = True) -> dict:
+def cleanup_episode_telemetry(db_path, *, principal: str,
+                              dry_run: bool = True) -> dict:
     """Route existing call-telemetry episodes out of ``episodes`` into
     ``episode_telemetry`` — the gemello of :func:`cleanup_telemetry` for the
     EPISODE backlog (the live ``episodes`` carry ~22% auto-saved cross-LLM call
@@ -158,10 +159,17 @@ def cleanup_episode_telemetry(db_path, *, dry_run: bool = True) -> dict:
     the authoritative undo is the pre-run DB backup. Idempotent.
 
     Returns ``{scanned, telemetry_found, moved, dry_run}``.
+
+    ``principal`` is MANDATORY (0.8 mutation audit): each episode moved out
+    of ``episodes`` leaves one chained row in this DB's ``audit_mutations``,
+    same transaction (fail-closed).
     """
+    from .mutation_audit import TABLE_SQL, record_mutation, require_principal
+    require_principal(principal)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
+        conn.execute(TABLE_SQL)  # legacy DBs never opened via EpisodicMemory
         cols = [r[1] for r in conn.execute("PRAGMA table_info(episodes)").fetchall()]
         rows = conn.execute("SELECT * FROM episodes").fetchall()
         to_move = [r for r in rows if is_call_telemetry(r["task_text"] or "")]
@@ -207,6 +215,11 @@ def cleanup_episode_telemetry(db_path, *, dry_run: bool = True) -> dict:
             if has_traces:
                 conn.execute("DELETE FROM traces WHERE episode_id = ?", (r["id"],))
             conn.execute("DELETE FROM episodes WHERE id = ?", (r["id"],))
+            # 0.8 mutation audit — same tx as the DELETE (fail-closed); the
+            # moved payload lives on in episode_telemetry, never the chain.
+            record_mutation(conn, principal=principal, action="delete",
+                            resource_id=r["id"],
+                            detail={"moved_to": "episode_telemetry"})
         conn.commit()
         result["moved"] = len(to_move)
         return result

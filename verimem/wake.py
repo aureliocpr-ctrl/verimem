@@ -478,14 +478,15 @@ class WakeAgent:
         """
         return list(self.memory.all(limit=k))
 
-    def delete_episode(self, episode_id: str) -> bool:
+    def delete_episode(self, episode_id: str, *, principal: str) -> bool:
         """Delete one episode by id. Thin delegate to memory.delete().
 
         Surfaced on the agent for symmetry with `consolidate()` /
         `run_task()` so callers don't have to reach into
-        `self.memory.delete(...)` directly.
+        `self.memory.delete(...)` directly. ``principal`` is MANDATORY
+        (0.8 mutation audit) and is passed through unchanged.
         """
-        return self.memory.delete(episode_id)
+        return self.memory.delete(episode_id, principal=principal)
 
     # --- Lightweight metrics API (FORGIA pezzo #91/#93/#102) ------------
     def metrics(self) -> dict[str, int | float]:

@@ -2668,7 +2668,8 @@ def facts_cleanup_episode_telemetry(
     sub = data / "episodes" / "episodes.db"
     flat = data / "episodes.db"
     ep_path = sub if sub.exists() else (flat if flat.exists() else sub)
-    res = cleanup_episode_telemetry(ep_path, dry_run=not apply)
+    res = cleanup_episode_telemetry(ep_path, principal="cli:local",
+                                    dry_run=not apply)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to move)"
     console.print(
         f"[bold]{mode}[/bold]  scanned={res['scanned']}  "

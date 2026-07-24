@@ -180,7 +180,7 @@ def main() -> int:
     n_deleted = 0
     for fid in to_delete:
         try:
-            mem.delete(fid)
+            mem.delete(fid, principal="system:l2-dedup")
             n_deleted += 1
         except Exception as exc:  # noqa: BLE001
             print(f"  delete failed id={fid}: {exc}")
@@ -207,7 +207,7 @@ def main() -> int:
         mem.store(new_keeper)
         for oid in others:
             try:
-                mem.delete(oid)
+                mem.delete(oid, principal="system:l2-dedup")
                 n_deleted += 1
             except Exception as exc:  # noqa: BLE001
                 print(f"  delete failed id={oid}: {exc}")

@@ -7790,7 +7790,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if not eid:
                 _audit(name, arguments, outcome="rejected_empty")
                 return _err("empty episode_id")
-            ok = a.memory.delete(eid)
+            ok = a.memory.delete(eid, principal=_MCP_PRINCIPAL,
+                                 action="forget")
             if not ok:
                 _audit(name, arguments, outcome="not_found")
                 return _err(f"episode not found: {eid}")

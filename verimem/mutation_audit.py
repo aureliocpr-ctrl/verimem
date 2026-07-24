@@ -80,8 +80,11 @@ __all__ = [
 #: already-committed supersede hops (supersede_chain failure path) — without
 #: it the chain would describe supersessions the DB no longer shows, which an
 #: auditor cannot tell apart from state tampering.
+#: ``decay`` is the episodic retention job's bulk pruning — semantically an
+#: automated deletion, kept distinct from a caller's ``delete`` so an auditor
+#: can tell policy-driven expiry from a request to remove.
 MUTATION_ACTIONS = ("delete", "purge", "forget", "supersede", "reset",
-                    "restore")
+                    "restore", "decay")
 
 _PRINCIPAL_MAX = 256
 

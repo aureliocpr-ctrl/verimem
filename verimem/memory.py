@@ -372,6 +372,11 @@ class EpisodicMemory:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
+            # 0.8 mutation audit (episodic chain): additive IF NOT EXISTS,
+            # single DDL source = mutation_audit.TABLE_SQL, outside the
+            # versioned ladder — same rationale as SemanticMemory.
+            from .mutation_audit import TABLE_SQL as _MUT_AUDIT_TABLE
+            conn.execute(_MUT_AUDIT_TABLE)
             # Run schema migrations. The framework is idempotent — fresh DBs
             # land at the target version directly, existing v1 DBs apply
             # _migration_v2_salience_columns once.
@@ -1319,6 +1324,7 @@ class EpisodicMemory:
 
     def decay_prune(
         self, *,
+        principal: str,
         retention_threshold: float = 0.30,
         tau_base_s: float | None = None,
         limit: int | None = None,
@@ -1333,6 +1339,8 @@ class EpisodicMemory:
         parent of synthesized skills, the lineage graph deserves its
         own GC pass).
         """
+        from .mutation_audit import record_mutation, require_principal
+        require_principal(principal)
         candidates = self.decay_pruning_candidates(
             retention_threshold=retention_threshold,
             tau_base_s=tau_base_s,
@@ -1350,6 +1358,13 @@ class EpisodicMemory:
                 f"DELETE FROM episodes WHERE id IN ({placeholders})",
                 ids,
             )
+            # 0.8 mutation audit: one 'decay' row PER pruned episode, same
+            # transaction — a bulk wipe summarised as nothing is exactly the
+            # untracked-deletion class this chain exists to close.
+            for _eid in ids:
+                record_mutation(conn, principal=principal, action="decay",
+                                resource_id=_eid,
+                                detail={"threshold": float(retention_threshold)})
         self._index_dirty = True
         emit(
             "episode_decay_pruned",
@@ -2050,11 +2065,23 @@ class EpisodicMemory:
                 row = conn.execute("SELECT COUNT(*) FROM episodes").fetchone()
             return int(row[0] if row else 0)
 
-    def clear(self) -> None:
+    def clear(self, *, principal: str) -> None:
+        """Wipe every episode/trace/edge. ``principal`` is MANDATORY (0.8
+        mutation audit): one ``reset`` chain row records who wiped how many
+        rows (explicit COUNTs — an unqualified DELETE's rowcount is
+        unreliable under SQLite's truncate optimization)."""
+        from .mutation_audit import record_mutation, require_principal
+        require_principal(principal)
         with self._connect() as conn:
+            n_ep = conn.execute("SELECT COUNT(*) FROM episodes").fetchone()[0]
+            n_tr = conn.execute("SELECT COUNT(*) FROM traces").fetchone()[0]
             conn.execute("DELETE FROM traces")
             conn.execute("DELETE FROM episodes")
             conn.execute("DELETE FROM causal_edges")
+            record_mutation(conn, principal=principal, action="reset",
+                            resource_id="*",
+                            detail={"episodes": int(n_ep),
+                                    "traces": int(n_tr)})
         self._index_dirty = True
         self._recall_index = None
         self._faiss_index = None
@@ -2495,28 +2522,42 @@ class EpisodicMemory:
             ]
         return out
 
-    def delete_by_task_text(self, task_text: str) -> int:
+    def delete_by_task_text(self, task_text: str, *, principal: str) -> int:
         """FORGIA pezzo #111: cancella tutti gli episodi con questo task_text.
 
         Returns the number of episodes removed. Useful when an admin
         wants to drop every run of a known-bad task in one shot
         (e.g. clean a corpus of accidentally-stored test fixtures
-        before a real bench run).
+        before a real bench run). ``principal`` is MANDATORY (0.8 mutation
+        audit) and is stamped on every per-episode chain row.
         """
         ids = [ep.id for ep in self.find_by_task_text(task_text, limit=10_000)]
         n_removed = 0
         for eid in ids:
-            if self.delete(eid):
+            if self.delete(eid, principal=principal):
                 n_removed += 1
         return n_removed
 
-    def delete(self, episode_id: str) -> bool:
+    def delete(self, episode_id: str, *, principal: str,
+               action: str = "delete") -> bool:
         """FORGIA pezzo #109: delete one episode + its traces + edges.
 
         Returns True if a row was actually removed, False otherwise.
         Useful for dashboards / admin tools that want to surgically
         remove a specific episode (e.g. user-flagged garbage data).
+
+        ``principal`` is MANDATORY (0.8 mutation audit): one hash-chained
+        ``audit_mutations`` row in episodes.db, SAME transaction as the
+        DELETE, fail-closed — mirrors ``SemanticMemory.delete``. ``action``
+        is the surface's audit label (``delete`` | ``purge`` | ``forget``).
+        Traces/causal-edges removal is part of this one audited action.
         """
+        from .mutation_audit import record_mutation, require_principal
+        require_principal(principal)
+        if action not in ("delete", "purge", "forget"):
+            raise ValueError(
+                f"delete() audit action must be delete|purge|forget, "
+                f"got {action!r}")
         with self._connect() as conn:
             cur = conn.execute(
                 "DELETE FROM episodes WHERE id = ?", (episode_id,),
@@ -2530,11 +2571,30 @@ class EpisodicMemory:
                 (episode_id, episode_id),
             )
             removed = cur.rowcount > 0
+            if removed:
+                record_mutation(conn, principal=principal, action=action,
+                                resource_id=episode_id)
         if removed:
             self._index_dirty = True
             self._recall_index = None
             self._faiss_index = None
         return removed
+
+    # ── 0.8 mutation-audit chain (episodic): verification API ─────────────
+
+    def audit_verify(self) -> str | None:
+        """First tampered ``audit_mutations`` row id in episodes.db, or
+        ``None`` when the chain is intact (same limits as the facts chain:
+        tail truncation / full rewrite need the anchored head)."""
+        from .mutation_audit import verify_conn
+        with self._connect() as conn:
+            return verify_conn(conn)
+
+    def audit_head(self) -> str | None:
+        """Current episodic mutation-chain head (archive off-box)."""
+        from .mutation_audit import head_conn
+        with self._connect() as conn:
+            return head_conn(conn)
 
     def gc_orphan_causal_edges(self) -> int:
         """Delete causal_edges whose src OR dst episode no longer exists.

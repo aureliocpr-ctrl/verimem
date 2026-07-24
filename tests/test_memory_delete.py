@@ -24,7 +24,7 @@ def test_delete_existing_episode_returns_true(tmp_path: Path):
     mem.store(_ep("e1"))
     mem.store(_ep("e2"))
     assert mem.count() == 2
-    assert mem.delete("e1") is True
+    assert mem.delete("e1", principal="test:suite") is True
     assert mem.count() == 1
     assert mem.get("e1") is None
     assert mem.get("e2") is not None
@@ -33,7 +33,7 @@ def test_delete_existing_episode_returns_true(tmp_path: Path):
 def test_delete_unknown_returns_false(tmp_path: Path):
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     mem.store(_ep("e1"))
-    assert mem.delete("nope") is False
+    assert mem.delete("nope", principal="test:suite") is False
     assert mem.count() == 1
 
 
@@ -44,7 +44,7 @@ def test_delete_invalidates_index(tmp_path: Path):
     mem.store(_ep("beta"))
     # Touch the recall path so the in-memory index is built.
     _ = mem.recall("alpha", k=2, track_access=False)
-    mem.delete("alpha")
+    mem.delete("alpha", principal="test:suite")
     hits = mem.recall("alpha", k=2, track_access=False)
     out_ids = {ep.id for ep, _ in hits}
     assert "alpha" not in out_ids
@@ -78,8 +78,8 @@ def test_wake_agent_delete_episode(tmp_path: Path):
     mem.store(_ep("e1"))
     mem.store(_ep("e2"))
     agent = WakeAgent(memory=mem, skills=skills)
-    assert agent.delete_episode("e1") is True
-    assert agent.delete_episode("nope") is False
+    assert agent.delete_episode("e1", principal="test:suite") is True
+    assert agent.delete_episode("nope", principal="test:suite") is False
     assert mem.count() == 1
 
 
@@ -107,7 +107,7 @@ def test_delete_by_task_text_removes_all_matches(tmp_path: Path):
     mem.store(e1)
     mem.store(e2)
     mem.store(e3)
-    n = mem.delete_by_task_text("duplicated task")
+    n = mem.delete_by_task_text("duplicated task", principal="test:suite")
     assert n == 2
     assert mem.count() == 1
     remaining = list(mem.all())
