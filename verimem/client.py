@@ -437,6 +437,16 @@ class Memory:
                     # the stale-beside-new state the feature exists to prevent (opus critic).
                     _LOG.warning("same-source supersede of %s failed (new %s admitted, old "
                                  "NOT retired): %s", _old_id, fact.id, exc)
+        # Review-queue backpressure (P0 ciclo 2, punto 4): a write that JOINS
+        # the quarantine/review backlog says how deep that backlog is. Only
+        # this write — annotating an admitted one would be noise on a page
+        # that has nothing to do with the queue, and noise is how a signal
+        # gets ignored. Read is memoised per window and never raises.
+        if fact.status == "quarantined":
+            from .review_queue import backpressure_warning
+            _bp = backpressure_warning(self.semantic.db_path)
+            if _bp:
+                warnings.append(_bp)
         _adj = _adjudication(gate, disposition=_disposition,
                              verified_by=verified_by, warnings=warnings)
         # The audit row also records a defense that STOOD DOWN (critic probe 3
