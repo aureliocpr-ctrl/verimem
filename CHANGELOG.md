@@ -4,6 +4,18 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased] — 0.8 line
 
+### Fixed
+- **MCP clients can no longer weaken the write gate from tool args.** The
+  shared-server MCP surface accepted `validate="off"` (anti-confab gate
+  never runs) and `force_persist=true` (overrides a downgrade/reject
+  verdict) from ANY client — a remote gate-off. These weakening knobs are
+  now honoured only when the operator opts in via
+  `VERIMEM_MCP_TRUST_GATE_KNOBS=1`; otherwise they are neutralized to the
+  safe defaults and the response reports `gate_knobs_denied` (on the
+  success AND reject paths — observable, never silent). Strengthening
+  values (`validate="full"`, `gate_mode="reject"`) always pass; the same
+  trust rule as `writer_principal`: tool args never set policy.
+
 ### Added
 - **Signed external anchor over BOTH audit chains (tamper-evidence WS,
   step 2).** `verimem audit anchor [--db] [--out]` emits a receipt —

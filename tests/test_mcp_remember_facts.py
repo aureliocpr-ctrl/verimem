@@ -56,10 +56,11 @@ class _FakeSemantic:
 
     def store(self, fact: _FakeFact, *,
                return_replaced: bool = False,
-               coherence_hook=None) -> bool | None:
+               coherence_hook=None, **_kw) -> bool | None:
         # Cycle #125: accept return_replaced + coherence_hook (cycle 119
         # wire) for back-compat with the production handler. Fake never
-        # invokes the hook.
+        # invokes the hook. **_kw tolerates future store kwargs (embed=...
+        # on the quarantine path — 0.8 WS1 knob-policy tests).
         _ = coherence_hook
         existed = fact.id in self._facts
         self._facts[fact.id] = fact
@@ -294,3 +295,81 @@ async def test_fact_forget_unknown(fake_agent: _FakeAgent) -> None:
     )
     payload = json.loads(blocks[0])
     assert "error" in payload
+
+
+# ---------- gate-knob policy (0.8 WS1: untrusted args can't weaken) ------
+#
+# The MCP surface is UNTRUSTED (shared server; args come from any client),
+# yet `validate="off"` skipped the anti-confab gate entirely and
+# `force_persist=True` overrode a downgrade/reject verdict. Policy: the
+# WEAKENING knobs are honoured only when the OPERATOR opted in via
+# VERIMEM_MCP_TRUST_GATE_KNOBS=1; otherwise they are neutralized and the
+# response says so (`gate_knobs_denied`) — observable, never silent.
+# Strengthening values (validate="full", gate_mode="reject") always pass.
+
+#: First-person software self-claim — the L1 agent-confab pin class the
+#: 0.7.0 domain-precision cycle kept escalating (never admitted bare).
+_SELF_CLAIM = "I have completed the migration and everything works perfectly now"
+
+
+@pytest.fixture
+def spy_agent(monkeypatch: pytest.MonkeyPatch) -> dict:
+    """fake_agent variant whose _build_fact records the status the handler
+    computed — the direct signal of whether the gate actually ran."""
+    a = _FakeAgent()
+    seen: dict[str, Any] = {"agent": a}
+    monkeypatch.setattr(mcp_server, "_ag", lambda: a)
+
+    def _factory(proposition: str, topic: str = "", confidence: float = 0.9,
+                 source_episodes: list[str] | None = None, *,
+                 status: str = "model_claim", **_kw) -> _FakeFact:
+        import uuid
+        seen["status"] = status
+        return _FakeFact(uuid.uuid4().hex[:12], proposition=proposition,
+                         topic=topic, confidence=confidence,
+                         source_episodes=source_episodes or [])
+
+    monkeypatch.setattr(mcp_server, "_build_fact", _factory, raising=False)
+    monkeypatch.delenv("VERIMEM_MCP_TRUST_GATE_KNOBS", raising=False)
+    return seen
+
+
+@pytest.mark.asyncio
+async def test_validate_off_denied_by_default(spy_agent: dict) -> None:
+    blocks = await _invoke_tool(
+        "hippo_remember", {"proposition": _SELF_CLAIM, "validate": "off"})
+    payload = json.loads(blocks[0])
+    assert payload.get("gate_knobs_denied") == ["validate=off"]
+    # the gate really ran: the self-claim was downgraded, not admitted
+    assert spy_agent.get("status") == "quarantined"
+
+
+@pytest.mark.asyncio
+async def test_force_persist_denied_by_default(spy_agent: dict) -> None:
+    blocks = await _invoke_tool(
+        "hippo_remember", {"proposition": _SELF_CLAIM, "force_persist": True})
+    payload = json.loads(blocks[0])
+    assert payload.get("gate_knobs_denied") == ["force_persist"]
+    assert spy_agent.get("status") == "quarantined"
+
+
+@pytest.mark.asyncio
+async def test_operator_opt_in_restores_legacy_knobs(
+        spy_agent: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VERIMEM_MCP_TRUST_GATE_KNOBS", "1")
+    blocks = await _invoke_tool(
+        "hippo_remember", {"proposition": _SELF_CLAIM, "validate": "off"})
+    payload = json.loads(blocks[0])
+    assert not payload.get("gate_knobs_denied")
+    assert spy_agent.get("status") == "model_claim"  # gate skipped, as asked
+
+
+@pytest.mark.asyncio
+async def test_strengthening_values_never_denied(spy_agent: dict) -> None:
+    blocks = await _invoke_tool(
+        "hippo_remember",
+        {"proposition": "The sky is blue", "validate": "fast",
+         "gate_mode": "reject"})
+    payload = json.loads(blocks[0])
+    assert not payload.get("gate_knobs_denied")
+    assert payload["ok"] is True
