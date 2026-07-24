@@ -365,6 +365,34 @@ async def test_operator_opt_in_restores_legacy_knobs(
 
 
 @pytest.mark.asyncio
+async def test_denied_validate_off_defers_to_operator_default(
+        spy_agent: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Critic counterexample on 4a37b09: neutralizing validate="off" to the
+    CONSTANT "fast" still let an untrusted client downgrade an operator who
+    configured ENGRAM_VALIDATE_DEFAULT=full (L3 contradiction checks run only
+    at full). The refused knob must defer to the operator's default — the
+    gate must receive validate=None, never a handler-chosen constant."""
+    import verimem.anti_confab_gate as acg
+    seen_kw: dict = {}
+    real_gate = acg.run_validation_gate
+
+    def spy_gate(**kw):
+        seen_kw.update(kw)
+        return real_gate(**kw)
+
+    # the handler does `from .anti_confab_gate import run_validation_gate`
+    # inside the function body, so patch the SOURCE module attribute
+    monkeypatch.setattr(acg, "run_validation_gate", spy_gate)
+    blocks = await _invoke_tool(
+        "hippo_remember", {"proposition": _SELF_CLAIM, "validate": "off"})
+    payload = json.loads(blocks[0])
+    assert payload.get("gate_knobs_denied") == ["validate=off"]
+    assert seen_kw.get("validate") is None, (
+        "a refused weakening knob must fall back to the operator default "
+        f"(None), not a constant — got {seen_kw.get('validate')!r}")
+
+
+@pytest.mark.asyncio
 async def test_strengthening_values_never_denied(spy_agent: dict) -> None:
     blocks = await _invoke_tool(
         "hippo_remember",

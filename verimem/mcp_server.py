@@ -11950,7 +11950,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                                                           "yes", "on"):
                 if str(_validate_kw or "").strip().lower() == "off":
                     _knobs_denied.append("validate=off")
-                    _validate_kw = "fast"
+                    # Defer to the OPERATOR's default (None -> _resolve_level
+                    # reads ENGRAM_VALIDATE_DEFAULT), never a handler-chosen
+                    # constant: forcing "fast" still let an untrusted client
+                    # downgrade a full-level operator out of the L3
+                    # contradiction checks (critic counterexample on 4a37b09).
+                    _validate_kw = None
                 if _force_persist:
                     _knobs_denied.append("force_persist")
                     _force_persist = False
