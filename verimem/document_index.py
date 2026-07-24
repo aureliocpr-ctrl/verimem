@@ -32,6 +32,16 @@ from .documents import DocumentStore
 from .file_extract import extract_text
 from .prompt_injection import detect_injection, sanitize_dangerous_unicode
 
+
+def _row_get(row, column: str):
+    """A column that may not exist on a row from a pre-migration DB read by an
+    old connection. Missing → None, which is exactly "unsigned"."""
+    try:
+        return row[column]
+    except (IndexError, KeyError):
+        return None
+
+
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS chunks (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,7 +54,11 @@ CREATE TABLE IF NOT EXISTS chunks (
     text       TEXT NOT NULL,
     uri        TEXT DEFAULT '',
     vec        BLOB NOT NULL,
-    flagged    INTEGER NOT NULL DEFAULT 0
+    flagged    INTEGER NOT NULL DEFAULT 0,
+    -- P0 ciclo 2: WHO indexed this chunk (server-stamped, mirrors the
+    -- snapshot's meta.indexed_by). NULL = unsigned ingest — absence stays
+    -- absence, never a default that could read as a vouch nobody made.
+    indexed_by TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_chunks_source ON chunks(source_id, version);
 """
@@ -95,19 +109,35 @@ class DocumentIndex:
                              "INTEGER NOT NULL DEFAULT 0")
             except sqlite3.OperationalError:
                 pass  # column already present
+            # migrate pre-provenance DBs (P0 ciclo 2): same additive shape.
+            # Existing chunks stay NULL = unsigned, which is the truth about
+            # them — they were indexed before anyone recorded who was asking.
+            try:
+                conn.execute("ALTER TABLE chunks ADD COLUMN indexed_by TEXT")
+            except sqlite3.OperationalError:
+                pass  # column already present
             conn.commit()
         finally:
             conn.close()
 
     # --- write ----------------------------------------------------------
     def index_document(self, source_id: str, content: str, uri: str = "",
-                       meta: dict | None = None) -> dict:
+                       meta: dict | None = None,
+                       principal: str | None = None) -> dict:
         """Snapshot + chunk + embed ``content``. Idempotent per content-hash.
 
         Returns ``{source_id, doc_id, version, is_new, chunks_indexed}``.
         Same content re-indexed -> ``chunks_indexed == 0`` (no duplicate work).
+
+        ``principal`` (P0 ciclo 2) is the SERVER-stamped identity of whoever
+        asked for the ingest. It reaches the snapshot (``meta.indexed_by``) and
+        every chunk, because a chunk is what search returns and what promotion
+        turns into a fact — provenance a join away is provenance missing at the
+        moment a citation is made. Absent by default: an unsigned ingest
+        records nothing rather than a comfortable-looking default.
         """
-        snap = self.docs.ingest(source_id, content, uri=uri, meta=meta)
+        snap = self.docs.ingest(source_id, content, uri=uri, meta=meta,
+                                principal=principal)
         if not snap["is_new"]:
             return {"source_id": source_id, "doc_id": snap["id"],
                     "version": snap["version"], "is_new": False,
@@ -133,13 +163,13 @@ class DocumentIndex:
                 n_flagged += flagged
                 rows.append((snap["id"], source_id, snap["version"], c.index,
                              c.start, c.end, c.text, uri, vecs[i].tobytes(),
-                             flagged))
+                             flagged, principal))
             conn = self._connect()
             try:
                 conn.executemany(
                     "INSERT INTO chunks(doc_id, source_id, version, idx, start, "
-                    "end, text, uri, vec, flagged) "
-                    "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    "end, text, uri, vec, flagged, indexed_by) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                     rows,
                 )
                 conn.commit()
@@ -156,14 +186,16 @@ class DocumentIndex:
                 "chunks_indexed": len(chunks), "chunks_flagged": n_flagged}
 
     def index_file(self, path: Path | str, source_id: str | None = None,
-                   meta: dict | None = None) -> dict:
+                   meta: dict | None = None,
+                   principal: str | None = None) -> dict:
         """Extract text from a real file (pdf/docx/html/txt) and index it."""
         p = Path(path)
         text = extract_text(p)
         m = dict(meta or {})
         m.setdefault("filename", p.name)
         return self.index_document(source_id if source_id is not None else str(p),
-                                   text, uri=f"file://{p}", meta=m)
+                                   text, uri=f"file://{p}", meta=m,
+                                   principal=principal)
 
     # --- read -----------------------------------------------------------
     def search(self, query: str, k: int = 5, *,
@@ -205,7 +237,10 @@ class DocumentIndex:
         return [{"text": r["text"], "score": round(s, 6),
                  "source_id": r["source_id"], "version": r["version"],
                  "start": r["start"], "end": r["end"], "uri": r["uri"] or "",
-                 "doc_id": r["doc_id"], "flagged": bool(r["flagged"])}
+                 "doc_id": r["doc_id"], "flagged": bool(r["flagged"]),
+                 # who vouched for this chunk (None = unsigned ingest): a
+                 # citation must carry it, not require a join to find it.
+                 "indexed_by": _row_get(r, "indexed_by")}
                 for s, r in scored[:max(1, int(k))]]
 
     # --- discovery ------------------------------------------------------

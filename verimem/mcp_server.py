@@ -7502,8 +7502,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="rejected_path")
                 return _err(_path_why)
             try:
+                # P0 ciclo 2: stamp WHO indexed. This tool is the
+                # poison-then-cite vector the design review named, so the
+                # identity is the SERVER's — never a tool argument.
                 res = DocumentIndex().index_file(
-                    path, source_id=arguments.get("source_id"))
+                    path, source_id=arguments.get("source_id"),
+                    principal=_MCP_PRINCIPAL)
             except FileNotFoundError:
                 _audit(name, arguments, outcome="not_found")
                 return _err(f"file not found: {path}")
