@@ -2596,6 +2596,22 @@ class EpisodicMemory:
         with self._connect() as conn:
             return head_conn(conn)
 
+    def audit_count(self) -> int:
+        """Number of chained rows in the episodic mutation chain — the
+        anchor receipt binds it so a later verify can tell truncation from
+        stasis."""
+        from .mutation_audit import count_conn
+        with self._connect() as conn:
+            return count_conn(conn)
+
+    def audit_head_at(self, count: int) -> str | None:
+        """The episodic chain head AS OF the ``count``-th chained row
+        (1-indexed), or ``None`` if out of range — the anchor's
+        rewrite/truncate+reinsert check."""
+        from .mutation_audit import head_at_conn
+        with self._connect() as conn:
+            return head_at_conn(conn, count)
+
     def gc_orphan_causal_edges(self) -> int:
         """Delete causal_edges whose src OR dst episode no longer exists.
 

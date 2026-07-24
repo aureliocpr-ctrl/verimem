@@ -3309,6 +3309,40 @@ def _audit_public_key() -> str | None:
             or os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()) or None
 
 
+def _audit_episodes_db(sm, override: Path | None) -> Path | None:
+    """Locate the episodes.db whose mutation chain the anchor should cover.
+    ``override`` wins; otherwise look beside the configured store (the same
+    layout cleanup-episode-telemetry uses). ``None`` when none exists — the
+    episodic chain is then simply not part of the receipt."""
+    if override is not None:
+        return override if override.exists() else None
+    beside = Path(sm.db_path).with_name("episodes.db")
+    if beside.exists():
+        return beside
+    try:
+        data = _facts_data_dir()
+    except Exception:  # noqa: BLE001 — discovery is best-effort
+        return None
+    for cand in (data / "episodes" / "episodes.db", data / "episodes.db"):
+        if cand.exists():
+            return cand
+    return None
+
+
+def _audit_episodic_chain_state(ep_path: Path | None):
+    """A ChainState for the episodic mutation chain, or ``None`` when there is
+    no episodes.db to cover (the receipt then stays a two-chain v1)."""
+    from verimem.audit_anchor import ChainState
+    if ep_path is None:
+        return None, None
+    from verimem.memory import EpisodicMemory
+    em = EpisodicMemory(db_path=ep_path)
+    state = ChainState(rows=em.audit_count(),
+                       intact=em.audit_verify() is None,
+                       head_at=em.audit_head_at)
+    return em, state
+
+
 @audit_app.command("anchor")
 def audit_anchor_cmd(
     db: Path | None = typer.Option(  # noqa: B008 — typer idiom
@@ -3317,10 +3351,15 @@ def audit_anchor_cmd(
     out: Path | None = typer.Option(  # noqa: B008 — typer idiom
         None, "--out",
         help="Write the receipt JSON here (default: print to stdout)"),
+    episodes_db: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--episodes-db",
+        help="Path to an episodes.db to also cover (default: auto-discover "
+             "beside the store; absent => a two-chain v1 receipt)"),
 ) -> None:
-    """Emit a SIGNED anchor receipt over BOTH audit chains — the mutation chain
-    (this semantic.db) and the gate-adjudication chain (sibling
-    adjudications.db). The receipt carries each chain's head AND row count, a
+    """Emit a SIGNED anchor receipt over the audit chains — the mutation chain
+    (this semantic.db), the gate-adjudication chain (sibling adjudications.db),
+    and, when an episodes.db is present, the episodic mutation chain (a v2
+    receipt). The receipt carries each chain's head AND row count, a
     timestamp, and an ed25519 signature over the whole payload under
     ``VERIMEM_AUDIT_SIGNING_KEY`` (the operator's private PEM; env only, never
     logged). Archive it OFF-BOX and always verify against the NEWEST receipt —
@@ -3340,11 +3379,19 @@ def audit_anchor_cmd(
     from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
     adj = _audit_adj_log(sm)
+    ep_path = _audit_episodes_db(sm, episodes_db)
+    ep_kwargs = {}
+    if ep_path is not None:
+        from verimem.memory import EpisodicMemory
+        em = EpisodicMemory(db_path=ep_path)
+        ep_kwargs = {"episodic_head": em.audit_head(),
+                     "episodic_rows": em.audit_count()}
     payload = build_payload(
         ts=_time.time(),
         mutations_head=sm.audit_head(), mutations_rows=sm.audit_count(),
         adjudications_head=adj.head() if adj is not None else None,
-        adjudications_rows=adj.count() if adj is not None else 0)
+        adjudications_rows=adj.count() if adj is not None else 0,
+        **ep_kwargs)
     receipt = sign_anchor(payload, key_path)
     text = json.dumps(receipt, indent=2, sort_keys=True)
     if out is not None:
@@ -3362,22 +3409,27 @@ def audit_verify_cmd(
         help="Path to a semantic.db (default: the configured store)"),
     anchor: Path | None = typer.Option(  # noqa: B008 — typer idiom
         None, "--anchor",
-        help="Verify against a signed anchor receipt (both chains): detects "
+        help="Verify against a signed anchor receipt (all chains): detects "
              "a full rewrite or tail-truncate+reinsert an in-DB check cannot"),
+    episodes_db: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--episodes-db",
+        help="Path to an episodes.db whose chain the receipt covers (default: "
+             "auto-discover beside the store)"),
 ) -> None:
     """Recompute the hash-chain over every recorded destructive mutation
     (delete/purge/forget/supersede/reset/restore). Exit 0 = intact; exit 1 =
     tampered, printing the first bad row. Archive the printed head off-box —
     an in-DB check alone cannot see a full rewrite or tail truncation.
 
-    With ``--anchor FILE`` it instead verifies BOTH chains against a signed
-    receipt (signature, intactness, append-only growth, anchored-head-at-count)
-    and exits 1 naming the chain and check that failed."""
+    With ``--anchor FILE`` it instead verifies every chain the receipt covers
+    against the signed receipt (signature, intactness, append-only growth,
+    anchored-head-at-count) and exits 1 naming the chain and check that
+    failed."""
     from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
 
     if anchor is not None:
-        _audit_verify_anchor(sm, anchor)
+        _audit_verify_anchor(sm, anchor, episodes_db)
         return
 
     bad = sm.audit_verify()
@@ -3395,9 +3447,11 @@ def audit_verify_cmd(
                   "[dim](archive this off-box)[/dim]")
 
 
-def _audit_verify_anchor(sm, anchor: Path) -> None:
-    """Verify both chains against a signed anchor receipt; exit 1 on any
-    failure, naming the chain + check."""
+def _audit_verify_anchor(sm, anchor: Path,
+                         episodes_db: Path | None = None) -> None:
+    """Verify every covered chain against a signed anchor receipt; exit 1 on
+    any failure, naming the chain + check. A live chain the receipt does not
+    cover (older v1 receipt vs an episodic chain) prints a non-fatal note."""
     from verimem.audit_anchor import ChainState, verify_anchor
     key_path = _audit_public_key()
     if not key_path:
@@ -3420,12 +3474,17 @@ def _audit_verify_anchor(sm, anchor: Path) -> None:
             rows=adj.count(), intact=adj.verify() is None, head_at=adj.head_at)
     else:
         adjudications = ChainState(rows=0, intact=True, head_at=lambda _k: None)
-    result = verify_anchor(receipt, key_path=key_path,
-                           chains={"mutations": mutations,
-                                   "adjudications": adjudications})
+    chains = {"mutations": mutations, "adjudications": adjudications}
+    ep_path = _audit_episodes_db(sm, episodes_db)
+    _em, ep_state = _audit_episodic_chain_state(ep_path)
+    if ep_state is not None:
+        chains["episodic"] = ep_state
+    result = verify_anchor(receipt, key_path=key_path, chains=chains)
+    for n in result.notes:
+        console.print(f"[yellow]note[/yellow]: {n}")
     if result.ok:
-        console.print("[green]intact[/green]: both chains match the signed "
-                      "anchor [dim](append-only extension)[/dim]")
+        console.print("[green]intact[/green]: every covered chain matches the "
+                      "signed anchor [dim](append-only extension)[/dim]")
         return
     for f in result.failures:
         console.print(f"[red]TAMPERED[/red]: {f}")

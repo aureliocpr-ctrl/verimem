@@ -290,3 +290,152 @@ def test_cli_verify_anchor_ok_then_tampered(tmp_path, keypair, monkeypatch):
                               "--anchor", str(out)])
     assert bad.exit_code == 1
     assert "mutations" in bad.output
+
+
+# ---------------------------------------------------------------------------
+# Receipt v2: the episodic chain joins the anchor (step 3)
+# ---------------------------------------------------------------------------
+
+def test_build_payload_v1_when_episodic_unset():
+    """No episodic args => a v1 payload, byte-for-byte the legacy shape, so
+    receipts archived by the two-chain code keep verifying."""
+    p = aa.build_payload(ts=1.0, mutations_head="a" * 64, mutations_rows=1,
+                         adjudications_head=None, adjudications_rows=0)
+    assert p["version"] == 1
+    assert "episodic_head" not in p and "episodic_rows" not in p
+
+
+def test_build_payload_v2_when_episodic_given():
+    p = aa.build_payload(ts=1.0, mutations_head="a" * 64, mutations_rows=1,
+                         adjudications_head=None, adjudications_rows=0,
+                         episodic_head="c" * 64, episodic_rows=2)
+    assert p["version"] == 2
+    assert p["episodic_head"] == "c" * 64
+    assert p["episodic_rows"] == 2
+
+
+def _cs(rows, heads):
+    """A ChainState from an in-memory list of hashes (1-indexed head_at)."""
+    return aa.ChainState(
+        rows=rows, intact=True,
+        head_at=lambda k: heads[k - 1] if 1 <= k <= len(heads) else None)
+
+
+def test_v2_verify_all_three_chains_clean(keypair):
+    priv, pub = keypair
+    payload = aa.build_payload(
+        ts=1.0, mutations_head="m1", mutations_rows=1,
+        adjudications_head="a1", adjudications_rows=1,
+        episodic_head="e2", episodic_rows=2)
+    receipt = aa.sign_anchor(payload, priv)
+    res = aa.verify_anchor(receipt, key_path=pub, chains={
+        "mutations": _cs(1, ["m1"]),
+        "adjudications": _cs(1, ["a1"]),
+        "episodic": _cs(2, ["e1", "e2"])})
+    assert res.ok is True, res.failures
+
+
+def test_v2_detects_episodic_rewrite(keypair):
+    priv, pub = keypair
+    payload = aa.build_payload(
+        ts=1.0, mutations_head="m1", mutations_rows=1,
+        adjudications_head=None, adjudications_rows=0,
+        episodic_head="e2", episodic_rows=2)
+    receipt = aa.sign_anchor(payload, priv)
+    # episodic row 2 rewritten to a different (internally-valid) hash
+    res = aa.verify_anchor(receipt, key_path=pub, chains={
+        "mutations": _cs(1, ["m1"]),
+        "adjudications": aa.ChainState(rows=0, intact=True,
+                                       head_at=lambda _k: None),
+        "episodic": _cs(2, ["e1", "DIFFERENT"])})
+    assert res.ok is False
+    assert any("episodic" in f for f in res.failures), res.failures
+
+
+def test_v1_receipt_reports_episodic_not_covered(keypair):
+    """A legacy v1 receipt verified where an episodic chain now exists must
+    say so as a NON-FATAL note (re-anchor), never a silent pass and never a
+    hard failure on an honest old receipt."""
+    priv, pub = keypair
+    payload = aa.build_payload(ts=1.0, mutations_head="m1", mutations_rows=1,
+                              adjudications_head=None, adjudications_rows=0)
+    receipt = aa.sign_anchor(payload, priv)
+    res = aa.verify_anchor(receipt, key_path=pub, chains={
+        "mutations": _cs(1, ["m1"]),
+        "adjudications": aa.ChainState(rows=0, intact=True,
+                                       head_at=lambda _k: None),
+        "episodic": _cs(3, ["e1", "e2", "e3"])})
+    assert res.ok is True, res.failures           # honest old receipt still ok
+    assert any("episodic" in n and "not covered" in n.lower()
+               for n in res.notes), res.notes
+
+
+def test_v2_payload_cannot_verify_as_v1(keypair):
+    """version lives inside the signed canonical payload, so flipping v2->v1
+    on the wire breaks the signature — no cross-version confusion."""
+    priv, pub = keypair
+    payload = aa.build_payload(
+        ts=1.0, mutations_head="m1", mutations_rows=1,
+        adjudications_head=None, adjudications_rows=0,
+        episodic_head="e1", episodic_rows=1)
+    receipt = aa.sign_anchor(payload, priv)
+    forged = {**receipt, "version": 1}
+    forged_payload = {k: v for k, v in forged.items() if k != "signature"}
+    assert te.verify_receipt_signature(
+        forged_payload, forged["signature"], pub) is False
+
+
+def test_episodic_memory_audit_count_and_head_at(tmp_path):
+    from verimem.memory import Episode, EpisodicMemory
+    em = EpisodicMemory(db_path=tmp_path / "ep.db")
+    em.store(Episode(id="e1", task_text="t", final_answer="a",
+                     outcome="success"))
+    em.delete("e1", principal="test:suite")
+    assert em.audit_count() == 1
+    assert em.audit_head_at(1) == em.audit_head()
+    assert em.audit_head_at(2) is None
+
+
+def test_cli_anchor_v2_covers_episodic(tmp_path, keypair, monkeypatch):
+    from pathlib import Path
+
+    from typer.testing import CliRunner
+
+    from verimem.cli import app
+    from verimem.memory import Episode, EpisodicMemory
+
+    priv, pub = keypair
+    sm = _sm(tmp_path)
+    _seed_both_chains(sm)
+    # an episodes.db beside semantic.db with one audited episodic mutation
+    ep_path = Path(sm.db_path).with_name("episodes.db")
+    em = EpisodicMemory(db_path=ep_path)
+    em.store(Episode(id="e1", task_text="t", final_answer="a",
+                     outcome="success"))
+    em.delete("e1", principal="cli:local")
+
+    monkeypatch.setenv("VERIMEM_AUDIT_SIGNING_KEY", str(priv))
+    out = tmp_path / "anchor.json"
+    runner = CliRunner()
+    res = runner.invoke(app, ["audit", "anchor", "--db", str(sm.db_path),
+                              "--episodes-db", str(ep_path), "--out", str(out)])
+    assert res.exit_code == 0, res.output
+    receipt = json.loads(out.read_text(encoding="utf-8"))
+    assert receipt["version"] == 2
+    assert receipt["episodic_rows"] == 1
+    assert receipt["episodic_head"] == em.audit_head()
+
+    monkeypatch.delenv("VERIMEM_AUDIT_SIGNING_KEY", raising=False)
+    monkeypatch.setenv("VERIMEM_AUDIT_PUBLIC_KEY", str(pub))
+    ok = runner.invoke(app, ["audit", "verify", "--db", str(sm.db_path),
+                             "--episodes-db", str(ep_path),
+                             "--anchor", str(out)])
+    assert ok.exit_code == 0, ok.output
+
+    with sqlite3.connect(ep_path) as conn:
+        conn.execute("UPDATE audit_mutations SET principal='attacker'")
+    bad = runner.invoke(app, ["audit", "verify", "--db", str(sm.db_path),
+                              "--episodes-db", str(ep_path),
+                              "--anchor", str(out)])
+    assert bad.exit_code == 1
+    assert "episodic" in bad.output
