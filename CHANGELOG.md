@@ -53,6 +53,18 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   so an L1 flood can mask an L3 contradiction.
 
 ### Fixed
+- **A fusion hit no longer reports a similarity nobody measured.** Graph- and
+  lexical-only candidates entered the result with `sim=0.0` — a placeholder
+  justified, in `ppr_seed`, by "the CE-rerank downstream re-scores them". The
+  2026-06-14 fix moved the fusion to run AFTER the rerank, so that re-scoring
+  never happens and the placeholder reached callers, indistinguishable from a
+  measured zero. Found by dogfooding on a real 10k-fact store: 7 of 40 results
+  carried it, and 0 of 40 with the fusion off. The similarity is computable, so
+  it is now computed — the query is encoded once, lazily, and each candidate is
+  scored against its stored embedding, on the same scale as the dense hits. A
+  consumer filtering by score no longer silently drops exactly what the fusion
+  contributed. `fuse_dense_and_ppr` takes an optional `score_extra`; without it
+  the behaviour is byte-identical, so no existing caller changes.
 - **MCP clients can no longer weaken the write gate from tool args.** The
   shared-server MCP surface accepted `validate="off"` (anti-confab gate
   never runs) and `force_persist=true` (overrides a downgrade/reject

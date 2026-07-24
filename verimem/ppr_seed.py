@@ -105,6 +105,7 @@ def fuse_dense_and_ppr(
     *,
     k: float = 60.0,
     protect_top: int = 0,
+    score_extra: Callable[[Any], float] | None = None,
 ) -> list[tuple[Any, float]]:
     """RRF-fuse a dense ``(Fact, sim)`` hit list with N extra fact-id ranklists
     (entity-PPR, BM25-lexical, …) — pure, no SemanticMemory dependency.
@@ -136,6 +137,7 @@ def fuse_dense_and_ppr(
                       for lst in extra]
         fused_tail = fuse_dense_and_ppr(
             list(dense_hits[protect_top:]), tail_extra, fetch_fact, k=k,
+            score_extra=score_extra,
         )
         return head + [(f, s) for f, s in fused_tail
                        if getattr(f, "id", None) not in head_ids]
@@ -159,7 +161,22 @@ def fuse_dense_and_ppr(
             except Exception:  # noqa: BLE001 — one bad fetch must not break recall
                 f = None
             if f is not None:
-                out.append((f, 0.0))
+                # A graph/lexical-only candidate has no cosine of its own. The
+                # historical placeholder was 0.0, on the assumption that the
+                # CE-rerank downstream would re-score it — but when that does
+                # not happen (CE over budget, CE off, or the candidate sits past
+                # the reranked head) the placeholder reaches the caller, who
+                # cannot tell "not measured" from "measured zero". Measured on
+                # the real store 2026-07-25: 7/40 results, and 0/40 with the
+                # fusion off. When a scorer is available the similarity is
+                # COMPUTED instead of guessed; without one nothing changes.
+                sim = 0.0
+                if score_extra is not None:
+                    try:
+                        sim = float(score_extra(f))
+                    except Exception:  # noqa: BLE001 — a receipt detail must never break recall
+                        sim = 0.0
+                out.append((f, sim))
                 seen.add(fid)
     # Defensive: keep any dense hit the fusion somehow dropped (id-less rows).
     for f, sim in dense_hits:

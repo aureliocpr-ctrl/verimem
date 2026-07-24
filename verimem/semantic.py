@@ -3830,6 +3830,57 @@ class SemanticMemory:
             independence=independence_enabled(),
             deconfound=independence_deconfounded())
 
+    def _extra_similarity_scorer(self, query: str):
+        """Real cosine for a graph/lexical-only fusion candidate.
+
+        Those candidates historically entered with ``sim=0.0``, on the premise
+        (still written in ``ppr_seed``) that the CE-rerank downstream would
+        re-score them. Since the 2026-06-14 fix the fusion runs AFTER the
+        rerank — this method's own docstring says so — so the re-scoring never
+        happens and the placeholder reaches the caller, who cannot tell "not
+        measured" from "measured zero". Dogfooding on the real store measured
+        it at 7/40 results, and 0/40 with the fusion off.
+
+        The similarity is computable, so it is computed: the query is encoded
+        once, lazily (nothing is paid when the fusion adds no extra candidate),
+        and each fact's stored embedding is read by id. Costs are per-candidate
+        and few (``protect_top`` caps them); a failure yields 0.0 and is never
+        raised — a receipt detail must not break a recall.
+        """
+        state: dict[str, Any] = {}
+
+        def _score(fact: Any) -> float:
+            fid = getattr(fact, "id", None)
+            if not fid:
+                return 0.0
+            cache = state.setdefault("seen", {})
+            if fid in cache:
+                return cache[fid]
+            try:
+                if "q" not in state:
+                    state["q"] = np.asarray(
+                        embedding.encode([query])[0], dtype=np.float32)
+                q = state["q"]
+                with self._connect() as conn:
+                    row = conn.execute(
+                        "SELECT embedding FROM facts WHERE id = ?",
+                        (fid,)).fetchone()
+                blob = row["embedding"] if row else None
+                if not blob:
+                    return 0.0
+                v = np.frombuffer(blob, dtype=np.float32)
+                if v.shape[0] != q.shape[0]:
+                    return 0.0            # dimension drift: no claim
+                sim = float(embedding.cosine_matrix(q, v.reshape(1, -1))[0])
+                if not np.isfinite(sim):
+                    return 0.0
+            except Exception:  # noqa: BLE001 — never break a recall over a score
+                return 0.0
+            cache[fid] = sim
+            return sim
+
+        return _score
+
     def _maybe_fuse_ppr(
         self, query: str, hits: list[tuple[Fact, float]], k: int,
         *, topic_prefix: str | None = None, topic: str | None = None,
@@ -3891,6 +3942,7 @@ class SemanticMemory:
                 hits, [ppr_ids, bm25_ids],
                 lambda fid: self.get(fid, live_only=True),
                 protect_top=max(1, k // 2),
+                score_extra=self._extra_similarity_scorer(query),
             )
             # B-1 multi-tenant (CI 2026-06-15, flip default-ON): PPR/BM25
             # ripescano fact-id dal corpus INTERO, ignorando lo scope che il
