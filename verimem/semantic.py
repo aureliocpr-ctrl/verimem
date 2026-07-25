@@ -1843,6 +1843,61 @@ def _rerank_breaker_cold_overrun() -> None:
         )
 
 
+# --- Fusion circuit-breaker (2026-07-25) -------------------------------------
+# Measured on the real corpus: the PPR fusion exceeded its budget on EVERY query
+# (6/6), so every recall paid the full 2000 ms and kept the reranked order
+# anyway — the exact failure the rerank breaker above was written for, one month
+# earlier, in a comment that describes this scenario word for word. The proximate
+# cause here was a cold-load inside the extra-similarity scorer (fixed at its
+# call site), but the LESSON is that the defect stayed invisible for weeks
+# because nothing STOPPED it: encode has a breaker (2026-06-06), rerank has one
+# (2026-07-10), the fusion had none. Systematic overruns are a property of the
+# session, not per-query bad luck: after N consecutive ones the fusion is
+# disabled for this process and recall stops waiting. An in-budget success
+# resets the count, so transient contention never disables it permanently.
+_FUSION_BREAKER: dict[str, Any] = {"consecutive": 0, "tripped": False}
+
+
+def _fusion_breaker_n() -> int:
+    """Consecutive fusion overruns that trip the breaker. 0 disables it.
+    Env ENGRAM_FUSION_BREAKER_N, default 5 — the same bound as the rerank: a
+    handful of wasted budgets is an acceptable price for tolerating a burst of
+    contention, thousands are not."""
+    try:
+        return max(0, int(os.environ.get("ENGRAM_FUSION_BREAKER_N", "5")))
+    except ValueError:
+        return 5
+
+
+def _fusion_breaker_reset() -> None:
+    """Re-arm the breaker (tests; env swap at runtime)."""
+    _FUSION_BREAKER["consecutive"] = 0
+    _FUSION_BREAKER["tripped"] = False
+
+
+def _fusion_breaker_tripped() -> bool:
+    return bool(_FUSION_BREAKER["tripped"])
+
+
+def _fusion_breaker_overrun() -> None:
+    _FUSION_BREAKER["consecutive"] += 1
+    n = _fusion_breaker_n()
+    if n and not _FUSION_BREAKER["tripped"] \
+            and _FUSION_BREAKER["consecutive"] >= n:
+        _FUSION_BREAKER["tripped"] = True
+        _LOG.warning(
+            "PPR fusion breaker TRIPPED after %d consecutive budget overruns — "
+            "graph/lexical fusion disabled for this process (reranked order "
+            "stands; restart or _fusion_breaker_reset() to re-arm). Recall stops "
+            "paying the budget for a result it never receives.", n,
+        )
+
+
+def _fusion_breaker_ok() -> None:
+    """An in-budget fusion: contention was transient, re-arm the count."""
+    _FUSION_BREAKER["consecutive"] = 0
+
+
 def _rerank_cold_budget_s() -> float:
     """Wall-clock budget for a rerank attempt while the CE is still COLD-loading.
     Much smaller than the steady budget: a cold query must not pay the full ~3s
@@ -3858,8 +3913,18 @@ class SemanticMemory:
                 return cache[fid]
             try:
                 if "q" not in state:
+                    # encode(str), NON encode([str]): i due rami di encode()
+                    # hanno contratti opposti e questo path e' quello CALDO. Il
+                    # ramo single-text passa dal daemon condiviso ed e'
+                    # LRU-cached (32 ms misurati); il ramo batch chiama _model()
+                    # e cold-loada il modello IN-PROCESS — 26382 ms misurati sul
+                    # corpus reale il 25/07, dentro un budget di fusione di 2 s,
+                    # quindi ucciso a meta' caricamento a ogni query (6 overrun
+                    # su 6) e mai caldo. Il recall encoda la query dal daemon, il
+                    # modello in-process resta freddo per definizione: chiederlo
+                    # qui era chiedere l'unica cosa che questo processo non ha.
                     state["q"] = np.asarray(
-                        embedding.encode([query])[0], dtype=np.float32)
+                        embedding.encode(query), dtype=np.float32)
                 q = state["q"]
                 with self._connect() as conn:
                     row = conn.execute(
@@ -3899,6 +3964,11 @@ class SemanticMemory:
         gap) + BM25 (Zep gap) are each their own RRF signal. Capped at k.
         Fail-soft: any error / no extra signals → unchanged."""
         if not _ppr_fusion_enabled() or not query or not hits:
+            return hits
+        # Breaker FIRST: once tripped the fusion is not attempted at all, so the
+        # exit costs nothing — the whole point is to stop paying for a result
+        # that never arrives (see _FUSION_BREAKER).
+        if _fusion_breaker_tripped():
             return hits
         # #3 default-ON prereq (audit round-2): su corpus PICCOLI il bi-encoder +
         # CE bastano e i 2 DB-open + il graph-build del PPR sono puro overhead.
@@ -3995,9 +4065,19 @@ class SemanticMemory:
                 "PPR fusion exceeded %.2fs budget → keeping reranked order "
                 "(graph/lexical signals skipped this query)", _budget,
             )
+            _fusion_breaker_overrun()
             return hits
         if "err" in _box:
-            return hits  # fail-soft: recall must never break on the opt-in path
+            # Fail-soft, but NOT silent: recall must never break on the opt-in
+            # path, and an operator must still be able to see that the fusion is
+            # dead. The silent version of this branch is how a scorer that raised
+            # on every query looked exactly like a working fusion.
+            _LOG.warning(
+                "PPR fusion failed → keeping reranked order (graph/lexical "
+                "signals skipped this query): %r", _box["err"],
+            )
+            return hits
+        _fusion_breaker_ok()
         return _box.get("fused", hits)
 
     # ----------------------------------------------------------------
