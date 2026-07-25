@@ -69,7 +69,19 @@ _MAX_FRAME = 8 * 1024 * 1024  # 8 MB guard against bogus length headers
 # model resident until the 8 h idle timeout. Cheap enough to run often: one
 # read of a ~200-byte file per interval, and only when the file is missing does
 # it cost a write.
-_DISCOVERY_CHECK_INTERVAL_S = 5.0
+#
+# The interval IS the worst-case invisibility window, and an adversarial review
+# priced it: a client that misses the file spawns a daemon that immediately
+# exits on the lock, then cold-loads the model in-process — 26 s to save at
+# most 2 s of polling. Hence 2 s rather than the 5 s first written.
+_DISCOVERY_CHECK_INTERVAL_S = 2.0
+
+#: Probe used to ask whether the daemon named in a FOREIGN discovery file is
+#: actually there. Short on purpose: unlike the lock steal, being wrong once is
+#: cheap here, because the decision needs two consecutive sightings anyway, and
+#: two looks spaced by the interval separate "busy right now" from "gone" far
+#: better than one long stare.
+_DISCOVERY_OWNER_PROBE_S = 0.4
 
 
 def _recvall(conn: socket.socket, n: int) -> bytes | None:
@@ -257,13 +269,21 @@ class EncodeServer:
         the probe narrows the window; only the daemon can close it, because it
         is the one side that knows it is alive and on which port.
 
-        Deliberately NOT a heartbeat: a file already claiming a pid is left
-        exactly as it is. If it claims someone else, that daemon won a race and
-        rewriting it would bounce clients between two ports; if it claims us,
+        Deliberately NOT a heartbeat: a file that names a daemon which ANSWERS
+        is left exactly as it is. If that daemon is someone else it won the
+        race, and rewriting would bounce clients between two ports; if it is us,
         there is nothing to fix and rewriting would churn a file others read.
-        Only a file that claims nobody — missing, truncated, unparseable — gets
-        taken over, on the same principle the rest of this module already uses:
-        what cannot be identified cannot be protected.
+        Only a file claimed by nobody reachable gets taken over.
+
+        "Claimed" is the PORT, not the pid — the same correction CI forced on
+        ``ensure_running`` yesterday, and this function shipped without it until
+        two independent adversarial reviews caught the inconsistency. A pid in
+        the file proves nothing: a second daemon can publish itself and then
+        die, and the first — alive, model resident, holding the lock — would
+        read a foreign pid, respect it forever, and stay invisible for 8 h. That
+        is not hypothetical; it is the two-daemon state measured on this machine
+        the same evening. So a foreign claim is honoured only while its port
+        still accepts a connection.
 
         The two unclaimed cases are NOT the same, and treating them alike stole
         a live file in test: MISSING is unambiguous, because deletion is atomic
@@ -287,7 +307,11 @@ class EncodeServer:
             data = json.loads(raw)
         except ValueError:
             data = None
-        if isinstance(data, dict) and isinstance(data.get("pid"), int):
+        if isinstance(data, dict) and data.get("pid") == os.getpid():
+            self._unclaimed_seen = 0
+            return
+        if (isinstance(data, dict) and isinstance(data.get("pid"), int)
+                and is_reachable(data, timeout=_DISCOVERY_OWNER_PROBE_S)):
             self._unclaimed_seen = 0
             return
         self._unclaimed_seen += 1

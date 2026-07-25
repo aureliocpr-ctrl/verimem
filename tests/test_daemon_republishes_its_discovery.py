@@ -27,8 +27,10 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 import threading
 import time
+from contextlib import contextmanager
 
 import pytest
 
@@ -46,6 +48,23 @@ def _wait_for(pred, timeout: float = 6.0, step: float = 0.05) -> bool:
             return True
         time.sleep(step)
     return False
+
+
+@contextmanager
+def _porta_in_ascolto():
+    """Una porta che accetta connessioni, senza un daemon dietro.
+
+    ``is_reachable`` fa connect+close e basta, quindi per rappresentare "il
+    daemon nel file c'e' davvero" non serve un EncodeServer intero: serve una
+    porta viva. Ed e' il punto — cio' che si verifica e' la raggiungibilita',
+    non l'identita' di chi ascolta."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.bind(("127.0.0.1", 0))
+        sock.listen(8)
+        yield sock.getsockname()[1]
+    finally:
+        sock.close()
 
 
 def _pid_dichiarato(path) -> int | None:
@@ -120,21 +139,56 @@ def test_the_republished_file_still_authenticates_the_same_clients(running):
     assert after["dim"] == before["dim"]
 
 
-def test_another_daemons_discovery_is_left_alone(running):
-    """Il confine: se il file c'e' ed e' di un altro, chi lo ha scritto ha
-    vinto la corsa. Sovrascriverlo farebbe rimbalzare i client fra due porte."""
-    srv, path = running
-    altrui = {
-        "pid": os.getpid() + 100000, "port": 1, "host": "127.0.0.1",
-        "model": "un-altro", "dim": 4, "started_at": time.time(), "token": "x",
-    }
-    path.write_text(json.dumps(altrui), encoding="utf-8")
+def test_another_daemon_that_answers_is_left_alone(running, tmp_path):
+    """Il confine: se il file e' di un altro daemon che RISPONDE, quello ha
+    vinto la corsa. Sovrascriverlo farebbe rimbalzare i client fra due porte.
 
-    # abbastanza giri del loop perche' l'avrebbe gia' sovrascritto se volesse
-    time.sleep(2.5)
-    assert json.loads(path.read_text(encoding="utf-8"))["pid"] == altrui["pid"], (
-        "il daemon ha sovrascritto il discovery di un altro: due daemon vivi si "
-        "rincorrono a vicenda e i client rimbalzano fra due porte")
+    L'altro daemon qui e' vero e in ascolto. La prima versione di questo test
+    scriveva ``"port": 1`` — una porta morta — e quindi passava misurando la
+    cosa sbagliata: verificava che si rispetti un pid, non un daemon."""
+    srv, path = running
+    altro = encode_service.EncodeServer(
+        encode_fn=_fake_encode, idle_timeout_s=30,
+        discovery_path=tmp_path / "altro.json", model_name="altro-modello")
+    altro.start()
+    altro_thread = threading.Thread(target=altro.serve_forever, daemon=True)
+    altro_thread.start()
+    try:
+        altrui = {
+            "pid": os.getpid() + 100000, "port": altro.port, "host": "127.0.0.1",
+            "model": "altro-modello", "dim": 3, "token": "x",
+        }
+        path.write_text(json.dumps(altrui), encoding="utf-8")
+
+        # abbastanza giri del loop perche' l'avrebbe gia' sovrascritto se volesse
+        time.sleep(2.5)
+        assert _pid_dichiarato(path) == altrui["pid"], (
+            "il daemon ha sovrascritto il discovery di un altro che risponde: "
+            "due daemon vivi si rincorrono e i client rimbalzano fra due porte")
+    finally:
+        altro.stop()
+        altro_thread.join(timeout=3)
+
+
+def test_a_discovery_naming_a_daemon_that_is_gone_is_taken_over(running):
+    """L'obiezione che due revisioni avversarie hanno sollevato per conto loro,
+    e che il critic gate non aveva visto: un pid nel file non prova niente.
+
+    Lo scenario e' quello misurato su questa macchina la sera stessa. Un secondo
+    daemon parte, pubblica se stesso, e muore. Il primo — vivo, col modello in
+    RAM — legge un pid altrui, lo rispetta, e resta invisibile per otto ore. La
+    domanda giusta e' se quella PORTA risponde, esattamente come la CI aveva gia'
+    insegnato per ``ensure_running``."""
+    srv, path = running
+    morto = {
+        "pid": os.getpid() + 100000, "port": 1, "host": "127.0.0.1",
+        "model": "fantasma", "dim": 3, "token": "x",
+    }
+    path.write_text(json.dumps(morto), encoding="utf-8")
+
+    assert _wait_for(lambda: _pid_dichiarato(path) == os.getpid()), (
+        "il discovery di un daemon SCOMPARSO e' stato rispettato: il daemon "
+        "vivo resta invisibile finche' quel file non lo cancella qualcuno")
 
 
 def test_a_discovery_that_claims_nobody_is_taken_over(running):
@@ -166,11 +220,13 @@ def test_a_file_being_written_right_now_is_not_stolen(tmp_path):
     assert path.read_text(encoding="utf-8") == "", (
         "un file vuoto per un istante e' stato preso al primo sguardo")
 
-    altrui = {"pid": os.getpid() + 100000, "port": 1, "host": "127.0.0.1"}
-    path.write_text(json.dumps(altrui), encoding="utf-8")   # scrittura finita
-    srv._republish_discovery_if_unclaimed()
-    assert _pid_dichiarato(path) == altrui["pid"], (
-        "il secondo sguardo ha visto un file valido e lo ha preso lo stesso")
+    with _porta_in_ascolto() as porta:
+        altrui = {"pid": os.getpid() + 100000, "port": porta, "host": "127.0.0.1"}
+        path.write_text(json.dumps(altrui), encoding="utf-8")  # scrittura finita
+        srv._republish_discovery_if_unclaimed()
+        assert _pid_dichiarato(path) == altrui["pid"], (
+            "il secondo sguardo ha visto un daemon che risponde e lo ha preso "
+            "lo stesso: il conteggio non si azzera quando l'ambiguita' passa")
 
 
 def test_a_stably_unclaimed_file_is_taken_on_the_second_look(tmp_path):
@@ -223,3 +279,27 @@ def test_the_daemon_does_not_rewrite_its_own_file_every_pass(running, monkeypatc
     assert not scritture, (
         f"il daemon ha riscritto il proprio discovery {len(scritture)} volte "
         "pur essendo gia' pubblicato correttamente")
+
+
+def test_the_daemon_does_not_probe_itself(running, monkeypatch):
+    """Riconoscere il proprio pid non cambia CHI vince — a quel punto il ramo
+    successivo troverebbe comunque la propria porta viva e si fermerebbe. Serve
+    a non aprire una connessione verso se stessi a ogni giro: ogni connect
+    accettata fa nascere un thread in ``_serve_conn``, e sarebbero decine al
+    minuto per non scoprire niente.
+
+    Scritto perche' una mutazione — togliere il riconoscimento del proprio pid —
+    NON veniva rilevata da nessun test: il comportamento osservabile restava
+    identico, e cio' che cambiava, il traffico verso se stessi, non lo misurava
+    nessuno."""
+    srv, path = running
+    accettate = []
+    vero = encode_service.EncodeServer._serve_conn
+    monkeypatch.setattr(
+        encode_service.EncodeServer, "_serve_conn",
+        lambda self, conn: (accettate.append(1), vero(self, conn))[1])
+
+    time.sleep(2.5)
+    assert not accettate, (
+        f"il daemon ha accettato {len(accettate)} connessioni senza che nessun "
+        "client lo chiamasse: si sta interrogando da solo")
