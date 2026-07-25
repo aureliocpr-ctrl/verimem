@@ -76,6 +76,24 @@ _MAX_FRAME = 8 * 1024 * 1024  # 8 MB guard against bogus length headers
 # most 2 s of polling. Hence 2 s rather than the 5 s first written.
 _DISCOVERY_CHECK_INTERVAL_S = 2.0
 
+#: Idle timeout for a daemon that is not the announced one. No client can find
+#: it, so it will never be asked for anything — measured on the real machine as
+#: two live daemons at 1933 MB and 1912 MB with a single discovery file between
+#: them. The lock keeps two daemons from STARTING; nothing reduced them to one
+#: if they got there afterwards, and they do: the lock is yielded when its owner
+#: looks wedged, and across an embedding-model switch the old daemon still
+#: answers while serving the wrong model.
+#:
+#: Lowering the idle rather than exiting outright, on two independent
+#: adversarial reviews that rejected exiting with the same counterexample:
+#: during a handover both daemons can read a file naming the other and both
+#: step out, leaving the machine with none — and if the winner dies a moment
+#: later, whoever already left cannot take over. Lowering the idle has neither
+#: flaw: it is reversible at every check, and a daemon still being called by
+#: clients holding a cached port is simply never idle, which is the right
+#: answer rather than an exception to work around.
+_SUPERFLUOUS_IDLE_S = 60.0
+
 #: Probe used to ask whether the daemon named in a FOREIGN discovery file is
 #: actually there. Short on purpose: unlike the lock steal, being wrong once is
 #: cheap here, because the decision needs two consecutive sightings anyway, and
@@ -172,6 +190,8 @@ class EncodeServer:
         # Consecutive passes that found the discovery file claiming nobody; see
         # _republish_discovery_if_unclaimed for why one sighting is not enough.
         self._unclaimed_seen = 0
+        # Someone else is announced and answering, so nobody can reach us.
+        self._superfluous = False
 
     @property
     def port(self) -> int:
@@ -299,6 +319,7 @@ class EncodeServer:
             raw = self._discovery_path.read_text(encoding="utf-8")
         except FileNotFoundError:
             self._unclaimed_seen = 0
+            self._superfluous = False
             self._write_discovery()
             return
         except OSError:
@@ -309,15 +330,36 @@ class EncodeServer:
             data = None
         if isinstance(data, dict) and data.get("pid") == os.getpid():
             self._unclaimed_seen = 0
+            self._superfluous = False
             return
         if (isinstance(data, dict) and isinstance(data.get("pid"), int)
                 and is_reachable(data, timeout=_DISCOVERY_OWNER_PROBE_S)):
+            # Someone else is serving and reachable. Not ours to arbitrate:
+            # step aside quietly (see _SUPERFLUOUS_IDLE_S) instead of holding a
+            # GB of model nobody can reach.
             self._unclaimed_seen = 0
+            self._superfluous = True
             return
+        # Nobody reachable is named here, so we are not redundant — whoever
+        # wrote this file is not serving.
+        self._superfluous = False
         self._unclaimed_seen += 1
         if self._unclaimed_seen >= 2:
             self._unclaimed_seen = 0
             self._write_discovery()
+
+    def _effective_idle_timeout(self) -> float:
+        """Seconds of silence before self-exiting, given who is announced.
+
+        Zero keeps meaning what the module documents — never idle-exit — which
+        it did not: ``idle > 0`` is true of every duration, so a daemon
+        configured as permanent exited after one second (measured). And a
+        configured idle SHORTER than the step-aside timeout is never
+        lengthened: becoming useless must not extend anyone's lifetime.
+        """
+        if self._idle_timeout_s and self._superfluous:
+            return min(_SUPERFLUOUS_IDLE_S, self._idle_timeout_s)
+        return self._idle_timeout_s
 
     def _clear_discovery(self) -> None:
         try:
@@ -357,7 +399,8 @@ class EncodeServer:
                 try:
                     conn, _ = self._sock.accept()
                 except TimeoutError:
-                    if self._idle_for() > self._idle_timeout_s:
+                    limite = self._effective_idle_timeout()
+                    if limite and self._idle_for() > limite:
                         break
                     continue
                 except OSError:
