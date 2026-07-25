@@ -62,6 +62,15 @@ def _idle_timeout_s() -> float:
 IDLE_TIMEOUT_S = _idle_timeout_s()
 _MAX_FRAME = 8 * 1024 * 1024  # 8 MB guard against bogus length headers
 
+# How often a serving daemon checks that it is still advertised (2026-07-25).
+# The discovery file is written once at startup but ANY process can delete it —
+# ``ensure_running`` does exactly that when its probe times out under load —
+# and nothing ever rebuilt it, so a healthy daemon stayed invisible with the
+# model resident until the 8 h idle timeout. Cheap enough to run often: one
+# read of a ~200-byte file per interval, and only when the file is missing does
+# it cost a write.
+_DISCOVERY_CHECK_INTERVAL_S = 5.0
+
 
 def _recvall(conn: socket.socket, n: int) -> bytes | None:
     buf = bytearray()
@@ -148,6 +157,9 @@ class EncodeServer:
         # is the trust anchor; the token binds a request to that anchor.
         import secrets as _secrets
         self._token = _secrets.token_urlsafe(24)
+        # Consecutive passes that found the discovery file claiming nobody; see
+        # _republish_discovery_if_unclaimed for why one sighting is not enough.
+        self._unclaimed_seen = 0
 
     @property
     def port(self) -> int:
@@ -207,7 +219,12 @@ class EncodeServer:
 
     def _write_discovery(self) -> None:
         self._discovery_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self._discovery_path.with_suffix(".json.tmp")
+        # The scratch name carries the pid: two daemons publishing at the same
+        # moment would otherwise write the SAME .json.tmp, and the loser's
+        # rename could promote a half-written or foreign payload. Harmless while
+        # this ran once per boot; the periodic republish below makes concurrent
+        # writes reachable, so the name has to be per-process.
+        tmp = self._discovery_path.with_suffix(f".{os.getpid()}.json.tmp")
         tmp.write_text(
             json.dumps({
                 "pid": os.getpid(),
@@ -228,6 +245,55 @@ class EncodeServer:
         except OSError:
             pass
         tmp.replace(self._discovery_path)
+
+    def _republish_discovery_if_unclaimed(self) -> None:
+        """Re-announce this daemon if nothing currently announces it.
+
+        Asymmetry this repairs: the discovery file is written once at startup,
+        but any process can delete it — ``ensure_running`` does precisely that
+        when its probe times out, which is exactly what happens under load. A
+        healthy daemon then sits with the model resident and unreachable until
+        the 8 h idle timeout (measured 2026-07-25: ~2 GB orphaned). Lengthening
+        the probe narrows the window; only the daemon can close it, because it
+        is the one side that knows it is alive and on which port.
+
+        Deliberately NOT a heartbeat: a file already claiming a pid is left
+        exactly as it is. If it claims someone else, that daemon won a race and
+        rewriting it would bounce clients between two ports; if it claims us,
+        there is nothing to fix and rewriting would churn a file others read.
+        Only a file that claims nobody — missing, truncated, unparseable — gets
+        taken over, on the same principle the rest of this module already uses:
+        what cannot be identified cannot be protected.
+
+        The two unclaimed cases are NOT the same, and treating them alike stole
+        a live file in test: MISSING is unambiguous, because deletion is atomic
+        and only one daemon holds the lock, so it is taken at once. PRESENT BUT
+        UNREADABLE can be a write in flight — a reader landing between a
+        truncate and its content sees empty — so it has to be seen unclaimed
+        twice running before being taken. Same lesson as the 0.4 s probe that
+        hid a healthy daemon: a transient state judged instantly is judged
+        wrong, and here the cost of patience is a few seconds on a pathological
+        file, while the cost of haste is two daemons overwriting each other.
+        """
+        try:
+            raw = self._discovery_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            self._unclaimed_seen = 0
+            self._write_discovery()
+            return
+        except OSError:
+            raw = ""
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            data = None
+        if isinstance(data, dict) and isinstance(data.get("pid"), int):
+            self._unclaimed_seen = 0
+            return
+        self._unclaimed_seen += 1
+        if self._unclaimed_seen >= 2:
+            self._unclaimed_seen = 0
+            self._write_discovery()
 
     def _clear_discovery(self) -> None:
         try:
@@ -251,8 +317,19 @@ class EncodeServer:
     def serve_forever(self) -> None:
         if self._sock is None:
             self.start()
+        next_discovery_check = 0.0  # first pass runs immediately
         try:
             while not self._stop.is_set():
+                # Top of the loop, not the accept-timeout branch: a daemon under
+                # steady load never times out, and load is precisely when its
+                # discovery gets deleted.
+                now = time.monotonic()
+                if now >= next_discovery_check:
+                    next_discovery_check = now + _DISCOVERY_CHECK_INTERVAL_S
+                    try:
+                        self._republish_discovery_if_unclaimed()
+                    except Exception:  # noqa: BLE001 — never kill the server
+                        pass
                 try:
                     conn, _ = self._sock.accept()
                 except TimeoutError:
