@@ -148,6 +148,31 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
     frozenset({"minimum", "maximum"}),
     frozenset({"primary", "backup", "secondary", "replica", "standby"}),
     frozenset({"staging", "production"}),
+    # 2026-07-25 — coppie ITALIANE. La batteria di ampiezza ha trovato
+    # "il gate legge in 45 ms" che ritirava "il gate scrive in 300 ms": la lista
+    # copriva {read, write} in inglese e questo store e' scritto in italiano.
+    # Un criterio strutturale ("ciascun lato ha una parola esclusiva") e' stato
+    # provato e FALSIFICATO da due test: non distingue un attributo opposto
+    # ("legge"/"scrive") da un sinonimo ("holds"/"bounded") ne' da un valore che
+    # cambia ("Rome"/"Paris"). Qui la lista e' il design giusto, perche' le coppie
+    # contrapposte sono un insieme piccolo e conosciuto.
+    frozenset({"legge", "scrive"}),
+    frozenset({"lettura", "scrittura"}),
+    frozenset({"richiesta", "risposta"}),
+    frozenset({"ingresso", "uscita"}),
+    frozenset({"entrata", "uscita"}),
+    frozenset({"invio", "ricezione"}),
+    frozenset({"caricamento", "scaricamento"}),
+    frozenset({"origine", "destinazione"}),
+    frozenset({"client", "server"}),
+    # flessioni: content_tokens non lemmatizza l'italiano, quindi la coppia
+    # va data in entrambi i generi ("latenza minima" / "latenza massima")
+    frozenset({"minimo", "massimo"}),
+    frozenset({"minima", "massima"}),
+    frozenset({"minime", "massime"}),
+    frozenset({"primario", "secondario", "replica"}),
+    frozenset({"collaudo", "produzione"}),
+    frozenset({"caldo", "freddo"}),
 )
 
 
@@ -196,6 +221,20 @@ _EVIDENCE_MARKER_RE = re.compile(
 _MIN_CLAIM_CHARS = 12
 _OPENERS, _CLOSERS = "([{", ")]}"
 
+#: A marker ends the claim only when it OPENS A SECTION: preceded by a delimiter
+#: (bar, newline, full stop, semicolon, dash) or by the start of the text —
+#: optionally with an upper-case label in between ("EMPIRICAL EVIDENCE:",
+#: "STEP-BY-STEP EVIDENCE:"). Counting characters was not enough, and an
+#: adversarial review found why (glm-5.2, 2026-07-25, confirmed by running it):
+#:   "Riferendosi alla fonte: il record 42 ha valore 100"
+#: left "Riferendosi alla " — 17 chars, above the threshold — and threw away the
+#: claim, identifier and value included. "fonte" and "prova" are ordinary Italian
+#: words and "ref:" shows up in technical notes; only the position tells a
+#: footnote from a phrase.
+_SECTION_DELIMS = "|\n\r.;—-•"
+#: An upper-case label may sit between the delimiter and the marker.
+_LABEL_RE = re.compile(r"[A-Z][A-Z0-9_-]*\s*$")
+
 
 def _inside_brackets(text: str, pos: int) -> bool:
     """True when *pos* sits inside a bracket opened earlier and not yet closed.
@@ -215,6 +254,27 @@ def _inside_brackets(text: str, pos: int) -> bool:
     return depth > 0
 
 
+def _opens_a_section(head: str) -> bool:
+    """True when what precedes a marker ends a SECTION rather than a phrase.
+
+    Walks back over an optional upper-case label ("EMPIRICAL EVIDENCE:") and then
+    asks for a delimiter or the start of the text. "Riferendosi alla fonte:" fails
+    on both counts — "alla" is neither.
+    """
+    stripped = head.rstrip(" \t")
+    if not stripped:
+        return True                       # marker at the very beginning
+    label = _LABEL_RE.search(stripped)
+    if label is not None:
+        # NB: strip spaces and tabs only. A newline IS the delimiter we are
+        # looking for, and rstripping it here made "…tests)\nEMPIRICAL EVIDENCE:"
+        # look mid-phrase — the label swallowed the very evidence of a break.
+        stripped = stripped[:label.start()].rstrip(" \t")
+        if not stripped:
+            return True
+    return stripped[-1] in _SECTION_DELIMS
+
+
 def claim_span(text: str) -> str:
     """The asserting part of *text*: everything before a provenance marker that
     introduces a trailing citation. Whole text when there is no such marker, when
@@ -226,8 +286,11 @@ def claim_span(text: str) -> str:
         if _inside_brackets(text, m.start()):
             continue                      # parenthetical citation, not a tail
         head = text[:m.start()]
-        if len(head.strip()) >= _MIN_CLAIM_CHARS:
-            return head
+        if len(head.strip()) < _MIN_CLAIM_CHARS:
+            continue                      # the marker opened the sentence
+        if not _opens_a_section(head):
+            continue                      # mid-phrase use, not a footnote
+        return head
     return text
 
 
@@ -317,7 +380,7 @@ def conflict_from_parts(
     if not (da & db):
         return None  # unrelated subject
     if contrasting_attrs(ca, cb):
-        return None  # different attribute
+        return None  # different attribute (kept: catches pairs that share words)
     for (ua, va) in qa:
         if not ua:
             continue  # bare unitless number → too ambiguous
@@ -652,10 +715,31 @@ _EVENT_INDEX_RE = re.compile(
 _ALNUM_CODE_RE = re.compile(r"\b([A-Za-z]{1,6})(\d{2,})\b")
 
 
+#: The POSITIONAL rule, which no list of kinds can replace: a word followed by a
+#: BARE number indexes something ("message 0", "issue 42", "porta 8080"), while a
+#: number followed by a unit measures it ("7883 test", "45 ms"). The named lists
+#: above stay for the kinds worth treating specially (progression), but this is
+#: what covers the open vocabulary.
+#:
+#: Why it exists: a suite test proved the closed list could not hold. Of 9
+#: distinct facts — "sends message 0/1/2", "stores profile 0/1/2", "computes rate
+#: 0/1/2" — SEVEN were retired, because message/profile/rate were not listed.
+#: A vocabulary cannot be enumerated; a position can be read.
+_GENERIC_INDEX_RE = re.compile(r"\b([A-Za-z][A-Za-z_-]{2,})\s*#?\s*(\d{1,6})\b")
+
+
+def _bare_numbers(text: str) -> set[str]:
+    """Numbers in *text* that carry NO unit — the ones eligible to be indices.
+    Reads the same extractor the measure path uses, so the two can never disagree
+    about which numbers are measures."""
+    return {f"{v:g}" for (u, v) in extract_quantities(text) if not u}
+
+
 def event_indices(text: str) -> set[tuple[str, int]]:
     """``(kind, n)`` indices in the CLAIM part of *text*: ordinals ("day 4" ->
-    ("day", 4)), entity identifiers ("issue #42" -> ("issue", 42)) and
-    alphanumeric codes ("A000030" -> ("a", 30)).
+    ("day", 4)), entity identifiers ("issue #42" -> ("issue", 42)), alphanumeric
+    codes ("A000030" -> ("a", 30)) and the positional rule — any word followed by
+    a bare number ("message 0" -> ("message", 0)).
 
     Reads :func:`claim_span`, not the whole text, for the same reason quantities
     do: an identifier in the PROVENANCE names the check, not the subject. Caught
@@ -668,16 +752,50 @@ def event_indices(text: str) -> set[tuple[str, int]]:
            for m in _EVENT_INDEX_RE.finditer(span)}
     out |= {(m.group(1).lower(), int(m.group(2)))
             for m in _ALNUM_CODE_RE.finditer(span)}
+    # positional rule, gated on the number being BARE: "message 0" indexes,
+    # "conta 7883 test" measures and must stay a measure
+    bare = _bare_numbers(text)
+    out |= {(m.group(1).lower(), int(m.group(2)))
+            for m in _GENERIC_INDEX_RE.finditer(span)
+            if f"{float(m.group(2)):g}" in bare}
     return out
+
+
+#: Kinds whose number marks a STAGE of one thing, not one thing among many.
+#: "version 2" is the same module later; "issue 43" is another issue. Treating the
+#: first group as identifiers lost legitimate retirements — counterexample from an
+#: adversarial review (glm-5.2, 2026-07-25), confirmed by running it:
+#:   "issue 42, fase 1: bug aperto"  vs  "issue 42, fase 2: bug chiuso"
+#:   "version 1: latenza 45 ms"      vs  "version 2: latenza 200 ms"
+#: read as different subjects, so the stale value stayed. These kinds are still
+#: EXTRACTED (a caller may want them) but they never make two subjects.
+_PROGRESSION_KINDS = frozenset({
+    "version", "build", "phase", "fase", "step", "passo", "cycle", "ciclo",
+    "iteration", "attempt", "tentativo", "round", "turno", "part", "parte",
+})
 
 
 def _indices_disjoint(ea: set[tuple[str, int]],
                       eb: set[tuple[str, int]]) -> bool:
     """Core of :func:`distinct_event_indices` on PRE-COMPUTED index sets, so the
-    numeric path can reuse it without re-parsing the text."""
+    numeric path can reuse it without re-parsing the text.
+
+    Progression kinds are skipped: a different stage number is the same subject
+    moving on, and letting it claim "different subjects" hid real evolutions.
+    """
     if not ea or not eb:
         return False
-    for k in {k for (k, _n) in ea} & {k for (k, _n) in eb}:
+    # Compare the index SETS, do not hunt for a shared kind. Hunting was the
+    # bigger hole and only strumenting the write path found it: with different
+    # kinds the loop never ran, so the guard answered "not different subjects" —
+    # the opposite of the truth. Measured: one fact about "email/message 0"
+    # retired THREE about "tax/rate 0/1/2".
+    ia = {(k, n) for (k, n) in ea if k not in _PROGRESSION_KINDS}
+    ib = {(k, n) for (k, n) in eb if k not in _PROGRESSION_KINDS}
+    if ia and ib and ia != ib:
+        return True
+    shared = ({k for (k, _n) in ea} & {k for (k, _n) in eb}) - _PROGRESSION_KINDS
+    for k in shared:
         na = {n for (kk, n) in ea if kk == k}
         nb = {n for (kk, n) in eb if kk == k}
         # DIFFERENT index sets = different subjects. Two earlier criteria were

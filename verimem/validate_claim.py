@@ -25,13 +25,19 @@ from .quantity_match import (
     YEAR_RE as _YEAR_RE,
 )
 from .quantity_match import (
+    agreement_from_parts as _agreement_from_parts,
+)
+from .quantity_match import (
+    conflict_from_parts as _conflict_from_parts,
+)
+from .quantity_match import (
     content_tokens as _content_tokens,
 )
 from .quantity_match import (
-    contrasting_attrs as _contrasting_attrs,
+    date_conflict as _date_conflict,
 )
 from .quantity_match import (
-    date_conflict as _date_conflict,
+    event_indices as _event_indices,
 )
 from .quantity_match import (
     extract_dates as _extract_dates,
@@ -274,24 +280,19 @@ def validate_claim(
             if not f_quants:
                 continue
             f_content = _content_tokens(f.proposition)
-            f_distinct = {
-                t for t in f_content if _norm_unit(t) not in claim_units
-            }
-            if not (claim_distinct & f_distinct):
-                continue  # unrelated subject → never a contradiction
-            if _contrasting_attrs(claim_content, f_content):
-                continue  # different attribute (read/write, …) → not a conflict
-            f_conflict: tuple[str, float, float] | None = None
-            for (cu, cv) in claim_quants:
-                if not cu:
-                    continue  # bare unitless number → too ambiguous
-                for (fu, fv) in f_quants:
-                    if cu != fu:
-                        continue
-                    if cv == fv:
-                        numeric_agree = True  # same unit & value → confirmed
-                    else:
-                        f_conflict = (cu, cv, fv)
+            # ONE detector, not a second copy of it. This loop used to reimplement
+            # the comparison inline, with its own guards — and the two drifted:
+            # on 2026-07-25 a fix landed in conflict_from_parts (each side having
+            # an exclusive distinctive word means another subject or another
+            # attribute) and this path never saw it, so "il gate legge in 45 ms"
+            # kept retiring "il gate scrive in 300 ms". Same failure mode as the
+            # three divergent copies of the behavioural rules cured the same day.
+            if _agreement_from_parts(claim_quants, claim_content,
+                                     f_quants, f_content):
+                numeric_agree = True  # same unit & value → confirmed
+            f_conflict = _conflict_from_parts(
+                claim_quants, claim_content, f_quants, f_content,
+                ia=_event_indices(claim), ib=_event_indices(f.proposition))
             if f_conflict:
                 numeric_contra.append(f)
                 if not numeric_advice:

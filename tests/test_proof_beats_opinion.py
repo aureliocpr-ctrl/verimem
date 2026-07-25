@@ -154,3 +154,70 @@ def test_a_marker_that_leaves_only_crumbs_is_ignored():
 
     t = "fonte: il documento interno dichiara 45 ms di latenza sul path caldo"
     assert claim_span(t) == t
+
+
+def test_a_marker_mid_sentence_is_not_a_section_break():
+    """Terzo controesempio di glm-5.2, confermato eseguendo:
+
+        "Riferendosi alla fonte: il record 42 ha valore 100"
+
+    lasciava "Riferendosi alla " — 17 caratteri, oltre la soglia — e buttava via
+    IL CLAIM, compreso l'identificatore 'record 42' e il valore. Se contraddiceva
+    "record 42 ha valore 200", il conflitto spariva.
+
+    'fonte:' e 'prova:' sono parole italiane comuni e 'ref:' compare nelle note
+    tecniche: contare i caratteri non basta. Un marcatore chiude il claim solo se
+    APRE UNA SEZIONE — preceduto da un delimitatore (|, newline, punto, ;, —) o
+    dall'inizio del testo, eventualmente con un'etichetta in maiuscolo davanti
+    ("EMPIRICAL EVIDENCE:", "STEP-BY-STEP EVIDENCE:")."""
+    from verimem.quantity_match import claim_span, numeric_conflict
+
+    t = "Riferendosi alla fonte: il record 42 conta 100 righe"
+    assert claim_span(t) == t, f"claim mangiato: {claim_span(t)!r}"
+    # l'unita' deve SEGUIRE il numero perche' il parser la veda ("100 righe"):
+    # una prima versione di questo test chiedeva un conflitto su "valore 100",
+    # dove l'unita' precede, e falliva per un limite del parser che non ha nulla
+    # a che vedere con claim_span — il test era mal posto, non il fix.
+    assert numeric_conflict(t, "il record 42 conta 300 righe") is not None
+
+    # …e "Vera fonte: X" e' un claim, non una citazione
+    v = "FASE 0 fix IDENTITA VERIFICATO. Vera fonte: SYN_IDENTITY in singularity.py"
+    assert claim_span(v) == v
+
+
+def test_section_markers_still_end_the_claim():
+    """Controllo nullo: i separatori di sezione veri continuano a tagliare —
+    dopo una barra, e dopo un newline anche con etichetta maiuscola davanti."""
+    from verimem.quantity_match import claim_span
+
+    bar = ("OEIS verified relation: +A000032(n) -3*A000045(n+1) = 0 | "
+           "evidence: holds exactly at 199 common points")
+    assert "199" not in claim_span(bar)
+
+    nl = ("LOC GENERATI: ~1500 (lab scripts + tests)\n"
+          "EMPIRICAL EVIDENCE: 8 ipotesi testate, 1 singolarita' confermata")
+    assert "8 ipotesi" not in claim_span(nl)
+
+
+def test_ordinary_vocabulary_markers_do_not_eat_the_claim():
+    """I tre controesempi del critic (counterexample worker, voto FAIL su
+    70f2a76d, 2026-07-25). 'sources', 'verified', 'prove' sono vocabolario
+    ORDINARIO del claim, e con >=12 caratteri davanti la prima versione di
+    claim_span mangiava il claim e faceva sparire un conflitto numerico VERO:
+
+        "The document lists these sources: 12 papers" vs "... 30 papers"
+        "The API latency verified: 45 ms"            vs "... 90 ms"
+        "le prove: 3 superate"                       vs "... 8 superate"
+
+    Erano gia' chiusi dal criterio del section-break (nessun delimitatore prima
+    del marcatore), introdotto in parallelo su segnalazione di glm-5.2 sulla
+    stessa classe. Restano qui come regressione: se qualcuno allenta il criterio,
+    questi tre cadono."""
+    from verimem.quantity_match import numeric_conflict
+
+    assert numeric_conflict("The document lists these sources: 12 papers",
+                            "The document lists these sources: 30 papers") is not None
+    assert numeric_conflict("The API latency verified: 45 ms",
+                            "The API latency verified: 90 ms") is not None
+    assert numeric_conflict("le prove: 3 superate",
+                            "le prove: 8 superate") is not None

@@ -154,3 +154,105 @@ def test_two_indexed_statements_stay_comparable():
 
     assert not indexed_vs_unindexed("il fatto 3 ha 500 righe",
                                     "il fatto 3 ha 200 righe")
+
+
+# --- progressione vs identita': due cesti diversi --------------------------
+
+def test_progression_kinds_do_not_make_two_subjects():
+    """Controesempio di glm-5.2 (2026-07-25), confermato eseguendo. 'version',
+    'build', 'fase', 'ciclo' indicano la PROGRESSIONE della stessa entita', non
+    entita' distinte: un numero diverso li' e' un'evoluzione, non un altro
+    soggetto. Trattandoli come identificatori si perdeva il ritiro legittimo:
+
+        "issue 42, fase 1: bug aperto"   vs  "issue 42, fase 2: bug chiuso"
+        "version 1: latenza 45 ms"       vs  "version 2: latenza 200 ms"
+
+    La prima coppia e' la STESSA issue che evolve; la seconda e' lo stesso modulo
+    che peggiora. Entrambe devono restare rilevabili."""
+    a = "issue 42, fase 1: bug aperto, priorita alta"
+    b = "issue 42, fase 2: bug chiuso, priorita bassa"
+    assert not distinct_event_indices(a, b), (
+        "la fase e' stata letta come un soggetto diverso")
+
+    c = "version 1 del modulo: latenza 45 ms"
+    d = "version 2 del modulo: latenza 200 ms"
+    assert numeric_conflict(c, d) is not None, (
+        "la version e' stata letta come un soggetto diverso")
+
+
+def test_identity_kinds_still_separate_subjects():
+    """Controllo nullo del fix precedente: i kind di IDENTITA' continuano a
+    distinguere i soggetti."""
+    assert distinct_event_indices("issue 42 e' aperta", "issue 43 e' aperta")
+    assert distinct_event_indices("la riga 12 va cambiata", "la riga 30 va cambiata")
+    assert distinct_event_indices("porta 8080 in ascolto", "porta 9090 in ascolto")
+
+
+def test_a_progression_kind_alone_leaves_the_conflict_visible():
+    """Se l'UNICO indice condiviso e' di progressione, non c'e' nulla che
+    distingua i soggetti e il conflitto resta."""
+    assert not distinct_event_indices("al ciclo 3 la suite conta 100 test",
+                                      "al ciclo 4 la suite conta 200 test")
+
+
+# --- il discriminante POSIZIONALE: una lista di kind non basta -------------
+
+def test_any_noun_followed_by_a_bare_number_is_an_index():
+    """Una lista chiusa di kind non copre il vocabolario, e un test della suite
+    l'ha dimostrato: di 9 fatti distinti — "The email module sends message 0/1/2",
+    "The user module stores profile 0/1/2", "The tax module computes rate 0/1/2" —
+    ne venivano RITIRATI 7, perche' message/profile/rate non erano in lista.
+
+    Il discriminante generale e' POSIZIONALE, non lessicale:
+      <parola> <numero>  senza unita' dopo  -> INDICE   ("message 0", "issue 42")
+      <numero> <unita'>                     -> MISURA   ("7883 test", "45 ms")
+    """
+    assert ("message", 0) in event_indices("The email module sends message 0.")
+    assert ("profile", 2) in event_indices("The user module stores profile 2.")
+    assert ("rate", 1) in event_indices("The tax module computes rate 1.")
+
+
+def test_a_measure_is_not_read_as_an_index():
+    """Controllo nullo, ed e' il vincolo che rende sicura la regola: se il numero
+    e' seguito da un'unita' e' una misura, e due valori diversi restano un
+    conflitto vero."""
+    assert not any(k == "conta" for (k, _n)
+                   in event_indices("la full suite conta 7883 test passati"))
+    assert numeric_conflict("la full suite conta 7883 test passati",
+                            "la full suite conta 8004 test passati") is not None
+    assert numeric_conflict("il recall risponde in 45 ms",
+                            "il recall risponde in 120 ms") is not None
+
+
+def test_the_nine_distinct_facts_stay_distinct():
+    """Il caso della suite, end-to-end sui primitivi."""
+    for word in ("message", "profile", "rate"):
+        a = f"The module handles {word} 0."
+        b = f"The module handles {word} 1."
+        assert distinct_event_indices(a, b), f"{word} 0 e {word} 1 confusi"
+
+
+def test_different_kinds_are_also_different_subjects():
+    """Il buco piu' grosso, trovato strumentando: _indices_disjoint cercava un
+    kind CONDIVISO, quindi con kind diversi il ciclo non iterava e la guardia
+    rispondeva "non sono soggetti diversi" — l'opposto della verita'. Effetto
+    misurato: un fatto su "email/message 0" ritirava TRE fatti su "tax/rate
+    0/1/2". Il criterio e' il confronto degli INSIEMI di indici, non la ricerca
+    di un kind in comune."""
+    assert distinct_event_indices("The email module sends message 0.",
+                                  "The tax module computes rate 0.")
+    assert distinct_event_indices("issue 42 e' aperta", "la riga 42 va cambiata")
+    assert numeric_conflict("The email module sends message 0.",
+                            "The tax module computes rate 0.") is None
+
+
+def test_same_index_set_still_conflicts():
+    """Controllo nullo: insiemi di indici UGUALI = stesso soggetto = il conflitto
+    vero resta."""
+    assert not distinct_event_indices("il fatto 3 ha 500 righe di codice",
+                                      "il fatto 3 ha 200 righe di codice")
+    assert numeric_conflict("il fatto 3 ha 500 righe di codice",
+                            "il fatto 3 ha 200 righe di codice") is not None
+    # nessun indice da nessuna parte: il rilevatore lavora come sempre
+    assert not distinct_event_indices("la full suite conta 7883 test",
+                                      "la full suite conta 8004 test")
