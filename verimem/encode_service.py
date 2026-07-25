@@ -358,11 +358,29 @@ _LOCK_STEAL_GRACE_S = 0.25
 _LOCK_VERIFY_DELAY_S = 0.10
 
 #: Quanto tempo un proprietario VIVO puo' tenere il lock senza essersi ancora
-#: annunciato. Un daemon appena partito sta caricando il modello — cold-load
-#: misurato 26-34 s — e rubargli il lock creerebbe la corsa a due daemon che il
-#: lock esiste per impedire. Oltre questa soglia, invece, "vivo" non basta piu'.
-#: 120 s = quattro volte il cold-load osservato.
-_ZOMBIE_GRACE_S = 120.0
+#: annunciato. Un daemon appena partito sta caricando il modello e rubargli il
+#: lock creerebbe la corsa a due daemon che il lock esiste per impedire. Oltre
+#: questa soglia, invece, "vivo" non basta piu'.
+#:
+#: 600 s, e il valore e' il compromesso, non una stima. La prima versione usava
+#: 120 s = 4x il cold-load misurato (26-34 s), e un worker del critic gate ha
+#: mostrato che era una REGRESSIONE introdotta da questo stesso fix: quel numero
+#: descrive il load a cache HuggingFace CALDA, mentre al PRIMO avvio il daemon
+#: deve SCARICARE il modello (~1 GB), operazione normale che supera i 120 s. Il
+#: lock e' scritto una volta e mai rinfrescato, quindi la sua eta' cresce durante
+#: il download: a t=180 s un altro processo avrebbe visto "vivo, oltre la grazia,
+#: non serve" e avrebbe rubato il lock a un daemon perfettamente sano, facendo
+#: caricare il modello a due processi insieme.
+#:
+#: Un heartbeat che rinfresca l'mtime durante il caricamento risolverebbe il
+#: caso lento ma reintrodurrebbe quello di partenza — due revisioni esterne
+#: indipendenti l'hanno detto: uno zombie che si tiene giovane non viene mai
+#: sostituito, ed e' esattamente il PID 51776 che ha tenuto spenta la semantica
+#: per un'ora e quaranta. Non essendoci un segnale di progresso da distinguere
+#: "sta scaricando" da "e' incastrato", si sposta la soglia invece di fingere di
+#: eliminare il compromesso: 10 minuti coprono un primo download reale, e uno
+#: zombie vero costa 10 minuti invece che per sempre.
+_ZOMBIE_GRACE_S = 600.0
 
 #: Timeout del probe che decide un FURTO di lock, deliberatamente piu' lungo di
 #: quello informativo (0.4 s): un falso "non serve" crea due daemon col modello

@@ -85,12 +85,21 @@ def test_a_live_owner_that_never_announced_is_a_zombie(lock, monkeypatch):
         "daemon potra' partire e ogni recall restera' degradato")
 
 
-def test_the_grace_is_long_enough_for_a_real_model_load(monkeypatch):
-    """La grazia deve coprire un caricamento vero: il cold-load misurato e'
-    ~26-34 s. Una grazia piu' corta trasformerebbe ogni avvio normale in un
-    furto di lock, cioe' la corsa a due daemon."""
-    assert svc._ZOMBIE_GRACE_S >= 60, (            # noqa: SLF001
-        f"grazia {svc._ZOMBIE_GRACE_S}s troppo corta per un cold-load da 26-34 s")
+def test_the_grace_covers_a_first_download_not_just_a_warm_cache_load():
+    """La grazia deve coprire il caso lento VERO, che non e' il cold-load a
+    cache calda (26-34 s) ma il PRIMO avvio, quando il daemon deve SCARICARE il
+    modello (~1 GB).
+
+    Questo test nasce da un controesempio del critic gate, che ha mostrato una
+    regressione introdotta dal fix stesso: con la grazia a 120 s, a t=180 s di
+    un download in corso un altro processo vedeva "vivo, oltre la grazia, non
+    serve" e rubava il lock a un daemon sano, facendo caricare il modello a due
+    processi insieme — l'invariante che il lock esiste per garantire. Il lock e'
+    scritto una volta sola e mai rinfrescato, quindi durante un load lungo la
+    sua eta' cresce senza limite."""
+    assert svc._ZOMBIE_GRACE_S >= 300, (           # noqa: SLF001
+        f"grazia {svc._ZOMBIE_GRACE_S}s: copre un load a cache calda ma non un "
+        "primo download, quindi ruberebbe il lock a un daemon sano e lento")
 
 
 def test_a_clock_jump_backwards_does_not_grant_an_endless_grace(lock, monkeypatch):
