@@ -219,25 +219,46 @@ def test_a_tripped_breaker_stops_attempting_the_fusion(store, fusione_che_sfonda
     assert not tentativi, "la fusione e' stata tentata a breaker scattato"
 
 
-def test_an_in_budget_success_re_arms_the_count(store, fusione_che_sfonda):
-    """Una contesa passeggera non deve spegnere niente in permanenza: un
-    successo in budget azzera il contatore. Senza questo, N overrun sparsi
-    nell'arco di una sessione lunga spegnerebbero una fusione sana."""
+def _fusione_ok(mp):
+    """Una fusione che rientra nel budget."""
+    from verimem import ppr_seed
+    mp.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "5")
+    mp.setattr(ppr_seed, "fuse_dense_and_ppr", lambda dense, *a, **kw: list(dense))
+
+
+def test_scattered_overruns_do_not_disable_a_healthy_fusion(store,
+                                                            fusione_che_sfonda):
+    """La proprieta' da non perdere: una contesa passeggera — pochi overrun in
+    mezzo a molti successi — non deve spegnere una fusione che funziona."""
     semantic = fusione_che_sfonda
     n = semantic._fusion_breaker_n()                     # noqa: SLF001
-    for _ in range(n - 1):                               # un passo dalla soglia
-        store.recall(QUERY, k=4)
-    assert not semantic._fusion_breaker_tripped()        # noqa: SLF001
-
-    from verimem import ppr_seed
-    with pytest.MonkeyPatch.context() as mp:             # una fusione che ce la fa
-        mp.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "5")
-        mp.setattr(ppr_seed, "fuse_dense_and_ppr",
-                   lambda dense, *a, **kw: list(dense))
-        store.recall(QUERY, k=4)
-
-    for _ in range(n - 1):                               # di nuovo sotto soglia
-        store.recall(QUERY, k=4)
+    finestra = semantic._fusion_breaker_window()         # noqa: SLF001
+    for i in range(finestra):
+        if i < n - 1:                                    # sotto soglia
+            store.recall(QUERY, k=4)
+        else:
+            with pytest.MonkeyPatch.context() as mp:
+                _fusione_ok(mp)
+                store.recall(QUERY, k=4)
     assert not semantic._fusion_breaker_tripped(), (      # noqa: SLF001
-        "il contatore non e' stato azzerato dal successo: overrun non "
-        "consecutivi spengono una fusione sana")
+        f"{n - 1} overrun su {finestra} hanno spento una fusione sana")
+
+
+def test_alternating_load_still_trips_the_breaker(store, fusione_che_sfonda):
+    """Il difetto che due revisioni avversariali indipendenti hanno trovato: col
+    conteggio dei soli overrun CONSECUTIVI, un carico alternato O-S-O-S non
+    raggiunge mai N di fila, quindi il breaker non scatta MAI mentre metà delle
+    query continua a bruciare il budget intero. Un successo fortunato ogni
+    quattro overrun lo disinnescava per sempre."""
+    semantic = fusione_che_sfonda
+    n = semantic._fusion_breaker_n()                     # noqa: SLF001
+    for _ in range(n):                                   # O, S, O, S, O, S…
+        store.recall(QUERY, k=4)                         # overrun
+        if semantic._fusion_breaker_tripped():           # noqa: SLF001
+            break
+        with pytest.MonkeyPatch.context() as mp:
+            _fusione_ok(mp)
+            store.recall(QUERY, k=4)                     # successo
+    assert semantic._fusion_breaker_tripped(), (          # noqa: SLF001
+        "carico alternato: il breaker non scatta e ogni seconda query paga il "
+        "budget per un risultato che non riceve")

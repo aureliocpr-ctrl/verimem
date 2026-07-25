@@ -38,6 +38,7 @@ import sqlite3
 import threading
 import time
 import uuid
+from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -1853,25 +1854,46 @@ def _rerank_breaker_cold_overrun() -> None:
 # because nothing STOPPED it: encode has a breaker (2026-06-06), rerank has one
 # (2026-07-10), the fusion had none. Systematic overruns are a property of the
 # session, not per-query bad luck: after N consecutive ones the fusion is
-# disabled for this process and recall stops waiting. An in-budget success
-# resets the count, so transient contention never disables it permanently.
-_FUSION_BREAKER: dict[str, Any] = {"consecutive": 0, "tripped": False}
+# disabled for this process and recall stops waiting.
+#
+# SLIDING WINDOW, not consecutive count. The first version of this counted
+# CONSECUTIVE overruns and reset on any success — copied from the rerank
+# breaker — and two independent adversarial reviews (glm-5.2, deepseek-v4-pro)
+# converged on the same defect: an alternating O-S-O-S load never reaches N in a
+# row, so the breaker never trips while HALF the queries still burn the full
+# budget. One lucky success every four overruns disarms it indefinitely. The
+# window asks the question that actually matters — what FRACTION of recent
+# fusions wasted their budget — so both properties hold: a handful of scattered
+# overruns in a long session does not disable a healthy fusion, and a session
+# where half the queries pay 2 s for nothing does get it switched off.
+# NOTE (2026-07-25): the rerank breaker above still uses consecutive-count and
+# has the same blind spot. Not touched here — it is 15 days old, tested, and on
+# a different budget; changing it is its own change with its own measurement.
+_FUSION_BREAKER: dict[str, Any] = {"window": deque(maxlen=10), "tripped": False}
 
 
 def _fusion_breaker_n() -> int:
-    """Consecutive fusion overruns that trip the breaker. 0 disables it.
-    Env ENGRAM_FUSION_BREAKER_N, default 5 — the same bound as the rerank: a
-    handful of wasted budgets is an acceptable price for tolerating a burst of
-    contention, thousands are not."""
+    """Overruns WITHIN the window that trip the breaker. 0 disables it.
+    Env ENGRAM_FUSION_BREAKER_N, default 5 of 10 = half the recent fusions
+    wasting their budget."""
     try:
         return max(0, int(os.environ.get("ENGRAM_FUSION_BREAKER_N", "5")))
     except ValueError:
         return 5
 
 
+def _fusion_breaker_window() -> int:
+    """How many recent fusion outcomes the decision looks at.
+    Env ENGRAM_FUSION_BREAKER_WINDOW, default 10."""
+    try:
+        return max(1, int(os.environ.get("ENGRAM_FUSION_BREAKER_WINDOW", "10")))
+    except ValueError:
+        return 10
+
+
 def _fusion_breaker_reset() -> None:
     """Re-arm the breaker (tests; env swap at runtime)."""
-    _FUSION_BREAKER["consecutive"] = 0
+    _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
     _FUSION_BREAKER["tripped"] = False
 
 
@@ -1879,23 +1901,23 @@ def _fusion_breaker_tripped() -> bool:
     return bool(_FUSION_BREAKER["tripped"])
 
 
-def _fusion_breaker_overrun() -> None:
-    _FUSION_BREAKER["consecutive"] += 1
+def _fusion_breaker_record(overrun: bool) -> None:
+    """Record one fusion outcome and trip if the window says it is systematic."""
+    w: deque = _FUSION_BREAKER["window"]
+    if w.maxlen != _fusion_breaker_window():      # env changed at runtime
+        w = deque(w, maxlen=_fusion_breaker_window())
+        _FUSION_BREAKER["window"] = w
+    w.append(bool(overrun))
     n = _fusion_breaker_n()
-    if n and not _FUSION_BREAKER["tripped"] \
-            and _FUSION_BREAKER["consecutive"] >= n:
+    if n and not _FUSION_BREAKER["tripped"] and sum(w) >= n:
         _FUSION_BREAKER["tripped"] = True
         _LOG.warning(
-            "PPR fusion breaker TRIPPED after %d consecutive budget overruns — "
-            "graph/lexical fusion disabled for this process (reranked order "
-            "stands; restart or _fusion_breaker_reset() to re-arm). Recall stops "
-            "paying the budget for a result it never receives.", n,
+            "PPR fusion breaker TRIPPED — %d of the last %d fusions exceeded "
+            "their budget; graph/lexical fusion disabled for this process "
+            "(reranked order stands; restart or _fusion_breaker_reset() to "
+            "re-arm). Recall stops paying a budget for a result it never "
+            "receives.", sum(w), len(w),
         )
-
-
-def _fusion_breaker_ok() -> None:
-    """An in-budget fusion: contention was transient, re-arm the count."""
-    _FUSION_BREAKER["consecutive"] = 0
 
 
 def _rerank_cold_budget_s() -> float:
@@ -4065,7 +4087,7 @@ class SemanticMemory:
                 "PPR fusion exceeded %.2fs budget → keeping reranked order "
                 "(graph/lexical signals skipped this query)", _budget,
             )
-            _fusion_breaker_overrun()
+            _fusion_breaker_record(True)
             return hits
         if "err" in _box:
             # Fail-soft, but NOT silent: recall must never break on the opt-in
@@ -4077,7 +4099,7 @@ class SemanticMemory:
                 "signals skipped this query): %r", _box["err"],
             )
             return hits
-        _fusion_breaker_ok()
+        _fusion_breaker_record(False)
         return _box.get("fused", hits)
 
     # ----------------------------------------------------------------

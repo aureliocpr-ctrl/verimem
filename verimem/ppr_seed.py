@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from collections.abc import Callable
 from typing import Any
 
@@ -48,12 +49,31 @@ def _token_resolve_enabled() -> bool:
     produzione, e non perche' il PPR non scali (103 ms a caldo) ma perche' non
     partiva.
 
-    In lettura l'economia e' rovesciata: un falso positivo costa zero, perche'
-    ``get_by_name`` restituisce None e il token viene scartato; un falso
-    negativo costa tutto. Lo store e' anche l'arbitro piu' affidabile —
+    In lettura l'economia e' rovesciata: un token che non e' un'entita' viene
+    scartato da ``get_by_name`` e non entra da nessuna parte, mentre un falso
+    negativo spegne il segnale. Lo store e' anche l'arbitro piu' affidabile —
     risolve verimem/Verimem/VERIMEM allo stesso id e non conosce 'cortex'. Il
     tetto ``max_seeds`` e l'hub-guard restano gli stessi per entrambe le vie.
-    ENGRAM_PPR_SEED_RESOLVE=0 torna al solo estrattore."""
+    ENGRAM_PPR_SEED_RESOLVE=0 torna al solo estrattore.
+
+    Due precisazioni che una revisione avversariale (glm-5.2 + deepseek-v4-pro,
+    convergenti) ha imposto, entrambe verificate sul corpus reale:
+
+    * "in lettura un falso positivo costa zero" e' FALSO in questo prodotto. Non
+      sporca il grafo — quello era il punto — ma costa lo slot che avrebbe preso
+      un fatto vero e, poiche' ``_bump_verified`` e' default-ON, il fatto
+      restituito viene RINGIOVANITO: il read-path scrive stato, quindi l'errore
+      sopravvive alla query. Mitigato dal dense-floor (la testa CE-reranked e'
+      intoccabile) e dalla soglia di refresh (si scrive solo oltre mezza
+      half-life), non annullato.
+    * il grafo CONTIENE falsi positivi dell'ingest: misurate 16 parole comuni su
+      21 provate ('test' 69 fatti, 'fatto' 24, 'stato' 19, 'cosa', 'esiste',
+      'nota'…), tutte sotto la soglia hub e quindi ammesse come seed. Non sono
+      distinguibili per conteggio da un nome vero ('verimem' ha 6 fatti, 'punto'
+      ne ha 6), quindi una soglia le taglierebbe insieme ai nomi. Per questo i
+      seed risolti sono ordinati per SPECIFICITA' (vedi
+      ``_seeds_resolved_from_tokens``): i generici finiscono in coda e sono i
+      primi a cadere sotto il tetto, senza che nessuna lista debba nominarli."""
     return os.environ.get("ENGRAM_PPR_SEED_RESOLVE", "on").strip().lower() not in (
         "0", "off", "false", "no",
     )
@@ -62,19 +82,30 @@ def _token_resolve_enabled() -> bool:
 def _seeds_resolved_from_tokens(
     query: str, entity_store: Any, *, already: set[str], budget: int,
 ) -> list[str]:
-    """I token della query che lo STORE riconosce come entita' (max ``budget``).
+    """I token della query che lo STORE riconosce come entita' (max ``budget``),
+    i piu' DISCRIMINANTI per primi.
 
     Le parole grammaticali non vengono nemmeno interrogate: in una query in
     italiano sono la maggioranza dei token e ogni lookup e' una query SQL.
+
+    L'ordinamento per specificita' (meno fatti linkati = piu' discriminante)
+    risponde a un'obiezione avversariale verificata: il grafo contiene falsi
+    positivi dell'ingest ('test' 69 fatti, 'stato' 19, 'cosa' 9) che passano la
+    soglia hub e, sotto un tetto, potrebbero prendere il posto di un'entita'
+    rara e preziosa. Nell'ordine di apparizione nella query cadrebbero i token
+    finali, cioe' a caso; per specificita' cadono i meno informativi. Misurato:
+    sul corpus reale nessuna delle 10 query di riferimento satura il tetto (max
+    7 su 8), quindi oggi l'ordine non cambia il risultato — serve a non
+    dipendere dalla fortuna quando lo saturera'. Un'entita' di cui lo store non
+    sa dire il conteggio va in coda, mai scartata.
+
     Fail-soft come il resto del modulo: un errore su un token lo salta.
     """
     from .entity_extract_lite import _STOPWORDS
 
-    out: list[str] = []
+    candidati: list[tuple[int, int, str]] = []      # (n_fatti, ordine, entity_id)
     visti = set(already)
-    for tok in _QUERY_TOKEN_RE.findall(query or ""):
-        if len(out) >= budget:
-            break
+    for i, tok in enumerate(_QUERY_TOKEN_RE.findall(query or "")):
         low = tok.lower()
         if low in _STOPWORDS or low.isdigit():
             continue
@@ -85,8 +116,22 @@ def _seeds_resolved_from_tokens(
         eid = getattr(ent, "id", None) if ent is not None else None
         if eid and eid not in visti:
             visti.add(eid)
-            out.append(eid)
-    return out
+            candidati.append((_fact_count_of(entity_store, eid), i, eid))
+    candidati.sort()                                # specificita', poi ordine
+    return [eid for _, _, eid in candidati[:budget]]
+
+
+def _fact_count_of(entity_store: Any, entity_id: str) -> int:
+    """Quanti fatti linka un'entita'. Uno store che non sa rispondere manda il
+    seed in CODA (sys.maxsize), non lo elimina: l'ignoranza sul conteggio non e'
+    una prova di irrilevanza."""
+    try:
+        total, per_entity = entity_store.fact_counts([entity_id])
+        if total:
+            return int(per_entity.get(entity_id, 0))
+    except Exception:  # noqa: BLE001 — best-effort come l'hub-guard
+        pass
+    return sys.maxsize
 
 
 def _fact_id_of(x: Any) -> str | None:

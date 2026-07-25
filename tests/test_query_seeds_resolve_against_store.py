@@ -133,6 +133,33 @@ def test_extractor_seeds_keep_priority(tmp_path):
         f"la via nuova ha scavalcato l'estrattore: {seeds}")
 
 
+def test_under_the_cap_the_most_discriminating_seeds_survive(tmp_path):
+    """L'obiezione avversariale (glm-5.2 e deepseek-v4-pro, convergenti): il
+    grafo contiene falsi positivi dell'ingest — misurate 16 parole comuni su 21
+    provate, 'test' con 69 fatti, 'stato' con 19 — che passano la soglia hub. Se
+    saturano il tetto, prendono il posto di un'entita' rara e preziosa.
+
+    Con l'ordine di apparizione nella query cadrebbero i token finali, cioe' a
+    caso. Ordinati per specificita' cade il meno informativo."""
+    es = _store(tmp_path)
+    generica = _entita(es, "test", fatti=[f"g{i}" for i in range(40)])
+    rara = _entita(es, "verimem", fatti=["f_raro"])
+    visti: list[list[str]] = []
+    vero_ppr = es.ppr
+
+    def _spia(seeds, *a, **kw):
+        visti.append(list(seeds))
+        return vero_ppr(seeds, *a, **kw)
+
+    es.ppr = _spia                                # type: ignore[method-assign]
+    # 'test' compare PRIMA nella query: con l'ordine d'apparizione vincerebbe.
+    ppr_seeded_fact_ids("test e poi verimem", es, max_seeds=1)
+    assert visti, "il PPR non e' stato invocato"
+    assert visti[0] == [rara], (
+        f"sotto il tetto e' sopravvissuta l'entita' generica: {visti[0]} "
+        f"(rara={rara}, generica={generica})")
+
+
 @pytest.mark.parametrize("query", ["", None, "   "])
 def test_fail_soft_is_unchanged(tmp_path, query):
     """Il contratto fail-soft del modulo non cambia."""
