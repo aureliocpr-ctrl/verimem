@@ -700,7 +700,14 @@ _EVENT_INDEX_RE = re.compile(
     # entity identifiers — IT
     r"fatto|riga|colonna|porta|progetto|punto|nota|capitolo|paragrafo|"
     r"pagina|ciclo|fase|passo|tentativo|elemento|scheda|turno|lotto"
-    r")\s*#?\s*(\d{1,6})\b",
+    # `\s*(?:#\s*)?` e NON `\s*#?\s*`: la seconda forma ha due quantificatori di
+    # spazio separati da un opzionale, quindi su una corsa di spazi il motore
+    # prova ogni divisione fra i due e degrada col QUADRATO dell'input —
+    # misurato 4031 ms su 16000 spazi, e questo modulo legge il testo dei fatti
+    # scritti dall'utente. Qui gli spazi dopo il cancelletto esistono solo se il
+    # cancelletto c'e': nessuna ambiguita', crescita lineare, stesse forme
+    # riconosciute. Segnalato da CodeQL (py/polynomial-redos) su una PR.
+    r")\s*(?:#\s*)?(\d{1,6})\b",
     re.IGNORECASE,
 )
 
@@ -725,7 +732,9 @@ _ALNUM_CODE_RE = re.compile(r"\b([A-Za-z]{1,6})(\d{2,})\b")
 #: distinct facts — "sends message 0/1/2", "stores profile 0/1/2", "computes rate
 #: 0/1/2" — SEVEN were retired, because message/profile/rate were not listed.
 #: A vocabulary cannot be enumerated; a position can be read.
-_GENERIC_INDEX_RE = re.compile(r"\b([A-Za-z][A-Za-z_-]{2,})\s*#?\s*(\d{1,6})\b")
+#: Stessa cura anti-ReDoS di _EVENT_INDEX_RE, e per lo stesso motivo misurato.
+_GENERIC_INDEX_RE = re.compile(
+    r"\b([A-Za-z][A-Za-z_-]{2,})\s*(?:#\s*)?(\d{1,6})\b")
 
 
 def _bare_numbers(text: str) -> set[str]:
