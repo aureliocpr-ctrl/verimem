@@ -192,6 +192,7 @@ class EncodeServer:
         self._unclaimed_seen = 0
         # Someone else is announced and answering, so nobody can reach us.
         self._superfluous = False
+        self._superfluous_since = 0.0
 
     @property
     def port(self) -> int:
@@ -319,7 +320,7 @@ class EncodeServer:
             raw = self._discovery_path.read_text(encoding="utf-8")
         except FileNotFoundError:
             self._unclaimed_seen = 0
-            self._superfluous = False
+            self._mark_superfluous(False)
             self._write_discovery()
             return
         except OSError:
@@ -330,7 +331,7 @@ class EncodeServer:
             data = None
         if isinstance(data, dict) and data.get("pid") == os.getpid():
             self._unclaimed_seen = 0
-            self._superfluous = False
+            self._mark_superfluous(False)
             return
         if (isinstance(data, dict) and isinstance(data.get("pid"), int)
                 and is_reachable(data, timeout=_DISCOVERY_OWNER_PROBE_S)):
@@ -338,28 +339,74 @@ class EncodeServer:
             # step aside quietly (see _SUPERFLUOUS_IDLE_S) instead of holding a
             # GB of model nobody can reach.
             self._unclaimed_seen = 0
-            self._superfluous = True
+            self._mark_superfluous(True)
             return
         # Nobody reachable is named here, so we are not redundant — whoever
         # wrote this file is not serving.
-        self._superfluous = False
+        self._mark_superfluous(False)
         self._unclaimed_seen += 1
         if self._unclaimed_seen >= 2:
             self._unclaimed_seen = 0
             self._write_discovery()
+
+    def _mark_superfluous(self, value: bool) -> None:
+        """Record the transition, not just the state — when the step-aside
+        began is what bounds how soon we may leave."""
+        if value and not self._superfluous:
+            # monotonic: this is a duration, and a clock stepping backwards
+            # must not grant an unbounded stay (same reason as the lock grace)
+            self._superfluous_since = time.monotonic()
+        self._superfluous = value
 
     def _effective_idle_timeout(self) -> float:
         """Seconds of silence before self-exiting, given who is announced.
 
         Zero keeps meaning what the module documents — never idle-exit — which
         it did not: ``idle > 0`` is true of every duration, so a daemon
-        configured as permanent exited after one second (measured). And a
-        configured idle SHORTER than the step-aside timeout is never
+        configured as permanent exited after one second (measured). But
+        "permanent" is a promise about THE daemon, the one serving requests,
+        not about every leftover process that no client can reach. Two
+        adversarial reviews independently called out the alternative as the
+        worst case here, and the argument that decides it is not frequency but
+        monotonicity: with no collector, each spuriously yielded lock adds a
+        couple of GB that never come back, until the OOM killer takes the lot.
+        So an unreachable daemon steps aside even when configured permanent.
+
+        A configured idle SHORTER than the step-aside timeout is never
         lengthened: becoming useless must not extend anyone's lifetime.
         """
-        if self._idle_timeout_s and self._superfluous:
-            return min(_SUPERFLUOUS_IDLE_S, self._idle_timeout_s)
-        return self._idle_timeout_s
+        if not self._superfluous:
+            return self._idle_timeout_s
+        if not self._idle_timeout_s:
+            return _SUPERFLUOUS_IDLE_S
+        return min(_SUPERFLUOUS_IDLE_S, self._idle_timeout_s)
+
+    def _should_idle_exit(self) -> bool:
+        """Whether to stop waiting for requests that are not coming.
+
+        A daemon that has just been demoted is a WARM STANDBY, and leaving
+        immediately throws that away exactly when it is worth most: an
+        adversarial review priced the case — demoted while already idle for
+        59 s, gone one second later, and if the winner dies in that window
+        nobody is left to reclaim the discovery file, turning a 4 s recovery
+        into a 26 s cold load for the next client. So the clock also has to
+        run from the demotion, not only from the last request.
+
+        KNOWN LIMIT, not fixed here: reachability is not health. A daemon
+        wedged behind an accepting socket still looks like a winner, and one
+        flapping in and out of reachability can keep the standby from ever
+        seeing the two consecutive failures a reclaim needs. Both are
+        properties of the whole arbitration layer, which asks the port rather
+        than the model, and both deserve their own measurement rather than a
+        guess bolted on here.
+        """
+        limit = self._effective_idle_timeout()
+        if not limit or self._idle_for() <= limit:
+            return False
+        if (self._superfluous
+                and time.monotonic() - self._superfluous_since <= limit):
+            return False
+        return True
 
     def _clear_discovery(self) -> None:
         try:
@@ -399,8 +446,7 @@ class EncodeServer:
                 try:
                     conn, _ = self._sock.accept()
                 except TimeoutError:
-                    limite = self._effective_idle_timeout()
-                    if limite and self._idle_for() > limite:
+                    if self._should_idle_exit():
                         break
                     continue
                 except OSError:

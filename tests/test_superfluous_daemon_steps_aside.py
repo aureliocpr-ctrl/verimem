@@ -182,6 +182,59 @@ def test_zero_means_permanent_as_the_module_documents(tmp_path):
         t.join(timeout=3)
 
 
+def test_a_freshly_demoted_daemon_stays_as_a_warm_standby(srv):
+    """Il conto non parte solo dall'ultima richiesta, ma anche dalla
+    retrocessione. Prezzo del caso, da una revisione avversaria: retrocesso
+    mentre era gia' inattivo da 59 s, uscirebbe un secondo dopo — e se il
+    vincitore muore in quella finestra non resta nessuno a riprendersi il file,
+    trasformando 4 s di recupero in 26 s di cold-load per il client successivo.
+
+    Piu' un daemon era inattivo, piu' in fretta sparirebbe: esattamente al
+    contrario di quel che serve, perche' un daemon inattivo e' lo standby che
+    costa meno tenere."""
+    s, path = srv
+    s._last_request = time.time() - 10 * 3600      # inattivo da ore
+    with _porta_in_ascolto() as porta:
+        _annuncia_altro(path, porta)
+        s._republish_discovery_if_unclaimed()
+        assert not s._should_idle_exit(), (
+            "il daemon appena retrocesso se n'e' andato subito: lo standby "
+            "caldo sparisce proprio quando potrebbe servire da ripiego")
+
+        # passato il tempo di standby, e sempre inattivo, se ne va
+        s._superfluous_since -= s._effective_idle_timeout() + 1
+        assert s._should_idle_exit()
+
+
+def test_a_permanent_daemon_still_steps_aside_when_unreachable(tmp_path):
+    """"Permanente" e' una promessa sul daemon che SERVE, non su ogni processo
+    residuo che nessuno puo' raggiungere.
+
+    Due revisioni avversarie indipendenti hanno indicato questo come il caso
+    peggiore, e l'argomento che decide non e' la frequenza ma la monotonia:
+    senza nessuno che li raccolga, ogni cessione spuria del lock aggiunge
+    qualche GB che non torna piu', fino all'OOM. Il daemon ANNUNCIATO con
+    idle 0 continua a non uscire mai — vedi il test qui sotto."""
+    path = tmp_path / "encode_service.json"
+    s = encode_service.EncodeServer(
+        encode_fn=_fake_encode, idle_timeout_s=0,      # "permanente"
+        discovery_path=path, model_name="test-model")
+    s.start()
+    try:
+        with _porta_in_ascolto() as porta:
+            _annuncia_altro(path, porta)
+            s._republish_discovery_if_unclaimed()
+            assert s._effective_idle_timeout() == encode_service._SUPERFLUOUS_IDLE_S
+            s._last_request = time.time() - 10 * 3600
+            s._superfluous_since -= encode_service._SUPERFLUOUS_IDLE_S + 1
+            assert s._should_idle_exit(), (
+                "un daemon irraggiungibile configurato permanente resta per "
+                "sempre: la RAM si accumula a ogni cessione del lock e nessuno "
+                "la raccoglie")
+    finally:
+        s.stop()
+
+
 def test_a_restarted_daemon_does_not_stay_in_retreat(tmp_path):
     """Riavviare il server nello stesso processo — che ``acquire_daemon_lock``
     dichiara di sostenere, "our own pid is re-entrant" — riscrive il discovery
