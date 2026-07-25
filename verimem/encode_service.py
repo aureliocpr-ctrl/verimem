@@ -561,22 +561,27 @@ def ensure_running() -> bool:
     # it so clients stop fast-failing against a dead port while a fresh daemon
     # warms (the new daemon rewrites discovery once it is up).
     #
-    # ONLY IF ITS OWNER IS DEAD (2026-07-25). `daemon_usable` answers False for a
-    # LIVE daemon that merely missed its probe, and removing the file then makes
-    # a healthy daemon — model already resident — invisible to every client,
-    # which is strictly worse than the stale file this cleanup exists for.
-    # Observed on the real machine right after the lock fix: three live daemons,
-    # one holding 1385 MB (the model loaded) and owning the lock, and no
-    # discovery file; it would have sat there unused until the 8 h idle timeout.
-    # The file names the pid that wrote it, so the question can be asked exactly.
-    # Unreadable or pid-less files are still removed: what cannot be identified
-    # cannot be protected.
-    _info = read_discovery()
-    _owner = (_info or {}).get("pid")
-    if not (_owner and _pid_alive(int(_owner))):
+    # NOT IF THE DAEMON STILL ANSWERS (2026-07-25). `daemon_usable` uses a 0.4 s
+    # probe, so it says False for a LIVE daemon that merely missed it, and
+    # removing the file then makes a healthy daemon — model already resident —
+    # invisible to every client. That is strictly worse than the stale file this
+    # cleanup exists for: a stale file costs one failed connect, a hidden daemon
+    # costs every client the 26 s in-process cold-load. Observed on the real
+    # machine right after the lock fix: a daemon holding 1385 MB and owning the
+    # lock, with no discovery file, unusable until the 8 h idle timeout.
+    #
+    # The test is the PORT, not the pid. The first version of this asked whether
+    # the pid in the file was alive, and CI caught it on POSIX: the suite's
+    # existing test writes `{"pid": 1}` to mean "dead owner", and pid 1 is init —
+    # always alive — so a genuinely stale file was being protected. A recycled
+    # pid would have been protected forever too. A healthy daemon accepts a
+    # connection; a recycled pid does not. Same patient probe used for the lock
+    # steal, and for the same reason: where being wrong is expensive, wait
+    # longer.
+    if not is_reachable(timeout=_ZOMBIE_PROBE_TIMEOUT_S):
         try:
             DISCOVERY_PATH.unlink()
-        except (OSError, TypeError, ValueError):
+        except OSError:
             pass
     try:
         if (_SPAWN_LOCK_PATH.exists()

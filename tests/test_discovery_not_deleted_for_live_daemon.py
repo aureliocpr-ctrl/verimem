@@ -52,42 +52,48 @@ def _scrivi(p, pid: int | None) -> None:
     p.write_text(json.dumps(info), encoding="utf-8")
 
 
-def test_a_live_owners_discovery_survives(discovery, monkeypatch):
-    """Il caso misurato: il daemon e' vivo e ha il modello caricato, ha solo
-    mancato un probe. Cancellargli il discovery lo rende irraggiungibile per
-    tutti, e nessuno se ne accorge."""
-    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+def test_a_daemon_that_still_answers_keeps_its_discovery(discovery, monkeypatch):
+    """Il caso misurato: il daemon e' sano e ha il modello caricato, ha solo
+    mancato il probe da 0.4 s di ``daemon_usable``. Cancellargli il discovery lo
+    rende irraggiungibile per tutti, e nessuno se ne accorge."""
+    monkeypatch.setattr(svc, "is_reachable", lambda *a, **k: True)
     _scrivi(discovery, 4242)
     svc.ensure_running()
     assert discovery.exists(), (
-        "il discovery di un daemon VIVO e' stato cancellato: un daemon sano con "
-        "il modello in RAM diventa invisibile a tutti i client")
+        "il discovery di un daemon che RISPONDE e' stato cancellato: un daemon "
+        "sano con il modello in RAM diventa invisibile a tutti i client")
 
 
-def test_a_dead_owners_discovery_is_removed(discovery, monkeypatch):
+def test_a_silent_daemons_discovery_is_removed(discovery, monkeypatch):
     """La ragione per cui la rimozione esiste, e che deve restare: senza,
     i client continuerebbero a fallire contro la porta di un daemon morto."""
-    monkeypatch.setattr(svc, "_pid_alive", lambda pid: False)
+    monkeypatch.setattr(svc, "is_reachable", lambda *a, **k: False)
     _scrivi(discovery, 4242)
     svc.ensure_running()
     assert not discovery.exists(), (
-        "il discovery di un daemon MORTO non e' stato rimosso: i client "
-        "continuano a sbattere contro una porta chiusa")
+        "il discovery di un daemon che NON risponde non e' stato rimosso: i "
+        "client continuano a sbattere contro una porta chiusa")
 
 
-def test_a_discovery_without_a_pid_is_removed(discovery, monkeypatch):
-    """Fail-safe: un file che non dice chi lo ha scritto — vecchio formato o
-    scrittura troncata — non puo' essere difeso, quindi si rimuove come prima."""
-    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
-    _scrivi(discovery, None)
+def test_a_recycled_pid_does_not_protect_a_stale_file(discovery, monkeypatch):
+    """Perche' il criterio e' la PORTA e non il pid, ed e' la CI ad averlo
+    insegnato: la prima versione di questo fix proteggeva il file se il pid
+    scritto dentro era vivo, e il test storico della suite usa ``{"pid": 1}``
+    per dire 'proprietario morto' — su POSIX pid 1 e' init, sempre vivo. Un pid
+    riciclato da un altro processo avrebbe protetto un file stantio per sempre.
+    Un daemon sano accetta una connessione; un pid riciclato no."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)   # pid vivissimo
+    monkeypatch.setattr(svc, "is_reachable", lambda *a, **k: False)  # ma muto
+    _scrivi(discovery, 1)
     svc.ensure_running()
-    assert not discovery.exists()
+    assert not discovery.exists(), (
+        "un pid vivo ma senza porta aperta ha protetto un file stantio")
 
 
 def test_an_unparseable_discovery_is_removed(discovery, monkeypatch):
-    """Stessa ragione: se non si riesce a leggere chi lo possiede, non lo si
-    puo' proteggere."""
-    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    """Un file illeggibile non descrive nessun daemon raggiungibile, quindi
+    esce come prima."""
+    monkeypatch.setattr(svc, "is_reachable", lambda *a, **k: False)
     discovery.write_text("{non json", encoding="utf-8")
     svc.ensure_running()
     assert not discovery.exists()
@@ -99,7 +105,7 @@ def test_the_service_disabled_switch_still_short_circuits(discovery, monkeypatch
     cortocircuito che, lasciato attivo dal conftest, faceva passare gli altri
     test senza che eseguissero il codice in esame."""
     monkeypatch.setenv("ENGRAM_ENCODE_SERVICE", "0")
-    monkeypatch.setattr(svc, "_pid_alive", lambda pid: False)
+    monkeypatch.setattr(svc, "is_reachable", lambda *a, **k: False)
     _scrivi(discovery, 4242)
     assert svc.ensure_running() is False
     assert discovery.exists(), "con il servizio disabilitato non si tocca nulla"
