@@ -560,10 +560,24 @@ def ensure_running() -> bool:
     # Not usable but a discovery file may linger from a dead/wrong daemon — remove
     # it so clients stop fast-failing against a dead port while a fresh daemon
     # warms (the new daemon rewrites discovery once it is up).
-    try:
-        DISCOVERY_PATH.unlink()
-    except OSError:
-        pass
+    #
+    # ONLY IF ITS OWNER IS DEAD (2026-07-25). `daemon_usable` answers False for a
+    # LIVE daemon that merely missed its probe, and removing the file then makes
+    # a healthy daemon — model already resident — invisible to every client,
+    # which is strictly worse than the stale file this cleanup exists for.
+    # Observed on the real machine right after the lock fix: three live daemons,
+    # one holding 1385 MB (the model loaded) and owning the lock, and no
+    # discovery file; it would have sat there unused until the 8 h idle timeout.
+    # The file names the pid that wrote it, so the question can be asked exactly.
+    # Unreadable or pid-less files are still removed: what cannot be identified
+    # cannot be protected.
+    _info = read_discovery()
+    _owner = (_info or {}).get("pid")
+    if not (_owner and _pid_alive(int(_owner))):
+        try:
+            DISCOVERY_PATH.unlink()
+        except (OSError, TypeError, ValueError):
+            pass
     try:
         if (_SPAWN_LOCK_PATH.exists()
                 and time.time() - _SPAWN_LOCK_PATH.stat().st_mtime < _SPAWN_COOLDOWN_S):
