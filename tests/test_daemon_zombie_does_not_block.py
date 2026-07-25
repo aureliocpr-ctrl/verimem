@@ -1,0 +1,109 @@
+"""Un daemon VIVO ma che non serve non deve bloccare il daemon di encode.
+
+Perche' questo file esiste (misurato sulla macchina reale il 25/07). Il PID
+51776 — ``pythonw -m verimem.encode_service``, avviato alle 15:56, 322 MB di
+RAM, cioe' il modello mai caricato — era vivo e possedeva il lock senza aver
+mai scritto il file di discovery. ``acquire_daemon_lock`` guarda se il
+proprietario e' VIVO, non se sta SERVENDO: ogni daemon successivo (misurato:
+PID 45668 alle 17:36) trovava il lock occupato e usciva in silenzio. Risultato:
+nessun daemon ha mai servito, ogni client ricadeva sul cold-load in-process
+(26 s misurati) contro un budget di 2 s, e il recall degradava a ricerca per
+parole chiave — restituendo risultati senza dichiarare il degrado, che e'
+l'opposto di cio' che questo prodotto vende.
+
+La catena era muta in tre punti: ``_spawn_detached`` manda stderr su DEVNULL,
+``ensure_running`` restituisce False sia che abbia spawnato sia che abbia
+fallito, e il client non dice al chiamante che sta rispondendo in modalita'
+degradata. Questo file copre il primo anello, quello che rende permanente il
+guasto: il lock.
+
+Il criterio non e' "da quanto vive il proprietario" ma "si e' annunciato?".
+Un daemon appena partito ha diritto al suo warmup (~20-30 s) senza che nessuno
+gli rubi il lock; passata la grazia senza un discovery raggiungibile, e' uno
+zombie e il lock va preso.
+"""
+from __future__ import annotations
+
+import json
+import os
+import time
+
+import pytest
+
+from verimem import encode_service as svc
+
+
+@pytest.fixture()
+def lock(tmp_path):
+    return tmp_path / "daemon.lock"
+
+
+def _scrivi_lock(path, pid: int, *, eta_s: float = 0.0) -> None:
+    path.write_text(str(pid), encoding="utf-8")
+    if eta_s:
+        vecchio = time.time() - eta_s
+        os.utime(path, (vecchio, vecchio))
+
+
+def test_a_dead_owner_lock_is_stolen(lock, monkeypatch):
+    """Regressione del comportamento storico: un proprietario morto non
+    trattiene niente."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: False)
+    _scrivi_lock(lock, 999999)
+    assert svc.acquire_daemon_lock(lock) is True
+
+
+def test_a_live_serving_owner_keeps_the_lock(lock, monkeypatch):
+    """Il caso che NON deve rompersi: un daemon sano — vivo e che si e'
+    annunciato — resta l'unico a servire. Senza questo, la cura allo zombie
+    aprirebbe la porta a due daemon che caricano il modello insieme."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: True)
+    _scrivi_lock(lock, 4242, eta_s=3600)          # vecchio ma SANO
+    assert svc.acquire_daemon_lock(lock) is False
+
+
+def test_a_warming_owner_is_given_its_grace(lock, monkeypatch):
+    """Un daemon appena partito non si e' ancora annunciato perche' sta
+    caricando il modello: rubargli il lock creerebbe la corsa a due daemon che
+    il lock esiste per impedire."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: False)
+    _scrivi_lock(lock, 4242, eta_s=1.0)           # dentro la grazia
+    assert svc.acquire_daemon_lock(lock) is False
+
+
+def test_a_live_owner_that_never_announced_is_a_zombie(lock, monkeypatch):
+    """Il caso misurato: vivo, oltre la grazia, e nessun discovery. Prima di
+    questo fix bloccava ogni daemon futuro per sempre e il recall restava
+    degradato a keyword-search senza dirlo a nessuno."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: False)
+    _scrivi_lock(lock, 4242, eta_s=svc._ZOMBIE_GRACE_S + 30)   # noqa: SLF001
+    assert svc.acquire_daemon_lock(lock) is True, (
+        "un daemon vivo che non ha mai servito trattiene il lock: nessun "
+        "daemon potra' partire e ogni recall restera' degradato")
+
+
+def test_the_grace_is_long_enough_for_a_real_model_load(monkeypatch):
+    """La grazia deve coprire un caricamento vero: il cold-load misurato e'
+    ~26-34 s. Una grazia piu' corta trasformerebbe ogni avvio normale in un
+    furto di lock, cioe' la corsa a due daemon."""
+    assert svc._ZOMBIE_GRACE_S >= 60, (            # noqa: SLF001
+        f"grazia {svc._ZOMBIE_GRACE_S}s troppo corta per un cold-load da 26-34 s")
+
+
+def test_an_unreadable_discovery_does_not_make_a_healthy_daemon_a_zombie(
+        lock, monkeypatch, tmp_path):
+    """Il giudizio deve venire da ``daemon_usable`` (raggiungibile E modello
+    giusto), non dalla sola presenza del file: un discovery scritto a meta' o
+    di un daemon con un altro modello non e' un daemon che serve."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    disc = tmp_path / "discovery.json"
+    disc.write_text(json.dumps({"port": 1, "model": "altro-modello"}),
+                    encoding="utf-8")
+    monkeypatch.setattr(svc, "DISCOVERY_PATH", disc)
+    _scrivi_lock(lock, 4242, eta_s=svc._ZOMBIE_GRACE_S + 30)   # noqa: SLF001
+    assert svc.acquire_daemon_lock(lock) is True, (
+        "un daemon che annuncia un ALTRO modello non sta servendo questo "
+        "corpus: il client lo rifiuta, quindi non deve trattenere il lock")

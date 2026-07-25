@@ -357,6 +357,40 @@ def _read_lock_owner(path: Path) -> int:
 _LOCK_STEAL_GRACE_S = 0.25
 _LOCK_VERIFY_DELAY_S = 0.10
 
+#: Quanto tempo un proprietario VIVO puo' tenere il lock senza essersi ancora
+#: annunciato. Un daemon appena partito sta caricando il modello — cold-load
+#: misurato 26-34 s — e rubargli il lock creerebbe la corsa a due daemon che il
+#: lock esiste per impedire. Oltre questa soglia, invece, "vivo" non basta piu'.
+#: 120 s = quattro volte il cold-load osservato.
+_ZOMBIE_GRACE_S = 120.0
+
+
+def _owner_is_zombie(path: Path) -> bool:
+    """True se il proprietario del lock e' vivo ma non sta SERVENDO.
+
+    Misurato il 2026-07-25: un daemon (PID 51776, 322 MB = modello mai
+    caricato) e' rimasto vivo un'ora e quaranta senza mai scrivere il file di
+    discovery. ``acquire_daemon_lock`` guardava solo se il proprietario fosse
+    vivo, quindi ogni daemon successivo usciva in silenzio, NESSUN daemon ha mai
+    servito, e ogni recall e' degradato a ricerca per parole chiave senza
+    dichiararlo. Vivo non e' la domanda giusta: la domanda e' se serve.
+
+    In dubbio NON si ruba (un lock illeggibile, o dentro la grazia, resta del
+    proprietario): l'errore di rubare crea due daemon che caricano il modello
+    insieme, che e' peggio del guasto che si sta curando. Limite dichiarato: un
+    daemon sano ma troppo occupato per accettare una connessione entro il
+    timeout di ``daemon_usable`` verrebbe letto come zombie; l'accept su
+    loopback resta veloce anche sotto carico, quindi il caso e' teorico ma non
+    impossibile.
+    """
+    try:
+        eta = time.time() - path.stat().st_mtime
+    except OSError:
+        return False
+    if eta <= _ZOMBIE_GRACE_S:
+        return False        # ha ancora diritto al suo warmup
+    return not daemon_usable()
+
 
 def acquire_daemon_lock(lock_path: Path | None = None) -> bool:
     """Atomically claim the one-daemon-per-machine lock.
@@ -392,7 +426,7 @@ def acquire_daemon_lock(lock_path: Path | None = None) -> bool:
             owner = _read_lock_owner(path)
         if owner == os.getpid():
             return True
-        if owner and _pid_alive(owner):
+        if owner and _pid_alive(owner) and not _owner_is_zombie(path):
             return False
         # dead (or persistently empty) owner → steal
         try:
