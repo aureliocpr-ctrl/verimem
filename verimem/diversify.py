@@ -27,7 +27,8 @@ the default stays put until a full-bench measurement says otherwise.
 """
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 
@@ -35,12 +36,12 @@ __all__ = ["mmr_select"]
 
 
 def mmr_select(
-    items: Sequence[tuple[Any, "np.ndarray"]],
-    query_vec: "np.ndarray",
+    items: Sequence[tuple[Any, np.ndarray]],
+    query_vec: np.ndarray,
     *,
     n: int,
     lam: float = 0.7,
-) -> list[tuple[Any, "np.ndarray"]]:
+) -> list[tuple[Any, np.ndarray]]:
     """Select ``n`` items balancing relevance to ``query_vec`` against
     redundancy among the picks.
 
