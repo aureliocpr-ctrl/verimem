@@ -20,6 +20,20 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   full-bench measurement. Default will stay OFF regardless: the product's real
   recall shows 7.0% top-30 redundancy against 77.5% on the conversational
   bench, so on a corpus of distinct propositions there is nothing to compress.
+  **The direction is SHELVED pending better evidence** — glm-5.2 and
+  deepseek-v4-pro, independently, on the numbers above: the n=5 is selection on
+  the dependent variable (those five are the questions that already failed, and
+  "going deeper finds deeper things" is tautological), the Wilson intervals for
+  1/5 and 3/5 overlap almost entirely, and there is zero data on collateral
+  damage over the 124 questions currently answered correctly — one regression
+  there cancels the +2. Worse for the direction: MMR penalises chunks similar
+  to those already picked, while TEMPORAL questions (our largest failure
+  category, 10 errors) need chunks that are semantically near-identical but
+  temporally distinct — MMR would treat Monday and Friday as redundant, and may
+  also raise false abstentions on "list all" queries by starving the model of
+  citable items. Both reviewers put the same unpulled lever first: the CE
+  rerank is 94% of recall latency and its marginal accuracy contribution has
+  never been measured. That is the next experiment, not this one.
 - **Evidence-before-belief: the independence rule (WS1, P0 cycle 2).** Cycle 1
   recorded WHO writes (`facts.writer_principal`) and WHO indexes
   (`meta.indexed_by`); this cycle asks the only question those stamps exist

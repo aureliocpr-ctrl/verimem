@@ -95,6 +95,33 @@ Il write-gate deve smettere di trattare "non abbastanza provato" come "malevolo"
 > migliorato ≥2 → invariato (su `6:5` trova 8 giochi e sbaglia comunque:
 > lì il problema è l'ATTRIBUZIONE, non il trovare).
 >
+> **DIREZIONE SOSPESA su parere avversariale convergente 2/2** (glm-5.2 +
+> deepseek-v4-pro, 2026-07-25). `verimem/diversify.py` esiste ed è testato ma
+> **non cablato**, e resta così. Le obiezioni che ho verificato e accettato:
+> l'n=5 è *selection on the dependent variable* (quelle 5 domande sono quelle
+> che già fallivano — "andare più in profondità trova cose più in profondità" è
+> tautologico); gli intervalli di Wilson di 1/5 e 3/5 si sovrappongono quasi
+> del tutto; **zero dati sul danno collaterale** sulle 124 domande oggi
+> corrette, e un solo regresso lì annulla il +2; MMR penalizza i chunk simili a
+> quelli già scelti, ma le domande **temporali** (la nostra categoria peggiore
+> per volume) vogliono chunk semanticamente quasi identici e temporalmente
+> distinti — MMR tratterebbe lunedì e venerdì come ridondanti.
+>
+> **Il giudice fabbrica parte del fallimento** (2/2): il protocollo
+> "insieme completo" trasforma un elemento mancante nel fallimento dell'intera
+> risposta. Con credito parziale, multi-hop passerebbe da 0.667 a ~0.76+ senza
+> toccare una riga di codice. Già visto in concreto su `4:238` (gold "be a
+> leader", predetto "A leader (and stay true)" → bocciato).
+>
+> **La leva mai tirata, indicata prima da entrambi**: il CE-rerank è il 94%
+> della latenza del recall e **non abbiamo mai misurato il suo contributo di
+> accuratezza**. Se vale poco, si liberano ~2.5s da spendere su profondità,
+> query expansion o una seconda passata di fusion. È l'esperimento successivo.
+>
+> **Domanda aperta a costo quasi zero, in corso**: le 12 astensioni avevano il
+> gold già nel contesto? Se sì per più di metà, il collo di bottiglia è la
+> **calibrazione** e non il retrieval, e WS2 cambia priorità.
+
 > **Scoping verificato**: la ridondanza del contesto è **77.5%** sul bench
 > (`window=1` = finestre sovrapposte) ma **7.0%** sul recall reale del
 > prodotto. Un fix di compressione va quindi **opt-in e misurato, mai
