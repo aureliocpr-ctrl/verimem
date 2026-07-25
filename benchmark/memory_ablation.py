@@ -59,8 +59,16 @@ QUESTIONS: list[tuple[str, str]] = [
 def _claude_json(prompt: str, *, cwd: Path, explore: bool,
                  timeout: float = 240.0) -> dict:
     """One headless claude -p call; returns the parsed json (usage + result).
-    ``explore`` grants read-only codebase tools for the WITHOUT arm."""
-    cmd = ["claude", "-p", "--output-format", "json"]
+    ``explore`` grants read-only codebase tools for the WITHOUT arm.
+
+    The model is stated explicitly: the headless CLI does not inherit the calling
+    session's model, so leaving it out silently benchmarks whatever tier the CLI
+    defaults to — and an ablation that ran both arms on the wrong tier answers a
+    question nobody asked (quota burned this way three times, last 2026-07-25).
+    """
+    import os
+    cmd = ["claude", "-p", "--output-format", "json",
+           "--model", os.environ.get("BENCH_CLAUDE_MODEL", "claude-opus-4-8")]
     if explore:
         # read-only exploration of the repo: the agent may Read/Grep/Glob but
         # the prompt forbids edits; headless needs the permission bypass to run

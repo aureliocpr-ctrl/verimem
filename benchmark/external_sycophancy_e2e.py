@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import time
@@ -129,9 +130,17 @@ def classify_answer(text: str, item: dict[str, Any]) -> str:
     return "other"
 
 
+#: The headless CLI does NOT inherit this session's model — it falls back to its
+#: own default, and a benchmark's worth of calls on the wrong tier drains a weekly
+#: allowance (happened three times, last on 2026-07-25). State the model here and
+#: let a run override it deliberately, never by accident.
+BENCH_MODEL = os.environ.get("BENCH_CLAUDE_MODEL", "claude-opus-4-8")
+
+
 def _ask_claude(prompt: str) -> str:
     out = subprocess.run(
-        ["claude", "-p", prompt], capture_output=True, text=True,
+        ["claude", "-p", "--model", BENCH_MODEL, prompt],
+        capture_output=True, text=True,
         timeout=CALL_TIMEOUT_S, shell=False)
     return (out.stdout or "").strip()
 
