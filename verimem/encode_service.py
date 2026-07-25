@@ -364,6 +364,11 @@ _LOCK_VERIFY_DELAY_S = 0.10
 #: 120 s = quattro volte il cold-load osservato.
 _ZOMBIE_GRACE_S = 120.0
 
+#: Timeout del probe che decide un FURTO di lock, deliberatamente piu' lungo di
+#: quello informativo (0.4 s): un falso "non serve" crea due daemon col modello
+#: in RAM, mentre l'attesa in piu' la paga solo chi sta per rubare.
+_ZOMBIE_PROBE_TIMEOUT_S = 2.0
+
 
 def _owner_is_zombie(path: Path) -> bool:
     """True se il proprietario del lock e' vivo ma non sta SERVENDO.
@@ -387,9 +392,22 @@ def _owner_is_zombie(path: Path) -> bool:
         eta = time.time() - path.stat().st_mtime
     except OSError:
         return False
-    if eta <= _ZOMBIE_GRACE_S:
+    # Un mtime nel FUTURO (salto d'orologio all'indietro, NTP) dava eta'
+    # negativa e quindi grazia infinita: lo zombie sarebbe diventato permanente
+    # al primo aggiustamento dell'ora. Sollevato da due revisioni indipendenti.
+    # Un orologio che va indietro non e' una prova di gioventu': si guarda il
+    # valore assoluto, cosi' "impossibile" non diventa "eternamente giovane".
+    if abs(eta) <= _ZOMBIE_GRACE_S:
         return False        # ha ancora diritto al suo warmup
-    return not daemon_usable()
+    # Probe PAZIENTE, non quello informativo da 0.4 s. Il presupposto delle due
+    # revisioni — "un daemon occupato fallisce il probe" — e' sbagliato:
+    # daemon_usable fa connect+close e il server ha listen(16), quindi su
+    # loopback il kernel completa l'handshake anche mentre l'applicazione e'
+    # occupata. Ma l'ASIMMETRIA che invocavano e' reale: se ci si sbaglia
+    # nascono due daemon col modello in RAM, mentre l'attesa in piu' la paga
+    # solo chi sta per rubare, cioe' un caso raro. Dove sbagliare costa caro si
+    # aspetta di piu'.
+    return not daemon_usable(timeout=_ZOMBIE_PROBE_TIMEOUT_S)
 
 
 def acquire_daemon_lock(lock_path: Path | None = None) -> bool:

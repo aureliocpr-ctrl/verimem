@@ -93,6 +93,55 @@ def test_the_grace_is_long_enough_for_a_real_model_load(monkeypatch):
         f"grazia {svc._ZOMBIE_GRACE_S}s troppo corta per un cold-load da 26-34 s")
 
 
+def test_a_clock_jump_backwards_does_not_grant_an_endless_grace(lock, monkeypatch):
+    """Un salto d'orologio all'indietro (NTP) rende l'mtime FUTURO e l'eta'
+    negativa: con un confronto ingenuo ``eta <= grazia`` lo zombie resterebbe
+    per sempre "in warmup" e non verrebbe mai sostituito. Sollevato da due
+    revisioni indipendenti; il caso gemello che invocavano — uno zombie che si
+    tiene giovane riscrivendo il lock — oggi non esiste, perche' il lock viene
+    scritto una sola volta all'acquisizione e mai piu'."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: False)
+    _scrivi_lock(lock, 4242, eta_s=-3600)          # mtime un'ora nel FUTURO
+    assert svc.acquire_daemon_lock(lock) is True, (
+        "un mtime nel futuro concede una grazia infinita: lo zombie diventa "
+        "permanente al primo salto di orologio")
+
+
+def test_stealing_uses_a_patient_probe(lock, monkeypatch):
+    """Prima di RUBARE, il probe deve essere piu' paziente del probe informativo
+    di default (0.4 s). Le due revisioni sostenevano che un daemon sano ma
+    occupato fallisca il probe e venga derubato: il presupposto e' sbagliato
+    (``is_reachable`` fa solo connect+close e il server ha ``listen(16)``, quindi
+    su loopback il kernel accetta anche senza ``accept()`` applicativo), ma
+    l'ASIMMETRIA del costo resta — sbagliare qui significa due daemon col
+    modello in RAM. Dove sbagliare costa caro si aspetta di piu'."""
+    visti: list[float] = []
+
+    def _spia(info=None, timeout=0.4):
+        visti.append(timeout)
+        return False
+
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    monkeypatch.setattr(svc, "daemon_usable", _spia)
+    _scrivi_lock(lock, 4242, eta_s=svc._ZOMBIE_GRACE_S + 30)   # noqa: SLF001
+    svc.acquire_daemon_lock(lock)
+    assert visti, "il probe non e' stato nemmeno eseguito"
+    assert max(visti) >= 2.0, (
+        f"il furto si decide con un probe da {max(visti)}s: troppo impaziente "
+        "per una decisione il cui errore costa due daemon")
+
+
+def test_an_unreadable_lock_is_not_a_deadlock(lock, monkeypatch):
+    """Entrambe le revisioni temevano che "in dubbio non si ruba" bloccasse la
+    macchina se il lock diventa illeggibile. Non e' cosi', e va tenuto vero: un
+    contenuto illeggibile da' owner=0, che non e' un proprietario vivo, quindi
+    il lock viene preso."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    lock.write_text("non-un-pid", encoding="utf-8")
+    assert svc.acquire_daemon_lock(lock) is True
+
+
 def test_an_unreadable_discovery_does_not_make_a_healthy_daemon_a_zombie(
         lock, monkeypatch, tmp_path):
     """Il giudizio deve venire da ``daemon_usable`` (raggiungibile E modello
