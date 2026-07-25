@@ -15,6 +15,8 @@ cosine. Pure given the store; the RRF fusion + CE-rerank wiring is a SEPARATE st
 """
 from __future__ import annotations
 
+import os
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -28,6 +30,63 @@ MIN_CORPUS_FOR_HUB_GUARD = 50
 #: hub non-discriminante (es. l'entità-utente linkata a ogni fatto): il suo PPR
 #: è quasi uniforme e in RRF sfratta dense hit validi con rumore.
 HUB_FACT_SHARE = 0.2
+
+
+#: Token candidati di una query: alfanumerici Unicode di almeno 3 caratteri
+#: (include le lettere accentate italiane, esclude la punteggiatura).
+_QUERY_TOKEN_RE = re.compile(r"[0-9A-Za-z_À-ɏ]{3,}")
+
+
+def _token_resolve_enabled() -> bool:
+    """In lettura, chi decide se un token e' un'entita' e' lo STORE.
+
+    ``extract_entities_lite`` e' tarato per l'INGEST, dove un falso positivo
+    sporca il grafo per sempre: e' deliberatamente conservativo e non ha alcun
+    pattern per un nome proprio minuscolo di una parola sola. Misurato sul
+    corpus reale il 25/07: il grafo aveva 8005 entita e 81477 archi, e il
+    seeding restituiva 0 id su OGNI query — il segnale-grafo era spento in
+    produzione, e non perche' il PPR non scali (103 ms a caldo) ma perche' non
+    partiva.
+
+    In lettura l'economia e' rovesciata: un falso positivo costa zero, perche'
+    ``get_by_name`` restituisce None e il token viene scartato; un falso
+    negativo costa tutto. Lo store e' anche l'arbitro piu' affidabile —
+    risolve verimem/Verimem/VERIMEM allo stesso id e non conosce 'cortex'. Il
+    tetto ``max_seeds`` e l'hub-guard restano gli stessi per entrambe le vie.
+    ENGRAM_PPR_SEED_RESOLVE=0 torna al solo estrattore."""
+    return os.environ.get("ENGRAM_PPR_SEED_RESOLVE", "on").strip().lower() not in (
+        "0", "off", "false", "no",
+    )
+
+
+def _seeds_resolved_from_tokens(
+    query: str, entity_store: Any, *, already: set[str], budget: int,
+) -> list[str]:
+    """I token della query che lo STORE riconosce come entita' (max ``budget``).
+
+    Le parole grammaticali non vengono nemmeno interrogate: in una query in
+    italiano sono la maggioranza dei token e ogni lookup e' una query SQL.
+    Fail-soft come il resto del modulo: un errore su un token lo salta.
+    """
+    from .entity_extract_lite import _STOPWORDS
+
+    out: list[str] = []
+    visti = set(already)
+    for tok in _QUERY_TOKEN_RE.findall(query or ""):
+        if len(out) >= budget:
+            break
+        low = tok.lower()
+        if low in _STOPWORDS or low.isdigit():
+            continue
+        try:
+            ent = entity_store.get_by_name(tok)
+        except Exception:  # noqa: BLE001 — un token illeggibile non blocca il resto
+            continue
+        eid = getattr(ent, "id", None) if ent is not None else None
+        if eid and eid not in visti:
+            visti.add(eid)
+            out.append(eid)
+    return out
 
 
 def _fact_id_of(x: Any) -> str | None:
@@ -70,6 +129,14 @@ def ppr_seeded_fact_ids(
                 seeds.append(ent_id)
             if len(seeds) >= max_seeds:
                 break
+        # I seed dell'estrattore restano DAVANTI (multiparola, piu' specifici):
+        # la via per risoluzione estende, non sostituisce, e occupa solo i posti
+        # liberi sotto max_seeds — lo stesso principio del dense-floor nella
+        # fusione. Vedi _token_resolve_enabled per il perche'.
+        if len(seeds) < max_seeds and _token_resolve_enabled():
+            seeds.extend(_seeds_resolved_from_tokens(
+                query, entity_store, already=seen,
+                budget=max_seeds - len(seeds)))
         if not seeds:
             return []
         # Hub-guard: su corpus non-piccoli scarta i seed non-discriminanti
