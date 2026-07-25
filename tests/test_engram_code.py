@@ -468,7 +468,7 @@ def test_episodes_since_sleep_no_skills(engram):
 def test_contextual_tip_first_run(engram):
     """When no episodes exist, the tip should encourage first-run experience."""
     # Reset memory so n_eps==0
-    engram.agent.memory.clear()
+    engram.agent.memory.clear(principal="test:suite")
     tip = engram._contextual_tip()
     if tip is not None:
         assert "first run" in tip.lower() or "task" in tip.lower()

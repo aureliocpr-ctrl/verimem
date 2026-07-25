@@ -184,6 +184,7 @@ def reconcile_fact_on_write(
         if verdict == "update":
             try:
                 sm.supersede(old.id, new_fact.id,
+                             principal="system:reconcile",
                              reason="reconcile:update-on-write")
                 superseded.append(old.id)
                 continue

@@ -193,6 +193,10 @@ class Memory:
         user_name: str | None = None,
         purpose: str | None = None,
         principal: str | None = None,
+        meta_narrative: bool = False,
+        lineage_to: list[str] | None = None,
+        confidence: float | None = None,
+        chronicle: bool = False,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -255,10 +259,25 @@ class Memory:
             gate_mode = self._preset_defaults["gate_mode"]
         if ground is None:
             ground = self._preset_defaults["ground"]
+        # Continuity narrative lane (2026-07-23): meta_narrative declares a
+        # retrospective session checkpoint. It relaxes ONLY the L1.x
+        # self-claim family (category error on a chronicle); injection/L3/L4
+        # are untouched and the row is stamped meta_narrative=1 +
+        # writer_role='user' so listings can tell chronicle from screened
+        # claim. In-process callers only — network handlers must never wire
+        # a client-supplied flag into this parameter.
+        # P0 evidence-before-belief (ciclo 2c): the gate can only ask whether
+        # the cited evidence is independent if it is told WHO writes and WHERE
+        # the documents live. The store is lazy — a write that never reaches
+        # the question opens no connection.
+        from .evidence_independence import LazyDocumentStore
         gate = run_validation_gate(
             proposition=text, verified_by=verified_by, topic=topic, agent=self,
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
+            narrative_l1_skip=meta_narrative,
+            claimant=principal or self._principal,
+            documents=LazyDocumentStore(),
         )
         warnings = list(gate.warnings)
         action = gate.action
@@ -303,7 +322,8 @@ class Memory:
             _adj = _adjudication(gate, disposition="rejected",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text, fact_id=None,
-                               judge=getattr(gate, "judge", None), layers=_layers)
+                               judge=getattr(gate, "judge", None), layers=_layers,
+                               verified_by=verified_by)
             return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score,
                     "adjudication": _adj}
@@ -313,8 +333,31 @@ class Memory:
                     confidence_tier=_confidence_tier(
                         gate.grounding_score, getattr(gate, "judge", None),
                         getattr(gate, "threshold", None)))
+        if confidence is not None:
+            fact.confidence = float(confidence)
+        if lineage_to:
+            fact.lineage_to = [str(x) for x in lineage_to if str(x).strip()]
+        if meta_narrative:
+            fact.meta_narrative = True
+            fact.writer_role = "user"  # in-process operator surface
         if action == "downgrade":
             fact.status = "quarantined"
+        elif chronicle:
+            # Orchestration/inter-agent CHRONICLE (2026-07-23): the
+            # proposition is an ATTRIBUTED third-party quotation ("[agent
+            # X → Y] ...") — a record that agent X said something, NOT
+            # verimem asserting the content is true. Store it as
+            # ``user_belief``: HIDDEN from default recall (the moat
+            # promise holds — you never recall an agent's unverified
+            # assertion AS a fact) yet not quarantined, so benign
+            # coordination chatter is archived rather than censored (the
+            # live channel is the inbox; memory is the audit trail).
+            # Adversarial review convergence (glm+deepseek, findings 1+2):
+            # this single classification defuses BOTH the throughput
+            # collapse of full-L1-gating and the laundering of a visible
+            # model_claim. A later injection screen inside store() can
+            # still flip it to quarantined — the screen is lane-agnostic.
+            fact.status = "user_belief"
         self.semantic.store(fact, embed="sync", purpose=purpose)
         # A write with a DECLARED telemetry signal (purpose tag, or a topic
         # matching ENGRAM_TELEMETRY_PREFIXES) is ROUTED inside store(): the
@@ -332,7 +375,8 @@ class Memory:
             self._audit_record(_adj, topic=topic, proposition=text,
                                fact_id=str(fact.id),
                                judge=getattr(gate, "judge", None),
-                               layers=["admission-route"])
+                               layers=["admission-route"],
+                               verified_by=verified_by)
             return {"stored": True, "status": "routed_telemetry",
                     "routed_to": _routed, "warnings": warnings,
                     "advice": gate.advice,
@@ -379,11 +423,13 @@ class Memory:
         _graded_admit = any(str(w.get("layer", "")).endswith("-graded")
                             for w in warnings)
         if (_disposition == "admitted" and not _graded_admit
+                and not chronicle  # a hidden chronicle must not retire a curated fact
                 and getattr(gate, "supersede_fact_ids", None)
                 and self.semantic.get(fact.id) is not None):
             for _old_id in gate.supersede_fact_ids:
                 try:
                     self.semantic.supersede(_old_id, fact.id,
+                                            principal=principal or self._principal,
                                             reason="same-source evolution")
                     _superseded.append(_old_id)
                 except Exception as exc:  # noqa: BLE001 — a supersede failure must not break the write
@@ -391,6 +437,16 @@ class Memory:
                     # the stale-beside-new state the feature exists to prevent (opus critic).
                     _LOG.warning("same-source supersede of %s failed (new %s admitted, old "
                                  "NOT retired): %s", _old_id, fact.id, exc)
+        # Review-queue backpressure (P0 ciclo 2, punto 4): a write that JOINS
+        # the quarantine/review backlog says how deep that backlog is. Only
+        # this write — annotating an admitted one would be noise on a page
+        # that has nothing to do with the queue, and noise is how a signal
+        # gets ignored. Read is memoised per window and never raises.
+        if fact.status == "quarantined":
+            from .review_queue import backpressure_warning
+            _bp = backpressure_warning(self.semantic.db_path)
+            if _bp:
+                warnings.append(_bp)
         _adj = _adjudication(gate, disposition=_disposition,
                              verified_by=verified_by, warnings=warnings)
         # The audit row also records a defense that STOOD DOWN (critic probe 3
@@ -402,7 +458,8 @@ class Memory:
                        == "L1-domain-advisory-observe"]
         self._audit_record(_adj, topic=topic, proposition=text, fact_id=fact.id,
                            judge=getattr(gate, "judge", None),
-                           layers=_hit_layers + _stood_down)
+                           layers=_hit_layers + _stood_down,
+                           verified_by=verified_by)
         _out = {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
@@ -1020,7 +1077,7 @@ class Memory:
                  "disposition": r.disposition, "proposition": r.proposition,
                  "fact_id": r.fact_id, "evidence_class": r.evidence_class,
                  "judge": r.judge, "score": r.score, "threshold": r.threshold,
-                 "reason": r.reason, "layers": r.layers}
+                 "reason": r.reason, "layers": r.layers, "pins": r.pins}
                 for r in log.list(disposition=disposition, topic=topic, limit=limit)]
 
     def audit_verify(self) -> str | None:
@@ -1041,13 +1098,15 @@ class Memory:
         return None if log is None else log.head()
 
     def audit_head_signed(self) -> dict | None:
-        """Anchor-B: the chain head PLUS its ed25519 signature under the
-        operator's EXTERNAL key (``VERIMEM_AUDIT_SIGNING_KEY`` = path to a
-        private PEM). Archive both off-box: a later ``audit_verify()`` +
-        signature check detects even a full-chain rewrite AND a forged head.
+        """DEPRECATED — signs only the ADJUDICATION chain's BARE head. Prefer
+        ``audit_anchor()``, which signs a receipt over BOTH chains and binds
+        chain identity + row counts into the signature (a bare head does not,
+        so a signature for one chain's head can be presented as another's).
+
+        Anchor-B: the chain head PLUS its ed25519 signature under the operator's
+        EXTERNAL key (``VERIMEM_AUDIT_SIGNING_KEY`` = path to a private PEM).
         ``None`` when no key is configured or the trail is empty; a configured
-        key that cannot sign raises loudly (an operator who asked for signing
-        must never silently not get it)."""
+        key that cannot sign raises loudly."""
         import os as _os
         key_path = _os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()
         if not key_path:
@@ -1059,8 +1118,99 @@ class Memory:
         return {"head": head, "signature": sign_head(head, key_path),
                 "algorithm": "ed25519"}
 
+    def audit_anchor(self) -> dict:
+        """A SIGNED anchor receipt over BOTH audit chains (mutations + gate
+        adjudications) — head AND row count of each, a timestamp, and an ed25519
+        signature over the canonical payload under ``VERIMEM_AUDIT_SIGNING_KEY``
+        (the operator's private PEM). Archive it off-box; a later
+        ``audit_verify_anchor()`` recomputes both chains and detects a full-chain
+        rewrite or a tail-truncate+reinsert that an in-DB ``verify`` cannot see.
+
+        No key configured RAISES (this method exists to sign — unlike
+        ``audit_head_signed``'s honest ``None``, a silent no-op here would be a
+        false sense of protection)."""
+        import os as _os
+        key_path = _os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()
+        if not key_path:
+            raise RuntimeError(
+                "VERIMEM_AUDIT_SIGNING_KEY is not configured — audit_anchor "
+                "exists to SIGN a receipt; set it to the operator's ed25519 "
+                "private PEM path (this never silently returns None)")
+        import time as _time
+
+        from .audit_anchor import build_payload, sign_anchor
+        adj = self._adjudication_log_ro()
+        payload = build_payload(
+            ts=_time.time(),
+            mutations_head=self.semantic.audit_head(),
+            mutations_rows=self.semantic.audit_count(),
+            adjudications_head=adj.head() if adj is not None else None,
+            adjudications_rows=adj.count() if adj is not None else 0)
+        return sign_anchor(payload, key_path)
+
+    def audit_verify_anchor(self, receipt: dict):
+        """Verify a signed anchor receipt against the live chains: signature
+        valid, both chains intact, row counts only grew, and each anchored head
+        still sits at its anchored row count. Returns an
+        ``audit_anchor.AnchorResult(ok, failures)`` naming any failing chain +
+        check. The verification key is ``VERIMEM_AUDIT_PUBLIC_KEY`` (public PEM)
+        or, failing that, ``VERIMEM_AUDIT_SIGNING_KEY`` (private PEM — the public
+        key is derived from it)."""
+        import os as _os
+        key_path = (_os.environ.get("VERIMEM_AUDIT_PUBLIC_KEY", "").strip()
+                    or _os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip())
+        if not key_path:
+            raise RuntimeError(
+                "no verification key configured — set VERIMEM_AUDIT_PUBLIC_KEY "
+                "(public PEM) or VERIMEM_AUDIT_SIGNING_KEY (private PEM)")
+        from .audit_anchor import ChainState, verify_anchor
+        adj = self._adjudication_log_ro()
+        mutations = ChainState(
+            rows=self.semantic.audit_count(),
+            intact=self.semantic.audit_verify() is None,
+            head_at=self.semantic.audit_head_at)
+        if adj is not None:
+            adjudications = ChainState(
+                rows=adj.count(), intact=adj.verify() is None,
+                head_at=adj.head_at)
+        else:
+            adjudications = ChainState(rows=0, intact=True,
+                                       head_at=lambda _k: None)
+        return verify_anchor(receipt, key_path=key_path,
+                             chains={"mutations": mutations,
+                                     "adjudications": adjudications})
+
+    def _content_pins(self, verified_by: Any) -> dict[str, str]:
+        """Content-bound receipts (D5/#44): hash the span each ``file:`` ref
+        cites, at write time. Refs that cannot be read contribute nothing —
+        the pin map says what WAS read, never what merely resolved. Best
+        effort: an unreadable tree must not break the write it documents."""
+        try:
+            from .content_pin import pin_for_ref
+            root = getattr(self.semantic, "repo_root", None)
+            if root is None:
+                return {}
+            out: dict[str, str] = {}
+            for ref in (verified_by or []):
+                if not isinstance(ref, str):
+                    continue
+                pin = pin_for_ref(ref, repo_root=root)
+                if pin:
+                    out[ref] = pin
+                elif ref.strip().lower().startswith("file:"):
+                    # Adversarial review 2026-07-25 (glm-5.2, Q6.5): silence
+                    # made a post-feature row whose ref did not resolve
+                    # indistinguishable from a pre-feature row, so the absence
+                    # of a pin proved nothing. A file: ref that could not be
+                    # read says so, on the record.
+                    out[ref] = "unresolved"
+            return out
+        except Exception:  # noqa: BLE001 — a receipt detail, never a write blocker
+            return {}
+
     def _audit_record(self, adjudication: dict, *, topic: Any, proposition: str,
-                      fact_id: str | None, judge: Any, layers: list) -> None:
+                      fact_id: str | None, judge: Any, layers: list,
+                      verified_by: Any = None) -> None:
         """Append the write's verdict to the opt-in audit trail (VERIMEM_AUDIT_LOG).
         No-op when off; never raises — persisting an audit record must never break the
         memory write it records.
@@ -1084,6 +1234,7 @@ class Memory:
                 threshold=adjudication.get("threshold"),
                 reason=str(adjudication.get("reason") or ""),
                 layers=list(layers or []),
+                pins=self._content_pins(verified_by),
             )
         except Exception as exc:  # noqa: BLE001 — must never break a write, but be visible
             _LOG.warning("audit append dropped (write succeeded): %s", exc)
@@ -1354,7 +1505,8 @@ class Memory:
             return None
         return self._fact_view(f, fact_id=fact_id)
 
-    def delete(self, fact_id: str, *, purge_history: bool = False) -> bool:
+    def delete(self, fact_id: str, *, purge_history: bool = False,
+               principal: str | None = None) -> bool:
         """Forget a fact by id (privacy / GDPR). True iff at least a row was removed.
 
         ``purge_history=True`` — the GDPR-grade delete (probe-confirmed defect
@@ -1363,9 +1515,15 @@ class Memory:
         and ``as_of`` time travel). It removes the whole supersession chain —
         predecessors (recursive) and forward successors — plus their
         unresolved-dispute ledger entries. Default False = single-row delete,
-        behaviour unchanged."""
+        behaviour unchanged.
+
+        ``principal`` (0.8 mutation audit) is stamped like ``add()``'s: the
+        caller may name a finer identity, otherwise this client's own
+        (``sdk:local`` by default) is recorded in the tamper-evident chain —
+        never None. Purged rows are audited with action ``purge``."""
+        _who = principal or self._principal
         if not purge_history:
-            return self.semantic.delete(fact_id)
+            return self.semantic.delete(fact_id, principal=_who)
         ids: set[str] = set()
         # forward: the live successors this fact was replaced by
         try:
@@ -1391,8 +1549,12 @@ class Memory:
         removed = False
         for fid in ids:
             try:
-                removed = self.semantic.delete(fid) or removed
+                removed = self.semantic.delete(
+                    fid, principal=_who, action="purge") or removed
             except Exception:  # noqa: BLE001 — one failed row must not stop the purge
+                # NB: with the fail-closed audit this row was NOT removed
+                # either (mutation and audit share one transaction) — the
+                # purge is honestly partial, never silently untracked.
                 continue
         # scrub the dispute ledger referencing purged facts (best-effort)
         try:
@@ -1427,7 +1589,9 @@ class Memory:
         res = self.add(text, topic=topic or getattr(old, "topic", "user"))
         if res.get("stored") and res.get("id"):
             try:
-                self.semantic.supersede(fact_id, res["id"], reason="sdk update")
+                self.semantic.supersede(fact_id, res["id"],
+                                        principal=self._principal,
+                                        reason="sdk update")
             except Exception as exc:  # noqa: BLE001
                 return {**res, "updated": True, "supersedes": fact_id, "supersede_warning": str(exc)}
         return {**res, "updated": bool(res.get("stored")), "supersedes": fact_id}

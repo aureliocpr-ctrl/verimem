@@ -23,7 +23,7 @@ def test_decay_prune_is_reversible_via_undo_log(tmp_path):
     mem.store(ep)
     assert mem.get(ep.id) is not None
 
-    pruned = mem.decay_prune(retention_threshold=0.30)
+    pruned = mem.decay_prune(principal="test:suite", retention_threshold=0.30)
     assert ep.id in pruned, f"expected the ancient episode to decay; got {pruned}"
     assert mem.get(ep.id) is None  # hard-deleted
 
@@ -46,7 +46,7 @@ def test_undo_log_is_bounded(tmp_path, monkeypatch):
             task_id="t", task_text=f"decayed-{i}", final_answer="a",
             outcome="success", created_at=ancient,
         ))
-    mem.decay_prune(retention_threshold=0.30)
+    mem.decay_prune(principal="test:suite", retention_threshold=0.30)
     with mem._connect() as conn:
         n = conn.execute("SELECT COUNT(*) FROM episodes_undo_log").fetchone()[0]
     assert n <= 3, f"undo log unbounded: {n} rows kept with cap=3"

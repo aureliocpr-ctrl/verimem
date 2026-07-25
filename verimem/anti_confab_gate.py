@@ -191,6 +191,34 @@ def _is_domain_professional_fact(proposition: str) -> bool:
         return False
 
 
+def advisory_eligible(warnings: Iterable[dict] | None) -> bool:
+    """True iff EVERY warning is from the L1 lexical family.
+
+    P0 evidence-before-belief relaxes a KEYWORD screen, never a semantic one:
+    an outside witness does not dissolve a contradiction (L3) nor supply the
+    entailment L4 failed to find. So independent evidence may only speak when
+    L1 is the whole story — the invariant that keeps evidence-before-belief
+    from degenerating into evidence-instead-of-belief.
+    """
+    ws = [w for w in (warnings or []) if isinstance(w, dict)]
+    if not ws:
+        return False
+    return all(str(w.get("layer", "")).upper().startswith("L1") for w in ws)
+
+
+def _p0_independence_enforced() -> bool:
+    """ENGRAM_P0_INDEPENDENCE — DEFAULT OFF (observe-first).
+
+    Off: the rule is evaluated and its verdict recorded on the receipt, but
+    the outcome is byte-identical to before. On: independent evidence keeps
+    an L1-only escalation advisory. The flip waits on a measured false-block
+    delta, per the 0.8 method — no default changes on a hunch.
+    """
+    return os.environ.get("ENGRAM_P0_INDEPENDENCE", "").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
+
+
 def _l1_domain_advisory() -> bool:
     """SERVER-SIDE, deployment-level switch (env ``ENGRAM_L1_DOMAIN_ADVISORY``,
     default OFF). When ON, the L1.x keyword anti-confabulation detectors run and
@@ -449,6 +477,15 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
     conflicts: list[str] = []
     for cid in ids:
+        # NO reference guard on THIS path, deliberately. Adversarial review
+        # 2026-07-25 (glm-5.2 + deepseek-v4-pro, convergent 2/2): applying it here
+        # broke the legitimate case — "CORREZIONE del fatto X: il valore e' 200"
+        # against a stored "il valore e' 100" names X, so the guard kept the stale
+        # 100 alive beside its own correction. This path's conflicts are found by
+        # the DETERMINISTIC detectors (year-disjoint, numeric, version, date,
+        # negation); when one of those fires there IS a concrete clash and citing
+        # an id must not excuse it. The guard belongs only where the judgement is
+        # a model's opinion — see the semantic path below.
         try:
             old = sm.get(cid)
         except Exception:  # noqa: BLE001 — a lookup miss is treated as a conflict
@@ -934,6 +971,7 @@ def run_validation_gate(
     force_persist: bool = False,
     writer_role: str | None = None,
     meta_narrative: bool = False,
+    narrative_l1_skip: bool = False,
     hook_token: str | None = None,
     repo_root: Any = None,
     source: str | None = None,
@@ -941,6 +979,8 @@ def run_validation_gate(
     ground_write: bool | None = None,
     asserted_at: float | None = None,
     status: str | None = None,
+    claimant: str | None = None,
+    documents: Any = None,
 ) -> GateResult:
     """Evaluate the anti-confab gate; return a ``GateResult``.
 
@@ -977,7 +1017,23 @@ def run_validation_gate(
     if meta_narrative and verify_trusted_writer(writer_role, hook_token):
         return GateResult(action="persist")
 
-    warnings = _l1_warnings(proposition, verified_by)
+    # Continuity narrative lane (2026-07-23, adversarial design glm+deepseek):
+    # a retrospective session checkpoint naturally reads like the self-claims
+    # the L1.x family polices ("shipped", "works", "tests pass") — category
+    # error on a declared chronicle. narrative_l1_skip suppresses ONLY that
+    # family (and its evidence-existence companion below); the injection
+    # screen, L3 contradiction and L4 grounding still run, and the fact is
+    # stamped meta_narrative=1 so every listing can tell chronicle from
+    # screened claim. SECURITY: this kwarg is for IN-PROCESS surfaces only
+    # (SDK/CLI — callers who could anyway open the SQLite file, and who can
+    # already pass validate="off", a strictly stronger lever). It must NEVER
+    # be wired from network arguments: the MCP/gateway handlers keep
+    # forwarding client meta_narrative only into the token-gated path above
+    # (fail-closed), never into this one — guarded by tests
+    # (test_mcp_arguments_meta_narrative_does_not_skip_l1,
+    # test_gateway_ignores_body_meta_narrative_and_lineage).
+    warnings = ([] if narrative_l1_skip
+                else _l1_warnings(proposition, verified_by))
     contradicting_ids: list[str] = []
     supersede_ids: list[str] = []
     advice = ""
@@ -995,7 +1051,8 @@ def run_validation_gate(
     # davvero nel repo -> trattalo come claim non supportato (downgrade). Senza
     # repo_root il comportamento resta format-only (default invariato, hermetic-
     # safe: i test honoring-evidence non passano repo_root).
-    if repo_root is not None and not warnings and verified_by is not None:
+    if (repo_root is not None and not warnings and verified_by is not None
+            and not narrative_l1_skip):  # companion of the L1 family above
         would_fire_without_evidence = _l1_warnings(proposition, None)
         if would_fire_without_evidence:
             from .provenance_validator import any_evidence_ref_exists
@@ -1088,8 +1145,12 @@ def run_validation_gate(
                     _sibs = [s for s in _sibs if _keep(s)]
                 _sib_by_id = {getattr(f, "id", None): f for f in _sibs}
                 _observe = _sc_mode == "observe"
+                from .proof_evidence import both_machine_checked
                 from .semantic import _STATUS_RANK
-                from .supersession_policy import classify_write_relation
+                from .supersession_policy import (
+                    classify_write_relation,
+                    references_fact,
+                )
                 _supersede_on = _supersede_same_source_on()
                 _new_rank = _STATUS_RANK.get(status or "model_claim", 2)
                 for _w in detect_semantic_conflicts(_new, _sibs, _judge):
@@ -1108,12 +1169,72 @@ def run_validation_gate(
                     # no supersession, no quarantine, no observe noise.
                     # (Found live: 12 diary adds collapsed under auto-NLI and
                     # count() dropped below ground truth.)
-                    from .quantity_match import distinct_event_indices
+                    _rel_pre = ("conflict" if _old is None
+                                else classify_write_relation(_new, _old))
+                    from .quantity_match import (
+                        distinct_event_indices,
+                        indexed_vs_unindexed,
+                    )
+                    _old_prop = getattr(_old, "proposition", "")
                     if (_old is not None and distinct_event_indices(
-                            proposition, getattr(_old, "proposition", ""))):
+                            proposition, _old_prop)):
                         continue
-                    _rel = ("conflict" if _old is None
-                            else classify_write_relation(_new, _old))
+                    # SPECIFIC-vs-GENERIC GUARD (2026-07-25, dogfooding): one
+                    # statement names indexed subjects, the other names none, so
+                    # they have no subject in common to contradict. The case that
+                    # forced it: a service note "a stray note that is not a
+                    # relation" RETIRED a verified OEIS relation, because the NLI
+                    # read "is NOT a relation" against "verified relation" as a
+                    # contradiction. Precision guard on a model's opinion, like
+                    # the two above — the deterministic path keeps its verdicts.
+                    if (_old is not None
+                            and indexed_vs_unindexed(proposition, _old_prop)):
+                        continue
+                    # PROOF-BEATS-OPINION (2026-07-25, dogfooding). Both sides
+                    # carry machine-checkable evidence — the very kind L1.15
+                    # accepts as support for a "verified" claim — and the only
+                    # thing calling them contradictory is this NLI verdict. A
+                    # proof the gate can inspect outranks a cross-encoder's
+                    # opinion, so neither is retired. The case: 9 OEIS relations
+                    # verified by exact integer check, 2 survived, because two
+                    # DISTINCT true properties of the same sequences read as
+                    # "same subject, different numbers". Measured on that pair:
+                    # every deterministic detector returns None.
+                    # Scope: no status is promoted and nothing becomes immune —
+                    # a deterministic clash never reaches this code and still
+                    # retires the old value.
+                    if (_old is not None and both_machine_checked(
+                            verified_by, getattr(_old, "verified_by", None))):
+                        continue
+                    # REFERENCE GUARD (2026-07-25, found by dogfooding on my own
+                    # writes): a write that NAMES the stored fact's id is citing
+                    # it. The memory protocol's own advice — pair a long fact with
+                    # a short lure so recall can find it — had the lure SUPERSEDE
+                    # the fact, leaving a pointer to something recall would no
+                    # longer return. Same treatment as the diary guard: skip, keep
+                    # both, let lineage record the order.
+                    #
+                    # SCOPE, narrowed after an adversarial review that was right
+                    # (glm-5.2 + deepseek-v4-pro, convergent 2/2). The guard lives
+                    # ONLY here, where the verdict is a model's OPINION, and only
+                    # for a same-source 'evolution' — never on the deterministic
+                    # lexical path, and never on a cross-source conflict:
+                    #   * a numeric/version/date clash is a concrete fact, and
+                    #     citing an id must not excuse it (their case: "CORREZIONE
+                    #     del fatto X: il valore e' 200" must still retire the
+                    #     stored 100 — the first version of this guard kept it);
+                    #   * restricting to 'evolution' keeps a DIFFERENT source from
+                    #     shielding someone else's fact by naming its id.
+                    # Residual, documented not hidden: a hostile writer on the
+                    # SAME source can quote an id to mute the NLI verdict on that
+                    # one pair. That writer can already do worse — this module
+                    # states the shared-tenant risk at _supersede_same_source_on —
+                    # and the alternative (an NLI opinion silently deleting a true
+                    # fact) is the error this store exists to avoid.
+                    if (_oid and _rel_pre == "evolution"
+                            and references_fact(proposition, _oid)):
+                        continue
+                    _rel = _rel_pre
                     if _observe:
                         # observe: surface but do NOT act, so the FP rate is measurable.
                         if _rel == "evolution":
@@ -1434,6 +1555,42 @@ def run_validation_gate(
             "advice": "unset ENGRAM_L1_DOMAIN_ADVISORY to restore L1 keyword "
                       "escalation",
         })
+    # P0 EVIDENCE-BEFORE-BELIEF (ciclo 2b, 2026-07-25) — observe-first.
+    # The note above says a DECLARED source cannot downgrade an L1 hit: it is
+    # caller-controlled, so trusting it would be the writer_role mistake again.
+    # This is the verified form of that recovery path — not what the caller
+    # SAYS, but who the server STAMPED: a fact whose cited document was indexed
+    # by a different principal, over a channel that authenticates, is not a
+    # self-claim laundering itself. Gated on `advisory_eligible` so it can only
+    # ever speak about the lexical family, and on a server-stamped `claimant`
+    # (never a tool argument). Default OFF: the verdict is recorded, the
+    # outcome unchanged, so the false-block delta is MEASURED before any flip.
+    if l1_escalates and documents is not None and advisory_eligible(warnings):
+        from .evidence_independence import independence_verdict
+        _iv = independence_verdict(verified_by=list(verified_by or []),
+                                   claimant=claimant, store=documents)
+        if _iv.independent:
+            if _p0_independence_enforced():
+                l1_escalates = False
+                warnings.append({
+                    "layer": "P0_INDEPENDENCE",
+                    "matched_text": _iv.ref or "",
+                    "reason": _iv.reason,
+                    "advice": "the L1 keyword hit was kept ADVISORY: the cited "
+                              "evidence was indexed by a different principal "
+                              "over a trusted channel (unset "
+                              "ENGRAM_P0_INDEPENDENCE to restore escalation)",
+                })
+            else:
+                warnings.append({
+                    "layer": "P0_INDEPENDENCE-observe",
+                    "matched_text": _iv.ref or "",
+                    "reason": _iv.reason,
+                    "advice": "observe mode: this write WOULD have been kept "
+                              "advisory instead of quarantined (independent "
+                              f"witness {_iv.author}) — set "
+                              "ENGRAM_P0_INDEPENDENCE=1 to enforce",
+                })
     def _mk(action: GateAction, *, advice_: str = advice,
             warnings_: list | None = None) -> GateResult:
         # Every gate outcome carries the judge-of-record + threshold, so the

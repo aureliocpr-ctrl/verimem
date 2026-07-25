@@ -81,7 +81,7 @@ def test_recall_as_of_reconstructs_the_past(tmp_path) -> None:
                proposition="Johnson's monthly income is 5000 USD")
     sm.store(old, embed="sync")
     sm.store(new, embed="sync")
-    sm.supersede("f-old", "f-new", reason="update")
+    sm.supersede("f-old", "f-new", principal="test:suite", reason="update")
     # as of APRIL: the 3500 was current (asserted, not yet superseded then)
     april = {f.id for f, *_ in recall_as_of(sm, "Johnson income", when=mar + 30 * _DAY, k=5)}
     assert april == {"f-old"}, f"April view must be the OLD truth, got {april}"
@@ -109,7 +109,7 @@ def test_recall_as_of_died_axis_is_event_time(tmp_path) -> None:
     sm.store(Fact(id="milano", topic="user/home",
                   proposition="User lives in Milan",
                   asserted_at=now - 750 * _DAY), embed="sync")
-    sm.supersede("roma", "milano", reason="moved")  # superseded_at = today
+    sm.supersede("roma", "milano", principal="test:suite", reason="moved")  # superseded_at = today
     ids = {f.id for f, *_ in recall_as_of(
         sm, "where does the user live", when=now - 560 * _DAY, k=5)}
     assert ids == {"milano"}, \

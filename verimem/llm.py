@@ -232,7 +232,18 @@ class ClaudeCLILLM:
         cmd = [
             self.claude_bin, "-p",
             "--output-format", "json",
-        ] + self.extra_args
+        ]
+        # Honour the `model` argument this signature has always advertised. It
+        # used to be read for the telemetry line and dropped on the floor before
+        # building argv, so a caller asking for a specific model silently got the
+        # CLI's own default (found 2026-07-25). No default is imposed here: with
+        # no model asked for, the command is byte-identical to before — picking a
+        # default for someone else's CLI is a product decision, not a bug fix.
+        # extra_args wins, because that is the path every benchmark already uses
+        # and two --model flags would be a conflict, not a preference.
+        if model and "--model" not in self.extra_args:
+            cmd += ["--model", str(model)]
+        cmd += self.extra_args
 
         t0 = time.time()
         try:

@@ -152,7 +152,7 @@ def test_decay_prune_actually_deletes(tmp_path):
                   last_accessed_age_days=0.04, salience=0.7))
 
     before = mem.count()
-    deleted = mem.decay_prune(retention_threshold=0.30)
+    deleted = mem.decay_prune(principal="test:suite", retention_threshold=0.30)
     after = mem.count()
 
     assert "ancient" in deleted
@@ -166,7 +166,7 @@ def test_decay_prune_actually_deletes(tmp_path):
 def test_decay_pruning_empty_memory_does_not_crash(tmp_path):
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
     assert mem.decay_pruning_candidates(retention_threshold=0.30) == []
-    assert mem.decay_prune(retention_threshold=0.30) == set()
+    assert mem.decay_prune(principal="test:suite", retention_threshold=0.30) == set()
 
 
 def test_retention_with_zero_tau_returns_zero():

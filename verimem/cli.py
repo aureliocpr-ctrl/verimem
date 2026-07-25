@@ -1821,7 +1821,7 @@ def facts_forget(
             console.print("[yellow]aborted[/yellow]")
             return
     if undoable:
-        result = sm.delete_with_undo(f.id)
+        result = sm.delete_with_undo(f.id, principal="cli:local")
         if result["removed"]:
             console.print(
                 f"[green]forgotten:[/green] {f.id} "
@@ -1830,7 +1830,7 @@ def facts_forget(
         else:
             console.print(f"[yellow]nothing to forget:[/yellow] {f.id}")
     else:
-        sm.delete(f.id)
+        sm.delete(f.id, principal="cli:local")
         console.print(f"[green]hard-deleted:[/green] {f.id}")
 
 
@@ -2638,7 +2638,8 @@ def facts_archive_narration(
     if use_llm:
         from verimem.llm import get_llm
         llm = get_llm()
-    res = archive_and_extract_narration(sm.db_path, dry_run=not apply, llm=llm)
+    res = archive_and_extract_narration(sm.db_path, principal="cli:local",
+                                        dry_run=not apply, llm=llm)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to move)"
     console.print(
         f"[bold]{mode}[/bold]  scanned={res['scanned']}  "
@@ -2667,7 +2668,8 @@ def facts_cleanup_episode_telemetry(
     sub = data / "episodes" / "episodes.db"
     flat = data / "episodes.db"
     ep_path = sub if sub.exists() else (flat if flat.exists() else sub)
-    res = cleanup_episode_telemetry(ep_path, dry_run=not apply)
+    res = cleanup_episode_telemetry(ep_path, principal="cli:local",
+                                    dry_run=not apply)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to move)"
     console.print(
         f"[bold]{mode}[/bold]  scanned={res['scanned']}  "
@@ -2880,6 +2882,372 @@ def agent_guide_cmd() -> None:
     print(AGENT_GUIDE_FULL)
 
 
+# --- Session continuity (2026-07-23) ------------------------------------------
+# The chain ergonomics that previously lived only in an internal legacy tool
+# (raw SQL, full gate bypass) — now product commands over the same
+# facts.lineage_to column: save / tip / recent / chain / handoff / digest.
+# Every write goes through Memory.add (receipt printed); checkpoints are
+# declared narrative (meta_narrative=1, writer_role='user', L1 self-claim
+# family relaxed, injection/L3/L4 active) and every listing MARKS them, so a
+# chronicle is never mistaken for a screened claim (adversarial review
+# glm+deepseek, 2026-07-23).
+
+chain_app = typer.Typer(help="Navigate and repair the session lineage chain",
+                        no_args_is_help=True)
+handoff_app = typer.Typer(help="Session handoffs: prepare / show / log",
+                          no_args_is_help=True)
+app.add_typer(chain_app, name="chain")
+app.add_typer(handoff_app, name="handoff")
+
+
+def _continuity_guard(local: bool) -> None:
+    """Fail-loud in server mode (adversarial glm #6): continuity operates on
+    the LOCAL embedded store; with VERIMEM_SERVER_URL set every other surface
+    talks to the server, so a silent local write/read would be invisible to
+    them. ``--local`` declares the split is intentional."""
+    if local:
+        return
+    if (os.environ.get("VERIMEM_SERVER_URL") or "").strip():
+        console.print(
+            "[red]VERIMEM_SERVER_URL is set:[/red] continuity commands run on "
+            "the LOCAL embedded store, which the memory server's clients will "
+            "NOT see. Pass [bold]--local[/bold] if that split is intentional.")
+        raise typer.Exit(1)
+
+
+def _continuity_memory():
+    """Embedded-store SDK client stamped with the CLI surface principal.
+
+    Pointed at the SAME env-resolved db file the read commands use
+    (``_facts_sm``): ``Memory()``'s default comes from the import-frozen
+    CONFIG, and a write/read path split here would silently save
+    checkpoints where tip/digest/chain never look.
+    """
+    from .client import Memory
+    return Memory(path=_facts_sm().db_path, principal="cli:local")
+
+
+def _lineage_exit(exc: Exception) -> typer.Exit:
+    from .continuity import LineageRefError
+    console.print(f"[red]{exc}[/red]")
+    return typer.Exit(2 if isinstance(exc, LineageRefError) else 1)
+
+
+def _node_line(node: dict) -> str:
+    """One compact line per chain node: id, time, status, topic, markers."""
+    import time as _time
+    ts = _time.strftime("%m-%d %H:%M", _time.localtime(node["created_at"]))
+    mark = " [magenta]narrative[/magenta]" if node.get("meta_narrative") else ""
+    parents = node.get("lineage_to") or []
+    arrow = f"  -> {parents[0][:12]}" if parents else ""
+    extra = (f" (+{len(parents) - 1} parent)" if len(parents) > 1 else "")
+    return (f"  {node['id'][:12]}  {ts}  {node['status']:<12} "
+            f"{(node['topic'] or '(no topic)')[:48]}{mark}{arrow}{extra}")
+
+
+@app.command("save")
+def save_cmd(
+    text: str = typer.Argument(None, help="Checkpoint text (or --from-file)."),
+    topic: str = typer.Option("session", "--topic", "-t"),
+    lineage_to: str = typer.Option(
+        None, "--lineage-to",
+        help="auto (session segment) | topic (exact thread) | latest | none "
+             "(root) | id-prefix. Default: auto, falling back to root."),
+    from_file: str = typer.Option(
+        None, "--from-file", help="Read the checkpoint body from a file."),
+    verified_by: list[str] = typer.Option(  # noqa: B008 — typer idiom
+        None, "--verified-by", help="Provenance ref (repeatable)."),
+    confidence: float = typer.Option(
+        None, "--confidence", help="Override the 0.5 narrative default."),
+    source: str = typer.Option(
+        None, "--source", help="Source text to ground the checkpoint (L4)."),
+    json_out: bool = typer.Option(False, "--json"),
+    local: bool = typer.Option(
+        False, "--local", help="Run on the local store even in server mode."),
+) -> None:
+    """Save a session checkpoint on the lineage chain — THROUGH the gate.
+
+    The write is declared narrative: retrospective chronicle, not a claim
+    the agent's own code works — so the L1 self-claim screen is relaxed
+    while injection/contradiction/grounding screens stay live, the receipt
+    is printed, and the fact is stamped (and listed) as narrative.
+    """
+    _continuity_guard(local)
+    from .continuity import LineageNotFound, LineageRefError, save_checkpoint
+    body = text
+    if from_file:
+        try:
+            body = Path(from_file).read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            console.print(f"[red]cannot read --from-file:[/red] {exc}")
+            raise typer.Exit(2) from exc
+    if not (body or "").strip():
+        console.print("[red]nothing to save:[/red] give TEXT or --from-file")
+        raise typer.Exit(2)
+    m = _continuity_memory()
+    try:
+        r = save_checkpoint(
+            m, body, topic=topic, lineage_to=lineage_to,
+            verified_by=list(verified_by or []) or None,
+            confidence=confidence, source=source, principal="cli:local")
+    except (LineageRefError, LineageNotFound) as exc:
+        raise _lineage_exit(exc) from exc
+    if json_out:
+        import json as _json
+        print(_json.dumps(r, ensure_ascii=False, default=str))
+        raise typer.Exit(0 if r.get("stored") else 1)
+    disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
+    console.print(f"[green]{disp}[/green] id={r.get('id') or '-'} "
+                  f"topic={topic!r} [magenta]narrative[/magenta]")
+    resolved = r.get("lineage_resolved")
+    if resolved:
+        console.print(f"  chained -> {resolved[:12]}")
+    else:
+        seg = topic.split('/', 1)[0]
+        console.print(f"  root checkpoint (no prior session fact under "
+                      f"'{seg}')")
+    if r.get("status") == "quarantined":
+        console.print("[yellow]stored QUARANTINED[/yellow] — the injection/"
+                      "contradiction screens fired; see warnings below")
+        for w in (r.get("warnings") or [])[:3]:
+            console.print(f"  [dim]{w.get('layer')}: {w.get('advice', '')[:100]}[/dim]")
+    if not r.get("stored"):
+        console.print(f"[red]not stored:[/red] {r.get('status')}")
+        raise typer.Exit(1)
+
+
+@app.command("tip")
+def tip_cmd(
+    json_out: bool = typer.Option(False, "--json"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Where were we? The newest fact, with its chain pointer."""
+    _continuity_guard(local)
+    from .continuity import tip_fact
+    t = tip_fact(_facts_sm())
+    if t is None:
+        console.print("(no facts yet)")
+        raise typer.Exit(0)
+    if json_out:
+        import json as _json
+        print(_json.dumps(t, ensure_ascii=False, default=str))
+        raise typer.Exit(0)
+    import time as _time
+    ts = _time.strftime("%Y-%m-%d %H:%M", _time.localtime(t["created_at"]))
+    mark = " [magenta]narrative[/magenta]" if t.get("meta_narrative") else ""
+    console.print(f"[bold]{t['id'][:12]}[/bold]  {ts}  {t['status']}{mark}")
+    console.print(f"  topic:   {t['topic'] or '(no topic)'}")
+    parents = t.get("lineage_to") or []
+    console.print(f"  chained: {' , '.join(p[:12] for p in parents) or '(root)'}")
+    console.print(f"  preview: {t['preview']}")
+
+
+@app.command("recent")
+def recent_cmd(
+    n: int = typer.Option(10, "-n", "--count"),
+    include_hidden: bool = typer.Option(
+        False, "--all", help="Include quarantined/orphaned/user_belief."),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """The last N facts, one line each, with chain + narrative markers."""
+    _continuity_guard(local)
+    from .continuity import recent_facts
+    rows = recent_facts(_facts_sm(), n=n, include_hidden=include_hidden)
+    if not rows:
+        console.print("(no facts)")
+        raise typer.Exit(0)
+    for node in rows:
+        console.print(_node_line(node))
+
+
+@chain_app.command("show")
+def chain_show_cmd(
+    fact_id: str = typer.Argument(..., help="Fact id prefix (>= 6 chars)."),
+    forward: bool = typer.Option(False, "--forward",
+                                 help="Descendants instead of ancestors."),
+    json_out: bool = typer.Option(False, "--json"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Walk the story: root -> fact (or its descendants with --forward)."""
+    _continuity_guard(local)
+    from .continuity import (
+        LineageNotFound,
+        LineageRefError,
+        resolve_prefix,
+        walk_backward,
+        walk_forward,
+    )
+    sm = _facts_sm()
+    try:
+        start = resolve_prefix(sm, fact_id)
+    except (LineageRefError, LineageNotFound) as exc:
+        raise _lineage_exit(exc) from exc
+    chain = (walk_forward(sm, start) if forward else walk_backward(sm, start))
+    if json_out:
+        import json as _json
+        print(_json.dumps(
+            {"start": start, "direction": "forward" if forward else "backward",
+             "n_hops": len(chain), "chain": chain},
+            ensure_ascii=False, default=str))
+        raise typer.Exit(0)
+    if not chain:
+        console.print("(empty chain)")
+        raise typer.Exit(0)
+    console.print(f"[bold]lineage {'forward' if forward else 'backward'} "
+                  f"({len(chain)} hops)[/bold]")
+    for node in chain:
+        console.print(_node_line(node))
+        for p in node.get("extra_parents", []):
+            console.print(f"      [dim]also derived from {p[:12]}[/dim]")
+        if node.get("missing_parent"):
+            console.print(f"      [yellow]missing parent "
+                          f"{node['missing_parent'][:12]} (deleted?)[/yellow]")
+
+
+@chain_app.command("orphans")
+def chain_orphans_cmd(
+    since: str = typer.Option("24h", "--since",
+                              help="Window: NUM[m|h|d|w] or 'today'."),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Facts in the window with no chain pointer (disconnected story)."""
+    _continuity_guard(local)
+    from .continuity import LineageRefError, find_orphans, since_epoch
+    try:
+        cutoff = since_epoch(since)
+    except LineageRefError as exc:
+        raise _lineage_exit(exc) from exc
+    r = find_orphans(_facts_sm(), since_epoch=cutoff)
+    n = len(r["orphans"])
+    console.print(f"[bold]{n}/{r['total']}[/bold] facts since {since} "
+                  "have no lineage")
+    for node in r["orphans"]:
+        console.print(_node_line(node))
+    if n:
+        console.print("[dim]repair: verimem chain relink <child> --to "
+                      "<parent>[/dim]")
+
+
+@chain_app.command("relink")
+def chain_relink_cmd(
+    child: str = typer.Argument(..., help="Fact to repoint (id prefix)."),
+    to: str = typer.Option(..., "--to", help="New parent (id prefix)."),
+    add: bool = typer.Option(False, "--add",
+                             help="Append as extra parent instead of replace."),
+    yes: bool = typer.Option(False, "--yes", help="Skip the confirmation."),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Repair the chain: repoint a fact's narrative parent (glm #7)."""
+    _continuity_guard(local)
+    from .continuity import LineageNotFound, LineageRefError, relink
+    sm = _facts_sm()
+    if not yes and not typer.confirm(
+            f"Repoint {child} -> {to} ({'append' if add else 'replace'})?"):
+        console.print("aborted")
+        raise typer.Exit(1)
+    try:
+        r = relink(sm, child, to, add=add)
+    except (LineageRefError, LineageNotFound) as exc:
+        raise _lineage_exit(exc) from exc
+    console.print(f"[green]relinked[/green] {r['id'][:12]} "
+                  f"lineage: {r['previous'] or '(root)'} -> {r['lineage_to']}")
+
+
+@handoff_app.command("prepare")
+def handoff_prepare_cmd(
+    text: str = typer.Argument(None, help="Handoff body (or --from-file)."),
+    label: str = typer.Option("default", "--label"),
+    from_file: str = typer.Option(None, "--from-file"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Save a handoff for the next session, auto-linked to the previous
+    handoff AND the current work tip (never a disconnected island)."""
+    _continuity_guard(local)
+    from .continuity import handoff_prepare
+    body = text
+    if from_file:
+        try:
+            body = Path(from_file).read_text(encoding="utf-8").strip()
+        except OSError as exc:
+            console.print(f"[red]cannot read --from-file:[/red] {exc}")
+            raise typer.Exit(2) from exc
+    if not (body or "").strip():
+        console.print("[red]nothing to save:[/red] give TEXT or --from-file")
+        raise typer.Exit(2)
+    r = handoff_prepare(_continuity_memory(), body, label=label,
+                        principal="cli:local")
+    if not r.get("stored"):
+        console.print(f"[red]not stored:[/red] {r.get('status')}")
+        raise typer.Exit(1)
+    parents = r.get("lineage_resolved") or []
+    console.print(f"[green]handoff saved[/green] id={r.get('id')} "
+                  f"label={label!r} parents={[p[:12] for p in parents] or 'root'}")
+
+
+@handoff_app.command("show")
+def handoff_show_cmd(
+    label: str = typer.Option("default", "--label"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Print the latest handoff for a label (full body)."""
+    _continuity_guard(local)
+    from .continuity import handoff_show
+    h = handoff_show(_facts_sm(), label=label)
+    if h is None:
+        console.print(f"(no handoff for label '{label}')")
+        raise typer.Exit(0)
+    import time as _time
+    ts = _time.strftime("%Y-%m-%d %H:%M", _time.localtime(h["created_at"]))
+    console.print(f"[bold]{h['id'][:12]}[/bold]  {ts}  {h['topic']}")
+    console.print(h["proposition"])
+
+
+@handoff_app.command("log")
+def handoff_log_cmd(
+    label: str = typer.Option("default", "--label"),
+    n: int = typer.Option(10, "-n", "--count"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Handoff history for a label, newest first."""
+    _continuity_guard(local)
+    from .continuity import handoff_log
+    rows = handoff_log(_facts_sm(), label=label, limit=n)
+    if not rows:
+        console.print(f"(no handoffs for label '{label}')")
+        raise typer.Exit(0)
+    for node in rows:
+        console.print(_node_line(node))
+
+
+@app.command("digest")
+def digest_cmd(
+    hours: float = typer.Option(24.0, "--hours"),
+    json_out: bool = typer.Option(False, "--json"),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Window recap: what happened, what the gate did, how linked the
+    story is — the trust-transparent session narrative."""
+    _continuity_guard(local)
+    from .continuity import collect_digest
+    d = collect_digest(_facts_sm(), hours=hours)
+    if json_out:
+        import json as _json
+        print(_json.dumps(d, ensure_ascii=False, default=str))
+        raise typer.Exit(0)
+    console.print(f"[bold]last {hours:g}h[/bold]  {d['n_facts']} facts  "
+                  f"velocity {d['velocity_per_hour']}/h  "
+                  f"orphans {d['orphan_ratio']:.0%}")
+    if d["by_status"]:
+        parts = ", ".join(f"{k}: {v}" for k, v in sorted(d["by_status"].items()))
+        console.print(f"  gate outcome: {parts}")
+    for t in d["themes"][:8]:
+        console.print(f"  {t['namespace']:<40} {t['n_facts']:>4} facts  "
+                      f"linked {t['linked_ratio']:.0%}")
+    if d["tip"] is not None:
+        console.print("[bold]tip[/bold]")
+        console.print(_node_line(d["tip"]))
+
+
 # --- `verimem agent` namespace (VERIMEM-MAP.md 1b, 2026-07-18) -----------------
 # The product CLI is verified MEMORY; the agent runtime (chat/code/run/benchmark,
 # sleep cycles, swarm/teams/lab) moves under `verimem agent <cmd>`. Done by
@@ -2915,6 +3283,212 @@ def _regroup_agent_runtime() -> None:
 
 
 _regroup_agent_runtime()
+
+
+# ── verimem audit — tamper-evidence over the mutation chain (0.8 step 1) ──
+audit_app = typer.Typer(
+    help="Tamper-evidence: verify the destructive-mutation audit chain",
+    no_args_is_help=True,
+)
+app.add_typer(audit_app, name="audit")
+
+
+def _audit_adj_log(sm):
+    """The adjudications chain that sits next to a semantic.db (sibling
+    ``adjudications.db``), or ``None`` when the operator never enabled it."""
+    from verimem.adjudication_log import AdjudicationLog
+    p = Path(sm.db_path).with_name("adjudications.db")
+    return AdjudicationLog(p) if p.exists() else None
+
+
+def _audit_public_key() -> str | None:
+    """Resolve the anchor VERIFICATION key from the environment only (never a
+    CLI flag — key paths stay out of shell history): the public PEM if wired,
+    else the private PEM (its public key is derived for verification)."""
+    return (os.environ.get("VERIMEM_AUDIT_PUBLIC_KEY", "").strip()
+            or os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()) or None
+
+
+def _audit_episodes_db(sm, override: Path | None) -> Path | None:
+    """Locate the episodes.db whose mutation chain the anchor should cover.
+    ``override`` wins; otherwise look beside the configured store (the same
+    layout cleanup-episode-telemetry uses). ``None`` when none exists — the
+    episodic chain is then simply not part of the receipt."""
+    if override is not None:
+        return override if override.exists() else None
+    beside = Path(sm.db_path).with_name("episodes.db")
+    if beside.exists():
+        return beside
+    try:
+        data = _facts_data_dir()
+    except Exception:  # noqa: BLE001 — discovery is best-effort
+        return None
+    for cand in (data / "episodes" / "episodes.db", data / "episodes.db"):
+        if cand.exists():
+            return cand
+    return None
+
+
+def _audit_episodic_chain_state(ep_path: Path | None):
+    """A ChainState for the episodic mutation chain, or ``None`` when there is
+    no episodes.db to cover (the receipt then stays a two-chain v1)."""
+    from verimem.audit_anchor import ChainState
+    if ep_path is None:
+        return None, None
+    from verimem.memory import EpisodicMemory
+    em = EpisodicMemory(db_path=ep_path)
+    state = ChainState(rows=em.audit_count(),
+                       intact=em.audit_verify() is None,
+                       head_at=em.audit_head_at)
+    return em, state
+
+
+@audit_app.command("anchor")
+def audit_anchor_cmd(
+    db: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--db",
+        help="Path to a semantic.db (default: the configured store)"),
+    out: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--out",
+        help="Write the receipt JSON here (default: print to stdout)"),
+    episodes_db: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--episodes-db",
+        help="Path to an episodes.db to also cover (default: auto-discover "
+             "beside the store; absent => a two-chain v1 receipt)"),
+) -> None:
+    """Emit a SIGNED anchor receipt over the audit chains — the mutation chain
+    (this semantic.db), the gate-adjudication chain (sibling adjudications.db),
+    and, when an episodes.db is present, the episodic mutation chain (a v2
+    receipt). The receipt carries each chain's head AND row count, a
+    timestamp, and an ed25519 signature over the whole payload under
+    ``VERIMEM_AUDIT_SIGNING_KEY`` (the operator's private PEM; env only, never
+    logged). Archive it OFF-BOX and always verify against the NEWEST receipt —
+    an old one legitimately signs an older, shorter state.
+
+    No signing key configured is an error (exit 2): this command exists to
+    sign."""
+    key_path = os.environ.get("VERIMEM_AUDIT_SIGNING_KEY", "").strip()
+    if not key_path:
+        console.print(
+            "[red]error[/red]: VERIMEM_AUDIT_SIGNING_KEY is not set — point it "
+            "at the operator's ed25519 private PEM (verimem never stores it)")
+        raise typer.Exit(2)
+    import time as _time
+
+    from verimem.audit_anchor import build_payload, sign_anchor
+    from verimem.semantic import SemanticMemory
+    sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
+    adj = _audit_adj_log(sm)
+    ep_path = _audit_episodes_db(sm, episodes_db)
+    ep_kwargs = {}
+    if ep_path is not None:
+        from verimem.memory import EpisodicMemory
+        em = EpisodicMemory(db_path=ep_path)
+        ep_kwargs = {"episodic_head": em.audit_head(),
+                     "episodic_rows": em.audit_count()}
+    payload = build_payload(
+        ts=_time.time(),
+        mutations_head=sm.audit_head(), mutations_rows=sm.audit_count(),
+        adjudications_head=adj.head() if adj is not None else None,
+        adjudications_rows=adj.count() if adj is not None else 0,
+        **ep_kwargs)
+    receipt = sign_anchor(payload, key_path)
+    text = json.dumps(receipt, indent=2, sort_keys=True)
+    if out is not None:
+        out.write_text(text + "\n", encoding="utf-8")
+        console.print(f"[green]anchor written[/green]: {out} "
+                      f"[dim](archive off-box; verify the newest)[/dim]")
+    else:
+        console.print_json(text)
+
+
+@audit_app.command("verify")
+def audit_verify_cmd(
+    db: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--db",
+        help="Path to a semantic.db (default: the configured store)"),
+    anchor: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--anchor",
+        help="Verify against a signed anchor receipt (all chains): detects "
+             "a full rewrite or tail-truncate+reinsert an in-DB check cannot"),
+    episodes_db: Path | None = typer.Option(  # noqa: B008 — typer idiom
+        None, "--episodes-db",
+        help="Path to an episodes.db whose chain the receipt covers (default: "
+             "auto-discover beside the store)"),
+) -> None:
+    """Recompute the hash-chain over every recorded destructive mutation
+    (delete/purge/forget/supersede/reset/restore). Exit 0 = intact; exit 1 =
+    tampered, printing the first bad row. Archive the printed head off-box —
+    an in-DB check alone cannot see a full rewrite or tail truncation.
+
+    With ``--anchor FILE`` it instead verifies every chain the receipt covers
+    against the signed receipt (signature, intactness, append-only growth,
+    anchored-head-at-count) and exits 1 naming the chain and check that
+    failed."""
+    from verimem.semantic import SemanticMemory
+    sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
+
+    if anchor is not None:
+        _audit_verify_anchor(sm, anchor, episodes_db)
+        return
+
+    bad = sm.audit_verify()
+    head = sm.audit_head()
+    if bad is not None:
+        console.print(
+            f"[red]TAMPERED[/red]: chain breaks at audit row [bold]{bad}[/bold] "
+            f"(edited, reordered, or an interior row was removed)")
+        raise typer.Exit(1)
+    if head is None:
+        console.print("[green]intact[/green]: audit chain is empty "
+                      "(no destructive mutations recorded yet)")
+        return
+    console.print(f"[green]intact[/green]: head [bold]{head}[/bold] "
+                  "[dim](archive this off-box)[/dim]")
+
+
+def _audit_verify_anchor(sm, anchor: Path,
+                         episodes_db: Path | None = None) -> None:
+    """Verify every covered chain against a signed anchor receipt; exit 1 on
+    any failure, naming the chain + check. A live chain the receipt does not
+    cover (older v1 receipt vs an episodic chain) prints a non-fatal note."""
+    from verimem.audit_anchor import ChainState, verify_anchor
+    key_path = _audit_public_key()
+    if not key_path:
+        console.print(
+            "[red]error[/red]: no verification key — set "
+            "VERIMEM_AUDIT_PUBLIC_KEY (public PEM) or VERIMEM_AUDIT_SIGNING_KEY "
+            "(private PEM)")
+        raise typer.Exit(2)
+    try:
+        receipt = json.loads(anchor.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]error[/red]: cannot read anchor {anchor}: {exc}")
+        raise typer.Exit(2) from exc
+    adj = _audit_adj_log(sm)
+    mutations = ChainState(
+        rows=sm.audit_count(), intact=sm.audit_verify() is None,
+        head_at=sm.audit_head_at)
+    if adj is not None:
+        adjudications = ChainState(
+            rows=adj.count(), intact=adj.verify() is None, head_at=adj.head_at)
+    else:
+        adjudications = ChainState(rows=0, intact=True, head_at=lambda _k: None)
+    chains = {"mutations": mutations, "adjudications": adjudications}
+    ep_path = _audit_episodes_db(sm, episodes_db)
+    _em, ep_state = _audit_episodic_chain_state(ep_path)
+    if ep_state is not None:
+        chains["episodic"] = ep_state
+    result = verify_anchor(receipt, key_path=key_path, chains=chains)
+    for n in result.notes:
+        console.print(f"[yellow]note[/yellow]: {n}")
+    if result.ok:
+        console.print("[green]intact[/green]: every covered chain matches the "
+                      "signed anchor [dim](append-only extension)[/dim]")
+        return
+    for f in result.failures:
+        console.print(f"[red]TAMPERED[/red]: {f}")
+    raise typer.Exit(1)
 
 
 def main() -> None:

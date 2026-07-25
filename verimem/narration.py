@@ -146,7 +146,7 @@ def extract_atomic_candidates(
 
 
 def archive_and_extract_narration(
-    db_path, *, dry_run: bool = True, llm: Any = None,
+    db_path, *, principal: str, dry_run: bool = True, llm: Any = None,
 ) -> dict[str, Any]:
     """Reversible: move NARRATION facts out of the curated ``facts`` table into a
     ``narrative`` archive, after extracting their atomic candidate claims.
@@ -165,10 +165,17 @@ def archive_and_extract_narration(
         DB backup.
 
     Returns ``{scanned, narration_found, atomic_candidates, archived, dry_run}``.
+
+    ``principal`` is MANDATORY (0.8 mutation audit): each archived row's
+    DELETE from ``facts`` is recorded in the tamper-evident chain, in the
+    same transaction (fail-closed).
     """
     import sqlite3
 
+    from .mutation_audit import TABLE_SQL, record_mutation, require_principal
+    require_principal(principal)
     conn = sqlite3.connect(db_path)
+    conn.execute(TABLE_SQL)  # legacy DBs never opened via SemanticMemory
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute(
@@ -194,6 +201,13 @@ def archive_and_extract_narration(
                     (r["id"], r["topic"], r["proposition"], r["created_at"]),
                 )
                 conn.execute("DELETE FROM facts WHERE id=?", (r["id"],))
+                # 0.8 mutation audit — same connection/transaction as the
+                # DELETE (fail-closed: an audit failure aborts the commit,
+                # so the row stays). Content is NOT in the chain; the
+                # archived prose lives in the (erasable) narrative table.
+                record_mutation(conn, principal=principal, action="delete",
+                                resource_id=r["id"],
+                                detail={"archived_to": "narrative"})
                 archived += 1
             conn.commit()
         return {

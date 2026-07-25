@@ -215,6 +215,7 @@ def _verimem_adapter(dataset: dict, workdir: Path):
                     mem.semantic.supersede(
                         fact_ids[(pid, key, a["value"])],
                         fact_ids[(pid, key, b["value"])],
+                        principal="bench:trustmem",
                         reason="timeline-update")
         stores[pid] = mem
 

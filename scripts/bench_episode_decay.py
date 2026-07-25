@@ -170,7 +170,7 @@ def _evaluate(label: str, threshold: float) -> BenchOutcome:
                 q, k=5, track_access=False,
             )}
 
-        deleted = mem.decay_prune(retention_threshold=threshold)
+        deleted = mem.decay_prune(principal="bench:decay", retention_threshold=threshold)
 
         post_picks: dict[str, set[str]] = {}
         for q in test_queries:

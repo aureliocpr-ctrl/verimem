@@ -239,7 +239,7 @@ def test_search_as_of_time_travels(tmp_path):
                             asserted_at=now - 120 * D), embed="sync")
     mem.semantic.store(Fact(id="n", proposition="income is 5000", topic="t",
                             asserted_at=now - 30 * D), embed="sync")
-    mem.semantic.supersede("o", "n", reason="update")
+    mem.semantic.supersede("o", "n", principal="test:suite", reason="update")
     april = mem.search("income", k=3, as_of=now - 60 * D)
     assert [h["id"] for h in april] == ["o"], "the past view serves the OLD truth"
 
@@ -255,7 +255,7 @@ def test_search_with_history_carries_transition(tmp_path):
                             asserted_at=now - 120 * 86400.0), embed="sync")
     mem.semantic.store(Fact(id="n2", proposition="income is 5000", topic="t",
                             asserted_at=now - 30 * 86400.0), embed="sync")
-    mem.semantic.supersede("o2", "n2", reason="update")
+    mem.semantic.supersede("o2", "n2", principal="test:suite", reason="update")
     hits = mem.search("income", k=3, with_history=True)
     top = next(h for h in hits if h["id"] == "n2")
     assert top["history"] and "3500" in top["history"][0]["text"], \
@@ -297,8 +297,8 @@ def test_delete_purge_history_kills_the_whole_chain(tmp_path):
         mem.semantic.store(Fact(id=fid, topic="t",
                                 proposition=f"Rossi salary is {val} (SENSITIVE)",
                                 asserted_at=now - age * D), embed="sync")
-    mem.semantic.supersede("a", "b", reason="update")
-    mem.semantic.supersede("b", "c", reason="update")
+    mem.semantic.supersede("a", "b", principal="test:suite", reason="update")
+    mem.semantic.supersede("b", "c", principal="test:suite", reason="update")
 
     assert mem.delete("c", purge_history=True) is True
     for fid in ("a", "b", "c"):
@@ -317,7 +317,7 @@ def test_delete_default_still_single_row(tmp_path):
     mem = Memory(tmp_path / "g2.db")
     mem.semantic.store(Fact(id="x", proposition="old note", topic="t"), embed="sync")
     mem.semantic.store(Fact(id="y", proposition="new note", topic="t"), embed="sync")
-    mem.semantic.supersede("x", "y", reason="u")
+    mem.semantic.supersede("x", "y", principal="test:suite", reason="u")
     assert mem.delete("y") is True
     assert mem.semantic.get("x") is not None, "default delete stays single-row"
 
@@ -332,8 +332,8 @@ def _seed_sensitive_chain(mem):
         mem.semantic.store(Fact(id=fid, topic="t",
                                 proposition=f"Rossi salary is {val} (SENSITIVE)",
                                 asserted_at=now - age * D), embed="sync")
-    mem.semantic.supersede("a", "b", reason="update")
-    mem.semantic.supersede("b", "c", reason="update")
+    mem.semantic.supersede("a", "b", principal="test:suite", reason="update")
+    mem.semantic.supersede("b", "c", principal="test:suite", reason="update")
     return now
 
 

@@ -38,6 +38,7 @@ import sqlite3
 import threading
 import time
 import uuid
+from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -51,6 +52,25 @@ from . import epistemic as _epistemic
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
+from .mutation_audit import TABLE_SQL as _MUTATION_AUDIT_TABLE
+from .mutation_audit import (
+    count_conn as _audit_count_conn,
+)
+from .mutation_audit import (
+    head_at_conn as _audit_head_at_conn,
+)
+from .mutation_audit import (
+    head_conn as _audit_head_conn,
+)
+from .mutation_audit import (
+    record_mutation as _record_mutation,
+)
+from .mutation_audit import (
+    require_principal as _require_principal,
+)
+from .mutation_audit import (
+    verify_conn as _audit_verify_conn,
+)
 from .provenance_validator import (
     validate_provisional_refs,
     validate_verified_refs,
@@ -788,7 +808,20 @@ class SupersedeConflict(RuntimeError):
 #:        restavano senza colonna e OGNI write moriva con "table facts has no
 #:        column named epistemic" (store reale, 6120 fatti, 2026-07-15).
 #:        Registrare una migrazione senza alzare il target = non averla.
-_SEMANTIC_TARGET_VERSION: int = 14
+#:   v15 — 2026-07-19 ``confidence_tier`` write-time. STESSO incidente della
+#:        nota v14, terza e quarta occorrenza: la 15 fu registrata col target
+#:        fermo a 14 (mai girata sugli store esistenti), e il 2026-07-22
+#:        ``writer_principal`` fu APPESO alla v13→v14 già consumata. Scoperto
+#:        LIVE dal primo ``verimem save`` di dogfooding (2026-07-23): ogni
+#:        write SDK/MCP su un DB pre-2026-07-19 moriva con "no column named
+#:        confidence_tier". La disciplina documentata ha fallito due volte →
+#:        da qui in poi l'invariante è MECCANICO: ``_ensure_fact_columns``
+#:        (chiamata post-ladder in ``__init__``) confronta le colonne reali
+#:        con lo schema atteso e ripara gli ADD COLUMN additivi mancanti,
+#:        loggando il self-heal (il bump dimenticato resta visibile, ma non
+#:        rompe mai più un write in produzione).
+#:   v16 — 2026-07-23 ``writer_principal`` nel SUO gradino raggiungibile.
+_SEMANTIC_TARGET_VERSION: int = 16
 
 #: v8 (2026-06-03) — half-life di default per il decadimento di freshness
 #: nel recall. is_stale(age, half_life, floor=0.5) e' True quando il fattore
@@ -1365,6 +1398,74 @@ def _migrate_v14_to_v15(conn: sqlite3.Connection) -> None:
             raise
 
 
+def _migrate_v15_to_v16(conn: sqlite3.Connection) -> None:
+    """v16 (2026-07-23): ``writer_principal`` in a REACHABLE ladder step.
+
+    The column was appended to ``_migrate_v13_to_v14`` on 2026-07-22 — a
+    migration every live store had already consumed, so it never ran there
+    (v15 history note). Idempotent for the fresh installs that did get it
+    via v14 or the CREATE TABLE."""
+    try:
+        conn.execute("ALTER TABLE facts ADD COLUMN writer_principal TEXT")
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" not in str(exc).lower():
+            raise
+
+
+#: Additive fact columns and their exact DDL — the mechanical schema guard.
+#: ``_ensure_fact_columns`` applies any that are MISSING after the versioned
+#: ladder ran, because twice (epistemic 2026-07-15, confidence_tier /
+#: writer_principal 2026-07-23) a column shipped in a ladder step old stores
+#: never re-run, and every production write died. Additive-only (ADD COLUMN,
+#: nullable or constant default) so the repair is always safe; the WARNING
+#: keeps the forgotten-bump visible instead of silently absorbed.
+_FACT_COLUMN_DDL: dict[str, str] = {
+    "superseded_by": "ALTER TABLE facts ADD COLUMN superseded_by TEXT",
+    "superseded_at": "ALTER TABLE facts ADD COLUMN superseded_at REAL",
+    "superseded_reason": "ALTER TABLE facts ADD COLUMN superseded_reason TEXT",
+    "verified_by": ("ALTER TABLE facts ADD COLUMN verified_by TEXT "
+                    "NOT NULL DEFAULT '[]'"),
+    "status": ("ALTER TABLE facts ADD COLUMN status TEXT "
+               "NOT NULL DEFAULT 'model_claim'"),
+    "source_signature": "ALTER TABLE facts ADD COLUMN source_signature TEXT",
+    "trigger_keywords": "ALTER TABLE facts ADD COLUMN trigger_keywords TEXT",
+    "applicable_when": "ALTER TABLE facts ADD COLUMN applicable_when TEXT",
+    "worked_example": "ALTER TABLE facts ADD COLUMN worked_example TEXT",
+    "lineage_to": "ALTER TABLE facts ADD COLUMN lineage_to TEXT",
+    "writer_role": ("ALTER TABLE facts ADD COLUMN writer_role TEXT "
+                    "NOT NULL DEFAULT 'agent_inference'"),
+    "meta_narrative": ("ALTER TABLE facts ADD COLUMN meta_narrative INTEGER "
+                       "NOT NULL DEFAULT 0"),
+    "writer_principal": "ALTER TABLE facts ADD COLUMN writer_principal TEXT",
+    "last_verified_at": "ALTER TABLE facts ADD COLUMN last_verified_at REAL",
+    "embedding_model": "ALTER TABLE facts ADD COLUMN embedding_model TEXT",
+    "valid_until": "ALTER TABLE facts ADD COLUMN valid_until REAL",
+    "derives_from": "ALTER TABLE facts ADD COLUMN derives_from TEXT",
+    "grounding_score": "ALTER TABLE facts ADD COLUMN grounding_score REAL",
+    "confidence_tier": "ALTER TABLE facts ADD COLUMN confidence_tier TEXT",
+    "asserted_at": "ALTER TABLE facts ADD COLUMN asserted_at REAL",
+    "epistemic": "ALTER TABLE facts ADD COLUMN epistemic TEXT",
+}
+
+
+def _ensure_fact_columns(conn: sqlite3.Connection) -> None:
+    """Self-heal additive fact columns the versioned ladder failed to add."""
+    present = {r[1] for r in conn.execute("PRAGMA table_info(facts)")}
+    for col, ddl in _FACT_COLUMN_DDL.items():
+        if col in present:
+            continue
+        try:
+            conn.execute(ddl)
+        except sqlite3.OperationalError as exc:
+            if "duplicate column name" not in str(exc).lower():
+                raise
+        _LOG.warning(
+            "schema self-heal: facts.%s was missing after the versioned "
+            "ladder (a migration bump was forgotten — see the v15 history "
+            "note); column added mechanically", col,
+        )
+
+
 def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
     """2026-07-13 epistemic label (cortex transfer #1).
 
@@ -1743,6 +1844,82 @@ def _rerank_breaker_cold_overrun() -> None:
         )
 
 
+# --- Fusion circuit-breaker (2026-07-25) -------------------------------------
+# Measured on the real corpus: the PPR fusion exceeded its budget on EVERY query
+# (6/6), so every recall paid the full 2000 ms and kept the reranked order
+# anyway — the exact failure the rerank breaker above was written for, one month
+# earlier, in a comment that describes this scenario word for word. The proximate
+# cause here was a cold-load inside the extra-similarity scorer (fixed at its
+# call site), but the LESSON is that the defect stayed invisible for weeks
+# because nothing STOPPED it: encode has a breaker (2026-06-06), rerank has one
+# (2026-07-10), the fusion had none. Systematic overruns are a property of the
+# session, not per-query bad luck: after N consecutive ones the fusion is
+# disabled for this process and recall stops waiting.
+#
+# SLIDING WINDOW, not consecutive count. The first version of this counted
+# CONSECUTIVE overruns and reset on any success — copied from the rerank
+# breaker — and two independent adversarial reviews (glm-5.2, deepseek-v4-pro)
+# converged on the same defect: an alternating O-S-O-S load never reaches N in a
+# row, so the breaker never trips while HALF the queries still burn the full
+# budget. One lucky success every four overruns disarms it indefinitely. The
+# window asks the question that actually matters — what FRACTION of recent
+# fusions wasted their budget — so both properties hold: a handful of scattered
+# overruns in a long session does not disable a healthy fusion, and a session
+# where half the queries pay 2 s for nothing does get it switched off.
+# NOTE (2026-07-25): the rerank breaker above still uses consecutive-count and
+# has the same blind spot. Not touched here — it is 15 days old, tested, and on
+# a different budget; changing it is its own change with its own measurement.
+_FUSION_BREAKER: dict[str, Any] = {"window": deque(maxlen=10), "tripped": False}
+
+
+def _fusion_breaker_n() -> int:
+    """Overruns WITHIN the window that trip the breaker. 0 disables it.
+    Env ENGRAM_FUSION_BREAKER_N, default 5 of 10 = half the recent fusions
+    wasting their budget."""
+    try:
+        return max(0, int(os.environ.get("ENGRAM_FUSION_BREAKER_N", "5")))
+    except ValueError:
+        return 5
+
+
+def _fusion_breaker_window() -> int:
+    """How many recent fusion outcomes the decision looks at.
+    Env ENGRAM_FUSION_BREAKER_WINDOW, default 10."""
+    try:
+        return max(1, int(os.environ.get("ENGRAM_FUSION_BREAKER_WINDOW", "10")))
+    except ValueError:
+        return 10
+
+
+def _fusion_breaker_reset() -> None:
+    """Re-arm the breaker (tests; env swap at runtime)."""
+    _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
+    _FUSION_BREAKER["tripped"] = False
+
+
+def _fusion_breaker_tripped() -> bool:
+    return bool(_FUSION_BREAKER["tripped"])
+
+
+def _fusion_breaker_record(overrun: bool) -> None:
+    """Record one fusion outcome and trip if the window says it is systematic."""
+    w: deque = _FUSION_BREAKER["window"]
+    if w.maxlen != _fusion_breaker_window():      # env changed at runtime
+        w = deque(w, maxlen=_fusion_breaker_window())
+        _FUSION_BREAKER["window"] = w
+    w.append(bool(overrun))
+    n = _fusion_breaker_n()
+    if n and not _FUSION_BREAKER["tripped"] and sum(w) >= n:
+        _FUSION_BREAKER["tripped"] = True
+        _LOG.warning(
+            "PPR fusion breaker TRIPPED — %d of the last %d fusions exceeded "
+            "their budget; graph/lexical fusion disabled for this process "
+            "(reranked order stands; restart or _fusion_breaker_reset() to "
+            "re-arm). Recall stops paying a budget for a result it never "
+            "receives.", sum(w), len(w),
+        )
+
+
 def _rerank_cold_budget_s() -> float:
     """Wall-clock budget for a rerank attempt while the CE is still COLD-loading.
     Much smaller than the steady budget: a cold query must not pay the full ~3s
@@ -1815,6 +1992,11 @@ class SemanticMemory:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
+            # Universal mutation audit (0.8 step 1): additive IF NOT EXISTS,
+            # single DDL source = mutation_audit.TABLE_SQL — deliberately
+            # outside the versioned ladder (v15 history: two forgotten
+            # target-bumps broke production writes).
+            conn.execute(_MUTATION_AUDIT_TABLE)
             from .migrations import ensure_schema_version
             ensure_schema_version(
                 conn, db_id="semantic", target_version=_SEMANTIC_TARGET_VERSION,
@@ -1834,8 +2016,13 @@ class SemanticMemory:
                     (13, _migrate_v12_to_v13),
                     (14, _migrate_v13_to_v14),
                     (15, _migrate_v14_to_v15),
+                    (16, _migrate_v15_to_v16),
                 ],
             )
+            # Mechanical guard AFTER the versioned ladder: repair any
+            # additive column a forgotten target-bump left behind (v15
+            # history note — this class broke production writes twice).
+            _ensure_fact_columns(conn)
         # Cycle #135 (2026-05-17): hot-path recall cache. The default
         # recall(topic=None) used to do np.stack([deserialize(r)]) on
         # every row on every call — O(N) Python per query. We now hold
@@ -3720,6 +3907,67 @@ class SemanticMemory:
             independence=independence_enabled(),
             deconfound=independence_deconfounded())
 
+    def _extra_similarity_scorer(self, query: str):
+        """Real cosine for a graph/lexical-only fusion candidate.
+
+        Those candidates historically entered with ``sim=0.0``, on the premise
+        (still written in ``ppr_seed``) that the CE-rerank downstream would
+        re-score them. Since the 2026-06-14 fix the fusion runs AFTER the
+        rerank — this method's own docstring says so — so the re-scoring never
+        happens and the placeholder reaches the caller, who cannot tell "not
+        measured" from "measured zero". Dogfooding on the real store measured
+        it at 7/40 results, and 0/40 with the fusion off.
+
+        The similarity is computable, so it is computed: the query is encoded
+        once, lazily (nothing is paid when the fusion adds no extra candidate),
+        and each fact's stored embedding is read by id. Costs are per-candidate
+        and few (``protect_top`` caps them); a failure yields 0.0 and is never
+        raised — a receipt detail must not break a recall.
+        """
+        state: dict[str, Any] = {}
+
+        def _score(fact: Any) -> float:
+            fid = getattr(fact, "id", None)
+            if not fid:
+                return 0.0
+            cache = state.setdefault("seen", {})
+            if fid in cache:
+                return cache[fid]
+            try:
+                if "q" not in state:
+                    # encode(str), NON encode([str]): i due rami di encode()
+                    # hanno contratti opposti e questo path e' quello CALDO. Il
+                    # ramo single-text passa dal daemon condiviso ed e'
+                    # LRU-cached (32 ms misurati); il ramo batch chiama _model()
+                    # e cold-loada il modello IN-PROCESS — 26382 ms misurati sul
+                    # corpus reale il 25/07, dentro un budget di fusione di 2 s,
+                    # quindi ucciso a meta' caricamento a ogni query (6 overrun
+                    # su 6) e mai caldo. Il recall encoda la query dal daemon, il
+                    # modello in-process resta freddo per definizione: chiederlo
+                    # qui era chiedere l'unica cosa che questo processo non ha.
+                    state["q"] = np.asarray(
+                        embedding.encode(query), dtype=np.float32)
+                q = state["q"]
+                with self._connect() as conn:
+                    row = conn.execute(
+                        "SELECT embedding FROM facts WHERE id = ?",
+                        (fid,)).fetchone()
+                blob = row["embedding"] if row else None
+                if not blob:
+                    return 0.0
+                v = np.frombuffer(blob, dtype=np.float32)
+                if v.shape[0] != q.shape[0]:
+                    return 0.0            # dimension drift: no claim
+                sim = float(embedding.cosine_matrix(q, v.reshape(1, -1))[0])
+                if not np.isfinite(sim):
+                    return 0.0
+            except Exception:  # noqa: BLE001 — never break a recall over a score
+                return 0.0
+            cache[fid] = sim
+            return sim
+
+        return _score
+
     def _maybe_fuse_ppr(
         self, query: str, hits: list[tuple[Fact, float]], k: int,
         *, topic_prefix: str | None = None, topic: str | None = None,
@@ -3738,6 +3986,11 @@ class SemanticMemory:
         gap) + BM25 (Zep gap) are each their own RRF signal. Capped at k.
         Fail-soft: any error / no extra signals → unchanged."""
         if not _ppr_fusion_enabled() or not query or not hits:
+            return hits
+        # Breaker FIRST: once tripped the fusion is not attempted at all, so the
+        # exit costs nothing — the whole point is to stop paying for a result
+        # that never arrives (see _FUSION_BREAKER).
+        if _fusion_breaker_tripped():
             return hits
         # #3 default-ON prereq (audit round-2): su corpus PICCOLI il bi-encoder +
         # CE bastano e i 2 DB-open + il graph-build del PPR sono puro overhead.
@@ -3781,6 +4034,7 @@ class SemanticMemory:
                 hits, [ppr_ids, bm25_ids],
                 lambda fid: self.get(fid, live_only=True),
                 protect_top=max(1, k // 2),
+                score_extra=self._extra_similarity_scorer(query),
             )
             # B-1 multi-tenant (CI 2026-06-15, flip default-ON): PPR/BM25
             # ripescano fact-id dal corpus INTERO, ignorando lo scope che il
@@ -3833,9 +4087,19 @@ class SemanticMemory:
                 "PPR fusion exceeded %.2fs budget → keeping reranked order "
                 "(graph/lexical signals skipped this query)", _budget,
             )
+            _fusion_breaker_record(True)
             return hits
         if "err" in _box:
-            return hits  # fail-soft: recall must never break on the opt-in path
+            # Fail-soft, but NOT silent: recall must never break on the opt-in
+            # path, and an operator must still be able to see that the fusion is
+            # dead. The silent version of this branch is how a scorer that raised
+            # on every query looked exactly like a working fusion.
+            _LOG.warning(
+                "PPR fusion failed → keeping reranked order (graph/lexical "
+                "signals skipped this query): %r", _box["err"],
+            )
+            return hits
+        _fusion_breaker_record(False)
         return _box.get("fused", hits)
 
     # ----------------------------------------------------------------
@@ -4170,24 +4434,43 @@ class SemanticMemory:
                 "UPDATE facts SET superseded_by = ? WHERE superseded_by = ?",
                 (succ, fact_id))
 
-    def delete(self, fact_id: str) -> bool:
+    def delete(self, fact_id: str, *, principal: str,
+               action: str = "delete") -> bool:
         """FORGIA pezzo #202: delete one fact by id (privacy / GDPR).
 
         Returns True iff a row was actually removed.
+
+        ``principal`` is MANDATORY (0.8 mutation audit): the acting identity
+        recorded in the tamper-evident ``audit_mutations`` chain — surfaces
+        stamp their own (``sdk:local``/``gw:<tenant>``/``mcp:*``/
+        ``cli:local``), background jobs declare ``system:<job>``. ``action``
+        is the surface-chosen audit label for this removal (``delete`` |
+        ``purge`` | ``forget``). The audit append runs in the SAME
+        transaction as the DELETE and is fail-closed: if it cannot be
+        written, the row is not removed either.
         """
+        _require_principal(principal)
+        if action not in ("delete", "purge", "forget"):
+            raise ValueError(
+                f"delete() audit action must be delete|purge|forget, "
+                f"got {action!r}")
         with self._connect() as conn:
             self._relink_through(conn, fact_id)
             cur = conn.execute(
                 "DELETE FROM facts WHERE id = ?", (fact_id,),
             )
             removed = cur.rowcount > 0
+            if removed:
+                _record_mutation(conn, principal=principal, action=action,
+                                 resource_id=fact_id)
         # Cycle #135: invalidate the recall cache on delete.
         if removed:
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
         return removed
 
-    def delete_with_undo(self, fact_id: str) -> dict[str, Any]:
+    def delete_with_undo(self, fact_id: str, *,
+                         principal: str) -> dict[str, Any]:
         """Cycle 2026-05-27 round 13 P0c — delete + emit undo handle.
 
         Wraps ``delete()`` with a pre-op snapshot in facts_undo_log.
@@ -4196,7 +4479,12 @@ class SemanticMemory:
 
         If the fact does not exist, removed=False and op_id=None — no
         undo handle is created (no row to restore).
+
+        ``principal`` is MANDATORY (0.8 mutation audit; see :meth:`delete`).
+        The audit row carries ``op_id`` so a later undo stays correlatable
+        with the delete it reverses.
         """
+        _require_principal(principal)
         from .undo_log import snapshot_pre_op
         with self._connect() as conn:
             op_id = snapshot_pre_op(conn, "forget", fact_id)
@@ -4211,6 +4499,10 @@ class SemanticMemory:
                 "DELETE FROM facts WHERE id = ?", (fact_id,),
             )
             removed = cur.rowcount > 0
+            if removed:
+                _record_mutation(conn, principal=principal, action="delete",
+                                 resource_id=fact_id,
+                                 detail={"op_id": op_id})
         if removed:
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
@@ -4366,12 +4658,17 @@ class SemanticMemory:
                 "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL"
             ).fetchone()[0]
 
-    def supersede(self, old_id: str, new_id: str, *, reason: str = "") -> dict[str, Any]:
+    def supersede(self, old_id: str, new_id: str, *, principal: str,
+                  reason: str = "") -> dict[str, Any]:
         """Cycle #78 — declare ``old_id`` superseded by ``new_id``.
 
         Args:
             old_id: fact id of the obsolete claim. Stays in DB for lineage.
             new_id: fact id that REPLACES the old claim. Must exist.
+            principal: MANDATORY acting identity (0.8 mutation audit; see
+                :meth:`delete`). Recorded in the chain; ``reason`` is NOT —
+                free text can carry PII and the chain is immutable, so the
+                reason lives only on the (erasable) facts row.
             reason: human-readable why this supersession happened.
 
         Returns:
@@ -4384,6 +4681,7 @@ class SemanticMemory:
             SupersedeConflict: old_id was already superseded by a
                 DIFFERENT new_id. Caller chooses chain vs reassign.
         """
+        _require_principal(principal)
         if old_id == new_id:
             raise SupersedeError("cannot supersede a fact with itself (self-supersede)")
         with self._connect() as conn:
@@ -4415,6 +4713,12 @@ class SemanticMemory:
                     "UPDATE facts SET superseded_reason = ? WHERE id = ?",
                     (reason, old_id),
                 )
+                # A real row mutation (0.8 audit): record it — as action
+                # metadata only, never the reason text itself.
+                _record_mutation(conn, principal=principal,
+                                 action="supersede", resource_id=old_id,
+                                 detail={"new_id": new_id,
+                                         "reason_update": True})
                 # Cycle #135.A (critic counterexample fix 2026-05-17):
                 # any DB mutation on the facts table must invalidate the
                 # recall cache, otherwise a stale snapshot may still
@@ -4486,6 +4790,11 @@ class SemanticMemory:
                     f"fact {old_id!r} was concurrently superseded by {won!r}; "
                     f"refusing to reassign to {new_id!r}."
                 )
+            # 0.8 mutation audit — the retire actually happened: record it
+            # in the SAME transaction (fail-closed; new_id is an opaque id,
+            # never the reason text).
+            _record_mutation(conn, principal=principal, action="supersede",
+                             resource_id=old_id, detail={"new_id": new_id})
         # Cycle #135.A (critic counterexample fix): the row that was
         # live up to this call is now hidden behind the default-filter
         # ``WHERE superseded_by IS NULL``. Bump the recall-cache version
@@ -4502,6 +4811,7 @@ class SemanticMemory:
         new_id: str,
         contradicting_ids: Iterable[str],
         *,
+        principal: str,
         reason: str = "",
     ) -> dict[str, Any]:
         """Auto-invalidate (supersede, NOT delete) older facts that a NEWER,
@@ -4567,7 +4877,8 @@ class SemanticMemory:
                 f"{new_id} (status={new_fact.status})"
             )
             try:
-                self.supersede(old_id, new_id, reason=note)
+                self.supersede(old_id, new_id, principal=principal,
+                               reason=note)
                 result["superseded"].append(old_id)
             except (SupersedeError, SupersedeConflict):
                 result["skipped"].append(old_id)
@@ -4622,7 +4933,7 @@ class SemanticMemory:
         return chain
 
     def supersede_chain(
-        self, ids: list[str], *, reason: str = "",
+        self, ids: list[str], *, principal: str, reason: str = "",
         atomic: bool = True,
     ) -> dict[str, Any]:
         """Cycle #81 (2026-05-16) — declare a multi-hop supersession
@@ -4679,7 +4990,8 @@ class SemanticMemory:
             pre_at = pre.superseded_at if pre is not None else None
             pre_reason = pre.superseded_reason if pre is not None else None
             try:
-                result = self.supersede(old_id, new_id, reason=reason)
+                result = self.supersede(old_id, new_id, principal=principal,
+                                        reason=reason)
                 already_pointing = (pre_super == new_id)
                 pure_noop = bool(result.get("idempotent_noop"))
                 if pure_noop:
@@ -4712,7 +5024,7 @@ class SemanticMemory:
                     "reason": str(exc),
                 })
                 if atomic:
-                    self._restore_supersession_snapshots(rollback_log)
+                    self._restore_supersession_snapshots(rollback_log, principal=principal)
                     for h in hops:
                         if h["status"] == "applied":
                             h["status"] = "rolled_back"
@@ -4731,7 +5043,7 @@ class SemanticMemory:
                     "reason": str(exc),
                 })
                 if atomic:
-                    self._restore_supersession_snapshots(rollback_log)
+                    self._restore_supersession_snapshots(rollback_log, principal=principal)
                     for h in hops:
                         if h["status"] == "applied":
                             h["status"] = "rolled_back"
@@ -4757,7 +5069,7 @@ class SemanticMemory:
                     "reason": str(exc),
                 })
                 if atomic:
-                    self._restore_supersession_snapshots(rollback_log)
+                    self._restore_supersession_snapshots(rollback_log, principal=principal)
                     for h in hops:
                         if h["status"] == "applied":
                             h["status"] = "rolled_back"
@@ -4783,12 +5095,20 @@ class SemanticMemory:
     def _restore_supersession_snapshots(
         self,
         snapshots: list[tuple[str, str | None, float | None, str | None]],
+        *,
+        principal: str,
     ) -> None:
         """Cycle #81b atomic rollback helper. Each snapshot is
         ``(old_id, pre_super, pre_at, pre_reason)``. Restores exact
         pre-state — distinguishes "was unsuperseded" (all None) from
         "was already superseded with original reason" (preserve
         pointer + ts + original reason). No-op on empty.
+
+        0.8 mutation audit: every restored row gets a ``restore`` chain
+        entry. The rolled-back hops' ``supersede`` rows are append-only and
+        cannot be retracted — without the matching ``restore`` rows the
+        chain would describe supersessions the DB no longer shows, which an
+        auditor cannot distinguish from state tampering.
         """
         if not snapshots:
             return
@@ -4799,6 +5119,9 @@ class SemanticMemory:
                     "superseded_at = ?, superseded_reason = ? WHERE id = ?",
                     (pre_super, pre_at, pre_reason, old_id),
                 )
+                _record_mutation(conn, principal=principal, action="restore",
+                                 resource_id=old_id,
+                                 detail={"pre_superseded_by": pre_super})
         # Cycle #135.A (critic counterexample fix): the rollback flips
         # rows back to their pre-supersession state. Each restored row
         # may transition from "hidden" to "live" (or vice-versa) under
@@ -4911,13 +5234,49 @@ class SemanticMemory:
             "superseded_by": fact.superseded_by,
         }
 
-    def clear(self) -> None:
+    def clear(self, *, principal: str) -> None:
+        """Wipe EVERY fact (test-reset / full re-init). ``principal`` is
+        MANDATORY (0.8 mutation audit): one ``reset`` row records who wiped
+        how many rows — the count via an explicit COUNT(*) because SQLite's
+        truncate optimization makes ``rowcount`` unreliable on an
+        unqualified DELETE."""
+        _require_principal(principal)
         with self._connect() as conn:
+            n = conn.execute("SELECT COUNT(*) FROM facts").fetchone()[0]
             conn.execute("DELETE FROM facts")
+            _record_mutation(conn, principal=principal, action="reset",
+                             resource_id="*", detail={"rows": int(n)})
         # SCAN-68 FIX 2026-06-02 (NONNA): invalida la recall-cache. Mancava il
         # bump -> recall(topic=None) continuava a servire fatti FANTASMA dalla
         # cache stantia finche un altro store/delete non bumpava la versione.
         self._cache_version += 1
+
+    # ── 0.8 mutation-audit chain: verification API ────────────────────────
+
+    def audit_verify(self) -> str | None:
+        """Recompute the mutation-audit chain; the id of the first tampered
+        row, or ``None`` when intact. See ``mutation_audit.verify_conn`` for
+        the honest limits (tail truncation / full rewrite need the archived
+        head)."""
+        with self._connect() as conn:
+            return _audit_verify_conn(conn)
+
+    def audit_head(self) -> str | None:
+        """Current mutation-audit chain head (archive it off-box)."""
+        with self._connect() as conn:
+            return _audit_head_conn(conn)
+
+    def audit_count(self) -> int:
+        """Number of chained mutation rows — recorded in a signed anchor so a
+        later verify can tell tail-truncation from stasis."""
+        with self._connect() as conn:
+            return _audit_count_conn(conn)
+
+    def audit_head_at(self, count: int) -> str | None:
+        """Stored head of the ``count``-th chained mutation row (1-indexed), or
+        ``None`` out of range — the anchor's rewrite/truncate+reinsert check."""
+        with self._connect() as conn:
+            return _audit_head_at_conn(conn, count)
 
     @staticmethod
     def _row(r: sqlite3.Row) -> Fact:

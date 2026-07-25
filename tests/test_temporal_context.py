@@ -34,8 +34,8 @@ def _store_chain(tmp_path):
                topic="t", asserted_at=_BASE + 60 * _DAY)
     for f in (old, mid, new):
         sm.store(f, embed="sync")
-    sm.supersede("f-old", "f-mid", reason="update")
-    sm.supersede("f-mid", "f-new", reason="update")
+    sm.supersede("f-old", "f-mid", principal="test:suite", reason="update")
+    sm.supersede("f-mid", "f-new", principal="test:suite", reason="update")
     return sm
 
 

@@ -54,7 +54,7 @@ def _seed(sm: SemanticMemory) -> None:
                   source_episodes=["e4"], lineage_to=["d1"]))
     sm.store(Fact(id="ok", proposition="independent valid", topic="t/jm",
                   source_episodes=["e5"]))
-    sm.supersede("f_old", "f_new")
+    sm.supersede("f_old", "f_new", principal="test:suite")
 
 
 @pytest.mark.asyncio
@@ -89,7 +89,7 @@ async def test_topic_scopes_the_report_not_the_graph(wired) -> None:  # noqa: AN
     sm.store(Fact(id="a_old", proposition="A old", topic="t/A", source_episodes=["e1"]))
     sm.store(Fact(id="a_new", proposition="A new", topic="t/A", source_episodes=["e2"]))
     sm.store(Fact(id="b1", proposition="B one", topic="t/B", source_episodes=["e3"]))
-    sm.supersede("a_old", "a_new")
+    sm.supersede("a_old", "a_new", principal="test:suite")
 
     out = await _invoke("hippo_justified_audit", {"topic": "t/A"})
     assert "a_old" in out["would_retract_ids"]
@@ -113,7 +113,7 @@ async def test_typed_derives_from_cascades_end_to_end(wired) -> None:  # noqa: A
     # round-trip: the typed edge actually persisted
     rows = {f.id: f for f in sm.list_facts(limit=100, offset=0, include_superseded=True)}
     assert rows["x1"].derives_from == ["g_old"]
-    sm.supersede("g_old", "g_new")
+    sm.supersede("g_old", "g_new", principal="test:suite")
 
     out = await _invoke("hippo_justified_audit", {"topic": "t/d"})
     assert "g_old" in out["would_retract_ids"]          # direct supersession

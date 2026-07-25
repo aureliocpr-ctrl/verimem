@@ -92,6 +92,7 @@ def main(argv=None) -> int:
             try:
                 r = sm.supersede(
                     lid, p["winner_id"],
+                    principal="system:snapshot-collapse",
                     reason="autohook-snapshot daily collapse (kept the day's "
                            "last snapshot; corpus truth scan 2026-07-02)")
                 ok = bool(r.get("ok", True))

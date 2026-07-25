@@ -381,7 +381,8 @@ def run_maintenance(engram_dir: Path, *, now: float | None = None,
         try:
             from verimem.contradiction import heal_contradictions, scan_corpus
             out["scan"] = scan_corpus(sm, time_budget_s=20.0)
-            healed = heal_contradictions(sm, limit=100)
+            healed = heal_contradictions(sm, principal="system:heal",
+                                         limit=100)
             out["healed"] = ({k: len(v) for k, v in healed.items()}
                              if isinstance(healed, dict) else None)
         except Exception as exc:  # noqa: BLE001

@@ -35,7 +35,7 @@ def test_concurrent_supersede_has_exactly_one_winner(tmp_path):
         def worker(new_id, tag, a=a, barrier=barrier, results=results):
             barrier.wait()  # release both threads together -> maximize the race
             try:
-                res = sm.supersede(a, new_id, reason=tag)
+                res = sm.supersede(a, new_id, principal="test:suite", reason=tag)
                 results[tag] = ("ok", bool(res.get("idempotent_noop")))
             except SupersedeConflict:
                 results[tag] = ("conflict", False)

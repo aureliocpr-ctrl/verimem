@@ -1281,8 +1281,12 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     @app.delete("/v1/memories/{fact_id}")
     def delete_memory(fact_id: str, purge_history: bool = False,
                       tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        # Audit-principal: the authenticated tenant, per-call — the cached
+        # tenant Memory is built without one, and a body-supplied principal
+        # would be a spoof (same rule as the write path).
         removed = tenants.get(tenant_id).delete(
-            fact_id, purge_history=purge_history)
+            fact_id, purge_history=purge_history,
+            principal=f"gw:{tenant_id}")
         meter.bump(tenant_id, writes=1)
         return {"removed": bool(removed)}
 

@@ -137,6 +137,22 @@ steady-state cost. **+40 ms for +7.5 pp recall@5 is the trade-off that justifies
 default-ON**, gated behind 3 prereqs (PPR budget-thread, cold-path consistency,
 corpus-floor) so the cap, coverage and small-corpus cases are all handled.
 
+> **The +40 ms above was true in this harness and false in production, from
+> 2026-06-15 to 2026-07-25.** Note the flag this bench sets:
+> `ENGRAM_PPR_FUSION_BUDGET_S=0` runs the fusion synchronously with no cap, in a
+> process that cold-loads the embedding model once and then keeps it warm
+> in-process. Under the *default* 2 s budget, in a process served by the encode
+> daemon — i.e. every real deployment — the extra-similarity scorer's
+> `encode([query])` took the batch branch and cold-loaded the model inside the
+> budgeted thread. Measured on the real corpus (6293 facts): the budget was
+> exceeded on **6 of 6 queries**, so every recall waited the full 2000 ms and
+> then discarded the result. p50 2312 ms, of which 2013 ms bought nothing.
+> Fixed in `a6fdd81d` (p50 → 585/572/590 ms, 0 overruns) plus a breaker so a
+> systematic overrun can no longer be free to repeat. The lesson for this file:
+> a latency figure measured with the guard disabled is not the shipped cost, and
+> a bench whose process holds the model in-process cannot see a defect that only
+> exists when it does not.
+
 Limit: retrieval recall@k, not end-to-end QA; CE-rerank OFF in this A/B to
 isolate the fusion signal; mem0 head-to-head still at n=100.
 

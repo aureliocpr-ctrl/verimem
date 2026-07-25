@@ -22,7 +22,7 @@ def _mem_with_transition(tmp_path):
                   verified_by=["payroll:2025-09"], asserted_at=_epoch(2025, 9, 5))
     new = mem.add("the monthly income is 4500 USD",
                   verified_by=["payroll:2026-06"], asserted_at=_epoch(2026, 6, 1))
-    mem.semantic.supersede(old["id"], new["id"], reason="raise")
+    mem.semantic.supersede(old["id"], new["id"], principal="test:suite", reason="raise")
     return mem
 
 

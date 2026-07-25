@@ -95,7 +95,7 @@ def _one(db, sql, *args):
 def test_dry_run_reports_references_without_mutating(dirty_db):
     from verimem.admission_cleanup import cleanup_telemetry
 
-    res = cleanup_telemetry(dirty_db, dry_run=True)
+    res = cleanup_telemetry(dirty_db, principal="test:suite", dry_run=True)
     assert res["telemetry_found"] == 2
     assert res["skipped_referenced"] == 1
     assert res["moved"] == 0
@@ -106,7 +106,7 @@ def test_dry_run_reports_references_without_mutating(dirty_db):
 def test_referenced_supersession_target_is_skipped(dirty_db):
     from verimem.admission_cleanup import cleanup_telemetry
 
-    res = cleanup_telemetry(dirty_db, dry_run=False)
+    res = cleanup_telemetry(dirty_db, principal="test:suite", dry_run=False)
     assert res["moved"] == 1
     assert res["skipped_referenced"] == 1
     # the chain target survives in facts; the unreferenced one moved
@@ -125,7 +125,7 @@ def test_fts_follows_the_move(dirty_db):
 
     assert _one(dirty_db,
                 "SELECT COUNT(*) FROM facts_fts WHERE fact_id='tel_free'") == 1
-    cleanup_telemetry(dirty_db, dry_run=False)
+    cleanup_telemetry(dirty_db, principal="test:suite", dry_run=False)
     assert _one(dirty_db,
                 "SELECT COUNT(*) FROM facts_fts WHERE fact_id='tel_free'") == 0
 
@@ -133,7 +133,7 @@ def test_fts_follows_the_move(dirty_db):
 def test_unresolved_contradiction_rows_of_moved_are_pruned(dirty_db):
     from verimem.admission_cleanup import cleanup_telemetry
 
-    res = cleanup_telemetry(dirty_db, dry_run=False)
+    res = cleanup_telemetry(dirty_db, principal="test:suite", dry_run=False)
     assert res["contradictions_pruned"] == 1
     # unresolved row citing the moved fact: gone
     assert _one(dirty_db, "SELECT COUNT(*) FROM contradictions WHERE id='c_unres'") == 0
@@ -150,6 +150,6 @@ def test_db_without_contradictions_table_still_works(tmp_path, monkeypatch):
     db = tmp_path / "bare.db"
     sm = SemanticMemory(db_path=db)
     sm.store(Fact(id="t1", proposition="bus tick", topic="bus/x"))
-    res = cleanup_telemetry(db, dry_run=False)
+    res = cleanup_telemetry(db, principal="test:suite", dry_run=False)
     assert res["moved"] == 1
     assert res["contradictions_pruned"] == 0

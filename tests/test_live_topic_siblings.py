@@ -24,7 +24,7 @@ def test_method_excludes_superseded_quarantined_and_other_topic(tmp_path):
     sm = SemanticMemory(db_path=tmp_path / "sm.db")
     _mk(sm, "live1", "the server is up")
     _mk(sm, "dead1", "the server is down")
-    sm.supersede("dead1", "live1")                      # dead1 now superseded_by live1
+    sm.supersede("dead1", "live1", principal="test:suite")                      # dead1 now superseded_by live1
     _mk(sm, "quar1", "the server exploded", status="quarantined")
     _mk(sm, "other", "unrelated", topic="t2")
     ids = {f.id for f in sm.live_topic_siblings("t")}

@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from verimem.semantic import SemanticMemory
+from verimem.client import Memory
 from verimem.swarm.lifecycle import (
     list_swarm_sessions,
     remove_session,
@@ -45,57 +45,61 @@ def _fail_run() -> MagicMock:
 
 
 @pytest.fixture
-def sm(tmp_path: Path) -> SemanticMemory:
-    return SemanticMemory(db_path=tmp_path / "sem.db")
+def memory(tmp_path: Path) -> Memory:
+    return Memory(path=tmp_path / "sem.db")
 
 
 class TestStopSession:
-    def test_invokes_claude_stop(self, sm: SemanticMemory) -> None:
+    def test_invokes_claude_stop(self, memory: Memory) -> None:
         with patch(
             "verimem.swarm.lifecycle.subprocess.run",
             return_value=_ok_run(),
         ) as run:
             ok = stop_session(
-                "abc12345", topic=_TOPIC, sm=sm, agent_name="agent-a",
+                "abc12345", topic=_TOPIC, memory=memory, agent_name="agent-a",
             )
         assert ok is True
         args, _ = run.call_args
         assert args[0][:3] == ["claude", "stop", "abc12345"]
 
-    def test_writes_audit_fact(self, sm: SemanticMemory) -> None:
+    def test_writes_gated_audit_chronicle(self, memory: Memory) -> None:
+        """The lifecycle audit fact goes through the moat: a hidden
+        ``user_belief`` chronicle stamped ``swarm:lifecycle/<agent>``,
+        not a raw top-confidence visible claim."""
         with patch(
             "verimem.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
         ):
             stop_session(
-                "abc12345", topic=_TOPIC, sm=sm, agent_name="agent-a",
+                "abc12345", topic=_TOPIC, memory=memory, agent_name="agent-a",
             )
-        with sm._connect() as conn:  # noqa: SLF001
+        with memory.semantic._connect() as conn:  # noqa: SLF001
             rows = conn.execute(
-                "SELECT proposition FROM facts WHERE topic = ?",
-                (_TOPIC,),
-            ).fetchall()
+                "SELECT proposition, status, writer_principal FROM facts "
+                "WHERE topic = ?", (_TOPIC,)).fetchall()
         assert len(rows) == 1
         assert "stop" in rows[0]["proposition"].lower()
         assert "abc12345" in rows[0]["proposition"]
+        assert rows[0]["status"] == "user_belief"
+        assert rows[0]["writer_principal"] == "swarm:lifecycle/agent-a"
 
-    def test_returns_false_on_failure(self, sm: SemanticMemory) -> None:
+    def test_returns_false_on_failure(self, memory: Memory) -> None:
         with patch(
             "verimem.swarm.lifecycle.subprocess.run",
             return_value=_fail_run(),
         ):
             ok = stop_session(
-                "abc12345", topic=_TOPIC, sm=sm, agent_name="agent-a",
+                "abc12345", topic=_TOPIC, memory=memory, agent_name="agent-a",
             )
         assert ok is False
 
 
 class TestRespawnSession:
-    def test_invokes_claude_respawn(self, sm: SemanticMemory) -> None:
+    def test_invokes_claude_respawn(self, memory: Memory) -> None:
         with patch(
             "verimem.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
         ) as run:
             ok = respawn_session(
-                "abc12345", topic=_TOPIC, sm=sm, agent_name="agent-a",
+                "abc12345", topic=_TOPIC, memory=memory, agent_name="agent-a",
             )
         assert ok is True
         args, _ = run.call_args
@@ -103,12 +107,12 @@ class TestRespawnSession:
 
 
 class TestRemoveSession:
-    def test_invokes_claude_rm(self, sm: SemanticMemory) -> None:
+    def test_invokes_claude_rm(self, memory: Memory) -> None:
         with patch(
             "verimem.swarm.lifecycle.subprocess.run", return_value=_ok_run(),
         ) as run:
             ok = remove_session(
-                "abc12345", topic=_TOPIC, sm=sm, agent_name="agent-a",
+                "abc12345", topic=_TOPIC, memory=memory, agent_name="agent-a",
             )
         assert ok is True
         args, _ = run.call_args

@@ -120,7 +120,7 @@ def cleanup_forgettable(
         if max_forget is not None and forgotten >= max_forget:
             break
 
-        if sm.delete(f.id):
+        if sm.delete(f.id, principal="system:cleanup"):
             forgotten += 1
 
     return {

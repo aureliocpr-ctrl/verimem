@@ -35,7 +35,7 @@ from .admission_gate import ROUTE_TELEMETRY, classify_admission
 _EPISODE_EMBED_COLS = ("summary_embedding", "dg_embedding", "context_embedding")
 
 
-def cleanup_telemetry(db_path, *, dry_run: bool = True) -> dict:
+def cleanup_telemetry(db_path, *, principal: str, dry_run: bool = True) -> dict:
     """Route existing telemetry facts out of ``facts`` into ``telemetry``.
 
     Reference-aware since 2026-07-20 (task #61 — the live corpus measured 90
@@ -53,8 +53,15 @@ def cleanup_telemetry(db_path, *, dry_run: bool = True) -> dict:
     Returns ``{scanned, telemetry_found, moved, skipped_referenced,
     contradictions_pruned, dry_run}``. With ``dry_run=True`` (default)
     nothing is mutated.
+
+    ``principal`` is MANDATORY (0.8 mutation audit): each row moved out of
+    ``facts`` is recorded in the tamper-evident chain, same transaction
+    (fail-closed).
     """
+    from .mutation_audit import TABLE_SQL, record_mutation, require_principal
+    require_principal(principal)
     conn = sqlite3.connect(db_path)
+    conn.execute(TABLE_SQL)  # legacy DBs never opened via SemanticMemory
     conn.row_factory = sqlite3.Row
     try:
         rows = conn.execute(
@@ -104,6 +111,12 @@ def cleanup_telemetry(db_path, *, dry_run: bool = True) -> dict:
                 (r["id"], r["topic"], r["proposition"], created, r["writer_role"]),
             )
             conn.execute("DELETE FROM facts WHERE id = ?", (r["id"],))
+            # 0.8 mutation audit — same transaction as the DELETE
+            # (fail-closed); the moved text lives on in the telemetry
+            # table, never in the chain.
+            record_mutation(conn, principal=principal, action="delete",
+                            resource_id=r["id"],
+                            detail={"moved_to": "telemetry"})
         moved_ids = [r["id"] for r in movable]
         has_contra = conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' "
@@ -124,7 +137,8 @@ def cleanup_telemetry(db_path, *, dry_run: bool = True) -> dict:
         conn.close()
 
 
-def cleanup_episode_telemetry(db_path, *, dry_run: bool = True) -> dict:
+def cleanup_episode_telemetry(db_path, *, principal: str,
+                              dry_run: bool = True) -> dict:
     """Route existing call-telemetry episodes out of ``episodes`` into
     ``episode_telemetry`` — the gemello of :func:`cleanup_telemetry` for the
     EPISODE backlog (the live ``episodes`` carry ~22% auto-saved cross-LLM call
@@ -145,10 +159,17 @@ def cleanup_episode_telemetry(db_path, *, dry_run: bool = True) -> dict:
     the authoritative undo is the pre-run DB backup. Idempotent.
 
     Returns ``{scanned, telemetry_found, moved, dry_run}``.
+
+    ``principal`` is MANDATORY (0.8 mutation audit): each episode moved out
+    of ``episodes`` leaves one chained row in this DB's ``audit_mutations``,
+    same transaction (fail-closed).
     """
+    from .mutation_audit import TABLE_SQL, record_mutation, require_principal
+    require_principal(principal)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
+        conn.execute(TABLE_SQL)  # legacy DBs never opened via EpisodicMemory
         cols = [r[1] for r in conn.execute("PRAGMA table_info(episodes)").fetchall()]
         rows = conn.execute("SELECT * FROM episodes").fetchall()
         to_move = [r for r in rows if is_call_telemetry(r["task_text"] or "")]
@@ -194,6 +215,11 @@ def cleanup_episode_telemetry(db_path, *, dry_run: bool = True) -> dict:
             if has_traces:
                 conn.execute("DELETE FROM traces WHERE episode_id = ?", (r["id"],))
             conn.execute("DELETE FROM episodes WHERE id = ?", (r["id"],))
+            # 0.8 mutation audit — same tx as the DELETE (fail-closed); the
+            # moved payload lives on in episode_telemetry, never the chain.
+            record_mutation(conn, principal=principal, action="delete",
+                            resource_id=r["id"],
+                            detail={"moved_to": "episode_telemetry"})
         conn.commit()
         result["moved"] = len(to_move)
         return result

@@ -48,7 +48,7 @@ def _seed(db):
 def test_dry_run_reports_but_mutates_nothing(tmp_path):
     db = tmp_path / "ep.db"
     _seed(db)
-    res = cleanup_episode_telemetry(db)  # dry_run defaults True
+    res = cleanup_episode_telemetry(db, principal="test:suite")  # dry_run defaults True
     assert res == {"scanned": 2, "telemetry_found": 1, "moved": 0, "dry_run": True}
     con = sqlite3.connect(db)
     assert con.execute("SELECT count(*) FROM episodes").fetchone()[0] == 2
@@ -62,7 +62,7 @@ def test_dry_run_reports_but_mutates_nothing(tmp_path):
 def test_apply_moves_only_telemetry_non_lossy(tmp_path):
     db = tmp_path / "ep.db"
     _seed(db)
-    res = cleanup_episode_telemetry(db, dry_run=False)
+    res = cleanup_episode_telemetry(db, principal="test:suite", dry_run=False)
     assert res == {"scanned": 2, "telemetry_found": 1, "moved": 1, "dry_run": False}
     con = sqlite3.connect(db)
     # the real task survives in episodes; the telemetry one is gone
@@ -89,8 +89,8 @@ def test_apply_moves_only_telemetry_non_lossy(tmp_path):
 def test_idempotent_second_run_is_noop(tmp_path):
     db = tmp_path / "ep.db"
     _seed(db)
-    cleanup_episode_telemetry(db, dry_run=False)
-    again = cleanup_episode_telemetry(db, dry_run=False)
+    cleanup_episode_telemetry(db, principal="test:suite", dry_run=False)
+    again = cleanup_episode_telemetry(db, principal="test:suite", dry_run=False)
     assert again == {"scanned": 1, "telemetry_found": 0, "moved": 0, "dry_run": False}
 
 
@@ -104,7 +104,7 @@ def test_empty_or_no_telemetry_safe(tmp_path):
     )
     con.commit()
     con.close()
-    res = cleanup_episode_telemetry(db, dry_run=False)
+    res = cleanup_episode_telemetry(db, principal="test:suite", dry_run=False)
     assert res["telemetry_found"] == 0 and res["moved"] == 0
 
 
@@ -137,7 +137,7 @@ def test_linked_traces_archived_and_deleted_not_orphaned(tmp_path):
     con.commit()
     con.close()
 
-    res = cleanup_episode_telemetry(db, dry_run=False)
+    res = cleanup_episode_telemetry(db, principal="test:suite", dry_run=False)
     assert res["moved"] == 1
     con = sqlite3.connect(db)
     # telemetry traces deleted (no orphan), real trace kept

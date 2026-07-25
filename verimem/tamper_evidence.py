@@ -143,7 +143,13 @@ def verify_head_signature(head_hash: str, signature_b64: str,
                           public_key_path) -> bool:
     """True iff ``signature_b64`` is a valid signature of ``head_hash`` under
     the public key -- ANY failure (garbage b64, wrong key, wrong head) is
-    ``False``, never an exception: verification is a yes/no question."""
+    ``False``, never an exception: verification is a yes/no question.
+
+    NOTE (domain-separation liability): this signs the BARE head string, so one
+    operator key across two chains lets a signature for chain A's head verify
+    against chain B's identical head. For anchoring BOTH audit chains use
+    ``sign_receipt`` / ``verify_receipt_signature`` (step 2), which bind chain
+    identity, ts and row counts into the signed bytes."""
     import base64
     try:
         serialization, _priv, _pub = _require_crypto()
@@ -151,6 +157,54 @@ def verify_head_signature(head_hash: str, signature_b64: str,
             open(public_key_path, "rb").read())
         key.verify(base64.b64decode(signature_b64),
                    str(head_hash).encode("utf-8"))
+        return True
+    except Exception:  # noqa: BLE001 -- verification is boolean by contract
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Receipt signing (task #24 step 2): sign the CANONICAL bytes of a whole
+# anchor payload, not a bare head. The payload names each chain's head and row
+# count, so the signature binds chain identity + counts + ts together -- a
+# signature for one chain's head can never be replayed onto another chain, and
+# a tampered count/head fails the check. Domain-separated from bare-head
+# signing above by a distinct prefix so the two signature spaces never overlap.
+# ---------------------------------------------------------------------------
+
+#: Prepended to the canonical payload bytes before signing, so a receipt
+#: signature can never be mistaken for (or replayed as) a bare-head signature.
+_RECEIPT_DOMAIN = b"verimem-audit-anchor-v1\x00"
+
+
+def sign_receipt(payload: dict, private_key_path) -> str:
+    """Sign the canonical serialization of ``payload`` (the receipt WITHOUT its
+    signature) with the operator's ed25519 private key; returns the base64
+    signature. Reuses ``canonical_bytes`` so key order/formatting can never
+    change the signed message."""
+    import base64
+    serialization, _priv, _pub = _require_crypto()
+    key = serialization.load_pem_private_key(
+        open(private_key_path, "rb").read(), password=None)
+    sig = key.sign(_RECEIPT_DOMAIN + canonical_bytes(payload))
+    return base64.b64encode(sig).decode("ascii")
+
+
+def verify_receipt_signature(payload: dict, signature_b64: str,
+                             key_path) -> bool:
+    """True iff ``signature_b64`` signs the canonical bytes of ``payload`` under
+    the key at ``key_path`` -- which may be a PUBLIC PEM, or the PRIVATE PEM (the
+    public key is derived from it), so an operator who only wired the signing
+    key can still verify. ANY failure is ``False``, never an exception."""
+    import base64
+    try:
+        serialization, _priv, _pub = _require_crypto()
+        raw = open(key_path, "rb").read()
+        try:
+            pub = serialization.load_pem_public_key(raw)
+        except (ValueError, TypeError):
+            pub = serialization.load_pem_private_key(raw, password=None).public_key()
+        pub.verify(base64.b64decode(signature_b64),
+                   _RECEIPT_DOMAIN + canonical_bytes(payload))
         return True
     except Exception:  # noqa: BLE001 -- verification is boolean by contract
         return False

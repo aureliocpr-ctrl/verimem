@@ -90,6 +90,7 @@ def main(argv=None) -> int:
         for lid in p["loser_ids"]:
             try:
                 r = sm.supersede(lid, p["winner_id"],
+                                 principal="system:dedup",
                                  reason="exact-text dedup (corpus truth scan "
                                         "2026-07-02; byte-identical proposition)")
                 ok = bool(r.get("ok", True))

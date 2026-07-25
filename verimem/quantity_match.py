@@ -44,11 +44,66 @@ _QUANT_RE = re.compile(
 # Function words that can FOLLOW a number but are never units ("30 and 45",
 # "5 of 10"). Stripped to a bare (unitless) number, which the conflict check
 # then ignores.
+#
+# 2026-07-25 — the Italian ARTICULATED prepositions were missing, and they are
+# the commonest form in the language this store is actually used in. Cost of the
+# gap, measured by dogfooding: "issue #42 nel tracker" yielded unit 'nel',
+# "task 7 del piano" yielded 'del', so two DISTINCT facts read as same-unit
+# different-value — a conflict — and the same-source supersede then retired the
+# earlier one. Eight true facts out of nine dropped out of default recall.
+# That breaks the contract this module states in numeric_conflict: "precision
+# over recall — a false conflict downgrades a true fact, the opposite of the
+# trust we sell".
 _NON_UNIT_WORDS = frozenset({
     "and", "or", "to", "of", "in", "on", "at", "by", "for", "the", "an",
     "is", "are", "was", "were", "be", "per", "via", "with", "from", "but",
     "as", "that", "than", "then", "plus", "over", "into", "out", "more",
     "e", "o", "di", "da", "su", "con", "tra", "fra", "ed", "il", "la", "un",
+    # preposizioni articolate + articoli/pronomi che seguono un numero
+    "del", "dello", "della", "dei", "degli", "delle",
+    "nel", "nello", "nella", "nei", "negli", "nelle",
+    "al", "allo", "alla", "ai", "agli", "alle",
+    "dal", "dallo", "dalla", "dai", "dagli", "dalle",
+    "sul", "sullo", "sulla", "sui", "sugli", "sulle",
+    "col", "coi", "lo", "le", "gli", "uno", "una", "che", "non", "come",
+    "sono", "era", "erano", "ha", "hanno", "piu", "meno",
+})
+
+#: No real unit of measure ends in ``-ly`` (EN) or ``-mente`` (IT): ms, kg, min,
+#: h, entries, requests, tests… all fail this test. Two morphological rules
+#: replace an open-ended list of adverbs ("8080 locally", "1024 entries only",
+#: "porta 8080 localmente", "3 volte esattamente").
+#:
+#: ``-mente`` was MISSING in the first version of this fix and an adversarial
+#: review (glm-5.2, 2026-07-25) caught it: the rule covered English and left
+#: Italian — the language this store is actually written in — exactly as broken
+#: as before. Confirmed by running it: "porta 8080 localmente" yielded unit
+#: 'localmente', and two different ports still produced a conflict.
+#:
+#: Known cost, accepted: two words added above are ALSO unit symbols.
+#:   * ``dal`` — articulated preposition, and the symbol for decalitre (raised by
+#:     glm-5.2);
+#:   * ``ha`` — third person of "avere" ("il fatto 3 ha 500 righe"), and the
+#:     symbol for hectare (raised by the critic's counterexample worker).
+#: Both now yield a bare number, so no conflict is detected on decalitres or
+#: hectares. Deliberate: in the prose this store holds, the preposition and the
+#: verb are overwhelmingly the commoner reading, and leaving them out would
+#: FABRICATE conflicts ("il fatto 3 ha 500 righe" vs "il fatto 5 ha 200 righe").
+#: A missed conflict is the cheaper error here than an invented one — the same
+#: "precision over recall" trade-off this module states below.
+_ADVERB_SUFFIXES = ("ly", "mente")
+
+#: …except the FREQUENCY words, which really are units in the domains this store
+#: serves: "10 daily reports", "5000 yearly", "3 weekly backups". Raised by a
+#: second adversary (deepseek-v4-pro, 2026-07-25) and confirmed by running it —
+#: my ``-ly`` rule had turned a fabricated conflict into a systematically MISSED
+#: one: "10 daily reports" vs "50 daily reports" stopped conflicting at all.
+#: A blunt morphological rule needs this exception list; without it the fix for
+#: one error class quietly created another.
+_FREQUENCY_UNITS = frozenset({
+    "hourly", "daily", "nightly", "weekly", "biweekly", "fortnightly",
+    "monthly", "quarterly", "yearly", "annually",
+    "orario", "giornaliero", "settimanale", "mensile", "trimestrale", "annuale",
 })
 
 # Unit synonyms → canonical form so "200ms" and "500 milliseconds" compare
@@ -93,6 +148,31 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
     frozenset({"minimum", "maximum"}),
     frozenset({"primary", "backup", "secondary", "replica", "standby"}),
     frozenset({"staging", "production"}),
+    # 2026-07-25 — coppie ITALIANE. La batteria di ampiezza ha trovato
+    # "il gate legge in 45 ms" che ritirava "il gate scrive in 300 ms": la lista
+    # copriva {read, write} in inglese e questo store e' scritto in italiano.
+    # Un criterio strutturale ("ciascun lato ha una parola esclusiva") e' stato
+    # provato e FALSIFICATO da due test: non distingue un attributo opposto
+    # ("legge"/"scrive") da un sinonimo ("holds"/"bounded") ne' da un valore che
+    # cambia ("Rome"/"Paris"). Qui la lista e' il design giusto, perche' le coppie
+    # contrapposte sono un insieme piccolo e conosciuto.
+    frozenset({"legge", "scrive"}),
+    frozenset({"lettura", "scrittura"}),
+    frozenset({"richiesta", "risposta"}),
+    frozenset({"ingresso", "uscita"}),
+    frozenset({"entrata", "uscita"}),
+    frozenset({"invio", "ricezione"}),
+    frozenset({"caricamento", "scaricamento"}),
+    frozenset({"origine", "destinazione"}),
+    frozenset({"client", "server"}),
+    # flessioni: content_tokens non lemmatizza l'italiano, quindi la coppia
+    # va data in entrambi i generi ("latenza minima" / "latenza massima")
+    frozenset({"minimo", "massimo"}),
+    frozenset({"minima", "massima"}),
+    frozenset({"minime", "massime"}),
+    frozenset({"primario", "secondario", "replica"}),
+    frozenset({"collaudo", "produzione"}),
+    frozenset({"caldo", "freddo"}),
 )
 
 
@@ -108,13 +188,123 @@ def norm_unit(word: str) -> str:
     return w
 
 
+#: Markers after which the text stops asserting and starts citing PROVENANCE:
+#: how many samples, which run, which commit. Numbers there describe the check,
+#: not the claim.
+#:
+#: 2026-07-25, root cause of a real loss: the OEIS organism wrote each relation
+#: with its evidence inline —
+#:   "… = 0 | evidence: holds exactly at 199 common points (window n<=200)"
+#:   "… = 0 | evidence: holds exactly at 200 common points (window n<=200)"
+#: — so two DIFFERENT relations, checked over a different number of points, read
+#: as "same unit 'common', 199 vs 200" and the supersede retired the first. Of 9
+#: verified relations, 2 survived. Measured: dropping the text after 'evidence:'
+#: made the conflict disappear. Anyone writing "verified on 200 samples" into a
+#: fact was manufacturing conflicts with themselves.
+_EVIDENCE_MARKER_RE = re.compile(
+    r"\b(?:evidence|verified_by|verified|source|sources|ref|refs|citation|"
+    r"prova|prove|fonte|fonti|riferimento)\s*:",
+    re.IGNORECASE)
+
+
+#: A provenance marker only ends the claim if what follows is a TAIL. Measured on
+#: the live corpus the moment this was written: the first version cut 140 facts of
+#: 6293, discarding a median 67% of their text, because it fired on markers used
+#: INLINE inside a metadata block —
+#:   "RESEARCH FINDING [provisional, source: arxiv.org/… ] ProvSEEK (Aug 2025) …"
+#: where the real claim comes AFTER the bracket. That version kept the heading and
+#: threw the content away, hiding 97% of those facts from every detector. So the
+#: cut must leave a substantial claim standing; if it leaves crumbs, the marker
+#: was part of the sentence, not the start of its footnote.
+#: A claim shorter than this is not a claim — the marker opened the sentence
+#: ("fonte: il documento dichiara 45 ms"), so there is nothing to keep.
+_MIN_CLAIM_CHARS = 12
+_OPENERS, _CLOSERS = "([{", ")]}"
+
+#: A marker ends the claim only when it OPENS A SECTION: preceded by a delimiter
+#: (bar, newline, full stop, semicolon, dash) or by the start of the text —
+#: optionally with an upper-case label in between ("EMPIRICAL EVIDENCE:",
+#: "STEP-BY-STEP EVIDENCE:"). Counting characters was not enough, and an
+#: adversarial review found why (glm-5.2, 2026-07-25, confirmed by running it):
+#:   "Riferendosi alla fonte: il record 42 ha valore 100"
+#: left "Riferendosi alla " — 17 chars, above the threshold — and threw away the
+#: claim, identifier and value included. "fonte" and "prova" are ordinary Italian
+#: words and "ref:" shows up in technical notes; only the position tells a
+#: footnote from a phrase.
+_SECTION_DELIMS = "|\n\r.;—-•"
+#: An upper-case label may sit between the delimiter and the marker.
+_LABEL_RE = re.compile(r"[A-Z][A-Z0-9_-]*\s*$")
+
+
+def _inside_brackets(text: str, pos: int) -> bool:
+    """True when *pos* sits inside a bracket opened earlier and not yet closed.
+
+    This is the test that separates a footnote from an aside. A first version
+    asked instead whether ANY closer appeared after the marker, and that was
+    wrong twice over: it rejected "evidence: holds at 199 points (window n<=200)"
+    — where the parentheses open and close inside the tail — while the case it
+    meant to catch is the marker sitting INSIDE an open bracket.
+    """
+    depth = 0
+    for ch in text[:pos]:
+        if ch in _OPENERS:
+            depth += 1
+        elif ch in _CLOSERS:
+            depth = max(0, depth - 1)
+    return depth > 0
+
+
+def _opens_a_section(head: str) -> bool:
+    """True when what precedes a marker ends a SECTION rather than a phrase.
+
+    Walks back over an optional upper-case label ("EMPIRICAL EVIDENCE:") and then
+    asks for a delimiter or the start of the text. "Riferendosi alla fonte:" fails
+    on both counts — "alla" is neither.
+    """
+    stripped = head.rstrip(" \t")
+    if not stripped:
+        return True                       # marker at the very beginning
+    label = _LABEL_RE.search(stripped)
+    if label is not None:
+        # NB: strip spaces and tabs only. A newline IS the delimiter we are
+        # looking for, and rstripping it here made "…tests)\nEMPIRICAL EVIDENCE:"
+        # look mid-phrase — the label swallowed the very evidence of a break.
+        stripped = stripped[:label.start()].rstrip(" \t")
+        if not stripped:
+            return True
+    return stripped[-1] in _SECTION_DELIMS
+
+
+def claim_span(text: str) -> str:
+    """The asserting part of *text*: everything before a provenance marker that
+    introduces a trailing citation. Whole text when there is no such marker, when
+    the marker sits inside brackets (an aside, not a footnote), or when cutting
+    would leave less than :data:`_MIN_CLAIM_CHARS` of claim."""
+    if not text:
+        return ""
+    for m in _EVIDENCE_MARKER_RE.finditer(text):
+        if _inside_brackets(text, m.start()):
+            continue                      # parenthetical citation, not a tail
+        head = text[:m.start()]
+        if len(head.strip()) < _MIN_CLAIM_CHARS:
+            continue                      # the marker opened the sentence
+        if not _opens_a_section(head):
+            continue                      # mid-phrase use, not a footnote
+        return head
+    return text
+
+
 def extract_quantities(text: str) -> set[tuple[str, float]]:
-    """Extract ``(unit_norm, value)`` pairs from text; bare YEARS excluded."""
+    """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
+    (provenance after an evidence marker is not measured); bare YEARS excluded."""
     out: set[tuple[str, float]] = set()
-    for m in _QUANT_RE.finditer(text or ""):
+    for m in _QUANT_RE.finditer(claim_span(text)):
         num_s, unit_s = m.group(1), (m.group(2) or "")
-        if unit_s.lower() in _NON_UNIT_WORDS:
-            unit_s = ""  # a following function word is not a unit
+        _u = unit_s.lower()
+        if _u in _NON_UNIT_WORDS or (len(_u) > 3
+                                     and _u not in _FREQUENCY_UNITS
+                                     and _u.endswith(_ADVERB_SUFFIXES)):
+            unit_s = ""  # a following function word / adverb is not a unit
         if not unit_s and YEAR_RE.fullmatch(num_s):
             continue  # bare year → year path, not a quantity
         try:
@@ -164,13 +354,23 @@ def distinctive_tokens(text: str) -> set[str]:
 def conflict_from_parts(
     qa: set[tuple[str, float]], ca: set[str],
     qb: set[tuple[str, float]], cb: set[str],
+    *, ia: set[tuple[str, int]] | None = None,
+    ib: set[tuple[str, int]] | None = None,
 ) -> tuple[str, float, float] | None:
     """Core numeric-conflict check on PRE-COMPUTED quantities/content tokens.
 
     Lets a batch scan precompute ``(quantities, content_tokens)`` once per
     fact and reuse them across the O(n²) pair loop without re-parsing.
     Guards identical to :func:`numeric_conflict`.
+
+    ``ia``/``ib`` are the pre-computed :func:`event_indices`. When both sides
+    index the same KIND with different numbers they are different subjects, and
+    no shared unit makes them comparable — pass them and the pair is refused
+    before any value is compared. Optional so existing batch callers keep
+    working; :func:`numeric_conflict` always supplies them.
     """
+    if ia and ib and _indices_disjoint(ia, ib):
+        return None  # different subject: "fatto 3" vs "fatto 5"
     if not qa or not qb:
         return None
     units_a = {u for (u, _v) in qa if u}
@@ -180,7 +380,7 @@ def conflict_from_parts(
     if not (da & db):
         return None  # unrelated subject
     if contrasting_attrs(ca, cb):
-        return None  # different attribute
+        return None  # different attribute (kept: catches pairs that share words)
     for (ua, va) in qa:
         if not ua:
             continue  # bare unitless number → too ambiguous
@@ -235,6 +435,7 @@ def numeric_conflict(
     return conflict_from_parts(
         extract_quantities(text_a), content_tokens(text_a),
         extract_quantities(text_b), content_tokens(text_b),
+        ia=event_indices(text_a), ib=event_indices(text_b),
     )
 
 
@@ -477,35 +678,176 @@ def lexical_conflict(text_a: str, text_b: str) -> tuple[str, str] | None:
 # supersedes nor contradicts the other. Calendar dates (March, 2025-03-06) are
 # deliberately excluded — "launches in March" -> "launches in September" is one
 # VALUE moving, which the evolution path must keep superseding.
+#: Words whose following number IDENTIFIES rather than MEASURES. "45 ms" is a
+#: measure — a different value is the same thing having changed. "issue 42" is an
+#: identifier — a different value is a DIFFERENT thing, and no other quantity in
+#: the sentence can make the two statements comparable.
+#:
+#: 2026-07-25 — extended from diary kinds (day/week/cycle…) to entity names, in
+#: both languages, and to the ``#42`` spelling. Before this, "il fatto 3 ha 500
+#: righe" and "il fatto 5 ha 200 righe" were declared a conflict: the shared unit
+#: was 'righe' and the distinctive words matched, so the judge read one subject
+#: with a changed value, while the indices 3 and 5 say they are two subjects.
+#: Masking the offending function words (the earlier cure) treated the symptom;
+#: this is the distinction the detector was missing.
 _EVENT_INDEX_RE = re.compile(
     r"\b(day|night|week|month|quarter|sprint|round|session|meeting|"
-    r"iteration|cycle|episode|phase|step|attempt|run|note|entry|item|log|chapter|part|lesson|task)\s+(\d{1,4})\b",
+    r"iteration|cycle|episode|phase|step|attempt|run|note|entry|item|log|"
+    r"chapter|part|lesson|task|"
+    # entity identifiers — EN
+    r"issue|ticket|bug|pr|line|port|record|fact|project|commit|batch|slot|"
+    r"row|column|page|version|build|job|worker|shard|partition|"
+    # entity identifiers — IT
+    r"fatto|riga|colonna|porta|progetto|punto|nota|capitolo|paragrafo|"
+    r"pagina|ciclo|fase|passo|tentativo|elemento|scheda|turno|lotto"
+    # `\s*(?:#\s*)?` e NON `\s*#?\s*`: la seconda forma ha due quantificatori di
+    # spazio separati da un opzionale, quindi su una corsa di spazi il motore
+    # prova ogni divisione fra i due e degrada col QUADRATO dell'input —
+    # misurato 4031 ms su 16000 spazi, e questo modulo legge il testo dei fatti
+    # scritti dall'utente. Qui gli spazi dopo il cancelletto esistono solo se il
+    # cancelletto c'e': nessuna ambiguita', crescita lineare, stesse forme
+    # riconosciute. Segnalato da CodeQL (py/polynomial-redos) su una PR.
+    r")\s*(?:#\s*)?(\d{1,6})\b",
     re.IGNORECASE,
 )
 
 
+#: Alphanumeric CODES: an alphabetic prefix glued to digits — A000030 (OEIS),
+#: CVE2024, ABC123. The prefix is the kind, the digits the index, so two codes
+#: with the same prefix and different numbers are different things.
+#:
+#: A commit SHA must NOT match (every fact citing one would become its own
+#: subject): the trailing ``\b`` after the digits rejects "a64d252", because the
+#: letters resume. Same for versions like "v1" — at least two digits are needed.
+_ALNUM_CODE_RE = re.compile(r"\b([A-Za-z]{1,6})(\d{2,})\b")
+
+
+#: The POSITIONAL rule, which no list of kinds can replace: a word followed by a
+#: BARE number indexes something ("message 0", "issue 42", "porta 8080"), while a
+#: number followed by a unit measures it ("7883 test", "45 ms"). The named lists
+#: above stay for the kinds worth treating specially (progression), but this is
+#: what covers the open vocabulary.
+#:
+#: Why it exists: a suite test proved the closed list could not hold. Of 9
+#: distinct facts — "sends message 0/1/2", "stores profile 0/1/2", "computes rate
+#: 0/1/2" — SEVEN were retired, because message/profile/rate were not listed.
+#: A vocabulary cannot be enumerated; a position can be read.
+#: Stessa cura anti-ReDoS di _EVENT_INDEX_RE, e per lo stesso motivo misurato.
+_GENERIC_INDEX_RE = re.compile(
+    r"\b([A-Za-z][A-Za-z_-]{2,})\s*(?:#\s*)?(\d{1,6})\b")
+
+
+def _bare_numbers(text: str) -> set[str]:
+    """Numbers in *text* that carry NO unit — the ones eligible to be indices.
+    Reads the same extractor the measure path uses, so the two can never disagree
+    about which numbers are measures."""
+    return {f"{v:g}" for (u, v) in extract_quantities(text) if not u}
+
+
 def event_indices(text: str) -> set[tuple[str, int]]:
-    """``(kind, n)`` ordinal event indices in *text* ("day 4" -> ("day", 4))."""
-    return {(m.group(1).lower(), int(m.group(2)))
-            for m in _EVENT_INDEX_RE.finditer(text or "")}
+    """``(kind, n)`` indices in the CLAIM part of *text*: ordinals ("day 4" ->
+    ("day", 4)), entity identifiers ("issue #42" -> ("issue", 42)), alphanumeric
+    codes ("A000030" -> ("a", 30)) and the positional rule — any word followed by
+    a bare number ("message 0" -> ("message", 0)).
+
+    Reads :func:`claim_span`, not the whole text, for the same reason quantities
+    do: an identifier in the PROVENANCE names the check, not the subject. Caught
+    by a null-control test — "la suite conta 7883 test | evidence: pytest run
+    12345" against the same claim proved by "run 99999" was read as two different
+    subjects, so a real conflict on the claim went undetected.
+    """
+    span = claim_span(text)
+    out = {(m.group(1).lower(), int(m.group(2)))
+           for m in _EVENT_INDEX_RE.finditer(span)}
+    out |= {(m.group(1).lower(), int(m.group(2)))
+            for m in _ALNUM_CODE_RE.finditer(span)}
+    # positional rule, gated on the number being BARE: "message 0" indexes,
+    # "conta 7883 test" measures and must stay a measure
+    bare = _bare_numbers(text)
+    out |= {(m.group(1).lower(), int(m.group(2)))
+            for m in _GENERIC_INDEX_RE.finditer(span)
+            if f"{float(m.group(2)):g}" in bare}
+    return out
+
+
+#: Kinds whose number marks a STAGE of one thing, not one thing among many.
+#: "version 2" is the same module later; "issue 43" is another issue. Treating the
+#: first group as identifiers lost legitimate retirements — counterexample from an
+#: adversarial review (glm-5.2, 2026-07-25), confirmed by running it:
+#:   "issue 42, fase 1: bug aperto"  vs  "issue 42, fase 2: bug chiuso"
+#:   "version 1: latenza 45 ms"      vs  "version 2: latenza 200 ms"
+#: read as different subjects, so the stale value stayed. These kinds are still
+#: EXTRACTED (a caller may want them) but they never make two subjects.
+_PROGRESSION_KINDS = frozenset({
+    "version", "build", "phase", "fase", "step", "passo", "cycle", "ciclo",
+    "iteration", "attempt", "tentativo", "round", "turno", "part", "parte",
+})
+
+
+def _indices_disjoint(ea: set[tuple[str, int]],
+                      eb: set[tuple[str, int]]) -> bool:
+    """Core of :func:`distinct_event_indices` on PRE-COMPUTED index sets, so the
+    numeric path can reuse it without re-parsing the text.
+
+    Progression kinds are skipped: a different stage number is the same subject
+    moving on, and letting it claim "different subjects" hid real evolutions.
+    """
+    if not ea or not eb:
+        return False
+    # Compare the index SETS, do not hunt for a shared kind. Hunting was the
+    # bigger hole and only strumenting the write path found it: with different
+    # kinds the loop never ran, so the guard answered "not different subjects" —
+    # the opposite of the truth. Measured: one fact about "email/message 0"
+    # retired THREE about "tax/rate 0/1/2".
+    ia = {(k, n) for (k, n) in ea if k not in _PROGRESSION_KINDS}
+    ib = {(k, n) for (k, n) in eb if k not in _PROGRESSION_KINDS}
+    if ia and ib and ia != ib:
+        return True
+    shared = ({k for (k, _n) in ea} & {k for (k, _n) in eb}) - _PROGRESSION_KINDS
+    for k in shared:
+        na = {n for (kk, n) in ea if kk == k}
+        nb = {n for (kk, n) in eb if kk == k}
+        # DIFFERENT index sets = different subjects. Two earlier criteria were
+        # both too strict, each failing on a real case from the corpus:
+        #   * "disjoint intersection" missed statements sharing a common term —
+        #     the OEIS relations "A000030 - A000045" and "A000032 - A000045" both
+        #     cite A000045, so the sets intersect while 30 and 32 say plainly
+        #     that the subjects differ;
+        #   * "each side has an exclusive index" then missed the SUBSET case —
+        #     a relation over {A000032, A000045} against one over {A000045}.
+        # Equality is the honest test: same indices = same subject (so "fatto 3
+        # ha 500 righe" vs "fatto 3 ha 200 righe" stays a real conflict), any
+        # difference = another thing being talked about.
+        if na != nb:
+            return True  # same kind, different indices -> different things
+    return False
+
+
+def indexed_vs_unindexed(text_a: str, text_b: str) -> bool:
+    """True when ONE statement names indexed subjects and the other names none.
+
+    A specific statement and a generic one have no subject in common to
+    contradict. Found by dogfooding 2026-07-25: the service note "a stray note
+    that is not a relation" SUPERSEDED a verified relation
+    "OEIS verified relation: +2*A000217(n) -A002378(n) = 0" — the NLI judge read
+    the negation ("is NOT a relation" vs "verified relation") as a contradiction,
+    and same-source + later time turned it into a retirement.
+
+    Scope note for whoever wires this: it is a PRECISION guard on a model's
+    verdict, not on the deterministic detectors — same call as the reference
+    guard after the adversarial review. On the deterministic path a concrete
+    clash (same unit, different value) stands on its own evidence.
+    """
+    ia, ib = event_indices(text_a), event_indices(text_b)
+    return bool(ia) != bool(ib)
 
 
 def distinct_event_indices(text_a: str, text_b: str) -> bool:
-    """True when the two statements index DIFFERENT events of the same kind
-    ("On day 4 ..." vs "On day 5 ..."): distinct diary entries, not an
-    evolution and not a contradiction. False when either carries no event
-    index, or the shared kind has the same index."""
-    ea, eb = event_indices(text_a), event_indices(text_b)
-    if not ea or not eb:
-        return False
-    kinds_a = {k for (k, _n) in ea}
-    kinds_b = {k for (k, _n) in eb}
-    for k in kinds_a & kinds_b:
-        na = {n for (kk, n) in ea if kk == k}
-        nb = {n for (kk, n) in eb if kk == k}
-        if na and nb and not (na & nb):
-            return True  # same kind, disjoint indices -> different events
-    return False
+    """True when the two statements index DIFFERENT things of the same kind
+    ("On day 4 ..." vs "On day 5 ...", "issue 42" vs "issue 43"): distinct
+    subjects, not an evolution and not a contradiction. False when either
+    carries no index, or the shared kind has the same index."""
+    return _indices_disjoint(event_indices(text_a), event_indices(text_b))
 
 
 __all__ = [
@@ -526,4 +868,5 @@ __all__ = [
     "lexical_conflict",
     "event_indices",
     "distinct_event_indices",
+    "indexed_vs_unindexed",
 ]

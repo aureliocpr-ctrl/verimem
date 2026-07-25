@@ -481,6 +481,7 @@ def heal_contradictions(
     memory: SemanticMemory,
     store: ContradictionStore | None = None,
     *,
+    principal: str,
     limit: int = 200,
 ) -> dict[str, list[str]]:
     """Self-healing pass over ALREADY-detected contradictions.
@@ -534,6 +535,7 @@ def heal_contradictions(
         res = memory.auto_supersede_on_contradiction(
             winner.id,
             [loser.id],
+            principal=principal,
             reason=(
                 f"heal_contradictions: {c.kind} clash on shared topic, "
                 f"lower-trust fact superseded by higher-trust"

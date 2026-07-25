@@ -2,6 +2,186 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — 0.8 line
+
+### Added
+- **`verimem/diversify.py` — MMR selection for deep-then-compress retrieval
+  (WS2, NOT yet wired into `recall`).** Measured on the five LoCoMo multi-hop
+  questions we get wrong, prediction stated before the result: k=30 (today's
+  default) 1/5 · k=100 raw 2/5 · k=100 then MMR-30 **3/5** — better than both,
+  with the same number of chunks handed to the model as the first. Both halves
+  carry weight: depth brings in evidence k=30 never sees (a gold element at
+  rank 77), compression makes it usable (raw k=100 fails where 30 diversified
+  chunks succeed — too much context is a problem too). Caveats stated: n=5 and
+  they are the KNOWN failures, so this is a probe on selected cases, not a
+  bench; the judge is the model that answers; λ=0.7 is untuned. The wiring
+  needs all three recall paths (cache/legacy/cold — asymmetries between them
+  are audit findings here) plus a deeper candidate pool, and waits on a
+  full-bench measurement. Default will stay OFF regardless: the product's real
+  recall shows 7.0% top-30 redundancy against 77.5% on the conversational
+  bench, so on a corpus of distinct propositions there is nothing to compress.
+  **The direction is SHELVED pending better evidence** — glm-5.2 and
+  deepseek-v4-pro, independently, on the numbers above: the n=5 is selection on
+  the dependent variable (those five are the questions that already failed, and
+  "going deeper finds deeper things" is tautological), the Wilson intervals for
+  1/5 and 3/5 overlap almost entirely, and there is zero data on collateral
+  damage over the 124 questions currently answered correctly — one regression
+  there cancels the +2. Worse for the direction: MMR penalises chunks similar
+  to those already picked, while TEMPORAL questions (our largest failure
+  category, 10 errors) need chunks that are semantically near-identical but
+  temporally distinct — MMR would treat Monday and Friday as redundant, and may
+  also raise false abstentions on "list all" queries by starving the model of
+  citable items. Both reviewers put the same unpulled lever first: the CE
+  rerank is 94% of recall latency and its marginal accuracy contribution has
+  never been measured. That is the next experiment, not this one.
+- **Evidence-before-belief: the independence rule (WS1, P0 cycle 2).** Cycle 1
+  recorded WHO writes (`facts.writer_principal`) and WHO indexes
+  (`meta.indexed_by`); this cycle asks the only question those stamps exist
+  for. Cited evidence counts as INDEPENDENT iff its author is known, differs
+  from the claimant, and BOTH sit on channels that authenticate. The last
+  conjunct is what survived adversarial review: checking only the author's
+  channel let poison indexed over the unauthenticated MCP surface be cited by
+  an SDK writer as "independent", and checking only the claimant's let an
+  unauthenticated writer launder itself through someone else's document.
+  Contested provenance (versions of one source disagreeing about their
+  stamper) yields no author — a re-ingest is how one relabels a document's
+  voucher. **Default OFF**: the verdict rides the receipt as
+  `P0_INDEPENDENCE-observe` and the outcome is byte-identical;
+  `ENGRAM_P0_INDEPENDENCE=1` makes an L1-ONLY escalation advisory instead of
+  quarantine, keeping the original warnings visible. It can never touch L3
+  (contradiction) or L4 (grounding): an outside witness dissolves no
+  contradiction and supplies no entailment. Declared cost: MCP writers
+  (always `mcp:unbound`) do not benefit until MCP clients carry a bound
+  identity.
+- **Content-bound receipts (D5 / task #44).** The provenance verifier answered
+  resolvability — does `file:<path>:<line>` point at a long-enough file? —
+  and nothing recorded what the line SAID. Each cited line is now hashed at
+  write time into the adjudication receipt, and verification reports `ok`,
+  `moved` (the same text elsewhere: an insertion above the citation is the
+  ordinary case), `changed`, or `unresolvable`. `moved` requires a
+  distinctive line — `pass` or `OK` occurs everywhere, and reporting it as
+  survival is reassurance, not evidence. A `file:` ref that could not be read
+  is recorded as `unresolved` rather than silently omitted, so the absence of
+  a pin can no longer be mistaken for a pre-feature row. The pins ride INSIDE
+  the hash chain (a pin an editor can rewrite is not evidence) but join the
+  chained payload only when non-empty, so every row written before the
+  feature still verifies — adding the field unconditionally would have raised
+  a tamper alarm on intact data.
+- **Chunk provenance.** `DocumentIndex` — the tier `hippo_document_index_file`
+  actually calls, and the poison-then-cite vector the design review named —
+  never passed a principal to the snapshot, so documents entering through the
+  indexer landed unsigned and the independence rule could never speak about
+  them. `index_document`/`index_file` now take one, store it on the snapshot
+  and on every chunk, and `search()` hits carry `indexed_by`. The MCP tool
+  stamps the server's identity, never a tool argument. `hippo_record_episode`
+  key_facts accept `verified_by`; those refs previously went nowhere.
+- **Review-queue backpressure.** A write that JOINS the quarantine backlog now
+  reports how deep it is (`ENGRAM_REVIEW_QUEUE_MAX`, default 500, `0` = off).
+  Admitted writes are never annotated. Known limit, stated in the module: with
+  no persisted per-fact quarantine reason the depth counts the whole backlog,
+  so an L1 flood can mask an L3 contradiction.
+
+### Fixed
+- **A fusion hit no longer reports a similarity nobody measured.** Graph- and
+  lexical-only candidates entered the result with `sim=0.0` — a placeholder
+  justified, in `ppr_seed`, by "the CE-rerank downstream re-scores them". The
+  2026-06-14 fix moved the fusion to run AFTER the rerank, so that re-scoring
+  never happens and the placeholder reached callers, indistinguishable from a
+  measured zero. Found by dogfooding on a real 10k-fact store: 7 of 40 results
+  carried it, and 0 of 40 with the fusion off. The similarity is computable, so
+  it is now computed — the query is encoded once, lazily, and each candidate is
+  scored against its stored embedding, on the same scale as the dense hits. A
+  consumer filtering by score no longer silently drops exactly what the fusion
+  contributed. `fuse_dense_and_ppr` takes an optional `score_extra`; without it
+  the behaviour is byte-identical, so no existing caller changes.
+- **MCP clients can no longer weaken the write gate from tool args.** The
+  shared-server MCP surface accepted `validate="off"` (anti-confab gate
+  never runs) and `force_persist=true` (overrides a downgrade/reject
+  verdict) from ANY client — a remote gate-off. These weakening knobs are
+  now honoured only when the operator opts in via
+  `VERIMEM_MCP_TRUST_GATE_KNOBS=1`; otherwise they are neutralized to the
+  safe defaults and the response reports `gate_knobs_denied` (on the
+  success AND reject paths — observable, never silent). Strengthening
+  values (`validate="full"`, `gate_mode="reject"`) always pass; the same
+  trust rule as `writer_principal`: tool args never set policy. A refused
+  `validate="off"` falls back to the OPERATOR's own default (re-reading
+  `ENGRAM_VALIDATE_DEFAULT`), not to a handler-chosen constant — pinning it
+  to `"fast"` would still have let an untrusted client downgrade a
+  full-level operator out of the L3 contradiction checks.
+
+### Added
+- **The episodic store is audited too (tamper-evidence WS, step 3).** The
+  step-1 chain covered the facts store and honestly declared episodic
+  deletes out of scope; they no longer are. Every destructive op on
+  `episodes.db` — `delete` (its traces and causal edges included),
+  `delete_by_task_text`, `clear`, the sleep cycle's `decay_prune`, and the
+  episode-telemetry backlog mover — appends one hash-chained
+  `audit_mutations` row **inside that DB**, in the same transaction,
+  fail-closed, with a keyword-only mandatory `principal`. The chain
+  primitives are reused verbatim (they were connection-agnostic by
+  construction); a new `decay` action separates policy-driven expiry from
+  a caller's delete, one row per pruned episode — a bulk wipe summarised as
+  nothing is exactly the untracked-deletion class this workstream closes.
+  Surfaces stamp their own identity (`system:decay`, `system:dedup`,
+  `system:agent-reset`, MCP `forget`, `cli:local`);
+  `EpisodicMemory.audit_verify()/audit_head()` mirror the facts API.
+  Declared derived-data exceptions (unchanged, same class as
+  `_cascade_delete_refs`): `gc_orphan_causal_edges` and `episodes_undo_log`
+  pruning.
+- **Anchor receipt v2 covers all three chains.** `verimem audit anchor`
+  and `verify --anchor` gain `--episodes-db` (auto-discovered beside the
+  store) and bind the episodic chain alongside mutations and adjudications.
+  Versioning is non-breaking and honest: a payload without episodic state
+  is emitted as a byte-identical v1 (an SDK client with no episodic store
+  keeps producing verifiable receipts), `verify_anchor` checks exactly the
+  chains its version covers, and a live chain an older receipt does NOT
+  cover yields a **non-fatal note** ("re-anchor") — never a silent pass,
+  never a hard failure on an honest old receipt. `version` lives inside the
+  signed canonical payload, so a v2 receipt cannot verify as v1. Documented
+  limitation: tampering only an uncovered chain while presenting the old
+  receipt yields ok+note — the same operational verify-the-newest contract
+  as replay, uncloseable by an older signature.
+- **Signed external anchor over BOTH audit chains (tamper-evidence WS,
+  step 2).** `verimem audit anchor [--db] [--out]` emits a receipt —
+  {ts, mutations_head+rows, adjudications_head+rows, ed25519 signature
+  under the operator's external `VERIMEM_AUDIT_SIGNING_KEY`, never stored
+  by verimem} — to archive off-box; `verimem audit verify --anchor FILE`
+  then detects what an in-DB check cannot: full-chain rewrite and
+  tail-truncate+reinsert (the two declared step-1 blind spots). The
+  signature covers the canonical receipt payload with a domain prefix
+  (`verimem-audit-anchor-v1`), binding chain identity + counts + ts —
+  a bare-head signature was cross-chain confusable, so
+  `Memory.audit_head_signed` is now deprecated in favour of
+  `Memory.audit_anchor()/audit_verify_anchor()`. Replay of an OLD receipt
+  against a chain truncated to that exact older state is a documented
+  operational limit (verify against your newest receipt), not a
+  pretended cryptographic guarantee. Implemented by a delegated
+  Claude Opus 4.8 security cycle (TDD, 15 tests); verified independently
+  end-to-end via CLI: anchor → intact (exit 0) → tampered row →
+  "TAMPERED: mutations" (exit 1). Every destructive
+  operation on the facts store — delete / GDPR purge / forget / supersede /
+  reset / rollback-restore — now appends one hash-chained row to
+  `audit_mutations` **inside the same SQLite transaction** as the mutation
+  (fail-closed: if the audit row cannot be written, the mutation rolls back
+  with it). The chain records the ACTION only ({ts, principal, action,
+  resource_id, detail, outcome}) — never content nor a content hash, so GDPR
+  Art.17 erasure stays real. `verimem audit verify` recomputes the chain and
+  exits 1 at the first tampered row; `SemanticMemory.audit_verify()/
+  audit_head()` expose the same via the SDK. Design forged against two
+  independent adversarial reviews (GLM-5.2 + deepseek, two rounds); the
+  stale-snapshot fork claim was empirically refuted (WAL BUSY_SNAPSHOT) and
+  anti-fork holds under a 4-thread concurrent-delete stress. Declared limits
+  (this cycle): tail truncation / full rewrite need the off-box anchored head
+  (signing primitives already in `tamper_evidence.py`; wiring is a later
+  cycle); episodic-store deletes and read/access logging are later cycles.
+- **BREAKING (internal API): `principal` is mandatory on the destructive
+  core.** `SemanticMemory.delete / delete_with_undo / supersede /
+  supersede_chain / auto_supersede_on_contradiction / clear` and
+  `heal_contradictions` now require a keyword-only `principal` (raise
+  without). Public surfaces are unchanged and stamp their own identity
+  server-side (`sdk:local`, `gw:<tenant>`, MCP principal, `cli:local`);
+  background jobs declare `system:reconcile|cleanup|heal|agent-reset`.
+
 ## [0.7.0] - 2026-07-22
 
 > First PyPI release since **0.5.0**. The **0.6.0** line below was an internal

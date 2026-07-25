@@ -129,7 +129,7 @@ def dedup_episodes(
                 skipped_cap = len(losers_total) - applied
                 break
             try:
-                if memory.delete(lid):
+                if memory.delete(lid, principal="system:dedup"):
                     applied += 1
             except Exception:
                 # Singola failure non blocca il batch.

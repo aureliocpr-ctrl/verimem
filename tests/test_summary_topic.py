@@ -168,7 +168,7 @@ class TestLineageEpisodes:
 
 class TestSupersessionChains:
     def test_excludes_superseded_by_default(self, populated):
-        populated.supersede("x_a_1", "x_a_3", reason="x_a_3 obsoletes x_a_1")
+        populated.supersede("x_a_1", "x_a_3", principal="test:suite", reason="x_a_3 obsoletes x_a_1")
         result = populated.summary_topic("project/x/A")
         assert result["n_total"] == 3   # raw count incl. superseded
         assert result["n_live"] == 2
@@ -178,7 +178,7 @@ class TestSupersessionChains:
         assert "x_a_3" in ids_in_facts
 
     def test_include_superseded_returns_all(self, populated):
-        populated.supersede("x_a_1", "x_a_3", reason="X")
+        populated.supersede("x_a_1", "x_a_3", principal="test:suite", reason="X")
         result = populated.summary_topic(
             "project/x/A", include_superseded=True,
         )
@@ -188,8 +188,8 @@ class TestSupersessionChains:
 
     def test_chain_payload_a_to_b_to_c(self, populated):
         # x_a_1 -> x_a_2 -> x_a_3 (chain of 3)
-        populated.supersede("x_a_1", "x_a_2", reason="step 1")
-        populated.supersede("x_a_2", "x_a_3", reason="step 2")
+        populated.supersede("x_a_1", "x_a_2", principal="test:suite", reason="step 1")
+        populated.supersede("x_a_2", "x_a_3", principal="test:suite", reason="step 2")
         result = populated.summary_topic("project/x/A")
         chains = result["supersession_chains"]
         # Expect at least one chain anchored at x_a_1 leading to x_a_3

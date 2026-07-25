@@ -16,11 +16,46 @@ observation-only; it decides a LABEL, it does not mutate anything.
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from .source_trust import canonical_source
 
-__all__ = ["canonical_source_of", "is_same_source", "classify_write_relation"]
+__all__ = ["canonical_source_of", "is_same_source", "classify_write_relation",
+           "references_fact"]
+
+#: A fact id as written in prose: 12 hex chars, on its own token boundary.
+#: Shorter ids are refused outright — a 3-char "id" appears by chance and would
+#: turn every write into a reference, which ends supersession instead of
+#: guarding it.
+_MIN_ID_LEN = 8
+
+
+def references_fact(new_text: Any, old_id: Any) -> bool:
+    """True when the new write NAMES the stored fact's id.
+
+    Found by dogfooding, 2026-07-25, on my own writes. The memory protocol says
+    to accompany a long fact with a short "lure" so semantic recall can find it;
+    the lure named the fact's id, the judge read the pair as a contradiction and
+    the lure SUPERSEDED the fact it existed to make findable. Verified: recall
+    returned the lure and not the 2993-char detail, so the lure became a pointer
+    to something the store would no longer hand back — the very failure this
+    product exists to prevent.
+
+    A lexical or NLI judge cannot tell "see X" from "X is wrong", so this does
+    not try: naming an id makes the pair AMBIGUOUS, and on ambiguity the caller
+    keeps both. Losing a true fact is irreversible, keeping two is not — the
+    same asymmetry :func:`quantity_match.numeric_conflict` states as "a false
+    conflict downgrades a true fact, the opposite of the trust we sell".
+    Lineage still records which came later.
+    """
+    if not new_text or not old_id:
+        return False
+    fid = str(old_id).strip()
+    if len(fid) < _MIN_ID_LEN:
+        return False
+    return re.search(rf"(?<![0-9A-Za-z]){re.escape(fid)}(?![0-9A-Za-z])",
+                     str(new_text), re.IGNORECASE) is not None
 
 
 def canonical_source_of(fact: Any) -> str:

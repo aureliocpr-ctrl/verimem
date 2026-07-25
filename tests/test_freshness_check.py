@@ -116,7 +116,7 @@ class TestStaleDetection:
     def test_already_superseded_facts_skip(self, aged_corpus):
         from verimem.freshness_check import facts_freshness_check
         # Manually supersede old_3 so it shouldn't appear as stale
-        aged_corpus.supersede("old_3", "fresh_1", reason="manual chain")
+        aged_corpus.supersede("old_3", "fresh_1", principal="test:suite", reason="manual chain")
         r = facts_freshness_check(
             aged_corpus, "project/x/*", threshold_days=30,
         )

@@ -83,11 +83,17 @@ PROMPTS = [
 
 
 def _run_claude(prompt: str, timeout_s: int = 120) -> tuple[str, float, dict]:
-    """Spawn `claude -p` silently, return (stdout, latency_s, parsed_json_or_empty)."""
+    """Spawn `claude -p` silently, return (stdout, latency_s, parsed_json_or_empty).
+
+    The model is explicit on purpose: the headless CLI does not inherit the
+    calling session's model, and an A/B whose two arms silently ran on the CLI
+    default measures the default, not the change (2026-07-25).
+    """
     t0 = time.perf_counter()
     try:
         proc = subprocess.run(
-            ["claude", "-p", prompt, "--output-format", "json"],
+            ["claude", "-p", prompt, "--output-format", "json",
+             "--model", os.environ.get("BENCH_CLAUDE_MODEL", "claude-opus-4-8")],
             capture_output=True,
             timeout=timeout_s,
             text=True,

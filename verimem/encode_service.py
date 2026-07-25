@@ -357,6 +357,76 @@ def _read_lock_owner(path: Path) -> int:
 _LOCK_STEAL_GRACE_S = 0.25
 _LOCK_VERIFY_DELAY_S = 0.10
 
+#: Quanto tempo un proprietario VIVO puo' tenere il lock senza essersi ancora
+#: annunciato. Un daemon appena partito sta caricando il modello e rubargli il
+#: lock creerebbe la corsa a due daemon che il lock esiste per impedire. Oltre
+#: questa soglia, invece, "vivo" non basta piu'.
+#:
+#: 600 s, e il valore e' il compromesso, non una stima. La prima versione usava
+#: 120 s = 4x il cold-load misurato (26-34 s), e un worker del critic gate ha
+#: mostrato che era una REGRESSIONE introdotta da questo stesso fix: quel numero
+#: descrive il load a cache HuggingFace CALDA, mentre al PRIMO avvio il daemon
+#: deve SCARICARE il modello (~1 GB), operazione normale che supera i 120 s. Il
+#: lock e' scritto una volta e mai rinfrescato, quindi la sua eta' cresce durante
+#: il download: a t=180 s un altro processo avrebbe visto "vivo, oltre la grazia,
+#: non serve" e avrebbe rubato il lock a un daemon perfettamente sano, facendo
+#: caricare il modello a due processi insieme.
+#:
+#: Un heartbeat che rinfresca l'mtime durante il caricamento risolverebbe il
+#: caso lento ma reintrodurrebbe quello di partenza — due revisioni esterne
+#: indipendenti l'hanno detto: uno zombie che si tiene giovane non viene mai
+#: sostituito, ed e' esattamente il PID 51776 che ha tenuto spenta la semantica
+#: per un'ora e quaranta. Non essendoci un segnale di progresso da distinguere
+#: "sta scaricando" da "e' incastrato", si sposta la soglia invece di fingere di
+#: eliminare il compromesso: 10 minuti coprono un primo download reale, e uno
+#: zombie vero costa 10 minuti invece che per sempre.
+_ZOMBIE_GRACE_S = 600.0
+
+#: Timeout del probe che decide un FURTO di lock, deliberatamente piu' lungo di
+#: quello informativo (0.4 s): un falso "non serve" crea due daemon col modello
+#: in RAM, mentre l'attesa in piu' la paga solo chi sta per rubare.
+_ZOMBIE_PROBE_TIMEOUT_S = 2.0
+
+
+def _owner_is_zombie(path: Path) -> bool:
+    """True se il proprietario del lock e' vivo ma non sta SERVENDO.
+
+    Misurato il 2026-07-25: un daemon (PID 51776, 322 MB = modello mai
+    caricato) e' rimasto vivo un'ora e quaranta senza mai scrivere il file di
+    discovery. ``acquire_daemon_lock`` guardava solo se il proprietario fosse
+    vivo, quindi ogni daemon successivo usciva in silenzio, NESSUN daemon ha mai
+    servito, e ogni recall e' degradato a ricerca per parole chiave senza
+    dichiararlo. Vivo non e' la domanda giusta: la domanda e' se serve.
+
+    In dubbio NON si ruba (un lock illeggibile, o dentro la grazia, resta del
+    proprietario): l'errore di rubare crea due daemon che caricano il modello
+    insieme, che e' peggio del guasto che si sta curando. Limite dichiarato: un
+    daemon sano ma troppo occupato per accettare una connessione entro il
+    timeout di ``daemon_usable`` verrebbe letto come zombie; l'accept su
+    loopback resta veloce anche sotto carico, quindi il caso e' teorico ma non
+    impossibile.
+    """
+    try:
+        eta = time.time() - path.stat().st_mtime
+    except OSError:
+        return False
+    # Un mtime nel FUTURO (salto d'orologio all'indietro, NTP) dava eta'
+    # negativa e quindi grazia infinita: lo zombie sarebbe diventato permanente
+    # al primo aggiustamento dell'ora. Sollevato da due revisioni indipendenti.
+    # Un orologio che va indietro non e' una prova di gioventu': si guarda il
+    # valore assoluto, cosi' "impossibile" non diventa "eternamente giovane".
+    if abs(eta) <= _ZOMBIE_GRACE_S:
+        return False        # ha ancora diritto al suo warmup
+    # Probe PAZIENTE, non quello informativo da 0.4 s. Il presupposto delle due
+    # revisioni — "un daemon occupato fallisce il probe" — e' sbagliato:
+    # daemon_usable fa connect+close e il server ha listen(16), quindi su
+    # loopback il kernel completa l'handshake anche mentre l'applicazione e'
+    # occupata. Ma l'ASIMMETRIA che invocavano e' reale: se ci si sbaglia
+    # nascono due daemon col modello in RAM, mentre l'attesa in piu' la paga
+    # solo chi sta per rubare, cioe' un caso raro. Dove sbagliare costa caro si
+    # aspetta di piu'.
+    return not daemon_usable(timeout=_ZOMBIE_PROBE_TIMEOUT_S)
+
 
 def acquire_daemon_lock(lock_path: Path | None = None) -> bool:
     """Atomically claim the one-daemon-per-machine lock.
@@ -392,7 +462,7 @@ def acquire_daemon_lock(lock_path: Path | None = None) -> bool:
             owner = _read_lock_owner(path)
         if owner == os.getpid():
             return True
-        if owner and _pid_alive(owner):
+        if owner and _pid_alive(owner) and not _owner_is_zombie(path):
             return False
         # dead (or persistently empty) owner → steal
         try:
@@ -490,10 +560,29 @@ def ensure_running() -> bool:
     # Not usable but a discovery file may linger from a dead/wrong daemon — remove
     # it so clients stop fast-failing against a dead port while a fresh daemon
     # warms (the new daemon rewrites discovery once it is up).
-    try:
-        DISCOVERY_PATH.unlink()
-    except OSError:
-        pass
+    #
+    # NOT IF THE DAEMON STILL ANSWERS (2026-07-25). `daemon_usable` uses a 0.4 s
+    # probe, so it says False for a LIVE daemon that merely missed it, and
+    # removing the file then makes a healthy daemon — model already resident —
+    # invisible to every client. That is strictly worse than the stale file this
+    # cleanup exists for: a stale file costs one failed connect, a hidden daemon
+    # costs every client the 26 s in-process cold-load. Observed on the real
+    # machine right after the lock fix: a daemon holding 1385 MB and owning the
+    # lock, with no discovery file, unusable until the 8 h idle timeout.
+    #
+    # The test is the PORT, not the pid. The first version of this asked whether
+    # the pid in the file was alive, and CI caught it on POSIX: the suite's
+    # existing test writes `{"pid": 1}` to mean "dead owner", and pid 1 is init —
+    # always alive — so a genuinely stale file was being protected. A recycled
+    # pid would have been protected forever too. A healthy daemon accepts a
+    # connection; a recycled pid does not. Same patient probe used for the lock
+    # steal, and for the same reason: where being wrong is expensive, wait
+    # longer.
+    if not is_reachable(timeout=_ZOMBIE_PROBE_TIMEOUT_S):
+        try:
+            DISCOVERY_PATH.unlink()
+        except OSError:
+            pass
     try:
         if (_SPAWN_LOCK_PATH.exists()
                 and time.time() - _SPAWN_LOCK_PATH.stat().st_mtime < _SPAWN_COOLDOWN_S):

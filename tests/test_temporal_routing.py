@@ -74,7 +74,7 @@ def test_sdk_auto_routes_per_query(tmp_path) -> None:
     mem.semantic.store(Fact(id="milano", topic="user/home",
                             proposition="User lives in Milan",
                             asserted_at=now - 10 * day), embed="sync")
-    mem.semantic.supersede("roma", "milano", reason="moved")
+    mem.semantic.supersede("roma", "milano", principal="test:suite", reason="moved")
 
     temporal = mem.search("When did the user move to Milan?", k=3,
                           with_history="auto")

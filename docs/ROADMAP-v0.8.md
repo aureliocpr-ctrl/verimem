@@ -68,10 +68,71 @@ Il write-gate deve smettere di trattare "non abbastanza provato" come "malevolo"
 4. D15: certificare banda LLM-judge + NLI auto (docs, critic, sycophancy re-cert).
 
 ### WS2 — RETRIEVAL WAR (salire nel gruppo di testa senza tradire il moat)
+
+> **DIAGNOSI FATTA 2026-07-25** (fact `779e356667fd`). Numeri di partenza
+> corretti: LongMemEval-s recall@5 **0.8745** (n=500) — il target 0.85 era
+> **già superato**, il `0.790` che circolava era un sotto-campione. Il gap
+> vero è **LoCoMo 0.8267** (n=150, `qa_locomo_strict`), concentrato in
+> cat2-temporal (10 err/26 dom) e cat1-multi-hop (5/15).
+>
+> **Il 46% dei fail sono ASTENSIONI, non errori**: il moat regge, manca il
+> recupero. Sui 5 multi-hop, tutti sono recupero incompleto, mai invenzione.
+>
+> **Il vincolo è la PROFONDITÀ del recall.** 13/17 elementi gold erano già nel
+> top-30 (giudice con citazione obbligatoria) — ma i 4 mancanti affondano 3
+> risposte su 5, perché basta un elemento assente per invalidare l'intera
+> risposta. A k=100 tutti e 4 compaiono, ai rank 54-80.
+>
+> **Tensione da cui nasce il fix**: alzare k porta dentro l'evidenza ma
+> peggiora l'aggregazione (già a k=30 il modello perde elementi a rank 20-30).
+> Né k=30 né k=100 grezzo. La direzione indicata è *recuperare in profondità e
+> poi comprimere* (selezione diversificata).
+>
+> **Due predizioni mie cadute**, registrate perché non si ripetano: (a) il
+> dedup del contesto avrebbe migliorato ≥2 risposte → peggiorate (soglia 0.90
+> su chunk con similarità mediana 0.92 riduce 30 chunk a 2: non deduplica,
+> rade al suolo); (b) un prompt "enumera prima di rispondere" avrebbe
+> migliorato ≥2 → invariato (su `6:5` trova 8 giochi e sbaglia comunque:
+> lì il problema è l'ATTRIBUZIONE, non il trovare).
+>
+> **DIREZIONE SOSPESA su parere avversariale convergente 2/2** (glm-5.2 +
+> deepseek-v4-pro, 2026-07-25). `verimem/diversify.py` esiste ed è testato ma
+> **non cablato**, e resta così. Le obiezioni che ho verificato e accettato:
+> l'n=5 è *selection on the dependent variable* (quelle 5 domande sono quelle
+> che già fallivano — "andare più in profondità trova cose più in profondità" è
+> tautologico); gli intervalli di Wilson di 1/5 e 3/5 si sovrappongono quasi
+> del tutto; **zero dati sul danno collaterale** sulle 124 domande oggi
+> corrette, e un solo regresso lì annulla il +2; MMR penalizza i chunk simili a
+> quelli già scelti, ma le domande **temporali** (la nostra categoria peggiore
+> per volume) vogliono chunk semanticamente quasi identici e temporalmente
+> distinti — MMR tratterebbe lunedì e venerdì come ridondanti.
+>
+> **Il giudice fabbrica parte del fallimento** (2/2): il protocollo
+> "insieme completo" trasforma un elemento mancante nel fallimento dell'intera
+> risposta. Con credito parziale, multi-hop passerebbe da 0.667 a ~0.76+ senza
+> toccare una riga di codice. Già visto in concreto su `4:238` (gold "be a
+> leader", predetto "A leader (and stay true)" → bocciato).
+>
+> **La leva mai tirata, indicata prima da entrambi**: il CE-rerank è il 94%
+> della latenza del recall e **non abbiamo mai misurato il suo contributo di
+> accuratezza**. Se vale poco, si liberano ~2.5s da spendere su profondità,
+> query expansion o una seconda passata di fusion. È l'esperimento successivo.
+>
+> **Domanda aperta a costo quasi zero, in corso**: le 12 astensioni avevano il
+> gold già nel contesto? Se sì per più di metà, il collo di bottiglia è la
+> **calibrazione** e non il retrieval, e WS2 cambia priorità.
+
+> **Scoping verificato**: la ridondanza del contesto è **77.5%** sul bench
+> (`window=1` = finestre sovrapposte) ma **7.0%** sul recall reale del
+> prodotto. Un fix di compressione va quindi **opt-in e misurato, mai
+> default** — su corpora non conversazionali non serve. Misurare prima ha
+> evitato di implementare MMR nel recall per curare un problema che il
+> prodotto non ha.
+
 Metodo diagnosi-first, NIENTE fix alla cieca:
-1. **Diagnosi per-categoria dei fail** su LoCoMo (0.813) e LongMemEval (0.790):
-   temporal? multi-hop? abstention-over-triggered? adversarial? Ogni categoria
-   con conteggio fail e causa dominante.
+1. ~~**Diagnosi per-categoria dei fail** su LoCoMo e LongMemEval~~ **FATTA**
+   (sopra). Da rifare per cat2-temporal, che ha il numero maggiore di errori
+   assoluti (10) e 6 astensioni: la diagnosi 2026-07-25 ha coperto cat1.
 2. Fix mirati per categoria (candidati, da validare in diagnosi: temporal
    reasoning sul retrieve, session-summary index, entity-KG live sul recall
    path, re-ranking, k-adattivo). Un fix per volta, A/B contro baseline.

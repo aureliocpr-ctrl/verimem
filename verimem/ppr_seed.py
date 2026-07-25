@@ -15,6 +15,9 @@ cosine. Pure given the store; the RRF fusion + CE-rerank wiring is a SEPARATE st
 """
 from __future__ import annotations
 
+import os
+import re
+import sys
 from collections.abc import Callable
 from typing import Any
 
@@ -28,6 +31,107 @@ MIN_CORPUS_FOR_HUB_GUARD = 50
 #: hub non-discriminante (es. l'entità-utente linkata a ogni fatto): il suo PPR
 #: è quasi uniforme e in RRF sfratta dense hit validi con rumore.
 HUB_FACT_SHARE = 0.2
+
+
+#: Token candidati di una query: alfanumerici Unicode di almeno 3 caratteri
+#: (include le lettere accentate italiane, esclude la punteggiatura).
+_QUERY_TOKEN_RE = re.compile(r"[0-9A-Za-z_À-ɏ]{3,}")
+
+
+def _token_resolve_enabled() -> bool:
+    """In lettura, chi decide se un token e' un'entita' e' lo STORE.
+
+    ``extract_entities_lite`` e' tarato per l'INGEST, dove un falso positivo
+    sporca il grafo per sempre: e' deliberatamente conservativo e non ha alcun
+    pattern per un nome proprio minuscolo di una parola sola. Misurato sul
+    corpus reale il 25/07: il grafo aveva 8005 entita e 81477 archi, e il
+    seeding restituiva 0 id su OGNI query — il segnale-grafo era spento in
+    produzione, e non perche' il PPR non scali (103 ms a caldo) ma perche' non
+    partiva.
+
+    In lettura l'economia e' rovesciata: un token che non e' un'entita' viene
+    scartato da ``get_by_name`` e non entra da nessuna parte, mentre un falso
+    negativo spegne il segnale. Lo store e' anche l'arbitro piu' affidabile —
+    risolve verimem/Verimem/VERIMEM allo stesso id e non conosce 'cortex'. Il
+    tetto ``max_seeds`` e l'hub-guard restano gli stessi per entrambe le vie.
+    ENGRAM_PPR_SEED_RESOLVE=0 torna al solo estrattore.
+
+    Due precisazioni che una revisione avversariale (glm-5.2 + deepseek-v4-pro,
+    convergenti) ha imposto, entrambe verificate sul corpus reale:
+
+    * "in lettura un falso positivo costa zero" e' FALSO in questo prodotto. Non
+      sporca il grafo — quello era il punto — ma costa lo slot che avrebbe preso
+      un fatto vero e, poiche' ``_bump_verified`` e' default-ON, il fatto
+      restituito viene RINGIOVANITO: il read-path scrive stato, quindi l'errore
+      sopravvive alla query. Mitigato dal dense-floor (la testa CE-reranked e'
+      intoccabile) e dalla soglia di refresh (si scrive solo oltre mezza
+      half-life), non annullato.
+    * il grafo CONTIENE falsi positivi dell'ingest: misurate 16 parole comuni su
+      21 provate ('test' 69 fatti, 'fatto' 24, 'stato' 19, 'cosa', 'esiste',
+      'nota'…), tutte sotto la soglia hub e quindi ammesse come seed. Non sono
+      distinguibili per conteggio da un nome vero ('verimem' ha 6 fatti, 'punto'
+      ne ha 6), quindi una soglia le taglierebbe insieme ai nomi. Per questo i
+      seed risolti sono ordinati per SPECIFICITA' (vedi
+      ``_seeds_resolved_from_tokens``): i generici finiscono in coda e sono i
+      primi a cadere sotto il tetto, senza che nessuna lista debba nominarli."""
+    return os.environ.get("ENGRAM_PPR_SEED_RESOLVE", "on").strip().lower() not in (
+        "0", "off", "false", "no",
+    )
+
+
+def _seeds_resolved_from_tokens(
+    query: str, entity_store: Any, *, already: set[str], budget: int,
+) -> list[str]:
+    """I token della query che lo STORE riconosce come entita' (max ``budget``),
+    i piu' DISCRIMINANTI per primi.
+
+    Le parole grammaticali non vengono nemmeno interrogate: in una query in
+    italiano sono la maggioranza dei token e ogni lookup e' una query SQL.
+
+    L'ordinamento per specificita' (meno fatti linkati = piu' discriminante)
+    risponde a un'obiezione avversariale verificata: il grafo contiene falsi
+    positivi dell'ingest ('test' 69 fatti, 'stato' 19, 'cosa' 9) che passano la
+    soglia hub e, sotto un tetto, potrebbero prendere il posto di un'entita'
+    rara e preziosa. Nell'ordine di apparizione nella query cadrebbero i token
+    finali, cioe' a caso; per specificita' cadono i meno informativi. Misurato:
+    sul corpus reale nessuna delle 10 query di riferimento satura il tetto (max
+    7 su 8), quindi oggi l'ordine non cambia il risultato — serve a non
+    dipendere dalla fortuna quando lo saturera'. Un'entita' di cui lo store non
+    sa dire il conteggio va in coda, mai scartata.
+
+    Fail-soft come il resto del modulo: un errore su un token lo salta.
+    """
+    from .entity_extract_lite import _STOPWORDS
+
+    candidati: list[tuple[int, int, str]] = []      # (n_fatti, ordine, entity_id)
+    visti = set(already)
+    for i, tok in enumerate(_QUERY_TOKEN_RE.findall(query or "")):
+        low = tok.lower()
+        if low in _STOPWORDS or low.isdigit():
+            continue
+        try:
+            ent = entity_store.get_by_name(tok)
+        except Exception:  # noqa: BLE001 — un token illeggibile non blocca il resto
+            continue
+        eid = getattr(ent, "id", None) if ent is not None else None
+        if eid and eid not in visti:
+            visti.add(eid)
+            candidati.append((_fact_count_of(entity_store, eid), i, eid))
+    candidati.sort()                                # specificita', poi ordine
+    return [eid for _, _, eid in candidati[:budget]]
+
+
+def _fact_count_of(entity_store: Any, entity_id: str) -> int:
+    """Quanti fatti linka un'entita'. Uno store che non sa rispondere manda il
+    seed in CODA (sys.maxsize), non lo elimina: l'ignoranza sul conteggio non e'
+    una prova di irrilevanza."""
+    try:
+        total, per_entity = entity_store.fact_counts([entity_id])
+        if total:
+            return int(per_entity.get(entity_id, 0))
+    except Exception:  # noqa: BLE001 — best-effort come l'hub-guard
+        pass
+    return sys.maxsize
 
 
 def _fact_id_of(x: Any) -> str | None:
@@ -70,6 +174,14 @@ def ppr_seeded_fact_ids(
                 seeds.append(ent_id)
             if len(seeds) >= max_seeds:
                 break
+        # I seed dell'estrattore restano DAVANTI (multiparola, piu' specifici):
+        # la via per risoluzione estende, non sostituisce, e occupa solo i posti
+        # liberi sotto max_seeds — lo stesso principio del dense-floor nella
+        # fusione. Vedi _token_resolve_enabled per il perche'.
+        if len(seeds) < max_seeds and _token_resolve_enabled():
+            seeds.extend(_seeds_resolved_from_tokens(
+                query, entity_store, already=seen,
+                budget=max_seeds - len(seeds)))
         if not seeds:
             return []
         # Hub-guard: su corpus non-piccoli scarta i seed non-discriminanti
@@ -105,6 +217,7 @@ def fuse_dense_and_ppr(
     *,
     k: float = 60.0,
     protect_top: int = 0,
+    score_extra: Callable[[Any], float] | None = None,
 ) -> list[tuple[Any, float]]:
     """RRF-fuse a dense ``(Fact, sim)`` hit list with N extra fact-id ranklists
     (entity-PPR, BM25-lexical, …) — pure, no SemanticMemory dependency.
@@ -136,6 +249,7 @@ def fuse_dense_and_ppr(
                       for lst in extra]
         fused_tail = fuse_dense_and_ppr(
             list(dense_hits[protect_top:]), tail_extra, fetch_fact, k=k,
+            score_extra=score_extra,
         )
         return head + [(f, s) for f, s in fused_tail
                        if getattr(f, "id", None) not in head_ids]
@@ -159,7 +273,22 @@ def fuse_dense_and_ppr(
             except Exception:  # noqa: BLE001 — one bad fetch must not break recall
                 f = None
             if f is not None:
-                out.append((f, 0.0))
+                # A graph/lexical-only candidate has no cosine of its own. The
+                # historical placeholder was 0.0, on the assumption that the
+                # CE-rerank downstream would re-score it — but when that does
+                # not happen (CE over budget, CE off, or the candidate sits past
+                # the reranked head) the placeholder reaches the caller, who
+                # cannot tell "not measured" from "measured zero". Measured on
+                # the real store 2026-07-25: 7/40 results, and 0/40 with the
+                # fusion off. When a scorer is available the similarity is
+                # COMPUTED instead of guessed; without one nothing changes.
+                sim = 0.0
+                if score_extra is not None:
+                    try:
+                        sim = float(score_extra(f))
+                    except Exception:  # noqa: BLE001 — a receipt detail must never break recall
+                        sim = 0.0
+                out.append((f, sim))
                 seen.add(fid)
     # Defensive: keep any dense hit the fusion somehow dropped (id-less rows).
     for f, sim in dense_hits:

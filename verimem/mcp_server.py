@@ -3478,8 +3478,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "at handler-level — empty/missing entries are "
                             "silently skipped, not rejected), topic (str, "
                             "default ''), confidence (float 0..1, default "
-                            "0.9). Resilient: one bad entry does NOT abort "
-                            "the call, the episode is still committed."
+                            "0.9), verified_by (list of provenance refs, "
+                            "same shape as hippo_remember's — they reach "
+                            "the gate AND the stored fact). Resilient: one "
+                            "bad entry does NOT abort the call, the episode "
+                            "is still committed."
                         ),
                         "items": {"type": "object"},
                         "default": [],
@@ -7499,8 +7502,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="rejected_path")
                 return _err(_path_why)
             try:
+                # P0 ciclo 2: stamp WHO indexed. This tool is the
+                # poison-then-cite vector the design review named, so the
+                # identity is the SERVER's — never a tool argument.
                 res = DocumentIndex().index_file(
-                    path, source_id=arguments.get("source_id"))
+                    path, source_id=arguments.get("source_id"),
+                    principal=_MCP_PRINCIPAL)
             except FileNotFoundError:
                 _audit(name, arguments, outcome="not_found")
                 return _err(f"file not found: {path}")
@@ -7790,7 +7797,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if not eid:
                 _audit(name, arguments, outcome="rejected_empty")
                 return _err("empty episode_id")
-            ok = a.memory.delete(eid)
+            ok = a.memory.delete(eid, principal=_MCP_PRINCIPAL,
+                                 action="forget")
             if not ok:
                 _audit(name, arguments, outcome="not_found")
                 return _err(f"episode not found: {eid}")
@@ -8324,6 +8332,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     except (TypeError, ValueError):
                         fact_conf = 0.9
                     fact_conf = max(0.0, min(1.0, fact_conf))
+                    # P0 ciclo 2c: a key_fact may carry its own provenance.
+                    # It could not before — the refs were dropped on the floor,
+                    # so this path could neither be verified nor benefit from
+                    # the independence rule. Same shape as hippo_remember's.
+                    _kf_refs = [str(x).strip() for x
+                                in (kf.get("verified_by") or [])
+                                if str(x).strip()]
                     try:
                         # FIX (2026-06-14 audit save-path, gate_bypass): i
                         # key_facts scrivevano un Fact SALTANDO l'anti-confab
@@ -8336,12 +8351,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         # writer_role/meta_narrative ai default -> NESSUN
                         # trusted-hook bypass (i key_facts NON sono fidati).
                         from .anti_confab_gate import run_validation_gate as _rvg
+                        from .evidence_independence import LazyDocumentStore
                         _kf_gate = _rvg(
-                            proposition=prop, verified_by=[], topic=fact_topic,
+                            proposition=prop, verified_by=_kf_refs,
+                            topic=fact_topic,
                             agent=a,
                             repo_root=getattr(
                                 getattr(a, "semantic", None), "repo_root", None,
                             ),
+                            claimant=_MCP_PRINCIPAL,
+                            documents=LazyDocumentStore(),
                         )
                         if _kf_gate.action == "reject":
                             log.warning(
@@ -8353,6 +8372,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                             proposition=prop, topic=fact_topic,
                             confidence=fact_conf,
                             source_episodes=[ep.id],
+                            verified_by=_kf_refs,
                             status=(
                                 "quarantined"
                                 if _kf_gate.action == "downgrade"
@@ -11933,6 +11953,32 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _validate_kw = arguments.get("validate")
             _gate_mode_kw = arguments.get("gate_mode")
             _force_persist = bool(arguments.get("force_persist", False))
+            # 0.8 WS1 knob policy: the MCP surface is UNTRUSTED (shared
+            # server, args from any client), so the gate-WEAKENING knobs —
+            # validate="off" (gate never runs) and force_persist=True
+            # (overrides a downgrade/reject verdict) — are honoured only
+            # when the OPERATOR opted in via VERIMEM_MCP_TRUST_GATE_KNOBS.
+            # Otherwise they are neutralized and the response says so
+            # (gate_knobs_denied) — observable, never silent. Strengthening
+            # values (validate="full", gate_mode="reject") always pass;
+            # gate_mode cannot weaken (its two values are downgrade|reject,
+            # and downgrade IS the default). Same trust rule as
+            # writer_principal: tool args never set policy.
+            _knobs_denied: list[str] = []
+            if os.environ.get("VERIMEM_MCP_TRUST_GATE_KNOBS",
+                              "").strip().lower() not in ("1", "true",
+                                                          "yes", "on"):
+                if str(_validate_kw or "").strip().lower() == "off":
+                    _knobs_denied.append("validate=off")
+                    # Defer to the OPERATOR's default (None -> _resolve_level
+                    # reads ENGRAM_VALIDATE_DEFAULT), never a handler-chosen
+                    # constant: forcing "fast" still let an untrusted client
+                    # downgrade a full-level operator out of the L3
+                    # contradiction checks (critic counterexample on 4a37b09).
+                    _validate_kw = None
+                if _force_persist:
+                    _knobs_denied.append("force_persist")
+                    _force_persist = False
             # Cycle 2026-05-27 round 12 F-fix: trusted-hook bypass for
             # retrospective continuity facts. writer_role + meta_narrative
             # together skip L1.x detectors. Defense in depth: an attacker
@@ -11961,6 +12007,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # (a.wake.llm / LazyLLM) so no backend is built unless the check actually runs.
             _source = arguments.get("source")
             _grounding_llm = getattr(getattr(a, "wake", None), "llm", None)
+            # P0 ciclo 2c: the identity is the SERVER's (_MCP_PRINCIPAL), never
+            # a tool argument — same trust boundary as writer_principal. The
+            # document store is lazy: writes that never reach the independence
+            # question open no connection.
+            from .evidence_independence import LazyDocumentStore
             _gate = run_validation_gate(
                 proposition=proposition,
                 verified_by=verified_by,
@@ -11974,6 +12025,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 repo_root=_gate_repo_root,
                 source=_source,
                 grounding_llm=_grounding_llm,
+                claimant=_MCP_PRINCIPAL,
+                documents=LazyDocumentStore(),
             )
             _gate_warnings: list[dict[str, Any]] = list(_gate.warnings)
             if _gate.action == "reject":
@@ -11987,6 +12040,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "contradicting_fact_ids": list(
                         _gate.contradicting_fact_ids
                     ),
+                    # 0.8 WS1: a caller whose weakening knobs were refused
+                    # must see WHY the gate still fired (observability on
+                    # the reject path too, not only on success).
+                    "gate_knobs_denied": _knobs_denied,
                 })
             if _gate.action == "downgrade":
                 # Cycle 138: preserve audit but lower trust so default
@@ -12184,6 +12241,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     a.semantic.auto_supersede_on_contradiction(
                         fact.id,
                         list(_gate.contradicting_fact_ids),
+                        principal=_MCP_PRINCIPAL,
                         reason=(
                             "auto-supersede @ write: anti-confab gate L3 "
                             f"flagged contradiction (superseded by {fact.id})"
@@ -12206,7 +12264,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 for _old_id in _gate.supersede_fact_ids:
                     try:
                         a.semantic.supersede(
-                            _old_id, fact.id, reason="same-source evolution")
+                            _old_id, fact.id, principal=_MCP_PRINCIPAL,
+                            reason="same-source evolution")
                     except Exception as _exc:  # noqa: BLE001 — never break the write
                         # surface it (SDK parity): new admitted, old NOT retired =
                         # stale-beside-new, the state the feature prevents.
@@ -12281,6 +12340,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # (LLM or operator) sees what fired and can adjust the
                 # proposition / verified_by before retry.
                 "anti_confab_warnings": _gate_warnings,
+                # 0.8 WS1: which requested gate-weakening knobs were
+                # refused (empty when none / operator opted in).
+                "gate_knobs_denied": _knobs_denied,
             })
 
         if name == "hippo_facts_recall":
@@ -12626,7 +12688,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if _deny is not None:
                 _audit(name, arguments, outcome="rejected_cross_scope")
                 return _err(_deny)
-            ok = a.semantic.delete(fid)
+            ok = a.semantic.delete(fid, principal=_MCP_PRINCIPAL,
+                                   action="forget")
             if not ok:
                 _audit(name, arguments, outcome="not_found")
                 return _err(f"fact not found: {fid}")
@@ -12643,7 +12706,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if _deny is not None:
                 _audit(name, arguments, outcome="rejected_cross_scope")
                 return _err(_deny)
-            result = a.semantic.delete_with_undo(fid)
+            result = a.semantic.delete_with_undo(fid,
+                                                 principal=_MCP_PRINCIPAL)
             if not result["removed"]:
                 _audit(name, arguments, outcome="not_found")
                 return _ok(result)  # ok=True, removed=False, op_id=None
@@ -12687,7 +12751,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 })
             op_ids: list[str] = []
             for f in matched:
-                r = a.semantic.delete_with_undo(f.id)
+                r = a.semantic.delete_with_undo(f.id,
+                                                principal=_MCP_PRINCIPAL)
                 if r.get("op_id"):
                     op_ids.append(r["op_id"])
             _audit(name, arguments, outcome=f"forgot_n={len(op_ids)}")
@@ -12835,7 +12900,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 return _err("ids must be a list of >= 2 fact ids")
             try:
                 result = a.semantic.supersede_chain(
-                    [str(x) for x in ids], reason=reason, atomic=atomic,
+                    [str(x) for x in ids], principal=_MCP_PRINCIPAL,
+                    reason=reason, atomic=atomic,
                 )
             except SupersedeError as exc:
                 _audit(name, arguments, outcome="rejected_invalid")
@@ -12904,7 +12970,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="rejected_empty")
                 return _err("old_id and new_id are required")
             try:
-                result = a.semantic.supersede(old_id, new_id, reason=reason)
+                result = a.semantic.supersede(old_id, new_id,
+                                              principal=_MCP_PRINCIPAL,
+                                              reason=reason)
             except SupersedeError as exc:
                 _audit(name, arguments, outcome="rejected_invalid")
                 return _err(str(exc))
@@ -13005,7 +13073,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             limit = max(1, min(limit, 1000))
             store = ContradictionStore(a.semantic.db_path)
             try:
-                summary = heal_contradictions(a.semantic, store, limit=limit)
+                summary = heal_contradictions(a.semantic, store,
+                                              principal=_MCP_PRINCIPAL,
+                                              limit=limit)
             except Exception as exc:  # noqa: BLE001
                 _audit(name, arguments, outcome="error")
                 return _err(f"heal_contradictions crash: {exc}")
