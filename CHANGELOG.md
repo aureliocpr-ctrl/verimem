@@ -5,6 +5,21 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 ## [Unreleased] — 0.8 line
 
 ### Added
+- **`verimem/diversify.py` — MMR selection for deep-then-compress retrieval
+  (WS2, NOT yet wired into `recall`).** Measured on the five LoCoMo multi-hop
+  questions we get wrong, prediction stated before the result: k=30 (today's
+  default) 1/5 · k=100 raw 2/5 · k=100 then MMR-30 **3/5** — better than both,
+  with the same number of chunks handed to the model as the first. Both halves
+  carry weight: depth brings in evidence k=30 never sees (a gold element at
+  rank 77), compression makes it usable (raw k=100 fails where 30 diversified
+  chunks succeed — too much context is a problem too). Caveats stated: n=5 and
+  they are the KNOWN failures, so this is a probe on selected cases, not a
+  bench; the judge is the model that answers; λ=0.7 is untuned. The wiring
+  needs all three recall paths (cache/legacy/cold — asymmetries between them
+  are audit findings here) plus a deeper candidate pool, and waits on a
+  full-bench measurement. Default will stay OFF regardless: the product's real
+  recall shows 7.0% top-30 redundancy against 77.5% on the conversational
+  bench, so on a corpus of distinct propositions there is nothing to compress.
 - **Evidence-before-belief: the independence rule (WS1, P0 cycle 2).** Cycle 1
   recorded WHO writes (`facts.writer_principal`) and WHO indexes
   (`meta.indexed_by`); this cycle asks the only question those stamps exist
