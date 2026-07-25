@@ -477,6 +477,15 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
     conflicts: list[str] = []
     for cid in ids:
+        # NO reference guard on THIS path, deliberately. Adversarial review
+        # 2026-07-25 (glm-5.2 + deepseek-v4-pro, convergent 2/2): applying it here
+        # broke the legitimate case — "CORREZIONE del fatto X: il valore e' 200"
+        # against a stored "il valore e' 100" names X, so the guard kept the stale
+        # 100 alive beside its own correction. This path's conflicts are found by
+        # the DETERMINISTIC detectors (year-disjoint, numeric, version, date,
+        # negation); when one of those fires there IS a concrete clash and citing
+        # an id must not excuse it. The guard belongs only where the judgement is
+        # a model's opinion — see the semantic path below.
         try:
             old = sm.get(cid)
         except Exception:  # noqa: BLE001 — a lookup miss is treated as a conflict
@@ -1137,7 +1146,10 @@ def run_validation_gate(
                 _sib_by_id = {getattr(f, "id", None): f for f in _sibs}
                 _observe = _sc_mode == "observe"
                 from .semantic import _STATUS_RANK
-                from .supersession_policy import classify_write_relation
+                from .supersession_policy import (
+                    classify_write_relation,
+                    references_fact,
+                )
                 _supersede_on = _supersede_same_source_on()
                 _new_rank = _STATUS_RANK.get(status or "model_claim", 2)
                 for _w in detect_semantic_conflicts(_new, _sibs, _judge):
@@ -1156,12 +1168,41 @@ def run_validation_gate(
                     # no supersession, no quarantine, no observe noise.
                     # (Found live: 12 diary adds collapsed under auto-NLI and
                     # count() dropped below ground truth.)
+                    _rel_pre = ("conflict" if _old is None
+                                else classify_write_relation(_new, _old))
                     from .quantity_match import distinct_event_indices
                     if (_old is not None and distinct_event_indices(
                             proposition, getattr(_old, "proposition", ""))):
                         continue
-                    _rel = ("conflict" if _old is None
-                            else classify_write_relation(_new, _old))
+                    # REFERENCE GUARD (2026-07-25, found by dogfooding on my own
+                    # writes): a write that NAMES the stored fact's id is citing
+                    # it. The memory protocol's own advice — pair a long fact with
+                    # a short lure so recall can find it — had the lure SUPERSEDE
+                    # the fact, leaving a pointer to something recall would no
+                    # longer return. Same treatment as the diary guard: skip, keep
+                    # both, let lineage record the order.
+                    #
+                    # SCOPE, narrowed after an adversarial review that was right
+                    # (glm-5.2 + deepseek-v4-pro, convergent 2/2). The guard lives
+                    # ONLY here, where the verdict is a model's OPINION, and only
+                    # for a same-source 'evolution' — never on the deterministic
+                    # lexical path, and never on a cross-source conflict:
+                    #   * a numeric/version/date clash is a concrete fact, and
+                    #     citing an id must not excuse it (their case: "CORREZIONE
+                    #     del fatto X: il valore e' 200" must still retire the
+                    #     stored 100 — the first version of this guard kept it);
+                    #   * restricting to 'evolution' keeps a DIFFERENT source from
+                    #     shielding someone else's fact by naming its id.
+                    # Residual, documented not hidden: a hostile writer on the
+                    # SAME source can quote an id to mute the NLI verdict on that
+                    # one pair. That writer can already do worse — this module
+                    # states the shared-tenant risk at _supersede_same_source_on —
+                    # and the alternative (an NLI opinion silently deleting a true
+                    # fact) is the error this store exists to avoid.
+                    if (_oid and _rel_pre == "evolution"
+                            and references_fact(proposition, _oid)):
+                        continue
+                    _rel = _rel_pre
                     if _observe:
                         # observe: surface but do NOT act, so the FP rate is measurable.
                         if _rel == "evolution":

@@ -44,11 +44,60 @@ _QUANT_RE = re.compile(
 # Function words that can FOLLOW a number but are never units ("30 and 45",
 # "5 of 10"). Stripped to a bare (unitless) number, which the conflict check
 # then ignores.
+#
+# 2026-07-25 — the Italian ARTICULATED prepositions were missing, and they are
+# the commonest form in the language this store is actually used in. Cost of the
+# gap, measured by dogfooding: "issue #42 nel tracker" yielded unit 'nel',
+# "task 7 del piano" yielded 'del', so two DISTINCT facts read as same-unit
+# different-value — a conflict — and the same-source supersede then retired the
+# earlier one. Eight true facts out of nine dropped out of default recall.
+# That breaks the contract this module states in numeric_conflict: "precision
+# over recall — a false conflict downgrades a true fact, the opposite of the
+# trust we sell".
 _NON_UNIT_WORDS = frozenset({
     "and", "or", "to", "of", "in", "on", "at", "by", "for", "the", "an",
     "is", "are", "was", "were", "be", "per", "via", "with", "from", "but",
     "as", "that", "than", "then", "plus", "over", "into", "out", "more",
     "e", "o", "di", "da", "su", "con", "tra", "fra", "ed", "il", "la", "un",
+    # preposizioni articolate + articoli/pronomi che seguono un numero
+    "del", "dello", "della", "dei", "degli", "delle",
+    "nel", "nello", "nella", "nei", "negli", "nelle",
+    "al", "allo", "alla", "ai", "agli", "alle",
+    "dal", "dallo", "dalla", "dai", "dagli", "dalle",
+    "sul", "sullo", "sulla", "sui", "sugli", "sulle",
+    "col", "coi", "lo", "le", "gli", "uno", "una", "che", "non", "come",
+    "sono", "era", "erano", "ha", "hanno", "piu", "meno",
+})
+
+#: No real unit of measure ends in ``-ly`` (EN) or ``-mente`` (IT): ms, kg, min,
+#: h, entries, requests, tests… all fail this test. Two morphological rules
+#: replace an open-ended list of adverbs ("8080 locally", "1024 entries only",
+#: "porta 8080 localmente", "3 volte esattamente").
+#:
+#: ``-mente`` was MISSING in the first version of this fix and an adversarial
+#: review (glm-5.2, 2026-07-25) caught it: the rule covered English and left
+#: Italian — the language this store is actually written in — exactly as broken
+#: as before. Confirmed by running it: "porta 8080 localmente" yielded unit
+#: 'localmente', and two different ports still produced a conflict.
+#:
+#: Known cost, accepted: ``dal`` is both an Italian articulated preposition and
+#: the symbol for decalitre, so "50 dal di vino" loses its unit and becomes a
+#: bare number — no conflict is detected on decalitres. Same adversary raised it.
+#: The preposition is overwhelmingly the commoner reading in prose, and a missed
+#: conflict is the cheaper error here than a fabricated one.
+_ADVERB_SUFFIXES = ("ly", "mente")
+
+#: …except the FREQUENCY words, which really are units in the domains this store
+#: serves: "10 daily reports", "5000 yearly", "3 weekly backups". Raised by a
+#: second adversary (deepseek-v4-pro, 2026-07-25) and confirmed by running it —
+#: my ``-ly`` rule had turned a fabricated conflict into a systematically MISSED
+#: one: "10 daily reports" vs "50 daily reports" stopped conflicting at all.
+#: A blunt morphological rule needs this exception list; without it the fix for
+#: one error class quietly created another.
+_FREQUENCY_UNITS = frozenset({
+    "hourly", "daily", "nightly", "weekly", "biweekly", "fortnightly",
+    "monthly", "quarterly", "yearly", "annually",
+    "orario", "giornaliero", "settimanale", "mensile", "trimestrale", "annuale",
 })
 
 # Unit synonyms → canonical form so "200ms" and "500 milliseconds" compare
@@ -113,8 +162,11 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
     out: set[tuple[str, float]] = set()
     for m in _QUANT_RE.finditer(text or ""):
         num_s, unit_s = m.group(1), (m.group(2) or "")
-        if unit_s.lower() in _NON_UNIT_WORDS:
-            unit_s = ""  # a following function word is not a unit
+        _u = unit_s.lower()
+        if _u in _NON_UNIT_WORDS or (len(_u) > 3
+                                     and _u not in _FREQUENCY_UNITS
+                                     and _u.endswith(_ADVERB_SUFFIXES)):
+            unit_s = ""  # a following function word / adverb is not a unit
         if not unit_s and YEAR_RE.fullmatch(num_s):
             continue  # bare year → year path, not a quantity
         try:
