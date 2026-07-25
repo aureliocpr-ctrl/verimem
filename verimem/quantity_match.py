@@ -80,11 +80,17 @@ _NON_UNIT_WORDS = frozenset({
 #: as before. Confirmed by running it: "porta 8080 localmente" yielded unit
 #: 'localmente', and two different ports still produced a conflict.
 #:
-#: Known cost, accepted: ``dal`` is both an Italian articulated preposition and
-#: the symbol for decalitre, so "50 dal di vino" loses its unit and becomes a
-#: bare number — no conflict is detected on decalitres. Same adversary raised it.
-#: The preposition is overwhelmingly the commoner reading in prose, and a missed
-#: conflict is the cheaper error here than a fabricated one.
+#: Known cost, accepted: two words added above are ALSO unit symbols.
+#:   * ``dal`` — articulated preposition, and the symbol for decalitre (raised by
+#:     glm-5.2);
+#:   * ``ha`` — third person of "avere" ("il fatto 3 ha 500 righe"), and the
+#:     symbol for hectare (raised by the critic's counterexample worker).
+#: Both now yield a bare number, so no conflict is detected on decalitres or
+#: hectares. Deliberate: in the prose this store holds, the preposition and the
+#: verb are overwhelmingly the commoner reading, and leaving them out would
+#: FABRICATE conflicts ("il fatto 3 ha 500 righe" vs "il fatto 5 ha 200 righe").
+#: A missed conflict is the cheaper error here than an invented one — the same
+#: "precision over recall" trade-off this module states below.
 _ADVERB_SUFFIXES = ("ly", "mente")
 
 #: …except the FREQUENCY words, which really are units in the domains this store
@@ -157,10 +163,79 @@ def norm_unit(word: str) -> str:
     return w
 
 
+#: Markers after which the text stops asserting and starts citing PROVENANCE:
+#: how many samples, which run, which commit. Numbers there describe the check,
+#: not the claim.
+#:
+#: 2026-07-25, root cause of a real loss: the OEIS organism wrote each relation
+#: with its evidence inline —
+#:   "… = 0 | evidence: holds exactly at 199 common points (window n<=200)"
+#:   "… = 0 | evidence: holds exactly at 200 common points (window n<=200)"
+#: — so two DIFFERENT relations, checked over a different number of points, read
+#: as "same unit 'common', 199 vs 200" and the supersede retired the first. Of 9
+#: verified relations, 2 survived. Measured: dropping the text after 'evidence:'
+#: made the conflict disappear. Anyone writing "verified on 200 samples" into a
+#: fact was manufacturing conflicts with themselves.
+_EVIDENCE_MARKER_RE = re.compile(
+    r"\b(?:evidence|verified_by|verified|source|sources|ref|refs|citation|"
+    r"prova|prove|fonte|fonti|riferimento)\s*:",
+    re.IGNORECASE)
+
+
+#: A provenance marker only ends the claim if what follows is a TAIL. Measured on
+#: the live corpus the moment this was written: the first version cut 140 facts of
+#: 6293, discarding a median 67% of their text, because it fired on markers used
+#: INLINE inside a metadata block —
+#:   "RESEARCH FINDING [provisional, source: arxiv.org/… ] ProvSEEK (Aug 2025) …"
+#: where the real claim comes AFTER the bracket. That version kept the heading and
+#: threw the content away, hiding 97% of those facts from every detector. So the
+#: cut must leave a substantial claim standing; if it leaves crumbs, the marker
+#: was part of the sentence, not the start of its footnote.
+#: A claim shorter than this is not a claim — the marker opened the sentence
+#: ("fonte: il documento dichiara 45 ms"), so there is nothing to keep.
+_MIN_CLAIM_CHARS = 12
+_OPENERS, _CLOSERS = "([{", ")]}"
+
+
+def _inside_brackets(text: str, pos: int) -> bool:
+    """True when *pos* sits inside a bracket opened earlier and not yet closed.
+
+    This is the test that separates a footnote from an aside. A first version
+    asked instead whether ANY closer appeared after the marker, and that was
+    wrong twice over: it rejected "evidence: holds at 199 points (window n<=200)"
+    — where the parentheses open and close inside the tail — while the case it
+    meant to catch is the marker sitting INSIDE an open bracket.
+    """
+    depth = 0
+    for ch in text[:pos]:
+        if ch in _OPENERS:
+            depth += 1
+        elif ch in _CLOSERS:
+            depth = max(0, depth - 1)
+    return depth > 0
+
+
+def claim_span(text: str) -> str:
+    """The asserting part of *text*: everything before a provenance marker that
+    introduces a trailing citation. Whole text when there is no such marker, when
+    the marker sits inside brackets (an aside, not a footnote), or when cutting
+    would leave less than :data:`_MIN_CLAIM_CHARS` of claim."""
+    if not text:
+        return ""
+    for m in _EVIDENCE_MARKER_RE.finditer(text):
+        if _inside_brackets(text, m.start()):
+            continue                      # parenthetical citation, not a tail
+        head = text[:m.start()]
+        if len(head.strip()) >= _MIN_CLAIM_CHARS:
+            return head
+    return text
+
+
 def extract_quantities(text: str) -> set[tuple[str, float]]:
-    """Extract ``(unit_norm, value)`` pairs from text; bare YEARS excluded."""
+    """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
+    (provenance after an evidence marker is not measured); bare YEARS excluded."""
     out: set[tuple[str, float]] = set()
-    for m in _QUANT_RE.finditer(text or ""):
+    for m in _QUANT_RE.finditer(claim_span(text)):
         num_s, unit_s = m.group(1), (m.group(2) or "")
         _u = unit_s.lower()
         if _u in _NON_UNIT_WORDS or (len(_u) > 3
@@ -216,13 +291,23 @@ def distinctive_tokens(text: str) -> set[str]:
 def conflict_from_parts(
     qa: set[tuple[str, float]], ca: set[str],
     qb: set[tuple[str, float]], cb: set[str],
+    *, ia: set[tuple[str, int]] | None = None,
+    ib: set[tuple[str, int]] | None = None,
 ) -> tuple[str, float, float] | None:
     """Core numeric-conflict check on PRE-COMPUTED quantities/content tokens.
 
     Lets a batch scan precompute ``(quantities, content_tokens)`` once per
     fact and reuse them across the O(n²) pair loop without re-parsing.
     Guards identical to :func:`numeric_conflict`.
+
+    ``ia``/``ib`` are the pre-computed :func:`event_indices`. When both sides
+    index the same KIND with different numbers they are different subjects, and
+    no shared unit makes them comparable — pass them and the pair is refused
+    before any value is compared. Optional so existing batch callers keep
+    working; :func:`numeric_conflict` always supplies them.
     """
+    if ia and ib and _indices_disjoint(ia, ib):
+        return None  # different subject: "fatto 3" vs "fatto 5"
     if not qa or not qb:
         return None
     units_a = {u for (u, _v) in qa if u}
@@ -287,6 +372,7 @@ def numeric_conflict(
     return conflict_from_parts(
         extract_quantities(text_a), content_tokens(text_a),
         extract_quantities(text_b), content_tokens(text_b),
+        ia=event_indices(text_a), ib=event_indices(text_b),
     )
 
 
@@ -529,35 +615,112 @@ def lexical_conflict(text_a: str, text_b: str) -> tuple[str, str] | None:
 # supersedes nor contradicts the other. Calendar dates (March, 2025-03-06) are
 # deliberately excluded — "launches in March" -> "launches in September" is one
 # VALUE moving, which the evolution path must keep superseding.
+#: Words whose following number IDENTIFIES rather than MEASURES. "45 ms" is a
+#: measure — a different value is the same thing having changed. "issue 42" is an
+#: identifier — a different value is a DIFFERENT thing, and no other quantity in
+#: the sentence can make the two statements comparable.
+#:
+#: 2026-07-25 — extended from diary kinds (day/week/cycle…) to entity names, in
+#: both languages, and to the ``#42`` spelling. Before this, "il fatto 3 ha 500
+#: righe" and "il fatto 5 ha 200 righe" were declared a conflict: the shared unit
+#: was 'righe' and the distinctive words matched, so the judge read one subject
+#: with a changed value, while the indices 3 and 5 say they are two subjects.
+#: Masking the offending function words (the earlier cure) treated the symptom;
+#: this is the distinction the detector was missing.
 _EVENT_INDEX_RE = re.compile(
     r"\b(day|night|week|month|quarter|sprint|round|session|meeting|"
-    r"iteration|cycle|episode|phase|step|attempt|run|note|entry|item|log|chapter|part|lesson|task)\s+(\d{1,4})\b",
+    r"iteration|cycle|episode|phase|step|attempt|run|note|entry|item|log|"
+    r"chapter|part|lesson|task|"
+    # entity identifiers — EN
+    r"issue|ticket|bug|pr|line|port|record|fact|project|commit|batch|slot|"
+    r"row|column|page|version|build|job|worker|shard|partition|"
+    # entity identifiers — IT
+    r"fatto|riga|colonna|porta|progetto|punto|nota|capitolo|paragrafo|"
+    r"pagina|ciclo|fase|passo|tentativo|elemento|scheda|turno|lotto"
+    r")\s*#?\s*(\d{1,6})\b",
     re.IGNORECASE,
 )
 
 
+#: Alphanumeric CODES: an alphabetic prefix glued to digits — A000030 (OEIS),
+#: CVE2024, ABC123. The prefix is the kind, the digits the index, so two codes
+#: with the same prefix and different numbers are different things.
+#:
+#: A commit SHA must NOT match (every fact citing one would become its own
+#: subject): the trailing ``\b`` after the digits rejects "a64d252", because the
+#: letters resume. Same for versions like "v1" — at least two digits are needed.
+_ALNUM_CODE_RE = re.compile(r"\b([A-Za-z]{1,6})(\d{2,})\b")
+
+
 def event_indices(text: str) -> set[tuple[str, int]]:
-    """``(kind, n)`` ordinal event indices in *text* ("day 4" -> ("day", 4))."""
-    return {(m.group(1).lower(), int(m.group(2)))
-            for m in _EVENT_INDEX_RE.finditer(text or "")}
+    """``(kind, n)`` indices in the CLAIM part of *text*: ordinals ("day 4" ->
+    ("day", 4)), entity identifiers ("issue #42" -> ("issue", 42)) and
+    alphanumeric codes ("A000030" -> ("a", 30)).
+
+    Reads :func:`claim_span`, not the whole text, for the same reason quantities
+    do: an identifier in the PROVENANCE names the check, not the subject. Caught
+    by a null-control test — "la suite conta 7883 test | evidence: pytest run
+    12345" against the same claim proved by "run 99999" was read as two different
+    subjects, so a real conflict on the claim went undetected.
+    """
+    span = claim_span(text)
+    out = {(m.group(1).lower(), int(m.group(2)))
+           for m in _EVENT_INDEX_RE.finditer(span)}
+    out |= {(m.group(1).lower(), int(m.group(2)))
+            for m in _ALNUM_CODE_RE.finditer(span)}
+    return out
+
+
+def _indices_disjoint(ea: set[tuple[str, int]],
+                      eb: set[tuple[str, int]]) -> bool:
+    """Core of :func:`distinct_event_indices` on PRE-COMPUTED index sets, so the
+    numeric path can reuse it without re-parsing the text."""
+    if not ea or not eb:
+        return False
+    for k in {k for (k, _n) in ea} & {k for (k, _n) in eb}:
+        na = {n for (kk, n) in ea if kk == k}
+        nb = {n for (kk, n) in eb if kk == k}
+        # DIFFERENT index sets = different subjects. Two earlier criteria were
+        # both too strict, each failing on a real case from the corpus:
+        #   * "disjoint intersection" missed statements sharing a common term —
+        #     the OEIS relations "A000030 - A000045" and "A000032 - A000045" both
+        #     cite A000045, so the sets intersect while 30 and 32 say plainly
+        #     that the subjects differ;
+        #   * "each side has an exclusive index" then missed the SUBSET case —
+        #     a relation over {A000032, A000045} against one over {A000045}.
+        # Equality is the honest test: same indices = same subject (so "fatto 3
+        # ha 500 righe" vs "fatto 3 ha 200 righe" stays a real conflict), any
+        # difference = another thing being talked about.
+        if na != nb:
+            return True  # same kind, different indices -> different things
+    return False
+
+
+def indexed_vs_unindexed(text_a: str, text_b: str) -> bool:
+    """True when ONE statement names indexed subjects and the other names none.
+
+    A specific statement and a generic one have no subject in common to
+    contradict. Found by dogfooding 2026-07-25: the service note "a stray note
+    that is not a relation" SUPERSEDED a verified relation
+    "OEIS verified relation: +2*A000217(n) -A002378(n) = 0" — the NLI judge read
+    the negation ("is NOT a relation" vs "verified relation") as a contradiction,
+    and same-source + later time turned it into a retirement.
+
+    Scope note for whoever wires this: it is a PRECISION guard on a model's
+    verdict, not on the deterministic detectors — same call as the reference
+    guard after the adversarial review. On the deterministic path a concrete
+    clash (same unit, different value) stands on its own evidence.
+    """
+    ia, ib = event_indices(text_a), event_indices(text_b)
+    return bool(ia) != bool(ib)
 
 
 def distinct_event_indices(text_a: str, text_b: str) -> bool:
-    """True when the two statements index DIFFERENT events of the same kind
-    ("On day 4 ..." vs "On day 5 ..."): distinct diary entries, not an
-    evolution and not a contradiction. False when either carries no event
-    index, or the shared kind has the same index."""
-    ea, eb = event_indices(text_a), event_indices(text_b)
-    if not ea or not eb:
-        return False
-    kinds_a = {k for (k, _n) in ea}
-    kinds_b = {k for (k, _n) in eb}
-    for k in kinds_a & kinds_b:
-        na = {n for (kk, n) in ea if kk == k}
-        nb = {n for (kk, n) in eb if kk == k}
-        if na and nb and not (na & nb):
-            return True  # same kind, disjoint indices -> different events
-    return False
+    """True when the two statements index DIFFERENT things of the same kind
+    ("On day 4 ..." vs "On day 5 ...", "issue 42" vs "issue 43"): distinct
+    subjects, not an evolution and not a contradiction. False when either
+    carries no index, or the shared kind has the same index."""
+    return _indices_disjoint(event_indices(text_a), event_indices(text_b))
 
 
 __all__ = [
@@ -578,4 +741,5 @@ __all__ = [
     "lexical_conflict",
     "event_indices",
     "distinct_event_indices",
+    "indexed_vs_unindexed",
 ]

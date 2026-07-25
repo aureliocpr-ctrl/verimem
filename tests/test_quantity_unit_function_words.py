@@ -132,3 +132,22 @@ def test_frequency_words_are_real_units():
                             "7 weekly backups are kept") is not None
     # …e gli avverbi che NON sono frequenze restano fuori
     assert not {u for (u, _v) in extract_quantities("port 8080 locally") if u}
+
+
+def test_hectare_and_decalitre_are_the_documented_collisions():
+    """Due parole della lista sono anche simboli di unita': 'dal' (decalitro,
+    trovata da glm-5.2) e 'ha' (ettaro, trovata dal counterexample worker del
+    critic). Entrambe restano nella lista perche' in italiano la preposizione e
+    il verbo sono di gran lunga la lettura piu' frequente, e togliersele
+    FABBRICHEREBBE conflitti: 'il fatto 3 ha 500 righe' contro 'il fatto 5 ha
+    200 righe'. Il test fissa la scelta perche' sia una decisione documentata e
+    non una sorpresa per chi misura gli ettari."""
+    assert ("", 5.0) in extract_quantities("5 ha di terreno coltivato")
+    assert ("", 50.0) in extract_quantities("50 dal di vino nella cantina")
+    # e il caso che la scelta protegge: due soggetti numerati, nessun'altra
+    # unita' in gioco -> se 'ha' fosse unita' sarebbe un conflitto fabbricato.
+    # NB: il caso piu' difficile ("fatto 3 ha 500 righe" vs "fatto 5 ha 200
+    # righe", con un'unita' condivisa) NON e' piu' un limite: lo risolve la
+    # distinzione indice-di-entita' vs misura, in test_entity_index_not_measure.
+    assert numeric_conflict("il progetto 3 ha superato la revisione",
+                            "il progetto 5 ha superato la revisione") is None

@@ -1145,6 +1145,7 @@ def run_validation_gate(
                     _sibs = [s for s in _sibs if _keep(s)]
                 _sib_by_id = {getattr(f, "id", None): f for f in _sibs}
                 _observe = _sc_mode == "observe"
+                from .proof_evidence import both_machine_checked
                 from .semantic import _STATUS_RANK
                 from .supersession_policy import (
                     classify_write_relation,
@@ -1170,9 +1171,40 @@ def run_validation_gate(
                     # count() dropped below ground truth.)
                     _rel_pre = ("conflict" if _old is None
                                 else classify_write_relation(_new, _old))
-                    from .quantity_match import distinct_event_indices
+                    from .quantity_match import (
+                        distinct_event_indices,
+                        indexed_vs_unindexed,
+                    )
+                    _old_prop = getattr(_old, "proposition", "")
                     if (_old is not None and distinct_event_indices(
-                            proposition, getattr(_old, "proposition", ""))):
+                            proposition, _old_prop)):
+                        continue
+                    # SPECIFIC-vs-GENERIC GUARD (2026-07-25, dogfooding): one
+                    # statement names indexed subjects, the other names none, so
+                    # they have no subject in common to contradict. The case that
+                    # forced it: a service note "a stray note that is not a
+                    # relation" RETIRED a verified OEIS relation, because the NLI
+                    # read "is NOT a relation" against "verified relation" as a
+                    # contradiction. Precision guard on a model's opinion, like
+                    # the two above — the deterministic path keeps its verdicts.
+                    if (_old is not None
+                            and indexed_vs_unindexed(proposition, _old_prop)):
+                        continue
+                    # PROOF-BEATS-OPINION (2026-07-25, dogfooding). Both sides
+                    # carry machine-checkable evidence — the very kind L1.15
+                    # accepts as support for a "verified" claim — and the only
+                    # thing calling them contradictory is this NLI verdict. A
+                    # proof the gate can inspect outranks a cross-encoder's
+                    # opinion, so neither is retired. The case: 9 OEIS relations
+                    # verified by exact integer check, 2 survived, because two
+                    # DISTINCT true properties of the same sequences read as
+                    # "same subject, different numbers". Measured on that pair:
+                    # every deterministic detector returns None.
+                    # Scope: no status is promoted and nothing becomes immune —
+                    # a deterministic clash never reaches this code and still
+                    # retires the old value.
+                    if (_old is not None and both_machine_checked(
+                            verified_by, getattr(_old, "verified_by", None))):
                         continue
                     # REFERENCE GUARD (2026-07-25, found by dogfooding on my own
                     # writes): a write that NAMES the stored fact's id is citing
