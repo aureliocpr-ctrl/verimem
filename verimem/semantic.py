@@ -1844,11 +1844,26 @@ def _rerank_slot_lease_s() -> float:
     since skips are not overruns the breaker would never announce it either.
     Trading a loud failure for a silent one is the exact defect that hid the
     fusion overrun for six weeks. Env ENGRAM_RERANK_SLOT_LEASE_S, 0 disables.
+
+    600 s, e il numero e' il compromesso, non una stima. La prima versione
+    diceva 60 s, e il caricamento del cross-encoder MISURATO su questa macchina
+    costa 43,6 s: dentro il lease, ma a cache HuggingFace CALDA. Al primo avvio
+    il modello va SCARICATO, e allora il lease scadrebbe mentre il primo thread
+    sta ancora caricando — lo slot verrebbe requisito e un secondo thread
+    inizierebbe a caricare un'altra copia, cioe' esattamente la contesa che lo
+    slot esiste per impedire, su due copie del modello invece di una.
+
+    E' la stessa classe di errore che una revisione avversaria trovo' nella
+    grazia del lock del daemon (120 s tarati sul load a cache calda, corretti a
+    600 per coprire un primo download reale): un numero vero nel suo regime,
+    falso in quello che deve coprire. Qui e' stato preso prima che mordesse,
+    misurando il caricamento invece di assumerlo, e la soglia si allinea a
+    quella del daemon per la stessa ragione.
     """
     try:
-        return max(0.0, float(os.environ.get("ENGRAM_RERANK_SLOT_LEASE_S", "60")))
+        return max(0.0, float(os.environ.get("ENGRAM_RERANK_SLOT_LEASE_S", "600")))
     except ValueError:
-        return 60.0
+        return 600.0
 
 
 def _rerank_inflight_acquire() -> int:

@@ -195,6 +195,24 @@ def test_a_wedged_worker_loses_the_slot_after_the_lease(monkeypatch, caplog):
     sem._rerank_inflight_release(nuovo)
 
 
+def test_the_lease_covers_a_first_model_download():
+    """La soglia va confrontata con il caso PEGGIORE, non con quello misurato.
+
+    Il caricamento del cross-encoder costa 43,6 s su questa macchina — dentro i
+    60 s della prima versione, ma a cache HuggingFace CALDA. Al primo avvio il
+    modello va scaricato (~1 GB) e il lease scadrebbe mentre il primo thread sta
+    ancora caricando: lo slot requisito, un secondo thread a caricare un'altra
+    copia, cioe' la contesa che lo slot impedisce — su due modelli invece di uno.
+
+    E' la stessa classe di errore che una revisione avversaria trovo' nella
+    grazia del lock del daemon (120 s tarati a cache calda, portati a 600), e la
+    soglia si allinea a quella per la stessa ragione. Il test la pinna: se
+    qualcuno la riabbassa sotto il tempo di un download reale, lo dice."""
+    assert sem._rerank_slot_lease_s() >= 300, (
+        "il lease e' tornato sotto i cinque minuti: un primo download del "
+        "modello lo supera e due thread caricheranno due copie")
+
+
 def test_a_slow_predict_keeps_its_slot():
     """L'altro lato: la scadenza serve per chi e' INCASTRATO, non per chi e'
     lento. Con la scadenza di produzione (60 s) un predict da 2 s non perde
