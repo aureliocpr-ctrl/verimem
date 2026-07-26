@@ -72,7 +72,15 @@ that is fusion/recall territory).
 
 **Honest bounds:** the 10-word threshold is derived from ONE corpus (n=304,
 one user, GT = episode task-texts) — that is why it is an env knob, documented
-here, and falsifiable by a second corpus. The historical "+0.29 R@1 on
+here, and falsifiable by a second corpus. AUTO is an **aggregate** win, not a
+per-query dominance: of the 50 long queries the CE changed, **12 were improved
+and lose that under auto** — the segment nets −0.080 because the other 38 were
+harmed, so auto trades those 12 for the 38 it protects; a workload dominated
+by long CE-benefiting queries should force `ENGRAM_RECALL_RERANK=1`. And the
+word gate splits on whitespace: a long **unspaced CJK query counts as ~1 word**
+and still gets the CE — the gate is a Latin-script heuristic, declared as such.
+(Both limits surfaced by the adversarial review of ff8e8ad8, dissenting worker,
+matching the pre-declared attack predictions.) The historical "+0.29 R@1 on
 LongMemEval" that circulated as the CE's justification has **no surviving
 artifact** (pre-v0.3.0 history is squashed); the reproducible basis for the
 06-10 flip is the n=120 paraphrase bench above, which the auto default keeps
