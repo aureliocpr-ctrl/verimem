@@ -250,6 +250,16 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # opt-in/opt-out esplicito con monkeypatch DENTRO il test (gira DOPO questa
     # fixture autouse); il test del default vero fa delenv esplicito.
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")
+    # 2026-07-26: il rerank ha uno SLOT unico per processo (un solo predict del
+    # cross-encoder alla volta, vedi _RERANK_SLOT), e lo slot e' stato globale
+    # che sopravvive al test. Un test che lascia appeso un worker finto lo tiene
+    # occupato, e ogni test successivo salta il proprio rerank — passando, o
+    # fallendo, per una ragione che non ha niente a che vedere con cio' che
+    # misura. Trovato cosi': test_rerank_still_runs_once_ce_is_loaded passava da
+    # solo e falliva dopo il test che lo precede nello stesso file. Va azzerato
+    # come ogni altro stato di processo, non lasciato alla cortesia dei test.
+    from verimem import semantic as _sem
+    _sem._rerank_breaker_reset()
     # CYCLE #25: isola HIPPO_DATA_DIR a una tmp_path per-test.
     # CONFIG è frozen dataclass costruito a import-time → monkeypatch
     # diretto fallisce con FrozenInstanceError. Use object.__setattr__

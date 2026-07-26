@@ -12,12 +12,37 @@ All tests inject a fake scorer — no model, no RAM.
 """
 from __future__ import annotations
 
+import threading
 import time
 
 import pytest
 
 from verimem import semantic
 from verimem.client import Memory
+
+
+def _cerca(mem, query="tower", k=3):
+    """Una ricerca che lascia finire il rerank prima di ritornare.
+
+    Dal 26/07 il rerank ha uno SLOT unico per processo: chi arriva mentre un
+    predict e' ancora in volo prende l'ordine del bi-encoder e prosegue, senza
+    accodare un secondo thread e senza contare uno sforamento. Serviva perche'
+    i thread abbandonati si accumulavano (8 dopo 8 query) e la contesa fra loro
+    faceva sforare i successivi, cioe' il breaker veniva innescato dall'accumulo
+    che il breaker stesso produceva.
+
+    Di conseguenza N ricerche ravvicinate NON sono piu' N sforamenti — la prima
+    sfora, le altre saltano. Questi test misurano il breaker, quindi devono
+    produrre sforamenti VERI, e per farlo aspettano il worker. Il breaker
+    continua a scattare quando il CE e' lento davvero, ed e' quello che deve
+    fare; cio' che non fa piu' e' scattare per la contesa autoinflitta da un
+    gruppo di query ravvicinate — vedi
+    test_close_together_queries_skip_instead_of_tripping.
+    """
+    out = mem.search(query, k=k)
+    for t in [t for t in threading.enumerate() if t.name == "hippo-rerank"]:
+        t.join(10)
+    return out
 
 FACTS = [
     "The Eiffel Tower is a wrought-iron lattice tower in Paris.",
@@ -58,7 +83,7 @@ def _mem(tmp_path, monkeypatch, *, scorer_delay: float, budget: str = "0.2"):
 def test_breaker_trips_after_consecutive_overruns(tmp_path, monkeypatch):
     mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)  # >> 0.2s budget
     for _ in range(3):
-        mem.search("where is the tower", k=3)
+        _cerca(mem, "where is the tower")
     assert semantic._RERANK_BREAKER["tripped"] is True
     t0 = time.time()
     mem.search("where is the tower", k=3)
@@ -69,7 +94,7 @@ def test_breaker_trips_after_consecutive_overruns(tmp_path, monkeypatch):
 def test_success_resets_consecutive_count(tmp_path, monkeypatch):
     mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)
     for _ in range(2):
-        mem.search("tower", k=3)  # 2 overruns
+        _cerca(mem)  # 2 overruns
     assert semantic._RERANK_BREAKER["consecutive"] == 2
     # a fast scorer now succeeds within budget → count resets
     monkeypatch.setattr(
@@ -114,7 +139,7 @@ def test_cold_overruns_have_their_own_bounded_trip(tmp_path, monkeypatch):
     monkeypatch.setattr(semantic, "_reranker_ready", lambda: False)
     monkeypatch.setenv("ENGRAM_RERANK_COLD_BREAKER_N", "3")
     for _ in range(3):
-        mem.search("tower", k=3)
+        _cerca(mem)
     assert semantic._RERANK_BREAKER["tripped"] is True
 
 
@@ -123,5 +148,26 @@ def test_steady_overruns_still_trip_after_warm(tmp_path, monkeypatch):
     # a WARM reranker that systematically overruns still trips at N.
     mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)  # ready=True fixture
     for _ in range(3):
-        mem.search("tower", k=3)
+        _cerca(mem)
     assert semantic._RERANK_BREAKER["tripped"] is True
+
+
+def test_close_together_queries_skip_instead_of_tripping(tmp_path, monkeypatch):
+    """Il comportamento NUOVO, dichiarato invece di lasciarlo implicito.
+
+    Tre ricerche ravvicinate su un CE lento: la prima sfora, le altre due
+    trovano lo slot occupato e prendono l'ordine del bi-encoder. Un salto non
+    e' uno sforamento — nessuno e' stato lento, lo slot era preso — quindi il
+    breaker NON scatta. Prima scattava, e scattava per la contesa che quelle
+    stesse tre query si infliggevano a vicenda: il cross-encoder restava spento
+    per tutto il processo per un guasto che non c'era."""
+    mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)
+    for _ in range(3):
+        mem.search("tower", k=3)          # senza aspettare il worker
+    assert semantic._RERANK_BREAKER["consecutive"] == 1, (
+        "tre ricerche ravvicinate hanno prodotto piu' di uno sforamento: i "
+        "thread si stanno di nuovo accumulando")
+    assert semantic._RERANK_BREAKER["tripped"] is False, (
+        "il breaker e' scattato per contesa autoinflitta, non per un CE lento")
+    for t in [t for t in threading.enumerate() if t.name == "hippo-rerank"]:
+        t.join(10)

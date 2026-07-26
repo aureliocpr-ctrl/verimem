@@ -1895,10 +1895,22 @@ def _rerank_inflight_release(lease: int) -> None:
 
 
 def _rerank_breaker_reset() -> None:
-    """Re-arm the breaker (tests; model/env swap at runtime)."""
+    """Re-arm the rerank protection (tests; model/env swap at runtime).
+
+    Frees the in-flight slot too, because the two are one mechanism and the
+    slot is process-global: a test that leaves a fake worker hanging would
+    otherwise make every later test skip its rerank and pass — or fail — for
+    reasons that have nothing to do with what it measures. Found exactly that
+    way, by test_rerank_still_runs_once_ce_is_loaded failing on a slot held by
+    a test that ran before it.
+    """
     _RERANK_BREAKER["consecutive"] = 0
     _RERANK_BREAKER["tripped"] = False
     _RERANK_BREAKER["cold"] = 0
+    with _RERANK_SLOT_LOCK:
+        _RERANK_SLOT["lease"] = 0
+        _RERANK_SLOT["since"] = 0.0
+        _RERANK_SLOT["skipped"] = 0
 
 
 def _rerank_breaker_overrun() -> None:
