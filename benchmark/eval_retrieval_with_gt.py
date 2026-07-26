@@ -350,6 +350,11 @@ def read_path_regime() -> dict[str, Any]:
     return {
         "embedding_model": CONFIG.embedding_model,
         "rerank_enabled": _sem._rerank_enabled(),
+        # mode + gate (2026-07-26): without these, a number measured in auto
+        # would be indistinguishable from one measured in forced-on — the same
+        # two-populations trap that hid the CE cost for weeks.
+        "rerank_mode": _sem._rerank_mode(),
+        "rerank_auto_max_words": _sem._rerank_auto_max_words(),
         "rerank_model": _flag("ENGRAM_RERANK_MODEL", _sem._DEFAULT_RERANK_MODEL),
         "rerank_resident_at_end": _sem._reranker_ready(),
         "rerank_budget_s": _sem._recall_rerank_budget_s(),

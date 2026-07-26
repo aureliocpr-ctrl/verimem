@@ -146,7 +146,12 @@ Sanitization must be logged (non-silent) and reversible.
 
 ### C1 — Rerank breaker trips during cold-load, disabling the CE for the process (HIGH, verified)
 
-**Symptom.** The cross-encoder rerank (worth +0.29 R@1 on LongMemEval) is OFF
+**Symptom.** The cross-encoder rerank (worth +0.29 R@1 on LongMemEval*) is OFF
+
+> *Correction 2026-07-26: no artifact for "+0.29 R@1 on LongMemEval" survives
+> (pre-v0.3.0 history is squashed). The reproducible evidence on the CE — for
+> and against, by regime — is in BENCHMARKS.md §"Cross-encoder rerank:
+> default AUTO". This note corrects the record without rewriting it.
 for the whole run: 5 consecutive cold-budget overruns trip the breaker.
 
 **Root cause.** `_rerank_stage2` calls `_rerank_breaker_overrun()` on a

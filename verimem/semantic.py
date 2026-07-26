@@ -1590,11 +1590,50 @@ _RERANKER = None
 _RERANKER_LOCK = threading.Lock()
 
 
+def _rerank_mode() -> str:
+    """'on' | 'off' | 'auto'. Default AUTO since 2026-07-26 (was ON since 06-10).
+
+    The 06-10 flip to ON had real evidence — short paraphrase probes, R@1
+    0.533 -> 0.683, p=0.00052 (`scripts/bench_rerank_fair.py`, n=120) — but it
+    sampled only the CE-friendly regime. On mixed real traffic (GT, 304
+    queries, 26/07) the aggregate is null (ΔMRR +0.0078, p=0.716) because two
+    REAL opposite effects cancel: pinpoint/short queries gain +0.146 MRR
+    (47 better / 16 worse), multi-fact/long queries LOSE 0.080 (12/38). Stable
+    on split-half, not truncation (median query 16 words vs a 512 window), and
+    a length-gated policy chosen on either half beats both pure modes on the
+    other half — same threshold (<=9 words) picked independently by both, wide
+    plateau (10-16). Always-ON also costs +2067 ms on EVERY query and flips
+    sign between halves: the dominated strategy on every measurement we have.
+
+    So AUTO applies the CE exactly where the June evidence and the July
+    segmentation agree it wins: short queries. Explicit values keep forcing:
+    truthy -> always on, falsy -> never.
+    """
+    v = os.environ.get("ENGRAM_RECALL_RERANK", "").strip().lower()
+    if v in ("0", "off", "false", "no"):
+        return "off"
+    if v in ("", "auto"):
+        return "auto"
+    return "on"
+
+
 def _rerank_enabled() -> bool:
-    """Default ON (flip 2026-06-10). Only an explicit opt-out disables."""
-    return os.environ.get("ENGRAM_RECALL_RERANK", "").strip().lower() not in (
-        "0", "off", "false", "no",
-    )
+    """Whether the CE may run at all (preload/CLI warm it iff this is True)."""
+    return _rerank_mode() != "off"
+
+
+def _rerank_auto_max_words() -> int:
+    """AUTO mode's gate: rerank only queries of at most this many words.
+
+    Default 10, from the measured plateau (10-16 all beat both pure modes on
+    the 26/07 GT). Derived from ONE corpus (n=304, one user) — which is why it
+    is an env knob and not a constant, and stays falsifiable by a second
+    corpus. Env ENGRAM_RERANK_AUTO_MAX_WORDS, minimum 1."""
+    try:
+        return max(1, int(os.environ.get(
+            "ENGRAM_RERANK_AUTO_MAX_WORDS", "10")))
+    except ValueError:
+        return 10
 
 
 def _topk_deterministic(sims, n: int, facts):
@@ -3902,6 +3941,14 @@ class SemanticMemory:
         skipped — not even loaded — and the bi-encoder order stands.
         """
         from .cross_encoder_rerank import rerank_candidates
+        if (_rerank_mode() == "auto"
+                and len(query.split()) > _rerank_auto_max_words()):
+            # AUTO (default 2026-07-26): a long query is the regime where the
+            # CE measurably HURTS (multi-fact/long: -0.080 MRR, 12 better/38
+            # worse on the 26/07 GT) — skip BEFORE any load/slot/breaker
+            # touch, same pattern as the long-docs guard below: skipping
+            # after the load would pay the ~43.6s warm-up for nothing.
+            return hits_2t[:k]
         if _RERANK_BREAKER["tripped"]:
             return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]
