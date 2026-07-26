@@ -325,6 +325,45 @@ def evaluate_path(
     }
 
 
+def read_path_regime() -> dict[str, Any]:
+    """Which read path actually ran, recorded alongside the numbers.
+
+    The results in ``benchmark/results/`` carry the embedding model and k but
+    say nothing about whether the cross-encoder rerank or the PPR fusion were
+    on, or whether a breaker had tripped mid-run. So a number could not be
+    reproduced and could not even be interpreted: the reference figures for
+    this corpus do not state whether the CE was reranking at all, and on
+    2026-07-26 the CE turned out to switch ITSELF off after five overruns.
+    A measurement without its regime is the same defect as the "+40 ms" in
+    BENCHMARKS.md — true where it was taken, false where it was quoted.
+
+    Read AFTER the run, so a breaker that tripped along the way shows up.
+    """
+    import os
+
+    from verimem import semantic as _sem
+    from verimem.config import CONFIG
+
+    def _flag(name: str, default: str) -> str:
+        return os.environ.get(name, default).strip() or default
+
+    return {
+        "embedding_model": CONFIG.embedding_model,
+        "rerank_enabled": _sem._rerank_enabled(),
+        "rerank_model": _flag("ENGRAM_RERANK_MODEL", _sem._DEFAULT_RERANK_MODEL),
+        "rerank_resident_at_end": _sem._reranker_ready(),
+        "rerank_budget_s": _sem._recall_rerank_budget_s(),
+        "rerank_pairs": _flag("ENGRAM_RERANK_TOPN", "20"),
+        # the two that decide whether the numbers describe the product or a
+        # degraded version of it
+        "rerank_breaker": dict(_sem._RERANK_BREAKER),
+        "rerank_slot_skipped": _sem._RERANK_SLOT.get("skipped", 0),
+        "fusion_enabled": _flag("ENGRAM_PPR_FUSION", "1") not in ("0", "off", "no"),
+        "fusion_breaker_tripped": _sem._fusion_breaker_tripped(),
+        "fusion_budget_s": _flag("ENGRAM_PPR_FUSION_BUDGET_S", "2.0"),
+    }
+
+
 def evaluate_all(
     sm: SemanticMemory,
     groundtruth: dict[str, Any],
@@ -345,6 +384,7 @@ def evaluate_all(
         "k": k,
         "n_queries": len(queries),
         "groundtruth_built_at": groundtruth.get("built_at"),
+        "read_path_regime": read_path_regime(),
         "per_path": per_path,
     }
 
