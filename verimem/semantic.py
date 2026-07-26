@@ -4058,7 +4058,9 @@ class SemanticMemory:
                     state["q"] = np.asarray(
                         embedding.encode(query), dtype=np.float32)
                 q = state["q"]
-                with self._connect() as conn:
+                # sola lettura, e il punto piu' caldo del read path: 145
+                # connessioni su 163 in tre recall venivano da qui
+                with read_connection(self.db_path) as conn:
                     row = conn.execute(
                         "SELECT embedding FROM facts WHERE id = ?",
                         (fid,)).fetchone()
