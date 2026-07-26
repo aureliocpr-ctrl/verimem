@@ -120,6 +120,13 @@ def test_cold_path_gains_ppr_signal_when_fusion_on(tmp_path, monkeypatch):
     off = {f.id for f, _ in sm.recall(q, k=5)}
 
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    # budget FISSATO, e non e' pedanteria: il default e' 2 s e il 26/07 la
+    # CI e' andata rossa su windows-latest perche' la fusione li' ha sforato
+    # ("PPR fusion exceeded 2.00s budget -> graph/lexical signals skipped"),
+    # cioe' il test misurava la velocita' del runner invece della fusione.
+    # Riprodotto in locale: con 0.001 s fallisce identico, con un budget largo
+    # passa. Chi accende la fusione e ne asserisce l'effetto deve fissarlo.
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")
     sm._recall_es = None
     on = {f.id for f, _ in sm.recall(q, k=5)}
 
