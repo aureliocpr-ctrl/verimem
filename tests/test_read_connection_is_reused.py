@@ -134,6 +134,16 @@ def test_only_closing_the_cursor_ends_a_read_transaction(tmp_path):
     e ``PRAGMA journal_mode=WAL`` — il rilevatore che funziona — MUTA il journal
     mode: alla seconda lettura sullo stesso file e' un no-op che non solleva
     piu' niente. Quindi un file fresco per ogni osservazione, e una sola.
+
+    E QUESTO TEST NON FALSIFICA LA RIMOZIONE, va detto perche' e' il rilievo con
+    cui il critic gate ha votato contro: rimettendo il ``conn.rollback()`` nel
+    modulo, i test di questo file passano 9 su 9 identici. Non e' una lacuna
+    colmabile — e' la definizione di cio' che e' stato rimosso. Un'istruzione
+    senza effetti osservabili non e' distinguibile da nessun test, altrimenti
+    avrebbe effetti. La rimozione poggia sulla MISURA qui sotto (nessuna azione
+    sulla connessione chiude la transazione, quindi quella riga non faceva cio'
+    che dichiarava) e sul contratto di sola lettura, non su una regressione
+    catturata.
     """
     def fresco(nome: str):
         p = tmp_path / nome
@@ -196,49 +206,91 @@ def test_no_reader_keeps_a_cursor_alive():
     Per la stessa ragione il test FALLISCE se non trova nessun blocco: un
     rename di ``read_connection`` lo renderebbe altrimenti vacuo in silenzio,
     cioe' verde per assenza di cose da controllare.
+
+    IL CRITERIO E' INVERTITO, e ci e' voluto un giro di critic gate. La prima
+    versione cercava la forma SBAGLIATA — un ``ast.Assign`` il cui valore e' una
+    ``.execute`` — e lasciava passare tutto il resto. Ma la forma sbagliata ha
+    molte facce, e il worker "counterexample" ne ha nominate tre che sfuggivano:
+    ``cur: T = conn.execute(...)`` (e' un ``AnnAssign``, non un ``Assign``),
+    ``(cur := conn.execute(...))``, e soprattutto ``cur = conn.cursor()``
+    seguito da ``cur.execute(...).fetchone()``, dove il fetch c'e' ma il cursore
+    ha un nome e vive quanto lui. Concluse che "GUARANTEED" era esagerato, e
+    aveva ragione. Se ne aggiungono due che erano sfuggite anche a lui:
+    ``read_connection`` usata senza ``with`` (un ``__enter__`` a mano evita
+    ogni controllo su quel blocco) e i sorgenti fuori da ``verimem/``.
+
+    Quindi ora si esige la forma GIUSTA, che e' una sola: ogni ``.execute(``
+    dentro il blocco deve essere l'oggetto di un ``.fetchone()``/
+    ``.fetchall()``/``.fetchmany()`` attaccato all'espressione, cosi' che nessun
+    nome sopravviva al cursore. E ``.cursor()`` e' vietato senza eccezioni.
+
+    ``tests/`` resta ESCLUSO di proposito: il test qui sopra tiene vivo un
+    cursore APPOSTA, perche' e' l'unico modo di osservare una transazione aperta.
     """
     import ast
     import pathlib as _pl
 
-    def apre_read_connection(items) -> bool:
-        for it in items:
-            e = it.context_expr
-            if not isinstance(e, ast.Call):
-                continue
-            f = e.func
-            nome = (f.id if isinstance(f, ast.Name)
-                    else f.attr if isinstance(f, ast.Attribute) else "")
-            if nome == "read_connection":
-                return True
-        return False
+    def e_read_connection(nodo) -> bool:
+        if not isinstance(nodo, ast.Call):
+            return False
+        f = nodo.func
+        nome = (f.id if isinstance(f, ast.Name)
+                else f.attr if isinstance(f, ast.Attribute) else "")
+        return nome == "read_connection"
 
+    sorgenti = [p for d in ("verimem", "benchmark", "scripts")
+                if _pl.Path(d).is_dir()
+                for p in sorted(_pl.Path(d).rglob("*.py"))]
     ispezionati = 0
-    for percorso in sorted(_pl.Path("verimem").rglob("*.py")):
+
+    for percorso in sorgenti:
         albero = ast.parse(percorso.read_text(encoding="utf-8"))
+        dove = percorso.as_posix()
+
+        # 1) sempre dentro un `with`: un __enter__ a mano evita il resto
+        dentro_with = {id(it.context_expr) for nodo in ast.walk(albero)
+                       if isinstance(nodo, ast.With) for it in nodo.items
+                       if e_read_connection(it.context_expr)}
         for nodo in ast.walk(albero):
-            if not isinstance(nodo, ast.With) or not apre_read_connection(
-                    nodo.items):
+            if e_read_connection(nodo) and id(nodo) not in dentro_with:
+                pytest.fail(
+                    f"{dove}:{nodo.lineno} apre read_connection fuori da un "
+                    "`with`: l'uscita non e' garantita e nessun controllo su "
+                    "quel blocco puo' funzionare")
+
+        # 2) dentro il blocco, ogni execute va consumato nell'espressione
+        for nodo in ast.walk(albero):
+            if not isinstance(nodo, ast.With) or not any(
+                    e_read_connection(it.context_expr) for it in nodo.items):
                 continue
             ispezionati += 1
+            consumati = {id(sub.func.value) for sub in ast.walk(nodo)
+                         if isinstance(sub, ast.Call)
+                         and isinstance(sub.func, ast.Attribute)
+                         and sub.func.attr in ("fetchone", "fetchall",
+                                               "fetchmany")
+                         and isinstance(sub.func.value, ast.Call)}
             for sub in ast.walk(nodo):
-                if not isinstance(sub, ast.Assign):
+                if not (isinstance(sub, ast.Call)
+                        and isinstance(sub.func, ast.Attribute)):
                     continue
-                v = sub.value
-                if (isinstance(v, ast.Call) and isinstance(v.func, ast.Attribute)
-                        and v.func.attr == "execute"):
+                if sub.func.attr == "cursor":
                     pytest.fail(
-                        f"{percorso.as_posix()}:{sub.lineno} tiene vivo un "
-                        "cursore dentro read_connection: la read transaction "
-                        "resta aperta per tutta la vita del thread e i "
-                        "checkpoint del WAL non consolidano piu'. Usa "
-                        ".fetchone()/.fetchall() sul temporaneo, o una "
-                        "connessione corta tua.")
+                        f"{dove}:{sub.lineno} da' un NOME a un cursore dentro "
+                        "read_connection: vive quanto il nome, quindi la read "
+                        "transaction resta aperta anche dopo il fetch")
+                if sub.func.attr == "execute" and id(sub) not in consumati:
+                    pytest.fail(
+                        f"{dove}:{sub.lineno} non consuma il cursore "
+                        "nell'espressione (serve .fetchone()/.fetchall()/"
+                        ".fetchmany() attaccato): il cursore sopravvive, la "
+                        "read transaction resta aperta per tutta la vita del "
+                        "thread e i checkpoint del WAL non consolidano piu'")
 
     assert ispezionati >= 6, (
-        f"trovati solo {ispezionati} blocchi read_connection in verimem/: erano "
-        "6 il 26/07. Se sono stati rinominati o rimossi questo test non "
-        "controlla piu' niente e passa per assenza di lavoro, non per "
-        "correttezza")
+        f"trovati solo {ispezionati} blocchi read_connection: erano 6 il "
+        "26/07. Se sono stati rinominati o rimossi questo test non controlla "
+        "piu' niente e passa per assenza di lavoro, non per correttezza")
 
 
 def test_every_hot_read_of_the_read_path_is_wired(db):
