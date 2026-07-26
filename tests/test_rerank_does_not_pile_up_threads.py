@@ -20,6 +20,15 @@ rerank e' gia' in volo prende l'ordine del bi-encoder e tira dritto. Non
 aggiunge contesa, non ruba core a chi sta gia' lavorando, e soprattutto lascia
 al primo thread la possibilita' di finire — rendendo il CE residente, che e'
 la condizione perche' tutti i successivi rientrino nel budget.
+
+IL LEASE, e perche' non c'era nella prima versione. Due revisioni avversarie
+indipendenti hanno indicato la stessa lacuna: un worker che si BLOCCA — un
+deadlock di torch, non un'eccezione, che il ``finally`` copre gia' — terrebbe
+lo slot per sempre, e siccome un salto non e' uno sforamento nemmeno il breaker
+lo annuncerebbe piu'. Sarebbe stato scambiare un guasto rumoroso con uno muto,
+cioe' la stessa classe che ha tenuto nascosto per sei settimane lo sforamento
+della fusione. Ora lo slot ha una scadenza, molto oltre il budget perche' un
+predict LENTO deve tenerselo, e chi lo requisisce lo dice nel log.
 """
 from __future__ import annotations
 
@@ -40,83 +49,21 @@ def _semina(sm, n=8):
 
 
 @pytest.fixture(autouse=True)
-def breaker_pulito():
+def stato_pulito():
     sem._rerank_breaker_reset()
+    sem._RERANK_SLOT.update({"lease": 0, "since": 0.0, "skipped": 0})
     yield
     sem._rerank_breaker_reset()
+    sem._RERANK_SLOT.update({"lease": 0, "since": 0.0, "skipped": 0})
 
 
 def _thread_di_rerank():
     return [t for t in threading.enumerate() if t.name == "hippo-rerank"]
 
 
-def test_a_rerank_already_in_flight_blocks_a_second_one():
-    """Il cuore: due chiamate ravvicinate, un solo thread."""
-    assert sem._rerank_inflight_acquire() is True, "il primo deve poter partire"
-    try:
-        assert sem._rerank_inflight_acquire() is False, (
-            "un secondo rerank e' partito mentre il primo era ancora in volo: "
-            "i thread si accumulano e si rubano i core a vicenda")
-    finally:
-        sem._rerank_inflight_release()
-
-
-def test_the_slot_is_free_again_once_the_first_finishes():
-    """Reversibile: finito il primo, il prossimo rerank riparte davvero.
-    Senza questo la cura spegnerebbe il rerank per sempre, che e' esattamente
-    il guasto che sta curando."""
-    assert sem._rerank_inflight_acquire() is True
-    sem._rerank_inflight_release()
-    assert sem._rerank_inflight_acquire() is True, (
-        "lo slot non e' tornato libero: il rerank resta spento per sempre")
-    sem._rerank_inflight_release()
-
-
-def test_the_slot_is_released_by_the_worker_not_by_the_caller():
-    """Il punto delicato. Il chiamante ABBANDONA il thread allo scadere del
-    budget, quindi se fosse lui a liberare lo slot il thread successivo
-    partirebbe mentre il precedente sta ancora macinando — cioe' esattamente
-    l'accumulo da evitare. Lo slot appartiene al lavoro, non all'attesa."""
-    partito = threading.Event()
-    finisci = threading.Event()
-
-    def _lavoro():
-        try:
-            partito.set()
-            finisci.wait(5)
-        finally:
-            sem._rerank_inflight_release()
-
-    assert sem._rerank_inflight_acquire() is True
-    t = threading.Thread(target=_lavoro, name="hippo-rerank", daemon=True)
-    t.start()
-    assert partito.wait(5)
-
-    # il "chiamante" ha rinunciato ad aspettare: lo slot deve restare occupato
-    assert sem._rerank_inflight_acquire() is False, (
-        "lo slot si e' liberato mentre il lavoro era ancora in corso")
-
-    finisci.set()
-    t.join(5)
-    assert sem._rerank_inflight_acquire() is True, (
-        "lo slot non e' stato liberato dal worker alla fine del lavoro")
-    sem._rerank_inflight_release()
-
-
-def test_skipping_is_not_an_overrun():
-    """Chi salta perche' lo slot e' occupato non ha sforato niente: contarlo
-    verso il breaker significherebbe che cinque query ravvicinate spengono il
-    cross-encoder senza che nessun rerank sia mai stato lento."""
-    prima = sem._RERANK_BREAKER["consecutive"]
-    assert sem._rerank_inflight_acquire() is True
-    try:
-        for _ in range(6):
-            assert sem._rerank_inflight_acquire() is False
-    finally:
-        sem._rerank_inflight_release()
-    assert sem._RERANK_BREAKER["consecutive"] == prima, (
-        "un salto per slot occupato ha contato come sforamento")
-    assert not sem._RERANK_BREAKER["tripped"]
+def _attendi_thread(timeout=6.0):
+    for t in _thread_di_rerank():
+        t.join(timeout)
 
 
 @pytest.fixture()
@@ -147,10 +94,155 @@ def rerank_vivo(monkeypatch):
     return None
 
 
-def _attendi_thread(timeout=6.0):
-    for t in _thread_di_rerank():
-        t.join(timeout)
+# --- lo slot ----------------------------------------------------------------
 
+def test_a_rerank_already_in_flight_blocks_a_second_one():
+    """Il cuore: due chiamate ravvicinate, un solo thread."""
+    lease = sem._rerank_inflight_acquire()
+    assert lease, "il primo deve poter partire"
+    try:
+        assert not sem._rerank_inflight_acquire(), (
+            "un secondo rerank e' partito mentre il primo era ancora in volo: "
+            "i thread si accumulano e si rubano i core a vicenda")
+    finally:
+        sem._rerank_inflight_release(lease)
+
+
+def test_the_slot_is_free_again_once_the_first_finishes():
+    """Reversibile: finito il primo, il prossimo rerank riparte davvero.
+    Senza questo la cura spegnerebbe il rerank per sempre, che e' esattamente
+    il guasto che sta curando."""
+    primo = sem._rerank_inflight_acquire()
+    assert primo
+    sem._rerank_inflight_release(primo)
+    secondo = sem._rerank_inflight_acquire()
+    assert secondo, "lo slot non e' tornato libero: il rerank resta spento"
+    sem._rerank_inflight_release(secondo)
+
+
+def test_the_slot_is_released_by_the_worker_not_by_the_caller():
+    """Il punto delicato. Il chiamante ABBANDONA il thread allo scadere del
+    budget, quindi se fosse lui a liberare lo slot il thread successivo
+    partirebbe mentre il precedente sta ancora macinando — cioe' esattamente
+    l'accumulo da evitare. Lo slot appartiene al lavoro, non all'attesa."""
+    partito = threading.Event()
+    finisci = threading.Event()
+    lease = sem._rerank_inflight_acquire()
+    assert lease
+
+    def _lavoro():
+        try:
+            partito.set()
+            finisci.wait(5)
+        finally:
+            sem._rerank_inflight_release(lease)
+
+    t = threading.Thread(target=_lavoro, name="hippo-rerank", daemon=True)
+    t.start()
+    assert partito.wait(5)
+
+    # il "chiamante" ha rinunciato ad aspettare: lo slot deve restare occupato
+    assert not sem._rerank_inflight_acquire(), (
+        "lo slot si e' liberato mentre il lavoro era ancora in corso")
+
+    finisci.set()
+    t.join(5)
+    dopo = sem._rerank_inflight_acquire()
+    assert dopo, "lo slot non e' stato liberato dal worker a lavoro finito"
+    sem._rerank_inflight_release(dopo)
+
+
+def test_skipping_is_not_an_overrun():
+    """Chi salta perche' lo slot e' occupato non ha sforato niente: contarlo
+    verso il breaker significherebbe che cinque query ravvicinate spengono il
+    cross-encoder senza che nessun rerank sia mai stato lento."""
+    prima = sem._RERANK_BREAKER["consecutive"]
+    lease = sem._rerank_inflight_acquire()
+    assert lease
+    try:
+        for _ in range(6):
+            assert not sem._rerank_inflight_acquire()
+    finally:
+        sem._rerank_inflight_release(lease)
+    assert sem._RERANK_BREAKER["consecutive"] == prima, (
+        "un salto per slot occupato ha contato come sforamento")
+    assert not sem._RERANK_BREAKER["tripped"]
+
+
+# --- il lease: cio' che le revisioni avversarie hanno guadagnato -------------
+
+def test_a_wedged_worker_loses_the_slot_after_the_lease(monkeypatch, caplog):
+    """La lacuna trovata da due revisioni indipendenti: un worker che si blocca
+    terrebbe lo slot per sempre, e siccome un salto non e' uno sforamento
+    nemmeno il breaker lo annuncerebbe. Il rerank resterebbe spento in silenzio
+    per tutta la vita del processo."""
+    monkeypatch.setenv("ENGRAM_RERANK_SLOT_LEASE_S", "0.2")
+    lease = sem._rerank_inflight_acquire()
+    assert lease
+    assert not sem._rerank_inflight_acquire(), "prima della scadenza si aspetta"
+
+    time.sleep(0.3)
+    with caplog.at_level("WARNING", logger=sem._LOG.name):
+        nuovo = sem._rerank_inflight_acquire()
+    assert nuovo, (
+        "lo slot non e' stato requisito dopo la scadenza: un worker incastrato "
+        "spegne il cross-encoder per sempre, e in silenzio")
+    assert any("wedged" in r.message or "wedged" in r.getMessage()
+               for r in caplog.records), (
+        "la requisizione non e' stata dichiarata: un guasto muto e' peggio di "
+        "uno rumoroso, ed e' la classe che ha nascosto lo sforamento della "
+        "fusione per sei settimane")
+    sem._rerank_inflight_release(nuovo)
+
+
+def test_a_slow_predict_keeps_its_slot():
+    """L'altro lato: la scadenza serve per chi e' INCASTRATO, non per chi e'
+    lento. Con la scadenza di produzione (60 s) un predict da 2 s non perde
+    niente, altrimenti la cura reintrodurrebbe la contesa che ha eliminato."""
+    lease = sem._rerank_inflight_acquire()
+    assert lease
+    try:
+        time.sleep(0.3)
+        assert not sem._rerank_inflight_acquire(), (
+            "un predict di pochi secondi si e' visto togliere lo slot")
+    finally:
+        sem._rerank_inflight_release(lease)
+
+
+def test_a_seized_slot_is_not_freed_by_the_worker_that_lost_it(monkeypatch):
+    """Perche' lo slot porta un numero. Se il worker incastrato, tornando,
+    liberasse lo slot di chi lo ha sostituito, l'accumulo rientrerebbe
+    dall'altro lato: due worker in volo e nessuno che tiene il posto."""
+    monkeypatch.setenv("ENGRAM_RERANK_SLOT_LEASE_S", "0.2")
+    perso = sem._rerank_inflight_acquire()
+    assert perso
+    time.sleep(0.3)
+    nuovo = sem._rerank_inflight_acquire()
+    assert nuovo and nuovo != perso
+
+    sem._rerank_inflight_release(perso)      # il vecchio worker si risveglia
+    assert not sem._rerank_inflight_acquire(), (
+        "il worker sostituito ha liberato lo slot del suo successore")
+    sem._rerank_inflight_release(nuovo)
+
+
+def test_the_lease_can_be_disabled():
+    """Zero disattiva la scadenza, per chi preferisce un blocco visibile a una
+    requisizione: e' la stessa forma degli altri interruttori del modulo."""
+    import os
+    os.environ["ENGRAM_RERANK_SLOT_LEASE_S"] = "0"
+    try:
+        lease = sem._rerank_inflight_acquire()
+        assert lease
+        sem._RERANK_SLOT["since"] -= 10_000     # tenuto da un'eternita'
+        assert not sem._rerank_inflight_acquire(), (
+            "con la scadenza a zero lo slot e' stato requisito comunque")
+        sem._rerank_inflight_release(lease)
+    finally:
+        os.environ.pop("ENGRAM_RERANK_SLOT_LEASE_S", None)
+
+
+# --- il recall vero ---------------------------------------------------------
 
 def test_a_recall_that_skips_the_rerank_still_returns_results(tmp_path, rerank_vivo):
     """Saltare il rerank e' una rinuncia all'ORDINE migliore, mai ai
@@ -159,11 +251,12 @@ def test_a_recall_that_skips_the_rerank_still_returns_results(tmp_path, rerank_v
     sm = sem.SemanticMemory(db_path=tmp_path / "s.db")
     _semina(sm)
 
-    assert sem._rerank_inflight_acquire() is True   # slot occupato da altri
+    lease = sem._rerank_inflight_acquire()
+    assert lease
     try:
         hits = sm.recall("gatti", k=5)
     finally:
-        sem._rerank_inflight_release()
+        sem._rerank_inflight_release(lease)
     assert hits, "il recall non ha restituito nulla perche' il rerank era occupato"
 
 
@@ -173,14 +266,15 @@ def test_no_thread_is_left_behind_when_the_slot_is_busy(tmp_path, rerank_vivo):
     sm = sem.SemanticMemory(db_path=tmp_path / "s.db")
     _semina(sm)
 
-    assert sem._rerank_inflight_acquire() is True
+    lease = sem._rerank_inflight_acquire()
+    assert lease
     try:
         prima = len(_thread_di_rerank())
         sm.recall("gatti", k=5)
         time.sleep(0.3)
         dopo = len(_thread_di_rerank())
     finally:
-        sem._rerank_inflight_release()
+        sem._rerank_inflight_release(lease)
     assert dopo == prima, (
         f"con lo slot occupato sono nati {dopo - prima} thread di rerank: "
         "l'accumulo continua")
@@ -213,10 +307,11 @@ def test_the_slot_comes_back_after_a_real_recall(tmp_path, rerank_vivo):
 
     sm.recall("gatti", k=5)          # sfora il budget da 0,15 s e abbandona
     _attendi_thread()                # ma il thread finisce per conto suo
-    assert sem._rerank_inflight_acquire() is True, (
+    lease = sem._rerank_inflight_acquire()
+    assert lease, (
         "dopo un recall che ha sforato, lo slot e' rimasto occupato: nessuna "
         "query successiva potra' mai piu' usare il cross-encoder")
-    sem._rerank_inflight_release()
+    sem._rerank_inflight_release(lease)
 
 
 def test_a_thread_that_never_starts_does_not_keep_the_slot(tmp_path, rerank_vivo,
@@ -224,7 +319,7 @@ def test_a_thread_that_never_starts_does_not_keep_the_slot(tmp_path, rerank_vivo
     """Se ``Thread.start`` fallisce — esaurimento di thread di sistema — il
     worker non gira mai, quindi non c'e' nessun ``finally`` a liberare lo
     slot. Senza il rilascio dal lato del chiamante il rerank resterebbe
-    spento per sempre, e il guasto sarebbe indistinguibile da quello curato."""
+    spento fino alla scadenza del lease, per un guasto che si conosce subito."""
     sm = sem.SemanticMemory(db_path=tmp_path / "s.db")
     _semina(sm)
 
@@ -241,9 +336,9 @@ def test_a_thread_that_never_starts_does_not_keep_the_slot(tmp_path, rerank_vivo
     monkeypatch.setattr(threading.Thread, "start", _start_rotto)
     hits = sm.recall("gatti", k=5)
     assert hits, "il recall non ha restituito nulla con lo start rotto"
-    assert sem._rerank_inflight_acquire() is True, (
-        "uno start fallito ha tenuto lo slot: il rerank non riparte piu'")
-    sem._rerank_inflight_release()
+    lease = sem._rerank_inflight_acquire()
+    assert lease, "uno start fallito ha tenuto lo slot: il rerank non riparte"
+    sem._rerank_inflight_release(lease)
 
 
 def test_a_recall_survives_a_fusion_thread_that_cannot_start(tmp_path, monkeypatch):

@@ -1829,23 +1829,69 @@ def _rerank_cold_breaker_n() -> int:
 #: contention, steals no cores from the work already running, and above all
 #: lets the first thread FINISH — making the CE resident, which is the very
 #: condition under which every later query fits in the budget.
-_RERANK_INFLIGHT = threading.Lock()
+_RERANK_SLOT: dict[str, Any] = {"lease": 0, "since": 0.0, "skipped": 0}
+_RERANK_SLOT_LOCK = threading.Lock()
 
 
-def _rerank_inflight_acquire() -> bool:
-    """Claim the single rerank slot. False = someone else is working."""
-    return _RERANK_INFLIGHT.acquire(blocking=False)
+def _rerank_slot_lease_s() -> float:
+    """How long the slot may stay held before it is presumed lost.
 
-
-def _rerank_inflight_release() -> None:
-    """Release the slot. Belongs to the WORK, not to the wait: the caller
-    abandons its thread when the budget expires, so releasing there would let
-    the next query start while the previous predict is still running — exactly
-    the pile-up this exists to prevent."""
+    Far beyond the 3 s budget on purpose: a slow predict must keep its slot,
+    only a WEDGED one loses it. Both adversarial reviews raised the same gap
+    independently — a worker that hangs (a torch deadlock, not an exception,
+    which the ``finally`` already covers) would hold the slot forever, and
+    since skips are not overruns the breaker would never announce it either.
+    Trading a loud failure for a silent one is the exact defect that hid the
+    fusion overrun for six weeks. Env ENGRAM_RERANK_SLOT_LEASE_S, 0 disables.
+    """
     try:
-        _RERANK_INFLIGHT.release()
-    except RuntimeError:
-        pass        # already free: never make a fail-soft path raise
+        return max(0.0, float(os.environ.get("ENGRAM_RERANK_SLOT_LEASE_S", "60")))
+    except ValueError:
+        return 60.0
+
+
+def _rerank_inflight_acquire() -> int:
+    """Claim the single rerank slot. Returns the lease number, or 0 if held.
+
+    The number matters: a seized slot must not be released by the worker that
+    lost it. Without it the wedged predict, whenever it finally returned, would
+    free the slot of whoever took its place — reopening the pile-up from the
+    other side.
+    """
+    with _RERANK_SLOT_LOCK:
+        if not _RERANK_SLOT["lease"]:
+            _RERANK_SLOT["lease"] = _RERANK_SLOT.get("next", 1)
+            _RERANK_SLOT["next"] = _RERANK_SLOT["lease"] + 1
+            _RERANK_SLOT["since"] = time.monotonic()
+            return _RERANK_SLOT["lease"]
+        lease_s = _rerank_slot_lease_s()
+        held = time.monotonic() - _RERANK_SLOT["since"]
+        if lease_s and held > lease_s:
+            _LOG.warning(
+                "rerank slot held %.0fs (lease %.0fs) after %d skipped queries "
+                "→ the worker is wedged, not slow; taking the slot back",
+                held, lease_s, _RERANK_SLOT["skipped"],
+            )
+            _RERANK_SLOT["lease"] = _RERANK_SLOT.get("next", 1)
+            _RERANK_SLOT["next"] = _RERANK_SLOT["lease"] + 1
+            _RERANK_SLOT["since"] = time.monotonic()
+            _RERANK_SLOT["skipped"] = 0
+            return _RERANK_SLOT["lease"]
+        _RERANK_SLOT["skipped"] += 1
+        return 0
+
+
+def _rerank_inflight_release(lease: int) -> None:
+    """Release the slot, but only if it is still the one we were given.
+
+    Belongs to the WORK, not to the wait: the caller abandons its thread when
+    the budget expires, so releasing there would let the next query start while
+    the previous predict is still running — exactly the pile-up this prevents.
+    """
+    with _RERANK_SLOT_LOCK:
+        if lease and _RERANK_SLOT["lease"] == lease:
+            _RERANK_SLOT["lease"] = 0
+            _RERANK_SLOT["skipped"] = 0
 
 
 def _rerank_breaker_reset() -> None:
@@ -3817,7 +3863,8 @@ class SemanticMemory:
             # is still running costs the contention that trips the breaker and
             # disables the cross-encoder for every query after it. Not counted
             # as an overrun: nothing here was slow, the slot was simply taken.
-            if not _rerank_inflight_acquire():
+            _lease = _rerank_inflight_acquire()
+            if not _lease:
                 return hits_2t[:k]
             _box: dict[str, Any] = {}
 
@@ -3834,13 +3881,13 @@ class SemanticMemory:
                 except Exception as exc:  # noqa: BLE001 — surfaced below
                     _box["err"] = exc
                 finally:
-                    _rerank_inflight_release()
+                    _rerank_inflight_release(_lease)
 
             _t = threading.Thread(target=_work, name="hippo-rerank", daemon=True)
             try:
                 _t.start()
             except Exception:  # noqa: BLE001 — a thread that never ran holds
-                _rerank_inflight_release()   # the slot forever otherwise
+                _rerank_inflight_release(_lease)  # the slot forever otherwise
                 return hits_2t[:k]
             _t.join(_budget)
             if _t.is_alive():
