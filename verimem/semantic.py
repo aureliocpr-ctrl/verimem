@@ -1811,6 +1811,43 @@ def _rerank_cold_breaker_n() -> int:
         return 40
 
 
+#: One rerank in flight at a time, per process (2026-07-26).
+#:
+#: The rerank runs in a daemon thread joined with a timeout, so when the budget
+#: expires the caller moves on but the thread keeps going — a torch ``predict``
+#: cannot be cancelled halfway. While every query started a fresh one they
+#: piled up: 8 threads measured alive after 8 queries, one per query.
+#:
+#: That is a fault, not waste. The predict costs a steady 2070 ms over 20 pairs
+#: against a 3000 ms budget — 930 ms of headroom, less than a second predict —
+#: so one concurrent thread is enough to blow it, and every overrun adds
+#: another thread and makes the next overrun likelier. Five in a row trip the
+#: breaker, which disables the cross-encoder for the whole process. The breaker
+#: that switches the rerank off is therefore set off by the pile-up the breaker
+#: itself produces, and the loop is what has to be cut: whoever arrives while a
+#: rerank is in flight takes the bi-encoder order and moves on. It adds no
+#: contention, steals no cores from the work already running, and above all
+#: lets the first thread FINISH — making the CE resident, which is the very
+#: condition under which every later query fits in the budget.
+_RERANK_INFLIGHT = threading.Lock()
+
+
+def _rerank_inflight_acquire() -> bool:
+    """Claim the single rerank slot. False = someone else is working."""
+    return _RERANK_INFLIGHT.acquire(blocking=False)
+
+
+def _rerank_inflight_release() -> None:
+    """Release the slot. Belongs to the WORK, not to the wait: the caller
+    abandons its thread when the budget expires, so releasing there would let
+    the next query start while the previous predict is still running — exactly
+    the pile-up this exists to prevent."""
+    try:
+        _RERANK_INFLIGHT.release()
+    except RuntimeError:
+        pass        # already free: never make a fail-soft path raise
+
+
 def _rerank_breaker_reset() -> None:
     """Re-arm the breaker (tests; model/env swap at runtime)."""
     _RERANK_BREAKER["consecutive"] = 0
@@ -3775,6 +3812,13 @@ class SemanticMemory:
             except Exception:  # noqa: BLE001 — recall must NEVER break when ON
                 return hits_2t[:k]
         else:
+            # One at a time (see _RERANK_INFLIGHT). Taking the bi-encoder order
+            # costs this query a worse ranking; queueing behind a predict that
+            # is still running costs the contention that trips the breaker and
+            # disables the cross-encoder for every query after it. Not counted
+            # as an overrun: nothing here was slow, the slot was simply taken.
+            if not _rerank_inflight_acquire():
+                return hits_2t[:k]
             _box: dict[str, Any] = {}
 
             def _work() -> None:
@@ -3789,9 +3833,15 @@ class SemanticMemory:
                     )
                 except Exception as exc:  # noqa: BLE001 — surfaced below
                     _box["err"] = exc
+                finally:
+                    _rerank_inflight_release()
 
             _t = threading.Thread(target=_work, name="hippo-rerank", daemon=True)
-            _t.start()
+            try:
+                _t.start()
+            except Exception:  # noqa: BLE001 — a thread that never ran holds
+                _rerank_inflight_release()   # the slot forever otherwise
+                return hits_2t[:k]
             _t.join(_budget)
             if _t.is_alive():
                 if _was_ready:
@@ -4080,7 +4130,14 @@ class SemanticMemory:
                 _box["err"] = exc
 
         _t = threading.Thread(target=_work, name="hippo-ppr-fusion", daemon=True)
-        _t.start()
+        try:
+            _t.start()
+        except Exception:  # noqa: BLE001 — the whole point of the budget is
+            return hits    # that recall degrades instead of breaking, and a
+            # machine out of thread handles is exactly when it must hold. Found
+            # while testing the rerank slot: breaking Thread.start there took
+            # this path down with it, because it was the one start() in the
+            # read path with nothing around it.
         _t.join(_budget)
         if _t.is_alive():
             _LOG.warning(
