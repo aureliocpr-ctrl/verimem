@@ -156,7 +156,7 @@ def test_skipping_is_not_an_overrun():
     """Chi salta perche' lo slot e' occupato non ha sforato niente: contarlo
     verso il breaker significherebbe che cinque query ravvicinate spengono il
     cross-encoder senza che nessun rerank sia mai stato lento."""
-    prima = sem._RERANK_BREAKER["consecutive"]
+    prima = sem._rerank_breaker_overruns_in_window()
     lease = sem._rerank_inflight_acquire()
     assert lease
     try:
@@ -164,7 +164,7 @@ def test_skipping_is_not_an_overrun():
             assert not sem._rerank_inflight_acquire()
     finally:
         sem._rerank_inflight_release(lease)
-    assert sem._RERANK_BREAKER["consecutive"] == prima, (
+    assert sem._rerank_breaker_overruns_in_window() == prima, (
         "un salto per slot occupato ha contato come sforamento")
     assert not sem._RERANK_BREAKER["tripped"]
 

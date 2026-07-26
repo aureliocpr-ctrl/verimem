@@ -91,18 +91,90 @@ def test_breaker_trips_after_consecutive_overruns(tmp_path, monkeypatch):
         "tripped breaker must skip the rerank wait entirely")
 
 
-def test_success_resets_consecutive_count(tmp_path, monkeypatch):
+def test_a_success_keeps_a_healthy_rerank_alive(tmp_path, monkeypatch):
+    """La proprieta' che questo test protegge dal 10/07 — una contesa
+    transitoria non deve disabilitare per sempre il lift misurato di R@1 —
+    espressa senza dipendere da COME e' contata.
+
+    Si chiamava ``test_success_resets_consecutive_count`` e asseriva
+    ``_RERANK_BREAKER["consecutive"] == 0``: cioe' fissava l'implementazione, e
+    quell'implementazione aveva un buco che il test non poteva vedere perche'
+    lo *codificava* (26/07: una query in budget ogni cinque teneva il breaker
+    disarmato mentre 80 rerank su 100 sforavano). Ora si chiede quello che
+    conta: dopo due sforamenti e un successo il rerank e' ancora vivo — e il
+    successo e' stato REGISTRATO, non usato per cancellare la memoria.
+    """
     mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)
     for _ in range(2):
-        _cerca(mem)  # 2 overruns
-    assert semantic._RERANK_BREAKER["consecutive"] == 2
-    # a fast scorer now succeeds within budget → count resets
+        _cerca(mem)  # 2 sforamenti veri
+    assert semantic._rerank_breaker_overruns_in_window() == 2
+    # ora uno scorer veloce rientra nel budget
     monkeypatch.setattr(
         semantic, "_load_reranker",
         lambda: (lambda pairs: [0.5] * len(pairs)))
-    mem.search("tower", k=3)
-    assert semantic._RERANK_BREAKER["consecutive"] == 0
-    assert semantic._RERANK_BREAKER["tripped"] is False
+    _cerca(mem, "tower")
+    assert semantic._rerank_breaker_tripped() is False, (
+        "due sforamenti e un successo hanno disabilitato un rerank sano")
+    assert len(semantic._RERANK_BREAKER["window"]) == 3, (
+        "il successo non e' stato registrato nella finestra: se cancella "
+        "invece di contare, un successo ogni N sforamenti disarma il breaker "
+        "per sempre")
+
+
+def test_an_alternating_load_still_trips_the_breaker():
+    """IL DIFETTO, misurato sul codice del 25/07 prima di curarlo: un carico
+    che alterna sforamenti e successi non arriva mai a N di fila, quindi il
+    breaker non scattava MENTRE meta' o piu' delle query bruciava il budget
+    intero. Numeri di allora: O-S-O-S 10 sforamenti su 20 → picco del contatore
+    1, non scattava; 30 su 40 → non scattava; **80 su 100 → non scattava**.
+    Bastava una query in budget ogni cinque per disarmarlo a tempo
+    indeterminato.
+
+    E' lo stesso difetto che due revisioni avversarie indipendenti (glm-5.2,
+    deepseek-v4-pro) avevano trovato nel breaker della FUSIONE il 25/07, curato
+    solo la' — con una nota qui accanto che diceva "same blind spot, not touched
+    here". Sweep del pattern mancato, non regola mancante.
+    """
+    for nome, quante, sfora_se in (
+            ("alternato", 20, lambda i: i % 2 == 0),
+            ("3 su 4", 40, lambda i: i % 4 != 3),
+            ("4 su 5", 100, lambda i: i % 5 != 4),
+            ("5 di fila", 5, lambda i: True),        # il caso del 10/07
+    ):
+        semantic._rerank_breaker_reset()
+        for i in range(quante):
+            semantic._rerank_breaker_record(sfora_se(i))
+        assert semantic._rerank_breaker_tripped(), (
+            f"carico '{nome}': il breaker non e' scattato mentre la maggior "
+            "parte dei rerank sforava il budget")
+    semantic._rerank_breaker_reset()
+
+
+def test_scattered_overruns_do_not_disable_a_healthy_session():
+    """L'altra metà, e va tenuta insieme alla prima: la finestra non deve
+    degenerare in un contatore cumulativo, che spegnerebbe il rerank dopo N
+    sforamenti sparsi in una sessione lunga e sana.
+
+    OGNI CARICO QUI HA PIU' DI N SFORAMENTI IN TOTALE, e non e' un dettaglio:
+    la prima versione di questo test usava al massimo 4 sforamenti — sotto la
+    soglia di 5 — quindi passava anche con un contatore cumulativo, cioe' non
+    falsificava proprio la degenerazione che dice di escludere. Trovato dalla
+    mutazione "finestra illimitata", che il test non rilevava. Ora ogni caso ha
+    abbastanza sforamenti da far scattare un totale cumulativo (8, 10, 20) ma
+    mai piu' di 1-2 dentro una finestra di 10.
+    """
+    for nome, quante, sfora_se in (
+            ("8 sforamenti ogni 25 query", 200, lambda i: i % 25 == 0),
+            ("10 sforamenti ogni 20 query", 200, lambda i: i % 20 == 0),
+            ("20 coppie distanziate", 400, lambda i: i % 20 in (0, 1)),
+    ):
+        semantic._rerank_breaker_reset()
+        for i in range(quante):
+            semantic._rerank_breaker_record(sfora_se(i))
+        assert not semantic._rerank_breaker_tripped(), (
+            f"carico '{nome}': sforamenti sparsi hanno disabilitato un rerank "
+            "sano — la finestra sta contando come un totale cumulativo")
+    semantic._rerank_breaker_reset()
 
 
 def test_breaker_disabled_with_zero_threshold(tmp_path, monkeypatch):
@@ -128,8 +200,11 @@ def test_cold_overruns_do_not_trip_steady_breaker(tmp_path, monkeypatch):
         mem.search("tower", k=3)
     assert semantic._RERANK_BREAKER["tripped"] is False, (
         "cold-load overruns are transient — they must never trip the breaker")
-    assert semantic._RERANK_BREAKER["consecutive"] == 0, (
+    assert semantic._rerank_breaker_overruns_in_window() == 0, (
         "cold overruns must not count toward the steady trip")
+    assert len(semantic._RERANK_BREAKER["window"]) == 0, (
+        "a cold overrun landed in the steady window at all: it must not be "
+        "recorded there, not even as a success")
 
 
 def test_cold_overruns_have_their_own_bounded_trip(tmp_path, monkeypatch):
@@ -164,7 +239,7 @@ def test_close_together_queries_skip_instead_of_tripping(tmp_path, monkeypatch):
     mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)
     for _ in range(3):
         mem.search("tower", k=3)          # senza aspettare il worker
-    assert semantic._RERANK_BREAKER["consecutive"] == 1, (
+    assert semantic._rerank_breaker_overruns_in_window() == 1, (
         "tre ricerche ravvicinate hanno prodotto piu' di uno sforamento: i "
         "thread si stanno di nuovo accumulando")
     assert semantic._RERANK_BREAKER["tripped"] is False, (

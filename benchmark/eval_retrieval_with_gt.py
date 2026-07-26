@@ -356,7 +356,18 @@ def read_path_regime() -> dict[str, Any]:
         "rerank_pairs": _flag("ENGRAM_RERANK_TOPN", "20"),
         # the two that decide whether the numbers describe the product or a
         # degraded version of it
-        "rerank_breaker": dict(_sem._RERANK_BREAKER),
+        # spelled out field by field, NOT dict(_RERANK_BREAKER): since
+        # 2026-07-26 that dict holds a deque window, and json.dump would raise
+        # on it — the envelope is written to disk, so a breaking change here
+        # loses the whole run's numbers, not just this field.
+        "rerank_breaker": {
+            "tripped": _sem._rerank_breaker_tripped(),
+            "overruns_in_window": _sem._rerank_breaker_overruns_in_window(),
+            "window_len": len(_sem._RERANK_BREAKER["window"]),
+            "window_max": _sem._rerank_breaker_window(),
+            "trips_at": _sem._rerank_breaker_n(),
+            "cold": _sem._RERANK_BREAKER.get("cold", 0),
+        },
         "rerank_slot_skipped": _sem._RERANK_SLOT.get("skipped", 0),
         "fusion_enabled": _flag("ENGRAM_PPR_FUSION", "1") not in ("0", "off", "no"),
         "fusion_breaker_tripped": _sem._fusion_breaker_tripped(),

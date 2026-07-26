@@ -1781,20 +1781,55 @@ def _reranker_ready() -> bool:
 # Observed on the external read-path runs: on a loaded CPU the CE predict
 # exceeds the budget on EVERY query — each recall then pays the full budget in
 # wasted wall-clock and keeps bi-encoder order anyway. Systematic overruns are
-# a session property, not per-query bad luck: after N CONSECUTIVE overruns the
-# CE is disabled for this process (explicit log, one line) and recall stops
-# waiting. A successful in-budget rerank resets the count, so transient
-# contention never disables the measured R@1 lift permanently.
-_RERANK_BREAKER: dict[str, Any] = {"consecutive": 0, "tripped": False, "cold": 0}
+# a session property, not per-query bad luck: past N of them the CE is disabled
+# for this process (explicit log, one line) and recall stops waiting. The
+# property that must survive is the other one: transient contention must never
+# disable the measured R@1 lift permanently.
+#
+# SLIDING WINDOW since 2026-07-26, and it was a consecutive count for 16 days.
+# A note left here on 25/07 said the fusion breaker had been moved to a window
+# because two independent adversarial reviews showed an alternating load never
+# reaches N in a row — and that this one "still uses consecutive-count and has
+# the same blind spot. Not touched here." Measured before touching it, on the
+# code as it stood: an O-S-O-S load peaked the counter at 1 and never tripped;
+# 30 overruns out of 40 never tripped; **80 out of 100 never tripped**. One
+# in-budget query every five disarmed it indefinitely while four fifths of the
+# traffic burned the whole budget. Five in a row still trips, which is the case
+# it was written for and the only one it ever covered.
+#
+# The window asks the question that actually matters — what FRACTION of recent
+# reranks wasted their budget — so both properties hold: scattered overruns in a
+# long healthy session do not disable the rerank, and a session where most
+# queries pay the budget for nothing does get it switched off.
+_RERANK_BREAKER: dict[str, Any] = {
+    "window": deque(maxlen=10), "tripped": False, "cold": 0,
+}
 
 
 def _rerank_breaker_n() -> int:
-    """Consecutive overruns that trip the breaker. 0 disables the breaker.
-    Env ENGRAM_RERANK_BREAKER_N, default 5."""
+    """Overruns WITHIN THE WINDOW that trip the breaker. 0 disables it.
+    Env ENGRAM_RERANK_BREAKER_N, default 5 of 10 = half the recent reranks."""
     try:
         return max(0, int(os.environ.get("ENGRAM_RERANK_BREAKER_N", "5")))
     except ValueError:
         return 5
+
+
+def _rerank_breaker_window() -> int:
+    """How many recent reranks the window remembers.
+    Env ENGRAM_RERANK_BREAKER_WINDOW, default 10."""
+    try:
+        return max(1, int(os.environ.get("ENGRAM_RERANK_BREAKER_WINDOW", "10")))
+    except ValueError:
+        return 10
+
+
+def _rerank_breaker_tripped() -> bool:
+    return bool(_RERANK_BREAKER["tripped"])
+
+
+def _rerank_breaker_overruns_in_window() -> int:
+    return sum(1 for x in _RERANK_BREAKER["window"] if x)
 
 
 def _rerank_cold_breaker_n() -> int:
@@ -1920,7 +1955,7 @@ def _rerank_breaker_reset() -> None:
     way, by test_rerank_still_runs_once_ce_is_loaded failing on a slot held by
     a test that ran before it.
     """
-    _RERANK_BREAKER["consecutive"] = 0
+    _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
     _RERANK_BREAKER["tripped"] = False
     _RERANK_BREAKER["cold"] = 0
     with _RERANK_SLOT_LOCK:
@@ -1929,17 +1964,36 @@ def _rerank_breaker_reset() -> None:
         _RERANK_SLOT["skipped"] = 0
 
 
-def _rerank_breaker_overrun() -> None:
-    _RERANK_BREAKER["consecutive"] += 1
+def _rerank_breaker_record(overrun: bool) -> None:
+    """Record one FINISHED rerank, in budget or not.
+
+    One entry point for both outcomes, as the fusion breaker has: while the
+    in-budget case was an inline ``_RERANK_BREAKER["consecutive"] = 0`` in the
+    recall path, no test could exercise the pair without reimplementing half of
+    it — so no test did, and the blind spot lived 16 days.
+    """
+    w: deque = _RERANK_BREAKER["window"]
+    if w.maxlen != _rerank_breaker_window():      # env changed at runtime
+        w = deque(w, maxlen=_rerank_breaker_window())
+        _RERANK_BREAKER["window"] = w
+    w.append(bool(overrun))
     n = _rerank_breaker_n()
-    if n and not _RERANK_BREAKER["tripped"] \
-            and _RERANK_BREAKER["consecutive"] >= n:
+    if not n or _RERANK_BREAKER["tripped"]:
+        return
+    sforati = sum(1 for x in w if x)
+    if sforati >= n:
         _RERANK_BREAKER["tripped"] = True
         _LOG.warning(
-            "rerank breaker TRIPPED after %d consecutive budget overruns — "
-            "CE rerank disabled for this process (bi-encoder order stands; "
-            "restart or _rerank_breaker_reset() to re-arm)", n,
+            "rerank breaker TRIPPED — %d of the last %d reranks overran their "
+            "budget — CE rerank disabled for this process (bi-encoder order "
+            "stands; restart or _rerank_breaker_reset() to re-arm)",
+            sforati, len(w),
         )
+
+
+def _rerank_breaker_overrun() -> None:
+    """One rerank that overran. Kept as the name the call sites already use."""
+    _rerank_breaker_record(True)
 
 
 def _rerank_breaker_cold_overrun() -> None:
@@ -3940,7 +3994,10 @@ class SemanticMemory:
             if "err" in _box:
                 return hits_2t[:k]  # scorer error → bi-encoder order
             ranked = _box.get("ranked")
-            _RERANK_BREAKER["consecutive"] = 0  # in-budget → transient, re-arm
+            # in budget: recorded, not erased. Erasing was the blind spot —
+            # one success every five queries kept the breaker disarmed while
+            # 80 of 100 reranks overran (measured 2026-07-26).
+            _rerank_breaker_record(False)
             _RERANK_BREAKER["cold"] = 0         # CE answered → warm again
         if not ranked:
             return hits_2t[:k]
