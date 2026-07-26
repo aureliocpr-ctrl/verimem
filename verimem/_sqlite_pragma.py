@@ -47,6 +47,17 @@ def synchronous_mode() -> str:
 # a contextmanager wrapped around _connect, so it also measured itself. The
 # figure above is arithmetic over two independently counted quantities instead.
 #
+# SCOPE POLICY (sweep 2026-07-26 evening, live AST inventory: 93 read-only
+# blocks / 101 with writes across verimem/). WIRED: the recall hot path
+# (measured, 102 -> 5 connections/query) and every pure reader in entity_kg.py
+# — except _get_graph, which STREAMS ~81k edges with no LIMIT and therefore
+# keeps its own short-lived connection, per this module's docstring. NOT wired,
+# by policy: the ~84 remaining cold read blocks (CLI stats, audits, dedup and
+# admin tools). Each would save ~2.2 ms on a rare invocation, while the edits
+# span 23 files and the classifier cannot prove blocks that hand their
+# connection to helpers (an undo classified "read-only" is the counterexample).
+# Judgment over churn: wiring them trades real edit risk for microseconds.
+#
 # WHY 5 AND NOT 1, and it is the load-bearing caveat: the reuse is per THREAD,
 # and the read path creates a NEW thread per query (semantic.py, hippo-rerank
 # and hippo-ppr-fusion). So the ~63 reads inside one query collapse onto 4-5

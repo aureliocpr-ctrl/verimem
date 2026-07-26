@@ -696,7 +696,7 @@ class EntityStore:
         ``facts_for_entity``)."""
         if not fact_id:
             return []
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             rows = conn.execute(
                 "SELECT entity_id FROM entity_facts WHERE fact_id = ?",
                 (fact_id,),
@@ -705,7 +705,7 @@ class EntityStore:
 
     def aliases_of(self, entity_id: str) -> list[str]:
         """Return all aliases for an entity."""
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             rows = conn.execute(
                 "SELECT alias FROM entity_aliases WHERE entity_id = ?",
                 (entity_id,),
@@ -713,7 +713,7 @@ class EntityStore:
         return [r["alias"] for r in rows]
 
     def count(self) -> int:
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             return conn.execute(
                 "SELECT COUNT(*) FROM entities",
             ).fetchone()[0]
@@ -751,7 +751,7 @@ class EntityStore:
         non esiste o non ha attrs."""
         if not entity_id:
             return {}
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             rows = conn.execute(
                 "SELECT key, value_json FROM entity_attrs "
                 "WHERE entity_id = ?",
@@ -771,7 +771,7 @@ class EntityStore:
         """Ritorna singolo attr decoded, o `default` se mancante."""
         if not entity_id or not key:
             return default
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             row = conn.execute(
                 "SELECT value_json FROM entity_attrs "
                 "WHERE entity_id = ? AND key = ?",
@@ -852,7 +852,11 @@ class EntityStore:
             if self._graph is not None and self._graph_dv == dv:
                 return self._graph
             graph = nx.DiGraph()
-            with self._connect() as conn:
+            with self._connect() as conn:  # NON read_connection, di proposito: qui si
+                # itera in STREAMING su ~81k archi, e la policy di
+                # read_connection (docstring) dice che chi itera parzialmente
+                # tiene la propria connessione corta; materializzare per
+                # cablare scambierebbe memoria per uniformita'.
                 for row in conn.execute("SELECT id FROM entities"):
                     graph.add_node(row["id"])
                 for row in conn.execute(
@@ -868,7 +872,7 @@ class EntityStore:
 
     def edges_from(self, entity_id: str) -> list[dict[str, Any]]:
         """Return outgoing edges (src_entity = entity_id)."""
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             rows = conn.execute(
                 "SELECT src_entity, dst_entity, predicate, weight, "
                 "source_fact_id, created_at FROM entity_edges "
@@ -1104,7 +1108,7 @@ class EntityStore:
         totals stay honest; edges are dropped with the nodes they point at, so
         an index NEVER dangles.
         """
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             total_entities = conn.execute(
                 "SELECT COUNT(*) AS n FROM entities").fetchone()["n"]
             total_edges = conn.execute(
@@ -1119,7 +1123,11 @@ class EntityStore:
             for r in conn.execute(
                     "SELECT src_entity, dst_entity, source_fact_id "
                     "FROM entity_edges ORDER BY created_at ASC LIMIT ?",
-                    (max(0, max_edges),)):
+                    (max(0, max_edges),)).fetchall():
+                # .fetchall() attaccato: il LIMIT rende la materializzazione
+                # bounded, e su una connessione riusata il cursore deve morire
+                # nell'espressione (invariante WAL) — diversamente da _get_graph,
+                # che itera SENZA limite e resta sulla connessione corta.
                 si, di = idx.get(r["src_entity"]), idx.get(r["dst_entity"])
                 if si is None or di is None:
                     continue          # endpoint outside the cap: never dangle
@@ -1352,7 +1360,7 @@ class EntityStore:
 
     def list_anchors(self) -> list[dict[str, Any]]:
         """List all entity with type='anchor' + their attrs."""
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             rows = conn.execute(
                 "SELECT id, canonical_name FROM entities "
                 "WHERE type = 'anchor'",

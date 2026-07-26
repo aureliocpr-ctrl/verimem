@@ -287,9 +287,9 @@ def test_no_reader_keeps_a_cursor_alive():
                         "read transaction resta aperta per tutta la vita del "
                         "thread e i checkpoint del WAL non consolidano piu'")
 
-    assert ispezionati >= 6, (
-        f"trovati solo {ispezionati} blocchi read_connection: erano 6 il "
-        "26/07. Se sono stati rinominati o rimossi questo test non controlla "
+    assert ispezionati >= 14, (
+        f"trovati solo {ispezionati} blocchi read_connection: erano 14 il "
+        "26/07 sera. Se sono stati rinominati o rimossi questo test non controlla "
         "piu' niente e passa per assenza di lavoro, non per correttezza")
 
 
@@ -305,7 +305,13 @@ def test_every_hot_read_of_the_read_path_is_wired(db):
     attesi = {
         "verimem/semantic.py": {"get"},
         "verimem/entity_kg.py": {"get", "get_by_name", "facts_for_entity",
-                                 "fact_counts"},
+                                 "fact_counts",
+                                 # sweep 26/07 sera: il file e' ora COMPLETO —
+                                 # ogni reader puro riusa; _get_graph resta
+                                 # corto di proposito (streaming senza LIMIT)
+                                 "entities_for_fact", "aliases_of", "count",
+                                 "get_attrs", "get_attr", "edges_from",
+                                 "snapshot_full", "list_anchors"},
     }
     for modulo, funzioni in attesi.items():
         albero = ast.parse(_pl.Path(modulo).read_text(encoding="utf-8"))
