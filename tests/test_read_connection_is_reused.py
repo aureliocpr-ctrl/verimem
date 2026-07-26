@@ -394,3 +394,38 @@ def test_repeated_reads_open_one_connection_not_one_each(tmp_path, monkeypatch):
     assert len(aperte) == 1, (
         f"quaranta letture hanno aperto {len(aperte)} connessioni: il primo "
         "accesso — 1,9 ms — si sta pagando a ogni lettura invece di una volta")
+
+
+def test_hermetic_consumers_can_release_and_delete(tmp_path):
+    """Il contratto per i consumer ermetici, inchiodato dal primo incidente.
+
+    26/07: un harness di diagnosi ha creato uno store temporaneo, letto via i
+    reader cablati, e al cleanup del TemporaryDirectory e' morto con WinError 32
+    perdendo i risultati — la connessione riusata teneva il file aperto. La cura
+    esiste (``close_read_connections``) ma il contratto non era scritto: chi
+    smonta una directory-store deve chiudere PRIMA. Su Windows il test verifica
+    il rilascio del lock; su POSIX (dove cancellare file aperti e' lecito)
+    verifica comunque che la sequenza close+delete funzioni.
+    """
+    import shutil
+    import sys
+
+    base = tmp_path / "store_ermetico"
+    base.mkdir()
+    db = base / "letture.db"
+    conn0 = sqlite3.connect(db)
+    conn0.execute("CREATE TABLE t (id TEXT PRIMARY KEY, v TEXT)")
+    conn0.execute("INSERT INTO t VALUES ('a', 'uno')")
+    conn0.commit(); conn0.close()
+
+    with read_connection(db) as c:
+        c.execute("SELECT v FROM t WHERE id='a'").fetchone()
+
+    if sys.platform == "win32":
+        with pytest.raises(PermissionError):
+            shutil.rmtree(base)          # il reader cached tiene il file
+        assert base.exists()
+
+    close_read_connections()
+    shutil.rmtree(base)                  # dopo il close DEVE riuscire
+    assert not base.exists()
