@@ -48,6 +48,7 @@ queries:
 | evidence (artifact) | regime sampled | verdict on CE |
 |---|---|---|
 | `scripts/bench_rerank_fair.py`, n=120 fluent paraphrases (the 06-10 flip's basis) | short pinpoint probes | **+0.15 R@1**, p=0.00052 |
+| comparative LME n=100 (`lme_s_comparative_n100_2026-06-10.json`): CE arm 0.723 vs base 0.800 recall@5, MRR 0.610 vs 0.719 | long session docs | **−0.077 recall@5, −0.11 MRR** — the docs-guard's origin |
 | internal GT, 304 real queries, paired A/B (26/07) — 1-fact / short segment | pinpoint | **+0.146 MRR** (47 better / 16 worse) |
 | same GT — multi-fact / long segment | broad | **−0.080 MRR** (12 better / 38 worse) |
 | same GT — aggregate | mixed traffic | **null**: ΔMRR +0.0078, p=0.716 (the two effects cancel) |
@@ -70,9 +71,15 @@ Mechanism (dense-only positions, k=20, same GT): gold already in top-5 for
 (the CE's whole upside), beyond top-20 for 43% (unreachable by any reranker —
 that is fusion/recall territory).
 
-**Honest bounds:** the 10-word threshold is derived from ONE corpus (n=304,
-one user, GT = episode task-texts) — that is why it is an env knob, documented
-here, and falsifiable by a second corpus. AUTO is an **aggregate** win, not a
+**Honest bounds:** the DIRECTION — CE wins on short text pairs, loses on long
+inputs — is validated on **three independent corpora with artifacts** (FAIR
+n=120 + HARD n=300 short probes: win; internal GT 304 by segment: +0.146
+short / −0.080 long; comparative LME n=100 long docs: −0.077 recall@5). The
+10-word THRESHOLD constant, however, is derived from ONE corpus (n=304, one
+user, GT = episode task-texts) — that is why it is an env knob, documented
+here, and falsifiable by a further corpus. Note LongMemEval cannot re-validate
+the query gate today: its facts are whole sessions, so the docs-guard skips
+the CE there regardless (a run would measure the guard, not the gate). AUTO is an **aggregate** win, not a
 per-query dominance: of the 50 long queries the CE changed, **12 were improved
 and lose that under auto** — the segment nets −0.080 because the other 38 were
 harmed, so auto trades those 12 for the 38 it protects; a workload dominated
