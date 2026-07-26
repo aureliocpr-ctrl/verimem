@@ -49,6 +49,7 @@ import numpy as np
 
 from . import embedding
 from . import epistemic as _epistemic
+from ._sqlite_pragma import read_connection
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
@@ -1589,11 +1590,50 @@ _RERANKER = None
 _RERANKER_LOCK = threading.Lock()
 
 
+def _rerank_mode() -> str:
+    """'on' | 'off' | 'auto'. Default AUTO since 2026-07-26 (was ON since 06-10).
+
+    The 06-10 flip to ON had real evidence — short paraphrase probes, R@1
+    0.533 -> 0.683, p=0.00052 (`scripts/bench_rerank_fair.py`, n=120) — but it
+    sampled only the CE-friendly regime. On mixed real traffic (GT, 304
+    queries, 26/07) the aggregate is null (ΔMRR +0.0078, p=0.716) because two
+    REAL opposite effects cancel: pinpoint/short queries gain +0.146 MRR
+    (47 better / 16 worse), multi-fact/long queries LOSE 0.080 (12/38). Stable
+    on split-half, not truncation (median query 16 words vs a 512 window), and
+    a length-gated policy chosen on either half beats both pure modes on the
+    other half — same threshold (<=9 words) picked independently by both, wide
+    plateau (10-16). Always-ON also costs +2067 ms on EVERY query and flips
+    sign between halves: the dominated strategy on every measurement we have.
+
+    So AUTO applies the CE exactly where the June evidence and the July
+    segmentation agree it wins: short queries. Explicit values keep forcing:
+    truthy -> always on, falsy -> never.
+    """
+    v = os.environ.get("ENGRAM_RECALL_RERANK", "").strip().lower()
+    if v in ("0", "off", "false", "no"):
+        return "off"
+    if v in ("", "auto"):
+        return "auto"
+    return "on"
+
+
 def _rerank_enabled() -> bool:
-    """Default ON (flip 2026-06-10). Only an explicit opt-out disables."""
-    return os.environ.get("ENGRAM_RECALL_RERANK", "").strip().lower() not in (
-        "0", "off", "false", "no",
-    )
+    """Whether the CE may run at all (preload/CLI warm it iff this is True)."""
+    return _rerank_mode() != "off"
+
+
+def _rerank_auto_max_words() -> int:
+    """AUTO mode's gate: rerank only queries of at most this many words.
+
+    Default 10, from the measured plateau (10-16 all beat both pure modes on
+    the 26/07 GT). Derived from ONE corpus (n=304, one user) — which is why it
+    is an env knob and not a constant, and stays falsifiable by a second
+    corpus. Env ENGRAM_RERANK_AUTO_MAX_WORDS, minimum 1."""
+    try:
+        return max(1, int(os.environ.get(
+            "ENGRAM_RERANK_AUTO_MAX_WORDS", "10")))
+    except ValueError:
+        return 10
 
 
 def _topk_deterministic(sims, n: int, facts):
@@ -1780,20 +1820,55 @@ def _reranker_ready() -> bool:
 # Observed on the external read-path runs: on a loaded CPU the CE predict
 # exceeds the budget on EVERY query — each recall then pays the full budget in
 # wasted wall-clock and keeps bi-encoder order anyway. Systematic overruns are
-# a session property, not per-query bad luck: after N CONSECUTIVE overruns the
-# CE is disabled for this process (explicit log, one line) and recall stops
-# waiting. A successful in-budget rerank resets the count, so transient
-# contention never disables the measured R@1 lift permanently.
-_RERANK_BREAKER: dict[str, Any] = {"consecutive": 0, "tripped": False, "cold": 0}
+# a session property, not per-query bad luck: past N of them the CE is disabled
+# for this process (explicit log, one line) and recall stops waiting. The
+# property that must survive is the other one: transient contention must never
+# disable the measured R@1 lift permanently.
+#
+# SLIDING WINDOW since 2026-07-26, and it was a consecutive count for 16 days.
+# A note left here on 25/07 said the fusion breaker had been moved to a window
+# because two independent adversarial reviews showed an alternating load never
+# reaches N in a row — and that this one "still uses consecutive-count and has
+# the same blind spot. Not touched here." Measured before touching it, on the
+# code as it stood: an O-S-O-S load peaked the counter at 1 and never tripped;
+# 30 overruns out of 40 never tripped; **80 out of 100 never tripped**. One
+# in-budget query every five disarmed it indefinitely while four fifths of the
+# traffic burned the whole budget. Five in a row still trips, which is the case
+# it was written for and the only one it ever covered.
+#
+# The window asks the question that actually matters — what FRACTION of recent
+# reranks wasted their budget — so both properties hold: scattered overruns in a
+# long healthy session do not disable the rerank, and a session where most
+# queries pay the budget for nothing does get it switched off.
+_RERANK_BREAKER: dict[str, Any] = {
+    "window": deque(maxlen=10), "tripped": False, "cold": 0,
+}
 
 
 def _rerank_breaker_n() -> int:
-    """Consecutive overruns that trip the breaker. 0 disables the breaker.
-    Env ENGRAM_RERANK_BREAKER_N, default 5."""
+    """Overruns WITHIN THE WINDOW that trip the breaker. 0 disables it.
+    Env ENGRAM_RERANK_BREAKER_N, default 5 of 10 = half the recent reranks."""
     try:
         return max(0, int(os.environ.get("ENGRAM_RERANK_BREAKER_N", "5")))
     except ValueError:
         return 5
+
+
+def _rerank_breaker_window() -> int:
+    """How many recent reranks the window remembers.
+    Env ENGRAM_RERANK_BREAKER_WINDOW, default 10."""
+    try:
+        return max(1, int(os.environ.get("ENGRAM_RERANK_BREAKER_WINDOW", "10")))
+    except ValueError:
+        return 10
+
+
+def _rerank_breaker_tripped() -> bool:
+    return bool(_RERANK_BREAKER["tripped"])
+
+
+def _rerank_breaker_overruns_in_window() -> int:
+    return sum(1 for x in _RERANK_BREAKER["window"] if x)
 
 
 def _rerank_cold_breaker_n() -> int:
@@ -1811,24 +1886,153 @@ def _rerank_cold_breaker_n() -> int:
         return 40
 
 
+#: One rerank in flight at a time, per process (2026-07-26).
+#:
+#: The rerank runs in a daemon thread joined with a timeout, so when the budget
+#: expires the caller moves on but the thread keeps going — a torch ``predict``
+#: cannot be cancelled halfway. While every query started a fresh one they
+#: piled up: 8 threads measured alive after 8 queries, one per query.
+#:
+#: That is a fault, not waste. The predict costs a steady 2070 ms over 20 pairs
+#: against a 3000 ms budget — 930 ms of headroom, less than a second predict —
+#: so one concurrent thread is enough to blow it, and every overrun adds
+#: another thread and makes the next overrun likelier. Five in a row trip the
+#: breaker, which disables the cross-encoder for the whole process. The breaker
+#: that switches the rerank off is therefore set off by the pile-up the breaker
+#: itself produces, and the loop is what has to be cut: whoever arrives while a
+#: rerank is in flight takes the bi-encoder order and moves on. It adds no
+#: contention, steals no cores from the work already running, and above all
+#: lets the first thread FINISH — making the CE resident, which is the very
+#: condition under which every later query fits in the budget.
+_RERANK_SLOT: dict[str, Any] = {"lease": 0, "since": 0.0, "skipped": 0}
+_RERANK_SLOT_LOCK = threading.Lock()
+
+
+def _rerank_slot_lease_s() -> float:
+    """How long the slot may stay held before it is presumed lost.
+
+    Far beyond the 3 s budget on purpose: a slow predict must keep its slot,
+    only a WEDGED one loses it. Both adversarial reviews raised the same gap
+    independently — a worker that hangs (a torch deadlock, not an exception,
+    which the ``finally`` already covers) would hold the slot forever, and
+    since skips are not overruns the breaker would never announce it either.
+    Trading a loud failure for a silent one is the exact defect that hid the
+    fusion overrun for six weeks. Env ENGRAM_RERANK_SLOT_LEASE_S, 0 disables.
+
+    600 s, e il numero e' il compromesso, non una stima. La prima versione
+    diceva 60 s, e il caricamento del cross-encoder MISURATO su questa macchina
+    costa 43,6 s: dentro il lease, ma a cache HuggingFace CALDA. Al primo avvio
+    il modello va SCARICATO, e allora il lease scadrebbe mentre il primo thread
+    sta ancora caricando — lo slot verrebbe requisito e un secondo thread
+    inizierebbe a caricare un'altra copia, cioe' esattamente la contesa che lo
+    slot esiste per impedire, su due copie del modello invece di una.
+
+    E' la stessa classe di errore che una revisione avversaria trovo' nella
+    grazia del lock del daemon (120 s tarati sul load a cache calda, corretti a
+    600 per coprire un primo download reale): un numero vero nel suo regime,
+    falso in quello che deve coprire. Qui e' stato preso prima che mordesse,
+    misurando il caricamento invece di assumerlo, e la soglia si allinea a
+    quella del daemon per la stessa ragione.
+    """
+    try:
+        return max(0.0, float(os.environ.get("ENGRAM_RERANK_SLOT_LEASE_S", "600")))
+    except ValueError:
+        return 600.0
+
+
+def _rerank_inflight_acquire() -> int:
+    """Claim the single rerank slot. Returns the lease number, or 0 if held.
+
+    The number matters: a seized slot must not be released by the worker that
+    lost it. Without it the wedged predict, whenever it finally returned, would
+    free the slot of whoever took its place — reopening the pile-up from the
+    other side.
+    """
+    with _RERANK_SLOT_LOCK:
+        if not _RERANK_SLOT["lease"]:
+            _RERANK_SLOT["lease"] = _RERANK_SLOT.get("next", 1)
+            _RERANK_SLOT["next"] = _RERANK_SLOT["lease"] + 1
+            _RERANK_SLOT["since"] = time.monotonic()
+            return _RERANK_SLOT["lease"]
+        lease_s = _rerank_slot_lease_s()
+        held = time.monotonic() - _RERANK_SLOT["since"]
+        if lease_s and held > lease_s:
+            _LOG.warning(
+                "rerank slot held %.0fs (lease %.0fs) after %d skipped queries "
+                "→ the worker is wedged, not slow; taking the slot back",
+                held, lease_s, _RERANK_SLOT["skipped"],
+            )
+            _RERANK_SLOT["lease"] = _RERANK_SLOT.get("next", 1)
+            _RERANK_SLOT["next"] = _RERANK_SLOT["lease"] + 1
+            _RERANK_SLOT["since"] = time.monotonic()
+            _RERANK_SLOT["skipped"] = 0
+            return _RERANK_SLOT["lease"]
+        _RERANK_SLOT["skipped"] += 1
+        return 0
+
+
+def _rerank_inflight_release(lease: int) -> None:
+    """Release the slot, but only if it is still the one we were given.
+
+    Belongs to the WORK, not to the wait: the caller abandons its thread when
+    the budget expires, so releasing there would let the next query start while
+    the previous predict is still running — exactly the pile-up this prevents.
+    """
+    with _RERANK_SLOT_LOCK:
+        if lease and _RERANK_SLOT["lease"] == lease:
+            _RERANK_SLOT["lease"] = 0
+            _RERANK_SLOT["skipped"] = 0
+
+
 def _rerank_breaker_reset() -> None:
-    """Re-arm the breaker (tests; model/env swap at runtime)."""
-    _RERANK_BREAKER["consecutive"] = 0
+    """Re-arm the rerank protection (tests; model/env swap at runtime).
+
+    Frees the in-flight slot too, because the two are one mechanism and the
+    slot is process-global: a test that leaves a fake worker hanging would
+    otherwise make every later test skip its rerank and pass — or fail — for
+    reasons that have nothing to do with what it measures. Found exactly that
+    way, by test_rerank_still_runs_once_ce_is_loaded failing on a slot held by
+    a test that ran before it.
+    """
+    _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
     _RERANK_BREAKER["tripped"] = False
     _RERANK_BREAKER["cold"] = 0
+    with _RERANK_SLOT_LOCK:
+        _RERANK_SLOT["lease"] = 0
+        _RERANK_SLOT["since"] = 0.0
+        _RERANK_SLOT["skipped"] = 0
+
+
+def _rerank_breaker_record(overrun: bool) -> None:
+    """Record one FINISHED rerank, in budget or not.
+
+    One entry point for both outcomes, as the fusion breaker has: while the
+    in-budget case was an inline ``_RERANK_BREAKER["consecutive"] = 0`` in the
+    recall path, no test could exercise the pair without reimplementing half of
+    it — so no test did, and the blind spot lived 16 days.
+    """
+    w: deque = _RERANK_BREAKER["window"]
+    if w.maxlen != _rerank_breaker_window():      # env changed at runtime
+        w = deque(w, maxlen=_rerank_breaker_window())
+        _RERANK_BREAKER["window"] = w
+    w.append(bool(overrun))
+    n = _rerank_breaker_n()
+    if not n or _RERANK_BREAKER["tripped"]:
+        return
+    sforati = sum(1 for x in w if x)
+    if sforati >= n:
+        _RERANK_BREAKER["tripped"] = True
+        _LOG.warning(
+            "rerank breaker TRIPPED — %d of the last %d reranks overran their "
+            "budget — CE rerank disabled for this process (bi-encoder order "
+            "stands; restart or _rerank_breaker_reset() to re-arm)",
+            sforati, len(w),
+        )
 
 
 def _rerank_breaker_overrun() -> None:
-    _RERANK_BREAKER["consecutive"] += 1
-    n = _rerank_breaker_n()
-    if n and not _RERANK_BREAKER["tripped"] \
-            and _RERANK_BREAKER["consecutive"] >= n:
-        _RERANK_BREAKER["tripped"] = True
-        _LOG.warning(
-            "rerank breaker TRIPPED after %d consecutive budget overruns — "
-            "CE rerank disabled for this process (bi-encoder order stands; "
-            "restart or _rerank_breaker_reset() to re-arm)", n,
-        )
+    """One rerank that overran. Kept as the name the call sites already use."""
+    _rerank_breaker_record(True)
 
 
 def _rerank_breaker_cold_overrun() -> None:
@@ -2880,7 +3084,7 @@ class SemanticMemory:
         view through its extra-id fetch (found by the sweep, pinned by
         ``test_fusion_extras_cannot_resurrect_beliefs_into_default_view``).
         """
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             row = conn.execute(
                 "SELECT * FROM facts WHERE id = ? LIMIT 1", (fact_id,),
             ).fetchone()
@@ -3737,6 +3941,14 @@ class SemanticMemory:
         skipped — not even loaded — and the bi-encoder order stands.
         """
         from .cross_encoder_rerank import rerank_candidates
+        if (_rerank_mode() == "auto"
+                and len(query.split()) > _rerank_auto_max_words()):
+            # AUTO (default 2026-07-26): a long query is the regime where the
+            # CE measurably HURTS (multi-fact/long: -0.080 MRR, 12 better/38
+            # worse on the 26/07 GT) — skip BEFORE any load/slot/breaker
+            # touch, same pattern as the long-docs guard below: skipping
+            # after the load would pay the ~43.6s warm-up for nothing.
+            return hits_2t[:k]
         if _RERANK_BREAKER["tripped"]:
             return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]
@@ -3775,6 +3987,14 @@ class SemanticMemory:
             except Exception:  # noqa: BLE001 — recall must NEVER break when ON
                 return hits_2t[:k]
         else:
+            # One at a time (see _RERANK_INFLIGHT). Taking the bi-encoder order
+            # costs this query a worse ranking; queueing behind a predict that
+            # is still running costs the contention that trips the breaker and
+            # disables the cross-encoder for every query after it. Not counted
+            # as an overrun: nothing here was slow, the slot was simply taken.
+            _lease = _rerank_inflight_acquire()
+            if not _lease:
+                return hits_2t[:k]
             _box: dict[str, Any] = {}
 
             def _work() -> None:
@@ -3789,9 +4009,15 @@ class SemanticMemory:
                     )
                 except Exception as exc:  # noqa: BLE001 — surfaced below
                     _box["err"] = exc
+                finally:
+                    _rerank_inflight_release(_lease)
 
             _t = threading.Thread(target=_work, name="hippo-rerank", daemon=True)
-            _t.start()
+            try:
+                _t.start()
+            except Exception:  # noqa: BLE001 — a thread that never ran holds
+                _rerank_inflight_release(_lease)  # the slot forever otherwise
+                return hits_2t[:k]
             _t.join(_budget)
             if _t.is_alive():
                 if _was_ready:
@@ -3815,7 +4041,10 @@ class SemanticMemory:
             if "err" in _box:
                 return hits_2t[:k]  # scorer error → bi-encoder order
             ranked = _box.get("ranked")
-            _RERANK_BREAKER["consecutive"] = 0  # in-budget → transient, re-arm
+            # in budget: recorded, not erased. Erasing was the blind spot —
+            # one success every five queries kept the breaker disarmed while
+            # 80 of 100 reranks overran (measured 2026-07-26).
+            _rerank_breaker_record(False)
             _RERANK_BREAKER["cold"] = 0         # CE answered → warm again
         if not ranked:
             return hits_2t[:k]
@@ -3948,7 +4177,9 @@ class SemanticMemory:
                     state["q"] = np.asarray(
                         embedding.encode(query), dtype=np.float32)
                 q = state["q"]
-                with self._connect() as conn:
+                # sola lettura, e il punto piu' caldo del read path: 145
+                # connessioni su 163 in tre recall venivano da qui
+                with read_connection(self.db_path) as conn:
                     row = conn.execute(
                         "SELECT embedding FROM facts WHERE id = ?",
                         (fid,)).fetchone()
@@ -4080,7 +4311,14 @@ class SemanticMemory:
                 _box["err"] = exc
 
         _t = threading.Thread(target=_work, name="hippo-ppr-fusion", daemon=True)
-        _t.start()
+        try:
+            _t.start()
+        except Exception:  # noqa: BLE001 — the whole point of the budget is
+            return hits    # that recall degrades instead of breaking, and a
+            # machine out of thread handles is exactly when it must hold. Found
+            # while testing the rerank slot: breaking Thread.start there took
+            # this path down with it, because it was the one start() in the
+            # read path with nothing around it.
         _t.join(_budget)
         if _t.is_alive():
             _LOG.warning(

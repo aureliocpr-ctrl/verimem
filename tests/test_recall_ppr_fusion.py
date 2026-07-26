@@ -33,6 +33,13 @@ def test_fusion_off_is_identity(tmp_path, monkeypatch):
 def test_fusion_on_surfaces_entity_linked_fact_cosine_missed(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    # budget FISSATO, e non e' pedanteria: il default e' 2 s e il 26/07 la
+    # CI e' andata rossa su windows-latest perche' la fusione li' ha sforato
+    # ("PPR fusion exceeded 2.00s budget -> graph/lexical signals skipped"),
+    # cioe' il test misurava la velocita' del runner invece della fusione.
+    # Riprodotto in locale: con 0.001 s fallisce identico, con un budget largo
+    # passa. Chi accende la fusione e ne asserisce l'effetto deve fissarlo.
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
 
     # gold fact: persisted so self.get() can fetch it; its lexical content is
@@ -61,6 +68,7 @@ def test_fusion_on_surfaces_entity_linked_fact_cosine_missed(tmp_path, monkeypat
 def test_fusion_on_no_entities_is_failsoft(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")  # vedi sopra
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     hits = [(Fact(proposition="x", topic="t"), 0.7)]
     # a query with no resolvable entities → dense pool unchanged.
@@ -98,6 +106,7 @@ def test_recall_end_to_end_fusion_surfaces_gold_cosine_missed(tmp_path, monkeypa
     off_ids = {f.id for f, _ in sm.recall(q, k=3)}
 
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")  # vedi sopra
     sm._recall_es = None  # rebuild the lazy entity store under the flag
     on_ids = {f.id for f, _ in sm.recall(q, k=3)}
 
@@ -112,6 +121,7 @@ def test_recall_fusion_runs_after_rerank_so_ppr_fact_survives(tmp_path, monkeypa
     stubbed to a deterministic identity (CE 'on' but no model load)."""
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")  # vedi sopra
     monkeypatch.setattr("verimem.bm25_rank.bm25_fact_ids", lambda *a, **k: [])  # isolate PPR
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     # CE-rerank ON but deterministic: return the pool unchanged (top-k).
@@ -153,6 +163,7 @@ def test_recall_fusion_bm25_surfaces_exact_token(tmp_path, monkeypatch):
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "0")  # OFF esplicito (post flip default-ON)
     off = {f.id for f, _ in sm.recall(q, k=3)}
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")  # vedi sopra
     sm._recall_es = None
     on = {f.id for f, _ in sm.recall(q, k=3)}
 
@@ -168,6 +179,7 @@ def test_fusion_does_not_resurrect_superseded_fact(tmp_path, monkeypatch):
     leak gia' chiuso per anchor/entity in HIGH-2 (get(live_only=True))."""
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")  # vedi sopra
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
 
     # gold entity-linked ma RITRATTATO: superseduto da un fatto a trust piu' alto.
@@ -198,6 +210,7 @@ def test_fusion_does_not_resurrect_orphaned_fact(tmp_path, monkeypatch):
     reconciler L2) entity-linked non deve rientrare via il fusion."""
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")  # vedi sopra
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
 
     gold = Fact(proposition="orphaned note about beta_service", topic="t/gold")
@@ -216,3 +229,60 @@ def test_fusion_does_not_resurrect_orphaned_fact(tmp_path, monkeypatch):
     assert gold.id not in ids, (
         "il fusion non deve resuscitare un fatto orphaned via PPR/BM25"
     )
+
+
+def test_every_test_that_turns_the_fusion_on_pins_its_budget():
+    """L'invariante che impedisce al prossimo test flaky di nascere.
+
+    Il 26/07 la CI e' andata rossa su windows-latest con UN solo test:
+    ``test_fusion_on_surfaces_entity_linked_fact_cosine_missed``, e il log
+    catturato diceva "PPR fusion exceeded 2.00s budget -> keeping reranked order
+    (graph/lexical signals skipped this query)". Il test asseriva la LOGICA
+    della fusione e misurava la VELOCITA' del runner: verde sul commit
+    precedente, rosso su quello dopo, stesso codice di fusione. Riprodotto in
+    locale in entrambe le direzioni — budget 0,001 s fallisce con lo stesso
+    messaggio, budget largo passa.
+
+    Non e' un caso isolato ma una classe: chiunque accenda la fusione e ne
+    asserisca l'effetto senza fissare il budget scrive un test che dipende dalla
+    macchina. Verificato qui invece che ricordato, perche' i test li scrive
+    anche chi non ha letto questa storia.
+
+    Restano fuori i test che la fusione la SPENGONO (``"0"``): a loro il budget
+    non serve, e chiederglielo sarebbe rumore.
+    """
+    import ast
+    import pathlib as _pl
+
+    def setenv_di(nodo):
+        """(nome, valore) per ogni monkeypatch.setenv con due literal."""
+        for sub in ast.walk(nodo):
+            if (isinstance(sub, ast.Call)
+                    and isinstance(sub.func, ast.Attribute)
+                    and sub.func.attr == "setenv"
+                    and len(sub.args) >= 2
+                    and isinstance(sub.args[0], ast.Constant)
+                    and isinstance(sub.args[1], ast.Constant)):
+                yield str(sub.args[0].value), str(sub.args[1].value)
+
+    accensioni = 0
+    for percorso in sorted(_pl.Path("tests").rglob("*.py")):
+        albero = ast.parse(percorso.read_text(encoding="utf-8"))
+        for nodo in ast.walk(albero):
+            if not isinstance(nodo, ast.FunctionDef):
+                continue
+            variabili = dict(setenv_di(nodo))
+            if variabili.get("ENGRAM_PPR_FUSION") != "1":
+                continue
+            accensioni += 1
+            assert "ENGRAM_PPR_FUSION_BUDGET_S" in variabili, (
+                f"{percorso.as_posix()}:{nodo.lineno} {nodo.name} accende la "
+                "fusione senza fissare ENGRAM_PPR_FUSION_BUDGET_S: sul default "
+                "di 2 s un runner lento la fa sforare, i segnali grafo/lessicali "
+                "vengono saltati in silenzio e il test fallisce per la velocita' "
+                "della macchina invece che per la logica")
+
+    assert accensioni >= 9, (
+        f"trovate solo {accensioni} accensioni della fusione nei test: erano 9 "
+        "il 26/07. Se il nome della variabile e' cambiato questo controllo non "
+        "verifica piu' niente e passa per assenza di lavoro")

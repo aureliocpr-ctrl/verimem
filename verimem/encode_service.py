@@ -62,6 +62,45 @@ def _idle_timeout_s() -> float:
 IDLE_TIMEOUT_S = _idle_timeout_s()
 _MAX_FRAME = 8 * 1024 * 1024  # 8 MB guard against bogus length headers
 
+# How often a serving daemon checks that it is still advertised (2026-07-25).
+# The discovery file is written once at startup but ANY process can delete it —
+# ``ensure_running`` does exactly that when its probe times out under load —
+# and nothing ever rebuilt it, so a healthy daemon stayed invisible with the
+# model resident until the 8 h idle timeout. Cheap enough to run often: one
+# read of a ~200-byte file per interval, and only when the file is missing does
+# it cost a write.
+#
+# The interval IS the worst-case invisibility window, and an adversarial review
+# priced it: a client that misses the file spawns a daemon that immediately
+# exits on the lock, then cold-loads the model in-process — 26 s to save at
+# most 2 s of polling. Hence 2 s rather than the 5 s first written.
+_DISCOVERY_CHECK_INTERVAL_S = 2.0
+
+#: Idle timeout for a daemon that is not the announced one. No client can find
+#: it, so it will never be asked for anything — measured on the real machine as
+#: two live daemons at 1933 MB and 1912 MB with a single discovery file between
+#: them. The lock keeps two daemons from STARTING; nothing reduced them to one
+#: if they got there afterwards, and they do: the lock is yielded when its owner
+#: looks wedged, and across an embedding-model switch the old daemon still
+#: answers while serving the wrong model.
+#:
+#: Lowering the idle rather than exiting outright, on two independent
+#: adversarial reviews that rejected exiting with the same counterexample:
+#: during a handover both daemons can read a file naming the other and both
+#: step out, leaving the machine with none — and if the winner dies a moment
+#: later, whoever already left cannot take over. Lowering the idle has neither
+#: flaw: it is reversible at every check, and a daemon still being called by
+#: clients holding a cached port is simply never idle, which is the right
+#: answer rather than an exception to work around.
+_SUPERFLUOUS_IDLE_S = 60.0
+
+#: Probe used to ask whether the daemon named in a FOREIGN discovery file is
+#: actually there. Short on purpose: unlike the lock steal, being wrong once is
+#: cheap here, because the decision needs two consecutive sightings anyway, and
+#: two looks spaced by the interval separate "busy right now" from "gone" far
+#: better than one long stare.
+_DISCOVERY_OWNER_PROBE_S = 0.4
+
 
 def _recvall(conn: socket.socket, n: int) -> bytes | None:
     buf = bytearray()
@@ -148,6 +187,12 @@ class EncodeServer:
         # is the trust anchor; the token binds a request to that anchor.
         import secrets as _secrets
         self._token = _secrets.token_urlsafe(24)
+        # Consecutive passes that found the discovery file claiming nobody; see
+        # _republish_discovery_if_unclaimed for why one sighting is not enough.
+        self._unclaimed_seen = 0
+        # Someone else is announced and answering, so nobody can reach us.
+        self._superfluous = False
+        self._superfluous_since = 0.0
 
     @property
     def port(self) -> int:
@@ -207,7 +252,12 @@ class EncodeServer:
 
     def _write_discovery(self) -> None:
         self._discovery_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self._discovery_path.with_suffix(".json.tmp")
+        # The scratch name carries the pid: two daemons publishing at the same
+        # moment would otherwise write the SAME .json.tmp, and the loser's
+        # rename could promote a half-written or foreign payload. Harmless while
+        # this ran once per boot; the periodic republish below makes concurrent
+        # writes reachable, so the name has to be per-process.
+        tmp = self._discovery_path.with_suffix(f".{os.getpid()}.json.tmp")
         tmp.write_text(
             json.dumps({
                 "pid": os.getpid(),
@@ -228,6 +278,135 @@ class EncodeServer:
         except OSError:
             pass
         tmp.replace(self._discovery_path)
+
+    def _republish_discovery_if_unclaimed(self) -> None:
+        """Re-announce this daemon if nothing currently announces it.
+
+        Asymmetry this repairs: the discovery file is written once at startup,
+        but any process can delete it — ``ensure_running`` does precisely that
+        when its probe times out, which is exactly what happens under load. A
+        healthy daemon then sits with the model resident and unreachable until
+        the 8 h idle timeout (measured 2026-07-25: ~2 GB orphaned). Lengthening
+        the probe narrows the window; only the daemon can close it, because it
+        is the one side that knows it is alive and on which port.
+
+        Deliberately NOT a heartbeat: a file that names a daemon which ANSWERS
+        is left exactly as it is. If that daemon is someone else it won the
+        race, and rewriting would bounce clients between two ports; if it is us,
+        there is nothing to fix and rewriting would churn a file others read.
+        Only a file claimed by nobody reachable gets taken over.
+
+        "Claimed" is the PORT, not the pid — the same correction CI forced on
+        ``ensure_running`` yesterday, and this function shipped without it until
+        two independent adversarial reviews caught the inconsistency. A pid in
+        the file proves nothing: a second daemon can publish itself and then
+        die, and the first — alive, model resident, holding the lock — would
+        read a foreign pid, respect it forever, and stay invisible for 8 h. That
+        is not hypothetical; it is the two-daemon state measured on this machine
+        the same evening. So a foreign claim is honoured only while its port
+        still accepts a connection.
+
+        The two unclaimed cases are NOT the same, and treating them alike stole
+        a live file in test: MISSING is unambiguous, because deletion is atomic
+        and only one daemon holds the lock, so it is taken at once. PRESENT BUT
+        UNREADABLE can be a write in flight — a reader landing between a
+        truncate and its content sees empty — so it has to be seen unclaimed
+        twice running before being taken. Same lesson as the 0.4 s probe that
+        hid a healthy daemon: a transient state judged instantly is judged
+        wrong, and here the cost of patience is a few seconds on a pathological
+        file, while the cost of haste is two daemons overwriting each other.
+        """
+        try:
+            raw = self._discovery_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            self._unclaimed_seen = 0
+            self._mark_superfluous(False)
+            self._write_discovery()
+            return
+        except OSError:
+            raw = ""
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            data = None
+        if isinstance(data, dict) and data.get("pid") == os.getpid():
+            self._unclaimed_seen = 0
+            self._mark_superfluous(False)
+            return
+        if (isinstance(data, dict) and isinstance(data.get("pid"), int)
+                and is_reachable(data, timeout=_DISCOVERY_OWNER_PROBE_S)):
+            # Someone else is serving and reachable. Not ours to arbitrate:
+            # step aside quietly (see _SUPERFLUOUS_IDLE_S) instead of holding a
+            # GB of model nobody can reach.
+            self._unclaimed_seen = 0
+            self._mark_superfluous(True)
+            return
+        # Nobody reachable is named here, so we are not redundant — whoever
+        # wrote this file is not serving.
+        self._mark_superfluous(False)
+        self._unclaimed_seen += 1
+        if self._unclaimed_seen >= 2:
+            self._unclaimed_seen = 0
+            self._write_discovery()
+
+    def _mark_superfluous(self, value: bool) -> None:
+        """Record the transition, not just the state — when the step-aside
+        began is what bounds how soon we may leave."""
+        if value and not self._superfluous:
+            # monotonic: this is a duration, and a clock stepping backwards
+            # must not grant an unbounded stay (same reason as the lock grace)
+            self._superfluous_since = time.monotonic()
+        self._superfluous = value
+
+    def _effective_idle_timeout(self) -> float:
+        """Seconds of silence before self-exiting, given who is announced.
+
+        Zero keeps meaning what the module documents — never idle-exit — which
+        it did not: ``idle > 0`` is true of every duration, so a daemon
+        configured as permanent exited after one second (measured). But
+        "permanent" is a promise about THE daemon, the one serving requests,
+        not about every leftover process that no client can reach. Two
+        adversarial reviews independently called out the alternative as the
+        worst case here, and the argument that decides it is not frequency but
+        monotonicity: with no collector, each spuriously yielded lock adds a
+        couple of GB that never come back, until the OOM killer takes the lot.
+        So an unreachable daemon steps aside even when configured permanent.
+
+        A configured idle SHORTER than the step-aside timeout is never
+        lengthened: becoming useless must not extend anyone's lifetime.
+        """
+        if not self._superfluous:
+            return self._idle_timeout_s
+        if not self._idle_timeout_s:
+            return _SUPERFLUOUS_IDLE_S
+        return min(_SUPERFLUOUS_IDLE_S, self._idle_timeout_s)
+
+    def _should_idle_exit(self) -> bool:
+        """Whether to stop waiting for requests that are not coming.
+
+        A daemon that has just been demoted is a WARM STANDBY, and leaving
+        immediately throws that away exactly when it is worth most: an
+        adversarial review priced the case — demoted while already idle for
+        59 s, gone one second later, and if the winner dies in that window
+        nobody is left to reclaim the discovery file, turning a 4 s recovery
+        into a 26 s cold load for the next client. So the clock also has to
+        run from the demotion, not only from the last request.
+
+        KNOWN LIMIT, not fixed here: reachability is not health. A daemon
+        wedged behind an accepting socket still looks like a winner, and one
+        flapping in and out of reachability can keep the standby from ever
+        seeing the two consecutive failures a reclaim needs. Both are
+        properties of the whole arbitration layer, which asks the port rather
+        than the model, and both deserve their own measurement rather than a
+        guess bolted on here.
+        """
+        limit = self._effective_idle_timeout()
+        if not limit or self._idle_for() <= limit:
+            return False
+        if (self._superfluous
+                and time.monotonic() - self._superfluous_since <= limit):
+            return False
+        return True
 
     def _clear_discovery(self) -> None:
         try:
@@ -251,12 +430,23 @@ class EncodeServer:
     def serve_forever(self) -> None:
         if self._sock is None:
             self.start()
+        next_discovery_check = 0.0  # first pass runs immediately
         try:
             while not self._stop.is_set():
+                # Top of the loop, not the accept-timeout branch: a daemon under
+                # steady load never times out, and load is precisely when its
+                # discovery gets deleted.
+                now = time.monotonic()
+                if now >= next_discovery_check:
+                    next_discovery_check = now + _DISCOVERY_CHECK_INTERVAL_S
+                    try:
+                        self._republish_discovery_if_unclaimed()
+                    except Exception:  # noqa: BLE001 — never kill the server
+                        pass
                 try:
                     conn, _ = self._sock.accept()
                 except TimeoutError:
-                    if self._idle_for() > self._idle_timeout_s:
+                    if self._should_idle_exit():
                         break
                     continue
                 except OSError:

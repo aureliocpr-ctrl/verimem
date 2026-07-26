@@ -132,6 +132,13 @@ def test_fusion_extras_cannot_resurrect_beliefs_into_default_view(monkeypatch):
     DEFAULT view through the fusion side-door, bypassing every SQL filter
     (same leak class as HIGH-2 anchor/entity and the cycle-138 back-door)."""
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    # budget FISSATO, e non e' pedanteria: il default e' 2 s e il 26/07 la
+    # CI e' andata rossa su windows-latest perche' la fusione li' ha sforato
+    # ("PPR fusion exceeded 2.00s budget -> graph/lexical signals skipped"),
+    # cioe' il test misurava la velocita' del runner invece della fusione.
+    # Riprodotto in locale: con 0.001 s fallisce identico, con un budget largo
+    # passa. Chi accende la fusione e ne asserisce l'effetto deve fissarlo.
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")
     monkeypatch.setenv("ENGRAM_PPR_FUSION_FLOOR", "0")   # tiny corpus, fusion ON
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "0")      # isolate the fusion
     m = _mem()

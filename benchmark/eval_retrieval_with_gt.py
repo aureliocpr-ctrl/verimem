@@ -325,6 +325,61 @@ def evaluate_path(
     }
 
 
+def read_path_regime() -> dict[str, Any]:
+    """Which read path actually ran, recorded alongside the numbers.
+
+    The results in ``benchmark/results/`` carry the embedding model and k but
+    say nothing about whether the cross-encoder rerank or the PPR fusion were
+    on, or whether a breaker had tripped mid-run. So a number could not be
+    reproduced and could not even be interpreted: the reference figures for
+    this corpus do not state whether the CE was reranking at all, and on
+    2026-07-26 the CE turned out to switch ITSELF off after five overruns.
+    A measurement without its regime is the same defect as the "+40 ms" in
+    BENCHMARKS.md — true where it was taken, false where it was quoted.
+
+    Read AFTER the run, so a breaker that tripped along the way shows up.
+    """
+    import os
+
+    from verimem import semantic as _sem
+    from verimem.config import CONFIG
+
+    def _flag(name: str, default: str) -> str:
+        return os.environ.get(name, default).strip() or default
+
+    return {
+        "embedding_model": CONFIG.embedding_model,
+        "rerank_enabled": _sem._rerank_enabled(),
+        # mode + gate (2026-07-26): without these, a number measured in auto
+        # would be indistinguishable from one measured in forced-on — the same
+        # two-populations trap that hid the CE cost for weeks.
+        "rerank_mode": _sem._rerank_mode(),
+        "rerank_auto_max_words": _sem._rerank_auto_max_words(),
+        "rerank_model": _flag("ENGRAM_RERANK_MODEL", _sem._DEFAULT_RERANK_MODEL),
+        "rerank_resident_at_end": _sem._reranker_ready(),
+        "rerank_budget_s": _sem._recall_rerank_budget_s(),
+        "rerank_pairs": _flag("ENGRAM_RERANK_TOPN", "20"),
+        # the two that decide whether the numbers describe the product or a
+        # degraded version of it
+        # spelled out field by field, NOT dict(_RERANK_BREAKER): since
+        # 2026-07-26 that dict holds a deque window, and json.dump would raise
+        # on it — the envelope is written to disk, so a breaking change here
+        # loses the whole run's numbers, not just this field.
+        "rerank_breaker": {
+            "tripped": _sem._rerank_breaker_tripped(),
+            "overruns_in_window": _sem._rerank_breaker_overruns_in_window(),
+            "window_len": len(_sem._RERANK_BREAKER["window"]),
+            "window_max": _sem._rerank_breaker_window(),
+            "trips_at": _sem._rerank_breaker_n(),
+            "cold": _sem._RERANK_BREAKER.get("cold", 0),
+        },
+        "rerank_slot_skipped": _sem._RERANK_SLOT.get("skipped", 0),
+        "fusion_enabled": _flag("ENGRAM_PPR_FUSION", "1") not in ("0", "off", "no"),
+        "fusion_breaker_tripped": _sem._fusion_breaker_tripped(),
+        "fusion_budget_s": _flag("ENGRAM_PPR_FUSION_BUDGET_S", "2.0"),
+    }
+
+
 def evaluate_all(
     sm: SemanticMemory,
     groundtruth: dict[str, Any],
@@ -345,6 +400,7 @@ def evaluate_all(
         "k": k,
         "n_queries": len(queries),
         "groundtruth_built_at": groundtruth.get("built_at"),
+        "read_path_regime": read_path_regime(),
         "per_path": per_path,
     }
 

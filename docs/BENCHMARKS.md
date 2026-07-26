@@ -35,6 +35,64 @@ more often AND more correctly.** This is the real metric (not just retrieval rec
   n=50 noise, but consistent with a MS-MARCO cross-encoder mismatched to long multi-turn
   sessions. Flagged for the core-defect review.
 
+## Cross-encoder rerank: default AUTO since 2026-07-26 (was always-ON since 06-10)
+
+**The decision, in one line: the CE reranks only queries of ≤10 words
+(`ENGRAM_RERANK_AUTO_MAX_WORDS`); `ENGRAM_RECALL_RERANK=1/0` still forces
+always/never.**
+
+Every measurement we have tells one coherent story — the CE is a pointwise
+relevance scorer, so it helps pinpoint lookups and hurts broad multi-fact
+queries:
+
+| evidence (artifact) | regime sampled | verdict on CE |
+|---|---|---|
+| `scripts/bench_rerank_fair.py`, n=120 fluent paraphrases (the 06-10 flip's basis) | short pinpoint probes | **+0.15 R@1**, p=0.00052 |
+| comparative LME n=100 (`lme_s_comparative_n100_2026-06-10.json`): CE arm 0.723 vs base 0.800 recall@5, MRR 0.610 vs 0.719 | long session docs | **−0.077 recall@5, −0.11 MRR** — the docs-guard's origin |
+| internal GT, 304 real queries, paired A/B (26/07) — 1-fact / short segment | pinpoint | **+0.146 MRR** (47 better / 16 worse) |
+| same GT — multi-fact / long segment | broad | **−0.080 MRR** (12 better / 38 worse) |
+| same GT — aggregate | mixed traffic | **null**: ΔMRR +0.0078, p=0.716 (the two effects cancel) |
+| LongMemEval e2e QA n=50 (above) | mixed | 0.76 ON vs 0.78 OFF — neutral-to-negative |
+| LongMemEval recall@5 n=500 | mixed | unmoved |
+| `updating_reach_rerank20/40.json`, 726 updates | reachability | pool width irrelevant |
+| latency, real corpus | every query | **+2067 ms** (median 3110 vs 1043) |
+
+Robustness of the segmentation (it is post-hoc, so it was attacked): stable on
+split-half (+0.15/+0.14 and −0.08/−0.08 on independent halves); not truncation
+(median query 16 words vs the 512 window); a length-gated policy chosen on
+either half **beats both pure modes on the other half** (B→A: OFF 0.391, ON
+0.415, policy 0.493; A→B: OFF 0.385, ON 0.376, policy 0.446), with the same
+threshold (≤9 words) picked independently by both halves and a wide plateau
+(every cutoff in 10–16 beats both). Always-ON flips sign between halves and
+pays 3× latency on every query: dominated.
+
+Mechanism (dense-only positions, k=20, same GT): gold already in top-5 for
+46% of queries (CE can only hold or hurt), promotable from 6..20 for **11%**
+(the CE's whole upside), beyond top-20 for 43% (unreachable by any reranker —
+that is fusion/recall territory).
+
+**Honest bounds:** the DIRECTION — CE wins on short text pairs, loses on long
+inputs — is validated on **three independent corpora with artifacts** (FAIR
+n=120 + HARD n=300 short probes: win; internal GT 304 by segment: +0.146
+short / −0.080 long; comparative LME n=100 long docs: −0.077 recall@5). The
+10-word THRESHOLD constant, however, is derived from ONE corpus (n=304, one
+user, GT = episode task-texts) — that is why it is an env knob, documented
+here, and falsifiable by a further corpus. Note LongMemEval cannot re-validate
+the query gate today: its facts are whole sessions, so the docs-guard skips
+the CE there regardless (a run would measure the guard, not the gate). AUTO is an **aggregate** win, not a
+per-query dominance: of the 50 long queries the CE changed, **12 were improved
+and lose that under auto** — the segment nets −0.080 because the other 38 were
+harmed, so auto trades those 12 for the 38 it protects; a workload dominated
+by long CE-benefiting queries should force `ENGRAM_RECALL_RERANK=1`. And the
+word gate splits on whitespace: a long **unspaced CJK query counts as ~1 word**
+and still gets the CE — the gate is a Latin-script heuristic, declared as such.
+(Both limits surfaced by the adversarial review of ff8e8ad8, dissenting worker,
+matching the pre-declared attack predictions.) The historical "+0.29 R@1 on
+LongMemEval" that circulated as the CE's justification has **no surviving
+artifact** (pre-v0.3.0 history is squashed); the reproducible basis for the
+06-10 flip is the n=120 paraphrase bench above, which the auto default keeps
+serving.
+
 ## Retrieval recall@5 (judge-free, upstream of QA)
 `benchmark/longmemeval_runner.py`, fusion default (dense e5 + entity-PPR + BM25 + CE-rerank):
 **recall@5 = 0.8745 on the FULL 500** (`lme_s_fusionON_n500_clean.json`), fusion ON vs OFF

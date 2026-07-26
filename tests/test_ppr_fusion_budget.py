@@ -61,6 +61,11 @@ def test_ppr_fusion_budget_zero_runs_synchronously(tmp_path, monkeypatch):
 def test_fusion_skipped_below_corpus_floor(tmp_path, monkeypatch):
     """#3 default-ON prereq: su corpus < floor la fusione e' saltata (overhead)."""
     monkeypatch.setenv("ENGRAM_PPR_FUSION", "1")
+    # fissato anche qui, dove la fusione non parte comunque (floor): la regola
+    # "chi accende fissa il budget" e' SENZA eccezioni di proposito, perche'
+    # un'esenzione richiederebbe di giudicare se quel test dipenda davvero dal
+    # budget — e un giudizio non si verifica sull'AST.
+    monkeypatch.setenv("ENGRAM_PPR_FUSION_BUDGET_S", "30")
     monkeypatch.setenv("ENGRAM_PPR_FUSION_FLOOR", "50")
     called: dict[str, bool] = {}
 
