@@ -30,10 +30,8 @@ def synchronous_mode() -> str:
 
 # --- Read-only reuse (2026-07-26) --------------------------------------------
 # The short-lived-per-operation policy above is right for writes and wrong for
-# the read path, where it costs 45% of every recall. Measured by timing only the
-# open and close inside four real recalls: 463 ms of 1025, across ~100-104
-# connections per query, matching an independent count the night before (102:
-# 71 on semantic.db + 31 on entity_kg.db).
+# the read path, which opened 102 connections per query — counted, not
+# estimated: 71 on semantic.db + 31 on entity_kg.db.
 #
 # The cost is not the PRAGMA set. Dropping it saves 0.307 ms per connection —
 # 31 ms in total, 3% — because journal_mode is persistent in the file and
@@ -42,6 +40,22 @@ def synchronous_mode() -> str:
 # schema, preparing the statement, opening the WAL. connect+close with no query
 # costs 0.347 ms; with one SELECT, 2.224 ms. It cannot be optimised, only
 # avoided — by not paying it a hundred times per query.
+#
+# So 102 x 2.224 = 227 ms of a 686.9 ms recall, 33%. Counted connections
+# afterwards: 5 per query, 11 ms, 2.7%. An earlier version of this comment said
+# 45%, from timing only open-and-close inside four recalls — that instrument was
+# a contextmanager wrapped around _connect, so it also measured itself. The
+# figure above is arithmetic over two independently counted quantities instead.
+#
+# WHY 5 AND NOT 1, and it is the load-bearing caveat: the reuse is per THREAD,
+# and the read path creates a NEW thread per query (semantic.py, hippo-rerank
+# and hippo-ppr-fusion). So the ~63 reads inside one query collapse onto 4-5
+# connections — that is where the 227 ms went — and then the thread dies and the
+# next query starts over. Counted: 5 per query, flat across six queries, with 51
+# of 66 opened by the hippo-* threads and the MainThread's two lasting its whole
+# life. Making them survive would need persistent workers or a shared pool, for
+# the 11 ms that are left: not worth the machinery, but it must not be described
+# as "one connection instead of a hundred" — it is five per query, every query.
 _LOCAL = threading.local()
 
 
@@ -61,10 +75,26 @@ def read_connection(db_path: Path | str) -> Iterator[sqlite3.Connection]:
     THE CONSTRAINT THAT SHAPES THIS: a long-lived reader that leaves a read
     transaction open STARVES THE WAL CHECKPOINTS, and the file then grows with
     no way to consolidate. It is the same constraint ``_db_data_version``
-    honours by issuing only PRAGMA and never DML — its docstring says so. Here
-    the SELECTs are the point, so the guard is a ``rollback`` on the way out: it
-    closes whatever a half-consumed cursor left open, and on a clean connection
-    it costs nothing.
+    honours by issuing only PRAGMA and never DML — its docstring says so.
+
+    AND NOTHING THIS FUNCTION CAN DO WOULD ENFORCE IT, which is why it does not
+    pretend to. An earlier version ended with ``conn.rollback()`` and a comment
+    saying it "closes whatever a half-consumed cursor left open". That was
+    false. Measured on 2026-07-26, one observation per fresh database because
+    ``PRAGMA journal_mode`` mutates what it is used to detect: with a live
+    cursor mid-result, ``rollback()``, ``commit()``, ``interrupt()`` and raw
+    ``ROLLBACK``/``COMMIT``/``END`` ALL leave the transaction open — the last
+    three refuse outright with "no transaction is active". Only ``cur.close()``
+    ends it. The read is not held by the driver's transaction, it is held by an
+    unfinalized STATEMENT, and only the cursor's owner can finalize it.
+
+    So the invariant lives with the CALLERS: every reader must let its cursor
+    die inside the block — ``conn.execute(...).fetchone()`` /
+    ``.fetchall()`` on a temporary, never ``cur = conn.execute(...)`` kept in a
+    local. All six readers do, verified on the AST by
+    ``test_no_reader_keeps_a_cursor_alive`` rather than left to discipline. A
+    caller that needs partial iteration must open its own short-lived
+    connection instead of this one.
 
     A connection that fails is dropped rather than kept: caching a broken one
     would turn a transient fault into a permanent one for that thread.
@@ -93,23 +123,11 @@ def read_connection(db_path: Path | str) -> Iterator[sqlite3.Connection]:
     try:
         yield conn
     except sqlite3.Error:
+        # a broken connection is dropped; every other exception is the caller's
+        # business and leaves the connection cached, because it says nothing
+        # about the connection's health.
         _drop(cache, key, conn)
         raise
-    else:
-        try:
-            # Guardia DIFENSIVA, e va detto: nel codice di oggi nessuna
-            # lettura tiene vivo un cursore (`conn.execute(...).fetchone()` lo
-            # scarta subito, chiudendo la transazione da se'), quindi non cura
-            # un difetto attuale e nessun test la copre — una mutazione che la
-            # rimuove non fa fallire niente. Resta perche' costa zero e perche'
-            # il giorno che una lettura iteri parzialmente (`for row in cur`
-            # interrotto) la read transaction resterebbe aperta: verificato che
-            # SQLite in quel caso considera la connessione in transazione
-            # (PRAGMA journal_mode solleva "from within a transaction") mentre
-            # conn.in_transaction dice False, quindi il guasto sarebbe invisibile.
-            conn.rollback()
-        except sqlite3.Error:
-            _drop(cache, key, conn)
 
 
 def _usable(conn: sqlite3.Connection) -> bool:

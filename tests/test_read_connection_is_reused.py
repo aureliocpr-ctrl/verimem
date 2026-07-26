@@ -1,9 +1,23 @@
 """Le letture del read path riusano una connessione invece di aprirne cento.
 
-MISURATO IL 26/07, strumentando ``_connect`` per cronometrare solo apertura e
-chiusura: su quattro recall reali il **45,2%** del tempo se ne va li' — 463 ms su
-1025 — con circa 100-104 connessioni per query. Il conteggio combacia con una
-misura indipendente della notte (102: 71 su semantic.db + 31 su entity_kg.db).
+CONTATE, non stimate: 102 connessioni per query — 71 su semantic.db, 31 su
+entity_kg.db. A 2,224 ms l'una (misura sotto) fanno 227 ms su un recall di 686,9,
+il 33%. Dopo il cablaggio, contate di nuovo: 5 per query, 11 ms, il 2,7%.
+
+Una versione precedente di questo commento diceva **45,2%**, ottenuto
+cronometrando solo apertura e chiusura dentro quattro recall: quello strumento
+era un contextmanager avvolto attorno a ``_connect``, quindi misurava anche se
+stesso. La cifra sopra e' invece aritmetica su due quantita' contate
+separatamente, che non richiede di fidarsi di un cronometro.
+
+CINQUE, NON UNA, ed e' il limite che conta: il riuso e' per THREAD, e il read
+path crea un thread NUOVO per ogni query (semantic.py, ``hippo-rerank`` e
+``hippo-ppr-fusion``). Le ~63 letture dentro una query collassano su 4-5
+connessioni — da li' vengono i 227 ms — e poi il thread muore e la query dopo
+riparte da zero. Misurato: 5 per query, piatte su sei query, 51 delle 66 aperte
+dai thread ``hippo-*``. Farle sopravvivere richiederebbe worker persistenti per
+gli 11 ms che restano: non vale il meccanismo, ma non va descritto come "una
+connessione invece di cento" — sono cinque per query, ogni query.
 
 Il costo non sono i PRAGMA. Togliendoli si risparmiano 0,307 ms per connessione,
 31 ms in tutto, il 3%: ``journal_mode`` e' persistente nel file e ``synchronous``
@@ -26,20 +40,26 @@ serializzerebbe letture che oggi vanno in parallelo.
 Due, ed e' il piu' insidioso: un lettore persistente che lasci aperta una read
 transaction AFFAMA I CHECKPOINT DEL WAL, e il file cresce senza mai potersi
 consolidare. E' lo stesso vincolo che ``_db_data_version`` rispetta emettendo
-solo PRAGMA e mai DML — il suo commento lo dice a chiare lettere. Qui le SELECT
-servono, quindi il presidio e' un ``rollback`` all'uscita: chiude qualunque
-transazione lasciata aperta da un cursore non esaurito, e su una connessione
-pulita non costa niente.
+solo PRAGMA e mai DML — il suo commento lo dice a chiare lettere.
+
+E il presidio che era scritto qui non presidiava niente: c'era un ``rollback``
+all'uscita, dichiarato capace di "chiudere qualunque transazione lasciata aperta
+da un cursore non esaurito", e non ne chiude nessuna
+(``test_only_closing_the_cursor_ends_a_read_transaction``). L'invariante sta
+sui CHIAMANTI — lasciare morire il cursore dentro il blocco — e da oggi e'
+verificata sull'AST invece che sperata
+(``test_no_reader_keeps_a_cursor_alive``).
 """
 from __future__ import annotations
 
+import contextlib
 import sqlite3
 import threading
 
 import pytest
 
 from verimem import semantic as sem
-from verimem._sqlite_pragma import read_connection
+from verimem._sqlite_pragma import close_read_connections, read_connection
 
 
 @pytest.fixture()
@@ -96,45 +116,129 @@ def test_a_different_database_gets_its_own_connection(db, tmp_path):
     assert c1 is not c2
 
 
-def test_a_read_transaction_is_always_closed_on_the_way_out(db):
-    """Il presidio contro l'unico modo in cui un lettore persistente fa danno.
+def test_only_closing_the_cursor_ends_a_read_transaction(tmp_path):
+    """Smentisce cio' che questo file affermava fino al 26/07.
 
-    LIMITE DICHIARATO: questo test NON falsifica il rollback. Una mutazione
-    che lo rimuove non lo fa fallire, perche' nel codice di oggi nessuna lettura
-    tiene vivo un cursore — `conn.execute(...).fetchone()` lo scarta e la
-    transazione si chiude da se'. Il rollback e' quindi una guardia difensiva,
-    non la cura di un difetto attuale, e va letto per quello che e'.
+    C'era un ``conn.rollback()`` all'uscita, con un commento che diceva "chiude
+    qualunque transazione lasciata aperta da un cursore non esaurito". FALSO,
+    misurato: con un cursore vivo a meta' risultato, ``rollback()``,
+    ``commit()``, ``interrupt()`` e i comandi ``ROLLBACK``/``COMMIT``/``END``
+    lasciano la transazione APERTA — gli ultimi tre rifiutano con "no
+    transaction is active", che e' la spiegazione: la lettura non e' tenuta
+    dalla transazione del driver, e' tenuta da uno STATEMENT non finalizzato, e
+    solo chi possiede il cursore puo' finalizzarlo. Il presidio non esisteva, e
+    per questo il rollback e' stato rimosso invece di annotato.
 
-    CHE IL CASO ESISTA E' PERO' DIMOSTRATO: su una connessione con un cursore
-    lasciato a meta', ``PRAGMA journal_mode=WAL`` solleva "cannot change into
-    wal mode from within a transaction" — cioe' SQLite la considera dentro una
-    transazione. E ``conn.in_transaction`` di Python dice False: riflette solo
-    le transazioni di scrittura che gestisce il driver e **non vede le read
-    transaction**. La prima versione di questo test usava proprio
-    ``in_transaction``, e per questo la mutazione "togli il rollback" NON
-    veniva rilevata: misurava con uno strumento cieco a cio' che cercava.
-
-    Un lettore che tiene aperta una read transaction impedisce ai checkpoint
-    del WAL di consolidare, e il file cresce senza potersi ridurre — lo stesso
-    vincolo che ``_db_data_version`` rispetta non emettendo mai DML.
+    DUE ERRORI DI STRUMENTO, entrambi commessi qui prima di arrivarci:
+    ``conn.in_transaction`` e' cieco alle read transaction (dice sempre False),
+    e ``PRAGMA journal_mode=WAL`` — il rilevatore che funziona — MUTA il journal
+    mode: alla seconda lettura sullo stesso file e' un no-op che non solleva
+    piu' niente. Quindi un file fresco per ogni osservazione, e una sola.
     """
-    conn = sqlite3.connect(db)
-    conn.executemany("INSERT INTO t VALUES (?, ?)",
-                     [(str(i), f"v{i}") for i in range(50)])
-    conn.commit(); conn.close()
+    def fresco(nome: str):
+        p = tmp_path / nome
+        c = sqlite3.connect(p)
+        c.execute("CREATE TABLE t (id TEXT PRIMARY KEY, v TEXT)")
+        c.executemany("INSERT INTO t VALUES (?, ?)",
+                      [(str(i), f"v{i}") for i in range(50)])
+        c.commit(); c.close()
+        return p
 
-    with read_connection(db) as c:
-        c.execute("SELECT v FROM t").fetchone()     # UNA riga su 51: a meta'
+    def aperta_dopo(nome: str, azione) -> bool:
+        with read_connection(fresco(nome)) as conn:
+            cur = conn.execute("SELECT v FROM t")   # cursore VIVO: senza tenerlo
+            cur.fetchone()                          # in una locale, niente tx
+            with contextlib.suppress(sqlite3.OperationalError):
+                azione(conn, cur)
+            assert conn.in_transaction is False, "in_transaction ora VEDE le read tx"
+            try:
+                conn.execute("PRAGMA journal_mode=WAL;")
+                return False
+            except sqlite3.OperationalError:
+                return True
+            finally:
+                cur.close()
 
-    # il rilevatore dimostrato: cambiare journal mode solleva se una
-    # transazione e' aperta, mentre in_transaction resta cieco e direbbe False
-    assert c.in_transaction is False                 # lo strumento sbagliato
-    try:
-        c.execute("PRAGMA journal_mode=WAL;")
-    except sqlite3.OperationalError as exc:
-        pytest.fail(
-            f"una read transaction e' rimasta aperta ({exc}): i checkpoint del "
-            "WAL non possono consolidare e il file cresce senza ridursi")
+    assert aperta_dopo("a.db", lambda c, u: None)
+    assert aperta_dopo("b.db", lambda c, u: c.rollback()), (
+        "rollback() ora chiude le read transaction: il presidio in-place e' "
+        "diventato possibile, rivalutare _sqlite_pragma.read_connection")
+    assert aperta_dopo("c.db", lambda c, u: c.commit())
+    assert aperta_dopo("d.db", lambda c, u: c.interrupt())
+    assert aperta_dopo("e.db", lambda c, u: c.execute("ROLLBACK"))
+    assert not aperta_dopo("f.db", lambda c, u: u.close()), (
+        "chiudere il cursore non chiude piu' la transazione: era l'UNICA cosa "
+        "che la chiudeva, e su cui poggia l'invariante dei chiamanti")
+    close_read_connections()
+
+
+def test_no_reader_keeps_a_cursor_alive():
+    """L'invariante che protegge davvero, e non e' lasciata alla disciplina.
+
+    Poiche' nessuna azione sulla connessione chiude una read transaction (test
+    sopra), l'unica difesa e' che ogni lettore lasci MORIRE il cursore dentro il
+    blocco: ``conn.execute(...).fetchone()`` su un temporaneo, mai
+    ``cur = conn.execute(...)`` tenuto in una variabile. La connessione e'
+    riusata e vive quanto il thread — nel MainThread quanto il processo — quindi
+    un cursore appeso bloccherebbe i checkpoint del WAL per tutta quella vita.
+
+    Verificato sull'AST e non a occhio: e' un invariante sui chiamanti, e i
+    chiamanti cambiano. Stesso metodo di ``test_every_hot_read_of_the_read_path
+    _is_wired``, che e' l'unico che aveva preso il buco del cablaggio.
+
+    E i file li SCOPRE, non li elenca. La prima versione girava su una lista di
+    due moduli scelti da me, mentre la docstring afferma l'invariante su OGNI
+    lettore: un terzo modulo che usasse ``read_connection`` non sarebbe stato
+    guardato. E' lo stesso punto cieco che il 26/07 ha fatto passare 12 rossi —
+    gli otto file "correlati" li avevo scelti io, e il piu' esposto non c'era.
+    Un controllo universale su una lista mia non e' universale.
+
+    Per la stessa ragione il test FALLISCE se non trova nessun blocco: un
+    rename di ``read_connection`` lo renderebbe altrimenti vacuo in silenzio,
+    cioe' verde per assenza di cose da controllare.
+    """
+    import ast
+    import pathlib as _pl
+
+    def apre_read_connection(items) -> bool:
+        for it in items:
+            e = it.context_expr
+            if not isinstance(e, ast.Call):
+                continue
+            f = e.func
+            nome = (f.id if isinstance(f, ast.Name)
+                    else f.attr if isinstance(f, ast.Attribute) else "")
+            if nome == "read_connection":
+                return True
+        return False
+
+    ispezionati = 0
+    for percorso in sorted(_pl.Path("verimem").rglob("*.py")):
+        albero = ast.parse(percorso.read_text(encoding="utf-8"))
+        for nodo in ast.walk(albero):
+            if not isinstance(nodo, ast.With) or not apre_read_connection(
+                    nodo.items):
+                continue
+            ispezionati += 1
+            for sub in ast.walk(nodo):
+                if not isinstance(sub, ast.Assign):
+                    continue
+                v = sub.value
+                if (isinstance(v, ast.Call) and isinstance(v.func, ast.Attribute)
+                        and v.func.attr == "execute"):
+                    pytest.fail(
+                        f"{percorso.as_posix()}:{sub.lineno} tiene vivo un "
+                        "cursore dentro read_connection: la read transaction "
+                        "resta aperta per tutta la vita del thread e i "
+                        "checkpoint del WAL non consolidano piu'. Usa "
+                        ".fetchone()/.fetchall() sul temporaneo, o una "
+                        "connessione corta tua.")
+
+    assert ispezionati >= 6, (
+        f"trovati solo {ispezionati} blocchi read_connection in verimem/: erano "
+        "6 il 26/07. Se sono stati rinominati o rimossi questo test non "
+        "controlla piu' niente e passa per assenza di lavoro, non per "
+        "correttezza")
 
 
 def test_every_hot_read_of_the_read_path_is_wired(db):
