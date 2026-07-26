@@ -49,6 +49,7 @@ import numpy as np
 
 from . import embedding
 from . import epistemic as _epistemic
+from ._sqlite_pragma import read_connection
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
@@ -2975,7 +2976,7 @@ class SemanticMemory:
         view through its extra-id fetch (found by the sweep, pinned by
         ``test_fusion_extras_cannot_resurrect_beliefs_into_default_view``).
         """
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             row = conn.execute(
                 "SELECT * FROM facts WHERE id = ? LIMIT 1", (fact_id,),
             ).fetchone()

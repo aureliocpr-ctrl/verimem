@@ -32,6 +32,7 @@ from typing import Any
 # Round-3 bench L1 cycle #70 (docs/bench/cycle-70-p2-load).
 import networkx as nx
 
+from ._sqlite_pragma import read_connection
 from .config import CONFIG
 
 _SCHEMA = """
@@ -618,7 +619,7 @@ class EntityStore:
         the nodes of a traced path."""
         if not entity_id:
             return None
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             row = conn.execute(
                 "SELECT * FROM entities WHERE id = ?", (entity_id,),
             ).fetchone()
@@ -633,7 +634,7 @@ class EntityStore:
         needle = _norm(name_or_alias)
         if not needle:
             return None
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             # 1) match canonical name (Python-normalized)
             row = conn.execute(
                 "SELECT * FROM entities WHERE name_norm = ?",
@@ -683,7 +684,7 @@ class EntityStore:
 
     def facts_for_entity(self, entity_id: str) -> list[str]:
         """Return all fact_ids linked to this entity."""
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             rows = conn.execute(
                 "SELECT fact_id FROM entity_facts WHERE entity_id = ?",
                 (entity_id,),
@@ -1176,7 +1177,7 @@ class EntityStore:
         if not entity_ids:
             return 0, {}
         placeholders = ",".join("?" * len(entity_ids))
-        with self._connect() as conn:
+        with read_connection(self.db_path) as conn:   # sola lettura: connessione riusata
             total = conn.execute(
                 "SELECT count(DISTINCT fact_id) FROM entity_facts",
             ).fetchone()[0]
