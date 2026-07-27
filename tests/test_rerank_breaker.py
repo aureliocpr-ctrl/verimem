@@ -337,3 +337,107 @@ def test_the_recall_gate_sees_the_rearm(tmp_path, monkeypatch):
         "after the cooldown the GATE must re-arm and rerank again — three "
         "fresh overruns re-trip; if this is False the gate never consulted "
         "the re-arming function")
+
+
+# --- the re-arm mutates shared state: it must be atomic (2026-07-27) ---------
+# Found by an external adversary (deepseek-v4-pro) reading the naked code: the
+# re-arm turned _rerank_breaker_tripped() from a PURE READER into a reader that
+# WRITES (window, tripped, cold), and recall runs it from several threads
+# (hippo-rerank, hippo-ppr-fusion, one per query). Two callers can re-arm while
+# a third appends to the deque the re-arm just replaced — that overrun lands in
+# the discarded deque and is LOST, so the breaker trips later than the window
+# says it should. The GIL makes each dict op atomic, never the check-then-reset
+# sequence.
+
+
+def test_no_overrun_is_lost_when_a_rearm_is_in_flight(monkeypatch):
+    """DETERMINISTIC, not a stress race: a 6-thread stress version of this
+    passed with and without the fix, i.e. proved nothing — the GIL makes the
+    unsafe window too narrow to hit by luck. So the interleaving is FORCED:
+    _rerank_breaker_window() is made slow, which stretches the gap between the
+    cooldown check and the deque swap inside the re-arm. A recorder that lands
+    in that gap appends to the deque the re-arm is about to throw away.
+
+    Without a lock: the 4 overruns recorded mid-re-arm are LOST and the breaker
+    does not trip. With the re-arm atomic: the recorder waits, appends to the
+    fresh window, and the 4th overrun trips it (threshold 3)."""
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.05")
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_N", "3")
+    semantic._rerank_breaker_reset()
+    for _ in range(3):
+        semantic._rerank_breaker_record(True)
+    assert semantic._RERANK_BREAKER["tripped"], "sanity: tripped"
+    time.sleep(0.06)                       # cooldown elapsed -> next read re-arms
+
+    lento = threading.Event()
+    vero_window = semantic._rerank_breaker_window
+
+    def window_lento():
+        lento.set()
+        time.sleep(0.3)                    # the re-arm is now mid-flight
+        return vero_window()
+
+    monkeypatch.setattr(semantic, "_rerank_breaker_window", window_lento)
+    t = threading.Thread(target=semantic._rerank_breaker_tripped, daemon=True)
+    t.start()
+    assert lento.wait(5), "il re-arm non e' partito"
+    monkeypatch.setattr(semantic, "_rerank_breaker_window", vero_window)
+    for _ in range(4):                     # recorded WHILE the re-arm is inside
+        semantic._rerank_breaker_record(True)
+    t.join(10)
+
+    assert semantic._rerank_breaker_overruns_in_window() >= 3, (
+        f"solo {semantic._rerank_breaker_overruns_in_window()} sforamenti nella "
+        "finestra: quelli registrati durante il re-arm sono finiti nella deque "
+        "che il re-arm ha poi sostituito, e sono persi")
+    assert semantic._RERANK_BREAKER["tripped"], (
+        "4 sforamenti con soglia 3 devono far scattare il breaker: se non "
+        "scatta, il re-arm ha inghiottito le registrazioni concorrenti")
+
+
+def test_observing_the_breaker_does_not_rearm_it(monkeypatch):
+    """Second finding of the same external review (glm-5.2): 'observation
+    becomes action'. The re-arm lives in the reader, and the read-path REGIME
+    recorder (benchmark/eval_retrieval_with_gt.py) calls that reader to write
+    down whether the breaker tripped during the run. So the recorder re-armed
+    what it was measuring and then wrote 'tripped: False' — the regime block,
+    which exists precisely so a number is never orphaned from the state that
+    produced it, would have been lying. Observers get a PURE reader; only the
+    gate re-arms."""
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.05")
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_N", "3")
+    semantic._rerank_breaker_reset()
+    for _ in range(3):
+        semantic._rerank_breaker_record(True)
+    time.sleep(0.06)                      # cooldown elapsed
+
+    assert semantic._rerank_breaker_tripped_now() is True, (
+        "the pure reader must report the state as it IS")
+    assert semantic._RERANK_BREAKER["tripped"] is True, (
+        "observing must not have re-armed anything")
+    assert semantic._rerank_breaker_tripped() is False, (
+        "the gate, and only the gate, re-arms after the cooldown")
+
+    semantic._fusion_breaker_reset()
+    monkeypatch.setenv("ENGRAM_FUSION_BREAKER_COOLDOWN_S", "0.05")
+    monkeypatch.setenv("ENGRAM_FUSION_BREAKER_N", "3")
+    for _ in range(3):
+        semantic._fusion_breaker_record(True)
+    time.sleep(0.06)
+    assert semantic._fusion_breaker_tripped_now() is True
+    assert semantic._FUSION_BREAKER["tripped"] is True, "twin: same contract"
+
+
+def test_the_regime_recorder_uses_the_pure_readers() -> None:
+    """The cure is only real at the CALL SITE: the bench must ask the pure
+    reader. Verified on the source so a future edit cannot quietly go back to
+    the re-arming one."""
+    import pathlib
+    src = (pathlib.Path(__file__).resolve().parents[1]
+           / "benchmark" / "eval_retrieval_with_gt.py").read_text(encoding="utf-8")
+    for vietato in ("_rerank_breaker_tripped()", "_fusion_breaker_tripped()"):
+        assert vietato not in src, (
+            f"the regime recorder calls {vietato}, which RE-ARMS what it is "
+            f"measuring; use the *_tripped_now() pure reader")
+    assert "_rerank_breaker_tripped_now()" in src
+    assert "_fusion_breaker_tripped_now()" in src
