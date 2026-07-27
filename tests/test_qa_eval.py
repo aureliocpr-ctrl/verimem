@@ -206,3 +206,23 @@ def test_answer_mode_adaptive_fp_opt_in(monkeypatch) -> None:
     assert "supports an answer" in fp.lower(), "keeps the adaptive context-gate"
     assert "false assumption" in fp.lower(), "adds false-premise correction"
     assert "NO ANSWER" in fp, "abstention preserved (moat)"
+
+
+def test_every_answer_prompt_declares_the_response_language() -> None:
+    """LoCoMo strict (n=150, 2026-07-25): two answers came back IN ITALIAN on an
+    English bench — 5:41 (graded CORRECT despite the language flip) and 9:200 (a
+    cat5 fabrication, in Italian). No answer prompt constrained the response
+    language, so the CLI answerer inherits whatever locale the host environment
+    carries. The contract: EVERY answer-system prompt pins the response to the
+    question's language — a new prompt variant cannot silently drop it."""
+    import benchmark.qa_eval as qa
+
+    prompts = {
+        name: val for name, val in vars(qa).items()
+        if (name.startswith("_ANSWER_SYSTEM") or name == "_GROUNDED_ANSWER_SYSTEM")
+        and isinstance(val, str)
+    }
+    assert len(prompts) >= 6, f"expected the full prompt family, got {sorted(prompts)}"
+    for name, prompt in prompts.items():
+        assert "language of the question" in prompt, (
+            f"{name} does not pin the response language")

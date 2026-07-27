@@ -23,9 +23,17 @@ import re
 from collections import defaultdict
 from typing import Any, Protocol
 
+# Every answer prompt pins the response to the QUESTION's language: the CLI
+# answerer otherwise inherits the host locale (LoCoMo strict n=150, 2026-07-25:
+# two Italian answers on an English bench — 5:41 graded CORRECT despite the
+# flip, 9:200 a cat5 fabrication in Italian). Contract-tested in
+# test_every_answer_prompt_declares_the_response_language.
+_LANGUAGE_PIN = "Answer in the language of the question. "
+
 _ANSWER_SYSTEM = (
     "You answer a question using ONLY the provided memory/context. "
     "Be concise: reply with just the answer, no explanation. "
+    + _LANGUAGE_PIN +
     "If the question asks for a LIST or for multiple things, enumerate ALL of "
     "the relevant items you can find across the context, comma-separated. "
     "When the question asks WHEN something happened, give the ABSOLUTE date "
@@ -53,7 +61,8 @@ _ANSWER_SYSTEM_STRICT = _ANSWER_SYSTEM + (
 # NO ANSWER abstention is preserved — the anti-hallucination contract stands.
 # Env-gated (ENGRAM_ANSWER_VERIFY=1), default OFF.
 _ANSWER_SYSTEM_VERIFY = (
-    "Answer from the CONTEXT only. The question may contain a FALSE ASSUMPTION: "
+    "Answer from the CONTEXT only. " + _LANGUAGE_PIN +
+    "The question may contain a FALSE ASSUMPTION: "
     "first check every claim inside the question against the context. "
     "If a claim contradicts the context, answer 'No' and state the correct fact "
     "from the context in the same sentence. "
@@ -72,7 +81,7 @@ _ANSWER_SYSTEM_VERIFY = (
 # no trade-off, fabrications went DOWN. Opt-in ENGRAM_ANSWER_MODE=declared;
 # small-n, not yet the default. Abstention preserved.
 _ANSWER_SYSTEM_DECLARED = (
-    "Answer from the CONTEXT only. Rules:\n"
+    "Answer from the CONTEXT only. " + _LANGUAGE_PIN + "Rules:\n"
     "- If the answer is stated, give it directly (short).\n"
     "- If the answer is NOT stated but clearly FOLLOWS from facts in the "
     "context, you MAY infer it — but you MUST declare the derivation: "
@@ -94,7 +103,8 @@ _ANSWER_SYSTEM_DECLARED = (
 # answers lost to over-caution. Opt-in ENGRAM_ANSWER_MODE=adaptive; default
 # strict unchanged. This preserves the sacred criterion (abstention).
 _ANSWER_SYSTEM_ADAPTIVE = (
-    "Answer from the CONTEXT only. FIRST decide: does the context contain "
+    "Answer from the CONTEXT only. " + _LANGUAGE_PIN +
+    "FIRST decide: does the context contain "
     "information that supports an answer, either directly OR by reasonable "
     "inference from what is stated? If YES, answer in ONE short sentence "
     "(inference is allowed, but grounded ONLY in the context). If the context "
@@ -109,7 +119,8 @@ _ANSWER_SYSTEM_ADAPTIVE = (
 # context-gate and NO ANSWER abstention (Boundary stays 1.0), plus: if the QUESTION
 # asserts something the context contradicts, say 'No' and give the correct fact.
 _ANSWER_SYSTEM_ADAPTIVE_FP = (
-    "Answer from the CONTEXT only. FIRST decide: does the context contain "
+    "Answer from the CONTEXT only. " + _LANGUAGE_PIN +
+    "FIRST decide: does the context contain "
     "information that supports an answer, either directly OR by reasonable "
     "inference from what is stated? If YES, answer in ONE short sentence "
     "(inference is allowed, but grounded ONLY in the context). "
@@ -282,7 +293,8 @@ _GROUNDED_ANSWER_SYSTEM = (
     "strongly its SOURCE was verified to entail it at write time (higher = more trustworthy). PREFER "
     "high-grounding facts. Treat a fact whose grounding is below the reliability floor as UNRELIABLE: "
     "do not assert it; if only low-grounding facts are relevant, reply exactly: NO ANSWER. Untagged "
-    "facts have no trust signal — use normal judgement. Be concise: reply with just the answer."
+    "facts have no trust signal — use normal judgement. Be concise: reply with just the answer. "
+    + _LANGUAGE_PIN.strip()
 )
 
 
