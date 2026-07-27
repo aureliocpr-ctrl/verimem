@@ -195,14 +195,19 @@ _JUDGE_SYSTEM_FAIR = (
 # the correction the rubric rewards and the fabrication it punishes.
 _JUDGE_ADVERSARIAL_GROUNDED = (
     "The QUESTION is likely UNANSWERABLE from the CONTEXT (a trick / "
-    "false-premise question). Judge the PREDICTED answer AGAINST THE CONTEXT. "
-    "It is CORRECT if it ABSTAINS (says the information is not available / not "
-    "mentioned / unknown), OR if it rejects the question's false premise and "
+    "false-premise question). Judge the PREDICTED answer AGAINST THE CONTEXT, "
+    "AS A WHOLE — including anything it adds after abstaining. "
+    "It is CORRECT when: (a) it abstains (says the information is not "
+    "available / not mentioned / unknown) and offers nothing further that "
+    "reads as an answer; or (b) it rejects the question's false premise and "
     "every fact it states in doing so is supported by the CONTEXT — correcting "
-    "'X did it, not Y' is CORRECT when the context shows X did it. It is "
-    "INCORRECT only if it asserts a specific fact that the CONTEXT does not "
-    "support, as if it were known. Reply with exactly one word: CORRECT or "
-    "INCORRECT."
+    "'X did it, not Y' is CORRECT when the context shows X did it. "
+    "It is INCORRECT when it asserts a specific fact the CONTEXT does not "
+    "support as if it were known, AND ALSO when it abstains but then "
+    "volunteers context facts in a way that IMPLIES they answer the question: "
+    "facts that are individually present in the context still fabricate an "
+    "answer if they are offered as one. Reply with exactly one word: CORRECT "
+    "or INCORRECT."
 )
 
 _JUDGE_ADVERSARIAL = (
@@ -383,14 +388,30 @@ def build_adversarial_judge_prompt(
 def judge_abstention(
     judge_llm: _LLM, question: str, predicted: str, *,
     model: str | None = None, context: list[str] | None = None,
+    allow_blind: bool = False,
 ) -> bool:
     """Grade an UNANSWERABLE (adversarial) question: CORRECT iff the prediction
     abstains / rejects the false premise rather than fabricating. An empty
     prediction counts as abstention (it asserts nothing false). Pass the
     ``context`` the answer was drawn from: it is what makes 'founded
-    correction' decidable at all (see build_adversarial_judge_prompt)."""
+    correction' decidable at all (see build_adversarial_judge_prompt).
+
+    NO SILENT FALLBACK. The blind rubric is strictly stricter than the grounded
+    one, so a function that picked between them by whether a context happened
+    to be passed would let one reported number mix items graded by two
+    different rulers — and both adversarial reviews said the same thing about
+    documenting that instead of preventing it: it only moves the blame to the
+    reader. A caller with no context must say so with ``allow_blind=True``, in
+    the call itself, where anyone reading the code sees which ruler was used.
+    """
     if not (predicted or "").strip():
         return True  # said nothing -> fabricated nothing -> correct abstention
+    if context is None and not allow_blind:
+        raise ValueError(
+            "adversarial judging without a context uses the BLIND rubric, "
+            "which is stricter than the grounded one — mixing the two in one "
+            "metric compares different rulers. Pass context=[...], or state "
+            "allow_blind=True if you really have none.")
     system, messages = build_adversarial_judge_prompt(question, predicted, context)
     resp = judge_llm.complete(system, messages, model=model, max_tokens=8)
     return parse_judge_label(getattr(resp, "text", "") or "")

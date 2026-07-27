@@ -27,8 +27,14 @@ def test_judge_abstention_empty_prediction_is_correct() -> None:
 
 
 def test_judge_abstention_uses_llm() -> None:
-    assert judge_abstention(MockLLM(scripted=["CORRECT"]), "Who?", "I don't know") is True
-    assert judge_abstention(MockLLM(scripted=["INCORRECT"]), "Who?", "It was Bob.") is False
+    # the normal path carries the context (the grounded rubric); the blind one
+    # is reachable only by saying so — see
+    # test_adversarial_judging_without_context_must_be_explicit
+    ctx = ["Ann: it was me who filed it."]
+    assert judge_abstention(MockLLM(scripted=["CORRECT"]), "Who?",
+                            "I don't know", context=ctx) is True
+    assert judge_abstention(MockLLM(scripted=["INCORRECT"]), "Who?",
+                            "It was Bob.", context=ctx) is False
 
 
 def test_score_qa_adversarial_record_scored_on_abstention() -> None:
@@ -280,3 +286,55 @@ def test_score_qa_passes_the_context_to_the_adversarial_judge() -> None:
     assert giudizi, "nessuna chiamata al giudice"
     assert "Marley flooring" in giudizi[-1]["user"], (
         "score_qa non passa il contesto al giudice adversarial")
+
+
+def test_the_grounded_rubric_judges_the_whole_answer_not_just_the_abstention() -> None:
+    """Two independent adversarial reviews (deepseek-v4-pro, glm-5.2) found the
+    same hole in the grounded rubric I shipped hours earlier: 'CORRECT if it
+    ABSTAINS ... OR if it rejects the premise with supported facts' is satisfied
+    by the abstention ALONE, so whatever is appended after it is never examined.
+
+    Their counterexample: 'The context does not mention techlash syndrome.
+    However, teenagers who overuse technology experience anxiety and
+    irritability.' Every fact IS in the context, the answer DOES abstain — and
+    it still fabricates, because the appended facts are presented as if they
+    answered the question. The blind judge caught these crudely (it rejected any
+    specific assertion); the grounded one let them through. Fabrication by
+    adjacency."""
+    import benchmark.qa_eval as qa
+
+    system, _ = qa.build_adversarial_judge_prompt(
+        "q", "p", context=["some chunk"])
+    basso = system.lower()
+    assert "as a whole" in basso, (
+        "the rubric must bind the verdict to the ENTIRE answer: an abstention "
+        "followed by volunteered facts is what slips through otherwise")
+    assert "implies" in basso or "as if" in basso or "suggest" in basso, (
+        "the rubric must name the failure mode — facts offered so that they "
+        "read as the answer — not merely require each fact to be supported")
+
+
+def test_adversarial_judging_without_context_must_be_explicit() -> None:
+    """The dual-ruler defect, the one both reviews said documentation cannot
+    fix: a function that picks its rubric from whether a context happened to be
+    passed lets a single reported number mix items graded by a permissive
+    rubric with items graded by a strict one — 'documented' only moves the
+    blame to the reader. So the blind rubric is no longer a silent fallback:
+    asking for an adversarial verdict without context raises unless the caller
+    states, in the call itself, that it wants the OLD ruler."""
+    import pytest as _pytest
+
+    import benchmark.qa_eval as qa
+    from verimem.llm import MockLLM
+
+    with _pytest.raises(ValueError, match="rubric"):
+        qa.judge_abstention(MockLLM(scripted=["CORRECT"]), "Who?", "It was Bob.")
+
+    # explicit opt-in still works, for callers that genuinely have no context
+    assert qa.judge_abstention(
+        MockLLM(scripted=["CORRECT"]), "Who?", "I don't know",
+        allow_blind=True) is True
+    # and the normal path — with context — needs no ceremony
+    assert qa.judge_abstention(
+        MockLLM(scripted=["CORRECT"]), "Who?", "I don't know",
+        context=["a chunk"]) is True
