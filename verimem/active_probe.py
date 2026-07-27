@@ -26,6 +26,7 @@ from typing import Any
 from .composer import _copula_parse, _strip_article
 from .epistemic import make_refuted, make_unbeaten
 from .self_provenance import is_self_ref
+from .source_trust import canonical_source
 
 __all__ = ["probe_fact"]
 
@@ -62,6 +63,16 @@ def probe_fact(mem: Any, fact_id: str, *, k: int = 8) -> dict[str, Any]:
             continue                                   # agreement, not a rival
         if any(is_self_ref(r) for r in (rival.verified_by or [])):
             continue                                   # P85: self-echo can't refute
+        # INDEPENDENCE (2026-07-27). The docstring promised counter-evidence
+        # "from an INDEPENDENT source" and only "not the engine" was enforced —
+        # two different claims. Since ``refuted`` is ABSORBING, a wrong one kills
+        # a fact for good, so the rival must be at least as well-sourced as what
+        # it destroys: it needs an identifiable source, and a source revising
+        # ITSELF is supersession (that machinery already exists), not refutation.
+        if not (rival.verified_by or []):
+            continue                                   # unsourced: too cheap to kill
+        if canonical_source(rival.verified_by) == canonical_source(fact.verified_by):
+            continue                                   # same source correcting itself
         label = make_refuted(f"{rival.id}: {rp[1]}")
         applied = mem.semantic.set_epistemic(fact.id, label)
         return {"outcome": "refuted_proposed", "probe_query": probe_query,
