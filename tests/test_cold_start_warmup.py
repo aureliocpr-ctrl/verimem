@@ -39,6 +39,15 @@ def test_daemon_usable_false_when_model_mismatch(monkeypatch):
 
 def test_daemon_usable_true_when_model_matches_and_reachable(monkeypatch):
     monkeypatch.setattr(encode_service, "is_reachable", lambda *a, **k: True)
+    # health probe (27/07): usable asks the DAEMON, not the port — a live
+    # correct-model daemon is one that ANSWERS the ping with that model, so a
+    # fake that only accepts connections no longer qualifies (that is now the
+    # wedged case, tests/test_daemon_health_probe.py)
+    monkeypatch.setattr(
+        encode_service, "_ping",
+        lambda *a, **k: {"ok": True, "model": CONFIG.embedding_model,
+                         "dim": CONFIG.embedding_dim, "pid": 7},
+    )
     info = {"host": "127.0.0.1", "port": 5555,
             "model": CONFIG.embedding_model, "dim": CONFIG.embedding_dim}
     assert encode_service.daemon_usable(info) is True

@@ -260,6 +260,15 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # come ogni altro stato di processo, non lasciato alla cortesia dei test.
     from verimem import semantic as _sem
     _sem._rerank_breaker_reset()
+    # E il GEMELLO della fusione, per la stessa ragione: nato il 25/07, dopo
+    # questa fixture, non ci era mai entrato. A breaker scattato la fusione e'
+    # SALTATA e nessun budget la riporta, quindi
+    # test_cold_path_gains_ppr_signal_when_fusion_on — che il budget lo fissa
+    # apposta per non misurare la velocita' del runner — restava comunque in
+    # balia di un trip lasciato da un test qualunque girato prima. Riprodotto
+    # il 27/07 trippando il breaker a mano: stesso identico rosso visto in
+    # full suite.
+    _sem._fusion_breaker_reset()
     # CYCLE #25: isola HIPPO_DATA_DIR a una tmp_path per-test.
     # CONFIG è frozen dataclass costruito a import-time → monkeypatch
     # diretto fallisce con FrozenInstanceError. Use object.__setattr__
