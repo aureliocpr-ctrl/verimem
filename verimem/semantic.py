@@ -2604,6 +2604,24 @@ class SemanticMemory:
                     fact.id, fact.topic, list(fact.verified_by or []),
                 )
                 fact.status = "model_claim"
+
+        # 2026-07-27 — provenance signatures are now HONOURED, not merely
+        # shippable. The module was sound in isolation and had ZERO call sites,
+        # so VERIMEM_PROVENANCE_KEY was an opt-in nobody could opt into.
+        # Deliberately narrow: an UNSIGNED ref stays fine (historical
+        # provenance is unsigned and refusing it would quarantine the corpus),
+        # and with no key the whole layer is inert. What is refused is a ref
+        # that CLAIMS a signature which does not verify — an origin asserted
+        # and not held, i.e. the forgery the SMSR complement exists to catch.
+        from .provenance_signing import signature_offenders
+        _forged = signature_offenders(fact)
+        if _forged:
+            _LOG.warning(
+                "provenance signature gate: fact_id=%s topic=%s quarantined "
+                "(refs claim a signature that does not verify: %r)",
+                fact.id, fact.topic, _forged,
+            )
+            fact.status = "quarantined"
         # Cycle #128 (2026-05-17) — L1 anti-confabulation: emit a
         # warning when the proposition contains a SHIPPED-like keyword
         # but verified_by lacks commit-tracking refs. The fact is STILL
