@@ -188,6 +188,23 @@ _JUDGE_SYSTEM_FAIR = (
 # correct behaviour is to ABSTAIN, not to fabricate — this is exactly the
 # anti-confabulation property Engram exists for, so it must be scored on
 # abstention, not string-matched against a missing gold.
+# GROUNDED variant (2026-07-27): same contract, but the judge is shown the
+# CONTEXT, so 'rejects the false premise' becomes decidable instead of being a
+# coin toss it resolves against the answer. The criterion is named explicitly —
+# supported by the context or not — because that is the only difference between
+# the correction the rubric rewards and the fabrication it punishes.
+_JUDGE_ADVERSARIAL_GROUNDED = (
+    "The QUESTION is likely UNANSWERABLE from the CONTEXT (a trick / "
+    "false-premise question). Judge the PREDICTED answer AGAINST THE CONTEXT. "
+    "It is CORRECT if it ABSTAINS (says the information is not available / not "
+    "mentioned / unknown), OR if it rejects the question's false premise and "
+    "every fact it states in doing so is supported by the CONTEXT — correcting "
+    "'X did it, not Y' is CORRECT when the context shows X did it. It is "
+    "INCORRECT only if it asserts a specific fact that the CONTEXT does not "
+    "support, as if it were known. Reply with exactly one word: CORRECT or "
+    "INCORRECT."
+)
+
 _JUDGE_ADVERSARIAL = (
     "The QUESTION is likely UNANSWERABLE from the conversation (a trick / "
     "false-premise question). The PREDICTED answer is CORRECT if it ABSTAINS — "
@@ -335,20 +352,47 @@ def judge_correct(
     return parse_judge_label(getattr(resp, "text", "") or "")
 
 
+def build_adversarial_judge_prompt(
+    question: str, predicted: str, context: list[str] | None = None,
+) -> tuple[str, list[dict[str, str]]]:
+    """Build the (system, messages) for grading an UNANSWERABLE question. Pure.
+
+    WITH the context, because without it the judge cannot do its job. An
+    adversarial question has gold=None by construction, so the retrieved
+    context is the ONLY evidence for whether a rejection of the false premise
+    is founded or invented — and the rubric hinges on exactly that
+    distinction. Graded blind, 'No, it is Jon and not Gina' looks the same as a
+    fabrication, and the judge defaults to INCORRECT: measured 2026-07-27 on
+    LoCoMo, all three cat5 cases it marked as failures were corrections
+    verifiable word for word in the conversation. When no context is supplied
+    the old blind prompt is used unchanged, so callers that cannot provide one
+    keep their previous behaviour rather than silently getting a new ruler.
+    """
+    if not context:
+        return _JUDGE_ADVERSARIAL, [
+            {"role": "user",
+             "content": f"QUESTION: {question}\nPREDICTED: {predicted}\n\n"
+                        f"Reply CORRECT or INCORRECT."}]
+    return _JUDGE_ADVERSARIAL_GROUNDED, [
+        {"role": "user",
+         "content": f"CONTEXT:\n{_context_block(context)}\n\n"
+                    f"QUESTION: {question}\nPREDICTED: {predicted}\n\n"
+                    f"Reply CORRECT or INCORRECT."}]
+
+
 def judge_abstention(
-    judge_llm: _LLM, question: str, predicted: str, *, model: str | None = None,
+    judge_llm: _LLM, question: str, predicted: str, *,
+    model: str | None = None, context: list[str] | None = None,
 ) -> bool:
     """Grade an UNANSWERABLE (adversarial) question: CORRECT iff the prediction
     abstains / rejects the false premise rather than fabricating. An empty
-    prediction counts as abstention (it asserts nothing false)."""
+    prediction counts as abstention (it asserts nothing false). Pass the
+    ``context`` the answer was drawn from: it is what makes 'founded
+    correction' decidable at all (see build_adversarial_judge_prompt)."""
     if not (predicted or "").strip():
         return True  # said nothing -> fabricated nothing -> correct abstention
-    resp = judge_llm.complete(
-        _JUDGE_ADVERSARIAL,
-        [{"role": "user",
-          "content": f"QUESTION: {question}\nPREDICTED: {predicted}\n\n"
-                     f"Reply CORRECT or INCORRECT."}],
-        model=model, max_tokens=8)
+    system, messages = build_adversarial_judge_prompt(question, predicted, context)
+    resp = judge_llm.complete(system, messages, model=model, max_tokens=8)
     return parse_judge_label(getattr(resp, "text", "") or "")
 
 
@@ -382,7 +426,8 @@ def score_qa(
                 answer_llm, question, context, model=answer_model)
             if rec.get("adversarial"):
                 correct = judge_abstention(
-                    judge_llm, question, predicted, model=judge_model)
+                    judge_llm, question, predicted, model=judge_model,
+                    context=context)
             else:
                 correct = judge_correct(
                     judge_llm, question, gold, predicted, model=judge_model,

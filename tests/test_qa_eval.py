@@ -226,3 +226,57 @@ def test_every_answer_prompt_declares_the_response_language() -> None:
     for name, prompt in prompts.items():
         assert "language of the question" in prompt, (
             f"{name} does not pin the response language")
+
+
+def test_the_adversarial_judge_is_given_the_context_it_needs() -> None:
+    """It graded blind, and that is why it was wrong three times out of three.
+
+    An adversarial (unanswerable) question has gold=None, so the only evidence
+    for whether a rejection is FOUNDED is the retrieved context — and
+    judge_abstention never received it. Its own rubric calls a rejection of the
+    false premise CORRECT, but with question+prediction alone 'No, it is Jon
+    not Gina' is indistinguishable from an invention, so the judge defaulted to
+    INCORRECT. Measured on LoCoMo 2026-07-27: all three cat5 cases declared
+    'lost' (1:86, 5:132, 9:195) were corrections verified word for word in the
+    dataset — Jon says 'I'm after Marley flooring', Audrey says 'I set up a
+    doggy play area', Calvin says 'I usually watch music videos, concerts and
+    documentaries'. The moat had not cracked; the ruler was blind.
+    """
+    import benchmark.qa_eval as qa
+
+    system, messages = qa.build_adversarial_judge_prompt(
+        "What flooring is Gina looking for?",
+        "No. It is Jon, not Gina, who wants Marley flooring.",
+        context=["Jon: I'm after Marley flooring, which dance studios use."],
+    )
+    corpo = messages[0]["content"]
+    assert "Marley flooring, which dance studios use" in corpo, (
+        "the judge must see the CONTEXT: it is the only evidence that separates "
+        "a founded correction from a fabrication")
+    assert "supported by the CONTEXT" in system or "supports" in system, (
+        "the rubric must name the criterion the context makes decidable")
+
+
+def test_score_qa_passes_the_context_to_the_adversarial_judge() -> None:
+    """The cure only counts at the CALL SITE (the 26/07 lesson): score_qa must
+    hand the context over, or the fixed judge grades blind anyway."""
+    import benchmark.qa_eval as qa
+
+    visti: list[dict] = []
+
+    class _Spia:
+        def complete(self, system, messages, **kw):
+            visti.append({"system": system, "user": messages[0]["content"]})
+            class R:
+                text = "CORRECT"
+            return R()
+
+    rec = [{"id": "1:86", "question": "What flooring is Gina looking for?",
+            "gold": "", "category": "5", "adversarial": True,
+            "context": ["Jon: I'm after Marley flooring."]}]
+    spia = _Spia()
+    qa.score_qa(rec, answer_llm=spia, judge_llm=spia)
+    giudizi = [v for v in visti if "PREDICTED" in v["user"]]
+    assert giudizi, "nessuna chiamata al giudice"
+    assert "Marley flooring" in giudizi[-1]["user"], (
+        "score_qa non passa il contesto al giudice adversarial")
