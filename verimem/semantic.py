@@ -1636,6 +1636,36 @@ def _rerank_auto_max_words() -> int:
         return 10
 
 
+#: Unicode blocks whose characters carry word-level meaning without spaces —
+#: the standard word-counter convention (one CJK character = one word). Han
+#: (+ ext A, + compatibility), Hiragana, Katakana (+ phonetic ext), Hangul
+#: syllables (+ jamo). Standard block boundaries, not tuned constants.
+_CJK_WORD_BLOCKS = (
+    (0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xF900, 0xFAFF),   # Han
+    (0x3040, 0x309F), (0x30A0, 0x30FF), (0x31F0, 0x31FF),   # Kana
+    (0x1100, 0x11FF), (0xAC00, 0xD7AF),                     # Hangul
+)
+
+
+def _query_word_count(query: str) -> int:
+    """Word count for the AUTO gate — Unicode-aware where split() is blind.
+
+    ``len(query.split())`` reads an unspaced 26-character Japanese question as
+    ONE word, so the gate ran the CE exactly in the regime where it measurably
+    hurts (long input, -0.080 MRR on the 26/07 GT). Per token: Latin counts 1
+    (the 304-query derivation corpus classifies identically — the validated
+    policy is untouched), and each CJK character counts as one word. For
+    spaced Korean this OVERSTATES (a 3-syllable word counts 3) — deliberately
+    conservative: overstating pushes borderline CJK queries to skip the CE and
+    keep the bi-encoder order, never into the harmful regime. Tuning it finer
+    would need a CJK ground-truth corpus that does not exist here."""
+    return sum(
+        max(1, sum(1 for ch in tok
+                   if any(lo <= ord(ch) <= hi for lo, hi in _CJK_WORD_BLOCKS)))
+        for tok in query.split()
+    )
+
+
 def _topk_deterministic(sims, n: int, facts):
     """Top-``n`` candidate indices by ``(-score, fact.id)`` — deterministic and
     ROW-ORDER INVARIANT: any permutation of the same candidate rows (full corpus
@@ -4001,7 +4031,7 @@ class SemanticMemory:
         """
         from .cross_encoder_rerank import rerank_candidates
         if (_rerank_mode() == "auto"
-                and len(query.split()) > _rerank_auto_max_words()):
+                and _query_word_count(query) > _rerank_auto_max_words()):
             # AUTO (default 2026-07-26): a long query is the regime where the
             # CE measurably HURTS (multi-fact/long: -0.080 MRR, 12 better/38
             # worse on the 26/07 GT) — skip BEFORE any load/slot/breaker
