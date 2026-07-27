@@ -338,3 +338,37 @@ def test_adversarial_judging_without_context_must_be_explicit() -> None:
     assert qa.judge_abstention(
         MockLLM(scripted=["CORRECT"]), "Who?", "I don't know",
         context=["a chunk"]) is True
+
+
+def test_the_rubric_protects_a_pure_abstention_and_a_plain_rejection() -> None:
+    """Measured regression from my own anti-adjacency clause (WS2.6, 27/07).
+
+    Giving the judge the context made it start reasoning 'you could have
+    answered', and the clause 'INCORRECT when it abstains but then volunteers
+    facts' was wide enough to swallow legitimate rejections. Two real cases:
+
+      0:186 'Who is Caroline a fan of in terms of modern music?' — it is
+      MELANIE who names Ed Sheeran. strict answered exactly 'NO ANSWER' and was
+      graded INCORRECT. A pure abstention on an item that is unanswerable BY
+      CONSTRUCTION must always be correct, whatever the context happens to hold.
+
+      3:227 'What impact does Joanna hope to have with her painting?' — the
+      context has zero occurrences of 'paint' and shows Joanna WRITES. declared
+      answered 'No. Joanna is a writer, not a painter. The context contains no
+      mention of her painting' — a textbook rejection — and was graded
+      INCORRECT.
+
+    So the rubric must say both things explicitly: a bare abstention is always
+    correct, and naming what the context DOES say while rejecting the premise
+    is a rejection, not an adjacency fabrication."""
+    import benchmark.qa_eval as qa
+
+    system, _ = qa.build_adversarial_judge_prompt("q", "p", context=["chunk"])
+    basso = system.lower()
+    assert "always correct" in basso, (
+        "a pure abstention must be unconditionally correct: these items are "
+        "unanswerable by construction, so 'the context looked answerable' is "
+        "never a reason to reject one")
+    assert "instead of" in basso or "rather than" in basso, (
+        "the rubric must distinguish 'X did it, not Y — here is what the "
+        "context says instead' (a rejection) from facts offered AS the answer")
