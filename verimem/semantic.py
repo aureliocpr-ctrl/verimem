@@ -1841,7 +1841,7 @@ def _reranker_ready() -> bool:
 # long healthy session do not disable the rerank, and a session where most
 # queries pay the budget for nothing does get it switched off.
 _RERANK_BREAKER: dict[str, Any] = {
-    "window": deque(maxlen=10), "tripped": False, "cold": 0,
+    "window": deque(maxlen=10), "tripped": False, "cold": 0, "tripped_at": 0.0,
 }
 
 
@@ -1863,8 +1863,40 @@ def _rerank_breaker_window() -> int:
         return 10
 
 
+def _rerank_breaker_cooldown_s() -> float:
+    """Seconds after a trip before the breaker re-arms itself; 0 = never
+    (the pre-2026-07-27 permanent trip, as an explicit opt-out).
+
+    Default 600 — the CE lease constant (_rerank_slot_lease_s), one cycle of
+    model possession. The trip is a SESSION property (a gaming session, an
+    antivirus scan); in a long-lived daemon a permanent trip turns transient
+    contention into a forever-lost lift, the exact outcome the breaker's own
+    contract promises to prevent. Re-arm starts from a CLEAN window, so a
+    persistent fault re-trips after N fresh overruns: bounded waste
+    (N x budget per cooldown, ~2.5% at defaults) instead of a dead CE.
+    Env ENGRAM_RERANK_BREAKER_COOLDOWN_S."""
+    try:
+        return max(0.0, float(
+            os.environ.get("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "600")))
+    except ValueError:
+        return 600.0
+
+
 def _rerank_breaker_tripped() -> bool:
-    return bool(_RERANK_BREAKER["tripped"])
+    """Whether the rerank is disabled — re-arming LAZILY once the cooldown
+    elapses. Every consumer (the recall gate included) must ask HERE, not the
+    raw field: the field cannot re-arm."""
+    if not _RERANK_BREAKER["tripped"]:
+        return False
+    cd = _rerank_breaker_cooldown_s()
+    if cd and time.monotonic() - _RERANK_BREAKER.get("tripped_at", 0.0) >= cd:
+        _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
+        _RERANK_BREAKER["tripped"] = False
+        _RERANK_BREAKER["cold"] = 0
+        _LOG.info("rerank breaker re-armed after %.0fs cooldown — window "
+                  "clean, CE rerank enabled again", cd)
+        return False
+    return True
 
 
 def _rerank_breaker_overruns_in_window() -> int:
@@ -2022,6 +2054,7 @@ def _rerank_breaker_record(overrun: bool) -> None:
     sforati = sum(1 for x in w if x)
     if sforati >= n:
         _RERANK_BREAKER["tripped"] = True
+        _RERANK_BREAKER["tripped_at"] = time.monotonic()
         _LOG.warning(
             "rerank breaker TRIPPED — %d of the last %d reranks overran their "
             "budget — CE rerank disabled for this process (bi-encoder order "
@@ -2041,6 +2074,7 @@ def _rerank_breaker_cold_overrun() -> None:
     if n and not _RERANK_BREAKER["tripped"] \
             and _RERANK_BREAKER["cold"] >= n:
         _RERANK_BREAKER["tripped"] = True
+        _RERANK_BREAKER["tripped_at"] = time.monotonic()
         _LOG.warning(
             "rerank breaker TRIPPED after %d cold-load overruns — the CE never "
             "became resident (broken install / perpetual load?); rerank "
@@ -2073,7 +2107,9 @@ def _rerank_breaker_cold_overrun() -> None:
 # NOTE (2026-07-25): the rerank breaker above still uses consecutive-count and
 # has the same blind spot. Not touched here — it is 15 days old, tested, and on
 # a different budget; changing it is its own change with its own measurement.
-_FUSION_BREAKER: dict[str, Any] = {"window": deque(maxlen=10), "tripped": False}
+_FUSION_BREAKER: dict[str, Any] = {
+    "window": deque(maxlen=10), "tripped": False, "tripped_at": 0.0,
+}
 
 
 def _fusion_breaker_n() -> int:
@@ -2101,8 +2137,30 @@ def _fusion_breaker_reset() -> None:
     _FUSION_BREAKER["tripped"] = False
 
 
+def _fusion_breaker_cooldown_s() -> float:
+    """Fusion twin of _rerank_breaker_cooldown_s — same rationale, same
+    default (600 s), same opt-out (0 = permanent trip).
+    Env ENGRAM_FUSION_BREAKER_COOLDOWN_S."""
+    try:
+        return max(0.0, float(
+            os.environ.get("ENGRAM_FUSION_BREAKER_COOLDOWN_S", "600")))
+    except ValueError:
+        return 600.0
+
+
 def _fusion_breaker_tripped() -> bool:
-    return bool(_FUSION_BREAKER["tripped"])
+    """Whether the fusion is disabled — re-arming lazily after the cooldown,
+    with a clean window (see _rerank_breaker_tripped)."""
+    if not _FUSION_BREAKER["tripped"]:
+        return False
+    cd = _fusion_breaker_cooldown_s()
+    if cd and time.monotonic() - _FUSION_BREAKER.get("tripped_at", 0.0) >= cd:
+        _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
+        _FUSION_BREAKER["tripped"] = False
+        _LOG.info("PPR fusion breaker re-armed after %.0fs cooldown — window "
+                  "clean, fusion enabled again", cd)
+        return False
+    return True
 
 
 def _fusion_breaker_record(overrun: bool) -> None:
@@ -2115,6 +2173,7 @@ def _fusion_breaker_record(overrun: bool) -> None:
     n = _fusion_breaker_n()
     if n and not _FUSION_BREAKER["tripped"] and sum(w) >= n:
         _FUSION_BREAKER["tripped"] = True
+        _FUSION_BREAKER["tripped_at"] = time.monotonic()
         _LOG.warning(
             "PPR fusion breaker TRIPPED — %d of the last %d fusions exceeded "
             "their budget; graph/lexical fusion disabled for this process "
@@ -3949,7 +4008,9 @@ class SemanticMemory:
             # touch, same pattern as the long-docs guard below: skipping
             # after the load would pay the ~43.6s warm-up for nothing.
             return hits_2t[:k]
-        if _RERANK_BREAKER["tripped"]:
+        if _rerank_breaker_tripped():
+            # the FUNCTION, not the raw field: only the function re-arms after
+            # the cooldown, and this gate is the consumer the re-arm exists for
             return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]
         tail = hits_2t[len(pool):]

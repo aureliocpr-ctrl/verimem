@@ -246,3 +246,94 @@ def test_close_together_queries_skip_instead_of_tripping(tmp_path, monkeypatch):
         "il breaker e' scattato per contesa autoinflitta, non per un CE lento")
     for t in [t for t in threading.enumerate() if t.name == "hippo-rerank"]:
         t.join(10)
+
+
+# --- Re-arm after cooldown (2026-07-27) --------------------------------------
+# The trip was a PROCESS sentence: "restart or _rerank_breaker_reset() to
+# re-arm" — in a long-lived daemon that means a transient contention (a gaming
+# session, an antivirus scan) disables the measured CE lift FOREVER, which is
+# the exact property the breaker's own docstring promised to protect. After
+# ENGRAM_RERANK_BREAKER_COOLDOWN_S (default 600, the CE lease constant) the
+# breaker re-arms with a CLEAN window: a persistent fault re-trips after N
+# fresh overruns (bounded waste: N*budget per cooldown), a healed session
+# gets its rerank back. 0 opts out (the old permanent trip).
+
+
+def test_a_tripped_breaker_rearms_after_the_cooldown(monkeypatch):
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.3")
+    for _ in range(5):
+        semantic._rerank_breaker_record(True)
+    assert semantic._rerank_breaker_tripped(), "before the cooldown the trip stands"
+    time.sleep(0.35)
+    assert not semantic._rerank_breaker_tripped(), "cooldown elapsed -> re-armed"
+    semantic._rerank_breaker_record(True)
+    assert not semantic._rerank_breaker_tripped(), (
+        "the window is CLEAN after re-arm: one overrun must not re-trip")
+    for _ in range(4):
+        semantic._rerank_breaker_record(True)
+    assert semantic._rerank_breaker_tripped(), "a persistent fault re-trips"
+
+
+def test_cooldown_zero_keeps_the_trip_standing(monkeypatch):
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0")
+    for _ in range(5):
+        semantic._rerank_breaker_record(True)
+    time.sleep(0.05)
+    assert semantic._rerank_breaker_tripped(), "0 opts out: permanent trip"
+
+
+def test_cold_trip_rearms_and_forgets_the_cold_count(monkeypatch):
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.3")
+    monkeypatch.setenv("ENGRAM_RERANK_COLD_BREAKER_N", "3")
+    for _ in range(3):
+        semantic._rerank_breaker_cold_overrun()
+    assert semantic._rerank_breaker_tripped()
+    time.sleep(0.35)
+    assert not semantic._rerank_breaker_tripped()
+    semantic._rerank_breaker_cold_overrun()
+    assert not semantic._rerank_breaker_tripped(), (
+        "the cold count restarts from zero after a re-arm")
+
+
+def test_fusion_breaker_rearms_after_the_cooldown(monkeypatch):
+    semantic._fusion_breaker_reset()
+    monkeypatch.setenv("ENGRAM_FUSION_BREAKER_COOLDOWN_S", "0.3")
+    for _ in range(5):
+        semantic._fusion_breaker_record(True)
+    assert semantic._fusion_breaker_tripped()
+    time.sleep(0.35)
+    assert not semantic._fusion_breaker_tripped(), "fusion twin re-arms too"
+    semantic._fusion_breaker_record(True)
+    assert not semantic._fusion_breaker_tripped(), "clean window after re-arm"
+    for _ in range(4):
+        semantic._fusion_breaker_record(True)
+    assert semantic._fusion_breaker_tripped()
+
+
+def test_the_recall_gate_sees_the_rearm(tmp_path, monkeypatch):
+    """The production gate (semantic.py:3952) read the RAW field, not the
+    function — a re-arm implemented only in _rerank_breaker_tripped() would be
+    invisible to the very code path it exists for. This test never calls the
+    function between cooldown and queries: only the gate itself can re-arm.
+    With the gate on the function: query 1 re-arms, reranks, overruns; three
+    overruns re-trip (BREAKER_N=3), and the assert runs INSIDE the fresh
+    cooldown -> True. With the gate on the field: no query ever re-arms or
+    reranks, the final assert's own call re-arms (cooldown long elapsed) ->
+    False -> caught.
+
+    Cooldown 2 s, NOT 0.3: the overrun is recorded by the CALLER at the
+    0.2 s budget timeout (semantic.py, join(_budget)) while _cerca then joins
+    the worker to completion (~0.8 s more) — a 0.3 s cooldown expires inside
+    that join and the sanity assert itself re-arms. Found exactly that way."""
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "2.0")
+    mem = _mem(tmp_path, monkeypatch, scorer_delay=1.0)
+    for _ in range(3):
+        _cerca(mem)
+    assert semantic._rerank_breaker_tripped(), "sanity: tripped on slow CE"
+    time.sleep(2.1)
+    for _ in range(3):
+        _cerca(mem)
+    assert semantic._rerank_breaker_tripped(), (
+        "after the cooldown the GATE must re-arm and rerank again — three "
+        "fresh overruns re-trip; if this is False the gate never consulted "
+        "the re-arming function")
