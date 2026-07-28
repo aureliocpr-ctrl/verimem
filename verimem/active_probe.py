@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .composer import _copula_parse, _strip_article
+from .composer import _copula_parse, subject_key
 from .epistemic import make_refuted, make_unbeaten
 from .self_provenance import is_self_ref
 from .source_trust import canonical_source
@@ -57,7 +57,10 @@ def probe_fact(mem: Any, fact_id: str, *, k: int = 8) -> dict[str, Any]:
                 or rival.status in ("quarantined", "orphaned", "user_belief"):
             continue
         rp = _copula_parse(rival.proposition)
-        if not rp or _strip_article(rp[0]).lower() != _strip_article(subj).lower():
+        # subject_key, not a local normalisation: this rule had a second copy in
+        # the guardian and the two disagreed (2026-07-28). Same behaviour as
+        # before here — the divergence was on the guardian's side.
+        if not rp or subject_key(rp[0]) != subject_key(subj):
             continue
         if rp[1] == obj_norm:
             continue                                   # agreement, not a rival

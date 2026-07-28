@@ -32,7 +32,7 @@ import re
 import uuid
 from typing import Any
 
-__all__ = ["compose_once", "_copula_parse"]
+__all__ = ["compose_once", "subject_key", "_copula_parse"]
 
 #: A DERIVED fact needs more than the gate's minimum: the unreadable-verdict
 #: fallback is a non-committal 50, which PASSES the claude-scale write cut
@@ -65,6 +65,26 @@ def _strip_article(np: str) -> str:
     if words and words[0].lower() in _ARTICLES:
         words = words[1:]
     return " ".join(words)
+
+
+def subject_key(subject: str) -> str:
+    """The ONE definition of "the same subject", for every reader that groups
+    rival facts — the guardian's conflict detection and the active probe's
+    counter-evidence search.
+
+    It existed twice and the copies disagreed (2026-07-28): the probe normalised
+    the article, the guardian did not, so one store holding "Rex is a labrador."
+    and "The Rex is a poodle." was a fatal contradiction for the probe (which
+    applied its ABSORBING ``refuted``) and no contradiction at all for the
+    guardian (which served "labrador" as unchallenged). The same evidence cannot
+    be both. Subject identity is one question, so it gets one answer here.
+
+    Deliberately shallow — article + case + surrounding space, the normalisation
+    ``_copula_parse`` already performs on the OBJECT. It does not resolve
+    pronouns, aliases or morphology: "Rexy" is not "Rex", and a reader must not
+    infer that it is.
+    """
+    return _strip_article(subject or "").strip().lower()
 
 
 def _copula_match(text: str) -> re.Match | None:

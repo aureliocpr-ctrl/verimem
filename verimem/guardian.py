@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .composer import _copula_parse
+from .composer import _copula_parse, subject_key
 
 __all__ = ["correct_read"]
 
@@ -65,16 +65,20 @@ def correct_read(mem: Any, query: str, *, k: int = 5) -> dict[str, Any]:
         # honest abstention — a read-path never crashes (audit mod.3).
         return {"verdict": "ABSTAIN", "answer": None, "served_id": None,
                 "evidence": [], "uncorroborated": [], "reason": "no_support"}
-    # group the copula facts by subject; non-copula hits pass through untouched
+    # group the copula facts by subject; non-copula hits pass through untouched.
+    # The key is composer.subject_key — the SHARED definition of "same subject".
+    # Grouping on the raw parse hid every conflict where the two sides spelled
+    # the subject differently ("Rex" vs "The Rex"): the guardian ACCEPTed and
+    # served an answer the active probe considered refuted (2026-07-28, banco 4).
     contenders: dict[str, list[Any]] = {}
     for f in facts:
         parsed = _copula_parse(f.proposition)
         if parsed:
-            contenders.setdefault(parsed[0], []).append(f)
+            contenders.setdefault(subject_key(parsed[0]), []).append(f)
 
     top = facts[0]
     top_parsed = _copula_parse(top.proposition)
-    rivals = contenders.get(top_parsed[0], [top]) if top_parsed else [top]
+    rivals = contenders.get(subject_key(top_parsed[0]), [top]) if top_parsed else [top]
     # a refuted fact never gets served — drop it from contention entirely
     live = [f for f in rivals if _rank(f) >= 0] or []
     if not live:
