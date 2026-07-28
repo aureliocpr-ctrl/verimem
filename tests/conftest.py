@@ -20,6 +20,26 @@ import pytest
 
 
 @pytest.fixture
+def isolated_corpus(tmp_path, monkeypatch):
+    """A temp corpus the CLI actually writes to — the env vars, not just a path.
+
+    ``tmp_data_dir`` hands back a directory but leaves ENGRAM_DATA_DIR alone, so
+    a test that invokes the CLI would write into the operator's REAL store. This
+    points both env names at a temp dir instead.
+
+    It lives here because three test modules had each grown their own identical
+    copy (test_cli_facts_add, test_cli_facts, test_cli_consolidate). Those local
+    definitions still shadow this one — pytest resolves the nearest fixture — so
+    adding it changes no existing test; it just stops the next one from becoming
+    the fourth copy.
+    """
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    (tmp_path / "semantic").mkdir(parents=True, exist_ok=True)
+    return tmp_path
+
+
+@pytest.fixture
 def tmp_data_dir(tmp_path):
     """Provide a temp data directory; tests pass explicit paths to constructors."""
     new = Path(tmp_path) / "hippo_data"

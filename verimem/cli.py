@@ -3011,6 +3011,18 @@ def save_cmd(
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     console.print(f"[green]{disp}[/green] id={r.get('id') or '-'} "
                   f"topic={topic!r} [magenta]narrative[/magenta]")
+    # Whether the entailment moat actually judged this write. It only runs when
+    # the write carries a source, and until now the receipt looked identical
+    # either way — which is how a corpus reaches 6414 facts with 0 grounding
+    # scores (measured 2026-07-28) while every save printed "admitted".
+    _gs = r.get("grounding_score")
+    if isinstance(_gs, (int, float)):
+        console.print(f"  grounded {float(_gs):.1f} [dim]— the source entails "
+                      f"this checkpoint[/dim]")
+    else:
+        console.print("  [yellow]not verified[/yellow] [dim]— no source, so the "
+                      "entailment moat did not run; pass --source \"<the output "
+                      "that proves it>\" to have it judged[/dim]")
     resolved = r.get("lineage_resolved")
     if resolved:
         console.print(f"  chained -> {resolved[:12]}")

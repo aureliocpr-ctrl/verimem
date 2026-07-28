@@ -92,9 +92,48 @@ def run_doctor() -> list[dict[str, Any]]:
         except Exception:  # noqa: BLE001 — provider detection is best-effort
             provider = None
         if ce:
-            add("moat-judge", OK,
-                "local CE gate model installed — the grounding moat is ON with "
-                "no llm (multilingual)")
+            # "the moat is ON" is true of the JUDGE and gets read as "my store
+            # is protected". The moat only runs on writes that carry a source,
+            # so an installed judge and an unjudged corpus coexist happily —
+            # measured 2026-07-28 on the real store: judge present, 0 of 6414
+            # facts ever judged. Two COUNTs keep doctor inside its ~2s budget.
+            _n = _judged = 0
+            try:
+                import sqlite3 as _sq
+
+                from ._compat import data_dir as _dd
+                # _compat.data_dir(), the same resolver the data-dir check above
+                # uses — it reads the environment at call time, so doctor reports
+                # on the store the operator is actually pointed at.
+                _db = _dd() / "semantic" / "semantic.db"
+                if _db.exists():
+                    with _sq.connect(str(_db)) as _c:
+                        _n = int(_c.execute(
+                            "SELECT COUNT(*) FROM facts "
+                            "WHERE superseded_by IS NULL").fetchone()[0])
+                        _judged = int(_c.execute(
+                            "SELECT COUNT(*) FROM facts WHERE superseded_by "
+                            "IS NULL AND grounding_score IS NOT NULL"
+                        ).fetchone()[0])
+            except Exception:  # noqa: BLE001 — a doctor that hangs is a patient
+                _n = _judged = 0
+            if _n and not _judged:
+                add("moat-judge", WARN,
+                    f"local CE gate model installed, but 0 of {_n} stored facts "
+                    f"were ever entailment-judged — the moat runs only on writes "
+                    f"that carry a source",
+                    "pass source='<the evidence text>' on add() (or --source on "
+                    "`verimem save`); a verified_by ref records WHO vouches and "
+                    "does not run the check")
+            elif _n:
+                add("moat-judge", OK,
+                    f"local CE gate model installed — the grounding moat is ON "
+                    f"with no llm (multilingual); {_judged} of {_n} stored facts "
+                    f"entailment-judged")
+            else:
+                add("moat-judge", OK,
+                    "local CE gate model installed — the grounding moat is ON "
+                    "with no llm (multilingual)")
         elif provider and provider != "mock":
             add("moat-judge", WARN,
                 f"local CE gate model NOT installed; an llm provider is available "
