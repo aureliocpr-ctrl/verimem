@@ -53,7 +53,8 @@ def _quarantined_overlap(semantic: Any, query: str, *, min_shared: int = 2) -> b
     return False
 
 
-def _classify(mem: Any, query: str, *, floor: float, k: int) -> dict[str, Any]:
+def _classify(mem: Any, query: str, *, floor: float, k: int,
+              noise_floor: float = 0.0) -> dict[str, Any]:
     hits = mem.search(query, k=k)
     top = hits[0].get("score", 0.0) if hits else None
     row: dict[str, Any] = {"query": query, "top_score": top}
@@ -88,7 +89,14 @@ def _classify(mem: Any, query: str, *, floor: float, k: int) -> dict[str, Any]:
             row.update({"class": "quarantined_only",
                         "what_would_help": "evidence exists but is quarantined "
                         "— provide a supporting source or review the quarantine"})
-        elif not hits:
+        elif not hits or (top or 0.0) <= noise_floor:
+            # A hit at or below the store's own NOISE ceiling is not weak
+            # evidence, it is a nearest neighbour with nothing to say. Calling
+            # it below_floor changes the prescription from "find a source on
+            # this topic" to "get stronger evidence" — pointing the operator at
+            # a fact that was never about the question (measured 2026-07-28:
+            # fourteen facts about servers turned a weather query from
+            # no_evidence into below_floor without adding a word about weather).
             row.update({"class": "no_evidence",
                         "what_would_help": "a source about: "
                         + ", ".join(sorted(_keywords(query))[:5])})
@@ -102,12 +110,27 @@ def _classify(mem: Any, query: str, *, floor: float, k: int) -> dict[str, Any]:
 
 
 def ignorance_map(mem: Any, queries: list[str], *, floor: float = 0.8,
-                  k: int = 5) -> dict[str, Any]:
+                  k: int = 5, noise_floor: float | None = None) -> dict[str, Any]:
     """Classify every query; return ``{queries: [...], by_class: {...}}`` —
-    every class counted, nothing silently dropped."""
-    rows = [_classify(mem, q, floor=floor, k=k) for q in queries]
+    every class counted, nothing silently dropped.
+
+    ``noise_floor`` separates NOISE from weak evidence; None measures it from
+    the store itself (``estimate_relevance_floor``: scrambled in-domain probes,
+    0.0 when the store is too small to measure, in which case nothing changes).
+    Estimated ONCE per call, not per query — it costs ~32 recalls. It is
+    returned in the report because a number that decides a verdict has to be
+    visible in it.
+    """
+    if noise_floor is None:
+        from .relevance_floor import estimate_relevance_floor
+        try:
+            noise_floor = estimate_relevance_floor(mem.semantic)
+        except Exception:            # noqa: BLE001 — a diagnostic never crashes
+            noise_floor = 0.0        # measurement failed: behave as before
+    rows = [_classify(mem, q, floor=floor, k=k, noise_floor=noise_floor)
+            for q in queries]
     by_class: dict[str, int] = {}
     for r in rows:
         by_class[r["class"]] = by_class.get(r["class"], 0) + 1
     return {"queries": rows, "by_class": by_class,
-            "floor": floor, "n": len(rows)}
+            "floor": floor, "noise_floor": noise_floor, "n": len(rows)}
