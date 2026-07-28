@@ -146,7 +146,7 @@ def compose_once(mem: Any, *, topic: str | None = None, run_id: str | None = Non
             # a parent never composes with its own derivative (trivial loops)
             if a.id in (b.derives_from or []) or b.id in (a.derives_from or []):
                 continue
-            if _strip_article(mb.group("s")).lower() != pivot_a:
+            if subject_key(mb.group("s")) != pivot_a:   # the shared definition
                 continue
             subj_a = ma.group("s").strip()
             obj_b = mb.group("o").strip()

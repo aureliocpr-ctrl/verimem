@@ -104,6 +104,26 @@ def test_distinct_subjects_are_not_merged(mem):
     assert "labrador" in out["answer"]
 
 
+def test_every_reader_that_groups_by_subject_agrees(mem):
+    """Three readers ask "is this the same subject?" — guardian, active probe and
+    ignorance map. The sweep, not the spot fix: the defect this file pins came
+    from TWO copies of the rule drifting apart, so a third copy left in place is
+    the same defect waiting. The ignorance map must call the conflict a conflict
+    exactly when the other two see one.
+    """
+    from verimem.ignorance_map import ignorance_map
+    mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
+    mem.add("The Rex is a poodle.", topic="pets", verified_by=["source-doc:bob:t1"])
+    guard = correct_read(mem, "What breed is Rex?")
+    row = ignorance_map(mem, ["What breed is Rex?"], floor=0.5)["queries"][0]
+    assert guard["verdict"] == "ABSTAIN"
+    assert row["class"] == "conflict", (
+        f"the guardian abstains on a conflict the map calls {row['class']!r} — "
+        f"the user is told 'I cannot answer' and the work-list that should "
+        f"schedule the cure never learns why")
+    assert len(row["conflicting_ids"]) == 2
+
+
 def test_the_hidden_conflict_reaches_the_production_endpoint(tmp_path, monkeypatch):
     """The same case over ``GET /v1/correct`` — the guardian's only production
     caller (gateway.py). A unit test cannot see a layer-interaction defect, so

@@ -25,7 +25,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .composer import _copula_parse, _strip_article
+from .composer import _copula_parse, subject_key
 
 __all__ = ["ignorance_map"]
 
@@ -69,7 +69,7 @@ def _classify(mem: Any, query: str, *, floor: float, k: int) -> dict[str, Any]:
         parsed = _copula_parse(fact.proposition)
         if not parsed:
             continue
-        subj = _strip_article(parsed[0]).lower()
+        subj = subject_key(parsed[0])
         by_subject.setdefault(subj, {}).setdefault(parsed[1], []).append(fact.id)
     qk = _keywords(query)
     for subj, values in by_subject.items():
