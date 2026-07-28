@@ -106,9 +106,22 @@ def correct_read(mem: Any, query: str, *, k: int = 5) -> dict[str, Any]:
                     "uncorroborated": [f.id for f in overridden],
                     "reason": "user assertion not corroborated — "
                               "the corroborated fact wins"}
+        # "unchallenged" is a CLAIM — the store holds nothing against this
+        # answer — and the guardian may only make it where it could actually
+        # look. Rivals are gathered through the copula parse, so a non-copula
+        # top hit has no contenders to gather and the fact is returned alone.
+        # Measured on the real corpus (2026-07-28): 0 of 4208 live facts are
+        # copula (median proposition 814 chars of prose), so on real queries
+        # this branch was answering "unchallenged" every time, through the
+        # production endpoint, without ever having compared anything. The
+        # verdict is unchanged — there is no better answer available — but the
+        # two cases stop sharing one word.
         return {"verdict": "ACCEPT", "answer": winner.proposition,
                 "served_id": winner.id, "evidence": [f.id for f in rivals],
-                "uncorroborated": [], "reason": "unchallenged"}
+                "uncorroborated": [],
+                "reason": ("unchallenged" if top_parsed else
+                           "served as-is: not comparable — no copula structure "
+                           "to gather rivals by, so no conflict search ran")}
 
     # dominance is per-VALUE, not per-fact (audit mod.3): two proven facts
     # AGREEING on "labrador" must beat a lone unlabeled "poodle" — comparing
