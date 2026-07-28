@@ -16,14 +16,23 @@ from __future__ import annotations
 #: Concise orientation returned to every MCP client on initialize. Orientation
 #: only — each tool's exact arguments live in its own schema.
 VERIMEM_AGENT_GUIDE = """\
-Verimem is a VERIFIED-memory server for AI agents: facts pass a grounding gate
-(the "moat") before they count as truth, so you never recall a confabulation.
+Verimem is a VERIFIED-memory server for AI agents: writes pass an anti-confab
+gate, and a fact its source does not support is QUARANTINED — stored, but kept
+OUT of default recall, so you never get it back as truth.
+
+Store with verimem_remember. What checks it, and when — the perimeter, so you
+can rely on it:
+- ALWAYS: a lexical screen on every write. Unsupported "it works / verified /
+  done" self-claims are quarantined, with no LLM call.
+- WITH a `source`: the entailment moat, the strong check — the fact is admitted
+  only if the source TEXT actually supports it. `verified_by` records WHO
+  vouches for a fact and does not run this check; pass the source text to get
+  it.
+- WITHOUT a source: there is nothing to check the fact against, so the moat does
+  not run and the fact is stored as an unverified `model_claim`. Pass a source
+  whenever you have one — it is what separates a claim from a verified fact.
 
 Orientation (each tool's exact arguments are in its own schema):
-- Store with verimem_remember; pass a `source` (or `verified_by`) when you can —
-  the moat checks the source entails the fact and QUARANTINES contradictions. A
-  quarantined fact is stored but kept OUT of default recall: you won't get it
-  back as truth.
 - Retrieve with verimem_recall / verimem_facts_search. Ask verimem_trust_report
   HOW the store knows (a provenance dossier); on a question it cannot support it
   ABSTAINS ("I don't know") instead of stitching a guess from weak matches.

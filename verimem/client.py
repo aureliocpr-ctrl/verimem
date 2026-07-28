@@ -257,6 +257,12 @@ class Memory:
             validate = self._preset_defaults["validate"]
         if gate_mode is None:
             gate_mode = self._preset_defaults["gate_mode"]
+        # Captured BEFORE the preset fills it in: only here does the difference
+        # between "the caller asked for entailment verification" and "the preset
+        # defaults to on" still exist. One line further down the two are the
+        # same True and the gate cannot tell them apart — which is why the
+        # advisory below is emitted here and not in the gate.
+        _ground_explicitly_requested = ground is True
         if ground is None:
             ground = self._preset_defaults["ground"]
         # Continuity narrative lane (2026-07-23): meta_narrative declares a
@@ -280,6 +286,25 @@ class Memory:
             documents=LazyDocumentStore(),
         )
         warnings = list(gate.warnings)
+        # The mirror of the gate's own L4-skipped advisory ("say so out loud,
+        # NEVER a silent skip"), for the case it never covered: a judge is
+        # reachable but the write carries NO source, so L4 has nothing to check
+        # the fact against and does not run. Ordinary unsourced writes stay
+        # quiet — most writes have no source and annotating them all would be
+        # wallpaper — but a caller who passed ground=True asked for entailment
+        # verification, and being given none WITHOUT being told is how "not
+        # checked" gets read as "checked and fine". Advisory only: the
+        # disposition below is untouched.
+        if _ground_explicitly_requested and not source:
+            warnings.append({
+                "layer": "L4-no-source",
+                "reason": "ground=True was requested but the write carries no "
+                          "source — there is nothing to check the fact "
+                          "against, entailment NOT verified",
+                "advice": "pass source='<the evidence text>' to run the moat. "
+                          "verified_by records WHO vouches for a fact and does "
+                          "not run this check.",
+            })
         action = gate.action
         # Source-trust consultation (task #17, behind ENGRAM_SOURCE_TRUST=1,
         # default OFF): a source whose persisted two-channel trust sits below
