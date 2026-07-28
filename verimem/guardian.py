@@ -30,18 +30,17 @@ from __future__ import annotations
 from typing import Any
 
 from .composer import _copula_parse, subject_key
+from .epistemic import guarantee_rank
 
 __all__ = ["correct_read"]
 
-_RANK = {"refuted": -1, None: 0, "unbeaten": 1, "proven": 2}
-
 
 def _rank(fact: Any) -> int:
-    # .get with default 0: an unknown/foreign epistemic kind is UNLABELED,
-    # never a KeyError on the read-path (audit mod.3 — line 109 already
-    # defended this way; the two must agree).
-    label = getattr(fact, "epistemic", None) or None
-    return _RANK.get(label.get("kind"), 0) if label else 0
+    # epistemic.guarantee_rank, not a local table: the active probe compares the
+    # same two facts and reached the OPPOSITE conclusion while this ordering
+    # lived only here (2026-07-28). An unknown/foreign kind is UNLABELED there
+    # too, never a KeyError on the read-path (audit mod.3).
+    return guarantee_rank(getattr(fact, "epistemic", None))
 
 
 def _is_belief(fact: Any) -> bool:

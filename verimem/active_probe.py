@@ -24,7 +24,7 @@ from __future__ import annotations
 from typing import Any
 
 from .composer import _copula_parse, subject_key
-from .epistemic import make_refuted, make_unbeaten
+from .epistemic import guarantee_rank, make_refuted, make_unbeaten
 from .self_provenance import is_self_ref
 from .source_trust import canonical_source
 
@@ -76,6 +76,14 @@ def probe_fact(mem: Any, fact_id: str, *, k: int = 8) -> dict[str, Any]:
             continue                                   # unsourced: too cheap to kill
         if canonical_source(rival.verified_by) == canonical_source(fact.verified_by):
             continue                                   # same source correcting itself
+        # GUARANTEE (2026-07-28). The same "at least as good as what it
+        # destroys" rule, applied to the epistemic label and not only to the
+        # source. Without it an UNLABELED rival permanently refuted a machine-
+        # `proven` fact, while the guardian — reading the same two facts —
+        # ranked proven higher and SERVED it. One store, opposite verdicts, and
+        # the destructive one wins because refuted is absorbing.
+        if guarantee_rank(rival.epistemic) < guarantee_rank(fact.epistemic):
+            continue                                   # weaker guarantee cannot kill
         label = make_refuted(f"{rival.id}: {rp[1]}")
         applied = mem.semantic.set_epistemic(fact.id, label)
         return {"outcome": "refuted_proposed", "probe_query": probe_query,
