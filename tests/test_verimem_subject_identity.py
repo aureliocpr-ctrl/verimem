@@ -76,7 +76,10 @@ def test_guardian_and_probe_agree_on_what_a_conflict_is(tmp_path, monkeypatch):
     guard_mem, _ = _seed("guard.db")
     probe = probe_fact(probe_mem, target)
     guard = correct_read(guard_mem, "What breed is Rex?")
-    probe_sees_conflict = probe["outcome"] == "refuted_proposed"
+    # `contested` counts as seeing the conflict (2026-07-28): on an even pair
+    # the probe now NAMES the rival instead of refuting by probe order, which
+    # is detection, not blindness.
+    probe_sees_conflict = probe["outcome"] in ("refuted_proposed", "contested")
     guard_sees_conflict = guard["verdict"] in ("ABSTAIN", "CORRECT")
     assert probe_sees_conflict == guard_sees_conflict, (
         f"probe={probe['outcome']} guardian={guard['verdict']} — the same "

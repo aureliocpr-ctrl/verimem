@@ -35,13 +35,19 @@ def mem(tmp_path, monkeypatch):
 
 
 def test_same_source_correction_does_not_refute(mem):
-    """A source revising itself is supersession, not falsification."""
+    """A source revising itself is supersession, not falsification.
+
+    2026-07-28: the outcome is `inconclusive`, not `survived`. A rival existed
+    and a guard removed it, so nothing withstood falsification — claiming
+    survival (and minting an `unbeaten` bound that counts probes SURVIVED)
+    would sell a receipt no probe earned.
+    """
     a = mem.add("Rex is a labrador.", topic="pets",
                 verified_by=["source-doc:alice:t1"])
     mem.add("Rex is a poodle.", topic="pets", verified_by=["source-doc:alice:t2"])
     out = probe_fact(mem, a["id"])
-    assert out["outcome"] == "survived"
-    assert (mem.semantic.get(a["id"]).epistemic or {}).get("kind") == "unbeaten"
+    assert out["outcome"] == "inconclusive"
+    assert (mem.semantic.get(a["id"]).epistemic or {}).get("kind") != "refuted"
 
 
 def test_unsourced_rival_does_not_refute_a_sourced_fact(mem):
@@ -50,17 +56,20 @@ def test_unsourced_rival_does_not_refute_a_sourced_fact(mem):
                 verified_by=["source-doc:alice:t1"])
     mem.add("Rex is a poodle.", topic="pets")          # no provenance at all
     out = probe_fact(mem, a["id"])
-    assert out["outcome"] == "survived"
+    assert out["outcome"] == "inconclusive"
+    assert (mem.semantic.get(a["id"]).epistemic or {}).get("kind") != "refuted"
 
 
-def test_independent_source_still_refutes(mem):
-    """The guard must not disarm the probe: a genuine rival still bites."""
+def test_an_independent_rival_is_still_detected(mem):
+    """The guard must not blind the probe: a genuine rival is still found and
+    NAMED. Equally guaranteed, so the verdict is `contested` rather than a
+    refutation decided by which side was probed first."""
     a = mem.add("Rex is a labrador.", topic="pets",
                 verified_by=["source-doc:alice:t1"])
     b = mem.add("Rex is a poodle.", topic="pets", verified_by=["source-doc:vet:t2"])
     out = probe_fact(mem, a["id"])
-    assert out["outcome"] == "refuted_proposed"
-    assert out["counterexample_id"] == b["id"]
+    assert out["outcome"] == "contested"
+    assert out["rival_id"] == b["id"]
 
 
 def test_unsourced_fact_can_still_be_refuted_by_a_sourced_rival(mem):
