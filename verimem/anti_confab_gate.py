@@ -116,6 +116,12 @@ from .l1_tested_detector import detect_unsupported_tested_claim
 # Triangulated Claude+Gemini+GPT all favored this as L1.10 priority.
 from .l1_works_detector import detect_unsupported_works_claim
 
+# 2026-07-28: relations a fact asserts and its source does not (cause, completed
+# state, certainty, computed quantity). The CE scores these HIGH — every word of
+# the source is there, only the link is invented — so they never fall in the
+# escalation band and the judge that could read them is never asked.
+from .relation_claim import unverified_relation
+
 # Security fix 2026-06-02 (sorelle loop): token-gate the trusted-hook
 # bypass. writer_role alone is client-spoofable (set via MCP arguments),
 # so the bypass now also requires a server-side secret token.
@@ -1399,7 +1405,19 @@ def run_validation_gate(
                     })
                     advice = advice or "Source does not entail the claim (semantic grounding)."
             elif (_judge_used == "local" and _ce_band_enforced()
-                  and gscore < _ce_band_tau_hi()):
+                  and (gscore < _ce_band_tau_hi()
+                       or unverified_relation(source, proposition))):
+                # The band catches what the CE DOUBTS. It never catches what the
+                # CE gets confidently wrong, and those are one class: relations
+                # between the source's facts — a cause, a completed state, a
+                # certainty, a computed quantity — where every word is present
+                # and only the link is invented. Measured 2026-07-28 across five
+                # domains: the CE's three misses scored 88, 100 and 100, i.e.
+                # ABOVE tau_hi, so the safety net hung under them. A write whose
+                # fact announces a relation its source never announces now
+                # escalates whatever the score. Routing, not rejecting: with no
+                # judge reachable escalate_band returns None and the write lands
+                # exactly as before.
                 # BAND ESCALATION (0.7.0): before parking the write for review,
                 # ask an AVAILABLE llm judge to adjudicate the CE's uncertain
                 # sliver -- auto-discovered claude CLI (subscription, no key)
