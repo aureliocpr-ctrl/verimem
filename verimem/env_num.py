@@ -33,11 +33,18 @@ import os
 __all__ = ["env_float", "finite_or"]
 
 
-def finite_or(raw: object, default: float) -> float:
+def finite_or(raw: object, default: float | None) -> float | None:
     """``raw`` as a finite float, else ``default``.
 
     For callers that already hold the string (or that layer extra meanings such
     as ``auto`` / ``off`` on top of it) and only need the numeric contract.
+
+    Pass ``default=None`` to mean "no usable value here" — for callers with a
+    CASCADE of sources (a specific env var, then a general one, then a constant)
+    that need to fall through to the next rung instead of stopping at the first
+    one that happens to be set but malformed. Without it those callers would
+    each re-implement the finiteness check, which is how this defect spread in
+    the first place.
     """
     if raw is None or raw == "":
         return default

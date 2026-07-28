@@ -159,15 +159,15 @@ def _abstention_kind(text: str) -> str:
 
 
 def _resolve_threshold(threshold: float | None) -> float:
+    # env_float, not float(): this threshold gates the ANSWER path, where the
+    # comparison reads `judge_score < threshold` (client.py, trust_report.py).
+    # A NaN makes that False forever, so the answer the judge REJECTED gets
+    # served — abstention silently traded for a guess. The explicit argument
+    # goes through the same check: the env is not the only way a NaN gets in.
+    from .env_num import env_float, finite_or
     if threshold is not None:
-        return float(threshold)
-    env = os.environ.get("ENGRAM_GROUNDING_THRESHOLD", "").strip()
-    if env:
-        try:
-            return float(env)
-        except ValueError:
-            pass
-    return DEFAULT_THRESHOLD
+        return finite_or(threshold, DEFAULT_THRESHOLD)      # type: ignore[return-value]
+    return env_float("ENGRAM_GROUNDING_THRESHOLD", DEFAULT_THRESHOLD)
 
 
 def _resolve_write_threshold() -> float:
@@ -175,18 +175,14 @@ def _resolve_write_threshold() -> float:
     the answer-path default (see WRITE_DEFAULT_THRESHOLD). Override with
     ENGRAM_GROUNDING_WRITE_THRESHOLD; falls back to the general ENGRAM_GROUNDING_THRESHOLD
     if a deployment set only that, then to WRITE_DEFAULT_THRESHOLD."""
-    env = os.environ.get("ENGRAM_GROUNDING_WRITE_THRESHOLD", "").strip()
-    if env:
-        try:
-            return float(env)
-        except ValueError:
-            pass
-    general = os.environ.get("ENGRAM_GROUNDING_THRESHOLD", "").strip()
-    if general:
-        try:
-            return float(general)
-        except ValueError:
-            pass
+    from .env_num import finite_or
+    # The cascade is preserved; each rung must yield a FINITE number to be
+    # taken, so a malformed override falls through to the next source instead
+    # of poisoning every `score >= threshold` downstream.
+    for name in ("ENGRAM_GROUNDING_WRITE_THRESHOLD", "ENGRAM_GROUNDING_THRESHOLD"):
+        value = finite_or(os.environ.get(name, "").strip(), None)
+        if value is not None:
+            return value
     return WRITE_DEFAULT_THRESHOLD
 
 

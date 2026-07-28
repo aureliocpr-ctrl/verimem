@@ -34,6 +34,18 @@ THRESHOLDS = [
     ("verimem.source_trust", "threshold", "ENGRAM_SOURCE_TRUST_MIN"),
     ("verimem.conversation_ingest", "_ingest_ground_threshold",
      "ENGRAM_INGEST_GROUND_THRESHOLD"),
+    # The two the first sweep missed, in a module it had already touched. An
+    # adversarial reviewer flagged them as harmless because `score >= nan` is
+    # False and therefore fail-CLOSED. That is true at four call sites and
+    # WRONG at the two that answer the user: client.py:710 reads
+    # `judge_score < _resolve_threshold(None)` to return "NO ANSWER", and
+    # trust_report.py:217 reads `score < _resolve_threshold(None)` to drop the
+    # hits. With NaN both comparisons are False, so the answer the judge would
+    # have rejected is SERVED. Same poison, opposite sign, depending on which
+    # way the comparison is written — which is exactly why the parser, not the
+    # call site, has to be the thing that refuses it.
+    ("verimem.grounding_gate", "_resolve_write_threshold",
+     "ENGRAM_GROUNDING_WRITE_THRESHOLD"),
 ]
 
 
@@ -53,6 +65,28 @@ def test_threshold_rejects_non_finite_env(mod_name, fn_name, env, poison,
     assert got == default, (
         f"a malformed {env} must fall back to the declared default {default}, "
         f"got {got}")
+
+
+@pytest.mark.parametrize("poison", ["nan", "inf", "-inf"])
+def test_answer_threshold_rejects_non_finite_env(poison, monkeypatch):
+    """ENGRAM_GROUNDING_THRESHOLD gates the ANSWER path, where the comparison is
+    written `judge_score < threshold` — so a NaN does not build a wall, it opens
+    the door: the answer the judge rejected gets served."""
+    from verimem.grounding_gate import _resolve_threshold
+    monkeypatch.delenv("ENGRAM_GROUNDING_THRESHOLD", raising=False)
+    default = _resolve_threshold(None)
+    monkeypatch.setenv("ENGRAM_GROUNDING_THRESHOLD", poison)
+    got = _resolve_threshold(None)
+    assert math.isfinite(got) and got == default, (
+        f"ENGRAM_GROUNDING_THRESHOLD={poison!r} resolved to {got}: every "
+        f"`score < threshold` rejection silently stops firing")
+
+
+@pytest.mark.parametrize("poison", [float("nan"), float("inf")])
+def test_an_explicit_non_finite_argument_is_refused_too(poison):
+    """The env is not the only way in — a caller can pass the threshold."""
+    from verimem.grounding_gate import _resolve_threshold
+    assert math.isfinite(_resolve_threshold(poison))
 
 
 def test_relevance_floor_rejects_infinity(monkeypatch):
