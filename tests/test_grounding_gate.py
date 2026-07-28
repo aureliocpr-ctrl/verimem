@@ -224,8 +224,19 @@ def test_fact_grounding_score_parses() -> None:
     assert fact_grounding_score(StubLLM("SCORE: 100"), "src", "fact") == 100.0
 
 
-def test_fact_grounding_score_missing_defaults_50() -> None:
-    assert fact_grounding_score(StubLLM("dunno"), "src", "fact") == 50.0
+def test_fact_grounding_score_unreadable_verdict_is_not_a_score() -> None:
+    """An unreadable verdict used to become 50.0, which CLEARS the write cut of
+    40 — so a judge that said nothing admitted the write with a number nobody
+    produced. Measured 2026-07-28 against glm-5.2 and deepseek-v4-pro: under the
+    old 12-token ceiling both returned an EMPTY string on every call, and both
+    scored the same claim 0 once given room to answer. Silence now raises
+    NoGroundingJudge, which the write path already reports honestly as the
+    L4-skipped advisory."""
+    import pytest as _pytest
+
+    from verimem.grounding_gate import NoGroundingJudge
+    with _pytest.raises(NoGroundingJudge):
+        fact_grounding_score(StubLLM("dunno"), "src", "fact")
 
 
 def test_should_store_fact_grounded() -> None:

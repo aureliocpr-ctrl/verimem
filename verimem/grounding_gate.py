@@ -402,10 +402,32 @@ def fact_grounding_score_ex(llm: Any, source: str, fact: str, *,
         system or _FACT_SYSTEM,
         [{"role": "user", "content": f"Source: {source}\n\nCandidate fact: {fact}\n\n"
                                      f"Score:"}],
-        model=model, max_tokens=12)
+        model=model, max_tokens=_JUDGE_MAX_TOKENS)
     m = _SCORE_RE.search(getattr(resp, "text", "") or "")
-    return (min(100.0, max(0.0, float(m.group(1)))) if m else 50.0), "claude"
+    if not m:
+        # SILENCE IS NOT A VERDICT (2026-07-28). This returned 50.0 — which
+        # clears the write cut of 40, so an unanswered judge ADMITTED the write
+        # with a number nobody produced. Measured against glm-5.2 and
+        # deepseek-v4-pro: under the old 12-token ceiling both replied with an
+        # EMPTY string, while at 128 both correctly scored the same claim 0.
+        # NoGroundingJudge is the signal the write path already knows how to
+        # report honestly (the L4-skipped advisory), so an unreadable verdict
+        # now says "I could not judge" instead of "about half".
+        raise NoGroundingJudge(
+            f"the grounding judge returned no score "
+            f"({len(getattr(resp, 'text', '') or '')} chars) — treating it as "
+            f"'cannot judge', not as a middling verdict")
+    return min(100.0, max(0.0, float(m.group(1)))), "claude"
 
+
+#: Token budget for the judge's reply. It was 12 — enough for "SCORE: 87" from a
+#: model that answers immediately, and NOTHING from a reasoning model, which
+#: spends the budget thinking before it writes. Measured 2026-07-28 on the two
+#: strongest third-party models available here: glm-5.2 and deepseek-v4-pro both
+#: returned an EMPTY string at 12, 32 and 64 tokens, and both scored the same
+#: claim 0 at 128. Sized with margin above that measured floor; the reply is
+#: still one short line, so the ceiling only has to clear the thinking.
+_JUDGE_MAX_TOKENS = 256
 
 _warned_uncalibrated = False
 
