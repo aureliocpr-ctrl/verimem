@@ -108,7 +108,14 @@ def test_doctor_flags_the_fresh_machine_no_judge_case(tmp_path, monkeypatch):
 
 
 def test_doctor_moat_ok_when_ce_present(tmp_path, monkeypatch):
-    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path / "d"))
+    # All three env names, not just HIPPO_DATA_DIR: _compat.data_dir() prefers
+    # VERIMEM_DATA_DIR then ENGRAM_DATA_DIR, and ENGRAM_DATA_DIR is set to the
+    # real store on this machine — so this test was reading the operator's own
+    # corpus. Harmless while the check only probed for the model file; the
+    # moment moat-judge started counting stored facts, the verdict began to
+    # depend on whatever happened to be in ~/.engram (2026-07-28).
+    for _env in ("VERIMEM_DATA_DIR", "ENGRAM_DATA_DIR", "HIPPO_DATA_DIR"):
+        monkeypatch.setenv(_env, str(tmp_path / "d"))
     monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: True)
     got = _by_name(run_doctor())
     assert got["moat-judge"]["status"] == OK

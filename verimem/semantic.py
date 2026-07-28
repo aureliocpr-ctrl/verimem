@@ -1017,11 +1017,9 @@ def _topic_penalty_strength() -> float:
     default ranking; set ENGRAM_TOPIC_PENALTY=0.10 to down-rank lessons/* facts on
     task-style queries (the bench-v2 hard-negative fix). A/B on the live corpus before
     raising the default (the corpus, not LongMemEval, carries lessons/* topics)."""
-    import os
-    try:
-        return max(0.0, min(1.0, float(os.environ.get("ENGRAM_TOPIC_PENALTY", "0.0"))))
-    except (TypeError, ValueError):
-        return 0.0
+    # clamping alone let nan through as 1.0 — the MAXIMUM penalty, silently
+    from .env_num import env_float
+    return max(0.0, min(1.0, env_float("ENGRAM_TOPIC_PENALTY", 0.0)))
 
 
 def _apply_topic_penalty_to_sims(sims, facts, query_text):

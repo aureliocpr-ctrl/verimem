@@ -121,16 +121,28 @@ def ignorance_map(mem: Any, queries: list[str], *, floor: float = 0.8,
     returned in the report because a number that decides a verdict has to be
     visible in it.
     """
-    if noise_floor is None:
+    # WHERE the floor came from, because 0.0 means three different things and a
+    # bare 0.0 in the report told them apart in none: the store was too small to
+    # measure (estimate_relevance_floor's deliberate answer — a floor guessed
+    # from nothing is worse than none), the measurement CRASHED, or the caller
+    # asked for it. At 0.0 the noise guard is inert and every weak hit is
+    # classified below_floor again, so an operator has to be able to tell a
+    # disabled guard from a measured one.
+    if noise_floor is not None:
+        source = "caller"
+    else:
         from .relevance_floor import estimate_relevance_floor
         try:
             noise_floor = estimate_relevance_floor(mem.semantic)
+            source = "unmeasurable" if not noise_floor else "measured"
         except Exception:            # noqa: BLE001 — a diagnostic never crashes
-            noise_floor = 0.0        # measurement failed: behave as before
+            noise_floor = 0.0        # behave as before, but SAY so
+            source = "failed"
     rows = [_classify(mem, q, floor=floor, k=k, noise_floor=noise_floor)
             for q in queries]
     by_class: dict[str, int] = {}
     for r in rows:
         by_class[r["class"]] = by_class.get(r["class"], 0) + 1
-    return {"queries": rows, "by_class": by_class,
-            "floor": floor, "noise_floor": noise_floor, "n": len(rows)}
+    return {"queries": rows, "by_class": by_class, "floor": floor,
+            "noise_floor": noise_floor, "noise_floor_source": source,
+            "n": len(rows)}

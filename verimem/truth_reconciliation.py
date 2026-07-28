@@ -227,11 +227,9 @@ def _min_conflict_overlap() -> float:
     0.2833 / false-compl 0.0667; 0.2 -> recall ~0.20 / false-compl ~0.008. A
     precision/recall DIAL (not a free win) for trust-first deployments;
     ENGRAM_RECONCILE_MIN_OVERLAP."""
-    import os
-    try:
-        return max(0.0, float(os.environ.get("ENGRAM_RECONCILE_MIN_OVERLAP", "0")))
-    except ValueError:
-        return 0.0
+    # max(0.0, float(...)) happened to filter nan (argument order) but not inf
+    from .env_num import env_float
+    return max(0.0, env_float("ENGRAM_RECONCILE_MIN_OVERLAP", 0.0))
 
 
 def _is_conflict(old_prop: str, new_prop: str, judge=None) -> bool:

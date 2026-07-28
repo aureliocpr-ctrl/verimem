@@ -76,6 +76,35 @@ def test_the_advice_matches_the_class(mem):
     assert "a source about" in row["what_would_help"]
 
 
+def test_the_report_says_where_the_noise_floor_came_from(mem):
+    """0.0 means three different things and the report told them apart in none.
+
+    estimate_relevance_floor returns 0.0 when the store is too small to measure
+    (deliberate: a floor guessed from nothing is worse than none), and the
+    caller ALSO falls back to 0.0 when the measurement raises. With the guard at
+    0.0 every weak hit is classified below_floor again — the exact pre-fix
+    misclassification — so "measurement crashed, guard disabled" and "store too
+    small, guard intentionally off" have to be distinguishable in the receipt.
+    """
+    out = ignorance_map(mem, [QUERY])
+    assert out["noise_floor_source"] in ("measured", "unmeasurable", "failed")
+
+
+def test_an_explicit_floor_is_reported_as_the_callers(mem):
+    out = ignorance_map(mem, [QUERY], noise_floor=0.42)
+    assert out["noise_floor"] == 0.42
+    assert out["noise_floor_source"] == "caller"
+
+
+def test_a_measurement_failure_is_not_silently_a_zero(mem, monkeypatch):
+    monkeypatch.setattr("verimem.relevance_floor.estimate_relevance_floor",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    out = ignorance_map(mem, [QUERY])
+    assert out["noise_floor"] == 0.0
+    assert out["noise_floor_source"] == "failed", (
+        "a crashed measurement must not look like a measured 0.0")
+
+
 def test_a_store_too_small_to_measure_changes_nothing(mem):
     """estimate_relevance_floor returns 0.0 when it cannot measure; the map
     must then behave exactly as before rather than guess."""

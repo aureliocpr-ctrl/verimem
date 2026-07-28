@@ -88,3 +88,51 @@ def test_an_empty_store_does_not_trip_the_warning(monkeypatch, tmp_path):
     assert row is not None
     body = _text(row).lower()
     assert "0 of 0" not in body
+
+
+def _is_ok(row) -> bool:
+    """doctor's statuses are lowercase ('ok' / 'warn' / 'fail').
+
+    Comparing against "OK" made both tests below pass while checking nothing —
+    the assertion was true for every possible status. Read the value, don't
+    assume its shape.
+    """
+    got = row.get("status") if isinstance(row, dict) else getattr(row, "status", "")
+    return str(got).strip().lower() == "ok"
+
+
+def test_a_barely_judged_corpus_is_not_reported_as_healthy(monkeypatch, tmp_path):
+    """The alarm fired only at EXACTLY zero: one judged write out of thousands
+    flipped the check to OK with the ratio buried in prose. Measured on the real
+    store the same evening — 3 of 4723 judged, status OK. An operator (or any
+    automation keying on status) reads green while the corpus is ungated."""
+    db = _isolate(monkeypatch, tmp_path)
+    from verimem.client import Memory
+    m = Memory(db)
+    m.add("Rex is a labrador.", topic="pets",
+          source="The kennel registry lists Rex as a labrador.")   # judged
+    for i, text in enumerate([
+            "The staging cluster was rebuilt on Tuesday.",
+            "Payroll exports moved to the new bucket.",
+            "Nadia joined the platform team in March.",
+            "The invoice run now starts at 03:00.",
+    ]):
+        m.add(text, topic=f"ops/{i}")                              # unjudged
+    row = _find(_run(), "moat-judge")
+    assert not _is_ok(row), (
+        f"1 judged of 5 must not read as healthy: {_text(row)}")
+
+
+def test_a_store_it_cannot_read_is_not_reported_as_ON(monkeypatch, tmp_path):
+    """The check exists to surface an unjudged corpus. Swallowing a read failure
+    into zero made it print the reassuring "the grounding moat is ON" exactly
+    when it could not look — a broken or schema-drifted store then looks
+    identical to a healthy empty one."""
+    _isolate(monkeypatch, tmp_path)
+    db = tmp_path / "semantic" / "semantic.db"
+    db.write_bytes(b"this is not a sqlite database at all")
+    row = _find(_run(), "moat-judge")
+    assert row is not None
+    body = _text(row).lower()
+    assert not _is_ok(row) or "could not" in body or "unreadable" in body, (
+        f"an unreadable store must not report the moat as ON: {_text(row)}")

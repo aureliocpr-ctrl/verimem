@@ -46,6 +46,18 @@ THRESHOLDS = [
     # call site, has to be the thing that refuses it.
     ("verimem.grounding_gate", "_resolve_write_threshold",
      "ENGRAM_GROUNDING_WRITE_THRESHOLD"),
+    # Found by an adversarial design review the same day this module was
+    # written, on the module's OWN docstring: it claimed "one parser, one
+    # contract" for "every threshold in this package" after migrating six of
+    # twenty-two call sites. The worst survivor is the CE relevance floor —
+    # trust_report._apply_ce_gate keeps a hit when `score >= floor`, so
+    # VERIMEM_CE_RELEVANCE_FLOOR=-inf keeps EVERY hit and the trust report
+    # serves the nearest-but-wrong fact as trusted, which is the confabulation
+    # the product exists to refuse.
+    ("verimem.trust_report", "_ce_relevance_floor", "VERIMEM_CE_RELEVANCE_FLOOR"),
+    ("verimem.truth_reconciliation", "_min_conflict_overlap",
+     "ENGRAM_RECONCILE_MIN_OVERLAP"),
+    ("verimem.semantic", "_topic_penalty_strength", "ENGRAM_TOPIC_PENALTY"),
 ]
 
 
