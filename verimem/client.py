@@ -1380,6 +1380,34 @@ class Memory:
         except Exception:
             pass
         out["store"] = store
+        # How much of the corpus the MOAT actually judged — the number that
+        # bounds every other number here. The entailment check only runs on a
+        # write that carries a source, so a store can be full of facts none of
+        # which the moat ever saw, and until now nothing said so: measured on
+        # the real corpus 2026-07-28, 0 of 6414 facts had a grounding_score
+        # while the product reported gate actions as usual. Provenance is
+        # counted SEPARATELY because a verified_by ref records who vouches and
+        # does not run the check — conflating them here would repeat, in the
+        # report, the very confusion the write path avoids. Pure SQL over
+        # columns already persisted: no judge, no LLM call.
+        moat = {"facts": 0, "grounded": 0, "with_provenance": 0, "coverage": 0.0}
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as con:
+                moat["facts"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL"
+                ).fetchone()[0])
+                moat["grounded"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND grounding_score IS NOT NULL").fetchone()[0])
+                moat["with_provenance"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND verified_by IS NOT NULL AND verified_by NOT IN ('', '[]')"
+                ).fetchone()[0])
+            if moat["facts"]:
+                moat["coverage"] = round(moat["grounded"] / moat["facts"], 3)
+        except Exception:  # noqa: BLE001 — the odometer never breaks a caller
+            pass
+        out["moat"] = moat
         out["ledger_write_failures"] = int(
             getattr(self._ledger, "write_failures", 0) or 0)
         return out

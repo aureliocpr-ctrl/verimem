@@ -805,6 +805,18 @@ def trust_stats_cmd(
     if s["store"]:
         live = ", ".join(f"{k}:{v}" for k, v in sorted(s["store"].items()))
         console.print(f"[bold]Live facts by status[/bold]  {live}")
+    _moat = s.get("moat") or {}
+    if _moat.get("facts"):
+        _pct = 100 * _moat["coverage"]
+        console.print(
+            f"[bold]Moat coverage[/bold]  {_moat['grounded']}/{_moat['facts']} "
+            f"facts entailment-judged ({_pct:.1f}%)  [dim]— only writes that "
+            f"carry a source are judged; {_moat['with_provenance']} carry a "
+            f"provenance ref, which records who vouches and does not run the "
+            f"check[/dim]")
+        if not _moat["grounded"]:
+            console.print("  [dim]the moat has not judged a single write on "
+                          "this store — pass source='...' to run it[/dim]")
 
 
 @app.command()
