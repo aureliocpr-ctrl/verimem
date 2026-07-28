@@ -104,10 +104,8 @@ def threshold() -> float:
     """Below this trust the write is quarantined (never rejected — quarantine
     is rehabilitable, rejection is not; the consistency channel must be able
     to fish a source back out). Env ENGRAM_SOURCE_TRUST_MIN, default 0.25."""
-    try:
-        return float(os.environ.get("ENGRAM_SOURCE_TRUST_MIN", "0.25"))
-    except ValueError:
-        return 0.25
+    from .env_num import env_float
+    return env_float("ENGRAM_SOURCE_TRUST_MIN", 0.25)
 
 
 _SOURCE_REF_RE = re.compile(r"^(?:source-doc|source|src|doc|file):([^:]+)",

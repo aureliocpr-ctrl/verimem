@@ -44,12 +44,8 @@ _MIN_SCORE_DEFAULT = 55.0
 
 
 def _min_score() -> float:
-    import os
-    try:
-        return float(os.environ.get("ENGRAM_COMPOSER_MIN_SCORE",
-                                    str(_MIN_SCORE_DEFAULT)))
-    except ValueError:
-        return _MIN_SCORE_DEFAULT
+    from .env_num import env_float
+    return env_float("ENGRAM_COMPOSER_MIN_SCORE", _MIN_SCORE_DEFAULT)
 
 _ARTICLES = ("a", "an", "the")
 #: leading words that mark a NON-noun-phrase object ("is in Rome", "is over")

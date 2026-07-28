@@ -184,12 +184,8 @@ _INGEST_GROUND_THRESHOLD = 40.0
 
 
 def _ingest_ground_threshold() -> float:
-    import os
-    try:
-        return float(os.environ.get("ENGRAM_INGEST_GROUND_THRESHOLD",
-                                    str(_INGEST_GROUND_THRESHOLD)))
-    except ValueError:
-        return _INGEST_GROUND_THRESHOLD
+    from .env_num import env_float
+    return env_float("ENGRAM_INGEST_GROUND_THRESHOLD", _INGEST_GROUND_THRESHOLD)
 
 
 def _grounds(dialogue: str, proposition: str) -> bool:

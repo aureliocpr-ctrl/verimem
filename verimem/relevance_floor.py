@@ -38,10 +38,10 @@ def env_floor(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str:
         return "auto"
     if raw in _FLOOR_OFF:
         return 0.0
-    try:
-        return max(0.0, float(raw))
-    except ValueError:
-        return 0.0
+    # finite_or, not float(): an INFINITE floor abstains on every query ever
+    # asked, and this site only survived `nan` by the argument order of max()
+    from .env_num import finite_or
+    return max(0.0, finite_or(raw, 0.0))
 
 _MIN_FACTS = 2          # cross-fact scrambling needs at least two sources
 _PROBE_WORDS = 10       # ~question-length probes

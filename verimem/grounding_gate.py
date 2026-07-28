@@ -470,11 +470,8 @@ CE_BAND_TAU_HI_DEFAULT = 80.0
 
 
 def _ce_band_tau_hi() -> float:
-    v = os.environ.get("VERIMEM_CE_TAU_HI", "").strip()
-    try:
-        return float(v) if v else CE_BAND_TAU_HI_DEFAULT
-    except ValueError:
-        return CE_BAND_TAU_HI_DEFAULT
+    from .env_num import env_float
+    return env_float("VERIMEM_CE_TAU_HI", CE_BAND_TAU_HI_DEFAULT)
 
 
 def _ce_band_enforced() -> bool:
