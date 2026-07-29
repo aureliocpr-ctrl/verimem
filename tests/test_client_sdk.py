@@ -268,12 +268,19 @@ def test_explain_returns_trust_report(tmp_path):
     mem.add("Rossi's budget is 500k")
     rep = mem.explain("Rossi budget")
     assert rep["abstained"] is False and rep["n_facts"] >= 1
-    # GLASS contract (known limit, open item for the critic): recall has no
-    # relevance floor, so on a non-empty store an off-domain query still
-    # returns top-k — the dossier DECLARES the weak relevance score instead
-    # of hiding it (abstained=True only on zero hits, e.g. empty store).
+    # The GLASS limit this used to document — "recall has no relevance floor, so
+    # on a non-empty store an off-domain query still returns top-k ... open item
+    # for the critic" — was CLOSED on 2026-07-29: the floor defaults to "auto",
+    # so an off-domain question abstains instead of handing back the nearest
+    # wrong fact with an honest score attached. Measured before the flip: 8/8
+    # inventions caught, 0 answers lost on 12 supported questions.
     rep2 = mem.explain("marziani viola")
-    assert rep2["facts"][0]["relevance"] is not None, "relevance declared"
+    assert rep2["abstained"] is True, (
+        f"off-domain query still served facts: {rep2.get('facts')}"
+    )
+    assert not rep2["facts"]
+    # and when it DOES answer, the relevance is still declared, not hidden
+    assert rep["facts"][0]["relevance"] is not None, "relevance declared"
 
 
 def test_delete_purge_history_kills_the_whole_chain(tmp_path):

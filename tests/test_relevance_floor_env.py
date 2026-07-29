@@ -12,7 +12,13 @@ from verimem.relevance_floor import env_floor
 
 def test_env_floor_parsing(monkeypatch):
     monkeypatch.delenv("ENGRAM_MIN_RELEVANCE", raising=False)
-    assert env_floor() == 0.0
+    # Unset means "auto" since 2026-07-29, not 0.0. The permissive default left
+    # the product's headline behaviour off for every SDK, console and gateway
+    # caller while the MCP surface abstained. Measured over 20 questions on the
+    # live store before flipping: 8/8 inventions caught, 0 wrong abstentions,
+    # 0 answers lost. `off` still buys the old behaviour, and the line below
+    # keeps proving it.
+    assert env_floor() == "auto"
     for val, exp in [("auto", "auto"), ("0.7", 0.7), ("off", 0.0),
                      ("none", 0.0), ("junk", 0.0)]:
         monkeypatch.setenv("ENGRAM_MIN_RELEVANCE", val)
