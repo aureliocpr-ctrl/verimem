@@ -56,6 +56,50 @@ _PATTERNS: dict[str, re.Pattern[str]] = {
 #: terms are already in the source and only the link is invented.
 RELATION_KINDS = ("causal", "modality", "completion", "derived-quantity")
 
+#: A completed state has a SHAPE, not just a vocabulary: an auxiliary plus a
+#: past participle. The hand-written ``completion`` list above knew ``firmato``
+#: and not ``pagato`` — found 2026-07-29 on an invoicing case, where "il totale
+#: e gia stato PAGATO" scored 99.8 against a source reading "scadenza 30
+#: giorni", which says the opposite. Enumerating verbs is the same defect cured
+#: on the critic-orchestrator the night before: a list of what someone happened
+#: to imagine. These two patterns match the CONSTRUCTION and capture the
+#: participle, so the check below can ask the only question that matters —
+#: does the source name this completed action at all?
+_PARTICIPLE_IT = re.compile(
+    r"\b(?:è|e|sono|era|erano|fu|furono|viene|vengono|venne|verrà|sarà)\s+"
+    r"(?:gi[àa]\s+|poi\s+|infine\s+)?stat[oiae]\s+"
+    r"(?:gi[àa]\s+|poi\s+|infine\s+)?"
+    r"(\w{3,}(?:at[oaie]|it[oaie]|ut[oaie]|s[oaie]|t[oaie]))\b",
+    re.IGNORECASE)
+
+#: English keeps the auxiliary adjacent, so the same shape reads directly. The
+#: irregular participles are the ones a corpus of records actually uses; -ed
+#: covers the rest of the class without listing it.
+_PARTICIPLE_EN = re.compile(
+    r"\b(?:was|were|has been|have been|had been|is|are|been)\s+"
+    r"(?:already\s+|now\s+|fully\s+|finally\s+)?"
+    r"(\w{3,}ed|paid|sent|done|made|built|won|lost|found|given|taken|"
+    r"written|signed|shipped|met|held|drawn|withdrawn)\b",
+    re.IGNORECASE)
+
+
+def _completed_action_absent_from(source: str, fact: str) -> bool:
+    """True when ``fact`` announces a completed action in the passive/perfect
+    and ``source`` never names it.
+
+    The participle itself is the probe, not its stem: "inviato per la firma"
+    contains *firma* but not *firmato*, and sending something for signature is
+    precisely the source that must NOT license "è stato firmato". Matching on
+    the stem would call that faithful.
+    """
+    for pat in (_PARTICIPLE_IT, _PARTICIPLE_EN):
+        for m in pat.finditer(fact):
+            participle = m.group(1)
+            if not re.search(rf"\b{re.escape(participle)}\b", source,
+                             re.IGNORECASE):
+                return True
+    return False
+
 
 def unverified_relation(source: str | None, fact: str | None) -> str | None:
     """The kind of relation ``fact`` announces that ``source`` does not, or None.
@@ -72,4 +116,9 @@ def unverified_relation(source: str | None, fact: str | None) -> str | None:
         pat = _PATTERNS[kind]
         if pat.search(f) and not pat.search(s):
             return kind
+    # Same kind, reached by shape instead of vocabulary — see
+    # _completed_action_absent_from. Checked after the named patterns so a
+    # sentence they already recognise keeps its existing answer.
+    if _completed_action_absent_from(s, f):
+        return "completion"
     return None
