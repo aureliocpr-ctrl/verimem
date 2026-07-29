@@ -3086,7 +3086,12 @@ def save_cmd(
         console.print("[yellow]stored QUARANTINED[/yellow] — the injection/"
                       "contradiction screens fired; see warnings below")
         for w in (r.get("warnings") or [])[:3]:
-            console.print(f"  [dim]{w.get('layer')}: {w.get('advice', '')[:100]}[/dim]")
+            # 400, not 100: the L4 advice now ends with WHICH clause the source
+            # does not carry, and at 100 chars the cut landed on the first
+            # letter of that sentence — the receipt printed the generic half of
+            # the message and hid the actionable half. Rich wraps, so a longer
+            # advice costs lines, not legibility.
+            console.print(f"  [dim]{w.get('layer')}: {w.get('advice', '')[:400]}[/dim]")
     if not r.get("stored"):
         console.print(f"[red]not stored:[/red] {r.get('status')}")
         raise typer.Exit(1)

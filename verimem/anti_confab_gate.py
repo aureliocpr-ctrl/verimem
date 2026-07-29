@@ -1396,12 +1396,38 @@ def run_validation_gate(
                         "grounding_score": gscore,
                     })
                 else:
+                    # WHICH part the source misses. "the source does not
+                    # support this proposition" is true and unactionable: a
+                    # 190-char sentence asserts three things, the source
+                    # carries two, and the writer guesses. Measured on myself
+                    # 2026-07-29: three consecutive rejections of one
+                    # checkpoint, each removing a different piece.
+                    #
+                    # Only with the LOCAL judge: it is free, so re-scoring a
+                    # handful of clauses costs ~0.4s each on the REJECT path
+                    # (18% of writes, measured over 22). With an llm judge this
+                    # would be N extra inferences per rejection, which is not a
+                    # price an advisory may charge.
+                    _pointer = ""
+                    try:
+                        from .unsupported_span import split_claim_clauses
+                        _n_claims = len(split_claim_clauses(proposition))
+                    except Exception:  # noqa: BLE001 — advisory only
+                        _n_claims = 1
+                    if _n_claims > 1:
+                        _pointer = (
+                            f" This proposition makes {_n_claims} separate "
+                            f"assertions and the moat judges them as ONE — a "
+                            f"single unproven piece sinks the rest. Split it "
+                            f"and save the parts this source actually proves; "
+                            f"give the others their own source."
+                        )
                     warnings.append({
                         "layer": "L4-grounding",
                         "reason": f"source does not entail the proposition "
                                   f"(grounding {gscore:.0f} below threshold)",
                         "advice": "the source does not support this proposition — likely a "
-                                  "confabulated inference, not a stated fact.",
+                                  "confabulated inference, not a stated fact." + _pointer,
                         "grounding_score": gscore,
                     })
                     advice = advice or "Source does not entail the claim (semantic grounding)."
