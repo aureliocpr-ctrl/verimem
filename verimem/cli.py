@@ -1832,7 +1832,15 @@ def facts_get(fact_id: str) -> None:
 
 @facts_app.command("forget")
 def facts_forget(
-    fact_id: str,
+    fact_id: str = typer.Argument(
+        None, help="Id (or id prefix) of the single fact to delete."),
+    topic: str = typer.Option(
+        None, "--topic",
+        help=("Delete EVERY fact whose topic starts with this prefix, "
+              "sub-topics included. Same undo snapshot and audit entry as the "
+              "single-id form — the point is not to need raw SQL for the "
+              "GDPR/cleanup case this command is named after."),
+    ),
     yes: bool = typer.Option(
         False, "--yes", "-y",
         help="Skip the confirmation prompt.",
@@ -1855,7 +1863,60 @@ def facts_forget(
     facts_undo_log so `engram facts undo <op_id>` can restore it within
     7 days. Use --no-undoable for true privacy-compliant hard delete.
     """
+    if bool(fact_id) == bool(topic):
+        console.print("[red]give either a FACT_ID or --topic[/red], not both "
+                      "and not neither")
+        raise typer.Exit(2) from None
+
     sm = _facts_sm()
+
+    if topic:
+        # A GDPR erasure covers every fact about a person, and a cleanup covers
+        # a whole topic; one id per invocation makes raw SQL the cheap path,
+        # and raw SQL drops the undo snapshot and the audit entry this command
+        # exists to write. Prefix match so sub-topics go with their parent —
+        # deleting `test/scarti` and leaving `test/scarti/sotto` behind would
+        # be a cleanup that did not clean.
+        try:
+            _all = list(sm.all())
+        except Exception as exc:  # noqa: BLE001
+            console.print(f"[red]cannot read the store:[/red] {exc}")
+            raise typer.Exit(1) from exc
+        _hits = [_x for _x in _all
+                 if (getattr(_x, "topic", "") or "").startswith(topic)]
+        if not _hits:
+            console.print(f"[yellow]0 facts under topic[/yellow] {topic!r} — "
+                          "nothing deleted")
+            return
+        if not yes:
+            try:
+                ok = typer.confirm(
+                    f"Delete {len(_hits)} facts under topic {topic!r}?",
+                    default=False,
+                )
+            except typer.Abort:
+                ok = False
+            if not ok:
+                console.print("[yellow]aborted[/yellow]")
+                return
+        _ops: list[str] = []
+        for _x in _hits:
+            if undoable:
+                _r = sm.delete_with_undo(_x.id, principal="cli:local")
+                if _r.get("removed"):
+                    _ops.append(str(_r.get("op_id")))
+            else:
+                sm.delete(_x.id, principal="cli:local")
+        if undoable:
+            console.print(
+                f"[green]forgotten:[/green] {len(_ops)} facts under {topic!r} "
+                f"[dim](undoable for 7 days — `verimem facts undo-list` for "
+                f"the op ids)[/dim]")
+        else:
+            console.print(f"[green]hard-deleted:[/green] {len(_hits)} facts "
+                          f"under {topic!r}")
+        return
+
     f = _fact_id_resolve(sm, fact_id)
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")
@@ -1901,6 +1962,20 @@ def facts_undo(
         not_found     — unknown op_id
     """
     sm = _facts_sm()
+    # Accept an id PREFIX, like `facts forget` does for fact ids. Without this
+    # the safety net is unreachable from its own listing: `facts undo-list`
+    # renders op_id inside a Rich column that truncates it to "9969b43c039c44…",
+    # and pasting exactly what is on screen answers "not found". Discovered by
+    # trying to undo a real batch delete on 2026-07-29 — the undo existed, was
+    # recorded correctly, and could not be invoked.
+    _matches = [o["op_id"] for o in sm.list_undoable_ops(limit=200)
+                if str(o.get("op_id", "")).startswith(op_id)]
+    if len(_matches) > 1:
+        console.print(f"[red]ambiguous op_id prefix:[/red] {op_id} matches "
+                      f"{len(_matches)} ops — give more characters")
+        raise typer.Exit(2) from None
+    if len(_matches) == 1:
+        op_id = _matches[0]
     result = sm.undo_destructive_op(op_id)
     action = result.get("action", "unknown")
     if action == "restored":
