@@ -106,3 +106,34 @@ def test_a_single_assertion_gets_no_split_advice(monkeypatch):
     l4 = [w for w in (r.warnings or []) if w.get("layer") == "L4-grounding"]
     if l4:
         assert "separate assertions" not in l4[0].get("advice", "")
+
+
+def test_a_run_of_spaces_does_not_blow_up_the_split():
+    """ReDoS guard, with the numbers that made it necessary.
+
+    _CLAUSE_BOUNDARY puts variable-width whitespace next to lookaheads, so on a
+    run of spaces whose lookahead FAILS the engine retries from every position.
+    Measured before the fix, on the exact input below:
+
+        2 000 spaces  ->   0.3 s
+        8 000 spaces  ->   5.2 s
+       16 000 spaces  ->  20.8 s
+       32 000 spaces  ->  82.9 s
+
+    This module reads user-written fact text, so that is a denial of service on
+    the write path. CodeQL flagged it (py/polynomial-redos, high) on the PR that
+    introduced it. Note the first attempt to reproduce it MISSED: a trailing
+    "mentre" makes the lookahead succeed immediately and the whole thing runs in
+    0.1 ms. The blow-up needs the lookahead to fail.
+
+    The threshold is deliberately loose — post-fix this is ~0.5 ms, so a second
+    is a 2000x margin and cannot flake on a loaded CI box; anything quadratic
+    sails past it.
+    """
+    import time
+
+    hostile = "testo," + " " * 32000 + "x"
+    t0 = time.perf_counter()
+    split_claim_clauses(hostile)
+    elapsed = time.perf_counter() - t0
+    assert elapsed < 1.0, f"{elapsed:.1f}s on 32k spaces — the split went quadratic again"

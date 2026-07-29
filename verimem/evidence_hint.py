@@ -33,13 +33,6 @@ _REFS: dict[str, re.Pattern[str]] = {
     "pr": re.compile(r"\b((?:PR|issue)\s*#\d+)\b", re.IGNORECASE),
 }
 
-#: kind -> the verified_by form that MAKES it checkable
-_AS_REF = {
-    "commit": "commit:{}",
-    "file": "file:{}",
-    "test": "pytest:{}_PASS",
-    "pr": "pr:{}_merged",
-}
 
 
 def evidence_in_text(proposition: str | None) -> list[tuple[str, str]]:

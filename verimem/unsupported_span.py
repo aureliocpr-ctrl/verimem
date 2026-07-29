@@ -49,13 +49,34 @@ _CLAUSE_BOUNDARY = re.compile(
 #: Below this a fragment is punctuation or a stray token, not a claim.
 _MIN_CLAUSE_CHARS = 25
 
+#: Collapse whitespace runs BEFORE the boundary regex ever sees the text.
+#: _CLAUSE_BOUNDARY has variable-width whitespace next to lookaheads, so on a
+#: run of spaces whose lookahead fails the engine retries from every position —
+#: quadratic. Measured on this module the day it was written:
+#:
+#:      2 000 spaces ->    0.3 s
+#:      8 000 spaces ->    5.2 s
+#:     16 000 spaces ->   20.8 s
+#:     32 000 spaces ->   82.9 s
+#:
+#: and this module reads the text of user-written facts. CodeQL flagged it
+#: (py/polynomial-redos, high) on the same pull request that introduced it —
+#: after I had read the identical warning in quantity_match.py earlier the same
+#: day and written the bug anyway.
+#:
+#: Collapsing first is linear and removes the input that causes the blow-up,
+#: instead of trying to make every branch of the boundary regex unambiguous.
+#: Newlines become single spaces, which costs nothing here: this counts
+#: assertions, it does not reformat anything.
+_WS_RUN = re.compile(r"\s+")
+
 
 def split_claim_clauses(proposition: str | None) -> list[str]:
     """The proposition's clauses, or a single-element list when it makes one
     claim. Short fragments are merged back into the previous clause rather than
-    dropped — a dangling ", e i due" is part of what came before, and scoring it
-    alone would produce a meaningless number."""
-    text = (proposition or "").strip()
+    dropped — a dangling ", e i due" is part of what came before, and counting
+    it alone would inflate the number of assertions."""
+    text = _WS_RUN.sub(" ", (proposition or "")).strip()
     if not text:
         return []
     parts: list[str] = []
