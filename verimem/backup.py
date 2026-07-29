@@ -44,7 +44,40 @@ _PRIMARY_TABLE: dict[str, str] = {
 }
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
+#: Retrocompatibilità: era il default di quattro funzioni pubbliche ed è in
+#: ``__all__``. Resta, ma NON è più il default — vedi ``default_backup_root``.
 DEFAULT_BACKUP_ROOT = Path.home() / ".engram" / "backups"
+
+
+def default_backup_root() -> Path:
+    """La cartella dei backup DELLO STORE configurato, risolta a ogni chiamata.
+
+    ``DEFAULT_BACKUP_ROOT`` è cablato a ``~/.engram`` e calcolato all'import,
+    quindi non vede ``ENGRAM_DATA_DIR`` / ``HIPPO_DATA_DIR`` /
+    ``VERIMEM_DATA_DIR`` — né se sono impostati, né se cambiano dopo. Il comando
+    leggeva quindi dallo store configurato e scriveva in quello di default.
+
+    Misurato il 2026-07-29 su uno store di prova con due fatti::
+
+        $ ENGRAM_DATA_DIR=<tmp> verimem backup-all --tier manual
+        semantic ok: semantic-20260729-234940-956861.db  rows: 2
+        $ find <tmp> -name '*semantic-2026*'   ->  niente
+        $ ls ~/.engram/backups/manual/         ->  il file è lì
+
+    Il backup conteneva i 2 fatti dello store di prova ed è finito nella
+    cartella dei backup del corpus reale, che ne ha 6448 — stesso schema di
+    nome, stessa directory. Un restore che pesca il file sbagliato sostituisce
+    6448 fatti con 2, e il comando esce 0 in entrambi i casi.
+
+    A CALL TIME e non all'import, perché ogni processo che configura lo store
+    dopo aver importato la libreria (ogni test, ogni servizio che legge la
+    config all'avvio) altrimenti non verrebbe visto.
+    """
+    try:
+        from ._compat import data_dir
+        return Path(data_dir()) / "backups"
+    except Exception:  # noqa: BLE001 — un backup non deve morire sul path
+        return DEFAULT_BACKUP_ROOT
 
 # Default retention policy (max copies per tier).
 DEFAULT_POLICY: dict[str, int] = {
@@ -189,7 +222,7 @@ def _sqlite_integrity_ok(path: Path) -> bool:
 
 def create_backup(
     db_path: Path | str,
-    backup_root: Path | str = DEFAULT_BACKUP_ROOT,
+    backup_root: Path | str | None = None,   # None -> default_backup_root()
     *,
     tier: BackupTier = "daily",
     verify_integrity: bool = True,
@@ -210,7 +243,7 @@ def create_backup(
     disk corruption).
     """
     db_path = Path(db_path)
-    backup_root = Path(backup_root)
+    backup_root = Path(backup_root) if backup_root else default_backup_root()
     if not db_path.exists():
         raise FileNotFoundError(f"DB not found: {db_path}")
 
@@ -375,7 +408,7 @@ def create_all_backups(
     semantic_db: Path | str | None = None,
     episodes_db: Path | str | None = None,
     skills_db: Path | str | None = None,
-    backup_root: Path | str = DEFAULT_BACKUP_ROOT,
+    backup_root: Path | str | None = None,   # None -> default_backup_root()
     tier: BackupTier = "daily",
     verify_integrity: bool = True,
 ) -> dict[str, BackupInfo | dict]:
@@ -418,12 +451,12 @@ def create_all_backups(
 
 
 def list_backups(
-    backup_root: Path | str = DEFAULT_BACKUP_ROOT,
+    backup_root: Path | str | None = None,   # None -> default_backup_root()
     *,
     tier: BackupTier | None = None,
 ) -> list[BackupInfo]:
     """List backups (optionally filtered to one tier), newest first."""
-    backup_root = Path(backup_root)
+    backup_root = Path(backup_root) if backup_root else default_backup_root()
     if not backup_root.exists():
         return []
     tiers = (tier,) if tier else ("daily", "weekly", "monthly", "manual")
@@ -460,7 +493,7 @@ def _is_sane_backup(path: Path) -> bool:
 
 
 def rotate_backups(
-    backup_root: Path | str = DEFAULT_BACKUP_ROOT,
+    backup_root: Path | str | None = None,   # None -> default_backup_root()
     *,
     policy: dict[str, int] | None = None,
 ) -> list[Path]:
@@ -474,7 +507,7 @@ def rotate_backups(
     insane files only when there aren't enough sane ones.
     """
     policy = policy or DEFAULT_POLICY
-    backup_root = Path(backup_root)
+    backup_root = Path(backup_root) if backup_root else default_backup_root()
     deleted: list[Path] = []
     for tier, keep in policy.items():
         tdir = backup_root / tier
