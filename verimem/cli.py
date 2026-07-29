@@ -171,12 +171,54 @@ def status():
     n_sk = agent.skills.count()
     n_sk_promoted = agent.skills.count(status="promoted")
     n_facts = agent.semantic.count() if hasattr(agent, "semantic") and agent.semantic else 0
+    # A command whose docstring says "health check" is where someone looks for
+    # whether their memory can be TRUSTED, and it used to answer with inventory
+    # only. On the live store the two figures below read 511 held back (10.8%)
+    # and 23 judged (0.5%) next to "4743 facts" — each one changes what the user
+    # does next, and neither was anywhere in this panel. `doctor` stays the
+    # deeper diagnosis; this is the health line.
+    _held = _judged = None
+    try:
+        import sqlite3 as _sq
+
+        # agent.semantic.db_path — the SAME store the counts above came from,
+        # not a path re-resolved from the environment. The first version used
+        # _compat.data_dir() and produced a panel reading "semantic facts: 4743"
+        # (the configured corpus) beside "quarantined: 1" (a different store),
+        # whenever the data dir was set after import. Identical on the live box,
+        # wrong everywhere else, and it is the exact defect this panel exists to
+        # report on.
+        _db = Path(agent.semantic.db_path)
+        if _db.exists():
+            with _sq.connect(f"file:{_db}?mode=ro", uri=True) as _c:
+                # superseded_by IS NULL on BOTH counts and on n_facts: without
+                # it this read 1732 (36.5%) against a live-only denominator
+                # while `verimem stats` said 511 three lines away — the same
+                # mixed-population mistake this session just fixed in the stats
+                # heading, made again one command over.
+                _held = _c.execute(
+                    "SELECT COUNT(*) FROM facts WHERE status = 'quarantined' "
+                    "AND superseded_by IS NULL").fetchone()[0]
+                _judged = _c.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND grounding_score IS NOT NULL").fetchone()[0]
+    except Exception:  # noqa: BLE001 — a health line never breaks the count
+        _held = _judged = None
+    _truth = ""
+    if _held is not None:
+        _pct = f" ({100 * _held / n_facts:.1f}%)" if n_facts else ""
+        _truth += f"\n  quarantined:     {_held}{_pct}  held back, awaiting review"
+    if _judged is not None:
+        _pct = f" ({100 * _judged / n_facts:.1f}%)" if n_facts else ""
+        _truth += (f"\n  moat-judged:     {_judged}{_pct}  writes whose source "
+                   f"was checked")
     console.print(Panel.fit(
         f"[bold]Verimem[/bold]\n"
         f"  episodes:        {n_eps}\n"
         f"  skills (total):  {n_sk}\n"
         f"  skills promoted: {n_sk_promoted}\n"
-        f"  semantic facts:  {n_facts}\n"
+        f"  semantic facts:  {n_facts}"
+        f"{_truth}\n"
         f"  data dir:        {CONFIG.data_dir}",
         title="status",
     ))
