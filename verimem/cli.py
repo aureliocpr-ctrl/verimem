@@ -3062,6 +3062,19 @@ def save_cmd(
         console.print("  [yellow]not verified[/yellow] [dim]— no source, so the "
                       "entailment moat did not run; pass --source \"<the output "
                       "that proves it>\" to have it judged[/dim]")
+    # A save that RETIRES an older fact is not an append: the old value stops
+    # being served by default recall. save_checkpoint has always returned the
+    # ids (client.py sets _out["superseded"]) and this receipt dropped them, so
+    # the one write with a subtractive effect looked like every other one. The
+    # person who just made it is the only one positioned to notice a wrong
+    # retirement, and only while still looking.
+    _sup = r.get("superseded") or []
+    if _sup:
+        _ids = ", ".join(str(s)[:12] for s in _sup[:3])
+        _more = f" (+{len(_sup) - 3})" if len(_sup) > 3 else ""
+        console.print(f"  superseded {_ids}{_more} [dim]— no longer served by "
+                      f"default recall; `verimem recall --as-of` still reaches "
+                      f"it[/dim]")
     resolved = r.get("lineage_resolved")
     if resolved:
         console.print(f"  chained -> {resolved[:12]}")
