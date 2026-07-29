@@ -30,8 +30,9 @@ import os
 import sqlite3
 import tempfile
 import traceback
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 SOURCE = "Runbook di produzione: il servizio di fatturazione ascolta sulla porta 8443."
 FATTO = "Il servizio di fatturazione ascolta sulla porta 8443."
