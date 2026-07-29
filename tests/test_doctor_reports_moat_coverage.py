@@ -136,3 +136,44 @@ def test_a_store_it_cannot_read_is_not_reported_as_ON(monkeypatch, tmp_path):
     body = _text(row).lower()
     assert not _is_ok(row) or "could not" in body or "unreadable" in body, (
         f"an unreadable store must not report the moat as ON: {_text(row)}")
+
+
+def test_coverage_is_reported_even_with_no_judge_installed(monkeypatch, tmp_path):
+    """The machine the CI runs on, and every fresh install.
+
+    Coverage lived inside the `if ce:` branch, so a box without the gate model
+    got an answer about the MODEL and nothing about its CORPUS — and that is
+    precisely the box whose corpus is most likely unjudged. Found by the CI on
+    2026-07-29, where three tests in this file failed with "doctor must say how
+    much of the corpus was judged, got: local ce gate model not installed".
+
+    How much of a store was judged is a fact about the STORE. It does not become
+    unknowable because today's machine lacks a judge.
+    """
+    import sqlite3
+
+    from verimem import doctor as D
+    from verimem import local_grounding
+
+    d = tmp_path / "engram"
+    (d / "semantic").mkdir(parents=True)
+    con = sqlite3.connect(str(d / "semantic" / "semantic.db"))
+    con.execute("CREATE TABLE facts (id TEXT, proposition TEXT, "
+                "superseded_by TEXT, grounding_score REAL)")
+    con.execute("INSERT INTO facts VALUES ('a','x',NULL,99.5)")
+    con.execute("INSERT INTO facts VALUES ('b','y',NULL,NULL)")
+    con.commit()
+    con.close()
+
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(d))
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(d))
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(d))
+    monkeypatch.setattr(local_grounding, "local_ce_available", lambda: False,
+                        raising=False)
+
+    row = next(r for r in D.run_doctor() if r["name"] == "moat-judge")
+    detail = row.get("detail", "")
+    assert "1 of 2" in detail, (
+        f"no judge installed, so doctor said nothing about the corpus: {detail}"
+    )
+    assert "judged" in detail

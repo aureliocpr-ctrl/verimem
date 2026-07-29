@@ -98,74 +98,85 @@ def run_doctor() -> list[dict[str, Any]]:
             provider = _autodetect_provider()
         except Exception:  # noqa: BLE001 — provider detection is best-effort
             provider = None
-        if ce:
-            # "the moat is ON" is true of the JUDGE and gets read as "my store
-            # is protected". The moat only runs on writes that carry a source,
-            # so an installed judge and an unjudged corpus coexist happily —
-            # measured 2026-07-28 on the real store: judge present, 0 of 6414
-            # facts ever judged. Two COUNTs keep doctor inside its ~2s budget.
-            _n = _judged = 0
-            _readable = True
-            try:
-                import sqlite3 as _sq
+        # "the moat is ON" is true of the JUDGE and gets read as "my store is
+        # protected". The moat only runs on writes that carry a source, so an
+        # installed judge and an unjudged corpus coexist happily — measured
+        # 2026-07-28 on the real store: judge present, 0 of 6414 facts ever
+        # judged. Two COUNTs keep doctor inside its ~2s budget.
+        #
+        # 2026-07-29: counted OUTSIDE the `if ce` branch. How much of the corpus
+        # was judged is a fact about the STORE — it does not become unknowable
+        # because the judge is missing today, and the machine without a judge is
+        # exactly the one whose corpus is most likely unjudged. CI found this:
+        # there the CE is not installed, and doctor answered about the model
+        # while saying nothing about the corpus.
+        _n = _judged = 0
+        _readable = True
+        try:
+            import sqlite3 as _sq
 
-                from ._compat import data_dir as _dd
-                # _compat.data_dir(), the same resolver the data-dir check above
-                # uses — it reads the environment at call time, so doctor reports
-                # on the store the operator is actually pointed at.
-                _db = _dd() / "semantic" / "semantic.db"
-                if _db.exists():
-                    with _sq.connect(str(_db)) as _c:
-                        _n = int(_c.execute(
-                            "SELECT COUNT(*) FROM facts "
-                            "WHERE superseded_by IS NULL").fetchone()[0])
-                        _judged = int(_c.execute(
-                            "SELECT COUNT(*) FROM facts WHERE superseded_by "
-                            "IS NULL AND grounding_score IS NOT NULL"
-                        ).fetchone()[0])
-            except Exception:  # noqa: BLE001 — a doctor that hangs is a patient
-                # NOT silently zero: a locked, corrupt or schema-drifted store
-                # would then be indistinguishable from a healthy empty one, and
-                # this check would print its most reassuring line exactly when
-                # it could not look (adversarial review, 2026-07-28).
-                _n = _judged = 0
-                _readable = False
+            from ._compat import data_dir as _dd
+            # _compat.data_dir(), the same resolver the data-dir check above
+            # uses — it reads the environment at call time, so doctor reports
+            # on the store the operator is actually pointed at.
+            _db = _dd() / "semantic" / "semantic.db"
+            if _db.exists():
+                with _sq.connect(str(_db)) as _c:
+                    _n = int(_c.execute(
+                        "SELECT COUNT(*) FROM facts "
+                        "WHERE superseded_by IS NULL").fetchone()[0])
+                    _judged = int(_c.execute(
+                        "SELECT COUNT(*) FROM facts WHERE superseded_by "
+                        "IS NULL AND grounding_score IS NOT NULL"
+                    ).fetchone()[0])
+        except Exception:  # noqa: BLE001 — a doctor that hangs is a patient
+            # NOT silently zero: a locked, corrupt or schema-drifted store
+            # would then be indistinguishable from a healthy empty one, and
+            # this check would print its most reassuring line exactly when
+            # it could not look (adversarial review, 2026-07-28).
+            _n = _judged = 0
+            _readable = False
+
+        if not _readable:
+            _coverage = ("coverage of the moat is UNKNOWN, not zero — the "
+                         "store could not be read")
+        elif _n:
+            _coverage = (f"{_judged} of {_n} stored facts entailment-judged "
+                         f"({100 * _judged / _n:.1f}%)")
+        else:
+            _coverage = "no facts stored yet, so nothing to have judged"
+
+        if ce:
             if not _readable:
                 add("moat-judge", WARN,
-                    "local CE gate model installed, but the store could not be "
-                    "read — coverage of the moat is UNKNOWN, not zero",
+                    f"local CE gate model installed, but {_coverage}",
                     "check the store with `verimem status`; a store predating "
                     "the grounding_score column, locked or corrupt will fail "
                     "this read")
             elif _n and _judged / _n < _MOAT_COVERAGE_WARN:
                 add("moat-judge", WARN,
-                    f"local CE gate model installed, but only {_judged} of {_n} "
-                    f"stored facts were entailment-judged "
-                    f"({100 * _judged / _n:.1f}%) — the moat runs only on writes "
-                    f"that carry a source",
+                    f"local CE gate model installed, but only {_coverage} — "
+                    f"the moat runs only on writes that carry a source",
                     "pass source='<the evidence text>' on add() (or --source on "
                     "`verimem save`); a verified_by ref records WHO vouches and "
                     "does not run the check")
-            elif _n:
-                add("moat-judge", OK,
-                    f"local CE gate model installed — the grounding moat is ON "
-                    f"with no llm (multilingual); {_judged} of {_n} stored facts "
-                    f"entailment-judged")
             else:
                 add("moat-judge", OK,
-                    "local CE gate model installed — the grounding moat is ON "
-                    "with no llm (multilingual)")
+                    f"local CE gate model installed — the grounding moat is ON "
+                    f"with no llm (multilingual); {_coverage}")
         elif provider and provider != "mock":
             add("moat-judge", WARN,
                 f"local CE gate model NOT installed; an llm provider is available "
-                f"({provider}) — the moat runs only when you pass llm=... to Memory",
+                f"({provider}) — the moat runs only when you pass llm=... to "
+                f"Memory; {_coverage}",
                 "run `verimem warmup` to download the gate model (~656 MB), or "
                 "pass llm= to Memory")
         else:
             add("moat-judge", FAIL,
                 f"NO grounding judge: local CE model missing at "
                 f"{_resolve_model_dir(None)} and no llm provider detected — "
-                "writes are admitted with an L4-skipped advisory (moat OFF)",
+                f"writes are admitted with an L4-skipped advisory (moat OFF); "
+                f"{_coverage}",
                 "run `verimem warmup` to download the published gate model "
                 "(~656 MB, no account needed), or pass llm= to Memory")
     except Exception as e:  # noqa: BLE001

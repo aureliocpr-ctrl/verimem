@@ -25,6 +25,8 @@ from the command named after trust.
 """
 from __future__ import annotations
 
+import re
+
 from typer.testing import CliRunner
 
 from verimem.cli import app
@@ -34,10 +36,22 @@ runner = CliRunner()
 INVENZIONE = ("il modulo di fatturazione di verimem usa PostgreSQL con "
               "sharding su otto nodi")
 
+#: Rich colours the help, and the colour codes land BETWEEN the two dashes of a
+#: long option: `--source` is emitted as ESC[1;36m-ESC[0mESC[1;36m-source`.
+#: Searching the raw output therefore passes or fails on whether the terminal
+#: happened to be a tty — this file was green locally and red on all six CI
+#: jobs for exactly that reason (2026-07-29). Strip the escapes and assert on
+#: what a human reads.
+_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+
+
+def _plain(text: str) -> str:
+    return _ANSI.sub("", text or "")
+
 
 def test_it_does_not_call_an_unchecked_claim_adequate_evidence():
     r = runner.invoke(app, ["trust", INVENZIONE])
-    assert "adequate evidence" not in r.output.lower(), (
+    assert "adequate evidence" not in _plain(r.output).lower(), (
         "printed 'adequate evidence' for a claim whose evidence was never "
         f"looked at:\n{r.output}"
     )
@@ -46,7 +60,7 @@ def test_it_does_not_call_an_unchecked_claim_adequate_evidence():
 def test_it_says_which_layers_actually_ran():
     """A reader must be able to tell a lexical-only pass from a full one."""
     r = runner.invoke(app, ["trust", INVENZIONE])
-    out = r.output.lower()
+    out = _plain(r.output).lower()
     assert "checked" in out or "screens" in out, (
         f"nothing in the output says what was checked:\n{r.output}"
     )
@@ -60,7 +74,7 @@ def test_the_command_named_after_trust_can_run_the_moat():
     """--source did not exist, so the headline check was unreachable from the
     command that advertises it."""
     r = runner.invoke(app, ["trust", "--help"])
-    assert "--source" in r.output, (
+    assert "--source" in _plain(r.output), (
         f"no way to give the moat something to check:\n{r.output}"
     )
 
@@ -68,4 +82,4 @@ def test_the_command_named_after_trust_can_run_the_moat():
 def test_a_claim_with_no_provenance_still_reports_that():
     """Regression guard on the line that was already right."""
     r = runner.invoke(app, ["trust", INVENZIONE])
-    assert "(none)" in r.output
+    assert "(none)" in _plain(r.output)
