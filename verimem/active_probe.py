@@ -82,7 +82,17 @@ def probe_fact(mem: Any, fact_id: str, *, k: int = 8) -> dict[str, Any]:
         # nothing but disqualified rivals did not survive a probe, it never had
         # one, and the ``unbeaten`` receipt must not claim otherwise.
         if any(is_self_ref(r) for r in (rival.verified_by or [])):
-            disqualified += 1
+            # NOT counted as a disqualified rival. P85 says an ``actor:*`` row
+            # is the engine quoting itself — it is not a voice that failed to
+            # qualify, it is not a voice. Counting it would mean a fact can
+            # never earn a bound once the composer has echoed it, and would let
+            # anyone freeze another fact's bound forever by writing echoes.
+            # The two cases below are different: a source revising ITSELF and
+            # an unsourced row are real disagreements that fail a bar, and
+            # "nothing withstood falsification" is the honest verdict there.
+            # (2026-07-29: these three shared one counter, so two tests
+            # contradicted each other and which one passed depended on whether
+            # recall happened to retrieve the rival.)
             continue                                   # P85: self-echo can't refute
         # INDEPENDENCE (2026-07-27). The docstring promised counter-evidence
         # "from an INDEPENDENT source" and only "not the engine" was enforced —

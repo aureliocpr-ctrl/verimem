@@ -91,14 +91,40 @@ def test_stronger_counter_evidence_still_refutes(mem):
 
 def test_survival_is_only_minted_when_a_probe_could_have_failed(mem):
     """`unbeaten(n)` says n probes were SURVIVED. With every rival excluded by a
-    guard, nothing was survived — the receipt must not claim it."""
+    guard, nothing was survived — the receipt must not claim it.
+
+    2026-07-29: this used an ``actor:*`` rival, which was the wrong example and
+    made this file contradict test_active_probe.py on identical input. Which of
+    the two passed depended on whether recall happened to retrieve the rival, so
+    both were green in isolation and the full suite failed.
+
+    The intent survives; the example was incoherent with P85. An ``actor:*`` row
+    is the engine quoting itself — not a voice that failed a bar, not a voice at
+    all — so a fact facing only self-echo faces NOTHING, which is exactly the
+    case test_a_genuinely_unchallenged_fact_still_survives mints unbeaten(1)
+    for. Counting it would also mean the composer freezes the bound of every
+    fact it ever echoes, and echoing is what the composer does.
+
+    An UNSOURCED rival is the honest example: a real disagreement that fails the
+    provenance bar, so nothing withstood falsification.
+    """
     a = mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
-    mem.add("Rex is a poodle.", topic="pets",
-            verified_by=["actor:composer:r1"])          # P85: cannot testify
+    mem.add("Rex is a poodle.", topic="pets")           # no provenance at all
     out = probe_fact(mem, a["id"])
     assert out["outcome"] != "survived", out
     assert _kind(mem, a["id"]) != "unbeaten", (
         "no rival could compete, so no falsification attempt took place")
+
+
+def test_self_echo_alone_is_not_a_challenge(mem):
+    """The other half of the same rule, pinned so the two files cannot drift
+    apart again: only self-echo means no challenger, so survival is real."""
+    a = mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
+    mem.add("Rex is a poodle.", topic="pets",
+            verified_by=["actor:composer:r1"])          # P85: cannot testify
+    out = probe_fact(mem, a["id"])
+    assert out["outcome"] == "survived", out
+    assert _kind(mem, a["id"]) == "unbeaten"
 
 
 def test_a_genuinely_unchallenged_fact_still_survives(mem):
