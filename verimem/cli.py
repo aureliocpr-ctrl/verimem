@@ -828,6 +828,12 @@ def trust(
              "ci:main:green, coverage:85, bash:test_PASS",
     ),
     topic: str = typer.Option("adhoc/trust-check", "--topic"),
+    source: str = typer.Option(
+        None, "--source",
+        help="The evidence TEXT the claim should follow from. Runs the moat "
+             "(L4 source-entails-claim) — the check this command is named "
+             "after. Without it only the lexical screens can run.",
+    ),
     validate: str = typer.Option(
         "fast", "--validate", help="Gate tier: 'fast' (L1 keyword detectors) "
         "or 'full' (L1+L3 contradiction vs the live corpus)",
@@ -847,6 +853,10 @@ def trust(
     res = run_validation_gate(
         proposition=claim, verified_by=refs, topic=topic,
         agent=None, validate=validate,
+        # 2026-07-29: the moat was unreachable from the command named after
+        # trust — there was no way to hand it evidence, so L4 could never run
+        # and the output still said "adequate evidence".
+        source=source, ground_write=True if source else None,
     )
     d = res.to_dict()
     action = d.get("action", "persist")
@@ -854,8 +864,15 @@ def trust(
         import json as _json
         console.print_json(_json.dumps(d))
         raise typer.Exit(0 if action == "persist" else 1)
+    # "TRUSTED" is earned by what actually ran. With no source the only layer
+    # that CAN run is the lexical screen, and calling that verdict TRUSTED is
+    # how an invented module with a fabricated ISO 27001 date got a green tick
+    # (measured 2026-07-29). Same verdict, honest name.
+    _judged = isinstance(d.get("grounding_score"), (int, float))
     verdict = {
-        "persist": "[green]TRUSTED ✓[/green]",
+        "persist": ("[green]TRUSTED ✓[/green]" if _judged
+                    else "[green]NO FLAGS ✓[/green] [dim](wording only — "
+                         "nothing was checked against evidence)[/dim]"),
         "downgrade": "[yellow]FLAGGED ↓ (would store as provisional)[/yellow]",
         "quarantine": "[red]QUARANTINED ✗ (excluded from recall)[/red]",
         "reject": "[red]REJECTED ✗[/red]",
@@ -873,7 +890,29 @@ def trust(
             msg = w.get("advice") or w.get("reason") or w.get("matched_text") or ""
             lines.append(f"    • [{layer}] {str(msg)[:130]}")
     else:
-        lines.append("  [dim]no anti-confab flags — adequate evidence / not a risky assertion[/dim]")
+        lines.append("  [dim]no flags from the screens that ran[/dim]")
+    # Which layers COULD run, so a lexical-only pass is not read as a full one
+    # — the same reason build_trust_report reports `verify: {...}` instead of
+    # letting an unfiltered result look like a filtered one. Measured
+    # 2026-07-29: an invented module with a fabricated ISO 27001 date came back
+    # "TRUSTED ✓ — adequate evidence", from a check that looked at no evidence.
+    _gs = d.get("grounding_score")
+    if isinstance(_gs, (int, float)):
+        _moat_line = f"the moat judged the source at {float(_gs):.1f}"
+    elif source:
+        _moat_line = ("a source was given but no judge answered — NOT a pass")
+    else:
+        _moat_line = ("the moat did NOT run: no --source, so nothing was "
+                      "checked against evidence")
+    lines.append(
+        f"  checked:     L1 lexical screens"
+        f"{', L3 contradiction' if validate == 'full' else ''}"
+        f"{', L4 moat' if isinstance(_gs, (int, float)) else ''}")
+    lines.append(f"  [dim]{_moat_line}[/dim]")
+    if not refs and not source:
+        lines.append("  [dim]no provenance ref and no source: this verdict is "
+                     "about the WORDING of the claim, not about whether it is "
+                     "true[/dim]")
     console.print(Panel.fit("\n".join(lines), title="trust"))
     raise typer.Exit(0 if action == "persist" else 1)
 

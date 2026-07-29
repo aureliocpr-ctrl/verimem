@@ -21,9 +21,21 @@ def test_trust_flags_hype_with_reasons():
 
 
 def test_trust_accepts_benign_fact():
+    """Passes, and says what that means.
+
+    2026-07-29: the verdict used to read "TRUSTED ✓" here. Without a --source
+    the only layer that CAN run is the L1 lexical screen, so the tick was
+    reporting "no hype words" as if it were verification — an invented module
+    with a fabricated ISO 27001 date earned the same green TRUSTED. The
+    disposition is unchanged (exit 0, the gate would store it); the label now
+    matches the check that produced it.
+    """
     r = runner.invoke(app, ["trust", "The capital of France is Paris"])
     assert r.exit_code == 0, r.output
-    assert "TRUSTED" in r.output
+    assert "NO FLAGS" in r.output, r.output
+    assert "TRUSTED" not in r.output, (
+        "a lexical-only pass must not claim the word the moat earns"
+    )
 
 
 def test_trust_evidence_clears_tested_claim():
