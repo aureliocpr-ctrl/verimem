@@ -32,9 +32,29 @@ def env_floor(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str:
     """Resolve a read-path abstention floor from an env var: ``auto`` (the store
     self-calibrates), a float, or off (0.0). The single switch that turns "knows when
     it doesn't know" ON across every surface (SDK ``explain()``, console, gateway).
-    Default unset → 0.0 = the permissive, backward-compatible behaviour."""
+
+    Default unset → ``auto`` since 2026-07-29. It used to be 0.0 — permissive,
+    backward-compatible, and nothing in the tree ever set the variable, so the
+    product's headline behaviour was off for every SDK, console and gateway
+    caller while the MCP surface (a1f5e778) abstained. One store, two answers.
+
+    Flipped on measurement, not on principle. Twenty questions against the live
+    store — twelve it can support, eight plausible inventions:
+
+        gate OFF   0 wrong abstentions   2 expected facts missed   0/8 caught   1.22s
+        gate ON    0 wrong abstentions   2 expected facts missed   8/8 caught   4.21s
+
+    The two misses are the SAME two in both columns: they were outside the
+    retrieval top-k to begin with, so the gate costs no answer the store could
+    have given. It withheld nothing it should have served, and caught every
+    invention. The price is ~3s on a deliberate custody check.
+
+    An explicit value still wins in both directions — ``off``/``0`` keeps the old
+    permissive behaviour for whoever depends on it."""
     raw = os.environ.get(var, "").strip().lower()
     if raw == "auto":
+        return "auto"
+    if not raw:
         return "auto"
     if raw in _FLOOR_OFF:
         return 0.0
