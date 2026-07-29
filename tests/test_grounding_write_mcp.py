@@ -86,15 +86,41 @@ async def test_rejects_when_source_does_not_entail(wired, monkeypatch) -> None: 
 
 
 @pytest.mark.asyncio
-async def test_off_does_not_consult_verifier(wired, monkeypatch) -> None:  # noqa: ANN001
+async def test_no_source_does_not_consult_verifier(wired, monkeypatch) -> None:  # noqa: ANN001
+    """The fast path, kept where it belongs: nothing to entail, nothing spent.
+
+    2026-07-29: this used to assert that an absent ENGRAM_GROUNDING_WRITE meant
+    no verifier call EVEN WITH A SOURCE. That was the live behaviour and it is
+    why the store reached 6427 facts with 11 grounding scores — an agent that
+    passed real evidence got it silently ignored, because the SDK preset passed
+    ground=True and the MCP handler passed nothing (commit 7b8af116).
+
+    What the test was protecting is the fast path, and that is preserved
+    exactly: no source means no entailment question, so no model is loaded.
+    Measured over 4 MCP writes: 0.10s steady without a source; 0.46s with one,
+    plus a ~29s CE cold-load once per process.
+    """
     _sm, stub = wired
     monkeypatch.delenv("ENGRAM_GROUNDING_WRITE", raising=False)
+    out = await _invoke("hippo_remember", {
+        "proposition": _CLEAN, "topic": "notes/grounding-test",
+    })
+    assert out.get("ok") is True
+    assert out.get("rejected") in (None, False)
+    assert stub.calls == 0, "a write with nothing to check paid for a judge"
+
+
+@pytest.mark.asyncio
+async def test_an_operator_can_still_switch_it_off(wired, monkeypatch) -> None:  # noqa: ANN001
+    """An explicit OFF keeps its power over the new default — changing one must
+    not take away a switch someone is already using."""
+    _sm, stub = wired
+    monkeypatch.setenv("ENGRAM_GROUNDING_WRITE", "0")
     out = await _invoke("hippo_remember", {
         "proposition": _CLEAN, "topic": "notes/grounding-test", "source": _SRC,
     })
     assert out.get("ok") is True
-    assert out.get("rejected") in (None, False)
-    assert stub.calls == 0  # feature off → no semantic call, fast path intact
+    assert stub.calls == 0, "an explicit off was overridden by the new default"
 
 
 # R27 step2: env-gated derivation auto-detect (id-mention only) in hippo_remember
