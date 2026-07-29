@@ -12409,17 +12409,22 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _moat = ("not run — no source, so the entailment moat had "
                          "nothing to check; pass source=\"<the evidence "
                          "text>\" to have this write judged")
+            elif _ground_write is False:
+                # Only an EXPLICIT opt-out lands here. Reading
+                # _grounding_write_on() instead would be wrong now that this
+                # handler passes ground_write itself: an absent env var means
+                # "on by default", and the message would announce a switch-off
+                # that did not happen — exactly the kind of confident-wrong
+                # report this whole receipt exists to stop.
+                _moat = ("not run — a source WAS given, but write-time "
+                         "grounding is switched off here "
+                         "(ENGRAM_GROUNDING_WRITE=0)")
             else:
-                from .anti_confab_gate import _grounding_write_on
-                if not _grounding_write_on():
-                    _moat = ("not run — a source WAS given, but write-time "
-                             "grounding is off on this server; set "
-                             "ENGRAM_GROUNDING_WRITE=1 to have the moat judge "
-                             "sourced writes")
-                else:
-                    _moat = ("could not judge — a source was given and the "
-                             "moat is on, but no judge was available for this "
-                             "write; this is not a pass")
+                _moat = ("could not judge — a source was given and the moat "
+                         "was asked, but no judge was available for this "
+                         "write (no llm and no local CE model); this is NOT a "
+                         "pass — run `verimem doctor` to see which judge is "
+                         "missing")
             return _ok({
                 "ok": True,
                 "id": fact.id,

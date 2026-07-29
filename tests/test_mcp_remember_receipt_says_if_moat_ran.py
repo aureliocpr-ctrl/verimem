@@ -111,3 +111,36 @@ async def test_a_source_that_could_not_be_judged_is_not_reported_as_unjudged(
         )
     else:
         assert str(round(float(out["grounding_score"]))) in moat or "judged" in moat.lower()
+
+
+@pytest.mark.asyncio
+async def test_no_judge_is_reported_as_no_judge_not_as_switched_off(
+    real_sm: SemanticMemory, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The case a machine WITHOUT the CE model hits — CI, a fresh install.
+
+    This branch used to read ENGRAM_GROUNDING_WRITE to decide its wording, which
+    became wrong the moment this handler started passing ground_write itself: an
+    absent env var now means "on by default", so the receipt would have
+    announced a switch-off that never happened. Confidently wrong about its own
+    state is the exact failure this receipt exists to prevent, so it is worth a
+    test of its own rather than a careful reading.
+    """
+    from verimem import anti_confab_gate
+    monkeypatch.delenv("ENGRAM_GROUNDING_WRITE", raising=False)
+    monkeypatch.setattr(anti_confab_gate, "local_ce_available", lambda: False,
+                        raising=False)
+
+    out = await _invoke("hippo_remember", {
+        "proposition": "The invoice total is 1240 euro.",
+        "topic": "test/receipt",
+        "source": "Invoice 88: subtotal 1000, VAT 240, total 1240 euro.",
+    })
+    moat = out.get("moat", "").lower()
+    if out.get("grounding_score") is None:
+        assert "switched off" not in moat and "is off" not in moat, (
+            f"claims it is switched off when nothing switched it off: {moat!r}"
+        )
+        assert "judge" in moat, (
+            f"must name the thing that was missing: {moat!r}"
+        )
