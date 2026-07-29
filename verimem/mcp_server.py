@@ -9418,6 +9418,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         "topic": getattr(f, "topic", ""),
                         "proposition": getattr(f, "proposition", ""),
                         "confidence": getattr(f, "confidence", 0.0),
+                        # 2026-07-29 sweep — see hippo_facts_list. Attributing
+                        # facts to an agent without saying which ones were
+                        # ever judged reads as an endorsement of all of them.
+                        "status": getattr(f, "status", "model_claim"),
+                        "verified_by": list(getattr(f, "verified_by", [])),
+                        "grounding_score": getattr(f, "grounding_score", None),
                     }
                     for f in filtered[:top_k]
                 ],
@@ -11530,6 +11536,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         # Cycle #109 S4-A: provenance visibility.
                         "status": getattr(f, "status", "model_claim"),
                         "verified_by": list(getattr(f, "verified_by", [])),
+                        # 2026-07-29: the moat's verdict, which _remote_row
+                        # already carried and this path dropped. Without it
+                        # ``confidence`` is the only trust number a reader
+                        # gets, and on the live store it is ANTI-correlated
+                        # with having been judged (11 judged facts at 0.5;
+                        # 4719 unjudged averaging 0.866) because it is a
+                        # per-channel default the moat never writes. None
+                        # means never judged — not judged and failed.
+                        "grounding_score": getattr(f, "grounding_score", None),
                     }
                     for f in hits
                 ],
@@ -12609,6 +12624,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         "topic": getattr(f, "topic", ""),
                         "confidence": float(getattr(f, "confidence", 0.0)),
                         "created_at": float(getattr(f, "created_at", 0.0)),
+                        # 2026-07-29 sweep: the same trust fields
+                        # hippo_facts_recall has carried since 2026-06-20. A
+                        # listing is where a consumer decides what to keep, so
+                        # dropping them here let the CHOICE OF TOOL decide
+                        # whether a verified fact was distinguishable from an
+                        # unverified one.
+                        "status": getattr(f, "status", "model_claim"),
+                        "verified_by": list(getattr(f, "verified_by", [])),
+                        "grounding_score": getattr(f, "grounding_score", None),
                     }
                     for f in window
                 ],
