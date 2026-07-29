@@ -51,6 +51,12 @@ from .anti_confabulation import (
     detect_unsupported_task_state_claim,
 )
 
+# 2026-07-28: relations a fact asserts and its source does not (cause, completed
+# state, certainty, computed quantity). The CE scores these HIGH — every word of
+# the source is there, only the link is invented — so they never fall in the
+# escalation band and the judge that could read them is never asked.
+from .evidence_hint import hint_for
+
 # Cycle 2026-05-27 (round 8): wire L1.16 approval detector.
 # Closes business-process gap: "approved/signed-off/authorized" sin
 # formal approval evidence (approver/review/pr/ticket/email/chat).
@@ -115,11 +121,6 @@ from .l1_tested_detector import detect_unsupported_tested_claim
 # claims without runtime evidence (pytest/bash:exit0/smoke).
 # Triangulated Claude+Gemini+GPT all favored this as L1.10 priority.
 from .l1_works_detector import detect_unsupported_works_claim
-
-# 2026-07-28: relations a fact asserts and its source does not (cause, completed
-# state, certainty, computed quantity). The CE scores these HIGH — every word of
-# the source is there, only the link is invented — so they never fall in the
-# escalation band and the judge that could read them is never asked.
 from .relation_claim import unverified_relation
 
 # Security fix 2026-06-02 (sorelle loop): token-gate the trusted-hook
@@ -1492,6 +1493,21 @@ def run_validation_gate(
                         })
     elif source and not _have_judge:
         _emit_l4_skipped()
+
+    # An L1 detector answers "no evidence in verified_by; add one of ...". Often
+    # the writer HAS it and put it in the sentence: "Wave 72 done, last commit
+    # ff2aaa3e". Measured on the live corpus 2026-07-28: 174 of 509 quarantined
+    # facts (34.2%) name a commit, a file:line, a test result or a PR in their
+    # own prose. The verdict stays exactly as it is — a SHA inside prose is an
+    # assertion, the same SHA in verified_by is something provenance_validator
+    # can CHECK with git rev-parse — but the gate can SEE the reference it is
+    # asking for, and quoting it back turns a generic refusal into one the
+    # writer can act on.
+    _hint = hint_for(proposition)
+    if _hint:
+        for _w in warnings:
+            if str(_w.get("layer", "")).startswith("L1") and _w.get("advice"):
+                _w["advice"] = f"{_w['advice']} NOTE: {_hint}."
 
     # Decision tree.
     has_l3_contradict = any(w.get("layer") == "L3" for w in warnings)
