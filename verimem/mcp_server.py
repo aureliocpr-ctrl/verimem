@@ -11966,6 +11966,30 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # (a.wake.llm / LazyLLM) so no backend is built unless the check actually runs.
             _source = arguments.get("source")
             _grounding_llm = getattr(getattr(a, "wake", None), "llm", None)
+            # 2026-07-29: ASK for the check when a source is given, instead of
+            # falling through to ENGRAM_GROUNDING_WRITE — which nothing in the
+            # source tree sets, so this channel stored sourced writes unjudged
+            # and answered `ok: true` all the same. Not a new contract:
+            # ebab6e92 (2026-07-17) documented "the moat is ON by default" and
+            # was right about the SDK path, whose `balanced` preset passes
+            # ground=True; its evidence line names the hardening-audit probe,
+            # which runs on that same path. This makes the second channel keep
+            # the promise the first one already made.
+            #
+            # Cost measured over 4 MCP writes: steady 0.10s -> 0.46s per write;
+            # the first pays the CE cold-load (~29s) ONCE PER PROCESS, i.e.
+            # once per session on a long-lived server. No source means nothing
+            # to entail, so nothing is requested and nothing is loaded.
+            #
+            # An explicit env value still wins in the OFF direction: whoever
+            # has already switched the moat off keeps it off.
+            _gw_env = os.environ.get("ENGRAM_GROUNDING_WRITE", "").strip().lower()
+            if _gw_env in ("0", "off", "false", "no"):
+                _ground_write = False
+            elif _source:
+                _ground_write = True
+            else:
+                _ground_write = None
             _gate = run_validation_gate(
                 proposition=proposition,
                 verified_by=verified_by,
@@ -11979,6 +12003,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 repo_root=_gate_repo_root,
                 source=_source,
                 grounding_llm=_grounding_llm,
+                ground_write=_ground_write,
             )
             _gate_warnings: list[dict[str, Any]] = list(_gate.warnings)
             if _gate.action == "reject":
