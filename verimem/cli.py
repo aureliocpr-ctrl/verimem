@@ -773,6 +773,35 @@ def recall_cmd(
         console.print(f"- {txt}{s}")
 
 
+def _ledger_window(stats: dict) -> tuple[float | None, float | None]:
+    """``(first_recorded_ts, % of stored facts written since then)``.
+
+    Read straight off the store rather than threaded through trust_stats(): this
+    is a presentation detail of one command, and a failure to compute it must
+    cost the caption, never the numbers underneath it.
+    """
+    try:
+        import sqlite3 as _sq
+
+        from ._compat import data_dir as _dd
+        _db = _dd() / "semantic" / "semantic.db"
+        if not _db.exists():
+            return None, None
+        with _sq.connect(f"file:{_db}?mode=ro", uri=True) as _c:
+            _first = _c.execute("SELECT MIN(ts) FROM trust_ledger").fetchone()[0]
+            if not _first:
+                return None, None
+            _tot = _c.execute("SELECT COUNT(*) FROM facts").fetchone()[0]
+            if not _tot:
+                return float(_first), None
+            _since = _c.execute(
+                "SELECT COUNT(*) FROM facts WHERE created_at >= ?",
+                (_first,)).fetchone()[0]
+        return float(_first), 100.0 * _since / _tot
+    except Exception:  # noqa: BLE001 — a caption never breaks the report
+        return None, None
+
+
 @app.command("stats")
 def trust_stats_cmd(
     db: str = typer.Option(
@@ -794,7 +823,22 @@ def trust_stats_cmd(
         console.print_json(_json.dumps(s))
         raise typer.Exit(0)
     led = s["ledger"]
-    console.print("[bold]Gate actions (all time)[/bold]")
+    # NOT "all time". The ledger starts the day it was added, and everything
+    # written before is invisible to these four counters — on the live store
+    # 5836 of 6443 facts (90.6%) predate its first entry. The same screen then
+    # prints "quarantined: 9" here and "quarantined:511" under Live facts,
+    # three lines apart: both true, 57-fold apart, and nothing said why. State
+    # the window and the share, so the numbers mean what they appear to mean.
+    _since_ts, _covered = _ledger_window(s)
+    if _since_ts:
+        from datetime import datetime as _dtm
+        _since = _dtm.fromtimestamp(_since_ts).strftime("%Y-%m-%d")
+        _head = (f"[bold]Gate actions (recorded since {_since}"
+                 + (f", {_covered:.0f}% of stored facts" if _covered is not None
+                    else "") + ")[/bold]")
+    else:
+        _head = "[bold]Gate actions (no writes recorded yet)[/bold]"
+    console.print(_head)
     console.print(f"  admitted:    {led['admitted']}")
     console.print(f"  quarantined: {led['quarantined']}  [dim]unsupported claims stored hidden[/dim]")
     console.print(f"  rejected:    {led['rejected']}  [dim]not stored at all[/dim]")
