@@ -2439,6 +2439,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                                       "attribute query ABSTAINS without an "
                                       "LLM (opt-in; the useful value is "
                                       "corpus/model-dependent)"},
+                    "ce_gate": {"type": "boolean", "default": True,
+                                "description": "cross-encoder relevance gate: "
+                                "drops hits the CE scores as off-topic, so a "
+                                "question the store cannot support ABSTAINS "
+                                "instead of returning the nearest-but-wrong "
+                                "fact. ON by default (measured 2026-07-29 on "
+                                "the live store: 4/5 correct abstentions, ZERO "
+                                "false ones, ~4s added per report). Pass false "
+                                "for the raw nearest matches, e.g. when "
+                                "debugging retrieval itself."},
                 },
                 "required": ["query"],
             },
@@ -7420,13 +7430,34 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # F3 (iter 47): il gate reso ATOMICO — dossier di custodia per query.
             from verimem.trust_report import build_trust_report
             _as_of = arguments.get("as_of")
+            # 2026-07-29: the two things that PRODUCE an abstention were both
+            # inert here — ce_gate defaults to False in the signature and the
+            # sufficiency judge is skipped unless an llm is handed in. So the
+            # dossier that advertises "it ABSTAINS instead of stitching a guess
+            # from weak matches" answered every question. Measured on the live
+            # store over ten questions (five supported, five inventions):
+            # gate OFF -> 0/5 abstentions; gate ON -> 4/5, with ZERO false
+            # abstentions, which is what makes flipping the default safe. Cost
+            # 1.47s -> 5.82s per report; this is a deliberate custody check,
+            # not the hot recall path.
+            # The comment below is the same class: a critic flagged SDK-only
+            # three weeks ago, min_relevance got wired, ce_gate did not.
+            _ce_gate_arg = arguments.get("ce_gate")
             rep = build_trust_report(
                 a.semantic, arguments.get("query", ""),
                 k=int(arguments.get("k", 5)),
                 deep=bool(arguments.get("deep", False)),
                 as_of=float(_as_of) if _as_of is not None else None,
                 # critic O3 caveat 2026-07-06: the floor was SDK-only
-                min_relevance=float(arguments.get("min_relevance", 0.0)))
+                min_relevance=float(arguments.get("min_relevance", 0.0)),
+                ce_gate=(True if _ce_gate_arg is None
+                         else bool(_ce_gate_arg)),
+                # sufficiency closes the residual the CE cannot see — a fact
+                # on-topic (+1.01 measured) that names the right subject in the
+                # wrong role. It needs a question-aware judge; pass the one the
+                # agent already carries, and `verify` keeps declaring whether
+                # it actually ran.
+                llm=getattr(getattr(a, "wake", None), "llm", None))
             _audit(name, arguments, outcome="ok")
             return _ok(rep)
 
