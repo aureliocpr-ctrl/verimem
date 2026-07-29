@@ -69,7 +69,14 @@ dependencies = [
   # mcp_server.py imports it unconditionally and the README primary install
   # documents `verimem mcp`, so it MUST be core (audit P0-5 2026-06-07: was
   # extras-only -> fresh install crashed ModuleNotFoundError on first command).
-  "mcp>=1.0.0",
+  # Upper bound added 2026-07-29, NOT a CI fix: mcp 2.0.0 removed
+  # Server.list_tools, which this server uses in 11 places, so the MCP surface
+  # does not start at all under it. Published verimem 0.7.0 asks for
+  # `mcp>=1.0.0` with no ceiling, so every `pip install verimem` since that
+  # release resolves to 2.0.0 and gets a broken server — the CI turning red is
+  # how we found out, not the damage. Lift this deliberately, with the
+  # migration, not by widening the range.
+  "mcp>=1.0.0,<2",
 ]
 
 [project.optional-dependencies]
@@ -81,7 +88,14 @@ headless = []
 # Just the MCP server stack — for users who only want to expose hippo to
 # Claude Code / Cursor / opencode and don't care about the dashboard.
 mcp-only = [
-  "mcp>=1.0.0",
+  # Upper bound added 2026-07-29, NOT a CI fix: mcp 2.0.0 removed
+  # Server.list_tools, which this server uses in 11 places, so the MCP surface
+  # does not start at all under it. Published verimem 0.7.0 asks for
+  # `mcp>=1.0.0` with no ceiling, so every `pip install verimem` since that
+  # release resolves to 2.0.0 and gets a broken server — the CI turning red is
+  # how we found out, not the damage. Lift this deliberately, with the
+  # migration, not by widening the range.
+  "mcp>=1.0.0,<2",
 ]
 
 # Web dashboard / IDE surfaces (server-only modules). NOT needed by the SDK,
@@ -138,7 +152,14 @@ full = [
   "opencv-python>=4.8.0",
   "pyautogui>=0.9.54",
   "textual>=0.60.0",
-  "mcp>=1.0.0",
+  # Upper bound added 2026-07-29, NOT a CI fix: mcp 2.0.0 removed
+  # Server.list_tools, which this server uses in 11 places, so the MCP surface
+  # does not start at all under it. Published verimem 0.7.0 asks for
+  # `mcp>=1.0.0` with no ceiling, so every `pip install verimem` since that
+  # release resolves to 2.0.0 and gets a broken server — the CI turning red is
+  # how we found out, not the damage. Lift this deliberately, with the
+  # migration, not by widening the range.
+  "mcp>=1.0.0,<2",
   "fastapi>=0.110.0",
   "uvicorn[standard]>=0.27.0",
   "jinja2>=3.1.0",
