@@ -12334,6 +12334,36 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         )
             except Exception:  # noqa: BLE001 — never break the response
                 pass
+            # 2026-07-29: say whether the moat actually ran. `verimem save`
+            # has printed this since 2026-07-28; hippo_remember — the channel
+            # an AGENT writes through — answered `ok: true` with an empty
+            # warnings list whether the entailment check ran, was switched
+            # off, or was never given anything to check. Measured the same
+            # day: a write carrying a real source came back indistinguishable
+            # from one carrying none, because L4 is opt-in via
+            # ENGRAM_GROUNDING_WRITE and nothing sets it. Four states, because
+            # "you gave me nothing to check" and "I am switched off" send the
+            # caller to fix different things — the UNKNOWN-vs-zero distinction
+            # doctor already makes about coverage.
+            _gs_out = getattr(fact, "grounding_score", None)
+            if isinstance(_gs_out, (int, float)):
+                _moat = (f"judged {float(_gs_out):.1f} — the source entails "
+                         f"this fact")
+            elif not _source:
+                _moat = ("not run — no source, so the entailment moat had "
+                         "nothing to check; pass source=\"<the evidence "
+                         "text>\" to have this write judged")
+            else:
+                from .anti_confab_gate import _grounding_write_on
+                if not _grounding_write_on():
+                    _moat = ("not run — a source WAS given, but write-time "
+                             "grounding is off on this server; set "
+                             "ENGRAM_GROUNDING_WRITE=1 to have the moat judge "
+                             "sourced writes")
+                else:
+                    _moat = ("could not judge — a source was given and the "
+                             "moat is on, but no judge was available for this "
+                             "write; this is not a pass")
             return _ok({
                 "ok": True,
                 "id": fact.id,
@@ -12341,6 +12371,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "topic": topic,
                 "confidence": confidence,
                 "replaced": was_replaced,
+                # The moat's verdict on THIS write, and the same score the
+                # read surfaces return. None means it did not run — read
+                # `moat` for which of the reasons.
+                "grounding_score": _gs_out,
+                "moat": _moat,
                 # Bounded-write circuit-breaker (2026-06-06): True when the write
                 # was deferred to the background (SQLite write lock contended) so
                 # the caller didn't block up to 60s; the fact lands shortly.
