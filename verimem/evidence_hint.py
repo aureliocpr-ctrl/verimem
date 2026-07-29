@@ -54,13 +54,23 @@ def evidence_in_text(proposition: str | None) -> list[tuple[str, str]]:
 
 
 def hint_for(proposition: str | None) -> str | None:
-    """A sentence naming what the writer already cited and how to make it count,
-    or None when the prose cites nothing."""
+    """A sentence naming what the writer already cited, or None when the prose
+    cites nothing.
+
+    It quotes the reference and points at the forms the DETECTOR listed, and
+    deliberately does not propose one itself. The first version suggested
+    ``commit:<sha>`` whenever a SHA appeared, which measured badly: over 60
+    quarantined facts carrying a SHA, ``commit:`` unblocks 6, while
+    ``pytest:<t>_PASS`` unblocks 40 and ``commit:`` + ``pytest:`` together 47.
+    A completion claim needs a closing criterion, and a commit is not one — so
+    naming the cheapest-looking form would send the writer down the path that
+    works one time in ten.
+    """
     found = evidence_in_text(proposition)
     if not found:
         return None
-    parts = [f"{_AS_REF[k].format(v)}" for k, v in found]
     cited = ", ".join(f"'{v}'" for _k, v in found)
-    return (f"this text already cites {cited} — pass it in verified_by "
-            f"(e.g. {', '.join(parts)}) so the gate can VERIFY it; a reference "
-            f"inside the proposition is an assertion, not evidence")
+    return (f"this text already cites {cited} — if that is the proof, pass it "
+            f"in verified_by in one of the forms listed above so the gate can "
+            f"VERIFY it; a reference inside the proposition is an assertion, "
+            f"not evidence")

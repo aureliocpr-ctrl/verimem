@@ -45,11 +45,21 @@ def test_prose_with_no_reference_produces_no_hint():
     assert hint_for(None) is None
 
 
-def test_the_hint_names_what_was_cited_and_what_to_do():
+def test_the_hint_names_what_was_cited_and_where_to_put_it():
     h = hint_for("Wave 72 skills_recent done, last commit ff2aaa3e.")
     assert h and "ff2aaa3e" in h
     assert "verified_by" in h
-    assert "commit:ff2aaa3e" in h, h
+
+
+def test_the_hint_does_not_propose_a_form_of_its_own():
+    """Measured over 60 quarantined facts carrying a SHA: commit:<sha> unblocks
+    6, pytest:<t>_PASS unblocks 40, both together 47. A completion claim needs a
+    closing criterion and a commit is not one, so a hint that names commit:
+    because it saw a SHA points at the path that works one time in ten. The
+    detector already lists the forms it accepts; the hint points there."""
+    h = hint_for("Wave 72 skills_recent done, last commit ff2aaa3e.")
+    assert "commit:ff2aaa3e" not in h, h
+    assert "listed above" in h, h
 
 
 def test_the_hint_says_why_prose_is_not_evidence():
