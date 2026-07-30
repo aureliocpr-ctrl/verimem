@@ -7472,14 +7472,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             items = []
             for h in hits:
                 f = h[0]
-                items.append({
-                    "id": getattr(f, "id", ""),
-                    "proposition": getattr(f, "proposition", ""),
-                    "topic": getattr(f, "topic", ""),
-                    "asserted_at": getattr(f, "asserted_at", None),
-                    "superseded_at": getattr(f, "superseded_at", None),
-                    "status": getattr(f, "status", ""),
-                })
+                items.append(f.as_payload())
             _audit(name, arguments, outcome="ok")
             return _ok({"as_of": arguments.get("when"), "facts": items,
                         "n": len(items)})
@@ -9443,21 +9436,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "agent_id": agent_id,
                 "include_shared": include_shared,
                 "n_total": len(filtered),
-                "facts": [
-                    {
-                        "id": getattr(f, "id", ""),
-                        "topic": getattr(f, "topic", ""),
-                        "proposition": getattr(f, "proposition", ""),
-                        "confidence": getattr(f, "confidence", 0.0),
-                        # 2026-07-29 sweep — see hippo_facts_list. Attributing
-                        # facts to an agent without saying which ones were
-                        # ever judged reads as an endorsement of all of them.
-                        "status": getattr(f, "status", "model_claim"),
-                        "verified_by": list(getattr(f, "verified_by", [])),
-                        "grounding_score": getattr(f, "grounding_score", None),
-                    }
-                    for f in filtered[:top_k]
-                ],
+                # 2026-07-29 sweep: attribuire fatti a un agente senza dire
+                # quali sono stati giudicati si legge come un avallo di tutti.
+                # Dal 30/07 il contratto e' uno solo (Fact.as_payload).
+                "facts": [f.as_payload() for f in filtered[:top_k]],
             }
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
@@ -11557,28 +11539,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "topic": topic,
                 "include_legacy": include_legacy,
                 "min_status": min_status,
-                "items": [
-                    {
-                        "id": f.id,
-                        "proposition": f.proposition,
-                        "topic": getattr(f, "topic", ""),
-                        "confidence": float(getattr(f, "confidence", 0.0)),
-                        "created_at": float(getattr(f, "created_at", 0.0)),
-                        # Cycle #109 S4-A: provenance visibility.
-                        "status": getattr(f, "status", "model_claim"),
-                        "verified_by": list(getattr(f, "verified_by", [])),
-                        # 2026-07-29: the moat's verdict, which _remote_row
-                        # already carried and this path dropped. Without it
-                        # ``confidence`` is the only trust number a reader
-                        # gets, and on the live store it is ANTI-correlated
-                        # with having been judged (11 judged facts at 0.5;
-                        # 4719 unjudged averaging 0.866) because it is a
-                        # per-channel default the moat never writes. None
-                        # means never judged — not judged and failed.
-                        "grounding_score": getattr(f, "grounding_score", None),
-                    }
-                    for f in hits
-                ],
+                # 2026-07-30: era uno dei 13 dict scritti a mano, e il verdetto
+                # ci era arrivato solo con una cura puntuale il giorno prima.
+                # Ora il fatto ha un contratto di uscita solo (Fact.as_payload),
+                # quindi porta anche il tier del giudice, l'etichetta epistemica
+                # e chi l'ha scritto — tre campi che uscivano da ZERO superfici
+                # su 13, calcolati e persistiti da settimane.
+                "items": [f.as_payload() for f in hits],
             })
 
         if name == "hippo_validate_claim":
@@ -12543,22 +12510,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     f, score = hit
                     sig = None
                 row: dict[str, Any] = {
-                    "id": f.id,
-                    "proposition": f.proposition,
-                    "topic": getattr(f, "topic", ""),
-                    "confidence": float(getattr(f, "confidence", 0.0)),
+                    # Il contratto di uscita del fatto (Fact.as_payload): un
+                    # punto solo, cosi' il campo aggiunto domani esce da qui e
+                    # da tutte le altre superfici insieme. Prima erano 13 dict
+                    # scritti a mano e il verdetto usciva da 6.
+                    **f.as_payload(),
                     "score": float(score),
-                    "created_at": float(getattr(f, "created_at", 0.0)),
-                    # Readable date alongside the raw epoch so the agent can reason
-                    # temporally over recalled facts, not just sort by a float (2026-06-20).
+                    # Data leggibile accanto all'epoch grezzo, cosi' l'agente
+                    # ragiona sul tempo invece di ordinare per float (2026-06-20).
                     "when": _iso_day(getattr(f, "created_at", 0.0)),
-                    # Cycle #109 S4-A: provenance visibility.
-                    "status": getattr(f, "status", "model_claim"),
-                    "verified_by": list(getattr(f, "verified_by", [])),
-                    # v12 (2026-06-20): the write-time source-entailment score (0-100) if
-                    # computed, so the agent can prefer/assert from grounded facts and
-                    # hedge low-grounding ones — provenance-conditioned answering.
-                    "grounding_score": getattr(f, "grounding_score", None),
                 }
                 if sig is not None:
                     row["verdict"] = sig.verdict
@@ -12713,25 +12673,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "total": len(facts),
                 "limit": limit,
                 "offset": offset,
-                "items": [
-                    {
-                        "id": f.id,
-                        "proposition": f.proposition,
-                        "topic": getattr(f, "topic", ""),
-                        "confidence": float(getattr(f, "confidence", 0.0)),
-                        "created_at": float(getattr(f, "created_at", 0.0)),
-                        # 2026-07-29 sweep: the same trust fields
-                        # hippo_facts_recall has carried since 2026-06-20. A
-                        # listing is where a consumer decides what to keep, so
-                        # dropping them here let the CHOICE OF TOOL decide
-                        # whether a verified fact was distinguishable from an
-                        # unverified one.
-                        "status": getattr(f, "status", "model_claim"),
-                        "verified_by": list(getattr(f, "verified_by", [])),
-                        "grounding_score": getattr(f, "grounding_score", None),
-                    }
-                    for f in window
-                ],
+                # 2026-07-29 sweep: un elenco e' dove si decide cosa tenere, e
+                # senza questi campi era la SCELTA DEL TOOL a stabilire se un
+                # fatto verificato fosse distinguibile da uno che non lo e'.
+                # Dal 30/07 non e' piu' una scelta di nessuno: il contratto e'
+                # uno solo (Fact.as_payload).
+                "items": [f.as_payload() for f in window],
             })
 
         if name == "hippo_quarantine_log":
@@ -12863,8 +12810,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 return _ok({
                     "dry_run": True,
                     "would_delete": len(matched),
+                    # Anteprima di una CANCELLAZIONE: qui il verdetto pesa
+                    # piu' che altrove — chi conferma deve poter vedere se sta
+                    # buttando via fatti che il moat aveva verificato. La
+                    # proposizione resta troncata: e' un'anteprima, non una
+                    # lettura.
                     "sample": [
-                        {"id": f.id, "topic": getattr(f, "topic", ""),
+                        {**f.as_payload(),
                          "proposition": (f.proposition or "")[:120]}
                         for f in matched[:10]
                     ],

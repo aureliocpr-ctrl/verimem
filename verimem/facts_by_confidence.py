@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .fact_contract import fact_payload
+
 
 def facts_by_confidence(
     facts: list[Any],
@@ -23,13 +25,14 @@ def facts_by_confidence(
             filtered.append((f, c))
     filtered.sort(key=lambda x: -x[1])
 
+    # 2026-07-30: ordinare per confidenza senza mostrare il verdetto lasciava
+    # credere che la confidenza fosse una misura di verifica. Non lo e': il
+    # moat non la scrive. Il contratto unico porta entrambi, cosi' chi legge
+    # vede quale delle due sta guardando.
     records = [
-        {
-            "id": getattr(f, "id", ""),
-            "proposition": (getattr(f, "proposition", "") or "")[:160],
-            "topic": getattr(f, "topic", "") or "",
-            "confidence": float(c),
-        }
+        {**fact_payload(f),
+         "proposition": (getattr(f, "proposition", "") or "")[:160],
+         "confidence": float(c)}
         for f, c in filtered[:top_k]
     ]
 

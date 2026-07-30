@@ -1571,6 +1571,16 @@ class Fact:
     # fact). The composition layer builds only from labels it can trust.
     epistemic: dict | None = None
 
+    def as_payload(self) -> dict[str, Any]:
+        """Il fatto come esce dal prodotto: un contratto solo, per tutti.
+
+        La forma canonica e' ``fact_contract.fact_payload``, che accetta anche
+        cio' che un ``Fact`` non e' (fake, righe adattate, proxy). Questo
+        metodo e' la scorciatoia comoda quando l'oggetto e' davvero un Fact.
+        """
+        from .fact_contract import fact_payload
+        return fact_payload(self)
+
 
 # ── P0.3 (2026-06-09) — stage-2 cross-encoder rerank, default ON 2026-06-10 ──
 # Verified on a COPY of the live corpus, twice, paired McNemar:

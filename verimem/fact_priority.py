@@ -8,6 +8,8 @@ import re
 import time
 from typing import Any
 
+from .fact_contract import fact_payload
+
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_\-]+")
 _DAY = 86400.0
 
@@ -60,9 +62,12 @@ def rank_facts_by_priority(
         fresh = _freshness(f, now, half_life_days)
         corr = _corroboration(f, facts, corr_threshold)
         priority = 0.5 * conf + 0.3 * fresh + 0.2 * corr
+        # 2026-07-30: contratto unico + le chiavi proprie di questa vista.
+        # Una priorita' calcolata da confidenza/freschezza/corroborazione
+        # senza il verdetto accanto si legge come se il moat fosse gia' dentro
+        # il conto, e non c'e'.
         ranked.append({
-            "id": getattr(f, "id", ""),
-            "topic": getattr(f, "topic", ""),
+            **fact_payload(f),
             "proposition": getattr(f, "proposition", "")[:80],
             "priority": round(min(1.0, priority), 4),
             "components": {

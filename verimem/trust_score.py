@@ -15,6 +15,8 @@ import re
 import time
 from typing import Any
 
+from .fact_contract import fact_payload
+
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_\-]+")
 _DAY_SEC = 86400.0
 
@@ -127,9 +129,15 @@ def rank_facts_by_trust(
             f, now=now, half_life_days=half_life_days,
             corroborating_facts=facts, use_grounding=use_grounding,
         )
+        # 2026-07-30: la classifica per FIDUCIA non mostrava la sola misura di
+        # verifica che il prodotto possiede. Il fattore esiste
+        # (_grounding_factor) ma e' opt-in e nessun percorso lo accende: la
+        # fiducia si calcolava senza il moat E senza dirlo. Il contratto unico
+        # porta il verdetto accanto al punteggio, cosi' chi legge vede da cosa
+        # e' fatta la fiducia — accendere il fattore e' un'altra decisione,
+        # che va misurata prima.
         ranked.append({
-            "id": getattr(f, "id", ""),
-            "topic": getattr(f, "topic", ""),
+            **fact_payload(f),
             "proposition": getattr(f, "proposition", "")[:80],
             "trust": out["trust"],
             "components": out["components"],
