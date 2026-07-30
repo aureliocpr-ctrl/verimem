@@ -95,7 +95,16 @@ def init_env_aliases() -> int:
 #: puntavano a store DIVERSI: il prodotto scriveva in quello isolato e le
 #: quattordici superfici che passano di qui (``backup``, ``doctor``, ``cli``,
 #: ``dashboard_routes.auth``) leggevano la produzione.
-_ALIAS_DATA_DIR = ("HIPPO_DATA_DIR", "VERIMEM_DATA_DIR", "ENGRAM_DATA_DIR")
+#: ``VERIMEM_DATA_DIR`` per ULTIMA, e non e' una preferenza di brand: e' l'unica
+#: che ``init_env_aliases`` puo' aver CREATO LEI all'import, copiandola dal
+#: valore ereditato dalla shell (pass 3, ENGRAM -> VERIMEM). Metterla davanti a
+#: ENGRAM l'ha resa velenosa: un chiamante che cancella HIPPO e imposta ENGRAM
+#: — cioe' `tests/test_config_data_dir.py::test_engram_data_dir_env_is_honored`,
+#: e il quickstart del README che imposta ENGRAM_DATA_DIR in .mcp.json — si
+#: vedeva scavalcare da un mirror del valore che voleva sostituire. Trovato
+#: dalla suite intera due ore dopo averlo scritto: i test mirati non lo videro
+#: perche' partono da un ambiente che non ha il mirror.
+_ALIAS_DATA_DIR = ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR")
 
 _avvisato_alias_discordi = False
 

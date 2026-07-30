@@ -43,11 +43,26 @@ DIVERGENZE_NOTE = 159
 
 
 def _due_store():
-    from verimem._compat import data_dir
-    d = data_dir() / "skills"
-    indice = d / "skills_index.db"
-    if not indice.exists() or not any(d.glob("*.json")):
+    """Lo store VERO, non quello che il conftest isola su tmp_path.
+
+    Prima passava da ``_compat.data_dir()`` e faceva SEMPRE skip: la fixture
+    autouse del conftest ridefinisce la data dir, quindi il test non trovava
+    nulla e passava per «3 skipped» — un presidio che sembra proteggere e non
+    protegge. Esattamente il difetto che questo file documenta, commesso qui.
+
+    Questo non e' un test unitario, e' un monitor sul dato reale: punta al
+    percorso vero e fa skip solo dove quel dato non esiste (CI, installazione
+    pulita). Il fallimento che deve produrre e' sulla macchina che ha lo store.
+    """
+    from pathlib import Path
+    for radice in (Path.home() / ".verimem", Path.home() / ".engram",
+                   Path.home() / ".hippoagent"):
+        d = radice / "skills"
+        if (d / "skills_index.db").exists() and any(d.glob("*.json")):
+            break
+    else:
         pytest.skip("store delle skill assente (CI, o installazione pulita)")
+    indice = d / "skills_index.db"
 
     su_disco: dict[str, str] = {}
     for p in d.glob("*.json"):

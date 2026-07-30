@@ -30,7 +30,7 @@ prodotto la divergenza.
 """
 from __future__ import annotations
 
-import importlib
+import os
 
 import pytest
 
@@ -38,15 +38,34 @@ ALIAS = ("VERIMEM_DATA_DIR", "ENGRAM_DATA_DIR", "HIPPO_DATA_DIR")
 
 
 @pytest.fixture(autouse=True)
-def _ambiente_pulito(monkeypatch):
+def _ambiente_pulito():
+    """Parte da un ambiente senza alias e lo rimette com'era.
+
+    Non usa ``monkeypatch`` perche' l'ordine dei teardown conta: il suo gira
+    DOPO quello dei fixture che lo richiedono, e qui serve che l'env sia
+    integro prima che finisca il file.
+    """
+    salvato = {k: os.environ.get(k) for k in ALIAS}
     for k in ALIAS:
-        monkeypatch.delenv(k, raising=False)
-    yield
+        os.environ.pop(k, None)
+    try:
+        yield
+    finally:
+        for k, v in salvato.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
 
 
 def _due_risolutori(tmp_path):
+    """NIENTE ``importlib.reload``: ``_data_root()`` rilegge l'ambiente a ogni
+    chiamata, quindi il reload non serviva — e ricostruiva ``CONFIG`` (che e'
+    congelato alla costruzione) sull'ambiente del momento, lasciandolo puntato
+    a una ``tmp_path`` PER TUTTA LA SUITE. Due test verdi da soli cadevano
+    dentro la suite, e sembravano difetti del prodotto: erano il mio attrezzo
+    di misura lasciato acceso."""
     from verimem import _compat, config
-    importlib.reload(config)          # CONFIG e' congelato alla costruzione
     return _compat.data_dir(), config._data_root()
 
 
@@ -72,6 +91,25 @@ def test_ogni_alias_da_solo_funziona(monkeypatch, tmp_path):
         a, b = _due_risolutori(tmp_path)
         assert a == b == (tmp_path / nome).resolve(), (
             f"{nome} da sola non e' onorata da entrambi: {a} vs {b}")
+
+
+def test_il_mirror_non_scavalca_chi_imposta_ENGRAM(monkeypatch, tmp_path):
+    """Il caso che mi e' sfuggito e che ha trovato la suite intera.
+
+    ``init_env_aliases`` CREA ``VERIMEM_DATA_DIR`` all'import, copiandola dal
+    valore ereditato dalla shell. Se quel mirror sta davanti a ENGRAM nella
+    precedenza, chi imposta ``ENGRAM_DATA_DIR`` — il quickstart del README, che
+    la mette in .mcp.json — si vede scavalcare da una copia del valore che
+    voleva sostituire. I test mirati non lo vedevano: partono da un ambiente
+    pulito, dove il mirror non c'e'.
+    """
+    from verimem import _compat
+    monkeypatch.setattr(_compat, "_avvisato_alias_discordi", True, raising=False)
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(tmp_path / "vecchio_mirror"))
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path / "voluto"))
+    a, b = _due_risolutori(tmp_path)
+    assert a == b == (tmp_path / "voluto").resolve(), (
+        f"il mirror ha scavalcato la variabile impostata apposta: {a}")
 
 
 def test_senza_env_il_comportamento_storico_resta(monkeypatch, tmp_path):
