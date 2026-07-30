@@ -21,6 +21,58 @@ WARN = "warn"
 FAIL = "fail"
 
 
+def _misura(byte: int) -> str:
+    for unita, soglia in (("GB", 1e9), ("MB", 1e6), ("KB", 1e3)):
+        if byte >= soglia:
+            return f"{byte / soglia:.1f} {unita}"
+    return f"{byte} B"
+
+
+def _stores_dichiarati(d) -> str:
+    """I database che CONFIG dichiara, con la loro dimensione — «c'e' un file
+    di nome episodes.db» e «quel file e' vuoto» mandano l'operatore a fare cose
+    diverse, e prima si leggeva solo il nome.
+
+    Da CONFIG si prende la STRUTTURA (quali file, in quali sottocartelle) e la
+    si ri-ancora alla data dir corrente ``d``: ``CONFIG`` e' congelato alla
+    costruzione, quindi su un processo puntato altrove — un operatore
+    multi-tenant, o un test isolato — dichiarerebbe assenti file che esistono.
+    """
+    from .config import CONFIG
+    righe = []
+    for attributo in ("semantic_db", "episodes_db", "skills_db"):
+        p = getattr(CONFIG, attributo, None)
+        if p is None:
+            continue
+        try:
+            p = d / p.relative_to(CONFIG.data_dir)
+        except (ValueError, AttributeError):
+            pass                     # path fuori dalla data dir: si usa com'e'
+        try:
+            righe.append(f"{p.name} {_misura(p.stat().st_size)}"
+                         if p.exists() else f"{p.name} (assente)")
+        except OSError:
+            righe.append(f"{p.name} (illeggibile)")
+    return ", ".join(righe) or "none yet"
+
+
+def _residui_dei_test(d) -> tuple[int, int]:
+    """(quanti, quanti byte) fra gli snapshot il cui nome dice «pytest».
+
+    Sullo store vero, il 2026-07-30: 284 file per 9.5 GB, il 77% di tutta la
+    cartella dati. Nessuna superficie lo diceva — per accorgersene bisognava
+    guardare il disco a mano.
+    """
+    cartella = d / "snapshots"
+    if not cartella.is_dir():
+        return 0, 0
+    try:
+        residui = [p for p in cartella.glob("*.db") if "pytest" in p.name.lower()]
+        return len(residui), sum(p.stat().st_size for p in residui)
+    except OSError:
+        return 0, 0
+
+
 def run_doctor() -> list[dict[str, Any]]:
     """Run all checks; each returns ``{name, status, detail, fix?}``.
 
@@ -53,10 +105,26 @@ def run_doctor() -> list[dict[str, Any]]:
             writable = True
         except OSError:
             writable = False
-        dbs = sorted(p.name for p in d.glob("*.db"))
+        # I DATABASE CHE IL PRODOTTO USA, non quelli che si trovano in giro.
+        # `d.glob("*.db")` guardava solo il livello alto, dove vivono scheletri
+        # di layout vecchi da 0 byte (episodes.db, hippo.db, memory.db...),
+        # mentre i database veri sono annidati: la diagnosi elencava file vuoti
+        # e taceva sui 79 MB di semantic/semantic.db. Un glob trova i file; il
+        # prodotto SA quali sono i suoi, e stanno in CONFIG.
         add("data-dir", OK if writable else FAIL,
-            f"{d} (writable={writable}; stores: {', '.join(dbs) or 'none yet'})",
+            f"{d} (writable={writable}; stores: {_stores_dichiarati(d)})",
             None if writable else "fix directory permissions, or set VERIMEM_DATA_DIR")
+        # Residui dei test nello store di PRODUZIONE: una suite che scrive
+        # dove vive la memoria dell'utente e' un difetto di igiene, e finche'
+        # nessuno lo misura cresce in silenzio.
+        _n_res, _byte_res = _residui_dei_test(d)
+        if _n_res:
+            add("test-leftovers", WARN,
+                f"{_n_res} snapshot con 'pytest' nel nome occupano "
+                f"{_misura(_byte_res)} nella cartella dati di produzione",
+                "these are left by the test suite writing into the real data "
+                "dir. Delete `snapshots/*pytest*.db` after checking none is "
+                "needed, and isolate the suite with HIPPO_DATA_DIR")
     except Exception as e:  # noqa: BLE001
         add("data-dir", FAIL, str(e), "set VERIMEM_DATA_DIR to a writable path")
 
