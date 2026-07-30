@@ -12,6 +12,7 @@ Every incident from 2026-07-18 maps to a check here: encode daemon down
 from __future__ import annotations
 
 import os
+import sqlite3
 import sys
 from typing import Any
 
@@ -224,6 +225,60 @@ def run_doctor() -> list[dict[str, Any]]:
                                "self-host team server)")
     except Exception as e:  # noqa: BLE001
         add("gateway", WARN, f"probe failed: {e}")
+
+    # -- confidenza vs verifica ------------------------------------------------
+    # Misurato sul corpus vivo il 2026-07-30: i 35 fatti giudicati dal moat
+    # stavano TUTTI a confidenza 0.5 esatta, i 4720 mai giudicati a 0.866 di
+    # media con 293 a 1.0 — e per canale, system_hook 0.954 con zero giudicati,
+    # agent_inference 0.876 con zero giudicati, user 0.652 con tutti i 35.
+    # Chi ordina per confidenza mette i fatti verificati sotto quelli che si
+    # sono auto-dichiarati certi.
+    #
+    # La confidenza non si ricalibra: significherebbe cambiare il senso di un
+    # campo su migliaia di righe per far tornare un ordinamento. Il prodotto lo
+    # DICE, che e' il mestiere di doctor.
+    try:
+        from ._compat import data_dir
+        _db = data_dir() / "semantic" / "semantic.db"
+        if not _db.exists():
+            add("confidence-vs-verifica", OK, "nessuno store da esaminare")
+        else:
+            _con = sqlite3.connect(f"file:{_db}?mode=ro", uri=True)
+            try:
+                _n_g, _avg_g, _n_u, _avg_u = _con.execute(
+                    "SELECT SUM(CASE WHEN grounding_score IS NOT NULL THEN 1 "
+                    "ELSE 0 END), AVG(CASE WHEN grounding_score IS NOT NULL "
+                    "THEN confidence END), SUM(CASE WHEN grounding_score IS "
+                    "NULL THEN 1 ELSE 0 END), AVG(CASE WHEN grounding_score "
+                    "IS NULL THEN confidence END) FROM facts "
+                    "WHERE superseded_by IS NULL").fetchone()
+            finally:
+                _con.close()
+            _n_g, _n_u = int(_n_g or 0), int(_n_u or 0)
+            if _n_g < 5:
+                # Sotto una manciata di fatti giudicati il confronto e' rumore,
+                # e gridare su due righe sarebbe inventare una tendenza.
+                add("confidence-vs-verifica", OK,
+                    f"{_n_g} fatti giudicati dal moat: troppo pochi per "
+                    f"confrontare le confidenze (ne servono 5)")
+            elif _avg_g is not None and _avg_u is not None and _avg_g < _avg_u:
+                add("confidence-vs-verifica", WARN,
+                    f"la confidenza ordina AL CONTRARIO della verifica: i "
+                    f"{_n_g} fatti giudicati dal moat stanno a "
+                    f"{float(_avg_g):.3f} di media, i {_n_u} mai giudicati a "
+                    f"{float(_avg_u):.3f}. Chi ordina per confidenza mette i "
+                    f"fatti verificati sotto quelli che si sono "
+                    f"auto-dichiarati certi.",
+                    "usa grounding_score per la fiducia, non confidence: "
+                    "`verimem facts list` e `hippo_facts_search` ora portano "
+                    "entrambi. La confidenza e' un default per-canale, non "
+                    "una scala comune.")
+            else:
+                add("confidence-vs-verifica", OK,
+                    f"{_n_g} giudicati a {float(_avg_g or 0):.3f}, {_n_u} mai "
+                    f"giudicati a {float(_avg_u or 0):.3f}")
+    except Exception as e:  # noqa: BLE001 — un doctor non crolla su un check
+        add("confidence-vs-verifica", WARN, f"probe failed: {e}")
 
     return checks
 
