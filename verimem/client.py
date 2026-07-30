@@ -1424,7 +1424,8 @@ class Memory:
             getattr(self._ledger, "write_failures", 0) or 0)
         return out
 
-    def quarantine_log(self, *, limit: int = 50) -> list[dict[str, Any]]:
+    def quarantine_log(self, *, limit: int = 50,
+                       explain: bool = False) -> list[dict[str, Any]]:
         """The blocked-claims log: live QUARANTINED facts, newest first.
 
         The odometer says HOW MANY the gate stopped; this says WHAT — each
@@ -1464,7 +1465,69 @@ class Memory:
                 row["layers"] = (a or {}).get("layers") or []
         except Exception:  # noqa: BLE001 — enrichment must never break the view
             pass
+        if explain:
+            self._spiega_le_quarantene(rows)
         return rows
+
+    @staticmethod
+    def _spiega_le_quarantene(rows: list[dict[str, Any]]) -> None:
+        """Ricalcola PERCHE' ogni claim e' stato fermato, e come sbloccarlo.
+
+        Il motivo esiste gia' nella riga quando l'audit trail e' acceso, ma
+        quello e' opt-in (``VERIMEM_AUDIT_LOG``) e in pratica non lo accende
+        nessuno: sul corpus vivo del 2026-07-30 ci sono 513 fatti trattenuti e
+        nessuno di loro ha una voce nel trail — «degrades cleanly» significa
+        che la colonna resta vuota e chi guarda non sa che fare. Nemmeno
+        accenderlo adesso aiuterebbe: il trail non e' retroattivo.
+
+        Si ricalcola perche' i detector lessicali sono deterministici e non
+        chiamano nessun modello: rieseguirli sulla proposizione dice quale si e'
+        acceso e cosa chiede per lasciar passare il fatto. E' lo stesso metodo
+        con cui il 29/07 si e' misurato che dei 164 quarantinati che citano
+        un'evidenza nel testo, 42 passerebbero spostandola in ``verified_by`` e
+        122 restano fermi sugli L1.
+
+        Opt-in perche' costa: chi vuole solo l'elenco non paga il ricalcolo.
+        Non tocca lo stato — e' una spiegazione, non una riabilitazione.
+        """
+        try:
+            from .anti_confab_gate import run_validation_gate
+        except Exception:  # noqa: BLE001
+            return
+        for row in rows:
+            if row.get("reason"):
+                continue  # l'audit trail sapeva gia' dirlo
+            try:
+                g = run_validation_gate(
+                    proposition=row.get("proposition") or "",
+                    verified_by=[], topic=row.get("topic"), agent=None)
+                avvisi = list(getattr(g, "warnings", None) or [])
+            except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
+                continue
+            if not avvisi:
+                # Nessuno schermo lessicale si accende: il fatto e' stato
+                # fermato da L4, il moat, che confronta la proposizione con la
+                # SUA fonte — e la fonte non e' persistita, quindi il motivo
+                # non e' ricostruibile qui. Provato sul corpus vivo: i tre
+                # quarantinati piu' recenti sono tutti di questo tipo.
+                #
+                # Si dice, invece di lasciare il campo vuoto: `None` si legge
+                # «nessun motivo», e non e' la stessa cosa di «non lo so piu'».
+                row["layers"] = []
+                row["why"] = (
+                    "nessuno schermo lessicale si accende su questa frase: "
+                    "e' stata fermata dal confronto con la sua fonte (L4), e "
+                    "la fonte non viene conservata, quindi il motivo esatto "
+                    "non e' piu' ricostruibile. Le cause tipiche sono un "
+                    "calcolo o una conversione che la fonte non enuncia, e "
+                    "una frase che contiene piu' affermazioni giudicate "
+                    "insieme: riscrivila coi numeri come stanno nella fonte, "
+                    "spezzala, e riscrivila con --source.")
+                continue
+            row["layers"] = [w.get("layer") for w in avvisi if w.get("layer")]
+            row["why"] = " · ".join(
+                f"{w.get('layer', '?')}: {w.get('advice') or w.get('reason') or ''}"
+                for w in avvisi[:3]).strip()
 
     def restore(self, fact_id: str, *, reason: str = "") -> bool:
         """Rescue a wrongly-blocked fact: un-quarantine ``fact_id`` back into the
