@@ -34,7 +34,21 @@ def _percentile(values: list[float], pct: float) -> float:
     return s[lo] + (s[hi] - s[lo]) * frac
 
 
-def analyze_audit_log(path: Path | str) -> dict[str, Any]:
+#: Il tool-sonda che una suite chiama per verificare la risposta a un nome
+#: inesistente. Un processo che lo invoca sta ESPLORANDO il server, non
+#: usandolo: e' la firma piu' netta che si trovi nell'audit log per separare le
+#: chiamate di test da quelle vere.
+_SONDA_DI_SUITE = "does_not_exist"
+
+
+def _pid_di_suite(records: list[dict[str, Any]]) -> set[Any]:
+    """I processi che hanno chiamato la sonda: sono suite, non utenti."""
+    return {r.get("caller_pid") for r in records
+            if r.get("tool") == _SONDA_DI_SUITE}
+
+
+def analyze_audit_log(path: Path | str, *,
+                      include_suite: bool = True) -> dict[str, Any]:
     """Parse the JSONL audit log and return a per-tool aggregate.
 
     Returns::
@@ -65,29 +79,44 @@ def analyze_audit_log(path: Path | str) -> dict[str, Any]:
         lambda: defaultdict(int),
     )
 
-    total = 0
+    # QUANTO DI QUESTO LOG E' SUITE. Misurato il 2026-07-30 sull'audit log di
+    # produzione: 10652 chiamate su 14560 (73.2%) venivano da 276 processi di
+    # test. Contarle insieme alle altre non e' un dettaglio — fa dire cose
+    # false: `hippo_skill_retire` risultava con il 50% di `not_found`, e i
+    # not_found VERI erano UNO (la suite prova apposta anche il caso negativo).
+    # Chi legge questo rapporto per decidere cosa ottimizzare deve poter
+    # separare i due mondi.
+    tutti = []
     with open(p, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
                 continue
             try:
-                rec = json.loads(line)
+                tutti.append(json.loads(line))
             except json.JSONDecodeError:
                 continue
-            tool = rec.get("tool")
-            if not tool:
-                continue
-            total += 1
-            per_tool_count[tool] += 1
-            outcome = rec.get("outcome", "unknown")
-            per_tool_outcomes[tool][outcome] += 1
-            pid = rec.get("caller_pid")
-            if pid is not None:
-                per_tool_pids[tool].add(int(pid))
-            lat = rec.get("latency_ms")
-            if isinstance(lat, (int, float)):
-                per_tool_latencies[tool].append(float(lat))
+    pid_suite = _pid_di_suite(tutti)
+    saltate_perche_suite = 0
+
+    total = 0
+    for rec in tutti:
+        if not include_suite and rec.get("caller_pid") in pid_suite:
+            saltate_perche_suite += 1
+            continue
+        tool = rec.get("tool")
+        if not tool:
+            continue
+        total += 1
+        per_tool_count[tool] += 1
+        outcome = rec.get("outcome", "unknown")
+        per_tool_outcomes[tool][outcome] += 1
+        pid = rec.get("caller_pid")
+        if pid is not None:
+            per_tool_pids[tool].add(int(pid))
+        lat = rec.get("latency_ms")
+        if isinstance(lat, (int, float)):
+            per_tool_latencies[tool].append(float(lat))
 
     per_tool: dict[str, Any] = {}
     for tool, count in per_tool_count.items():
@@ -101,4 +130,13 @@ def analyze_audit_log(path: Path | str) -> dict[str, Any]:
             "outcomes": dict(per_tool_outcomes[tool]),
         }
 
-    return {"total_calls": total, "per_tool": per_tool}
+    return {
+        "total_calls": total,
+        "per_tool": per_tool,
+        # Sempre presenti, anche quando la suite e' inclusa: chi legge deve
+        # sapere QUANTO di questo rapporto e' traffico di test, non doverlo
+        # dedurre. Su un log dove i tre quarti delle chiamate vengono dai test,
+        # un numero senza questo contesto manda a ottimizzare la cosa sbagliata.
+        "suite_calls_excluded": saltate_perche_suite,
+        "suite_pids_seen": len(pid_suite),
+    }

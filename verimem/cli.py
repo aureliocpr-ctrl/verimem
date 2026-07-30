@@ -871,6 +871,10 @@ def ignorance_cmd(
 @app.command("telemetry")
 def telemetry_cmd(
     top: int = typer.Option(15, "--top", help="How many tools to show."),
+    include_suite: bool = typer.Option(
+        False, "--include-suite",
+        help="Also count calls made by test suites (off by default: on this "
+             "machine they were 73% of the log)."),
     as_json: bool = typer.Option(False, "--json"),
 ) -> None:
     """Which MCP tools are actually used, how fast, and how they end.
@@ -891,13 +895,16 @@ def telemetry_cmd(
         console.print(f"[yellow]no audit log at {log_path}[/yellow] — the MCP "
                       f"server writes it as it serves tools")
         raise typer.Exit(0)
-    rep = analyze_audit_log(log_path)
+    rep = analyze_audit_log(log_path, include_suite=include_suite)
     if as_json:
         console.print_json(data=rep)
         raise typer.Exit(0)
     righe = sorted(rep["per_tool"].items(), key=lambda kv: -kv[1]["count"])
+    escluse = rep.get("suite_calls_excluded", 0)
     t = Table(title=f"{rep['total_calls']} calls · "
-                    f"{len(rep['per_tool'])} distinct tools")
+                    f"{len(rep['per_tool'])} distinct tools"
+                    + (f" · {escluse} test-suite calls excluded" if escluse
+                       else ""))
     for c in ("tool", "calls", "p50 ms", "p99 ms", "pids", "outcomes"):
         t.add_column(c, justify="right" if c != "tool" and c != "outcomes"
                      else "left")
