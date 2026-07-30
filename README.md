@@ -106,8 +106,12 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 - **Quarantine recovery — a wrong block is visible and reversible.** When the gate
   holds a legitimate fact (an over-eager keyword flag on a real
   lawyer/engineer/clinician statement, say), you can SEE it and undo it without
-  reaching into internals: `Memory.quarantine_log()` lists held claims (with the
-  blocking layers + reason when the audit trail is on), and
+  reaching into internals: `Memory.quarantine_log()` lists held claims — pass
+  `explain=True` (or `explain: true` on the MCP tool) and each row also says
+  WHICH screen stopped it and what would let it through, recomputed on the spot
+  so it works on claims held long before you asked. A claim stopped by the
+  source-entailment check is the one case that cannot be explained afterwards —
+  the source is not retained — and it says so rather than returning nothing. And
   `Memory.restore(fact_id, reason=…)` returns one to default recall. The same pair
   is on the MCP surface (`hippo_quarantine_log` / `hippo_quarantine_restore`). It is
   a *guarded* human override, not a back door: restore refuses a **superseded** fact
@@ -280,6 +284,10 @@ verimem import conversations.json       # list a ChatGPT/Claude export (imports 
 verimem import conversations.json --project verimem --since 2026-06-01 --all-matching
                                         # import a filtered subset (title/date/project)
 verimem trust "the deploy is green" --verified-by ci:main:green
+verimem save "The rent is 900/month." --asserted-at 2026-03-15
+                                        # WHEN the fact is true, distinct from when
+                                        # you wrote it — this is what `as_of` travels
+                                        # over. Omit it and event time stays unknown.
 verimem airgap                          # verify a zero-egress CONFIGURATION
 verimem airgap --live                   # PROVE it: audit every socket during a
                                         # real write+search, exit 0 iff no egress
