@@ -3145,8 +3145,23 @@ def _lineage_exit(exc: Exception) -> typer.Exit:
     return typer.Exit(2 if isinstance(exc, LineageRefError) else 1)
 
 
+def _moat_cell(score: float | None) -> str:
+    """Il verdetto del moat in una colonna stretta, senza fingere uno zero.
+
+    `status` dice CHE COSA e' un fatto, non se qualcuno l'ha verificato: un
+    model_claim giudicato 99.9 e uno che il moat non ha mai guardato mostrano
+    lo stesso status. Su `tip` e `recent` la differenza pesa piu' che altrove —
+    sono le superfici che si leggono per RIPRENDERE il lavoro, quindi il punto
+    esatto in cui un checkpoint mai verificato viene riletto come acquisito.
+    """
+    if isinstance(score, (int, float)):
+        colore = "green" if score >= 70 else "yellow"
+        return f"[{colore}]moat {float(score):>5.1f}[/{colore}]"
+    return "[dim]moat    --[/dim]"
+
+
 def _node_line(node: dict) -> str:
-    """One compact line per chain node: id, time, status, topic, markers."""
+    """One compact line per chain node: id, time, status, moat, topic."""
     import time as _time
     ts = _time.strftime("%m-%d %H:%M", _time.localtime(node["created_at"]))
     mark = " [magenta]narrative[/magenta]" if node.get("meta_narrative") else ""
@@ -3154,6 +3169,7 @@ def _node_line(node: dict) -> str:
     arrow = f"  -> {parents[0][:12]}" if parents else ""
     extra = (f" (+{len(parents) - 1} parent)" if len(parents) > 1 else "")
     return (f"  {node['id'][:12]}  {ts}  {node['status']:<12} "
+            f"{_moat_cell(node.get('grounding_score'))}  "
             f"{(node['topic'] or '(no topic)')[:48]}{mark}{arrow}{extra}")
 
 
@@ -3278,6 +3294,13 @@ def tip_cmd(
     ts = _time.strftime("%Y-%m-%d %H:%M", _time.localtime(t["created_at"]))
     mark = " [magenta]narrative[/magenta]" if t.get("meta_narrative") else ""
     console.print(f"[bold]{t['id'][:12]}[/bold]  {ts}  {t['status']}{mark}")
+    _gs = t.get("grounding_score")
+    if isinstance(_gs, (int, float)):
+        console.print(f"  moat:    [green]{float(_gs):.1f}[/green] — "
+                      f"la fonte implica questo fatto")
+    else:
+        console.print("  moat:    [dim]mai giudicato — nessuna fonte da "
+                      "verificare, non e' un pass[/dim]")
     console.print(f"  topic:   {t['topic'] or '(no topic)'}")
     parents = t.get("lineage_to") or []
     console.print(f"  chained: {' , '.join(p[:12] for p in parents) or '(root)'}")

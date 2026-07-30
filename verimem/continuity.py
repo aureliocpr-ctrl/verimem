@@ -39,7 +39,8 @@ def _parse_ids(raw: str | None) -> list[str]:
 
 
 _NODE_COLS = ("id, topic, substr(proposition, 1, 160), created_at, "
-              "lineage_to, confidence, status, meta_narrative")
+              "lineage_to, confidence, status, meta_narrative, "
+              "grounding_score")
 
 
 def _node(row: tuple) -> dict[str, Any]:
@@ -54,6 +55,12 @@ def _node(row: tuple) -> dict[str, Any]:
         "confidence": row[5],
         "status": row[6],
         "meta_narrative": bool(row[7]),
+        # Il verdetto del moat viaggia col nodo. `status` dice CHE COSA e' il
+        # fatto (l'affermazione di un modello), non se qualcuno l'ha
+        # verificata: un model_claim giudicato 99.9 e uno mai guardato hanno lo
+        # stesso status. Resta None quando il moat non ha girato — «mai
+        # giudicato» non e' zero, ed e' la distinzione che il prodotto vende.
+        "grounding_score": row[8],
     }
 
 
