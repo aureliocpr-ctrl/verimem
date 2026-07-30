@@ -38,9 +38,14 @@ NON_ESCONO = frozenset({
 #: chiave che manca si legge «questa superficie non lo espone», un null
 #: esplicito si legge «il moat non ha girato», e distinguere le due cose e'
 #: cio' che questo prodotto vende.
+#:
+#: `verified_by` sta qui per la stessa ragione e l'ha imposto la suite intera:
+#: omettendolo da vuoto, 24 test di provenienza sono andati rossi. Avevano
+#: ragione — una lista vuota di garanti DICE qualcosa, «nessuno lo avalla», che
+#: non e' «questa superficie non espone i garanti».
 SEMPRE = frozenset({
     "id", "proposition", "topic", "confidence", "created_at", "status",
-    "grounding_score",
+    "grounding_score", "verified_by",
 })
 
 _NOMI: tuple[str, ...] | None = None

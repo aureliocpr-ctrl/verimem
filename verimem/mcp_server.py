@@ -55,6 +55,7 @@ from mcp.server.stdio import stdio_server  # noqa: E402
 
 from .agent import VerimemAgent  # noqa: E402
 from .config import CONFIG  # noqa: E402
+from .fact_contract import fact_payload  # noqa: E402
 from .observability import emit, get_log  # noqa: E402
 
 log = get_log()
@@ -7472,7 +7473,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             items = []
             for h in hits:
                 f = h[0]
-                items.append(f.as_payload())
+                items.append(fact_payload(f))
             _audit(name, arguments, outcome="ok")
             return _ok({"as_of": arguments.get("when"), "facts": items,
                         "n": len(items)})
@@ -9439,7 +9440,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # 2026-07-29 sweep: attribuire fatti a un agente senza dire
                 # quali sono stati giudicati si legge come un avallo di tutti.
                 # Dal 30/07 il contratto e' uno solo (Fact.as_payload).
-                "facts": [f.as_payload() for f in filtered[:top_k]],
+                "facts": [fact_payload(f) for f in filtered[:top_k]],
             }
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
@@ -11545,7 +11546,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # quindi porta anche il tier del giudice, l'etichetta epistemica
                 # e chi l'ha scritto — tre campi che uscivano da ZERO superfici
                 # su 13, calcolati e persistiti da settimane.
-                "items": [f.as_payload() for f in hits],
+                "items": [fact_payload(f) for f in hits],
             })
 
         if name == "hippo_validate_claim":
@@ -12514,7 +12515,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     # punto solo, cosi' il campo aggiunto domani esce da qui e
                     # da tutte le altre superfici insieme. Prima erano 13 dict
                     # scritti a mano e il verdetto usciva da 6.
-                    **f.as_payload(),
+                    **fact_payload(f),
                     "score": float(score),
                     # Data leggibile accanto all'epoch grezzo, cosi' l'agente
                     # ragiona sul tempo invece di ordinare per float (2026-06-20).
@@ -12678,7 +12679,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # fatto verificato fosse distinguibile da uno che non lo e'.
                 # Dal 30/07 non e' piu' una scelta di nessuno: il contratto e'
                 # uno solo (Fact.as_payload).
-                "items": [f.as_payload() for f in window],
+                "items": [fact_payload(f) for f in window],
             })
 
         if name == "hippo_quarantine_log":
@@ -12816,7 +12817,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     # proposizione resta troncata: e' un'anteprima, non una
                     # lettura.
                     "sample": [
-                        {**f.as_payload(),
+                        {**fact_payload(f),
                          "proposition": (f.proposition or "")[:120]}
                         for f in matched[:10]
                     ],
