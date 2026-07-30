@@ -858,8 +858,14 @@ def ignorance_cmd(
     # `noise_floor_source` esce SEMPRE: 0.0 significa «non misurabile», «la
     # misura e' fallita» o «l'hai imposto tu», e senza dirlo l'operatore non
     # distingue una guardia spenta da una misurata.
-    console.print(f"[dim]{riepilogo}   noise_floor="
-                  f"{rep['noise_floor']:.3f} ({rep['noise_floor_source']})[/dim]")
+    # QUALE soglia ha deciso, non solo quali numeri esistevano: il verdetto lo
+    # prende `max(floor, noise_floor)`, e su un corpus con la banda compressa
+    # e' il rumore misurato a comandare.
+    deciso = rep.get("deciding_floor", floor)
+    chi = "rumore misurato" if deciso > floor + 1e-9 else "floor dichiarato"
+    console.print(f"[dim]{riepilogo}   decide {deciso:.3f} ({chi}) — "
+                  f"floor={floor:.3f} noise_floor={rep['noise_floor']:.3f} "
+                  f"({rep['noise_floor_source']})[/dim]")
 
 
 def _ledger_window(stats: dict) -> tuple[float | None, float | None]:
@@ -1046,6 +1052,18 @@ def trust(
         lines.append("  [dim]no provenance ref and no source: this verdict is "
                      "about the WORDING of the claim, not about whether it is "
                      "true[/dim]")
+    # UNA DOMANDA NON E' UN CLAIM. Il comando esamina le parole di
+    # un'affermazione; su un'interrogativa il verdetto non e' impreciso, e'
+    # vacuo — non c'e' nessuna asserzione da esaminare. E chi legge la spunta
+    # verde e salta il testo fine porta via «verimem dice che va bene» da una
+    # domanda senza risposta, che e' il contrario di questo prodotto.
+    # Criterio sulla FINE della frase: un claim che CITA una domanda («la
+    # domanda "che ore sono?" e' stata posta») non deve essere scambiato.
+    if claim.rstrip().endswith(("?", "？")):
+        lines.append("  [yellow]that looks like a QUESTION, not a claim[/yellow] "
+                     "[dim]— there is no assertion to lint here. To search the "
+                     "store use `verimem recall`; to see what is MISSING for "
+                     "an answer use `verimem ignorance`.[/dim]")
     console.print(Panel.fit("\n".join(lines), title="trust"))
     raise typer.Exit(0 if action == "persist" else 1)
 

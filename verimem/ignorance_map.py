@@ -84,7 +84,21 @@ def _classify(mem: Any, query: str, *, floor: float, k: int,
                         f"audit) to resolve '{subj}' — "
                         f"{len(values)} live values disagree"})
             return row
-    if not hits or (top or 0.0) < floor:
+    # LA SOGLIA CHE DECIDE e' la piu' alta fra il pavimento dichiarato e il
+    # rumore MISURATO sullo store. Prima decideva il solo `floor`, e il
+    # noise_floor entrava soltanto DENTRO il ramo dell'ignoranza, per scegliere
+    # fra no_evidence e below_floor: cosi', quando il rumore misurato stava
+    # SOPRA il pavimento statico, l'intera fascia fra i due era `answerable` per
+    # costruzione — pur essendo, per la misura dello store stesso, «a nearest
+    # neighbour with nothing to say». Trovato sul corpus vero il 2026-07-30:
+    # floor 0.8, rumore misurato 0.861, una domanda senza risposta risolta
+    # `answerable` col best a 0.8369.
+    #
+    # Il pavimento dell'operatore non viene MAI abbassato: `max` lo alza solo
+    # quando lo store dimostra che sotto c'e' rumore.
+    soglia = max(float(floor), float(noise_floor or 0.0))
+    row["deciding_floor"] = soglia
+    if not hits or (top or 0.0) < soglia:
         if _quarantined_overlap(mem.semantic, query):
             row.update({"class": "quarantined_only",
                         "what_would_help": "evidence exists but is quarantined "
@@ -101,9 +115,11 @@ def _classify(mem: Any, query: str, *, floor: float, k: int,
                         "what_would_help": "a source about: "
                         + ", ".join(sorted(_keywords(query))[:5])})
         else:
+            quale = ("measured noise floor" if soglia > float(floor)
+                     else "declared floor")
             row.update({"class": "below_floor",
                         "what_would_help": f"stronger evidence — best hit "
-                        f"{top:.2f} sits under the declared floor {floor:.2f}"})
+                        f"{top:.2f} sits under the {quale} {soglia:.2f}"})
         return row
     row.update({"class": "answerable", "what_would_help": None})
     return row
@@ -145,4 +161,7 @@ def ignorance_map(mem: Any, queries: list[str], *, floor: float = 0.8,
         by_class[r["class"]] = by_class.get(r["class"], 0) + 1
     return {"queries": rows, "by_class": by_class, "floor": floor,
             "noise_floor": noise_floor, "noise_floor_source": source,
+            # QUALE dei due ha deciso: due numeri di cui uno comanda, e se non
+            # si vede quale il verdetto non e' verificabile da chi lo legge.
+            "deciding_floor": max(float(floor), float(noise_floor or 0.0)),
             "n": len(rows)}
