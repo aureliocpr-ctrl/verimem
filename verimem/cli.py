@@ -202,8 +202,15 @@ def status():
                 _judged = _c.execute(
                     "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
                     "AND grounding_score IS NOT NULL").fetchone()[0]
+                # 2026-07-31: cio' che non si conta resta spento in silenzio.
+                # Le etichette epistemiche erano NULL su tutti e 6457 i fatti
+                # mentre il README le prometteva in 18 punti, e nessuna riga di
+                # stato lo diceva. Ora un sottosistema fermo a zero SI VEDE.
+                _lab = _c.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND epistemic IS NOT NULL").fetchone()[0]
     except Exception:  # noqa: BLE001 — a health line never breaks the count
-        _held = _judged = None
+        _held = _judged = _lab = None
     _truth = ""
     if _held is not None:
         _pct = f" ({100 * _held / n_facts:.1f}%)" if n_facts else ""
@@ -212,6 +219,9 @@ def status():
         _pct = f" ({100 * _judged / n_facts:.1f}%)" if n_facts else ""
         _truth += (f"\n  moat-judged:     {_judged}{_pct}  writes whose source "
                    f"was checked")
+    if _lab is not None:
+        _truth += (f"\n  epistemic:       {_lab}  facts carrying a declared "
+                   f"guarantee (proven/unbeaten/refuted)")
     console.print(Panel.fit(
         f"[bold]Verimem[/bold]\n"
         f"  episodes:        {n_eps}\n"
@@ -1907,6 +1917,55 @@ def facts_search(
             (f.topic or "")[:24], (f.proposition or "")[:80],
         )
     console.print(table)
+
+
+@facts_app.command("label")
+def facts_label(
+    fact_id: str = typer.Argument(..., help="Fact id (or a >=6 char prefix)."),
+    proven: str = typer.Option(
+        None, "--proven", metavar="PROOF",
+        help="A NAMED machine-checkable proof, e.g. pytest:test_x_PASS."),
+    unbeaten: float = typer.Option(
+        None, "--unbeaten", metavar="BOUND",
+        help="The largest probe the fact survived (> 0). The bound only grows."),
+    refuted: str = typer.Option(
+        None, "--refuted", metavar="COUNTEREXAMPLE",
+        help="A NAMED counterexample. Absorbing: nothing follows it."),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Attach the KIND of guarantee behind a fact.
+
+    "Held to 10^6" and "proven" are never conflated. A proof without a named
+    reference is refused: a label you can give yourself without evidence is
+    what this product exists to prevent.
+    """
+    _continuity_guard(local)
+    scelte = [("proven", proven), ("unbeaten", unbeaten),
+              ("refuted", refuted)]
+    dati = [(k, v) for k, v in scelte if v is not None]
+    if len(dati) != 1:
+        raise typer.BadParameter(
+            "scegline esattamente uno: --proven PROOF | --unbeaten BOUND | "
+            "--refuted COUNTEREXAMPLE")
+    kind, valore = dati[0]
+    m = _continuity_memory()
+    try:
+        fatto = m.label(
+            fact_id, kind,
+            proof=valore if kind == "proven" else None,
+            bound=valore if kind == "unbeaten" else None,
+            counterexample=valore if kind == "refuted" else None)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if fatto:
+        console.print(f"[green]{kind}[/green] {fact_id[:12]} — {valore}")
+    else:
+        # Non e' un fallimento del chiamante: e' la monotonia che tiene.
+        console.print(
+            f"[yellow]non applicata[/yellow] {fact_id[:12]}: la transizione e' "
+            f"vietata dalle regole monotone (refuted assorbe, e un limite non "
+            f"si abbassa). Lo stato precedente resta.")
+        raise typer.Exit(0)
 
 
 @facts_app.command("get")

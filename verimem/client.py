@@ -1529,6 +1529,46 @@ class Memory:
                 f"{w.get('layer', '?')}: {w.get('advice') or w.get('reason') or ''}"
                 for w in avvisi[:3]).strip()
 
+    def label(self, fact_id: str, kind: str, *, proof: str | None = None,
+              bound: float | None = None,
+              counterexample: str | None = None) -> bool:
+        """Attacca a un fatto il TIPO di garanzia che lo sostiene.
+
+        `proven` (una prova verificabile a macchina, nominata), `unbeaten`
+        (ha retto fino a un limite dichiarato, e il limite puo' solo crescere),
+        `refuted` (un controesempio nominato, e assorbe). «Held to 10^6» e
+        «proven» non si confondono mai — e' la distinzione che il README
+        promette in 18 punti.
+
+        Il sottosistema esisteva completo e SCOLLEGATO in entrambe le direzioni:
+        `set_epistemic` era chiamato solo da due moduli che nessuna superficie
+        raggiunge, e sul corpus vivo del 2026-07-30 la colonna era NULL su tutti
+        e 6457 i fatti. Questo e' l'ingresso che mancava; l'uscita ce l'ha gia'
+        il contratto (`fact_contract.fact_payload`), e `verimem status` conta le
+        etichette perche' un sottosistema fermo a zero si veda.
+
+        L'attrito dell'API non e' smussato nel collegarlo: `proven` senza una
+        prova nominata alza `ValueError`, perche' un'etichetta che ci si puo'
+        auto-attribuire senza evidenza e' esattamente cio' che questo prodotto
+        esiste per impedire.
+
+        Ritorna False — senza alzare — quando la transizione e' vietata dalle
+        regole monotone (un fatto `refuted` non torna `proven` perche' qualcuno
+        lo richiede): non e' un errore del chiamante, e' il sistema che tiene.
+        """
+        from .epistemic import make_proven, make_refuted, make_unbeaten
+        k = (kind or "").strip().lower()
+        if k == "proven":
+            etichetta = make_proven(proof or "")
+        elif k == "unbeaten":
+            etichetta = make_unbeaten(bound if bound is not None else 0)
+        elif k == "refuted":
+            etichetta = make_refuted(counterexample or "")
+        else:
+            raise ValueError(
+                f"kind sconosciuto: {kind!r}. Sono proven | unbeaten | refuted")
+        return bool(self.semantic.set_epistemic(fact_id, etichetta))
+
     def restore(self, fact_id: str, *, reason: str = "") -> bool:
         """Rescue a wrongly-blocked fact: un-quarantine ``fact_id`` back into the
         live recall view. The public product surface for the reversibility the

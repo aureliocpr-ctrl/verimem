@@ -2645,6 +2645,39 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_fact_label",
+            description=(
+                "Attach the KIND OF GUARANTEE behind a fact: 'proven' (a named "
+                "machine-checkable proof), 'unbeaten' (held up to a declared "
+                "bound — the bound only grows), 'refuted' (a named "
+                "counterexample, absorbing). \"Held to 10^6\" and \"proven\" are "
+                "never conflated. Transitions are MONOTONE: a refuted fact does "
+                "not become proven because someone asks — that returns "
+                "labelled=false, which is the system holding, not your error. "
+                "A 'proven' without a named proof is an ERROR: a label you can "
+                "give yourself without evidence is what this product exists to "
+                "prevent. The label comes back on every read as `epistemic`."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "fact_id": {"type": "string"},
+                    "kind": {"type": "string",
+                             "enum": ["proven", "unbeaten", "refuted"]},
+                    "proof": {"type": "string",
+                              "description": "required for 'proven' — a named, "
+                                             "machine-checkable reference"},
+                    "bound": {"type": "number",
+                              "description": "required for 'unbeaten' — the "
+                                             "largest probe it survived (> 0)"},
+                    "counterexample": {
+                        "type": "string",
+                        "description": "required for 'refuted' — name the case"},
+                },
+                "required": ["fact_id", "kind"],
+            },
+        ),
+        t.Tool(
             name="hippo_quarantine_restore",
             description=(
                 "Mandate p.7 (2026-07-22). Rescue a wrongly-blocked fact: "
@@ -12727,6 +12760,44 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
                     pass
             return _ok({"ok": True, "n": len(_rows), "quarantined": _rows})
+
+        if name == "hippo_fact_label":
+            # Ingresso del sottosistema epistemico sul canale MCP. Era
+            # scollegato in entrambe le direzioni: `set_epistemic` esisteva ed
+            # era chiamato solo da due moduli irraggiungibili, e la colonna era
+            # NULL su tutti e 6457 i fatti del corpus vivo mentre il README la
+            # prometteva in 18 punti.
+            from .epistemic import make_proven, make_refuted, make_unbeaten
+            _fid = str(arguments.get("fact_id", "")).strip()
+            if not _fid:
+                return _err("empty fact_id")
+            _kind = str(arguments.get("kind", "")).strip().lower()
+            _bound = arguments.get("bound")
+            try:
+                if _kind == "proven":
+                    _lab = make_proven(str(arguments.get("proof") or ""))
+                elif _kind == "unbeaten":
+                    _lab = make_unbeaten(
+                        float(_bound) if _bound is not None else 0)
+                elif _kind == "refuted":
+                    _lab = make_refuted(
+                        str(arguments.get("counterexample") or ""))
+                else:
+                    raise ValueError(
+                        f"kind sconosciuto: {_kind!r}. Sono proven | unbeaten "
+                        f"| refuted")
+                _done = a.semantic.set_epistemic(_fid, _lab)
+            except ValueError as _ve:
+                # Un'etichetta senza la sua evidenza e' un errore del
+                # chiamante, e va detto: silenziarlo la renderebbe
+                # un'auto-attribuzione.
+                return _err(str(_ve))
+            _audit(name, arguments, outcome="ok")
+            return _ok({"ok": True, "fact_id": _fid, "labelled": bool(_done),
+                        "note": ("" if _done else
+                                 "transizione vietata dalle regole monotone "
+                                 "(refuted assorbe): non e' un errore, e' il "
+                                 "sistema che tiene")})
 
         if name == "hippo_quarantine_restore":
             import sqlite3 as _sq
