@@ -541,6 +541,11 @@ _EXPECTED_TOOLS = {
     # Mandate p.7 2026-07-22 — quarantine recovery on the MCP surface
     "hippo_quarantine_log",
     "hippo_quarantine_restore",
+    # 2026-07-31 — l'ingresso del sottosistema epistemico, che era completo e
+    # scollegato: `epistemic` NULL su 6457 fatti mentre il README lo prometteva
+    # in 18 punti. Questo elenco ha fatto il suo mestiere e mi ha fermato:
+    # avevo aggiunto il tool senza dichiararlo qui.
+    "hippo_fact_label",
     # B-1 2026-06-08 — multi-tenancy delete_all(scope), dry-run + undoable
     "hippo_forget_scope",
     "hippo_undo_destructive_op",
