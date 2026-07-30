@@ -37,6 +37,12 @@ Orientation (each tool's exact arguments are in its own schema):
   HOW the store knows (a provenance dossier); on a question it cannot support it
   ABSTAINS ("I don't know") instead of stitching a guess from weak matches.
 - Search indexed files with verimem_document_semantic_search (exact citations).
+- Every read carries `grounding_score`: the moat's verdict on that fact, 0-100.
+  A number means a source was checked against it; `null` means NEVER JUDGED, not
+  judged and failed — treat it as a claim, not a fact. Do NOT use `confidence`
+  as a trust signal: it is a per-channel default the moat never rewrites, and on
+  a real corpus it runs OPPOSITE to verification (`verimem doctor` reports the
+  gap when it does).
 
 Principles: gated writes, provenance on every read, abstention over hallucination.
 Prefer grounded writes. Legacy tool names use the hippo_ prefix; both work.
