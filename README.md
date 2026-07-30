@@ -293,6 +293,38 @@ verimem airgap --live                   # PROVE it: audit every socket during a
                                         # real write+search, exit 0 iff no egress
 ```
 
+## Episodic memory
+
+Facts are what the agent knows; episodes are what it *did* — one row per
+task with outcome, final answer and token cost, in a separate store
+(`episodes/episodes.db`).
+
+```python
+ep = m.record_episode(task_text="migrate the auth module",
+                      final_answer="done: 3 files, 41 tests green",
+                      outcome="success",
+                      key_facts=[{"proposition": "...",         # each key_fact goes
+                                  "verified_by": ["pytest:..."]}])  # through the SAME
+                                                               # anti-confab gate as
+                                                               # remember() — an
+                                                               # unsupported "works
+                                                               # perfectly" self-claim
+                                                               # lands quarantined
+```
+
+Read it back with keyword search, semantic recall, or `verimem episodes
+list` / `show` from the CLI. Deleting an episode removes its traces and
+causal edges in the same transaction and writes one hash-chained audit
+row (the action, never the content — GDPR-shaped).
+
+Honest limits, so you can rely on what is actually there: semantic
+recall indexes the task line plus the head of the answer (long answers
+are found by *task*, not by their full content); Ebbinghaus decay-pruning
+is on-demand, no background runner ever deletes on its own; episode
+deletion ships on the MCP/SDK surfaces (`hippo_forget` / `delete()`),
+not yet as a CLI verb; auto-consolidation keeps exactly one anchor
+episode per cluster.
+
 ## See your memory working — the trust console
 
 The visual layer exists at every deployment size — single user, team
