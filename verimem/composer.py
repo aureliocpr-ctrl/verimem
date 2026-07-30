@@ -47,18 +47,71 @@ def _min_score() -> float:
     from .env_num import env_float
     return env_float("ENGRAM_COMPOSER_MIN_SCORE", _MIN_SCORE_DEFAULT)
 
-_ARTICLES = ("a", "an", "the")
-#: leading words that mark a NON-noun-phrase object ("is in Rome", "is over")
-_NON_NP_LEADS = frozenset(
-    "in on at from to of for with by about over under near into onto as".split())
+#: Le QUATTRO LINGUE su cui il giudice del moat e' misurato (EN/IT/FR/ES). Fino
+#: al 2026-07-30 la copula era ``\s+is\s+`` e basta: in italiano
+#: ``_copula_parse`` restituiva None, quindi il guardian non vedeva MAI due
+#: fatti come rivali e la contesa non veniva dichiarata da nessuna superficie.
+#: Un prodotto che dichiara di giudicare in quattro lingue e riconosce
+#: l'identita' del soggetto in una sola non protegge le altre tre.
+#:
+#: LA LINGUA LA DECIDE LA COPULA INCONTRATA, e ogni lingua porta i SUOI
+#: articoli e le SUE preposizioni. Non e' pignoleria: «a» e' articolo in inglese
+#: («is a labrador») e preposizione in italiano («e' a Roma»). Con le liste
+#: mescolate, o si perde l'oggetto in inglese o si accetta un locativo italiano
+#: come se fosse una classe — e un locativo scambiato per classe fa dichiarare
+#: rivali due fatti che non lo sono.
+_ARTICOLI_PER_LINGUA: dict[str, tuple[str, ...]] = {
+    "en": ("a", "an", "the"),
+    "it": ("il", "lo", "la", "i", "gli", "le", "un", "uno", "una"),
+    "fr": ("le", "la", "les", "un", "une", "des"),
+    "es": ("el", "la", "los", "las", "un", "una", "unos", "unas"),
+}
 
+#: parole che aprono un oggetto NON nominale ("is in Rome", "e' a Roma")
+_NON_NP_PER_LINGUA: dict[str, frozenset[str]] = {
+    "en": frozenset("in on at from to of for with by about over under near "
+                    "into onto as".split()),
+    "it": frozenset("in su a da di per con tra fra sotto sopra verso presso "
+                    "dentro fuori".split()),
+    "fr": frozenset("en sur a de du des dans pour avec par sous vers chez "
+                    "entre".split()),
+    "es": frozenset("en sobre a de del para con por bajo hacia entre desde "
+                    "hasta".split()),
+}
+
+#: La copula -> la lingua. `est` prima di `es`, e `e'` prima di `es`: il regex
+#: prova le alternative in ordine e la piu' lunga deve avere la precedenza.
+_COPULE: dict[str, str] = {
+    "is": "en", "è": "it", "e'": "it", "est": "fr", "es": "es",
+}
+
+#: Retrocompatibilita': l'inglese resta il default per chi importa il nome.
+_ARTICLES = _ARTICOLI_PER_LINGUA["en"]
+_NON_NP_LEADS = _NON_NP_PER_LINGUA["en"]
+
+#: Tutti gli articoli, per ``subject_key``: li' la lingua non e' nota (si
+#: normalizza un soggetto gia' estratto) e togliere un articolo di troppo e'
+#: innocuo, mentre lasciarne uno fa divergere due chiavi che devono coincidere.
+_ARTICOLI_TUTTI = frozenset(
+    a for lista in _ARTICOLI_PER_LINGUA.values() for a in lista)
+
+#: ``[^\W\d_]`` = una lettera qualsiasi, accenti compresi: con ``[A-Za-z]``
+#: una frase che inizia per È o É non veniva nemmeno presa in esame.
 _COPULA_RE = re.compile(
-    r"^(?P<s>[A-Za-z][\w\s\-']{0,60}?)\s+is\s+(?P<o>[A-Za-z][\w\s\-']{1,60}?)\s*\.$")
+    r"^(?P<s>[^\W\d_][\w\s\-']{0,60}?)\s+(?P<c>is|est|è|e'|es)\s+"
+    r"(?P<o>[^\W\d_][\w\s\-']{1,60}?)\s*\.$",
+    re.UNICODE)
 
 
-def _strip_article(np: str) -> str:
+def _strip_article(np: str, lingua: str | None = None) -> str:
+    """Toglie l'articolo iniziale. Con ``lingua`` usa SOLO gli articoli di
+    quella lingua (l'oggetto di una copula: li' «a» inglese e «a» italiano
+    vogliono trattamenti opposti); senza, usa l'unione — il caso di
+    ``subject_key``, dove la lingua non e' nota."""
     words = np.strip().split()
-    if words and words[0].lower() in _ARTICLES:
+    ammessi = (_ARTICOLI_PER_LINGUA.get(lingua, ()) if lingua
+               else _ARTICOLI_TUTTI)
+    if words and words[0].lower() in ammessi:
         words = words[1:]
     return " ".join(words)
 
@@ -87,10 +140,11 @@ def _copula_match(text: str) -> re.Match | None:
     m = _COPULA_RE.match((text or "").strip())
     if not m:
         return None
+    lingua = _COPULE.get(m.group("c").lower(), "en")
     obj_words = m.group("o").strip().split()
-    if not obj_words or obj_words[0].lower() in _NON_NP_LEADS:
-        return None                      # "is in Rome" — locative, not a class NP
-    if not _strip_article(m.group("o")):
+    if not obj_words or obj_words[0].lower() in _NON_NP_PER_LINGUA[lingua]:
+        return None                      # "is in Rome" / "e' a Roma" — locativo
+    if not _strip_article(m.group("o"), lingua):
         return None                      # bare article, no head noun
     return m
 
@@ -103,8 +157,9 @@ def _copula_parse(text: str) -> tuple[str, str, str] | None:
     m = _copula_match(text)
     if not m:
         return None
+    lingua = _COPULE.get(m.group("c").lower(), "en")
     return (m.group("s").strip().lower(),
-            _strip_article(m.group("o")).lower(),
+            _strip_article(m.group("o"), lingua).lower(),
             m.group("o").strip().lower())
 
 
