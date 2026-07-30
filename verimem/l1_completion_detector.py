@@ -123,6 +123,29 @@ def detect_unsupported_completion_claim(
     matched_text = m.group(0)
     if _has_completion_evidence(verified_by):
         return None
+    # Quante affermazioni contiene la frase. Misurato sui 513 quarantinati vivi
+    # del corpus (2026-07-30): 1 affermazione 9%, 2-3 16%, 4-9 30%, 10+ 45% —
+    # lunghezza mediana 852 char. Non sono fatti respinti ingiustamente, sono
+    # NARRAZIONI DI SESSIONE giudicate come un blocco unico, e un blocco con
+    # dieci affermazioni chiede dieci evidenze.
+    #
+    # Il consiglio era gia' su L4 (il moat) e non qui, dove il backlog si ferma
+    # davvero: rieseguendo il gate sui 164 che citano evidenza nel testo, 42
+    # passano e 122 restano fermi sui detector lessicali, spesso piu' d'uno
+    # sullo stesso fatto. Aggiunto solo quando le affermazioni sono piu' di una:
+    # dirlo a una frase che ne fa una sola e' rumore, e il rumore e' come la
+    # meta' utile di un messaggio smette di essere letta.
+    _split = ""
+    try:
+        from .unsupported_span import split_claim_clauses
+        _n = len(split_claim_clauses(proposition))
+    except Exception:  # noqa: BLE001 — un consiglio non rompe un detector
+        _n = 1
+    if _n > 1:
+        _split = (f" This proposition makes {_n} separate assertions and the "
+                  f"screens judge them together, so one unproven piece holds "
+                  f"back the rest — split it and give each part its own "
+                  f"evidence.")
     return CompletionClaimWarning(
         matched_text=matched_text,
         advice=(
@@ -130,7 +153,7 @@ def detect_unsupported_completion_claim(
             f"no closing criteria evidence in verified_by. Add at least "
             f"one of: task:<id>_closed, acceptance_test:<id>_PASS, "
             f"definition_of_done:<id>_met, review:<id>_approved, "
-            f"pr:<n>_merged, pytest:<t>_PASS, bash:<cmd>:exit0."
+            f"pr:<n>_merged, pytest:<t>_PASS, bash:<cmd>:exit0." + _split
         ),
     )
 
