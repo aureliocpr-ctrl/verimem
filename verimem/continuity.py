@@ -227,7 +227,8 @@ def save_checkpoint(memory, text: str, *, topic: str = "session",
                     verified_by: list[str] | None = None,
                     confidence: float | None = None,
                     source: str | None = None,
-                    principal: str | None = None) -> dict[str, Any]:
+                    principal: str | None = None,
+                    asserted_at: float | None = None) -> dict[str, Any]:
     """Write a session checkpoint THROUGH the gate, chained.
 
     The write is ``Memory.add(meta_narrative=True)`` — receipt included,
@@ -256,7 +257,12 @@ def save_checkpoint(memory, text: str, *, topic: str = "session",
         text, topic=topic, meta_narrative=True,
         lineage_to=[resolved] if resolved else None,
         verified_by=verified_by, confidence=confidence,
-        source=source, principal=principal)
+        source=source, principal=principal,
+        # Il tempo di EVENTO, quando il fatto e' vero, distinto da quello di
+        # transazione. Resta None se non lo si dichiara: riempirlo d'ufficio
+        # con l'ora di scrittura cancellerebbe la distinzione fra le due cose,
+        # che e' cio' su cui `recall_as_of` costruisce il time-travel.
+        asserted_at=asserted_at)
     r["lineage_resolved"] = resolved
     return r
 

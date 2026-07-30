@@ -3160,6 +3160,32 @@ def _moat_cell(score: float | None) -> str:
     return "[dim]moat    --[/dim]"
 
 
+def _epoch_di(spec: str | None) -> float | None:
+    """«2026-03-15» o un epoch -> secondi. None se non dichiarato.
+
+    Una data illeggibile e' un ERRORE, non un silenzio: accettare «marzo
+    scorso» e scrivere None farebbe credere che il tempo di evento sia stato
+    registrato, che e' peggio di un rifiuto.
+    """
+    s = (spec or "").strip()
+    if not s:
+        return None
+    import datetime as _dt
+    try:
+        return float(s)
+    except ValueError:
+        pass
+    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S",
+                "%d/%m/%Y"):
+        try:
+            return _dt.datetime.strptime(s, fmt).timestamp()
+        except ValueError:
+            continue
+    raise typer.BadParameter(
+        f"--asserted-at: non riesco a leggere {s!r}. Usa YYYY-MM-DD "
+        f"(o un epoch in secondi).")
+
+
 def _node_line(node: dict) -> str:
     """One compact line per chain node: id, time, status, moat, topic."""
     import time as _time
@@ -3189,6 +3215,11 @@ def save_cmd(
         None, "--confidence", help="Override the 0.5 narrative default."),
     source: str = typer.Option(
         None, "--source", help="Source text to ground the checkpoint (L4)."),
+    asserted_at: str = typer.Option(
+        None, "--asserted-at",
+        help="When the fact is TRUE (YYYY-MM-DD or epoch), if different from "
+             "now. Feeds the time-travel: `recall_as_of` finds it from that "
+             "moment on, not from when you wrote it."),
     json_out: bool = typer.Option(False, "--json"),
     local: bool = typer.Option(
         False, "--local", help="Run on the local store even in server mode."),
@@ -3217,7 +3248,8 @@ def save_cmd(
         r = save_checkpoint(
             m, body, topic=topic, lineage_to=lineage_to,
             verified_by=list(verified_by or []) or None,
-            confidence=confidence, source=source, principal="cli:local")
+            confidence=confidence, source=source, principal="cli:local",
+            asserted_at=_epoch_di(asserted_at))
     except (LineageRefError, LineageNotFound) as exc:
         raise _lineage_exit(exc) from exc
     if json_out:
