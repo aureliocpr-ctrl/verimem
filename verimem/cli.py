@@ -1561,6 +1561,41 @@ def introspect(
     console.print(eps_table)
 
 
+@skills_app.command("dedup")
+def skills_dedup(
+    apply: bool = typer.Option(
+        False, "--apply",
+        help="Actually retire the duplicates. Default = DRY RUN."),
+    max_retire: int = typer.Option(
+        200, "--max", help="Safety cap on how many get retired in one pass."),
+) -> None:
+    """Unisci le skill che hanno lo STESSO NOME, tenendo la migliore.
+
+    Misurato sulla libreria vera il 2026-07-31: 325 skill, di cui 33 con un
+    nome identico a un'altra. Il modulo che le unisce esisteva, era testato, e
+    non aveva nessuna superficie: una manutenzione che nessuno poteva eseguire
+    su un problema che esiste per davvero.
+
+    Tocca solo le `candidate` — una skill promossa ha superato una soglia con
+    dei trial veri, e non la ritira una manutenzione automatica.
+    """
+    from verimem.skill_name_dedup import dedup_skills_by_name
+    agent = VerimemAgent.build()
+    r = dedup_skills_by_name(agent.skills, apply=apply,
+                             max_retire=max(1, int(max_retire)))
+    testa = "[yellow]DRY RUN[/yellow]" if r.get("dry_run") else "[green]APPLICATO[/green]"
+    console.print(
+        f"{testa}  gruppi con nome ripetuto: {r.get('groups_found', 0)}  "
+        f"su {r.get('total_skills', 0)} skill  |  da ritirare: "
+        f"{r.get('skills_to_retire', 0)}")
+    if r.get("dry_run"):
+        console.print("[dim]niente e' stato modificato — usa --apply[/dim]")
+    else:
+        console.print(f"  ritirate: {r.get('applied_retired', 0)}"
+                      + (f"  (saltate per il cap: {r['applied_skipped_cap']})"
+                         if r.get("applied_skipped_cap") else ""))
+
+
 @skills_app.command("show")
 def skills_show(skill_id: str):
     agent = VerimemAgent.build()
