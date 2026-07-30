@@ -11,11 +11,14 @@ Il README le promette in 18 punti (righe 158-162):
 Sul corpus vivo del 2026-07-30: `epistemic` valorizzato in 0 fatti su 6457.
 Verificato il perche', modulo per modulo:
 
-    scrittura   Memory.add non accetta epistemic; in mcp_server.py la parola
-                compare ZERO volte; nessun comando CLI. `set_epistemic()`
+    scrittura   Memory.add non accetta epistemic; nessun tool MCP lo prende o
+                lo restituisce come dato; nessun comando CLI. `set_epistemic()`
                 esiste su SemanticMemory ed e' chiamato solo da composer.py e
                 active_probe.py, che nessuna superficie raggiunge —
                 compose_daemon non e' avviato da nessuna parte.
+                (Le uniche due occorrenze della PAROLA in mcp_server.py sono
+                una riga di help e un commento: cercare la parola invece del
+                dato faceva accendere il test sui propri commenti.)
     lettura     epistemic_health, adaptive_ledger e grounding_gate non sono
                 importati ne' da mcp_server ne' da cli; l'SDK client.py nomina
                 epistemic solo in un commento.
@@ -55,8 +58,15 @@ def test_nessuna_superficie_permette_di_etichettare():
     assert "epistemic" not in firma, (
         "l'SDK ora accetta epistemic: il sottosistema si sta ricollegando, "
         "aggiorna questo file e il README")
-    assert "epistemic" not in _testo("mcp_server.py"), (
-        "un tool MCP ora nomina epistemic: aggiorna questo file")
+    # Il criterio e' il DATO, non la parola. La prima versione cercava
+    # «epistemic» nel sorgente e trovava due cose che non c'entrano: una riga
+    # di help di hippo_justified_audit e un commento che avevo scritto io
+    # stesso quella mattina. Un test che si accende sui propri commenti misura
+    # se stesso.
+    mcp = _testo("mcp_server.py")
+    assert '"epistemic"' not in mcp and "epistemic=" not in mcp, (
+        "un tool MCP ora accetta o restituisce l'etichetta come dato: "
+        "il sottosistema si sta ricollegando, aggiorna questo file")
 
 
 def test_i_moduli_che_etichettano_restano_irraggiungibili():
