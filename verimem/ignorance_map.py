@@ -84,19 +84,28 @@ def _classify(mem: Any, query: str, *, floor: float, k: int,
                         f"audit) to resolve '{subj}' — "
                         f"{len(values)} live values disagree"})
             return row
-    # LA SOGLIA CHE DECIDE e' la piu' alta fra il pavimento dichiarato e il
-    # rumore MISURATO sullo store. Prima decideva il solo `floor`, e il
-    # noise_floor entrava soltanto DENTRO il ramo dell'ignoranza, per scegliere
-    # fra no_evidence e below_floor: cosi', quando il rumore misurato stava
-    # SOPRA il pavimento statico, l'intera fascia fra i due era `answerable` per
-    # costruzione — pur essendo, per la misura dello store stesso, «a nearest
-    # neighbour with nothing to say». Trovato sul corpus vero il 2026-07-30:
-    # floor 0.8, rumore misurato 0.861, una domanda senza risposta risolta
-    # `answerable` col best a 0.8369.
+    # LA SOGLIA CHE DECIDE e' il pavimento dichiarato, e basta.
     #
-    # Il pavimento dell'operatore non viene MAI abbassato: `max` lo alza solo
-    # quando lo store dimostra che sotto c'e' rumore.
-    soglia = max(float(floor), float(noise_floor or 0.0))
+    # Per qualche ora e' stata `max(floor, noise_floor)`, ed era SBAGLIATO —
+    # misurato sul corpus vero lo stesso giorno, 2026-07-30, prima di lasciarlo
+    # in piedi: con quella regola SETTE domande su otto che il corpus sa
+    # rispondere (il moat, il grounding score, le regole di Aurelio, la
+    # pubblicazione su PyPI...) uscivano come ignoranza, e le `answerable`
+    # erano ZERO. Una mappa dell'ignoranza che dice «non lo so» su tutto e'
+    # inutile quanto una che dice «lo so» su tutto.
+    #
+    # L'errore concettuale: `estimate_relevance_floor` e' il 95o percentile dei
+    # MASSIMI di sonde scramblate, e su un corpus grande qualche sonda casuale
+    # becca sempre qualcosa — quel numero e' alto per costruzione (0.87 sul
+    # corpus vero) e NON e' «il livello sotto cui non c'e' informazione». Usarlo
+    # come soglia di risposta taglia via i match semantici veri: una domanda che
+    # RIFORMULA un fatto vale ~0.78, e sta sotto.
+    #
+    # Il difetto che aveva fatto nascere quella cura resta vero e va risolto
+    # altrimenti: quando il top sta sotto il rumore misurato, la risposta si da'
+    # ma CON L'AVVERTENZA (sotto), invece di essere dichiarata rispondibile
+    # senza riserve.
+    soglia = float(floor)
     row["deciding_floor"] = soglia
     if not hits or (top or 0.0) < soglia:
         if _quarantined_overlap(mem.semantic, query):
@@ -122,6 +131,16 @@ def _classify(mem: Any, query: str, *, floor: float, k: int,
                         f"{top:.2f} sits under the {quale} {soglia:.2f}"})
         return row
     row.update({"class": "answerable", "what_would_help": None})
+    # Il top supera il pavimento dichiarato ma sta sotto il RUMORE che lo store
+    # ha misurato su se stesso: si risponde, e lo si dice. E' il difetto che
+    # aveva fatto nascere (male) la soglia `max`: quella fascia usciva
+    # `answerable` senza alcuna riserva, e per la misura dello store e' la zona
+    # in cui un vicino qualsiasi vale quanto un match.
+    if noise_floor and (top or 0.0) <= float(noise_floor):
+        row["caveat"] = (
+            f"best hit {top:.2f} sits at or below the store's own measured "
+            f"noise level {float(noise_floor):.2f} — answerable, but this is "
+            f"the band where a nearest neighbour scores like a real match")
     return row
 
 
@@ -161,7 +180,8 @@ def ignorance_map(mem: Any, queries: list[str], *, floor: float = 0.8,
         by_class[r["class"]] = by_class.get(r["class"], 0) + 1
     return {"queries": rows, "by_class": by_class, "floor": floor,
             "noise_floor": noise_floor, "noise_floor_source": source,
-            # QUALE dei due ha deciso: due numeri di cui uno comanda, e se non
-            # si vede quale il verdetto non e' verificabile da chi lo legge.
-            "deciding_floor": max(float(floor), float(noise_floor or 0.0)),
+            # Quale soglia ha deciso — resta esposta anche ora che coincide
+            # col floor dichiarato: e' il numero che un lettore deve poter
+            # verificare senza leggere il codice.
+            "deciding_floor": float(floor),
             "n": len(rows)}
