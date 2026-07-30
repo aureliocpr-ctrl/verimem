@@ -5603,6 +5603,18 @@ class SemanticMemory:
             # SCAN-68 FIX 2026-06-02 (NONNA): erano OMESSI -> provenance v6 persa
             # nel roundtrip (il gate anti-confab legge fact.writer_role).
             writer_role=_opt("writer_role") or "agent_inference",
+            # 2026-07-30, stessa classe del FIX qui sopra e sette settimane
+            # dopo: `writer_principal` e' arrivato con la v16 (2026-07-23) e
+            # non era mai stato aggiunto a questa ricostruzione, quindi ogni
+            # lettura lo perdeva — 205 righe del corpus vivo lo hanno sul disco
+            # e nessuna lo restituiva. E' l'identita' STAMPATA dal server,
+            # quella che il dataclass descrive come mai presa dagli argomenti
+            # di un tool: esattamente la provenienza che non deve sparire.
+            #
+            # Trovato solo perche' il contratto di uscita ha iniziato a
+            # mostrarlo: un campo che nessuna superficie espone non ha modo di
+            # risultare sbagliato.
+            writer_principal=_opt("writer_principal"),
             meta_narrative=bool(_opt("meta_narrative")),
             # v8 (2026-06-03) buco #3. Defensive su righe pre-v8 (None ->
             # freshness lo coalesce a created_at).
