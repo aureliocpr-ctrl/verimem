@@ -1838,11 +1838,18 @@ def facts_recall(
         ][:k]
     table = Table(title=f"Recall '{query[:40]}'")
     table.add_column("id"); table.add_column("sim")
-    table.add_column("status"); table.add_column("topic")
+    table.add_column("status")
+    # 2026-07-30: `sim` e' la somiglianza fra domanda e fatto e `status` dice
+    # che COSA e' il fatto: nessuno dei due dice se qualcuno l'ha verificato.
+    # `verimem recall` era gia' stato curato, e questo comando fa la stessa
+    # cosa con un altro nome — curarne uno non cura l'altro.
+    table.add_column("moat")
+    table.add_column("topic")
     table.add_column("proposition")
     for f, sim in hits:
         table.add_row(
             f.id[:8], f"{sim:.3f}", getattr(f, "status", "?"),
+            _moat_cella_corta(getattr(f, "grounding_score", None)),
             (f.topic or "")[:24], (f.proposition or "")[:80],
         )
     console.print(table)
@@ -1891,10 +1898,12 @@ def facts_search(
         ][:limit]
     table = Table(title=f"Search '{query[:40]}'")
     table.add_column("id"); table.add_column("status")
+    table.add_column("moat")
     table.add_column("topic"); table.add_column("proposition")
     for f in hits:
         table.add_row(
             f.id[:8], getattr(f, "status", "?"),
+            _moat_cella_corta(getattr(f, "grounding_score", None)),
             (f.topic or "")[:24], (f.proposition or "")[:80],
         )
     console.print(table)
