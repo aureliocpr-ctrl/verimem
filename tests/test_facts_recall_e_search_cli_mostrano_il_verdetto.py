@@ -59,7 +59,11 @@ def _tabella(args: list[str]) -> str:
 def test_la_tabella_porta_il_verdetto(cmd, store: Path):
     out = _tabella(cmd)
     assert "8443" in out, f"{cmd} non ha trovato il fatto:\n{out[:300]}"
-    assert "91" in out, f"{cmd} non porta il verdetto:\n{out[:400]}"
+    # Il verdetto COL DECIMALE, non "91": la prima versione cercava la
+    # sottostringa nuda in tutto l'output e l'ha trovata dentro l'id del fatto
+    # (08591243), quindi era un test che passava o falliva a seconda dell'id
+    # casuale — instabile per costruzione, e in CI sarebbe caduto a caso.
+    assert "91.5" in out, f"{cmd} non porta il verdetto:\n{out[:400]}"
 
 
 @pytest.mark.parametrize("cmd", [
@@ -73,4 +77,8 @@ def test_un_fatto_mai_giudicato_non_mostra_uno_zero(cmd, store: Path):
     con.close()
     out = _tabella(cmd)
     assert "8443" in out
-    assert "91" not in out and " 0.0 " not in out, out[:400]
+    # Si guarda la CELLA, non l'intero output: `--` e' il segno di «mai
+    # giudicato», e cercare l'assenza di una sottostringa numerica fa fallire
+    # il test quando quella cifra capita dentro un id.
+    assert " -- " in out, f"la cella del verdetto non dice «mai giudicato»:\n{out[:400]}"
+    assert "91.5" not in out and " 0.0 " not in out, out[:400]
