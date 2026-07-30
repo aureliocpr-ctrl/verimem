@@ -66,10 +66,27 @@ def _corroboration(
 
 def _grounding_factor(fact: Any, use_grounding: bool) -> float:
     """Multiplicative trust factor from the WRITE-time grounding score (source⊢fact,
-    AUROC 0.971). Connects the proven write-path moat to read-path trust: a fact whose
-    source strongly entailed it is more trustworthy than an ungrounded one. Maps
-    grounding 0→0.5 (penalize ungrounded), 50→0.8, 100→1.1 (modest boost). Neutral (1.0)
-    when disabled OR the fact has no grounding score (backward-compatible — most facts)."""
+    AUROC 0.971). Maps grounding 0→0.5 (penalize ungrounded), 50→0.8, 100→1.1 (modest
+    boost). Neutral (1.0) when disabled OR the fact has no grounding score.
+
+    MISURATO 2026-07-30, e il risultato smentisce la riga che stava qui («connects the
+    proven write-path moat to read-path trust»). Ricalcolando l'INTERA classifica del
+    corpus vivo con e senza il fattore — 4755 fatti, 35 giudicati:
+
+        fatti che cambiano posizione     362 su 4755
+        posizione mediana dei giudicati  4418  ->  4411
+        giudicati nella top-20             0  ->     0
+
+    Sette posizioni su quattromilasettecento. Il fattore non e' solo opt-in e mai acceso
+    da nessun percorso: alla calibrazione attuale e' troppo debole per contrastare la
+    confidenza, che i fatti giudicati hanno a 0.5 (il default di `verimem save`, che non
+    se la inventa) mentre le inferenze di modello arrivano a 0.9-1.0 auto-assegnate.
+
+    Percio' resta spento: accenderlo darebbe l'ILLUSIONE del collegamento — un
+    interruttore acceso, una promessa dichiarata mantenuta, e i fatti verificati ancora
+    in fondo. Ricollegare davvero write-path e read-path significa ripensare come si
+    compone la fiducia, che e' un cambiamento di prodotto da misurare con un A/B.
+    Il risultato e' inchiodato in tests/test_il_fattore_grounding_non_basta.py."""
     if not use_grounding:
         return 1.0
     g = getattr(fact, "grounding_score", None)
