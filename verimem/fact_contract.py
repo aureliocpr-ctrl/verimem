@@ -92,6 +92,17 @@ def fact_payload(f: Any) -> dict[str, Any]:
             continue
         else:
             out[nome] = valore
+    # Misurato sul corpus vivo: 20 fatti veri sono passati da 6958 a 11273 byte
+    # (+62%, +215 per fatto) quando questo contratto ha iniziato a portare tutti
+    # i campi. Per un agente MCP e' contesto tolto al resto della conversazione,
+    # quindi va speso dove informa. Questi due non informano quando valgono il
+    # default, ed e' lo stesso principio per cui i campi vuoti non escono.
+    if out.get("last_verified_at") == out.get("created_at"):
+        # il dataclass lo dichiara: quando manca, «freshness lo coalesce a
+        # created_at» — quindi coinciderci non dice niente
+        out.pop("last_verified_at", None)
+    if out.get("writer_role") == "agent_inference":
+        out.pop("writer_role", None)  # il default del dataclass
     return out
 
 

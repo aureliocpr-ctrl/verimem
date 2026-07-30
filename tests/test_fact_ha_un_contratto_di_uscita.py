@@ -96,6 +96,11 @@ def test_ogni_campo_del_dataclass_e_deciso():
         superseded_at=1.0, superseded_reason="r", verified_by=["v"],
         source_signature="sig", trigger_keywords=["k"], applicable_when="w",
         worked_example="ex", lineage_to=["l"], writer_principal="p",
+        # NON i default: il payload omette un campo che vale quanto il suo
+        # default, perche' ripeterlo e' peso senza informazione. Costruirlo
+        # col default renderebbe questo test un falso allarme sul contratto —
+        # e infatti l'ha dato, la prima volta.
+        writer_role="user",
         last_verified_at=2.0, valid_until=3.0, derives_from=["d"],
         grounding_score=50.0, confidence_tier="high", asserted_at=4.0,
         epistemic={"kind": "proven"},
