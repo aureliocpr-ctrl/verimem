@@ -1754,7 +1754,8 @@ def facts_list(
         if _scoped and (topic or not _lead or include_shared):
             _sql_limit = min(_sql_limit * 8, 2000)
         sql = (
-            "SELECT id, proposition, topic, status, confidence "
+            "SELECT id, proposition, topic, status, confidence, "
+            "grounding_score "
             "FROM facts WHERE " + " AND ".join(clauses)
             + " ORDER BY created_at DESC LIMIT ?"
         )
@@ -1771,12 +1772,21 @@ def facts_list(
     table = Table(title=f"Facts ({len(rows)})")
     table.add_column("id"); table.add_column("topic")
     table.add_column("status"); table.add_column("conf")
+    # 2026-07-30: la tabella mostrava `conf`, che e' il numero ANTI-correlato
+    # con la verifica (i 35 fatti giudicati del corpus vivo stanno tutti a 0.5,
+    # i 4720 mai giudicati a 0.866 di media — vedi il check doctor
+    # confidence-vs-verifica), e taceva il verdetto. Il tool MCP gemello,
+    # hippo_facts_list, lo portava gia': stessa vista, due canali, uno curato.
+    table.add_column("moat")
     table.add_column("proposition")
     for r in rows:
         table.add_row(
             r["id"][:8], (r["topic"] or "")[:24],
             r["status"] or "",
             f"{r['confidence']:.2f}",
+            # sqlite3.Row non ha .get(): l'accesso per chiave assente alza
+            _moat_cella_corta(r["grounding_score"]
+                              if "grounding_score" in r.keys() else None),
             (r["proposition"] or "")[:80],
         )
     console.print(table)
@@ -3158,6 +3168,16 @@ def _moat_cell(score: float | None) -> str:
         colore = "green" if score >= 70 else "yellow"
         return f"[{colore}]moat {float(score):>5.1f}[/{colore}]"
     return "[dim]moat    --[/dim]"
+
+
+def _moat_cella_corta(score: float | None) -> str:
+    """Il verdetto in una colonna di tabella. `--` quando non e' stato
+    giudicato: uno 0.0 si leggerebbe come una bocciatura, e non averlo
+    misurato non e' averlo misurato male."""
+    if isinstance(score, (int, float)) and not isinstance(score, bool):
+        colore = "green" if score >= 70 else "yellow"
+        return f"[{colore}]{float(score):.1f}[/{colore}]"
+    return "[dim]--[/dim]"
 
 
 def _epoch_di(spec: str | None) -> float | None:
