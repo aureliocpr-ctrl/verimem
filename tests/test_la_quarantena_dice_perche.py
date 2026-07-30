@@ -87,3 +87,51 @@ def test_quando_non_si_puo_ricostruire_lo_dice(mem, tmp_path):
     why = str(voci[0].get("why") or "")
     assert "non e' piu' ricostruibile" in why, why
     assert "--source" in why, "non dice come rimediare la prossima volta"
+
+
+def test_anche_il_tool_mcp_sa_spiegare(tmp_path, monkeypatch):
+    """Una capacita' su un canale solo e' il difetto che questa serie di
+    commit ha passato la giornata a chiudere: se `explain` vive solo
+    sull'SDK, l'ho appena rifatto."""
+    import asyncio
+    import json as _json
+    for k in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR", "VERIMEM_DATA_DIR"):
+        monkeypatch.setenv(k, str(tmp_path))
+    from verimem.client import Memory
+    m = Memory(path=tmp_path / "semantic" / "semantic.db")
+    assert m.add(CLAIM, topic="prova").get("status") == "quarantined"
+
+    from mcp.types import CallToolRequest, CallToolRequestParams
+
+    from verimem import mcp_server
+
+    class _A:
+        def __init__(s):
+            s.semantic = m.semantic
+    mcp_server._ag = lambda: _A()
+    h = mcp_server.server.request_handlers[CallToolRequest]
+
+    def _call(args):
+        res = asyncio.run(h(CallToolRequest(
+            method="tools/call",
+            params=CallToolRequestParams(name="hippo_quarantine_log",
+                                         arguments=args))))
+        p = res.root if hasattr(res, "root") else res
+        return _json.loads(next(c.text for c in p.content if hasattr(c, "text")))
+
+    nudo = _call({"limit": 5})
+    assert nudo["quarantined"], nudo
+    assert "why" not in nudo["quarantined"][0]
+
+    spiegato = _call({"limit": 5, "explain": True})
+    assert spiegato["quarantined"][0].get("why"), spiegato["quarantined"][0]
+
+
+def test_lo_schema_del_tool_dichiara_explain():
+    """Un parametro che il client non puo' scoprire non esiste."""
+    import asyncio
+
+    from verimem import mcp_server
+    tools = asyncio.run(mcp_server._list_tools_unfiltered())
+    t = next(x for x in tools if x.name == "hippo_quarantine_log")
+    assert "explain" in ((t.inputSchema or {}).get("properties") or {})

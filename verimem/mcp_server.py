@@ -2622,11 +2622,26 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "gate stopped and audit it (the SDK twin is "
                 "Memory.quarantine_log). Read-only; superseded/deleted "
                 "quarantined facts drop out of this view. Returns "
-                "{ok, n, quarantined:[...]}."
+                "{ok, n, quarantined:[...]}. Pass explain=true to also get WHY "
+                "each claim was stopped and how to unblock it: it re-runs the "
+                "lexical screens (deterministic, no model call). A claim "
+                "stopped by L4 — the comparison against ITS OWN source — is "
+                "not explainable after the fact, because the source is not "
+                "kept; that case says so instead of returning nothing."
             ),
             inputSchema={
                 "type": "object",
-                "properties": {"limit": {"type": "integer"}},
+                "properties": {
+                    "limit": {"type": "integer"},
+                    "explain": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": (
+                            "Recompute WHY each claim was blocked. Costs a "
+                            "gate re-run per row; the plain listing is "
+                            "unchanged without it."),
+                    },
+                },
             },
         ),
         t.Tool(
@@ -12700,6 +12715,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         _rows.append(dict(_r))
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"quarantine_log read failed: {_exc}")
+            # 2026-07-30: sapere QUALI fatti sono fermi senza sapere PERCHE'
+            # non permette di correggerne nessuno. Opt-in perche' ricalcola i
+            # detector; e sta anche qui, e non solo sull'SDK, perche' una
+            # capacita' su un canale solo e' il difetto che questa serie di
+            # commit ha passato la giornata a chiudere.
+            if bool(arguments.get("explain", False)):
+                try:
+                    from .client import Memory as _M
+                    _M._spiega_le_quarantene(_rows)
+                except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
+                    pass
             return _ok({"ok": True, "n": len(_rows), "quarantined": _rows})
 
         if name == "hippo_quarantine_restore":
