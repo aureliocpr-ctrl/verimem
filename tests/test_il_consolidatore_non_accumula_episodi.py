@@ -94,18 +94,13 @@ def test_un_re_pass_sullo_stesso_prefix_non_accumula_episodi(
     )
 
 
-def test_un_prefix_di_telemetria_non_produce_episodi(
-    sm: SemanticMemory, mem: EpisodicMemory, tmp_path: Path,
-) -> None:
-    """I topic ``metric/*`` sono telemetria: consolidarli in episodi
-    inquina il recall episodico (top-5 del corpus vivo: 185-198 pass
-    l'uno). Il pass su un prefix di telemetria non deve coniare
-    nessun episodio."""
-    _seed_facts(sm, "metric/event_test_probe", 6, tag="m")
-    auto_consolidate(sm, mem, min_size=5, prefix_depth=2)
-
-    n = _count_episodes(tmp_path / "ep.db", "metric/%")
-    assert n == 0, (
-        f"prefix di telemetria consolidato in {n} episodio/i: la "
-        f"telemetria non deve entrare nel tier episodico"
-    )
+# NOTA (post-critic 0e65a25d04b48653): qui viveva un secondo test,
+# "un prefix di telemetria non produce episodi", scritto per la lama
+# 'skip metric/' poi RITIRATA dopo misura (0 fatti metric/ nel corpus:
+# il gate di ingest li instrada in telemetry dal 2026-07-20, il filtro
+# sarebbe stato codice morto). Il test era rimasto nel file ed era
+# AMBIENTE-DIPENDENTE: verde dove il telemetry-routing e' attivo (il
+# seed veniva instradato via gate), rosso nell'ambiente pulito della
+# suite (il seed scriveva nello store e l'episodio veniva coniato).
+# Un test la cui verita' dipende dall'env non misura il prodotto:
+# rimosso insieme alla lama che doveva presidiare.
