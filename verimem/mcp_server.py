@@ -12678,6 +12678,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _pf = {"topic_prefix": _topic_prefix} if _topic_prefix else {}
             if arguments.get("deep"):
                 _pf["deep"] = True   # v14 archaeology: lift age hiding only
+            # Apre la registrazione di COME verra' ordinata questa risposta.
+            # Misurato il 30/07: tre chiamate identiche di fila davano insiemi
+            # diversi (un fatto dentro a freddo, un altro a caldo) perche' il
+            # CE-rerank e la fusione PPR sfioravano il loro budget, e la
+            # risposta aveva le stesse identiche chiavi in tutti e tre i casi.
+            from .semantic import ranking_reset as _ranking_reset
+            from .semantic import ranking_stages as _ranking_stages
+            _ranking_reset()
             try:
                 hits = a.semantic.recall(
                     query, k=_recall_k, topic=_recall_topic,
@@ -12725,6 +12733,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok({
                 "query": query,
                 "topic": topic,
+                # Quali dei tre segnali hanno DAVVERO ordinato questa risposta.
+                # `applied` o un motivo per ognuno: un ordine tenuto in piedi
+                # dal solo bi-encoder non e' lo stesso oggetto di uno passato
+                # dal cross-encoder e dalla fusione grafo/lessicale, e finora
+                # i due erano indistinguibili da qui.
+                "ranking": _ranking_stages(),
                 "include_legacy": include_legacy,
                 "min_status": min_status,
                 "trust_signals": trust_signals,

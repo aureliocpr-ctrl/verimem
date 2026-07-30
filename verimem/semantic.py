@@ -31,6 +31,7 @@ post-fix con status implicito).
 from __future__ import annotations
 
 import atexit
+import contextvars
 import json
 import logging
 import os
@@ -2180,6 +2181,58 @@ def _ppr_fusion_enabled() -> bool:
     )
 
 
+# --- Come e' stato ordinato questo risultato (2026-07-30) --------------------
+# I tre segnali del ranking — dense, CE-rerank, fusione PPR+BM25 — hanno ognuno
+# un budget che li fa DEGRADARE invece di appendere il chiamante, e fanno bene:
+# profilato lo stesso giorno su un processo fresco col daemon caldo, la prima
+# recall costa 3.12s e la terza 0.42s; sull'audit log di produzione, DENTRO lo
+# stesso processo, la prima e' 88939 ms mediani (n=239) e la terza in poi
+# 125 ms (n=64). Senza quei tetti sarebbe peggio.
+#
+# Le mediane FRA processi diversi non si usano: sopravvive chi ha risposto in
+# fretta (chi era lento viene ucciso dal timeout del client e resta con una
+# riga sola), quindi ogni aggregato per-processo e' selezionato dalla velocita'
+# che pretende di misurare. E' il confronto APPAIATO qui sopra a reggere.
+#
+# Il difetto non e' il degrado: e' che il degrado era MUTO. Tre chiamate
+# identiche sul corpus vero restituivano insiemi diversi (17cefffe1bce dentro a
+# freddo, 93eec6da4302 dentro a caldo) con le stesse identiche chiavi nella
+# risposta; la spiegazione esisteva solo nel log del SERVER. Le vie silenziose
+# sono otto per il rerank e altrettante per la fusione.
+#
+# Il registro vive in un ContextVar (async-safe come il timer del server MCP) e
+# lo scrivono i CHIAMANTI, dove l'overrun si osserva — mai i thread worker: un
+# thread nasce con un contesto proprio e la sua nota si perderebbe.
+#
+# `None` significa «nessuno ha aperto una registrazione», che NON e' «nessun
+# degrado»: e' la distinzione che mancava a judge_state stamattina, e va tenuta.
+_RANKING: contextvars.ContextVar[dict[str, str] | None] = contextvars.ContextVar(
+    "verimem_ranking_stages", default=None,
+)
+
+
+def ranking_reset() -> None:
+    """Apre una registrazione per la recall che sta per partire."""
+    _RANKING.set({})
+
+
+def _ranking_note(stage: str, outcome: str) -> None:
+    """Registra l'esito di uno stadio. Muta il dict IN PLACE: chi ha aperto la
+    registrazione vede la nota anche se nel frattempo il contesto e' stato
+    copiato. Senza registrazione aperta e' un no-op — la recall non deve mai
+    rompersi per la telemetria del suo stesso ordinamento."""
+    d = _RANKING.get()
+    if d is not None:
+        d[stage] = outcome
+
+
+def ranking_stages() -> dict[str, str] | None:
+    """Gli stadi dell'ultima recall in questo contesto, o None se nessuna.
+    Copia difensiva: chi legge non riscrive lo stato interno."""
+    d = _RANKING.get()
+    return dict(d) if d is not None else None
+
+
 class SemanticMemory:
     def __init__(
         self,
@@ -3756,6 +3809,8 @@ class SemanticMemory:
             if _rr_on and len(hits_2t) > 1:
                 hits_2t = self._rerank_stage2(query, hits_2t, k)
             else:
+                _ranking_note("rerank",
+                              "off" if not _rr_on else "skipped_single_hit")
                 hits_2t = hits_2t[:k]
             hits_2t = self._maybe_fuse_ppr(
                 query, hits_2t, k,
@@ -3920,6 +3975,8 @@ class SemanticMemory:
         if _rr_on and len(hits_2t) > 1:
             hits_2t = self._rerank_stage2(query, hits_2t, k)
         else:
+            _ranking_note("rerank",
+                          "off" if not _rr_on else "skipped_single_hit")
             hits_2t = hits_2t[:k]
         hits_2t = self._maybe_fuse_ppr(
             query, hits_2t, k, topic_prefix=topic_prefix, topic=topic,
@@ -3974,8 +4031,10 @@ class SemanticMemory:
             # worse on the 26/07 GT) — skip BEFORE any load/slot/breaker
             # touch, same pattern as the long-docs guard below: skipping
             # after the load would pay the ~43.6s warm-up for nothing.
+            _ranking_note("rerank", "skipped_long_query")
             return hits_2t[:k]
         if _RERANK_BREAKER["tripped"]:
+            _ranking_note("rerank", "skipped_breaker")
             return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]
         tail = hits_2t[len(pool):]
@@ -3985,6 +4044,7 @@ class SemanticMemory:
                            for f, _ in pool)
             _median = _lens[len(_lens) // 2]
             if _median > _cap:
+                _ranking_note("rerank", "skipped_long_docs")
                 return hits_2t[:k]  # docs out of CE window — keep bi-encoder
         by_id = {f.id: (f, sim) for f, sim in pool}
         # Circuit-breaker (2026-06-13): the CE COLD load is ~33s and the steady
@@ -4011,6 +4071,7 @@ class SemanticMemory:
                     semantic_db=self.db_path, scorer=scorer, top_n=len(pool),
                 )
             except Exception:  # noqa: BLE001 — recall must NEVER break when ON
+                _ranking_note("rerank", "error")
                 return hits_2t[:k]
         else:
             # One at a time (see _RERANK_INFLIGHT). Taking the bi-encoder order
@@ -4020,6 +4081,7 @@ class SemanticMemory:
             # as an overrun: nothing here was slow, the slot was simply taken.
             _lease = _rerank_inflight_acquire()
             if not _lease:
+                _ranking_note("rerank", "skipped_busy")
                 return hits_2t[:k]
             _box: dict[str, Any] = {}
 
@@ -4043,6 +4105,7 @@ class SemanticMemory:
                 _t.start()
             except Exception:  # noqa: BLE001 — a thread that never ran holds
                 _rerank_inflight_release(_lease)  # the slot forever otherwise
+                _ranking_note("rerank", "error")
                 return hits_2t[:k]
             _t.join(_budget)
             if _t.is_alive():
@@ -4053,6 +4116,7 @@ class SemanticMemory:
                         _budget,
                     )
                     _rerank_breaker_overrun()
+                    _ranking_note("rerank", "timeout")
                 else:
                     # F1 C1: cold overrun = CE still warming = transient by
                     # definition. Never counts toward the steady trip; only
@@ -4063,8 +4127,10 @@ class SemanticMemory:
                         "overruns do not trip the steady breaker)", _budget,
                     )
                     _rerank_breaker_cold_overrun()
+                    _ranking_note("rerank", "timeout_cold")
                 return hits_2t[:k]
             if "err" in _box:
+                _ranking_note("rerank", "error")
                 return hits_2t[:k]  # scorer error → bi-encoder order
             ranked = _box.get("ranked")
             # in budget: recorded, not erased. Erasing was the blind spot —
@@ -4073,7 +4139,9 @@ class SemanticMemory:
             _rerank_breaker_record(False)
             _RERANK_BREAKER["cold"] = 0         # CE answered → warm again
         if not ranked:
+            _ranking_note("rerank", "no_result")
             return hits_2t[:k]
+        _ranking_note("rerank", "applied")
         reordered = [by_id[fid] for fid, _ce in ranked if fid in by_id]
         # Defensive: re-attach pool items the primitive dropped (ids missing
         # from the DB) so a hit never silently disappears from the result.
@@ -4242,12 +4310,17 @@ class SemanticMemory:
         scorer: they enter purely via RRF against the CE order. PPR (HippoRAG-2
         gap) + BM25 (Zep gap) are each their own RRF signal. Capped at k.
         Fail-soft: any error / no extra signals → unchanged."""
-        if not _ppr_fusion_enabled() or not query or not hits:
+        if not _ppr_fusion_enabled():
+            _ranking_note("fusion", "off")
+            return hits
+        if not query or not hits:
+            _ranking_note("fusion", "skipped_no_input")
             return hits
         # Breaker FIRST: once tripped the fusion is not attempted at all, so the
         # exit costs nothing — the whole point is to stop paying for a result
         # that never arrives (see _FUSION_BREAKER).
         if _fusion_breaker_tripped():
+            _ranking_note("fusion", "skipped_breaker")
             return hits
         # #3 default-ON prereq (audit round-2): su corpus PICCOLI il bi-encoder +
         # CE bastano e i 2 DB-open + il graph-build del PPR sono puro overhead.
@@ -4259,6 +4332,7 @@ class SemanticMemory:
         if _floor > 0:
             try:
                 if len(self._get_corpus_cache()[0]) < _floor:
+                    _ranking_note("fusion", "skipped_small_corpus")
                     return hits
             except Exception:  # noqa: BLE001 — fail-soft: in dubbio, fondi
                 pass
@@ -4324,8 +4398,11 @@ class SemanticMemory:
         _budget = _ppr_fusion_budget_s()
         if _budget <= 0.0:  # 0 = no cap, synchronous (accurate bench)
             try:
-                return _fuse()
+                _fused = _fuse()
+                _ranking_note("fusion", "applied")
+                return _fused
             except Exception:  # noqa: BLE001 — recall must never break
+                _ranking_note("fusion", "error")
                 return hits
 
         _box: dict[str, Any] = {}
@@ -4340,6 +4417,7 @@ class SemanticMemory:
         try:
             _t.start()
         except Exception:  # noqa: BLE001 — the whole point of the budget is
+            _ranking_note("fusion", "error")
             return hits    # that recall degrades instead of breaking, and a
             # machine out of thread handles is exactly when it must hold. Found
             # while testing the rerank slot: breaking Thread.start there took
@@ -4352,6 +4430,7 @@ class SemanticMemory:
                 "(graph/lexical signals skipped this query)", _budget,
             )
             _fusion_breaker_record(True)
+            _ranking_note("fusion", "timeout")
             return hits
         if "err" in _box:
             # Fail-soft, but NOT silent: recall must never break on the opt-in
@@ -4362,8 +4441,10 @@ class SemanticMemory:
                 "PPR fusion failed → keeping reranked order (graph/lexical "
                 "signals skipped this query): %r", _box["err"],
             )
+            _ranking_note("fusion", "error")
             return hits
         _fusion_breaker_record(False)
+        _ranking_note("fusion", "applied")
         return _box.get("fused", hits)
 
     # ----------------------------------------------------------------

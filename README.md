@@ -121,6 +121,13 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 - **Provenance on every read** — answers cite where each fact came from
   (conversation, document offset, tool call). A `TrustReport` explains *how the
   system knows*: chain of custody, declared conflicts, or an explicit abstention.
+  The *ranking* declares itself too: `hippo_facts_recall` returns a `ranking`
+  field saying which of the three signals actually ordered the answer — e.g.
+  `{"rerank": "timeout_cold", "fusion": "timeout"}` when a cold process kept
+  bi-encoder order, `{"rerank": "applied", "fusion": "applied"}` when all three
+  ran. Each stage degrades under a wall-clock budget rather than hanging the
+  caller, so the same query can legitimately return a different set on a cold
+  process than on a warm one — that difference is now stated, not silent.
 - **Bi-temporal history** — facts carry both *when it happened* and *when we
   learned it*. Query the past (`as_of`), see transitions ("changed from X to Y
   on date Z"), and audit every revision.
