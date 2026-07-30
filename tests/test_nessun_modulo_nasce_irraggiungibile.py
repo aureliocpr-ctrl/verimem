@@ -54,7 +54,7 @@ PORTE = ("__init__", "cli", "mcp_server", "client", "gateway")
 #: Misurato il 2026-07-31. Il numero puo' SCENDERE quando si collega o si
 #: cancella qualcosa; se sale, un modulo e' nato staccato e il test lo dice
 #: subito. Non e' un obiettivo di qualita': e' un cricchetto.
-IRRAGGIUNGIBILI_NOTI = 39
+IRRAGGIUNGIBILI_NOTI = 38
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:

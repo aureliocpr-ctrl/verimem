@@ -868,6 +868,52 @@ def ignorance_cmd(
                   f"({rep['noise_floor_source']})[/dim]")
 
 
+@app.command("telemetry")
+def telemetry_cmd(
+    top: int = typer.Option(15, "--top", help="How many tools to show."),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    """Which MCP tools are actually used, how fast, and how they end.
+
+    Reads the server's audit log (`mcp_audit.log` in the data dir). Read-only.
+
+    `telemetry_analyzer` was complete and unreachable from every surface while
+    the log kept growing: 14559 calls on this machine the day it was wired.
+    The two numbers it makes visible — 121 distinct tools called out of 244
+    exposed, and a p50 of 47 s on one of the busiest — are the kind nobody
+    finds until someone complains.
+    """
+    from ._compat import data_dir
+    from .telemetry_analyzer import analyze_audit_log
+    log_path = data_dir() / "mcp_audit.log"
+    if not log_path.exists():
+        # «nessuno ha chiamato niente» e «non so» sono due risposte diverse.
+        console.print(f"[yellow]no audit log at {log_path}[/yellow] — the MCP "
+                      f"server writes it as it serves tools")
+        raise typer.Exit(0)
+    rep = analyze_audit_log(log_path)
+    if as_json:
+        console.print_json(data=rep)
+        raise typer.Exit(0)
+    righe = sorted(rep["per_tool"].items(), key=lambda kv: -kv[1]["count"])
+    t = Table(title=f"{rep['total_calls']} calls · "
+                    f"{len(rep['per_tool'])} distinct tools")
+    for c in ("tool", "calls", "p50 ms", "p99 ms", "pids", "outcomes"):
+        t.add_column(c, justify="right" if c != "tool" and c != "outcomes"
+                     else "left")
+    for nome, d in righe[:top]:
+        esiti = ", ".join(f"{k}:{v}" for k, v in
+                          sorted(d["outcomes"].items(), key=lambda kv: -kv[1])[:3])
+        t.add_row(nome, str(d["count"]),
+                  f"{d.get('latency_p50_ms') or 0:.0f}",
+                  f"{d.get('latency_p99_ms') or 0:.0f}",
+                  str(d.get("n_unique_pids", 0)), esiti)
+    console.print(t)
+    if len(righe) > top:
+        console.print(f"[dim]… e altri {len(righe) - top} tool "
+                      f"(--top per vederne di piu')[/dim]")
+
+
 def _ledger_window(stats: dict) -> tuple[float | None, float | None]:
     """``(first_recorded_ts, % of stored facts written since then)``.
 
