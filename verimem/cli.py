@@ -883,12 +883,21 @@ def telemetry_cmd(
 
     `telemetry_analyzer` was complete and unreachable from every surface while
     the log kept growing: 14559 calls on this machine the day it was wired.
-    The two numbers it makes visible — 121 distinct tools called out of 244
-    exposed, and a p50 of 47 s on one of the busiest — are the kind nobody
-    finds until someone complains.
+    It makes visible what nobody finds until someone complains — on this
+    machine, 126 of 243 exposed tools never called once in 78 days, and a
+    first-call latency of 88939 ms on one of the busiest against 125 ms from
+    the third call on.
+
+    The latency columns are FIRST-CALL vs LATER, not p50/p99 of everything.
+    An overall p50 here is not «what a call costs»: since mid-July nearly every
+    process makes one call and dies (the client times out and respawns), and
+    those processes are not a random sample — the slow ones got killed. The
+    paired comparison stays inside one process, so it does not compare
+    survivors with the dead.
     """
     from ._compat import data_dir
     from .telemetry_analyzer import analyze_audit_log
+    from .telemetry_analyzer import nome_leggibile as _nome_leggibile
     log_path = data_dir() / "mcp_audit.log"
     if not log_path.exists():
         # «nessuno ha chiamato niente» e «non so» sono due risposte diverse.
@@ -905,16 +914,26 @@ def telemetry_cmd(
                     f"{len(rep['per_tool'])} distinct tools"
                     + (f" · {escluse} test-suite calls excluded" if escluse
                        else ""))
-    for c in ("tool", "calls", "p50 ms", "p99 ms", "pids", "outcomes"):
-        t.add_column(c, justify="right" if c != "tool" and c != "outcomes"
+    # p50 della PRIMA chiamata di un processo contro quello delle SUCCESSIVE,
+    # al posto di p50/p99 complessivi: l'aggregato e' selezionato dalla
+    # sopravvivenza del processo (chi era lento e' stato ucciso dal timeout del
+    # client e conta una riga sola), il confronto appaiato no. `pids` dice
+    # anche quanti di quei processi hanno fatto una chiamata SOLA: quando sono
+    # quasi tutti, i due numeri accanto vanno letti come cold-start.
+    for c in ("tool", "calls", "p50 1a", "p50 dopo", "pids (1 sola)",
+              "outcomes"):
+        t.add_column(c, justify="right" if c not in ("tool", "outcomes")
                      else "left")
     for nome, d in righe[:top]:
-        esiti = ", ".join(f"{k}:{v}" for k, v in
+        esiti = ", ".join(f"{_nome_leggibile(k)}:{v}" for k, v in
                           sorted(d["outcomes"].items(), key=lambda kv: -kv[1])[:3])
-        t.add_row(nome, str(d["count"]),
-                  f"{d.get('latency_p50_ms') or 0:.0f}",
-                  f"{d.get('latency_p99_ms') or 0:.0f}",
-                  str(d.get("n_unique_pids", 0)), esiti)
+        _p1 = d.get("latency_p50_first_call_ms")
+        _pd = d.get("latency_p50_later_calls_ms")
+        t.add_row(_nome_leggibile(nome), str(d["count"]),
+                  "-" if _p1 is None else f"{_p1:.0f}",
+                  "-" if _pd is None else f"{_pd:.0f}",
+                  f"{d.get('n_unique_pids', 0)} ({d.get('n_single_call_pids', 0)})",
+                  esiti)
     console.print(t)
     if len(righe) > top:
         console.print(f"[dim]… e altri {len(righe) - top} tool "
