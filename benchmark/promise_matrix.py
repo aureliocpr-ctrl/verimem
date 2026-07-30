@@ -219,12 +219,37 @@ PROMESSE: list[tuple[str, Callable[[_Canale], tuple[bool, str]]]] = [
 CANALI = [CanaleSDK, CanaleCLI, CanaleMCP]
 
 
+#: Promesse che senza un giudice non sono verificabili. Su una macchina senza il
+#: modello CE (la CI, un'installazione fresca) segnarle "NO" sarebbe un falso
+#: rosso — la promessa non e' violata, e' NON MISURABILE. Distinguere le due cose
+#: e' esattamente cio' che questo prodotto vende, e una matrice che le confonde
+#: non merita di essere creduta.
+RICHIEDONO_GIUDICE = {
+    "giudica una scrittura con source",
+    "persiste il verdetto sulla riga",
+    "la lettura riporta il verdetto",
+    "si astiene su cio' che non sa",
+}
+
+
 def main() -> int:
     rotte: list[str] = []
     griglia: dict[tuple[str, str], str] = {}
+    try:
+        from verimem.local_grounding import local_ce_available
+        _giudice = local_ce_available()
+    except Exception:  # noqa: BLE001
+        _giudice = False
+    if not _giudice:
+        print("\nnessun giudice locale installato: le promesse che ne dipendono "
+              "sono NON MISURABILI qui, non violate.\n"
+              "  `verimem warmup` scarica il modello (~656 MB).")
 
     for cls in CANALI:
         for nome, prova in PROMESSE:
+            if not _giudice and nome in RICHIEDONO_GIUDICE:
+                griglia[(nome, cls.nome)] = "n/d"
+                continue
             d = Path(tempfile.mkdtemp(prefix="matrice_"))
             for k in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR", "VERIMEM_DATA_DIR"):
                 os.environ[k] = str(d)
@@ -252,7 +277,17 @@ def main() -> int:
         for r in rotte:
             print(f"  {r}")
         return 1
-    print(f"tutte le {len(PROMESSE) * len(CANALI)} celle reggono")
+    _nd = sum(1 for v in griglia.values() if v == "n/d")
+    _ok = sum(1 for v in griglia.values() if v == "ok")
+    if _nd:
+        # NON "tutte le celle reggono": 12 celle n/d con 3 ok non e' un verde,
+        # e dirlo cosi' sarebbe il difetto che questa matrice esiste per
+        # trovare — dichiarare misurato cio' che non e' stato misurato.
+        print(f"{_ok} celle verificate, {_nd} NON MISURABILI senza giudice "
+              f"(su {len(griglia)}). Questo non e' un verde: e' un verde "
+              f"parziale, e la parte che conta di piu' e' quella non misurata.")
+    else:
+        print(f"tutte le {len(griglia)} celle reggono")
     return 0
 
 
