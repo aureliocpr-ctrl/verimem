@@ -81,7 +81,7 @@ def test_un_corpus_giudicato_male_lo_dice(mem):
     assert r["composite"] < 0.7, r
 
 
-def test_anche_il_tool_mcp_lo_espone(mem):
+def test_anche_il_tool_mcp_lo_espone(mem, monkeypatch):
     """Una lettura su un canale solo e' il difetto che questi commit hanno
     passato due giorni a chiudere."""
     import asyncio
@@ -95,7 +95,10 @@ def test_anche_il_tool_mcp_lo_espone(mem):
     class _A:
         def __init__(s):
             s.semantic = mem.semantic
-    mcp_server._ag = lambda: _A()
+    # monkeypatch, non assegnazione diretta: senza ripristino `_ag` resta
+    # sostituita per tutta la sessione pytest e ogni test successivo che passa
+    # dal server MCP riceve questo doppio (5 rossi misurati il 2026-07-30).
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _A())
     h = mcp_server.server.request_handlers[CallToolRequest]
     res = asyncio.run(h(CallToolRequest(
         method="tools/call",

@@ -90,7 +90,7 @@ def test_l_etichetta_esce_dalle_letture(mem):
 
 
 # ------------------------------------------------------------------- canali
-def test_anche_il_tool_mcp_sa_etichettare(mem):
+def test_anche_il_tool_mcp_sa_etichettare(mem, monkeypatch):
     from mcp.types import CallToolRequest, CallToolRequestParams
 
     from verimem import mcp_server
@@ -98,7 +98,12 @@ def test_anche_il_tool_mcp_sa_etichettare(mem):
     class _A:
         def __init__(s):
             s.semantic = mem.semantic
-    mcp_server._ag = lambda: _A()
+    # monkeypatch, non assegnazione diretta: `_ag` e' una funzione di modulo, e
+    # chi la sostituisce senza ripristinarla la lascia sostituita per TUTTA la
+    # sessione pytest. Misurato il 2026-07-30: da qui in poi ogni test che
+    # passa dal server MCP riceveva questo `_A` al posto dell'agente vero — 5
+    # rossi in una suite intera, in test che non avevano nulla che non andasse.
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _A())
     h = mcp_server.server.request_handlers[CallToolRequest]
     res = asyncio.run(h(CallToolRequest(
         method="tools/call",
@@ -130,11 +135,34 @@ def test_anche_la_cli_sa_etichettare(mem):
 
 
 # ----------------------------------------------------------------- conteggio
-def test_lo_stato_conta_le_etichette(mem):
+def test_lo_stato_conta_le_etichette():
     """Cio' che non si conta resta spento in silenzio: e' la lezione dei due
     giorni, e questo e' il presidio che la applica al sottosistema appena
-    collegato."""
-    mem.label(mem._fid, "proven", proof="pytest:x_PASS")
+    collegato.
+
+    Non usa la fixture `mem`. `verimem status` costruisce un agente e legge
+    ``agent.semantic.db_path``, cioe' lo store di CONFIG — deliberatamente, per
+    non mescolare due popolazioni nello stesso pannello (il commento in
+    cli.py:184 lo spiega). Ma CONFIG e' congelato al primo import: quale store
+    sia dipende da chi ha importato per primo, quindi scrivere in una tmp_path e
+    poi interrogare `status` funzionava o no SECONDO L'ORDINE DEI TEST. E' stato
+    l'ultimo rosso di una suite intera (2026-07-31), e passava da solo.
+
+    Si scrive dove `status` legge davvero. E si guarda la RIGA del pannello
+    invece di cercare «1» in tutto l'output: un carattere che ricorre ovunque
+    non e' un conteggio, e con due etichette il vecchio assert sarebbe caduto
+    su un prodotto perfettamente sano.
+    """
+    from verimem.client import Memory
+    from verimem.config import CONFIG
+    m = Memory(path=CONFIG.semantic_db)
+    fid = m.add(FRASE, topic="prova/epistemica").get("id")
+    assert m.label(fid, "proven", proof="pytest:x_PASS") is True
+
     out = _ANSI.sub("", runner.invoke(app, ["status"]).output)
-    assert "epistemic" in out.lower() or "etichett" in out.lower(), out
-    assert "1" in out
+    righe = [r for r in out.splitlines()
+             if "epistemic" in r.lower() or "etichett" in r.lower()]
+    assert righe, f"il pannello non nomina le etichette:\n{out}"
+    numeri = [int(n) for n in re.findall(r"\d+", righe[0])]
+    assert numeri and max(numeri) >= 1, (
+        f"la riga c'e' ma non conta nulla: {righe[0]!r}")

@@ -124,11 +124,18 @@ def _chiama(sm, nome: str, args: dict) -> str:
     class _A:
         def __init__(s):
             s.semantic = sm
-    mcp_server._ag = lambda: _A()
-    h = mcp_server.server.request_handlers[CallToolRequest]
-    res = asyncio.run(h(CallToolRequest(
-        method="tools/call",
-        params=CallToolRequestParams(name=nome, arguments=args))))
+    # `MonkeyPatch.context()` e non un'assegnazione: questa e' una helper e non
+    # riceve la fixture, ma `_ag` e' una funzione di MODULO — sostituirla senza
+    # ripristino la lascia sostituita per tutta la sessione pytest, e ogni test
+    # successivo che passa dal server MCP riceve questo doppio (5 rossi in una
+    # suite intera, misurati il 2026-07-30, in test che non avevano nulla che
+    # non andasse).
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(mcp_server, "_ag", lambda: _A())
+        h = mcp_server.server.request_handlers[CallToolRequest]
+        res = asyncio.run(h(CallToolRequest(
+            method="tools/call",
+            params=CallToolRequestParams(name=nome, arguments=args))))
     payload = res.root if hasattr(res, "root") else res
     return "".join(c.text for c in payload.content if hasattr(c, "text"))
 

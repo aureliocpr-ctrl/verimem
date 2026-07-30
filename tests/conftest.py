@@ -179,6 +179,61 @@ def _reset_session_token():
 
 
 @pytest.fixture(autouse=True)
+def _reset_mcp_agent():
+    """Azzera l'agente globale del server MCP fra un test e l'altro.
+
+    ``mcp_server._agent`` e' una globale di processo costruita una volta sola
+    (double-checked locking — due build concorrenti sulle stesse SQLite erano
+    un difetto vero). Giusta in produzione: un processo, uno store, un agente.
+    Sotto pytest quella globale attraversa i test, e nessuna delle fixture qui
+    sopra la toccava.
+
+    Cosa costava, misurato il 2026-07-30 sulla suite intera (seed 2069628213):
+    **7 rossi su 8592**, nessuno dei quali era un test rotto — passano tutti
+    isolatamente. Le firme::
+
+        AssertionError: build() ran 0x — _ag() is not locked
+        error="'_A' object has no attribute 'memory'"  tool=hippo_record_episode
+        AssertionError: {'error': 'store failed: AttributeError'}
+
+    L'ordine di esecuzione lo mostra: subito prima di
+    ``test_cold_start_warmup`` girava ``test_mcp_anti_confab_scan``, che
+    installa un ``MagicMock`` al posto dell'agente. Chi arriva dopo se lo
+    ritrova — un mock, uno stub ``_A`` di un altro file, o un agente vero
+    puntato allo store di qualcun altro. Con l'ordine casuale la vittima cambia
+    a ogni seme: la stessa suite, sullo stesso codice, dava verde o rosso.
+    Un gate che non e' riproducibile non e' un gate.
+
+    Stesso principio di ``_restore_module_config`` qui sotto — chi NON usa
+    monkeypatch lascia lo stato in piedi, e la rete di sicurezza sta qui, non
+    nella disciplina di chi scrive il prossimo test.
+
+    Si tocca il modulo SOLO se e' gia' stato importato: importarlo qui
+    costerebbe a ogni test un modulo da 13k righe (~3.7 s al primo import) per
+    azzerare una globale che, se nessuno ha caricato il server, non esiste.
+    """
+    import sys
+    mod = sys.modules.get("verimem.mcp_server")
+    if mod is None:
+        yield
+        return
+    # `_ag` (la FUNZIONE) conta quanto `_agent` (la globale), ed e' quella che
+    # ha fatto il danno: tre file la sostituivano con `mcp_server._ag = lambda:
+    # _A()` — assegnazione diretta, mai ripristinata — mentre una trentina di
+    # altri usavano monkeypatch. Da quel punto in poi, per il resto della
+    # sessione, ogni tool MCP riceveva quel doppio: `'_A' object has no
+    # attribute 'memory'`. I tre call site sono corretti; questo e' cio' che
+    # regge quando il prossimo li rifara'.
+    _ag_prima = mod._ag
+    mod._agent = None
+    yield
+    mod = sys.modules.get("verimem.mcp_server")
+    if mod is not None:
+        mod._agent = None
+        mod._ag = _ag_prima
+
+
+@pytest.fixture(autouse=True)
 def _restore_module_config():
     """Restore the CONFIG binding inside modules that allow override.
 

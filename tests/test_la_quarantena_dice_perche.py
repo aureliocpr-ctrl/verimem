@@ -108,7 +108,10 @@ def test_anche_il_tool_mcp_sa_spiegare(tmp_path, monkeypatch):
     class _A:
         def __init__(s):
             s.semantic = m.semantic
-    mcp_server._ag = lambda: _A()
+    # monkeypatch, non assegnazione diretta: senza ripristino `_ag` resta
+    # sostituita per tutta la sessione pytest e ogni test successivo che passa
+    # dal server MCP riceve questo doppio (5 rossi misurati il 2026-07-30).
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _A())
     h = mcp_server.server.request_handlers[CallToolRequest]
 
     def _call(args):
