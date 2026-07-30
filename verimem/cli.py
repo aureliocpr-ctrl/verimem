@@ -822,6 +822,46 @@ def recall_cmd(
         console.print(riga_di_recall(h))
 
 
+@app.command("ignorance")
+def ignorance_cmd(
+    queries: list[str] = typer.Argument(  # noqa: B008 — typer idiom
+        ..., help="The questions that went unanswered."),
+    floor: float = typer.Option(0.8, "--floor", help="Abstention floor a hit "
+                                                     "must clear."),
+    k: int = typer.Option(5, "--k"),
+    noise_floor: float | None = typer.Option(
+        None, "--noise-floor", help="Separates noise from weak evidence; "
+                                    "omit to measure it from the store."),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    """WHY the store cannot answer — the ignorance CLASS and what would cure it.
+
+    ``no_evidence`` (nothing relevant is stored) · ``below_floor`` (hits exist,
+    none clears the floor) · ``quarantined_only`` (the evidence EXISTS but is
+    quarantined — the cure is a source or a review, not more retrieval) ·
+    ``conflict`` (live facts disagree, no epistemic winner) · ``answerable``.
+
+    Read-only: the map never writes.
+    """
+    rep = _open_memory().ignorance(list(queries), floor=floor, k=k,
+                                   noise_floor=noise_floor)
+    if as_json:
+        console.print_json(data=rep)
+        raise typer.Exit(0)
+    for r in rep["queries"]:
+        colore = {"answerable": "green", "conflict": "red",
+                  "quarantined_only": "yellow"}.get(r["class"], "cyan")
+        console.print(f"[{colore}]{r['class']}[/{colore}]  {r['query']}")
+        if r.get("what_would_help"):
+            console.print(f"    → {r['what_would_help']}")
+    riepilogo = "  ".join(f"{c}={n}" for c, n in sorted(rep["by_class"].items()))
+    # `noise_floor_source` esce SEMPRE: 0.0 significa «non misurabile», «la
+    # misura e' fallita» o «l'hai imposto tu», e senza dirlo l'operatore non
+    # distingue una guardia spenta da una misurata.
+    console.print(f"[dim]{riepilogo}   noise_floor="
+                  f"{rep['noise_floor']:.3f} ({rep['noise_floor_source']})[/dim]")
+
+
 def _ledger_window(stats: dict) -> tuple[float | None, float | None]:
     """``(first_recorded_ts, % of stored facts written since then)``.
 

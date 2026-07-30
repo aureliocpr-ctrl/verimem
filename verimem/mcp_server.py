@@ -2666,6 +2666,45 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_ignorance_map",
+            description=(
+                "WHY the store cannot answer — the active complement of "
+                "abstention. For each query it names the ignorance CLASS and "
+                "what would cure it: 'no_evidence' (nothing relevant is "
+                "stored), 'below_floor' (hits exist, none clears the declared "
+                "floor), 'quarantined_only' (the evidence EXISTS but every "
+                "piece is quarantined — the cure is a supporting source or a "
+                "quarantine review, NOT more retrieval), 'conflict' (live "
+                "facts disagree about one subject with no epistemic winner), "
+                "'answerable' (not ignorance, counted so the denominator is "
+                "honest). Call it after a recall came back empty or a "
+                "trust_report abstained: it turns \"I don't know\" into a "
+                "work-list. Read-only — the map never writes."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "queries": {"type": "array", "items": {"type": "string"},
+                                "description": "the questions that went "
+                                               "unanswered"},
+                    "floor": {"type": "number", "default": 0.8,
+                              "description": "the abstention floor a hit must "
+                                             "clear to count as evidence"},
+                    "k": {"type": "integer", "default": 5},
+                    "noise_floor": {
+                        "type": "number",
+                        "description": "separates NOISE from weak evidence; "
+                                       "omit to measure it from the store "
+                                       "itself. The report says WHICH of the "
+                                       "two happened (`noise_floor_source`), "
+                                       "because a bare 0.0 means three "
+                                       "different things.",
+                    },
+                },
+                "required": ["queries"],
+            },
+        ),
+        t.Tool(
             name="hippo_fact_label",
             description=(
                 "Attach the KIND OF GUARANTEE behind a fact: 'proven' (a named "
@@ -12457,11 +12496,32 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                          "grounding is switched off here "
                          "(ENGRAM_GROUNDING_WRITE=0)")
             else:
-                _moat = ("could not judge — a source was given and the moat "
-                         "was asked, but no judge was available for this "
-                         "write (no llm and no local CE model); this is NOT a "
-                         "pass — run `verimem doctor` to see which judge is "
-                         "missing")
+                # QUALE dei tre «non ho giudicato», perche' mandano a fare cose
+                # diverse. Diceva sempre «no local CE model», e su QUESTO canale
+                # era quasi sempre falso: il server gira delegate-only e per i
+                # primi ~45 secondi il modello e' su disco e sta caricando su un
+                # thread di sfondo (misurato 2026-07-30). Lo stato lo dice
+                # `judge_state()`, lo stesso che legge l'advisory L4.
+                from .local_grounding import judge_state as _js
+                _stato = _js()
+                if _stato == "warming":
+                    _moat = ("could not judge — the local CE judge was still "
+                             "LOADING when this write arrived (the server keeps "
+                             "the ~30s cold load off the request thread). The "
+                             "model is NOT missing; this is NOT a pass. Writes "
+                             "after it lands are judged, and the CLI judges "
+                             "immediately")
+                elif _stato == "failed":
+                    _moat = ("could not judge — the local CE judge is on disk "
+                             "but FAILED to load in this process (cached for "
+                             "its lifetime); this is NOT a pass — run "
+                             "`verimem doctor` for the reason")
+                else:
+                    _moat = ("could not judge — a source was given and the moat "
+                             "was asked, but no judge was available for this "
+                             "write (no llm and no local CE model); this is NOT a "
+                             "pass — run `verimem warmup` to fetch the free "
+                             "judge, or `verimem doctor` to see which is missing")
             return _ok({
                 "ok": True,
                 "id": fact.id,
@@ -12796,6 +12856,38 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     threshold=float(arguments.get("threshold", 85.0) or 85.0))
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"epistemic_health failed: {_exc}")
+            _audit(name, arguments, outcome="ok")
+            return _ok(_rep)
+
+        if name == "hippo_ignorance_map":
+            # Il complemento attivo dell'astensione: era completo, con due file
+            # di test suoi, e nessuna superficie lo raggiungeva. Sul canale MCP
+            # e' dove serve di piu' — un agente che ha appena ricevuto «non lo
+            # so» chiede COSA MANCA senza cambiare strumento.
+            from .client import Memory as _M
+
+            class _Vista:
+                # `ignorance_map` vuole `.search` (dict con id/score) e
+                # `.semantic`. `Memory.search` usa SOLO `self.semantic`
+                # (verificato sull'AST, non a occhio), quindi la vista basta:
+                # nessun secondo handle sullo stesso SQLite.
+                semantic = a.semantic
+
+                def search(self, query, k=5, **kw):
+                    return _M.search(self, query, k=k, **kw)
+
+            _queries = [str(q) for q in (arguments.get("queries") or []) if str(q).strip()]
+            if not _queries:
+                return _err("hippo_ignorance_map needs at least one query")
+            _nf = arguments.get("noise_floor")
+            try:
+                _rep = _M.ignorance(
+                    _Vista(), _queries,
+                    floor=float(arguments.get("floor", 0.8) or 0.8),
+                    k=int(arguments.get("k", 5) or 5),
+                    noise_floor=None if _nf is None else float(_nf))
+            except Exception as _exc:  # noqa: BLE001
+                return _err(f"ignorance_map failed: {_exc}")
             _audit(name, arguments, outcome="ok")
             return _ok(_rep)
 

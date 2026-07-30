@@ -41,12 +41,20 @@ from pathlib import Path
 PKG = Path(__file__).resolve().parent.parent / "verimem"
 
 #: Le porte del prodotto: cio' che un utente puo' invocare.
-PORTE = ("cli", "mcp_server", "client", "gateway")
+#:
+#: ``__init__`` E' UNA PORTA, ed e' la prima: ``import verimem`` la esegue
+#: sempre. Ometterla ha dichiarato spenti due moduli vivi — ``mode``, il cui
+#: ``apply_engram_mode()`` gira a ogni import (riga 32 di ``__init__.py``), e
+#: ``auto_memory``, che sta in ``__all__`` ed e' API pubblica. Stesso difetto di
+#: quando mancava ``python -m``: uno strumento che grida piu' del dovuto fa
+#: perdere tempo invece di farne guadagnare, e va corretto con la stessa cura
+#: con cui si corregge il prodotto.
+PORTE = ("__init__", "cli", "mcp_server", "client", "gateway")
 
 #: Misurato il 2026-07-31. Il numero puo' SCENDERE quando si collega o si
 #: cancella qualcosa; se sale, un modulo e' nato staccato e il test lo dice
 #: subito. Non e' un obiettivo di qualita': e' un cricchetto.
-IRRAGGIUNGIBILI_NOTI = 42
+IRRAGGIUNGIBILI_NOTI = 39
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:
@@ -131,6 +139,26 @@ def test_il_cricchetto_si_stringe_quando_si_collega():
         f"gli irraggiungibili sono scesi a {n} (noti {IRRAGGIUNGIBILI_NOTI}): "
         f"abbassa IRRAGGIUNGIBILI_NOTI, altrimenti il prossimo modulo staccato "
         f"passa senza far rumore")
+
+
+def test_cio_che_init_esegue_non_puo_risultare_spento(monkeypatch):
+    """``mode`` e ``auto_memory`` erano nella lista degli spenti, e sono vivi.
+
+    Il test si falsifica da solo: togliendo ``__init__`` dalle porte, i due
+    devono RIAPPARIRE fra gli irraggiungibili. Se non riapparissero, la porta
+    non starebbe contando nulla e questo test non presidierebbe niente —
+    misurare che la misura misura, dopo dieci criteri sbagliati in due giorni.
+    """
+    vivi = {"mode", "auto_memory"}
+    assert not (vivi & set(_irraggiungibili())), (
+        "un modulo che `import verimem` esegue risulta irraggiungibile")
+
+    import sys
+    monkeypatch.setattr(sys.modules[__name__], "PORTE",
+                        tuple(p for p in PORTE if p != "__init__"))
+    assert vivi <= set(_irraggiungibili()), (
+        "senza la porta __init__ i due dovrebbero risultare spenti: la porta "
+        "non sta cambiando il conto, quindi non e' lei a coprirli")
 
 
 def test_le_porte_esistono_ancora():

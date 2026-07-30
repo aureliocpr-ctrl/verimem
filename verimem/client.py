@@ -1573,6 +1573,31 @@ class Memory:
                 threshold=threshold))
         return health_report(audits)
 
+    def ignorance(self, queries: list[str], *, floor: float = 0.8,
+                  k: int = 5,
+                  noise_floor: float | None = None) -> dict[str, Any]:
+        """Perche' non lo so: la CLASSE dell'ignoranza e cosa la curerebbe.
+
+        L'astensione e' il claim che distingue questo prodotto, e da sola
+        lascia il chiamante dov'era — sa che non sa. Qui ogni domanda torna
+        classificata: `no_evidence` (non c'e' niente), `below_floor` (c'e' ma
+        non regge), `quarantined_only` (l'evidenza ESISTE ed e' in quarantena —
+        la cura e' una fonte o una revisione, non altro retrieval), `conflict`
+        (fatti vivi che si contraddicono senza vincitore), `answerable` (non e'
+        ignoranza, e si conta lo stesso perche' il denominatore sia onesto).
+
+        Il modulo era completo, con due file di test suoi, e irraggiungibile da
+        ogni superficie: zero import fuori da se', zero righe nel README. La
+        sua interfaccia combacia gia' con questo client — nessun adattatore,
+        a differenza di [epistemic_health][], che era scritto per una forma di
+        fatto diversa.
+
+        Sola lettura: la mappa non scrive mai.
+        """
+        from .ignorance_map import ignorance_map as _mappa
+        return _mappa(self, list(queries), floor=floor, k=k,
+                      noise_floor=noise_floor)
+
     def label(self, fact_id: str, kind: str, *, proof: str | None = None,
               bound: float | None = None,
               counterexample: str | None = None) -> bool:

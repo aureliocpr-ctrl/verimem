@@ -967,6 +967,55 @@ def _is_historical_completion(proposition: str) -> bool:
     return bool(_HISTORICAL_COMPLETION.search(p)) and bool(_CALENDAR_YEAR.search(p))
 
 
+def _advisory_l4_skipped() -> dict[str, str]:
+    """L'avviso che finisce nella provenance di un write sourced NON giudicato.
+
+    Diceva sempre «il modello locale non e' installato», e per il server MCP era
+    FALSO: li' il modello c'e' e sta caricando su un thread di sfondo, quindi
+    per i primi ~45 secondi ogni write sourced veniva ammesso con un avviso che
+    mandava a scaricare un file gia' presente (misurato 2026-07-30, riprodotto
+    con l'env del server). Quell'avviso resta scritto sul fatto per sempre, e
+    una diagnosi confidente-e-sbagliata e' precisamente cio' che questo prodotto
+    esiste per impedire — a maggior ragione quando la scrive lui.
+
+    Lo stato lo dice ``local_grounding.judge_state()``, uno solo per tutte le
+    superfici. Il write resta AMMESSO in ogni caso (regola della provenance da
+    fonte), etichettato onestamente «entailment NOT verified»: mai spacciato per
+    verificato, mai saltato in silenzio.
+    """
+    from .local_grounding import judge_state
+    stato = judge_state()
+    if stato == "warming":
+        return {
+            "layer": "L4-skipped",
+            "reason": "source provided but the grounding judge was still "
+                      "loading - entailment NOT verified for THIS write",
+            "advice": "the local CE judge is warming on a background thread "
+                      "(delegate-only mode keeps the ~30s cold load off the "
+                      "request thread). It is NOT missing: re-writing after it "
+                      "lands, or writing through the CLI, gets the moat verdict.",
+        }
+    if stato == "failed":
+        return {
+            "layer": "L4-skipped",
+            "reason": "source provided but the grounding judge failed to load - "
+                      "entailment NOT verified",
+            "advice": "the local model is on disk but could not be loaded in "
+                      "this process (the failure is cached for its lifetime). "
+                      "Run `verimem doctor` for the reason, or pass "
+                      "Memory(llm=...) to use an injected judge instead.",
+        }
+    return {
+        "layer": "L4-skipped",
+        "reason": "source provided but no grounding judge is available - "
+                  "entailment NOT verified",
+        "advice": "the local grounding model is not installed and no llm was "
+                  "passed. Run `verimem warmup` to fetch the free multilingual "
+                  "CE judge, or pass Memory(llm=...) — either turns the "
+                  "source-entailment moat on.",
+    }
+
+
 def run_validation_gate(
     *,
     proposition: str,
@@ -1326,22 +1375,7 @@ def run_validation_gate(
                    or _resolve_backend() == "local"
                    or local_ce_available())
     def _emit_l4_skipped() -> None:
-        # A sourced write with NO reachable grounding judge — neither an injected
-        # llm NOR the local CE (never downloaded, or unloadable at score-time) —
-        # is NOT entailment-verified. Say so out loud, NEVER a silent skip. The
-        # write is still ADMITTED (source-provenance rule below) but its provenance
-        # carries this advisory: recallable, honestly labelled "grounding not
-        # verified", never passed off as verified. (2026-07-18: the CE is the
-        # default judge when present and is multilingual — measured EN/IT/FR/ES.)
-        warnings.append({
-            "layer": "L4-skipped",
-            "reason": "source provided but no grounding judge is available - "
-                      "entailment NOT verified",
-            "advice": "the local grounding model is not installed and no llm was "
-                      "passed. Run `verimem warmup` to fetch the free multilingual "
-                      "CE judge, or pass Memory(llm=...) — either turns the "
-                      "source-entailment moat on.",
-        })
+        warnings.append(_advisory_l4_skipped())
 
     if source and _ground_on and _have_judge:
         # score and cut resolved for the SAME judge (local CE vs claude scales differ —

@@ -171,6 +171,41 @@ def get_local_threshold() -> float | None:
     return get_local_judge().threshold
 
 
+def judge_state() -> str:
+    """Lo stato del giudice locale in UNA parola, per tutte le superfici.
+
+    ``ready`` (carico, giudica adesso) · ``warming`` (il modello c'e' e sta
+    caricando su un thread di sfondo: in delegate-only il primo write NON viene
+    giudicato) · ``absent`` (il modello non e' su disco: si scarica) ·
+    ``failed`` (c'e' ma il caricamento e' fallito: si diagnostica).
+
+    Esiste perche' tre superfici — l'advisory L4, la ricevuta MCP e ``doctor``
+    — deducevano ognuna per conto suo perche' mancasse un punteggio, e nessuna
+    distingueva «assente» da «sta scaldando». Misurato il 2026-07-30 con l'env
+    del server MCP: per ~45 secondi il moat non giudica e annuncia «model
+    missing or unloadable» mentre lo stesso modello, senza delegate-only,
+    risponde 99.93 all'istante. Un posto solo che lo sa, come per il contratto
+    di uscita dei fatti: quando in tanti ricostruiscono lo stesso dato, la cura
+    non e' correggerli tutti, e' averne uno.
+    """
+    j = get_local_judge()
+    if getattr(j, "_scorer", None) is not None:
+        return "ready"
+    if getattr(j, "_load_failed", False):
+        return "failed"
+    try:
+        presente = j.model_dir.exists()
+    except OSError:
+        presente = False
+    if not presente:
+        return "absent"
+    # Il modello c'e' e lo scorer no. In delegate-only e' il caso NORMALE dei
+    # primi secondi: il caricamento e' su un thread di sfondo per non bloccare
+    # la richiesta. Fuori da delegate-only il caricamento e' sincrono alla
+    # prima chiamata, quindi «pronto appena serve».
+    return "warming" if _delegate_only() else "ready"
+
+
 def local_ce_available() -> bool:
     """True when the local CE moat judge can score WITHOUT an injected llm — an
     injected scorer (tests) or a model dir present on disk. Cheap by design:
@@ -376,6 +411,7 @@ def try_local_score(source: str, fact: str, *,
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
            "try_local_score", "local_ce_available", "warm_local_judge_async",
+           "judge_state",
            "ensure_gate_model", "DEFAULT_GATE_MODEL_URL",
            "DEFAULT_GATE_MODEL_SHA256", "DEFAULT_GATE_MODEL_HUB_ID",
            "DEFAULT_MODEL_DIR"]

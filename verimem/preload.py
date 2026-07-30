@@ -71,6 +71,38 @@ def _warm_reranker(*, log=None) -> None:
             log.warning("mcp_preload_reranker_failed", error=str(exc))
 
 
+def _deve_scaldare_il_giudice() -> bool:
+    """Il moat sul write e' acceso ESPLICITAMENTE per questo processo?
+
+    Se lo e', quel server GIUDICHERA', e il modello va scaldato all'avvio invece
+    che alla prima scrittura: in delegate-only la prima scrittura non viene
+    giudicata (misurato 2026-07-30: ~45s di ``NoGroundingJudge`` prima che il
+    warm atterri) e nessuno la rimette in coda quando il giudice si sveglia. Il
+    fatto entra non verificato e ci resta.
+
+    Condizionato al flag, e non e' un dettaglio: scaldare il cross-encoder in
+    OGNI server MCP e' costato ~450 MB per processo nell'incidente RAM del
+    2026-07-10. Chi non accende il moat sul write non paga niente. Assente =
+    NO: solo una scelta esplicita compra il modello.
+    """
+    return (os.environ.get("ENGRAM_GROUNDING_WRITE", "").strip().lower()
+            in {"1", "true", "yes", "on"})
+
+
+def _warm_moat_judge(*, log=None) -> None:
+    """Carica il giudice del moat fuori dal thread di richiesta. Best-effort:
+    il fallimento e' gia' memorizzato sul giudice e l'advisory continua a
+    funzionare — un warm non fa mai morire il boot."""
+    try:
+        from .local_grounding import get_local_judge
+        get_local_judge()._ensure_scorer()
+        if log is not None:
+            log.info("mcp_preload_moat_judge_complete")
+    except Exception as exc:  # noqa: BLE001 — il warm non deve mai uccidere il boot
+        if log is not None:
+            log.warning("mcp_preload_moat_judge_failed", error=str(exc))
+
+
 def _service_enabled() -> bool:
     return os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() not in _FALSY
 
@@ -144,11 +176,20 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
         _run()
         if warm_ce:
             _run_reranker()
+        if _deve_scaldare_il_giudice():
+            _warm_moat_judge(log=log)
         return None
 
     if warm_ce:
         threading.Thread(
             target=_run_reranker, name="hippo-reranker-preload", daemon=True,
+        ).start()
+    # Il giudice del moat, sul SUO thread: modello e lock diversi dall'embedder
+    # e dal reranker, quindi scaldarlo qui non blocca ne' recall ne' save.
+    if _deve_scaldare_il_giudice():
+        threading.Thread(
+            target=lambda: _warm_moat_judge(log=log),
+            name="verimem-moat-judge-preload", daemon=True,
         ).start()
     thread = threading.Thread(
         target=_run, name="hippo-embedding-preload", daemon=True,

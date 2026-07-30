@@ -92,8 +92,15 @@ def run_doctor() -> list[dict[str, Any]]:
     _MOAT_COVERAGE_WARN = 0.5
     try:
         from .llm import _autodetect_provider
-        from .local_grounding import _resolve_model_dir, local_ce_available
+        from .local_grounding import (
+            _resolve_model_dir,
+            judge_state,
+            local_ce_available,
+        )
         ce = local_ce_available()
+        # Lo STATO nel processo che chiede, dalla funzione unica (la stessa che
+        # legge l'advisory L4 e la ricevuta MCP) — non ri-dedotto qui.
+        _stato_giudice = judge_state()
         provider = None
         try:
             provider = _autodetect_provider()
@@ -155,12 +162,24 @@ def run_doctor() -> list[dict[str, Any]]:
                     "the grounding_score column, locked or corrupt will fail "
                     "this read")
             elif _n and _judged / _n < _MOAT_COVERAGE_WARN:
+                # DUE cause, non una. La seconda e' stata misurata il
+                # 2026-07-30: un write CON fonte, sul canale MCP, non e' stato
+                # giudicato lo stesso — li' il server tiene il cold-load da ~30s
+                # fuori dal thread di richiesta, e per quei secondi il giudice
+                # sta caricando (`judge_state() == "warming"`). Nominare solo la
+                # prima manda l'operatore ad aggiungere una source che gia'
+                # c'era, e il numero non si muove.
                 add("moat-judge", WARN,
-                    f"local CE gate model installed, but only {_coverage} — "
-                    f"the moat runs only on writes that carry a source",
+                    f"local CE gate model installed (state here: "
+                    f"{_stato_giudice}), but only {_coverage} — the moat runs "
+                    f"only on writes that carry a source, AND on the MCP "
+                    f"channel the judge loads in the background: writes that "
+                    f"arrive while it is warming are admitted unjudged",
                     "pass source='<the evidence text>' on add() (or --source on "
                     "`verimem save`); a verified_by ref records WHO vouches and "
-                    "does not run the check")
+                    "does not run the check. For the MCP server, set "
+                    "ENGRAM_GROUNDING_WRITE=1 in its env so the judge is warmed "
+                    "at boot instead of on the first write")
             else:
                 add("moat-judge", OK,
                     f"local CE gate model installed — the grounding moat is ON "
