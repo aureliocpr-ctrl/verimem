@@ -138,6 +138,16 @@ def history_line(fact, history: list, *, disputes: list[str] | None = None) -> s
     prop = (getattr(fact, "proposition", "") or "").strip()
     since = _iso(_event_ts(fact))
     line = f"{prop} [current, since {since}]" if since else prop
+    # 2026-07-30: questa riga e' il canale con cui un modello legge la memoria
+    # e decide quanto fidarsi, e non diceva se il fatto fosse stato verificato.
+    # Si marca SOLO quando il verdetto c'e': nel payload JSON il campo esce
+    # sempre, anche null, perche' lo legge una macchina e distinguere «assente»
+    # da «mai giudicato» costa zero — qui ogni token e' contesto tolto a chi
+    # legge, e sul corpus vivo i fatti giudicati sono una minoranza, quindi
+    # marcare l'assenza su quasi ogni riga sommergerebbe il segnale.
+    _gs = getattr(fact, "grounding_score", None)
+    if isinstance(_gs, (int, float)) and not isinstance(_gs, bool):
+        line += f" [verificato: la fonte lo implica, {float(_gs):.1f}]"
     for p in history:
         p_prop = (getattr(p, "proposition", "") or "").strip()
         asserted = _iso(_event_ts(p))

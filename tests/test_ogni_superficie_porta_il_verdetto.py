@@ -16,15 +16,28 @@ nasce una superficie nuova, non se ne accorge.
 
 Questo file chiude la classe invece dell'ottava istanza. Il censimento chiama i
 tool su uno store con UN fatto giudicato e usa un criterio operativo, non
-un'euristica sul nome: se nella risposta compare l'id di quel fatto, e' una
-superficie che restituisce fatti, e allora deve portare anche il verdetto.
+un'euristica sul nome: se nella risposta compare il CONTENUTO di quel fatto,
+e' una superficie che restituisce fatti, e allora deve portare anche il
+verdetto.
 
-Misurato il 2026-07-30 su 241 tool: 4 portano il verdetto, 11 no.
+Il criterio e' costato due correzioni, e vanno tenute a mente perche' sono il
+modo in cui uno strumento del genere mente. Cercare l'id sbagliava in entrambe
+le direzioni: intercettava `justified_audit`, che restituisce solo una lista di
+identificativi e a cui il verdetto per-fatto non si chiede, e MANCAVA
+`recall_history`, che stampa la proposizione senza l'id — una superficie di
+recall vera, rimasta invisibile finche' il criterio non e' stato corretto.
 
-Le 11 sono DEBITO DICHIARATO, non un elenco di scuse: `test_le_scoperte_sono
-_ancora_quelle_dichiarate` fallisce sia se ne nasce una in piu' sia se ne curi
-una senza spostarla. Un debito che nessuno puo' lasciar marcire in silenzio e'
-la differenza fra un difetto noto e un difetto dimenticato.
+Misurato il 2026-07-30 su 241 tool, mentre la cura procedeva:
+
+    4 portano il verdetto, 11 no      (prima)
+    9 portano                          (contratto unico nei moduli)
+    13 portano                         (recall_history, briefing, topics)
+    14 portano,  1 no                  (aggregato con n_judged)
+
+L'ultima non e' un difetto ed e' dichiarata con il perche'.
+`test_le_scoperte_sono_ancora_quelle_dichiarate` fallisce sia se ne nasce una
+in piu' sia se ne viene curata una senza spostarla: un elenco che si aggiorna
+solo quando peggiora non presidia niente.
 """
 from __future__ import annotations
 
@@ -43,32 +56,41 @@ VERDETTO = 88.5
 #: Superfici che restituiscono fatti E portano il verdetto. Curate a mano, una
 #: per volta, ed e' esattamente il motivo per cui questo file esiste.
 PORTANO = {
+    # Le quattro curate a mano, una per volta, prima che esistesse un contratto.
     "hippo_facts_search",
     "hippo_facts_list",
     "hippo_facts_recall",
     "hippo_trust_report",
-    # 2026-07-30: guarite tutte insieme dal contratto unico
-    # (fact_contract.fact_payload), senza toccarne una per una — cablando i
-    # cinque MODULI dietro di loro. Erano 4 su 15; il censimento ha detto 9.
+    # Guarite insieme dal contratto unico (fact_contract.fact_payload) cablato
+    # nei MODULI dietro di loro, non nei tool: 4 -> 9.
     "hippo_facts_recent",
     "hippo_facts_by_confidence",
     "hippo_fact_priority",
     "hippo_rank_facts_trust",
     "hippo_facts_export_all",
+    # 9 -> 14. Ognuna con la forma che il suo canale richiede, non col payload
+    # copiato ovunque: `recall_history` restituisce righe di TESTO per un
+    # modello, quindi marca solo i fatti giudicati (marcare l'assenza su quasi
+    # ogni riga sommergerebbe il segnale); `facts_cluster_by_topic` e' un
+    # aggregato, quindi dice n_judged e la media sui soli giudicati; il
+    # briefing alimenta anche la dashboard, che e' guarita di conseguenza.
+    "hippo_briefing",
+    "hippo_dashboard_overview",
+    "hippo_facts_topics",
+    "hippo_recall_history",
+    "hippo_facts_cluster_by_topic",
 }
 
 #: Superfici che restituiscono fatti SENZA il verdetto. Il motivo per cui una
 #: sta qui non e' «va bene»: e' «non e' ancora curata». Vanno lette come una
 #: lista di lavoro, con la piu' grave in cima.
 SCOPERTE = {
-    "hippo_justified_audit":
-        "un audit di giustificazione senza il verdetto dice meta' storia",
     "hippo_facts_topic_merge":
-        "unisce topic: da guardare se e' una lettura o un'operazione",
-    "hippo_briefing": "riassunto di sessione: forse gli basta un aggregato",
-    "hippo_facts_cluster_by_topic": "aggregato: forse gli basta una media",
-    "hippo_dashboard_overview": "aggregato",
-    "hippo_facts_topics": "elenco di topic",
+        "non e' una lettura: FONDE piu' proposizioni in un fatto nuovo. Il "
+        "verdetto dei fatti d'origine non si eredita — un merge di cinque "
+        "fatti verificati non e' verificato — e giudicare il risultato e' "
+        "un'altra decisione, non un campo da propagare. Resta qui perche' il "
+        "censimento lo intercetta e l'elenco deve dire perche', non tacere.",
 }
 
 CENSITE = PORTANO | set(SCOPERTE)
@@ -111,22 +133,32 @@ def _chiama(sm, nome: str, args: dict) -> str:
     return "".join(c.text for c in payload.content if hasattr(c, "text"))
 
 
+#: Frammento distintivo della proposizione. E' IL criterio: «la risposta
+#: contiene il contenuto del fatto». Cercare l'id sbagliava in due direzioni —
+#: intercettava justified_audit, che restituisce solo una lista di
+#: identificativi e a cui il verdetto per-fatto non si chiede, e mancava
+#: recall_history, che stampa la proposizione senza l'id.
+MARCA = "8443"
+
+
 def _args(nome: str) -> dict:
     a: dict = {}
     if nome in ("hippo_facts_search", "hippo_facts_recall",
-                "hippo_trust_report", "hippo_briefing"):
+                "hippo_trust_report", "hippo_briefing",
+                "hippo_recall_history"):
         a["query"] = QUERY
-    if nome in ("hippo_facts_topic_merge", "hippo_justified_audit"):
+    if nome == "hippo_facts_topic_merge":
         a["topic"] = "censimento/prova"
     return a
 
 
 @pytest.mark.parametrize("nome", sorted(PORTANO))
 def test_le_superfici_curate_portano_il_verdetto(nome: str, store):
-    sm, fid = store
+    sm, _fid = store
     testo = _chiama(sm, nome, _args(nome))
-    assert fid[:12] in testo or fid in testo, (
-        f"{nome} non ha restituito il fatto: il censimento non lo copre piu'")
+    assert MARCA in testo, (
+        f"{nome} non restituisce piu' il contenuto del fatto: il censimento "
+        f"non lo copre piu', ricontrollalo")
     assert "grounding_score" in testo or str(VERDETTO) in testo, (
         f"REGRESSIONE: {nome} restituisce il fatto senza il verdetto.\n"
         f"{testo[:400]}")
@@ -139,7 +171,7 @@ def test_le_scoperte_sono_ancora_quelle_dichiarate(store):
     spostata in PORTANO, e se ne compare una nuova va classificata. Un elenco
     che si aggiorna solo quando peggiora e' un elenco che non presidia niente.
     """
-    sm, fid = store
+    sm, _fid = store
     guarite, sparite = [], []
     for nome in sorted(SCOPERTE):
         try:
@@ -147,7 +179,7 @@ def test_le_scoperte_sono_ancora_quelle_dichiarate(store):
         except Exception as exc:  # noqa: BLE001
             sparite.append(f"{nome}: {type(exc).__name__}")
             continue
-        if fid[:12] not in testo and fid not in testo:
+        if MARCA not in testo:
             sparite.append(f"{nome}: non restituisce piu' il fatto")
         elif "grounding_score" in testo or str(VERDETTO) in testo:
             guarite.append(nome)
@@ -168,7 +200,7 @@ def test_nessuna_superficie_sfugge_al_censimento(store):
     """
     from verimem import mcp_server
     tools = asyncio.run(mcp_server._list_tools_unfiltered())
-    sm, fid = store
+    sm, _fid = store
     noti = {"query": QUERY, "q": QUERY, "text": QUERY, "question": QUERY,
             "limit": 5, "k": 5, "top_k": 5, "n": 5, "max_results": 5,
             "topic": "censimento/prova", "hours": 24, "days": 7}
@@ -188,7 +220,7 @@ def test_nessuna_superficie_sfugge_al_censimento(store):
         except Exception:  # noqa: BLE001
             non_censiti += 1
             continue
-        if fid[:12] not in testo and fid not in testo:
+        if MARCA not in testo:
             continue
         if "grounding_score" in testo or str(VERDETTO) in testo:
             continue
