@@ -3599,9 +3599,19 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "default ''), confidence (float 0..1, default "
                             "0.9), verified_by (list of provenance refs, "
                             "same shape as hippo_remember's — they reach "
-                            "the gate AND the stored fact). Resilient: one "
-                            "bad entry does NOT abort the call, the episode "
-                            "is still committed."
+                            "the gate AND the stored fact), and `source` "
+                            "(the EVIDENCE TEXT this fact is checked "
+                            "against — it is what runs the entailment moat; "
+                            "verified_by records WHO vouches and does not "
+                            "run the check). Resilient: one bad entry does "
+                            "NOT abort the call, the episode is still "
+                            "committed. The reply carries "
+                            "`key_facts_outcome`: one entry per fact with "
+                            "its status (model_claim / quarantined / "
+                            "rejected / failed), the moat verdict, and — for "
+                            "the ones that did not land clean — why. A "
+                            "QUARANTINED fact is stored but OUT of default "
+                            "recall: read the outcome, not just fact_ids."
                         ),
                         "items": {"type": "object"},
                         "default": [],
@@ -8451,6 +8461,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # not here. Apply the same sanitize at this entry point.
             from verimem.syntax_pollution import sanitize_proposition as _sp
             fact_ids: list[str] = []
+            # CHE FINE HA FATTO OGNI key_fact (2026-07-30). Prima uscivano solo
+            # `fact_ids` nudi: l'id di un fatto sano e quello di un fatto
+            # QUARANTINATO — cioe' fuori dal recall di default — erano
+            # indistinguibili, e un fatto RIFIUTATO spariva con un log
+            # server-side che il chiamante non vede. Chi registra un episodio
+            # credeva di aver salvato tutto. `hippo_remember` la ricevuta ce
+            # l'ha; questo canale no, ed e' il secondo canale di scrittura.
+            key_facts_outcome: list[dict[str, Any]] = []
             raw_key_facts = arguments.get("key_facts") or []
             if isinstance(raw_key_facts, list):
                 for kf in raw_key_facts:
@@ -8472,6 +8490,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     _kf_refs = [str(x).strip() for x
                                 in (kf.get("verified_by") or [])
                                 if str(x).strip()]
+                    # LA SOURCE, che questo canale buttava in silenzio. Senza,
+                    # il moat dell'entailment — la promessa d'esordio del
+                    # server — non poteva girare qui NEMMENO volendo: non era
+                    # spento per configurazione, non c'era il modo di
+                    # accenderlo. `verified_by` registra CHI garantisce e non
+                    # esegue il controllo; la source e' il testo contro cui il
+                    # fatto viene verificato.
+                    _kf_source = str(kf.get("source", "") or "").strip() or None
+                    _kf_esito: dict[str, Any] = {
+                        "proposition": prop, "topic": fact_topic,
+                    }
                     try:
                         # FIX (2026-06-14 audit save-path, gate_bypass): i
                         # key_facts scrivevano un Fact SALTANDO l'anti-confab
@@ -8494,12 +8523,31 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                             ),
                             claimant=_MCP_PRINCIPAL,
                             documents=LazyDocumentStore(),
+                            source=_kf_source,
+                            ground_write=True if _kf_source else None,
+                        )
+                        _kf_gs = getattr(_kf_gate, "grounding_score", None)
+                        _kf_esito["moat"] = (
+                            f"judged {float(_kf_gs):.1f}"
+                            if isinstance(_kf_gs, (int, float))
+                            else ("not run — no source, so the entailment moat "
+                                  "had nothing to check; pass source=\"<the "
+                                  "evidence text>\" on this key_fact"
+                                  if not _kf_source else
+                                  "could not judge — a source was given but no "
+                                  "judge answered; this is NOT a pass")
                         )
                         if _kf_gate.action == "reject":
                             log.warning(
                                 "record_episode_key_fact_rejected_anti_confab",
                                 proposition_excerpt=prop[:80],
                             )
+                            _kf_esito.update({
+                                "status": "rejected", "id": None,
+                                "why": [w.get("reason") or w.get("layer")
+                                        for w in (_kf_gate.warnings or [])][:3],
+                            })
+                            key_facts_outcome.append(_kf_esito)
                             continue
                         fact = _build_fact(
                             proposition=prop, topic=fact_topic,
@@ -8524,12 +8572,26 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         # this loop is reached.
                         store_within_budget(a.semantic, fact, embed="auto")
                         fact_ids.append(fact.id)
+                        _kf_esito.update({"status": fact.status, "id": fact.id})
+                        if fact.status == "quarantined":
+                            # Il caso che il chiamante NON poteva vedere: il
+                            # fatto e' scritto ma fuori dal recall di default.
+                            _kf_esito["why"] = [
+                                w.get("reason") or w.get("layer")
+                                for w in (_kf_gate.warnings or [])][:3]
+                            _kf_esito["note"] = (
+                                "stored but OUT of default recall — it will "
+                                "not come back from a normal search")
+                        key_facts_outcome.append(_kf_esito)
                     except Exception as exc:  # noqa: BLE001
                         log.warning(
                             "record_episode_key_fact_store_failed",
                             proposition_excerpt=prop[:80],
                             error=str(exc),
                         )
+                        _kf_esito.update({"status": "failed", "id": None,
+                                          "error": str(exc)[:160]})
+                        key_facts_outcome.append(_kf_esito)
 
             edges_created = 0
             raw_related = arguments.get("related_episode_ids") or []
@@ -8595,6 +8657,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # Cycle #51: narrative extension — always present even
                 # when empty, so callers can rely on the shape.
                 "fact_ids": fact_ids,
+                # Che fine ha fatto OGNI key_fact: uno per voce, con il
+                # verdetto del moat e — per i quarantinati e i rifiutati — il
+                # perche'. `fact_ids` resta per chi lo usa gia': la ricevuta si
+                # aggiunge, non sostituisce.
+                "key_facts_outcome": key_facts_outcome,
                 "edges_created": edges_created,
             })
 
