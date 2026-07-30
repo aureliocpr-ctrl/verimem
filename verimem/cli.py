@@ -809,10 +809,7 @@ def recall_cmd(
         console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
     for h in hits:
-        txt = h.get("text") if isinstance(h, dict) else str(h)
-        score = h.get("score") if isinstance(h, dict) else None
-        s = f" [{score:.2f}]" if isinstance(score, (int, float)) else ""
-        console.print(f"- {txt}{s}")
+        console.print(riga_di_recall(h))
 
 
 def _ledger_window(stats: dict) -> tuple[float | None, float | None]:
@@ -3168,6 +3165,36 @@ def _moat_cell(score: float | None) -> str:
         colore = "green" if score >= 70 else "yellow"
         return f"[{colore}]moat {float(score):>5.1f}[/{colore}]"
     return "[dim]moat    --[/dim]"
+
+
+def riga_di_recall(h: object) -> str:
+    """Una riga di `verimem recall`: il fatto, quanto risponde, se e' verificato.
+
+    2026-07-30: la riga mostrava SOLO la somiglianza —
+
+        - Il servizio di fatturazione ascolta sulla porta 8443. [0.90]
+
+    e un numero solo accanto a una frase si legge come una misura di
+    affidabilita'. Sono due assi diversi (quanto il fatto risponde alla domanda,
+    e se qualcuno ha verificato che sia vero) e servono entrambi: molto
+    pertinente e mai giudicato e' esattamente il caso in cui chi legge va
+    avvisato.
+
+    E' una funzione e non codice dentro il comando perche' cosi' si puo'
+    provare: la suite sostituisce l'embedder con uno stub deterministico, quindi
+    un test che passasse dal recall vero misurerebbe il retrieval invece della
+    riga.
+    """
+    txt = h.get("text") if isinstance(h, dict) else str(h)
+    score = h.get("score") if isinstance(h, dict) else None
+    s = f" [{score:.2f}]" if isinstance(score, (int, float)) else ""
+    gs = h.get("grounding_score") if isinstance(h, dict) else None
+    if isinstance(gs, (int, float)) and not isinstance(gs, bool):
+        colore = "green" if gs >= 70 else "yellow"
+        s += f" [{colore}]moat {float(gs):.1f}[/{colore}]"
+    else:
+        s += " [dim]moat --[/dim]"
+    return f"- {txt}{s}"
 
 
 def _moat_cella_corta(score: float | None) -> str:
