@@ -483,16 +483,28 @@ def _persist_master(
     IMMEDIATE`` seam (HIGH#2 TOCTOU, cycle 155). The reorder removes the
     orphan-episode failure mode; it does not make the pair atomic.
     """
+    # ws4/episodi (2026-07-30): l'episodio-ancora e' UNICO per prefix,
+    # simmetrico all'unique index del master fact. Un re-pass legittimo
+    # (master superseded, cluster cresciuto) RIUSA l'ancora esistente —
+    # store() a parita' di id e' un replace (ok_replaced) — invece di
+    # coniare una riga nuova. Misurato sul corpus vivo pre-bonifica:
+    # l'asimmetria aveva accumulato fino a 198 episodi "cycle 144"
+    # (stringa fissa, non un contatore) per un singolo prefix, 1729 in
+    # totale (79,8% del tier), e la telemetria vinceva il recall sul
+    # lavoro reale.
+    _prior_anchors = mem.by_task(master["topic"], limit=1)
     ep = Episode(
         task_id=master["topic"],
         task_text=(
-            f"Auto-consolidation pass cycle 144 for cluster "
+            f"Auto-consolidation master for cluster "
             f"{cluster['topic_prefix']} ({cluster['fact_count']} facts)"
         ),
         final_answer=master["proposition"],
         outcome="success",
         created_at=time.time(),
     )
+    if _prior_anchors:
+        ep.id = _prior_anchors[0].id
     # ep.id is assigned at construction (a fresh uuid), so the Fact can
     # reference it before the Episode is stored — letting the unique-index
     # guard on the Fact abort a lost race with no Episode side effect.
