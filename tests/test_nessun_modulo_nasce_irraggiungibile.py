@@ -4,13 +4,19 @@ Aurelio, 2026-07-31: «come mai quando sviluppi un modulo finisce sempre per non
 essere collegato a nulla? parli di import, test verdi, e mesi dopo ci accorgiamo
 che e' tutto spento».
 
-La risposta misurata: **66 moduli su 372 non sono raggiungibili** da nessuna
-delle quattro porte del prodotto — la CLI, il server MCP, l'SDK, il gateway —
-seguendo gli import a qualsiasi profondita'. Il 18%. Possono avere i test verdi
-e non essere mai eseguiti da nessun utente, che e' esattamente il modo in cui il
-moat e' rimasto spento sul canale MCP per mesi.
+La risposta misurata: **45 moduli su 372 non sono raggiungibili** — ne' dalle
+quattro porte del prodotto (CLI, server MCP, SDK, gateway) seguendo gli import a
+qualsiasi profondita', ne' come script `python -m verimem.X`. Il 12%. Possono
+avere i test verdi e non essere mai eseguiti da nessun utente, che e' esattamente
+il modo in cui il moat e' rimasto spento sul canale MCP per mesi.
 
-Questo file non pretende di curare i 66: congela il numero. Un modulo NUOVO che
+Il primo giro ne contava 66 e SOVRASTIMAVA: non considerava `python -m` una
+porta, e cosi' dichiarava scollegato `compose_daemon`, che il README documenta
+testualmente («Run it one-shot») e che funziona. Uno strumento di misura che
+grida piu' del dovuto fa perdere tempo invece di farne guadagnare, e la
+correzione vale quanto la scoperta.
+
+Questo file non pretende di curare i 45: congela il numero. Un modulo NUOVO che
 nasce staccato fa fallire il test il giorno stesso, invece di scoprirsi mesi
 dopo. E' la sola cura che regge, perche' la disciplina non ha retto: la lezione
 «built-never-wired» era gia' scritta in memoria da un ciclo precedente, ed e'
@@ -20,7 +26,7 @@ Metodo: si legge il sorgente con ``ast``, non a runtime. Questo repo mette gli
 import DENTRO le funzioni per rompere i cicli, e un'analisi che guardasse solo
 la testa dei file dichiarerebbe irraggiungibile mezzo prodotto.
 
-Sui 66 non tutti sono difetti, e la distinzione va fatta guardandoli:
+Sui 45 non tutti sono difetti, e la distinzione va fatta guardandoli:
 ``rerank.py`` sembrava una feature pubblicizzata e spenta, ma il rerank vero e'
 ``cross_encoder_rerank.py``, importato da semantic.py e vivo — quello e' un
 doppione morto, da cancellare, non da collegare. ``auto_dream_worker`` e' uno
@@ -40,7 +46,7 @@ PORTE = ("cli", "mcp_server", "client", "gateway")
 #: Misurato il 2026-07-31. Il numero puo' SCENDERE quando si collega o si
 #: cancella qualcosa; se sale, un modulo e' nato staccato e il test lo dice
 #: subito. Non e' un obiettivo di qualita': e' un cricchetto.
-IRRAGGIUNGIBILI_NOTI = 66
+IRRAGGIUNGIBILI_NOTI = 45
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:
@@ -67,10 +73,34 @@ def _import_locali(percorso: Path, noti: set[str]) -> set[str]:
     return trovati
 
 
+def _eseguibile(f: Path) -> bool:
+    """Ha un `main()` o un `if __name__ == "__main__"`.
+
+    `python -m verimem.X` E' UNA PORTA. Il primo giro non lo considerava e
+    dichiarava irraggiungibile `compose_daemon`, che il README documenta
+    testualmente: «Run it one-shot (python -m verimem.compose_daemon --db ...)»
+    — provato, funziona, e lo `--help` spiega che lo scheduling resta all'OS
+    per scelta. Il censimento sovrastimava il problema, che e' il modo in cui
+    uno strumento di misura fa perdere tempo invece di farne guadagnare.
+    """
+    try:
+        albero = ast.parse(f.read_text(encoding="utf-8", errors="replace"))
+    except (SyntaxError, OSError):
+        return False
+    for n in ast.walk(albero):
+        if isinstance(n, ast.FunctionDef) and n.name == "main":
+            return True
+        if isinstance(n, ast.If) and isinstance(n.test, ast.Compare):
+            if getattr(n.test.left, "id", "") == "__name__":
+                return True
+    return False
+
+
 def _irraggiungibili() -> list[str]:
     moduli = {p.stem for p in PKG.glob("*.py")
               if not p.stem.startswith(("_", "test_")) and p.stem != "__init__"}
     raggiunti = {p for p in PORTE if (PKG / f"{p}.py").exists()}
+    raggiunti |= {m for m in moduli if _eseguibile(PKG / f"{m}.py")}
     da_visitare = list(raggiunti)
     while da_visitare:
         f = PKG / f"{da_visitare.pop()}.py"
