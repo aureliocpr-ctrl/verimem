@@ -1,0 +1,110 @@
+"""Lo store e' UNO: due risolutori con precedenza opposta sono due store.
+
+TROVATO il 2026-07-30 dal dogfooding in parallelo, che lo aveva letto come
+«doctor ignora HIPPO_DATA_DIR». E' piu' largo: due funzioni risolvono la data
+dir con precedenze diverse, e su una macchina dove ``ENGRAM_DATA_DIR`` e'
+esportata nell'ambiente (questa) puntano a store DIVERSI.
+
+    HIPPO_DATA_DIR=C:/tmp/isolato_prova, ENGRAM_DATA_DIR=C:\\Users\\aurel\\.engram
+
+    _compat.data_dir()  -> C:\\Users\\aurel\\.engram      (produzione)
+    Config.data_dir     -> C:\\tmp\\isolato_prova         (isolato)
+    agent.semantic      -> C:\\tmp\\isolato_prova\\...    (isolato)
+
+Il prodotto legge e scrive nello store isolato; **quattordici punti** in cinque
+file passano invece da ``_compat.data_dir()`` — fra cui ``backup.py``, dove uno
+store sbagliato non e' un messaggio sbagliato.
+
+La parte istruttiva: ENTRAMBE le precedenze sono deliberate e documentate.
+``config._data_root`` mette ``HIPPO_DATA_DIR`` per primo perche' e' l'handle
+storico dell'isolamento nei test, e il suo commento descrive esattamente questa
+macchina — «a machine whose shell exports ENGRAM_DATA_DIR (the maintainer's)
+must not override a test's explicit HIPPO_DATA_DIR». ``_compat.data_dir`` fa
+vincere il primo fra VERIMEM/ENGRAM/HIPPO. Due scelte ragionate, prese in due
+posti, incompatibili: nessuno ha mai confrontato i due elenchi.
+
+CURA: un risolutore solo (``_compat._env_data_dir``), usato da entrambi. E
+quando piu' alias puntano a posti DIVERSI il prodotto lo dice una volta per
+processo, invece di scegliere in silenzio — la scelta silenziosa e' cio' che ha
+prodotto la divergenza.
+"""
+from __future__ import annotations
+
+import importlib
+
+import pytest
+
+ALIAS = ("VERIMEM_DATA_DIR", "ENGRAM_DATA_DIR", "HIPPO_DATA_DIR")
+
+
+@pytest.fixture(autouse=True)
+def _ambiente_pulito(monkeypatch):
+    for k in ALIAS:
+        monkeypatch.delenv(k, raising=False)
+    yield
+
+
+def _due_risolutori(tmp_path):
+    from verimem import _compat, config
+    importlib.reload(config)          # CONFIG e' congelato alla costruzione
+    return _compat.data_dir(), config._data_root()
+
+
+def test_i_due_risolutori_concordano_sempre(monkeypatch, tmp_path):
+    """Il caso vero: ENGRAM esportata nell'ambiente, l'utente isola con HIPPO."""
+    isolato = tmp_path / "isolato"
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path / "produzione"))
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(isolato))
+    a, b = _due_risolutori(tmp_path)
+    assert a == b, (
+        f"due risolutori, due store: _compat -> {a}, Config -> {b}. "
+        f"Le superfici diagnostiche guardano un posto e il prodotto un altro")
+    assert a.resolve() == isolato.resolve(), (
+        "l'isolamento esplicito deve vincere sull'ambiente della shell — e' la "
+        "ragione documentata in config._data_root")
+
+
+def test_ogni_alias_da_solo_funziona(monkeypatch, tmp_path):
+    for nome in ALIAS:
+        for k in ALIAS:
+            monkeypatch.delenv(k, raising=False)
+        monkeypatch.setenv(nome, str(tmp_path / nome))
+        a, b = _due_risolutori(tmp_path)
+        assert a == b == (tmp_path / nome).resolve(), (
+            f"{nome} da sola non e' onorata da entrambi: {a} vs {b}")
+
+
+def test_senza_env_il_comportamento_storico_resta(monkeypatch, tmp_path):
+    """Nessun alias: decide il resolver storico (~/.verimem, ~/.engram, ...).
+    La cura non deve cambiare dove atterra un'installazione esistente."""
+    a, b = _due_risolutori(tmp_path)
+    assert a == b
+    assert a.name in {".verimem", ".engram", ".hippoagent"}, a
+
+
+def test_alias_discordi_vengono_DICHIARATI(monkeypatch, tmp_path, recwarn):
+    """Scegliere in silenzio fra due store e' cio' che ha prodotto il difetto:
+    chi ha impostato due alias diversi deve sapere quale ha vinto."""
+    from verimem import _compat
+    monkeypatch.setattr(_compat, "_avvisato_alias_discordi", False,
+                        raising=False)
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path / "uno"))
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path / "due"))
+    with pytest.warns(RuntimeWarning, match="DATA_DIR"):
+        _compat.data_dir()
+
+
+def test_alias_concordi_non_avvisano(monkeypatch, tmp_path):
+    """Il mirror di compatibilita' popola tutti gli alias con lo STESSO valore:
+    quello e' il caso normale e non deve produrre rumore."""
+    from verimem import _compat
+    monkeypatch.setattr(_compat, "_avvisato_alias_discordi", False,
+                        raising=False)
+    uguale = str(tmp_path / "stesso")
+    monkeypatch.setenv("ENGRAM_DATA_DIR", uguale)
+    monkeypatch.setenv("HIPPO_DATA_DIR", uguale)
+    monkeypatch.setenv("VERIMEM_DATA_DIR", uguale)
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert _compat.data_dir().resolve() == (tmp_path / "stesso").resolve()

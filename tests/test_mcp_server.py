@@ -252,6 +252,11 @@ _EXPECTED_TOOLS = {
     "hippo_skills_search",
     # FORGIA #204 — deep health-check at startup
     "hippo_health",
+    # 2026-07-30 — il complemento ATTIVO dell'astensione: dopo un recall vuoto
+    # o un trust_report che si astiene, dice QUALE ignoranza e cosa la curerebbe.
+    # Il modulo era completo, con due file di test suoi, e irraggiungibile da
+    # ogni superficie.
+    "hippo_ignorance_map",
     # P0a/4 (d285cd9) — self-healing tool per le contraddizioni (tool reale, expected-set era stale)
     "hippo_heal_contradictions",
     # FORGIA #206 — hosted mode (delegate LLM to host like Claude Code)

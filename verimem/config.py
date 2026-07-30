@@ -42,14 +42,16 @@ def _data_root() -> Path:
     ``ENGRAM_DATA_DIR`` (the maintainer's → ~/.engram) must not override a test's
     explicit ``HIPPO_DATA_DIR``.
     """
-    env = (
-        os.environ.get("HIPPO_DATA_DIR")
-        or os.environ.get("ENGRAM_DATA_DIR")
-        or ""
-    ).strip()
-    if env:
-        return Path(env).expanduser().resolve()
+    # UN SOLO risolutore, condiviso con `_compat.data_dir` (2026-07-30): questa
+    # funzione e quella avevano precedenze DIVERSE — entrambe deliberate,
+    # entrambe documentate, mai confrontate — e su una macchina con
+    # ENGRAM_DATA_DIR esportata puntavano a store diversi. La precedenza
+    # descritta sopra e' quella che ha vinto, ed e' ora scritta una volta sola
+    # in `_compat._ALIAS_DATA_DIR`.
+    from ._compat import _env_data_dir
     from ._compat import data_dir as _compat_data_dir
+    if env := _env_data_dir():
+        return Path(env).expanduser().resolve()
     return _compat_data_dir()
 
 

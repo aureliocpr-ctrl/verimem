@@ -84,6 +84,51 @@ def init_env_aliases() -> int:
     return added
 
 
+#: Ordine di precedenza degli alias, UNO SOLO per tutto il prodotto.
+#:
+#: ``HIPPO_DATA_DIR`` per primo, come gia' faceva ``config._data_root`` per una
+#: ragione documentata e valida: e' l'handle storico dell'isolamento nei test, e
+#: una macchina la cui shell esporta ``ENGRAM_DATA_DIR`` non deve poter
+#: scavalcare un isolamento esplicito. Qui invece vinceva il primo fra
+#: VERIMEM/ENGRAM/HIPPO — due precedenze deliberate, prese in due file, mai
+#: confrontate. Il 2026-07-30, su una macchina con ``ENGRAM_DATA_DIR`` esportata,
+#: puntavano a store DIVERSI: il prodotto scriveva in quello isolato e le
+#: quattordici superfici che passano di qui (``backup``, ``doctor``, ``cli``,
+#: ``dashboard_routes.auth``) leggevano la produzione.
+_ALIAS_DATA_DIR = ("HIPPO_DATA_DIR", "VERIMEM_DATA_DIR", "ENGRAM_DATA_DIR")
+
+_avvisato_alias_discordi = False
+
+
+def _env_data_dir() -> str:
+    """L'override della data dir dall'ambiente, o "" se nessun alias e' posto.
+
+    Quando piu' alias sono posti su percorsi DIVERSI lo dice — una volta per
+    processo. Sceglierne uno in silenzio e' esattamente cio' che ha prodotto la
+    divergenza: chi aveva impostato due variabili credeva di aver isolato lo
+    store, e meta' del prodotto guardava altrove senza dirlo. Il caso normale
+    (il mirror di compatibilita' che popola tutti gli alias con lo STESSO
+    valore) non produce rumore.
+    """
+    global _avvisato_alias_discordi
+    posti = {n: v.strip() for n in _ALIAS_DATA_DIR
+             if (v := os.environ.get(n, "")) and v.strip()}
+    if not posti:
+        return ""
+    scelto = next(posti[n] for n in _ALIAS_DATA_DIR if n in posti)
+    distinti = {str(Path(v).expanduser().resolve()) for v in posti.values()}
+    if len(distinti) > 1 and not _avvisato_alias_discordi:
+        _avvisato_alias_discordi = True
+        import warnings
+        warnings.warn(
+            "DATA_DIR aliases disagree: "
+            + ", ".join(f"{n}={posti[n]}" for n in _ALIAS_DATA_DIR if n in posti)
+            + f" — using {scelto} (HIPPO_DATA_DIR wins, it is the explicit "
+              "isolation handle). Unset the ones you did not mean.",
+            RuntimeWarning, stacklevel=3)
+    return scelto
+
+
 def data_dir() -> Path:
     """Return the canonical Verimem data directory.
 
@@ -101,13 +146,10 @@ def data_dir() -> Path:
     Never throws — best-effort. Callers should still handle :py:class:`OSError`
     on subsequent disk operations.
 
-    Env override (highest precedence, in order): ``VERIMEM_DATA_DIR`` /
-    ``ENGRAM_DATA_DIR`` / ``HIPPO_DATA_DIR`` — the first set wins entirely.
+    Env override: see :func:`_env_data_dir` — the SAME resolver
+    ``config._data_root`` uses, so the two can no longer disagree.
     """
-    # Explicit override via env (VERIMEM_DATA_DIR / ENGRAM_DATA_DIR / HIPPO_DATA_DIR).
-    override = (os.environ.get("VERIMEM_DATA_DIR")
-                or os.environ.get("ENGRAM_DATA_DIR")
-                or os.environ.get("HIPPO_DATA_DIR"))
+    override = _env_data_dir()
     if override:
         p = Path(override).expanduser()
         p.mkdir(parents=True, exist_ok=True)
