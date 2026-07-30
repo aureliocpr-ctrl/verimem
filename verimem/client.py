@@ -197,6 +197,14 @@ class Memory:
         lineage_to: list[str] | None = None,
         confidence: float | None = None,
         chronicle: bool = False,
+        # 2026-07-30: il canale MCP li accettava e questo no, quindi sul corpus
+        # vivo erano NULL su tutti e 6457 i fatti — e su di loro si reggono due
+        # dei quattro trigger di hippo_justified_audit («stale» e la cascata,
+        # che il tool descrive come la capacita' che nessun prodotto offre).
+        # Non erano trigger silenti perche' il corpus e' sano: erano
+        # irraggiungibili dal canale che lo riempie.
+        valid_until: float | None = None,
+        derives_from: list[str] | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -360,6 +368,10 @@ class Memory:
                         getattr(gate, "threshold", None)))
         if confidence is not None:
             fact.confidence = float(confidence)
+        if valid_until is not None:
+            fact.valid_until = float(valid_until)
+        if derives_from:
+            fact.derives_from = [str(x) for x in derives_from if str(x).strip()]
         if lineage_to:
             fact.lineage_to = [str(x) for x in lineage_to if str(x).strip()]
         if meta_narrative:
