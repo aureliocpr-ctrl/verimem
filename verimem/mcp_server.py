@@ -2645,6 +2645,27 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_epistemic_health",
+            description=(
+                "How the CORPUS is doing, not one fact at a time: provenance "
+                "coverage (what fraction ever passed the moat), grounded "
+                "fraction (of those, how many cleared the bar), uncontested "
+                "fraction, and a composite. Reuses the verdicts the write-path "
+                "already persisted — no model is loaded, nothing is re-judged. "
+                "`provenance_coverage` bounds the rest: on a corpus the moat "
+                "never judged, nothing can be claimed about its health, and "
+                "the report says so instead of returning a good score."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "default": 2000},
+                    "threshold": {"type": "number", "default": 85.0,
+                                  "description": "the bar a verdict must clear"},
+                },
+            },
+        ),
+        t.Tool(
             name="hippo_fact_label",
             description=(
                 "Attach the KIND OF GUARANTEE behind a fact: 'proven' (a named "
@@ -12760,6 +12781,23 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
                     pass
             return _ok({"ok": True, "n": len(_rows), "quarantined": _rows})
+
+        if name == "hippo_epistemic_health":
+            # `epistemic_health` era completo, testato e irraggiungibile: si
+            # potevano mettere i verdetti e non si poteva chiedere l'aggregato.
+            from .client import Memory as _M
+
+            class _Vista:
+                semantic = a.semantic
+            try:
+                _rep = _M.epistemic_health(
+                    _Vista(),
+                    limit=int(arguments.get("limit", 2000) or 2000),
+                    threshold=float(arguments.get("threshold", 85.0) or 85.0))
+            except Exception as _exc:  # noqa: BLE001
+                return _err(f"epistemic_health failed: {_exc}")
+            _audit(name, arguments, outcome="ok")
+            return _ok(_rep)
 
         if name == "hippo_fact_label":
             # Ingresso del sottosistema epistemico sul canale MCP. Era

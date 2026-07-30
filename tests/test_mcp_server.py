@@ -546,6 +546,9 @@ _EXPECTED_TOOLS = {
     # in 18 punti. Questo elenco ha fatto il suo mestiere e mi ha fermato:
     # avevo aggiunto il tool senza dichiararlo qui.
     "hippo_fact_label",
+    # 2026-07-31 — la lettura aggregata, l'altra meta' del sottosistema:
+    # `epistemic_health` era completo, testato e senza superficie.
+    "hippo_epistemic_health",
     # B-1 2026-06-08 — multi-tenancy delete_all(scope), dry-run + undoable
     "hippo_forget_scope",
     "hippo_undo_destructive_op",

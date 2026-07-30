@@ -4,7 +4,7 @@ Aurelio, 2026-07-31: «come mai quando sviluppi un modulo finisce sempre per non
 essere collegato a nulla? parli di import, test verdi, e mesi dopo ci accorgiamo
 che e' tutto spento».
 
-La risposta misurata: **45 moduli su 372 non sono raggiungibili** — ne' dalle
+La risposta misurata: **44 moduli su 372 non sono raggiungibili** — ne' dalle
 quattro porte del prodotto (CLI, server MCP, SDK, gateway) seguendo gli import a
 qualsiasi profondita', ne' come script `python -m verimem.X`. Il 12%. Possono
 avere i test verdi e non essere mai eseguiti da nessun utente, che e' esattamente
@@ -16,7 +16,7 @@ testualmente («Run it one-shot») e che funziona. Uno strumento di misura che
 grida piu' del dovuto fa perdere tempo invece di farne guadagnare, e la
 correzione vale quanto la scoperta.
 
-Questo file non pretende di curare i 45: congela il numero. Un modulo NUOVO che
+Questo file non pretende di curare i 44: congela il numero. Un modulo NUOVO che
 nasce staccato fa fallire il test il giorno stesso, invece di scoprirsi mesi
 dopo. E' la sola cura che regge, perche' la disciplina non ha retto: la lezione
 «built-never-wired» era gia' scritta in memoria da un ciclo precedente, ed e'
@@ -26,7 +26,7 @@ Metodo: si legge il sorgente con ``ast``, non a runtime. Questo repo mette gli
 import DENTRO le funzioni per rompere i cicli, e un'analisi che guardasse solo
 la testa dei file dichiarerebbe irraggiungibile mezzo prodotto.
 
-Sui 45 non tutti sono difetti, e la distinzione va fatta guardandoli:
+Sui 44 non tutti sono difetti, e la distinzione va fatta guardandoli:
 ``rerank.py`` sembrava una feature pubblicizzata e spenta, ma il rerank vero e'
 ``cross_encoder_rerank.py``, importato da semantic.py e vivo — quello e' un
 doppione morto, da cancellare, non da collegare. ``auto_dream_worker`` e' uno
@@ -46,7 +46,7 @@ PORTE = ("cli", "mcp_server", "client", "gateway")
 #: Misurato il 2026-07-31. Il numero puo' SCENDERE quando si collega o si
 #: cancella qualcosa; se sale, un modulo e' nato staccato e il test lo dice
 #: subito. Non e' un obiettivo di qualita': e' un cricchetto.
-IRRAGGIUNGIBILI_NOTI = 45
+IRRAGGIUNGIBILI_NOTI = 44
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:

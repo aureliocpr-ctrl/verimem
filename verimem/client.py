@@ -1529,6 +1529,50 @@ class Memory:
                 f"{w.get('layer', '?')}: {w.get('advice') or w.get('reason') or ''}"
                 for w in avvisi[:3]).strip()
 
+    def epistemic_health(self, *, limit: int = 2000,
+                         threshold: float = 85.0) -> dict[str, Any]:
+        """Come sta messo il CORPUS, non un fatto per volta.
+
+        `epistemic_health` era completo, con i suoi test, e irraggiungibile da
+        ogni superficie: si potevano mettere i verdetti e non si poteva chiedere
+        l'aggregato. Il motivo si legge nel modulo — `_source_of` cerca gli
+        attributi ``source`` / ``provenance`` / ``grounding_span``, che il
+        dataclass ``Fact`` non ha. E' scritto per una forma di fatto diversa da
+        quella del prodotto, e collegarlo alla lettera avrebbe dato un report
+        VUOTO che sembra funzionare: peggio che lasciarlo staccato.
+
+        L'adattamento sta qui e il modulo non si tocca. La source in chiaro non
+        viene conservata (verificato il 30/07 sui quarantinati), ma la sua
+        IMPRONTA si' — ``source_signature`` — e il verdetto sta in
+        ``grounding_score``. Quindi ``has_source`` significa «e' passato dal
+        moat» e ``grounded`` riusa il punteggio persistito invece di rifare il
+        giudizio: costo zero, nessun modello caricato, e aggrega esattamente
+        cio' che il write-path ha gia' misurato.
+
+        ``provenance_coverage`` e' il numero che limita gli altri: su un corpus
+        che il moat non ha mai giudicato non si puo' affermare niente sulla sua
+        salute, e il report lo dice invece di dare un bel voto.
+        """
+        from .epistemic_health import audit_one, health_report
+        audits = []
+        for f in self.semantic.list_facts(limit=limit, offset=0):
+            punteggio = getattr(f, "grounding_score", None)
+            giudicato = isinstance(punteggio, (int, float)) and not isinstance(
+                punteggio, bool)
+            vista = {
+                "id": getattr(f, "id", ""),
+                "proposition": getattr(f, "proposition", ""),
+                # `source` qui vuol dire «c'e' qualcosa contro cui e' stato
+                # controllato»: senza il verdetto non e' auditabile, e va detto
+                # con None invece che con uno zero.
+                "source": (getattr(f, "source_signature", None) or "moat")
+                          if giudicato else None,
+            }
+            audits.append(audit_one(
+                vista, grounder=lambda _s, _p, _g=punteggio: float(_g or 0.0),
+                threshold=threshold))
+        return health_report(audits)
+
     def label(self, fact_id: str, kind: str, *, proof: str | None = None,
               bound: float | None = None,
               counterexample: str | None = None) -> bool:

@@ -7,18 +7,15 @@ lo sono (tests/test_le_etichette_epistemiche_sono_collegate.py):
     lettura per-fatto il contratto porta `epistemic` su ogni superficie
     conteggio         `verimem status`, perche' un sottosistema a zero si veda
 
-Questo file resta perche' DUE non lo sono, e cancellarlo avrebbe nascosto
+Questo file resta perche' UNO non lo e', e cancellarlo avrebbe nascosto
 proprio la parte che manca — dopo due giorni passati a scoprire meccanismi
 spenti in silenzio, sarebbe stato l'errore piu' stupido possibile:
 
-    lettura aggregata  `epistemic_health.audit_corpus` non e' esposto da nessuna
-                       superficie: si possono mettere le etichette e non si puo'
-                       chiedere al corpus come sta messo
     ring di composizione `composer` e `active_probe` — gli unici che DERIVANO
                        etichette invece di riceverle — restano irraggiungibili,
                        e `compose_daemon` non e' avviato da nessuna parte
 
-Il test qui sotto e' scritto perche' FALLISCA quando uno dei due viene
+Il test qui sotto e' scritto perche' FALLISCA quando anche quello verra'
 collegato: e' un promemoria che si accende da solo, non una descrizione che
 invecchia.
 
@@ -41,10 +38,11 @@ COM'ERA ALLORA, verificato modulo per modulo — la prima riga NON vale piu':
                 (Le uniche due occorrenze della PAROLA in mcp_server.py erano
                 una riga di help e un commento: cercare la parola invece del
                 dato faceva accendere il test sui propri commenti.)
-    lettura     [ANCORA VERA] epistemic_health e adaptive_ledger non sono
-                importati ne' da mcp_server ne' da cli: le etichette si scrivono
-                e si leggono per-fatto, ma non si puo' chiedere al CORPUS come
-                sta messo.
+    lettura     [SUPERATA il 31/07 per epistemic_health] non era importato ne'
+                da mcp_server ne' da cli: le etichette si scrivevano e si
+                leggevano per-fatto, e non si poteva chiedere al CORPUS come
+                stesse messo. Ora c'e' hippo_epistemic_health. Resta
+                `adaptive_ledger`.
 
 Il sottosistema era completo e ben progettato — `make_proven` rifiuta un
 riferimento vuoto perche' «a proof must be machine-checkable, not a vibe» — e
@@ -53,7 +51,7 @@ scollegato in entrambe le direzioni.
 La regola che ha guidato il collegamento: NON bastava esporre la scrittura, o si
 sarebbero scritte etichette che nessuno legge — una colonna riempita per poter
 dire che e' piena. Percio' sono arrivate insieme scrittura, lettura per-fatto e
-conteggio; restano il ring di composizione e la lettura aggregata.
+conteggio, e poi la lettura aggregata. Resta il ring di composizione.
 """
 from __future__ import annotations
 
@@ -93,10 +91,14 @@ def test_i_moduli_che_etichettano_restano_irraggiungibili():
 
 def test_nessuna_superficie_legge_le_etichette():
     mcp, cli = _testo("mcp_server.py"), _testo("cli.py")
-    for modulo in ("epistemic_health", "adaptive_ledger"):
+    # `epistemic_health` E' STATO COLLEGATO il 31/07 (hippo_epistemic_health +
+    # Memory.epistemic_health): resta `adaptive_ledger`.
+    assert "hippo_epistemic_health" in mcp, (
+        "la lettura aggregata e' stata scollegata: era il pezzo che chiudeva "
+        "il cerchio fra il verdetto scritto e la salute del corpus")
+    for modulo in ("adaptive_ledger",):
         assert modulo not in mcp and modulo not in cli, (
-            f"{modulo} e' stato esposto: ora le etichette si possono leggere, "
-            f"aggiorna questo file")
+            f"{modulo} e' stato esposto: aggiorna questo file")
 
 
 def test_l_api_pretende_ancora_un_riferimento_vero():
