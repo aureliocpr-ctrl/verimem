@@ -190,10 +190,12 @@ def get_local_threshold() -> float | None:
 def judge_state() -> str:
     """Lo stato del giudice locale in UNA parola, per tutte le superfici.
 
-    ``ready`` (carico, giudica adesso) · ``warming`` (il modello c'e' e sta
-    caricando su un thread di sfondo: in delegate-only il primo write NON viene
-    giudicato) · ``absent`` (il modello non e' su disco: si scarica) ·
-    ``failed`` (c'e' ma il caricamento e' fallito: si diagnostica).
+    ``ready`` (carico QUI, giudica adesso) · ``delegated`` (il daemon condiviso
+    ha gia' giudicato per questo processo: il modello in casa non serve, e non
+    servira') · ``warming`` (il modello c'e' e sta caricando su un thread di
+    sfondo, e nessuno sta giudicando al posto suo: in delegate-only il primo
+    write NON viene giudicato) · ``absent`` (il modello non e' su disco: si
+    scarica) · ``failed`` (c'e' ma il caricamento e' fallito: si diagnostica).
 
     Esiste perche' tre superfici — l'advisory L4, la ricevuta MCP e ``doctor``
     — deducevano ognuna per conto suo perche' mancasse un punteggio, e nessuna
@@ -209,6 +211,15 @@ def judge_state() -> str:
         return "ready"
     if getattr(j, "_load_failed", False):
         return "failed"
+    # Il daemon ha gia' giudicato per questo processo (2026-08-01, rilievo del
+    # critic sul commit precedente, che l'aveva pero' declassato a «stringa
+    # cosmetica»). Non e' cosmetica: e' la parola che tre superfici leggono per
+    # dire perche' manca un punteggio, e dire «sto scaldando» mentre il giudizio
+    # sta gia' avvenendo altrove e' la stessa classe curata tre volte questa
+    # settimana. Sta DOPO `_load_failed` di proposito: un fallimento locale
+    # conclamato e' una diagnosi piu' urgente della strada che ha funzionato.
+    if _GATE_DELEGATO["ok"]:
+        return "delegated"
     try:
         presente = j.model_dir.exists()
     except OSError:

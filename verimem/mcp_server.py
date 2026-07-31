@@ -11606,15 +11606,54 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 depth=depth, beam_width=beam_width,
                 goal=goal_pred,
             )
+            # DUE NUMERI PER PIANO, misurati il 2026-08-01 sul corpus vero.
+            #
+            # (1) `passi_distinti`. Partendo dalle sei skill piu' frequenti,
+            # 11 piani su 16 ripetevano almeno un passo, e quello con la
+            # probabilita' PIU' ALTA (0.3068) era un ping-pong puro fra due id.
+            # Non e' un difetto di implementazione: e' cosa il beam search
+            # massimizza. Se A->B e B->A sono entrambe frequenti — cioe' se due
+            # skill si usano spesso insieme — il percorso piu' probabile e'
+            # alternarle, e il «piano» diventa la coppia piu' frequente
+            # ripetuta fino alla profondita' chiesta.
+            # I cicli NON si vietano: «scrivi il test -> eseguilo -> scrivi il
+            # test» e' il loop TDD, non un errore; e scegliere una penalita'
+            # sarebbe un numero deciso a occhio, l'errore gia' pagato tre volte
+            # questa settimana con le soglie sui coseni. Si espone il dato e
+            # chi legge distingue un piano che avanza da uno che oscilla.
+            #
+            # (2) `passi_noti`. La matrice si costruisce da `skills_used` degli
+            # episodi, non dallo store: misurati 558 id di cui 519 NON esistono
+            # fra le 325 skill vive (sono nomi di regole — `A1_anti_confab` —
+            # che gli episodi storici registravano come se fossero skill). Un
+            # piano puo' nominare passi che nessuno potra' mai eseguire, e il
+            # chiamante non aveva modo di accorgersene.
+            # Lo store delle skill serve SOLO a questi due numeri, che sono
+            # osservabilita': se non e' raggiungibile valgono None e il piano
+            # esce lo stesso. Un tool che moriva perche' una diagnostica non
+            # trovava il suo dato sarebbe il difetto peggiore di quello che
+            # sta curando — stesso contratto del watchdog degli stalli,
+            # «observability ONLY, never raises». (Trovato dalla suite: il
+            # ramo non aveva MAI toccato `a.skills`, e i sette test del tool
+            # montano un agente finto con la sola `memory`.)
+            try:
+                _vivi: set[str] | None = {s.id for s in a.skills.all()}
+            except Exception:  # noqa: BLE001 — i piani valgono piu' del conteggio
+                _vivi = None
             plans_out = [
                 {
                     "path": list(path),
                     "log_prob": float(lp),
                     "prob": float(math.exp(lp)),
+                    "passi_distinti": len(set(path)),
+                    "passi_noti": (None if _vivi is None
+                                   else sum(1 for p in path if p in _vivi)),
                 }
                 for path, lp in raw_plans
             ]
-            _audit(name, arguments, outcome="ok")
+            _audit(name, arguments, outcome="ok",
+                   detail={"n_plans": len(plans_out),
+                           "n_unique_skills": len(ids)})
             return _ok({
                 "start_skill": start_skill,
                 "depth": depth,
@@ -11622,6 +11661,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "goal_skill": goal_skill or "",
                 "n_episodes_used": len(sequences),
                 "n_unique_skills": len(ids),
+                # Accanto a `n_unique_skills`, quanti di quegli id sono skill
+                # VIVE: 39 su 558, sul corpus reale. None quando lo store delle
+                # skill non e' raggiungibile — meglio «non lo so» di un numero
+                # che sembra un conteggio e non lo e'.
+                "n_skill_vive": (None if _vivi is None
+                                 else sum(1 for i in ids if i in _vivi)),
                 "plans": plans_out,
             })
 
