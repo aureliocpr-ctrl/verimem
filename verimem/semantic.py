@@ -1785,15 +1785,97 @@ def _rerank_max_doc_chars() -> int:
         return 2000
 
 
-def _load_reranker():
+#: Il daemon ha gia' rerankato per noi almeno una volta in questo processo.
+#: Dict e non bool perche' lo scrivono i thread worker del rerank e lo legge il
+#: path caldo: una mutazione in place e' visibile a tutti senza `global` e
+#: senza lock (il valore passa solo da False a True, quindi nessuna corsa che
+#: possa perdere informazione).
+_RERANK_DELEGATO = {"ok": False}
+
+
+def _rerank_via_daemon(pairs, *, info=None) -> list[float] | None:
+    """Punteggi del cross-encoder dal daemon condiviso, o None per degradare.
+
+    Perche' esiste: il CE costa ~33s di caricamento e finora viveva nel
+    processo che fa la recall. Misurato il 2026-07-31, dodici recall in un
+    processo fresco — `timeout_cold`, poi cinque `skipped_busy`, e `applied`
+    solo dalla settima, dopo ~36s di vita. Sull'audit log di produzione 256
+    processi su 293 ne fanno UNA e muoiono: quei 33s venivano buttati a ogni
+    respawn, e il rerank non si applicava mai.
+
+    Il guadagno non e' rendere veloce la prima chiamata — quella paga comunque.
+    E' che il caricamento **non muore col processo**: il client scade a 0.25s e
+    degrada come prima, ma il daemon continua a caricare, e il server MCP
+    successivo (un altro processo) lo trova caldo.
+
+    Mai una dipendenza, sempre un'ottimizzazione: qualunque intoppo -> None ->
+    il chiamante carica in-process come ha sempre fatto.
+    """
+    if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
+        "0", "false", "no", "off",
+    ):
+        return None
+    try:
+        import socket as _socket
+
+        from . import encode_service as _svc
+        info = info if info is not None else _svc.read_discovery()
+        if not info or not info.get("port"):
+            return None
+        conn = _socket.create_connection(
+            (info.get("host", "127.0.0.1"), info["port"]),
+            timeout=embedding._SERVICE_CONNECT_TIMEOUT_S,
+        )
+        try:
+            # Il predict a caldo e' ~1.7s: leggere con lo stesso timeout
+            # dell'encode (5s) lascia margine senza attendere un cold-load,
+            # che e' proprio cio' che il budget del chiamante taglia.
+            conn.settimeout(embedding._SERVICE_READ_TIMEOUT_S)
+            req = {"rerank_pairs": [[p[0], p[1]] for p in pairs]}
+            if info.get("token"):
+                req["token"] = info["token"]
+            _svc.send_msg(conn, req)
+            resp = _svc.recv_msg(conn)
+        finally:
+            conn.close()
+        # Un daemon VECCHIO non conosce 'rerank_pairs' e risponde ok=False:
+        # degradare qui e' cio' che rende l'aggiornamento non-atomico sicuro.
+        if resp and resp.get("ok") and isinstance(resp.get("scores"), list):
+            # Da ora il rerank e' «pronto» anche senza modello qui: la prossima
+            # query prende il budget pieno invece di quello del cold-load.
+            _RERANK_DELEGATO["ok"] = True
+            return [float(s) for s in resp["scores"]]
+    except Exception:  # noqa: BLE001 — qualunque intoppo -> carica in-process
+        return None
+    return None
+
+
+def _load_reranker(*, consenti_daemon: bool = True):
     """Process-wide lazy CrossEncoder scorer (mirror of embedding._load_model).
 
     Cache-only load first; network retry ONLY when no offline flag is set —
     a network stall under the lock must never wedge recall (the 2026-06-05
     embedding-hang lesson). CPU pinned: the 8GB GPU OOMs with the e5 encoder
     and the CE resident together.
+
+    Prima di caricare qui, si chiede al daemon condiviso: e' lo stesso mestiere
+    che l'embedder gli affida da mesi, e per la stessa ragione — un processo
+    effimero non deve pagare (ne' buttare) il cold-load di un modello.
+    ``consenti_daemon=False`` per il daemon stesso, che non puo' essere client
+    di se' stesso.
     """
     global _RERANKER
+    if consenti_daemon and _RERANKER is None:
+        def _scorer_remoto(pairs):
+            punteggi = _rerank_via_daemon(pairs)
+            if punteggi is None:
+                # Il daemon non c'e' piu' a meta' sessione: si carica qui,
+                # una volta, e da li' in poi si usa quello.
+                return _load_reranker(consenti_daemon=False)(pairs)
+            return punteggi
+        if _rerank_via_daemon([("", "")]) is not None:
+            return _scorer_remoto
+
     if _RERANKER is None:
         with _RERANKER_LOCK:
             if _RERANKER is None:
@@ -1819,10 +1901,22 @@ def _load_reranker():
 
 
 def _reranker_ready() -> bool:
-    """True once the CE is resident in this process — a None check (no lock, no
-    load), so the rerank hot path can decide in nanoseconds whether the model is
-    still cold."""
-    return _RERANKER is not None
+    """True quando una risposta del cross-encoder e' a portata: modello
+    residente QUI, oppure daemon condiviso che ha gia' rerankato per noi.
+
+    Resta un controllo in nanosecondi — due letture di variabile, nessun lock,
+    nessun I/O: il path caldo del rerank la interroga a ogni query per scegliere
+    fra il budget pieno e quello ristretto del cold-load.
+
+    Il secondo ramo e' stato il pezzo mancante della delega al daemon, e lo si
+    e' visto solo misurando: col CE spostato nel daemon, ``_RERANKER`` resta
+    None per sempre in questo processo, quindi ogni query si dava il budget a
+    freddo (0.25s) e un predict remoto (~1.7s) non ci stava MAI — dodici recall
+    di fila tutte `timeout_cold`, con un daemon caldo dall'altra parte. La
+    prontezza va definita come per l'embedder, dove `warm` e' `in_process or
+    shared_daemon`; qui era rimasta «in_process» soltanto.
+    """
+    return _RERANKER is not None or _RERANK_DELEGATO["ok"]
 
 
 # --- Rerank circuit-breaker (task #16, 2026-07-10) ---------------------------

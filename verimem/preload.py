@@ -48,6 +48,33 @@ def _warm() -> None:
     embedding.encode("warmup")
 
 
+def _segnala_rerank_delegato(*, log=None) -> None:
+    """Chiede al daemon se sa rerankare, e lo registra. Nessun modello caricato.
+
+    Serve a far trovare alla PRIMA query il budget giusto. Con il CE spostato
+    nel daemon, `_reranker_ready()` e' falso finche' il daemon non ha risposto
+    almeno una volta: la prima query si da' quindi il budget del cold-load
+    (0.25s), un predict remoto (~2.8s) non ci sta, e quella query perde il
+    rerank. Misurato il 2026-07-31 su un processo fresco con daemon caldo:
+    `timeout_cold` alla prima, `applied` dalla seconda in poi — 11 su 12.
+
+    Nel regime reale quella prima query e' TUTTO: 256 processi su 293 ne fanno
+    una sola e muoiono. Una probe da millisecondi sul thread di boot la
+    recupera, e non costa RAM: il modello resta nel daemon, qui si registra
+    soltanto che c'e'.
+    """
+    try:
+        from . import semantic
+        if not semantic._rerank_enabled():
+            return
+        if semantic._rerank_via_daemon([("probe", "probe")]) is not None and \
+                log is not None:
+            log.info("mcp_preload_rerank_delegato_al_daemon")
+    except Exception as exc:  # noqa: BLE001 — una probe non fa morire il boot
+        if log is not None:
+            log.warning("mcp_preload_rerank_probe_failed", error=str(exc))
+
+
 def _warm_reranker(*, log=None) -> None:
     """Pre-load the stage-2 cross-encoder reranker (the R@1 lever) in-process.
 
@@ -183,6 +210,16 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
     if warm_ce:
         threading.Thread(
             target=_run_reranker, name="hippo-reranker-preload", daemon=True,
+        ).start()
+    else:
+        # Nessun modello caricato qui: si chiede solo al daemon se rerankera'
+        # lui, cosi' la PRIMA query trova il budget pieno invece di quello del
+        # cold-load. E' la meta' economica del warm — millisecondi, zero RAM —
+        # ed e' quella che conta nel regime osservato, dove quasi ogni processo
+        # fa una query sola e muore.
+        threading.Thread(
+            target=lambda: _segnala_rerank_delegato(log=log),
+            name="verimem-rerank-probe", daemon=True,
         ).start()
     # Il giudice del moat, sul SUO thread: modello e lock diversi dall'embedder
     # e dal reranker, quindi scaldarlo qui non blocca ne' recall ne' save.

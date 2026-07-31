@@ -335,6 +335,16 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # come ogni altro stato di processo, non lasciato alla cortesia dei test.
     from verimem import semantic as _sem
     _sem._rerank_breaker_reset()
+    # Stessa ragione, stato diverso (2026-07-31): `_RERANK_DELEGATO` ricorda che
+    # il daemon condiviso ha gia' rerankato per questo PROCESSO, e da quel
+    # momento la prontezza e' vera anche senza modello in casa — quindi il
+    # budget passa da quello del cold-load a quello pieno. Legittimo in
+    # produzione, dove il processo serve un solo store per tutta la sua vita;
+    # velenoso fra i test, dove il primo che parla col daemon cambia il budget
+    # di tutti quelli dopo. Trovato subito, e da chi scriveva la delega:
+    # test_recall_degrades_fast_during_ce_cold_load passa da solo e falliva
+    # dopo i test del daemon-reranker.
+    _sem._RERANK_DELEGATO["ok"] = False
     # CYCLE #25: isola HIPPO_DATA_DIR a una tmp_path per-test.
     # CONFIG è frozen dataclass costruito a import-time → monkeypatch
     # diretto fallisce con FrozenInstanceError. Use object.__setattr__

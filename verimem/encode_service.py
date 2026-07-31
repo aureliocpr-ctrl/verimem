@@ -153,6 +153,34 @@ def _default_encode_fn(text: str):
     return embedding._encode_local(text)
 
 
+#: Sentinella: «il chiamante non ha detto nulla», che non e' «il chiamante ha
+#: detto None». Serve perche' None qui ha un significato suo — un daemon che
+#: non sa rerankare — e senza distinguerli non si puo' costruire in un test il
+#: caso «daemon vecchio» per provare che il client degrada.
+_ASSENTE = object()
+
+
+def _default_rerank_fn(pairs):
+    """Punteggi del cross-encoder, calcolati QUI — nel daemon, una volta sola.
+
+    Il CE costa ~33s di caricamento e finora viveva nel processo che fa la
+    recall. Misurato il 2026-07-31 sull'audit log di produzione: 256 processi
+    su 293 chiamano `hippo_facts_recall` una volta e muoiono, quindi quei 33s
+    di lavoro venivano buttati a ogni respawn e il rerank non si applicava mai.
+    Il daemon vive: lo carica una volta e lo serve a tutti i processi effimeri,
+    esattamente come gia' fa per l'embedder.
+
+    `_load_reranker()` qui dentro NON ricade sul daemon (`_rerank_via_daemon`
+    esce subito se il modello e' gia' residente in questo processo, e comunque
+    il daemon non e' un client di se stesso): stessa guardia anti-ricorsione di
+    `_default_encode_fn`.
+    """
+    from . import semantic
+
+    scorer = semantic._load_reranker(consenti_daemon=False)
+    return [float(s) for s in scorer([tuple(p) for p in pairs])]
+
+
 class EncodeServer:
     """Threaded localhost encode server. ``encode_fn`` is injectable for tests."""
 
@@ -160,6 +188,7 @@ class EncodeServer:
         self,
         encode_fn: Callable[[str], object] | None = None,
         *,
+        rerank_fn: Callable[[list], list] | None = _ASSENTE,
         host: str = "127.0.0.1",
         port: int = 0,
         idle_timeout_s: float = IDLE_TIMEOUT_S,
@@ -168,6 +197,13 @@ class EncodeServer:
         model_dim: int = 0,
     ) -> None:
         self._encode_fn = encode_fn or _default_encode_fn
+        # Iniettabile come encode_fn, e per lo stesso motivo: un test deve poter
+        # verificare il protocollo senza caricare mezzo giga di modello.
+        # `_ASSENTE` distingue «non passato» (usa il default) da «passato None»
+        # (un daemon che NON sa rerankare — serve a provare che un client
+        # moderno contro un daemon vecchio degrada invece di rompersi).
+        self._rerank_fn = (_default_rerank_fn if rerank_fn is _ASSENTE
+                           else rerank_fn)
         self._host = host
         self._port = port
         self._idle_timeout_s = idle_timeout_s
@@ -225,7 +261,19 @@ class EncodeServer:
             return {"ok": True, "vecs": vecs}
         if "text" in req:
             return {"ok": True, "vec": self._to_list(self._encode_fn(req["text"]))}
-        return {"ok": False, "error": "request must contain 'text', 'texts', or 'ping'"}
+        if "rerank_pairs" in req:
+            # Il cross-encoder vive QUI, non nel processo che fa la recall: e'
+            # il modello che costa ~33s a caricare, e i processi che chiamano
+            # muoiono prima (256 su 293 fanno una chiamata sola). Un daemon che
+            # non sa rerankare risponde l'errore qui sotto e il client degrada.
+            if self._rerank_fn is None:
+                return {"ok": False, "error": "this daemon cannot rerank"}
+            coppie = [(str(p[0]), str(p[1])) for p in req["rerank_pairs"]]
+            return {"ok": True,
+                    "scores": [float(s) for s in self._rerank_fn(coppie)]}
+        return {"ok": False,
+                "error": "request must contain 'text', 'texts', "
+                         "'rerank_pairs', or 'ping'"}
 
     def _serve_conn(self, conn: socket.socket) -> None:
         with conn:
