@@ -807,14 +807,35 @@ def remember_cmd(
 def recall_cmd(
     query: str = typer.Argument(..., help="What to remember."),
     k: int = typer.Option(5, "--k"),
+    as_of: str = typer.Option("", "--as-of", help=(
+        "Unix epoch: answer with what was CURRENT at that instant, not now.")),
 ) -> None:
     """Recall the top-k facts for a query — the 2-second read quickstart.
 
     Same architecture-A routing as ``remember``: thin client when a memory
     server is configured, embedded otherwise.
+
+    ``--as-of <epoch>`` chiede il PASSATO: i fatti asseriti entro quell'istante
+    e non ancora superati allora. Il README promette il time-travel fra le
+    cinque righe che descrivono il prodotto, e fino al 2026-07-31 era
+    raggiungibile solo da MCP (`hippo_recall_as_of`) e dall'SDK
+    (`Memory.search(as_of=…)`): la funzione c'era completa, mancava questa
+    porta. Chi legge il README e usa la riga di comando concludeva che il
+    prodotto non lo facesse.
     """
     m = _open_memory()
-    hits = m.search(query, k=k)
+    quando = None
+    if as_of.strip():
+        try:
+            quando = float(as_of)
+        except ValueError:
+            # Ignorarlo servirebbe il PRESENTE a chi ha chiesto il passato:
+            # una risposta plausibile e sbagliata, che è il modo peggiore di
+            # sbagliare per un prodotto costruito per non farlo.
+            console.print(f"[red]--as-of non e' un epoch: {as_of!r}[/red] — "
+                          f"atteso un numero di secondi (es. 1785518205)")
+            raise typer.Exit(2) from None
+    hits = m.search(query, k=k, as_of=quando)
     if not hits:
         console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
