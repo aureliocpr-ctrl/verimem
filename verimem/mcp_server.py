@@ -819,8 +819,20 @@ def _capability_gate(
 
 
 def _audit(tool: str, arguments: dict[str, Any], outcome: str,
-           error: str = "") -> None:
-    """Append one structured JSONL record. Best-effort — never raises."""
+           error: str = "", detail: dict[str, Any] | None = None) -> None:
+    """Append one structured JSONL record. Best-effort — never raises.
+
+    ``outcome`` e' un'ETICHETTA CHIUSA (`ok`, `not_found`, `rejected_empty`):
+    dice com'e' andata, e si conta. I numeri che accompagnano l'esito vanno in
+    ``detail``, dove si leggono senza rompere l'aggregazione.
+
+    La distinzione e' costata mesi di telemetria inutilizzabile: incastrando i
+    conteggi nel nome (`ok_n_total=161`, `ok_total=10149_chains=7`) il campo ha
+    assunto 52 valori distinti, 27 dei quali con cifre dentro, e la sua
+    cardinalita' cresceva coi dati. Nessun tasso di successo per tool era
+    calcolabile — `hippo_summary_topic` risultava «100% non-ok» su quindici
+    chiamate tutte riuscite (misurato 2026-07-31).
+    """
     try:
         path = _audit_log_path()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -835,6 +847,10 @@ def _audit(tool: str, arguments: dict[str, Any], outcome: str,
             "outcome": outcome,
             "error": error[:200],
         }
+        # Assente quando non c'e' nulla da dire: un `detail: null` su ogni riga
+        # sarebbe peso morto su un file che cresce di ~1.9 MB ogni due mesi.
+        if detail:
+            record["detail"] = detail
         # Cycle #115.A: latency_ms when call_tool() set the start timer.
         # Direct `_audit()` calls outside the request flow (e.g. unit
         # tests) leave the field absent.
@@ -7720,7 +7736,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "config_dim": CONFIG.embedding_dim,
                 "cold_load_estimate_s": 0 if (in_proc or daemon_ok) else 20,
             }
-            _audit(name, arguments, outcome=f"warm={payload['warm']}")
+            _audit(name, arguments, outcome="ok",
+                   detail={"warm": bool(payload["warm"])})
             return _ok(payload)
 
         if name == "hippo_backfill_embeddings":
@@ -7732,7 +7749,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             except (TypeError, ValueError):
                 limit = None
             n = a.semantic.backfill_pending_embeddings(limit=limit)
-            _audit(name, arguments, outcome=f"backfilled={n}")
+            _audit(name, arguments, outcome="ok", detail={"backfilled": n})
             return _ok({"backfilled": n, "limit": limit})
 
         if name == "hippo_skills_for":
@@ -13115,7 +13132,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 if _ms(getattr(f, "topic", ""), user_id=_su, agent_id=_sa, run_id=_sr)
             ]
             if dry_run:
-                _audit(name, arguments, outcome=f"dry_run_n={len(matched)}")
+                _audit(name, arguments, outcome="dry_run",
+                       detail={"n": len(matched)})
                 return _ok({
                     "dry_run": True,
                     "would_delete": len(matched),
@@ -13136,7 +13154,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                                                 principal=_MCP_PRINCIPAL)
                 if r.get("op_id"):
                     op_ids.append(r["op_id"])
-            _audit(name, arguments, outcome=f"forgot_n={len(op_ids)}")
+            _audit(name, arguments, outcome="ok", detail={"forgot_n": len(op_ids)})
             return _ok({"dry_run": False, "removed": len(op_ids), "op_ids": op_ids})
 
         if name == "hippo_undo_destructive_op":
@@ -13151,7 +13169,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if name == "hippo_undo_list":
             limit = int(arguments.get("limit", 20) or 20)
             items = a.semantic.list_undoable_ops(limit=limit)
-            _audit(name, arguments, outcome=f"ok_n={len(items)}")
+            _audit(name, arguments, outcome="ok", detail={"n": len(items)})
             return _ok({"ok": True, "items": items})
 
         if name == "hippo_briefing_by_project":
@@ -13169,7 +13187,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             except Exception as exc:  # noqa: BLE001
                 _audit(name, arguments, outcome="error")
                 return _err(f"briefing_by_project crash: {exc}")
-            _audit(name, arguments, outcome=f"ok_n_live={result['n_live']}")
+            _audit(name, arguments, outcome="ok",
+                   detail={"n_live": result["n_live"]})
             return _ok(result)
 
         if name == "hippo_summary_topic":
@@ -13192,7 +13211,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 return _err(f"summary_topic crash: {exc}")
             _audit(
                 name, arguments,
-                outcome=f"ok_n_total={result['n_total']}",
+                outcome="ok", detail={"n_total": result["n_total"]},
             )
             return _ok(result)
 
@@ -13216,7 +13235,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="error")
                 return _err(f"dashboard_overview crash: {exc}")
             _audit(name, arguments,
-                   outcome=f"ok_total={result['health']['n_total']}")
+                   outcome="ok",
+                   detail={"n_total": result["health"]["n_total"]})
             return _ok(result)
 
         if name == "hippo_topic_cleanup_suggestions":
@@ -13233,7 +13253,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="error")
                 return _err(f"topic_cleanup_suggestions crash: {exc}")
             _audit(name, arguments,
-                   outcome=f"ok_orphans={result['n_facts_no_topic']}_sugg={len(result['suggestions'])}")
+                   outcome="ok",
+                   detail={"orphans": result["n_facts_no_topic"],
+                           "suggestions": len(result["suggestions"])})
             return _ok(result)
 
         if name == "hippo_corpus_health_metrics":
@@ -13245,7 +13267,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="error")
                 return _err(f"corpus_health_metrics crash: {exc}")
             _audit(name, arguments,
-                   outcome=f"ok_total={result['n_total']}_chains={result['n_chains']}")
+                   outcome="ok",
+                   detail={"n_total": result["n_total"],
+                           "n_chains": result["n_chains"]})
             return _ok(result)
 
         if name == "hippo_facts_freshness_check":
@@ -13268,7 +13292,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="error")
                 return _err(f"freshness_check crash: {exc}")
             _audit(name, arguments,
-                   outcome=f"ok_stale={result['n_stale']}_cand={result['n_auto_supersede_candidates']}")
+                   outcome="ok",
+                   detail={"n_stale": result["n_stale"],
+                           "n_candidates": result["n_auto_supersede_candidates"]})
             return _ok(result)
 
         if name == "hippo_fact_supersede_chain":

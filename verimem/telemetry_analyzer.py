@@ -41,6 +41,35 @@ def _percentile(values: list[float], pct: float) -> float:
 _SONDA_DI_SUITE = "does_not_exist"
 
 
+def famiglia_esito(outcome: Any) -> str:
+    """L'esito ridotto alla sua famiglia, per poterlo CONTARE.
+
+    Il campo `outcome` doveva essere un'etichetta chiusa e per mesi ha portato
+    dentro anche i dati. Misurato il 2026-07-31 sull'audit log di produzione:
+    **27 dei 52 valori distinti contengono cifre** — `ok_n_total=161`,
+    `ok_total=10149_chains=7`, `ok_n_live=122`. La cardinalita' cresceva coi
+    dati, quindi nessun tasso per tool era calcolabile: `hippo_summary_topic`
+    risultava «100% non-ok» su quindici chiamate tutte riuscite.
+
+    La sorgente e' curata (l'esito nasce chiuso, il numero va in `detail`), ma
+    i 78 giorni gia' scritti restano — e sono l'unica evidenza di come il
+    prodotto venga usato davvero. Qui si rendono aggregabili.
+
+    La regola guarda il `=`, non le cifre: dove c'e' un `=` il valore e'
+    composito e si tiene il primo segmento; dove non c'e', l'etichetta era gia'
+    chiusa e resta INTATTA — `ok_new` e `ok_replaced` dicono due cose diverse, e
+    schiacciarle su `ok` perderebbe una distinzione voluta.
+    """
+    if outcome is None:
+        return "unknown"
+    testo = str(outcome)
+    if not testo:
+        return "unknown"
+    if "=" not in testo:
+        return testo
+    return testo.split("=", 1)[0].split("_", 1)[0]
+
+
 def _pid_di_suite(records: list[dict[str, Any]]) -> set[Any]:
     """I processi che hanno chiamato la sonda: sono suite, non utenti."""
     return {r.get("caller_pid") for r in records
@@ -155,8 +184,7 @@ def analyze_audit_log(path: Path | str, *,
             continue
         total += 1
         per_tool_count[tool] += 1
-        outcome = rec.get("outcome", "unknown")
-        per_tool_outcomes[tool][outcome] += 1
+        per_tool_outcomes[tool][famiglia_esito(rec.get("outcome"))] += 1
         pid = rec.get("caller_pid")
         if pid is not None:
             per_tool_pids[tool].add(int(pid))
