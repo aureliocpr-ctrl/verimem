@@ -345,6 +345,12 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # test_recall_degrades_fast_during_ce_cold_load passa da solo e falliva
     # dopo i test del daemon-reranker.
     _sem._RERANK_DELEGATO["ok"] = False
+    # Idem per il GIUDICE DEL MOAT, che dal 2026-07-31 ha la stessa delega:
+    # azzerato QUI e non «quando servira'», perche' la lezione del gemello e'
+    # che un globale lasciato acceso rende l'esito dipendente dall'ordine dei
+    # test, e lo si scopre giorni dopo su un rosso che non c'entra.
+    from verimem import local_grounding as _lg
+    _lg._GATE_DELEGATO["ok"] = False
     # CYCLE #25: isola HIPPO_DATA_DIR a una tmp_path per-test.
     # CONFIG è frozen dataclass costruito a import-time → monkeypatch
     # diretto fallisce con FrozenInstanceError. Use object.__setattr__

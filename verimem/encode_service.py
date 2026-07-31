@@ -181,6 +181,35 @@ def _default_rerank_fn(pairs):
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
+def _default_gate_fn(pairs):
+    """Punteggi del GIUDICE DEL MOAT, calcolati qui — nel daemon, una volta sola.
+
+    E' un cross-encoder DIVERSO da quello del rerank: il gate model
+    `local_gate_ce_v2`, testa binaria, che decide se una source implica un
+    fatto. Per questo era rimasto fuori quando il reranker e' entrato nel
+    daemon (93cfdf28), ma il mestiere e' identico e la ragione anche.
+
+    Perche' e' piu' grave qui che altrove. Il `doctor` di questo store dice:
+    «only 107 of 4827 stored facts entailment-judged (2.2%) — ... on the MCP
+    channel the judge loads in the background: writes that arrive while it is
+    warming are admitted unjudged». Non e' un caso di bordo: sull'audit log
+    **256 processi su 293 fanno UNA chiamata e muoiono**, quindi ogni respawn
+    ricomincia il warm da zero e c'e' sempre una finestra iniziale in cui il
+    moat non gira. Un processo che vive solo dentro quella finestra non lo
+    esegue mai — e il prodotto ammette senza giudicare, che e' esattamente cio'
+    che esiste per non fare.
+
+    `consenti_daemon=False` non serve qui perche' si chiama direttamente il
+    giudice locale, che non ha un ramo daemon: la guardia anti-ricorsione e'
+    che questa funzione NON passa da `try_local_score`, l'unico punto che
+    interroga il daemon.
+    """
+    from .local_grounding import get_local_judge
+
+    scorer = get_local_judge()._ensure_scorer()
+    return [float(s) for s in scorer([tuple(p) for p in pairs])]
+
+
 class EncodeServer:
     """Threaded localhost encode server. ``encode_fn`` is injectable for tests."""
 
@@ -189,6 +218,7 @@ class EncodeServer:
         encode_fn: Callable[[str], object] | None = None,
         *,
         rerank_fn: Callable[[list], list] | None = _ASSENTE,
+        gate_fn: Callable[[list], list] | None = _ASSENTE,
         host: str = "127.0.0.1",
         port: int = 0,
         idle_timeout_s: float = IDLE_TIMEOUT_S,
@@ -204,6 +234,11 @@ class EncodeServer:
         # moderno contro un daemon vecchio degrada invece di rompersi).
         self._rerank_fn = (_default_rerank_fn if rerank_fn is _ASSENTE
                            else rerank_fn)
+        # Stessa iniettabilita' e stessa sentinella del rerank, per le stesse
+        # due ragioni: provare il protocollo senza caricare il gate model, e
+        # poter COSTRUIRE in un test il caso «daemon vecchio che non sa
+        # giudicare» (gate_fn=None) per verificare che il client degradi.
+        self._gate_fn = _default_gate_fn if gate_fn is _ASSENTE else gate_fn
         self._host = host
         self._port = port
         self._idle_timeout_s = idle_timeout_s
@@ -271,9 +306,21 @@ class EncodeServer:
             coppie = [(str(p[0]), str(p[1])) for p in req["rerank_pairs"]]
             return {"ok": True,
                     "scores": [float(s) for s in self._rerank_fn(coppie)]}
+        if "gate_pairs" in req:
+            # Il GIUDICE DEL MOAT, che e' un modello diverso dal reranker. Qui
+            # non si guadagna solo latenza: finche' viveva nel processo che
+            # scrive, le scritture che arrivavano durante il warm venivano
+            # AMMESSE SENZA GIUDIZIO (doctor: 107 su 4827 giudicati), e con 256
+            # processi su 293 che fanno una chiamata sola quella finestra e' il
+            # regime normale, non l'eccezione.
+            if self._gate_fn is None:
+                return {"ok": False, "error": "this daemon cannot judge"}
+            coppie = [(str(p[0]), str(p[1])) for p in req["gate_pairs"]]
+            return {"ok": True,
+                    "scores": [float(s) for s in self._gate_fn(coppie)]}
         return {"ok": False,
                 "error": "request must contain 'text', 'texts', "
-                         "'rerank_pairs', or 'ping'"}
+                         "'rerank_pairs', 'gate_pairs', or 'ping'"}
 
     def _serve_conn(self, conn: socket.socket) -> None:
         with conn:
