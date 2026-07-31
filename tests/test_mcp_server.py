@@ -588,8 +588,16 @@ async def _call_handler(handler_attr: str, *args, **kwargs):
 
 
 @pytest.mark.asyncio
-async def test_list_tools_returns_expected_set(fake_agent: _FakeAgent) -> None:
-    """The MCP `tools/list` handler must advertise the documented set."""
+async def test_list_tools_returns_expected_set(
+    fake_agent: _FakeAgent, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The MCP `tools/list` handler must advertise the documented set.
+
+    ws4 (2026-07-31): questo test verifica il REGISTRY completo, quindi
+    dichiara il profilo ``full`` — il default ``core`` nasconde dalla
+    lista i 126 tool mai chiamati (vedi ``tool_profile.py``), e quel
+    comportamento ha i suoi test dedicati."""
+    monkeypatch.setenv("VERIMEM_TOOL_PROFILE", "full")
     from mcp.types import ListToolsRequest, PaginatedRequestParams
     handlers = mcp_server.server.request_handlers
     handler = handlers[ListToolsRequest]

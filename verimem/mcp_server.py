@@ -6944,10 +6944,23 @@ async def list_tools() -> list[t.Tool]:
     ``_list_tools_unfiltered``. When the env var is unset the output is
     byte-identical to the legacy behaviour.
     """
-    return _apply_tool_namespace(_filter_tools(
-        await _list_tools_unfiltered(),
-        _allowed_tool_prefixes(),
-    ))
+    # ws4 (2026-07-31): profilo di esposizione. Misurato su mcp_audit.log
+    # (14.298 chiamate, 78 giorni): 126 tool su 244 mai chiamati = 48% dei
+    # 168.169 char che OGNI client paga a OGNI sessione in questa lista.
+    # Il profilo 'core' (default) li toglie dalla LISTA; il dispatch di
+    # call_tool resta completo, quindi un nome nascosto chiamato
+    # esplicitamente risponde comunque. VERIMEM_TOOL_PROFILE=full espone
+    # tutto; la lista baked e' dei NASCOSTI cosi' un tool nuovo nasce
+    # visibile.
+    from .tool_profile import exposed
+    return [
+        tool for tool in _apply_tool_namespace(_filter_tools(
+            await _list_tools_unfiltered(),
+            _allowed_tool_prefixes(),
+        ))
+        if exposed(tool.name.replace("verimem_", "hippo_", 1)
+                   if tool.name.startswith("verimem_") else tool.name)
+    ]
 
 
 def _apply_tool_namespace(tools: list[t.Tool]) -> list[t.Tool]:
