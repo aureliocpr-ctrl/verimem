@@ -27,7 +27,13 @@ except ImportError:  # pragma: no cover - faiss is OPTIONAL (pip install "verime
 #: Below this fact count the exact brute-force path wins (build/sync overhead
 #: outweighs the sublinear query). The gate stacks on top of the auto-enable
 #: (faiss importable, ENGRAM_ANN_RECALL=0 to opt out — semantic._ann_recall_enabled).
-_ANN_MIN_N = 100_000
+#:
+#: The VALUE lives in ``ann_gate``, a module that imports nothing heavy, so a
+#: caller can ask "is this corpus big enough to want an index?" without paying
+#: the faiss load to hear "no" (2026-07-31: ~650 ms, and the dominant module in
+#: the hang traces). Re-exported here because this is where it has always been
+#: imported from.
+from verimem.ann_gate import _ANN_MIN_N  # noqa: E402  (re-export, see above)
 
 
 class ANNIndex:

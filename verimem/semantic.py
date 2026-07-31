@@ -52,6 +52,10 @@ from . import embedding
 from . import epistemic as _epistemic
 from ._sqlite_pragma import read_connection
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
+
+# Solo la SOGLIA dell'ANN, da un modulo che importa `os` e basta. L'indice
+# vero (`ann_index` -> `faiss`) resta fuori dagli import di testa apposta.
+from .ann_gate import default_min_n as _ann_default_min_n
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
 from .mutation_audit import TABLE_SQL as _MUTATION_AUDIT_TABLE
@@ -2403,8 +2407,17 @@ class SemanticMemory:
         # ENGRAM_ANN_RECALL=0 opts out — see _ann_recall_enabled; keyed by
         # _cache_version so a write invalidates/rebuilds it). Dormant until
         # the corpus crosses the gate; the exact brute-force path is unchanged.
-        from verimem.ann_cache import ANNCache
-        self._ann_cache = ANNCache()
+        #
+        # COSTRUITA AL PRIMO USO, non qui (2026-07-31). `ann_cache` importa
+        # `ann_index`, che importa `faiss`: costruirla nell'__init__ faceva
+        # pagare 274,6 ms misurati (978,8 con faiss contro 704,2 senza) e una
+        # DLL nativa a OGNI processo che apre lo store —
+        # anche a `hippo_health`, che non tocca modelli e che nei 38 trace di
+        # `~/.engram/hang-traces/` e' il tool piu' spesso appeso (13 su 38, con
+        # faiss modulo dominante negli stack: 387 occorrenze). Sotto i 100k
+        # fatti del gate quell'indice non viene mai costruito, quindi era costo
+        # senza contropartita. Vedi la property `_ann_cache` piu' sotto.
+        self._ann_cache_obj: Any = None
         # Cross-process cache-coherence (sorelle loop 2026-06-03): a LONG-LIVED
         # probe connection whose ``PRAGMA data_version`` tracks commits made by
         # OTHER connections/processes. A fresh connection cannot do this — its
@@ -2453,6 +2466,27 @@ class SemanticMemory:
                     "slow sqlite txn: %.2fs on %s (pid %d)",
                     _dt, self.db_path, os.getpid(),
                 )
+
+    @property
+    def _ann_cache(self):
+        """La cache dell'indice ANN, costruita al PRIMO accesso.
+
+        Property e non attributo perche' toccare ``ANNCache`` significa
+        importare ``faiss``, e questo store viene aperto anche da chi non fara'
+        mai una recall — la CLI di stato, ``hippo_health``, un processo che
+        scrive e basta. Il nome resta ``_ann_cache``: i test che lo usano per
+        abbassare la soglia (``mem._ann_cache.min_n = 50``) continuano a
+        funzionare, e costruiscono l'oggetto proprio perche' lo stanno per
+        esercitare.
+
+        Non serve un lock: due thread che arrivassero insieme costruirebbero
+        due ``ANNCache`` vuote e una vincerebbe: nessun indice viene perso,
+        perche' l'indice non e' ancora stato costruito da nessuno dei due. Il
+        lock che conta e' quello DENTRO ``ANNCache``, che serializza i build."""
+        if self._ann_cache_obj is None:
+            from verimem.ann_cache import ANNCache
+            self._ann_cache_obj = ANNCache()
+        return self._ann_cache_obj
 
     def _db_data_version(self) -> int:
         """Cross-process cache-coherence probe (sorelle loop 2026-06-03).
@@ -3774,7 +3808,20 @@ class SemanticMemory:
             # / cosine / rerank below run on O(pool) not O(N). Byte-identical to
             # brute-force when OFF or below the gate (query_pool -> None). The
             # oversampled pool preserves the true top-k that survive the filters.
-            if _ann_recall_enabled():
+            # I DUE GATE, NELL'ORDINE IN CUI COSTANO (2026-07-31). Il gate
+            # sulla dimensione e' un confronto fra due interi che ho gia' in
+            # mano; `_ann_recall_enabled()` risponde importando faiss, cioe'
+            # ~275 ms e una DLL nativa. Chiedere prima quello gratis non cambia
+            # il risultato di una sola query — sotto la soglia `query_pool`
+            # tornerebbe comunque None — e toglie il costo a ogni recall di
+            # ogni corpus reale (6517 fatti contro un gate di 100.000).
+            # La soglia si legge dalla cache SE esiste gia': chi l'ha
+            # costruita puo' averla abbassata (i test lo fanno), e leggerla
+            # altrove creerebbe due numeri che possono divergere.
+            _min_n = (self._ann_cache_obj.min_n
+                      if self._ann_cache_obj is not None
+                      else _ann_default_min_n())
+            if len(facts) >= _min_n and _ann_recall_enabled():
                 try:
                     # background=True: never build inline — exact brute until
                     # the index for THIS corpus version is ready (iter 26).
