@@ -843,6 +843,81 @@ def recall_cmd(
         console.print(riga_di_recall(h))
 
 
+@app.command("correct")
+def correct_cmd(
+    old_id: str = typer.Argument(..., help="Id del fatto da correggere."),
+    text: str = typer.Argument(..., help="La versione corretta."),
+    source: str = typer.Option(None, "--source",
+                               help="L'evidenza da cui la correzione deve "
+                                    "seguire. Senza, il moat non gira."),
+    topic: str = typer.Option(None, "--topic", "-t",
+                              help="Default: lo stesso topic del fatto corretto."),
+    reason: str = typer.Option("", "--reason", help="Perche' la correzione."),
+) -> None:
+    """Corregge un fatto gia' scritto: il nuovo passa dal moat, poi supersede.
+
+    La capacita' c'era su MCP (`hippo_fact_supersede`) e nell'SDK
+    (`SemanticMemory.supersede`, semantic.py:5151), non sulla riga di comando —
+    e chi puo' scrivere da un canale deve poter correggere da quel canale. E'
+    la seconda occorrenza in un giorno della stessa classe dopo `recall
+    --as-of`, il che la rende una classe: una capacita' matura raggiungibile
+    solo dai canali che gli altri agenti usano.
+
+    UN GESTO SOLO, non due. `supersede(old, new)` pretende che il nuovo fatto
+    esista gia': sarebbero due comandi e un id da ricopiare, e soprattutto si
+    potrebbe ritirare un fatto buono a favore di uno che il gate non ha
+    ammesso.
+
+    L'INVARIANTE: se la correzione non e' ammessa, la supersessione NON
+    avviene. Non e' una regola nuova — e' la stessa che `Memory.add` applica
+    gia' alla supersessione same-source (client.py:442): «retire the OLD value
+    ONLY when the new write was actually ADMITTED ... superseding the old would
+    lose BOTH». Vale anche per un'ammissione GRADED, per la stessa ragione: un
+    fatto ammesso con riserva non deve ritirare dal recall uno che si era
+    guadagnato l'ammissione. Meglio due fatti in contesa che zero.
+    """
+    m = _open_memory()
+    sm = getattr(m, "semantic", None)
+    if sm is None:
+        console.print("[red]correct non e' disponibile su un memory server "
+                      "remoto[/red] — la supersessione e' un'operazione dello "
+                      "store, non del client")
+        raise typer.Exit(2)
+    vecchio = sm.get(old_id)
+    if vecchio is None:
+        # Prima di scrivere, non dopo: un `correct` su un id sbagliato che
+        # lasciasse nello store un fatto nuovo orfano E nessuna correzione
+        # sarebbe il peggiore dei due esiti, perche' sembra riuscito.
+        console.print(f"[red]fatto non trovato:[/red] {old_id}")
+        raise typer.Exit(2)
+
+    kw: dict[str, str] = {"topic": topic or getattr(vecchio, "topic", "user")}
+    if source:
+        kw["source"] = source
+    r = m.add(text, **kw)
+    adj = r.get("adjudication") or {}
+    disp = adj.get("disposition") or r.get("status")
+    nuovo = r.get("id") or "-"
+    graded = any(str(w.get("layer", "")).endswith("-graded")
+                 for w in (r.get("warnings") or []))
+    ammesso = (bool(r.get("stored")) and disp == "admitted"
+               and r.get("status") != "quarantined" and not graded)
+    if not ammesso:
+        console.print(f"[yellow]{disp}[/yellow] id={nuovo} — la correzione NON "
+                      f"e' stata ammessa, quindi {old_id} resta in piedi")
+        console.print("[dim]il vecchio fatto non viene ritirato: ritirarlo a "
+                      "favore di uno non ammesso li perderebbe entrambi[/dim]")
+        raise typer.Exit(1)
+
+    esito = sm.supersede(old_id, nuovo, principal="cli:local", reason=reason)
+    if esito.get("idempotent_noop"):
+        console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
+                      f"(gia' dichiarato, nessun cambiamento)")
+    else:
+        console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
+                      f"topic={kw['topic']}")
+
+
 @app.command("ignorance")
 def ignorance_cmd(
     queries: list[str] = typer.Argument(  # noqa: B008 — typer idiom

@@ -11484,12 +11484,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     return 0.0
                 return float(_np.dot(va, vb) / (na * nb))
 
+            scansione: dict = {}
             results = find_structural_analogues(
                 target, pool,
                 semantic_cosine_fn=_cosine,
                 min_structural=min_struct,
                 max_semantic=max_sem,
                 top_k=top_k,
+                report=scansione,
             )
             analogues_out = [
                 {
@@ -11500,12 +11502,36 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 }
                 for cand, info in results
             ]
-            _audit(name, arguments, outcome="ok")
+            _audit(name, arguments, outcome="ok",
+                   detail={"n_analogues": len(analogues_out),
+                           "n_candidates": len(pool)})
+            # `found` SIGNIFICA «il target esiste», non «ho trovato analogie»:
+            # il False sopra e' solo per il target mancante. Il nome inganna, ma
+            # l'audit registra 155 chiamate `ok` e 51 `unknown_target`, cioe'
+            # chiamanti veri — cambiargli senso li romperebbe in silenzio.
+            # Si aggiunge invece cio' che permette di leggerlo bene.
+            #
+            # `limiti_osservati` e' il pezzo che mancava per capire una lista
+            # vuota. Misurato il 2026-07-31 su questo store: il coseno fra due
+            # skill qualunque ha minimo 0.7425 e le coppie sotto il default
+            # `max_semantic=0.5` sono ZERO — con i default questo tool non puo'
+            # restituire nulla, per nessun target. Con gli estremi accanto ai
+            # vincoli chiesti, chi chiama lo vede da se' invece di concludere
+            # «non ci sono analogie».
             return _ok({
                 "target_skill_id": target_id,
                 "found": True,
+                "target_found": True,
                 "n_candidates": len(pool),
+                "n_analogues": len(analogues_out),
                 "analogues": analogues_out,
+                "vincoli_richiesti": {"min_structural": min_struct,
+                                      "max_semantic": max_sem},
+                "limiti_osservati": {
+                    "max_structural": scansione.get("max_structural"),
+                    "min_semantic": scansione.get("min_semantic"),
+                    "n_scored": scansione.get("n_scored", 0),
+                },
             })
 
         if name == "hippo_plan_strips":
