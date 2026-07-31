@@ -80,13 +80,30 @@ def scrambled_probes(sm, *, n: int = 32, seed: int = 0) -> list[str]:
     "noise" band then contains signal and the floor eats real queries (caught
     by the lexical test stub, which scores exactly that failure mode). A
     probe that collides with a stored proposition is discarded outright."""
-    facts = sm.all()[:_MAX_POOL_FACTS]
-    if len(facts) < _MIN_FACTS:
+    return scrambled_probes_da_testi(
+        [(getattr(f, "proposition", "") or "") for f in sm.all()[:_MAX_POOL_FACTS]],
+        n=n, seed=seed)
+
+
+def scrambled_probes_da_testi(testi, *, n: int = 32,
+                              seed: int = 0) -> list[str]:
+    """La stessa costruzione, su TESTI qualsiasi invece che su fatti.
+
+    Estratta il 2026-07-31 mentre si misurava il rumore di un indice di
+    DOCUMENTI. Quella misura si e' poi rivelata inutile allo scopo (il
+    pavimento veniva 0.8706, sopra TUTTE le query comprese quelle con
+    risposta) e non e' stata tenuta — ma la separazione fra «da dove prendo le
+    parole» e «su cosa cerco» resta giusta di per se': prima la funzione
+    sapeva leggere solo un `SemanticMemory`, e un secondo chiamante avrebbe
+    dovuto riscriverne la logica.
+    """
+    testi = list(testi)
+    if len(testi) < _MIN_FACTS:
         return []
     words_by_fact: list[list[str]] = []
     originals: set[str] = set()
-    for f in facts:
-        text = (getattr(f, "proposition", "") or "").strip()
+    for t in testi:
+        text = (t or "").strip()
         originals.add(text.lower())
         ws = [w for w in text.split() if len(w) > 2]
         if ws:
