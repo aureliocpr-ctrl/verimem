@@ -523,13 +523,29 @@ _CE_MOAT_TESTS = frozenset({
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip the CE-moat tests when the local CE gate model isn't cached."""
+    """Skip the CE-moat tests when the local CE gate model isn't cached, e
+    tienili sullo STESSO worker quando la suite gira in parallelo.
+
+    Il raggruppamento (2026-07-31) nasce da un crash misurato: con
+    ``-n 4 --dist loadfile`` i quattro file qui sotto finiscono su quattro
+    worker diversi, che caricano lo STESSO cross-encoder nello stesso istante,
+    e il worker muore — ``replacing crashed worker`` tre volte, poi il master
+    resta appeso al 99% senza dare nessun verdetto. Il dump indica il punto::
+
+        verimem/local_grounding.py:59   make_finetuned_scorer
+        verimem/local_grounding.py:125  _ensure_scorer
+        verimem/local_grounding.py:393  try_local_score
+
+    `xdist_group` li mette tutti sullo stesso worker: un caricamento solo,
+    nessuna corsa. Il mark e' inerte senza xdist, quindi l'esecuzione seriale
+    non cambia di una virgola.
+    """
     from tests._real_model import real_ce_cached
-    if real_ce_cached():
-        return  # gate model present → exercise the moat (local dev / CI w/o --no-gate)
+    ce_pronto = real_ce_cached()
     skip_ce = pytest.mark.skip(
         reason="local CE gate model not cached (CI warms with --no-gate)")
+    gruppo_ce = pytest.mark.xdist_group("ce_moat")
     for item in items:
         nid = item.nodeid.replace("\\", "/")
         if any(nid.endswith(suffix) for suffix in _CE_MOAT_TESTS):
-            item.add_marker(skip_ce)
+            item.add_marker(gruppo_ce if ce_pronto else skip_ce)

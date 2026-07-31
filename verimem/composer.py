@@ -97,10 +97,48 @@ _ARTICOLI_TUTTI = frozenset(
 
 #: ``[^\W\d_]`` = una lettera qualsiasi, accenti compresi: con ``[A-Za-z]``
 #: una frase che inizia per È o É non veniva nemmeno presa in esame.
+#:
+#: IL PUNTO FINALE E' FACOLTATIVO (2026-07-31). Era obbligatorio da sempre —
+#: `4a282db4^` aveva gia' `\s*\.$` — e costava caro: `_copula_parse` alimenta
+#: CINQUE moduli (composer, guardian, active_probe, source_trust,
+#: ignorance_map), e un fatto che il parser non vede non entra in NESSUN
+#: confronto. Due fatti contraddittori scritti senza punto coesistevano senza
+#: che nessuno dichiarasse la contesa, e nessuno mette il punto per abitudine:
+#: e' esattamente cio' che ha reso divergenti due prove sullo stesso codice,
+#: una con le frasi punteggiate e una no.
 _COPULA_RE = re.compile(
     r"^(?P<s>[^\W\d_][\w\s\-']{0,60}?)\s+(?P<c>is|est|è|e'|es)\s+"
-    r"(?P<o>[^\W\d_][\w\s\-']{1,60}?)\s*\.$",
+    r"(?P<o>[^\W\d_][\w\s\-']{1,60}?)\s*\.?$",
     re.UNICODE)
+
+#: L'oggetto di una copula e' un SINTAGMA NOMINALE. Un connettivo al suo
+#: interno dice che la frase non finisce li', e quello che si estrae non e'
+#: l'oggetto di niente:
+#:
+#:     «Il linguaggio è Rust e il database è Postgres.» -> 'rust e il database è postgres'
+#:     «Se il linguaggio è Rust allora compila.»        -> 'rust allora compila'
+#:
+#: Entrambi MATCHAVANO GIA' prima di rendere facoltativo il punto (verificato
+#: sul regex di `4a282db4`): non sono una regressione, sono un difetto che il
+#: punto obbligatorio nascondeva a meta'.
+#:
+#: Il criterio e' conservativo per scelta: «Il colore è bianco e nero» viene
+#: rifiutato insieme agli altri. Perdere un'analisi legittima costa un fatto in
+#: meno nei confronti; accettarne una sbagliata mette in contesa fatti che non
+#: parlano della stessa cosa — e un prodotto che esiste per non inventare
+#: preferisce il primo errore al secondo.
+_CONNETTIVI = (
+    "e", "ed", "and", "et", "y", "o", "od", "or", "ou", "u",
+    "ma", "but", "mais", "pero", "però",
+    "allora", "then", "alors", "entonces",
+    "perche", "perché", "because", "parce", "porque",
+    "quando", "when", "quand", "cuando",
+    "mentre", "while", "pendant", "mientras",
+    "che", "that", "que", "se", "if", "si",
+)
+_CONNETTIVO_NELL_OGGETTO = re.compile(
+    r"\s(?:" + "|".join(re.escape(c) for c in _CONNETTIVI) + r")\s",
+    re.UNICODE | re.IGNORECASE)
 
 
 def _strip_article(np: str, lingua: str | None = None) -> str:
@@ -139,6 +177,10 @@ def subject_key(subject: str) -> str:
 def _copula_match(text: str) -> re.Match | None:
     m = _COPULA_RE.match((text or "").strip())
     if not m:
+        return None
+    # La frase continua oltre l'oggetto: non e' una proposizione semplice e
+    # cio' che si estrarrebbe non e' l'oggetto di nessuna delle sue clausole.
+    if _CONNETTIVO_NELL_OGGETTO.search(" " + m.group("o").strip() + " "):
         return None
     lingua = _COPULE.get(m.group("c").lower(), "en")
     obj_words = m.group("o").strip().split()

@@ -1873,7 +1873,11 @@ def _load_reranker(*, consenti_daemon: bool = True):
                 # una volta, e da li' in poi si usa quello.
                 return _load_reranker(consenti_daemon=False)(pairs)
             return punteggi
-        if _rerank_via_daemon([("", "")]) is not None:
+        # La probe si paga UNA volta per processo, non a ogni recall: appena il
+        # daemon ha risposto la prima volta la risposta e' nota, e rifarla
+        # aggiungeva un round-trip a ogni query (visto nel profilo come due
+        # chiamate a `_rerank_via_daemon` per una sola recall).
+        if _RERANK_DELEGATO["ok"] or _rerank_via_daemon([("", "")]) is not None:
             return _scorer_remoto
 
     if _RERANKER is None:
