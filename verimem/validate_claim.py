@@ -147,6 +147,25 @@ def _parole_di_contenuto(text: str) -> set[str]:
             and t.lower() not in _PAROLE_VUOTE and t.lower() not in nomi}
 
 
+def _testa_nominale(text: str) -> str:
+    """La prima parola di contenuto: in una frase SVO e' la testa del soggetto.
+
+    «Il corpus contiene 6682 fatti» -> «corpus». Non e' un parser: e' la
+    domanda «di che cosa parla questa frase» risolta con la sola cosa che
+    l'italiano scritto garantisce quasi sempre, l'ordine. Sbaglia sulle frasi
+    che aprono con un complemento («Nel piano annuale il prezzo e' 100 euro»
+    -> «piano»), ed e' per questo che chi la usa non ci si affida da sola —
+    vedi `_puo_essere_una_evoluzione`, dove e' UNA delle due condizioni.
+    """
+    contenuto = _parole_di_contenuto(text)
+    if not contenuto:
+        return ""
+    for tok in _PAROLA_RE.findall(text or ""):
+        if tok.lower() in contenuto:
+            return tok.lower()
+    return ""
+
+
 def _qualcuno_asserisce(claim: str, facts: list[_FactLike]) -> bool:
     """Almeno un fatto dice qualcosa DELLA claim, non solo dei suoi soggetti.
 

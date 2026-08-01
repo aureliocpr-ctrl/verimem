@@ -452,8 +452,30 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
     Restringe cosa puo' CHIAMARSI evoluzione: non tocca il knob, non promuove
     nessuno stato, non rende nulla immune. Un testo vuoto non da' opinione —
     decidono gli strati che c'erano gia'.
+
+    DUE CONDIZIONI IN OR, e nessuna delle due regge da sola — misurato su 18
+    coppie, comprese tre evoluzioni legittime scritte con un complemento in
+    apertura::
+
+        una sola parola condivisa   -> 1 sbagliata (basta «fatti», generica
+                                       in un prodotto che parla di fatti)
+        sola testa nominale         -> 3 sbagliate sulle evoluzioni VERE
+                                       («Nel piano annuale il prezzo e' 100»)
+        testa OPPURE >= 2 parole    -> 0 sbagliate su 18
+
+    Il DUE non e' una soglia scelta: e' «piu' di una», cioe' la differenza fra
+    un incrocio e una coincidenza. `_copula_parse` sarebbe stata la strada
+    esatta e non e' percorribile: su questo corpus restituisce None ovunque
+    (5 frasi copulari su 4854).
+
+    IL LIMITE CHE RESTA, e mi e' capitato addosso mentre scrivevo questa
+    funzione: due misure DIVERSE dello stesso soggetto — un conteggio e una
+    mediana, stessa fonte, scritte a due secondi di distanza — hanno la stessa
+    testa e molte parole in comune, e la seconda ha ritirato la prima. Per
+    separarle serve sapere QUALE grandezza si misura, non quali parole si
+    usano. Nessuna delle due condizioni qui lo sa.
     """
-    from .validate_claim import _parole_di_contenuto
+    from .validate_claim import _parole_di_contenuto, _testa_nominale
 
     if not (nuovo or "").strip() or not (vecchio or "").strip():
         return True
@@ -461,7 +483,10 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
     b = _parole_di_contenuto(vecchio)
     if not a or not b:
         return True
-    return bool(a & b)
+    testa = _testa_nominale(nuovo)
+    if testa and testa == _testa_nominale(vecchio):
+        return True
+    return len(a & b) >= 2
 
 
 def _supersede_same_source_on() -> bool:

@@ -93,34 +93,76 @@ def test_una_evoluzione_VERA_resta_una_evoluzione(vecchio, nuovo):
         "ritirare quello vecchio")
 
 
-def test_IL_LIMITE_una_parola_generica_in_comune_basta_a_passare():
-    """La cura RIDUCE la cascata, non la chiude — e il numero sta qui.
+def test_una_parola_generica_in_comune_NON_basta_piu():
+    """Il limite che questo file dichiarava, e che e' stato superato.
 
-    Misurato dopo averla scritta, fuori da pytest e su store vergine: cinque
-    misure vere e scorrelate, **due ancora ritirate**. Il warning porta di
-    nuovo `other_fact_id`, quindi e' lo stesso ramo NLI: la guardia non ha
-    bloccato perche' le due frasi UNA parola di contenuto ce l'hanno::
+    La prima stesura della guardia chiedeva UNA parola di contenuto condivisa,
+    e due misure di cose diverse passavano lo stesso::
 
         "Il corpus contiene 6682 fatti."      -> {corpus, contiene, fatti}
         "La quarantena trattiene 528 fatti."  -> {quarantena, trattiene, fatti}
                                                                     ^^^^^^
 
-    «fatti» e' generica in un prodotto che parla di fatti, e il requisito di
-    UNA parola condivisa le lascia passare. La cura resta giusta e necessaria —
-    toglie i casi a zero sovrapposizione, che erano la maggioranza — ma chi
-    legge questo file deve sapere che il difetto NON e' chiuso.
-
-    Il passo successivo, quando qualcuno lo prende: pretendere il SOGGETTO in
-    comune (la testa nominale) invece di una parola qualsiasi. Il giorno in cui
-    succede questo test FALLISCE, ed e' il momento giusto per riscriverlo.
+    «fatti» e' generica in un prodotto che parla di fatti. Ora le condizioni
+    sono due in OR — stessa testa nominale, oppure almeno DUE parole — e
+    nessuna delle due regge da sola: misurato su 18 coppie, la sola parola
+    sbaglia 1, la sola testa ne sbaglia 3 (sulle evoluzioni VERE), le due
+    insieme zero.
     """
     from verimem.anti_confab_gate import _puo_essere_una_evoluzione
     assert _puo_essere_una_evoluzione(
         "Il corpus contiene 6682 fatti.",
-        "La quarantena trattiene 528 fatti.") is True, (
-        "la guardia ora separa anche i soggetti diversi che condividono una "
-        "parola generica: ottimo — rimisura la cascata e aggiorna il limite "
-        "dichiarato qui")
+        "La quarantena trattiene 528 fatti.") is False, (
+        "due misure di soggetti diversi passano ancora per una sola parola "
+        "generica in comune")
+
+
+@pytest.mark.parametrize("vecchio,nuovo", [
+    ("Nel piano annuale il prezzo e 100 euro.",
+     "Il prezzo del piano annuale e 200 euro."),
+    ("Secondo la misura di ieri la suite impiega 18 minuti.",
+     "La suite impiega 20 minuti."),
+    ("A gennaio il corpus conteneva 6000 fatti.",
+     "Il corpus contiene 6682 fatti."),
+])
+def test_una_evoluzione_scritta_al_contrario_resta_una_evoluzione(vecchio, nuovo):
+    """Perche' la testa nominale NON puo' essere l'unica condizione.
+
+    Queste tre aggiornano davvero lo stesso valore, ma aprono con un
+    complemento, quindi la loro «prima parola di contenuto» e' «piano»,
+    «secondo», «gennaio». Con la sola testa il prodotto terrebbe due valori in
+    contesa invece di ritirare il vecchio — tre casi su dieci nella misura.
+    A salvarle e' l'altra condizione: le parole condivise sono molte.
+    """
+    from verimem.anti_confab_gate import _puo_essere_una_evoluzione
+    assert _puo_essere_una_evoluzione(nuovo, vecchio) is True
+
+
+def test_IL_LIMITE_due_misure_diverse_dello_STESSO_soggetto():
+    """Il caso duro, capitato addosso a me mentre scrivevo questa cura.
+
+    Due fatti veri, stessa fonte, scritti a due secondi di distanza — uno un
+    CONTEGGIO, l'altro delle MEDIANE — e il secondo ha ritirato il primo::
+
+        superseded 6f5552d31efe — no longer served by default recall
+
+    Hanno la stessa testa («coppie») e molte parole in comune, quindi
+    passano entrambe le condizioni. Non e' un difetto di questa guardia: e' il
+    punto in cui un criterio LESSICALE finisce. Per separarle serve sapere
+    QUALE grandezza si misura — un conteggio non aggiorna una mediana — e
+    nessuna parola della frase lo dice.
+
+    Sta in un test perche' il giorno in cui qualcuno ci arriva questo FALLISCE,
+    ed e' il momento giusto per riscriverlo.
+    """
+    from verimem.anti_confab_gate import _puo_essere_una_evoluzione
+    assert _puo_essere_una_evoluzione(
+        "Le coppie riconosciute come evoluzione hanno mediana 2498 char e "
+        "quelle giudicate ritiri sbagliati mediana 165 char.",
+        "Fra le coppie ritirato-ritirante con entrambi i testi sotto 200 "
+        "char, i ritiri sbagliati sono 32 su 257.") is True, (
+        "la guardia distingue due MISURE diverse dello stesso soggetto: "
+        "rimisura la cascata sul corpus e aggiorna il limite dichiarato qui")
 
 
 def test_un_fatto_vuoto_non_blocca_nulla():
