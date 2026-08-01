@@ -110,11 +110,36 @@ def _subj_overlap(claim_caps: set[str], fact_text: str) -> float:
     Riproduce il match "i nomi della claim appaiono nel fact". Lavora
     su stringa-lower per gestire eventuali normalizzazioni (es. "Tonegawa"
     in claim, "tonegawa" in proposition).
+
+    PAROLA INTERA, non sottostringa (2026-08-01). Con `t.lower() in fact_lower`
+    il nome «Rust» risultava presente dentro «adhoc/t·rust·-check», e con
+    «database» che compariva davvero l'overlap saliva a 0.667 — sopra la soglia
+    0.6. Il fatto entrava fra i candidati, non aveva conflitti di anni o
+    quantita', e finiva fra i `supporting`: cosi' la claim «verimem e' scritto
+    in Rust e usa Oracle Database» riceveva verdetto **supported**, con
+    «Claim coerente con la memoria», mentre la sola «verimem e' scritto in
+    Rust» dava onestamente `unknown`. Allungare una falsita' la faceva passare.
+
+    E' la classe gia' in memoria come feedback dopo sei falsi allarmi in una
+    sessione — «interroga la struttura, non il testo» — il cui caso peggiore era
+    un `"91"` trovato dentro un id casuale. Qui decideva se una claim risulta
+    verificata dal gate anti-confabulazione.
+
+    Il confine `\\b` non basta da solo per i nomi che contengono punteggiatura
+    (`PROC-1037`, `scikit-learn`): si scappa il termine e si ancora ai bordi
+    non-alfanumerici, cosi' «Rust» non entra in «trust» ma «PROC-1037» si trova
+    ancora dentro «il codice PROC-1037 identifica».
     """
     if not claim_caps:
         return 0.0
     fact_lower = (fact_text or "").lower()
-    hits = sum(1 for t in claim_caps if t.lower() in fact_lower)
+    hits = 0
+    for t in claim_caps:
+        tl = t.lower().strip()
+        if not tl:
+            continue
+        if re.search(rf"(?<![0-9a-z]){re.escape(tl)}(?![0-9a-z])", fact_lower):
+            hits += 1
     return hits / len(claim_caps)
 
 
