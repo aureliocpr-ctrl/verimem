@@ -3682,10 +3682,34 @@ def save_cmd(
     # the write carries a source, and until now the receipt looked identical
     # either way — which is how a corpus reaches 6414 facts with 0 grounding
     # scores (measured 2026-07-28) while every save printed "admitted".
+    # E il verdetto va LETTO, non solo mostrato. La riga sotto diceva «the
+    # source entails this checkpoint» per QUALUNQUE punteggio, quindi un
+    # rifiuto si presentava cosi':
+    #     quarantined id=522e7c3bf744 …
+    #       grounded 3.8 — the source entails this checkpoint
+    # cioe' affermando l'implicazione proprio mentre la negava col numero, e
+    # mandando dalla parte opposta chi cerca di capire perche' la sua
+    # scrittura non e' passata. La cura sopra distingueva GIUDICATO da NON
+    # GIUDICATO e aveva lasciato intatto PASSATO da BOCCIATO.
+    # Nulla da inventare: `adjudication` porta gia' `threshold` accanto a
+    # `score`, e senza il taglio un 3.8 non dice se manca poco o tanto.
     _gs = r.get("grounding_score")
     if isinstance(_gs, (int, float)):
-        console.print(f"  grounded {float(_gs):.1f} [dim]— the source entails "
-                      f"this checkpoint[/dim]")
+        _adj = r.get("adjudication") or {}
+        _cut = _adj.get("threshold")
+        _passa = (float(_gs) >= float(_cut)) if isinstance(
+            _cut, (int, float)) else (_adj.get("disposition") != "quarantined")
+        if _passa:
+            console.print(f"  grounded {float(_gs):.1f} [dim]— the source "
+                          f"entails this checkpoint[/dim]")
+        else:
+            _soglia = (f" (cut {float(_cut):.0f})"
+                       if isinstance(_cut, (int, float)) else "")
+            console.print(
+                f"  [yellow]not grounded {float(_gs):.1f}{_soglia}[/yellow] "
+                f"[dim]— the source does NOT entail this checkpoint: that is "
+                f"why it is quarantined. Narrow the claim to what the source "
+                f"literally says, or split it[/dim]")
     else:
         console.print("  [yellow]not verified[/yellow] [dim]— no source, so the "
                       "entailment moat did not run; pass --source \"<the output "
