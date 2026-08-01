@@ -54,11 +54,28 @@ def store(monkeypatch: pytest.MonkeyPatch) -> Path:
     return d
 
 
+#: IL PUNTEGGIO INTERO, mai le prime due cifre. `97` nudo si trova dentro un id
+#: esadecimale, e in questo stesso file ce ne sono due che lo contengono
+#: (`0508d280af97`, `e5fe0b97862f`): i due test qui sotto potevano passare
+#: SENZA che la superficie stampasse alcun verdetto — un presidio che non
+#: presidia, che e' peggio di un presidio assente.
+#:
+#: Scoperto il 2026-08-01 dal gemello di questo difetto, che sull'altro verso
+#: aveva fatto fallire la CI su macOS: il fatto era nato `5936ecc7` e il `93`
+#: cercato «non doveva esserci» si trovava dentro l'id. Stessa causa, due
+#: sintomi opposti — falso positivo qui, falso negativo la'.
+#:
+#: `97.5` col punto in un id esadecimale non ci sta. E' la lezione gia' in
+#: memoria dopo sei falsi allarmi in una sessione: interroga la struttura, non
+#: il testo.
+_VERDETTO = "97.5"
+
+
 def test_tip_shows_the_moat_verdict(store: Path):
     r = runner.invoke(app, ["tip"])
     assert r.exit_code == 0, r.output
     out = _plain(r.output)
-    assert "97" in out, (
+    assert _VERDETTO in out, (
         f"`tip` non mostra il verdetto del fatto che serve a riprendere:\n{out}"
     )
 
@@ -67,7 +84,7 @@ def test_recent_shows_the_moat_verdict(store: Path):
     r = runner.invoke(app, ["recent"])
     assert r.exit_code == 0, r.output
     out = _plain(r.output)
-    assert "97" in out, f"`recent` non mostra il verdetto:\n{out}"
+    assert _VERDETTO in out, f"`recent` non mostra il verdetto:\n{out}"
 
 
 def test_an_unjudged_fact_is_not_shown_as_a_number(store: Path):
@@ -79,6 +96,14 @@ def test_an_unjudged_fact_is_not_shown_as_a_number(store: Path):
     con.commit()
     con.close()
     out = _plain(runner.invoke(app, ["recent"]).output)
-    assert "0.0" not in out and "97" not in out, (
+    # Il terzo test dello stesso difetto, e questo l'ha mostrato DAL VIVO: alla
+    # prima esecuzione dopo la cura degli altri due, l'id generato era
+    # `3d12839735c7` e il `97` che «non doveva esserci» stava dentro l'id. Tre
+    # test, tre volte la stessa causa, in un file solo.
+    assert "0.0" not in out and _VERDETTO not in out, (
         f"un fatto mai giudicato appare con un punteggio:\n{out}"
+    )
+    assert "--" in out, (
+        f"la superficie non dichiara «mai giudicato»: una cella vuota si legge "
+        f"come uno zero, che e' la distinzione che questo prodotto vende\n{out}"
     )

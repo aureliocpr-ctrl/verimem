@@ -53,9 +53,26 @@ def _tabella(args: list[str]) -> str:
     return re.sub(r"[│┌┐└┘├┤┬┴─\s]+", " ", piatto)
 
 
+#: IL PUNTEGGIO INTERO, mai le prime due cifre. `93` nudo si trova dentro un id
+#: esadecimale — su macOS il fatto e' nato `5936ecc7` e ha fatto fallire la CI
+#: (2026-08-01, l'unico rosso rimasto su quella piattaforma). I due test qui
+#: sotto sbagliavano in direzioni OPPOSTE per la stessa causa: quello positivo
+#: poteva passare senza che il verdetto fosse stampato, quello negativo falliva
+#: pur essendo il prodotto corretto.
+#:
+#: `93.5` col punto in un id esadecimale non ci sta, e per il caso «mai
+#: giudicato» si controlla il marcatore che la colonna stampa davvero.
+#: E' la lezione gia' in memoria dopo sei falsi allarmi in una sessione —
+#: «interroga la struttura, non il testo» — il cui caso peggiore era proprio un
+#: test flaky per un `"91"` dentro un id casuale. Stessa forma, due cifre
+#: diverse, tre giorni dopo.
+_VERDETTO = "93.5"
+_MAI_GIUDICATO = "--"
+
+
 def test_la_tabella_porta_il_verdetto(store: Path):
     out = _tabella(["facts", "list"])
-    assert "93" in out, f"nessun verdetto nella tabella:\n{out[:400]}"
+    assert _VERDETTO in out, f"nessun verdetto nella tabella:\n{out[:400]}"
 
 
 def test_un_fatto_mai_giudicato_non_mostra_uno_zero(store: Path):
@@ -66,7 +83,10 @@ def test_un_fatto_mai_giudicato_non_mostra_uno_zero(store: Path):
     con.commit()
     con.close()
     out = _tabella(["facts", "list"])
-    assert "0.0" not in out and "93" not in out, out[:400]
+    assert "0.0" not in out and _VERDETTO not in out, out[:400]
+    assert _MAI_GIUDICATO in out, (
+        "la colonna moat non dichiara «mai giudicato»: senza quel marcatore "
+        f"la cella e' solo vuota, che si legge come uno zero\n{out[:400]}")
 
 
 def test_la_confidenza_resta_visibile(store: Path):
