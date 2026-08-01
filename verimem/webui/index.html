@@ -77,15 +77,24 @@
     </div>
   </section>
 
+  <!-- aria-selected + aria-controls: un role="tab" senza di essi non dice a uno
+       screen reader quale scheda e' attiva ne' cosa apre. Le section esistevano
+       gia' (id="tab-*") e il JS le mostrava togglando una classe CSS: mancava
+       solo il collegamento dichiarato. La pratica corretta era gia' nel repo,
+       in templates/episodes.html e skills.html. -->
   <nav class="tabs" role="tablist">
-    <button class="tab-btn on" data-tab="graph" role="tab">Knowledge graph</button>
-    <button class="tab-btn" data-tab="search" role="tab">Search &amp; ask</button>
-    <button class="tab-btn" data-tab="blocked" role="tab">Blocked claims</button>
-    <button class="tab-btn" data-tab="layers" role="tab">Gate layers</button>
+    <button class="tab-btn on" data-tab="graph" role="tab"
+            aria-selected="true" aria-controls="tab-graph">Knowledge graph</button>
+    <button class="tab-btn" data-tab="search" role="tab"
+            aria-selected="false" aria-controls="tab-search">Search &amp; ask</button>
+    <button class="tab-btn" data-tab="blocked" role="tab"
+            aria-selected="false" aria-controls="tab-blocked">Blocked claims</button>
+    <button class="tab-btn" data-tab="layers" role="tab"
+            aria-selected="false" aria-controls="tab-layers">Gate layers</button>
   </nav>
 
   <!-- graph + chain of custody -->
-  <section id="tab-graph" class="tab on">
+  <section id="tab-graph" class="tab on" role="tabpanel">
     <div class="graph-wrap">
       <div class="graph-canvas card">
         <input id="graph-search" type="search" placeholder="find entity&hellip;"
@@ -132,7 +141,7 @@
   </section>
 
   <!-- search the memory, provenance-first; ask it, grounding-verified -->
-  <section id="tab-search" class="tab">
+  <section id="tab-search" class="tab" role="tabpanel">
     <p class="hint">Every hit shows its custody: status, who verified, event
       time vs write time, source episode. Trust per fact, not just per
       aggregate.</p>
@@ -161,7 +170,7 @@
   </section>
 
   <!-- the confabulations the gate stopped -->
-  <section id="tab-blocked" class="tab">
+  <section id="tab-blocked" class="tab" role="tabpanel">
     <p class="hint">Unsupported claims the admission gate refused to treat as
       truth — quarantined, visible, auditable. Rescue a false positive by
       re-adding it with <code>verified_by</code> evidence.</p>
@@ -176,7 +185,7 @@
   </section>
 
   <!-- which gate layers acted -->
-  <section id="tab-layers" class="tab">
+  <section id="tab-layers" class="tab" role="tabpanel">
     <p class="hint">Which defense actually fired, cumulatively.</p>
     <div id="layers" class="rows card"></div>
     <h3 class="sub-h">Live facts by status</h3>

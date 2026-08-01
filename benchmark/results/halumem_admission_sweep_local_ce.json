@@ -1,0 +1,54 @@
+{
+  "judge": "local_ce",
+  "clean_n": 60,
+  "noise_n": 60,
+  "clean_mean": 90.65,
+  "noise_mean": 6.47,
+  "sweep": [
+    {
+      "threshold": 10,
+      "clean_admit_rate": 0.917,
+      "noise_reject_rate": 0.933
+    },
+    {
+      "threshold": 20,
+      "clean_admit_rate": 0.917,
+      "noise_reject_rate": 0.933
+    },
+    {
+      "threshold": 30,
+      "clean_admit_rate": 0.917,
+      "noise_reject_rate": 0.933
+    },
+    {
+      "threshold": 40,
+      "clean_admit_rate": 0.917,
+      "noise_reject_rate": 0.933
+    },
+    {
+      "threshold": 50,
+      "clean_admit_rate": 0.9,
+      "noise_reject_rate": 0.933
+    },
+    {
+      "threshold": 60,
+      "clean_admit_rate": 0.9,
+      "noise_reject_rate": 0.933
+    },
+    {
+      "threshold": 70,
+      "clean_admit_rate": 0.9,
+      "noise_reject_rate": 0.933
+    },
+    {
+      "threshold": 80,
+      "clean_admit_rate": 0.9,
+      "noise_reject_rate": 0.933
+    },
+    {
+      "threshold": 90,
+      "clean_admit_rate": 0.9,
+      "noise_reject_rate": 0.95
+    }
+  ]
+}

@@ -48,6 +48,11 @@ import pytest
 from tests._real_model import requires_real_model
 from verimem.semantic import Fact, SemanticMemory
 
+#: Quanto si aspetta un worker che deve importare verimem. Generoso di
+#: proposito: e' un tetto anti-stallo, non una misura di prestazioni. Vedi il
+#: commento al punto d'uso.
+_TETTO_WORKER_S = 180
+
 # Subprocess workers spawn a fresh Python that loads the REAL model (no
 # in-process stub); skip when it isn't cached (CI without a warmed HF cache).
 pytestmark = requires_real_model
@@ -162,13 +167,22 @@ def test_two_processes_cannot_both_persist_master_for_same_topic(
     barrier.write_text("GO", encoding="utf-8")
 
     # Collect results.
+    #
+    # Il tetto esiste per non appendere la suite se un worker si blocca, NON
+    # per misurare quanto ci mette a importare verimem. Era 60s, e il
+    # 2026-07-31 ha fatto fallire questo test nella suite eseguita a fette
+    # parallele: `TimeoutExpired after 60 seconds`, mentre da solo passa in
+    # 49s. Con quattro processi pytest sulla stessa macchina l'import dei
+    # moduli pesanti nei due worker supera il minuto — e un test di
+    # CONCORRENZA che cade per lentezza dice «i due processi hanno persistito
+    # entrambi» quando il fatto vero e' «la macchina era occupata».
     try:
-        proc_a.wait(timeout=60)
-        proc_b.wait(timeout=60)
+        proc_a.wait(timeout=_TETTO_WORKER_S)
+        proc_b.wait(timeout=_TETTO_WORKER_S)
     except subprocess.TimeoutExpired:
         proc_a.kill()
         proc_b.kill()
-        pytest.fail("Worker did not finish within 60 s")
+        pytest.fail(f"Worker did not finish within {_TETTO_WORKER_S} s")
 
     # Both should have exited 0 (graceful handling of any IntegrityError
     # is the consolidation.py contract; non-zero exit is a real bug).

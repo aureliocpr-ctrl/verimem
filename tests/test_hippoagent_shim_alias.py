@@ -29,6 +29,20 @@ PYEXE = sys.executable
 REPO = Path(__file__).resolve().parent.parent
 
 
+#: Il tetto esiste per non appendere la suite se il subprocess si blocca, NON
+#: per misurare quanto ci mette a importare. Era 30s, e il 2026-07-31 ha fatto
+#: cadere `test_sys_modules_keys_share_object_identity` in una suite intera con
+#: `subprocess.TimeoutExpired ... after 30 seconds` — su macchina carica
+#: l'import di verimem li supera, e lo stesso test passa da solo (5 passed).
+#:
+#: Un test di IDENTITA' che cade per lentezza e' un test di prestazioni
+#: mascherato: dice «i moduli sono due oggetti diversi» quando il vero fatto e'
+#: «la macchina era occupata». Alzarlo non indebolisce nulla — se l'identita'
+#: fosse davvero rotta il subprocess stamperebbe `False` e l'assert cadrebbe
+#: comunque, che e' cio' che questo file misura.
+_TETTO_S = 180
+
+
 def _run_isolated(script: str) -> tuple[int, str, str]:
     """Run `script` in a fresh Python subprocess (no state leak from test).
 
@@ -37,7 +51,7 @@ def _run_isolated(script: str) -> tuple[int, str, str]:
     """
     proc = subprocess.run(
         [PYEXE, "-W", "ignore::DeprecationWarning", "-c", script],
-        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+        capture_output=True, text=True, timeout=_TETTO_S, cwd=str(REPO),
     )
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 

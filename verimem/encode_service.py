@@ -153,6 +153,63 @@ def _default_encode_fn(text: str):
     return embedding._encode_local(text)
 
 
+#: Sentinella: «il chiamante non ha detto nulla», che non e' «il chiamante ha
+#: detto None». Serve perche' None qui ha un significato suo — un daemon che
+#: non sa rerankare — e senza distinguerli non si puo' costruire in un test il
+#: caso «daemon vecchio» per provare che il client degrada.
+_ASSENTE = object()
+
+
+def _default_rerank_fn(pairs):
+    """Punteggi del cross-encoder, calcolati QUI — nel daemon, una volta sola.
+
+    Il CE costa ~33s di caricamento e finora viveva nel processo che fa la
+    recall. Misurato il 2026-07-31 sull'audit log di produzione: 256 processi
+    su 293 chiamano `hippo_facts_recall` una volta e muoiono, quindi quei 33s
+    di lavoro venivano buttati a ogni respawn e il rerank non si applicava mai.
+    Il daemon vive: lo carica una volta e lo serve a tutti i processi effimeri,
+    esattamente come gia' fa per l'embedder.
+
+    `_load_reranker()` qui dentro NON ricade sul daemon (`_rerank_via_daemon`
+    esce subito se il modello e' gia' residente in questo processo, e comunque
+    il daemon non e' un client di se stesso): stessa guardia anti-ricorsione di
+    `_default_encode_fn`.
+    """
+    from . import semantic
+
+    scorer = semantic._load_reranker(consenti_daemon=False)
+    return [float(s) for s in scorer([tuple(p) for p in pairs])]
+
+
+def _default_gate_fn(pairs):
+    """Punteggi del GIUDICE DEL MOAT, calcolati qui — nel daemon, una volta sola.
+
+    E' un cross-encoder DIVERSO da quello del rerank: il gate model
+    `local_gate_ce_v2`, testa binaria, che decide se una source implica un
+    fatto. Per questo era rimasto fuori quando il reranker e' entrato nel
+    daemon (93cfdf28), ma il mestiere e' identico e la ragione anche.
+
+    Perche' e' piu' grave qui che altrove. Il `doctor` di questo store dice:
+    «only 107 of 4827 stored facts entailment-judged (2.2%) — ... on the MCP
+    channel the judge loads in the background: writes that arrive while it is
+    warming are admitted unjudged». Non e' un caso di bordo: sull'audit log
+    **256 processi su 293 fanno UNA chiamata e muoiono**, quindi ogni respawn
+    ricomincia il warm da zero e c'e' sempre una finestra iniziale in cui il
+    moat non gira. Un processo che vive solo dentro quella finestra non lo
+    esegue mai — e il prodotto ammette senza giudicare, che e' esattamente cio'
+    che esiste per non fare.
+
+    `consenti_daemon=False` non serve qui perche' si chiama direttamente il
+    giudice locale, che non ha un ramo daemon: la guardia anti-ricorsione e'
+    che questa funzione NON passa da `try_local_score`, l'unico punto che
+    interroga il daemon.
+    """
+    from .local_grounding import get_local_judge
+
+    scorer = get_local_judge()._ensure_scorer()
+    return [float(s) for s in scorer([tuple(p) for p in pairs])]
+
+
 class EncodeServer:
     """Threaded localhost encode server. ``encode_fn`` is injectable for tests."""
 
@@ -160,6 +217,8 @@ class EncodeServer:
         self,
         encode_fn: Callable[[str], object] | None = None,
         *,
+        rerank_fn: Callable[[list], list] | None = _ASSENTE,
+        gate_fn: Callable[[list], list] | None = _ASSENTE,
         host: str = "127.0.0.1",
         port: int = 0,
         idle_timeout_s: float = IDLE_TIMEOUT_S,
@@ -168,6 +227,18 @@ class EncodeServer:
         model_dim: int = 0,
     ) -> None:
         self._encode_fn = encode_fn or _default_encode_fn
+        # Iniettabile come encode_fn, e per lo stesso motivo: un test deve poter
+        # verificare il protocollo senza caricare mezzo giga di modello.
+        # `_ASSENTE` distingue «non passato» (usa il default) da «passato None»
+        # (un daemon che NON sa rerankare — serve a provare che un client
+        # moderno contro un daemon vecchio degrada invece di rompersi).
+        self._rerank_fn = (_default_rerank_fn if rerank_fn is _ASSENTE
+                           else rerank_fn)
+        # Stessa iniettabilita' e stessa sentinella del rerank, per le stesse
+        # due ragioni: provare il protocollo senza caricare il gate model, e
+        # poter COSTRUIRE in un test il caso «daemon vecchio che non sa
+        # giudicare» (gate_fn=None) per verificare che il client degradi.
+        self._gate_fn = _default_gate_fn if gate_fn is _ASSENTE else gate_fn
         self._host = host
         self._port = port
         self._idle_timeout_s = idle_timeout_s
@@ -225,7 +296,31 @@ class EncodeServer:
             return {"ok": True, "vecs": vecs}
         if "text" in req:
             return {"ok": True, "vec": self._to_list(self._encode_fn(req["text"]))}
-        return {"ok": False, "error": "request must contain 'text', 'texts', or 'ping'"}
+        if "rerank_pairs" in req:
+            # Il cross-encoder vive QUI, non nel processo che fa la recall: e'
+            # il modello che costa ~33s a caricare, e i processi che chiamano
+            # muoiono prima (256 su 293 fanno una chiamata sola). Un daemon che
+            # non sa rerankare risponde l'errore qui sotto e il client degrada.
+            if self._rerank_fn is None:
+                return {"ok": False, "error": "this daemon cannot rerank"}
+            coppie = [(str(p[0]), str(p[1])) for p in req["rerank_pairs"]]
+            return {"ok": True,
+                    "scores": [float(s) for s in self._rerank_fn(coppie)]}
+        if "gate_pairs" in req:
+            # Il GIUDICE DEL MOAT, che e' un modello diverso dal reranker. Qui
+            # non si guadagna solo latenza: finche' viveva nel processo che
+            # scrive, le scritture che arrivavano durante il warm venivano
+            # AMMESSE SENZA GIUDIZIO (doctor: 107 su 4827 giudicati), e con 256
+            # processi su 293 che fanno una chiamata sola quella finestra e' il
+            # regime normale, non l'eccezione.
+            if self._gate_fn is None:
+                return {"ok": False, "error": "this daemon cannot judge"}
+            coppie = [(str(p[0]), str(p[1])) for p in req["gate_pairs"]]
+            return {"ok": True,
+                    "scores": [float(s) for s in self._gate_fn(coppie)]}
+        return {"ok": False,
+                "error": "request must contain 'text', 'texts', "
+                         "'rerank_pairs', 'gate_pairs', or 'ping'"}
 
     def _serve_conn(self, conn: socket.socket) -> None:
         with conn:

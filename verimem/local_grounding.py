@@ -132,12 +132,28 @@ class LocalGroundingJudge:
                     self.load_s = round(time.time() - t0, 1)
         return self._scorer
 
+    def coppia(self, source: str, fact: str, *,
+               focus_budget: int | None = None) -> tuple[str, str]:
+        """La coppia (span, fatto) che il CE giudica.
+
+        Estratta da ``score`` perche' ha DUE esecutori: lo scorer in-process e
+        il daemon condiviso (``_gate_via_daemon``). La selezione dello span e'
+        puro testo e costa poco, quindi resta di qua in entrambi i casi: al
+        daemon si manda la coppia gia' pronta, cosi' non c'e' un secondo posto
+        dove il budget possa essere applicato in modo diverso."""
+        budget = int(focus_budget) if focus_budget else self.focus_budget
+        return (select_relevant_span(source or "", fact or "", budget=budget),
+                fact or "")
+
+    @staticmethod
+    def normalizza(val: float) -> float:
+        """Il punteggio in [0, 100], da qualunque esecutore arrivi."""
+        return min(100.0, max(0.0, float(val)))
+
     def score(self, source: str, fact: str, *,
               focus_budget: int | None = None) -> float:
-        budget = int(focus_budget) if focus_budget else self.focus_budget
-        span = select_relevant_span(source or "", fact or "", budget=budget)
-        val = self._ensure_scorer()([(span, fact or "")])[0]
-        return min(100.0, max(0.0, float(val)))
+        coppia = self.coppia(source, fact, focus_budget=focus_budget)
+        return self.normalizza(self._ensure_scorer()([coppia])[0])
 
 
 _judge: LocalGroundingJudge | None = None
@@ -169,6 +185,52 @@ def reset_local_judge() -> None:
 def get_local_threshold() -> float | None:
     """The fine-tune-calibrated admission threshold, if the model ships one."""
     return get_local_judge().threshold
+
+
+def judge_state() -> str:
+    """Lo stato del giudice locale in UNA parola, per tutte le superfici.
+
+    ``ready`` (carico QUI, giudica adesso) · ``delegated`` (il daemon condiviso
+    ha gia' giudicato per questo processo: il modello in casa non serve, e non
+    servira') · ``warming`` (il modello c'e' e sta caricando su un thread di
+    sfondo, e nessuno sta giudicando al posto suo: in delegate-only il primo
+    write NON viene giudicato) · ``absent`` (il modello non e' su disco: si
+    scarica) · ``failed`` (c'e' ma il caricamento e' fallito: si diagnostica).
+
+    Esiste perche' tre superfici — l'advisory L4, la ricevuta MCP e ``doctor``
+    — deducevano ognuna per conto suo perche' mancasse un punteggio, e nessuna
+    distingueva «assente» da «sta scaldando». Misurato il 2026-07-30 con l'env
+    del server MCP: per ~45 secondi il moat non giudica e annuncia «model
+    missing or unloadable» mentre lo stesso modello, senza delegate-only,
+    risponde 99.93 all'istante. Un posto solo che lo sa, come per il contratto
+    di uscita dei fatti: quando in tanti ricostruiscono lo stesso dato, la cura
+    non e' correggerli tutti, e' averne uno.
+    """
+    j = get_local_judge()
+    if getattr(j, "_scorer", None) is not None:
+        return "ready"
+    if getattr(j, "_load_failed", False):
+        return "failed"
+    # Il daemon ha gia' giudicato per questo processo (2026-08-01, rilievo del
+    # critic sul commit precedente, che l'aveva pero' declassato a «stringa
+    # cosmetica»). Non e' cosmetica: e' la parola che tre superfici leggono per
+    # dire perche' manca un punteggio, e dire «sto scaldando» mentre il giudizio
+    # sta gia' avvenendo altrove e' la stessa classe curata tre volte questa
+    # settimana. Sta DOPO `_load_failed` di proposito: un fallimento locale
+    # conclamato e' una diagnosi piu' urgente della strada che ha funzionato.
+    if _GATE_DELEGATO["ok"]:
+        return "delegated"
+    try:
+        presente = j.model_dir.exists()
+    except OSError:
+        presente = False
+    if not presente:
+        return "absent"
+    # Il modello c'e' e lo scorer no. In delegate-only e' il caso NORMALE dei
+    # primi secondi: il caricamento e' su un thread di sfondo per non bloccare
+    # la richiesta. Fuori da delegate-only il caricamento e' sincrono alla
+    # prima chiamata, quindi «pronto appena serve».
+    return "warming" if _delegate_only() else "ready"
 
 
 def local_ce_available() -> bool:
@@ -319,6 +381,69 @@ def _delegate_only() -> bool:
             in _DELEGATE_TRUTHY)
 
 
+#: Il daemon ha gia' risposto una volta: da qui in poi il giudizio e' «pronto»
+#: anche senza modello in questo processo. Azzerato nel conftest fra i test
+#: (classe imparata curando l'equivalente del rerank: un globale che sopravvive
+#: al test lo rende dipendente dall'ordine).
+_GATE_DELEGATO = {"ok": False}
+
+
+def _gate_via_daemon(pairs, *, info=None) -> list[float] | None:
+    """Punteggi del giudice del moat dal daemon condiviso, o None per degradare.
+
+    Speculare a ``semantic._rerank_via_daemon``, e per la stessa ragione con una
+    posta piu' alta. Il reranker che non gira costa RILEVANZA; il giudice che
+    non gira costa la GARANZIA — una scrittura ammessa senza essere giudicata
+    e' precisamente cio' che questo prodotto esiste per non fare, e il `doctor`
+    misura quanto spesso accade: «only 107 of 4827 stored facts
+    entailment-judged (2.2%)».
+
+    Perche' il daemon lo cura davvero e non sposta solo il problema: 256
+    processi su 293, nell'audit log, fanno UNA chiamata e muoiono. Un warm
+    in-process non fa in tempo per costruzione, e ricomincia da capo a ogni
+    respawn. Il daemon vive: carica una volta e serve tutti.
+
+    Mai una dipendenza, sempre un'ottimizzazione: daemon spento, daemon vecchio
+    che non conosce ``gate_pairs``, socket caduto -> None -> il chiamante fa
+    esattamente cio' che faceva prima. E anche quando questo client scade, il
+    daemon **continua a caricare**: il processo dopo lo trova caldo.
+    """
+    if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
+        "0", "false", "no", "off",
+    ):
+        return None
+    try:
+        import socket as _socket
+
+        from . import embedding as _emb
+        from . import encode_service as _svc
+        info = info if info is not None else _svc.read_discovery()
+        if not info or not info.get("port"):
+            return None
+        conn = _socket.create_connection(
+            (info.get("host", "127.0.0.1"), info["port"]),
+            timeout=_emb._SERVICE_CONNECT_TIMEOUT_S,
+        )
+        try:
+            conn.settimeout(_emb._SERVICE_READ_TIMEOUT_S)
+            req = {"gate_pairs": [[p[0], p[1]] for p in pairs]}
+            if info.get("token"):
+                req["token"] = info["token"]
+            _svc.send_msg(conn, req)
+            resp = _svc.recv_msg(conn)
+        finally:
+            conn.close()
+        # Un daemon VECCHIO non conosce 'gate_pairs' e risponde ok=False:
+        # degradare qui e' cio' che rende sicuro un aggiornamento non atomico,
+        # in cui client e daemon non ripartono nello stesso istante.
+        if resp and resp.get("ok") and isinstance(resp.get("scores"), list):
+            _GATE_DELEGATO["ok"] = True
+            return [float(s) for s in resp["scores"]]
+    except Exception:  # noqa: BLE001 — qualunque intoppo -> si degrada come prima
+        return None
+    return None
+
+
 def warm_local_judge_async() -> None:
     """Warm the CE off the request thread (once per process). Load failure is
     cached on the judge, so the advisory path keeps working either way."""
@@ -346,9 +471,19 @@ def try_local_score(source: str, fact: str, *,
     load failure is cached; the fallback warning fires once per process."""
     global _warned_fallback
     judge = get_local_judge()
-    # DELEGATE-ONLY (MCP server): never pay the CE cold-load on this thread —
-    # kick the background warm and degrade until it lands (see block above).
+    # DELEGATE-ONLY (MCP server): never pay the CE cold-load on this thread.
+    # PRIMA si chiede al daemon condiviso — e' cio' che rende giudicata la
+    # PRIMA scrittura invece di ammetterla al buio (doctor: 107 su 4827
+    # giudicati; 256 processi su 293 fanno una chiamata sola, quindi il warm
+    # in-process non fa in tempo per costruzione). Se il daemon non c'e', non
+    # sa giudicare o e' lento, si degrada ESATTAMENTE come prima: warm in
+    # background e None. Il daemon pero' continua a caricare, quindi il
+    # processo successivo lo trova caldo.
     if judge._scorer is None and not judge._load_failed and _delegate_only():
+        punteggi = _gate_via_daemon(
+            [judge.coppia(source, fact, focus_budget=focus_budget)])
+        if punteggi:
+            return judge.normalizza(punteggi[0]), judge.threshold
         warm_local_judge_async()
         return None
     # LOAD phase — a missing / unloadable model is a legitimate "no local judge":
@@ -376,6 +511,7 @@ def try_local_score(source: str, fact: str, *,
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
            "try_local_score", "local_ce_available", "warm_local_judge_async",
+           "judge_state", "_gate_via_daemon",
            "ensure_gate_model", "DEFAULT_GATE_MODEL_URL",
            "DEFAULT_GATE_MODEL_SHA256", "DEFAULT_GATE_MODEL_HUB_ID",
            "DEFAULT_MODEL_DIR"]

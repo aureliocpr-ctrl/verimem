@@ -25,7 +25,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .composer import _copula_parse, _strip_article
+from .composer import _copula_parse, subject_key
 
 __all__ = ["ignorance_map"]
 
@@ -53,7 +53,8 @@ def _quarantined_overlap(semantic: Any, query: str, *, min_shared: int = 2) -> b
     return False
 
 
-def _classify(mem: Any, query: str, *, floor: float, k: int) -> dict[str, Any]:
+def _classify(mem: Any, query: str, *, floor: float, k: int,
+              noise_floor: float = 0.0) -> dict[str, Any]:
     hits = mem.search(query, k=k)
     top = hits[0].get("score", 0.0) if hits else None
     row: dict[str, Any] = {"query": query, "top_score": top}
@@ -69,7 +70,7 @@ def _classify(mem: Any, query: str, *, floor: float, k: int) -> dict[str, Any]:
         parsed = _copula_parse(fact.proposition)
         if not parsed:
             continue
-        subj = _strip_article(parsed[0]).lower()
+        subj = subject_key(parsed[0])
         by_subject.setdefault(subj, {}).setdefault(parsed[1], []).append(fact.id)
     qk = _keywords(query)
     for subj, values in by_subject.items():
@@ -83,31 +84,104 @@ def _classify(mem: Any, query: str, *, floor: float, k: int) -> dict[str, Any]:
                         f"audit) to resolve '{subj}' — "
                         f"{len(values)} live values disagree"})
             return row
-    if not hits or (top or 0.0) < floor:
+    # LA SOGLIA CHE DECIDE e' il pavimento dichiarato, e basta.
+    #
+    # Per qualche ora e' stata `max(floor, noise_floor)`, ed era SBAGLIATO —
+    # misurato sul corpus vero lo stesso giorno, 2026-07-30, prima di lasciarlo
+    # in piedi: con quella regola SETTE domande su otto che il corpus sa
+    # rispondere (il moat, il grounding score, le regole di Aurelio, la
+    # pubblicazione su PyPI...) uscivano come ignoranza, e le `answerable`
+    # erano ZERO. Una mappa dell'ignoranza che dice «non lo so» su tutto e'
+    # inutile quanto una che dice «lo so» su tutto.
+    #
+    # L'errore concettuale: `estimate_relevance_floor` e' il 95o percentile dei
+    # MASSIMI di sonde scramblate, e su un corpus grande qualche sonda casuale
+    # becca sempre qualcosa — quel numero e' alto per costruzione (0.87 sul
+    # corpus vero) e NON e' «il livello sotto cui non c'e' informazione». Usarlo
+    # come soglia di risposta taglia via i match semantici veri: una domanda che
+    # RIFORMULA un fatto vale ~0.78, e sta sotto.
+    #
+    # Il difetto che aveva fatto nascere quella cura resta vero e va risolto
+    # altrimenti: quando il top sta sotto il rumore misurato, la risposta si da'
+    # ma CON L'AVVERTENZA (sotto), invece di essere dichiarata rispondibile
+    # senza riserve.
+    soglia = float(floor)
+    row["deciding_floor"] = soglia
+    if not hits or (top or 0.0) < soglia:
         if _quarantined_overlap(mem.semantic, query):
             row.update({"class": "quarantined_only",
                         "what_would_help": "evidence exists but is quarantined "
                         "— provide a supporting source or review the quarantine"})
-        elif not hits:
+        elif not hits or (top or 0.0) <= noise_floor:
+            # A hit at or below the store's own NOISE ceiling is not weak
+            # evidence, it is a nearest neighbour with nothing to say. Calling
+            # it below_floor changes the prescription from "find a source on
+            # this topic" to "get stronger evidence" — pointing the operator at
+            # a fact that was never about the question (measured 2026-07-28:
+            # fourteen facts about servers turned a weather query from
+            # no_evidence into below_floor without adding a word about weather).
             row.update({"class": "no_evidence",
                         "what_would_help": "a source about: "
                         + ", ".join(sorted(_keywords(query))[:5])})
         else:
+            quale = ("measured noise floor" if soglia > float(floor)
+                     else "declared floor")
             row.update({"class": "below_floor",
                         "what_would_help": f"stronger evidence — best hit "
-                        f"{top:.2f} sits under the declared floor {floor:.2f}"})
+                        f"{top:.2f} sits under the {quale} {soglia:.2f}"})
         return row
     row.update({"class": "answerable", "what_would_help": None})
+    # Il top supera il pavimento dichiarato ma sta sotto il RUMORE che lo store
+    # ha misurato su se stesso: si risponde, e lo si dice. E' il difetto che
+    # aveva fatto nascere (male) la soglia `max`: quella fascia usciva
+    # `answerable` senza alcuna riserva, e per la misura dello store e' la zona
+    # in cui un vicino qualsiasi vale quanto un match.
+    if noise_floor and (top or 0.0) <= float(noise_floor):
+        row["caveat"] = (
+            f"best hit {top:.2f} sits at or below the store's own measured "
+            f"noise level {float(noise_floor):.2f} — answerable, but this is "
+            f"the band where a nearest neighbour scores like a real match")
     return row
 
 
 def ignorance_map(mem: Any, queries: list[str], *, floor: float = 0.8,
-                  k: int = 5) -> dict[str, Any]:
+                  k: int = 5, noise_floor: float | None = None) -> dict[str, Any]:
     """Classify every query; return ``{queries: [...], by_class: {...}}`` —
-    every class counted, nothing silently dropped."""
-    rows = [_classify(mem, q, floor=floor, k=k) for q in queries]
+    every class counted, nothing silently dropped.
+
+    ``noise_floor`` separates NOISE from weak evidence; None measures it from
+    the store itself (``estimate_relevance_floor``: scrambled in-domain probes,
+    0.0 when the store is too small to measure, in which case nothing changes).
+    Estimated ONCE per call, not per query — it costs ~32 recalls. It is
+    returned in the report because a number that decides a verdict has to be
+    visible in it.
+    """
+    # WHERE the floor came from, because 0.0 means three different things and a
+    # bare 0.0 in the report told them apart in none: the store was too small to
+    # measure (estimate_relevance_floor's deliberate answer — a floor guessed
+    # from nothing is worse than none), the measurement CRASHED, or the caller
+    # asked for it. At 0.0 the noise guard is inert and every weak hit is
+    # classified below_floor again, so an operator has to be able to tell a
+    # disabled guard from a measured one.
+    if noise_floor is not None:
+        source = "caller"
+    else:
+        from .relevance_floor import estimate_relevance_floor
+        try:
+            noise_floor = estimate_relevance_floor(mem.semantic)
+            source = "unmeasurable" if not noise_floor else "measured"
+        except Exception:            # noqa: BLE001 — a diagnostic never crashes
+            noise_floor = 0.0        # behave as before, but SAY so
+            source = "failed"
+    rows = [_classify(mem, q, floor=floor, k=k, noise_floor=noise_floor)
+            for q in queries]
     by_class: dict[str, int] = {}
     for r in rows:
         by_class[r["class"]] = by_class.get(r["class"], 0) + 1
-    return {"queries": rows, "by_class": by_class,
-            "floor": floor, "n": len(rows)}
+    return {"queries": rows, "by_class": by_class, "floor": floor,
+            "noise_floor": noise_floor, "noise_floor_source": source,
+            # Quale soglia ha deciso — resta esposta anche ora che coincide
+            # col floor dichiarato: e' il numero che un lettore deve poter
+            # verificare senza leggere il codice.
+            "deciding_floor": float(floor),
+            "n": len(rows)}

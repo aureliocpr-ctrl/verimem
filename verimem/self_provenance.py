@@ -24,7 +24,6 @@ Pure helpers + one SQL read; no write path here.
 from __future__ import annotations
 
 import json
-import os
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -49,10 +48,8 @@ def actor_of(ref: str) -> str | None:
 
 
 def _threshold() -> float:
-    try:
-        return float(os.environ.get("ENGRAM_SELF_RATIO_MAX", "0.5"))
-    except ValueError:
-        return 0.5
+    from .env_num import env_float
+    return env_float("ENGRAM_SELF_RATIO_MAX", 0.5)
 
 
 def self_write_check(db_path: str | Path, *, window: int = 500) -> dict[str, Any]:

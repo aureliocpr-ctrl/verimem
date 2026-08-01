@@ -32,7 +32,7 @@ import re
 import uuid
 from typing import Any
 
-__all__ = ["compose_once", "_copula_parse"]
+__all__ = ["compose_once", "subject_key", "_copula_parse"]
 
 #: A DERIVED fact needs more than the gate's minimum: the unreadable-verdict
 #: fallback is a non-committal 50, which PASSES the claude-scale write cut
@@ -44,37 +44,149 @@ _MIN_SCORE_DEFAULT = 55.0
 
 
 def _min_score() -> float:
-    import os
-    try:
-        return float(os.environ.get("ENGRAM_COMPOSER_MIN_SCORE",
-                                    str(_MIN_SCORE_DEFAULT)))
-    except ValueError:
-        return _MIN_SCORE_DEFAULT
+    from .env_num import env_float
+    return env_float("ENGRAM_COMPOSER_MIN_SCORE", _MIN_SCORE_DEFAULT)
 
-_ARTICLES = ("a", "an", "the")
-#: leading words that mark a NON-noun-phrase object ("is in Rome", "is over")
-_NON_NP_LEADS = frozenset(
-    "in on at from to of for with by about over under near into onto as".split())
+#: Le QUATTRO LINGUE su cui il giudice del moat e' misurato (EN/IT/FR/ES). Fino
+#: al 2026-07-30 la copula era ``\s+is\s+`` e basta: in italiano
+#: ``_copula_parse`` restituiva None, quindi il guardian non vedeva MAI due
+#: fatti come rivali e la contesa non veniva dichiarata da nessuna superficie.
+#: Un prodotto che dichiara di giudicare in quattro lingue e riconosce
+#: l'identita' del soggetto in una sola non protegge le altre tre.
+#:
+#: LA LINGUA LA DECIDE LA COPULA INCONTRATA, e ogni lingua porta i SUOI
+#: articoli e le SUE preposizioni. Non e' pignoleria: «a» e' articolo in inglese
+#: («is a labrador») e preposizione in italiano («e' a Roma»). Con le liste
+#: mescolate, o si perde l'oggetto in inglese o si accetta un locativo italiano
+#: come se fosse una classe — e un locativo scambiato per classe fa dichiarare
+#: rivali due fatti che non lo sono.
+_ARTICOLI_PER_LINGUA: dict[str, tuple[str, ...]] = {
+    "en": ("a", "an", "the"),
+    "it": ("il", "lo", "la", "i", "gli", "le", "un", "uno", "una"),
+    "fr": ("le", "la", "les", "un", "une", "des"),
+    "es": ("el", "la", "los", "las", "un", "una", "unos", "unas"),
+}
 
+#: parole che aprono un oggetto NON nominale ("is in Rome", "e' a Roma")
+_NON_NP_PER_LINGUA: dict[str, frozenset[str]] = {
+    "en": frozenset("in on at from to of for with by about over under near "
+                    "into onto as".split()),
+    "it": frozenset("in su a da di per con tra fra sotto sopra verso presso "
+                    "dentro fuori".split()),
+    "fr": frozenset("en sur a de du des dans pour avec par sous vers chez "
+                    "entre".split()),
+    "es": frozenset("en sobre a de del para con por bajo hacia entre desde "
+                    "hasta".split()),
+}
+
+#: La copula -> la lingua. `est` prima di `es`, e `e'` prima di `es`: il regex
+#: prova le alternative in ordine e la piu' lunga deve avere la precedenza.
+_COPULE: dict[str, str] = {
+    "is": "en", "è": "it", "e'": "it", "est": "fr", "es": "es",
+}
+
+#: Retrocompatibilita': l'inglese resta il default per chi importa il nome.
+_ARTICLES = _ARTICOLI_PER_LINGUA["en"]
+_NON_NP_LEADS = _NON_NP_PER_LINGUA["en"]
+
+#: Tutti gli articoli, per ``subject_key``: li' la lingua non e' nota (si
+#: normalizza un soggetto gia' estratto) e togliere un articolo di troppo e'
+#: innocuo, mentre lasciarne uno fa divergere due chiavi che devono coincidere.
+_ARTICOLI_TUTTI = frozenset(
+    a for lista in _ARTICOLI_PER_LINGUA.values() for a in lista)
+
+#: ``[^\W\d_]`` = una lettera qualsiasi, accenti compresi: con ``[A-Za-z]``
+#: una frase che inizia per È o É non veniva nemmeno presa in esame.
+#:
+#: IL PUNTO FINALE E' FACOLTATIVO (2026-07-31). Era obbligatorio da sempre —
+#: `4a282db4^` aveva gia' `\s*\.$` — e costava caro: `_copula_parse` alimenta
+#: CINQUE moduli (composer, guardian, active_probe, source_trust,
+#: ignorance_map), e un fatto che il parser non vede non entra in NESSUN
+#: confronto. Due fatti contraddittori scritti senza punto coesistevano senza
+#: che nessuno dichiarasse la contesa, e nessuno mette il punto per abitudine:
+#: e' esattamente cio' che ha reso divergenti due prove sullo stesso codice,
+#: una con le frasi punteggiate e una no.
 _COPULA_RE = re.compile(
-    r"^(?P<s>[A-Za-z][\w\s\-']{0,60}?)\s+is\s+(?P<o>[A-Za-z][\w\s\-']{1,60}?)\s*\.$")
+    r"^(?P<s>[^\W\d_][\w\s\-']{0,60}?)\s+(?P<c>is|est|è|e'|es)\s+"
+    r"(?P<o>[^\W\d_][\w\s\-']{1,60}?)\s*\.?$",
+    re.UNICODE)
+
+#: L'oggetto di una copula e' un SINTAGMA NOMINALE. Un connettivo al suo
+#: interno dice che la frase non finisce li', e quello che si estrae non e'
+#: l'oggetto di niente:
+#:
+#:     «Il linguaggio è Rust e il database è Postgres.» -> 'rust e il database è postgres'
+#:     «Se il linguaggio è Rust allora compila.»        -> 'rust allora compila'
+#:
+#: Entrambi MATCHAVANO GIA' prima di rendere facoltativo il punto (verificato
+#: sul regex di `4a282db4`): non sono una regressione, sono un difetto che il
+#: punto obbligatorio nascondeva a meta'.
+#:
+#: Il criterio e' conservativo per scelta: «Il colore è bianco e nero» viene
+#: rifiutato insieme agli altri. Perdere un'analisi legittima costa un fatto in
+#: meno nei confronti; accettarne una sbagliata mette in contesa fatti che non
+#: parlano della stessa cosa — e un prodotto che esiste per non inventare
+#: preferisce il primo errore al secondo.
+_CONNETTIVI = (
+    "e", "ed", "and", "et", "y", "o", "od", "or", "ou", "u",
+    "ma", "but", "mais", "pero", "però",
+    "allora", "then", "alors", "entonces",
+    "perche", "perché", "because", "parce", "porque",
+    "quando", "when", "quand", "cuando",
+    "mentre", "while", "pendant", "mientras",
+    "che", "that", "que", "se", "if", "si",
+)
+_CONNETTIVO_NELL_OGGETTO = re.compile(
+    r"\s(?:" + "|".join(re.escape(c) for c in _CONNETTIVI) + r")\s",
+    re.UNICODE | re.IGNORECASE)
 
 
-def _strip_article(np: str) -> str:
+def _strip_article(np: str, lingua: str | None = None) -> str:
+    """Toglie l'articolo iniziale. Con ``lingua`` usa SOLO gli articoli di
+    quella lingua (l'oggetto di una copula: li' «a» inglese e «a» italiano
+    vogliono trattamenti opposti); senza, usa l'unione — il caso di
+    ``subject_key``, dove la lingua non e' nota."""
     words = np.strip().split()
-    if words and words[0].lower() in _ARTICLES:
+    ammessi = (_ARTICOLI_PER_LINGUA.get(lingua, ()) if lingua
+               else _ARTICOLI_TUTTI)
+    if words and words[0].lower() in ammessi:
         words = words[1:]
     return " ".join(words)
+
+
+def subject_key(subject: str) -> str:
+    """The ONE definition of "the same subject", for every reader that groups
+    rival facts — the guardian's conflict detection and the active probe's
+    counter-evidence search.
+
+    It existed twice and the copies disagreed (2026-07-28): the probe normalised
+    the article, the guardian did not, so one store holding "Rex is a labrador."
+    and "The Rex is a poodle." was a fatal contradiction for the probe (which
+    applied its ABSORBING ``refuted``) and no contradiction at all for the
+    guardian (which served "labrador" as unchallenged). The same evidence cannot
+    be both. Subject identity is one question, so it gets one answer here.
+
+    Deliberately shallow — article + case + surrounding space, the normalisation
+    ``_copula_parse`` already performs on the OBJECT. It does not resolve
+    pronouns, aliases or morphology: "Rexy" is not "Rex", and a reader must not
+    infer that it is.
+    """
+    return _strip_article(subject or "").strip().lower()
 
 
 def _copula_match(text: str) -> re.Match | None:
     m = _COPULA_RE.match((text or "").strip())
     if not m:
         return None
+    # La frase continua oltre l'oggetto: non e' una proposizione semplice e
+    # cio' che si estrarrebbe non e' l'oggetto di nessuna delle sue clausole.
+    if _CONNETTIVO_NELL_OGGETTO.search(" " + m.group("o").strip() + " "):
+        return None
+    lingua = _COPULE.get(m.group("c").lower(), "en")
     obj_words = m.group("o").strip().split()
-    if not obj_words or obj_words[0].lower() in _NON_NP_LEADS:
-        return None                      # "is in Rome" — locative, not a class NP
-    if not _strip_article(m.group("o")):
+    if not obj_words or obj_words[0].lower() in _NON_NP_PER_LINGUA[lingua]:
+        return None                      # "is in Rome" / "e' a Roma" — locativo
+    if not _strip_article(m.group("o"), lingua):
         return None                      # bare article, no head noun
     return m
 
@@ -87,8 +199,9 @@ def _copula_parse(text: str) -> tuple[str, str, str] | None:
     m = _copula_match(text)
     if not m:
         return None
+    lingua = _COPULE.get(m.group("c").lower(), "en")
     return (m.group("s").strip().lower(),
-            _strip_article(m.group("o")).lower(),
+            _strip_article(m.group("o"), lingua).lower(),
             m.group("o").strip().lower())
 
 
@@ -126,7 +239,7 @@ def compose_once(mem: Any, *, topic: str | None = None, run_id: str | None = Non
             # a parent never composes with its own derivative (trivial loops)
             if a.id in (b.derives_from or []) or b.id in (a.derives_from or []):
                 continue
-            if _strip_article(mb.group("s")).lower() != pivot_a:
+            if subject_key(mb.group("s")) != pivot_a:   # the shared definition
                 continue
             subj_a = ma.group("s").strip()
             obj_b = mb.group("o").strip()

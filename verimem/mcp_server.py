@@ -55,6 +55,7 @@ from mcp.server.stdio import stdio_server  # noqa: E402
 
 from .agent import VerimemAgent  # noqa: E402
 from .config import CONFIG  # noqa: E402
+from .fact_contract import fact_payload  # noqa: E402
 from .observability import emit, get_log  # noqa: E402
 
 log = get_log()
@@ -818,8 +819,20 @@ def _capability_gate(
 
 
 def _audit(tool: str, arguments: dict[str, Any], outcome: str,
-           error: str = "") -> None:
-    """Append one structured JSONL record. Best-effort — never raises."""
+           error: str = "", detail: dict[str, Any] | None = None) -> None:
+    """Append one structured JSONL record. Best-effort — never raises.
+
+    ``outcome`` e' un'ETICHETTA CHIUSA (`ok`, `not_found`, `rejected_empty`):
+    dice com'e' andata, e si conta. I numeri che accompagnano l'esito vanno in
+    ``detail``, dove si leggono senza rompere l'aggregazione.
+
+    La distinzione e' costata mesi di telemetria inutilizzabile: incastrando i
+    conteggi nel nome (`ok_n_total=161`, `ok_total=10149_chains=7`) il campo ha
+    assunto 52 valori distinti, 27 dei quali con cifre dentro, e la sua
+    cardinalita' cresceva coi dati. Nessun tasso di successo per tool era
+    calcolabile — `hippo_summary_topic` risultava «100% non-ok» su quindici
+    chiamate tutte riuscite (misurato 2026-07-31).
+    """
     try:
         path = _audit_log_path()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -834,6 +847,10 @@ def _audit(tool: str, arguments: dict[str, Any], outcome: str,
             "outcome": outcome,
             "error": error[:200],
         }
+        # Assente quando non c'e' nulla da dire: un `detail: null` su ogni riga
+        # sarebbe peso morto su un file che cresce di ~1.9 MB ogni due mesi.
+        if detail:
+            record["detail"] = detail
         # Cycle #115.A: latency_ms when call_tool() set the start timer.
         # Direct `_audit()` calls outside the request flow (e.g. unit
         # tests) leave the field absent.
@@ -2439,6 +2456,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                                       "attribute query ABSTAINS without an "
                                       "LLM (opt-in; the useful value is "
                                       "corpus/model-dependent)"},
+                    "ce_gate": {"type": "boolean", "default": True,
+                                "description": "cross-encoder relevance gate: "
+                                "drops hits the CE scores as off-topic, so a "
+                                "question the store cannot support ABSTAINS "
+                                "instead of returning the nearest-but-wrong "
+                                "fact. ON by default (measured 2026-07-29 on "
+                                "the live store: 4/5 correct abstentions, ZERO "
+                                "false ones, ~4s added per report). Pass false "
+                                "for the raw nearest matches, e.g. when "
+                                "debugging retrieval itself."},
                 },
                 "required": ["query"],
             },
@@ -2611,11 +2638,119 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "gate stopped and audit it (the SDK twin is "
                 "Memory.quarantine_log). Read-only; superseded/deleted "
                 "quarantined facts drop out of this view. Returns "
-                "{ok, n, quarantined:[...]}."
+                "{ok, n, quarantined:[...]}. Pass explain=true to also get WHY "
+                "each claim was stopped and how to unblock it: it re-runs the "
+                "lexical screens (deterministic, no model call). A claim "
+                "stopped by L4 — the comparison against ITS OWN source — is "
+                "not explainable after the fact, because the source is not "
+                "kept; that case says so instead of returning nothing."
             ),
             inputSchema={
                 "type": "object",
-                "properties": {"limit": {"type": "integer"}},
+                "properties": {
+                    "limit": {"type": "integer"},
+                    "explain": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": (
+                            "Recompute WHY each claim was blocked. Costs a "
+                            "gate re-run per row; the plain listing is "
+                            "unchanged without it."),
+                    },
+                },
+            },
+        ),
+        t.Tool(
+            name="hippo_epistemic_health",
+            description=(
+                "How the CORPUS is doing, not one fact at a time: provenance "
+                "coverage (what fraction ever passed the moat), grounded "
+                "fraction (of those, how many cleared the bar), uncontested "
+                "fraction, and a composite. Reuses the verdicts the write-path "
+                "already persisted — no model is loaded, nothing is re-judged. "
+                "`provenance_coverage` bounds the rest: on a corpus the moat "
+                "never judged, nothing can be claimed about its health, and "
+                "the report says so instead of returning a good score."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "default": 2000},
+                    "threshold": {"type": "number", "default": 85.0,
+                                  "description": "the bar a verdict must clear"},
+                },
+            },
+        ),
+        t.Tool(
+            name="hippo_ignorance_map",
+            description=(
+                "WHY the store cannot answer — the active complement of "
+                "abstention. For each query it names the ignorance CLASS and "
+                "what would cure it: 'no_evidence' (nothing relevant is "
+                "stored), 'below_floor' (hits exist, none clears the declared "
+                "floor), 'quarantined_only' (the evidence EXISTS but every "
+                "piece is quarantined — the cure is a supporting source or a "
+                "quarantine review, NOT more retrieval), 'conflict' (live "
+                "facts disagree about one subject with no epistemic winner), "
+                "'answerable' (not ignorance, counted so the denominator is "
+                "honest). Call it after a recall came back empty or a "
+                "trust_report abstained: it turns \"I don't know\" into a "
+                "work-list. Read-only — the map never writes."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "queries": {"type": "array", "items": {"type": "string"},
+                                "description": "the questions that went "
+                                               "unanswered"},
+                    "floor": {"type": "number", "default": 0.8,
+                              "description": "the abstention floor a hit must "
+                                             "clear to count as evidence"},
+                    "k": {"type": "integer", "default": 5},
+                    "noise_floor": {
+                        "type": "number",
+                        "description": "separates NOISE from weak evidence; "
+                                       "omit to measure it from the store "
+                                       "itself. The report says WHICH of the "
+                                       "two happened (`noise_floor_source`), "
+                                       "because a bare 0.0 means three "
+                                       "different things.",
+                    },
+                },
+                "required": ["queries"],
+            },
+        ),
+        t.Tool(
+            name="hippo_fact_label",
+            description=(
+                "Attach the KIND OF GUARANTEE behind a fact: 'proven' (a named "
+                "machine-checkable proof), 'unbeaten' (held up to a declared "
+                "bound — the bound only grows), 'refuted' (a named "
+                "counterexample, absorbing). \"Held to 10^6\" and \"proven\" are "
+                "never conflated. Transitions are MONOTONE: a refuted fact does "
+                "not become proven because someone asks — that returns "
+                "labelled=false, which is the system holding, not your error. "
+                "A 'proven' without a named proof is an ERROR: a label you can "
+                "give yourself without evidence is what this product exists to "
+                "prevent. The label comes back on every read as `epistemic`."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "fact_id": {"type": "string"},
+                    "kind": {"type": "string",
+                             "enum": ["proven", "unbeaten", "refuted"]},
+                    "proof": {"type": "string",
+                              "description": "required for 'proven' — a named, "
+                                             "machine-checkable reference"},
+                    "bound": {"type": "number",
+                              "description": "required for 'unbeaten' — the "
+                                             "largest probe it survived (> 0)"},
+                    "counterexample": {
+                        "type": "string",
+                        "description": "required for 'refuted' — name the case"},
+                },
+                "required": ["fact_id", "kind"],
             },
         ),
         t.Tool(
@@ -3480,9 +3615,19 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "default ''), confidence (float 0..1, default "
                             "0.9), verified_by (list of provenance refs, "
                             "same shape as hippo_remember's — they reach "
-                            "the gate AND the stored fact). Resilient: one "
-                            "bad entry does NOT abort the call, the episode "
-                            "is still committed."
+                            "the gate AND the stored fact), and `source` "
+                            "(the EVIDENCE TEXT this fact is checked "
+                            "against — it is what runs the entailment moat; "
+                            "verified_by records WHO vouches and does not "
+                            "run the check). Resilient: one bad entry does "
+                            "NOT abort the call, the episode is still "
+                            "committed. The reply carries "
+                            "`key_facts_outcome`: one entry per fact with "
+                            "its status (model_claim / quarantined / "
+                            "rejected / failed), the moat verdict, and — for "
+                            "the ones that did not land clean — why. A "
+                            "QUARANTINED fact is stored but OUT of default "
+                            "recall: read the outcome, not just fact_ids."
                         ),
                         "items": {"type": "object"},
                         "default": [],
@@ -7420,13 +7565,34 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # F3 (iter 47): il gate reso ATOMICO — dossier di custodia per query.
             from verimem.trust_report import build_trust_report
             _as_of = arguments.get("as_of")
+            # 2026-07-29: the two things that PRODUCE an abstention were both
+            # inert here — ce_gate defaults to False in the signature and the
+            # sufficiency judge is skipped unless an llm is handed in. So the
+            # dossier that advertises "it ABSTAINS instead of stitching a guess
+            # from weak matches" answered every question. Measured on the live
+            # store over ten questions (five supported, five inventions):
+            # gate OFF -> 0/5 abstentions; gate ON -> 4/5, with ZERO false
+            # abstentions, which is what makes flipping the default safe. Cost
+            # 1.47s -> 5.82s per report; this is a deliberate custody check,
+            # not the hot recall path.
+            # The comment below is the same class: a critic flagged SDK-only
+            # three weeks ago, min_relevance got wired, ce_gate did not.
+            _ce_gate_arg = arguments.get("ce_gate")
             rep = build_trust_report(
                 a.semantic, arguments.get("query", ""),
                 k=int(arguments.get("k", 5)),
                 deep=bool(arguments.get("deep", False)),
                 as_of=float(_as_of) if _as_of is not None else None,
                 # critic O3 caveat 2026-07-06: the floor was SDK-only
-                min_relevance=float(arguments.get("min_relevance", 0.0)))
+                min_relevance=float(arguments.get("min_relevance", 0.0)),
+                ce_gate=(True if _ce_gate_arg is None
+                         else bool(_ce_gate_arg)),
+                # sufficiency closes the residual the CE cannot see — a fact
+                # on-topic (+1.01 measured) that names the right subject in the
+                # wrong role. It needs a question-aware judge; pass the one the
+                # agent already carries, and `verify` keeps declaring whether
+                # it actually ran.
+                llm=getattr(getattr(a, "wake", None), "llm", None))
             _audit(name, arguments, outcome="ok")
             return _ok(rep)
 
@@ -7441,14 +7607,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             items = []
             for h in hits:
                 f = h[0]
-                items.append({
-                    "id": getattr(f, "id", ""),
-                    "proposition": getattr(f, "proposition", ""),
-                    "topic": getattr(f, "topic", ""),
-                    "asserted_at": getattr(f, "asserted_at", None),
-                    "superseded_at": getattr(f, "superseded_at", None),
-                    "status": getattr(f, "status", ""),
-                })
+                items.append(fact_payload(f))
             _audit(name, arguments, outcome="ok")
             return _ok({"as_of": arguments.get("when"), "facts": items,
                         "n": len(items)})
@@ -7577,7 +7736,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "config_dim": CONFIG.embedding_dim,
                 "cold_load_estimate_s": 0 if (in_proc or daemon_ok) else 20,
             }
-            _audit(name, arguments, outcome=f"warm={payload['warm']}")
+            _audit(name, arguments, outcome="ok",
+                   detail={"warm": bool(payload["warm"])})
             return _ok(payload)
 
         if name == "hippo_backfill_embeddings":
@@ -7589,7 +7749,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             except (TypeError, ValueError):
                 limit = None
             n = a.semantic.backfill_pending_embeddings(limit=limit)
-            _audit(name, arguments, outcome=f"backfilled={n}")
+            _audit(name, arguments, outcome="ok", detail={"backfilled": n})
             return _ok({"backfilled": n, "limit": limit})
 
         if name == "hippo_skills_for":
@@ -8318,6 +8478,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # not here. Apply the same sanitize at this entry point.
             from verimem.syntax_pollution import sanitize_proposition as _sp
             fact_ids: list[str] = []
+            # CHE FINE HA FATTO OGNI key_fact (2026-07-30). Prima uscivano solo
+            # `fact_ids` nudi: l'id di un fatto sano e quello di un fatto
+            # QUARANTINATO — cioe' fuori dal recall di default — erano
+            # indistinguibili, e un fatto RIFIUTATO spariva con un log
+            # server-side che il chiamante non vede. Chi registra un episodio
+            # credeva di aver salvato tutto. `hippo_remember` la ricevuta ce
+            # l'ha; questo canale no, ed e' il secondo canale di scrittura.
+            key_facts_outcome: list[dict[str, Any]] = []
             raw_key_facts = arguments.get("key_facts") or []
             if isinstance(raw_key_facts, list):
                 for kf in raw_key_facts:
@@ -8339,6 +8507,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     _kf_refs = [str(x).strip() for x
                                 in (kf.get("verified_by") or [])
                                 if str(x).strip()]
+                    # LA SOURCE, che questo canale buttava in silenzio. Senza,
+                    # il moat dell'entailment — la promessa d'esordio del
+                    # server — non poteva girare qui NEMMENO volendo: non era
+                    # spento per configurazione, non c'era il modo di
+                    # accenderlo. `verified_by` registra CHI garantisce e non
+                    # esegue il controllo; la source e' il testo contro cui il
+                    # fatto viene verificato.
+                    _kf_source = str(kf.get("source", "") or "").strip() or None
+                    _kf_esito: dict[str, Any] = {
+                        "proposition": prop, "topic": fact_topic,
+                    }
                     try:
                         # FIX (2026-06-14 audit save-path, gate_bypass): i
                         # key_facts scrivevano un Fact SALTANDO l'anti-confab
@@ -8361,12 +8540,31 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                             ),
                             claimant=_MCP_PRINCIPAL,
                             documents=LazyDocumentStore(),
+                            source=_kf_source,
+                            ground_write=True if _kf_source else None,
+                        )
+                        _kf_gs = getattr(_kf_gate, "grounding_score", None)
+                        _kf_esito["moat"] = (
+                            f"judged {float(_kf_gs):.1f}"
+                            if isinstance(_kf_gs, (int, float))
+                            else ("not run — no source, so the entailment moat "
+                                  "had nothing to check; pass source=\"<the "
+                                  "evidence text>\" on this key_fact"
+                                  if not _kf_source else
+                                  "could not judge — a source was given but no "
+                                  "judge answered; this is NOT a pass")
                         )
                         if _kf_gate.action == "reject":
                             log.warning(
                                 "record_episode_key_fact_rejected_anti_confab",
                                 proposition_excerpt=prop[:80],
                             )
+                            _kf_esito.update({
+                                "status": "rejected", "id": None,
+                                "why": [w.get("reason") or w.get("layer")
+                                        for w in (_kf_gate.warnings or [])][:3],
+                            })
+                            key_facts_outcome.append(_kf_esito)
                             continue
                         fact = _build_fact(
                             proposition=prop, topic=fact_topic,
@@ -8391,12 +8589,26 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         # this loop is reached.
                         store_within_budget(a.semantic, fact, embed="auto")
                         fact_ids.append(fact.id)
+                        _kf_esito.update({"status": fact.status, "id": fact.id})
+                        if fact.status == "quarantined":
+                            # Il caso che il chiamante NON poteva vedere: il
+                            # fatto e' scritto ma fuori dal recall di default.
+                            _kf_esito["why"] = [
+                                w.get("reason") or w.get("layer")
+                                for w in (_kf_gate.warnings or [])][:3]
+                            _kf_esito["note"] = (
+                                "stored but OUT of default recall — it will "
+                                "not come back from a normal search")
+                        key_facts_outcome.append(_kf_esito)
                     except Exception as exc:  # noqa: BLE001
                         log.warning(
                             "record_episode_key_fact_store_failed",
                             proposition_excerpt=prop[:80],
                             error=str(exc),
                         )
+                        _kf_esito.update({"status": "failed", "id": None,
+                                          "error": str(exc)[:160]})
+                        key_facts_outcome.append(_kf_esito)
 
             edges_created = 0
             raw_related = arguments.get("related_episode_ids") or []
@@ -8462,6 +8674,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # Cycle #51: narrative extension — always present even
                 # when empty, so callers can rely on the shape.
                 "fact_ids": fact_ids,
+                # Che fine ha fatto OGNI key_fact: uno per voce, con il
+                # verdetto del moat e — per i quarantinati e i rifiutati — il
+                # perche'. `fact_ids` resta per chi lo usa gia': la ricevuta si
+                # aggiunge, non sostituisce.
+                "key_facts_outcome": key_facts_outcome,
                 "edges_created": edges_created,
             })
 
@@ -9412,15 +9629,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "agent_id": agent_id,
                 "include_shared": include_shared,
                 "n_total": len(filtered),
-                "facts": [
-                    {
-                        "id": getattr(f, "id", ""),
-                        "topic": getattr(f, "topic", ""),
-                        "proposition": getattr(f, "proposition", ""),
-                        "confidence": getattr(f, "confidence", 0.0),
-                    }
-                    for f in filtered[:top_k]
-                ],
+                # 2026-07-29 sweep: attribuire fatti a un agente senza dire
+                # quali sono stati giudicati si legge come un avallo di tutti.
+                # Dal 30/07 il contratto e' uno solo (Fact.as_payload).
+                "facts": [fact_payload(f) for f in filtered[:top_k]],
             }
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
@@ -11272,12 +11484,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     return 0.0
                 return float(_np.dot(va, vb) / (na * nb))
 
+            scansione: dict = {}
             results = find_structural_analogues(
                 target, pool,
                 semantic_cosine_fn=_cosine,
                 min_structural=min_struct,
                 max_semantic=max_sem,
                 top_k=top_k,
+                report=scansione,
             )
             analogues_out = [
                 {
@@ -11288,12 +11502,36 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 }
                 for cand, info in results
             ]
-            _audit(name, arguments, outcome="ok")
+            _audit(name, arguments, outcome="ok",
+                   detail={"n_analogues": len(analogues_out),
+                           "n_candidates": len(pool)})
+            # `found` SIGNIFICA «il target esiste», non «ho trovato analogie»:
+            # il False sopra e' solo per il target mancante. Il nome inganna, ma
+            # l'audit registra 155 chiamate `ok` e 51 `unknown_target`, cioe'
+            # chiamanti veri — cambiargli senso li romperebbe in silenzio.
+            # Si aggiunge invece cio' che permette di leggerlo bene.
+            #
+            # `limiti_osservati` e' il pezzo che mancava per capire una lista
+            # vuota. Misurato il 2026-07-31 su questo store: il coseno fra due
+            # skill qualunque ha minimo 0.7425 e le coppie sotto il default
+            # `max_semantic=0.5` sono ZERO — con i default questo tool non puo'
+            # restituire nulla, per nessun target. Con gli estremi accanto ai
+            # vincoli chiesti, chi chiama lo vede da se' invece di concludere
+            # «non ci sono analogie».
             return _ok({
                 "target_skill_id": target_id,
                 "found": True,
+                "target_found": True,
                 "n_candidates": len(pool),
+                "n_analogues": len(analogues_out),
                 "analogues": analogues_out,
+                "vincoli_richiesti": {"min_structural": min_struct,
+                                      "max_semantic": max_sem},
+                "limiti_osservati": {
+                    "max_structural": scansione.get("max_structural"),
+                    "min_semantic": scansione.get("min_semantic"),
+                    "n_scored": scansione.get("n_scored", 0),
+                },
             })
 
         if name == "hippo_plan_strips":
@@ -11368,15 +11606,54 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 depth=depth, beam_width=beam_width,
                 goal=goal_pred,
             )
+            # DUE NUMERI PER PIANO, misurati il 2026-08-01 sul corpus vero.
+            #
+            # (1) `passi_distinti`. Partendo dalle sei skill piu' frequenti,
+            # 11 piani su 16 ripetevano almeno un passo, e quello con la
+            # probabilita' PIU' ALTA (0.3068) era un ping-pong puro fra due id.
+            # Non e' un difetto di implementazione: e' cosa il beam search
+            # massimizza. Se A->B e B->A sono entrambe frequenti — cioe' se due
+            # skill si usano spesso insieme — il percorso piu' probabile e'
+            # alternarle, e il «piano» diventa la coppia piu' frequente
+            # ripetuta fino alla profondita' chiesta.
+            # I cicli NON si vietano: «scrivi il test -> eseguilo -> scrivi il
+            # test» e' il loop TDD, non un errore; e scegliere una penalita'
+            # sarebbe un numero deciso a occhio, l'errore gia' pagato tre volte
+            # questa settimana con le soglie sui coseni. Si espone il dato e
+            # chi legge distingue un piano che avanza da uno che oscilla.
+            #
+            # (2) `passi_noti`. La matrice si costruisce da `skills_used` degli
+            # episodi, non dallo store: misurati 558 id di cui 519 NON esistono
+            # fra le 325 skill vive (sono nomi di regole — `A1_anti_confab` —
+            # che gli episodi storici registravano come se fossero skill). Un
+            # piano puo' nominare passi che nessuno potra' mai eseguire, e il
+            # chiamante non aveva modo di accorgersene.
+            # Lo store delle skill serve SOLO a questi due numeri, che sono
+            # osservabilita': se non e' raggiungibile valgono None e il piano
+            # esce lo stesso. Un tool che moriva perche' una diagnostica non
+            # trovava il suo dato sarebbe il difetto peggiore di quello che
+            # sta curando — stesso contratto del watchdog degli stalli,
+            # «observability ONLY, never raises». (Trovato dalla suite: il
+            # ramo non aveva MAI toccato `a.skills`, e i sette test del tool
+            # montano un agente finto con la sola `memory`.)
+            try:
+                _vivi: set[str] | None = {s.id for s in a.skills.all()}
+            except Exception:  # noqa: BLE001 — i piani valgono piu' del conteggio
+                _vivi = None
             plans_out = [
                 {
                     "path": list(path),
                     "log_prob": float(lp),
                     "prob": float(math.exp(lp)),
+                    "passi_distinti": len(set(path)),
+                    "passi_noti": (None if _vivi is None
+                                   else sum(1 for p in path if p in _vivi)),
                 }
                 for path, lp in raw_plans
             ]
-            _audit(name, arguments, outcome="ok")
+            _audit(name, arguments, outcome="ok",
+                   detail={"n_plans": len(plans_out),
+                           "n_unique_skills": len(ids)})
             return _ok({
                 "start_skill": start_skill,
                 "depth": depth,
@@ -11384,6 +11661,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "goal_skill": goal_skill or "",
                 "n_episodes_used": len(sequences),
                 "n_unique_skills": len(ids),
+                # Accanto a `n_unique_skills`, quanti di quegli id sono skill
+                # VIVE: 39 su 558, sul corpus reale. None quando lo store delle
+                # skill non e' raggiungibile — meglio «non lo so» di un numero
+                # che sembra un conteggio e non lo e'.
+                "n_skill_vive": (None if _vivi is None
+                                 else sum(1 for i in ids if i in _vivi)),
                 "plans": plans_out,
             })
 
@@ -11520,19 +11803,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "topic": topic,
                 "include_legacy": include_legacy,
                 "min_status": min_status,
-                "items": [
-                    {
-                        "id": f.id,
-                        "proposition": f.proposition,
-                        "topic": getattr(f, "topic", ""),
-                        "confidence": float(getattr(f, "confidence", 0.0)),
-                        "created_at": float(getattr(f, "created_at", 0.0)),
-                        # Cycle #109 S4-A: provenance visibility.
-                        "status": getattr(f, "status", "model_claim"),
-                        "verified_by": list(getattr(f, "verified_by", [])),
-                    }
-                    for f in hits
-                ],
+                # 2026-07-30: era uno dei 13 dict scritti a mano, e il verdetto
+                # ci era arrivato solo con una cura puntuale il giorno prima.
+                # Ora il fatto ha un contratto di uscita solo (Fact.as_payload),
+                # quindi porta anche il tier del giudice, l'etichetta epistemica
+                # e chi l'ha scritto — tre campi che uscivano da ZERO superfici
+                # su 13, calcolati e persistiti da settimane.
+                "items": [fact_payload(f) for f in hits],
             })
 
         if name == "hippo_validate_claim":
@@ -12007,6 +12284,30 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # (a.wake.llm / LazyLLM) so no backend is built unless the check actually runs.
             _source = arguments.get("source")
             _grounding_llm = getattr(getattr(a, "wake", None), "llm", None)
+            # 2026-07-29: ASK for the check when a source is given, instead of
+            # falling through to ENGRAM_GROUNDING_WRITE — which nothing in the
+            # source tree sets, so this channel stored sourced writes unjudged
+            # and answered `ok: true` all the same. Not a new contract:
+            # ebab6e92 (2026-07-17) documented "the moat is ON by default" and
+            # was right about the SDK path, whose `balanced` preset passes
+            # ground=True; its evidence line names the hardening-audit probe,
+            # which runs on that same path. This makes the second channel keep
+            # the promise the first one already made.
+            #
+            # Cost measured over 4 MCP writes: steady 0.10s -> 0.46s per write;
+            # the first pays the CE cold-load (~29s) ONCE PER PROCESS, i.e.
+            # once per session on a long-lived server. No source means nothing
+            # to entail, so nothing is requested and nothing is loaded.
+            #
+            # An explicit env value still wins in the OFF direction: whoever
+            # has already switched the moat off keeps it off.
+            _gw_env = os.environ.get("ENGRAM_GROUNDING_WRITE", "").strip().lower()
+            if _gw_env in ("0", "off", "false", "no"):
+                _ground_write = False
+            elif _source:
+                _ground_write = True
+            else:
+                _ground_write = None
             # P0 ciclo 2c: the identity is the SERVER's (_MCP_PRINCIPAL), never
             # a tool argument — same trust boundary as writer_principal. The
             # document store is lazy: writes that never reach the independence
@@ -12025,6 +12326,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 repo_root=_gate_repo_root,
                 source=_source,
                 grounding_llm=_grounding_llm,
+                ground_write=_ground_write,
                 claimant=_MCP_PRINCIPAL,
                 documents=LazyDocumentStore(),
             )
@@ -12319,6 +12621,78 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         )
             except Exception:  # noqa: BLE001 — never break the response
                 pass
+            # 2026-07-29: say whether the moat actually ran. `verimem save`
+            # has printed this since 2026-07-28; hippo_remember — the channel
+            # an AGENT writes through — answered `ok: true` with an empty
+            # warnings list whether the entailment check ran, was switched
+            # off, or was never given anything to check. Measured the same
+            # day: a write carrying a real source came back indistinguishable
+            # from one carrying none, because L4 is opt-in via
+            # ENGRAM_GROUNDING_WRITE and nothing sets it. Four states, because
+            # "you gave me nothing to check" and "I am switched off" send the
+            # caller to fix different things — the UNKNOWN-vs-zero distinction
+            # doctor already makes about coverage.
+            _gs_out = getattr(fact, "grounding_score", None)
+            if isinstance(_gs_out, (int, float)):
+                _moat = (f"judged {float(_gs_out):.1f} — the source entails "
+                         f"this fact")
+            elif not _source:
+                _moat = ("not run — no source, so the entailment moat had "
+                         "nothing to check; pass source=\"<the evidence "
+                         "text>\" to have this write judged")
+            elif _ground_write is False:
+                # Only an EXPLICIT opt-out lands here. Reading
+                # _grounding_write_on() instead would be wrong now that this
+                # handler passes ground_write itself: an absent env var means
+                # "on by default", and the message would announce a switch-off
+                # that did not happen — exactly the kind of confident-wrong
+                # report this whole receipt exists to stop.
+                _moat = ("not run — a source WAS given, but write-time "
+                         "grounding is switched off here "
+                         "(ENGRAM_GROUNDING_WRITE=0)")
+            else:
+                # QUALE dei tre «non ho giudicato», perche' mandano a fare cose
+                # diverse. Diceva sempre «no local CE model», e su QUESTO canale
+                # era quasi sempre falso: il server gira delegate-only e per i
+                # primi ~45 secondi il modello e' su disco e sta caricando su un
+                # thread di sfondo (misurato 2026-07-30). Lo stato lo dice
+                # `judge_state()`, lo stesso che legge l'advisory L4.
+                from .local_grounding import judge_state as _js
+                _stato = _js()
+                if _stato == "warming":
+                    _moat = ("could not judge — the local CE judge was still "
+                             "LOADING when this write arrived (the server keeps "
+                             "the ~30s cold load off the request thread). The "
+                             "model is NOT missing; this is NOT a pass. Writes "
+                             "after it lands are judged, and the CLI judges "
+                             "immediately")
+                elif _stato == "failed":
+                    _moat = ("could not judge — the local CE judge is on disk "
+                             "but FAILED to load in this process (cached for "
+                             "its lifetime); this is NOT a pass — run "
+                             "`verimem doctor` for the reason")
+                elif _stato in ("ready", "delegated"):
+                    # IL GIUDICE C'ERA. Misurato il 2026-08-01 su questo
+                    # canale: `local_ce_available()` True, `judge_state()`
+                    # «ready», modello su disco — e la ricevuta diceva «no
+                    # judge was available ... run `verimem warmup`», mandando
+                    # chi legge a scaricare un modello che ha gia'.
+                    # Un messaggio che descrive UNO stato (`absent`) applicato
+                    # a tre: la diagnosi diventa una pista falsa, che per una
+                    # ricevuta e' peggio del silenzio.
+                    _moat = (f"could not judge — the local CE judge was "
+                             f"{_stato} in this process and the moat was asked, "
+                             f"but no score came back. This is NOT a pass, and "
+                             f"NOT a missing model: `verimem warmup` non "
+                             f"servirebbe. E' un difetto del percorso di "
+                             f"giudizio su questo canale — la CLI sullo stesso "
+                             f"store giudica")
+                else:
+                    _moat = ("could not judge — a source was given and the moat "
+                             "was asked, but no judge was available for this "
+                             "write (no llm and no local CE model); this is NOT a "
+                             "pass — run `verimem warmup` to fetch the free "
+                             "judge, or `verimem doctor` to see which is missing")
             return _ok({
                 "ok": True,
                 "id": fact.id,
@@ -12326,6 +12700,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "topic": topic,
                 "confidence": confidence,
                 "replaced": was_replaced,
+                # The moat's verdict on THIS write, and the same score the
+                # read surfaces return. None means it did not run — read
+                # `moat` for which of the reasons.
+                "grounding_score": _gs_out,
+                "moat": _moat,
                 # Bounded-write circuit-breaker (2026-06-06): True when the write
                 # was deferred to the background (SQLite write lock contended) so
                 # the caller didn't block up to 60s; the fact lands shortly.
@@ -12403,6 +12782,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _pf = {"topic_prefix": _topic_prefix} if _topic_prefix else {}
             if arguments.get("deep"):
                 _pf["deep"] = True   # v14 archaeology: lift age hiding only
+            # Apre la registrazione di COME verra' ordinata questa risposta.
+            # Misurato il 30/07: tre chiamate identiche di fila davano insiemi
+            # diversi (un fatto dentro a freddo, un altro a caldo) perche' il
+            # CE-rerank e la fusione PPR sfioravano il loro budget, e la
+            # risposta aveva le stesse identiche chiavi in tutti e tre i casi.
+            from .semantic import ranking_reset as _ranking_reset
+            from .semantic import ranking_stages as _ranking_stages
+            _ranking_reset()
             try:
                 hits = a.semantic.recall(
                     query, k=_recall_k, topic=_recall_topic,
@@ -12432,22 +12819,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     f, score = hit
                     sig = None
                 row: dict[str, Any] = {
-                    "id": f.id,
-                    "proposition": f.proposition,
-                    "topic": getattr(f, "topic", ""),
-                    "confidence": float(getattr(f, "confidence", 0.0)),
+                    # Il contratto di uscita del fatto (Fact.as_payload): un
+                    # punto solo, cosi' il campo aggiunto domani esce da qui e
+                    # da tutte le altre superfici insieme. Prima erano 13 dict
+                    # scritti a mano e il verdetto usciva da 6.
+                    **fact_payload(f),
                     "score": float(score),
-                    "created_at": float(getattr(f, "created_at", 0.0)),
-                    # Readable date alongside the raw epoch so the agent can reason
-                    # temporally over recalled facts, not just sort by a float (2026-06-20).
+                    # Data leggibile accanto all'epoch grezzo, cosi' l'agente
+                    # ragiona sul tempo invece di ordinare per float (2026-06-20).
                     "when": _iso_day(getattr(f, "created_at", 0.0)),
-                    # Cycle #109 S4-A: provenance visibility.
-                    "status": getattr(f, "status", "model_claim"),
-                    "verified_by": list(getattr(f, "verified_by", [])),
-                    # v12 (2026-06-20): the write-time source-entailment score (0-100) if
-                    # computed, so the agent can prefer/assert from grounded facts and
-                    # hedge low-grounding ones — provenance-conditioned answering.
-                    "grounding_score": getattr(f, "grounding_score", None),
                 }
                 if sig is not None:
                     row["verdict"] = sig.verdict
@@ -12457,6 +12837,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok({
                 "query": query,
                 "topic": topic,
+                # Quali dei tre segnali hanno DAVVERO ordinato questa risposta.
+                # `applied` o un motivo per ognuno: un ordine tenuto in piedi
+                # dal solo bi-encoder non e' lo stesso oggetto di uno passato
+                # dal cross-encoder e dalla fusione grafo/lessicale, e finora
+                # i due erano indistinguibili da qui.
+                "ranking": _ranking_stages(),
                 "include_legacy": include_legacy,
                 "min_status": min_status,
                 "trust_signals": trust_signals,
@@ -12602,16 +12988,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "total": len(facts),
                 "limit": limit,
                 "offset": offset,
-                "items": [
-                    {
-                        "id": f.id,
-                        "proposition": f.proposition,
-                        "topic": getattr(f, "topic", ""),
-                        "confidence": float(getattr(f, "confidence", 0.0)),
-                        "created_at": float(getattr(f, "created_at", 0.0)),
-                    }
-                    for f in window
-                ],
+                # 2026-07-29 sweep: un elenco e' dove si decide cosa tenere, e
+                # senza questi campi era la SCELTA DEL TOOL a stabilire se un
+                # fatto verificato fosse distinguibile da uno che non lo e'.
+                # Dal 30/07 non e' piu' una scelta di nessuno: il contratto e'
+                # uno solo (Fact.as_payload).
+                "items": [fact_payload(f) for f in window],
             })
 
         if name == "hippo_quarantine_log":
@@ -12632,7 +13014,105 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         _rows.append(dict(_r))
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"quarantine_log read failed: {_exc}")
+            # 2026-07-30: sapere QUALI fatti sono fermi senza sapere PERCHE'
+            # non permette di correggerne nessuno. Opt-in perche' ricalcola i
+            # detector; e sta anche qui, e non solo sull'SDK, perche' una
+            # capacita' su un canale solo e' il difetto che questa serie di
+            # commit ha passato la giornata a chiudere.
+            if bool(arguments.get("explain", False)):
+                try:
+                    from .client import Memory as _M
+                    _M._spiega_le_quarantene(_rows)
+                except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
+                    pass
             return _ok({"ok": True, "n": len(_rows), "quarantined": _rows})
+
+        if name == "hippo_epistemic_health":
+            # `epistemic_health` era completo, testato e irraggiungibile: si
+            # potevano mettere i verdetti e non si poteva chiedere l'aggregato.
+            from .client import Memory as _M
+
+            class _Vista:
+                semantic = a.semantic
+            try:
+                _rep = _M.epistemic_health(
+                    _Vista(),
+                    limit=int(arguments.get("limit", 2000) or 2000),
+                    threshold=float(arguments.get("threshold", 85.0) or 85.0))
+            except Exception as _exc:  # noqa: BLE001
+                return _err(f"epistemic_health failed: {_exc}")
+            _audit(name, arguments, outcome="ok")
+            return _ok(_rep)
+
+        if name == "hippo_ignorance_map":
+            # Il complemento attivo dell'astensione: era completo, con due file
+            # di test suoi, e nessuna superficie lo raggiungeva. Sul canale MCP
+            # e' dove serve di piu' — un agente che ha appena ricevuto «non lo
+            # so» chiede COSA MANCA senza cambiare strumento.
+            from .client import Memory as _M
+
+            class _Vista:
+                # `ignorance_map` vuole `.search` (dict con id/score) e
+                # `.semantic`. `Memory.search` usa SOLO `self.semantic`
+                # (verificato sull'AST, non a occhio), quindi la vista basta:
+                # nessun secondo handle sullo stesso SQLite.
+                semantic = a.semantic
+
+                def search(self, query, k=5, **kw):
+                    return _M.search(self, query, k=k, **kw)
+
+            _queries = [str(q) for q in (arguments.get("queries") or []) if str(q).strip()]
+            if not _queries:
+                return _err("hippo_ignorance_map needs at least one query")
+            _nf = arguments.get("noise_floor")
+            try:
+                _rep = _M.ignorance(
+                    _Vista(), _queries,
+                    floor=float(arguments.get("floor", 0.8) or 0.8),
+                    k=int(arguments.get("k", 5) or 5),
+                    noise_floor=None if _nf is None else float(_nf))
+            except Exception as _exc:  # noqa: BLE001
+                return _err(f"ignorance_map failed: {_exc}")
+            _audit(name, arguments, outcome="ok")
+            return _ok(_rep)
+
+        if name == "hippo_fact_label":
+            # Ingresso del sottosistema epistemico sul canale MCP. Era
+            # scollegato in entrambe le direzioni: `set_epistemic` esisteva ed
+            # era chiamato solo da due moduli irraggiungibili, e la colonna era
+            # NULL su tutti e 6457 i fatti del corpus vivo mentre il README la
+            # prometteva in 18 punti.
+            from .epistemic import make_proven, make_refuted, make_unbeaten
+            _fid = str(arguments.get("fact_id", "")).strip()
+            if not _fid:
+                return _err("empty fact_id")
+            _kind = str(arguments.get("kind", "")).strip().lower()
+            _bound = arguments.get("bound")
+            try:
+                if _kind == "proven":
+                    _lab = make_proven(str(arguments.get("proof") or ""))
+                elif _kind == "unbeaten":
+                    _lab = make_unbeaten(
+                        float(_bound) if _bound is not None else 0)
+                elif _kind == "refuted":
+                    _lab = make_refuted(
+                        str(arguments.get("counterexample") or ""))
+                else:
+                    raise ValueError(
+                        f"kind sconosciuto: {_kind!r}. Sono proven | unbeaten "
+                        f"| refuted")
+                _done = a.semantic.set_epistemic(_fid, _lab)
+            except ValueError as _ve:
+                # Un'etichetta senza la sua evidenza e' un errore del
+                # chiamante, e va detto: silenziarlo la renderebbe
+                # un'auto-attribuzione.
+                return _err(str(_ve))
+            _audit(name, arguments, outcome="ok")
+            return _ok({"ok": True, "fact_id": _fid, "labelled": bool(_done),
+                        "note": ("" if _done else
+                                 "transizione vietata dalle regole monotone "
+                                 "(refuted assorbe): non e' un errore, e' il "
+                                 "sistema che tiene")})
 
         if name == "hippo_quarantine_restore":
             import sqlite3 as _sq
@@ -12739,12 +13219,18 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 if _ms(getattr(f, "topic", ""), user_id=_su, agent_id=_sa, run_id=_sr)
             ]
             if dry_run:
-                _audit(name, arguments, outcome=f"dry_run_n={len(matched)}")
+                _audit(name, arguments, outcome="dry_run",
+                       detail={"n": len(matched)})
                 return _ok({
                     "dry_run": True,
                     "would_delete": len(matched),
+                    # Anteprima di una CANCELLAZIONE: qui il verdetto pesa
+                    # piu' che altrove — chi conferma deve poter vedere se sta
+                    # buttando via fatti che il moat aveva verificato. La
+                    # proposizione resta troncata: e' un'anteprima, non una
+                    # lettura.
                     "sample": [
-                        {"id": f.id, "topic": getattr(f, "topic", ""),
+                        {**fact_payload(f),
                          "proposition": (f.proposition or "")[:120]}
                         for f in matched[:10]
                     ],
@@ -12755,7 +13241,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                                                 principal=_MCP_PRINCIPAL)
                 if r.get("op_id"):
                     op_ids.append(r["op_id"])
-            _audit(name, arguments, outcome=f"forgot_n={len(op_ids)}")
+            _audit(name, arguments, outcome="ok", detail={"forgot_n": len(op_ids)})
             return _ok({"dry_run": False, "removed": len(op_ids), "op_ids": op_ids})
 
         if name == "hippo_undo_destructive_op":
@@ -12770,7 +13256,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if name == "hippo_undo_list":
             limit = int(arguments.get("limit", 20) or 20)
             items = a.semantic.list_undoable_ops(limit=limit)
-            _audit(name, arguments, outcome=f"ok_n={len(items)}")
+            _audit(name, arguments, outcome="ok", detail={"n": len(items)})
             return _ok({"ok": True, "items": items})
 
         if name == "hippo_briefing_by_project":
@@ -12788,7 +13274,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             except Exception as exc:  # noqa: BLE001
                 _audit(name, arguments, outcome="error")
                 return _err(f"briefing_by_project crash: {exc}")
-            _audit(name, arguments, outcome=f"ok_n_live={result['n_live']}")
+            _audit(name, arguments, outcome="ok",
+                   detail={"n_live": result["n_live"]})
             return _ok(result)
 
         if name == "hippo_summary_topic":
@@ -12811,7 +13298,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 return _err(f"summary_topic crash: {exc}")
             _audit(
                 name, arguments,
-                outcome=f"ok_n_total={result['n_total']}",
+                outcome="ok", detail={"n_total": result["n_total"]},
             )
             return _ok(result)
 
@@ -12835,7 +13322,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="error")
                 return _err(f"dashboard_overview crash: {exc}")
             _audit(name, arguments,
-                   outcome=f"ok_total={result['health']['n_total']}")
+                   outcome="ok",
+                   detail={"n_total": result["health"]["n_total"]})
             return _ok(result)
 
         if name == "hippo_topic_cleanup_suggestions":
@@ -12852,7 +13340,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="error")
                 return _err(f"topic_cleanup_suggestions crash: {exc}")
             _audit(name, arguments,
-                   outcome=f"ok_orphans={result['n_facts_no_topic']}_sugg={len(result['suggestions'])}")
+                   outcome="ok",
+                   detail={"orphans": result["n_facts_no_topic"],
+                           "suggestions": len(result["suggestions"])})
             return _ok(result)
 
         if name == "hippo_corpus_health_metrics":
@@ -12864,7 +13354,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="error")
                 return _err(f"corpus_health_metrics crash: {exc}")
             _audit(name, arguments,
-                   outcome=f"ok_total={result['n_total']}_chains={result['n_chains']}")
+                   outcome="ok",
+                   detail={"n_total": result["n_total"],
+                           "n_chains": result["n_chains"]})
             return _ok(result)
 
         if name == "hippo_facts_freshness_check":
@@ -12887,7 +13379,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _audit(name, arguments, outcome="error")
                 return _err(f"freshness_check crash: {exc}")
             _audit(name, arguments,
-                   outcome=f"ok_stale={result['n_stale']}_cand={result['n_auto_supersede_candidates']}")
+                   outcome="ok",
+                   detail={"n_stale": result["n_stale"],
+                           "n_candidates": result["n_auto_supersede_candidates"]})
             return _ok(result)
 
         if name == "hippo_fact_supersede_chain":

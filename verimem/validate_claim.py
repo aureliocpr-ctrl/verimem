@@ -104,17 +104,147 @@ def _extract_salients(text: str) -> tuple[set[str], set[str]]:
     return caps, years
 
 
+def _termine_presente(termine: str, testo_lower: str) -> bool:
+    """Il termine come PAROLA INTERA, non come sottostringa.
+
+    Estratta da `_subj_overlap` perche' ora ha due chiamanti e la domanda e'
+    la stessa: «Rust» non sta dentro «t·rust·-check». Il confine `\\b` da solo
+    non basta sui nomi con punteggiatura (`PROC-1037`, `scikit-learn`), quindi
+    si scappa il termine e si ancora ai bordi non-alfanumerici.
+    """
+    return bool(re.search(
+        rf"(?<![0-9a-z]){re.escape(termine)}(?![0-9a-z])", testo_lower))
+
+
+#: Un dominio e' un NOME, non un predicato. Senza questa riga «verimem.com»
+#: entra fra le parole che portano l'asserzione con i suoi due pezzi — e
+#: «verimem» e «com» si trovano in mezzo corpus, per cui qualunque cosa si
+#: affermi su un sito risulterebbe asserita da qualcuno. Misurato: e' l'unico
+#: motivo per cui una claim del banco sopravviveva al controllo qui sotto.
+_DOMINIO_RE = re.compile(r"\b[\w-]+(?:\.[\w-]+)+\b")
+
+#: Le parole, per il controllo di asserzione. Tre lettere minime: sotto ci
+#: sono sigle e desinenze, non predicati.
+_PAROLA_RE = re.compile(r"\w+", re.UNICODE)
+
+
+def _parole_di_contenuto(text: str) -> set[str]:
+    """Le parole che portano l'ASSERZIONE: né nomi, né parole vuote.
+
+    I nomi dicono DI COSA si parla, queste dicono COSA se ne dice. La
+    distinzione e' tutto il punto del controllo qui sotto: due testi che
+    condividono solo i nomi parlano dello stesso soggetto, non della stessa
+    cosa.
+    """
+    from .document_index import _PAROLE_VUOTE  # una fonte, non una copia
+
+    caps, _ = _extract_salients(text)
+    nomi = {c.lower() for c in caps}
+    for dominio in _DOMINIO_RE.findall(text or ""):
+        nomi.update(p.lower() for p in _PAROLA_RE.findall(dominio))
+    return {t.lower() for t in _PAROLA_RE.findall(text or "")
+            if len(t) > 2 and not t.isdigit()
+            and t.lower() not in _PAROLE_VUOTE and t.lower() not in nomi}
+
+
+def _testa_nominale(text: str) -> str:
+    """La prima parola di contenuto: in una frase SVO e' la testa del soggetto.
+
+    «Il corpus contiene 6682 fatti» -> «corpus». Non e' un parser: e' la
+    domanda «di che cosa parla questa frase» risolta con la sola cosa che
+    l'italiano scritto garantisce quasi sempre, l'ordine. Sbaglia sulle frasi
+    che aprono con un complemento («Nel piano annuale il prezzo e' 100 euro»
+    -> «piano»), ed e' per questo che chi la usa non ci si affida da sola —
+    vedi `_puo_essere_una_evoluzione`, dove e' UNA delle due condizioni.
+    """
+    contenuto = _parole_di_contenuto(text)
+    if not contenuto:
+        return ""
+    for tok in _PAROLA_RE.findall(text or ""):
+        if tok.lower() in contenuto:
+            return tok.lower()
+    return ""
+
+
+def _qualcuno_asserisce(claim: str, facts: list[_FactLike]) -> bool:
+    """Almeno un fatto dice qualcosa DELLA claim, non solo dei suoi soggetti.
+
+    IL CASO REALE che ha portato qui, misurato sul corpus vivo il 2026-08-01::
+
+        "Il moat di Verimem è stato progettato da Google."
+            -> supported, confidence 0.95, «Claim coerente con la memoria.»
+               7 fatti citati come evidenza
+
+    I sette parlano di Google Ads, Google Analytics e Search Console per
+    verimem.com. L'overlap dei nomi e' LEGITTIMO — «Verimem» e «Google» ci sono
+    per davvero, non per sottostringa — e nessuno contraddice, perche' sono
+    d'argomento tutt'altro. Su venti claim: otto confabulazioni su dieci
+    ricevevano `supported`, contro due verita' su dieci. Il verdetto correlava
+    col numero di nomi propri, non col contenuto.
+
+    Non e' semantica nuova: questo modulo la applica GIA' in due casi su tre —
+    la claim con quantita' non confermate e la `lexical_only` restano `unknown`
+    proprio per non dare «false reassurance» sul solo overlap dei nomi. Questo
+    e' il terzo caso, quello che mancava: la claim che asserisce una RELAZIONE
+    che nessun fatto enuncia.
+
+    IL PERIMETRO, dichiarato perche' e' un costo vero e non un dettaglio: il
+    controllo e' lessicale, quindi una claim vera scritta con parole diverse da
+    quelle del fatto («il monitoraggio e' attivo» contro «Analytics LIVE»)
+    scende a `unknown`. E' la direzione giusta per un prodotto che promette
+    l'astensione invece dell'invenzione — dire «non lo so» di una cosa vera
+    costa all'utente un controllo, dire «coerente con la memoria» di una falsa
+    gli costa la fiducia in tutto il resto. Il giorno in cui serve piu' finezza,
+    la si aggiunge qui: il CE locale NON serve allo scopo, misurato lo stesso
+    giorno — dava 99.09 alla relazione mai enunciata, perche' e' tarato sul
+    write path, dove la source e' l'evidenza scelta per QUEL fatto.
+    """
+    volute = _parole_di_contenuto(claim)
+    if not volute:
+        return True  # nessun predicato da cercare: non c'e' niente da negare
+    for f in facts:
+        testo = (f.proposition or "").lower()
+        if any(_termine_presente(p, testo) for p in volute):
+            return True
+    return False
+
+
 def _subj_overlap(claim_caps: set[str], fact_text: str) -> float:
     """Frazione di nomi-claim presenti nel testo del fact (case-insensitive).
 
     Riproduce il match "i nomi della claim appaiono nel fact". Lavora
     su stringa-lower per gestire eventuali normalizzazioni (es. "Tonegawa"
     in claim, "tonegawa" in proposition).
+
+    PAROLA INTERA, non sottostringa (2026-08-01). Con `t.lower() in fact_lower`
+    il nome «Rust» risultava presente dentro «adhoc/t·rust·-check», e con
+    «database» che compariva davvero l'overlap saliva a 0.667 — sopra la soglia
+    0.6. Il fatto entrava fra i candidati, non aveva conflitti di anni o
+    quantita', e finiva fra i `supporting`: cosi' la claim «verimem e' scritto
+    in Rust e usa Oracle Database» riceveva verdetto **supported**, con
+    «Claim coerente con la memoria», mentre la sola «verimem e' scritto in
+    Rust» dava onestamente `unknown`. Allungare una falsita' la faceva passare.
+
+    E' la classe gia' in memoria come feedback dopo sei falsi allarmi in una
+    sessione — «interroga la struttura, non il testo» — il cui caso peggiore era
+    un `"91"` trovato dentro un id casuale. Qui decideva se una claim risulta
+    verificata dal gate anti-confabulazione.
+
+    Il confine `\\b` non basta da solo per i nomi che contengono punteggiatura
+    (`PROC-1037`, `scikit-learn`): si scappa il termine e si ancora ai bordi
+    non-alfanumerici, cosi' «Rust» non entra in «trust» ma «PROC-1037» si trova
+    ancora dentro «il codice PROC-1037 identifica».
     """
     if not claim_caps:
         return 0.0
     fact_lower = (fact_text or "").lower()
-    hits = sum(1 for t in claim_caps if t.lower() in fact_lower)
+    hits = 0
+    for t in claim_caps:
+        tl = t.lower().strip()
+        if not tl:
+            continue
+        if _termine_presente(tl, fact_lower):
+            hits += 1
     return hits / len(claim_caps)
 
 
@@ -262,6 +392,57 @@ def validate_claim(
         else:
             supporting.append(f)
 
+    # NAMED-VALUE contradiction pass (2026-08-01) — «X e' A» contro «X e' B»,
+    # la contraddizione piu' comune di tutte, e finora invisibile.
+    #
+    # Perche' il ciclo sopra non poteva vederla: aggancia con
+    # `_subj_overlap(claim_caps, fact)`, cioe' chiede che i SALIENTI DELLA
+    # CLAIM compaiano nel fatto. Due frasi che si contraddicono differiscono
+    # PROPRIO sul nome proprio, quindi l'overlap tende a zero esattamente
+    # quando la contraddizione e' netta. Misurato sul prodotto vero: claim
+    # «Il database di produzione e' MySQL» contro il fatto «... e' PostgreSQL»
+    # -> caps {'MySQL'} contro {'PostgreSQL'}, overlap 0.0000 su soglia 0.6,
+    # verdetto `unknown`.
+    #
+    # E' lo STESSO ragionamento che il passo numerico qui sotto fa gia' per i
+    # numeri («independent of the caps-overlap gate above, which is ~0 for
+    # number-only claims»): quando l'aggancio sui caps non puo' funzionare, ci
+    # si aggancia al CONTESTO CONDIVISO e si cerca il conflitto sul valore.
+    # Mancava la versione per i nomi.
+    #
+    # I due criteri NON sono nuovi e non sono una copia: sono gli stessi che
+    # `quantity_match.conflict_from_parts` applica prima di confrontare due
+    # valori — intersezione non vuota delle parole di contenuto («unrelated
+    # subject») e attributi non contrastanti («different attribute»). Averli
+    # in un posto solo e' la ragione per cui il fix del 2026-07-25 su
+    # `conflict_from_parts` non e' dovuto essere replicato a mano qui.
+    #
+    # La guardia sul soggetto condiviso NON e' decorazione: senza, «il server
+    # e' Nginx» e «il database e' PostgreSQL» — che non parlano della stessa
+    # cosa — avrebbero salienti disgiunti e finirebbero in contesa. Un corpus
+    # pieno di conflitti inventati e' il modo piu' rapido per far ignorare il
+    # segnale.
+    # RITIRATO il 2026-08-01, poche ore dopo averlo scritto. Qui c'era un
+    # "named-value pass" lessicale per «X e' A» contro «X e' B». Il difetto che
+    # curava e' vero, ma il WRITE PATH lo copre gia' — e meglio: su
+    # un'installazione vergine, `Memory.add("... e' PostgreSQL")` seguito da
+    # `Memory.add("... e' MySQL")` da' `superseded: ['edc2cc9d76e9']` e il
+    # recall restituisce solo il corrente. E' il tier NLI semantico, che si
+    # auto-abilita quando il modello e' su disco (README: «Entity swaps need
+    # the semantic NLI tier, which auto-enables when its model is already
+    # installed»).
+    #
+    # Tenerlo sarebbe stato un secondo rilevatore, piu' grezzo, sullo stesso
+    # caso: la classe di difetto che questo repo cura da giorni (due copie che
+    # divergono). E aveva gia' prodotto un falso positivo che solo la suite
+    # INTERA ha preso — «la sequenza A000045 e' Fibonacci» contro «la sequenza
+    # A000032 e' Lucas», due soggetti diversi dichiarati in contesa, con un
+    # fatto distinto ritirato.
+    #
+    # Cio' che restava scoperto era la SIMULAZIONE (`verimem trust`), che non
+    # passa dal write path: quello e' curato dove il difetto stava davvero —
+    # l'agente che non veniva costruito, la riga `checked:` che derivava dal
+    # flag, e il topic fittizio usato come filtro di ricerca.
     # NUMERIC-QUANTITY contradiction pass — independent of the caps-overlap
     # gate above (which is ~0 for number-only claims). Fires only when the
     # hit shares a DISTINCTIVE (non-unit) content word with the claim AND
@@ -380,9 +561,16 @@ def validate_claim(
     # generic-claim gate ONLY through lexical viability (no 2 salients, no
     # numeric), it is here to be CHECKED for conflicts, never promoted —
     # "Tonegawa is a researcher." must stay unknown, not become supported.
+    # TERZO caso della stessa disciplina, aggiunto 2026-08-01 su un caso reale
+    # e non per principio: i due sopra coprono la claim con quantita' non
+    # confermate e quella generica, ma NON la claim che asserisce una relazione
+    # che nessun fatto enuncia. Sul corpus vivo erano otto confabulazioni su
+    # dieci a ricevere `supported` — vedi `_qualcuno_asserisce`.
     lexical_only = salient_count < 2 and not numeric_viable
     suppress_support = bool(claim_quants) and not numeric_agree
-    if supporting and not suppress_support and not lexical_only:
+    non_asserita = bool(supporting) and not _qualcuno_asserisce(claim, supporting)
+    if (supporting and not suppress_support and not lexical_only
+            and not non_asserita):
         episodes = sorted(
             {eid for f in supporting for eid in f.source_episodes}
         )
@@ -393,6 +581,19 @@ def validate_claim(
             "evidence_facts": [f.id for f in supporting],
             "evidence_episodes": episodes,
             "advice": "Claim coerente con la memoria.",
+        }
+
+    if non_asserita:
+        return {
+            "verdict": "unknown",
+            "confidence": 0.0,
+            "evidence_facts": [f.id for f in supporting],
+            "evidence_episodes": [],
+            "advice": (
+                "I fatti in memoria nominano gli stessi soggetti ma nessuno "
+                "asserisce questa claim — il soggetto è noto, questo di lui "
+                "no. Verifica prima di affermarlo."
+            ),
         }
 
     if suppress_support and supporting:

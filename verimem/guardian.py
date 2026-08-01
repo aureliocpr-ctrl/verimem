@@ -29,19 +29,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from .composer import _copula_parse
+from .composer import _copula_parse, subject_key
+from .epistemic import guarantee_rank
 
 __all__ = ["correct_read"]
 
-_RANK = {"refuted": -1, None: 0, "unbeaten": 1, "proven": 2}
-
 
 def _rank(fact: Any) -> int:
-    # .get with default 0: an unknown/foreign epistemic kind is UNLABELED,
-    # never a KeyError on the read-path (audit mod.3 — line 109 already
-    # defended this way; the two must agree).
-    label = getattr(fact, "epistemic", None) or None
-    return _RANK.get(label.get("kind"), 0) if label else 0
+    # epistemic.guarantee_rank, not a local table: the active probe compares the
+    # same two facts and reached the OPPOSITE conclusion while this ordering
+    # lived only here (2026-07-28). An unknown/foreign kind is UNLABELED there
+    # too, never a KeyError on the read-path (audit mod.3).
+    return guarantee_rank(getattr(fact, "epistemic", None))
 
 
 def _is_belief(fact: Any) -> bool:
@@ -65,16 +64,20 @@ def correct_read(mem: Any, query: str, *, k: int = 5) -> dict[str, Any]:
         # honest abstention — a read-path never crashes (audit mod.3).
         return {"verdict": "ABSTAIN", "answer": None, "served_id": None,
                 "evidence": [], "uncorroborated": [], "reason": "no_support"}
-    # group the copula facts by subject; non-copula hits pass through untouched
+    # group the copula facts by subject; non-copula hits pass through untouched.
+    # The key is composer.subject_key — the SHARED definition of "same subject".
+    # Grouping on the raw parse hid every conflict where the two sides spelled
+    # the subject differently ("Rex" vs "The Rex"): the guardian ACCEPTed and
+    # served an answer the active probe considered refuted (2026-07-28, banco 4).
     contenders: dict[str, list[Any]] = {}
     for f in facts:
         parsed = _copula_parse(f.proposition)
         if parsed:
-            contenders.setdefault(parsed[0], []).append(f)
+            contenders.setdefault(subject_key(parsed[0]), []).append(f)
 
     top = facts[0]
     top_parsed = _copula_parse(top.proposition)
-    rivals = contenders.get(top_parsed[0], [top]) if top_parsed else [top]
+    rivals = contenders.get(subject_key(top_parsed[0]), [top]) if top_parsed else [top]
     # a refuted fact never gets served — drop it from contention entirely
     live = [f for f in rivals if _rank(f) >= 0] or []
     if not live:
@@ -103,9 +106,22 @@ def correct_read(mem: Any, query: str, *, k: int = 5) -> dict[str, Any]:
                     "uncorroborated": [f.id for f in overridden],
                     "reason": "user assertion not corroborated — "
                               "the corroborated fact wins"}
+        # "unchallenged" is a CLAIM — the store holds nothing against this
+        # answer — and the guardian may only make it where it could actually
+        # look. Rivals are gathered through the copula parse, so a non-copula
+        # top hit has no contenders to gather and the fact is returned alone.
+        # Measured on the real corpus (2026-07-28): 0 of 4208 live facts are
+        # copula (median proposition 814 chars of prose), so on real queries
+        # this branch was answering "unchallenged" every time, through the
+        # production endpoint, without ever having compared anything. The
+        # verdict is unchanged — there is no better answer available — but the
+        # two cases stop sharing one word.
         return {"verdict": "ACCEPT", "answer": winner.proposition,
                 "served_id": winner.id, "evidence": [f.id for f in rivals],
-                "uncorroborated": [], "reason": "unchallenged"}
+                "uncorroborated": [],
+                "reason": ("unchallenged" if top_parsed else
+                           "served as-is: not comparable — no copula structure "
+                           "to gather rivals by, so no conflict search ran")}
 
     # dominance is per-VALUE, not per-fact (audit mod.3): two proven facts
     # AGREEING on "labrador" must beat a lone unlabeled "poodle" — comparing

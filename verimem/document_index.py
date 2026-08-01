@@ -22,6 +22,7 @@ Isolated store (own SQLite), like the Documents tier: NOT wired into
 """
 from __future__ import annotations
 
+import re
 import sqlite3
 from pathlib import Path
 
@@ -40,6 +41,45 @@ def _row_get(row, column: str):
         return row[column]
     except (IndexError, KeyError):
         return None
+
+
+#: Parole troppo comuni per dire qualcosa sulla pertinenza di un chunk: se la
+#: query e' «come funziona l'admission gate», sono `admission` e `gate` a
+#: contare. Deliberatamente corta e solo funzionale — non e' una lista di
+#: stopword linguistica, e un termine di troppo qui costa al massimo un
+#: conteggio piu' prudente.
+_PAROLE_VUOTE = frozenset("""
+come cosa quale quali quando dove perche perché chi che cui
+del della dello dei delle degli di da in su per con tra fra
+il lo la le un uno una gli
+e ed o od ma se non piu più meno molto tutto tutti
+essere sono era stato stata usa usare usano fa fare ha hanno
+funziona funzionano serve servono significa vuol dire
+the a an of to in on for with and or is are was were be been
+what which who where when why how does do did use uses using
+""".split())
+
+_TERMINE_RE = re.compile(r"[\w'’-]{3,}", re.UNICODE)
+
+
+def _termini_di_ricerca(query: str) -> list[str]:
+    """I termini della query che possono dire qualcosa, minuscoli.
+
+    L'elisione si scarta: «l'admission» vale `admission`. Senza questo passo il
+    token resterebbe `l'admission`, che non e' nelle parole vuote e non compare
+    in nessun testo scritto senza apostrofo — cioe' un termine che non puo' mai
+    corrispondere, e un conteggio sistematicamente piu' basso del vero.
+    """
+    fuori = []
+    for grezzo in _TERMINE_RE.findall((query or "").lower()):
+        t = grezzo
+        for apostrofo in ("'", "’"):
+            testa, sep, coda = t.partition(apostrofo)
+            if sep and len(testa) <= 2 and len(coda) >= 3:
+                t = coda          # l'admission, dell'ufficio, un'ora
+        if len(t) >= 3 and t not in _PAROLE_VUOTE:
+            fuori.append(t)
+    return fuori
 
 
 _SCHEMA = """
@@ -234,7 +274,8 @@ class DocumentIndex:
             score = float(np.dot(qv, v) / (qn * vn))
             scored.append((score, r))
         scored.sort(key=lambda t: (-t[0], t[1]["source_id"], t[1]["idx"]))
-        return [{"text": r["text"], "score": round(s, 6),
+        termini = _termini_di_ricerca(q)
+        hits = [{"text": r["text"], "score": round(s, 6),
                  "source_id": r["source_id"], "version": r["version"],
                  "start": r["start"], "end": r["end"], "uri": r["uri"] or "",
                  "doc_id": r["doc_id"], "flagged": bool(r["flagged"]),
@@ -242,6 +283,37 @@ class DocumentIndex:
                  # citation must carry it, not require a join to find it.
                  "indexed_by": _row_get(r, "indexed_by")}
                 for s, r in scored[:max(1, int(k))]]
+        # QUANTE parole della query compaiono nel testo citato.
+        #
+        # Misurato il 2026-07-31 sul README (47 chunk): «ricetta della carbonara
+        # con guanciale» prende 0.754 e torna con la citazione ESATTA — file,
+        # versione, offset di carattere. Per un umano e' un risultato strano;
+        # per un agente, che e' il consumatore vero di questo tool, e' una fonte
+        # con provenienza, e la citazione precisa da' autorevolezza proprio a
+        # cio' che non c'entra.
+        #
+        # NON una soglia sul punteggio. Provata e BUTTATA lo stesso giorno: il
+        # rumore stimato dell'indice (il quantile dei massimi di sonde
+        # scramblate, la misura che il prodotto usa sui fatti) viene 0.8706,
+        # piu' alto di TUTTE le query — comprese quelle con risposta, che stanno
+        # a 0.810-0.830. Marcava tutto, cioe' niente. E' lo stesso errore
+        # commesso e ritirato dodici ore prima sulla mappa dell'ignoranza: quel
+        # numero e' alto per costruzione, non e' «il livello sotto cui non c'e'
+        # informazione». Le due popolazioni sul coseno si sovrappongono e nessun
+        # taglio le separa.
+        #
+        # Il conteggio lessicale invece separa (stessa prova):
+        #     con risposta   copertura 0.33 - 1.00
+        #     estranee       copertura 0.00 su tre casi su quattro
+        #
+        # E qui non si giudica: si CONTA. Zero termini in comune e' un fatto
+        # verificabile da chi legge, non un verdetto con una soglia inventata
+        # dentro. Chi consuma decide cosa farne.
+        for h in hits:
+            h["query_terms"] = len(termini)
+            h["query_terms_matched"] = sum(
+                1 for t in termini if t in h["text"].lower())
+        return hits
 
     # --- discovery ------------------------------------------------------
     def stats(self) -> dict:

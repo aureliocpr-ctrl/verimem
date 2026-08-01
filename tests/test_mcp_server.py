@@ -252,6 +252,11 @@ _EXPECTED_TOOLS = {
     "hippo_skills_search",
     # FORGIA #204 — deep health-check at startup
     "hippo_health",
+    # 2026-07-30 — il complemento ATTIVO dell'astensione: dopo un recall vuoto
+    # o un trust_report che si astiene, dice QUALE ignoranza e cosa la curerebbe.
+    # Il modulo era completo, con due file di test suoi, e irraggiungibile da
+    # ogni superficie.
+    "hippo_ignorance_map",
     # P0a/4 (d285cd9) — self-healing tool per le contraddizioni (tool reale, expected-set era stale)
     "hippo_heal_contradictions",
     # FORGIA #206 — hosted mode (delegate LLM to host like Claude Code)
@@ -541,6 +546,14 @@ _EXPECTED_TOOLS = {
     # Mandate p.7 2026-07-22 — quarantine recovery on the MCP surface
     "hippo_quarantine_log",
     "hippo_quarantine_restore",
+    # 2026-07-31 — l'ingresso del sottosistema epistemico, che era completo e
+    # scollegato: `epistemic` NULL su 6457 fatti mentre il README lo prometteva
+    # in 18 punti. Questo elenco ha fatto il suo mestiere e mi ha fermato:
+    # avevo aggiunto il tool senza dichiararlo qui.
+    "hippo_fact_label",
+    # 2026-07-31 — la lettura aggregata, l'altra meta' del sottosistema:
+    # `epistemic_health` era completo, testato e senza superficie.
+    "hippo_epistemic_health",
     # B-1 2026-06-08 — multi-tenancy delete_all(scope), dry-run + undoable
     "hippo_forget_scope",
     "hippo_undo_destructive_op",

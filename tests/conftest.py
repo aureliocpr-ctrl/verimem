@@ -20,6 +20,26 @@ import pytest
 
 
 @pytest.fixture
+def isolated_corpus(tmp_path, monkeypatch):
+    """A temp corpus the CLI actually writes to — the env vars, not just a path.
+
+    ``tmp_data_dir`` hands back a directory but leaves ENGRAM_DATA_DIR alone, so
+    a test that invokes the CLI would write into the operator's REAL store. This
+    points both env names at a temp dir instead.
+
+    It lives here because three test modules had each grown their own identical
+    copy (test_cli_facts_add, test_cli_facts, test_cli_consolidate). Those local
+    definitions still shadow this one — pytest resolves the nearest fixture — so
+    adding it changes no existing test; it just stops the next one from becoming
+    the fourth copy.
+    """
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    (tmp_path / "semantic").mkdir(parents=True, exist_ok=True)
+    return tmp_path
+
+
+@pytest.fixture
 def tmp_data_dir(tmp_path):
     """Provide a temp data directory; tests pass explicit paths to constructors."""
     new = Path(tmp_path) / "hippo_data"
@@ -159,6 +179,61 @@ def _reset_session_token():
 
 
 @pytest.fixture(autouse=True)
+def _reset_mcp_agent():
+    """Azzera l'agente globale del server MCP fra un test e l'altro.
+
+    ``mcp_server._agent`` e' una globale di processo costruita una volta sola
+    (double-checked locking — due build concorrenti sulle stesse SQLite erano
+    un difetto vero). Giusta in produzione: un processo, uno store, un agente.
+    Sotto pytest quella globale attraversa i test, e nessuna delle fixture qui
+    sopra la toccava.
+
+    Cosa costava, misurato il 2026-07-30 sulla suite intera (seed 2069628213):
+    **7 rossi su 8592**, nessuno dei quali era un test rotto — passano tutti
+    isolatamente. Le firme::
+
+        AssertionError: build() ran 0x — _ag() is not locked
+        error="'_A' object has no attribute 'memory'"  tool=hippo_record_episode
+        AssertionError: {'error': 'store failed: AttributeError'}
+
+    L'ordine di esecuzione lo mostra: subito prima di
+    ``test_cold_start_warmup`` girava ``test_mcp_anti_confab_scan``, che
+    installa un ``MagicMock`` al posto dell'agente. Chi arriva dopo se lo
+    ritrova — un mock, uno stub ``_A`` di un altro file, o un agente vero
+    puntato allo store di qualcun altro. Con l'ordine casuale la vittima cambia
+    a ogni seme: la stessa suite, sullo stesso codice, dava verde o rosso.
+    Un gate che non e' riproducibile non e' un gate.
+
+    Stesso principio di ``_restore_module_config`` qui sotto — chi NON usa
+    monkeypatch lascia lo stato in piedi, e la rete di sicurezza sta qui, non
+    nella disciplina di chi scrive il prossimo test.
+
+    Si tocca il modulo SOLO se e' gia' stato importato: importarlo qui
+    costerebbe a ogni test un modulo da 13k righe (~3.7 s al primo import) per
+    azzerare una globale che, se nessuno ha caricato il server, non esiste.
+    """
+    import sys
+    mod = sys.modules.get("verimem.mcp_server")
+    if mod is None:
+        yield
+        return
+    # `_ag` (la FUNZIONE) conta quanto `_agent` (la globale), ed e' quella che
+    # ha fatto il danno: tre file la sostituivano con `mcp_server._ag = lambda:
+    # _A()` — assegnazione diretta, mai ripristinata — mentre una trentina di
+    # altri usavano monkeypatch. Da quel punto in poi, per il resto della
+    # sessione, ogni tool MCP riceveva quel doppio: `'_A' object has no
+    # attribute 'memory'`. I tre call site sono corretti; questo e' cio' che
+    # regge quando il prossimo li rifara'.
+    _ag_prima = mod._ag
+    mod._agent = None
+    yield
+    mod = sys.modules.get("verimem.mcp_server")
+    if mod is not None:
+        mod._agent = None
+        mod._ag = _ag_prima
+
+
+@pytest.fixture(autouse=True)
 def _restore_module_config():
     """Restore the CONFIG binding inside modules that allow override.
 
@@ -260,6 +335,22 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # come ogni altro stato di processo, non lasciato alla cortesia dei test.
     from verimem import semantic as _sem
     _sem._rerank_breaker_reset()
+    # Stessa ragione, stato diverso (2026-07-31): `_RERANK_DELEGATO` ricorda che
+    # il daemon condiviso ha gia' rerankato per questo PROCESSO, e da quel
+    # momento la prontezza e' vera anche senza modello in casa — quindi il
+    # budget passa da quello del cold-load a quello pieno. Legittimo in
+    # produzione, dove il processo serve un solo store per tutta la sua vita;
+    # velenoso fra i test, dove il primo che parla col daemon cambia il budget
+    # di tutti quelli dopo. Trovato subito, e da chi scriveva la delega:
+    # test_recall_degrades_fast_during_ce_cold_load passa da solo e falliva
+    # dopo i test del daemon-reranker.
+    _sem._RERANK_DELEGATO["ok"] = False
+    # Idem per il GIUDICE DEL MOAT, che dal 2026-07-31 ha la stessa delega:
+    # azzerato QUI e non «quando servira'», perche' la lezione del gemello e'
+    # che un globale lasciato acceso rende l'esito dipendente dall'ordine dei
+    # test, e lo si scopre giorni dopo su un rosso che non c'entra.
+    from verimem import local_grounding as _lg
+    _lg._GATE_DELEGATO["ok"] = False
     # CYCLE #25: isola HIPPO_DATA_DIR a una tmp_path per-test.
     # CONFIG è frozen dataclass costruito a import-time → monkeypatch
     # diretto fallisce con FrozenInstanceError. Use object.__setattr__
@@ -278,6 +369,22 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # clp, NON HIPPO_DATA_DIR) -> scrivevano in ~/.engram reale. Il subprocess
     # eredita os.environ, quindi pinnando ENGRAM_DIR usa la tmp isolata.
     monkeypatch.setenv("ENGRAM_DIR", str(test_data_dir))
+    # 2026-08-01: mancava il TERZO alias. `VERIMEM_DATA_DIR` non veniva pinnato,
+    # quindi in un worker figlio cadeva sul DEFAULT — cioe' su ~/.engram, lo
+    # store REALE. Il prodotto lo denuncia da solo, ed e' cosi' che e' saltato
+    # fuori: un test cross-process e' fallito in suite con
+    #
+    #   RuntimeWarning: DATA_DIR aliases disagree:
+    #     HIPPO_DATA_DIR   = ...pytest-4661\hippo_test_data511
+    #     ENGRAM_DATA_DIR  = ...pytest-4661\hippo_test_data511
+    #     VERIMEM_DATA_DIR = C:\Users\aurel\.engram
+    #
+    # Due alias su tre isolati e' isolamento a meta': basta che un risolutore
+    # guardi il nome sbagliato e i test scrivono in produzione. Stessa classe
+    # curata in 42b7136f («una sola data dir: due risolutori con precedenza
+    # opposta erano due store») e nelle due righe qui sopra, che erano gia' la
+    # seconda e la terza occorrenza. Questa e' la quarta: si pinnano TUTTI.
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(test_data_dir))
     original = {}
     try:
         from verimem.config import CONFIG
@@ -438,13 +545,29 @@ _CE_MOAT_TESTS = frozenset({
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip the CE-moat tests when the local CE gate model isn't cached."""
+    """Skip the CE-moat tests when the local CE gate model isn't cached, e
+    tienili sullo STESSO worker quando la suite gira in parallelo.
+
+    Il raggruppamento (2026-07-31) nasce da un crash misurato: con
+    ``-n 4 --dist loadfile`` i quattro file qui sotto finiscono su quattro
+    worker diversi, che caricano lo STESSO cross-encoder nello stesso istante,
+    e il worker muore — ``replacing crashed worker`` tre volte, poi il master
+    resta appeso al 99% senza dare nessun verdetto. Il dump indica il punto::
+
+        verimem/local_grounding.py:59   make_finetuned_scorer
+        verimem/local_grounding.py:125  _ensure_scorer
+        verimem/local_grounding.py:393  try_local_score
+
+    `xdist_group` li mette tutti sullo stesso worker: un caricamento solo,
+    nessuna corsa. Il mark e' inerte senza xdist, quindi l'esecuzione seriale
+    non cambia di una virgola.
+    """
     from tests._real_model import real_ce_cached
-    if real_ce_cached():
-        return  # gate model present → exercise the moat (local dev / CI w/o --no-gate)
+    ce_pronto = real_ce_cached()
     skip_ce = pytest.mark.skip(
         reason="local CE gate model not cached (CI warms with --no-gate)")
+    gruppo_ce = pytest.mark.xdist_group("ce_moat")
     for item in items:
         nid = item.nodeid.replace("\\", "/")
         if any(nid.endswith(suffix) for suffix in _CE_MOAT_TESTS):
-            item.add_marker(skip_ce)
+            item.add_marker(gruppo_ce if ce_pronto else skip_ce)

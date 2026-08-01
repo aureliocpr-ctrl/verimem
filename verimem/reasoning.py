@@ -27,6 +27,30 @@ from .strips import plan_strips
 from .successor_repr import build_transition_matrix, forward_plan
 
 
+def _appaia(righe: list) -> list[tuple]:
+    """Porta alla forma `(skill, score)` cio' che le superfici restituiscono.
+
+    `SkillLibrary.retrieve` e' dichiarata `-> list[Skill]` (skill.py:415): dava
+    oggetti NUDI, mentre questa funzione prometteva coppie e il chiamante le
+    spacchettava — `for s, score in recall_pairs` (riga 142). Risultato:
+    `TypeError: cannot unpack non-iterable Skill object` sul percorso NORMALE
+    del tool, perche' `retrieve` e' la prima superficie che si prova. L'audit
+    di produzione lo misura: hippo_reason, 6 chiamate, 5 `exception`.
+
+    Lo score assente vale `None`, non `0.0`: nessuno l'ha misurato, e uno zero
+    esce dal tool indistinguibile da un punteggio vero — la stessa classe di
+    difetto curata altrove tutta la notte (un campo che dice piu' di cio' che
+    sa). Chi legge distingue «non pertinente» da «non misurato».
+    """
+    fuori: list[tuple] = []
+    for r in righe:
+        if isinstance(r, tuple) and len(r) == 2:
+            fuori.append((r[0], r[1]))
+        else:
+            fuori.append((r, None))
+    return fuori
+
+
 def _safe_recall(agent: Any, task: str, k: int) -> list[tuple]:
     """Try the agent's semantic-retrieval surface. Different code
     paths exist (`skills.retrieve`, `memory.recall`, `recall_skills`
@@ -36,12 +60,12 @@ def _safe_recall(agent: Any, task: str, k: int) -> list[tuple]:
         return []
     if hasattr(skills_store, "retrieve"):
         try:
-            return list(skills_store.retrieve(task, k=k)) or []
+            return _appaia(list(skills_store.retrieve(task, k=k)))
         except Exception:
             return []
     if hasattr(skills_store, "recall_skills"):
         try:
-            return list(skills_store.recall_skills(task, k=k)) or []
+            return _appaia(list(skills_store.recall_skills(task, k=k)))
         except Exception:
             return []
     return []
@@ -138,8 +162,12 @@ def reason_about_task(
 
     # ----- 1. SEMANTIC RECALL ------------------------------------------
     recall_pairs = _safe_recall(agent, task, k=k_recall)
+    # `score` puo' essere None quando la superficie di richiamo restituisce
+    # skill senza punteggio (vedi `_appaia`): esce None, non 0.0, cosi' «non
+    # misurato» non si legge come «misurato zero».
     payload["recall"] = [
-        {"id": s.id, "name": s.name, "score": float(score)}
+        {"id": s.id, "name": s.name,
+         "score": None if score is None else float(score)}
         for s, score in recall_pairs
     ]
 

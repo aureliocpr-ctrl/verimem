@@ -38,10 +38,24 @@ def facts_cluster_by_topic(
     for topic, group in buckets.items():
         confs = [float(getattr(g, "confidence", 0.0) or 0.0) for g in group]
         avg_conf = sum(confs) / len(confs) if confs else 0.0
+        # 2026-07-30: `avg_confidence` non e' una misura di verifica — sul
+        # corpus vivo e' un default per-canale che il moat non riscrive, quindi
+        # un gruppo di fatti giudicati 100 e uno di fatti mai guardati davano
+        # lo stesso numero. Un aggregato non deve portare il payload per
+        # fatto: deve dire quanti ne ha di verificati.
+        #
+        # La media e' sui SOLI giudicati, e resta None quando non ce n'e'
+        # nessuno: contare i non giudicati come zero inventerebbe una
+        # bocciatura, e «mai misurato» non e' «misurato male».
+        gscores = [float(g) for g in
+                   (getattr(x, "grounding_score", None) for x in group)
+                   if isinstance(g, (int, float)) and not isinstance(g, bool)]
         clusters.append({
             "topic": topic,
             "count": len(group),
             "avg_confidence": avg_conf,
+            "n_judged": len(gscores),
+            "avg_grounding": (sum(gscores) / len(gscores)) if gscores else None,
             "fact_ids": [getattr(g, "id", "") for g in group],
             "sample_propositions": [
                 getattr(g, "proposition", "") for g in group[:max_props_per_cluster]

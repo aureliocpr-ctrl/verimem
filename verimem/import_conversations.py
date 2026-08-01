@@ -232,7 +232,20 @@ def import_conversations(
             semantic_memory, msgs, llm=llm,
             conversation_id=f"import:{c['format']}:{c['id']}",
             topic=topic, consolidate=consolidate, embed=embed,
-            user_name=user_name)
+            user_name=user_name,
+            # ground=True: ingest_conversation defaults to False and this call
+            # never passed it, so the CLI import stored every extracted fact
+            # unjudged — while the SDK's `balanced` preset passes ground=True
+            # and Memory.add(messages) judged. One product, two answers, and
+            # the silent one is the COLD-START path: import is where a new
+            # user's corpus comes from.
+            #
+            # The source is free here — it is the dialogue the fact was
+            # extracted from — so the check costs one local CE call per
+            # extracted fact (~0.4s, no model API) on a one-off onboarding
+            # operation. A fact its own conversation does not support is
+            # quarantined rather than silently trusted.
+            ground=True)
         rep["imported"] += 1
         rep["stored"] += res.get("stored", 0)
         rep["rejected"] += res.get("rejected", 0)

@@ -197,6 +197,14 @@ class Memory:
         lineage_to: list[str] | None = None,
         confidence: float | None = None,
         chronicle: bool = False,
+        # 2026-07-30: il canale MCP li accettava e questo no, quindi sul corpus
+        # vivo erano NULL su tutti e 6457 i fatti — e su di loro si reggono due
+        # dei quattro trigger di hippo_justified_audit («stale» e la cascata,
+        # che il tool descrive come la capacita' che nessun prodotto offre).
+        # Non erano trigger silenti perche' il corpus e' sano: erano
+        # irraggiungibili dal canale che lo riempie.
+        valid_until: float | None = None,
+        derives_from: list[str] | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -257,6 +265,12 @@ class Memory:
             validate = self._preset_defaults["validate"]
         if gate_mode is None:
             gate_mode = self._preset_defaults["gate_mode"]
+        # Captured BEFORE the preset fills it in: only here does the difference
+        # between "the caller asked for entailment verification" and "the preset
+        # defaults to on" still exist. One line further down the two are the
+        # same True and the gate cannot tell them apart — which is why the
+        # advisory below is emitted here and not in the gate.
+        _ground_explicitly_requested = ground is True
         if ground is None:
             ground = self._preset_defaults["ground"]
         # Continuity narrative lane (2026-07-23): meta_narrative declares a
@@ -280,6 +294,25 @@ class Memory:
             documents=LazyDocumentStore(),
         )
         warnings = list(gate.warnings)
+        # The mirror of the gate's own L4-skipped advisory ("say so out loud,
+        # NEVER a silent skip"), for the case it never covered: a judge is
+        # reachable but the write carries NO source, so L4 has nothing to check
+        # the fact against and does not run. Ordinary unsourced writes stay
+        # quiet — most writes have no source and annotating them all would be
+        # wallpaper — but a caller who passed ground=True asked for entailment
+        # verification, and being given none WITHOUT being told is how "not
+        # checked" gets read as "checked and fine". Advisory only: the
+        # disposition below is untouched.
+        if _ground_explicitly_requested and not source:
+            warnings.append({
+                "layer": "L4-no-source",
+                "reason": "ground=True was requested but the write carries no "
+                          "source — there is nothing to check the fact "
+                          "against, entailment NOT verified",
+                "advice": "pass source='<the evidence text>' to run the moat. "
+                          "verified_by records WHO vouches for a fact and does "
+                          "not run this check.",
+            })
         action = gate.action
         # Source-trust consultation (task #17, behind ENGRAM_SOURCE_TRUST=1,
         # default OFF): a source whose persisted two-channel trust sits below
@@ -335,6 +368,10 @@ class Memory:
                         getattr(gate, "threshold", None)))
         if confidence is not None:
             fact.confidence = float(confidence)
+        if valid_until is not None:
+            fact.valid_until = float(valid_until)
+        if derives_from:
+            fact.derives_from = [str(x) for x in derives_from if str(x).strip()]
         if lineage_to:
             fact.lineage_to = [str(x) for x in lineage_to if str(x).strip()]
         if meta_narrative:
@@ -1355,11 +1392,40 @@ class Memory:
         except Exception:
             pass
         out["store"] = store
+        # How much of the corpus the MOAT actually judged — the number that
+        # bounds every other number here. The entailment check only runs on a
+        # write that carries a source, so a store can be full of facts none of
+        # which the moat ever saw, and until now nothing said so: measured on
+        # the real corpus 2026-07-28, 0 of 6414 facts had a grounding_score
+        # while the product reported gate actions as usual. Provenance is
+        # counted SEPARATELY because a verified_by ref records who vouches and
+        # does not run the check — conflating them here would repeat, in the
+        # report, the very confusion the write path avoids. Pure SQL over
+        # columns already persisted: no judge, no LLM call.
+        moat = {"facts": 0, "grounded": 0, "with_provenance": 0, "coverage": 0.0}
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as con:
+                moat["facts"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL"
+                ).fetchone()[0])
+                moat["grounded"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND grounding_score IS NOT NULL").fetchone()[0])
+                moat["with_provenance"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND verified_by IS NOT NULL AND verified_by NOT IN ('', '[]')"
+                ).fetchone()[0])
+            if moat["facts"]:
+                moat["coverage"] = round(moat["grounded"] / moat["facts"], 3)
+        except Exception:  # noqa: BLE001 — the odometer never breaks a caller
+            pass
+        out["moat"] = moat
         out["ledger_write_failures"] = int(
             getattr(self._ledger, "write_failures", 0) or 0)
         return out
 
-    def quarantine_log(self, *, limit: int = 50) -> list[dict[str, Any]]:
+    def quarantine_log(self, *, limit: int = 50,
+                       explain: bool = False) -> list[dict[str, Any]]:
         """The blocked-claims log: live QUARANTINED facts, newest first.
 
         The odometer says HOW MANY the gate stopped; this says WHAT — each
@@ -1399,7 +1465,178 @@ class Memory:
                 row["layers"] = (a or {}).get("layers") or []
         except Exception:  # noqa: BLE001 — enrichment must never break the view
             pass
+        if explain:
+            self._spiega_le_quarantene(rows)
         return rows
+
+    @staticmethod
+    def _spiega_le_quarantene(rows: list[dict[str, Any]]) -> None:
+        """Ricalcola PERCHE' ogni claim e' stato fermato, e come sbloccarlo.
+
+        Il motivo esiste gia' nella riga quando l'audit trail e' acceso, ma
+        quello e' opt-in (``VERIMEM_AUDIT_LOG``) e in pratica non lo accende
+        nessuno: sul corpus vivo del 2026-07-30 ci sono 513 fatti trattenuti e
+        nessuno di loro ha una voce nel trail — «degrades cleanly» significa
+        che la colonna resta vuota e chi guarda non sa che fare. Nemmeno
+        accenderlo adesso aiuterebbe: il trail non e' retroattivo.
+
+        Si ricalcola perche' i detector lessicali sono deterministici e non
+        chiamano nessun modello: rieseguirli sulla proposizione dice quale si e'
+        acceso e cosa chiede per lasciar passare il fatto. E' lo stesso metodo
+        con cui il 29/07 si e' misurato che dei 164 quarantinati che citano
+        un'evidenza nel testo, 42 passerebbero spostandola in ``verified_by`` e
+        122 restano fermi sugli L1.
+
+        Opt-in perche' costa: chi vuole solo l'elenco non paga il ricalcolo.
+        Non tocca lo stato — e' una spiegazione, non una riabilitazione.
+        """
+        try:
+            from .anti_confab_gate import run_validation_gate
+        except Exception:  # noqa: BLE001
+            return
+        for row in rows:
+            if row.get("reason"):
+                continue  # l'audit trail sapeva gia' dirlo
+            try:
+                g = run_validation_gate(
+                    proposition=row.get("proposition") or "",
+                    verified_by=[], topic=row.get("topic"), agent=None)
+                avvisi = list(getattr(g, "warnings", None) or [])
+            except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
+                continue
+            if not avvisi:
+                # Nessuno schermo lessicale si accende: il fatto e' stato
+                # fermato da L4, il moat, che confronta la proposizione con la
+                # SUA fonte — e la fonte non e' persistita, quindi il motivo
+                # non e' ricostruibile qui. Provato sul corpus vivo: i tre
+                # quarantinati piu' recenti sono tutti di questo tipo.
+                #
+                # Si dice, invece di lasciare il campo vuoto: `None` si legge
+                # «nessun motivo», e non e' la stessa cosa di «non lo so piu'».
+                row["layers"] = []
+                row["why"] = (
+                    "nessuno schermo lessicale si accende su questa frase: "
+                    "e' stata fermata dal confronto con la sua fonte (L4), e "
+                    "la fonte non viene conservata, quindi il motivo esatto "
+                    "non e' piu' ricostruibile. Le cause tipiche sono un "
+                    "calcolo o una conversione che la fonte non enuncia, e "
+                    "una frase che contiene piu' affermazioni giudicate "
+                    "insieme: riscrivila coi numeri come stanno nella fonte, "
+                    "spezzala, e riscrivila con --source.")
+                continue
+            row["layers"] = [w.get("layer") for w in avvisi if w.get("layer")]
+            row["why"] = " · ".join(
+                f"{w.get('layer', '?')}: {w.get('advice') or w.get('reason') or ''}"
+                for w in avvisi[:3]).strip()
+
+    def epistemic_health(self, *, limit: int = 2000,
+                         threshold: float = 85.0) -> dict[str, Any]:
+        """Come sta messo il CORPUS, non un fatto per volta.
+
+        `epistemic_health` era completo, con i suoi test, e irraggiungibile da
+        ogni superficie: si potevano mettere i verdetti e non si poteva chiedere
+        l'aggregato. Il motivo si legge nel modulo — `_source_of` cerca gli
+        attributi ``source`` / ``provenance`` / ``grounding_span``, che il
+        dataclass ``Fact`` non ha. E' scritto per una forma di fatto diversa da
+        quella del prodotto, e collegarlo alla lettera avrebbe dato un report
+        VUOTO che sembra funzionare: peggio che lasciarlo staccato.
+
+        L'adattamento sta qui e il modulo non si tocca. La source in chiaro non
+        viene conservata (verificato il 30/07 sui quarantinati), ma la sua
+        IMPRONTA si' — ``source_signature`` — e il verdetto sta in
+        ``grounding_score``. Quindi ``has_source`` significa «e' passato dal
+        moat» e ``grounded`` riusa il punteggio persistito invece di rifare il
+        giudizio: costo zero, nessun modello caricato, e aggrega esattamente
+        cio' che il write-path ha gia' misurato.
+
+        ``provenance_coverage`` e' il numero che limita gli altri: su un corpus
+        che il moat non ha mai giudicato non si puo' affermare niente sulla sua
+        salute, e il report lo dice invece di dare un bel voto.
+        """
+        from .epistemic_health import audit_one, health_report
+        audits = []
+        for f in self.semantic.list_facts(limit=limit, offset=0):
+            punteggio = getattr(f, "grounding_score", None)
+            giudicato = isinstance(punteggio, (int, float)) and not isinstance(
+                punteggio, bool)
+            vista = {
+                "id": getattr(f, "id", ""),
+                "proposition": getattr(f, "proposition", ""),
+                # `source` qui vuol dire «c'e' qualcosa contro cui e' stato
+                # controllato»: senza il verdetto non e' auditabile, e va detto
+                # con None invece che con uno zero.
+                "source": (getattr(f, "source_signature", None) or "moat")
+                          if giudicato else None,
+            }
+            audits.append(audit_one(
+                vista, grounder=lambda _s, _p, _g=punteggio: float(_g or 0.0),
+                threshold=threshold))
+        return health_report(audits)
+
+    def ignorance(self, queries: list[str], *, floor: float = 0.8,
+                  k: int = 5,
+                  noise_floor: float | None = None) -> dict[str, Any]:
+        """Perche' non lo so: la CLASSE dell'ignoranza e cosa la curerebbe.
+
+        L'astensione e' il claim che distingue questo prodotto, e da sola
+        lascia il chiamante dov'era — sa che non sa. Qui ogni domanda torna
+        classificata: `no_evidence` (non c'e' niente), `below_floor` (c'e' ma
+        non regge), `quarantined_only` (l'evidenza ESISTE ed e' in quarantena —
+        la cura e' una fonte o una revisione, non altro retrieval), `conflict`
+        (fatti vivi che si contraddicono senza vincitore), `answerable` (non e'
+        ignoranza, e si conta lo stesso perche' il denominatore sia onesto).
+
+        Il modulo era completo, con due file di test suoi, e irraggiungibile da
+        ogni superficie: zero import fuori da se', zero righe nel README. La
+        sua interfaccia combacia gia' con questo client — nessun adattatore,
+        a differenza di [epistemic_health][], che era scritto per una forma di
+        fatto diversa.
+
+        Sola lettura: la mappa non scrive mai.
+        """
+        from .ignorance_map import ignorance_map as _mappa
+        return _mappa(self, list(queries), floor=floor, k=k,
+                      noise_floor=noise_floor)
+
+    def label(self, fact_id: str, kind: str, *, proof: str | None = None,
+              bound: float | None = None,
+              counterexample: str | None = None) -> bool:
+        """Attacca a un fatto il TIPO di garanzia che lo sostiene.
+
+        `proven` (una prova verificabile a macchina, nominata), `unbeaten`
+        (ha retto fino a un limite dichiarato, e il limite puo' solo crescere),
+        `refuted` (un controesempio nominato, e assorbe). «Held to 10^6» e
+        «proven» non si confondono mai — e' la distinzione che il README
+        promette in 18 punti.
+
+        Il sottosistema esisteva completo e SCOLLEGATO in entrambe le direzioni:
+        `set_epistemic` era chiamato solo da due moduli che nessuna superficie
+        raggiunge, e sul corpus vivo del 2026-07-30 la colonna era NULL su tutti
+        e 6457 i fatti. Questo e' l'ingresso che mancava; l'uscita ce l'ha gia'
+        il contratto (`fact_contract.fact_payload`), e `verimem status` conta le
+        etichette perche' un sottosistema fermo a zero si veda.
+
+        L'attrito dell'API non e' smussato nel collegarlo: `proven` senza una
+        prova nominata alza `ValueError`, perche' un'etichetta che ci si puo'
+        auto-attribuire senza evidenza e' esattamente cio' che questo prodotto
+        esiste per impedire.
+
+        Ritorna False — senza alzare — quando la transizione e' vietata dalle
+        regole monotone (un fatto `refuted` non torna `proven` perche' qualcuno
+        lo richiede): non e' un errore del chiamante, e' il sistema che tiene.
+        """
+        from .epistemic import make_proven, make_refuted, make_unbeaten
+        k = (kind or "").strip().lower()
+        if k == "proven":
+            etichetta = make_proven(proof or "")
+        elif k == "unbeaten":
+            etichetta = make_unbeaten(bound if bound is not None else 0)
+        elif k == "refuted":
+            etichetta = make_refuted(counterexample or "")
+        else:
+            raise ValueError(
+                f"kind sconosciuto: {kind!r}. Sono proven | unbeaten | refuted")
+        return bool(self.semantic.set_epistemic(fact_id, etichetta))
 
     def restore(self, fact_id: str, *, reason: str = "") -> bool:
         """Rescue a wrongly-blocked fact: un-quarantine ``fact_id`` back into the

@@ -221,6 +221,14 @@ def trace(
             causal_g=causal_g, lineage_g=lineage_g,
             skill_to_episodes=skill_to_episodes,
         ):
+            # L'etichetta si risolve PRIMA di creare l'arco: e' lei a dire se
+            # il nodo esiste ancora, e la relazione deve poterlo riportare.
+            # (Marcarlo dopo, su `edges[-1]`, era sbagliato: quando l'arco era
+            # gia' stato visto non veniva riaggiunto e `edges[-1]` era un ALTRO
+            # arco, che si sarebbe trovato marcato «removed» senza motivo.)
+            nbr_label = _label_for(nbr_id, nbr_kind, agent)
+            if nbr_label is None:
+                relation = f"{relation}:removed"
             edge_key = (node_kind, node_id, nbr_kind, nbr_id, relation)
             if edge_key not in edge_seen:
                 edge_seen.add(edge_key)
@@ -232,11 +240,29 @@ def trace(
             nbr_key = (nbr_id, nbr_kind)
             if nbr_key in visited:
                 continue
-            nbr_label = _label_for(nbr_id, nbr_kind, agent)
             if nbr_label is None:
-                # Dangling reference (e.g. ep deleted but causal_edge
-                # still present). Silently skip — the edge already
-                # surfaced in `edges` for transparency.
+                # RIFERIMENTO A UN NODO CHE NON C'E' PIU'. Prima si saltava in
+                # silenzio, con l'idea che l'arco bastasse: ma un arco che dice
+                # `from_episode` verso un episodio cancellato e uno verso un
+                # episodio vivo si leggono IDENTICI, e chi consuma i nodi non
+                # vede proprio l'anello mancante.
+                #
+                # Misurato il 2026-07-30, dopo la bonifica di 1735 episodi di
+                # telemetria: 75 master fact su 75 puntano a episodi che non
+                # esistono piu'. Le alternative erano ricreare quegli episodi
+                # (fabbricare evidenza: record che dicono «e' avvenuto» quando
+                # non e' avvenuto) o azzerare i riferimenti — e azzerarli rende
+                # «la fonte c'era ed e' stata rimossa» indistinguibile da «non
+                # ne ha mai avuta una». L'id dangling E' l'informazione: si
+                # dichiara, non si nasconde e non si inventa.
+                #
+                # Il nodo entra con l'etichetta esplicita e NON viene messo in
+                # coda: non c'e' niente da attraversare oltre.
+                if len(visited) < max_nodes:
+                    visited[nbr_key] = {
+                        "label": "(removed — no longer in the store)",
+                        "depth": depth + 1,
+                    }
                 continue
             if len(visited) >= max_nodes:
                 truncated = True

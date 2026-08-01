@@ -24,10 +24,30 @@ from __future__ import annotations
 import json
 from typing import Any
 
-__all__ = ["KINDS", "can_transition", "make_proven", "make_refuted",
-           "make_unbeaten", "parse", "serialize"]
+__all__ = ["KINDS", "can_transition", "guarantee_rank", "make_proven",
+           "make_refuted", "make_unbeaten", "parse", "serialize"]
 
 KINDS = ("proven", "unbeaten", "refuted")
+
+#: How STRONG a guarantee is, for readers that must compare two facts. Separate
+#: from can_transition, which says how a label may CHANGE over time.
+_GUARANTEE_ORDER = {"refuted": -1, None: 0, "unbeaten": 1, "proven": 2}
+
+
+def guarantee_rank(label: dict[str, Any] | None) -> int:
+    """Strength of an epistemic label: refuted < unlabeled < unbeaten < proven.
+
+    It lives here, once, because two readers comparing the same two facts must
+    not reach opposite conclusions. They did (2026-07-28): the guardian ranked
+    proven above unlabeled and SERVED the proven fact, while the active probe
+    read no label at all and stamped that same fact with the absorbing
+    ``refuted`` on the word of the unlabeled one.
+
+    An unknown or future kind is UNLABELED (0), never a KeyError — a foreign
+    label must not crash a read-path.
+    """
+    kind = (label or {}).get("kind") if isinstance(label, dict) else None
+    return _GUARANTEE_ORDER.get(kind, 0)
 
 
 def make_proven(proof: str) -> dict[str, Any]:

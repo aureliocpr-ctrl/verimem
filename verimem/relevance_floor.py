@@ -32,16 +32,36 @@ def env_floor(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str:
     """Resolve a read-path abstention floor from an env var: ``auto`` (the store
     self-calibrates), a float, or off (0.0). The single switch that turns "knows when
     it doesn't know" ON across every surface (SDK ``explain()``, console, gateway).
-    Default unset → 0.0 = the permissive, backward-compatible behaviour."""
+
+    Default unset → ``auto`` since 2026-07-29. It used to be 0.0 — permissive,
+    backward-compatible, and nothing in the tree ever set the variable, so the
+    product's headline behaviour was off for every SDK, console and gateway
+    caller while the MCP surface (a1f5e778) abstained. One store, two answers.
+
+    Flipped on measurement, not on principle. Twenty questions against the live
+    store — twelve it can support, eight plausible inventions:
+
+        gate OFF   0 wrong abstentions   2 expected facts missed   0/8 caught   1.22s
+        gate ON    0 wrong abstentions   2 expected facts missed   8/8 caught   4.21s
+
+    The two misses are the SAME two in both columns: they were outside the
+    retrieval top-k to begin with, so the gate costs no answer the store could
+    have given. It withheld nothing it should have served, and caught every
+    invention. The price is ~3s on a deliberate custody check.
+
+    An explicit value still wins in both directions — ``off``/``0`` keeps the old
+    permissive behaviour for whoever depends on it."""
     raw = os.environ.get(var, "").strip().lower()
     if raw == "auto":
         return "auto"
+    if not raw:
+        return "auto"
     if raw in _FLOOR_OFF:
         return 0.0
-    try:
-        return max(0.0, float(raw))
-    except ValueError:
-        return 0.0
+    # finite_or, not float(): an INFINITE floor abstains on every query ever
+    # asked, and this site only survived `nan` by the argument order of max()
+    from .env_num import finite_or
+    return max(0.0, finite_or(raw, 0.0))
 
 _MIN_FACTS = 2          # cross-fact scrambling needs at least two sources
 _PROBE_WORDS = 10       # ~question-length probes
@@ -60,13 +80,30 @@ def scrambled_probes(sm, *, n: int = 32, seed: int = 0) -> list[str]:
     "noise" band then contains signal and the floor eats real queries (caught
     by the lexical test stub, which scores exactly that failure mode). A
     probe that collides with a stored proposition is discarded outright."""
-    facts = sm.all()[:_MAX_POOL_FACTS]
-    if len(facts) < _MIN_FACTS:
+    return scrambled_probes_da_testi(
+        [(getattr(f, "proposition", "") or "") for f in sm.all()[:_MAX_POOL_FACTS]],
+        n=n, seed=seed)
+
+
+def scrambled_probes_da_testi(testi, *, n: int = 32,
+                              seed: int = 0) -> list[str]:
+    """La stessa costruzione, su TESTI qualsiasi invece che su fatti.
+
+    Estratta il 2026-07-31 mentre si misurava il rumore di un indice di
+    DOCUMENTI. Quella misura si e' poi rivelata inutile allo scopo (il
+    pavimento veniva 0.8706, sopra TUTTE le query comprese quelle con
+    risposta) e non e' stata tenuta — ma la separazione fra «da dove prendo le
+    parole» e «su cosa cerco» resta giusta di per se': prima la funzione
+    sapeva leggere solo un `SemanticMemory`, e un secondo chiamante avrebbe
+    dovuto riscriverne la logica.
+    """
+    testi = list(testi)
+    if len(testi) < _MIN_FACTS:
         return []
     words_by_fact: list[list[str]] = []
     originals: set[str] = set()
-    for f in facts:
-        text = (getattr(f, "proposition", "") or "").strip()
+    for t in testi:
+        text = (t or "").strip()
         originals.add(text.lower())
         ws = [w for w in text.split() if len(w) > 2]
         if ws:

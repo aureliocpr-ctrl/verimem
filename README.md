@@ -106,8 +106,12 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 - **Quarantine recovery — a wrong block is visible and reversible.** When the gate
   holds a legitimate fact (an over-eager keyword flag on a real
   lawyer/engineer/clinician statement, say), you can SEE it and undo it without
-  reaching into internals: `Memory.quarantine_log()` lists held claims (with the
-  blocking layers + reason when the audit trail is on), and
+  reaching into internals: `Memory.quarantine_log()` lists held claims — pass
+  `explain=True` (or `explain: true` on the MCP tool) and each row also says
+  WHICH screen stopped it and what would let it through, recomputed on the spot
+  so it works on claims held long before you asked. A claim stopped by the
+  source-entailment check is the one case that cannot be explained afterwards —
+  the source is not retained — and it says so rather than returning nothing. And
   `Memory.restore(fact_id, reason=…)` returns one to default recall. The same pair
   is on the MCP surface (`hippo_quarantine_log` / `hippo_quarantine_restore`). It is
   a *guarded* human override, not a back door: restore refuses a **superseded** fact
@@ -117,6 +121,13 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 - **Provenance on every read** — answers cite where each fact came from
   (conversation, document offset, tool call). A `TrustReport` explains *how the
   system knows*: chain of custody, declared conflicts, or an explicit abstention.
+  The *ranking* declares itself too: `hippo_facts_recall` returns a `ranking`
+  field saying which of the three signals actually ordered the answer — e.g.
+  `{"rerank": "timeout_cold", "fusion": "timeout"}` when a cold process kept
+  bi-encoder order, `{"rerank": "applied", "fusion": "applied"}` when all three
+  ran. Each stage degrades under a wall-clock budget rather than hanging the
+  caller, so the same query can legitimately return a different set on a cold
+  process than on a warm one — that difference is now stated, not silent.
 - **Bi-temporal history** — facts carry both *when it happened* and *when we
   learned it*. Query the past (`as_of`), see transitions ("changed from X to Y
   on date Z"), and audit every revision.
@@ -280,6 +291,10 @@ verimem import conversations.json       # list a ChatGPT/Claude export (imports 
 verimem import conversations.json --project verimem --since 2026-06-01 --all-matching
                                         # import a filtered subset (title/date/project)
 verimem trust "the deploy is green" --verified-by ci:main:green
+verimem save "The rent is 900/month." --asserted-at 2026-03-15
+                                        # WHEN the fact is true, distinct from when
+                                        # you wrote it — this is what `as_of` travels
+                                        # over. Omit it and event time stays unknown.
 verimem airgap                          # verify a zero-egress CONFIGURATION
 verimem airgap --live                   # PROVE it: audit every socket during a
                                         # real write+search, exit 0 iff no egress

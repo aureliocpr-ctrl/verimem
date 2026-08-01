@@ -184,25 +184,33 @@ _INGEST_GROUND_THRESHOLD = 40.0
 
 
 def _ingest_ground_threshold() -> float:
-    import os
-    try:
-        return float(os.environ.get("ENGRAM_INGEST_GROUND_THRESHOLD",
-                                    str(_INGEST_GROUND_THRESHOLD)))
-    except ValueError:
-        return _INGEST_GROUND_THRESHOLD
+    from .env_num import env_float
+    return env_float("ENGRAM_INGEST_GROUND_THRESHOLD", _INGEST_GROUND_THRESHOLD)
 
 
-def _grounds(dialogue: str, proposition: str) -> bool:
+def _grounds(dialogue: str, proposition: str) -> tuple[bool, float | None]:
     """The moat on the ingest path: does the DIALOGUE entail the extracted fact?
-    Uses the local CE (free, no per-fact LLM call, AUROC 1.0 on this domain).
-    Fail-open: CE unavailable → True (admit), never break an ingest for a
-    missing model."""
+
+    Returns ``(admit, score)``. Uses the local CE (free, no per-fact LLM call,
+    AUROC 1.0 on this domain). Fail-open: CE unavailable → ``(True, None)``,
+    never break an ingest for a missing model — and ``None``, not 0.0, because
+    "never asked" is not "asked and failed".
+
+    The score used to be computed and dropped (2026-07-29): it decided
+    quarantine and never reached the stored row, so an imported fact — whose
+    source exists BY CONSTRUCTION, being the dialogue it was extracted from —
+    looked exactly like one nobody had ever checked. That is worst on this path
+    of all: import is the cold-start story, so it is where a new corpus comes
+    from, and it arrived looking entirely unverified.
+    """
     try:
         from .local_grounding import try_local_score
         r = try_local_score(dialogue, proposition)
-        return r is None or r[0] >= _ingest_ground_threshold()
+        if r is None:
+            return True, None
+        return float(r[0]) >= _ingest_ground_threshold(), float(r[0])
     except Exception:  # noqa: BLE001 — the moat must never crash the ingest
-        return True
+        return True, None
 
 
 def conversation_provenance_ref(conversation_id: str) -> str:
@@ -372,9 +380,12 @@ def ingest_conversation(
         # deleted, rehabilitable). ON via ``ground`` (Memory.add(messages)
         # passes the preset's default). Beliefs keep their own status.
         status = "user_belief" if is_belief else "model_claim"
-        if ground and not is_belief and not _grounds(dialogue, prop):
-            status = "quarantined"
-            res["quarantined"] = res.get("quarantined", 0) + 1
+        _score: float | None = None
+        if ground and not is_belief:
+            _admit, _score = _grounds(dialogue, prop)
+            if not _admit:
+                status = "quarantined"
+                res["quarantined"] = res.get("quarantined", 0) + 1
         fact = Fact(
             proposition=prop,
             topic=topic,
@@ -382,6 +393,9 @@ def ingest_conversation(
             status=status,
             source_episodes=[prov],
             writer_role=INGEST_WRITER_ROLE,
+            # persist the verdict, quarantine or not: a held-back fact and an
+            # unchecked one must not be indistinguishable in the store.
+            grounding_score=_score,
             **stamp,
         )
         try:

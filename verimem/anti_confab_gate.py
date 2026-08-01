@@ -51,6 +51,12 @@ from .anti_confabulation import (
     detect_unsupported_task_state_claim,
 )
 
+# 2026-07-28: relations a fact asserts and its source does not (cause, completed
+# state, certainty, computed quantity). The CE scores these HIGH — every word of
+# the source is there, only the link is invented — so they never fall in the
+# escalation band and the judge that could read them is never asked.
+from .evidence_hint import hint_for
+
 # Cycle 2026-05-27 (round 8): wire L1.16 approval detector.
 # Closes business-process gap: "approved/signed-off/authorized" sin
 # formal approval evidence (approver/review/pr/ticket/email/chat).
@@ -115,6 +121,7 @@ from .l1_tested_detector import detect_unsupported_tested_claim
 # claims without runtime evidence (pytest/bash:exit0/smoke).
 # Triangulated Claude+Gemini+GPT all favored this as L1.10 priority.
 from .l1_works_detector import detect_unsupported_works_claim
+from .relation_claim import unverified_relation
 
 # Security fix 2026-06-02 (sorelle loop): token-gate the trusted-hook
 # bypass. writer_role alone is client-spoofable (set via MCP arguments),
@@ -408,6 +415,78 @@ def _l3_subject_filter() -> bool:
     import os
     v = os.environ.get("ENGRAM_L3_SUBJECT_FILTER", "").strip().lower()
     return v not in ("0", "false", "off", "no")
+
+
+def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
+    """Due fatti possono essere l'uno l'aggiornamento dell'altro?
+
+    LA TERZA GUARDIA, misurata su data dir VERGINE con dieci fatti veri e
+    scorrelati scritti dall'SDK senza un flag: **sei ritirati su dieci**, a
+    catena — ogni fatto che porta un numero mangiava il precedente::
+
+        RITIRATO ... Il grafo delle entita contiene 8625 nodi.
+        RITIRATO ... La quarantena trattiene 528 fatti.
+        RITIRATO ... Il repository ha 113 commit fuori da main.
+        RITIRATO ... La CLI espone 24 comandi.
+        RITIRATO ... Il corpus contiene 6682 fatti.
+        RITIRATO ... La prima fetta della suite ha riportato 2698 passed.
+
+    Chi scrive dieci misure ne ritrova quattro, in silenzio: il recall non
+    serve piu' i ritirati e `Memory.get()` non espone nemmeno `superseded_by`.
+
+    LA CLASSE ERA GIA' NOTA QUI, per un caso particolare. `both_machine_checked`
+    nacque da nove relazioni OEIS e la descrive cosi': «two DISTINCT true
+    properties of the same sequences read as "same subject, different
+    numbers"». E' questo difetto — ma quella guardia protegge solo chi porta un
+    `verified_by` deterministico, cioe' nessuno di chi scrive dall'SDK.
+
+    IL CRITERIO, senza soglie e senza modelli: i nomi e i numeri dicono DI COSA
+    si parla, le altre parole dicono COSA se ne dice. Due frasi che non
+    condividono NESSUNA parola di contenuto non asseriscono la stessa
+    grandezza, quindi la seconda non puo' essere un valore nuovo della prima.
+    Misurato su dodici coppie prima di scrivere una riga:
+
+        sei finte (ritirate davvero) -> 0 parole condivise, tutte e sei
+        sei evoluzioni legittime     -> da 3 a 5 parole condivise, tutte e sei
+
+    Restringe cosa puo' CHIAMARSI evoluzione: non tocca il knob, non promuove
+    nessuno stato, non rende nulla immune. Un testo vuoto non da' opinione —
+    decidono gli strati che c'erano gia'.
+
+    DUE CONDIZIONI IN OR, e nessuna delle due regge da sola — misurato su 18
+    coppie, comprese tre evoluzioni legittime scritte con un complemento in
+    apertura::
+
+        una sola parola condivisa   -> 1 sbagliata (basta «fatti», generica
+                                       in un prodotto che parla di fatti)
+        sola testa nominale         -> 3 sbagliate sulle evoluzioni VERE
+                                       («Nel piano annuale il prezzo e' 100»)
+        testa OPPURE >= 2 parole    -> 0 sbagliate su 18
+
+    Il DUE non e' una soglia scelta: e' «piu' di una», cioe' la differenza fra
+    un incrocio e una coincidenza. `_copula_parse` sarebbe stata la strada
+    esatta e non e' percorribile: su questo corpus restituisce None ovunque
+    (5 frasi copulari su 4854).
+
+    IL LIMITE CHE RESTA, e mi e' capitato addosso mentre scrivevo questa
+    funzione: due misure DIVERSE dello stesso soggetto — un conteggio e una
+    mediana, stessa fonte, scritte a due secondi di distanza — hanno la stessa
+    testa e molte parole in comune, e la seconda ha ritirato la prima. Per
+    separarle serve sapere QUALE grandezza si misura, non quali parole si
+    usano. Nessuna delle due condizioni qui lo sa.
+    """
+    from .validate_claim import _parole_di_contenuto, _testa_nominale
+
+    if not (nuovo or "").strip() or not (vecchio or "").strip():
+        return True
+    a = _parole_di_contenuto(nuovo)
+    b = _parole_di_contenuto(vecchio)
+    if not a or not b:
+        return True
+    testa = _testa_nominale(nuovo)
+    if testa and testa == _testa_nominale(vecchio):
+        return True
+    return len(a & b) >= 2
 
 
 def _supersede_same_source_on() -> bool:
@@ -960,6 +1039,55 @@ def _is_historical_completion(proposition: str) -> bool:
     return bool(_HISTORICAL_COMPLETION.search(p)) and bool(_CALENDAR_YEAR.search(p))
 
 
+def _advisory_l4_skipped() -> dict[str, str]:
+    """L'avviso che finisce nella provenance di un write sourced NON giudicato.
+
+    Diceva sempre «il modello locale non e' installato», e per il server MCP era
+    FALSO: li' il modello c'e' e sta caricando su un thread di sfondo, quindi
+    per i primi ~45 secondi ogni write sourced veniva ammesso con un avviso che
+    mandava a scaricare un file gia' presente (misurato 2026-07-30, riprodotto
+    con l'env del server). Quell'avviso resta scritto sul fatto per sempre, e
+    una diagnosi confidente-e-sbagliata e' precisamente cio' che questo prodotto
+    esiste per impedire — a maggior ragione quando la scrive lui.
+
+    Lo stato lo dice ``local_grounding.judge_state()``, uno solo per tutte le
+    superfici. Il write resta AMMESSO in ogni caso (regola della provenance da
+    fonte), etichettato onestamente «entailment NOT verified»: mai spacciato per
+    verificato, mai saltato in silenzio.
+    """
+    from .local_grounding import judge_state
+    stato = judge_state()
+    if stato == "warming":
+        return {
+            "layer": "L4-skipped",
+            "reason": "source provided but the grounding judge was still "
+                      "loading - entailment NOT verified for THIS write",
+            "advice": "the local CE judge is warming on a background thread "
+                      "(delegate-only mode keeps the ~30s cold load off the "
+                      "request thread). It is NOT missing: re-writing after it "
+                      "lands, or writing through the CLI, gets the moat verdict.",
+        }
+    if stato == "failed":
+        return {
+            "layer": "L4-skipped",
+            "reason": "source provided but the grounding judge failed to load - "
+                      "entailment NOT verified",
+            "advice": "the local model is on disk but could not be loaded in "
+                      "this process (the failure is cached for its lifetime). "
+                      "Run `verimem doctor` for the reason, or pass "
+                      "Memory(llm=...) to use an injected judge instead.",
+        }
+    return {
+        "layer": "L4-skipped",
+        "reason": "source provided but no grounding judge is available - "
+                  "entailment NOT verified",
+        "advice": "the local grounding model is not installed and no llm was "
+                  "passed. Run `verimem warmup` to fetch the free multilingual "
+                  "CE judge, or pass Memory(llm=...) — either turns the "
+                  "source-entailment moat on.",
+    }
+
+
 def run_validation_gate(
     *,
     proposition: str,
@@ -1234,6 +1362,18 @@ def run_validation_gate(
                     if (_oid and _rel_pre == "evolution"
                             and references_fact(proposition, _oid)):
                         continue
+                    # TERZA GUARDIA (2026-08-01): due fatti che non condividono
+                    # nessuna parola di CONTENUTO non sono l'uno l'evoluzione
+                    # dell'altro. Sta qui, accanto alle altre due, per lo stesso
+                    # motivo dichiarato sopra — questo e' il punto in cui il
+                    # verdetto e' l'OPINIONE di un modello — e generalizza la
+                    # guardia OEIS, che riconosce lo stesso errore ma solo per
+                    # chi porta un `verified_by` deterministico. Su store
+                    # vergine erano SEI fatti veri ritirati su dieci: vedi
+                    # `_puo_essere_una_evoluzione` per la misura.
+                    if (_rel_pre == "evolution" and not _puo_essere_una_evoluzione(
+                            proposition, getattr(_old, "proposition", ""))):
+                        continue
                     _rel = _rel_pre
                     if _observe:
                         # observe: surface but do NOT act, so the FP rate is measurable.
@@ -1319,22 +1459,7 @@ def run_validation_gate(
                    or _resolve_backend() == "local"
                    or local_ce_available())
     def _emit_l4_skipped() -> None:
-        # A sourced write with NO reachable grounding judge — neither an injected
-        # llm NOR the local CE (never downloaded, or unloadable at score-time) —
-        # is NOT entailment-verified. Say so out loud, NEVER a silent skip. The
-        # write is still ADMITTED (source-provenance rule below) but its provenance
-        # carries this advisory: recallable, honestly labelled "grounding not
-        # verified", never passed off as verified. (2026-07-18: the CE is the
-        # default judge when present and is multilingual — measured EN/IT/FR/ES.)
-        warnings.append({
-            "layer": "L4-skipped",
-            "reason": "source provided but no grounding judge is available - "
-                      "entailment NOT verified",
-            "advice": "the local grounding model is not installed and no llm was "
-                      "passed. Run `verimem warmup` to fetch the free multilingual "
-                      "CE judge, or pass Memory(llm=...) — either turns the "
-                      "source-entailment moat on.",
-        })
+        warnings.append(_advisory_l4_skipped())
 
     if source and _ground_on and _have_judge:
         # score and cut resolved for the SAME judge (local CE vs claude scales differ —
@@ -1389,17 +1514,55 @@ def run_validation_gate(
                         "grounding_score": gscore,
                     })
                 else:
+                    # WHICH part the source misses. "the source does not
+                    # support this proposition" is true and unactionable: a
+                    # 190-char sentence asserts three things, the source
+                    # carries two, and the writer guesses. Measured on myself
+                    # 2026-07-29: three consecutive rejections of one
+                    # checkpoint, each removing a different piece.
+                    #
+                    # Only with the LOCAL judge: it is free, so re-scoring a
+                    # handful of clauses costs ~0.4s each on the REJECT path
+                    # (18% of writes, measured over 22). With an llm judge this
+                    # would be N extra inferences per rejection, which is not a
+                    # price an advisory may charge.
+                    _pointer = ""
+                    try:
+                        from .unsupported_span import split_claim_clauses
+                        _n_claims = len(split_claim_clauses(proposition))
+                    except Exception:  # noqa: BLE001 — advisory only
+                        _n_claims = 1
+                    if _n_claims > 1:
+                        _pointer = (
+                            f" This proposition makes {_n_claims} separate "
+                            f"assertions and the moat judges them as ONE — a "
+                            f"single unproven piece sinks the rest. Split it "
+                            f"and save the parts this source actually proves; "
+                            f"give the others their own source."
+                        )
                     warnings.append({
                         "layer": "L4-grounding",
                         "reason": f"source does not entail the proposition "
                                   f"(grounding {gscore:.0f} below threshold)",
                         "advice": "the source does not support this proposition — likely a "
-                                  "confabulated inference, not a stated fact.",
+                                  "confabulated inference, not a stated fact." + _pointer,
                         "grounding_score": gscore,
                     })
                     advice = advice or "Source does not entail the claim (semantic grounding)."
             elif (_judge_used == "local" and _ce_band_enforced()
-                  and gscore < _ce_band_tau_hi()):
+                  and (gscore < _ce_band_tau_hi()
+                       or unverified_relation(source, proposition))):
+                # The band catches what the CE DOUBTS. It never catches what the
+                # CE gets confidently wrong, and those are one class: relations
+                # between the source's facts — a cause, a completed state, a
+                # certainty, a computed quantity — where every word is present
+                # and only the link is invented. Measured 2026-07-28 across five
+                # domains: the CE's three misses scored 88, 100 and 100, i.e.
+                # ABOVE tau_hi, so the safety net hung under them. A write whose
+                # fact announces a relation its source never announces now
+                # escalates whatever the score. Routing, not rejecting: with no
+                # judge reachable escalate_band returns None and the write lands
+                # exactly as before.
                 # BAND ESCALATION (0.7.0): before parking the write for review,
                 # ask an AVAILABLE llm judge to adjudicate the CE's uncertain
                 # sliver -- auto-discovered claude CLI (subscription, no key)
@@ -1474,6 +1637,21 @@ def run_validation_gate(
                         })
     elif source and not _have_judge:
         _emit_l4_skipped()
+
+    # An L1 detector answers "no evidence in verified_by; add one of ...". Often
+    # the writer HAS it and put it in the sentence: "Wave 72 done, last commit
+    # ff2aaa3e". Measured on the live corpus 2026-07-28: 174 of 509 quarantined
+    # facts (34.2%) name a commit, a file:line, a test result or a PR in their
+    # own prose. The verdict stays exactly as it is — a SHA inside prose is an
+    # assertion, the same SHA in verified_by is something provenance_validator
+    # can CHECK with git rev-parse — but the gate can SEE the reference it is
+    # asking for, and quoting it back turns a generic refusal into one the
+    # writer can act on.
+    _hint = hint_for(proposition)
+    if _hint:
+        for _w in warnings:
+            if str(_w.get("layer", "")).startswith("L1") and _w.get("advice"):
+                _w["advice"] = f"{_w['advice']} NOTE: {_hint}."
 
     # Decision tree.
     has_l3_contradict = any(w.get("layer") == "L3" for w in warnings)

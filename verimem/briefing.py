@@ -18,6 +18,7 @@ import os
 from typing import Any
 
 from ._call_telemetry import is_call_telemetry
+from .fact_contract import fact_payload
 
 # Semantic relevance for the correction signal: instead of 4-token overlap (which
 # misses paraphrased tasks), recall the episodes whose MEANING matches the task
@@ -124,13 +125,12 @@ def get_briefing(
             # that also call list_facts keep the default (whole corpus).
             facts = semantic.list_facts(limit=n_facts, offset=0,
                                         hide_low_trust=True)
+            # 2026-07-30: il briefing e' cio' che si legge per RIPRENDERE il
+            # lavoro, e alimenta anche hippo_dashboard_overview. Senza il
+            # verdetto, un checkpoint mai verificato si rilegge come acquisito
+            # — la stessa ragione per cui e' stato cablato su tip e recent.
             for f in facts:
-                recent_facts.append({
-                    "id": getattr(f, "id", ""),
-                    "proposition": getattr(f, "proposition", ""),
-                    "topic": getattr(f, "topic", ""),
-                    "created_at": float(getattr(f, "created_at", 0.0)),
-                })
+                recent_facts.append(fact_payload(f))
         except Exception:
             recent_facts = []
 
@@ -217,13 +217,11 @@ def get_briefing(
                 if sim < thr:
                     continue
                 proactive_hits.append({
-                    "id": getattr(fact, "id", ""),
+                    **fact_payload(fact),
                     "proposition": (
                         getattr(fact, "proposition", "") or ""
                     )[:200],
-                    "topic": getattr(fact, "topic", ""),
                     "similarity": float(sim),
-                    "created_at": float(getattr(fact, "created_at", 0.0)),
                 })
                 if len(proactive_hits) >= top_k:
                     break
