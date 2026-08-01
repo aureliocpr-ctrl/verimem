@@ -16,7 +16,27 @@ _TOKEN_RE = re.compile(r"[A-Za-z0-9_\-]+")
 
 
 def _tokens(text: str) -> set[str]:
-    return {t.lower() for t in _TOKEN_RE.findall(text or "")}
+    """I token che portano ARGOMENTO, senza le parole vuote.
+
+    Misurato il 2026-08-01 sul corpus vero: alla domanda «quale versione di
+    Kubernetes usa il cluster OnlyPaws» l'oracolo citava «il colore preferito di
+    Aurelio e' il blu», perche'::
+
+        comuni : ['di', 'il']
+        jaccard: 0.1538   >=  min_sim 0.1
+
+    Le uniche parole in comune erano DUE PREPOSIZIONI, e bastavano a superare la
+    soglia. La similarita' misurava i connettivi della lingua, non l'argomento.
+
+    La soglia NON si tocca: alzarla sarebbe un numero scelto a occhio, l'errore
+    gia' pagato tre volte questa settimana. Si toglie dal conto cio' che non
+    porta informazione — e la lista non si riscrive, e' quella che
+    `document_index` usa gia' per lo stesso identico motivo su un altro tool.
+    Due copie divergono, e questo repo l'ha gia' pagata.
+    """
+    from .document_index import _PAROLE_VUOTE
+    return {t.lower() for t in _TOKEN_RE.findall(text or "")
+            if t.lower() not in _PAROLE_VUOTE}
 
 
 def _jaccard(a: set[str], b: set[str]) -> float:

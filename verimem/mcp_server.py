@@ -12671,6 +12671,22 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                              "but FAILED to load in this process (cached for "
                              "its lifetime); this is NOT a pass — run "
                              "`verimem doctor` for the reason")
+                elif _stato in ("ready", "delegated"):
+                    # IL GIUDICE C'ERA. Misurato il 2026-08-01 su questo
+                    # canale: `local_ce_available()` True, `judge_state()`
+                    # «ready», modello su disco — e la ricevuta diceva «no
+                    # judge was available ... run `verimem warmup`», mandando
+                    # chi legge a scaricare un modello che ha gia'.
+                    # Un messaggio che descrive UNO stato (`absent`) applicato
+                    # a tre: la diagnosi diventa una pista falsa, che per una
+                    # ricevuta e' peggio del silenzio.
+                    _moat = (f"could not judge — the local CE judge was "
+                             f"{_stato} in this process and the moat was asked, "
+                             f"but no score came back. This is NOT a pass, and "
+                             f"NOT a missing model: `verimem warmup` non "
+                             f"servirebbe. E' un difetto del percorso di "
+                             f"giudizio su questo canale — la CLI sullo stesso "
+                             f"store giudica")
                 else:
                     _moat = ("could not judge — a source was given and the moat "
                              "was asked, but no judge was available for this "
