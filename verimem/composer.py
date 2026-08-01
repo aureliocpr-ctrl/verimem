@@ -68,15 +68,45 @@ _ARTICOLI_PER_LINGUA: dict[str, tuple[str, ...]] = {
 }
 
 #: parole che aprono un oggetto NON nominale ("is in Rome", "e' a Roma")
+#:
+#: LE FORME FUSE SONO NELLA LISTA QUANTO QUELLE NUDE. Italiano, francese e
+#: spagnolo fondono la preposizione con l'articolo in UNA parola — «nel», «al»,
+#: «sul», «au», «aux», «al» — e in italiano quella e' la forma piu' comune
+#: delle due. Con le sole preposizioni nude la guardia esisteva sulla frase
+#: semplice e spariva su quella normale: misurato il 2026-08-01, «Il gatto è a
+#: Roma.» respinto e «Il server è nel datacenter di Milano.» accettato come
+#: CLASSE, 7 locativi su 10. E in francese la preposizione e' `à`: `a` senza
+#: accento e' il verbo avere, cioe' l'unica forma che NON serviva.
+#:
+#: Non e' una perdita di analisi, e' una contesa fabbricata: «Il server è nel
+#: datacenter di Milano» e «Il server è un nodo di produzione» diventavano due
+#: CLASSI rivali dello stesso soggetto, su tutti e cinque i moduli che leggono
+#: da qui.
+#:
+#: L'inglese resta com'era — non fonde nulla, e nessun difetto e' stato
+#: misurato li'. Allargarlo per simmetria significherebbe agire su un'ipotesi
+#: invece che su un'evidenza, sul comportamento su cui gira tutto il corpus.
 _NON_NP_PER_LINGUA: dict[str, frozenset[str]] = {
     "en": frozenset("in on at from to of for with by about over under near "
                     "into onto as".split()),
-    "it": frozenset("in su a da di per con tra fra sotto sopra verso presso "
-                    "dentro fuori".split()),
-    "fr": frozenset("en sur a de du des dans pour avec par sous vers chez "
-                    "entre".split()),
-    "es": frozenset("en sobre a de del para con por bajo hacia entre desde "
-                    "hasta".split()),
+    "it": frozenset(
+        "in su a da di per con tra fra sotto sopra verso presso dentro fuori "
+        # di+art · a+art · da+art · in+art · su+art · con+art
+        "del dello della dei degli delle dell' "
+        "al allo alla ai agli alle all' "
+        "dal dallo dalla dai dagli dalle dall' "
+        "nel nello nella nei negli nelle nell' "
+        "sul sullo sulla sui sugli sulle sull' "
+        "col coi".split()),
+    "fr": frozenset(
+        "en sur a de du des dans pour avec par sous vers chez entre "
+        # à accentata (la preposizione vera) e le sue due contrazioni.
+        # `l'` NON entra: in francese e' ARTICOLO («est l'animal favori» e'
+        # una classe), e «est à l'hôtel» e' gia' respinto dal suo `à`.
+        "à au aux d'".split()),
+    "es": frozenset(
+        "en sobre a de del para con por bajo hacia entre desde hasta "
+        "al".split()),          # `del` c'era, la sua gemella `al` no
 }
 
 #: La copula -> la lingua. `est` prima di `es`, e `e'` prima di `es`: il regex
@@ -174,6 +204,28 @@ def subject_key(subject: str) -> str:
     return _strip_article(subject or "").strip().lower()
 
 
+def _apre_un_locativo(parola: str, lingua: str) -> bool:
+    """La prima parola dell'oggetto e' una preposizione di ``lingua``?
+
+    Confronta PAROLE INTERE, non prefissi: `nel` e' una preposizione, `Nelson`
+    e `nelle` no. E' la forma di difetto gia' pagata su questo repo (un nome
+    trovato dentro un'altra parola), e qui la tentazione c'e' tutta, perche'
+    le forme articolate sono corte e frequenti come inizio di nome.
+
+    L'ELISIONE va sciolta a mano: `split()` restituisce `nell'archivio` in un
+    pezzo solo, quindi «Il documento è nell'archivio.» sfuggiva a una lista
+    che pure contiene `nell'`. Si guarda il troncone fino all'apostrofo — e
+    solo quello, perche' `d'` francese e' preposizione mentre `l'` e'
+    articolo, e la lista lo sa gia'.
+    """
+    p = parola.lower()
+    prep = _NON_NP_PER_LINGUA[lingua]
+    if p in prep:
+        return True
+    tronco, sep, _ = p.partition("'")
+    return bool(sep) and (tronco + "'") in prep
+
+
 def _copula_match(text: str) -> re.Match | None:
     m = _COPULA_RE.match((text or "").strip())
     if not m:
@@ -184,7 +236,7 @@ def _copula_match(text: str) -> re.Match | None:
         return None
     lingua = _COPULE.get(m.group("c").lower(), "en")
     obj_words = m.group("o").strip().split()
-    if not obj_words or obj_words[0].lower() in _NON_NP_PER_LINGUA[lingua]:
+    if not obj_words or _apre_un_locativo(obj_words[0], lingua):
         return None                      # "is in Rome" / "e' a Roma" — locativo
     if not _strip_article(m.group("o"), lingua):
         return None                      # bare article, no head noun
