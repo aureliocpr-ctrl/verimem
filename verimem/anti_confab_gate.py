@@ -417,6 +417,53 @@ def _l3_subject_filter() -> bool:
     return v not in ("0", "false", "off", "no")
 
 
+def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
+    """Due fatti possono essere l'uno l'aggiornamento dell'altro?
+
+    LA TERZA GUARDIA, misurata su data dir VERGINE con dieci fatti veri e
+    scorrelati scritti dall'SDK senza un flag: **sei ritirati su dieci**, a
+    catena — ogni fatto che porta un numero mangiava il precedente::
+
+        RITIRATO ... Il grafo delle entita contiene 8625 nodi.
+        RITIRATO ... La quarantena trattiene 528 fatti.
+        RITIRATO ... Il repository ha 113 commit fuori da main.
+        RITIRATO ... La CLI espone 24 comandi.
+        RITIRATO ... Il corpus contiene 6682 fatti.
+        RITIRATO ... La prima fetta della suite ha riportato 2698 passed.
+
+    Chi scrive dieci misure ne ritrova quattro, in silenzio: il recall non
+    serve piu' i ritirati e `Memory.get()` non espone nemmeno `superseded_by`.
+
+    LA CLASSE ERA GIA' NOTA QUI, per un caso particolare. `both_machine_checked`
+    nacque da nove relazioni OEIS e la descrive cosi': «two DISTINCT true
+    properties of the same sequences read as "same subject, different
+    numbers"». E' questo difetto — ma quella guardia protegge solo chi porta un
+    `verified_by` deterministico, cioe' nessuno di chi scrive dall'SDK.
+
+    IL CRITERIO, senza soglie e senza modelli: i nomi e i numeri dicono DI COSA
+    si parla, le altre parole dicono COSA se ne dice. Due frasi che non
+    condividono NESSUNA parola di contenuto non asseriscono la stessa
+    grandezza, quindi la seconda non puo' essere un valore nuovo della prima.
+    Misurato su dodici coppie prima di scrivere una riga:
+
+        sei finte (ritirate davvero) -> 0 parole condivise, tutte e sei
+        sei evoluzioni legittime     -> da 3 a 5 parole condivise, tutte e sei
+
+    Restringe cosa puo' CHIAMARSI evoluzione: non tocca il knob, non promuove
+    nessuno stato, non rende nulla immune. Un testo vuoto non da' opinione —
+    decidono gli strati che c'erano gia'.
+    """
+    from .validate_claim import _parole_di_contenuto
+
+    if not (nuovo or "").strip() or not (vecchio or "").strip():
+        return True
+    a = _parole_di_contenuto(nuovo)
+    b = _parole_di_contenuto(vecchio)
+    if not a or not b:
+        return True
+    return bool(a & b)
+
+
 def _supersede_same_source_on() -> bool:
     """When a clash is a same-source EVOLUTION (the source restating its own value with a
     newer valid-time), ADMIT the new write and retire the OLD — instead of quarantining
@@ -1289,6 +1336,18 @@ def run_validation_gate(
                     # fact) is the error this store exists to avoid.
                     if (_oid and _rel_pre == "evolution"
                             and references_fact(proposition, _oid)):
+                        continue
+                    # TERZA GUARDIA (2026-08-01): due fatti che non condividono
+                    # nessuna parola di CONTENUTO non sono l'uno l'evoluzione
+                    # dell'altro. Sta qui, accanto alle altre due, per lo stesso
+                    # motivo dichiarato sopra — questo e' il punto in cui il
+                    # verdetto e' l'OPINIONE di un modello — e generalizza la
+                    # guardia OEIS, che riconosce lo stesso errore ma solo per
+                    # chi porta un `verified_by` deterministico. Su store
+                    # vergine erano SEI fatti veri ritirati su dieci: vedi
+                    # `_puo_essere_una_evoluzione` per la misura.
+                    if (_rel_pre == "evolution" and not _puo_essere_una_evoluzione(
+                            proposition, getattr(_old, "proposition", ""))):
                         continue
                     _rel = _rel_pre
                     if _observe:

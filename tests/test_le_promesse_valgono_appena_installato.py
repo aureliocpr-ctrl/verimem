@@ -242,3 +242,19 @@ def test_il_passato_si_puo_chiedere_senza_chiedere_nulla(appena_installato):
     assert "mysql" not in prima, (
         f"il passato contiene un fatto che a quell'istante non esisteva ancora: "
         f"{prima}")
+
+
+#: LA CASCATA DI SUPERSESSIONE NON HA UN TEST QUI, e l'assenza e' un reperto.
+#:
+#: Dieci misure vere e scorrelate scritte su data dir vergine ne lasciano vive
+#: QUATTRO: ogni fatto che porta un numero ritira il precedente. Ma la stessa
+#: prova scritta come test — sia qui sia altrove — PASSA anche disattivando la
+#: cura, cioe' non riproduce niente. Fuori da pytest, con le stesse env, la
+#: cascata avviene (2 ritirati su 5 misurati il 2026-08-01).
+#:
+#: Qualcosa nell'ambiente della suite spegne il ramo che produce il difetto, e
+#: non e' l'offline (`local_nli_available()` risponde True in entrambi i casi).
+#: Finche' non si sa COSA, un test che passa sempre e' peggio di nessun test:
+#: sarebbe il terzo presidio-che-non-presidia di questa giornata. Il difetto e'
+#: inchiodato dove si puo' inchiodarlo davvero — sui predicati, in
+#: `test_due_misure_diverse_non_sono_un_aggiornamento.py`.

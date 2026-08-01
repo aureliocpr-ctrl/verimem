@@ -96,13 +96,26 @@ SCOPERTE = {
 CENSITE = PORTANO | set(SCOPERTE)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def store(tmp_path_factory) -> tuple[object, str]:
     """Uno store con UN fatto, verdetto scritto a mano.
 
     Il punteggio non passa dal giudice: su una macchina senza il modello CE il
     test misurerebbe la presenza del giudice invece della propagazione del
     verdetto, e confondere le due cose e' il difetto che qui si vuole trovare.
+
+    NIENTE `scope="module"`, ed e' la riga che teneva rossa la CI dal 30/07
+    (15 errori, `LocalEntryNotFoundError`, su tutte e sei le piattaforme).
+    Lo stub di embedding del conftest e' `autouse` ma **function**-scoped, e
+    pytest istanzia le fixture a scope piu' largo PRIMA: quando questa girava
+    `_stub_embedding_model` non era ancora attivo, quindi `m.add()` caricava il
+    modello VERO — che in CI non c'e'. In locale invisibile, perche' qui il
+    modello e' in cache: la stessa forma del marker `xdist_group` che mancava
+    e di ogni altro caso in cui il presidio non copre il percorso.
+
+    Il costo dello scope stretto e' ricostruire lo store per ciascuna
+    parametrizzazione; con lo stub attivo e' una scrittura in memoria, e
+    l'isolamento fra i casi si guadagna invece di perderlo.
     """
     d = Path(tempfile.mkdtemp(prefix="censimento_", dir=tmp_path_factory.mktemp("c")))
     from verimem.client import Memory
