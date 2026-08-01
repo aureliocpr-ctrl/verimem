@@ -45,6 +45,17 @@ def appena_installato(tmp_path, monkeypatch):
     Le tre env sono quelle che il prodotto stesso usa per isolare lo store —
     non configurazione, ma il modo di dire «parti da zero». Tutto il resto
     (soglie, gate, tier, daemon) resta al suo default."""
+    # I MODELLI DEVONO ESSERE SU DISCO, ed e' il limite che questo file
+    # dichiara in cima — ma dichiararlo non basta: la CI warma con `--no-gate`
+    # e ha la rete chiusa, e i test committati senza questa guardia sono andati
+    # in `LocalEntryNotFoundError` su tutte le piattaforme, bloccando la PR.
+    # Scritto il limite e non applicato: la stessa distanza fra promessa ed
+    # esecuzione che questo banco esiste per misurare.
+    from tests._real_model import real_ce_cached, real_model_cached
+    if not real_model_cached() or not real_ce_cached():
+        pytest.skip("i modelli locali non sono in cache (la CI warma con "
+                    "--no-gate e senza rete): qui si verificano i DEFAULT dato "
+                    "che l'installazione e' completa, non il download")
     for k in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR", "VERIMEM_DATA_DIR"):
         monkeypatch.setenv(k, str(tmp_path))
     from verimem.client import Memory

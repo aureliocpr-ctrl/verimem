@@ -88,7 +88,19 @@ def test_una_recall_sotto_la_soglia_non_carica_faiss(tmp_path):
     """Il caso che si paga davvero: non l'apertura, ma OGNI processo che legge.
 
     Un corpus di due fatti e' quattro ordini di grandezza sotto il gate: la
-    risposta e' identica con o senza ANN, quindi la libreria non serve."""
+    risposta e' identica con o senza ANN, quindi la libreria non serve.
+
+    Salta senza modello in cache: `store(embed="sync")` e la recall lo caricano
+    davvero, e in CI (warm `--no-gate`, rete chiusa) finiva in
+    `LocalEntryNotFoundError`. Il primo test del file — quello che conta di
+    piu', «aprire lo store non carica faiss» — NON ha bisogno di modelli e
+    resta attivo ovunque."""
+    import pytest as _pt
+
+    from tests._real_model import real_model_cached
+    if not real_model_cached():
+        _pt.skip("modello di embedding non in cache: questo test scrive e "
+                 "richiama davvero")
     out = _in_un_processo_pulito(f"""
         import sys
         from pathlib import Path
