@@ -67,6 +67,69 @@ def test_unreadable_store_reports_no_pressure(tmp_path):
     assert p["depth"] == 0 and p["over"] is False
 
 
+# --- deposito fermo o coda che cresce? ------------------------------------
+
+def test_il_conteggio_recente_separa_il_deposito_dal_flusso(tmp_path):
+    """Una PROFONDITA' non dice se la coda sta crescendo.
+
+    Misurato sul corpus vivo il 2026-08-01: 528 quarantinati contro una soglia
+    di 500 — l'allarme suona — ma 415 sono di MAGGIO e solo 20 sono degli
+    ultimi sette giorni. Un allarme sempre acceso e' un allarme spento: chi lo
+    legge non distingue «il gate sta quarantinando adesso» da «c'e' un
+    deposito che nessuno ha mai drenato», e sono due azioni diverse.
+
+    Si aggiunge il dato che manca, non si cambia la soglia: quella decide
+    ancora sullo stock, che e' la cosa giusta da decidere.
+    """
+    import sqlite3
+
+    from verimem.review_queue import recenti
+
+    m = Memory(path=tmp_path / "m.db")
+    _quarantine(m, 3)
+    assert recenti(m.semantic.db_path) == 3
+
+    # due dei tre spostati a tre mesi fa: restano nello STOCK, escono dal FLUSSO
+    import time as _t
+    vecchio = _t.time() - 90 * 86400
+    with sqlite3.connect(m.semantic.db_path) as c:
+        c.execute("UPDATE facts SET created_at = ? WHERE id IN "
+                  "(SELECT id FROM facts WHERE status = 'quarantined' LIMIT 2)",
+                  (vecchio,))
+    assert depth(m.semantic.db_path) == 3, "lo stock non cambia"
+    assert recenti(m.semantic.db_path) == 1, "il flusso si e' svuotato"
+
+
+def test_il_recente_legge_created_at_come_EPOCH_non_come_data():
+    """La trappola, pagata il giorno stesso su una query di analisi.
+
+    `created_at` e' un epoch float (`1778229783.68`), non una stringa ISO. Un
+    filtro scritto come per una data — `created_at >= date('now','-7 day')` —
+    confronta un numero con una stringa e restituisce **0 sempre**, in
+    silenzio: l'allarme direbbe «nessun arrivo recente» su qualunque corpus,
+    che e' peggio del difetto che sta curando.
+
+    Qui si inchioda il contratto sulla colonna, non sul risultato: se un
+    giorno diventasse una data ISO, questo test dice dove guardare.
+    """
+    import sqlite3
+    from pathlib import Path
+
+    db = Path.home() / ".engram" / "semantic" / "semantic.db"
+    if not db.exists():
+        pytest.skip("nessuno store reale su questa macchina")
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        riga = con.execute("SELECT created_at FROM facts LIMIT 1").fetchone()
+    finally:
+        con.close()
+    if not riga:
+        pytest.skip("store vuoto")
+    assert isinstance(riga[0], (int, float)), (
+        f"created_at non e' piu' un epoch ma {type(riga[0]).__name__}: "
+        "il filtro temporale di review_queue.recenti va riscritto")
+
+
 def test_threshold_comes_from_the_env(monkeypatch):
     monkeypatch.setenv("ENGRAM_REVIEW_QUEUE_MAX", "7")
     assert threshold() == 7
