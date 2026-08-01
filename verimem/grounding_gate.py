@@ -191,6 +191,57 @@ def _resolve_judge(judge: str | None) -> str:
     return j if j in ("basic", "span") else "basic"
 
 
+def _e_un_giudice_vero(llm: Any) -> bool:
+    """C'e' un llm che sa davvero giudicare, o solo il segnaposto?
+
+    La domanda sembra `llm is not None` e NON lo e'. Quando nessun provider e'
+    configurato, `verimem.llm` non passa `None`: costruisce un `MockLLM()` e lo
+    logga (`llm_using_mock reason='no provider available'`). Quell'oggetto
+    passava il controllo `llm is None`, quindi il ramo del CE locale non veniva
+    mai preso e il gate finiva a chiedere il punteggio a un mock — che risponde
+    a vuoto, e da li' `NoGroundingJudge: the grounding judge returned no score
+    (0 chars)`.
+
+    Il risultato e' che l'utente «brand-new with no llm» — cioe' esattamente
+    quello che il ramo locale esisteva per proteggere (commento 2026-07-18) —
+    era l'unico a NON avere il moat. Misurato sul corpus reale: 152 fatti
+    giudicati su 6572.
+
+    `isinstance` e non un'euristica sul nome: `MockLLM` e' una classe di questo
+    prodotto, e la domanda «e' il segnaposto che costruiamo quando non c'e'
+    niente?» ha una risposta esatta. Import locale perche' `llm.py` e' pesante e
+    questo modulo sta sul write path.
+    """
+    if llm is None:
+        return False
+    try:
+        from verimem.llm import LazyLLM, MockLLM
+    except Exception:  # noqa: BLE001 — senza il modulo, un oggetto vale un llm
+        return True
+    # IL PROXY VA APERTO. `LazyLLM` e' un proxy trasparente che costruisce il
+    # backend vero al primo accesso a un attributo, e il suo docstring dichiara
+    # la condizione di sicurezza: «No isinstance checks are done on the llm in
+    # the wake/sleep hot paths (verified), so a proxy is safe here». Quella
+    # verifica NON copriva il write gate, dove `llm is None` e' precisamente un
+    # controllo di identita' — e il proxy lo scavalca. Tracciato sul canale MCP:
+    #     [gate] fact_grounding_score_ex  llm=LazyLLM
+    #     [gate] -> NoGroundingJudge: the grounding judge returned no score
+    # con `try_local_score` mai chiamato.
+    #
+    # Risolverlo qui e' legittimo e non tradisce lo scopo del proxy: siamo nel
+    # punto in cui l'inferenza sta per essere TENTATA, cioe' esattamente quando
+    # il proxy vuole risolversi. Se la risoluzione fallisce (nessuna chiave),
+    # non c'e' un giudice vero — che e' la risposta giusta.
+    if isinstance(llm, LazyLLM):
+        try:
+            llm = llm._resolve()
+        except Exception:  # noqa: BLE001 — niente backend = niente giudice vero
+            return False
+        if llm is None:
+            return False
+    return not isinstance(llm, MockLLM)
+
+
 def _resolve_backend() -> str:
     """Write-gate judge backend: 'claude' (default, injected llm — unchanged),
     'local' (distilled CE, verimem.local_grounding; no llm call), or 'interactive'
@@ -376,7 +427,8 @@ def fact_grounding_score_ex(llm: Any, source: str, fact: str, *,
     # still gets the entailment moat — the CE is multilingual (measured EN/IT/FR/ES,
     # entailed ~97-99 vs confab ~0.6) — instead of the gate fail-opening. An
     # injected llm still wins on the default "claude" backend.
-    if backend == "local" or (backend == "claude" and llm is None):
+    if backend == "local" or (backend == "claude"
+                              and not _e_un_giudice_vero(llm)):
         from verimem.local_grounding import try_local_score
         r = try_local_score(source, fact, focus_budget=focus_budget)
         if r is not None:

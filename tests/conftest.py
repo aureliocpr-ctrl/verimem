@@ -369,6 +369,22 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # clp, NON HIPPO_DATA_DIR) -> scrivevano in ~/.engram reale. Il subprocess
     # eredita os.environ, quindi pinnando ENGRAM_DIR usa la tmp isolata.
     monkeypatch.setenv("ENGRAM_DIR", str(test_data_dir))
+    # 2026-08-01: mancava il TERZO alias. `VERIMEM_DATA_DIR` non veniva pinnato,
+    # quindi in un worker figlio cadeva sul DEFAULT — cioe' su ~/.engram, lo
+    # store REALE. Il prodotto lo denuncia da solo, ed e' cosi' che e' saltato
+    # fuori: un test cross-process e' fallito in suite con
+    #
+    #   RuntimeWarning: DATA_DIR aliases disagree:
+    #     HIPPO_DATA_DIR   = ...pytest-4661\hippo_test_data511
+    #     ENGRAM_DATA_DIR  = ...pytest-4661\hippo_test_data511
+    #     VERIMEM_DATA_DIR = C:\Users\aurel\.engram
+    #
+    # Due alias su tre isolati e' isolamento a meta': basta che un risolutore
+    # guardi il nome sbagliato e i test scrivono in produzione. Stessa classe
+    # curata in 42b7136f («una sola data dir: due risolutori con precedenza
+    # opposta erano due store») e nelle due righe qui sopra, che erano gia' la
+    # seconda e la terza occorrenza. Questa e' la quarta: si pinnano TUTTI.
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(test_data_dir))
     original = {}
     try:
         from verimem.config import CONFIG
