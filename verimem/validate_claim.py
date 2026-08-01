@@ -262,6 +262,57 @@ def validate_claim(
         else:
             supporting.append(f)
 
+    # NAMED-VALUE contradiction pass (2026-08-01) — «X e' A» contro «X e' B»,
+    # la contraddizione piu' comune di tutte, e finora invisibile.
+    #
+    # Perche' il ciclo sopra non poteva vederla: aggancia con
+    # `_subj_overlap(claim_caps, fact)`, cioe' chiede che i SALIENTI DELLA
+    # CLAIM compaiano nel fatto. Due frasi che si contraddicono differiscono
+    # PROPRIO sul nome proprio, quindi l'overlap tende a zero esattamente
+    # quando la contraddizione e' netta. Misurato sul prodotto vero: claim
+    # «Il database di produzione e' MySQL» contro il fatto «... e' PostgreSQL»
+    # -> caps {'MySQL'} contro {'PostgreSQL'}, overlap 0.0000 su soglia 0.6,
+    # verdetto `unknown`.
+    #
+    # E' lo STESSO ragionamento che il passo numerico qui sotto fa gia' per i
+    # numeri («independent of the caps-overlap gate above, which is ~0 for
+    # number-only claims»): quando l'aggancio sui caps non puo' funzionare, ci
+    # si aggancia al CONTESTO CONDIVISO e si cerca il conflitto sul valore.
+    # Mancava la versione per i nomi.
+    #
+    # I due criteri NON sono nuovi e non sono una copia: sono gli stessi che
+    # `quantity_match.conflict_from_parts` applica prima di confrontare due
+    # valori — intersezione non vuota delle parole di contenuto («unrelated
+    # subject») e attributi non contrastanti («different attribute»). Averli
+    # in un posto solo e' la ragione per cui il fix del 2026-07-25 su
+    # `conflict_from_parts` non e' dovuto essere replicato a mano qui.
+    #
+    # La guardia sul soggetto condiviso NON e' decorazione: senza, «il server
+    # e' Nginx» e «il database e' PostgreSQL» — che non parlano della stessa
+    # cosa — avrebbero salienti disgiunti e finirebbero in contesa. Un corpus
+    # pieno di conflitti inventati e' il modo piu' rapido per far ignorare il
+    # segnale.
+    # RITIRATO il 2026-08-01, poche ore dopo averlo scritto. Qui c'era un
+    # "named-value pass" lessicale per «X e' A» contro «X e' B». Il difetto che
+    # curava e' vero, ma il WRITE PATH lo copre gia' — e meglio: su
+    # un'installazione vergine, `Memory.add("... e' PostgreSQL")` seguito da
+    # `Memory.add("... e' MySQL")` da' `superseded: ['edc2cc9d76e9']` e il
+    # recall restituisce solo il corrente. E' il tier NLI semantico, che si
+    # auto-abilita quando il modello e' su disco (README: «Entity swaps need
+    # the semantic NLI tier, which auto-enables when its model is already
+    # installed»).
+    #
+    # Tenerlo sarebbe stato un secondo rilevatore, piu' grezzo, sullo stesso
+    # caso: la classe di difetto che questo repo cura da giorni (due copie che
+    # divergono). E aveva gia' prodotto un falso positivo che solo la suite
+    # INTERA ha preso — «la sequenza A000045 e' Fibonacci» contro «la sequenza
+    # A000032 e' Lucas», due soggetti diversi dichiarati in contesa, con un
+    # fatto distinto ritirato.
+    #
+    # Cio' che restava scoperto era la SIMULAZIONE (`verimem trust`), che non
+    # passa dal write path: quello e' curato dove il difetto stava davvero —
+    # l'agente che non veniva costruito, la riga `checked:` che derivava dal
+    # flag, e il topic fittizio usato come filtro di ricerca.
     # NUMERIC-QUANTITY contradiction pass — independent of the caps-overlap
     # gate above (which is ~0 for number-only claims). Fires only when the
     # hit shares a DISTINCTIVE (non-unit) content word with the claim AND

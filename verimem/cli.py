@@ -770,6 +770,16 @@ def import_cmd(
         console.print(f"  [yellow]warn:[/yellow] {e}")
 
 
+def _agente_per_l3():
+    """L'agente che serve a L3 per confrontare col corpus vivo.
+
+    Funzione a se' — e non due righe inline — perche' e' il punto in cui il
+    controllo puo' NON poter girare, e un test deve poter costruire quel caso
+    per verificare che `checked:` lo dica invece di ereditare il flag."""
+    from .agent import VerimemAgent
+    return VerimemAgent.build()
+
+
 def _open_memory():
     """Factory hook (monkeypatchable in tests): the architecture-A entry —
     a THIN client when VERIMEM_SERVER_URL points at a running memory server,
@@ -1134,7 +1144,11 @@ def trust(
         help="Provenance ref (repeatable): commit:abc123, pr:#12:merged, "
              "ci:main:green, coverage:85, bash:test_PASS",
     ),
-    topic: str = typer.Option("adhoc/trust-check", "--topic"),
+    topic: str = typer.Option(
+        None, "--topic",
+        help="Restringe il confronto L3 a un topic. Senza, si confronta con "
+             "TUTTO il corpus — che e' cio' che «vs the live corpus» promette.",
+    ),
     source: str = typer.Option(
         None, "--source",
         help="The evidence TEXT the claim should follow from. Runs the moat "
@@ -1157,9 +1171,31 @@ def trust(
     """
     from .anti_confab_gate import run_validation_gate
     refs = list(verified_by or [])
+    # `--validate full` PROMETTE il confronto col corpus vivo, e L3 comincia con
+    # `if agent is None ... return None`: passando None il controllo non poteva
+    # girare, e la riga `checked:` lo annunciava lo stesso perche' era derivata
+    # dal FLAG. Stessa classe curata il 2026-07-29 sul VERDETTO, tre righe piu'
+    # sotto («"TRUSTED" is earned by what actually ran»), sopravvissuta nel
+    # gemello. L'agente si costruisce SOLO su richiesta esplicita: `fast`, che
+    # e' il default, non tocca nulla.
+    _agente = None
+    _l3 = "off"
+    if validate == "full":
+        try:
+            _agente = _agente_per_l3()
+            _l3 = "ran" if getattr(_agente, "semantic", None) is not None else "off"
+        except Exception:  # noqa: BLE001 — meglio senza L3 che senza risposta
+            _agente, _l3 = None, "off"
+    # Il topic arriva a L3 come FILTRO di ricerca. Il vecchio default
+    # `"adhoc/trust-check"` e' un'etichetta inventata dal comando per la
+    # simulazione, e nessun fatto vive li': misurato sul corpus vero, la stessa
+    # claim da' `contradicted` senza topic_hint e `unknown` con
+    # `topic_hint='adhoc/trust-check'`. Cioe' il comando che promette il
+    # confronto «vs the live corpus» cercava dentro un topic vuoto per
+    # costruzione. Ora si passa solo cio' che l'utente ha chiesto davvero.
     res = run_validation_gate(
-        proposition=claim, verified_by=refs, topic=topic,
-        agent=None, validate=validate,
+        proposition=claim, verified_by=refs, topic=topic or None,
+        agent=_agente, validate=validate,
         # 2026-07-29: the moat was unreachable from the command named after
         # trust — there was no way to hand it evidence, so L4 could never run
         # and the output still said "adequate evidence".
@@ -1211,9 +1247,11 @@ def trust(
     else:
         _moat_line = ("the moat did NOT run: no --source, so nothing was "
                       "checked against evidence")
+    # `checked:` elenca cio' che ha GIRATO, non cio' che e' stato chiesto: se
+    # L3 non ha potuto (store assente, errore) la riga non deve nominarlo.
     lines.append(
         f"  checked:     L1 lexical screens"
-        f"{', L3 contradiction' if validate == 'full' else ''}"
+        f"{', L3 contradiction' if _l3 == 'ran' else ''}"
         f"{', L4 moat' if isinstance(_gs, (int, float)) else ''}")
     lines.append(f"  [dim]{_moat_line}[/dim]")
     if not refs and not source:
