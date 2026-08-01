@@ -38,10 +38,16 @@ __all__ = ["split_claim_clauses"]
 #: Where a new assertion starts. Italian and English, both directions of
 #: contrast, plus the causal and consecutive links — those are precisely the
 #: joins that carry an inference the source may never have made.
+#: UNO spazio, mai `\s+`: il testo arriva qui gia' collassato (vedi _WS_RUN),
+#: quindi una corsa di spazi non esiste piu' e chiedere «uno o piu'» sarebbe
+#: solo il permesso di backtrackare. Con un quantificatore la garanzia stava a
+#: dieci righe di distanza, dentro l'unica funzione che collassa: bastava usare
+#: questo regex da un altro punto del modulo per riportarsi in casa il blow-up
+#: senza rompere niente di visibile.
 _CLAUSE_BOUNDARY = re.compile(
-    r"(?:(?<=[.;:])\s+)"                       # sentence end
-    r"|(?:,\s*(?=(?:e|ma|mentre|and|but|while|whereas)\b))"  # comma + coordinator
-    r"|(?:\s+(?=(?:mentre|whereas|while|perch[ée]|because|poich[ée]|"
+    r"(?:(?<=[.;:]) )"                         # sentence end
+    r"|(?:, ?(?=(?:e|ma|mentre|and|but|while|whereas)\b))"  # comma + coordinator
+    r"|(?: (?=(?:mentre|whereas|while|perch[ée]|because|poich[ée]|"
     r"quindi|therefore|cosicch[ée]|so that)\b))",
     re.IGNORECASE,
 )
@@ -64,10 +70,16 @@ _MIN_CLAUSE_CHARS = 25
 #: after I had read the identical warning in quantity_match.py earlier the same
 #: day and written the bug anyway.
 #:
-#: Collapsing first is linear and removes the input that causes the blow-up,
-#: instead of trying to make every branch of the boundary regex unambiguous.
+#: Collapsing first is linear and removes the input that causes the blow-up.
 #: Newlines become single spaces, which costs nothing here: this counts
 #: assertions, it does not reformat anything.
+#:
+#: 2026-08-01 — this alone was NOT the whole cure, and CodeQL kept flagging the
+#: same line after it. The collapse made the module fast (0.000 s on the 32 000
+#: spaces that used to take 82.9 s) but left the guarantee POSITIONAL: it held
+#: because the one caller collapses first, not because the regex is safe. So
+#: the boundary now asks for a single space and this pair is what protects the
+#: split — collapse here, no quantifier there. Neither half is decoration.
 _WS_RUN = re.compile(r"\s+")
 
 

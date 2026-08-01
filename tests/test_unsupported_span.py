@@ -137,3 +137,57 @@ def test_a_run_of_spaces_does_not_blow_up_the_split():
     split_claim_clauses(hostile)
     elapsed = time.perf_counter() - t0
     assert elapsed < 1.0, f"{elapsed:.1f}s on 32k spaces — the split went quadratic again"
+
+
+def test_la_garanzia_sta_nel_REGEX_non_in_una_riga_lontana():
+    """Il test qui sopra passa da quando esiste `_WS_RUN`, e CodeQL segnala il
+    punto lo stesso (py/polynomial-redos, high, unsupported_span.py:83).
+
+    NON e' il linter che si sbaglia sul comportamento — misurato oggi, 32 000
+    spazi in 0.000 s contro gli 82.9 s di prima. Ha ragione su DOVE sta la
+    garanzia: il collasso avviene in `split_claim_clauses`, una funzione piu'
+    in la', e il regex resta ambiguo. Chi domani usasse `_CLAUSE_BOUNDARY` da
+    un altro punto del modulo — un modulo di parsing, e' la cosa piu' naturale
+    del mondo — si riporterebbe in casa il blow-up senza toccare niente di
+    rotto.
+
+    Quindi l'invariante si sposta DENTRO il pattern: dopo il collasso una
+    corsa di spazi non esiste piu', percio' il confine di clausola puo'
+    chiedere UN solo spazio. Nessun quantificatore, nessun backtracking
+    possibile, e la promessa non dipende piu' dalla disciplina di chi chiama.
+
+    E' la forma che questo repo ha gia' pagato tre volte per imparare: la cura
+    e' un invariante, non la disciplina.
+    """
+    from verimem.unsupported_span import _CLAUSE_BOUNDARY
+
+    for ambiguo in (r"\s+", r"\s*"):
+        assert ambiguo not in _CLAUSE_BOUNDARY.pattern, (
+            f"il confine di clausola contiene ancora {ambiguo!r}: su una corsa "
+            "di spazi il cui lookahead fallisce il motore riprova da ogni "
+            "posizione, e la protezione dipende dal fatto che il chiamante "
+            "abbia collassato prima")
+
+
+def test_il_confine_riconosce_ancora_le_frasi_normali():
+    """Controprova della riga qui sopra: stringere il regex non deve fargli
+    perdere i confini veri. Se `\\s+` diventasse uno spazio singolo e il testo
+    arrivasse NON collassato, i tagli sparirebbero in silenzio — un difetto
+    peggiore del ReDoS, perche' non si vede.
+
+    Qui si passa apposta il testo come lo scrive un utente: a capo, doppi
+    spazi, tabulazioni."""
+    sporco = ("La misura era ferma da giorni.\n\n"
+              "\tIl gate copriva SDK e console,  ma   il gateway restava fuori")
+    clausole = split_claim_clauses(sporco)
+    # Tre, non due: dopo il punto, e di nuovo sul «,  ma» — che e' proprio un
+    # confine sporco, doppio spazio compreso. La prima stesura di questa riga
+    # ne pretendeva due e il test mi ha corretto prima della cura.
+    assert len(clausole) == 3, clausole
+    assert clausole[0].startswith("La misura era ferma")
+    assert clausole[1].startswith("Il gate copriva")
+    assert clausole[2].startswith("ma il gateway")
+    assert "  " not in " ".join(clausole), (
+        "le corse di spazi sono arrivate fino all'uscita: il collasso non ha "
+        "girato, e con un regex che chiede UN solo spazio i confini dopo un "
+        "doppio spazio si perdono")

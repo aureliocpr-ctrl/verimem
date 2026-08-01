@@ -177,7 +177,12 @@ def status():
     # and 23 judged (0.5%) next to "4743 facts" — each one changes what the user
     # does next, and neither was anywhere in this panel. `doctor` stays the
     # deeper diagnosis; this is the health line.
-    _held = _judged = None
+    # Tutte e TRE, non due: `_lab` e' stata aggiunta al blocco sotto il 31/07 e
+    # non qui, cosi' il ramo «il DB non c'e'» — che esiste apposta per reggere
+    # quel caso — moriva di UnboundLocalError sull'unica variabile che nessuno
+    # aveva inizializzato. CodeQL l'ha visto (py/uninitialized-local-variable),
+    # e non lo prende nessun test della CLI perche' `build()` il DB lo crea.
+    _held = _judged = _lab = None
     try:
         import sqlite3 as _sq
 
