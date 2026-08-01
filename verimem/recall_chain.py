@@ -11,6 +11,7 @@ import math
 from typing import Any
 
 from .momentum_macro import momentum_macro_candidate
+from .reasoning import _appaia
 from .successor_repr import build_transition_matrix, forward_plan
 
 
@@ -32,11 +33,21 @@ def recall_chain(
     skills_store = getattr(agent, "skills", None)
     memory = getattr(agent, "memory", None)
 
-    # Recall.
-    recall_pairs: list[tuple[Any, float]] = []
+    # Recall. `_appaia` porta alla forma (skill, score) cio' che la superficie
+    # restituisce: `SkillLibrary.retrieve` e' dichiarata `-> list[Skill]`
+    # (skill.py:415) e da' oggetti NUDI, mentre la riga che segue spacchetta
+    # coppie — ed e' FUORI dal try, quindi il `TypeError: cannot unpack
+    # non-iterable Skill object` usciva dal tool. E' l'identico difetto gia'
+    # curato in reasoning.py, dove l'audit di produzione lo misurava a 6
+    # chiamate e 5 exception: la cura esisteva, applicata a un solo call site.
+    # Qui non si vedeva perche' il test provava un doppio la cui `retrieve`
+    # restituiva coppie — scritto sull'aspettativa del chiamante invece che
+    # sul comportamento del fornitore — e perche' sulla lista vuota il ciclo
+    # non gira, quindi uno store senza skill fa passare qualunque versione.
+    recall_pairs: list[tuple[Any, float | None]] = []
     if skills_store is not None and hasattr(skills_store, "retrieve"):
         try:
-            recall_pairs = list(skills_store.retrieve(task, k=k_recall))
+            recall_pairs = _appaia(list(skills_store.retrieve(task, k=k_recall)))
         except Exception:
             recall_pairs = []
 
@@ -69,7 +80,11 @@ def recall_chain(
         recalls_out.append({
             "skill_id": sk.id,
             "name": sk.name,
-            "score": float(score),
+            # None quando la superficie di richiamo non da' un punteggio (vedi
+            # `_appaia`): «non misurato» non si legge come «misurato zero», ed
+            # e' la seconda meta' della stessa cura — `float(None)` esplodeva
+            # qui appena il primo TypeError smetteva di coprirlo.
+            "score": None if score is None else float(score),
             "forward_plans": plans,
         })
 

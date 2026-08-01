@@ -6,6 +6,18 @@ also build a forward trajectory from there. The user gets
 
 Less heavy than full reason_about_task (no STRIPS, no analogy);
 faster, smaller payload.
+
+ATTENZIONE AL DOPPIO QUI SOTTO. `_FakeSkillsStore.retrieve` restituisce
+COPPIE `(Skill, float)`, mentre la `SkillLibrary` vera e' dichiarata
+`-> list[Skill]` (skill.py:415) e restituisce oggetti NUDI. Il doppio e'
+stato scritto sull'aspettativa del CHIAMANTE invece che sul comportamento del
+FORNITORE, e per questo il file e' rimasto verde mentre il tool esplodeva in
+produzione con `TypeError: cannot unpack non-iterable Skill object`.
+
+Il caso a coppie e' legittimo e resta provato qui — `_appaia` normalizza
+entrambe le forme. Il percorso VERO, senza doppi, sta in
+`test_il_doppio_prometteva_piu_del_vero.py`: e' li' che va aggiunto un caso
+se si cambia come il tool richiama le skill.
 """
 from __future__ import annotations
 
