@@ -111,3 +111,37 @@ def test_una_parola_che_INIZIA_come_una_preposizione_non_lo_e():
                   "Il pesce è sulmone."):
         assert _copula_parse(frase) is not None, (
             f"parola respinta perche' INIZIA come una preposizione: {frase}")
+
+
+def test_un_cognome_con_l_apostrofo_non_e_una_preposizione():
+    """Il buco che il test qui sopra NON copriva, e che un critic avversario
+    ha trovato: quello provava le forme SENZA apostrofo, cioe' le uniche gia'
+    protette dal confronto su parole intere.
+
+    Sciogliendo l'elisione sempre, «Il senatore è Dell'Utri.» diventava un
+    locativo — e con lei una classe chiusa ma reale di cognomi italiani, che
+    prima di quella funzione veniva analizzata correttamente. La maiuscola
+    dopo l'apostrofo li distingue.
+    """
+    for frase in ("Il senatore è Dell'Utri.",
+                  "Il difensore è Dall'Ara.",
+                  "Il pittore è Dell'Orto.",
+                  "Lo scrittore è Dell'Aquila."):
+        assert _copula_parse(frase) is not None, (
+            f"cognome respinto come preposizione elisa: {frase}")
+
+
+def test_il_limite_dichiarato_un_locativo_con_nome_proprio():
+    """Cio' che la maiuscola NON risolve, detto invece che nascosto.
+
+    «nell'Archivio di Stato» e' un locativo e viene analizzato come classe:
+    senza un dizionario di cognomi non e' distinguibile da «Dell'Utri», e
+    questo modulo non ne ha uno. Non e' una regressione — era gia' cosi'
+    prima che l'elisione venisse sciolta — ed e' il verso di errore meno
+    grave fra i due solo perche' l'alternativa costava TUTTI i cognomi.
+
+    Se un giorno arriva un criterio migliore, questo test cade e va riscritto:
+    e' un segnaposto onesto, non un comportamento desiderato.
+    """
+    assert _copula_parse("Il documento è nell'Archivio di Stato.") is not None
+    assert _copula_parse("Il documento è nell'archivio.") is None

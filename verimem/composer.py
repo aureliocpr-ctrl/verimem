@@ -217,13 +217,33 @@ def _apre_un_locativo(parola: str, lingua: str) -> bool:
     che pure contiene `nell'`. Si guarda il troncone fino all'apostrofo — e
     solo quello, perche' `d'` francese e' preposizione mentre `l'` e'
     articolo, e la lista lo sa gia'.
+
+    MA UN COGNOME NON E' UNA PREPOSIZIONE. Sciogliendo l'elisione sempre,
+    «Il senatore è Dell'Utri.» veniva respinta come locativo, e con lei
+    Dall'Ara, Dell'Orto, Dall'Oglio: una classe chiusa ma reale di cognomi
+    italiani, che prima di questa funzione veniva analizzata correttamente.
+    Trovato da un critic avversario, verificato dal vivo, e non era coperto
+    dal test che pure sorvegliava questa forma di difetto — quel test provava
+    `nel` contro `Nelson`, cioe' le forme SENZA apostrofo, che sono le uniche
+    che il confronto su parole intere gia' proteggeva.
+
+    Il segnale disponibile e' la MAIUSCOLA dopo l'apostrofo, e la ragione per
+    cui basta e' che non regredisce nulla: «nell'Archivio di Stato» resta
+    analizzato come classe, ma lo era GIA' PRIMA che questa funzione
+    esistesse, mentre «Dell'Utri» funzionava e si era rotto. Si guadagna il
+    caso minuscolo — quello comune — senza perdere terreno su nessun altro.
+    Il limite resta dichiarato in un test invece che nascosto: un locativo
+    seguito da nome proprio non e' distinguibile da un cognome senza un
+    dizionario, e questo modulo non ne ha uno.
     """
     p = parola.lower()
     prep = _NON_NP_PER_LINGUA[lingua]
     if p in prep:
         return True
-    tronco, sep, _ = p.partition("'")
-    return bool(sep) and (tronco + "'") in prep
+    tronco, sep, resto = parola.partition("'")
+    if not sep or (resto[:1].isupper() if resto else False):
+        return False
+    return (tronco.lower() + "'") in prep
 
 
 def _copula_match(text: str) -> re.Match | None:
