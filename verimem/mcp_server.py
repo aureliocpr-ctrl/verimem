@@ -8706,6 +8706,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # handler riceveva una lista che poteva contenere duplicati.
             # Dedup preserva ordine (dict.fromkeys) per determinismo.
             fitness_updates: list[str] = []
+            # E QUELLE CHE NON RISOLVONO. `update_fitness` restituisce `None`
+            # quando l'id non esiste, e qui c'era `if s is not None: append`
+            # senza ramo `else`: l'etichetta spariva dalla ricevuta e il
+            # chiamante non aveva modo di sapere che era stata ignorata.
+            # Sull'audit di produzione sono 519 etichette su 558 a non
+            # risolvere, il che spiega da solo i 230 skill su 325 senza
+            # trials: gli id veri sono hash esadecimali, lo schema del tool
+            # non li descrive, e chi chiama passa il NOME.
+            # Il difetto è il silenzio, non la mancata risoluzione — chi sa
+            # di aver passato tre etichette e ne vede tornare una corregge.
+            non_risolte: list[str] = []
             success_flag = (outcome == "success")
             for sid in dict.fromkeys(skills_used):
                 try:
@@ -8715,6 +8726,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     )
                     if s is not None:
                         fitness_updates.append(sid)
+                    else:
+                        non_risolte.append(sid)
                 except Exception as exc:  # noqa: BLE001
                     # Update di una singola skill non deve bloccare
                     # la persistenza dell'episode (già committed).
@@ -8730,6 +8743,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "outcome": outcome,
                 "skills_used": skills_used,
                 "fitness_updated": fitness_updates,
+                # Solo quando ce ne sono: un campo che compare sempre, anche
+                # vuoto, diventa rumore da saltare — e questo deve farsi
+                # notare proprio nel caso in cui c'è.
+                **({"skills_not_found": non_risolte} if non_risolte else {}),
                 # Cycle #51: narrative extension — always present even
                 # when empty, so callers can rely on the shape.
                 "fact_ids": fact_ids,
