@@ -287,21 +287,38 @@ class SkillLibrary:
         """
         skill.updated_at = time.time()
         _screen_skill_text(skill)  # audit A2: redact secrets + defang injection
-        self._path(skill.id).write_text(json.dumps(skill.to_dict(), indent=2), encoding="utf-8")
-        if self._skills_cache is not None:
-            self._skills_cache[skill.id] = skill
-        # Reuse the persisted learned_embedding ONLY if its dimension matches the
-        # ACTIVE model — otherwise we'd serialize a wrong-length vector but stamp
-        # the active model_signature() below, and retrieve()'s `length(...) = ?`
-        # filter would silently drop the row (a post-model-flip skill becomes
-        # unrecallable). On a dim mismatch (or no vector) re-encode with the active
-        # model so the stored row always matches the stamped signature (hunt #4).
+
+        # L'ENCODE PRIMA DI QUALUNQUE SCRITTURA, e non in mezzo alle due.
+        # L'ordine era: scrivi il JSON -> encode -> scrivi l'indice. Ma
+        # `embedding.encode` è la riga fallibile di questo metodo (budget
+        # scaduto, daemon giù, cold load da decine di secondi): quando
+        # solleva, il file è già quello NUOVO e l'indice è rimasto VECCHIO, e
+        # nessuno se ne accorge perché l'eccezione risale al chiamante come
+        # «lo store è fallito».
+        #
+        # Misurato dall'altra istanza sul corpus vivo: **159 skill su 324**
+        # hanno due status, tutte `file=retired` / `indice=candidate` — cioè
+        # è il RITIRO a non arrivare in fondo. E `retrieve()` interroga
+        # l'INDICE: `retrieve(status="candidate")` restituiva 10 skill su 10
+        # già ritirate nei file.
+        #
+        # Reuse the persisted learned_embedding ONLY if its dimension matches
+        # the ACTIVE model — otherwise we'd serialize a wrong-length vector
+        # but stamp the active model_signature() below, and retrieve()'s
+        # `length(...) = ?` filter would silently drop the row (a
+        # post-model-flip skill becomes unrecallable). On a dim mismatch (or
+        # no vector) re-encode with the active model so the stored row always
+        # matches the stamped signature (hunt #4).
         if skill.learned_embedding is not None and (
             len(skill.learned_embedding) * 4 == embedding.expected_embedding_bytes()
         ):
             emb = np.asarray(skill.learned_embedding, dtype=np.float32)
         else:
             emb = embedding.encode(f"{skill.name}\n{skill.trigger}")
+
+        self._path(skill.id).write_text(json.dumps(skill.to_dict(), indent=2), encoding="utf-8")
+        if self._skills_cache is not None:
+            self._skills_cache[skill.id] = skill
         with self._connect() as conn:
             was_existing = False
             if return_replaced:
