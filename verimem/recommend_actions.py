@@ -70,6 +70,15 @@ def recommend_actions(
         groups[action].append(record)
 
     # Sort each group.
+    # QUANTE SONO DAVVERO, prima di troncare. Il sommario contava la lista
+    # GIÀ tagliata a `top_k_per_group`, quindi con il default 50 diceva
+    # «test: 50» dove le skill che vogliono un test erano 254 — e lo schema
+    # MCP cappa quel parametro a 200, così il numero vero non era nemmeno
+    # RAGGIUNGIBILE da quel canale (misurato: 50→50, 200→200, 10000→254).
+    # Il cap serve a limitare l'ELENCO mostrato, non a cambiare il totale
+    # dichiarato: un conteggio che coincide sempre col limite è un conteggio
+    # che non conta niente.
+    totali: dict[str, int] = {}
     for action_name, items in groups.items():
         sort_cfg = _GROUP_SORT.get(action_name)
         if sort_cfg is None:
@@ -78,21 +87,29 @@ def recommend_actions(
         else:
             keyfn, reverse = sort_cfg
         items.sort(key=keyfn, reverse=reverse)
+        totali[action_name] = len(items)
         groups[action_name] = items[:top_k_per_group]
 
     summary_parts = [
         f"Library curation dashboard ({len(skills)} skills total)."
     ]
     for action_name in ("promote", "retire", "test", "pin", "ok"):
-        n = len(groups.get(action_name, []))
+        n = totali.get(action_name, 0)
         if n > 0:
-            summary_parts.append(f"{action_name}: {n}")
+            mostrate = len(groups.get(action_name, []))
+            summary_parts.append(
+                f"{action_name}: {n}" if mostrate >= n
+                else f"{action_name}: {n} (showing {mostrate})")
     summary = "; ".join(summary_parts) + "."
 
     return {
         "summary": summary,
         "n_total": len(skills),
         "actions": groups,
+        # I totali PRIMA del taglio, per chi legge la struttura invece della
+        # frase: `len(actions[x])` dice quante ne sono state MOSTRATE, e senza
+        # questo campo non c'è modo di sapere quante ce ne fossero.
+        "n_by_action": totali,
     }
 
 
