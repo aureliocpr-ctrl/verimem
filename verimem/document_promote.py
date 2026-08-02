@@ -83,7 +83,23 @@ def promote_chunk_to_fact(
             source=chunk_text or None, ground_write=True,
         )
         punteggio = verdetto.grounding_score
-        if verdetto.action in ("reject", "downgrade"):
+        # QUARANTINA QUANDO IL MOAT BOCCIA, non quando l'azione e'
+        # `downgrade`. La prima versione di questa riga guardava
+        # `action in ("reject","downgrade")` ed era SBAGLIATA: `downgrade`
+        # copre due situazioni diverse, e un test gia' in repo l'ha presa —
+        # «frase grezza spacciata per verificata senza prove» promossa con
+        # `status="verified"` da' `action=downgrade` con `grounding 98.78`,
+        # cioe' il contenuto e' implicato dalla fonte e a decadere e' solo lo
+        # STATUS. Trattarlo come una quarantena avrebbe nascosto un fatto
+        # buono per un difetto di provenienza, che `store()` gia' corregge da
+        # solo. Misurato: contraddetta 0.44 e confabulazione 0.38 sono
+        # `downgrade` quanto quella, e vanno trattenute — la differenza sta
+        # nel PUNTEGGIO, non nell'azione, e il verdetto porta la sua soglia.
+        _soglia = getattr(verdetto, "threshold", None)
+        if verdetto.action == "reject" or (
+                isinstance(punteggio, (int, float))
+                and isinstance(_soglia, (int, float))
+                and punteggio < _soglia):
             stato = "quarantined"
     except Exception:  # noqa: BLE001 — un gate irraggiungibile non fa passare
         # ... e non fa nemmeno cadere la promozione: resta un `model_claim`
