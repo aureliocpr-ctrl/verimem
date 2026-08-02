@@ -2360,7 +2360,16 @@ def facts_forget(
 
     Default mode (--undoable) snapshots the pre-delete row to
     facts_undo_log so `engram facts undo <op_id>` can restore it within
-    7 days. Use --no-undoable for true privacy-compliant hard delete.
+    7 days. --no-undoable skips that snapshot.
+
+    PER UNA RICHIESTA DI CANCELLAZIONE SERVE --purge-history, non
+    --no-undoable. Questa riga diceva «use --no-undoable for true
+    privacy-compliant hard delete» e mandava alla cura sbagliata: senza lo
+    snapshot la riga se ne va davvero, ma i PREDECESSORI restano — `update()`
+    non sovrascrive, memorizza un fatto nuovo e supersede il vecchio, che
+    rimane nel database con lo stesso identico datum. Le due opzioni
+    rispondono a due domande diverse: --no-undoable riguarda il recupero,
+    --purge-history riguarda la catena.
     """
     if bool(fact_id) == bool(topic):
         console.print("[red]give either a FACT_ID or --topic[/red], not both "

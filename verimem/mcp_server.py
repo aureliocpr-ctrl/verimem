@@ -2616,12 +2616,24 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "FORGIA #202. Delete one fact by id (privacy / GDPR). "
                 "Symmetric to `hippo_forget` for episodes. Multi-tenant: if "
                 "user_id/agent_id/run_id is given, the delete is REFUSED when "
-                "the fact is outside that scope (no cross-tenant delete)."
+                "the fact is outside that scope (no cross-tenant delete). "
+                "For a real erasure request pass purge_history=true: without "
+                "it only ONE row goes, and a fact that was ever updated left "
+                "predecessors carrying the SAME datum behind (update() stores "
+                "a new fact and supersedes the old one, it never overwrites)."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "fact_id": {"type": "string"},
+                    "purge_history": {
+                        "type": "boolean",
+                        "description": (
+                            "Delete the whole supersession chain — every "
+                            "predecessor and successor. Default false: the "
+                            "provenance chain is the product's value and is "
+                            "not destroyed unless asked."),
+                    },
                     "user_id": {"type": "string"},
                     "agent_id": {"type": "string"},
                     "run_id": {"type": "string"},
@@ -13168,13 +13180,26 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if _deny is not None:
                 _audit(name, arguments, outcome="rejected_cross_scope")
                 return _err(_deny)
-            ok = a.semantic.delete(fid, principal=_MCP_PRINCIPAL,
-                                   action="forget")
+            # `purge_history` NON esiste su `semantic.delete` — la sua firma e'
+            # (fact_id, principal, action) — e la cancellazione con la catena
+            # vive uno strato piu' su, su `Memory.delete`. Non bastava
+            # aggiungere una chiave allo schema: andava cambiata la catena
+            # delle chiamate. Senza, questo tool toglieva UNA riga e lasciava
+            # i predecessori con lo stesso datum, mentre si descrive «Delete
+            # one fact by id (privacy / GDPR)» — ed e' il canale che usano gli
+            # agenti, cioe' la promessa piu' esposta.
+            _purga = bool(arguments.get("purge_history"))
+            if _purga:
+                ok = a.memory.delete(fid, purge_history=True,
+                                     principal=_MCP_PRINCIPAL)
+            else:
+                ok = a.semantic.delete(fid, principal=_MCP_PRINCIPAL,
+                                       action="forget")
             if not ok:
                 _audit(name, arguments, outcome="not_found")
                 return _err(f"fact not found: {fid}")
             _audit(name, arguments, outcome="ok")
-            return _ok({"ok": True, "id": fid})
+            return _ok({"ok": True, "id": fid, "purged_history": _purga})
 
         # Cycle 2026-05-27 round 13 P0c — undo log API.
         if name == "hippo_fact_forget_with_undo":
