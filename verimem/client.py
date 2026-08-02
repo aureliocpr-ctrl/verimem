@@ -580,10 +580,22 @@ class Memory:
             }
             if with_history:
                 from .temporal_context import _event_ts, _iso, fact_history
+                # `until` PASSA DA `_iso` COME `asserted_date`. Nella prima
+                # stesura usciva grezzo, e la riga di storia mostrava mezzo
+                # cartello in epoch:
+                #     (2026-08-02 → 1785663692.5640569)
+                # due date della stessa parentesi in due formati diversi, e
+                # `_iso` importata quattro righe sopra. `temporal_context` la
+                # converte da sempre; questa superficie, nata oggi, no.
+                #
+                # `None` resta `None` e non diventa la stringa vuota che `_iso`
+                # darebbe: un fatto ancora valido NON ha una data di fine, e
+                # «nessuna fine» non è «fine sconosciuta».
                 item["history"] = [
                     {"text": getattr(p, "proposition", ""),
                      "asserted_date": _iso(_event_ts(p)),
-                     "until": getattr(p, "superseded_at", None)}
+                     "until": (None if getattr(p, "superseded_at", None) is None
+                               else _iso(p.superseded_at) or None)}
                     for p in fact_history(self.semantic, item["id"])
                 ]
             out.append(item)
