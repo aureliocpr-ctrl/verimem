@@ -1001,6 +1001,16 @@ def ignorance_cmd(
         console.print(f"[{colore}]{r['class']}[/{colore}]  {r['query']}")
         if r.get("what_would_help"):
             console.print(f"    → {r['what_would_help']}")
+        # LA RISERVA. `ignorance_map` la produce quando il migliore dei
+        # risultati supera il pavimento dichiarato ma sta sotto il rumore che
+        # lo store ha misurato su se stesso — la fascia in cui un vicino
+        # qualunque vale quanto un match — e questa superficie non la
+        # stampava: usciva solo dal `--json`. E' la CURA del difetto per cui
+        # era nata (male) la soglia `max(floor, noise_floor)`, ritirata il
+        # 01/08 perche' rendeva muta la mappa; scritta, e capace di avvisare
+        # soltanto se stessa.
+        if r.get("caveat"):
+            console.print(f"    [yellow]⚠[/yellow] [dim]{r['caveat']}[/dim]")
     riepilogo = "  ".join(f"{c}={n}" for c, n in sorted(rep["by_class"].items()))
     # `noise_floor_source` esce SEMPRE: 0.0 significa «non misurabile», «la
     # misura e' fallita» o «l'hai imposto tu», e senza dirlo l'operatore non
