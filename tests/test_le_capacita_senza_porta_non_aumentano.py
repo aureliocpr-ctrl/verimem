@@ -33,10 +33,23 @@ import re
 
 from verimem.client import Memory
 
-#: Misurato il 2026-08-02 su 31 metodi pubblici. Chi apre una porta ABBASSA
-#: questo numero nello stesso commit; chi ne aggiunge una senza porta lo vede
-#: salire e deve decidere se e' una scelta o una dimenticanza.
+#: Misurato il 2026-08-02. Chi apre una porta ABBASSA questo numero nello
+#: stesso commit; chi ne aggiunge una senza porta lo vede salire e deve
+#: decidere se e' una scelta o una dimenticanza.
+#:
+#: E' un TETTO, non un'uguaglianza, e la ragione e' una misura: in locale il
+#: conteggio e' 11 e in CI 10. `dir(Memory)` non e' identico ovunque — un
+#: metodo definito dietro un import opzionale c'e' su una macchina e non
+#: sull'altra — quindi pretendere il numero esatto rende il cricchetto rosso
+#: per l'AMBIENTE invece che per un difetto. Il verso che conta e' uno solo:
+#: che non CRESCA.
 SENZA_PORTA_NOTE = 11
+
+#: Di quanto puo' scendere prima che valga la pena riallineare la costante.
+#: Sotto questa distanza il calo puo' essere ambientale; oltre, qualcuno ha
+#: aperto delle porte e il numero qui sopra non racconta piu' lo stato di
+#: oggi.
+_SCARTO_AMBIENTALE = 3
 
 _RADICE = pathlib.Path(__file__).resolve().parents[1] / "verimem"
 
@@ -67,15 +80,23 @@ def test_le_capacita_senza_porta_non_aumentano():
           "e' una scelta.")
 
 
-def test_se_ne_apri_una_abbassi_il_numero():
+def test_se_ne_apri_TANTE_abbassi_il_numero():
     """Il verso opposto: un elenco che si aggiorna solo quando peggiora non
-    presidia niente. Se il conteggio scende e la costante resta, questo test
-    lo dice — cosi' il numero racconta sempre lo stato di oggi."""
+    presidia niente.
+
+    Con uno SCARTO, e non a uguaglianza. La prima stesura pretendeva il numero
+    esatto ed e' caduta in CI: 11 in locale, 10 li'. `dir(Memory)` non e'
+    identico ovunque — un metodo dietro un import opzionale c'e' su una
+    macchina e non sull'altra — quindi l'uguaglianza rende il cricchetto rosso
+    per l'ambiente invece che per un difetto, ed e' la peggiore specie di
+    presidio: quello che si impara a ignorare.
+    """
     mancanti = _senza_porta()
-    assert len(mancanti) >= SENZA_PORTA_NOTE, (
+    assert len(mancanti) >= SENZA_PORTA_NOTE - _SCARTO_AMBIENTALE, (
         f"ora sono {len(mancanti)} e la costante dice {SENZA_PORTA_NOTE}: "
-        f"hai aperto una porta senza aggiornarla. Portala a "
-        f"{len(mancanti)}.\nRestano senza:\n  " + "\n  ".join(mancanti))
+        f"hai aperto piu' di {_SCARTO_AMBIENTALE} porte senza aggiornarla. "
+        f"Portala a {len(mancanti)}.\nRestano senza:\n  "
+        + "\n  ".join(mancanti))
 
 
 def test_il_criterio_vede_davvero_qualcosa():

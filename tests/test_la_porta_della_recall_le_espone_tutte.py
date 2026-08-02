@@ -32,29 +32,47 @@ from verimem.client import Memory
 _ESCLUSI = {"self", "query", "k"}
 
 
-def _opzioni_di_recall() -> str:
-    return CliRunner().invoke(cli_mod.app, ["recall", "--help"]).output
+def _opzioni_di_recall() -> set[str]:
+    """Le opzioni DICHIARATE dal comando, non l'help renderizzato.
+
+    La prima stesura leggeva `recall --help` e in CI cadeva: Rich impagina
+    sulla larghezza del terminale e su una colonna stretta tronca i nomi
+    lunghi, quindi `--with-history` e `--include-beliefs` sparivano dal testo
+    pur essendo nel comando. Un test verde in locale e rosso in CI per la
+    LARGHEZZA DELLO SCHERMO — la stessa lezione gia' pagata su questo repo:
+    interroga la struttura, non il testo.
+
+    Typer non usa `__click_params__`: i parametri stanno nella FIRMA, e il
+    default di ognuno e' un `OptionInfo` che porta i suoi `param_decls`
+    (`--deep`, `--with-history`, …). Chi non ne ha e' un argomento posizionale.
+    """
+    nomi: set[str] = set()
+    for p in inspect.signature(cli_mod.recall_cmd).parameters.values():
+        for d in getattr(p.default, "param_decls", ()) or ():
+            if isinstance(d, str) and d.startswith("--"):
+                nomi.add(d)
+    return nomi
 
 
 def test_ogni_modo_di_search_ha_la_sua_porta():
     """Il criterio, non l'elenco: se nasce un quinto modo, questo cade."""
     modi = [p for p in inspect.signature(Memory.search).parameters
             if p not in _ESCLUSI]
-    aiuto = _opzioni_di_recall()
+    opzioni = _opzioni_di_recall()
     mancanti = [m for m in modi
-                if f"--{m.replace('_', '-')}" not in aiuto]
+                if f"--{m.replace('_', '-')}" not in opzioni]
     assert not mancanti, (
         f"modi di lettura senza una porta sulla riga di comando: {mancanti}\n"
         f"la funzione c'e' completa nell'SDK e chi usa la CLI conclude che il "
-        f"prodotto non la faccia\n{aiuto}")
+        f"prodotto non la faccia\nopzioni dichiarate: {sorted(opzioni)}")
 
 
 def test_deep_e_with_history_ci_sono_per_nome():
     """Gli stessi due, nominati: se il criterio sopra venisse indebolito,
     questo resta a dire quali erano."""
-    aiuto = _opzioni_di_recall()
-    assert "--deep" in aiuto, aiuto
-    assert "--with-history" in aiuto, aiuto
+    opzioni = _opzioni_di_recall()
+    assert "--deep" in opzioni, sorted(opzioni)
+    assert "--with-history" in opzioni, sorted(opzioni)
 
 
 def test_la_recall_normale_non_cambia(tmp_path, monkeypatch):
