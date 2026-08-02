@@ -113,6 +113,100 @@ class _DefaultEmbedder:
         return np.asarray(encode(list(texts)), dtype=np.float32)
 
 
+#: Quanto testo del chunk va al cross-encoder. I chunk sono ~1000 char, la
+#: finestra del modello e' piu' corta: tagliare qui e' esplicito invece che
+#: lasciarlo fare al tokenizer in silenzio.
+_RERANK_MAX_CHARS = 2000
+
+
+def _pool_rerank(indice, k: int) -> int:
+    """Quanti candidati recuperare PRIMA del riordino.
+
+    Senza rerank e' `k` e nulla cambia. Con il rerank si recupera largo e si
+    taglia dopo: un riordino puo' solo mettere in fila cio' che riceve, e con
+    `k=2` il cross-encoder ordinava due chunk sbagliati fra loro. Stessa
+    funzione del percorso fatti, non una costante nuova."""
+    k = max(1, int(k))
+    try:
+        if not indice._rerank_attivo():
+            return k
+        from .semantic import _rerank_topn
+        return max(k, _rerank_topn())
+    except Exception:  # noqa: BLE001 — in dubbio, il comportamento di prima
+        return k
+
+
+def _rerank_pairs(pairs, **kw):
+    """I punteggi del cross-encoder, o ``None`` per degradare.
+
+    Delega al daemon condiviso che il percorso FATTI usa dal 2026-06-13, senza
+    ricopiarne la logica: budget, discovery e fallback stanno tutti la'."""
+    from .semantic import _rerank_via_daemon
+    return _rerank_via_daemon(pairs, **kw)
+
+
+def _applica_rerank(indice, query: str, hits: list[dict]) -> list[dict]:
+    """Riordina i chunk col cross-encoder. STADIO IN PIU', MAI UNA DIPENDENZA.
+
+    PERCHE'. Il coseno del bi-encoder non separa i chunk pertinenti dai non
+    pertinenti. Misurato il 2026-08-02 su un documento vero (10383 byte, 18
+    chunk), tre domande a cui risponde e tre a cui no:
+
+        [SI] quante skill hanno due status diversi   0.8272     3.1453
+        [SI] cosa faceva il campo moat sui respinti  0.8120     2.0328
+        [SI] quale commit ha curato il caveat        0.8292    -0.2292
+        [NO] quale database usa il cluster           0.8149    -5.4931
+        [NO] come si configura il proxy aziendale    0.8128    -6.6794
+        [NO] qual e la ricetta della carbonara       0.7984    -5.5207
+
+        bi-encoder   dentro min 0.8120  fuori max 0.8149  margine -0.0029
+        reranker CE  dentro min -0.2292 fuori max -5.4931 margine +5.2639
+
+    Una domanda FUORI TEMA prendeva piu' di una che il documento contiene, e
+    tutti i punteggi stavano fra 0.79 e 0.83. Il commento sopra `search`
+    racconta la soglia provata e buttata il 31/07 su questa stessa banda: il
+    problema non era la soglia, era lo STADIO MANCANTE. Il reranker esisteva
+    gia' — cablato ai fatti, non ai documenti.
+
+    IL BI-ENCODER RESTA LEGGIBILE. `score` non viene sovrascritto e il
+    punteggio del CE esce come `rerank_score`: sono due misure diverse, e chi
+    consuma deve poter dire se un ordine e' stato tenuto in piedi dal solo
+    coseno — la stessa onesta' che `ranking` porta sul percorso fatti.
+
+    DEGRADA SEMPRE. Daemon assente, budget scaduto, eccezione: si torna
+    all'ordine del bi-encoder, senza errori e senza attese. Spegnibile con
+    ENGRAM_DOC_RERANK=0."""
+    if len(hits) < 2 or not query.strip():
+        return hits
+    try:
+        if not indice._rerank_attivo():
+            return hits
+        # LA GUARDIA SULLA LUNGHEZZA, la stessa del percorso fatti. Il CE
+        # mmarco tronca a 512 token: su testi piu' lunghi della sua finestra
+        # legge solo la testa e RIMESCOLA un ordine gia' buono (misurato
+        # 2026-06-10, recall@5 0.723 contro 0.800 di base sui documenti
+        # lunghi). I chunk stanno a ~1000 char e passano; un indice con
+        # chunk_size alzato no, ed e' giusto cosi'.
+        from .semantic import _rerank_max_doc_chars
+        limite = _rerank_max_doc_chars()
+        if limite:
+            lunghezze = sorted(len(h.get("text") or "") for h in hits)
+            mediana = lunghezze[len(lunghezze) // 2]
+            if mediana > limite:
+                return hits
+        punteggi = _rerank_pairs(
+            [(query, (h.get("text") or "")[:_RERANK_MAX_CHARS]) for h in hits])
+    except Exception:  # noqa: BLE001 — mai una dipendenza, sempre un'aggiunta
+        return hits
+    if not punteggi or len(punteggi) != len(hits):
+        return hits
+    for h, p in zip(hits, punteggi, strict=True):
+        h["rerank_score"] = round(float(p), 4)
+    # `sorted` e non `sort`: stabile, quindi a parita' di punteggio l'ordine
+    # del bi-encoder sopravvive invece di essere rimescolato.
+    return sorted(hits, key=lambda h: -float(h.get("rerank_score") or 0.0))
+
+
 class DocumentIndex:
     """Chunk-level semantic index with exact provenance over the Documents tier."""
 
@@ -282,7 +376,15 @@ class DocumentIndex:
                  # who vouched for this chunk (None = unsigned ingest): a
                  # citation must carry it, not require a join to find it.
                  "indexed_by": _row_get(r, "indexed_by")}
-                for s, r in scored[:max(1, int(k))]]
+                # OVERSAMPLING per il rerank. Un riordino puo' solo mettere in
+                # fila cio' che il recupero gli consegna: con k=2 il cross
+                # encoder riceveva due chunk sbagliati e li ordinava fra loro.
+                # Misurato dal vivo il 2026-08-02: il rerank scattava e il
+                # risultato non migliorava, perche' il chunk giusto non era
+                # nei candidati. Stessa forma del percorso fatti
+                # (`_pool_n = max(k, _rerank_topn())`), stessa funzione: si
+                # recupera largo, si riordina, si taglia a k DOPO.
+                for s, r in scored[:_pool_rerank(self, int(k))]]
         # QUANTE parole della query compaiono nel testo citato.
         #
         # Misurato il 2026-07-31 sul README (47 chunk): «ricetta della carbonara
@@ -313,7 +415,14 @@ class DocumentIndex:
             h["query_terms"] = len(termini)
             h["query_terms_matched"] = sum(
                 1 for t in termini if t in h["text"].lower())
-        return hits
+        return _applica_rerank(self, q, hits)[:max(1, int(k))]
+
+    # --- rerank ---------------------------------------------------------
+    def _rerank_attivo(self) -> bool:
+        import os
+        return os.environ.get(
+            "ENGRAM_DOC_RERANK", "1").strip().lower() not in (
+                "0", "false", "no", "off")
 
     # --- discovery ------------------------------------------------------
     def stats(self) -> dict:
