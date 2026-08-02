@@ -498,21 +498,53 @@ def index(
 def search_docs(
     query: str = typer.Argument(..., help="Natural-language query"),
     k: int = typer.Option(5, "-k", help="Top-k chunks"),
+    min_score: float = typer.Option(
+        0.0, "--min-score",
+        help=("Drop hits below this score. Off by default: the right cut "
+              "depends on your corpus and this command does not guess one.")),
 ):
     """Semantic search over indexed documents, with the exact citation.
 
     Every hit shows source file, version and character offsets
     (original[start:end] == chunk text) — the provenance moat applied to
     documents. Only the LATEST version of each source is searched.
+
+    QUESTO E' UN TOP-K, NON UN'ASTENSIONE, e il comando ora lo dice. Provato
+    su un listino prezzi indicizzato: «quanto costa il piano annuale» rende il
+    chunk a 0.884, e «quale database usa il cluster di produzione» — di cui in
+    quel documento non c'e' una parola — rende LO STESSO chunk a 0.757, con la
+    stessa citazione esatta. Chi legge vede un risultato con una fonte precisa
+    e conclude di aver avuto una risposta.
+
+    Il resto del prodotto si astiene («abstention over hallucination») perche'
+    ha un pavimento misurato; qui non c'e', e inventarne uno a occhio e'
+    l'errore gia' pagato il 30/07 con la soglia `max(floor, noise_floor)`,
+    scritta, misurata e ritirata perche' rendeva muta la mappa. Quindi:
+    `--min-score` a chi sa che taglio vuole, e una riga che dichiara la natura
+    della lista a tutti gli altri.
     """
     from .document_index import DocumentIndex
     hits = DocumentIndex().search(query, k=k)
+    if min_score > 0:
+        hits = [h for h in hits if float(h.get("score") or 0.0) >= min_score]
     if not hits:
         console.print("no results (index empty or no match)")
         raise typer.Exit(0)
     terms = [t for t in query.lower().split() if t.strip()]
     for i, h in enumerate(hits, 1):
-        cite = f"{h['source_id']} v{h['version']} [{h['start']}:{h['end']}]"
+        # LA CITAZIONE CANONICA, non una seconda forma della stessa cosa.
+        # Qui veniva ricostruita a mano come «listino.md v1 [0:80]» mentre
+        # `chunk_citation` — la funzione che la promozione usa per riempire
+        # `verified_by` e `source_episodes` — produce «file:listino.md:0-80».
+        # Due formati per la stessa citazione, e `chunk_citation` non compariva
+        # in questo file: chi leggeva un risultato e voleva sapere se quel
+        # chunk era gia' stato promosso cercava la stringa che aveva davanti e
+        # non trovava niente. La citazione esatta E' il punto del tier
+        # documenti, e due forme la rendono inutile proprio nel gesto per cui
+        # esiste. La versione resta accanto: la citazione canonica non la
+        # porta, e il tier versiona i documenti apposta.
+        from .document_promote import chunk_citation
+        cite = f"{chunk_citation(h)} (v{h['version']})"
         text = h["text"]
         # Snippet centered on the first query term present — show WHY it matched,
         # not just how the chunk begins (same idea as the lexical tier's snippet).
@@ -522,6 +554,16 @@ def search_docs(
         snippet = ("…" if start > 0 else "") + text[start:start + 180].strip() \
                   + ("…" if start + 180 < len(text) else "")
         console.print(f"[bold]{i}.[/bold] ({h['score']:.3f}) [cyan]{cite}[/cyan]\n   {snippet}")
+
+    # LA NATURA DELLA LISTA, detta una volta sola in fondo. Senza, un chunk
+    # con la sua citazione esatta si legge come una risposta anche quando il
+    # documento non contiene la domanda — misurato: 0.884 per una domanda che
+    # il listino risponde, 0.757 per una che non ci compare nemmeno, stesso
+    # chunk e stessa citazione.
+    console.print(f"[dim]top-{len(hits)} per similarita': questi sono i chunk "
+                  f"piu' vicini alla domanda, non una risposta verificata. "
+                  f"Il tier documenti non si astiene — usa --min-score per "
+                  f"tagliare, o `verimem trust` per un verdetto.[/dim]")
 
 
 def _gateway_data_dir(data_dir: str | None) -> Path:
@@ -824,6 +866,20 @@ def recall_cmd(
     k: int = typer.Option(5, "--k"),
     as_of: str = typer.Option("", "--as-of", help=(
         "Unix epoch: answer with what was CURRENT at that instant, not now.")),
+    deep: bool = typer.Option(False, "--deep", help=(
+        "Archaeology: also search the dormant memories that the freshness "
+        "half-life hides from the default view. The integrity guards stay.")),
+    with_history: bool = typer.Option(False, "--with-history", help=(
+        "Each hit carries its transition story: what it said before, from "
+        "when, and until when it held.")),
+    include_beliefs: bool = typer.Option(False, "--include-beliefs", help=(
+        "Also return unverified user assertions. They never win a conflict "
+        "and are marked as what they are.")),
+    min_relevance: str = typer.Option("", "--min-relevance", help=(
+        "Floor below which this returns NOTHING instead of the nearest "
+        "neighbours: a number, or `auto` to let the store measure it on "
+        "itself. Default: ENGRAM_MIN_RELEVANCE if you set it, no floor "
+        "otherwise.")),
 ) -> None:
     """Recall the top-k facts for a query — the 2-second read quickstart.
 
@@ -837,6 +893,13 @@ def recall_cmd(
     (`Memory.search(as_of=…)`): la funzione c'era completa, mancava questa
     porta. Chi legge il README e usa la riga di comando concludeva che il
     prodotto non lo facesse.
+
+    ``--deep``, ``--with-history`` e ``--include-beliefs`` sono gli altri tre
+    modi che `Memory.search` ha sempre avuto e che da qui non si potevano
+    chiedere. Stessa porta, stessa storia: la volta scorsa e' entrato
+    `--as-of` e questi tre sono rimasti fuori, quindi ora il criterio sta in
+    un test — OGNI parametro pubblico di `search` deve avere la sua opzione, e
+    il test cade da solo il giorno in cui ne nasce un quinto senza porta.
     """
     m = _open_memory()
     quando = None
@@ -850,11 +913,119 @@ def recall_cmd(
             console.print(f"[red]--as-of non e' un epoch: {as_of!r}[/red] — "
                           f"atteso un numero di secondi (es. 1785518205)")
             raise typer.Exit(2) from None
-    hits = m.search(query, k=k, as_of=quando)
+    # Stringa e non float perché il valore ha DUE forme: un numero, oppure
+    # `auto` che delega la misura allo store. Un `--min-relevance` tipizzato
+    # float avrebbe rifiutato proprio la forma che non richiede di indovinare
+    # una soglia — cioè quella giusta per chi non sa che taglio serve al suo
+    # corpus, che è la ragione per cui `auto` esiste.
+    pavimento: float | str | None = None
+    if min_relevance.strip():
+        grezzo = min_relevance.strip().lower()
+        if grezzo == "auto":
+            pavimento = "auto"
+        else:
+            try:
+                pavimento = float(grezzo)
+            except ValueError:
+                console.print(
+                    f"[red]--min-relevance non e' un numero: "
+                    f"{min_relevance!r}[/red] — atteso un punteggio (es. 0.85) "
+                    f"o `auto` per farlo misurare allo store")
+                raise typer.Exit(2) from None
+    hits = m.search(query, k=k, as_of=quando, deep=deep,
+                    with_history=with_history,
+                    include_beliefs=include_beliefs,
+                    min_relevance=pavimento)
     if not hits:
+        # Un pavimento che svuota la lista NON è «non ho trovato niente»: sono
+        # due esiti diversi — il corpus non ha nulla, oppure ha qualcosa che
+        # tu hai deciso di non voler vedere sotto una certa soglia. Dirli con
+        # la stessa frase è la classe di difetto che questo prodotto passa la
+        # giornata a curare.
+        if pavimento:
+            console.print(
+                f"[yellow]no facts above the floor[/yellow] "
+                f"[dim](--min-relevance {min_relevance.strip()}): the store "
+                f"may still hold weaker matches — re-run without the floor to "
+                f"see them, or `verimem ignorance \"{query}\"` to ask whether "
+                f"this question is answerable at all.[/dim]")
+        else:
+            console.print("[yellow]no facts found[/yellow]")
+        raise typer.Exit(0)
+    # SE IL MIGLIORE STA SOTTO IL PAVIMENTO MISURATO, si dice. `recall` è un
+    # top-k e restituisce sempre i più vicini: su uno store di tre fatti di
+    # listino, «quale database usa il cluster di produzione» rende «La prova
+    # gratuita dura 14 giorni» a 0.7375. Il README apre con «when the evidence
+    # isn't there the system abstains instead of guessing», e chi legge quella
+    # riga e usa questo comando riceve una frase scorrelata senza nulla che lo
+    # avverta.
+    #
+    # Il pavimento c'è già ed è MISURATO — `_auto_relevance_floor`, lo stesso
+    # che `ignorance` usa per classificare `no_evidence`. Qui NON cambia il
+    # verdetto e non filtra niente: alzare una soglia sul recall è l'errore
+    # pagato il 30/07 (`max(floor, noise_floor)`, ritirata perché rendeva muta
+    # la mappa). Dice, e basta.
+    try:
+        _pavimento = m._auto_relevance_floor()
+        _best = max(float(h.get("score") or 0.0) for h in hits)
+    except Exception:  # noqa: BLE001 — una riserva non fa cadere una lettura
+        _pavimento = _best = None
+    if (_pavimento and _best is not None and _best < float(_pavimento)):
+        console.print(
+            f"[yellow]⚠[/yellow] [dim]il migliore di questi ({_best:.3f}) sta "
+            f"sotto il pavimento che lo store ha misurato su se stesso "
+            f"({float(_pavimento):.3f}): sono i fatti più vicini alla domanda, "
+            f"non necessariamente una risposta. `verimem ignorance "
+            f"\"{query}\"` dice cosa manca.[/dim]")
+    for h in hits:
+        console.print(riga_di_recall(h))
+        # La storia si chiede e va MOSTRATA: passare il flag e stampare la
+        # stessa riga di prima sarebbe una porta che si apre sul muro.
+        for _p in (h.get("history") or []):
+            _fino = _p.get("until") or "—"
+            console.print(f"    [dim]prima:[/dim] {_p.get('text','')[:72]} "
+                          f"[dim]({_p.get('asserted_date','?')} → {_fino})[/dim]")
+
+
+@app.command("ask")
+def ask_cmd(
+    query: str = typer.Argument(..., help="La domanda, in linguaggio naturale."),
+    k: int = typer.Option(5, "--k", help="Quanti risultati per una FIND."),
+    topic: str = typer.Option(None, "--topic", "-t",
+                              help="Limita a un prefisso di topic."),
+) -> None:
+    """Domanda con ROUTING D'INTENTO — «quante volte…» conta, non cerca.
+
+    `recall` restituisce i top-k, e per una domanda di CARDINALITÀ i top-k
+    SOTTOCONTANO: `Memory.ask` classifica l'intento e manda una domanda di
+    conteggio a uno scan del corpus. Misurato: «quante volte ho parlato del
+    moat» dà `count 205` da qui e **5 hits** da `recall`, perché cinque è il
+    valore di k.
+
+    La capacità c'era nell'SDK dal principio e non aveva una porta: chi usa la
+    riga di comando otteneva un numero sbagliato di due ordini di grandezza,
+    senza niente che glielo dicesse. È la quinta occorrenza della classe che
+    `test_le_capacita_senza_porta_non_aumentano` sorveglia — e il cricchetto
+    non la vedeva perché concatenava le due superfici, quindi bastava esistere
+    su MCP.
+
+    FIND è il default sicuro: una domanda classificata male si comporta
+    esattamente come `recall`.
+    """
+    rep = _open_memory().ask(query, k=k, topic_prefix=topic or None)
+    intento = rep.get("intent", "find")
+    if intento == "count":
+        console.print(f"[green]{rep.get('count', 0)}[/green] "
+                      f"[dim]fatti su «{rep.get('terms', query)}» "
+                      f"(intento: conteggio — scan dell'intero corpus, "
+                      f"non i primi {k})[/dim]")
+        raise typer.Exit(0)
+    risultati = rep.get("results") or []
+    if not risultati:
         console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
-    for h in hits:
+    console.print(f"[dim]intento: {intento}[/dim]")
+    for h in risultati:
         console.print(riga_di_recall(h))
 
 
@@ -918,8 +1089,21 @@ def correct_cmd(
     ammesso = (bool(r.get("stored")) and disp == "admitted"
                and r.get("status") != "quarantined" and not graded)
     if not ammesso:
-        console.print(f"[yellow]{disp}[/yellow] id={nuovo} — la correzione NON "
-                      f"e' stata ammessa, quindi {old_id} resta in piedi")
+        # L'ETICHETTA DICE QUALE DEI TRE RAMI, non `disp`. La disposizione del
+        # gate vale `admitted` anche quando il fatto e' finito in quarantena o
+        # e' entrato in via GRADUATA, quindi questa riga stampava
+        #     admitted id=… — la correzione NON e' stata ammessa
+        # cioe' due affermazioni opposte nella stessa riga, e la stessa riga
+        # per due rami diversi. L'invariante regge — il vecchio non viene
+        # ritirato, e c'e' un test che lo prova — ed e' il messaggio a
+        # contraddirla.
+        etichetta = ("quarantined" if r.get("status") == "quarantined"
+                     else "graded" if graded
+                     else "not stored" if not r.get("stored")
+                     else str(disp))
+        console.print(f"[yellow]{etichetta}[/yellow] id={nuovo} — la "
+                      f"correzione NON e' stata ammessa, quindi {old_id} "
+                      f"resta in piedi")
         console.print("[dim]il vecchio fatto non viene ritirato: ritirarlo a "
                       "favore di uno non ammesso li perderebbe entrambi[/dim]")
         raise typer.Exit(1)
@@ -965,6 +1149,16 @@ def ignorance_cmd(
         console.print(f"[{colore}]{r['class']}[/{colore}]  {r['query']}")
         if r.get("what_would_help"):
             console.print(f"    → {r['what_would_help']}")
+        # LA RISERVA. `ignorance_map` la produce quando il migliore dei
+        # risultati supera il pavimento dichiarato ma sta sotto il rumore che
+        # lo store ha misurato su se stesso — la fascia in cui un vicino
+        # qualunque vale quanto un match — e questa superficie non la
+        # stampava: usciva solo dal `--json`. E' la CURA del difetto per cui
+        # era nata (male) la soglia `max(floor, noise_floor)`, ritirata il
+        # 01/08 perche' rendeva muta la mappa; scritta, e capace di avvisare
+        # soltanto se stessa.
+        if r.get("caveat"):
+            console.print(f"    [yellow]⚠[/yellow] [dim]{r['caveat']}[/dim]")
     riepilogo = "  ".join(f"{c}={n}" for c, n in sorted(rep["by_class"].items()))
     # `noise_floor_source` esce SEMPRE: 0.0 significa «non misurabile», «la
     # misura e' fallita» o «l'hai imposto tu», e senza dirlo l'operatore non
@@ -1219,8 +1413,9 @@ def trust(
     _judged = isinstance(d.get("grounding_score"), (int, float))
     verdict = {
         "persist": ("[green]TRUSTED ✓[/green]" if _judged
-                    else "[green]NO FLAGS ✓[/green] [dim](wording only — "
-                         "nothing was checked against evidence)[/dim]"),
+                    else "[green]NO FLAGS ✓[/green] [dim](no source was "
+                         "checked — see `checked:` below for what did "
+                         "run)[/dim]"),
         "downgrade": "[yellow]FLAGGED ↓ (would store as provisional)[/yellow]",
         "quarantine": "[red]QUARANTINED ✗ (excluded from recall)[/red]",
         "reject": "[red]REJECTED ✗[/red]",
@@ -1250,8 +1445,16 @@ def trust(
     elif source:
         _moat_line = ("a source was given but no judge answered — NOT a pass")
     else:
+        # «CONTRO LA SOURCE», non «contro l'evidenza». Senza precisarlo questa
+        # riga contraddiceva quella sopra: `checked:` puo' elencare «L3
+        # contradiction», che il confronto lo ha fatto — contro il CORPUS —
+        # mentre qui si leggeva «nothing was checked against evidence». Due
+        # righe della stessa card, una che dice cosa ha gia' girato e una che
+        # dice che non e' girato niente.
         _moat_line = ("the moat did NOT run: no --source, so nothing was "
-                      "checked against evidence")
+                      "checked against a source"
+                      + (" (L3 did compare against the stored corpus)"
+                         if _l3 == "ran" else ""))
     # `checked:` elenca cio' che ha GIRATO, non cio' che e' stato chiesto: se
     # L3 non ha potuto (store assente, errore) la riga non deve nominarlo.
     lines.append(
@@ -2318,6 +2521,16 @@ def facts_forget(
             "Pass --no-undoable for hard delete (privacy/GDPR)."
         ),
     ),
+    purge_history: bool = typer.Option(
+        False, "--purge-history",
+        help=(
+            "Also delete the whole supersession chain — every predecessor "
+            "and successor of this fact. WITHOUT it a deleted fact can leave "
+            "rows carrying the SAME datum behind: `update()` never overwrites, "
+            "it stores a new fact and supersedes the old one, which stays in "
+            "the database. Needed for a real erasure request."
+        ),
+    ),
 ) -> None:
     """Delete one fact (privacy / GDPR / cleanup).
 
@@ -2326,7 +2539,16 @@ def facts_forget(
 
     Default mode (--undoable) snapshots the pre-delete row to
     facts_undo_log so `engram facts undo <op_id>` can restore it within
-    7 days. Use --no-undoable for true privacy-compliant hard delete.
+    7 days. --no-undoable skips that snapshot.
+
+    PER UNA RICHIESTA DI CANCELLAZIONE SERVE --purge-history, non
+    --no-undoable. Questa riga diceva «use --no-undoable for true
+    privacy-compliant hard delete» e mandava alla cura sbagliata: senza lo
+    snapshot la riga se ne va davvero, ma i PREDECESSORI restano — `update()`
+    non sovrascrive, memorizza un fatto nuovo e supersede il vecchio, che
+    rimane nel database con lo stesso identico datum. Le due opzioni
+    rispondono a due domande diverse: --no-undoable riguarda il recupero,
+    --purge-history riguarda la catena.
     """
     if bool(fact_id) == bool(topic):
         console.print("[red]give either a FACT_ID or --topic[/red], not both "
@@ -2397,7 +2619,32 @@ def facts_forget(
         if not ok:
             console.print("[yellow]aborted[/yellow]")
             return
-    if undoable:
+    # QUANTE ALTRE RIGHE PORTANO LO STESSO DATO. `update()` non sovrascrive:
+    # STORE un fatto nuovo e SUPERSEDE il vecchio, che resta nel database con
+    # lo stesso contenuto. Un comando che si chiama «privacy / GDPR» e ne
+    # cancella una su due deve dirlo — misurato dall'SDK: dopo `delete(nuovo)`
+    # la riga col dato sensibile era ancora li' e `get(vecchio)` la
+    # restituiva. `Memory.delete(purge_history=True)` chiudeva il caso da
+    # sempre, e la parola `purge_history` non compariva in tutto questo file:
+    # la cancellazione completa viveva solo nell'SDK, cioe' nel canale che
+    # nessuno usa per una richiesta di cancellazione.
+    _resto: list[str] = []
+    if not purge_history:
+        try:
+            _resto = [x for x in
+                      [getattr(p, "id", "") for p in
+                       sm.direct_predecessors(f.id, limit=100)] if x]
+        except Exception:  # noqa: BLE001 — un avviso non fa cadere un delete
+            _resto = []
+
+    if purge_history:
+        _mem = _continuity_memory()
+        _n = _mem.delete(f.id, purge_history=True, principal="cli:local")
+        console.print(f"[green]forgotten with its chain:[/green] {f.id} "
+                      f"[dim](predecessors and successors purged)[/dim]"
+                      if _n else
+                      f"[yellow]nothing to forget:[/yellow] {f.id}")
+    elif undoable:
         result = sm.delete_with_undo(f.id, principal="cli:local")
         if result["removed"]:
             console.print(
@@ -2409,6 +2656,13 @@ def facts_forget(
     else:
         sm.delete(f.id, principal="cli:local")
         console.print(f"[green]hard-deleted:[/green] {f.id}")
+
+    if _resto:
+        console.print(
+            f"[yellow]{len(_resto)} predecessor(s) left in the store[/yellow] "
+            f"[dim]— this fact superseded others, and they still carry what "
+            f"they said. Re-run with --purge-history for an erasure "
+            f"request.[/dim]")
 
 
 @facts_app.command("undo")
@@ -3682,10 +3936,34 @@ def save_cmd(
     # the write carries a source, and until now the receipt looked identical
     # either way — which is how a corpus reaches 6414 facts with 0 grounding
     # scores (measured 2026-07-28) while every save printed "admitted".
+    # E il verdetto va LETTO, non solo mostrato. La riga sotto diceva «the
+    # source entails this checkpoint» per QUALUNQUE punteggio, quindi un
+    # rifiuto si presentava cosi':
+    #     quarantined id=522e7c3bf744 …
+    #       grounded 3.8 — the source entails this checkpoint
+    # cioe' affermando l'implicazione proprio mentre la negava col numero, e
+    # mandando dalla parte opposta chi cerca di capire perche' la sua
+    # scrittura non e' passata. La cura sopra distingueva GIUDICATO da NON
+    # GIUDICATO e aveva lasciato intatto PASSATO da BOCCIATO.
+    # Nulla da inventare: `adjudication` porta gia' `threshold` accanto a
+    # `score`, e senza il taglio un 3.8 non dice se manca poco o tanto.
     _gs = r.get("grounding_score")
     if isinstance(_gs, (int, float)):
-        console.print(f"  grounded {float(_gs):.1f} [dim]— the source entails "
-                      f"this checkpoint[/dim]")
+        _adj = r.get("adjudication") or {}
+        _cut = _adj.get("threshold")
+        _passa = (float(_gs) >= float(_cut)) if isinstance(
+            _cut, (int, float)) else (_adj.get("disposition") != "quarantined")
+        if _passa:
+            console.print(f"  grounded {float(_gs):.1f} [dim]— the source "
+                          f"entails this checkpoint[/dim]")
+        else:
+            _soglia = (f" (cut {float(_cut):.0f})"
+                       if isinstance(_cut, (int, float)) else "")
+            console.print(
+                f"  [yellow]not grounded {float(_gs):.1f}{_soglia}[/yellow] "
+                f"[dim]— the source does NOT entail this checkpoint: that is "
+                f"why it is quarantined. Narrow the claim to what the source "
+                f"literally says, or split it[/dim]")
     else:
         console.print("  [yellow]not verified[/yellow] [dim]— no source, so the "
                       "entailment moat did not run; pass --source \"<the output "

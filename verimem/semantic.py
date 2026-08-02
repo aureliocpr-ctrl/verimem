@@ -4812,6 +4812,41 @@ class SemanticMemory:
                 # Default (both False) stays exact-substring for back-compat.
                 _multi = tokenize or require_all_tokens
                 toks = [t for t in q.lower().split() if len(t) >= 2] if _multi else []
+                # L'OR NON PUO' MATCHARE GLI ARTICOLI. Il ramo AND chiede che
+                # ogni token ci sia, quindi una funzionale in più stringe e non
+                # allarga; l'OR chiede che ce ne sia UNO, e «il» sta in mezzo
+                # corpus. Misurato 2026-08-02 sul corpus vero (7079 fatti,
+                # limit 20):
+                #     'quale database usa il cluster ... a Singapore' -> 20 hit
+                #     'qual e il numero di targa della mia automobile'-> 20 hit
+                # e i primi TRE erano gli stessi identici delle due query, che
+                # non hanno in comune nient'altro che le parole funzionali. Su
+                # tre frasi inglesi che cominciano tutte con «The», qualunque
+                # domanda rendeva il corpus intero.
+                #
+                # `_tokens` di bm25_rank, non una copia: quel percorso toglie
+                # le funzionali da luglio e il suo commento descrive lo stesso
+                # danno («riempiendo il ranklist di rumore»), ma vive su FTS e
+                # questa e' una LIKE, quindi la cura non ci era mai arrivata.
+                #
+                # LIMITE: quella lista e' en+it. Una domanda in tedesco resta
+                # scoperta. Il criterio che non dipende dalla lingua — la
+                # document frequency — sta sullo stesso modulo ma interroga
+                # `facts_fts` con MATCH indicizzato: portarlo su una LIKE e'
+                # una misura da fare, non un'assunzione da scrivere qui.
+                #
+                # Solo il ramo OR: `require_all_tokens` e' il percorso di
+                # precisione e chi cerca una frase esatta deve continuare a
+                # trovarla.
+                if tokenize and not require_all_tokens and len(toks) > 1:
+                    from .bm25_rank import _tokens as _informativi
+                    _ridotti = [t for t in _informativi(q) if len(t) >= 2]
+                    # Nessun token informativo => la domanda condivideva SOLO
+                    # parole funzionali. Zero e' la risposta giusta: il ramo
+                    # AND ha gia' detto che nulla contiene tutti i termini, e
+                    # servire i piu' recenti sarebbe una risposta che non
+                    # dipende dalla domanda.
+                    toks = _ridotti
                 if len(toks) > 1:
                     _join = " AND " if require_all_tokens else " OR "
                     clauses.append(

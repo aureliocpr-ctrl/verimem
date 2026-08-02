@@ -52,6 +52,23 @@ def _suggest_action(
     trials = int(getattr(skill, "trials", 0))
     status = getattr(skill, "status", "candidate")
 
+    # UNA SKILL RITIRATA NON SI TESTA. La catena non nominava mai `retired`,
+    # e una skill ritirata con zero trials cadeva nel ramo qui sotto: sul
+    # corpus vivo sono **315 su 325** a essere retired, e il dashboard
+    # consigliava «test» a 253 skill morte. Un pannello in cui otto consigli
+    # su dieci riguardano cose che nessuno eseguirà più non è un pannello.
+    #
+    # PRECISAZIONE MISURATA, perché la prima diagnosi diceva che la policy
+    # SCRIVE: `apply_recommendations._ACTION_TO_STATUS` mappa solo
+    # `promote` e `retire`, quindi «test» non tocca lo status di nessuno. Il
+    # danno era il RUMORE, non una scrittura sbagliata — e il rumore su un
+    # pannello di curatela costa comunque, perché è la superficie da cui si
+    # decide dove guardare.
+    if status == "retired":
+        return ("retired",
+                "retired — no action: it is out of the library and no trial "
+                "will run on it. Recover it first if you want it back")
+
     if trials == 0:
         return ("test",
                 "no trials yet — run the skill on real tasks to gather signal")

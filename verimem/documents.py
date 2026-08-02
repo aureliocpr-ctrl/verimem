@@ -104,9 +104,27 @@ class DocumentStore:
 
     # --- write ---------------------------------------------------------
     def ingest(self, source_id: str, content: str, uri: str = "",
-               meta: dict | None = None, fetched_at: float = 0.0,
+               meta: dict | None = None, fetched_at: float | None = None,
                principal: str | None = None) -> dict:
         """Persisti uno snapshot. IDEMPOTENTE su ``(source_id, content_hash)``.
+
+        ``fetched_at`` OMESSO = ADESSO, non zero. Il momento in cui un
+        contenuto viene acquisito non e' un'informazione che il chiamante
+        debba possedere — e' l'istante di questa chiamata, per costruzione — e
+        il vecchio default ``0.0`` non era un'assenza: era il 1° gennaio 1970,
+        una data FALSA su un campo che ``list_sources`` usa per ORDINARE
+        (``ORDER BY d.fetched_at DESC``). Cosi' i documenti appena indicizzati
+        finivano in fondo alla lista, in ordine alfabetico, sotto quelli di
+        mesi prima.
+
+        Nessuno lo calcolava e in tutto il repo lo passava un solo script
+        (``scripts/ingest_md.py``): sullo store di Aurelio, 12 documenti su 42
+        erano a zero — e su quei dodici nemmeno ``meta.indexed_at`` era
+        valorizzato, perche' quello si scrive solo quando arriva un
+        ``principal``. Il dato non esisteva da nessun'altra parte.
+
+        Chi ricostruisce un archivio con date vere continua a passarle:
+        un valore esplicito non viene mai riscritto.
 
         Ritorna ``{id, version, is_new, content_hash}``:
           - contenuto già presente per il source_id -> riga esistente, ``is_new=False``;
@@ -143,7 +161,8 @@ class DocumentStore:
                 "INSERT INTO documents(id, source_id, version, content_hash, content, "
                 "uri, meta, fetched_at) VALUES(?,?,?,?,?,?,?,?)",
                 (doc_id, source_id, version, chash, content, uri,
-                 json.dumps(m), float(fetched_at)),
+                 json.dumps(m),
+                 time.time() if fetched_at is None else float(fetched_at)),
             )
             conn.commit()
             return {"id": doc_id, "version": version, "is_new": True, "content_hash": chash}
@@ -151,7 +170,7 @@ class DocumentStore:
             conn.close()
 
     def ingest_file(self, path: Path | str, source_id: str | None = None,
-                    meta: dict | None = None, fetched_at: float = 0.0,
+                    meta: dict | None = None, fetched_at: float | None = None,
                     principal: str | None = None) -> dict:
         """Snapshot di un file (caso d'uso continuità-MD: linka un MD -> copia
         versionata in Engram). ``source_id`` default = path del file; re-ingest

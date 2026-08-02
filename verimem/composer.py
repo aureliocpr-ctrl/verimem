@@ -68,15 +68,72 @@ _ARTICOLI_PER_LINGUA: dict[str, tuple[str, ...]] = {
 }
 
 #: parole che aprono un oggetto NON nominale ("is in Rome", "e' a Roma")
+#:
+#: LE FORME FUSE SONO NELLA LISTA QUANTO QUELLE NUDE. Italiano, francese e
+#: spagnolo fondono la preposizione con l'articolo in UNA parola — «nel», «al»,
+#: «sul», «au», «aux», «al» — e in italiano quella e' la forma piu' comune
+#: delle due. Con le sole preposizioni nude la guardia esisteva sulla frase
+#: semplice e spariva su quella normale: misurato il 2026-08-01, «Il gatto è a
+#: Roma.» respinto e «Il server è nel datacenter di Milano.» accettato come
+#: CLASSE, 7 locativi su 10. E in francese la preposizione e' `à`: `a` senza
+#: accento e' il verbo avere, cioe' l'unica forma che NON serviva.
+#:
+#: Non e' una perdita di analisi, e' una contesa fabbricata: «Il server è nel
+#: datacenter di Milano» e «Il server è un nodo di produzione» diventavano due
+#: CLASSI rivali dello stesso soggetto, su tutti e cinque i moduli che leggono
+#: da qui.
+#:
+#: L'inglese resta com'era — non fonde nulla, e nessun difetto e' stato
+#: misurato li'. Allargarlo per simmetria significherebbe agire su un'ipotesi
+#: invece che su un'evidenza, sul comportamento su cui gira tutto il corpus.
+#: E LE IMPROPRIE QUANTO LE PROPRIE. La prima cura ha completato le forme
+#: FUSE e ha lasciato fuori l'altra meta' della lista: qui c'erano solo le
+#: preposizioni PROPRIE, e le improprie — quelle che sono anche avverbi o
+#: participi — passavano tutte. Misurato dal vivo, 9 su 9 accettati come
+#: CLASSI, inglese compreso:
+#:     Il server è vicino a Roma.         -> ('il server', 'vicino a roma')
+#:     Le bureau est près de la gare.     -> ('le bureau', 'près de la gare')
+#:     The server is behind the firewall. -> ('the server', 'behind the firewall')
+#: L'inglese entra ORA perche' ora c'e' la misura: la cura precedente lo aveva
+#: lasciato fermo proprio per non muoverlo su un'ipotesi.
+#:
+#: TRE RESTANO FUORI DI PROPOSITO, e stanno in un test: «lungo» («Il fiume è
+#: lungo trecento chilometri» — aggettivo), «salvo» («Il file è salvo» —
+#: participio) e «secondo» («Il capitolo è secondo» — ordinale). Sono
+#: preposizioni improprie a tutti gli effetti, e metterle costerebbe classi
+#: vere su frasi che parlano davvero di una classe.
 _NON_NP_PER_LINGUA: dict[str, frozenset[str]] = {
-    "en": frozenset("in on at from to of for with by about over under near "
-                    "into onto as".split()),
-    "it": frozenset("in su a da di per con tra fra sotto sopra verso presso "
-                    "dentro fuori".split()),
-    "fr": frozenset("en sur a de du des dans pour avec par sous vers chez "
-                    "entre".split()),
-    "es": frozenset("en sobre a de del para con por bajo hacia entre desde "
-                    "hasta".split()),
+    "en": frozenset(
+        "in on at from to of for with by about over under near into onto as "
+        "behind inside outside next within between among against through "
+        "across around during via without before after since until upon "
+        "beyond throughout toward towards beneath alongside".split()),
+    "it": frozenset(
+        "in su a da di per con tra fra sotto sopra verso presso dentro fuori "
+        # di+art · a+art · da+art · in+art · su+art · con+art
+        "del dello della dei degli delle dell' "
+        "al allo alla ai agli alle all' "
+        "dal dallo dalla dai dagli dalle dall' "
+        "nel nello nella nei negli nelle nell' "
+        "sul sullo sulla sui sugli sulle sull' "
+        "col coi "
+        # improprie e locuzioni — senza lungo/salvo/secondo (vedi sopra)
+        "vicino accanto prima dopo durante oltre attraverso intorno davanti "
+        "dietro contro circa entro mediante tramite tranne eccetto "
+        "nonostante malgrado rispetto".split()),
+    "fr": frozenset(
+        "en sur a de du des dans pour avec par sous vers chez entre "
+        # à accentata (la preposizione vera) e le sue due contrazioni.
+        # `l'` NON entra: in francese e' ARTICOLO («est l'animal favori» e'
+        # una classe), e «est à l'hôtel» e' gia' respinto dal suo `à`.
+        "à au aux d' "
+        "près loin autour avant après pendant selon malgré envers hors "
+        "parmi depuis contre devant derrière".split()),
+    "es": frozenset(
+        "en sobre a de del para con por bajo hacia entre desde hasta "
+        "al "                   # `del` c'era, la sua gemella `al` no
+        "cerca lejos antes después durante según excepto mediante tras ante "
+        "contra dentro fuera alrededor".split()),
 }
 
 #: La copula -> la lingua. `est` prima di `es`, e `e'` prima di `es`: il regex
@@ -171,11 +228,78 @@ def subject_key(subject: str) -> str:
     pronouns, aliases or morphology: "Rexy" is not "Rex", and a reader must not
     infer that it is.
     """
-    return _strip_article(subject or "").strip().lower()
+    return _strip_article(
+        normalizza_apostrofi(subject or "")).strip().lower()
+
+
+def _apre_un_locativo(parola: str, lingua: str) -> bool:
+    """La prima parola dell'oggetto e' una preposizione di ``lingua``?
+
+    Confronta PAROLE INTERE, non prefissi: `nel` e' una preposizione, `Nelson`
+    e `nelle` no. E' la forma di difetto gia' pagata su questo repo (un nome
+    trovato dentro un'altra parola), e qui la tentazione c'e' tutta, perche'
+    le forme articolate sono corte e frequenti come inizio di nome.
+
+    L'ELISIONE va sciolta a mano: `split()` restituisce `nell'archivio` in un
+    pezzo solo, quindi «Il documento è nell'archivio.» sfuggiva a una lista
+    che pure contiene `nell'`. Si guarda il troncone fino all'apostrofo — e
+    solo quello, perche' `d'` francese e' preposizione mentre `l'` e'
+    articolo, e la lista lo sa gia'.
+
+    MA UN COGNOME NON E' UNA PREPOSIZIONE. Sciogliendo l'elisione sempre,
+    «Il senatore è Dell'Utri.» veniva respinta come locativo, e con lei
+    Dall'Ara, Dell'Orto, Dall'Oglio: una classe chiusa ma reale di cognomi
+    italiani, che prima di questa funzione veniva analizzata correttamente.
+    Trovato da un critic avversario, verificato dal vivo, e non era coperto
+    dal test che pure sorvegliava questa forma di difetto — quel test provava
+    `nel` contro `Nelson`, cioe' le forme SENZA apostrofo, che sono le uniche
+    che il confronto su parole intere gia' proteggeva.
+
+    Il segnale disponibile e' la MAIUSCOLA dopo l'apostrofo, e la ragione per
+    cui basta e' che non regredisce nulla: «nell'Archivio di Stato» resta
+    analizzato come classe, ma lo era GIA' PRIMA che questa funzione
+    esistesse, mentre «Dell'Utri» funzionava e si era rotto. Si guadagna il
+    caso minuscolo — quello comune — senza perdere terreno su nessun altro.
+    Il limite resta dichiarato in un test invece che nascosto: un locativo
+    seguito da nome proprio non e' distinguibile da un cognome senza un
+    dizionario, e questo modulo non ne ha uno.
+    """
+    p = parola.lower()
+    prep = _NON_NP_PER_LINGUA[lingua]
+    if p in prep:
+        return True
+    tronco, sep, resto = parola.partition("'")
+    if not sep or (resto[:1].isupper() if resto else False):
+        return False
+    return (tronco.lower() + "'") in prep
+
+
+#: Gli apostrofi che una TASTIERA non produce ma un EDITOR si': `U+2019` e'
+#: quello che mettono Word, macOS e iOS al posto di `'`, e senza questa riga il
+#: testo scritto da una persona si comportava diversamente da quello scritto in
+#: un editor di codice. Misurato: «Il senatore è Dell'Utri» parsato col dritto
+#: e None col curvo, e con lui si perdeva anche «Il gatto è l'animale
+#: preferito», che e' una classe vera.
+#:
+#: Il danno piu' sottile non e' la perdita: `subject_key` e' «la UNICA
+#: definizione di stesso soggetto» per il guardian e per la contro-evidenza, e
+#: senza normalizzare «Dell'Utri» e «Dell’Utri» sono due soggetti DIVERSI —
+#: due fatti sulla stessa persona non finiscono mai in contesa, e basta che uno
+#: arrivi incollato da un documento e l'altro digitato a mano.
+#:
+#: Solo APOSTROFI: le virgolette doppie non si toccano, qui serve che una
+#: parola elisa resti una parola, non ripulire la punteggiatura.
+_APOSTROFI = str.maketrans({"’": "'", "‘": "'",
+                            "ʼ": "'", "´": "'", "＇": "'"})
+
+
+def normalizza_apostrofi(text: str) -> str:
+    """Porta ogni variante tipografica di apostrofo su `U+0027`."""
+    return (text or "").translate(_APOSTROFI)
 
 
 def _copula_match(text: str) -> re.Match | None:
-    m = _COPULA_RE.match((text or "").strip())
+    m = _COPULA_RE.match(normalizza_apostrofi(text).strip())
     if not m:
         return None
     # La frase continua oltre l'oggetto: non e' una proposizione semplice e
@@ -184,7 +308,7 @@ def _copula_match(text: str) -> re.Match | None:
         return None
     lingua = _COPULE.get(m.group("c").lower(), "en")
     obj_words = m.group("o").strip().split()
-    if not obj_words or obj_words[0].lower() in _NON_NP_PER_LINGUA[lingua]:
+    if not obj_words or _apre_un_locativo(obj_words[0], lingua):
         return None                      # "is in Rome" / "e' a Roma" — locativo
     if not _strip_article(m.group("o"), lingua):
         return None                      # bare article, no head noun

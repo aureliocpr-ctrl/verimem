@@ -23,7 +23,8 @@ from __future__ import annotations
 import os
 import random
 
-__all__ = ["scrambled_probes", "estimate_relevance_floor", "env_floor"]
+__all__ = ["scrambled_probes", "estimate_relevance_floor", "env_floor",
+           "env_floor_if_set"]
 
 _FLOOR_OFF = {"off", "none", "0", "0.0", ""}
 
@@ -50,7 +51,29 @@ def env_floor(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str:
     invention. The price is ~3s on a deliberate custody check.
 
     An explicit value still wins in both directions — ``off``/``0`` keeps the old
-    permissive behaviour for whoever depends on it."""
+    permissive behaviour for whoever depends on it.
+
+    WHERE THE DEFAULT ACTUALLY LANDS. "Across every surface" was the intent and
+    for a year it was not the fact: this function had ONE caller in the product,
+    ``Memory.explain``. Measured live 2026-08-02 with the floor at 0.99 — high
+    enough that nothing can pass — on a three-fact store and a question outside
+    it::
+
+        search   -> 3 hit  best=0.7548
+        recall   -> 3 hit
+        ask      -> intent=find  3 risultati
+        explain  -> abstained=True  min_relevance=0.99
+
+    Which is the same "one store, two answers" written above, with ``explain``
+    where the MCP surface used to be: the 2026-07-29 cure landed on the SITE and
+    not on the CLASS. ``search``/``recall``/``ask`` now honour an EXPLICITLY SET
+    variable (via ``env_floor_if_set``), so the switch means on those surfaces
+    what it says. What they do NOT take is the unset ``auto`` default: the 8/8
+    measurement above ran through ``explain``'s CE gate, and turning abstention
+    on by default for a path nobody measured is the shape of the 2026-07-30
+    mistake (``max(floor, noise_floor)``, written, measured and withdrawn for
+    muting the ignorance map). Whoever never sets the variable gets byte-identical
+    recall."""
     raw = os.environ.get(var, "").strip().lower()
     if raw == "auto":
         return "auto"
@@ -62,6 +85,18 @@ def env_floor(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str:
     # asked, and this site only survived `nan` by the argument order of max()
     from .env_num import finite_or
     return max(0.0, finite_or(raw, 0.0))
+
+
+def env_floor_if_set(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str | None:
+    """``env_floor``, but ``None`` when the variable is NOT SET.
+
+    ``env_floor`` cannot answer this question: it returns ``"auto"`` both when
+    the caller typed ``auto`` and when the caller typed nothing, and those are
+    two different intentions. Surfaces that had no floor before adopt the switch
+    through here — an explicit value applies, silence keeps them as they were."""
+    if not os.environ.get(var, "").strip():
+        return None
+    return env_floor(var)
 
 _MIN_FACTS = 2          # cross-fact scrambling needs at least two sources
 _PROBE_WORDS = 10       # ~question-length probes

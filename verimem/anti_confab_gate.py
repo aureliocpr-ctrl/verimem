@@ -475,10 +475,51 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
     separarle serve sapere QUALE grandezza si misura, non quali parole si
     usano. Nessuna delle due condizioni qui lo sa.
     """
-    from .validate_claim import _parole_di_contenuto, _testa_nominale
+    from .validate_claim import (
+        _SOGLIA_SIMILARITA,
+        _parole_di_contenuto,
+        _polarita,
+        _testa_nominale,
+        leggibile_a_maiuscole,
+        similarita_semantica,
+    )
 
     if not (nuovo or "").strip() or not (vecchio or "").strip():
         return True
+    # SE IL CRITERIO NON SA LEGGERE LA FRASE, NON DECIDE. Riconoscere i nomi
+    # propri dalla maiuscola e' una convenzione tipografica e non e'
+    # universale: in tedesco ogni sostantivo e' maiuscolo, quindi finiscono
+    # tutti fra i nomi e cio' che resta come «contenuto» e' scarto
+    # grammaticale — misurato, «Der Server ist ein Produktionsknoten» e «Die
+    # Datenbank ist ein Postgres Cluster» danno entrambe ['ein','ist'] e testa
+    # 'ist', e questa funzione rispondeva True. Due fatti scorrelati, il
+    # secondo ritirava il primo, e chi scrive dieci misure ne ritrovava una.
+    # E DOVE LE LISTE NON LEGGONO, DECIDE IL MODELLO CHE PARLA CENTO LINGUE.
+    # Tacere era meglio che sbagliare e restava un servizio in meno: due fatti
+    # tedeschi che SONO l'uno l'aggiornamento dell'altro rimanevano separati
+    # per sempre. `intfloat/multilingual-e5-base` e' gia' installato e gia' in
+    # uso — sul corpus di Aurelio tutti i 6972 fatti hanno il vettore
+    # persistito — quindi il confronto e' un coseno, senza liste da scrivere.
+    # Soglia MISURATA su dodici coppie in de/pt/pl/tr: vere 0.9349-0.9682,
+    # false 0.8121-0.8674. Il fast-path lessicale resta primo: l'italiano e
+    # l'inglese non pagano un encode, ed e' su quel comportamento che gira
+    # tutto il corpus.
+    if not (leggibile_a_maiuscole(nuovo) and leggibile_a_maiuscole(vecchio)):
+        return similarita_semantica(nuovo, vecchio) >= _SOGLIA_SIMILARITA
+    # POLARITA' DIVERSA, NESSUNA EVOLUZIONE. Una frase e la sua negazione
+    # hanno le stesse parole di contenuto e la stessa testa nominale —
+    # verificato: «Il gate NON gira sul canale MCP» e «Il gate gira sul canale
+    # MCP» danno entrambe ['canale','gate','gira','sul'] e testa «gate» —
+    # quindi per le due condizioni qui sotto sono lo stesso fatto aggiornato,
+    # e la seconda ritira la prima mentre dice il CONTRARIO.
+    # La causa e' che «non» sta fra le parole vuote (per l'italiano soltanto:
+    # `not`, `no`, `mai`, `senza`, `never`, `without` no). Rimetterle nel
+    # conteggio e' stato provato e misurato PEGGIORE — 228 -> 229 evoluzioni
+    # sulle 260 coppie corte, e la coppia in piu' e' un falso positivo — quindi
+    # la negazione si confronta come POLARITA', dove non gonfia nessuna
+    # intersezione.
+    if _polarita(nuovo) != _polarita(vecchio):
+        return False
     a = _parole_di_contenuto(nuovo)
     b = _parole_di_contenuto(vecchio)
     if not a or not b:
@@ -1503,7 +1544,12 @@ def run_validation_gate(
                     # so the escalation equality check does not fire.
                     warnings.append({
                         "layer": "L4-grounding-graded",
-                        "reason": f"graded admission: grounding {gscore:.0f} below "
+                        # `.1f` e non `.0f`: con `.0f` un grounding di 0.3651
+                        # si legge «grounding 0», che e' il valore che questo
+                        # prodotto usa per dire «nessun punteggio». Chi legge
+                        # non distingue un giudizio bassissimo da un giudizio
+                        # assente — la distinzione che tutto il resto difende.
+                        "reason": f"graded admission: grounding {gscore:.1f} below "
                                   f"threshold {_threshold_of_record:.0f} — admitted "
                                   "as low-confidence, NOT verified "
                                   "(ENGRAM_GRADED_ADMISSION)",
@@ -1542,8 +1588,10 @@ def run_validation_gate(
                         )
                     warnings.append({
                         "layer": "L4-grounding",
+                        # `.1f` come sopra: «grounding 0» su un valore di 0.37
+                        # confonde un giudizio bassissimo con uno assente.
                         "reason": f"source does not entail the proposition "
-                                  f"(grounding {gscore:.0f} below threshold)",
+                                  f"(grounding {gscore:.1f} below threshold)",
                         "advice": "the source does not support this proposition — likely a "
                                   "confabulated inference, not a stated fact." + _pointer,
                         "grounding_score": gscore,

@@ -511,7 +511,9 @@ class Memory:
     def search(self, query: str, k: int = 5, *, deep: bool = False,
                as_of: float | str | None = None,
                with_history: bool | str = False,
-               include_beliefs: bool = False) -> list[dict[str, Any]]:
+               include_beliefs: bool = False,
+               min_relevance: float | str | None = None
+               ) -> list[dict[str, Any]]:
         """Recall the top-k facts for ``query``, each with its provenance — the
         differentiator: ``status`` + write-time ``grounding_score`` so a caller can
         prefer/assert grounded facts and hedge low-trust ones.
@@ -538,7 +540,21 @@ class Memory:
           ``tag_beliefs``) back into the result. They are OUT of the default
           view so the memory never serves an uncorroborated user claim back as
           truth; a caller opting in sees ``status`` on each hit and must caveat
-          accordingly. Narrow: un-hides beliefs only."""
+          accordingly. Narrow: un-hides beliefs only.
+        * ``min_relevance`` — the retrieval floor below which this surface
+          returns NOTHING instead of the nearest neighbours. ``"auto"`` lets the
+          store calibrate it on itself (scrambled-probe quantile, the same floor
+          the ignorance map uses); a float applies as given. ``None`` (default)
+          takes ``ENGRAM_MIN_RELEVANCE`` ONLY IF SET — the switch documented as
+          working "across every surface", which until 2026-08-02 reached only
+          ``explain``. An unset variable leaves this surface exactly as it was;
+          see ``relevance_floor.env_floor`` for why the default is not adopted
+          here."""
+        if min_relevance is None:
+            from .relevance_floor import env_floor_if_set
+            min_relevance = env_floor_if_set()
+        if min_relevance == "auto":
+            min_relevance = self._auto_relevance_floor()
         if with_history == "auto":
             from .temporal_context import wants_history
             with_history = wants_history(query)
@@ -554,32 +570,58 @@ class Memory:
                                         include_beliefs=include_beliefs)
         out: list[dict[str, Any]] = []
         for f, score, *_rest in [h if len(h) >= 2 else (h[0], 0.0) for h in hits]:
+            # per-fact provenance for trust-conditioned answering (case-B
+            # wire, measured 2026-07-16): event time, transaction time, first
+            # source episode, and who verified. Raw values — the caller
+            # formats; None == genuinely unknown, never invented.
+            #
+            # This USES `_fact_view` instead of restating it. It used to be a
+            # hand-written copy of eight of its nine keys, and the ninth is
+            # how the copy was found: `superseded_by` was added to the shared
+            # view and `search` — the surface everyone actually calls — went
+            # on without it, while `_fact_view`'s own docstring promised "the
+            # SAME provenance surface everywhere". Two copies drift, and this
+            # one already had. `score` and `confidence_tier` stay here because
+            # they belong to the QUERY, not to the fact: no fact carries a
+            # score until something ranks it.
+            #
+            # It matters most exactly where a retracted fact is meant to come
+            # back: `as_of` time travel returns what was current THEN, so its
+            # hits are superseded by construction — and `deep` reaches the
+            # dormant ones. Without the field those arrive looking live.
             item = {
-                "text": getattr(f, "proposition", ""),
+                **self._fact_view(f),
                 "score": round(float(score), 4),
-                "status": getattr(f, "status", "model_claim"),
-                "grounding_score": getattr(f, "grounding_score", None),
                 "confidence_tier": getattr(f, "confidence_tier", None),
-                "topic": getattr(f, "topic", ""),
-                "id": getattr(f, "id", ""),
-                # per-fact provenance for trust-conditioned answering (case-B
-                # wire, measured 2026-07-16): event time, transaction time,
-                # first source episode, and who verified. Raw values — the
-                # caller formats; None == genuinely unknown, never invented.
-                "asserted_at": getattr(f, "asserted_at", None),
-                "created_at": getattr(f, "created_at", None),
-                "source": (getattr(f, "source_episodes", None) or [None])[0],
-                "verified_by": list(getattr(f, "verified_by", None) or []),
             }
             if with_history:
                 from .temporal_context import _event_ts, _iso, fact_history
+                # `until` PASSA DA `_iso` COME `asserted_date`. Nella prima
+                # stesura usciva grezzo, e la riga di storia mostrava mezzo
+                # cartello in epoch:
+                #     (2026-08-02 → 1785663692.5640569)
+                # due date della stessa parentesi in due formati diversi, e
+                # `_iso` importata quattro righe sopra. `temporal_context` la
+                # converte da sempre; questa superficie, nata oggi, no.
+                #
+                # `None` resta `None` e non diventa la stringa vuota che `_iso`
+                # darebbe: un fatto ancora valido NON ha una data di fine, e
+                # «nessuna fine» non è «fine sconosciuta».
                 item["history"] = [
                     {"text": getattr(p, "proposition", ""),
                      "asserted_date": _iso(_event_ts(p)),
-                     "until": getattr(p, "superseded_at", None)}
+                     "until": (None if getattr(p, "superseded_at", None) is None
+                               else _iso(p.superseded_at) or None)}
                     for p in fact_history(self.semantic, item["id"])
                 ]
             out.append(item)
+        # Il taglio sta QUI e non prima del ranking: `score` appartiene alla
+        # query, non al fatto, e nessun fatto ne ha uno finché qualcosa non lo
+        # ordina. Filtrare a valle tiene il pavimento fuori dal recupero, che
+        # resta identico — quello che cambia è solo se il risultato si serve.
+        if min_relevance:
+            pavimento = float(min_relevance)
+            out = [i for i in out if float(i.get("score") or 0.0) >= pavimento]
         _emit_flow("flow.recall", kind="search", n=len(out),
                    best=round(max((float(i.get("score") or 0.0)
                                    for i in out), default=0.0), 4))
@@ -1722,7 +1764,28 @@ class Memory:
     def _fact_view(f: Any, *, fact_id: str = "") -> dict[str, Any]:
         """One fact as the SDK dict — the SAME provenance surface everywhere
         (audit mod.8: get/get_all lacked the fields search exposes, so a
-        trust-conditioning caller lost verified_by the moment it re-fetched)."""
+        trust-conditioning caller lost verified_by the moment it re-fetched).
+
+        ``superseded_by`` is here for the same reason, one field over: a
+        retracted fact came back through every one of these surfaces looking
+        EXACTLY like a live one — same status, no successor named — while the
+        default recall had already stopped serving it. Measured on a virgin
+        store through the SDK: the row read ``('…', 'Il piano annuale costa
+        100 euro.', 'model_claim', 'a8b1b7d03471')`` and the view read
+        ``status: model_claim`` with the key absent. ``update()`` promises in
+        its own docstring that the old version "stays in the provenance
+        chain"; it does, but consulting it did not reveal it had been
+        replaced. And supersession is not only triggered by ``update()`` — the
+        evolution heuristic fires on its own, so this silence is what makes a
+        wrong retraction invisible to anyone not opening the DB by hand.
+
+        It is the RAW column, deliberately, and not a friendlier ``retired``
+        flag: a second name for one fact is how two truths start diverging
+        (this store already carries 159 skills whose status differs between
+        the index and the files). Always present, ``None`` when live — an
+        absent key cannot distinguish "not superseded" from "this view does
+        not say".
+        """
         return {
             "id": getattr(f, "id", fact_id),
             "text": getattr(f, "proposition", ""),
@@ -1733,6 +1796,7 @@ class Memory:
             "created_at": getattr(f, "created_at", None),
             "source": (getattr(f, "source_episodes", None) or [None])[0],
             "verified_by": list(getattr(f, "verified_by", None) or []),
+            "superseded_by": getattr(f, "superseded_by", None) or None,
         }
 
     def get(self, fact_id: str) -> dict[str, Any] | None:

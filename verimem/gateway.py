@@ -1302,10 +1302,17 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
 
     @app.get("/v1/quarantine")
     def quarantine(limit: int = Query(default=50, ge=1, le=500),
+                   explain: bool = Query(default=False),
                    tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         """Il log delle confabulazioni FERMATE: i claim vivi in quarantena,
-        i più recenti prima. L'odometro dice QUANTI, questo dice QUALI."""
-        items = tenants.get(tenant_id).quarantine_log(limit=limit)
+        i più recenti prima. L'odometro dice QUANTI, questo dice QUALI.
+
+        `explain=true` aggiunge PERCHÉ ciascuno è fermo. Era l'unico dei tre
+        canali a non poterlo chiedere: l'SDK e l'MCP sì, e su tre superfici
+        della stessa lettura ognuna aveva la sua combinazione di capacità.
+        Opt-in perché ricalcola i detector."""
+        items = tenants.get(tenant_id).quarantine_log(limit=limit,
+                                                      explain=explain)
         meter.bump(tenant_id, reads=1)
         return {"items": items, "count": len(items)}
 

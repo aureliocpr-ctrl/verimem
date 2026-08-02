@@ -108,6 +108,12 @@ def test_anche_il_tool_mcp_sa_spiegare(tmp_path, monkeypatch):
     class _A:
         def __init__(s):
             s.semantic = m.semantic
+            # NIENTE `.memory` qui: `VerimemAgent.memory` e' una
+            # `EpisodicMemory`, non il `Memory` dell'SDK. Un doppio che
+            # espone il secondo tiene verde un handler che chiama l'SDK
+            # attraverso l'agente — ed e' esattamente cosi' che due
+            # deleghe sbagliate sono passate: il doppio prometteva cio'
+            # che serviva a chi lo scriveva.
     # monkeypatch, non assegnazione diretta: senza ripristino `_ag` resta
     # sostituita per tutta la sessione pytest e ogni test successivo che passa
     # dal server MCP riceve questo doppio (5 rossi misurati il 2026-07-30).

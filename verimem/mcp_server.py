@@ -655,6 +655,7 @@ GATING_BYPASS_LIST: frozenset[str] = frozenset({
     "hippo_recall",
     "hippo_transcript_recall",
     "hippo_document_list",
+    "hippo_document_versions",
     "hippo_document_search",
     "hippo_document_get",
     "hippo_episode_list",
@@ -1542,6 +1543,24 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_document_versions",
+            description=(
+                "The HISTORY of one source document: every snapshot ever "
+                "ingested for that source_id, oldest first, with version, "
+                "content_hash, fetched_at and size. `hippo_document_list` "
+                "shows each source at its LATEST version and "
+                "`hippo_document_get` returns one — this is how a document "
+                "CHANGED. Metadata only: use hippo_document_get for a "
+                "specific version's text. Unknown source_id returns an empty "
+                "list, not an error."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {"source_id": {"type": "string"}},
+                "required": ["source_id"],
+            },
+        ),
+        t.Tool(
             name="hippo_document_search",
             description=(
                 "Substring (lexical, case-insensitive) search over ingested "
@@ -2375,6 +2394,20 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "provisional(1) > legacy_unverified(0)."
                         ),
                     },
+                    "min_relevance": {
+                        "description": (
+                            "Retrieval floor: below it this returns NOTHING "
+                            "instead of the nearest neighbours — the "
+                            "'abstention over hallucination' promise, on this "
+                            "channel. A number, or \"auto\" to let the store "
+                            "measure the floor on itself (the same one the "
+                            "ignorance map uses). Omitted: ENGRAM_MIN_RELEVANCE "
+                            "if it is SET, no floor otherwise. The floor that "
+                            "actually applied comes back as `min_relevance` so "
+                            "a short list from a poor corpus and a short list "
+                            "from a high floor stay distinguishable."
+                        ),
+                    },
                     "trust_signals": {
                         "type": "boolean",
                         "default": False,
@@ -2616,12 +2649,24 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "FORGIA #202. Delete one fact by id (privacy / GDPR). "
                 "Symmetric to `hippo_forget` for episodes. Multi-tenant: if "
                 "user_id/agent_id/run_id is given, the delete is REFUSED when "
-                "the fact is outside that scope (no cross-tenant delete)."
+                "the fact is outside that scope (no cross-tenant delete). "
+                "For a real erasure request pass purge_history=true: without "
+                "it only ONE row goes, and a fact that was ever updated left "
+                "predecessors carrying the SAME datum behind (update() stores "
+                "a new fact and supersedes the old one, it never overwrites)."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "fact_id": {"type": "string"},
+                    "purge_history": {
+                        "type": "boolean",
+                        "description": (
+                            "Delete the whole supersession chain — every "
+                            "predecessor and successor. Default false: the "
+                            "provenance chain is the product's value and is "
+                            "not destroyed unless asked."),
+                    },
                     "user_id": {"type": "string"},
                     "agent_id": {"type": "string"},
                     "run_id": {"type": "string"},
@@ -7621,6 +7666,34 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _audit(name, arguments, outcome="ok")
             return _ok(srcs)
 
+        if name == "hippo_document_versions":
+            # LA STORIA di un documento. `ingest` incrementa la versione ogni
+            # volta che il CONTENUTO cambia — versionare e' una scelta
+            # esplicita del tier, ed e' la ragione per cui si chiama
+            # «versionato-per-hash» — ma `list_versions` non compariva in
+            # nessuna delle tre superfici (mcp_server 0, cli 0, client 0).
+            # Sei tool `hippo_document_*` e nessuno che dicesse come un
+            # documento e' CAMBIATO: `document_list` da' ogni fonte alla sua
+            # versione piu' alta, `document_get` ne da' una.
+            #
+            # Metadati soltanto: una lista che porta ogni revisione intera
+            # diventa impraticabile su un file grosso, e `document_get` esiste
+            # gia' per il testo di una versione precisa.
+            from verimem.documents import DocumentStore
+            _sid = str(arguments.get("source_id", "") or "").strip()
+            if not _sid:
+                _audit(name, arguments, outcome="rejected_empty")
+                return _err("empty source_id")
+            _versioni = [
+                {"source_id": d.source_id, "version": d.version,
+                 "content_hash": d.content_hash, "uri": d.uri,
+                 "fetched_at": d.fetched_at, "chars": len(d.content or ""),
+                 "meta": d.meta}
+                for d in DocumentStore().list_versions(_sid)
+            ]
+            _audit(name, arguments, outcome="ok")
+            return _ok(_versioni)
+
         if name == "hippo_document_search":
             # Substring lessicale (NON semantico) sulla versione piu' alta di
             # ogni source. Isolato da hippo_recall / hippo_facts_*.
@@ -8647,6 +8720,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # handler riceveva una lista che poteva contenere duplicati.
             # Dedup preserva ordine (dict.fromkeys) per determinismo.
             fitness_updates: list[str] = []
+            # E QUELLE CHE NON RISOLVONO. `update_fitness` restituisce `None`
+            # quando l'id non esiste, e qui c'era `if s is not None: append`
+            # senza ramo `else`: l'etichetta spariva dalla ricevuta e il
+            # chiamante non aveva modo di sapere che era stata ignorata.
+            # Sull'audit di produzione sono 519 etichette su 558 a non
+            # risolvere, il che spiega da solo i 230 skill su 325 senza
+            # trials: gli id veri sono hash esadecimali, lo schema del tool
+            # non li descrive, e chi chiama passa il NOME.
+            # Il difetto è il silenzio, non la mancata risoluzione — chi sa
+            # di aver passato tre etichette e ne vede tornare una corregge.
+            non_risolte: list[str] = []
             success_flag = (outcome == "success")
             for sid in dict.fromkeys(skills_used):
                 try:
@@ -8656,6 +8740,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     )
                     if s is not None:
                         fitness_updates.append(sid)
+                    else:
+                        non_risolte.append(sid)
                 except Exception as exc:  # noqa: BLE001
                     # Update di una singola skill non deve bloccare
                     # la persistenza dell'episode (già committed).
@@ -8671,6 +8757,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "outcome": outcome,
                 "skills_used": skills_used,
                 "fitness_updated": fitness_updates,
+                # Solo quando ce ne sono: un campo che compare sempre, anche
+                # vuoto, diventa rumore da saltare — e questo deve farsi
+                # notare proprio nel caso in cui c'è.
+                **({"skills_not_found": non_risolte} if non_risolte else {}),
                 # Cycle #51: narrative extension — always present even
                 # when empty, so callers can rely on the shape.
                 "fact_ids": fact_ids,
@@ -12634,8 +12724,34 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # doctor already makes about coverage.
             _gs_out = getattr(fact, "grounding_score", None)
             if isinstance(_gs_out, (int, float)):
-                _moat = (f"judged {float(_gs_out):.1f} — the source entails "
-                         f"this fact")
+                # E QUALE dei due esiti, non solo «ho giudicato». Questo ramo
+                # discriminava su `isinstance` — cioe' su «il giudizio E'
+                # girato» — e vi attaccava una frase che asserisce L'ESITO,
+                # quindi la stessa ricevuta poteva portare
+                #     moat:    "judged 0.3 — the source entails this fact"
+                #     status:  quarantined
+                #     warning: source does not entail
+                # tre campi, due che dicono no e uno che dice si'. Il commento
+                # qui sopra promette QUATTRO stati, e il quarto — girato e
+                # BOCCIATO — era proprio quello che mancava. Ed e' il campo
+                # che si legge quando una scrittura non passa: mentiva a chi
+                # lo consultava per capire perche'.
+                #
+                # Stessa cura di `76d5dc1c` sulla ricevuta della CLI, cinque
+                # ore prima e sull'altro canale: lo sweep si era fermato li'.
+                #
+                # LIMITE DICHIARATO: in questo punto c'e' solo `fact` — niente
+                # verdetto, niente soglia — quindi l'esito si legge dallo
+                # status. Se una quarantena venisse da un altro strato con un
+                # punteggio alto, la frase attribuirebbe al moat la decisione
+                # di un altro; il punteggio accanto la smentisce, e resta
+                # meglio di una riga che afferma SEMPRE l'implicazione.
+                _passato = getattr(fact, "status", "") != "quarantined"
+                _moat = (
+                    f"judged {float(_gs_out):.1f} — the source "
+                    + ("entails this fact" if _passato else
+                       "does NOT entail this fact: that is why it is "
+                       "quarantined"))
             elif not _source:
                 _moat = ("not run — no source, so the entailment moat had "
                          "nothing to check; pass source=\"<the evidence "
@@ -12834,9 +12950,42 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     row["age_days"] = float(sig.age_days)
                     row["n_contradictions"] = int(sig.n_contradictions)
                 items.append(row)
+            # IL PAVIMENTO ARRIVA ANCHE QUI. Censimento del 2026-08-02, stesso
+            # store e stessa domanda fuori tema, ENGRAM_MIN_RELEVANCE=0.99 —
+            # un pavimento che nulla puo' superare:
+            #     SDK   Memory.search      -> 0 hit
+            #     MCP   hippo_facts_recall -> 3
+            # Questo handler chiama `a.semantic` direttamente e non passa da
+            # `Memory.search`, quindi la cura di un'ora prima non lo
+            # raggiungeva: la stessa forma per cui quella del 29/07 si era
+            # fermata a `explain`. Ed e' il canale degli AGENTI, il primo posto
+            # dove il prodotto scrive «abstention over hallucination».
+            #
+            # `env_floor_if_set` e non una copia del criterio: due copie
+            # divergono, e questa e' la terza generazione della stessa cura.
+            # Un valore esplicito batte l'ambiente; l'ambiente NON impostato
+            # lascia questa superficie esattamente com'era (il default `auto`
+            # e' misurato sul percorso di `explain`, non su questo).
+            _mr = arguments.get("min_relevance")
+            if _mr is None:
+                from .relevance_floor import env_floor_if_set
+                _mr = env_floor_if_set()
+            if _mr == "auto":
+                from .client import Memory as _MemForFloor
+                _mr = _MemForFloor(
+                    path=a.semantic.db_path)._auto_relevance_floor()
+            if _mr:
+                _pav = float(_mr)
+                items = [i for i in items
+                         if float(i.get("score") or 0.0) >= _pav]
             return _ok({
                 "query": query,
                 "topic": topic,
+                # Il pavimento che ha DAVVERO filtrato questa risposta, o
+                # `null`: una lista corta perche' il corpus e' povero e una
+                # corta perche' un pavimento l'ha tagliata sono due esiti che
+                # un agente deve poter distinguere senza indovinare.
+                "min_relevance": (float(_mr) if _mr else None),
                 # Quali dei tre segnali hanno DAVVERO ordinato questa risposta.
                 # `applied` o un motivo per ognuno: un ordine tenuto in piedi
                 # dal solo bi-encoder non e' lo stesso oggetto di uno passato
@@ -12997,34 +13146,48 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             })
 
         if name == "hippo_quarantine_log":
-            import sqlite3 as _sq
             try:
                 _limit = max(1, int(arguments.get("limit", 50) or 50))
             except (TypeError, ValueError):
                 _limit = 50
-            _rows: list[dict] = []
+            # DELEGA, non copia. Qui c'era la stessa SELECT dell'SDK
+            # (`client.py:1447-1452`) ricopiata a mano, e con la copia si e'
+            # perso cio' che la copia non conteneva: l'arricchimento
+            # `reason`/`layers` dall'audit trail, cioe' PERCHE' ogni claim e'
+            # stato fermato. Sapere QUALI fatti sono in quarantena senza
+            # sapere perche' non permette di correggerne nessuno — ed e'
+            # esattamente la ragione per cui quell'arricchimento fu scritto.
+            #
+            # Il commento che stava qui diceva di star chiudendo questa classe
+            # («una capacita' su un canale solo»): lo sweep si era fermato a
+            # `explain` e non aveva guardato la riga sopra. Il gateway
+            # (`gateway.py:1308`) delegava gia' — tre superfici, tre
+            # comportamenti, e divergevano in direzioni opposte.
+            #
+            # Effetto secondario che spariva con la copia: `client.py:1505`
+            # salta il ricalcolo dove la riga porta gia' un `reason`. Su
+            # questo canale `reason` non era mai popolato, quindi `explain`
+            # ricalcolava tutto e il risparmio che dichiara non c'era.
+            # `a.memory` E' UNA `EpisodicMemory`, non il `Memory` dell'SDK —
+            # sbagliato nella prima stesura di questa delega, e i test non lo
+            # presero perche' il loro doppio esponeva `memory = Memory(...)`:
+            # un doppio costruito su cio' che serviva a chi lo scriveva.
+            #
+            # E nemmeno la vista-con-`semantic` che questo file usa per
+            # `epistemic_health` e `ignorance_map` basta: l'arricchimento
+            # risale a `self.audit_log()` -> `self._adjudication_log_ro()` ->
+            # `self._adj_log`, quindi servirebbe una vista che cresce a ogni
+            # campo. Un `Memory` sullo stesso store e' piu' onesto di una
+            # vista che finge di essere un `Memory`: il secondo handle e'
+            # innocuo perche' il DB e' in WAL e questa e' una lettura.
+            from .client import Memory as _M
             try:
-                with _sq.connect(str(a.semantic.db_path)) as _con:
-                    _con.row_factory = _sq.Row
-                    for _r in _con.execute(
-                            "SELECT id, proposition, topic, created_at, status "
-                            "FROM facts WHERE status = 'quarantined' "
-                            "AND superseded_by IS NULL "
-                            "ORDER BY created_at DESC LIMIT ?", (_limit,)):
-                        _rows.append(dict(_r))
+                _sdk = _M(path=a.semantic.db_path)
+                _rows = list(_sdk.quarantine_log(
+                    limit=_limit,
+                    explain=bool(arguments.get("explain", False))))
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"quarantine_log read failed: {_exc}")
-            # 2026-07-30: sapere QUALI fatti sono fermi senza sapere PERCHE'
-            # non permette di correggerne nessuno. Opt-in perche' ricalcola i
-            # detector; e sta anche qui, e non solo sull'SDK, perche' una
-            # capacita' su un canale solo e' il difetto che questa serie di
-            # commit ha passato la giornata a chiudere.
-            if bool(arguments.get("explain", False)):
-                try:
-                    from .client import Memory as _M
-                    _M._spiega_le_quarantene(_rows)
-                except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
-                    pass
             return _ok({"ok": True, "n": len(_rows), "quarantined": _rows})
 
         if name == "hippo_epistemic_health":
@@ -13168,13 +13331,31 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if _deny is not None:
                 _audit(name, arguments, outcome="rejected_cross_scope")
                 return _err(_deny)
-            ok = a.semantic.delete(fid, principal=_MCP_PRINCIPAL,
-                                   action="forget")
+            # `purge_history` NON esiste su `semantic.delete` — la sua firma e'
+            # (fact_id, principal, action) — e la cancellazione con la catena
+            # vive uno strato piu' su, su `Memory.delete`. Non bastava
+            # aggiungere una chiave allo schema: andava cambiata la catena
+            # delle chiamate. Senza, questo tool toglieva UNA riga e lasciava
+            # i predecessori con lo stesso datum, mentre si descrive «Delete
+            # one fact by id (privacy / GDPR)» — ed e' il canale che usano gli
+            # agenti, cioe' la promessa piu' esposta.
+            _purga = bool(arguments.get("purge_history"))
+            if _purga:
+                # Stessa correzione: `a.memory` e' una `EpisodicMemory`, la
+                # cui `delete(episode_id, *, principal, action)` non ha
+                # nemmeno il parametro — e cancella EPISODI. La cancellazione
+                # con la catena vive su `Memory.delete`.
+                from .client import Memory as _M
+                ok = _M(path=a.semantic.db_path).delete(
+                    fid, purge_history=True, principal=_MCP_PRINCIPAL)
+            else:
+                ok = a.semantic.delete(fid, principal=_MCP_PRINCIPAL,
+                                       action="forget")
             if not ok:
                 _audit(name, arguments, outcome="not_found")
                 return _err(f"fact not found: {fid}")
             _audit(name, arguments, outcome="ok")
-            return _ok({"ok": True, "id": fid})
+            return _ok({"ok": True, "id": fid, "purged_history": _purga})
 
         # Cycle 2026-05-27 round 13 P0c — undo log API.
         if name == "hippo_fact_forget_with_undo":

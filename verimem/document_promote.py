@@ -53,14 +53,70 @@ def promote_chunk_to_fact(
                 "error": "empty chunk/claim — nothing to promote"}
     prop, _ = redact_secrets(text)
     version = hit.get("version")
+
+    # IL GATE, che questo modulo prometteva e non chiamava. Il docstring dice
+    # «through the same anti-confab discipline as everything else, NEVER
+    # AROUND IT» e «the full admission gate runs», ma `semantic.store()` non
+    # ha un parametro `source` e non importa mai `anti_confab_gate`: misurato
+    # eseguendo, quattro promozioni su quattro uscivano con
+    # `grounding_score=None`, e fra quelle passavano «Il piano annuale costa
+    # 500 euro» — che il chunk CONTRADDICE — e la confabulazione-scuola che
+    # ogni altro canale quarantina.
+    #
+    # E pesa piu' di una scrittura qualunque: la promozione mette la citazione
+    # esatta del file in `verified_by`, quindi il fatto esce con l'aria di
+    # essere verificato DAL DOCUMENTO mentre il documento puo' dire il
+    # contrario. La provenienza diventa una decorazione.
+    #
+    # LA SOURCE C'ERA GIA' E VENIVA BUTTATA: `hit["text"]` e' il chunk, e
+    # quando il chiamante passa un `claim` distillato quel testo e' esattamente
+    # l'input che L4 vuole — source = il chunk, claim = la frase. Il caso d'uso
+    # principale del modulo E' il caso d'uso principale del moat.
+    chunk_text = str(hit.get("text", "") or "").strip()
+    stato = "model_claim"                  # a claim, never laundered truth
+    punteggio = None
+    try:
+        from .anti_confab_gate import run_validation_gate
+        verdetto = run_validation_gate(
+            proposition=prop, verified_by=[citation], topic=topic,
+            agent=None, writer_role=PROMOTE_WRITER_ROLE,
+            source=chunk_text or None, ground_write=True,
+        )
+        punteggio = verdetto.grounding_score
+        # QUARANTINA QUANDO IL MOAT BOCCIA, non quando l'azione e'
+        # `downgrade`. La prima versione di questa riga guardava
+        # `action in ("reject","downgrade")` ed era SBAGLIATA: `downgrade`
+        # copre due situazioni diverse, e un test gia' in repo l'ha presa —
+        # «frase grezza spacciata per verificata senza prove» promossa con
+        # `status="verified"` da' `action=downgrade` con `grounding 98.78`,
+        # cioe' il contenuto e' implicato dalla fonte e a decadere e' solo lo
+        # STATUS. Trattarlo come una quarantena avrebbe nascosto un fatto
+        # buono per un difetto di provenienza, che `store()` gia' corregge da
+        # solo. Misurato: contraddetta 0.44 e confabulazione 0.38 sono
+        # `downgrade` quanto quella, e vanno trattenute — la differenza sta
+        # nel PUNTEGGIO, non nell'azione, e il verdetto porta la sua soglia.
+        _soglia = getattr(verdetto, "threshold", None)
+        if verdetto.action == "reject" or (
+                isinstance(punteggio, (int, float))
+                and isinstance(_soglia, (int, float))
+                and punteggio < _soglia):
+            stato = "quarantined"
+    except Exception:  # noqa: BLE001 — un gate irraggiungibile non fa passare
+        # ... e non fa nemmeno cadere la promozione: resta un `model_claim`
+        # senza verdetto, che e' cio' che era prima e che il lettore riconosce
+        # da `grounding_score=None` («mai giudicato», non «giudicato e
+        # passato»).
+        punteggio = None
+
     fact = Fact(
         proposition=prop,
         topic=topic,
         confidence=confidence,
-        status="model_claim",              # a claim, never laundered truth
+        status=stato,
         verified_by=[citation],            # the checkable file citation
         source_episodes=[citation] + ([f"doc_version:{version}"] if version else []),
         writer_role=PROMOTE_WRITER_ROLE,
+        grounding_score=punteggio,
     )
     try:
         if embed is not None:

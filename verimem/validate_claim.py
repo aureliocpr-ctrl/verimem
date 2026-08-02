@@ -121,6 +121,162 @@ def _termine_presente(termine: str, testo_lower: str) -> bool:
 #: «verimem» e «com» si trovano in mezzo corpus, per cui qualunque cosa si
 #: affermi su un sito risulterebbe asserita da qualcuno. Misurato: e' l'unico
 #: motivo per cui una claim del banco sopravviveva al controllo qui sotto.
+#: Le parole che RIBALTANO una frase, e che percio' non possono essere tolte
+#: dal contenuto insieme alle vuote. Elenco CHIUSO — non e' una lista di
+#: «parole importanti» che cresce a piacere: sono le negazioni, e la loro
+#: proprieta' e' che togliendole la frase dice il CONTRARIO.
+#: Oggi solo `non` e' anche in `_PAROLE_VUOTE`; le altre ci sono perche' quella
+#: lista e' una fonte esterna che puo' cambiare, e allora il difetto tornerebbe
+#: in silenzio su un'altra lingua.
+_NEGAZIONI = frozenset({
+    "non", "no", "not", "mai", "never", "nessun", "nessuna", "nessuno",
+    "niente", "nulla", "senza", "without", "neither", "nor", "ni",
+    "pas", "sans", "jamais", "aucun", "sin", "nunca", "ninguno",
+})
+
+#: Sopra questa frazione di parole capitalizzate (escluse le iniziali di
+#: frase), il riconoscimento dei nomi propri PER MAIUSCOLA non sta piu'
+#: leggendo dei nomi. Misurato:
+#:     Der Server ist ein Produktionsknoten.        2 su 4 = 0.50
+#:     Der Graph hat 8625 Knoten.                   2 su 4 = 0.50
+#:     The Database Is A Postgres Cluster.          5 su 5 = 1.00
+#:     Il server di Roma ospita il cluster Postgres da marzo.   2 su 9 = 0.22
+#:     The annual plan costs 200 euros.             0 su 5 = 0.00
+#: Fra 0.22 e 0.50 c'e' spazio per una soglia che non e' un valore scelto a
+#: occhio: e' «piu' di un terzo», cioe' piu' di quanti nomi propri veri sta in
+#: una frase che ne ha diversi.
+_SOGLIA_CAPITALIZZATE = 0.4
+
+#: Sotto questo numero di parole non iniziali una densita' non significa
+#: niente: una frase di tre parole con un nome proprio darebbe 0.5.
+_MIN_PAROLE_PER_DENSITA = 4
+
+
+def leggibile_a_maiuscole(text: str) -> bool:
+    """Il riconoscimento dei nomi propri per MAIUSCOLA funziona su questa frase?
+
+    Serve perche' quel riconoscimento e' una convenzione TIPOGRAFICA, e non e'
+    universale: in tedesco ogni sostantivo e' maiuscolo, quindi finiscono tutti
+    fra i «nomi propri» e `_parole_di_contenuto` li toglie. Cio' che resta non
+    e' contenuto, e' scarto grammaticale::
+
+        Der Server ist ein Produktionsknoten.    -> ['ein', 'ist']  testa 'ist'
+        Die Datenbank ist ein Postgres Cluster.  -> ['ein', 'ist']  testa 'ist'
+
+    e due fatti scorrelati diventano l'uno l'aggiornamento dell'altro, per due
+    vie insieme: stessa testa nominale e due parole condivise. Chi scrive dieci
+    misure in tedesco ne ritrova una.
+
+    NON SI CURA CON UNA LISTA. Aggiungere `der`/`die`/`das`/`ist` alle parole
+    vuote sistemerebbe il tedesco e lascerebbe identici polacco, turco, russo,
+    indonesiano e le altre settemila lingue: il prodotto ha liste per quattro
+    lingue e utenti in tutto il mondo, e quella strada non arriva in fondo per
+    costruzione.
+
+    Quindi il segnale e' STRUTTURALE e non nomina nessuna lingua: la densita'
+    di parole capitalizzate. Alta densita' = la maiuscola qui non distingue i
+    nomi, e chi legge deve saperlo invece di ricevere una risposta a caso. Vale
+    identico sul Title Case inglese, che non e' una lingua ma ha lo stesso
+    effetto.
+
+    Le frasi troppo corte per una densita' sono dichiarate leggibili: meglio il
+    comportamento di prima che una soglia calcolata su tre parole.
+    """
+    parole = _PAROLA_RE.findall(text or "")
+    if len(parole) - 1 < _MIN_PAROLE_PER_DENSITA:
+        return True
+    resto = parole[1:]                       # la prima e' maiuscola per regola
+    su = sum(1 for p in resto if p[:1].isupper())
+    return (su / len(resto)) < _SOGLIA_CAPITALIZZATE
+
+
+#: Sopra questa similarita' due frasi parlano dello STESSO soggetto con un
+#: valore aggiornato. Misurata, non scelta: banco di dodici coppie scritte a
+#: mano in lingue NON coperte dalle liste (de, pt, pl, tr), meta' evoluzioni
+#: vere e meta' osservazioni scorrelate.
+#:     vere   0.9349 .. 0.9682
+#:     false  0.8121 .. 0.8674
+#: piu' tre casi duri (stesso soggetto, grandezza DIVERSA — non evoluzioni):
+#:     0.8581  Korpus 6682 Fakten     | mediane Laenge 795 Zeichen
+#:     0.9117  Graph 8625 Knoten      | Dichte 0.42
+#:     0.9082  corpus 6682 fatti      | mediana 795 caratteri
+#: A 0.93 il banco si separa tutto. IL MARGINE E' STRETTO — 0.9349 la vera piu'
+#: bassa contro 0.9117 il duro piu' alto, 0.023 — e non e' una separazione
+#: comoda: e' quel tanto che basta sul banco disponibile. Se una coppia vera
+#: scende sotto, si rimisura su un banco piu' grande, non si abbassa la soglia.
+_SOGLIA_SIMILARITA = 0.93
+
+
+def similarita_semantica(a: str, b: str) -> float:
+    """Quanto due frasi parlano della stessa cosa, in QUALUNQUE lingua.
+
+    Usa l'embedder che il prodotto ha gia' installato e gia' in uso —
+    `intfloat/multilingual-e5-base`, cento lingue, 768 dimensioni — invece di
+    una lista di parole scritta a mano per quattro. Sul corpus di Aurelio tutti
+    i 6972 fatti hanno gia' il loro vettore persistito in tabella: qui si
+    ricalcola perche' la funzione riceve due stringhe e non due fatti, ed e'
+    il prezzo del fallback, pagato solo dove le liste non arrivano.
+
+    Restituisce 0.0 se l'encode non e' disponibile: un motore assente non deve
+    far cadere una scrittura, e zero significa «non ho potuto misurare», che
+    porta alla decisione conservativa (nessuna evoluzione).
+
+    NON RIUSARE QUESTA FUNZIONE PER RAGGRUPPARE. Regge dove i due candidati
+    sono GIA' STATI ACCOPPIATI da qualcun altro — nel write path `_old` arriva
+    per id da `_sib_by_id` e `classify_write_relation` ha gia' detto
+    «evolution», quindi qui si giudica UNA coppia proposta. Non regge dove
+    bisogna SELEZIONARE le coppie: misurato sul corpus, 900 fatti vivi e non
+    quarantinati danno 404550 coppie, e sopra la soglia del banco (0.878) ne
+    stanno 13659 — il 91.3% dei fatti avrebbe almeno un «rivale». A 0.93 e'
+    ancora il 26.1%. La coppia piu' simile di tutte, 0.9941, e' «Lab stress
+    test worker 0 write 33» contro «worker 1 write 33»: due eventi distinti,
+    non due versioni della stessa cosa.
+    Il banco e' fatto di frasi corte e pulite, il corpus e' prosa lunga dove
+    tutto somiglia a tutto. Usare la similarita' per raccogliere i contendenti
+    del guardian renderebbe il prodotto muto — dichiarerebbe contese ovunque e
+    si asterrebbe ovunque.
+    """
+    try:
+        import numpy as np
+
+        from . import embedding
+        va = np.asarray(embedding.encode(a or ""), dtype=float)
+        vb = np.asarray(embedding.encode(b or ""), dtype=float)
+        na, nb = float(np.linalg.norm(va)), float(np.linalg.norm(vb))
+        if na == 0.0 or nb == 0.0:
+            return 0.0
+        return float(va @ vb / (na * nb))
+    except Exception:  # noqa: BLE001 — un motore assente non rompe una scrittura
+        return 0.0
+
+
+def _polarita(text: str) -> bool:
+    """La frase e' NEGATA? — il segnale che distingue una frase dal suo
+    contrario, e che nessun conteggio di parole condivise puo' portare.
+
+    Serve perche' «Il gate NON gira sul canale MCP» e «Il gate gira sul canale
+    MCP» hanno le STESSE parole di contenuto e la stessa testa nominale: per il
+    criterio dell'evoluzione sono lo stesso fatto aggiornato, e il secondo
+    ritira il primo mentre dice il contrario.
+
+    Sta qui e non dentro `_parole_di_contenuto` perche' quella strada e' stata
+    provata e MISURATA come peggiore: rimettere le negazioni fra le parole
+    contate porta le riconosciute-evoluzione da 228 a 229 sulle 260 coppie
+    corte del corpus, e la coppia in piu' e' un falso positivo — due
+    osservazioni diverse unite dal solo fatto di nominare entrambe «non».
+    Come polarita' quel caso non si muove: hanno la stessa, e a decidere resta
+    il criterio di prima.
+
+    Deliberatamente GREZZA — presenza di una negazione, non la sua portata
+    sintattica. Non risolve la doppia negazione ne' capisce su quale sintagma
+    cade: dice solo che due frasi hanno polarita' diverse, che e' abbastanza
+    per NON dichiararle un aggiornamento l'una dell'altra. Nel dubbio non
+    evolve, che e' il verso di errore che questo prodotto preferisce.
+    """
+    parole = {t.lower() for t in _PAROLA_RE.findall(text or "")}
+    return bool(parole & _NEGAZIONI)
+
+
 _DOMINIO_RE = re.compile(r"\b[\w-]+(?:\.[\w-]+)+\b")
 
 #: Le parole, per il controllo di asserzione. Tre lettere minime: sotto ci
@@ -138,13 +294,51 @@ def _parole_di_contenuto(text: str) -> set[str]:
     """
     from .document_index import _PAROLE_VUOTE  # una fonte, non una copia
 
+    # I NOMI SONO IN TITLE CASE. Una parola TUTTA MAIUSCOLA e' enfasi o sigla,
+    # mai un nome proprio, e toglierla dal contenuto le faceva perdere il peso
+    # che ha. Misurato sui 5151 fatti vivi del corpus il 2026-08-02: dei 14102
+    # nomi distinti estratti (86977 occorrenze) ne sono TUTTE MAIUSCOLE 7833
+    # (54717 occorrenze) — il 63% — e la piu' frequente e' «NON», 1461 volte.
+    # Una negazione contata come nome proprio, e quindi tolta dal contenuto:
+    #     Il gate NON gira sul canale MCP. -> ['canale','gate','gira','sul']
+    #     Il gate gira sul canale MCP.     -> ['canale','gate','gira','sul']
+    # cioe' una frase e la sua negazione indistinguibili per il criterio che
+    # decide se un fatto e' l'EVOLUZIONE di un altro: la seconda ritira la
+    # prima come aggiornamento, mentre dice il contrario.
+    #
+    # Le sigle (MCP, TDD, API) tornano fra le parole di contenuto, ed e'
+    # giusto: portano contenuto, e chiamarle nomi propri serviva solo a
+    # toglierle.
+    #
+    # PORTATA SUL PREGRESSO: ZERO. Sulle 260 coppie corte gia' superseduta del
+    # corpus vivo, riconosciute evoluzione 228 prima e 228 dopo — il corpus e'
+    # prosa di sviluppo e non contiene negazioni urlate contrapposte. Vale per
+    # cio' che un utente scrive («il deploy NON e' andato»), non per cio' che
+    # c'e' gia'.
+    #
+    # `_extract_salients` NON e' toccata: i suoi altri due consumatori
+    # (`salient_count`, `_subj_overlap`) alimentano il gate misurato sul banco
+    # delle 20 claim, e questo giro non ha misurato quello.
     caps, _ = _extract_salients(text)
-    nomi = {c.lower() for c in caps}
+    nomi = {c.lower() for c in caps if not c.isupper()}
+    # LA NEGAZIONE RESTA FUORI DAL CONTENUTO, ed e' una correzione a me stesso.
+    # Il primo tentativo la rimetteva dentro — «non» e' nelle parole vuote per
+    # l'italiano e non per `not`/`no`/`mai`/`senza`/`never`/`without`, il che e'
+    # gia' un'incoerenza — ma MISURATO sul corpus quel rimedio PEGGIORA: sulle
+    # 260 coppie corte gia' superseduta le riconosciute-evoluzione passano da
+    # 228 a 229, e la coppia in piu' e' un falso positivo (due osservazioni
+    # diverse, una sul grafo entity_kg e una sulle frequenze, unite dal solo
+    # fatto di contenere entrambe «non»).
+    # La negazione non e' una parola in piu' da contare: e' la POLARITA' della
+    # frase, e va confrontata come tale. Lo fa `_polarita`, usata dalla guardia
+    # dell'evoluzione, che distingue «Il gate NON gira» da «Il gate gira»
+    # SENZA gonfiare l'intersezione di chi la nomina per caso.
+    vuote = _PAROLE_VUOTE
     for dominio in _DOMINIO_RE.findall(text or ""):
         nomi.update(p.lower() for p in _PAROLA_RE.findall(dominio))
     return {t.lower() for t in _PAROLA_RE.findall(text or "")
             if len(t) > 2 and not t.isdigit()
-            and t.lower() not in _PAROLE_VUOTE and t.lower() not in nomi}
+            and t.lower() not in vuote and t.lower() not in nomi}
 
 
 def _testa_nominale(text: str) -> str:
