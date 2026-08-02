@@ -50,7 +50,6 @@ def store_con_quarantena(tmp_path, monkeypatch):
 
     class _Ag:
         def __init__(self, mem):
-            self.memory = mem
             self.semantic = mem.semantic
     monkeypatch.setattr(srv, "_ag", lambda: _Ag(m))
     return m
@@ -92,6 +91,41 @@ def test_explain_continua_a_funzionare_su_MCP(store_con_quarantena):
     assert any(r.get("reason") or r.get("layers") for r in righe), righe[0]
 
 
+def test_con_l_agente_VERO_senza_doppi(tmp_path, monkeypatch):
+    """Il test che mancava, e senza il quale due deleghe sbagliate sono
+    passate verdi.
+
+    `VerimemAgent.memory` e' una `EpisodicMemory`, non il `Memory` dell'SDK.
+    La prima stesura di questa delega chiamava `a.memory.quarantine_log(...)`
+    e i doppi la tenevano verde perche' esponevano `memory = Memory(...)` —
+    cioe' promettevano cio' che serviva a chi li scriveva. In produzione
+    quella riga finiva nell'`except` e il tool rispondeva con un errore al
+    posto del log.
+
+    Qui non c'e' nessun doppio: si costruisce l'agente come lo costruisce il
+    server, e si verifica che `a.memory` sia davvero quello che e'.
+    """
+    import asyncio as _a
+
+    from verimem import mcp_server as srv
+    for k in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR", "VERIMEM_DATA_DIR"):
+        monkeypatch.setenv(k, str(tmp_path))
+    srv._agent = None                      # niente agente di un altro test
+    agente = srv._ag()
+    from verimem.memory import EpisodicMemory
+    assert isinstance(agente.memory, EpisodicMemory), (
+        f"a.memory e' {type(agente.memory).__name__}: se un giorno diventa il "
+        f"Memory dell'SDK, le deleghe di questo file possono tornare a "
+        f"passargli attraverso")
+
+    _a.run(srv.call_tool("hippo_remember", {"proposition": CLAIM, "topic": "t"}))
+    out = _mcp({"limit": 5})
+    assert not out.get("error"), out
+    righe = out.get("quarantined") or []
+    if righe:
+        assert "layers" in righe[0], sorted(righe[0])
+
+
 def test_uno_store_illeggibile_non_fa_esplodere_il_canale(tmp_path, monkeypatch):
     """Il contratto dell'SDK e' «vista in sola lettura: uno store illeggibile
     mostra vuoto, non 500». La delega non deve perderlo."""
@@ -99,13 +133,16 @@ def test_uno_store_illeggibile_non_fa_esplodere_il_canale(tmp_path, monkeypatch)
 
     m = Memory(path=tmp_path / "m.db")
 
-    class _Rotto:
-        def quarantine_log(self, **kw):
+    class _SemanticRotta:
+        """Si rompe DOVE passa la delega. La prima stesura rompeva
+        `a.memory`, che dopo la correzione non e' piu' sul percorso: il test
+        sarebbe rimasto verde senza provare niente."""
+        @property
+        def db_path(self):
             raise RuntimeError("store giu'")
 
     class _Ag:
-        memory = _Rotto()
-        semantic = m.semantic
+        semantic = _SemanticRotta()
     monkeypatch.setattr(srv, "_ag", lambda: _Ag())
     out = _mcp({"limit": 10})
     assert out.get("quarantined") == [] or out.get("error"), out

@@ -37,18 +37,9 @@ LEGAL_FP = "The due-diligence review was completed before the acquisition closed
 def real_sm(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SemanticMemory:
     sm = SemanticMemory(db_path=tmp_path / "s.db")
 
-    # `.memory` come l'agente vero: `VerimemAgent` espone sia `.semantic` sia
-    # `.memory`, e `mcp_server` usa `a.memory` in 83 punti. Un doppio che ne
-    # dichiara uno solo resta verde finche' l'handler tocca solo quello, e
-    # diventa rosso il giorno in cui l'handler smette di ricopiare l'SDK e
-    # comincia a chiamarlo — che e' precisamente la cura giusta.
-    from verimem.client import Memory as _Memory
-    _mem = _Memory(path=tmp_path / "s.db")
-
     class _FakeAgent:
         def __init__(self) -> None:
             self.semantic = sm
-            self.memory = _mem
 
     monkeypatch.setattr(mcp_server, "_ag", lambda: _FakeAgent())
     monkeypatch.delenv("ENGRAM_VALIDATE_DEFAULT", raising=False)

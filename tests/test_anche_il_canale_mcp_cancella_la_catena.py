@@ -41,7 +41,6 @@ def store_con_catena(tmp_path, monkeypatch):
 
     class _Ag:
         def __init__(self, mem):
-            self.memory = mem
             self.semantic = mem.semantic
     monkeypatch.setattr(srv, "_ag", lambda: _Ag(m))
     return m, vecchio, nuovo

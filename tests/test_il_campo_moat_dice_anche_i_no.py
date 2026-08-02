@@ -52,7 +52,6 @@ def store(tmp_path, monkeypatch):
 
     class _Ag:
         def __init__(self):
-            self.memory = m
             self.semantic = m.semantic
     monkeypatch.setattr(srv, "_ag", lambda: _Ag())
     return m

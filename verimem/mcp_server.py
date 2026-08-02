@@ -13104,8 +13104,22 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # salta il ricalcolo dove la riga porta gia' un `reason`. Su
             # questo canale `reason` non era mai popolato, quindi `explain`
             # ricalcolava tutto e il risparmio che dichiara non c'era.
+            # `a.memory` E' UNA `EpisodicMemory`, non il `Memory` dell'SDK —
+            # sbagliato nella prima stesura di questa delega, e i test non lo
+            # presero perche' il loro doppio esponeva `memory = Memory(...)`:
+            # un doppio costruito su cio' che serviva a chi lo scriveva.
+            #
+            # E nemmeno la vista-con-`semantic` che questo file usa per
+            # `epistemic_health` e `ignorance_map` basta: l'arricchimento
+            # risale a `self.audit_log()` -> `self._adjudication_log_ro()` ->
+            # `self._adj_log`, quindi servirebbe una vista che cresce a ogni
+            # campo. Un `Memory` sullo stesso store e' piu' onesto di una
+            # vista che finge di essere un `Memory`: il secondo handle e'
+            # innocuo perche' il DB e' in WAL e questa e' una lettura.
+            from .client import Memory as _M
             try:
-                _rows = list(a.memory.quarantine_log(
+                _sdk = _M(path=a.semantic.db_path)
+                _rows = list(_sdk.quarantine_log(
                     limit=_limit,
                     explain=bool(arguments.get("explain", False))))
             except Exception as _exc:  # noqa: BLE001
@@ -13263,8 +13277,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # agenti, cioe' la promessa piu' esposta.
             _purga = bool(arguments.get("purge_history"))
             if _purga:
-                ok = a.memory.delete(fid, purge_history=True,
-                                     principal=_MCP_PRINCIPAL)
+                # Stessa correzione: `a.memory` e' una `EpisodicMemory`, la
+                # cui `delete(episode_id, *, principal, action)` non ha
+                # nemmeno il parametro — e cancella EPISODI. La cancellazione
+                # con la catena vive su `Memory.delete`.
+                from .client import Memory as _M
+                ok = _M(path=a.semantic.db_path).delete(
+                    fid, purge_history=True, principal=_MCP_PRINCIPAL)
             else:
                 ok = a.semantic.delete(fid, principal=_MCP_PRINCIPAL,
                                        action="forget")
