@@ -498,15 +498,35 @@ def index(
 def search_docs(
     query: str = typer.Argument(..., help="Natural-language query"),
     k: int = typer.Option(5, "-k", help="Top-k chunks"),
+    min_score: float = typer.Option(
+        0.0, "--min-score",
+        help=("Drop hits below this score. Off by default: the right cut "
+              "depends on your corpus and this command does not guess one.")),
 ):
     """Semantic search over indexed documents, with the exact citation.
 
     Every hit shows source file, version and character offsets
     (original[start:end] == chunk text) — the provenance moat applied to
     documents. Only the LATEST version of each source is searched.
+
+    QUESTO E' UN TOP-K, NON UN'ASTENSIONE, e il comando ora lo dice. Provato
+    su un listino prezzi indicizzato: «quanto costa il piano annuale» rende il
+    chunk a 0.884, e «quale database usa il cluster di produzione» — di cui in
+    quel documento non c'e' una parola — rende LO STESSO chunk a 0.757, con la
+    stessa citazione esatta. Chi legge vede un risultato con una fonte precisa
+    e conclude di aver avuto una risposta.
+
+    Il resto del prodotto si astiene («abstention over hallucination») perche'
+    ha un pavimento misurato; qui non c'e', e inventarne uno a occhio e'
+    l'errore gia' pagato il 30/07 con la soglia `max(floor, noise_floor)`,
+    scritta, misurata e ritirata perche' rendeva muta la mappa. Quindi:
+    `--min-score` a chi sa che taglio vuole, e una riga che dichiara la natura
+    della lista a tutti gli altri.
     """
     from .document_index import DocumentIndex
     hits = DocumentIndex().search(query, k=k)
+    if min_score > 0:
+        hits = [h for h in hits if float(h.get("score") or 0.0) >= min_score]
     if not hits:
         console.print("no results (index empty or no match)")
         raise typer.Exit(0)
@@ -534,6 +554,16 @@ def search_docs(
         snippet = ("…" if start > 0 else "") + text[start:start + 180].strip() \
                   + ("…" if start + 180 < len(text) else "")
         console.print(f"[bold]{i}.[/bold] ({h['score']:.3f}) [cyan]{cite}[/cyan]\n   {snippet}")
+
+    # LA NATURA DELLA LISTA, detta una volta sola in fondo. Senza, un chunk
+    # con la sua citazione esatta si legge come una risposta anche quando il
+    # documento non contiene la domanda — misurato: 0.884 per una domanda che
+    # il listino risponde, 0.757 per una che non ci compare nemmeno, stesso
+    # chunk e stessa citazione.
+    console.print(f"[dim]top-{len(hits)} per similarita': questi sono i chunk "
+                  f"piu' vicini alla domanda, non una risposta verificata. "
+                  f"Il tier documenti non si astiene — usa --min-score per "
+                  f"tagliare, o `verimem trust` per un verdetto.[/dim]")
 
 
 def _gateway_data_dir(data_dir: str | None) -> Path:
