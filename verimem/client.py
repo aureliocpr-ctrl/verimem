@@ -647,8 +647,35 @@ class Memory:
         view. This is the primitive; routing a natural-language counting query
         to it is a separate intent step (gateway/F2)."""
         if query is not None:
+            # UN ARTICOLO NON PUÒ CAMBIARE UN CONTEGGIO. L'AND è su TUTTI i
+            # token, e i token includono articoli e preposizioni: misurato
+            # 2026-08-02 sul corpus vero (5333 fatti vivi),
+            #     moat    207 -> del moat   134    73 persi (35%)
+            #     commit 1324 -> un commit 1126   198 persi (15%)
+            #     gate    942 -> il gate    877    65 persi  (7%)
+            # 429 fatti persi su otto coppie, e nessuno parlava di altro:
+            # parlavano dello stesso argomento senza quell'articolo. Questo
+            # metodo promette «the WHOLE matching set» — con una preposizione
+            # nella domanda ne vedeva due terzi.
+            #
+            # È lo SPECULARE della cura in `2f2c667e`: nel ramo OR le parole
+            # funzionali ALLARGANO a caso, qui nel ramo AND RESTRINGONO a
+            # caso. E corregge un ragionamento di quel commit, dove avevo
+            # scritto che `require_all_tokens` «è il percorso di precisione,
+            # dove una funzionale in più STRINGE invece di allargare» e
+            # l'avevo chiuso come non-problema: per una RICERCA è vero, per un
+            # CONTEGGIO il cui contratto è vedere tutto l'insieme, no.
+            #
+            # Sta QUI e non in `search_facts` apposta: la ricerca deve
+            # continuare a stringere. `_tokens` di bm25_rank, non una copia.
+            from .bm25_rank import _tokens as _informativi
+            _q = " ".join(_informativi(query)) if query.strip() else query
+            if query.strip() and not _q:
+                # Solo parole funzionali: non c'è nessun insieme da contare.
+                # Zero, non «tutto» — che è ciò che una query vuota darebbe.
+                return 0
             return len(self.semantic.search_facts(
-                query, limit=1_000_000, require_all_tokens=True,
+                _q, limit=1_000_000, require_all_tokens=True,
                 topic=topic, topic_prefix=topic_prefix))
         if topic_prefix is not None:
             return len(self.semantic.search_facts(
