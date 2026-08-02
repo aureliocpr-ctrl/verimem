@@ -187,6 +187,12 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
   falsify a stored fact — finding independent counter-evidence proposes a
   `refuted` label, surviving grows its `unbeaten` bound — the store falsifies
   itself instead of waiting for a contradiction to arrive.
+  *Scope, measured:* "the same subject" is resolved by parsing a copula
+  ("X is a Y"), so the comparison only happens on facts with that shape — **7
+  of 5194 live facts** on our own corpus (2026-08-02), which is prose. On the
+  rest the read is served with `not comparable — no conflict search ran`
+  rather than a silent "unchallenged": the guardian says when it did not look,
+  and on prose-shaped memory that is most of the time.
 - **Ignorance map** — "I don't know" becomes "here is *what* I'm missing": each
   unanswerable query is classed (no evidence / below the floor / evidence
   quarantined / a live conflict) with the concrete source or audit that would
