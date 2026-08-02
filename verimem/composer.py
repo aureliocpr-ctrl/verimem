@@ -228,7 +228,8 @@ def subject_key(subject: str) -> str:
     pronouns, aliases or morphology: "Rexy" is not "Rex", and a reader must not
     infer that it is.
     """
-    return _strip_article(subject or "").strip().lower()
+    return _strip_article(
+        normalizza_apostrofi(subject or "")).strip().lower()
 
 
 def _apre_un_locativo(parola: str, lingua: str) -> bool:
@@ -273,8 +274,32 @@ def _apre_un_locativo(parola: str, lingua: str) -> bool:
     return (tronco.lower() + "'") in prep
 
 
+#: Gli apostrofi che una TASTIERA non produce ma un EDITOR si': `U+2019` e'
+#: quello che mettono Word, macOS e iOS al posto di `'`, e senza questa riga il
+#: testo scritto da una persona si comportava diversamente da quello scritto in
+#: un editor di codice. Misurato: «Il senatore è Dell'Utri» parsato col dritto
+#: e None col curvo, e con lui si perdeva anche «Il gatto è l'animale
+#: preferito», che e' una classe vera.
+#:
+#: Il danno piu' sottile non e' la perdita: `subject_key` e' «la UNICA
+#: definizione di stesso soggetto» per il guardian e per la contro-evidenza, e
+#: senza normalizzare «Dell'Utri» e «Dell’Utri» sono due soggetti DIVERSI —
+#: due fatti sulla stessa persona non finiscono mai in contesa, e basta che uno
+#: arrivi incollato da un documento e l'altro digitato a mano.
+#:
+#: Solo APOSTROFI: le virgolette doppie non si toccano, qui serve che una
+#: parola elisa resti una parola, non ripulire la punteggiatura.
+_APOSTROFI = str.maketrans({"’": "'", "‘": "'",
+                            "ʼ": "'", "´": "'", "＇": "'"})
+
+
+def normalizza_apostrofi(text: str) -> str:
+    """Porta ogni variante tipografica di apostrofo su `U+0027`."""
+    return (text or "").translate(_APOSTROFI)
+
+
 def _copula_match(text: str) -> re.Match | None:
-    m = _COPULA_RE.match((text or "").strip())
+    m = _COPULA_RE.match(normalizza_apostrofi(text).strip())
     if not m:
         return None
     # La frase continua oltre l'oggetto: non e' una proposizione semplice e
