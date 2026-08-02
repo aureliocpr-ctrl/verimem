@@ -86,9 +86,28 @@ _ARTICOLI_PER_LINGUA: dict[str, tuple[str, ...]] = {
 #: L'inglese resta com'era — non fonde nulla, e nessun difetto e' stato
 #: misurato li'. Allargarlo per simmetria significherebbe agire su un'ipotesi
 #: invece che su un'evidenza, sul comportamento su cui gira tutto il corpus.
+#: E LE IMPROPRIE QUANTO LE PROPRIE. La prima cura ha completato le forme
+#: FUSE e ha lasciato fuori l'altra meta' della lista: qui c'erano solo le
+#: preposizioni PROPRIE, e le improprie — quelle che sono anche avverbi o
+#: participi — passavano tutte. Misurato dal vivo, 9 su 9 accettati come
+#: CLASSI, inglese compreso:
+#:     Il server è vicino a Roma.         -> ('il server', 'vicino a roma')
+#:     Le bureau est près de la gare.     -> ('le bureau', 'près de la gare')
+#:     The server is behind the firewall. -> ('the server', 'behind the firewall')
+#: L'inglese entra ORA perche' ora c'e' la misura: la cura precedente lo aveva
+#: lasciato fermo proprio per non muoverlo su un'ipotesi.
+#:
+#: TRE RESTANO FUORI DI PROPOSITO, e stanno in un test: «lungo» («Il fiume è
+#: lungo trecento chilometri» — aggettivo), «salvo» («Il file è salvo» —
+#: participio) e «secondo» («Il capitolo è secondo» — ordinale). Sono
+#: preposizioni improprie a tutti gli effetti, e metterle costerebbe classi
+#: vere su frasi che parlano davvero di una classe.
 _NON_NP_PER_LINGUA: dict[str, frozenset[str]] = {
-    "en": frozenset("in on at from to of for with by about over under near "
-                    "into onto as".split()),
+    "en": frozenset(
+        "in on at from to of for with by about over under near into onto as "
+        "behind inside outside next within between among against through "
+        "across around during via without before after since until upon "
+        "beyond throughout toward towards beneath alongside".split()),
     "it": frozenset(
         "in su a da di per con tra fra sotto sopra verso presso dentro fuori "
         # di+art · a+art · da+art · in+art · su+art · con+art
@@ -97,16 +116,24 @@ _NON_NP_PER_LINGUA: dict[str, frozenset[str]] = {
         "dal dallo dalla dai dagli dalle dall' "
         "nel nello nella nei negli nelle nell' "
         "sul sullo sulla sui sugli sulle sull' "
-        "col coi".split()),
+        "col coi "
+        # improprie e locuzioni — senza lungo/salvo/secondo (vedi sopra)
+        "vicino accanto prima dopo durante oltre attraverso intorno davanti "
+        "dietro contro circa entro mediante tramite tranne eccetto "
+        "nonostante malgrado rispetto".split()),
     "fr": frozenset(
         "en sur a de du des dans pour avec par sous vers chez entre "
         # à accentata (la preposizione vera) e le sue due contrazioni.
         # `l'` NON entra: in francese e' ARTICOLO («est l'animal favori» e'
         # una classe), e «est à l'hôtel» e' gia' respinto dal suo `à`.
-        "à au aux d'".split()),
+        "à au aux d' "
+        "près loin autour avant après pendant selon malgré envers hors "
+        "parmi depuis contre devant derrière".split()),
     "es": frozenset(
         "en sobre a de del para con por bajo hacia entre desde hasta "
-        "al".split()),          # `del` c'era, la sua gemella `al` no
+        "al "                   # `del` c'era, la sua gemella `al` no
+        "cerca lejos antes después durante según excepto mediante tras ante "
+        "contra dentro fuera alrededor".split()),
 }
 
 #: La copula -> la lingua. `est` prima di `es`, e `e'` prima di `es`: il regex

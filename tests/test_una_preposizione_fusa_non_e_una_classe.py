@@ -91,6 +91,64 @@ def test_una_classe_vera_continua_a_passare(frase):
     assert _copula_parse(frase) is not None, f"classe vera respinta: {frase}"
 
 
+# --- lo SWEEP: le preposizioni IMPROPRIE e le locuzioni ------------------
+#
+# La cura sulle forme fuse ha completato meta' della lista e ne ha lasciato
+# fuori l'altra: `_NON_NP_PER_LINGUA` conosceva solo le preposizioni PROPRIE.
+# Segnalato dall'altra istanza e verificato dal vivo qui, 9 su 9 accettati
+# come CLASSI — inglese compreso, che e' l'evidenza che mancava per toccarlo:
+#
+#     Il server è vicino a Roma.          -> ('il server', 'vicino a roma')
+#     Le bureau est près de la gare.      -> ('le bureau', 'près de la gare')
+#     The server is behind the firewall.  -> ('the server', 'behind the firewall')
+
+LOCATIVI_IMPROPRI = [
+    ("Il server è vicino a Roma.", "it: vicino a"),
+    ("Il file è accanto al log.", "it: accanto a"),
+    ("Il deploy è prima del test.", "it: prima di"),
+    ("Il backup è dopo la suite.", "it: dopo"),
+    ("Il job è durante la notte.", "it: durante"),
+    ("Il valore è oltre la soglia.", "it: oltre"),
+    ("Il cavo è attraverso il muro.", "it: attraverso"),
+    ("Le bureau est près de la gare.", "fr: près de"),
+    ("Le colis est derrière la porte.", "fr: derrière"),
+    ("The server is behind the firewall.", "en: behind"),
+    ("The cache is inside the process.", "en: inside"),
+    ("The office is next to the station.", "en: next to"),
+    ("The window is between two calls.", "en: between"),
+    ("El coche está... el servidor es tras la puerta.", "es: tras"),
+]
+
+
+@pytest.mark.parametrize("frase,forma", LOCATIVI_IMPROPRI,
+                         ids=[f for f, _ in LOCATIVI_IMPROPRI])
+def test_una_preposizione_impropria_non_e_una_classe(frase, forma):
+    assert _copula_parse(frase) is None, (
+        f"{forma}: locativo accettato come classe -> {_copula_parse(frase)}")
+
+
+AMBIGUE_LASCIATE_FUORI = [
+    ("Il fiume è lungo trecento chilometri.", "it: «lungo» e' AGGETTIVO"),
+    ("Il file è salvo.", "it: «salvo» e' AGGETTIVO (salvato)"),
+    ("Il capitolo è secondo nella lista.", "it: «secondo» e' ORDINALE"),
+]
+
+
+@pytest.mark.parametrize("frase,perche", AMBIGUE_LASCIATE_FUORI,
+                         ids=[f for f, _ in AMBIGUE_LASCIATE_FUORI])
+def test_le_ambigue_restano_fuori_dalla_lista(frase, perche):
+    """Tre parole che SONO preposizioni improprie e che non entrano, perche'
+    in italiano sono anche altro. Metterle costerebbe classi vere, ed e' il
+    verso di errore piu' caro: perdere un'analisi lascia un fatto in meno nei
+    confronti, ma solo su frasi che parlano davvero di una classe.
+
+    Sta in un test e non in un commento perche' e' una decisione, e le
+    decisioni si rompono quando qualcuno «completa» la lista senza sapere
+    perche' era incompleta.
+    """
+    assert _copula_parse(frase) is not None, f"{perche}: {frase}"
+
+
 def test_i_locativi_nudi_restano_respinti():
     """La guardia che gia' c'era non si tocca."""
     for frase in ("Il gatto è a Roma.", "Rex e' a Roma.",
