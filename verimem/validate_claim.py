@@ -220,6 +220,21 @@ def similarita_semantica(a: str, b: str) -> float:
     Restituisce 0.0 se l'encode non e' disponibile: un motore assente non deve
     far cadere una scrittura, e zero significa «non ho potuto misurare», che
     porta alla decisione conservativa (nessuna evoluzione).
+
+    NON RIUSARE QUESTA FUNZIONE PER RAGGRUPPARE. Regge dove i due candidati
+    sono GIA' STATI ACCOPPIATI da qualcun altro — nel write path `_old` arriva
+    per id da `_sib_by_id` e `classify_write_relation` ha gia' detto
+    «evolution», quindi qui si giudica UNA coppia proposta. Non regge dove
+    bisogna SELEZIONARE le coppie: misurato sul corpus, 900 fatti vivi e non
+    quarantinati danno 404550 coppie, e sopra la soglia del banco (0.878) ne
+    stanno 13659 — il 91.3% dei fatti avrebbe almeno un «rivale». A 0.93 e'
+    ancora il 26.1%. La coppia piu' simile di tutte, 0.9941, e' «Lab stress
+    test worker 0 write 33» contro «worker 1 write 33»: due eventi distinti,
+    non due versioni della stessa cosa.
+    Il banco e' fatto di frasi corte e pulite, il corpus e' prosa lunga dove
+    tutto somiglia a tutto. Usare la similarita' per raccogliere i contendenti
+    del guardian renderebbe il prodotto muto — dichiarerebbe contese ovunque e
+    si asterrebbe ovunque.
     """
     try:
         import numpy as np
