@@ -108,6 +108,13 @@ def test_anche_il_tool_mcp_sa_spiegare(tmp_path, monkeypatch):
     class _A:
         def __init__(s):
             s.semantic = m.semantic
+            # E ANCHE `.memory`, come l'agente vero: `VerimemAgent` espone
+            # entrambi e `mcp_server` usa `a.memory` in 83 punti. Un doppio
+            # che ne dichiara uno solo tiene verde un handler finche' quello
+            # basta, e nasconde il giorno in cui smette di bastare — e' la
+            # stessa distanza doppio/vero gia' pagata su `test_recall_chain`,
+            # dove il doppio prometteva PIU' del vero invece di meno.
+            s.memory = m
     # monkeypatch, non assegnazione diretta: senza ripristino `_ag` resta
     # sostituita per tutta la sessione pytest e ogni test successivo che passa
     # dal server MCP riceve questo doppio (5 rossi misurati il 2026-07-30).

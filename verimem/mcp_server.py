@@ -13009,34 +13009,34 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             })
 
         if name == "hippo_quarantine_log":
-            import sqlite3 as _sq
             try:
                 _limit = max(1, int(arguments.get("limit", 50) or 50))
             except (TypeError, ValueError):
                 _limit = 50
-            _rows: list[dict] = []
+            # DELEGA, non copia. Qui c'era la stessa SELECT dell'SDK
+            # (`client.py:1447-1452`) ricopiata a mano, e con la copia si e'
+            # perso cio' che la copia non conteneva: l'arricchimento
+            # `reason`/`layers` dall'audit trail, cioe' PERCHE' ogni claim e'
+            # stato fermato. Sapere QUALI fatti sono in quarantena senza
+            # sapere perche' non permette di correggerne nessuno — ed e'
+            # esattamente la ragione per cui quell'arricchimento fu scritto.
+            #
+            # Il commento che stava qui diceva di star chiudendo questa classe
+            # («una capacita' su un canale solo»): lo sweep si era fermato a
+            # `explain` e non aveva guardato la riga sopra. Il gateway
+            # (`gateway.py:1308`) delegava gia' — tre superfici, tre
+            # comportamenti, e divergevano in direzioni opposte.
+            #
+            # Effetto secondario che spariva con la copia: `client.py:1505`
+            # salta il ricalcolo dove la riga porta gia' un `reason`. Su
+            # questo canale `reason` non era mai popolato, quindi `explain`
+            # ricalcolava tutto e il risparmio che dichiara non c'era.
             try:
-                with _sq.connect(str(a.semantic.db_path)) as _con:
-                    _con.row_factory = _sq.Row
-                    for _r in _con.execute(
-                            "SELECT id, proposition, topic, created_at, status "
-                            "FROM facts WHERE status = 'quarantined' "
-                            "AND superseded_by IS NULL "
-                            "ORDER BY created_at DESC LIMIT ?", (_limit,)):
-                        _rows.append(dict(_r))
+                _rows = list(a.memory.quarantine_log(
+                    limit=_limit,
+                    explain=bool(arguments.get("explain", False))))
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"quarantine_log read failed: {_exc}")
-            # 2026-07-30: sapere QUALI fatti sono fermi senza sapere PERCHE'
-            # non permette di correggerne nessuno. Opt-in perche' ricalcola i
-            # detector; e sta anche qui, e non solo sull'SDK, perche' una
-            # capacita' su un canale solo e' il difetto che questa serie di
-            # commit ha passato la giornata a chiudere.
-            if bool(arguments.get("explain", False)):
-                try:
-                    from .client import Memory as _M
-                    _M._spiega_le_quarantene(_rows)
-                except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
-                    pass
             return _ok({"ok": True, "n": len(_rows), "quarantined": _rows})
 
         if name == "hippo_epistemic_health":
