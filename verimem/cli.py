@@ -914,6 +914,31 @@ def recall_cmd(
     if not hits:
         console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
+    # SE IL MIGLIORE STA SOTTO IL PAVIMENTO MISURATO, si dice. `recall` è un
+    # top-k e restituisce sempre i più vicini: su uno store di tre fatti di
+    # listino, «quale database usa il cluster di produzione» rende «La prova
+    # gratuita dura 14 giorni» a 0.7375. Il README apre con «when the evidence
+    # isn't there the system abstains instead of guessing», e chi legge quella
+    # riga e usa questo comando riceve una frase scorrelata senza nulla che lo
+    # avverta.
+    #
+    # Il pavimento c'è già ed è MISURATO — `_auto_relevance_floor`, lo stesso
+    # che `ignorance` usa per classificare `no_evidence`. Qui NON cambia il
+    # verdetto e non filtra niente: alzare una soglia sul recall è l'errore
+    # pagato il 30/07 (`max(floor, noise_floor)`, ritirata perché rendeva muta
+    # la mappa). Dice, e basta.
+    try:
+        _pavimento = m._auto_relevance_floor()
+        _best = max(float(h.get("score") or 0.0) for h in hits)
+    except Exception:  # noqa: BLE001 — una riserva non fa cadere una lettura
+        _pavimento = _best = None
+    if (_pavimento and _best is not None and _best < float(_pavimento)):
+        console.print(
+            f"[yellow]⚠[/yellow] [dim]il migliore di questi ({_best:.3f}) sta "
+            f"sotto il pavimento che lo store ha misurato su se stesso "
+            f"({float(_pavimento):.3f}): sono i fatti più vicini alla domanda, "
+            f"non necessariamente una risposta. `verimem ignorance "
+            f"\"{query}\"` dice cosa manca.[/dim]")
     for h in hits:
         console.print(riga_di_recall(h))
         # La storia si chiede e va MOSTRATA: passare il flag e stampare la
