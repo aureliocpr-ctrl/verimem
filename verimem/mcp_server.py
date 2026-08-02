@@ -655,6 +655,7 @@ GATING_BYPASS_LIST: frozenset[str] = frozenset({
     "hippo_recall",
     "hippo_transcript_recall",
     "hippo_document_list",
+    "hippo_document_versions",
     "hippo_document_search",
     "hippo_document_get",
     "hippo_episode_list",
@@ -1539,6 +1540,24 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {"limit": {"type": "integer", "default": 200}},
+            },
+        ),
+        t.Tool(
+            name="hippo_document_versions",
+            description=(
+                "The HISTORY of one source document: every snapshot ever "
+                "ingested for that source_id, oldest first, with version, "
+                "content_hash, fetched_at and size. `hippo_document_list` "
+                "shows each source at its LATEST version and "
+                "`hippo_document_get` returns one — this is how a document "
+                "CHANGED. Metadata only: use hippo_document_get for a "
+                "specific version's text. Unknown source_id returns an empty "
+                "list, not an error."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {"source_id": {"type": "string"}},
+                "required": ["source_id"],
             },
         ),
         t.Tool(
@@ -7632,6 +7651,34 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             srcs = DocumentStore().list_sources(limit=limit)
             _audit(name, arguments, outcome="ok")
             return _ok(srcs)
+
+        if name == "hippo_document_versions":
+            # LA STORIA di un documento. `ingest` incrementa la versione ogni
+            # volta che il CONTENUTO cambia — versionare e' una scelta
+            # esplicita del tier, ed e' la ragione per cui si chiama
+            # «versionato-per-hash» — ma `list_versions` non compariva in
+            # nessuna delle tre superfici (mcp_server 0, cli 0, client 0).
+            # Sei tool `hippo_document_*` e nessuno che dicesse come un
+            # documento e' CAMBIATO: `document_list` da' ogni fonte alla sua
+            # versione piu' alta, `document_get` ne da' una.
+            #
+            # Metadati soltanto: una lista che porta ogni revisione intera
+            # diventa impraticabile su un file grosso, e `document_get` esiste
+            # gia' per il testo di una versione precisa.
+            from verimem.documents import DocumentStore
+            _sid = str(arguments.get("source_id", "") or "").strip()
+            if not _sid:
+                _audit(name, arguments, outcome="rejected_empty")
+                return _err("empty source_id")
+            _versioni = [
+                {"source_id": d.source_id, "version": d.version,
+                 "content_hash": d.content_hash, "uri": d.uri,
+                 "fetched_at": d.fetched_at, "chars": len(d.content or ""),
+                 "meta": d.meta}
+                for d in DocumentStore().list_versions(_sid)
+            ]
+            _audit(name, arguments, outcome="ok")
+            return _ok(_versioni)
 
         if name == "hippo_document_search":
             # Substring lessicale (NON semantico) sulla versione piu' alta di
