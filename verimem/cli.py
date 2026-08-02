@@ -2318,6 +2318,16 @@ def facts_forget(
             "Pass --no-undoable for hard delete (privacy/GDPR)."
         ),
     ),
+    purge_history: bool = typer.Option(
+        False, "--purge-history",
+        help=(
+            "Also delete the whole supersession chain — every predecessor "
+            "and successor of this fact. WITHOUT it a deleted fact can leave "
+            "rows carrying the SAME datum behind: `update()` never overwrites, "
+            "it stores a new fact and supersedes the old one, which stays in "
+            "the database. Needed for a real erasure request."
+        ),
+    ),
 ) -> None:
     """Delete one fact (privacy / GDPR / cleanup).
 
@@ -2397,7 +2407,32 @@ def facts_forget(
         if not ok:
             console.print("[yellow]aborted[/yellow]")
             return
-    if undoable:
+    # QUANTE ALTRE RIGHE PORTANO LO STESSO DATO. `update()` non sovrascrive:
+    # STORE un fatto nuovo e SUPERSEDE il vecchio, che resta nel database con
+    # lo stesso contenuto. Un comando che si chiama «privacy / GDPR» e ne
+    # cancella una su due deve dirlo — misurato dall'SDK: dopo `delete(nuovo)`
+    # la riga col dato sensibile era ancora li' e `get(vecchio)` la
+    # restituiva. `Memory.delete(purge_history=True)` chiudeva il caso da
+    # sempre, e la parola `purge_history` non compariva in tutto questo file:
+    # la cancellazione completa viveva solo nell'SDK, cioe' nel canale che
+    # nessuno usa per una richiesta di cancellazione.
+    _resto: list[str] = []
+    if not purge_history:
+        try:
+            _resto = [x for x in
+                      [getattr(p, "id", "") for p in
+                       sm.direct_predecessors(f.id, limit=100)] if x]
+        except Exception:  # noqa: BLE001 — un avviso non fa cadere un delete
+            _resto = []
+
+    if purge_history:
+        _mem = _continuity_memory()
+        _n = _mem.delete(f.id, purge_history=True, principal="cli:local")
+        console.print(f"[green]forgotten with its chain:[/green] {f.id} "
+                      f"[dim](predecessors and successors purged)[/dim]"
+                      if _n else
+                      f"[yellow]nothing to forget:[/yellow] {f.id}")
+    elif undoable:
         result = sm.delete_with_undo(f.id, principal="cli:local")
         if result["removed"]:
             console.print(
@@ -2409,6 +2444,13 @@ def facts_forget(
     else:
         sm.delete(f.id, principal="cli:local")
         console.print(f"[green]hard-deleted:[/green] {f.id}")
+
+    if _resto:
+        console.print(
+            f"[yellow]{len(_resto)} predecessor(s) left in the store[/yellow] "
+            f"[dim]— this fact superseded others, and they still carry what "
+            f"they said. Re-run with --purge-history for an erasure "
+            f"request.[/dim]")
 
 
 @facts_app.command("undo")
