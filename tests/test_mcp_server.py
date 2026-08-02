@@ -171,6 +171,11 @@ _EXPECTED_TOOLS = {
     # dossier (chain of custody / declared disputes / explicit abstention).
     "hippo_trust_report",
     "hippo_document_list",
+    # la STORIA di una fonte: ogni snapshot mai ingerito, dal piu' vecchio.
+    # `list_versions` esisteva nel DocumentStore dal principio e non compariva
+    # in nessuna delle tre superfici, mentre il tier versiona i documenti
+    # apposta — e' la funzione che gli da' il nome.
+    "hippo_document_versions",
     "hippo_document_search",
     "hippo_document_get",
     # roadmap #1 (2026-07-07): document RAG — semantic chunk index over whole
