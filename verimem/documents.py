@@ -267,6 +267,28 @@ class DocumentStore:
         """
         q = (query or "").strip()
         terms = [tok.lower() for tok in q.split() if tok.strip()]
+        # UN ARTICOLO NON PUO' CAMBIARE QUALI DOCUMENTI TROVI. L'AND e' su
+        # TUTTI i termini, e i termini includevano articoli e preposizioni.
+        # Misurato 2026-08-02 su tre documenti che parlano tutti di piano
+        # annuale:
+        #     'piano annuale'      -> 3 doc  [faq, listino, note]
+        #     'il piano annuale'   -> 2 doc  [listino, note]
+        #     'del piano annuale'  -> 1 doc  [faq]
+        # Non e' solo «meno»: e' un insieme DIVERSO — «del piano annuale»
+        # rendeva l'unico documento che contiene «del» e perdeva i due che
+        # rispondono meglio. L'articolo selezionava la grammatica.
+        #
+        # Terza superficie con questo schema dopo `count` (aa62e68b) e il ramo
+        # di esclusione (7567a464). `_tokens` di bm25_rank, non una copia.
+        #
+        # Il tier resta grezzo come dichiarato: nessun embedding, nessun
+        # punteggio, nessuna soglia. Si toglie solo cio' che non e' contenuto.
+        if terms:
+            from .bm25_rank import _tokens as _informativi
+            ridotti = [t for t in _informativi(q) if t]
+            # Nessun termine informativo => la query era fatta di sola
+            # grammatica. Zero, non «tutto»: una query vuota renderebbe tutto.
+            terms = ridotti
         if not terms:
             return []
         conn = self._connect()
