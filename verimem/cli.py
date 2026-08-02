@@ -996,8 +996,21 @@ def correct_cmd(
     ammesso = (bool(r.get("stored")) and disp == "admitted"
                and r.get("status") != "quarantined" and not graded)
     if not ammesso:
-        console.print(f"[yellow]{disp}[/yellow] id={nuovo} — la correzione NON "
-                      f"e' stata ammessa, quindi {old_id} resta in piedi")
+        # L'ETICHETTA DICE QUALE DEI TRE RAMI, non `disp`. La disposizione del
+        # gate vale `admitted` anche quando il fatto e' finito in quarantena o
+        # e' entrato in via GRADUATA, quindi questa riga stampava
+        #     admitted id=… — la correzione NON e' stata ammessa
+        # cioe' due affermazioni opposte nella stessa riga, e la stessa riga
+        # per due rami diversi. L'invariante regge — il vecchio non viene
+        # ritirato, e c'e' un test che lo prova — ed e' il messaggio a
+        # contraddirla.
+        etichetta = ("quarantined" if r.get("status") == "quarantined"
+                     else "graded" if graded
+                     else "not stored" if not r.get("stored")
+                     else str(disp))
+        console.print(f"[yellow]{etichetta}[/yellow] id={nuovo} — la "
+                      f"correzione NON e' stata ammessa, quindi {old_id} "
+                      f"resta in piedi")
         console.print("[dim]il vecchio fatto non viene ritirato: ritirarlo a "
                       "favore di uno non ammesso li perderebbe entrambi[/dim]")
         raise typer.Exit(1)

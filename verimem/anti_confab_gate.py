@@ -1544,7 +1544,12 @@ def run_validation_gate(
                     # so the escalation equality check does not fire.
                     warnings.append({
                         "layer": "L4-grounding-graded",
-                        "reason": f"graded admission: grounding {gscore:.0f} below "
+                        # `.1f` e non `.0f`: con `.0f` un grounding di 0.3651
+                        # si legge «grounding 0», che e' il valore che questo
+                        # prodotto usa per dire «nessun punteggio». Chi legge
+                        # non distingue un giudizio bassissimo da un giudizio
+                        # assente — la distinzione che tutto il resto difende.
+                        "reason": f"graded admission: grounding {gscore:.1f} below "
                                   f"threshold {_threshold_of_record:.0f} — admitted "
                                   "as low-confidence, NOT verified "
                                   "(ENGRAM_GRADED_ADMISSION)",
@@ -1583,8 +1588,10 @@ def run_validation_gate(
                         )
                     warnings.append({
                         "layer": "L4-grounding",
+                        # `.1f` come sopra: «grounding 0» su un valore di 0.37
+                        # confonde un giudizio bassissimo con uno assente.
                         "reason": f"source does not entail the proposition "
-                                  f"(grounding {gscore:.0f} below threshold)",
+                                  f"(grounding {gscore:.1f} below threshold)",
                         "advice": "the source does not support this proposition — likely a "
                                   "confabulated inference, not a stated fact." + _pointer,
                         "grounding_score": gscore,
