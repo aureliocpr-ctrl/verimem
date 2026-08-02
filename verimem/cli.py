@@ -894,6 +894,48 @@ def recall_cmd(
                           f"[dim]({_p.get('asserted_date','?')} → {_fino})[/dim]")
 
 
+@app.command("ask")
+def ask_cmd(
+    query: str = typer.Argument(..., help="La domanda, in linguaggio naturale."),
+    k: int = typer.Option(5, "--k", help="Quanti risultati per una FIND."),
+    topic: str = typer.Option(None, "--topic", "-t",
+                              help="Limita a un prefisso di topic."),
+) -> None:
+    """Domanda con ROUTING D'INTENTO — «quante volte…» conta, non cerca.
+
+    `recall` restituisce i top-k, e per una domanda di CARDINALITÀ i top-k
+    SOTTOCONTANO: `Memory.ask` classifica l'intento e manda una domanda di
+    conteggio a uno scan del corpus. Misurato: «quante volte ho parlato del
+    moat» dà `count 205` da qui e **5 hits** da `recall`, perché cinque è il
+    valore di k.
+
+    La capacità c'era nell'SDK dal principio e non aveva una porta: chi usa la
+    riga di comando otteneva un numero sbagliato di due ordini di grandezza,
+    senza niente che glielo dicesse. È la quinta occorrenza della classe che
+    `test_le_capacita_senza_porta_non_aumentano` sorveglia — e il cricchetto
+    non la vedeva perché concatenava le due superfici, quindi bastava esistere
+    su MCP.
+
+    FIND è il default sicuro: una domanda classificata male si comporta
+    esattamente come `recall`.
+    """
+    rep = _open_memory().ask(query, k=k, topic_prefix=topic or None)
+    intento = rep.get("intent", "find")
+    if intento == "count":
+        console.print(f"[green]{rep.get('count', 0)}[/green] "
+                      f"[dim]fatti su «{rep.get('terms', query)}» "
+                      f"(intento: conteggio — scan dell'intero corpus, "
+                      f"non i primi {k})[/dim]")
+        raise typer.Exit(0)
+    risultati = rep.get("results") or []
+    if not risultati:
+        console.print("[yellow]no facts found[/yellow]")
+        raise typer.Exit(0)
+    console.print(f"[dim]intento: {intento}[/dim]")
+    for h in risultati:
+        console.print(riga_di_recall(h))
+
+
 @app.command("correct")
 def correct_cmd(
     old_id: str = typer.Argument(..., help="Id del fatto da correggere."),

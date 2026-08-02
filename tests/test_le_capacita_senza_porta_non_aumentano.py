@@ -31,6 +31,8 @@ from __future__ import annotations
 import pathlib
 import re
 
+import pytest
+
 from verimem.client import Memory
 
 #: Misurato il 2026-08-02. Chi apre una porta ABBASSA questo numero nello
@@ -45,6 +47,15 @@ from verimem.client import Memory
 #: che non CRESCA.
 SENZA_PORTA_NOTE = 11
 
+#: E PER SUPERFICIE, che è la domanda vera. Misurato il 2026-08-02: erano 14
+#: su `cli.py` e 14 su `mcp_server.py`, contro le 10 che mancano a entrambe.
+#: Contare solo l'unione nascondeva proprio la classe che questo file
+#: sorveglia — una capacità che vive su un canale solo.
+#: `cli.py` scende a 13 con l'apertura di `verimem ask` nello stesso commit
+#: che ha corretto il conteggio: è il verso in cui questo numero deve
+#: muoversi.
+SENZA_PORTA_PER_SUPERFICIE = {"cli.py": 13, "mcp_server.py": 14}
+
 #: Di quanto puo' scendere prima che valga la pena riallineare la costante.
 #: Sotto questa distanza il calo puo' essere ambientale; oltre, qualcuno ha
 #: aperto delle porte e il numero qui sopra non racconta piu' lo stato di
@@ -54,18 +65,33 @@ _SCARTO_AMBIENTALE = 3
 _RADICE = pathlib.Path(__file__).resolve().parents[1] / "verimem"
 
 
-def _superfici() -> str:
-    return "\n".join(
-        (_RADICE / nome).read_text(encoding="utf-8", errors="ignore")
-        for nome in ("cli.py", "mcp_server.py"))
+def _superficie(nome: str) -> str:
+    return (_RADICE / nome).read_text(encoding="utf-8", errors="ignore")
 
 
-def _senza_porta() -> list[str]:
-    testo = _superfici()
+def _senza_porta(dove: str | None = None) -> list[str]:
+    """Le capacita' senza porta. `dove=None` = senza porta su NESSUNA delle
+    due superfici; `dove="cli.py"` = senza porta su quella.
+
+    LA PRIMA STESURA CONCATENAVA I DUE FILE, e bastava comparire in UNO dei
+    due per contare come esposta. Cosi' il cricchetto vedeva 10 capacita'
+    scoperte mentre PER SUPERFICIE sono 18 — quattro senza porta CLI (`ask`,
+    `audit_log`, `epistemic_health`, `quarantine_log`) e quattro senza MCP.
+    Un cricchetto nato per la classe «una capacita' raggiungibile solo dal
+    canale che l'ha vista nascere» che non distingueva i canali: e' il difetto
+    che sorveglia, dentro sé stesso.
+
+    Trovato dall'altra istanza, con un caso concreto che pesa: `Memory.ask` e'
+    il router di intento — le domande di cardinalita' vanno a uno SCAN perche'
+    il top-k sottoconta — e senza porta CLI `verimem` risponde 5 dove il vero
+    e' 205.
+    """
+    testi = ([_superficie(dove)] if dove
+             else [_superficie(n) for n in ("cli.py", "mcp_server.py")])
     return sorted(
         m for m in dir(Memory)
         if not m.startswith("_")
-        and not re.search(rf"\b{re.escape(m)}\b", testo))
+        and all(not re.search(rf"\b{re.escape(m)}\b", t) for t in testi))
 
 
 def test_le_capacita_senza_porta_non_aumentano():
@@ -97,6 +123,23 @@ def test_se_ne_apri_TANTE_abbassi_il_numero():
         f"hai aperto piu' di {_SCARTO_AMBIENTALE} porte senza aggiornarla. "
         f"Portala a {len(mancanti)}.\nRestano senza:\n  "
         + "\n  ".join(mancanti))
+
+
+@pytest.mark.parametrize("superficie", sorted(SENZA_PORTA_PER_SUPERFICIE))
+def test_nessuna_superficie_perde_terreno(superficie):
+    """La domanda vera è PER CANALE, non sull'unione.
+
+    Una capacità che vive solo su MCP è esattamente il difetto che questo
+    file sorveglia — «raggiungibile solo dal canale che l'ha vista nascere» —
+    e contando l'unione risultava coperta. Il caso che l'ha mostrato:
+    `Memory.ask`, il router di intento, senza porta CLI, con `verimem` che
+    risponde 5 dove il vero è 205.
+    """
+    mancanti = _senza_porta(superficie)
+    atteso = SENZA_PORTA_PER_SUPERFICIE[superficie]
+    assert len(mancanti) <= atteso, (
+        f"{superficie}: {len(mancanti)} capacità senza porta, erano {atteso}. "
+        f"Le nuove sono fra queste:\n  " + "\n  ".join(mancanti))
 
 
 def test_il_criterio_vede_davvero_qualcosa():
