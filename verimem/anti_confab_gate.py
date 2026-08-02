@@ -475,10 +475,28 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
     separarle serve sapere QUALE grandezza si misura, non quali parole si
     usano. Nessuna delle due condizioni qui lo sa.
     """
-    from .validate_claim import _parole_di_contenuto, _testa_nominale
+    from .validate_claim import (
+        _parole_di_contenuto,
+        _polarita,
+        _testa_nominale,
+    )
 
     if not (nuovo or "").strip() or not (vecchio or "").strip():
         return True
+    # POLARITA' DIVERSA, NESSUNA EVOLUZIONE. Una frase e la sua negazione
+    # hanno le stesse parole di contenuto e la stessa testa nominale —
+    # verificato: «Il gate NON gira sul canale MCP» e «Il gate gira sul canale
+    # MCP» danno entrambe ['canale','gate','gira','sul'] e testa «gate» —
+    # quindi per le due condizioni qui sotto sono lo stesso fatto aggiornato,
+    # e la seconda ritira la prima mentre dice il CONTRARIO.
+    # La causa e' che «non» sta fra le parole vuote (per l'italiano soltanto:
+    # `not`, `no`, `mai`, `senza`, `never`, `without` no). Rimetterle nel
+    # conteggio e' stato provato e misurato PEGGIORE — 228 -> 229 evoluzioni
+    # sulle 260 coppie corte, e la coppia in piu' e' un falso positivo — quindi
+    # la negazione si confronta come POLARITA', dove non gonfia nessuna
+    # intersezione.
+    if _polarita(nuovo) != _polarita(vecchio):
+        return False
     a = _parole_di_contenuto(nuovo)
     b = _parole_di_contenuto(vecchio)
     if not a or not b:

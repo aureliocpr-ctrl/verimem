@@ -121,6 +121,46 @@ def _termine_presente(termine: str, testo_lower: str) -> bool:
 #: «verimem» e «com» si trovano in mezzo corpus, per cui qualunque cosa si
 #: affermi su un sito risulterebbe asserita da qualcuno. Misurato: e' l'unico
 #: motivo per cui una claim del banco sopravviveva al controllo qui sotto.
+#: Le parole che RIBALTANO una frase, e che percio' non possono essere tolte
+#: dal contenuto insieme alle vuote. Elenco CHIUSO — non e' una lista di
+#: «parole importanti» che cresce a piacere: sono le negazioni, e la loro
+#: proprieta' e' che togliendole la frase dice il CONTRARIO.
+#: Oggi solo `non` e' anche in `_PAROLE_VUOTE`; le altre ci sono perche' quella
+#: lista e' una fonte esterna che puo' cambiare, e allora il difetto tornerebbe
+#: in silenzio su un'altra lingua.
+_NEGAZIONI = frozenset({
+    "non", "no", "not", "mai", "never", "nessun", "nessuna", "nessuno",
+    "niente", "nulla", "senza", "without", "neither", "nor", "ni",
+    "pas", "sans", "jamais", "aucun", "sin", "nunca", "ninguno",
+})
+
+def _polarita(text: str) -> bool:
+    """La frase e' NEGATA? — il segnale che distingue una frase dal suo
+    contrario, e che nessun conteggio di parole condivise puo' portare.
+
+    Serve perche' «Il gate NON gira sul canale MCP» e «Il gate gira sul canale
+    MCP» hanno le STESSE parole di contenuto e la stessa testa nominale: per il
+    criterio dell'evoluzione sono lo stesso fatto aggiornato, e il secondo
+    ritira il primo mentre dice il contrario.
+
+    Sta qui e non dentro `_parole_di_contenuto` perche' quella strada e' stata
+    provata e MISURATA come peggiore: rimettere le negazioni fra le parole
+    contate porta le riconosciute-evoluzione da 228 a 229 sulle 260 coppie
+    corte del corpus, e la coppia in piu' e' un falso positivo — due
+    osservazioni diverse unite dal solo fatto di nominare entrambe «non».
+    Come polarita' quel caso non si muove: hanno la stessa, e a decidere resta
+    il criterio di prima.
+
+    Deliberatamente GREZZA — presenza di una negazione, non la sua portata
+    sintattica. Non risolve la doppia negazione ne' capisce su quale sintagma
+    cade: dice solo che due frasi hanno polarita' diverse, che e' abbastanza
+    per NON dichiararle un aggiornamento l'una dell'altra. Nel dubbio non
+    evolve, che e' il verso di errore che questo prodotto preferisce.
+    """
+    parole = {t.lower() for t in _PAROLA_RE.findall(text or "")}
+    return bool(parole & _NEGAZIONI)
+
+
 _DOMINIO_RE = re.compile(r"\b[\w-]+(?:\.[\w-]+)+\b")
 
 #: Le parole, per il controllo di asserzione. Tre lettere minime: sotto ci
@@ -138,13 +178,51 @@ def _parole_di_contenuto(text: str) -> set[str]:
     """
     from .document_index import _PAROLE_VUOTE  # una fonte, non una copia
 
+    # I NOMI SONO IN TITLE CASE. Una parola TUTTA MAIUSCOLA e' enfasi o sigla,
+    # mai un nome proprio, e toglierla dal contenuto le faceva perdere il peso
+    # che ha. Misurato sui 5151 fatti vivi del corpus il 2026-08-02: dei 14102
+    # nomi distinti estratti (86977 occorrenze) ne sono TUTTE MAIUSCOLE 7833
+    # (54717 occorrenze) — il 63% — e la piu' frequente e' «NON», 1461 volte.
+    # Una negazione contata come nome proprio, e quindi tolta dal contenuto:
+    #     Il gate NON gira sul canale MCP. -> ['canale','gate','gira','sul']
+    #     Il gate gira sul canale MCP.     -> ['canale','gate','gira','sul']
+    # cioe' una frase e la sua negazione indistinguibili per il criterio che
+    # decide se un fatto e' l'EVOLUZIONE di un altro: la seconda ritira la
+    # prima come aggiornamento, mentre dice il contrario.
+    #
+    # Le sigle (MCP, TDD, API) tornano fra le parole di contenuto, ed e'
+    # giusto: portano contenuto, e chiamarle nomi propri serviva solo a
+    # toglierle.
+    #
+    # PORTATA SUL PREGRESSO: ZERO. Sulle 260 coppie corte gia' superseduta del
+    # corpus vivo, riconosciute evoluzione 228 prima e 228 dopo — il corpus e'
+    # prosa di sviluppo e non contiene negazioni urlate contrapposte. Vale per
+    # cio' che un utente scrive («il deploy NON e' andato»), non per cio' che
+    # c'e' gia'.
+    #
+    # `_extract_salients` NON e' toccata: i suoi altri due consumatori
+    # (`salient_count`, `_subj_overlap`) alimentano il gate misurato sul banco
+    # delle 20 claim, e questo giro non ha misurato quello.
     caps, _ = _extract_salients(text)
-    nomi = {c.lower() for c in caps}
+    nomi = {c.lower() for c in caps if not c.isupper()}
+    # LA NEGAZIONE RESTA FUORI DAL CONTENUTO, ed e' una correzione a me stesso.
+    # Il primo tentativo la rimetteva dentro — «non» e' nelle parole vuote per
+    # l'italiano e non per `not`/`no`/`mai`/`senza`/`never`/`without`, il che e'
+    # gia' un'incoerenza — ma MISURATO sul corpus quel rimedio PEGGIORA: sulle
+    # 260 coppie corte gia' superseduta le riconosciute-evoluzione passano da
+    # 228 a 229, e la coppia in piu' e' un falso positivo (due osservazioni
+    # diverse, una sul grafo entity_kg e una sulle frequenze, unite dal solo
+    # fatto di contenere entrambe «non»).
+    # La negazione non e' una parola in piu' da contare: e' la POLARITA' della
+    # frase, e va confrontata come tale. Lo fa `_polarita`, usata dalla guardia
+    # dell'evoluzione, che distingue «Il gate NON gira» da «Il gate gira»
+    # SENZA gonfiare l'intersezione di chi la nomina per caso.
+    vuote = _PAROLE_VUOTE
     for dominio in _DOMINIO_RE.findall(text or ""):
         nomi.update(p.lower() for p in _PAROLA_RE.findall(dominio))
     return {t.lower() for t in _PAROLA_RE.findall(text or "")
             if len(t) > 2 and not t.isdigit()
-            and t.lower() not in _PAROLE_VUOTE and t.lower() not in nomi}
+            and t.lower() not in vuote and t.lower() not in nomi}
 
 
 def _testa_nominale(text: str) -> str:
