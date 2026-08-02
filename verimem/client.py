@@ -647,8 +647,35 @@ class Memory:
         view. This is the primitive; routing a natural-language counting query
         to it is a separate intent step (gateway/F2)."""
         if query is not None:
+            # UN ARTICOLO NON PUÒ CAMBIARE UN CONTEGGIO. L'AND è su TUTTI i
+            # token, e i token includono articoli e preposizioni: misurato
+            # 2026-08-02 sul corpus vero (5333 fatti vivi),
+            #     moat    207 -> del moat   134    73 persi (35%)
+            #     commit 1324 -> un commit 1126   198 persi (15%)
+            #     gate    942 -> il gate    877    65 persi  (7%)
+            # 429 fatti persi su otto coppie, e nessuno parlava di altro:
+            # parlavano dello stesso argomento senza quell'articolo. Questo
+            # metodo promette «the WHOLE matching set» — con una preposizione
+            # nella domanda ne vedeva due terzi.
+            #
+            # È lo SPECULARE della cura in `2f2c667e`: nel ramo OR le parole
+            # funzionali ALLARGANO a caso, qui nel ramo AND RESTRINGONO a
+            # caso. E corregge un ragionamento di quel commit, dove avevo
+            # scritto che `require_all_tokens` «è il percorso di precisione,
+            # dove una funzionale in più STRINGE invece di allargare» e
+            # l'avevo chiuso come non-problema: per una RICERCA è vero, per un
+            # CONTEGGIO il cui contratto è vedere tutto l'insieme, no.
+            #
+            # Sta QUI e non in `search_facts` apposta: la ricerca deve
+            # continuare a stringere. `_tokens` di bm25_rank, non una copia.
+            from .bm25_rank import _tokens as _informativi
+            _q = " ".join(_informativi(query)) if query.strip() else query
+            if query.strip() and not _q:
+                # Solo parole funzionali: non c'è nessun insieme da contare.
+                # Zero, non «tutto» — che è ciò che una query vuota darebbe.
+                return 0
             return len(self.semantic.search_facts(
-                query, limit=1_000_000, require_all_tokens=True,
+                _q, limit=1_000_000, require_all_tokens=True,
                 topic=topic, topic_prefix=topic_prefix))
         if topic_prefix is not None:
             return len(self.semantic.search_facts(
@@ -864,13 +891,33 @@ class Memory:
             # generic subject never zeroes the set.
             from .query_intent import split_exclude
             _subj, excluded = split_exclude(query)
-            base = (self.semantic.search_facts("", limit=10000,
-                                               topic_prefix=topic_prefix)
-                    if topic_prefix else self.semantic.list_facts(limit=10000))
+            # LA BASE E GLI ESCLUSI DEVONO ESSERE LO STESSO INSIEME. La base
+            # usava `list_facts`, che include i QUARANTINATI; gli esclusi
+            # `search_facts`, che non li include. Misurato 2026-08-02 su cinque
+            # note di cui una quarantinata dal gate:
+            #     BASE    (list_facts)  : 5 fatti
+            #     ESCLUSI (search_facts): 2 fatti
+            #     'tutto tranne moat' -> 3 risultati, e fra questi
+            #        «Il moat giudica la fonte contro il fatto.» (quarantined)
+            # Due danni, e il primo è il grave: un fatto che il gate ha
+            # respinto ESCE da una superficie di lettura, contro la riga di
+            # apertura del prodotto («kept OUT of default recall, so you never
+            # get it back as truth»). Il secondo: ciò che sta solo nella base
+            # è INESCLUDIBILE per costruzione — nessuna formulazione della
+            # domanda lo fa sparire, perché l'insieme escludente non lo vede.
+            base = self.semantic.search_facts(
+                "", limit=10000, topic_prefix=topic_prefix)
             excl_ids: set[str] = set()
             if excluded:
+                # Gli stessi token informativi di `count` (aa62e68b): «tranne
+                # IL moat» deve escludere quello che esclude «tranne moat» —
+                # l'articolo non fa parte del soggetto, e qui restringere
+                # l'insieme escluso significa LASCIARE DENTRO ciò che l'utente
+                # ha chiesto di togliere. Misurato: 2 fatti rimasti invece di 1.
+                from .bm25_rank import _tokens as _informativi
+                _escl = " ".join(_informativi(excluded)) or excluded
                 excl_ids = {f.id for f in self.semantic.search_facts(
-                    excluded, limit=10000, require_all_tokens=True,
+                    _escl, limit=10000, require_all_tokens=True,
                     topic_prefix=topic_prefix)}
             results = [f for f in base if f.id not in excl_ids]
             return {"intent": EXCLUDE, "excluded": excluded,

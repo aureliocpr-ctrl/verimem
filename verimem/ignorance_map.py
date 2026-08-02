@@ -30,8 +30,44 @@ from .composer import _copula_parse, subject_key
 __all__ = ["ignorance_map"]
 
 _WORD = re.compile(r"[a-zA-ZÀ-ɏ0-9]{3,}")
-_STOP = frozenset("the and for with what which who how why does is are was "
-                  "were this that from into about".split())
+def _stopwords() -> frozenset[str]:
+    """Le parole vuote del percorso LESSICALE, non una copia.
+
+    Qui c'era una lista di 19 parole INGLESI — the, and, for, with, what,
+    which, who, how, why, does, is, are, was, were, this, that, from, into,
+    about — mentre `bm25_rank._QUERY_STOPWORDS` ne ha 104 EN+IT ed e' usata dal
+    percorso lessicale dal 2026-07-07. Due copie divergono, e questa lo aveva
+    gia' fatto: `_WORD` chiede 3+ caratteri, quindi «il»/«la»/«di» erano fuori
+    da soli, ma le funzionali LUNGHE — della, per, con, del, alla, sul — che
+    nessuna lista inglese puo' contenere passavano come parole di contenuto.
+
+    Due danni misurati il 2026-08-02:
+
+    1. `what_would_help` («a source about: …») elencava parole vuote: 5 termini
+       su 31 in otto domande, TUTTI italiani; le inglesi uscivano pulite.
+    2. Peggio, `_quarantined_overlap(min_shared=2)` decide la classe
+       `quarantined_only` — «l'evidenza ESISTE ed e' in quarantena, la cura e'
+       una fonte, non altro retrieval». Bastavano due funzionali condivise:
+
+           'come si configura il backup della macchina per la produzione'
+           vs «La ricetta della nonna per il pane e nel quaderno.»
+              overlap 2 su ['della', 'per']  -> quarantined_only
+
+       Le stesse frasi in inglese: overlap 0. Il prodotto mandava l'utente
+       italiano a cercare una fonte per un fatto che parla di un gatto, e
+       quello inglese no.
+
+    L'unione e non la sostituzione: le 19 storiche restano anche se un domani
+    la lista condivisa cambiasse, cosi' la cura non puo' togliere copertura.
+    """
+    from .bm25_rank import _QUERY_STOPWORDS
+    return _STOP_STORICHE | _QUERY_STOPWORDS
+
+
+_STOP_STORICHE = frozenset(
+    "the and for with what which who how why does is are was "
+    "were this that from into about".split())
+_STOP = _stopwords()
 
 
 def _keywords(text: str) -> set[str]:
