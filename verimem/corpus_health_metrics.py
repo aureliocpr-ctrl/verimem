@@ -94,8 +94,25 @@ def corpus_health_metrics(
         # recall. Reporting it next to n_recallable makes the headline honest:
         # n_live (= total - superseded) counts quarantined too, so a corpus that
         # is 44% quarantined would look "mostly live/ready" without this split.
+        #
+        # AND SUPERSEDED_BY IS NULL, for exactly that reason. n_live excludes
+        # the retired rows, so counting them here put two different populations
+        # side by side in one answer — and the comparison this comment asks for
+        # became a ratio between sets that do not overlap. Measured on the live
+        # corpus 2026-08-02: n_live 5150, and n_quarantined read 1810 (35.1% of
+        # the live corpus) where the answer is 570 (11.1%). 1240 of those 1810
+        # are not in n_live at all: a newer fact already answered for them, so
+        # they left the queue — and draining them is work on rows nobody holds.
+        #
+        # Five other surfaces already agreed with each other and disagreed with
+        # this one: cli.py:205, client.py:1449, mcp_server.py:13011 and both
+        # queries in review_queue.py all carry the filter, and that module's
+        # docstring says why: "a superseded row left the queue: a newer fact
+        # already answered it". There was no semantics to pick — one surface
+        # had simply lost the line.
         n_quarantined = conn.execute(
-            "SELECT COUNT(*) FROM facts WHERE status = 'quarantined'"
+            "SELECT COUNT(*) FROM facts WHERE status = 'quarantined' "
+            "AND superseded_by IS NULL"
         ).fetchone()[0]
         # What recall can ACTUALLY return: eligible AND embedded at the active
         # model (eligible minus the silently-excluded dark vectors).
