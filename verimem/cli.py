@@ -1265,8 +1265,9 @@ def trust(
     _judged = isinstance(d.get("grounding_score"), (int, float))
     verdict = {
         "persist": ("[green]TRUSTED ✓[/green]" if _judged
-                    else "[green]NO FLAGS ✓[/green] [dim](wording only — "
-                         "nothing was checked against evidence)[/dim]"),
+                    else "[green]NO FLAGS ✓[/green] [dim](no source was "
+                         "checked — see `checked:` below for what did "
+                         "run)[/dim]"),
         "downgrade": "[yellow]FLAGGED ↓ (would store as provisional)[/yellow]",
         "quarantine": "[red]QUARANTINED ✗ (excluded from recall)[/red]",
         "reject": "[red]REJECTED ✗[/red]",
@@ -1296,8 +1297,16 @@ def trust(
     elif source:
         _moat_line = ("a source was given but no judge answered — NOT a pass")
     else:
+        # «CONTRO LA SOURCE», non «contro l'evidenza». Senza precisarlo questa
+        # riga contraddiceva quella sopra: `checked:` puo' elencare «L3
+        # contradiction», che il confronto lo ha fatto — contro il CORPUS —
+        # mentre qui si leggeva «nothing was checked against evidence». Due
+        # righe della stessa card, una che dice cosa ha gia' girato e una che
+        # dice che non e' girato niente.
         _moat_line = ("the moat did NOT run: no --source, so nothing was "
-                      "checked against evidence")
+                      "checked against a source"
+                      + (" (L3 did compare against the stored corpus)"
+                         if _l3 == "ran" else ""))
     # `checked:` elenca cio' che ha GIRATO, non cio' che e' stato chiesto: se
     # L3 non ha potuto (store assente, errore) la riga non deve nominarlo.
     lines.append(
