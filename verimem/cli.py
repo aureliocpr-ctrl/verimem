@@ -824,6 +824,15 @@ def recall_cmd(
     k: int = typer.Option(5, "--k"),
     as_of: str = typer.Option("", "--as-of", help=(
         "Unix epoch: answer with what was CURRENT at that instant, not now.")),
+    deep: bool = typer.Option(False, "--deep", help=(
+        "Archaeology: also search the dormant memories that the freshness "
+        "half-life hides from the default view. The integrity guards stay.")),
+    with_history: bool = typer.Option(False, "--with-history", help=(
+        "Each hit carries its transition story: what it said before, from "
+        "when, and until when it held.")),
+    include_beliefs: bool = typer.Option(False, "--include-beliefs", help=(
+        "Also return unverified user assertions. They never win a conflict "
+        "and are marked as what they are.")),
 ) -> None:
     """Recall the top-k facts for a query — the 2-second read quickstart.
 
@@ -837,6 +846,13 @@ def recall_cmd(
     (`Memory.search(as_of=…)`): la funzione c'era completa, mancava questa
     porta. Chi legge il README e usa la riga di comando concludeva che il
     prodotto non lo facesse.
+
+    ``--deep``, ``--with-history`` e ``--include-beliefs`` sono gli altri tre
+    modi che `Memory.search` ha sempre avuto e che da qui non si potevano
+    chiedere. Stessa porta, stessa storia: la volta scorsa e' entrato
+    `--as-of` e questi tre sono rimasti fuori, quindi ora il criterio sta in
+    un test — OGNI parametro pubblico di `search` deve avere la sua opzione, e
+    il test cade da solo il giorno in cui ne nasce un quinto senza porta.
     """
     m = _open_memory()
     quando = None
@@ -850,12 +866,20 @@ def recall_cmd(
             console.print(f"[red]--as-of non e' un epoch: {as_of!r}[/red] — "
                           f"atteso un numero di secondi (es. 1785518205)")
             raise typer.Exit(2) from None
-    hits = m.search(query, k=k, as_of=quando)
+    hits = m.search(query, k=k, as_of=quando, deep=deep,
+                    with_history=with_history,
+                    include_beliefs=include_beliefs)
     if not hits:
         console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
     for h in hits:
         console.print(riga_di_recall(h))
+        # La storia si chiede e va MOSTRATA: passare il flag e stampare la
+        # stessa riga di prima sarebbe una porta che si apre sul muro.
+        for _p in (h.get("history") or []):
+            _fino = _p.get("until") or "—"
+            console.print(f"    [dim]prima:[/dim] {_p.get('text','')[:72]} "
+                          f"[dim]({_p.get('asserted_date','?')} → {_fino})[/dim]")
 
 
 @app.command("correct")
