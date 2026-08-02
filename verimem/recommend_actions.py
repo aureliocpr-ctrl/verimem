@@ -93,7 +93,10 @@ def recommend_actions(
     summary_parts = [
         f"Library curation dashboard ({len(skills)} skills total)."
     ]
-    for action_name in ("promote", "retire", "test", "pin", "ok"):
+    # `retired` è nell'elenco perché altrimenti sparirebbe dal sommario: su
+    # questo corpus sono 315 skill su 325, e un pannello che tace la voce più
+    # numerosa racconta una libreria che non esiste.
+    for action_name in ("promote", "retire", "test", "pin", "ok", "retired"):
         n = totali.get(action_name, 0)
         if n > 0:
             mostrate = len(groups.get(action_name, []))
