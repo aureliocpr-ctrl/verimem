@@ -512,7 +512,19 @@ def search_docs(
         raise typer.Exit(0)
     terms = [t for t in query.lower().split() if t.strip()]
     for i, h in enumerate(hits, 1):
-        cite = f"{h['source_id']} v{h['version']} [{h['start']}:{h['end']}]"
+        # LA CITAZIONE CANONICA, non una seconda forma della stessa cosa.
+        # Qui veniva ricostruita a mano come «listino.md v1 [0:80]» mentre
+        # `chunk_citation` — la funzione che la promozione usa per riempire
+        # `verified_by` e `source_episodes` — produce «file:listino.md:0-80».
+        # Due formati per la stessa citazione, e `chunk_citation` non compariva
+        # in questo file: chi leggeva un risultato e voleva sapere se quel
+        # chunk era gia' stato promosso cercava la stringa che aveva davanti e
+        # non trovava niente. La citazione esatta E' il punto del tier
+        # documenti, e due forme la rendono inutile proprio nel gesto per cui
+        # esiste. La versione resta accanto: la citazione canonica non la
+        # porta, e il tier versiona i documenti apposta.
+        from .document_promote import chunk_citation
+        cite = f"{chunk_citation(h)} (v{h['version']})"
         text = h["text"]
         # Snippet centered on the first query term present — show WHY it matched,
         # not just how the chunk begins (same idea as the lexical tier's snippet).
