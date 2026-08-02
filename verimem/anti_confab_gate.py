@@ -476,10 +476,12 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
     usano. Nessuna delle due condizioni qui lo sa.
     """
     from .validate_claim import (
+        _SOGLIA_SIMILARITA,
         _parole_di_contenuto,
         _polarita,
         _testa_nominale,
         leggibile_a_maiuscole,
+        similarita_semantica,
     )
 
     if not (nuovo or "").strip() or not (vecchio or "").strip():
@@ -492,10 +494,18 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
     # Datenbank ist ein Postgres Cluster» danno entrambe ['ein','ist'] e testa
     # 'ist', e questa funzione rispondeva True. Due fatti scorrelati, il
     # secondo ritirava il primo, e chi scrive dieci misure ne ritrovava una.
-    # Non decidere e' l'unica risposta onesta: restano due fatti vivi in
-    # contesa, che e' il verso di errore che questo modulo preferisce.
+    # E DOVE LE LISTE NON LEGGONO, DECIDE IL MODELLO CHE PARLA CENTO LINGUE.
+    # Tacere era meglio che sbagliare e restava un servizio in meno: due fatti
+    # tedeschi che SONO l'uno l'aggiornamento dell'altro rimanevano separati
+    # per sempre. `intfloat/multilingual-e5-base` e' gia' installato e gia' in
+    # uso — sul corpus di Aurelio tutti i 6972 fatti hanno il vettore
+    # persistito — quindi il confronto e' un coseno, senza liste da scrivere.
+    # Soglia MISURATA su dodici coppie in de/pt/pl/tr: vere 0.9349-0.9682,
+    # false 0.8121-0.8674. Il fast-path lessicale resta primo: l'italiano e
+    # l'inglese non pagano un encode, ed e' su quel comportamento che gira
+    # tutto il corpus.
     if not (leggibile_a_maiuscole(nuovo) and leggibile_a_maiuscole(vecchio)):
-        return False
+        return similarita_semantica(nuovo, vecchio) >= _SOGLIA_SIMILARITA
     # POLARITA' DIVERSA, NESSUNA EVOLUZIONE. Una frase e la sua negazione
     # hanno le stesse parole di contenuto e la stessa testa nominale —
     # verificato: «Il gate NON gira sul canale MCP» e «Il gate gira sul canale

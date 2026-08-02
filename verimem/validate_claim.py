@@ -190,6 +190,51 @@ def leggibile_a_maiuscole(text: str) -> bool:
     return (su / len(resto)) < _SOGLIA_CAPITALIZZATE
 
 
+#: Sopra questa similarita' due frasi parlano dello STESSO soggetto con un
+#: valore aggiornato. Misurata, non scelta: banco di dodici coppie scritte a
+#: mano in lingue NON coperte dalle liste (de, pt, pl, tr), meta' evoluzioni
+#: vere e meta' osservazioni scorrelate.
+#:     vere   0.9349 .. 0.9682
+#:     false  0.8121 .. 0.8674
+#: piu' tre casi duri (stesso soggetto, grandezza DIVERSA — non evoluzioni):
+#:     0.8581  Korpus 6682 Fakten     | mediane Laenge 795 Zeichen
+#:     0.9117  Graph 8625 Knoten      | Dichte 0.42
+#:     0.9082  corpus 6682 fatti      | mediana 795 caratteri
+#: A 0.93 il banco si separa tutto. IL MARGINE E' STRETTO — 0.9349 la vera piu'
+#: bassa contro 0.9117 il duro piu' alto, 0.023 — e non e' una separazione
+#: comoda: e' quel tanto che basta sul banco disponibile. Se una coppia vera
+#: scende sotto, si rimisura su un banco piu' grande, non si abbassa la soglia.
+_SOGLIA_SIMILARITA = 0.93
+
+
+def similarita_semantica(a: str, b: str) -> float:
+    """Quanto due frasi parlano della stessa cosa, in QUALUNQUE lingua.
+
+    Usa l'embedder che il prodotto ha gia' installato e gia' in uso —
+    `intfloat/multilingual-e5-base`, cento lingue, 768 dimensioni — invece di
+    una lista di parole scritta a mano per quattro. Sul corpus di Aurelio tutti
+    i 6972 fatti hanno gia' il loro vettore persistito in tabella: qui si
+    ricalcola perche' la funzione riceve due stringhe e non due fatti, ed e'
+    il prezzo del fallback, pagato solo dove le liste non arrivano.
+
+    Restituisce 0.0 se l'encode non e' disponibile: un motore assente non deve
+    far cadere una scrittura, e zero significa «non ho potuto misurare», che
+    porta alla decisione conservativa (nessuna evoluzione).
+    """
+    try:
+        import numpy as np
+
+        from . import embedding
+        va = np.asarray(embedding.encode(a or ""), dtype=float)
+        vb = np.asarray(embedding.encode(b or ""), dtype=float)
+        na, nb = float(np.linalg.norm(va)), float(np.linalg.norm(vb))
+        if na == 0.0 or nb == 0.0:
+            return 0.0
+        return float(va @ vb / (na * nb))
+    except Exception:  # noqa: BLE001 — un motore assente non rompe una scrittura
+        return 0.0
+
+
 def _polarita(text: str) -> bool:
     """La frase e' NEGATA? — il segnale che distingue una frase dal suo
     contrario, e che nessun conteggio di parole condivise puo' portare.
