@@ -479,10 +479,23 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
         _parole_di_contenuto,
         _polarita,
         _testa_nominale,
+        leggibile_a_maiuscole,
     )
 
     if not (nuovo or "").strip() or not (vecchio or "").strip():
         return True
+    # SE IL CRITERIO NON SA LEGGERE LA FRASE, NON DECIDE. Riconoscere i nomi
+    # propri dalla maiuscola e' una convenzione tipografica e non e'
+    # universale: in tedesco ogni sostantivo e' maiuscolo, quindi finiscono
+    # tutti fra i nomi e cio' che resta come «contenuto» e' scarto
+    # grammaticale — misurato, «Der Server ist ein Produktionsknoten» e «Die
+    # Datenbank ist ein Postgres Cluster» danno entrambe ['ein','ist'] e testa
+    # 'ist', e questa funzione rispondeva True. Due fatti scorrelati, il
+    # secondo ritirava il primo, e chi scrive dieci misure ne ritrovava una.
+    # Non decidere e' l'unica risposta onesta: restano due fatti vivi in
+    # contesa, che e' il verso di errore che questo modulo preferisce.
+    if not (leggibile_a_maiuscole(nuovo) and leggibile_a_maiuscole(vecchio)):
+        return False
     # POLARITA' DIVERSA, NESSUNA EVOLUZIONE. Una frase e la sua negazione
     # hanno le stesse parole di contenuto e la stessa testa nominale —
     # verificato: «Il gate NON gira sul canale MCP» e «Il gate gira sul canale

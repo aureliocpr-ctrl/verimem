@@ -134,6 +134,62 @@ _NEGAZIONI = frozenset({
     "pas", "sans", "jamais", "aucun", "sin", "nunca", "ninguno",
 })
 
+#: Sopra questa frazione di parole capitalizzate (escluse le iniziali di
+#: frase), il riconoscimento dei nomi propri PER MAIUSCOLA non sta piu'
+#: leggendo dei nomi. Misurato:
+#:     Der Server ist ein Produktionsknoten.        2 su 4 = 0.50
+#:     Der Graph hat 8625 Knoten.                   2 su 4 = 0.50
+#:     The Database Is A Postgres Cluster.          5 su 5 = 1.00
+#:     Il server di Roma ospita il cluster Postgres da marzo.   2 su 9 = 0.22
+#:     The annual plan costs 200 euros.             0 su 5 = 0.00
+#: Fra 0.22 e 0.50 c'e' spazio per una soglia che non e' un valore scelto a
+#: occhio: e' «piu' di un terzo», cioe' piu' di quanti nomi propri veri sta in
+#: una frase che ne ha diversi.
+_SOGLIA_CAPITALIZZATE = 0.4
+
+#: Sotto questo numero di parole non iniziali una densita' non significa
+#: niente: una frase di tre parole con un nome proprio darebbe 0.5.
+_MIN_PAROLE_PER_DENSITA = 4
+
+
+def leggibile_a_maiuscole(text: str) -> bool:
+    """Il riconoscimento dei nomi propri per MAIUSCOLA funziona su questa frase?
+
+    Serve perche' quel riconoscimento e' una convenzione TIPOGRAFICA, e non e'
+    universale: in tedesco ogni sostantivo e' maiuscolo, quindi finiscono tutti
+    fra i «nomi propri» e `_parole_di_contenuto` li toglie. Cio' che resta non
+    e' contenuto, e' scarto grammaticale::
+
+        Der Server ist ein Produktionsknoten.    -> ['ein', 'ist']  testa 'ist'
+        Die Datenbank ist ein Postgres Cluster.  -> ['ein', 'ist']  testa 'ist'
+
+    e due fatti scorrelati diventano l'uno l'aggiornamento dell'altro, per due
+    vie insieme: stessa testa nominale e due parole condivise. Chi scrive dieci
+    misure in tedesco ne ritrova una.
+
+    NON SI CURA CON UNA LISTA. Aggiungere `der`/`die`/`das`/`ist` alle parole
+    vuote sistemerebbe il tedesco e lascerebbe identici polacco, turco, russo,
+    indonesiano e le altre settemila lingue: il prodotto ha liste per quattro
+    lingue e utenti in tutto il mondo, e quella strada non arriva in fondo per
+    costruzione.
+
+    Quindi il segnale e' STRUTTURALE e non nomina nessuna lingua: la densita'
+    di parole capitalizzate. Alta densita' = la maiuscola qui non distingue i
+    nomi, e chi legge deve saperlo invece di ricevere una risposta a caso. Vale
+    identico sul Title Case inglese, che non e' una lingua ma ha lo stesso
+    effetto.
+
+    Le frasi troppo corte per una densita' sono dichiarate leggibili: meglio il
+    comportamento di prima che una soglia calcolata su tre parole.
+    """
+    parole = _PAROLA_RE.findall(text or "")
+    if len(parole) - 1 < _MIN_PAROLE_PER_DENSITA:
+        return True
+    resto = parole[1:]                       # la prima e' maiuscola per regola
+    su = sum(1 for p in resto if p[:1].isupper())
+    return (su / len(resto)) < _SOGLIA_CAPITALIZZATE
+
+
 def _polarita(text: str) -> bool:
     """La frase e' NEGATA? — il segnale che distingue una frase dal suo
     contrario, e che nessun conteggio di parole condivise puo' portare.
