@@ -891,13 +891,33 @@ class Memory:
             # generic subject never zeroes the set.
             from .query_intent import split_exclude
             _subj, excluded = split_exclude(query)
-            base = (self.semantic.search_facts("", limit=10000,
-                                               topic_prefix=topic_prefix)
-                    if topic_prefix else self.semantic.list_facts(limit=10000))
+            # LA BASE E GLI ESCLUSI DEVONO ESSERE LO STESSO INSIEME. La base
+            # usava `list_facts`, che include i QUARANTINATI; gli esclusi
+            # `search_facts`, che non li include. Misurato 2026-08-02 su cinque
+            # note di cui una quarantinata dal gate:
+            #     BASE    (list_facts)  : 5 fatti
+            #     ESCLUSI (search_facts): 2 fatti
+            #     'tutto tranne moat' -> 3 risultati, e fra questi
+            #        «Il moat giudica la fonte contro il fatto.» (quarantined)
+            # Due danni, e il primo è il grave: un fatto che il gate ha
+            # respinto ESCE da una superficie di lettura, contro la riga di
+            # apertura del prodotto («kept OUT of default recall, so you never
+            # get it back as truth»). Il secondo: ciò che sta solo nella base
+            # è INESCLUDIBILE per costruzione — nessuna formulazione della
+            # domanda lo fa sparire, perché l'insieme escludente non lo vede.
+            base = self.semantic.search_facts(
+                "", limit=10000, topic_prefix=topic_prefix)
             excl_ids: set[str] = set()
             if excluded:
+                # Gli stessi token informativi di `count` (aa62e68b): «tranne
+                # IL moat» deve escludere quello che esclude «tranne moat» —
+                # l'articolo non fa parte del soggetto, e qui restringere
+                # l'insieme escluso significa LASCIARE DENTRO ciò che l'utente
+                # ha chiesto di togliere. Misurato: 2 fatti rimasti invece di 1.
+                from .bm25_rank import _tokens as _informativi
+                _escl = " ".join(_informativi(excluded)) or excluded
                 excl_ids = {f.id for f in self.semantic.search_facts(
-                    excluded, limit=10000, require_all_tokens=True,
+                    _escl, limit=10000, require_all_tokens=True,
                     topic_prefix=topic_prefix)}
             results = [f for f in base if f.id not in excl_ids]
             return {"intent": EXCLUDE, "excluded": excluded,
