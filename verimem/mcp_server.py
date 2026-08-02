@@ -2394,6 +2394,20 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "provisional(1) > legacy_unverified(0)."
                         ),
                     },
+                    "min_relevance": {
+                        "description": (
+                            "Retrieval floor: below it this returns NOTHING "
+                            "instead of the nearest neighbours — the "
+                            "'abstention over hallucination' promise, on this "
+                            "channel. A number, or \"auto\" to let the store "
+                            "measure the floor on itself (the same one the "
+                            "ignorance map uses). Omitted: ENGRAM_MIN_RELEVANCE "
+                            "if it is SET, no floor otherwise. The floor that "
+                            "actually applied comes back as `min_relevance` so "
+                            "a short list from a poor corpus and a short list "
+                            "from a high floor stay distinguishable."
+                        ),
+                    },
                     "trust_signals": {
                         "type": "boolean",
                         "default": False,
@@ -12936,9 +12950,42 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     row["age_days"] = float(sig.age_days)
                     row["n_contradictions"] = int(sig.n_contradictions)
                 items.append(row)
+            # IL PAVIMENTO ARRIVA ANCHE QUI. Censimento del 2026-08-02, stesso
+            # store e stessa domanda fuori tema, ENGRAM_MIN_RELEVANCE=0.99 —
+            # un pavimento che nulla puo' superare:
+            #     SDK   Memory.search      -> 0 hit
+            #     MCP   hippo_facts_recall -> 3
+            # Questo handler chiama `a.semantic` direttamente e non passa da
+            # `Memory.search`, quindi la cura di un'ora prima non lo
+            # raggiungeva: la stessa forma per cui quella del 29/07 si era
+            # fermata a `explain`. Ed e' il canale degli AGENTI, il primo posto
+            # dove il prodotto scrive «abstention over hallucination».
+            #
+            # `env_floor_if_set` e non una copia del criterio: due copie
+            # divergono, e questa e' la terza generazione della stessa cura.
+            # Un valore esplicito batte l'ambiente; l'ambiente NON impostato
+            # lascia questa superficie esattamente com'era (il default `auto`
+            # e' misurato sul percorso di `explain`, non su questo).
+            _mr = arguments.get("min_relevance")
+            if _mr is None:
+                from .relevance_floor import env_floor_if_set
+                _mr = env_floor_if_set()
+            if _mr == "auto":
+                from .client import Memory as _MemForFloor
+                _mr = _MemForFloor(
+                    path=a.semantic.db_path)._auto_relevance_floor()
+            if _mr:
+                _pav = float(_mr)
+                items = [i for i in items
+                         if float(i.get("score") or 0.0) >= _pav]
             return _ok({
                 "query": query,
                 "topic": topic,
+                # Il pavimento che ha DAVVERO filtrato questa risposta, o
+                # `null`: una lista corta perche' il corpus e' povero e una
+                # corta perche' un pavimento l'ha tagliata sono due esiti che
+                # un agente deve poter distinguere senza indovinare.
+                "min_relevance": (float(_mr) if _mr else None),
                 # Quali dei tre segnali hanno DAVVERO ordinato questa risposta.
                 # `applied` o un motivo per ognuno: un ordine tenuto in piedi
                 # dal solo bi-encoder non e' lo stesso oggetto di uno passato
