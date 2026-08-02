@@ -12693,8 +12693,34 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # doctor already makes about coverage.
             _gs_out = getattr(fact, "grounding_score", None)
             if isinstance(_gs_out, (int, float)):
-                _moat = (f"judged {float(_gs_out):.1f} — the source entails "
-                         f"this fact")
+                # E QUALE dei due esiti, non solo «ho giudicato». Questo ramo
+                # discriminava su `isinstance` — cioe' su «il giudizio E'
+                # girato» — e vi attaccava una frase che asserisce L'ESITO,
+                # quindi la stessa ricevuta poteva portare
+                #     moat:    "judged 0.3 — the source entails this fact"
+                #     status:  quarantined
+                #     warning: source does not entail
+                # tre campi, due che dicono no e uno che dice si'. Il commento
+                # qui sopra promette QUATTRO stati, e il quarto — girato e
+                # BOCCIATO — era proprio quello che mancava. Ed e' il campo
+                # che si legge quando una scrittura non passa: mentiva a chi
+                # lo consultava per capire perche'.
+                #
+                # Stessa cura di `76d5dc1c` sulla ricevuta della CLI, cinque
+                # ore prima e sull'altro canale: lo sweep si era fermato li'.
+                #
+                # LIMITE DICHIARATO: in questo punto c'e' solo `fact` — niente
+                # verdetto, niente soglia — quindi l'esito si legge dallo
+                # status. Se una quarantena venisse da un altro strato con un
+                # punteggio alto, la frase attribuirebbe al moat la decisione
+                # di un altro; il punteggio accanto la smentisce, e resta
+                # meglio di una riga che afferma SEMPRE l'implicazione.
+                _passato = getattr(fact, "status", "") != "quarantined"
+                _moat = (
+                    f"judged {float(_gs_out):.1f} — the source "
+                    + ("entails this fact" if _passato else
+                       "does NOT entail this fact: that is why it is "
+                       "quarantined"))
             elif not _source:
                 _moat = ("not run — no source, so the entailment moat had "
                          "nothing to check; pass source=\"<the evidence "
