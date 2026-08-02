@@ -875,6 +875,11 @@ def recall_cmd(
     include_beliefs: bool = typer.Option(False, "--include-beliefs", help=(
         "Also return unverified user assertions. They never win a conflict "
         "and are marked as what they are.")),
+    min_relevance: str = typer.Option("", "--min-relevance", help=(
+        "Floor below which this returns NOTHING instead of the nearest "
+        "neighbours: a number, or `auto` to let the store measure it on "
+        "itself. Default: ENGRAM_MIN_RELEVANCE if you set it, no floor "
+        "otherwise.")),
 ) -> None:
     """Recall the top-k facts for a query — the 2-second read quickstart.
 
@@ -908,11 +913,44 @@ def recall_cmd(
             console.print(f"[red]--as-of non e' un epoch: {as_of!r}[/red] — "
                           f"atteso un numero di secondi (es. 1785518205)")
             raise typer.Exit(2) from None
+    # Stringa e non float perché il valore ha DUE forme: un numero, oppure
+    # `auto` che delega la misura allo store. Un `--min-relevance` tipizzato
+    # float avrebbe rifiutato proprio la forma che non richiede di indovinare
+    # una soglia — cioè quella giusta per chi non sa che taglio serve al suo
+    # corpus, che è la ragione per cui `auto` esiste.
+    pavimento: float | str | None = None
+    if min_relevance.strip():
+        grezzo = min_relevance.strip().lower()
+        if grezzo == "auto":
+            pavimento = "auto"
+        else:
+            try:
+                pavimento = float(grezzo)
+            except ValueError:
+                console.print(
+                    f"[red]--min-relevance non e' un numero: "
+                    f"{min_relevance!r}[/red] — atteso un punteggio (es. 0.85) "
+                    f"o `auto` per farlo misurare allo store")
+                raise typer.Exit(2) from None
     hits = m.search(query, k=k, as_of=quando, deep=deep,
                     with_history=with_history,
-                    include_beliefs=include_beliefs)
+                    include_beliefs=include_beliefs,
+                    min_relevance=pavimento)
     if not hits:
-        console.print("[yellow]no facts found[/yellow]")
+        # Un pavimento che svuota la lista NON è «non ho trovato niente»: sono
+        # due esiti diversi — il corpus non ha nulla, oppure ha qualcosa che
+        # tu hai deciso di non voler vedere sotto una certa soglia. Dirli con
+        # la stessa frase è la classe di difetto che questo prodotto passa la
+        # giornata a curare.
+        if pavimento:
+            console.print(
+                f"[yellow]no facts above the floor[/yellow] "
+                f"[dim](--min-relevance {min_relevance.strip()}): the store "
+                f"may still hold weaker matches — re-run without the floor to "
+                f"see them, or `verimem ignorance \"{query}\"` to ask whether "
+                f"this question is answerable at all.[/dim]")
+        else:
+            console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
     # SE IL MIGLIORE STA SOTTO IL PAVIMENTO MISURATO, si dice. `recall` è un
     # top-k e restituisce sempre i più vicini: su uno store di tre fatti di

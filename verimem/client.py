@@ -511,7 +511,9 @@ class Memory:
     def search(self, query: str, k: int = 5, *, deep: bool = False,
                as_of: float | str | None = None,
                with_history: bool | str = False,
-               include_beliefs: bool = False) -> list[dict[str, Any]]:
+               include_beliefs: bool = False,
+               min_relevance: float | str | None = None
+               ) -> list[dict[str, Any]]:
         """Recall the top-k facts for ``query``, each with its provenance — the
         differentiator: ``status`` + write-time ``grounding_score`` so a caller can
         prefer/assert grounded facts and hedge low-trust ones.
@@ -538,7 +540,21 @@ class Memory:
           ``tag_beliefs``) back into the result. They are OUT of the default
           view so the memory never serves an uncorroborated user claim back as
           truth; a caller opting in sees ``status`` on each hit and must caveat
-          accordingly. Narrow: un-hides beliefs only."""
+          accordingly. Narrow: un-hides beliefs only.
+        * ``min_relevance`` — the retrieval floor below which this surface
+          returns NOTHING instead of the nearest neighbours. ``"auto"`` lets the
+          store calibrate it on itself (scrambled-probe quantile, the same floor
+          the ignorance map uses); a float applies as given. ``None`` (default)
+          takes ``ENGRAM_MIN_RELEVANCE`` ONLY IF SET — the switch documented as
+          working "across every surface", which until 2026-08-02 reached only
+          ``explain``. An unset variable leaves this surface exactly as it was;
+          see ``relevance_floor.env_floor`` for why the default is not adopted
+          here."""
+        if min_relevance is None:
+            from .relevance_floor import env_floor_if_set
+            min_relevance = env_floor_if_set()
+        if min_relevance == "auto":
+            min_relevance = self._auto_relevance_floor()
         if with_history == "auto":
             from .temporal_context import wants_history
             with_history = wants_history(query)
@@ -599,6 +615,13 @@ class Memory:
                     for p in fact_history(self.semantic, item["id"])
                 ]
             out.append(item)
+        # Il taglio sta QUI e non prima del ranking: `score` appartiene alla
+        # query, non al fatto, e nessun fatto ne ha uno finché qualcosa non lo
+        # ordina. Filtrare a valle tiene il pavimento fuori dal recupero, che
+        # resta identico — quello che cambia è solo se il risultato si serve.
+        if min_relevance:
+            pavimento = float(min_relevance)
+            out = [i for i in out if float(i.get("score") or 0.0) >= pavimento]
         _emit_flow("flow.recall", kind="search", n=len(out),
                    best=round(max((float(i.get("score") or 0.0)
                                    for i in out), default=0.0), 4))
