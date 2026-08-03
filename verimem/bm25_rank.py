@@ -52,6 +52,28 @@ _QUERY_STOPWORDS = frozenset({
     "il", "lo", "la", "le", "gli", "un", "una", "uno", "di", "da", "per",
     "con", "su", "tra", "fra", "del", "della", "dei", "delle", "nel", "nella",
     "ed", "sono", "era", "erano", "ha", "hanno", "aveva",
+    # it — preposizioni ARTICOLATE. Ce n'erano 6 su 32 (solo le forme di `di`
+    # e `in`), e le mancanti non erano rare: misurato 2026-08-02 sul corpus
+    # vero, 5343 fatti vivi, `sul` in 590 (11.0%), `dal` in 522 (9.8%), `col`
+    # in 298 (5.6%), `alla` in 266 (5.0%). Il filtro df non le tocca — sotto
+    # il DF_CEILING del 25% — che è esattamente il caso previsto dalla nota
+    # qui sopra: rare in df, rumore puro nel match.
+    #
+    # Generate dalla REGOLA (preposizione × articolo) e non elencate a occhio,
+    # perché è così che le prime sei erano rimaste sole.
+    #
+    # `ai` e `al` sono ESCLUSE di proposito: questa lista è consultata sul
+    # testo abbassato, e nel corpus vero «AI» maiuscolo parola intera sta in
+    # 281 fatti contro i 254 di «ai» preposizione (e «AL» in 32). Metterle
+    # dentro toglierebbe la sigla dal percorso lessicale in un corpus che
+    # parla di AI. Distinguere per capitalizzazione è una cura diversa, da
+    # misurare sul ranking prima di scriverla.
+    "dello", "degli",
+    "allo", "alla", "agli", "alle",
+    "dal", "dallo", "dalla", "dai", "dagli", "dalle",
+    "nello", "nei", "negli", "nelle",
+    "sul", "sullo", "sulla", "sui", "sugli", "sulle",
+    "col", "coi",
 })
 
 
