@@ -13193,13 +13193,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if name == "hippo_epistemic_health":
             # `epistemic_health` era completo, testato e irraggiungibile: si
             # potevano mettere i verdetti e non si poteva chiedere l'aggregato.
+            # Stessa delega di `quarantine_log` e `ignorance_map`: un `Memory`
+            # sullo stesso store, non una vista che finge di esserlo. Questa
+            # reggeva ancora — dichiara solo `semantic` e `epistemic_health`
+            # oggi non chiede altro — ma e' la stessa bomba: la gemella
+            # accanto e' esplosa quando `search` e' passato da `_fact_view`,
+            # e una vista si rompe in silenzio fino alla prima chiamata.
             from .client import Memory as _M
 
-            class _Vista:
-                semantic = a.semantic
             try:
-                _rep = _M.epistemic_health(
-                    _Vista(),
+                _rep = _M(path=a.semantic.db_path).epistemic_health(
                     limit=int(arguments.get("limit", 2000) or 2000),
                     threshold=float(arguments.get("threshold", 85.0) or 85.0))
             except Exception as _exc:  # noqa: BLE001
@@ -13212,25 +13215,37 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # di test suoi, e nessuna superficie lo raggiungeva. Sul canale MCP
             # e' dove serve di piu' — un agente che ha appena ricevuto «non lo
             # so» chiede COSA MANCA senza cambiare strumento.
+            # DELEGA ALL'SDK VERO, non a una vista finta. Qui c'era una
+            # `class _Vista` con `semantic = a.semantic` e un `search`
+            # inoltrato, motivata cosi':
+            #
+            #     `Memory.search` usa SOLO `self.semantic` (verificato
+            #     sull'AST, non a occhio), quindi la vista basta
+            #
+            # La verifica era GIUSTA quando fu scritta. Poi il 2026-08-02
+            # `search` e' passato da `_fact_view` — *la cura contro le copie
+            # del contratto di uscita* — e il doppio non e' stato aggiornato:
+            # `'_Vista' object has no attribute '_fact_view'` su ogni
+            # chiamata, con store vuoto e con dati. Una cura contro la
+            # duplicazione ha rotto un doppio, e la verifica non era
+            # sbagliata: era INVECCHIATA.
+            #
+            # Il 2026-08-03 `_fact_view` e' cresciuto ancora (epistemic,
+            # confidence, confidence_tier, writer_principal): la vista si
+            # sarebbe rotta una seconda volta.
+            #
+            # Stessa cura di `hippo_quarantine_log` (`7d7fa932`): il canale
+            # MCP chiede all'SDK invece di riprodurne l'interfaccia a mano.
             from .client import Memory as _M
 
-            class _Vista:
-                # `ignorance_map` vuole `.search` (dict con id/score) e
-                # `.semantic`. `Memory.search` usa SOLO `self.semantic`
-                # (verificato sull'AST, non a occhio), quindi la vista basta:
-                # nessun secondo handle sullo stesso SQLite.
-                semantic = a.semantic
-
-                def search(self, query, k=5, **kw):
-                    return _M.search(self, query, k=k, **kw)
-
+            _sdk = _M(path=a.semantic.db_path)
             _queries = [str(q) for q in (arguments.get("queries") or []) if str(q).strip()]
             if not _queries:
                 return _err("hippo_ignorance_map needs at least one query")
             _nf = arguments.get("noise_floor")
             try:
-                _rep = _M.ignorance(
-                    _Vista(), _queries,
+                _rep = _sdk.ignorance(
+                    _queries,
                     floor=float(arguments.get("floor", 0.8) or 0.8),
                     k=int(arguments.get("k", 5) or 5),
                     noise_floor=None if _nf is None else float(_nf))

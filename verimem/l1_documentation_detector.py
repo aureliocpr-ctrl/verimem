@@ -24,8 +24,12 @@ from dataclasses import dataclass
 _DOC_PATTERN = re.compile(
     r"\b(?:documented|well[- ]documented|"
     r"explained|described|"
-    r"documentato|documentata|spiegato|spiegata|"
-    r"descritto|descritta)\b",
+    # Le quattro flessioni: c'erano maschile e femminile SINGOLARI e non i
+    # plurali, quindi «Le API sono documentate» passava mentre «Il modulo e
+    # documentato» veniva presa. Stessa cura di `l1_completion_detector`,
+    # stesso modello (`l1_tested_detector`), stessa misura sul corpus
+    # (`documentati` 24 occorrenze su 5387, `documentate` 2).
+    r"documentat[oaie]|spiegat[oaie]|descritt[oaie])\b",
     re.IGNORECASE,
 )
 

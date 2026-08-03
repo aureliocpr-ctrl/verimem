@@ -49,6 +49,20 @@ SHIPPED_KEYWORDS = frozenset({
     "MERGED",
     "WIRED",
     "DEPLOYED",
+    # Gli equivalenti ITALIANI. Il match gira su `proposition.upper()`, quindi
+    # il case non c'entrava: mancava la lingua. Misurato 2026-08-03 — «Questo
+    # e stato rilasciato la settimana scorsa» entrava come model_claim mentre
+    # «This was shipped last week» veniva quarantinata.
+    #
+    # Radici e non parole intere PERCHE' il confronto e' gia' una
+    # sottostringa (`kw in upper`): una radice sola copre le quattro flessioni
+    # invece di moltiplicare le voci. Frequenze sul corpus (5387 fatti vivi):
+    # `cablat` 63, `mergiat` 29, `distribuit` 18, `rilasciat` 9 — tutte sotto
+    # l'1.2%, e ognuna e' l'equivalente esatto di una voce inglese gia' qui.
+    "RILASCIAT",
+    "MERGIAT",
+    "CABLAT",
+    "DISTRIBUIT",
 })
 
 # Verified_by reference prefixes that indicate commit-traceability.

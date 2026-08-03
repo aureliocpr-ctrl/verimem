@@ -1845,6 +1845,34 @@ class Memory:
             "source": (getattr(f, "source_episodes", None) or [None])[0],
             "verified_by": list(getattr(f, "verified_by", None) or []),
             "superseded_by": getattr(f, "superseded_by", None) or None,
+            # CIO' CHE IL CANALE MCP SERVIVA E QUESTO NO. Il docstring qui
+            # sopra promette «the SAME provenance surface everywhere», e il
+            # 2026-08-02 quella frase aveva gia' fatto trovare `superseded_by`
+            # mancante. Non bastava: sullo stesso fatto i due contratti di
+            # uscita divergevano ancora su cinque campi.
+            #
+            #   MCP  fact_payload -> confidence confidence_tier EPISTEMIC
+            #                        meta_narrative writer_principal + …
+            #   SDK  _fact_view   -> (nessuno di questi)
+            #
+            # `epistemic` e' quello che ha fatto trovare il difetto:
+            # `label(fid, 'proven', proof=…)` risponde True, il DB contiene
+            # `{"kind": "proven", "proof": "listino firmato"}`, e nessuna
+            # superficie SDK lo serviva — ne' `search`, ne' `get`, ne'
+            # `explain`. Il tier che dice PERCHE' un fatto merita fiducia si
+            # scriveva e non si rileggeva.
+            #
+            # ADDITIVO di proposito, non una delega a `fact_payload`: i due
+            # usano nomi diversi per la stessa cosa (`text` contro
+            # `proposition`), e allinearli romperebbe ogni chiamante dell'SDK.
+            # Si aggiunge cio' che manca; niente sparisce.
+            #
+            # Sempre presenti, `None` quando non c'e': una chiave assente non
+            # distingue «nessuna garanzia» da «questa vista non lo dice».
+            "epistemic": getattr(f, "epistemic", None) or None,
+            "confidence": getattr(f, "confidence", None),
+            "confidence_tier": getattr(f, "confidence_tier", None),
+            "writer_principal": getattr(f, "writer_principal", None) or None,
         }
 
     def get(self, fact_id: str) -> dict[str, Any] | None:
