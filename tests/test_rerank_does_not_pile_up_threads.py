@@ -66,6 +66,34 @@ def _attendi_thread(timeout=6.0):
         t.join(timeout)
 
 
+def _thread_nati_durante(azione, attesa=0.3) -> set:
+    """Quali thread di rerank NASCONO durante l'azione. Insiemi, non conteggi.
+
+    ⚠️ QUESTA E' LA CURA DI UN ROSSO VERO, e il rosso spiega perche' serve.
+    CI Windows del 04/08 su `71b67f7a`: 1 failed su 9072 passed, con il
+    messaggio «con lo slot occupato sono nati **-1** thread di rerank:
+    l'accumulo continua» e `assert 0 == 1`. Un conteggio NEGATIVO — cioe' il
+    test accusava il codice di accumulare thread nel momento esatto in cui ne
+    stava finendo uno.
+
+    La causa: si misurava `len()` prima e dopo. La cardinalita' di una
+    popolazione viva somma nascite e morti in un numero solo, e i thread di
+    rerank di questo file vivono 1,5 s (lo scorer finto dorme) contro un budget
+    di 0,15 — quindi un test lascia dietro un thread che muore mentre il
+    successivo sta misurando. Su Windows, piu' lento, la finestra si allarga e
+    la sovrapposizione diventa probabile.
+
+    Guardando gli oggetti invece del loro numero, una morte non puo' piu'
+    somigliare a una nascita: e' la stessa distinzione fra il contare e
+    l'identificare che nel prodotto separa «quanti fatti sono stati ritirati»
+    da «quali, e di che specie».
+    """
+    prima = set(_thread_di_rerank())
+    azione()
+    time.sleep(attesa)
+    return set(_thread_di_rerank()) - prima
+
+
 @pytest.fixture()
 def rerank_vivo(monkeypatch):
     """Un recall che TENTA davvero il rerank, con uno scorer lento e finto.
@@ -287,16 +315,34 @@ def test_no_thread_is_left_behind_when_the_slot_is_busy(tmp_path, rerank_vivo):
     lease = sem._rerank_inflight_acquire()
     assert lease
     try:
-        prima = len(_thread_di_rerank())
-        sm.recall("gatti", k=5)
-        time.sleep(0.3)
-        dopo = len(_thread_di_rerank())
+        nati = _thread_nati_durante(lambda: sm.recall("gatti", k=5))
     finally:
         sem._rerank_inflight_release(lease)
-    assert dopo == prima, (
-        f"con lo slot occupato sono nati {dopo - prima} thread di rerank: "
+    assert not nati, (
+        f"con lo slot occupato sono nati {len(nati)} thread di rerank: "
         "l'accumulo continua")
     _attendi_thread()
+
+
+def test_la_misura_non_scambia_una_MORTE_per_una_nascita():
+    """Il presidio del rosso di Windows, ed e' il verso che rende la cura
+    onesta: se togliessi semplicemente l'assert, il test smetterebbe di
+    fallire e anche di misurare. Qui un thread ALTRUI muore mentre la misura
+    e' in corso — la situazione esatta della CI — e la misura deve dire zero
+    nascite, non meno uno."""
+    partito = threading.Event()
+
+    def _breve():
+        partito.set()
+        time.sleep(0.15)        # vivo quando si conta PRIMA, morto al DOPO
+
+    morente = threading.Thread(target=_breve, name="hippo-rerank", daemon=True)
+    morente.start()
+    assert partito.wait(5), "il thread finto non e' nemmeno partito"
+    assert _thread_nati_durante(lambda: None) == set(), (
+        "un thread di rerank che FINISCE viene contato come se ne fosse nato "
+        "uno con il segno meno")
+    morente.join(5)
 
 
 def test_the_pile_up_is_gone_across_several_queries(tmp_path, rerank_vivo):
@@ -306,10 +352,15 @@ def test_the_pile_up_is_gone_across_several_queries(tmp_path, rerank_vivo):
     sm = sem.SemanticMemory(db_path=tmp_path / "s.db")
     _semina(sm)
 
+    # stessa ragione del test qui sopra: si guardano i thread NATI da questi
+    # sei recall, non quanti ne sono vivi nel processo — un residuo altrui
+    # farebbe partire il massimo da uno e il test cadrebbe per colpa di un
+    # vicino.
+    estranei = set(_thread_di_rerank())
     massimo = 0
     for _ in range(6):
         sm.recall("gatti", k=5)
-        massimo = max(massimo, len(_thread_di_rerank()))
+        massimo = max(massimo, len(set(_thread_di_rerank()) - estranei))
     assert massimo <= 1, (
         f"con sei recall sono arrivati a {massimo} thread di rerank vivi "
         "insieme: i predict si rubano i core e sforano il budget a vicenda")
