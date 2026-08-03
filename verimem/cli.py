@@ -2165,11 +2165,20 @@ def _facts_data_dir() -> Path:
     HIPPO_DATA_DIR / ENGRAM_DATA_DIR set AFTER import (eg in tests or
     when launching from a wrapper script) — otherwise pytest cannot
     isolate the live corpus.
+
+    L'ORDINE DEGLI ALIAS NON SI DECIDE QUI. Fino al 2026-08-04 questa funzione
+    aveva il suo loop, con ENGRAM_DATA_DIR per PRIMA, cioe' l'opposto della
+    regola che il prodotto dichiara: `HIPPO_DATA_DIR` e' l'appiglio esplicito
+    di isolamento e la variabile del manutentore non deve sovrascriverlo.
+    L'effetto era quello che la regola voleva evitare — con entrambe poste
+    (la situazione normale di chi sviluppa) la CLI scriveva nel corpus VIVO
+    mentre l'avviso annunciava di usare quello isolato. Misurato: i fatti in
+    produzione da 7178 a 7179 con HIPPO_DATA_DIR su una directory temporanea.
     """
-    for k in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR"):
-        v = os.environ.get(k, "").strip()
-        if v:
-            return Path(v).expanduser().resolve()
+    from ._compat import _env_data_dir
+    override = _env_data_dir()
+    if override:
+        return Path(override).expanduser().resolve()
     return CONFIG.data_dir
 
 
