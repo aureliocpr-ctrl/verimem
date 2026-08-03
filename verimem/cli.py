@@ -3143,6 +3143,23 @@ def facts_add(
             "'file:report.md:42'."
         ),
     ),
+    source: str = typer.Option(
+        None, "--source",
+        help=(
+            "The EVIDENCE TEXT the fact must follow from — this is what runs "
+            "the moat (L4 entailment). Different from --verified-by, which "
+            "records WHO vouches and runs no check. Bulk: put a 'source' "
+            "field in each --jsonl-stdin object."
+        ),
+    ),
+    source_file: str = typer.Option(
+        None, "--source-file",
+        help=(
+            "Read the evidence from a file — raw output (pytest, git log, a "
+            "log tail) is multi-line and hits the same shell-quoting hazards "
+            "that --from-file exists for."
+        ),
+    ),
     status: str = typer.Option(
         "model_claim", "--status",
         help="Initial status enum (model_claim default).",
@@ -3261,11 +3278,19 @@ def facts_add(
         if not topic:
             console.print("[red]--topic required[/red]")
             raise typer.Exit(1) from None
+        evidenza = source
+        if source_file:
+            try:
+                evidenza = Path(source_file).read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                console.print(f"[red]cannot read --source-file:[/red] {exc}")
+                raise typer.Exit(1) from exc
         payloads.append({
             "proposition": body,
             "topic": topic,
             "confidence": confidence,
             "verified_by": list(verified_by or []),
+            "source": evidenza,
             "status": status,
             "validate": validate,
             "gate_mode": gate_mode,
@@ -3348,6 +3373,14 @@ def facts_add(
             continue
         conf = max(0.0, min(conf, 1.0))
         vb = [str(x) for x in (p.get("verified_by") or [])]
+        # 2026-08-04: il QUARTO canale di scrittura. Fino a qui `facts add` non
+        # aveva modo di consegnare l'evidenza al gate — non era il moat spento
+        # per configurazione, era che non esisteva l'interruttore. Stessa forma
+        # di `key_facts`, curata sull'altro canale il 2026-07-30 e non portata
+        # al gemello. Il per-record del JSONL vince sul flag, come per ogni
+        # altro campo qui: l'import bulk e' l'uso principale del comando.
+        src = p.get("source")
+        src = str(src).strip() if src is not None else None
         st = str(p.get("status") or status)
         v_lvl = str(p.get("validate") or validate)
         g_mode = str(p.get("gate_mode") or gate_mode)
@@ -3379,6 +3412,11 @@ def facts_add(
             meta_narrative=mn,
             hook_token=hook_token,
             repo_root=_gate_repo_root,
+            # La coppia esatta di `verimem save` (cli.py) e della cura di
+            # `key_facts`: senza `ground_write` il canale ricadrebbe su
+            # ENGRAM_GROUNDING_WRITE, che nessun file dell'albero imposta.
+            source=src or None,
+            ground_write=True if src else None,
         )
         if gate.action == "reject":
             console.print(
@@ -3400,6 +3438,11 @@ def facts_add(
             status=final_status,
             writer_role=wr,
             meta_narrative=mn,
+            # Il verdetto va PERSISTITO, non solo calcolato: un giudizio che
+            # muore col processo non e' provenienza, e ogni lettura successiva
+            # chiamerebbe il fatto non giudicato. E' il modo in cui
+            # `Memory.add` lo scrive.
+            grounding_score=getattr(gate, "grounding_score", None),
         )
         # 2026-06-05: embed="auto" so `engram facts add` never cold-blocks
         # ~22s when the encode daemon is down (defers; heal via
