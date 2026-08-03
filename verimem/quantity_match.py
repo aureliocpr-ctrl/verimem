@@ -202,6 +202,31 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
     # contrasto fra la stessa cosa scritta due volte.
     frozenset({"annuali", "mensili", "settimanali", "giornalieri",
                "trimestrali", "semestrali", "orari"}),
+    # GLI ALTRI DOMINI DELLO STESSO SCHEMA, misurati end-to-end dall'altra
+    # istanza subito dopo la periodicita': `base`/`premium` e `netto`/`lordo`
+    # davano ancora VIVI=1 su 2 sulle STESSE frasi. Un listino a due livelli e
+    # un prezzo con e senza imposta sono forme dei dati comuni quanto
+    # annuale/mensile, e sullo stesso schema stanno taglia, canale, tipo di
+    # cliente e verso del viaggio.
+    #
+    # ⛔ QUESTO NON CHIUDE LA CLASSE, e va detto: la lista e' il SURROGATO di un
+    # terzo esito che il giudice non ha. Misurato su coppie fatto->fatto, il CE
+    # binario da contraddice 0.77/0.92 e indipendente 1.25/0.28/0.30 — uno degli
+    # indipendenti sta SOPRA entrambi i contraddice, mentre il controllo
+    # «supporta» sta a 99.19. I due gruppi da separare collassano, perche' la
+    # distinzione vive dentro il «non-supporta», che e' un esito unico. Finche'
+    # il giudice ha due esiti, ogni dominio nuovo va aggiunto a mano.
+    frozenset({"base", "premium", "enterprise", "pro"}),
+    frozenset({"netto", "lordo"}),
+    frozenset({"net", "gross"}),
+    frozenset({"piccola", "media", "grande"}),
+    frozenset({"piccolo", "medio", "grande"}),
+    frozenset({"small", "medium", "large"}),
+    frozenset({"online", "negozio"}),
+    frozenset({"privati", "aziende"}),
+    frozenset({"andata", "ritorno"}),
+    frozenset({"acquisto", "noleggio"}),
+    frozenset({"nuovo", "usato"}),
 )
 
 
