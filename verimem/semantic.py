@@ -2841,6 +2841,11 @@ class SemanticMemory:
             _l1_warning = detect_unsupported_shipped_claim(
                 proposition=fact.proposition,
                 verified_by=list(fact.verified_by or []),
+                # 2026-08-04: il topic dice se si sta parlando di software, e
+                # qui era gia' a portata di mano — la riga di log qui sotto lo
+                # stampa. Senza, «le stazioni sono distribuite sul territorio»
+                # si vedeva chiedere un commit.
+                topic=getattr(fact, "topic", None),
             )
             if _l1_warning:
                 _LOG.warning(

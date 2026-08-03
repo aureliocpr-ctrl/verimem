@@ -707,6 +707,7 @@ def _is_honest_reported(proposition: str) -> bool:
 
 def _l1_warnings(
     proposition: str, verified_by: Iterable[str] | None,
+    topic: str | None = None,
 ) -> list[dict[str, Any]]:
     """Run the L1 family detectors; return one warning dict per positive.
 
@@ -736,12 +737,17 @@ def _l1_warnings(
     proposition = (proposition or "")[:_LEXICAL_SCAN_CAP]
 
     out: list[dict[str, Any]] = []
-    for layer, detect in (
-        ("L1", detect_unsupported_shipped_claim),
-        ("L1.5", detect_unsupported_diagnosis_claim),
-        ("L1.7", detect_unsupported_task_state_claim),
+    # Il terzo elemento sono gli argomenti che SOLO quel detector accetta.
+    # L1 dal 2026-08-04 guarda anche il topic per capire se il claim riguarda
+    # un artefatto software; gli altri due non ne hanno bisogno, e passarglielo
+    # per uniformita' significherebbe aggiungere un parametro che nessuno
+    # legge. Esplicito qui, invece che con una firma finta la' dentro.
+    for layer, detect, extra in (
+        ("L1", detect_unsupported_shipped_claim, {"topic": topic}),
+        ("L1.5", detect_unsupported_diagnosis_claim, {}),
+        ("L1.7", detect_unsupported_task_state_claim, {}),
     ):
-        reason = detect(proposition=proposition, verified_by=vb_list)
+        reason = detect(proposition=proposition, verified_by=vb_list, **extra)
         if reason:
             out.append({"layer": layer, "reason": reason})
     # Cycle 184: L1.8 has a richer Warning struct (keyword + advice).
@@ -1018,6 +1024,11 @@ _DEV_CONTEXT = re.compile(
     r"test(?:s|ed|ing)?|pytest|bug|crash|hang|traceback|regression|"
     r"feature|module|function|class|method|endpoint|API|server|daemon|service|"
     r"script|codebase|schema|migration|database|query|compile|"
+    # 2026-08-04: le superfici del prodotto mancavano tutte. Trovate mentre
+    # questa lista diventava il secondo asse del detector L1 (prima girava
+    # solo per i fatti personali): «il nuovo comando e' stato cablato nella
+    # CLI» non aveva UN segnale dev, e nemmeno un topic come project/x/cli.
+    r"CLI|SDK|MCP|comando|comandi|subcomando|"
     r"production|staging|prod|merge[ds]?|wired|implement(?:ed|ation)?|"
     # Italian dev vocabulary (the agent logs dev-claims in IT too): produzione,
     # modulo, testato/a, verificato/a, validato/a, rilasciato, distribuito, ciclo,

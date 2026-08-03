@@ -100,6 +100,56 @@ def _find_shipped_keyword(proposition: str) -> str | None:
     return None
 
 
+def _parla_di_software(proposition: str, keyword: str,
+                       topic: str | None) -> bool:
+    """Il claim riguarda un artefatto software, o solo una parola omonima?
+
+    NON C'E' UNA LISTA NUOVA QUI, ed e' voluto: il vocabolario dev esiste dal
+    2026-06-19 in ``anti_confab_gate._DEV_CONTEXT``, e' gia' bilingue e nasce
+    dallo stesso ragionamento (un detector pensato per l'AGENTE che dichiara
+    finito il PROPRIO lavoro, applicato a fatti che non parlano di software).
+    Scriverne una seconda accanto significherebbe due liste che divergono al
+    primo cambiamento — la classe che questo progetto ha gia' pagato.
+
+    DUE COSE PERO' VANNO AGGIUSTATE, e sono il motivo per cui quella guardia
+    non ha protetto il sismologo di ws5 (2026-08-04):
+
+    1. ERA CONDIZIONATA AL «PERSONALE». La soppressione girava solo per fatti
+       con un segnale di vita quotidiana e nessun segnale dev
+       (``_has_personal_context(p) and not _has_dev_context(p)``, cycle
+       2026-06-19, nato dai "dentist appointment scheduled"). «Le stazioni di
+       misura sono distribuite sul territorio» non e' personale, quindi non
+       veniva soppressa: il mondo non si divide in personale e software, c'e'
+       una terza regione — scientifica, professionale — dove la guardia non
+       arrivava. E' la stessa forma del terzo esito che manca al giudice di
+       supersessione: due categorie dove ne servono tre.
+
+    2. IL SECONDO ASSE TOCCAVA IL PRIMO. ``_DEV_CONTEXT`` contiene
+       ``rilasciat[oaie]``, ``distribuit[oaie]``, ``merge[ds]?``, ``wired``,
+       ``deploy`` — cioe' le PAROLE STESSE che fanno scattare L1. Una
+       congiunzione i cui due termini condividono il trigger non e' un secondo
+       asse: e' il primo ripetuto, e da' sempre vero. Per questo qui il segnale
+       si cerca in un testo da cui la parola-trigger e' stata TOLTA: il
+       contesto vale solo se viene da un'altra parola.
+
+    Il ``topic`` entra nella stessa ricerca perche' «This was shipped last
+    week» — il claim che ha fatto nascere la regola nel 2026-05-17 — non
+    contiene un solo termine tecnico, e nessuna lista potra' mai riconoscerlo
+    dal testo. La stessa frase in un corpus di sismologia non dichiara nessun
+    rilascio: a decidere e' il contesto, che il prodotto possiede gia'.
+    """
+    # Import locale: anti_confab_gate importa QUESTO modulo (riga ~50), quindi
+    # un import in cima chiuderebbe il ciclo. Il vocabolario vive la' perche'
+    # la' vive anche la sua controparte personale.
+    import re as _re
+
+    from .anti_confab_gate import _has_dev_context
+
+    testo = f"{proposition or ''} {topic or ''}"
+    senza_trigger = _re.sub(_re.escape(keyword), " ", testo, flags=_re.I)
+    return _has_dev_context(senza_trigger)
+
+
 def _is_pr_id_token(token: str) -> bool:
     """A pr id-ish token to ignore when checking qualifiers: pure digits, or a
     hex-ish hash (>=6 hex chars)."""
@@ -135,14 +185,24 @@ def detect_unsupported_shipped_claim(
     *,
     proposition: str,
     verified_by: Iterable[str] | None,
+    topic: str | None = None,
 ) -> str | None:
     """L1 anti-confabulation warning detector.
 
     Returns a human-readable warning string when:
     * ``proposition`` contains a SHIPPED-like keyword, AND
+    * the claim is about a SOFTWARE artefact (see ``_parla_di_software``), AND
     * ``verified_by`` lacks any commit/pr/file/git reference.
 
     Returns ``None`` when no warning is needed.
+
+    La condizione di mezzo e' del 2026-08-04 e cambia la FORMA del test, non
+    la sua lunghezza: prima bastava che una parola comparisse, e cosi' un
+    sismologo che scriveva «le stazioni sono distribuite sul territorio» si
+    vedeva chiedere un commit — con `grounding_score` 100.0, cioe' scavalcando
+    il giudizio semantico che gli dava ragione. ``topic`` e' facoltativo per
+    non rompere i chiamanti, ma passarlo migliora la decisione: e' li' che
+    vive il contesto quando la frase da sola non ce l'ha.
 
     This is a PURE detection function — no I/O, no global state, no
     BUS emit. The caller (SemanticMemory.store) decides what to do
@@ -150,6 +210,8 @@ def detect_unsupported_shipped_claim(
     """
     kw = _find_shipped_keyword(proposition)
     if kw is None:
+        return None
+    if not _parla_di_software(proposition, kw, topic):
         return None
     if _has_commit_ref(verified_by):
         return None
@@ -395,6 +457,7 @@ def scan_orphaned_facts(
         if include_shipped:
             w = detect_unsupported_shipped_claim(
                 proposition=prop, verified_by=vb,
+                topic=getattr(fact, "topic", None),
             )
             if w is not None:
                 out["shipped"].append((fid, w))
