@@ -359,6 +359,29 @@ def _min_shared_ratio() -> float:
 
     Un fattore 4.7 fra le due, e 0.15 non tocca nessuno dei casi presidiati.
 
+    E LA CURA ESISTEVA GIA', SUI DUE MODULI FRATELLI. `facts_conflict.
+    find_conflicting_pairs` (polarita') e `corroboration.find_corroborations`
+    hanno entrambi `min_overlap=0.30` — lo stesso overlap coefficient — piu' un
+    `min_shared_tokens=2`, e il commento del primo descrive letteralmente
+    questo difetto: «AVOIDS the failure mode where a single common token like
+    "main" between unrelated facts gives high overlap coefficient». Il percorso
+    NUMERICO, l'unico dei tre che fa RITIRARE un fatto, non aveva ne' l'una ne'
+    l'altro.
+
+    PERCHE' QUI SERVE IL RAPPORTO E NON IL CONTEGGIO — misurato, cosi' nessuno
+    «allinea per coerenza» e rompe tre conflitti veri. Su quattro coppie che i
+    test pretendono siano conflitti, TRE hanno UN SOLO token condiviso:
+
+        Marco ha 30 anni. / Marco ha 40 anni.            1 token, quota 1.000
+        Cache is bounded at 1024 / Cache holds 4096       1 token, quota 0.500
+        Sessions ... TTL of 30 min / ... 45 minutes       1 token, quota 0.500
+
+    `min_shared_tokens=2` le farebbe cadere tutte e tre. I fratelli lavorano su
+    prosa e possono permetterselo; questo percorso deve reggere anche «Marco ha
+    30 anni», dove un token condiviso e' il CENTO PER CENTO della frase. E'
+    esattamente la differenza che il rapporto vede e il conteggio no: «marco»
+    e' 1 su 1, «loop» e' 1 su 28.
+
     Cosa toglie: sul campione (220 fatti con quantita', 24090 coppie) i
     conflitti erano 321, di cui 84 (26%) retti da un solo token condiviso —
     «json» con unita' `tool` 5 contro 4, «chain» con `loc` 1700 contro 1414,

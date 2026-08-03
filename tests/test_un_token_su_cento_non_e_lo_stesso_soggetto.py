@@ -103,6 +103,27 @@ def test_una_soglia_illeggibile_non_rompe_il_gate(monkeypatch):
     numeric_conflict(LUNGA_A, LUNGA_B)  # non deve sollevare
 
 
+def test_perche_NON_si_usa_il_conteggio_dei_fratelli():
+    """Presidia la DECISIONE di divergere da `facts_conflict` e
+    `corroboration`, che hanno `min_shared_tokens=2` oltre al rapporto.
+
+    Qui quel minimo farebbe cadere TRE conflitti veri su quattro: questo
+    percorso deve reggere anche «Marco ha 30 anni», dove UN token condiviso è
+    il cento per cento della frase. Se un domani qualcuno allinea i tre moduli
+    «per coerenza», questo test mostra il conto."""
+    from verimem.quantity_match import distinctive_tokens
+
+    con_un_token = [(a, b) for a, b in VERI
+                    if len(distinctive_tokens(a) & distinctive_tokens(b)) < 2]
+    assert con_un_token, (
+        "nessuno dei conflitti veri ha un solo token condiviso: se è cambiato "
+        "il corpus dei casi, la scelta del rapporto va rimotivata")
+    for a, b in con_un_token:
+        assert numeric_conflict(a, b) is not None, (
+            f"un conflitto vero con un solo token condiviso è caduto: "
+            f"«{a}» / «{b}»")
+
+
 def test_lo_scanner_batch_vede_la_stessa_cosa():
     """Il docstring promette che gate e scanner restino identici: la cura sta
     nel punto condiviso, quindi la promessa regge da sé."""
