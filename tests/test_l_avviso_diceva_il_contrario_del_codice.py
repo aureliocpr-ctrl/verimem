@@ -53,33 +53,49 @@ import pathlib
 
 import pytest
 
-ISOLATO = r"C:\tmp\test_isolamento_esplicito"
-PRODUZIONE = r"C:\tmp\finta_produzione_del_manutentore"
+
+#: ⚠️ I PERCORSI SI COSTRUISCONO, NON SI SCRIVONO. La prima stesura usava
+#: `C:\tmp\isolato`, e su Linux `Path(r"C:\tmp\isolato").resolve()` diventa
+#: `/home/runner/work/verimem/verimem/C:\tmp\isolato` — relativo alla cwd. In
+#: locale verde, in CI rosso su tutti e sei i job. È la terza volta in tre
+#: giorni che un mio test misura l'AMBIENTE invece del prodotto, e stavolta
+#: l'ambiente era il sistema operativo.
+@pytest.fixture()
+def dirs(tmp_path):
+    isolato = tmp_path / "isolamento_esplicito"
+    produzione = tmp_path / "finta_produzione_del_manutentore"
+    isolato.mkdir()
+    produzione.mkdir()
+    return isolato, produzione
 
 
 @pytest.fixture(autouse=True)
-def _alias_discordi(monkeypatch: pytest.MonkeyPatch):
+def _alias_discordi(monkeypatch: pytest.MonkeyPatch, dirs):
     """La situazione normale di chi sviluppa: la variabile del manutentore c'è
     già, e il test ne aggiunge una esplicita per isolarsi."""
-    monkeypatch.setenv("HIPPO_DATA_DIR", ISOLATO)
-    monkeypatch.setenv("ENGRAM_DATA_DIR", PRODUZIONE)
+    isolato, produzione = dirs
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(isolato))
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(produzione))
     monkeypatch.delenv("VERIMEM_DATA_DIR", raising=False)
 
 
-def test_la_CLI_onora_l_isolamento_esplicito():
+def test_la_CLI_onora_l_isolamento_esplicito(dirs):
     """`facts add` e ogni comando che passa da qui: è il canale con cui si
     carica un corpus, quindi è quello che può sporcare di più."""
+    isolato, _ = dirs
     from verimem.cli import _facts_data_dir
-    assert str(_facts_data_dir()).lower().startswith(ISOLATO.lower()), (
-        f"la CLI ha scelto {_facts_data_dir()} invece di {ISOLATO}: la "
-        f"variabile del manutentore ha sovrascritto l'isolamento esplicito, "
-        f"che è esattamente ciò che config.py dice di non fare")
+    scelto = pathlib.Path(_facts_data_dir()).resolve()
+    assert scelto == isolato.resolve(), (
+        f"la CLI ha scelto {scelto} invece di {isolato}: la variabile del "
+        f"manutentore ha sovrascritto l'isolamento esplicito, che è "
+        f"esattamente ciò che config.py dice di non fare")
 
 
-def test_il_worker_dei_sogni_onora_l_isolamento_esplicito():
+def test_il_worker_dei_sogni_onora_l_isolamento_esplicito(dirs):
     """Gira in background e scrive: se non è isolato, sporca durante la suite."""
+    isolato, _ = dirs
     from verimem.auto_dream_worker import _resolve_engram_dir
-    assert str(_resolve_engram_dir()).lower().startswith(ISOLATO.lower()), (
+    assert pathlib.Path(_resolve_engram_dir()).resolve() == isolato.resolve(), (
         f"il worker ha scelto {_resolve_engram_dir()}")
 
 
