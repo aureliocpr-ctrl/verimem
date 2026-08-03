@@ -335,6 +335,59 @@ def content_tokens(text: str) -> set[str]:
     return out
 
 
+def _min_shared_ratio() -> float:
+    """Quanta parte della frase PIU' POVERA deve essere condivisa perche' due
+    proposizioni parlino dello stesso soggetto. 0 = guardia spenta.
+
+    Perche' un RAPPORTO e non un conteggio: il conteggio e' gia' stato
+    falsificato il 2026-07-25 — «ciascun lato ha una parola distintiva che
+    l'altro non ha, quindi sono soggetti diversi» cadde su due test che
+    esistevano gia', perche' un attributo opposto, un sinonimo e un valore
+    cambiato hanno la STESSA forma lessicale (vedi
+    tests/test_exclusive_words_mean_other_subject.py). Un rapporto invece
+    misura una cosa diversa: due frasi corte che condividono meta' dei loro
+    termini sono lo stesso soggetto, due prose che ne condividono un
+    ventottesimo no.
+
+    LA SOGLIA STA IN MEZZO A DUE POPOLAZIONI SEPARATE, misurate il 2026-08-03
+    PRIMA di scrivere la guardia:
+
+        conflitti che il codice dichiara sulle frasi dei TEST (118 coppie)
+            quota minima   0.3333
+        falsi dal corpus vero, tenuti in piedi da UN token (84 coppie)
+            quota massima  0.0714
+
+    Un fattore 4.7 fra le due, e 0.15 non tocca nessuno dei casi presidiati.
+
+    Cosa toglie: sul campione (220 fatti con quantita', 24090 coppie) i
+    conflitti erano 321, di cui 84 (26%) retti da un solo token condiviso —
+    «json» con unita' `tool` 5 contro 4, «chain» con `loc` 1700 contro 1414,
+    «loop» con `skill` 8 contro 324. Fatti che non parlano della stessa cosa.
+    E il costo non e' cosmetico: `anti_confab_gate.py` legge
+    `verdict=contradicted` e manda il fatto vecchio a `_route_evolutions`,
+    cioe' lo RITIRA — il meccanismo gia' quantificato il 01/08 come «la
+    supersessione mangia i fatti veri».
+
+    ENGRAM_CONFLICT_MIN_SHARED_RATIO=0 riporta al comportamento precedente."""
+    from .env_num import env_float
+    return max(0.0, env_float("ENGRAM_CONFLICT_MIN_SHARED_RATIO", 0.15))
+
+
+def _shared_enough(da: set[str], db: set[str]) -> bool:
+    """I token condivisi sono una frazione sufficiente della frase piu' povera?
+
+    Sul lato PIU' POVERO e non sull'unione: se una frase corta e specifica
+    incontra una prosa lunga, e' la corta a dire se il soggetto e' lo stesso.
+    """
+    soglia = _min_shared_ratio()
+    if soglia <= 0.0:
+        return True
+    piccola = min(len(da), len(db))
+    if piccola <= 0:
+        return True
+    return len(da & db) / piccola >= soglia
+
+
 def contrasting_attrs(a_tokens: set[str], b_tokens: set[str]) -> bool:
     """True if the two token sets describe DIFFERENT attributes — each holds
     a different member of a contrasting-qualifier group (read vs write)."""
@@ -379,6 +432,8 @@ def conflict_from_parts(
     db = {t for t in cb if norm_unit(t) not in units_b}
     if not (da & db):
         return None  # unrelated subject
+    if not _shared_enough(da, db):
+        return None  # una parola su decine: prose diverse, non stesso soggetto
     if contrasting_attrs(ca, cb):
         return None  # different attribute (kept: catches pairs that share words)
     for (ua, va) in qa:
