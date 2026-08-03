@@ -173,6 +173,35 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
     frozenset({"primario", "secondario", "replica"}),
     frozenset({"collaudo", "produzione"}),
     frozenset({"caldo", "freddo"}),
+    # PERIODICITA'. I trenta gruppi qui sopra coprono il dominio
+    # INFRASTRUTTURALE — letture, repliche, ambienti — e non quello
+    # commerciale e temporale, che e' il primo che incontra chi prova il
+    # prodotto con il proprio listino. Costo misurato il 2026-08-04:
+    #   «Il piano annuale costa 100 euro» + «Il piano mensile costa 20 euro»
+    #       -> VIVI=1, l'annuale RITIRATO. Anche in inglese.
+    #   «La latenza di lettura e' 5 ms»   + «... di scrittura e' 9 ms»
+    #       -> VIVI=2, perche' lettura/scrittura e' un gruppo che c'e'.
+    # Il meccanismo funzionava: gli mancava il mondo. Era l'aperto «il mensile
+    # cancella l'annuale», cercato per giorni nella soglia di overlap — dove
+    # non poteva stare, perche' su frasi corte la quota e' 0.75.
+    #
+    # Due fatti sullo STESSO periodo con numeri diversi restano una
+    # contraddizione: `ca == cb` non e' un contrasto, e la supersessione
+    # continua a scattare (presidiato).
+    # UN GRUPPO NON PUO' CONTENERE DUE NOMI DELLA STESSA PERIODICITA': il
+    # contrasto si decide su `ca != cb`, quindi «annual» accanto a «yearly»
+    # farebbe leggere come attributi diversi due frasi che dicono lo stesso.
+    # Per questo mancano «yearly» e «biannual» (che vale sia semestrale sia
+    # biennale, a seconda di chi scrive).
+    frozenset({"annual", "monthly", "weekly", "daily", "quarterly", "hourly"}),
+    frozenset({"annuale", "mensile", "settimanale", "giornaliero",
+               "trimestrale", "semestrale", "orario"}),
+    # `content_tokens` singolarizza l'inglese ma NON l'italiano (misurato: «i
+    # canoni annuali» -> `annuali`), quindi il plurale va dato a mano — in un
+    # gruppo SEPARATO, se no «annuale» contro «annuali» diventerebbe un
+    # contrasto fra la stessa cosa scritta due volte.
+    frozenset({"annuali", "mensili", "settimanali", "giornalieri",
+               "trimestrali", "semestrali", "orari"}),
 )
 
 
