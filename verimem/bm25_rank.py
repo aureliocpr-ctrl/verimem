@@ -49,6 +49,25 @@ _QUERY_STOPWORDS = frozenset({
     "your", "there", "this", "that", "these", "those", "any", "some",
     # it — interrogative/funzionali
     "cosa", "che", "chi", "quando", "dove", "perche", "come", "quale", "quali",
+    # it+en — le interrogative di QUANTITA'. C'erano tutte le altre e non
+    # queste, cioe' proprio quelle che introducono una domanda di CONTEGGIO.
+    # Misurato 2026-08-03 su uno store di quattro fatti di listino:
+    #     count(query="quanto costa il piano annuale")  ->  0
+    # mentre «Il piano annuale di VeriMem costa 100 euro.» era nello store:
+    # `count` fa un AND sui token informativi e «quanto» restava fra questi.
+    #
+    # Il prodotto le conosce gia' altrove: `query_intent._STOP` — la lista del
+    # router di cardinalita' — ha `how many much number count times quanti
+    # quante volte numero`. Due liste, due verita', e query_intent ha i PLURALI
+    # e non i singolari (una dimenticanza di genere, non di criterio).
+    #
+    # NON entrano i SOSTANTIVI omografi, misurati sul corpus vero (5371 fatti):
+    #     count 43 — e' il nome di un metodo di questo prodotto
+    #     numero 139 · volte 75 · number 10 · times 3
+    # In questo dominio sono contenuto, e toglierli renderebbe non cercabili i
+    # fatti che ne parlano. Stessa decisione presa per `ai` (281 come sigla
+    # contro 254 come preposizione).
+    "quanto", "quanta", "quanti", "quante", "many", "much",
     "il", "lo", "la", "le", "gli", "un", "una", "uno", "di", "da", "per",
     "con", "su", "tra", "fra", "del", "della", "dei", "delle", "nel", "nella",
     "ed", "sono", "era", "erano", "ha", "hanno", "aveva",
