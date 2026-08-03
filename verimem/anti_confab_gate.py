@@ -527,7 +527,33 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
     testa = _testa_nominale(nuovo)
     if testa and testa == _testa_nominale(vecchio):
         return True
-    return len(a & b) >= 2
+    # IL CONTEGGIO BASTA SULLE FRASI CORTE, NON SULLA PROSA. Le dodici coppie
+    # con cui `>= 2` fu misurato (sopra) sono frasi brevi: fra 0 parole
+    # condivise delle finte e 3-5 delle vere, due sta comodo. Ma il corpus e'
+    # fatto di prosa, e due prose da 800 caratteri condividono due parole per
+    # caso. Misurato 2026-08-03 su un campione di 200 fatti:
+    #
+    #     prosa lunga (>400 char)  4005 coppie  1830 «puo' essere» (45.7%)
+    #                              quota condivisa mediana 0.0588
+    #     frasi corte (<=200)       528 coppie    94 «puo' essere» (17.8%)
+    #                              quota condivisa mediana 0.8000
+    #
+    # Quasi una coppia di prose su due passava, condividendo il 5.9% delle
+    # proprie parole: un ordine di grandezza sotto le frasi corte per cui il
+    # criterio era tarato. Esempi veri presi dal corpus, quota 0.026:
+    # «reale»+«strutturale» fra un fatto su quantity_match e uno su una
+    # architettura a spazio di stati; «loop»+«reali» fra un selftest di driver
+    # e un bench MMLU. Il vecchio veniva RITIRATO.
+    #
+    # Le evoluzioni che i test presidiano stanno a quota 0.667-1.000, quindi
+    # la soglia 0.15 gia' misurata in `quantity_match._shared_enough` (stessa
+    # famiglia, stessa env) sta in mezzo con margine da entrambi i lati. Si
+    # RIUSA quella: una superficie sola, una sola manopola.
+    #
+    # Il conteggio resta ACCANTO al rapporto e non viene sostituito: sulle
+    # frasi corte e' lui a lavorare, ed e' misurato.
+    from .quantity_match import _shared_enough
+    return len(a & b) >= 2 and _shared_enough(a, b)
 
 
 def _supersede_same_source_on() -> bool:
