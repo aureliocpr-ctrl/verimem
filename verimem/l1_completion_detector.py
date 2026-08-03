@@ -33,7 +33,26 @@ from dataclasses import dataclass
 _COMPLETION_PATTERN = re.compile(
     r"\b(?:complete|completed|done|finished|closed|"
     r"wrapped[- ]up|all[- ]done|task[- ]done|"
-    r"completo|completato|finito|fatto|chiuso|concluso)\b",
+    # LE QUATTRO FLESSIONI, non solo il maschile singolare. Il gate prendeva
+    # «completato» e lasciava passare «completata»: misurato 2026-08-03 sulla
+    # self-claim che l'orientamento MCP cita testualmente come esempio di cio'
+    # che respinge —
+    #     EN  The migration is complete and all tests pass. -> quarantined
+    #     IT  La migrazione e completata e tutti i test ...  -> model_claim
+    # Non mancava l'italiano: c'era, con una flessione su quattro.
+    #
+    # Generate dalla REGOLA come fa `l1_tested_detector._TESTED_PATTERN`
+    # (testato|testati|testata|testate|verificato|...), che nel banco sui
+    # quindici detector era uno di quelli che funzionavano in entrambe le
+    # lingue.
+    #
+    # Rischio misurato prima sul corpus vero (5387 fatti vivi): nessuna forma
+    # aggiunta supera il 2% — le piu' frequenti sono `chiusi` 62, `chiusa` 43.
+    # E non c'e' asimmetria da valutare: la forma maschile e' gia' qui, quindi
+    # se «chiuso» fa scattare il gate «chiusa» deve farlo. Le flessioni non
+    # cambiano il criterio, lo applicano.
+    r"complet[oaie]|completat[oaie]|finit[oaie]|fatt[oaie]|"
+    r"chius[oaie]|conclus[oaie])\b",
     re.IGNORECASE,
 )
 

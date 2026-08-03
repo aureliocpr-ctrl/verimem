@@ -134,8 +134,20 @@ _PERF_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             r"(?:terzo|quarto|metà|meta)\s+"
             r"(?:la\s+|il\s+)?(?:latenza|tempo|durata)?"
             r"|"
-            r"\b(?:due|tre|dieci|cento)\s+volte\s+"
-            r"(?:più|piu|meno)\s+(?:veloce|lento|rapido)",
+            # CIFRE **E** PAROLE, in tutte e due le lingue. Misurato
+            # 2026-08-03: ogni lingua copriva meta' del caso, in modo
+            # complementare —
+            #     IT «dieci volte piu veloce» -> quarantined  (parole si')
+            #     IT «10 volte piu veloce»    -> model_claim  (cifre no)
+            #     EN «10x faster»             -> quarantined  (cifre si')
+            #     EN «ten times faster»       -> model_claim  (parole no)
+            # Scrivere «10» invece di «dieci» non cambia che sia una
+            # self-claim di prestazione.
+            r"\b(?:\d+|due|tre|quattro|cinque|dieci|venti|cento|mille)"
+            r"\s+volte\s+(?:più|piu|meno)\s+(?:veloce|lento|rapido)"
+            r"|"
+            r"\b(?:two|three|four|five|ten|twenty|hundred)\s+times\s+"
+            r"(?:faster|slower|quicker)",
             re.IGNORECASE,
         ),
     ),
