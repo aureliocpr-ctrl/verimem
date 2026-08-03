@@ -77,8 +77,24 @@ def test_una_query_di_soli_articoli_non_conta_tutto(store):
 
 
 def test_il_conteggio_senza_query_non_si_muove(store):
-    """Il ramo che conta il corpus intero non passa dai token."""
-    assert store.count() == len(CORPUS)
+    """Il ramo che conta il corpus intero non passa dai token.
+
+    ⚠️ QUESTO TEST ASSERIVA `== len(CORPUS)`, e passava PER CASO. Uno dei
+    quattro testi qui sopra viene quarantinato dal gate (L1.13) e io non me
+    n'ero accorta: l'uguaglianza reggeva perché il ramo `none` contava anche i
+    quarantinati, cioè per via del difetto curato il 2026-08-04.
+
+    Misurava una cosa — «il ramo senza query non passa dai token» — e ne
+    assumeva un'altra: quanti fatti sopravvivono al gate. Ora dice quello che
+    voleva dire: il conteggio senza query è la popolazione RICHIAMABILE, la
+    stessa che vede il default di `search`, e non dipende da quanti testi
+    stanno nella lista qui sopra."""
+    richiamabili = len(store.semantic.search_facts("", limit=1000))
+    assert store.count() == richiamabili, (
+        f"count()={store.count()} contro {richiamabili} richiamabili: il ramo "
+        f"senza query conta una popolazione diversa da quella che il prodotto "
+        f"restituisce")
+    assert 0 < richiamabili <= len(CORPUS)
 
 
 def test_la_ricerca_resta_com_era(store):

@@ -680,9 +680,19 @@ class Memory:
         if topic_prefix is not None:
             return len(self.semantic.search_facts(
                 "", limit=1_000_000, topic_prefix=topic_prefix))
+        # I DUE RAMI RIMASTI INDIETRO. Il 2026-08-02 avevo spostato `query` e
+        # `topic_prefix` da `list_facts` a `search_facts` per allineare le
+        # popolazioni; questi due erano restati, e contavano anche i
+        # QUARANTINATI — che il prodotto tiene fuori dal recall di default.
+        # Misurato sul corpus vero: 5428 qui contro i 4834 del default di
+        # `search`, cioe' i 594 quarantinati vivi, mentre la docstring qui
+        # sopra promette «matching search's default view».
+        # Si passa da SQL e non da `search_facts('')`: stesso risultato, ma
+        # 0.00s invece di 0.45s su 7000 fatti, e un conteggio che si paga mezzo
+        # secondo smette di essere una primitiva.
         if topic is not None:
-            return len(self.semantic.list_facts(topic=topic, limit=1_000_000))
-        return self.semantic.count()
+            return self.semantic.count(topic=topic, include_quarantined=False)
+        return self.semantic.count(include_quarantined=False)
 
     def answer(self, query: str, *, llm: Any, k: int = 8,
                verify_threshold: float | None = None,
