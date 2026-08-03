@@ -1807,6 +1807,7 @@ class Memory:
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).
     recall = search
 
+
     @staticmethod
     def _fact_view(f: Any, *, fact_id: str = "") -> dict[str, Any]:
         """One fact as the SDK dict — the SAME provenance surface everywhere
@@ -1985,14 +1986,29 @@ class Memory:
             cur = self.semantic.get(nxt) if nxt else None
         return chain
 
+    #: I VERBI DELLA RIGA DI COMANDO, sull'SDK con lo stesso nome. Percorrendo
+    #: il ciclo di vita di un fatto come lo farebbe chi usa il prodotto —
+    #: scrivo, rileggo, correggo, dimentico — le due capacità c'erano ma con
+    #: un altro nome, e `Memory.correct` sollevava AttributeError mentre
+    #: `verimem correct` esisteva. Il docstring di `delete` si apre perfino con
+    #: «Forget a fact by id»: usava la parola della CLI per descrivere un
+    #: metodo chiamato in un altro modo.
+    #:
+    #: Non mancava una capacità — mancava il nome con cui l'utente la cerca, e
+    #: il cricchetto sulle capacità (`4cea1aa8`) non poteva vederlo perché
+    #: confronta i NOMI e `update` esiste. Alias e non reimplementazioni, come
+    #: `recall`: due implementazioni della stessa operazione divergono.
+    correct = update
+    forget = delete
+
 
 #: Alias for users who expect a ``Client`` name (mem0/Zep ergonomics).
 Client = Memory
 
 __all__ = ["Memory", "Client"]
 
-
 # --- adjudication receipt (Phase 0.1/0.2) --------------------------------------
+
 def _evidence_class(gate: Any, verified_by: Any, warnings: list) -> str:
     """How this write was adjudicated - the HONEST tier label.
 
