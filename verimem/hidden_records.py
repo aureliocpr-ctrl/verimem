@@ -190,4 +190,37 @@ def hidden_records_for(source: Any, *, query: str, served: str,
     return out
 
 
-__all__ = ["codes_in", "hidden_records_for", "SqliteRows"]
+def withheld_notice(hits: list[dict[str, Any]]) -> str:
+    """La riga che dice a chi risponde: su questo record c'e' dell'altro.
+
+    ⚠️ NON PASSA IL TESTO DEL FATTO NASCOSTO, e la scelta e' di merito. Un
+    quarantinato e' stato filtrato in scrittura apposta: darlo in pasto a chi
+    formula la risposta lo servirebbe come evidenza e tradirebbe la garanzia
+    che questo prodotto vende. Passano solo il CODICE, il NUMERO e il PERCHE'.
+
+    Il valore non e' servire il contenuto trattenuto — e' togliere la
+    CONFIDENZA a una risposta sbagliata. Senza questa riga il prodotto
+    risponde «il ticket e' aperto» a 0.8819 mentre l'aggiornamento che dice il
+    contrario sta in quarantena, e chi legge non ha modo di sospettarlo.
+
+    Stringa VUOTA quando non c'e' niente da dichiarare: il prompt resta
+    byte-identico a prima, che e' il caso della grande maggioranza delle
+    letture (4356 fatti su 5333 non contengono nemmeno un codice)."""
+    conteggio: dict[str, dict[str, int]] = {}
+    for h in hits or ():
+        for n in h.get("hidden_records") or ():
+            per_code = conteggio.setdefault(n["code"], {})
+            per_code[n["why"]] = per_code.get(n["why"], 0) + 1
+    if not conteggio:
+        return ""
+    pezzi = []
+    for code in sorted(conteggio):
+        dettaglio = ", ".join(f"{n} {why}"
+                              for why, n in sorted(conteggio[code].items()))
+        pezzi.append(f"{code}: {dettaglio}")
+    return ("\n\nWITHHELD — the store holds facts about these records that are "
+            "NOT in the list above (" + " · ".join(pezzi) + "). Do not answer "
+            "with certainty about them; say what is uncertain.")
+
+
+__all__ = ["codes_in", "hidden_records_for", "withheld_notice", "SqliteRows"]

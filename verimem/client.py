@@ -793,7 +793,15 @@ class Memory:
         else:
             lines = [f"- {t}" for t in facts]
             system = _ANSWER_SYSTEM
-        user = "Facts:\n" + "\n".join(lines) + f"\n\nQuestion: {query}"
+        # L'AVVISO SUI RECORD TRATTENUTI. Senza, questa superficie riceve solo
+        # `h["text"]` e il campo `hidden_records` — che `search` calcola — non
+        # arriva mai a chi formula la risposta: una garanzia che vive nel
+        # dizionario e non nella risposta è una garanzia che nessuno legge.
+        # Vuota quando non c'è nulla da dichiarare, e allora il prompt resta
+        # byte-identico a prima.
+        from .hidden_records import withheld_notice
+        user = ("Facts:\n" + "\n".join(lines) + withheld_notice(hits)
+                + f"\n\nQuestion: {query}")
         resp = llm.complete(system,
                             [{"role": "user", "content": user}],
                             max_tokens=max_tokens)
