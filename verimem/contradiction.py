@@ -44,6 +44,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import embedding
+from .quantity_match import negation_conflict
 from .semantic import Fact, SemanticMemory
 
 # ---------------------------------------------------------------------------
@@ -323,6 +324,26 @@ def detect_boolean_clashes(
                 (a, a_neg), (b, b_neg) = flags[i], flags[j]
                 if a_neg == b_neg:
                     continue  # same polarity, not a clash
+                # POLARITA' DIVERSA NON BASTA (2026-08-04). Fin qui la
+                # condizione era solo questa: una frase CONTIENE una
+                # negazione e l'altra no. Ma «quando is_new e' False la
+                # funzione ritorna 0» e «su 31 documenti 29 hanno source_id
+                # assoluto» hanno polarita' diversa e non si contraddicono per
+                # niente — parlano d'altro. Sul corpus di produzione un solo
+                # fatto (gs 99.98) ne ha superseduti DODICI cosi', tutti dello
+                # stesso topic, uno dei quali a gs 98.49: heal_contradictions
+                # esegue senza ri-validare, e sopprime verso il trust
+                # maggiore, quindi piu' un fatto e' ben verificato piu' ne
+                # ingoia.
+                #
+                # `negation_conflict` fa gia' la domanda giusta e porta le
+                # guardie che qui mancavano: le due frasi devono condividere
+                # quasi tutte le parole di contenuto (Jaccard >= 0.6, almeno
+                # due condivise) E la parola nello scope del negatore
+                # dev'essere una di quelle condivise. Misurato sui dodici casi
+                # veri: 12/12 segnalati prima, 0/12 dopo.
+                if negation_conflict(a.proposition, b.proposition) is None:
+                    continue
                 key = tuple(sorted([a.id, b.id]))
                 if key in seen_pairs:
                     continue
