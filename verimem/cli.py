@@ -985,6 +985,20 @@ def recall_cmd(
             _fino = _p.get("until") or "—"
             console.print(f"    [dim]prima:[/dim] {_p.get('text','')[:72]} "
                           f"[dim]({_p.get('asserted_date','?')} → {_fino})[/dim]")
+        # I RECORD TRATTENUTI, e non è un dettaglio di formattazione. Su un
+        # registro dove il fatto giusto è stato archiviato, questa riga di
+        # comando serviva la risposta SBAGLIATA con un punteggio alto e nulla
+        # che lo lasciasse sospettare — mentre lo stesso identico store,
+        # interrogato dall'SDK, dichiarava `hidden_records`.
+        #
+        # È la classe che `test_le_capacita_senza_porta_non_aumentano`
+        # sorveglia, ma peggio del solito: non è un comando in più da
+        # scoprire, è un AVVISO su una risposta che si sta già leggendo.
+        for _n in (h.get("hidden_records") or []):
+            console.print(
+                f"    [yellow]⚠ trattenuto[/yellow] [dim]({_n.get('why','?')})"
+                f"[/dim] [bold]{_n.get('code','?')}[/bold]: "
+                f"{str(_n.get('text',''))[:64]}")
 
 
 @app.command("ask")
