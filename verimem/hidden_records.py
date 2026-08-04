@@ -103,12 +103,64 @@ def codes_in(text: str) -> set[str]:
     return {m.group(0).upper() for m in _CODE_RE.finditer(text or "")}
 
 
+def names_code(text: str, code: str) -> bool:
+    """Questo testo nomina QUESTO record — non uno che gli somiglia.
+
+    ⚠️ SERVE IL CONFINE DI PAROLA, e la sottostringa non basta: «S-1» E'
+    contenuto in «S-10» e in «S-100». Con il solo `in`, un registro numerato
+    S-1...S-100 avrebbe trattato tre schede diverse come lo stesso record —
+    che e' esattamente il difetto che questo modulo esiste per riparare, e
+    l'avrei reintrodotto dal lato della cura.
+
+    E' anche il verso in cui sbagliava il LIKE: `%ROUND-1%` prende «ROUND-10»
+    (misurato: 15 differenze su 60 codici veri fra LIKE e FTS)."""
+    if not text or not code:
+        return False
+    return re.search(rf"(?<![0-9A-Za-z]){re.escape(code)}(?![0-9A-Za-z])",
+                     text, re.IGNORECASE) is not None
+
+
 class SqliteRows:
     """L'adattatore verso il database vero: una SELECT mirata per codice.
 
-    Il codice e' il termine di ricerca piu' selettivo che un registro
-    possieda, e cercarlo costa un LIKE su una colonna. La scansione completa
-    resta per i chiamanti che hanno gia' le righe in mano (i test)."""
+    USA `facts_fts` QUANDO C'E', e c'era gia': indice FTS5 su `facts`,
+    allineato (7810 = 7810) e mantenuto da tre trigger (insert/delete/update).
+    Nessuno lo interrogava da qui. Misurato sul corpus vero, 7813 righe::
+
+        tempo medio per codice     LIKE 127.06 ms     FTS 0.57 ms
+
+    e la distanza cresce, perche' il LIKE e' una SCANSIONE: su un corpus
+    sintetico da 500k righe stava a 594 ms mentre l'FTS restava a 0.38.
+    Un prodotto che vuole reggere corpus grandi non puo' pagare mezzo secondo
+    per codice a ogni lettura.
+
+    ⚠️ LE DUE RICERCHE NON DANNO GLI STESSI CANDIDATI: su 60 codici veri, 45
+    identici e 15 diversi. Le differenze vanno in due versi opposti, e uno dei
+    due era un DIFETTO MIO:
+
+      * il LIKE trova DI PIU' del dovuto perche' cerca sottostringhe:
+        ``%ROUND-1%`` prende anche «ROUND-10». In un registro numerato
+        S-1...S-100, cercare S-1 avrebbe restituito S-10, S-11, S-100.
+      * l'FTS trova di piu' perche' ignora la punteggiatura: «OPUS-4-7»
+        diventa la frase «opus 4 7» e prende «Opus 4.7» (7 -> 50 risultati).
+
+    Entrambi gli eccessi muoiono nel filtro di `hidden_records_for`, che esige
+    il codice ESATTO dentro il testo. Ecco perche' quel filtro deve girare
+    PRIMA del conteggio per la soglia: contare i candidati grezzi userebbe il
+    numero gonfiato dell'FTS e scarterebbe codici buoni.
+
+    Il LIKE resta come ripiego quando `facts_fts` non c'e' (database vecchi,
+    store minimali): stesso risultato, piu' lento."""
+
+    _SQL_FTS = (
+        "SELECT f.id, f.status, f.superseded_by, f.proposition "
+        "FROM facts_fts JOIN facts f ON f.id = facts_fts.fact_id "
+        "WHERE facts_fts MATCH ? LIMIT 50"
+    )
+    _SQL_LIKE = (
+        "SELECT id, status, superseded_by, proposition FROM facts "
+        "WHERE UPPER(proposition) LIKE ? LIMIT 50"
+    )
 
     def __init__(self, db_path: Any) -> None:
         self.db_path = str(db_path)
@@ -116,17 +168,23 @@ class SqliteRows:
     def rows_for_code(self, code: str) -> list[tuple]:
         con = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)
         try:
-            cur = con.execute(
-                "SELECT id, status, superseded_by, proposition FROM facts "
-                "WHERE UPPER(proposition) LIKE ? LIMIT 50",
-                (f"%{code.upper()}%",))
-            return list(cur.fetchall())
+            try:
+                # La phrase query e' fra virgolette: senza, i token del codice
+                # verrebbero cercati separati e «S-007» diventerebbe «s OR 007».
+                return list(con.execute(self._SQL_FTS, (f'"{code}"',)))
+            except sqlite3.OperationalError:
+                # niente facts_fts (o sintassi FTS rifiutata): si ripiega.
+                return list(con.execute(self._SQL_LIKE, (f"%{code.upper()}%",)))
         finally:
             con.close()
 
 
 def _rows_for(source: Any, code: str) -> list[tuple]:
-    """Le righe candidate, da qualunque sorgente il chiamante abbia."""
+    """Le righe candidate, da qualunque sorgente il chiamante abbia.
+
+    Recupero GREZZO e volutamente largo: ne' l'FTS ne' il LIKE danno i
+    candidati esatti, e a stringere ci pensa `names_code` in
+    `hidden_records_for`, dove il filtro gira PRIMA del conteggio."""
     if hasattr(source, "rows_for_code"):
         return source.rows_for_code(code)
     if hasattr(source, "rows"):
@@ -166,19 +224,22 @@ def hidden_records_for(source: Any, *, query: str, served: str,
     servito = (served or "").strip()
     out: list[dict[str, str]] = []
     for code in sorted(codici):
-        righe = _rows_for(source, code)
-        # LA SELETTIVITA' PRIMA DI TUTTO IL RESTO, e senza una query in piu':
-        # la SELECT prende gia' fino a 50 righe, quindi contarle qui basta a
-        # riconoscere un'etichetta e a scartarla. Vedi `_MAX_FACTS_PER_CODE`
-        # per i numeri che hanno imposto questo taglio.
+        # ⚠️ IL FILTRO PRIMA DEL CONTEGGIO, e l'ordine non e' un dettaglio.
+        # Ne' l'FTS ne' il LIKE danno i candidati esatti: il primo ignora la
+        # punteggiatura («OPUS-4-7» prende «Opus 4.7», 7 righe -> 50), il
+        # secondo cerca sottostringhe («ROUND-1» prende «ROUND-10»). Contare i
+        # candidati GREZZI userebbe quei numeri gonfiati e scarterebbe codici
+        # buoni come se fossero etichette.
+        righe = [r for r in _rows_for(source, code)
+                 if names_code(r[3] or "", code)]
+        # LA SELETTIVITA': sopra la soglia il codice non identifica un record.
+        # Vedi `_MAX_FACTS_PER_CODE` per i numeri che l'hanno imposta.
         if len(righe) > _MAX_FACTS_PER_CODE:
             continue
         presi = 0
         for rid, status, superseded_by, proposition in righe:
             testo = (proposition or "").strip()
             if not testo or testo == servito:
-                continue
-            if code not in testo.upper():
                 continue
             motivo = _why(status, superseded_by)
             if motivo is None:
@@ -223,4 +284,5 @@ def withheld_notice(hits: list[dict[str, Any]]) -> str:
             "with certainty about them; say what is uncertain.")
 
 
-__all__ = ["codes_in", "hidden_records_for", "withheld_notice", "SqliteRows"]
+__all__ = ["codes_in", "names_code", "hidden_records_for",
+           "withheld_notice", "SqliteRows"]

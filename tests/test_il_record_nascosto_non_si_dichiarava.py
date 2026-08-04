@@ -138,6 +138,26 @@ def test_le_sigle_attaccate_al_numero_NON_sono_codici(testo):
     assert codes_in(testo) == set()
 
 
+def test_S_1_non_e_S_10(mono=None):
+    """IL DIFETTO DEL LIKE, trovato confrontandolo con l'FTS sul corpus vero.
+
+    ``WHERE proposition LIKE '%ROUND-1%'`` prende anche «ROUND-10»: su 60
+    codici veri, LIKE e FTS davano risultati diversi in 15 casi, e questo era
+    uno dei due versi. In un registro numerato S-1...S-100 cercare S-1 avrebbe
+    restituito S-10, S-11 e S-100 come se fossero lo stesso record.
+
+    Il filtro sul codice ESATTO e' cio' che lo impedisce, e per questo gira
+    PRIMA del conteggio della soglia."""
+    righe = [("v", "model_claim", None, "Il lotto S-10 pesa 40 chili."),
+             ("w", "model_claim", None, "Il lotto S-100 pesa 55 chili."),
+             ("x", "model_claim", "v", "Il lotto S-1 pesa 12 chili.")]
+    out = hidden_records_for(_Conn(righe),
+                             query="Quanto pesa il lotto S-1?",
+                             served="Il lotto S-10 pesa 40 chili.")
+    assert len(out) == 1, f"S-10 e S-100 non sono S-1: {out}"
+    assert out[0]["text"] == "Il lotto S-1 pesa 12 chili."
+
+
 def test_un_codice_che_nomina_troppi_fatti_e_un_ETICHETTA():
     """LA SOGLIA DI SELETTIVITA', e il corpus vero l'ha imposta.
 
