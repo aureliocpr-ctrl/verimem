@@ -726,9 +726,51 @@ def date_conflict(
 
 
 # Polarity flip: the same statement with a negator on exactly one side.
+#
+# ⚠️ QUESTA E' LA SUPERFICIE UNICA DEI NEGATORI, dal 2026-08-04.
+# `contradiction._has_negation` la importa invece di tenere la propria lista:
+# ne esistevano DUE, con difetti complementari, ed e' il motivo per cui il
+# difetto e' sopravvissuto a lungo.
+#
+#   contradiction._has_negation        aveva gia' l'italiano  MA girava solo
+#                                      dentro scan_corpus, mai in scrittura
+#   quantity_match._NEGATOR_RE (qui)   gira in scrittura      MA era solo
+#                                      inglese
+#
+# Il prodotto sapeva riconoscere una negazione italiana e sapeva usarla, in due
+# posti diversi e mai insieme. Effetto misurato: «Il farmaco riduce la
+# mortalita» e «Il farmaco NON riduce la mortalita» restavano VIVI ENTRAMBI,
+# mentre le stesse due in inglese no. Per una memoria verificata e' il guasto
+# peggiore: la smentita convive col fatto e la domanda dopo ne pesca uno a caso.
+#
+# Isolato passo per passo, tutto il resto del percorso funzionava gia':
+# content_tokens identici, jaccard 4/4 = 1.00, contrasting_attrs False. Cadeva
+# solo `_has_negator`, alla prima riga.
 _NEGATOR_RE = re.compile(
+    # inglese (l'insieme originale)
     r"\b(?:not|never|no longer|cannot|can't|won't|isn't|aren't|wasn't|"
-    r"weren't|doesn't|don't|didn't|nor)\b",
+    r"weren't|doesn't|don't|didn't|nor|no)\b"
+    # italiano: «non» e' una PAROLA qui e un PREFISSO in inglese
+    # (non-blocking, non-deterministic), quindi si esclude il trattino —
+    # senza questa guardia un corpus tecnico inglese darebbe falsi positivi
+    # a raffica.
+    r"|(?<![\w-])non(?![-\w])"
+    # tedesco · olandese · polacco · scandinavi
+    r"|\b(?:nicht|kein(?:e|en|em|er|es)?|niet|geen|nie|ikke|inte|ei)\b"
+    # spagnolo · portoghese (il «no» spagnolo e' gia' coperto dall'inglese)
+    r"|\b(?:n[aã]o|nunca|jam[aá]s|tampoco)\b"
+    # francese: «ne … pas» e' discontinuo, quindi si aggancia il «ne» solo se
+    # il «pas» arriva poco dopo — «ne» da solo e' troppo corto e frequente
+    # per essere un negatore affidabile.
+    r"|\bne\b(?=.{0,40}\bpas\b)|\bn'(?=.{0,40}\bpas\b)"
+    # LINGUE A NEGAZIONE MORFOLOGICA. Il giapponese nega col suffisso verbale,
+    # il cinese con una particella attaccata, l'arabo con una particella
+    # separata: nessuno di questi e' una «parola» delimitata da spazi, ma sono
+    # tutti riconoscibili lessicalmente — e lasciarli fuori sarebbe coprire
+    # «le lingue con gli spazi» invece che «le lingue».
+    r"|(?:ません|ないです|なかった|ない|ぬ)"
+    r"|(?:没有|不是|不会|不能|不|未|非)"
+    r"|(?:\bلا\b|\bلم\b|\bلن\b|\bليس\b)",
     re.IGNORECASE,
 )
 

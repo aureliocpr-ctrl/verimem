@@ -223,17 +223,20 @@ def _cosine(fact_a: Fact, fact_b: Fact) -> float:
 
 
 def _has_negation(text: str) -> bool:
-    """Token-aware negation check.
+    """Negation check — DELEGA alla superficie unica in ``quantity_match``.
 
-    Splits on whitespace + punctuation; matches any of ``_NEGATION_TOKENS``
-    plus the suffix ``n't`` on auxiliary verbs (isn't / doesn't / won't /
-    can't / shouldn't ...).
+    Fino al 2026-08-04 questa funzione aveva una lista sua
+    (``_NEGATION_TOKENS``), e le due divergevano: qui l'italiano c'era, di là
+    no. Siccome il write path passa da ``quantity_match`` e questa gira solo
+    dentro ``scan_corpus``, il risultato era che il prodotto sapeva
+    riconoscere una negazione italiana **in un posto che non decideva niente**.
+
+    Due liste della stessa cosa divergono sempre, prima o poi: qui si è già
+    visto. Ora la definizione è una sola e il difetto non può tornare per
+    metà.
     """
-    lower = text.lower()
-    tokens = re.findall(r"[a-z']+", lower)
-    if any(t in _NEGATION_TOKENS for t in tokens):
-        return True
-    return any(t.endswith("n't") for t in tokens)
+    from .quantity_match import _has_negator
+    return _has_negator(text)
 
 
 def _group_by_topic(facts: list[Fact]) -> dict[str, list[Fact]]:
