@@ -585,6 +585,13 @@ class Memory:
         if as_of == "auto":
             from .temporal_context import extract_as_of
             as_of = extract_as_of(query)
+        # IL DEGRADO SI CONTA PRIMA E DOPO. Quando l'encoder non risponde entro
+        # il budget, `SemanticMemory.recall` cade sul ramo keyword e assegna
+        # `score 0.0` a TUTTI i risultati — un numero che non è una misura di
+        # somiglianza, ma che ne ha la forma. Il contatore esisteva già
+        # (`_recall_degraded_count`, nato apposta perché «il degrado cold-encode
+        # era invisibile al caller») e nessuno lo leggeva da qui.
+        _deg_prima = getattr(self.semantic, "_recall_degraded_count", 0) or 0
         if as_of is not None:
             from .temporal_context import recall_as_of
             hits = recall_as_of(self.semantic, query, when=float(as_of), k=k,
@@ -592,6 +599,8 @@ class Memory:
         else:
             hits = self.semantic.recall(query, k=k, deep=deep,
                                         include_beliefs=include_beliefs)
+        _degradato = (getattr(self.semantic, "_recall_degraded_count", 0) or 0
+                      ) > _deg_prima
         out: list[dict[str, Any]] = []
         for f, score, *_rest in [h if len(h) >= 2 else (h[0], 0.0) for h in hits]:
             # per-fact provenance for trust-conditioned answering (case-B
@@ -661,9 +670,29 @@ class Memory:
         # query, non al fatto, e nessun fatto ne ha uno finché qualcosa non lo
         # ordina. Filtrare a valle tiene il pavimento fuori dal recupero, che
         # resta identico — quello che cambia è solo se il risultato si serve.
-        if min_relevance:
+        # ⚠️ IL PAVIMENTO NON SI APPLICA A UN RANKING DEGRADATO, ed è un errore
+        # di categoria non un caso limite: sul ramo keyword lo `score` è 0.0 per
+        # costruzione — non «nessuna somiglianza», ma «somiglianza NON MISURATA»
+        # — e confrontarlo con una soglia di somiglianza taglia tutto.
+        #
+        # Misurato il 2026-08-05, stesso store, stessa domanda:
+        #     a caldo      [0.8995] risposta giusta · min_relevance=0.5 -> 1
+        #     degradato    [0.0]    STESSA risposta · min_relevance=0.5 -> 0
+        #
+        # Per un prodotto la cui promessa di punta è «abstention over
+        # hallucination» questo è il modo peggiore di sbagliare: si astiene per
+        # un motivo che non ha nulla a che vedere con l'evidenza — l'encoder era
+        # lento — e chi legge non ha modo di distinguerlo da un'astensione vera.
+        # Trovato usando il prodotto sul corpus vero: `[0.00]` su ogni riga.
+        if min_relevance and not _degradato:
             pavimento = float(min_relevance)
             out = [i for i in out if float(i.get("score") or 0.0) >= pavimento]
+        # E IL DEGRADO SI DICHIARA, sempre: un ranking per parole chiave che si
+        # spaccia per un ranking per somiglianza è la stessa classe di difetto
+        # che questo prodotto passa la notte a curare.
+        if _degradato:
+            for item in out:
+                item["ranking"] = "keyword"
         # I FATTI NASCOSTI SU QUEL RECORD. Non cambia cosa si serve né come si
         # ordina: aggiunge un campo che dice «su S-007 c'è un fatto che non ti
         # sto dando». Serviva perché senza, su un registro di 25 schede, questa
