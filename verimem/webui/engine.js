@@ -160,6 +160,20 @@
     stamp("st-sup", "RESTORED", "adm");
     govSoon();
   }
+  /* quarantine transitions AFTER the write: the entry was visible only at
+     write time (flow.write status=quarantined), the exit never — so the
+     queue could only appear to grow. Both light the quarantine box now. */
+  function onQuarantine(p) {
+    counters.quar++;
+    heat("n-quar", ["fail"], 1400);
+    stamp("st-q", "QUARANTINED", "ref");
+    govSoon();
+  }
+  function onRestore(p) {
+    heat("n-quar", ["pass"], 1400);
+    stamp("st-q", "RELEASED", "adm");
+    govSoon();
+  }
   function onRecall(p) {
     tsR.push(Date.now());
     var abst = !!p.abstained;
@@ -450,6 +464,18 @@
       tag.textContent = "RESTORED";
       detail = " · undo " + String(p.op_type || "") + " · fact "
         + String(p.fact_id || "?").slice(0, 8);
+    } else if (evt.name === "flow.quarantine") {
+      tag.className = "ref";
+      tag.textContent = "QUARANTINED";
+      detail = " · declassed · fact " + String(p.fact_id || "?").slice(0, 8)
+        + " · was " + (p.prior_status || "?")
+        + (p.reason ? " · " + p.reason : "");
+    } else if (evt.name === "flow.restore") {
+      tag.className = "adm";
+      tag.textContent = "RELEASED";
+      detail = " · quarantine exit · fact " + String(p.fact_id || "?").slice(0, 8)
+        + " → " + (p.to_status || "?")
+        + (p.reason ? " · " + p.reason : "");
     } else {
       var abst = !!p.abstained;
       tag.className = abst ? "abs" : "ans";
@@ -504,6 +530,8 @@
     else if (name === "flow.recall") { onRecall(evt.payload || {}); }
     else if (name === "flow.supersession") { onSupersession(evt.payload || {}); }
     else if (name === "flow.undo") { onUndo(evt.payload || {}); }
+    else if (name === "flow.quarantine") { onQuarantine(evt.payload || {}); }
+    else if (name === "flow.restore") { onRestore(evt.payload || {}); }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);

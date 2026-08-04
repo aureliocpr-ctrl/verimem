@@ -5127,6 +5127,15 @@ class SemanticMemory:
                   prior_status=current_status)
         except Exception:  # noqa: BLE001 — observability never breaks mutator
             pass
+        # …and on the flow channel too (ws6 2026-08-05). The event above has
+        # existed for cycles, but the live surfaces keep only names starting
+        # with "flow." (gateway.py:511), so a fact declassed AFTER its write
+        # vanished from the Engine Room: the entry visible at write time
+        # (flow.write status=quarantined) had no counterpart for a later
+        # triage. Same defect class as the silent retirements, same cure.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.quarantine", fact_id=fact_id,
+                   prior_status=current_status, reason=(reason or "")[:200])
         return True
 
     def restore_fact(self, fact_id: str, *, to_status: str = "model_claim",
@@ -5152,6 +5161,13 @@ class SemanticMemory:
                   reason=(reason or "")[:200])
         except Exception:  # noqa: BLE001
             pass
+        # The EXIT from quarantine on the flow channel (ws6 2026-08-05): the
+        # entry was visible (flow.write status=quarantined) and the release
+        # was not, so the Engine Room showed a queue that only ever grew.
+        # A governance action must be as visible as the decision it reverses.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.restore", fact_id=fact_id, to_status=to_status,
+                   reason=(reason or "")[:200])
         return True
 
     def mark_orphaned(self, fact_id: str, *, reason: str = "") -> bool:

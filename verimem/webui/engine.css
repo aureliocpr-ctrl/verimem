@@ -131,5 +131,10 @@ svg{display:block; width:100%; height:auto; min-width:640px;}
 .dark-c b{display:block; font-size:.68rem; letter-spacing:.08em; color:var(--ink-3);}
 .dark-c span{display:block; color:var(--ink-3); font-size:.64rem;}
 .dark-c i{display:block; color:var(--ink-3); font-size:.64rem; font-style:italic;}
+/* a chamber that got its telemetry: kept in the list on purpose — the map
+   should show what was lit and when, not quietly drop the row */
+.dark-c.lit{border-style:solid; border-color:var(--verified);}
+.dark-c.lit b{color:var(--verified-d);}
+.dark-c.lit i{color:var(--verified-d); font-style:normal;}
 @media (max-width:900px){.gov-grid{grid-template-columns:1fr}
   .gov-col + .gov-col{border-left:none; border-top:1px solid var(--rule-2);}}
