@@ -173,6 +173,60 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
     frozenset({"primario", "secondario", "replica"}),
     frozenset({"collaudo", "produzione"}),
     frozenset({"caldo", "freddo"}),
+    # PERIODICITA'. I trenta gruppi qui sopra coprono il dominio
+    # INFRASTRUTTURALE — letture, repliche, ambienti — e non quello
+    # commerciale e temporale, che e' il primo che incontra chi prova il
+    # prodotto con il proprio listino. Costo misurato il 2026-08-04:
+    #   «Il piano annuale costa 100 euro» + «Il piano mensile costa 20 euro»
+    #       -> VIVI=1, l'annuale RITIRATO. Anche in inglese.
+    #   «La latenza di lettura e' 5 ms»   + «... di scrittura e' 9 ms»
+    #       -> VIVI=2, perche' lettura/scrittura e' un gruppo che c'e'.
+    # Il meccanismo funzionava: gli mancava il mondo. Era l'aperto «il mensile
+    # cancella l'annuale», cercato per giorni nella soglia di overlap — dove
+    # non poteva stare, perche' su frasi corte la quota e' 0.75.
+    #
+    # Due fatti sullo STESSO periodo con numeri diversi restano una
+    # contraddizione: `ca == cb` non e' un contrasto, e la supersessione
+    # continua a scattare (presidiato).
+    # UN GRUPPO NON PUO' CONTENERE DUE NOMI DELLA STESSA PERIODICITA': il
+    # contrasto si decide su `ca != cb`, quindi «annual» accanto a «yearly»
+    # farebbe leggere come attributi diversi due frasi che dicono lo stesso.
+    # Per questo mancano «yearly» e «biannual» (che vale sia semestrale sia
+    # biennale, a seconda di chi scrive).
+    frozenset({"annual", "monthly", "weekly", "daily", "quarterly", "hourly"}),
+    frozenset({"annuale", "mensile", "settimanale", "giornaliero",
+               "trimestrale", "semestrale", "orario"}),
+    # `content_tokens` singolarizza l'inglese ma NON l'italiano (misurato: «i
+    # canoni annuali» -> `annuali`), quindi il plurale va dato a mano — in un
+    # gruppo SEPARATO, se no «annuale» contro «annuali» diventerebbe un
+    # contrasto fra la stessa cosa scritta due volte.
+    frozenset({"annuali", "mensili", "settimanali", "giornalieri",
+               "trimestrali", "semestrali", "orari"}),
+    # GLI ALTRI DOMINI DELLO STESSO SCHEMA, misurati end-to-end dall'altra
+    # istanza subito dopo la periodicita': `base`/`premium` e `netto`/`lordo`
+    # davano ancora VIVI=1 su 2 sulle STESSE frasi. Un listino a due livelli e
+    # un prezzo con e senza imposta sono forme dei dati comuni quanto
+    # annuale/mensile, e sullo stesso schema stanno taglia, canale, tipo di
+    # cliente e verso del viaggio.
+    #
+    # ⛔ QUESTO NON CHIUDE LA CLASSE, e va detto: la lista e' il SURROGATO di un
+    # terzo esito che il giudice non ha. Misurato su coppie fatto->fatto, il CE
+    # binario da contraddice 0.77/0.92 e indipendente 1.25/0.28/0.30 — uno degli
+    # indipendenti sta SOPRA entrambi i contraddice, mentre il controllo
+    # «supporta» sta a 99.19. I due gruppi da separare collassano, perche' la
+    # distinzione vive dentro il «non-supporta», che e' un esito unico. Finche'
+    # il giudice ha due esiti, ogni dominio nuovo va aggiunto a mano.
+    frozenset({"base", "premium", "enterprise", "pro"}),
+    frozenset({"netto", "lordo"}),
+    frozenset({"net", "gross"}),
+    frozenset({"piccola", "media", "grande"}),
+    frozenset({"piccolo", "medio", "grande"}),
+    frozenset({"small", "medium", "large"}),
+    frozenset({"online", "negozio"}),
+    frozenset({"privati", "aziende"}),
+    frozenset({"andata", "ritorno"}),
+    frozenset({"acquisto", "noleggio"}),
+    frozenset({"nuovo", "usato"}),
 )
 
 
@@ -672,9 +726,51 @@ def date_conflict(
 
 
 # Polarity flip: the same statement with a negator on exactly one side.
+#
+# ⚠️ QUESTA E' LA SUPERFICIE UNICA DEI NEGATORI, dal 2026-08-04.
+# `contradiction._has_negation` la importa invece di tenere la propria lista:
+# ne esistevano DUE, con difetti complementari, ed e' il motivo per cui il
+# difetto e' sopravvissuto a lungo.
+#
+#   contradiction._has_negation        aveva gia' l'italiano  MA girava solo
+#                                      dentro scan_corpus, mai in scrittura
+#   quantity_match._NEGATOR_RE (qui)   gira in scrittura      MA era solo
+#                                      inglese
+#
+# Il prodotto sapeva riconoscere una negazione italiana e sapeva usarla, in due
+# posti diversi e mai insieme. Effetto misurato: «Il farmaco riduce la
+# mortalita» e «Il farmaco NON riduce la mortalita» restavano VIVI ENTRAMBI,
+# mentre le stesse due in inglese no. Per una memoria verificata e' il guasto
+# peggiore: la smentita convive col fatto e la domanda dopo ne pesca uno a caso.
+#
+# Isolato passo per passo, tutto il resto del percorso funzionava gia':
+# content_tokens identici, jaccard 4/4 = 1.00, contrasting_attrs False. Cadeva
+# solo `_has_negator`, alla prima riga.
 _NEGATOR_RE = re.compile(
+    # inglese (l'insieme originale)
     r"\b(?:not|never|no longer|cannot|can't|won't|isn't|aren't|wasn't|"
-    r"weren't|doesn't|don't|didn't|nor)\b",
+    r"weren't|doesn't|don't|didn't|nor|no)\b"
+    # italiano: «non» e' una PAROLA qui e un PREFISSO in inglese
+    # (non-blocking, non-deterministic), quindi si esclude il trattino —
+    # senza questa guardia un corpus tecnico inglese darebbe falsi positivi
+    # a raffica.
+    r"|(?<![\w-])non(?![-\w])"
+    # tedesco · olandese · polacco · scandinavi
+    r"|\b(?:nicht|kein(?:e|en|em|er|es)?|niet|geen|nie|ikke|inte|ei)\b"
+    # spagnolo · portoghese (il «no» spagnolo e' gia' coperto dall'inglese)
+    r"|\b(?:n[aã]o|nunca|jam[aá]s|tampoco)\b"
+    # francese: «ne … pas» e' discontinuo, quindi si aggancia il «ne» solo se
+    # il «pas» arriva poco dopo — «ne» da solo e' troppo corto e frequente
+    # per essere un negatore affidabile.
+    r"|\bne\b(?=.{0,40}\bpas\b)|\bn'(?=.{0,40}\bpas\b)"
+    # LINGUE A NEGAZIONE MORFOLOGICA. Il giapponese nega col suffisso verbale,
+    # il cinese con una particella attaccata, l'arabo con una particella
+    # separata: nessuno di questi e' una «parola» delimitata da spazi, ma sono
+    # tutti riconoscibili lessicalmente — e lasciarli fuori sarebbe coprire
+    # «le lingue con gli spazi» invece che «le lingue».
+    r"|(?:ません|ないです|なかった|ない|ぬ)"
+    r"|(?:没有|不是|不会|不能|不|未|非)"
+    r"|(?:\bلا\b|\bلم\b|\bلن\b|\bليس\b)",
     re.IGNORECASE,
 )
 

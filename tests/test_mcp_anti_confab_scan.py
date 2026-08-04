@@ -65,7 +65,7 @@ class TestHandler:
 
         fake_sm = MagicMock()
         fake_sm.all = MagicMock(return_value=[
-            _FakeFact("s1", "X is SHIPPED", ["tool:a"]),
+            _FakeFact("s1", "The auth endpoint is SHIPPED", ["tool:a"]),
             _FakeFact("d1", "Bug #1 search miss", ["obs:s"]),
             _FakeFact("t1", "Cycle 9 da chiudere", []),
             _FakeFact("ok", "User lives in Italy", []),
@@ -98,7 +98,7 @@ class TestHandler:
 
         fake_sm = MagicMock()
         fake_sm.all = MagicMock(return_value=[
-            _FakeFact("s1", "X is SHIPPED", ["tool:a"]),
+            _FakeFact("s1", "The auth endpoint is SHIPPED", ["tool:a"]),
             _FakeFact("d1", "Bug #1", ["obs:s"]),
         ])
         fake_agent = MagicMock()
@@ -123,7 +123,7 @@ class TestHandler:
         # 30 shipped orphans — limit_per_category=5 must cap output.
         fake_sm = MagicMock()
         fake_sm.all = MagicMock(return_value=[
-            _FakeFact(f"s{i}", "X is SHIPPED", ["tool:a"])
+            _FakeFact(f"s{i}", "The auth endpoint is SHIPPED", ["tool:a"])
             for i in range(30)
         ])
         fake_agent = MagicMock()

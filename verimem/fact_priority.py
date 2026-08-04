@@ -30,17 +30,64 @@ def _freshness(fact: Any, now: float, half_life_days: float) -> float:
     return 0.5 ** (age_days / half_life_days) if half_life_days > 0 else 1.0
 
 
-def _corroboration(fact: Any, others: list[Any], threshold: float) -> float:
+def _quantita_divergono(qa: set[tuple[str, float]],
+                        qb: set[tuple[str, float]]) -> bool:
+    """Esiste un'unita' presente in ENTRAMBI con valori diversi?
+
+    Non e' una stima di somiglianza: se un fatto dice «100 euro» e l'altro
+    «500 euro», si contraddicono. Un'unita' presente da una parte sola non e'
+    un conflitto — e' un'aggiunta.
+    """
+    if not qa or not qb:
+        return False
+    per_unita: dict[str, set[float]] = {}
+    for unita, valore in qa:
+        per_unita.setdefault(unita, set()).add(valore)
+    for unita, valore in qb:
+        se_ne_sa = per_unita.get(unita)
+        if se_ne_sa and valore not in se_ne_sa:
+            return True
+    return False
+
+
+def _corroboration(fact: Any, others: list[Any], threshold: float,
+                   quantita: dict[str, set[tuple[str, float]]] | None = None) -> float:
+    """Quante ALTRE proposizioni confermano questa.
+
+    DUE FATTI CHE SI CONTRADDICONO NON SI CONFERMANO. Il conto guardava solo il
+    Jaccard sui token, ma un overlap lessicale alto e' esattamente il segnale
+    che altrove nel prodotto significa CONFLITTO: due frasi che parlano della
+    stessa cosa. Misurato il 2026-08-04, tre coppie che si contraddicono
+    prendevano `corroboration=0.200` e priorita' 0.590, mentre una coppia che si
+    conferma davvero (parole diverse) prendeva 0.000 e 0.550 — il conto era
+    ROVESCIATO, e `client.py` chiama questo termine «confirmations by
+    independent sources».
+
+    Per il caso numerico la correzione e' LOGICA e non euristica, e usa cio' che
+    il prodotto ha gia': `quantity_match.extract_quantities` legge «100 euro» e
+    «500 euro» come valori diversi della stessa unita'.
+
+    ⛔ NON copre il caso non numerico («PostgreSQL» contro «MySQL»): li'
+    servirebbe sapere che sono valori alternativi dello stesso attributo. E non
+    copre il difetto SIMMETRICO — una conferma parafrasata ha Jaccard basso e
+    prende 0.0. Si tolgono i falsi positivi che si sanno riconoscere; i falsi
+    negativi restano.
+    """
     ftok = _tokens(getattr(fact, "proposition", ""))
     if not ftok:
         return 0.0
     fid = getattr(fact, "id", "")
+    mie = (quantita or {}).get(fid, set())
     matches = 0
     for o in others:
-        if getattr(o, "id", "") == fid:
+        oid = getattr(o, "id", "")
+        if oid == fid:
             continue
-        if _jaccard(ftok, _tokens(getattr(o, "proposition", ""))) >= threshold:
-            matches += 1
+        if _jaccard(ftok, _tokens(getattr(o, "proposition", ""))) < threshold:
+            continue
+        if _quantita_divergono(mie, (quantita or {}).get(oid, set())):
+            continue
+        matches += 1
     return min(1.0, matches * 0.2)
 
 
@@ -56,11 +103,22 @@ def rank_facts_by_priority(
     if now is None:
         now = time.time()
 
+    # Le quantita' UNA VOLTA per fatto e non per coppia: il conto e' gia'
+    # quadratico sui confronti, e non deve diventarlo anche sull'estrazione.
+    from .quantity_match import extract_quantities
+    quantita: dict[str, set[tuple[str, float]]] = {}
+    for f in facts:
+        try:
+            quantita[getattr(f, "id", "")] = extract_quantities(
+                getattr(f, "proposition", "") or "")
+        except Exception:  # noqa: BLE001 — un'estrazione fallita non vale un rank perso
+            quantita[getattr(f, "id", "")] = set()
+
     ranked: list[dict[str, Any]] = []
     for f in facts:
         conf = float(getattr(f, "confidence", 0.0) or 0.0)
         fresh = _freshness(f, now, half_life_days)
-        corr = _corroboration(f, facts, corr_threshold)
+        corr = _corroboration(f, facts, corr_threshold, quantita)
         priority = 0.5 * conf + 0.3 * fresh + 0.2 * corr
         # 2026-07-30: contratto unico + le chiavi proprie di questa vista.
         # Una priorita' calcolata da confidenza/freschezza/corroborazione

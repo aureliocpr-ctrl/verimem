@@ -2841,6 +2841,11 @@ class SemanticMemory:
             _l1_warning = detect_unsupported_shipped_claim(
                 proposition=fact.proposition,
                 verified_by=list(fact.verified_by or []),
+                # 2026-08-04: il topic dice se si sta parlando di software, e
+                # qui era gia' a portata di mano — la riga di log qui sotto lo
+                # stampa. Senza, «le stazioni sono distribuite sul territorio»
+                # si vedeva chiedere un commit.
+                topic=getattr(fact, "topic", None),
             )
             if _l1_warning:
                 _LOG.warning(
@@ -5168,13 +5173,34 @@ class SemanticMemory:
             pass
         return True
 
-    def count(self, *, include_superseded: bool = False) -> int:
+    def count(self, *, include_superseded: bool = False,
+              include_quarantined: bool = True,
+              topic: str | None = None) -> int:
+        """Quante righe, e di QUALE popolazione.
+
+        ``include_quarantined`` sta a True per non cambiare sotto i piedi il
+        significato a chi gia' chiama questo metodo — e' la primitiva di basso
+        livello. Chi promette «la vista di default di search» (``Memory.count``)
+        lo chiede a False: un fatto quarantinato e' tenuto FUORI dal recall di
+        default, quindi contarlo fra i propri fatti significa rispondere con un
+        numero che comprende cio' che non verra' mai restituito. Misurato il
+        2026-08-04 sul corpus vero: 5428 contro i 4834 di `search_facts('')`,
+        e la differenza erano esattamente i 594 quarantinati vivi.
+        """
+        dove: list[str] = []
+        args: list[Any] = []
+        if not include_superseded:
+            dove.append("superseded_by IS NULL")
+        if not include_quarantined:
+            dove.append("(status IS NULL OR status != 'quarantined')")
+        if topic is not None:
+            dove.append("topic = ?")
+            args.append(topic)
+        sql = "SELECT COUNT(*) FROM facts"
+        if dove:
+            sql += " WHERE " + " AND ".join(dove)
         with self._connect() as conn:
-            if include_superseded:
-                return conn.execute("SELECT COUNT(*) FROM facts").fetchone()[0]
-            return conn.execute(
-                "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL"
-            ).fetchone()[0]
+            return conn.execute(sql, args).fetchone()[0]
 
     def count_superseded(self) -> int:
         """Cycle #78: count facts marked as superseded."""

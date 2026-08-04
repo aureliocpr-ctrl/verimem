@@ -108,6 +108,35 @@ def promote_chunk_to_fact(
         # passato»).
         punteggio = None
 
+    # UN PUNTEGGIO TAUTOLOGICO NON E' UN VERDETTO. Senza `claim` la
+    # proposizione E' il chunk, quindi il moat verifica «X implica X» e
+    # risponde ~100 per costruzione. Misurato il 2026-08-04 su tre documenti
+    # senza niente in comune: 99.95, 99.96, 99.98 — mentre le stesse tre fonti
+    # con una claim che NON dicono danno 0.00, 0.23, 0.00. Il gate funziona; e'
+    # la domanda a non esserci.
+    #
+    # Pubblicarlo sarebbe peggio che tacerlo: il prodotto insegna a leggere
+    # quel numero come «the moat's verdict on that fact» e a trust-condizionare
+    # su di esso, e la promozione mette in `verified_by` la citazione esatta del
+    # file. Il fatto uscirebbe con il punteggio piu' alto del corpus E una
+    # provenienza puntuale, mentre nessuno ha verificato niente — il documento
+    # puo' dire qualunque cosa. Lo stesso testo che `facts add` quarantina
+    # entrava da qui come model_claim con 99.97.
+    #
+    # `None` e' la descrizione esatta di questo caso ed e' quella che il
+    # prodotto gia' insegna: «null means NEVER JUDGED, not judged and failed».
+    # Il chunk grezzo continua a passare: cambia solo che non porta piu' un
+    # verdetto che non ha. Confronto sulle parole, non sui caratteri, perche' la
+    # redazione dei segreti puo' aver riscritto `prop`.
+    nota_punteggio = None
+    if punteggio is not None and prop.split() == chunk_text.split():
+        nota_punteggio = (
+            "no grounding verdict: the proposition IS the source chunk, so the "
+            "moat would only confirm that the text says what it says. Pass a "
+            "distilled `claim` to get a real entailment check against the chunk."
+        )
+        punteggio = None
+
     fact = Fact(
         proposition=prop,
         topic=topic,
@@ -127,4 +156,4 @@ def promote_chunk_to_fact(
         return {"stored": False, "fact_id": None, "citation": citation,
                 "error": f"gate rejected: {exc!s:.120}"}
     return {"stored": True, "fact_id": fact.id, "citation": citation,
-            "error": None}
+            "error": None, "grounding_note": nota_punteggio}

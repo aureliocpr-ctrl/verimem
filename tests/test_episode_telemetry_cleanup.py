@@ -158,8 +158,18 @@ def test_linked_traces_archived_and_deleted_not_orphaned(tmp_path):
 
 
 def test_cli_command_is_a_real_entry_point(tmp_path, monkeypatch):
-    """The fix is wired to a CLI command (closes the critic's dead-code finding)."""
-    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
+    """The fix is wired to a CLI command (closes the critic's dead-code finding).
+
+    ⚠️ ISOLA SU TUTTI GLI ALIAS, non solo su uno. Il conftest ne fissa già due
+    (`HIPPO_DATA_DIR` e `ENGRAM_DATA_DIR`) sulla propria tmp; spostarne uno solo
+    li fa DISCORDARE, e da quel momento il vincitore lo decide la precedenza
+    invece dell'intenzione di chi scrive il test. Con la precedenza allineata al
+    contratto (`HIPPO_DATA_DIR` per primo, 2026-08-04) questo test cercava le
+    proprie tabelle nella directory del conftest: `OperationalError: no such
+    table: episodes`.
+    """
+    for alias in ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR"):
+        monkeypatch.setenv(alias, str(tmp_path))
     epdir = tmp_path / "episodes"
     epdir.mkdir()
     _seed(epdir / "episodes.db")

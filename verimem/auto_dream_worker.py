@@ -30,7 +30,15 @@ from typing import Any
 
 
 def _resolve_engram_dir() -> Path:
-    cand = os.environ.get("ENGRAM_DATA_DIR") or os.environ.get("HIPPO_DATA_DIR")
+    """L'ordine degli alias lo decide `_compat`, non questo modulo.
+
+    Aveva ENGRAM_DATA_DIR per prima, cioe' l'opposto della regola dichiarata
+    (`HIPPO_DATA_DIR` e' l'appiglio esplicito di isolamento). Qui pesa il
+    doppio: il worker gira in BACKGROUND, quindi scriveva nel corpus vivo
+    mentre la suite credeva di essere isolata.
+    """
+    from ._compat import _env_data_dir
+    cand = _env_data_dir()
     if cand:
         return Path(cand)
     return Path.home() / ".engram"
