@@ -1259,7 +1259,11 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         from .guardian import correct_read
         _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.recall col tenant
         try:
-            out = correct_read(tenants.get(tenant_id), q, k=k)
+            # Il pavimento vale su TUTTE le letture, non solo su `explain`:
+            # senza, questa rotta serviva un fatto scorrelato come risposta
+            # (ws4, 2026-08-04 — domanda sul logo, risposta sulla riunione).
+            out = correct_read(tenants.get(tenant_id), q, k=k,
+                               min_relevance=_gateway_min_relevance())
             from .flow_events import emit_flow as _emit_flow
             _emit_flow("flow.recall", kind="correct",
                        verdict=str(out.get("verdict") or ""),
