@@ -68,6 +68,35 @@ _CODE_RE = re.compile(r"\b[A-Za-z]{1,8}[-_/]\d{1,6}(?:[-_/]\d{1,6})*\b")
 #: dello stesso danno.
 _PER_CODE = 3
 
+#: SOPRA QUESTA SOGLIA IL CODICE NON E' UN IDENTIFICATIVO, E' UN'ETICHETTA.
+#:
+#: ⚠️ IL TAGLIO `_PER_CODE` NON BASTA, e il corpus vero lo ha dimostrato: limita
+#: il VOLUME e non la PERTINENZA. Sui 977 fatti servibili che nominano un
+#: codice, senza soglia la dichiarazione arrivava a 2491 nascosti per una sola
+#: lettura, perche' `TURN-0` compare in 1471 fatti e `REPORT-2026-05-28` in
+#: 1028. Quelli non identificano un record: identificano una categoria, e cio'
+#: che uscirebbe e' rumore — due fatti su OMNEX dichiarati a chi legge di
+#: `hippo_skills_for`, solo perche' entrambi contengono «TOP-5».
+#:
+#: La distribuzione e' una legge di potenza (63% dei codici in UN fatto, 3
+#: codici sopra i cento): nessuna separazione da leggere, quindi la soglia si
+#: sceglie e il prezzo si dichiara. Misurato sul corpus vero::
+#:
+#:     soglia   query col campo   mediana   massimo   >3 nascosti
+#:    nessuna        318             3        2491        137
+#:         10        121             2          14         19
+#:          5         73             1           5          2
+#:
+#: A 10 il massimo crolla da 2491 a 14, e le 197 query che perdono la
+#: dichiarazione la perdono per `TOP-5`, `TOP-3`, `SESSION_2026_05_12` — cioe'
+#: esattamente il rumore. IL PREZZO: una scheda rimisurata piu' di dieci volte
+#: non viene piu' dichiarata. E' il verso giusto in cui sbagliare.
+#:
+#: Costante ASSOLUTA e non frazione del corpus, di proposito: quanti fatti
+#: nominano un record non cresce col corpus, cresce con quante volte QUEL
+#: record e' stato aggiornato. E' una proprieta' del record.
+_MAX_FACTS_PER_CODE = 10
+
 
 def codes_in(text: str) -> set[str]:
     """I codici di record nominati da un testo, normalizzati a maiuscolo."""
@@ -137,8 +166,15 @@ def hidden_records_for(source: Any, *, query: str, served: str,
     servito = (served or "").strip()
     out: list[dict[str, str]] = []
     for code in sorted(codici):
+        righe = _rows_for(source, code)
+        # LA SELETTIVITA' PRIMA DI TUTTO IL RESTO, e senza una query in piu':
+        # la SELECT prende gia' fino a 50 righe, quindi contarle qui basta a
+        # riconoscere un'etichetta e a scartarla. Vedi `_MAX_FACTS_PER_CODE`
+        # per i numeri che hanno imposto questo taglio.
+        if len(righe) > _MAX_FACTS_PER_CODE:
+            continue
         presi = 0
-        for rid, status, superseded_by, proposition in _rows_for(source, code):
+        for rid, status, superseded_by, proposition in righe:
             testo = (proposition or "").strip()
             if not testo or testo == servito:
                 continue

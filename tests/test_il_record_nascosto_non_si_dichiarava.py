@@ -138,6 +138,37 @@ def test_le_sigle_attaccate_al_numero_NON_sono_codici(testo):
     assert codes_in(testo) == set()
 
 
+def test_un_codice_che_nomina_troppi_fatti_e_un_ETICHETTA():
+    """LA SOGLIA DI SELETTIVITA', e il corpus vero l'ha imposta.
+
+    Senza, la dichiarazione arrivava a 2491 nascosti per UNA lettura: `TURN-0`
+    compare in 1471 fatti e `REPORT-2026-05-28` in 1028. Quelli non
+    identificano un record, identificano una categoria — e il taglio a 3 per
+    codice limitava il volume e non la pertinenza."""
+    etichetta = [(f"e{i}", "quarantined", None,
+                  f"Nota numero {i} del TURN-0 di questa sessione.")
+                 for i in range(12)]
+    out = hidden_records_for(
+        _Conn(etichetta),
+        query="Cosa e' successo nel TURN-0?",
+        served="Il turno si e' concluso senza incidenti.")
+    assert out == [], f"un codice in 12 fatti va scartato: {out}"
+
+
+def test_un_record_normalmente_rimisurato_resta_dichiarato():
+    """IL PRESIDIO DELLA SOGLIA: dieci e' sopra il numero di rimisure che una
+    scheda vera colleziona. Nove fatti sullo stesso codice restano visti."""
+    righe = [(f"r{i}", "model_claim", "r9" if i < 9 else None,
+              f"Il campione S-007 contiene zinco a {10 + i} milligrammi.")
+             for i in range(9)]
+    out = hidden_records_for(
+        _Conn(righe),
+        query="Quanto zinco contiene il campione S-007?",
+        served="Il campione S-025 contiene rame a 40 milligrammi.")
+    assert out, "nove fatti sullo stesso record devono restare dichiarabili"
+    assert len(out) == 3, "e il taglio per codice resta 3"
+
+
 @pytest.mark.parametrize("testo", [
     "Le password sono cifrate con SHA-256 dal 2024.",
     "The IL-6 levels were elevated in the treated cohort.",
