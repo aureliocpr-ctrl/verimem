@@ -366,6 +366,21 @@ class Memory:
                     confidence_tier=_confidence_tier(
                         gate.grounding_score, getattr(gate, "judge", None),
                         getattr(gate, "threshold", None)))
+        # LA PROVENIENZA DICHIARATA NON SI BUTTA VIA (2026-08-04). Il testo di
+        # `source` serve al moat per l'entailment e poi spariva: la tabella
+        # `facts` non ha una colonna `source`, e `source_signature` — l'unico
+        # campo di provenienza che sopravvive — nessuno la popolava (26 fatti
+        # su 6075 in tutto il corpus). Conseguenza misurata su un registro
+        # pazienti: «Rossi pesa 70 kg» e «Bianchi pesa 95 kg», due cartelle
+        # diverse, stesso topic -> il secondo RITIRA il primo come
+        # `same-source evolution`, perche' senza verified_by entrambi
+        # canonicalizzano su "user".
+        # L'impronta e' un hash: la source puo' essere un log di migliaia di
+        # righe, e qui serve solo distinguere due origini, non rileggerle.
+        if source and not getattr(fact, "source_signature", None):
+            import hashlib
+            fact.source_signature = "sha256:" + hashlib.sha256(
+                " ".join(str(source).split()).encode("utf-8")).hexdigest()[:16]
         if confidence is not None:
             fact.confidence = float(confidence)
         if valid_until is not None:

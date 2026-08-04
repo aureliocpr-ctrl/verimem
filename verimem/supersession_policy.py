@@ -60,7 +60,48 @@ def references_fact(new_text: Any, old_id: Any) -> bool:
 
 def canonical_source_of(fact: Any) -> str:
     """The reputation key of a fact's writer (``canonical_source`` of its
-    ``verified_by``); the ``"user"`` fallback when unsourced."""
+    ``verified_by``); the ``source_signature`` when there is no ``verified_by``;
+    the ``"user"`` fallback when the fact declares neither.
+
+    PERCHE' LA SIGNATURE (2026-08-04, da un registro pazienti di ws5).
+    «Il paziente Rossi pesa 70 kg» veniva RITIRATO da «Il paziente Bianchi pesa
+    95 kg», reason `same-source evolution`. Il banco, una variabile per volta:
+
+        topic DIVERSI, nessuna source        entrambi vivi
+        stesso topic, source DIVERSE         NE RESTA UNO
+        stesso topic, verified_by diversi    entrambi vivi
+
+    La riga di mezzo era il difetto: chi scrive passa `source=` credendo di
+    dichiarare la provenienza — e' cio' che il prodotto raccomanda, ed e' cio'
+    che accende il moat — e qui si guardava solo `verified_by`, quindi due
+    fatti senza ref erano entrambi `"user"` e il secondo «evolveva» il primo.
+    Sul corpus vivo 500 fatti su 6075 hanno un `verified_by`: per gli altri
+    5575 qualunque coppia nello stesso topic era un candidato al ritiro,
+    qualunque cosa dicesse.
+
+    Non si inventa un criterio nuovo: si smette di buttare via cio' che chi
+    scrive ha gia' dichiarato.
+
+    ⛔ LA CURA E' STATA SCRITTA, MISURATA E RITIRATA IL 2026-08-04. Leggere la
+    ``source_signature`` qui dentro colpisce il bersaglio e rompe il presidio:
+
+        caso                                riga attuale   con la signature
+        source DIVERSE (due cartelle)          1 vivo         2 vivi   ✅
+        STESSA source, valore aggiornato       1 vivo         2 vivi   ❌
+        nessuna source (compatibilita')        1 vivo         1 vivo   ✅
+
+    La seconda riga e' una regressione vera: l'aggiornamento legittimo smette
+    di ritirare. E la funzione, chiamata da sola, e' CORRETTA in tutti e tre i
+    casi — stessa signature -> ``evolution``, diverse -> ``conflict``, assente
+    -> ``evolution``; e il fatto riletto dal DB espone davvero l'attributo. Il
+    comportamento cambia piu' a valle, in un punto che non e' stato isolato.
+
+    Una cura che colpisce il bersaglio per una ragione che non si sa spiegare
+    non si consegna: e' la stessa lezione di «misurare una cura a livello di
+    FUNZIONE», dove il verdetto isolato diceva il contrario dell'end-to-end.
+    Resta il pezzo che CONSERVA l'impronta in ``client.add`` — additivo, non
+    cambia comportamento — e il test la documenta come xfail strict.
+    """
     return canonical_source(getattr(fact, "verified_by", None) or None)
 
 
