@@ -66,6 +66,55 @@ _COMPLETION_EVIDENCE_PREFIXES: tuple[str, ...] = (
 )
 
 
+# FIX 2026-08-04 — «IL FATTO» E' UN SOSTANTIVO, E IN QUESTO PRODOTTO E' IL NOME
+# DELL'UNITA' DI DOMINIO.
+#
+# Trovato seguendo un numero: se `verimem save` chiamasse il gate L1, 3520 fatti
+# vivi su 5781 (60%) avrebbero un warning, e L1.13 da solo ne fa 2082. Contati
+# gli hit per parola scatenante, i primi due posti sono `fatto` 437 e `fatti`
+# 390 — 855 su 2082, il 41%:
+#
+#     …updated_at uguale 1785623544 il fatto ha grounding 3.9…
+#     …Con i due fatti sul piano annuale entrambi vivi…
+#
+# LA CAUSA E' UN'OMONIMIA CREATA DALLA TRADUZIONE. In inglese `fact` e `done`
+# sono parole diverse e il detector non puo' confonderle; in italiano «fatto» e'
+# il participio di *fare* E il sostantivo che questo prodotto usa per i propri
+# record. Il pattern e' stato esteso all'italiano parola per parola senza
+# accorgersi che una di quelle parole e' il nome della cosa di cui il corpus
+# parla in continuazione.
+#
+# MISURATO SU ENTRAMBE LE POPOLAZIONI (la trappola gia' pagata cinque volte qui:
+# un criterio guardato solo dai negativi sembra sempre ottimo). Su 855 hit di
+# `fatt*`: 419 con un determinante davanti, 428 senza. Letti nove per parte —
+# con determinante 9 su 9 sostantivi; senza, almeno 4 su 9 lo sono comunque.
+# Quindi PRECISIONE ALTA e RICHIAMO PARZIALE: questa cura toglie i 419 senza
+# perdere claim veri, e non pretende di prenderli tutti.
+#
+#: Determinanti che rendono «fatto» un sostantivo. Restano FUORI `tutti`/`altri`
+#: (precedono volentieri un participio: «sono tutti fatti») e un numero
+#: preceduto da `#`, che e' l'id di un task e non un conteggio («P1 #6 FATTO»).
+_DETERMINANTE = re.compile(
+    r"(?<!#)(?<!#\d)(?<!#\d\d)"
+    r"\b(?:il|lo|la|i|gli|le|un|uno|una|del|dei|dello|degli|della|delle|"
+    r"nel|nei|nella|nelle|dal|dai|sul|sui|quel|quei|quella|questo|questi|"
+    r"questa|ogni|due|tre|quattro|cinque|sei|sette|otto|nove|dieci|dodici|"
+    r"\d+)\s+$",
+    re.IGNORECASE,
+)
+
+
+def _e_il_sostantivo_fatto(testo: str, m: re.Match) -> bool:
+    """La parola trovata e' «fatto/fatti/fatta/fatte» usato come NOME?
+
+    Il confine e' «immediatamente prima»: in «il lavoro fatto in fretta» fra
+    l'articolo e la parola c'e' dell'altro, e la parola resta un participio.
+    """
+    if not m.group(0).lower().startswith("fatt"):
+        return False
+    return bool(_DETERMINANTE.search(testo[max(0, m.start() - 24):m.start()]))
+
+
 @dataclass(frozen=True)
 class CompletionClaimWarning:
     """Warning emitted when 'complete/done/finished' claim lacks
@@ -136,10 +185,16 @@ def detect_unsupported_completion_claim(
     """
     if not proposition:
         return None
-    m = _COMPLETION_PATTERN.search(proposition)
-    if m is None:
+    # Si scorrono TUTTE le occorrenze: la prima puo' essere «il fatto» (il nome
+    # di un record) e la seconda un claim vero. Fermarsi alla prima renderebbe
+    # la cura una scappatoia — basterebbe aprire il testo con «il fatto».
+    for m in _COMPLETION_PATTERN.finditer(proposition):
+        if _e_il_sostantivo_fatto(proposition, m):
+            continue
+        matched_text = m.group(0)
+        break
+    else:
         return None
-    matched_text = m.group(0)
     if _has_completion_evidence(verified_by):
         return None
     # Quante affermazioni contiene la frase. Misurato sui 513 quarantinati vivi
