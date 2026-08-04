@@ -105,6 +105,36 @@ _MAX_POOL_FACTS = 200   # cap the word pool: enough diversity, bounded cost
 
 _MAX_WORDS_PER_FACT = 2
 
+#: Oltre questa lunghezza un "token" non è una parola: è un pezzo di frase che
+#: nessuno spazio ha separato. Misurato il 2026-08-04 su segnalazione di ws5,
+#: che provava il prodotto in cinese, giapponese e thai: `text.split()` su una
+#: scrittura senza spazi restituisce **un token solo, la frase intera**, quindi
+#: il cap di due parole per fatto ne concedeva due… di cui una era tutto il
+#: fatto. Dodici sonde su dodici contenevano un fatto intero.
+#:
+#: La soglia non identifica una lingua e non contiene una lista di alfabeti: si
+#: limita a dire che una sequenza lunga e senza spazi va spezzata prima di
+#: poterla chiamare "una parola". Vale per il cinese come per il thai, il lao,
+#: il khmer e per qualunque scrittura a cui nessuno ha ancora pensato — che è
+#: il punto, visto quante volte questo progetto ha pagato una lista tarata su
+#: una lingua sola.
+_MAX_TOKEN_CHARS = 12
+#: In quanti pezzi spezzarlo. Tre caratteri sono abbastanza per non essere
+#: rumore puro e abbastanza pochi perché due pezzi non ricostruiscano il senso.
+_TOKEN_PIECE = 3
+
+
+def _parole(testo: str) -> list[str]:
+    """Le unità da cui pescare, anche dove gli spazi non separano le parole."""
+    fuori: list[str] = []
+    for tok in testo.split():
+        if len(tok) <= _MAX_TOKEN_CHARS:
+            fuori.append(tok)
+            continue
+        fuori.extend(tok[i:i + _TOKEN_PIECE]
+                     for i in range(0, len(tok), _TOKEN_PIECE))
+    return fuori
+
 
 def scrambled_probes(sm, *, n: int = 32, seed: int = 0) -> list[str]:
     """Deterministic nonsense probes from the store's OWN vocabulary.
@@ -140,7 +170,7 @@ def scrambled_probes_da_testi(testi, *, n: int = 32,
     for t in testi:
         text = (t or "").strip()
         originals.add(text.lower())
-        ws = [w for w in text.split() if len(w) > 2]
+        ws = [w for w in _parole(text) if len(w) > 2]
         if ws:
             words_by_fact.append(ws)
     if len(words_by_fact) < _MIN_FACTS:
@@ -164,7 +194,15 @@ def scrambled_probes_da_testi(testi, *, n: int = 32,
             continue
         rng.shuffle(words)
         probe = " ".join(words)
-        if probe.lower() not in originals:
+        # SI SCARTA PER INCLUSIONE, NON PER UGUAGLIANZA (2026-08-04). Il
+        # controllo era `probe.lower() not in originals`, cioè cadeva solo se
+        # la sonda coincideva ESATTAMENTE con un fatto: una sonda che ne
+        # contiene uno intero più qualche parola d'altro non è uguale a
+        # niente, e passava. È la seconda rete, indipendente dalla
+        # segmentazione qui sopra, e regge anche per una scrittura che quella
+        # non sapesse spezzare — il rumore non deve MAI contenere segnale.
+        basso = probe.lower()
+        if not any(o and o in basso for o in originals):
             probes.append(probe)
     return probes
 
