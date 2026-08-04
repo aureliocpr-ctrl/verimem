@@ -22,14 +22,76 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+# LA superficie unica della negazione — vedi il blocco su `_e_negata` piu'
+# sotto per il perche' non se ne scrive una seconda qui.
+from .quantity_match import _NEGATOR_RE
+
 _TESTED_PATTERN = re.compile(
-    r"\b(?:tested|well[- ]tested|"
+    r"\b(?:well[- ]tested|tested|"
     r"verified|validated|"
     r"testato|testati|testata|testate|"
     r"verificato|verificata|verificati|verificate|"
     r"validato|validata|validati|validate)\b",
     re.IGNORECASE,
 )
+
+# FIX 2026-08-04 — LA PAROLA C'E' MA NON E' UNA DICHIARAZIONE. Trovato
+# misurando: se `verimem save` chiamasse il gate, 3520 fatti vivi su 5781 (il
+# 60%) riceverebbero un warning L1, e questo detector da solo ne fa 1560.
+# Letto un campione casuale, quasi tutti erano falsi positivi di due forme.
+#
+# ① LA NEGAZIONE. «Il confine anti-correlato NON e' stato testato» faceva
+#    scattare 'testato'. E' la TERZA occorrenza della stessa classe in due
+#    giorni (`unresolved` conteneva `RESOLVED`, curato in e2d69715): il gate
+#    anti-confabulazione blocca la SMENTITA invece del claim, cioe' punisce
+#    chi documenta di non aver verificato — l'informazione piu' onesta che un
+#    fatto possa portare.
+#
+#    Il lessico NON si riscrive: `quantity_match._NEGATOR_RE` esiste ed e'
+#    stata estesa a undici lingue il 2026-08-03 (d06f1521), proprio dopo aver
+#    scoperto che il prodotto riconosceva la negazione italiana in due posti
+#    diversi e mai insieme. Quello che manca qui non e' il vocabolario ma la
+#    PORTATA: il negatore deve stare vicino alla parola e non oltre una virgola
+#    o un'avversativa, altrimenti qualunque fatto lungo conterrebbe un «non» e
+#    il detector sarebbe spento invece che corretto.
+#
+# ② LA PAROLA E' SINTASSI. `--verified-by` e' il nome di un FLAG,
+#    `status verified/provisional` e `min_status verified` sono VALORI di
+#    parametro, `rustc-verified` e' un identificatore composto. Il fatto cita
+#    del codice, non asserisce nulla su se stesso. E' il gemello del caso
+#    trovato il 2026-08-04 liberando a mano i fatti quarantinati.
+
+#: Confini che chiudono la portata di una negazione: oltre questi, il «non» sta
+#: parlando di un'altra cosa.
+_FINE_PORTATA = re.compile(r"[,;.:!?]|\bma\b|\bpero'?\b|\bbut\b|\byet\b",
+                           re.IGNORECASE)
+#: Quanto indietro guardare. «non e' mai stato validato» sono 25 caratteri.
+_FINESTRA_NEGAZIONE = 60
+#: Un carattere ATTACCATO alla parola che la rende sintassi e non prosa.
+#: Attaccato e' il punto: «Nota: verificato tutto» ha uno spazio in mezzo ed
+#: e' un claim, `--verified-by` no.
+_ADIACENTE_DI_CODICE = frozenset("-=:/_")
+#: La parola come valore di un parametro di stato, dove il nome precede.
+_NOME_DI_PARAMETRO = re.compile(r"(?:\w*status|\w*state|--?\w+)\s+$",
+                                re.IGNORECASE)
+
+
+def _e_negata(testo: str, inizio: int) -> bool:
+    """Un negatore governa la parola che inizia a ``inizio``?"""
+    finestra = testo[max(0, inizio - _FINESTRA_NEGAZIONE):inizio]
+    tagli = [m.end() for m in _FINE_PORTATA.finditer(finestra)]
+    if tagli:
+        finestra = finestra[tagli[-1]:]
+    return bool(_NEGATOR_RE.search(finestra))
+
+
+def _e_sintassi(testo: str, inizio: int, fine: int) -> bool:
+    """La parola e' un pezzo di codice citato, non un'asserzione?"""
+    prima = testo[inizio - 1] if inizio > 0 else ""
+    dopo = testo[fine] if fine < len(testo) else ""
+    if prima in _ADIACENTE_DI_CODICE or dopo in _ADIACENTE_DI_CODICE:
+        return True
+    return bool(_NOME_DI_PARAMETRO.search(testo[max(0, inizio - 40):inizio]))
 
 # FIX 2026-06-03 (sorella red-team, buco L1-tested-bypass): i prefissi che
 # implicano un test/processo eseguito NON bastano da soli — un ref-spazzatura
@@ -143,10 +205,18 @@ def detect_unsupported_tested_claim(
 ) -> VerificationClaimWarning | None:
     if not proposition:
         return None
-    m = _TESTED_PATTERN.search(proposition)
-    if m is None:
+    # Si scorrono TUTTE le occorrenze: la prima puo' essere un `--verified-by`
+    # e la seconda un claim vero. Fermarsi alla prima renderebbe la cura una
+    # scappatoia — basterebbe nominare un flag all'inizio del fatto.
+    for m in _TESTED_PATTERN.finditer(proposition):
+        if _e_negata(proposition, m.start()):
+            continue
+        if _e_sintassi(proposition, m.start(), m.end()):
+            continue
+        matched_text = m.group(0)
+        break
+    else:
         return None
-    matched_text = m.group(0)
     if _has_tested_evidence(verified_by):
         return None
     return VerificationClaimWarning(
