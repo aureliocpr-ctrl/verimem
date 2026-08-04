@@ -54,8 +54,14 @@ def reset_flow_context(token: contextvars.Token | None = None) -> None:
 
 
 def _ambient() -> dict[str, Any]:
+    # "unknown", not "sdk": the old default was the NAME OF A REAL SURFACE,
+    # so 9357 of 9603 real-corpus writes claimed "sdk" while 438 MCP write
+    # calls produced ZERO "mcp" events — a dashboard cannot tell a default
+    # from a datum (measured ws4, 2026-08-04). Every real entrypoint now
+    # declares itself (cli.main / mcp_server / gateway ctx); what remains
+    # genuinely unknown SAYS unknown.
     out: dict[str, Any] = {
-        "surface": os.environ.get("ENGRAM_FLOW_SURFACE", "").strip() or "sdk",
+        "surface": os.environ.get("ENGRAM_FLOW_SURFACE", "").strip() or "unknown",
     }
     actor = (os.environ.get("VERIMEM_ACTOR", "").strip()
              or os.environ.get("ENGRAM_ACTOR", "").strip())

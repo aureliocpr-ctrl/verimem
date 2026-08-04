@@ -1610,6 +1610,14 @@ def mcp():
     # inside mcp_server would come too late — re-route explicitly first.
     from .observability import route_logs_to_stderr
     route_logs_to_stderr()
+    # Surface correction: `engram mcp` reaches here THROUGH cli.main, which
+    # setdefaults surface="cli" — and mcp_server's own setdefault would then
+    # lose. The path-derived "cli" yields to "mcp"; an explicit operator env
+    # (anything else) still wins. This is the exact trap ws4 measured on
+    # 2026-08-04: one entrypoint chain, two claimed surfaces, zero "mcp"
+    # events on a corpus with 438 real MCP write calls.
+    if os.environ.get("ENGRAM_FLOW_SURFACE", "").strip() in ("", "cli"):
+        os.environ["ENGRAM_FLOW_SURFACE"] = "mcp"
     from .mcp_server import main as mcp_main
     mcp_main()
 
@@ -4605,6 +4613,12 @@ def main() -> None:
     the Typer app. Wrapping the app (vs pointing the entry directly at it) is
     what lets the encoding fix run before any command writes output."""
     _force_utf8_stdio()
+    # Surface tagging (ws6 control-room): the CLI was the ONE entrypoint that
+    # never declared itself, so its flow events wore the old "sdk" default —
+    # 97% of the real corpus tagged with a surface nobody chose (ws4,
+    # 2026-08-04). setdefault: `engram mcp` re-sets "mcp" downstream in
+    # mcp_server, and an explicit operator env always wins.
+    os.environ.setdefault("ENGRAM_FLOW_SURFACE", "cli")
     app()
 
 
