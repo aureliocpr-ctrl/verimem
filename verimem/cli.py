@@ -985,18 +985,30 @@ def recall_cmd(
             _fino = _p.get("until") or "—"
             console.print(f"    [dim]prima:[/dim] {_p.get('text','')[:72]} "
                           f"[dim]({_p.get('asserted_date','?')} → {_fino})[/dim]")
-        # I RECORD TRATTENUTI, e non è un dettaglio di formattazione. Su un
-        # registro dove il fatto giusto è stato archiviato, questa riga di
-        # comando serviva la risposta SBAGLIATA con un punteggio alto e nulla
-        # che lo lasciasse sospettare — mentre lo stesso identico store,
-        # interrogato dall'SDK, dichiarava `hidden_records`.
-        #
-        # È la classe che `test_le_capacita_senza_porta_non_aumentano`
-        # sorveglia, ma peggio del solito: non è un comando in più da
-        # scoprire, è un AVVISO su una risposta che si sta già leggendo.
+    # I RECORD TRATTENUTI, e non è un dettaglio di formattazione. Su un
+    # registro dove il fatto giusto è stato archiviato, questa riga di comando
+    # serviva la risposta SBAGLIATA con un punteggio alto e nulla che lo
+    # lasciasse sospettare — mentre lo stesso identico store, interrogato
+    # dall'SDK, dichiarava `hidden_records`.
+    #
+    # È la classe che `test_le_capacita_senza_porta_non_aumentano` sorveglia,
+    # ma peggio del solito: non è un comando in più da scoprire, è un AVVISO
+    # su una risposta che si sta già leggendo.
+    #
+    # ⚠️ UNA VOLTA SOLA, FUORI DAL CICLO. La prima stesura lo stampava per hit
+    # e usando il prodotto usciva TRE VOLTE identico su tre risultati. Il campo
+    # è informazione della DOMANDA — `client.recall` lo allega a ogni hit
+    # apposta, perché un consumatore può leggerne uno solo — ma chi STAMPA una
+    # lista lo dice una volta. I test non potevano vederlo: avevano un hit.
+    _visti: set[str] = set()
+    for h in hits:
         for _n in (h.get("hidden_records") or []):
+            _chiave = f"{_n.get('code','?')}|{_n.get('id','')}"
+            if _chiave in _visti:
+                continue
+            _visti.add(_chiave)
             console.print(
-                f"    [yellow]⚠ trattenuto[/yellow] [dim]({_n.get('why','?')})"
+                f"  [yellow]⚠ trattenuto[/yellow] [dim]({_n.get('why','?')})"
                 f"[/dim] [bold]{_n.get('code','?')}[/bold]: "
                 f"{str(_n.get('text',''))[:64]}")
 
