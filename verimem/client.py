@@ -460,6 +460,12 @@ class Memory:
         # the old would lose BOTH (opus critic guard). supersede() keeps the old row for
         # lineage; it just drops out of the default recall filter.
         _superseded: list[str] = []
+        # ws6 control-room: each real retirement now carries its undo handle
+        # (semantic.supersede snapshots pre-op). Surfacing the handle HERE —
+        # in the add() receipt — is what turns "this write retired another
+        # fact" from an invisible mutation into a reversible one for every
+        # SDK/MCP/gateway caller (indicator #1, ws5 2026-08-04).
+        _superseded_undo: dict[str, str] = {}
         # admit-guard: retire the old ONLY if the new write was admitted AND is actually
         # retrievable from the CURATED store — store() can divert a non-quarantined write
         # elsewhere (admission-gate telemetry route sets no 'quarantined' status), and
@@ -480,10 +486,13 @@ class Memory:
                 and self.semantic.get(fact.id) is not None):
             for _old_id in gate.supersede_fact_ids:
                 try:
-                    self.semantic.supersede(_old_id, fact.id,
-                                            principal=principal or self._principal,
-                                            reason="same-source evolution")
+                    _sup_res = self.semantic.supersede(
+                        _old_id, fact.id,
+                        principal=principal or self._principal,
+                        reason="same-source evolution")
                     _superseded.append(_old_id)
+                    if _sup_res.get("undo_op_id"):
+                        _superseded_undo[_old_id] = _sup_res["undo_op_id"]
                 except Exception as exc:  # noqa: BLE001 — a supersede failure must not break the write
                     # surface it: the new fact is admitted but the old was NOT retired —
                     # the stale-beside-new state the feature exists to prevent (opus critic).
@@ -520,6 +529,8 @@ class Memory:
         }
         if _superseded:
             _out["superseded"] = _superseded
+            if _superseded_undo:
+                _out["superseded_undo_ops"] = _superseded_undo
         return _out
 
     # ---- read --------------------------------------------------------------
@@ -1989,14 +2000,19 @@ class Memory:
         if old is None:
             return {"updated": False, "reason": "not found"}
         res = self.add(text, topic=topic or getattr(old, "topic", "user"))
+        _undo_id: str | None = None
         if res.get("stored") and res.get("id"):
             try:
-                self.semantic.supersede(fact_id, res["id"],
-                                        principal=self._principal,
-                                        reason="sdk update")
+                _sup = self.semantic.supersede(fact_id, res["id"],
+                                               principal=self._principal,
+                                               reason="sdk update")
+                _undo_id = _sup.get("undo_op_id")
             except Exception as exc:  # noqa: BLE001
                 return {**res, "updated": True, "supersedes": fact_id, "supersede_warning": str(exc)}
-        return {**res, "updated": bool(res.get("stored")), "supersedes": fact_id}
+        out = {**res, "updated": bool(res.get("stored")), "supersedes": fact_id}
+        if _undo_id is not None:
+            out["undo_op_id"] = _undo_id
+        return out
 
     def history(self, fact_id: str) -> list[dict[str, Any]]:
         """The FULL supersession trail of the lineage containing ``fact_id`` —

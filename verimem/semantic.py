@@ -5210,7 +5210,8 @@ class SemanticMemory:
             ).fetchone()[0]
 
     def supersede(self, old_id: str, new_id: str, *, principal: str,
-                  reason: str = "") -> dict[str, Any]:
+                  reason: str = "",
+                  flow_extra: dict[str, Any] | None = None) -> dict[str, Any]:
         """Cycle #78 — declare ``old_id`` superseded by ``new_id``.
 
         Args:
@@ -5221,11 +5222,18 @@ class SemanticMemory:
                 free text can carry PII and the chain is immutable, so the
                 reason lives only on the (erasable) facts row.
             reason: human-readable why this supersession happened.
+            flow_extra: optional extra payload merged into the
+                ``flow.supersession`` event (e.g. the write path's
+                ``branch`` / ``n_candidati_esaminati`` / search tokens).
+                Metadata only — never proposition text.
 
         Returns:
             dict ``{ok, old_id, new_id, reason, superseded_at,
-            idempotent_noop}``. ``idempotent_noop=True`` when the same
-            (old, new) pair was already declared with the same reason.
+            idempotent_noop[, undo_op_id]}``. ``idempotent_noop=True`` when
+            the same (old, new) pair was already declared with the same
+            reason. ``undo_op_id`` (real retirements only) is the
+            ``facts_undo_log`` handle: ``undo_destructive_op(undo_op_id)``
+            reverses the retirement.
 
         Raises:
             SupersedeError: old==new, or either id missing in DB.
@@ -5235,18 +5243,24 @@ class SemanticMemory:
         _require_principal(principal)
         if old_id == new_id:
             raise SupersedeError("cannot supersede a fact with itself (self-supersede)")
+        loser_topic: str | None = None
+        winner_topic: str | None = None
+        undo_op_id: str | None = None
         with self._connect() as conn:
             old_row = conn.execute(
-                "SELECT superseded_by, superseded_reason FROM facts WHERE id = ?",
+                "SELECT superseded_by, superseded_reason, topic "
+                "FROM facts WHERE id = ?",
                 (old_id,),
             ).fetchone()
             if old_row is None:
                 raise SupersedeError(f"old_id {old_id!r} not found in facts table")
             new_row = conn.execute(
-                "SELECT 1 FROM facts WHERE id = ?", (new_id,),
+                "SELECT topic FROM facts WHERE id = ?", (new_id,),
             ).fetchone()
             if new_row is None:
                 raise SupersedeError(f"new_id {new_id!r} not found in facts table")
+            loser_topic = old_row["topic"]
+            winner_topic = new_row["topic"]
 
             existing_super = old_row["superseded_by"]
             existing_reason = old_row["superseded_reason"]
@@ -5315,12 +5329,34 @@ class SemanticMemory:
                 ).fetchone()
                 chain_cur = nxt["superseded_by"] if nxt else None
 
+            # THE HELM (ws6 control-room, 2026-08-04): the pre-op snapshot
+            # that makes a retirement reversible. The infrastructure existed
+            # since cycle 13 (facts_undo_log declares op_type='supersede';
+            # undo_op restores via INSERT OR REPLACE) but production had ONE
+            # snapshot caller, for 'forget' — so a wrong retirement had no
+            # way back on any surface (measured live: the Rossi/Bianchi
+            # ping-pong, where rewriting the lost fact retires another).
+            # Same-transaction like _record_mutation: the handle exists iff
+            # the retirement committed.
+            from .undo_log import snapshot_pre_op
+            undo_op_id = snapshot_pre_op(conn, "supersede", old_id)
             cur = conn.execute(
                 "UPDATE facts SET superseded_by = ?, superseded_at = ?, "
                 "superseded_reason = ? WHERE id = ? AND superseded_by IS NULL",
                 (new_id, now, reason, old_id),
             )
             if cur.rowcount == 0:
+                # Lost the race — the retirement did NOT happen here, so the
+                # snapshot above is an orphan handle. Deleting it in the same
+                # transaction keeps the invariant "one undo handle per real
+                # retirement": undoing an orphan would clear the CONCURRENT
+                # winner's supersede_by, resurrecting the loser behind the
+                # race winner's back.
+                if undo_op_id is not None:
+                    conn.execute(
+                        "DELETE FROM facts_undo_log WHERE op_id = ?",
+                        (undo_op_id,))
+                    undo_op_id = None
                 # A5 (audit 2026-06-08): lost a concurrent race — another writer
                 # set superseded_by between our SELECT above and this UPDATE. The
                 # old UNCONDITIONAL update silently overwrote it (last-writer-wins
@@ -5351,11 +5387,34 @@ class SemanticMemory:
         # ``WHERE superseded_by IS NULL``. Bump the recall-cache version
         # so the next recall() rebuilds the matrix without ``old_id``.
         self._cache_version += 1
-        return {
+        # flow.supersession (ws6 control-room): the retirement feed, emitted
+        # HERE — the single method all eight .supersede( call sites converge
+        # on — so every path (same-source post-gate, correct(), reconcile,
+        # chains, MCP, CLI) and every port produce the event. Until tonight
+        # retirements were the biggest silent mutation in the product: seven
+        # read APIs said nothing (measured ws5, 2026-08-04). Metadata only,
+        # never proposition text (Engine Room shows flow, not content).
+        # Outside the transaction and best-effort by flow_events contract:
+        # observability must never break the write path.
+        from .flow_events import emit_flow as _emit_flow
+        _payload: dict[str, Any] = {
+            "loser_id": old_id, "winner_id": new_id,
+            "loser_topic": loser_topic, "winner_topic": winner_topic,
+            "reason": reason, "branch": reason or "unspecified",
+            "reversible": undo_op_id is not None,
+            "undo_op_id": undo_op_id,
+        }
+        if flow_extra:
+            _payload.update(flow_extra)
+        _emit_flow("flow.supersession", **_payload)
+        out: dict[str, Any] = {
             "ok": True, "old_id": old_id, "new_id": new_id,
             "reason": reason, "superseded_at": now,
             "idempotent_noop": False,
         }
+        if undo_op_id is not None:
+            out["undo_op_id"] = undo_op_id
+        return out
 
     def auto_supersede_on_contradiction(
         self,
