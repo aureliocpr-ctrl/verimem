@@ -526,6 +526,7 @@ class Memory:
     def search(self, query: str, k: int = 5, *, deep: bool = False,
                as_of: float | str | None = None,
                with_history: bool | str = False,
+               history_hops: int = 5,
                include_beliefs: bool = False,
                min_relevance: float | str | None = None
                ) -> list[dict[str, Any]]:
@@ -550,6 +551,14 @@ class Memory:
           on transition questions), plain lookups keep the lean context whose
           abstention on trap questions is pure (1.000 vs 0.949 — the measured
           price of always-on history, docs/TRUST_MAINTENANCE.md).
+        * ``history_hops`` — quanti predecessori mostrare. Il limite serve (una
+          catena di duecento schede riversata in un contesto è un'altra forma
+          dello stesso danno), ma fino al 2026-08-04 era MUTO e non si poteva
+          toccare: `fact_history` ha `max_hops=5` di default e questa
+          superficie — la porta pubblica — non lo passava mai. Su un registro
+          di 25 schede uscivano cinque voci e nessun segno delle altre
+          diciannove. Ora il taglio si dichiara (``history_truncated: True``) e
+          il limite si può alzare.
         * ``include_beliefs`` (anti-sycophancy read-side) — opt unverified USER
           assertions (``status='user_belief'``, produced by the ingest's
           ``tag_beliefs``) back into the result. They are OUT of the default
@@ -622,12 +631,30 @@ class Memory:
                 # `None` resta `None` e non diventa la stringa vuota che `_iso`
                 # darebbe: un fatto ancora valido NON ha una data di fine, e
                 # «nessuna fine» non è «fine sconosciuta».
+                # ⚠️ SI CHIEDE UN SALTO IN PIÙ DI QUELLI CHE SI MOSTRANO. Il
+                # limite serve — una catena di duecento schede riversata in un
+                # contesto è un'altra forma dello stesso danno — ma prima il
+                # taglio era MUTO: su un registro di 25 schede uscivano cinque
+                # voci e nessun segno che ce ne fossero altre diciannove, e chi
+                # legge conclude che la storia sia quella.
+                #
+                # Il salto in più costa un hop, non un conteggio della catena:
+                # se torna, il taglio c'è stato e si dichiara. `max_hops` era
+                # il default di `fact_history` che questa superficie — la porta
+                # pubblica — non passava mai, quindi non poteva né alzarlo né
+                # sapere di averlo.
+                hops = max(0, int(history_hops))
+                catena = fact_history(self.semantic, item["id"],
+                                      max_hops=hops + 1)
+                if len(catena) > hops:
+                    item["history_truncated"] = True
+                    catena = catena[:hops]
                 item["history"] = [
                     {"text": getattr(p, "proposition", ""),
                      "asserted_date": _iso(_event_ts(p)),
                      "until": (None if getattr(p, "superseded_at", None) is None
                                else _iso(p.superseded_at) or None)}
-                    for p in fact_history(self.semantic, item["id"])
+                    for p in catena
                 ]
             out.append(item)
         # Il taglio sta QUI e non prima del ranking: `score` appartiene alla
