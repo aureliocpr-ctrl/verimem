@@ -18,6 +18,7 @@ corpus, and vice-versa.
 from __future__ import annotations
 
 import re
+import unicodedata
 
 # 4-digit years (1500–2099). Bare years are NOT quantities — they belong
 # to the year-disjoint rule in validate_claim, so the two detectors never
@@ -369,14 +370,60 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
     return out
 
 
+#: Le lettere di QUALUNQUE alfabeto, non solo ASCII.
+#:
+#: PERCHE' (2026-08-04). `[a-zA-Z]{4,}` e' la classe ASCII, e questa funzione e'
+#: la guardia di sovrapposizione lessicale su cui poggiano supersessione e
+#: rilevamento di contraddizioni. Fuori da ASCII restavano:
+#:
+#:   cirillico · greco · arabo   ZERO token — e sono alfabeti ORDINARI, con gli
+#:                               spazi fra le parole: nulla li distingue dal
+#:                               latino se non il blocco Unicode.
+#:   accenti italiani            la parola TRONCATA sull'accento —
+#:                               «citta'» -> citta ma «città» -> citt,
+#:                               «pero'» -> pero ma «però» -> per (3 char, via).
+#:
+#: Il caso non e' ipotetico: sul corpus vivo (6068 fatti) ci sono 100 parole
+#: scritte in ENTRAMBE le grafie — `perche` 322 contro `perché` 88, `entita`
+#: 118 contro `entità` 32, `singolarita` 66 contro `singolarità` 131. Chi scrive
+#: da tastiera italiana e chi scrive da una shell che mangia gli accenti parlano
+#: della stessa cosa, e la funzione che misura la sovrapposizione non lo sapeva.
+#:
+#: MISURATO SULLE DUE POPOLAZIONI — obbligatorio qui, perche' la cura gemella
+#: («conservare token corti e cifre») fu falsificata proprio cosi', portando le
+#: coppie sopra soglia da 848 a 2293 su 3000, cioe' PIU' ritiri:
+#:   BENEFICIO  coppie «stessa frase, due grafie»: 215 su 400 non risultavano
+#:              identiche; dopo, 0. Jaccard mediano 0.984 -> 1.000.
+#:   COSTO      coppie casuali sopra soglia, su 3000: +0.
+#:
+#: ⚠️ IL PREZZO, dichiarato: in italiano l'accento distingue parole — `metà` e
+#: `meta`, `completò` e `completo` diventano lo stesso token. Si paga perche' sul
+#: corpus non produce un solo ritiro in piu' e perche' la coppia che unisce e'
+#: molto piu' frequente di quella che confonde. Se un giorno costera' qualcosa
+#: di misurabile, la strada e' l'analisi morfologica, non il ritorno ad ASCII.
+#:
+#: ⚠️ NON si toccano la soglia dei 4 caratteri ne' le cifre: quella strada e'
+#: gia' falsificata sul corpus (`7aa678f57c73`). Qui cambia solo l'ALFABETO.
+_PAROLA_RE = re.compile(r"[^\W\d_]{4,}", re.UNICODE)
+
+
+def _senza_diacritici(text: str) -> str:
+    """«città» -> «citta»: la stessa parola, una grafia sola."""
+    return "".join(c for c in unicodedata.normalize("NFKD", text)
+                   if not unicodedata.combining(c))
+
+
 def content_tokens(text: str) -> set[str]:
     """Lower-cased alpha tokens ≥4 chars minus fillers, lightly singularised.
 
     Used as the topical-overlap precision guard: two statements must share
     a *distinctive* (non-unit) content word before a same-unit/different-
     value pair counts as a contradiction.
+
+    Gli accenti sono normalizzati e gli alfabeti non latini contano come
+    lettere — vedi il blocco su ``_PAROLA_RE`` per la misura che lo giustifica.
     """
-    toks = re.findall(r"[a-zA-Z]{4,}", (text or "").lower())
+    toks = _PAROLA_RE.findall(_senza_diacritici((text or "").lower()))
     out: set[str] = set()
     for t in toks:
         if t in _CONTENT_STOP:
