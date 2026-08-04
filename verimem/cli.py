@@ -2688,7 +2688,12 @@ def facts_undo(
         ..., help="op_id from a previous undoable delete/supersede",
     ),
 ) -> None:
-    """Restore a fact deleted via `engram facts forget` (undoable mode).
+    """Reverse a destructive op by its handle: a forget OR a retirement.
+
+    Since the helm (2026-08-04) every supersession snapshots pre-op too, so
+    this undoes retirements as well — the loser comes back servable, the
+    winner stays alive. Find handles with `facts undo-list` or
+    `facts retirement-log`; write receipts carry them too.
 
     Cycle 2026-05-27 round 13 P0c. Reads facts_undo_log to recover the
     pre-deletion row state. Returns:
