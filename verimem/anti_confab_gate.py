@@ -1379,6 +1379,7 @@ def run_validation_gate(
             # caught contradiction (numeric/version/date) against the SAME source's earlier
             # value is an evolution — retire the old, admit the new — not a quarantine.
             _conflicts = ev
+            _sup_prima = len(supersede_ids)
             if _supersede_same_source_on() and ev:
                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
                                                supersede_ids, status,
@@ -1390,12 +1391,33 @@ def run_validation_gate(
                     "advice": advice,
                 })
                 contradicting_ids = _conflicts
-            elif ev:  # every contradiction was a same-source evolution → admit + supersede
+            elif ev and len(supersede_ids) > _sup_prima:
+                # ogni contraddizione era un'evoluzione della stessa fonte →
+                # si ammette il nuovo e si ritira il vecchio
                 warnings.append({
                     "layer": "L3-supersession",
                     "reason": "a newer same-source value supersedes a stored fact",
                     "advice": "this write updates an earlier value from the same source; "
                               "the older value is superseded.",
+                })
+            elif ev:
+                # ⚠️ IL MESSAGGIO DICHIARAVA UN'AZIONE CHE NON ERA AVVENUTA.
+                # Trovato dal critic avversariale (job 2635e23b, worker
+                # counterexample) sulla cura della coesistenza: quando TUTTE le
+                # coppie escono dalla terza uscita, `_conflicts` e' vuoto e si
+                # cadeva qui, annunciando «the older value is superseded» con
+                # `supersede_ids` INTATTO. Nulla era stato ritirato.
+                #
+                # Per un prodotto che vende memoria verificata, un avviso che
+                # racconta una supersessione mai avvenuta e' la stessa classe di
+                # difetto che il gate esiste per fermare — solo che stavolta a
+                # confabulare era il gate.
+                warnings.append({
+                    "layer": "L3-coexistence",
+                    "reason": "a contradiction was found but both facts are kept",
+                    "advice": "the clashing facts come from DIFFERENT declared "
+                              "authors: neither is an update of the other, so both "
+                              "stay servable and recall returns them together.",
                 })
 
     # L3-SEMANTIC (NLI moat): the lexical L3 (validate_claim, "puramente lessicale")
