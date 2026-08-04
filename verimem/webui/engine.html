@@ -39,6 +39,7 @@
   <div class="counters">
     <span class="c adm">admitted <b id="cAdm">0</b></span>
     <span class="c quar">quarantined <b id="cQuar">0</b></span>
+    <span class="c ret" title="a write that RETIRED another fact (flow.supersession)">retired <b id="cRet">0</b></span>
     <span class="c ans">answered <b id="cAns">0</b></span>
     <span class="c abs">abstained <b id="cAbs">0</b></span>
     <span class="c chart" aria-hidden="true"><canvas id="ratechart" width="240" height="34"></canvas></span>
@@ -88,6 +89,15 @@
       <g id="n-quar" transform="translate(298,108)">
         <rect class="qbox" width="148" height="40" rx="3"/>
         <text class="qt" x="10" y="24">QUARANTINE</text></g>
+      <!-- the retirement chamber (ws6 control-room): until 2026-08-04 the
+           engine's biggest silent mutation — supersession — had no chamber
+           because it had no event. flow.supersession lights it. -->
+      <path class="wire dash" id="w-scr-sup" d="M568 80 V120"/>
+      <g class="chamber sm" id="n-sup" transform="translate(512,120)">
+        <rect class="box" width="112" height="44" rx="3"/>
+        <text class="cap" x="10" y="19">SUPERSEDE</text>
+        <text class="sub2" x="10" y="34">retire + undo handle</text></g>
+      <text class="stamp" id="st-sup" x="512" y="180">RETIRED</text>
       <g class="chamber sm" id="n-ent" transform="translate(646,120)">
         <rect class="box" width="122" height="44" rx="3"/>
         <text class="cap" x="10" y="19">ENTITY → KG</text>
@@ -141,6 +151,51 @@
   <div class="stage-info" id="stage-info" hidden>
     <b id="si-title"></b><span class="si-mod" id="si-mod"></span>
     <p id="si-body"></p>
+  </div>
+
+  <!-- ============ GOVERNANCE — see AND act (the helm) ============
+       Watching without being able to act is worse than not watching
+       (measured 2026-08-04: HTTP exposed DELETE and nothing reversible).
+       Every button here drives a real endpoint of THIS gateway. -->
+  <div class="governance">
+    <div class="gov-head">
+      <h2>governance — the helm</h2>
+      <span class="gov-quartet" id="quartet" title="written = servable + retired + quarantined — a fact disappears in TWO ways; the formula ships with the number">…</span>
+      <button id="govRefresh" class="gov-btn">refresh</button>
+    </div>
+    <div class="gov-grid">
+      <div class="gov-col">
+        <h3>retirements — newest pairs <span class="gov-src">GET /v1/retirements</span></h3>
+        <div id="govRet" class="gov-list"><div class="gov-empty">connect to load</div></div>
+      </div>
+      <div class="gov-col">
+        <h3>quarantine — blocked writes <span class="gov-src">GET /v1/quarantine</span></h3>
+        <div id="govQuar" class="gov-list"><div class="gov-empty">connect to load</div></div>
+      </div>
+    </div>
+    <p class="gov-note">undo restores the LOSER of a retirement (the winner stays —
+    both facts live, the ping-pong ends) · restore releases a quarantined false
+    positive back to recall. Rows retired before the helm existed say
+    <i>irreversible</i> honestly.</p>
+  </div>
+
+  <!-- ============ DARK CHAMBERS — the map shows its own limits ============
+       Subsystems that MUTATE or decide with NO telemetry yet: they run,
+       but this room cannot see them. Naming them is the census's honesty:
+       a map that only shows what is instrumented reads as complete when
+       it is not. Each names its module and what it would need to emit. -->
+  <div class="dark-chambers">
+    <h2>dark chambers — running, not yet visible</h2>
+    <div class="dark-grid" id="darkGrid">
+      <div class="dark-c"><b>DREAM / CONSOLIDATION</b><span>dream.py · consolidation.py · auto worker</span><i>rewrites clusters in background — would need flow.dream</i></div>
+      <div class="dark-c"><b>DECAY</b><span>decay.py · time_decay.py</span><i>labels stale/expired (inert today, two thresholds: 45d vs 90d) — flow.decay</i></div>
+      <div class="dark-c"><b>FORGET</b><span>semantic.py delete — snapshots undo, emits nothing</span><i>flow.forget</i></div>
+      <div class="dark-c"><b>QUARANTINE EXIT</b><span>restore_fact — entry is visible, release is not</span><i>flow.restore</i></div>
+      <div class="dark-c"><b>DOCUMENTS</b><span>documents.py · document_index.py — the tier that VERSIONS</span><i>flow.document</i></div>
+      <div class="dark-c"><b>EPISODES</b><span>episode*.py — tier paused by design</span><i>flow.episode</i></div>
+      <div class="dark-c"><b>SKILLS</b><span>skill*.py (~40 modules)</span><i>flow.skill</i></div>
+      <div class="dark-c"><b>CONTRADICTION SCAN</b><span>contradiction.py · facts_conflict.py</span><i>flow.conflict</i></div>
+    </div>
   </div>
 
   <p class="foot"><b>Live Engine Room.</b> Every row is a real event from THIS

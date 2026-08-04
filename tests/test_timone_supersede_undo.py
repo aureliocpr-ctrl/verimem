@@ -169,6 +169,21 @@ def test_flow_extra_arricchisce_l_evento(mem):
 
 # ---- 6. il wiring: la ricevuta SDK porta l'handle ----------------------------
 
+def test_undo_emette_flow_undo(mem):
+    """Un'azione di governo dev'essere visibile quanto la mutazione che
+    annulla: un undo invisibile ricreerebbe il difetto che il timone cura."""
+    m, tmp = mem
+    a, b = _due_fatti(m)
+    res = m.semantic.supersede(a, b, principal="test:timone",
+                               reason="manual-test")
+    m.semantic.undo_destructive_op(res["undo_op_id"])
+    evts = _flow(tmp, "flow.undo")
+    assert len(evts) == 1
+    p = evts[0]["payload"]
+    assert p["op_type"] == "supersede" and p["fact_id"] == a
+    assert p["action"] == "restored"
+
+
 def test_update_propaga_undo_op_id_nella_ricevuta(mem):
     """``Memory.update`` supersede il vecchio: la ricevuta deve portare
     l'handle — l'utente che corregge DEVE poter tornare indietro senza

@@ -14,7 +14,7 @@
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var counters = { adm: 0, quar: 0, ans: 0, abs: 0 };
+  var counters = { adm: 0, quar: 0, ans: 0, abs: 0, ret: 0 };
   var shadowN = 0;
   var aborter = null;
   var gen = 0;                 // connection generation: a new connect
@@ -145,6 +145,21 @@
       stamp("st-q", String(p.status || "QUARANTINED").toUpperCase(), "ref");
     }
   }
+  /* flow.supersession (the helm): a write RETIRED another fact. Not a
+     failure of the engine — a decision it took; the chamber glows and the
+     governance panel is where the decision can be reversed. */
+  function onSupersession(p) {
+    counters.ret++;
+    heat("w-scr-sup", ["flow", "q"], 1200);
+    heat("n-sup", ["fail"], 1200);
+    stamp("st-sup", p.reversible ? "RETIRED ↺" : "RETIRED", "ref");
+    govSoon();                       // the pair appears in the helm below
+  }
+  function onUndo(p) {
+    heat("n-sup", ["pass"], 1400);
+    stamp("st-sup", "RESTORED", "adm");
+    govSoon();
+  }
   function onRecall(p) {
     tsR.push(Date.now());
     var abst = !!p.abstained;
@@ -251,7 +266,14 @@
     "n-ce": ["CE ⊢ CHECK", "engram/local_grounding.py",
       "A local cross-encoder verifies the draft is ENTAILED by a retrieved " +
       "fact; below threshold → NO ANSWER (reason: unsupported_by_facts). " +
-      "Catches the model inventing beyond memory — measured, not promised."]
+      "Catches the model inventing beyond memory — measured, not promised."],
+    "n-sup": ["SUPERSEDE (the helm)", "verimem/semantic.py supersede()",
+      "Every retirement in the product converges on ONE method: it stamps " +
+      "superseded_by, snapshots the pre-op row (facts_undo_log) and emits " +
+      "flow.supersession — loser, winner, reason, branch, reversible. " +
+      "Until 2026-08-04 this was the engine's biggest silent mutation: " +
+      "seven read APIs said nothing. The governance panel below shows the " +
+      "pairs; undo restores the loser, the winner stays."]
   };
   Object.keys(STAGE_INFO).forEach(function (id) {
     var el = $(id);
@@ -267,7 +289,118 @@
   function countersRender() {
     $("cAdm").textContent = counters.adm; $("cQuar").textContent = counters.quar;
     $("cAns").textContent = counters.ans; $("cAbs").textContent = counters.abs;
+    $("cRet").textContent = counters.ret;
   }
+
+  /* ---- GOVERNANCE — see AND act ------------------------------------------
+     The helm: retirements (undo) + quarantine (restore), driven by the
+     REAL endpoints. Buttons act, reload, and the feed shows the effect —
+     watching without acting is worse than not watching (2026-08-04). */
+  function govHeaders() {
+    var key = sessionStorage.getItem(KEY_SS) || $("key").value.trim();
+    return key ? { Authorization: "Bearer " + key } : {};
+  }
+  var govTimer = null;
+  function govSoon() {              // debounce: a burst of events = one reload
+    if (govTimer) { return; }
+    govTimer = setTimeout(function () { govTimer = null; govLoad(); }, 800);
+  }
+  function govAction(url, btn) {
+    btn.disabled = true; btn.textContent = "…";
+    fetch(url, { method: "POST", headers: govHeaders() })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (res) {
+        btn.textContent = (res.action === "restored" || res.restored)
+          ? "done ✓" : (res.action || "failed");
+        govSoon();
+      })
+      .catch(function () { btn.textContent = "failed"; btn.disabled = false; });
+  }
+  function govRowBase(idA, idB, sub) {
+    var row = document.createElement("div"); row.className = "gov-row";
+    var ids = document.createElement("span"); ids.className = "gov-ids";
+    ids.textContent = idA + (idB ? " → " + idB : "");
+    var s = document.createElement("span"); s.className = "gov-sub";
+    s.textContent = sub;
+    row.appendChild(ids); row.appendChild(s);
+    return row;
+  }
+  function govRenderRet(items) {
+    var box = $("govRet");
+    box.textContent = "";
+    if (!items.length) {
+      var e = document.createElement("div"); e.className = "gov-empty";
+      e.textContent = "no retirements — nothing has been silently lost";
+      box.appendChild(e); return;
+    }
+    items.forEach(function (r) {
+      var row = govRowBase(String(r.loser_id).slice(0, 10),
+        String(r.winner_id || "?").slice(0, 10),
+        (r.loser_topic || "—") + " · " + (r.reason || "no reason"));
+      if (r.reversible && r.undo_op_id) {
+        var b = document.createElement("button");
+        b.className = "gov-btn act"; b.textContent = "undo";
+        b.title = "restore the loser — the winner stays; both live";
+        (function (op) {
+          b.addEventListener("click", function () {
+            govAction("/v1/undo/" + encodeURIComponent(op), b);
+          });
+        })(r.undo_op_id);
+        row.appendChild(b);
+      } else {
+        var i = document.createElement("i"); i.className = "gov-irrev";
+        i.textContent = "irreversible (pre-helm)";
+        row.appendChild(i);
+      }
+      box.appendChild(row);
+    });
+  }
+  function govRenderQuar(items) {
+    var box = $("govQuar");
+    box.textContent = "";
+    if (!items.length) {
+      var e = document.createElement("div"); e.className = "gov-empty";
+      e.textContent = "quarantine empty";
+      box.appendChild(e); return;
+    }
+    items.forEach(function (q) {
+      var fid = String(q.id || q.fact_id || "");
+      var row = govRowBase(fid.slice(0, 10), null,
+        (q.topic || "—") + " · " + String(q.proposition || "").slice(0, 60));
+      var b = document.createElement("button");
+      b.className = "gov-btn act"; b.textContent = "restore";
+      b.title = "release a false positive back to recall";
+      (function (id) {
+        b.addEventListener("click", function () {
+          govAction("/v1/memories/" + encodeURIComponent(id) + "/restore", b);
+        });
+      })(fid);
+      row.appendChild(b);
+      box.appendChild(row);
+    });
+  }
+  function govLoad() {
+    var h = govHeaders();
+    fetch("/v1/retirements?limit=20", { headers: h })
+      .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+      .then(function (d) { govRenderRet(d.items || []); })
+      .catch(function () { /* gateway without the route: leave as is */ });
+    fetch("/v1/retirements?counts=true", { headers: h })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (q) {
+        if (!q) { return; }
+        $("quartet").textContent = "written " + q.written
+          + " · servable " + q.servable + " · retired " + q.retired
+          + " · quarantined " + q.quarantined;
+        $("quartet").title = q.formula;
+      })
+      .catch(function () {});
+    fetch("/v1/quarantine?limit=20", { headers: h })
+      .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+      .then(function (d) { govRenderQuar(d.items || []); })
+      .catch(function () {});
+  }
+  $("govRefresh").addEventListener("click", govLoad);
 
   /* ---- feed: batched per animation frame ------------------------------------*/
   var pendingRows = [];
@@ -287,6 +420,19 @@
       tag.textContent = ok ? "ADMITTED" : String(p.status || "refused").toUpperCase();
       detail = " · write · topic " + (p.topic || "—")
         + (p.fact_id ? " · id " + String(p.fact_id).slice(0, 8) : "");
+    } else if (evt.name === "flow.supersession") {
+      tag.className = "ref";
+      tag.textContent = "RETIRED";
+      detail = " · " + String(p.loser_id || "?").slice(0, 8)
+        + " → " + String(p.winner_id || "?").slice(0, 8)
+        + " · " + (p.loser_topic || "—")
+        + " · " + (p.reason || "no reason")
+        + (p.reversible ? " · undoable" : " · irreversible");
+    } else if (evt.name === "flow.undo") {
+      tag.className = "adm";
+      tag.textContent = "RESTORED";
+      detail = " · undo " + String(p.op_type || "") + " · fact "
+        + String(p.fact_id || "?").slice(0, 8);
     } else {
       var abst = !!p.abstained;
       tag.className = abst ? "abs" : "ans";
@@ -339,6 +485,8 @@
     }
     if (name === "flow.write") { onWrite(evt.payload || {}); }
     else if (name === "flow.recall") { onRecall(evt.payload || {}); }
+    else if (name === "flow.supersession") { onSupersession(evt.payload || {}); }
+    else if (name === "flow.undo") { onUndo(evt.payload || {}); }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);
@@ -368,6 +516,7 @@
       }
       if (!r.ok || !r.body) { throw new Error("HTTP " + r.status); }
       setLive(true, "LIVE");
+      govLoad();                 // the helm loads with the stream
       if (!key) {               // personal mode: the form is noise — drop it
         $("key").hidden = true; $("go").hidden = true;
         $("streamHint").textContent =

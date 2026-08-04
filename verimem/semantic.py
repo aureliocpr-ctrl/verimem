@@ -5053,6 +5053,15 @@ class SemanticMemory:
             result = undo_op(conn, op_id)
         if result.get("ok"):
             self._cache_version += 1
+            # flow.undo (ws6 control-room): a governance action must be as
+            # visible as the mutation it reverses — an invisible undo would
+            # re-create the very defect the helm exists to cure. Metadata
+            # only, best-effort by flow_events contract.
+            from .flow_events import emit_flow as _emit_flow
+            _emit_flow("flow.undo", op_id=op_id,
+                       op_type=result.get("op_type"),
+                       fact_id=result.get("fact_id"),
+                       action=result.get("action"))
         return result
 
     def list_undoable_ops(self, *, limit: int = 20) -> list[dict[str, Any]]:
