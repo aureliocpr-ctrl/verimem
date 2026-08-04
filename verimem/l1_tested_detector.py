@@ -48,6 +48,45 @@ _OUTCOME_REQUIRED_PREFIXES: tuple[str, ...] = (
 #: Prefissi metrica: richiedono almeno un token numerico (es. coverage 85%).
 _COVERAGE_PREFIXES: tuple[str, ...] = ("test_coverage:", "coverage:")
 
+#: Prefissi "comando eseguito": da soli NON provano un test — vedi
+#: ``_RUNNER_TOKENS`` sotto.
+_ESECUZIONE_PREFIXES: tuple[str, ...] = ("bash:", "cmd:")
+#: I runner di test, riconosciuti DENTRO il comando.
+#:
+#: PERCHE' (misurato il 2026-08-04): `bash:pytest tests/test_parsing.py:exit0`
+#: E' pytest eseguito, con l'esito, e veniva rifiutato — perche' il prefisso
+#: diceva `bash:` invece di `pytest:`. L'utente porta la prova che il detector
+#: chiede, scritta in un altro formato, e si vede quarantinare il fatto.
+#:
+#: E' un caso della forma che il 04/08 e' uscita quattro volte in punti
+#: indipendenti: una domanda con DUE esiti dove ne servono TRE. Qui la domanda
+#: e' «c'e' la prova?» e le risposte vere sono *del tipo giusto* / **di un
+#: altro tipo** / *nessuna*, con quella di mezzo schiacciata su «nessuna». Le
+#: cinque famiglie di prefissi L1 sono quasi disgiunte (tested∩security = 0,
+#: works∩security = 0), quindi una prova vale per una famiglia sola.
+#:
+#: ⚠️ SI CURA SOLO IL CASO INEQUIVOCABILE, e la differenza e' il punto: un
+#: `bandit:clean` per «il modulo funziona» va rifiutato davvero — uno scanner
+#: statico non prova il comportamento a runtime — e unire le liste renderebbe
+#: ogni prova buona per ogni claim, cioe' spegnerebbe il detector fingendo di
+#: ripararlo. Qui il comando NOMINA un runner di test: e' il comando a dirlo,
+#: non il prefisso.
+_RUNNER_TOKENS: frozenset[str] = frozenset({
+    "pytest", "unittest", "tox", "nox",          # python
+    "jest", "mocha", "vitest", "jasmine",        # javascript
+    "rspec", "minitest",                         # ruby
+    "phpunit",                                   # php
+    "junit", "testng",                           # java
+})
+#: `npm test`, `cargo test`, `go test`, `mvn test`, `dotnet test`: qui il
+#: token `test` e' il SOTTOCOMANDO, quindi va accettato solo accanto al suo
+#: strumento — `bash:ls test` non e' un test.
+_RUNNER_COPPIE: tuple[tuple[str, str], ...] = (
+    ("npm", "test"), ("yarn", "test"), ("pnpm", "test"),
+    ("cargo", "test"), ("go", "test"), ("mvn", "test"),
+    ("gradle", "test"), ("dotnet", "test"), ("swift", "test"),
+)
+
 
 @dataclass(frozen=True)
 class VerificationClaimWarning:
@@ -79,6 +118,19 @@ def _has_tested_evidence(verified_by: Iterable[str] | None) -> bool:
         # Processo eseguito: serve un token di esito verificabile.
         if lower.startswith(_OUTCOME_REQUIRED_PREFIXES):
             if any(t in _OUTCOME_TOKENS for t in tokens):
+                return True
+            continue
+        # Comando eseguito che INVOCA un runner di test: e' una prova di test
+        # comunque sia stato scritto il prefisso. Servono entrambe le cose —
+        # il runner e l'esito — perche' `bash:pytest ...` senza exit code non
+        # dice come e' andata, e `bash:ls:exit0` non e' un test.
+        if lower.startswith(_ESECUZIONE_PREFIXES):
+            if not any(t in _OUTCOME_TOKENS for t in tokens):
+                continue
+            visti = set(tokens)
+            if visti & _RUNNER_TOKENS:
+                return True
+            if any(a in visti and b in visti for a, b in _RUNNER_COPPIE):
                 return True
             continue
     return False
