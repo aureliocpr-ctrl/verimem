@@ -279,6 +279,39 @@ def list_undoable(
     return out
 
 
+def invalidate_handles_for(
+    conn: sqlite3.Connection, fact_id: str, *, keep_op_id: str | None = None,
+) -> int:
+    """Drop the PENDING undo handles that would resurrect ``fact_id``.
+
+    Called when a fact is deleted (privacy / GDPR): a deletion is the user's
+    most recent and strongest intent, and an undo of an EARLIER operation
+    must not overrule it. Without this, the helm's supersede snapshots made
+    a deleted fact recoverable through the wrong door — measured 2026-08-05:
+    add(A) · add(B) retires A · forget(A) · undo(retirement handle) brought
+    A back and recall served it.
+
+    ``keep_op_id`` spares one handle — the ``forget`` snapshot taken by
+    :meth:`SemanticMemory.delete_with_undo` for THIS deletion, which must
+    stay reversible (that is the feature it exists to provide).
+
+    Deletes the rows instead of stamping ``undone_at``: an undo attempt then
+    answers ``not_found``, which is the truth (the handle is gone with the
+    fact), while ``already_undone`` would claim an undo that never happened.
+    Returns the number of handles dropped.
+    """
+    if keep_op_id:
+        cur = conn.execute(
+            "DELETE FROM facts_undo_log WHERE fact_id = ? AND op_id != ? "
+            "AND undone_at IS NULL",
+            (fact_id, keep_op_id))
+    else:
+        cur = conn.execute(
+            "DELETE FROM facts_undo_log WHERE fact_id = ? AND undone_at IS NULL",
+            (fact_id,))
+    return int(cur.rowcount)
+
+
 def prune_expired_undo_log(conn: sqlite3.Connection) -> int:
     """Delete undo entries past their TTL. Returns count deleted."""
     cur = conn.execute(
@@ -292,6 +325,7 @@ __all__ = [
     "UNDO_TTL_SECONDS",
     "OpType",
     "UndoEntry",
+    "invalidate_handles_for",
     "ensure_undo_table",
     "snapshot_pre_op",
     "undo_op",

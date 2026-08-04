@@ -4965,10 +4965,16 @@ class SemanticMemory:
                 (succ, fact_id))
 
     def delete(self, fact_id: str, *, principal: str,
-               action: str = "delete") -> bool:
+               action: str = "delete",
+               keep_undo_op_id: str | None = None) -> bool:
         """FORGIA pezzo #202: delete one fact by id (privacy / GDPR).
 
         Returns True iff a row was actually removed.
+
+        ``keep_undo_op_id`` — the ONE undo handle to spare while invalidating
+        the others (used by :meth:`delete_with_undo` to keep its own forget
+        snapshot reversible). Every other pending handle for this fact is
+        dropped: a deletion outranks an earlier undo.
 
         ``principal`` is MANDATORY (0.8 mutation audit): the acting identity
         recorded in the tamper-evident ``audit_mutations`` chain — surfaces
@@ -4993,6 +4999,18 @@ class SemanticMemory:
             if removed:
                 _record_mutation(conn, principal=principal, action=action,
                                  resource_id=fact_id)
+                # A deletion outranks any EARLIER undo handle for this row
+                # (ws6 2026-08-05). The helm snapshots every supersession,
+                # and undo_op restores with INSERT OR REPLACE — so without
+                # this a retirement handle could resurrect a fact the user
+                # had deleted, and recall would serve it again. Same
+                # transaction as the DELETE: no window where the row is gone
+                # and a live handle still points at it. The forget snapshot
+                # taken by delete_with_undo for THIS deletion is spared by
+                # its caller (keep_op_id) — that one must stay reversible.
+                from .undo_log import invalidate_handles_for
+                invalidate_handles_for(conn, fact_id,
+                                       keep_op_id=keep_undo_op_id)
         # Cycle #135: invalidate the recall cache on delete.
         if removed:
             self._cache_version += 1
@@ -5033,6 +5051,11 @@ class SemanticMemory:
                 _record_mutation(conn, principal=principal, action="delete",
                                  resource_id=fact_id,
                                  detail={"op_id": op_id})
+                # Same rule as delete(): the deletion invalidates every
+                # EARLIER handle for this fact — except the forget snapshot
+                # taken just above, which is what makes THIS delete undoable.
+                from .undo_log import invalidate_handles_for
+                invalidate_handles_for(conn, fact_id, keep_op_id=op_id)
         if removed:
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
