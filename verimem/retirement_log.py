@@ -128,22 +128,24 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
         where = "WHERE topic LIKE ?"
         params.append(topic + "%")
     sql = f"""
-        SELECT COUNT(*)                                          AS scritti,
-               SUM(CASE WHEN {SERVABLE_WHERE} THEN 1 ELSE 0 END) AS servibili,
+        SELECT COUNT(*)                                          AS written,
+               SUM(CASE WHEN {SERVABLE_WHERE} THEN 1 ELSE 0 END) AS servable,
                SUM(CASE WHEN superseded_by IS NOT NULL
-                        THEN 1 ELSE 0 END)                       AS ritirati,
+                        THEN 1 ELSE 0 END)                       AS retired,
                SUM(CASE WHEN superseded_by IS NULL
                          AND status IN ('quarantined')
-                        THEN 1 ELSE 0 END)                       AS quarantinati
+                        THEN 1 ELSE 0 END)                       AS quarantined
         FROM facts {where}
     """
     with sm._connect() as conn:
         row = conn.execute(sql, params).fetchone()
+    # English keys: this dict travels over every port of an international
+    # product (monolingual surfaces are a measured defect class here).
     return {
-        "scritti": int(row["scritti"] or 0),
-        "servibili": int(row["servibili"] or 0),
-        "ritirati": int(row["ritirati"] or 0),
-        "quarantinati": int(row["quarantinati"] or 0),
+        "written": int(row["written"] or 0),
+        "servable": int(row["servable"] or 0),
+        "retired": int(row["retired"] or 0),
+        "quarantined": int(row["quarantined"] or 0),
         "topic": topic,
-        "formula": f"servibili = {SERVABLE_WHERE}",
+        "formula": f"servable = {SERVABLE_WHERE}",
     }

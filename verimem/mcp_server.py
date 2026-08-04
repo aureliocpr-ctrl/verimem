@@ -2901,6 +2901,40 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_retirement_log",
+            description=(
+                "ws6 control-room 2026-08-04. The retirements, newest first, "
+                "as (loser, winner) PAIRS — the quarantine_log equivalent "
+                "for supersessions. Until this tool NO read surface said a "
+                "fact had been retired (seven silent APIs, measured). Each "
+                "row: loser/winner id+topic+status, reason, superseded_at, "
+                "reversible + undo_op_id (pass it to "
+                "hippo_undo_destructive_op to reverse the retirement). "
+                "with_text=true adds propositions for judging a pair. "
+                "counts=true returns instead the canonical quartet "
+                "{written, servable, retired, quarantined, formula} — "
+                "a fact disappears in TWO ways; any 'alive' count that "
+                "ignores one hides half the loss."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "minimum": 1,
+                              "maximum": 500, "default": 50},
+                    "since": {"type": "number",
+                              "description": "epoch seconds lower bound"},
+                    "topic": {"type": "string",
+                              "description": "loser-topic prefix filter"},
+                    "reason": {"type": "string",
+                               "description": "exact superseded_reason"},
+                    "with_text": {"type": "boolean", "default": False},
+                    "counts": {"type": "boolean", "default": False,
+                               "description": "return the survivability "
+                                              "quartet instead of rows"},
+                },
+            },
+        ),
+        t.Tool(
             name="hippo_briefing_by_project",
             description=(
                 "Cycle #80 (2026-05-16). Project-scoped briefing — "
@@ -13462,6 +13496,25 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             items = a.semantic.list_undoable_ops(limit=limit)
             _audit(name, arguments, outcome="ok", detail={"n": len(items)})
             return _ok({"ok": True, "items": items})
+
+        if name == "hippo_retirement_log":
+            from verimem.retirement_log import retirement_log, survivability_counts
+            _topic = arguments.get("topic") or None
+            if arguments.get("counts"):
+                q = survivability_counts(a.semantic, topic=_topic)
+                _audit(name, arguments, outcome="ok",
+                       detail={"retired": q["retired"]})
+                return _ok({"ok": True, **q})
+            rows = retirement_log(
+                a.semantic,
+                limit=int(arguments.get("limit", 50) or 50),
+                since=arguments.get("since"),
+                topic=_topic,
+                reason=arguments.get("reason") or None,
+                with_text=bool(arguments.get("with_text", False)),
+            )
+            _audit(name, arguments, outcome="ok", detail={"n": len(rows)})
+            return _ok({"ok": True, "items": rows})
 
         if name == "hippo_briefing_by_project":
             from verimem.briefing_by_project import briefing_by_project

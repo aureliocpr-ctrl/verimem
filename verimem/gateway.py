@@ -1320,6 +1320,58 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         meter.bump(tenant_id, reads=1)
         return {"items": items, "count": len(items)}
 
+    @app.get("/v1/retirements")
+    def retirements(limit: int = Query(default=50, ge=1, le=500),
+                    topic: str | None = Query(default=None),
+                    reason: str | None = Query(default=None),
+                    counts: bool = Query(default=False),
+                    tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Il log dei RITIRI: le coppie (perso, vincitore), i più recenti
+        prima — l'equivalente di /v1/quarantine per la supersessione.
+
+        Fino al 2026-08-04 il cliente HTTP vedeva la quarantena e non i
+        ritiri: l'unica mutazione invisibile era la più distruttiva
+        (misurato ws4/ws5: sette API mute, DELETE esposta e restore no).
+        Ogni riga porta ``reversible`` + ``undo_op_id``: il ritiro si
+        annulla con ``POST /v1/undo/{op_id}``. Metadati, mai i testi —
+        ``counts=true`` ritorna il quartetto scritti/servibili/ritirati/
+        quarantinati con la formula dichiarata."""
+        mem = tenants.get(tenant_id)
+        from .retirement_log import retirement_log as _rlog
+        from .retirement_log import survivability_counts as _scounts
+        meter.bump(tenant_id, reads=1)
+        if counts:
+            return _scounts(mem.semantic, topic=topic)
+        rows = _rlog(mem.semantic, limit=limit, topic=topic, reason=reason)
+        return {"items": rows, "count": len(rows)}
+
+    @app.post("/v1/memories/{fact_id}/restore")
+    def restore_memory(fact_id: str,
+                       tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Libera un fatto QUARANTINATO (falso positivo del gate): il
+        reverse di ciò che /v1/quarantine mostra. Prima di questa rotta
+        l'HTTP mostrava i bloccati senza poterci fare nulla — «mostrare
+        senza permettere di agire è peggio che non mostrare» (ws4,
+        2026-08-04: restore/update 404, DELETE 200)."""
+        mem = tenants.get(tenant_id)
+        ok = mem.restore(fact_id, reason="http restore")
+        meter.bump(tenant_id, writes=1)
+        return {"restored": bool(ok), "fact_id": fact_id}
+
+    @app.post("/v1/undo/{op_id}")
+    def undo_operation(op_id: str,
+                       tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Annulla un'operazione distruttiva (forget O supersede) tramite
+        l'handle: quello che arriva nella ricevuta di scrittura
+        (``superseded_undo_ops``), nelle righe di /v1/retirements
+        (``undo_op_id``) o da /v1/quarantine. Il timone della cabina:
+        ripristina la riga pre-op; il vincitore di una supersessione resta
+        vivo — il ping-pong finisce con ENTRAMBI i fatti."""
+        mem = tenants.get(tenant_id)
+        result = mem.semantic.undo_destructive_op(op_id)
+        meter.bump(tenant_id, writes=1)
+        return result
+
     # ---- knowledge graph (read-only views for the console) ----------------
     _kgs: dict[str, Any] = {}
     _kgs_lock = threading.Lock()

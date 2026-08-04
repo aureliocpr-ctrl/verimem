@@ -2014,6 +2014,35 @@ class Memory:
             out["undo_op_id"] = _undo_id
         return out
 
+    def retirement_log(self, *, limit: int = 50, since: float | None = None,
+                       topic: str | None = None, reason: str | None = None,
+                       with_text: bool = False) -> list[dict[str, Any]]:
+        """The retirements, newest first, as (loser, winner) pairs — the
+        ``quarantine_log`` equivalent for supersessions. Each row carries
+        topics, reason, timestamp, and the ``undo_op_id`` handle when the
+        retirement is reversible (``undo(op_id)`` reverses it). Measured
+        2026-08-04: seven read surfaces said nothing about a retirement;
+        this is the window. Metadata by default; ``with_text=True`` adds
+        the propositions for local judging."""
+        from .retirement_log import retirement_log as _rlog
+        return _rlog(self.semantic, limit=limit, since=since, topic=topic,
+                     reason=reason, with_text=with_text)
+
+    def survivability(self, *, topic: str | None = None) -> dict[str, Any]:
+        """The canonical quartet written/servable/retired/quarantined with
+        its formula. A fact disappears in TWO ways; any 'alive' count that
+        ignores one of them hides half the loss (ws3 retraction 2026-08-04)."""
+        from .retirement_log import survivability_counts as _scounts
+        return _scounts(self.semantic, topic=topic)
+
+    def undo(self, op_id: str) -> dict[str, Any]:
+        """Reverse a destructive op (forget / supersede) by its handle —
+        the handle arrives in ``add()['superseded_undo_ops']``,
+        ``update()['undo_op_id']`` or ``retirement_log()`` rows. Restores
+        the pre-op row; the winner of a supersession stays alive (the
+        ping-pong ends with BOTH facts, not another retirement)."""
+        return self.semantic.undo_destructive_op(op_id)
+
     def history(self, fact_id: str) -> list[dict[str, Any]]:
         """The FULL supersession trail of the lineage containing ``fact_id`` —
         the provenance trail no cosine-only store has:

@@ -2756,6 +2756,69 @@ def facts_undo_list(
     console.print(table)
 
 
+@facts_app.command("retirement-log")
+def facts_retirement_log(
+    limit: int = typer.Option(50, "--limit", "-n", help="Max rows"),
+    topic: str = typer.Option(None, "--topic", help="Loser-topic prefix filter"),
+    reason: str = typer.Option(None, "--reason", help="Exact superseded_reason"),
+    with_text: bool = typer.Option(
+        False, "--with-text",
+        help="Include propositions (local judging; the feed default is metadata)"),
+    counts: bool = typer.Option(
+        False, "--counts",
+        help="Print the written/servable/retired/quarantined quartet instead"),
+) -> None:
+    """The retirements, newest first, as (loser, winner) pairs.
+
+    The quarantine-log equivalent for supersessions: who was retired, by
+    whom, when, why — and whether it can be undone (`facts undo <op_id>`).
+    Until 2026-08-04 NO read surface answered this (seven silent APIs,
+    measured); the columns existed since cycle #78. ``--counts`` prints the
+    canonical quartet with its formula: a fact disappears in TWO ways, and
+    counting only non-superseded rows hides half the loss.
+    """
+    from .retirement_log import retirement_log as _rlog
+    from .retirement_log import survivability_counts as _scounts
+    sm = _facts_sm()
+    if counts:
+        q = _scounts(sm, topic=topic)
+        console.print(
+            f"written={q['written']}  [green]servable={q['servable']}[/green]  "
+            f"[red]retired={q['retired']}[/red]  "
+            f"[yellow]quarantined={q['quarantined']}[/yellow]")
+        console.print(f"[dim]{q['formula']}[/dim]")
+        return
+    rows = _rlog(sm, limit=limit, topic=topic, reason=reason,
+                 with_text=with_text)
+    if not rows:
+        console.print("[dim]no retirements recorded[/dim]")
+        return
+    from datetime import datetime as _dt
+    table = Table(title=f"Retirements (newest first, max {limit})")
+    table.add_column("loser")
+    table.add_column("winner")
+    table.add_column("topic (loser → winner)")
+    table.add_column("reason")
+    table.add_column("when")
+    table.add_column("undo")
+    for r in rows:
+        _tp = (r["loser_topic"] if r["loser_topic"] == r["winner_topic"]
+               else f"{r['loser_topic']} → {r['winner_topic']}")
+        table.add_row(
+            r["loser_id"], str(r["winner_id"]), str(_tp),
+            str(r["reason"] or ""),
+            _dt.fromtimestamp(r["superseded_at"]).strftime("%m-%d %H:%M")
+            if r["superseded_at"] else "?",
+            r["undo_op_id"] if r["reversible"] else "[dim]—[/dim]",
+        )
+    console.print(table)
+    if with_text:
+        for r in rows:
+            console.print(
+                f"[red]- {r['loser_id']}[/red]: {r.get('loser_text', '')}\n"
+                f"[green]+ {r['winner_id']}[/green]: {r.get('winner_text', '')}")
+
+
 @facts_app.command("backup")
 def facts_backup(
     tier: str = typer.Option(

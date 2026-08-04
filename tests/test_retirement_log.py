@@ -79,12 +79,12 @@ def test_filtri_topic_e_reason(popolato):
 def test_survivability_counts_quartetto_canonico(popolato):
     m, ids = popolato
     tot = survivability_counts(m.semantic)
-    # scritti = servibili + ritirati + quarantinati(non-ritirati): la somma
+    # written = servable + retired + quarantined(non-ritirati): la somma
     # torna per costruzione, e il test l'ancora ai numeri dello store.
-    assert tot["scritti"] == tot["servibili"] + tot["ritirati"] + tot["quarantinati"]
-    assert tot["ritirati"] == 1
+    assert tot["written"] == tot["servable"] + tot["retired"] + tot["quarantined"]
+    assert tot["retired"] == 1
     if ids["q_status"] == "quarantined":       # il gate ha quarantinato l'hype
-        assert tot["quarantinati"] >= 1
+        assert tot["quarantined"] >= 1
     per_topic = survivability_counts(m.semantic, topic="hq/sedi")
-    assert per_topic["ritirati"] == 1
-    assert per_topic["scritti"] >= 2
+    assert per_topic["retired"] == 1
+    assert per_topic["written"] >= 2
