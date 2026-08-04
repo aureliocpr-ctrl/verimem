@@ -21,8 +21,8 @@ from typing import Any
 
 from .source_trust import canonical_source
 
-__all__ = ["canonical_source_of", "is_same_source", "classify_write_relation",
-           "references_fact"]
+__all__ = ["canonical_source_of", "declared_identity", "is_same_source",
+           "classify_write_relation", "references_fact"]
 
 #: A fact id as written in prose: 12 hex chars, on its own token boundary.
 #: Shorter ids are refused outright — a 3-char "id" appears by chance and would
@@ -145,33 +145,39 @@ def declared_identity(principal: Any) -> str | None:
 
 
 def is_same_source(a: Any, b: Any) -> bool:
-    """Due fatti vengono dalla stessa penna?
+    """Due fatti vengono dalla stessa penna? (la `canonical_source` del loro
+    `verified_by`).
 
-    L'IDENTITA' DI CHI SCRIVE E' UN SECONDO CANCELLO, sotto `verified_by`, e
-    nasce da un caso di ws5 sul multi-utente::
+    ⛔ QUI DENTRO C'E' STATO L'ASSE DELL'AUTORE, PER TRE ORE, ED E' RITIRATO.
+    L'idea: due `writer_principal` dichiarati e diversi non si ritirano a
+    vicenda — nasceva dal caso di ws5 «in una memoria di team il fatto di bruno
+    archivia quello di anna». Curava quel caso e ne ROMPEVA uno piu' comune,
+    misurato da ws5 sulla matrice completa poche ore dopo::
 
-        anna  -> «Il magazzino K-77 di Rovigo ha 4200 mq»   ARCHIVIATO
-        bruno -> «Il magazzino Z-08 di Ancona ha 2600 mq»   vivo
-        vivi: 1 su 2
+        caso                        vivi  atteso  esito
+        un autore,  due entita'       1      2    x  il buco storico, non chiuso
+        due autori, due entita'       2      2    ok la cura sull'autore
+        un autore,  aggiornamento     1      1    ok presidio
+        due autori, aggiornamento     2      1    REGRESSIONE
 
-    Anna chiede del PROPRIO magazzino e riceve quello di un collega: il suo
-    lavoro non e' perso, e' SOSTITUITO, senza un avviso a nessuno dei due. La
-    colonna `writer_principal` esisteva ed era popolata giusta; questo percorso
-    non la guardava.
+    anna scrive «Il paziente Rossi pesa 70 chilogrammi», bruno corregge «78», e
+    restavano vivi entrambi: in un'organizzazione **la correzione di un collega
+    smetteva di sovrascrivere il dato sbagliato**, che e' il caso piu' comune
+    che esista. E togliendo l'asse dal solo gate senza toglierlo da qui il
+    risultato peggiorava ancora: la correzione finiva in QUARANTENA e restava
+    servito il valore vecchio.
 
-    ⚠️ SERVONO ENTRAMBE LE IDENTITA', ed e' il motivo per cui il cancello sta
-    QUI e non in `canonical_source_of`: quella vede un fatto solo. Con
-    un'identita' su un lato soltanto non si puo' concludere che siano due
-    persone diverse — potrebbe essere la stessa che una volta si e' firmata e
-    una volta no — quindi il comportamento resta quello di prima. E' lo stesso
-    principio del codice-su-un-lato-solo in `hidden_records`."""
-    if canonical_source_of(a) != canonical_source_of(b):
-        return False
-    ia = declared_identity(getattr(a, "writer_principal", None))
-    ib = declared_identity(getattr(b, "writer_principal", None))
-    if ia and ib and ia != ib:
-        return False
-    return True
+    🔑 «Autori diversi» non implica «cose diverse». Due persone che parlano
+    dello STESSO paziente parlano della stessa cosa: l'autore era un proxy
+    debole per l'asse che conta, cioe' L'ENTITA' — e quello vive in
+    `anti_confab_gate._entita_diverse`, che confronta i codici di record e
+    copre anche il caso anna/bruno per cui questa cura era nata.
+
+    `declared_identity` resta esportata: e' corretta, e distinguere un CANALE
+    (`cli:local`, `mcp:unbound`) da una PERSONA serve a chi mostra la
+    provenienza. Non serve a decidere un ritiro.
+    """
+    return canonical_source_of(a) == canonical_source_of(b)
 
 
 def _coerce_ts(v: Any) -> float | None:

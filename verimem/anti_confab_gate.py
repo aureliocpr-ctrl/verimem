@@ -604,7 +604,8 @@ def _supersede_same_source_on() -> bool:
 def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
                       ids: list[str], supersede_ids: list[str],
                       new_status: str | None = None,
-                      claimant: str | None = None) -> list[str]:
+                      claimant: str | None = None,
+                      proposition: str | None = None) -> list[str]:
     """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
     later valid-time + at least as trusted → appended to ``supersede_ids``, retired) and
     genuine CONFLICTS (returned, to quarantine the new write). This gives contradictions
@@ -641,7 +642,8 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     # le passava di che.
     cand = _ty.SimpleNamespace(verified_by=verified_by, created_at=_t.time(),
                                asserted_at=asserted_at,
-                               writer_principal=claimant)
+                               writer_principal=claimant,
+                               proposition=proposition or "")
     _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
     conflicts: list[str] = []
     for cid in ids:
@@ -683,7 +685,7 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
         # un'identita' non anonima. Sul corpus di casa i quattro principal sono
         # tutti anonimi (`cli:local`, `mcp:unbound`, `sdk:local`, NULL), quindi
         # qui non cambia una virgola; morde solo in una memoria multi-utente.
-        if old is not None and _autori_diversi(cand, old):
+        if old is not None and _entita_diverse(cand, old):
             continue
         if (old is not None
                 and classify_write_relation(cand, old) == "evolution"
@@ -695,12 +697,41 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     return conflicts
 
 
-def _autori_diversi(a: Any, b: Any) -> bool:
-    """Entrambi dichiarano un'identita', e sono due persone diverse."""
-    from .supersession_policy import declared_identity
-    ia = declared_identity(getattr(a, "writer_principal", None))
-    ib = declared_identity(getattr(b, "writer_principal", None))
-    return bool(ia and ib and ia != ib)
+def _entita_diverse(a: Any, b: Any) -> bool:
+    """I due fatti nominano record DIVERSI: non c'è un codice in comune.
+
+    ⚠️ QUESTO ASSE HA SOSTITUITO QUELLO DELL'AUTORE, e la ragione è una
+    regressione che ws5 ha misurato sulla mia stessa cura, poche ore dopo:
+
+        caso                        vivi  atteso  esito
+        un autore,  due entità        1      2    ✗  il buco storico
+        due autori, due entità        2      2    ✅ la cura sull'autore
+        un autore,  aggiornamento     1      1    ✅ presidio
+        due autori, aggiornamento     2      1    🔴 REGRESSIONE
+
+    anna scrive «Il paziente Rossi pesa 70 chilogrammi», bruno corregge «78», e
+    con l'asse autore restavano vivi ENTRAMBI: in un'organizzazione la
+    correzione di un collega smetteva di sovrascrivere il dato sbagliato — il
+    caso più comune che esista.
+
+    🔑 «Autori diversi» non implica «cose diverse». Due persone che parlano
+    dello STESSO paziente parlano della stessa cosa: l'autore era un proxy
+    debole per l'asse che conta davvero, cioè L'ENTITÀ.
+
+    ⚠️ E SO PERCHÉ QUESTO CRITERIO PUÒ REGGERE OGGI, mentre il 2026-08-04 era
+    stato scritto, misurato e RITIRATO (`test_venticinque_schede_un_fatto_vivo`,
+    xfail strict): allora l'unica alternativa a `evolution` era `conflict`,
+    cioè la QUARANTENA, e la perdita cambiava solo nome. Oggi c'è la terza
+    uscita — coesistenza, né ritiro né quarantena — che allora non esisteva.
+    La stessa cura su una manopola con una posizione in più.
+
+    Servono i codici su ENTRAMBI i lati: con un codice su un lato solo non si
+    sa nulla e il comportamento resta quello di prima. È lo stesso principio
+    del presidio in `hidden_records`."""
+    from .hidden_records import codes_in
+    ca = codes_in(getattr(a, "proposition", "") or "")
+    cb = codes_in(getattr(b, "proposition", "") or "")
+    return bool(ca and cb and not (ca & cb))
 
 
 #: statuses that are OUT of trusted recall — a new write must NOT be flagged as
@@ -1383,7 +1414,8 @@ def run_validation_gate(
             if _supersede_same_source_on() and ev:
                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
                                                supersede_ids, status,
-                                               claimant=claimant)
+                                               claimant=claimant,
+                                               proposition=proposition)
             if _conflicts:
                 warnings.append({
                     "layer": "L3",
@@ -1582,7 +1614,7 @@ def run_validation_gate(
                     # `_route_evolutions` per il perche' e per i numeri. Due
                     # autori dichiarati e diversi non si ritirano a vicenda e
                     # non si quarantinano a vicenda: restano entrambi vivi.
-                    if _old is not None and _autori_diversi(_new, _old):
+                    if _old is not None and _entita_diverse(_new, _old):
                         continue
                     _rel = _rel_pre
                     if _observe:
