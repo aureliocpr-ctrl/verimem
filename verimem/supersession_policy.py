@@ -105,8 +105,73 @@ def canonical_source_of(fact: Any) -> str:
     return canonical_source(getattr(fact, "verified_by", None) or None)
 
 
+#: Le code di `writer_principal` che NON sono un'identita': dicono da quale
+#: canale e' entrato il fatto, non chi l'ha scritto.
+_ANONIME = frozenset({"local", "unbound", "unknown", "anonymous", ""})
+
+
+def declared_identity(principal: Any) -> str | None:
+    """L'identita' DICHIARATA in un ``writer_principal``, o ``None``.
+
+    ⚠️ IL CAMPO CONTIENE DUE COSE DIVERSE, e distinguerle e' tutto il punto.
+    Sul corpus vero, 7852 fatti::
+
+        6253  <NULL>          1454  cli:local
+         143  mcp:unbound        2  sdk:local
+
+    Sono CANALI: dicono da dove e' entrato il fatto, non chi l'ha scritto. Ma
+    `Memory(principal="anna")` ci mette una PERSONA. Trattare le due cose allo
+    stesso modo renderebbe «due autori diversi» la stessa persona che scrive da
+    CLI e aggiorna da MCP — cioe' romperebbe l'aggiornamento legittimo, che e'
+    il presidio su cui e' caduta la cura della `source_signature` (vedi
+    `canonical_source_of`).
+
+    Il formato canonico e' ``<prefisso>:<segmenti>`` (`orchestration.
+    agent_principal`), quindi la coda dopo i due punti dice se un'identita' c'e':
+    `mcp:alice` e' alice via MCP, `mcp:unbound` non e' nessuno.
+
+    Conseguenza voluta: sul corpus di casa i quattro principal sono TUTTI
+    anonimi, quindi questa funzione vi ritorna sempre ``None`` e nulla cambia.
+    Morde solo dove un'identita' e' stata dichiarata davvero."""
+    if not isinstance(principal, str):
+        return None
+    p = principal.strip().lower()
+    if not p:
+        return None
+    coda = p.split(":", 1)[1] if ":" in p else p
+    if coda.strip() in _ANONIME:
+        return None
+    return p
+
+
 def is_same_source(a: Any, b: Any) -> bool:
-    return canonical_source_of(a) == canonical_source_of(b)
+    """Due fatti vengono dalla stessa penna?
+
+    L'IDENTITA' DI CHI SCRIVE E' UN SECONDO CANCELLO, sotto `verified_by`, e
+    nasce da un caso di ws5 sul multi-utente::
+
+        anna  -> «Il magazzino K-77 di Rovigo ha 4200 mq»   ARCHIVIATO
+        bruno -> «Il magazzino Z-08 di Ancona ha 2600 mq»   vivo
+        vivi: 1 su 2
+
+    Anna chiede del PROPRIO magazzino e riceve quello di un collega: il suo
+    lavoro non e' perso, e' SOSTITUITO, senza un avviso a nessuno dei due. La
+    colonna `writer_principal` esisteva ed era popolata giusta; questo percorso
+    non la guardava.
+
+    ⚠️ SERVONO ENTRAMBE LE IDENTITA', ed e' il motivo per cui il cancello sta
+    QUI e non in `canonical_source_of`: quella vede un fatto solo. Con
+    un'identita' su un lato soltanto non si puo' concludere che siano due
+    persone diverse — potrebbe essere la stessa che una volta si e' firmata e
+    una volta no — quindi il comportamento resta quello di prima. E' lo stesso
+    principio del codice-su-un-lato-solo in `hidden_records`."""
+    if canonical_source_of(a) != canonical_source_of(b):
+        return False
+    ia = declared_identity(getattr(a, "writer_principal", None))
+    ib = declared_identity(getattr(b, "writer_principal", None))
+    if ia and ib and ia != ib:
+        return False
+    return True
 
 
 def _coerce_ts(v: Any) -> float | None:

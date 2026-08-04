@@ -603,7 +603,8 @@ def _supersede_same_source_on() -> bool:
 
 def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
                       ids: list[str], supersede_ids: list[str],
-                      new_status: str | None = None) -> list[str]:
+                      new_status: str | None = None,
+                      claimant: str | None = None) -> list[str]:
     """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
     later valid-time + at least as trusted → appended to ``supersede_ids``, retired) and
     genuine CONFLICTS (returned, to quarantine the new write). This gives contradictions
@@ -622,8 +623,25 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     sm = getattr(agent, "semantic", None) if agent is not None else None
     if sm is None:
         return list(ids)
+    # ⚠️ IL CANDIDATO PORTAVA TRE CAMPI, E CHI LO GIUDICA NE LEGGE DI PIU'.
+    # `writer_principal` mancava, quindi il cancello sull'identita' di chi
+    # scrive — che `is_same_source` interroga — vedeva sempre `None` su questo
+    # lato e non poteva scattare MAI. Il valore c'era gia' e arrivava fin qui
+    # accanto: `run_validation_gate` lo riceve come `claimant`, la porta SDK lo
+    # passa (`claimant=principal or self._principal`, client.py:293) e si
+    # fermava una chiamata prima.
+    #
+    # Il costo di non passarlo, misurato da ws5 sul multi-utente: in una
+    # memoria di team il fatto di bruno ARCHIVIA quello di anna, e anna che
+    # chiede del proprio magazzino riceve quello di un collega.
+    #
+    # 🔑 E' anche il caso di scuola del perche' una cura si misura END-TO-END:
+    # con `is_same_source` gia' corretta e venti test verdi, il banco end-to-end
+    # restava a «1 vivo su 2» — la funzione sapeva distinguere, il chiamante non
+    # le passava di che.
     cand = _ty.SimpleNamespace(verified_by=verified_by, created_at=_t.time(),
-                               asserted_at=asserted_at)
+                               asserted_at=asserted_at,
+                               writer_principal=claimant)
     _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
     conflicts: list[str] = []
     for cid in ids:
@@ -640,6 +658,33 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
             old = sm.get(cid)
         except Exception:  # noqa: BLE001 — a lookup miss is treated as a conflict
             old = None
+        # ⚠️ LA TERZA USCITA: COESISTENZA. Fino al 2026-08-05 questo ciclo ne
+        # aveva DUE, e perdono entrambe:
+        #     evolution -> ritira il VECCHIO      conflict -> quarantina il NUOVO
+        # Nessuna tiene in vita tutti e due, quindi qualunque criterio messo qui
+        # dentro sceglie soltanto CHI perde. E' il motivo per cui otto criteri su
+        # otto erano caduti nel distinguere un catalogo da un aggiornamento:
+        # non sbagliavano la soglia, rispondevano a una domanda le cui due
+        # risposte sono entrambe una perdita.
+        #
+        # Misurato sul caso di ws5 (due colleghi, due magazzini diversi):
+        #     senza l'identita'   anna ARCHIVIATO · bruno vivo        1 vivo su 2
+        #     con l'identita'     anna vivo · bruno QUARANTINED       1 vivo su 2
+        # La perdita si sposta e non sparisce — lo stesso esito della cura sulla
+        # «capienza uno», ritirata perche' cambiava il NOME della perdita.
+        #
+        # DUE AUTORI DICHIARATI E DIVERSI NON SI RITIRANO A VICENDA: nessuno dei
+        # due e' la versione aggiornata dell'altro, e il disaccordo fra due
+        # persone e' un DATO, non un errore da risolvere cancellando. Restano
+        # entrambi vivi e `recall` li serve entrambi, quindi il disaccordo e'
+        # visibile per costruzione.
+        #
+        # ⚠️ IL PERIMETRO E' STRETTO E VOLUTO: serve che ENTRAMBI dichiarino
+        # un'identita' non anonima. Sul corpus di casa i quattro principal sono
+        # tutti anonimi (`cli:local`, `mcp:unbound`, `sdk:local`, NULL), quindi
+        # qui non cambia una virgola; morde solo in una memoria multi-utente.
+        if old is not None and _autori_diversi(cand, old):
+            continue
         if (old is not None
                 and classify_write_relation(cand, old) == "evolution"
                 and _STATUS_RANK.get(getattr(old, "status", "model_claim"), 2) <= _nr):
@@ -648,6 +693,14 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
         else:
             conflicts.append(cid)
     return conflicts
+
+
+def _autori_diversi(a: Any, b: Any) -> bool:
+    """Entrambi dichiarano un'identita', e sono due persone diverse."""
+    from .supersession_policy import declared_identity
+    ia = declared_identity(getattr(a, "writer_principal", None))
+    ib = declared_identity(getattr(b, "writer_principal", None))
+    return bool(ia and ib and ia != ib)
 
 
 #: statuses that are OUT of trusted recall — a new write must NOT be flagged as
@@ -1328,7 +1381,8 @@ def run_validation_gate(
             _conflicts = ev
             if _supersede_same_source_on() and ev:
                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
-                                               supersede_ids, status)
+                                               supersede_ids, status,
+                                               claimant=claimant)
             if _conflicts:
                 warnings.append({
                     "layer": "L3",
@@ -1374,10 +1428,15 @@ def run_validation_gate(
                     # so a missing model degrades to "no warning", never a crash.
                     from .local_relation import get_local_relation_judge
                     _judge = get_local_relation_judge()
+                # `writer_principal` anche qui: e' il GEMELLO del candidato di
+                # `_route_evolutions`, e curare uno solo dei due lascia intatto
+                # il difetto — la lezione «dopo ogni cura chiedi: chi ALTRO fa
+                # la stessa cosa?». Misurato: col solo percorso lessicale curato
+                # il fatto di anna veniva ritirato lo stesso, da QUI.
                 _new = _ty.SimpleNamespace(
                     id="__candidate__", proposition=proposition,
                     topic=topic, created_at=_t.time(), verified_by=verified_by,
-                    asserted_at=asserted_at,
+                    asserted_at=asserted_at, writer_principal=claimant,
                 )
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
                 if _l3_subject_filter():
@@ -1496,6 +1555,12 @@ def run_validation_gate(
                     # `_puo_essere_una_evoluzione` per la misura.
                     if (_rel_pre == "evolution" and not _puo_essere_una_evoluzione(
                             proposition, getattr(_old, "proposition", ""))):
+                        continue
+                    # LA TERZA USCITA anche su questo percorso — vedi
+                    # `_route_evolutions` per il perche' e per i numeri. Due
+                    # autori dichiarati e diversi non si ritirano a vicenda e
+                    # non si quarantinano a vicenda: restano entrambi vivi.
+                    if _old is not None and _autori_diversi(_new, _old):
                         continue
                     _rel = _rel_pre
                     if _observe:
