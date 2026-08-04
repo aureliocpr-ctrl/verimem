@@ -1074,6 +1074,26 @@ class Memory:
                                     as_of=as_of, min_relevance=min_relevance,
                                     ce_gate=want_ce_floor, llm=llm)
         report["min_relevance"] = float(min_relevance)
+        # ⚠️ CHI HA DECISO, non solo con che numero. Il dossier riportava
+        # `min_relevance` e basta, e con `auto` quel numero NON è la soglia che
+        # ha filtrato: la decisione passa al cross-encoder e il float resta un
+        # riferimento sulla scala del coseno. ws4 lo ha misurato dal lato di chi
+        # legge, ed è il modo peggiore in cui il difetto si manifesta:
+        #
+        #     min_relevance=None (default)  -> abstained=False  floor 0.872
+        #                                      servito con relevance 0.8337
+        #     min_relevance=0.872 (a mano)  -> abstained=True   n_facts=0
+        #
+        # cioè COPIARE IL NUMERO CHE IL PRODOTTO TI HA APPENA DATO cambia la
+        # risposta, e chi legge conclude una delle due cose sbagliate: «il
+        # filtro è rotto» oppure «il numero è sbagliato».
+        #
+        # La logica NON cambia — il CE è più accurato del coseno e lasciargli
+        # l'ultima parola dimezza i falsi silenzi (misurato da ws4). Cambia che
+        # il dossier lo dice. È la stessa classe dello `0.0` del ranking
+        # degradato: un numero con la forma di una misura che significa altro.
+        report["floor_applied_by"] = (
+            "cross_encoder" if want_ce_floor else "cosine")
         # task #20a: dossier transparency — with source-trust on, every fact
         # shows its SOURCE's two-channel trust, not just its own status.
         from . import source_trust as _st
