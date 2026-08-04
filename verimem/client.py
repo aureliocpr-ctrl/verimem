@@ -637,6 +637,26 @@ class Memory:
         if min_relevance:
             pavimento = float(min_relevance)
             out = [i for i in out if float(i.get("score") or 0.0) >= pavimento]
+        # I FATTI NASCOSTI SU QUEL RECORD. Non cambia cosa si serve né come si
+        # ordina: aggiunge un campo che dice «su S-007 c'è un fatto che non ti
+        # sto dando». Serviva perché senza, su un registro di 25 schede, questa
+        # superficie risponde S-025 a una domanda su S-007 con score 0.8786 —
+        # sbagliata e confidente — e nulla nella risposta lo lascia sospettare.
+        #
+        # LA RICERCA SI FA UNA VOLTA SOLA, sulla QUERY. È informazione della
+        # domanda, non del singolo risultato: farla per hit moltiplicherebbe le
+        # query per k senza cambiare una virgola dell'esito.
+        #
+        # Il taglio sta DOPO `min_relevance`: su ciò che è già stato scartato
+        # non si spende una SELECT.
+        if out:
+            from .hidden_records import SqliteRows, hidden_records_for
+            nascosti = hidden_records_for(
+                SqliteRows(self.semantic.db_path), query=query, served="")
+            if nascosti:
+                for item in out:
+                    item["hidden_records"] = [
+                        h for h in nascosti if h["text"] != item.get("text")]
         _emit_flow("flow.recall", kind="search", n=len(out),
                    best=round(max((float(i.get("score") or 0.0)
                                    for i in out), default=0.0), 4))
