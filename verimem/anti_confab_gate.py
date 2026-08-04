@@ -121,6 +121,10 @@ from .l1_tested_detector import detect_unsupported_tested_claim
 # claims without runtime evidence (pytest/bash:exit0/smoke).
 # Triangulated Claude+Gemini+GPT all favored this as L1.10 priority.
 from .l1_works_detector import detect_unsupported_works_claim
+
+# 2026-08-04: la PORTATA di una negazione, in un modulo solo. Il lessico non e'
+# qui ne' la' — resta `quantity_match._NEGATOR_RE`, undici lingue.
+from .negation_scope import tutte_le_occorrenze_sono_negate
 from .relation_claim import unverified_relation
 
 # Security fix 2026-06-02 (sorelle loop): token-gate the trusted-hook
@@ -981,7 +985,48 @@ def _l1_warnings(
                          "L1.14", "L1.15", "L1.16", "L1.17", "L1.18",
                          "L1.20", "L1.21"}
         out = [w for w in out if w.get("layer") not in _STATE_FAMILY]
+    # LA SMENTITA NON E' IL CLAIM (2026-08-04). Nove detector su dodici
+    # leggevano «Il modulo NON funziona in produzione» come la dichiarazione
+    # che funziona: la parola c'era, il «non» davanti non veniva guardato da
+    # nessuno. Per un gate anti-confabulazione e' il verso sbagliato — punisce
+    # chi documenta un limite noto e lascia passare chi tace.
+    #
+    # LA GUARDIA STA QUI, NON NEI NOVE DETECTOR. Copiarla in ognuno sarebbe la
+    # seconda classe ricorrente di questo progetto (una copia invece della
+    # superficie unica) e le copie divergerebbero, come sono gia' divergiate le
+    # due liste di negatori trovate il 2026-08-03. Applicata dove i warning si
+    # raccolgono vale per i detector di oggi E per quelli scritti domani.
+    #
+    # Trovato da ws5 misurando la cura che avevo appena fatto su L1.15: era
+    # giusta e riguardava un detector solo.
+    if out:
+        out = [w for w in out if not _e_una_smentita(proposition, w)]
     return out
+
+
+#: Le famiglie il cui warning e' una DICHIARAZIONE DI STATO, che la negazione
+#: puo' ribaltare. Restano fuori i layer quantitativi: negare un numero non lo
+#: rende meno inventato, e «la latenza NON e' scesa del 40%» contiene comunque
+#: una cifra da giustificare.
+_NEGABILI = frozenset({
+    "L1", "L1.5", "L1.7", "L1.8", "L1.10", "L1.11", "L1.12", "L1.13",
+    "L1.14", "L1.15", "L1.16", "L1.17", "L1.18", "L1.20", "L1.21",
+})
+#: La parola scatenante, che i detector scrivono fra apici nel `reason`
+#: («Works/confirmed claim 'funziona' lacks runtime evidence»). I piu' recenti
+#: la espongono anche come campo: si prova prima quello.
+_PAROLA_NEL_REASON = re.compile(r"'([^']{1,80})'")
+
+
+def _e_una_smentita(proposition: str, warning: dict[str, Any]) -> bool:
+    """Il warning nasce da una parola che nel testo e' NEGATA?"""
+    if str(warning.get("layer", "")) not in _NEGABILI:
+        return False
+    parola = (warning.get("keyword") or warning.get("matched_text") or "")
+    if not parola:
+        m = _PAROLA_NEL_REASON.search(str(warning.get("reason", "")))
+        parola = m.group(1) if m else ""
+    return tutte_le_occorrenze_sono_negate(proposition, str(parola))
 
 
 def _l3_check(

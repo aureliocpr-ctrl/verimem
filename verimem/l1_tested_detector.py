@@ -22,9 +22,9 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-# LA superficie unica della negazione — vedi il blocco su `_e_negata` piu'
-# sotto per il perche' non se ne scrive una seconda qui.
-from .quantity_match import _NEGATOR_RE
+# La portata della negazione sta in UN modulo solo — vedi `negation_scope`, che
+# spiega perche' non se ne scrive una copia qui dentro.
+from .negation_scope import governata_da_negazione
 
 _TESTED_PATTERN = re.compile(
     r"\b(?:well[- ]tested|tested|"
@@ -61,12 +61,6 @@ _TESTED_PATTERN = re.compile(
 #    del codice, non asserisce nulla su se stesso. E' il gemello del caso
 #    trovato il 2026-08-04 liberando a mano i fatti quarantinati.
 
-#: Confini che chiudono la portata di una negazione: oltre questi, il «non» sta
-#: parlando di un'altra cosa.
-_FINE_PORTATA = re.compile(r"[,;.:!?]|\bma\b|\bpero'?\b|\bbut\b|\byet\b",
-                           re.IGNORECASE)
-#: Quanto indietro guardare. «non e' mai stato validato» sono 25 caratteri.
-_FINESTRA_NEGAZIONE = 60
 #: Un carattere ATTACCATO alla parola che la rende sintassi e non prosa.
 #: Attaccato e' il punto: «Nota: verificato tutto» ha uno spazio in mezzo ed
 #: e' un claim, `--verified-by` no.
@@ -74,15 +68,6 @@ _ADIACENTE_DI_CODICE = frozenset("-=:/_")
 #: La parola come valore di un parametro di stato, dove il nome precede.
 _NOME_DI_PARAMETRO = re.compile(r"(?:\w*status|\w*state|--?\w+)\s+$",
                                 re.IGNORECASE)
-
-
-def _e_negata(testo: str, inizio: int) -> bool:
-    """Un negatore governa la parola che inizia a ``inizio``?"""
-    finestra = testo[max(0, inizio - _FINESTRA_NEGAZIONE):inizio]
-    tagli = [m.end() for m in _FINE_PORTATA.finditer(finestra)]
-    if tagli:
-        finestra = finestra[tagli[-1]:]
-    return bool(_NEGATOR_RE.search(finestra))
 
 
 def _e_sintassi(testo: str, inizio: int, fine: int) -> bool:
@@ -209,7 +194,7 @@ def detect_unsupported_tested_claim(
     # e la seconda un claim vero. Fermarsi alla prima renderebbe la cura una
     # scappatoia — basterebbe nominare un flag all'inizio del fatto.
     for m in _TESTED_PATTERN.finditer(proposition):
-        if _e_negata(proposition, m.start()):
+        if governata_da_negazione(proposition, m.start()):
             continue
         if _e_sintassi(proposition, m.start(), m.end()):
             continue
