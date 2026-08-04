@@ -2099,6 +2099,30 @@ class Memory:
     correct = update
     forget = delete
 
+    def forget_with_report(self, fact_id: str) -> dict[str, Any]:
+        """Delete a fact AND say where it is still readable.
+
+        ``forget`` clears every live table (the entity graph included —
+        verified), but the Auto-Dream worker keeps whole-DB copies:
+        rotating ones for a few hours, MANUAL ones forever (one from May 12
+        still holds 60 facts the live store dropped). The deletion is real
+        and its effect is partial, and until now no surface said so — the
+        same class as the invisible retirements this release cures.
+
+        Returns ``{removed, fact_id, residual_copies: [...]}``; each copy
+        carries ``rotates`` so "for a few hours" and "forever" are
+        distinguishable. Reporting NEVER blocks the erasure: a scan failure
+        degrades to an empty list."""
+        from . import residual_copies as _rc
+        copies: list[dict[str, Any]] = []
+        try:
+            copies = _rc.residual_copies_for(self.semantic.db_path, fact_id)
+        except Exception:  # noqa: BLE001 — observability never blocks erasure
+            copies = []
+        removed = bool(self.delete(fact_id))
+        return {"removed": removed, "fact_id": fact_id,
+                "residual_copies": copies}
+
 
 #: Alias for users who expect a ``Client`` name (mem0/Zep ergonomics).
 Client = Memory
