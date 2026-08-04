@@ -1028,7 +1028,7 @@ _DEV_CONTEXT = re.compile(
     # questa lista diventava il secondo asse del detector L1 (prima girava
     # solo per i fatti personali): «il nuovo comando e' stato cablato nella
     # CLI» non aveva UN segnale dev, e nemmeno un topic come project/x/cli.
-    r"CLI|SDK|MCP|comando|comandi|subcomando|"
+    r"CLI|SDK|MCP|comando|comandi|subcomando|modifica|modifiche|"
     r"production|staging|prod|merge[ds]?|wired|implement(?:ed|ation)?|"
     # Italian dev vocabulary (the agent logs dev-claims in IT too): produzione,
     # modulo, testato/a, verificato/a, validato/a, rilasciato, distribuito, ciclo,

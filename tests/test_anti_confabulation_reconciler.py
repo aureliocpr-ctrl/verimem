@@ -116,7 +116,7 @@ class TestScanOrphanedFactsMixedCorpus:
 class TestIncludeToggles:
     def test_include_shipped_false_skips_shipped(self) -> None:
         facts = [
-            _FakeFact("s", "X is SHIPPED", ["tool:x"]),
+            _FakeFact("s", "The auth endpoint is SHIPPED", ["tool:x"]),
             _FakeFact("d", "Bug #1", ["observation:y"]),
         ]
         report = scan_orphaned_facts(facts, include_shipped=False)
@@ -125,7 +125,7 @@ class TestIncludeToggles:
 
     def test_include_diagnosis_false_skips_diagnosis(self) -> None:
         facts = [
-            _FakeFact("s", "X is SHIPPED", ["tool:x"]),
+            _FakeFact("s", "The auth endpoint is SHIPPED", ["tool:x"]),
             _FakeFact("d", "Bug #1", ["observation:y"]),
         ]
         report = scan_orphaned_facts(facts, include_diagnosis=False)
