@@ -379,12 +379,26 @@
       box.appendChild(row);
     });
   }
+  function govMissing(boxId) {
+    // A 404 must SAY 404: rendering "nothing lost" on a gateway that does
+    // not expose the route is the silent-drop class measured on 2026-08-04
+    // (valid_until accepted with 200 and thrown away). The panel tells the
+    // truth about its own blind spot instead.
+    var box = $(boxId);
+    box.textContent = "";
+    var e = document.createElement("div"); e.className = "gov-empty";
+    e.textContent = "this gateway does not expose the route (pre-helm build)";
+    box.appendChild(e);
+  }
   function govLoad() {
     var h = govHeaders();
     fetch("/v1/retirements?limit=20", { headers: h })
-      .then(function (r) { return r.ok ? r.json() : { items: [] }; })
-      .then(function (d) { govRenderRet(d.items || []); })
-      .catch(function () { /* gateway without the route: leave as is */ });
+      .then(function (r) {
+        if (!r.ok) { govMissing("govRet"); return null; }
+        return r.json();
+      })
+      .then(function (d) { if (d) { govRenderRet(d.items || []); } })
+      .catch(function () { /* network error: leave as is */ });
     fetch("/v1/retirements?counts=true", { headers: h })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (q) {
@@ -396,8 +410,11 @@
       })
       .catch(function () {});
     fetch("/v1/quarantine?limit=20", { headers: h })
-      .then(function (r) { return r.ok ? r.json() : { items: [] }; })
-      .then(function (d) { govRenderQuar(d.items || []); })
+      .then(function (r) {
+        if (!r.ok) { govMissing("govQuar"); return null; }
+        return r.json();
+      })
+      .then(function (d) { if (d) { govRenderQuar(d.items || []); } })
       .catch(function () {});
   }
   $("govRefresh").addEventListener("click", govLoad);
