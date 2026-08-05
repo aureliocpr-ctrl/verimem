@@ -67,12 +67,34 @@ def _iso(ts: Any) -> str:
 _MONTHS = {m: i + 1 for i, m in enumerate(
     ["january", "february", "march", "april", "may", "june", "july",
      "august", "september", "october", "november", "december"])}
+# 2026-08-06: i mesi italiani. `_TEMPORAL_QUERY_RE` trenta righe piu' su li ha
+# dal giorno zero («EN+IT» nel suo docstring) e questa mappa, nata dopo per un
+# caso inglese, non c'era mai tornata: due elenchi di mesi nello stesso file,
+# uno bilingue e uno no.
+_MONTHS.update({m: i + 1 for i, m in enumerate(
+    ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio",
+     "agosto", "settembre", "ottobre", "novembre", "dicembre"])})
 _MONTHS.update({m[:3]: i for m, i in list(_MONTHS.items())})
+#: Le ancore RETROSPETTIVE, in EN e IT. ⚠️ «dopo»/«after» restano FUORI in
+#: entrambe le lingue: aprono un periodo successivo che il time-travel
+#: taglierebbe (esclusione deliberata del cantiere 07/08, e importarla in
+#: italiano avrebbe significato riportare in una lingua un difetto che
+#: nell'altra era stato evitato apposta).
+#: «il» e «l'» ancorano solo perche' la regex esige una data subito dopo: da
+#: soli sono gli articoli piu' comuni della lingua.
+#: ⚠️ Il lookbehind non e' una rifinitura: senza, «dopo IL 2026-08-05» ancorava,
+#: perche' in italiano l'ancora e' un articolo e l'articolo segue anche «dopo».
+#: L'inglese non aveva questo problema — «after» non e' seguito da «the» — e la
+#: prima stesura di questa cura ha importato in una lingua il difetto che
+#: nell'altra era escluso per costruzione. L'ha presa il presidio
+#: test_DOPO_non_ancora_niente_ne_in_IT_ne_in_EN.
 _AS_OF_ANCHOR_RE = re.compile(
-    r"\b(?:as of|on|by|until|till|before)\s+"
+    r"(?<!dopo )(?<!dopo l)\b(?:as of|on|by|until|till|before"
+    r"|alla data del|fino al|fino a|entro il|entro"
+    r"|prima del|prima di|al|all'|il|l')\s*"
     r"(?:(\d{4})-(\d{2})-(\d{2})"                       # ISO 2025-09-04
-    r"|([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})"  # Dec 21, 2025
-    r"|(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?\s+(\d{4}))",  # 21 Dec 2025
+    r"|([A-Za-zÀ-ÿ]{3,10})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})"  # Dec 21, 2025
+    r"|(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-zÀ-ÿ]{3,10})\.?,?\s+(\d{4}))",  # 21 Dec 2025 · 5 agosto 2026
     re.IGNORECASE)
 
 
