@@ -507,6 +507,22 @@
       tag.textContent = p.undoable ? "DELETED (undoable)" : "DELETED";
       detail = " · fact " + String(p.fact_id || "?").slice(0, 8)
         + " · " + (p.action || "delete");
+    } else if (evt.name === "flow.decay") {
+      /* la scrittura di massa: migliaia di righe cambiano valore in un
+         colpo. Il totale da solo non dice la cosa che conta — che la
+         formula non guarda il verdetto — quindi la riga porta le due
+         popolazioni accanto, e una prova non deve leggersi come una
+         passata vera */
+      var pp = p.updated_by_population || {};
+      tag.className = p.dry_run ? "wait" : "sup";
+      tag.textContent = p.dry_run ? "DECAY (dry run)" : "DECAY";
+      detail = " · " + (p.facts_updated != null ? p.facts_updated : "?")
+        + "/" + (p.facts_seen != null ? p.facts_seen : "?") + " fatti"
+        + " · giudicati " + (pp.grounded != null ? pp.grounded : "?")
+        + " · mai giudicati " + (pp.never_judged != null ? pp.never_judged : "?")
+        + (pp.retired || pp.quarantined
+           ? " · non serviti " + ((pp.retired || 0) + (pp.quarantined || 0))
+           : "");
     } else if (evt.name === "flow.warmup") {
       /* l'attesa ha un nome: senza questa riga il feed resta muto per
          quaranta secondi mentre il prodotto carica il giudice, e un motore
@@ -589,7 +605,7 @@
     else if (name === "flow.restore") { onRestore(evt.payload || {}); }
     else if (name === "flow.episode" || name === "flow.skill"
              || name === "flow.document" || name === "flow.warmup"
-             || name === "flow.forget") { /* feed-only */ }
+             || name === "flow.forget" || name === "flow.decay") { /* feed-only */ }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);

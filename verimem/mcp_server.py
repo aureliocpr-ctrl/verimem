@@ -3112,7 +3112,14 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "Default tau = 30 days (half-life ~21 days), floor = "
                 "0.05. The fact's embedding/proposition/topic are NOT "
                 "touched -- only the confidence prior. Pass dry_run=true "
-                "to preview without persisting."
+                "to preview without persisting. The pass does NOT read the "
+                "moat verdict: a fact judged 99 and one it never saw decay "
+                "identically, and retired/quarantined rows -- served to "
+                "nobody -- are decayed too. The summary reports "
+                "`updated_by_population` (grounded / never_judged / "
+                "servable / retired / quarantined) so the caller can see WHO "
+                "was touched, and `decays_regardless_of` states the "
+                "blindness next to the numbers."
             ),
             inputSchema={
                 "type": "object",

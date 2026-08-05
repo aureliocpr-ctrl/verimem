@@ -152,7 +152,7 @@ the helm it also shows:
   | SKILLS | **LIT** — `flow.skill` on fitness and promotion; 369 skills, 281 with zero trials, last update May 15 |
   | DOCUMENTS | **LIT** — `flow.document` index+search; was the ONLY tier with no `emit` call at all, and it is the one this team leans on |
   | DREAM / consolidation | measured, still dark: consolidates by ADDING a master node, never retires — the specific answer still beats the master in recall |
-  | DECAY | measured, still dark: `run_decay_pass` DOES write, flooring aged facts to 0.05 confidence regardless of verification; the default ranking does not read that field, but a signal builder does |
+  | DECAY | **LIT** — `flow.decay` on the product's mass write, carrying `updated_by_population`: the formula reads neither the moat verdict nor the row's fate, so a fact judged 99 and one never judged decay identically, and retired/quarantined rows (served to nobody) are decayed too. Declared, not decided — the pass still touches exactly the same rows |
   | FORGET | **LIT** — `flow.forget` carries `undoable`, and `forget_with_report` says WHERE the fact is still readable (see §6) |
   | CONTRADICTION SCAN | measured, delivered to the write-path owner: it excludes superseded rows *by design*, so the two defences are in series and the first removes the second's input; and no detector covers a categorical clash (Milan vs Rome) |
 
