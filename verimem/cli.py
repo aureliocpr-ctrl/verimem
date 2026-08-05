@@ -2795,10 +2795,18 @@ def facts_retirement_log(
     sm = _facts_sm()
     if counts:
         q = _scounts(sm, topic=topic)
+        _pct = (100.0 * q["judged"] / q["servable"]) if q["servable"] else 0.0
         console.print(
             f"written={q['written']}  [green]servable={q['servable']}[/green]  "
             f"[red]retired={q['retired']}[/red]  "
             f"[yellow]quarantined={q['quarantined']}[/yellow]")
+        # il giudicato accanto al servibile, non su una riga a parte: separati,
+        # si legge "5631 servibili" e si dimentica che i due terzi non hanno un
+        # verdetto — che è la domanda su cui il prodotto è venduto
+        console.print(
+            f"[cyan]judged={q['judged']}[/cyan] of {q['servable']} served "
+            f"({_pct:.1f}%)  —  "
+            f"[dim]{q['servable'] - q['judged']} served without a verdict[/dim]")
         console.print(f"[dim]{q['formula']}[/dim]")
         return
     rows = _rlog(sm, limit=limit, topic=topic, reason=reason,

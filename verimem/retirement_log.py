@@ -141,7 +141,17 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
                         THEN 1 ELSE 0 END)                       AS retired,
                SUM(CASE WHEN superseded_by IS NULL
                          AND status IN ('quarantined')
-                        THEN 1 ELSE 0 END)                       AS quarantined
+                        THEN 1 ELSE 0 END)                       AS quarantined,
+               -- how many of the SERVED ones the moat ever judged: the
+               -- question this product is sold on, and the quartet did not
+               -- answer it. On the real corpus 2026-08-05: 1360 of 5631
+               -- servable (24.2%) — i.e. 4271 facts served without a verdict.
+               -- Counted on the servable ones only: a retired or quarantined
+               -- fact is served to nobody, and including it would pad the
+               -- denominator in exactly the flattering direction.
+               SUM(CASE WHEN {SERVABLE_WHERE}
+                         AND grounding_score IS NOT NULL
+                        THEN 1 ELSE 0 END)                       AS judged
         FROM facts {where}
     """
     with sm._connect() as conn:
@@ -153,6 +163,9 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
         "servable": int(row["servable"] or 0),
         "retired": int(row["retired"] or 0),
         "quarantined": int(row["quarantined"] or 0),
+        "judged": int(row["judged"] or 0),
         "topic": topic,
-        "formula": f"servable = {SERVABLE_WHERE}",
+        "formula": (f"servable = {SERVABLE_WHERE} · "
+                    f"judged = servable AND grounding_score IS NOT NULL "
+                    f"(NULL means never judged, not judged and failed)"),
     }
