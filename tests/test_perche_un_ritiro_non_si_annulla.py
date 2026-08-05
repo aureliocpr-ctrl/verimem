@@ -113,6 +113,71 @@ def test_una_riga_sola_per_ritiro_anche_con_piu_scatti(mem):
     assert len(righe) == 1, righe
 
 
+@pytest.mark.asyncio
+async def test_il_perche_esce_anche_da_MCP(tmp_path, monkeypatch):
+    """La regola che mi sono imposto: una funzione di governo esce su
+    tutte le porte NELLO STESSO commit. Qui il campo viaggia sulla riga,
+    quindi la garanzia è strutturale — e un test la rende una garanzia
+    invece di una coincidenza."""
+    import json as _json
+
+    from mcp.types import CallToolRequest, CallToolRequestParams
+
+    from verimem import mcp_server
+
+    m = Memory(tmp_path / "m.db")
+    a, b = _coppia(m)
+    m.semantic.supersede(a, b, principal="test", reason="banco")
+    with sqlite3.connect(m.semantic.db_path) as con:
+        con.execute("DELETE FROM facts_undo_log WHERE fact_id = ?", (a,))
+
+    class _FakeAgent:
+        def __init__(self) -> None:
+            self.semantic = m.semantic
+
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _FakeAgent())
+    handler = mcp_server.server.request_handlers[CallToolRequest]
+    res = await handler(CallToolRequest(
+        method="tools/call",
+        params=CallToolRequestParams(name="hippo_retirement_log",
+                                     arguments={})))
+    payload = res.root if hasattr(res, "root") else res
+    out = _json.loads(next(c.text for c in payload.content
+                           if hasattr(c, "text")))
+
+    assert out["items"][0]["irreversible_because"] == "no snapshot", out
+    assert out["items"][0]["undo_op_id"] is None
+
+
+def test_il_perche_esce_anche_da_HTTP(tmp_path):
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    from verimem.gateway import GatewayKeys, create_app
+
+    keys = GatewayKeys(tmp_path / "gateway_keys.db")
+    key = keys.create(tenant_id="t1", name="ci")
+    client = TestClient(create_app(data_dir=tmp_path, keys=keys))
+    hdr = {"Authorization": f"Bearer {key}"}
+
+    r1 = client.post("/v1/memories", json={"content": "the head office is in Milan",
+                                           "topic": "hq/a"}, headers=hdr)
+    r2 = client.post("/v1/memories", json={"content": "the depot is in Turin",
+                                           "topic": "hq/b"}, headers=hdr)
+    a, b = r1.json()["id"], r2.json()["id"]
+    with sqlite3.connect(tmp_path / "tenants" / "t1" / "memory.db") as con:
+        con.execute("UPDATE facts SET superseded_by = ?, superseded_at = ?, "
+                    "superseded_reason = ? WHERE id = ?",
+                    (b, time.time(), "banco", a))
+
+    out = client.get("/v1/retirements", headers=hdr).json()
+    riga = next(x for x in out["items"] if x["loser_id"] == a)
+    assert riga["irreversible_because"] == "no snapshot", riga
+
+    conti = client.get("/v1/retirements?counts=true", headers=hdr).json()
+    assert conti["retired_reversible"] == 0, conti
+
+
 def test_il_contatore_dice_quanti_ritiri_si_possono_ancora_annullare(mem):
     """La finestra di riparazione ha una dimensione, e il quartetto non la
     diceva: «1796 ritirati» non dice se se ne recupera uno o mille."""
