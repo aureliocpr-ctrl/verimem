@@ -15,7 +15,7 @@ without repeating the full session briefing. The complement to cycle
 Design:
 - ``StepInjector(agent)`` keeps a per-session cache of fact ids already
   emitted, so the same fact never gets injected twice in a row.
-- ``.inject(step_text, *, min_similarity=0.55, top_k=3)`` returns a
+- ``.inject(step_text, *, min_similarity=0.30, top_k=3)`` returns a
   short list of dicts ``{id, proposition, topic, similarity}`` filtered
   by the threshold and de-duplicated against the cache.
 - ``.reset()`` clears the cache (e.g. when the user pivots to a new
@@ -97,18 +97,38 @@ class StepInjector:
             semantic, "recall_hybrid"
         ):
             # Cycle 161 path: hybrid recall direct (skips briefing wrapper).
+            #
+            # ⚠️ IL DEGRADO SI CONTA PRIMA E DOPO. `recall_hybrid` chiama
+            # `self.recall` internamente, quindi eredita il ramo keyword: con
+            # l'encoder lento lo score è `0.0` per costruzione — «somiglianza
+            # NON MISURATA», non «nessuna somiglianza» — e la soglia qui sotto
+            # taglierebbe TUTTO. Misurato:
+            #     A CALDO    hits=5 (similarity ≈ 0.509)
+            #     DEGRADATO  hits=0
+            #
+            # È la SESTA superficie con questo difetto e la peggiore, non per
+            # il numero: questa inietta contesto PROATTIVAMENTE. Altrove chi
+            # legge ha almeno fatto una domanda e può insospettirsi di una
+            # risposta strana; qui il contesto semplicemente non arriva, e
+            # nessuno ha chiesto niente su cui dubitare.
+            _deg_prima = getattr(semantic, "_recall_degraded_count", 0) or 0
             scored = semantic.recall_hybrid(
                 step, k=top_k, semantic_weight=semantic_weight,
             )
+            _degradato = (getattr(semantic, "_recall_degraded_count", 0) or 0
+                          ) > _deg_prima
             for fact, score in scored:
-                if float(score) < min_similarity:
+                if not _degradato and float(score) < min_similarity:
                     continue
-                hits.append({
+                riga = {
                     "id": getattr(fact, "id", ""),
                     "proposition": getattr(fact, "proposition", ""),
                     "topic": getattr(fact, "topic", ""),
                     "similarity": float(score),
-                })
+                }
+                if _degradato:
+                    riga["ranking"] = "keyword"
+                hits.append(riga)
         else:
             # Fallback path: cycle #53 briefing-based proactive recall.
             payload = get_briefing(
