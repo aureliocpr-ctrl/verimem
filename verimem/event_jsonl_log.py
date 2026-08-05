@@ -31,12 +31,30 @@ import time
 from pathlib import Path
 from typing import Any
 
-EVENT_LOG_PATH: Path = Path(
-    os.environ.get(
-        "ENGRAM_EVENT_LOG",
-        str(Path.home() / ".engram" / "events.jsonl"),
-    )
-)
+
+def _default_event_log() -> Path:
+    """``<data dir>/events.jsonl`` — the log lives where the store lives.
+
+    It used to be ``Path.home() / ".engram"`` written by hand, so a caller
+    who isolated the store with ``HIPPO_DATA_DIR`` (the lever the product
+    itself teaches: the alias warning says "HIPPO_DATA_DIR wins") kept
+    writing telemetry into the home corpus — measured 2026-08-05, 39 lines
+    of isolated benches landed in the production log. Store and observability
+    stay two separate things: ``ENGRAM_EVENT_LOG`` remains the explicit
+    override for whoever wants the log elsewhere. Best-effort: if the data
+    dir cannot be resolved, the historical home path stands.
+    """
+    override = os.environ.get("ENGRAM_EVENT_LOG", "").strip()
+    if override:
+        return Path(override)
+    try:
+        from ._compat import data_dir
+        return Path(data_dir()) / "events.jsonl"
+    except Exception:  # noqa: BLE001 — observability never breaks an import
+        return Path.home() / ".engram" / "events.jsonl"
+
+
+EVENT_LOG_PATH: Path = _default_event_log()
 
 # A7 (audit 2026-06-08): cap the append-only log. Every emit() — incl. every MCP
 # tool call — appends a line here; with no rotation a long-running server grew
