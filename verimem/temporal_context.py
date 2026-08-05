@@ -17,6 +17,7 @@ Pure read-side, no LLM, no schema change: it composes ``SemanticMemory.recall``
 from __future__ import annotations
 
 import re
+import unicodedata
 from datetime import datetime, timezone
 from typing import Any
 
@@ -74,7 +75,37 @@ _MONTHS = {m: i + 1 for i, m in enumerate(
 _MONTHS.update({m: i + 1 for i, m in enumerate(
     ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio",
      "agosto", "settembre", "ottobre", "novembre", "dicembre"])})
+# 2026-08-06: DE/FR/ES, per i registri di eventi datati — il buco DICHIARATO
+# consegnando `date_menzionate`, e misurato prima di chiuderlo:
+#     DE «12. Marz» / «20. April»       date viste []  e  []
+#     ES «12 de marzo de 2026»          date viste []
+#     FR «12 mars» / «20 avril»         date viste [(2026,3,12)]  e  []
+# ⚠️ Il francese era PEGGIO degli altri due: `mars` passava per collisione del
+# troncamento a tre (`mars[:3] == march[:3]`) e `avril` no, quindi una data
+# vista e l'altra no — il discriminante taceva in modo IMPREVEDIBILE, secondo
+# quali mesi capitavano nelle due frasi.
+_MONTHS.update({m: i + 1 for i, m in enumerate(
+    ["januar", "februar", "marz", "april", "mai", "juni", "juli",
+     "august", "september", "oktober", "november", "dezember"])})
+_MONTHS.update({m: i + 1 for i, m in enumerate(
+    ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet",
+     "aout", "septembre", "octobre", "novembre", "decembre"])})
+_MONTHS.update({m: i + 1 for i, m in enumerate(
+    ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+     "agosto", "septiembre", "octubre", "noviembre", "diciembre"])})
 _MONTHS.update({m[:3]: i for m, i in list(_MONTHS.items())})
+
+
+def _senza_accenti(parola: str) -> str:
+    """`März` → `marz`, `août` → `aout`, `décembre` → `decembre`.
+
+    Si normalizza invece di elencare le varianti accentate: una lista di
+    varianti è una lista in più da tenere allineata, e questa casa ha già pagato
+    tre volte per due elenchi che divergono. Così `_MONTHS` resta scritta in
+    ASCII e accetta comunque come la gente scrive davvero.
+    """
+    return "".join(c for c in unicodedata.normalize("NFD", parola.casefold())
+                   if not unicodedata.combining(c))
 #: Le ancore RETROSPETTIVE, in EN e IT. ⚠️ «dopo»/«after» restano FUORI in
 #: entrambe le lingue: aprono un periodo successivo che il time-travel
 #: taglierebbe (esclusione deliberata del cantiere 07/08, e importarla in
@@ -347,8 +378,13 @@ def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
 #: ortografico. Qui il discriminante diventa la data in quanto tale.
 _DATA_ISO_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 _DATA_NUM_RE = re.compile(r"\b(\d{1,2})[/.](\d{1,2})[/.](\d{4})\b")
+#: ⚠️ `(?:de |di |von )?` non è cosmesi: lo spagnolo scrive «12 DE marzo DE
+#: 2026», e senza le particelle il pattern non vede la data — non per la lista
+#: dei mesi, per ciò che sta in mezzo. Il `\.?` dopo il giorno copre il «12.»
+#: tedesco. Allargare la lista senza allargare la FORMA sarebbe stato inutile.
 _DATA_MESE_RE = re.compile(
-    r"\b(\d{1,2})(?:st|nd|rd|th)?\s+([^\W\d_]{3,10})\.?,?\s+(\d{4})\b"
+    r"\b(\d{1,2})(?:st|nd|rd|th)?\.?\s+(?:de |di |von |d'|of )?"
+    r"([^\W\d_]{3,10})\.?,?\s+(?:de |di |von |of )?(\d{4})\b"
     r"|\b([^\W\d_]{3,10})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b",
     re.IGNORECASE)
 
@@ -378,8 +414,8 @@ def date_menzionate(testo: str | None) -> set[tuple[int, int, int]]:
     for m in _DATA_MESE_RE.finditer(testo):
         g, nome, a = ((m.group(1), m.group(2), m.group(3)) if m.group(1)
                       else (m.group(5), m.group(4), m.group(6)))
-        mese = _MONTHS.get(str(nome).casefold()) or _MONTHS.get(
-            str(nome).casefold()[:3])
+        _n = _senza_accenti(str(nome))
+        mese = _MONTHS.get(_n) or _MONTHS.get(_n[:3])
         if mese:
             fuori.add((int(a), int(mese), int(g)))
     return fuori
