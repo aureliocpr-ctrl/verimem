@@ -175,6 +175,33 @@ async def test_la_porta_mcp_consegna_la_ripartizione(tmp_path, monkeypatch):
     assert "grounding_score" in out["decays_regardless_of"]
 
 
+def test_l_evento_supera_il_filtro_che_alimenta_la_sala_motore(mem):
+    """L'ultimo anello, quello che non si vede col pannello nascosto:
+    `_parse_flow_line` è il filtro che sta fra il log e lo stream della
+    Engine Room, e scarta tutto ciò che non è `flow.*` per QUESTO tenant.
+    Provato sulla riga vera prodotta dalla passata, non su una scritta a
+    mano: un evento che non passa di lì è emesso e invisibile.
+
+    (Lo stream SSE non si chiude mai, quindi leggerlo in un test lo
+    impianta — misurato su questo ramo. Il filtro è il pezzo
+    deterministico e testabile della catena.)"""
+    pytest.importorskip("fastapi")
+    from verimem.gateway import _parse_flow_line
+
+    m, tmp = mem
+    _invecchia(m, _scrivi(m, "the head office is in Milan"), 120)
+    run_decay_pass(m.semantic)
+
+    riga = next(ln for ln in (tmp / "events.jsonl").read_text(
+        encoding="utf-8").splitlines() if '"flow.decay"' in ln)
+    rec = _parse_flow_line(riga, "t1", True)
+    assert rec is not None, "l'evento non arriva alla sala motore"
+    assert rec["payload"]["updated_by_population"]["never_judged"] >= 1
+    # e senza il permesso di vedere l'attività senza tenant resta fuori,
+    # come ogni altro evento di macchina: nessuna corsia privilegiata
+    assert _parse_flow_line(riga, "t1", False) is None
+
+
 def test_una_passata_che_non_cambia_niente_non_emette(mem):
     """Stessa regola del ramo idempotente della cancellazione: un evento
     per un non-cambiamento è rumore, e su un corpus fermo la passata gira
