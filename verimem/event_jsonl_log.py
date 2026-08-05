@@ -20,8 +20,15 @@ Idempotente: la dir parent viene creata se manca. Best-effort: payload
 non serializzabili o errori I/O sono inghiottiti — il bus principale
 non viene mai rotto da questo modulo.
 
-Il path è override-abile via env ``ENGRAM_EVENT_LOG`` per testing /
-sandboxing. I test monkey-patcha-no ``EVENT_LOG_PATH`` direttamente.
+Dove vive il file: ``<data dir>/events.jsonl``, cioè la data dir che
+l'utente ha scelto (``HIPPO_DATA_DIR`` e alias). Fino al 2026-08-05 il
+default era ``~/.engram`` scritto a mano, quindi chi isolava lo store
+scriveva comunque la telemetria nel corpus di casa. ``ENGRAM_EVENT_LOG``
+resta l'override esplicito e vince su tutto.
+
+⚠️ ``EVENT_LOG_PATH`` è calcolato all'IMPORT del modulo: settare le env
+dopo non ha effetto, e per questo i test lo monkey-patchano direttamente
+(o girano in un subprocesso, che è il modo di verificare il default vero).
 """
 from __future__ import annotations
 
