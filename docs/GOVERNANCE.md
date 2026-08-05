@@ -153,7 +153,7 @@ the helm it also shows:
   | DOCUMENTS | **LIT** — `flow.document` index+search; was the ONLY tier with no `emit` call at all, and it is the one this team leans on |
   | DREAM / consolidation | measured, still dark: consolidates by ADDING a master node, never retires — the specific answer still beats the master in recall |
   | DECAY | measured, still dark: `run_decay_pass` DOES write, flooring aged facts to 0.05 confidence regardless of verification; the default ranking does not read that field, but a signal builder does |
-  | FORGET | still dark as an event — but `forget_with_report` now says WHERE the fact is still readable (see §6) |
+  | FORGET | **LIT** — `flow.forget` carries `undoable`, and `forget_with_report` says WHERE the fact is still readable (see §6) |
   | CONTRADICTION SCAN | measured, delivered to the write-path owner: it excludes superseded rows *by design*, so the two defences are in series and the first removes the second's input; and no detector covers a categorical clash (Milan vs Rome) |
 
 A gateway without the governance routes makes the panel say so
@@ -193,6 +193,18 @@ false as `-1` and harder to spot. In the machine-readable dicts the value is
 A sentinel value is a defect when it travels ALONE; next to an explicit
 declaration (`checks[...] = "error: …"`, `status = "degraded"`) it is
 legitimate, and `hippo_health` keeps its own for that reason.
+
+**The HTTP write receipt mirrors the SDK one, verbatim.** `POST
+/v1/memories` returns the SDK receipt object itself, so a field added to
+`Memory.add()` reaches HTTP clients with no gateway work. Worth stating,
+because grepping `gateway.py` for a receipt field finds only comments and
+reads as "HTTP does not have it" — measured on 2026-08-05, when the missing
+field was missing from *both* ports for the same reason: the merge base
+lacked it. Pinned by `tests/test_http_rispecchia_la_ricevuta.py`, which
+injects a key on the SDK side and reads it back over HTTP; the day someone
+whitelists the response, that test fails instead of the contract silently
+splitting in two. The mirror is total in the other direction too: a key
+added to the receipt is published to HTTP callers without review.
 
 ## 6. Deleting: what "forgotten" really covers
 
