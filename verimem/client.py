@@ -1305,6 +1305,29 @@ class Memory:
         # degradato: un numero con la forma di una misura che significa altro.
         report["floor_applied_by"] = (
             "cross_encoder" if want_ce_floor else "cosine")
+        # IL DOSSIER DICHIARA ANCHE LA FONDATEZZA, non solo la rilevanza.
+        # Finding di ws5, dogfooding da utente esterno, e la diagnosi è sua:
+        #
+        #     «Il pavimento misura la RILEVANZA. Il claim promette la
+        #      FONDATEZZA. Sono due cose diverse, e la distanza fra le due è
+        #      esattamente dove il prodotto sbaglia.»
+        #
+        # Un fatto scritto senza `source` ha `grounding_score = None`, che
+        # significa MAI GIUDICATO — non «giudicato e passato». Le istruzioni
+        # del server MCP lo dicono testuali («treat it as a claim, not a
+        # fact»), e il dossier lo serviva con `abstained: False` e nessun
+        # avviso: onesto NEL DATO, non NEL VERDETTO.
+        #
+        # ⚠️ `abstained` NON si tocca: è il verdetto sulla RILEVANZA («non ho
+        # niente di abbastanza vicino») e su una domanda fuori corpus funziona
+        # bene, con la sua ragione dichiarata. Si aggiunge la grandezza che
+        # mancava, così le due smettono di essere confuse in un verdetto solo.
+        _fatti = report.get("facts") or []
+        _senza = sum(1 for f in _fatti
+                     if not isinstance(f.get("grounding_score"), (int, float))
+                     or isinstance(f.get("grounding_score"), bool))
+        report["ungrounded_facts"] = _senza
+        report["grounding_checked"] = bool(_fatti) and _senza == 0
         # task #20a: dossier transparency — with source-trust on, every fact
         # shows its SOURCE's two-channel trust, not just its own status.
         from . import source_trust as _st
@@ -1321,6 +1344,28 @@ class Memory:
                    n=len(report.get("facts") or []),
                    abstained=bool(report.get("abstained")))
         return report
+
+    def trust_report(self, query: str, k: int = 5, **kwargs):
+        """Il dossier di provenienza — lo STESSO di :meth:`explain`.
+
+        ⚠️ ESISTE PERCHÉ IL NOME NON TORNAVA, e a segnalarlo è stato un utente
+        vero (ws5, dogfooding, due giorni sul prodotto)::
+
+            «Ho cercato trust_report, non l'ho trovato, e stavo per scrivervi
+             che mancava.»
+
+        Le istruzioni del server MCP dicono `verimem_trust_report` — è il claim
+        di marketing più forte del prodotto, quello sull'astensione — l'SDK
+        aveva solo `explain`, e nessuno dei due rimandava all'altro. Chi legge
+        le istruzioni e apre l'SDK fa esattamente quel percorso.
+
+        ⚠️ E NON È UN ALIAS SECCO, di proposito: `correct = update` è un alias,
+        e chiamandolo con gli argomenti sbagliati l'errore dice «Memory.update()
+        missing 1 required positional argument» — nomina una funzione che chi
+        scrive non ha mai chiamato e che cercherà invano nel proprio codice.
+        Un metodo che delega fa sì che l'errore nomini il nome usato.
+        """
+        return self.explain(query, k, **kwargs)
 
     # ---- source trust (task #17, behind ENGRAM_SOURCE_TRUST) ----------------
 
