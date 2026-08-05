@@ -727,11 +727,57 @@ def _entita_diverse(a: Any, b: Any) -> bool:
 
     Servono i codici su ENTRAMBI i lati: con un codice su un lato solo non si
     sa nulla e il comportamento resta quello di prima. È lo stesso principio
-    del presidio in `hidden_records`."""
+    del presidio in `hidden_records`.
+
+    🔑 E DAL 2026-08-05 NON SOLO I CODICI: anche LE ENTITÀ DEL GRAFO, ed è così
+    che si è chiusa LA CELLA 6 — «un autore, due entità SENZA codice»
+    (Rossi/Bianchi), il buco storico su cui erano caduti SEI criteri lessicali
+    in una notte (i nomi propri via `_CAPS_RE`, l'ancoraggio, l'allargamento di
+    `codes_in` alla coda alfabetica).
+
+    La risposta era in casa dal principio, e l'ha trovata ws5 misurando::
+
+        «DC-Nord e DC-Sud il prodotto li distingue GIÀ, senza nessun criterio
+         lessicale: il grafo li estrae come due entità [proper] separate, nello
+         stesso add() che archivia il fatto.»
+
+    `extract_entities_lite` è la funzione che alimenta il grafo
+    (`semantic.py:3101`) ed è PURA: chiamarla qui usa la stessa superficie, non
+    una copia che divergerà.
+
+    ⚠️ SI CONFRONTANO I `proper`, NON TUTTE LE ENTITÀ, e senza questo la cura
+    non funzionerebbe sul caso che l'ha motivata::
+
+        DC-Nord -> [{'DC','acronym'}, {'Nord','proper'}]
+        DC-Sud  -> [{'DC','acronym'}, {'Sud','proper'}]
+
+    condividono l'acronimo `DC`. Un ACRONIMO è un TIPO di cosa (`GB`, `RAM`,
+    `DC`), un `proper` è un'ISTANZA — ed è l'istanza che distingue due record.
+    Lo stesso motivo per cui «Il server ha 64 GB di RAM» e «…128 GB…» NON
+    devono coesistere: condividono `GB` e `RAM`, che sono tipi, e non hanno
+    nessun proper che li distingua.
+
+    I numeri di ws5 sulle 104 coppie ordinarie del corpus vero::
+
+        42 entità CONDIVISE        -> il veto lascia passare  (il presidio)
+        31 DISGIUNTE               -> il veto salva           (il buco chiuso)
+        31 senza entità da un lato -> non coperto             (comportamento vecchio)
+    """
+    from .entity_extract_lite import extract_entities_lite
     from .hidden_records import codes_in
-    ca = codes_in(getattr(a, "proposition", "") or "")
-    cb = codes_in(getattr(b, "proposition", "") or "")
-    return bool(ca and cb and not (ca & cb))
+
+    pa = getattr(a, "proposition", "") or ""
+    pb = getattr(b, "proposition", "") or ""
+    ca, cb = codes_in(pa), codes_in(pb)
+    if ca and cb and not (ca & cb):
+        return True
+
+    def _proper(testo: str) -> set[str]:
+        return {e["name"].casefold() for e in extract_entities_lite(testo)
+                if e.get("type") == "proper"}
+
+    ea, eb = _proper(pa), _proper(pb)
+    return bool(ea and eb and not (ea & eb))
 
 
 #: statuses that are OUT of trusted recall — a new write must NOT be flagged as

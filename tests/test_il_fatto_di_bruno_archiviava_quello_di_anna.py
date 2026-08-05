@@ -70,9 +70,16 @@ class _F:
     # un codice su un lato solo: non si sa nulla
     ("Il magazzino K-77 ha 4200 metri quadrati.",
      "Il magazzino di Ancona ha 2600 metri quadrati.", False),
-    # nessun codice: il buco storico, che questo criterio NON chiude
+    # nessun codice — ERA il buco storico (la cella 6), e dal 2026-08-05 è
+    # CHIUSO: non dai codici ma dalle ENTITÀ del grafo. `extract_entities_lite`
+    # estrae «Rossi» e «Bianchi» come due `proper` separati, nello stesso
+    # `add()` che archivia il fatto. La riga qui sotto diceva `False` con la
+    # nota «questo criterio NON chiude»: il criterio è cresciuto.
     ("Il paziente Rossi pesa 70 chilogrammi.",
-     "Il paziente Bianchi pesa 95 chilogrammi.", False),
+     "Il paziente Bianchi pesa 95 chilogrammi.", True),
+    # e il verso opposto resta il presidio: STESSA entità, valore nuovo
+    ("Il paziente Rossi pesa 70 chilogrammi.",
+     "Il paziente Rossi pesa 78 chilogrammi.", False),
 ])
 def test_l_asse_e_l_entita_non_l_autore(a, b, diverse):
     assert _entita_diverse(_F(b, 200.0), _F(a, 100.0)) is diverse
