@@ -2916,7 +2916,12 @@ def facts_retirement_log(
             str(r["reason"] or ""),
             _dt.fromtimestamp(r["superseded_at"]).strftime("%m-%d %H:%M")
             if r["superseded_at"] else "?",
-            r["undo_op_id"] if r["reversible"] else "[dim]—[/dim]",
+            # non un trattino: il PERCHE'. «nessuno scatto» manda a
+            # guardare la build che ha eseguito il ritiro, «finestra
+            # scaduta» manda a guardare il calendario, «gia' annullato»
+            # dice che si sta cercando la cosa sbagliata
+            r["undo_op_id"] if r["reversible"]
+            else f"[dim]{r.get('irreversible_because') or '—'}[/dim]",
         )
     console.print(table)
     if with_text:

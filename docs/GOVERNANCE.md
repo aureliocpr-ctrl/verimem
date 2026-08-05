@@ -79,8 +79,23 @@ HTTP `GET /v1/retirements`. Fields per row: `loser_id/topic/status`,
 `undo_op_id`. Network/UI feeds carry **metadata only** — propositions are
 opt-in (`with_text`) for local judging.
 
-`reversible: false` on old rows is honest: retirements from before the helm
-(2026-08-04) have no undo snapshot and cannot be reversed.
+`reversible: false` is honest but was mute, and `irreversible_because` now
+splits the three cases an operator handles differently:
+
+| value | what it means | what to do |
+|---|---|---|
+| `no snapshot` | the build that performed the retirement leaves no handle | look at *which code* is writing (`verimem doctor` reports branch + revision) |
+| `undo window expired` | the snapshot existed; the 7-day TTL passed | nothing today — the product worked, the calendar did not |
+| `already undone` | the handle was used and the fact was retired again | it is a ping-pong; hunting for an undo is hunting the wrong thing |
+
+On the real corpus 2026-08-05: **1805 retired, 2 still reversible** — every
+other row reads `no snapshot`, including the five the unattended maintenance
+pass performed at 23:08, because the build that runs it does not carry the
+helm. `retired_reversible` in the quartet is the size of that repair window:
+"1805 retired" alone does not say whether one can be recovered or a thousand.
+
+The handle itself is withheld when it cannot be used: an `undo_op_id` that
+`undo` would refuse reads as a repair that is available.
 
 ### Where the verdict and the fate disagree
 

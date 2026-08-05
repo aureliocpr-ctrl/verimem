@@ -362,8 +362,15 @@
         })(r.undo_op_id);
         row.appendChild(b);
       } else {
+        /* diceva «irreversible (pre-helm)»: una causa ASSERITA, e sbagliata
+           in due casi su tre — la finestra puo' essere SCADUTA (lo scatto
+           c'era, il prodotto ha funzionato) oppure l'undo puo' essere GIA'
+           stato usato. Ora arriva decisa dal server, dalla riga stessa.
+           Quinta volta stasera che una superficie asseriva un perche', e
+           questa l'avevo scritta io. */
         var i = document.createElement("i"); i.className = "gov-irrev";
-        i.textContent = "irreversible (pre-helm)";
+        i.textContent = "irreversible — " +
+          (r.irreversible_because || "reason not recorded");
         row.appendChild(i);
       }
       box.appendChild(row);

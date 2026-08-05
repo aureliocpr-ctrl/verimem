@@ -123,12 +123,21 @@ def retirement_log(
                w.topic         AS winner_topic,
                w.status        AS winner_status,
                w.created_at    AS winner_created_at,
-               u.op_id         AS undo_op_id{text_cols}
+               u.op_id         AS undo_op_id,
+               u.undone_at     AS undo_undone_at,
+               u.ttl_expires_at AS undo_ttl{text_cols}
         FROM facts f
         LEFT JOIN facts w ON w.id = f.superseded_by
-        LEFT JOIN facts_undo_log u
-               ON u.fact_id = f.id AND u.op_type = 'supersede'
-              AND u.undone_at IS NULL AND u.ttl_expires_at > ?
+        -- lo scatto PIU' RECENTE per questo fatto, uno solo. Il join
+        -- filtrava «vivo e non scaduto», e cosi' faceva due cose
+        -- sbagliate insieme: due scatti vivi DUPLICAVANO la riga (un
+        -- registro che conta due volte lo stesso ritiro e' peggio di uno
+        -- che tace, e il caso e' entrato in un test), e i tre modi di
+        -- NON essere annullabile finivano tutti in un NULL indistinto.
+        LEFT JOIN facts_undo_log u ON u.op_id = (
+            SELECT op_id FROM facts_undo_log
+            WHERE fact_id = f.id AND op_type = 'supersede'
+            ORDER BY created_at DESC LIMIT 1)
         WHERE {" AND ".join(where)}
         ORDER BY f.superseded_at DESC, f.created_at DESC
         LIMIT ?
@@ -146,11 +155,34 @@ def retirement_log(
         # same lazy way semantic.py does, so the JOIN never crashes.
         from .undo_log import ensure_undo_table
         ensure_undo_table(conn)
-        rows = conn.execute(sql, (_time.time(), *params, int(limit))).fetchall()
+        rows = conn.execute(sql, (*params, int(limit))).fetchall()
+    ora = _time.time()
     out: list[dict[str, Any]] = []
     for r in rows:
         d = {k: r[k] for k in r.keys()}
-        d["reversible"] = d.get("undo_op_id") is not None
+        _ttl = d.pop("undo_ttl", None)
+        _undone = d.pop("undo_undone_at", None)
+        # TRE modi di non essere annullabile, e l'operatore fa cose diverse
+        # in ciascuno: nessuno scatto = la build che ha eseguito il ritiro
+        # non lascia appigli (i cinque ritiri della manutenzione automatica
+        # del 2026-08-05 sono tutti cosi'); finestra scaduta = lo scatto
+        # c'era e il prodotto ha funzionato, sono passati i sette giorni;
+        # gia' annullato = c'e' stato un ping-pong, e cercare l'undo e'
+        # cercare la cosa sbagliata. Un solo False per i tre e' un'etichetta
+        # che non distingue il ramo.
+        if d.get("undo_op_id") is None:
+            d["reversible"], d["irreversible_because"] = False, "no snapshot"
+        elif _undone is not None:
+            d["reversible"], d["irreversible_because"] = False, "already undone"
+        elif (_ttl or 0) <= ora:
+            d["reversible"] = False
+            d["irreversible_because"] = "undo window expired"
+        else:
+            d["reversible"], d["irreversible_because"] = True, None
+        if not d["reversible"]:
+            # l'appiglio NON viaggia quando non e' usabile: un op_id che
+            # `undo` rifiuta si legge come una riparazione disponibile
+            d["undo_op_id"] = None
         out.append(d)
     return out
 
@@ -234,7 +266,9 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
     where = ""
     params: list[Any] = []
     if topic is not None:
-        where = "WHERE topic LIKE ?"
+        # segnaposto NOMINATO: la query porta anche `:ora` per la finestra
+        # di undo, e mescolare `?` e nomi nella stessa istruzione non si fa
+        where = "WHERE topic LIKE :topic"
         params.append(topic + "%")
     sql = f"""
         SELECT COUNT(*)                                          AS written,
@@ -253,21 +287,40 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
                -- denominator in exactly the flattering direction.
                SUM(CASE WHEN {SERVABLE_WHERE}
                          AND grounding_score IS NOT NULL
-                        THEN 1 ELSE 0 END)                       AS judged
+                        THEN 1 ELSE 0 END)                       AS judged,
+               -- quanti dei RITIRATI si possono ancora annullare: la
+               -- finestra di riparazione ha una dimensione, e «1796
+               -- ritirati» non diceva se se ne recupera uno o mille.
+               SUM(CASE WHEN superseded_by IS NOT NULL AND EXISTS (
+                        SELECT 1 FROM facts_undo_log u
+                        WHERE u.fact_id = facts.id
+                          AND u.op_type = 'supersede'
+                          AND u.undone_at IS NULL
+                          AND u.ttl_expires_at > :ora)
+                        THEN 1 ELSE 0 END)                 AS retired_reversible
         FROM facts {where}
     """
+    import time as _time
     with sm._connect() as conn:
-        row = conn.execute(sql, params).fetchone()
+        from .undo_log import ensure_undo_table
+        ensure_undo_table(conn)
+        row = conn.execute(sql, {"ora": _time.time(),
+                                 **({"topic": params[0]} if params else {})}
+                           ).fetchone()
     # English keys: this dict travels over every port of an international
     # product (monolingual surfaces are a measured defect class here).
     return {
         "written": int(row["written"] or 0),
         "servable": int(row["servable"] or 0),
         "retired": int(row["retired"] or 0),
+        "retired_reversible": int(row["retired_reversible"] or 0),
         "quarantined": int(row["quarantined"] or 0),
         "judged": int(row["judged"] or 0),
         "topic": topic,
         "formula": (f"servable = {SERVABLE_WHERE} · "
                     f"judged = servable AND grounding_score IS NOT NULL "
-                    f"(NULL means never judged, not judged and failed)"),
+                    f"(NULL means never judged, not judged and failed) · "
+                    f"retired_reversible = retired AND a live undo snapshot "
+                    f"exists (the size of the repair window: 'retired' alone "
+                    f"does not say whether one can be recovered or a thousand)"),
     }
