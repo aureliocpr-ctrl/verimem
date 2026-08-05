@@ -82,6 +82,31 @@ opt-in (`with_text`) for local judging.
 `reversible: false` on old rows is honest: retirements from before the helm
 (2026-08-04) have no undo snapshot and cannot be reversed.
 
+### Where the verdict and the fate disagree
+
+`--mismatches` (SDK `verdict_mismatches`, MCP `hippo_retirement_log
+{"mismatches": true}`, HTTP `?mismatches=true`) lists three populations, and
+decides nothing:
+
+| list | what it means | real corpus 2026-08-05 |
+|---|---|---|
+| `judged_true_but_withheld` | the moat said the source supports it and the fact is kept out anyway | 11 (ten ≥ 99) |
+| `judged_false_but_served` | the moat rejected it and the store serves it as its own | 10, down to 0.22 |
+| `contested_band` | 40–70: the outcome depended on **which judge was up**, not on the text | 23, all withheld |
+
+The band is a category of its own because the admission cut is not one number
+(40 on the fallback scale, 70 on the fine-tuned one — measured by ws4): there
+the disagreement is *uncertainty*, not incoherence, and merging it into the
+other two would be a choice dressed as a measurement. The low cut is
+deliberate, so `judged_false_but_served` is a **lower bound**: below 40 any
+cut rejects.
+
+The live twin: `flow.write` carries `withheld_despite_judge`, and the Engine
+Room prints **QUARANTINED DESPITE THE JUDGE** in yellow — not red, because red
+here means "the defence worked" and this line says the opposite. One
+threshold serves both (`retirement_log.judged_true`); a threshold written
+twice diverges.
+
 ### The live feed
 
 Every retirement emits `flow.supersession` (loser, winner, topics, reason,
@@ -219,6 +244,65 @@ than estimating, and never blocks the erasure if it fails.
 
 Whether the manual dream copies should rotate or be purged is a product
 decision, not a defect — but now the data to make it is visible.
+
+Every port: SDK `forget_with_report`, MCP `hippo_forget_with_report`, and the
+CLI prints the residual copies after a hard delete — the GDPR case, and the
+one where "deleted" without "but the dream worker keeps copies forever" is an
+incomplete answer given confidently. One body in
+`residual_copies.forget_with_report`: the first MCP handler *rewrote* it, and
+a copy instead of one surface is the defect class this branch keeps curing.
+
+## 6b. Where each tier actually lives
+
+`verimem tiers` (SDK `tier_inventory`, MCP `hippo_tier_inventory`, HTTP
+`GET /v1/tiers`) names the store file per tier and counts its rows:
+
+```
+facts     8232   semantic/semantic.db          entities  9079   entity_kg/entity_kg.db
+episodes   413   episodes/episodes.db          skills     324   skills/skills_index.db
+documents   68   documents/documents.db
+```
+
+It exists because on 2026-08-05 the five entity tables inside `semantic.db`
+— an empty migration shell — were counted as the tier, producing "the entity
+tier is empty" while the graph held 9078 entities and 87387 edges, and a work
+direction was retired on that reading. `verimem doctor` said nothing about
+where a tier lives, so counting files by hand was the only way to find out,
+i.e. the act that goes wrong.
+
+Nine **decoys** live in the data-dir root, each carrying a tier's obvious
+name (`semantic.db`, `episodes.db`, `entities.db`, `hippo.db`…). The
+inventory lists them with their row counts rather than merely avoiding them:
+avoiding protects this code, naming protects whoever counts by hand.
+`~/.engram/semantic.db` is the worst of the nine because it *has* the table
+and answers `0` — a plausible number instead of an error. A missing store
+reads `unavailable`, never `0`: an empty container and an absent one return
+the same number, and only the second announces itself.
+
+## 6c. Why a claim was blocked — and when we don't know
+
+`quarantine_log(explain=True)` re-runs the deterministic screens on the
+proposition and names the one that fired. Two things it must never do, both
+learned the hard way on 2026-08-05 (ws1, found by *using* the product):
+
+- **It re-runs the store screen too, not only the validation gate.**
+  `detect_injection` lives inside `store()`, which the gate does not cross,
+  so for every fact the injection screen held, re-running the gate alone
+  found nothing — and the fallback branch asserted L4. That family could
+  never have been explained correctly.
+- **When nothing fires, it declares instead of deducing.** The old fallback
+  said "stopped by the comparison with its source (L4)" for any row it could
+  not explain — false on a record whose `grounding_score` was 99.98, i.e.
+  approved by that very layer. Now the row's own verdict decides the wording:
+  never judged → "not L4, and not reconstructible"; approved → "NOT L4, the
+  moat approved it and the fact is withheld anyway"; below the cut →
+  "consistent with an L4 block, but this row does not assert it".
+
+Measured breadth: `reason` is None on 500/500 records and `layers` empty on
+183/500, because the deciding layer is computed at write time and not
+persisted. Persisting it is a write-path column and stays open. A mute
+surface gets noticed; an assertive and wrong one sends you looking in the
+opposite direction.
 
 ## 7. What governance does NOT do
 
