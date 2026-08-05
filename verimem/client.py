@@ -733,8 +733,33 @@ class Memory:
             _moat = "failed"
         else:
             _moat = "passed"
+        # E CHI HA DECISO LA QUARANTENA. Trovato da ws5 e ampliato:
+        #     moat passa + parola L1 : moat=passed  gs=96.810  QUARANTINED
+        #     moat passa, niente L1  : moat=passed  gs=99.278  QUARANTINED
+        # Anche il secondo — una fonte che sostiene il fatto al 99,278 — viene
+        # trattenuto: il MOAT dice «verificato» e uno screen lessicale lo
+        # scavalca. Si lega al numero di ws4 (il 90,2% della quarantena del
+        # corpus viene dallo screen, 1728 su 1915) e alla precisione ~40% di L1.
+        #
+        # ⚠️ LA PRECEDENZA NON SI TOCCA, e non è pigrizia: L1 esiste per
+        # intercettare le auto-affermazioni («ho verificato che funziona»), che
+        # sono LA confabulazione tipica di un agente — e una fonte «che
+        # sostiene» può essere stata scritta dallo stesso agente che afferma.
+        # Ribaltare la precedenza aprirebbe esattamente quella porta, ed è una
+        # decisione di prodotto, non una cura di notte.
+        #
+        # Si dichiara CHI ha deciso: una quarantena per contenuto falso e una
+        # per scelta di parole sono due cose diverse, e chi riceve la ricevuta
+        # non aveva modo di distinguerle.
+        if fact.status == "quarantined":
+            _out_qb = "moat" if _moat == "failed" else (
+                "L1" if any(str(w.get("layer", "")).startswith("L1")
+                            for w in warnings) else "gate")
+        else:
+            _out_qb = None
         _out = {
             "moat": _moat,
+            **({"quarantined_by": _out_qb} if _out_qb else {}),
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
             "warnings": warnings, "advice": gate.advice,
