@@ -82,4 +82,23 @@ def tutte_le_occorrenze_sono_negate(testo: str, parola: str) -> bool:
     return trovata
 
 
-__all__ = ["governata_da_negazione", "tutte_le_occorrenze_sono_negate"]
+def e_un_claim_negativo(testo: str) -> bool:
+    """Il claim afferma un'ASSENZA?
+
+    Domanda diversa dalle due qui sopra, che chiedono se una PAROLA e' sotto
+    negazione. Al moat serve sapere se l'intero claim e' una smentita, perche'
+    su quella classe il suo verdetto non e' affidabile: un cross-encoder di
+    entailment non ha l'assunzione di mondo chiuso, quindi «Verdi non era
+    presente» non risulta implicato da un elenco che semplicemente non lo
+    nomina (misurato: g fra 0.42 e 1.39 su negazioni VERE, in quattro lingue).
+
+    Sta qui e non nel gate perche' il lessico dei negatori vive in un posto
+    solo — ``quantity_match._NEGATOR_RE``, undici lingue — e la lezione che ha
+    creato questo modulo e' esattamente che il prodotto riconosceva una
+    negazione «in due posti diversi e mai insieme».
+    """
+    return bool(testo) and bool(_NEGATOR_RE.search(testo))
+
+
+__all__ = ["e_un_claim_negativo", "governata_da_negazione",
+           "tutte_le_occorrenze_sono_negate"]

@@ -129,6 +129,7 @@ from .l1_works_detector import detect_unsupported_works_claim
 
 # 2026-08-04: la PORTATA di una negazione, in un modulo solo. Il lessico non e'
 # qui ne' la' — resta `quantity_match._NEGATOR_RE`, undici lingue.
+from .negation_scope import e_un_claim_negativo as _e_un_claim_negativo
 from .negation_scope import tutte_le_occorrenze_sono_negate
 from .relation_claim import unverified_relation
 
@@ -1877,6 +1878,43 @@ def run_validation_gate(
                                "correggi la grandezza, oppure passa la fonte "
                                "che sostiene questo valore"),
                     "matched_text": _rr,
+                })
+            # L4-negazione — NON un verdetto, una DICHIARAZIONE, e solo quando
+            # il moat ha gia' deciso di bocciare. Il giudice e' un
+            # cross-encoder di ENTAILMENT e non ha l'assunzione di mondo
+            # chiuso: «il fornitore Verdi non era presente» non e' implicato da
+            # un elenco che semplicemente non lo nomina, quindi cade a 1.38
+            # anche quando e' VERA (ws5: 8 su 12 in quattro lingue, con la
+            # stessa simmetria — segno che e' il modello, non il lessico).
+            # L'unica negazione che passa e' quella la cui assenza la fonte
+            # ENUNCIA («l'ordine 91 resta in sospeso» -> ammessa a 90), ed e'
+            # per questo che l'avviso indica quella uscita.
+            #
+            # ⚠️ Nessuna soglia puo' separare qui: ws4 ha misurato che il 91,8%
+            # dei verdetti sta agli estremi (1324 su 1673 sopra 99). Il gate
+            # non puo' sapere se la negazione sia vera; puo' smettere di far
+            # sparire il fatto senza dire che il giudizio non era affidabile.
+            # E' anche il motivo per cui questa cura non ha bisogno della
+            # popolazione opposta, che per un veto sarebbe indispensabile:
+            # l'avviso e' vero tanto per una negazione vera quanto per una
+            # falsa. La guardia gemella sui detector L1 esiste dal 04/08
+            # (negation_scope, riga ~1138) e al moat non era mai arrivata.
+            if gscore < _threshold_of_record and _e_un_claim_negativo(
+                    proposition):
+                warnings.append({
+                    "layer": "L4-negazione",
+                    "reason": ("il claim afferma un'ASSENZA e il giudice non "
+                               "sa verificarla: un modello di entailment non "
+                               "assume mondo chiuso, quindi una negazione vera "
+                               "che la fonte non enuncia esplicitamente cade "
+                               "come una falsa — questo punteggio non separa "
+                               "le due"),
+                    "advice": ("se la negazione e' vera, passa una fonte che "
+                               "ENUNCI l'assenza («l'ordine 91 resta in "
+                               "sospeso») invece di una che la lasci dedurre "
+                               "da un elenco: su quella forma il giudizio "
+                               "torna affidabile"),
+                    "matched_text": proposition[:120],
                 })
             if gscore < _threshold_of_record:
                 if _graded_admission():
