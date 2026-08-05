@@ -696,7 +696,45 @@ class Memory:
                            "il documento con `verimem index` / DocumentIndex — "
                            "chunked e citato"),
             }]
+        # IL VERDETTO DEL MOAT, SEMPRE E IN CHIARO — i quattro casi che la
+        # regola O3 promette («leggi il campo `moat` della ricevuta, che dice
+        # quale dei quattro casi è») e che la ricevuta NON AVEVA: le sue chiavi
+        # erano ['adjudication','advice','grounding_score','id','status',
+        # 'stored','warnings'].
+        #
+        # ⚠️ IL COSTO DI QUEL SILENZIO, misurato: `grounding_score = None`
+        # significa DUE cose — «non c'era una fonte» (corretto) e «c'era una
+        # fonte e non ho giudicato» (difetto) — e dal corpus non si
+        # distinguono. Sul corpus vero, 250 scritture in un giorno: 6 NULL, di
+        # cui 2 senza fonte (giusti) e **4 con una fonte dichiarata**. Tre
+        # istanze hanno bruciato CINQUE ipotesi su quei sei fatti (il gate
+        # sotto carico, delegate-only, la raffica, il verified_by vuoto, la
+        # source condivisa): tutte cadute, perché il verdetto esisteva al
+        # momento della scrittura e non veniva conservato.
+        #
+        # 🔑 E IL CASO CHE CONTA È `not_run:no_judge`: quando il giudice non è
+        # raggiungibile il gate emette `L4-skipped` e **il fatto entra lo
+        # stesso come model_claim**, cioè ammesso. Il fail-open è la scelta
+        # giusta (non si blocca una scrittura perché il modello non è su
+        # disco), ma chi scrive crede di aver messo un fatto verificato e ha
+        # messo un claim.
+        #
+        # Si DERIVA da ciò che il gate ha già detto, non si duplica la sua
+        # logica: se un giorno cambiano i nomi dei layer, il test dei quattro
+        # casi distinti lo prende.
+        _layers = {str(w.get("layer", "")) for w in warnings}
+        if not source:
+            _moat = "not_run:no_source"
+        elif "L4-skipped" in _layers:
+            _moat = "not_run:no_judge"
+        elif gate.grounding_score is None:
+            _moat = "not_run:unknown"
+        elif "L4-grounding" in _layers:
+            _moat = "failed"
+        else:
+            _moat = "passed"
         _out = {
+            "moat": _moat,
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
             "warnings": warnings, "advice": gate.advice,
