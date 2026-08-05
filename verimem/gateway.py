@@ -1354,7 +1354,17 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         senza permettere di agire è peggio che non mostrare» (ws4,
         2026-08-04: restore/update 404, DELETE 200)."""
         mem = tenants.get(tenant_id)
-        ok = mem.restore(fact_id, reason="http restore")
+        # Il contesto flow va aperto anche qui: senza, l'evento di governo
+        # esce con surface="unknown" e SENZA tenant (misurato 2026-08-05 —
+        # il difetto era in queste tre rotte, che avevo aggiunto stanotte
+        # senza il _flow_ctx che le rotte storiche hanno). Un evento senza
+        # tenant non è solo mal attribuito: è un'azione di governo che
+        # nessuno può ricondurre al cliente che l'ha chiesta.
+        _ftok = _flow_ctx(tenant_id)
+        try:
+            ok = mem.restore(fact_id, reason="http restore")
+        finally:
+            _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, writes=1)
         return {"restored": bool(ok), "fact_id": fact_id}
 
@@ -1368,7 +1378,11 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         ripristina la riga pre-op; il vincitore di una supersessione resta
         vivo — il ping-pong finisce con ENTRAMBI i fatti."""
         mem = tenants.get(tenant_id)
-        result = mem.semantic.undo_destructive_op(op_id)
+        _ftok = _flow_ctx(tenant_id)   # stesso motivo della restore, sopra
+        try:
+            result = mem.semantic.undo_destructive_op(op_id)
+        finally:
+            _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, writes=1)
         return result
 
