@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 import sqlite3
 import sys
+import time
 from typing import Any
 
 OK = "ok"
@@ -30,6 +31,17 @@ FAIL = "fail"
 #: un avviso: la piu' rassicurante delle frasi sbagliate, e per questo la
 #: peggiore. Una sola definizione, importata anche da `verimem warmup`:
 #: due copie della stessa frase divergono.
+#: La finestra dello scatto di undo (`undo_log`: created_at + 7 giorni).
+#: Il check sui ritiri guarda SOLO dentro questa finestra, perche' fuori
+#: «lo scatto non c'e' mai stato» e «lo scatto e' scaduto» danno lo stesso
+#: risultato — e distinguere le due e' tutto il punto del check.
+_UNDO_TTL_S = 7 * 86400.0
+
+#: Sotto questa quota di ritiri ancora annullabili il check avvisa. Meta'
+#: e' una scelta dichiarata, non una misura: il punto e' che il check
+#: legge un RAPPORTO, quindi non lo si zittisce con un ritiro fortunato.
+_UNDO_HANDLE_WARN = 0.5
+
 AVVISO_SENZA_GIUDICE = (
     "writes that CARRY A SOURCE are admitted with an L4-skipped advisory; "
     "writes without a source get no advisory at all — there was nothing to "
@@ -413,6 +425,61 @@ def run_doctor() -> list[dict[str, Any]]:
                 "(~656 MB, no account needed), or pass llm= to Memory")
     except Exception as e:  # noqa: BLE001
         add("moat-judge", WARN, f"probe failed: {e}")
+
+    # -- finestra di riparazione dei ritiri -------------------------------------
+    # Un ritiro con lo scatto di undo si annulla in un click; senza, il fatto
+    # e' perso. Sul corpus di casa il 2026-08-05: 105 ritiri negli ultimi
+    # sette giorni e DUE con l'appiglio vivo — cioe' la build che scrive su
+    # questo store il timone non ce l'ha, e nessuna superficie lo diceva:
+    # serviva una query fatta apposta da chi gia' sospettava.
+    #
+    # SETTE GIORNI e' il TTL dello scatto, e non una scelta di comodo: fuori
+    # da quella finestra «manca» e «e' scaduto» sono indistinguibili, quindi
+    # contare tutto il corpus direbbe sempre che qualcosa non va — e un
+    # allarme che suona sempre si impara a ignorare.
+    try:
+        import sqlite3 as _sq3
+
+        from ._compat import data_dir as _dd2
+        _dbr = _dd2() / "semantic" / "semantic.db"
+        if _dbr.exists():
+            _ora = time.time()
+            _da = _ora - _UNDO_TTL_S
+            with _sq3.connect(f"file:{_dbr}?mode=ro", uri=True) as _c2:
+                _rit = int(_c2.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL "
+                    "AND superseded_at >= ?", (_da,)).fetchone()[0])
+                _con_app = int(_c2.execute(
+                    "SELECT COUNT(*) FROM facts f WHERE f.superseded_by IS NOT "
+                    "NULL AND f.superseded_at >= ? AND EXISTS (SELECT 1 FROM "
+                    "facts_undo_log u WHERE u.fact_id = f.id AND u.op_type = "
+                    "'supersede' AND u.undone_at IS NULL AND "
+                    "u.ttl_expires_at > ?)", (_da, _ora)).fetchone()[0])
+            if not _rit:
+                # zero su zero non e' «zero per cento»: senza ritiri non c'e'
+                # niente da dire, e stampare un rapporto inventato e' la
+                # stessa forma che questo file cura da stasera
+                add("undo-window", OK,
+                    "no retirements in the last 7 days — nothing to repair "
+                    "and no ratio to report")
+            elif _con_app / _rit < _UNDO_HANDLE_WARN:
+                add("undo-window", WARN,
+                    f"{_rit} retirements in the last 7 days and only "
+                    f"{_con_app} still carry an undo handle: the rest cannot "
+                    f"be reversed. The window is the snapshot TTL (7 days) "
+                    f"because outside it a missing handle is indistinguishable "
+                    f"from an expired one",
+                    "a retirement WITHOUT a handle means the code that "
+                    "performed it does not snapshot: check which build writes "
+                    "to this store (the `version` check above reports its tree "
+                    "and revision) — an unattended worker on an older build "
+                    "retires facts irreversibly")
+            else:
+                add("undo-window", OK,
+                    f"{_con_app} of {_rit} retirements in the last 7 days can "
+                    f"still be undone")
+    except Exception:  # noqa: BLE001 — un check non rompe il doctor
+        pass
 
     # -- offline pins ----------------------------------------------------------
     try:
