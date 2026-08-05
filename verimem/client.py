@@ -1816,17 +1816,79 @@ class Memory:
 
     _FLOOR_CACHE_TTL_S = 300.0
 
+    #: Di quanto deve cambiare il corpus perché il pavimento vada ricalcolato.
+    #: È la calibrazione DI QUEL corpus: finché il corpus è quello, il valore
+    #: è quello. 5% su 8000 fatti = 400 scritture.
+    _FLOOR_DRIFT = 0.05
+
+    def _floor_file(self):
+        from pathlib import Path
+        return Path(str(self.semantic.db_path) + ".floor.json")
+
     def _auto_relevance_floor(self) -> float:
-        """Resolve the self-calibrated floor, cached per client for the TTL —
-        estimation costs ~32 probe recalls, which must not be paid per query."""
+        """Il pavimento auto-calibrato, PERSISTITO e invalidato sul corpus.
+
+        ⚠️ ERA CACHED PER-ISTANZA CON UN TTL DI 5 MINUTI, e costava 57 secondi
+        alla prima chiamata. Misurato da ws5 sul corpus vero (8058 fatti) e
+        riprodotto::
+
+            explain chiamata 1:   56.845 ms
+            explain chiamata 2:      773 ms      <- 73 volte più veloce
+            recall:                  413 ms      <- nessuna cache di mezzo
+
+        La stima fa ~32 recall di sonde giudicati dal cross-encoder. La cache
+        c'era; la diagnosi di ws5 dice perché non bastava:
+
+            «Chi fa molte domande di fila paga 76 secondi UNA volta:
+             tollerabile. Chi consulta il dossier OGNI TANTO paga 76 secondi
+             OGNI VOLTA: inutilizzabile. E il secondo è il profilo d'uso vero —
+             nessuno interroga la provenienza a raffica. Il caso ottimizzato
+             dalla cache è quello che non capita mai.»
+
+        🔑 **Il pavimento è una proprietà del CORPUS, non della query**: cambia
+        quando il corpus cambia, non quando passano cinque minuti. Un TTL lo
+        ricalcola per il passare del tempo invece che per una ragione.
+
+        ⚠️ ACCANTO al DB e non DENTRO: una tabella nuova è una modifica di
+        schema, e lo schema è di un'altra istanza. Un file JSON non ha
+        migrazioni né lock, e se sparisce si ricalcola — perderlo costa un
+        ricalcolo, non un errore. Tutto il percorso è fail-open per lo stesso
+        motivo: il valore salvato è un'ottimizzazione, non un dato.
+        """
+        import json as _json
         import time as _time
+
+        n = -1
+        try:
+            n = int(self.semantic.count())
+        except Exception:  # noqa: BLE001 — un conteggio fallito non blocca
+            pass
+
         cached = getattr(self, "_floor_cache", None)
         now = _time.time()
         if cached and now - cached[0] < self._FLOOR_CACHE_TTL_S:
             return cached[1]
+
+        f = self._floor_file()
+        if n >= 0:
+            try:
+                d = _json.loads(f.read_text(encoding="utf-8"))
+                salvato, n_salvato = float(d["floor"]), int(d["n_facts"])
+                if abs(n - n_salvato) <= max(1, n_salvato) * self._FLOOR_DRIFT:
+                    self._floor_cache = (now, salvato)
+                    return salvato
+            except Exception:  # noqa: BLE001 — file assente/corrotto: si ricalcola
+                pass
+
         from .relevance_floor import estimate_relevance_floor
         val = estimate_relevance_floor(self.semantic)
         self._floor_cache = (now, val)
+        if n >= 0:
+            try:
+                f.write_text(_json.dumps({"floor": val, "n_facts": n}),
+                             encoding="utf-8")
+            except Exception:  # noqa: BLE001 — non poter scrivere non è un errore
+                pass
         return val
 
     def _record_trust(self, action: str, layers: list[str] | None = None,
