@@ -772,11 +772,29 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     """
     from .entity_extract_lite import extract_entities_lite
     from .hidden_records import codes_in
+    from .temporal_context import date_menzionate
 
     pa = getattr(a, "proposition", "") or ""
     pb = getattr(b, "proposition", "") or ""
     ca, cb = codes_in(pa), codes_in(pb)
     if ca and cb and not (ca & cb):
+        return True
+    # LA DATA DISTINGUE DUE EVENTI, e questo ramo toglie all'inglese un
+    # privilegio che aveva per accidente ortografico. Misurato scrivendo tre
+    # consegne in tre date, stesso topic:
+    #     ISO «2026-03-12/04-20/05-30»            scritti 3 -> VIVI 1
+    #     mese IT «12 marzo/20 aprile/30 maggio»  scritti 3 -> VIVI 1
+    #     mese EN «12 March/20 April/30 May»      scritti 3 -> VIVI 3
+    # I tre inglesi sopravvivevano perche' `March`/`April` sono MAIUSCOLI e
+    # finiscono fra i `proper` qui sotto; `marzo`/`aprile` no, e una data ISO
+    # non ha nemmeno una parola. Un registro di consegne non e' un valore che
+    # si aggiorna: e' una serie di eventi, e perderne due e' perdere il
+    # registro (il nodo «catalogare tre cose ne perde due»).
+    # ⚠️ Solo date DIVERSE: con la stessa data si parla dello stesso momento e
+    # un valore nuovo lo aggiorna, altrimenti «avere una data» diventerebbe un
+    # lasciapassare per non essere mai superseduti.
+    da, db = date_menzionate(pa), date_menzionate(pb)
+    if da and db and not (da & db):
         return True
 
     def _proper(testo: str) -> set[str]:

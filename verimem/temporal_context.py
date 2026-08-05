@@ -326,3 +326,60 @@ def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
         except Exception:  # noqa: BLE001 — enrichment must never break recall
             lines.append(getattr(f, "proposition", ""))
     return lines
+
+
+#: Le date NOMINATE dentro una proposizione — non quando è stata scritta, ma di
+#: quale giorno PARLA. Serve al gate per sapere se due fatti sono due EVENTI o
+#: due versioni dello stesso: un registro di consegne non è un valore che si
+#: aggiorna.
+#:
+#: 🔑 IL DIFETTO CHE L'HA MOTIVATA, misurato scrivendo la stessa cosa in tre
+#: forme (tre consegne in tre date, stesso topic)::
+#:
+#:     ISO «2026-03-12/04-20/05-30»          scritti 3 -> VIVI 1
+#:     mese IT «12 marzo/20 aprile/30 maggio» scritti 3 -> VIVI 1
+#:     mese EN «12 March/20 April/30 May»     scritti 3 -> VIVI 3
+#:
+#: La guardia che teneva vivi i tre inglesi è `_entita_diverse`, che riconosce
+#: le entità dalle MAIUSCOLE: `March` e `April` diventano `proper` e distinguono
+#: i fatti, `marzo` e `aprile` no, e una data ISO non ha nemmeno una parola.
+#: L'inglese non era protetto meglio — era protetto per un accidente
+#: ortografico. Qui il discriminante diventa la data in quanto tale.
+_DATA_ISO_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+_DATA_NUM_RE = re.compile(r"\b(\d{1,2})[/.](\d{1,2})[/.](\d{4})\b")
+_DATA_MESE_RE = re.compile(
+    r"\b(\d{1,2})(?:st|nd|rd|th)?\s+([^\W\d_]{3,10})\.?,?\s+(\d{4})\b"
+    r"|\b([^\W\d_]{3,10})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b",
+    re.IGNORECASE)
+
+
+def date_menzionate(testo: str | None) -> set[tuple[int, int, int]]:
+    """Le date di cui il testo PARLA, come ``{(anno, mese, giorno)}``.
+
+    Normalizzate in tuple e non in stringhe, così «2026-03-12», «12/03/2026»,
+    «12 marzo 2026» e «12 March 2026» sono LA STESSA data: senza questo, il
+    criterio direbbe che due scritture della stessa giornata sono due eventi
+    diversi solo perché una è in italiano.
+
+    I mesi vengono da ``_MONTHS``, l'unica mappa del modulo (EN+IT): una seconda
+    copia divergerebbe, ed è la lezione che questa casa ha già pagato con tre
+    elenchi di regole e due di negatori.
+    """
+    if not testo:
+        return set()
+    fuori: set[tuple[int, int, int]] = set()
+    for m in _DATA_ISO_RE.finditer(testo):
+        fuori.add((int(m.group(1)), int(m.group(2)), int(m.group(3))))
+    for m in _DATA_NUM_RE.finditer(testo):
+        # giorno/mese/anno: l'ordine europeo. Una data ambigua (05/08) resta
+        # ambigua in entrambi i fatti che si confrontano, quindi il CONFRONTO
+        # regge anche dove la lettura assoluta sbaglierebbe.
+        fuori.add((int(m.group(3)), int(m.group(2)), int(m.group(1))))
+    for m in _DATA_MESE_RE.finditer(testo):
+        g, nome, a = ((m.group(1), m.group(2), m.group(3)) if m.group(1)
+                      else (m.group(5), m.group(4), m.group(6)))
+        mese = _MONTHS.get(str(nome).casefold()) or _MONTHS.get(
+            str(nome).casefold()[:3])
+        if mese:
+            fuori.add((int(a), int(mese), int(g)))
+    return fuori
