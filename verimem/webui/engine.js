@@ -449,8 +449,16 @@
       var ok = p.stored && p.status !== "quarantined";
       tag.className = ok ? "adm" : "ref";
       tag.textContent = ok ? "ADMITTED" : String(p.status || "refused").toUpperCase();
+      /* ammesso ≠ verificato: senza questo, un fatto giudicato 99.9 e uno MAI
+         giudicato leggono identici — cioè la distinzione che il prodotto vende
+         sparisce dalla pagina che dovrebbe mostrarla. `judged === false` è
+         diverso da un punteggio basso: è assenza di verdetto, non un verdetto. */
+      var verdetto = (p.judged === true)
+        ? " · moat " + Number(p.grounding_score).toFixed(1)
+        : (p.judged === false ? " · NOT JUDGED" : "");
       detail = " · write · topic " + (p.topic || "—")
-        + (p.fact_id ? " · id " + String(p.fact_id).slice(0, 8) : "");
+        + (p.fact_id ? " · id " + String(p.fact_id).slice(0, 8) : "")
+        + verdetto;
     } else if (evt.name === "flow.supersession") {
       tag.className = "ref";
       tag.textContent = "RETIRED";

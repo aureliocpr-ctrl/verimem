@@ -450,8 +450,19 @@ class Memory:
         # layers in the flow event = which defense actually ACTED (same
         # attribution as the ledger): the Live Engine Room lights the real
         # stage, not a generic box. Metadata only, never fact content.
+        # `judged` accanto a `status`: senza, nel feed un fatto verificato
+        # 99.9 e uno MAI GIUDICATO sono entrambi "ADMITTED" — cioè la
+        # distinzione che questo prodotto vende sparisce proprio dalla
+        # pagina che dovrebbe mostrarla. E i mai-giudicati esistono: le
+        # scritture che arrivano mentre il moat si scalda entrano non
+        # giudicate (isolato da ws5 il 2026-08-05 leggendo `verimem
+        # doctor`). Il flag è esplicito perché un `grounding_score: null`
+        # si legge distrattamente come zero, e zero è un verdetto — il
+        # contrario dell'assenza di verdetto.
+        _gs = getattr(gate, "grounding_score", None)
         _emit_flow("flow.write", stored=True, status=str(fact.status),
-                   fact_id=str(fact.id), topic=str(topic), layers=_hit_layers)
+                   fact_id=str(fact.id), topic=str(topic), layers=_hit_layers,
+                   grounding_score=_gs, judged=_gs is not None)
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
         # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE, classified by
