@@ -117,6 +117,67 @@ def soglia_fatto_lungo() -> int:
         return _LONG_FACT_DEFAULT
 
 
+#: Oltre quante righe il controllo del duplicato costa troppo per pagarlo a
+#: OGNI scrittura. Misurato: 0.08 ms sul corpus reale (7950 righe), 9.89 ms a
+#: 50k, 21.36 ms a 200k — e' una scansione, perche' `proposition` non ha
+#: indice. `0` disattiva del tutto e in silenzio (scelta esplicita).
+_DUP_CHECK_MAX_DEFAULT = 50_000
+
+
+def soglia_controllo_duplicati() -> int:
+    """Il tetto di righe sotto cui il controllo del duplicato esatto si fa.
+
+    UNA FUNZIONE SOLA, come `soglia_fatto_lungo`: la stessa soglia letta in due
+    posti sono gia' due copie in attesa di divergere.
+    """
+    import os
+    try:
+        return int(os.environ.get("ENGRAM_DUP_CHECK_MAX_FACTS",
+                                  str(_DUP_CHECK_MAX_DEFAULT)))
+    except ValueError:
+        return _DUP_CHECK_MAX_DEFAULT
+
+
+def _esiste_gia_identico(sm, testo: str, topic: str | None,
+                         escludi: str | None = None) -> bool:
+    """C'e' gia' un fatto SERVIBILE con questo identico testo in questo topic?
+
+    Uguaglianza esatta, non similarita': il giudizio sulla similarita' e' un
+    altro mestiere e ha gia' il suo strumento (`find_duplicate_facts`).
+
+    ⚠️ SCANSIONE, non indice — `proposition` non ne ha uno. E' il motivo per
+    cui il chiamante controlla prima quanto e' grande il corpus: 0.08 ms su
+    7950 righe, 21.36 ms su 200 000.
+
+    ⚠️ E NON SI USA `facts_fts` QUI, benche' sia indicizzato: misurato, su una
+    FRASE INTERA la phrase query costa 5.33 ms contro 0.01 ms della scansione,
+    perche' deve verificare l'adiacenza di decine di token. FTS vince sui
+    termini corti e selettivi (un codice di record), perde sulle frasi lunghe.
+    """
+    import sqlite3
+    try:
+        con = sqlite3.connect(f"file:{sm.db_path}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return False
+    try:
+        # ⚠️ `escludi` E' IL FATTO APPENA SCRITTO, e senza di lui il controllo
+        # trovava SE STESSO: ogni scrittura risultava un duplicato. Il codice
+        # gira dopo la persistenza (li' c'e' la ricevuta da comporre), quindi
+        # la riga nuova e' gia' nel database. Preso dai due presidi che
+        # cadevano — «un fatto nuovo non porta avvisi» e «lo stesso testo in
+        # un altro topic non e' un duplicato» — non dal caso che curavo.
+        riga = con.execute(
+            "SELECT id FROM facts WHERE proposition = ? AND topic IS ? "
+            "AND superseded_by IS NULL AND status != 'quarantined' "
+            "AND id IS NOT ? LIMIT 1",
+            (testo, topic, escludi)).fetchone()
+        return riga is not None
+    except sqlite3.Error:
+        return False
+    finally:
+        con.close()
+
+
 def _remote_cls():
     """Lazy import hook (monkeypatchable in tests) for the thin client."""
     from .remote import RemoteMemory
@@ -551,6 +612,56 @@ class Memory:
         # TESTA, quindi il recall semantico non vede il resto. È la ragione per
         # cui il protocollo di casa prescrive di spezzare i fatti lunghi o di
         # usare `verimem index` — e chi scrive non poteva saperlo dal prodotto.
+        # IL DUPLICATO IDENTICO SI DICE A CHI SCRIVE, ALLA SECONDA VOLTA.
+        # Misurato da utente: tre `add` dello stesso testo -> 3 righe, 3
+        # servibili, e il recall rende la stessa frase TRE VOLTE senza che il
+        # prodotto lo abbia mai detto. ws4 aveva misurato il costo dall'altro
+        # lato: `slot=35 sprecati_da_duplicati=7` in un recall reale.
+        #
+        # Il meccanismo c'era già — `find_duplicate_facts`, esposto come
+        # `hippo_find_duplicate_facts` — ma è BATCH e fa Jaccard: si usa DOPO,
+        # per ripulire. Al momento della scrittura non lo chiamava nessuno.
+        #
+        # ⚠️ QUI SI GUARDA SOLO L'IDENTICO ESATTO, e non è pigrizia: la
+        # similarità è un giudizio (e `find_duplicate_facts` esiste per
+        # quello), l'uguaglianza no. Stesso testo E stesso topic — la stessa
+        # frase sotto «magazzini» e sotto «verbali» sono due contesti, non una
+        # svista.
+        #
+        # ⚠️ E IL COSTO DECIDE LA FORMA. È una scansione (`proposition` non ha
+        # indice): 0.08 ms sul corpus reale, 9.89 ms a 50k, 21.36 ms a 200k.
+        # Sopra la soglia NON si fa — ma si DICHIARA di non averlo fatto:
+        # saltarlo in silenzio sarebbe la stessa classe di difetto che questo
+        # prodotto passa la giornata a curare. Un indice su `proposition` lo
+        # renderebbe O(1) (0.127 ms a 200k, 286 ms per costruirlo), ma è una
+        # modifica di schema.
+        _dup_max = soglia_controllo_duplicati()
+        if _dup_max:
+            try:
+                _n_righe = self.semantic.count()
+            except Exception:  # noqa: BLE001 — un conteggio fallito non blocca
+                _n_righe = 0
+            if _n_righe <= _dup_max:
+                if _esiste_gia_identico(self.semantic, text, topic,
+                                        escludi=fact.id):
+                    warnings = [*warnings, {
+                        "layer": "duplicate",
+                        "reason": ("un fatto identico è già servibile in questo "
+                                   "topic: la memoria ne servirà due copie"),
+                        "advice": ("se è una conferma va bene così; se è una "
+                                   "svista, `forget` una delle due — "
+                                   "`hippo_find_duplicate_facts` le elenca"),
+                    }]
+            else:
+                warnings = [*warnings, {
+                    "layer": "duplicate_check_skipped",
+                    "reason": (f"il controllo dei duplicati non è stato fatto: "
+                               f"{_n_righe} fatti superano il tetto {_dup_max} "
+                               f"e la verifica è una scansione"),
+                    "advice": ("alza ENGRAM_DUP_CHECK_MAX_FACTS, oppure crea un "
+                               "indice su facts(proposition) — rende il "
+                               "controllo immediato a qualunque scala"),
+                }]
         _soglia = soglia_fatto_lungo()
         if _soglia and len(text or "") > _soglia:
             warnings = [*warnings, {
