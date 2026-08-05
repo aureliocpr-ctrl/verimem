@@ -1778,6 +1778,46 @@ def run_validation_gate(
             grounding_val = float(gscore)  # persist the score even when it PASSES
             _judge_of_record = _judge_used
             _threshold_of_record = resolve_write_threshold_for(_judge_used)
+            # L4.1 — IL CONTROLLO DETERMINISTICO CHE MANCAVA, e sta QUI perché
+            # qui la fonte c'è. Misurato da ws5, stessa fonte e stesso giudice:
+            #
+            #   A  inventa un'ENTITÀ (fornitore Verdi)  ammessi 0/4  il moat li ferma
+            #   B  DETTAGLIO non detto su entità VERA   ammessi 5/5  con g 97,1–99,5
+            #        «L'ordine 77 conteneva 40 pezzi.»          g=97.1
+            #        «Bianchi ha partecipato per 45 minuti»     g=98.7
+            #        «L'ordine 77 vale 1200 euro.»              g=98.0
+            #
+            # (B) è la forma in cui un LLM allucina davvero — non inventa un
+            # fornitore inesistente, inventa la durata e l'importo — ed entra
+            # col punteggio più alto del sistema.
+            #
+            # 🔑 La diagnosi è di ws5: «nessun rilevatore L1 riceve la fonte, il
+            # confronto claim↔fonte esiste in UN SOLO posto, dentro il
+            # cross-encoder, che è esattamente quello che sbaglia su questa
+            # classe». E da ws4 il numero che la rende strutturale: il 91,8%
+            # dei verdetti sta agli estremi (1324 su 1673 sopra 99) — NESSUNA
+            # SOGLIA PUÒ SEPARARE, perché il giudice dà lo stesso punteggio a
+            # un fatto vero e a un dettaglio inventato.
+            #
+            # ⚠️ Non sostituisce il moat e non lo contraddice: si affianca. Il
+            # moat dice «la fonte lo implica», questo dice «questo NUMERO nella
+            # fonte non c'è» — che è la domanda a cui un modello di entailment
+            # non risponde (ws4: «sa dire questo CONTRADDICE la fonte, non sa
+            # dire questo NON C'È nella fonte»).
+            from .valore_non_nella_fonte import valori_non_nella_fonte
+            _assenti = valori_non_nella_fonte(proposition, source)
+            if _assenti:
+                _vv = ", ".join(
+                    (f"{v.valore:g} {v.unita}".strip()) for v in _assenti[:4])
+                warnings.append({
+                    "layer": "L4.1",
+                    "reason": (f"il claim afferma un valore che la fonte non "
+                               f"contiene: {_vv}"),
+                    "advice": ("un numero che la fonte non dice non e' un "
+                               "numero verificato: correggi il valore, oppure "
+                               "passa la fonte che lo contiene"),
+                    "matched_text": _vv,
+                })
             if gscore < _threshold_of_record:
                 if _graded_admission():
                     # GRADED ADMISSION (design bf5d322 step 1, env-gated,
@@ -1951,7 +1991,13 @@ def run_validation_gate(
     # Decision tree.
     has_l3_contradict = any(w.get("layer") == "L3" for w in warnings)
     has_l3_semantic = any(w.get("layer") == "L3-semantic" for w in warnings)
-    has_grounding_fail = any(w.get("layer") == "L4-grounding" for w in warnings)
+    # L4.1 tratta come un fallimento del moat, e deve: un numero che la fonte
+    # non contiene NON è un numero verificato, e questa è l'unica classe di
+    # allucinazione che il giudice non prende (misurata 5/5 ammessi a 97-99).
+    # Sta con `L4-grounding` e non fra i layer L1 perché il verdetto viene dal
+    # confronto con la FONTE, non dalle parole del claim.
+    has_grounding_fail = any(w.get("layer") in ("L4-grounding", "L4.1")
+                             for w in warnings)
     has_l4_review = any(w.get("layer") == "L4-review" for w in warnings)
     # WF3 2026-06-19 PRECISION FIX: the L1 lexical dev-claim detectors fire on ordinary
     # personal words ('scheduled'/'done'/'confirmed'/'automatically'/'recurring') and were
