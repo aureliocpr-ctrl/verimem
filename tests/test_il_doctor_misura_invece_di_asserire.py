@@ -109,6 +109,54 @@ def test_un_corpus_tutto_giudicato_non_allarma(tmp_path, monkeypatch):
     assert c["status"] != "warn" or "6445" not in c["detail"]
 
 
+def test_non_promette_un_avviso_che_le_scritture_senza_fonte_non_ricevono(
+        tmp_path, monkeypatch):
+    """Quarta istanza della stessa classe, e la più rassicurante — che è
+    la peggiore specie.
+
+    Senza giudice il doctor diceva «writes are admitted with an
+    L4-skipped advisory (moat OFF)». Misurato, con giudice assente:
+
+        add(testo)                      -> warnings []          ← NESSUN avviso
+        add(testo, source="…")          -> warnings [L4-skipped]
+
+    Cioè l'avviso esiste solo per le scritture che portano una fonte. Per
+    tutte le altre — 6445 su 8267 sul corpus reale — il fatto entra in
+    silenzio, e chi legge quella riga crede che il prodotto lo avvisi.
+    """
+    from verimem import doctor
+
+    monkeypatch.setattr("verimem.local_grounding.local_ce_available",
+                        lambda *a, **k: False)
+    monkeypatch.setattr("verimem.llm._autodetect_provider",
+                        lambda *a, **k: None)
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+
+    c = next(x for x in doctor.run_doctor() if x["name"] == "moat-judge")
+    testo = c["detail"].lower()
+    assert "l4-skipped" in testo
+    assert "source" in testo, (
+        "l'avviso vale solo per le scritture CON fonte, e la riga deve dirlo: "
+        + c["detail"])
+    assert ("no advisory" in testo or "silently" in testo
+            or "nothing to check" in testo), c["detail"]
+
+
+def test_la_stessa_frase_su_entrambe_le_superfici(tmp_path):
+    """`doctor` e `verimem warmup` dicevano la stessa cosa con due frasi
+    scritte a mano: due copie divergono, ed è la prima delle tre classi
+    che questo prodotto ripete. Una sola definizione, importata da
+    entrambe."""
+    import verimem.cli as _cli
+    from verimem.doctor import AVVISO_SENZA_GIUDICE
+
+    assert "source" in AVVISO_SENZA_GIUDICE.lower()
+    sorgente = __import__("pathlib").Path(_cli.__file__).read_text(
+        encoding="utf-8")
+    assert "AVVISO_SENZA_GIUDICE" in sorgente, (
+        "la CLI riscrive la frase invece di importarla")
+
+
 def test_la_provenienza_legge_ramo_E_revisione_anche_da_un_worktree(
         tmp_path, monkeypatch):
     """Il caso che mi è sfuggito alla prima stesura, ed è il caso NORMALE

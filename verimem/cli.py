@@ -359,10 +359,14 @@ def warmup(
                 console.print(f"[green]✓ moat gate model ready[/] — {msg}")
             else:
                 console.print(f"[yellow]· moat gate model NOT installed[/] — {msg}")
+                # la frase NON si riscrive qui: e' la stessa del doctor, e
+                # due copie divergono (misurato: quella scritta a mano
+                # prometteva un avviso che le scritture senza fonte non
+                # ricevono mai)
+                from .doctor import AVVISO_SENZA_GIUDICE
                 console.print(
-                    "[yellow]  Until installed, judge-less writes are admitted "
-                    "with an L4-skipped advisory (moat off); pass llm= to "
-                    "Memory for the llm judge.[/]")
+                    f"[yellow]  Until installed, {AVVISO_SENZA_GIUDICE}; "
+                    f"pass llm= to Memory for the llm judge.[/]")
         except Exception as exc:  # noqa: BLE001 — warmup must not die on this
             console.print(f"[yellow]· gate model fetch failed "
                           f"({type(exc).__name__}: {exc})[/]")

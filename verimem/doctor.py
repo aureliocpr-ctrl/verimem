@@ -20,6 +20,21 @@ OK = "ok"
 WARN = "warn"
 FAIL = "fail"
 
+#: Cosa succede DAVVERO alle scritture quando non c'e' nessun giudice.
+#: La riga diceva «writes are admitted with an L4-skipped advisory (moat
+#: OFF)» — vero solo per le scritture che portano una fonte. Misurato il
+#: 2026-08-05 con giudice assente: `add(testo)` torna `warnings []`, e
+#: `add(testo, source=...)` torna l'avviso L4-skipped. Cioe' la stragrande
+#: maggioranza delle scritture (6445 su 8267 sul corpus reale non hanno
+#: una fonte dichiarata) entrava in silenzio mentre il referto prometteva
+#: un avviso: la piu' rassicurante delle frasi sbagliate, e per questo la
+#: peggiore. Una sola definizione, importata anche da `verimem warmup`:
+#: due copie della stessa frase divergono.
+AVVISO_SENZA_GIUDICE = (
+    "writes that CARRY A SOURCE are admitted with an L4-skipped advisory; "
+    "writes without a source get no advisory at all — there was nothing to "
+    "check them against")
+
 
 def _misura(byte: int) -> str:
     for unita, soglia in (("GB", 1e9), ("MB", 1e6), ("KB", 1e3)):
@@ -392,9 +407,8 @@ def run_doctor() -> list[dict[str, Any]]:
         else:
             add("moat-judge", FAIL,
                 f"NO grounding judge: local CE model missing at "
-                f"{_resolve_model_dir(None)} and no llm provider detected — "
-                f"writes are admitted with an L4-skipped advisory (moat OFF); "
-                f"{_coverage}",
+                f"{_resolve_model_dir(None)} and no llm provider detected "
+                f"(moat OFF) — {AVVISO_SENZA_GIUDICE}; {_coverage}",
                 "run `verimem warmup` to download the published gate model "
                 "(~656 MB, no account needed), or pass llm= to Memory")
     except Exception as e:  # noqa: BLE001
