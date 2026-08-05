@@ -1857,6 +1857,27 @@ def run_validation_gate(
                                "passa la fonte che lo contiene"),
                     "matched_text": _vv,
                 })
+            # L4.2 — L'ALTRA META' DELLO STESSO BUCO, misurata da ws5 sulla cura
+            # qui sopra: «14 valvole» entrava a 100.0 perche' la fonte diceva
+            # «14 operai». L4.1 chiede se il VALORE c'e'; questo chiede se
+            # parla della STESSA COSA. Cifra riusata: fermati 0/3 prima.
+            # Non si sovrappongono: valori_riusati_da_altro_contesto salta per
+            # costruzione i valori assenti, che sono il perimetro di L4.1.
+            from .vicinato_del_valore import valori_riusati_da_altro_contesto
+            _riusati = valori_riusati_da_altro_contesto(proposition, source)
+            if _riusati:
+                _rr = "; ".join(
+                    f"{r.valore:g} qui e' «{r.nel_claim}», nella fonte "
+                    f"«{r.nella_fonte}»" for r in _riusati[:3])
+                warnings.append({
+                    "layer": "L4.2",
+                    "reason": (f"il claim riusa un numero della fonte "
+                               f"riferendolo a un'altra grandezza: {_rr}"),
+                    "advice": ("la cifra compare nella fonte ma parla d'altro: "
+                               "correggi la grandezza, oppure passa la fonte "
+                               "che sostiene questo valore"),
+                    "matched_text": _rr,
+                })
             if gscore < _threshold_of_record:
                 if _graded_admission():
                     # GRADED ADMISSION (design bf5d322 step 1, env-gated,
@@ -2035,6 +2056,14 @@ def run_validation_gate(
     # allucinazione che il giudice non prende (misurata 5/5 ammessi a 97-99).
     # Sta con `L4-grounding` e non fra i layer L1 perché il verdetto viene dal
     # confronto con la FONTE, non dalle parole del claim.
+    # ⚠️ L4.2 NON e' qui, ed e' una scelta MISURATA. Come veto costerebbe il
+    # 20% di falsi positivi sui riformulati veri (banco di ws4, 1/5: «300
+    # pallet» contro una fonte che dice «300 bancali» cambia sia il verbo sia
+    # il sostantivo, e nessuno dei due lati coincide). Il riformulato E' il
+    # caso normale, e una cura che rompe un presidio verde scritto da un altro
+    # non si consegna. Resta come AVVISO: dichiara che il numero e' riusato da
+    # un altro contesto e lascia decidere — la forma di hidden_records,
+    # quarantined_by, floor_applied_by, ranking.
     has_grounding_fail = any(w.get("layer") in ("L4-grounding", "L4.1")
                              for w in warnings)
     has_l4_review = any(w.get("layer") == "L4-review" for w in warnings)
