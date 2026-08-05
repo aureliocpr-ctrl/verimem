@@ -517,6 +517,18 @@
       tag.textContent = p.undoable ? "DELETED (undoable)" : "DELETED";
       detail = " · fact " + String(p.fact_id || "?").slice(0, 8)
         + " · " + (p.action || "delete");
+    } else if (evt.name === "flow.conflict") {
+      /* quello che la scansione REGISTRA diventa quello su cui la
+         manutenzione agisce: i nuovi accanto ai gia' noti, perche' una
+         scansione che ne ritrova 2495 e ne aggiunge 31 e' una cosa
+         diversa da una che ne trova 31 su un corpus pulito */
+      tag.className = p.new_detected ? "sup" : "adm";
+      tag.textContent = "CONFLICT SCAN";
+      detail = " · nuovi " + (p.new_detected != null ? p.new_detected : "?")
+        + " · gia' noti " + (p.already_known != null ? p.already_known : "?")
+        + " · su " + (p.scanned_facts != null ? p.scanned_facts : "?")
+        + " fatti"
+        + (p.kinds ? " · " + Object.keys(p.kinds).join(", ") : "");
     } else if (evt.name === "flow.dream") {
       /* la manutenzione automatica gira DA SOLA ogni 4 ore e ritira fatti
          (misurato: 5 in una passata, con 95 lasciati per pari fiducia).
@@ -631,7 +643,8 @@
     else if (name === "flow.episode" || name === "flow.skill"
              || name === "flow.document" || name === "flow.warmup"
              || name === "flow.forget" || name === "flow.decay"
-             || name === "flow.dream") { /* feed-only */ }
+             || name === "flow.dream"
+             || name === "flow.conflict") { /* feed-only */ }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);

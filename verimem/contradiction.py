@@ -650,12 +650,33 @@ def scan_corpus(
             already_known += 1
         kinds[c.kind] = kinds.get(c.kind, 0) + 1
 
-    return {
+    esito = {
         "scanned_facts": len(facts),
         "new_detected": new_count,
         "already_known": already_known,
         "kinds": kinds,
     }
+    # La scansione ALIMENTA i ritiri: `heal_contradictions` supersede il
+    # lato debole di cio' che questa registra, e la manutenzione la lancia
+    # da sola ogni 4 ore (5 fatti ritirati nella passata delle 23:07 del
+    # 2026-08-05). Finora cresceva in silenzio — per accorgersene serviva
+    # una query fatta apposta da qualcuno che gia' sospettava, ed e' cosi'
+    # che ws4 ha scoperto 2526 conflitti registrati campionandone 25 senza
+    # trovarne una vera. `already_known` viaggia accanto ai nuovi perche'
+    # una scansione che ne ritrova 2495 e ne aggiunge 31 sta facendo una
+    # cosa diversa da una che ne trova 31 su un corpus pulito.
+    #
+    # Niente evento per una scansione a vuoto: la manutenzione la chiama
+    # ogni quattro ore e un evento per un non-fatto seppellisce quelli
+    # veri (stessa regola di flow.decay e del ramo idempotente di
+    # flow.forget). Conteggi e tipi, mai proposizioni.
+    if facts:
+        try:
+            from .flow_events import emit_flow
+            emit_flow("flow.conflict", **esito, kinds_total=sum(kinds.values()))
+        except Exception:  # noqa: BLE001 — l'osservabilita' non rompe lo scan
+            pass
+    return esito
 
 
 __all__ = [
