@@ -57,6 +57,11 @@ from .anti_confabulation import (
 # escalation band and the judge that could read them is never asked.
 from .evidence_hint import hint_for
 
+# 2026-08-05: il router di provenienza, per lo sweep sui quattordici layer che
+# vivono qui (finora era applicato solo ai tre detector in semantic.py).
+from .gate_router import classify_provenance as _gr_classify_provenance
+from .gate_router import l1x_applies as _gr_l1x_applies
+
 # Cycle 2026-05-27 (round 8): wire L1.16 approval detector.
 # Closes business-process gap: "approved/signed-off/authorized" sin
 # formal approval evidence (approver/review/pr/ticket/email/chat).
@@ -1353,6 +1358,9 @@ def run_validation_gate(
     writer_role: str | None = None,
     meta_narrative: bool = False,
     narrative_l1_skip: bool = False,
+    #: 2026-08-05 — abilita il routing di provenienza (gate_router) sui layer
+    #: L1.x. SOLO superfici in-process: vedi il commento esteso al punto d'uso.
+    provenance_trusted: bool = False,
     hook_token: str | None = None,
     repo_root: Any = None,
     source: str | None = None,
@@ -1413,8 +1421,39 @@ def run_validation_gate(
     # (fail-closed), never into this one — guarded by tests
     # (test_mcp_arguments_meta_narrative_does_not_skip_l1,
     # test_gateway_ignores_body_meta_narrative_and_lineage).
-    warnings = ([] if narrative_l1_skip
-                else _l1_warnings(proposition, verified_by))
+    # PROVENIENZA (2026-08-05) — lo sweep che al router mancava. Il mandato del
+    # 10/07 («ma questo tocca a me o a qualcuno di voi?») e' cablato in
+    # gate_router e applicato in semantic.py:2836 a TRE detector; i quattordici
+    # layer L1.8-L1.21 che vivono qui non ci passavano, e questa funzione
+    # riceveva gia' writer_role usandolo solo per il bypass dei trusted-hook.
+    # Il difetto che l'ha fatto emergere: «Hanno firmato Neri e Gialli», un
+    # verbale, quarantinato da L1.16 col moat a 99,93 — il gate chiedeva una
+    # prova di approvazione formale a un testo che RIPORTA una firma altrui.
+    #
+    # ⚠️ verified_by e' un Iterable e classify_provenance lo scorre: senza
+    # materializzarlo qui, un generatore arriverebbe CONSUMATO a _l1_warnings.
+    # E' la trappola che _l1_warnings documenta nella propria docstring.
+    #
+    # 🛡️ IN-PROCESS ONLY, e il perche' l'ha insegnato il presidio che questa
+    # cura ha fatto cadere alla prima stesura
+    # (test_attacker_with_user_role_cannot_bypass): gate_router argomenta che
+    # writer_role e' spoofabile «BECAUSE the only privilege external_content
+    # grants is skipping a warning-only heuristic» — vero per un chiamante
+    # in-process, FALSO sul canale MCP, dove writer_role e' un argomento del
+    # CLIENT: un attaccante scriveva writer_role='user' e si comprava il salto
+    # di L1. Quindi il privilegio non pende da writer_role, che arriva dalla
+    # rete, ma da questo kwarg che solo SDK/CLI passano — la stessa forma con
+    # cui narrative_l1_skip protegge meta_narrative dieci righe piu' su, e per
+    # la stessa ragione. I gestori MCP/gateway non devono inoltrarlo MAI.
+    # Tutto il resto (screen delle iniezioni, admission gate, hard-gate dei
+    # refs, source-trust, moat L4) gira identico per ogni provenienza.
+    _vb_list = None if verified_by is None else [str(x) for x in verified_by]
+    _l1_ha_giurisdizione = (
+        not provenance_trusted
+        or _gr_l1x_applies(_gr_classify_provenance(writer_role, _vb_list)))
+    warnings = ([] if narrative_l1_skip or not _l1_ha_giurisdizione
+                else _l1_warnings(proposition, _vb_list))
+    verified_by = _vb_list
     contradicting_ids: list[str] = []
     supersede_ids: list[str] = []
     advice = ""

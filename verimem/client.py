@@ -291,6 +291,17 @@ class Memory:
         # irraggiungibili dal canale che lo riempie.
         valid_until: float | None = None,
         derives_from: list[str] | None = None,
+        # 2026-08-05: stessa storia dei due qui sopra, nona istanza della
+        # classe. `gate_router` esiste dal mandato del 10/07 e risponde alla
+        # domanda «di CHI e' questo claim?»: un documento ingerito non e'
+        # l'agente che si vanta, quindi i detector L1.x — che gradano la
+        # sincerita' dell'AGENTE — non hanno giurisdizione. Il router era
+        # cablato su 3 detector in semantic.py e i 14 layer L1.8-L1.21 non ci
+        # passavano; e questa firma non lo esponeva affatto, cosi' la strada
+        # che il gate stesso SUGGERISCE a chi scrive («set
+        # writer_role='external_content'») era irraggiungibile: sul corpus
+        # vivo, external_content = 0 fatti su 8217.
+        writer_role: str | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -376,6 +387,12 @@ class Memory:
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
             narrative_l1_skip=meta_narrative,
+            writer_role=writer_role,
+            # Superficie in-process (SDK/CLI): chi arriva qui puo' comunque
+            # passare validate="off", una leva strettamente piu' forte. Il
+            # canale MCP NON deve inoltrarlo — presidio in
+            # test_anti_confab_gate_mcp_provenance.py.
+            provenance_trusted=True,
             claimant=principal or self._principal,
             documents=LazyDocumentStore(),
         )
@@ -475,6 +492,10 @@ class Memory:
             fact.derives_from = [str(x) for x in derives_from if str(x).strip()]
         if lineage_to:
             fact.lineage_to = [str(x) for x in lineage_to if str(x).strip()]
+        # Prima del blocco meta_narrative, che sovrascrive di proposito: quella
+        # e' la superficie operatore in-process e resta l'ultima parola.
+        if writer_role and str(writer_role).strip():
+            fact.writer_role = str(writer_role).strip()
         if meta_narrative:
             fact.meta_narrative = True
             fact.writer_role = "user"  # in-process operator surface
