@@ -315,6 +315,18 @@ class DocumentIndex:
                     "document %s: %d/%d chunk(s) flagged for injection signals "
                     "— hidden from default search (audit via include_flagged)",
                     source_id, n_flagged, len(chunks))
+        # Flow channel (ws6 2026-08-05, camera dark DOCUMENTS). This tier was
+        # the only one with NO telemetry at all — the others at least emitted
+        # under a name the live surfaces drop. And it is the tier the whole
+        # team leans on as "the robust channel": 25 documents, 598 chunks, of
+        # which 307 (51.3%) belong to superseded versions (measured by ws4).
+        # `version` and `chunks_flagged` travel because they are the two
+        # numbers that make an ingest readable: which version won, and how
+        # much of it was withheld.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.document", kind="index", source_id=source_id,
+                   doc_id=snap["id"], version=snap["version"],
+                   chunks_indexed=len(chunks), chunks_flagged=n_flagged)
         return {"source_id": source_id, "doc_id": snap["id"],
                 "version": snap["version"], "is_new": True,
                 "chunks_indexed": len(chunks), "chunks_flagged": n_flagged}
@@ -415,7 +427,17 @@ class DocumentIndex:
             h["query_terms"] = len(termini)
             h["query_terms_matched"] = sum(
                 1 for t in termini if t in h["text"].lower())
-        return _applica_rerank(self, q, hits)[:max(1, int(k))]
+        _out = _applica_rerank(self, q, hits)[:max(1, int(k))]
+        # The read side of the documents tier on the flow channel: `n` and the
+        # best score make a search readable, and `flagged_hidden` says whether
+        # the answer was built while something was being withheld — the tier
+        # hides flagged chunks by default and until now said so to nobody.
+        # Metadata only: never the citation text.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.document", kind="search", n=len(_out),
+                   best=(_out[0]["score"] if _out else None),
+                   include_flagged=bool(include_flagged))
+        return _out
 
     # --- rerank ---------------------------------------------------------
     def _rerank_attivo(self) -> bool:

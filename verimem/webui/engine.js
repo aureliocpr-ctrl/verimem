@@ -492,6 +492,18 @@
         + " · fitness " + (p.fitness != null ? Number(p.fitness).toFixed(2) : "?")
         + " · trials " + (p.trials != null ? p.trials : "?")
         + " · " + (p.status || "?");
+    } else if (evt.name === "flow.document") {
+      var isIdx = String(p.kind || "") === "index";
+      tag.className = (isIdx && p.chunks_flagged) ? "ref" : "adm";
+      tag.textContent = "DOC " + String(p.kind || "?").toUpperCase();
+      detail = isIdx
+        ? " · " + String(p.source_id || "?").slice(0, 24)
+          + " · v" + (p.version != null ? p.version : "?")
+          + " · " + (p.chunks_indexed != null ? p.chunks_indexed : "?") + " chunk"
+          + (p.chunks_flagged ? " · " + p.chunks_flagged + " withheld" : "")
+        : " · " + (p.n != null ? p.n : "?") + " hits"
+          + (p.best != null ? " · best " + Number(p.best).toFixed(3) : "")
+          + (p.include_flagged ? " · incl. flagged" : "");
     } else {
       var abst = !!p.abstained;
       tag.className = abst ? "abs" : "ans";
@@ -548,7 +560,8 @@
     else if (name === "flow.undo") { onUndo(evt.payload || {}); }
     else if (name === "flow.quarantine") { onQuarantine(evt.payload || {}); }
     else if (name === "flow.restore") { onRestore(evt.payload || {}); }
-    else if (name === "flow.episode" || name === "flow.skill") { /* feed-only */ }
+    else if (name === "flow.episode" || name === "flow.skill"
+             || name === "flow.document") { /* feed-only */ }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);
