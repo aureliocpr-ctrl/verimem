@@ -1045,6 +1045,25 @@ def ask_cmd(
                       f"[dim]fatti su «{rep.get('terms', query)}» "
                       f"(intento: conteggio — scan dell'intero corpus, "
                       f"non i primi {k})[/dim]")
+        # PERCHÉ LO ZERO. `Memory.ask` dichiara già il conteggio per singolo
+        # termine quando il totale è zero e i termini sono più d'uno — il
+        # conteggio è un AND, e basta una parola che nessun fatto contiene per
+        # azzerarlo. Qui si stampava solo il numero, quindi da riga di comando
+        # «0 fatti su fatti parlano degrado» restava un muro:
+        #
+        #     verimem ask "quanti fatti parlano del degrado?"  ->  0
+        #     e nel corpus vero i fatti su «degrado» ci sono
+        #
+        # È la settima volta che una cura nasce su una superficie e un'altra
+        # resta indietro — stavolta la cura incompleta era mia, di due ore
+        # prima, sull'asse SDK→CLI che la mappa del read path non copriva.
+        per_termine = rep.get("per_term") or {}
+        if per_termine:
+            dettaglio = " · ".join(
+                f"[bold]{t}[/bold]: {n}" for t, n in sorted(
+                    per_termine.items(), key=lambda kv: -kv[1]))
+            console.print(f"   [dim]il conteggio è un AND su tutti i termini:"
+                          f"[/dim] {dettaglio}")
         raise typer.Exit(0)
     risultati = rep.get("results") or []
     if not risultati:
