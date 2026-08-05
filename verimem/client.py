@@ -92,6 +92,31 @@ def _fact_trust_line(h: dict[str, Any]) -> str:
 _ANSWER_VERIFY_THRESHOLD = 40.0
 
 
+#: Il default documentato di `ENGRAM_LONG_FACT_WARN_CHARS` (~512 token
+#: conservativi). Oltre questa soglia l'embedder vede solo la testa del fatto.
+_LONG_FACT_DEFAULT = 2000
+
+
+def soglia_fatto_lungo() -> int:
+    """La soglia oltre la quale un fatto eccede la finestra dell'embedder.
+
+    UNA FUNZIONE SOLA, di proposito. Lo stesso numero e' letto anche in
+    `semantic.py` (che emette l'avviso nel log): due letture dell'ambiente in
+    due posti sono gia' due copie in attesa di divergere, ed e' la classe che
+    questa casa paga di piu'. Quando `semantic.py` verra' toccato potra'
+    chiamare questa invece di rileggere `os.environ` per conto suo.
+
+    `0` disattiva l'avviso, come documentato; un valore illeggibile torna al
+    default invece di far esplodere una scrittura.
+    """
+    import os
+    try:
+        return int(os.environ.get("ENGRAM_LONG_FACT_WARN_CHARS",
+                                  str(_LONG_FACT_DEFAULT)))
+    except ValueError:
+        return _LONG_FACT_DEFAULT
+
+
 def _remote_cls():
     """Lazy import hook (monkeypatchable in tests) for the thin client."""
     from .remote import RemoteMemory
@@ -512,6 +537,31 @@ class Memory:
                            judge=getattr(gate, "judge", None),
                            layers=_hit_layers + _stood_down,
                            verified_by=verified_by)
+        # L'AVVISO SUL FATTO TROPPO LUNGO ARRIVA A CHI SCRIVE. Esisteva già, ed
+        # è ottimo — dice la dimensione, il limite e cosa fare invece — ma
+        # `semantic.py` lo emette con `_LOG.warning`, quindi finiva nel log e
+        # NON nella ricevuta. Misurato da utente su un fatto di 4476 caratteri:
+        # il log lo diceva, `warnings` era vuoto.
+        #
+        # Il commento che accompagna quella guardia la chiama «non-silent
+        # over-window guard»: è stata scritta apposta per non essere
+        # silenziosa, ed era silenziosa esattamente per il chiamante.
+        #
+        # Perché conta: oltre la finestra dell'embedder si embedda solo la
+        # TESTA, quindi il recall semantico non vede il resto. È la ragione per
+        # cui il protocollo di casa prescrive di spezzare i fatti lunghi o di
+        # usare `verimem index` — e chi scrive non poteva saperlo dal prodotto.
+        _soglia = soglia_fatto_lungo()
+        if _soglia and len(text or "") > _soglia:
+            warnings = [*warnings, {
+                "layer": "long_fact",
+                "reason": (f"il fatto è di {len(text)} caratteri, oltre la "
+                           f"finestra dell'embedder (~512 token): il recall "
+                           f"semantico ne vedrà solo la testa"),
+                "advice": ("spezzalo in fatti brevi e autonomi, oppure indicizza "
+                           "il documento con `verimem index` / DocumentIndex — "
+                           "chunked e citato"),
+            }]
         _out = {
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
