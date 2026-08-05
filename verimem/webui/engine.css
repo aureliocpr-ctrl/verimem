@@ -74,6 +74,12 @@ svg{display:block; width:100%; height:auto; min-width:640px;}
    una decisione presa (il warmup del giudice dura ~41s alla prima scrittura) */
 .evt .wait{color:var(--ink-3); font-weight:600; font-style:italic;}
 .evt .ans{color:#7ec49f; font-weight:600;} .evt .abs{color:#bdb4a0; font-weight:600;}
+/* «trattenuto NONOSTANTE il giudice»: non è un rifiuto come gli altri, è
+   l'unico caso in cui il prodotto contraddice sé stesso (il moat ha detto
+   che la fonte lo sostiene e L1 lo tiene fuori lo stesso). Giallo, non
+   rosso: il rosso qui vuol dire «la difesa ha funzionato», e questa riga
+   dice il contrario — va guardata, non archiviata. */
+.evt .conflict{color:#e3c05c; font-weight:700;}
 .foot{margin-top:1rem; font-size:.7rem; color:var(--ink-3); line-height:1.7;}
 @media (max-width:900px){.grid{grid-template-columns:1fr}}
 /* v2: real-time load — chips in the bar, per-second chart in the counters */

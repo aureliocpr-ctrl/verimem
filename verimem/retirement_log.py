@@ -30,7 +30,7 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = ["retirement_log", "survivability_counts", "verdict_mismatches",
-           "SERVABLE_WHERE"]
+           "judged_true", "SERVABLE_WHERE"]
 
 #: Sopra questo il moat ha detto «la fonte lo sostiene»: 90 è deliberatamente
 #: prudente — a quel punteggio non si discute che il verdetto fosse positivo.
@@ -53,6 +53,21 @@ _BANDA_CONTESA_ALTA = 70.0
 #: Two implicit definitions of the same word cost ws3 three hours on
 #: 2026-08-04; every counter this module exposes states its formula.
 SERVABLE_WHERE = "superseded_by IS NULL AND status NOT IN ('quarantined')"
+
+
+def judged_true(score: Any) -> bool:
+    """Whether the moat's verdict on this fact counts as «the source
+    supports it». The ONE definition — the live feed asks it about a
+    single write, :func:`verdict_mismatches` asks it of the whole corpus,
+    and a threshold written twice diverges (three times in two days on
+    this product). ``None`` is never judged, so never true: absence of a
+    verdict is not a verdict."""
+    if score is None:
+        return False
+    try:
+        return float(score) >= _VERDETTO_VERO
+    except (TypeError, ValueError):
+        return False
 
 
 def retirement_log(

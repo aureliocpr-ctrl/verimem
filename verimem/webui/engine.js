@@ -447,8 +447,18 @@
     var detail;
     if (evt.name === "flow.write") {
       var ok = p.stored && p.status !== "quarantined";
-      tag.className = ok ? "adm" : "ref";
-      tag.textContent = ok ? "ADMITTED" : String(p.status || "refused").toUpperCase();
+      /* «rifiutato DAL giudice» e «rifiutato NONOSTANTE il giudice» non
+         sono la stessa riga: nel secondo il moat ha girato, ha detto che
+         la fonte sostiene il fatto, e L1 lo tiene fuori per una parola.
+         È l'unico caso in cui il prodotto contraddice sé stesso, e qui si
+         leggeva come un rifiuto qualunque (ws5, 2026-08-05). La soglia
+         non sta in questo file: arriva già decisa nell'evento, dalla
+         stessa funzione che alimenta la vista sul corpus. */
+      var contro = p.withheld_despite_judge === true;
+      tag.className = contro ? "conflict" : (ok ? "adm" : "ref");
+      tag.textContent = contro
+        ? String(p.status || "refused").toUpperCase() + " DESPITE THE JUDGE"
+        : (ok ? "ADMITTED" : String(p.status || "refused").toUpperCase());
       /* ammesso ≠ verificato: senza questo, un fatto giudicato 99.9 e uno MAI
          giudicato leggono identici — cioè la distinzione che il prodotto vende
          sparisce dalla pagina che dovrebbe mostrarla. `judged === false` è

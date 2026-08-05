@@ -294,6 +294,32 @@ class Memory:
             documents=LazyDocumentStore(),
         )
         warnings = list(gate.warnings)
+
+        def _verdetto_evt(stato: str) -> dict[str, Any]:
+            """Il verdetto del moat per l'evento, UGUALE su ogni ramo.
+
+            `flow.write` esce da tre punti di questa funzione — respinto,
+            instradato a telemetria, scritto — e solo l'ultimo portava il
+            punteggio: nel feed un RIFIUTO non diceva nemmeno se il
+            giudice fosse stato coinvolto, mentre la ricevuta lo diceva
+            (`moat 3.0`). Verdetto a intermittenza = nessun verdetto.
+
+            `withheld_despite_judge` separa «rifiutato DAL giudice» da
+            «rifiutato NONOSTANTE il giudice»: il moat ha girato, ha detto
+            che la fonte sostiene il fatto, e il fatto resta fuori lo
+            stesso perché L1 ha visto una parola (ws5, 2026-08-05: moat
+            passed, grounding 100.0, status quarantined). È l'unico caso
+            in cui il prodotto contraddice sé stesso, e nel feed si
+            leggeva come un rifiuto qualunque. La soglia NON si riscrive
+            qui: è la stessa funzione che alimenta
+            `judged_true_but_withheld` sul corpus.
+            """
+            from .retirement_log import judged_true as _jt
+            _s = getattr(gate, "grounding_score", None)
+            return {"grounding_score": _s, "judged": _s is not None,
+                    "withheld_despite_judge": (
+                        stato in ("quarantined", "rejected") and _jt(_s))}
+
         # The mirror of the gate's own L4-skipped advisory ("say so out loud,
         # NEVER a silent skip"), for the case it never covered: a judge is
         # reachable but the write carries NO source, so L4 has nothing to check
@@ -351,7 +377,8 @@ class Memory:
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
             _emit_flow("flow.write", stored=False, status="rejected",
-                       fact_id="", topic=str(topic), layers=_layers)
+                       fact_id="", topic=str(topic), layers=_layers,
+                       **_verdetto_evt("rejected"))
             _adj = _adjudication(gate, disposition="rejected",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text, fact_id=None,
@@ -421,7 +448,8 @@ class Memory:
             self._record_trust("routed_telemetry", layers=None, topic=topic)
             _emit_flow("flow.write", stored=True, status="routed_telemetry",
                        fact_id=str(fact.id), topic=str(topic),
-                       layers=["admission-route"])
+                       layers=["admission-route"],
+                       **_verdetto_evt("routed_telemetry"))
             _adj = _adjudication(gate, disposition="routed_telemetry",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text,
@@ -453,16 +481,24 @@ class Memory:
         # `judged` accanto a `status`: senza, nel feed un fatto verificato
         # 99.9 e uno MAI GIUDICATO sono entrambi "ADMITTED" — cioè la
         # distinzione che questo prodotto vende sparisce proprio dalla
-        # pagina che dovrebbe mostrarla. E i mai-giudicati esistono: le
-        # scritture che arrivano mentre il moat si scalda entrano non
-        # giudicate (isolato da ws5 il 2026-08-05 leggendo `verimem
-        # doctor`). Il flag è esplicito perché un `grounding_score: null`
-        # si legge distrattamente come zero, e zero è un verdetto — il
-        # contrario dell'assenza di verdetto.
-        _gs = getattr(gate, "grounding_score", None)
+        # pagina che dovrebbe mostrarla. Il flag è esplicito perché un
+        # `grounding_score: null` si legge distrattamente come zero, e
+        # zero è un verdetto — il contrario dell'assenza di verdetto.
+        #
+        # ⚠️ ERRATA 2026-08-05: i commit `49096224` e `cc367071` motivano
+        # questo campo con «le scritture che arrivano mentre il moat si
+        # scalda entrano non giudicate». ws5 me l'aveva passata leggendo
+        # una STRINGA di `verimem doctor`, poi l'ha MISURATA e cade: 4
+        # thread simultanei su store vergine aspettano tutti 42.60s e
+        # ricevono tutti un verdetto (0 NULL su 4) — il caricamento è
+        # sincrono con lock, quella finestra non esiste sul canale SDK.
+        # Quello che regge, e basta a giustificare il campo: i
+        # mai-giudicati ESISTONO (ws3: 6 NULL su 250 scritti oggi, 4 dei
+        # quali con una source_signature) e il feed non li distingueva.
+        # La causa resta ignota, ed è meglio dirlo che spiegarla a caso.
         _emit_flow("flow.write", stored=True, status=str(fact.status),
                    fact_id=str(fact.id), topic=str(topic), layers=_hit_layers,
-                   grounding_score=_gs, judged=_gs is not None)
+                   **_verdetto_evt(str(fact.status)))
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
         # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE, classified by
