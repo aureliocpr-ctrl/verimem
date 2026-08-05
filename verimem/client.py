@@ -1610,7 +1610,13 @@ class Memory:
             with sqlite3.connect(str(self.semantic.db_path)) as con:
                 con.row_factory = sqlite3.Row
                 for r in con.execute(
-                        "SELECT id, proposition, topic, created_at, status "
+                        # grounding_score viaggia con la riga perche' la
+                        # spiegazione ne ha bisogno per NON inventare la
+                        # causa: un verdetto alto su un fatto trattenuto
+                        # smentisce da solo l'attribuzione a L4 (ws1,
+                        # 2026-08-05).
+                        "SELECT id, proposition, topic, created_at, status, "
+                        "grounding_score "
                         "FROM facts WHERE status = 'quarantined' "
                         "AND superseded_by IS NULL "
                         "ORDER BY created_at DESC LIMIT ?",
@@ -1664,6 +1670,7 @@ class Memory:
         """
         try:
             from .anti_confab_gate import run_validation_gate
+            from .retirement_log import judged_true as _judged_true
         except Exception:  # noqa: BLE001
             return
         for row in rows:
@@ -1677,24 +1684,67 @@ class Memory:
             except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
                 continue
             if not avvisi:
-                # Nessuno schermo lessicale si accende: il fatto e' stato
-                # fermato da L4, il moat, che confronta la proposizione con la
-                # SUA fonte — e la fonte non e' persistita, quindi il motivo
-                # non e' ricostruibile qui. Provato sul corpus vivo: i tre
-                # quarantinati piu' recenti sono tutti di questo tipo.
-                #
-                # Si dice, invece di lasciare il campo vuoto: `None` si legge
-                # «nessun motivo», e non e' la stessa cosa di «non lo so piu'».
+                # Lo schermo dello STORE, che il gate di validazione non
+                # attraversa: `detect_injection` gira dentro store() ed e'
+                # puro e deterministico esattamente come gli L1 qui sopra.
+                # Rieseguire il SOLO gate non poteva trovarlo mai — ed e'
+                # per questo che il caso di ws1 (2026-08-05) finiva sul
+                # ramo di default con una causa inventata, mentre la
+                # ricevuta di scrittura diceva layers=['store-screen'].
+                try:
+                    from .prompt_injection import detect_injection
+                    v = detect_injection(row.get("proposition") or "")
+                except Exception:  # noqa: BLE001
+                    v = None
+                if v is not None and getattr(v, "is_injection", False):
+                    row["layers"] = ["store-screen"]
+                    row["why"] = (
+                        "store-screen: prompt-injection signals "
+                        f"{list(getattr(v, 'signals', []) or [])} — la frase "
+                        "CITA una formula che il rilevatore riconosce. Se il "
+                        "testo e' un referto che documenta l'attacco invece "
+                        "di portarlo, e' un falso positivo: e' la variante "
+                        "gemella del gate che trattiene i referti sul gate.")
+                    continue
+
+                # Nessuno schermo si riaccende. Qui la causa NON e' nota, e
+                # fino al 2026-08-05 questo ramo la attribuiva a L4 — una
+                # deduzione, non una lettura, e ws1 ha misurato che e' falsa
+                # su 183 record su 500: `layers` arriva vuoto, l'explain non
+                # trova niente e ASSERISCE. Una superficie muta si nota, una
+                # assertiva e sbagliata manda a cercare nella direzione
+                # opposta. Ora si guarda l'unica cosa che la riga sa sul
+                # moat — il suo verdetto — e si DICHIARA.
+                _gs = row.get("grounding_score")
+                _coda = (
+                    " Le cause tipiche di un blocco L4 sono un calcolo o una "
+                    "conversione che la fonte non enuncia, e una frase che "
+                    "contiene piu' affermazioni giudicate insieme: riscrivila "
+                    "coi numeri come stanno nella fonte, spezzala, e "
+                    "riscrivila con --source.")
                 row["layers"] = []
-                row["why"] = (
-                    "nessuno schermo lessicale si accende su questa frase: "
-                    "e' stata fermata dal confronto con la sua fonte (L4), e "
-                    "la fonte non viene conservata, quindi il motivo esatto "
-                    "non e' piu' ricostruibile. Le cause tipiche sono un "
-                    "calcolo o una conversione che la fonte non enuncia, e "
-                    "una frase che contiene piu' affermazioni giudicate "
-                    "insieme: riscrivila coi numeri come stanno nella fonte, "
-                    "spezzala, e riscrivila con --source.")
+                if _gs is None:
+                    row["why"] = (
+                        "causa NON REGISTRATA: nessuno schermo lessicale si "
+                        "riaccende su questa frase e il moat non l'ha MAI "
+                        "GIUDICATA (grounding_score assente), quindi non e' "
+                        "stata fermata da L4 e il motivo esatto non e' piu' "
+                        "ricostruibile da questa riga. La ricevuta di "
+                        "scrittura il layer lo diceva (`layers`): riscrivila "
+                        "con --source e guarda la ricevuta.")
+                elif _judged_true(_gs):
+                    row["why"] = (
+                        f"causa NON REGISTRATA, e NON e' L4: il moat ha "
+                        f"giudicato questa frase {float(_gs):.2f}, cioe' l'ha "
+                        "APPROVATA, e il fatto e' trattenuto lo stesso. Il "
+                        "layer che ha deciso e' un altro e non e' ricostruibile "
+                        "da questa riga.")
+                else:
+                    row["why"] = (
+                        f"causa non registrata: nessuno schermo lessicale si "
+                        f"riaccende, e il moat ha giudicato {float(_gs):.2f} — "
+                        "compatibile con un blocco L4, ma la riga non lo "
+                        "afferma." + _coda)
                 continue
             row["layers"] = [w.get("layer") for w in avvisi if w.get("layer")]
             row["why"] = " · ".join(
@@ -2189,15 +2239,8 @@ class Memory:
         carries ``rotates`` so "for a few hours" and "forever" are
         distinguishable. Reporting NEVER blocks the erasure: a scan failure
         degrades to an empty list."""
-        from . import residual_copies as _rc
-        copies: list[dict[str, Any]] = []
-        try:
-            copies = _rc.residual_copies_for(self.semantic.db_path, fact_id)
-        except Exception:  # noqa: BLE001 — observability never blocks erasure
-            copies = []
-        removed = bool(self.delete(fact_id))
-        return {"removed": removed, "fact_id": fact_id,
-                "residual_copies": copies}
+        from .residual_copies import forget_with_report as _fwr
+        return _fwr(self.semantic, fact_id, principal=self._principal or "sdk")
 
 
 #: Alias for users who expect a ``Client`` name (mem0/Zep ergonomics).

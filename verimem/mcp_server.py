@@ -186,6 +186,7 @@ _THIN_UNSUPPORTED_READS: frozenset[str] = frozenset({
 #: episodes, so for those the local store is the correct answer.
 _THIN_UNSUPPORTED_WRITES: frozenset[str] = frozenset({
     "hippo_fact_forget", "hippo_fact_forget_with_undo", "hippo_forget_scope",
+    "hippo_forget_with_report",
     "hippo_fact_supersede", "hippo_fact_supersede_chain", "hippo_facts_merge",
     "hippo_facts_topic_merge", "hippo_smart_prune", "hippo_decay_run",
     "hippo_heal_contradictions", "hippo_contradictions_resolve",
@@ -2944,6 +2945,24 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                                                   "fact's fate disagree"},
                 },
             },
+        ),
+        t.Tool(
+            name="hippo_forget_with_report",
+            description=(
+                "ws6 control-room. DELETE a fact and say WHERE it is still "
+                "readable. The erasure clears every live table (entity graph "
+                "included), but the Auto-Dream worker keeps whole-DB copies: "
+                "rotating ones for a few hours, MANUAL ones forever — one "
+                "from May 12 still holds 60 facts the live store dropped. "
+                "The deletion is real and its effect is partial, and no "
+                "surface said so. Each copy carries `rotates`, so 'for a few "
+                "hours' and 'forever' are distinguishable. Reporting NEVER "
+                "blocks the erasure: a scan failure degrades to an empty "
+                "list. Destructive: the fact is gone from the live store."
+            ),
+            inputSchema={"type": "object",
+                         "properties": {"fact_id": {"type": "string"}},
+                         "required": ["fact_id"]},
         ),
         t.Tool(
             name="hippo_tier_inventory",
@@ -13471,6 +13490,29 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 return _ok(result)  # ok=True, removed=False, op_id=None
             _audit(name, arguments, outcome="ok_with_undo")
             return _ok(result)
+
+        if name == "hippo_forget_with_report":
+            # La cancellazione e' reale e il suo effetto e' PARZIALE: il
+            # worker dei dream tiene copie intere del DB, alcune a
+            # rotazione e altre manuali che restano per sempre. Sull'SDK
+            # questo si sapeva dal 2026-08-05; qui no, ed e' la stessa
+            # classe che questo ramo chiude — una capacita' di governo
+            # raggiungibile solo dal canale che l'ha vista nascere.
+            fid = str(arguments.get("fact_id", "")).strip()
+            if not fid:
+                _audit(name, arguments, outcome="rejected_empty")
+                return _err("empty fact_id")
+            _deny = _forget_cross_scope_denied(a, fid, arguments)
+            if _deny is not None:
+                _audit(name, arguments, outcome="rejected_cross_scope")
+                return _err(_deny)
+            from verimem.residual_copies import forget_with_report
+            esito = forget_with_report(a.semantic, fid,
+                                       principal=_MCP_PRINCIPAL)
+            _audit(name, arguments,
+                   outcome=("ok" if esito["removed"] else "not_found"),
+                   detail={"residual_copies": len(esito["residual_copies"])})
+            return _ok({"ok": True, **esito})
 
         if name == "hippo_forget_scope":
             # B-1 mem0-parity delete_all(user_id): forget all FACTS matching a

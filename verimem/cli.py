@@ -2714,8 +2714,19 @@ def facts_forget(
         else:
             console.print(f"[yellow]nothing to forget:[/yellow] {f.id}")
     else:
-        sm.delete(f.id, principal="cli:local")
+        # `forget_with_report`: cancella E dice dove il fatto resta
+        # leggibile. Stessa funzione dell'SDK e del tool MCP — la
+        # cancellazione hard e' il caso GDPR, ed e' proprio quello in cui
+        # «rimosso» senza «ma il worker dei dream ne tiene copie» e' una
+        # risposta incompleta data con sicurezza.
+        from .residual_copies import forget_with_report
+        _esito = forget_with_report(sm, f.id, principal="cli:local")
         console.print(f"[green]hard-deleted:[/green] {f.id}")
+        for _c in _esito["residual_copies"]:
+            _durata = ("a rotazione" if _c["rotates"]
+                       else "MANUALE: resta per sempre")
+            console.print(f"[yellow]resta leggibile in[/yellow] {_c['name']} "
+                          f"[dim]({_durata})[/]")
 
     if _resto:
         console.print(
@@ -2836,8 +2847,12 @@ def facts_retirement_log(
     canonical quartet with its formula: a fact disappears in TWO ways, and
     counting only non-superseded rows hides half the loss.
     """
+    # il quartetto si chiede con lo STESSO nome dell'SDK (`survivability`):
+    # la CLI importava la funzione del modulo per conto suo, quindi la
+    # capacita' risultava senza porta al cricchetto — e chi legge il codice
+    # vedeva due strade per lo stesso conto invece di una
     from .retirement_log import retirement_log as _rlog
-    from .retirement_log import survivability_counts as _scounts
+    from .retirement_log import survivability_counts as survivability
     sm = _facts_sm()
     if mismatches:
         from .retirement_log import verdict_mismatches as _vm
@@ -2861,7 +2876,7 @@ def facts_retirement_log(
         console.print(f"[dim]{mm['thresholds']}[/dim]")
         return
     if counts:
-        q = _scounts(sm, topic=topic)
+        q = survivability(sm, topic=topic)
         _pct = (100.0 * q["judged"] / q["servable"]) if q["servable"] else 0.0
         console.print(
             f"written={q['written']}  [green]servable={q['servable']}[/green]  "

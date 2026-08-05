@@ -28,7 +28,31 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-__all__ = ["residual_copies_for", "dreams_root_for"]
+__all__ = ["residual_copies_for", "dreams_root_for", "forget_with_report"]
+
+
+def forget_with_report(semantic, fact_id: str, *,
+                       principal: str = "sdk") -> dict:
+    """Cancella un fatto E dice dove resta leggibile. UNA definizione.
+
+    Stava solo dentro ``Memory.forget_with_report``: quando ho aperto la
+    porta MCP, il primo tentativo ne ha RISCRITTO il corpo nell'handler —
+    cioè la prima delle tre classi di difetto che questo prodotto ripete
+    (una copia invece della superficie unica), commessa mentre curavo la
+    terza (una capacità raggiungibile da un canale solo). Ora il corpo sta
+    qui e lo chiamano tutte le porte.
+
+    Il referto non blocca MAI la cancellazione: se la scansione delle
+    copie fallisce, l'elenco esce vuoto e l'atto avviene lo stesso.
+    """
+    try:
+        copie = residual_copies_for(semantic.db_path, fact_id)
+    except Exception:  # noqa: BLE001 — l'osservabilita' non blocca l'atto
+        copie = []
+    rimosso = bool(semantic.delete(fact_id, principal=principal,
+                                   action="forget"))
+    return {"removed": rimosso, "fact_id": fact_id,
+            "residual_copies": copie}
 
 #: Copies whose name starts with this are managed by the auto-worker's
 #: retention (``_prune_old_dreams`` keeps the newest few). Anything else in
