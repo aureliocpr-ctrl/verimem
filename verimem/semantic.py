@@ -5062,6 +5062,15 @@ class SemanticMemory:
         if removed:
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
+            # L'azione più distruttiva del prodotto era l'unica senza evento
+            # (ws6 2026-08-05): un ritiro si vede, una quarantena si vede, e
+            # una CANCELLAZIONE — che non si annulla se non c'era snapshot e
+            # sopravvive solo nelle copie — spariva in silenzio. `undoable`
+            # dice, sul momento, se quel fatto ha una via di ritorno; niente
+            # testo della proposizione, come per ogni evento di questo canale.
+            from .flow_events import emit_flow as _emit_flow
+            _emit_flow("flow.forget", fact_id=fact_id, action=action,
+                       undoable=keep_undo_op_id is not None)
         return removed
 
     def delete_with_undo(self, fact_id: str, *,
@@ -5104,6 +5113,13 @@ class SemanticMemory:
                 from .undo_log import invalidate_handles_for
                 invalidate_handles_for(conn, fact_id, keep_op_id=op_id)
         if removed:
+            # Anche qui: delete_with_undo NON passa da delete(), fa il DELETE
+            # per conto suo — quindi senza questa riga la cancellazione
+            # REVERSIBILE sarebbe l'unica muta, cioè proprio quella su cui il
+            # feed avrebbe qualcosa di utile da dire.
+            from .flow_events import emit_flow as _emit_flow
+            _emit_flow("flow.forget", fact_id=fact_id, action="delete",
+                       undoable=True)
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
         return {

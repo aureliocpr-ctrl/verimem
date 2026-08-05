@@ -492,6 +492,13 @@
         + " · fitness " + (p.fitness != null ? Number(p.fitness).toFixed(2) : "?")
         + " · trials " + (p.trials != null ? p.trials : "?")
         + " · " + (p.status || "?");
+    } else if (evt.name === "flow.forget") {
+      /* rosso quando è definitiva: è l'unica azione che nessun bottone di
+         questa pagina può annullare, e deve leggersi diversa da un ritiro */
+      tag.className = p.undoable ? "adm" : "ref";
+      tag.textContent = p.undoable ? "DELETED (undoable)" : "DELETED";
+      detail = " · fact " + String(p.fact_id || "?").slice(0, 8)
+        + " · " + (p.action || "delete");
     } else if (evt.name === "flow.warmup") {
       /* l'attesa ha un nome: senza questa riga il feed resta muto per
          quaranta secondi mentre il prodotto carica il giudice, e un motore
@@ -573,7 +580,8 @@
     else if (name === "flow.quarantine") { onQuarantine(evt.payload || {}); }
     else if (name === "flow.restore") { onRestore(evt.payload || {}); }
     else if (name === "flow.episode" || name === "flow.skill"
-             || name === "flow.document" || name === "flow.warmup") { /* feed-only */ }
+             || name === "flow.document" || name === "flow.warmup"
+             || name === "flow.forget") { /* feed-only */ }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);
