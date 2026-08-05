@@ -1325,6 +1325,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                     topic: str | None = Query(default=None),
                     reason: str | None = Query(default=None),
                     counts: bool = Query(default=False),
+                    mismatches: bool = Query(default=False),
                     tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         """Il log dei RITIRI: le coppie (perso, vincitore), i più recenti
         prima — l'equivalente di /v1/quarantine per la supersessione.
@@ -1335,11 +1336,22 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         Ogni riga porta ``reversible`` + ``undo_op_id``: il ritiro si
         annulla con ``POST /v1/undo/{op_id}``. Metadati, mai i testi —
         ``counts=true`` ritorna il quartetto scritti/servibili/ritirati/
-        quarantinati con la formula dichiarata."""
+        quarantinati con la formula dichiarata.
+
+        ``mismatches=true`` ritorna invece dove il verdetto del moat e il
+        destino del fatto NON concordano: i fatti che questo store SERVE
+        benché il proprio giudice li abbia bocciati, quelli tenuti fuori
+        benché li abbia promossi, e la banda contesa dove l'esito
+        dipendeva da quale giudice era su. Elenca, non decide — ed è la
+        domanda per cui il prodotto esiste, quindi esce da ogni porta e
+        non solo dalla CLI (violazione mia, corretta il 2026-08-05)."""
         mem = tenants.get(tenant_id)
         from .retirement_log import retirement_log as _rlog
         from .retirement_log import survivability_counts as _scounts
         meter.bump(tenant_id, reads=1)
+        if mismatches:
+            from .retirement_log import verdict_mismatches as _vm
+            return _vm(mem.semantic, limit=limit, topic=topic)
         if counts:
             return _scounts(mem.semantic, topic=topic)
         rows = _rlog(mem.semantic, limit=limit, topic=topic, reason=reason)

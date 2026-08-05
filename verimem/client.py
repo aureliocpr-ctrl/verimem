@@ -2075,6 +2075,21 @@ class Memory:
         return _rlog(self.semantic, limit=limit, since=since, topic=topic,
                      reason=reason, with_text=with_text)
 
+    def verdict_mismatches(self, *, limit: int = 50,
+                           topic: str | None = None) -> dict[str, Any]:
+        """Where the moat's verdict and the fact's fate disagree, both ways:
+        judged true and withheld, judged false and served, plus the
+        contested band where the outcome depended on which judge was up.
+
+        It decides nothing — it lists, like the retirement log lists pairs.
+        The thresholds travel in the result because "true" and "false" here
+        are two cuts, and a number without its definition is the defect this
+        branch cures. Measured on the real corpus 2026-08-05: 11 quarantined
+        facts carry a verdict >= 90 and 10 served facts carry one below the
+        admission cut, down to 0.22."""
+        from .retirement_log import verdict_mismatches as _vm
+        return _vm(self.semantic, limit=limit, topic=topic)
+
     def survivability(self, *, topic: str | None = None) -> dict[str, Any]:
         """The canonical quartet written/servable/retired/quarantined with
         its formula. A fact disappears in TWO ways; any 'alive' count that

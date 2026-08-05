@@ -2914,7 +2914,14 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "counts=true returns instead the canonical quartet "
                 "{written, servable, retired, quarantined, formula} — "
                 "a fact disappears in TWO ways; any 'alive' count that "
-                "ignores one hides half the loss."
+                "ignores one hides half the loss. mismatches=true returns "
+                "instead where the moat's verdict and the fact's fate "
+                "DISAGREE: {judged_true_but_withheld, "
+                "judged_false_but_served, contested_band, thresholds} — "
+                "facts this store SERVES although its own judge rejected "
+                "them, facts kept out although it accepted them, and the "
+                "band where the outcome depended on which judge was up. "
+                "It lists, it decides nothing."
             ),
             inputSchema={
                 "type": "object",
@@ -2931,6 +2938,10 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     "counts": {"type": "boolean", "default": False,
                                "description": "return the survivability "
                                               "quartet instead of rows"},
+                    "mismatches": {"type": "boolean", "default": False,
+                                   "description": "return instead where the "
+                                                  "moat verdict and the "
+                                                  "fact's fate disagree"},
                 },
             },
         ),
@@ -13507,6 +13518,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if name == "hippo_retirement_log":
             from verimem.retirement_log import retirement_log, survivability_counts
             _topic = arguments.get("topic") or None
+            if arguments.get("mismatches"):
+                # dove il verdetto del moat e il destino del fatto non
+                # concordano. Un agente che scrive da qui non aveva modo di
+                # sapere che il proprio corpus serve fatti con un verdetto
+                # di bocciatura — la domanda per cui questo prodotto esiste.
+                from verimem.retirement_log import verdict_mismatches
+                mm = verdict_mismatches(
+                    a.semantic, limit=int(arguments.get("limit", 50) or 50),
+                    topic=_topic)
+                _audit(name, arguments, outcome="ok",
+                       detail={"served_but_judged_false":
+                               len(mm["judged_false_but_served"])})
+                return _ok({"ok": True, **mm})
             if arguments.get("counts"):
                 q = survivability_counts(a.semantic, topic=_topic)
                 _audit(name, arguments, outcome="ok",
