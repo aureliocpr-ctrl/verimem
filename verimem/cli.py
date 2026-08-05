@@ -2800,15 +2800,21 @@ def facts_retirement_log(
         from .retirement_log import verdict_mismatches as _vm
         mm = _vm(sm, topic=topic, limit=limit)
         veri, falsi = mm["judged_true_but_withheld"], mm["judged_false_but_served"]
+        banda = mm["contested_band"]
         console.print(
             f"[yellow]judged TRUE but withheld: {len(veri)}[/yellow]  "
-            f"[red]judged FALSE but served: {len(falsi)}[/red]")
+            f"[red]judged FALSE but served: {len(falsi)}[/red]  "
+            f"[magenta]contested band: {len(banda)}[/magenta]")
         for r in veri[:limit]:
             console.print(f"  [yellow]withheld[/yellow] {r['fact_id'][:8]} "
                           f"moat {r['grounding_score']:.2f}  {r['topic']}")
         for r in falsi[:limit]:
             console.print(f"  [red]served  [/red] {r['fact_id'][:8]} "
                           f"moat {r['grounding_score']:.2f}  {r['topic']}")
+        for r in banda[:limit]:
+            _dest = "served" if r["status"] != "quarantined" else "withheld"
+            console.print(f"  [magenta]contested[/magenta] {r['fact_id'][:8]} "
+                          f"moat {r['grounding_score']:.2f}  → {_dest}  {r['topic']}")
         console.print(f"[dim]{mm['thresholds']}[/dim]")
         return
     if counts:

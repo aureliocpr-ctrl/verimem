@@ -77,3 +77,35 @@ def test_le_soglie_sono_dichiarate(store):
     «vero» e «falso» qui sono due tagli, e chi legge deve vederli."""
     out = verdict_mismatches(store.semantic)
     assert "90" in out["thresholds"] and "40" in out["thresholds"], out
+
+
+def test_la_banda_contesa_e_una_categoria_a_parte(store):
+    """ws4 ha misurato il 2026-08-05 che la cut di ammissione NON è una:
+    40 (scala claude, il ripiego) o 70 (la calibrata del fine-tune), e quale
+    tocchi dipende da quale giudice era disponibile in quel momento. Un 55
+    entra con la prima e viene trattenuto con la seconda.
+
+    Fra le due cut il destino non è un'INCOERENZA — è un'INCERTEZZA, e va
+    nominata a parte: non «il prodotto ha sbagliato» ma «l'esito dipendeva
+    dal minuto». Sul corpus reale sono 23 fatti, tutti trattenuti."""
+    m = store
+    r = m.add("the office headquarters are in Milan", topic="hq", source=_FONTE)
+    with __import__("sqlite3").connect(m.semantic.db_path) as con:
+        con.execute("UPDATE facts SET grounding_score = 55.0 WHERE id = ?",
+                    (r["id"],))
+
+    out = verdict_mismatches(m.semantic)
+    ids = [x["fact_id"] for x in out["contested_band"]]
+    assert r["id"] in ids, out
+    # e NON deve finire fra i bocciati-ma-serviti: sotto la cut alta lo
+    # sarebbe, sotto quella bassa no — chiamarlo difetto sarebbe una scelta
+    # travestita da misura
+    assert r["id"] not in [x["fact_id"] for x in out["judged_false_but_served"]]
+
+
+def test_i_bocciati_serviti_sono_un_limite_inferiore_dichiarato(store):
+    """La lista usa il taglio BASSO: sotto 40 un fatto è respinto da
+    qualunque cut, quindi ogni riga è certa e il totale è un minimo. Deve
+    dirlo, altrimenti si legge come «sono tutti»."""
+    out = verdict_mismatches(store.semantic)
+    assert "lower bound" in out["thresholds"].lower(), out["thresholds"]

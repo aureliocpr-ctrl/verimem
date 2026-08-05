@@ -32,12 +32,22 @@ from typing import Any
 __all__ = ["retirement_log", "survivability_counts", "verdict_mismatches",
            "SERVABLE_WHERE"]
 
-#: Sopra questo il moat ha detto «la fonte lo sostiene»; sotto l'altro ha
-#: detto il contrario. Il taglio basso è quello che il gate usa per ammettere
-#: (40, la cut validata); quello alto è deliberatamente prudente — a 90 non
-#: si discute che il verdetto fosse positivo.
+#: Sopra questo il moat ha detto «la fonte lo sostiene»: 90 è deliberatamente
+#: prudente — a quel punteggio non si discute che il verdetto fosse positivo.
 _VERDETTO_VERO = 90.0
+
+#: LA CUT DI AMMISSIONE NON È UNA (misurato da ws4 il 2026-08-05): vale 40
+#: (scala claude, il ripiego) oppure 70 (la calibrata del fine-tune), e quale
+#: tocchi dipende da quale giudice era disponibile in quel momento — un 55
+#: entra con la prima e viene trattenuto con la seconda. Qui si usa il taglio
+#: BASSO di proposito: sotto 40 un fatto è respinto da QUALUNQUE cut, quindi
+#: ogni riga elencata è certa e il totale è un limite inferiore, mai gonfiato.
 _VERDETTO_FALSO = 40.0
+#: Fra le due cut il destino non è un'incoerenza ma un'INCERTEZZA: non «il
+#: prodotto ha sbagliato» bensì «l'esito dipendeva dal minuto». Categoria a
+#: parte, perché fonderla con le altre due sarebbe una scelta travestita da
+#: misura. Sul corpus reale: 23 fatti, tutti trattenuti, zero serviti.
+_BANDA_CONTESA_ALTA = 70.0
 
 #: The canonical "servable" predicate — the ONE definition of "alive".
 #: Two implicit definitions of the same word cost ws3 three hours on
@@ -169,18 +179,33 @@ def verdict_mismatches(sm, *, limit: int = 50,
           {where_t}
         ORDER BY grounding_score ASC LIMIT ?
     """
+    q_banda = f"""
+        SELECT id AS fact_id, topic, status, grounding_score, created_at
+        FROM facts
+        WHERE superseded_by IS NULL
+          AND grounding_score >= ? AND grounding_score < ?
+          {where_t}
+        ORDER BY grounding_score ASC LIMIT ?
+    """
     with sm._connect() as conn:
         veri = [dict(r) for r in conn.execute(
             q_true, (_VERDETTO_VERO, *par, int(limit)))]
         falsi = [dict(r) for r in conn.execute(
             q_false, (_VERDETTO_FALSO, *par, int(limit)))]
+        banda = [dict(r) for r in conn.execute(
+            q_banda, (_VERDETTO_FALSO, _BANDA_CONTESA_ALTA, *par, int(limit)))]
     return {
         "judged_true_but_withheld": veri,
         "judged_false_but_served": falsi,
+        "contested_band": banda,
         "topic": topic,
-        "thresholds": (f"judged_true = grounding_score >= {_VERDETTO_VERO:.0f} "
-                       f"AND quarantined · judged_false = grounding_score < "
-                       f"{_VERDETTO_FALSO:.0f} AND servable"),
+        "thresholds": (
+            f"judged_true = grounding_score >= {_VERDETTO_VERO:.0f} AND "
+            f"quarantined · judged_false = grounding_score < "
+            f"{_VERDETTO_FALSO:.0f} AND servable (LOWER BOUND: below "
+            f"{_VERDETTO_FALSO:.0f} any cut rejects) · contested_band = "
+            f"{_VERDETTO_FALSO:.0f}–{_BANDA_CONTESA_ALTA:.0f}, where the "
+            f"outcome depended on which judge was up, not on the text"),
     }
 
 
