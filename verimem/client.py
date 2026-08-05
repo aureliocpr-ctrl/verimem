@@ -984,7 +984,34 @@ class Memory:
             terms = content_terms(query)
             n = (self.count(query=terms, topic_prefix=topic_prefix)
                  if terms else self.count(topic_prefix=topic_prefix))
-            return {"intent": COUNT, "terms": terms, "count": n}
+            out = {"intent": COUNT, "terms": terms, "count": n}
+            # ⚠️ UNO ZERO SU UNA DOMANDA DI CONTEGGIO È LA RISPOSTA PEGGIORE
+            # POSSIBILE: «non ho trovato niente» detto con certezza. Misurato::
+            #
+            #     «Quanti fatti parlano di zinco?» -> 0, con DODICI fatti che
+            #     contengono zinco. Termini estratti: «fatti parlano zinco».
+            #
+            # `count` è un AND su TUTTI i termini, e `content_terms` lascia
+            # dentro le parole funzionali che la sua stoplist non conosce
+            # («parlano» manca, «parlato» c'è). Chi legge lo zero non ha modo di
+            # sapere QUALE termine lo ha azzerato.
+            #
+            # NON si cura la stoplist — «curare tutte le 15 stoplist» è una
+            # strada già falsificata in casa, perché la lista è infinita: oggi
+            # «parlano», domani «citano» o «riguardano». Si cura il SILENZIO, e
+            # il conteggio per singolo termine non decide nulla: MOSTRA.
+            # «zinco: 12 · parlano: 0» si legge in un secondo e la diagnosi la
+            # fa chi ha scritto la domanda.
+            #
+            # Costa una query per termine e si paga SOLO qui: conteggio a zero
+            # E più di un termine, cioè l'unico caso in cui un AND può avere
+            # azzerato qualcosa che c'era.
+            pezzi = terms.split()
+            if n == 0 and len(pezzi) > 1:
+                out["per_term"] = {
+                    t: self.count(query=t, topic_prefix=topic_prefix)
+                    for t in pezzi}
+            return out
         if intent == LIST_ALL:
             terms = content_terms(query)
             rows = self.semantic.search_facts(
