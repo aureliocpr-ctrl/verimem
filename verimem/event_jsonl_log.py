@@ -87,6 +87,48 @@ def _maybe_rotate() -> None:
         pass
 
 
+#: L'avviso di divergenza si dà UNA volta per processo: su un log che scrive
+#: centinaia di righe l'ora, ripeterlo sarebbe il rumore che fa ignorare gli
+#: avvisi veri.
+_DIVERGENZA_AVVISATA: bool = False
+
+
+def _avvisa_se_diverge() -> None:
+    """Dichiara quando il log finisce lontano dallo store in uso.
+
+    ``EVENT_LOG_PATH`` è calcolato all'import: chi setta ``HIPPO_DATA_DIR``
+    DOPO aver importato ottiene i fatti nella cartella isolata e gli eventi
+    nel corpus di casa. È l'ordine fra import ed env a decidere, e finora
+    nessuno lo diceva — la stessa causa per cui 210 fatti di laboratorio
+    sono finiti in produzione (misurato 2026-08-05).
+
+    Non sposta il file: cambiarlo a metà corsa spezzerebbe i lettori già
+    attaccati, e la scelta di dove scrivere non è di questa funzione. Tace
+    quando la divergenza è una scelta esplicita (``ENGRAM_EVENT_LOG``) e
+    quando non c'è. Best-effort: non solleva mai.
+    """
+    global _DIVERGENZA_AVVISATA
+    if _DIVERGENZA_AVVISATA or os.environ.get("ENGRAM_EVENT_LOG", "").strip():
+        return
+    try:
+        from ._compat import data_dir
+        atteso = Path(data_dir()) / "events.jsonl"
+        if atteso.resolve() == EVENT_LOG_PATH.resolve():
+            return
+        _DIVERGENZA_AVVISATA = True
+        import warnings
+        warnings.warn(
+            f"il log eventi scrive in {EVENT_LOG_PATH} mentre la data dir in "
+            f"uso è {data_dir()}: i fatti e la loro telemetria stanno in due "
+            f"posti diversi. Succede quando HIPPO_DATA_DIR è impostata DOPO "
+            f"l'import di verimem (EVENT_LOG_PATH si fissa all'import). "
+            f"Impostala prima, oppure dichiara ENGRAM_EVENT_LOG se la vuoi "
+            f"davvero altrove.",
+            RuntimeWarning, stacklevel=3)
+    except Exception:  # noqa: BLE001 — un avviso non può rompere un emit
+        pass
+
+
 def append_event(
     name: str,
     payload: dict[str, Any],
@@ -97,6 +139,7 @@ def append_event(
     Safe da chiamare da qualunque processo: la dir parent viene creata
     se manca, errori I/O o di serializzazione vengono inghiottiti.
     """
+    _avvisa_se_diverge()
     try:
         EVENT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     except OSError:
