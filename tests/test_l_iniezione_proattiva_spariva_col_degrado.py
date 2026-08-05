@@ -95,15 +95,35 @@ def test_a_caldo_non_si_dichiara_nessun_degrado(injector):
     assert all("ranking" not in h for h in injector.inject(PASSO))
 
 
-def test_il_docstring_dichiara_la_soglia_che_il_codice_ha():
-    """Il docstring del modulo prometteva `min_similarity=0.55`, la firma ne
-    aveva 0.30. Una doc che mente su un numero è un numero sbagliato in mano a
-    chi decide se fidarsi."""
+def test_il_docstring_dichiara_TUTTI_i_default_che_il_codice_ha():
+    """Il docstring prometteva `min_similarity=0.55` e la firma ne aveva 0.30.
+
+    ⚠️ LA PRIMA STESURA DI QUESTO TEST GUARDAVA UN NUMERO SOLO, e uno sweep
+    sull'intero pacchetto ha trovato che nella STESSA RIGA ce n'era un altro
+    sbagliato: `top_k=3` con la firma a `10`. Avevo corretto il primo e
+    lasciato quello accanto — «la cura c'era e mancava lo SWEEP», addosso a me
+    stessa, dentro la stessa riga di docstring.
+
+    Ora il presidio legge TUTTI i default numerici dalla firma via `inspect` e
+    verifica che il docstring non ne dichiari uno diverso. Il numero non si
+    ricopia mai: si legge dal codice, così i due non possono divergere.
+
+    (Lo sweep sull'intero pacchetto: 2825 funzioni esaminate, 8 divergenze, 7
+    delle quali erano casi limite spiegati nel testo — «per_day=0 makes the
+    function a no-op» — e una sola era vera. Questa.)
+    """
     import inspect
+    import re
 
     import verimem.proactive_step_injector as psi
 
-    reale = inspect.signature(StepInjector.inject).parameters[
-        "min_similarity"].default
-    assert f"min_similarity={reale}" in (psi.__doc__ or ""), (
-        f"il docstring non dichiara la soglia reale ({reale})")
+    doc = psi.__doc__ or ""
+    for nome, par in inspect.signature(StepInjector.inject).parameters.items():
+        reale = par.default
+        if not isinstance(reale, (int, float)) or isinstance(reale, bool):
+            continue
+        for m in re.finditer(rf"\b{re.escape(nome)}\s*=\s*(-?\d+(?:\.\d+)?)",
+                             doc):
+            assert abs(float(m.group(1)) - float(reale)) < 1e-9, (
+                f"il docstring dichiara {nome}={m.group(1)} "
+                f"ma la firma ha {reale}")

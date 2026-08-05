@@ -15,7 +15,7 @@ without repeating the full session briefing. The complement to cycle
 Design:
 - ``StepInjector(agent)`` keeps a per-session cache of fact ids already
   emitted, so the same fact never gets injected twice in a row.
-- ``.inject(step_text, *, min_similarity=0.30, top_k=3)`` returns a
+- ``.inject(step_text, *, min_similarity=0.30, top_k=10)`` returns a
   short list of dicts ``{id, proposition, topic, similarity}`` filtered
   by the threshold and de-duplicated against the cache.
 - ``.reset()`` clears the cache (e.g. when the user pivots to a new
