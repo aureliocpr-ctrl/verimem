@@ -70,6 +70,9 @@ svg{display:block; width:100%; height:auto; min-width:640px;}
 .evt{font-size:.74rem; line-height:1.5; padding:.32rem 0; border-bottom:1px dashed #3a352b; word-break:break-word;}
 .evt .t{color:#7c7666;}
 .evt .adm{color:#7ec49f; font-weight:600;} .evt .ref{color:#e08a6f; font-weight:600;}
+/* un'attesa in corso non è un esito: né verde né rossa, e non deve sembrare
+   una decisione presa (il warmup del giudice dura ~41s alla prima scrittura) */
+.evt .wait{color:var(--ink-3); font-weight:600; font-style:italic;}
 .evt .ans{color:#7ec49f; font-weight:600;} .evt .abs{color:#bdb4a0; font-weight:600;}
 .foot{margin-top:1rem; font-size:.7rem; color:var(--ink-3); line-height:1.7;}
 @media (max-width:900px){.grid{grid-template-columns:1fr}}

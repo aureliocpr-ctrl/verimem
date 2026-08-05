@@ -492,6 +492,18 @@
         + " · fitness " + (p.fitness != null ? Number(p.fitness).toFixed(2) : "?")
         + " · trials " + (p.trials != null ? p.trials : "?")
         + " · " + (p.status || "?");
+    } else if (evt.name === "flow.warmup") {
+      /* l'attesa ha un nome: senza questa riga il feed resta muto per
+         quaranta secondi mentre il prodotto carica il giudice, e un motore
+         che non dice nulla sembra fermo invece che al lavoro */
+      var fase = String(p.phase || "");
+      tag.className = fase === "failed" ? "ref" : (fase === "start" ? "wait" : "adm");
+      tag.textContent = fase === "start" ? "WARMING"
+        : (fase === "failed" ? "WARMUP FAILED" : "WARM");
+      detail = " · " + (p.what || "?")
+        + (p.elapsed_ms != null
+           ? " · " + (Number(p.elapsed_ms) / 1000).toFixed(1) + "s"
+           : " · loading…");
     } else if (evt.name === "flow.document") {
       var isIdx = String(p.kind || "") === "index";
       tag.className = (isIdx && p.chunks_flagged) ? "ref" : "adm";
@@ -561,7 +573,7 @@
     else if (name === "flow.quarantine") { onQuarantine(evt.payload || {}); }
     else if (name === "flow.restore") { onRestore(evt.payload || {}); }
     else if (name === "flow.episode" || name === "flow.skill"
-             || name === "flow.document") { /* feed-only */ }
+             || name === "flow.document" || name === "flow.warmup") { /* feed-only */ }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);

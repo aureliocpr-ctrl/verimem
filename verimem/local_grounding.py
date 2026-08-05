@@ -120,6 +120,14 @@ class LocalGroundingJudge:
                 raise RuntimeError(f"local gate model unavailable: {self.model_dir}")
             with self._lock:
                 if self._scorer is None:
+                    # flow.warmup va QUI e non nel costruttore: misurato
+                    # 2026-08-05, `LocalGroundingJudge()` ritorna in 0.1ms e i
+                    # 41 secondi si spendono in questa riga. Un evento "ready"
+                    # emesso dal costruttore dichiarava pronto un giudice che
+                    # non aveva ancora caricato niente — cioè esattamente la
+                    # bugia che l'osservabilità serve a togliere.
+                    from .flow_events import emit_flow as _emit_flow
+                    _emit_flow("flow.warmup", what="moat-judge", phase="start")
                     t0 = time.time()
                     try:
                         self._scorer = make_finetuned_scorer(
@@ -128,8 +136,13 @@ class LocalGroundingJudge:
                         # cache the failure: a broken/absent model must not re-pay
                         # the load attempt on every gated write
                         self._load_failed = True
+                        _emit_flow("flow.warmup", what="moat-judge",
+                                   phase="failed",
+                                   elapsed_ms=round((time.time() - t0) * 1000, 1))
                         raise
                     self.load_s = round(time.time() - t0, 1)
+                    _emit_flow("flow.warmup", what="moat-judge", phase="ready",
+                               elapsed_ms=round((time.time() - t0) * 1000, 1))
         return self._scorer
 
     def coppia(self, source: str, fact: str, *,
@@ -161,7 +174,18 @@ _judge_lock = threading.Lock()
 
 
 def get_local_judge() -> LocalGroundingJudge:
-    """Process-wide lazy singleton (model loads once)."""
+    """Process-wide lazy singleton (model loads once).
+
+    Emits ``flow.warmup`` around the load. Measured 2026-08-05 on a fresh
+    store: the first grounded write takes 42.7s and the flow channel stays
+    SILENT for all of them, then delivers both events at the end — so the
+    live Engine Room shows a stopped engine exactly while the product is
+    doing the most expensive thing it does. The cost belongs to whoever owns
+    the write path; the SILENCE is what makes a working product look stuck,
+    and that is observability. ``judge_state()`` already told this in one
+    word "for every surface" — it just never reached the channel the live
+    surfaces listen to.
+    """
     global _judge
     if _judge is None:
         with _judge_lock:
