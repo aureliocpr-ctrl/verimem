@@ -59,6 +59,7 @@ from .evidence_hint import hint_for
 
 # 2026-08-05: il router di provenienza, per lo sweep sui quattordici layer che
 # vivono qui (finora era applicato solo ai tre detector in semantic.py).
+from .gate_router import attribution_question as _gr_attribution_question
 from .gate_router import classify_provenance as _gr_classify_provenance
 from .gate_router import l1x_applies as _gr_l1x_applies
 
@@ -2216,6 +2217,31 @@ def run_validation_gate(
                               f"witness {_iv.author}) — set "
                               "ENGRAM_P0_INDEPENDENCE=1 to enforce",
                 })
+    def _attribuzione_da_suggerire(ws: list) -> str:
+        """La strada che il gate CONOSCE e non diceva a chi ne ha bisogno.
+
+        Il router (10/07) esporta tre funzioni: `classify_provenance` e
+        `l1x_applies` decidono, `attribution_question` lo SPIEGA a chi scrive —
+        e quella terza era chiamata solo in semantic.py, mai qui. Il caso che
+        l'ha fatta emergere: «Hanno firmato Neri e Gialli» quarantinata da
+        L1.16 con l'advice «Add approval:<id>_signed / pr:<n>_approved», che
+        per un verbale d'assemblea non ha nessuna uscita.
+
+        ⚠️ NON SEMPRE, o e' rumore: su «ho fixato il bug» la provenienza non
+        c'entra, e un advice che compare ovunque non si legge piu'. Il segnale
+        che isola il caso vero e' la CONTRADDIZIONE INTERNA del gate — L1
+        trattiene MENTRE il moat ha approvato la fonte. Li' il gate dice due
+        cose incompatibili, e quella sbagliata e' la seconda: il testo non e'
+        dell'agente.
+        """
+        if grounding_val is None or grounding_val < _threshold_of_record:
+            return ""  # il moat non ha approvato: nessuna contraddizione
+        if not any(str(w.get("layer", "")).startswith("L1") for w in ws):
+            return ""
+        if _gr_classify_provenance(writer_role, verified_by) != "agent_claim":
+            return ""  # gia' dichiarata: dirglielo sarebbe rumore
+        return _gr_attribution_question("agent_claim")
+
     def _mk(action: GateAction, *, advice_: str = advice,
             warnings_: list | None = None) -> GateResult:
         # Every gate outcome carries the judge-of-record + threshold, so the
@@ -2225,9 +2251,16 @@ def run_validation_gate(
         # receipt + a harmless-but-noisy second supersede attempt).
         _sup = list(dict.fromkeys(supersede_ids))
         _sup_set = set(_sup)
+        _ws = warnings if warnings_ is None else warnings_
+        _attr = _attribuzione_da_suggerire(_ws)
+        if _attr:
+            advice_ = f"{advice_} {_attr}".strip() if advice_ else _attr
+            for _w in _ws:
+                if str(_w.get("layer", "")).startswith("L1"):
+                    _w["advice"] = f"{_w.get('advice', '')} {_attr}".strip()
         return GateResult(
             action=action,
-            warnings=warnings if warnings_ is None else warnings_,
+            warnings=_ws,
             contradicting_fact_ids=[c for c in dict.fromkeys(contradicting_ids)
                                     if c not in _sup_set],
             supersede_fact_ids=_sup,
