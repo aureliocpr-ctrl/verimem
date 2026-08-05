@@ -73,6 +73,72 @@ def _residui_dei_test(d) -> tuple[int, int]:
         return 0, 0
 
 
+def _provenienza_del_codice() -> str:
+    """Da quale albero gira il pacchetto, e a quale revisione.
+
+    Il numero di versione e' lo stesso in ogni checkout: dice cosa
+    dovrebbe essere il codice, non quale codice e'. Qui si legge la
+    cartella che lo contiene e — se e' un albero git — la revisione, dal
+    file ``.git/HEAD`` senza lanciare nessun processo (un doctor che si
+    impianta e' un paziente). Un pacchetto installato non ha un albero, e
+    allora si dice solo dove sta: e' comunque l'informazione che
+    distingue due installazioni.
+    """
+    from pathlib import Path
+    try:
+        radice = Path(__file__).resolve().parent.parent
+    except OSError:
+        return "unknown"
+    testa = ""
+    try:
+        g = radice / ".git"
+        if g.is_file():                       # worktree: .git e' un puntatore
+            riga = g.read_text(encoding="utf-8").strip()
+            if riga.startswith("gitdir:"):
+                g = Path(riga.split(":", 1)[1].strip())
+        if g.is_dir():
+            h = (g / "HEAD").read_text(encoding="utf-8").strip()
+            if h.startswith("ref:"):
+                ref = h.split(":", 1)[1].strip()
+                # il nome INTERO del ramo: `ws6/control-room` e
+                # `ws3/control-room` condividono l'ultimo segmento, ed e'
+                # esattamente il tipo di ambiguita' che questo campo esiste
+                # per togliere
+                testa = ref[len("refs/heads/"):] if ref.startswith(
+                    "refs/heads/") else ref
+                # In un WORKTREE i ref non stanno nella sua gitdir ma nel
+                # repo principale, indicato dal file `commondir`: leggere
+                # solo la gitdir dava il ramo senza revisione — meta'
+                # risposta, e la meta' mancante era quella che distingue
+                # due checkout allo stesso ramo.
+                radici = [g]
+                try:
+                    cd = (g / "commondir").read_text(encoding="utf-8").strip()
+                    radici.append((g / cd).resolve())
+                except OSError:
+                    pass
+                for base in radici:
+                    p = base / ref
+                    if p.exists():
+                        testa += "@" + p.read_text(
+                            encoding="utf-8").strip()[:8]
+                        break
+                    pr = base / "packed-refs"
+                    if pr.exists():
+                        for r in pr.read_text(encoding="utf-8").splitlines():
+                            if r.endswith(" " + ref):
+                                testa += "@" + r.split(" ", 1)[0][:8]
+                                break
+                        else:
+                            continue
+                        break
+            else:
+                testa = "detached@" + h[:8]
+    except (OSError, ValueError, IndexError):
+        testa = ""                            # un albero illeggibile non e' un errore
+    return f"{radice}" + (f" [{testa}]" if testa else "")
+
+
 def run_doctor() -> list[dict[str, Any]]:
     """Run all checks; each returns ``{name, status, detail, fix?}``.
 
@@ -90,7 +156,17 @@ def run_doctor() -> list[dict[str, Any]]:
     # -- version ---------------------------------------------------------------
     try:
         from . import __version__
-        add("version", OK, f"verimem {__version__} · python {sys.version.split()[0]}")
+        # QUALE codice sta girando, non solo che numero porta. Cinque
+        # istanze lavorano sullo stesso repo da checkout diversi e
+        # `verimem 0.7.0` e' identico in tutti: la versione non
+        # distingue, e il 2026-08-05 e' costato tre volte in un giorno
+        # (una misura sul ramo di un'altra creduto il main; una cura
+        # verificata e assente dall'albero dove il prodotto gira). Il
+        # percorso del pacchetto lo dice sempre; la revisione git solo
+        # quando il codice gira da un albero, e allora vale doppio.
+        add("version", OK,
+            f"verimem {__version__} · python {sys.version.split()[0]} · "
+            f"code from {_provenienza_del_codice()}")
     except Exception as e:  # noqa: BLE001 — a doctor never crashes on a check
         add("version", WARN, f"unreadable: {e}")
 
@@ -187,6 +263,7 @@ def run_doctor() -> list[dict[str, Any]]:
         # there the CE is not installed, and doctor answered about the model
         # while saying nothing about the corpus.
         _n = _judged = 0
+        _con_fonte_non_giud = _senza_fonte = None
         _readable = True
         try:
             import sqlite3 as _sq
@@ -205,12 +282,41 @@ def run_doctor() -> list[dict[str, Any]]:
                         "SELECT COUNT(*) FROM facts WHERE superseded_by "
                         "IS NULL AND grounding_score IS NOT NULL"
                     ).fetchone()[0])
+                    # LE DUE POPOLAZIONI, contate invece che nominate. Il
+                    # messaggio elencava due cause alla pari; sul corpus
+                    # reale pesano 6445 contro 32, e l'operatore andava a
+                    # inseguire la piccola.
+                    #
+                    # In un try SUO: `source_signature` e' una colonna piu'
+                    # giovane, e su uno store che non ce l'ha la query
+                    # fallisce. Dentro il try grande faceva cadere anche la
+                    # copertura — cioe' il dato che c'era gia' — e il
+                    # referto rispondeva «UNKNOWN» a una domanda a cui
+                    # sapeva rispondere. Preso in regressione, non a
+                    # ragionamento: un test del 2026-07 e' andato rosso.
+                    try:
+                        _con_fonte_non_giud = int(_c.execute(
+                            "SELECT COUNT(*) FROM facts WHERE superseded_by "
+                            "IS NULL AND grounding_score IS NULL "
+                            "AND source_signature IS NOT NULL "
+                            "AND source_signature != ''").fetchone()[0])
+                        _senza_fonte = int(_c.execute(
+                            "SELECT COUNT(*) FROM facts WHERE superseded_by "
+                            "IS NULL AND grounding_score IS NULL "
+                            "AND (source_signature IS NULL "
+                            "OR source_signature = '')").fetchone()[0])
+                    except Exception:  # noqa: BLE001
+                        # None, non 0: «non ho potuto separarle» non e'
+                        # «sono zero», ed e' la distinzione che questo
+                        # referto difende in ogni sua riga.
+                        _con_fonte_non_giud = _senza_fonte = None
         except Exception:  # noqa: BLE001 — a doctor that hangs is a patient
             # NOT silently zero: a locked, corrupt or schema-drifted store
             # would then be indistinguishable from a healthy empty one, and
             # this check would print its most reassuring line exactly when
             # it could not look (adversarial review, 2026-07-28).
             _n = _judged = 0
+            _con_fonte_non_giud = _senza_fonte = None
             _readable = False
 
         if not _readable:
@@ -230,24 +336,48 @@ def run_doctor() -> list[dict[str, Any]]:
                     "the grounding_score column, locked or corrupt will fail "
                     "this read")
             elif _n and _judged / _n < _MOAT_COVERAGE_WARN:
-                # DUE cause, non una. La seconda e' stata misurata il
-                # 2026-07-30: un write CON fonte, sul canale MCP, non e' stato
-                # giudicato lo stesso — li' il server tiene il cold-load da ~30s
-                # fuori dal thread di richiesta, e per quei secondi il giudice
-                # sta caricando (`judge_state() == "warming"`). Nominare solo la
-                # prima manda l'operatore ad aggiungere una source che gia'
-                # c'era, e il numero non si muove.
-                add("moat-judge", WARN,
-                    f"local CE gate model installed (state here: "
-                    f"{_stato_giudice}), but only {_coverage} — the moat runs "
-                    f"only on writes that carry a source, AND on the MCP "
-                    f"channel the judge loads in the background: writes that "
-                    f"arrive while it is warming are admitted unjudged",
-                    "pass source='<the evidence text>' on add() (or --source on "
-                    "`verimem save`); a verified_by ref records WHO vouches and "
-                    "does not run the check. For the MCP server, set "
-                    "ENGRAM_GROUNDING_WRITE=1 in its env so the judge is warmed "
-                    "at boot instead of on the first write")
+                # DUE cause, e ora CONTATE invece che nominate alla pari.
+                #
+                # Questa riga asseriva: «on the MCP channel the judge loads
+                # in the background: writes that arrive while it is warming
+                # are admitted unjudged». Era una generalizzazione di UNA
+                # osservazione (2026-07-30, un write con fonte non giudicato
+                # su MCP), scritta come proprieta' del prodotto — e la
+                # catena che ne e' seguita, il 2026-08-05, e' il motivo per
+                # cui non si fa: ws5 l'ha letta qui e me l'ha passata come
+                # misura, io l'ho messa in due commit e in un commento, poi
+                # lei l'ha misurata sul canale SDK (4 thread simultanei,
+                # tutti 42.60s, 0 NULL su 4) e l'ha ritirata. Nessuno aveva
+                # inventato niente: il prodotto non distingueva una misura
+                # da un'ipotesi, e chi legge non poteva farlo per lui.
+                #
+                # E le due cause non pesano uguale: sul corpus reale 6445
+                # fatti senza fonte contro 32 con la fonte e senza verdetto.
+                # Elencarle alla pari mandava l'operatore a impostare una
+                # variabile d'ambiente per inseguire i 32.
+                _riga = (f"local CE gate model installed (state here: "
+                         f"{_stato_giudice}), but only {_coverage}")
+                if _senza_fonte is not None and _con_fonte_non_giud is not None:
+                    _riga += (f" — of the unjudged: {_senza_fonte} carry NO "
+                              f"declared source (the moat had nothing to "
+                              f"check) and {_con_fonte_non_giud} declared a "
+                              f"source and still have no verdict")
+                if _con_fonte_non_giud:
+                    _riga += (" — for those the reason is NOT recorded per "
+                              "fact; candidates are write-time grounding "
+                              "switched off, a judge that failed to load, or "
+                              "a judge still warming (observed once on the "
+                              "MCP channel, 2026-07-30, and NOT reproduced on "
+                              "the SDK channel on 2026-08-05)")
+                _fix = ("pass source='<the evidence text>' on add() (or "
+                        "--source on `verimem save`); a verified_by ref "
+                        "records WHO vouches and does not run the check")
+                if _con_fonte_non_giud:
+                    _fix += (f" — that closes the {_senza_fonte}. For the "
+                             f"other {_con_fonte_non_giud}, check "
+                             f"ENGRAM_GROUNDING_WRITE in the writing "
+                             f"process's env and `verimem doctor` there")
+                add("moat-judge", WARN, _riga, _fix)
             else:
                 add("moat-judge", OK,
                     f"local CE gate model installed — the grounding moat is ON "
