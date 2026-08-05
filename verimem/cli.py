@@ -380,6 +380,49 @@ def warmup(
 
 
 @app.command()
+def tiers(
+    json_out: bool = typer.Option(False, "--json", help="Emit raw JSON"),
+    decoys: bool = typer.Option(True, "--decoys/--no-decoys",
+                                help="list same-named files next to each store"),
+) -> None:
+    """Dove vive ogni tier e quante righe ha — con i file che ne portano
+    il nome senza esserlo.
+
+    Il 2026-08-05 le cinque tabelle delle entità dentro `semantic.db`
+    (un guscio di migrazione, tutte a zero) sono state scambiate per il
+    tier: il grafo sta in `entity_kg/entity_kg.db` con 9078 entità e
+    87387 archi. Nessun comando diceva dove un tier vivesse, quindi
+    l'unico modo di saperlo era contare i file a mano. Uno store assente
+    dice `unavailable`, mai `0`.
+    """
+    from .tier_inventory import tier_inventory
+    inv = tier_inventory(with_decoys=decoys)
+    if json_out:
+        console.print_json(data=inv)
+        return
+    console.print(f"[dim]data dir[/] {inv['data_dir']}")
+    table = Table()
+    table.add_column("tier")
+    table.add_column("righe")
+    # il percorso NON si tronca: è il contenuto di questo comando, e una
+    # riga che finisce con «…» rimanda esattamente all'atto — contare a
+    # mano il file sbagliato — che il comando esiste per evitare
+    table.add_column("store", overflow="fold")
+    table.add_column("tabella")
+    for t in inv["tiers"]:
+        n = t["rows"]
+        table.add_row(t["tier"],
+                      f"[dim]{n}[/]" if n == "unavailable" else str(n),
+                      t["store"], t["counted_in"])
+    console.print(table)
+    for t in inv["tiers"]:
+        for d in t.get("decoys") or []:
+            console.print(f"[yellow]doppione[/] {t['tier']}: {d['path']} "
+                          f"— righe {d['rows']}, {d['size_mb']} MB "
+                          f"[dim](non è il tier: contarlo dà un numero falso)[/]")
+
+
+@app.command()
 def doctor(
     json_out: bool = typer.Option(False, "--json", help="Emit raw JSON checks"),
 ) -> None:

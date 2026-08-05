@@ -1320,6 +1320,22 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         meter.bump(tenant_id, reads=1)
         return {"items": items, "count": len(items)}
 
+    @app.get("/v1/tiers")
+    def tiers(tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        """Dove vive ogni tier di questo tenant e quante righe ha.
+
+        Nasce da una misura del 2026-08-05: le cinque tabelle delle
+        entità dentro `semantic.db` sono un guscio di migrazione vuoto —
+        il grafo sta in `entity_kg/entity_kg.db` (9078 entità, 87387
+        archi) — e contare il guscio produsse «il tier entità è vuoto».
+        Nessuna superficie diceva dove un tier viva, quindi l'unico modo
+        di saperlo era contare i file a mano, cioè cadere nella buca.
+        Uno store assente vale `unavailable`, mai `0`."""
+        mem = tenants.get(tenant_id)
+        from .tier_inventory import tier_inventory as _ti
+        meter.bump(tenant_id, reads=1)
+        return _ti(data_dir=Path(mem.semantic.db_path).resolve().parent.parent)
+
     @app.get("/v1/retirements")
     def retirements(limit: int = Query(default=50, ge=1, le=500),
                     topic: str | None = Query(default=None),

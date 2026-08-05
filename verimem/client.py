@@ -2075,6 +2075,20 @@ class Memory:
         return _rlog(self.semantic, limit=limit, since=since, topic=topic,
                      reason=reason, with_text=with_text)
 
+    def tier_inventory(self) -> dict[str, Any]:
+        """Where each tier actually lives, how many rows it holds, and
+        which nearby files carry its name without being it.
+
+        Measured 2026-08-05: the five entity tables inside ``semantic.db``
+        are an empty migration shell — the graph lives in
+        ``entity_kg/entity_kg.db`` with 9078 entities and 87387 edges, and
+        counting the shell produced "the entity tier is empty". A missing
+        store reads ``unavailable``, never ``0``: an empty container and
+        an absent one return the same number, and only the second
+        announces itself."""
+        from .tier_inventory import tier_inventory as _ti
+        return _ti(data_dir=Path(self.semantic.db_path).resolve().parent.parent)
+
     def verdict_mismatches(self, *, limit: int = 50,
                            topic: str | None = None) -> dict[str, Any]:
         """Where the moat's verdict and the fact's fate disagree, both ways:

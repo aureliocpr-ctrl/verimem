@@ -2946,6 +2946,28 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_tier_inventory",
+            description=(
+                "ws6 control-room 2026-08-05. WHERE each tier actually "
+                "lives, how many rows it holds, and which nearby files "
+                "carry its name without being it. Born from a measured "
+                "mistake: the five entity tables inside semantic.db are an "
+                "empty migration shell — the graph lives in "
+                "entity_kg/entity_kg.db with 9078 entities and 87387 edges "
+                "— and counting the shell produced 'the entity tier is "
+                "empty', retiring a work direction. No surface said where "
+                "a tier lives, so the only way to know was counting files "
+                "by hand, i.e. falling in the hole. A missing store reads "
+                "`unavailable`, NEVER 0: an empty container and an absent "
+                "one return the same number and only the second announces "
+                "itself. Read-only, every store opened mode=ro."
+            ),
+            inputSchema={"type": "object", "properties": {
+                "with_decoys": {"type": "boolean", "default": True,
+                                "description": "list the same-named files "
+                                               "next to each real store"}}},
+        ),
+        t.Tool(
             name="hippo_briefing_by_project",
             description=(
                 "Cycle #80 (2026-05-16). Project-scoped briefing — "
@@ -13514,6 +13536,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             items = a.semantic.list_undoable_ops(limit=limit)
             _audit(name, arguments, outcome="ok", detail={"n": len(items)})
             return _ok({"ok": True, "items": items})
+
+        if name == "hippo_tier_inventory":
+            from pathlib import Path as _P
+
+            from verimem.tier_inventory import tier_inventory
+            inv = tier_inventory(
+                data_dir=_P(a.semantic.db_path).resolve().parent.parent,
+                with_decoys=bool(arguments.get("with_decoys", True)))
+            _audit(name, arguments, outcome="ok",
+                   detail={"tiers": len(inv["tiers"])})
+            return _ok({"ok": True, **inv})
 
         if name == "hippo_retirement_log":
             from verimem.retirement_log import retirement_log, survivability_counts
