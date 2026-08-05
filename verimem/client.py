@@ -635,6 +635,29 @@ class Memory:
         # prodotto passa la giornata a curare. Un indice su `proposition` lo
         # renderebbe O(1) (0.127 ms a 200k, 286 ms per costruirlo), ma è una
         # modifica di schema.
+        # UN TOPIC CON SPAZI AI BORDI È UN SILO INVISIBILE. Misurato da utente:
+        #     count(topic='az/mag')  = 1     count(topic='az/mag ') = 1
+        #     count(topic=' az/mag') = 1     count(topic='AZ/MAG')  = 1
+        # quattro varianti, quattro contenitori. E le due superfici hanno
+        # semantiche diverse: `topic_prefix` normalizza il case e non gli
+        # spazi, il topic esatto non normalizza nulla.
+        #
+        # ⚠️ NON SI NORMALIZZA, ed è una scelta: sul corpus vero il danno non
+        # esiste ancora (5716 topic distinti, 0 con spazi ai bordi, 0
+        # collisioni), e `topic` è la chiave usata anche per l'isolamento fra
+        # tenant. Riscrivere una chiave del genere alle spalle di chi scrive,
+        # per un difetto con zero istanze misurate, è un rischio sproporzionato.
+        # Si dichiara e la decisione resta sua.
+        if topic and topic != topic.strip():
+            warnings = [*warnings, {
+                "layer": "topic_spazi",
+                "reason": (f"il topic {topic!r} ha spazi ai bordi: è un "
+                           f"contenitore diverso da {topic.strip()!r} e i due "
+                           f"non si trovano a vicenda"),
+                "advice": ("se non era voluto, riscrivi il fatto con il topic "
+                           "senza spazi — il topic è una chiave e non viene "
+                           "corretto in automatico"),
+            }]
         _dup_max = soglia_controllo_duplicati()
         if _dup_max:
             try:
