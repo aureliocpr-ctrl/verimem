@@ -517,6 +517,21 @@
       tag.textContent = p.undoable ? "DELETED (undoable)" : "DELETED";
       detail = " · fact " + String(p.fact_id || "?").slice(0, 8)
         + " · " + (p.action || "delete");
+    } else if (evt.name === "flow.dream") {
+      /* la manutenzione automatica gira DA SOLA ogni 4 ore e ritira fatti
+         (misurato: 5 in una passata, con 95 lasciati per pari fiducia).
+         I passi caduti stanno nella stessa riga: il fail-open resta, ma
+         un fallimento ogni 4 ore che nessuno vede e' quello che non si
+         scopre */
+      var rotti = (p.steps_failed || []).length;
+      tag.className = rotti ? "ref" : (p.retired ? "sup" : "adm");
+      tag.textContent = rotti ? "MAINTENANCE (partial)" : "MAINTENANCE";
+      detail = " · ritirati " + (p.retired != null ? p.retired : "?")
+        + " · lasciati " + (p.skipped_equal_trust != null
+                            ? p.skipped_equal_trust : "?")
+        + " · scan " + (p.scanned_facts != null ? p.scanned_facts : "?")
+        + (p.new_conflicts ? " · nuovi conflitti " + p.new_conflicts : "")
+        + (rotti ? " · CADUTI: " + (p.steps_failed || []).join(", ") : "");
     } else if (evt.name === "flow.decay") {
       /* la scrittura di massa: migliaia di righe cambiano valore in un
          colpo. Il totale da solo non dice la cosa che conta — che la
@@ -615,7 +630,8 @@
     else if (name === "flow.restore") { onRestore(evt.payload || {}); }
     else if (name === "flow.episode" || name === "flow.skill"
              || name === "flow.document" || name === "flow.warmup"
-             || name === "flow.forget" || name === "flow.decay") { /* feed-only */ }
+             || name === "flow.forget" || name === "flow.decay"
+             || name === "flow.dream") { /* feed-only */ }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);
