@@ -1380,7 +1380,7 @@ class Memory:
                              outcome: tuple[str, bool, float] | None = None,
                              reports: dict[str, dict[str, str]] | None = None,
                              audited_false: tuple[str, str] | None = None,
-                             ) -> None:
+                             ) -> dict[str, Any]:
         """Feed the per-source book and persist it. ``confirmation`` = ≥2
         distinct sources asserted the same accepted value; ``contradiction``
         = this source contradicted an accepted value; ``outcome`` =
@@ -1417,13 +1417,38 @@ class Memory:
         # included) — the recovery crossing-up is read against these.
         pre_all = {s: book.trust(s)
                    for s in set(watched) | set(confirmation or [])}
+        # ⚠️ IL RIFIUTO DI UNA CONFERMA NON È PIÙ MUTO. `observe_confirmation`
+        # richiede ≥2 fonti distinte — regola documentata e con una ragione
+        # anti-collusione: «a single (or self-duplicated) source cannot confirm
+        # itself» — e con UNA sola fonte esce senza fare nulla. Chi chiamava
+        # non riceveva nessun segnale: il metodo tornava `None` e il numero non
+        # si muoveva.
+        #
+        # Trovato da ws5 dall'esterno, e la conclusione a cui è arrivato dice
+        # quanto costa il silenzio: «le conferme non arrivano al ledger, una
+        # fonte che sbaglia resta penalizzata per sempre». Rimisurato, è falso
+        # — la reputazione RISALE (0.3333 → 0.5 → 0.6 con ≥2 conferme, e la
+        # formula dichiarata torna esatta) — ma un utente esperto ci ha messo
+        # mezz'ora per concludere il contrario, perché il rifiuto era invisibile.
+        #
+        # LA REGOLA NON SI TOCCA. Si dichiara cosa è stato registrato e cosa no.
+        esito: dict[str, Any] = {}
         if confirmation:
             for src_id, kv in (reports or {}).items():
                 for k, v in (kv or {}).items():
                     book.record_report(src_id, k, v)
+            _prima = {s: book.trust(s) for s in confirmation}
             book.observe_confirmation(
                 confirmation, require_independent=independence_enabled(),
                 deconfounded=independence_deconfounded())
+            _registrata = any(book.trust(s) != _prima.get(s)
+                              for s in confirmation)
+            esito["confirmation_recorded"] = _registrata
+            if not _registrata:
+                esito["reason"] = (
+                    "una conferma richiede almeno 2 fonti distinte: una fonte "
+                    "non può confermare sé stessa. Nessuna reputazione è "
+                    "cambiata.")
         if contradiction:
             book.observe_contradiction(contradiction)
         if outcome:
@@ -1442,6 +1467,7 @@ class Memory:
             for s in confirmation:
                 if pre_all.get(s, 0.0) < thr <= book.trust(s):
                     self._rehabilitate_source(s)
+        return esito
 
     def report_outcome(self, fact_id: str, *, good: bool,
                        weight: float = 1.0) -> bool:
