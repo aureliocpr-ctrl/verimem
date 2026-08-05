@@ -141,24 +141,74 @@ the helm it also shows:
   quarantine with a *restore* button — the buttons drive the real endpoints
   of this gateway, and the feed shows the effect;
 - a **`retired` counter** in the header next to admitted/quarantined;
-- the **dark chambers**: subsystems that mutate or decide with **no
-  telemetry yet** (dream/consolidation, decay, forget, quarantine-exit,
-  documents, episodes, skills, contradiction scan), each naming its module
-  and the event it lacks. The map declares its own blind spots instead of
-  looking complete. (Episodes example, measured: 405/413 outcomes hardcoded
-  "success"; zero failures recorded in 2.5 months of heavy failure.)
+- the **chamber map**, which declares its own blind spots instead of looking
+  complete. Rows marked **LIT** carry the date their telemetry arrived; the
+  rest still mutate or decide with **no event a live surface can hear**:
+
+  | Chamber | State (2026-08-05) |
+  |---|---|
+  | QUARANTINE ⇄ | **LIT** — `flow.quarantine` + `flow.restore`. The entry was visible at write time and the exit never was, so the queue could only appear to grow |
+  | EPISODES | **LIT** — `flow.episode` carries `outcome`, because 405 of 413 say "success" and none has failed since May 19 (a skew you notice only if every episode wears its outcome) |
+  | SKILLS | **LIT** — `flow.skill` on fitness and promotion; 369 skills, 281 with zero trials, last update May 15 |
+  | DOCUMENTS | **LIT** — `flow.document` index+search; was the ONLY tier with no `emit` call at all, and it is the one this team leans on |
+  | DREAM / consolidation | measured, still dark: consolidates by ADDING a master node, never retires — the specific answer still beats the master in recall |
+  | DECAY | measured, still dark: `run_decay_pass` DOES write, flooring aged facts to 0.05 confidence regardless of verification; the default ranking does not read that field, but a signal builder does |
+  | FORGET | still dark as an event — but `forget_with_report` now says WHERE the fact is still readable (see §6) |
+  | CONTRADICTION SCAN | measured, delivered to the write-path owner: it excludes superseded rows *by design*, so the two defences are in series and the first removes the second's input; and no detector covers a categorical clash (Milan vs Rome) |
 
 A gateway without the governance routes makes the panel say so
 ("pre-helm build") — an absent route must never render as "nothing lost".
 
-## 5. Surface tags you can trust
+⚠️ **Reading the panel from an automated browser**: `feedFlush` runs inside
+`requestAnimationFrame`, which browsers suspend for a hidden tab. A pane that
+is not on screen shows `LIVE` and an empty feed while the stream is perfectly
+healthy. Probe `document.visibilityState` before calling a UI defect: if it
+says `hidden`, verify from the endpoint instead (this cost three rounds on
+2026-08-05, and the lesson was already in memory from July 16).
 
-Flow events carry `surface`. Since 2026-08-04 an undeclared caller is tagged
-`unknown` (before, the default was the *name of a real surface* — 97% of the
-real corpus wore "sdk" chosen by nobody). `cli`, `mcp`, `gateway` are set by
-their entrypoints; an explicit `ENGRAM_FLOW_SURFACE` always wins.
+## 5. Numbers and tags you can trust
 
-## 6. What governance does NOT do
+**Surface.** Flow events carry `surface`. Since 2026-08-04 an undeclared
+caller is tagged `unknown` (before, the default was the *name of a real
+surface* — 97% of the real corpus wore "sdk" chosen by nobody). `cli`, `mcp`,
+`gateway` are set by their entrypoints; an explicit `ENGRAM_FLOW_SURFACE`
+always wins.
+
+**Tenant.** Every governance action carries the tenant that asked for it. The
+restore/undo routes did not, at first: their events left as `surface=unknown`
+with no tenant, which meant no one could tie a governance action to a
+customer — and in personal mode it surfaced on the machine feed. Fixed the
+same day it was measured.
+
+**Where the log lives.** `<data dir>/events.jsonl` — the log follows the
+store the caller chose. It used to be `~/.engram` hardcoded, so isolating a
+bench with `HIPPO_DATA_DIR` still wrote telemetry into the home corpus.
+`ENGRAM_EVENT_LOG` remains the explicit override.
+
+**Unknown is not a number.** Counts a tier cannot answer read `unavailable`,
+not `-1`, and a success/failure split is not printed at all when the tier did
+not respond: "0 success, 0 failure" on a corpus holding 405 successes is as
+false as `-1` and harder to spot. In the machine-readable dicts the value is
+`None` — a program sums `-1` without noticing.
+A sentinel value is a defect when it travels ALONE; next to an explicit
+declaration (`checks[...] = "error: …"`, `status = "degraded"`) it is
+legitimate, and `hippo_health` keeps its own for that reason.
+
+## 6. Deleting: what "forgotten" really covers
+
+`forget` clears every live table, the entity graph included. It does not
+touch the whole-DB copies the Auto-Dream worker keeps: rotating ones for a
+few hours, MANUAL ones forever — the May 12 copy still holds 60 facts the
+live store dropped. `Memory.forget_with_report` deletes AND reports where
+the fact is still readable, distinguishing copies that rotate from copies
+that do not, because "for a couple of hours" and "forever" are different
+promises. The scan checks each copy for real (a primary-key lookup) rather
+than estimating, and never blocks the erasure if it fails.
+
+Whether the manual dream copies should rotate or be purged is a product
+decision, not a defect — but now the data to make it is visible.
+
+## 7. What governance does NOT do
 
 It does not make retirements *right* — it makes them visible and reversible.
 The decision to retire (the write path) is a separate concern with its own
