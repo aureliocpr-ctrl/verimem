@@ -1082,6 +1082,16 @@ def _migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_facts_superseded_by "
         "ON facts(superseded_by)"
     )
+    # …and one on WHEN the retirement happened, which is how the retirement
+    # log reads them (newest first). Without it SQLite scans the whole table
+    # and sorts in memory to return fifty rows: measured on 200k synthetic
+    # rows, 63.6ms with a temp B-tree against 0.1ms using the index — 600x,
+    # and it grows with the corpus. The governance queue is only usable if
+    # looking at it is cheap.
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_facts_superseded_at "
+        "ON facts(superseded_at DESC)"
+    )
 
 
 def _migrate_v2_to_v3(conn: sqlite3.Connection) -> None:
@@ -1468,6 +1478,35 @@ def _ensure_fact_columns(conn: sqlite3.Connection) -> None:
             "ladder (a migration bump was forgotten — see the v15 history "
             "note); column added mechanically", col,
         )
+
+
+#: Indexes that must exist on ANY store, whatever version it arrived at.
+#: An index declared inside migration N never reaches a database that had
+#: already passed N — so a store upgraded long ago keeps missing it forever.
+#: Keyed by index name; the value is the idempotent DDL.
+_FACT_INDEX_DDL: dict[str, str] = {
+    "idx_facts_superseded_at": (
+        "CREATE INDEX IF NOT EXISTS idx_facts_superseded_at "
+        "ON facts(superseded_at DESC)"
+    ),
+}
+
+
+def _ensure_fact_indexes(conn: sqlite3.Connection) -> None:
+    """Create the indexes an already-migrated store would never get.
+
+    Measured 2026-08-05 on a copy of the real 8061-fact corpus: the index
+    the retirement log reads by had been added inside an old migration, so
+    NEW stores had it and the production one did not — the fast path
+    existed everywhere except where the data was. Idempotent and cheap:
+    ``CREATE INDEX IF NOT EXISTS`` on a store that already has it is a
+    no-op. Never raises: a missing index costs speed, not correctness.
+    """
+    for nome, ddl in _FACT_INDEX_DDL.items():
+        try:
+            conn.execute(ddl)
+        except sqlite3.OperationalError as exc:  # colonna non ancora aggiunta
+            _LOG.debug("index %s not created yet: %s", nome, exc)
 
 
 def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
@@ -2390,6 +2429,14 @@ class SemanticMemory:
             # additive column a forgotten target-bump left behind (v15
             # history note — this class broke production writes twice).
             _ensure_fact_columns(conn)
+            # Same guard for INDEXES, and for the same reason one step
+            # further: an index added inside an old migration never reaches
+            # a database that already passed that step. Measured 2026-08-05
+            # on a copy of the real corpus — idx_facts_superseded_at was
+            # created for new stores and absent on the 8061-fact one, i.e.
+            # exactly where the speed was needed. Idempotent (IF NOT EXISTS)
+            # and only for columns the ladder has certainly added by now.
+            _ensure_fact_indexes(conn)
         # Cycle #135 (2026-05-17): hot-path recall cache. The default
         # recall(topic=None) used to do np.stack([deserialize(r)]) on
         # every row on every call — O(N) Python per query. We now hold

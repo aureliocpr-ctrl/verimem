@@ -97,9 +97,16 @@ def retirement_log(
                ON u.fact_id = f.id AND u.op_type = 'supersede'
               AND u.undone_at IS NULL AND u.ttl_expires_at > ?
         WHERE {" AND ".join(where)}
-        ORDER BY COALESCE(f.superseded_at, 0) DESC, f.created_at DESC
+        ORDER BY f.superseded_at DESC, f.created_at DESC
         LIMIT ?
     """
+    # ORDER BY sulla COLONNA, non su COALESCE(colonna, 0): un'espressione non
+    # può usare un indice, e SQLite scansionava tutta la tabella ordinando in
+    # memoria per restituire cinquanta righe (200k righe: 63.6ms contro 0.1ms
+    # con idx_facts_superseded_at — 600x). L'ordine non cambia: in SQLite NULL
+    # è minore di tutto, quindi in DESC finisce in fondo esattamente dove lo
+    # metteva lo zero (verificato), e sul corpus reale i ritiri senza data
+    # sono 0 su 1794.
     import time as _time
     with sm._connect() as conn:
         # facts_undo_log may not exist on very old stores — create it the
