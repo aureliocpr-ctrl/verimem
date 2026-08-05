@@ -223,7 +223,8 @@ def _died_event_ts(sm, fact) -> float | None:
 
 def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
                         with_disputes: bool = True,
-                        as_of: float | None = None) -> list[str]:
+                        as_of: float | None = None,
+                        min_relevance: float | None = None) -> list[str]:
     """Live top-k recall, each hit enriched with its transition story and its
     declared unresolved conflicts. Best-effort: a history/dispute lookup error
     degrades that hit to its plain proposition — recall itself never breaks.
@@ -259,6 +260,26 @@ def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
             out.append(line)
         return out
     hits = sm.recall(query or "", k=k)
+    # ⚠️ IL PAVIMENTO ARRIVA ANCHE QUI, e senza era il buco piu' visibile che
+    # restasse sul canale degli agenti. Misurato, stesso store e stesso
+    # istante, sulla domanda fuori tema «quale database usa il cluster di
+    # produzione» con un pavimento che nulla puo' superare::
+    #
+    #     hippo_facts_recall    items=0   si astiene
+    #     hippo_recall_history  n=3       «Il supporto risponde in 24 ore.»
+    #
+    # Due tool sulla STESSA superficie e sullo STESSO corpus, uno che si
+    # astiene e uno che serve tre fatti scorrelati. E' la classe «la cura
+    # nasce su una superficie e le altre restano indietro» — qui dentro la
+    # stessa superficie — e la cura del pavimento su MCP e' del 02/08.
+    #
+    # Il filtro sta QUI e non nell'handler perche' questa funzione restituisce
+    # righe gia' formattate: a valle lo score non esiste piu'. Un solo recall,
+    # non due.
+    if min_relevance:
+        _pav = float(min_relevance)
+        hits = [h for h in hits
+                if float((h[1] if len(h) > 1 else 0.0) or 0.0) >= _pav]
     cs = None
     if with_disputes:
         try:

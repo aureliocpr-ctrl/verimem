@@ -7598,10 +7598,24 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 lines = [getattr(f, "proposition", "") for f, *_ in hits]
                 _audit(name, arguments, outcome="ok")
                 return _ok({"context": lines, "n": len(lines), "routed": "plain"})
+            # IL PAVIMENTO ANCHE QUI. Senza, due tool della STESSA superficie
+            # rispondevano diversamente alla stessa domanda fuori tema:
+            #     hippo_facts_recall    items=0   si astiene
+            #     hippo_recall_history  n=3       «Il supporto risponde in 24 ore.»
+            # `env_floor_if_set` e non una copia del criterio: due copie
+            # divergono, ed e' la quinta generazione di questa stessa cura.
+            from .relevance_floor import env_floor_if_set as _env_floor
+            _mrh = arguments.get("min_relevance")
+            if _mrh is None:
+                _mrh = _env_floor()
+            if _mrh == "auto":
+                from .client import Memory as _MemFloor
+                _mrh = _MemFloor(path=a.semantic.db_path)._auto_relevance_floor()
             lines = recall_with_history(
                 a.semantic, _q,
                 k=int(arguments.get("k", 5)),
                 max_hops=int(arguments.get("max_hops", 3)),
+                min_relevance=float(_mrh) if _mrh else None,
                 with_disputes=bool(arguments.get("with_disputes", True)))
             _audit(name, arguments, outcome="ok")
             return _ok({"context": lines, "n": len(lines)})
