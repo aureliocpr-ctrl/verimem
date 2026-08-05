@@ -29,7 +29,15 @@ from __future__ import annotations
 
 from typing import Any
 
-__all__ = ["retirement_log", "survivability_counts", "SERVABLE_WHERE"]
+__all__ = ["retirement_log", "survivability_counts", "verdict_mismatches",
+           "SERVABLE_WHERE"]
+
+#: Sopra questo il moat ha detto «la fonte lo sostiene»; sotto l'altro ha
+#: detto il contrario. Il taglio basso è quello che il gate usa per ammettere
+#: (40, la cut validata); quello alto è deliberatamente prudente — a 90 non
+#: si discute che il verdetto fosse positivo.
+_VERDETTO_VERO = 90.0
+_VERDETTO_FALSO = 40.0
 
 #: The canonical "servable" predicate — the ONE definition of "alive".
 #: Two implicit definitions of the same word cost ws3 three hours on
@@ -120,6 +128,60 @@ def retirement_log(
         d["reversible"] = d.get("undo_op_id") is not None
         out.append(d)
     return out
+
+
+def verdict_mismatches(sm, *, limit: int = 50,
+                       topic: str | None = None) -> dict[str, Any]:
+    """Where the moat's verdict and the fact's fate disagree, both ways.
+
+    Measured on the real corpus 2026-08-05: 11 quarantined facts carry a
+    verdict >= 90 (ten of them >= 99), and 10 served facts carry one below
+    the admission cut — down to 0.22. Two opposite anomalies, and no view
+    named either:
+
+    - ``judged_true_but_withheld`` — the moat spent ~42 seconds to say "the
+      source supports this" and the fact is kept out anyway. Work paid for
+      and data lost; ws5 traced these to reports that DOCUMENT a defect,
+      blocked because they contain the defect's own words.
+    - ``judged_false_but_served`` — the moat said the source does not
+      support it and the memory returns it as its own. The graver one for
+      whoever reads: a product that serves what its own judge rejected.
+
+    It decides nothing: it lists, like the retirement log lists pairs. The
+    thresholds travel in the result because "true" and "false" here are two
+    cuts, and a number without its definition is the defect this branch cures.
+    """
+    where_t = "AND topic LIKE ?" if topic else ""
+    par: list[Any] = [topic + "%"] if topic else []
+    q_true = f"""
+        SELECT id AS fact_id, topic, status, grounding_score, created_at
+        FROM facts
+        WHERE superseded_by IS NULL AND status IN ('quarantined')
+          AND grounding_score IS NOT NULL AND grounding_score >= ?
+          {where_t}
+        ORDER BY grounding_score DESC LIMIT ?
+    """
+    q_false = f"""
+        SELECT id AS fact_id, topic, status, grounding_score, created_at
+        FROM facts
+        WHERE {SERVABLE_WHERE}
+          AND grounding_score IS NOT NULL AND grounding_score < ?
+          {where_t}
+        ORDER BY grounding_score ASC LIMIT ?
+    """
+    with sm._connect() as conn:
+        veri = [dict(r) for r in conn.execute(
+            q_true, (_VERDETTO_VERO, *par, int(limit)))]
+        falsi = [dict(r) for r in conn.execute(
+            q_false, (_VERDETTO_FALSO, *par, int(limit)))]
+    return {
+        "judged_true_but_withheld": veri,
+        "judged_false_but_served": falsi,
+        "topic": topic,
+        "thresholds": (f"judged_true = grounding_score >= {_VERDETTO_VERO:.0f} "
+                       f"AND quarantined · judged_false = grounding_score < "
+                       f"{_VERDETTO_FALSO:.0f} AND servable"),
+    }
 
 
 def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:

@@ -2780,6 +2780,9 @@ def facts_retirement_log(
     counts: bool = typer.Option(
         False, "--counts",
         help="Print the written/servable/retired/quarantined quartet instead"),
+    mismatches: bool = typer.Option(
+        False, "--mismatches",
+        help="List where the moat's verdict and the fact's fate disagree"),
 ) -> None:
     """The retirements, newest first, as (loser, winner) pairs.
 
@@ -2793,6 +2796,21 @@ def facts_retirement_log(
     from .retirement_log import retirement_log as _rlog
     from .retirement_log import survivability_counts as _scounts
     sm = _facts_sm()
+    if mismatches:
+        from .retirement_log import verdict_mismatches as _vm
+        mm = _vm(sm, topic=topic, limit=limit)
+        veri, falsi = mm["judged_true_but_withheld"], mm["judged_false_but_served"]
+        console.print(
+            f"[yellow]judged TRUE but withheld: {len(veri)}[/yellow]  "
+            f"[red]judged FALSE but served: {len(falsi)}[/red]")
+        for r in veri[:limit]:
+            console.print(f"  [yellow]withheld[/yellow] {r['fact_id'][:8]} "
+                          f"moat {r['grounding_score']:.2f}  {r['topic']}")
+        for r in falsi[:limit]:
+            console.print(f"  [red]served  [/red] {r['fact_id'][:8]} "
+                          f"moat {r['grounding_score']:.2f}  {r['topic']}")
+        console.print(f"[dim]{mm['thresholds']}[/dim]")
+        return
     if counts:
         q = _scounts(sm, topic=topic)
         _pct = (100.0 * q["judged"] / q["servable"]) if q["servable"] else 0.0
