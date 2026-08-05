@@ -1322,6 +1322,24 @@ class Memory:
         # niente di abbastanza vicino») e su una domanda fuori corpus funziona
         # bene, con la sua ragione dichiarata. Si aggiunge la grandezza che
         # mancava, così le due smettono di essere confuse in un verdetto solo.
+        # DUE NOMI PER LA STESSA COSA, e chi passa da una superficie all'altra
+        # ci sbatte. Finding di ws5, col costo misurato addosso a sé: «mi ha
+        # fatto quasi consegnare *explain sbaglia 10 su 10*» — su una funzione
+        # che è corretta.
+        #
+        #     il TESTO      recall: `text`   ·  explain: `proposition`
+        #     il PUNTEGGIO  recall: `score`  ·  explain: `relevance`
+        #
+        # ⚠️ SI AGGIUNGONO ALIAS, NON SI RINOMINA: `proposition` è il nome
+        # della colonna nel DB e `relevance` è ciò che il dossier misura —
+        # entrambi hanno una ragione, e rinominare romperebbe chi li legge già.
+        # La cura non decide quale sia giusto: fa in modo che chi cerca l'altro
+        # lo trovi.
+        for _f in report.get("facts") or []:
+            if "text" not in _f and "proposition" in _f:
+                _f["text"] = _f["proposition"]
+            if "score" not in _f and "relevance" in _f:
+                _f["score"] = _f["relevance"]
         _fatti = report.get("facts") or []
         _senza = sum(1 for f in _fatti
                      if not isinstance(f.get("grounding_score"), (int, float))
