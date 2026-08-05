@@ -57,6 +57,34 @@ _DESCRIPTIVE_RECURRENCE = re.compile(
 )
 
 
+#: I giorni e i mesi che nominano UN momento: sono la spia di un calendario,
+#: non di uno scheduler. EN+IT come il pattern principale — il tedesco «Der
+#: Termin ist für Freitag geplant» oggi non scatta nemmeno prima, perché
+#: `_AUTOMATED_PATTERN` è EN/IT: l'asimmetria linguistica è dichiarata, non
+#: curata qui.
+_GIORNI = (r"lunedi|lunedì|martedi|martedì|mercoledi|mercoledì|giovedi|"
+           r"giovedì|venerdi|venerdì|sabato|domenica|"
+           r"monday|tuesday|wednesday|thursday|friday|saturday|sunday")
+_MESI = (r"gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|"
+         r"settembre|ottobre|novembre|dicembre|january|february|march|april|"
+         r"may|june|july|august|september|october|november|december")
+
+#: «per venerdì», «per il 12 marzo», «for Friday», «for next week»
+_MOMENTO_SINGOLO = re.compile(
+    rf"\b(?:per|for)\s+(?:il\s+|the\s+)?(?:\d{{1,2}}\s+)?"
+    rf"(?:{_GIORNI}|{_MESI}|next\s+week|la\s+prossima\s+settimana)\b",
+    re.IGNORECASE)
+
+#: LA RICORRENZA VINCE sul giorno nominato: «ogni lunedì» resta un'automazione,
+#: altrimenti basterebbe nominare un giorno per aggirare il layer. Include il
+#: vocabolario dell'automazione conclamata (cron, CI, job, pipeline).
+_RICORRENZA = re.compile(
+    r"\bogni\b|\bevery\b|\bnightly\b|\bdaily\b|\bhourly\b|\bweekly\b|"
+    r"\bcron\b|\bci\b|\brunner\b|\bjob\b|\bbackup\b|\bpipeline\b|"
+    r"\bperiodic|\bperiodic[ao]\b|\bautomaticamente\b|\bautomatically\b",
+    re.IGNORECASE)
+
+
 @dataclass(frozen=True)
 class AutomationClaimWarning:
     matched_text: str
@@ -91,11 +119,33 @@ def _is_descriptive_occurrence(proposition: str, m: re.Match[str]) -> bool:
     'automated' never qualify, and we look only at a window around this match.
     """
     word = m.group(0).lower()
-    if word not in ("recurring", "periodic", "periodico", "periodica"):
-        return False
-    lo = max(0, m.start() - 48)
-    hi = min(len(proposition), m.end() + 48)
-    return bool(_DESCRIPTIVE_RECURRENCE.search(proposition[lo:hi]))
+    if word in ("recurring", "periodic", "periodico", "periodica"):
+        lo = max(0, m.start() - 48)
+        hi = min(len(proposition), m.end() + 48)
+        return bool(_DESCRIPTIVE_RECURRENCE.search(proposition[lo:hi]))
+    # 2026-08-05: UN CALENDARIO NON È UN'AUTOMAZIONE. «La riunione è schedulata
+    # per venerdì» finiva in quarantena — e con lei il deploy di venerdì,
+    # l'intervento di giovedì, la consegna del 12 marzo, il colloquio di lunedì.
+    # Misurato: 8 frasi aziendali ordinarie su 9 bloccate.
+    #
+    # La riga sopra escludeva DELIBERATAMENTE 'scheduled'/'automated' («claims
+    # of active automation»), ed è lo stesso difetto che la cura del 2026-06-14
+    # aveva riconosciuto per 'recurring'/'periodic': la cura c'era e mancava lo
+    # SWEEP alla parola accanto.
+    #
+    # ⚠️ LA DISCRIMINANTE NON È IL SOSTANTIVO — un «deploy» può essere sia un
+    # evento che un processo — MA QUANDO ACCADE:
+    #     «schedulato PER VENERDI'»      un'occorrenza  -> calendario
+    #     «schedulato OGNI NOTTE alle 3» una ricorrenza -> automazione
+    # e la ricorrenza VINCE sul giorno nominato, altrimenti basterebbe dire
+    # «ogni lunedì» per aggirare il layer.
+    #
+    # Separazione misurata: eventi 8/8 · processi 6/6 sul banco; sul CORPUS
+    # VERO morde 1 volta su 45 fatti col verbo, e quell'una è «the quarterly
+    # board meeting is scheduled for Friday» — giusta. Nessuna automazione
+    # diventa calendario.
+    return bool(_MOMENTO_SINGOLO.search(proposition)
+                and not _RICORRENZA.search(proposition))
 
 
 def detect_unsupported_automated_claim(
