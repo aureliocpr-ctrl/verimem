@@ -476,6 +476,22 @@
       detail = " · quarantine exit · fact " + String(p.fact_id || "?").slice(0, 8)
         + " → " + (p.to_status || "?")
         + (p.reason ? " · " + p.reason : "");
+    } else if (evt.name === "flow.episode") {
+      /* outcome in the label ON PURPOSE: on the real corpus 405 of 413
+         episodes say "success" and none has failed since May 19 — a skew
+         you can only notice if every episode wears its outcome. */
+      var ok = String(p.outcome || "") === "success";
+      tag.className = ok ? "adm" : "ref";
+      tag.textContent = "EPISODE " + String(p.outcome || "?").toUpperCase();
+      detail = " · task " + String(p.task_id || "?").slice(0, 28)
+        + " · steps " + (p.steps != null ? p.steps : "?");
+    } else if (evt.name === "flow.skill") {
+      tag.className = "adm";
+      tag.textContent = "SKILL " + String(p.kind || "").toUpperCase();
+      detail = " · " + String(p.skill_id || "?").slice(0, 8)
+        + " · fitness " + (p.fitness != null ? Number(p.fitness).toFixed(2) : "?")
+        + " · trials " + (p.trials != null ? p.trials : "?")
+        + " · " + (p.status || "?");
     } else {
       var abst = !!p.abstained;
       tag.className = abst ? "abs" : "ans";
@@ -532,6 +548,7 @@
     else if (name === "flow.undo") { onUndo(evt.payload || {}); }
     else if (name === "flow.quarantine") { onQuarantine(evt.payload || {}); }
     else if (name === "flow.restore") { onRestore(evt.payload || {}); }
+    else if (name === "flow.episode" || name === "flow.skill") { /* feed-only */ }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);
