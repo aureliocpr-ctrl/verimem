@@ -240,6 +240,47 @@ def norm_unit(word: str) -> str:
         return w[:-3] + "y"
     if len(w) > 3 and w.endswith("s"):
         return w[:-1]
+    # IL PLURALE NON E' SOLO INGLESE. Censito da ws4 sul mandato lingue:
+    #     EN  minute -> min      minutes -> min        ok
+    #     FR  minute -> min      minutes -> min        ok  <- per caso, parola uguale
+    #     ES  minuto -> minuto   minutos -> minuto     ok  <- per caso, plurale in -s
+    #     IT  minuto -> minuto   minuti  -> minuti     DUE UNITA' DIVERSE
+    #     DE  Minute -> min      Minuten -> minuten    idem
+    # Le tre lingue che funzionavano funzionavano PER CASO, e non era una
+    # scelta di nessuno: era il bordo di una regola scritta per una lingua sola.
+    # Costo: due fatti sulla stessa grandezza non condividono l'unita', quindi
+    # un conflitto vero puo' sfuggire, e `L4.2` (il vicinato) eredita il bordo
+    # perche' sta a valle — «45 Minuten» contro «30 Minuten» e' il caso di ws4.
+    #
+    # NON UNA LISTA DI PAROLE, che crescerebbe con le lingue del mondo: i
+    # plurali si formano con SUFFISSI, e sono una manciata. E' morfologia.
+    #
+    # ⛔ IL PLURALE ITALIANO IN «-e» E' STATO PROVATO E TOLTO, ed e' il limite
+    # che questa cura DICHIARA invece di nascondere: «-e» segna il plurale di un
+    # femminile italiano («cassa»->«casse») ma anche il SINGOLARE di quasi ogni
+    # unita' di tempo tedesca («Stunde», «Minute», «Woche»). Applicandolo,
+    # «Stunde» diventava «stunda» — cioe' per curare un plurale italiano
+    # rompevo il singolare tedesco. Senza sapere in che lingua e' scritto il
+    # testo le due regole si contraddicono, e non si sceglie a caso quale
+    # lingua servire. Restano coperti «-i» (IT) e «-en» (DE), che non
+    # collidono con niente; «cassa/casse» e «ora/ore» restano scoperti, ed e'
+    # il prezzo dichiarato.
+    # ⚠️ Si MAPPA al singolare invece di TRONCARE: troncare accorcia anche
+    # parole che plurali non sono e fa collassare unita' distinte («ora»/«oro»
+    # su «or»), che sarebbe peggio del difetto curato. La lunghezza minima
+    # protegge le parole corte, dove un suffisso e' quasi tutta la parola.
+    if len(w) > 3:
+        # ⚠️ Si RIPASSA dal dizionario dopo aver tolto il suffisso: senza,
+        # «Minuten» diventava «minute» e si fermava li', mentre «Minute» era
+        # gia' nel dizionario e usciva «min» — due forme della stessa unita'
+        # separate dall'ultimo passo, che e' il difetto che si sta curando.
+        radice = None
+        if w.endswith("en"):       # DE: Minuten->minute, Stunden->stunde
+            radice = w[:-1]
+        elif w.endswith("i"):      # IT: minuti->minuto, giorni->giorno
+            radice = w[:-1] + "o"
+        if radice:
+            return _UNIT_SYN.get(radice, radice)
     return w
 
 
