@@ -964,9 +964,21 @@ class Memory:
             rows = self.semantic.search_facts(
                 terms, limit=1000, require_all_tokens=bool(terms),
                 topic_prefix=topic_prefix)
+            # LA STESSA VISTA DEL RAMO `find`. Questi due rami proiettavano
+            # a mano tre chiavi — id, text, topic — mentre `find`, nella
+            # STESSA funzione, restituisce le quindici di `_fact_view`
+            # (trovato da ws2 il 2026-08-07 con una grep dalle chiavi, non
+            # dai letterali). Chi chiedeva «elencami tutto su X» riceveva
+            # fatti in cui un `model_claim` e uno verificato erano
+            # INDISTINGUIBILI: niente status, niente verdetto, niente
+            # provenienza — e la stessa domanda posta in un'altra forma li
+            # distingueva.
+            #
+            # `score` NON si aggiunge: appartiene alla query e qui non si
+            # ordina niente. Uno zero direbbe «rilevanza nulla», che e'
+            # un'affermazione; l'assenza dice «questo elenco non ordina».
             return {"intent": LIST_ALL, "terms": terms,
-                    "results": [{"text": f.proposition, "id": f.id,
-                                 "topic": f.topic} for f in rows]}
+                    "results": [self._fact_view(f) for f in rows]}
         if intent == EXCLUDE:
             # Set-difference: the scoped corpus MINUS the facts matching the
             # excluded terms. Embeddings ignore "not"; this executes it as a
@@ -1003,9 +1015,14 @@ class Memory:
                     _escl, limit=10000, require_all_tokens=True,
                     topic_prefix=topic_prefix)}
             results = [f for f in base if f.id not in excl_ids]
+            # stessa vista degli altri rami (vedi LIST_ALL qui sopra). Qui
+            # pesa doppio: il commento del 2026-08-02 poco piu' su racconta
+            # che da questo ramo e' gia' USCITO un fatto quarantinato, e
+            # usciva senza `status` — cioe' indistinguibile da uno ammesso.
+            # La base resta quella che e': questa cura non filtra niente,
+            # rende solo VISIBILE cio' che esce.
             return {"intent": EXCLUDE, "excluded": excluded,
-                    "results": [{"text": f.proposition, "id": f.id,
-                                 "topic": f.topic} for f in results]}
+                    "results": [self._fact_view(f) for f in results]}
         return {"intent": FIND, "results": self.search(query, k=k)}
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
