@@ -34,6 +34,13 @@ from .admission_gate import ROUTE_TELEMETRY, classify_admission
 #: the fact gate, which drops embeddings too).
 _EPISODE_EMBED_COLS = ("summary_embedding", "dg_embedding", "context_embedding")
 
+#: Sotto questo punteggio il moat ha detto «la fonte non lo sostiene», e
+#: `requalify_quarantined` NON lo riporta nel recall. E' la piu' ALTA
+#: delle due cut di ammissione (40 col giudice di ripiego, 70 col
+#: calibrato, misurato il 2026-08-05): davanti al dubbio si recupera di
+#: meno. I NULL restano eleggibili — «mai giudicato» non e' «bocciato».
+_MOAT_MIN_RECOVER = 70.0
+
 
 def cleanup_telemetry(db_path, *, principal: str, dry_run: bool = True) -> dict:
     """Route existing telemetry facts out of ``facts`` into ``telemetry``.
@@ -272,10 +279,11 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
     try:
         rows = conn.execute(
             "SELECT id, topic, proposition, verified_by, writer_role, "
-            "source_episodes FROM facts "
+            "source_episodes, grounding_score FROM facts "
             "WHERE status='quarantined' AND superseded_by IS NULL"
         ).fetchall()
         recoverable: list[str] = []
+        held_by_moat = 0
         for r in rows:
             prop = r["proposition"] or ""
             try:
@@ -307,10 +315,43 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
             )
             if verdict.decision == ROUTE_TELEMETRY or not verdict.admit_to_curated:
                 continue  # telemetry / polluted / flagged — keep quarantined
+            # ⚠️ IL QUARTO PRESIDIO, che i tre controlli non guardano.
+            # Il verdetto di L4 e' gia' persistito qui e non serve il
+            # giudice per leggerlo. Misurato da ws4 il 2026-08-07: dei
+            # 172 recuperabili dalle tre condizioni, 138 avevano gs
+            # sotto 40 e 17 fra 40 e 70 — 155 su 172, il 90,1%, erano
+            # stati BOCCIATI DAL MOAT e sarebbero tornati nel recall
+            # senza che nessuno riguardasse la ragione.
+            #
+            # Non e' un cambio di politica: lo scopo dichiarato qui
+            # sopra e' recuperare «real knowledge that a SINCE-FIXED
+            # false positive had hidden», e un fatto che il moat boccia
+            # OGGI non e' un falso positivo gia' curato.
+            #
+            # I NULL restano DENTRO: «mai giudicato» non e' «bocciato».
+            # La soglia e' 70 e non 40 perche' la cut di ammissione non
+            # e' una (40 col giudice di ripiego, 70 col calibrato,
+            # misurato il 2026-08-05): davanti al dubbio si recupera di
+            # meno.
+            _gs = r["grounding_score"]
+            if _gs is not None and float(_gs) < _MOAT_MIN_RECOVER:
+                held_by_moat += 1
+                continue
             recoverable.append(r["id"])
         result = {
             "scanned": len(rows),
             "recoverable": len(recoverable),
+            # Un conteggio che cala senza spiegazione si legge «ce
+            # n'erano meno»: chi guarda deve vedere che la differenza
+            # e' una SCELTA, e quale.
+            "held_by_moat": held_by_moat,
+            "moat_rule": (
+                f"a quarantined fact is NOT recovered when the moat "
+                f"judged it below {_MOAT_MIN_RECOVER:.0f}; NULL means "
+                f"never judged, not rejected, so it stays eligible. "
+                f"The cut is the HIGHER of the two admission cuts "
+                f"(40 fallback / 70 calibrated): facing a doubt, "
+                f"recover less"),
             "promoted": 0,
             "dry_run": dry_run,
         }

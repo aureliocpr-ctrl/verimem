@@ -55,20 +55,32 @@ def _recuperabili(m: Memory) -> int:
         pathlib.Path(m.semantic.db_path), dry_run=True)["recoverable"]
 
 
-def test_un_fatto_BOCCIATO_DAL_MOAT_risulta_recuperabile(store):
-    """Il caso dei 158: il moat ha detto «la fonte non lo sostiene» (3.2 su
-    100) e le tre condizioni non lo vedono nemmeno. Non è un'ipotesi: è
-    quello che lo strumento risponde."""
+def test_un_fatto_BOCCIATO_DAL_MOAT_NON_e_piu_recuperabile(store):
+    """AGGIORNATO un'ora dopo, e il cambio è il punto.
+
+    Quando ho scritto questo file l'asserzione era `== 1`: il moat aveva
+    detto «la fonte non lo sostiene» (3.2 su 100) e le tre condizioni non
+    lo vedevano nemmeno. Era una CARATTERIZZAZIONE — fissava il
+    comportamento vero perché la parola «SAFE» nel docstring diceva il
+    contrario.
+
+    Poi ws4 ha misurato quanto pesava (155 su 172, il 90,1%) e la cura è
+    entrata. Questo test è andato rosso, **che è esattamente il suo
+    mestiere**: ha reso visibile il cambio invece di lasciarlo passare in
+    silenzio. Aggiornarlo qui, con la storia accanto, è il modo giusto —
+    cancellarlo perderebbe la ragione per cui esisteva."""
     _quarantina(store, "the depot in Turin holds 40 crates", gs=3.2)
-    assert _recuperabili(store) == 1
+    assert _recuperabili(store) == 0
 
 
-def test_e_lo_stesso_numero_di_un_fatto_MAI_giudicato(store):
-    """La prova che il punteggio non entra: due fatti identici tranne il
-    verdetto danno lo stesso esito."""
+def test_il_punteggio_ORA_entra_e_separa_i_due_casi(store):
+    """Era la prova che il punteggio NON entrava: due fatti identici
+    tranne il verdetto davano lo stesso esito (2 su 2 recuperabili). Ora
+    li separa — e «mai giudicato» resta eleggibile, perché non è
+    «bocciato»."""
     _quarantina(store, "the depot in Turin holds 40 crates", gs=3.2)
     _quarantina(store, "the yard in Milan holds 12 pallets", gs=None)
-    assert _recuperabili(store) == 2
+    assert _recuperabili(store) == 1
 
 
 def test_un_fatto_che_fa_ancora_scattare_L1_NON_e_recuperabile(store):
