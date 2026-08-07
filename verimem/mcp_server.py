@@ -3054,6 +3054,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                                    "maximum": 500, "default": 50},
                     "include_lineage": {"type": "boolean", "default": True},
                     "include_superseded": {"type": "boolean", "default": False},
+                    "include_quarantined": {
+                        "type": "boolean", "default": True,
+                        "description": (
+                            "Default TRUE keeps today's behaviour: the "
+                            "payload carries facts the gate REJECTED, marked "
+                            "by `status`. Measured 2026-08-07: 24 of 78 "
+                            "production briefings contain at least one. Pass "
+                            "false for a context with only admitted facts — "
+                            "`n_quarantined` still reports how many exist."),
+                    },
                 },
                 "required": ["topic_glob"],
             },
@@ -13713,11 +13723,20 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             max_facts = int(arguments.get("max_facts", 50) or 50)
             include_lineage = bool(arguments.get("include_lineage", True))
             include_superseded = bool(arguments.get("include_superseded", False))
+            # UN AGENTE che carica il contesto di progetto e' il consumatore
+            # principale di questo tool: se la scelta non esce da qui, per
+            # lui non esiste. Default invariato — 24 briefing di produzione
+            # su 78 contengono claim respinti dal gate (misura ws2,
+            # 2026-08-07), ma toglierli d'ufficio cambia cosa l'agente
+            # riceve, e quella e' una decisione di prodotto.
+            include_quarantined = bool(
+                arguments.get("include_quarantined", True))
             try:
                 result = a.semantic.summary_topic(
                     topic_glob, max_facts=max_facts,
                     include_lineage=include_lineage,
                     include_superseded=include_superseded,
+                    include_quarantined=include_quarantined,
                 )
             except Exception as exc:  # noqa: BLE001
                 _audit(name, arguments, outcome="error")

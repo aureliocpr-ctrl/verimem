@@ -5854,6 +5854,7 @@ class SemanticMemory:
         max_facts: int = 50,
         include_lineage: bool = True,
         include_superseded: bool = False,
+        include_quarantined: bool = True,
     ) -> dict[str, Any]:
         """Cycle #79 (2026-05-16) — narrative aggregator for a topic glob.
 
@@ -5914,6 +5915,22 @@ class SemanticMemory:
             params: list[Any] = [like_pattern]
             if not include_superseded:
                 sql += " AND superseded_by IS NULL"
+            if not include_quarantined:
+                # LA SCELTA ESISTE, IL DEFAULT NO. ws2«Vega» ha misurato che
+                # 24 briefing di produzione su 78 (e 25 su 50 su omnex)
+                # contengono claim che il gate ha RESPINTO, serviti come
+                # fatti di progetto. Un'ora fa ho curato la meta' visibile
+                # (`n_live` non li conta piu', il payload porta `status`), e
+                # ho rifiutato di filtrare: togliere righe cambia cosa un
+                # agente riceve, ed e' una decisione di prodotto.
+                #
+                # Con la misura in mano la mossa giusta NON e' cambiare il
+                # default di nascosto — sarebbe la stessa cosa rifiutata,
+                # fatta con piu' dati. E' dare la capacita' e lasciare la
+                # decisione dove sta: chi vuole un contesto pulito lo
+                # chiede, il risultato dichiara in quale modalita' e' stato
+                # prodotto, e il default resta com'era.
+                sql += " AND status NOT IN ('quarantined')"
             sql += " ORDER BY created_at DESC LIMIT ?"
             params.append(int(max(1, max_facts)))
             payload_rows = conn.execute(sql, tuple(params)).fetchall()
@@ -5964,10 +5981,20 @@ class SemanticMemory:
             "counts_mean": (
                 "n_live = n_total - n_superseded - n_quarantined (a "
                 "quarantined fact is NOT live: the product keeps it out of "
-                "default recall). The facts payload still CONTAINS "
-                "quarantined rows — they are marked by `status`, not "
-                "removed: filtering them would change what an agent "
-                "receives, which is a product decision, not a fix"),
+                "default recall). "
+                + ("The facts payload INCLUDES QUARANTINED rows — marked by "
+                   "`status`, not removed. Measured 2026-08-07: 24 of 78 "
+                   "production briefings carry at least one. Ask with "
+                   "include_quarantined=False for a clean context; the "
+                   "default is unchanged on purpose, because dropping rows "
+                   "changes what an agent receives and that is a product "
+                   "decision"
+                   if include_quarantined else
+                   "Quarantined rows were EXCLUDED from the payload "
+                   "(include_quarantined=False). `n_quarantined` still "
+                   "counts how many exist in this topic, not how many were "
+                   "served: a counter that zeroed itself under the filter "
+                   "would say 'there were none'")),
             "topics_seen": topics_seen,
             "facts": facts_payload,
             "lineage_episodes": lineage_episodes,
