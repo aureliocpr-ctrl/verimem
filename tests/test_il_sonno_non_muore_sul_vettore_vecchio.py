@@ -50,6 +50,26 @@ def _skill_ferma_da_tempo(dim: int, sid: str = "vecchia") -> Skill:
     return s
 
 
+def test_il_banco_misura_una_funzione_ACCESA(lib):
+    """PRESIDIO DEL PRESIDIO (segnalato da ws3, verificato: aveva ragione).
+
+    Senza questo, con ``hebbian_decay_enabled=False`` ``decay_idle_embeddings``
+    esce subito con 0 e TUTTI i casi qui sotto passano — verde su una funzione
+    spenta. E' la stessa forma del difetto che cerchiamo nel prodotto: un
+    presidio che non distingue «funziona» da «non e' stato eseguito».
+    """
+    assert CONFIG.hebbian_decay_enabled, (
+        "il decay hebbiano e' SPENTO: i test di questo file passerebbero senza "
+        "esercitare nulla"
+    )
+    s = _skill_ferma_da_tempo(_dim_attiva(), sid="sonda")
+    lib.store(s)
+    assert lib.decay_idle_embeddings() == 1, (
+        "la funzione non ha decaduto una skill idonea: il banco non la sta "
+        "esercitando (config cambiata? soglie diverse?)"
+    )
+
+
 def test_decay_non_esplode_su_vettore_di_dimensione_diversa(lib):
     dim_altra = 384 if _dim_attiva() != 384 else 768
     lib.store(_skill_ferma_da_tempo(dim_altra))
