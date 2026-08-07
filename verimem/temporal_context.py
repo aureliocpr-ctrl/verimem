@@ -17,6 +17,7 @@ Pure read-side, no LLM, no schema change: it composes ``SemanticMemory.recall``
 from __future__ import annotations
 
 import re
+import unicodedata
 from datetime import datetime, timezone
 from typing import Any
 
@@ -67,12 +68,64 @@ def _iso(ts: Any) -> str:
 _MONTHS = {m: i + 1 for i, m in enumerate(
     ["january", "february", "march", "april", "may", "june", "july",
      "august", "september", "october", "november", "december"])}
+# 2026-08-06: i mesi italiani. `_TEMPORAL_QUERY_RE` trenta righe piu' su li ha
+# dal giorno zero («EN+IT» nel suo docstring) e questa mappa, nata dopo per un
+# caso inglese, non c'era mai tornata: due elenchi di mesi nello stesso file,
+# uno bilingue e uno no.
+_MONTHS.update({m: i + 1 for i, m in enumerate(
+    ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio",
+     "agosto", "settembre", "ottobre", "novembre", "dicembre"])})
+# 2026-08-06: DE/FR/ES, per i registri di eventi datati — il buco DICHIARATO
+# consegnando `date_menzionate`, e misurato prima di chiuderlo:
+#     DE «12. Marz» / «20. April»       date viste []  e  []
+#     ES «12 de marzo de 2026»          date viste []
+#     FR «12 mars» / «20 avril»         date viste [(2026,3,12)]  e  []
+# ⚠️ Il francese era PEGGIO degli altri due: `mars` passava per collisione del
+# troncamento a tre (`mars[:3] == march[:3]`) e `avril` no, quindi una data
+# vista e l'altra no — il discriminante taceva in modo IMPREVEDIBILE, secondo
+# quali mesi capitavano nelle due frasi.
+_MONTHS.update({m: i + 1 for i, m in enumerate(
+    ["januar", "februar", "marz", "april", "mai", "juni", "juli",
+     "august", "september", "oktober", "november", "dezember"])})
+_MONTHS.update({m: i + 1 for i, m in enumerate(
+    ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet",
+     "aout", "septembre", "octobre", "novembre", "decembre"])})
+_MONTHS.update({m: i + 1 for i, m in enumerate(
+    ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+     "agosto", "septiembre", "octubre", "noviembre", "diciembre"])})
 _MONTHS.update({m[:3]: i for m, i in list(_MONTHS.items())})
+
+
+def _senza_accenti(parola: str) -> str:
+    """`März` → `marz`, `août` → `aout`, `décembre` → `decembre`.
+
+    Si normalizza invece di elencare le varianti accentate: una lista di
+    varianti è una lista in più da tenere allineata, e questa casa ha già pagato
+    tre volte per due elenchi che divergono. Così `_MONTHS` resta scritta in
+    ASCII e accetta comunque come la gente scrive davvero.
+    """
+    return "".join(c for c in unicodedata.normalize("NFD", parola.casefold())
+                   if not unicodedata.combining(c))
+#: Le ancore RETROSPETTIVE, in EN e IT. ⚠️ «dopo»/«after» restano FUORI in
+#: entrambe le lingue: aprono un periodo successivo che il time-travel
+#: taglierebbe (esclusione deliberata del cantiere 07/08, e importarla in
+#: italiano avrebbe significato riportare in una lingua un difetto che
+#: nell'altra era stato evitato apposta).
+#: «il» e «l'» ancorano solo perche' la regex esige una data subito dopo: da
+#: soli sono gli articoli piu' comuni della lingua.
+#: ⚠️ Il lookbehind non e' una rifinitura: senza, «dopo IL 2026-08-05» ancorava,
+#: perche' in italiano l'ancora e' un articolo e l'articolo segue anche «dopo».
+#: L'inglese non aveva questo problema — «after» non e' seguito da «the» — e la
+#: prima stesura di questa cura ha importato in una lingua il difetto che
+#: nell'altra era escluso per costruzione. L'ha presa il presidio
+#: test_DOPO_non_ancora_niente_ne_in_IT_ne_in_EN.
 _AS_OF_ANCHOR_RE = re.compile(
-    r"\b(?:as of|on|by|until|till|before)\s+"
+    r"(?<!dopo )(?<!dopo l)\b(?:as of|on|by|until|till|before"
+    r"|alla data del|fino al|fino a|entro il|entro"
+    r"|prima del|prima di|al|all'|il|l')\s*"
     r"(?:(\d{4})-(\d{2})-(\d{2})"                       # ISO 2025-09-04
-    r"|([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})"  # Dec 21, 2025
-    r"|(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?\s+(\d{4}))",  # 21 Dec 2025
+    r"|([A-Za-zÀ-ÿ]{3,10})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})"  # Dec 21, 2025
+    r"|(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-zÀ-ÿ]{3,10})\.?,?\s+(\d{4}))",  # 21 Dec 2025 · 5 agosto 2026
     re.IGNORECASE)
 
 
@@ -223,7 +276,8 @@ def _died_event_ts(sm, fact) -> float | None:
 
 def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
                         with_disputes: bool = True,
-                        as_of: float | None = None) -> list[str]:
+                        as_of: float | None = None,
+                        min_relevance: float | None = None) -> list[str]:
     """Live top-k recall, each hit enriched with its transition story and its
     declared unresolved conflicts. Best-effort: a history/dispute lookup error
     degrades that hit to its plain proposition — recall itself never breaks.
@@ -259,6 +313,26 @@ def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
             out.append(line)
         return out
     hits = sm.recall(query or "", k=k)
+    # ⚠️ IL PAVIMENTO ARRIVA ANCHE QUI, e senza era il buco piu' visibile che
+    # restasse sul canale degli agenti. Misurato, stesso store e stesso
+    # istante, sulla domanda fuori tema «quale database usa il cluster di
+    # produzione» con un pavimento che nulla puo' superare::
+    #
+    #     hippo_facts_recall    items=0   si astiene
+    #     hippo_recall_history  n=3       «Il supporto risponde in 24 ore.»
+    #
+    # Due tool sulla STESSA superficie e sullo STESSO corpus, uno che si
+    # astiene e uno che serve tre fatti scorrelati. E' la classe «la cura
+    # nasce su una superficie e le altre restano indietro» — qui dentro la
+    # stessa superficie — e la cura del pavimento su MCP e' del 02/08.
+    #
+    # Il filtro sta QUI e non nell'handler perche' questa funzione restituisce
+    # righe gia' formattate: a valle lo score non esiste piu'. Un solo recall,
+    # non due.
+    if min_relevance:
+        _pav = float(min_relevance)
+        hits = [h for h in hits
+                if float((h[1] if len(h) > 1 else 0.0) or 0.0) >= _pav]
     cs = None
     if with_disputes:
         try:
@@ -283,3 +357,65 @@ def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
         except Exception:  # noqa: BLE001 — enrichment must never break recall
             lines.append(getattr(f, "proposition", ""))
     return lines
+
+
+#: Le date NOMINATE dentro una proposizione — non quando è stata scritta, ma di
+#: quale giorno PARLA. Serve al gate per sapere se due fatti sono due EVENTI o
+#: due versioni dello stesso: un registro di consegne non è un valore che si
+#: aggiorna.
+#:
+#: 🔑 IL DIFETTO CHE L'HA MOTIVATA, misurato scrivendo la stessa cosa in tre
+#: forme (tre consegne in tre date, stesso topic)::
+#:
+#:     ISO «2026-03-12/04-20/05-30»          scritti 3 -> VIVI 1
+#:     mese IT «12 marzo/20 aprile/30 maggio» scritti 3 -> VIVI 1
+#:     mese EN «12 March/20 April/30 May»     scritti 3 -> VIVI 3
+#:
+#: La guardia che teneva vivi i tre inglesi è `_entita_diverse`, che riconosce
+#: le entità dalle MAIUSCOLE: `March` e `April` diventano `proper` e distinguono
+#: i fatti, `marzo` e `aprile` no, e una data ISO non ha nemmeno una parola.
+#: L'inglese non era protetto meglio — era protetto per un accidente
+#: ortografico. Qui il discriminante diventa la data in quanto tale.
+_DATA_ISO_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+_DATA_NUM_RE = re.compile(r"\b(\d{1,2})[/.](\d{1,2})[/.](\d{4})\b")
+#: ⚠️ `(?:de |di |von )?` non è cosmesi: lo spagnolo scrive «12 DE marzo DE
+#: 2026», e senza le particelle il pattern non vede la data — non per la lista
+#: dei mesi, per ciò che sta in mezzo. Il `\.?` dopo il giorno copre il «12.»
+#: tedesco. Allargare la lista senza allargare la FORMA sarebbe stato inutile.
+_DATA_MESE_RE = re.compile(
+    r"\b(\d{1,2})(?:st|nd|rd|th)?\.?\s+(?:de |di |von |d'|of )?"
+    r"([^\W\d_]{3,10})\.?,?\s+(?:de |di |von |of )?(\d{4})\b"
+    r"|\b([^\W\d_]{3,10})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b",
+    re.IGNORECASE)
+
+
+def date_menzionate(testo: str | None) -> set[tuple[int, int, int]]:
+    """Le date di cui il testo PARLA, come ``{(anno, mese, giorno)}``.
+
+    Normalizzate in tuple e non in stringhe, così «2026-03-12», «12/03/2026»,
+    «12 marzo 2026» e «12 March 2026» sono LA STESSA data: senza questo, il
+    criterio direbbe che due scritture della stessa giornata sono due eventi
+    diversi solo perché una è in italiano.
+
+    I mesi vengono da ``_MONTHS``, l'unica mappa del modulo (EN+IT): una seconda
+    copia divergerebbe, ed è la lezione che questa casa ha già pagato con tre
+    elenchi di regole e due di negatori.
+    """
+    if not testo:
+        return set()
+    fuori: set[tuple[int, int, int]] = set()
+    for m in _DATA_ISO_RE.finditer(testo):
+        fuori.add((int(m.group(1)), int(m.group(2)), int(m.group(3))))
+    for m in _DATA_NUM_RE.finditer(testo):
+        # giorno/mese/anno: l'ordine europeo. Una data ambigua (05/08) resta
+        # ambigua in entrambi i fatti che si confrontano, quindi il CONFRONTO
+        # regge anche dove la lettura assoluta sbaglierebbe.
+        fuori.add((int(m.group(3)), int(m.group(2)), int(m.group(1))))
+    for m in _DATA_MESE_RE.finditer(testo):
+        g, nome, a = ((m.group(1), m.group(2), m.group(3)) if m.group(1)
+                      else (m.group(5), m.group(4), m.group(6)))
+        _n = _senza_accenti(str(nome))
+        mese = _MONTHS.get(_n) or _MONTHS.get(_n[:3])
+        if mese:
+            fuori.add((int(a), int(mese), int(g)))
+    return fuori

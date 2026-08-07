@@ -51,11 +51,35 @@ def test_external_content_role():
     assert classify_provenance("external_content", []) == EXTERNAL_CONTENT
 
 
-def test_external_via_source_doc_refs():
+def test_i_ref_esterni_NON_bastano_piu_a_dichiarare_la_provenienza():
+    """ERA il contrario, e il rovesciamento è una cura di SICUREZZA.
+
+    Fino al 2026-08-07 questo test pretendeva che ``source-doc:`` e ``url:`` in
+    ``verified_by`` rendessero il claim ``EXTERNAL_CONTENT``. Allora era
+    innocuo: ``l1x_applies`` governava tre detector dentro ``semantic.py`` e
+    ``provenance_trusted`` non esisteva.
+
+    Poi il router è stato cablato ai quattordici layer L1.x e ``Memory.add``
+    ha cominciato a passare ``provenance_trusted=True`` — e **il gateway HTTP
+    passa da lì**, con ``verified_by`` preso dal body della richiesta. Da quel
+    momento la stessa riga significava: chiunque parli col gateway disattiva L1
+    scrivendo ``url:`` in un campo. Verificato end-to-end::
+
+        verified_by ['commit:abc123']  quarantined  L1=['L1.10','L1.15']
+        verified_by ['url:https://…']  model_claim  L1=NESSUNO
+        verified_by ['doc:inventato']  model_claim  L1=NESSUNO
+
+    🔑 ``writer_role`` è una DICHIARAZIONE di chi chiama; ``verified_by`` è un
+    DATO. Un dato non decide i privilegi di chi lo porta. Chi ingerisce davvero
+    un documento passa ``writer_role='external_content'`` (test qui sopra), che
+    è la strada esplicita e raggiungibile.
+
+    Il caso è di ws4, che ha ricostruito la catena riga per riga.
+    """
     assert classify_provenance(
-        "agent_inference", ["source-doc:contract.pdf"]) == EXTERNAL_CONTENT
+        "agent_inference", ["source-doc:contract.pdf"]) == AGENT_CLAIM
     assert classify_provenance(
-        "agent_inference", ["url:https://example.org/a"]) == EXTERNAL_CONTENT
+        "agent_inference", ["url:https://example.org/a"]) == AGENT_CLAIM
 
 
 def test_user_and_hook_roles():

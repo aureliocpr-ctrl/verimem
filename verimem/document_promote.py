@@ -74,6 +74,7 @@ def promote_chunk_to_fact(
     # principale del modulo E' il caso d'uso principale del moat.
     chunk_text = str(hit.get("text", "") or "").strip()
     stato = "model_claim"                  # a claim, never laundered truth
+    _trattenuto_da = ""                    # quale layer L1, se e' stato L1
     punteggio = None
     try:
         from .anti_confab_gate import run_validation_gate
@@ -96,11 +97,50 @@ def promote_chunk_to_fact(
         # `downgrade` quanto quella, e vanno trattenute — la differenza sta
         # nel PUNTEGGIO, non nell'azione, e il verdetto porta la sua soglia.
         _soglia = getattr(verdetto, "threshold", None)
-        if verdetto.action == "reject" or (
+        # ...MA UN LAYER L1 NON E' UNA QUESTIONE DI PUNTEGGIO, e il criterio
+        # qui sopra non poteva vederlo. Misurato sul percorso reale (ws4 l'ha
+        # isolato, io l'ho riprodotto):
+        #     «Ho verificato che la funzione ora funziona»   add() quarantined
+        #                                          promote() model_claim 99.9572
+        #     «Il modulo e' stato testato ed e' pronto»      99.9825
+        #     «Il bug e' stato risolto e il sistema e' stabile»  99.9840
+        #     quarantinati da add() 3/3  ·  SERVIBILI via promozione 3/3
+        # E il punteggio non e' un errore del moat: e' il piu' alto del corpus
+        # perche' la frase sta LETTERALMENTE dentro il documento, quindi la
+        # fonte la implica davvero.
+        # 🔑 La distinzione che mancava non e' fra punteggi: e' fra «il
+        # documento RIPORTA X» e «X e' vero». Per un dato oggettivo («il
+        # magazzino contiene 300 pallet») coincidono; per un'auto-attestazione
+        # no — il moat conferma la CITAZIONE, non il fatto.
+        # ⚠️ Non tocca la scelta documentata qui sopra, perche' non guarda
+        # l'azione: guarda DA QUALE LAYER viene il downgrade. Un `downgrade`
+        # da L4/provenienza resta ammesso (contenuto implicato, decade solo lo
+        # status); L1.x significa auto-attestazione senza prova, ed e' cio' che
+        # `facts add` cestina dall'altra porta. Presidi in
+        # test_il_vanto_entrava_dalla_porta_dei_documenti.py: i tre dati
+        # oggettivi dello stesso documento continuano a promuoversi.
+        # ⚠️ SOLO CON UN `claim` ESPLICITO, e la distinzione l'ha insegnata un
+        # test che veniva da main (test_il_chunk_grezzo_CONTINUA_a_passare):
+        # senza `claim` la proposizione E' IL CHUNK, cioe' il documento stesso,
+        # e un documento che contiene «la migrazione e' completa» non e'
+        # l'agente che rivendica un merito — e' un testo che riporta una frase.
+        # Applicarci L1 era lo stesso errore di categoria che ho curato ieri
+        # sul router di provenienza (F1 C2), rifatto da un'altra porta.
+        # Con `claim`, invece, chi promuove sta DISTILLANDO un'affermazione e se
+        # ne fa carico: li' L1 ha giurisdizione, ed e' il caso del vanto.
+        _l1 = [str(w.get("layer")) for w in (verdetto.warnings or [])
+               if claim is not None
+               and str(w.get("layer", "")).startswith("L1")]
+        if verdetto.action == "reject" or _l1 or (
                 isinstance(punteggio, (int, float))
                 and isinstance(_soglia, (int, float))
                 and punteggio < _soglia):
             stato = "quarantined"
+            if _l1:
+                # Chi promuove deve sapere che e' stato L1 e non il moat: il
+                # punteggio dira' 99.9 e senza il layer la ricevuta sembrerebbe
+                # contraddirsi da sola.
+                _trattenuto_da = ",".join(sorted(set(_l1)))
     except Exception:  # noqa: BLE001 — un gate irraggiungibile non fa passare
         # ... e non fa nemmeno cadere la promozione: resta un `model_claim`
         # senza verdetto, che e' cio' che era prima e che il lettore riconosce
@@ -156,4 +196,10 @@ def promote_chunk_to_fact(
         return {"stored": False, "fact_id": None, "citation": citation,
                 "error": f"gate rejected: {exc!s:.120}"}
     return {"stored": True, "fact_id": fact.id, "citation": citation,
-            "error": None, "grounding_note": nota_punteggio}
+            "error": None, "grounding_note": nota_punteggio,
+            # Vuoto quando non e' stato L1: cosi' la ricevuta distingue «il
+            # moat ha bocciato» da «il documento lo dice ma e' un vanto», che
+            # con il solo punteggio erano indistinguibili — 99.98 in ENTRAMBI
+            # i casi, perche' la fonte contiene davvero la frase.
+            "trattenuto_da": _trattenuto_da,
+            "status": stato}

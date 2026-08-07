@@ -525,11 +525,26 @@ def search_docs(
     """
     from .document_index import DocumentIndex
     hits = DocumentIndex().search(query, k=k)
+    nascosti = getattr(hits, "nascosti", 0)
     if min_score > 0:
         hits = [h for h in hits if float(h.get("score") or 0.0) >= min_score]
     if not hits:
-        console.print("no results (index empty or no match)")
+        # «NESSUN RISULTATO» E «TUTTO NASCOSTO» ERANO LA STESSA RIGA, ed e'
+        # il caso in cui la differenza conta di piu': un documento con dentro
+        # una riga ostile sparisce INTERO, e chi cerca riceve la stessa
+        # risposta che avrebbe se non fosse mai stato indicizzato.
+        if nascosti:
+            console.print(
+                f"no results — but {nascosti} chunk(s) were HIDDEN because "
+                "they carry injection signals. The document is indexed: rerun "
+                "with the audit path (include_flagged) to inspect them.")
+        else:
+            console.print("no results (index empty or no match)")
         raise typer.Exit(0)
+    if nascosti:
+        console.print(
+            f"[yellow]note:[/yellow] {nascosti} chunk(s) hidden (injection "
+            "signals) — results below are PARTIAL")
     terms = [t for t in query.lower().split() if t.strip()]
     for i, h in enumerate(hits, 1):
         # LA CITAZIONE CANONICA, non una seconda forma della stessa cosa.
@@ -985,6 +1000,32 @@ def recall_cmd(
             _fino = _p.get("until") or "—"
             console.print(f"    [dim]prima:[/dim] {_p.get('text','')[:72]} "
                           f"[dim]({_p.get('asserted_date','?')} → {_fino})[/dim]")
+    # I RECORD TRATTENUTI, e non è un dettaglio di formattazione. Su un
+    # registro dove il fatto giusto è stato archiviato, questa riga di comando
+    # serviva la risposta SBAGLIATA con un punteggio alto e nulla che lo
+    # lasciasse sospettare — mentre lo stesso identico store, interrogato
+    # dall'SDK, dichiarava `hidden_records`.
+    #
+    # È la classe che `test_le_capacita_senza_porta_non_aumentano` sorveglia,
+    # ma peggio del solito: non è un comando in più da scoprire, è un AVVISO
+    # su una risposta che si sta già leggendo.
+    #
+    # ⚠️ UNA VOLTA SOLA, FUORI DAL CICLO. La prima stesura lo stampava per hit
+    # e usando il prodotto usciva TRE VOLTE identico su tre risultati. Il campo
+    # è informazione della DOMANDA — `client.recall` lo allega a ogni hit
+    # apposta, perché un consumatore può leggerne uno solo — ma chi STAMPA una
+    # lista lo dice una volta. I test non potevano vederlo: avevano un hit.
+    _visti: set[str] = set()
+    for h in hits:
+        for _n in (h.get("hidden_records") or []):
+            _chiave = f"{_n.get('code','?')}|{_n.get('id','')}"
+            if _chiave in _visti:
+                continue
+            _visti.add(_chiave)
+            console.print(
+                f"  [yellow]⚠ trattenuto[/yellow] [dim]({_n.get('why','?')})"
+                f"[/dim] [bold]{_n.get('code','?')}[/bold]: "
+                f"{str(_n.get('text',''))[:64]}")
 
 
 @app.command("ask")
@@ -1019,6 +1060,25 @@ def ask_cmd(
                       f"[dim]fatti su «{rep.get('terms', query)}» "
                       f"(intento: conteggio — scan dell'intero corpus, "
                       f"non i primi {k})[/dim]")
+        # PERCHÉ LO ZERO. `Memory.ask` dichiara già il conteggio per singolo
+        # termine quando il totale è zero e i termini sono più d'uno — il
+        # conteggio è un AND, e basta una parola che nessun fatto contiene per
+        # azzerarlo. Qui si stampava solo il numero, quindi da riga di comando
+        # «0 fatti su fatti parlano degrado» restava un muro:
+        #
+        #     verimem ask "quanti fatti parlano del degrado?"  ->  0
+        #     e nel corpus vero i fatti su «degrado» ci sono
+        #
+        # È la settima volta che una cura nasce su una superficie e un'altra
+        # resta indietro — stavolta la cura incompleta era mia, di due ore
+        # prima, sull'asse SDK→CLI che la mappa del read path non copriva.
+        per_termine = rep.get("per_term") or {}
+        if per_termine:
+            dettaglio = " · ".join(
+                f"[bold]{t}[/bold]: {n}" for t, n in sorted(
+                    per_termine.items(), key=lambda kv: -kv[1]))
+            console.print(f"   [dim]il conteggio è un AND su tutti i termini:"
+                          f"[/dim] {dettaglio}")
         raise typer.Exit(0)
     risultati = rep.get("results") or []
     if not risultati:
@@ -2002,7 +2062,17 @@ def introspect(
     # Skills: rank all by cosine to (learned_embedding or canonical).
     sk_scored = []
     for s in agent.skills.all():
-        if s.learned_embedding is not None:
+        # OTTAVO PUNTO DELLA CLASSE 384/768, e questo CRASHAVA: `verimem
+        # introspect` alzava `ValueError: shapes (768,) (384,)` sul primo
+        # `cosine` con una skill scritta da un modello precedente. I primi sei
+        # erano in skill.py, il settimo in document_index (dove invece TACEVA).
+        # Non e' un criterio nuovo: e' la funzione estratta curando il ciclo di
+        # sonno, e risolve la dimensione attesa LIVE.
+        # Il vettore appreso incompatibile si scarta e si ricade sul canonico —
+        # gia' la semantica prevista da `decay_idle_embeddings` («drop
+        # learned_embedding entirely so retrieval falls back to canonical»):
+        # un comando di ispezione deve MOSTRARE le skill, non morire su una.
+        if _emb.vettore_compatibile(s.learned_embedding):
             v = _np.asarray(s.learned_embedding, dtype=_np.float32)
         else:
             v = _emb.encode(f"{s.name}\n{s.trigger}")

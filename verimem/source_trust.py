@@ -108,8 +108,31 @@ def threshold() -> float:
     return env_float("ENGRAM_SOURCE_TRUST_MIN", 0.25)
 
 
-_SOURCE_REF_RE = re.compile(r"^(?:source-doc|source|src|doc|file):([^:]+)",
-                            re.IGNORECASE)
+#: La chiave di reputazione estratta da un ref documentale.
+#:
+#: LE DUE ALTERNATIVE, e perché in quest'ordine (2026-08-04). Il `[^:]+` da
+#: solo si ferma al primo due punti — che su Windows è quello del DRIVE:
+#:
+#:     file:C:/Users/aurel/Code/verimem/gate.py   ->  'C'
+#:     file:D:/altro/percorso/b.py                ->  'D'
+#:     file:/home/utente/progetto/c.py            ->  '/home/utente/...'  (ok)
+#:
+#: I path POSIX e relativi non hanno mai avuto il problema; quelli Windows
+#: collassavano TUTTI sulla lettera del disco, quindi `is_same_source` li
+#: dichiarava la stessa origine e due documenti scollegati potevano ritirarsi
+#: a vicenda. Sul corpus di produzione c'erano 43 fatti con chiave `'C'`.
+#: È la stessa classe pagata più volte in questi giorni — un'espressione
+#: tarata su un mondo (POSIX, dove i path non contengono due punti) e usata su
+#: tutti — e si vedeva solo dove il prodotto gira davvero.
+#:
+#: La prima alternativa riconosce il drive: UNA lettera, due punti, uno slash.
+#: Nessun identificatore di documento ha quella forma, quindi il formato
+#: strutturato `source-doc:X:qualcosa` -> `X` resta intatto (ci arriva la
+#: seconda alternativa, che è quella di prima).
+_SOURCE_REF_RE = re.compile(
+    r"^(?:source-doc|source|src|doc|file):"
+    r"([A-Za-z]:[\\/]\S*|[^:]+)",
+    re.IGNORECASE)
 
 
 def canonical_source(verified_by: list[str] | None,

@@ -2364,6 +2364,34 @@ class SemanticMemory:
             # outside the versioned ladder (v15 history: two forgotten
             # target-bumps broke production writes).
             conn.execute(_MUTATION_AUDIT_TABLE)
+            # CHI HA QUARANTINATO, scritto dove sopravvive alla ricevuta.
+            #
+            # Il campo `quarantined_by` esce nel dict di `add()` — cioe' lo vede
+            # chi scrive, nell'istante in cui scrive. Un minuto dopo
+            # l'informazione non esiste piu': le colonne di stato erano
+            # [created_at, status, grounding_score] e `audit_mutations` /
+            # `facts_undo_log` non hanno una riga per le quarantene.
+            # Non e' comodita': e' il motivo per cui un caso resta aperto. Due
+            # fatti quarantinati in produzione con grounding 99.96 non possono
+            # dire da soli chi li ha fermati, e sei tentativi di riproduzione
+            # (testo, fonte, topic, dimensione del corpus, canale, validate)
+            # non hanno chiuso la domanda a cui questa colonna risponde subito.
+            #
+            # NON in `audit_mutations`: quella e' ACTION-ONLY per scelta
+            # motivata (GDPR Art.17) e per le operazioni DISTRUTTIVE. Una
+            # quarantena al write non distrugge niente — e' una decisione di
+            # ammissione, e piegare quella superficie sarebbe usarla per il caso
+            # sbagliato.
+            # E FUORI DALLA SCALA VERSIONATA, come la tabella qui sopra e per la
+            # stessa ragione gia' pagata: «v15 history: two forgotten
+            # target-bumps broke production writes». Una colonna nullable
+            # aggiunta idempotentemente non ha bisogno di un numero di versione
+            # e non puo' rompere una scrittura per un bump dimenticato.
+            try:
+                conn.execute("ALTER TABLE facts ADD COLUMN quarantined_by TEXT")
+            except sqlite3.OperationalError as _exc:  # gia' presente
+                if "duplicate column" not in str(_exc).lower():
+                    raise
             from .migrations import ensure_schema_version
             ensure_schema_version(
                 conn, db_id="semantic", target_version=_SEMANTIC_TARGET_VERSION,

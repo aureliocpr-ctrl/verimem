@@ -31,10 +31,53 @@ import time
 from pathlib import Path
 from typing import Any
 
+
+def _cartella_dati() -> Path:
+    """La data dir del prodotto, non la home.
+
+    IL DIFETTO CHE HA INQUINATO LE MISURE DI TUTTE PER UN GIORNO: questo path
+    si risolveva su ``Path.home()`` e ignorava ``HIPPO_DATA_DIR``, quindi ogni
+    banco su store temporaneo scriveva nel giornale di PRODUZIONE::
+
+        quarantene registrate in events.jsonl  1765
+        con il fatto ancora nel database        108   (6%)
+        L3            301 eventi ->   0 vivi
+        tutti i L1.x  724 eventi ->   0 vivi
+
+    Il 94% del giornale racconta store che non esistono piu' — i `tmp` dei
+    nostri banchi — e per un giorno intero il team ha ricavato da li' tabelle
+    su «chi quarantina davvero», misurando i propri esperimenti credendo di
+    misurare il prodotto.
+
+    Il risolutore e' quello di `config`, l'UNICO del prodotto: precedenza
+    ``HIPPO_DATA_DIR`` -> ``ENGRAM_DATA_DIR`` -> default. Il giornale era
+    l'unica superficie che non ci passava.
+
+    ⚠️ In PRODUZIONE non cambia niente: ``HIPPO_DATA_DIR`` vale ``~/.engram`` e
+    il percorso resta identico byte per byte. Cambia solo per chi isola lo
+    store — cioe' per chi inquinava il giornale.
+
+    Fail-safe: se `config` non e' importabile (dipendenza circolare a
+    import-time, ambiente parziale) si torna alla home, che e' il comportamento
+    storico — un giornale nel posto vecchio e' meglio di un import che esplode.
+    """
+    try:
+        from .config import CONFIG
+        base = getattr(CONFIG, "data_dir", None)
+        if base:
+            return Path(str(base))
+    except Exception:  # noqa: BLE001 — vedi docstring: mai far cadere l'import
+        pass
+    return Path.home() / ".engram"
+
+
+#: ``ENGRAM_EVENT_LOG`` resta l'override esplicito e VINCE sulla data dir: e'
+#: documentato per testing/sandboxing, e una scelta esplicita del chiamante
+#: batte una derivazione automatica.
 EVENT_LOG_PATH: Path = Path(
     os.environ.get(
         "ENGRAM_EVENT_LOG",
-        str(Path.home() / ".engram" / "events.jsonl"),
+        str(_cartella_dati() / "events.jsonl"),
     )
 )
 
