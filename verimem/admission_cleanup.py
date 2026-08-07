@@ -233,11 +233,28 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
     knowledge that a SINCE-FIXED false positive (e.g. the 2026-06-14 L1.18/L1.9
     fixes) had hidden from recall (the recall path hard-excludes quarantined rows).
 
-    SAFE: a fact is recovered ONLY if ALL three quarantine sources now pass —
+    Three checks must pass — and ⚠️ THEY ARE NOT ALL THE QUARANTINE SOURCES,
+    which is what this docstring used to claim:
       (1) no L1.x anti-confab warning (``_l1_warnings`` empty),
       (2) not flagged by ``prompt_injection.detect_injection`` (security TP),
       (3) the admission gate admits it to the curated corpus (not telemetry,
           not REJECT_POLLUTED / FLAG_INJECTION).
+
+    ⚠️ **L3 (contradiction with the corpus) and L4 (the entailment moat) are
+    NOT among them.** ``classify_admission`` is called with topic /
+    proposition / status / writer_role / source_episodes — the grounding
+    score never reaches it. A fact the moat REJECTED satisfies all three and
+    comes back into recall with nobody re-reading why it was stopped.
+
+    Measured on the real corpus 2026-08-07, on 717 live quarantined facts:
+    209 carry a moat verdict and **158 of those score below 40** — the moat
+    said the source does not support them. Read in the code by ws4; the
+    numbers and the characterization tests
+    (``tests/test_le_tre_condizioni_non_sono_le_tre_fonti.py``) are ws7's.
+
+    The word this docstring opened with — SAFE — is removed deliberately: the
+    behaviour is unchanged, the claim was not true, and three of us had
+    recommended the tool on the strength of that word.
     So genuine positives (injection, polluted, telemetry) stay quarantined.
     ``dry_run`` default; the authoritative undo is the pre-run DB backup.
 

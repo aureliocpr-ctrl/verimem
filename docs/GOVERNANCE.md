@@ -392,8 +392,19 @@ same hour, with the product's own tool:
 **Roughly 30% of the live quarantine is held by detectors that no longer
 fire.** Those facts were blocked by rules that have since been cured; nothing
 re-evaluates them, so they stay hidden. The repair tool exists, moves in one
-direction only, has three safety conditions and defaults to `dry_run` — and
-**has never been run in apply**. ws4's sample of the topics is uncomfortable:
+direction only, defaults to `dry_run` — and **has never been run in apply**.
+
+⚠️ **CORRECTION (same day, one hour later).** This paragraph first called the
+tool's checks "three safety conditions", echoing a docstring that opened with
+`SAFE: … ALL three quarantine sources`. ws4 read the code: **L3 (contradiction)
+and L4 (the moat) are not among the three** — `classify_admission` never
+receives the grounding score. Measured here on the 717 live quarantined facts:
+**209 carry a moat verdict and 158 of those score below 40**, i.e. the moat
+said the source does not support them. Those satisfy all three checks. Running
+the tool in apply would return them to recall with nobody re-reading why they
+were stopped. The docstring's `SAFE` is gone and the behaviour is pinned by
+`tests/test_le_tre_condizioni_non_sono_le_tre_fonti.py`.
+🔑 Three of us recommended that tool on the strength of one word. ws4's sample of the topics is uncomfortable:
 they are largely our own dogfooding reports, i.e. the gate is hiding the
 observations written about the gate.
 
