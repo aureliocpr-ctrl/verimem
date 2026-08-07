@@ -843,10 +843,23 @@ _VERSION3_RE = re.compile(r"(?<![\w.])v?(\d+(?:\.\d+){2,})(?!\w)(?!\.\d)")
 # ⇒ non cadeva «una lingua»: cadeva ogni forma DECLINATA. L'italiano declina
 #   sempre («versione»), le altre solo al plurale — e l'unica lingua che non
 #   funzionava mai e' quella in cui questo store e' scritto.
-# COSTO: `version_conflict` decide una supersessione. Senza estrazione, due
-# fatti italiani sulla stessa cosa a due versioni diverse non sono MAI in
-# conflitto e il vecchio resta vivo accanto al nuovo — il ramo gemello di cio'
-# che ws2 ha misurato sul numerico (due verita' contemporanee sullo stesso dato).
+# COSTO, e il livello a cui e' misurato e' dichiarato perche' la mia prima
+# versione di questa riga era piu' ambiziosa del dato:
+#     version_conflict IT   riga vecchia: None   con la cura: ('2.1','3.4')
+#     lexical_conflict IT   riga vecchia: None   con la cura: ('version','2.1 vs 3.4')
+# ⇒ IL BENEFICIO DIMOSTRATO E' IL RILEVAMENTO. Due fatti italiani sulla stessa
+#   cosa a due versioni diverse non producevano NESSUN conflitto, ne' dal
+#   detector ne' dal composto che sta a valle.
+# ⚠️ NON e' dimostrata la supersessione: sul banco end-to-end (Client.add, store
+#   isolato, stesso topic e topic diversi) il numero di fatti vivi e' IDENTICO
+#   con e senza la cura — 1 e 1, poi 2 e 2. A stesso topic il vecchio veniva
+#   gia' ritirato da un'altra via; a topic diversi non lo ritira nessuna delle
+#   due. Che il conflitto sia RILEVATO e non produca supersessione in `add()` e'
+#   una domanda aperta, non un difetto dimostrato: non l'ho inseguita qui.
+# 📌 E' la regola di casa applicata a me stesso: regex interna < funzione
+#   pubblica < porta che il prodotto usa, e ogni salto puo' ribaltare. Il primo
+#   commit di questa cura dichiarava «il vecchio resta vivo accanto al nuovo»
+#   misurandolo al secondo livello e scrivendolo come se fosse il terzo.
 # LA CURA E' LA RADICE, non l'elenco delle lingue: tutte le romanze e le
 # germaniche prendono la parola dal latino *versio*, e un suffisso libero copre
 # version(s) · versione · versioni · versionen · versión · versiones ·
