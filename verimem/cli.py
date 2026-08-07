@@ -1979,6 +1979,34 @@ def skills_list(status: str | None = typer.Option(None)):
     console.print(table)
 
 
+def _punteggio_skill_per_introspect(s, q) -> float:
+    """Coseno fra la query e il vettore della skill, con la guardia sulla forma.
+
+    Un `learned_embedding` scritto da un ALTRO modello vive in uno spazio
+    diverso: passarlo a `cosine` non da' un punteggio impreciso, solleva
+    (`ValueError: shapes (768,) and (384,) not aligned`) e `verimem introspect`
+    muore in faccia all'utente. Sul corpus reale (misura ws1, 07/08) 37
+    `learned_embedding` su 41 sono a 384 mentre il modello attivo ne vuole 768,
+    e 9 stanno su skill non-retired: ne basta UNA.
+
+    Il vettore inservibile si scarta e si ricade sull'ancora canonica — la
+    stessa guardia che `skill.py` ha in `store()` e in `decay_idle_embeddings`.
+    Qui mancava perche' lo sweep di `skill.py` non usciva dal file.
+    """
+    import numpy as _np
+
+    from verimem import embedding as _emb
+
+    v = None
+    if s.learned_embedding is not None:
+        v = _np.asarray(s.learned_embedding, dtype=_np.float32)
+        if v.shape != _np.asarray(q).shape:
+            v = None            # altro modello: inservibile, non convertibile
+    if v is None:
+        v = _emb.encode(f"{s.name}\n{s.trigger}")
+    return float(_emb.cosine(q, v / max(_np.linalg.norm(v), 1e-9)))
+
+
 @app.command("introspect")
 def introspect(
     topic: str = typer.Argument(..., help="What you want the agent to surface knowledge about."),
@@ -1992,7 +2020,6 @@ def introspect(
     episodes. Useful for "what does the system actually remember about
     fix-arithmetic-bug?" without paying for an LLM round-trip.
     """
-    import numpy as _np
 
     from verimem import embedding as _emb
 
@@ -2000,13 +2027,11 @@ def introspect(
     q = _emb.encode(topic)
 
     # Skills: rank all by cosine to (learned_embedding or canonical).
+    # (il punteggio sta in `_punteggio_skill_per_introspect`, sotto: serve una
+    #  guardia sulla forma del vettore e una funzione la rende testabile)
     sk_scored = []
     for s in agent.skills.all():
-        if s.learned_embedding is not None:
-            v = _np.asarray(s.learned_embedding, dtype=_np.float32)
-        else:
-            v = _emb.encode(f"{s.name}\n{s.trigger}")
-        sk_scored.append((float(_emb.cosine(q, v / max(_np.linalg.norm(v), 1e-9))), s))
+        sk_scored.append((_punteggio_skill_per_introspect(s, q), s))
     sk_scored.sort(key=lambda p: -p[0])
     sk_scored = sk_scored[:skills_top]
 
