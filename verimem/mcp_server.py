@@ -1393,7 +1393,13 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "(Tier C): what was literally said in past sessions, verbatim. "
                 "UNVERIFIED, low-trust (confidence~0) — NOT accepted knowledge. "
                 "Use to see exactly what was said/decided, then verify before "
-                "trusting. Fully isolated from hippo_recall / hippo_facts_*."
+                "trusting. Fully isolated from hippo_recall / hippo_facts_*. "
+                "⚠️ THIS TIER DOES NOT FILL ITSELF: its ingester is delegated "
+                "to a hook the product does not install, so on a factory "
+                "install it stays empty and every call returns no turns. The "
+                "result says which case you are in — `tier_empty` and "
+                "`n_indexed_turns` — because an empty list alone cannot tell "
+                "'nothing was indexed' from 'nothing matched'."
             ),
             inputSchema={
                 "type": "object",
@@ -7602,20 +7608,37 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             query = arguments.get("query", "")
             k = int(arguments.get("k", 5))
             sid = arguments.get("session_id")
-            hits = TranscriptIndex().recall(query, k=k, session_id=sid)
-            _audit(name, arguments, outcome="ok")
-            return _ok([
-                {
-                    "id": tn.id, "session_id": tn.session_id, "role": tn.role,
-                    "ts": tn.ts, "when": _iso_day(tn.ts), "score": round(score, 3),
-                    "text": tn.text[:800],
-                    "source_path": tn.source_path,
-                    "source_offset": tn.source_offset,
-                    "confidence": tn.confidence,
-                    "source_type": tn.source_type,
-                }
-                for tn, score in hits
-            ])
+            # OGGETTO e non piu' lista nuda: una lista vuota non puo'
+            # portare la differenza fra «tier vuoto» e «nessun match», e su
+            # un'installazione di fabbrica questo tier resta vuoto PER
+            # SEMPRE (il suo ingester e' delegato a un hook che il prodotto
+            # non installa — misurato da ws2 il 2026-08-07). L'agente
+            # riceveva `[]` identico nei due casi.
+            # Rottura di forma dichiarata: in repo nessuno dipendeva dalla
+            # lista (una sola menzione, in un docstring).
+            _rep = TranscriptIndex().recall_report(query, k=k, session_id=sid)
+            _audit(name, arguments, outcome="ok",
+                   detail={"tier_empty": _rep["tier_empty"]})
+            return _ok({
+                "turns": [
+                    {
+                        "id": tn.id, "session_id": tn.session_id,
+                        "role": tn.role,
+                        "ts": tn.ts, "when": _iso_day(tn.ts),
+                        "score": round(score, 3),
+                        "text": tn.text[:800],
+                        "source_path": tn.source_path,
+                        "source_offset": tn.source_offset,
+                        "confidence": tn.confidence,
+                        "source_type": tn.source_type,
+                    }
+                    for tn, score in _rep["turns"]
+                ],
+                "n_indexed_turns": _rep["n_indexed_turns"],
+                "tier_empty": _rep["tier_empty"],
+                "scope": _rep["scope"],
+                "tier_empty_means": _rep["tier_empty_means"],
+            })
 
         if name == "hippo_transcript_promote":
             # Ponte gated Tier C -> corpus accettato. Usa la SemanticMemory
