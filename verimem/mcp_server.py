@@ -12769,6 +12769,23 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "ok_new" if was_replaced is False else "ok"
                 )
             )
+            # LA PORTA MCP SCRIVEVA SENZA DIRLO: 141 scritture ad agosto e
+            # ZERO eventi (ws4, 2026-08-07; verificato sul log reale: 8247
+            # flow.write, `mcp` zero). Non era un tag mancante — `flow.write`
+            # compariva zero volte in questo file, perche' qui si costruisce
+            # il Fact e si chiama `semantic.store()` senza passare da
+            # `Memory.add()`, dove viveva l'emissione. Un agente che scrive
+            # da qui era invisibile alla sala motore.
+            # UN SOLO emettitore, non una quarta copia: `judged` e
+            # `withheld_despite_judge` li deriva lui dal punteggio.
+            from verimem.flow_events import emit_write as _emit_write
+            _emit_write(
+                stored=True, status=str(getattr(fact, "status", "")),
+                fact_id=str(getattr(fact, "id", "")),
+                topic=str(getattr(fact, "topic", "")),
+                layers=[w.get("layer") for w in (_gate_warnings or [])
+                        if isinstance(w, dict) and w.get("layer")],
+                grounding_score=getattr(fact, "grounding_score", None))
             # 2026-06-02 (P0a — Aurelio "la memoria conserva claim errati →
             # quasi inutile"): auto-invalidate older facts the anti-confab
             # gate (L3) flagged as contradicted by THIS just-stored fact.

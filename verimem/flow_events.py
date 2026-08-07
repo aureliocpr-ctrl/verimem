@@ -71,6 +71,38 @@ def _ambient() -> dict[str, Any]:
     return out
 
 
+def emit_write(*, stored: bool, status: str, fact_id: str, topic: str,
+               layers: Any = None, grounding_score: Any = None,
+               **extra: Any) -> None:
+    """L'UNICO emettitore di ``flow.write`` — una funzione, piu' porte.
+
+    Misurato il 2026-08-07 sul log reale: 8247 eventi ``flow.write``, di
+    cui `sdk` 7953, `unknown` 208, `gateway` 48, `cli` 38 e **`mcp` ZERO**.
+    La causa non era un tag mancante ma strutturale: `flow.write` compariva
+    zero volte in `mcp_server.py`, perche' quella porta costruisce il
+    ``Fact`` e chiama ``SemanticMemory.store()`` senza passare da
+    ``Memory.add()``, dove viveva l'emissione. Un agente che scrive da MCP
+    era invisibile al governo — e ws4 ha misurato che e' anche la porta
+    meno coperta dal moat (69,5% contro 99,2% della CLI): il meno
+    osservabile e il meno controllato sono lo stesso posto.
+
+    ``judged`` e ``withheld_despite_judge`` si DERIVANO qui e non si
+    accettano dal chiamante: se una porta potesse dichiarare `judged=True`
+    senza un punteggio, il campo mentirebbe — ed e' il campo su cui questo
+    prodotto si vende.
+    """
+    from .retirement_log import judged_true as _judged_true
+    _gs = grounding_score
+    emit_flow("flow.write", stored=bool(stored), status=str(status),
+              fact_id=str(fact_id), topic=str(topic),
+              layers=list(layers or []),
+              grounding_score=_gs, judged=_gs is not None,
+              withheld_despite_judge=(str(status) in ("quarantined",
+                                                      "rejected")
+                                      and _judged_true(_gs)),
+              **extra)
+
+
 def emit_flow(name: str, **payload: Any) -> None:
     """Emit one flow event (ambient tags + ``payload``). Never raises."""
     try:

@@ -295,30 +295,16 @@ class Memory:
         )
         warnings = list(gate.warnings)
 
-        def _verdetto_evt(stato: str) -> dict[str, Any]:
-            """Il verdetto del moat per l'evento, UGUALE su ogni ramo.
+        # Il verdetto per l'evento sta in UNA funzione sola
+        # (`flow_events.emit_write`), che lo deriva dal punteggio: qui
+        # basta il punteggio. Prima questa closure lo componeva a mano, e
+        # la stessa composizione mancava del tutto sulla porta MCP —
+        # 141 scritture ad agosto, ZERO eventi (ws4, 2026-08-07). Una
+        # regola scritta due volte diverge; scritta una volta e mai
+        # chiamata dalla terza porta, sparisce.
+        from .flow_events import emit_write as _emit_write
+        _gs_evt = getattr(gate, "grounding_score", None)
 
-            `flow.write` esce da tre punti di questa funzione — respinto,
-            instradato a telemetria, scritto — e solo l'ultimo portava il
-            punteggio: nel feed un RIFIUTO non diceva nemmeno se il
-            giudice fosse stato coinvolto, mentre la ricevuta lo diceva
-            (`moat 3.0`). Verdetto a intermittenza = nessun verdetto.
-
-            `withheld_despite_judge` separa «rifiutato DAL giudice» da
-            «rifiutato NONOSTANTE il giudice»: il moat ha girato, ha detto
-            che la fonte sostiene il fatto, e il fatto resta fuori lo
-            stesso perché L1 ha visto una parola (ws5, 2026-08-05: moat
-            passed, grounding 100.0, status quarantined). È l'unico caso
-            in cui il prodotto contraddice sé stesso, e nel feed si
-            leggeva come un rifiuto qualunque. La soglia NON si riscrive
-            qui: è la stessa funzione che alimenta
-            `judged_true_but_withheld` sul corpus.
-            """
-            from .retirement_log import judged_true as _jt
-            _s = getattr(gate, "grounding_score", None)
-            return {"grounding_score": _s, "judged": _s is not None,
-                    "withheld_despite_judge": (
-                        stato in ("quarantined", "rejected") and _jt(_s))}
 
         # The mirror of the gate's own L4-skipped advisory ("say so out loud,
         # NEVER a silent skip"), for the case it never covered: a judge is
@@ -376,9 +362,9 @@ class Memory:
         _layers = _blocking_layers(warnings)
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
-            _emit_flow("flow.write", stored=False, status="rejected",
-                       fact_id="", topic=str(topic), layers=_layers,
-                       **_verdetto_evt("rejected"))
+            _emit_write(stored=False, status="rejected", fact_id="",
+                        topic=str(topic), layers=_layers,
+                        grounding_score=_gs_evt)
             _adj = _adjudication(gate, disposition="rejected",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text, fact_id=None,
@@ -446,10 +432,9 @@ class Memory:
         _routed = getattr(fact, "routed_to", None)
         if _routed:
             self._record_trust("routed_telemetry", layers=None, topic=topic)
-            _emit_flow("flow.write", stored=True, status="routed_telemetry",
-                       fact_id=str(fact.id), topic=str(topic),
-                       layers=["admission-route"],
-                       **_verdetto_evt("routed_telemetry"))
+            _emit_write(stored=True, status="routed_telemetry",
+                        fact_id=str(fact.id), topic=str(topic),
+                        layers=["admission-route"], grounding_score=_gs_evt)
             _adj = _adjudication(gate, disposition="routed_telemetry",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text,
@@ -496,9 +481,9 @@ class Memory:
         # mai-giudicati ESISTONO (ws3: 6 NULL su 250 scritti oggi, 4 dei
         # quali con una source_signature) e il feed non li distingueva.
         # La causa resta ignota, ed è meglio dirlo che spiegarla a caso.
-        _emit_flow("flow.write", stored=True, status=str(fact.status),
-                   fact_id=str(fact.id), topic=str(topic), layers=_hit_layers,
-                   **_verdetto_evt(str(fact.status)))
+        _emit_write(stored=True, status=str(fact.status),
+                    fact_id=str(fact.id), topic=str(topic),
+                    layers=_hit_layers, grounding_score=_gs_evt)
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
         # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE, classified by

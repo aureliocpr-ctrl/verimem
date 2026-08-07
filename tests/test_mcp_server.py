@@ -550,6 +550,13 @@ _EXPECTED_TOOLS = {
     "hippo_fact_forget_with_undo",
     # Mandate p.7 2026-07-22 — quarantine recovery on the MCP surface
     "hippo_quarantine_log",
+    # I TRE TOOL DI GOVERNO aggiunti dal ramo control-room il 2026-08-05/06,
+    # e mai aggiunti QUI: questo test era rosso da allora e non l'avevo mai
+    # eseguito. Aggiungere un tool e non aggiornare l'elenco atteso e' un
+    # rosso che nessuno vede finche' non lancia proprio questo file.
+    "hippo_retirement_log",
+    "hippo_forget_with_report",
+    "hippo_tier_inventory",
     "hippo_quarantine_restore",
     # 2026-07-31 — l'ingresso del sottosistema epistemico, che era completo e
     # scollegato: `epistemic` NULL su 6457 fatti mentre il README lo prometteva
@@ -963,10 +970,20 @@ async def test_call_tool_transcript_recall(monkeypatch: pytest.MonkeyPatch,
         "hippo_transcript_recall", {"query": "quale store per il tier C", "k": 3}
     )
     payload = json.loads(blocks[0])
-    assert isinstance(payload, list) and payload, payload
-    assert payload[0]["id"] == "tt1"
-    assert payload[0]["confidence"] == 0.0, "deve esporre la fiducia ~0 (low-trust)"
-    assert payload[0]["source_type"] == "conversational_raw"
+    # FORMA CAMBIATA il 2026-08-07 (77df325a): da lista nuda a oggetto,
+    # perche' una lista vuota non poteva distinguere «tier vuoto» da
+    # «nessun match» e su un'installazione di fabbrica quel tier resta
+    # vuoto per sempre. Consegnando quella cura avevo scritto «in repo
+    # nessuno dipendeva dalla lista»: era FALSO, questo test ci dipendeva
+    # e la mia grep non l'aveva visto (cercavo il nome del tool, qui il
+    # nome sta solo nella chiamata a `_invoke_tool`).
+    assert isinstance(payload, dict), payload
+    turni = payload["turns"]
+    assert turni, payload
+    assert turni[0]["id"] == "tt1"
+    assert turni[0]["confidence"] == 0.0, "deve esporre la fiducia ~0 (low-trust)"
+    assert turni[0]["source_type"] == "conversational_raw"
+    assert payload["tier_empty"] is False, payload
 
 
 @pytest.mark.asyncio
