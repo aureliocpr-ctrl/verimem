@@ -27,7 +27,29 @@ Two functions, both read-only:
 """
 from __future__ import annotations
 
+import time
 from typing import Any
+
+
+def _istante() -> float:
+    """QUANDO e' stato preso il conteggio. Epoch, non una stringa leggibile.
+
+    Il 2026-08-07 tre istanze hanno misurato la STESSA quantita' — i
+    quarantinati recuperabili — ottenendo `155 su 172` (ws4), `164 su 220`
+    (ws7), `171 su 235` (ws1) e `171 su 236` (ws7, sei minuti dopo ws1), e ne
+    sono seguiti messaggi per riconciliarli. Nessuno dei quattro era sbagliato:
+    i quarantinati vivi crescono di **~7,5 all'ora** (45 in sei ore, misurato
+    ora per ora) e i quattro numeri sono monotoni crescenti nell'ordine in cui
+    sono stati presi.
+
+    🔑 Un conteggio su un corpus che cambia non e' un numero: e' un numero PIU'
+    un istante. Senza, non e' confrontabile nemmeno con se stesso.
+
+    Epoch e non «07/08 16:41»: una stringa leggibile non e' sottraibile e non
+    dice il fuso — e queste misure viaggiano fra macchine e fra istanze.
+    """
+    return time.time()
+
 
 __all__ = ["retirement_log", "retirement_breakdown",
            "quarantine_breakdown",
@@ -292,6 +314,7 @@ def verdict_mismatches(sm, *, limit: int = 50,
         banda = [dict(r) for r in conn.execute(
             q_banda, (_VERDETTO_FALSO, _BANDA_CONTESA_ALTA, *par, int(limit)))]
     return {
+        "measured_at": _istante(),
         "judged_true_but_withheld": veri,
         "judged_false_but_served": falsi,
         "contested_band": banda,
@@ -484,6 +507,7 @@ def retirement_breakdown(sm, *, limit: int = 10,
                 WHERE {w}""", par).fetchone()
     top = giorni[0] if giorni else None
     return {
+        "measured_at": _istante(),
         "by_reason": motivi,
         "by_day": giorni,
         "by_principal": attori,
@@ -594,6 +618,7 @@ def quarantine_breakdown(sm, *, limit: int = 10,
                 {**par, "lim": int(limit)})]
     top = giorni[0] if giorni else None
     return {
+        "measured_at": _istante(),
         "quarantined": tot,
         "by_day": giorni,
         "concentration": {
@@ -689,6 +714,7 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
     # English keys: this dict travels over every port of an international
     # product (monolingual surfaces are a measured defect class here).
     return {
+        "measured_at": _istante(),
         "written": int(row["written"] or 0),
         "servable": int(row["servable"] or 0),
         "retired": int(row["retired"] or 0),

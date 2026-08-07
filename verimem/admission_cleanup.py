@@ -28,6 +28,7 @@ import sqlite3
 
 from ._call_telemetry import is_call_telemetry
 from .admission_gate import ROUTE_TELEMETRY, classify_admission
+from .retirement_log import _istante
 
 #: Embedding BLOB columns dropped from the archived payload — telemetry is never
 #: recalled semantically, so re-embeddable vectors are pure bloat (same choice as
@@ -277,10 +278,21 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
+        # `grounding_score` puo' MANCARE su uno store vecchio: la colonna e'
+        # arrivata con lo schema, e questo e' uno strumento di RECUPERO — chi
+        # lo esegue ha spesso proprio uno store vecchio. Senza questa
+        # tolleranza la chiamata muore con `OperationalError: no such column`
+        # invece di lavorare.
+        # ⚠️ Difetto MIO: l'ho introdotto con la cura `f1431950` di stamattina
+        # aggiungendo la colonna alla SELECT, e ho consegnato senza accorgermi
+        # che quattro prove erano rosse.
+        _colonne = {r[1] for r in conn.execute("PRAGMA table_info(facts)")}
+        _ha_punteggio = "grounding_score" in _colonne
         rows = conn.execute(
             "SELECT id, topic, proposition, verified_by, writer_role, "
-            "source_episodes, grounding_score FROM facts "
-            "WHERE status='quarantined' AND superseded_by IS NULL"
+            "source_episodes"
+            + (", grounding_score" if _ha_punteggio else "")
+            + " FROM facts WHERE status='quarantined' AND superseded_by IS NULL"
         ).fetchall()
         recoverable: list[str] = []
         held_by_moat = 0
@@ -333,7 +345,7 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
             # e' una (40 col giudice di ripiego, 70 col calibrato,
             # misurato il 2026-08-05): davanti al dubbio si recupera di
             # meno.
-            _gs = r["grounding_score"]
+            _gs = r["grounding_score"] if _ha_punteggio else None
             if _gs is not None and float(_gs) < _MOAT_MIN_RECOVER:
                 held_by_moat += 1
                 continue
@@ -345,6 +357,10 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
             # n'erano meno»: chi guarda deve vedere che la differenza
             # e' una SCELTA, e quale.
             "held_by_moat": held_by_moat,
+            # Su uno store senza la colonna, `held_by_moat` vale 0 — e uno
+            # zero senza spiegazione si legge «il moat non ha bocciato
+            # nessuno», che e' l'opposto di «non ho potuto guardare».
+            "moat_available": _ha_punteggio,
             "moat_rule": (
                 f"a quarantined fact is NOT recovered when the moat "
                 f"judged it below {_MOAT_MIN_RECOVER:.0f}; NULL means "
@@ -354,6 +370,13 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
                 f"recover less"),
             "promoted": 0,
             "dry_run": dry_run,
+            # QUANDO. Il 2026-08-07 tre istanze hanno misurato proprio questo
+            # `recoverable` e hanno ottenuto 172, 220, 235 e 236 — e nessuna
+            # era in errore: i quarantinati vivi crescono di ~7,5 all'ora e i
+            # quattro numeri sono monotoni nell'ordine in cui furono presi.
+            # Un conteggio su un corpus che cambia e' un numero PIU' un
+            # istante. Vedi `retirement_log._istante`.
+            "measured_at": _istante(),
         }
         if dry_run or not recoverable:
             return result

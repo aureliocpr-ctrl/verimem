@@ -112,3 +112,36 @@ def test_il_dry_run_resta_il_default(store):
     with sqlite3.connect(store.semantic.db_path) as con:
         assert con.execute("SELECT status FROM facts WHERE id = ?",
                            (fid,)).fetchone()[0] == "quarantined"
+
+
+def test_su_uno_store_SENZA_la_colonna_lo_strumento_lavora_e_lo_dichiara(
+        tmp_path):
+    """🪞 IL DIFETTO CHE HO INTRODOTTO IO CON QUESTA STESSA CURA.
+
+    Aggiungendo `grounding_score` alla SELECT (commit `f1431950`) ho reso la
+    funzione incapace di girare su uno store che non ha quella colonna —
+    `OperationalError: no such column` — e ho consegnato senza accorgermi che
+    QUATTRO prove di `test_requalify_quarantined.py` erano diventate rosse.
+    Trovato solo dopo, allargando la regressione.
+
+    ⚠️ E la tolleranza da sola non basterebbe: senza la colonna `held_by_moat`
+    vale 0, e uno zero senza spiegazione si legge «il moat non ha bocciato
+    nessuno» — che è l'opposto di «non ho potuto guardare». Per questo l'esito
+    porta `moat_available`.
+    """
+    db = tmp_path / "vecchio.db"
+    with sqlite3.connect(db) as con:
+        con.execute(
+            "CREATE TABLE facts (id TEXT PRIMARY KEY, topic TEXT,"
+            " proposition TEXT, verified_by TEXT, status TEXT,"
+            " writer_role TEXT, source_episodes TEXT, superseded_by TEXT)")
+        con.execute(
+            "INSERT INTO facts VALUES ('v1','t/x','the depot in Turin holds"
+            " 40 crates','[]','quarantined','agent_inference',NULL,NULL)")
+
+    out = requalify_quarantined(str(db), dry_run=True)
+    assert out["scanned"] == 1, out
+    assert out["recoverable"] == 1, out
+    assert out["held_by_moat"] == 0
+    assert out["moat_available"] is False, (
+        "uno zero senza dire che non si poteva guardare mente")
