@@ -893,13 +893,72 @@ _VERSION_CARRIER_TOKENS = frozenset({"version", "release", "build"})
 
 _CAPS_NAME_RE = re.compile(r"\b[A-Z][a-zA-Z]{2,}\b")
 
+#: L'inizio di una frase, dove la maiuscola e' punteggiatura e non un nome.
+_APRE_LA_FRASE_RE = re.compile(r"(?:^|[.;:!?\n]\s*|^\s*[-•*]\s*)([A-Z][a-zA-Z]{2,})")
+
+def _nomi_propri(testo: str) -> set[str]:
+    """Le parole maiuscole di *testo* che sono davvero NOMI PROPRI.
+
+    ⛔ IL DIFETTO CURATO (2026-08-07). La firma era `[A-Z][a-zA-Z]{2,}` — una
+    maiuscola e due lettere — e in italiano la soddisfano tutte le parole che
+    APRONO una frase::
+
+        «Sul corpus reale…» vs «Dopo la cura…»   -> soggetti «Sul» e «Dopo»
+        «ASSUNTO che…»      vs «CONFERMATA la…»  -> soggetti urlati
+
+    Due frasi che cominciano con parole diverse avevano «nomi propri disgiunti»
+    e la guardia concludeva che parlassero di cose diverse: un veto che scatta
+    sulla punteggiatura. Misurato in indipendenza da ws1 (5120 conflitti su
+    21151, 24,2%) e da ws4 (147 coppie vere, 26,5%) — due stime che convergono.
+
+    IL CRITERIO E' DI ws4, ed e' raro perche' migliora ENTRAMBE le popolazioni
+    insieme: sulle 147 coppie vere toglie 22 falsi soggetti E AGGIUNGE 5
+    protezioni su coppie con sovrapposizione mediana 3,9% — ritiri quasi
+    certamente sbagliati che oggi passano. I casi protetti scendono da 39 a 22.
+
+    ⚠️ NON E' POSIZIONALE PURO, ED E' IL CORPUS REALE A ESIGERLO. La lettura
+    ovvia del criterio — «scarta la parola che apre la frase» — l'ho misurata
+    sugli 8865 fatti dello store: **il 72% delle proposizioni apre con una
+    maiuscola**, e le piu' frequenti sono `PYTEST` 268, `Orin` 149, `OMNEX` 119,
+    `VERIMEM` 103, `Lab`, `MASTER`, `User`, `Pattern` — nomi propri veri.
+    Scartare per posizione spegnerebbe la guardia proprio sui soggetti piu'
+    ricorrenti del corpus. La parola cade solo se apre la frase **ed e' anche
+    una parola funzionale**, cioe' se non puo' essere un nome in nessuna lettura.
+
+    MISURATO sul corpus, entrambe le popolazioni::
+        aperture maiuscole            6420
+          scartate (funzionali)        794  12,4%   Per Non DEI GLI UNA COME Nel
+          tenute   (candidati nome)   5626  87,6%   OMNEX HippoAgent Episodes
+
+    ⚠️ La lista NON e' `composer._ARTICOLI_TUTTI`, che era la strada proposta e
+    l'ho verificata prima di prenderla: ha 20 voci — il, la, the, el… — e non
+    contiene NESSUNA delle parole del referto (`sul`, `dopo`, `assunto`,
+    `questo`: tutte assenti). Gli articoli non aprono le frasi di questo store:
+    le aprono le PREPOSIZIONI, che stanno in `_NON_UNIT_WORDS`.
+
+    ⚠️ DUE LIMITI APERTI E DICHIARATI, che sono la stessa firma troppo larga:
+      · NON VEDE `S-007`, `SRV-12`, `L-45` — cifra e trattino, e nei domini veri
+        (macchine, lotti, ticket, server) sono LA norma. Allargare alle cifre
+        farebbe entrare versioni e date come soggetti (controipotesi di ws4).
+      · CONTA GLI ACRONIMI — `RAM`, `CPU`, `API`. Effetto oggi benigno (uniscono
+        due frasi che parlano della stessa cosa) ma la firma e' la stessa.
+      · `_NON_UNIT_WORDS` e' piu' ricca in italiano che in inglese, quindi
+        `This`, `All`, `Across`, `Multiple` in apertura restano contati come
+        nomi. Si vede nel campione delle 5626 tenute: la cura toglie i falsi
+        soggetti italiani e lascia quelli inglesi.
+    """
+    testo = testo or ""
+    apre = {m.group(1) for m in _APRE_LA_FRASE_RE.finditer(testo)}
+    return {w for w in _CAPS_NAME_RE.findall(testo)
+            if not (w in apre and w.lower() in _NON_UNIT_WORDS)}
+
 
 def _named_subjects_disjoint(text_a: str, text_b: str) -> bool:
     """True when BOTH statements name capitalized subjects and the two sets
     are fully disjoint ("Orion ..." vs "Zephyr ...") — different named
     things, so a differing version/date between them is NOT a conflict."""
-    ca = set(_CAPS_NAME_RE.findall(text_a or ""))
-    cb = set(_CAPS_NAME_RE.findall(text_b or ""))
+    ca = _nomi_propri(text_a)
+    cb = _nomi_propri(text_b)
     return bool(ca) and bool(cb) and not (ca & cb)
 
 
