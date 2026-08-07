@@ -2681,8 +2681,31 @@ class Memory:
             cid = getattr(cur, "id", "")
             seen.add(cid)
             nxt = getattr(cur, "superseded_by", None)
-            chain.append({"id": cid, "text": getattr(cur, "proposition", ""),
-                          "status": getattr(cur, "status", ""), "superseded_by": nxt})
+            # LA VISTA CONDIVISA, non la TERZA copia scritta a mano.
+            #
+            # Qui c'era `{id, text, status, superseded_by}`: quattro chiavi
+            # contro le quattordici che `get`/`get_all`/`search` garantiscono
+            # (censito da ws2). Su quelle superfici la promessa «provenance on
+            # every read» regge; qui cadevano tutte insieme — provenienza,
+            # verdetto, tempo, autore.
+            # ⚠️ E colpisce cio' che si e' appena acceso: col routing temporale
+            # su "auto" (2aa8a4b1) la storia ARRIVA, ma serviva versioni senza
+            # fonte, senza grounding, senza data e senza scrittore. Chi deve
+            # SCEGLIERE FRA VERSIONI — l'unico motivo per cui si chiama
+            # `history` — aveva in mano due testi e nessun criterio.
+            # 🔑 E' la terza copia della stessa vista, e la seconda era gia'
+            # costata: accanto all'uso di `_fact_view` in `search` sta scritto
+            # come fu trovata — «superseded_by was added to the shared view and
+            # search went on without it. Two copies drift, and this one already
+            # had». Per questo la cura e' la PROIEZIONE e non quattro campi
+            # aggiunti a mano, che sarebbe la quarta copia.
+            # Additivo: le quattro chiavi storiche restano (`text` non e' nella
+            # vista condivisa, che usa `text` come alias di `proposition`).
+            _voce = dict(self._fact_view(cur))
+            _voce.update({"id": cid, "text": getattr(cur, "proposition", ""),
+                          "status": getattr(cur, "status", ""),
+                          "superseded_by": nxt})
+            chain.append(_voce)
             cur = self.semantic.get(nxt) if nxt else None
         return chain
 
