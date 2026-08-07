@@ -57,6 +57,7 @@ from .agent import VerimemAgent  # noqa: E402
 from .config import CONFIG  # noqa: E402
 from .fact_contract import fact_payload  # noqa: E402
 from .observability import emit, get_log  # noqa: E402
+from .text_cut import safe_cut  # noqa: E402
 
 log = get_log()
 
@@ -7636,7 +7637,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         "role": tn.role,
                         "ts": tn.ts, "when": _iso_day(tn.ts),
                         "score": round(score, 3),
-                        "text": tn.text[:800],
+                        "text": safe_cut(tn.text, 800),
                         "source_path": tn.source_path,
                         "source_offset": tn.source_offset,
                         "confidence": tn.confidence,
@@ -8772,7 +8773,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         if _kf_gate.action == "reject":
                             log.warning(
                                 "record_episode_key_fact_rejected_anti_confab",
-                                proposition_excerpt=prop[:80],
+                                proposition_excerpt=safe_cut(prop, 80),
                             )
                             _kf_esito.update({
                                 "status": "rejected", "id": None,
@@ -8818,7 +8819,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     except Exception as exc:  # noqa: BLE001
                         log.warning(
                             "record_episode_key_fact_store_failed",
-                            proposition_excerpt=prop[:80],
+                            proposition_excerpt=safe_cut(prop, 80),
                             error=str(exc),
                         )
                         _kf_esito.update({"status": "failed", "id": None,
@@ -12847,7 +12848,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     confidence=confidence,
                     replaced=bool(was_replaced),
                     status=getattr(fact, "status", "model_claim"),
-                    proposition_excerpt=proposition[:140],
+                    proposition_excerpt=proposition,
                 )
                 # Cycle #134: emit anti_confab_warning when the L1 detector
                 # fires on the just-stored proposition. The dashboard uses
@@ -12873,7 +12874,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                             level=_level,
                             fact_id=fact.id,
                             topic=topic,
-                            proposition_excerpt=proposition[:140],
+                            proposition_excerpt=proposition,
                             reason=_w,
                         )
             except Exception:  # noqa: BLE001 — never break the response

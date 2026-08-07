@@ -266,7 +266,37 @@ def get_log() -> structlog.BoundLogger:
     return log
 
 
+#: Quanto testo dell'utente entra in un campo `*_excerpt`. La politica sta
+#: QUI e non nei chiamanti: prima era scritta quattro volte (`[:140]` due
+#: volte, `[:80]` due volte) e ognuna sbagliava per conto suo.
+MAX_ESTRATTO = 140
+
+
+def _estratto(v: Any) -> Any:
+    """Taglia un campo dichiarato ESTRATTO senza mutilare il grafema.
+
+    Perche' qui e non dal chiamante: un evento non e' una schermata, e'
+    un DATO che resta in `events.jsonl` e viene riletto mesi dopo. Un
+    accento perso nel taglio rende la riga irreperibile a chi cerca la
+    proposizione con la stringa che ha in mano.
+
+    🔑 E l'ordine non e' invertibile: **riparare a valle non si puo'.**
+    Dei quattro modi di spezzare un grafema, due lasciano una traccia
+    (uno ZWJ penzolante, mezza bandiera) e due NON ne lasciano alcuna —
+    l'accento composto e il virama spariscono, e `caffe` e' una stringa
+    legittima che nessun controllo successivo puo' riconoscere come
+    mutilata. Percio' il chiamante passa il testo INTERO: se passasse gia'
+    il taglio, il dato sarebbe gia' perso quando arriva qui.
+    """
+    if not isinstance(v, str):
+        return v
+    from .text_cut import safe_cut
+    return safe_cut(v, MAX_ESTRATTO)
+
+
 def emit(name: str, **payload: Any) -> None:
+    payload = {k: (_estratto(v) if k.endswith("_excerpt") else v)
+               for k, v in payload.items()}
     BUS.emit(name, **payload)
     log.info(name, **payload)
     # Cross-process fan-out: la memory-map live dashboard fa tail del JSONL
