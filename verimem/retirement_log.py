@@ -492,14 +492,28 @@ def retirement_breakdown(sm, *, limit: int = 10,
                      "winner_missing": int(_sc[2] or 0)},
         # L'INTERPRETAZIONE STA QUI, col suo numero e col suo margine — non
         # in un'etichetta per riga, che sarebbe falsa in un caso su venti.
+        # CORRETTA il 2026-08-07, un'ora dopo averla consegnata. Diceva
+        # «95.1% housekeeping» e si leggeva come una rassicurazione: il
+        # meccanismo e' automatico (vero, l'hook e' stato trovato nel
+        # codice) ma NON e' senza perdita. Due misure indipendenti, con
+        # metodi diversi, lo stesso giorno — e ws4 ha ritirato il proprio
+        # «housekeeping funziona come deve», che era un giudizio non
+        # misurato: aveva classificato la causa e dedotto l'innocenza.
         "scope_means": (
             "cross_topic is an OBSERVABLE (two stored strings differ), not a "
             "verdict. On this corpus 1463 of the 1538 cross-topic "
-            "retirements are `autohook-snapshot daily collapse` — 95.1% "
-            "housekeeping, measured by ws4 on 2026-08-07 and reproduced "
-            "independently; the remaining 4.9% are not. The same-topic 266 "
-            "are the population where supersession is a real editorial act, "
-            "and the ones a versioning scheme would need to keep"),
+            "retirements are `autohook-snapshot daily collapse` — an "
+            "automatic housekeeping hook, measured 2026-08-07 and reproduced "
+            "independently. ⚠️ HOUSEKEEPING NAMES THE MECHANISM, NOT THE "
+            "OUTCOME: on the master that retired 389 of them the 389 losers "
+            "had 389 DISTINCT topics (separate checkpoints, not versions of "
+            "one fact), 1,053,033 characters were replaced by 2,694 — 0.26% "
+            "of the text survives — and 0 of 8 specific pointers (fact ids, "
+            "pull-request URLs, paths) are in the master. A second method "
+            "over 1463 pairs found 88.7% of the vocabulary lost, 3695 of the "
+            "lost tokens being ids/paths/flags. It is NOT compression, it is "
+            "SUBSTITUTION. The same-topic 266 are where supersession is a "
+            "real editorial act, and the ones a versioning scheme must keep"),
         # IL LIMITE ACCANTO AL DATO. Un campo che sembra rispondere «chi»
         # senza dire cosa misura e' peggio di un campo assente, e qui i
         # limiti sono due: (1) il principal nomina la PORTA — `cli:local`
