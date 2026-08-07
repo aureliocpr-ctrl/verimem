@@ -424,9 +424,24 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (q) {
         if (!q) { return; }
-        $("quartet").textContent = "written " + q.written
-          + " · servable " + q.servable + " · retired " + q.retired
-          + " · quarantined " + q.quarantined;
+        /* L'endpoint manda SEI numeri e questa riga ne mostrava quattro —
+           e i due che mancavano sono quelli che rispondono alle due
+           domande del prodotto: «e' verificata?» (judged) e «si puo'
+           tornare indietro?» (retired_reversible). Sul corpus reale:
+           1360 giudicati su 5631 servibili, e 2 ritiri annullabili su
+           1805. Il conteggio da solo non dice niente, quindi vanno come
+           RAPPORTO sul loro denominatore.
+           Una chiave assente resta "?" e non 0: un gateway piu' vecchio
+           non ha questi campi, e «nessuno giudicato» sarebbe una bugia
+           diversa da «non lo so». */
+        var _q = function (v) { return (v === undefined || v === null) ? "?" : v; };
+        var riga = "written " + q.written
+          + " · servable " + q.servable
+          + " (judged " + _q(q.judged) + ")"
+          + " · retired " + q.retired;
+        if (q.retired) { riga += " (undoable " + _q(q.retired_reversible) + ")"; }
+        riga += " · quarantined " + q.quarantined;
+        $("quartet").textContent = riga;
         $("quartet").title = q.formula;
       })
       .catch(function () {});

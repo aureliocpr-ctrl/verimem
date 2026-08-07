@@ -180,7 +180,12 @@ the helm it also shows:
 - the **governance panel**: retirement pairs with an *undo* button, the
   quarantine with a *restore* button — the buttons drive the real endpoints
   of this gateway, and the feed shows the effect;
-- a **`retired` counter** in the header next to admitted/quarantined;
+- the **quartet in the header**, all six numbers the endpoint returns and not
+  four: `written · servable (judged N) · retired (undoable N) · quarantined`.
+  The two in brackets are the ones that answer the product's own questions —
+  "is it verified?" and "can we go back?" — and the panel omitted both until
+  2026-08-07. They ride as ratios on their denominator because a bare count
+  says nothing, and a missing key renders `?`, never `0`;
 - the **chamber map**, which declares its own blind spots instead of looking
   complete. Rows marked **LIT** carry the date their telemetry arrived; the
   rest still mutate or decide with **no event a live surface can hear**:
@@ -198,6 +203,15 @@ the helm it also shows:
 
 A gateway without the governance routes makes the panel say so
 ("pre-helm build") — an absent route must never render as "nothing lost".
+
+⚠️ **Editing the panel's JS**: `webui.asset()` is `@cache`d — the file is read
+ONCE per process, so an edit to `engine.js` is invisible until the server
+restarts. The ETag hashes the cached body, so it stays self-consistent (the
+server never serves content X labelled as Y) and no browser reload helps.
+Correct for a shipped package, a trap while developing: it cost a round on
+2026-08-07. And when you check whether your edit is live, grep for a string
+UNIQUE to the change — the first probe here matched `undoable`, a word the old
+file already contained in another renderer, and reported success.
 
 ⚠️ **Reading the panel from an automated browser**: `feedFlush` runs inside
 `requestAnimationFrame`, which browsers suspend for a hidden tab. A pane that
