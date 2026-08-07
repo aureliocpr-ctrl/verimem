@@ -123,6 +123,7 @@ def retirement_log(
                f.superseded_reason AS reason,
                w.topic         AS winner_topic,
                w.status        AS winner_status,
+               w.superseded_by AS winner_superseded_by,
                w.created_at    AS winner_created_at,
                u.op_id         AS undo_op_id,
                u.undone_at     AS undo_undone_at,
@@ -180,6 +181,21 @@ def retirement_log(
             d["irreversible_because"] = "undo window expired"
         else:
             d["reversible"], d["irreversible_because"] = True, None
+        # «RITIRATO IN FAVORE DI X» si legge come «l'informazione vive in
+        # X», e sul corpus reale per 1177 righe su 1805 X e' a sua volta
+        # ritirato o quarantinato (ws4, 2026-08-07). La riga non lo diceva:
+        # portava `winner_status` e toccava a chi legge saperlo
+        # interpretare. `winner_missing` e' un caso a parte — sul corpus
+        # reale ce n'e' UNO, un `superseded_by` che punta a un id che non
+        # esiste — e assente non e' «non servibile»: e' un dato rotto, e
+        # None lo dice mentre False lo mimetizzerebbe fra i normali.
+        d["winner_missing"] = (d.get("winner_id") is not None
+                               and d.get("winner_status") is None)
+        d["winner_servable"] = (
+            None if d["winner_missing"] or d.get("winner_id") is None
+            else (d.get("winner_superseded_by") is None
+                  and d.get("winner_status") != "quarantined"))
+        d.pop("winner_superseded_by", None)
         if not d["reversible"]:
             # l'appiglio NON viaggia quando non e' usabile: un op_id che
             # `undo` rifiuta si legge come una riparazione disponibile
@@ -263,6 +279,97 @@ def verdict_mismatches(sm, *, limit: int = 50,
 _SENZA_MOTIVO = "(no reason recorded)"
 
 
+#: Oltre questo numero di supersessioni le catene non si seguono e il
+#: risultato lo DICHIARA invece di tacere: un limite silenzioso si legge
+#: come «ho guardato tutto». Sul corpus reale sono 1805.
+_MAX_CATENE = 50_000
+
+
+def _esito_delle_catene(sm, *, topic: str | None = None) -> dict[str, Any]:
+    """Dove FINISCE la catena delle supersessioni, non solo il primo passo.
+
+    «Ritirato in favore di X» si legge come «l'informazione vive in X», ma
+    X puo' essere a sua volta ritirato. Seguendo la catena fino in fondo
+    sul corpus reale (2026-08-07): 673 ritiri su 1805 (37.3%) finiscono su
+    un fatto servibile, 1131 no, 1 punta a un id inesistente, zero cicli,
+    profondita' massima 13 e media 1.11.
+
+    ⚠️ E l'aggregato da solo ACCUSA il prodotto di una cosa che non fa —
+    per questo esce sempre insieme allo split per motivo::
+
+        same-source evolution              107 · viva 107 (100.0%)
+        heal_contradictions: numeric        21 · viva  21 (100.0%)
+        exact-text dedup                   202 · viva 133 ( 65.8%)
+        autohook-snapshot daily collapse  1463 · viva 406 ( 27.8%)
+
+    Il write path ordinario non lascia MAI una catena morta: il 62.7% che
+    muore e' quasi tutto la manutenzione del 2 luglio. Un numero che si
+    ribalta quando lo dividi non va consegnato da solo.
+
+    In Python e non in SQL ricorsivo: i passi sono pochi (media 1.11) e la
+    guardia sui cicli qui e' esplicita e leggibile. Un ciclo non manda in
+    loop — si conta — perche' un registro che si impianta su un dato
+    sporco e' peggio di uno che lo dichiara.
+    """
+    with sm._connect() as conn:
+        n_sup = int(conn.execute(
+            "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL"
+        ).fetchone()[0])
+        if n_sup > _MAX_CATENE:
+            return {"status": f"skipped: {n_sup} supersessions > "
+                              f"{_MAX_CATENE} cap — chains not followed"}
+        sup = dict(conn.execute(
+            "SELECT id, superseded_by FROM facts "
+            "WHERE superseded_by IS NOT NULL"))
+        motivo = dict(conn.execute(
+            "SELECT id, COALESCE(superseded_reason, ?) FROM facts "
+            "WHERE superseded_by IS NOT NULL", (_SENZA_MOTIVO,)))
+        vivi = {r[0] for r in conn.execute(
+            f"SELECT id FROM facts WHERE {SERVABLE_WHERE}")}
+        esistono = {r[0] for r in conn.execute("SELECT id FROM facts")}
+        _tp = dict(conn.execute(
+            "SELECT id, topic FROM facts WHERE superseded_by IS NOT NULL"))
+
+    conti = {"ends_servable": 0, "ends_dead": 0, "ends_missing": 0,
+             "cycles": 0}
+    per_motivo: dict[str, list[int]] = {}
+    prof_max = 0
+    for start in sup:
+        if topic is not None and not str(_tp.get(start, "")).startswith(topic):
+            continue
+        cur, visti = start, set()
+        while cur in sup and cur not in visti:
+            visti.add(cur)
+            cur = sup[cur]
+        prof_max = max(prof_max, len(visti))
+        k = motivo[start]
+        voce = per_motivo.setdefault(k, [0, 0])
+        voce[0] += 1
+        if cur in visti:
+            conti["cycles"] += 1
+        elif cur not in esistono:
+            conti["ends_missing"] += 1
+        elif cur in vivi:
+            conti["ends_servable"] += 1
+            voce[1] += 1
+        else:
+            conti["ends_dead"] += 1
+    return {
+        **conti,
+        "max_depth": prof_max,
+        "by_reason": [
+            {"reason": k, "n": v[0], "ends_servable": v[1],
+             "share": round(v[1] / v[0], 4) if v[0] else None}
+            for k, v in sorted(per_motivo.items(), key=lambda x: -x[1][0])],
+        "formula": ("follow superseded_by to the end of the chain; "
+                    "ends_servable = the tip is servable. The aggregate "
+                    "ships WITH the per-reason split on purpose: on the "
+                    "real corpus it reads 37% overall and 100% for "
+                    "same-source evolution — a number that flips when you "
+                    "divide it must not travel alone"),
+    }
+
+
 def retirement_breakdown(sm, *, limit: int = 10,
                          topic: str | None = None) -> dict[str, Any]:
     """Dove si ADDENSANO i ritiri: per motivo e per giorno.
@@ -321,6 +428,7 @@ def retirement_breakdown(sm, *, limit: int = 10,
     return {
         "by_reason": motivi,
         "by_day": giorni,
+        "chain": _esito_delle_catene(sm, topic=topic),
         "total_retired": totale,
         "concentration": {
             "day": top["day"] if top else None,
