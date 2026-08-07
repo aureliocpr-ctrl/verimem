@@ -2205,8 +2205,28 @@ class Memory:
             cid = getattr(cur, "id", "")
             seen.add(cid)
             nxt = getattr(cur, "superseded_by", None)
-            chain.append({"id": cid, "text": getattr(cur, "proposition", ""),
-                          "status": getattr(cur, "status", ""), "superseded_by": nxt})
+            # IL CONTRATTO, non un dizionario a mano. Questa riga rendeva
+            # quattro campi dove ogni altra lettura ne rende quattordici, e
+            # le istruzioni del prodotto promettono «every read carries
+            # grounding_score»: vero su get/get_all/search, falso qui
+            # (censimento promesse-vs-realta' di ws2, 2026-08-07). Non era
+            # «manca il verdetto» ma una proiezione SCHELETRICA — cadevano
+            # insieme provenienza, verdetto, tempo, autore. E' la classe che
+            # `fact_contract` esiste per prevenire: 13 punti costruivano il
+            # dizionario a mano e sette dimenticavano il verdetto; questo
+            # era sfuggito al censimento di allora.
+            from .fact_contract import fact_payload
+            riga = fact_payload(cur)
+            # `text` e' il nome storico e chi legge una storia lo usa da
+            # sempre: resta come alias, curare una promessa rompendone
+            # un'altra non e' una cura.
+            riga.setdefault("text", riga.get("proposition", ""))
+            # `superseded_by` SEMPRE presente, anche None: in una catena
+            # l'assenza e' informazione («questa e' la punta») e chi cammina
+            # la storia la legge a ogni passo — la regola normale del
+            # contratto (i vuoti si omettono) qui romperebbe il camminatore.
+            riga["superseded_by"] = nxt
+            chain.append(riga)
             cur = self.semantic.get(nxt) if nxt else None
         return chain
 
