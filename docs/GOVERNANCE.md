@@ -60,6 +60,34 @@ servable). Ingest surfaces need their own counter (`messages_in →
 facts_out` per conversation); until then, treat "0 rejected" on an import
 as "nothing that arrived was rejected", not "everything arrived".
 
+### Known blind spot: a field named for a verification that is not one
+
+`last_verified_at` reads as "when this was last verified" and is not. Measured
+2026-08-07 (ws5): it advances on **2762** facts — up to 87 days after the write
+— and **zero** of those carry a `grounding_score`. It moves exactly where a
+verdict never happened: a migration or a re-embed. A touch, not a judgement.
+
+Two governance surfaces derived from it and were corrected: the trust dossier
+computed `age_days`/`freshness` from it (990 never-verified facts read as
+`live`), and `fact_payload` emitted the key only when it *differed* from
+`created_at` — i.e. **only on the never-verified facts**, the signal inverted.
+Both now go through `fact_contract.verifica_sostenuta`: the field counts as a
+verification only when a verdict backs it.
+
+**Still open, and not on this branch**: `semantic._fact_is_stale` uses the same
+field as the age base, and it runs in the default recall view. On the real
+corpus **993** servable facts clear the 45-day freshness cut *only* because of
+an unbacked touch, and all 993 are unjudged.
+⚠️ What the data does NOT show: judged facts being hidden — 0 of the 1306
+stale-hidden ones carry a verdict. The reason is temporal, not epistemic: write
+-time grounding started 2026-07-28, so the oldest judged fact is 9.6 days old.
+**Falsifiable prediction**: from **2026-09-11** the first judged facts cross the
+cut, and from then on the filter will hide verified facts while keeping touched
+-but-never-verified ones. The mechanism is already there; the effect is not yet
+in the data. Changing it is retrieval behaviour, so it belongs to the write-path
+owner. A `doctor` check for it is deliberately deferred — the doctor suite
+probes the local judge and takes 60-90s, and the machine was reserved.
+
 ---
 
 ## 2. Seeing retirements: the retirement log
