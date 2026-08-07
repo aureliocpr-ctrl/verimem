@@ -792,8 +792,27 @@ class Memory:
 
     # ---- read --------------------------------------------------------------
     def search(self, query: str, k: int = 5, *, deep: bool = False,
-               as_of: float | str | None = None,
-               with_history: bool | str = False,
+               # "auto" E NON None/False: il ROUTING c'era, funzionava anche in
+               # italiano, e non si accendeva mai perche' nessuna superficie
+               # passava "auto". Misurato sul listino che cambia tre volte
+               # (100 -> 120 -> 150), il difetto isolato da ws5:
+               #     quanto costava a GENNAIO -> «150 euro» rilevanza 0.8457
+               #     quanto costava ad APRILE -> «150 euro» rilevanza 0.8382
+               # cioe' una risposta SBAGLIATA presentata come giusta, mentre
+               # `history()` aveva le tre versioni ordinate e leggibili. Il
+               # prodotto dichiara «abstention over hallucination» e sull'asse
+               # del tempo non lo applicava.
+               # ⚠️ "auto" INSTRADA, non accende: chiede a `wants_history` /
+               # `extract_as_of`, che su «quanto costa OGGI» rispondono di no.
+               # E' la differenza fra curare il difetto e far pagare a tutti il
+               # costo della catena.
+               # 📌 TERZA VOLTA SU QUESTA SUPERFICIE, e la prima e' documentata
+               # in mcp_server.py:7627 (ce_gate inerte -> 0/5 astensioni; acceso
+               # -> 4/5 con ZERO astensioni false). Stessa forma, stessa cura:
+               # si ribalta il default DOPO aver misurato che la popolazione
+               # opposta non paga.
+               as_of: float | str | None = "auto",
+               with_history: bool | str = "auto",
                history_hops: int = 5,
                include_beliefs: bool = False,
                min_relevance: float | str | None = None
