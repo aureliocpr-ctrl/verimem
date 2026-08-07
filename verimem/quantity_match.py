@@ -835,8 +835,31 @@ def numeric_conflict(
 # anywhere; 2-component ("2.3") only counts near a version keyword, else it
 # is a decimal quantity ("2.3 degrees") and belongs to the numeric path.
 _VERSION3_RE = re.compile(r"(?<![\w.])v?(\d+(?:\.\d+){2,})(?!\w)(?!\.\d)")
+# 2026-08-07 — LA PAROLA CHIAVE ERA IN INGLESE, e le altre lingue maggiori si
+# salvavano PER SOMIGLIANZA invece che per copertura. Misurato:
+#     EN runs version 2.1      -> {'2.1'}   DE laeuft Version 2.1     -> {'2.1'}
+#     FR la version 2.1        -> {'2.1'}   ES la version 2.1         -> {'2.1'}
+#     IT monta la versione 2.1 -> set()   🔴  DE Versionen / ES versiones 🔴
+# ⇒ non cadeva «una lingua»: cadeva ogni forma DECLINATA. L'italiano declina
+#   sempre («versione»), le altre solo al plurale — e l'unica lingua che non
+#   funzionava mai e' quella in cui questo store e' scritto.
+# COSTO: `version_conflict` decide una supersessione. Senza estrazione, due
+# fatti italiani sulla stessa cosa a due versioni diverse non sono MAI in
+# conflitto e il vecchio resta vivo accanto al nuovo — il ramo gemello di cio'
+# che ws2 ha misurato sul numerico (due verita' contemporanee sullo stesso dato).
+# LA CURA E' LA RADICE, non l'elenco delle lingue: tutte le romanze e le
+# germaniche prendono la parola dal latino *versio*, e un suffisso libero copre
+# version(s) · versione · versioni · versionen · versión · versiones ·
+# versioning, comprese le lingue che nessuno di noi parla.
+# ⚠️ PERCHE' `version` E NON `versi`, che sarebbe piu' corta e coprirebbe anche
+#   il portoghese in un colpo: in italiano «versi» sono le righe di una poesia
+#   («i versi 2.3 sono i piu' belli»). L'omografo decide la forma della radice,
+#   e il portoghese va elencato a parte. E' la lezione di ws4 su «ora».
+# ⛔ `release` e `build` NON sono stati estesi: sono prestiti che ogni lingua
+#   tecnica usa in inglese. La parola che le lingue traducono davvero e' *version*.
 _VERSION2_KW_RE = re.compile(
-    r"\b(?:version|versions|release|releases|build|builds|v)[\s:]{0,3}"
+    r"\b(?:vers(?:ion\w*|ión\w*|ão|ões|ao|oes)|release|releases|build|builds|v)"
+    r"[\s:]{0,3}"
     r"(\d+\.\d+(?:\.\d+)*)(?!\w)(?!\.\d)",
     re.IGNORECASE,
 )
