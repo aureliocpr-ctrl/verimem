@@ -608,6 +608,53 @@ def run_doctor() -> list[dict[str, Any]]:
     except Exception:  # noqa: BLE001 — un check non rompe il doctor
         pass
 
+    # -- copertura della tabella dei ranghi di fiducia --------------------------
+    # Il rovescio della cura `4d8c48a0`: fermare il ritiro automatico dei fatti
+    # a rango ignoto era giusto, ma lascia un ARRETRATO — quelle coppie non si
+    # risolveranno mai da sole. Sullo store di casa il 2026-08-07 erano 65515
+    # contro 14679 a rango davvero pari. Una cura che crea un arretrato
+    # silenzioso non e' finita: il posto per dirlo e' qui, e la riparazione e'
+    # in mano all'operatore (normalizzare gli stati, o aggiungerli alla
+    # tabella).
+    try:
+        import sqlite3 as _sq5
+
+        from ._compat import data_dir as _dd5
+        from .semantic import _rango_di_fiducia
+        _db5 = _dd5() / "semantic" / "semantic.db"
+        if _db5.exists():
+            with _sq5.connect(f"file:{_db5}?mode=ro", uri=True) as _c5:
+                _righe = list(_c5.execute(
+                    "SELECT status, COUNT(*) FROM facts "
+                    "WHERE superseded_by IS NULL GROUP BY status"))
+            _vivi = sum(n for _, n in _righe)
+            _senza = {s: n for s, n in _righe if _rango_di_fiducia(s) is None}
+            _n_senza = sum(_senza.values())
+            if not _vivi:
+                pass                       # store vuoto: niente da dire
+            elif not _n_senza:
+                add("trust-rank-coverage", OK,
+                    f"tutti i {_vivi} fatti vivi hanno uno stato con un rango "
+                    f"di fiducia noto")
+            else:
+                # I nomi servono (sono cio' che si aggiunge alla tabella) ma
+                # non tutti: una riga di diagnosi con quaranta nomi non si
+                # legge. I primi per numerosita', poi il conto del resto.
+                _ord = sorted(_senza.items(), key=lambda kv: -kv[1])
+                _mostra = ", ".join(f"{s} {n}" for s, n in _ord[:4])
+                if len(_ord) > 4:
+                    _mostra += f", +{len(_ord) - 4} altri"
+                add("trust-rank-coverage", WARN,
+                    f"{_n_senza} of {_vivi} live facts carry a status with no "
+                    f"trust rank ({_mostra}) — they are NEVER auto-retired in "
+                    f"a contradiction, so those clashes pile up unresolved "
+                    f"instead of being decided wrongly",
+                    "normalise those statuses, or add them to _STATUS_RANK "
+                    "(verimem/semantic.py) — until then nothing is lost, "
+                    "only left for human judgement")
+    except Exception:  # noqa: BLE001 — un check non rompe il doctor
+        pass
+
     # -- offline pins ----------------------------------------------------------
     try:
         from .airgap import _OFFLINE_FLAGS
