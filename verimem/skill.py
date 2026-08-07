@@ -721,6 +721,29 @@ class SkillLibrary:
             # skip those rather than decay aggressively at first sleep.
             if s.last_used_at == 0.0 or s.last_used_at >= cutoff:
                 continue
+            # UN VETTORE DI UN MODELLO CHE NON C'E' PIU' NON SI PUO' SOMMARE.
+            # Il ciclo di sonno moriva qui (isolato da un'altra istanza
+            # eseguendolo su una copia):
+            #     ValueError: operands could not be broadcast together with
+            #     shapes (384,) (768,)
+            # Sul corpus vivo: 37 file su 41 hanno `learned_embedding` a 384
+            # mentre l'indice e' a 768 su 324 skill su 324, e 9 di quelle 37
+            # non sono `retired` — ne basta UNA per far saltare l'intero ciclo,
+            # DOPO che il lavoro e' stato fatto (1 skill NREM, 2 REM, 3 merge,
+            # 1 schema erano gia' prodotti quando e' morto). Un tier che sembra
+            # non partire e invece non riesce a finire.
+            # Lo si SCARTA, che e' gia' la semantica prevista dodici righe piu'
+            # giu' («drop learned_embedding entirely so retrieval falls back to
+            # canonical»): un vettore di un modello morto E' un vettore che non
+            # serve piu'. E lo si dichiara, perche' scartarlo in silenzio
+            # sarebbe lo stesso difetto in miniatura.
+            if not embedding.vettore_compatibile(s.learned_embedding):
+                s.learned_embedding = None
+                self.store(s)
+                emit("hebbian_decay_vettore_incompatibile", skill_id=s.id,
+                     motivo="dimensione di un altro modello: scartato, il "
+                            "recupero torna al vettore canonico")
+                continue
             current = np.asarray(s.learned_embedding, dtype=np.float32)
             anchor = embedding.encode(f"{s.name}\n{s.trigger}")
             new = (1.0 - rate) * current + rate * anchor
