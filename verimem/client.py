@@ -805,6 +805,25 @@ class Memory:
             _out_qb = "moat" if _moat == "failed" else (
                 "L1" if any(str(w.get("layer", "")).startswith("L1")
                             for w in warnings) else "gate")
+            # …E SI SCRIVE, non solo si dice. Fino a qui la causa viveva SOLO
+            # nella ricevuta: la vede chi scrive, nell'istante in cui scrive, e
+            # un minuto dopo non esiste piu' da nessuna parte (le colonne di
+            # stato erano [created_at, status, grounding_score], e
+            # `audit_mutations` e' action-only per le operazioni distruttive).
+            # Il costo di non averla: due fatti quarantinati in produzione con
+            # grounding 99.96 e sei tentativi di riproduzione che non hanno
+            # chiuso la domanda a cui questa riga risponde subito.
+            # UPDATE mirato e non una colonna nell'INSERT a 25 parametri: tocca
+            # solo i quarantinati, e se fallisce si perde la CAUSA, non il
+            # FATTO — un fatto scritto senza causa e' il comportamento di
+            # sempre, un fatto non scritto sarebbe un danno nuovo.
+            try:
+                import sqlite3 as _sq
+                with _sq.connect(str(self.semantic.db_path)) as _c:
+                    _c.execute("UPDATE facts SET quarantined_by=? WHERE id=?",
+                               (_out_qb, fact.id))
+            except Exception:  # noqa: BLE001 — vedi sopra: fail-open dichiarato
+                _LOG.debug("quarantined_by non persistito per %s", fact.id)
         else:
             _out_qb = None
         _out = {
