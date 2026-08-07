@@ -433,7 +433,8 @@ def _esito_delle_catene(sm, *, topic: str | None = None) -> dict[str, Any]:
 
 
 def retirement_breakdown(sm, *, limit: int = 10,
-                         topic: str | None = None) -> dict[str, Any]:
+                         topic: str | None = None,
+                         since: float | None = None) -> dict[str, Any]:
     """Dove si ADDENSANO i ritiri: per motivo e per giorno.
 
     Misurato da ws4 il 2026-08-07 sul corpus reale, e ribalta una storia
@@ -462,6 +463,17 @@ def retirement_breakdown(sm, *, limit: int = 10,
     if topic is not None:
         where.append("f.topic LIKE ?")
         par.append(topic + "%")
+    # LA FINESTRA. Senza, ogni rapporto di questa superficie e' calcolato su
+    # TUTTA la storia del corpus, e un evento di massa la domina per sempre:
+    # misurato il 2026-08-07, il 2026-07-02 porta da solo 1665 ritiri contro
+    # le poche decine di ogni altro giorno, e produce il «7,6% di
+    # attribuzione» che avevo consegnato come se descrivesse lo stato
+    # dell'audit — mentre dal 24/07 la copertura e' 100% ogni giorno.
+    # `retirement_log`, nello stesso modulo, aveva `since` dal primo giorno:
+    # due funzioni sulla stessa tabella e una sola sapeva farlo.
+    if since is not None:
+        where.append("f.superseded_at >= ?")
+        par.append(float(since))
     w = " AND ".join(where)
     with sm._connect() as conn:
         from .mutation_audit import TABLE_SQL as _AUDIT_DDL
@@ -524,6 +536,10 @@ def retirement_breakdown(sm, *, limit: int = 10,
         "by_reason": motivi,
         "by_day": giorni,
         "by_principal": attori,
+        # La finestra USATA, accanto ai numeri che ha prodotto: due risposte
+        # identiche nella forma descrivono popolazioni diverse, e senza questo
+        # campo nessuno se ne accorge. Stessa ragione di `measured_at`.
+        "since": since,
         "attribution": {
             "attributed": _attribuiti,
             "unattributed": _tot_ritiri - _attribuiti,
