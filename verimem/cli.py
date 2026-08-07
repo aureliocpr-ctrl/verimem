@@ -2062,7 +2062,17 @@ def introspect(
     # Skills: rank all by cosine to (learned_embedding or canonical).
     sk_scored = []
     for s in agent.skills.all():
-        if s.learned_embedding is not None:
+        # OTTAVO PUNTO DELLA CLASSE 384/768, e questo CRASHAVA: `verimem
+        # introspect` alzava `ValueError: shapes (768,) (384,)` sul primo
+        # `cosine` con una skill scritta da un modello precedente. I primi sei
+        # erano in skill.py, il settimo in document_index (dove invece TACEVA).
+        # Non e' un criterio nuovo: e' la funzione estratta curando il ciclo di
+        # sonno, e risolve la dimensione attesa LIVE.
+        # Il vettore appreso incompatibile si scarta e si ricade sul canonico —
+        # gia' la semantica prevista da `decay_idle_embeddings` («drop
+        # learned_embedding entirely so retrieval falls back to canonical»):
+        # un comando di ispezione deve MOSTRARE le skill, non morire su una.
+        if _emb.vettore_compatibile(s.learned_embedding):
             v = _np.asarray(s.learned_embedding, dtype=_np.float32)
         else:
             v = _emb.encode(f"{s.name}\n{s.trigger}")

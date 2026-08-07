@@ -240,12 +240,18 @@ class Risultati(list):
     nascosto nulla.
     """
 
-    __slots__ = ("nascosti",)
+    __slots__ = ("nascosti", "illeggibili")
 
-    def __init__(self, iterable=(), *, nascosti: int = 0) -> None:
+    def __init__(self, iterable=(), *, nascosti: int = 0,
+                 illeggibili: int = 0) -> None:
         super().__init__(iterable)
         #: quanti chunk questa ricerca ha escluso perché marcati (injection)
         self.nascosti = int(nascosti)
+        #: quanti chunk sono stati SALTATI perché scritti con un altro modello
+        #: di embedding (dimensione diversa da quella attiva). Zero su un
+        #: archivio sano; > 0 su un backup riaperto dopo un cambio di modello,
+        #: dove prima la ricerca taceva e restituiva zero risultati.
+        self.illeggibili = int(illeggibili)
 
 
 class DocumentIndex:
@@ -419,11 +425,31 @@ class DocumentIndex:
         qv = np.asarray(self.embedder.encode([q]), dtype=np.float32)[0]
         qn = float(np.linalg.norm(qv)) or 1.0
         scored = []
+        illeggibili = 0
         for r in rows:
             v = np.frombuffer(r["vec"], dtype=np.float32)
+            # UN VETTORE DI UN ALTRO MODELLO NON SI PUO' CONFRONTARE.
+            # Terzo punto della classe 384/768 (i primi sei erano in skill.py,
+            # il settimo in cli.py::introspect che CRASHA). Qui invece TACEVA,
+            # ed e' il caso peggiore: ws5 l'ha trovato da un'altra strada —
+            # «un backup del corpus non e' piu' interrogabile dopo un cambio di
+            # modello: gli snapshot di maggio hanno vettori a 384, il motore di
+            # oggi ne vuole 768 -> ZERO risultati, in silenzio». Un archivio che
+            # risponde «non ho trovato niente» quando in realta' non riesce a
+            # leggere e' indistinguibile da un archivio vuoto.
+            # Si SALTA (rifiutare tutto sarebbe una seconda perdita sopra la
+            # prima: un archivio misto deve servire cio' che puo' leggere) e si
+            # CONTA, perche' saltare in silenzio e' il difetto di partenza.
+            if v.size != qv.size:
+                illeggibili += 1
+                continue
             vn = float(np.linalg.norm(v)) or 1.0
             score = float(np.dot(qv, v) / (qn * vn))
             scored.append((score, r))
+        if not scored:
+            # Tutti i chunk erano di un altro modello: la lista e' vuota, ma il
+            # conteggio dice PERCHE'.
+            return Risultati(nascosti=nascosti, illeggibili=illeggibili)
         scored.sort(key=lambda t: (-t[0], t[1]["source_id"], t[1]["idx"]))
         termini = _termini_di_ricerca(q)
         hits = [{"text": r["text"], "score": round(s, 6),
@@ -473,7 +499,7 @@ class DocumentIndex:
             h["query_terms_matched"] = sum(
                 1 for t in termini if t in h["text"].lower())
         return Risultati(_applica_rerank(self, q, hits)[:max(1, int(k))],
-                         nascosti=nascosti)
+                         nascosti=nascosti, illeggibili=illeggibili)
 
     # --- rerank ---------------------------------------------------------
     def _rerank_attivo(self) -> bool:
