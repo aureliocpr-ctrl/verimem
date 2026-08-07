@@ -476,6 +476,19 @@ def retirement_breakdown(sm, *, limit: int = 10,
                            COUNT(*)
                     FROM facts f WHERE {w}
                     GROUP BY 1 ORDER BY COUNT(*) DESC""", par)]
+        # QUANTA PARTE dei ritiri `by_principal` riesce ad attribuire, come
+        # RAPPORTO e non come conteggio. Sullo store vero il 2026-08-07:
+        # 137 su 1814, il 7,6%. Chi legge «cli:local 111» accanto a
+        # «(not recorded) 1677» puo' calcolare 111/137 = 81% invece di
+        # 111/1814 = 6%: due letture, un ordine di grandezza di distanza.
+        _attribuiti = int(conn.execute(
+            f"""SELECT COUNT(*) FROM facts f WHERE {w}
+                AND EXISTS (SELECT 1 FROM audit_mutations m
+                            WHERE m.resource_id = f.id
+                              AND m.action = 'supersede')""",
+            par).fetchone()[0])
+        _tot_ritiri = int(conn.execute(
+            f"SELECT COUNT(*) FROM facts f WHERE {w}", par).fetchone()[0])
         motivi = [
             {"reason": r[0] or _SENZA_MOTIVO, "n": int(r[1]),
              "first_at": r[2], "last_at": r[3]}
@@ -511,6 +524,22 @@ def retirement_breakdown(sm, *, limit: int = 10,
         "by_reason": motivi,
         "by_day": giorni,
         "by_principal": attori,
+        "attribution": {
+            "attributed": _attribuiti,
+            "unattributed": _tot_ritiri - _attribuiti,
+            # zero su zero non e' una percentuale — stessa regola di
+            # `concentration`, che su un corpus senza ritiri vale None.
+            "share": (round(_attribuiti / _tot_ritiri, 4)
+                      if _tot_ritiri else None),
+            "note": (
+                "`principal` names the PORT that performed the retirement, "
+                "not the actor: verimem/cli.py stamps 'cli:local' for every "
+                "caller, so N instances of the CLI collapse into one row. "
+                "Since 2026-08-07 a caller that sets VERIMEM_ACTOR is "
+                "stamped 'cli:local/<actor>' — an env-supplied LABEL, never "
+                "an authenticated identity. Rows written before that date "
+                "carry the port alone"),
+        },
         "by_scope": {"same_topic": int(_sc[0] or 0),
                      "cross_topic": int(_sc[1] or 0),
                      "winner_missing": int(_sc[2] or 0)},

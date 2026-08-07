@@ -78,6 +78,48 @@ flow_app = typer.Typer(help="Live flow events feed",
                        no_args_is_help=True)
 app.add_typer(flow_app, name="flow")
 
+#: Il nome della PORTA. Resta il prefisso perche' ws4 ha misurato la copertura
+#: del moat PER PORTA (CLI 99,2% contro MCP 69,5%): sostituirlo con l'attore
+#: spegnerebbe una misura che serve.
+_PORTA = "cli:local"
+
+#: Oltre questo l'attore si scarta. `require_principal` rifiuta un principal
+#: oltre 256 caratteri e RIFIUTA invece di troncare, «perche' un'identita'
+#: troncata e' un'identita' ambigua»: troncarlo qui riporterebbe dentro
+#: l'ambiguita' che quella guardia esiste per tenere fuori.
+_ATTORE_MAX = 64
+
+
+def _principale(porta: str = _PORTA) -> str:
+    """Chi la CLI dice di essere quando ritira o cancella un fatto.
+
+    ⚠️ PRIMA ERA LA COSTANTE `"cli:local"` RIPETUTA IN UNDICI PUNTI, e non e'
+    un'identita': e' il nome della porta. Misurato sullo store il 2026-08-07:
+    dei **1814** ritiri, **137 (7,6%)** hanno una riga di audit, e quei 137
+    dicono `cli:local` (111) o `system:heal` (26). Sette istanze che lavorano
+    insieme scrivevano tutte la stessa stringa — il referto di ws4 delle 17:02
+    («*single-agent-per-tenant ... noi siamo sette e il prodotto ci vede come
+    UNO*») letto dal lato della provenienza.
+
+    🔗 LA CURA ESISTEVA E NON ERA COLLEGATA. ``VERIMEM_ACTOR`` e' documentato
+    in `flow_events.py:19` come «the agent's label ... every one of its events
+    arrives labeled — the single multi-agent panel», e lo leggono
+    `flow_events`, `flow_tail` e `mcp_server`. Il percorso dei ritiri no.
+
+    ⚠️ **ETICHETTA, NON IDENTITA' AUTENTICATA**: viene da una variabile
+    d'ambiente, quindi chiunque ci scrive quello che vuole. Serve a separare
+    strumenti che collaborano, non a rispondere a «chi e' stato» quando
+    qualcuno mente. Stessa natura del tag `actor` degli eventi.
+    """
+    attore = (os.environ.get("VERIMEM_ACTOR", "").strip()
+              or os.environ.get("ENGRAM_ACTOR", "").strip())
+    if not attore or len(attore) > _ATTORE_MAX:
+        return porta
+    # la barra separa i due campi: una barra DENTRO l'attore renderebbe la
+    # lettura ambigua, come la virgola che oggi mi ha gia' spezzato una riga
+    # di diagnosi in due.
+    return f"{porta}/{attore.replace('/', '-')}"
+
 
 @flow_app.command("tail")
 def flow_tail_cmd(
@@ -1155,7 +1197,7 @@ def correct_cmd(
                       "favore di uno non ammesso li perderebbe entrambi[/dim]")
         raise typer.Exit(1)
 
-    esito = sm.supersede(old_id, nuovo, principal="cli:local", reason=reason)
+    esito = sm.supersede(old_id, nuovo, principal=_principale(), reason=reason)
     if esito.get("idempotent_noop"):
         console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
                       f"(gia' dichiarato, nessun cambiamento)")
@@ -2653,11 +2695,11 @@ def facts_forget(
         _ops: list[str] = []
         for _x in _hits:
             if undoable:
-                _r = sm.delete_with_undo(_x.id, principal="cli:local")
+                _r = sm.delete_with_undo(_x.id, principal=_principale())
                 if _r.get("removed"):
                     _ops.append(str(_r.get("op_id")))
             else:
-                sm.delete(_x.id, principal="cli:local")
+                sm.delete(_x.id, principal=_principale())
         if undoable:
             console.print(
                 f"[green]forgotten:[/green] {len(_ops)} facts under {topic!r} "
@@ -2703,13 +2745,13 @@ def facts_forget(
 
     if purge_history:
         _mem = _continuity_memory()
-        _n = _mem.delete(f.id, purge_history=True, principal="cli:local")
+        _n = _mem.delete(f.id, purge_history=True, principal=_principale())
         console.print(f"[green]forgotten with its chain:[/green] {f.id} "
                       f"[dim](predecessors and successors purged)[/dim]"
                       if _n else
                       f"[yellow]nothing to forget:[/yellow] {f.id}")
     elif undoable:
-        result = sm.delete_with_undo(f.id, principal="cli:local")
+        result = sm.delete_with_undo(f.id, principal=_principale())
         if result["removed"]:
             console.print(
                 f"[green]forgotten:[/green] {f.id} "
@@ -2724,7 +2766,7 @@ def facts_forget(
         # «rimosso» senza «ma il worker dei dream ne tiene copie» e' una
         # risposta incompleta data con sicurezza.
         from .residual_copies import forget_with_report
-        _esito = forget_with_report(sm, f.id, principal="cli:local")
+        _esito = forget_with_report(sm, f.id, principal=_principale())
         console.print(f"[green]hard-deleted:[/green] {f.id}")
         for _c in _esito["residual_copies"]:
             _durata = ("a rotazione" if _c["rotates"]
@@ -3793,7 +3835,7 @@ def facts_archive_narration(
     if use_llm:
         from verimem.llm import get_llm
         llm = get_llm()
-    res = archive_and_extract_narration(sm.db_path, principal="cli:local",
+    res = archive_and_extract_narration(sm.db_path, principal=_principale(),
                                         dry_run=not apply, llm=llm)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to move)"
     console.print(
@@ -3823,7 +3865,7 @@ def facts_cleanup_episode_telemetry(
     sub = data / "episodes" / "episodes.db"
     flat = data / "episodes.db"
     ep_path = sub if sub.exists() else (flat if flat.exists() else sub)
-    res = cleanup_episode_telemetry(ep_path, principal="cli:local",
+    res = cleanup_episode_telemetry(ep_path, principal=_principale(),
                                     dry_run=not apply)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to move)"
     console.print(
@@ -4079,7 +4121,7 @@ def _continuity_memory():
     checkpoints where tip/digest/chain never look.
     """
     from .client import Memory
-    return Memory(path=_facts_sm().db_path, principal="cli:local")
+    return Memory(path=_facts_sm().db_path, principal=_principale())
 
 
 def _lineage_exit(exc: Exception) -> typer.Exit:
@@ -4231,7 +4273,7 @@ def save_cmd(
         r = save_checkpoint(
             m, body, topic=topic, lineage_to=lineage_to,
             verified_by=list(verified_by or []) or None,
-            confidence=confidence, source=source, principal="cli:local",
+            confidence=confidence, source=source, principal=_principale(),
             asserted_at=_epoch_di(asserted_at))
     except (LineageRefError, LineageNotFound) as exc:
         raise _lineage_exit(exc) from exc
@@ -4479,7 +4521,7 @@ def handoff_prepare_cmd(
         console.print("[red]nothing to save:[/red] give TEXT or --from-file")
         raise typer.Exit(2)
     r = handoff_prepare(_continuity_memory(), body, label=label,
-                        principal="cli:local")
+                        principal=_principale())
     if not r.get("stored"):
         console.print(f"[red]not stored:[/red] {r.get('status')}")
         raise typer.Exit(1)
