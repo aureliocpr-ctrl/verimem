@@ -53,7 +53,34 @@ def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
     now = time.time()
     created = getattr(fact, "created_at", None)
     asserted = getattr(fact, "asserted_at", None)
-    lv = getattr(fact, "last_verified_at", None) or created
+    # DA QUALE TIMESTAMP NASCE L'ETA'. `last_verified_at` si chiama come se
+    # registrasse una verifica e NON lo fa: misurato da ws5 il 2026-08-07 sul
+    # corpus reale, avanza su 2762 fatti — fino a 87 giorni dopo la scrittura
+    # — e di quelli ZERO hanno un grounding_score (sono `legacy_unverified` o
+    # `provisional`). La correlazione col verdetto e' perfettamente inversa:
+    # il campo si muove esattamente sui fatti mai giudicati, ed e'
+    # plausibilmente il passaggio di una migrazione o di un re-embedding. Un
+    # TOCCO, non un giudizio.
+    #
+    # Il dossier ci calcolava `age_days`, e da li' nasce `freshness`: 990
+    # fatti mai verificati risultavano `live` mentre dalla loro creazione
+    # sarebbero `dormant`. Cioe' la superficie che risponde a «come fa la
+    # memoria a saperlo» li mostrava piu' freschi PROPRIO perche' non erano
+    # mai stati verificati. ws5 aveva proposto di esporre il campo nel recall
+    # e ha ritirato la proposta in dieci minuti («porterebbe la bugia dal DB
+    # all'interfaccia»): all'interfaccia c'era gia', qui.
+    #
+    # Non lo ignoro: lo faccio contare SOLO quando un verdetto lo sostiene.
+    # E' piu' forte che scartarlo — il giorno in cui una ri-verifica vera
+    # esistera', questa la usera' senza altre modifiche, e finche' non esiste
+    # non regala freschezza a nessuno. Lo schema e chi scrive quel campo
+    # restano di chi possiede il write path.
+    _lv_raw = getattr(fact, "last_verified_at", None)
+    _giudicato = getattr(fact, "grounding_score", None) is not None
+    if _lv_raw is not None and _giudicato:
+        lv, _base = _lv_raw, "last_verified_at"
+    else:
+        lv, _base = created, "created_at"
     age_days = (now - float(lv)) / 86400.0 if lv is not None else None
     ev: dict[str, Any] = {
         "id": getattr(fact, "id", ""),
@@ -71,7 +98,15 @@ def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
         "asserted_at": asserted,
         "asserted_date": _iso(_event_ts(fact)),
         "created_at": created,
+        # il campo grezzo RESTA visibile: esiste ed e' valorizzato su 8091
+        # fatti su 8335, e toglierlo sarebbe nascondere un dato vero. Quello
+        # che non fa piu' e' produrre da solo un giudizio di freschezza.
+        "last_verified_at": _lv_raw,
         "age_days": round(age_days, 1) if age_days is not None else None,
+        # da DOVE viene quel numero: `age_days` da solo non dice se conta
+        # dalla scrittura o dall'ultima verifica, e sul corpus reale le due
+        # cose differiscono fino a 87 giorni su un terzo dei fatti
+        "age_basis": _base,
         "freshness": ("dormant" if (age_days is not None and age_days > 45.0)
                       else "live"),
         "history": [],
