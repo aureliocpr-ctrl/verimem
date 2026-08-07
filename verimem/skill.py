@@ -723,6 +723,24 @@ class SkillLibrary:
                 continue
             current = np.asarray(s.learned_embedding, dtype=np.float32)
             anchor = embedding.encode(f"{s.name}\n{s.trigger}")
+            # Un `learned_embedding` scritto da un ALTRO modello vive in un altro
+            # spazio: sommarlo all'ancora attuale non e' impreciso, e' impossibile
+            # (`ValueError: operands could not be broadcast together`), e siccome
+            # questo e' l'ULTIMO stadio del ciclo il sonno faceva tutto il lavoro
+            # e poi moriva sull'ultima riga. Misurato sul corpus reale (ws1,
+            # 05/08): l'indice era stato ri-encodato a 768 float per tutte le 324
+            # skill, ma nei FILE 37 `learned_embedding` su 41 erano rimasti a 384
+            # — la migrazione ha toccato una vista sola. Il vettore vecchio non e'
+            # convertibile: si SCARTA e il retrieval torna all'ancora canonica,
+            # che e' esattamente cio' che `store()` fa gia' qualche riga piu' su
+            # per il `trigger_embedding`. Qui il controllo mancava.
+            if current.shape != anchor.shape:
+                log.warning("hebbian_decay_embedding_dim_mismatch", skill_id=s.id,
+                            stored=int(current.shape[0]), active=int(anchor.shape[0]))
+                s.learned_embedding = None
+                self.store(s)
+                decayed += 1
+                continue
             new = (1.0 - rate) * current + rate * anchor
             n = float(np.linalg.norm(new))
             if n > 0:
