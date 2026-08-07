@@ -29,7 +29,8 @@ from __future__ import annotations
 
 from typing import Any
 
-__all__ = ["retirement_log", "survivability_counts", "verdict_mismatches",
+__all__ = ["retirement_log", "retirement_breakdown",
+           "survivability_counts", "verdict_mismatches",
            "judged_true", "SERVABLE_WHERE"]
 
 #: Sopra questo il moat ha detto «la fonte lo sostiene»: 90 è deliberatamente
@@ -253,6 +254,84 @@ def verdict_mismatches(sm, *, limit: int = 50,
             f"{_VERDETTO_FALSO:.0f} any cut rejects) · contested_band = "
             f"{_VERDETTO_FALSO:.0f}–{_BANDA_CONTESA_ALTA:.0f}, where the "
             f"outcome depended on which judge was up, not on the text"),
+    }
+
+
+#: Etichetta per i ritiri senza motivo registrato. Raggrupparli sotto una
+#: stringa vuota li manderebbe in fondo alla tabella con un nome che non si
+#: legge — e sono la maggioranza dei ritiri storici.
+_SENZA_MOTIVO = "(no reason recorded)"
+
+
+def retirement_breakdown(sm, *, limit: int = 10,
+                         topic: str | None = None) -> dict[str, Any]:
+    """Dove si ADDENSANO i ritiri: per motivo e per giorno.
+
+    Misurato da ws4 il 2026-08-07 sul corpus reale, e ribalta una storia
+    che circolava da giorni («un terzo della memoria non risponde»)::
+
+        per mese  05: 7 · 06: 5 · 07: 1701 · 08: 92
+        07-02: 1665 (ore 21 -> 1665 su 1665) · ogni altro giorno <= 12
+        autohook-snapshot daily collapse 1463 · exact-text dedup 202
+
+    Un'ora sola contiene il 92% dei ritiri di tutta la storia del corpus, e
+    i due motivi principali non sono verdetti di qualita': sono
+    manutenzioni.
+
+    :func:`retirement_log` la risposta ce l'aveva — elenca le coppie e sa
+    filtrare per ``reason`` — ma solo per chi SOSPETTAVA gia'. Mancava la
+    domanda al contrario: «raggruppa e dimmi dove si addensano». Senza,
+    un evento singolo si legge come un tasso, ed e' successo davvero.
+
+    ``concentration`` non decide niente: e' la quota del giorno piu'
+    affollato, col suo denominatore e la sua definizione accanto. Su un
+    corpus senza ritiri vale ``None`` e non 100% — zero su zero non e' una
+    percentuale.
+    """
+    where = ["f.superseded_by IS NOT NULL"]
+    par: list[Any] = []
+    if topic is not None:
+        where.append("f.topic LIKE ?")
+        par.append(topic + "%")
+    w = " AND ".join(where)
+    with sm._connect() as conn:
+        motivi = [
+            {"reason": r[0] or _SENZA_MOTIVO, "n": int(r[1]),
+             "first_at": r[2], "last_at": r[3]}
+            for r in conn.execute(
+                f"""SELECT f.superseded_reason, COUNT(*),
+                           MIN(f.superseded_at), MAX(f.superseded_at)
+                    FROM facts f WHERE {w}
+                    GROUP BY f.superseded_reason
+                    ORDER BY COUNT(*) DESC LIMIT ?""", (*par, int(limit)))]
+        # il giorno in ora LOCALE: chi legge il registro guarda il proprio
+        # calendario, e un raggruppamento in UTC spezza un evento serale in
+        # due giorni diversi — che e' esattamente il caso qui (ore 21)
+        giorni = [
+            {"day": r[0], "n": int(r[1])}
+            for r in conn.execute(
+                f"""SELECT date(f.superseded_at, 'unixepoch', 'localtime'),
+                           COUNT(*)
+                    FROM facts f WHERE {w} AND f.superseded_at IS NOT NULL
+                    GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT ?""",
+                (*par, int(limit)))]
+        totale = int(conn.execute(
+            f"SELECT COUNT(*) FROM facts f WHERE {w}", par).fetchone()[0])
+    top = giorni[0] if giorni else None
+    return {
+        "by_reason": motivi,
+        "by_day": giorni,
+        "total_retired": totale,
+        "concentration": {
+            "day": top["day"] if top else None,
+            "n": top["n"] if top else None,
+            "share": (round(top["n"] / totale, 4)
+                      if (top and totale) else None),
+            "formula": ("share = retirements on the busiest day / all "
+                        "retirements — a rate and a one-off event look the "
+                        "same until someone reads the distribution"),
+        },
+        "topic": topic,
     }
 
 

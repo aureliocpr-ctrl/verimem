@@ -2841,6 +2841,10 @@ def facts_retirement_log(
     mismatches: bool = typer.Option(
         False, "--mismatches",
         help="List where the moat's verdict and the fact's fate disagree"),
+    breakdown: bool = typer.Option(
+        False, "--breakdown",
+        help="Group retirements by reason and by day — a rate and a one-off "
+             "event look the same until you read the distribution"),
 ) -> None:
     """The retirements, newest first, as (loser, winner) pairs.
 
@@ -2858,6 +2862,27 @@ def facts_retirement_log(
     from .retirement_log import retirement_log as _rlog
     from .retirement_log import survivability_counts as survivability
     sm = _facts_sm()
+    if breakdown:
+        # DOVE si addensano, non solo quali sono i piu' recenti: sul corpus
+        # reale un'ora sola contiene il 92% dei ritiri di tutta la storia, e
+        # i due motivi principali sono manutenzioni, non verdetti. Elencando
+        # le coppie recenti non si vede — la risposta c'era solo per chi
+        # sospettava gia'.
+        from .retirement_log import retirement_breakdown as _bd
+        bd = _bd(sm, topic=topic, limit=limit)
+        console.print(f"[bold]{bd['total_retired']}[/bold] retired total")
+        for r in bd["by_reason"]:
+            console.print(f"  [cyan]{r['n']:>6}[/cyan]  {r['reason'][:64]}")
+        console.print("[dim]— by day —[/dim]")
+        for d in bd["by_day"]:
+            console.print(f"  [cyan]{d['n']:>6}[/cyan]  {d['day']}")
+        c = bd["concentration"]
+        if c["share"] is not None:
+            console.print(
+                f"[yellow]concentration[/yellow] {c['n']} of "
+                f"{bd['total_retired']} ({c['share']:.1%}) on {c['day']}")
+        console.print(f"[dim]{c['formula']}[/dim]")
+        return
     if mismatches:
         from .retirement_log import verdict_mismatches as _vm
         mm = _vm(sm, topic=topic, limit=limit)

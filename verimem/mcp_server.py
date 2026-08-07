@@ -2943,6 +2943,12 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                                    "description": "return instead where the "
                                                   "moat verdict and the "
                                                   "fact's fate disagree"},
+                    "breakdown": {"type": "boolean", "default": False,
+                                  "description": "group retirements by reason "
+                                                 "and by day: a steady rate "
+                                                 "and a one-off maintenance "
+                                                 "event look identical until "
+                                                 "you read the distribution"},
                 },
             },
         ),
@@ -13606,6 +13612,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                        detail={"served_but_judged_false":
                                len(mm["judged_false_but_served"])})
                 return _ok({"ok": True, **mm})
+            if arguments.get("breakdown"):
+                # dove si addensano i ritiri. Un agente che legge le coppie
+                # piu' recenti non puo' distinguere un tasso da un evento:
+                # sul corpus reale un'ora sola contiene il 92% dei ritiri di
+                # tutta la storia, e i due motivi principali sono
+                # manutenzioni, non verdetti di qualita'.
+                from verimem.retirement_log import retirement_breakdown
+                bd = retirement_breakdown(
+                    a.semantic, topic=_topic,
+                    limit=int(arguments.get("limit", 10) or 10))
+                _audit(name, arguments, outcome="ok",
+                       detail={"total_retired": bd["total_retired"]})
+                return _ok({"ok": True, **bd})
             if arguments.get("counts"):
                 q = survivability_counts(a.semantic, topic=_topic)
                 _audit(name, arguments, outcome="ok",

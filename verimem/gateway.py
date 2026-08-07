@@ -1342,6 +1342,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
                     reason: str | None = Query(default=None),
                     counts: bool = Query(default=False),
                     mismatches: bool = Query(default=False),
+                    breakdown: bool = Query(default=False),
                     tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         """Il log dei RITIRI: le coppie (perso, vincitore), i più recenti
         prima — l'equivalente di /v1/quarantine per la supersessione.
@@ -1365,6 +1366,13 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         from .retirement_log import retirement_log as _rlog
         from .retirement_log import survivability_counts as _scounts
         meter.bump(tenant_id, reads=1)
+        if breakdown:
+            # dove si ADDENSANO: un tasso e un evento singolo hanno la
+            # stessa faccia finche' nessuno legge la distribuzione (sul
+            # corpus reale un'ora sola contiene il 92% dei ritiri di tutta
+            # la storia, e i due motivi principali sono manutenzioni)
+            from .retirement_log import retirement_breakdown as _bd
+            return _bd(mem.semantic, limit=limit, topic=topic)
         if mismatches:
             from .retirement_log import verdict_mismatches as _vm
             return _vm(mem.semantic, limit=limit, topic=topic)
