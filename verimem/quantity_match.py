@@ -38,8 +38,28 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # a tenant writing "5"+" "*60000 stalled the server ~30s per fact. Bounding the
 # whitespace to 3 removes the ReDoS while still matching every real form
 # ("5kg", "5 kg", "5-kg", "5 - kg") — real quantities never have >3 spaces.
+# 2026-08-07 — L'UNITA' ERA IN ASCII, e il difetto e' la CLASSE ② con la sua
+# diagnosi gia' scritta quindici righe piu' sotto. Misurato (ws4, gradino 4):
+#     40 unità -> VUOTA     40 Stück -> VUOTA     40 años -> VUOTA
+#     40 Stueck -> 'stueck'  40 minuti -> 'minuto'          (senza accento: ok)
+# `([A-Za-z]+)` non contiene i diacritici, quindi ogni unita' scritta
+# correttamente nella propria lingua spariva — e sono le PIU' COMUNI del
+# dominio: `Stück` e' il tedesco per «pezzi», l'unita' di magazzino per
+# eccellenza. ⇒ E spiega perche' il tedesco sembrava funzionare: nei banchi
+# avevamo usato tutti «Minuten», «Paletten», «Stunden», il sottoinsieme che si
+# scrive in ASCII.
+# ⚠️ La stessa diagnosi era gia' in questo file dal 2026-08-04 per
+# `content_tokens` («la parola TRONCATA sull'accento — città -> citt»), e non
+# fu applicata qui. La domanda che mancava: *chi ALTRO fa la stessa cosa?*
+# `[^\W\d_]` e' «una lettera di QUALUNQUE alfabeto» — chiude insieme il gradino
+# 2 della mappa (cirillico, greco, arabo: hanno gli spazi come il latino e
+# perdevano l'unita' per la stessa ragione).
+# ⛔ NON tocca il gradino 3 (ZH/JA/TH): li' e' il NUMERO a non essere catturato,
+# perche' i lookaround falliscono in assenza di spazi. Difetto diverso, cura
+# diversa, e allargarlo cambierebbe la cattura in tutte le lingue insieme.
 _QUANT_RE = re.compile(
-    r"(?<![\w.])(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([A-Za-z]+))?(?![\w])"
+    r"(?<![\w.])(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?(?![\w])",
+    re.UNICODE,
 )
 
 # Function words that can FOLLOW a number but are never units ("30 and 45",
@@ -269,11 +289,50 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
 )
 
 
+def _senza_diacritici(parola: str) -> str:
+    """`unità` → `unita`, `Stück` → `stuck`, `años` → `anos`, `unités` → `unites`.
+
+    Si normalizza invece di elencare le varianti accentate — la stessa scelta,
+    con la stessa motivazione, di `temporal_context._senza_accenti`: una lista
+    di varianti e' una lista in piu' da tenere allineata.
+
+    ⚠️ LIMITE DICHIARATO — LE TRASLITTERAZIONI NON SONO ACCENTI CADUTI. Chi non
+    ha l'umlaut sulla tastiera scrive «Stueck», non «Stuck», e nei gestionali
+    tedeschi quella e' la forma corrente. Qui `Stück` e `Stuck` si uniscono (una
+    e' l'altra senza il segno) mentre `Stueck` resta a parte, perche' unirla
+    richiederebbe la regola inversa `ue -> u`, che romperebbe ogni parola in cui
+    `ue` e' scritto per se stesso. Ho provato la traslitterazione `ü -> ue` come
+    forma canonica e sposta solo il problema: allora e' `Stuck` a restare fuori.
+    Serve un dizionario per-lingua, che e' un'altra cura — e la scelta di quale
+    delle due grafie unire va fatta con un dato sul corpus, non a intuito.
+    """
+    import unicodedata
+    p = (parola or "").lower()
+    return "".join(c for c in unicodedata.normalize("NFD", p)
+                   if not unicodedata.combining(c))
+
+
 def norm_unit(word: str) -> str:
-    """Canonicalise a unit word (synonyms + plural/`-ies` singularisation)."""
+    """Canonicalise a unit word (synonyms + plural/`-ies` singularisation).
+
+    ⚠️ I DIACRITICI SI NORMALIZZANO, non si elencano (2026-08-07): chi scrive
+    «unità» e chi scrive «unita» misura la stessa grandezza, e se restano due
+    unita' diverse due fatti sullo stesso magazzino non si confrontano mai.
+    Stessa scelta — e stessa motivazione scritta — di `temporal_context`, che
+    normalizza invece di tenere una lista di varianti accentate: «questa casa ha
+    gia' pagato tre volte per due elenchi che divergono».
+    ⚠️ Il tedesco fa eccezione e non e' un dettaglio: `ü` si traslittera in `ue`,
+    non in `u` — «Stück» e «Stueck» sono la STESSA parola scritta da due
+    tastiere diverse, ed e' la forma che si trova nei sistemi gestionali.
+    """
     w = (word or "").lower()
     if w in _UNIT_SYN:
         return _UNIT_SYN[w]
+    piano = _senza_diacritici(w)
+    if piano != w and piano in _UNIT_SYN:
+        return _UNIT_SYN[piano]
+    if piano != w:
+        w = piano
     if len(w) > 3 and w.endswith("ies"):
         return w[:-3] + "y"
     if len(w) > 3 and w.endswith("s"):
