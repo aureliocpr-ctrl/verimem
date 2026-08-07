@@ -30,6 +30,7 @@ from __future__ import annotations
 from typing import Any
 
 __all__ = ["retirement_log", "retirement_breakdown",
+           "quarantine_breakdown",
            "survivability_counts", "verdict_mismatches",
            "judged_true", "SERVABLE_WHERE"]
 
@@ -438,6 +439,74 @@ def retirement_breakdown(sm, *, limit: int = 10,
             "formula": ("share = retirements on the busiest day / all "
                         "retirements — a rate and a one-off event look the "
                         "same until someone reads the distribution"),
+        },
+        "topic": topic,
+    }
+
+
+def quarantine_breakdown(sm, *, limit: int = 10,
+                         topic: str | None = None) -> dict[str, Any]:
+    """La stessa domanda dei ritiri, girata alla quarantena — esito opposto.
+
+    Sui ritiri la distribuzione ha ribaltato la storia (un'ora sola conteneva
+    il 92%). Qui la risposta e' NO, e va detta perche' un negativo misurato
+    vale quanto una cura::
+
+        quarantinati vivi 705 · giorno piu' affollato 88 (12.5%)
+
+    Nessun evento: e' distribuita, quindi «tasso di quarantena» e' una parola
+    giusta — al contrario di «tasso di ritiro», che non lo era.
+
+    ⚠️ Ma la stessa query mostra quello che nessuna superficie diceva: **il
+    tasso oscilla di venti volte fra un giorno e l'altro**::
+
+        scritti 621 · quarantinati 68 (11.0%)  2026-08-04
+        scritti 430 · quarantinati  1 ( 0.2%)  2026-05-31
+
+    Un singolo numero — «il 10.2% viene quarantinato» — descrive gli ultimi
+    giorni e non il prodotto. Il PERCHE' non e' qui: puo' essere il gate che
+    e' cambiato o cosa scriviamo che e' cambiato, e distinguerli e' del write
+    path. Questa vista mostra la serie, non la causa.
+
+    Ogni riga porta scritti E quarantinati: il conteggio da solo non dice
+    niente, 68 su 621 e 68 su 100 sono due prodotti diversi. E si contano
+    solo i quarantinati NON ritirati — la stessa definizione del quartetto,
+    dove le tre uscite restano separate per costruzione.
+    """
+    _w = "AND topic LIKE :topic" if topic is not None else ""
+    par: dict[str, Any] = {"topic": topic + "%"} if topic is not None else {}
+    quar = f"status IN ('quarantined') AND superseded_by IS NULL {_w}"
+    with sm._connect() as conn:
+        tot = int(conn.execute(
+            f"SELECT COUNT(*) FROM facts WHERE {quar}", par).fetchone()[0])
+        giorni = [
+            {"day": r[0], "written": int(r[1]), "quarantined": int(r[2]),
+             "rate": round(r[2] / r[1], 4) if r[1] else None}
+            for r in conn.execute(
+                f"""SELECT date(created_at,'unixepoch','localtime'),
+                           COUNT(*),
+                           SUM(CASE WHEN {quar} THEN 1 ELSE 0 END)
+                    FROM facts
+                    WHERE 1=1 {_w}
+                    GROUP BY 1 HAVING SUM(CASE WHEN {quar} THEN 1 ELSE 0 END) > 0
+                    ORDER BY 3 DESC LIMIT :lim""",
+                {**par, "lim": int(limit)})]
+    top = giorni[0] if giorni else None
+    return {
+        "quarantined": tot,
+        "by_day": giorni,
+        "concentration": {
+            "day": top["day"] if top else None,
+            "n": top["quarantined"] if top else None,
+            "share": (round(top["quarantined"] / tot, 4)
+                      if (top and tot) else None),
+            # lo stesso campo dei ritiri, e serve nei DUE versi: la' mostrava
+            # un evento, qui mostra che un evento NON c'e'
+            "formula": ("share = quarantines on the busiest day / all live "
+                        "quarantines — the same field the retirement view "
+                        "uses, and it earns its place in both directions: "
+                        "there it showed one hour holding 92%, here it shows "
+                        "there is no such event"),
         },
         "topic": topic,
     }

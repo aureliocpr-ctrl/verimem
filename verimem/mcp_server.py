@@ -2703,6 +2703,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "gate re-run per row; the plain listing is "
                             "unchanged without it."),
                     },
+                    "breakdown": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": (
+                            "Return the SERIES instead of the list: per day, "
+                            "written vs quarantined with the rate. On the "
+                            "real corpus that rate swings between 0.2% and "
+                            "49% day to day, so a single figure describes "
+                            "the last few days, not the product."),
+                    },
                 },
             },
         ),
@@ -13257,6 +13267,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _limit = max(1, int(arguments.get("limit", 50) or 50))
             except (TypeError, ValueError):
                 _limit = 50
+            if arguments.get("breakdown"):
+                # la SERIE, non solo l'elenco: sul corpus reale il tasso di
+                # quarantena oscilla fra 0.2% e 49% da un giorno all'altro,
+                # quindi «il 10% viene quarantinato» descrive gli ultimi
+                # giorni e non il prodotto. Un agente che legge da qui non
+                # aveva modo di saperlo.
+                from verimem.retirement_log import quarantine_breakdown
+                _bd = quarantine_breakdown(a.semantic, limit=_limit)
+                _audit(name, arguments, outcome="ok",
+                       detail={"quarantined": _bd["quarantined"]})
+                return _ok({"ok": True, **_bd})
             # DELEGA, non copia. Qui c'era la stessa SELECT dell'SDK
             # (`client.py:1447-1452`) ricopiata a mano, e con la copia si e'
             # perso cio' che la copia non conteneva: l'arricchimento

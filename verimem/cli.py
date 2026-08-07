@@ -2827,6 +2827,55 @@ def facts_undo_list(
     console.print(table)
 
 
+@facts_app.command("quarantine-log")
+def facts_quarantine_log(
+    limit: int = typer.Option(20, "--limit", "-n", min=1, max=500),
+    breakdown: bool = typer.Option(
+        False, "--breakdown",
+        help="Show the SERIES instead of the list: per day, written vs "
+             "quarantined with the rate"),
+) -> None:
+    """I claim FERMATI dal gate — e, con --breakdown, la loro serie.
+
+    Il listato esisteva su SDK, MCP e HTTP e NON sulla CLI: la porta da cui
+    un umano guarda il corpus era l'unica senza. Stessa asimmetria che
+    questo ramo ha gia' curato tre volte, trovata cercando dove mettere la
+    serie.
+
+    La serie conta perche' un numero solo non descrive il prodotto: sul
+    corpus reale il tasso di quarantena oscilla fra 0.2% e 49% da un giorno
+    all'altro. Il PERCHE' non e' qui — puo' essere il gate che e' cambiato
+    o cosa scriviamo che e' cambiato, e distinguerli non e' di questa
+    superficie.
+    """
+    sm = _facts_sm()
+    if breakdown:
+        from .retirement_log import quarantine_breakdown as _qbd
+        bd = _qbd(sm, limit=limit)
+        console.print(f"[bold]{bd['quarantined']}[/bold] live quarantined")
+        for d in bd["by_day"]:
+            console.print(
+                f"  {d['day']}  written [cyan]{d['written']:>5}[/cyan] · "
+                f"quarantined [yellow]{d['quarantined']:>4}[/yellow] "
+                f"({d['rate']:.1%})")
+        c = bd["concentration"]
+        if c["share"] is not None:
+            console.print(
+                f"[dim]busiest day {c['day']}: {c['n']} "
+                f"({c['share']:.1%}) — no single event, unlike retirements"
+                f"[/dim]")
+        return
+    from .client import Memory
+    righe = Memory(sm.db_path).quarantine_log(limit=limit)
+    if not righe:
+        console.print("[dim]no live quarantined claims[/dim]")
+        return
+    for r in righe:
+        console.print(f"  [yellow]{str(r.get('id'))[:8]}[/yellow]  "
+                      f"{str(r.get('topic') or '')[:28]:<28} "
+                      f"{str(r.get('proposition') or '')[:60]}")
+
+
 @facts_app.command("retirement-log")
 def facts_retirement_log(
     limit: int = typer.Option(50, "--limit", "-n", help="Max rows"),

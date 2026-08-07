@@ -1307,6 +1307,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
     @app.get("/v1/quarantine")
     def quarantine(limit: int = Query(default=50, ge=1, le=500),
                    explain: bool = Query(default=False),
+                   breakdown: bool = Query(default=False),
                    tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
         """Il log delle confabulazioni FERMATE: i claim vivi in quarantena,
         i più recenti prima. L'odometro dice QUANTI, questo dice QUALI.
@@ -1315,6 +1316,13 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         canali a non poterlo chiedere: l'SDK e l'MCP sì, e su tre superfici
         della stessa lettura ognuna aveva la sua combinazione di capacità.
         Opt-in perché ricalcola i detector."""
+        if breakdown:
+            # la serie per giorno con scritti E quarantinati: il tasso
+            # oscilla da 0.2% a 49% fra un giorno e l'altro sul corpus
+            # reale, quindi un numero solo non descrive il prodotto
+            from .retirement_log import quarantine_breakdown as _qbd
+            meter.bump(tenant_id, reads=1)
+            return _qbd(tenants.get(tenant_id).semantic, limit=limit)
         items = tenants.get(tenant_id).quarantine_log(limit=limit,
                                                       explain=explain)
         meter.bump(tenant_id, reads=1)
