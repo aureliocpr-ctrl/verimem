@@ -118,14 +118,23 @@ def test_una_unita_accentata_e_la_sua_forma_ASCII_sono_LA_STESSA():
     assert norm_unit("unités") == norm_unit("unites")
 
 
-def test_LIMITE_DICHIARATO_il_gradino_3_resta_aperto():
-    """⚠️ Il limite, misurato e scritto: in cinese, giapponese e thai il numero
-    non viene catturato affatto, e questa cura non lo tocca.
+def test_il_gradino_3_ERA_aperto_e_ora_e_chiuso():
+    """⚠️ QUESTO TEST DICEVA IL CONTRARIO UN'ORA FA, e l'aggiornamento è il
+    dato: dichiarava che in cinese il numero non veniva catturato e che questa
+    cura non lo toccava. Era vero, ed è stato chiuso subito dopo da una cura
+    diversa — il lookbehind ``(?<![\\w.])`` ristretto alle lettere LATINE
+    (``test_un_numero_attaccato_a_una_lettera_cinese``).
 
-    La causa è nei lookaround ``(?<![\\w.])`` / ``(?![\\w])``: senza spazi, il
-    numero è circondato da caratteri che Python conta come ``\\w``, quindi
-    entrambi falliscono. È un difetto diverso — la regex non assume una lingua,
-    assume la SEGMENTAZIONE PER SPAZI — e ws4 avverte che allargarlo cambierebbe
-    la cattura in tutte le lingue insieme. Una cura per volta, misurata.
+    Lo lascio qui, riscritto invece che cancellato, perché è la prova che i due
+    gradini erano difetti separati con cure separate: la classe di caratteri
+    dell'UNITÀ (curata qui) e il lookbehind del NUMERO (curato lì). Chi ne
+    cura una sola e misura sull'altra lingua conclude che non funziona — ed è
+    esattamente l'avvertimento che ws4 aveva scritto proponendo la mappa.
+
+    ⚠️ IL LIMITE CHE RESTA: l'unità cinese cattura ``个托盘`` tutto insieme —
+    il classificatore più il sostantivo — perché senza spazi non c'è un confine
+    di parola da rispettare. È leggibile e confrontabile con sé stessa, quindi
+    il conflitto numerico funziona; non è però la stessa unità che scriverebbe
+    un umano. Segmentare il cinese è un'altra cura e non una regex.
     """
-    assert not extract_quantities("罗维戈仓库500个托盘")
+    assert extract_quantities("罗维戈仓库500个托盘") == {("个托盘", 500.0)}

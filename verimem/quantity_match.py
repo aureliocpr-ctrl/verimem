@@ -57,8 +57,35 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # ⛔ NON tocca il gradino 3 (ZH/JA/TH): li' e' il NUMERO a non essere catturato,
 # perche' i lookaround falliscono in assenza di spazi. Difetto diverso, cura
 # diversa, e allargarlo cambierebbe la cattura in tutte le lingue insieme.
+#
+# 2026-08-07 (secondo giro) — I LOOKAROUND ERANO SU `\w`, E NON E' UN DIFETTO
+# CJK. Isolato da ws1 con l'osservazione che lo rende curabile: `\w` comprende
+# gli ideogrammi MA ANCHE le lettere latine, quindi il difetto e' lo stesso in
+# ogni lingua — in cinese, giapponese e thai colpisce il 100% delle frasi
+# perche' lo spazio non esiste e ogni numero e' preceduto da un ideogramma.
+#     abc300 pallet     -> []          罗维戈仓库500个托盘 -> []
+#     SKU300 pallet     -> []          คลัง500พาเลท        -> []
+# La cura NON toglie il lookbehind, che serve: `SKU300` non contiene 300 pallet
+# e `v1.2` non e' una quantita'. Restringe la classe da «qualunque carattere di
+# parola» a «lettera LATINA, cifra, punto o underscore» — gli identificatori
+# sono scritti in ASCII per costruzione e restano protetti, gli ideogrammi
+# smettono di bloccare. E' mirata, non allarga la cattura in tutte le lingue:
+# era l'avvertimento di ws4 e questo e' il modo di rispettarlo.
+# 🔑 E RIPARA UN DIFETTO CHE NESSUNO CERCAVA, misurato scrivendo il test:
+#     release 3.4.0   prima -> quantita' 3.4    dopo -> nessuna
+#     il file 2.1.3   prima -> quantita' 2.1    dopo -> nessuna
+#   Le versioni a tre componenti entravano nel confronto NUMERICO come decimali,
+#   perche' il lookahead non vedeva il punto che seguiva.
+#
+# ⚠️ IL PUNTO NEL LOOKAHEAD VA QUALIFICATO, e la prima versione di questa cura
+# non lo faceva: `(?![A-Za-z0-9._])` rifiuta il numero seguito da un punto, e
+# quello e' il punto di FINE FRASE. «I fatti superseduti sono 1900.» smetteva di
+# essere una quantita'. Preso da due presidi esistenti in meno di un minuto —
+# il difetto che serve escludere e' `3.4` dentro `3.4.0`, cioe' un punto seguito
+# da una CIFRA, non un punto qualsiasi.
 _QUANT_RE = re.compile(
-    r"(?<![\w.])(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?(?![\w])",
+    r"(?<![A-Za-z0-9._])(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
+    r"(?![A-Za-z0-9_])(?!\.\d)",
     re.UNICODE,
 )
 
