@@ -450,6 +450,12 @@ def _emetti_la_passata(out: dict[str, Any], now: float) -> None:
             promoted=_quanti(_cl.get("promoted")),
             retired=_quanti(_heal.get("healed_superseded")),
             skipped_equal_trust=_quanti(_heal.get("skipped_equal_trust")),
+            # NUOVO e SEPARATO da equal_trust: le coppie in cui almeno un lato
+            # ha uno stato che `_STATUS_RANK` non conosce. Prima non
+            # esistevano come categoria — il lato ignoto valeva 0 e VENIVA
+            # RITIRATO. Sommarle a `equal_trust` avrebbe nascosto proprio la
+            # popolazione che la cura ha tirato fuori dal ritiro automatico.
+            skipped_unknown_trust=_quanti(_heal.get("skipped_unknown_trust")),
             clusters_detected=_quanti(_cons.get("clusters_detected")),
             masters_persisted=_quanti(_cons.get("masters_persisted")),
             scanned_facts=_quanti(_scan.get("scanned_facts")),

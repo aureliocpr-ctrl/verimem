@@ -524,15 +524,23 @@ def heal_contradictions(
     Reversible; never deletes.
 
     Returns ``{"healed_superseded": [fact_ids], "resolved": [contradiction_ids],
-    "skipped_equal_trust": [contradiction_ids], "missing": [contradiction_ids]}``.
+    "skipped_equal_trust": [contradiction_ids], "missing": [contradiction_ids],
+    "skipped_unknown_trust": [contradiction_ids]}``.
+
+    ``skipped_unknown_trust`` — coppie in cui almeno un lato ha uno stato che
+    ``_STATUS_RANK`` non conosce. Prima finivano nel confronto come rango 0 e
+    il lato ignoto veniva RITIRATO: sullo store vero erano 257 coppie, 227 con
+    un `model_claim` che ritirava un `user_manual`. Vedi
+    ``semantic._rango_di_fiducia``.
     """
-    from .semantic import _STATUS_RANK
+    from .semantic import _rango_di_fiducia
 
     if store is None:
         store = ContradictionStore(memory.db_path)
     healed_superseded: list[str] = []
     resolved: list[str] = []
     skipped: list[str] = []
+    skipped_ignoto: list[str] = []
     missing: list[str] = []
     for c in store.list_unresolved(limit=limit):
         fa = memory.get(c.fact_a_id)
@@ -543,8 +551,15 @@ def heal_contradictions(
             missing.append(c.id)
             resolved.append(c.id)
             continue
-        ra = _STATUS_RANK.get(fa.status, 0)
-        rb = _STATUS_RANK.get(fb.status, 0)
+        ra = _rango_di_fiducia(fa.status)
+        rb = _rango_di_fiducia(fb.status)
+        if ra is None or rb is None:
+            # RANGO IGNOTO → non e' un rango basso, e' un non-so. Va nel SUO
+            # secchio e non fra gli «equal trust»: contarlo li' sarebbe
+            # un'etichetta che porta una conclusione non verificata — la
+            # classe che questo file esiste per non ripetere.
+            skipped_ignoto.append(c.id)
+            continue
         if ra == rb:
             # Equal trust → we cannot decide which is right; leave for review.
             skipped.append(c.id)
@@ -593,6 +608,7 @@ def heal_contradictions(
         "healed_superseded": healed_superseded,
         "resolved": resolved,
         "skipped_equal_trust": skipped,
+        "skipped_unknown_trust": skipped_ignoto,
         "missing": missing,
     }
 

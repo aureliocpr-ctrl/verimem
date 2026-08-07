@@ -596,6 +596,37 @@ _STATUS_RANK = {
 }
 
 
+def _rango_di_fiducia(status: str | None) -> int | None:
+    """Il rango di ``status``, oppure ``None`` se la tabella non lo conosce.
+
+    ``None`` E NON ``0``, ed e' tutta la differenza. Misurato sullo store vero
+    il 2026-08-07: la tabella conosce **7** stati, nello store ce ne sono
+    **12**, e i fatti vivi con uno stato che la tabella non conosce sono
+    **2540 su 6982** — il 36%, di cui `user_manual` da solo 2493.
+
+    Con ``.get(status, 0)`` quei 2540 valgono **0**, cioe' *piu' deboli di
+    ``model_claim`` che vale 2* — e le due funzioni che RITIRANO un fatto in
+    una contraddizione leggevano il rango cosi'. Contato sulle coppie non
+    risolte con entrambi i fatti vivi: **257** in cui il perdente sarebbe il
+    lato a stato ignoto (227 battuti da `model_claim`, 30 da `provisional`).
+
+    🔑 ``.get(..., 0)`` traduce «non lo so» in «vale poco». Sono cose diverse,
+    e solo la seconda autorizza un ritiro. Chi decide un RITIRO deve trattare
+    l'ignoto come la PARITA' — il posto in cui quelle funzioni gia' si fermano,
+    e per la stessa ragione: non sappiamo chi ha ragione.
+
+    ⚠️ LIMITE DICHIARATO: il filtro di lettura ``min_status``
+    (``_row_passes_status`` piu' sotto) usa ancora ``.get(status, 0)``. Non e'
+    stato cambiato di proposito: li' l'errore NASCONDE un fatto, e chi legge
+    puo' abbassare la soglia; qui l'errore lo RITIRA. Direzioni diverse,
+    decisioni diverse — e la seconda non e' una diagnosi ma una scelta di
+    prodotto.
+    """
+    if status is None:
+        return None
+    return _STATUS_RANK.get(status)
+
+
 def _validate_min_status(min_status: str | None) -> None:
     """Raise ValueError when ``min_status`` is set but unknown."""
     if min_status is not None and min_status not in _STATUS_RANK:
@@ -5575,7 +5606,13 @@ class SemanticMemory:
         if new_fact.superseded_by:
             result["skipped"] = [oid for oid in contradicting_ids if oid]
             return result
-        new_rank = _STATUS_RANK.get(new_fact.status, 0)
+        # RANGO IGNOTO = NON DECIDO (vedi `_rango_di_fiducia`). Se non conosco
+        # il rango di CHI VINCE non so nemmeno che sia piu' forte: e' la meta'
+        # simmetrica, quella che si dimentica.
+        new_rank = _rango_di_fiducia(new_fact.status)
+        if new_rank is None:
+            result["skipped"] = [oid for oid in contradicting_ids if oid]
+            return result
         seen: set[str] = set()
         for old_id in contradicting_ids:
             if not old_id or old_id == new_id or old_id in seen:
@@ -5588,9 +5625,10 @@ class SemanticMemory:
             if old_fact.superseded_by:
                 result["skipped"].append(old_id)
                 continue
-            old_rank = _STATUS_RANK.get(old_fact.status, 0)
-            if new_rank <= old_rank:
-                # Safety: never let a weaker/equal claim invalidate a stronger one.
+            old_rank = _rango_di_fiducia(old_fact.status)
+            if old_rank is None or new_rank <= old_rank:
+                # Safety: never let a weaker/equal claim invalidate a stronger
+                # one — NE' un rango noto invalidare uno che non si conosce.
                 result["skipped"].append(old_id)
                 continue
             note = reason or (
