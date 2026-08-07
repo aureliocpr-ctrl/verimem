@@ -5886,7 +5886,23 @@ class SemanticMemory:
                 "AND superseded_by IS NOT NULL",
                 (like_pattern,),
             ).fetchone()[0]
-            n_live = n_total - n_super
+            # `n_live` DICEVA IL FALSO, e non per politica: contava vivo
+            # ogni fatto non superseduto, quindi anche i QUARANTINATI — che
+            # il prodotto tiene fuori dal recall di default («kept OUT of
+            # default recall, so you never get it back as truth»). Sulla
+            # sonda di ws2 il briefing diceva `n_live 2` e i due erano
+            # entrambi respinti dal gate.
+            #
+            # E' la lezione da cui nasce il quartetto dei servibili
+            # (`superseded_by IS NULL` != vivo, pagata il 2026-08-04):
+            # correggere un contatore che smentisce il proprio nome non e'
+            # una scelta di prodotto, e' rimettere il nome sul numero.
+            n_quar = conn.execute(
+                "SELECT COUNT(*) FROM facts WHERE topic LIKE ? ESCAPE '\\' "
+                "AND superseded_by IS NULL AND status IN ('quarantined')",
+                (like_pattern,),
+            ).fetchone()[0]
+            n_live = n_total - n_super - n_quar
             topics_seen = [
                 row[0] for row in conn.execute(
                     "SELECT DISTINCT topic FROM facts WHERE topic LIKE ? "
@@ -5937,6 +5953,21 @@ class SemanticMemory:
             "n_total": int(n_total),
             "n_live": int(n_live),
             "n_superseded": int(n_super),
+            "n_quarantined": int(n_quar),
+            # LA FORMULA COL NUMERO, come il quartetto dei servibili: un
+            # contatore senza la sua definizione viene interpretato da chi
+            # legge, e le tre uscite di un fatto sono facili da confondere.
+            # E la seconda frase e' altrettanto importante: dice che i
+            # quarantinati SONO nel payload — senza, chi legge penserebbe
+            # che il gate abbia gia' ripulito, e la visibilita' che questa
+            # cura aggiunge si trasformerebbe in una falsa rassicurazione.
+            "counts_mean": (
+                "n_live = n_total - n_superseded - n_quarantined (a "
+                "quarantined fact is NOT live: the product keeps it out of "
+                "default recall). The facts payload still CONTAINS "
+                "quarantined rows — they are marked by `status`, not "
+                "removed: filtering them would change what an agent "
+                "receives, which is a product decision, not a fix"),
             "topics_seen": topics_seen,
             "facts": facts_payload,
             "lineage_episodes": lineage_episodes,
@@ -5945,10 +5976,28 @@ class SemanticMemory:
 
     @staticmethod
     def _fact_to_summary_dict(fact: Fact) -> dict[str, Any]:
+        # `status` e `grounding_score` MANCAVANO, e questo payload e' quello
+        # del briefing di progetto — il tool che si vende come «load the
+        # full cross-session context» e che la description consiglia
+        # «when the user mentions a project by name».
+        #
+        # Misurato da ws2 il 2026-08-07 su store isolato: dopo una
+        # correzione che supersede i fatti sani, `summary_topic` serviva un
+        # payload fatto ESATTAMENTE dei due vanti QUARANTINATI, senza un
+        # campo che permettesse di accorgersene. Cioe' il canale con cui un
+        # claim respinto dal gate rientra nel contesto di un agente come
+        # testo di progetto, indistinguibile da un fatto sano.
+        #
+        # Additivo: qui NON si filtra. Togliere i quarantinati dal payload
+        # cambia cosa un agente riceve ed e' una decisione di prodotto, da
+        # misurare sui briefing veri. Questa riga li rende VISIBILI, e chi
+        # vuole tagliare ora ha il campo per farlo.
         return {
             "id": fact.id,
             "topic": fact.topic,
             "proposition": fact.proposition,
+            "status": fact.status,
+            "grounding_score": getattr(fact, "grounding_score", None),
             "confidence": fact.confidence,
             "created_at": fact.created_at,
             "source_episodes": list(fact.source_episodes),
