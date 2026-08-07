@@ -51,6 +51,21 @@ On this repository's own corpus the first ever reading was:
 `written 7767 · servable 5346 · retired 1761 · quarantined 660` — 31% of
 everything ever written was not servable, and no API had ever said so.
 
+⚠️ **That 31% is a true reading and a misleading headline — corrected
+2026-08-07.** ws4 partitioned the retirements by reason and by hour: **1463 of
+them carry `autohook-snapshot daily collapse` and 202 `exact-text dedup`, and
+all 1463 happened in ONE hour** (2026-07-02, 23:00) on facts created across 118
+different hours a month earlier. That is a single cleanup session, not a rate.
+The product's structural retirement is **~139**, which converges with the
+independent 143 already in the team's memory.
+⇒ Quote the 31% for what it is — *how much of this corpus is not servable
+today* — and never as *how much this product loses*. Both readings were in
+circulation, including in this branch's own reports.
+🔑 And "housekeeping" does not mean "without loss": on the master that retired
+389 of them, 1,053,033 characters were replaced by 2,694 (0.26% survives) and
+**0 of 8 specific pointers** — fact ids, PR URLs, paths — are in the survivor.
+It is substitution, not compression.
+
 ### Known blind spot: said vs written
 
 The quartet counts what reached the store. It **cannot see** content lost
@@ -361,7 +376,7 @@ persisted. Persisting it is a write-path column and stays open. A mute
 surface gets noticed; an assertive and wrong one sends you looking in the
 opposite direction.
 
-## 6b. Nothing here is off by default
+## 6d. Nothing here is off by default
 
 ws3's 2026-08-07 census named a class worth naming: **declared but never
 switched on** — a feature that exists, works, and no default reaches. It caught
@@ -382,7 +397,12 @@ not just their names. Falsified by injecting an off-by-default switch into
 The failure this prevents is nasty because the symptom misleads: an empty
 Engine Room looks like a broken stream, and nobody goes looking for a default.
 
-## 6c. Measured and NOT built: 220 facts blocked by cures that already landed
+## 6e. 220 facts blocked by cures that already landed — and the tool that would have resurrected the wrong ones
+
+> **Status: BUILT, one hour after this section first said "not built".** The
+> paragraph below is kept as written, with the outcome appended, because the
+> sequence is the point: measure → declare the gap → refuse to ship untested →
+> ship when the machine allowed and the team had converged.
 
 ws4 measured it on 2026-08-07 and this branch reproduced it independently the
 same hour, with the product's own tool:
@@ -419,6 +439,35 @@ beat a deadline would be the exact opposite of what this branch is for.
 ⚠️ Running the tool in `apply` is a **write on the user's corpus** and is not a
 governance read: it belongs to whoever owns that decision, with a backup taken
 first. This section records the number so the decision can be made with it.
+
+### Outcome, same day
+
+Four instances converged within twenty minutes. ws4 read the code (L3 and L4
+are not among the three checks), ws1 found 9 of their 10 quarantined facts were
+stopped by L4.x, ws5 withdrew the recommendation they had been first to make,
+and this branch had repeated the docstring's word `SAFE` in the paragraph
+above. Then ws4 ran the decisive test **without needing the judge, because L4's
+verdict is already persisted in `grounding_score`**: of the 172 the three
+checks called recoverable, **155 (90.1%) had been rejected by the moat**.
+
+The cure is one condition — `grounding_score IS NULL OR >= 70` — and it is in
+(`f1431950`). On the real corpus:
+
+    before :  scanned 721 · recoverable 220
+    after  :  scanned 719 · recoverable 56 · held_by_moat 164
+
+It is a **correction, not a policy change**: the tool's own docstring says it
+recovers "real knowledge that a SINCE-FIXED false positive had hidden", and a
+fact the moat rejects *today* is not a since-fixed false positive. NULLs stay
+eligible — never judged is not rejected — and the cut is the higher of the two
+admission thresholds, because facing a doubt one recovers less. `held_by_moat`
+and `moat_rule` travel in the result: a count that drops without an explanation
+reads as "there were fewer".
+
+🔑 The characterization test written an hour earlier went RED when the cure
+landed. That was its job: it made the change visible instead of silent. It was
+updated with its history kept, not deleted — a test that pins a *wrong but
+real* behaviour is the only way to notice the day it changes.
 
 ## 7. What governance does NOT do
 
