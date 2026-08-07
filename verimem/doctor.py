@@ -71,15 +71,47 @@ def _stores_dichiarati(d) -> str:
         p = getattr(CONFIG, attributo, None)
         if p is None:
             continue
+        rel = None
         try:
-            p = d / p.relative_to(CONFIG.data_dir)
+            rel = p.relative_to(CONFIG.data_dir)
+            p = d / rel
         except (ValueError, AttributeError):
             pass                     # path fuori dalla data dir: si usa com'e'
+        # IL PERCORSO RELATIVO E NON `p.name`: `p.name` e' `semantic.db` per
+        # TUTTE E DUE le disposizioni che questo prodotto incontra — la
+        # canonica `<dati>/semantic/semantic.db` e la legacy piatta
+        # `<dati>/semantic.db` — perche' butta via la sottocartella, che e'
+        # l'unica cosa che le distingue. Il 2026-08-07, verificando un
+        # salvataggio, il doctor diceva «semantic.db (assente)» con un
+        # `semantic.db` presente nella cartella dati.
+        etichetta = str(rel).replace("\\", "/") if rel is not None else p.name
         try:
-            righe.append(f"{p.name} {_misura(p.stat().st_size)}"
-                         if p.exists() else f"{p.name} (assente)")
+            if p.exists():
+                righe.append(f"{etichetta} {_misura(p.stat().st_size)}")
+                continue
+            # ...E DIRE DOVE. Un'assenza manda l'operatore a fare una cosa
+            # sbagliata («il file c'e', il doctor sbaglia»); un'assenza che
+            # dice dove sta il file lo manda a fare quella giusta («il tuo
+            # store e' nel tracciato legacy, il prodotto ne usera' un altro»).
+            # Stessa forma di `quarantined_by` e di «trovato ma nascosto».
+            # Si guarda SOLO l'altra disposizione che il prodotto stesso
+            # risolve (auto_dream_trigger.py:177-178 e altri quattro), mai in
+            # giro per la cartella: `dreams/auto-*/semantic.db` ha lo stesso
+            # nome ed e' una COPIA, indicarla manderebbe fuori strada.
+            altra = d / p.name
+            if (rel is not None and len(rel.parts) > 1
+                    and altra.is_file() and altra != p):
+                # NIENTE VIRGOLE nel frammento: le righe si uniscono con
+                # ", " e una virgola qui dentro spezza il campo in due. Preso
+                # dal mio stesso sondaggio, che tagliava il messaggio a meta'.
+                righe.append(
+                    f"{etichetta} (assente; ce n'e' uno in {p.name} da "
+                    f"{_misura(altra.stat().st_size)} — tracciato legacy "
+                    f"che il prodotto non usa)")
+            else:
+                righe.append(f"{etichetta} (assente)")
         except OSError:
-            righe.append(f"{p.name} (illeggibile)")
+            righe.append(f"{etichetta} (illeggibile)")
     return ", ".join(righe) or "none yet"
 
 
