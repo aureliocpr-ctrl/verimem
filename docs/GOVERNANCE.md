@@ -361,6 +361,27 @@ persisted. Persisting it is a write-path column and stays open. A mute
 surface gets noticed; an assertive and wrong one sends you looking in the
 opposite direction.
 
+## 6b. Nothing here is off by default
+
+ws3's 2026-08-07 census named a class worth naming: **declared but never
+switched on** — a feature that exists, works, and no default reaches. It caught
+ws5's time routing, ws3's own `explain`, and the episode tier's salience.
+
+This branch's perimeter was censused against it and is clean: `observability.
+emit` has no gate, `append_event` has none, the SSE route has none, and the
+gateway access-audit is a *declared* choice (ON for a service, OFF for the
+personal console, with the reason in the code).
+
+That was a snapshot, so it is now a guarantee:
+`tests/test_il_governo_e_acceso_di_default.py` clears every `ENGRAM_*`/
+`HIPPO_*`/`VERIMEM_*` variable and demands that write, supersession,
+quarantine and forget still reach the channel — with their governance fields,
+not just their names. Falsified by injecting an off-by-default switch into
+`emit_flow`: 2 of 3 went red, and green again on revert.
+
+The failure this prevents is nasty because the symptom misleads: an empty
+Engine Room looks like a broken stream, and nobody goes looking for a default.
+
 ## 7. What governance does NOT do
 
 It does not make retirements *right* — it makes them visible and reversible.
