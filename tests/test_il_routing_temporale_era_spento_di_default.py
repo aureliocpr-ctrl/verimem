@@ -120,6 +120,33 @@ def test_chi_dice_esplicitamente_NO_continua_a_non_riceverla(mem):
     assert not any(h.get("history") for h in hits)
 
 
+def test_anche_EXPLAIN_instrada_sul_tempo_non_solo_search(mem):
+    """LO SWEEP, e questa cura è nata dal censimento fatto SUBITO DOPO aver
+    curato `search`: cercando le strade «auto» che il default non prende,
+    `explain` è saltata fuori con lo stesso difetto sullo stesso asse.
+
+    Curare una porta sola sarebbe stato lo sweep mancato che in questa casa si
+    paga ogni volta — e `explain` è quella che promette di più: il dossier
+    «how do you know?». Chi chiede come si sappia il prezzo di aprile riceveva
+    la custodia del prezzo di OGGI, con la catena di provenienza completa a
+    certificare il fatto sbagliato.
+
+    ⚠️ Si asserisce che il dossier NON contraddica la domanda, non che contenga
+    una data: `extract_as_of` è conservativa e su una data ISO àncora, su «a
+    gennaio» no. Il presidio qui è che le due porte non divergano.
+    """
+    d_search = mem.search("quanto costava il prodotto A al 2026-01-15", k=3)
+    d_explain = mem.explain("quanto costava il prodotto A al 2026-01-15", k=3)
+    assert isinstance(d_explain, dict)
+    # Se `search` instrada e `explain` no, i due insiemi di id divergono su una
+    # domanda ancorata — ed è esattamente la divergenza che questo test vieta.
+    ids_s = {h.get("id") for h in d_search}
+    ids_e = {f.get("id") for f in (d_explain.get("facts") or [])}
+    assert not ids_e or (ids_e & ids_s) or not ids_s, (
+        f"search ed explain divergono sulla stessa domanda ancorata: "
+        f"{ids_s} vs {ids_e}")
+
+
 def test_e_chi_dice_esplicitamente_SI_la_riceve_sempre(mem):
     """La simmetria: ``True`` significa «sempre», anche su una domanda che il
     router non riconoscerebbe come temporale."""

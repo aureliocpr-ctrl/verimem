@@ -1349,7 +1349,16 @@ class Memory:
         return {"intent": FIND, "results": self.search(query, k=k)}
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
-                as_of: float | None = None,
+                # "auto" come in `search`, e per non lasciare la cura a META'.
+                # Censendo le strade "auto" non prese dal default (dopo il
+                # difetto del routing temporale) questa e' saltata fuori
+                # SUBITO DOPO aver curato `search`: le due porte sarebbero
+                # divergite sullo stesso asse, ed `explain` e' quella che
+                # promette di piu' — il dossier «how do you know?». Chi chiede
+                # come faccia a sapere il prezzo di aprile riceveva la custodia
+                # del prezzo di OGGI, con la catena di provenienza completa a
+                # certificare il fatto sbagliato.
+                as_of: float | str | None = "auto",
                 min_relevance: float | str | None = None,
                 llm: Any = None) -> dict[str, Any]:
         """The evidence dossier behind an answer — the trust gate made atomic:
@@ -1383,6 +1392,12 @@ class Memory:
         want_ce_floor = (min_relevance == "auto")
         if min_relevance == "auto":
             min_relevance = self._auto_relevance_floor()
+        if as_of == "auto":
+            # Si risolve QUI e non a valle: `build_trust_report` vuole un
+            # float, e la stringa ci arriverebbe come tale. Stessa riga di
+            # `search`, stessa funzione — il routing e' uno solo.
+            from .temporal_context import extract_as_of
+            as_of = extract_as_of(query)
         from .trust_report import build_trust_report
         report = build_trust_report(self.semantic, query, k=k, deep=deep,
                                     as_of=as_of, min_relevance=min_relevance,
