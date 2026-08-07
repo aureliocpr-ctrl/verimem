@@ -104,19 +104,36 @@ def test_il_nome_proprio_a_INIZIO_frase_resta_riconosciuto():
     assert disgiunti("Orion ha 300 gigabyte.", "Zephyr ha 500 gigabyte.")
 
 
-def test_LIMITE_DICHIARATO_dopo_e_i_participi_urlati_restano_scoperti():
-    """⚠️ IL LIMITE, misurato e scritto invece che allargato per far passare il
-    test. «Dopo», «Questo», «ASSUNTO», «CONFERMATA» aprono la frase ma NON sono
-    in ``_NON_UNIT_WORDS``, quindi restano contati come nomi propri.
+def test_il_limite_su_DOPO_si_e_chiuso_da_solo_e_il_perche_conta():
+    """⚠️ QUESTO TEST DICEVA IL CONTRARIO UN'ORA FA, e l'aggiornamento e' il
+    dato piu' interessante della giornata su questa lista.
 
-    ⛔ La strada facile era aggiungerli alla lista. Non l'ho presa: sarebbero
-    entrati per far passare quattro casi che ho scritto io, non perche' una
-    misura lo chiedesse. Sul corpus reale «Dopo» apre 53 proposizioni su 8865 —
-    lo 0,6% — mentre «Nel», «Con», «Sul», «Per», «Non», gia' coperti, ne aprono
-    794. La lista si estende quando un dato lo chiede.
+    Dichiarava che «Dopo» restava contato come nome proprio, e aggiungeva: «la
+    strada facile era metterlo in lista, non l'ho presa perche' sarebbe entrato
+    per far passare un caso che ho scritto io — sul corpus apre 53 proposizioni
+    su 8865, lo 0,6%». Corretto allora, e resta il criterio giusto.
+
+    🔑 SI E' CHIUSO SENZA CHE LO CURASSI: `dopo` e' entrato in
+    ``_NON_UNIT_WORDS`` per un'ALTRA cura — le particelle italiane che erano
+    diventate unita' di misura dopo l'allargamento della cattura a Unicode — e
+    ``_nomi_propri`` legge la STESSA lista. Il dato che l'ha giustificata veniva
+    da un altro difetto e da un altro conteggio.
+
+    ⇒ E' l'altra faccia di cio' che questa casa chiama classe ②. Quando due
+      funzioni condividono una lista, estenderla per una CURA l'estende anche
+      per l'ALTRA — nel bene, come qui, e nel male, come nel difetto che ha
+      prodotto quelle particelle: allargare la cattura a Unicode ha reso
+      incompleta `_NON_UNIT_WORDS`, che era completa per costruzione.
+      **La domanda da farsi e' sempre la stessa: chi altro legge questa lista?**
+
+    ⚠️ Restano scoperti «Questo», «ASSUNTO», «CONFERMATA», e li lascio: nessun
+    dato ne ha ancora chiesto l'ingresso.
     """
-    assert disgiunti("Dopo la verifica il dato cambia.",
-                     "Questo scenario invece fallisce.")
+    assert not disgiunti("Dopo la verifica il dato cambia.",
+                         "Prima di allora nessuno guardava.")
+    # e cio' che nessun dato ha ancora chiesto resta fuori
+    assert disgiunti("ASSUNTO che il gate funzioni.",
+                     "CONFERMATA la misura sul campione.")
 
 
 def test_LIMITE_DICHIARATO_le_sigle_restano_invisibili():

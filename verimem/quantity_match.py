@@ -153,6 +153,23 @@ _NON_UNIT_WORDS = frozenset({
     # ed e' la forma in cui si scrive una MISURA, cioe' il testo che questo
     # store contiene di piu': misurato da ws1, «7453 verified contro 553».
     "vs", "versus", "contro", "against", "gegen", "contre", "frente",
+    # ── LE PARTICELLE ITALIANE (2026-08-07, secondo giro) ─────────────────
+    # Misurate sul corpus vivo DOPO l'allargamento della cattura a Unicode:
+    # `ma` 43 occorrenze · `ne` 14 · `si` 10 · `se` 7 su 45381 unita' estratte.
+    # Non ci sono mai state e prima non servivano — con `[A-Za-z]` la cattura
+    # le prendeva gia', ma il difetto restava sotto la soglia di attenzione.
+    # ⚠️ Sono OMOGRAFI accettati consapevolmente, come `in` (inches) e `at`
+    # (atmosfere) che sono in lista dal principio: `si` e' anche il silicio,
+    # `mi` una nota. La scelta e' la stessa e la ragione pure — una falsa unita'
+    # CREA conflitti che non esistono, un'unita' persa ne fa mancare uno.
+    "ma", "ne", "se", "si", "ci", "vi", "mi", "ti", "pero", "quindi",
+    "anche", "solo", "gia", "ancora", "poi", "cioe", "ossia", "ovvero",
+    "puo", "perche", "poiche", "mentre", "dopo", "prima", "quando",
+    # ⚠️ `i` MANCAVA, ed e' la terza asimmetria della stessa lista trovata
+    # oggi: c'erano `il` `lo` `la` `le` `gli` `un` `uno` `una` e non `i`, come
+    # c'erano `da` e non `a`, `an` e non `a`. «sono gia' 200 i fatti» dava
+    # unita' `i`. Le liste non si sbagliano in blocco: perdono UNA voce.
+    "i",
 })
 
 #: No real unit of measure ends in ``-ly`` (EN) or ``-mente`` (IT): ms, kg, min,
@@ -643,7 +660,23 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
         num_s, unit_s = m.group(1), (m.group(2) or "")
         if unit_s and _e_una_forma_elisa(claim, m.end(2)):
             unit_s = ""   # «120 l'anno» non contiene litri
-        _u = unit_s.lower()
+        # ⚠️ SI CONFRONTA LA FORMA NORMALIZZATA, NON QUELLA SCRITTA — la cura e'
+        # una riga ed e' di ws4, che ha misurato il difetto sul corpus reale
+        # (66 fatti su 5874 guadagnavano un'unita' che non lo era):
+        #     'e' in _NON_UNIT_WORDS -> True    norm_unit('e') -> 'e'
+        #     'è' in _NON_UNIT_WORDS -> False   norm_unit('è') -> 'e'
+        # Il filtro vedeva la forma ACCENTATA e la normalizzazione arrivava
+        # dopo, quindi «è», «già», «perché», «può» diventavano unita' di misura.
+        # 🔑 E LA CAUSA PRIMA E' MIA: `_NON_UNIT_WORDS` era completa PER
+        # COSTRUZIONE finche' il regex catturava solo `[A-Za-z]` — le parole
+        # accentate non ci arrivavano nemmeno. Allargando la cattura a «una
+        # lettera di qualunque alfabeto» (5e78549a) ho reso incompleta una lista
+        # che nessuno aveva sbagliato. ⇒ Una cura che allarga un input rende
+        # incomplete tutte le liste A VALLE, e quelle liste non sembrano
+        # difettose perche' per anni non lo erano: e' la classe ② vista dal lato
+        # opposto — non «chi altro fa la stessa cosa?» ma «chi RICEVE cio' che
+        # ho appena allargato?».
+        _u = _senza_diacritici(unit_s)
         if _u in _NON_UNIT_WORDS or (len(_u) > 3
                                      and _u not in _FREQUENCY_UNITS
                                      and _u.endswith(_ADVERB_SUFFIXES)):
