@@ -111,6 +111,26 @@ def _percorsi(root: Path) -> list[dict[str, Any]]:
          "table": "skills"},
         {"tier": "documents", "store": root / "documents" / "documents.db",
          "table": "documents"},
+        # I QUATTRO che l'inventario saltava, trovati contando invece che
+        # indovinando (ws4 ha sondato le decisioni il 2026-08-06 e qui non
+        # comparivano). Un inventario che salta un tier e' il difetto che
+        # l'inventario esiste per prevenire — e `transcript.db` pesa 72 MB
+        # sul corpus reale, il secondo store per dimensione dopo i fatti.
+        # I percorsi sono quelli che apre il prodotto: `decisions.db` e
+        # `adjudications.db` stanno ACCANTO a semantic.db (client.py:1240
+        # e 1263), non sotto la radice.
+        {"tier": "decisions", "store": sem.with_name("decisions.db"),
+         "table": "decisions"},
+        # il registro di cosa il gate ha deciso e perche': governo, non
+        # memoria, ma e' uno store con dei dati e la domanda «dove sta» e'
+        # la stessa
+        {"tier": "adjudications", "store": sem.with_name("adjudications.db"),
+         "table": "adjudications"},
+        {"tier": "transcripts",
+         "store": root / "conversational" / "transcript.db",
+         "table": "turns"},
+        {"tier": "self_model", "store": root / "self_model.db",
+         "table": "self_model_current"},
     ]
 
 

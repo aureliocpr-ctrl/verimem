@@ -98,6 +98,39 @@ def test_i_percorsi_sono_quelli_del_prodotto(tmp_path, monkeypatch):
     assert _tier(out, "skills")["store"] == str(_cfg.CONFIG.skills_db)
 
 
+def test_elenca_TUTTI_gli_store_del_prodotto_non_solo_i_cinque_noti(tmp_path):
+    """Un inventario che salta un tier è il difetto che l'inventario
+    esiste per prevenire.
+
+    ws4 il 2026-08-06 ha sondato un «quinto tier mai sondato», le
+    decisioni, che ha un DB suo — e qui non compariva. Cercando quanti ne
+    saltassi (invece di indovinare) sono usciti quattro store che il
+    prodotto apre e l'inventario non nominava:
+
+        semantic/decisions.db       (client.py:1240)
+        semantic/adjudications.db   (client.py:1263) — il registro del gate
+        conversational/transcript.db (transcript_index.py:74) — 72 MB sul
+                                     corpus reale, il secondo per dimensione
+        self_model.db               (mcp_server.py:10708)
+
+    Non serve che esistano: uno store assente dice `unavailable` col suo
+    percorso, e quella è la risposta a «questo store ce l'ho?» — che
+    prima richiedeva di conoscere il nome del file per cercarlo.
+    """
+    nomi = {t["tier"] for t in tier_inventory(data_dir=tmp_path)["tiers"]}
+    assert {"facts", "entities", "episodes", "skills", "documents",
+            "decisions", "adjudications", "transcripts",
+            "self_model"} <= nomi, sorted(nomi)
+
+
+def test_uno_store_che_non_esiste_ancora_dice_DOVE_sarebbe(tmp_path):
+    """Il caso delle decisioni sul corpus di casa: il file non c'è. La
+    riga utile non è il silenzio, è «si chiamerebbe così e non c'è»."""
+    d = _tier(tier_inventory(data_dir=tmp_path), "decisions")
+    assert d["rows"] == "unavailable"
+    assert d["store"].endswith("decisions.db"), d
+
+
 def test_il_tier_entita_non_e_dentro_semantic_db(tmp_path):
     """Il caso che ha originato tutto: le entità NON stanno in
     semantic.db, e l'inventario deve puntare al file giusto."""
