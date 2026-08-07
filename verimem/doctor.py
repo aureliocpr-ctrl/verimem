@@ -426,6 +426,101 @@ def run_doctor() -> list[dict[str, Any]]:
     except Exception as e:  # noqa: BLE001
         add("moat-judge", WARN, f"probe failed: {e}")
 
+    # -- vettori di un altro modello --------------------------------------------
+    # ws5, 2026-08-07: un backup del corpus non e' piu' interrogabile dopo un
+    # cambio di modello — gli snapshot di maggio hanno vettori a 384
+    # dimensioni, il motore di oggi ne vuole 768, e la ricerca semantica
+    # restituisce ZERO risultati SENZA DIRE PERCHE'. Nessun crash: il
+    # silenzio, che e' peggio, perche' «nessun risultato» si legge come «non
+    # c'era niente».
+    #
+    # Tutto quello che si confronta qui e' LETTO, niente e' assunto: le
+    # dimensioni stanno nei blob, il modello dichiarato sta in
+    # `facts.embedding_model` riga per riga, e la dimensione ATTESA la
+    # pubblica il daemon di encode nel suo discovery. Se il daemon non c'e',
+    # si dice che non si sa invece di indovinare — e' la regola che questo
+    # file ha imparato stanotte.
+    #
+    # Regge su store ESTRANEI di proposito: e' nato per guardare backup e
+    # snapshot altrui, quindi una colonna assente non lo fa sparire. Un
+    # referto che se ne va sullo store che doveva diagnosticare e' inutile
+    # due volte.
+    try:
+        import sqlite3 as _sq4
+
+        from ._compat import data_dir as _dd4
+        _dbv = _dd4() / "semantic" / "semantic.db"
+        if _dbv.exists():
+            _dim_attesa = None
+            try:
+                from . import encode_service as _svc
+                _info = _svc.read_discovery() or {}
+                _dim_attesa = int(_info.get("dim")) if _info.get("dim") else None
+            except Exception:  # noqa: BLE001
+                _dim_attesa = None
+            with _sq4.connect(f"file:{_dbv}?mode=ro", uri=True) as _c4:
+                _cols = {r[1] for r in _c4.execute("PRAGMA table_info(facts)")}
+                _dims: dict[int, int] = {}
+                if "embedding" in _cols:
+                    for (_b,) in _c4.execute(
+                            "SELECT embedding FROM facts "
+                            "WHERE embedding IS NOT NULL"):
+                        _k = len(_b) // 4
+                        _dims[_k] = _dims.get(_k, 0) + 1
+                _modelli: list[tuple[str, int]] = []
+                if "embedding_model" in _cols:
+                    _modelli = [(r[0] or "(declared by no row)", int(r[1]))
+                                for r in _c4.execute(
+                                    "SELECT embedding_model, COUNT(*) FROM facts "
+                                    "WHERE embedding IS NOT NULL GROUP BY 1 "
+                                    "ORDER BY 2 DESC")]
+            from .config import CONFIG as _CFG
+            _atteso_nome = getattr(_CFG, "embedding_model", "")
+            _tot = sum(_dims.values())
+            _fonte = (f"expected {_dim_attesa} (from the running encode "
+                      f"daemon)" if _dim_attesa
+                      else "expected dimension NOT known here — no encode "
+                           "daemon is running to declare it")
+            _righe_dim = " · ".join(f"{d}d: {n}" for d, n in
+                                    sorted(_dims.items(), key=lambda x: -x[1]))
+            _righe_mod = " · ".join(f"{m}: {n}" for m, n in _modelli[:3])
+            if not _tot:
+                add("embedding-model", OK,
+                    "no vectors stored yet — nothing that a model change "
+                    "could have orphaned")
+            else:
+                _buoni = (_dims.get(_dim_attesa, 0) if _dim_attesa
+                          else max(_dims.values()))
+                _cattivi = _tot - _buoni
+                _dettaglio = (f"{_tot} vectors — {_righe_dim}; {_fonte}"
+                              + (f"; declared: {_righe_mod}" if _righe_mod
+                                 else "; no embedding_model column"))
+                if _dim_attesa and not _buoni:
+                    add("embedding-model", FAIL,
+                        f"NO vector matches the engine in use: {_dettaglio}. "
+                        f"Semantic search returns ZERO rows here, and returns "
+                        f"it SILENTLY — an empty answer reads as 'there was "
+                        f"nothing'",
+                        "this store was written by a different embedding "
+                        "model (a backup or an older snapshot). Re-embed it "
+                        "with the current model, or query it with the model "
+                        "that wrote it — configure ENGRAM_EMBEDDING_MODEL to "
+                        f"match {_atteso_nome!r} only if that is what wrote "
+                        "these rows")
+                elif _cattivi:
+                    add("embedding-model", WARN,
+                        f"{_buoni} vectors match the engine and {_cattivi} do "
+                        f"not: {_dettaglio}. The mismatched rows are stored "
+                        f"but unreachable by semantic search",
+                        "re-embed the older rows, or keep them for the audit "
+                        "trail knowing recall will never return them")
+                else:
+                    add("embedding-model", OK,
+                        f"all {_tot} vectors match the engine in use "
+                        f"({_righe_dim}); {_fonte}")
+    except Exception:  # noqa: BLE001 — un check non rompe il doctor
+        pass
+
     # -- finestra di riparazione dei ritiri -------------------------------------
     # Un ritiro con lo scatto di undo si annulla in un click; senza, il fatto
     # e' perso. Sul corpus di casa il 2026-08-05: 105 ritiri negli ultimi
