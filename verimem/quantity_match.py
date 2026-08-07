@@ -474,6 +474,80 @@ def _e_una_forma_elisa(testo: str, fine_unita: int) -> bool:
     return dopo < len(testo) and testo[dopo] in _VOCALI_DOPO_ELISIONE
 
 
+#: Le parole che INTRODUCONO una data. Preposizioni e articoli — classe chiusa,
+#: come `_NON_UNIT_WORDS`: nessuna lingua ne acquisisce di nuove. EN·IT·DE·FR·ES.
+_INTRODUCE_UN_ANNO = frozenset({
+    "nel", "nell", "del", "dell", "dal", "dall", "al", "all", "il", "l",
+    "entro", "da", "a", "di", "fino", "verso", "circa", "anno", "anni",
+    "in", "on", "by", "since", "until", "till", "from", "the", "of", "for",
+    "year", "fy", "ab", "seit", "bis", "im", "jahr", "vom", "zum",
+    "en", "depuis", "jusqu", "an", "annee", "année", "desde", "hasta", "ano",
+})
+
+
+def _nomi_di_mese() -> frozenset[str]:
+    """I nomi di mese, PRESI DA `temporal_context` invece che ricopiati qui.
+
+    ⚠️ E' la classe ① — «una copia invece della superficie unica» — e questa
+    casa la paga a ogni giro: due liste di mesi divergono al primo che ne
+    estende una sola. `temporal_context._MONTHS` e' gia' EN·IT·DE·FR·ES ed e'
+    la lista che il percorso delle date usa davvero; se domani qualcuno la
+    estende, questo criterio si estende con lei.
+
+    L'import e' pigro e non crea ciclo: `temporal_context` importa solo la
+    libreria standard. Il costo e' un dizionario letto una volta.
+    """
+    global _MESI_CACHE
+    if _MESI_CACHE is None:
+        try:
+            from .temporal_context import _MONTHS
+            _MESI_CACHE = frozenset(str(k).lower() for k in _MONTHS)
+        except Exception:      # pragma: no cover — il criterio degrada, non rompe
+            _MESI_CACHE = frozenset()
+    return _MESI_CACHE
+
+
+_MESI_CACHE: frozenset[str] | None = None
+
+
+def _introdotto_da_una_parola_temporale(testo: str, inizio_numero: int) -> bool:
+    """Il numero a quattro cifre che comincia a *inizio_numero* e' una DATA
+    («scade **nel** 2027») o un CONTEGGIO («i superseduti **sono** 1900»)?
+
+    🔑 LA DISTINZIONE E' NEL VICINATO, ed e' la stessa forma di criterio che ha
+    retto su L4.2: guardare la parola ATTACCATA al numero invece del numero.
+    Misurata sulle due popolazioni, 9/9 e 7/7::
+
+        ANNI      nel · il · dal · al · in · ab · en · since   preposizioni/articoli
+        CONTEGGI  sono · totali · contiene · restano · are     verbi/sostantivi
+
+    ⚠️ PERCHE' SERVE, e non e' un dettaglio di forma. `YEAR_RE` scarta ogni
+    numero fra 1000 e 2100 che non abbia un'unita' accanto, e nei referti di
+    misura quei numeri sono la norma: le fonti sono output di script — tabelle,
+    colonne, `chiave=valore` — dove il numero sta a fine riga senza unita'.
+    Costo misurato da ws4: dei quarantinati di agosto con grounding **sopra 90**
+    (cioe' che il moat APPROVA), 20 su 21 portano L4.1/L4.2, e fra loro c'e' il
+    referto che misurava il gate, quarantinato dal gate.
+
+    E il danno era su DUE lati, non uno: oltre ai falsi positivi, «i superseduti
+    sono 1900» con una fonte che dice 1805 **non veniva fermato** — il numero
+    inventato spariva prima di essere confrontato. Stessa causa, esiti opposti.
+
+    📌 L'esclusione degli anni resta dove serve: «il contratto scade nel 2027»
+    non e' un dettaglio numerico inventato, e le date hanno un percorso loro.
+    """
+    testa = testo[:inizio_numero].rstrip(" \t-–—")
+    if not testa:
+        return False              # numero a inizio testo: nessun introduttore
+    if testa[-1] in ".;:!?\n":
+        return False              # inizio di frase o cella di tabella
+    m = re.search(r"([^\W\d_]+)$", testa, re.UNICODE)
+    if m is None:
+        return False
+    parola = m.group(1).lower()
+    return parola in _INTRODUCE_UN_ANNO or parola in _nomi_di_mese()
+
+
 def extract_quantities(text: str) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
     (provenance after an evidence marker is not measured); bare YEARS excluded."""
@@ -488,7 +562,8 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
                                      and _u not in _FREQUENCY_UNITS
                                      and _u.endswith(_ADVERB_SUFFIXES)):
             unit_s = ""  # a following function word / adverb is not a unit
-        if not unit_s and YEAR_RE.fullmatch(num_s):
+        if (not unit_s and YEAR_RE.fullmatch(num_s)
+                and _introdotto_da_una_parola_temporale(claim, m.start(1))):
             continue  # bare year → year path, not a quantity
         try:
             val = float(num_s)
