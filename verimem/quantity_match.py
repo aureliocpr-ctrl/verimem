@@ -348,29 +348,6 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
 )
 
 
-def _senza_diacritici(parola: str) -> str:
-    """`unità` → `unita`, `Stück` → `stuck`, `años` → `anos`, `unités` → `unites`.
-
-    Si normalizza invece di elencare le varianti accentate — la stessa scelta,
-    con la stessa motivazione, di `temporal_context._senza_accenti`: una lista
-    di varianti e' una lista in piu' da tenere allineata.
-
-    ⚠️ LIMITE DICHIARATO — LE TRASLITTERAZIONI NON SONO ACCENTI CADUTI. Chi non
-    ha l'umlaut sulla tastiera scrive «Stueck», non «Stuck», e nei gestionali
-    tedeschi quella e' la forma corrente. Qui `Stück` e `Stuck` si uniscono (una
-    e' l'altra senza il segno) mentre `Stueck` resta a parte, perche' unirla
-    richiederebbe la regola inversa `ue -> u`, che romperebbe ogni parola in cui
-    `ue` e' scritto per se stesso. Ho provato la traslitterazione `ü -> ue` come
-    forma canonica e sposta solo il problema: allora e' `Stuck` a restare fuori.
-    Serve un dizionario per-lingua, che e' un'altra cura — e la scelta di quale
-    delle due grafie unire va fatta con un dato sul corpus, non a intuito.
-    """
-    import unicodedata
-    p = (parola or "").lower()
-    return "".join(c for c in unicodedata.normalize("NFD", p)
-                   if not unicodedata.combining(c))
-
-
 def norm_unit(word: str) -> str:
     """Canonicalise a unit word (synonyms + plural/`-ies` singularisation).
 
@@ -387,7 +364,7 @@ def norm_unit(word: str) -> str:
     w = (word or "").lower()
     if w in _UNIT_SYN:
         return _UNIT_SYN[w]
-    piano = _senza_diacritici(w)
+    piano = _senza_diacritici(w)   # `w` e' gia' .lower()
     if piano != w and piano in _UNIT_SYN:
         return _UNIT_SYN[piano]
     if piano != w:
@@ -691,7 +668,7 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
         # difettose perche' per anni non lo erano: e' la classe ② vista dal lato
         # opposto — non «chi altro fa la stessa cosa?» ma «chi RICEVE cio' che
         # ho appena allargato?».
-        _u = _senza_diacritici(unit_s)
+        _u = _senza_diacritici(unit_s.lower())
         if _u in _NON_UNIT_WORDS or (len(_u) > 3
                                      and _u not in _FREQUENCY_UNITS
                                      and _u.endswith(_ADVERB_SUFFIXES)):
@@ -745,7 +722,25 @@ _PAROLA_RE = re.compile(r"[^\W\d_]{4,}", re.UNICODE)
 
 
 def _senza_diacritici(text: str) -> str:
-    """«città» -> «citta»: la stessa parola, una grafia sola."""
+    """«città» -> «citta»: la stessa parola, una grafia sola.
+
+    ⚠️ NON ABBASSA — il chiamante passa il testo gia' in minuscolo. Sembra un
+    dettaglio e il 2026-08-07 e' costato una regressione: avevo scritto una
+    SECONDA `_senza_diacritici` in cima al modulo, che abbassava, e Python
+    tiene l'ULTIMA definizione. Le mie due chiamate ne usavano una che non
+    conoscevo: «0.709 e alto» era filtrato e «0.709 E alto» no. Isolata da ws4
+    a una riga. ⇒ La cura non e' stata scegliere quale tenere: e' stato
+    CANCELLARE il duplicato. Due funzioni con lo stesso nome sono la classe ①
+    di questa casa — una copia invece della superficie unica — e la domanda che
+    mi mancava e' la piu' semplice: *esiste gia'?* Un `grep` prima di scrivere.
+
+    ⚠️ E IL LIMITE, che vale per entrambe le chiamate: le TRASLITTERAZIONI non
+    sono accenti caduti. Chi non ha l'umlaut scrive «Stueck», non «Stuck», e
+    nei gestionali tedeschi quella e' la forma corrente. Qui «Stück» e «Stuck»
+    si uniscono, «Stueck» resta a parte: unirla richiederebbe la regola inversa
+    `ue -> u`, che romperebbe ogni parola in cui `ue` sta per se stesso. Provata
+    la traslitterazione inversa come forma canonica: sposta solo il problema.
+    """
     return "".join(c for c in unicodedata.normalize("NFKD", text)
                    if not unicodedata.combining(c))
 
