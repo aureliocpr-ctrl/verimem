@@ -79,6 +79,7 @@ def retirement_log(
     since: float | None = None,
     topic: str | None = None,
     reason: str | None = None,
+    cross_topic: bool | None = None,
     with_text: bool = False,
 ) -> list[dict[str, Any]]:
     """The retirements, newest first, as (loser, winner) PAIRS.
@@ -111,6 +112,15 @@ def retirement_log(
     if reason is not None:
         where.append("f.superseded_reason = ?")
         params.append(reason)
+    if cross_topic is not None:
+        # Chi implementa «versionare invece di ritirare» deve poter
+        # GUARDARE i 266 ritiri dentro-topic uno per uno, non solo contarli:
+        # il versionamento serve a loro, non ai 1538 che attraversano i
+        # topic (misura di ws4, riprodotta 2026-08-07). Il confronto sta in
+        # SQL e non a valle perche' filtrare dopo il LIMIT restituirebbe
+        # meno righe del richiesto senza dirlo.
+        where.append("w.topic IS NOT NULL AND f.topic "
+                     + ("<> w.topic" if cross_topic else "= w.topic"))
     text_cols = (",\n               f.proposition AS loser_text,"
                  "\n               w.proposition AS winner_text"
                  if with_text else "")
@@ -210,6 +220,15 @@ def retirement_log(
             else (d.get("winner_superseded_by") is None
                   and d.get("winner_status") != "quarantined"))
         d.pop("winner_superseded_by", None)
+        # L'OSSERVABILE, non l'interpretazione. «Attraversa i topic» e' il
+        # confronto di due stringhe salvate: certo. «Housekeeping» e'
+        # un'INTERPRETAZIONE, misurata al 95.1% su questo corpus, e vive
+        # nella dichiarazione del riassunto — non qui, perche' un'etichetta
+        # per riga sarebbe falsa in un caso su venti.
+        # None quando il vincitore non esiste: i topic non si possono
+        # confrontare, e False direbbe «stesso topic».
+        d["cross_topic"] = (None if d.get("winner_topic") is None
+                            else d.get("loser_topic") != d.get("winner_topic"))
         if not d["reversible"]:
             # l'appiglio NON viaggia quando non e' usabile: un op_id che
             # `undo` rifiuta si legge come una riparazione disponibile
@@ -456,11 +475,31 @@ def retirement_breakdown(sm, *, limit: int = 10,
                 (*par, int(limit)))]
         totale = int(conn.execute(
             f"SELECT COUNT(*) FROM facts f WHERE {w}", par).fetchone()[0])
+        _sc = conn.execute(
+            f"""SELECT
+                  SUM(CASE WHEN f.topic = w.topic THEN 1 ELSE 0 END),
+                  SUM(CASE WHEN f.topic <> w.topic THEN 1 ELSE 0 END),
+                  SUM(CASE WHEN w.id IS NULL THEN 1 ELSE 0 END)
+                FROM facts f LEFT JOIN facts w ON w.id = f.superseded_by
+                WHERE {w}""", par).fetchone()
     top = giorni[0] if giorni else None
     return {
         "by_reason": motivi,
         "by_day": giorni,
         "by_principal": attori,
+        "by_scope": {"same_topic": int(_sc[0] or 0),
+                     "cross_topic": int(_sc[1] or 0),
+                     "winner_missing": int(_sc[2] or 0)},
+        # L'INTERPRETAZIONE STA QUI, col suo numero e col suo margine — non
+        # in un'etichetta per riga, che sarebbe falsa in un caso su venti.
+        "scope_means": (
+            "cross_topic is an OBSERVABLE (two stored strings differ), not a "
+            "verdict. On this corpus 1463 of the 1538 cross-topic "
+            "retirements are `autohook-snapshot daily collapse` — 95.1% "
+            "housekeeping, measured by ws4 on 2026-08-07 and reproduced "
+            "independently; the remaining 4.9% are not. The same-topic 266 "
+            "are the population where supersession is a real editorial act, "
+            "and the ones a versioning scheme would need to keep"),
         # IL LIMITE ACCANTO AL DATO. Un campo che sembra rispondere «chi»
         # senza dire cosa misura e' peggio di un campo assente, e qui i
         # limiti sono due: (1) il principal nomina la PORTA — `cli:local`
