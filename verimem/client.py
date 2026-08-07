@@ -225,6 +225,35 @@ def open_memory(path: Any = None, **kwargs: Any):
     return Memory(path, **kwargs) if path is not None else Memory(**kwargs)
 
 
+class Risultati(list):
+    """I risultati di una ricerca, con l'avviso quando NESSUNO supera il pavimento.
+
+    IL DIFETTO CHE LA MOTIVA (misurato da ws5): su 5 domande la cui risposta NON
+    è nel corpus, `recall` risponde 5 volte su 5, con punteggi di grounding fino
+    a 99.93 — risposte plausibili nella forma e scollegate nel merito, che un
+    agente riceve come fatti verificati. Il pavimento che le separa **esiste ed
+    è già usato** da `trust_report` ed `explain`, che si astengono; questa porta
+    no.
+
+    ⚠️ Dichiara e non taglia: sul banco di ws5 il pavimento cadeva dentro il
+    margine fra le due popolazioni (0 falsi tagli), sul mio cadeva **sopra** il
+    minimo delle domande rispondibili (1 falso taglio su 5). La taratura dipende
+    dal corpus, e un veto costerebbe un fatto vero dove un avviso costa un
+    avviso.
+
+    È una `list` VERA: chi non legge l'attributo non si accorge di niente, e
+    `search` ha una quantità di consumatori che la iterano e ne fanno `len()`.
+    """
+
+    __slots__ = ("sotto_il_pavimento",)
+
+    def __init__(self, iterable=(), *, sotto_il_pavimento=None) -> None:
+        super().__init__(iterable)
+        #: ``{pavimento, score_migliore, nota}`` quando nessun risultato supera
+        #: la soglia di rilevanza; ``None`` quando almeno uno la supera.
+        self.sotto_il_pavimento = sotto_il_pavimento
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
@@ -1003,7 +1032,41 @@ class Memory:
         _emit_flow("flow.recall", kind="search", n=len(out),
                    best=round(max((float(i.get("score") or 0.0)
                                    for i in out), default=0.0), 4))
-        return out
+        # «NON LO SO» DETTO SULLA PORTA CHE LA GENTE APRE.
+        #
+        # Misurato da ws5 su un corpus aziendale controllato: su 15 domande
+        # RISPONDIBILI il primo posto e' giusto 14 volte — il retrieval
+        # funziona — ma su 5 domande SENZA risposta `recall` risponde 5 volte su
+        # 5, con `grounding_score` fino a 99.93. Risposte peggiori del silenzio:
+        # plausibili nella forma, scollegate nel merito, e chi le riceve vede un
+        # fatto verificato. Il prodotto dichiara «abstention over
+        # hallucination», e questa porta non lo applicava — mentre
+        # `trust_report` ed `explain` si astengono da sempre, con lo STESSO
+        # pavimento. Terza asimmetria fra porte in due giorni.
+        #
+        # ⚠️ SI DICHIARA, NON SI TAGLIA, e la ragione e' una misura che
+        # contraddice quella che ha motivato la cura:
+        #     banco di ws5  rispondibili min 0.8757 · pavimento 0.8689 -> 0 falsi tagli
+        #     banco mio     rispondibili min 0.8489 · pavimento 0.8491 -> 1 falso taglio su 5
+        # La taratura del pavimento dipende dal corpus: come veto perderebbe un
+        # fatto vero, come avviso costa un avviso. Chi vuole il taglio ha
+        # `min_relevance`, che continua a funzionare esattamente come prima.
+        try:
+            _pav = self._auto_relevance_floor()
+            _best = max((float(i.get("score") or 0.0) for i in out), default=0.0)
+        except Exception:  # noqa: BLE001 — un avviso non fa cadere una lettura
+            return Risultati(out)
+        return Risultati(
+            out,
+            sotto_il_pavimento=(
+                {"pavimento": round(float(_pav), 4),
+                 "score_migliore": round(_best, 4),
+                 "nota": ("nessun risultato supera la soglia di rilevanza "
+                          "calibrata su questo corpus: probabilmente la "
+                          "risposta NON e' in memoria. I risultati sono qui "
+                          "sotto, non tagliati — decidi tu.")}
+                if out and _pav and _best < float(_pav) else None),
+        )
 
     def count(self, *, query: str | None = None, topic: str | None = None,
               topic_prefix: str | None = None) -> int:
