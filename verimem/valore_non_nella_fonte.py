@@ -43,6 +43,7 @@ fonte non contiene non è un numero verificato**.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from .quantity_match import extract_quantities
@@ -55,6 +56,52 @@ class ValoreAssente:
     """Un valore che il claim afferma e la fonte non contiene."""
     valore: float
     unita: str
+
+
+_DECIMALI_RE = re.compile(r"(?<![\w.])\d+[.,](\d+)")
+
+
+def _tolleranza_dichiarata(testo: str, valore: float) -> float:
+    """±mezza unità dell'ultima cifra che il claim SCRIVE.
+
+    IL FALSO POSITIVO CHE LA MOTIVA, trovato da ws1 senza cercarlo — al primo
+    fatto vero salvato dopo la cura::
+
+        fonte «durata 443.0485324859619»  ·  claim «443 secondi»
+        -> QUARANTINATO, con grounding 100.0
+
+    Troncare un decimale è la forma più comune in cui un umano riporta una
+    durata: il falso positivo è ad alta frequenza.
+
+    🔑 IL CRITERIO È DI ws5, e le due alternative le ha fatte cadere lui stesso:
+      * **prefisso letterale** («443» sta dentro «443.048…»): ammette anche
+        «44», che è un altro numero. veri 6/10, falsi fermati 8/9.
+      * **tolleranza relativa ≤1%**: 19/19 sugli arrotondamenti, poi cade 4
+        volte su 4 dove l'1% è una differenza VERA — «505» da «500 mg» è
+        un'altra dose, «4.03» da «4 per cento» un altro tasso. *L'1% di una
+        durata è rumore, l'1% di una dose è un errore clinico.*
+
+    Un numero riportato con k decimali **dichiara la propria precisione**:
+    ``0.5 * 10^-k``. Non è una costante che abbiamo scelto noi — la sceglie chi
+    scrive il numero, ed è il modo standard in cui scienza e ingegneria
+    trattano un valore riportato. Per questo regge su domini che nessuno di noi
+    ha previsto: non c'è niente da ri-calibrare.
+
+    Si contano i decimali SCRITTI e non quelli del float: ``443`` e ``443.00``
+    sono lo stesso valore e due precisioni diverse, e il float non lo ricorda.
+    Fallback prudente a ``0.5`` (intero) quando la cifra non si ritrova nel
+    testo — la stessa tolleranza che il claim si attribuirebbe scrivendola
+    senza decimali.
+    """
+    intero = int(valore) if float(valore).is_integer() else valore
+    for m in _DECIMALI_RE.finditer(testo):
+        try:
+            if abs(float(m.group(0).replace(",", ".")) - valore) < 1e-12:
+                return 0.5 * (10.0 ** -len(m.group(1)))
+        except ValueError:  # pragma: no cover - gruppo non numerico
+            continue
+    del intero
+    return 0.5
 
 
 def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]:
@@ -75,6 +122,16 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     if not nel_claim:
         return []
     nella_fonte = {v for _u, v in extract_quantities(source)}
-    return [ValoreAssente(valore=v, unita=u)
-            for u, v in sorted(nel_claim, key=lambda q: q[1])
-            if v not in nella_fonte]
+    fuori: list[ValoreAssente] = []
+    for u, v in sorted(nel_claim, key=lambda q: q[1]):
+        if v in nella_fonte:
+            continue
+        # UN ARROTONDAMENTO NON E' UN'INVENZIONE. Confronto STRETTO (`<` e non
+        # `<=`): sulle 38 prove di ws5 l'inclusivo dava 37/38 e lo stretto
+        # 38/38 — al bordo esatto due valori sono distinguibili, e ammetterli
+        # sarebbe la stessa indulgenza che ha fatto cadere la tolleranza fissa.
+        tol = _tolleranza_dichiarata(proposition, v)
+        if any(abs(v - y) < tol for y in nella_fonte):
+            continue
+        fuori.append(ValoreAssente(valore=v, unita=u))
+    return fuori
