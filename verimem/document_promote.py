@@ -119,8 +119,18 @@ def promote_chunk_to_fact(
         # `facts add` cestina dall'altra porta. Presidi in
         # test_il_vanto_entrava_dalla_porta_dei_documenti.py: i tre dati
         # oggettivi dello stesso documento continuano a promuoversi.
+        # ⚠️ SOLO CON UN `claim` ESPLICITO, e la distinzione l'ha insegnata un
+        # test che veniva da main (test_il_chunk_grezzo_CONTINUA_a_passare):
+        # senza `claim` la proposizione E' IL CHUNK, cioe' il documento stesso,
+        # e un documento che contiene «la migrazione e' completa» non e'
+        # l'agente che rivendica un merito — e' un testo che riporta una frase.
+        # Applicarci L1 era lo stesso errore di categoria che ho curato ieri
+        # sul router di provenienza (F1 C2), rifatto da un'altra porta.
+        # Con `claim`, invece, chi promuove sta DISTILLANDO un'affermazione e se
+        # ne fa carico: li' L1 ha giurisdizione, ed e' il caso del vanto.
         _l1 = [str(w.get("layer")) for w in (verdetto.warnings or [])
-               if str(w.get("layer", "")).startswith("L1")]
+               if claim is not None
+               and str(w.get("layer", "")).startswith("L1")]
         if verdetto.action == "reject" or _l1 or (
                 isinstance(punteggio, (int, float))
                 and isinstance(_soglia, (int, float))
