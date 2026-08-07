@@ -53,6 +53,57 @@ def reset_flow_context(token: contextvars.Token | None = None) -> None:
         _CTX.set(None)
 
 
+#: Impronta della memoria a cui gli eventi si riferiscono, calcolata una
+#: volta per processo. `None` = non ancora calcolata.
+_IMPRONTA: str | None = None
+
+
+def reset_store_fingerprint() -> None:
+    """Ricalcola l'impronta alla prossima emissione (banchi, e chi cambia
+    data dir a processo vivo)."""
+    global _IMPRONTA
+    _IMPRONTA = None
+
+
+def _store_fingerprint() -> str:
+    """QUALE memoria ha prodotto questo evento — impronta, non percorso.
+
+    Il 2026-08-07 tre misure indipendenti sono cadute nella stessa ora
+    sullo stesso file: ws3 «il 94% delle quarantene in events.jsonl poggia
+    su fatti che non esistono piu', la fonte e' MULTI-STORE e non lo dice»,
+    ws1 lo conferma al decimale e trova la causa vera («il journal e'
+    inquinato all'88% dal nostro dogfooding: `events.jsonl` non viene
+    isolato da HIPPO_DATA_DIR»), ws4 lo ritrova sulla propria tabella.
+
+    E' un difetto mio a meta': avevo curato il PERCORSO del log (deriva
+    dalla data dir invece di essere fisso) e aggiunto l'avviso quando
+    diverge — ma `EVENT_LOG_PATH` si fissa all'IMPORT, quindi chi imposta
+    la data dir DOPO (cioe' ogni banco) continua a scrivere nel journal di
+    casa. La cura dichiarava la divergenza e non la rendeva LEGGIBILE a
+    valle: chi analizza il file non poteva separare le due popolazioni, e
+    ha dovuto inventarsi un join sui fatti vivi che introduce un secondo
+    taglio non scelto.
+
+    Non si impedisce la scrittura — un evento perso e' peggio di un evento
+    da filtrare — si dice a quale memoria appartiene.
+
+    IMPRONTA e non percorso: il percorso e' lungo, cambia di macchina e
+    questo campo finisce su una pagina web e in file che ci scambiamo.
+    L'impronta e' stabile, corta, e basta a dire «questi due eventi
+    vengono da memorie diverse».
+    """
+    global _IMPRONTA
+    if _IMPRONTA is None:
+        from hashlib import sha256
+        try:
+            from ._compat import data_dir
+            _radice = str(data_dir().resolve())
+        except Exception:  # noqa: BLE001 — un tag non rompe un'emissione
+            _radice = os.environ.get("HIPPO_DATA_DIR", "") or "unknown"
+        _IMPRONTA = sha256(_radice.encode("utf-8")).hexdigest()[:12]
+    return _IMPRONTA
+
+
 def _ambient() -> dict[str, Any]:
     # "unknown", not "sdk": the old default was the NAME OF A REAL SURFACE,
     # so 9357 of 9603 real-corpus writes claimed "sdk" while 438 MCP write
@@ -62,6 +113,10 @@ def _ambient() -> dict[str, Any]:
     # genuinely unknown SAYS unknown.
     out: dict[str, Any] = {
         "surface": os.environ.get("ENGRAM_FLOW_SURFACE", "").strip() or "unknown",
+        # Sta negli AMBIENT e non su `flow.write`: mettendolo solo li', le
+        # quarantene — cioe' proprio la popolazione che ws3 e ws4 stavano
+        # misurando quando il difetto e' saltato fuori — resterebbero senza.
+        "store": _store_fingerprint(),
     }
     actor = (os.environ.get("VERIMEM_ACTOR", "").strip()
              or os.environ.get("ENGRAM_ACTOR", "").strip())
