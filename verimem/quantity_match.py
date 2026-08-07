@@ -83,8 +83,23 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # essere una quantita'. Preso da due presidi esistenti in meno di un minuto —
 # il difetto che serve escludere e' `3.4` dentro `3.4.0`, cioe' un punto seguito
 # da una CIFRA, non un punto qualsiasi.
+#
+# ⚠️ E ANCHE IL PUNTO DEL LOOKBEHIND VA QUALIFICATO — isolato da ws1, ed e' la
+# classe di oggi vista DALL'ALTRO LATO: nel parser «attaccato» faceva catturare
+# di troppo, nel gate fa NON riconoscere e boccia un fatto VERO.
+#     fonte «Rilevazione: grad.3 su scala 5, temp.22 gradi» -> solo (5.0)
+#     claim «…riporta grado 3 … e temperatura 22 gradi»     -> assenti [3, 22]
+#     ⇒ L4.1 quarantina un fatto i cui numeri SONO nella fonte.
+# In italiano il punto di abbreviazione davanti a un numero e' una forma
+# corrente: grad.3 · temp.22 · art.15 · pag.7 · n.42 · fig.3 · tot.300 · Nr.5.
+# LA DISTINZIONE E' STRUTTURALE e non chiede una lista di abbreviazioni:
+#     1.2      punto fra due CIFRE         -> decimale/versione: NON catturare
+#     grad.3   punto fra LETTERA e cifra   -> abbreviazione: catturare
+# Il lookbehind diventa «non preceduto da CIFRA-punto» invece di «non preceduto
+# da punto». Misurato: 7/7 recuperati, 7/7 protetti (v1.2, 3.4.0, 2.1.3,
+# 65.61.137.117, 127.0.0.1, SKU300, abc300), 160 proposizioni su 8951 (1,79%).
 _QUANT_RE = re.compile(
-    r"(?<![A-Za-z0-9._])(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
+    r"(?<![A-Za-z0-9_])(?<!\d\.)(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
     r"(?![A-Za-z0-9_])(?!\.\d)",
     re.UNICODE,
 )
