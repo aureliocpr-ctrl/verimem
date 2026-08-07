@@ -59,10 +59,11 @@ _IMPRONTA: str | None = None
 
 
 def reset_store_fingerprint() -> None:
-    """Ricalcola l'impronta alla prossima emissione (banchi, e chi cambia
-    data dir a processo vivo)."""
-    global _IMPRONTA
+    """Ricalcola l'impronta e il build alla prossima emissione (banchi, e chi
+    cambia data dir a processo vivo)."""
+    global _IMPRONTA, _BUILD
     _IMPRONTA = None
+    _BUILD = None
 
 
 def _store_fingerprint() -> str:
@@ -104,6 +105,91 @@ def _store_fingerprint() -> str:
     return _IMPRONTA
 
 
+#: Il codice che ha prodotto l'evento. `None` = non ancora calcolato.
+_BUILD: str | None = None
+
+
+def _revisione_git() -> str | None:
+    """La revisione corta dell'albero da cui gira il pacchetto, o ``None``.
+
+    Legge `.git` a mano e NON lancia `git`: un sottoprocesso per evento
+    sarebbe assurdo, e questo campo deve costare quanto l'impronta dello
+    store. Gestisce il caso WORKTREE, dove i ref non stanno nella gitdir
+    locale ma nel repo principale indicato da `commondir` — senza, si
+    otterrebbe il ramo e non la revisione, cioe' meta' risposta, e la meta'
+    mancante e' proprio quella che distingue due checkout dello stesso ramo.
+    """
+    from pathlib import Path
+    try:
+        g = Path(__file__).resolve().parent.parent / ".git"
+        if g.is_file():                       # worktree: .git e' un puntatore
+            riga = g.read_text(encoding="utf-8").strip()
+            if riga.startswith("gitdir:"):
+                g = Path(riga.split(":", 1)[1].strip())
+        if not g.is_dir():
+            return None
+        h = (g / "HEAD").read_text(encoding="utf-8").strip()
+        if not h.startswith("ref:"):
+            return h[:8] or None              # HEAD staccata
+        ref = h.split(":", 1)[1].strip()
+        radici = [g]
+        try:
+            cd = (g / "commondir").read_text(encoding="utf-8").strip()
+            radici.append((g / cd).resolve())
+        except OSError:
+            pass
+        for base in radici:
+            p = base / ref
+            if p.exists():
+                return p.read_text(encoding="utf-8").strip()[:8] or None
+            pr = base / "packed-refs"
+            if pr.exists():
+                for r in pr.read_text(encoding="utf-8").splitlines():
+                    if r.endswith(" " + ref):
+                        return r.split(" ", 1)[0][:8]
+    except (OSError, ValueError):
+        return None
+    return None
+
+
+def _build() -> str:
+    """DA QUALE CODICE viene questo evento — calcolato una volta per processo.
+
+    Il 2026-08-07 TRE indagini diverse sono finite sullo stesso confondente,
+    e nessuna poteva risolverlo dal dato: «`heal_contradictions` non registra
+    l'undo» (11 su 11), «solo 3 ritiri su 114 hanno un appiglio», «la
+    telemetria e' muta sul `grounding_score` per sdk». **Tutte e tre false**,
+    e la causa era la stessa: quelle righe le aveva scritte un ALTRO build.
+    Per uscirne bisognava ogni volta rieseguire il codice su uno store nuovo.
+
+    L'impronta dello store dice a quale MEMORIA appartiene un evento; questo
+    dice da quale CODICE. Senza, quando piu' build scrivono nello stesso
+    journal — cioe' sempre, con piu' worktree in parallelo — un campo mancante
+    e un difetto sono indistinguibili.
+
+    ⚠️ LA REVISIONE, NON IL PERCORSO, per la stessa ragione per cui l'impronta
+    dello store e' un hash: questo campo finisce in file che ci scambiamo e su
+    una pagina web. Fuori da un albero git resta la VERSIONE, che risponde a
+    una domanda diversa — due checkout della stessa release hanno la stessa
+    versione e revisioni diverse — quindi si distingue nella forma.
+    """
+    global _BUILD
+    if _BUILD is None:
+        try:
+            rev = _revisione_git()
+        except Exception:  # noqa: BLE001 — un tag non rompe un'emissione
+            rev = None
+        if rev:
+            _BUILD = rev
+        else:
+            try:
+                from . import __version__
+                _BUILD = f"v{__version__}"
+            except Exception:  # noqa: BLE001
+                _BUILD = "unknown"
+    return _BUILD
+
+
 def _ambient() -> dict[str, Any]:
     # "unknown", not "sdk": the old default was the NAME OF A REAL SURFACE,
     # so 9357 of 9603 real-corpus writes claimed "sdk" while 438 MCP write
@@ -117,6 +203,10 @@ def _ambient() -> dict[str, Any]:
         # quarantene — cioe' proprio la popolazione che ws3 e ws4 stavano
         # misurando quando il difetto e' saltato fuori — resterebbero senza.
         "store": _store_fingerprint(),
+        # Accanto all'impronta e non altrove: le due rispondono alle due
+        # meta' della stessa domanda — QUALE memoria, QUALE codice — e oggi
+        # tre indagini si sono fermate sulla seconda meta' mancante.
+        "build": _build(),
     }
     actor = (os.environ.get("VERIMEM_ACTOR", "").strip()
              or os.environ.get("ENGRAM_ACTOR", "").strip())
