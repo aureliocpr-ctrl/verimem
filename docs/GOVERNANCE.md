@@ -382,6 +382,33 @@ not just their names. Falsified by injecting an off-by-default switch into
 The failure this prevents is nasty because the symptom misleads: an empty
 Engine Room looks like a broken stream, and nobody goes looking for a default.
 
+## 6c. Measured and NOT built: 220 facts blocked by cures that already landed
+
+ws4 measured it on 2026-08-07 and this branch reproduced it independently the
+same hour, with the product's own tool:
+
+    requalify_quarantined(dry_run=True) → {scanned: 721, recoverable: 220}
+
+**Roughly 30% of the live quarantine is held by detectors that no longer
+fire.** Those facts were blocked by rules that have since been cured; nothing
+re-evaluates them, so they stay hidden. The repair tool exists, moves in one
+direction only, has three safety conditions and defaults to `dry_run` — and
+**has never been run in apply**. ws4's sample of the topics is uncomfortable:
+they are largely our own dogfooding reports, i.e. the gate is hiding the
+observations written about the gate.
+
+What is missing is a **surface**, not a mechanism: `quarantine_log` lists what
+is blocked, `verdict_mismatches` lists the 11 blocked-despite-a-verdict, and
+nothing says *"this one would no longer be blocked today"*. That check belongs
+in `doctor` next to `undo-window`, and it is deliberately **not** built yet:
+it needs a test, and the machine was saturated (4.6 GB free of 31.3, forks
+failing) when the measurement landed. Shipping an untested governance check to
+beat a deadline would be the exact opposite of what this branch is for.
+
+⚠️ Running the tool in `apply` is a **write on the user's corpus** and is not a
+governance read: it belongs to whoever owns that decision, with a backup taken
+first. This section records the number so the decision can be made with it.
+
 ## 7. What governance does NOT do
 
 It does not make retirements *right* — it makes them visible and reversible.
