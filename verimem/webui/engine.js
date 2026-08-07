@@ -330,6 +330,39 @@
       })
       .catch(function () { btn.textContent = "failed"; btn.disabled = false; });
   }
+  /* TAGLIARE SENZA MUTILARE. In JavaScript e' peggio che in Python:
+     `String.slice` taglia a UNITA' UTF-16, quindi spezza le coppie
+     surrogate e lascia mezzo carattere, che si vede come il carattere di
+     sostituzione. Misurato sul motore vero (node) tagliando DENTRO la
+     coppia: CJK esteso, bandiere e simboli musicali si rompono tutti e
+     tre; l'italiano e l'inglese no — ed e' il presidio che rende la
+     misura leggibile, perche' dice che il difetto e' della funzione e non
+     della lingua.
+     Su testo latino rende esattamente `s.slice(0, n)`: una cura che tocca
+     anche cio' che non c'entra nessuno puo' verificarla.
+     Gemella di `verimem/text_cut.py:safe_cut`; il banco sta in
+     `tests/js/taglio_ui.mjs` e legge QUESTO file, non una copia. */
+  function safeCut(s, n) {
+    if (!s || n <= 0) { return ""; }
+    if (s.length <= n) { return s; }
+    var alto = function (c) { return c >= 0xD800 && c <= 0xDBFF; };
+    var basso = function (c) { return c >= 0xDC00 && c <= 0xDFFF; };
+    var ri = function (cp) { return cp >= 0x1F1E6 && cp <= 0x1F1FF; };
+    var meta = function (k) {
+      return k > 0 && alto(s.charCodeAt(k - 1)) && basso(s.charCodeAt(k));
+    };
+    var i = n;
+    if (meta(i)) { i -= 1; }
+    while (i > 0 && ((i < s.length && /\p{M}/u.test(s[i]))
+                     || s.charCodeAt(i - 1) === 0x200D)) {
+      i -= 1;
+      if (meta(i)) { i -= 1; }
+    }
+    if (i >= 2 && i + 1 < s.length
+        && ri(s.codePointAt(i - 2)) && ri(s.codePointAt(i))) { i -= 2; }
+    return s.slice(0, i);
+  }
+
   function govRowBase(idA, idB, sub) {
     var row = document.createElement("div"); row.className = "gov-row";
     var ids = document.createElement("span"); ids.className = "gov-ids";
@@ -387,7 +420,7 @@
     items.forEach(function (q) {
       var fid = String(q.id || q.fact_id || "");
       var row = govRowBase(fid.slice(0, 10), null,
-        (q.topic || "—") + " · " + String(q.proposition || "").slice(0, 60));
+        (q.topic || "—") + " · " + safeCut(String(q.proposition || ""), 60));
       var b = document.createElement("button");
       b.className = "gov-btn act"; b.textContent = "restore";
       b.title = "release a false positive back to recall";
