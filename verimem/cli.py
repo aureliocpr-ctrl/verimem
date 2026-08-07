@@ -525,11 +525,26 @@ def search_docs(
     """
     from .document_index import DocumentIndex
     hits = DocumentIndex().search(query, k=k)
+    nascosti = getattr(hits, "nascosti", 0)
     if min_score > 0:
         hits = [h for h in hits if float(h.get("score") or 0.0) >= min_score]
     if not hits:
-        console.print("no results (index empty or no match)")
+        # «NESSUN RISULTATO» E «TUTTO NASCOSTO» ERANO LA STESSA RIGA, ed e'
+        # il caso in cui la differenza conta di piu': un documento con dentro
+        # una riga ostile sparisce INTERO, e chi cerca riceve la stessa
+        # risposta che avrebbe se non fosse mai stato indicizzato.
+        if nascosti:
+            console.print(
+                f"no results — but {nascosti} chunk(s) were HIDDEN because "
+                "they carry injection signals. The document is indexed: rerun "
+                "with the audit path (include_flagged) to inspect them.")
+        else:
+            console.print("no results (index empty or no match)")
         raise typer.Exit(0)
+    if nascosti:
+        console.print(
+            f"[yellow]note:[/yellow] {nascosti} chunk(s) hidden (injection "
+            "signals) — results below are PARTIAL")
     terms = [t for t in query.lower().split() if t.strip()]
     for i, h in enumerate(hits, 1):
         # LA CITAZIONE CANONICA, non una seconda forma della stessa cosa.

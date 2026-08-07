@@ -7771,6 +7771,20 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             k = int(arguments.get("k", 5))
             hits = DocumentIndex().search(query, k=k)
             _audit(name, arguments, outcome="ok")
+            # Un agente che riceve una lista vuota conclude «il documento non
+            # dice niente». Se e' vuota perche' i chunk sono stati NASCOSTI
+            # (segnali di injection) la conclusione e' sbagliata e nessuno
+            # gliel'ha detto: il documento c'e', ed e' stato zittito.
+            _nascosti = getattr(hits, "nascosti", 0)
+            if _nascosti:
+                return _ok({
+                    "hits": list(hits),
+                    "hidden_chunks": _nascosti,
+                    "note": (f"{_nascosti} chunk(s) hidden: injection signals "
+                             "detected at index time. These results are "
+                             "PARTIAL — the document is indexed but part of it "
+                             "is withheld from default search."),
+                })
             return _ok(hits)
 
         if name == "hippo_recall":
