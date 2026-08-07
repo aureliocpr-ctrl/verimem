@@ -55,6 +55,32 @@ _QUANT_RE = re.compile(
 # That breaks the contract this module states in numeric_conflict: "precision
 # over recall — a false conflict downgrades a true fact, the opposite of the
 # trust we sell".
+#
+# 2026-08-07 — PERCHE' QUESTA LISTA E' LEGITTIMA, e le liste che questa casa
+# rifiuta no. Non enumera IL MONDO: le unita' di misura sono infinite e nuove
+# ne nascono (pallet, bancali, container, valvole), e una lista che le insegue
+# e' persa in partenza. Enumera le PAROLE FUNZIONALI di una lingua —
+# preposizioni, articoli, congiunzioni — che sono una classe CHIUSA: l'italiano
+# ha una ventina di preposizioni e non ne acquisisce di nuove. Il segnale che
+# era incompleta e non sbagliata sono le sue ASIMMETRIE: `da` senza `a`, `an`
+# senza `a`, `tra`/`fra` senza `contro`.
+#
+# ⛔ UN CRITERIO POSIZIONALE E' STATO PROVATO E RITIRATO, e vale la pena
+# scriverlo perche' e' la strada che sembra piu' elegante — «la parola sta
+# ESATTAMENTE fra due numeri ⇒ non e' un'unita'», zero liste, tutte le lingue.
+# Misurato su entrambe le popolazioni: prende 3 bersagli su 5 («136 contro sub
+# 10» e «7453 verified contro 553» hanno una parola in mezzo e gli sfuggono) e
+# ne rompe DUE veri — «la stanza misura 3 metri 20» perde `metri`, che e' il
+# modo normale di scrivere 3,20 m in italiano, e «300 pallet 45 corsie» perde
+# `pallet`. Copertura minore della lista E un danno che la lista non ha.
+#
+# ⚠️ IL COSTO ACCETTATO, dichiarato: alcune di queste parole sono anche
+# abbreviazioni di unita' — `in` (inches), `at` (atmosfere), `a` (ampere). La
+# scelta era gia' stata fatta da chi ha scritto le prime due righe, e la
+# confermo: l'asimmetria del danno la decide. Una falsa unita' CREA conflitti
+# che non esistono (ws1: 28 conflitti su 30 fra topic diversi, unita' `verified`
+# 38022 contro 9622); un'unita' persa fa MANCARE un conflitto. Il primo e' il
+# danno che stiamo pagando, e il modulo dichiara "precision over recall".
 _NON_UNIT_WORDS = frozenset({
     "and", "or", "to", "of", "in", "on", "at", "by", "for", "the", "an",
     "is", "are", "was", "were", "be", "per", "via", "with", "from", "but",
@@ -68,6 +94,18 @@ _NON_UNIT_WORDS = frozenset({
     "sul", "sullo", "sulla", "sui", "sugli", "sulle",
     "col", "coi", "lo", "le", "gli", "uno", "una", "che", "non", "come",
     "sono", "era", "erano", "ha", "hanno", "piu", "meno",
+    # ── LE DUE ASIMMETRIE (2026-08-07) ────────────────────────────────────
+    # `da` c'era e `a` no; `an` c'era e `a` no. «passa da 33 a 45» dava unita'
+    # `a` al 33 — la preposizione che APRE l'intervallo era coperta, quella
+    # che lo CHIUDE no. Un buco per omissione, non per scelta.
+    "a",
+    # ── LE CONGIUNZIONI DI CONFRONTO, EN·IT·DE·FR·ES ──────────────────────
+    # `tra`/`fra`/`and`/`e` c'erano gia': accostano due numeri e non sono
+    # unita'. Le congiunzioni di CONFRONTO fanno esattamente la stessa cosa
+    # («30 and 45» e «30 vs 45» hanno la stessa struttura) e non c'erano —
+    # ed e' la forma in cui si scrive una MISURA, cioe' il testo che questo
+    # store contiene di piu': misurato da ws1, «7453 verified contro 553».
+    "vs", "versus", "contro", "against", "gegen", "contre", "frente",
 })
 
 #: No real unit of measure ends in ``-ly`` (EN) or ``-mente`` (IT): ms, kg, min,
@@ -390,12 +428,61 @@ def claim_span(text: str) -> str:
     return text
 
 
+#: Gli apostrofi che la gente scrive davvero: l'ASCII e il TIPOGRAFICO U+2019,
+#: che e' quello che producono Word, iOS e i modelli di linguaggio. Guardare
+#: solo il primo coprirebbe il testo battuto a mano e non quello che questo
+#: store riceve.
+_APOSTROFI = "'’ʼ"
+
+#: Le vocali che possono seguire un'elisione. `y` non c'e': in italiano non e'
+#: una vocale, e in inglese non segue mai un apostrofo di elisione.
+_VOCALI_DOPO_ELISIONE = frozenset("aeiouAEIOUàèéìòùÀÈÉÌÒÙáéíóúÁÉÍÓÚäöüÄÖÜâêîôûëï")
+
+
+def _e_una_forma_elisa(testo: str, fine_unita: int) -> bool:
+    """La presunta unita' che finisce a *fine_unita* e' il moncone di una parola
+    ELISA («120 **l'**anno», «40 **all'**ora»)?
+
+    🔑 LA REGOLA E' GRAMMATICALE, e per questo non ha bisogno di liste::
+
+        apostrofo + VOCALE      -> elisione (IT/FR)   l'anno · all'ora · d'entre
+        apostrofo + «s»/spazio  -> genitivo (EN)      days' notice · day's work
+
+    L'elisione italiana **esiste solo davanti a vocale** — e' la sua
+    definizione — mentre il genitivo sassone non e' mai seguito da una vocale.
+    Le due popolazioni non si toccano, e la regola vale per ogni parola elisa
+    senza enumerarne nessuna: le elisioni sono una classe aperta (all', dell',
+    nell', dall', sull', coll', l', un', quest', d', qu'…) e in francese lo sono
+    ancora di piu'.
+
+    ⚠️ E' LA META' CHE MANCAVA A `_NON_UNIT_WORDS`: quella lista copre le
+    preposizioni PIENE («nel tracker», «del piano») e nessuna elisa. La cura del
+    2026-07-25 aveva chiuso meta' della stessa classe.
+
+    ⛔ PERCHE' NON UNA LISTA. Il moncone piu' dannoso e' ``l``, che **e'
+    un'unita' vera**: il litro. Mettendolo fra le non-unita' «la tanica contiene
+    120 l» perderebbe la sua unita'. La popolazione opposta esclude la lista e
+    lascia solo il criterio posizionale.
+    """
+    if fine_unita <= 0 or fine_unita >= len(testo):
+        return False
+    if testo[fine_unita] not in _APOSTROFI:
+        return False
+    dopo = fine_unita + 1
+    # apostrofo a fine testo, o seguito da spazio -> genitivo sassone plurale
+    # («a 3 days' notice»), non un'elisione: l'unita' e' vera e resta.
+    return dopo < len(testo) and testo[dopo] in _VOCALI_DOPO_ELISIONE
+
+
 def extract_quantities(text: str) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
     (provenance after an evidence marker is not measured); bare YEARS excluded."""
     out: set[tuple[str, float]] = set()
-    for m in _QUANT_RE.finditer(claim_span(text)):
+    claim = claim_span(text)
+    for m in _QUANT_RE.finditer(claim):
         num_s, unit_s = m.group(1), (m.group(2) or "")
+        if unit_s and _e_una_forma_elisa(claim, m.end(2)):
+            unit_s = ""   # «120 l'anno» non contiene litri
         _u = unit_s.lower()
         if _u in _NON_UNIT_WORDS or (len(_u) > 3
                                      and _u not in _FREQUENCY_UNITS
