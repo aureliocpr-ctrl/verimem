@@ -75,9 +75,11 @@ def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
     # esistera', questa la usera' senza altre modifiche, e finche' non esiste
     # non regala freschezza a nessuno. Lo schema e chi scrive quel campo
     # restano di chi possiede il write path.
+    # la regola sta in UN posto solo (`fact_contract`), perche' la usa anche
+    # il contratto di uscita per decidere se il campo esce
+    from .fact_contract import verifica_sostenuta
     _lv_raw = getattr(fact, "last_verified_at", None)
-    _giudicato = getattr(fact, "grounding_score", None) is not None
-    if _lv_raw is not None and _giudicato:
+    if verifica_sostenuta(fact):
         lv, _base = _lv_raw, "last_verified_at"
     else:
         lv, _base = created, "created_at"
