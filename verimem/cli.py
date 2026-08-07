@@ -2866,14 +2866,15 @@ def facts_quarantine_log(
                 f"[/dim]")
         return
     from .client import Memory
+    from .text_cut import safe_cut
     righe = Memory(sm.db_path).quarantine_log(limit=limit)
     if not righe:
         console.print("[dim]no live quarantined claims[/dim]")
         return
     for r in righe:
         console.print(f"  [yellow]{str(r.get('id'))[:8]}[/yellow]  "
-                      f"{str(r.get('topic') or '')[:28]:<28} "
-                      f"{str(r.get('proposition') or '')[:60]}")
+                      f"{safe_cut(str(r.get('topic') or ''), 28):<28} "
+                      f"{safe_cut(str(r.get('proposition') or ''), 60)}")
 
 
 @facts_app.command("retirement-log")
@@ -2918,10 +2919,11 @@ def facts_retirement_log(
         # le coppie recenti non si vede — la risposta c'era solo per chi
         # sospettava gia'.
         from .retirement_log import retirement_breakdown as _bd
+        from .text_cut import safe_cut
         bd = _bd(sm, topic=topic, limit=limit)
         console.print(f"[bold]{bd['total_retired']}[/bold] retired total")
         for r in bd["by_reason"]:
-            console.print(f"  [cyan]{r['n']:>6}[/cyan]  {r['reason'][:64]}")
+            console.print(f"  [cyan]{r['n']:>6}[/cyan]  {safe_cut(r['reason'], 64)}")
         console.print("[dim]— by day —[/dim]")
         for d in bd["by_day"]:
             console.print(f"  [cyan]{d['n']:>6}[/cyan]  {d['day']}")
