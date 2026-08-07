@@ -128,7 +128,15 @@ def retirement_log(
                w.created_at    AS winner_created_at,
                u.op_id         AS undo_op_id,
                u.undone_at     AS undo_undone_at,
-               u.ttl_expires_at AS undo_ttl{text_cols}
+               u.ttl_expires_at AS undo_ttl,
+               -- CHI ha ritirato. Il dato c'era: ogni supersessione scrive
+               -- il principal in `audit_mutations`, nella STESSA
+               -- transazione della mutazione — e questo registro non lo
+               -- leggeva. Il piu' recente, perche' un fatto puo' avere
+               -- piu' righe d'audit (aggiornamento del motivo).
+               (SELECT m.principal FROM audit_mutations m
+                 WHERE m.resource_id = f.id AND m.action = 'supersede'
+                 ORDER BY m.ts DESC LIMIT 1) AS retired_by{text_cols}
         FROM facts f
         LEFT JOIN facts w ON w.id = f.superseded_by
         -- lo scatto PIU' RECENTE per questo fatto, uno solo. Il join
@@ -158,6 +166,11 @@ def retirement_log(
         # same lazy way semantic.py does, so the JOIN never crashes.
         from .undo_log import ensure_undo_table
         ensure_undo_table(conn)
+        # audit_mutations puo' mancare su uno store molto vecchio: la
+        # sotto-query lo farebbe fallire, e un registro che sparisce perche'
+        # una colonna in piu' non c'e' e' peggio di uno senza quella colonna
+        from .mutation_audit import TABLE_SQL as _AUDIT_DDL
+        conn.execute(_AUDIT_DDL)
         rows = conn.execute(sql, (*params, int(limit))).fetchall()
     ora = _time.time()
     out: list[dict[str, Any]] = []
@@ -273,6 +286,12 @@ def verdict_mismatches(sm, *, limit: int = 50,
             f"outcome depended on which judge was up, not on the text"),
     }
 
+
+#: Etichetta per i ritiri di cui NON esiste una riga d'audit: «non
+#: registrato» non e' «nessuno», ed e' la stessa distinzione per cui un
+#: `grounding_score` nullo non e' uno zero. Sul corpus reale sono 1631
+#: ritiri su 1805 — la maggioranza.
+_NON_REGISTRATO = "(not recorded)"
 
 #: Etichetta per i ritiri senza motivo registrato. Raggrupparli sotto una
 #: stringa vuota li manderebbe in fondo alla tabella con un nome che non si
@@ -403,6 +422,18 @@ def retirement_breakdown(sm, *, limit: int = 10,
         par.append(topic + "%")
     w = " AND ".join(where)
     with sm._connect() as conn:
+        from .mutation_audit import TABLE_SQL as _AUDIT_DDL
+        conn.execute(_AUDIT_DDL)
+        attori = [
+            {"principal": r[0] or _NON_REGISTRATO, "n": int(r[1])}
+            for r in conn.execute(
+                f"""SELECT (SELECT m.principal FROM audit_mutations m
+                             WHERE m.resource_id = f.id
+                               AND m.action = 'supersede'
+                             ORDER BY m.ts DESC LIMIT 1),
+                           COUNT(*)
+                    FROM facts f WHERE {w}
+                    GROUP BY 1 ORDER BY COUNT(*) DESC""", par)]
         motivi = [
             {"reason": r[0] or _SENZA_MOTIVO, "n": int(r[1]),
              "first_at": r[2], "last_at": r[3]}
@@ -429,6 +460,23 @@ def retirement_breakdown(sm, *, limit: int = 10,
     return {
         "by_reason": motivi,
         "by_day": giorni,
+        "by_principal": attori,
+        # IL LIMITE ACCANTO AL DATO. Un campo che sembra rispondere «chi»
+        # senza dire cosa misura e' peggio di un campo assente, e qui i
+        # limiti sono due: (1) il principal nomina la PORTA — `cli:local`
+        # e' lo stesso valore per tutte e sei le istanze che lavorano su
+        # questo corpus (ws4, 2026-08-07); (2) sul corpus reale solo 174
+        # supersessioni su 1805 hanno una riga d'audit, quindi il resto e'
+        # «non registrato», che non e' «nessuno».
+        "principal_means": (
+            "the acting principal names the PORT the action came through "
+            "(cli:local, sdk:local, mcp:unbound), not the person or the "
+            "instance — six agents share cli:local on this corpus. "
+            "'(not recorded)' means no audit row exists for that "
+            "retirement, which is not the same as nobody: on the real "
+            "corpus 174 of 1805 retirements carry one. system:heal is the "
+            "exception that identifies a real actor — the unattended "
+            "maintenance pass"),
         "chain": _esito_delle_catene(sm, topic=topic),
         "total_retired": totale,
         "concentration": {

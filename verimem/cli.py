@@ -2925,6 +2925,13 @@ def facts_retirement_log(
         console.print("[dim]— by day —[/dim]")
         for d in bd["by_day"]:
             console.print(f"  [cyan]{d['n']:>6}[/cyan]  {d['day']}")
+        # CHI: il dato c'era in `audit_mutations` e nessuna superficie lo
+        # leggeva. Sul corpus reale 1677 ritiri su 1805 non hanno un attore
+        # registrato — e «non registrato» non e' «nessuno».
+        console.print("[dim]— by actor —[/dim]")
+        for v in bd["by_principal"]:
+            console.print(f"  [cyan]{v['n']:>6}[/cyan]  {v['principal']}")
+        console.print(f"[dim]{bd['principal_means']}[/dim]")
         c = bd["concentration"]
         if c["share"] is not None:
             console.print(
