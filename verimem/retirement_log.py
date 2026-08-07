@@ -661,9 +661,31 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
     with sm._connect() as conn:
         from .undo_log import ensure_undo_table
         ensure_undo_table(conn)
-        row = conn.execute(sql, {"ora": _time.time(),
-                                 **({"topic": params[0]} if params else {})}
-                           ).fetchone()
+        _p = {"ora": _time.time(), **({"topic": params[0]} if params else {})}
+        row = conn.execute(sql, _p).fetchone()
+        # LA RIPARTIZIONE, perche' `judged` da solo e' una MEDIA fra due
+        # mondi. ws1 ha misurato il 2026-08-07 che `clp save` non chiama il
+        # gate — INSERT diretto con `status` fisso — e ws5 ha corretto un
+        # proprio numero per la stessa ragione, chiamandola «la trappola
+        # del denominatore». Sul corpus reale: `model_claim` 3074 servibili
+        # con 1800 verdetti (58.6%), `user_manual` 2493 con ZERO. Sommarli
+        # descrive una media che non corrisponde a nessuna delle due, e fa
+        # sembrare il gate peggiore di com'e'.
+        #
+        # ⚠️ NON si inventa l'etichetta «mai passato dal gate»: quale status
+        # venga da quale porta lo sa chi possiede il write path, e lo
+        # status e' l'OSSERVABILE, non la causa. Stessa distinzione che ho
+        # gia' sbagliato oggi con la parola «housekeeping».
+        per_status = [
+            {"status": r[0], "servable": int(r[1]), "judged": int(r[2])}
+            for r in conn.execute(
+                f"""SELECT status, COUNT(*),
+                           SUM(CASE WHEN grounding_score IS NOT NULL
+                                    THEN 1 ELSE 0 END)
+                    FROM facts
+                    WHERE {SERVABLE_WHERE}
+                      {"AND topic LIKE :topic" if topic is not None else ""}
+                    GROUP BY status ORDER BY COUNT(*) DESC""", _p)]
     # English keys: this dict travels over every port of an international
     # product (monolingual surfaces are a measured defect class here).
     return {
@@ -673,10 +695,19 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
         "retired_reversible": int(row["retired_reversible"] or 0),
         "quarantined": int(row["quarantined"] or 0),
         "judged": int(row["judged"] or 0),
+        "judged_by_status": per_status,
         "topic": topic,
         "formula": (f"servable = {SERVABLE_WHERE} · "
                     f"judged = servable AND grounding_score IS NOT NULL "
                     f"(NULL means never judged, not judged and failed) · "
+                    f"⚠️ the aggregate `judged` MIXES populations with "
+                    f"different rules — see judged_by_status: on the real "
+                    f"corpus 2026-08-07 `model_claim` was judged 1800/3074 "
+                    f"(58.6%) while `user_manual` was 0/2493, so the mixed "
+                    f"figure describes neither and makes the gate look worse "
+                    f"than it is. Which status comes from which write path "
+                    f"is for the write-path owner to say; status is the "
+                    f"observable, not the cause · "
                     f"retired_reversible = retired AND a live undo snapshot "
                     f"exists (the size of the repair window: 'retired' alone "
                     f"does not say whether one can be recovered or a thousand)"),
