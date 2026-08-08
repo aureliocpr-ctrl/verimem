@@ -56,10 +56,14 @@ Orientation (each tool's exact arguments are in its own schema):
   gap when it does).
 
 Principles: gated writes, provenance on every read, abstention over hallucination.
-Prefer grounded writes. Legacy tool names use the hippo_ prefix; both work
-today, but the hippo_ PACKAGE shim (python `import hippoagent`) is scheduled for
-removal on 2026-08-13. That is the python package, not the tool prefix
-above: the hippo_ TOOL names stay, they are the default.
+Prefer grounded writes.
+
+On the two prefixes, precisely: the namespace switch RENAMES — you are listed
+either the hippo_ set or the verimem_ set, never both. Calling either spelling
+works (verimem_X is dispatched to hippo_X), but only one is in your tool list,
+and a tool you cannot see is a tool you will not use. Separately, the python
+PACKAGE shim (`import hippoagent`) is scheduled for removal on 2026-08-13 —
+that is the package, not the tool prefix, which stays.
 """
 
 #: Extended terminal guide: the MCP orientation plus the CLI/SDK map an agent
