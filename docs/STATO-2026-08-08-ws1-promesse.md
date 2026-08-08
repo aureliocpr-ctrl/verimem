@@ -62,6 +62,34 @@ percorso NO»): il percorso documentato è quello giusto, ed è documentato.
 
 ---
 
+## ⚠️ Correzione dalla fetta ② (ws2): le mie VERO valgono nel MIO ambiente
+
+ws2 ha installato da zero (`046e6cf7`). Due cose ribaltano la lettura di sopra,
+e la seconda è la più importante del task:
+
+| | |
+|---|---|
+| **P17 / P11** «the moat runs by default» | **VERO qui, INATTIVO su un'installazione pulita.** Il giudice locale sono **656 MB** che `pip install` non porta: finché non si esegue `verimem warmup` il moat non gira, e il `doctor` lo dichiara («*moat OFF — fix: run `verimem warmup`*»). Le mie prove (98.9 / 0.98) girano su una macchina dove il modello c'è **già**. |
+| «*`verimem save` è il comando del protocollo O3*» (nostra doc interna) | **FALSO sul pacchetto pubblicato**: PyPI 0.7.0 ha **26 comandi**, il repo **37**. Un utente che segue la nostra documentazione riceve `No such command 'save'`. |
+
+**Il modo giusto di dirlo, e le `instructions` lo dicono già meglio del README:**
+la guida MCP distingue ciò che vale *sempre* («ALWAYS: a lexical screen … with
+no LLM call») da ciò che richiede il giudice («WITH a `source`: the entailment
+moat»). Il README invece dice «the moat runs by default» senza aggiungere che
+quel default richiede 656 MB non annunciati. **La promessa non è falsa: è
+incompleta, e l'incompletezza cade tutta sul primo utente.**
+
+Verificato da me, con `ENGRAM_GROUNDING_WRITE=0`:
+
+- il **lexical screen sopravvive**: il vanto senza fonte resta `quarantined`
+  (`grounding=None`) — P16 «ALWAYS» regge anche a moat disattivato ✅
+- **ma quella variabile NON spegne il moat**: il fatto contraddetto esce
+  comunque `quarantined` con `grounding=0.82`, e il sostenuto con `98.29`.
+  ⇒ una variabile d'ambiente che non fa ciò che il nome dichiara — segnalata a
+  ws7 (fetta ⑥, parametri), e il motivo per cui **non ho potuto simulare
+  l'ambiente di ws2**: la sua misura su installazione pulita resta l'unica
+  fonte per quella riga.
+
 ## Cosa manca DEL TUTTO rispetto a ciò che un utente si aspetta
 
 Le promesse ci sono e reggono. Quello che **non è promesso da nessuna parte**, e
