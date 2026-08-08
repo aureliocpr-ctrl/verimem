@@ -494,6 +494,7 @@ class Memory:
                     "adjudication": _adj}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at,
+                    grounding_span=getattr(gate, "grounding_span", None),
                     writer_principal=principal or self._principal,
                     confidence_tier=_confidence_tier(
                         gate.grounding_score, getattr(gate, "judge", None),

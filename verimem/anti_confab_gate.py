@@ -321,6 +321,12 @@ class GateResult:
     #: retrieval/answering on it (the moonshot 2026-06-20: a write-time trust signal no
     #: competitor has). None = not computed (default fast path).
     grounding_score: float | None = None
+    #: v17 (2026-08-08) LA PROVA della verifica: la porzione di `source` che
+    #: sostiene la proposizione. `grounding_score` dice QUANTO, questa DA COSA.
+    #: Prima della cura del fatto restava solo un'impronta sha256, quindi davanti
+    #: a un voto 98 non si poteva piu' rivedere su cosa fosse stato dato.
+    #: None quando non c'e' una fonte (e allora non c'e' nemmeno un punteggio).
+    grounding_span: str | None = None
     #: judge-of-record: WHICH judge scored L4 ('local' CE, or 'claude'/
     #: 'interactive' injected llm), or None when no entailment judge ran.
     #: Surfaced so a provider swap is auditable, never a silent drift.
@@ -1366,6 +1372,15 @@ def _advisory_l4_skipped() -> dict[str, str]:
     }
 
 
+#: Quanto della fonte conservare come PROVA della verifica (v17, 2026-08-08).
+#: 400 caratteri: due o tre righe di un verbale, cioe' la porzione che un umano
+#: rileggerebbe per controllare. Costo su disco misurato sul corpus di casa: i
+#: fatti con fonte sono 2514, e a 400 char fanno ~1 MB su 90,6 — poco piu'
+#: dell'1%. Non e' una soglia di comportamento: alzarlo conserva piu' contesto,
+#: abbassarlo meno, e nessun verdetto si muove in nessuno dei due casi.
+_GROUNDING_SPAN_BUDGET = int(os.environ.get("VERIMEM_GROUNDING_SPAN_BUDGET", "400"))
+
+
 def run_validation_gate(
     *,
     proposition: str,
@@ -1808,6 +1823,11 @@ def run_validation_gate(
     def _emit_l4_skipped() -> None:
         warnings.append(_advisory_l4_skipped())
 
+    # v17: la PROVA della verifica esiste solo se esiste una fonte. Inizializzata
+    # QUI e non dentro il ramo: senza, ogni scrittura priva di fonte moriva su un
+    # NameError — ed e' il caso piu' comune del prodotto (4279 fatti su 6425 nel
+    # corpus di casa). Preso dal banco al primo giro, sulla popolazione opposta.
+    _gspan: str | None = None
     if source and _ground_on and _have_judge:
         # score and cut resolved for the SAME judge (local CE vs claude scales differ —
         # the 2026-07-02 critic caught the calibrated cut not reaching this L4 site).
@@ -1820,6 +1840,17 @@ def run_validation_gate(
         )
         try:
             gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
+            # v17: la PROVA accanto al voto. `select_relevant_span` e' pura e
+            # deterministica (nessun modello, 0,046 ms su 500 chiamate contro i
+            # 32.800 del giudice) e NON tocca `gscore`: i verdetti di ammissione
+            # non si muovono di un decimale. Fallire qui non deve mai impedire
+            # una scrittura — la prova e' un di piu', il voto e' il gate.
+            try:
+                from .grounding_gate import select_relevant_span
+                _gspan = select_relevant_span(
+                    source, proposition, budget=_GROUNDING_SPAN_BUDGET) or None
+            except Exception:      # pragma: no cover — degrada, non blocca
+                _gspan = None
         except (FileNotFoundError, OSError, ImportError, NoGroundingJudge):
             # ONLY "the judge isn't really reachable" is tolerated here (missing /
             # unloadable model). A DEDICATED NoGroundingJudge — not the whole
@@ -2284,6 +2315,7 @@ def run_validation_gate(
             supersede_fact_ids=_sup,
             advice=advice_,
             grounding_score=grounding_val,
+            grounding_span=_gspan,
             judge=_judge_of_record,
             threshold=_threshold_of_record,
         )

@@ -695,6 +695,12 @@ CREATE TABLE IF NOT EXISTS facts (
     -- (grounding_gate, AUROC 0.971) calcolato dal gate e ora PERSISTITO (era scartato).
     -- Trust-coordinate write-time per provenance-conditioned recall/answer. Nullable.
     grounding_score REAL,
+    -- v17 (2026-08-08) LA PROVA della verifica: la porzione di fonte che
+    -- sostiene il fatto. `grounding_score` dice QUANTO, questa dice DA COSA.
+    -- Prima restava solo `source_signature` (un'impronta sha256): si sapeva che
+    -- due fatti venivano dalla stessa fonte e non piu' cosa dicesse. Riempita da
+    -- grounding_gate.select_relevant_span: pura, deterministica, 0,046 ms.
+    grounding_span TEXT,
     -- v15 (2026-07-19) write-time confidence_tier (high/borderline/low/
     -- unverified): the judge's CONFIDENCE band, persisted so recall/audit can
     -- distinguish a borderline 'held-for-review' quarantine from a hard
@@ -827,7 +833,7 @@ class SupersedeConflict(RuntimeError):
 #:        loggando il self-heal (il bump dimenticato resta visibile, ma non
 #:        rompe mai più un write in produzione).
 #:   v16 — 2026-07-23 ``writer_principal`` nel SUO gradino raggiungibile.
-_SEMANTIC_TARGET_VERSION: int = 16
+_SEMANTIC_TARGET_VERSION: int = 17
 
 #: v8 (2026-06-03) — half-life di default per il decadimento di freshness
 #: nel recall. is_stale(age, half_life, floor=0.5) e' True quando il fattore
@@ -1416,6 +1422,26 @@ def _migrate_v15_to_v16(conn: sqlite3.Connection) -> None:
             raise
 
 
+def _migrate_v16_to_v17(conn: sqlite3.Connection) -> None:
+    """v17 (2026-08-08): ``grounding_span`` — LA PROVA della verifica.
+
+    `grounding_score` dice QUANTO la fonte sostiene il fatto. Non diceva DA COSA:
+    della fonte restava solo `source_signature`, un'impronta sha256. Si sapeva
+    che due fatti venivano dalla stessa fonte e non si sapeva piu' cosa quella
+    fonte dicesse — misurato a due livelli (30 colonne in tabella, 14920 righe di
+    giornale eventi: la fonte non e' in nessuno dei due).
+
+    Additiva e retrocompatibile: le righe scritte prima restano NULL, nessuna
+    riscrittura. Un NULL qui significa «scritto prima della v17 o senza fonte»,
+    ed e' distinguibile dal caso «fonte c'era»: quello ha `source_signature`.
+    """
+    try:
+        conn.execute("ALTER TABLE facts ADD COLUMN grounding_span TEXT")
+    except sqlite3.OperationalError as exc:
+        if "duplicate column name" not in str(exc).lower():
+            raise
+
+
 #: Additive fact columns and their exact DDL — the mechanical schema guard.
 #: ``_ensure_fact_columns`` applies any that are MISSING after the versioned
 #: ladder ran, because twice (epistemic 2026-07-15, confidence_tier /
@@ -1446,6 +1472,15 @@ _FACT_COLUMN_DDL: dict[str, str] = {
     "valid_until": "ALTER TABLE facts ADD COLUMN valid_until REAL",
     "derives_from": "ALTER TABLE facts ADD COLUMN derives_from TEXT",
     "grounding_score": "ALTER TABLE facts ADD COLUMN grounding_score REAL",
+    # 2026-08-08 — LA PROVA DELLA VERIFICA. `grounding_score` dice QUANTO la fonte
+    # sostiene il fatto; questa dice DA COSA. Prima c'era solo `source_signature`,
+    # cioe' un'impronta sha256: si sapeva che due fatti venivano dalla stessa
+    # fonte e non si sapeva piu' cosa quella fonte dicesse. Per un prodotto che
+    # si chiama memoria VERIFICATA, la verifica c'era e la PROVA no.
+    # Riempita da `grounding_gate.select_relevant_span` — pura, deterministica,
+    # nessun modello: 0,046 ms su 500 chiamate contro i 32.800 ms del giudice, e
+    # NON tocca il punteggio, quindi i verdetti di ammissione non si muovono.
+    "grounding_span": "ALTER TABLE facts ADD COLUMN grounding_span TEXT",
     "confidence_tier": "ALTER TABLE facts ADD COLUMN confidence_tier TEXT",
     "asserted_at": "ALTER TABLE facts ADD COLUMN asserted_at REAL",
     "epistemic": "ALTER TABLE facts ADD COLUMN epistemic TEXT",
@@ -1559,6 +1594,10 @@ class Fact:
     # None == not computed (no source / ENGRAM_GROUNDING_WRITE off). Appended last;
     # recall byte-identical (column unused by recall until conditioning ships).
     grounding_score: float | None = None
+    #: v17 (2026-08-08) LA PROVA della verifica: la porzione di fonte che
+    #: sostiene il fatto (`grounding_score` dice quanto, questa da cosa).
+    #: None == nessuna fonte, o riga scritta prima della v17.
+    grounding_span: str | None = None
     #: v15 (2026-07-19) write-time confidence tier (high/borderline/low/
     #: unverified) - the judge's CONFIDENCE band, persisted for recall/audit.
     #: None on pre-v15 rows / when no judge ran.
@@ -2412,6 +2451,7 @@ class SemanticMemory:
                     (14, _migrate_v13_to_v14),
                     (15, _migrate_v14_to_v15),
                     (16, _migrate_v15_to_v16),
+                    (17, _migrate_v16_to_v17),
                 ],
             )
             # Mechanical guard AFTER the versioned ladder: repair any
@@ -3029,8 +3069,8 @@ class SemanticMemory:
                  trigger_keywords, applicable_when, worked_example, lineage_to,
                  writer_role, meta_narrative, last_verified_at, embedding_model,
                  valid_until, derives_from, grounding_score, asserted_at,
-                 epistemic, confidence_tier, writer_principal)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 epistemic, confidence_tier, writer_principal, grounding_span)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                  proposition=excluded.proposition, topic=excluded.topic,
                  confidence=excluded.confidence,
@@ -3073,6 +3113,10 @@ class SemanticMemory:
                  -- (None), else take the new one — mirrors the embedding-preserve guard.
                  grounding_score=CASE WHEN excluded.grounding_score IS NOT NULL
                      THEN excluded.grounding_score ELSE facts.grounding_score END,
+                 -- v17: stesso trattamento del punteggio — un re-store senza
+                 -- fonte non deve cancellare la prova gia' conservata.
+                 grounding_span=CASE WHEN excluded.grounding_span IS NOT NULL
+                     THEN excluded.grounding_span ELSE facts.grounding_span END,
                  -- v13: preserve a known event time on re-store without one.
                  asserted_at=CASE WHEN excluded.asserted_at IS NOT NULL
                      THEN excluded.asserted_at ELSE facts.asserted_at END,
@@ -3109,6 +3153,7 @@ class SemanticMemory:
                      if getattr(fact, "epistemic", None) else None),
                     getattr(fact, "confidence_tier", None),
                     getattr(fact, "writer_principal", None),
+                    getattr(fact, "grounding_span", None),
                 ),
             )
         # Entity-live write path (2026-06-10, critic caveat on 2aa6769):
