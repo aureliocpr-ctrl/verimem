@@ -256,9 +256,40 @@ def run_doctor() -> list[dict[str, Any]]:
         # mentre i database veri sono annidati: la diagnosi elencava file vuoti
         # e taceva sui 79 MB di semantic/semantic.db. Un glob trova i file; il
         # prodotto SA quali sono i suoi, e stanno in CONFIG.
+        # DUE RESOLVER, DUE RISPOSTE. `_compat.data_dir()` — quello che questo
+        # check usa — legge l'ambiente AL MOMENTO; `CONFIG` e' costruito
+        # all'IMPORT e non si aggiorna. In un processo che imposta la cartella
+        # DOPO aver importato verimem (chi lo incorpora come libreria, chi
+        # cambia inquilino a processo vivo, ogni banco che monkeypatcha
+        # l'ambiente) i due divergono, e allora QUESTA DIAGNOSI DESCRIVE UNO
+        # STORE MENTRE IL PRODOTTO NE USA UN ALTRO. Misurato il 2026-08-08:
+        #     _compat.data_dir()  -> \tmp\tmp.XOPKsjMKaK   (l'ambiente ora)
+        #     CONFIG.data_dir     -> C:\Users\aurel\.engram (l'import)
+        #     SemanticMemory().db_path -> quello di CONFIG
+        # Sette moduli leggono il primo, dodici il secondo, e `backup`, `cli` e
+        # `doctor` LI LEGGONO ENTRAMBI.
+        # ⛔ Non si sceglie uno dei due qui: nasconderebbe la divergenza. Si
+        # DICHIARA — quando due fonti non concordano, il fatto che non
+        # concordino E' la diagnosi. E' diverso dall'avviso sui tre prefissi
+        # piu' sopra: li' discordano tre VARIABILI, qui due modi di risolverle.
+        _divergenza = ""
+        try:
+            from .config import CONFIG as _CFG
+            if str(_CFG.data_dir) != str(d):
+                _divergenza = (
+                    f" ⚠️ this diagnosis reads {d}, but the product WRITES to "
+                    f"{_CFG.data_dir} — the data dir was set AFTER verimem was "
+                    f"imported, and CONFIG is fixed at import time")
+        except Exception:  # noqa: BLE001
+            pass
         add("data-dir", OK if writable else FAIL,
-            f"{d} (writable={writable}; stores: {_stores_dichiarati(d)})",
-            None if writable else "fix directory permissions, or set VERIMEM_DATA_DIR")
+            f"{d} (writable={writable}; stores: {_stores_dichiarati(d)})"
+            + _divergenza,
+            ("set the data dir BEFORE importing verimem (env var, or the "
+             "parent process), or restart the process after changing it"
+             if _divergenza else
+             None if writable else
+             "fix directory permissions, or set VERIMEM_DATA_DIR"))
         # Residui dei test nello store di PRODUZIONE: una suite che scrive
         # dove vive la memoria dell'utente e' un difetto di igiene, e finche'
         # nessuno lo misura cresce in silenzio.
