@@ -15,12 +15,18 @@ Tu avevi chiesto *«se un utente la installa cosa fa»*, e sei sezioni su sette
 descrivono il **repository**. Quello che l'utente riceve è un'altra cosa, e va detto
 prima di tutto il resto.
 
-**Cosa NON cambia** — il comportamento. ws2 ha rieseguito il banco di ws1 sul pacchetto
-vero: **7 promesse su 7 reggono**. Il guardiano funziona anche lì, e la soglia di
-ammissione è identica (verificato da ws7 sul wheel scaricato).
+**Il guardiano in scrittura funziona anche lì**: ws2 ha rieseguito il banco sul
+pacchetto vero, 7 promesse su 7 reggono, e la soglia di ammissione è identica
+(verificato da ws7 sul wheel scaricato).
 
-**Cosa cambia** — quanto c'è. Il pacchetto ha **meno superficie**, e le assenze non
-sono casuali:
+🔴 **Ma una promessa del pacchetto è falsa, non solo assente.** Avevamo scritto qui
+che il pacchetto ha «meno superficie, non un comportamento diverso»: **è caduta**.
+Sul pacchetto pubblicato l'astensione non funziona — il pavimento è a `0.0` invece
+che a `0.8688` — quindi *«abstention instead of hallucination»*, che è la riga della
+descrizione PyPI, **oggi non è vera per chi installa**. Non è una funzione che manca:
+è una funzione che c'è e non fa quello che dice.
+
+**E il resto delle assenze non è casuale:**
 
 | manca nel pacchetto | conseguenza |
 |---|---|
@@ -30,11 +36,22 @@ sono casuali:
 | 4 controlli del `doctor` su 11 | confidence-vs-verifica, undo-window, trust-rank-coverage, embedding-model |
 | 11 comandi su 37 | fra cui `save`, che la nostra documentazione insegna |
 
-⇒ **Chi installa oggi riceve un prodotto che si comporta bene e non sa raccontare cosa
-ha fatto.** Verifica, e non tiene il registro di ciò che ha verificato.
+⇒ **Chi installa oggi riceve un prodotto che scrive bene, non sa raccontare cosa ha
+fatto, e su una promessa dice il falso.**
 
-📌 La prima cosa da fare per la 0.7.5 non è una cura: è **pubblicare il codice che
-abbiamo**.
+### 📌 E la notizia buona è che quasi tutto si risolve pubblicando
+
+Verificato da ws4 e ws5 su `origin/main`, non ipotizzato:
+
+| | |
+|---|---|
+| i 13 interruttori mancanti | **ci sono tutti e 13 su main** |
+| `save` e altri 15 comandi | non è un difetto di confezionamento: sono **nati dopo** il 22 luglio. Pubblicando da main arrivano da soli |
+| l'astensione (`explain`, `trust_report`, `ignorance`) | **esistono tutte su main**, e `ignorance` è fra i comandi registrati |
+
+⇒ **La prima cosa da fare per la 0.7.5 non è una cura: è pubblicare il codice che
+abbiamo.** La maggior parte di questo elenco sparisce con un `git merge` e un
+`twine upload`, non con altro lavoro.
 
 ---
 
