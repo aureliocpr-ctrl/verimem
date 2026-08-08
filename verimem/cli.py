@@ -871,6 +871,27 @@ def remember_cmd(
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     fid = r.get("id") or "-"
     console.print(f"[green]{disp}[/green] id={fid} topic={topic}")
+    # 2026-08-08 — DIRE QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e
+    # chiedono cose diverse: il giudice «questa fonte sostiene il fatto?» e i
+    # controlli «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le
+    # attiva entrambe (ws1, 16 casi su 16), e la ricevuta ne mostrava zero:
+    #     quarantined id=f014eeafa03a topic=t
+    # Fermato, senza sapere perche'. Il motivo era GIA' nel verdetto — «il claim
+    # afferma un valore che la fonte non contiene: 40 pezzo» — e non arrivava
+    # alla porta dell'umano. Nulla da inventare: si stampa.
+    # ⚠️ Con moat a 95,5 e taglio 40 il fatto e' comunque quarantinato da L4.1:
+    # decidere cosa dire in base al solo PUNTEGGIO nasconde proprio il caso in
+    # cui le due voci si contraddicono, che e' quello in cui l'utente ha piu'
+    # bisogno di sapere chi ha parlato.
+    for _w in (r.get("warnings") or []):
+        _ragione = str(_w.get("reason") or "").strip()
+        if not _ragione:
+            continue
+        console.print(f"  [yellow]{_w.get('layer') or 'gate'}[/yellow] "
+                      f"[dim]— {_ragione}[/dim]")
+        _cons = str(_w.get("advice") or "").strip()
+        if _cons:
+            console.print(f"     [dim]{_cons}[/dim]")
     if not r.get("stored"):
         console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
 
@@ -4069,6 +4090,26 @@ def save_cmd(
     # GIUDICATO e aveva lasciato intatto PASSATO da BOCCIATO.
     # Nulla da inventare: `adjudication` porta gia' `threshold` accanto a
     # `score`, e senza il taglio un 3.8 non dice se manca poco o tanto.
+    # 2026-08-08 — QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e chiedono
+    # cose diverse: il giudice «questa fonte sostiene il fatto?» e i controlli
+    # «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le attiva
+    # entrambe (ws1: 16 casi su 16), e la ricevuta mostrava solo la prima —
+    # decidendo cosa dire in base al PUNTEGGIO. Un fatto con moat a 95,5 e
+    # fermato da L4.1 usciva cosi':
+    #     quarantined id=f014eeafa03a topic=t
+    # e basta: fermato, senza sapere perche'. Il motivo c'era gia' nel verdetto
+    # («il claim afferma un valore che la fonte non contiene: 40 pezzo») e non
+    # arrivava alla porta dell'umano. Nulla da inventare: si stampa.
+    for _w in (r.get("warnings") or []):
+        _ragione = str(_w.get("reason") or "").strip()
+        if not _ragione:
+            continue
+        console.print(f"  [yellow]{_w.get('layer', 'gate')}[/yellow] "
+                      f"[dim]— {_ragione}[/dim]")
+        _cons = str(_w.get("advice") or "").strip()
+        if _cons:
+            console.print(f"     [dim]{_cons}[/dim]")
+
     _gs = r.get("grounding_score")
     if isinstance(_gs, (int, float)):
         _adj = r.get("adjudication") or {}
