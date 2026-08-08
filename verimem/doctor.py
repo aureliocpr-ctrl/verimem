@@ -738,6 +738,71 @@ def run_doctor() -> list[dict[str, Any]]:
     except Exception:  # noqa: BLE001 — un check non rompe il doctor
         pass
 
+    # -- parametri in vigore ---------------------------------------------------
+    # Il verdetto della fetta ⑥ (2026-08-08): «i parametri esistono e
+    # funzionano, ma non sono ISPEZIONABILI». Misurato allora: 173 variabili
+    # d'ambiente lette dal codice, 5 delle quali passano da `config.py`; 194
+    # soglie numeriche, 181 fisse nel sorgente; e QUESTA superficie — l'unica
+    # diagnosi del prodotto — non nominava ne' la soglia in vigore ne' una sola
+    # variabile impostata. Provato con `ENGRAM_SUPERSEDE_SAME_SOURCE=0`, che
+    # secondo l'archivio fa smettere la memoria di aggiornarsi: non compariva.
+    try:
+        from .grounding_gate import resolve_write_threshold_for
+        from .local_grounding import get_local_threshold
+
+        # QUALE giudice, perche' senza il numero non si interpreta: la stessa
+        # installazione ammette a 40 col giudice locale e a 70 con gli altri.
+        _giudice = "local"
+        try:
+            from .llm import _autodetect_provider
+            _p = _autodetect_provider()
+            if _p and _p != "mock":
+                _giudice = _p
+        except Exception:  # noqa: BLE001
+            pass
+        _soglia = resolve_write_threshold_for(_giudice)
+        _dichiarata = get_local_threshold() if _giudice == "local" else None
+        _nota = ""
+        if _dichiarata is not None and _dichiarata > 90.0:
+            # DUE decimali e non zero: il valore vero e' 99.64 e `:.0f` lo
+            # stampava «100» — arrotondare proprio il numero che questa riga
+            # denuncia come artefatto lo farebbe sembrare una cifra tonda
+            # scelta da qualcuno, che e' l'opposto di cio' che e'.
+            _nota = (f" (the installed model ships {_dichiarata:.2f}, ignored "
+                     f"as a calibration artifact)")
+
+        # COSA HA IMPOSTATO L'OPERATORE — e non cio' che si e' creato da solo:
+        # `init_env_aliases` specchia ogni ENGRAM_X in HIPPO_X e VERIMEM_X
+        # all'import (8 variabili prima, 21 dopo, misurato). Elencarle tutte
+        # presenterebbe come scelta dell'utente cio' che ha fatto la libreria.
+        from ._compat import alias_creati
+        _creati = alias_creati()
+        _suoi = sorted(
+            k for k in os.environ
+            if k.startswith(("VERIMEM_", "ENGRAM_", "HIPPO_"))
+            and k not in _creati)
+        # IL NOME SI', IL VALORE MAI per chiave/token/segreto: una diagnosi che
+        # perde una credenziale e' peggio di nessuna diagnosi.
+        def _vale(k: str) -> str:
+            v = os.environ.get(k, "")
+            if any(s in k.upper() for s in ("KEY", "TOKEN", "SECRET", "PASSWORD")):
+                return "(set)" if v else "(empty)"
+            return v[:24] if v else "(empty)"
+        _elenco = ", ".join(f"{k}={_vale(k)}" for k in _suoi[:12])
+        if len(_suoi) > 12:
+            _elenco += f", +{len(_suoi) - 12} altre"
+        add("parameters", OK,
+            f"admission threshold in force: {_soglia:.0f}/100, decided by the "
+            f"`{_giudice}` judge{_nota} — a write scoring below it is "
+            f"quarantined. Env set by you: "
+            + (f"{len(_suoi)} ({_elenco})" if _suoi
+               else "none (every parameter is at its built-in default)")
+            + f"; {len(_creati)} more were created by the "
+              "VERIMEM_/ENGRAM_/HIPPO_ compatibility mirror at import and are "
+              "NOT your choices")
+    except Exception:  # noqa: BLE001 — un check non rompe il doctor
+        pass
+
     # -- offline pins ----------------------------------------------------------
     try:
         from .airgap import _OFFLINE_FLAGS
