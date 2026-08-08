@@ -465,6 +465,40 @@ regressions and falsified hypotheses in
 "parity, not a win" — is enforced against ourselves. A memory layer asking
 for your trust should be able to show its work. This one does.
 
+## What Verimem does not do (yet)
+
+Same rule as the numbers above: measured, not assumed.
+
+**Deletion removes a fact from service, not from the file.**
+`Memory.forget(fact_id)` does what it says at the database level — the row is
+gone, no table still contains the text, and `recall` no longer returns it
+(verified). But the string **remains readable in the raw `.db` bytes**, and
+still does after `VACUUM`: SQLite's `secure_delete` is off by default, so
+deleted pages are not overwritten. This is standard SQLite behaviour, not a
+bug in Verimem — but "forgotten" here means **no longer served**, not
+**no longer recoverable**. If you hand the file to someone else, put it in a
+backup, or lose the disk, you hand over what you believed you had deleted.
+
+What deletion looks like depends on which door you use, so here it is per door:
+
+- **bulk deletion by tenant exists — over MCP.** `hippo_forget_scope` deletes
+  every fact under a `user_id` / `agent_id` / `run_id`. It refuses a
+  whole-corpus wipe, defaults to `dry_run=true` (it reports what it *would*
+  delete), and each delete is reversible via `hippo_undo_destructive_op`.
+- **deletion by subject does not exist anywhere.** "Forget everything about
+  this person" is not a tenant scope: unless that person's facts happen to sit
+  under their own `user_id`, you are back to one `fact_id` at a time.
+- **the CLI cannot delete at all.** `verimem forget` is not a command — of the
+  65 CLI commands in the repo, none delete. From the shell, the capability is
+  invisible.
+
+We state this because the licence is AGPL-3.0 and an agent memory is exactly
+where personal data ends up. If your deployment needs deletion to be
+irreversible — GDPR erasure, for instance — treat `forget()` as a first step
+and handle the storage layer yourself (`PRAGMA secure_delete=ON` before the
+writes, plus a `VACUUM`), or keep the store on encrypted media and destroy the
+key. Do not rely on `forget()` alone for that guarantee: it does not make it.
+
 ## Architecture
 
 ```
