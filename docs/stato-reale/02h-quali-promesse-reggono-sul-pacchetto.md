@@ -47,3 +47,53 @@ esiste nel pacchetto; una promessa di disponibilità va verificata sull'artefatt
   perché l'SDK non lo espone nella risposta di `add()`. La promessa è formalmente vera, ma il mio
   banco non la mette alla prova. Nel DB a freddo il valore era `0.5` ([02g](02g-il-primo-comando-a-freddo.md)).
 * Un'installazione, un OS, un fatto per condizione, HOME già scaldata (giudice installato).
+
+
+---
+
+# Aggiornamento (ore 15:36) — le celle che mancavano, e due dati nuovi
+
+⚠️ Da leggere **dopo** [02l](02l-l-astensione-e-spenta-nel-pacchetto.md), che corregge la tesi
+generale di questo file: le promesse reggono **una per una**, non per categoria. Ecco perché ho
+rieseguito sul pacchetto anche quelle che erano rimaste `—`.
+
+| promessa | PACCHETTO 0.7.0 | REPO |
+|---|---|---|
+| **P8** — supersessione esplicita: il vecchio resta recuperabile | ✅ `True` | ✅ `True` |
+| **P3** — `history(fact_id)` bi-temporale | ✅ 2 voci | ✅ 2 voci |
+| **P18** — `verified_by` non fa girare il moat | ✅ `grounding=None` | ✅ `grounding=None` |
+
+**Tre su tre reggono su entrambi.** Il sito può dire queste righe.
+
+## 🆕 Lo shim `hippoagent` è già rotto, e la sua rimozione è fra cinque giorni
+
+```
+import hippoagent  ->  AttributeError
+    DeprecationWarning: The 'hippoagent' package has been renamed to 'verimem'.
+    This backward-compat shim will be removed in 3 months (~2026-08-13).
+import engram      ->  OK
+import verimem     ->  OK
+```
+
+La data dichiarata è il **13 agosto**. Chi ha `import hippoagent` trova un `AttributeError`
+**oggi**, e fra cinque giorni perde anche l'avviso che glielo spiega. Materia da rilascio: o si
+ripara, o si sposta la data, o la 0.7.5 lo dichiara rotto nel CHANGELOG.
+
+## P25 «both work»: quello che ho misurato e quello che non concludo
+
+```
+PACCHETTO   stringhe "hippo_*" in mcp_server.py = 241   ·   "verimem_*" = 0
+REPO        stringhe "hippo_*" = 245                    ·   "verimem_*" = 0
+```
+
+⚠️ **Non concludo che i nomi nuovi non esistano**: un alias generato a runtime non si vede con un
+grep sulle stringhe letterali. Dichiaro solo la misura. La cella va chiusa da chi può interrogare un
+server MCP vivo.
+
+🪞 **Un difetto del mio banco**: il primo test di P25 misurava se il *modulo Python* si importa,
+mentre la promessa parla dei *nomi dei tool MCP*. Ho misurato la cosa sbagliata, e me ne sono
+accorto rileggendo la promessa — non il risultato, che sembrava ottimo.
+
+**Caveat**: una scrittura per promessa, un dominio, un OS. P8 è verificato come «il vecchio è ancora
+recuperabile con `get()`», che è **meno** di «mai sovrascritto in silenzio»: non ho riletto il
+*valore* vecchio dopo la supersessione.
