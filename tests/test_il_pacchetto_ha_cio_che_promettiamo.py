@@ -37,6 +37,7 @@ RADICE = Path(__file__).resolve().parents[1]
 CLI = RADICE / "verimem" / "cli.py"
 README = RADICE / "README.md"
 
+
 # Parole che seguono "verimem" nella prosa senza essere comandi ("verimem 0.7.5",
 # "verimem recall will be instant"). Tenuta corta apposta: se cresce, significa che
 # il README parla di sé in modo ambiguo, e vale la pena accorgersene.
