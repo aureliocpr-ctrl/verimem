@@ -220,3 +220,54 @@ campo chiamato `branch`, che sembra dire *quale ramo di codice ha deciso*. **Non
 **197 eventi su 197** contiene esattamente la stessa stringa del campo `reason`, cioè il testo che
 l'utente ha passato. È un campo diagnostico che ripete l'input — se ci costruisci sopra un'analisi
 dei rami, misuri le parole di chi ha scritto, non il comportamento del programma.
+
+---
+
+## ⑦ La sottocategoria che mancava: **(c-bis) l'effetto annullato da un'altra porta**
+
+Dopo aver consegnato la categoria (c) sono andato a verificare una promessa della fetta ① — *«un
+fatto messo in quarantena resta fuori da ciò che ti viene restituito»* — e ho trovato il caso che
+completa il criterio di questo documento.
+
+**La quarantena funziona su quattro porte e cade sulla quinta:**
+
+    search    → non lo restituisce   ✅        recall   → non lo restituisce   ✅
+    ask       → non lo restituisce   ✅        explain  → non lo restituisce   ✅
+    **briefing → LO RESTITUISCE**    🔴  (il testo che il prodotto inietta da solo a inizio sessione)
+
+**Con una variabile sola:**
+
+    numero di fatti chiesti al briefing:   8 → 0 quarantinati      ← valore di fabbrica
+                                          **10 → 1**              ← basta questo
+                                           30 → 6      40 → 9
+
+Il primo fatto servito è `f9b216379a1b`, punteggio 11,42: **è il fatto che il gate aveva respinto
+ieri sera** perché la sua fonte non lo sosteneva. Il programma lo ha giudicato inaffidabile, lo ha
+nascosto dalle ricerche, **e poi me lo ha messo nel contesto senza che lo chiedessi.**
+
+E non serve cambiare configurazione: in `verimem/mcp_server.py:8820` il numero di fatti arriva
+dagli argomenti dello strumento (`arguments.get("n_facts", 8)`). **Qualunque agente collegato che
+ne chieda dieci invece di otto riceve un quarantinato.**
+
+### Perché questo cambia il criterio
+
+Le quattro categorie di questo documento presumono che una capacità sia *accesa* o *spenta*. Questo
+caso è una quinta forma:
+
+| | | |
+|---|---|---|
+| **(c-bis)** | **effetto annullato da un'altra porta** | la protezione funziona **e** un percorso diverso la scavalca |
+
+**Non è (c)** — l'effetto arriva eccome. **Non è (b)** — nessun interruttore è spento. È che **due
+percorsi dello stesso prodotto danno risposte opposte sullo stesso fatto**, ed è la stessa forma
+del punto ① di questo documento: *lo stesso interruttore è acceso da una parte e spento
+dall'altra*. Lì erano due ambienti, qui sono due porte.
+
+⇒ **La regola generale che ne esce, ed è la risposta più utile alla tua domanda «ci sono cose
+spente?»**: una protezione non è una proprietà del programma, **è una proprietà di ogni singolo
+percorso che porta al dato**. Verificarla su un percorso non dice niente sugli altri — e a noi
+serve verificarla su tutti quelli che l'utente può imboccare, **compresi quelli che non imbocca
+lui ma il prodotto per lui.**
+
+⚠️ **NON VERIFICATO**: non ho guardato se accanto ai fatti serviti dal briefing compaia
+l'etichetta «quarantinato». Se ci fosse, il danno sarebbe molto minore.
