@@ -133,12 +133,19 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
   on date Z"), and audit every revision.
 - **Abstention by design** — on questions the store cannot support, Verimem
   says so instead of stitching an answer from the nearest-but-irrelevant facts.
-  Memory-boundary abstention holds at 1.0 across our end-to-end runs. It is **ON
-  by default on every served surface** (gateway/console self-calibrate the floor
-  per tenant); in the embedded SDK it is one switch away —
-  `explain(..., min_relevance="auto")` or `VERIMEM_MIN_RELEVANCE=auto` — left
-  permissive by default so a brand-new, near-empty store doesn't over-abstain
-  while it fills up (the floor is sharpest on real-size corpora).
+  Memory-boundary abstention holds at 1.0 across our end-to-end runs. What each
+  door does with it differs, so: **gateway/console FILTER** — results under the
+  self-calibrated floor are not served at all; **MCP SERVES the results and
+  flags them** — every read carries `sotto_il_pavimento` (floor, best score,
+  and what it means) so the agent has the yardstick, plus `trattenuti` when the
+  gate withheld facts on that topic; **the embedded SDK** exposes the same two
+  signals on the `Risultati` object, and is left permissive by default so a
+  brand-new, near-empty store doesn't over-abstain while it fills up — one
+  switch away (`explain(..., min_relevance="auto")` or
+  `VERIMEM_MIN_RELEVANCE=auto`), and the floor is sharpest on real-size corpora.
+  Note the shape: only `explain`/`trust_report` refuse to answer. `recall` and
+  `search` always return the nearest facts — the flag is how you tell "nearest"
+  from "right".
 - **Document memory with exact citations** — index PDF/DOCX/HTML/EPUB/text
   files; semantic search returns passages with file, version and character
   offsets; passages can be promoted to memory *through the gate*, citation
