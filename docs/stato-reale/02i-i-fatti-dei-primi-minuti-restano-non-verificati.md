@@ -86,3 +86,50 @@ quanti fatti con fonte hanno `grounding_score NULL` su un corpus vero — non l'
 **Caveat**: un'installazione, un OS, 3 fatti in tutto nello store freddo; i 175 s del warmup sono una
 misura sola e includono ~440 MB di download su questa rete. Che `requalify` non ricalcoli il
 grounding l'ho letto nel docstring e nella firma, **non l'ho eseguito**.
+
+
+---
+
+# ⚠️ CORREZIONE (ore 14:58) — la misura regge, **la cura che ne avevo dedotto no**
+
+Avevo proposto a ws3 «la controparte di `requalify-quarantined` per i mai-giudicati», offrendomi di
+misurarne la popolazione. **Misurata, e la proposta si sgonfia.**
+
+**Corpus vero, denominatore 9097 fatti, ore 14:56, `sqlite mode=ro`:**
+
+| | | |
+|---|---|---|
+| mai giudicati (`grounding_score IS NULL`) | **6485** | 71,3% |
+| giudicati dal moat | 2612 | 28,7% |
+| **di cui con un'impronta di fonte** | **35** | 0,5% dei mai giudicati — **0,4% del corpus** |
+| *(controllo)* giudicati **e** con fonte | 1453 | |
+
+E **quattro righe di ciò che ho contato**, come vuole la regola di casa:
+
+```
+638f34262c5f quarantined sig=cycle103-reb «HippoAgent status @ 2026-05-11 00:15: 82 tool MCP…»
+ade9b68c2d11 quarantined sig=cycle103-reb «HippoAgent status @ 2026-05-11 00:30: 85 tool MCP…»
+3226c10c0edf quarantined sig=cycle103-reb «HippoAgent @ 2026-05-11 00:50: 87 tool MCP…»
+e2b8c3bd8fa9 quarantined sig=cycle103-reb «HippoAgent @ 2026-05-11 01:00: 88 tool MCP…»
+```
+
+Telemetria di un ciclo dell'11 maggio, **già quarantinata**. Non sono «l'utente aveva dato la fonte
+e nessuno l'ha giudicata»: il caso che immaginavo non c'è nemmeno in quei 35.
+
+## Cosa resta e cosa cade
+
+* ✅ **Resta**: a freddo 2 fatti su 3 restano `NULL` per sempre, e nessun comando li rivede. La
+  misura di §3 e §4 è corretta.
+* ❌ **Cade**: la cura che ne avevo dedotto. Un comando di riqualificazione retroattiva varrebbe per
+  lo **0,4%** del corpus, e per righe che non lo meritano.
+* 🔑 **La cura giusta è impedire che nascano**: l'avviso al primo comando
+  ([02g](02g-il-primo-comando-a-freddo.md), una riga) o il warmup automatico. Il difetto è reale per
+  **l'utente nuovo**, non per il corpus esistente — perché il nostro corpus lo hanno scritto istanze
+  che il moat ce l'avevano già.
+
+## E il 71,3% non è un difetto — attenzione al denominatore
+
+I 6485 mai giudicati sono in larga parte fatti scritti **senza fonte**, ed è esattamente ciò che P19
+e P23 promettono (*«without a source… stored as an unverified `model_claim`»*, *«null = NEVER
+JUDGED»*). Chi citasse quel 71,3% come «il moat non gira quasi mai» userebbe il denominatore
+sbagliato: **sui fatti con fonte, giudicati 1453 su 1488 = 97,6%.**
