@@ -103,3 +103,34 @@ def test_un_agente_senza_memoria_non_rompe():
         pass
 
     assert _avvisi_di_lettura(_Agent(), "qualsiasi cosa") == {}
+
+
+# ── IL BUG CHE IL MIO STESSO BANCO NON PRENDEVA ─────────────────────────────
+# ws4 l'ha isolato con un A/B: la prima versione dell'helper cercava
+# `agent.memory` e basta. Ma `Memory` (il client) NON ha un attributo `memory`,
+# e nell'agente MCP `a.memory` è la memoria EPISODICA — un'altra cosa. Quindi
+# l'helper restituiva un dict vuoto SEMPRE, e l'agente continuava a non ricevere
+# niente.
+#
+# ⚠️ E i miei test passavano lo stesso, perché costruivo un oggetto finto
+# `class _Agent: memory = memoria` — cioè la forma che l'helper si aspettava,
+# non quella che il prodotto passa davvero. **Il banco confermava la mia
+# assunzione invece di misurarla.** Dodicesima volta oggi.
+
+def test_l_avviso_esce_da_TUTTE_le_forme_di_oggetto_che_il_prodotto_passa(memoria):
+    """⚠️ IL PRESIDIO CHE MANCAVA. L'helper riceve oggetti diversi a seconda
+    della superficie, e una sola forma indovinata non basta: se sbaglia,
+    restituisce silenzio — che è indistinguibile dal «non c'è niente»."""
+    from verimem.mcp_server import _avvisi_di_lettura
+
+    memoria.add("Ho implementato l'export del magazzino e funziona perfettamente.",
+                topic="mag")
+
+    forme = {
+        "il client stesso": memoria,
+        "oggetto con .memory": type("_A", (), {"memory": memoria})(),
+        "oggetto con .semantic": type("_A", (), {"semantic": memoria.semantic})(),
+    }
+    for nome, ogg in forme.items():
+        avvisi = _avvisi_di_lettura(ogg, "export del magazzino")
+        assert avvisi.get("trattenuti"), f"silenzio con «{nome}»"

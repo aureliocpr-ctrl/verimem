@@ -223,9 +223,29 @@ def _avvisi_di_lettura(agent, query: str) -> dict:
     """
     out: dict = {}
     try:
-        mem = getattr(agent, "memory", None)
-        conta = getattr(mem, "_trattenuti_safe", None)
-        if callable(conta):
+        # ⚠️ L'OGGETTO NON E' SEMPRE LO STESSO, e la prima versione di questo
+        # helper ci e' cascata: cercava `agent.memory` e basta. Ma `Memory` (il
+        # client) NON ha un attributo `memory`, e nell'agente MCP `a.memory` e'
+        # la memoria EPISODICA — un'altra cosa. Risultato: `mem` era sempre
+        # None e la funzione restituiva un dict vuoto SEMPRE. Isolato da ws4 con
+        # un A/B: con un oggetto che ha `.memory` tornava 44 trattenuti, con
+        # quello vero zero. La cura non e' indovinare l'attributo giusto: e'
+        # provare le tre forme che questa casa passa davvero.
+        conta = None
+        for cand in (agent, getattr(agent, "memory", None)):
+            f = getattr(cand, "_trattenuti_safe", None)
+            if callable(f):
+                conta = f
+                break
+        if conta is None:
+            # ultima strada: costruire il conteggio dallo store semantico, che
+            # l'agente MCP espone sempre come `a.semantic`.
+            sem = getattr(agent, "semantic", None)
+            if sem is not None and getattr(sem, "db_path", None):
+                from .client import Memory as _Mem
+                conta = lambda q: _Mem._conta_trattenuti(  # noqa: E731
+                    type("_S", (), {"semantic": sem})(), q)
+        if conta is not None:
             tr = conta(query)
             if tr:
                 out["trattenuti"] = tr
@@ -13102,6 +13122,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # dal cross-encoder e dalla fusione grafo/lessicale, e finora
                 # i due erano indistinguibili da qui.
                 "ranking": _ranking_stages(),
+                # 2026-08-08 — gli avvisi escono anche da QUI. Erano su un tool
+                # solo (facts_search), e un agente che usa `recall` invece di
+                # `search` restava al buio: il secondo difetto che ws4 ha visto
+                # accanto al primo. Un segnale che esce da una porta sola non e'
+                # un segnale, e' una coincidenza.
+                **_avvisi_di_lettura(a, query),
                 "include_legacy": include_legacy,
                 "min_status": min_status,
                 "trust_signals": trust_signals,
