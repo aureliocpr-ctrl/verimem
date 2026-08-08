@@ -51,7 +51,9 @@ Orientation (each tool's exact arguments are in its own schema):
   gap when it does).
 
 Principles: gated writes, provenance on every read, abstention over hallucination.
-Prefer grounded writes. Legacy tool names use the hippo_ prefix; both work.
+Prefer grounded writes. Legacy tool names use the hippo_ prefix; both work
+today, but the hippo_ shim is scheduled for removal on 2026-08-13 — write new
+integrations against verimem_ names.
 """
 
 #: Extended terminal guide: the MCP orientation plus the CLI/SDK map an agent
