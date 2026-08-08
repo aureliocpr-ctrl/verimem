@@ -5,6 +5,39 @@ Misurato su `544d27bd`. Le sezioni di dettaglio sono i file numerati qui accanto
 
 ---
 
+## ⚠️ Leggi prima questo: abbiamo misurato due cose diverse
+
+**Il pacchetto che si scarica da PyPI è il codice del 22 luglio — 375 commit indietro,
+con lo stesso numero di versione, `0.7.0`.** Trovato da ws2, confermato da ws1, ws4 e
+ws7 su tre misure indipendenti.
+
+Tu avevi chiesto *«se un utente la installa cosa fa»*, e sei sezioni su sette
+descrivono il **repository**. Quello che l'utente riceve è un'altra cosa, e va detto
+prima di tutto il resto.
+
+**Cosa NON cambia** — il comportamento. ws2 ha rieseguito il banco di ws1 sul pacchetto
+vero: **7 promesse su 7 reggono**. Il guardiano funziona anche lì, e la soglia di
+ammissione è identica (verificato da ws7 sul wheel scaricato).
+
+**Cosa cambia** — quanto c'è. Il pacchetto ha **meno superficie**, e le assenze non
+sono casuali:
+
+| manca nel pacchetto | conseguenza |
+|---|---|
+| `emit_write` (la telemetria di scrittura) | **spiega le 8.623 righe senza verdetto**: non è un difetto di misura, è un modulo che non c'è. Chiude tre nostre indagini |
+| 20 moduli fra cui `retirement_log` | tutta la **superficie di governo** — chi ha ritirato cosa, e quando |
+| 13 interruttori su 151 | fra cui le **chiavi di firma dell'audit**, il trust gate MCP e i freni anti-timeout (e i timeout li abbiamo visti scattare oggi sul corpus vero) |
+| 4 controlli del `doctor` su 11 | confidence-vs-verifica, undo-window, trust-rank-coverage, embedding-model |
+| 11 comandi su 37 | fra cui `save`, che la nostra documentazione insegna |
+
+⇒ **Chi installa oggi riceve un prodotto che si comporta bene e non sa raccontare cosa
+ha fatto.** Verifica, e non tiene il registro di ciò che ha verificato.
+
+📌 La prima cosa da fare per la 0.7.5 non è una cura: è **pubblicare il codice che
+abbiamo**.
+
+---
+
 ## La risposta in dieci righe
 
 Verimem è una **memoria che rifiuta di ricordare ciò che non le è stato dimostrato**.
@@ -142,20 +175,53 @@ e il prodotto appena installato.
     ─────
     4.279   dei 6.425 serviti NON hanno mai avuto un voto — il 67%
 
-⚠️ **Il 28,6% che non arriva non è di per sé una perdita**: nel banco di prova quattro
-ritiri su quattro erano corretti. Ma sul corpus vero **non è misurato**, ed è la
-differenza fra «severo» e «mangia i dati».
+### 🔴 Ora è misurato, e la risposta non è quella che ci aspettavamo
+
+Quel 28,6% era la domanda aperta più grossa: *quanti di quei fatti sono trattenuti a
+ragione?* L'abbiamo aperta.
+
+Ho letto **uno per uno** i 45 quarantinati che il giudice approvava a 99-100. Sono
+tutti **referti di misura veri** — righe di codice, conteggi, SHA. Riscrivendone 20 su
+uno store pulito, **20 su 20 vengono ammessi oggi**. Non sarebbero più trattenuti.
+
+**Ma non è severità, ed è la parte che conta.** Il gate ha due voci che chiedono cose
+diverse:
+
+    il giudice   «questa fonte sostiene questo fatto?»       -> sì, 99/100
+    il controllo «ogni cifra del fatto sta nella fonte?»     -> no, ne manca una
+
+**Chi scrive misure le attiva entrambe** — e ws1 l'ha verificato su 16 casi su 16.
+Nessuna delle due sbaglia: chiedono cose diverse e il prodotto tiene solo la risposta
+peggiore, senza dire quale delle due ha parlato.
+
+⇒ E ci si aggiunge un difetto che nessuno aveva visto: **quando il gate migliora,
+nessuno rivede la quarantena**. Quei 45 sono stati fermati da criteri poi corretti — uno
+scattava sulla parola **«fatto»**, in una memoria dei fatti — e sono rimasti fermi.
 
 ---
 
-## Le tre cose da riparare, in ordine
+## Cosa riparare, in ordine
 
+0. **Pubblicare il codice che abbiamo.** Non è una cura, è una pubblicazione — e
+   finché non è fatta, ogni cura che scriviamo non arriva a nessuno.
 1. **L'astensione** — una memoria che risponde Verona quando le chiedi Trento è
    peggio di una che tace. È il difetto che tocca ogni utente a ogni domanda.
 2. **Il primo avvio** — 10 minuti, 1 GB, la verifica spenta e un comando che non
    esiste. Chi prova il prodotto si ferma qui.
-3. **La prova della verifica** — la fonte viene usata per giudicare e poi buttata:
-   resta solo un'impronta. La verifica c'è, il modo di rivederla no.
+3. **Dire quale delle due voci ha parlato** — quando un fatto viene trattenuto,
+   l'utente deve sapere se il giudice non gli ha creduto o se manca una cifra: sono
+   due problemi diversi e si risolvono in due modi diversi. La cura più piccola,
+   proposta da ws1: **dire quale cifra non è stata trovata**.
+4. **Rivedere la quarantena quando il gate cambia** — oggi un fatto fermato da un
+   criterio poi corretto resta fermo per sempre.
+
+### Già riparato oggi, dopo questo censimento
+
+| | |
+|---|---|
+| la prova della verifica | ora accanto al voto c'è **la porzione di fonte** che lo giustifica (`35dd263f`) |
+| il fatto trattenuto era muto | ora chi interroga sa che **c'era qualcosa e non gli è stato dato** (`a711f653`) |
+| gli avvisi non arrivavano all'agente | ora escono anche dalla porta **MCP**, che in una memoria per agenti è quella che conta (`d9fd029c`) |
 
 ---
 
