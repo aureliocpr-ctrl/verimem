@@ -35,12 +35,13 @@ can rely on it:
 Orientation (each tool's exact arguments are in its own schema):
 - Retrieve with verimem_recall / verimem_facts_search. These return the closest
   matches and DO NOT abstain: ask them something the store knows nothing about
-  and you still get the nearest facts back. Read `Risultati.sotto_il_pavimento`
-  — when set, it says the best match fell under the relevance floor, i.e. the
-  answer is probably not in memory.
+  and you still get the nearest facts back, with high scores. A result is not
+  evidence that the store knows the answer.
 - To learn WHETHER the store can answer at all, ask verimem_trust_report: it
   returns a provenance dossier and, on a question it cannot support, it
   ABSTAINS ("I don't know") instead of stitching a guess from weak matches.
+  When it matters that the answer be IN memory rather than merely nearest,
+  that is the tool to use.
 - Search indexed files with verimem_document_semantic_search (exact citations).
 - Every read carries `grounding_score`: the moat's verdict on that fact, 0-100.
   A number means a source was checked against it; `null` means NEVER JUDGED, not
