@@ -19,12 +19,16 @@ prima di tutto il resto.
 pacchetto vero, 7 promesse su 7 reggono, e la soglia di ammissione è identica
 (verificato da ws7 sul wheel scaricato).
 
-🔴 **Ma una promessa del pacchetto è falsa, non solo assente.** Avevamo scritto qui
-che il pacchetto ha «meno superficie, non un comportamento diverso»: **è caduta**.
-Sul pacchetto pubblicato l'astensione non funziona — il pavimento è a `0.0` invece
-che a `0.8688` — quindi *«abstention instead of hallucination»*, che è la riga della
-descrizione PyPI, **oggi non è vera per chi installa**. Non è una funzione che manca:
-è una funzione che c'è e non fa quello che dice.
+⚠️ **Sull'astensione ci siamo sbagliati in tre, e la correzione è istruttiva.** Per
+un'ora questo documento ha detto che *«abstention instead of hallucination»* fosse
+una promessa **falsa**. Non lo è: l'astensione **è vera su `explain`** ed è
+**spenta di proposito su `recall`**, con la ragione scritta in settanta righe di
+commento nel codice e la misura già fatta (gate acceso: 8 casi su 8 catturati, zero
+astensioni sbagliate).
+
+⇒ Tre di noi hanno detto «rotta» una cosa che il prodotto spiega. Il difetto
+vero è più piccolo e più curabile: **quella spiegazione sta nel codice, non dove la
+legge chi usa il prodotto.**
 
 **E il resto delle assenze non è casuale:**
 
@@ -36,8 +40,8 @@ descrizione PyPI, **oggi non è vera per chi installa**. Non è una funzione che
 | 4 controlli del `doctor` su 11 | confidence-vs-verifica, undo-window, trust-rank-coverage, embedding-model |
 | 11 comandi su 37 | fra cui `save`, che la nostra documentazione insegna |
 
-⇒ **Chi installa oggi riceve un prodotto che scrive bene, non sa raccontare cosa ha
-fatto, e su una promessa dice il falso.**
+⇒ **Chi installa oggi riceve un prodotto che scrive bene e non sa raccontare cosa
+ha fatto.** Verifica, e non tiene il registro di ciò che ha verificato.
 
 ### 📌 E la notizia buona è che quasi tutto si risolve pubblicando
 

@@ -134,3 +134,64 @@ def test_l_avviso_esce_da_TUTTE_le_forme_di_oggetto_che_il_prodotto_passa(memori
     for nome, ogg in forme.items():
         avvisi = _avvisi_di_lettura(ogg, "export del magazzino")
         assert avvisi.get("trattenuti"), f"silenzio con «{nome}»"
+
+
+# ── IL SECONDO AVVISO: il metro accanto al punteggio ────────────────────────
+# ws4: «l'agente riceve il punteggio senza il metro». ws1 ha poi misurato che la
+# prima cura ne portava UNO SU DUE — `trattenuti` arrivava, `sotto_il_pavimento`
+# no. Non era una svista: l'avevo lasciato fuori apposta, in attesa del numero di
+# ws5 sul pavimento. Il numero è arrivato ed è un VINCOLO, non un via libera:
+#     «NON innestarlo come TAGLIO: 7 valori su 11 stanno a 0.86+, dove la mia
+#      curva perde risposte VERE. Come AVVISO va bene sempre.»
+# Quindi entra come avviso — la stessa disciplina di `Risultati` nell'SDK, dove
+# la nota dice testualmente «i risultati sono qui sotto, NON tagliati».
+
+def test_l_agente_riceve_il_METRO_non_solo_il_punteggio(memoria):
+    """IL CUORE: su una domanda la cui risposta non è in memoria, l'agente deve
+    sapere che nessun risultato supera la soglia di rilevanza — altrimenti legge
+    un punteggio senza sapere se è alto o basso PER QUESTO corpus."""
+    from verimem.mcp_server import _avvisi_di_lettura
+
+    memoria.add("Il magazzino di Verona contiene 480 pallet.", topic="m",
+                source="Inventario: Verona 480 pallet.")
+    memoria.add("La sede di Milano ha 120 dipendenti.", topic="m",
+                source="Inventario: Milano 120 dipendenti.")
+
+    avvisi = _avvisi_di_lettura(memoria, "qual e' il fatturato trimestrale")
+    pav = avvisi.get("sotto_il_pavimento")
+    assert pav, "l'agente riceve il punteggio senza il metro"
+    assert "pavimento" in pav and "score_migliore" in pav
+
+
+def test_CONTROLLO_POSITIVO_una_domanda_CON_risposta_non_riceve_l_avviso(memoria):
+    """⚠️ LA POPOLAZIONE OPPOSTA, ed è quella che rende l'avviso utile: se
+    comparisse anche quando la risposta c'è, l'agente imparerebbe a ignorarlo —
+    e allora non servirebbe più quando conta."""
+    from verimem.mcp_server import _avvisi_di_lettura
+
+    memoria.add("Il magazzino di Verona contiene 480 pallet.", topic="m",
+                source="Inventario: Verona 480 pallet.")
+    memoria.add("La sede di Milano ha 120 dipendenti.", topic="m",
+                source="Inventario: Milano 120 dipendenti.")
+
+    avvisi = _avvisi_di_lettura(memoria, "magazzino di Verona pallet")
+    assert "sotto_il_pavimento" not in avvisi
+
+
+def test_i_due_avvisi_sono_INDIPENDENTI(memoria, monkeypatch):
+    """⚠️ Se il conteggio dei trattenuti esplode, il metro deve arrivare lo
+    stesso: due avvisi in un try solo cadono insieme, e un guasto in uno
+    spegnerebbe silenziosamente anche l'altro."""
+    from verimem.mcp_server import _avvisi_di_lettura
+
+    memoria.add("Il magazzino di Verona contiene 480 pallet.", topic="m",
+                source="Inventario: Verona 480 pallet.")
+    memoria.add("La sede di Milano ha 120 dipendenti.", topic="m",
+                source="Inventario: Milano 120 dipendenti.")
+
+    def esplode(self, q):
+        raise RuntimeError("database is locked")
+
+    monkeypatch.setattr(type(memoria), "_trattenuti_safe", esplode, raising=False)
+    avvisi = _avvisi_di_lettura(memoria, "qual e' il fatturato trimestrale")
+    assert avvisi.get("sotto_il_pavimento"), "un guasto nel primo ha spento il secondo"

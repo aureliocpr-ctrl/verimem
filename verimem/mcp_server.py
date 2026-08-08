@@ -251,6 +251,47 @@ def _avvisi_di_lettura(agent, query: str) -> dict:
                 out["trattenuti"] = tr
     except Exception:      # noqa: BLE001 — un avviso non fa cadere una lettura
         pass
+
+    # 2026-08-08 — IL SECONDO AVVISO, e arriva con un numero e un vincolo.
+    # `sotto_il_pavimento` dice che nessun risultato supera la soglia di
+    # rilevanza calibrata su questo corpus: senza, l'agente riceve un punteggio
+    # e non ha il metro per leggerlo (ws4: «CLI avvisa, SDK avvisa, MCP tace»).
+    # ⚠️ NON e' un taglio, ed e' una scelta misurata da ws5, non una prudenza:
+    # 7 valori su 11 stanno a 0.86+, cioe' dove la sua curva perde risposte VERE.
+    # Come veto costerebbe un fatto giusto, come avviso costa un avviso — ed e'
+    # la stessa disciplina di `Risultati.sotto_il_pavimento` nell'SDK, dove la
+    # nota dice testualmente «i risultati sono qui sotto, non tagliati».
+    # ⚠️ E arriva DOPO i trattenuti, in un try suo: due avvisi indipendenti non
+    # devono cadere insieme se uno dei due sbaglia.
+    try:
+        # ⚠️ NON passo da `search`: costruisce `Risultati` chiamando anche il
+        # conteggio dei trattenuti, e i due avvisi resterebbero ACCOPPIATI — un
+        # guasto nel primo spegnerebbe silenziosamente il secondo. Preso da un
+        # test che inietta il guasto, non da un ragionamento. Qui si calcola il
+        # pavimento e basta: due avvisi indipendenti, due try separati.
+        mem = None
+        for cand in (agent, getattr(agent, "memory", None)):
+            if callable(getattr(cand, "_auto_relevance_floor", None)):
+                mem = cand
+                break
+        if mem is not None and query:
+            pav = float(mem._auto_relevance_floor() or 0.0)
+            hits = mem.semantic.recall(query, k=3) if pav else []
+            best = 0.0
+            for h in (hits or []):
+                s = h[1] if isinstance(h, tuple) else getattr(h, "score", 0.0)
+                best = max(best, float(s or 0.0))
+            if pav and hits and best < pav:
+                out["sotto_il_pavimento"] = {
+                    "pavimento": round(pav, 4),
+                    "score_migliore": round(best, 4),
+                    "nota": ("nessun risultato supera la soglia di rilevanza "
+                             "calibrata su questo corpus: probabilmente la "
+                             "risposta NON e' in memoria. I risultati sono "
+                             "qui sotto, non tagliati — decidi tu."),
+                }
+    except Exception:      # noqa: BLE001 — un avviso non fa cadere una lettura
+        pass
     return out
 
 
