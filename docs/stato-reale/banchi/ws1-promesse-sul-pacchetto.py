@@ -19,7 +19,15 @@ os.environ["VERIMEM_DATA_DIR"] = TMP
 os.environ["ENGRAM_GROUNDING_WRITE"] = "1"
 
 import sys  # noqa: E402
-import verimem as _v; print("verimem importato da:", _v.__file__)
+# DA DOVE stiamo misurando — la riga che mi mancava stamattina e che mi e'
+# costata cinque errori (repo vs pacchetto vs processo vivo). Strumento di ws2.
+import subprocess, sys as _s
+try:
+    _a = subprocess.run([_s.executable, "scripts/artefatto.py"], capture_output=True,
+                        text=True, timeout=60).stdout.strip()
+    print("ARTEFATTO:", _a or "(artefatto.py non ha risposto)")
+except Exception as _e:
+    import verimem as _v; print("ARTEFATTO: fallback ->", _v.__file__)
 
 ESITI = []
 
