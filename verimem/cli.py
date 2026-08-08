@@ -892,6 +892,26 @@ def remember_cmd(
         _cons = str(_w.get("advice") or "").strip()
         if _cons:
             console.print(f"     [dim]{_cons}[/dim]")
+    # 2026-08-08 — E L'ALTRA VOCE, quella che era D'ACCORDO. Il gate ne ha due:
+    # il giudice («questa fonte sostiene il fatto?») e i controlli sui dettagli
+    # («ogni cifra sta nella fonte?»). Sopra si stampa chi ha detto NO; senza
+    # questa riga non si sa che l'altro aveva detto SI'.
+    #     quarantined … L4.1 — il claim afferma un valore che la fonte non
+    #     contiene: 40 pezzo
+    # e quel fatto aveva grounding 95,5 su un taglio di 40: il giudice lo
+    # APPROVAVA. Un fatto respinto 1-a-1 non e' un fatto respinto 2-a-0, e per
+    # chi scrive e' la differenza fra «riformula la frase» e «hai sbagliato UN
+    # numero». Il dato c'era gia' nel verdetto: si stampa.
+    _ws_ = r.get("warnings") or []
+    _gs_ = r.get("grounding_score")
+    if _ws_ and isinstance(_gs_, (int, float)):
+        _cut_ = (r.get("adjudication") or {}).get("threshold")
+        if isinstance(_cut_, (int, float)) and float(_gs_) >= float(_cut_):
+            console.print(
+                f"  [green]il giudice era d'accordo[/green] [dim]— "
+                f"{float(_gs_):.1f} sul taglio di {float(_cut_):.0f}: la fonte "
+                f"SOSTIENE il fatto, e' un controllo di dettaglio ad averlo "
+                f"fermato. Correggi quel dettaglio, non la frase[/dim]")
     if not r.get("stored"):
         console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
 

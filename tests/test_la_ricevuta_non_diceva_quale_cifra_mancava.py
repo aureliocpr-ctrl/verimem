@@ -88,3 +88,29 @@ def test_il_caso_che_sfuggiva_moat_a_favore_e_layer_contrario(tmp_path):
     # il punteggio del giudice è ALTO e il fatto è fermato lo stesso:
     # entrambe le informazioni devono raggiungere chi legge
     assert "L4.1" in out and "40" in out
+
+
+# ── L'ALTRA VOCE: quella che era d'accordo ──────────────────────────────────
+# Il gate ha DUE voci e chiedono cose diverse. La cura sopra fa dire quale ha
+# bocciato; questa fa dire che l'altra aveva approvato.
+#
+# Un fatto respinto 1-a-1 non è un fatto respinto 2-a-0, e per chi scrive è la
+# differenza fra «riformula la frase» e «hai sbagliato UN numero».
+
+def test_la_ricevuta_dice_che_il_giudice_era_D_ACCORDO(tmp_path):
+    """IL CUORE: il claim è fermato da un controllo di dettaglio, ma la fonte lo
+    sostiene — grounding 94,6 su un taglio di 40. Chi legge deve saperlo,
+    altrimenti riscrive tutta la frase quando bastava correggere una cifra."""
+    out = _remember(tmp_path, CLAIM, FONTE)
+    assert "quarantined" in out
+    assert "giudice era d'accordo" in out or "giudice era d" in out
+    assert "taglio" in out
+
+
+def test_CONTROLLO_POSITIVO_il_fatto_ammesso_non_riceve_la_seconda_voce(tmp_path):
+    """⚠️ LA POPOLAZIONE OPPOSTA: se il fatto passa, non c'è nessun disaccordo da
+    spiegare. Due righe in più su ogni salvataggio riuscito sono rumore, e il
+    rumore fa smettere di leggere proprio quando conta."""
+    out = _remember(tmp_path, VERO, FONTE_VERA)
+    assert "admitted" in out
+    assert "giudice era d" not in out
