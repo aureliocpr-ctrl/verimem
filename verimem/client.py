@@ -22,6 +22,7 @@ local distilled CE, ENGRAM_GROUNDING_BACKEND=local).
 from __future__ import annotations
 
 import logging
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -245,13 +246,28 @@ class Risultati(list):
     `search` ha una quantità di consumatori che la iterano e ne fanno `len()`.
     """
 
-    __slots__ = ("sotto_il_pavimento",)
+    __slots__ = ("sotto_il_pavimento", "trattenuti")
 
-    def __init__(self, iterable=(), *, sotto_il_pavimento=None) -> None:
+    def __init__(self, iterable=(), *, sotto_il_pavimento=None,
+                 trattenuti=None) -> None:
         super().__init__(iterable)
         #: ``{pavimento, score_migliore, nota}`` quando nessun risultato supera
         #: la soglia di rilevanza; ``None`` quando almeno uno la supera.
         self.sotto_il_pavimento = sotto_il_pavimento
+        #: ``{quanti, nota}`` quando il gate ha TRATTENUTO fatti sull'argomento
+        #: chiesto; ``None`` quando non ce n'e' nessuno (2026-08-08).
+        #:
+        #: PERCHE'. Nel corpus di casa 746 fatti su 8999 sono in quarantena.
+        #: Non tornano dalle letture, ed e' giusto — e' il loro mestiere, ed e'
+        #: verificato su sei porte da ws1 e sul briefing da ws4. Ma **il loro
+        #: silenzio era indistinguibile dall'assenza**: chi ha scritto quel
+        #: fatto crede di averlo salvato, chi legge crede che in memoria non ci
+        #: sia niente.
+        #:
+        #: ⚠️ DICHIARA E NON MOSTRA. Non contiene il testo del fatto trattenuto:
+        #: un fatto e' in quarantena perche' non ci si fida, e mostrarlo «per
+        #: trasparenza» lo rimetterebbe in circolo dalla porta di servizio.
+        self.trattenuti = trattenuti
 
 
 class Memory:
@@ -1075,9 +1091,10 @@ class Memory:
             _pav = self._auto_relevance_floor()
             _best = max((float(i.get("score") or 0.0) for i in out), default=0.0)
         except Exception:  # noqa: BLE001 — un avviso non fa cadere una lettura
-            return Risultati(out)
+            return Risultati(out, trattenuti=self._trattenuti_safe(query))
         return Risultati(
             out,
+            trattenuti=self._trattenuti_safe(query),
             sotto_il_pavimento=(
                 {"pavimento": round(float(_pav), 4),
                  "score_migliore": round(_best, 4),
@@ -2043,6 +2060,71 @@ class Memory:
     def _floor_file(self):
         from pathlib import Path
         return Path(str(self.semantic.db_path) + ".floor.json")
+
+    def _trattenuti_safe(self, query: str | None) -> dict | None:
+        """`_conta_trattenuti` blindato NEL CHIAMANTE, non solo al suo interno.
+
+        Il metodo ha gia' un suo try/except, ma la protezione che conta e' qui:
+        un avviso non deve MAI far cadere una lettura, e la lettura non puo'
+        dipendere dal fatto che chi tocchera' quel metodo domani si ricordi di
+        tenerci dentro un except. Difendere il punto d'uso e' l'unica forma che
+        sopravvive alle modifiche altrui.
+        """
+        try:
+            return self._conta_trattenuti(query)
+        except Exception:      # noqa: BLE001 — un avviso non fa cadere una lettura
+            return None
+
+    def _conta_trattenuti(self, query: str | None,
+                          topic: str | None = None) -> dict | None:
+        """Quanti fatti il gate ha TRATTENUTO sull'argomento chiesto.
+
+        Restituisce ``{quanti, nota}`` oppure ``None`` quando non ce n'e'
+        nessuno — cosi' l'avviso compare solo quando c'e' qualcosa da dire, e
+        non diventa rumore su ogni lettura.
+
+        ⚠️ NON RESTITUISCE IL TESTO. Un fatto e' in quarantena perche' non ci si
+        fida: mostrarlo «per trasparenza» lo rimetterebbe in circolo dalla porta
+        di servizio, cioe' curerebbe un avviso mancante rompendo la garanzia che
+        da' valore al prodotto.
+
+        ⚠️ UN AVVISO NON FA CADERE UNA LETTURA. Qualunque errore qui — database
+        occupato, schema di uno store vecchio, colonna assente — degrada a
+        ``None`` e la ricerca restituisce comunque i suoi risultati.
+
+        COSTO: una COUNT su una tabella gia' aperta, con LIKE sui token della
+        domanda. Misurato sul corpus di casa (8999 fatti) nel commit che
+        introduce questo metodo.
+        """
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as _c:
+                sql = ("SELECT count(*) FROM facts "
+                       "WHERE status='quarantined' AND superseded_by IS NULL")
+                par: list = []
+                if topic:
+                    sql += " AND topic = ?"
+                    par.append(topic)
+                # i token lunghi della domanda: un LIKE per ognuno, in OR. Senza
+                # token utili si conta la quarantena del topic (o si tace).
+                toks = [w for w in re.findall(r"[^\W\d_]{4,}", (query or ""),
+                                              re.UNICODE)][:6]
+                if toks:
+                    sql += " AND (" + " OR ".join(
+                        ["lower(proposition) LIKE ?"] * len(toks)) + ")"
+                    par += [f"%{w.lower()}%" for w in toks]
+                elif not topic:
+                    return None
+                n = _c.execute(sql, par).fetchone()[0]
+        except Exception:      # noqa: BLE001 — un avviso non fa cadere una lettura
+            return None
+        if not n:
+            return None
+        return {"quanti": int(n),
+                "nota": (f"{n} fatto/i sull'argomento sono stati TRATTENUTI dal "
+                         "gate e non compaiono qui: non erano sostenuti dalla "
+                         "loro fonte. Non sono persi — restano nello store e si "
+                         "vedono con la quarantena; ma non ti vengono serviti "
+                         "come veri.")}
 
     def _auto_relevance_floor(self) -> float:
         """Il pavimento auto-calibrato, PERSISTITO e invalidato sul corpus.
