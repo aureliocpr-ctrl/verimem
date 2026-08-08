@@ -20,6 +20,11 @@ Verimem is a VERIFIED-memory server for AI agents: writes pass an anti-confab
 gate, and a fact its source does not support is QUARANTINED — stored, but kept
 OUT of default recall, so you never get it back as truth.
 
+Tool names below are written verimem_*. That prefix is what you get when the
+server runs with VERIMEM_TOOL_NAMESPACE=verimem (the wiring example does set
+it); WITHOUT it — the default — the very same tools are exposed as hippo_*.
+Read the names your client actually lists, not the ones in this text.
+
 Store with verimem_remember. What checks it, and when — the perimeter, so you
 can rely on it:
 - ALWAYS: a lexical screen on every write. Unsupported "it works / verified /
@@ -52,8 +57,9 @@ Orientation (each tool's exact arguments are in its own schema):
 
 Principles: gated writes, provenance on every read, abstention over hallucination.
 Prefer grounded writes. Legacy tool names use the hippo_ prefix; both work
-today, but the hippo_ shim is scheduled for removal on 2026-08-13 — write new
-integrations against verimem_ names.
+today, but the hippo_ PACKAGE shim (python `import hippoagent`) is scheduled for
+removal on 2026-08-13. That is the python package, not the tool prefix
+above: the hippo_ TOOL names stay, they are the default.
 """
 
 #: Extended terminal guide: the MCP orientation plus the CLI/SDK map an agent
