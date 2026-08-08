@@ -119,6 +119,37 @@ validated local CE moat cut 40*»), e la ragione è documentata e misurata. Non 
 un bug nascosto. **Ma non è scritto in nessun posto che un utente legga**, e la
 diagnosi non lo riporta (§6).
 
+### 🪞 3a. E ADESSO MI FALSIFICO DA SOLO: quanto pesa davvero
+Ho scritto qui sopra che è «il dato più importante». **Poi ho misurato quanti
+fatti cadono nella fascia dove le due soglie danno esiti diversi**, ed è molto
+meno di quanto il titolo suggerisse. Distribuzione dei punteggi sui **2514**
+fatti che ne hanno uno:
+
+    punteggio      fatti     quota
+      0 –   1       108     4,30%
+      1 –  10        50     1,99%
+     10 –  40        42     1,67%
+     40 –  70        29     1,15%   <-- SOLO QUI la soglia 40 vs 70 cambia l'esito
+     70 –  90        40     1,59%
+     90 –  99       165     6,56%
+     99 – 100      2080    82,74%
+
+⇒ **La doppia soglia decide il destino di 29 fatti su 2514: l'1,15%.** Il
+giudice è fortemente **bimodale** — l'83% dei fatti sta sopra 99 e l'8% sotto
+10 — quindi nella stragrande maggioranza dei casi *qualunque* soglia fra 10 e 90
+darebbe lo stesso esito.
+
+🔑 **Il fatto resta vero, la sua portata no.** La lettura onesta è: *«la soglia
+è doppia, e su questo corpus la differenza tocca 29 fatti — che oggi sono in
+memoria e su un'installazione con Claude sarebbero in quarantena»*. Non «il
+prodotto ammette a caso».
+
+📌 E la tabella solleva una domanda più grossa, che **non è la mia fetta**: se
+l'83% dei giudizi sta fra 99 e 100, quel punteggio sta ancora distinguendo
+qualcosa? Un punteggio che vale 99,7 quasi sempre è vicino a non essere un
+punteggio. Lo passo a **ws3 (fetta ⑦, il gate)**: io ho misurato la
+distribuzione, non che cosa significhi.
+
 ---
 
 ## 4. Le soglie numeriche — 194, e 181 non sono toccabili
@@ -250,8 +281,8 @@ Eseguito, cercando le parole nella risposta completa di `doctor`:
    uso e le variabili del prodotto impostate. È piccola e chiude i punti 1-2-4
    del §6.
 2. **Decidere se la soglia doppia (40 locale / 70 remoto) è voluta.** Se lo è,
-   va detta all'utente; se non lo è, è la differenza fra «verificato» e
-   «quarantinato» su una parte del corpus.
+   va detta all'utente. ⚖️ **Con la sua misura accanto**: tocca 29 fatti su
+   2514 (1,15%) — è una decisione da prendere, non un'emergenza.
 3. **Decidere quanto deve durare la telemetria.** Oggi ~10 MB e circa quattro
    giorni. Se serve rispondere a domande sul passato, non basta; se non serve,
    va detto che non è un archivio.
