@@ -140,3 +140,59 @@ questo fatto entra senza verifica. `verimem warmup` per attivarlo»*.
 * Il primo `doctor` che ho eseguito ha letto il **data-dir di produzione** perché la mia shell
   aveva `ENGRAM_DATA_DIR` esportata: **contaminazione mia, corretta rilanciando con `env -u`.**
   Segnalo la trappola perché chiunque di noi misuri "da utente" su questa macchina la incontra.
+
+---
+
+## 6. IL BUCO CHE AVEVO DICHIARATO — CHIUSO (ore 13:30-13:35)
+
+Nella §5 avevo scritto: «non ho eseguito `verimem warmup`, quindi **non ho verificato che dopo il
+warmup il moat si accenda davvero**». Eseguito adesso. **Si accende, e il prodotto mantiene la
+promessa.**
+
+### 6.1 Il warmup
+```
+$ verimem warmup
+✓ model ready in 35.2s (vector dim 768)
+✓ reranker ready in 59.1s
+✓ moat gate model ready — gate model installed at …\home\.engram\models\local_gate_ce_v2
+✓ shared encode daemon already running
+Warmup complete — Verimem recall will be instant.
+```
+**190 secondi.** Il doctor dopo: `✓ moat-judge  local CE gate model installed — the grounding
+moat is ON`.
+
+### 6.2 Il gate FUNZIONA — quattro prove
+| prova | esito | layer |
+|---|---|---|
+| vanto senza fonte («ho verificato che… tutti i test passano») | **quarantined** | `L1.15` |
+| fatto NON sostenuto dalla fonte (dico 900, la fonte dice 250) | **quarantined** | `L4-grounding` |
+| fatto sostenuto dalla fonte (dico 250, la fonte dice 250) | **admitted** | — |
+| fatto neutro senza fonte | admitted `model_claim` | — |
+
+⇒ **Dopo il warmup, le due promesse centrali sono VERE**: lo screening lessicale ferma i vanti, e
+il moat dell'entailment quarantina un numero che la fonte non sostiene ammettendo quello che
+sostiene. Il controllo positivo c'è: non è un gate che blocca tutto.
+
+### 6.3 Ma `trust` risponde ancora `TRUSTED` — il punto ③ NON è causato dal moat spento
+```
+$ verimem trust "qual e' il fatturato del 2025?"     # moat ON, store con 4 fatti, nessuno sul fatturato
+  Anti-confab trust check   TRUSTED ✓
+  provenance:  (none)
+```
+**Identico a prima del warmup.** Quindi la mia ipotesi della §2③ («senza giudice `trust` non ha con
+cosa decidere») **è falsificata**: il giudice c'è, e `trust` risponde lo stesso `TRUSTED` con
+`provenance: (none)` su una domanda che la memoria non può sostenere.
+⇒ Il difetto è di `trust`, non del moat. Resta il candidato più serio della mia fetta.
+
+### 6.4 Il costo reale, aggiornato
+| | |
+|---|---|
+| installazione | 594 s |
+| warmup (necessario perché il prodotto mantenga le promesse) | **190 s** |
+| primo `remember` (dopo warmup: niente download) | ~2 s |
+| **totale dal nulla al primo fatto verificato** | **~13 minuti** |
+
+### 6.5 Una nota di coerenza dei percorsi
+Il data-dir su installazione pulita è `…\home\.verimem`, ma il modello del gate viene scritto in
+`…\home\.engram\models\`. **Due cartelle diverse nella stessa installazione vergine.** Non è un
+difetto funzionale (funziona), ma un utente che volesse cancellare tutto ne troverebbe una sola.
