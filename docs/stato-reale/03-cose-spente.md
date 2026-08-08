@@ -137,7 +137,8 @@ verificato se la legge Claude Code** (che è chi costruisce l'elenco degli strum
 - **87 interruttori su 151 (58%) non li ho misurati.** Il mio metodo interroga solo le funzioni
   senza argomenti che decidono acceso/spento; gli altri interruttori vengono letti dentro funzioni
   più grandi e per misurarli va costruito un caso ciascuno. **NON VERIFICATO.**
-- **La categoria (c) — «gira ma l'effetto non arriva all'utente» — non l'ho misurata in questo
+- ~~La categoria (c) non l'ho misurata~~ → **misurata dopo il primo commit, vedi §⑥ qui sotto.**
+- **(riga originale, tenuta per onestà) La categoria (c) — «gira ma l'effetto non arriva» — non l'ho misurata in questo
   giro.** È quella che tu intendi quando dici «cose spente» ed è la più importante. L'unico caso
   noto è quello che abbiamo trovato ieri (un conflitto viene *rilevato* e il programma tiene
   entrambi i fatti invece di aggiornare), **e non l'ho ri-misurato oggi.** **NON VERIFICATO.**
@@ -169,3 +170,53 @@ python docs/stato-reale/banchi/q_quale.py      # verifica QUALE pacchetto stai m
 
 Gli script sono committati qui accanto e sono di sola lettura: non scrivono niente, non caricano modelli,
 non toccano il database.
+
+---
+
+## ⑥ La categoria (c), misurata — e va riformulata
+
+Dopo il primo commit ho misurato anche la categoria (c), quella che ti sfugge sempre: *«gira, ma
+l'effetto non arriva mai all'utente»*. Il caso di riferimento è quello trovato ieri — un conflitto
+fra due fatti viene **rilevato** e il programma **tiene entrambi** invece di aggiornare.
+
+**Prima ipotesi, mia, ed era sbagliata.** Avevo concluso che quel caso fosse *invisibile per
+disegno*: la registrazione degli eventi annota le sostituzioni **avvenute**, non quelle **non
+avvenute**. Poi ho guardato le righe invece di fidarmi dell'elenco dei nomi, e ho trovato che
+**la traccia esiste**:
+
+    coherence_warning   kind=numeric_clash    details="numbers=[150.0] vs [100.0] sim=0.75"
+    coherence_warning   kind=near_duplicate   details="jaccard=0.75"
+
+⇒ **Il programma segnala l'incoerenza anche quando non aggiorna.** La mia conclusione sarebbe stata
+falsa e l'ho evitata solo guardando due righe.
+
+**Il conto vero:**
+
+    scritture registrate in totale                      8672
+    segnalazioni di incoerenza (coherence_warning)        24     ← lo 0,28%
+        di cui  numeri in conflitto (numeric_clash)       13
+        di cui  quasi-duplicati (near_duplicate)          11
+    segnalazioni SENZA nessuna sostituzione dei due fatti 12
+        ma 11 delle 12 sono LO STESSO caso ripetuto (topic research/rag, jaccard 0.75)
+        una sola è un conflitto numerico vero:  topic lab/m, numbers=[42.0] vs [88.0] sim=0.92
+
+### 🔑 Cosa cambia questo per la tua domanda
+
+La categoria (c) come l'avevamo formulata — *«l'effetto non arriva»* — **non è quello che i dati
+mostrano**. Quello che mostrano è più semplice e più serio:
+
+> **il rilevatore di incoerenze si accende 24 volte su 8672 scritture: lo 0,28%.**
+
+Non è che trova e poi non agisce. **È che quasi non trova.** E i pochi casi registrati vengono da
+argomenti di prova (`research/rag`, `lab/m`, `t`), non da uso reale.
+
+⇒ ⚠️ **Il limite, dichiarato**: 24 casi sono troppo pochi per dire se in uso reale il rilevatore
+sia tarato male o se davvero le incoerenze siano rare. **Su questo resta NON VERIFICATO**, e la
+misura che lo chiuderebbe è confrontare le incoerenze *segnalate* con quelle *presenti* nel corpus
+— che è la fetta di chi misura la qualità del rilevamento, non la mia.
+
+⇒ 📌 **E una nota utile a chi legge la telemetria dopo di me**: l'evento della sostituzione ha un
+campo chiamato `branch`, che sembra dire *quale ramo di codice ha deciso*. **Non lo dice**: su
+**197 eventi su 197** contiene esattamente la stessa stringa del campo `reason`, cioè il testo che
+l'utente ha passato. È un campo diagnostico che ripete l'input — se ci costruisci sopra un'analisi
+dei rami, misuri le parole di chi ha scritto, non il comportamento del programma.
