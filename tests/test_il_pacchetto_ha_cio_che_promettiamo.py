@@ -203,6 +203,58 @@ def test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice():
     )
 
 
+def test_le_dipendenze_che_pubblichiamo_hanno_un_tetto_dove_serve():
+    """Una dipendenza senza tetto pubblica un prodotto che si romperà da solo.
+
+    Il caso vero, e non è ipotetico: `verimem 0.7.0` su PyPI chiede `mcp>=1.0.0` senza
+    limite superiore. `mcp 2.0.0` ha rimosso `Server.list_tools`, che il nostro server
+    usa in 11 punti — quindi **ogni `pip install verimem` da luglio riceve un server MCP
+    che non parte** (`verimem mcp` → AttributeError), mentre tutto il resto della CLI
+    funziona. Il tetto è nel repo dal 29/07 (`bd4ff5ba`) e non è ancora pubblicato:
+    ``docs/stato-reale/02n-il-server-mcp-e-morto-per-chi-installa.md``.
+
+    Il test guarda le dipendenze che DICHIARIAMO, non quelle installate qui: è la riga
+    che finisce nel wheel a decidere cosa riceve l'utente.
+    """
+    testo = (RADICE / "pyproject.toml").read_text(encoding="utf-8")
+    dichiarate = re.findall(r'^\s*"([a-zA-Z0-9_.-]+)([^"]*)"', testo, re.M)
+
+    # Solo le dipendenze la cui API usiamo direttamente e che hanno già rotto una volta.
+    # Deliberatamente corta: un tetto ovunque è un dolore, un tetto qui è memoria.
+    SENSIBILI = {"mcp"}
+    # `set`: `mcp` è dichiarato in tre punti (core + due extra) e senza deduplica il
+    # messaggio diceva ['mcp', 'mcp', 'mcp'], che si legge come tre dipendenze diverse.
+    senza_tetto = sorted({
+        n for n, v in dichiarate
+        if n in SENSIBILI and "<" not in v and "==" not in v and "~=" not in v
+    })
+    assert not senza_tetto, (
+        f"dipendenze sensibili dichiarate senza limite superiore: {senza_tetto}\n"
+        f"una major nuova le romperà nel pacchetto pubblicato, dove non ce ne accorgiamo."
+    )
+
+
+def test_il_server_mcp_si_importa():
+    """La porta degli agenti deve almeno partire.
+
+    Complemento del test qui sopra: quello guarda ciò che dichiariamo, questo ciò che è
+    installato QUI. Se qualcuno si porta in casa una `mcp` incompatibile, questo test lo
+    dice subito invece di lasciarlo scoprire a un utente.
+    """
+    try:
+        import verimem.mcp_server  # noqa: F401
+    except Exception as exc:
+        try:
+            import importlib.metadata as md
+            versione = md.version("mcp")
+        except Exception:  # noqa: BLE001 — la versione è un dettaglio del messaggio
+            versione = "sconosciuta"
+        pytest.fail(
+            f"verimem.mcp_server non si importa con mcp {versione}: "
+            f"{type(exc).__name__}: {exc}"
+        )
+
+
 @pytest.mark.slow
 def test_il_wheel_contiene_i_comandi_del_repo(tmp_path):
     """Ciò che il repo definisce deve arrivare dentro il pacchetto.
