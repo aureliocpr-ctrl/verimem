@@ -38,8 +38,70 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # a tenant writing "5"+" "*60000 stalled the server ~30s per fact. Bounding the
 # whitespace to 3 removes the ReDoS while still matching every real form
 # ("5kg", "5 kg", "5-kg", "5 - kg") — real quantities never have >3 spaces.
+# 2026-08-07 — L'UNITA' ERA IN ASCII, e il difetto e' la CLASSE ② con la sua
+# diagnosi gia' scritta quindici righe piu' sotto. Misurato (ws4, gradino 4):
+#     40 unità -> VUOTA     40 Stück -> VUOTA     40 años -> VUOTA
+#     40 Stueck -> 'stueck'  40 minuti -> 'minuto'          (senza accento: ok)
+# `([A-Za-z]+)` non contiene i diacritici, quindi ogni unita' scritta
+# correttamente nella propria lingua spariva — e sono le PIU' COMUNI del
+# dominio: `Stück` e' il tedesco per «pezzi», l'unita' di magazzino per
+# eccellenza. ⇒ E spiega perche' il tedesco sembrava funzionare: nei banchi
+# avevamo usato tutti «Minuten», «Paletten», «Stunden», il sottoinsieme che si
+# scrive in ASCII.
+# ⚠️ La stessa diagnosi era gia' in questo file dal 2026-08-04 per
+# `content_tokens` («la parola TRONCATA sull'accento — città -> citt»), e non
+# fu applicata qui. La domanda che mancava: *chi ALTRO fa la stessa cosa?*
+# `[^\W\d_]` e' «una lettera di QUALUNQUE alfabeto» — chiude insieme il gradino
+# 2 della mappa (cirillico, greco, arabo: hanno gli spazi come il latino e
+# perdevano l'unita' per la stessa ragione).
+# ⛔ NON tocca il gradino 3 (ZH/JA/TH): li' e' il NUMERO a non essere catturato,
+# perche' i lookaround falliscono in assenza di spazi. Difetto diverso, cura
+# diversa, e allargarlo cambierebbe la cattura in tutte le lingue insieme.
+#
+# 2026-08-07 (secondo giro) — I LOOKAROUND ERANO SU `\w`, E NON E' UN DIFETTO
+# CJK. Isolato da ws1 con l'osservazione che lo rende curabile: `\w` comprende
+# gli ideogrammi MA ANCHE le lettere latine, quindi il difetto e' lo stesso in
+# ogni lingua — in cinese, giapponese e thai colpisce il 100% delle frasi
+# perche' lo spazio non esiste e ogni numero e' preceduto da un ideogramma.
+#     abc300 pallet     -> []          罗维戈仓库500个托盘 -> []
+#     SKU300 pallet     -> []          คลัง500พาเลท        -> []
+# La cura NON toglie il lookbehind, che serve: `SKU300` non contiene 300 pallet
+# e `v1.2` non e' una quantita'. Restringe la classe da «qualunque carattere di
+# parola» a «lettera LATINA, cifra, punto o underscore» — gli identificatori
+# sono scritti in ASCII per costruzione e restano protetti, gli ideogrammi
+# smettono di bloccare. E' mirata, non allarga la cattura in tutte le lingue:
+# era l'avvertimento di ws4 e questo e' il modo di rispettarlo.
+# 🔑 E RIPARA UN DIFETTO CHE NESSUNO CERCAVA, misurato scrivendo il test:
+#     release 3.4.0   prima -> quantita' 3.4    dopo -> nessuna
+#     il file 2.1.3   prima -> quantita' 2.1    dopo -> nessuna
+#   Le versioni a tre componenti entravano nel confronto NUMERICO come decimali,
+#   perche' il lookahead non vedeva il punto che seguiva.
+#
+# ⚠️ IL PUNTO NEL LOOKAHEAD VA QUALIFICATO, e la prima versione di questa cura
+# non lo faceva: `(?![A-Za-z0-9._])` rifiuta il numero seguito da un punto, e
+# quello e' il punto di FINE FRASE. «I fatti superseduti sono 1900.» smetteva di
+# essere una quantita'. Preso da due presidi esistenti in meno di un minuto —
+# il difetto che serve escludere e' `3.4` dentro `3.4.0`, cioe' un punto seguito
+# da una CIFRA, non un punto qualsiasi.
+#
+# ⚠️ E ANCHE IL PUNTO DEL LOOKBEHIND VA QUALIFICATO — isolato da ws1, ed e' la
+# classe di oggi vista DALL'ALTRO LATO: nel parser «attaccato» faceva catturare
+# di troppo, nel gate fa NON riconoscere e boccia un fatto VERO.
+#     fonte «Rilevazione: grad.3 su scala 5, temp.22 gradi» -> solo (5.0)
+#     claim «…riporta grado 3 … e temperatura 22 gradi»     -> assenti [3, 22]
+#     ⇒ L4.1 quarantina un fatto i cui numeri SONO nella fonte.
+# In italiano il punto di abbreviazione davanti a un numero e' una forma
+# corrente: grad.3 · temp.22 · art.15 · pag.7 · n.42 · fig.3 · tot.300 · Nr.5.
+# LA DISTINZIONE E' STRUTTURALE e non chiede una lista di abbreviazioni:
+#     1.2      punto fra due CIFRE         -> decimale/versione: NON catturare
+#     grad.3   punto fra LETTERA e cifra   -> abbreviazione: catturare
+# Il lookbehind diventa «non preceduto da CIFRA-punto» invece di «non preceduto
+# da punto». Misurato: 7/7 recuperati, 7/7 protetti (v1.2, 3.4.0, 2.1.3,
+# 65.61.137.117, 127.0.0.1, SKU300, abc300), 160 proposizioni su 8951 (1,79%).
 _QUANT_RE = re.compile(
-    r"(?<![\w.])(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([A-Za-z]+))?(?![\w])"
+    r"(?<![A-Za-z0-9_])(?<!\d\.)(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
+    r"(?![A-Za-z0-9_])(?!\.\d)",
+    re.UNICODE,
 )
 
 # Function words that can FOLLOW a number but are never units ("30 and 45",
@@ -55,6 +117,32 @@ _QUANT_RE = re.compile(
 # That breaks the contract this module states in numeric_conflict: "precision
 # over recall — a false conflict downgrades a true fact, the opposite of the
 # trust we sell".
+#
+# 2026-08-07 — PERCHE' QUESTA LISTA E' LEGITTIMA, e le liste che questa casa
+# rifiuta no. Non enumera IL MONDO: le unita' di misura sono infinite e nuove
+# ne nascono (pallet, bancali, container, valvole), e una lista che le insegue
+# e' persa in partenza. Enumera le PAROLE FUNZIONALI di una lingua —
+# preposizioni, articoli, congiunzioni — che sono una classe CHIUSA: l'italiano
+# ha una ventina di preposizioni e non ne acquisisce di nuove. Il segnale che
+# era incompleta e non sbagliata sono le sue ASIMMETRIE: `da` senza `a`, `an`
+# senza `a`, `tra`/`fra` senza `contro`.
+#
+# ⛔ UN CRITERIO POSIZIONALE E' STATO PROVATO E RITIRATO, e vale la pena
+# scriverlo perche' e' la strada che sembra piu' elegante — «la parola sta
+# ESATTAMENTE fra due numeri ⇒ non e' un'unita'», zero liste, tutte le lingue.
+# Misurato su entrambe le popolazioni: prende 3 bersagli su 5 («136 contro sub
+# 10» e «7453 verified contro 553» hanno una parola in mezzo e gli sfuggono) e
+# ne rompe DUE veri — «la stanza misura 3 metri 20» perde `metri`, che e' il
+# modo normale di scrivere 3,20 m in italiano, e «300 pallet 45 corsie» perde
+# `pallet`. Copertura minore della lista E un danno che la lista non ha.
+#
+# ⚠️ IL COSTO ACCETTATO, dichiarato: alcune di queste parole sono anche
+# abbreviazioni di unita' — `in` (inches), `at` (atmosfere), `a` (ampere). La
+# scelta era gia' stata fatta da chi ha scritto le prime due righe, e la
+# confermo: l'asimmetria del danno la decide. Una falsa unita' CREA conflitti
+# che non esistono (ws1: 28 conflitti su 30 fra topic diversi, unita' `verified`
+# 38022 contro 9622); un'unita' persa fa MANCARE un conflitto. Il primo e' il
+# danno che stiamo pagando, e il modulo dichiara "precision over recall".
 _NON_UNIT_WORDS = frozenset({
     "and", "or", "to", "of", "in", "on", "at", "by", "for", "the", "an",
     "is", "are", "was", "were", "be", "per", "via", "with", "from", "but",
@@ -68,6 +156,35 @@ _NON_UNIT_WORDS = frozenset({
     "sul", "sullo", "sulla", "sui", "sugli", "sulle",
     "col", "coi", "lo", "le", "gli", "uno", "una", "che", "non", "come",
     "sono", "era", "erano", "ha", "hanno", "piu", "meno",
+    # ── LE DUE ASIMMETRIE (2026-08-07) ────────────────────────────────────
+    # `da` c'era e `a` no; `an` c'era e `a` no. «passa da 33 a 45» dava unita'
+    # `a` al 33 — la preposizione che APRE l'intervallo era coperta, quella
+    # che lo CHIUDE no. Un buco per omissione, non per scelta.
+    "a",
+    # ── LE CONGIUNZIONI DI CONFRONTO, EN·IT·DE·FR·ES ──────────────────────
+    # `tra`/`fra`/`and`/`e` c'erano gia': accostano due numeri e non sono
+    # unita'. Le congiunzioni di CONFRONTO fanno esattamente la stessa cosa
+    # («30 and 45» e «30 vs 45» hanno la stessa struttura) e non c'erano —
+    # ed e' la forma in cui si scrive una MISURA, cioe' il testo che questo
+    # store contiene di piu': misurato da ws1, «7453 verified contro 553».
+    "vs", "versus", "contro", "against", "gegen", "contre", "frente",
+    # ── LE PARTICELLE ITALIANE (2026-08-07, secondo giro) ─────────────────
+    # Misurate sul corpus vivo DOPO l'allargamento della cattura a Unicode:
+    # `ma` 43 occorrenze · `ne` 14 · `si` 10 · `se` 7 su 45381 unita' estratte.
+    # Non ci sono mai state e prima non servivano — con `[A-Za-z]` la cattura
+    # le prendeva gia', ma il difetto restava sotto la soglia di attenzione.
+    # ⚠️ Sono OMOGRAFI accettati consapevolmente, come `in` (inches) e `at`
+    # (atmosfere) che sono in lista dal principio: `si` e' anche il silicio,
+    # `mi` una nota. La scelta e' la stessa e la ragione pure — una falsa unita'
+    # CREA conflitti che non esistono, un'unita' persa ne fa mancare uno.
+    "ma", "ne", "se", "si", "ci", "vi", "mi", "ti", "pero", "quindi",
+    "anche", "solo", "gia", "ancora", "poi", "cioe", "ossia", "ovvero",
+    "puo", "perche", "poiche", "mentre", "dopo", "prima", "quando",
+    # ⚠️ `i` MANCAVA, ed e' la terza asimmetria della stessa lista trovata
+    # oggi: c'erano `il` `lo` `la` `le` `gli` `un` `uno` `una` e non `i`, come
+    # c'erano `da` e non `a`, `an` e non `a`. «sono gia' 200 i fatti» dava
+    # unita' `i`. Le liste non si sbagliano in blocco: perdono UNA voce.
+    "i",
 })
 
 #: No real unit of measure ends in ``-ly`` (EN) or ``-mente`` (IT): ms, kg, min,
@@ -232,14 +349,71 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
 
 
 def norm_unit(word: str) -> str:
-    """Canonicalise a unit word (synonyms + plural/`-ies` singularisation)."""
+    """Canonicalise a unit word (synonyms + plural/`-ies` singularisation).
+
+    ⚠️ I DIACRITICI SI NORMALIZZANO, non si elencano (2026-08-07): chi scrive
+    «unità» e chi scrive «unita» misura la stessa grandezza, e se restano due
+    unita' diverse due fatti sullo stesso magazzino non si confrontano mai.
+    Stessa scelta — e stessa motivazione scritta — di `temporal_context`, che
+    normalizza invece di tenere una lista di varianti accentate: «questa casa ha
+    gia' pagato tre volte per due elenchi che divergono».
+    ⚠️ Il tedesco fa eccezione e non e' un dettaglio: `ü` si traslittera in `ue`,
+    non in `u` — «Stück» e «Stueck» sono la STESSA parola scritta da due
+    tastiere diverse, ed e' la forma che si trova nei sistemi gestionali.
+    """
     w = (word or "").lower()
     if w in _UNIT_SYN:
         return _UNIT_SYN[w]
+    piano = _senza_diacritici(w)   # `w` e' gia' .lower()
+    if piano != w and piano in _UNIT_SYN:
+        return _UNIT_SYN[piano]
+    if piano != w:
+        w = piano
     if len(w) > 3 and w.endswith("ies"):
         return w[:-3] + "y"
     if len(w) > 3 and w.endswith("s"):
         return w[:-1]
+    # IL PLURALE NON E' SOLO INGLESE. Censito da ws4 sul mandato lingue:
+    #     EN  minute -> min      minutes -> min        ok
+    #     FR  minute -> min      minutes -> min        ok  <- per caso, parola uguale
+    #     ES  minuto -> minuto   minutos -> minuto     ok  <- per caso, plurale in -s
+    #     IT  minuto -> minuto   minuti  -> minuti     DUE UNITA' DIVERSE
+    #     DE  Minute -> min      Minuten -> minuten    idem
+    # Le tre lingue che funzionavano funzionavano PER CASO, e non era una
+    # scelta di nessuno: era il bordo di una regola scritta per una lingua sola.
+    # Costo: due fatti sulla stessa grandezza non condividono l'unita', quindi
+    # un conflitto vero puo' sfuggire, e `L4.2` (il vicinato) eredita il bordo
+    # perche' sta a valle — «45 Minuten» contro «30 Minuten» e' il caso di ws4.
+    #
+    # NON UNA LISTA DI PAROLE, che crescerebbe con le lingue del mondo: i
+    # plurali si formano con SUFFISSI, e sono una manciata. E' morfologia.
+    #
+    # ⛔ IL PLURALE ITALIANO IN «-e» E' STATO PROVATO E TOLTO, ed e' il limite
+    # che questa cura DICHIARA invece di nascondere: «-e» segna il plurale di un
+    # femminile italiano («cassa»->«casse») ma anche il SINGOLARE di quasi ogni
+    # unita' di tempo tedesca («Stunde», «Minute», «Woche»). Applicandolo,
+    # «Stunde» diventava «stunda» — cioe' per curare un plurale italiano
+    # rompevo il singolare tedesco. Senza sapere in che lingua e' scritto il
+    # testo le due regole si contraddicono, e non si sceglie a caso quale
+    # lingua servire. Restano coperti «-i» (IT) e «-en» (DE), che non
+    # collidono con niente; «cassa/casse» e «ora/ore» restano scoperti, ed e'
+    # il prezzo dichiarato.
+    # ⚠️ Si MAPPA al singolare invece di TRONCARE: troncare accorcia anche
+    # parole che plurali non sono e fa collassare unita' distinte («ora»/«oro»
+    # su «or»), che sarebbe peggio del difetto curato. La lunghezza minima
+    # protegge le parole corte, dove un suffisso e' quasi tutta la parola.
+    if len(w) > 3:
+        # ⚠️ Si RIPASSA dal dizionario dopo aver tolto il suffisso: senza,
+        # «Minuten» diventava «minute» e si fermava li', mentre «Minute» era
+        # gia' nel dizionario e usciva «min» — due forme della stessa unita'
+        # separate dall'ultimo passo, che e' il difetto che si sta curando.
+        radice = None
+        if w.endswith("en"):       # DE: Minuten->minute, Stunden->stunde
+            radice = w[:-1]
+        elif w.endswith("i"):      # IT: minuti->minuto, giorni->giorno
+            radice = w[:-1] + "o"
+        if radice:
+            return _UNIT_SYN.get(radice, radice)
     return w
 
 
@@ -349,18 +523,158 @@ def claim_span(text: str) -> str:
     return text
 
 
+#: Gli apostrofi che la gente scrive davvero: l'ASCII e il TIPOGRAFICO U+2019,
+#: che e' quello che producono Word, iOS e i modelli di linguaggio. Guardare
+#: solo il primo coprirebbe il testo battuto a mano e non quello che questo
+#: store riceve.
+_APOSTROFI = "'’ʼ"
+
+#: Le vocali che possono seguire un'elisione. `y` non c'e': in italiano non e'
+#: una vocale, e in inglese non segue mai un apostrofo di elisione.
+_VOCALI_DOPO_ELISIONE = frozenset("aeiouAEIOUàèéìòùÀÈÉÌÒÙáéíóúÁÉÍÓÚäöüÄÖÜâêîôûëï")
+
+
+def _e_una_forma_elisa(testo: str, fine_unita: int) -> bool:
+    """La presunta unita' che finisce a *fine_unita* e' il moncone di una parola
+    ELISA («120 **l'**anno», «40 **all'**ora»)?
+
+    🔑 LA REGOLA E' GRAMMATICALE, e per questo non ha bisogno di liste::
+
+        apostrofo + VOCALE      -> elisione (IT/FR)   l'anno · all'ora · d'entre
+        apostrofo + «s»/spazio  -> genitivo (EN)      days' notice · day's work
+
+    L'elisione italiana **esiste solo davanti a vocale** — e' la sua
+    definizione — mentre il genitivo sassone non e' mai seguito da una vocale.
+    Le due popolazioni non si toccano, e la regola vale per ogni parola elisa
+    senza enumerarne nessuna: le elisioni sono una classe aperta (all', dell',
+    nell', dall', sull', coll', l', un', quest', d', qu'…) e in francese lo sono
+    ancora di piu'.
+
+    ⚠️ E' LA META' CHE MANCAVA A `_NON_UNIT_WORDS`: quella lista copre le
+    preposizioni PIENE («nel tracker», «del piano») e nessuna elisa. La cura del
+    2026-07-25 aveva chiuso meta' della stessa classe.
+
+    ⛔ PERCHE' NON UNA LISTA. Il moncone piu' dannoso e' ``l``, che **e'
+    un'unita' vera**: il litro. Mettendolo fra le non-unita' «la tanica contiene
+    120 l» perderebbe la sua unita'. La popolazione opposta esclude la lista e
+    lascia solo il criterio posizionale.
+    """
+    if fine_unita <= 0 or fine_unita >= len(testo):
+        return False
+    if testo[fine_unita] not in _APOSTROFI:
+        return False
+    dopo = fine_unita + 1
+    # apostrofo a fine testo, o seguito da spazio -> genitivo sassone plurale
+    # («a 3 days' notice»), non un'elisione: l'unita' e' vera e resta.
+    return dopo < len(testo) and testo[dopo] in _VOCALI_DOPO_ELISIONE
+
+
+#: Le parole che INTRODUCONO una data. Preposizioni e articoli — classe chiusa,
+#: come `_NON_UNIT_WORDS`: nessuna lingua ne acquisisce di nuove. EN·IT·DE·FR·ES.
+_INTRODUCE_UN_ANNO = frozenset({
+    "nel", "nell", "del", "dell", "dal", "dall", "al", "all", "il", "l",
+    "entro", "da", "a", "di", "fino", "verso", "circa", "anno", "anni",
+    "in", "on", "by", "since", "until", "till", "from", "the", "of", "for",
+    "year", "fy", "ab", "seit", "bis", "im", "jahr", "vom", "zum",
+    "en", "depuis", "jusqu", "an", "annee", "année", "desde", "hasta", "ano",
+})
+
+
+def _nomi_di_mese() -> frozenset[str]:
+    """I nomi di mese, PRESI DA `temporal_context` invece che ricopiati qui.
+
+    ⚠️ E' la classe ① — «una copia invece della superficie unica» — e questa
+    casa la paga a ogni giro: due liste di mesi divergono al primo che ne
+    estende una sola. `temporal_context._MONTHS` e' gia' EN·IT·DE·FR·ES ed e'
+    la lista che il percorso delle date usa davvero; se domani qualcuno la
+    estende, questo criterio si estende con lei.
+
+    L'import e' pigro e non crea ciclo: `temporal_context` importa solo la
+    libreria standard. Il costo e' un dizionario letto una volta.
+    """
+    global _MESI_CACHE
+    if _MESI_CACHE is None:
+        try:
+            from .temporal_context import _MONTHS
+            _MESI_CACHE = frozenset(str(k).lower() for k in _MONTHS)
+        except Exception:      # pragma: no cover — il criterio degrada, non rompe
+            _MESI_CACHE = frozenset()
+    return _MESI_CACHE
+
+
+_MESI_CACHE: frozenset[str] | None = None
+
+
+def _introdotto_da_una_parola_temporale(testo: str, inizio_numero: int) -> bool:
+    """Il numero a quattro cifre che comincia a *inizio_numero* e' una DATA
+    («scade **nel** 2027») o un CONTEGGIO («i superseduti **sono** 1900»)?
+
+    🔑 LA DISTINZIONE E' NEL VICINATO, ed e' la stessa forma di criterio che ha
+    retto su L4.2: guardare la parola ATTACCATA al numero invece del numero.
+    Misurata sulle due popolazioni, 9/9 e 7/7::
+
+        ANNI      nel · il · dal · al · in · ab · en · since   preposizioni/articoli
+        CONTEGGI  sono · totali · contiene · restano · are     verbi/sostantivi
+
+    ⚠️ PERCHE' SERVE, e non e' un dettaglio di forma. `YEAR_RE` scarta ogni
+    numero fra 1000 e 2100 che non abbia un'unita' accanto, e nei referti di
+    misura quei numeri sono la norma: le fonti sono output di script — tabelle,
+    colonne, `chiave=valore` — dove il numero sta a fine riga senza unita'.
+    Costo misurato da ws4: dei quarantinati di agosto con grounding **sopra 90**
+    (cioe' che il moat APPROVA), 20 su 21 portano L4.1/L4.2, e fra loro c'e' il
+    referto che misurava il gate, quarantinato dal gate.
+
+    E il danno era su DUE lati, non uno: oltre ai falsi positivi, «i superseduti
+    sono 1900» con una fonte che dice 1805 **non veniva fermato** — il numero
+    inventato spariva prima di essere confrontato. Stessa causa, esiti opposti.
+
+    📌 L'esclusione degli anni resta dove serve: «il contratto scade nel 2027»
+    non e' un dettaglio numerico inventato, e le date hanno un percorso loro.
+    """
+    testa = testo[:inizio_numero].rstrip(" \t-–—")
+    if not testa:
+        return False              # numero a inizio testo: nessun introduttore
+    if testa[-1] in ".;:!?\n":
+        return False              # inizio di frase o cella di tabella
+    m = re.search(r"([^\W\d_]+)$", testa, re.UNICODE)
+    if m is None:
+        return False
+    parola = m.group(1).lower()
+    return parola in _INTRODUCE_UN_ANNO or parola in _nomi_di_mese()
+
+
 def extract_quantities(text: str) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
     (provenance after an evidence marker is not measured); bare YEARS excluded."""
     out: set[tuple[str, float]] = set()
-    for m in _QUANT_RE.finditer(claim_span(text)):
+    claim = claim_span(text)
+    for m in _QUANT_RE.finditer(claim):
         num_s, unit_s = m.group(1), (m.group(2) or "")
-        _u = unit_s.lower()
+        if unit_s and _e_una_forma_elisa(claim, m.end(2)):
+            unit_s = ""   # «120 l'anno» non contiene litri
+        # ⚠️ SI CONFRONTA LA FORMA NORMALIZZATA, NON QUELLA SCRITTA — la cura e'
+        # una riga ed e' di ws4, che ha misurato il difetto sul corpus reale
+        # (66 fatti su 5874 guadagnavano un'unita' che non lo era):
+        #     'e' in _NON_UNIT_WORDS -> True    norm_unit('e') -> 'e'
+        #     'è' in _NON_UNIT_WORDS -> False   norm_unit('è') -> 'e'
+        # Il filtro vedeva la forma ACCENTATA e la normalizzazione arrivava
+        # dopo, quindi «è», «già», «perché», «può» diventavano unita' di misura.
+        # 🔑 E LA CAUSA PRIMA E' MIA: `_NON_UNIT_WORDS` era completa PER
+        # COSTRUZIONE finche' il regex catturava solo `[A-Za-z]` — le parole
+        # accentate non ci arrivavano nemmeno. Allargando la cattura a «una
+        # lettera di qualunque alfabeto» (5e78549a) ho reso incompleta una lista
+        # che nessuno aveva sbagliato. ⇒ Una cura che allarga un input rende
+        # incomplete tutte le liste A VALLE, e quelle liste non sembrano
+        # difettose perche' per anni non lo erano: e' la classe ② vista dal lato
+        # opposto — non «chi altro fa la stessa cosa?» ma «chi RICEVE cio' che
+        # ho appena allargato?».
+        _u = _senza_diacritici(unit_s.lower())
         if _u in _NON_UNIT_WORDS or (len(_u) > 3
                                      and _u not in _FREQUENCY_UNITS
                                      and _u.endswith(_ADVERB_SUFFIXES)):
             unit_s = ""  # a following function word / adverb is not a unit
-        if not unit_s and YEAR_RE.fullmatch(num_s):
+        if (not unit_s and YEAR_RE.fullmatch(num_s)
+                and _introdotto_da_una_parola_temporale(claim, m.start(1))):
             continue  # bare year → year path, not a quantity
         try:
             val = float(num_s)
@@ -408,7 +722,25 @@ _PAROLA_RE = re.compile(r"[^\W\d_]{4,}", re.UNICODE)
 
 
 def _senza_diacritici(text: str) -> str:
-    """«città» -> «citta»: la stessa parola, una grafia sola."""
+    """«città» -> «citta»: la stessa parola, una grafia sola.
+
+    ⚠️ NON ABBASSA — il chiamante passa il testo gia' in minuscolo. Sembra un
+    dettaglio e il 2026-08-07 e' costato una regressione: avevo scritto una
+    SECONDA `_senza_diacritici` in cima al modulo, che abbassava, e Python
+    tiene l'ULTIMA definizione. Le mie due chiamate ne usavano una che non
+    conoscevo: «0.709 e alto» era filtrato e «0.709 E alto» no. Isolata da ws4
+    a una riga. ⇒ La cura non e' stata scegliere quale tenere: e' stato
+    CANCELLARE il duplicato. Due funzioni con lo stesso nome sono la classe ①
+    di questa casa — una copia invece della superficie unica — e la domanda che
+    mi mancava e' la piu' semplice: *esiste gia'?* Un `grep` prima di scrivere.
+
+    ⚠️ E IL LIMITE, che vale per entrambe le chiamate: le TRASLITTERAZIONI non
+    sono accenti caduti. Chi non ha l'umlaut scrive «Stueck», non «Stuck», e
+    nei gestionali tedeschi quella e' la forma corrente. Qui «Stück» e «Stuck»
+    si uniscono, «Stueck» resta a parte: unirla richiederebbe la regola inversa
+    `ue -> u`, che romperebbe ogni parola in cui `ue` sta per se stesso. Provata
+    la traslitterazione inversa come forma canonica: sposta solo il problema.
+    """
     return "".join(c for c in unicodedata.normalize("NFKD", text)
                    if not unicodedata.combining(c))
 
@@ -632,8 +964,44 @@ def numeric_conflict(
 # anywhere; 2-component ("2.3") only counts near a version keyword, else it
 # is a decimal quantity ("2.3 degrees") and belongs to the numeric path.
 _VERSION3_RE = re.compile(r"(?<![\w.])v?(\d+(?:\.\d+){2,})(?!\w)(?!\.\d)")
+# 2026-08-07 — LA PAROLA CHIAVE ERA IN INGLESE, e le altre lingue maggiori si
+# salvavano PER SOMIGLIANZA invece che per copertura. Misurato:
+#     EN runs version 2.1      -> {'2.1'}   DE laeuft Version 2.1     -> {'2.1'}
+#     FR la version 2.1        -> {'2.1'}   ES la version 2.1         -> {'2.1'}
+#     IT monta la versione 2.1 -> set()   🔴  DE Versionen / ES versiones 🔴
+# ⇒ non cadeva «una lingua»: cadeva ogni forma DECLINATA. L'italiano declina
+#   sempre («versione»), le altre solo al plurale — e l'unica lingua che non
+#   funzionava mai e' quella in cui questo store e' scritto.
+# COSTO, e il livello a cui e' misurato e' dichiarato perche' la mia prima
+# versione di questa riga era piu' ambiziosa del dato:
+#     version_conflict IT   riga vecchia: None   con la cura: ('2.1','3.4')
+#     lexical_conflict IT   riga vecchia: None   con la cura: ('version','2.1 vs 3.4')
+# ⇒ IL BENEFICIO DIMOSTRATO E' IL RILEVAMENTO. Due fatti italiani sulla stessa
+#   cosa a due versioni diverse non producevano NESSUN conflitto, ne' dal
+#   detector ne' dal composto che sta a valle.
+# ⚠️ NON e' dimostrata la supersessione: sul banco end-to-end (Client.add, store
+#   isolato, stesso topic e topic diversi) il numero di fatti vivi e' IDENTICO
+#   con e senza la cura — 1 e 1, poi 2 e 2. A stesso topic il vecchio veniva
+#   gia' ritirato da un'altra via; a topic diversi non lo ritira nessuna delle
+#   due. Che il conflitto sia RILEVATO e non produca supersessione in `add()` e'
+#   una domanda aperta, non un difetto dimostrato: non l'ho inseguita qui.
+# 📌 E' la regola di casa applicata a me stesso: regex interna < funzione
+#   pubblica < porta che il prodotto usa, e ogni salto puo' ribaltare. Il primo
+#   commit di questa cura dichiarava «il vecchio resta vivo accanto al nuovo»
+#   misurandolo al secondo livello e scrivendolo come se fosse il terzo.
+# LA CURA E' LA RADICE, non l'elenco delle lingue: tutte le romanze e le
+# germaniche prendono la parola dal latino *versio*, e un suffisso libero copre
+# version(s) · versione · versioni · versionen · versión · versiones ·
+# versioning, comprese le lingue che nessuno di noi parla.
+# ⚠️ PERCHE' `version` E NON `versi`, che sarebbe piu' corta e coprirebbe anche
+#   il portoghese in un colpo: in italiano «versi» sono le righe di una poesia
+#   («i versi 2.3 sono i piu' belli»). L'omografo decide la forma della radice,
+#   e il portoghese va elencato a parte. E' la lezione di ws4 su «ora».
+# ⛔ `release` e `build` NON sono stati estesi: sono prestiti che ogni lingua
+#   tecnica usa in inglese. La parola che le lingue traducono davvero e' *version*.
 _VERSION2_KW_RE = re.compile(
-    r"\b(?:version|versions|release|releases|build|builds|v)[\s:]{0,3}"
+    r"\b(?:vers(?:ion\w*|ión\w*|ão|ões|ao|oes)|release|releases|build|builds|v)"
+    r"[\s:]{0,3}"
     r"(\d+\.\d+(?:\.\d+)*)(?!\w)(?!\.\d)",
     re.IGNORECASE,
 )
@@ -654,13 +1022,72 @@ _VERSION_CARRIER_TOKENS = frozenset({"version", "release", "build"})
 
 _CAPS_NAME_RE = re.compile(r"\b[A-Z][a-zA-Z]{2,}\b")
 
+#: L'inizio di una frase, dove la maiuscola e' punteggiatura e non un nome.
+_APRE_LA_FRASE_RE = re.compile(r"(?:^|[.;:!?\n]\s*|^\s*[-•*]\s*)([A-Z][a-zA-Z]{2,})")
+
+def _nomi_propri(testo: str) -> set[str]:
+    """Le parole maiuscole di *testo* che sono davvero NOMI PROPRI.
+
+    ⛔ IL DIFETTO CURATO (2026-08-07). La firma era `[A-Z][a-zA-Z]{2,}` — una
+    maiuscola e due lettere — e in italiano la soddisfano tutte le parole che
+    APRONO una frase::
+
+        «Sul corpus reale…» vs «Dopo la cura…»   -> soggetti «Sul» e «Dopo»
+        «ASSUNTO che…»      vs «CONFERMATA la…»  -> soggetti urlati
+
+    Due frasi che cominciano con parole diverse avevano «nomi propri disgiunti»
+    e la guardia concludeva che parlassero di cose diverse: un veto che scatta
+    sulla punteggiatura. Misurato in indipendenza da ws1 (5120 conflitti su
+    21151, 24,2%) e da ws4 (147 coppie vere, 26,5%) — due stime che convergono.
+
+    IL CRITERIO E' DI ws4, ed e' raro perche' migliora ENTRAMBE le popolazioni
+    insieme: sulle 147 coppie vere toglie 22 falsi soggetti E AGGIUNGE 5
+    protezioni su coppie con sovrapposizione mediana 3,9% — ritiri quasi
+    certamente sbagliati che oggi passano. I casi protetti scendono da 39 a 22.
+
+    ⚠️ NON E' POSIZIONALE PURO, ED E' IL CORPUS REALE A ESIGERLO. La lettura
+    ovvia del criterio — «scarta la parola che apre la frase» — l'ho misurata
+    sugli 8865 fatti dello store: **il 72% delle proposizioni apre con una
+    maiuscola**, e le piu' frequenti sono `PYTEST` 268, `Orin` 149, `OMNEX` 119,
+    `VERIMEM` 103, `Lab`, `MASTER`, `User`, `Pattern` — nomi propri veri.
+    Scartare per posizione spegnerebbe la guardia proprio sui soggetti piu'
+    ricorrenti del corpus. La parola cade solo se apre la frase **ed e' anche
+    una parola funzionale**, cioe' se non puo' essere un nome in nessuna lettura.
+
+    MISURATO sul corpus, entrambe le popolazioni::
+        aperture maiuscole            6420
+          scartate (funzionali)        794  12,4%   Per Non DEI GLI UNA COME Nel
+          tenute   (candidati nome)   5626  87,6%   OMNEX HippoAgent Episodes
+
+    ⚠️ La lista NON e' `composer._ARTICOLI_TUTTI`, che era la strada proposta e
+    l'ho verificata prima di prenderla: ha 20 voci — il, la, the, el… — e non
+    contiene NESSUNA delle parole del referto (`sul`, `dopo`, `assunto`,
+    `questo`: tutte assenti). Gli articoli non aprono le frasi di questo store:
+    le aprono le PREPOSIZIONI, che stanno in `_NON_UNIT_WORDS`.
+
+    ⚠️ DUE LIMITI APERTI E DICHIARATI, che sono la stessa firma troppo larga:
+      · NON VEDE `S-007`, `SRV-12`, `L-45` — cifra e trattino, e nei domini veri
+        (macchine, lotti, ticket, server) sono LA norma. Allargare alle cifre
+        farebbe entrare versioni e date come soggetti (controipotesi di ws4).
+      · CONTA GLI ACRONIMI — `RAM`, `CPU`, `API`. Effetto oggi benigno (uniscono
+        due frasi che parlano della stessa cosa) ma la firma e' la stessa.
+      · `_NON_UNIT_WORDS` e' piu' ricca in italiano che in inglese, quindi
+        `This`, `All`, `Across`, `Multiple` in apertura restano contati come
+        nomi. Si vede nel campione delle 5626 tenute: la cura toglie i falsi
+        soggetti italiani e lascia quelli inglesi.
+    """
+    testo = testo or ""
+    apre = {m.group(1) for m in _APRE_LA_FRASE_RE.finditer(testo)}
+    return {w for w in _CAPS_NAME_RE.findall(testo)
+            if not (w in apre and w.lower() in _NON_UNIT_WORDS)}
+
 
 def _named_subjects_disjoint(text_a: str, text_b: str) -> bool:
     """True when BOTH statements name capitalized subjects and the two sets
     are fully disjoint ("Orion ..." vs "Zephyr ...") — different named
     things, so a differing version/date between them is NOT a conflict."""
-    ca = set(_CAPS_NAME_RE.findall(text_a or ""))
-    cb = set(_CAPS_NAME_RE.findall(text_b or ""))
+    ca = _nomi_propri(text_a)
+    cb = _nomi_propri(text_b)
     return bool(ca) and bool(cb) and not (ca & cb)
 
 
