@@ -38,10 +38,11 @@ whether you should upgrade is the first.
   source in June and kept riding along inside the published package: the 0.7.0
   wheel on PyPI contains it (verified by downloading the artifact — 397 modules,
   `verimem/rerank.py` among them), because it survives in a stale local `build/`
-  directory and setuptools packs what it finds there. The 0.7.5 wheels are built
-  clean and match the repository exactly: **384 modules in the wheel, 384 in git,
-  nothing extra and nothing missing.** Nothing imported it, so no behaviour
-  changes — but the package no longer carries code that the source deleted.
+  directory and setuptools packs what it finds there. The 0.7.5 wheel is built
+  clean and matches the repository exactly: **no module in the wheel that is not
+  in git, and none missing — checked at both depths** (top level and
+  subpackages). Nothing imported it, so no behaviour changes — but the package
+  no longer carries code that the source deleted.
 
 ### Added
 
