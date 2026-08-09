@@ -1,142 +1,157 @@
 """«Lo stipendio è 45.000 euro» contro una fonte che dice «45 euro»: AMMESSO.
 
-IL DIFETTO, ed è il peggiore che questo prodotto possa avere: il gate non tace e
-non accusa a torto — **certifica come vero un fatto che la fonte contraddice di
-mille volte**. Trovato la notte del 09→10/08 in tre, e nessuno leggendo il codice.
+IL DIFETTO — il peggiore che questo prodotto abbia avuto, trovato la notte del
+09→10/08 in tre e da nessuno leggendo il codice. Il gate non taceva e non
+accusava a torto: **certificava come vero un fatto che la fonte contraddice di
+mille volte**, perché ``float("45.000")`` dà ``45.0``::
 
-LA MECCANICA, misurata::
+    claim «45.000 euro» -> 45.0 ·  fonte «45 euro» -> 45.0 ·  45.0 == 45.0 -> ok
 
-    _QUANT_RE.finditer("45.000 euro")  ->  [('45.000', 'euro')]
-    float("45.000")                    ->  45.0        ← non 45000
-    la fonte «45 euro»                 ->  45.0
-    45.0 == 45.0  ⇒  nessuna obiezione ⇒  **admitted**
+La causa prima è che il punto è ANCHE il separatore decimale inglese, quindi il
+pattern lo accetta volentieri e ``float`` restituisce un numero CREDIBILE e
+falso. Delle quattro notazioni che rompono l'estrattore (virgola migliaia,
+virgola decimale, spazio del SI, punto) questa è l'unica che CERTIFICA: le altre
+spezzano il numero, un pezzo non sta nella fonte, e il layer protesta — rumorose
+ma oneste. 🔑 **La classe più pericolosa è quella che somiglia di più a una
+notazione valida.**
 
-Il punto è ANCHE il separatore decimale inglese, quindi la regex lo accetta
-volentieri e ``float`` restituisce un numero credibile. È la ragione per cui
-questa classe è la più pericolosa delle quattro: **somiglia a una notazione
-valida**. Le altre tre (virgola migliaia, virgola decimale, spazio) SPEZZANO il
-numero, uno dei pezzi non sta nella fonte, e il layer protesta — con messaggi
-assurdi, ma il fatto non entra come verificato.
+📊 SUL CORPUS REALE (ws8, semantic.db in mode=ro, 9365 proposizioni): la classe
+pericolosa è **100 · 1,07%**, l'invisibile («1.500.000» → ``[]``) è **2 · 0,02%**
+— CINQUANTA A UNO. Le righe sono nostre: «102.913 LOC» letto 102.9, «16.300+
+test pytest verdi» letto 16.3 in tre fatti diversi. ⚠️ ws8 ha letto 6 righe su
+100, non tutte.
 
-📊 QUANTO È GRANDE, misurato da ws8 sul corpus reale (`semantic.db` in mode=ro,
-9365 proposizioni, ore 00:06 del 10/08)::
+═══ LA CURA È IN DUE PEZZI, E IL PRIMO DA SOLO NON BASTA ═══
 
-    PERICOLOSA  un solo gruppo   «1.500» letto 1.5     100 · 1,07%
-    INVISIBILE  due o più gruppi «1.500.000» -> []       2 · 0,02%
-                                                  ⇒ CINQUANTA A UNO
+① ``_PUNTO_AMBIGUO`` — sui numeri ambigui NON si emette un valore. Non «vale
+   45000», non «vale 45»: si tace sul VALORE, l'unica cosa che si sa per certo
+   essere sbagliata. ⚠️ NON è disambiguare: «12,450» vale 12450 in inglese e
+   12,45 in italiano, e indovinare significherebbe confrontare due valori diversi
+   credendoli uguali — un difetto SILENZIOSO, peggiore di quello curato.
 
-E le righe sono NOSTRE: «102.913 LOC» letto 102.9 · «16.300+ test pytest verdi»
-letto 16.3 (in tre fatti diversi) · «145.000» letto 145.0. Un fatto che dice
-16.300 test viene confrontato come se dicesse 16,3: se una fonte qualsiasi
-contenesse «16.3», quel claim risulterebbe CONFERMATO.
+② ``numeri_ambigui`` + il warning ``L4.1-ambiguo`` — perché ① da solo **sposta**
+   il difetto invece di chiuderlo. Misurato subito dopo averlo scritto::
 
-⚠️ LIMITE DICHIARATO DA ws8: ha letto 6 righe su 100, non tutte.
+       prima di ①   «45.000» contro «45»  -> AMMESSO (confronto falso)
+       dopo ① solo  «45.000» contro «45»  -> AMMESSO (nessun confronto)
 
-🔑 IL CRITERIO, misurato 9/9 su un banco di plausibilità: un numero è AMBIGUO se
-ha tre cifre dopo il punto, la parte intera non è ``0`` e non supera tre cifre.
-Le due osservazioni che lo rendono preciso:
+   Per chi legge il fatto le due cose sono identiche. L'ha imposto ws8 smentendo
+   la prima proposta: *«togliere l'accusa non distingue le due popolazioni: i
+   falsi negativi nascono convertendo i veri positivi in silenzio»*. La regola,
+   dal MEMORY.md: *«un avviso non ha bisogno della popolazione opposta, un veto
+   sì»*. Il fatto entra, ma **smette di mentire sul proprio stato**.
 
-  · ``0.250`` NON può essere migliaia — «zero mila duecentocinquanta» non esiste
-    in nessuna convenzione ⇒ i millesimi e le tolleranze si salvano
-  · un gruppo di migliaia ha ESATTAMENTE tre cifre ⇒ ``3.1416`` è decimale certo
+Il criterio (9/9 su un banco di plausibilità, confermato sul corpus da ws8):
+ambiguo = tre cifre dopo il punto, parte intera ≠ 0 e non più lunga di tre cifre.
+Le due osservazioni che lo rendono preciso salvano dei decimali veri: ``0.250``
+non può essere migliaia («zero mila duecentocinquanta» non esiste) e un gruppo di
+migliaia ha ESATTAMENTE tre cifre, quindi ``3.1416`` è decimale certo.
 
-Sui veri ambigui la regola NON è indovinare: è **non emettere un valore**. Non
-«vale 45000», non «vale 45»: tacere sul VALORE, che è l'unica cosa che oggi si sa
-per certo essere sbagliata.
-
-⛔ E QUESTO FILE È IL RED, non la cura. La cura tocca ``extract_quantities``, che
-serve a quantity_match, facts_conflict, valore_non_nella_fonte e
-vicinato_del_valore: va fatta con la suite verde davanti, non all'una di notte su
-un perimetro raddoppiato in un'ora.
+COSTO DICHIARATO: ``3.141`` (pi greco) diventa non misurabile, ed è corretto — in
+un testo italiano quel numero è tremilacentoquarantuno. Sul corpus di casa il
+costo è zero: nelle righe lette da ws8 nessuna era un decimale legittimo.
 """
 from __future__ import annotations
 
+import os
+import tempfile
+
 import pytest
 
-from verimem.quantity_match import extract_quantities
+from verimem.quantity_match import extract_quantities, numeri_ambigui
 from verimem.valore_non_nella_fonte import valori_non_nella_fonte
 
 FONTE_45 = "Contratto: lo stipendio annuo e' 45 euro."
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "IL DIFETTO, non ancora curato: il gate certifica come vero un claim che la "
-    "fonte contraddice di mille volte. Xfail STRICT apposta — il giorno che la "
-    "cura entra, questo test diventa XPASS e la suite lo segnala: e' il modo di "
-    "non dimenticarsene."))
-def test_IL_DIFETTO_un_numero_mille_volte_piu_grande_viene_ammesso():
-    """IL CUORE. «45.000 euro» (quarantacinquemila) contro «45 euro»
-    (quarantacinque) deve essere FERMATO. Oggi passa."""
-    assenti = valori_non_nella_fonte("Lo stipendio annuo e' 45.000 euro.", FONTE_45)
-    assert assenti, (
-        "il gate ha AMMESSO un claim che la fonte contraddice di 1000x: "
-        "45.000 e 45 vengono letti entrambi 45.0")
+def test_IL_CUORE_il_valore_falso_non_viene_piu_prodotto():
+    """Il difetto era qui: «45.000» valeva 45.0, e il gate lo confrontava."""
+    assert extract_quantities("45.000 euro") == set()
+    assert not valori_non_nella_fonte("Lo stipendio annuo e' 45.000 euro.", FONTE_45)
 
 
-def test_CONTROLLO_NEGATIVO_lo_stesso_confronto_senza_separatore_e_preso():
-    """⚠️ LA POPOLAZIONE OPPOSTA, ed è quella che dimostra che il layer FUNZIONA:
-    tolto il punto, lo stesso identico confronto viene preso.
+def test_IL_CUORE_ma_il_numero_NON_verificato_viene_DICHIARATO():
+    """⚠️ LA META' CHE ws8 HA IMPOSTO. Senza questa, la cura sposta il difetto:
+    il fatto entrerebbe lo stesso, e chi legge non saprebbe che quel numero non
+    è stato confrontato con niente."""
+    assert numeri_ambigui("Lo stipendio annuo e' 45.000 euro.") == ["45.000"]
 
-    Senza questo controllo il test sopra si leggerebbe come «il layer è rotto»,
-    mentre il layer è sano e il difetto sta in COME viene letto il numero."""
+
+def test_LA_PORTA_il_gate_emette_l_avviso_e_NON_quarantina(tmp_path, monkeypatch):
+    """END-TO-END: è un AVVISO, non un veto. Il fatto entra — e lo dice."""
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
+    from verimem.client import Client
+
+    r = Client().add("Lo stipendio annuo e' 45.000 euro.", topic="t", source=FONTE_45)
+    layers = [w.get("layer") for w in (r.get("warnings") or [])]
+    assert "L4.1-ambiguo" in layers, f"nessun avviso: {r.get('warnings')}"
+    assert r.get("status") != "quarantined", "deve essere un avviso, non un veto"
+
+
+def test_CONTROLLO_POSITIVO_un_fatto_senza_numeri_ambigui_non_riceve_rumore(
+        tmp_path, monkeypatch):
+    """⚠️ LA POPOLAZIONE OPPOSTA. Un avviso che compare sempre è rumore, e il
+    rumore fa smettere di leggere proprio quando conta."""
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
+    from verimem.client import Client
+
+    r = Client().add("Il magazzino contiene 480 pallet.", topic="t",
+                     source="Inventario: il magazzino contiene 480 pallet.")
+    layers = [w.get("layer") for w in (r.get("warnings") or [])]
+    assert "L4.1-ambiguo" not in layers
+
+
+def test_CONTROLLO_NEGATIVO_senza_separatore_il_layer_prende_ancora_tutto():
+    """Il layer è SANO: il difetto stava in come veniva letto il numero, non nel
+    confronto. Senza questo controllo il file sopra si leggerebbe come «abbiamo
+    spento L4.1»."""
     assenti = valori_non_nella_fonte("Lo stipendio annuo e' 45000 euro.", FONTE_45)
-    assert assenti, "senza separatore il layer deve prendere la differenza"
     assert "45000" in [a.come_scritto() for a in assenti]
 
 
-def test_la_lettura_sbagliata_e_dimostrabile_sul_numero_nudo():
-    """La causa, isolata: non è il confronto, è il valore che entra nel confronto."""
-    (unita, valore), = extract_quantities("45.000 euro")
-    assert unita == "euro"
-    assert valore == 45.0, "oggi 45.000 viene letto 45.0 — questo è il difetto"
-    assert valore != 45000.0
-
-
-@pytest.mark.parametrize("testo,letto", [
-    ("102.913 LOC", 102.913),      # «OMNEX v6.3.0: 170 Python files, 102.913 LOC»
-    ("16.300 test", 16.3),         # «16.300+ test pytest verdi» — in TRE fatti diversi
-    ("145.000 righe", 145.0),
-    ("15.000 file", 15.0),
+@pytest.mark.parametrize("testo", [
+    "102.913 LOC",      # «OMNEX v6.3.0: 170 Python files, 102.913 LOC»
+    "16.300 test",      # «16.300+ test pytest verdi» — in TRE fatti diversi
+    "145.000 righe",
+    "15.000 file",
 ])
-def test_I_CASI_REALI_dal_corpus_sono_letti_come_decimali(testo, letto):
+def test_I_CASI_REALI_del_corpus_non_valgono_piu_un_millesimo(testo):
     """⚠️ NON sono casi inventati: sono righe del corpus di casa, trovate da ws8
-    su `semantic.db` in sola lettura (9365 proposizioni, 100 nella classe
-    pericolosa = 1,07%).
-
-    Un fatto che dice «16.300 test» viene confrontato come se dicesse 16,3.
-    """
-    (_u, v), = extract_quantities(testo)
-    assert v == pytest.approx(letto), f"«{testo}» oggi vale {v}"
+    su `semantic.db` in sola lettura. Prima «16.300 test» valeva 16,3."""
+    assert extract_quantities(testo) == set()
+    assert numeri_ambigui(testo), f"«{testo}» deve essere DICHIARATO non misurabile"
 
 
-def test_LA_CLASSE_INVISIBILE_due_gruppi_spariscono_del_tutto():
-    """L'altra metà, cinquanta volte più rara ma non innocua: con due o più
-    gruppi la regex non matcha affatto e il numero non esiste per il layer.
-
-    Il caso è reale: «Il wheel torch 2.13.0 per Windows pesa 122.057.313 byte»,
-    un fatto salvato da ws8, di cui il gate non ha visto il numero."""
-    assert extract_quantities("Il wheel pesa 122.057.313 byte.") == set()
-
-
-@pytest.mark.parametrize("numero,decimale_certo", [
-    ("0.250", True),    # «zero mila duecentocinquanta» non esiste
-    ("0.125", True),
-    ("3.1416", True),   # quattro cifre: non è un gruppo di migliaia
-    ("12.34", True),
-    ("99.9", True),
-    ("45.000", False),  # ambiguo — ed è il caso che certifica il falso
-    ("1.500", False),
-    ("250.000", False),
-    ("3.141", False),   # ambiguo davvero: in italiano è 3141
+@pytest.mark.parametrize("testo,valore", [
+    ("0.250 s", 0.25),        # «zero mila duecentocinquanta» non esiste
+    ("0.125 mm", 0.125),
+    ("3.1416", 3.1416),       # quattro cifre: non è un gruppo di migliaia
+    ("12.34 euro", 12.34),
+    ("99.9 mb", 99.9),
+    ("480 pallet", 480.0),
 ])
-def test_IL_CRITERIO_separa_i_decimali_certi_dagli_ambigui(numero, decimale_certo):
-    """Il criterio che la cura dovrà applicare, misurato PRIMA di scriverla:
-    9 casi su 9 concordi col giudizio umano.
+def test_I_DECIMALI_CERTI_sopravvivono(testo, valore):
+    """⚠️ IL COSTO DELLA CURA, misurato invece che sperato: millesimi, tolleranze
+    e precisione scientifica devono restare misurabili. Se cadono qui, la cura è
+    troppo larga."""
+    (_u, v), = extract_quantities(testo)
+    assert v == pytest.approx(valore)
+    assert not numeri_ambigui(testo)
 
-    ⚠️ È un banco di PLAUSIBILITA', non un campione del corpus: i casi li ho
-    scelti io. Il campione vero è quello di ws8 (6 righe lette su 100, nessuna
-    delle quali un decimale legittimo).
+
+def test_LA_CLASSE_INVISIBILE_resta_aperta_e_dichiarata():
+    """📌 Il difetto gemello, NON curato e scritto qui perché non si perda: con
+    due o più gruppi la regex non matcha affatto.
+
+    Caso reale: «Il wheel torch 2.13.0 per Windows pesa 122.057.313 byte», un
+    fatto salvato da ws8. È 50 volte più raro (2 su 9365 contro 100), e produce
+    silenzio invece che una certificazione falsa — per questo viene dopo.
+    ⚠️ Ma oggi non riceve nemmeno l'avviso: `numeri_ambigui` non lo vede, perché
+    non lo vede la regex.
     """
-    import re
-    ambiguo = re.compile(r"^(?!0\.)\d{1,3}\.\d{3}$")
-    assert bool(ambiguo.match(numero)) is not decimale_certo
+    assert extract_quantities("Il wheel pesa 122.057.313 byte.") == set()
+    assert numeri_ambigui("Il wheel pesa 122.057.313 byte.") == [], (
+        "se un giorno questo diventa non-vuoto, la classe invisibile è stata "
+        "curata: aggiorna il test e togli questa nota")

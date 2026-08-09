@@ -1894,6 +1894,31 @@ def run_validation_gate(
             # fonte non c'è» — che è la domanda a cui un modello di entailment
             # non risponde (ws4: «sa dire questo CONTRADDICE la fonte, non sa
             # dire questo NON C'È nella fonte»).
+            # L4.1-bis — I NUMERI CHE NON ABBIAMO POTUTO MISURARE LO DICONO.
+            # Il fatto ENTRA: questo non è un veto, è un avviso, e la differenza
+            # è la regola di casa «un avviso non ha bisogno della popolazione
+            # opposta, un veto sì».
+            # ⚠️ Senza questa riga la cura di `_PUNTO_AMBIGUO` sposta il difetto
+            # invece di chiuderlo: prima «45.000 euro» contro «45 euro» veniva
+            # AMMESSO da un confronto falso, dopo viene ammesso da NESSUN
+            # confronto — e per chi legge il fatto le due cose sono identiche.
+            # L'ha imposta ws8 smentendo la prima proposta: «togliere l'accusa
+            # non distingue le due popolazioni, i falsi negativi nascono
+            # convertendo i veri positivi in silenzio».
+            from .quantity_match import numeri_ambigui
+            _ambigui = numeri_ambigui(proposition)
+            if _ambigui:
+                _aa = ", ".join(_ambigui[:4])
+                warnings.append({
+                    "layer": "L4.1-ambiguo",
+                    "reason": (f"il claim contiene numeri che NON sono stati "
+                               f"verificati contro la fonte: {_aa}"),
+                    "advice": ("il punto puo' essere separatore decimale o delle "
+                               "migliaia e le due letture differiscono di mille "
+                               "volte: riscrivi il numero senza separatori "
+                               "(45000) per farlo verificare"),
+                    "matched_text": _aa,
+                })
             from .valore_non_nella_fonte import valori_non_nella_fonte
             _assenti = valori_non_nella_fonte(proposition, source)
             if _assenti:
