@@ -4,8 +4,8 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 
 ## [0.7.5] - 2026-08-09
 
-419 commits since 0.7.0 (published 2026-07-22). The one that decides whether you
-should upgrade is the first.
+Over 400 commits since 0.7.0 (published 2026-07-22). The one that decides
+whether you should upgrade is the first.
 
 ### Fixed
 
@@ -47,7 +47,7 @@ should upgrade is the first.
 
 0.7.1 through 0.7.4 were never published. The jump is deliberate: it marks the
 release that makes the packaged artifact match the repository again, after the
-two drifted for 419 commits under a single version number.
+two drifted for over 400 commits under a single version number.
 
 ### Known limits in this release
 
