@@ -112,6 +112,17 @@ def main(versione: str) -> int:
     for k, v in promesse.items():
         esito(f"agent_guide: {k}", v, "nel wheel" if v else "ASSENTE dal wheel")
 
+    # ── ④-bis la superficie di governo, entrata il 09/08 a merge tardivo ────
+    # Sta qui perche' e' il caso in cui il pacchetto puo' restare indietro
+    # rispetto al repository SENZA che nulla lo segnali: il 09/08 il wheel
+    # collaudato aveva 384 moduli e main ne aveva gia' 419.
+    governo = ("retirement_log", "tier_inventory", "residual_copies", "text_cut")
+    mancanti = [m for m in governo if f"verimem/{m}.py" not in nomi]
+    esito("la superficie di governo e' nel pacchetto",
+          not mancanti,
+          "tutti e quattro presenti" if not mancanti
+          else f"MANCANO: {mancanti} — il wheel e' piu' vecchio del merge")
+
     # ── ⑤ il README che finisce sulla pagina PyPI ───────────────────────────
     esito("il README nel METADATA non contiene la riga ritirata il 09/08",
           "the CLI cannot delete at all" not in meta,
