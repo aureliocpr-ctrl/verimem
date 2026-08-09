@@ -20,6 +20,11 @@ Verimem is a VERIFIED-memory server for AI agents: writes pass an anti-confab
 gate, and a fact its source does not support is QUARANTINED — stored, but kept
 OUT of default recall, so you never get it back as truth.
 
+Tool names below are written verimem_*. That prefix is what you get when the
+server runs with VERIMEM_TOOL_NAMESPACE=verimem (the wiring example does set
+it); WITHOUT it — the default — the very same tools are exposed as hippo_*.
+Read the names your client actually lists, not the ones in this text.
+
 Store with verimem_remember. What checks it, and when — the perimeter, so you
 can rely on it:
 - ALWAYS: a lexical screen on every write. Unsupported "it works / verified /
@@ -33,9 +38,15 @@ can rely on it:
   whenever you have one — it is what separates a claim from a verified fact.
 
 Orientation (each tool's exact arguments are in its own schema):
-- Retrieve with verimem_recall / verimem_facts_search. Ask verimem_trust_report
-  HOW the store knows (a provenance dossier); on a question it cannot support it
+- Retrieve with verimem_recall / verimem_facts_search. These return the closest
+  matches and DO NOT abstain: ask them something the store knows nothing about
+  and you still get the nearest facts back, with high scores. A result is not
+  evidence that the store knows the answer.
+- To learn WHETHER the store can answer at all, ask verimem_trust_report: it
+  returns a provenance dossier and, on a question it cannot support, it
   ABSTAINS ("I don't know") instead of stitching a guess from weak matches.
+  When it matters that the answer be IN memory rather than merely nearest,
+  that is the tool to use.
 - Search indexed files with verimem_document_semantic_search (exact citations).
 - Every read carries `grounding_score`: the moat's verdict on that fact, 0-100.
   A number means a source was checked against it; `null` means NEVER JUDGED, not
@@ -45,7 +56,14 @@ Orientation (each tool's exact arguments are in its own schema):
   gap when it does).
 
 Principles: gated writes, provenance on every read, abstention over hallucination.
-Prefer grounded writes. Legacy tool names use the hippo_ prefix; both work.
+Prefer grounded writes.
+
+On the two prefixes, precisely: the namespace switch RENAMES — you are listed
+either the hippo_ set or the verimem_ set, never both. Calling either spelling
+works (verimem_X is dispatched to hippo_X), but only one is in your tool list,
+and a tool you cannot see is a tool you will not use. Separately, the python
+PACKAGE shim (`import hippoagent`) is scheduled for removal on 2026-08-13 —
+that is the package, not the tool prefix, which stays.
 """
 
 #: Extended terminal guide: the MCP orientation plus the CLI/SDK map an agent
