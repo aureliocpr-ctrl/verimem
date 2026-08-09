@@ -1,0 +1,97 @@
+--- red_intatto/verimem/cli.py	2026-08-09 22:46:13.000000000 +0200
++++ red_cura/verimem/cli.py	2026-08-09 23:16:44.548122300 +0200
+@@ -1005,6 +1005,40 @@
+         console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
+ 
+ 
++def _avviso_pavimento(m, hits, query: str) -> None:
++    """Dice che il migliore sta sotto il pavimento MISURATO, se ci sta.
++
++    Estratta da ``recall_cmd`` per essere chiamata anche da ``ask_cmd``: le due
++    porte rispondono alla stessa domanda e una sola avvisava, quindi lo stesso
++    store diceva «forse non lo so» o taceva a seconda del comando digitato.
++    Una COPIA del blocco sarebbe lo stesso difetto un giro dopo."""
++    # SE IL MIGLIORE STA SOTTO IL PAVIMENTO MISURATO, si dice. `recall` è un
++    # top-k e restituisce sempre i più vicini: su uno store di tre fatti di
++    # listino, «quale database usa il cluster di produzione» rende «La prova
++    # gratuita dura 14 giorni» a 0.7375. Il README apre con «when the evidence
++    # isn't there the system abstains instead of guessing», e chi legge quella
++    # riga e usa questo comando riceve una frase scorrelata senza nulla che lo
++    # avverta.
++    #
++    # Il pavimento c'è già ed è MISURATO — `_auto_relevance_floor`, lo stesso
++    # che `ignorance` usa per classificare `no_evidence`. Qui NON cambia il
++    # verdetto e non filtra niente: alzare una soglia sul recall è l'errore
++    # pagato il 30/07 (`max(floor, noise_floor)`, ritirata perché rendeva muta
++    # la mappa). Dice, e basta.
++    try:
++        _pavimento = m._auto_relevance_floor()
++        _best = max(float(h.get("score") or 0.0) for h in hits)
++    except Exception:  # noqa: BLE001 — una riserva non fa cadere una lettura
++        _pavimento = _best = None
++    if (_pavimento and _best is not None and _best < float(_pavimento)):
++        console.print(
++            f"[yellow]⚠[/yellow] [dim]il migliore di questi ({_best:.3f}) sta "
++            f"sotto il pavimento che lo store ha misurato su se stesso "
++            f"({float(_pavimento):.3f}): sono i fatti più vicini alla domanda, "
++            f"non necessariamente una risposta. `verimem ignorance "
++            f"\"{query}\"` dice cosa manca.[/dim]")
++
++
+ @app.command("recall")
+ def recall_cmd(
+     query: str = typer.Argument(..., help="What to remember."),
+@@ -1097,31 +1131,7 @@
+         else:
+             console.print("[yellow]no facts found[/yellow]")
+         raise typer.Exit(0)
+-    # SE IL MIGLIORE STA SOTTO IL PAVIMENTO MISURATO, si dice. `recall` è un
+-    # top-k e restituisce sempre i più vicini: su uno store di tre fatti di
+-    # listino, «quale database usa il cluster di produzione» rende «La prova
+-    # gratuita dura 14 giorni» a 0.7375. Il README apre con «when the evidence
+-    # isn't there the system abstains instead of guessing», e chi legge quella
+-    # riga e usa questo comando riceve una frase scorrelata senza nulla che lo
+-    # avverta.
+-    #
+-    # Il pavimento c'è già ed è MISURATO — `_auto_relevance_floor`, lo stesso
+-    # che `ignorance` usa per classificare `no_evidence`. Qui NON cambia il
+-    # verdetto e non filtra niente: alzare una soglia sul recall è l'errore
+-    # pagato il 30/07 (`max(floor, noise_floor)`, ritirata perché rendeva muta
+-    # la mappa). Dice, e basta.
+-    try:
+-        _pavimento = m._auto_relevance_floor()
+-        _best = max(float(h.get("score") or 0.0) for h in hits)
+-    except Exception:  # noqa: BLE001 — una riserva non fa cadere una lettura
+-        _pavimento = _best = None
+-    if (_pavimento and _best is not None and _best < float(_pavimento)):
+-        console.print(
+-            f"[yellow]⚠[/yellow] [dim]il migliore di questi ({_best:.3f}) sta "
+-            f"sotto il pavimento che lo store ha misurato su se stesso "
+-            f"({float(_pavimento):.3f}): sono i fatti più vicini alla domanda, "
+-            f"non necessariamente una risposta. `verimem ignorance "
+-            f"\"{query}\"` dice cosa manca.[/dim]")
++    _avviso_pavimento(m, hits, query)
+     for h in hits:
+         console.print(riga_di_recall(h))
+         # La storia si chiede e va MOSTRATA: passare il flag e stampare la
+@@ -1183,7 +1193,8 @@
+     FIND è il default sicuro: una domanda classificata male si comporta
+     esattamente come `recall`.
+     """
+-    rep = _open_memory().ask(query, k=k, topic_prefix=topic or None)
++    m = _open_memory()
++    rep = m.ask(query, k=k, topic_prefix=topic or None)
+     intento = rep.get("intent", "find")
+     if intento == "count":
+         console.print(f"[green]{rep.get('count', 0)}[/green] "
+@@ -1215,6 +1226,10 @@
+         console.print("[yellow]no facts found[/yellow]")
+         raise typer.Exit(0)
+     console.print(f"[dim]intento: {intento}[/dim]")
++    # Il ramo `count` è già uscito sopra: lì non ci sono punteggi da
++    # confrontare col pavimento. Qui siamo in FIND, la stessa domanda
++    # che `recall` avvisa.
++    _avviso_pavimento(m, risultati, query)
+     for h in risultati:
+         console.print(riga_di_recall(h))
+ 
