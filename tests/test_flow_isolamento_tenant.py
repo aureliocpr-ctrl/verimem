@@ -65,8 +65,11 @@ def test_il_restore_via_http_porta_il_tenant(gw):
                                           "topic": "hype"}, headers=hdr)
     assert r.status_code == 200, r.text
     body = r.json()
-    if body.get("status") != "quarantined":
-        pytest.skip("il gate non ha quarantinato in questo ambiente")
+    assert body.get("status") == "quarantined", (
+        f"un vanto senza fonte DEVE essere quarantinato: e' la promessa "
+        f"principale del prodotto. Qui era un `skip` e mi accecava proprio "
+        f"quando serviva — se il gate smette, questo test deve diventare "
+        f"rosso, non verde. Ricevuto: {body}")
     assert client.post(f"/v1/memories/{body['id']}/restore",
                        headers=hdr).status_code == 200
 
@@ -87,8 +90,10 @@ def test_il_filtro_nega_l_evento_agli_altri_tenant(gw):
     client, hdr, tmp = gw
     r = client.post("/v1/memories", json={"content": _UNSUPPORTED,
                                           "topic": "hype"}, headers=hdr)
-    if r.json().get("status") != "quarantined":
-        pytest.skip("il gate non ha quarantinato in questo ambiente")
+    assert r.json().get("status") == "quarantined", (
+        f"stessa ragione del test qui sopra: senza quarantena non c'e' un "
+        f"rilascio da isolare, e un guardiano che tace quando manca il suo "
+        f"bersaglio non sta guardando. Ricevuto: {r.json()}")
     client.post(f"/v1/memories/{r.json()['id']}/restore", headers=hdr)
 
     riga = json.dumps(_eventi(tmp, "flow.restore")[-1])
@@ -109,8 +114,10 @@ def test_l_undo_via_http_porta_il_tenant(gw):
                                           "topic": "hq/a"}, headers=hdr).json()
     b = client.post("/v1/memories", json={"content": "the warehouse is in Rome",
                                           "topic": "wh/b"}, headers=hdr).json()
-    if not (a.get("stored") and b.get("stored")):
-        pytest.skip("scritture non ammesse in questo ambiente")
+    assert a.get("stored") and b.get("stored"), (
+        f"due fatti ordinari e verificabili DEVONO entrare: se il gate li "
+        f"rifiuta il prodotto e' rotto, e saltare qui lo nasconderebbe. "
+        f"a={a} b={b}")
     from verimem.semantic import SemanticMemory
     sm = SemanticMemory(db_path=tmp / "tenants" / "alfa" / "memory.db")
     res = sm.supersede(a["id"], b["id"], principal="test", reason="t")

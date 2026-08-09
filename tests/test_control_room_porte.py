@@ -175,8 +175,10 @@ def test_http_restore_quarantined(tmp_path, monkeypatch):
         "topic": "hype"}, headers=hdr)
     assert r.status_code == 200
     body = r.json()
-    if body.get("status") != "quarantined":
-        pytest.skip("gate did not quarantine in this environment")
+    assert body.get("status") == "quarantined", (
+        f"era uno `skip`, e lo skip rendeva questo guardiano VERDE proprio "
+        f"nel caso in cui il gate avesse smesso di quarantinare. Se la "
+        f"promessa principale cade, qui deve uscire un rosso: {body}")
     fid = body["id"]
     rest = client.post(f"/v1/memories/{fid}/restore", headers=hdr)
     assert rest.status_code == 200, rest.text
