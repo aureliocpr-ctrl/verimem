@@ -197,6 +197,104 @@ def _ok(obj: Any) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps(obj, indent=2, default=str))]
 
 
+def _avvisi_di_lettura(agent, query: str) -> dict:
+    """Gli avvisi che CLI e SDK danno gia', portati alla porta dell'AGENTE.
+
+    2026-08-08. `Risultati` (client.py) espone due segnali che nessuna superficie
+    MCP restituiva:
+      · `sotto_il_pavimento` — nessun risultato supera la soglia di rilevanza
+        calibrata su questo corpus: la risposta probabilmente NON e' in memoria.
+        Senza, l'agente riceve un punteggio e non ha il metro per leggerlo
+        (difetto isolato da ws4: «CLI avvisa, SDK avvisa, MCP tace»).
+      · `trattenuti` — quanti fatti sull'argomento il gate ha trattenuto. Senza,
+        il silenzio di un fatto quarantinato e' indistinguibile dall'assenza.
+
+    ⚠️ In una memoria PER AGENTI questa e' la porta che conta di piu': un difetto
+    che qui non arriva e' quello che ws4 chiama «codice che gira e il cui effetto
+    non raggiunge mai l'utente». La cura sull'SDK di un'ora fa, senza questa
+    riga, sarebbe finita esattamente in quella categoria.
+
+    ⚠️ NON restituisce nulla del fatto trattenuto oltre al conteggio: un fatto e'
+    in quarantena perche' non ci si fida, e mostrarlo «per trasparenza» lo
+    rimetterebbe in circolo dalla porta di servizio.
+
+    ⚠️ UN AVVISO NON FA CADERE UNA LETTURA: qualunque errore qui degrada a dict
+    vuoto e la risposta parte comunque.
+    """
+    out: dict = {}
+    try:
+        # ⚠️ L'OGGETTO NON E' SEMPRE LO STESSO, e la prima versione di questo
+        # helper ci e' cascata: cercava `agent.memory` e basta. Ma `Memory` (il
+        # client) NON ha un attributo `memory`, e nell'agente MCP `a.memory` e'
+        # la memoria EPISODICA — un'altra cosa. Risultato: `mem` era sempre
+        # None e la funzione restituiva un dict vuoto SEMPRE. Isolato da ws4 con
+        # un A/B: con un oggetto che ha `.memory` tornava 44 trattenuti, con
+        # quello vero zero. La cura non e' indovinare l'attributo giusto: e'
+        # provare le tre forme che questa casa passa davvero.
+        conta = None
+        for cand in (agent, getattr(agent, "memory", None)):
+            f = getattr(cand, "_trattenuti_safe", None)
+            if callable(f):
+                conta = f
+                break
+        if conta is None:
+            # ultima strada: costruire il conteggio dallo store semantico, che
+            # l'agente MCP espone sempre come `a.semantic`.
+            sem = getattr(agent, "semantic", None)
+            if sem is not None and getattr(sem, "db_path", None):
+                from .client import Memory as _Mem
+                conta = lambda q: _Mem._conta_trattenuti(  # noqa: E731
+                    type("_S", (), {"semantic": sem})(), q)
+        if conta is not None:
+            tr = conta(query)
+            if tr:
+                out["trattenuti"] = tr
+    except Exception:      # noqa: BLE001 — un avviso non fa cadere una lettura
+        pass
+
+    # 2026-08-08 — IL SECONDO AVVISO, e arriva con un numero e un vincolo.
+    # `sotto_il_pavimento` dice che nessun risultato supera la soglia di
+    # rilevanza calibrata su questo corpus: senza, l'agente riceve un punteggio
+    # e non ha il metro per leggerlo (ws4: «CLI avvisa, SDK avvisa, MCP tace»).
+    # ⚠️ NON e' un taglio, ed e' una scelta misurata da ws5, non una prudenza:
+    # 7 valori su 11 stanno a 0.86+, cioe' dove la sua curva perde risposte VERE.
+    # Come veto costerebbe un fatto giusto, come avviso costa un avviso — ed e'
+    # la stessa disciplina di `Risultati.sotto_il_pavimento` nell'SDK, dove la
+    # nota dice testualmente «i risultati sono qui sotto, non tagliati».
+    # ⚠️ E arriva DOPO i trattenuti, in un try suo: due avvisi indipendenti non
+    # devono cadere insieme se uno dei due sbaglia.
+    try:
+        # ⚠️ NON passo da `search`: costruisce `Risultati` chiamando anche il
+        # conteggio dei trattenuti, e i due avvisi resterebbero ACCOPPIATI — un
+        # guasto nel primo spegnerebbe silenziosamente il secondo. Preso da un
+        # test che inietta il guasto, non da un ragionamento. Qui si calcola il
+        # pavimento e basta: due avvisi indipendenti, due try separati.
+        mem = None
+        for cand in (agent, getattr(agent, "memory", None)):
+            if callable(getattr(cand, "_auto_relevance_floor", None)):
+                mem = cand
+                break
+        if mem is not None and query:
+            pav = float(mem._auto_relevance_floor() or 0.0)
+            hits = mem.semantic.recall(query, k=3) if pav else []
+            best = 0.0
+            for h in (hits or []):
+                s = h[1] if isinstance(h, tuple) else getattr(h, "score", 0.0)
+                best = max(best, float(s or 0.0))
+            if pav and hits and best < pav:
+                out["sotto_il_pavimento"] = {
+                    "pavimento": round(pav, 4),
+                    "score_migliore": round(best, 4),
+                    "nota": ("nessun risultato supera la soglia di rilevanza "
+                             "calibrata su questo corpus: probabilmente la "
+                             "risposta NON e' in memoria. I risultati sono "
+                             "qui sotto, non tagliati — decidi tu."),
+                }
+    except Exception:      # noqa: BLE001 — un avviso non fa cadere una lettura
+        pass
+    return out
+
+
 def _err(msg: str) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps({"error": msg}))]
 
@@ -11936,6 +12034,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # e chi l'ha scritto — tre campi che uscivano da ZERO superfici
                 # su 13, calcolati e persistiti da settimane.
                 "items": [fact_payload(f) for f in hits],
+                # 2026-08-08 — GLI AVVISI ESCONO ANCHE DA QUI, cioe' dalla porta
+                # dell'AGENTE. CLI e SDK li davano gia'; questa taceva, e in una
+                # memoria per agenti e' la porta che conta di piu': l'agente
+                # riceveva il punteggio senza il metro per leggerlo, e il
+                # silenzio di un fatto trattenuto era indistinguibile
+                # dall'assenza. Difetto isolato da ws4 (sotto_il_pavimento) e
+                # mio (trattenuti, che avevo appena aggiunto all'SDK e che senza
+                # questa riga sarebbe stato «codice che gira e non arriva mai
+                # all'utente» — la categoria che ws4 stesso ha censito).
+                **_avvisi_di_lettura(a, query),
             })
 
         if name == "hippo_validate_claim":
@@ -13055,6 +13163,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # dal cross-encoder e dalla fusione grafo/lessicale, e finora
                 # i due erano indistinguibili da qui.
                 "ranking": _ranking_stages(),
+                # 2026-08-08 — gli avvisi escono anche da QUI. Erano su un tool
+                # solo (facts_search), e un agente che usa `recall` invece di
+                # `search` restava al buio: il secondo difetto che ws4 ha visto
+                # accanto al primo. Un segnale che esce da una porta sola non e'
+                # un segnale, e' una coincidenza.
+                **_avvisi_di_lettura(a, query),
                 "include_legacy": include_legacy,
                 "min_status": min_status,
                 "trust_signals": trust_signals,
