@@ -488,30 +488,34 @@ backup, or lose the disk, you hand over what you believed you had deleted.
 
 What deletion looks like depends on which door you use, so here it is per door:
 
-- **bulk deletion by tenant exists — over MCP.** `hippo_forget_scope` deletes
-  every fact under a `user_id` / `agent_id` / `run_id`. It refuses a
-  whole-corpus wipe, defaults to `dry_run=true` (it reports what it *would*
-  delete), and each delete is reversible via `hippo_undo_destructive_op`.
 - **deletion by subject does not exist anywhere.** "Forget everything about
   this person" is not a tenant scope: unless that person's facts happen to sit
   under their own `user_id`, you are back to one `fact_id` at a time.
-- **the CLI deletes, but keeps the text for seven days.**
-  `verimem facts forget <id>` works and reports
-  `forgotten: <id> (op_id=… — undoable for 7 days)`. That undo is not free: the
-  proposition stays **in clear text** in `facts_undo_log` for the whole window.
-  Measured A/B in one run, same store, same moment:
+- **which door you use decides whether the text is really gone.** Five doors
+  delete; they do NOT make the same promise. Measured in one run, same store,
+  searching every table for the deleted string afterwards:
 
   | door | after the delete, the text is in |
   |---|---|
+  | `Memory.forget(id)` / `.delete(id, purge_history=True)` (SDK) | no table |
+  | `hippo_fact_forget` (MCP) — calls the SDK delete | no table |
   | `verimem facts forget <id>` (CLI) | **`facts_undo_log`** |
-  | `Memory.forget(id, purge_history=True)` (SDK) | no table |
-  | `Memory.forget(id)` (SDK, default) | no table |
+  | `hippo_fact_forget_with_undo` (MCP) | **`facts_undo_log`** |
+  | `hippo_forget_scope` (MCP, bulk by tenant) | **`facts_undo_log`** |
 
-  So the two doors do NOT make the same promise, and the more reachable one
-  makes the weaker one — while its message says "undoable", which reads as
-  *reversible*, not as *still readable in a table*. For an erasure request that
-  distinction is the whole point: use the SDK, or wait out the undo window and
-  verify, or delete the undo row yourself.
+  The bottom three keep the proposition **in clear text** for the undo window
+  (7 days) — that is what makes them reversible. It is a real feature and the
+  right default for an operator who mistyped an id; it is the wrong default for
+  an erasure request, and nothing in the output says so: the CLI prints
+  `undoable for 7 days`, which reads as *reversible*, not as *still readable in
+  a table*.
+  ⚠️ Note the shape of it: **the bulk-by-tenant door — the one you would reach
+  for on a "delete everything about this user" request — is one of the three
+  that keep it.** For that case use the SDK, or wait out the window and verify,
+  or delete the `facts_undo_log` rows yourself.
+  (Measured at the level of the functions those doors call —
+  `semantic.delete_with_undo` vs `Memory.delete` — not through a live MCP
+  dispatcher.)
 
 We state this because the licence is AGPL-3.0 and an agent memory is exactly
 where personal data ends up. If your deployment needs deletion to be
