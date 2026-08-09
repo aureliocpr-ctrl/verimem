@@ -1,8 +1,8 @@
-# ⑧ — Cosa ci ha insegnato un rilascio: cinque cose sugli artefatti
+# ⑧ — Cosa ci ha insegnato un rilascio: sette cose sugli artefatti
 
 > **ws2 «Vega» · 09/08 ore 22:10 · `origin/main` `34d4d272`, worktree separato, `git status` vuoto**
 > In quattro ore, otto istanze hanno portato la 0.7.5 dal bloccante alla pubblicabilità. Le misure
-> stanno nei referti; **queste cinque righe stanno solo nei messaggi**, e domani si ripetono.
+> stanno nei referti; **queste sette righe stanno solo nei messaggi**, e domani si ripetono.
 > Ogni voce ha il caso che l'ha prodotta, misurato — nessuna è una massima.
 
 ---
@@ -91,6 +91,38 @@ non è un errore di sintassi: PyPI la accetta e la mostra male.
 ⇒ Copre «l'upload viene RIFIUTATO», non «la pagina viene bene». Scritto nel test, perché senza
 quella riga verrebbe letto come una garanzia che non dà.
 
+## 6. Un ramo già assorbito non può fare da controllo negativo
+
+ws4 aveva usato `ws2/abstention` come caso che *deve* fallire, per dimostrare che il metodo
+distingue. Poco dopo dava 0 conflitti in tutte le combinazioni — e la ragione non era
+«main si muove», che è la mia formulazione generica, ma la sua, precisa:
+
+> **Un ramo mergiato dà zero per costruzione.**
+
+⇒ Il controllo negativo va scelto fra i rami **non ancora assorbiti**, e va **ri-scelto** quando
+vengono assorbiti. Un verdetto positivo senza un negativo vivo accanto vale meno di quanto sembri.
+📌 E la sua regola gemella: *chi usa un controllo negativo ne dichiari l'SHA*, come per i wheel.
+
+## 7. L'errore che nasce mettendo accanto due misure **giuste**
+
+La formulazione è di ws1, dopo aver ritirato un allarme suo — ed è la più utile della serata:
+
+> Non «ho misurato male»: l'errore nasce nel **mettere accanto due misure giuste con metodi
+> diversi**. E sembra più solido, perché ha due misure vere dietro.
+
+Il suo caso: `419` (moduli ricorsivi, da git) accanto a `384` (primo livello, dal wheel) →
+«35 mancanti», di cui 4 sarebbero stati quelli di governo. Nessuno dei due numeri era sbagliato.
+Misurati con lo stesso metodo: git 388/419, wheel 388/419, **zero mancanti**.
+
+Lo stesso è successo a me un'ora dopo, sui comandi: **52** (parser del sorgente), **40**
+(`--help`), **37** (ws4) — tre insiemi diversi con lo stesso nome. Lì il confronto sbagliato non
+ha prodotto un falso allarme ma **un test cieco**: verificava i comandi del README contro il
+sorgente, e avrebbe approvato `verimem tui`, che è definito e invisibile.
+
+🔑 **Un numero non è confrontabile con un altro finché non è confrontabile il metodo.** È la
+forma più insidiosa perché non ha l'aspetto di un errore: ha due fonti, due misure e una
+conclusione — e la conclusione è falsa.
+
 ---
 
 ## La forma comune, che è una sola
@@ -110,6 +142,8 @@ python scripts/artefatto.py
 # verimem 0.7.5 · mcp 1.29.0 · da pacchetto · git n/d (misuri il pacchetto, non l'albero)
 ```
 
-**Caveat**: una sera, otto istanze, un rilascio, un sistema operativo. Le cinque voci sono
-generalizzazioni da un caso ciascuna — tranne la prima e la seconda, che ne hanno due. Nessuna è
+**Caveat**: una sera, otto istanze, un rilascio, un sistema operativo. Le sette voci sono
+generalizzazioni da un caso ciascuna — tranne la 1, la 2 e la 7, che ne hanno due. Nessuna è
 stata verificata su un secondo rilascio, perché un secondo rilascio non c'è ancora stato.
+**Le voci 6 e 7 non sono mie**: sono di ws4 e ws1, formulate meglio di come le avevo scritte io,
+e le riporto con il loro nome perché una lezione senza autore si ricorda peggio.
