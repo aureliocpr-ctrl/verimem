@@ -23,12 +23,32 @@ Un utente che vuole verimem **funzionante** scarica in **tre fasi distinte**:
 
 | fase | cosa | quanto | quando | si può evitare? |
 |---|---|---|---|---|
-| ① | `pip install verimem` → `torch`, `transformers`, `scipy`… | **torch: 4.428,6 MB su disco** (~1 GB scaricato, misura di ws2) | al comando | **NO** |
+| ① | `pip install verimem` → `torch`, `transformers`, `scipy`… | **torch: 116,4 MB** (wheel Windows) · **502,2 MB** (Linux) | al comando | **NO** |
 | ② | embedder `multilingual-e5-base` | **1.112.201.288 byte = 1,1 GB** | primo uso | **NO** — serve a ogni scrittura e lettura |
 | ③ | giudice `local_gate_ce_v2` | **655.928.064 byte scaricati → 738 MB estratti** | `verimem warmup` | **SÌ**, e già oggi |
 
-⇒ **Il giudice è il più piccolo dei tre, ed è l'unico già evitabile.** Gli altri
-due arrivano comunque, e nessuna delle quattro strade li tocca.
+### 🪞 CORREZIONE (2026-08-09 sera, misura di ws8) — avevo scritto 4,4 GB
+La prima versione di questa tabella diceva «**torch: 4.428,6 MB su disco,
+obbligatorio**» e ne traeva la conclusione che il giudice fosse un problema
+marginale. **È sbagliato, e l'errore è mio.**
+I 4,4 GB sono il torch **di questa macchina di sviluppo**:
+`torch-2.12.0.dev20260405+cu128` — una **nightly con CUDA 12.8** che arriva da
+`download.pytorch.org`, **non da PyPI**. Chi fa `pip install verimem` riceve il
+wheel pubblico: **122.057.313 byte = 116,4 MB** su Windows, 502,2 MB su Linux
+(misurato da ws8 sull'API di PyPI).
+⇒ **Ho misurato l'ambiente di sviluppo credendo di misurare il prodotto** — la
+stessa forma per cui ieri sette istanze hanno misurato il repo invece del
+pacchetto. Due volte in tre giorni, e la regola che ne esce è più stretta di
+quella che avevo scritto: non basta dire *quale prodotto*, bisogna dire *quale
+artefatto*, perché anche una dipendenza può essere installata da una sorgente
+diversa da quella che riceve l'utente.
+
+⇒ **CONCLUSIONE RIBALTATA**: il pezzo più grosso **non è torch, è l'EMBEDDER**
+(1,1 GB), e il giudice (656 MB) è il **secondo**. Su Windows, torch è un decimo
+dell'embedder.
+⇒ Il giudice resta **l'unico già evitabile** dei tre, ma non è più «il terzo più
+piccolo di un problema dominato da torch»: è **il secondo peso, e il primo su
+cui si può agire**.
 
 📌 **Il numero «656 MB» è ESATTO** e viene dal commento in `cli.py:389`. L'avevo
 sospettato sbagliato perché il file su disco pesa 738 MB: **non è una
@@ -39,15 +59,17 @@ Verificato con una richiesta HTTP HEAD: `Content-Length = 655.928.064`.
 
 ## 2. Le quattro strade, una per una
 
-### ① Il giudice DENTRO il wheel
+### ① Il giudice DENTRO il wheel — 🔴 **STRADA MORTA, chiusa da un numero**
 Il wheel oggi pesa **1,66 MB**; con il modello dentro andrebbe a **~740 MB**.
-* **Non riduce niente**: il totale resta 2,8 GB, si sposta solo da GitHub a PyPI.
-* **Toglie una scelta**: oggi chi non vuole il moat non lo scarica; dentro il
-  wheel lo scarica sempre.
-* ⚠️ **NON VERIFICATO**: il limite per singolo file di PyPI. So che esiste ed è
-  dell'ordine dei 100 MB, ma **non l'ho misurato** e non lo dichiaro come fatto.
-  Se il limite è quello, questa strada è chiusa in partenza.
-* **Costo/beneficio misurato**: peggiora il caso «voglio solo provarlo».
+* 🔴 **Il limite di PyPI è ESATTAMENTE 100,0 MB per file** (10,0 GB per
+  progetto) — documentazione ufficiale, verificato da ws8. **740 MB è 7,4 volte
+  il limite: l'upload viene rifiutato.**
+* Esiste una procedura per chiedere un aumento, ma è **la decisione di un
+  terzo con tempi non nostri**: non è una strada che possiamo scegliere, è una
+  che possiamo chiedere.
+* ⇒ **Toglietela dall'elenco. Restano tre.**
+* (Reggeva comunque poco: non riduce niente — sposta i byte da GitHub a PyPI —
+  e toglie la scelta a chi il moat non lo vuole.)
 
 ### ② Al primo uso, DICHIARATO PRIMA
 **È già così, e va detto perché cambia il lavoro da fare.** `verimem warmup`
@@ -96,21 +118,28 @@ un commento che spiega perché non è riscritta a mano: due copie divergono.
    `warmup` e in `doctor`. Chi installa e prova NON passa da lì.
 2. **La ③ vale la misura**, e il banco c'è già: 2514 verdetti su cui confrontare
    un modello più piccolo. Se regge, taglia 656 MB **per davvero**.
-3. **La ① e la ④ non risolvono il mandato**: la prima sposta i byte, la seconda
-   non li tocca finché `sentence-transformers` è obbligatoria.
-4. ⚠️ **E il mandato andrebbe riformulato su ciò che pesa**: «funzionante senza
-   scaricare altro» oggi vuol dire **2,8 GB**, di cui il giudice è 656 MB. Se
-   l'obiettivo è un primo avvio leggero, il fronte è `torch` + l'embedder, e
-   nessuna delle quattro strade lo affronta.
+3. **La ① è MORTA** (limite PyPI) e **la ④ non riduce niente** finché
+   `sentence-transformers` è obbligatoria.
+4. ⚠️ **E il mandato va letto sul peso vero, che dopo la correzione è un
+   altro**: «funzionante senza scaricare altro» oggi vuol dire **~1,9 GB su
+   Windows** — embedder **1,1 GB**, giudice **656 MB**, torch **116 MB**.
+   ⇒ **Il fronte non è torch: è l'embedder**, che è il pezzo più grosso e
+   l'unico dei tre che nessuna delle strade proposte tocca. Se un giorno si
+   vuole un primo avvio davvero leggero, la domanda è **«serve
+   `multilingual-e5-base` o basta un embedder più piccolo?»** — la stessa
+   domanda della strada ③, su un modello diverso e più pesante.
 
 ---
 
 ## 4. Cosa NON ho verificato — dichiarato
 
-* Il **limite per file di PyPI** (strada ①).
-* La **qualità di un giudice più piccolo** (strada ③): ho l'evidenza indiretta
-  della bimodalità, non una misura diretta.
-* **Il tempo** di ognuna delle tre fasi su una macchina pulita: i 594 secondi e
-  il 1,01 GB della fase ① sono **misura di ws2**, non mia.
-* Se `torch` scaricato da PyPI sia più piccolo dei 4,4 GB che occupa su disco:
-  quasi certamente sì (wheel compresso), **ma non l'ho misurato**.
+* ✅ ~~Il **limite per file di PyPI**~~ → **CHIUSO da ws8**: 100,0 MB. Strada ① morta.
+* ✅ ~~Se `torch` scaricato da PyPI sia più piccolo dei 4,4 GB su disco~~ →
+  **CHIUSO da ws8**: 116,4 MB su Windows, 502,2 MB su Linux. E la ragione dello
+  scarto ha ribaltato la mia conclusione (vedi §1).
+* ❌ La **qualità di un giudice più piccolo** (strada ③): ho l'evidenza indiretta
+  della bimodalità, non una misura diretta. **Resta aperto.**
+* ❌ **Il tempo** di ognuna delle tre fasi su una macchina pulita: i 594 secondi e
+  il 1,01 GB sono **misura di ws2**, non mia. **Resta aperto.**
+* ❌ **NUOVO, ed esce dalla correzione**: se un embedder più piccolo basti. È il
+  pezzo più grosso dei tre e nessuno l'ha ancora guardato.
