@@ -54,9 +54,20 @@ anche ciò che credeva cancellato.
 
 - **Nessuna cancellazione per tema/soggetto.** Solo `forget(fact_id)`, un id
   alla volta. «Dimentica tutto su Mario Rossi» richiede di conoscere ogni id.
-- **Nessun comando da riga di comando.** `verimem forget` → `No such command
-  'forget'. Did you mean 'correct'?`. Su **65 comandi** della CLI nel repo,
-  **zero** cancellano. La capacità esiste solo per chi usa l'SDK Python.
+- ~~**Nessun comando da riga di comando.**~~ ⛔ **RITIRATO IL 09/08 — era mio ed
+  era falso.** `verimem facts forget <id>` **esiste e cancella**: eseguito,
+  `forgotten: … (op_id=… — undoable for 7 days)`, la lista passa da 1 fatto a 0,
+  e con un id inesistente risponde `not found` (controllo positivo).
+  **Il mio errore**: avevo cercato `verimem forget` al livello TOP e concluso
+  «zero su 65» contando solo i comandi di primo livello — la cancellazione è un
+  **sotto-comando** di `facts`. È la stessa classe che questa casa ha già pagato:
+  *il livello a cui misuri decide il verdetto*.
+  🔑 **E la misura giusta trova un difetto MIGLIORE di quello che avevo
+  inventato**: A/B nella stessa esecuzione, stesso store — la CLI lascia il testo
+  in chiaro in **`facts_undo_log`** per 7 giorni, l'SDK (`purge_history=True` *e*
+  il default) non lo lascia in nessuna tabella. **Due porte, due promesse
+  diverse, e la più raggiungibile è la più debole** — mentre dice «undoable»,
+  che si legge *reversibile*, non *ancora leggibile in una tabella*.
 
 ### Perché conta più delle altre due
 

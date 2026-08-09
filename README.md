@@ -495,9 +495,23 @@ What deletion looks like depends on which door you use, so here it is per door:
 - **deletion by subject does not exist anywhere.** "Forget everything about
   this person" is not a tenant scope: unless that person's facts happen to sit
   under their own `user_id`, you are back to one `fact_id` at a time.
-- **the CLI cannot delete at all.** `verimem forget` is not a command — of the
-  65 CLI commands in the repo, none delete. From the shell, the capability is
-  invisible.
+- **the CLI deletes, but keeps the text for seven days.**
+  `verimem facts forget <id>` works and reports
+  `forgotten: <id> (op_id=… — undoable for 7 days)`. That undo is not free: the
+  proposition stays **in clear text** in `facts_undo_log` for the whole window.
+  Measured A/B in one run, same store, same moment:
+
+  | door | after the delete, the text is in |
+  |---|---|
+  | `verimem facts forget <id>` (CLI) | **`facts_undo_log`** |
+  | `Memory.forget(id, purge_history=True)` (SDK) | no table |
+  | `Memory.forget(id)` (SDK, default) | no table |
+
+  So the two doors do NOT make the same promise, and the more reachable one
+  makes the weaker one — while its message says "undoable", which reads as
+  *reversible*, not as *still readable in a table*. For an erasure request that
+  distinction is the whole point: use the SDK, or wait out the undo window and
+  verify, or delete the undo row yourself.
 
 We state this because the licence is AGPL-3.0 and an agent memory is exactly
 where personal data ends up. If your deployment needs deletion to be
