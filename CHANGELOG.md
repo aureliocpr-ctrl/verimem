@@ -40,6 +40,41 @@ should upgrade is the first.
 release that makes the packaged artifact match the repository again, after the
 two drifted for 419 commits under a single version number.
 
+### Known limits in this release
+
+Measured before publishing, and listed because a release with known and written
+defects is usable while one with hidden defects is not. None of these is a
+regression: they are the state of the ground as we found it.
+
+- **Deleting through a door that offers undo keeps the text for 7 days.**
+  `verimem facts forget`, `hippo_fact_forget_with_undo` and `hippo_forget_scope`
+  route through `delete_with_undo`, which retains the proposition **in clear
+  text** in `facts_undo_log` for the undo window; the SDK's `Memory.forget()`
+  and `hippo_fact_forget` leave no table holding it. That is what makes the
+  first three reversible, and it is the right default for a mistyped id — but
+  the bulk-by-tenant door is the one you would reach for on an erasure request,
+  and nothing in its output says so. The README carries the per-door table.
+
+- **The quarantine review does not read the moat's verdict.** `verimem facts
+  requalify-quarantined` re-runs three screens (L1, injection, admission gate);
+  it does not look at `grounding_score`, which is already stored on the row. On
+  a 9168-fact corpus it called 265 facts recoverable, of which 165 carried
+  `grounding_score < 40` — a source *was* checked against them and refused them.
+  The dry run now reports that split (`by_moat`) instead of a bare total, and
+  every applied promotion writes a `restore` row to the audit chain, but the
+  criterion itself is unchanged in this release.
+
+- **The governance surface is not in this release.** `retirement_log`,
+  `text_cut`, `residual_copies` and `tier_inventory` — the retirement register,
+  the written/servable/retired/quarantined quartet, and the grapheme-safe cut —
+  live on a branch that is not merged yet. Nothing in the README or the package
+  description promises them; they are simply not here.
+
+- **The wheel and sdist carry one dead module.** `verimem/rerank.py` was removed
+  from the source in June and survives in build artifacts, so it ships without
+  being importable from anywhere in the codebase. Harmless — nothing imports it
+  — but it is in the package, and it has been since 0.7.0.
+
 ## [Unreleased] — 0.8 line
 
 ### Changed (BREAKING)
