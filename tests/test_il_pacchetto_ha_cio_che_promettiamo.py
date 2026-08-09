@@ -249,8 +249,53 @@ def test_il_server_mcp_si_importa():
         )
 
 
+@pytest.fixture(scope="module")
+def wheel_costruito(tmp_path_factory):
+    """Costruisce il wheel UNA volta per tutti i test che devono guardarci dentro.
+
+    Prima era una `subprocess.run` dentro il singolo test; con due consumatori il
+    wheel veniva costruito due volte (~25 s ciascuno) per leggere lo stesso file.
+    """
+    dove = tmp_path_factory.mktemp("wheel")
+    esito = subprocess.run(
+        [sys.executable, "-m", "build", "--wheel", "--no-isolation", "-o", str(dove)],
+        cwd=RADICE, capture_output=True, text=True, timeout=900,
+    )
+    if esito.returncode != 0:
+        pytest.skip(f"build del wheel non riuscita in questo ambiente: {esito.stderr[-400:]}")
+    wheels = list(dove.glob("*.whl"))
+    if not wheels:
+        pytest.skip(f"nessun wheel prodotto in {dove}")
+    return wheels[0]
+
+
 @pytest.mark.slow
-def test_il_wheel_contiene_i_comandi_del_repo(tmp_path):
+def test_il_wheel_passa_il_controllo_che_pypi_fa_prima_di_accettarlo(wheel_costruito):
+    """Un README che non si renderizza fa RIFIUTARE l'upload — e brucia il numero.
+
+    PyPI valida la `Description` (che è il README, finito nel METADATA) e risponde
+    400 se non rende. E un numero di versione non si riusa: PyPI rifiuta un filename
+    già visto **anche dopo che la release è stata cancellata**, quindi un upload
+    fallito per il README costringe a passare alla versione successiva, davanti a
+    tutti e per sempre nello storico.
+
+    `twine check` è la stessa validazione, eseguita prima. Costa un secondo qui e
+    una versione bruciata là.
+    """
+    esito = subprocess.run(
+        [sys.executable, "-m", "twine", "check", str(wheel_costruito)],
+        cwd=RADICE, capture_output=True, text=True, timeout=300,
+    )
+    if "No module named twine" in (esito.stderr or ""):
+        pytest.skip("twine non installato in questo ambiente")
+    assert esito.returncode == 0 and "PASSED" in esito.stdout, (
+        f"il pacchetto non passerebbe la validazione di PyPI:\n"
+        f"{esito.stdout[-600:]}\n{esito.stderr[-400:]}"
+    )
+
+
+@pytest.mark.slow
+def test_il_wheel_contiene_i_comandi_del_repo(wheel_costruito):
     """Ciò che il repo definisce deve arrivare dentro il pacchetto.
 
     ⚠️ Limite dichiarato: il wheel viene costruito DA QUESTO ALBERO, quindi contiene
@@ -259,17 +304,7 @@ def test_il_wheel_contiene_i_comandi_del_repo(tmp_path):
     pubblicazione: se il wheel su PyPI è vecchio, questo test passa lo stesso. Per
     quello c'è ``test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice``.
     """
-    esito = subprocess.run(
-        [sys.executable, "-m", "build", "--wheel", "--no-isolation", "-o", str(tmp_path)],
-        cwd=RADICE, capture_output=True, text=True, timeout=900,
-    )
-    if esito.returncode != 0:
-        pytest.skip(f"build del wheel non riuscita in questo ambiente: {esito.stderr[-400:]}")
-
-    wheels = list(tmp_path.glob("*.whl"))
-    assert wheels, f"nessun wheel prodotto in {tmp_path}"
-
-    with zipfile.ZipFile(wheels[0]) as z:
+    with zipfile.ZipFile(wheel_costruito) as z:
         nomi = [n for n in z.namelist() if n.endswith("verimem/cli.py")]
         assert nomi, f"il wheel non contiene verimem/cli.py: {z.namelist()[:10]}"
         nel_wheel = _comandi_definiti(z.read(nomi[0]).decode("utf-8"))
