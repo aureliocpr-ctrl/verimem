@@ -42,15 +42,24 @@ def _is_call_telemetry_episode(ep: Any) -> bool:
     return is_call_telemetry(getattr(ep, "task_text", ""))
 
 
-def _safe_count(obj: Any, attr: str = "count") -> int:
-    """Best-effort `count()` via duck-typing. Returns -1 on error."""
+def _safe_count(obj: Any, attr: str = "count") -> int | None:
+    """Best-effort ``count()`` via duck-typing. Returns None when the tier
+    cannot answer — NOT a number.
+
+    It used to return -1, a reasonable sentinel INSIDE a function that ended
+    up textual in a human summary: an SDK caller (who holds a ``Memory``, so
+    only ``.semantic``) read "verimem memory: -1 episode (0 success, 0
+    failure), 6113 fact, -1 skill" as the first line of the session — while
+    the corpus held 405 successes (measured 2026-08-05). A count nobody could
+    take is not minus one: it is unknown, and saying so is the whole point of
+    this product."""
     try:
         fn = getattr(obj, attr, None)
         if callable(fn):
             return int(fn())
     except Exception:
         pass
-    return -1
+    return None
 
 
 def get_briefing(
@@ -301,11 +310,17 @@ def get_briefing(
 
     # --- Summary text ------------------------------------------------
     parts: list[str] = []
-    parts.append(
-        f"verimem memory: {ep_count} episode "
-        f"({success_count} success, {failure_count} failure), "
-        f"{fact_count} fact, {sk_count} skill."
-    )
+    # Each tier states its own number or its own absence. A tier that could
+    # not be read contributes "unavailable", and its success/failure split
+    # is NOT printed: "0 success, 0 failure" on a corpus with 405 successes
+    # is as false as -1, only harder to notice.
+    _bits = [
+        f"{ep_count} episode ({success_count} success, {failure_count} failure)"
+        if ep_count is not None else "episodes unavailable",
+        f"{fact_count} fact" if fact_count is not None else "facts unavailable",
+        f"{sk_count} skill" if sk_count is not None else "skills unavailable",
+    ]
+    parts.append("verimem memory: " + ", ".join(_bits) + ".")
     if recent_facts:
         f0 = recent_facts[0]["proposition"][:80]
         parts.append(f"Most recent fact: {f0!r}.")

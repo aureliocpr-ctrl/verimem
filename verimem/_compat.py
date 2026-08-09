@@ -51,6 +51,30 @@ _NEW_DIR_NAME = ".engram"
 _VERIMEM_DIR_NAME = ".verimem"
 
 
+#: I nomi che lo specchio ha CREATO lui, per distinguerli da quelli che ha
+#: scelto l'operatore. La funzione rendeva gia' il NUMERO — «for tests /
+#: introspection», dice il suo docstring — e buttava via QUALI: e' la classe
+#: che questo progetto paga di piu', la capacita' c'era e mancava il
+#: collegamento.
+#:
+#: ⚠️ Non e' un dettaglio estetico. Misurato il 2026-08-08: 8 variabili del
+#: prodotto prima dell'import, 21 dopo. Una diagnosi che elencasse
+#: `os.environ` presenterebbe come «impostate dall'operatore» tredici
+#: variabili create dalla libreria — e il docstring di `_ALIAS_DATA_DIR`, qui
+#: sotto, racconta un incidente del 2026-07-30 in cui proprio una variabile
+#: creata dallo specchio ha scavalcato quella scelta dall'operatore.
+_CREATI: set[str] = set()
+
+
+def alias_creati() -> frozenset[str]:
+    """I nomi che :func:`init_env_aliases` ha creato in questo processo.
+
+    Tutto cio' che sta in `os.environ` col nostro prefisso e NON e' qui dentro
+    l'ha messo l'operatore (o l'ambiente che lo ospita).
+    """
+    return frozenset(_CREATI)
+
+
 def init_env_aliases() -> int:
     """Mirror VERIMEM_* / HIPPO_* ↔ ENGRAM_* env vars (idempotent).
 
@@ -62,7 +86,8 @@ def init_env_aliases() -> int:
        after pass 1 makes the brand value transitively visible as ``HIPPO_X``)
     3. ``ENGRAM_X`` → ``VERIMEM_X`` (symmetry, for introspection)
 
-    Returns the number of mirror entries added (for tests / introspection).
+    Returns the number of mirror entries added (for tests / introspection);
+    :func:`alias_creati` says WHICH ones.
     """
     added = 0
 
@@ -74,6 +99,7 @@ def init_env_aliases() -> int:
                 dst = dst_prefix + k[len(src_prefix):]
                 if dst not in os.environ:
                     os.environ[dst] = v
+                    _CREATI.add(dst)
                     n += 1
         return n
 

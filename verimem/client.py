@@ -442,6 +442,18 @@ class Memory:
             documents=LazyDocumentStore(),
         )
         warnings = list(gate.warnings)
+
+        # Il verdetto per l'evento sta in UNA funzione sola
+        # (`flow_events.emit_write`), che lo deriva dal punteggio: qui
+        # basta il punteggio. Prima questa closure lo componeva a mano, e
+        # la stessa composizione mancava del tutto sulla porta MCP —
+        # 141 scritture ad agosto, ZERO eventi (ws4, 2026-08-07). Una
+        # regola scritta due volte diverge; scritta una volta e mai
+        # chiamata dalla terza porta, sparisce.
+        from .flow_events import emit_write as _emit_write
+        _gs_evt = getattr(gate, "grounding_score", None)
+
+
         # The mirror of the gate's own L4-skipped advisory ("say so out loud,
         # NEVER a silent skip"), for the case it never covered: a judge is
         # reachable but the write carries NO source, so L4 has nothing to check
@@ -498,8 +510,9 @@ class Memory:
         _layers = _blocking_layers(warnings)
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
-            _emit_flow("flow.write", stored=False, status="rejected",
-                       fact_id="", topic=str(topic), layers=_layers)
+            _emit_write(stored=False, status="rejected", fact_id="",
+                        topic=str(topic), layers=_layers,
+                        grounding_score=_gs_evt)
             _adj = _adjudication(gate, disposition="rejected",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text, fact_id=None,
@@ -572,9 +585,9 @@ class Memory:
         _routed = getattr(fact, "routed_to", None)
         if _routed:
             self._record_trust("routed_telemetry", layers=None, topic=topic)
-            _emit_flow("flow.write", stored=True, status="routed_telemetry",
-                       fact_id=str(fact.id), topic=str(topic),
-                       layers=["admission-route"])
+            _emit_write(stored=True, status="routed_telemetry",
+                        fact_id=str(fact.id), topic=str(topic),
+                        layers=["admission-route"], grounding_score=_gs_evt)
             _adj = _adjudication(gate, disposition="routed_telemetry",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text,
@@ -603,8 +616,27 @@ class Memory:
         # layers in the flow event = which defense actually ACTED (same
         # attribution as the ledger): the Live Engine Room lights the real
         # stage, not a generic box. Metadata only, never fact content.
-        _emit_flow("flow.write", stored=True, status=str(fact.status),
-                   fact_id=str(fact.id), topic=str(topic), layers=_hit_layers)
+        # `judged` accanto a `status`: senza, nel feed un fatto verificato
+        # 99.9 e uno MAI GIUDICATO sono entrambi "ADMITTED" — cioè la
+        # distinzione che questo prodotto vende sparisce proprio dalla
+        # pagina che dovrebbe mostrarla. Il flag è esplicito perché un
+        # `grounding_score: null` si legge distrattamente come zero, e
+        # zero è un verdetto — il contrario dell'assenza di verdetto.
+        #
+        # ⚠️ ERRATA 2026-08-05: i commit `49096224` e `cc367071` motivano
+        # questo campo con «le scritture che arrivano mentre il moat si
+        # scalda entrano non giudicate». ws5 me l'aveva passata leggendo
+        # una STRINGA di `verimem doctor`, poi l'ha MISURATA e cade: 4
+        # thread simultanei su store vergine aspettano tutti 42.60s e
+        # ricevono tutti un verdetto (0 NULL su 4) — il caricamento è
+        # sincrono con lock, quella finestra non esiste sul canale SDK.
+        # Quello che regge, e basta a giustificare il campo: i
+        # mai-giudicati ESISTONO (ws3: 6 NULL su 250 scritti oggi, 4 dei
+        # quali con una source_signature) e il feed non li distingueva.
+        # La causa resta ignota, ed è meglio dirlo che spiegarla a caso.
+        _emit_write(stored=True, status=str(fact.status),
+                    fact_id=str(fact.id), topic=str(topic),
+                    layers=_hit_layers, grounding_score=_gs_evt)
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
         # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE, classified by
@@ -613,6 +645,12 @@ class Memory:
         # the old would lose BOTH (opus critic guard). supersede() keeps the old row for
         # lineage; it just drops out of the default recall filter.
         _superseded: list[str] = []
+        # ws6 control-room: each real retirement now carries its undo handle
+        # (semantic.supersede snapshots pre-op). Surfacing the handle HERE —
+        # in the add() receipt — is what turns "this write retired another
+        # fact" from an invisible mutation into a reversible one for every
+        # SDK/MCP/gateway caller (indicator #1, ws5 2026-08-04).
+        _superseded_undo: dict[str, str] = {}
         # admit-guard: retire the old ONLY if the new write was admitted AND is actually
         # retrievable from the CURATED store — store() can divert a non-quarantined write
         # elsewhere (admission-gate telemetry route sets no 'quarantined' status), and
@@ -633,10 +671,13 @@ class Memory:
                 and self.semantic.get(fact.id) is not None):
             for _old_id in gate.supersede_fact_ids:
                 try:
-                    self.semantic.supersede(_old_id, fact.id,
-                                            principal=principal or self._principal,
-                                            reason="same-source evolution")
+                    _sup_res = self.semantic.supersede(
+                        _old_id, fact.id,
+                        principal=principal or self._principal,
+                        reason="same-source evolution")
                     _superseded.append(_old_id)
+                    if _sup_res.get("undo_op_id"):
+                        _superseded_undo[_old_id] = _sup_res["undo_op_id"]
                 except Exception as exc:  # noqa: BLE001 — a supersede failure must not break the write
                     # surface it: the new fact is admitted but the old was NOT retired —
                     # the stale-beside-new state the feature exists to prevent (opus critic).
@@ -853,6 +894,8 @@ class Memory:
         }
         if _superseded:
             _out["superseded"] = _superseded
+            if _superseded_undo:
+                _out["superseded_undo_ops"] = _superseded_undo
         return _out
 
     # ---- read --------------------------------------------------------------
@@ -1404,9 +1447,21 @@ class Memory:
             rows = self.semantic.search_facts(
                 terms, limit=1000, require_all_tokens=bool(terms),
                 topic_prefix=topic_prefix)
+            # LA STESSA VISTA DEL RAMO `find`. Questi due rami proiettavano
+            # a mano tre chiavi — id, text, topic — mentre `find`, nella
+            # STESSA funzione, restituisce le quindici di `_fact_view`
+            # (trovato da ws2 il 2026-08-07 con una grep dalle chiavi, non
+            # dai letterali). Chi chiedeva «elencami tutto su X» riceveva
+            # fatti in cui un `model_claim` e uno verificato erano
+            # INDISTINGUIBILI: niente status, niente verdetto, niente
+            # provenienza — e la stessa domanda posta in un'altra forma li
+            # distingueva.
+            #
+            # `score` NON si aggiunge: appartiene alla query e qui non si
+            # ordina niente. Uno zero direbbe «rilevanza nulla», che e'
+            # un'affermazione; l'assenza dice «questo elenco non ordina».
             return {"intent": LIST_ALL, "terms": terms,
-                    "results": [{"text": f.proposition, "id": f.id,
-                                 "topic": f.topic} for f in rows]}
+                    "results": [self._fact_view(f) for f in rows]}
         if intent == EXCLUDE:
             # Set-difference: the scoped corpus MINUS the facts matching the
             # excluded terms. Embeddings ignore "not"; this executes it as a
@@ -1443,9 +1498,14 @@ class Memory:
                     _escl, limit=10000, require_all_tokens=True,
                     topic_prefix=topic_prefix)}
             results = [f for f in base if f.id not in excl_ids]
+            # stessa vista degli altri rami (vedi LIST_ALL qui sopra). Qui
+            # pesa doppio: il commento del 2026-08-02 poco piu' su racconta
+            # che da questo ramo e' gia' USCITO un fatto quarantinato, e
+            # usciva senza `status` — cioe' indistinguibile da uno ammesso.
+            # La base resta quella che e': questa cura non filtra niente,
+            # rende solo VISIBILE cio' che esce.
             return {"intent": EXCLUDE, "excluded": excluded,
-                    "results": [{"text": f.proposition, "id": f.id,
-                                 "topic": f.topic} for f in results]}
+                    "results": [self._fact_view(f) for f in results]}
         return {"intent": FIND, "results": self.search(query, k=k)}
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
@@ -2301,7 +2361,13 @@ class Memory:
             with sqlite3.connect(str(self.semantic.db_path)) as con:
                 con.row_factory = sqlite3.Row
                 for r in con.execute(
-                        "SELECT id, proposition, topic, created_at, status "
+                        # grounding_score viaggia con la riga perche' la
+                        # spiegazione ne ha bisogno per NON inventare la
+                        # causa: un verdetto alto su un fatto trattenuto
+                        # smentisce da solo l'attribuzione a L4 (ws1,
+                        # 2026-08-05).
+                        "SELECT id, proposition, topic, created_at, status, "
+                        "grounding_score "
                         "FROM facts WHERE status = 'quarantined' "
                         "AND superseded_by IS NULL "
                         "ORDER BY created_at DESC LIMIT ?",
@@ -2355,6 +2421,7 @@ class Memory:
         """
         try:
             from .anti_confab_gate import run_validation_gate
+            from .retirement_log import judged_true as _judged_true
         except Exception:  # noqa: BLE001
             return
         for row in rows:
@@ -2368,24 +2435,67 @@ class Memory:
             except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
                 continue
             if not avvisi:
-                # Nessuno schermo lessicale si accende: il fatto e' stato
-                # fermato da L4, il moat, che confronta la proposizione con la
-                # SUA fonte — e la fonte non e' persistita, quindi il motivo
-                # non e' ricostruibile qui. Provato sul corpus vivo: i tre
-                # quarantinati piu' recenti sono tutti di questo tipo.
-                #
-                # Si dice, invece di lasciare il campo vuoto: `None` si legge
-                # «nessun motivo», e non e' la stessa cosa di «non lo so piu'».
+                # Lo schermo dello STORE, che il gate di validazione non
+                # attraversa: `detect_injection` gira dentro store() ed e'
+                # puro e deterministico esattamente come gli L1 qui sopra.
+                # Rieseguire il SOLO gate non poteva trovarlo mai — ed e'
+                # per questo che il caso di ws1 (2026-08-05) finiva sul
+                # ramo di default con una causa inventata, mentre la
+                # ricevuta di scrittura diceva layers=['store-screen'].
+                try:
+                    from .prompt_injection import detect_injection
+                    v = detect_injection(row.get("proposition") or "")
+                except Exception:  # noqa: BLE001
+                    v = None
+                if v is not None and getattr(v, "is_injection", False):
+                    row["layers"] = ["store-screen"]
+                    row["why"] = (
+                        "store-screen: prompt-injection signals "
+                        f"{list(getattr(v, 'signals', []) or [])} — la frase "
+                        "CITA una formula che il rilevatore riconosce. Se il "
+                        "testo e' un referto che documenta l'attacco invece "
+                        "di portarlo, e' un falso positivo: e' la variante "
+                        "gemella del gate che trattiene i referti sul gate.")
+                    continue
+
+                # Nessuno schermo si riaccende. Qui la causa NON e' nota, e
+                # fino al 2026-08-05 questo ramo la attribuiva a L4 — una
+                # deduzione, non una lettura, e ws1 ha misurato che e' falsa
+                # su 183 record su 500: `layers` arriva vuoto, l'explain non
+                # trova niente e ASSERISCE. Una superficie muta si nota, una
+                # assertiva e sbagliata manda a cercare nella direzione
+                # opposta. Ora si guarda l'unica cosa che la riga sa sul
+                # moat — il suo verdetto — e si DICHIARA.
+                _gs = row.get("grounding_score")
+                _coda = (
+                    " Le cause tipiche di un blocco L4 sono un calcolo o una "
+                    "conversione che la fonte non enuncia, e una frase che "
+                    "contiene piu' affermazioni giudicate insieme: riscrivila "
+                    "coi numeri come stanno nella fonte, spezzala, e "
+                    "riscrivila con --source.")
                 row["layers"] = []
-                row["why"] = (
-                    "nessuno schermo lessicale si accende su questa frase: "
-                    "e' stata fermata dal confronto con la sua fonte (L4), e "
-                    "la fonte non viene conservata, quindi il motivo esatto "
-                    "non e' piu' ricostruibile. Le cause tipiche sono un "
-                    "calcolo o una conversione che la fonte non enuncia, e "
-                    "una frase che contiene piu' affermazioni giudicate "
-                    "insieme: riscrivila coi numeri come stanno nella fonte, "
-                    "spezzala, e riscrivila con --source.")
+                if _gs is None:
+                    row["why"] = (
+                        "causa NON REGISTRATA: nessuno schermo lessicale si "
+                        "riaccende su questa frase e il moat non l'ha MAI "
+                        "GIUDICATA (grounding_score assente), quindi non e' "
+                        "stata fermata da L4 e il motivo esatto non e' piu' "
+                        "ricostruibile da questa riga. La ricevuta di "
+                        "scrittura il layer lo diceva (`layers`): riscrivila "
+                        "con --source e guarda la ricevuta.")
+                elif _judged_true(_gs):
+                    row["why"] = (
+                        f"causa NON REGISTRATA, e NON e' L4: il moat ha "
+                        f"giudicato questa frase {float(_gs):.2f}, cioe' l'ha "
+                        "APPROVATA, e il fatto e' trattenuto lo stesso. Il "
+                        "layer che ha deciso e' un altro e non e' ricostruibile "
+                        "da questa riga.")
+                else:
+                    row["why"] = (
+                        f"causa non registrata: nessuno schermo lessicale si "
+                        f"riaccende, e il moat ha giudicato {float(_gs):.2f} — "
+                        "compatibile con un blocco L4, ma la riga non lo "
+                        "afferma." + _coda)
                 continue
             row["layers"] = [w.get("layer") for w in avvisi if w.get("layer")]
             row["why"] = " · ".join(
@@ -2738,14 +2848,77 @@ class Memory:
         if old is None:
             return {"updated": False, "reason": "not found"}
         res = self.add(text, topic=topic or getattr(old, "topic", "user"))
+        _undo_id: str | None = None
         if res.get("stored") and res.get("id"):
             try:
-                self.semantic.supersede(fact_id, res["id"],
-                                        principal=self._principal,
-                                        reason="sdk update")
+                _sup = self.semantic.supersede(fact_id, res["id"],
+                                               principal=self._principal,
+                                               reason="sdk update")
+                _undo_id = _sup.get("undo_op_id")
             except Exception as exc:  # noqa: BLE001
                 return {**res, "updated": True, "supersedes": fact_id, "supersede_warning": str(exc)}
-        return {**res, "updated": bool(res.get("stored")), "supersedes": fact_id}
+        out = {**res, "updated": bool(res.get("stored")), "supersedes": fact_id}
+        if _undo_id is not None:
+            out["undo_op_id"] = _undo_id
+        return out
+
+    def retirement_log(self, *, limit: int = 50, since: float | None = None,
+                       topic: str | None = None, reason: str | None = None,
+                       with_text: bool = False) -> list[dict[str, Any]]:
+        """The retirements, newest first, as (loser, winner) pairs — the
+        ``quarantine_log`` equivalent for supersessions. Each row carries
+        topics, reason, timestamp, and the ``undo_op_id`` handle when the
+        retirement is reversible (``undo(op_id)`` reverses it). Measured
+        2026-08-04: seven read surfaces said nothing about a retirement;
+        this is the window. Metadata by default; ``with_text=True`` adds
+        the propositions for local judging."""
+        from .retirement_log import retirement_log as _rlog
+        return _rlog(self.semantic, limit=limit, since=since, topic=topic,
+                     reason=reason, with_text=with_text)
+
+    def tier_inventory(self) -> dict[str, Any]:
+        """Where each tier actually lives, how many rows it holds, and
+        which nearby files carry its name without being it.
+
+        Measured 2026-08-05: the five entity tables inside ``semantic.db``
+        are an empty migration shell — the graph lives in
+        ``entity_kg/entity_kg.db`` with 9078 entities and 87387 edges, and
+        counting the shell produced "the entity tier is empty". A missing
+        store reads ``unavailable``, never ``0``: an empty container and
+        an absent one return the same number, and only the second
+        announces itself."""
+        from .tier_inventory import tier_inventory as _ti
+        return _ti(data_dir=Path(self.semantic.db_path).resolve().parent.parent)
+
+    def verdict_mismatches(self, *, limit: int = 50,
+                           topic: str | None = None) -> dict[str, Any]:
+        """Where the moat's verdict and the fact's fate disagree, both ways:
+        judged true and withheld, judged false and served, plus the
+        contested band where the outcome depended on which judge was up.
+
+        It decides nothing — it lists, like the retirement log lists pairs.
+        The thresholds travel in the result because "true" and "false" here
+        are two cuts, and a number without its definition is the defect this
+        branch cures. Measured on the real corpus 2026-08-05: 11 quarantined
+        facts carry a verdict >= 90 and 10 served facts carry one below the
+        admission cut, down to 0.22."""
+        from .retirement_log import verdict_mismatches as _vm
+        return _vm(self.semantic, limit=limit, topic=topic)
+
+    def survivability(self, *, topic: str | None = None) -> dict[str, Any]:
+        """The canonical quartet written/servable/retired/quarantined with
+        its formula. A fact disappears in TWO ways; any 'alive' count that
+        ignores one of them hides half the loss (ws3 retraction 2026-08-04)."""
+        from .retirement_log import survivability_counts as _scounts
+        return _scounts(self.semantic, topic=topic)
+
+    def undo(self, op_id: str) -> dict[str, Any]:
+        """Reverse a destructive op (forget / supersede) by its handle —
+        the handle arrives in ``add()['superseded_undo_ops']``,
+        ``update()['undo_op_id']`` or ``retirement_log()`` rows. Restores
+        the pre-op row; the winner of a supersession stays alive (the
+        ping-pong ends with BOTH facts, not another retirement)."""
+        return self.semantic.undo_destructive_op(op_id)
 
     def history(self, fact_id: str) -> list[dict[str, Any]]:
         """The FULL supersession trail of the lineage containing ``fact_id`` —
@@ -2783,6 +2956,21 @@ class Memory:
             cid = getattr(cur, "id", "")
             seen.add(cid)
             nxt = getattr(cur, "superseded_by", None)
+            # ⚠️ RISOLUZIONE DEL CONFLITTO (ws7, 2026-08-09) — TENGO IL LATO DI
+            # MAIN E SCARTO IL MIO, e la ragione e' che IL MIO ERA SBAGLIATO
+            # PER QUESTA SUPERFICIE. Avevo curato lo stesso difetto (history
+            # rendeva quattro campi invece di quattordici) usando
+            # `fact_contract.fact_payload`, che e' il contratto della porta
+            # MCP. Ma `Memory.history` e' SDK, e il commento di `_fact_view`
+            # — su main, riga 2556 — dichiara che la divergenza fra le due
+            # viste e' DELIBERATA: «ADDITIVO di proposito, non una delega a
+            # `fact_payload`: i due usano nomi diversi per la stessa cosa
+            # (`text` contro `proposition`), e allinearli romperebbe ogni
+            # chiamante dell'SDK».
+            # ⇒ La mia versione avrebbe portato nell'SDK i campi che sono
+            #   solo dell'MCP (confidence_tier, meta_narrative,
+            #   writer_principal) e lasciato fuori `epistemic`. Il merge ha
+            #   trovato un mio errore, non una scelta fra due lati pari.
             # LA VISTA CONDIVISA, non la TERZA copia scritta a mano.
             #
             # Qui c'era `{id, text, status, superseded_by}`: quattro chiavi
@@ -2825,6 +3013,23 @@ class Memory:
     #: `recall`: due implementazioni della stessa operazione divergono.
     correct = update
     forget = delete
+
+    def forget_with_report(self, fact_id: str) -> dict[str, Any]:
+        """Delete a fact AND say where it is still readable.
+
+        ``forget`` clears every live table (the entity graph included —
+        verified), but the Auto-Dream worker keeps whole-DB copies:
+        rotating ones for a few hours, MANUAL ones forever (one from May 12
+        still holds 60 facts the live store dropped). The deletion is real
+        and its effect is partial, and until now no surface said so — the
+        same class as the invisible retirements this release cures.
+
+        Returns ``{removed, fact_id, residual_copies: [...]}``; each copy
+        carries ``rotates`` so "for a few hours" and "forever" are
+        distinguishable. Reporting NEVER blocks the erasure: a scan failure
+        degrades to an empty list."""
+        from .residual_copies import forget_with_report as _fwr
+        return _fwr(self.semantic, fact_id, principal=self._principal or "sdk")
 
 
 #: Alias for users who expect a ``Client`` name (mem0/Zep ergonomics).

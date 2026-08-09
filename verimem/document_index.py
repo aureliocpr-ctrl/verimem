@@ -362,6 +362,18 @@ class DocumentIndex:
                     "document %s: %d/%d chunk(s) flagged for injection signals "
                     "— hidden from default search (audit via include_flagged)",
                     source_id, n_flagged, len(chunks))
+        # Flow channel (ws6 2026-08-05, camera dark DOCUMENTS). This tier was
+        # the only one with NO telemetry at all — the others at least emitted
+        # under a name the live surfaces drop. And it is the tier the whole
+        # team leans on as "the robust channel": 25 documents, 598 chunks, of
+        # which 307 (51.3%) belong to superseded versions (measured by ws4).
+        # `version` and `chunks_flagged` travel because they are the two
+        # numbers that make an ingest readable: which version won, and how
+        # much of it was withheld.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.document", kind="index", source_id=source_id,
+                   doc_id=snap["id"], version=snap["version"],
+                   chunks_indexed=len(chunks), chunks_flagged=n_flagged)
         return {"source_id": source_id, "doc_id": snap["id"],
                 "version": snap["version"], "is_new": True,
                 "chunks_indexed": len(chunks), "chunks_flagged": n_flagged}
@@ -498,8 +510,28 @@ class DocumentIndex:
             h["query_terms"] = len(termini)
             h["query_terms_matched"] = sum(
                 1 for t in termini if t in h["text"].lower())
-        return Risultati(_applica_rerank(self, q, hits)[:max(1, int(k))],
-                         nascosti=nascosti, illeggibili=illeggibili)
+        # ⚠️ RISOLUZIONE DEL CONFLITTO (ws7, 2026-08-09) — QUI I DUE LATI SONO
+        # DAVVERO COMPLEMENTARI, al contrario di `event_jsonl_log` dove erano
+        # la stessa cura scritta due volte. Su main la ricerca rende un
+        # `Risultati` che distingue «non trovato» da «trovato e nascosto»
+        # (nascosti/illeggibili); su questo ramo emette l'evento `flow.document`,
+        # che era l'unico tier a non dire NULLA sul canale di flusso.
+        # ⇒ Si tengono ENTRAMBI: si calcola una volta, si emette, si avvolge.
+        _out = _applica_rerank(self, q, hits)[:max(1, int(k))]
+        # Il lato LETTURA del tier documenti sul canale di flusso: `n` e il
+        # punteggio migliore rendono leggibile una ricerca, e
+        # `include_flagged` dice se la risposta e' stata costruita mentre
+        # qualcosa veniva trattenuto. Solo metadati: mai il testo della
+        # citazione.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.document", kind="search", n=len(_out),
+                   best=(_out[0]["score"] if _out else None),
+                   include_flagged=bool(include_flagged),
+                   # i due conteggi di main viaggiano anche sul canale: chi
+                   # guarda il flusso vedeva `n` senza sapere che una parte
+                   # era stata tolta.
+                   hidden=int(nascosti), unreadable=int(illeggibili))
+        return Risultati(_out, nascosti=nascosti, illeggibili=illeggibili)
 
     # --- rerank ---------------------------------------------------------
     def _rerank_attivo(self) -> bool:

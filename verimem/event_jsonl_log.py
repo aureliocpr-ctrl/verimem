@@ -20,8 +20,15 @@ Idempotente: la dir parent viene creata se manca. Best-effort: payload
 non serializzabili o errori I/O sono inghiottiti — il bus principale
 non viene mai rotto da questo modulo.
 
-Il path è override-abile via env ``ENGRAM_EVENT_LOG`` per testing /
-sandboxing. I test monkey-patcha-no ``EVENT_LOG_PATH`` direttamente.
+Dove vive il file: ``<data dir>/events.jsonl``, cioè la data dir che
+l'utente ha scelto (``HIPPO_DATA_DIR`` e alias). Fino al 2026-08-05 il
+default era ``~/.engram`` scritto a mano, quindi chi isolava lo store
+scriveva comunque la telemetria nel corpus di casa. ``ENGRAM_EVENT_LOG``
+resta l'override esplicito e vince su tutto.
+
+⚠️ ``EVENT_LOG_PATH`` è calcolato all'IMPORT del modulo: settare le env
+dopo non ha effetto, e per questo i test lo monkey-patchano direttamente
+(o girano in un subprocesso, che è il modo di verificare il default vero).
 """
 from __future__ import annotations
 
@@ -32,6 +39,24 @@ from pathlib import Path
 from typing import Any
 
 
+# ⚠️ RISOLUZIONE DEL CONFLITTO (ws7, 2026-08-09) — LA STESSA CURA SCRITTA DUE
+# VOLTE. Su questo ramo c'era `_default_event_log()` (risolveva con
+# `_compat.data_dir`), su `main` c'e' `_cartella_dati()` (risolve con
+# `CONFIG.data_dir`). Due istanze hanno curato lo stesso difetto — «il giornale
+# scriveva nella home anche con lo store isolato» — nello stesso giorno e senza
+# saperlo, ed e' la classe ① di questo prodotto: una copia invece della
+# superficie unica.
+#
+# Non e' una scelta a caso fra due lati: ho VERIFICATO che sono equivalenti.
+# `config._data_root()` delega a `_compat.data_dir` per il caso senza env e
+# usa la stessa precedenza (HIPPO_DATA_DIR -> ENGRAM_DATA_DIR), e in entrambe
+# le versioni `EVENT_LOG_PATH` si fissa comunque all'IMPORT.
+# ⇒ Tengo QUELLA DI MAIN, che e' gia' nel tronco e che quindi non costringe
+#   nessun altro ramo a cambiare; il mio `_default_event_log` sparisce.
+# ⇒ Ma tengo il MIO strato sopra — `_avvisa_se_diverge()`, piu' sotto — che
+#   main NON ha: e' la superficie che DICE quando il giornale finisce lontano
+#   dallo store, cioe' l'unica che si accorge del difetto quando ricapita in
+#   un'altra forma. La cura e' di main, l'osservabilita' resta mia.
 def _cartella_dati() -> Path:
     """La data dir del prodotto, non la home.
 
@@ -105,6 +130,48 @@ def _maybe_rotate() -> None:
         pass
 
 
+#: L'avviso di divergenza si dà UNA volta per processo: su un log che scrive
+#: centinaia di righe l'ora, ripeterlo sarebbe il rumore che fa ignorare gli
+#: avvisi veri.
+_DIVERGENZA_AVVISATA: bool = False
+
+
+def _avvisa_se_diverge() -> None:
+    """Dichiara quando il log finisce lontano dallo store in uso.
+
+    ``EVENT_LOG_PATH`` è calcolato all'import: chi setta ``HIPPO_DATA_DIR``
+    DOPO aver importato ottiene i fatti nella cartella isolata e gli eventi
+    nel corpus di casa. È l'ordine fra import ed env a decidere, e finora
+    nessuno lo diceva — la stessa causa per cui 210 fatti di laboratorio
+    sono finiti in produzione (misurato 2026-08-05).
+
+    Non sposta il file: cambiarlo a metà corsa spezzerebbe i lettori già
+    attaccati, e la scelta di dove scrivere non è di questa funzione. Tace
+    quando la divergenza è una scelta esplicita (``ENGRAM_EVENT_LOG``) e
+    quando non c'è. Best-effort: non solleva mai.
+    """
+    global _DIVERGENZA_AVVISATA
+    if _DIVERGENZA_AVVISATA or os.environ.get("ENGRAM_EVENT_LOG", "").strip():
+        return
+    try:
+        from ._compat import data_dir
+        atteso = Path(data_dir()) / "events.jsonl"
+        if atteso.resolve() == EVENT_LOG_PATH.resolve():
+            return
+        _DIVERGENZA_AVVISATA = True
+        import warnings
+        warnings.warn(
+            f"il log eventi scrive in {EVENT_LOG_PATH} mentre la data dir in "
+            f"uso è {data_dir()}: i fatti e la loro telemetria stanno in due "
+            f"posti diversi. Succede quando HIPPO_DATA_DIR è impostata DOPO "
+            f"l'import di verimem (EVENT_LOG_PATH si fissa all'import). "
+            f"Impostala prima, oppure dichiara ENGRAM_EVENT_LOG se la vuoi "
+            f"davvero altrove.",
+            RuntimeWarning, stacklevel=3)
+    except Exception:  # noqa: BLE001 — un avviso non può rompere un emit
+        pass
+
+
 def append_event(
     name: str,
     payload: dict[str, Any],
@@ -115,6 +182,7 @@ def append_event(
     Safe da chiamare da qualunque processo: la dir parent viene creata
     se manca, errori I/O o di serializzazione vengono inghiottiti.
     """
+    _avvisa_se_diverge()
     try:
         EVENT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     except OSError:

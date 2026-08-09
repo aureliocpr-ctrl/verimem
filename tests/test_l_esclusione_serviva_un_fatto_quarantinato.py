@@ -59,9 +59,31 @@ CORPUS = [
 
 @pytest.fixture()
 def store():
+    """RIPARATO il 2026-08-07, e la ragione conta più della riparazione.
+
+    Il banco contava sul fatto che il gate quarantinasse la PRIMA frase da
+    solo. Non lo fa più, e non per un guasto: sul ramo sono entrate quattro
+    cure di L1 — fra cui `a6b7fd30` «una parola non è un claim: il
+    detector L1 chiedeva un commit a un sismologo» — che l'hanno reso
+    meno impulsivo di proposito. Misurato: tutte e cinque tornano
+    `model_claim`, `layers=[]`.
+
+    La canarino `test_il_banco_regge` ha fatto esattamente il suo mestiere:
+    ha detto «questo banco non prova più niente» invece di lasciare
+    passare a vuoto gli altri test.
+
+    ⛔ Quello che NON si fa è ripristinare l'assert sul vecchio
+    comportamento: sarebbe un test verde che tiene in vita ciò che qualcuno
+    ha cambiato apposta — la classe che questo stesso ramo ha curato
+    stamattina su `last_verified_at`.
+
+    Quindi la quarantena qui diventa ESPLICITA. Il banco misura il ramo
+    EXCLUDE, non i gusti lessicali del gate: dipenderne era una fragilità,
+    e ora la premessa è costruita invece che sperata.
+    """
     m = Memory(path=str(pathlib.Path(tempfile.mkdtemp()) / "s.db"))
-    for t in CORPUS:
-        m.add(t, topic="note")
+    ids = [m.add(t, topic="note")["id"] for t in CORPUS]
+    m.semantic.quarantine_fact(ids[0], reason="banco: premessa esplicita")
     return m
 
 
@@ -71,8 +93,14 @@ def _quarantinati(m) -> list[str]:
 
 
 def test_il_banco_regge(store):
-    """Se il gate smette di quarantinare quella frase, questo test lo dice
-    invece di lasciare che gli altri passino senza misurare niente."""
+    """La premessa esiste ancora: se questo cade, gli altri test qui sotto
+    non stanno misurando niente.
+
+    Prima verificava che fosse il GATE a quarantinare, ed è caduto il
+    2026-08-07 quando una cura di L1 l'ha reso meno impulsivo — facendo
+    esattamente il suo mestiere. Ora la premessa è costruita a mano
+    (vedi la fixture), quindi il canarino sorveglia che la costruzione
+    regga, non i gusti del gate."""
     assert _quarantinati(store), (
         "nessun fatto quarantinato: il banco non prova più nulla")
 

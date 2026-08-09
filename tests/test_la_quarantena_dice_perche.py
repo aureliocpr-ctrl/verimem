@@ -71,14 +71,20 @@ def test_un_fatto_pulito_non_finisce_qui(mem, tmp_path):
 
 
 def test_quando_non_si_puo_ricostruire_lo_dice(mem, tmp_path):
-    """Un fatto fermato da L4 — il confronto con la SUA fonte — non e'
-    spiegabile a posteriori: la fonte non viene conservata. Provato sul corpus
-    vivo: i tre quarantinati piu' recenti sono tutti cosi', e prima davano
-    `why: None`.
+    """Un fatto su cui nessuno schermo si riaccende non e' spiegabile a
+    posteriori: la causa decisa a write-time non viene persistita.
 
     `None` si legge «nessun motivo». Non e' la stessa cosa di «non lo so
     piu'», ed e' la stessa distinzione che il prodotto difende fra un verdetto
     assente e uno negativo.
+
+    ⚠️ RISCRITTO il 2026-08-05 (referto ws1). Questo test diceva «un fatto
+    fermato da L4» e pretendeva quella spiegazione: era la premessa
+    SBAGLIATA, e il test la teneva in vita. ws1 ha misurato su 500 record
+    che `layers` arriva vuoto in 183 casi e che l'explain, non trovando la
+    causa, la DEDUCEVA — attribuendo a L4 anche un fatto che L4 aveva
+    approvato a 99.98. Resta la meta' giusta (dire «non lo so» invece di
+    `None`); cade l'attribuzione, e il test ora la vieta.
     """
     voci = [{"id": "x", "proposition": "Il canone e 900 euro al mese.",
              "topic": "prova", "reason": None}]
@@ -87,6 +93,8 @@ def test_quando_non_si_puo_ricostruire_lo_dice(mem, tmp_path):
     why = str(voci[0].get("why") or "")
     assert "non e' piu' ricostruibile" in why, why
     assert "--source" in why, "non dice come rimediare la prossima volta"
+    assert "fermata dal confronto con la sua fonte (L4)" not in why, (
+        "non puo' attribuire a L4 un blocco che non ha letto da nessuna parte")
 
 
 def test_anche_il_tool_mcp_sa_spiegare(tmp_path, monkeypatch):

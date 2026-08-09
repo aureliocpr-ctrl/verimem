@@ -70,7 +70,16 @@ svg{display:block; width:100%; height:auto; min-width:640px;}
 .evt{font-size:.74rem; line-height:1.5; padding:.32rem 0; border-bottom:1px dashed #3a352b; word-break:break-word;}
 .evt .t{color:#7c7666;}
 .evt .adm{color:#7ec49f; font-weight:600;} .evt .ref{color:#e08a6f; font-weight:600;}
+/* un'attesa in corso non è un esito: né verde né rossa, e non deve sembrare
+   una decisione presa (il warmup del giudice dura ~41s alla prima scrittura) */
+.evt .wait{color:var(--ink-3); font-weight:600; font-style:italic;}
 .evt .ans{color:#7ec49f; font-weight:600;} .evt .abs{color:#bdb4a0; font-weight:600;}
+/* «trattenuto NONOSTANTE il giudice»: non è un rifiuto come gli altri, è
+   l'unico caso in cui il prodotto contraddice sé stesso (il moat ha detto
+   che la fonte lo sostiene e L1 lo tiene fuori lo stesso). Giallo, non
+   rosso: il rosso qui vuol dire «la difesa ha funzionato», e questa riga
+   dice il contrario — va guardata, non archiviata. */
+.evt .conflict{color:#e3c05c; font-weight:700;}
 .foot{margin-top:1rem; font-size:.7rem; color:var(--ink-3); line-height:1.7;}
 @media (max-width:900px){.grid{grid-template-columns:1fr}}
 /* v2: real-time load — chips in the bar, per-second chart in the counters */
@@ -91,3 +100,50 @@ svg{display:block; width:100%; height:auto; min-width:640px;}
 .stage-info b{font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;}
 .stage-info .si-mod{color:var(--ink-3); font-size:.7rem;}
 .stage-info p{margin:.25rem 0 0;}
+/* the helm (ws6 control-room): governance panel — see AND act */
+.c.ret b{color:var(--refuse-d)}
+.governance{border:1px solid var(--ink); margin-top:1rem; background:var(--paper-2);}
+.gov-head{display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+  border-bottom:1px solid var(--rule-2); padding:.5rem .8rem;}
+.gov-head h2{font-size:.72rem; letter-spacing:.2em; text-transform:uppercase;
+  margin:0; font-weight:600;}
+.gov-quartet{font-size:.74rem; color:var(--ink-2); font-variant-numeric:tabular-nums;}
+.gov-grid{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+.gov-col{padding:.6rem .8rem; min-width:0;}
+.gov-col + .gov-col{border-left:1px solid var(--rule-2);}
+.gov-col h3{font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+  margin:.1rem 0 .5rem; font-weight:600;}
+.gov-src{color:var(--ink-3); font-weight:400; letter-spacing:.02em; text-transform:none;}
+.gov-list{max-height:260px; overflow-y:auto;}
+.gov-row{display:flex; align-items:center; gap:.6rem; padding:.35rem 0;
+  border-bottom:1px dashed var(--rule); font-size:.74rem; min-width:0;}
+.gov-ids{font-weight:600; white-space:nowrap;}
+.gov-sub{color:var(--ink-3); overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; flex:1; min-width:0;}
+.gov-btn{font-family:var(--mono); font-size:.7rem; padding:.25rem .6rem;
+  cursor:pointer; border:1px solid var(--ink); background:var(--paper); color:var(--ink);}
+.gov-btn:hover{background:var(--ink); color:var(--paper);}
+.gov-btn.act{border-color:var(--verified-d); color:var(--verified-d);}
+.gov-btn.act:hover{background:var(--verified-d); color:var(--paper);}
+.gov-btn:disabled{opacity:.55; cursor:default;}
+.gov-irrev{color:var(--ink-3); font-size:.68rem; white-space:nowrap;}
+.gov-empty{color:var(--ink-3); font-size:.74rem; padding:.3rem 0;}
+.gov-note{font-size:.68rem; color:var(--ink-3); margin:0; padding:.5rem .8rem;
+  border-top:1px solid var(--rule-2); line-height:1.6;}
+/* dark chambers: the map declares what it CANNOT see yet */
+.dark-chambers{margin-top:1rem; border:1px dashed var(--rule-2); padding:.6rem .8rem;}
+.dark-chambers h2{font-size:.7rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-3); margin:.1rem 0 .6rem; font-weight:600;}
+.dark-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:.5rem;}
+.dark-c{border:1px dashed var(--rule-2); background:var(--paper); padding:.45rem .6rem;
+  font-size:.7rem; line-height:1.5; color:var(--ink-2);}
+.dark-c b{display:block; font-size:.68rem; letter-spacing:.08em; color:var(--ink-3);}
+.dark-c span{display:block; color:var(--ink-3); font-size:.64rem;}
+.dark-c i{display:block; color:var(--ink-3); font-size:.64rem; font-style:italic;}
+/* a chamber that got its telemetry: kept in the list on purpose — the map
+   should show what was lit and when, not quietly drop the row */
+.dark-c.lit{border-style:solid; border-color:var(--verified);}
+.dark-c.lit b{color:var(--verified-d);}
+.dark-c.lit i{color:var(--verified-d); font-style:normal;}
+@media (max-width:900px){.gov-grid{grid-template-columns:1fr}
+  .gov-col + .gov-col{border-left:none; border-top:1px solid var(--rule-2);}}

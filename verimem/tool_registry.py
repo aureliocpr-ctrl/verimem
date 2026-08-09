@@ -202,6 +202,13 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
         capability="READ", risk_level="low",
         reversibility="yes",
     ),
+    ToolCapability(
+        name="hippo_retirement_log",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="ws6 control-room: retirements as (loser, winner) pairs + "
+              "survivability quartet. Read-only window on supersessions.",
+    ),
     # Cycle 15 round 1 — anti-confab scrubber tools.
     ToolCapability(
         name="hippo_anti_confab_scan",

@@ -712,6 +712,18 @@ class EpisodicMemory:
         emit("episode_stored", episode_id=episode.id, outcome=episode.outcome,
              task_id=episode.task_id, steps=episode.num_steps,
              salience=round(salience, 3))
+        # …and on the flow channel (ws6 2026-08-05, camera dark EPISODES).
+        # The event above has existed for cycles but the live surfaces keep
+        # only names starting with "flow." (gateway.py:511), so the episodic
+        # tier was invisible in the Engine Room while it kept writing —
+        # measured on the real corpus: 413 episodes, 405 of them "success",
+        # zero failures recorded since May 19 while four instances failed
+        # and retracted all night. Carrying `outcome` on the flow channel is
+        # what makes that skew VISIBLE instead of merely true.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.episode", episode_id=episode.id,
+                   outcome=episode.outcome, task_id=episode.task_id,
+                   steps=episode.num_steps, salience=round(salience, 3))
         return was_existing if return_replaced else None
 
     def backfill_pending_embeddings(self, *, limit: int | None = None) -> int:

@@ -92,6 +92,19 @@ def generate_health_report(
     return {
         "overall_score": int(overall),
         "verdict": verdict,
+        # LA SOGLIA VIAGGIA COL VERDETTO, e qui non e' la stessa di
+        # `corpus_health_score`: la' «Healthy» vuol dire >= 75, qui >= 80
+        # (misurato da ws4 il 2026-08-06). Le stesse quattro etichette su
+        # due scale — un corpus a 77 cambia verdetto a seconda dello
+        # strumento che si chiama. Non allineati di proposito: i due
+        # punteggi pesano cose diverse, e sceglierne uno sarebbe una
+        # decisione travestita da correzione.
+        "thresholds": ("Healthy >= 80 · Acceptable >= 60 · "
+                       "Needs attention >= 40 · Poor below · "
+                       "Empty when there is nothing stored"),
+        "formula": ("0.40*episodes_score + 0.35*skills_score + "
+                    "0.25*facts_score"),
+        "verdict_scale": "memory_health_report (Healthy >= 80)",
         "components": {
             "episodes_score": round(ep_score, 1),
             "skills_score": round(sk_score, 1),

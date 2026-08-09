@@ -188,6 +188,21 @@ def compute_health_score(*, agent: Any) -> dict[str, Any]:
         "score": float(score),
         "components": components,
         "verdict": verdict,
+        # LA SOGLIA VIAGGIA COL VERDETTO. «Healthy» qui vuol dire >= 75 e
+        # in `memory_health_report` vuol dire >= 80 (misurato da ws4 il
+        # 2026-08-06): le stesse quattro etichette su due scale, quindi un
+        # corpus a 77 e' «Healthy» per uno strumento e «Acceptable» per
+        # l'altro. I due tagli NON sono stati unificati di proposito —
+        # sceglierne uno sarebbe una decisione travestita da correzione, e
+        # i due punteggi misurano cose diverse.
+        "thresholds": ("Healthy >= 75 · Acceptable >= 50 · "
+                       "Needs attention >= 30 · Poor below"),
+        # E la FORMULA, perche' due numeri sulla stessa scala 0-100
+        # sembrano confrontabili e non lo sono: questo pesa l'attivita'
+        # delle skill, l'altro l'equilibrio fra i tier.
+        "formula": ("0.40*success_rate + 0.30*promoted_frac + "
+                    "0.20*avg_fitness + 0.10*connect_frac"),
+        "verdict_scale": "corpus_health_score (Healthy >= 75)",
     }
 
 

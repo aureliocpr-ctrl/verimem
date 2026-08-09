@@ -524,15 +524,23 @@ def heal_contradictions(
     Reversible; never deletes.
 
     Returns ``{"healed_superseded": [fact_ids], "resolved": [contradiction_ids],
-    "skipped_equal_trust": [contradiction_ids], "missing": [contradiction_ids]}``.
+    "skipped_equal_trust": [contradiction_ids], "missing": [contradiction_ids],
+    "skipped_unknown_trust": [contradiction_ids]}``.
+
+    ``skipped_unknown_trust`` — coppie in cui almeno un lato ha uno stato che
+    ``_STATUS_RANK`` non conosce. Prima finivano nel confronto come rango 0 e
+    il lato ignoto veniva RITIRATO: sullo store vero erano 257 coppie, 227 con
+    un `model_claim` che ritirava un `user_manual`. Vedi
+    ``semantic._rango_di_fiducia``.
     """
-    from .semantic import _STATUS_RANK
+    from .semantic import _rango_di_fiducia
 
     if store is None:
         store = ContradictionStore(memory.db_path)
     healed_superseded: list[str] = []
     resolved: list[str] = []
     skipped: list[str] = []
+    skipped_ignoto: list[str] = []
     missing: list[str] = []
     for c in store.list_unresolved(limit=limit):
         fa = memory.get(c.fact_a_id)
@@ -543,8 +551,15 @@ def heal_contradictions(
             missing.append(c.id)
             resolved.append(c.id)
             continue
-        ra = _STATUS_RANK.get(fa.status, 0)
-        rb = _STATUS_RANK.get(fb.status, 0)
+        ra = _rango_di_fiducia(fa.status)
+        rb = _rango_di_fiducia(fb.status)
+        if ra is None or rb is None:
+            # RANGO IGNOTO → non e' un rango basso, e' un non-so. Va nel SUO
+            # secchio e non fra gli «equal trust»: contarlo li' sarebbe
+            # un'etichetta che porta una conclusione non verificata — la
+            # classe che questo file esiste per non ripetere.
+            skipped_ignoto.append(c.id)
+            continue
         if ra == rb:
             # Equal trust → we cannot decide which is right; leave for review.
             skipped.append(c.id)
@@ -593,6 +608,7 @@ def heal_contradictions(
         "healed_superseded": healed_superseded,
         "resolved": resolved,
         "skipped_equal_trust": skipped,
+        "skipped_unknown_trust": skipped_ignoto,
         "missing": missing,
     }
 
@@ -650,12 +666,33 @@ def scan_corpus(
             already_known += 1
         kinds[c.kind] = kinds.get(c.kind, 0) + 1
 
-    return {
+    esito = {
         "scanned_facts": len(facts),
         "new_detected": new_count,
         "already_known": already_known,
         "kinds": kinds,
     }
+    # La scansione ALIMENTA i ritiri: `heal_contradictions` supersede il
+    # lato debole di cio' che questa registra, e la manutenzione la lancia
+    # da sola ogni 4 ore (5 fatti ritirati nella passata delle 23:07 del
+    # 2026-08-05). Finora cresceva in silenzio — per accorgersene serviva
+    # una query fatta apposta da qualcuno che gia' sospettava, ed e' cosi'
+    # che ws4 ha scoperto 2526 conflitti registrati campionandone 25 senza
+    # trovarne una vera. `already_known` viaggia accanto ai nuovi perche'
+    # una scansione che ne ritrova 2495 e ne aggiunge 31 sta facendo una
+    # cosa diversa da una che ne trova 31 su un corpus pulito.
+    #
+    # Niente evento per una scansione a vuoto: la manutenzione la chiama
+    # ogni quattro ore e un evento per un non-fatto seppellisce quelli
+    # veri (stessa regola di flow.decay e del ramo idempotente di
+    # flow.forget). Conteggi e tipi, mai proposizioni.
+    if facts:
+        try:
+            from .flow_events import emit_flow
+            emit_flow("flow.conflict", **esito, kinds_total=sum(kinds.values()))
+        except Exception:  # noqa: BLE001 — l'osservabilita' non rompe lo scan
+            pass
+    return esito
 
 
 __all__ = [

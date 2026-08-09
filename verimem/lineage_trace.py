@@ -33,8 +33,15 @@ from typing import Any
 
 import networkx as nx
 
+from .text_cut import safe_cut
+
 _VALID_KINDS = ("episode", "fact", "skill")
 _VALID_DIRECTIONS = ("forward", "backward", "both")
+
+#: Lunghezza dell'etichetta che si LEGGE nel grafo di discendenza. Tagliata
+#: con `safe_cut` e non con `[:140]`: l'etichetta e' testo dell'utente, e un
+#: accento perso qui e' una parola diversa per chi legge il grafo.
+_MAX_ETICHETTA = 140
 
 
 def _label_for(node_id: str, kind: str, agent: Any) -> str | None:
@@ -46,12 +53,13 @@ def _label_for(node_id: str, kind: str, agent: Any) -> str | None:
             ep = agent.memory.get(node_id)
             if ep is None:
                 return None
-            return (getattr(ep, "task_text", "") or "")[:140]
+            return safe_cut(getattr(ep, "task_text", "") or "", _MAX_ETICHETTA)
         if kind == "fact":
             f = agent.semantic.get(node_id)
             if f is None:
                 return None
-            return (getattr(f, "proposition", "") or "")[:140]
+            return safe_cut(getattr(f, "proposition", "") or "",
+                            _MAX_ETICHETTA)
         if kind == "skill":
             s = agent.skills.get(node_id)
             if s is None:
