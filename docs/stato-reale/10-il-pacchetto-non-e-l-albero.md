@@ -86,7 +86,63 @@ sopra non è storia: è lo stato corrente del prodotto per chi lo usa.
 
 ---
 
-**Caveat**: un file (`quantity_match.py`), sei casi, una piattaforma. Non ho confrontato gli altri
-2051 file-righe di differenza né ho rifatto sul pacchetto le conte di corpus di ws8 — dico solo
-che il righello cambia con l'artefatto, non di quanto. E la cura `(?!\.\d)` la descrivo dal
-`diff`: non ho cercato il commit che l'ha introdotta né la sua intenzione.
+## Quante altre cure stanno nel repo e non nel pacchetto
+
+La domanda è di ws8, che l'ha posta dichiarando di non averla chiusa. Il confronto è meccanico.
+
+> **Perimetro, dichiarato prima di contare**: i `.py` sotto `verimem/`, ricorsivi, confrontati per
+> path relativo e sha256 del contenuto **normalizzato CRLF→LF**.
+> wheel **397** file · albero **419**.
+
+### Il difetto era nel mio misuratore
+
+|  | comuni | identici | diversi |
+|---|---|---|---|
+| senza normalizzare i line-ending | 396 | **0** | 396 |
+| normalizzando CRLF→LF | 396 | **288** | **108** |
+
+Stavo per consegnare *«nessun file su 396 è identico»* — clamoroso e falso, prodotto dallo
+strumento e non dal prodotto. L'unica ragione per cui l'ho preso è che era **troppo bello**.
+
+### I 23 moduli che chi installa non ha
+
+`+22` netto (23 solo-albero, 1 solo-wheel: `rerank.py`) — lo stesso numero di ws8, scomposto. E
+non sono file qualunque:
+
+```
+verimem/valore_non_nella_fonte.py   <- L4.1
+verimem/vicinato_del_valore.py      <- L4.2
+unsupported_span · negation_scope · evidence_independence · proof_evidence ·
+fact_contract · evidence_hint · ann_gate · audit_anchor · mutation_audit ·
+hidden_records · retirement_log · review_queue · residual_copies · content_pin ·
+tier_inventory · continuity · diversify · text_cut · relation_claim · env_num · orchestration
+```
+
+Seconda strada, indipendente: `anti_confab_gate.py` del wheel ha **0 occorrenze** dei due nomi e
+**nessuna etichetta `L4.1`/`L4.2`**.
+
+### Cosa l'utente ha, che è la metà che conta
+
+| strato | wheel 0.7.0 | albero |
+|---|---|---|
+| `L1.x` | **17** | **17** |
+| `L3` | SEMANTIC, semantic, supersession | + `L3-coexistence` |
+| `L4` | grounding, review, skipped | + `L4-negazione`, `L4.1`, `L4.2` |
+
+Gli mancano **quattro** strati, non tutti — e L1 e il giudice di entailment ci sono. È il motivo
+per cui il falso accetto passa **con grounding alto**: chi lo ammette è presente in entrambi.
+
+🔑 Ne segue una rilettura di un'intera notte di lavoro: il canale ha passato ore su L4.1 (i 44
+falsi positivi, la cura «avviso invece di veto») e su L4.2 (l'estrattore a `anti_confab_gate.py:1926`).
+**Per chi ha installato, quei due strati non ci sono.** Le cure restano giuste — ma non sono un
+ritardo che l'utente sta subendo: sono difese che non ha ancora ricevuto. E il caso `45.000` vs
+`45` peggiora: da noi almeno l'obiezione viene *stampata sotto la riga `admitted`*; lì, silenzio.
+
+---
+
+**Caveat**: sul primo blocco — un file (`quantity_match.py`), sei casi, una piattaforma; la cura
+`(?!\.\d)` la descrivo dal `diff`, senza cercare il commit che l'ha introdotta né la sua
+intenzione. Sul secondo — ho misurato **l'assenza dei file** e **l'assenza delle menzioni**, due
+strade indipendenti che concordano, ma **non ho eseguito il gate del wheel**: dire «quegli strati
+non girano per l'utente» è la lettura più probabile, non una misura d'esecuzione. Chi ha un venv
+col wheel installato la chiude in un minuto.
