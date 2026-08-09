@@ -62,7 +62,12 @@ def test_sdk_add_emits_flow_write_admitted(mem):
     assert p["status"] == res["status"]
     assert p["fact_id"] == res["id"]
     assert p["topic"] == "hq"
-    assert p["surface"] == "sdk"           # default: direct SDK use
+    # 2026-08-04 (ws4 measurement, ws6 fix): the default USED to be "sdk" —
+    # the name of a real surface — so 9357/9603 real-corpus events claimed
+    # "sdk" and 438 MCP write calls produced ZERO "mcp" events. An
+    # undeclared caller now says so; real entrypoints declare themselves
+    # (cli.main → "cli", `verimem mcp` → "mcp", gateway → context).
+    assert p["surface"] == "unknown"       # undeclared caller says the truth
     assert "tenant" not in p               # no gateway → no tenant field
 
 

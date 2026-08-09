@@ -53,6 +53,7 @@ queries:
 | same GT — multi-fact / long segment | broad | **−0.080 MRR** (12 better / 38 worse) |
 | same GT — aggregate | mixed traffic | **null**: ΔMRR +0.0078, p=0.716 (the two effects cancel) |
 | LongMemEval e2e QA n=50 (above) | mixed | 0.76 ON vs 0.78 OFF — neutral-to-negative |
+| HaluMem-Medium retrieval GT, 578 queries / 2969 atomic memory points, exact evidence→fact ids (27/07, `ws23_ce_halumem.json`) | **atomic short docs** (median 123 chars), natural questions | **CE wins at EVERY query length**: len 11–14 +0.121 MRR (n=245), len 15+ +0.108 (n=263); always-ON 0.575 vs auto≤10 0.468 vs OFF 0.464 — the ≤10 gate silences the CE for 94% of this workload |
 | LongMemEval recall@5 n=500 | mixed | unmoved |
 | `updating_reach_rerank20/40.json`, 726 updates | reachability | pool width irrelevant |
 | latency, real corpus | every query | **+2067 ms** (median 3110 vs 1043) |
@@ -83,11 +84,26 @@ the CE there regardless (a run would measure the guard, not the gate). AUTO is a
 per-query dominance: of the 50 long queries the CE changed, **12 were improved
 and lose that under auto** — the segment nets −0.080 because the other 38 were
 harmed, so auto trades those 12 for the 38 it protects; a workload dominated
-by long CE-benefiting queries should force `ENGRAM_RECALL_RERANK=1`. And the
-word gate splits on whitespace: a long **unspaced CJK query counts as ~1 word**
-and still gets the CE — the gate is a Latin-script heuristic, declared as such.
-(Both limits surfaced by the adversarial review of ff8e8ad8, dissenting worker,
-matching the pre-declared attack predictions.) The historical "+0.29 R@1 on
+by long CE-benefiting queries should force `ENGRAM_RECALL_RERANK=1`. (The
+word gate's whitespace blindness on unspaced CJK — flagged by the ff8e8ad8
+adversarial review — is fixed since 7544f0bf: the count is Unicode-aware, one
+CJK character = one word, Latin text unchanged.)
+
+**The further corpus arrived (27/07) and split the verdict.** On HaluMem —
+atomic short facts (median 123 chars, p90 161), natural English questions —
+the CE wins at every query length and auto≤10 leaves +0.107 MRR on the table.
+Driver diagnosis on existing artifacts: doc length alone is NOT the driver
+(real-GT tertiles are non-monotonic: 250c −0.074 / 322c +0.178 / 415c
+−0.080); pinpoint-vs-broad flips in the critical cell (real GT 1-fact q>10:
+**−0.130**, 1+/8−, n=36 — vs HaluMem 1-fact long queries +0.11); language
+does not explain it (LME is English and the CE loses there). What HOLDS
+across all three corpora: **atomic-doc pools → CE always helps; long-doc
+pools → CE hurts; mixed pools → query length decides.** Operational guide:
+corpus of short atomic facts → set `ENGRAM_RECALL_RERANK=1`; conversational
+/ long-doc stores → keep AUTO. A candidate evolution — subordinate the query
+gate to the pool's median doc length (a signal the long-docs guard already
+computes), threshold ~150–200 chars — fits all three corpora but needs a
+second atomic corpus before any default change. The historical "+0.29 R@1 on
 LongMemEval" that circulated as the CE's justification has **no surviving
 artifact** (pre-v0.3.0 history is squashed); the reproducible basis for the
 06-10 flip is the n=120 paraphrase bench above, which the auto default keeps

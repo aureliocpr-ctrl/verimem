@@ -402,7 +402,69 @@ def run_maintenance(engram_dir: Path, *, now: float | None = None,
                           encoding="utf-8")
     except Exception:
         pass
+    _emetti_la_passata(out, now)
     return out
+
+
+def _quanti(v: Any) -> int:
+    """Quanti elementi dichiara un esito, qualunque forma abbia.
+
+    I tre passi rispondono in modi diversi (liste di id, interi, None) e
+    l'evento deve portare un numero solo: una lista si conta, un intero
+    e' gia' il conto, tutto il resto vale zero.
+    """
+    if isinstance(v, bool) or v is None:
+        return 0
+    if isinstance(v, int):
+        return v
+    if isinstance(v, (list, tuple, set, dict)):
+        return len(v)
+    return 0
+
+
+def _emetti_la_passata(out: dict[str, Any], now: float) -> None:
+    """La manutenzione automatica dice cosa ha fatto, e cosa e' fallito.
+
+    Gira DA SOLA ogni 4 ore e ritira fatti: misurato sul corpus di casa
+    il 2026-08-05 alle 23:07, ``healed_superseded 5`` con
+    ``skipped_equal_trust 95``, su uno scan di 6476. Le singole
+    supersessioni un evento ce l'hanno; la passata no — e nemmeno i suoi
+    fallimenti, perche' ogni passo e' avvolto in un try («a step failure
+    never crashes the worker») e l'errore finisce nel marker, un file
+    che non apre nessuno. Il fail-open resta: un worker che muore su un
+    passo e' peggio. Smette solo di essere invisibile.
+
+    Solo metadati e conteggi, mai proposizioni — come ogni evento di
+    questo ramo, perche' il feed viaggia in rete.
+    """
+    if not out.get("ran"):
+        return                       # in cooldown non e' successo niente
+    try:
+        _cl = out.get("cycle_light") or {}
+        _cons = out.get("consolidate") or {}
+        _scan = out.get("scan") or {}
+        _heal = out.get("healed") or {}
+        from .flow_events import emit_flow
+        emit_flow(
+            "flow.dream", phase="maintenance", ran=True,
+            promoted=_quanti(_cl.get("promoted")),
+            retired=_quanti(_heal.get("healed_superseded")),
+            skipped_equal_trust=_quanti(_heal.get("skipped_equal_trust")),
+            # NUOVO e SEPARATO da equal_trust: le coppie in cui almeno un lato
+            # ha uno stato che `_STATUS_RANK` non conosce. Prima non
+            # esistevano come categoria — il lato ignoto valeva 0 e VENIVA
+            # RITIRATO. Sommarle a `equal_trust` avrebbe nascosto proprio la
+            # popolazione che la cura ha tirato fuori dal ritiro automatico.
+            skipped_unknown_trust=_quanti(_heal.get("skipped_unknown_trust")),
+            clusters_detected=_quanti(_cons.get("clusters_detected")),
+            masters_persisted=_quanti(_cons.get("masters_persisted")),
+            scanned_facts=_quanti(_scan.get("scanned_facts")),
+            new_conflicts=_quanti(_scan.get("new_detected")),
+            # i passi caduti, per NOME: `cycle_light_err` -> `cycle_light`
+            steps_failed=sorted(k[:-4] for k in out if k.endswith("_err")),
+            fatal=out.get("fatal"))
+    except Exception:  # noqa: BLE001 — l'osservabilita' non rompe il worker
+        pass
 
 
 def main() -> int:

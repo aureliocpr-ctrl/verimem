@@ -28,10 +28,29 @@ def test_last_verified_at_uguale_a_created_at_non_esce():
     assert "last_verified_at" not in fact_payload(f)
 
 
-def test_last_verified_at_diverso_esce():
-    """Una verifica successiva alla scrittura E' un'informazione."""
-    f = Fact(proposition="x", created_at=1000.0, last_verified_at=2000.0)
-    assert fact_payload(f)["last_verified_at"] == 2000.0
+def test_last_verified_at_diverso_esce_SOLO_con_un_verdetto():
+    """RISCRITTO il 2026-08-07, e la ragione conta piu' del test.
+
+    Diceva: «una verifica successiva alla scrittura E' un'informazione»,
+    e lo verificava su un fatto SENZA verdetto. Quella premessa e' stata
+    misurata da ws5 sul corpus reale ed e' falsa: il campo avanza su 2762
+    fatti e di quelli ZERO hanno un `grounding_score` — si muove solo dove
+    un giudizio non c'e' mai stato (migrazione o re-embedding: un tocco).
+
+    Combinato con la regola di emissione «esce se differisce da
+    created_at», il contratto emetteva una chiave chiamata
+    `last_verified_at` ESATTAMENTE sui fatti mai verificati. Questo test,
+    verde, teneva in vita quel comportamento — che e' il modo in cui un
+    banco protegge un difetto invece di un dato.
+
+    Il caso che voleva difendere resta difeso: con un verdetto a
+    sostenerlo, il campo esce."""
+    senza = Fact(proposition="x", created_at=1000.0, last_verified_at=2000.0)
+    assert "last_verified_at" not in fact_payload(senza)
+
+    con = Fact(proposition="x", created_at=1000.0, last_verified_at=2000.0,
+               grounding_score=98.0)
+    assert fact_payload(con)["last_verified_at"] == 2000.0
 
 
 def test_il_writer_role_di_default_non_esce():

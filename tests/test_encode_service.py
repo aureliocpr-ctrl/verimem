@@ -175,6 +175,12 @@ def test_ensure_running_true_when_reachable(monkeypatch):
         lambda *a, **k: {"model": CONFIG.embedding_model, "host": "127.0.0.1", "port": 1},
     )
     monkeypatch.setattr(encode_service, "is_reachable", lambda *a, **k: True)
+    # health probe 27/07: daemon_usable asks the daemon, not the port — a live
+    # correct-model daemon now means a verified ping ANSWER with that model
+    monkeypatch.setattr(
+        encode_service, "_ping",
+        lambda *a, **k: {"ok": True, "model": CONFIG.embedding_model, "pid": 7},
+    )
     spawned = []
     monkeypatch.setattr(encode_service, "_spawn_detached", lambda: spawned.append(1))
     assert encode_service.ensure_running() is True
@@ -191,6 +197,10 @@ def test_ensure_running_spawns_when_daemon_is_wrong_model(monkeypatch, tmp_path)
         lambda *a, **k: {"model": "stale-wrong-model", "host": "127.0.0.1", "port": 1},
     )
     monkeypatch.setattr(encode_service, "is_reachable", lambda *a, **k: True)  # reachable, wrong model
+    monkeypatch.setattr(
+        encode_service, "_ping",
+        lambda *a, **k: {"ok": True, "model": "stale-wrong-model", "pid": 7},
+    )
     monkeypatch.setattr(encode_service, "_SPAWN_LOCK_PATH", tmp_path / "spawn.lock")
     monkeypatch.setattr(encode_service, "DISCOVERY_PATH", tmp_path / "disco.json")
     spawned = []

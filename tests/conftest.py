@@ -335,6 +335,20 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # come ogni altro stato di processo, non lasciato alla cortesia dei test.
     from verimem import semantic as _sem
     _sem._rerank_breaker_reset()
+    # E il GEMELLO della fusione, per la stessa ragione: nato il 25/07, dopo
+    # questa fixture, non ci era mai entrato. A breaker scattato la fusione e'
+    # SALTATA e nessun budget la riporta, quindi
+    # test_cold_path_gains_ppr_signal_when_fusion_on — che il budget lo fissa
+    # apposta per non misurare la velocita' del runner — restava comunque in
+    # balia di un trip lasciato da un test qualunque girato prima. Riprodotto
+    # il 27/07 trippando il breaker a mano: stesso identico rosso visto in
+    # full suite.
+    _sem._fusion_breaker_reset()
+    # Merge 09/08 (ws2/abstention ← main): i due lati NON erano alternative —
+    # sono quattro stati di processo diversi che questa fixture deve azzerare,
+    # e git li ha visti in conflitto solo perche' sono righe adiacenti. Tenerne
+    # uno solo avrebbe riportato la classe che entrambi i lati curavano: un
+    # globale lasciato acceso rende l'esito dipendente dall'ORDINE dei test.
     # Stessa ragione, stato diverso (2026-07-31): `_RERANK_DELEGATO` ricorda che
     # il daemon condiviso ha gia' rerankato per questo PROCESSO, e da quel
     # momento la prontezza e' vera anche senza modello in casa — quindi il

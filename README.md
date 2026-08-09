@@ -313,6 +313,27 @@ verimem airgap --live                   # PROVE it: audit every socket during a
                                         # real write+search, exit 0 iff no egress
 ```
 
+## Governance — see and reverse what the memory decides
+
+A fact disappears in TWO ways — retired (superseded) or quarantined — and a
+memory that decides silently is a memory you cannot trust. The governance
+surface makes every decision visible and the wrong ones reversible, on every
+port (SDK, CLI, MCP, HTTP):
+
+```bash
+verimem facts retirement-log --counts   # the honest quartet: written / servable /
+                                        # retired / quarantined, formula included
+verimem facts retirement-log            # who was retired, by whom, why — with the
+                                        # undo handle when reversible
+verimem facts undo <op_id>              # reverse a retirement: the lost fact comes
+                                        # back SERVABLE and the newer one stays alive
+```
+
+Write receipts carry the handles too (`superseded_undo_ops` on `add()`), every
+retirement emits a `flow.supersession` event, and the Engine Room
+(`/ui/engine`) shows the pairs with one-click undo/restore. Full manual:
+[docs/GOVERNANCE.md](docs/GOVERNANCE.md).
+
 ## See your memory working — the trust console
 
 The visual layer exists at every deployment size — single user, team

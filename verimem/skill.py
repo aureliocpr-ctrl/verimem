@@ -579,6 +579,15 @@ class SkillLibrary:
 
         self.store(s)
         emit("fitness_updated", skill_id=s.id, fitness=s.fitness_mean, trials=s.trials)
+        # Flow channel (ws6 2026-08-05, camera dark SKILLS): the skill tier
+        # mutates fitness on every trial and none of it reached the live
+        # surfaces — they keep only "flow." names. Measured on the real
+        # corpus: 369 skills, 281 with ZERO trials, last update 2026-05-15.
+        # A tier that stopped three months ago looked exactly like a tier
+        # that is simply quiet; the flow event makes the difference visible.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.skill", skill_id=s.id, kind="fitness",
+                   fitness=s.fitness_mean, trials=s.trials, status=s.status)
         return s
 
     def _hebbian_update(self, skill: Skill, task_text: str) -> None:
@@ -778,6 +787,9 @@ class SkillLibrary:
                 s.status = "promoted"
                 self.store(s)
                 emit("skill_promoted", skill_id=s.id, fitness=f, trials=s.trials)
+                from .flow_events import emit_flow as _emit_flow
+                _emit_flow("flow.skill", skill_id=s.id, kind="promoted",
+                           fitness=f, trials=s.trials, status="promoted")
                 promoted.append(s.id)
             elif f < retire_threshold and s.status != "retired":
                 s.status = "retired"

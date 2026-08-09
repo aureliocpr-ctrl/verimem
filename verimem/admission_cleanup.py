@@ -28,11 +28,19 @@ import sqlite3
 
 from ._call_telemetry import is_call_telemetry
 from .admission_gate import ROUTE_TELEMETRY, classify_admission
+from .retirement_log import _istante
 
 #: Embedding BLOB columns dropped from the archived payload — telemetry is never
 #: recalled semantically, so re-embeddable vectors are pure bloat (same choice as
 #: the fact gate, which drops embeddings too).
 _EPISODE_EMBED_COLS = ("summary_embedding", "dg_embedding", "context_embedding")
+
+#: Sotto questo punteggio il moat ha detto «la fonte non lo sostiene», e
+#: `requalify_quarantined` NON lo riporta nel recall. E' la piu' ALTA
+#: delle due cut di ammissione (40 col giudice di ripiego, 70 col
+#: calibrato, misurato il 2026-08-05): davanti al dubbio si recupera di
+#: meno. I NULL restano eleggibili — «mai giudicato» non e' «bocciato».
+_MOAT_MIN_RECOVER = 70.0
 
 
 def cleanup_telemetry(db_path, *, principal: str, dry_run: bool = True) -> dict:
@@ -234,11 +242,28 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
     knowledge that a SINCE-FIXED false positive (e.g. the 2026-06-14 L1.18/L1.9
     fixes) had hidden from recall (the recall path hard-excludes quarantined rows).
 
-    SAFE: a fact is recovered ONLY if ALL three quarantine sources now pass —
+    Three checks must pass — and ⚠️ THEY ARE NOT ALL THE QUARANTINE SOURCES,
+    which is what this docstring used to claim:
       (1) no L1.x anti-confab warning (``_l1_warnings`` empty),
       (2) not flagged by ``prompt_injection.detect_injection`` (security TP),
       (3) the admission gate admits it to the curated corpus (not telemetry,
           not REJECT_POLLUTED / FLAG_INJECTION).
+
+    ⚠️ **L3 (contradiction with the corpus) and L4 (the entailment moat) are
+    NOT among them.** ``classify_admission`` is called with topic /
+    proposition / status / writer_role / source_episodes — the grounding
+    score never reaches it. A fact the moat REJECTED satisfies all three and
+    comes back into recall with nobody re-reading why it was stopped.
+
+    Measured on the real corpus 2026-08-07, on 717 live quarantined facts:
+    209 carry a moat verdict and **158 of those score below 40** — the moat
+    said the source does not support them. Read in the code by ws4; the
+    numbers and the characterization tests
+    (``tests/test_le_tre_condizioni_non_sono_le_tre_fonti.py``) are ws7's.
+
+    The word this docstring opened with — SAFE — is removed deliberately: the
+    behaviour is unchanged, the claim was not true, and three of us had
+    recommended the tool on the strength of that word.
     So genuine positives (injection, polluted, telemetry) stay quarantined.
     ``dry_run`` default; the authoritative undo is the pre-run DB backup.
 
@@ -279,12 +304,30 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
+        # `grounding_score` puo' MANCARE su uno store vecchio: la colonna e'
+        # arrivata con lo schema, e questo e' uno strumento di RECUPERO — chi
+        # lo esegue ha spesso proprio uno store vecchio. Senza questa
+        # tolleranza la chiamata muore con `OperationalError: no such column`
+        # invece di lavorare.
+        # ⚠️ Difetto MIO: l'ho introdotto con la cura `f1431950` di stamattina
+        # aggiungendo la colonna alla SELECT, e ho consegnato senza accorgermi
+        # che quattro prove erano rosse.
+        _colonne = {r[1] for r in conn.execute("PRAGMA table_info(facts)")}
+        _ha_punteggio = "grounding_score" in _colonne
         rows = conn.execute(
             "SELECT id, topic, proposition, verified_by, writer_role, "
-            "source_episodes, grounding_score FROM facts "
-            "WHERE status='quarantined' AND superseded_by IS NULL"
+            # ⚠️ RISOLUZIONE (ws7, 2026-08-09) — COMPLEMENTARI, si tengono
+            # entrambi: la colonna CONDIZIONALE e' mia (uno store vecchio non
+            # ha `grounding_score` e la SELECT fissa lo fa morire con
+            # `OperationalError` — questo strumento e' di RECUPERO, chi lo
+            # esegue ha spesso proprio uno store vecchio), il dizionario
+            # `grounding` e' di ws1 e serve alla ripartizione `by_moat`.
+            "source_episodes"
+            + (", grounding_score" if _ha_punteggio else "")
+            + " FROM facts WHERE status='quarantined' AND superseded_by IS NULL"
         ).fetchall()
         recoverable: list[str] = []
+        held_by_moat = 0
         grounding: dict[str, float | None] = {}
         for r in rows:
             prop = r["proposition"] or ""
@@ -317,8 +360,34 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
             )
             if verdict.decision == ROUTE_TELEMETRY or not verdict.admit_to_curated:
                 continue  # telemetry / polluted / flagged — keep quarantined
+            # ⚠️ IL QUARTO PRESIDIO, che i tre controlli non guardano.
+            # Il verdetto di L4 e' gia' persistito qui e non serve il
+            # giudice per leggerlo. Misurato da ws4 il 2026-08-07: dei
+            # 172 recuperabili dalle tre condizioni, 138 avevano gs
+            # sotto 40 e 17 fra 40 e 70 — 155 su 172, il 90,1%, erano
+            # stati BOCCIATI DAL MOAT e sarebbero tornati nel recall
+            # senza che nessuno riguardasse la ragione.
+            #
+            # Non e' un cambio di politica: lo scopo dichiarato qui
+            # sopra e' recuperare «real knowledge that a SINCE-FIXED
+            # false positive had hidden», e un fatto che il moat boccia
+            # OGGI non e' un falso positivo gia' curato.
+            #
+            # I NULL restano DENTRO: «mai giudicato» non e' «bocciato».
+            # La soglia e' 70 e non 40 perche' la cut di ammissione non
+            # e' una (40 col giudice di ripiego, 70 col calibrato,
+            # misurato il 2026-08-05): davanti al dubbio si recupera di
+            # meno.
+            _gs = r["grounding_score"] if _ha_punteggio else None
+            if _gs is not None and float(_gs) < _MOAT_MIN_RECOVER:
+                held_by_moat += 1
+                continue
             recoverable.append(r["id"])
-            grounding[r["id"]] = r["grounding_score"]
+            # `_gs`, non `r["grounding_score"]`: su uno store senza la colonna
+            # la riga di ws1 rimetterebbe il crash che la tolleranza qui sopra
+            # ha appena tolto. E' la GIUNTURA — due lati entrambi giusti che
+            # combinati rompono — e l'auto-merge non poteva vederla.
+            grounding[r["id"]] = _gs
         # What the JUDGE thinks of what we are about to re-admit. The three
         # conditions never read it, so without this split the caller sees one
         # number that hides the only distinction that matters here: a fact whose
@@ -339,8 +408,37 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
         result = {
             "scanned": len(rows),
             "recoverable": len(recoverable),
+            # Un conteggio che cala senza spiegazione si legge «ce
+            # n'erano meno»: chi guarda deve vedere che la differenza
+            # e' una SCELTA, e quale.
+            "held_by_moat": held_by_moat,
+            # Su uno store senza la colonna, `held_by_moat` vale 0 — e uno
+            # zero senza spiegazione si legge «il moat non ha bocciato
+            # nessuno», che e' l'opposto di «non ho potuto guardare».
+            "moat_available": _ha_punteggio,
+            "moat_rule": (
+                f"a quarantined fact is NOT recovered when the moat "
+                f"judged it below {_MOAT_MIN_RECOVER:.0f}; NULL means "
+                f"never judged, not rejected, so it stays eligible. "
+                f"The cut is the HIGHER of the two admission cuts "
+                f"(40 fallback / 70 calibrated): facing a doubt, "
+                f"recover less"),
             "promoted": 0,
             "dry_run": dry_run,
+            # QUANDO. Il 2026-08-07 tre istanze hanno misurato proprio questo
+            # `recoverable` e hanno ottenuto 172, 220, 235 e 236 — e nessuna
+            # era in errore: i quarantinati vivi crescono di ~7,5 all'ora e i
+            # quattro numeri sono monotoni nell'ordine in cui furono presi.
+            # Un conteggio su un corpus che cambia e' un numero PIU' un
+            # istante. Vedi `retirement_log._istante`.
+            "measured_at": _istante(),
+            # E COSA NE PENSA IL GIUDICE (ws1): senza questa ripartizione il
+            # chiamante vede UN numero che nasconde l'unica distinzione che
+            # conta qui — un fatto la cui fonte e' stata controllata e
+            # RIFIUTATA non e' lo stesso caso di uno che un falso positivo
+            # gia' curato aveva nascosto.
+            # ⇒ I due campi rispondono a domande diverse e stanno insieme:
+            #   `measured_at` dice QUANDO, `by_moat` dice COSA.
             "by_moat": by_moat,
         }
         if dry_run or not recoverable:

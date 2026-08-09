@@ -14,7 +14,7 @@
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var counters = { adm: 0, quar: 0, ans: 0, abs: 0 };
+  var counters = { adm: 0, quar: 0, ans: 0, abs: 0, ret: 0 };
   var shadowN = 0;
   var aborter = null;
   var gen = 0;                 // connection generation: a new connect
@@ -145,6 +145,35 @@
       stamp("st-q", String(p.status || "QUARANTINED").toUpperCase(), "ref");
     }
   }
+  /* flow.supersession (the helm): a write RETIRED another fact. Not a
+     failure of the engine — a decision it took; the chamber glows and the
+     governance panel is where the decision can be reversed. */
+  function onSupersession(p) {
+    counters.ret++;
+    heat("w-scr-sup", ["flow", "q"], 1200);
+    heat("n-sup", ["fail"], 1200);
+    stamp("st-sup", p.reversible ? "RETIRED ↺" : "RETIRED", "ref");
+    govSoon();                       // the pair appears in the helm below
+  }
+  function onUndo(p) {
+    heat("n-sup", ["pass"], 1400);
+    stamp("st-sup", "RESTORED", "adm");
+    govSoon();
+  }
+  /* quarantine transitions AFTER the write: the entry was visible only at
+     write time (flow.write status=quarantined), the exit never — so the
+     queue could only appear to grow. Both light the quarantine box now. */
+  function onQuarantine(p) {
+    counters.quar++;
+    heat("n-quar", ["fail"], 1400);
+    stamp("st-q", "QUARANTINED", "ref");
+    govSoon();
+  }
+  function onRestore(p) {
+    heat("n-quar", ["pass"], 1400);
+    stamp("st-q", "RELEASED", "adm");
+    govSoon();
+  }
   function onRecall(p) {
     tsR.push(Date.now());
     var abst = !!p.abstained;
@@ -251,7 +280,14 @@
     "n-ce": ["CE ⊢ CHECK", "engram/local_grounding.py",
       "A local cross-encoder verifies the draft is ENTAILED by a retrieved " +
       "fact; below threshold → NO ANSWER (reason: unsupported_by_facts). " +
-      "Catches the model inventing beyond memory — measured, not promised."]
+      "Catches the model inventing beyond memory — measured, not promised."],
+    "n-sup": ["SUPERSEDE (the helm)", "verimem/semantic.py supersede()",
+      "Every retirement in the product converges on ONE method: it stamps " +
+      "superseded_by, snapshots the pre-op row (facts_undo_log) and emits " +
+      "flow.supersession — loser, winner, reason, branch, reversible. " +
+      "Until 2026-08-04 this was the engine's biggest silent mutation: " +
+      "seven read APIs said nothing. The governance panel below shows the " +
+      "pairs; undo restores the loser, the winner stays."]
   };
   Object.keys(STAGE_INFO).forEach(function (id) {
     var el = $(id);
@@ -267,7 +303,190 @@
   function countersRender() {
     $("cAdm").textContent = counters.adm; $("cQuar").textContent = counters.quar;
     $("cAns").textContent = counters.ans; $("cAbs").textContent = counters.abs;
+    $("cRet").textContent = counters.ret;
   }
+
+  /* ---- GOVERNANCE — see AND act ------------------------------------------
+     The helm: retirements (undo) + quarantine (restore), driven by the
+     REAL endpoints. Buttons act, reload, and the feed shows the effect —
+     watching without acting is worse than not watching (2026-08-04). */
+  function govHeaders() {
+    var key = sessionStorage.getItem(KEY_SS) || $("key").value.trim();
+    return key ? { Authorization: "Bearer " + key } : {};
+  }
+  var govTimer = null;
+  function govSoon() {              // debounce: a burst of events = one reload
+    if (govTimer) { return; }
+    govTimer = setTimeout(function () { govTimer = null; govLoad(); }, 800);
+  }
+  function govAction(url, btn) {
+    btn.disabled = true; btn.textContent = "…";
+    fetch(url, { method: "POST", headers: govHeaders() })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (res) {
+        btn.textContent = (res.action === "restored" || res.restored)
+          ? "done ✓" : (res.action || "failed");
+        govSoon();
+      })
+      .catch(function () { btn.textContent = "failed"; btn.disabled = false; });
+  }
+  /* TAGLIARE SENZA MUTILARE. In JavaScript e' peggio che in Python:
+     `String.slice` taglia a UNITA' UTF-16, quindi spezza le coppie
+     surrogate e lascia mezzo carattere, che si vede come il carattere di
+     sostituzione. Misurato sul motore vero (node) tagliando DENTRO la
+     coppia: CJK esteso, bandiere e simboli musicali si rompono tutti e
+     tre; l'italiano e l'inglese no — ed e' il presidio che rende la
+     misura leggibile, perche' dice che il difetto e' della funzione e non
+     della lingua.
+     Su testo latino rende esattamente `s.slice(0, n)`: una cura che tocca
+     anche cio' che non c'entra nessuno puo' verificarla.
+     Gemella di `verimem/text_cut.py:safe_cut`; il banco sta in
+     `tests/js/taglio_ui.mjs` e legge QUESTO file, non una copia. */
+  function safeCut(s, n) {
+    if (!s || n <= 0) { return ""; }
+    if (s.length <= n) { return s; }
+    var alto = function (c) { return c >= 0xD800 && c <= 0xDBFF; };
+    var basso = function (c) { return c >= 0xDC00 && c <= 0xDFFF; };
+    var ri = function (cp) { return cp >= 0x1F1E6 && cp <= 0x1F1FF; };
+    var meta = function (k) {
+      return k > 0 && alto(s.charCodeAt(k - 1)) && basso(s.charCodeAt(k));
+    };
+    var i = n;
+    if (meta(i)) { i -= 1; }
+    while (i > 0 && ((i < s.length && /\p{M}/u.test(s[i]))
+                     || s.charCodeAt(i - 1) === 0x200D)) {
+      i -= 1;
+      if (meta(i)) { i -= 1; }
+    }
+    if (i >= 2 && i + 1 < s.length
+        && ri(s.codePointAt(i - 2)) && ri(s.codePointAt(i))) { i -= 2; }
+    return s.slice(0, i);
+  }
+
+  function govRowBase(idA, idB, sub) {
+    var row = document.createElement("div"); row.className = "gov-row";
+    var ids = document.createElement("span"); ids.className = "gov-ids";
+    ids.textContent = idA + (idB ? " → " + idB : "");
+    var s = document.createElement("span"); s.className = "gov-sub";
+    s.textContent = sub;
+    row.appendChild(ids); row.appendChild(s);
+    return row;
+  }
+  function govRenderRet(items) {
+    var box = $("govRet");
+    box.textContent = "";
+    if (!items.length) {
+      var e = document.createElement("div"); e.className = "gov-empty";
+      e.textContent = "no retirements — nothing has been silently lost";
+      box.appendChild(e); return;
+    }
+    items.forEach(function (r) {
+      var row = govRowBase(String(r.loser_id).slice(0, 10),
+        String(r.winner_id || "?").slice(0, 10),
+        (r.loser_topic || "—") + " · " + (r.reason || "no reason"));
+      if (r.reversible && r.undo_op_id) {
+        var b = document.createElement("button");
+        b.className = "gov-btn act"; b.textContent = "undo";
+        b.title = "restore the loser — the winner stays; both live";
+        (function (op) {
+          b.addEventListener("click", function () {
+            govAction("/v1/undo/" + encodeURIComponent(op), b);
+          });
+        })(r.undo_op_id);
+        row.appendChild(b);
+      } else {
+        /* diceva «irreversible (pre-helm)»: una causa ASSERITA, e sbagliata
+           in due casi su tre — la finestra puo' essere SCADUTA (lo scatto
+           c'era, il prodotto ha funzionato) oppure l'undo puo' essere GIA'
+           stato usato. Ora arriva decisa dal server, dalla riga stessa.
+           Quinta volta stasera che una superficie asseriva un perche', e
+           questa l'avevo scritta io. */
+        var i = document.createElement("i"); i.className = "gov-irrev";
+        i.textContent = "irreversible — " +
+          (r.irreversible_because || "reason not recorded");
+        row.appendChild(i);
+      }
+      box.appendChild(row);
+    });
+  }
+  function govRenderQuar(items) {
+    var box = $("govQuar");
+    box.textContent = "";
+    if (!items.length) {
+      var e = document.createElement("div"); e.className = "gov-empty";
+      e.textContent = "quarantine empty";
+      box.appendChild(e); return;
+    }
+    items.forEach(function (q) {
+      var fid = String(q.id || q.fact_id || "");
+      var row = govRowBase(fid.slice(0, 10), null,
+        (q.topic || "—") + " · " + safeCut(String(q.proposition || ""), 60));
+      var b = document.createElement("button");
+      b.className = "gov-btn act"; b.textContent = "restore";
+      b.title = "release a false positive back to recall";
+      (function (id) {
+        b.addEventListener("click", function () {
+          govAction("/v1/memories/" + encodeURIComponent(id) + "/restore", b);
+        });
+      })(fid);
+      row.appendChild(b);
+      box.appendChild(row);
+    });
+  }
+  function govMissing(boxId) {
+    // A 404 must SAY 404: rendering "nothing lost" on a gateway that does
+    // not expose the route is the silent-drop class measured on 2026-08-04
+    // (valid_until accepted with 200 and thrown away). The panel tells the
+    // truth about its own blind spot instead.
+    var box = $(boxId);
+    box.textContent = "";
+    var e = document.createElement("div"); e.className = "gov-empty";
+    e.textContent = "this gateway does not expose the route (pre-helm build)";
+    box.appendChild(e);
+  }
+  function govLoad() {
+    var h = govHeaders();
+    fetch("/v1/retirements?limit=20", { headers: h })
+      .then(function (r) {
+        if (!r.ok) { govMissing("govRet"); return null; }
+        return r.json();
+      })
+      .then(function (d) { if (d) { govRenderRet(d.items || []); } })
+      .catch(function () { /* network error: leave as is */ });
+    fetch("/v1/retirements?counts=true", { headers: h })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (q) {
+        if (!q) { return; }
+        /* L'endpoint manda SEI numeri e questa riga ne mostrava quattro —
+           e i due che mancavano sono quelli che rispondono alle due
+           domande del prodotto: «e' verificata?» (judged) e «si puo'
+           tornare indietro?» (retired_reversible). Sul corpus reale:
+           1360 giudicati su 5631 servibili, e 2 ritiri annullabili su
+           1805. Il conteggio da solo non dice niente, quindi vanno come
+           RAPPORTO sul loro denominatore.
+           Una chiave assente resta "?" e non 0: un gateway piu' vecchio
+           non ha questi campi, e «nessuno giudicato» sarebbe una bugia
+           diversa da «non lo so». */
+        var _q = function (v) { return (v === undefined || v === null) ? "?" : v; };
+        var riga = "written " + q.written
+          + " · servable " + q.servable
+          + " (judged " + _q(q.judged) + ")"
+          + " · retired " + q.retired;
+        if (q.retired) { riga += " (undoable " + _q(q.retired_reversible) + ")"; }
+        riga += " · quarantined " + q.quarantined;
+        $("quartet").textContent = riga;
+        $("quartet").title = q.formula;
+      })
+      .catch(function () {});
+    fetch("/v1/quarantine?limit=20", { headers: h })
+      .then(function (r) {
+        if (!r.ok) { govMissing("govQuar"); return null; }
+        return r.json();
+      })
+      .then(function (d) { if (d) { govRenderQuar(d.items || []); } })
+      .catch(function () {});
+  }
+  $("govRefresh").addEventListener("click", govLoad);
 
   /* ---- feed: batched per animation frame ------------------------------------*/
   var pendingRows = [];
@@ -283,10 +502,143 @@
     var detail;
     if (evt.name === "flow.write") {
       var ok = p.stored && p.status !== "quarantined";
-      tag.className = ok ? "adm" : "ref";
-      tag.textContent = ok ? "ADMITTED" : String(p.status || "refused").toUpperCase();
+      /* «rifiutato DAL giudice» e «rifiutato NONOSTANTE il giudice» non
+         sono la stessa riga: nel secondo il moat ha girato, ha detto che
+         la fonte sostiene il fatto, e L1 lo tiene fuori per una parola.
+         È l'unico caso in cui il prodotto contraddice sé stesso, e qui si
+         leggeva come un rifiuto qualunque (ws5, 2026-08-05). La soglia
+         non sta in questo file: arriva già decisa nell'evento, dalla
+         stessa funzione che alimenta la vista sul corpus. */
+      var contro = p.withheld_despite_judge === true;
+      tag.className = contro ? "conflict" : (ok ? "adm" : "ref");
+      tag.textContent = contro
+        ? String(p.status || "refused").toUpperCase() + " DESPITE THE JUDGE"
+        : (ok ? "ADMITTED" : String(p.status || "refused").toUpperCase());
+      /* ammesso ≠ verificato: senza questo, un fatto giudicato 99.9 e uno MAI
+         giudicato leggono identici — cioè la distinzione che il prodotto vende
+         sparisce dalla pagina che dovrebbe mostrarla. `judged === false` è
+         diverso da un punteggio basso: è assenza di verdetto, non un verdetto. */
+      var verdetto = (p.judged === true)
+        ? " · moat " + Number(p.grounding_score).toFixed(1)
+        : (p.judged === false ? " · NOT JUDGED" : "");
       detail = " · write · topic " + (p.topic || "—")
-        + (p.fact_id ? " · id " + String(p.fact_id).slice(0, 8) : "");
+        + (p.fact_id ? " · id " + String(p.fact_id).slice(0, 8) : "")
+        + verdetto;
+    } else if (evt.name === "flow.supersession") {
+      tag.className = "ref";
+      tag.textContent = "RETIRED";
+      detail = " · " + String(p.loser_id || "?").slice(0, 8)
+        + " → " + String(p.winner_id || "?").slice(0, 8)
+        + " · " + (p.loser_topic || "—")
+        + " · " + (p.reason || "no reason")
+        + (p.reversible ? " · undoable" : " · irreversible");
+    } else if (evt.name === "flow.undo") {
+      tag.className = "adm";
+      tag.textContent = "RESTORED";
+      detail = " · undo " + String(p.op_type || "") + " · fact "
+        + String(p.fact_id || "?").slice(0, 8);
+    } else if (evt.name === "flow.quarantine") {
+      tag.className = "ref";
+      tag.textContent = "QUARANTINED";
+      detail = " · declassed · fact " + String(p.fact_id || "?").slice(0, 8)
+        + " · was " + (p.prior_status || "?")
+        + (p.reason ? " · " + p.reason : "");
+    } else if (evt.name === "flow.restore") {
+      tag.className = "adm";
+      tag.textContent = "RELEASED";
+      detail = " · quarantine exit · fact " + String(p.fact_id || "?").slice(0, 8)
+        + " → " + (p.to_status || "?")
+        + (p.reason ? " · " + p.reason : "");
+    } else if (evt.name === "flow.episode") {
+      /* outcome in the label ON PURPOSE: on the real corpus 405 of 413
+         episodes say "success" and none has failed since May 19 — a skew
+         you can only notice if every episode wears its outcome. */
+      var ok = String(p.outcome || "") === "success";
+      tag.className = ok ? "adm" : "ref";
+      tag.textContent = "EPISODE " + String(p.outcome || "?").toUpperCase();
+      detail = " · task " + String(p.task_id || "?").slice(0, 28)
+        + " · steps " + (p.steps != null ? p.steps : "?");
+    } else if (evt.name === "flow.skill") {
+      tag.className = "adm";
+      tag.textContent = "SKILL " + String(p.kind || "").toUpperCase();
+      detail = " · " + String(p.skill_id || "?").slice(0, 8)
+        + " · fitness " + (p.fitness != null ? Number(p.fitness).toFixed(2) : "?")
+        + " · trials " + (p.trials != null ? p.trials : "?")
+        + " · " + (p.status || "?");
+    } else if (evt.name === "flow.forget") {
+      /* rosso quando è definitiva: è l'unica azione che nessun bottone di
+         questa pagina può annullare, e deve leggersi diversa da un ritiro */
+      tag.className = p.undoable ? "adm" : "ref";
+      tag.textContent = p.undoable ? "DELETED (undoable)" : "DELETED";
+      detail = " · fact " + String(p.fact_id || "?").slice(0, 8)
+        + " · " + (p.action || "delete");
+    } else if (evt.name === "flow.conflict") {
+      /* quello che la scansione REGISTRA diventa quello su cui la
+         manutenzione agisce: i nuovi accanto ai gia' noti, perche' una
+         scansione che ne ritrova 2495 e ne aggiunge 31 e' una cosa
+         diversa da una che ne trova 31 su un corpus pulito */
+      tag.className = p.new_detected ? "sup" : "adm";
+      tag.textContent = "CONFLICT SCAN";
+      detail = " · nuovi " + (p.new_detected != null ? p.new_detected : "?")
+        + " · gia' noti " + (p.already_known != null ? p.already_known : "?")
+        + " · su " + (p.scanned_facts != null ? p.scanned_facts : "?")
+        + " fatti"
+        + (p.kinds ? " · " + Object.keys(p.kinds).join(", ") : "");
+    } else if (evt.name === "flow.dream") {
+      /* la manutenzione automatica gira DA SOLA ogni 4 ore e ritira fatti
+         (misurato: 5 in una passata, con 95 lasciati per pari fiducia).
+         I passi caduti stanno nella stessa riga: il fail-open resta, ma
+         un fallimento ogni 4 ore che nessuno vede e' quello che non si
+         scopre */
+      var rotti = (p.steps_failed || []).length;
+      tag.className = rotti ? "ref" : (p.retired ? "sup" : "adm");
+      tag.textContent = rotti ? "MAINTENANCE (partial)" : "MAINTENANCE";
+      detail = " · ritirati " + (p.retired != null ? p.retired : "?")
+        + " · lasciati " + (p.skipped_equal_trust != null
+                            ? p.skipped_equal_trust : "?")
+        + " · scan " + (p.scanned_facts != null ? p.scanned_facts : "?")
+        + (p.new_conflicts ? " · nuovi conflitti " + p.new_conflicts : "")
+        + (rotti ? " · CADUTI: " + (p.steps_failed || []).join(", ") : "");
+    } else if (evt.name === "flow.decay") {
+      /* la scrittura di massa: migliaia di righe cambiano valore in un
+         colpo. Il totale da solo non dice la cosa che conta — che la
+         formula non guarda il verdetto — quindi la riga porta le due
+         popolazioni accanto, e una prova non deve leggersi come una
+         passata vera */
+      var pp = p.updated_by_population || {};
+      tag.className = p.dry_run ? "wait" : "sup";
+      tag.textContent = p.dry_run ? "DECAY (dry run)" : "DECAY";
+      detail = " · " + (p.facts_updated != null ? p.facts_updated : "?")
+        + "/" + (p.facts_seen != null ? p.facts_seen : "?") + " fatti"
+        + " · giudicati " + (pp.grounded != null ? pp.grounded : "?")
+        + " · mai giudicati " + (pp.never_judged != null ? pp.never_judged : "?")
+        + (pp.retired || pp.quarantined
+           ? " · non serviti " + ((pp.retired || 0) + (pp.quarantined || 0))
+           : "");
+    } else if (evt.name === "flow.warmup") {
+      /* l'attesa ha un nome: senza questa riga il feed resta muto per
+         quaranta secondi mentre il prodotto carica il giudice, e un motore
+         che non dice nulla sembra fermo invece che al lavoro */
+      var fase = String(p.phase || "");
+      tag.className = fase === "failed" ? "ref" : (fase === "start" ? "wait" : "adm");
+      tag.textContent = fase === "start" ? "WARMING"
+        : (fase === "failed" ? "WARMUP FAILED" : "WARM");
+      detail = " · " + (p.what || "?")
+        + (p.elapsed_ms != null
+           ? " · " + (Number(p.elapsed_ms) / 1000).toFixed(1) + "s"
+           : " · loading…");
+    } else if (evt.name === "flow.document") {
+      var isIdx = String(p.kind || "") === "index";
+      tag.className = (isIdx && p.chunks_flagged) ? "ref" : "adm";
+      tag.textContent = "DOC " + String(p.kind || "?").toUpperCase();
+      detail = isIdx
+        ? " · " + String(p.source_id || "?").slice(0, 24)
+          + " · v" + (p.version != null ? p.version : "?")
+          + " · " + (p.chunks_indexed != null ? p.chunks_indexed : "?") + " chunk"
+          + (p.chunks_flagged ? " · " + p.chunks_flagged + " withheld" : "")
+        : " · " + (p.n != null ? p.n : "?") + " hits"
+          + (p.best != null ? " · best " + Number(p.best).toFixed(3) : "")
+          + (p.include_flagged ? " · incl. flagged" : "");
     } else {
       var abst = !!p.abstained;
       tag.className = abst ? "abs" : "ans";
@@ -339,6 +691,15 @@
     }
     if (name === "flow.write") { onWrite(evt.payload || {}); }
     else if (name === "flow.recall") { onRecall(evt.payload || {}); }
+    else if (name === "flow.supersession") { onSupersession(evt.payload || {}); }
+    else if (name === "flow.undo") { onUndo(evt.payload || {}); }
+    else if (name === "flow.quarantine") { onQuarantine(evt.payload || {}); }
+    else if (name === "flow.restore") { onRestore(evt.payload || {}); }
+    else if (name === "flow.episode" || name === "flow.skill"
+             || name === "flow.document" || name === "flow.warmup"
+             || name === "flow.forget" || name === "flow.decay"
+             || name === "flow.dream"
+             || name === "flow.conflict") { /* feed-only */ }
     else { return; }           // flow.entity lives on the console's graph
     countersRender();
     feedPush(evt);
@@ -368,6 +729,7 @@
       }
       if (!r.ok || !r.body) { throw new Error("HTTP " + r.status); }
       setLive(true, "LIVE");
+      govLoad();                 // the helm loads with the stream
       if (!key) {               // personal mode: the form is noise — drop it
         $("key").hidden = true; $("go").hidden = true;
         $("streamHint").textContent =

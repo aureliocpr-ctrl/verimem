@@ -48,6 +48,25 @@ SEMPRE = frozenset({
     "grounding_score", "verified_by",
 })
 
+def verifica_sostenuta(f: Any) -> bool:
+    """Se il `last_verified_at` di questo fatto poggia su un VERDETTO.
+
+    Il campo si chiama come se registrasse una verifica e non lo fa:
+    misurato da ws5 il 2026-08-07 sul corpus reale, avanza su 2762 fatti —
+    fino a 87 giorni dopo la scrittura — e di quelli ZERO hanno un
+    `grounding_score` (sono `legacy_unverified` o `provisional`). Si muove
+    esattamente dove un giudizio non c'e' mai stato: un TOCCO — una
+    migrazione, un re-embedding — non un verdetto.
+
+    Una definizione sola, perche' la usano due superfici: qui per decidere
+    se il campo esce, e in `trust_report` per decidere da quale timestamp
+    nasce l'eta'. Due copie della stessa regola divergono, ed e' la prima
+    delle classi che questo prodotto ripete.
+    """
+    lv = getattr(f, "last_verified_at", None)
+    return lv is not None and getattr(f, "grounding_score", None) is not None
+
+
 _NOMI: tuple[str, ...] | None = None
 
 
@@ -97,13 +116,31 @@ def fact_payload(f: Any) -> dict[str, Any]:
     # i campi. Per un agente MCP e' contesto tolto al resto della conversazione,
     # quindi va speso dove informa. Questi due non informano quando valgono il
     # default, ed e' lo stesso principio per cui i campi vuoti non escono.
-    if out.get("last_verified_at") == out.get("created_at"):
-        # il dataclass lo dichiara: quando manca, «freshness lo coalesce a
-        # created_at» — quindi coinciderci non dice niente
+    # La regola era «omettilo se coincide con created_at», e presa insieme
+    # alla misura di ws5 si INVERTIVA: il campo avanza solo sui fatti mai
+    # giudicati, quindi il contratto emetteva una chiave chiamata
+    # `last_verified_at` ESATTAMENTE sui fatti che nessuno ha mai
+    # verificato, e la nascondeva su quelli col verdetto. Il segnale al
+    # contrario, nel modulo che esiste per essere l'unica superficie
+    # onesta.
+    #
+    # Ora esce quando un verdetto lo sostiene. Il dato grezzo non sparisce
+    # dal prodotto: `trust_report` continua a portarlo, dove sta accanto a
+    # `age_basis` che dice cosa quel numero misura davvero. Sparisce dal
+    # payload generico, dove veniva letto per quello che il nome promette.
+    #
+    # DUE condizioni, non una: la regola vecchia resta valida (coincidere
+    # con `created_at` non aggiunge niente, ed e' economia di byte su un
+    # payload gia' cresciuto del 62%), la nuova si somma. La prima stesura
+    # aveva SOSTITUITO la vecchia invece di affinarla, e l'ha presa il mio
+    # stesso test: una verifica avvenuta al momento della scrittura tornava
+    # a occupare una chiave per ripetere `created_at`.
+    if (not verifica_sostenuta(f)
+            or out.get("last_verified_at") == out.get("created_at")):
         out.pop("last_verified_at", None)
     if out.get("writer_role") == "agent_inference":
         out.pop("writer_role", None)  # il default del dataclass
     return out
 
 
-__all__ = ["NON_ESCONO", "SEMPRE", "fact_payload"]
+__all__ = ["NON_ESCONO", "SEMPRE", "fact_payload", "verifica_sostenuta"]

@@ -218,6 +218,46 @@ class TranscriptIndex:
             for i in order if np.isfinite(sims[i])
         ]
 
+    def recall_report(self, query: str, k: int = 10,
+                      session_id: str | None = None) -> dict:
+        """Come :meth:`recall`, ma dice ANCHE se c'era qualcosa da cercare.
+
+        Misurato da ws2«Vega» il 2026-08-07 su store isolato senza
+        ingestione: ``count()`` vale 0, ``recall(...)`` torna ``[]`` in
+        0.03s, e nessun campo distingue «tier vuoto» da «nessun match».
+        Il tier C non si riempie da solo — l'ingester e' delegato a un hook
+        che il prodotto non installa — quindi un utente di fabbrica ha il
+        tool nel listino, riceve ``[]`` per sempre, e quel ``[]`` e'
+        identico a «ho cercato e non c'era».
+
+        Quinta istanza della stessa forma (non-trovato contro
+        trovato-ma-nascosto), dopo i documenti nascosti e la quarantena
+        invisibile: il prodotto SA una cosa — ``count() == 0`` — e non la
+        dice dove serve.
+
+        ``tier_empty`` guarda il TIER, non la sessione: chiedere di una
+        sessione che non esiste e' un'altra assenza, e confonderle
+        rifarebbe lo stesso difetto un piano piu' in basso. Per questo
+        ``scope`` dichiara su cosa si e' cercato e ``n_indexed_turns``
+        conta dentro quello scope.
+
+        :meth:`recall` resta come e': chi vuole solo le righe continua a
+        chiamarla. Questo e' un metodo IN PIU', non una rottura.
+        """
+        turni = self.recall(query, k=k, session_id=session_id)
+        return {
+            "turns": turni,
+            "n_indexed_turns": self.count(session_id=session_id),
+            "tier_empty": self.count() == 0,
+            "scope": ("all" if session_id is None else f"session:{session_id}"),
+            "tier_empty_means": (
+                "the transcript tier does not fill itself: its ingester is "
+                "delegated to a hook the product does not install, so on a "
+                "factory install this tier stays empty forever and every "
+                "recall returns [] — which is NOT 'I searched and found "
+                "nothing'"),
+        }
+
     def get(self, turn_id: str) -> Turn | None:
         """Recupera un turno per id (usato da promozione / ispezione)."""
         conn = self._connect()

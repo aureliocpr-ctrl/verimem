@@ -179,3 +179,44 @@ def test_the_regime_records_the_mode(monkeypatch):
     assert r["rerank_auto_max_words"] == semantic._rerank_auto_max_words()
     monkeypatch.setenv("ENGRAM_RECALL_RERANK", "1")
     assert read_path_regime()["rerank_mode"] == "on"
+
+
+def test_auto_gate_counts_unspaced_cjk_as_words(monkeypatch):
+    """split() is blind on unspaced text: a 25-character Japanese question is
+    ONE token, so the AUTO gate reads it as a one-word query and runs the CE in
+    the regime where it measurably hurts (long input). The gate's word count is
+    now Unicode-aware: each CJK character (Han, Kana, Hangul — the word-counter
+    convention) counts as a word, so the same question exceeds the 10-word
+    threshold and the CE is skipped. Latin tokens still count 1 — the 304-query
+    derivation corpus classifies identically, so the validated policy is
+    untouched."""
+    from verimem import semantic
+
+    monkeypatch.delenv("ENGRAM_RERANK_AUTO_MAX_WORDS", raising=False)
+    lunga_ja = "今日は雨が降ると思いますか天気予報を確認してください"      # 26 chars, no spaces
+    corta_zh = "北京在哪里"                                              # 5 chars
+    inglese = "what did marie curie win the nobel prize for"            # 9 words
+    assert semantic._query_word_count(lunga_ja) > 10, (
+        "an unspaced 26-char Japanese query is NOT one word")
+    assert semantic._query_word_count(corta_zh) <= 10, (
+        "a short Chinese query stays below the threshold — CE still allowed")
+    assert semantic._query_word_count(inglese) == len(inglese.split()), (
+        "Latin text counts exactly as before: the derivation corpus is untouched")
+    misto = "weather forecast 東京都内"                                  # 2 + 4
+    assert semantic._query_word_count(misto) == 6
+
+
+def test_auto_skips_an_unspaced_cjk_query_at_the_gate(tmp_path, monkeypatch):
+    """The gate itself, not just the counter: an unspaced 26-char Japanese
+    query must be skipped BEFORE any CE load. Mutating the gate back to
+    len(query.split()) leaves _query_word_count correct but the gate blind —
+    this test catches exactly that (the function-level test cannot)."""
+    chiamate: dict = {}
+    mem = _mem(tmp_path, monkeypatch, chiamate)
+    lunga_ja = "今日は雨が降ると思いますか天気予報を確認してください"
+    out = mem.search(lunga_ja, k=3)
+    _aspetta_worker()
+    assert chiamate.get("load", 0) == 0, (
+        "unspaced CJK query in auto: the CE was LOADED — the gate is still "
+        "counting whitespace-separated tokens")
+    assert chiamate.get("score", 0) == 0

@@ -57,6 +57,7 @@ from .agent import VerimemAgent  # noqa: E402
 from .config import CONFIG  # noqa: E402
 from .fact_contract import fact_payload  # noqa: E402
 from .observability import emit, get_log  # noqa: E402
+from .text_cut import safe_cut  # noqa: E402
 
 log = get_log()
 
@@ -186,6 +187,7 @@ _THIN_UNSUPPORTED_READS: frozenset[str] = frozenset({
 #: episodes, so for those the local store is the correct answer.
 _THIN_UNSUPPORTED_WRITES: frozenset[str] = frozenset({
     "hippo_fact_forget", "hippo_fact_forget_with_undo", "hippo_forget_scope",
+    "hippo_forget_with_report",
     "hippo_fact_supersede", "hippo_fact_supersede_chain", "hippo_facts_merge",
     "hippo_facts_topic_merge", "hippo_smart_prune", "hippo_decay_run",
     "hippo_heal_contradictions", "hippo_contradictions_resolve",
@@ -1501,7 +1503,13 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "(Tier C): what was literally said in past sessions, verbatim. "
                 "UNVERIFIED, low-trust (confidence~0) — NOT accepted knowledge. "
                 "Use to see exactly what was said/decided, then verify before "
-                "trusting. Fully isolated from hippo_recall / hippo_facts_*."
+                "trusting. Fully isolated from hippo_recall / hippo_facts_*. "
+                "⚠️ THIS TIER DOES NOT FILL ITSELF: its ingester is delegated "
+                "to a hook the product does not install, so on a factory "
+                "install it stays empty and every call returns no turns. The "
+                "result says which case you are in — `tier_empty` and "
+                "`n_indexed_turns` — because an empty list alone cannot tell "
+                "'nothing was indexed' from 'nothing matched'."
             ),
             inputSchema={
                 "type": "object",
@@ -2811,6 +2819,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "gate re-run per row; the plain listing is "
                             "unchanged without it."),
                     },
+                    "breakdown": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": (
+                            "Return the SERIES instead of the list: per day, "
+                            "written vs quarantined with the rate. On the "
+                            "real corpus that rate swings between 0.2% and "
+                            "49% day to day, so a single figure describes "
+                            "the last few days, not the product."),
+                    },
                 },
             },
         ),
@@ -3010,6 +3028,97 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
         t.Tool(
+            name="hippo_retirement_log",
+            description=(
+                "ws6 control-room 2026-08-04. The retirements, newest first, "
+                "as (loser, winner) PAIRS — the quarantine_log equivalent "
+                "for supersessions. Until this tool NO read surface said a "
+                "fact had been retired (seven silent APIs, measured). Each "
+                "row: loser/winner id+topic+status, reason, superseded_at, "
+                "reversible + undo_op_id (pass it to "
+                "hippo_undo_destructive_op to reverse the retirement). "
+                "with_text=true adds propositions for judging a pair. "
+                "counts=true returns instead the canonical quartet "
+                "{written, servable, retired, quarantined, formula} — "
+                "a fact disappears in TWO ways; any 'alive' count that "
+                "ignores one hides half the loss. mismatches=true returns "
+                "instead where the moat's verdict and the fact's fate "
+                "DISAGREE: {judged_true_but_withheld, "
+                "judged_false_but_served, contested_band, thresholds} — "
+                "facts this store SERVES although its own judge rejected "
+                "them, facts kept out although it accepted them, and the "
+                "band where the outcome depended on which judge was up. "
+                "It lists, it decides nothing."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "minimum": 1,
+                              "maximum": 500, "default": 50},
+                    "since": {"type": "number",
+                              "description": "epoch seconds lower bound"},
+                    "topic": {"type": "string",
+                              "description": "loser-topic prefix filter"},
+                    "reason": {"type": "string",
+                               "description": "exact superseded_reason"},
+                    "with_text": {"type": "boolean", "default": False},
+                    "counts": {"type": "boolean", "default": False,
+                               "description": "return the survivability "
+                                              "quartet instead of rows"},
+                    "mismatches": {"type": "boolean", "default": False,
+                                   "description": "return instead where the "
+                                                  "moat verdict and the "
+                                                  "fact's fate disagree"},
+                    "breakdown": {"type": "boolean", "default": False,
+                                  "description": "group retirements by reason "
+                                                 "and by day: a steady rate "
+                                                 "and a one-off maintenance "
+                                                 "event look identical until "
+                                                 "you read the distribution"},
+                },
+            },
+        ),
+        t.Tool(
+            name="hippo_forget_with_report",
+            description=(
+                "ws6 control-room. DELETE a fact and say WHERE it is still "
+                "readable. The erasure clears every live table (entity graph "
+                "included), but the Auto-Dream worker keeps whole-DB copies: "
+                "rotating ones for a few hours, MANUAL ones forever — one "
+                "from May 12 still holds 60 facts the live store dropped. "
+                "The deletion is real and its effect is partial, and no "
+                "surface said so. Each copy carries `rotates`, so 'for a few "
+                "hours' and 'forever' are distinguishable. Reporting NEVER "
+                "blocks the erasure: a scan failure degrades to an empty "
+                "list. Destructive: the fact is gone from the live store."
+            ),
+            inputSchema={"type": "object",
+                         "properties": {"fact_id": {"type": "string"}},
+                         "required": ["fact_id"]},
+        ),
+        t.Tool(
+            name="hippo_tier_inventory",
+            description=(
+                "ws6 control-room 2026-08-05. WHERE each tier actually "
+                "lives, how many rows it holds, and which nearby files "
+                "carry its name without being it. Born from a measured "
+                "mistake: the five entity tables inside semantic.db are an "
+                "empty migration shell — the graph lives in "
+                "entity_kg/entity_kg.db with 9078 entities and 87387 edges "
+                "— and counting the shell produced 'the entity tier is "
+                "empty', retiring a work direction. No surface said where "
+                "a tier lives, so the only way to know was counting files "
+                "by hand, i.e. falling in the hole. A missing store reads "
+                "`unavailable`, NEVER 0: an empty container and an absent "
+                "one return the same number and only the second announces "
+                "itself. Read-only, every store opened mode=ro."
+            ),
+            inputSchema={"type": "object", "properties": {
+                "with_decoys": {"type": "boolean", "default": True,
+                                "description": "list the same-named files "
+                                               "next to each real store"}}},
+        ),
+        t.Tool(
             name="hippo_briefing_by_project",
             description=(
                 "Cycle #80 (2026-05-16). Project-scoped briefing — "
@@ -3055,6 +3164,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                                    "maximum": 500, "default": 50},
                     "include_lineage": {"type": "boolean", "default": True},
                     "include_superseded": {"type": "boolean", "default": False},
+                    "include_quarantined": {
+                        "type": "boolean", "default": True,
+                        "description": (
+                            "Default TRUE keeps today's behaviour: the "
+                            "payload carries facts the gate REJECTED, marked "
+                            "by `status`. Measured 2026-08-07: 24 of 78 "
+                            "production briefings contain at least one. Pass "
+                            "false for a context with only admitted facts — "
+                            "`n_quarantined` still reports how many exist."),
+                    },
                 },
                 "required": ["topic_glob"],
             },
@@ -3187,7 +3306,14 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "Default tau = 30 days (half-life ~21 days), floor = "
                 "0.05. The fact's embedding/proposition/topic are NOT "
                 "touched -- only the confidence prior. Pass dry_run=true "
-                "to preview without persisting."
+                "to preview without persisting. The pass does NOT read the "
+                "moat verdict: a fact judged 99 and one it never saw decay "
+                "identically, and retired/quarantined rows -- served to "
+                "nobody -- are decayed too. The summary reports "
+                "`updated_by_population` (grounded / never_judged / "
+                "servable / retired / quarantined) so the caller can see WHO "
+                "was touched, and `decays_regardless_of` states the "
+                "blindness next to the numbers."
             ),
             inputSchema={
                 "type": "object",
@@ -7602,20 +7728,37 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             query = arguments.get("query", "")
             k = int(arguments.get("k", 5))
             sid = arguments.get("session_id")
-            hits = TranscriptIndex().recall(query, k=k, session_id=sid)
-            _audit(name, arguments, outcome="ok")
-            return _ok([
-                {
-                    "id": tn.id, "session_id": tn.session_id, "role": tn.role,
-                    "ts": tn.ts, "when": _iso_day(tn.ts), "score": round(score, 3),
-                    "text": tn.text[:800],
-                    "source_path": tn.source_path,
-                    "source_offset": tn.source_offset,
-                    "confidence": tn.confidence,
-                    "source_type": tn.source_type,
-                }
-                for tn, score in hits
-            ])
+            # OGGETTO e non piu' lista nuda: una lista vuota non puo'
+            # portare la differenza fra «tier vuoto» e «nessun match», e su
+            # un'installazione di fabbrica questo tier resta vuoto PER
+            # SEMPRE (il suo ingester e' delegato a un hook che il prodotto
+            # non installa — misurato da ws2 il 2026-08-07). L'agente
+            # riceveva `[]` identico nei due casi.
+            # Rottura di forma dichiarata: in repo nessuno dipendeva dalla
+            # lista (una sola menzione, in un docstring).
+            _rep = TranscriptIndex().recall_report(query, k=k, session_id=sid)
+            _audit(name, arguments, outcome="ok",
+                   detail={"tier_empty": _rep["tier_empty"]})
+            return _ok({
+                "turns": [
+                    {
+                        "id": tn.id, "session_id": tn.session_id,
+                        "role": tn.role,
+                        "ts": tn.ts, "when": _iso_day(tn.ts),
+                        "score": round(score, 3),
+                        "text": safe_cut(tn.text, 800),
+                        "source_path": tn.source_path,
+                        "source_offset": tn.source_offset,
+                        "confidence": tn.confidence,
+                        "source_type": tn.source_type,
+                    }
+                    for tn, score in _rep["turns"]
+                ],
+                "n_indexed_turns": _rep["n_indexed_turns"],
+                "tier_empty": _rep["tier_empty"],
+                "scope": _rep["scope"],
+                "tier_empty_means": _rep["tier_empty_means"],
+            })
 
         if name == "hippo_transcript_promote":
             # Ponte gated Tier C -> corpus accettato. Usa la SemanticMemory
@@ -8767,7 +8910,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         if _kf_gate.action == "reject":
                             log.warning(
                                 "record_episode_key_fact_rejected_anti_confab",
-                                proposition_excerpt=prop[:80],
+                                proposition_excerpt=safe_cut(prop, 80),
                             )
                             _kf_esito.update({
                                 "status": "rejected", "id": None,
@@ -8813,7 +8956,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     except Exception as exc:  # noqa: BLE001
                         log.warning(
                             "record_episode_key_fact_store_failed",
-                            proposition_excerpt=prop[:80],
+                            proposition_excerpt=safe_cut(prop, 80),
                             error=str(exc),
                         )
                         _kf_esito.update({"status": "failed", "id": None,
@@ -12774,6 +12917,23 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "ok_new" if was_replaced is False else "ok"
                 )
             )
+            # LA PORTA MCP SCRIVEVA SENZA DIRLO: 141 scritture ad agosto e
+            # ZERO eventi (ws4, 2026-08-07; verificato sul log reale: 8247
+            # flow.write, `mcp` zero). Non era un tag mancante — `flow.write`
+            # compariva zero volte in questo file, perche' qui si costruisce
+            # il Fact e si chiama `semantic.store()` senza passare da
+            # `Memory.add()`, dove viveva l'emissione. Un agente che scrive
+            # da qui era invisibile alla sala motore.
+            # UN SOLO emettitore, non una quarta copia: `judged` e
+            # `withheld_despite_judge` li deriva lui dal punteggio.
+            from verimem.flow_events import emit_write as _emit_write
+            _emit_write(
+                stored=True, status=str(getattr(fact, "status", "")),
+                fact_id=str(getattr(fact, "id", "")),
+                topic=str(getattr(fact, "topic", "")),
+                layers=[w.get("layer") for w in (_gate_warnings or [])
+                        if isinstance(w, dict) and w.get("layer")],
+                grounding_score=getattr(fact, "grounding_score", None))
             # 2026-06-02 (P0a — Aurelio "la memoria conserva claim errati →
             # quasi inutile"): auto-invalidate older facts the anti-confab
             # gate (L3) flagged as contradicted by THIS just-stored fact.
@@ -12835,7 +12995,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     confidence=confidence,
                     replaced=bool(was_replaced),
                     status=getattr(fact, "status", "model_claim"),
-                    proposition_excerpt=proposition[:140],
+                    proposition_excerpt=proposition,
                 )
                 # Cycle #134: emit anti_confab_warning when the L1 detector
                 # fires on the just-stored proposition. The dashboard uses
@@ -12861,7 +13021,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                             level=_level,
                             fact_id=fact.id,
                             topic=topic,
-                            proposition_excerpt=proposition[:140],
+                            proposition_excerpt=proposition,
                             reason=_w,
                         )
             except Exception:  # noqa: BLE001 — never break the response
@@ -13338,6 +13498,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _limit = max(1, int(arguments.get("limit", 50) or 50))
             except (TypeError, ValueError):
                 _limit = 50
+            if arguments.get("breakdown"):
+                # la SERIE, non solo l'elenco: sul corpus reale il tasso di
+                # quarantena oscilla fra 0.2% e 49% da un giorno all'altro,
+                # quindi «il 10% viene quarantinato» descrive gli ultimi
+                # giorni e non il prodotto. Un agente che legge da qui non
+                # aveva modo di saperlo.
+                from verimem.retirement_log import quarantine_breakdown
+                _bd = quarantine_breakdown(a.semantic, limit=_limit)
+                _audit(name, arguments, outcome="ok",
+                       detail={"quarantined": _bd["quarantined"]})
+                return _ok({"ok": True, **_bd})
             # DELEGA, non copia. Qui c'era la stessa SELECT dell'SDK
             # (`client.py:1447-1452`) ricopiata a mano, e con la copia si e'
             # perso cio' che la copia non conteneva: l'arricchimento
@@ -13578,6 +13749,29 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _audit(name, arguments, outcome="ok_with_undo")
             return _ok(result)
 
+        if name == "hippo_forget_with_report":
+            # La cancellazione e' reale e il suo effetto e' PARZIALE: il
+            # worker dei dream tiene copie intere del DB, alcune a
+            # rotazione e altre manuali che restano per sempre. Sull'SDK
+            # questo si sapeva dal 2026-08-05; qui no, ed e' la stessa
+            # classe che questo ramo chiude — una capacita' di governo
+            # raggiungibile solo dal canale che l'ha vista nascere.
+            fid = str(arguments.get("fact_id", "")).strip()
+            if not fid:
+                _audit(name, arguments, outcome="rejected_empty")
+                return _err("empty fact_id")
+            _deny = _forget_cross_scope_denied(a, fid, arguments)
+            if _deny is not None:
+                _audit(name, arguments, outcome="rejected_cross_scope")
+                return _err(_deny)
+            from verimem.residual_copies import forget_with_report
+            esito = forget_with_report(a.semantic, fid,
+                                       principal=_MCP_PRINCIPAL)
+            _audit(name, arguments,
+                   outcome=("ok" if esito["removed"] else "not_found"),
+                   detail={"residual_copies": len(esito["residual_copies"])})
+            return _ok({"ok": True, **esito})
+
         if name == "hippo_forget_scope":
             # B-1 mem0-parity delete_all(user_id): forget all FACTS matching a
             # tenant scope. Safe by construction: dry_run defaults True
@@ -13643,6 +13837,62 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _audit(name, arguments, outcome="ok", detail={"n": len(items)})
             return _ok({"ok": True, "items": items})
 
+        if name == "hippo_tier_inventory":
+            from pathlib import Path as _P
+
+            from verimem.tier_inventory import tier_inventory
+            inv = tier_inventory(
+                data_dir=_P(a.semantic.db_path).resolve().parent.parent,
+                with_decoys=bool(arguments.get("with_decoys", True)))
+            _audit(name, arguments, outcome="ok",
+                   detail={"tiers": len(inv["tiers"])})
+            return _ok({"ok": True, **inv})
+
+        if name == "hippo_retirement_log":
+            from verimem.retirement_log import retirement_log, survivability_counts
+            _topic = arguments.get("topic") or None
+            if arguments.get("mismatches"):
+                # dove il verdetto del moat e il destino del fatto non
+                # concordano. Un agente che scrive da qui non aveva modo di
+                # sapere che il proprio corpus serve fatti con un verdetto
+                # di bocciatura — la domanda per cui questo prodotto esiste.
+                from verimem.retirement_log import verdict_mismatches
+                mm = verdict_mismatches(
+                    a.semantic, limit=int(arguments.get("limit", 50) or 50),
+                    topic=_topic)
+                _audit(name, arguments, outcome="ok",
+                       detail={"served_but_judged_false":
+                               len(mm["judged_false_but_served"])})
+                return _ok({"ok": True, **mm})
+            if arguments.get("breakdown"):
+                # dove si addensano i ritiri. Un agente che legge le coppie
+                # piu' recenti non puo' distinguere un tasso da un evento:
+                # sul corpus reale un'ora sola contiene il 92% dei ritiri di
+                # tutta la storia, e i due motivi principali sono
+                # manutenzioni, non verdetti di qualita'.
+                from verimem.retirement_log import retirement_breakdown
+                bd = retirement_breakdown(
+                    a.semantic, topic=_topic,
+                    limit=int(arguments.get("limit", 10) or 10))
+                _audit(name, arguments, outcome="ok",
+                       detail={"total_retired": bd["total_retired"]})
+                return _ok({"ok": True, **bd})
+            if arguments.get("counts"):
+                q = survivability_counts(a.semantic, topic=_topic)
+                _audit(name, arguments, outcome="ok",
+                       detail={"retired": q["retired"]})
+                return _ok({"ok": True, **q})
+            rows = retirement_log(
+                a.semantic,
+                limit=int(arguments.get("limit", 50) or 50),
+                since=arguments.get("since"),
+                topic=_topic,
+                reason=arguments.get("reason") or None,
+                with_text=bool(arguments.get("with_text", False)),
+            )
+            _audit(name, arguments, outcome="ok", detail={"n": len(rows)})
+            return _ok({"ok": True, "items": rows})
+
         if name == "hippo_briefing_by_project":
             from verimem.briefing_by_project import briefing_by_project
             project = str(arguments.get("project", "")).strip()
@@ -13671,11 +13921,20 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             max_facts = int(arguments.get("max_facts", 50) or 50)
             include_lineage = bool(arguments.get("include_lineage", True))
             include_superseded = bool(arguments.get("include_superseded", False))
+            # UN AGENTE che carica il contesto di progetto e' il consumatore
+            # principale di questo tool: se la scelta non esce da qui, per
+            # lui non esiste. Default invariato — 24 briefing di produzione
+            # su 78 contengono claim respinti dal gate (misura ws2,
+            # 2026-08-07), ma toglierli d'ufficio cambia cosa l'agente
+            # riceve, e quella e' una decisione di prodotto.
+            include_quarantined = bool(
+                arguments.get("include_quarantined", True))
             try:
                 result = a.semantic.summary_topic(
                     topic_glob, max_facts=max_facts,
                     include_lineage=include_lineage,
                     include_superseded=include_superseded,
+                    include_quarantined=include_quarantined,
                 )
             except Exception as exc:  # noqa: BLE001
                 _audit(name, arguments, outcome="error")

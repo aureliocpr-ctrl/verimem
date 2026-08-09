@@ -596,6 +596,37 @@ _STATUS_RANK = {
 }
 
 
+def _rango_di_fiducia(status: str | None) -> int | None:
+    """Il rango di ``status``, oppure ``None`` se la tabella non lo conosce.
+
+    ``None`` E NON ``0``, ed e' tutta la differenza. Misurato sullo store vero
+    il 2026-08-07: la tabella conosce **7** stati, nello store ce ne sono
+    **12**, e i fatti vivi con uno stato che la tabella non conosce sono
+    **2540 su 6982** — il 36%, di cui `user_manual` da solo 2493.
+
+    Con ``.get(status, 0)`` quei 2540 valgono **0**, cioe' *piu' deboli di
+    ``model_claim`` che vale 2* — e le due funzioni che RITIRANO un fatto in
+    una contraddizione leggevano il rango cosi'. Contato sulle coppie non
+    risolte con entrambi i fatti vivi: **257** in cui il perdente sarebbe il
+    lato a stato ignoto (227 battuti da `model_claim`, 30 da `provisional`).
+
+    🔑 ``.get(..., 0)`` traduce «non lo so» in «vale poco». Sono cose diverse,
+    e solo la seconda autorizza un ritiro. Chi decide un RITIRO deve trattare
+    l'ignoto come la PARITA' — il posto in cui quelle funzioni gia' si fermano,
+    e per la stessa ragione: non sappiamo chi ha ragione.
+
+    ⚠️ LIMITE DICHIARATO: il filtro di lettura ``min_status``
+    (``_row_passes_status`` piu' sotto) usa ancora ``.get(status, 0)``. Non e'
+    stato cambiato di proposito: li' l'errore NASCONDE un fatto, e chi legge
+    puo' abbassare la soglia; qui l'errore lo RITIRA. Direzioni diverse,
+    decisioni diverse — e la seconda non e' una diagnosi ma una scelta di
+    prodotto.
+    """
+    if status is None:
+        return None
+    return _STATUS_RANK.get(status)
+
+
 def _validate_min_status(min_status: str | None) -> None:
     """Raise ValueError when ``min_status`` is set but unknown."""
     if min_status is not None and min_status not in _STATUS_RANK:
@@ -1088,6 +1119,16 @@ def _migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_facts_superseded_by "
         "ON facts(superseded_by)"
     )
+    # …and one on WHEN the retirement happened, which is how the retirement
+    # log reads them (newest first). Without it SQLite scans the whole table
+    # and sorts in memory to return fifty rows: measured on 200k synthetic
+    # rows, 63.6ms with a temp B-tree against 0.1ms using the index — 600x,
+    # and it grows with the corpus. The governance queue is only usable if
+    # looking at it is cheap.
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_facts_superseded_at "
+        "ON facts(superseded_at DESC)"
+    )
 
 
 def _migrate_v2_to_v3(conn: sqlite3.Connection) -> None:
@@ -1505,6 +1546,35 @@ def _ensure_fact_columns(conn: sqlite3.Connection) -> None:
         )
 
 
+#: Indexes that must exist on ANY store, whatever version it arrived at.
+#: An index declared inside migration N never reaches a database that had
+#: already passed N — so a store upgraded long ago keeps missing it forever.
+#: Keyed by index name; the value is the idempotent DDL.
+_FACT_INDEX_DDL: dict[str, str] = {
+    "idx_facts_superseded_at": (
+        "CREATE INDEX IF NOT EXISTS idx_facts_superseded_at "
+        "ON facts(superseded_at DESC)"
+    ),
+}
+
+
+def _ensure_fact_indexes(conn: sqlite3.Connection) -> None:
+    """Create the indexes an already-migrated store would never get.
+
+    Measured 2026-08-05 on a copy of the real 8061-fact corpus: the index
+    the retirement log reads by had been added inside an old migration, so
+    NEW stores had it and the production one did not — the fast path
+    existed everywhere except where the data was. Idempotent and cheap:
+    ``CREATE INDEX IF NOT EXISTS`` on a store that already has it is a
+    no-op. Never raises: a missing index costs speed, not correctness.
+    """
+    for nome, ddl in _FACT_INDEX_DDL.items():
+        try:
+            conn.execute(ddl)
+        except sqlite3.OperationalError as exc:  # colonna non ancora aggiunta
+            _LOG.debug("index %s not created yet: %s", nome, exc)
+
+
 def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
     """2026-07-13 epistemic label (cortex transfer #1).
 
@@ -1686,6 +1756,36 @@ def _rerank_auto_max_words() -> int:
             "ENGRAM_RERANK_AUTO_MAX_WORDS", "10")))
     except ValueError:
         return 10
+
+
+#: Unicode blocks whose characters carry word-level meaning without spaces —
+#: the standard word-counter convention (one CJK character = one word). Han
+#: (+ ext A, + compatibility), Hiragana, Katakana (+ phonetic ext), Hangul
+#: syllables (+ jamo). Standard block boundaries, not tuned constants.
+_CJK_WORD_BLOCKS = (
+    (0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xF900, 0xFAFF),   # Han
+    (0x3040, 0x309F), (0x30A0, 0x30FF), (0x31F0, 0x31FF),   # Kana
+    (0x1100, 0x11FF), (0xAC00, 0xD7AF),                     # Hangul
+)
+
+
+def _query_word_count(query: str) -> int:
+    """Word count for the AUTO gate — Unicode-aware where split() is blind.
+
+    ``len(query.split())`` reads an unspaced 26-character Japanese question as
+    ONE word, so the gate ran the CE exactly in the regime where it measurably
+    hurts (long input, -0.080 MRR on the 26/07 GT). Per token: Latin counts 1
+    (the 304-query derivation corpus classifies identically — the validated
+    policy is untouched), and each CJK character counts as one word. For
+    spaced Korean this OVERSTATES (a 3-syllable word counts 3) — deliberately
+    conservative: overstating pushes borderline CJK queries to skip the CE and
+    keep the bi-encoder order, never into the harmful regime. Tuning it finer
+    would need a CJK ground-truth corpus that does not exist here."""
+    return sum(
+        max(1, sum(1 for ch in tok
+                   if any(lo <= ord(ch) <= hi for lo, hi in _CJK_WORD_BLOCKS)))
+        for tok in query.split()
+    )
 
 
 def _topk_deterministic(sims, n: int, facts):
@@ -1991,8 +2091,12 @@ def _reranker_ready() -> bool:
 # long healthy session do not disable the rerank, and a session where most
 # queries pay the budget for nothing does get it switched off.
 _RERANK_BREAKER: dict[str, Any] = {
-    "window": deque(maxlen=10), "tripped": False, "cold": 0,
+    "window": deque(maxlen=10), "tripped": False, "cold": 0, "tripped_at": 0.0,
 }
+#: Guards the check-then-mutate sequences on the dict above. Needed since the
+#: re-arm (27/07) made the READER a writer: recall runs one thread per query,
+#: and the GIL makes each dict operation atomic but never the sequence.
+_RERANK_BREAKER_LOCK = threading.RLock()
 
 
 def _rerank_breaker_n() -> int:
@@ -2013,8 +2117,69 @@ def _rerank_breaker_window() -> int:
         return 10
 
 
-def _rerank_breaker_tripped() -> bool:
+def _rerank_breaker_cooldown_s() -> float:
+    """Seconds after a trip before the breaker re-arms itself; 0 = never
+    (the pre-2026-07-27 permanent trip, as an explicit opt-out).
+
+    Default 600 — the CE lease constant (_rerank_slot_lease_s), one cycle of
+    model possession. The trip is a SESSION property (a gaming session, an
+    antivirus scan); in a long-lived daemon a permanent trip turns transient
+    contention into a forever-lost lift, the exact outcome the breaker's own
+    contract promises to prevent. Re-arm starts from a CLEAN window, so a
+    persistent fault re-trips after N fresh overruns: bounded waste
+    (N x budget per cooldown, ~2.5% at defaults) instead of a dead CE.
+    Env ENGRAM_RERANK_BREAKER_COOLDOWN_S."""
+    try:
+        return max(0.0, float(
+            os.environ.get("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "600")))
+    except ValueError:
+        return 600.0
+
+
+def _rerank_breaker_tripped_now() -> bool:
+    """The state as it IS, with no side effect — for observers.
+
+    The re-arm lives in the GATE below, which makes reading a write, and an
+    external review named the consequence: 'observation becomes action'. The
+    read-path regime recorder (benchmark/eval_retrieval_with_gt.py) exists so a
+    measurement is never orphaned from the state that produced it — calling the
+    gate, it would have re-armed the breaker and then recorded ``tripped:
+    False`` for a run that ran with it tripped. Observers, telemetry and tests
+    ask here; only the code that is about to DECIDE whether to rerank asks the
+    gate.
+    """
     return bool(_RERANK_BREAKER["tripped"])
+
+
+def _rerank_breaker_tripped() -> bool:
+    """THE GATE: whether the rerank is disabled — re-arming LAZILY once the
+    cooldown elapses. The consumer that decides whether to rerank must ask
+    HERE, not the raw field: the field cannot re-arm. Anyone merely OBSERVING
+    must ask ``_rerank_breaker_tripped_now()`` instead.
+
+    UNDER THE LOCK, because this reader WRITES. An external review of the naked
+    code (deepseek-v4-pro, 27/07) pointed at the obvious consequence: recall
+    runs on one thread per query, so a recorder can append to the deque that a
+    concurrent re-arm is about to replace, and that overrun is lost. Forcing
+    the interleaving reproduces it deterministically — 4 overruns swallowed,
+    the breaker never trips (test_no_overrun_is_lost_when_a_rearm_is_in_flight).
+    The cheap early-out stays outside: when the breaker is not tripped, which
+    is the normal case on the hot path, no lock is taken at all.
+    """
+    if not _RERANK_BREAKER["tripped"]:
+        return False
+    cd = _rerank_breaker_cooldown_s()
+    with _RERANK_BREAKER_LOCK:
+        if not _RERANK_BREAKER["tripped"]:
+            return False                  # re-armed by whoever held the lock
+        if cd and time.monotonic() - _RERANK_BREAKER.get("tripped_at", 0.0) >= cd:
+            _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
+            _RERANK_BREAKER["tripped"] = False
+            _RERANK_BREAKER["cold"] = 0
+            _LOG.info("rerank breaker re-armed after %.0fs cooldown — window "
+                      "clean, CE rerank enabled again", cd)
+            return False
+        return True
 
 
 def _rerank_breaker_overruns_in_window() -> int:
@@ -2144,9 +2309,11 @@ def _rerank_breaker_reset() -> None:
     way, by test_rerank_still_runs_once_ce_is_loaded failing on a slot held by
     a test that ran before it.
     """
-    _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
-    _RERANK_BREAKER["tripped"] = False
-    _RERANK_BREAKER["cold"] = 0
+    with _RERANK_BREAKER_LOCK:
+        _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
+        _RERANK_BREAKER["tripped"] = False
+        _RERANK_BREAKER["cold"] = 0
+        _RERANK_BREAKER["tripped_at"] = 0.0
     with _RERANK_SLOT_LOCK:
         _RERANK_SLOT["lease"] = 0
         _RERANK_SLOT["since"] = 0.0
@@ -2161,23 +2328,27 @@ def _rerank_breaker_record(overrun: bool) -> None:
     recall path, no test could exercise the pair without reimplementing half of
     it — so no test did, and the blind spot lived 16 days.
     """
-    w: deque = _RERANK_BREAKER["window"]
-    if w.maxlen != _rerank_breaker_window():      # env changed at runtime
-        w = deque(w, maxlen=_rerank_breaker_window())
-        _RERANK_BREAKER["window"] = w
-    w.append(bool(overrun))
-    n = _rerank_breaker_n()
-    if not n or _RERANK_BREAKER["tripped"]:
-        return
-    sforati = sum(1 for x in w if x)
-    if sforati >= n:
+    with _RERANK_BREAKER_LOCK:
+        w: deque = _RERANK_BREAKER["window"]
+        if w.maxlen != _rerank_breaker_window():      # env changed at runtime
+            w = deque(w, maxlen=_rerank_breaker_window())
+            _RERANK_BREAKER["window"] = w
+        w.append(bool(overrun))
+        n = _rerank_breaker_n()
+        if not n or _RERANK_BREAKER["tripped"]:
+            return
+        sforati = sum(1 for x in w if x)
+        if sforati < n:
+            return
         _RERANK_BREAKER["tripped"] = True
-        _LOG.warning(
-            "rerank breaker TRIPPED — %d of the last %d reranks overran their "
-            "budget — CE rerank disabled for this process (bi-encoder order "
-            "stands; restart or _rerank_breaker_reset() to re-arm)",
-            sforati, len(w),
-        )
+        _RERANK_BREAKER["tripped_at"] = time.monotonic()
+        quanti = len(w)
+    _LOG.warning(
+        "rerank breaker TRIPPED — %d of the last %d reranks overran their "
+        "budget — CE rerank disabled for this process (bi-encoder order "
+        "stands; re-arms after the cooldown, or _rerank_breaker_reset())",
+        sforati, quanti,
+    )
 
 
 def _rerank_breaker_overrun() -> None:
@@ -2191,6 +2362,7 @@ def _rerank_breaker_cold_overrun() -> None:
     if n and not _RERANK_BREAKER["tripped"] \
             and _RERANK_BREAKER["cold"] >= n:
         _RERANK_BREAKER["tripped"] = True
+        _RERANK_BREAKER["tripped_at"] = time.monotonic()
         _LOG.warning(
             "rerank breaker TRIPPED after %d cold-load overruns — the CE never "
             "became resident (broken install / perpetual load?); rerank "
@@ -2223,7 +2395,11 @@ def _rerank_breaker_cold_overrun() -> None:
 # NOTE (2026-07-25): the rerank breaker above still uses consecutive-count and
 # has the same blind spot. Not touched here — it is 15 days old, tested, and on
 # a different budget; changing it is its own change with its own measurement.
-_FUSION_BREAKER: dict[str, Any] = {"window": deque(maxlen=10), "tripped": False}
+_FUSION_BREAKER: dict[str, Any] = {
+    "window": deque(maxlen=10), "tripped": False, "tripped_at": 0.0,
+}
+#: Same reason as _RERANK_BREAKER_LOCK: the re-arm made the reader a writer.
+_FUSION_BREAKER_LOCK = threading.RLock()
 
 
 def _fusion_breaker_n() -> int:
@@ -2247,31 +2423,69 @@ def _fusion_breaker_window() -> int:
 
 def _fusion_breaker_reset() -> None:
     """Re-arm the breaker (tests; env swap at runtime)."""
-    _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
-    _FUSION_BREAKER["tripped"] = False
+    with _FUSION_BREAKER_LOCK:
+        _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
+        _FUSION_BREAKER["tripped"] = False
+        _FUSION_BREAKER["tripped_at"] = 0.0
+
+
+def _fusion_breaker_cooldown_s() -> float:
+    """Fusion twin of _rerank_breaker_cooldown_s — same rationale, same
+    default (600 s), same opt-out (0 = permanent trip).
+    Env ENGRAM_FUSION_BREAKER_COOLDOWN_S."""
+    try:
+        return max(0.0, float(
+            os.environ.get("ENGRAM_FUSION_BREAKER_COOLDOWN_S", "600")))
+    except ValueError:
+        return 600.0
+
+
+def _fusion_breaker_tripped_now() -> bool:
+    """The fusion state as it IS, no side effect — twin of
+    ``_rerank_breaker_tripped_now``; observers and telemetry ask here."""
+    return bool(_FUSION_BREAKER["tripped"])
 
 
 def _fusion_breaker_tripped() -> bool:
-    return bool(_FUSION_BREAKER["tripped"])
+    """THE GATE: whether the fusion is disabled — re-arming lazily after the
+    cooldown, with a clean window, UNDER THE LOCK (see _rerank_breaker_tripped:
+    this reader writes, and the fusion runs one thread per query too)."""
+    if not _FUSION_BREAKER["tripped"]:
+        return False
+    cd = _fusion_breaker_cooldown_s()
+    with _FUSION_BREAKER_LOCK:
+        if not _FUSION_BREAKER["tripped"]:
+            return False                  # re-armed by whoever held the lock
+        if cd and time.monotonic() - _FUSION_BREAKER.get("tripped_at", 0.0) >= cd:
+            _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
+            _FUSION_BREAKER["tripped"] = False
+            _LOG.info("PPR fusion breaker re-armed after %.0fs cooldown — "
+                      "window clean, fusion enabled again", cd)
+            return False
+        return True
 
 
 def _fusion_breaker_record(overrun: bool) -> None:
     """Record one fusion outcome and trip if the window says it is systematic."""
-    w: deque = _FUSION_BREAKER["window"]
-    if w.maxlen != _fusion_breaker_window():      # env changed at runtime
-        w = deque(w, maxlen=_fusion_breaker_window())
-        _FUSION_BREAKER["window"] = w
-    w.append(bool(overrun))
-    n = _fusion_breaker_n()
-    if n and not _FUSION_BREAKER["tripped"] and sum(w) >= n:
+    with _FUSION_BREAKER_LOCK:
+        w: deque = _FUSION_BREAKER["window"]
+        if w.maxlen != _fusion_breaker_window():      # env changed at runtime
+            w = deque(w, maxlen=_fusion_breaker_window())
+            _FUSION_BREAKER["window"] = w
+        w.append(bool(overrun))
+        n = _fusion_breaker_n()
+        if not (n and not _FUSION_BREAKER["tripped"] and sum(w) >= n):
+            return
         _FUSION_BREAKER["tripped"] = True
-        _LOG.warning(
-            "PPR fusion breaker TRIPPED — %d of the last %d fusions exceeded "
-            "their budget; graph/lexical fusion disabled for this process "
-            "(reranked order stands; restart or _fusion_breaker_reset() to "
-            "re-arm). Recall stops paying a budget for a result it never "
-            "receives.", sum(w), len(w),
-        )
+        _FUSION_BREAKER["tripped_at"] = time.monotonic()
+        sforati, quanti = sum(w), len(w)
+    _LOG.warning(
+        "PPR fusion breaker TRIPPED — %d of the last %d fusions exceeded "
+        "their budget; graph/lexical fusion disabled for this process "
+        "(reranked order stands; re-arms after the cooldown, or "
+        "_fusion_breaker_reset()). Recall stops paying a budget for a result "
+        "it never receives.", sforati, quanti,
+    )
 
 
 def _rerank_cold_budget_s() -> float:
@@ -2458,6 +2672,14 @@ class SemanticMemory:
             # additive column a forgotten target-bump left behind (v15
             # history note — this class broke production writes twice).
             _ensure_fact_columns(conn)
+            # Same guard for INDEXES, and for the same reason one step
+            # further: an index added inside an old migration never reaches
+            # a database that already passed that step. Measured 2026-08-05
+            # on a copy of the real corpus — idx_facts_superseded_at was
+            # created for new stores and absent on the 8061-fact one, i.e.
+            # exactly where the speed was needed. Idempotent (IF NOT EXISTS)
+            # and only for columns the ladder has certainly added by now.
+            _ensure_fact_indexes(conn)
         # Cycle #135 (2026-05-17): hot-path recall cache. The default
         # recall(topic=None) used to do np.stack([deserialize(r)]) on
         # every row on every call — O(N) Python per query. We now hold
@@ -4248,7 +4470,7 @@ class SemanticMemory:
         """
         from .cross_encoder_rerank import rerank_candidates
         if (_rerank_mode() == "auto"
-                and len(query.split()) > _rerank_auto_max_words()):
+                and _query_word_count(query) > _rerank_auto_max_words()):
             # AUTO (default 2026-07-26): a long query is the regime where the
             # CE measurably HURTS (multi-fact/long: -0.080 MRR, 12 better/38
             # worse on the 26/07 GT) — skip BEFORE any load/slot/breaker
@@ -4256,7 +4478,16 @@ class SemanticMemory:
             # after the load would pay the ~43.6s warm-up for nothing.
             _ranking_note("rerank", "skipped_long_query")
             return hits_2t[:k]
-        if _RERANK_BREAKER["tripped"]:
+        if _rerank_breaker_tripped():
+            # the FUNCTION, not the raw field: only the function re-arms after
+            # the cooldown, and this gate is the consumer the re-arm exists for.
+            # Merge 09/08 (ws2/abstention ← main): the two sides were NOT
+            # alternatives. Reading through the function is what lets a tripped
+            # breaker come back; the note is what tells the caller the ranking
+            # it just got is degraded to keyword order. Keeping only main's side
+            # would strand the breaker; keeping only ours would leave the caller
+            # a 0.0 score with no reason attached — the exact gap ws4 measured
+            # today at the agent's door.
             _ranking_note("rerank", "skipped_breaker")
             return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]
@@ -5038,10 +5269,16 @@ class SemanticMemory:
                 (succ, fact_id))
 
     def delete(self, fact_id: str, *, principal: str,
-               action: str = "delete") -> bool:
+               action: str = "delete",
+               keep_undo_op_id: str | None = None) -> bool:
         """FORGIA pezzo #202: delete one fact by id (privacy / GDPR).
 
         Returns True iff a row was actually removed.
+
+        ``keep_undo_op_id`` — the ONE undo handle to spare while invalidating
+        the others (used by :meth:`delete_with_undo` to keep its own forget
+        snapshot reversible). Every other pending handle for this fact is
+        dropped: a deletion outranks an earlier undo.
 
         ``principal`` is MANDATORY (0.8 mutation audit): the acting identity
         recorded in the tamper-evident ``audit_mutations`` chain — surfaces
@@ -5066,10 +5303,31 @@ class SemanticMemory:
             if removed:
                 _record_mutation(conn, principal=principal, action=action,
                                  resource_id=fact_id)
+                # A deletion outranks any EARLIER undo handle for this row
+                # (ws6 2026-08-05). The helm snapshots every supersession,
+                # and undo_op restores with INSERT OR REPLACE — so without
+                # this a retirement handle could resurrect a fact the user
+                # had deleted, and recall would serve it again. Same
+                # transaction as the DELETE: no window where the row is gone
+                # and a live handle still points at it. The forget snapshot
+                # taken by delete_with_undo for THIS deletion is spared by
+                # its caller (keep_op_id) — that one must stay reversible.
+                from .undo_log import invalidate_handles_for
+                invalidate_handles_for(conn, fact_id,
+                                       keep_op_id=keep_undo_op_id)
         # Cycle #135: invalidate the recall cache on delete.
         if removed:
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
+            # L'azione più distruttiva del prodotto era l'unica senza evento
+            # (ws6 2026-08-05): un ritiro si vede, una quarantena si vede, e
+            # una CANCELLAZIONE — che non si annulla se non c'era snapshot e
+            # sopravvive solo nelle copie — spariva in silenzio. `undoable`
+            # dice, sul momento, se quel fatto ha una via di ritorno; niente
+            # testo della proposizione, come per ogni evento di questo canale.
+            from .flow_events import emit_flow as _emit_flow
+            _emit_flow("flow.forget", fact_id=fact_id, action=action,
+                       undoable=keep_undo_op_id is not None)
         return removed
 
     def delete_with_undo(self, fact_id: str, *,
@@ -5106,7 +5364,19 @@ class SemanticMemory:
                 _record_mutation(conn, principal=principal, action="delete",
                                  resource_id=fact_id,
                                  detail={"op_id": op_id})
+                # Same rule as delete(): the deletion invalidates every
+                # EARLIER handle for this fact — except the forget snapshot
+                # taken just above, which is what makes THIS delete undoable.
+                from .undo_log import invalidate_handles_for
+                invalidate_handles_for(conn, fact_id, keep_op_id=op_id)
         if removed:
+            # Anche qui: delete_with_undo NON passa da delete(), fa il DELETE
+            # per conto suo — quindi senza questa riga la cancellazione
+            # REVERSIBILE sarebbe l'unica muta, cioè proprio quella su cui il
+            # feed avrebbe qualcosa di utile da dire.
+            from .flow_events import emit_flow as _emit_flow
+            _emit_flow("flow.forget", fact_id=fact_id, action="delete",
+                       undoable=True)
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
         return {
@@ -5126,6 +5396,15 @@ class SemanticMemory:
             result = undo_op(conn, op_id)
         if result.get("ok"):
             self._cache_version += 1
+            # flow.undo (ws6 control-room): a governance action must be as
+            # visible as the mutation it reverses — an invisible undo would
+            # re-create the very defect the helm exists to cure. Metadata
+            # only, best-effort by flow_events contract.
+            from .flow_events import emit_flow as _emit_flow
+            _emit_flow("flow.undo", op_id=op_id,
+                       op_type=result.get("op_type"),
+                       fact_id=result.get("fact_id"),
+                       action=result.get("action"))
         return result
 
     def list_undoable_ops(self, *, limit: int = 20) -> list[dict[str, Any]]:
@@ -5168,6 +5447,15 @@ class SemanticMemory:
                   prior_status=current_status)
         except Exception:  # noqa: BLE001 — observability never breaks mutator
             pass
+        # …and on the flow channel too (ws6 2026-08-05). The event above has
+        # existed for cycles, but the live surfaces keep only names starting
+        # with "flow." (gateway.py:511), so a fact declassed AFTER its write
+        # vanished from the Engine Room: the entry visible at write time
+        # (flow.write status=quarantined) had no counterpart for a later
+        # triage. Same defect class as the silent retirements, same cure.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.quarantine", fact_id=fact_id,
+                   prior_status=current_status, reason=(reason or "")[:200])
         return True
 
     def restore_fact(self, fact_id: str, *, to_status: str = "model_claim",
@@ -5193,6 +5481,13 @@ class SemanticMemory:
                   reason=(reason or "")[:200])
         except Exception:  # noqa: BLE001
             pass
+        # The EXIT from quarantine on the flow channel (ws6 2026-08-05): the
+        # entry was visible (flow.write status=quarantined) and the release
+        # was not, so the Engine Room showed a queue that only ever grew.
+        # A governance action must be as visible as the decision it reverses.
+        from .flow_events import emit_flow as _emit_flow
+        _emit_flow("flow.restore", fact_id=fact_id, to_status=to_status,
+                   reason=(reason or "")[:200])
         return True
 
     def mark_orphaned(self, fact_id: str, *, reason: str = "") -> bool:
@@ -5283,7 +5578,8 @@ class SemanticMemory:
             ).fetchone()[0]
 
     def supersede(self, old_id: str, new_id: str, *, principal: str,
-                  reason: str = "") -> dict[str, Any]:
+                  reason: str = "",
+                  flow_extra: dict[str, Any] | None = None) -> dict[str, Any]:
         """Cycle #78 — declare ``old_id`` superseded by ``new_id``.
 
         Args:
@@ -5294,11 +5590,18 @@ class SemanticMemory:
                 free text can carry PII and the chain is immutable, so the
                 reason lives only on the (erasable) facts row.
             reason: human-readable why this supersession happened.
+            flow_extra: optional extra payload merged into the
+                ``flow.supersession`` event (e.g. the write path's
+                ``branch`` / ``n_candidati_esaminati`` / search tokens).
+                Metadata only — never proposition text.
 
         Returns:
             dict ``{ok, old_id, new_id, reason, superseded_at,
-            idempotent_noop}``. ``idempotent_noop=True`` when the same
-            (old, new) pair was already declared with the same reason.
+            idempotent_noop[, undo_op_id]}``. ``idempotent_noop=True`` when
+            the same (old, new) pair was already declared with the same
+            reason. ``undo_op_id`` (real retirements only) is the
+            ``facts_undo_log`` handle: ``undo_destructive_op(undo_op_id)``
+            reverses the retirement.
 
         Raises:
             SupersedeError: old==new, or either id missing in DB.
@@ -5308,18 +5611,24 @@ class SemanticMemory:
         _require_principal(principal)
         if old_id == new_id:
             raise SupersedeError("cannot supersede a fact with itself (self-supersede)")
+        loser_topic: str | None = None
+        winner_topic: str | None = None
+        undo_op_id: str | None = None
         with self._connect() as conn:
             old_row = conn.execute(
-                "SELECT superseded_by, superseded_reason FROM facts WHERE id = ?",
+                "SELECT superseded_by, superseded_reason, topic "
+                "FROM facts WHERE id = ?",
                 (old_id,),
             ).fetchone()
             if old_row is None:
                 raise SupersedeError(f"old_id {old_id!r} not found in facts table")
             new_row = conn.execute(
-                "SELECT 1 FROM facts WHERE id = ?", (new_id,),
+                "SELECT topic FROM facts WHERE id = ?", (new_id,),
             ).fetchone()
             if new_row is None:
                 raise SupersedeError(f"new_id {new_id!r} not found in facts table")
+            loser_topic = old_row["topic"]
+            winner_topic = new_row["topic"]
 
             existing_super = old_row["superseded_by"]
             existing_reason = old_row["superseded_reason"]
@@ -5388,12 +5697,34 @@ class SemanticMemory:
                 ).fetchone()
                 chain_cur = nxt["superseded_by"] if nxt else None
 
+            # THE HELM (ws6 control-room, 2026-08-04): the pre-op snapshot
+            # that makes a retirement reversible. The infrastructure existed
+            # since cycle 13 (facts_undo_log declares op_type='supersede';
+            # undo_op restores via INSERT OR REPLACE) but production had ONE
+            # snapshot caller, for 'forget' — so a wrong retirement had no
+            # way back on any surface (measured live: the Rossi/Bianchi
+            # ping-pong, where rewriting the lost fact retires another).
+            # Same-transaction like _record_mutation: the handle exists iff
+            # the retirement committed.
+            from .undo_log import snapshot_pre_op
+            undo_op_id = snapshot_pre_op(conn, "supersede", old_id)
             cur = conn.execute(
                 "UPDATE facts SET superseded_by = ?, superseded_at = ?, "
                 "superseded_reason = ? WHERE id = ? AND superseded_by IS NULL",
                 (new_id, now, reason, old_id),
             )
             if cur.rowcount == 0:
+                # Lost the race — the retirement did NOT happen here, so the
+                # snapshot above is an orphan handle. Deleting it in the same
+                # transaction keeps the invariant "one undo handle per real
+                # retirement": undoing an orphan would clear the CONCURRENT
+                # winner's supersede_by, resurrecting the loser behind the
+                # race winner's back.
+                if undo_op_id is not None:
+                    conn.execute(
+                        "DELETE FROM facts_undo_log WHERE op_id = ?",
+                        (undo_op_id,))
+                    undo_op_id = None
                 # A5 (audit 2026-06-08): lost a concurrent race — another writer
                 # set superseded_by between our SELECT above and this UPDATE. The
                 # old UNCONDITIONAL update silently overwrote it (last-writer-wins
@@ -5424,11 +5755,34 @@ class SemanticMemory:
         # ``WHERE superseded_by IS NULL``. Bump the recall-cache version
         # so the next recall() rebuilds the matrix without ``old_id``.
         self._cache_version += 1
-        return {
+        # flow.supersession (ws6 control-room): the retirement feed, emitted
+        # HERE — the single method all eight .supersede( call sites converge
+        # on — so every path (same-source post-gate, correct(), reconcile,
+        # chains, MCP, CLI) and every port produce the event. Until tonight
+        # retirements were the biggest silent mutation in the product: seven
+        # read APIs said nothing (measured ws5, 2026-08-04). Metadata only,
+        # never proposition text (Engine Room shows flow, not content).
+        # Outside the transaction and best-effort by flow_events contract:
+        # observability must never break the write path.
+        from .flow_events import emit_flow as _emit_flow
+        _payload: dict[str, Any] = {
+            "loser_id": old_id, "winner_id": new_id,
+            "loser_topic": loser_topic, "winner_topic": winner_topic,
+            "reason": reason, "branch": reason or "unspecified",
+            "reversible": undo_op_id is not None,
+            "undo_op_id": undo_op_id,
+        }
+        if flow_extra:
+            _payload.update(flow_extra)
+        _emit_flow("flow.supersession", **_payload)
+        out: dict[str, Any] = {
             "ok": True, "old_id": old_id, "new_id": new_id,
             "reason": reason, "superseded_at": now,
             "idempotent_noop": False,
         }
+        if undo_op_id is not None:
+            out["undo_op_id"] = undo_op_id
+        return out
 
     def auto_supersede_on_contradiction(
         self,
@@ -5478,7 +5832,13 @@ class SemanticMemory:
         if new_fact.superseded_by:
             result["skipped"] = [oid for oid in contradicting_ids if oid]
             return result
-        new_rank = _STATUS_RANK.get(new_fact.status, 0)
+        # RANGO IGNOTO = NON DECIDO (vedi `_rango_di_fiducia`). Se non conosco
+        # il rango di CHI VINCE non so nemmeno che sia piu' forte: e' la meta'
+        # simmetrica, quella che si dimentica.
+        new_rank = _rango_di_fiducia(new_fact.status)
+        if new_rank is None:
+            result["skipped"] = [oid for oid in contradicting_ids if oid]
+            return result
         seen: set[str] = set()
         for old_id in contradicting_ids:
             if not old_id or old_id == new_id or old_id in seen:
@@ -5491,9 +5851,10 @@ class SemanticMemory:
             if old_fact.superseded_by:
                 result["skipped"].append(old_id)
                 continue
-            old_rank = _STATUS_RANK.get(old_fact.status, 0)
-            if new_rank <= old_rank:
-                # Safety: never let a weaker/equal claim invalidate a stronger one.
+            old_rank = _rango_di_fiducia(old_fact.status)
+            if old_rank is None or new_rank <= old_rank:
+                # Safety: never let a weaker/equal claim invalidate a stronger
+                # one — NE' un rango noto invalidare uno che non si conosce.
                 result["skipped"].append(old_id)
                 continue
             note = reason or (
@@ -5757,6 +6118,7 @@ class SemanticMemory:
         max_facts: int = 50,
         include_lineage: bool = True,
         include_superseded: bool = False,
+        include_quarantined: bool = True,
     ) -> dict[str, Any]:
         """Cycle #79 (2026-05-16) — narrative aggregator for a topic glob.
 
@@ -5789,7 +6151,23 @@ class SemanticMemory:
                 "AND superseded_by IS NOT NULL",
                 (like_pattern,),
             ).fetchone()[0]
-            n_live = n_total - n_super
+            # `n_live` DICEVA IL FALSO, e non per politica: contava vivo
+            # ogni fatto non superseduto, quindi anche i QUARANTINATI — che
+            # il prodotto tiene fuori dal recall di default («kept OUT of
+            # default recall, so you never get it back as truth»). Sulla
+            # sonda di ws2 il briefing diceva `n_live 2` e i due erano
+            # entrambi respinti dal gate.
+            #
+            # E' la lezione da cui nasce il quartetto dei servibili
+            # (`superseded_by IS NULL` != vivo, pagata il 2026-08-04):
+            # correggere un contatore che smentisce il proprio nome non e'
+            # una scelta di prodotto, e' rimettere il nome sul numero.
+            n_quar = conn.execute(
+                "SELECT COUNT(*) FROM facts WHERE topic LIKE ? ESCAPE '\\' "
+                "AND superseded_by IS NULL AND status IN ('quarantined')",
+                (like_pattern,),
+            ).fetchone()[0]
+            n_live = n_total - n_super - n_quar
             topics_seen = [
                 row[0] for row in conn.execute(
                     "SELECT DISTINCT topic FROM facts WHERE topic LIKE ? "
@@ -5801,6 +6179,22 @@ class SemanticMemory:
             params: list[Any] = [like_pattern]
             if not include_superseded:
                 sql += " AND superseded_by IS NULL"
+            if not include_quarantined:
+                # LA SCELTA ESISTE, IL DEFAULT NO. ws2«Vega» ha misurato che
+                # 24 briefing di produzione su 78 (e 25 su 50 su omnex)
+                # contengono claim che il gate ha RESPINTO, serviti come
+                # fatti di progetto. Un'ora fa ho curato la meta' visibile
+                # (`n_live` non li conta piu', il payload porta `status`), e
+                # ho rifiutato di filtrare: togliere righe cambia cosa un
+                # agente riceve, ed e' una decisione di prodotto.
+                #
+                # Con la misura in mano la mossa giusta NON e' cambiare il
+                # default di nascosto — sarebbe la stessa cosa rifiutata,
+                # fatta con piu' dati. E' dare la capacita' e lasciare la
+                # decisione dove sta: chi vuole un contesto pulito lo
+                # chiede, il risultato dichiara in quale modalita' e' stato
+                # prodotto, e il default resta com'era.
+                sql += " AND status NOT IN ('quarantined')"
             sql += " ORDER BY created_at DESC LIMIT ?"
             params.append(int(max(1, max_facts)))
             payload_rows = conn.execute(sql, tuple(params)).fetchall()
@@ -5840,6 +6234,31 @@ class SemanticMemory:
             "n_total": int(n_total),
             "n_live": int(n_live),
             "n_superseded": int(n_super),
+            "n_quarantined": int(n_quar),
+            # LA FORMULA COL NUMERO, come il quartetto dei servibili: un
+            # contatore senza la sua definizione viene interpretato da chi
+            # legge, e le tre uscite di un fatto sono facili da confondere.
+            # E la seconda frase e' altrettanto importante: dice che i
+            # quarantinati SONO nel payload — senza, chi legge penserebbe
+            # che il gate abbia gia' ripulito, e la visibilita' che questa
+            # cura aggiunge si trasformerebbe in una falsa rassicurazione.
+            "counts_mean": (
+                "n_live = n_total - n_superseded - n_quarantined (a "
+                "quarantined fact is NOT live: the product keeps it out of "
+                "default recall). "
+                + ("The facts payload INCLUDES QUARANTINED rows — marked by "
+                   "`status`, not removed. Measured 2026-08-07: 24 of 78 "
+                   "production briefings carry at least one. Ask with "
+                   "include_quarantined=False for a clean context; the "
+                   "default is unchanged on purpose, because dropping rows "
+                   "changes what an agent receives and that is a product "
+                   "decision"
+                   if include_quarantined else
+                   "Quarantined rows were EXCLUDED from the payload "
+                   "(include_quarantined=False). `n_quarantined` still "
+                   "counts how many exist in this topic, not how many were "
+                   "served: a counter that zeroed itself under the filter "
+                   "would say 'there were none'")),
             "topics_seen": topics_seen,
             "facts": facts_payload,
             "lineage_episodes": lineage_episodes,
@@ -5848,10 +6267,28 @@ class SemanticMemory:
 
     @staticmethod
     def _fact_to_summary_dict(fact: Fact) -> dict[str, Any]:
+        # `status` e `grounding_score` MANCAVANO, e questo payload e' quello
+        # del briefing di progetto — il tool che si vende come «load the
+        # full cross-session context» e che la description consiglia
+        # «when the user mentions a project by name».
+        #
+        # Misurato da ws2 il 2026-08-07 su store isolato: dopo una
+        # correzione che supersede i fatti sani, `summary_topic` serviva un
+        # payload fatto ESATTAMENTE dei due vanti QUARANTINATI, senza un
+        # campo che permettesse di accorgersene. Cioe' il canale con cui un
+        # claim respinto dal gate rientra nel contesto di un agente come
+        # testo di progetto, indistinguibile da un fatto sano.
+        #
+        # Additivo: qui NON si filtra. Togliere i quarantinati dal payload
+        # cambia cosa un agente riceve ed e' una decisione di prodotto, da
+        # misurare sui briefing veri. Questa riga li rende VISIBILI, e chi
+        # vuole tagliare ora ha il campo per farlo.
         return {
             "id": fact.id,
             "topic": fact.topic,
             "proposition": fact.proposition,
+            "status": fact.status,
+            "grounding_score": getattr(fact, "grounding_score", None),
             "confidence": fact.confidence,
             "created_at": fact.created_at,
             "source_episodes": list(fact.source_episodes),

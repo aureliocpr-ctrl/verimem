@@ -78,6 +78,48 @@ flow_app = typer.Typer(help="Live flow events feed",
                        no_args_is_help=True)
 app.add_typer(flow_app, name="flow")
 
+#: Il nome della PORTA. Resta il prefisso perche' ws4 ha misurato la copertura
+#: del moat PER PORTA (CLI 99,2% contro MCP 69,5%): sostituirlo con l'attore
+#: spegnerebbe una misura che serve.
+_PORTA = "cli:local"
+
+#: Oltre questo l'attore si scarta. `require_principal` rifiuta un principal
+#: oltre 256 caratteri e RIFIUTA invece di troncare, «perche' un'identita'
+#: troncata e' un'identita' ambigua»: troncarlo qui riporterebbe dentro
+#: l'ambiguita' che quella guardia esiste per tenere fuori.
+_ATTORE_MAX = 64
+
+
+def _principale(porta: str = _PORTA) -> str:
+    """Chi la CLI dice di essere quando ritira o cancella un fatto.
+
+    ⚠️ PRIMA ERA LA COSTANTE `"cli:local"` RIPETUTA IN UNDICI PUNTI, e non e'
+    un'identita': e' il nome della porta. Misurato sullo store il 2026-08-07:
+    dei **1814** ritiri, **137 (7,6%)** hanno una riga di audit, e quei 137
+    dicono `cli:local` (111) o `system:heal` (26). Sette istanze che lavorano
+    insieme scrivevano tutte la stessa stringa — il referto di ws4 delle 17:02
+    («*single-agent-per-tenant ... noi siamo sette e il prodotto ci vede come
+    UNO*») letto dal lato della provenienza.
+
+    🔗 LA CURA ESISTEVA E NON ERA COLLEGATA. ``VERIMEM_ACTOR`` e' documentato
+    in `flow_events.py:19` come «the agent's label ... every one of its events
+    arrives labeled — the single multi-agent panel», e lo leggono
+    `flow_events`, `flow_tail` e `mcp_server`. Il percorso dei ritiri no.
+
+    ⚠️ **ETICHETTA, NON IDENTITA' AUTENTICATA**: viene da una variabile
+    d'ambiente, quindi chiunque ci scrive quello che vuole. Serve a separare
+    strumenti che collaborano, non a rispondere a «chi e' stato» quando
+    qualcuno mente. Stessa natura del tag `actor` degli eventi.
+    """
+    attore = (os.environ.get("VERIMEM_ACTOR", "").strip()
+              or os.environ.get("ENGRAM_ACTOR", "").strip())
+    if not attore or len(attore) > _ATTORE_MAX:
+        return porta
+    # la barra separa i due campi: una barra DENTRO l'attore renderebbe la
+    # lettura ambigua, come la virgola che oggi mi ha gia' spezzato una riga
+    # di diagnosi in due.
+    return f"{porta}/{attore.replace('/', '-')}"
+
 
 @flow_app.command("tail")
 def flow_tail_cmd(
@@ -359,10 +401,14 @@ def warmup(
                 console.print(f"[green]✓ moat gate model ready[/] — {msg}")
             else:
                 console.print(f"[yellow]· moat gate model NOT installed[/] — {msg}")
+                # la frase NON si riscrive qui: e' la stessa del doctor, e
+                # due copie divergono (misurato: quella scritta a mano
+                # prometteva un avviso che le scritture senza fonte non
+                # ricevono mai)
+                from .doctor import AVVISO_SENZA_GIUDICE
                 console.print(
-                    "[yellow]  Until installed, judge-less writes are admitted "
-                    "with an L4-skipped advisory (moat off); pass llm= to "
-                    "Memory for the llm judge.[/]")
+                    f"[yellow]  Until installed, {AVVISO_SENZA_GIUDICE}; "
+                    f"pass llm= to Memory for the llm judge.[/]")
         except Exception as exc:  # noqa: BLE001 — warmup must not die on this
             console.print(f"[yellow]· gate model fetch failed "
                           f"({type(exc).__name__}: {exc})[/]")
@@ -377,6 +423,49 @@ def warmup(
                 "(warms from cache in ~20s; all MCP servers then share it)[/]"
             )
     console.print("[bold green]Warmup complete — Verimem recall will be instant.[/]")
+
+
+@app.command()
+def tiers(
+    json_out: bool = typer.Option(False, "--json", help="Emit raw JSON"),
+    decoys: bool = typer.Option(True, "--decoys/--no-decoys",
+                                help="list same-named files next to each store"),
+) -> None:
+    """Dove vive ogni tier e quante righe ha — con i file che ne portano
+    il nome senza esserlo.
+
+    Il 2026-08-05 le cinque tabelle delle entità dentro `semantic.db`
+    (un guscio di migrazione, tutte a zero) sono state scambiate per il
+    tier: il grafo sta in `entity_kg/entity_kg.db` con 9078 entità e
+    87387 archi. Nessun comando diceva dove un tier vivesse, quindi
+    l'unico modo di saperlo era contare i file a mano. Uno store assente
+    dice `unavailable`, mai `0`.
+    """
+    from .tier_inventory import tier_inventory
+    inv = tier_inventory(with_decoys=decoys)
+    if json_out:
+        console.print_json(data=inv)
+        return
+    console.print(f"[dim]data dir[/] {inv['data_dir']}")
+    table = Table()
+    table.add_column("tier")
+    table.add_column("righe")
+    # il percorso NON si tronca: è il contenuto di questo comando, e una
+    # riga che finisce con «…» rimanda esattamente all'atto — contare a
+    # mano il file sbagliato — che il comando esiste per evitare
+    table.add_column("store", overflow="fold")
+    table.add_column("tabella")
+    for t in inv["tiers"]:
+        n = t["rows"]
+        table.add_row(t["tier"],
+                      f"[dim]{n}[/]" if n == "unavailable" else str(n),
+                      t["store"], t["counted_in"])
+    console.print(table)
+    for t in inv["tiers"]:
+        for d in t.get("decoys") or []:
+            console.print(f"[yellow]doppione[/] {t['tier']}: {d['path']} "
+                          f"— righe {d['rows']}, {d['size_mb']} MB "
+                          f"[dim](non è il tier: contarlo dà un numero falso)[/]")
 
 
 @app.command()
@@ -1209,7 +1298,7 @@ def correct_cmd(
                       "favore di uno non ammesso li perderebbe entrambi[/dim]")
         raise typer.Exit(1)
 
-    esito = sm.supersede(old_id, nuovo, principal="cli:local", reason=reason)
+    esito = sm.supersede(old_id, nuovo, principal=_principale(), reason=reason)
     if esito.get("idempotent_noop"):
         console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
                       f"(gia' dichiarato, nessun cambiamento)")
@@ -1711,6 +1800,14 @@ def mcp():
     # inside mcp_server would come too late — re-route explicitly first.
     from .observability import route_logs_to_stderr
     route_logs_to_stderr()
+    # Surface correction: `engram mcp` reaches here THROUGH cli.main, which
+    # setdefaults surface="cli" — and mcp_server's own setdefault would then
+    # lose. The path-derived "cli" yields to "mcp"; an explicit operator env
+    # (anything else) still wins. This is the exact trap ws4 measured on
+    # 2026-08-04: one entrypoint chain, two claimed surfaces, zero "mcp"
+    # events on a corpus with 438 real MCP write calls.
+    if os.environ.get("ENGRAM_FLOW_SURFACE", "").strip() in ("", "cli"):
+        os.environ["ENGRAM_FLOW_SURFACE"] = "mcp"
     from .mcp_server import main as mcp_main
     mcp_main()
 
@@ -2709,11 +2806,11 @@ def facts_forget(
         _ops: list[str] = []
         for _x in _hits:
             if undoable:
-                _r = sm.delete_with_undo(_x.id, principal="cli:local")
+                _r = sm.delete_with_undo(_x.id, principal=_principale())
                 if _r.get("removed"):
                     _ops.append(str(_r.get("op_id")))
             else:
-                sm.delete(_x.id, principal="cli:local")
+                sm.delete(_x.id, principal=_principale())
         if undoable:
             console.print(
                 f"[green]forgotten:[/green] {len(_ops)} facts under {topic!r} "
@@ -2759,13 +2856,13 @@ def facts_forget(
 
     if purge_history:
         _mem = _continuity_memory()
-        _n = _mem.delete(f.id, purge_history=True, principal="cli:local")
+        _n = _mem.delete(f.id, purge_history=True, principal=_principale())
         console.print(f"[green]forgotten with its chain:[/green] {f.id} "
                       f"[dim](predecessors and successors purged)[/dim]"
                       if _n else
                       f"[yellow]nothing to forget:[/yellow] {f.id}")
     elif undoable:
-        result = sm.delete_with_undo(f.id, principal="cli:local")
+        result = sm.delete_with_undo(f.id, principal=_principale())
         if result["removed"]:
             console.print(
                 f"[green]forgotten:[/green] {f.id} "
@@ -2774,8 +2871,19 @@ def facts_forget(
         else:
             console.print(f"[yellow]nothing to forget:[/yellow] {f.id}")
     else:
-        sm.delete(f.id, principal="cli:local")
+        # `forget_with_report`: cancella E dice dove il fatto resta
+        # leggibile. Stessa funzione dell'SDK e del tool MCP — la
+        # cancellazione hard e' il caso GDPR, ed e' proprio quello in cui
+        # «rimosso» senza «ma il worker dei dream ne tiene copie» e' una
+        # risposta incompleta data con sicurezza.
+        from .residual_copies import forget_with_report
+        _esito = forget_with_report(sm, f.id, principal=_principale())
         console.print(f"[green]hard-deleted:[/green] {f.id}")
+        for _c in _esito["residual_copies"]:
+            _durata = ("a rotazione" if _c["rotates"]
+                       else "MANUALE: resta per sempre")
+            console.print(f"[yellow]resta leggibile in[/yellow] {_c['name']} "
+                          f"[dim]({_durata})[/]")
 
     if _resto:
         console.print(
@@ -2791,7 +2899,12 @@ def facts_undo(
         ..., help="op_id from a previous undoable delete/supersede",
     ),
 ) -> None:
-    """Restore a fact deleted via `engram facts forget` (undoable mode).
+    """Reverse a destructive op by its handle: a forget OR a retirement.
+
+    Since the helm (2026-08-04) every supersession snapshots pre-op too, so
+    this undoes retirements as well — the loser comes back servable, the
+    winner stays alive. Find handles with `facts undo-list` or
+    `facts retirement-log`; write receipts carry them too.
 
     Cycle 2026-05-27 round 13 P0c. Reads facts_undo_log to recover the
     pre-deletion row state. Returns:
@@ -2865,6 +2978,193 @@ def facts_undo_list(
             _dt.fromtimestamp(op["ttl_expires_at"]).strftime("%Y-%m-%d %H:%M"),
         )
     console.print(table)
+
+
+@facts_app.command("quarantine-log")
+def facts_quarantine_log(
+    limit: int = typer.Option(20, "--limit", "-n", min=1, max=500),
+    breakdown: bool = typer.Option(
+        False, "--breakdown",
+        help="Show the SERIES instead of the list: per day, written vs "
+             "quarantined with the rate"),
+) -> None:
+    """I claim FERMATI dal gate — e, con --breakdown, la loro serie.
+
+    Il listato esisteva su SDK, MCP e HTTP e NON sulla CLI: la porta da cui
+    un umano guarda il corpus era l'unica senza. Stessa asimmetria che
+    questo ramo ha gia' curato tre volte, trovata cercando dove mettere la
+    serie.
+
+    La serie conta perche' un numero solo non descrive il prodotto: sul
+    corpus reale il tasso di quarantena oscilla fra 0.2% e 49% da un giorno
+    all'altro. Il PERCHE' non e' qui — puo' essere il gate che e' cambiato
+    o cosa scriviamo che e' cambiato, e distinguerli non e' di questa
+    superficie.
+    """
+    sm = _facts_sm()
+    if breakdown:
+        from .retirement_log import quarantine_breakdown as _qbd
+        bd = _qbd(sm, limit=limit)
+        console.print(f"[bold]{bd['quarantined']}[/bold] live quarantined")
+        for d in bd["by_day"]:
+            console.print(
+                f"  {d['day']}  written [cyan]{d['written']:>5}[/cyan] · "
+                f"quarantined [yellow]{d['quarantined']:>4}[/yellow] "
+                f"({d['rate']:.1%})")
+        c = bd["concentration"]
+        if c["share"] is not None:
+            console.print(
+                f"[dim]busiest day {c['day']}: {c['n']} "
+                f"({c['share']:.1%}) — no single event, unlike retirements"
+                f"[/dim]")
+        return
+    from .client import Memory
+    from .text_cut import safe_cut
+    righe = Memory(sm.db_path).quarantine_log(limit=limit)
+    if not righe:
+        console.print("[dim]no live quarantined claims[/dim]")
+        return
+    for r in righe:
+        console.print(f"  [yellow]{str(r.get('id'))[:8]}[/yellow]  "
+                      f"{safe_cut(str(r.get('topic') or ''), 28):<28} "
+                      f"{safe_cut(str(r.get('proposition') or ''), 60)}")
+
+
+@facts_app.command("retirement-log")
+def facts_retirement_log(
+    limit: int = typer.Option(50, "--limit", "-n", help="Max rows"),
+    topic: str = typer.Option(None, "--topic", help="Loser-topic prefix filter"),
+    reason: str = typer.Option(None, "--reason", help="Exact superseded_reason"),
+    with_text: bool = typer.Option(
+        False, "--with-text",
+        help="Include propositions (local judging; the feed default is metadata)"),
+    counts: bool = typer.Option(
+        False, "--counts",
+        help="Print the written/servable/retired/quarantined quartet instead"),
+    mismatches: bool = typer.Option(
+        False, "--mismatches",
+        help="List where the moat's verdict and the fact's fate disagree"),
+    breakdown: bool = typer.Option(
+        False, "--breakdown",
+        help="Group retirements by reason and by day — a rate and a one-off "
+             "event look the same until you read the distribution"),
+) -> None:
+    """The retirements, newest first, as (loser, winner) pairs.
+
+    The quarantine-log equivalent for supersessions: who was retired, by
+    whom, when, why — and whether it can be undone (`facts undo <op_id>`).
+    Until 2026-08-04 NO read surface answered this (seven silent APIs,
+    measured); the columns existed since cycle #78. ``--counts`` prints the
+    canonical quartet with its formula: a fact disappears in TWO ways, and
+    counting only non-superseded rows hides half the loss.
+    """
+    # il quartetto si chiede con lo STESSO nome dell'SDK (`survivability`):
+    # la CLI importava la funzione del modulo per conto suo, quindi la
+    # capacita' risultava senza porta al cricchetto — e chi legge il codice
+    # vedeva due strade per lo stesso conto invece di una
+    from .retirement_log import retirement_log as _rlog
+    from .retirement_log import survivability_counts as survivability
+    sm = _facts_sm()
+    if breakdown:
+        # DOVE si addensano, non solo quali sono i piu' recenti: sul corpus
+        # reale un'ora sola contiene il 92% dei ritiri di tutta la storia, e
+        # i due motivi principali sono manutenzioni, non verdetti. Elencando
+        # le coppie recenti non si vede — la risposta c'era solo per chi
+        # sospettava gia'.
+        from .retirement_log import retirement_breakdown as _bd
+        from .text_cut import safe_cut
+        bd = _bd(sm, topic=topic, limit=limit)
+        console.print(f"[bold]{bd['total_retired']}[/bold] retired total")
+        for r in bd["by_reason"]:
+            console.print(f"  [cyan]{r['n']:>6}[/cyan]  {safe_cut(r['reason'], 64)}")
+        console.print("[dim]— by day —[/dim]")
+        for d in bd["by_day"]:
+            console.print(f"  [cyan]{d['n']:>6}[/cyan]  {d['day']}")
+        # CHI: il dato c'era in `audit_mutations` e nessuna superficie lo
+        # leggeva. Sul corpus reale 1677 ritiri su 1805 non hanno un attore
+        # registrato — e «non registrato» non e' «nessuno».
+        console.print("[dim]— by actor —[/dim]")
+        for v in bd["by_principal"]:
+            console.print(f"  [cyan]{v['n']:>6}[/cyan]  {v['principal']}")
+        console.print(f"[dim]{bd['principal_means']}[/dim]")
+        c = bd["concentration"]
+        if c["share"] is not None:
+            console.print(
+                f"[yellow]concentration[/yellow] {c['n']} of "
+                f"{bd['total_retired']} ({c['share']:.1%}) on {c['day']}")
+        console.print(f"[dim]{c['formula']}[/dim]")
+        return
+    if mismatches:
+        from .retirement_log import verdict_mismatches as _vm
+        mm = _vm(sm, topic=topic, limit=limit)
+        veri, falsi = mm["judged_true_but_withheld"], mm["judged_false_but_served"]
+        banda = mm["contested_band"]
+        console.print(
+            f"[yellow]judged TRUE but withheld: {len(veri)}[/yellow]  "
+            f"[red]judged FALSE but served: {len(falsi)}[/red]  "
+            f"[magenta]contested band: {len(banda)}[/magenta]")
+        for r in veri[:limit]:
+            console.print(f"  [yellow]withheld[/yellow] {r['fact_id'][:8]} "
+                          f"moat {r['grounding_score']:.2f}  {r['topic']}")
+        for r in falsi[:limit]:
+            console.print(f"  [red]served  [/red] {r['fact_id'][:8]} "
+                          f"moat {r['grounding_score']:.2f}  {r['topic']}")
+        for r in banda[:limit]:
+            _dest = "served" if r["status"] != "quarantined" else "withheld"
+            console.print(f"  [magenta]contested[/magenta] {r['fact_id'][:8]} "
+                          f"moat {r['grounding_score']:.2f}  → {_dest}  {r['topic']}")
+        console.print(f"[dim]{mm['thresholds']}[/dim]")
+        return
+    if counts:
+        q = survivability(sm, topic=topic)
+        _pct = (100.0 * q["judged"] / q["servable"]) if q["servable"] else 0.0
+        console.print(
+            f"written={q['written']}  [green]servable={q['servable']}[/green]  "
+            f"[red]retired={q['retired']}[/red]  "
+            f"[yellow]quarantined={q['quarantined']}[/yellow]")
+        # il giudicato accanto al servibile, non su una riga a parte: separati,
+        # si legge "5631 servibili" e si dimentica che i due terzi non hanno un
+        # verdetto — che è la domanda su cui il prodotto è venduto
+        console.print(
+            f"[cyan]judged={q['judged']}[/cyan] of {q['servable']} served "
+            f"({_pct:.1f}%)  —  "
+            f"[dim]{q['servable'] - q['judged']} served without a verdict[/dim]")
+        console.print(f"[dim]{q['formula']}[/dim]")
+        return
+    rows = _rlog(sm, limit=limit, topic=topic, reason=reason,
+                 with_text=with_text)
+    if not rows:
+        console.print("[dim]no retirements recorded[/dim]")
+        return
+    from datetime import datetime as _dt
+    table = Table(title=f"Retirements (newest first, max {limit})")
+    table.add_column("loser")
+    table.add_column("winner")
+    table.add_column("topic (loser → winner)")
+    table.add_column("reason")
+    table.add_column("when")
+    table.add_column("undo")
+    for r in rows:
+        _tp = (r["loser_topic"] if r["loser_topic"] == r["winner_topic"]
+               else f"{r['loser_topic']} → {r['winner_topic']}")
+        table.add_row(
+            r["loser_id"], str(r["winner_id"]), str(_tp),
+            str(r["reason"] or ""),
+            _dt.fromtimestamp(r["superseded_at"]).strftime("%m-%d %H:%M")
+            if r["superseded_at"] else "?",
+            # non un trattino: il PERCHE'. «nessuno scatto» manda a
+            # guardare la build che ha eseguito il ritiro, «finestra
+            # scaduta» manda a guardare il calendario, «gia' annullato»
+            # dice che si sta cercando la cosa sbagliata
+            r["undo_op_id"] if r["reversible"]
+            else f"[dim]{r.get('irreversible_because') or '—'}[/dim]",
+        )
+    console.print(table)
+    if with_text:
+        for r in rows:
+            console.print(
+                f"[red]- {r['loser_id']}[/red]: {r.get('loser_text', '')}\n"
+                f"[green]+ {r['winner_id']}[/green]: {r.get('winner_text', '')}")
 
 
 @facts_app.command("backup")
@@ -3646,7 +3946,7 @@ def facts_archive_narration(
     if use_llm:
         from verimem.llm import get_llm
         llm = get_llm()
-    res = archive_and_extract_narration(sm.db_path, principal="cli:local",
+    res = archive_and_extract_narration(sm.db_path, principal=_principale(),
                                         dry_run=not apply, llm=llm)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to move)"
     console.print(
@@ -3676,7 +3976,7 @@ def facts_cleanup_episode_telemetry(
     sub = data / "episodes" / "episodes.db"
     flat = data / "episodes.db"
     ep_path = sub if sub.exists() else (flat if flat.exists() else sub)
-    res = cleanup_episode_telemetry(ep_path, principal="cli:local",
+    res = cleanup_episode_telemetry(ep_path, principal=_principale(),
                                     dry_run=not apply)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to move)"
     console.print(
@@ -3957,7 +4257,7 @@ def _continuity_memory():
     checkpoints where tip/digest/chain never look.
     """
     from .client import Memory
-    return Memory(path=_facts_sm().db_path, principal="cli:local")
+    return Memory(path=_facts_sm().db_path, principal=_principale())
 
 
 def _lineage_exit(exc: Exception) -> typer.Exit:
@@ -4109,7 +4409,7 @@ def save_cmd(
         r = save_checkpoint(
             m, body, topic=topic, lineage_to=lineage_to,
             verified_by=list(verified_by or []) or None,
-            confidence=confidence, source=source, principal="cli:local",
+            confidence=confidence, source=source, principal=_principale(),
             asserted_at=_epoch_di(asserted_at))
     except (LineageRefError, LineageNotFound) as exc:
         raise _lineage_exit(exc) from exc
@@ -4377,7 +4677,7 @@ def handoff_prepare_cmd(
         console.print("[red]nothing to save:[/red] give TEXT or --from-file")
         raise typer.Exit(2)
     r = handoff_prepare(_continuity_memory(), body, label=label,
-                        principal="cli:local")
+                        principal=_principale())
     if not r.get("stored"):
         console.print(f"[red]not stored:[/red] {r.get('status')}")
         raise typer.Exit(1)
@@ -4698,6 +4998,12 @@ def main() -> None:
     the Typer app. Wrapping the app (vs pointing the entry directly at it) is
     what lets the encoding fix run before any command writes output."""
     _force_utf8_stdio()
+    # Surface tagging (ws6 control-room): the CLI was the ONE entrypoint that
+    # never declared itself, so its flow events wore the old "sdk" default —
+    # 97% of the real corpus tagged with a surface nobody chose (ws4,
+    # 2026-08-04). setdefault: `engram mcp` re-sets "mcp" downstream in
+    # mcp_server, and an explicit operator env always wins.
+    os.environ.setdefault("ENGRAM_FLOW_SURFACE", "cli")
     app()
 
 

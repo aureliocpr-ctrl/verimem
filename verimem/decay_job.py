@@ -143,6 +143,14 @@ def run_decay_pass(
         {
             "facts_seen": N,
             "facts_updated": K,  # rows where |new - old| > 1e-6
+            # WHO was touched — the pass does not read the verdict, so a
+            # fact the moat judged 99 and one it never saw decay the same,
+            # and retired/quarantined rows (served to nobody) decay too.
+            # Counted over the UPDATED rows: work actually done.
+            "updated_by_population": {"grounded": .., "never_judged": ..,
+                                      "servable": .., "retired": ..,
+                                      "quarantined": ..},
+            "decays_regardless_of": str,
             "avg_confidence_before": float,
             "avg_confidence_after": float,
             "tau_seconds": ...,
@@ -158,14 +166,22 @@ def run_decay_pass(
     # embedding bytes or the proposition for decay.
     with _connect(sm.db_path) as conn:
         _ensure_last_decay_column(conn)
+        # Le tre colonne in coda non entrano nella formula e non la
+        # cambiano: servono a DIRE chi e' stato toccato. Stanno nella
+        # stessa SELECT perche' la scansione e' gia' questa — una query
+        # in piu' sugli id aggiornati costerebbe un secondo passaggio su
+        # tutta la tabella per un dato che qui e' gia' in mano.
         rows = conn.execute(
-            "SELECT id, confidence, created_at, last_decay_at FROM facts",
+            "SELECT id, confidence, created_at, last_decay_at, "
+            "grounding_score, superseded_by, status FROM facts",
         ).fetchall()
 
         facts_seen = len(rows)
         total_before = 0.0
         total_after = 0.0
         updates: list[tuple[float, float, str]] = []
+        pop = {"grounded": 0, "never_judged": 0,
+               "servable": 0, "retired": 0, "quarantined": 0}
 
         for r in rows:
             old = float(r["confidence"])
@@ -186,6 +202,21 @@ def run_decay_pass(
             total_after += new
             if _changed(old, new):
                 updates.append((new, now_ts, r["id"]))
+                # Le due popolazioni SEPARATE, non solo il totale: il
+                # conteggio da solo non mostra che la formula tratta
+                # identici un fatto giudicato 99 e una pretesa che il
+                # moat non ha mai visto. NULL vuol dire MAI GIUDICATO,
+                # non giudicato e bocciato.
+                if r["grounding_score"] is None:
+                    pop["never_judged"] += 1
+                else:
+                    pop["grounded"] += 1
+                if r["superseded_by"] is not None:
+                    pop["retired"] += 1
+                elif r["status"] == "quarantined":
+                    pop["quarantined"] += 1
+                else:
+                    pop["servable"] += 1
 
         if not dry_run and updates:
             conn.executemany(
@@ -196,16 +227,44 @@ def run_decay_pass(
     avg_before = (total_before / facts_seen) if facts_seen else 0.0
     avg_after = (total_after / facts_seen) if facts_seen else 0.0
 
-    return {
+    out = {
         "facts_seen": facts_seen,
         "facts_updated": len(updates),
+        "updated_by_population": pop,
         "avg_confidence_before": round(avg_before, 6),
         "avg_confidence_after": round(avg_after, 6),
         "tau_seconds": tau_seconds,
         "floor": floor,
         "dry_run": dry_run,
+        # La ripartizione va letta sapendo che la formula non consulta
+        # nessuno di questi campi: dichiararlo accanto ai numeri e' la
+        # stessa scelta di `formula` nel quartetto dei servibili, dove un
+        # numero senza la sua definizione era il difetto da curare.
+        "decays_regardless_of": (
+            "grounding_score (a fact the moat judged 99 and one it never "
+            "saw decay identically) and superseded_by/status (retired and "
+            "quarantined rows are decayed too, though they are served to "
+            "nobody)"),
         "elapsed_s": round(time.time() - started_at, 3),
     }
+    # La scrittura di massa del prodotto era l'unica muta: migliaia di
+    # righe cambiavano valore e nessuna superficie viva poteva dirlo.
+    # Nessun evento per una passata che non cambia niente — su un corpus
+    # fermo il worker gira a vuoto ogni volta, e un evento per un
+    # non-cambiamento e' rumore (stessa regola del ramo idempotente della
+    # cancellazione). `dry_run` viaggia con l'evento: una prova che emette
+    # lo stesso evento di una passata vera e' una bugia sul feed.
+    if updates:
+        try:
+            from .flow_events import emit_flow
+            emit_flow("flow.decay", facts_seen=facts_seen,
+                      facts_updated=len(updates),
+                      updated_by_population=dict(pop), dry_run=bool(dry_run),
+                      floor=floor, tau_seconds=tau_seconds,
+                      elapsed_ms=round((time.time() - started_at) * 1000, 1))
+        except Exception:  # noqa: BLE001 — l'osservabilita' non rompe il job
+            pass
+    return out
 
 
 __all__ = [
