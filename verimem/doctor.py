@@ -722,6 +722,81 @@ def run_doctor() -> list[dict[str, Any]]:
     except Exception:  # noqa: BLE001 — un check non rompe il doctor
         pass
 
+    # -- affollamento dei topic -------------------------------------------------
+    # Il 2026-08-09, in otto, abbiamo scoperto A MANO che i fatti scritti su un
+    # topic gia' usato sopravvivono molto meno di quelli su un topic proprio
+    # (94,4% contro 67,5% sul corpus di casa; ws5: 75 fatti su 75 topic distinti
+    # e ZERO ritirati). Nessuno di noi l'ha visto col prodotto: e' uscito da
+    # query SQL scritte a mano.
+    # 🔴 La perdita e' SILENZIOSA per costruzione — un fatto ritirato resta nel
+    # DB e sparisce solo dal recall — quindi chi non ha quella stanza perde i
+    # fatti e non lo sa. Questo e' il posto dove il prodotto lo dice da solo.
+    # ⚖️ E dice solo cio' che sa: due misure diverse sullo stesso topic e un
+    # aggiornamento legittimo hanno la STESSA forma nel DB. Il segnale non e' il
+    # tasso, e' la SEPARAZIONE fra le due popolazioni — un tasso da solo non
+    # dice se e' alto (la trappola che ci ha morso cinque volte in un giorno).
+    try:
+        import sqlite3 as _sq6
+
+        from ._compat import data_dir as _dd6
+        _db6 = _dd6() / "semantic" / "semantic.db"
+        if _db6.exists():
+            _da6 = time.time() - _UNDO_TTL_S      # la finestra di undo-window
+            with _sq6.connect(f"file:{_db6}?mode=ro", uri=True) as _c6:
+                _t6 = list(_c6.execute(
+                    """SELECT topic, COUNT(*),
+                              SUM(CASE WHEN superseded_by IS NULL AND status
+                                  NOT IN ('quarantined') THEN 1 ELSE 0 END),
+                              SUM(CASE WHEN superseded_by IS NOT NULL
+                                  THEN 1 ELSE 0 END)
+                       FROM facts WHERE created_at >= ? GROUP BY topic""",
+                    (_da6,)))
+            _aff = [r for r in _t6 if int(r[1]) >= 2]
+            _sol = [r for r in _t6 if int(r[1]) == 1]
+            _na, _va = (sum(int(r[1]) for r in _aff),
+                        sum(int(r[2] or 0) for r in _aff))
+            _ns, _vs = (sum(int(r[1]) for r in _sol),
+                        sum(int(r[2] or 0) for r in _sol))
+            _persi = sum(int(r[3] or 0) for r in _aff)
+            # zero su zero non e' «zero per cento»: senza topic affollati non
+            # c'e' niente da confrontare, e stampare un rapporto inventato
+            # sarebbe la stessa forma che questo file cura.
+            if not _aff:
+                add("topic-crowding", OK,
+                    "in the last 7 days every topic carries a single write — "
+                    "nothing to compare and no ratio to report")
+            elif not _persi:
+                add("topic-crowding", OK,
+                    f"{_na} facts on {len(_aff)} shared topics in the last 7 "
+                    f"days and none of them was retired")
+            else:
+                _peggio = ", ".join(
+                    f"{r[0]} ({int(r[3] or 0)} of {int(r[1])})"
+                    for r in sorted(_aff, key=lambda r: -int(r[3] or 0))[:2])
+                _det = (
+                    f"facts written in the last 7 days survive {_va}/{_na} on "
+                    f"topics that already had another write, against "
+                    f"{_vs}/{_ns} on topics used once. Worst: {_peggio}. A "
+                    f"retired fact stays in the DB and leaves only the recall, "
+                    f"so this loss is silent unless someone counts")
+                # la SEPARAZIONE e' il segnale: senza il gruppo di controllo un
+                # tasso non si sa se e' alto. Se i due tassi coincidono, i
+                # ritiri non sono legati all'affollamento e non c'e' avviso.
+                _ra = _va / _na if _na else 1.0
+                _rs = _vs / _ns if _ns else _ra
+                if _ra < _rs:
+                    add("topic-crowding", WARN, _det,
+                        "one topic per measurement "
+                        "(`project/<theme>/<name>`) keeps siblings apart. "
+                        "This check CANNOT tell a legitimate update from a "
+                        "sibling retired by mistake — in the DB they have the "
+                        "same shape; the asymmetry between the two "
+                        "populations is where to look, not a verdict")
+                else:
+                    add("topic-crowding", OK, _det)
+    except Exception:  # noqa: BLE001 — un check non rompe il doctor
+        pass
+
     # -- copertura della tabella dei ranghi di fiducia --------------------------
     # Il rovescio della cura `4d8c48a0`: fermare il ritiro automatico dei fatti
     # a rango ignoto era giusto, ma lascia un ARRETRATO — quelle coppie non si
