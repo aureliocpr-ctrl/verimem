@@ -281,6 +281,15 @@ def test_il_wheel_passa_il_controllo_che_pypi_fa_prima_di_accettarlo(wheel_costr
 
     `twine check` è la stessa validazione, eseguita prima. Costa un secondo qui e
     una versione bruciata là.
+
+    ⚠️ LIMITE, misurato il 09/08 e non dedotto: `twine check` verifica che il markup
+    RENDA SENZA ERRORI, non che renda COME VUOI. Due wheel dello stesso giorno —
+    `bf283ef1` con 7 righe di tabella indentate dentro un bullet e `00581a4f` con 0 —
+    passano ENTRAMBI. Una tabella indentata non è un errore di sintassi: PyPI la
+    accetta e la mostra male. Questo test copre «l'upload viene RIFIUTATO», non «la
+    pagina viene bene»; per il secondo serve un occhio, e non c'è modo di automatizzarlo
+    qui. Scritto perché senza questa riga il test verrebbe letto come una garanzia che
+    non dà.
     """
     esito = subprocess.run(
         [sys.executable, "-m", "twine", "check", str(wheel_costruito)],
