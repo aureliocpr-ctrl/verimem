@@ -23,7 +23,8 @@ from __future__ import annotations
 import os
 import random
 
-__all__ = ["scrambled_probes", "estimate_relevance_floor", "env_floor"]
+__all__ = ["scrambled_probes", "estimate_relevance_floor", "env_floor",
+           "env_floor_if_set"]
 
 _FLOOR_OFF = {"off", "none", "0", "0.0", ""}
 
@@ -32,16 +33,70 @@ def env_floor(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str:
     """Resolve a read-path abstention floor from an env var: ``auto`` (the store
     self-calibrates), a float, or off (0.0). The single switch that turns "knows when
     it doesn't know" ON across every surface (SDK ``explain()``, console, gateway).
-    Default unset → 0.0 = the permissive, backward-compatible behaviour."""
+
+    Default unset → ``auto`` since 2026-07-29. It used to be 0.0 — permissive,
+    backward-compatible, and nothing in the tree ever set the variable, so the
+    product's headline behaviour was off for every SDK, console and gateway
+    caller while the MCP surface (a1f5e778) abstained. One store, two answers.
+
+    Flipped on measurement, not on principle. Twenty questions against the live
+    store — twelve it can support, eight plausible inventions:
+
+        gate OFF   0 wrong abstentions   2 expected facts missed   0/8 caught   1.22s
+        gate ON    0 wrong abstentions   2 expected facts missed   8/8 caught   4.21s
+
+    The two misses are the SAME two in both columns: they were outside the
+    retrieval top-k to begin with, so the gate costs no answer the store could
+    have given. It withheld nothing it should have served, and caught every
+    invention. The price is ~3s on a deliberate custody check.
+
+    An explicit value still wins in both directions — ``off``/``0`` keeps the old
+    permissive behaviour for whoever depends on it.
+
+    WHERE THE DEFAULT ACTUALLY LANDS. "Across every surface" was the intent and
+    for a year it was not the fact: this function had ONE caller in the product,
+    ``Memory.explain``. Measured live 2026-08-02 with the floor at 0.99 — high
+    enough that nothing can pass — on a three-fact store and a question outside
+    it::
+
+        search   -> 3 hit  best=0.7548
+        recall   -> 3 hit
+        ask      -> intent=find  3 risultati
+        explain  -> abstained=True  min_relevance=0.99
+
+    Which is the same "one store, two answers" written above, with ``explain``
+    where the MCP surface used to be: the 2026-07-29 cure landed on the SITE and
+    not on the CLASS. ``search``/``recall``/``ask`` now honour an EXPLICITLY SET
+    variable (via ``env_floor_if_set``), so the switch means on those surfaces
+    what it says. What they do NOT take is the unset ``auto`` default: the 8/8
+    measurement above ran through ``explain``'s CE gate, and turning abstention
+    on by default for a path nobody measured is the shape of the 2026-07-30
+    mistake (``max(floor, noise_floor)``, written, measured and withdrawn for
+    muting the ignorance map). Whoever never sets the variable gets byte-identical
+    recall."""
     raw = os.environ.get(var, "").strip().lower()
     if raw == "auto":
         return "auto"
+    if not raw:
+        return "auto"
     if raw in _FLOOR_OFF:
         return 0.0
-    try:
-        return max(0.0, float(raw))
-    except ValueError:
-        return 0.0
+    # finite_or, not float(): an INFINITE floor abstains on every query ever
+    # asked, and this site only survived `nan` by the argument order of max()
+    from .env_num import finite_or
+    return max(0.0, finite_or(raw, 0.0))
+
+
+def env_floor_if_set(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str | None:
+    """``env_floor``, but ``None`` when the variable is NOT SET.
+
+    ``env_floor`` cannot answer this question: it returns ``"auto"`` both when
+    the caller typed ``auto`` and when the caller typed nothing, and those are
+    two different intentions. Surfaces that had no floor before adopt the switch
+    through here — an explicit value applies, silence keeps them as they were."""
+    if not os.environ.get(var, "").strip():
+        return None
+    return env_floor(var)
 
 _MIN_FACTS = 2          # cross-fact scrambling needs at least two sources
 _PROBE_WORDS = 10       # ~question-length probes
@@ -49,6 +104,36 @@ _MAX_POOL_FACTS = 200   # cap the word pool: enough diversity, bounded cost
 
 
 _MAX_WORDS_PER_FACT = 2
+
+#: Oltre questa lunghezza un "token" non è una parola: è un pezzo di frase che
+#: nessuno spazio ha separato. Misurato il 2026-08-04 su segnalazione di ws5,
+#: che provava il prodotto in cinese, giapponese e thai: `text.split()` su una
+#: scrittura senza spazi restituisce **un token solo, la frase intera**, quindi
+#: il cap di due parole per fatto ne concedeva due… di cui una era tutto il
+#: fatto. Dodici sonde su dodici contenevano un fatto intero.
+#:
+#: La soglia non identifica una lingua e non contiene una lista di alfabeti: si
+#: limita a dire che una sequenza lunga e senza spazi va spezzata prima di
+#: poterla chiamare "una parola". Vale per il cinese come per il thai, il lao,
+#: il khmer e per qualunque scrittura a cui nessuno ha ancora pensato — che è
+#: il punto, visto quante volte questo progetto ha pagato una lista tarata su
+#: una lingua sola.
+_MAX_TOKEN_CHARS = 12
+#: In quanti pezzi spezzarlo. Tre caratteri sono abbastanza per non essere
+#: rumore puro e abbastanza pochi perché due pezzi non ricostruiscano il senso.
+_TOKEN_PIECE = 3
+
+
+def _parole(testo: str) -> list[str]:
+    """Le unità da cui pescare, anche dove gli spazi non separano le parole."""
+    fuori: list[str] = []
+    for tok in testo.split():
+        if len(tok) <= _MAX_TOKEN_CHARS:
+            fuori.append(tok)
+            continue
+        fuori.extend(tok[i:i + _TOKEN_PIECE]
+                     for i in range(0, len(tok), _TOKEN_PIECE))
+    return fuori
 
 
 def scrambled_probes(sm, *, n: int = 32, seed: int = 0) -> list[str]:
@@ -60,15 +145,32 @@ def scrambled_probes(sm, *, n: int = 32, seed: int = 0) -> list[str]:
     "noise" band then contains signal and the floor eats real queries (caught
     by the lexical test stub, which scores exactly that failure mode). A
     probe that collides with a stored proposition is discarded outright."""
-    facts = sm.all()[:_MAX_POOL_FACTS]
-    if len(facts) < _MIN_FACTS:
+    return scrambled_probes_da_testi(
+        [(getattr(f, "proposition", "") or "") for f in sm.all()[:_MAX_POOL_FACTS]],
+        n=n, seed=seed)
+
+
+def scrambled_probes_da_testi(testi, *, n: int = 32,
+                              seed: int = 0) -> list[str]:
+    """La stessa costruzione, su TESTI qualsiasi invece che su fatti.
+
+    Estratta il 2026-07-31 mentre si misurava il rumore di un indice di
+    DOCUMENTI. Quella misura si e' poi rivelata inutile allo scopo (il
+    pavimento veniva 0.8706, sopra TUTTE le query comprese quelle con
+    risposta) e non e' stata tenuta — ma la separazione fra «da dove prendo le
+    parole» e «su cosa cerco» resta giusta di per se': prima la funzione
+    sapeva leggere solo un `SemanticMemory`, e un secondo chiamante avrebbe
+    dovuto riscriverne la logica.
+    """
+    testi = list(testi)
+    if len(testi) < _MIN_FACTS:
         return []
     words_by_fact: list[list[str]] = []
     originals: set[str] = set()
-    for f in facts:
-        text = (getattr(f, "proposition", "") or "").strip()
+    for t in testi:
+        text = (t or "").strip()
         originals.add(text.lower())
-        ws = [w for w in text.split() if len(w) > 2]
+        ws = [w for w in _parole(text) if len(w) > 2]
         if ws:
             words_by_fact.append(ws)
     if len(words_by_fact) < _MIN_FACTS:
@@ -92,7 +194,15 @@ def scrambled_probes(sm, *, n: int = 32, seed: int = 0) -> list[str]:
             continue
         rng.shuffle(words)
         probe = " ".join(words)
-        if probe.lower() not in originals:
+        # SI SCARTA PER INCLUSIONE, NON PER UGUAGLIANZA (2026-08-04). Il
+        # controllo era `probe.lower() not in originals`, cioè cadeva solo se
+        # la sonda coincideva ESATTAMENTE con un fatto: una sonda che ne
+        # contiene uno intero più qualche parola d'altro non è uguale a
+        # niente, e passava. È la seconda rete, indipendente dalla
+        # segmentazione qui sopra, e regge anche per una scrittura che quella
+        # non sapesse spezzare — il rumore non deve MAI contenere segnale.
+        basso = probe.lower()
+        if not any(o and o in basso for o in originals):
             probes.append(probe)
     return probes
 

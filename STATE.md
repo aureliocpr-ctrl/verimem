@@ -4,7 +4,11 @@
 > `engram` stays as the module name and the architecture term. Historical
 > entries below keep the names used at the time — they are logs, not brand copy.
 
-> **Single source of truth.** Updated at the end of each macro-cycle.
+> **FROZEN ARCHIVE (2026-08-07 audit).** This file stopped being updated on
+> 2026-07-04 while the repo kept moving daily — a "single source of truth" that
+> is 34 days stale is a trap, not a source. Current state lives in `verimem tip`
+> + `git log` + MEMORY.md, per CLAUDE.md. Everything below is a historical
+> snapshot, kept verbatim.
 > Last update: **2026-07-04 EU/Rome** — **HaluMem updating selector v3 shipped**:
 > learned out-of-fold discriminator (17 runtime-legal features) lifts the
 > severe number 0.254 → 0.3286 and the judge-corrected number 0.2379 → 0.2867
@@ -25,7 +29,8 @@
 > Previous: 2026-07-01 consolidation (scale wins folded, LoCoMo same-judge TIE, A1 span).
 >
 > Historical snapshots, audits, and R&D diaries live in
-> [`docs/archive/`](./docs/archive/). This file is the only one that stays current.
+> [`docs/archive/`](./docs/archive/). This file is frozen too (see banner above);
+> current state lives in `verimem tip` + `git log`.
 
 ---
 

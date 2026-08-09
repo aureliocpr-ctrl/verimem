@@ -45,7 +45,6 @@ API
 from __future__ import annotations
 
 import json
-import os
 import sys
 from collections.abc import Callable, Mapping
 from pathlib import Path
@@ -137,14 +136,17 @@ def _default_agent_factory() -> Any | None:
     Returns ``None`` if the data dir is missing — the hook then degrades
     to silent.
     """
+    # L'ordine degli alias lo decide `_compat`: aveva ENGRAM_DATA_DIR per
+    # prima, cioe' l'opposto della regola dichiarata dal prodotto. Il vincolo
+    # «la directory deve esistere» resta, perche' qui l'assenza fa degradare
+    # l'hook al silenzio invece di crearla.
     data_dir = None
-    for env_key in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR"):
-        v = os.environ.get(env_key)
-        if v:
-            p = Path(v)
-            if p.exists():
-                data_dir = p
-                break
+    from .._compat import _env_data_dir
+    v = _env_data_dir()
+    if v:
+        p = Path(v)
+        if p.exists():
+            data_dir = p
     if data_dir is None:
         for cand in (
             Path.home() / ".engram",

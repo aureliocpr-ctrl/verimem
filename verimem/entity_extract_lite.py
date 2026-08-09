@@ -166,6 +166,28 @@ def extract_entities_lite(text: str) -> list[dict[str, str]]:
                 continue
             if name.isdigit():
                 continue
+            # Una PAROLA FUNZIONALE urlata non e' una sigla (2026-08-01).
+            # `("acronym", r"\b[A-Z]{2,6}\b")` prende qualunque parola di 2-6
+            # lettere tutta maiuscola, e nei nostri fatti le maiuscole sono
+            # ENFASI: «il gate NON ha girato». Misurato sul grafo vero (8625
+            # entita', 87879 archi): «NON» era l'acronimo con piu' fatti
+            # collegati (416) e il terzo nodo per grado dell'INTERO grafo
+            # (1494 archi, dietro solo «Loop» 1962 e «HippoAgent» 1761) — e il
+            # PPR ci cammina sopra per fare retrieval.
+            #
+            # PERIMETRO, dichiarato perche' non si legga come «grafo pulito»:
+            # questo chiude le parole FUNZIONALI, cioe' il caso dominante,
+            # riusando la lista che `document_index` ha gia'. Restano fuori le
+            # parole PIENE urlate (PASS, MASTER, CYCLE, LIVE): separarle vuole
+            # un dizionario della lingua. La «quota di occorrenze maiuscole»
+            # sembrava il criterio ovvio ed e' stata misurata — separa non
+            # 0.325 / fix 0.068 da tdd 0.997 / llm 0.889, ma sbaglia su pass
+            # 0.742 e master 0.843. Un taglio a occhio li' e' l'errore gia'
+            # pagato tre volte questa settimana.
+            if etype == "acronym":
+                from .document_index import _PAROLE_VUOTE
+                if low in _PAROLE_VUOTE:
+                    continue
             if etype in ("person", "place") and (
                     low in _DATE_WORDS or low.split()[0] in _DATE_WORDS):
                 continue  # "in March" / "with Sunday brunch" = date, not entity

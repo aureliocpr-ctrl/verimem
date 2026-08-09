@@ -1,0 +1,219 @@
+diff --git a/verimem/anti_confab_gate.py b/verimem/anti_confab_gate.py
+index c388c8c4..67f6818c 100644
+--- a/verimem/anti_confab_gate.py
++++ b/verimem/anti_confab_gate.py
+@@ -603,7 +603,8 @@ def _supersede_same_source_on() -> bool:
+ 
+ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
+                       ids: list[str], supersede_ids: list[str],
+-                      new_status: str | None = None) -> list[str]:
++                      new_status: str | None = None,
++                      proposition: str = "") -> list[str]:
+     """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
+     later valid-time + at least as trusted → appended to ``supersede_ids``, retired) and
+     genuine CONFLICTS (returned, to quarantine the new write). This gives contradictions
+@@ -622,8 +623,28 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
+     sm = getattr(agent, "semantic", None) if agent is not None else None
+     if sm is None:
+         return list(ids)
++    # IL CANDIDATO DEVE PORTARE IL SUO TESTO (2026-08-04). Questo namespace
++    # aveva tre campi — verified_by, created_at, asserted_at — e NON la
++    # proposizione: qualunque guardia che legga il testo del fatto nuovo qui
++    # dentro vedeva una stringa vuota, e non poteva scattare.
++    #
++    # Costo misurato: un registro di 25 schede con codici distinti (S-001…S-025)
++    # lascia UN fatto vivo. Il veto «due record con codici diversi non sono un
++    # aggiornamento» esiste in `supersession_policy._record_diversi`, è testato,
++    # e su questo percorso non veniva mai raggiunto perché `cand.proposition`
++    # era vuota. Alla scala di 200 record il numero di vivi resta uno: non è una
++    # perdita proporzionale, è una CAPIENZA.
++    #
++    # E' anche la spiegazione del comportamento che il 04/08 mi aveva fatto
++    # RITIRARE una cura sulla provenienza: senza `source_signature` nel
++    # candidato, il confronto fra le due chiavi-fonte era fra un oggetto pieno e
++    # uno mutilato, quindi «stessa fonte» diventava «fonti diverse» e
++    # l'aggiornamento legittimo smetteva di ritirare. Non era la cura a essere
++    # sbagliata: era il candidato a essere parziale.
+     cand = _ty.SimpleNamespace(verified_by=verified_by, created_at=_t.time(),
+-                               asserted_at=asserted_at)
++                               asserted_at=asserted_at,
++                               proposition=proposition or "",
++                               source_signature=None)
+     _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
+     conflicts: list[str] = []
+     for cid in ids:
+@@ -1328,7 +1349,8 @@ def run_validation_gate(
+             _conflicts = ev
+             if _supersede_same_source_on() and ev:
+                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
+-                                               supersede_ids, status)
++                                               supersede_ids, status,
++                                               proposition=proposition)
+             if _conflicts:
+                 warnings.append({
+                     "layer": "L3",
+diff --git a/verimem/quantity_match.py b/verimem/quantity_match.py
+index 030849ea..8e1cc7c4 100644
+--- a/verimem/quantity_match.py
++++ b/verimem/quantity_match.py
+@@ -349,11 +349,60 @@ def claim_span(text: str) -> str:
+     return text
+ 
+ 
++#: Una DATA ISO completa. ``YEAR_RE`` esclude gia' l'anno nudo; il mese e il
++#: giorno no, e «Il report del 2026-08-04 conta 42 righe» produceva ('', 8.0) e
++#: ('conta', 4.0). Due report di due giorni diversi avevano quindi «conta 4» e
++#: «conta 5» — stessa unita', valori diversi — ed e' la forma che scriviamo piu'
++#: spesso.
++_DATA_ISO_RE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
++
++#: Un IDENTIFICATORE: lettere attaccate a un trattino e a delle cifre.
++#:
++#: PERCHE' (2026-08-04, dal referto di ws5 sulla scala — «duecento record
++#: scritti, uno vivo: il corpus ha capienza UNO»). Il codice di un record veniva
++#: letto come una QUANTITA', e la parola successiva come la sua unita':
++#:
++#:   «Il campione S-001 contiene piombo a 11 mg/l»  ->  ('contiene', 1.0) …
++#:   «Il campione S-002 contiene cadmio a 12 mg/l»  ->  ('contiene', 2.0) …
++#:   numeric_conflict  ->  ('contiene', 1.0, 2.0)
++#:
++#: Due schede con codici diversi risultavano «la stessa grandezza con due
++#: valori», cioe' una contraddizione: **l'identificatore che DISTINGUE i due
++#: record diventava la prova che si contraddicono**. Moltiplicato per un
++#: registro, lascia un fatto vivo su venticinque (misurato).
++#:
++#: Sul corpus vivo sono 908 fatti su 6109 (15%), e i piu' frequenti non sono
++#: codici di laboratorio ma i nomi che usiamo ogni giorno: `glm-5`, `GPT-5`,
++#: `gemini-2`, `opus-4`, `round-2`, `top-10`.
++#:
++#: ⚠️ QUESTA CURA NON E' QUELLA GIA' CADUTA: non conserva token corti e cifre in
++#: `content_tokens` (falsificato, coppie sopra soglia da 848 a 2293), non alza
++#: soglie (margine +0.000), non e' il veto sulle entita'. Toglie un falso
++#: positivo alla radice — un codice non e' una misura, e non lo era nemmeno
++#: prima.
++_IDENTIFICATORE_RE = re.compile(r"\b[A-Za-z]{1,6}-\d{1,6}\b")
++
++
++def _senza_identificatori(text: str) -> str:
++    """Il testo con date e codici sostituiti da spazi.
++
++    Spazi e non stringa vuota: le posizioni restano quelle originali, cosi' ogni
++    lettore che ragioni per offset non si sposta.
++    """
++    def _bianco(m: re.Match) -> str:
++        return " " * (m.end() - m.start())
++    return _IDENTIFICATORE_RE.sub(_bianco, _DATA_ISO_RE.sub(_bianco, text or ""))
++
++
+ def extract_quantities(text: str) -> set[tuple[str, float]]:
+     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
+-    (provenance after an evidence marker is not measured); bare YEARS excluded."""
++    (provenance after an evidence marker is not measured); bare YEARS excluded.
++
++    Gli identificatori (``S-001``, ``GPT-5``) e le date ISO non sono quantita' —
++    vedi il blocco su ``_IDENTIFICATORE_RE``.
++    """
+     out: set[tuple[str, float]] = set()
+-    for m in _QUANT_RE.finditer(claim_span(text)):
++    for m in _QUANT_RE.finditer(_senza_identificatori(claim_span(text))):
+         num_s, unit_s = m.group(1), (m.group(2) or "")
+         _u = unit_s.lower()
+         if _u in _NON_UNIT_WORDS or (len(_u) > 3
+@@ -609,8 +658,11 @@ def numeric_conflict(
+       • they must share ≥1 distinctive (non-unit) content word (same
+         subject) — stops coincidental same-unit matches across topics;
+       • no contrasting qualifier (read/write, client/server, …);
++      • no DIFFERENT record identifiers (``S-001`` vs ``S-002``);
+       • same normalised unit, different value.
+     """
++    if _identificatori_disgiunti(text_a, text_b):
++        return None
+     return conflict_from_parts(
+         extract_quantities(text_a), content_tokens(text_a),
+         extract_quantities(text_b), content_tokens(text_b),
+@@ -618,6 +670,40 @@ def numeric_conflict(
+     )
+ 
+ 
++def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
++    """Entrambi i testi portano un codice, e non ne condividono nemmeno uno?
++
++    E' il DISCRIMINANTE DI SOGGETTO che mancava. Tolto il falso segnale (il
++    codice letto come quantita', vedi ``_IDENTIFICATORE_RE``), restava il vero:
++    «S-001 contiene 11 mg/l» e «S-002 contiene 12 mg/l» continuavano a
++    risultare «stessa unita', valori diversi». Sono due campioni, e il codice lo
++    dice.
++
++    PERCHE' QUESTO NON E' IL «VETO ENTITA'» GIA' CADUTO. Quello leggeva le
++    entita' estratte: solo il 43,5% dei fatti ne ha, e le piu' condivise erano
++    `NON`, `MCP`, `Aurelio` — cioe' rumore. Qui il segnale e' un pattern
++    sintattico stretto (lettere-trattino-cifre), presente nel 15% del corpus, e
++    con una semantica sola: e' un codice di record. E ws5 ha gia' misurato che
++    il discriminante FUNZIONA — con un indice numerato nel testo, 50 record su
++    50 restano vivi contro 1 su 50 della forma piana.
++
++    ⚠️ SERVONO SU ENTRAMBI I LATI. Se uno solo dei due testi ha un codice, non
++    si sa nulla: «il campione S-001 contiene 11» e «il campione contiene 25»
++    possono benissimo parlare della stessa cosa, e li' il conflitto va visto.
++
++    ⚠️ E DEVONO ESSERE DISGIUNTI. Stesso codice con due valori e' esattamente la
++    contraddizione che questo modulo esiste per trovare — «S-001 contiene 11» e
++    «S-001 contiene 25» restano in conflitto.
++    """
++    ia = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text_a or "")}
++    if not ia:
++        return False
++    ib = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text_b or "")}
++    if not ib:
++        return False
++    return not (ia & ib)
++
++
+ # ---------------------------------------------------------------------------
+ # Lexical expansion (0.7.0): version / sub-year date / negation conflicts.
+ #
+diff --git a/verimem/supersession_policy.py b/verimem/supersession_policy.py
+index d3980adf..c2a7e82a 100644
+--- a/verimem/supersession_policy.py
++++ b/verimem/supersession_policy.py
+@@ -164,9 +164,40 @@ def classify_write_relation(new_fact: Any, old_fact: Any) -> str:
+     can retire another's true values. Until per-writer auth ships, a shared-server
+     deployment that cannot trust every session should set
+     ``ENGRAM_SUPERSEDE_SAME_SOURCE=0``."""
++    if _record_diversi(new_fact, old_fact):
++        return "conflict"
+     if not is_same_source(new_fact, old_fact):
+         return "conflict"
+     tn, to = _when_true(new_fact), _when_true(old_fact)
+     if tn is None or to is None or tn <= to:
+         return "conflict"
+     return "evolution"
++
++
++def _record_diversi(new_fact: Any, old_fact: Any) -> bool:
++    """I due fatti portano CODICI DI RECORD e non ne condividono nemmeno uno?
++
++    Un'evoluzione è «la stessa cosa che cambia valore». Due schede con codici
++    diversi non sono la stessa cosa, e nessun ordine temporale le rende tali.
++
++    PERCHE' (2026-08-04, dalla misura di ws5 sulla scala). Un registro di
++    venticinque campioni con codici distinti S-001…S-025, analiti diversi e
++    valori diversi, scritto in frasi piane, lascia **UN fatto vivo su 25** — e
++    il sopravvissuto è semplicemente l'ultimo scritto. Ventiquattro ritiri,
++    tutti con reason `same-source evolution`. Alla scala di duecento record il
++    numero di vivi resta uno: non è una perdita proporzionale, è una CAPIENZA.
++
++    Il conflitto lì è rilevato per via SEMANTICA, non numerica, quindi la cura
++    su `quantity_match` (il codice letto come quantità) non lo intercetta: il
++    veto va dove si decide *aggiornamento contro voci distinte*, cioè qui.
++
++    ⚠️ SERVONO SU ENTRAMBI I LATI E DISGIUNTI, come nel gemello in
++    ``quantity_match._identificatori_disgiunti``: se un solo fatto porta un
++    codice non si sa nulla, e lo STESSO codice con due valori è l'aggiornamento
++    legittimo che deve continuare a ritirare — una memoria che non ritira più
++    niente è rotta quanto una che ritira tutto.
++    """
++    from .quantity_match import _identificatori_disgiunti
++    return _identificatori_disgiunti(
++        getattr(new_fact, "proposition", "") or "",
++        getattr(old_fact, "proposition", "") or "")

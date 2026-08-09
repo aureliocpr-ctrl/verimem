@@ -72,9 +72,22 @@ def test_sourced_write_without_judge_carries_explicit_advisory():
 
 
 class _RejectingJudge:
-    """A grounding judge that always reports no entailment (score 0)."""
+    """A grounding judge that always reports no entailment (score 0).
+
+    Returns an object carrying ``.text``, which is the contract the gate reads
+    (``getattr(resp, "text", "")``). It used to return the bare string "0": a
+    string has no ``.text``, so the verdict was UNREADABLE and the gate fell back
+    to 50 — the quarantine this test asserts came from that fallback, not from
+    the judge, which was never actually consulted. The test passed while
+    measuring something else. Surfaced 2026-07-28, when an unreadable verdict
+    stopped being scored as 50.
+    """
+
+    class _Reply:
+        text = "SCORE: 0"
+
     def complete(self, system, messages, **kw):  # pragma: no cover - shape only
-        return "0"
+        return self._Reply()
 
 
 def test_confab_is_quarantined_when_judge_rejects_entailment():

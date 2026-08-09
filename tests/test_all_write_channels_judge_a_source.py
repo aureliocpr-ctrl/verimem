@@ -1,0 +1,131 @@
+"""Every channel must judge a source. The invariant, not one channel's wiring.
+
+Three entry points write facts — ``Memory.add`` (SDK), ``save_checkpoint``
+(what ``verimem save`` calls), and the ``hippo_remember`` MCP handler — and each
+asks for the moat its own way: ``add`` takes ``ground``, the handler passes
+``ground_write``, and until 2026-07-29 the handler passed NOTHING and fell
+through to ENGRAM_GROUNDING_WRITE, an env var no file in the tree sets.
+
+The cost of that was not theoretical. On the live store the same proposition,
+written with a real source and without one, both landed with grounding_score
+NULL — while the CLI path judged 11 of 11 writes the same night. The docs were
+not wrong: ebab6e92 (2026-07-17) documented "the moat is ON by default" and its
+evidence line names the hardening-audit probe, which runs on the SDK path. The
+promise was kept by the channel that was measured.
+
+So this test does not check how any channel is wired. It checks what a user
+gets: give a channel a source, and the stored fact carries a verdict. A new
+channel that skips the gate breaks this, which is the only thing that stops the
+bug from coming back under a different name — the product has 14 gate env vars
+plus a per-call override, and remembering to wire each one is not a strategy.
+
+Judge-stubbed, so it costs milliseconds instead of the ~29s CE cold-load.
+"""
+from __future__ import annotations
+
+import json
+import types
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+PROP = "The invoice total is 1240 euro."
+SRC = "Invoice 88: subtotal 1000, VAT 240, total 1240 euro."
+
+
+class _Judge:
+    """Deterministic entailment judge — the gate parses SCORE: N."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def complete(self, system, messages, *, model=None, max_tokens=None):  # noqa: ANN001
+        self.calls += 1
+        return types.SimpleNamespace(text="SCORE: 95")
+
+
+@pytest.fixture(autouse=True)
+def _no_env_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The env must NOT be what makes this pass — that is the bug being pinned.
+    A developer with ENGRAM_GROUNDING_WRITE=1 in their shell would otherwise
+    see every channel judge and never notice one was relying on it."""
+    monkeypatch.delenv("ENGRAM_GROUNDING_WRITE", raising=False)
+    monkeypatch.delenv("ENGRAM_VALIDATE_DEFAULT", raising=False)
+    monkeypatch.delenv("VERIMEM_MCP_TRUST_GATE_KNOBS", raising=False)
+
+
+def _score_of(sm: Any, fact_id: str) -> float | None:
+    import sqlite3
+    with sqlite3.connect(str(sm.db_path)) as c:
+        row = c.execute(
+            "SELECT grounding_score FROM facts WHERE id = ?", (fact_id,),
+        ).fetchone()
+    return row[0] if row else None
+
+
+def test_the_sdk_channel_judges_a_source(tmp_path: Path) -> None:
+    from verimem import Memory
+    judge = _Judge()
+    m = Memory(path=tmp_path / "s.db", grounding_llm=judge)
+    r = m.add(PROP, topic="parity/sdk", source=SRC)
+    assert judge.calls >= 1, "the SDK channel never consulted the judge"
+    assert r.get("grounding_score") is not None, (
+        "the SDK receipt reports no verdict"
+    )
+    assert _score_of(m.semantic, str(r["id"])) is not None, (
+        "judged but not PERSISTED — a verdict that dies with the process is "
+        "not provenance, and every later read would call the fact unjudged"
+    )
+
+
+def test_the_checkpoint_channel_judges_a_source(tmp_path: Path) -> None:
+    """What `verimem save --source` runs."""
+    from verimem import Memory
+    from verimem.continuity import save_checkpoint
+    judge = _Judge()
+    m = Memory(path=tmp_path / "s.db", grounding_llm=judge)
+    r = save_checkpoint(m, PROP, topic="parity/cli", source=SRC,
+                        principal="cli:local")
+    assert judge.calls >= 1, "the checkpoint channel never consulted the judge"
+    assert r.get("grounding_score") is not None, (
+        "the receipt reports no verdict, so `verimem save` would print "
+        "'not verified' for a write that WAS judged"
+    )
+
+
+@pytest.mark.asyncio
+async def test_the_mcp_channel_judges_a_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The channel an AGENT writes through — the one that was silently unjudged."""
+    from verimem import mcp_server
+    from verimem.semantic import SemanticMemory
+    judge = _Judge()
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+
+    class _A:
+        def __init__(self) -> None:
+            self.semantic = sm
+            # how the handler reaches a judge: a.wake.llm
+            self.wake = types.SimpleNamespace(llm=judge)
+
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _A())
+
+    from mcp.types import CallToolRequest, CallToolRequestParams
+    handler = mcp_server.server.request_handlers[CallToolRequest]
+    result = await handler(CallToolRequest(
+        method="tools/call",
+        params=CallToolRequestParams(name="hippo_remember", arguments={
+            "proposition": PROP, "topic": "parity/mcp", "source": SRC,
+        }),
+    ))
+    payload = result.root if hasattr(result, "root") else result
+    out = json.loads(next(c.text for c in payload.content if hasattr(c, "text")))
+
+    assert judge.calls >= 1, (
+        "the MCP channel stored a sourced write without consulting the judge — "
+        "the state the live store was in until 2026-07-29"
+    )
+    assert out.get("grounding_score") is not None
+    assert "judged" in out.get("moat", "").lower()

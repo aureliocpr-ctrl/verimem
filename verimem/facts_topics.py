@@ -8,6 +8,8 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
+from .fact_contract import fact_payload
+
 _FALLBACK_TOPIC = "(no topic)"
 
 
@@ -34,11 +36,13 @@ def facts_topics(
 
     rows: list[dict[str, Any]] = []
     for topic, items in by_topic.items():
+        # 2026-07-30: i campioni sono fatti veri, non una statistica, quindi
+        # passano dal contratto unico (fact_contract.fact_payload) con
+        # l'anteprima corta che questa vista aveva gia'. Chi sfoglia i topic
+        # per capire cosa c'e' dentro decide anche cosa fidarsi di leggere.
         sample = [
-            {
-                "id": getattr(it, "id", ""),
-                "proposition": (getattr(it, "proposition", "") or "")[:200],
-            }
+            {**fact_payload(it),
+             "proposition": (getattr(it, "proposition", "") or "")[:200]}
             for it in items[:n_samples]
         ]
         rows.append({

@@ -86,6 +86,7 @@ def find_structural_analogues(
     min_structural: float = 0.4,
     max_semantic: float = 0.5,
     top_k: int = 5,
+    report: dict | None = None,
 ) -> list[tuple[Skill, dict[str, float]]]:
     """Find skills structurally similar to `target` but semantically
     distant — the "analogy" regime in Gentner's framework.
@@ -105,6 +106,36 @@ def find_structural_analogues(
         analogies. Set to 1.0 to disable.
       - `top_k`: cap on returned analogues (default 5). Sorted by
         descending structural Jaccard.
+      - `report`: dict OPZIONALE che, se passato, viene riempito con gli
+        estremi effettivamente OSSERVATI durante la scansione:
+        `{n_candidates, n_scored, max_structural, min_semantic}`. Serve a
+        distinguere «non ci sono analogie» da «i vincoli erano
+        irraggiungibili», che oggi si leggono uguali — una lista vuota.
+
+        Perche' serve, misurato il 2026-07-31 sul corpus reale (325 skill,
+        20.000 coppie): il coseno semantico fra due skill qualunque ha
+        MINIMO 0.7425, e le coppie sotto il default `max_semantic=0.5` sono
+        ZERO. Il default non e' severo, e' irraggiungibile — e non per un
+        numero sfortunato: firma strutturale ed embedding si calcolano dallo
+        stesso testo, quindi salgono insieme (r=0.7503, e le 326 coppie sopra
+        `min_structural=0.4` hanno semantico minimo 0.8743). Il regime
+        cercato — stessa forma, dominio diverso — e' quasi vuoto per
+        costruzione del metodo di misura.
+
+        La cura NON e' una soglia nuova scelta a occhio: sarebbe lo stesso
+        errore in direzione opposta, ed e' gia' costato due ritiri in una
+        settimana (il `noise_floor` 0.8706 dei documenti e il
+        `max(floor, noise_floor)` della mappa dell'ignoranza). La cura e'
+        RESTITUIRE il dato: chi vede «richiesto <= 0.5, minimo osservato
+        0.87» sa da se' di aver posto una domanda senza risposta possibile.
+
+        Gli estremi sono gia' calcolati dentro il ciclo e venivano buttati:
+        costo zero. `min_semantic` e' il minimo fra i candidati che hanno
+        superato il filtro STRUTTURALE, perche' sono gli unici per cui il
+        coseno viene calcolato — riportarlo su tutto il pool costerebbe un
+        encode per skill, cioe' una diagnostica cara quanto la ricerca.
+        `n_scored` dice su quanti e' stato osservato, cosi' «min 0.95» su un
+        solo candidato non si legge come una proprieta' del corpus.
 
     Returns: list of `(candidate, info)` tuples sorted by structural
     score descending. `info` carries `{structural, semantic}` so the
@@ -112,18 +143,35 @@ def find_structural_analogues(
     """
     target_sig = structural_signature(target)
     out: list[tuple[Skill, dict[str, float]]] = []
+    n_candidates = 0
+    n_scored = 0
+    max_structural: float | None = None
+    min_semantic: float | None = None
     for cand in candidates:
         if cand.id == target.id:
             continue
+        n_candidates += 1
         cand_sig = structural_signature(cand)
         struct = structural_jaccard(target_sig, cand_sig)
+        if max_structural is None or struct > max_structural:
+            max_structural = struct
         if struct < min_structural:
             continue
         sem = float(semantic_cosine_fn(target, cand))
+        n_scored += 1
+        if min_semantic is None or sem < min_semantic:
+            min_semantic = sem
         if sem > max_semantic:
             continue
         out.append((cand, {"structural": struct, "semantic": sem}))
     out.sort(key=lambda x: -x[1]["structural"])
+    if report is not None:
+        report.update({
+            "n_candidates": n_candidates,
+            "n_scored": n_scored,
+            "max_structural": max_structural,
+            "min_semantic": min_semantic,
+        })
     return out[:top_k]
 
 

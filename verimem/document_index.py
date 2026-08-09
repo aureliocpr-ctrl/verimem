@@ -22,6 +22,7 @@ Isolated store (own SQLite), like the Documents tier: NOT wired into
 """
 from __future__ import annotations
 
+import re
 import sqlite3
 from pathlib import Path
 
@@ -40,6 +41,45 @@ def _row_get(row, column: str):
         return row[column]
     except (IndexError, KeyError):
         return None
+
+
+#: Parole troppo comuni per dire qualcosa sulla pertinenza di un chunk: se la
+#: query e' «come funziona l'admission gate», sono `admission` e `gate` a
+#: contare. Deliberatamente corta e solo funzionale — non e' una lista di
+#: stopword linguistica, e un termine di troppo qui costa al massimo un
+#: conteggio piu' prudente.
+_PAROLE_VUOTE = frozenset("""
+come cosa quale quali quando dove perche perché chi che cui
+del della dello dei delle degli di da in su per con tra fra
+il lo la le un uno una gli
+e ed o od ma se non piu più meno molto tutto tutti
+essere sono era stato stata usa usare usano fa fare ha hanno
+funziona funzionano serve servono significa vuol dire
+the a an of to in on for with and or is are was were be been
+what which who where when why how does do did use uses using
+""".split())
+
+_TERMINE_RE = re.compile(r"[\w'’-]{3,}", re.UNICODE)
+
+
+def _termini_di_ricerca(query: str) -> list[str]:
+    """I termini della query che possono dire qualcosa, minuscoli.
+
+    L'elisione si scarta: «l'admission» vale `admission`. Senza questo passo il
+    token resterebbe `l'admission`, che non e' nelle parole vuote e non compare
+    in nessun testo scritto senza apostrofo — cioe' un termine che non puo' mai
+    corrispondere, e un conteggio sistematicamente piu' basso del vero.
+    """
+    fuori = []
+    for grezzo in _TERMINE_RE.findall((query or "").lower()):
+        t = grezzo
+        for apostrofo in ("'", "’"):
+            testa, sep, coda = t.partition(apostrofo)
+            if sep and len(testa) <= 2 and len(coda) >= 3:
+                t = coda          # l'admission, dell'ufficio, un'ora
+        if len(t) >= 3 and t not in _PAROLE_VUOTE:
+            fuori.append(t)
+    return fuori
 
 
 _SCHEMA = """
@@ -71,6 +111,147 @@ class _DefaultEmbedder:
         from .embedding import encode
 
         return np.asarray(encode(list(texts)), dtype=np.float32)
+
+
+#: Quanto testo del chunk va al cross-encoder. I chunk sono ~1000 char, la
+#: finestra del modello e' piu' corta: tagliare qui e' esplicito invece che
+#: lasciarlo fare al tokenizer in silenzio.
+_RERANK_MAX_CHARS = 2000
+
+
+def _pool_rerank(indice, k: int) -> int:
+    """Quanti candidati recuperare PRIMA del riordino.
+
+    Senza rerank e' `k` e nulla cambia. Con il rerank si recupera largo e si
+    taglia dopo: un riordino puo' solo mettere in fila cio' che riceve, e con
+    `k=2` il cross-encoder ordinava due chunk sbagliati fra loro. Stessa
+    funzione del percorso fatti, non una costante nuova."""
+    k = max(1, int(k))
+    try:
+        if not indice._rerank_attivo():
+            return k
+        from .semantic import _rerank_topn
+        return max(k, _rerank_topn())
+    except Exception:  # noqa: BLE001 — in dubbio, il comportamento di prima
+        return k
+
+
+def _rerank_pairs(pairs, **kw):
+    """I punteggi del cross-encoder, o ``None`` per degradare.
+
+    Delega al daemon condiviso che il percorso FATTI usa dal 2026-06-13, senza
+    ricopiarne la logica: budget, discovery e fallback stanno tutti la'."""
+    from .semantic import _rerank_via_daemon
+    return _rerank_via_daemon(pairs, **kw)
+
+
+def _applica_rerank(indice, query: str, hits: list[dict]) -> list[dict]:
+    """Riordina i chunk col cross-encoder. STADIO IN PIU', MAI UNA DIPENDENZA.
+
+    PERCHE'. Il coseno del bi-encoder non separa i chunk pertinenti dai non
+    pertinenti. Misurato il 2026-08-02 su un documento vero (10383 byte, 18
+    chunk), tre domande a cui risponde e tre a cui no:
+
+        [SI] quante skill hanno due status diversi   0.8272     3.1453
+        [SI] cosa faceva il campo moat sui respinti  0.8120     2.0328
+        [SI] quale commit ha curato il caveat        0.8292    -0.2292
+        [NO] quale database usa il cluster           0.8149    -5.4931
+        [NO] come si configura il proxy aziendale    0.8128    -6.6794
+        [NO] qual e la ricetta della carbonara       0.7984    -5.5207
+
+        bi-encoder   dentro min 0.8120  fuori max 0.8149  margine -0.0029
+        reranker CE  dentro min -0.2292 fuori max -5.4931 margine +5.2639
+
+    Una domanda FUORI TEMA prendeva piu' di una che il documento contiene, e
+    tutti i punteggi stavano fra 0.79 e 0.83. Il commento sopra `search`
+    racconta la soglia provata e buttata il 31/07 su questa stessa banda: il
+    problema non era la soglia, era lo STADIO MANCANTE. Il reranker esisteva
+    gia' — cablato ai fatti, non ai documenti.
+
+    IL BI-ENCODER RESTA LEGGIBILE. `score` non viene sovrascritto e il
+    punteggio del CE esce come `rerank_score`: sono due misure diverse, e chi
+    consuma deve poter dire se un ordine e' stato tenuto in piedi dal solo
+    coseno — la stessa onesta' che `ranking` porta sul percorso fatti.
+
+    DEGRADA SEMPRE. Daemon assente, budget scaduto, eccezione: si torna
+    all'ordine del bi-encoder, senza errori e senza attese. Spegnibile con
+    ENGRAM_DOC_RERANK=0."""
+    if len(hits) < 2 or not query.strip():
+        return hits
+    try:
+        if not indice._rerank_attivo():
+            return hits
+        # LA GUARDIA SULLA LUNGHEZZA, la stessa del percorso fatti. Il CE
+        # mmarco tronca a 512 token: su testi piu' lunghi della sua finestra
+        # legge solo la testa e RIMESCOLA un ordine gia' buono (misurato
+        # 2026-06-10, recall@5 0.723 contro 0.800 di base sui documenti
+        # lunghi). I chunk stanno a ~1000 char e passano; un indice con
+        # chunk_size alzato no, ed e' giusto cosi'.
+        from .semantic import _rerank_max_doc_chars
+        limite = _rerank_max_doc_chars()
+        if limite:
+            lunghezze = sorted(len(h.get("text") or "") for h in hits)
+            mediana = lunghezze[len(lunghezze) // 2]
+            if mediana > limite:
+                return hits
+        punteggi = _rerank_pairs(
+            [(query, (h.get("text") or "")[:_RERANK_MAX_CHARS]) for h in hits])
+    except Exception:  # noqa: BLE001 — mai una dipendenza, sempre un'aggiunta
+        return hits
+    if not punteggi or len(punteggi) != len(hits):
+        return hits
+    for h, p in zip(hits, punteggi, strict=True):
+        h["rerank_score"] = round(float(p), 4)
+    # `sorted` e non `sort`: stabile, quindi a parita' di punteggio l'ordine
+    # del bi-encoder sopravvive invece di essere rimescolato.
+    return sorted(hits, key=lambda h: -float(h.get("rerank_score") or 0.0))
+
+
+class Risultati(list):
+    """I risultati di una ricerca, con quanti ne sono stati NASCOSTI.
+
+    IL DIFETTO CHE LA MOTIVA (isolato da ws5 con uno sweep sulle superfici —
+    un'azienda l'injection non la digita, la RICEVE dentro il PDF di un
+    fornitore)::
+
+        contratto pulito                       risposte 7/7
+        con dentro UNA riga ostile             risposte **0/7**
+
+    La difesa funziona: il payload non raggiunge mai chi legge. Ma i chunk
+    marcati sparivano dal `WHERE`, e quando li nascondeva TUTTI la ricerca
+    restituiva una lista vuota — **la stessa risposta che darebbe se il
+    documento non fosse mai stato indicizzato**. Nessun errore, nessun avviso:
+    solo silenzio.
+
+    🎯 Ed è sicurezza, non ergonomia: chi manda il documento sceglie DOVE
+    mettere la riga, e non gli serve che l'injection *funzioni* — gli basta che
+    venga **RILEVATA**, e l'informazione accanto sparisce. Un attacco alla
+    disponibilità, abilitato dalla difesa stessa, che colpisce soprattutto i
+    documenti CORTI (ordini, conferme, email), cioè la maggioranza di quelli
+    aziendali.
+
+    ⚠️ È una `list` VERA e non un oggetto nuovo perché `search()` ha due
+    consumatori in produzione (`cli.py`, `mcp_server.py`) e una quantità di
+    test che la iterano, la indicizzano e ne fanno `len()`: il conteggio si
+    AGGIUNGE, non sostituisce nulla. Chi non lo legge non si accorge di niente.
+
+    📌 `nascosti` descrive LA CHIAMATA, non il documento: con
+    ``include_flagged=True`` è zero, perché in quella chiamata non è stato
+    nascosto nulla.
+    """
+
+    __slots__ = ("nascosti", "illeggibili")
+
+    def __init__(self, iterable=(), *, nascosti: int = 0,
+                 illeggibili: int = 0) -> None:
+        super().__init__(iterable)
+        #: quanti chunk questa ricerca ha escluso perché marcati (injection)
+        self.nascosti = int(nascosti)
+        #: quanti chunk sono stati SALTATI perché scritti con un altro modello
+        #: di embedding (dimensione diversa da quella attiva). Zero su un
+        #: archivio sano; > 0 su un backup riaperto dopo un cambio di modello,
+        #: dove prima la ricerca taceva e restituiva zero risultati.
+        self.illeggibili = int(illeggibili)
 
 
 class DocumentIndex:
@@ -211,37 +392,121 @@ class DocumentIndex:
         """
         q = (query or "").strip()
         if not q:
-            return []
-        where = "" if include_flagged else "WHERE c.flagged = 0"
+            return Risultati()
         conn = self._connect()
         try:
-            rows = conn.execute(
+            tutte = conn.execute(
                 "SELECT c.* FROM chunks c JOIN (SELECT source_id, MAX(version) AS mv "
                 "FROM chunks GROUP BY source_id) m "
-                "ON c.source_id = m.source_id AND c.version = m.mv "
-                f"{where}",  # noqa: S608 — `where` is a constant, not user input
+                "ON c.source_id = m.source_id AND c.version = m.mv ",
             ).fetchall()
         finally:
             conn.close()
+        # IL FILTRO E' QUI E NON NEL `WHERE` PERCHE' SERVE IL CONTEGGIO.
+        # Prima la query portava `WHERE c.flagged = 0` e i chunk esclusi non
+        # esistevano per nessuno: quando li nascondeva TUTTI, `search` tornava
+        # una lista vuota — cioe' **la stessa risposta che darebbe se il
+        # documento non fosse mai stato indicizzato**.
+        # Misurato (il difetto e' di ws5, questo e' il mio banco):
+        #     contratto pulito              risposte 7/7
+        #     con una riga ostile dentro    risposte **0/7**
+        # e chi interroga non riceve nessun errore, nessun avviso: solo
+        # silenzio. Chi manda il documento sceglie DOVE mettere la riga, e non
+        # gli serve che l'injection funzioni — gli basta che venga RILEVATA.
+        # Leggere anche i flagged non cambia il costo in modo sensibile: sono
+        # l'eccezione, e questa query gia' faceva un fetchall() completo.
+        if include_flagged:
+            rows, nascosti = tutte, 0
+        else:
+            rows = [r for r in tutte if not r["flagged"]]
+            nascosti = len(tutte) - len(rows)
         if not rows:
-            return []
+            return Risultati(nascosti=nascosti)
         qv = np.asarray(self.embedder.encode([q]), dtype=np.float32)[0]
         qn = float(np.linalg.norm(qv)) or 1.0
         scored = []
+        illeggibili = 0
         for r in rows:
             v = np.frombuffer(r["vec"], dtype=np.float32)
+            # UN VETTORE DI UN ALTRO MODELLO NON SI PUO' CONFRONTARE.
+            # Terzo punto della classe 384/768 (i primi sei erano in skill.py,
+            # il settimo in cli.py::introspect che CRASHA). Qui invece TACEVA,
+            # ed e' il caso peggiore: ws5 l'ha trovato da un'altra strada —
+            # «un backup del corpus non e' piu' interrogabile dopo un cambio di
+            # modello: gli snapshot di maggio hanno vettori a 384, il motore di
+            # oggi ne vuole 768 -> ZERO risultati, in silenzio». Un archivio che
+            # risponde «non ho trovato niente» quando in realta' non riesce a
+            # leggere e' indistinguibile da un archivio vuoto.
+            # Si SALTA (rifiutare tutto sarebbe una seconda perdita sopra la
+            # prima: un archivio misto deve servire cio' che puo' leggere) e si
+            # CONTA, perche' saltare in silenzio e' il difetto di partenza.
+            if v.size != qv.size:
+                illeggibili += 1
+                continue
             vn = float(np.linalg.norm(v)) or 1.0
             score = float(np.dot(qv, v) / (qn * vn))
             scored.append((score, r))
+        if not scored:
+            # Tutti i chunk erano di un altro modello: la lista e' vuota, ma il
+            # conteggio dice PERCHE'.
+            return Risultati(nascosti=nascosti, illeggibili=illeggibili)
         scored.sort(key=lambda t: (-t[0], t[1]["source_id"], t[1]["idx"]))
-        return [{"text": r["text"], "score": round(s, 6),
+        termini = _termini_di_ricerca(q)
+        hits = [{"text": r["text"], "score": round(s, 6),
                  "source_id": r["source_id"], "version": r["version"],
                  "start": r["start"], "end": r["end"], "uri": r["uri"] or "",
                  "doc_id": r["doc_id"], "flagged": bool(r["flagged"]),
                  # who vouched for this chunk (None = unsigned ingest): a
                  # citation must carry it, not require a join to find it.
                  "indexed_by": _row_get(r, "indexed_by")}
-                for s, r in scored[:max(1, int(k))]]
+                # OVERSAMPLING per il rerank. Un riordino puo' solo mettere in
+                # fila cio' che il recupero gli consegna: con k=2 il cross
+                # encoder riceveva due chunk sbagliati e li ordinava fra loro.
+                # Misurato dal vivo il 2026-08-02: il rerank scattava e il
+                # risultato non migliorava, perche' il chunk giusto non era
+                # nei candidati. Stessa forma del percorso fatti
+                # (`_pool_n = max(k, _rerank_topn())`), stessa funzione: si
+                # recupera largo, si riordina, si taglia a k DOPO.
+                for s, r in scored[:_pool_rerank(self, int(k))]]
+        # QUANTE parole della query compaiono nel testo citato.
+        #
+        # Misurato il 2026-07-31 sul README (47 chunk): «ricetta della carbonara
+        # con guanciale» prende 0.754 e torna con la citazione ESATTA — file,
+        # versione, offset di carattere. Per un umano e' un risultato strano;
+        # per un agente, che e' il consumatore vero di questo tool, e' una fonte
+        # con provenienza, e la citazione precisa da' autorevolezza proprio a
+        # cio' che non c'entra.
+        #
+        # NON una soglia sul punteggio. Provata e BUTTATA lo stesso giorno: il
+        # rumore stimato dell'indice (il quantile dei massimi di sonde
+        # scramblate, la misura che il prodotto usa sui fatti) viene 0.8706,
+        # piu' alto di TUTTE le query — comprese quelle con risposta, che stanno
+        # a 0.810-0.830. Marcava tutto, cioe' niente. E' lo stesso errore
+        # commesso e ritirato dodici ore prima sulla mappa dell'ignoranza: quel
+        # numero e' alto per costruzione, non e' «il livello sotto cui non c'e'
+        # informazione». Le due popolazioni sul coseno si sovrappongono e nessun
+        # taglio le separa.
+        #
+        # Il conteggio lessicale invece separa (stessa prova):
+        #     con risposta   copertura 0.33 - 1.00
+        #     estranee       copertura 0.00 su tre casi su quattro
+        #
+        # E qui non si giudica: si CONTA. Zero termini in comune e' un fatto
+        # verificabile da chi legge, non un verdetto con una soglia inventata
+        # dentro. Chi consuma decide cosa farne.
+        for h in hits:
+            h["query_terms"] = len(termini)
+            h["query_terms_matched"] = sum(
+                1 for t in termini if t in h["text"].lower())
+        return Risultati(_applica_rerank(self, q, hits)[:max(1, int(k))],
+                         nascosti=nascosti, illeggibili=illeggibili)
+
+    # --- rerank ---------------------------------------------------------
+    def _rerank_attivo(self) -> bool:
+        import os
+        return os.environ.get(
+            "ENGRAM_DOC_RERANK", "1").strip().lower() not in (
+                "0", "false", "no", "off")
 
     # --- discovery ------------------------------------------------------
     def stats(self) -> dict:

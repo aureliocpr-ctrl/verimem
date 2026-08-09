@@ -31,6 +31,7 @@ post-fix con status implicito).
 from __future__ import annotations
 
 import atexit
+import contextvars
 import json
 import logging
 import os
@@ -51,6 +52,10 @@ from . import embedding
 from . import epistemic as _epistemic
 from ._sqlite_pragma import read_connection
 from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PREFIXES
+
+# Solo la SOGLIA dell'ANN, da un modulo che importa `os` e basta. L'indice
+# vero (`ann_index` -> `faiss`) resta fuori dagli import di testa apposta.
+from .ann_gate import default_min_n as _ann_default_min_n
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
 from .mutation_audit import TABLE_SQL as _MUTATION_AUDIT_TABLE
@@ -1017,11 +1022,9 @@ def _topic_penalty_strength() -> float:
     default ranking; set ENGRAM_TOPIC_PENALTY=0.10 to down-rank lessons/* facts on
     task-style queries (the bench-v2 hard-negative fix). A/B on the live corpus before
     raising the default (the corpus, not LongMemEval, carries lessons/* topics)."""
-    import os
-    try:
-        return max(0.0, min(1.0, float(os.environ.get("ENGRAM_TOPIC_PENALTY", "0.0"))))
-    except (TypeError, ValueError):
-        return 0.0
+    # clamping alone let nan through as 1.0 — the MAXIMUM penalty, silently
+    from .env_num import env_float
+    return max(0.0, min(1.0, env_float("ENGRAM_TOPIC_PENALTY", 0.0)))
 
 
 def _apply_topic_penalty_to_sims(sims, facts, query_text):
@@ -1573,6 +1576,16 @@ class Fact:
     # fact). The composition layer builds only from labels it can trust.
     epistemic: dict | None = None
 
+    def as_payload(self) -> dict[str, Any]:
+        """Il fatto come esce dal prodotto: un contratto solo, per tutti.
+
+        La forma canonica e' ``fact_contract.fact_payload``, che accetta anche
+        cio' che un ``Fact`` non e' (fake, righe adattate, proxy). Questo
+        metodo e' la scorciatoia comoda quando l'oggetto e' davvero un Fact.
+        """
+        from .fact_contract import fact_payload
+        return fact_payload(self)
+
 
 # ── P0.3 (2026-06-09) — stage-2 cross-encoder rerank, default ON 2026-06-10 ──
 # Verified on a COPY of the live corpus, twice, paired McNemar:
@@ -1806,15 +1819,101 @@ def _rerank_max_doc_chars() -> int:
         return 2000
 
 
-def _load_reranker():
+#: Il daemon ha gia' rerankato per noi almeno una volta in questo processo.
+#: Dict e non bool perche' lo scrivono i thread worker del rerank e lo legge il
+#: path caldo: una mutazione in place e' visibile a tutti senza `global` e
+#: senza lock (il valore passa solo da False a True, quindi nessuna corsa che
+#: possa perdere informazione).
+_RERANK_DELEGATO = {"ok": False}
+
+
+def _rerank_via_daemon(pairs, *, info=None) -> list[float] | None:
+    """Punteggi del cross-encoder dal daemon condiviso, o None per degradare.
+
+    Perche' esiste: il CE costa ~33s di caricamento e finora viveva nel
+    processo che fa la recall. Misurato il 2026-07-31, dodici recall in un
+    processo fresco — `timeout_cold`, poi cinque `skipped_busy`, e `applied`
+    solo dalla settima, dopo ~36s di vita. Sull'audit log di produzione 256
+    processi su 293 ne fanno UNA e muoiono: quei 33s venivano buttati a ogni
+    respawn, e il rerank non si applicava mai.
+
+    Il guadagno non e' rendere veloce la prima chiamata — quella paga comunque.
+    E' che il caricamento **non muore col processo**: il client scade a 0.25s e
+    degrada come prima, ma il daemon continua a caricare, e il server MCP
+    successivo (un altro processo) lo trova caldo.
+
+    Mai una dipendenza, sempre un'ottimizzazione: qualunque intoppo -> None ->
+    il chiamante carica in-process come ha sempre fatto.
+    """
+    if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
+        "0", "false", "no", "off",
+    ):
+        return None
+    try:
+        import socket as _socket
+
+        from . import encode_service as _svc
+        info = info if info is not None else _svc.read_discovery()
+        if not info or not info.get("port"):
+            return None
+        conn = _socket.create_connection(
+            (info.get("host", "127.0.0.1"), info["port"]),
+            timeout=embedding._SERVICE_CONNECT_TIMEOUT_S,
+        )
+        try:
+            # Il predict a caldo e' ~1.7s: leggere con lo stesso timeout
+            # dell'encode (5s) lascia margine senza attendere un cold-load,
+            # che e' proprio cio' che il budget del chiamante taglia.
+            conn.settimeout(embedding._SERVICE_READ_TIMEOUT_S)
+            req = {"rerank_pairs": [[p[0], p[1]] for p in pairs]}
+            if info.get("token"):
+                req["token"] = info["token"]
+            _svc.send_msg(conn, req)
+            resp = _svc.recv_msg(conn)
+        finally:
+            conn.close()
+        # Un daemon VECCHIO non conosce 'rerank_pairs' e risponde ok=False:
+        # degradare qui e' cio' che rende l'aggiornamento non-atomico sicuro.
+        if resp and resp.get("ok") and isinstance(resp.get("scores"), list):
+            # Da ora il rerank e' «pronto» anche senza modello qui: la prossima
+            # query prende il budget pieno invece di quello del cold-load.
+            _RERANK_DELEGATO["ok"] = True
+            return [float(s) for s in resp["scores"]]
+    except Exception:  # noqa: BLE001 — qualunque intoppo -> carica in-process
+        return None
+    return None
+
+
+def _load_reranker(*, consenti_daemon: bool = True):
     """Process-wide lazy CrossEncoder scorer (mirror of embedding._load_model).
 
     Cache-only load first; network retry ONLY when no offline flag is set —
     a network stall under the lock must never wedge recall (the 2026-06-05
     embedding-hang lesson). CPU pinned: the 8GB GPU OOMs with the e5 encoder
     and the CE resident together.
+
+    Prima di caricare qui, si chiede al daemon condiviso: e' lo stesso mestiere
+    che l'embedder gli affida da mesi, e per la stessa ragione — un processo
+    effimero non deve pagare (ne' buttare) il cold-load di un modello.
+    ``consenti_daemon=False`` per il daemon stesso, che non puo' essere client
+    di se' stesso.
     """
     global _RERANKER
+    if consenti_daemon and _RERANKER is None:
+        def _scorer_remoto(pairs):
+            punteggi = _rerank_via_daemon(pairs)
+            if punteggi is None:
+                # Il daemon non c'e' piu' a meta' sessione: si carica qui,
+                # una volta, e da li' in poi si usa quello.
+                return _load_reranker(consenti_daemon=False)(pairs)
+            return punteggi
+        # La probe si paga UNA volta per processo, non a ogni recall: appena il
+        # daemon ha risposto la prima volta la risposta e' nota, e rifarla
+        # aggiungeva un round-trip a ogni query (visto nel profilo come due
+        # chiamate a `_rerank_via_daemon` per una sola recall).
+        if _RERANK_DELEGATO["ok"] or _rerank_via_daemon([("", "")]) is not None:
+            return _scorer_remoto
+
     if _RERANKER is None:
         with _RERANKER_LOCK:
             if _RERANKER is None:
@@ -1840,10 +1939,22 @@ def _load_reranker():
 
 
 def _reranker_ready() -> bool:
-    """True once the CE is resident in this process — a None check (no lock, no
-    load), so the rerank hot path can decide in nanoseconds whether the model is
-    still cold."""
-    return _RERANKER is not None
+    """True quando una risposta del cross-encoder e' a portata: modello
+    residente QUI, oppure daemon condiviso che ha gia' rerankato per noi.
+
+    Resta un controllo in nanosecondi — due letture di variabile, nessun lock,
+    nessun I/O: il path caldo del rerank la interroga a ogni query per scegliere
+    fra il budget pieno e quello ristretto del cold-load.
+
+    Il secondo ramo e' stato il pezzo mancante della delega al daemon, e lo si
+    e' visto solo misurando: col CE spostato nel daemon, ``_RERANKER`` resta
+    None per sempre in questo processo, quindi ogni query si dava il budget a
+    freddo (0.25s) e un predict remoto (~1.7s) non ci stava MAI — dodici recall
+    di fila tutte `timeout_cold`, con un daemon caldo dall'altra parte. La
+    prontezza va definita come per l'embedder, dove `warm` e' `in_process or
+    shared_daemon`; qui era rimasta «in_process» soltanto.
+    """
+    return _RERANKER is not None or _RERANK_DELEGATO["ok"]
 
 
 # --- Rerank circuit-breaker (task #16, 2026-07-10) ---------------------------
@@ -2316,6 +2427,58 @@ def _ppr_fusion_enabled() -> bool:
     )
 
 
+# --- Come e' stato ordinato questo risultato (2026-07-30) --------------------
+# I tre segnali del ranking — dense, CE-rerank, fusione PPR+BM25 — hanno ognuno
+# un budget che li fa DEGRADARE invece di appendere il chiamante, e fanno bene:
+# profilato lo stesso giorno su un processo fresco col daemon caldo, la prima
+# recall costa 3.12s e la terza 0.42s; sull'audit log di produzione, DENTRO lo
+# stesso processo, la prima e' 88939 ms mediani (n=239) e la terza in poi
+# 125 ms (n=64). Senza quei tetti sarebbe peggio.
+#
+# Le mediane FRA processi diversi non si usano: sopravvive chi ha risposto in
+# fretta (chi era lento viene ucciso dal timeout del client e resta con una
+# riga sola), quindi ogni aggregato per-processo e' selezionato dalla velocita'
+# che pretende di misurare. E' il confronto APPAIATO qui sopra a reggere.
+#
+# Il difetto non e' il degrado: e' che il degrado era MUTO. Tre chiamate
+# identiche sul corpus vero restituivano insiemi diversi (17cefffe1bce dentro a
+# freddo, 93eec6da4302 dentro a caldo) con le stesse identiche chiavi nella
+# risposta; la spiegazione esisteva solo nel log del SERVER. Le vie silenziose
+# sono otto per il rerank e altrettante per la fusione.
+#
+# Il registro vive in un ContextVar (async-safe come il timer del server MCP) e
+# lo scrivono i CHIAMANTI, dove l'overrun si osserva — mai i thread worker: un
+# thread nasce con un contesto proprio e la sua nota si perderebbe.
+#
+# `None` significa «nessuno ha aperto una registrazione», che NON e' «nessun
+# degrado»: e' la distinzione che mancava a judge_state stamattina, e va tenuta.
+_RANKING: contextvars.ContextVar[dict[str, str] | None] = contextvars.ContextVar(
+    "verimem_ranking_stages", default=None,
+)
+
+
+def ranking_reset() -> None:
+    """Apre una registrazione per la recall che sta per partire."""
+    _RANKING.set({})
+
+
+def _ranking_note(stage: str, outcome: str) -> None:
+    """Registra l'esito di uno stadio. Muta il dict IN PLACE: chi ha aperto la
+    registrazione vede la nota anche se nel frattempo il contesto e' stato
+    copiato. Senza registrazione aperta e' un no-op — la recall non deve mai
+    rompersi per la telemetria del suo stesso ordinamento."""
+    d = _RANKING.get()
+    if d is not None:
+        d[stage] = outcome
+
+
+def ranking_stages() -> dict[str, str] | None:
+    """Gli stadi dell'ultima recall in questo contesto, o None se nessuna.
+    Copia difensiva: chi legge non riscrive lo stato interno."""
+    d = _RANKING.get()
+    return dict(d) if d is not None else None
+
+
 class SemanticMemory:
     def __init__(
         self,
@@ -2345,6 +2508,34 @@ class SemanticMemory:
             # outside the versioned ladder (v15 history: two forgotten
             # target-bumps broke production writes).
             conn.execute(_MUTATION_AUDIT_TABLE)
+            # CHI HA QUARANTINATO, scritto dove sopravvive alla ricevuta.
+            #
+            # Il campo `quarantined_by` esce nel dict di `add()` — cioe' lo vede
+            # chi scrive, nell'istante in cui scrive. Un minuto dopo
+            # l'informazione non esiste piu': le colonne di stato erano
+            # [created_at, status, grounding_score] e `audit_mutations` /
+            # `facts_undo_log` non hanno una riga per le quarantene.
+            # Non e' comodita': e' il motivo per cui un caso resta aperto. Due
+            # fatti quarantinati in produzione con grounding 99.96 non possono
+            # dire da soli chi li ha fermati, e sei tentativi di riproduzione
+            # (testo, fonte, topic, dimensione del corpus, canale, validate)
+            # non hanno chiuso la domanda a cui questa colonna risponde subito.
+            #
+            # NON in `audit_mutations`: quella e' ACTION-ONLY per scelta
+            # motivata (GDPR Art.17) e per le operazioni DISTRUTTIVE. Una
+            # quarantena al write non distrugge niente — e' una decisione di
+            # ammissione, e piegare quella superficie sarebbe usarla per il caso
+            # sbagliato.
+            # E FUORI DALLA SCALA VERSIONATA, come la tabella qui sopra e per la
+            # stessa ragione gia' pagata: «v15 history: two forgotten
+            # target-bumps broke production writes». Una colonna nullable
+            # aggiunta idempotentemente non ha bisogno di un numero di versione
+            # e non puo' rompere una scrittura per un bump dimenticato.
+            try:
+                conn.execute("ALTER TABLE facts ADD COLUMN quarantined_by TEXT")
+            except sqlite3.OperationalError as _exc:  # gia' presente
+                if "duplicate column" not in str(_exc).lower():
+                    raise
             from .migrations import ensure_schema_version
             ensure_schema_version(
                 conn, db_id="semantic", target_version=_SEMANTIC_TARGET_VERSION,
@@ -2388,8 +2579,17 @@ class SemanticMemory:
         # ENGRAM_ANN_RECALL=0 opts out — see _ann_recall_enabled; keyed by
         # _cache_version so a write invalidates/rebuilds it). Dormant until
         # the corpus crosses the gate; the exact brute-force path is unchanged.
-        from verimem.ann_cache import ANNCache
-        self._ann_cache = ANNCache()
+        #
+        # COSTRUITA AL PRIMO USO, non qui (2026-07-31). `ann_cache` importa
+        # `ann_index`, che importa `faiss`: costruirla nell'__init__ faceva
+        # pagare 274,6 ms misurati (978,8 con faiss contro 704,2 senza) e una
+        # DLL nativa a OGNI processo che apre lo store —
+        # anche a `hippo_health`, che non tocca modelli e che nei 38 trace di
+        # `~/.engram/hang-traces/` e' il tool piu' spesso appeso (13 su 38, con
+        # faiss modulo dominante negli stack: 387 occorrenze). Sotto i 100k
+        # fatti del gate quell'indice non viene mai costruito, quindi era costo
+        # senza contropartita. Vedi la property `_ann_cache` piu' sotto.
+        self._ann_cache_obj: Any = None
         # Cross-process cache-coherence (sorelle loop 2026-06-03): a LONG-LIVED
         # probe connection whose ``PRAGMA data_version`` tracks commits made by
         # OTHER connections/processes. A fresh connection cannot do this — its
@@ -2438,6 +2638,27 @@ class SemanticMemory:
                     "slow sqlite txn: %.2fs on %s (pid %d)",
                     _dt, self.db_path, os.getpid(),
                 )
+
+    @property
+    def _ann_cache(self):
+        """La cache dell'indice ANN, costruita al PRIMO accesso.
+
+        Property e non attributo perche' toccare ``ANNCache`` significa
+        importare ``faiss``, e questo store viene aperto anche da chi non fara'
+        mai una recall — la CLI di stato, ``hippo_health``, un processo che
+        scrive e basta. Il nome resta ``_ann_cache``: i test che lo usano per
+        abbassare la soglia (``mem._ann_cache.min_n = 50``) continuano a
+        funzionare, e costruiscono l'oggetto proprio perche' lo stanno per
+        esercitare.
+
+        Non serve un lock: due thread che arrivassero insieme costruirebbero
+        due ``ANNCache`` vuote e una vincerebbe: nessun indice viene perso,
+        perche' l'indice non e' ancora stato costruito da nessuno dei due. Il
+        lock che conta e' quello DENTRO ``ANNCache``, che serializza i build."""
+        if self._ann_cache_obj is None:
+            from verimem.ann_cache import ANNCache
+            self._ann_cache_obj = ANNCache()
+        return self._ann_cache_obj
 
     def _db_data_version(self) -> int:
         """Cross-process cache-coherence probe (sorelle loop 2026-06-03).
@@ -2748,6 +2969,24 @@ class SemanticMemory:
                     fact.id, fact.topic, list(fact.verified_by or []),
                 )
                 fact.status = "model_claim"
+
+        # 2026-07-27 — provenance signatures are now HONOURED, not merely
+        # shippable. The module was sound in isolation and had ZERO call sites,
+        # so VERIMEM_PROVENANCE_KEY was an opt-in nobody could opt into.
+        # Deliberately narrow: an UNSIGNED ref stays fine (historical
+        # provenance is unsigned and refusing it would quarantine the corpus),
+        # and with no key the whole layer is inert. What is refused is a ref
+        # that CLAIMS a signature which does not verify — an origin asserted
+        # and not held, i.e. the forgery the SMSR complement exists to catch.
+        from .provenance_signing import signature_offenders
+        _forged = signature_offenders(fact)
+        if _forged:
+            _LOG.warning(
+                "provenance signature gate: fact_id=%s topic=%s quarantined "
+                "(refs claim a signature that does not verify: %r)",
+                fact.id, fact.topic, _forged,
+            )
+            fact.status = "quarantined"
         # Cycle #128 (2026-05-17) — L1 anti-confabulation: emit a
         # warning when the proposition contains a SHIPPED-like keyword
         # but verified_by lacks commit-tracking refs. The fact is STILL
@@ -2774,6 +3013,11 @@ class SemanticMemory:
             _l1_warning = detect_unsupported_shipped_claim(
                 proposition=fact.proposition,
                 verified_by=list(fact.verified_by or []),
+                # 2026-08-04: il topic dice se si sta parlando di software, e
+                # qui era gia' a portata di mano — la riga di log qui sotto lo
+                # stampa. Senza, «le stazioni sono distribuite sul territorio»
+                # si vedeva chiedere un commit.
+                topic=getattr(fact, "topic", None),
             )
             if _l1_warning:
                 _LOG.warning(
@@ -3741,7 +3985,20 @@ class SemanticMemory:
             # / cosine / rerank below run on O(pool) not O(N). Byte-identical to
             # brute-force when OFF or below the gate (query_pool -> None). The
             # oversampled pool preserves the true top-k that survive the filters.
-            if _ann_recall_enabled():
+            # I DUE GATE, NELL'ORDINE IN CUI COSTANO (2026-07-31). Il gate
+            # sulla dimensione e' un confronto fra due interi che ho gia' in
+            # mano; `_ann_recall_enabled()` risponde importando faiss, cioe'
+            # ~275 ms e una DLL nativa. Chiedere prima quello gratis non cambia
+            # il risultato di una sola query — sotto la soglia `query_pool`
+            # tornerebbe comunque None — e toglie il costo a ogni recall di
+            # ogni corpus reale (6517 fatti contro un gate di 100.000).
+            # La soglia si legge dalla cache SE esiste gia': chi l'ha
+            # costruita puo' averla abbassata (i test lo fanno), e leggerla
+            # altrove creerebbe due numeri che possono divergere.
+            _min_n = (self._ann_cache_obj.min_n
+                      if self._ann_cache_obj is not None
+                      else _ann_default_min_n())
+            if len(facts) >= _min_n and _ann_recall_enabled():
                 try:
                     # background=True: never build inline — exact brute until
                     # the index for THIS corpus version is ready (iter 26).
@@ -3874,6 +4131,8 @@ class SemanticMemory:
             if _rr_on and len(hits_2t) > 1:
                 hits_2t = self._rerank_stage2(query, hits_2t, k)
             else:
+                _ranking_note("rerank",
+                              "off" if not _rr_on else "skipped_single_hit")
                 hits_2t = hits_2t[:k]
             hits_2t = self._maybe_fuse_ppr(
                 query, hits_2t, k,
@@ -4038,6 +4297,8 @@ class SemanticMemory:
         if _rr_on and len(hits_2t) > 1:
             hits_2t = self._rerank_stage2(query, hits_2t, k)
         else:
+            _ranking_note("rerank",
+                          "off" if not _rr_on else "skipped_single_hit")
             hits_2t = hits_2t[:k]
         hits_2t = self._maybe_fuse_ppr(
             query, hits_2t, k, topic_prefix=topic_prefix, topic=topic,
@@ -4092,10 +4353,19 @@ class SemanticMemory:
             # worse on the 26/07 GT) — skip BEFORE any load/slot/breaker
             # touch, same pattern as the long-docs guard below: skipping
             # after the load would pay the ~43.6s warm-up for nothing.
+            _ranking_note("rerank", "skipped_long_query")
             return hits_2t[:k]
         if _rerank_breaker_tripped():
             # the FUNCTION, not the raw field: only the function re-arms after
-            # the cooldown, and this gate is the consumer the re-arm exists for
+            # the cooldown, and this gate is the consumer the re-arm exists for.
+            # Merge 09/08 (ws2/abstention ← main): the two sides were NOT
+            # alternatives. Reading through the function is what lets a tripped
+            # breaker come back; the note is what tells the caller the ranking
+            # it just got is degraded to keyword order. Keeping only main's side
+            # would strand the breaker; keeping only ours would leave the caller
+            # a 0.0 score with no reason attached — the exact gap ws4 measured
+            # today at the agent's door.
+            _ranking_note("rerank", "skipped_breaker")
             return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]
         tail = hits_2t[len(pool):]
@@ -4105,6 +4375,7 @@ class SemanticMemory:
                            for f, _ in pool)
             _median = _lens[len(_lens) // 2]
             if _median > _cap:
+                _ranking_note("rerank", "skipped_long_docs")
                 return hits_2t[:k]  # docs out of CE window — keep bi-encoder
         by_id = {f.id: (f, sim) for f, sim in pool}
         # Circuit-breaker (2026-06-13): the CE COLD load is ~33s and the steady
@@ -4131,6 +4402,7 @@ class SemanticMemory:
                     semantic_db=self.db_path, scorer=scorer, top_n=len(pool),
                 )
             except Exception:  # noqa: BLE001 — recall must NEVER break when ON
+                _ranking_note("rerank", "error")
                 return hits_2t[:k]
         else:
             # One at a time (see _RERANK_INFLIGHT). Taking the bi-encoder order
@@ -4140,6 +4412,7 @@ class SemanticMemory:
             # as an overrun: nothing here was slow, the slot was simply taken.
             _lease = _rerank_inflight_acquire()
             if not _lease:
+                _ranking_note("rerank", "skipped_busy")
                 return hits_2t[:k]
             _box: dict[str, Any] = {}
 
@@ -4163,6 +4436,7 @@ class SemanticMemory:
                 _t.start()
             except Exception:  # noqa: BLE001 — a thread that never ran holds
                 _rerank_inflight_release(_lease)  # the slot forever otherwise
+                _ranking_note("rerank", "error")
                 return hits_2t[:k]
             _t.join(_budget)
             if _t.is_alive():
@@ -4173,6 +4447,7 @@ class SemanticMemory:
                         _budget,
                     )
                     _rerank_breaker_overrun()
+                    _ranking_note("rerank", "timeout")
                 else:
                     # F1 C1: cold overrun = CE still warming = transient by
                     # definition. Never counts toward the steady trip; only
@@ -4183,8 +4458,10 @@ class SemanticMemory:
                         "overruns do not trip the steady breaker)", _budget,
                     )
                     _rerank_breaker_cold_overrun()
+                    _ranking_note("rerank", "timeout_cold")
                 return hits_2t[:k]
             if "err" in _box:
+                _ranking_note("rerank", "error")
                 return hits_2t[:k]  # scorer error → bi-encoder order
             ranked = _box.get("ranked")
             # in budget: recorded, not erased. Erasing was the blind spot —
@@ -4193,7 +4470,9 @@ class SemanticMemory:
             _rerank_breaker_record(False)
             _RERANK_BREAKER["cold"] = 0         # CE answered → warm again
         if not ranked:
+            _ranking_note("rerank", "no_result")
             return hits_2t[:k]
+        _ranking_note("rerank", "applied")
         reordered = [by_id[fid] for fid, _ce in ranked if fid in by_id]
         # Defensive: re-attach pool items the primitive dropped (ids missing
         # from the DB) so a hit never silently disappears from the result.
@@ -4362,12 +4641,17 @@ class SemanticMemory:
         scorer: they enter purely via RRF against the CE order. PPR (HippoRAG-2
         gap) + BM25 (Zep gap) are each their own RRF signal. Capped at k.
         Fail-soft: any error / no extra signals → unchanged."""
-        if not _ppr_fusion_enabled() or not query or not hits:
+        if not _ppr_fusion_enabled():
+            _ranking_note("fusion", "off")
+            return hits
+        if not query or not hits:
+            _ranking_note("fusion", "skipped_no_input")
             return hits
         # Breaker FIRST: once tripped the fusion is not attempted at all, so the
         # exit costs nothing — the whole point is to stop paying for a result
         # that never arrives (see _FUSION_BREAKER).
         if _fusion_breaker_tripped():
+            _ranking_note("fusion", "skipped_breaker")
             return hits
         # #3 default-ON prereq (audit round-2): su corpus PICCOLI il bi-encoder +
         # CE bastano e i 2 DB-open + il graph-build del PPR sono puro overhead.
@@ -4379,6 +4663,7 @@ class SemanticMemory:
         if _floor > 0:
             try:
                 if len(self._get_corpus_cache()[0]) < _floor:
+                    _ranking_note("fusion", "skipped_small_corpus")
                     return hits
             except Exception:  # noqa: BLE001 — fail-soft: in dubbio, fondi
                 pass
@@ -4444,8 +4729,11 @@ class SemanticMemory:
         _budget = _ppr_fusion_budget_s()
         if _budget <= 0.0:  # 0 = no cap, synchronous (accurate bench)
             try:
-                return _fuse()
+                _fused = _fuse()
+                _ranking_note("fusion", "applied")
+                return _fused
             except Exception:  # noqa: BLE001 — recall must never break
+                _ranking_note("fusion", "error")
                 return hits
 
         _box: dict[str, Any] = {}
@@ -4460,6 +4748,7 @@ class SemanticMemory:
         try:
             _t.start()
         except Exception:  # noqa: BLE001 — the whole point of the budget is
+            _ranking_note("fusion", "error")
             return hits    # that recall degrades instead of breaking, and a
             # machine out of thread handles is exactly when it must hold. Found
             # while testing the rerank slot: breaking Thread.start there took
@@ -4472,6 +4761,7 @@ class SemanticMemory:
                 "(graph/lexical signals skipped this query)", _budget,
             )
             _fusion_breaker_record(True)
+            _ranking_note("fusion", "timeout")
             return hits
         if "err" in _box:
             # Fail-soft, but NOT silent: recall must never break on the opt-in
@@ -4482,8 +4772,10 @@ class SemanticMemory:
                 "PPR fusion failed → keeping reranked order (graph/lexical "
                 "signals skipped this query): %r", _box["err"],
             )
+            _ranking_note("fusion", "error")
             return hits
         _fusion_breaker_record(False)
+        _ranking_note("fusion", "applied")
         return _box.get("fused", hits)
 
     # ----------------------------------------------------------------
@@ -4706,6 +4998,41 @@ class SemanticMemory:
                 # Default (both False) stays exact-substring for back-compat.
                 _multi = tokenize or require_all_tokens
                 toks = [t for t in q.lower().split() if len(t) >= 2] if _multi else []
+                # L'OR NON PUO' MATCHARE GLI ARTICOLI. Il ramo AND chiede che
+                # ogni token ci sia, quindi una funzionale in più stringe e non
+                # allarga; l'OR chiede che ce ne sia UNO, e «il» sta in mezzo
+                # corpus. Misurato 2026-08-02 sul corpus vero (7079 fatti,
+                # limit 20):
+                #     'quale database usa il cluster ... a Singapore' -> 20 hit
+                #     'qual e il numero di targa della mia automobile'-> 20 hit
+                # e i primi TRE erano gli stessi identici delle due query, che
+                # non hanno in comune nient'altro che le parole funzionali. Su
+                # tre frasi inglesi che cominciano tutte con «The», qualunque
+                # domanda rendeva il corpus intero.
+                #
+                # `_tokens` di bm25_rank, non una copia: quel percorso toglie
+                # le funzionali da luglio e il suo commento descrive lo stesso
+                # danno («riempiendo il ranklist di rumore»), ma vive su FTS e
+                # questa e' una LIKE, quindi la cura non ci era mai arrivata.
+                #
+                # LIMITE: quella lista e' en+it. Una domanda in tedesco resta
+                # scoperta. Il criterio che non dipende dalla lingua — la
+                # document frequency — sta sullo stesso modulo ma interroga
+                # `facts_fts` con MATCH indicizzato: portarlo su una LIKE e'
+                # una misura da fare, non un'assunzione da scrivere qui.
+                #
+                # Solo il ramo OR: `require_all_tokens` e' il percorso di
+                # precisione e chi cerca una frase esatta deve continuare a
+                # trovarla.
+                if tokenize and not require_all_tokens and len(toks) > 1:
+                    from .bm25_rank import _tokens as _informativi
+                    _ridotti = [t for t in _informativi(q) if len(t) >= 2]
+                    # Nessun token informativo => la domanda condivideva SOLO
+                    # parole funzionali. Zero e' la risposta giusta: il ramo
+                    # AND ha gia' detto che nulla contiene tutti i termini, e
+                    # servire i piu' recenti sarebbe una risposta che non
+                    # dipende dalla domanda.
+                    toks = _ridotti
                 if len(toks) > 1:
                     _join = " AND " if require_all_tokens else " OR "
                     clauses.append(
@@ -5027,13 +5354,34 @@ class SemanticMemory:
             pass
         return True
 
-    def count(self, *, include_superseded: bool = False) -> int:
+    def count(self, *, include_superseded: bool = False,
+              include_quarantined: bool = True,
+              topic: str | None = None) -> int:
+        """Quante righe, e di QUALE popolazione.
+
+        ``include_quarantined`` sta a True per non cambiare sotto i piedi il
+        significato a chi gia' chiama questo metodo — e' la primitiva di basso
+        livello. Chi promette «la vista di default di search» (``Memory.count``)
+        lo chiede a False: un fatto quarantinato e' tenuto FUORI dal recall di
+        default, quindi contarlo fra i propri fatti significa rispondere con un
+        numero che comprende cio' che non verra' mai restituito. Misurato il
+        2026-08-04 sul corpus vero: 5428 contro i 4834 di `search_facts('')`,
+        e la differenza erano esattamente i 594 quarantinati vivi.
+        """
+        dove: list[str] = []
+        args: list[Any] = []
+        if not include_superseded:
+            dove.append("superseded_by IS NULL")
+        if not include_quarantined:
+            dove.append("(status IS NULL OR status != 'quarantined')")
+        if topic is not None:
+            dove.append("topic = ?")
+            args.append(topic)
+        sql = "SELECT COUNT(*) FROM facts"
+        if dove:
+            sql += " WHERE " + " AND ".join(dove)
         with self._connect() as conn:
-            if include_superseded:
-                return conn.execute("SELECT COUNT(*) FROM facts").fetchone()[0]
-            return conn.execute(
-                "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL"
-            ).fetchone()[0]
+            return conn.execute(sql, args).fetchone()[0]
 
     def count_superseded(self) -> int:
         """Cycle #78: count facts marked as superseded."""
@@ -5723,6 +6071,18 @@ class SemanticMemory:
             # SCAN-68 FIX 2026-06-02 (NONNA): erano OMESSI -> provenance v6 persa
             # nel roundtrip (il gate anti-confab legge fact.writer_role).
             writer_role=_opt("writer_role") or "agent_inference",
+            # 2026-07-30, stessa classe del FIX qui sopra e sette settimane
+            # dopo: `writer_principal` e' arrivato con la v16 (2026-07-23) e
+            # non era mai stato aggiunto a questa ricostruzione, quindi ogni
+            # lettura lo perdeva — 205 righe del corpus vivo lo hanno sul disco
+            # e nessuna lo restituiva. E' l'identita' STAMPATA dal server,
+            # quella che il dataclass descrive come mai presa dagli argomenti
+            # di un tool: esattamente la provenienza che non deve sparire.
+            #
+            # Trovato solo perche' il contratto di uscita ha iniziato a
+            # mostrarlo: un campo che nessuna superficie espone non ha modo di
+            # risultare sbagliato.
+            writer_principal=_opt("writer_principal"),
             meta_narrative=bool(_opt("meta_narrative")),
             # v8 (2026-06-03) buco #3. Defensive su righe pre-v8 (None ->
             # freshness lo coalesce a created_at).

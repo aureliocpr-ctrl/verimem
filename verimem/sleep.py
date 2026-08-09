@@ -493,11 +493,42 @@ class SleepEngine:
         fact: Fact | None = None
         if skill.rationale:
             topic = (cluster[0].task_text[:40] or "general").strip()
+            # IL GATE, anche qui. Questa proposizione e' `skill.rationale`:
+            # un testo che un LLM ha SCRITTO riassumendo il cluster, cioe' il
+            # tipo di scrittura per cui il moat esiste — derivata, non
+            # osservata. Finiva in `semantic.store()` (`:456`), che fa
+            # redazione, screen di sicurezza e hard-gate sulla provenienza, e
+            # NON fa girare ne' L1 ne' L4. Il README apre con «Every write
+            # passes an admission gate»: questo era l'ultimo canale a non
+            # farlo, dopo `document_promote` (`8d4d393d`) e
+            # `transcript_promote` (`88713b32`).
+            #
+            # La source e' `body`, il testo degli episodi da cui il razionale
+            # e' stato tratto: e' esattamente cio' contro cui va confrontato.
+            _punteggio = None
+            _stato = "model_claim"
+            try:
+                from .anti_confab_gate import run_validation_gate
+                _v = run_validation_gate(
+                    proposition=skill.rationale, verified_by=None, topic=topic,
+                    agent=None, source=body, ground_write=True,
+                )
+                _punteggio = _v.grounding_score
+                _soglia = getattr(_v, "threshold", None)
+                if _v.action == "reject" or (
+                        isinstance(_punteggio, (int, float))
+                        and isinstance(_soglia, (int, float))
+                        and _punteggio < _soglia):
+                    _stato = "quarantined"
+            except Exception:  # noqa: BLE001 — un giudice assente non promuove
+                _punteggio = None
             fact = Fact(
                 proposition=skill.rationale,
                 topic=topic,
                 confidence=min(0.9, 0.5 + 0.1 * n_success - 0.05 * n_failure),
                 source_episodes=[e.id for e in cluster],
+                grounding_score=_punteggio,
+                status=_stato,
             )
         return skill, fact, resp.total_tokens
 

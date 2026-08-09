@@ -30,14 +30,20 @@ def test_probe_finds_independent_counterevidence(mem, monkeypatch):
     # the model is installed) would now quarantine before they land -- so
     # the write-side NLI is explicitly opted out here.
     monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
+    # 2026-07-28: both facts here are equally guaranteed (neither carries an
+    # epistemic label, both carry a source), so this pins DETECTION, which is
+    # what the probe owes on such a pair. Applying the absorbing `refuted` to
+    # settle it would decide by probe ORDER — probe the labrador and the
+    # labrador dies, probe the poodle and the poodle dies — so the even case is
+    # now reported as `contested` with the rival named. Refutation by a
+    # STRICTLY better-guaranteed rival is pinned in test_verimem_probe_rank.py
+    # and test_verimem_probe_contested.py.
     a = mem.add("Rex is a labrador.", topic="pets", verified_by=["source-doc:alice:t1"])
     b = mem.add("Rex is a poodle.", topic="pets", verified_by=["source-doc:vet:t2"])
     out = probe_fact(mem, a["id"])
-    assert out["outcome"] == "refuted_proposed"
-    assert out["counterexample_id"] == b["id"]
-    fact = mem.semantic.get(a["id"])
-    assert fact.epistemic and fact.epistemic["kind"] == "refuted"
-    assert b["id"] in fact.epistemic["counterexample"]
+    assert out["outcome"] == "contested"
+    assert out["rival_id"] == b["id"]
+    assert (mem.semantic.get(a["id"]).epistemic or {}).get("kind") != "refuted"
 
 
 def test_probe_survival_grows_the_bound(mem):

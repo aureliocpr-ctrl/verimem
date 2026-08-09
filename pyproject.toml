@@ -69,7 +69,14 @@ dependencies = [
   # mcp_server.py imports it unconditionally and the README primary install
   # documents `verimem mcp`, so it MUST be core (audit P0-5 2026-06-07: was
   # extras-only -> fresh install crashed ModuleNotFoundError on first command).
-  "mcp>=1.0.0",
+  # Upper bound added 2026-07-29, NOT a CI fix: mcp 2.0.0 removed
+  # Server.list_tools, which this server uses in 11 places, so the MCP surface
+  # does not start at all under it. Published verimem 0.7.0 asks for
+  # `mcp>=1.0.0` with no ceiling, so every `pip install verimem` since that
+  # release resolves to 2.0.0 and gets a broken server — the CI turning red is
+  # how we found out, not the damage. Lift this deliberately, with the
+  # migration, not by widening the range.
+  "mcp>=1.0.0,<2",
 ]
 
 [project.optional-dependencies]
@@ -81,7 +88,14 @@ headless = []
 # Just the MCP server stack — for users who only want to expose hippo to
 # Claude Code / Cursor / opencode and don't care about the dashboard.
 mcp-only = [
-  "mcp>=1.0.0",
+  # Upper bound added 2026-07-29, NOT a CI fix: mcp 2.0.0 removed
+  # Server.list_tools, which this server uses in 11 places, so the MCP surface
+  # does not start at all under it. Published verimem 0.7.0 asks for
+  # `mcp>=1.0.0` with no ceiling, so every `pip install verimem` since that
+  # release resolves to 2.0.0 and gets a broken server — the CI turning red is
+  # how we found out, not the damage. Lift this deliberately, with the
+  # migration, not by widening the range.
+  "mcp>=1.0.0,<2",
 ]
 
 # Web dashboard / IDE surfaces (server-only modules). NOT needed by the SDK,
@@ -138,7 +152,14 @@ full = [
   "opencv-python>=4.8.0",
   "pyautogui>=0.9.54",
   "textual>=0.60.0",
-  "mcp>=1.0.0",
+  # Upper bound added 2026-07-29, NOT a CI fix: mcp 2.0.0 removed
+  # Server.list_tools, which this server uses in 11 places, so the MCP surface
+  # does not start at all under it. Published verimem 0.7.0 asks for
+  # `mcp>=1.0.0` with no ceiling, so every `pip install verimem` since that
+  # release resolves to 2.0.0 and gets a broken server — the CI turning red is
+  # how we found out, not the damage. Lift this deliberately, with the
+  # migration, not by widening the range.
+  "mcp>=1.0.0,<2",
   "fastapi>=0.110.0",
   "uvicorn[standard]>=0.27.0",
   "jinja2>=3.1.0",
@@ -226,6 +247,17 @@ markers = [
   "security: security-focused tests (auth, sandbox, injection)",
   "network: tests that require network access",
   "perf: performance benchmarks (run with --benchmark-only)",
+  # Dichiarato il 2026-08-01 perche' `--strict-markers` (riga 235) fa fallire la
+  # COLLECTION se un marker usato non e' in questa lista, e il conftest lo
+  # applica in `pytest_collection_modifyitems`. In locale non si vedeva:
+  # `pytest-xdist` non e' installato qui, quindi il marker non veniva
+  # registrato ne' preteso. In CI, dove xdist c'e', la collection moriva con
+  # `INTERNALERROR> Failed: 'xdist_group' not found in markers configuration
+  # option` — su TUTTE le piattaforme, bloccando la PR.
+  # Serve anche se oggi la suite si esegue a fette e non con xdist: il marker
+  # raggruppa i test che caricano lo stesso cross-encoder, ed e' l'informazione
+  # da non perdere il giorno in cui si riprova.
+  "xdist_group: raggruppa i test che devono girare nello stesso worker xdist",
 ]
 
 # ─────────────────────────── coverage ───────────────────────────

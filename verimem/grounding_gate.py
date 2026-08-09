@@ -159,15 +159,15 @@ def _abstention_kind(text: str) -> str:
 
 
 def _resolve_threshold(threshold: float | None) -> float:
+    # env_float, not float(): this threshold gates the ANSWER path, where the
+    # comparison reads `judge_score < threshold` (client.py, trust_report.py).
+    # A NaN makes that False forever, so the answer the judge REJECTED gets
+    # served — abstention silently traded for a guess. The explicit argument
+    # goes through the same check: the env is not the only way a NaN gets in.
+    from .env_num import env_float, finite_or
     if threshold is not None:
-        return float(threshold)
-    env = os.environ.get("ENGRAM_GROUNDING_THRESHOLD", "").strip()
-    if env:
-        try:
-            return float(env)
-        except ValueError:
-            pass
-    return DEFAULT_THRESHOLD
+        return finite_or(threshold, DEFAULT_THRESHOLD)      # type: ignore[return-value]
+    return env_float("ENGRAM_GROUNDING_THRESHOLD", DEFAULT_THRESHOLD)
 
 
 def _resolve_write_threshold() -> float:
@@ -175,24 +175,71 @@ def _resolve_write_threshold() -> float:
     the answer-path default (see WRITE_DEFAULT_THRESHOLD). Override with
     ENGRAM_GROUNDING_WRITE_THRESHOLD; falls back to the general ENGRAM_GROUNDING_THRESHOLD
     if a deployment set only that, then to WRITE_DEFAULT_THRESHOLD."""
-    env = os.environ.get("ENGRAM_GROUNDING_WRITE_THRESHOLD", "").strip()
-    if env:
-        try:
-            return float(env)
-        except ValueError:
-            pass
-    general = os.environ.get("ENGRAM_GROUNDING_THRESHOLD", "").strip()
-    if general:
-        try:
-            return float(general)
-        except ValueError:
-            pass
+    from .env_num import finite_or
+    # The cascade is preserved; each rung must yield a FINITE number to be
+    # taken, so a malformed override falls through to the next source instead
+    # of poisoning every `score >= threshold` downstream.
+    for name in ("ENGRAM_GROUNDING_WRITE_THRESHOLD", "ENGRAM_GROUNDING_THRESHOLD"):
+        value = finite_or(os.environ.get(name, "").strip(), None)
+        if value is not None:
+            return value
     return WRITE_DEFAULT_THRESHOLD
 
 
 def _resolve_judge(judge: str | None) -> str:
     j = (judge or os.environ.get("ENGRAM_GROUNDING_JUDGE", "")).strip().lower()
     return j if j in ("basic", "span") else "basic"
+
+
+def _e_un_giudice_vero(llm: Any) -> bool:
+    """C'e' un llm che sa davvero giudicare, o solo il segnaposto?
+
+    La domanda sembra `llm is not None` e NON lo e'. Quando nessun provider e'
+    configurato, `verimem.llm` non passa `None`: costruisce un `MockLLM()` e lo
+    logga (`llm_using_mock reason='no provider available'`). Quell'oggetto
+    passava il controllo `llm is None`, quindi il ramo del CE locale non veniva
+    mai preso e il gate finiva a chiedere il punteggio a un mock — che risponde
+    a vuoto, e da li' `NoGroundingJudge: the grounding judge returned no score
+    (0 chars)`.
+
+    Il risultato e' che l'utente «brand-new with no llm» — cioe' esattamente
+    quello che il ramo locale esisteva per proteggere (commento 2026-07-18) —
+    era l'unico a NON avere il moat. Misurato sul corpus reale: 152 fatti
+    giudicati su 6572.
+
+    `isinstance` e non un'euristica sul nome: `MockLLM` e' una classe di questo
+    prodotto, e la domanda «e' il segnaposto che costruiamo quando non c'e'
+    niente?» ha una risposta esatta. Import locale perche' `llm.py` e' pesante e
+    questo modulo sta sul write path.
+    """
+    if llm is None:
+        return False
+    try:
+        from verimem.llm import LazyLLM, MockLLM
+    except Exception:  # noqa: BLE001 — senza il modulo, un oggetto vale un llm
+        return True
+    # IL PROXY VA APERTO. `LazyLLM` e' un proxy trasparente che costruisce il
+    # backend vero al primo accesso a un attributo, e il suo docstring dichiara
+    # la condizione di sicurezza: «No isinstance checks are done on the llm in
+    # the wake/sleep hot paths (verified), so a proxy is safe here». Quella
+    # verifica NON copriva il write gate, dove `llm is None` e' precisamente un
+    # controllo di identita' — e il proxy lo scavalca. Tracciato sul canale MCP:
+    #     [gate] fact_grounding_score_ex  llm=LazyLLM
+    #     [gate] -> NoGroundingJudge: the grounding judge returned no score
+    # con `try_local_score` mai chiamato.
+    #
+    # Risolverlo qui e' legittimo e non tradisce lo scopo del proxy: siamo nel
+    # punto in cui l'inferenza sta per essere TENTATA, cioe' esattamente quando
+    # il proxy vuole risolversi. Se la risoluzione fallisce (nessuna chiave),
+    # non c'e' un giudice vero — che e' la risposta giusta.
+    if isinstance(llm, LazyLLM):
+        try:
+            llm = llm._resolve()
+        except Exception:  # noqa: BLE001 — niente backend = niente giudice vero
+            return False
+        if llm is None:
+            return False
+    return not isinstance(llm, MockLLM)
 
 
 def _resolve_backend() -> str:
@@ -380,7 +427,8 @@ def fact_grounding_score_ex(llm: Any, source: str, fact: str, *,
     # still gets the entailment moat — the CE is multilingual (measured EN/IT/FR/ES,
     # entailed ~97-99 vs confab ~0.6) — instead of the gate fail-opening. An
     # injected llm still wins on the default "claude" backend.
-    if backend == "local" or (backend == "claude" and llm is None):
+    if backend == "local" or (backend == "claude"
+                              and not _e_un_giudice_vero(llm)):
         from verimem.local_grounding import try_local_score
         r = try_local_score(source, fact, focus_budget=focus_budget)
         if r is not None:
@@ -406,10 +454,32 @@ def fact_grounding_score_ex(llm: Any, source: str, fact: str, *,
         system or _FACT_SYSTEM,
         [{"role": "user", "content": f"Source: {source}\n\nCandidate fact: {fact}\n\n"
                                      f"Score:"}],
-        model=model, max_tokens=12)
+        model=model, max_tokens=_JUDGE_MAX_TOKENS)
     m = _SCORE_RE.search(getattr(resp, "text", "") or "")
-    return (min(100.0, max(0.0, float(m.group(1)))) if m else 50.0), "claude"
+    if not m:
+        # SILENCE IS NOT A VERDICT (2026-07-28). This returned 50.0 — which
+        # clears the write cut of 40, so an unanswered judge ADMITTED the write
+        # with a number nobody produced. Measured against glm-5.2 and
+        # deepseek-v4-pro: under the old 12-token ceiling both replied with an
+        # EMPTY string, while at 128 both correctly scored the same claim 0.
+        # NoGroundingJudge is the signal the write path already knows how to
+        # report honestly (the L4-skipped advisory), so an unreadable verdict
+        # now says "I could not judge" instead of "about half".
+        raise NoGroundingJudge(
+            f"the grounding judge returned no score "
+            f"({len(getattr(resp, 'text', '') or '')} chars) — treating it as "
+            f"'cannot judge', not as a middling verdict")
+    return min(100.0, max(0.0, float(m.group(1)))), "claude"
 
+
+#: Token budget for the judge's reply. It was 12 — enough for "SCORE: 87" from a
+#: model that answers immediately, and NOTHING from a reasoning model, which
+#: spends the budget thinking before it writes. Measured 2026-07-28 on the two
+#: strongest third-party models available here: glm-5.2 and deepseek-v4-pro both
+#: returned an EMPTY string at 12, 32 and 64 tokens, and both scored the same
+#: claim 0 at 128. Sized with margin above that measured floor; the reply is
+#: still one short line, so the ceiling only has to clear the thinking.
+_JUDGE_MAX_TOKENS = 256
 
 _warned_uncalibrated = False
 
@@ -470,11 +540,8 @@ CE_BAND_TAU_HI_DEFAULT = 80.0
 
 
 def _ce_band_tau_hi() -> float:
-    v = os.environ.get("VERIMEM_CE_TAU_HI", "").strip()
-    try:
-        return float(v) if v else CE_BAND_TAU_HI_DEFAULT
-    except ValueError:
-        return CE_BAND_TAU_HI_DEFAULT
+    from .env_num import env_float
+    return env_float("VERIMEM_CE_TAU_HI", CE_BAND_TAU_HI_DEFAULT)
 
 
 def _ce_band_enforced() -> bool:

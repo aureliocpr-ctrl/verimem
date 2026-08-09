@@ -4,6 +4,45 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 
 ## [Unreleased] — 0.8 line
 
+### Changed (BREAKING)
+
+- **Read-path abstention is ON by default.** `ENGRAM_MIN_RELEVANCE` unset now
+  resolves to `auto` instead of `0.0`, so `Memory.explain()`, the console and
+  the gateway abstain on a question the store cannot support, instead of
+  returning the nearest-but-wrong fact with an honest relevance score attached.
+  The MCP surface already behaved this way; one store now gives one answer.
+
+  Measured on the live corpus before flipping — 20 questions, 12 the store can
+  support and 8 plausible inventions:
+
+  | | wrong abstentions | expected fact missed | inventions caught | latency |
+  |---|---|---|---|---|
+  | floor off | 0/12 | 2/12 | **0/8** | 1.22s |
+  | floor auto | 0/12 | 2/12 | **8/8** | 4.21s |
+
+  The two misses are the SAME two in both rows — outside the retrieval top-k to
+  begin with — so the gate costs no answer the store could have given. A
+  narrower 5+5 bench had suggested it dropped one good fact in five; at n=12
+  that cost is zero, which is why it was measured again before touching a
+  default.
+
+  **Restore the old behaviour with `ENGRAM_MIN_RELEVANCE=off`** (or `0`). An
+  explicit value has always won and still does.
+
+  This closes a limit the code documented as open: `test_client_sdk` called it
+  the "GLASS contract (known limit, open item for the critic)", and
+  `test_abstention_ce_gate` — a file whose docstring calls the behaviour a
+  "must not pass" — carried a test guaranteeing the permissive default for
+  backward compatibility. Its example was asking "what database does analytics
+  run on?" of a store that only knows the office coffee machine was serviced on
+  Tuesday, and expecting the coffee machine back. That test is now inverted and
+  renamed; a second one guards that `off` still returns it for callers who
+  depend on it.
+
+  Found by three failures in the FULL suite after 67 targeted tests passed —
+  the repo's own rule, from a regression reverted in `ffbebb9`: *"un flip di
+  default sul gate senza suite intera è vietato."*
+
 ### Added
 - **`verimem/diversify.py` — MMR selection for deep-then-compress retrieval
   (WS2, NOT yet wired into `recall`).** Measured on the five LoCoMo multi-hop

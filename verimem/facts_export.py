@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .fact_contract import fact_payload
+
 _SCHEMA_VERSION = 1
 
 
@@ -26,16 +28,12 @@ def export_all_facts(
     for f in facts:
         if topic is not None and getattr(f, "topic", "") != topic:
             continue
-        rows.append({
-            "id": getattr(f, "id", ""),
-            "proposition": getattr(f, "proposition", ""),
-            "topic": getattr(f, "topic", ""),
-            "confidence": float(getattr(f, "confidence", 0.0)),
-            "created_at": float(getattr(f, "created_at", 0.0)),
-            "source_episodes": list(
-                getattr(f, "source_episodes", []) or []
-            ),
-        })
+        # 2026-07-30: un export che lascia indietro meta' del fatto e' una
+        # perdita di dati silenziosa — chi migra il corpus si porta via le
+        # proposizioni e non il verdetto del moat, il tier del giudice, chi
+        # l'ha scritto, ne' se e' stato superato. Qui il fatto esce INTERO,
+        # tramite il contratto unico (Fact.as_payload).
+        rows.append(fact_payload(f))
     return {
         "schema_version": _SCHEMA_VERSION,
         "n_total": len(rows),

@@ -49,9 +49,50 @@ _QUERY_STOPWORDS = frozenset({
     "your", "there", "this", "that", "these", "those", "any", "some",
     # it — interrogative/funzionali
     "cosa", "che", "chi", "quando", "dove", "perche", "come", "quale", "quali",
+    # it+en — le interrogative di QUANTITA'. C'erano tutte le altre e non
+    # queste, cioe' proprio quelle che introducono una domanda di CONTEGGIO.
+    # Misurato 2026-08-03 su uno store di quattro fatti di listino:
+    #     count(query="quanto costa il piano annuale")  ->  0
+    # mentre «Il piano annuale di VeriMem costa 100 euro.» era nello store:
+    # `count` fa un AND sui token informativi e «quanto» restava fra questi.
+    #
+    # Il prodotto le conosce gia' altrove: `query_intent._STOP` — la lista del
+    # router di cardinalita' — ha `how many much number count times quanti
+    # quante volte numero`. Due liste, due verita', e query_intent ha i PLURALI
+    # e non i singolari (una dimenticanza di genere, non di criterio).
+    #
+    # NON entrano i SOSTANTIVI omografi, misurati sul corpus vero (5371 fatti):
+    #     count 43 — e' il nome di un metodo di questo prodotto
+    #     numero 139 · volte 75 · number 10 · times 3
+    # In questo dominio sono contenuto, e toglierli renderebbe non cercabili i
+    # fatti che ne parlano. Stessa decisione presa per `ai` (281 come sigla
+    # contro 254 come preposizione).
+    "quanto", "quanta", "quanti", "quante", "many", "much",
     "il", "lo", "la", "le", "gli", "un", "una", "uno", "di", "da", "per",
     "con", "su", "tra", "fra", "del", "della", "dei", "delle", "nel", "nella",
     "ed", "sono", "era", "erano", "ha", "hanno", "aveva",
+    # it — preposizioni ARTICOLATE. Ce n'erano 6 su 32 (solo le forme di `di`
+    # e `in`), e le mancanti non erano rare: misurato 2026-08-02 sul corpus
+    # vero, 5343 fatti vivi, `sul` in 590 (11.0%), `dal` in 522 (9.8%), `col`
+    # in 298 (5.6%), `alla` in 266 (5.0%). Il filtro df non le tocca — sotto
+    # il DF_CEILING del 25% — che è esattamente il caso previsto dalla nota
+    # qui sopra: rare in df, rumore puro nel match.
+    #
+    # Generate dalla REGOLA (preposizione × articolo) e non elencate a occhio,
+    # perché è così che le prime sei erano rimaste sole.
+    #
+    # `ai` e `al` sono ESCLUSE di proposito: questa lista è consultata sul
+    # testo abbassato, e nel corpus vero «AI» maiuscolo parola intera sta in
+    # 281 fatti contro i 254 di «ai» preposizione (e «AL» in 32). Metterle
+    # dentro toglierebbe la sigla dal percorso lessicale in un corpus che
+    # parla di AI. Distinguere per capitalizzazione è una cura diversa, da
+    # misurare sul ranking prima di scriverla.
+    "dello", "degli",
+    "allo", "alla", "agli", "alle",
+    "dal", "dallo", "dalla", "dai", "dagli", "dalle",
+    "nello", "nei", "negli", "nelle",
+    "sul", "sullo", "sulla", "sui", "sugli", "sulle",
+    "col", "coi",
 })
 
 

@@ -85,6 +85,48 @@ def _count(db_path: Path | str) -> int:
         conn.close()
 
 
+#: Quanto indietro guarda il conteggio del FLUSSO. Sette giorni perche' e'
+#: l'orizzonte in cui un operatore ricorda cosa ha scritto, non una soglia di
+#: decisione: nessun allarme dipende da questo numero, che serve solo a
+#: raccontare lo stock.
+_GIORNI_RECENTI = 7.0
+
+
+def recenti(db_path: Path | str, *, giorni: float = _GIORNI_RECENTI) -> int:
+    """Quanti del backlog sono ENTRATI negli ultimi ``giorni``.
+
+    Una profondita' non dice se la coda sta crescendo. Misurato sul corpus
+    vivo il 2026-08-01: 528 quarantinati contro soglia 500 — l'allarme suona —
+    ma 415 sono di maggio e 20 degli ultimi sette giorni. Un allarme sempre
+    acceso e' un allarme spento: «il gate sta quarantinando adesso» e «c'e' un
+    deposito che nessuno ha mai drenato» chiedono due azioni diverse.
+
+    `created_at` E' UN EPOCH, e la trappola e' costata una misura sbagliata lo
+    stesso giorno: scritto come per una data — ``created_at >= date('now',
+    '-7 day')`` — il confronto e' fra un numero e una stringa e restituisce
+    **0 sempre**, in silenzio. L'allarme direbbe «nessun arrivo recente» su
+    qualunque corpus, che e' peggio del difetto che sta curando.
+
+    Store illeggibile → 0, come `_count`: mai far cadere una scrittura per una
+    lettura di telemetria, e mai inventare un numero.
+    """
+    da = time.time() - max(0.0, float(giorni)) * 86400.0
+    try:
+        conn = sqlite3.connect(f"file:{Path(db_path)}?mode=ro", uri=True,
+                               timeout=2.0)
+    except sqlite3.Error:
+        return 0
+    try:
+        row = conn.execute(
+            "SELECT COUNT(*) FROM facts WHERE status = 'quarantined' "
+            "AND superseded_by IS NULL AND created_at >= ?", (da,)).fetchone()
+        return int(row[0]) if row else 0
+    except sqlite3.Error:
+        return 0
+    finally:
+        conn.close()
+
+
 def depth(db_path: Path | str, *, max_age_s: float = 0.0) -> int:
     """Current queue depth. ``max_age_s > 0`` accepts a memoised reading that
     recent — the write path uses it; a caller that wants the truth right now
@@ -133,11 +175,22 @@ def backpressure_warning(db_path: Path | str) -> dict[str, str] | None:
         return None
     if not p["over"]:
         return None
+    # Quanto di quel numero e' ARRIVATO di recente: senza, «528 in coda» non
+    # distingue un gate che sta quarantinando adesso da un deposito fermo da
+    # mesi, e sono due azioni diverse. Il conteggio non decide niente — la
+    # soglia continua a guardare lo stock — ma dice all'operatore quale delle
+    # due cose sta leggendo. Illeggibile → si tace, non si inventa.
+    try:
+        n_recenti = recenti(db_path)
+    except Exception:  # noqa: BLE001 — la telemetria non rompe una scrittura
+        n_recenti = None
+    quando = ("" if n_recenti is None else
+              f", {n_recenti} of them in the last {int(_GIORNI_RECENTI)} days")
     return {
         "layer": "REVIEW_BACKPRESSURE",
         "reason": (f"{p['depth']} facts are waiting in the quarantine/review "
-                   f"backlog (threshold {p['threshold']}) — this write joins "
-                   f"them"),
+                   f"backlog (threshold {p['threshold']}){quando} — this "
+                   f"write joins them"),
         "advice": ("drain the backlog (review and restore or forget) — a "
                    "queue nobody drains turns 'held for review' into "
                    "'silently dropped'; tune or disable with "

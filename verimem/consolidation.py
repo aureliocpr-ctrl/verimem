@@ -185,11 +185,31 @@ def propose_master_node(
     props = [r["proposition"] or "" for r in rows]
     key_facts = _select_key_facts(props, k=3)
 
+    # NIENTE frammenti dei fatti figli nella proposition (2026-07-30).
+    #
+    # La riga era:  f"Top representative atomi: {' | '.join(p[:60] for p in key_facts)}"
+    #
+    # Concatenando i primi 60 caratteri di tre fatti, l'INDICE finiva per
+    # contenere le parole chiave di tutti e batteva nel ranking semantico ognuno
+    # dei fatti che indicizza. Misurato sul corpus vivo, 40 query
+    # «cosa so di <topic>» sui topic che hanno un indice:
+    #
+    #     indice nei primi tre : 22/40  (55%)
+    #     indice al PRIMO posto: 11/40  (28%)
+    #
+    # Con k=3 un indice nei primi tre e' un fatto vero in meno, e cio' che offre
+    # al suo posto sono spezzoni tagliati a meta' parola («il verbo del
+    # giocatore (play |»). Non si perde informazione togliendoli: un frammento
+    # troncato non informa nessuno, quante sono le sub-facts e sotto quale
+    # prefisso restano scritti, e ``key_facts`` resta nel dict per gli edge
+    # causali e per chi vuole i testi interi.
+    #
+    # La cura sta nel TESTO e non nel read path di proposito: toglie all'indice
+    # la rendita di posizione senza toccare il ranking, che e' stato mergiato di
+    # recente dopo settimane di lavoro.
     proposition = (
         f"{_AUTO_MASTER_TAG} {prefix} — auto-consolidated entry point "
-        f"organizing {len(fact_ids)} sub-facts under this prefix. "
-        f"Top representative atomi: "
-        f"{' | '.join(p[:60] for p in key_facts)}"
+        f"organizing {len(fact_ids)} sub-facts under this prefix."
     )
     topic = f"{prefix}/{_AUTO_MASTER_TOPIC_SUFFIX}"
     return {

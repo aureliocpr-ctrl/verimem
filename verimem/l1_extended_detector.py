@@ -18,7 +18,9 @@ Decision rule (mirrors cycle-128 family)
 ----------------------------------------
 A fact's proposition is flagged when:
 
-  * ``proposition.upper()`` contains a FIX_KEYWORDS entry (substring)
+  * the proposition contains a FIX_KEYWORDS entry as a WHOLE WORD
+    (non piu' come substring: ``unresolved`` e' il contrario di
+    ``resolved`` — vedi il commento su ``_FIX_WORD_RE``)
   * ``verified_by`` has NO entry that proves the fix actually landed,
     where "proves" means at least one of:
       - starts with ``commit:`` / ``pr:`` / ``file:`` / ``git:``
@@ -36,12 +38,39 @@ Closes gap §5 #3 of ``docs/sota/L0-L3-anti-confab-layers.md`` (cycle 180).
 """
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-#: Canonical bug-fix verbs. Upper-case so the keyword scan is a single
-#: ``.upper()`` + substring check, consistent with cycle-128.
+#: Canonical bug-fix verbs, in upper case perche' il confronto e'
+#: case-insensitive e la warning riporta la forma canonica.
 FIX_KEYWORDS = frozenset({"FIXED", "RESOLVED", "PATCHED", "REPAIRED"})
+
+#: Le stesse parole, ma confrontate come PAROLE INTERE.
+#:
+#: PERCHE' (2026-08-04, dal corpus di produzione): la scansione era un
+#: ``.upper()`` + substring, e ``UNRESOLVED`` contiene ``RESOLVED``. Due dei
+#: dodici fatti ripristinati a mano erano quarantinati per questo:
+#:
+#:   «…riporta due blocchi DISPUTED unresolved con lo stesso record in
+#:     conflitto»  ->  L1.8: FIX-family claim 'RESOLVED' lacks an evidence ref
+#:
+#: Il fatto dice che due conflitti NON sono risolti, e il detector lo legge
+#: come la dichiarazione di averli risolti. E' il caso peggiore per un gate
+#: anti-confabulazione: non blocca una millanteria, blocca la sua SMENTITA —
+#: chi scrive «il problema non e' risolto» si vede chiedere la prova di
+#: averlo risolto. Stesso effetto su ``resolved_at``, che e' il nome di una
+#: colonna.
+#:
+#: LA CURA C'ERA GIA' NEL REPO, sul lato delle PROVE: il fratello
+#: ``l1_tested_detector._has_tested_evidence`` confronta per token e non per
+#: substring, e il commento accanto spiega perche' (``test:greenfield`` non
+#: deve contare). La stessa precauzione non era mai stata portata sul lato
+#: della PROPOSIZIONE — la classe «la cura c'era e mancava lo sweep».
+_FIX_WORD_RE = re.compile(
+    r"\b(?:" + "|".join(sorted(FIX_KEYWORDS)) + r")\b",
+    re.IGNORECASE,
+)
 
 #: Verified-by prefixes that count as "git-state evidence".
 _COMMIT_REF_PREFIXES = ("commit:", "pr:", "file:", "git:")
@@ -104,14 +133,10 @@ def detect_unsupported_fix_claim(
     """
     if not proposition:
         return None
-    text_upper = proposition.upper()
-    hit_keyword: str | None = None
-    for kw in FIX_KEYWORDS:
-        if kw in text_upper:
-            hit_keyword = kw
-            break
-    if hit_keyword is None:
+    m = _FIX_WORD_RE.search(proposition)
+    if m is None:
         return None
+    hit_keyword = m.group(0).upper()
     if _has_evidence_ref(verified_by):
         return None
     return FixClaimWarning(

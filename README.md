@@ -58,7 +58,7 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
   offline) is preferred, then a `claude` CLI on PATH (subscription, no key), else the
   write is held for review. The verdict admits (judge-of-record `local-band`/`claude-band`
   on the receipt) or blocks; any escalation failure falls back to held-for-review, an
-  unreadable verdict never admits (`ENGRAM_BAND_LLM=0` opts out). An air-gapped box with
+  unreadable verdict never admits (`VERIMEM_BAND_LLM=0` opts out). An air-gapped box with
   ollama thus gets the full moat with no network. The residual ~2% scores high and still needs
   a full llm judge. A third
   measured limit: the CE **hard-rejects true facts that require arithmetic or a
@@ -89,11 +89,11 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
   **auto-enables when its model is already installed** (`verimem warmup` fetches it; a
   pure filesystem check, no flag needed — measured **0/10 stale-leak across the full
   matrix** on a warmed machine, vs mem0's 10/10). No model on disk → the tier stays off
-  and costs nothing; `ENGRAM_SEMANTIC_CONFLICT=0` opts out explicitly. A **cross-source** clash
+  and costs nothing; `VERIMEM_SEMANTIC_CONFLICT=0` opts out explicitly. A **cross-source** clash
   quarantines the new instead (the griefing guard — one source never retires another's
   fact). Same-source authority is sound within a tenant + a single-agent-per-tenant
   assumption (verimem has no per-writer auth yet); a multi-agent tenant that can't trust
-  its writers sets `ENGRAM_SUPERSEDE_SAME_SOURCE=0` (detect, but quarantine instead of
+  its writers sets `VERIMEM_SUPERSEDE_SAME_SOURCE=0` (detect, but quarantine instead of
   supersede), or `Memory(preset="permissive")` / `validate="fast"` to skip the moat.
 - **Every write returns an adjudication receipt** — `add()` hands back a visible
   verdict: `{disposition, evidence_class, judge, score, threshold, margin, reason,
@@ -106,8 +106,12 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 - **Quarantine recovery — a wrong block is visible and reversible.** When the gate
   holds a legitimate fact (an over-eager keyword flag on a real
   lawyer/engineer/clinician statement, say), you can SEE it and undo it without
-  reaching into internals: `Memory.quarantine_log()` lists held claims (with the
-  blocking layers + reason when the audit trail is on), and
+  reaching into internals: `Memory.quarantine_log()` lists held claims — pass
+  `explain=True` (or `explain: true` on the MCP tool) and each row also says
+  WHICH screen stopped it and what would let it through, recomputed on the spot
+  so it works on claims held long before you asked. A claim stopped by the
+  source-entailment check is the one case that cannot be explained afterwards —
+  the source is not retained — and it says so rather than returning nothing. And
   `Memory.restore(fact_id, reason=…)` returns one to default recall. The same pair
   is on the MCP surface (`hippo_quarantine_log` / `hippo_quarantine_restore`). It is
   a *guarded* human override, not a back door: restore refuses a **superseded** fact
@@ -117,6 +121,13 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 - **Provenance on every read** — answers cite where each fact came from
   (conversation, document offset, tool call). A `TrustReport` explains *how the
   system knows*: chain of custody, declared conflicts, or an explicit abstention.
+  The *ranking* declares itself too: `hippo_facts_recall` returns a `ranking`
+  field saying which of the three signals actually ordered the answer — e.g.
+  `{"rerank": "timeout_cold", "fusion": "timeout"}` when a cold process kept
+  bi-encoder order, `{"rerank": "applied", "fusion": "applied"}` when all three
+  ran. Each stage degrades under a wall-clock budget rather than hanging the
+  caller, so the same query can legitimately return a different set on a cold
+  process than on a warm one — that difference is now stated, not silent.
 - **Bi-temporal history** — facts carry both *when it happened* and *when we
   learned it*. Query the past (`as_of`), see transitions ("changed from X to Y
   on date Z"), and audit every revision.
@@ -125,7 +136,7 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
   Memory-boundary abstention holds at 1.0 across our end-to-end runs. It is **ON
   by default on every served surface** (gateway/console self-calibrate the floor
   per tenant); in the embedded SDK it is one switch away —
-  `explain(..., min_relevance="auto")` or `ENGRAM_MIN_RELEVANCE=auto` — left
+  `explain(..., min_relevance="auto")` or `VERIMEM_MIN_RELEVANCE=auto` — left
   permissive by default so a brand-new, near-empty store doesn't over-abstain
   while it fills up (the floor is sharpest on real-size corpora).
 - **Document memory with exact citations** — index PDF/DOCX/HTML/EPUB/text
@@ -176,6 +187,12 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
   falsify a stored fact — finding independent counter-evidence proposes a
   `refuted` label, surviving grows its `unbeaten` bound — the store falsifies
   itself instead of waiting for a contradiction to arrive.
+  *Scope, measured:* "the same subject" is resolved by parsing a copula
+  ("X is a Y"), so the comparison only happens on facts with that shape — **7
+  of 5194 live facts** on our own corpus (2026-08-02), which is prose. On the
+  rest the read is served with `not comparable — no conflict search ran`
+  rather than a silent "unchallenged": the guardian says when it did not look,
+  and on prose-shaped memory that is most of the time.
 - **Ignorance map** — "I don't know" becomes "here is *what* I'm missing": each
   unanswerable query is classed (no evidence / below the floor / evidence
   quarantined / a live conflict) with the concrete source or audit that would
@@ -280,6 +297,10 @@ verimem import conversations.json       # list a ChatGPT/Claude export (imports 
 verimem import conversations.json --project verimem --since 2026-06-01 --all-matching
                                         # import a filtered subset (title/date/project)
 verimem trust "the deploy is green" --verified-by ci:main:green
+verimem save "The rent is 900/month." --asserted-at 2026-03-15
+                                        # WHEN the fact is true, distinct from when
+                                        # you wrote it — this is what `as_of` travels
+                                        # over. Omit it and event time stays unknown.
 verimem airgap                          # verify a zero-egress CONFIGURATION
 verimem airgap --live                   # PROVE it: audit every socket during a
                                         # real write+search, exit 0 iff no egress
@@ -409,7 +430,7 @@ the bench is offline and seeded, run it yourself in one command.
 
 Scale: recall latency stays ~flat with the optional ANN index
 (`pip install "verimem[ann]"`): 1.3 ms at 1M facts vs 81 ms brute-force. With
-faiss installed it auto-enables above 100k facts (`ENGRAM_ANN_RECALL=0` opts
+faiss installed it auto-enables above 100k facts (`VERIMEM_ANN_RECALL=0` opts
 out); the default install ships no faiss, so recall is exact brute-force. See
 [SCALE.md](./SCALE.md) for the table + the honest caveats: the ANN is
 *approximate*, and on the random-vector stress bench its recall-in-pool

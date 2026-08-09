@@ -16,10 +16,16 @@ Design choices, deliberate:
     different fact fails (no cut-and-paste replay across facts);
   * ``actor:*`` refs are EXEMPT here: engine self-writes are governed by P85
     (they never testify), not by source signing;
-  * key from ``ENGRAM_PROVENANCE_KEY``; everything ships default OFF — this
-    module is the pure mechanics + the store audit. Gate enforcement (reject
-    unsigned writes when a key is configured) is a one-line consult where
-    L1 already runs, wired when the operator opts in.
+  * key from ``VERIMEM_PROVENANCE_KEY`` (legacy ``ENGRAM_PROVENANCE_KEY`` still
+    honoured); with no key the layer is INERT and nothing changes.
+
+Wiring (2026-07-27): the write path now CONSULTS this module — ``store()`` calls
+``signature_offenders`` and quarantines a write whose refs claim a signature that
+does not verify. Until that date the module had zero call sites, so the "opt-in"
+the docs advertised could not be opted into: setting the key was inert. What is
+refused is narrow on purpose — an UNSIGNED ref is still fine (historical
+provenance is unsigned; refusing it would quarantine the corpus), and only a
+BROKEN signature is treated as forgery.
 
 Honest scope: this authenticates the WRITER'S CHANNEL, not the truth of the
 source document itself — that is the truth-gate's job. Both together are the
@@ -34,17 +40,50 @@ from typing import Any
 
 from .self_provenance import is_self_ref
 
-__all__ = ["audit_store", "provenance_key", "sign_ref", "verify_fact_refs",
-           "verify_ref"]
+__all__ = ["audit_store", "provenance_key", "sign_ref", "signature_offenders",
+           "verify_fact_refs", "verify_ref"]
 
 _SIG_TAG = "#sig="
 _SIG_LEN = 16          # hex chars — 64 bits of MAC, plenty for a write channel
 
 
 def provenance_key() -> str | None:
-    """``ENGRAM_PROVENANCE_KEY`` — None means signing is not configured."""
-    key = os.environ.get("ENGRAM_PROVENANCE_KEY", "").strip()
+    """``VERIMEM_PROVENANCE_KEY`` — None means signing is not configured.
+
+    ``ENGRAM_PROVENANCE_KEY`` stays honoured as the legacy spelling (it is what
+    every existing deployment sets); the verimem name wins when both are set.
+    """
+    key = os.environ.get("VERIMEM_PROVENANCE_KEY", "").strip()
+    if not key:
+        key = os.environ.get("ENGRAM_PROVENANCE_KEY", "").strip()
     return key or None
+
+
+def signature_offenders(fact: Any) -> list[str]:
+    """The refs on ``fact`` that CLAIM a signature and fail to back it.
+
+    Empty when signing is unconfigured (the layer is inert), when no ref carries
+    the ``#sig=`` tag, or when every signature verifies. ``actor:`` refs are
+    exempt — P85 admits engine writes by verification, never by claimed origin.
+
+    This is the read side of the wiring: an unsigned ref is NOT an offender
+    (historical provenance is unsigned and must keep working), but a signature
+    that does not verify is — someone asserted an origin and the assertion does
+    not hold, which is exactly the forgery this module exists to catch.
+    """
+    key = provenance_key()
+    if not key:
+        return []
+    proposition = (getattr(fact, "proposition", "") or "").strip()
+    offenders: list[str] = []
+    for ref in getattr(fact, "verified_by", None) or []:
+        if not isinstance(ref, str) or _SIG_TAG not in ref:
+            continue
+        if is_self_ref(ref):        # same exemption test as verify_fact_refs
+            continue
+        if not verify_ref(ref, proposition, key=key):
+            offenders.append(ref)
+    return offenders
 
 
 def _mac(body: str, proposition: str, key: str) -> str:

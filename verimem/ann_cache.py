@@ -23,18 +23,12 @@ most one rebuild per debounce window. A failed build just keeps brute forever.
 """
 from __future__ import annotations
 
-import os
 import threading
 import time
 from typing import Any
 
-from verimem.ann_index import _ANN_MIN_N, ANNIndex
-
-
-def _default_min_n() -> int:
-    """Deploy override for the ANN gate; falls back to the module default."""
-    v = os.environ.get("ENGRAM_ANN_MIN_N", "").strip()
-    return int(v) if v.isdigit() else _ANN_MIN_N
+from verimem.ann_gate import default_min_n as _default_min_n
+from verimem.ann_index import ANNIndex
 
 
 class ANNCache:

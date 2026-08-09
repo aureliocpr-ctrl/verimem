@@ -1,0 +1,118 @@
+"""`S-001` letto come «1 contiene»: il codice che DISTINGUE prova il conflitto.
+
+TROVATO seguendo il referto di ws5 sulla scala — «duecento record scritti, uno
+vivo: il corpus ha capienza UNO» — e cercando *perché* un prefisso numerato nel
+testo porta la perdita dal 98% a zero. La risposta sta nel parser delle
+quantità:
+
+    «Il campione S-001 contiene piombo a 11 mg/l»  ->  ('contiene', 1.0) …
+    «Il campione S-002 contiene cadmio a 12 mg/l»  ->  ('contiene', 2.0) …
+    numeric_conflict  ->  ('contiene', 1.0, 2.0)
+
+Il `001` del codice viene letto come un VALORE e la parola che segue come la sua
+UNITÀ. Due schede con codici diversi risultano quindi «la stessa grandezza con
+due valori» — cioè una contraddizione. **L'identificatore che distingue i due
+record diventa la prova che si contraddicono**, ed è il contrario del suo
+mestiere.
+
+Sul corpus vivo: **908 fatti su 6109 (15%)** contengono un identificatore
+`LETTERA-CIFRE`, e i più frequenti non sono codici di laboratorio ma i nomi che
+usiamo ogni giorno — `glm-5`, `GPT-5`, `gemini-2`, `opus-4`, `round-2`, `top-10`.
+
+    «Il caccia F-16 vola a 2000 km orari»   ->  ('vola', 16.0)
+    «Il magazzino K-77 ha 4200 metri quadri» ->  ('', 77.0)
+
+**E LE DATE ISO, che scriviamo in continuazione:**
+
+    «Il report del 2026-08-04 conta 42 righe»  ->  ('', 8.0), ('conta', 4.0)
+
+Due report di due giorni diversi hanno «conta 4» e «conta 5»: stessa unità,
+valori diversi. `YEAR_RE` esclude già l'anno nudo — il mese e il giorno di una
+data completa no.
+
+⚠️ QUESTA CURA È DIVERSA DA QUELLE GIÀ CADUTE, e la differenza è il motivo per
+cui vale la pena provarla. Non tocca `content_tokens` (conservare token corti e
+cifre: falsificato, le coppie sopra soglia da 848 a 2293), non alza soglie
+(margine +0.000), non è il veto sulle entità (caduto). **Toglie un falso
+positivo alla radice**: un codice non è una misura, e non lo era nemmeno prima.
+
+⚠️ IL PRESIDIO: le quantità vere non si toccano. «4200 metri quadri», «11 mg/l»,
+«2000 km orari» devono continuare a essere estratte — anche quando stanno nella
+stessa frase di un identificatore, che è il caso normale.
+"""
+from __future__ import annotations
+
+import pytest
+
+from verimem.quantity_match import extract_quantities, numeric_conflict
+
+
+def _valori(testo: str) -> set[float]:
+    return {v for _, v in extract_quantities(testo)}
+
+
+#: (frase, numero che NON è una quantità)
+NON_SONO_QUANTITA = [
+    ("Il campione S-001 contiene piombo a 11 milligrammi per litro.", 1.0),
+    ("Il magazzino K-77 ha 4200 metri quadri.", 77.0),
+    ("Il caccia F-16 vola a 2000 chilometri orari.", 16.0),
+    ("Il modello GPT-5 ha risposto in 3 secondi.", 5.0),
+    ("Il lotto REF-42 pesa 8 chilogrammi.", 42.0),
+]
+
+
+@pytest.mark.parametrize("frase,intruso", NON_SONO_QUANTITA)
+@pytest.mark.xfail(strict=True, reason="IL DIFETTO E' VIVO: la cura e' stata scritta, misurata e RITIRATA il 2026-08-04 perche' chiude il caso (25 schede -> 25 vive invece di 1) ma ROMPE il presidio qui accanto e fa cadere 2 test nella suite del gate. Causa accertata nel docstring; patch in scratchpad/CURA-capienza-uno.patch.")
+def test_un_identificatore_non_e_una_quantita(frase, intruso):
+    """Il cuore: `S-001` identifica un record, non misura niente. Leggerlo come
+    valore fa sì che due schede diverse risultino in conflitto."""
+    assert intruso not in _valori(frase), (
+        f"«{frase}» produce {sorted(extract_quantities(frase))}, "
+        f"dove {intruso} viene dall'identificatore")
+
+
+@pytest.mark.parametrize("frase,vera", [
+    ("Il campione S-001 contiene piombo a 11 milligrammi per litro.", 11.0),
+    ("Il magazzino K-77 ha 4200 metri quadri.", 4200.0),
+    ("Il caccia F-16 vola a 2000 chilometri orari.", 2000.0),
+    ("Il modello GPT-5 ha risposto in 3 secondi.", 3.0),
+    ("Il lotto REF-42 pesa 8 chilogrammi.", 8.0),
+])
+def test_la_quantita_VERA_nella_stessa_frase_resta(frase, vera):
+    """IL PRESIDIO. Il caso normale è che identificatore e misura stiano nella
+    stessa frase: togliere il primo non deve togliere la seconda, altrimenti la
+    cura spegne il rilevatore di contraddizioni numeriche invece di affinarlo."""
+    assert vera in _valori(frase), (
+        f"«{frase}» ha perso la misura vera: {sorted(extract_quantities(frase))}")
+
+
+@pytest.mark.parametrize("frase", [
+    "Il report del 2026-08-04 conta 42 righe.",
+    "La misura del 2026-08-05 conta 42 righe.",
+])
+@pytest.mark.xfail(strict=True, reason="IL DIFETTO E' VIVO: la cura e' stata scritta, misurata e RITIRATA il 2026-08-04 perche' chiude il caso (25 schede -> 25 vive invece di 1) ma ROMPE il presidio qui accanto e fa cadere 2 test nella suite del gate. Causa accertata nel docstring; patch in scratchpad/CURA-capienza-uno.patch.")
+def test_una_data_ISO_non_e_una_coppia_di_quantita(frase):
+    """`YEAR_RE` esclude già l'anno nudo; il mese e il giorno di una data
+    completa no. Due report di due giorni diversi avevano «conta 4» e «conta 5»
+    — stessa unità, valori diversi — e sono la cosa che scriviamo più spesso."""
+    assert _valori(frase) == {42.0}, (
+        f"«{frase}» -> {sorted(extract_quantities(frase))}")
+
+
+@pytest.mark.xfail(strict=True, reason="IL DIFETTO E' VIVO: la cura e' stata scritta, misurata e RITIRATA il 2026-08-04 perche' chiude il caso (25 schede -> 25 vive invece di 1) ma ROMPE il presidio qui accanto e fa cadere 2 test nella suite del gate. Causa accertata nel docstring; patch in scratchpad/CURA-capienza-uno.patch.")
+def test_due_schede_con_codici_diversi_non_sono_in_conflitto():
+    """L'end-to-end del difetto: è la coppia che, moltiplicata per duecento
+    record, lascia il corpus con un solo fatto vivo."""
+    a = "Il campione S-001 contiene piombo a 11 milligrammi per litro."
+    b = "Il campione S-002 contiene cadmio a 12 milligrammi per litro."
+    assert numeric_conflict(a, b) is None, (
+        f"due schede distinte risultano in conflitto: {numeric_conflict(a, b)}")
+
+
+def test_due_misure_dello_STESSO_record_restano_in_conflitto():
+    """L'altro verso, senza cui la cura sarebbe uno spegnimento: lo stesso
+    campione con due valori diversi È una contraddizione, e va vista."""
+    a = "Il campione S-001 contiene piombo a 11 milligrammi per litro."
+    b = "Il campione S-001 contiene piombo a 25 milligrammi per litro."
+    assert numeric_conflict(a, b) is not None, (
+        "stesso campione, due valori: il conflitto deve restare")

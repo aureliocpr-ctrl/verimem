@@ -72,7 +72,15 @@
     function (btn) {
       btn.addEventListener("click", function () {
         Array.prototype.forEach.call(document.querySelectorAll(".tab-btn"),
-          function (b) { b.classList.toggle("on", b === btn); });
+          function (b) {
+            var attivo = b === btn;
+            b.classList.toggle("on", attivo);
+            // aria-selected insieme alla classe: il markup statico partiva
+            // corretto e restava fermo al primo tab, quindi dopo un click lo
+            // stato DICHIARATO e quello reale divergevano — e uno screen reader
+            // legge il primo.
+            b.setAttribute("aria-selected", attivo ? "true" : "false");
+          });
         Array.prototype.forEach.call(document.querySelectorAll(".tab"),
           function (t) {
             t.classList.toggle("on", t.id === "tab-" + btn.dataset.tab);

@@ -109,11 +109,12 @@ _CE_FLOOR_ENV = "VERIMEM_CE_RELEVANCE_FLOOR"
 
 
 def _ce_relevance_floor() -> float:
-    import os
-    try:
-        return float(os.environ.get(_CE_FLOOR_ENV, "0.0"))
-    except ValueError:
-        return 0.0
+    # env_float: _apply_ce_gate keeps a hit when `score >= floor`, so a floor of
+    # -inf keeps EVERY hit and this report serves the nearest-but-wrong fact as
+    # trusted; a floor of nan makes the comparison False forever and blacks out
+    # recall entirely. Same poison, both directions, on the abstention gate.
+    from .env_num import env_float
+    return env_float(_CE_FLOOR_ENV, 0.0)
 
 
 def _apply_ce_gate(sm, query: str, hits: list) -> tuple[list, bool, str]:

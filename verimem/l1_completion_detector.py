@@ -33,7 +33,26 @@ from dataclasses import dataclass
 _COMPLETION_PATTERN = re.compile(
     r"\b(?:complete|completed|done|finished|closed|"
     r"wrapped[- ]up|all[- ]done|task[- ]done|"
-    r"completo|completato|finito|fatto|chiuso|concluso)\b",
+    # LE QUATTRO FLESSIONI, non solo il maschile singolare. Il gate prendeva
+    # «completato» e lasciava passare «completata»: misurato 2026-08-03 sulla
+    # self-claim che l'orientamento MCP cita testualmente come esempio di cio'
+    # che respinge —
+    #     EN  The migration is complete and all tests pass. -> quarantined
+    #     IT  La migrazione e completata e tutti i test ...  -> model_claim
+    # Non mancava l'italiano: c'era, con una flessione su quattro.
+    #
+    # Generate dalla REGOLA come fa `l1_tested_detector._TESTED_PATTERN`
+    # (testato|testati|testata|testate|verificato|...), che nel banco sui
+    # quindici detector era uno di quelli che funzionavano in entrambe le
+    # lingue.
+    #
+    # Rischio misurato prima sul corpus vero (5387 fatti vivi): nessuna forma
+    # aggiunta supera il 2% — le piu' frequenti sono `chiusi` 62, `chiusa` 43.
+    # E non c'e' asimmetria da valutare: la forma maschile e' gia' qui, quindi
+    # se «chiuso» fa scattare il gate «chiusa» deve farlo. Le flessioni non
+    # cambiano il criterio, lo applicano.
+    r"complet[oaie]|completat[oaie]|finit[oaie]|fatt[oaie]|"
+    r"chius[oaie]|conclus[oaie])\b",
     re.IGNORECASE,
 )
 
@@ -45,6 +64,55 @@ _COMPLETION_EVIDENCE_PREFIXES: tuple[str, ...] = (
     "review:", "pr:", "mr:",
     "pytest:", "bash:",
 )
+
+
+# FIX 2026-08-04 — «IL FATTO» E' UN SOSTANTIVO, E IN QUESTO PRODOTTO E' IL NOME
+# DELL'UNITA' DI DOMINIO.
+#
+# Trovato seguendo un numero: se `verimem save` chiamasse il gate L1, 3520 fatti
+# vivi su 5781 (60%) avrebbero un warning, e L1.13 da solo ne fa 2082. Contati
+# gli hit per parola scatenante, i primi due posti sono `fatto` 437 e `fatti`
+# 390 — 855 su 2082, il 41%:
+#
+#     …updated_at uguale 1785623544 il fatto ha grounding 3.9…
+#     …Con i due fatti sul piano annuale entrambi vivi…
+#
+# LA CAUSA E' UN'OMONIMIA CREATA DALLA TRADUZIONE. In inglese `fact` e `done`
+# sono parole diverse e il detector non puo' confonderle; in italiano «fatto» e'
+# il participio di *fare* E il sostantivo che questo prodotto usa per i propri
+# record. Il pattern e' stato esteso all'italiano parola per parola senza
+# accorgersi che una di quelle parole e' il nome della cosa di cui il corpus
+# parla in continuazione.
+#
+# MISURATO SU ENTRAMBE LE POPOLAZIONI (la trappola gia' pagata cinque volte qui:
+# un criterio guardato solo dai negativi sembra sempre ottimo). Su 855 hit di
+# `fatt*`: 419 con un determinante davanti, 428 senza. Letti nove per parte —
+# con determinante 9 su 9 sostantivi; senza, almeno 4 su 9 lo sono comunque.
+# Quindi PRECISIONE ALTA e RICHIAMO PARZIALE: questa cura toglie i 419 senza
+# perdere claim veri, e non pretende di prenderli tutti.
+#
+#: Determinanti che rendono «fatto» un sostantivo. Restano FUORI `tutti`/`altri`
+#: (precedono volentieri un participio: «sono tutti fatti») e un numero
+#: preceduto da `#`, che e' l'id di un task e non un conteggio («P1 #6 FATTO»).
+_DETERMINANTE = re.compile(
+    r"(?<!#)(?<!#\d)(?<!#\d\d)"
+    r"\b(?:il|lo|la|i|gli|le|un|uno|una|del|dei|dello|degli|della|delle|"
+    r"nel|nei|nella|nelle|dal|dai|sul|sui|quel|quei|quella|questo|questi|"
+    r"questa|ogni|due|tre|quattro|cinque|sei|sette|otto|nove|dieci|dodici|"
+    r"\d+)\s+$",
+    re.IGNORECASE,
+)
+
+
+def _e_il_sostantivo_fatto(testo: str, m: re.Match) -> bool:
+    """La parola trovata e' «fatto/fatti/fatta/fatte» usato come NOME?
+
+    Il confine e' «immediatamente prima»: in «il lavoro fatto in fretta» fra
+    l'articolo e la parola c'e' dell'altro, e la parola resta un participio.
+    """
+    if not m.group(0).lower().startswith("fatt"):
+        return False
+    return bool(_DETERMINANTE.search(testo[max(0, m.start() - 24):m.start()]))
 
 
 @dataclass(frozen=True)
@@ -117,12 +185,41 @@ def detect_unsupported_completion_claim(
     """
     if not proposition:
         return None
-    m = _COMPLETION_PATTERN.search(proposition)
-    if m is None:
+    # Si scorrono TUTTE le occorrenze: la prima puo' essere «il fatto» (il nome
+    # di un record) e la seconda un claim vero. Fermarsi alla prima renderebbe
+    # la cura una scappatoia — basterebbe aprire il testo con «il fatto».
+    for m in _COMPLETION_PATTERN.finditer(proposition):
+        if _e_il_sostantivo_fatto(proposition, m):
+            continue
+        matched_text = m.group(0)
+        break
+    else:
         return None
-    matched_text = m.group(0)
     if _has_completion_evidence(verified_by):
         return None
+    # Quante affermazioni contiene la frase. Misurato sui 513 quarantinati vivi
+    # del corpus (2026-07-30): 1 affermazione 9%, 2-3 16%, 4-9 30%, 10+ 45% —
+    # lunghezza mediana 852 char. Non sono fatti respinti ingiustamente, sono
+    # NARRAZIONI DI SESSIONE giudicate come un blocco unico, e un blocco con
+    # dieci affermazioni chiede dieci evidenze.
+    #
+    # Il consiglio era gia' su L4 (il moat) e non qui, dove il backlog si ferma
+    # davvero: rieseguendo il gate sui 164 che citano evidenza nel testo, 42
+    # passano e 122 restano fermi sui detector lessicali, spesso piu' d'uno
+    # sullo stesso fatto. Aggiunto solo quando le affermazioni sono piu' di una:
+    # dirlo a una frase che ne fa una sola e' rumore, e il rumore e' come la
+    # meta' utile di un messaggio smette di essere letta.
+    _split = ""
+    try:
+        from .unsupported_span import split_claim_clauses
+        _n = len(split_claim_clauses(proposition))
+    except Exception:  # noqa: BLE001 — un consiglio non rompe un detector
+        _n = 1
+    if _n > 1:
+        _split = (f" This proposition makes {_n} separate assertions and the "
+                  f"screens judge them together, so one unproven piece holds "
+                  f"back the rest — split it and give each part its own "
+                  f"evidence.")
     return CompletionClaimWarning(
         matched_text=matched_text,
         advice=(
@@ -130,7 +227,7 @@ def detect_unsupported_completion_claim(
             f"no closing criteria evidence in verified_by. Add at least "
             f"one of: task:<id>_closed, acceptance_test:<id>_PASS, "
             f"definition_of_done:<id>_met, review:<id>_approved, "
-            f"pr:<n>_merged, pytest:<t>_PASS, bash:<cmd>:exit0."
+            f"pr:<n>_merged, pytest:<t>_PASS, bash:<cmd>:exit0." + _split
         ),
     )
 

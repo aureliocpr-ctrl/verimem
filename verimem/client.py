@@ -92,6 +92,92 @@ def _fact_trust_line(h: dict[str, Any]) -> str:
 _ANSWER_VERIFY_THRESHOLD = 40.0
 
 
+#: Il default documentato di `ENGRAM_LONG_FACT_WARN_CHARS` (~512 token
+#: conservativi). Oltre questa soglia l'embedder vede solo la testa del fatto.
+_LONG_FACT_DEFAULT = 2000
+
+
+def soglia_fatto_lungo() -> int:
+    """La soglia oltre la quale un fatto eccede la finestra dell'embedder.
+
+    UNA FUNZIONE SOLA, di proposito. Lo stesso numero e' letto anche in
+    `semantic.py` (che emette l'avviso nel log): due letture dell'ambiente in
+    due posti sono gia' due copie in attesa di divergere, ed e' la classe che
+    questa casa paga di piu'. Quando `semantic.py` verra' toccato potra'
+    chiamare questa invece di rileggere `os.environ` per conto suo.
+
+    `0` disattiva l'avviso, come documentato; un valore illeggibile torna al
+    default invece di far esplodere una scrittura.
+    """
+    import os
+    try:
+        return int(os.environ.get("ENGRAM_LONG_FACT_WARN_CHARS",
+                                  str(_LONG_FACT_DEFAULT)))
+    except ValueError:
+        return _LONG_FACT_DEFAULT
+
+
+#: Oltre quante righe il controllo del duplicato costa troppo per pagarlo a
+#: OGNI scrittura. Misurato: 0.08 ms sul corpus reale (7950 righe), 9.89 ms a
+#: 50k, 21.36 ms a 200k — e' una scansione, perche' `proposition` non ha
+#: indice. `0` disattiva del tutto e in silenzio (scelta esplicita).
+_DUP_CHECK_MAX_DEFAULT = 50_000
+
+
+def soglia_controllo_duplicati() -> int:
+    """Il tetto di righe sotto cui il controllo del duplicato esatto si fa.
+
+    UNA FUNZIONE SOLA, come `soglia_fatto_lungo`: la stessa soglia letta in due
+    posti sono gia' due copie in attesa di divergere.
+    """
+    import os
+    try:
+        return int(os.environ.get("ENGRAM_DUP_CHECK_MAX_FACTS",
+                                  str(_DUP_CHECK_MAX_DEFAULT)))
+    except ValueError:
+        return _DUP_CHECK_MAX_DEFAULT
+
+
+def _esiste_gia_identico(sm, testo: str, topic: str | None,
+                         escludi: str | None = None) -> bool:
+    """C'e' gia' un fatto SERVIBILE con questo identico testo in questo topic?
+
+    Uguaglianza esatta, non similarita': il giudizio sulla similarita' e' un
+    altro mestiere e ha gia' il suo strumento (`find_duplicate_facts`).
+
+    ⚠️ SCANSIONE, non indice — `proposition` non ne ha uno. E' il motivo per
+    cui il chiamante controlla prima quanto e' grande il corpus: 0.08 ms su
+    7950 righe, 21.36 ms su 200 000.
+
+    ⚠️ E NON SI USA `facts_fts` QUI, benche' sia indicizzato: misurato, su una
+    FRASE INTERA la phrase query costa 5.33 ms contro 0.01 ms della scansione,
+    perche' deve verificare l'adiacenza di decine di token. FTS vince sui
+    termini corti e selettivi (un codice di record), perde sulle frasi lunghe.
+    """
+    import sqlite3
+    try:
+        con = sqlite3.connect(f"file:{sm.db_path}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return False
+    try:
+        # ⚠️ `escludi` E' IL FATTO APPENA SCRITTO, e senza di lui il controllo
+        # trovava SE STESSO: ogni scrittura risultava un duplicato. Il codice
+        # gira dopo la persistenza (li' c'e' la ricevuta da comporre), quindi
+        # la riga nuova e' gia' nel database. Preso dai due presidi che
+        # cadevano — «un fatto nuovo non porta avvisi» e «lo stesso testo in
+        # un altro topic non e' un duplicato» — non dal caso che curavo.
+        riga = con.execute(
+            "SELECT id FROM facts WHERE proposition = ? AND topic IS ? "
+            "AND superseded_by IS NULL AND status != 'quarantined' "
+            "AND id IS NOT ? LIMIT 1",
+            (testo, topic, escludi)).fetchone()
+        return riga is not None
+    except sqlite3.Error:
+        return False
+    finally:
+        con.close()
+
+
 def _remote_cls():
     """Lazy import hook (monkeypatchable in tests) for the thin client."""
     from .remote import RemoteMemory
@@ -137,6 +223,35 @@ def open_memory(path: Any = None, **kwargs: Any):
                 "verimem thin client init failed (%s) - falling back to "
                 "embedded", type(exc).__name__)
     return Memory(path, **kwargs) if path is not None else Memory(**kwargs)
+
+
+class Risultati(list):
+    """I risultati di una ricerca, con l'avviso quando NESSUNO supera il pavimento.
+
+    IL DIFETTO CHE LA MOTIVA (misurato da ws5): su 5 domande la cui risposta NON
+    è nel corpus, `recall` risponde 5 volte su 5, con punteggi di grounding fino
+    a 99.93 — risposte plausibili nella forma e scollegate nel merito, che un
+    agente riceve come fatti verificati. Il pavimento che le separa **esiste ed
+    è già usato** da `trust_report` ed `explain`, che si astengono; questa porta
+    no.
+
+    ⚠️ Dichiara e non taglia: sul banco di ws5 il pavimento cadeva dentro il
+    margine fra le due popolazioni (0 falsi tagli), sul mio cadeva **sopra** il
+    minimo delle domande rispondibili (1 falso taglio su 5). La taratura dipende
+    dal corpus, e un veto costerebbe un fatto vero dove un avviso costa un
+    avviso.
+
+    È una `list` VERA: chi non legge l'attributo non si accorge di niente, e
+    `search` ha una quantità di consumatori che la iterano e ne fanno `len()`.
+    """
+
+    __slots__ = ("sotto_il_pavimento",)
+
+    def __init__(self, iterable=(), *, sotto_il_pavimento=None) -> None:
+        super().__init__(iterable)
+        #: ``{pavimento, score_migliore, nota}`` quando nessun risultato supera
+        #: la soglia di rilevanza; ``None`` quando almeno uno la supera.
+        self.sotto_il_pavimento = sotto_il_pavimento
 
 
 class Memory:
@@ -197,6 +312,25 @@ class Memory:
         lineage_to: list[str] | None = None,
         confidence: float | None = None,
         chronicle: bool = False,
+        # 2026-07-30: il canale MCP li accettava e questo no, quindi sul corpus
+        # vivo erano NULL su tutti e 6457 i fatti — e su di loro si reggono due
+        # dei quattro trigger di hippo_justified_audit («stale» e la cascata,
+        # che il tool descrive come la capacita' che nessun prodotto offre).
+        # Non erano trigger silenti perche' il corpus e' sano: erano
+        # irraggiungibili dal canale che lo riempie.
+        valid_until: float | None = None,
+        derives_from: list[str] | None = None,
+        # 2026-08-05: stessa storia dei due qui sopra, nona istanza della
+        # classe. `gate_router` esiste dal mandato del 10/07 e risponde alla
+        # domanda «di CHI e' questo claim?»: un documento ingerito non e'
+        # l'agente che si vanta, quindi i detector L1.x — che gradano la
+        # sincerita' dell'AGENTE — non hanno giurisdizione. Il router era
+        # cablato su 3 detector in semantic.py e i 14 layer L1.8-L1.21 non ci
+        # passavano; e questa firma non lo esponeva affatto, cosi' la strada
+        # che il gate stesso SUGGERISCE a chi scrive («set
+        # writer_role='external_content'») era irraggiungibile: sul corpus
+        # vivo, external_content = 0 fatti su 8217.
+        writer_role: str | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -257,6 +391,12 @@ class Memory:
             validate = self._preset_defaults["validate"]
         if gate_mode is None:
             gate_mode = self._preset_defaults["gate_mode"]
+        # Captured BEFORE the preset fills it in: only here does the difference
+        # between "the caller asked for entailment verification" and "the preset
+        # defaults to on" still exist. One line further down the two are the
+        # same True and the gate cannot tell them apart — which is why the
+        # advisory below is emitted here and not in the gate.
+        _ground_explicitly_requested = ground is True
         if ground is None:
             ground = self._preset_defaults["ground"]
         # Continuity narrative lane (2026-07-23): meta_narrative declares a
@@ -276,10 +416,35 @@ class Memory:
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
             narrative_l1_skip=meta_narrative,
+            writer_role=writer_role,
+            # Superficie in-process (SDK/CLI): chi arriva qui puo' comunque
+            # passare validate="off", una leva strettamente piu' forte. Il
+            # canale MCP NON deve inoltrarlo — presidio in
+            # test_anti_confab_gate_mcp_provenance.py.
+            provenance_trusted=True,
             claimant=principal or self._principal,
             documents=LazyDocumentStore(),
         )
         warnings = list(gate.warnings)
+        # The mirror of the gate's own L4-skipped advisory ("say so out loud,
+        # NEVER a silent skip"), for the case it never covered: a judge is
+        # reachable but the write carries NO source, so L4 has nothing to check
+        # the fact against and does not run. Ordinary unsourced writes stay
+        # quiet — most writes have no source and annotating them all would be
+        # wallpaper — but a caller who passed ground=True asked for entailment
+        # verification, and being given none WITHOUT being told is how "not
+        # checked" gets read as "checked and fine". Advisory only: the
+        # disposition below is untouched.
+        if _ground_explicitly_requested and not source:
+            warnings.append({
+                "layer": "L4-no-source",
+                "reason": "ground=True was requested but the write carries no "
+                          "source — there is nothing to check the fact "
+                          "against, entailment NOT verified",
+                "advice": "pass source='<the evidence text>' to run the moat. "
+                          "verified_by records WHO vouches for a fact and does "
+                          "not run this check.",
+            })
         action = gate.action
         # Source-trust consultation (task #17, behind ENGRAM_SOURCE_TRUST=1,
         # default OFF): a source whose persisted two-channel trust sits below
@@ -333,10 +498,33 @@ class Memory:
                     confidence_tier=_confidence_tier(
                         gate.grounding_score, getattr(gate, "judge", None),
                         getattr(gate, "threshold", None)))
+        # LA PROVENIENZA DICHIARATA NON SI BUTTA VIA (2026-08-04). Il testo di
+        # `source` serve al moat per l'entailment e poi spariva: la tabella
+        # `facts` non ha una colonna `source`, e `source_signature` — l'unico
+        # campo di provenienza che sopravvive — nessuno la popolava (26 fatti
+        # su 6075 in tutto il corpus). Conseguenza misurata su un registro
+        # pazienti: «Rossi pesa 70 kg» e «Bianchi pesa 95 kg», due cartelle
+        # diverse, stesso topic -> il secondo RITIRA il primo come
+        # `same-source evolution`, perche' senza verified_by entrambi
+        # canonicalizzano su "user".
+        # L'impronta e' un hash: la source puo' essere un log di migliaia di
+        # righe, e qui serve solo distinguere due origini, non rileggerle.
+        if source and not getattr(fact, "source_signature", None):
+            import hashlib
+            fact.source_signature = "sha256:" + hashlib.sha256(
+                " ".join(str(source).split()).encode("utf-8")).hexdigest()[:16]
         if confidence is not None:
             fact.confidence = float(confidence)
+        if valid_until is not None:
+            fact.valid_until = float(valid_until)
+        if derives_from:
+            fact.derives_from = [str(x) for x in derives_from if str(x).strip()]
         if lineage_to:
             fact.lineage_to = [str(x) for x in lineage_to if str(x).strip()]
+        # Prima del blocco meta_narrative, che sovrascrive di proposito: quella
+        # e' la superficie operatore in-process e resta l'ultima parola.
+        if writer_role and str(writer_role).strip():
+            fact.writer_role = str(writer_role).strip()
         if meta_narrative:
             fact.meta_narrative = True
             fact.writer_role = "user"  # in-process operator surface
@@ -460,7 +648,187 @@ class Memory:
                            judge=getattr(gate, "judge", None),
                            layers=_hit_layers + _stood_down,
                            verified_by=verified_by)
+        # L'AVVISO SUL FATTO TROPPO LUNGO ARRIVA A CHI SCRIVE. Esisteva già, ed
+        # è ottimo — dice la dimensione, il limite e cosa fare invece — ma
+        # `semantic.py` lo emette con `_LOG.warning`, quindi finiva nel log e
+        # NON nella ricevuta. Misurato da utente su un fatto di 4476 caratteri:
+        # il log lo diceva, `warnings` era vuoto.
+        #
+        # Il commento che accompagna quella guardia la chiama «non-silent
+        # over-window guard»: è stata scritta apposta per non essere
+        # silenziosa, ed era silenziosa esattamente per il chiamante.
+        #
+        # Perché conta: oltre la finestra dell'embedder si embedda solo la
+        # TESTA, quindi il recall semantico non vede il resto. È la ragione per
+        # cui il protocollo di casa prescrive di spezzare i fatti lunghi o di
+        # usare `verimem index` — e chi scrive non poteva saperlo dal prodotto.
+        # IL DUPLICATO IDENTICO SI DICE A CHI SCRIVE, ALLA SECONDA VOLTA.
+        # Misurato da utente: tre `add` dello stesso testo -> 3 righe, 3
+        # servibili, e il recall rende la stessa frase TRE VOLTE senza che il
+        # prodotto lo abbia mai detto. ws4 aveva misurato il costo dall'altro
+        # lato: `slot=35 sprecati_da_duplicati=7` in un recall reale.
+        #
+        # Il meccanismo c'era già — `find_duplicate_facts`, esposto come
+        # `hippo_find_duplicate_facts` — ma è BATCH e fa Jaccard: si usa DOPO,
+        # per ripulire. Al momento della scrittura non lo chiamava nessuno.
+        #
+        # ⚠️ QUI SI GUARDA SOLO L'IDENTICO ESATTO, e non è pigrizia: la
+        # similarità è un giudizio (e `find_duplicate_facts` esiste per
+        # quello), l'uguaglianza no. Stesso testo E stesso topic — la stessa
+        # frase sotto «magazzini» e sotto «verbali» sono due contesti, non una
+        # svista.
+        #
+        # ⚠️ E IL COSTO DECIDE LA FORMA. È una scansione (`proposition` non ha
+        # indice): 0.08 ms sul corpus reale, 9.89 ms a 50k, 21.36 ms a 200k.
+        # Sopra la soglia NON si fa — ma si DICHIARA di non averlo fatto:
+        # saltarlo in silenzio sarebbe la stessa classe di difetto che questo
+        # prodotto passa la giornata a curare. Un indice su `proposition` lo
+        # renderebbe O(1) (0.127 ms a 200k, 286 ms per costruirlo), ma è una
+        # modifica di schema.
+        # UN TOPIC CON SPAZI AI BORDI È UN SILO INVISIBILE. Misurato da utente:
+        #     count(topic='az/mag')  = 1     count(topic='az/mag ') = 1
+        #     count(topic=' az/mag') = 1     count(topic='AZ/MAG')  = 1
+        # quattro varianti, quattro contenitori. E le due superfici hanno
+        # semantiche diverse: `topic_prefix` normalizza il case e non gli
+        # spazi, il topic esatto non normalizza nulla.
+        #
+        # ⚠️ NON SI NORMALIZZA, ed è una scelta: sul corpus vero il danno non
+        # esiste ancora (5716 topic distinti, 0 con spazi ai bordi, 0
+        # collisioni), e `topic` è la chiave usata anche per l'isolamento fra
+        # tenant. Riscrivere una chiave del genere alle spalle di chi scrive,
+        # per un difetto con zero istanze misurate, è un rischio sproporzionato.
+        # Si dichiara e la decisione resta sua.
+        if topic and topic != topic.strip():
+            warnings = [*warnings, {
+                "layer": "topic_spazi",
+                "reason": (f"il topic {topic!r} ha spazi ai bordi: è un "
+                           f"contenitore diverso da {topic.strip()!r} e i due "
+                           f"non si trovano a vicenda"),
+                "advice": ("se non era voluto, riscrivi il fatto con il topic "
+                           "senza spazi — il topic è una chiave e non viene "
+                           "corretto in automatico"),
+            }]
+        _dup_max = soglia_controllo_duplicati()
+        if _dup_max:
+            try:
+                _n_righe = self.semantic.count()
+            except Exception:  # noqa: BLE001 — un conteggio fallito non blocca
+                _n_righe = 0
+            if _n_righe <= _dup_max:
+                if _esiste_gia_identico(self.semantic, text, topic,
+                                        escludi=fact.id):
+                    warnings = [*warnings, {
+                        "layer": "duplicate",
+                        "reason": ("un fatto identico è già servibile in questo "
+                                   "topic: la memoria ne servirà due copie"),
+                        "advice": ("se è una conferma va bene così; se è una "
+                                   "svista, `forget` una delle due — "
+                                   "`hippo_find_duplicate_facts` le elenca"),
+                    }]
+            else:
+                warnings = [*warnings, {
+                    "layer": "duplicate_check_skipped",
+                    "reason": (f"il controllo dei duplicati non è stato fatto: "
+                               f"{_n_righe} fatti superano il tetto {_dup_max} "
+                               f"e la verifica è una scansione"),
+                    "advice": ("alza ENGRAM_DUP_CHECK_MAX_FACTS, oppure crea un "
+                               "indice su facts(proposition) — rende il "
+                               "controllo immediato a qualunque scala"),
+                }]
+        _soglia = soglia_fatto_lungo()
+        if _soglia and len(text or "") > _soglia:
+            warnings = [*warnings, {
+                "layer": "long_fact",
+                "reason": (f"il fatto è di {len(text)} caratteri, oltre la "
+                           f"finestra dell'embedder (~512 token): il recall "
+                           f"semantico ne vedrà solo la testa"),
+                "advice": ("spezzalo in fatti brevi e autonomi, oppure indicizza "
+                           "il documento con `verimem index` / DocumentIndex — "
+                           "chunked e citato"),
+            }]
+        # IL VERDETTO DEL MOAT, SEMPRE E IN CHIARO — i quattro casi che la
+        # regola O3 promette («leggi il campo `moat` della ricevuta, che dice
+        # quale dei quattro casi è») e che la ricevuta NON AVEVA: le sue chiavi
+        # erano ['adjudication','advice','grounding_score','id','status',
+        # 'stored','warnings'].
+        #
+        # ⚠️ IL COSTO DI QUEL SILENZIO, misurato: `grounding_score = None`
+        # significa DUE cose — «non c'era una fonte» (corretto) e «c'era una
+        # fonte e non ho giudicato» (difetto) — e dal corpus non si
+        # distinguono. Sul corpus vero, 250 scritture in un giorno: 6 NULL, di
+        # cui 2 senza fonte (giusti) e **4 con una fonte dichiarata**. Tre
+        # istanze hanno bruciato CINQUE ipotesi su quei sei fatti (il gate
+        # sotto carico, delegate-only, la raffica, il verified_by vuoto, la
+        # source condivisa): tutte cadute, perché il verdetto esisteva al
+        # momento della scrittura e non veniva conservato.
+        #
+        # 🔑 E IL CASO CHE CONTA È `not_run:no_judge`: quando il giudice non è
+        # raggiungibile il gate emette `L4-skipped` e **il fatto entra lo
+        # stesso come model_claim**, cioè ammesso. Il fail-open è la scelta
+        # giusta (non si blocca una scrittura perché il modello non è su
+        # disco), ma chi scrive crede di aver messo un fatto verificato e ha
+        # messo un claim.
+        #
+        # Si DERIVA da ciò che il gate ha già detto, non si duplica la sua
+        # logica: se un giorno cambiano i nomi dei layer, il test dei quattro
+        # casi distinti lo prende.
+        _layers = {str(w.get("layer", "")) for w in warnings}
+        if not source:
+            _moat = "not_run:no_source"
+        elif "L4-skipped" in _layers:
+            _moat = "not_run:no_judge"
+        elif gate.grounding_score is None:
+            _moat = "not_run:unknown"
+        elif "L4-grounding" in _layers:
+            _moat = "failed"
+        else:
+            _moat = "passed"
+        # E CHI HA DECISO LA QUARANTENA. Trovato da ws5 e ampliato:
+        #     moat passa + parola L1 : moat=passed  gs=96.810  QUARANTINED
+        #     moat passa, niente L1  : moat=passed  gs=99.278  QUARANTINED
+        # Anche il secondo — una fonte che sostiene il fatto al 99,278 — viene
+        # trattenuto: il MOAT dice «verificato» e uno screen lessicale lo
+        # scavalca. Si lega al numero di ws4 (il 90,2% della quarantena del
+        # corpus viene dallo screen, 1728 su 1915) e alla precisione ~40% di L1.
+        #
+        # ⚠️ LA PRECEDENZA NON SI TOCCA, e non è pigrizia: L1 esiste per
+        # intercettare le auto-affermazioni («ho verificato che funziona»), che
+        # sono LA confabulazione tipica di un agente — e una fonte «che
+        # sostiene» può essere stata scritta dallo stesso agente che afferma.
+        # Ribaltare la precedenza aprirebbe esattamente quella porta, ed è una
+        # decisione di prodotto, non una cura di notte.
+        #
+        # Si dichiara CHI ha deciso: una quarantena per contenuto falso e una
+        # per scelta di parole sono due cose diverse, e chi riceve la ricevuta
+        # non aveva modo di distinguerle.
+        if fact.status == "quarantined":
+            _out_qb = "moat" if _moat == "failed" else (
+                "L1" if any(str(w.get("layer", "")).startswith("L1")
+                            for w in warnings) else "gate")
+            # …E SI SCRIVE, non solo si dice. Fino a qui la causa viveva SOLO
+            # nella ricevuta: la vede chi scrive, nell'istante in cui scrive, e
+            # un minuto dopo non esiste piu' da nessuna parte (le colonne di
+            # stato erano [created_at, status, grounding_score], e
+            # `audit_mutations` e' action-only per le operazioni distruttive).
+            # Il costo di non averla: due fatti quarantinati in produzione con
+            # grounding 99.96 e sei tentativi di riproduzione che non hanno
+            # chiuso la domanda a cui questa riga risponde subito.
+            # UPDATE mirato e non una colonna nell'INSERT a 25 parametri: tocca
+            # solo i quarantinati, e se fallisce si perde la CAUSA, non il
+            # FATTO — un fatto scritto senza causa e' il comportamento di
+            # sempre, un fatto non scritto sarebbe un danno nuovo.
+            try:
+                import sqlite3 as _sq
+                with _sq.connect(str(self.semantic.db_path)) as _c:
+                    _c.execute("UPDATE facts SET quarantined_by=? WHERE id=?",
+                               (_out_qb, fact.id))
+            except Exception:  # noqa: BLE001 — vedi sopra: fail-open dichiarato
+                _LOG.debug("quarantined_by non persistito per %s", fact.id)
+        else:
+            _out_qb = None
         _out = {
+            "moat": _moat,
+            **({"quarantined_by": _out_qb} if _out_qb else {}),
             "stored": True, "id": fact.id, "status": fact.status,
             "grounding_score": gate.grounding_score,
             "warnings": warnings, "advice": gate.advice,
@@ -472,9 +840,31 @@ class Memory:
 
     # ---- read --------------------------------------------------------------
     def search(self, query: str, k: int = 5, *, deep: bool = False,
-               as_of: float | str | None = None,
-               with_history: bool | str = False,
-               include_beliefs: bool = False) -> list[dict[str, Any]]:
+               # "auto" E NON None/False: il ROUTING c'era, funzionava anche in
+               # italiano, e non si accendeva mai perche' nessuna superficie
+               # passava "auto". Misurato sul listino che cambia tre volte
+               # (100 -> 120 -> 150), il difetto isolato da ws5:
+               #     quanto costava a GENNAIO -> «150 euro» rilevanza 0.8457
+               #     quanto costava ad APRILE -> «150 euro» rilevanza 0.8382
+               # cioe' una risposta SBAGLIATA presentata come giusta, mentre
+               # `history()` aveva le tre versioni ordinate e leggibili. Il
+               # prodotto dichiara «abstention over hallucination» e sull'asse
+               # del tempo non lo applicava.
+               # ⚠️ "auto" INSTRADA, non accende: chiede a `wants_history` /
+               # `extract_as_of`, che su «quanto costa OGGI» rispondono di no.
+               # E' la differenza fra curare il difetto e far pagare a tutti il
+               # costo della catena.
+               # 📌 TERZA VOLTA SU QUESTA SUPERFICIE, e la prima e' documentata
+               # in mcp_server.py:7627 (ce_gate inerte -> 0/5 astensioni; acceso
+               # -> 4/5 con ZERO astensioni false). Stessa forma, stessa cura:
+               # si ribalta il default DOPO aver misurato che la popolazione
+               # opposta non paga.
+               as_of: float | str | None = "auto",
+               with_history: bool | str = "auto",
+               history_hops: int = 5,
+               include_beliefs: bool = False,
+               min_relevance: float | str | None = None
+               ) -> list[dict[str, Any]]:
         """Recall the top-k facts for ``query``, each with its provenance — the
         differentiator: ``status`` + write-time ``grounding_score`` so a caller can
         prefer/assert grounded facts and hedge low-trust ones.
@@ -496,18 +886,47 @@ class Memory:
           on transition questions), plain lookups keep the lean context whose
           abstention on trap questions is pure (1.000 vs 0.949 — the measured
           price of always-on history, docs/TRUST_MAINTENANCE.md).
+        * ``history_hops`` — quanti predecessori mostrare. Il limite serve (una
+          catena di duecento schede riversata in un contesto è un'altra forma
+          dello stesso danno), ma fino al 2026-08-04 era MUTO e non si poteva
+          toccare: `fact_history` ha `max_hops=5` di default e questa
+          superficie — la porta pubblica — non lo passava mai. Su un registro
+          di 25 schede uscivano cinque voci e nessun segno delle altre
+          diciannove. Ora il taglio si dichiara (``history_truncated: True``) e
+          il limite si può alzare.
         * ``include_beliefs`` (anti-sycophancy read-side) — opt unverified USER
           assertions (``status='user_belief'``, produced by the ingest's
           ``tag_beliefs``) back into the result. They are OUT of the default
           view so the memory never serves an uncorroborated user claim back as
           truth; a caller opting in sees ``status`` on each hit and must caveat
-          accordingly. Narrow: un-hides beliefs only."""
+          accordingly. Narrow: un-hides beliefs only.
+        * ``min_relevance`` — the retrieval floor below which this surface
+          returns NOTHING instead of the nearest neighbours. ``"auto"`` lets the
+          store calibrate it on itself (scrambled-probe quantile, the same floor
+          the ignorance map uses); a float applies as given. ``None`` (default)
+          takes ``ENGRAM_MIN_RELEVANCE`` ONLY IF SET — the switch documented as
+          working "across every surface", which until 2026-08-02 reached only
+          ``explain``. An unset variable leaves this surface exactly as it was;
+          see ``relevance_floor.env_floor`` for why the default is not adopted
+          here."""
+        if min_relevance is None:
+            from .relevance_floor import env_floor_if_set
+            min_relevance = env_floor_if_set()
+        if min_relevance == "auto":
+            min_relevance = self._auto_relevance_floor()
         if with_history == "auto":
             from .temporal_context import wants_history
             with_history = wants_history(query)
         if as_of == "auto":
             from .temporal_context import extract_as_of
             as_of = extract_as_of(query)
+        # IL DEGRADO SI CONTA PRIMA E DOPO. Quando l'encoder non risponde entro
+        # il budget, `SemanticMemory.recall` cade sul ramo keyword e assegna
+        # `score 0.0` a TUTTI i risultati — un numero che non è una misura di
+        # somiglianza, ma che ne ha la forma. Il contatore esisteva già
+        # (`_recall_degraded_count`, nato apposta perché «il degrado cold-encode
+        # era invisibile al caller») e nessuno lo leggeva da qui.
+        _deg_prima = getattr(self.semantic, "_recall_degraded_count", 0) or 0
         if as_of is not None:
             from .temporal_context import recall_as_of
             hits = recall_as_of(self.semantic, query, when=float(as_of), k=k,
@@ -515,38 +934,158 @@ class Memory:
         else:
             hits = self.semantic.recall(query, k=k, deep=deep,
                                         include_beliefs=include_beliefs)
+        _degradato = (getattr(self.semantic, "_recall_degraded_count", 0) or 0
+                      ) > _deg_prima
         out: list[dict[str, Any]] = []
         for f, score, *_rest in [h if len(h) >= 2 else (h[0], 0.0) for h in hits]:
+            # per-fact provenance for trust-conditioned answering (case-B
+            # wire, measured 2026-07-16): event time, transaction time, first
+            # source episode, and who verified. Raw values — the caller
+            # formats; None == genuinely unknown, never invented.
+            #
+            # This USES `_fact_view` instead of restating it. It used to be a
+            # hand-written copy of eight of its nine keys, and the ninth is
+            # how the copy was found: `superseded_by` was added to the shared
+            # view and `search` — the surface everyone actually calls — went
+            # on without it, while `_fact_view`'s own docstring promised "the
+            # SAME provenance surface everywhere". Two copies drift, and this
+            # one already had. `score` and `confidence_tier` stay here because
+            # they belong to the QUERY, not to the fact: no fact carries a
+            # score until something ranks it.
+            #
+            # It matters most exactly where a retracted fact is meant to come
+            # back: `as_of` time travel returns what was current THEN, so its
+            # hits are superseded by construction — and `deep` reaches the
+            # dormant ones. Without the field those arrive looking live.
             item = {
-                "text": getattr(f, "proposition", ""),
+                **self._fact_view(f),
                 "score": round(float(score), 4),
-                "status": getattr(f, "status", "model_claim"),
-                "grounding_score": getattr(f, "grounding_score", None),
                 "confidence_tier": getattr(f, "confidence_tier", None),
-                "topic": getattr(f, "topic", ""),
-                "id": getattr(f, "id", ""),
-                # per-fact provenance for trust-conditioned answering (case-B
-                # wire, measured 2026-07-16): event time, transaction time,
-                # first source episode, and who verified. Raw values — the
-                # caller formats; None == genuinely unknown, never invented.
-                "asserted_at": getattr(f, "asserted_at", None),
-                "created_at": getattr(f, "created_at", None),
-                "source": (getattr(f, "source_episodes", None) or [None])[0],
-                "verified_by": list(getattr(f, "verified_by", None) or []),
             }
             if with_history:
                 from .temporal_context import _event_ts, _iso, fact_history
+                # `until` PASSA DA `_iso` COME `asserted_date`. Nella prima
+                # stesura usciva grezzo, e la riga di storia mostrava mezzo
+                # cartello in epoch:
+                #     (2026-08-02 → 1785663692.5640569)
+                # due date della stessa parentesi in due formati diversi, e
+                # `_iso` importata quattro righe sopra. `temporal_context` la
+                # converte da sempre; questa superficie, nata oggi, no.
+                #
+                # `None` resta `None` e non diventa la stringa vuota che `_iso`
+                # darebbe: un fatto ancora valido NON ha una data di fine, e
+                # «nessuna fine» non è «fine sconosciuta».
+                # ⚠️ SI CHIEDE UN SALTO IN PIÙ DI QUELLI CHE SI MOSTRANO. Il
+                # limite serve — una catena di duecento schede riversata in un
+                # contesto è un'altra forma dello stesso danno — ma prima il
+                # taglio era MUTO: su un registro di 25 schede uscivano cinque
+                # voci e nessun segno che ce ne fossero altre diciannove, e chi
+                # legge conclude che la storia sia quella.
+                #
+                # Il salto in più costa un hop, non un conteggio della catena:
+                # se torna, il taglio c'è stato e si dichiara. `max_hops` era
+                # il default di `fact_history` che questa superficie — la porta
+                # pubblica — non passava mai, quindi non poteva né alzarlo né
+                # sapere di averlo.
+                hops = max(0, int(history_hops))
+                catena = fact_history(self.semantic, item["id"],
+                                      max_hops=hops + 1)
+                if len(catena) > hops:
+                    item["history_truncated"] = True
+                    catena = catena[:hops]
                 item["history"] = [
                     {"text": getattr(p, "proposition", ""),
                      "asserted_date": _iso(_event_ts(p)),
-                     "until": getattr(p, "superseded_at", None)}
-                    for p in fact_history(self.semantic, item["id"])
+                     "until": (None if getattr(p, "superseded_at", None) is None
+                               else _iso(p.superseded_at) or None)}
+                    for p in catena
                 ]
             out.append(item)
+        # Il taglio sta QUI e non prima del ranking: `score` appartiene alla
+        # query, non al fatto, e nessun fatto ne ha uno finché qualcosa non lo
+        # ordina. Filtrare a valle tiene il pavimento fuori dal recupero, che
+        # resta identico — quello che cambia è solo se il risultato si serve.
+        # ⚠️ IL PAVIMENTO NON SI APPLICA A UN RANKING DEGRADATO, ed è un errore
+        # di categoria non un caso limite: sul ramo keyword lo `score` è 0.0 per
+        # costruzione — non «nessuna somiglianza», ma «somiglianza NON MISURATA»
+        # — e confrontarlo con una soglia di somiglianza taglia tutto.
+        #
+        # Misurato il 2026-08-05, stesso store, stessa domanda:
+        #     a caldo      [0.8995] risposta giusta · min_relevance=0.5 -> 1
+        #     degradato    [0.0]    STESSA risposta · min_relevance=0.5 -> 0
+        #
+        # Per un prodotto la cui promessa di punta è «abstention over
+        # hallucination» questo è il modo peggiore di sbagliare: si astiene per
+        # un motivo che non ha nulla a che vedere con l'evidenza — l'encoder era
+        # lento — e chi legge non ha modo di distinguerlo da un'astensione vera.
+        # Trovato usando il prodotto sul corpus vero: `[0.00]` su ogni riga.
+        if min_relevance and not _degradato:
+            pavimento = float(min_relevance)
+            out = [i for i in out if float(i.get("score") or 0.0) >= pavimento]
+        # E IL DEGRADO SI DICHIARA, sempre: un ranking per parole chiave che si
+        # spaccia per un ranking per somiglianza è la stessa classe di difetto
+        # che questo prodotto passa la notte a curare.
+        if _degradato:
+            for item in out:
+                item["ranking"] = "keyword"
+        # I FATTI NASCOSTI SU QUEL RECORD. Non cambia cosa si serve né come si
+        # ordina: aggiunge un campo che dice «su S-007 c'è un fatto che non ti
+        # sto dando». Serviva perché senza, su un registro di 25 schede, questa
+        # superficie risponde S-025 a una domanda su S-007 con score 0.8786 —
+        # sbagliata e confidente — e nulla nella risposta lo lascia sospettare.
+        #
+        # LA RICERCA SI FA UNA VOLTA SOLA, sulla QUERY. È informazione della
+        # domanda, non del singolo risultato: farla per hit moltiplicherebbe le
+        # query per k senza cambiare una virgola dell'esito.
+        #
+        # Il taglio sta DOPO `min_relevance`: su ciò che è già stato scartato
+        # non si spende una SELECT.
+        if out:
+            from .hidden_records import SqliteRows, hidden_records_for
+            nascosti = hidden_records_for(
+                SqliteRows(self.semantic.db_path), query=query, served="")
+            if nascosti:
+                for item in out:
+                    item["hidden_records"] = [
+                        h for h in nascosti if h["text"] != item.get("text")]
         _emit_flow("flow.recall", kind="search", n=len(out),
                    best=round(max((float(i.get("score") or 0.0)
                                    for i in out), default=0.0), 4))
-        return out
+        # «NON LO SO» DETTO SULLA PORTA CHE LA GENTE APRE.
+        #
+        # Misurato da ws5 su un corpus aziendale controllato: su 15 domande
+        # RISPONDIBILI il primo posto e' giusto 14 volte — il retrieval
+        # funziona — ma su 5 domande SENZA risposta `recall` risponde 5 volte su
+        # 5, con `grounding_score` fino a 99.93. Risposte peggiori del silenzio:
+        # plausibili nella forma, scollegate nel merito, e chi le riceve vede un
+        # fatto verificato. Il prodotto dichiara «abstention over
+        # hallucination», e questa porta non lo applicava — mentre
+        # `trust_report` ed `explain` si astengono da sempre, con lo STESSO
+        # pavimento. Terza asimmetria fra porte in due giorni.
+        #
+        # ⚠️ SI DICHIARA, NON SI TAGLIA, e la ragione e' una misura che
+        # contraddice quella che ha motivato la cura:
+        #     banco di ws5  rispondibili min 0.8757 · pavimento 0.8689 -> 0 falsi tagli
+        #     banco mio     rispondibili min 0.8489 · pavimento 0.8491 -> 1 falso taglio su 5
+        # La taratura del pavimento dipende dal corpus: come veto perderebbe un
+        # fatto vero, come avviso costa un avviso. Chi vuole il taglio ha
+        # `min_relevance`, che continua a funzionare esattamente come prima.
+        try:
+            _pav = self._auto_relevance_floor()
+            _best = max((float(i.get("score") or 0.0) for i in out), default=0.0)
+        except Exception:  # noqa: BLE001 — un avviso non fa cadere una lettura
+            return Risultati(out)
+        return Risultati(
+            out,
+            sotto_il_pavimento=(
+                {"pavimento": round(float(_pav), 4),
+                 "score_migliore": round(_best, 4),
+                 "nota": ("nessun risultato supera la soglia di rilevanza "
+                          "calibrata su questo corpus: probabilmente la "
+                          "risposta NON e' in memoria. I risultati sono qui "
+                          "sotto, non tagliati — decidi tu.")}
+                if out and _pav and _best < float(_pav) else None),
+        )
 
     def count(self, *, query: str | None = None, topic: str | None = None,
               topic_prefix: str | None = None) -> int:
@@ -568,15 +1107,52 @@ class Memory:
         view. This is the primitive; routing a natural-language counting query
         to it is a separate intent step (gateway/F2)."""
         if query is not None:
+            # UN ARTICOLO NON PUÒ CAMBIARE UN CONTEGGIO. L'AND è su TUTTI i
+            # token, e i token includono articoli e preposizioni: misurato
+            # 2026-08-02 sul corpus vero (5333 fatti vivi),
+            #     moat    207 -> del moat   134    73 persi (35%)
+            #     commit 1324 -> un commit 1126   198 persi (15%)
+            #     gate    942 -> il gate    877    65 persi  (7%)
+            # 429 fatti persi su otto coppie, e nessuno parlava di altro:
+            # parlavano dello stesso argomento senza quell'articolo. Questo
+            # metodo promette «the WHOLE matching set» — con una preposizione
+            # nella domanda ne vedeva due terzi.
+            #
+            # È lo SPECULARE della cura in `2f2c667e`: nel ramo OR le parole
+            # funzionali ALLARGANO a caso, qui nel ramo AND RESTRINGONO a
+            # caso. E corregge un ragionamento di quel commit, dove avevo
+            # scritto che `require_all_tokens` «è il percorso di precisione,
+            # dove una funzionale in più STRINGE invece di allargare» e
+            # l'avevo chiuso come non-problema: per una RICERCA è vero, per un
+            # CONTEGGIO il cui contratto è vedere tutto l'insieme, no.
+            #
+            # Sta QUI e non in `search_facts` apposta: la ricerca deve
+            # continuare a stringere. `_tokens` di bm25_rank, non una copia.
+            from .bm25_rank import _tokens as _informativi
+            _q = " ".join(_informativi(query)) if query.strip() else query
+            if query.strip() and not _q:
+                # Solo parole funzionali: non c'è nessun insieme da contare.
+                # Zero, non «tutto» — che è ciò che una query vuota darebbe.
+                return 0
             return len(self.semantic.search_facts(
-                query, limit=1_000_000, require_all_tokens=True,
+                _q, limit=1_000_000, require_all_tokens=True,
                 topic=topic, topic_prefix=topic_prefix))
         if topic_prefix is not None:
             return len(self.semantic.search_facts(
                 "", limit=1_000_000, topic_prefix=topic_prefix))
+        # I DUE RAMI RIMASTI INDIETRO. Il 2026-08-02 avevo spostato `query` e
+        # `topic_prefix` da `list_facts` a `search_facts` per allineare le
+        # popolazioni; questi due erano restati, e contavano anche i
+        # QUARANTINATI — che il prodotto tiene fuori dal recall di default.
+        # Misurato sul corpus vero: 5428 qui contro i 4834 del default di
+        # `search`, cioe' i 594 quarantinati vivi, mentre la docstring qui
+        # sopra promette «matching search's default view».
+        # Si passa da SQL e non da `search_facts('')`: stesso risultato, ma
+        # 0.00s invece di 0.45s su 7000 fatti, e un conteggio che si paga mezzo
+        # secondo smette di essere una primitiva.
         if topic is not None:
-            return len(self.semantic.list_facts(topic=topic, limit=1_000_000))
-        return self.semantic.count()
+            return self.semantic.count(topic=topic, include_quarantined=False)
+        return self.semantic.count(include_quarantined=False)
 
     def answer(self, query: str, *, llm: Any, k: int = 8,
                verify_threshold: float | None = None,
@@ -642,7 +1218,15 @@ class Memory:
         else:
             lines = [f"- {t}" for t in facts]
             system = _ANSWER_SYSTEM
-        user = "Facts:\n" + "\n".join(lines) + f"\n\nQuestion: {query}"
+        # L'AVVISO SUI RECORD TRATTENUTI. Senza, questa superficie riceve solo
+        # `h["text"]` e il campo `hidden_records` — che `search` calcola — non
+        # arriva mai a chi formula la risposta: una garanzia che vive nel
+        # dizionario e non nella risposta è una garanzia che nessuno legge.
+        # Vuota quando non c'è nulla da dichiarare, e allora il prompt resta
+        # byte-identico a prima.
+        from .hidden_records import withheld_notice
+        user = ("Facts:\n" + "\n".join(lines) + withheld_notice(hits)
+                + f"\n\nQuestion: {query}")
         resp = llm.complete(system,
                             [{"role": "user", "content": user}],
                             max_tokens=max_tokens)
@@ -769,7 +1353,34 @@ class Memory:
             terms = content_terms(query)
             n = (self.count(query=terms, topic_prefix=topic_prefix)
                  if terms else self.count(topic_prefix=topic_prefix))
-            return {"intent": COUNT, "terms": terms, "count": n}
+            out = {"intent": COUNT, "terms": terms, "count": n}
+            # ⚠️ UNO ZERO SU UNA DOMANDA DI CONTEGGIO È LA RISPOSTA PEGGIORE
+            # POSSIBILE: «non ho trovato niente» detto con certezza. Misurato::
+            #
+            #     «Quanti fatti parlano di zinco?» -> 0, con DODICI fatti che
+            #     contengono zinco. Termini estratti: «fatti parlano zinco».
+            #
+            # `count` è un AND su TUTTI i termini, e `content_terms` lascia
+            # dentro le parole funzionali che la sua stoplist non conosce
+            # («parlano» manca, «parlato» c'è). Chi legge lo zero non ha modo di
+            # sapere QUALE termine lo ha azzerato.
+            #
+            # NON si cura la stoplist — «curare tutte le 15 stoplist» è una
+            # strada già falsificata in casa, perché la lista è infinita: oggi
+            # «parlano», domani «citano» o «riguardano». Si cura il SILENZIO, e
+            # il conteggio per singolo termine non decide nulla: MOSTRA.
+            # «zinco: 12 · parlano: 0» si legge in un secondo e la diagnosi la
+            # fa chi ha scritto la domanda.
+            #
+            # Costa una query per termine e si paga SOLO qui: conteggio a zero
+            # E più di un termine, cioè l'unico caso in cui un AND può avere
+            # azzerato qualcosa che c'era.
+            pezzi = terms.split()
+            if n == 0 and len(pezzi) > 1:
+                out["per_term"] = {
+                    t: self.count(query=t, topic_prefix=topic_prefix)
+                    for t in pezzi}
+            return out
         if intent == LIST_ALL:
             terms = content_terms(query)
             rows = self.semantic.search_facts(
@@ -785,13 +1396,33 @@ class Memory:
             # generic subject never zeroes the set.
             from .query_intent import split_exclude
             _subj, excluded = split_exclude(query)
-            base = (self.semantic.search_facts("", limit=10000,
-                                               topic_prefix=topic_prefix)
-                    if topic_prefix else self.semantic.list_facts(limit=10000))
+            # LA BASE E GLI ESCLUSI DEVONO ESSERE LO STESSO INSIEME. La base
+            # usava `list_facts`, che include i QUARANTINATI; gli esclusi
+            # `search_facts`, che non li include. Misurato 2026-08-02 su cinque
+            # note di cui una quarantinata dal gate:
+            #     BASE    (list_facts)  : 5 fatti
+            #     ESCLUSI (search_facts): 2 fatti
+            #     'tutto tranne moat' -> 3 risultati, e fra questi
+            #        «Il moat giudica la fonte contro il fatto.» (quarantined)
+            # Due danni, e il primo è il grave: un fatto che il gate ha
+            # respinto ESCE da una superficie di lettura, contro la riga di
+            # apertura del prodotto («kept OUT of default recall, so you never
+            # get it back as truth»). Il secondo: ciò che sta solo nella base
+            # è INESCLUDIBILE per costruzione — nessuna formulazione della
+            # domanda lo fa sparire, perché l'insieme escludente non lo vede.
+            base = self.semantic.search_facts(
+                "", limit=10000, topic_prefix=topic_prefix)
             excl_ids: set[str] = set()
             if excluded:
+                # Gli stessi token informativi di `count` (aa62e68b): «tranne
+                # IL moat» deve escludere quello che esclude «tranne moat» —
+                # l'articolo non fa parte del soggetto, e qui restringere
+                # l'insieme escluso significa LASCIARE DENTRO ciò che l'utente
+                # ha chiesto di togliere. Misurato: 2 fatti rimasti invece di 1.
+                from .bm25_rank import _tokens as _informativi
+                _escl = " ".join(_informativi(excluded)) or excluded
                 excl_ids = {f.id for f in self.semantic.search_facts(
-                    excluded, limit=10000, require_all_tokens=True,
+                    _escl, limit=10000, require_all_tokens=True,
                     topic_prefix=topic_prefix)}
             results = [f for f in base if f.id not in excl_ids]
             return {"intent": EXCLUDE, "excluded": excluded,
@@ -800,7 +1431,16 @@ class Memory:
         return {"intent": FIND, "results": self.search(query, k=k)}
 
     def explain(self, query: str, k: int = 5, *, deep: bool = False,
-                as_of: float | None = None,
+                # "auto" come in `search`, e per non lasciare la cura a META'.
+                # Censendo le strade "auto" non prese dal default (dopo il
+                # difetto del routing temporale) questa e' saltata fuori
+                # SUBITO DOPO aver curato `search`: le due porte sarebbero
+                # divergite sullo stesso asse, ed `explain` e' quella che
+                # promette di piu' — il dossier «how do you know?». Chi chiede
+                # come faccia a sapere il prezzo di aprile riceveva la custodia
+                # del prezzo di OGGI, con la catena di provenienza completa a
+                # certificare il fatto sbagliato.
+                as_of: float | str | None = "auto",
                 min_relevance: float | str | None = None,
                 llm: Any = None) -> dict[str, Any]:
         """The evidence dossier behind an answer — the trust gate made atomic:
@@ -834,11 +1474,78 @@ class Memory:
         want_ce_floor = (min_relevance == "auto")
         if min_relevance == "auto":
             min_relevance = self._auto_relevance_floor()
+        if as_of == "auto":
+            # Si risolve QUI e non a valle: `build_trust_report` vuole un
+            # float, e la stringa ci arriverebbe come tale. Stessa riga di
+            # `search`, stessa funzione — il routing e' uno solo.
+            from .temporal_context import extract_as_of
+            as_of = extract_as_of(query)
         from .trust_report import build_trust_report
         report = build_trust_report(self.semantic, query, k=k, deep=deep,
                                     as_of=as_of, min_relevance=min_relevance,
                                     ce_gate=want_ce_floor, llm=llm)
         report["min_relevance"] = float(min_relevance)
+        # ⚠️ CHI HA DECISO, non solo con che numero. Il dossier riportava
+        # `min_relevance` e basta, e con `auto` quel numero NON è la soglia che
+        # ha filtrato: la decisione passa al cross-encoder e il float resta un
+        # riferimento sulla scala del coseno. ws4 lo ha misurato dal lato di chi
+        # legge, ed è il modo peggiore in cui il difetto si manifesta:
+        #
+        #     min_relevance=None (default)  -> abstained=False  floor 0.872
+        #                                      servito con relevance 0.8337
+        #     min_relevance=0.872 (a mano)  -> abstained=True   n_facts=0
+        #
+        # cioè COPIARE IL NUMERO CHE IL PRODOTTO TI HA APPENA DATO cambia la
+        # risposta, e chi legge conclude una delle due cose sbagliate: «il
+        # filtro è rotto» oppure «il numero è sbagliato».
+        #
+        # La logica NON cambia — il CE è più accurato del coseno e lasciargli
+        # l'ultima parola dimezza i falsi silenzi (misurato da ws4). Cambia che
+        # il dossier lo dice. È la stessa classe dello `0.0` del ranking
+        # degradato: un numero con la forma di una misura che significa altro.
+        report["floor_applied_by"] = (
+            "cross_encoder" if want_ce_floor else "cosine")
+        # IL DOSSIER DICHIARA ANCHE LA FONDATEZZA, non solo la rilevanza.
+        # Finding di ws5, dogfooding da utente esterno, e la diagnosi è sua:
+        #
+        #     «Il pavimento misura la RILEVANZA. Il claim promette la
+        #      FONDATEZZA. Sono due cose diverse, e la distanza fra le due è
+        #      esattamente dove il prodotto sbaglia.»
+        #
+        # Un fatto scritto senza `source` ha `grounding_score = None`, che
+        # significa MAI GIUDICATO — non «giudicato e passato». Le istruzioni
+        # del server MCP lo dicono testuali («treat it as a claim, not a
+        # fact»), e il dossier lo serviva con `abstained: False` e nessun
+        # avviso: onesto NEL DATO, non NEL VERDETTO.
+        #
+        # ⚠️ `abstained` NON si tocca: è il verdetto sulla RILEVANZA («non ho
+        # niente di abbastanza vicino») e su una domanda fuori corpus funziona
+        # bene, con la sua ragione dichiarata. Si aggiunge la grandezza che
+        # mancava, così le due smettono di essere confuse in un verdetto solo.
+        # DUE NOMI PER LA STESSA COSA, e chi passa da una superficie all'altra
+        # ci sbatte. Finding di ws5, col costo misurato addosso a sé: «mi ha
+        # fatto quasi consegnare *explain sbaglia 10 su 10*» — su una funzione
+        # che è corretta.
+        #
+        #     il TESTO      recall: `text`   ·  explain: `proposition`
+        #     il PUNTEGGIO  recall: `score`  ·  explain: `relevance`
+        #
+        # ⚠️ SI AGGIUNGONO ALIAS, NON SI RINOMINA: `proposition` è il nome
+        # della colonna nel DB e `relevance` è ciò che il dossier misura —
+        # entrambi hanno una ragione, e rinominare romperebbe chi li legge già.
+        # La cura non decide quale sia giusto: fa in modo che chi cerca l'altro
+        # lo trovi.
+        for _f in report.get("facts") or []:
+            if "text" not in _f and "proposition" in _f:
+                _f["text"] = _f["proposition"]
+            if "score" not in _f and "relevance" in _f:
+                _f["score"] = _f["relevance"]
+        _fatti = report.get("facts") or []
+        _senza = sum(1 for f in _fatti
+                     if not isinstance(f.get("grounding_score"), (int, float))
+                     or isinstance(f.get("grounding_score"), bool))
+        report["ungrounded_facts"] = _senza
+        report["grounding_checked"] = bool(_fatti) and _senza == 0
         # task #20a: dossier transparency — with source-trust on, every fact
         # shows its SOURCE's two-channel trust, not just its own status.
         from . import source_trust as _st
@@ -856,6 +1563,28 @@ class Memory:
                    abstained=bool(report.get("abstained")))
         return report
 
+    def trust_report(self, query: str, k: int = 5, **kwargs):
+        """Il dossier di provenienza — lo STESSO di :meth:`explain`.
+
+        ⚠️ ESISTE PERCHÉ IL NOME NON TORNAVA, e a segnalarlo è stato un utente
+        vero (ws5, dogfooding, due giorni sul prodotto)::
+
+            «Ho cercato trust_report, non l'ho trovato, e stavo per scrivervi
+             che mancava.»
+
+        Le istruzioni del server MCP dicono `verimem_trust_report` — è il claim
+        di marketing più forte del prodotto, quello sull'astensione — l'SDK
+        aveva solo `explain`, e nessuno dei due rimandava all'altro. Chi legge
+        le istruzioni e apre l'SDK fa esattamente quel percorso.
+
+        ⚠️ E NON È UN ALIAS SECCO, di proposito: `correct = update` è un alias,
+        e chiamandolo con gli argomenti sbagliati l'errore dice «Memory.update()
+        missing 1 required positional argument» — nomina una funzione che chi
+        scrive non ha mai chiamato e che cercherà invano nel proprio codice.
+        Un metodo che delega fa sì che l'errore nomini il nome usato.
+        """
+        return self.explain(query, k, **kwargs)
+
     # ---- source trust (task #17, behind ENGRAM_SOURCE_TRUST) ----------------
 
     def _source_trust_book(self):
@@ -869,7 +1598,7 @@ class Memory:
                              outcome: tuple[str, bool, float] | None = None,
                              reports: dict[str, dict[str, str]] | None = None,
                              audited_false: tuple[str, str] | None = None,
-                             ) -> None:
+                             ) -> dict[str, Any]:
         """Feed the per-source book and persist it. ``confirmation`` = ≥2
         distinct sources asserted the same accepted value; ``contradiction``
         = this source contradicted an accepted value; ``outcome`` =
@@ -906,13 +1635,38 @@ class Memory:
         # included) — the recovery crossing-up is read against these.
         pre_all = {s: book.trust(s)
                    for s in set(watched) | set(confirmation or [])}
+        # ⚠️ IL RIFIUTO DI UNA CONFERMA NON È PIÙ MUTO. `observe_confirmation`
+        # richiede ≥2 fonti distinte — regola documentata e con una ragione
+        # anti-collusione: «a single (or self-duplicated) source cannot confirm
+        # itself» — e con UNA sola fonte esce senza fare nulla. Chi chiamava
+        # non riceveva nessun segnale: il metodo tornava `None` e il numero non
+        # si muoveva.
+        #
+        # Trovato da ws5 dall'esterno, e la conclusione a cui è arrivato dice
+        # quanto costa il silenzio: «le conferme non arrivano al ledger, una
+        # fonte che sbaglia resta penalizzata per sempre». Rimisurato, è falso
+        # — la reputazione RISALE (0.3333 → 0.5 → 0.6 con ≥2 conferme, e la
+        # formula dichiarata torna esatta) — ma un utente esperto ci ha messo
+        # mezz'ora per concludere il contrario, perché il rifiuto era invisibile.
+        #
+        # LA REGOLA NON SI TOCCA. Si dichiara cosa è stato registrato e cosa no.
+        esito: dict[str, Any] = {}
         if confirmation:
             for src_id, kv in (reports or {}).items():
                 for k, v in (kv or {}).items():
                     book.record_report(src_id, k, v)
+            _prima = {s: book.trust(s) for s in confirmation}
             book.observe_confirmation(
                 confirmation, require_independent=independence_enabled(),
                 deconfounded=independence_deconfounded())
+            _registrata = any(book.trust(s) != _prima.get(s)
+                              for s in confirmation)
+            esito["confirmation_recorded"] = _registrata
+            if not _registrata:
+                esito["reason"] = (
+                    "una conferma richiede almeno 2 fonti distinte: una fonte "
+                    "non può confermare sé stessa. Nessuna reputazione è "
+                    "cambiata.")
         if contradiction:
             book.observe_contradiction(contradiction)
         if outcome:
@@ -931,6 +1685,7 @@ class Memory:
             for s in confirmation:
                 if pre_all.get(s, 0.0) < thr <= book.trust(s):
                     self._rehabilitate_source(s)
+        return esito
 
     def report_outcome(self, fact_id: str, *, good: bool,
                        weight: float = 1.0) -> bool:
@@ -1279,17 +2034,79 @@ class Memory:
 
     _FLOOR_CACHE_TTL_S = 300.0
 
+    #: Di quanto deve cambiare il corpus perché il pavimento vada ricalcolato.
+    #: È la calibrazione DI QUEL corpus: finché il corpus è quello, il valore
+    #: è quello. 5% su 8000 fatti = 400 scritture.
+    _FLOOR_DRIFT = 0.05
+
+    def _floor_file(self):
+        from pathlib import Path
+        return Path(str(self.semantic.db_path) + ".floor.json")
+
     def _auto_relevance_floor(self) -> float:
-        """Resolve the self-calibrated floor, cached per client for the TTL —
-        estimation costs ~32 probe recalls, which must not be paid per query."""
+        """Il pavimento auto-calibrato, PERSISTITO e invalidato sul corpus.
+
+        ⚠️ ERA CACHED PER-ISTANZA CON UN TTL DI 5 MINUTI, e costava 57 secondi
+        alla prima chiamata. Misurato da ws5 sul corpus vero (8058 fatti) e
+        riprodotto::
+
+            explain chiamata 1:   56.845 ms
+            explain chiamata 2:      773 ms      <- 73 volte più veloce
+            recall:                  413 ms      <- nessuna cache di mezzo
+
+        La stima fa ~32 recall di sonde giudicati dal cross-encoder. La cache
+        c'era; la diagnosi di ws5 dice perché non bastava:
+
+            «Chi fa molte domande di fila paga 76 secondi UNA volta:
+             tollerabile. Chi consulta il dossier OGNI TANTO paga 76 secondi
+             OGNI VOLTA: inutilizzabile. E il secondo è il profilo d'uso vero —
+             nessuno interroga la provenienza a raffica. Il caso ottimizzato
+             dalla cache è quello che non capita mai.»
+
+        🔑 **Il pavimento è una proprietà del CORPUS, non della query**: cambia
+        quando il corpus cambia, non quando passano cinque minuti. Un TTL lo
+        ricalcola per il passare del tempo invece che per una ragione.
+
+        ⚠️ ACCANTO al DB e non DENTRO: una tabella nuova è una modifica di
+        schema, e lo schema è di un'altra istanza. Un file JSON non ha
+        migrazioni né lock, e se sparisce si ricalcola — perderlo costa un
+        ricalcolo, non un errore. Tutto il percorso è fail-open per lo stesso
+        motivo: il valore salvato è un'ottimizzazione, non un dato.
+        """
+        import json as _json
         import time as _time
+
+        n = -1
+        try:
+            n = int(self.semantic.count())
+        except Exception:  # noqa: BLE001 — un conteggio fallito non blocca
+            pass
+
         cached = getattr(self, "_floor_cache", None)
         now = _time.time()
         if cached and now - cached[0] < self._FLOOR_CACHE_TTL_S:
             return cached[1]
+
+        f = self._floor_file()
+        if n >= 0:
+            try:
+                d = _json.loads(f.read_text(encoding="utf-8"))
+                salvato, n_salvato = float(d["floor"]), int(d["n_facts"])
+                if abs(n - n_salvato) <= max(1, n_salvato) * self._FLOOR_DRIFT:
+                    self._floor_cache = (now, salvato)
+                    return salvato
+            except Exception:  # noqa: BLE001 — file assente/corrotto: si ricalcola
+                pass
+
         from .relevance_floor import estimate_relevance_floor
         val = estimate_relevance_floor(self.semantic)
         self._floor_cache = (now, val)
+        if n >= 0:
+            try:
+                f.write_text(_json.dumps({"floor": val, "n_facts": n}),
+                             encoding="utf-8")
+            except Exception:  # noqa: BLE001 — non poter scrivere non è un errore
+                pass
         return val
 
     def _record_trust(self, action: str, layers: list[str] | None = None,
@@ -1355,11 +2172,40 @@ class Memory:
         except Exception:
             pass
         out["store"] = store
+        # How much of the corpus the MOAT actually judged — the number that
+        # bounds every other number here. The entailment check only runs on a
+        # write that carries a source, so a store can be full of facts none of
+        # which the moat ever saw, and until now nothing said so: measured on
+        # the real corpus 2026-07-28, 0 of 6414 facts had a grounding_score
+        # while the product reported gate actions as usual. Provenance is
+        # counted SEPARATELY because a verified_by ref records who vouches and
+        # does not run the check — conflating them here would repeat, in the
+        # report, the very confusion the write path avoids. Pure SQL over
+        # columns already persisted: no judge, no LLM call.
+        moat = {"facts": 0, "grounded": 0, "with_provenance": 0, "coverage": 0.0}
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as con:
+                moat["facts"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL"
+                ).fetchone()[0])
+                moat["grounded"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND grounding_score IS NOT NULL").fetchone()[0])
+                moat["with_provenance"] = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND verified_by IS NOT NULL AND verified_by NOT IN ('', '[]')"
+                ).fetchone()[0])
+            if moat["facts"]:
+                moat["coverage"] = round(moat["grounded"] / moat["facts"], 3)
+        except Exception:  # noqa: BLE001 — the odometer never breaks a caller
+            pass
+        out["moat"] = moat
         out["ledger_write_failures"] = int(
             getattr(self._ledger, "write_failures", 0) or 0)
         return out
 
-    def quarantine_log(self, *, limit: int = 50) -> list[dict[str, Any]]:
+    def quarantine_log(self, *, limit: int = 50,
+                       explain: bool = False) -> list[dict[str, Any]]:
         """The blocked-claims log: live QUARANTINED facts, newest first.
 
         The odometer says HOW MANY the gate stopped; this says WHAT — each
@@ -1399,7 +2245,178 @@ class Memory:
                 row["layers"] = (a or {}).get("layers") or []
         except Exception:  # noqa: BLE001 — enrichment must never break the view
             pass
+        if explain:
+            self._spiega_le_quarantene(rows)
         return rows
+
+    @staticmethod
+    def _spiega_le_quarantene(rows: list[dict[str, Any]]) -> None:
+        """Ricalcola PERCHE' ogni claim e' stato fermato, e come sbloccarlo.
+
+        Il motivo esiste gia' nella riga quando l'audit trail e' acceso, ma
+        quello e' opt-in (``VERIMEM_AUDIT_LOG``) e in pratica non lo accende
+        nessuno: sul corpus vivo del 2026-07-30 ci sono 513 fatti trattenuti e
+        nessuno di loro ha una voce nel trail — «degrades cleanly» significa
+        che la colonna resta vuota e chi guarda non sa che fare. Nemmeno
+        accenderlo adesso aiuterebbe: il trail non e' retroattivo.
+
+        Si ricalcola perche' i detector lessicali sono deterministici e non
+        chiamano nessun modello: rieseguirli sulla proposizione dice quale si e'
+        acceso e cosa chiede per lasciar passare il fatto. E' lo stesso metodo
+        con cui il 29/07 si e' misurato che dei 164 quarantinati che citano
+        un'evidenza nel testo, 42 passerebbero spostandola in ``verified_by`` e
+        122 restano fermi sugli L1.
+
+        Opt-in perche' costa: chi vuole solo l'elenco non paga il ricalcolo.
+        Non tocca lo stato — e' una spiegazione, non una riabilitazione.
+        """
+        try:
+            from .anti_confab_gate import run_validation_gate
+        except Exception:  # noqa: BLE001
+            return
+        for row in rows:
+            if row.get("reason"):
+                continue  # l'audit trail sapeva gia' dirlo
+            try:
+                g = run_validation_gate(
+                    proposition=row.get("proposition") or "",
+                    verified_by=[], topic=row.get("topic"), agent=None)
+                avvisi = list(getattr(g, "warnings", None) or [])
+            except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
+                continue
+            if not avvisi:
+                # Nessuno schermo lessicale si accende: il fatto e' stato
+                # fermato da L4, il moat, che confronta la proposizione con la
+                # SUA fonte — e la fonte non e' persistita, quindi il motivo
+                # non e' ricostruibile qui. Provato sul corpus vivo: i tre
+                # quarantinati piu' recenti sono tutti di questo tipo.
+                #
+                # Si dice, invece di lasciare il campo vuoto: `None` si legge
+                # «nessun motivo», e non e' la stessa cosa di «non lo so piu'».
+                row["layers"] = []
+                row["why"] = (
+                    "nessuno schermo lessicale si accende su questa frase: "
+                    "e' stata fermata dal confronto con la sua fonte (L4), e "
+                    "la fonte non viene conservata, quindi il motivo esatto "
+                    "non e' piu' ricostruibile. Le cause tipiche sono un "
+                    "calcolo o una conversione che la fonte non enuncia, e "
+                    "una frase che contiene piu' affermazioni giudicate "
+                    "insieme: riscrivila coi numeri come stanno nella fonte, "
+                    "spezzala, e riscrivila con --source.")
+                continue
+            row["layers"] = [w.get("layer") for w in avvisi if w.get("layer")]
+            row["why"] = " · ".join(
+                f"{w.get('layer', '?')}: {w.get('advice') or w.get('reason') or ''}"
+                for w in avvisi[:3]).strip()
+
+    def epistemic_health(self, *, limit: int = 2000,
+                         threshold: float = 85.0) -> dict[str, Any]:
+        """Come sta messo il CORPUS, non un fatto per volta.
+
+        `epistemic_health` era completo, con i suoi test, e irraggiungibile da
+        ogni superficie: si potevano mettere i verdetti e non si poteva chiedere
+        l'aggregato. Il motivo si legge nel modulo — `_source_of` cerca gli
+        attributi ``source`` / ``provenance`` / ``grounding_span``, che il
+        dataclass ``Fact`` non ha. E' scritto per una forma di fatto diversa da
+        quella del prodotto, e collegarlo alla lettera avrebbe dato un report
+        VUOTO che sembra funzionare: peggio che lasciarlo staccato.
+
+        L'adattamento sta qui e il modulo non si tocca. La source in chiaro non
+        viene conservata (verificato il 30/07 sui quarantinati), ma la sua
+        IMPRONTA si' — ``source_signature`` — e il verdetto sta in
+        ``grounding_score``. Quindi ``has_source`` significa «e' passato dal
+        moat» e ``grounded`` riusa il punteggio persistito invece di rifare il
+        giudizio: costo zero, nessun modello caricato, e aggrega esattamente
+        cio' che il write-path ha gia' misurato.
+
+        ``provenance_coverage`` e' il numero che limita gli altri: su un corpus
+        che il moat non ha mai giudicato non si puo' affermare niente sulla sua
+        salute, e il report lo dice invece di dare un bel voto.
+        """
+        from .epistemic_health import audit_one, health_report
+        audits = []
+        for f in self.semantic.list_facts(limit=limit, offset=0):
+            punteggio = getattr(f, "grounding_score", None)
+            giudicato = isinstance(punteggio, (int, float)) and not isinstance(
+                punteggio, bool)
+            vista = {
+                "id": getattr(f, "id", ""),
+                "proposition": getattr(f, "proposition", ""),
+                # `source` qui vuol dire «c'e' qualcosa contro cui e' stato
+                # controllato»: senza il verdetto non e' auditabile, e va detto
+                # con None invece che con uno zero.
+                "source": (getattr(f, "source_signature", None) or "moat")
+                          if giudicato else None,
+            }
+            audits.append(audit_one(
+                vista, grounder=lambda _s, _p, _g=punteggio: float(_g or 0.0),
+                threshold=threshold))
+        return health_report(audits)
+
+    def ignorance(self, queries: list[str], *, floor: float = 0.8,
+                  k: int = 5,
+                  noise_floor: float | None = None) -> dict[str, Any]:
+        """Perche' non lo so: la CLASSE dell'ignoranza e cosa la curerebbe.
+
+        L'astensione e' il claim che distingue questo prodotto, e da sola
+        lascia il chiamante dov'era — sa che non sa. Qui ogni domanda torna
+        classificata: `no_evidence` (non c'e' niente), `below_floor` (c'e' ma
+        non regge), `quarantined_only` (l'evidenza ESISTE ed e' in quarantena —
+        la cura e' una fonte o una revisione, non altro retrieval), `conflict`
+        (fatti vivi che si contraddicono senza vincitore), `answerable` (non e'
+        ignoranza, e si conta lo stesso perche' il denominatore sia onesto).
+
+        Il modulo era completo, con due file di test suoi, e irraggiungibile da
+        ogni superficie: zero import fuori da se', zero righe nel README. La
+        sua interfaccia combacia gia' con questo client — nessun adattatore,
+        a differenza di [epistemic_health][], che era scritto per una forma di
+        fatto diversa.
+
+        Sola lettura: la mappa non scrive mai.
+        """
+        from .ignorance_map import ignorance_map as _mappa
+        return _mappa(self, list(queries), floor=floor, k=k,
+                      noise_floor=noise_floor)
+
+    def label(self, fact_id: str, kind: str, *, proof: str | None = None,
+              bound: float | None = None,
+              counterexample: str | None = None) -> bool:
+        """Attacca a un fatto il TIPO di garanzia che lo sostiene.
+
+        `proven` (una prova verificabile a macchina, nominata), `unbeaten`
+        (ha retto fino a un limite dichiarato, e il limite puo' solo crescere),
+        `refuted` (un controesempio nominato, e assorbe). «Held to 10^6» e
+        «proven» non si confondono mai — e' la distinzione che il README
+        promette in 18 punti.
+
+        Il sottosistema esisteva completo e SCOLLEGATO in entrambe le direzioni:
+        `set_epistemic` era chiamato solo da due moduli che nessuna superficie
+        raggiunge, e sul corpus vivo del 2026-07-30 la colonna era NULL su tutti
+        e 6457 i fatti. Questo e' l'ingresso che mancava; l'uscita ce l'ha gia'
+        il contratto (`fact_contract.fact_payload`), e `verimem status` conta le
+        etichette perche' un sottosistema fermo a zero si veda.
+
+        L'attrito dell'API non e' smussato nel collegarlo: `proven` senza una
+        prova nominata alza `ValueError`, perche' un'etichetta che ci si puo'
+        auto-attribuire senza evidenza e' esattamente cio' che questo prodotto
+        esiste per impedire.
+
+        Ritorna False — senza alzare — quando la transizione e' vietata dalle
+        regole monotone (un fatto `refuted` non torna `proven` perche' qualcuno
+        lo richiede): non e' un errore del chiamante, e' il sistema che tiene.
+        """
+        from .epistemic import make_proven, make_refuted, make_unbeaten
+        k = (kind or "").strip().lower()
+        if k == "proven":
+            etichetta = make_proven(proof or "")
+        elif k == "unbeaten":
+            etichetta = make_unbeaten(bound if bound is not None else 0)
+        elif k == "refuted":
+            etichetta = make_refuted(counterexample or "")
+        else:
+            raise ValueError(
+                f"kind sconosciuto: {kind!r}. Sono proven | unbeaten | refuted")
+        return bool(self.semantic.set_epistemic(fact_id, etichetta))
 
     def restore(self, fact_id: str, *, reason: str = "") -> bool:
         """Rescue a wrongly-blocked fact: un-quarantine ``fact_id`` back into the
@@ -1481,11 +2498,33 @@ class Memory:
     #: ``recall`` is the same operation as ``search`` (HippoAgent naming).
     recall = search
 
+
     @staticmethod
     def _fact_view(f: Any, *, fact_id: str = "") -> dict[str, Any]:
         """One fact as the SDK dict — the SAME provenance surface everywhere
         (audit mod.8: get/get_all lacked the fields search exposes, so a
-        trust-conditioning caller lost verified_by the moment it re-fetched)."""
+        trust-conditioning caller lost verified_by the moment it re-fetched).
+
+        ``superseded_by`` is here for the same reason, one field over: a
+        retracted fact came back through every one of these surfaces looking
+        EXACTLY like a live one — same status, no successor named — while the
+        default recall had already stopped serving it. Measured on a virgin
+        store through the SDK: the row read ``('…', 'Il piano annuale costa
+        100 euro.', 'model_claim', 'a8b1b7d03471')`` and the view read
+        ``status: model_claim`` with the key absent. ``update()`` promises in
+        its own docstring that the old version "stays in the provenance
+        chain"; it does, but consulting it did not reveal it had been
+        replaced. And supersession is not only triggered by ``update()`` — the
+        evolution heuristic fires on its own, so this silence is what makes a
+        wrong retraction invisible to anyone not opening the DB by hand.
+
+        It is the RAW column, deliberately, and not a friendlier ``retired``
+        flag: a second name for one fact is how two truths start diverging
+        (this store already carries 159 skills whose status differs between
+        the index and the files). Always present, ``None`` when live — an
+        absent key cannot distinguish "not superseded" from "this view does
+        not say".
+        """
         return {
             "id": getattr(f, "id", fact_id),
             "text": getattr(f, "proposition", ""),
@@ -1496,6 +2535,35 @@ class Memory:
             "created_at": getattr(f, "created_at", None),
             "source": (getattr(f, "source_episodes", None) or [None])[0],
             "verified_by": list(getattr(f, "verified_by", None) or []),
+            "superseded_by": getattr(f, "superseded_by", None) or None,
+            # CIO' CHE IL CANALE MCP SERVIVA E QUESTO NO. Il docstring qui
+            # sopra promette «the SAME provenance surface everywhere», e il
+            # 2026-08-02 quella frase aveva gia' fatto trovare `superseded_by`
+            # mancante. Non bastava: sullo stesso fatto i due contratti di
+            # uscita divergevano ancora su cinque campi.
+            #
+            #   MCP  fact_payload -> confidence confidence_tier EPISTEMIC
+            #                        meta_narrative writer_principal + …
+            #   SDK  _fact_view   -> (nessuno di questi)
+            #
+            # `epistemic` e' quello che ha fatto trovare il difetto:
+            # `label(fid, 'proven', proof=…)` risponde True, il DB contiene
+            # `{"kind": "proven", "proof": "listino firmato"}`, e nessuna
+            # superficie SDK lo serviva — ne' `search`, ne' `get`, ne'
+            # `explain`. Il tier che dice PERCHE' un fatto merita fiducia si
+            # scriveva e non si rileggeva.
+            #
+            # ADDITIVO di proposito, non una delega a `fact_payload`: i due
+            # usano nomi diversi per la stessa cosa (`text` contro
+            # `proposition`), e allinearli romperebbe ogni chiamante dell'SDK.
+            # Si aggiunge cio' che manca; niente sparisce.
+            #
+            # Sempre presenti, `None` quando non c'e': una chiave assente non
+            # distingue «nessuna garanzia» da «questa vista non lo dice».
+            "epistemic": getattr(f, "epistemic", None) or None,
+            "confidence": getattr(f, "confidence", None),
+            "confidence_tier": getattr(f, "confidence_tier", None),
+            "writer_principal": getattr(f, "writer_principal", None) or None,
         }
 
     def get(self, fact_id: str) -> dict[str, Any] | None:
@@ -1632,10 +2700,48 @@ class Memory:
             cid = getattr(cur, "id", "")
             seen.add(cid)
             nxt = getattr(cur, "superseded_by", None)
-            chain.append({"id": cid, "text": getattr(cur, "proposition", ""),
-                          "status": getattr(cur, "status", ""), "superseded_by": nxt})
+            # LA VISTA CONDIVISA, non la TERZA copia scritta a mano.
+            #
+            # Qui c'era `{id, text, status, superseded_by}`: quattro chiavi
+            # contro le quattordici che `get`/`get_all`/`search` garantiscono
+            # (censito da ws2). Su quelle superfici la promessa «provenance on
+            # every read» regge; qui cadevano tutte insieme — provenienza,
+            # verdetto, tempo, autore.
+            # ⚠️ E colpisce cio' che si e' appena acceso: col routing temporale
+            # su "auto" (2aa8a4b1) la storia ARRIVA, ma serviva versioni senza
+            # fonte, senza grounding, senza data e senza scrittore. Chi deve
+            # SCEGLIERE FRA VERSIONI — l'unico motivo per cui si chiama
+            # `history` — aveva in mano due testi e nessun criterio.
+            # 🔑 E' la terza copia della stessa vista, e la seconda era gia'
+            # costata: accanto all'uso di `_fact_view` in `search` sta scritto
+            # come fu trovata — «superseded_by was added to the shared view and
+            # search went on without it. Two copies drift, and this one already
+            # had». Per questo la cura e' la PROIEZIONE e non quattro campi
+            # aggiunti a mano, che sarebbe la quarta copia.
+            # Additivo: le quattro chiavi storiche restano (`text` non e' nella
+            # vista condivisa, che usa `text` come alias di `proposition`).
+            _voce = dict(self._fact_view(cur))
+            _voce.update({"id": cid, "text": getattr(cur, "proposition", ""),
+                          "status": getattr(cur, "status", ""),
+                          "superseded_by": nxt})
+            chain.append(_voce)
             cur = self.semantic.get(nxt) if nxt else None
         return chain
+
+    #: I VERBI DELLA RIGA DI COMANDO, sull'SDK con lo stesso nome. Percorrendo
+    #: il ciclo di vita di un fatto come lo farebbe chi usa il prodotto —
+    #: scrivo, rileggo, correggo, dimentico — le due capacità c'erano ma con
+    #: un altro nome, e `Memory.correct` sollevava AttributeError mentre
+    #: `verimem correct` esisteva. Il docstring di `delete` si apre perfino con
+    #: «Forget a fact by id»: usava la parola della CLI per descrivere un
+    #: metodo chiamato in un altro modo.
+    #:
+    #: Non mancava una capacità — mancava il nome con cui l'utente la cerca, e
+    #: il cricchetto sulle capacità (`4cea1aa8`) non poteva vederlo perché
+    #: confronta i NOMI e `update` esiste. Alias e non reimplementazioni, come
+    #: `recall`: due implementazioni della stessa operazione divergono.
+    correct = update
+    forget = delete
 
 
 #: Alias for users who expect a ``Client`` name (mem0/Zep ergonomics).
@@ -1643,8 +2749,8 @@ Client = Memory
 
 __all__ = ["Memory", "Client"]
 
-
 # --- adjudication receipt (Phase 0.1/0.2) --------------------------------------
+
 def _evidence_class(gate: Any, verified_by: Any, warnings: list) -> str:
     """How this write was adjudicated - the HONEST tier label.
 

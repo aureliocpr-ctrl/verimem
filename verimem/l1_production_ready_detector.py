@@ -38,7 +38,15 @@ from dataclasses import dataclass
 _PROD_READY_PATTERN = re.compile(
     r"\b(?:production[- ]?ready|prod[- ]?ready|production ready|"
     r"ship[- ]?ready|release[- ]?ready|"
-    r"stable|stabile|robust|robusto|"
+    # Le flessioni e la locuzione italiana. C'erano `stabile|robusto` — i soli
+    # maschili singolari — e nessuna traduzione di «production ready», che in
+    # italiano si dice «pronto per la produzione». Misurato 2026-08-03: la
+    # claim «La funzione e pronta per la produzione» entrava come model_claim
+    # mentre «The feature is production ready» veniva quarantinata.
+    # Frequenze sul corpus (5387 fatti): `stabili` 66, `robuste` 38,
+    # `robusta` 36 — tutte sotto l'1.3%.
+    r"stable|stabil[ei]|robust|robust[oaie]|"
+    r"pront[oaie]\s+(?:per|alla|per\s+la)\s+(?:la\s+)?produzione|"
     r"enterprise[- ]?grade|business[- ]?grade|"
     r"battle[- ]?tested)\b",
     re.IGNORECASE,

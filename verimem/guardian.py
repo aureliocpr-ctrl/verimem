@@ -29,19 +29,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from .composer import _copula_parse
+from .composer import _copula_parse, subject_key
+from .epistemic import guarantee_rank
 
 __all__ = ["correct_read"]
 
-_RANK = {"refuted": -1, None: 0, "unbeaten": 1, "proven": 2}
-
 
 def _rank(fact: Any) -> int:
-    # .get with default 0: an unknown/foreign epistemic kind is UNLABELED,
-    # never a KeyError on the read-path (audit mod.3 — line 109 already
-    # defended this way; the two must agree).
-    label = getattr(fact, "epistemic", None) or None
-    return _RANK.get(label.get("kind"), 0) if label else 0
+    # epistemic.guarantee_rank, not a local table: the active probe compares the
+    # same two facts and reached the OPPOSITE conclusion while this ordering
+    # lived only here (2026-07-28). An unknown/foreign kind is UNLABELED there
+    # too, never a KeyError on the read-path (audit mod.3).
+    return guarantee_rank(getattr(fact, "epistemic", None))
 
 
 def _is_belief(fact: Any) -> bool:
@@ -52,29 +51,99 @@ def _value(fact: Any) -> str:
     return (_copula_parse(fact.proposition) or ("", "", ""))[1]
 
 
-def correct_read(mem: Any, query: str, *, k: int = 5) -> dict[str, Any]:
+def _risolvi_pavimento(mem: Any, min_relevance: float | str | None) -> float:
+    """Il pavimento come NUMERO. ``"auto"`` lo fa calcolare allo store (che lo
+    tiene in cache: la stima costa ~32 sonde e non si paga per query)."""
+    if min_relevance is None:
+        return 0.0
+    if min_relevance == "auto":
+        try:
+            return float(mem._auto_relevance_floor())
+        except Exception:      # noqa: BLE001 — un read-path non cade mai per
+            return 0.0         # colpa della calibrazione: si degrada a «off».
+    try:
+        return max(0.0, float(min_relevance))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def correct_read(mem: Any, query: str, *, k: int = 5,
+                 min_relevance: float | str | None = None) -> dict[str, Any]:
     """One gated read with correction. Returns
-    ``{verdict, answer, served_id, evidence, uncorroborated, reason}``."""
+    ``{verdict, answer, served_id, evidence, uncorroborated, reason}``.
+
+    ``min_relevance`` is the abstention floor, forwarded to ``mem.search``:
+    ``"auto"`` (the store self-calibrates), a float, or ``None`` for the old
+    permissive behaviour.
+
+    PERCHE' ESISTE (2026-08-04, trovato da ws4 usando l'API HTTP da utente).
+    Stesso store, stessa domanda senza risposta, tre rotte:
+
+        GET /v1/search   2 hit, top «La riunione settimanale e' il martedi'» 0.8227
+        GET /v1/explain  abstained=TRUE, n_facts=0
+        GET /v1/correct  verdict=ACCEPT, answer=«La riunione ... alle 10.»
+                         <- a una domanda sul LOGO aziendale
+
+    Il retrieval era lo stesso: a mancare era il pavimento.
+    ``min_relevance=_gateway_min_relevance()`` compariva UNA SOLA VOLTA in tutto
+    ``gateway.py``, sulla rotta ``explain``, e qui non c'era nemmeno il
+    parametro da passare. La rotta esplicitamente chiamata *guardian* era
+    l'unica lettura che non applicava l'astensione che il prodotto vende — il
+    docstring di ``_gateway_min_relevance`` la chiama «the point of a TRUST
+    product».
+
+    ⚠️ IL PAVIMENTO DECIDE SE SERVIRE, NON SE VEDERE — e la prima stesura di
+    questa cura sbagliava proprio qui. Passarlo a ``mem.search`` sembrava la
+    cosa ovvia e ha rotto ``test_correct_abstains_on_real_conflict``: quando
+    due fatti si contraddicono, questo endpoint si astiene MOSTRANDO ENTRAMBI
+    I LATI, e col filtro davanti al retrieval i due contendenti sparivano prima
+    di essere visti. L'astensione restava, ma l'utente perdeva l'informazione
+    piu' preziosa che il guardiano possa dargli: *ci sono due fatti in
+    conflitto, eccoli*. Un'astensione cieca e una motivata non sono la stessa
+    risposta.
+
+    Quindi si recupera SENZA filtro e si controlla il punteggio migliore prima
+    di servire: sotto il pavimento si abbandona con ``below_relevance_floor``,
+    portandosi dietro gli id di cio' che c'era.
+
+    Costo e beneficio, misurati da ws4 su entrambe le popolazioni (10 domande
+    con risposta, 10 senza): senza pavimento 10/10 servite e 10/10 false
+    servite; con pavimento 9/10 servite e 0/10 false. Una risposta vera persa
+    su dieci contro dieci risposte inventate bloccate su dieci.
+    """
     hits = mem.search(query, k=k, include_beliefs=True)
     if not hits:
         return {"verdict": "ABSTAIN", "answer": None, "served_id": None,
                 "evidence": [], "uncorroborated": [], "reason": "no_support"}
+    pavimento = _risolvi_pavimento(mem, min_relevance)
+    if pavimento > 0.0:
+        migliore = max((float(h.get("score") or 0.0) for h in hits), default=0.0)
+        if migliore < pavimento:
+            # C'era qualcosa, ma niente di abbastanza pertinente. Si dice cosa
+            # c'era: un'astensione motivata vale piu' di una muta.
+            return {"verdict": "ABSTAIN", "answer": None, "served_id": None,
+                    "evidence": [h.get("id", "") for h in hits],
+                    "uncorroborated": [], "reason": "below_relevance_floor"}
     facts = [f for f in (mem.semantic.get(h.get("id", "")) for h in hits) if f]
     if not facts:
         # hits existed but every row is gone (delete race): degrade to the
         # honest abstention — a read-path never crashes (audit mod.3).
         return {"verdict": "ABSTAIN", "answer": None, "served_id": None,
                 "evidence": [], "uncorroborated": [], "reason": "no_support"}
-    # group the copula facts by subject; non-copula hits pass through untouched
+    # group the copula facts by subject; non-copula hits pass through untouched.
+    # The key is composer.subject_key — the SHARED definition of "same subject".
+    # Grouping on the raw parse hid every conflict where the two sides spelled
+    # the subject differently ("Rex" vs "The Rex"): the guardian ACCEPTed and
+    # served an answer the active probe considered refuted (2026-07-28, banco 4).
     contenders: dict[str, list[Any]] = {}
     for f in facts:
         parsed = _copula_parse(f.proposition)
         if parsed:
-            contenders.setdefault(parsed[0], []).append(f)
+            contenders.setdefault(subject_key(parsed[0]), []).append(f)
 
     top = facts[0]
     top_parsed = _copula_parse(top.proposition)
-    rivals = contenders.get(top_parsed[0], [top]) if top_parsed else [top]
+    rivals = contenders.get(subject_key(top_parsed[0]), [top]) if top_parsed else [top]
     # a refuted fact never gets served — drop it from contention entirely
     live = [f for f in rivals if _rank(f) >= 0] or []
     if not live:
@@ -103,9 +172,22 @@ def correct_read(mem: Any, query: str, *, k: int = 5) -> dict[str, Any]:
                     "uncorroborated": [f.id for f in overridden],
                     "reason": "user assertion not corroborated — "
                               "the corroborated fact wins"}
+        # "unchallenged" is a CLAIM — the store holds nothing against this
+        # answer — and the guardian may only make it where it could actually
+        # look. Rivals are gathered through the copula parse, so a non-copula
+        # top hit has no contenders to gather and the fact is returned alone.
+        # Measured on the real corpus (2026-07-28): 0 of 4208 live facts are
+        # copula (median proposition 814 chars of prose), so on real queries
+        # this branch was answering "unchallenged" every time, through the
+        # production endpoint, without ever having compared anything. The
+        # verdict is unchanged — there is no better answer available — but the
+        # two cases stop sharing one word.
         return {"verdict": "ACCEPT", "answer": winner.proposition,
                 "served_id": winner.id, "evidence": [f.id for f in rivals],
-                "uncorroborated": [], "reason": "unchallenged"}
+                "uncorroborated": [],
+                "reason": ("unchallenged" if top_parsed else
+                           "served as-is: not comparable — no copula structure "
+                           "to gather rivals by, so no conflict search ran")}
 
     # dominance is per-VALUE, not per-fact (audit mod.3): two proven facts
     # AGREEING on "labrador" must beat a lone unlabeled "poodle" — comparing

@@ -200,6 +200,27 @@ def reconcile_fact_on_write(
     return {"superseded": superseded, "contested": contested}
 
 
+# QUESTA LISTA RESTA EN-ONLY DI PROPOSITO. E' l'unica delle sei stoplist
+# «povere» censite il 2026-08-02 che NON e' stata unita a
+# `bm25_rank._QUERY_STOPWORDS` (128 parole EN+IT), e la ragione e' misurata:
+# su un Jaccard, togliere parole vuote puo' ALZARE il punteggio invece di
+# abbassarlo, quando quelle parole stanno in UNA SOLA delle due frasi.
+#
+# Il caso, gia' presidiato da test_reconcile_overlap_guard.py — due frasi sullo
+# stesso soggetto ma su attributi DIVERSI, che la guardia deve rifiutare:
+#     a = "Taylor David shared anecdotes about the museum trip"
+#     b = "Taylor David launched a new consultancy company"
+#
+#     39 storiche   A=7 B=6 comuni=2 unione=11 -> Jaccard 0.1818 -> rifiuta
+#     unione bm25   A=6 B=6 comuni=2 unione=10 -> Jaccard 0.2000 -> ACCETTA
+#
+# Una parola sola di differenza («about», presente solo in `a`): l'unione si
+# accorcia, il rapporto sale, e la guardia passa dal rifiutare all'accettare
+# un conflitto che deve rifiutare — cioe' una supersessione in piu'.
+#
+# La cura era stata scritta, misurata e RITIRATA in giornata. Chi la rifa'
+# deve prima decidere cosa fare del denominatore: la strada e' falsificata,
+# non dimenticata.
 _OVERLAP_STOP = frozenset(
     "the a an is are was were of to in on at for and or with by from as be been "
     "being this that these those it its their his her have has had not s do does "
@@ -227,11 +248,9 @@ def _min_conflict_overlap() -> float:
     0.2833 / false-compl 0.0667; 0.2 -> recall ~0.20 / false-compl ~0.008. A
     precision/recall DIAL (not a free win) for trust-first deployments;
     ENGRAM_RECONCILE_MIN_OVERLAP."""
-    import os
-    try:
-        return max(0.0, float(os.environ.get("ENGRAM_RECONCILE_MIN_OVERLAP", "0")))
-    except ValueError:
-        return 0.0
+    # max(0.0, float(...)) happened to filter nan (argument order) but not inf
+    from .env_num import env_float
+    return max(0.0, env_float("ENGRAM_RECONCILE_MIN_OVERLAP", 0.0))
 
 
 def _is_conflict(old_prop: str, new_prop: str, judge=None) -> bool:

@@ -7,6 +7,20 @@
 # passing". I did not run ruff before committing. Good intentions are not a
 # mechanism; this is.
 #
+# 2026-07-30: this hook had stopped being one. It ran
+#
+#     ruff check engram tests scripts
+#
+# under a comment claiming "exactly what ci.yml runs", while ci.yml had moved to
+# `verimem` at the rename. `engram/` is now an 88-line compatibility shim and
+# `verimem/` is 107,067 lines, so the gate covered 0.08% of the code — and it
+# never failed, which is exactly why nobody noticed. A gate that cannot fail is
+# not a gate, it is a green light.
+#
+# So it no longer keeps its own copy of the list: it READS the ruff line out of
+# the workflow. A duplicated list drifts the moment one side moves; a derived
+# one cannot.
+#
 # Install once:  git config core.hooksPath .githooks
 # Bypass (rare): git commit --no-verify
 
@@ -17,13 +31,27 @@ if ! command -v ruff >/dev/null 2>&1; then
     exit 0
 fi
 
-# exactly what .github/workflows/ci.yml runs
-if ! ruff check engram tests scripts; then
+WF=".github/workflows/ci.yml"
+TARGETS=""
+if [ -f "$WF" ]; then
+    # the argument list of the workflow's own `ruff check ...` step
+    TARGETS=$(grep -oE 'ruff check [A-Za-z0-9_ /.-]+' "$WF" | head -1 | sed 's/^ruff check //')
+fi
+
+if [ -z "$TARGETS" ]; then
+    # The workflow is the source of truth. If it cannot be read, SAY so instead
+    # of quietly checking a guess — the silent-wrong-target failure this hook
+    # was just repaired for.
+    echo "pre-commit: cannot read the ruff targets from $WF — using the default"
+    TARGETS="verimem tests scripts"
+fi
+
+if ! ruff check $TARGETS; then
     echo ""
     echo "pre-commit BLOCKED: ruff would fail the CI's Lint step, which runs"
     echo "before the tests — every job on every OS would go red."
-    echo "Fix:  ruff check engram tests scripts --fix"
+    echo "Fix:  ruff check $TARGETS --fix"
     exit 1
 fi
 
-echo "pre-commit: lint clean"
+echo "pre-commit: lint clean ($TARGETS)"

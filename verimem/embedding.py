@@ -361,6 +361,40 @@ def expected_embedding_bytes() -> int:
     return CONFIG.embedding_dim * 4
 
 
+def vettore_compatibile(vec) -> bool:
+    """Il vettore è di questo modello, o di uno che non c'è più?
+
+    IL CRITERIO ESISTEVA GIÀ, scritto a mano in ``skill.py:305``::
+
+        # Reuse the persisted learned_embedding ONLY if its dimension matches
+        # the ACTIVE model … On a dim mismatch (or no vector) re-encode
+        if skill.learned_embedding is not None and (
+            len(skill.learned_embedding) * 4 == embedding.expected_embedding_bytes()
+        ):
+
+    …e mancava in **cinque** altri consumatori dello stesso campo:
+    ``skill.decay_idle_embeddings`` (che per questo faceva morire il ciclo di
+    sonno con ``shapes (384,) (768,)``), ``cli.py:2051``, ``selection.py:97``,
+    ``code.py:523``, ``dashboard_routes/skills.py:65``. **Uno su sei ce
+    l'aveva.**
+
+    Diventa una funzione invece di una sesta copia perché è la classe che
+    questa casa paga di più — «una copia invece della superficie unica» — e
+    perché il valore giusto non è una costante: ``expected_embedding_bytes()``
+    si risolve LIVE, così un cambio di modello a runtime muove tutti e sei i
+    controlli insieme invece di lasciarne cinque congelati.
+
+    Falso su ``None`` e su un vettore vuoto: entrambi significano «non c'è un
+    vettore utilizzabile», che è la stessa decisione a valle.
+    """
+    if not vec:
+        return False
+    try:
+        return len(vec) * 4 == expected_embedding_bytes()
+    except TypeError:       # non è una sequenza: non è un vettore
+        return False
+
+
 def verify_model_dim() -> tuple[bool, int]:
     """Falsification guard: load the encoder and compare its real output dim
     to ``CONFIG.embedding_dim``.

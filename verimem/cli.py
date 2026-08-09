@@ -171,12 +171,69 @@ def status():
     n_sk = agent.skills.count()
     n_sk_promoted = agent.skills.count(status="promoted")
     n_facts = agent.semantic.count() if hasattr(agent, "semantic") and agent.semantic else 0
+    # A command whose docstring says "health check" is where someone looks for
+    # whether their memory can be TRUSTED, and it used to answer with inventory
+    # only. On the live store the two figures below read 511 held back (10.8%)
+    # and 23 judged (0.5%) next to "4743 facts" — each one changes what the user
+    # does next, and neither was anywhere in this panel. `doctor` stays the
+    # deeper diagnosis; this is the health line.
+    # Tutte e TRE, non due: `_lab` e' stata aggiunta al blocco sotto il 31/07 e
+    # non qui, cosi' il ramo «il DB non c'e'» — che esiste apposta per reggere
+    # quel caso — moriva di UnboundLocalError sull'unica variabile che nessuno
+    # aveva inizializzato. CodeQL l'ha visto (py/uninitialized-local-variable),
+    # e non lo prende nessun test della CLI perche' `build()` il DB lo crea.
+    _held = _judged = _lab = None
+    try:
+        import sqlite3 as _sq
+
+        # agent.semantic.db_path — the SAME store the counts above came from,
+        # not a path re-resolved from the environment. The first version used
+        # _compat.data_dir() and produced a panel reading "semantic facts: 4743"
+        # (the configured corpus) beside "quarantined: 1" (a different store),
+        # whenever the data dir was set after import. Identical on the live box,
+        # wrong everywhere else, and it is the exact defect this panel exists to
+        # report on.
+        _db = Path(agent.semantic.db_path)
+        if _db.exists():
+            with _sq.connect(f"file:{_db}?mode=ro", uri=True) as _c:
+                # superseded_by IS NULL on BOTH counts and on n_facts: without
+                # it this read 1732 (36.5%) against a live-only denominator
+                # while `verimem stats` said 511 three lines away — the same
+                # mixed-population mistake this session just fixed in the stats
+                # heading, made again one command over.
+                _held = _c.execute(
+                    "SELECT COUNT(*) FROM facts WHERE status = 'quarantined' "
+                    "AND superseded_by IS NULL").fetchone()[0]
+                _judged = _c.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND grounding_score IS NOT NULL").fetchone()[0]
+                # 2026-07-31: cio' che non si conta resta spento in silenzio.
+                # Le etichette epistemiche erano NULL su tutti e 6457 i fatti
+                # mentre il README le prometteva in 18 punti, e nessuna riga di
+                # stato lo diceva. Ora un sottosistema fermo a zero SI VEDE.
+                _lab = _c.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND epistemic IS NOT NULL").fetchone()[0]
+    except Exception:  # noqa: BLE001 — a health line never breaks the count
+        _held = _judged = _lab = None
+    _truth = ""
+    if _held is not None:
+        _pct = f" ({100 * _held / n_facts:.1f}%)" if n_facts else ""
+        _truth += f"\n  quarantined:     {_held}{_pct}  held back, awaiting review"
+    if _judged is not None:
+        _pct = f" ({100 * _judged / n_facts:.1f}%)" if n_facts else ""
+        _truth += (f"\n  moat-judged:     {_judged}{_pct}  writes whose source "
+                   f"was checked")
+    if _lab is not None:
+        _truth += (f"\n  epistemic:       {_lab}  facts carrying a declared "
+                   f"guarantee (proven/unbeaten/refuted)")
     console.print(Panel.fit(
         f"[bold]Verimem[/bold]\n"
         f"  episodes:        {n_eps}\n"
         f"  skills (total):  {n_sk}\n"
         f"  skills promoted: {n_sk_promoted}\n"
-        f"  semantic facts:  {n_facts}\n"
+        f"  semantic facts:  {n_facts}"
+        f"{_truth}\n"
         f"  data dir:        {CONFIG.data_dir}",
         title="status",
     ))
@@ -441,21 +498,68 @@ def index(
 def search_docs(
     query: str = typer.Argument(..., help="Natural-language query"),
     k: int = typer.Option(5, "-k", help="Top-k chunks"),
+    min_score: float = typer.Option(
+        0.0, "--min-score",
+        help=("Drop hits below this score. Off by default: the right cut "
+              "depends on your corpus and this command does not guess one.")),
 ):
     """Semantic search over indexed documents, with the exact citation.
 
     Every hit shows source file, version and character offsets
     (original[start:end] == chunk text) — the provenance moat applied to
     documents. Only the LATEST version of each source is searched.
+
+    QUESTO E' UN TOP-K, NON UN'ASTENSIONE, e il comando ora lo dice. Provato
+    su un listino prezzi indicizzato: «quanto costa il piano annuale» rende il
+    chunk a 0.884, e «quale database usa il cluster di produzione» — di cui in
+    quel documento non c'e' una parola — rende LO STESSO chunk a 0.757, con la
+    stessa citazione esatta. Chi legge vede un risultato con una fonte precisa
+    e conclude di aver avuto una risposta.
+
+    Il resto del prodotto si astiene («abstention over hallucination») perche'
+    ha un pavimento misurato; qui non c'e', e inventarne uno a occhio e'
+    l'errore gia' pagato il 30/07 con la soglia `max(floor, noise_floor)`,
+    scritta, misurata e ritirata perche' rendeva muta la mappa. Quindi:
+    `--min-score` a chi sa che taglio vuole, e una riga che dichiara la natura
+    della lista a tutti gli altri.
     """
     from .document_index import DocumentIndex
     hits = DocumentIndex().search(query, k=k)
+    nascosti = getattr(hits, "nascosti", 0)
+    if min_score > 0:
+        hits = [h for h in hits if float(h.get("score") or 0.0) >= min_score]
     if not hits:
-        console.print("no results (index empty or no match)")
+        # «NESSUN RISULTATO» E «TUTTO NASCOSTO» ERANO LA STESSA RIGA, ed e'
+        # il caso in cui la differenza conta di piu': un documento con dentro
+        # una riga ostile sparisce INTERO, e chi cerca riceve la stessa
+        # risposta che avrebbe se non fosse mai stato indicizzato.
+        if nascosti:
+            console.print(
+                f"no results — but {nascosti} chunk(s) were HIDDEN because "
+                "they carry injection signals. The document is indexed: rerun "
+                "with the audit path (include_flagged) to inspect them.")
+        else:
+            console.print("no results (index empty or no match)")
         raise typer.Exit(0)
+    if nascosti:
+        console.print(
+            f"[yellow]note:[/yellow] {nascosti} chunk(s) hidden (injection "
+            "signals) — results below are PARTIAL")
     terms = [t for t in query.lower().split() if t.strip()]
     for i, h in enumerate(hits, 1):
-        cite = f"{h['source_id']} v{h['version']} [{h['start']}:{h['end']}]"
+        # LA CITAZIONE CANONICA, non una seconda forma della stessa cosa.
+        # Qui veniva ricostruita a mano come «listino.md v1 [0:80]» mentre
+        # `chunk_citation` — la funzione che la promozione usa per riempire
+        # `verified_by` e `source_episodes` — produce «file:listino.md:0-80».
+        # Due formati per la stessa citazione, e `chunk_citation` non compariva
+        # in questo file: chi leggeva un risultato e voleva sapere se quel
+        # chunk era gia' stato promosso cercava la stringa che aveva davanti e
+        # non trovava niente. La citazione esatta E' il punto del tier
+        # documenti, e due forme la rendono inutile proprio nel gesto per cui
+        # esiste. La versione resta accanto: la citazione canonica non la
+        # porta, e il tier versiona i documenti apposta.
+        from .document_promote import chunk_citation
+        cite = f"{chunk_citation(h)} (v{h['version']})"
         text = h["text"]
         # Snippet centered on the first query term present — show WHY it matched,
         # not just how the chunk begins (same idea as the lexical tier's snippet).
@@ -465,6 +569,16 @@ def search_docs(
         snippet = ("…" if start > 0 else "") + text[start:start + 180].strip() \
                   + ("…" if start + 180 < len(text) else "")
         console.print(f"[bold]{i}.[/bold] ({h['score']:.3f}) [cyan]{cite}[/cyan]\n   {snippet}")
+
+    # LA NATURA DELLA LISTA, detta una volta sola in fondo. Senza, un chunk
+    # con la sua citazione esatta si legge come una risposta anche quando il
+    # documento non contiene la domanda — misurato: 0.884 per una domanda che
+    # il listino risponde, 0.757 per una che non ci compare nemmeno, stesso
+    # chunk e stessa citazione.
+    console.print(f"[dim]top-{len(hits)} per similarita': questi sono i chunk "
+                  f"piu' vicini alla domanda, non una risposta verificata. "
+                  f"Il tier documenti non si astiene — usa --min-score per "
+                  f"tagliare, o `verimem trust` per un verdetto.[/dim]")
 
 
 def _gateway_data_dir(data_dir: str | None) -> Path:
@@ -718,6 +832,16 @@ def import_cmd(
         console.print(f"  [yellow]warn:[/yellow] {e}")
 
 
+def _agente_per_l3():
+    """L'agente che serve a L3 per confrontare col corpus vivo.
+
+    Funzione a se' — e non due righe inline — perche' e' il punto in cui il
+    controllo puo' NON poter girare, e un test deve poter costruire quel caso
+    per verificare che `checked:` lo dica invece di ereditare il flag."""
+    from .agent import VerimemAgent
+    return VerimemAgent.build()
+
+
 def _open_memory():
     """Factory hook (monkeypatchable in tests): the architecture-A entry —
     a THIN client when VERIMEM_SERVER_URL points at a running memory server,
@@ -755,22 +879,459 @@ def remember_cmd(
 def recall_cmd(
     query: str = typer.Argument(..., help="What to remember."),
     k: int = typer.Option(5, "--k"),
+    as_of: str = typer.Option("", "--as-of", help=(
+        "Unix epoch: answer with what was CURRENT at that instant, not now.")),
+    deep: bool = typer.Option(False, "--deep", help=(
+        "Archaeology: also search the dormant memories that the freshness "
+        "half-life hides from the default view. The integrity guards stay.")),
+    with_history: bool = typer.Option(False, "--with-history", help=(
+        "Each hit carries its transition story: what it said before, from "
+        "when, and until when it held.")),
+    include_beliefs: bool = typer.Option(False, "--include-beliefs", help=(
+        "Also return unverified user assertions. They never win a conflict "
+        "and are marked as what they are.")),
+    min_relevance: str = typer.Option("", "--min-relevance", help=(
+        "Floor below which this returns NOTHING instead of the nearest "
+        "neighbours: a number, or `auto` to let the store measure it on "
+        "itself. Default: ENGRAM_MIN_RELEVANCE if you set it, no floor "
+        "otherwise.")),
 ) -> None:
     """Recall the top-k facts for a query — the 2-second read quickstart.
 
     Same architecture-A routing as ``remember``: thin client when a memory
     server is configured, embedded otherwise.
+
+    ``--as-of <epoch>`` chiede il PASSATO: i fatti asseriti entro quell'istante
+    e non ancora superati allora. Il README promette il time-travel fra le
+    cinque righe che descrivono il prodotto, e fino al 2026-07-31 era
+    raggiungibile solo da MCP (`hippo_recall_as_of`) e dall'SDK
+    (`Memory.search(as_of=…)`): la funzione c'era completa, mancava questa
+    porta. Chi legge il README e usa la riga di comando concludeva che il
+    prodotto non lo facesse.
+
+    ``--deep``, ``--with-history`` e ``--include-beliefs`` sono gli altri tre
+    modi che `Memory.search` ha sempre avuto e che da qui non si potevano
+    chiedere. Stessa porta, stessa storia: la volta scorsa e' entrato
+    `--as-of` e questi tre sono rimasti fuori, quindi ora il criterio sta in
+    un test — OGNI parametro pubblico di `search` deve avere la sua opzione, e
+    il test cade da solo il giorno in cui ne nasce un quinto senza porta.
     """
     m = _open_memory()
-    hits = m.search(query, k=k)
+    quando = None
+    if as_of.strip():
+        try:
+            quando = float(as_of)
+        except ValueError:
+            # Ignorarlo servirebbe il PRESENTE a chi ha chiesto il passato:
+            # una risposta plausibile e sbagliata, che è il modo peggiore di
+            # sbagliare per un prodotto costruito per non farlo.
+            console.print(f"[red]--as-of non e' un epoch: {as_of!r}[/red] — "
+                          f"atteso un numero di secondi (es. 1785518205)")
+            raise typer.Exit(2) from None
+    # Stringa e non float perché il valore ha DUE forme: un numero, oppure
+    # `auto` che delega la misura allo store. Un `--min-relevance` tipizzato
+    # float avrebbe rifiutato proprio la forma che non richiede di indovinare
+    # una soglia — cioè quella giusta per chi non sa che taglio serve al suo
+    # corpus, che è la ragione per cui `auto` esiste.
+    pavimento: float | str | None = None
+    if min_relevance.strip():
+        grezzo = min_relevance.strip().lower()
+        if grezzo == "auto":
+            pavimento = "auto"
+        else:
+            try:
+                pavimento = float(grezzo)
+            except ValueError:
+                console.print(
+                    f"[red]--min-relevance non e' un numero: "
+                    f"{min_relevance!r}[/red] — atteso un punteggio (es. 0.85) "
+                    f"o `auto` per farlo misurare allo store")
+                raise typer.Exit(2) from None
+    hits = m.search(query, k=k, as_of=quando, deep=deep,
+                    with_history=with_history,
+                    include_beliefs=include_beliefs,
+                    min_relevance=pavimento)
     if not hits:
+        # Un pavimento che svuota la lista NON è «non ho trovato niente»: sono
+        # due esiti diversi — il corpus non ha nulla, oppure ha qualcosa che
+        # tu hai deciso di non voler vedere sotto una certa soglia. Dirli con
+        # la stessa frase è la classe di difetto che questo prodotto passa la
+        # giornata a curare.
+        if pavimento:
+            console.print(
+                f"[yellow]no facts above the floor[/yellow] "
+                f"[dim](--min-relevance {min_relevance.strip()}): the store "
+                f"may still hold weaker matches — re-run without the floor to "
+                f"see them, or `verimem ignorance \"{query}\"` to ask whether "
+                f"this question is answerable at all.[/dim]")
+        else:
+            console.print("[yellow]no facts found[/yellow]")
+        raise typer.Exit(0)
+    # SE IL MIGLIORE STA SOTTO IL PAVIMENTO MISURATO, si dice. `recall` è un
+    # top-k e restituisce sempre i più vicini: su uno store di tre fatti di
+    # listino, «quale database usa il cluster di produzione» rende «La prova
+    # gratuita dura 14 giorni» a 0.7375. Il README apre con «when the evidence
+    # isn't there the system abstains instead of guessing», e chi legge quella
+    # riga e usa questo comando riceve una frase scorrelata senza nulla che lo
+    # avverta.
+    #
+    # Il pavimento c'è già ed è MISURATO — `_auto_relevance_floor`, lo stesso
+    # che `ignorance` usa per classificare `no_evidence`. Qui NON cambia il
+    # verdetto e non filtra niente: alzare una soglia sul recall è l'errore
+    # pagato il 30/07 (`max(floor, noise_floor)`, ritirata perché rendeva muta
+    # la mappa). Dice, e basta.
+    try:
+        _pavimento = m._auto_relevance_floor()
+        _best = max(float(h.get("score") or 0.0) for h in hits)
+    except Exception:  # noqa: BLE001 — una riserva non fa cadere una lettura
+        _pavimento = _best = None
+    if (_pavimento and _best is not None and _best < float(_pavimento)):
+        console.print(
+            f"[yellow]⚠[/yellow] [dim]il migliore di questi ({_best:.3f}) sta "
+            f"sotto il pavimento che lo store ha misurato su se stesso "
+            f"({float(_pavimento):.3f}): sono i fatti più vicini alla domanda, "
+            f"non necessariamente una risposta. `verimem ignorance "
+            f"\"{query}\"` dice cosa manca.[/dim]")
+    for h in hits:
+        console.print(riga_di_recall(h))
+        # La storia si chiede e va MOSTRATA: passare il flag e stampare la
+        # stessa riga di prima sarebbe una porta che si apre sul muro.
+        for _p in (h.get("history") or []):
+            _fino = _p.get("until") or "—"
+            console.print(f"    [dim]prima:[/dim] {_p.get('text','')[:72]} "
+                          f"[dim]({_p.get('asserted_date','?')} → {_fino})[/dim]")
+    # I RECORD TRATTENUTI, e non è un dettaglio di formattazione. Su un
+    # registro dove il fatto giusto è stato archiviato, questa riga di comando
+    # serviva la risposta SBAGLIATA con un punteggio alto e nulla che lo
+    # lasciasse sospettare — mentre lo stesso identico store, interrogato
+    # dall'SDK, dichiarava `hidden_records`.
+    #
+    # È la classe che `test_le_capacita_senza_porta_non_aumentano` sorveglia,
+    # ma peggio del solito: non è un comando in più da scoprire, è un AVVISO
+    # su una risposta che si sta già leggendo.
+    #
+    # ⚠️ UNA VOLTA SOLA, FUORI DAL CICLO. La prima stesura lo stampava per hit
+    # e usando il prodotto usciva TRE VOLTE identico su tre risultati. Il campo
+    # è informazione della DOMANDA — `client.recall` lo allega a ogni hit
+    # apposta, perché un consumatore può leggerne uno solo — ma chi STAMPA una
+    # lista lo dice una volta. I test non potevano vederlo: avevano un hit.
+    _visti: set[str] = set()
+    for h in hits:
+        for _n in (h.get("hidden_records") or []):
+            _chiave = f"{_n.get('code','?')}|{_n.get('id','')}"
+            if _chiave in _visti:
+                continue
+            _visti.add(_chiave)
+            console.print(
+                f"  [yellow]⚠ trattenuto[/yellow] [dim]({_n.get('why','?')})"
+                f"[/dim] [bold]{_n.get('code','?')}[/bold]: "
+                f"{str(_n.get('text',''))[:64]}")
+
+
+@app.command("ask")
+def ask_cmd(
+    query: str = typer.Argument(..., help="La domanda, in linguaggio naturale."),
+    k: int = typer.Option(5, "--k", help="Quanti risultati per una FIND."),
+    topic: str = typer.Option(None, "--topic", "-t",
+                              help="Limita a un prefisso di topic."),
+) -> None:
+    """Domanda con ROUTING D'INTENTO — «quante volte…» conta, non cerca.
+
+    `recall` restituisce i top-k, e per una domanda di CARDINALITÀ i top-k
+    SOTTOCONTANO: `Memory.ask` classifica l'intento e manda una domanda di
+    conteggio a uno scan del corpus. Misurato: «quante volte ho parlato del
+    moat» dà `count 205` da qui e **5 hits** da `recall`, perché cinque è il
+    valore di k.
+
+    La capacità c'era nell'SDK dal principio e non aveva una porta: chi usa la
+    riga di comando otteneva un numero sbagliato di due ordini di grandezza,
+    senza niente che glielo dicesse. È la quinta occorrenza della classe che
+    `test_le_capacita_senza_porta_non_aumentano` sorveglia — e il cricchetto
+    non la vedeva perché concatenava le due superfici, quindi bastava esistere
+    su MCP.
+
+    FIND è il default sicuro: una domanda classificata male si comporta
+    esattamente come `recall`.
+    """
+    rep = _open_memory().ask(query, k=k, topic_prefix=topic or None)
+    intento = rep.get("intent", "find")
+    if intento == "count":
+        console.print(f"[green]{rep.get('count', 0)}[/green] "
+                      f"[dim]fatti su «{rep.get('terms', query)}» "
+                      f"(intento: conteggio — scan dell'intero corpus, "
+                      f"non i primi {k})[/dim]")
+        # PERCHÉ LO ZERO. `Memory.ask` dichiara già il conteggio per singolo
+        # termine quando il totale è zero e i termini sono più d'uno — il
+        # conteggio è un AND, e basta una parola che nessun fatto contiene per
+        # azzerarlo. Qui si stampava solo il numero, quindi da riga di comando
+        # «0 fatti su fatti parlano degrado» restava un muro:
+        #
+        #     verimem ask "quanti fatti parlano del degrado?"  ->  0
+        #     e nel corpus vero i fatti su «degrado» ci sono
+        #
+        # È la settima volta che una cura nasce su una superficie e un'altra
+        # resta indietro — stavolta la cura incompleta era mia, di due ore
+        # prima, sull'asse SDK→CLI che la mappa del read path non copriva.
+        per_termine = rep.get("per_term") or {}
+        if per_termine:
+            dettaglio = " · ".join(
+                f"[bold]{t}[/bold]: {n}" for t, n in sorted(
+                    per_termine.items(), key=lambda kv: -kv[1]))
+            console.print(f"   [dim]il conteggio è un AND su tutti i termini:"
+                          f"[/dim] {dettaglio}")
+        raise typer.Exit(0)
+    risultati = rep.get("results") or []
+    if not risultati:
         console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
-    for h in hits:
-        txt = h.get("text") if isinstance(h, dict) else str(h)
-        score = h.get("score") if isinstance(h, dict) else None
-        s = f" [{score:.2f}]" if isinstance(score, (int, float)) else ""
-        console.print(f"- {txt}{s}")
+    console.print(f"[dim]intento: {intento}[/dim]")
+    for h in risultati:
+        console.print(riga_di_recall(h))
+
+
+@app.command("correct")
+def correct_cmd(
+    old_id: str = typer.Argument(..., help="Id del fatto da correggere."),
+    text: str = typer.Argument(..., help="La versione corretta."),
+    source: str = typer.Option(None, "--source",
+                               help="L'evidenza da cui la correzione deve "
+                                    "seguire. Senza, il moat non gira."),
+    topic: str = typer.Option(None, "--topic", "-t",
+                              help="Default: lo stesso topic del fatto corretto."),
+    reason: str = typer.Option("", "--reason", help="Perche' la correzione."),
+) -> None:
+    """Corregge un fatto gia' scritto: il nuovo passa dal moat, poi supersede.
+
+    La capacita' c'era su MCP (`hippo_fact_supersede`) e nell'SDK
+    (`SemanticMemory.supersede`, semantic.py:5151), non sulla riga di comando —
+    e chi puo' scrivere da un canale deve poter correggere da quel canale. E'
+    la seconda occorrenza in un giorno della stessa classe dopo `recall
+    --as-of`, il che la rende una classe: una capacita' matura raggiungibile
+    solo dai canali che gli altri agenti usano.
+
+    UN GESTO SOLO, non due. `supersede(old, new)` pretende che il nuovo fatto
+    esista gia': sarebbero due comandi e un id da ricopiare, e soprattutto si
+    potrebbe ritirare un fatto buono a favore di uno che il gate non ha
+    ammesso.
+
+    L'INVARIANTE: se la correzione non e' ammessa, la supersessione NON
+    avviene. Non e' una regola nuova — e' la stessa che `Memory.add` applica
+    gia' alla supersessione same-source (client.py:442): «retire the OLD value
+    ONLY when the new write was actually ADMITTED ... superseding the old would
+    lose BOTH». Vale anche per un'ammissione GRADED, per la stessa ragione: un
+    fatto ammesso con riserva non deve ritirare dal recall uno che si era
+    guadagnato l'ammissione. Meglio due fatti in contesa che zero.
+    """
+    m = _open_memory()
+    sm = getattr(m, "semantic", None)
+    if sm is None:
+        console.print("[red]correct non e' disponibile su un memory server "
+                      "remoto[/red] — la supersessione e' un'operazione dello "
+                      "store, non del client")
+        raise typer.Exit(2)
+    vecchio = sm.get(old_id)
+    if vecchio is None:
+        # Prima di scrivere, non dopo: un `correct` su un id sbagliato che
+        # lasciasse nello store un fatto nuovo orfano E nessuna correzione
+        # sarebbe il peggiore dei due esiti, perche' sembra riuscito.
+        console.print(f"[red]fatto non trovato:[/red] {old_id}")
+        raise typer.Exit(2)
+
+    kw: dict[str, str] = {"topic": topic or getattr(vecchio, "topic", "user")}
+    if source:
+        kw["source"] = source
+    r = m.add(text, **kw)
+    adj = r.get("adjudication") or {}
+    disp = adj.get("disposition") or r.get("status")
+    nuovo = r.get("id") or "-"
+    graded = any(str(w.get("layer", "")).endswith("-graded")
+                 for w in (r.get("warnings") or []))
+    ammesso = (bool(r.get("stored")) and disp == "admitted"
+               and r.get("status") != "quarantined" and not graded)
+    if not ammesso:
+        # L'ETICHETTA DICE QUALE DEI TRE RAMI, non `disp`. La disposizione del
+        # gate vale `admitted` anche quando il fatto e' finito in quarantena o
+        # e' entrato in via GRADUATA, quindi questa riga stampava
+        #     admitted id=… — la correzione NON e' stata ammessa
+        # cioe' due affermazioni opposte nella stessa riga, e la stessa riga
+        # per due rami diversi. L'invariante regge — il vecchio non viene
+        # ritirato, e c'e' un test che lo prova — ed e' il messaggio a
+        # contraddirla.
+        etichetta = ("quarantined" if r.get("status") == "quarantined"
+                     else "graded" if graded
+                     else "not stored" if not r.get("stored")
+                     else str(disp))
+        console.print(f"[yellow]{etichetta}[/yellow] id={nuovo} — la "
+                      f"correzione NON e' stata ammessa, quindi {old_id} "
+                      f"resta in piedi")
+        console.print("[dim]il vecchio fatto non viene ritirato: ritirarlo a "
+                      "favore di uno non ammesso li perderebbe entrambi[/dim]")
+        raise typer.Exit(1)
+
+    esito = sm.supersede(old_id, nuovo, principal="cli:local", reason=reason)
+    if esito.get("idempotent_noop"):
+        console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
+                      f"(gia' dichiarato, nessun cambiamento)")
+    else:
+        console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
+                      f"topic={kw['topic']}")
+
+
+@app.command("ignorance")
+def ignorance_cmd(
+    queries: list[str] = typer.Argument(  # noqa: B008 — typer idiom
+        ..., help="The questions that went unanswered."),
+    floor: float = typer.Option(0.8, "--floor", help="Abstention floor a hit "
+                                                     "must clear."),
+    k: int = typer.Option(5, "--k"),
+    noise_floor: float | None = typer.Option(
+        None, "--noise-floor", help="Separates noise from weak evidence; "
+                                    "omit to measure it from the store."),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    """WHY the store cannot answer — the ignorance CLASS and what would cure it.
+
+    ``no_evidence`` (nothing relevant is stored) · ``below_floor`` (hits exist,
+    none clears the floor) · ``quarantined_only`` (the evidence EXISTS but is
+    quarantined — the cure is a source or a review, not more retrieval) ·
+    ``conflict`` (live facts disagree, no epistemic winner) · ``answerable``.
+
+    Read-only: the map never writes.
+    """
+    rep = _open_memory().ignorance(list(queries), floor=floor, k=k,
+                                   noise_floor=noise_floor)
+    if as_json:
+        console.print_json(data=rep)
+        raise typer.Exit(0)
+    for r in rep["queries"]:
+        colore = {"answerable": "green", "conflict": "red",
+                  "quarantined_only": "yellow"}.get(r["class"], "cyan")
+        console.print(f"[{colore}]{r['class']}[/{colore}]  {r['query']}")
+        if r.get("what_would_help"):
+            console.print(f"    → {r['what_would_help']}")
+        # LA RISERVA. `ignorance_map` la produce quando il migliore dei
+        # risultati supera il pavimento dichiarato ma sta sotto il rumore che
+        # lo store ha misurato su se stesso — la fascia in cui un vicino
+        # qualunque vale quanto un match — e questa superficie non la
+        # stampava: usciva solo dal `--json`. E' la CURA del difetto per cui
+        # era nata (male) la soglia `max(floor, noise_floor)`, ritirata il
+        # 01/08 perche' rendeva muta la mappa; scritta, e capace di avvisare
+        # soltanto se stessa.
+        if r.get("caveat"):
+            console.print(f"    [yellow]⚠[/yellow] [dim]{r['caveat']}[/dim]")
+    riepilogo = "  ".join(f"{c}={n}" for c, n in sorted(rep["by_class"].items()))
+    # `noise_floor_source` esce SEMPRE: 0.0 significa «non misurabile», «la
+    # misura e' fallita» o «l'hai imposto tu», e senza dirlo l'operatore non
+    # distingue una guardia spenta da una misurata.
+    # QUALE soglia ha deciso, non solo quali numeri esistevano: il verdetto lo
+    # prende `max(floor, noise_floor)`, e su un corpus con la banda compressa
+    # e' il rumore misurato a comandare.
+    deciso = rep.get("deciding_floor", floor)
+    chi = "rumore misurato" if deciso > floor + 1e-9 else "floor dichiarato"
+    console.print(f"[dim]{riepilogo}   decide {deciso:.3f} ({chi}) — "
+                  f"floor={floor:.3f} noise_floor={rep['noise_floor']:.3f} "
+                  f"({rep['noise_floor_source']})[/dim]")
+
+
+@app.command("telemetry")
+def telemetry_cmd(
+    top: int = typer.Option(15, "--top", help="How many tools to show."),
+    include_suite: bool = typer.Option(
+        False, "--include-suite",
+        help="Also count calls made by test suites (off by default: on this "
+             "machine they were 73% of the log)."),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    """Which MCP tools are actually used, how fast, and how they end.
+
+    Reads the server's audit log (`mcp_audit.log` in the data dir). Read-only.
+
+    `telemetry_analyzer` was complete and unreachable from every surface while
+    the log kept growing: 14559 calls on this machine the day it was wired.
+    It makes visible what nobody finds until someone complains — on this
+    machine, 126 of 243 exposed tools never called once in 78 days, and a
+    first-call latency of 88939 ms on one of the busiest against 125 ms from
+    the third call on.
+
+    The latency columns are FIRST-CALL vs LATER, not p50/p99 of everything.
+    An overall p50 here is not «what a call costs»: since mid-July nearly every
+    process makes one call and dies (the client times out and respawns), and
+    those processes are not a random sample — the slow ones got killed. The
+    paired comparison stays inside one process, so it does not compare
+    survivors with the dead.
+    """
+    from ._compat import data_dir
+    from .telemetry_analyzer import analyze_audit_log
+    from .telemetry_analyzer import nome_leggibile as _nome_leggibile
+    log_path = data_dir() / "mcp_audit.log"
+    if not log_path.exists():
+        # «nessuno ha chiamato niente» e «non so» sono due risposte diverse.
+        console.print(f"[yellow]no audit log at {log_path}[/yellow] — the MCP "
+                      f"server writes it as it serves tools")
+        raise typer.Exit(0)
+    rep = analyze_audit_log(log_path, include_suite=include_suite)
+    if as_json:
+        console.print_json(data=rep)
+        raise typer.Exit(0)
+    righe = sorted(rep["per_tool"].items(), key=lambda kv: -kv[1]["count"])
+    escluse = rep.get("suite_calls_excluded", 0)
+    t = Table(title=f"{rep['total_calls']} calls · "
+                    f"{len(rep['per_tool'])} distinct tools"
+                    + (f" · {escluse} test-suite calls excluded" if escluse
+                       else ""))
+    # p50 della PRIMA chiamata di un processo contro quello delle SUCCESSIVE,
+    # al posto di p50/p99 complessivi: l'aggregato e' selezionato dalla
+    # sopravvivenza del processo (chi era lento e' stato ucciso dal timeout del
+    # client e conta una riga sola), il confronto appaiato no. `pids` dice
+    # anche quanti di quei processi hanno fatto una chiamata SOLA: quando sono
+    # quasi tutti, i due numeri accanto vanno letti come cold-start.
+    for c in ("tool", "calls", "p50 1a", "p50 dopo", "pids (1 sola)",
+              "outcomes"):
+        t.add_column(c, justify="right" if c not in ("tool", "outcomes")
+                     else "left")
+    for nome, d in righe[:top]:
+        esiti = ", ".join(f"{_nome_leggibile(k)}:{v}" for k, v in
+                          sorted(d["outcomes"].items(), key=lambda kv: -kv[1])[:3])
+        _p1 = d.get("latency_p50_first_call_ms")
+        _pd = d.get("latency_p50_later_calls_ms")
+        t.add_row(_nome_leggibile(nome), str(d["count"]),
+                  "-" if _p1 is None else f"{_p1:.0f}",
+                  "-" if _pd is None else f"{_pd:.0f}",
+                  f"{d.get('n_unique_pids', 0)} ({d.get('n_single_call_pids', 0)})",
+                  esiti)
+    console.print(t)
+    if len(righe) > top:
+        console.print(f"[dim]… e altri {len(righe) - top} tool "
+                      f"(--top per vederne di piu')[/dim]")
+
+
+def _ledger_window(stats: dict) -> tuple[float | None, float | None]:
+    """``(first_recorded_ts, % of stored facts written since then)``.
+
+    Read straight off the store rather than threaded through trust_stats(): this
+    is a presentation detail of one command, and a failure to compute it must
+    cost the caption, never the numbers underneath it.
+    """
+    try:
+        import sqlite3 as _sq
+
+        from ._compat import data_dir as _dd
+        _db = _dd() / "semantic" / "semantic.db"
+        if not _db.exists():
+            return None, None
+        with _sq.connect(f"file:{_db}?mode=ro", uri=True) as _c:
+            _first = _c.execute("SELECT MIN(ts) FROM trust_ledger").fetchone()[0]
+            if not _first:
+                return None, None
+            _tot = _c.execute("SELECT COUNT(*) FROM facts").fetchone()[0]
+            if not _tot:
+                return float(_first), None
+            _since = _c.execute(
+                "SELECT COUNT(*) FROM facts WHERE created_at >= ?",
+                (_first,)).fetchone()[0]
+        return float(_first), 100.0 * _since / _tot
+    except Exception:  # noqa: BLE001 — a caption never breaks the report
+        return None, None
 
 
 @app.command("stats")
@@ -794,7 +1355,22 @@ def trust_stats_cmd(
         console.print_json(_json.dumps(s))
         raise typer.Exit(0)
     led = s["ledger"]
-    console.print("[bold]Gate actions (all time)[/bold]")
+    # NOT "all time". The ledger starts the day it was added, and everything
+    # written before is invisible to these four counters — on the live store
+    # 5836 of 6443 facts (90.6%) predate its first entry. The same screen then
+    # prints "quarantined: 9" here and "quarantined:511" under Live facts,
+    # three lines apart: both true, 57-fold apart, and nothing said why. State
+    # the window and the share, so the numbers mean what they appear to mean.
+    _since_ts, _covered = _ledger_window(s)
+    if _since_ts:
+        from datetime import datetime as _dtm
+        _since = _dtm.fromtimestamp(_since_ts).strftime("%Y-%m-%d")
+        _head = (f"[bold]Gate actions (recorded since {_since}"
+                 + (f", {_covered:.0f}% of stored facts" if _covered is not None
+                    else "") + ")[/bold]")
+    else:
+        _head = "[bold]Gate actions (no writes recorded yet)[/bold]"
+    console.print(_head)
     console.print(f"  admitted:    {led['admitted']}")
     console.print(f"  quarantined: {led['quarantined']}  [dim]unsupported claims stored hidden[/dim]")
     console.print(f"  rejected:    {led['rejected']}  [dim]not stored at all[/dim]")
@@ -805,6 +1381,18 @@ def trust_stats_cmd(
     if s["store"]:
         live = ", ".join(f"{k}:{v}" for k, v in sorted(s["store"].items()))
         console.print(f"[bold]Live facts by status[/bold]  {live}")
+    _moat = s.get("moat") or {}
+    if _moat.get("facts"):
+        _pct = 100 * _moat["coverage"]
+        console.print(
+            f"[bold]Moat coverage[/bold]  {_moat['grounded']}/{_moat['facts']} "
+            f"facts entailment-judged ({_pct:.1f}%)  [dim]— only writes that "
+            f"carry a source are judged; {_moat['with_provenance']} carry a "
+            f"provenance ref, which records who vouches and does not run the "
+            f"check[/dim]")
+        if not _moat["grounded"]:
+            console.print("  [dim]the moat has not judged a single write on "
+                          "this store — pass source='...' to run it[/dim]")
 
 
 @app.command()
@@ -815,7 +1403,17 @@ def trust(
         help="Provenance ref (repeatable): commit:abc123, pr:#12:merged, "
              "ci:main:green, coverage:85, bash:test_PASS",
     ),
-    topic: str = typer.Option("adhoc/trust-check", "--topic"),
+    topic: str = typer.Option(
+        None, "--topic",
+        help="Restringe il confronto L3 a un topic. Senza, si confronta con "
+             "TUTTO il corpus — che e' cio' che «vs the live corpus» promette.",
+    ),
+    source: str = typer.Option(
+        None, "--source",
+        help="The evidence TEXT the claim should follow from. Runs the moat "
+             "(L4 source-entails-claim) — the check this command is named "
+             "after. Without it only the lexical screens can run.",
+    ),
     validate: str = typer.Option(
         "fast", "--validate", help="Gate tier: 'fast' (L1 keyword detectors) "
         "or 'full' (L1+L3 contradiction vs the live corpus)",
@@ -832,9 +1430,35 @@ def trust(
     """
     from .anti_confab_gate import run_validation_gate
     refs = list(verified_by or [])
+    # `--validate full` PROMETTE il confronto col corpus vivo, e L3 comincia con
+    # `if agent is None ... return None`: passando None il controllo non poteva
+    # girare, e la riga `checked:` lo annunciava lo stesso perche' era derivata
+    # dal FLAG. Stessa classe curata il 2026-07-29 sul VERDETTO, tre righe piu'
+    # sotto («"TRUSTED" is earned by what actually ran»), sopravvissuta nel
+    # gemello. L'agente si costruisce SOLO su richiesta esplicita: `fast`, che
+    # e' il default, non tocca nulla.
+    _agente = None
+    _l3 = "off"
+    if validate == "full":
+        try:
+            _agente = _agente_per_l3()
+            _l3 = "ran" if getattr(_agente, "semantic", None) is not None else "off"
+        except Exception:  # noqa: BLE001 — meglio senza L3 che senza risposta
+            _agente, _l3 = None, "off"
+    # Il topic arriva a L3 come FILTRO di ricerca. Il vecchio default
+    # `"adhoc/trust-check"` e' un'etichetta inventata dal comando per la
+    # simulazione, e nessun fatto vive li': misurato sul corpus vero, la stessa
+    # claim da' `contradicted` senza topic_hint e `unknown` con
+    # `topic_hint='adhoc/trust-check'`. Cioe' il comando che promette il
+    # confronto «vs the live corpus» cercava dentro un topic vuoto per
+    # costruzione. Ora si passa solo cio' che l'utente ha chiesto davvero.
     res = run_validation_gate(
-        proposition=claim, verified_by=refs, topic=topic,
-        agent=None, validate=validate,
+        proposition=claim, verified_by=refs, topic=topic or None,
+        agent=_agente, validate=validate,
+        # 2026-07-29: the moat was unreachable from the command named after
+        # trust — there was no way to hand it evidence, so L4 could never run
+        # and the output still said "adequate evidence".
+        source=source, ground_write=True if source else None,
     )
     d = res.to_dict()
     action = d.get("action", "persist")
@@ -842,8 +1466,16 @@ def trust(
         import json as _json
         console.print_json(_json.dumps(d))
         raise typer.Exit(0 if action == "persist" else 1)
+    # "TRUSTED" is earned by what actually ran. With no source the only layer
+    # that CAN run is the lexical screen, and calling that verdict TRUSTED is
+    # how an invented module with a fabricated ISO 27001 date got a green tick
+    # (measured 2026-07-29). Same verdict, honest name.
+    _judged = isinstance(d.get("grounding_score"), (int, float))
     verdict = {
-        "persist": "[green]TRUSTED ✓[/green]",
+        "persist": ("[green]TRUSTED ✓[/green]" if _judged
+                    else "[green]NO FLAGS ✓[/green] [dim](no source was "
+                         "checked — see `checked:` below for what did "
+                         "run)[/dim]"),
         "downgrade": "[yellow]FLAGGED ↓ (would store as provisional)[/yellow]",
         "quarantine": "[red]QUARANTINED ✗ (excluded from recall)[/red]",
         "reject": "[red]REJECTED ✗[/red]",
@@ -861,7 +1493,51 @@ def trust(
             msg = w.get("advice") or w.get("reason") or w.get("matched_text") or ""
             lines.append(f"    • [{layer}] {str(msg)[:130]}")
     else:
-        lines.append("  [dim]no anti-confab flags — adequate evidence / not a risky assertion[/dim]")
+        lines.append("  [dim]no flags from the screens that ran[/dim]")
+    # Which layers COULD run, so a lexical-only pass is not read as a full one
+    # — the same reason build_trust_report reports `verify: {...}` instead of
+    # letting an unfiltered result look like a filtered one. Measured
+    # 2026-07-29: an invented module with a fabricated ISO 27001 date came back
+    # "TRUSTED ✓ — adequate evidence", from a check that looked at no evidence.
+    _gs = d.get("grounding_score")
+    if isinstance(_gs, (int, float)):
+        _moat_line = f"the moat judged the source at {float(_gs):.1f}"
+    elif source:
+        _moat_line = ("a source was given but no judge answered — NOT a pass")
+    else:
+        # «CONTRO LA SOURCE», non «contro l'evidenza». Senza precisarlo questa
+        # riga contraddiceva quella sopra: `checked:` puo' elencare «L3
+        # contradiction», che il confronto lo ha fatto — contro il CORPUS —
+        # mentre qui si leggeva «nothing was checked against evidence». Due
+        # righe della stessa card, una che dice cosa ha gia' girato e una che
+        # dice che non e' girato niente.
+        _moat_line = ("the moat did NOT run: no --source, so nothing was "
+                      "checked against a source"
+                      + (" (L3 did compare against the stored corpus)"
+                         if _l3 == "ran" else ""))
+    # `checked:` elenca cio' che ha GIRATO, non cio' che e' stato chiesto: se
+    # L3 non ha potuto (store assente, errore) la riga non deve nominarlo.
+    lines.append(
+        f"  checked:     L1 lexical screens"
+        f"{', L3 contradiction' if _l3 == 'ran' else ''}"
+        f"{', L4 moat' if isinstance(_gs, (int, float)) else ''}")
+    lines.append(f"  [dim]{_moat_line}[/dim]")
+    if not refs and not source:
+        lines.append("  [dim]no provenance ref and no source: this verdict is "
+                     "about the WORDING of the claim, not about whether it is "
+                     "true[/dim]")
+    # UNA DOMANDA NON E' UN CLAIM. Il comando esamina le parole di
+    # un'affermazione; su un'interrogativa il verdetto non e' impreciso, e'
+    # vacuo — non c'e' nessuna asserzione da esaminare. E chi legge la spunta
+    # verde e salta il testo fine porta via «verimem dice che va bene» da una
+    # domanda senza risposta, che e' il contrario di questo prodotto.
+    # Criterio sulla FINE della frase: un claim che CITA una domanda («la
+    # domanda "che ore sono?" e' stata posta») non deve essere scambiato.
+    if claim.rstrip().endswith(("?", "？")):
+        lines.append("  [yellow]that looks like a QUESTION, not a claim[/yellow] "
+                     "[dim]— there is no assertion to lint here. To search the "
+                     "store use `verimem recall`; to see what is MISSING for "
+                     "an answer use `verimem ignorance`.[/dim]")
     console.print(Panel.fit("\n".join(lines), title="trust"))
     raise typer.Exit(0 if action == "persist" else 1)
 
@@ -1386,7 +2062,17 @@ def introspect(
     # Skills: rank all by cosine to (learned_embedding or canonical).
     sk_scored = []
     for s in agent.skills.all():
-        if s.learned_embedding is not None:
+        # OTTAVO PUNTO DELLA CLASSE 384/768, e questo CRASHAVA: `verimem
+        # introspect` alzava `ValueError: shapes (768,) (384,)` sul primo
+        # `cosine` con una skill scritta da un modello precedente. I primi sei
+        # erano in skill.py, il settimo in document_index (dove invece TACEVA).
+        # Non e' un criterio nuovo: e' la funzione estratta curando il ciclo di
+        # sonno, e risolve la dimensione attesa LIVE.
+        # Il vettore appreso incompatibile si scarta e si ricade sul canonico —
+        # gia' la semantica prevista da `decay_idle_embeddings` («drop
+        # learned_embedding entirely so retrieval falls back to canonical»):
+        # un comando di ispezione deve MOSTRARE le skill, non morire su una.
+        if _emb.vettore_compatibile(s.learned_embedding):
             v = _np.asarray(s.learned_embedding, dtype=_np.float32)
         else:
             v = _emb.encode(f"{s.name}\n{s.trigger}")
@@ -1415,6 +2101,41 @@ def introspect(
             f"{sim:+.2f}", ep.outcome, ep.task_text[:60],
         )
     console.print(eps_table)
+
+
+@skills_app.command("dedup")
+def skills_dedup(
+    apply: bool = typer.Option(
+        False, "--apply",
+        help="Actually retire the duplicates. Default = DRY RUN."),
+    max_retire: int = typer.Option(
+        200, "--max", help="Safety cap on how many get retired in one pass."),
+) -> None:
+    """Unisci le skill che hanno lo STESSO NOME, tenendo la migliore.
+
+    Misurato sulla libreria vera il 2026-07-31: 325 skill, di cui 33 con un
+    nome identico a un'altra. Il modulo che le unisce esisteva, era testato, e
+    non aveva nessuna superficie: una manutenzione che nessuno poteva eseguire
+    su un problema che esiste per davvero.
+
+    Tocca solo le `candidate` — una skill promossa ha superato una soglia con
+    dei trial veri, e non la ritira una manutenzione automatica.
+    """
+    from verimem.skill_name_dedup import dedup_skills_by_name
+    agent = VerimemAgent.build()
+    r = dedup_skills_by_name(agent.skills, apply=apply,
+                             max_retire=max(1, int(max_retire)))
+    testa = "[yellow]DRY RUN[/yellow]" if r.get("dry_run") else "[green]APPLICATO[/green]"
+    console.print(
+        f"{testa}  gruppi con nome ripetuto: {r.get('groups_found', 0)}  "
+        f"su {r.get('total_skills', 0)} skill  |  da ritirare: "
+        f"{r.get('skills_to_retire', 0)}")
+    if r.get("dry_run"):
+        console.print("[dim]niente e' stato modificato — usa --apply[/dim]")
+    else:
+        console.print(f"  ritirate: {r.get('applied_retired', 0)}"
+                      + (f"  (saltate per il cap: {r['applied_skipped_cap']})"
+                         if r.get("applied_skipped_cap") else ""))
 
 
 @skills_app.command("show")
@@ -1514,11 +2235,20 @@ def _facts_data_dir() -> Path:
     HIPPO_DATA_DIR / ENGRAM_DATA_DIR set AFTER import (eg in tests or
     when launching from a wrapper script) — otherwise pytest cannot
     isolate the live corpus.
+
+    L'ORDINE DEGLI ALIAS NON SI DECIDE QUI. Fino al 2026-08-04 questa funzione
+    aveva il suo loop, con ENGRAM_DATA_DIR per PRIMA, cioe' l'opposto della
+    regola che il prodotto dichiara: `HIPPO_DATA_DIR` e' l'appiglio esplicito
+    di isolamento e la variabile del manutentore non deve sovrascriverlo.
+    L'effetto era quello che la regola voleva evitare — con entrambe poste
+    (la situazione normale di chi sviluppa) la CLI scriveva nel corpus VIVO
+    mentre l'avviso annunciava di usare quello isolato. Misurato: i fatti in
+    produzione da 7178 a 7179 con HIPPO_DATA_DIR su una directory temporanea.
     """
-    for k in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR"):
-        v = os.environ.get(k, "").strip()
-        if v:
-            return Path(v).expanduser().resolve()
+    from ._compat import _env_data_dir
+    override = _env_data_dir()
+    if override:
+        return Path(override).expanduser().resolve()
     return CONFIG.data_dir
 
 
@@ -1617,7 +2347,8 @@ def facts_list(
         if _scoped and (topic or not _lead or include_shared):
             _sql_limit = min(_sql_limit * 8, 2000)
         sql = (
-            "SELECT id, proposition, topic, status, confidence "
+            "SELECT id, proposition, topic, status, confidence, "
+            "grounding_score "
             "FROM facts WHERE " + " AND ".join(clauses)
             + " ORDER BY created_at DESC LIMIT ?"
         )
@@ -1634,12 +2365,21 @@ def facts_list(
     table = Table(title=f"Facts ({len(rows)})")
     table.add_column("id"); table.add_column("topic")
     table.add_column("status"); table.add_column("conf")
+    # 2026-07-30: la tabella mostrava `conf`, che e' il numero ANTI-correlato
+    # con la verifica (i 35 fatti giudicati del corpus vivo stanno tutti a 0.5,
+    # i 4720 mai giudicati a 0.866 di media — vedi il check doctor
+    # confidence-vs-verifica), e taceva il verdetto. Il tool MCP gemello,
+    # hippo_facts_list, lo portava gia': stessa vista, due canali, uno curato.
+    table.add_column("moat")
     table.add_column("proposition")
     for r in rows:
         table.add_row(
             r["id"][:8], (r["topic"] or "")[:24],
             r["status"] or "",
             f"{r['confidence']:.2f}",
+            # sqlite3.Row non ha .get(): l'accesso per chiave assente alza
+            _moat_cella_corta(r["grounding_score"]
+                              if "grounding_score" in r.keys() else None),
             (r["proposition"] or "")[:80],
         )
     console.print(table)
@@ -1694,11 +2434,18 @@ def facts_recall(
         ][:k]
     table = Table(title=f"Recall '{query[:40]}'")
     table.add_column("id"); table.add_column("sim")
-    table.add_column("status"); table.add_column("topic")
+    table.add_column("status")
+    # 2026-07-30: `sim` e' la somiglianza fra domanda e fatto e `status` dice
+    # che COSA e' il fatto: nessuno dei due dice se qualcuno l'ha verificato.
+    # `verimem recall` era gia' stato curato, e questo comando fa la stessa
+    # cosa con un altro nome — curarne uno non cura l'altro.
+    table.add_column("moat")
+    table.add_column("topic")
     table.add_column("proposition")
     for f, sim in hits:
         table.add_row(
             f.id[:8], f"{sim:.3f}", getattr(f, "status", "?"),
+            _moat_cella_corta(getattr(f, "grounding_score", None)),
             (f.topic or "")[:24], (f.proposition or "")[:80],
         )
     console.print(table)
@@ -1747,13 +2494,64 @@ def facts_search(
         ][:limit]
     table = Table(title=f"Search '{query[:40]}'")
     table.add_column("id"); table.add_column("status")
+    table.add_column("moat")
     table.add_column("topic"); table.add_column("proposition")
     for f in hits:
         table.add_row(
             f.id[:8], getattr(f, "status", "?"),
+            _moat_cella_corta(getattr(f, "grounding_score", None)),
             (f.topic or "")[:24], (f.proposition or "")[:80],
         )
     console.print(table)
+
+
+@facts_app.command("label")
+def facts_label(
+    fact_id: str = typer.Argument(..., help="Fact id (or a >=6 char prefix)."),
+    proven: str = typer.Option(
+        None, "--proven", metavar="PROOF",
+        help="A NAMED machine-checkable proof, e.g. pytest:test_x_PASS."),
+    unbeaten: float = typer.Option(
+        None, "--unbeaten", metavar="BOUND",
+        help="The largest probe the fact survived (> 0). The bound only grows."),
+    refuted: str = typer.Option(
+        None, "--refuted", metavar="COUNTEREXAMPLE",
+        help="A NAMED counterexample. Absorbing: nothing follows it."),
+    local: bool = typer.Option(False, "--local"),
+) -> None:
+    """Attach the KIND of guarantee behind a fact.
+
+    "Held to 10^6" and "proven" are never conflated. A proof without a named
+    reference is refused: a label you can give yourself without evidence is
+    what this product exists to prevent.
+    """
+    _continuity_guard(local)
+    scelte = [("proven", proven), ("unbeaten", unbeaten),
+              ("refuted", refuted)]
+    dati = [(k, v) for k, v in scelte if v is not None]
+    if len(dati) != 1:
+        raise typer.BadParameter(
+            "scegline esattamente uno: --proven PROOF | --unbeaten BOUND | "
+            "--refuted COUNTEREXAMPLE")
+    kind, valore = dati[0]
+    m = _continuity_memory()
+    try:
+        fatto = m.label(
+            fact_id, kind,
+            proof=valore if kind == "proven" else None,
+            bound=valore if kind == "unbeaten" else None,
+            counterexample=valore if kind == "refuted" else None)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if fatto:
+        console.print(f"[green]{kind}[/green] {fact_id[:12]} — {valore}")
+    else:
+        # Non e' un fallimento del chiamante: e' la monotonia che tiene.
+        console.print(
+            f"[yellow]non applicata[/yellow] {fact_id[:12]}: la transizione e' "
+            f"vietata dalle regole monotone (refuted assorbe, e un limite non "
+            f"si abbassa). Lo stato precedente resta.")
+        raise typer.Exit(0)
 
 
 @facts_app.command("get")
@@ -1781,7 +2579,15 @@ def facts_get(fact_id: str) -> None:
 
 @facts_app.command("forget")
 def facts_forget(
-    fact_id: str,
+    fact_id: str = typer.Argument(
+        None, help="Id (or id prefix) of the single fact to delete."),
+    topic: str = typer.Option(
+        None, "--topic",
+        help=("Delete EVERY fact whose topic starts with this prefix, "
+              "sub-topics included. Same undo snapshot and audit entry as the "
+              "single-id form — the point is not to need raw SQL for the "
+              "GDPR/cleanup case this command is named after."),
+    ),
     yes: bool = typer.Option(
         False, "--yes", "-y",
         help="Skip the confirmation prompt.",
@@ -1794,6 +2600,16 @@ def facts_forget(
             "Pass --no-undoable for hard delete (privacy/GDPR)."
         ),
     ),
+    purge_history: bool = typer.Option(
+        False, "--purge-history",
+        help=(
+            "Also delete the whole supersession chain — every predecessor "
+            "and successor of this fact. WITHOUT it a deleted fact can leave "
+            "rows carrying the SAME datum behind: `update()` never overwrites, "
+            "it stores a new fact and supersedes the old one, which stays in "
+            "the database. Needed for a real erasure request."
+        ),
+    ),
 ) -> None:
     """Delete one fact (privacy / GDPR / cleanup).
 
@@ -1802,9 +2618,71 @@ def facts_forget(
 
     Default mode (--undoable) snapshots the pre-delete row to
     facts_undo_log so `engram facts undo <op_id>` can restore it within
-    7 days. Use --no-undoable for true privacy-compliant hard delete.
+    7 days. --no-undoable skips that snapshot.
+
+    PER UNA RICHIESTA DI CANCELLAZIONE SERVE --purge-history, non
+    --no-undoable. Questa riga diceva «use --no-undoable for true
+    privacy-compliant hard delete» e mandava alla cura sbagliata: senza lo
+    snapshot la riga se ne va davvero, ma i PREDECESSORI restano — `update()`
+    non sovrascrive, memorizza un fatto nuovo e supersede il vecchio, che
+    rimane nel database con lo stesso identico datum. Le due opzioni
+    rispondono a due domande diverse: --no-undoable riguarda il recupero,
+    --purge-history riguarda la catena.
     """
+    if bool(fact_id) == bool(topic):
+        console.print("[red]give either a FACT_ID or --topic[/red], not both "
+                      "and not neither")
+        raise typer.Exit(2) from None
+
     sm = _facts_sm()
+
+    if topic:
+        # A GDPR erasure covers every fact about a person, and a cleanup covers
+        # a whole topic; one id per invocation makes raw SQL the cheap path,
+        # and raw SQL drops the undo snapshot and the audit entry this command
+        # exists to write. Prefix match so sub-topics go with their parent —
+        # deleting `test/scarti` and leaving `test/scarti/sotto` behind would
+        # be a cleanup that did not clean.
+        try:
+            _all = list(sm.all())
+        except Exception as exc:  # noqa: BLE001
+            console.print(f"[red]cannot read the store:[/red] {exc}")
+            raise typer.Exit(1) from exc
+        _hits = [_x for _x in _all
+                 if (getattr(_x, "topic", "") or "").startswith(topic)]
+        if not _hits:
+            console.print(f"[yellow]0 facts under topic[/yellow] {topic!r} — "
+                          "nothing deleted")
+            return
+        if not yes:
+            try:
+                ok = typer.confirm(
+                    f"Delete {len(_hits)} facts under topic {topic!r}?",
+                    default=False,
+                )
+            except typer.Abort:
+                ok = False
+            if not ok:
+                console.print("[yellow]aborted[/yellow]")
+                return
+        _ops: list[str] = []
+        for _x in _hits:
+            if undoable:
+                _r = sm.delete_with_undo(_x.id, principal="cli:local")
+                if _r.get("removed"):
+                    _ops.append(str(_r.get("op_id")))
+            else:
+                sm.delete(_x.id, principal="cli:local")
+        if undoable:
+            console.print(
+                f"[green]forgotten:[/green] {len(_ops)} facts under {topic!r} "
+                f"[dim](undoable for 7 days — `verimem facts undo-list` for "
+                f"the op ids)[/dim]")
+        else:
+            console.print(f"[green]hard-deleted:[/green] {len(_hits)} facts "
+                          f"under {topic!r}")
+        return
+
     f = _fact_id_resolve(sm, fact_id)
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")
@@ -1820,7 +2698,32 @@ def facts_forget(
         if not ok:
             console.print("[yellow]aborted[/yellow]")
             return
-    if undoable:
+    # QUANTE ALTRE RIGHE PORTANO LO STESSO DATO. `update()` non sovrascrive:
+    # STORE un fatto nuovo e SUPERSEDE il vecchio, che resta nel database con
+    # lo stesso contenuto. Un comando che si chiama «privacy / GDPR» e ne
+    # cancella una su due deve dirlo — misurato dall'SDK: dopo `delete(nuovo)`
+    # la riga col dato sensibile era ancora li' e `get(vecchio)` la
+    # restituiva. `Memory.delete(purge_history=True)` chiudeva il caso da
+    # sempre, e la parola `purge_history` non compariva in tutto questo file:
+    # la cancellazione completa viveva solo nell'SDK, cioe' nel canale che
+    # nessuno usa per una richiesta di cancellazione.
+    _resto: list[str] = []
+    if not purge_history:
+        try:
+            _resto = [x for x in
+                      [getattr(p, "id", "") for p in
+                       sm.direct_predecessors(f.id, limit=100)] if x]
+        except Exception:  # noqa: BLE001 — un avviso non fa cadere un delete
+            _resto = []
+
+    if purge_history:
+        _mem = _continuity_memory()
+        _n = _mem.delete(f.id, purge_history=True, principal="cli:local")
+        console.print(f"[green]forgotten with its chain:[/green] {f.id} "
+                      f"[dim](predecessors and successors purged)[/dim]"
+                      if _n else
+                      f"[yellow]nothing to forget:[/yellow] {f.id}")
+    elif undoable:
         result = sm.delete_with_undo(f.id, principal="cli:local")
         if result["removed"]:
             console.print(
@@ -1832,6 +2735,13 @@ def facts_forget(
     else:
         sm.delete(f.id, principal="cli:local")
         console.print(f"[green]hard-deleted:[/green] {f.id}")
+
+    if _resto:
+        console.print(
+            f"[yellow]{len(_resto)} predecessor(s) left in the store[/yellow] "
+            f"[dim]— this fact superseded others, and they still carry what "
+            f"they said. Re-run with --purge-history for an erasure "
+            f"request.[/dim]")
 
 
 @facts_app.command("undo")
@@ -1850,6 +2760,20 @@ def facts_undo(
         not_found     — unknown op_id
     """
     sm = _facts_sm()
+    # Accept an id PREFIX, like `facts forget` does for fact ids. Without this
+    # the safety net is unreachable from its own listing: `facts undo-list`
+    # renders op_id inside a Rich column that truncates it to "9969b43c039c44…",
+    # and pasting exactly what is on screen answers "not found". Discovered by
+    # trying to undo a real batch delete on 2026-07-29 — the undo existed, was
+    # recorded correctly, and could not be invoked.
+    _matches = [o["op_id"] for o in sm.list_undoable_ops(limit=200)
+                if str(o.get("op_id", "")).startswith(op_id)]
+    if len(_matches) > 1:
+        console.print(f"[red]ambiguous op_id prefix:[/red] {op_id} matches "
+                      f"{len(_matches)} ops — give more characters")
+        raise typer.Exit(2) from None
+    if len(_matches) == 1:
+        op_id = _matches[0]
     result = sm.undo_destructive_op(op_id)
     action = result.get("action", "unknown")
     if action == "restored":
@@ -2298,6 +3222,23 @@ def facts_add(
             "'file:report.md:42'."
         ),
     ),
+    source: str = typer.Option(
+        None, "--source",
+        help=(
+            "The EVIDENCE TEXT the fact must follow from — this is what runs "
+            "the moat (L4 entailment). Different from --verified-by, which "
+            "records WHO vouches and runs no check. Bulk: put a 'source' "
+            "field in each --jsonl-stdin object."
+        ),
+    ),
+    source_file: str = typer.Option(
+        None, "--source-file",
+        help=(
+            "Read the evidence from a file — raw output (pytest, git log, a "
+            "log tail) is multi-line and hits the same shell-quoting hazards "
+            "that --from-file exists for."
+        ),
+    ),
     status: str = typer.Option(
         "model_claim", "--status",
         help="Initial status enum (model_claim default).",
@@ -2416,11 +3357,19 @@ def facts_add(
         if not topic:
             console.print("[red]--topic required[/red]")
             raise typer.Exit(1) from None
+        evidenza = source
+        if source_file:
+            try:
+                evidenza = Path(source_file).read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                console.print(f"[red]cannot read --source-file:[/red] {exc}")
+                raise typer.Exit(1) from exc
         payloads.append({
             "proposition": body,
             "topic": topic,
             "confidence": confidence,
             "verified_by": list(verified_by or []),
+            "source": evidenza,
             "status": status,
             "validate": validate,
             "gate_mode": gate_mode,
@@ -2503,6 +3452,14 @@ def facts_add(
             continue
         conf = max(0.0, min(conf, 1.0))
         vb = [str(x) for x in (p.get("verified_by") or [])]
+        # 2026-08-04: il QUARTO canale di scrittura. Fino a qui `facts add` non
+        # aveva modo di consegnare l'evidenza al gate — non era il moat spento
+        # per configurazione, era che non esisteva l'interruttore. Stessa forma
+        # di `key_facts`, curata sull'altro canale il 2026-07-30 e non portata
+        # al gemello. Il per-record del JSONL vince sul flag, come per ogni
+        # altro campo qui: l'import bulk e' l'uso principale del comando.
+        src = p.get("source")
+        src = str(src).strip() if src is not None else None
         st = str(p.get("status") or status)
         v_lvl = str(p.get("validate") or validate)
         g_mode = str(p.get("gate_mode") or gate_mode)
@@ -2534,6 +3491,11 @@ def facts_add(
             meta_narrative=mn,
             hook_token=hook_token,
             repo_root=_gate_repo_root,
+            # La coppia esatta di `verimem save` (cli.py) e della cura di
+            # `key_facts`: senza `ground_write` il canale ricadrebbe su
+            # ENGRAM_GROUNDING_WRITE, che nessun file dell'albero imposta.
+            source=src or None,
+            ground_write=True if src else None,
         )
         if gate.action == "reject":
             console.print(
@@ -2555,6 +3517,11 @@ def facts_add(
             status=final_status,
             writer_role=wr,
             meta_narrative=mn,
+            # Il verdetto va PERSISTITO, non solo calcolato: un giudizio che
+            # muore col processo non e' provenienza, e ogni lettura successiva
+            # chiamerebbe il fatto non giudicato. E' il modo in cui
+            # `Memory.add` lo scrive.
+            grounding_score=getattr(gate, "grounding_score", None),
         )
         # 2026-06-05: embed="auto" so `engram facts add` never cold-blocks
         # ~22s when the encode daemon is down (defers; heal via
@@ -2933,8 +3900,89 @@ def _lineage_exit(exc: Exception) -> typer.Exit:
     return typer.Exit(2 if isinstance(exc, LineageRefError) else 1)
 
 
+def _moat_cell(score: float | None) -> str:
+    """Il verdetto del moat in una colonna stretta, senza fingere uno zero.
+
+    `status` dice CHE COSA e' un fatto, non se qualcuno l'ha verificato: un
+    model_claim giudicato 99.9 e uno che il moat non ha mai guardato mostrano
+    lo stesso status. Su `tip` e `recent` la differenza pesa piu' che altrove —
+    sono le superfici che si leggono per RIPRENDERE il lavoro, quindi il punto
+    esatto in cui un checkpoint mai verificato viene riletto come acquisito.
+    """
+    if isinstance(score, (int, float)):
+        colore = "green" if score >= 70 else "yellow"
+        return f"[{colore}]moat {float(score):>5.1f}[/{colore}]"
+    return "[dim]moat    --[/dim]"
+
+
+def riga_di_recall(h: object) -> str:
+    """Una riga di `verimem recall`: il fatto, quanto risponde, se e' verificato.
+
+    2026-07-30: la riga mostrava SOLO la somiglianza —
+
+        - Il servizio di fatturazione ascolta sulla porta 8443. [0.90]
+
+    e un numero solo accanto a una frase si legge come una misura di
+    affidabilita'. Sono due assi diversi (quanto il fatto risponde alla domanda,
+    e se qualcuno ha verificato che sia vero) e servono entrambi: molto
+    pertinente e mai giudicato e' esattamente il caso in cui chi legge va
+    avvisato.
+
+    E' una funzione e non codice dentro il comando perche' cosi' si puo'
+    provare: la suite sostituisce l'embedder con uno stub deterministico, quindi
+    un test che passasse dal recall vero misurerebbe il retrieval invece della
+    riga.
+    """
+    txt = h.get("text") if isinstance(h, dict) else str(h)
+    score = h.get("score") if isinstance(h, dict) else None
+    s = f" [{score:.2f}]" if isinstance(score, (int, float)) else ""
+    gs = h.get("grounding_score") if isinstance(h, dict) else None
+    if isinstance(gs, (int, float)) and not isinstance(gs, bool):
+        colore = "green" if gs >= 70 else "yellow"
+        s += f" [{colore}]moat {float(gs):.1f}[/{colore}]"
+    else:
+        s += " [dim]moat --[/dim]"
+    return f"- {txt}{s}"
+
+
+def _moat_cella_corta(score: float | None) -> str:
+    """Il verdetto in una colonna di tabella. `--` quando non e' stato
+    giudicato: uno 0.0 si leggerebbe come una bocciatura, e non averlo
+    misurato non e' averlo misurato male."""
+    if isinstance(score, (int, float)) and not isinstance(score, bool):
+        colore = "green" if score >= 70 else "yellow"
+        return f"[{colore}]{float(score):.1f}[/{colore}]"
+    return "[dim]--[/dim]"
+
+
+def _epoch_di(spec: str | None) -> float | None:
+    """«2026-03-15» o un epoch -> secondi. None se non dichiarato.
+
+    Una data illeggibile e' un ERRORE, non un silenzio: accettare «marzo
+    scorso» e scrivere None farebbe credere che il tempo di evento sia stato
+    registrato, che e' peggio di un rifiuto.
+    """
+    s = (spec or "").strip()
+    if not s:
+        return None
+    import datetime as _dt
+    try:
+        return float(s)
+    except ValueError:
+        pass
+    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S",
+                "%d/%m/%Y"):
+        try:
+            return _dt.datetime.strptime(s, fmt).timestamp()
+        except ValueError:
+            continue
+    raise typer.BadParameter(
+        f"--asserted-at: non riesco a leggere {s!r}. Usa YYYY-MM-DD "
+        f"(o un epoch in secondi).")
+
+
 def _node_line(node: dict) -> str:
-    """One compact line per chain node: id, time, status, topic, markers."""
+    """One compact line per chain node: id, time, status, moat, topic."""
     import time as _time
     ts = _time.strftime("%m-%d %H:%M", _time.localtime(node["created_at"]))
     mark = " [magenta]narrative[/magenta]" if node.get("meta_narrative") else ""
@@ -2942,6 +3990,7 @@ def _node_line(node: dict) -> str:
     arrow = f"  -> {parents[0][:12]}" if parents else ""
     extra = (f" (+{len(parents) - 1} parent)" if len(parents) > 1 else "")
     return (f"  {node['id'][:12]}  {ts}  {node['status']:<12} "
+            f"{_moat_cell(node.get('grounding_score'))}  "
             f"{(node['topic'] or '(no topic)')[:48]}{mark}{arrow}{extra}")
 
 
@@ -2961,6 +4010,11 @@ def save_cmd(
         None, "--confidence", help="Override the 0.5 narrative default."),
     source: str = typer.Option(
         None, "--source", help="Source text to ground the checkpoint (L4)."),
+    asserted_at: str = typer.Option(
+        None, "--asserted-at",
+        help="When the fact is TRUE (YYYY-MM-DD or epoch), if different from "
+             "now. Feeds the time-travel: `recall_as_of` finds it from that "
+             "moment on, not from when you wrote it."),
     json_out: bool = typer.Option(False, "--json"),
     local: bool = typer.Option(
         False, "--local", help="Run on the local store even in server mode."),
@@ -2989,7 +4043,8 @@ def save_cmd(
         r = save_checkpoint(
             m, body, topic=topic, lineage_to=lineage_to,
             verified_by=list(verified_by or []) or None,
-            confidence=confidence, source=source, principal="cli:local")
+            confidence=confidence, source=source, principal="cli:local",
+            asserted_at=_epoch_di(asserted_at))
     except (LineageRefError, LineageNotFound) as exc:
         raise _lineage_exit(exc) from exc
     if json_out:
@@ -2999,6 +4054,55 @@ def save_cmd(
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     console.print(f"[green]{disp}[/green] id={r.get('id') or '-'} "
                   f"topic={topic!r} [magenta]narrative[/magenta]")
+    # Whether the entailment moat actually judged this write. It only runs when
+    # the write carries a source, and until now the receipt looked identical
+    # either way — which is how a corpus reaches 6414 facts with 0 grounding
+    # scores (measured 2026-07-28) while every save printed "admitted".
+    # E il verdetto va LETTO, non solo mostrato. La riga sotto diceva «the
+    # source entails this checkpoint» per QUALUNQUE punteggio, quindi un
+    # rifiuto si presentava cosi':
+    #     quarantined id=522e7c3bf744 …
+    #       grounded 3.8 — the source entails this checkpoint
+    # cioe' affermando l'implicazione proprio mentre la negava col numero, e
+    # mandando dalla parte opposta chi cerca di capire perche' la sua
+    # scrittura non e' passata. La cura sopra distingueva GIUDICATO da NON
+    # GIUDICATO e aveva lasciato intatto PASSATO da BOCCIATO.
+    # Nulla da inventare: `adjudication` porta gia' `threshold` accanto a
+    # `score`, e senza il taglio un 3.8 non dice se manca poco o tanto.
+    _gs = r.get("grounding_score")
+    if isinstance(_gs, (int, float)):
+        _adj = r.get("adjudication") or {}
+        _cut = _adj.get("threshold")
+        _passa = (float(_gs) >= float(_cut)) if isinstance(
+            _cut, (int, float)) else (_adj.get("disposition") != "quarantined")
+        if _passa:
+            console.print(f"  grounded {float(_gs):.1f} [dim]— the source "
+                          f"entails this checkpoint[/dim]")
+        else:
+            _soglia = (f" (cut {float(_cut):.0f})"
+                       if isinstance(_cut, (int, float)) else "")
+            console.print(
+                f"  [yellow]not grounded {float(_gs):.1f}{_soglia}[/yellow] "
+                f"[dim]— the source does NOT entail this checkpoint: that is "
+                f"why it is quarantined. Narrow the claim to what the source "
+                f"literally says, or split it[/dim]")
+    else:
+        console.print("  [yellow]not verified[/yellow] [dim]— no source, so the "
+                      "entailment moat did not run; pass --source \"<the output "
+                      "that proves it>\" to have it judged[/dim]")
+    # A save that RETIRES an older fact is not an append: the old value stops
+    # being served by default recall. save_checkpoint has always returned the
+    # ids (client.py sets _out["superseded"]) and this receipt dropped them, so
+    # the one write with a subtractive effect looked like every other one. The
+    # person who just made it is the only one positioned to notice a wrong
+    # retirement, and only while still looking.
+    _sup = r.get("superseded") or []
+    if _sup:
+        _ids = ", ".join(str(s)[:12] for s in _sup[:3])
+        _more = f" (+{len(_sup) - 3})" if len(_sup) > 3 else ""
+        console.print(f"  superseded {_ids}{_more} [dim]— no longer served by "
+                      f"default recall; `verimem recall --as-of` still reaches "
+                      f"it[/dim]")
     resolved = r.get("lineage_resolved")
     if resolved:
         console.print(f"  chained -> {resolved[:12]}")
@@ -3010,7 +4114,12 @@ def save_cmd(
         console.print("[yellow]stored QUARANTINED[/yellow] — the injection/"
                       "contradiction screens fired; see warnings below")
         for w in (r.get("warnings") or [])[:3]:
-            console.print(f"  [dim]{w.get('layer')}: {w.get('advice', '')[:100]}[/dim]")
+            # 400, not 100: the L4 advice now ends with WHICH clause the source
+            # does not carry, and at 100 chars the cut landed on the first
+            # letter of that sentence — the receipt printed the generic half of
+            # the message and hid the actionable half. Rich wraps, so a longer
+            # advice costs lines, not legibility.
+            console.print(f"  [dim]{w.get('layer')}: {w.get('advice', '')[:400]}[/dim]")
     if not r.get("stored"):
         console.print(f"[red]not stored:[/red] {r.get('status')}")
         raise typer.Exit(1)
@@ -3036,6 +4145,13 @@ def tip_cmd(
     ts = _time.strftime("%Y-%m-%d %H:%M", _time.localtime(t["created_at"]))
     mark = " [magenta]narrative[/magenta]" if t.get("meta_narrative") else ""
     console.print(f"[bold]{t['id'][:12]}[/bold]  {ts}  {t['status']}{mark}")
+    _gs = t.get("grounding_score")
+    if isinstance(_gs, (int, float)):
+        console.print(f"  moat:    [green]{float(_gs):.1f}[/green] — "
+                      f"la fonte implica questo fatto")
+    else:
+        console.print("  moat:    [dim]mai giudicato — nessuna fonte da "
+                      "verificare, non e' un pass[/dim]")
     console.print(f"  topic:   {t['topic'] or '(no topic)'}")
     parents = t.get("lineage_to") or []
     console.print(f"  chained: {' , '.join(p[:12] for p in parents) or '(root)'}")

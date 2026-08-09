@@ -18,6 +18,7 @@ corpus, and vice-versa.
 from __future__ import annotations
 
 import re
+import unicodedata
 
 # 4-digit years (1500–2099). Bare years are NOT quantities — they belong
 # to the year-disjoint rule in validate_claim, so the two detectors never
@@ -173,6 +174,60 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
     frozenset({"primario", "secondario", "replica"}),
     frozenset({"collaudo", "produzione"}),
     frozenset({"caldo", "freddo"}),
+    # PERIODICITA'. I trenta gruppi qui sopra coprono il dominio
+    # INFRASTRUTTURALE — letture, repliche, ambienti — e non quello
+    # commerciale e temporale, che e' il primo che incontra chi prova il
+    # prodotto con il proprio listino. Costo misurato il 2026-08-04:
+    #   «Il piano annuale costa 100 euro» + «Il piano mensile costa 20 euro»
+    #       -> VIVI=1, l'annuale RITIRATO. Anche in inglese.
+    #   «La latenza di lettura e' 5 ms»   + «... di scrittura e' 9 ms»
+    #       -> VIVI=2, perche' lettura/scrittura e' un gruppo che c'e'.
+    # Il meccanismo funzionava: gli mancava il mondo. Era l'aperto «il mensile
+    # cancella l'annuale», cercato per giorni nella soglia di overlap — dove
+    # non poteva stare, perche' su frasi corte la quota e' 0.75.
+    #
+    # Due fatti sullo STESSO periodo con numeri diversi restano una
+    # contraddizione: `ca == cb` non e' un contrasto, e la supersessione
+    # continua a scattare (presidiato).
+    # UN GRUPPO NON PUO' CONTENERE DUE NOMI DELLA STESSA PERIODICITA': il
+    # contrasto si decide su `ca != cb`, quindi «annual» accanto a «yearly»
+    # farebbe leggere come attributi diversi due frasi che dicono lo stesso.
+    # Per questo mancano «yearly» e «biannual» (che vale sia semestrale sia
+    # biennale, a seconda di chi scrive).
+    frozenset({"annual", "monthly", "weekly", "daily", "quarterly", "hourly"}),
+    frozenset({"annuale", "mensile", "settimanale", "giornaliero",
+               "trimestrale", "semestrale", "orario"}),
+    # `content_tokens` singolarizza l'inglese ma NON l'italiano (misurato: «i
+    # canoni annuali» -> `annuali`), quindi il plurale va dato a mano — in un
+    # gruppo SEPARATO, se no «annuale» contro «annuali» diventerebbe un
+    # contrasto fra la stessa cosa scritta due volte.
+    frozenset({"annuali", "mensili", "settimanali", "giornalieri",
+               "trimestrali", "semestrali", "orari"}),
+    # GLI ALTRI DOMINI DELLO STESSO SCHEMA, misurati end-to-end dall'altra
+    # istanza subito dopo la periodicita': `base`/`premium` e `netto`/`lordo`
+    # davano ancora VIVI=1 su 2 sulle STESSE frasi. Un listino a due livelli e
+    # un prezzo con e senza imposta sono forme dei dati comuni quanto
+    # annuale/mensile, e sullo stesso schema stanno taglia, canale, tipo di
+    # cliente e verso del viaggio.
+    #
+    # ⛔ QUESTO NON CHIUDE LA CLASSE, e va detto: la lista e' il SURROGATO di un
+    # terzo esito che il giudice non ha. Misurato su coppie fatto->fatto, il CE
+    # binario da contraddice 0.77/0.92 e indipendente 1.25/0.28/0.30 — uno degli
+    # indipendenti sta SOPRA entrambi i contraddice, mentre il controllo
+    # «supporta» sta a 99.19. I due gruppi da separare collassano, perche' la
+    # distinzione vive dentro il «non-supporta», che e' un esito unico. Finche'
+    # il giudice ha due esiti, ogni dominio nuovo va aggiunto a mano.
+    frozenset({"base", "premium", "enterprise", "pro"}),
+    frozenset({"netto", "lordo"}),
+    frozenset({"net", "gross"}),
+    frozenset({"piccola", "media", "grande"}),
+    frozenset({"piccolo", "medio", "grande"}),
+    frozenset({"small", "medium", "large"}),
+    frozenset({"online", "negozio"}),
+    frozenset({"privati", "aziende"}),
+    frozenset({"andata", "ritorno"}),
+    frozenset({"acquisto", "noleggio"}),
+    frozenset({"nuovo", "usato"}),
 )
 
 
@@ -315,14 +370,60 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
     return out
 
 
+#: Le lettere di QUALUNQUE alfabeto, non solo ASCII.
+#:
+#: PERCHE' (2026-08-04). `[a-zA-Z]{4,}` e' la classe ASCII, e questa funzione e'
+#: la guardia di sovrapposizione lessicale su cui poggiano supersessione e
+#: rilevamento di contraddizioni. Fuori da ASCII restavano:
+#:
+#:   cirillico · greco · arabo   ZERO token — e sono alfabeti ORDINARI, con gli
+#:                               spazi fra le parole: nulla li distingue dal
+#:                               latino se non il blocco Unicode.
+#:   accenti italiani            la parola TRONCATA sull'accento —
+#:                               «citta'» -> citta ma «città» -> citt,
+#:                               «pero'» -> pero ma «però» -> per (3 char, via).
+#:
+#: Il caso non e' ipotetico: sul corpus vivo (6068 fatti) ci sono 100 parole
+#: scritte in ENTRAMBE le grafie — `perche` 322 contro `perché` 88, `entita`
+#: 118 contro `entità` 32, `singolarita` 66 contro `singolarità` 131. Chi scrive
+#: da tastiera italiana e chi scrive da una shell che mangia gli accenti parlano
+#: della stessa cosa, e la funzione che misura la sovrapposizione non lo sapeva.
+#:
+#: MISURATO SULLE DUE POPOLAZIONI — obbligatorio qui, perche' la cura gemella
+#: («conservare token corti e cifre») fu falsificata proprio cosi', portando le
+#: coppie sopra soglia da 848 a 2293 su 3000, cioe' PIU' ritiri:
+#:   BENEFICIO  coppie «stessa frase, due grafie»: 215 su 400 non risultavano
+#:              identiche; dopo, 0. Jaccard mediano 0.984 -> 1.000.
+#:   COSTO      coppie casuali sopra soglia, su 3000: +0.
+#:
+#: ⚠️ IL PREZZO, dichiarato: in italiano l'accento distingue parole — `metà` e
+#: `meta`, `completò` e `completo` diventano lo stesso token. Si paga perche' sul
+#: corpus non produce un solo ritiro in piu' e perche' la coppia che unisce e'
+#: molto piu' frequente di quella che confonde. Se un giorno costera' qualcosa
+#: di misurabile, la strada e' l'analisi morfologica, non il ritorno ad ASCII.
+#:
+#: ⚠️ NON si toccano la soglia dei 4 caratteri ne' le cifre: quella strada e'
+#: gia' falsificata sul corpus (`7aa678f57c73`). Qui cambia solo l'ALFABETO.
+_PAROLA_RE = re.compile(r"[^\W\d_]{4,}", re.UNICODE)
+
+
+def _senza_diacritici(text: str) -> str:
+    """«città» -> «citta»: la stessa parola, una grafia sola."""
+    return "".join(c for c in unicodedata.normalize("NFKD", text)
+                   if not unicodedata.combining(c))
+
+
 def content_tokens(text: str) -> set[str]:
     """Lower-cased alpha tokens ≥4 chars minus fillers, lightly singularised.
 
     Used as the topical-overlap precision guard: two statements must share
     a *distinctive* (non-unit) content word before a same-unit/different-
     value pair counts as a contradiction.
+
+    Gli accenti sono normalizzati e gli alfabeti non latini contano come
+    lettere — vedi il blocco su ``_PAROLA_RE`` per la misura che lo giustifica.
     """
-    toks = re.findall(r"[a-zA-Z]{4,}", (text or "").lower())
+    toks = _PAROLA_RE.findall(_senza_diacritici((text or "").lower()))
     out: set[str] = set()
     for t in toks:
         if t in _CONTENT_STOP:
@@ -333,6 +434,82 @@ def content_tokens(text: str) -> set[str]:
             t = t[:-1]
         out.add(t)
     return out
+
+
+def _min_shared_ratio() -> float:
+    """Quanta parte della frase PIU' POVERA deve essere condivisa perche' due
+    proposizioni parlino dello stesso soggetto. 0 = guardia spenta.
+
+    Perche' un RAPPORTO e non un conteggio: il conteggio e' gia' stato
+    falsificato il 2026-07-25 — «ciascun lato ha una parola distintiva che
+    l'altro non ha, quindi sono soggetti diversi» cadde su due test che
+    esistevano gia', perche' un attributo opposto, un sinonimo e un valore
+    cambiato hanno la STESSA forma lessicale (vedi
+    tests/test_exclusive_words_mean_other_subject.py). Un rapporto invece
+    misura una cosa diversa: due frasi corte che condividono meta' dei loro
+    termini sono lo stesso soggetto, due prose che ne condividono un
+    ventottesimo no.
+
+    LA SOGLIA STA IN MEZZO A DUE POPOLAZIONI SEPARATE, misurate il 2026-08-03
+    PRIMA di scrivere la guardia:
+
+        conflitti che il codice dichiara sulle frasi dei TEST (118 coppie)
+            quota minima   0.3333
+        falsi dal corpus vero, tenuti in piedi da UN token (84 coppie)
+            quota massima  0.0714
+
+    Un fattore 4.7 fra le due, e 0.15 non tocca nessuno dei casi presidiati.
+
+    E LA CURA ESISTEVA GIA', SUI DUE MODULI FRATELLI. `facts_conflict.
+    find_conflicting_pairs` (polarita') e `corroboration.find_corroborations`
+    hanno entrambi `min_overlap=0.30` — lo stesso overlap coefficient — piu' un
+    `min_shared_tokens=2`, e il commento del primo descrive letteralmente
+    questo difetto: «AVOIDS the failure mode where a single common token like
+    "main" between unrelated facts gives high overlap coefficient». Il percorso
+    NUMERICO, l'unico dei tre che fa RITIRARE un fatto, non aveva ne' l'una ne'
+    l'altro.
+
+    PERCHE' QUI SERVE IL RAPPORTO E NON IL CONTEGGIO — misurato, cosi' nessuno
+    «allinea per coerenza» e rompe tre conflitti veri. Su quattro coppie che i
+    test pretendono siano conflitti, TRE hanno UN SOLO token condiviso:
+
+        Marco ha 30 anni. / Marco ha 40 anni.            1 token, quota 1.000
+        Cache is bounded at 1024 / Cache holds 4096       1 token, quota 0.500
+        Sessions ... TTL of 30 min / ... 45 minutes       1 token, quota 0.500
+
+    `min_shared_tokens=2` le farebbe cadere tutte e tre. I fratelli lavorano su
+    prosa e possono permetterselo; questo percorso deve reggere anche «Marco ha
+    30 anni», dove un token condiviso e' il CENTO PER CENTO della frase. E'
+    esattamente la differenza che il rapporto vede e il conteggio no: «marco»
+    e' 1 su 1, «loop» e' 1 su 28.
+
+    Cosa toglie: sul campione (220 fatti con quantita', 24090 coppie) i
+    conflitti erano 321, di cui 84 (26%) retti da un solo token condiviso —
+    «json» con unita' `tool` 5 contro 4, «chain» con `loc` 1700 contro 1414,
+    «loop» con `skill` 8 contro 324. Fatti che non parlano della stessa cosa.
+    E il costo non e' cosmetico: `anti_confab_gate.py` legge
+    `verdict=contradicted` e manda il fatto vecchio a `_route_evolutions`,
+    cioe' lo RITIRA — il meccanismo gia' quantificato il 01/08 come «la
+    supersessione mangia i fatti veri».
+
+    ENGRAM_CONFLICT_MIN_SHARED_RATIO=0 riporta al comportamento precedente."""
+    from .env_num import env_float
+    return max(0.0, env_float("ENGRAM_CONFLICT_MIN_SHARED_RATIO", 0.15))
+
+
+def _shared_enough(da: set[str], db: set[str]) -> bool:
+    """I token condivisi sono una frazione sufficiente della frase piu' povera?
+
+    Sul lato PIU' POVERO e non sull'unione: se una frase corta e specifica
+    incontra una prosa lunga, e' la corta a dire se il soggetto e' lo stesso.
+    """
+    soglia = _min_shared_ratio()
+    if soglia <= 0.0:
+        return True
+    piccola = min(len(da), len(db))
+    if piccola <= 0:
+        return True
+    return len(da & db) / piccola >= soglia
 
 
 def contrasting_attrs(a_tokens: set[str], b_tokens: set[str]) -> bool:
@@ -379,6 +556,8 @@ def conflict_from_parts(
     db = {t for t in cb if norm_unit(t) not in units_b}
     if not (da & db):
         return None  # unrelated subject
+    if not _shared_enough(da, db):
+        return None  # una parola su decine: prose diverse, non stesso soggetto
     if contrasting_attrs(ca, cb):
         return None  # different attribute (kept: catches pairs that share words)
     for (ua, va) in qa:
@@ -594,9 +773,51 @@ def date_conflict(
 
 
 # Polarity flip: the same statement with a negator on exactly one side.
+#
+# ⚠️ QUESTA E' LA SUPERFICIE UNICA DEI NEGATORI, dal 2026-08-04.
+# `contradiction._has_negation` la importa invece di tenere la propria lista:
+# ne esistevano DUE, con difetti complementari, ed e' il motivo per cui il
+# difetto e' sopravvissuto a lungo.
+#
+#   contradiction._has_negation        aveva gia' l'italiano  MA girava solo
+#                                      dentro scan_corpus, mai in scrittura
+#   quantity_match._NEGATOR_RE (qui)   gira in scrittura      MA era solo
+#                                      inglese
+#
+# Il prodotto sapeva riconoscere una negazione italiana e sapeva usarla, in due
+# posti diversi e mai insieme. Effetto misurato: «Il farmaco riduce la
+# mortalita» e «Il farmaco NON riduce la mortalita» restavano VIVI ENTRAMBI,
+# mentre le stesse due in inglese no. Per una memoria verificata e' il guasto
+# peggiore: la smentita convive col fatto e la domanda dopo ne pesca uno a caso.
+#
+# Isolato passo per passo, tutto il resto del percorso funzionava gia':
+# content_tokens identici, jaccard 4/4 = 1.00, contrasting_attrs False. Cadeva
+# solo `_has_negator`, alla prima riga.
 _NEGATOR_RE = re.compile(
+    # inglese (l'insieme originale)
     r"\b(?:not|never|no longer|cannot|can't|won't|isn't|aren't|wasn't|"
-    r"weren't|doesn't|don't|didn't|nor)\b",
+    r"weren't|doesn't|don't|didn't|nor|no)\b"
+    # italiano: «non» e' una PAROLA qui e un PREFISSO in inglese
+    # (non-blocking, non-deterministic), quindi si esclude il trattino —
+    # senza questa guardia un corpus tecnico inglese darebbe falsi positivi
+    # a raffica.
+    r"|(?<![\w-])non(?![-\w])"
+    # tedesco · olandese · polacco · scandinavi
+    r"|\b(?:nicht|kein(?:e|en|em|er|es)?|niet|geen|nie|ikke|inte|ei)\b"
+    # spagnolo · portoghese (il «no» spagnolo e' gia' coperto dall'inglese)
+    r"|\b(?:n[aã]o|nunca|jam[aá]s|tampoco)\b"
+    # francese: «ne … pas» e' discontinuo, quindi si aggancia il «ne» solo se
+    # il «pas» arriva poco dopo — «ne» da solo e' troppo corto e frequente
+    # per essere un negatore affidabile.
+    r"|\bne\b(?=.{0,40}\bpas\b)|\bn'(?=.{0,40}\bpas\b)"
+    # LINGUE A NEGAZIONE MORFOLOGICA. Il giapponese nega col suffisso verbale,
+    # il cinese con una particella attaccata, l'arabo con una particella
+    # separata: nessuno di questi e' una «parola» delimitata da spazi, ma sono
+    # tutti riconoscibili lessicalmente — e lasciarli fuori sarebbe coprire
+    # «le lingue con gli spazi» invece che «le lingue».
+    r"|(?:ません|ないです|なかった|ない|ぬ)"
+    r"|(?:没有|不是|不会|不能|不|未|非)"
+    r"|(?:\bلا\b|\bلم\b|\bلن\b|\bليس\b)",
     re.IGNORECASE,
 )
 

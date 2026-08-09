@@ -33,7 +33,14 @@ _QUANT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             r"\b(?:latenza|latency|response\s*time|"
             r"durata|duration)\s*"
-            r"(?:è|is|of|di|=|:)?\s*"
+            # `e` NUDO accanto a `è`. Un accento decideva se il gate
+            # scattava: «La latenza è 40 ms» quarantinata, «La latenza e 40
+            # ms» ammessa — mentre «: 40 ms» e «di 40 ms» funzionavano
+            # entrambe. In log, commit message e scritture automatiche
+            # l'italiano si scrive spesso senza accenti (chi ha trovato questo
+            # difetto ci era cascato per primo: tutti i fatti verimem del 2-3
+            # agosto sono salvati con «e»).
+            r"(?:è|e|is|of|di|=|:)?\s*"
             r"\d+(?:\.\d+)?\s*(?:ms|s|sec|seconds?|min|h)\b",
             re.IGNORECASE,
         ),
@@ -43,7 +50,8 @@ _QUANT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         "percent_metric",
         re.compile(
             r"\b(?:coverage|uptime|availability|accuracy|precision|recall)\s*"
-            r"(?:è|is|at|al|of|del)?\s*\d+(?:\.\d+)?\s*%"
+            # `e` nudo qui come sopra: stessa forma, stesso motivo.
+            r"(?:è|e|is|at|al|of|del)?\s*\d+(?:\.\d+)?\s*%"
             r"|"
             r"\b\d+(?:\.\d+)?\s*%\s+"
             r"(?:coverage|uptime|availability|accuracy|precision|recall)\b",

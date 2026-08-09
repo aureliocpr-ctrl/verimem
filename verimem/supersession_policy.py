@@ -21,8 +21,8 @@ from typing import Any
 
 from .source_trust import canonical_source
 
-__all__ = ["canonical_source_of", "is_same_source", "classify_write_relation",
-           "references_fact"]
+__all__ = ["canonical_source_of", "declared_identity", "is_same_source",
+           "classify_write_relation", "references_fact"]
 
 #: A fact id as written in prose: 12 hex chars, on its own token boundary.
 #: Shorter ids are refused outright — a 3-char "id" appears by chance and would
@@ -60,11 +60,123 @@ def references_fact(new_text: Any, old_id: Any) -> bool:
 
 def canonical_source_of(fact: Any) -> str:
     """The reputation key of a fact's writer (``canonical_source`` of its
-    ``verified_by``); the ``"user"`` fallback when unsourced."""
+    ``verified_by``); the ``source_signature`` when there is no ``verified_by``;
+    the ``"user"`` fallback when the fact declares neither.
+
+    PERCHE' LA SIGNATURE (2026-08-04, da un registro pazienti di ws5).
+    «Il paziente Rossi pesa 70 kg» veniva RITIRATO da «Il paziente Bianchi pesa
+    95 kg», reason `same-source evolution`. Il banco, una variabile per volta:
+
+        topic DIVERSI, nessuna source        entrambi vivi
+        stesso topic, source DIVERSE         NE RESTA UNO
+        stesso topic, verified_by diversi    entrambi vivi
+
+    La riga di mezzo era il difetto: chi scrive passa `source=` credendo di
+    dichiarare la provenienza — e' cio' che il prodotto raccomanda, ed e' cio'
+    che accende il moat — e qui si guardava solo `verified_by`, quindi due
+    fatti senza ref erano entrambi `"user"` e il secondo «evolveva» il primo.
+    Sul corpus vivo 500 fatti su 6075 hanno un `verified_by`: per gli altri
+    5575 qualunque coppia nello stesso topic era un candidato al ritiro,
+    qualunque cosa dicesse.
+
+    Non si inventa un criterio nuovo: si smette di buttare via cio' che chi
+    scrive ha gia' dichiarato.
+
+    ⛔ LA CURA E' STATA SCRITTA, MISURATA E RITIRATA IL 2026-08-04. Leggere la
+    ``source_signature`` qui dentro colpisce il bersaglio e rompe il presidio:
+
+        caso                                riga attuale   con la signature
+        source DIVERSE (due cartelle)          1 vivo         2 vivi   ✅
+        STESSA source, valore aggiornato       1 vivo         2 vivi   ❌
+        nessuna source (compatibilita')        1 vivo         1 vivo   ✅
+
+    La seconda riga e' una regressione vera: l'aggiornamento legittimo smette
+    di ritirare. E la funzione, chiamata da sola, e' CORRETTA in tutti e tre i
+    casi — stessa signature -> ``evolution``, diverse -> ``conflict``, assente
+    -> ``evolution``; e il fatto riletto dal DB espone davvero l'attributo. Il
+    comportamento cambia piu' a valle, in un punto che non e' stato isolato.
+
+    Una cura che colpisce il bersaglio per una ragione che non si sa spiegare
+    non si consegna: e' la stessa lezione di «misurare una cura a livello di
+    FUNZIONE», dove il verdetto isolato diceva il contrario dell'end-to-end.
+    Resta il pezzo che CONSERVA l'impronta in ``client.add`` — additivo, non
+    cambia comportamento — e il test la documenta come xfail strict.
+    """
     return canonical_source(getattr(fact, "verified_by", None) or None)
 
 
+#: Le code di `writer_principal` che NON sono un'identita': dicono da quale
+#: canale e' entrato il fatto, non chi l'ha scritto.
+_ANONIME = frozenset({"local", "unbound", "unknown", "anonymous", ""})
+
+
+def declared_identity(principal: Any) -> str | None:
+    """L'identita' DICHIARATA in un ``writer_principal``, o ``None``.
+
+    ⚠️ IL CAMPO CONTIENE DUE COSE DIVERSE, e distinguerle e' tutto il punto.
+    Sul corpus vero, 7852 fatti::
+
+        6253  <NULL>          1454  cli:local
+         143  mcp:unbound        2  sdk:local
+
+    Sono CANALI: dicono da dove e' entrato il fatto, non chi l'ha scritto. Ma
+    `Memory(principal="anna")` ci mette una PERSONA. Trattare le due cose allo
+    stesso modo renderebbe «due autori diversi» la stessa persona che scrive da
+    CLI e aggiorna da MCP — cioe' romperebbe l'aggiornamento legittimo, che e'
+    il presidio su cui e' caduta la cura della `source_signature` (vedi
+    `canonical_source_of`).
+
+    Il formato canonico e' ``<prefisso>:<segmenti>`` (`orchestration.
+    agent_principal`), quindi la coda dopo i due punti dice se un'identita' c'e':
+    `mcp:alice` e' alice via MCP, `mcp:unbound` non e' nessuno.
+
+    Conseguenza voluta: sul corpus di casa i quattro principal sono TUTTI
+    anonimi, quindi questa funzione vi ritorna sempre ``None`` e nulla cambia.
+    Morde solo dove un'identita' e' stata dichiarata davvero."""
+    if not isinstance(principal, str):
+        return None
+    p = principal.strip().lower()
+    if not p:
+        return None
+    coda = p.split(":", 1)[1] if ":" in p else p
+    if coda.strip() in _ANONIME:
+        return None
+    return p
+
+
 def is_same_source(a: Any, b: Any) -> bool:
+    """Due fatti vengono dalla stessa penna? (la `canonical_source` del loro
+    `verified_by`).
+
+    ⛔ QUI DENTRO C'E' STATO L'ASSE DELL'AUTORE, PER TRE ORE, ED E' RITIRATO.
+    L'idea: due `writer_principal` dichiarati e diversi non si ritirano a
+    vicenda — nasceva dal caso di ws5 «in una memoria di team il fatto di bruno
+    archivia quello di anna». Curava quel caso e ne ROMPEVA uno piu' comune,
+    misurato da ws5 sulla matrice completa poche ore dopo::
+
+        caso                        vivi  atteso  esito
+        un autore,  due entita'       1      2    x  il buco storico, non chiuso
+        due autori, due entita'       2      2    ok la cura sull'autore
+        un autore,  aggiornamento     1      1    ok presidio
+        due autori, aggiornamento     2      1    REGRESSIONE
+
+    anna scrive «Il paziente Rossi pesa 70 chilogrammi», bruno corregge «78», e
+    restavano vivi entrambi: in un'organizzazione **la correzione di un collega
+    smetteva di sovrascrivere il dato sbagliato**, che e' il caso piu' comune
+    che esista. E togliendo l'asse dal solo gate senza toglierlo da qui il
+    risultato peggiorava ancora: la correzione finiva in QUARANTENA e restava
+    servito il valore vecchio.
+
+    🔑 «Autori diversi» non implica «cose diverse». Due persone che parlano
+    dello STESSO paziente parlano della stessa cosa: l'autore era un proxy
+    debole per l'asse che conta, cioe' L'ENTITA' — e quello vive in
+    `anti_confab_gate._entita_diverse`, che confronta i codici di record e
+    copre anche il caso anna/bruno per cui questa cura era nata.
+
+    `declared_identity` resta esportata: e' corretta, e distinguere un CANALE
+    (`cli:local`, `mcp:unbound`) da una PERSONA serve a chi mostra la
+    provenienza. Non serve a decidere un ritiro.
+    """
     return canonical_source_of(a) == canonical_source_of(b)
 
 
