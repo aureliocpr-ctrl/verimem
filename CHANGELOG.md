@@ -34,6 +34,15 @@ should upgrade is the first.
   already in your environment and a restart will not remove it — upgrade with
   `pip install -U verimem`.
 
+- **A dead module stops shipping.** `verimem/rerank.py` was deleted from the
+  source in June and kept riding along inside the published package: the 0.7.0
+  wheel on PyPI contains it (verified by downloading the artifact — 397 modules,
+  `verimem/rerank.py` among them), because it survives in a stale local `build/`
+  directory and setuptools packs what it finds there. The 0.7.5 wheels are built
+  clean and match the repository exactly: **384 modules in the wheel, 384 in git,
+  nothing extra and nothing missing.** Nothing imported it, so no behaviour
+  changes — but the package no longer carries code that the source deleted.
+
 ### Note on the version number
 
 0.7.1 through 0.7.4 were never published. The jump is deliberate: it marks the
@@ -70,10 +79,9 @@ regression: they are the state of the ground as we found it.
   live on a branch that is not merged yet. Nothing in the README or the package
   description promises them; they are simply not here.
 
-- **The wheel and sdist carry one dead module.** `verimem/rerank.py` was removed
-  from the source in June and survives in build artifacts, so it ships without
-  being importable from anywhere in the codebase. Harmless — nothing imports it
-  — but it is in the package, and it has been since 0.7.0.
+(A fourth entry listed here in an earlier draft — a dead `verimem/rerank.py`
+shipping in the package — was wrong for this release and has moved to *Fixed*
+above: 0.7.0 carries it, 0.7.5 does not.)
 
 ## [Unreleased] — 0.8 line
 
