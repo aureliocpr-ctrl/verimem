@@ -1243,7 +1243,18 @@ def _filter_tools(
 # (the CLI prints the same text via `verimem agent-guide`).
 from .agent_guide import VERIMEM_AGENT_GUIDE  # noqa: E402 — after module setup  # isort:skip
 
-server: Server = Server("verimem", instructions=VERIMEM_AGENT_GUIDE)
+# `version=` is not optional decoration: without it the MCP library fills
+# `serverInfo.version` with ITS OWN version, so a client asking "which verimem am
+# I talking to" got `1.26.0` on 08-08 and `1.29.0` on 08-09 — a number that moved
+# on its own while verimem never changed, and that was never a verimem version at
+# all. Measured through a real `initialize` on both days. It is the same defect
+# the 0.7.5 bump fixes at the package level (an artifact that misstates its own
+# version), on the one door agents actually read.
+from . import __version__ as _verimem_version  # noqa: E402,I001 — beside its only use  # isort:skip
+
+server: Server = Server(
+    "verimem", version=_verimem_version, instructions=VERIMEM_AGENT_GUIDE,
+)
 
 
 async def _list_tools_unfiltered() -> list[t.Tool]:
