@@ -3691,6 +3691,10 @@ def facts_requalify_quarantined(
         False, "--apply",
         help="Actually promote. Default = DRY RUN (reports only, mutates nothing).",
     ),
+    principal: str = typer.Option(
+        "cli:local", "--principal",
+        help="Identity recorded in the audit chain for each re-admitted fact.",
+    ),
 ) -> None:
     """Recover real knowledge a SINCE-FIXED false positive had quarantined.
 
@@ -3702,12 +3706,33 @@ def facts_requalify_quarantined(
     """
     from verimem.admission_cleanup import requalify_quarantined
     sm = _facts_sm()
-    res = requalify_quarantined(sm.db_path, dry_run=not apply)
+    res = requalify_quarantined(sm.db_path, dry_run=not apply,
+                                principal=principal)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to promote)"
     console.print(
         f"[bold]{mode}[/bold]  scanned={res['scanned']}  "
         f"recoverable={res['recoverable']}  promoted={res['promoted']}"
     )
+    # Never a bare total: the three conditions do not read the judge's verdict,
+    # so the split is the only thing telling the operator that part of what is
+    # about to be re-admitted was checked against a source and refused.
+    b = res.get("by_moat") or {}
+    if b:
+        console.print(
+            f"  del recuperabile, il giudice: [red]{b.get('respinti', 0)} "
+            f"respinti[/red]  {b.get('incerti', 0)} incerti  "
+            f"[green]{b.get('approvati', 0)} approvati[/green]  "
+            f"{b.get('mai_giudicati', 0)} mai giudicati"
+        )
+        if not apply and b.get("respinti"):
+            console.print(
+                f"  [yellow]⚠ {b['respinti']} dei {res['recoverable']} "
+                f"portano un verdetto NEGATIVO del moat (grounding < 40): "
+                f"--apply li riammette insieme agli altri.[/yellow]"
+            )
+    if apply:
+        console.print(f"  tracciato in audit_mutations come 'restore' "
+                      f"(principal={principal})")
 
 
 # ---- Consolidate sub-commands (cycle 145) --------------------------------
