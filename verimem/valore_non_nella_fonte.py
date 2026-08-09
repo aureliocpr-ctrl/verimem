@@ -46,16 +46,75 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from .quantity_match import extract_quantities
+from .quantity_match import _QUANT_RE, claim_span, extract_quantities
 
 __all__ = ["ValoreAssente", "valori_non_nella_fonte"]
 
 
+def _numeri_come_scritti(testo: str) -> dict[float, str]:
+    """``{valore: il numero COM'E' SCRITTO}`` per i numeri del claim.
+
+    Legge ``_QUANT_RE`` sullo stesso ``claim_span`` che usa
+    ``extract_quantities``: il legame valore→testo e' esatto PER COSTRUZIONE,
+    non ritrovato a posteriori. E' la differenza fra conservare e indovinare,
+    ed e' il motivo per cui questa strada e' stata scelta contro l'alternativa
+    di ricercare il token al punto di stampa.
+
+    ⚠️ LIMITE DICHIARATO: se due scritture DIVERSE danno lo stesso ``float``
+    («2607.2676» e «2607.26760» nello stesso claim) qui ne resta una — la
+    prima. Non e' l'ambiguita' che affossa la ricerca a posteriori: la' i
+    candidati sono tutti i numeri del testo, qui solo quelli che collassano
+    sullo stesso valore, e fra quelli il gate non ha comunque nulla da
+    distinguere: sono lo stesso numero.
+    """
+    fuori: dict[float, str] = {}
+    for m in _QUANT_RE.finditer(claim_span(testo)):
+        try:
+            v = float(m.group(1))
+        except ValueError:      # pragma: no cover — la regex cattura cifre
+            continue
+        fuori.setdefault(v, m.group(1))
+    return fuori
+
+
 @dataclass(frozen=True)
 class ValoreAssente:
-    """Un valore che il claim afferma e la fonte non contiene."""
+    """Un valore che il claim afferma e la fonte non contiene.
+
+    ``testo`` E' IL NUMERO COM'E' SCRITTO NEL CLAIM, e non e' un lusso: senza,
+    il gate stampava una cifra che l'utente non aveva mai scritto. Il caso, reale
+    e trovato da ws8 usando il prodotto (id=21b5710c46f5)::
+
+        claim  «Il paper Metis arXiv 2607.26760 elenca fra le affiliazioni ...»
+        gate   «il claim afferma un valore che la fonte non contiene: 2607.27»
+
+    Il ``2607.27`` non era nel claim ne' nella fonte: nasceva da ``f"{v:g}"``,
+    che tiene SEI cifre significative e arrotonda. Corrompe ogni identificatore:
+    ``1706.03762`` (Attention is all you need) diventa ``1706.04``.
+
+    🔑 E NON BASTAVA STAMPARE PIU' CIFRE: lo zero finale muore prima, nella
+    ``float()`` — ``2607.26760 -> 2607.2676`` — quindi ``:.15g`` darebbe ancora
+    la cifra sbagliata. ws8, che ha scelto questa strada contro l'alternativa di
+    ricostruire il token a valle: «(B) non e' rischiosa, e' IMPOSSIBILE: chiede
+    una funzione inversa che non esiste; non puo' RITROVARE il token, puo' solo
+    INDOVINARE quale pezzo di testo lo abbia generato» — e il suo referto di
+    quella sera cita CINQUE id arXiv nello stesso claim, tutti della stessa
+    forma. Qui invece il testo non si indovina: si conserva quando lo si legge.
+    """
     valore: float
     unita: str
+    #: vuoto solo per i costruttori che non lo passano: nessuno, oggi, fuori da
+    #: questo modulo (verificato: `grep ValoreAssente(` non da' altri esiti).
+    testo: str = ""
+
+    def come_scritto(self) -> str:
+        """Il numero da mostrare a chi legge: il suo, se ce l'abbiamo.
+
+        Il ripiego su ``:g`` resta per i (nessuni) costruttori che non passano
+        ``testo``, ed e' deliberatamente identico al comportamento vecchio: un
+        ripiego che cambia anche il resto nasconderebbe quando viene usato.
+        """
+        return self.testo or f"{self.valore:g}"
 
 
 _DECIMALI_RE = re.compile(r"(?<![\w.])\d+[.,](\d+)")
@@ -122,6 +181,7 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     if not nel_claim:
         return []
     nella_fonte = {v for _u, v in extract_quantities(source)}
+    come_scritti = _numeri_come_scritti(proposition)
     fuori: list[ValoreAssente] = []
     for u, v in sorted(nel_claim, key=lambda q: q[1]):
         if v in nella_fonte:
@@ -133,5 +193,6 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
         tol = _tolleranza_dichiarata(proposition, v)
         if any(abs(v - y) < tol for y in nella_fonte):
             continue
-        fuori.append(ValoreAssente(valore=v, unita=u))
+        fuori.append(ValoreAssente(valore=v, unita=u,
+                                   testo=come_scritti.get(v, "")))
     return fuori

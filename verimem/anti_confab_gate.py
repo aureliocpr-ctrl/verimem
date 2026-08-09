@@ -1897,8 +1897,17 @@ def run_validation_gate(
             from .valore_non_nella_fonte import valori_non_nella_fonte
             _assenti = valori_non_nella_fonte(proposition, source)
             if _assenti:
+                # ⚠️ `come_scritto()` E NON `f"{v.valore:g}"`: quel formato tiene
+                # sei cifre significative e ARROTONDA, quindi il gate nominava
+                # una cifra che l'utente non aveva scritto — «2607.26760» usciva
+                # come «2607.27», e «1706.03762» come «1706.04». Caso reale
+                # trovato da ws8 usando il prodotto (id=21b5710c46f5), su un
+                # claim che citava la propria fonte verbatim.
+                # Per un gate che esiste per fermare i numeri inventati, era il
+                # difetto peggiore possibile: non diceva «non capisco», diceva
+                # con precisione una cosa falsa.
                 _vv = ", ".join(
-                    (f"{v.valore:g} {v.unita}".strip()) for v in _assenti[:4])
+                    (f"{v.come_scritto()} {v.unita}".strip()) for v in _assenti[:4])
                 warnings.append({
                     "layer": "L4.1",
                     "reason": (f"il claim afferma un valore che la fonte non "
