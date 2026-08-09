@@ -643,6 +643,80 @@ def _introdotto_da_una_parola_temporale(testo: str, inizio_numero: int) -> bool:
     return parola in _INTRODUCE_UN_ANNO or parola in _nomi_di_mese()
 
 
+#: «45.000» NON vale 45, e finché non sappiamo se vale 45000 non vale NIENTE.
+#:
+#: IL DIFETTO CHE LO MOTIVA e' il peggiore che questo prodotto abbia avuto, ed e'
+#: stato trovato la notte del 09→10/08 in tre, nessuno leggendo il codice::
+#:
+#:     claim  «Lo stipendio annuo e' 45.000 euro»   (quarantacinquemila)
+#:     fonte  «Contratto: lo stipendio e' 45 euro»  (quarantacinque)
+#:     -> AMMESSO, nessuna obiezione
+#:
+#: perche' `float("45.000")` da' 45.0. Il gate non taceva e non accusava a torto:
+#: **certificava come vero un fatto che la fonte contraddice di mille volte**.
+#: La causa prima e' che il punto e' ANCHE il separatore decimale inglese, quindi
+#: il pattern lo accetta volentieri e `float` restituisce un numero CREDIBILE e
+#: falso. Delle quattro notazioni che rompono l'estrattore (virgola migliaia,
+#: virgola decimale, spazio del SI, punto) questa e' l'unica che certifica: le
+#: altre SPEZZANO il numero, un pezzo non sta nella fonte, e il layer protesta —
+#: rumorose ma oneste. 🔑 **La classe piu' pericolosa e' quella che somiglia di
+#: piu' a una notazione valida.**
+#:
+#: QUANTO E' GRANDE, misurato da ws8 sul corpus reale (semantic.db in mode=ro,
+#: 9365 proposizioni): la classe pericolosa e' **100 · 1,07%**, quella invisibile
+#: (due o piu' gruppi, «1.500.000» -> `[]`) e' **2 · 0,02%** — CINQUANTA A UNO. E
+#: le righe sono nostre: «102.913 LOC» letto 102.9, «16.300+ test pytest verdi»
+#: letto 16.3 in tre fatti diversi. ⚠️ ws8 ha letto 6 righe su 100, non tutte.
+#:
+#: IL CRITERIO, misurato 9/9 PRIMA di scrivere la cura. Ambiguo = tre cifre dopo
+#: il punto, parte intera diversa da zero e non piu' lunga di tre cifre. Le due
+#: osservazioni che lo rendono preciso, ed entrambe salvano dei veri decimali:
+#:
+#:   · `0.250` NON puo' essere migliaia: «zero mila duecentocinquanta» non esiste
+#:     in nessuna convenzione ⇒ millesimi e tolleranze restano misurabili
+#:   · un gruppo di migliaia ha ESATTAMENTE tre cifre ⇒ `3.1416` e' decimale
+#:     certo, e la precisione scientifica non si perde
+#:
+#: ⚠️ E NON E' DISAMBIGUARE — quella strada e' stata scartata perche' «12,450»
+#: vale 12450 in inglese e 12,45 in italiano, e sbagliare significherebbe
+#: confrontare due valori diversi credendoli uguali: un difetto SILENZIOSO,
+#: peggiore di quello che si cura. Qui si smette solo di AFFERMARE una
+#: disambiguazione che non abbiamo.
+#:
+#: COSTO DICHIARATO: `3.141` (pi greco) diventa non misurabile, ed e' corretto —
+#: in un testo italiano quel numero e' tremilacentoquarantuno. Sul corpus di casa
+#: il costo e' zero: nelle righe lette da ws8 nessuna era un decimale legittimo.
+_PUNTO_AMBIGUO = re.compile(r"(?!0\.)\d{1,3}\.\d{3}$")
+
+
+def numeri_ambigui(text: str) -> list[str]:
+    """I numeri del claim che NON abbiamo potuto misurare, come sono scritti.
+
+    ⚠️ ESISTE PERCHE' LA META' DELLA CURA NON BASTA, e la seconda meta' l'ha
+    imposta ws8 smentendo la prima proposta: *«togliere l'accusa non distingue
+    le due popolazioni: i falsi negativi nascono convertendo i veri positivi in
+    silenzio»*. Misurato subito dopo aver scritto `_PUNTO_AMBIGUO`::
+
+        prima  «45.000 euro» contro «45 euro»  -> AMMESSO (confronto falso)
+        dopo   «45.000 euro» contro «45 euro»  -> AMMESSO (nessun confronto)
+
+    Per chi legge il fatto le due cose sono identiche: entra comunque. Smettere
+    di affermare un valore falso e' necessario e NON e' sufficiente — senza
+    questa funzione la cura sposta il difetto invece di chiuderlo.
+
+    La regola, dal MEMORY.md di casa: *«un avviso non ha bisogno della
+    popolazione opposta, un veto si»*. Quindi il fatto entra, ma **smette di
+    mentire sul proprio stato**: chi lo legge sa che quel numero non e' stato
+    verificato contro la fonte, e perche'.
+    """
+    fuori: list[str] = []
+    for m in _QUANT_RE.finditer(claim_span(text)):
+        num_s = m.group(1)
+        if _PUNTO_AMBIGUO.match(num_s) and num_s not in fuori:
+            fuori.append(num_s)
+    return fuori
+
+
 def extract_quantities(text: str) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
     (provenance after an evidence marker is not measured); bare YEARS excluded."""
@@ -676,6 +750,8 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
         if (not unit_s and YEAR_RE.fullmatch(num_s)
                 and _introdotto_da_una_parola_temporale(claim, m.start(1))):
             continue  # bare year → year path, not a quantity
+        if _PUNTO_AMBIGUO.match(num_s):
+            continue  # vedi _PUNTO_AMBIGUO: meglio nessun valore che quello falso
         try:
             val = float(num_s)
         except ValueError:  # pragma: no cover — regex guarantees numeric
@@ -1503,6 +1579,7 @@ __all__ = [
     "CONTRAST_QUALIFIERS",
     "norm_unit",
     "extract_quantities",
+    "numeri_ambigui",
     "content_tokens",
     "contrasting_attrs",
     "distinctive_tokens",
