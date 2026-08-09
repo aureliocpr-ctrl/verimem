@@ -16,7 +16,10 @@ Tre livelli, dal più economico al più caro:
    un comando che non c'è. Costo: millisecondi, nessuna installazione.
 2. ``test_i_prefissi_di_provenance_che_suggeriamo_sono_accettati`` — se l'aiuto in
    linea suggerisce ``--verified-by commit:...``, il detector deve accettarlo.
-   **xfail(strict)**: oggi NON è così, ed è un difetto scritto, non nascosto.
+   **ROSSO**: oggi non è così. È stato in `xfail` per un giorno con la ragione
+   scritta accanto, e mi ero detta che «documentato» bastasse: non basta. La suite
+   usciva EXIT=0 con dentro un difetto vero, e un esito verde è ciò che l'altro
+   legge — non il `reason`.
 3. ``test_il_wheel_contiene_i_comandi_del_repo`` (slow) — costruisce il wheel e
    guarda dentro: ciò che il repo definisce deve arrivare a chi installa.
 
@@ -141,20 +144,22 @@ def test_i_comandi_che_il_readme_insegna_esistono():
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "DIFETTO NOTO, misurato il 08/08 (docs/stato-reale/02j-trust-il-punto-c.md): "
-        "l'aiuto di `trust` suggerisce `--verified-by commit:...` e `coverage:N`, ma "
-        "_RUNTIME_EVIDENCE_PREFIXES non li contiene, quindi il claim resta FLAGGED e "
-        "l'utente non sa perché. 3 prefissi su 5 funzionano. La cura è una riga di "
-        "documentazione (cambiare gli esempi), NON allargare la lista: uno SHA di "
-        "commit non è evidenza che qualcosa funzioni. Quando la cura entra, questo "
-        "xfail diventa rosso e va tolto."
-    ),
-)
 def test_i_prefissi_di_provenance_che_suggeriamo_sono_accettati():
-    """Se lo suggeriamo nell'aiuto in linea, il detector deve accettarlo."""
+    """Se lo suggeriamo nell'aiuto in linea, il detector deve accettarlo.
+
+    🔴 QUESTO TEST È ROSSO, ED È GIUSTO CHE LO SIA. Ha vissuto in `xfail(strict=True)`
+    dall'08/08 al 09/08: il difetto era scritto nel `reason`, ma la suite usciva con
+    EXIT=0 e chi legge un esito non legge i reason. Un semaforo che nasconde è peggio
+    di nessun semaforo — e il fatto che la ragione fosse documentata non cambia il
+    colore che l'altro vede.
+
+    Il difetto (misurato in docs/stato-reale/02j): l'aiuto di `trust` propone
+    `--verified-by commit:…`, `coverage:N` e `pr:…`, che `_RUNTIME_EVIDENCE_PREFIXES`
+    non contiene — il claim resta FLAGGED e l'utente non sa perché. 3 prefissi su 5
+    funzionano. La cura è una riga di documentazione (cambiare gli esempi), NON
+    allargare la lista: uno SHA di commit non è evidenza che qualcosa funzioni.
+    Resta rosso finché quella riga non entra.
+    """
     from verimem.l1_works_detector import _RUNTIME_EVIDENCE_PREFIXES
 
     testo = CLI.read_text(encoding="utf-8")
