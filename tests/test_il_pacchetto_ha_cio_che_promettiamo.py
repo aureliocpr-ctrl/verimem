@@ -152,19 +152,6 @@ def test_i_prefissi_di_provenance_che_suggeriamo_sono_accettati():
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "ROSSO VOLUTO, e il rosso è l'informazione: il 08/08 la versione 0.7.0 era "
-        "ferma da 387 commit e il pacchetto pubblicato era del 22 luglio. È il "
-        "criterio ② del mandato 0.7.5 e va tolto insieme al bump — con strict=True, "
-        "il giorno che la distanza rientra questo test xPASSA e la CI chiede di "
-        "rimuovere il marcatore. Sta in xfail e non rosso per una ragione pratica: "
-        "ws7 sta facendo il merge di sei rami col criterio «dopo ogni merge la suite "
-        "passa su main», e un rosso che non dipende dal merge le renderebbe "
-        "inapplicabile il proprio criterio."
-    ),
-)
 def test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice():
     """Il numero di versione deve distinguere due artefatti diversi.
 
@@ -178,6 +165,12 @@ def test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice():
     La soglia è larga apposta: non impone di rilasciare spesso, impone che quando la
     distanza diventa grande qualcuno lo dica. È un avviso, non un veto — la stessa
     forma che il resto del progetto ha già scelto per il pavimento del recall.
+
+    Nato in ``xfail(strict=True)`` l'08/08, quando la distanza era 387 commit e
+    toglierlo dall'xfail avrebbe messo un rosso permanente in mezzo a un merge di
+    sei rami. Il marcatore è stato rimosso il 09/08 **dal test stesso**: fatto il
+    bump a 0.7.5, l'xfail è diventato XPASS(strict) e la suite ha chiesto di
+    toglierlo, che è esattamente il lavoro per cui era stato messo lì.
     """
     SOGLIA = 150  # commit; a 375 eravamo ben oltre, a 20 nessuno si allarma
 
