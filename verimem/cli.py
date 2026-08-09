@@ -960,6 +960,47 @@ def remember_cmd(
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     fid = r.get("id") or "-"
     console.print(f"[green]{disp}[/green] id={fid} topic={topic}")
+    # 2026-08-08 — DIRE QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e
+    # chiedono cose diverse: il giudice «questa fonte sostiene il fatto?» e i
+    # controlli «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le
+    # attiva entrambe (ws1, 16 casi su 16), e la ricevuta ne mostrava zero:
+    #     quarantined id=f014eeafa03a topic=t
+    # Fermato, senza sapere perche'. Il motivo era GIA' nel verdetto — «il claim
+    # afferma un valore che la fonte non contiene: 40 pezzo» — e non arrivava
+    # alla porta dell'umano. Nulla da inventare: si stampa.
+    # ⚠️ Con moat a 95,5 e taglio 40 il fatto e' comunque quarantinato da L4.1:
+    # decidere cosa dire in base al solo PUNTEGGIO nasconde proprio il caso in
+    # cui le due voci si contraddicono, che e' quello in cui l'utente ha piu'
+    # bisogno di sapere chi ha parlato.
+    for _w in (r.get("warnings") or []):
+        _ragione = str(_w.get("reason") or "").strip()
+        if not _ragione:
+            continue
+        console.print(f"  [yellow]{_w.get('layer') or 'gate'}[/yellow] "
+                      f"[dim]— {_ragione}[/dim]")
+        _cons = str(_w.get("advice") or "").strip()
+        if _cons:
+            console.print(f"     [dim]{_cons}[/dim]")
+    # 2026-08-08 — E L'ALTRA VOCE, quella che era D'ACCORDO. Il gate ne ha due:
+    # il giudice («questa fonte sostiene il fatto?») e i controlli sui dettagli
+    # («ogni cifra sta nella fonte?»). Sopra si stampa chi ha detto NO; senza
+    # questa riga non si sa che l'altro aveva detto SI'.
+    #     quarantined … L4.1 — il claim afferma un valore che la fonte non
+    #     contiene: 40 pezzo
+    # e quel fatto aveva grounding 95,5 su un taglio di 40: il giudice lo
+    # APPROVAVA. Un fatto respinto 1-a-1 non e' un fatto respinto 2-a-0, e per
+    # chi scrive e' la differenza fra «riformula la frase» e «hai sbagliato UN
+    # numero». Il dato c'era gia' nel verdetto: si stampa.
+    _ws_ = r.get("warnings") or []
+    _gs_ = r.get("grounding_score")
+    if _ws_ and isinstance(_gs_, (int, float)):
+        _cut_ = (r.get("adjudication") or {}).get("threshold")
+        if isinstance(_cut_, (int, float)) and float(_gs_) >= float(_cut_):
+            console.print(
+                f"  [green]il giudice era d'accordo[/green] [dim]— "
+                f"{float(_gs_):.1f} sul taglio di {float(_cut_):.0f}: la fonte "
+                f"SOSTIENE il fatto, e' un controllo di dettaglio ad averlo "
+                f"fermato. Correggi quel dettaglio, non la frase[/dim]")
     if not r.get("stored"):
         console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
 
@@ -3950,6 +3991,10 @@ def facts_requalify_quarantined(
         False, "--apply",
         help="Actually promote. Default = DRY RUN (reports only, mutates nothing).",
     ),
+    principal: str = typer.Option(
+        "cli:local", "--principal",
+        help="Identity recorded in the audit chain for each re-admitted fact.",
+    ),
 ) -> None:
     """Recover real knowledge a SINCE-FIXED false positive had quarantined.
 
@@ -3961,12 +4006,33 @@ def facts_requalify_quarantined(
     """
     from verimem.admission_cleanup import requalify_quarantined
     sm = _facts_sm()
-    res = requalify_quarantined(sm.db_path, dry_run=not apply)
+    res = requalify_quarantined(sm.db_path, dry_run=not apply,
+                                principal=principal)
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to promote)"
     console.print(
         f"[bold]{mode}[/bold]  scanned={res['scanned']}  "
         f"recoverable={res['recoverable']}  promoted={res['promoted']}"
     )
+    # Never a bare total: the three conditions do not read the judge's verdict,
+    # so the split is the only thing telling the operator that part of what is
+    # about to be re-admitted was checked against a source and refused.
+    b = res.get("by_moat") or {}
+    if b:
+        console.print(
+            f"  del recuperabile, il giudice: [red]{b.get('respinti', 0)} "
+            f"respinti[/red]  {b.get('incerti', 0)} incerti  "
+            f"[green]{b.get('approvati', 0)} approvati[/green]  "
+            f"{b.get('mai_giudicati', 0)} mai giudicati"
+        )
+        if not apply and b.get("respinti"):
+            console.print(
+                f"  [yellow]⚠ {b['respinti']} dei {res['recoverable']} "
+                f"portano un verdetto NEGATIVO del moat (grounding < 40): "
+                f"--apply li riammette insieme agli altri.[/yellow]"
+            )
+    if apply:
+        console.print(f"  tracciato in audit_mutations come 'restore' "
+                      f"(principal={principal})")
 
 
 # ---- Consolidate sub-commands (cycle 145) --------------------------------
@@ -4369,6 +4435,26 @@ def save_cmd(
     # GIUDICATO e aveva lasciato intatto PASSATO da BOCCIATO.
     # Nulla da inventare: `adjudication` porta gia' `threshold` accanto a
     # `score`, e senza il taglio un 3.8 non dice se manca poco o tanto.
+    # 2026-08-08 — QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e chiedono
+    # cose diverse: il giudice «questa fonte sostiene il fatto?» e i controlli
+    # «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le attiva
+    # entrambe (ws1: 16 casi su 16), e la ricevuta mostrava solo la prima —
+    # decidendo cosa dire in base al PUNTEGGIO. Un fatto con moat a 95,5 e
+    # fermato da L4.1 usciva cosi':
+    #     quarantined id=f014eeafa03a topic=t
+    # e basta: fermato, senza sapere perche'. Il motivo c'era gia' nel verdetto
+    # («il claim afferma un valore che la fonte non contiene: 40 pezzo») e non
+    # arrivava alla porta dell'umano. Nulla da inventare: si stampa.
+    for _w in (r.get("warnings") or []):
+        _ragione = str(_w.get("reason") or "").strip()
+        if not _ragione:
+            continue
+        console.print(f"  [yellow]{_w.get('layer', 'gate')}[/yellow] "
+                      f"[dim]— {_ragione}[/dim]")
+        _cons = str(_w.get("advice") or "").strip()
+        if _cons:
+            console.print(f"     [dim]{_cons}[/dim]")
+
     _gs = r.get("grounding_score")
     if isinstance(_gs, (int, float)):
         _adj = r.get("adjudication") or {}

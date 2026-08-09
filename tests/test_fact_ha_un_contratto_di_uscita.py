@@ -104,6 +104,17 @@ def test_ogni_campo_del_dataclass_e_deciso():
         last_verified_at=2.0, valid_until=3.0, derives_from=["d"],
         grounding_score=50.0, confidence_tier="high", asserted_at=4.0,
         epistemic={"kind": "proven"},
+        # il campo 28, aggiunto il 08/08 con la migrazione v17: la PORZIONE di
+        # fonte che sostiene il fatto. Questo test l'ha preso il giorno dopo,
+        # ed e' esattamente il suo mestiere — ma il difetto era QUI, non nel
+        # prodotto: `fact_payload` lo espone gia' correttamente quando ha un
+        # valore (misurato: Fact(grounding_span=...).as_payload() lo contiene).
+        # Il banco lo omettiva, il campo restava al default, e il contratto lo
+        # contava fra i dimenticati.
+        # ⚠️ Chi aggiunge il campo 29 rompera' questo test allo stesso modo, ed
+        # e' voluto: la lista si scrive a mano perche' NESSUN campo entri senza
+        # che qualcuno decida se chi legge il fatto deve vederlo.
+        grounding_span="480 pallet a scaffale",
     )
     esce = set(pieno.as_payload())
     tutti = {f.name for f in dataclasses.fields(Fact)}

@@ -2,6 +2,44 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.5] - 2026-08-09
+
+419 commits since 0.7.0 (published 2026-07-22). The one that decides whether you
+should upgrade is the first.
+
+### Fixed
+
+- **The MCP server starts again.** `verimem 0.7.0` on PyPI declares
+  `mcp>=1.0.0` with no upper bound. `mcp 2.0.0` — published six days *after*
+  0.7.0 — removed `Server.list_tools`, which this server uses in 11 places, so
+  every `pip install verimem` since then resolved to 2.0.0 and got a server that
+  does not start at all:
+
+  ```
+  $ verimem mcp
+  AttributeError: 'Server' object has no attribute 'list_tools'
+  ```
+
+  Only the MCP surface was affected — `status`, `doctor`, `recall` and the rest
+  of the CLI kept working, which is why it went unnoticed. The ceiling
+  (`mcp>=1.0.0,<2`) has been in the repository since 2026-07-29; this release is
+  what carries it to the index.
+
+  Verified end to end on the wheel before publishing: the pin reaches all three
+  `Requires-Dist` lines in the METADATA, `pip` downgrades an environment holding
+  `mcp 2.0.0` back to `1.29.0`, and the server then answers `initialize` and
+  lists its 245 tools.
+
+  **If you installed between 2026-07-22 and this release**, `mcp 2.0.0` is
+  already in your environment and a restart will not remove it — upgrade with
+  `pip install -U verimem`.
+
+### Note on the version number
+
+0.7.1 through 0.7.4 were never published. The jump is deliberate: it marks the
+release that makes the packaged artifact match the repository again, after the
+two drifted for 419 commits under a single version number.
+
 ## [Unreleased] — 0.8 line
 
 ### Changed (BREAKING)

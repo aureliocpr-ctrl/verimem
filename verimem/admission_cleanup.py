@@ -235,7 +235,8 @@ def cleanup_episode_telemetry(db_path, *, principal: str,
         conn.close()
 
 
-def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
+def requalify_quarantined(db_path, *, dry_run: bool = True,
+                          principal: str | None = None) -> dict:
     """Re-evaluate quarantined facts with the CURRENT gate and promote to
     ``model_claim`` the ones no detector trips anymore — recovering real
     knowledge that a SINCE-FIXED false positive (e.g. the 2026-06-14 L1.18/L1.9
@@ -266,14 +267,39 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
     So genuine positives (injection, polluted, telemetry) stay quarantined.
     ``dry_run`` default; the authoritative undo is the pre-run DB backup.
 
-    Returns ``{scanned, recoverable, promoted, dry_run}``.
+    ``principal`` is MANDATORY to apply (never to preview): re-admitting facts
+    in bulk is a deliberate administrative mutation of what the product serves,
+    so it lands in ``audit_mutations`` as ``restore`` — one row per fact, in the
+    SAME transaction as the promotion (both land or neither does). Until
+    2026-08-09 this function did a bare UPDATE: 265 facts could return to the
+    live view on a corpus whose audit chain held 443 rows and not one of them a
+    ``restore``, while ``cleanup_episode_telemetry`` eighty lines above recorded
+    every single delete. The sibling surface — ``SemanticMemory.restore_fact``
+    (single-fact) — still only emits telemetry; and unlike it, this path does
+    not bump the recall cache. Both are open.
+
+    ``by_moat`` splits the recoverable set by the judge's verdict already stored
+    on each row, because the three conditions above do NOT read it: on the home
+    corpus 165 of 265 recoverable facts carry ``grounding_score < 40`` — a
+    source WAS checked against them and it refused them. A caller who reads only
+    the total is about to re-admit those too.
+
+    Returns ``{scanned, recoverable, promoted, dry_run, by_moat}``.
     """
+    from . import __version__
     from .anti_confab_gate import (
         _has_dev_context,
         _has_personal_context,
         _l1_warnings,
     )
+    from .mutation_audit import TABLE_SQL, record_mutation, require_principal
     from .prompt_injection import detect_injection
+
+    # Refuse BEFORE touching a row: an anonymous bulk re-admission is exactly
+    # the silent operation this audit exists to prevent, and refusing after the
+    # UPDATE would leave the mutation without its receipt.
+    if not dry_run:
+        require_principal(principal)
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -290,12 +316,19 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
         _ha_punteggio = "grounding_score" in _colonne
         rows = conn.execute(
             "SELECT id, topic, proposition, verified_by, writer_role, "
+            # ⚠️ RISOLUZIONE (ws7, 2026-08-09) — COMPLEMENTARI, si tengono
+            # entrambi: la colonna CONDIZIONALE e' mia (uno store vecchio non
+            # ha `grounding_score` e la SELECT fissa lo fa morire con
+            # `OperationalError` — questo strumento e' di RECUPERO, chi lo
+            # esegue ha spesso proprio uno store vecchio), il dizionario
+            # `grounding` e' di ws1 e serve alla ripartizione `by_moat`.
             "source_episodes"
             + (", grounding_score" if _ha_punteggio else "")
             + " FROM facts WHERE status='quarantined' AND superseded_by IS NULL"
         ).fetchall()
         recoverable: list[str] = []
         held_by_moat = 0
+        grounding: dict[str, float | None] = {}
         for r in rows:
             prop = r["proposition"] or ""
             try:
@@ -350,6 +383,28 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
                 held_by_moat += 1
                 continue
             recoverable.append(r["id"])
+            # `_gs`, non `r["grounding_score"]`: su uno store senza la colonna
+            # la riga di ws1 rimetterebbe il crash che la tolleranza qui sopra
+            # ha appena tolto. E' la GIUNTURA — due lati entrambi giusti che
+            # combinati rompono — e l'auto-merge non poteva vederla.
+            grounding[r["id"]] = _gs
+        # What the JUDGE thinks of what we are about to re-admit. The three
+        # conditions never read it, so without this split the caller sees one
+        # number that hides the only distinction that matters here: a fact whose
+        # source was checked and REFUSED it is not the same case as one a fixed
+        # false positive had hidden. Thresholds are the product's own 40/70.
+        by_moat = {"respinti": 0, "incerti": 0, "approvati": 0,
+                   "mai_giudicati": 0}
+        for fid in recoverable:
+            gs = grounding.get(fid)
+            if gs is None:
+                by_moat["mai_giudicati"] += 1
+            elif gs < 40:
+                by_moat["respinti"] += 1
+            elif gs < 70:
+                by_moat["incerti"] += 1
+            else:
+                by_moat["approvati"] += 1
         result = {
             "scanned": len(rows),
             "recoverable": len(recoverable),
@@ -377,12 +432,30 @@ def requalify_quarantined(db_path, *, dry_run: bool = True) -> dict:
             # Un conteggio su un corpus che cambia e' un numero PIU' un
             # istante. Vedi `retirement_log._istante`.
             "measured_at": _istante(),
+            # E COSA NE PENSA IL GIUDICE (ws1): senza questa ripartizione il
+            # chiamante vede UN numero che nasconde l'unica distinzione che
+            # conta qui — un fatto la cui fonte e' stata controllata e
+            # RIFIUTATA non e' lo stesso caso di uno che un falso positivo
+            # gia' curato aveva nascosto.
+            # ⇒ I due campi rispondono a domande diverse e stanno insieme:
+            #   `measured_at` dice QUANDO, `by_moat` dice COSA.
+            "by_moat": by_moat,
         }
         if dry_run or not recoverable:
             return result
+        conn.execute(TABLE_SQL)  # legacy DBs never opened via SemanticMemory
         for fid in recoverable:
             conn.execute(
                 "UPDATE facts SET status='model_claim' WHERE id=?", (fid,)
+            )
+            # AFTER the write, on the same connection/transaction: the receipt
+            # and the mutation are atomic together (mutation_audit's contract).
+            record_mutation(
+                conn, principal=principal, action="restore", resource_id=fid,
+                detail={"from": "quarantined", "to": "model_claim",
+                        "by": "requalify_quarantined",
+                        "version": __version__,
+                        "grounding_score": grounding.get(fid)},
             )
         conn.commit()
         result["promoted"] = len(recoverable)

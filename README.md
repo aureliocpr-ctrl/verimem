@@ -133,12 +133,19 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
   on date Z"), and audit every revision.
 - **Abstention by design** — on questions the store cannot support, Verimem
   says so instead of stitching an answer from the nearest-but-irrelevant facts.
-  Memory-boundary abstention holds at 1.0 across our end-to-end runs. It is **ON
-  by default on every served surface** (gateway/console self-calibrate the floor
-  per tenant); in the embedded SDK it is one switch away —
-  `explain(..., min_relevance="auto")` or `VERIMEM_MIN_RELEVANCE=auto` — left
-  permissive by default so a brand-new, near-empty store doesn't over-abstain
-  while it fills up (the floor is sharpest on real-size corpora).
+  Memory-boundary abstention holds at 1.0 across our end-to-end runs. What each
+  door does with it differs, so: **gateway/console FILTER** — results under the
+  self-calibrated floor are not served at all; **MCP SERVES the results and
+  flags them** — every read carries `sotto_il_pavimento` (floor, best score,
+  and what it means) so the agent has the yardstick, plus `trattenuti` when the
+  gate withheld facts on that topic; **the embedded SDK** exposes the same two
+  signals on the `Risultati` object, and is left permissive by default so a
+  brand-new, near-empty store doesn't over-abstain while it fills up — one
+  switch away (`explain(..., min_relevance="auto")` or
+  `VERIMEM_MIN_RELEVANCE=auto`), and the floor is sharpest on real-size corpora.
+  Note the shape: only `explain`/`trust_report` refuse to answer. `recall` and
+  `search` always return the nearest facts — the flag is how you tell "nearest"
+  from "right".
 - **Document memory with exact citations** — index PDF/DOCX/HTML/EPUB/text
   files; semantic search returns passages with file, version and character
   offsets; passages can be promoted to memory *through the gate*, citation
@@ -485,6 +492,59 @@ regressions and falsified hypotheses in
 [BENCHMARKS.md](./docs/BENCHMARKS.md)), and the honest framing rule —
 "parity, not a win" — is enforced against ourselves. A memory layer asking
 for your trust should be able to show its work. This one does.
+
+## What Verimem does not do (yet)
+
+Same rule as the numbers above: measured, not assumed.
+
+**Deletion removes a fact from service, not from the file.**
+`Memory.forget(fact_id)` does what it says at the database level — the row is
+gone, no table still contains the text, and `recall` no longer returns it
+(verified). But the string **remains readable in the raw `.db` bytes**, and
+still does after `VACUUM`: SQLite's `secure_delete` is off by default, so
+deleted pages are not overwritten. This is standard SQLite behaviour, not a
+bug in Verimem — but "forgotten" here means **no longer served**, not
+**no longer recoverable**. If you hand the file to someone else, put it in a
+backup, or lose the disk, you hand over what you believed you had deleted.
+
+What deletion looks like depends on which door you use, so here it is per door:
+
+- **deletion by subject does not exist anywhere.** "Forget everything about
+  this person" is not a tenant scope: unless that person's facts happen to sit
+  under their own `user_id`, you are back to one `fact_id` at a time.
+- **which door you use decides whether the text is really gone.** Five doors
+  delete and they do NOT make the same promise — the table below says which.
+
+Measured in one run, same store, searching every table for the deleted string
+afterwards:
+
+| deletion door | after the delete, the text is in |
+|---|---|
+| `Memory.forget(id)` / `.delete(id, purge_history=True)` (SDK) | no table |
+| `hippo_fact_forget` (MCP) — calls the SDK delete | no table |
+| `verimem facts forget <id>` (CLI) | **`facts_undo_log`** |
+| `hippo_fact_forget_with_undo` (MCP) | **`facts_undo_log`** |
+| `hippo_forget_scope` (MCP, bulk by tenant) | **`facts_undo_log`** |
+
+The bottom three keep the proposition **in clear text** for the undo window
+(7 days) — that is what makes them reversible. It is a real feature and the
+right default for an operator who mistyped an id; it is the wrong default for an
+erasure request, and nothing in the output says so: the CLI prints `undoable for
+7 days`, which reads as *reversible*, not as *still readable in a table*.
+
+⚠️ Note the shape of it: **the bulk-by-tenant door — the one you would reach for
+on a "delete everything about this user" request — is one of the three that keep
+it.** For that case use the SDK, or wait out the window and verify, or delete the
+`facts_undo_log` rows yourself. (Measured at the level of the functions those
+doors call — `semantic.delete_with_undo` vs `Memory.delete` — not through a live
+MCP dispatcher.)
+
+We state this because the licence is AGPL-3.0 and an agent memory is exactly
+where personal data ends up. If your deployment needs deletion to be
+irreversible — GDPR erasure, for instance — treat `forget()` as a first step
+and handle the storage layer yourself (`PRAGMA secure_delete=ON` before the
+writes, plus a `VACUUM`), or keep the store on encrypted media and destroy the
+key. Do not rely on `forget()` alone for that guarantee: it does not make it.
 
 ## Architecture
 
