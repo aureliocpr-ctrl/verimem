@@ -23,9 +23,17 @@ import re
 from collections import defaultdict
 from typing import Any, Protocol
 
+# Every answer prompt pins the response to the QUESTION's language: the CLI
+# answerer otherwise inherits the host locale (LoCoMo strict n=150, 2026-07-25:
+# two Italian answers on an English bench — 5:41 graded CORRECT despite the
+# flip, 9:200 a cat5 fabrication in Italian). Contract-tested in
+# test_every_answer_prompt_declares_the_response_language.
+_LANGUAGE_PIN = "Answer in the language of the question. "
+
 _ANSWER_SYSTEM = (
     "You answer a question using ONLY the provided memory/context. "
     "Be concise: reply with just the answer, no explanation. "
+    + _LANGUAGE_PIN +
     "If the question asks for a LIST or for multiple things, enumerate ALL of "
     "the relevant items you can find across the context, comma-separated. "
     "When the question asks WHEN something happened, give the ABSOLUTE date "
@@ -53,7 +61,8 @@ _ANSWER_SYSTEM_STRICT = _ANSWER_SYSTEM + (
 # NO ANSWER abstention is preserved — the anti-hallucination contract stands.
 # Env-gated (ENGRAM_ANSWER_VERIFY=1), default OFF.
 _ANSWER_SYSTEM_VERIFY = (
-    "Answer from the CONTEXT only. The question may contain a FALSE ASSUMPTION: "
+    "Answer from the CONTEXT only. " + _LANGUAGE_PIN +
+    "The question may contain a FALSE ASSUMPTION: "
     "first check every claim inside the question against the context. "
     "If a claim contradicts the context, answer 'No' and state the correct fact "
     "from the context in the same sentence. "
@@ -72,7 +81,7 @@ _ANSWER_SYSTEM_VERIFY = (
 # no trade-off, fabrications went DOWN. Opt-in ENGRAM_ANSWER_MODE=declared;
 # small-n, not yet the default. Abstention preserved.
 _ANSWER_SYSTEM_DECLARED = (
-    "Answer from the CONTEXT only. Rules:\n"
+    "Answer from the CONTEXT only. " + _LANGUAGE_PIN + "Rules:\n"
     "- If the answer is stated, give it directly (short).\n"
     "- If the answer is NOT stated but clearly FOLLOWS from facts in the "
     "context, you MAY infer it — but you MUST declare the derivation: "
@@ -94,7 +103,8 @@ _ANSWER_SYSTEM_DECLARED = (
 # answers lost to over-caution. Opt-in ENGRAM_ANSWER_MODE=adaptive; default
 # strict unchanged. This preserves the sacred criterion (abstention).
 _ANSWER_SYSTEM_ADAPTIVE = (
-    "Answer from the CONTEXT only. FIRST decide: does the context contain "
+    "Answer from the CONTEXT only. " + _LANGUAGE_PIN +
+    "FIRST decide: does the context contain "
     "information that supports an answer, either directly OR by reasonable "
     "inference from what is stated? If YES, answer in ONE short sentence "
     "(inference is allowed, but grounded ONLY in the context). If the context "
@@ -109,7 +119,8 @@ _ANSWER_SYSTEM_ADAPTIVE = (
 # context-gate and NO ANSWER abstention (Boundary stays 1.0), plus: if the QUESTION
 # asserts something the context contradicts, say 'No' and give the correct fact.
 _ANSWER_SYSTEM_ADAPTIVE_FP = (
-    "Answer from the CONTEXT only. FIRST decide: does the context contain "
+    "Answer from the CONTEXT only. " + _LANGUAGE_PIN +
+    "FIRST decide: does the context contain "
     "information that supports an answer, either directly OR by reasonable "
     "inference from what is stated? If YES, answer in ONE short sentence "
     "(inference is allowed, but grounded ONLY in the context). "
@@ -177,6 +188,32 @@ _JUDGE_SYSTEM_FAIR = (
 # correct behaviour is to ABSTAIN, not to fabricate — this is exactly the
 # anti-confabulation property Engram exists for, so it must be scored on
 # abstention, not string-matched against a missing gold.
+# GROUNDED variant (2026-07-27): same contract, but the judge is shown the
+# CONTEXT, so 'rejects the false premise' becomes decidable instead of being a
+# coin toss it resolves against the answer. The criterion is named explicitly —
+# supported by the context or not — because that is the only difference between
+# the correction the rubric rewards and the fabrication it punishes.
+_JUDGE_ADVERSARIAL_GROUNDED = (
+    "The QUESTION is likely UNANSWERABLE from the CONTEXT (a trick / "
+    "false-premise question). Judge the PREDICTED answer AGAINST THE CONTEXT, "
+    "AS A WHOLE — including anything it adds after abstaining. "
+    "It is CORRECT when: (a) it ONLY abstains (says the information is not "
+    "available / not mentioned / unknown) — a bare abstention is ALWAYS "
+    "CORRECT here, whatever the CONTEXT happens to contain, because these "
+    "questions are unanswerable by construction; or (b) it rejects the "
+    "question's false premise, and every fact it states in doing so is "
+    "supported by the CONTEXT — 'it was X, not Y' is CORRECT when the context "
+    "shows X, and so is saying what the context shows INSTEAD of the thing "
+    "the question presupposes ('she writes, there is no painting here'). "
+    "It is INCORRECT when it asserts a specific fact the CONTEXT does not "
+    "support as if it were known, and ALSO when it abstains and then offers "
+    "context facts AS the answer to the asked question — facts individually "
+    "present in the context still fabricate if they are served as the answer. "
+    "Correcting the premise is NOT that: the test is whether the facts are "
+    "given as what the question asked for, or as what the context says "
+    "instead. Reply with exactly one word: CORRECT or INCORRECT."
+)
+
 _JUDGE_ADVERSARIAL = (
     "The QUESTION is likely UNANSWERABLE from the conversation (a trick / "
     "false-premise question). The PREDICTED answer is CORRECT if it ABSTAINS — "
@@ -282,7 +319,8 @@ _GROUNDED_ANSWER_SYSTEM = (
     "strongly its SOURCE was verified to entail it at write time (higher = more trustworthy). PREFER "
     "high-grounding facts. Treat a fact whose grounding is below the reliability floor as UNRELIABLE: "
     "do not assert it; if only low-grounding facts are relevant, reply exactly: NO ANSWER. Untagged "
-    "facts have no trust signal — use normal judgement. Be concise: reply with just the answer."
+    "facts have no trust signal — use normal judgement. Be concise: reply with just the answer. "
+    + _LANGUAGE_PIN.strip()
 )
 
 
@@ -323,20 +361,63 @@ def judge_correct(
     return parse_judge_label(getattr(resp, "text", "") or "")
 
 
+def build_adversarial_judge_prompt(
+    question: str, predicted: str, context: list[str] | None = None,
+) -> tuple[str, list[dict[str, str]]]:
+    """Build the (system, messages) for grading an UNANSWERABLE question. Pure.
+
+    WITH the context, because without it the judge cannot do its job. An
+    adversarial question has gold=None by construction, so the retrieved
+    context is the ONLY evidence for whether a rejection of the false premise
+    is founded or invented — and the rubric hinges on exactly that
+    distinction. Graded blind, 'No, it is Jon and not Gina' looks the same as a
+    fabrication, and the judge defaults to INCORRECT: measured 2026-07-27 on
+    LoCoMo, all three cat5 cases it marked as failures were corrections
+    verifiable word for word in the conversation. When no context is supplied
+    the old blind prompt is used unchanged, so callers that cannot provide one
+    keep their previous behaviour rather than silently getting a new ruler.
+    """
+    if not context:
+        return _JUDGE_ADVERSARIAL, [
+            {"role": "user",
+             "content": f"QUESTION: {question}\nPREDICTED: {predicted}\n\n"
+                        f"Reply CORRECT or INCORRECT."}]
+    return _JUDGE_ADVERSARIAL_GROUNDED, [
+        {"role": "user",
+         "content": f"CONTEXT:\n{_context_block(context)}\n\n"
+                    f"QUESTION: {question}\nPREDICTED: {predicted}\n\n"
+                    f"Reply CORRECT or INCORRECT."}]
+
+
 def judge_abstention(
-    judge_llm: _LLM, question: str, predicted: str, *, model: str | None = None,
+    judge_llm: _LLM, question: str, predicted: str, *,
+    model: str | None = None, context: list[str] | None = None,
+    allow_blind: bool = False,
 ) -> bool:
     """Grade an UNANSWERABLE (adversarial) question: CORRECT iff the prediction
     abstains / rejects the false premise rather than fabricating. An empty
-    prediction counts as abstention (it asserts nothing false)."""
+    prediction counts as abstention (it asserts nothing false). Pass the
+    ``context`` the answer was drawn from: it is what makes 'founded
+    correction' decidable at all (see build_adversarial_judge_prompt).
+
+    NO SILENT FALLBACK. The blind rubric is strictly stricter than the grounded
+    one, so a function that picked between them by whether a context happened
+    to be passed would let one reported number mix items graded by two
+    different rulers — and both adversarial reviews said the same thing about
+    documenting that instead of preventing it: it only moves the blame to the
+    reader. A caller with no context must say so with ``allow_blind=True``, in
+    the call itself, where anyone reading the code sees which ruler was used.
+    """
     if not (predicted or "").strip():
         return True  # said nothing -> fabricated nothing -> correct abstention
-    resp = judge_llm.complete(
-        _JUDGE_ADVERSARIAL,
-        [{"role": "user",
-          "content": f"QUESTION: {question}\nPREDICTED: {predicted}\n\n"
-                     f"Reply CORRECT or INCORRECT."}],
-        model=model, max_tokens=8)
+    if context is None and not allow_blind:
+        raise ValueError(
+            "adversarial judging without a context uses the BLIND rubric, "
+            "which is stricter than the grounded one — mixing the two in one "
+            "metric compares different rulers. Pass context=[...], or state "
+            "allow_blind=True if you really have none.")
+    system, messages = build_adversarial_judge_prompt(question, predicted, context)
+    resp = judge_llm.complete(system, messages, model=model, max_tokens=8)
     return parse_judge_label(getattr(resp, "text", "") or "")
 
 
@@ -370,7 +451,8 @@ def score_qa(
                 answer_llm, question, context, model=answer_model)
             if rec.get("adversarial"):
                 correct = judge_abstention(
-                    judge_llm, question, predicted, model=judge_model)
+                    judge_llm, question, predicted, model=judge_model,
+                    context=context)
             else:
                 correct = judge_correct(
                     judge_llm, question, gold, predicted, model=judge_model,

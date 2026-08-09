@@ -44,14 +44,40 @@ def _fake_encode(text):
 
 @contextmanager
 def _porta_in_ascolto():
-    """Una porta viva senza un daemon dietro: cio' che si verifica e' la
-    raggiungibilita', non l'identita' di chi ascolta."""
+    """Un daemon FINTO ma che RISPONDE al ping riflettendo il nonce.
+
+    Fino al 26/07 bastava una porta nuda: l'arbitraggio verificava la
+    raggiungibilita', non l'identita' di chi ascolta. Dal 27/07 (health
+    probe) chiede la salute — una porta muta ora rappresenta un daemon
+    WEDGED, che e' il caso opposto — quindi il fake deve parlare il
+    protocollo per impersonare un daemon vivo."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    stop = threading.Event()
     try:
         sock.bind(("127.0.0.1", 0))
         sock.listen(8)
+
+        def _rispondi():
+            sock.settimeout(0.1)
+            while not stop.is_set():
+                try:
+                    c, _ = sock.accept()
+                except OSError:
+                    continue
+                try:
+                    req = encode_service.recv_msg(c)
+                    encode_service.send_msg(c, {
+                        "ok": True, "model": "altro-daemon", "dim": 3,
+                        "pid": 424242, "nonce": (req or {}).get("nonce")})
+                except OSError:
+                    pass
+                finally:
+                    c.close()
+
+        threading.Thread(target=_rispondi, daemon=True).start()
         yield sock.getsockname()[1]
     finally:
+        stop.set()
         sock.close()
 
 

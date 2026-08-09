@@ -1688,6 +1688,36 @@ def _rerank_auto_max_words() -> int:
         return 10
 
 
+#: Unicode blocks whose characters carry word-level meaning without spaces —
+#: the standard word-counter convention (one CJK character = one word). Han
+#: (+ ext A, + compatibility), Hiragana, Katakana (+ phonetic ext), Hangul
+#: syllables (+ jamo). Standard block boundaries, not tuned constants.
+_CJK_WORD_BLOCKS = (
+    (0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xF900, 0xFAFF),   # Han
+    (0x3040, 0x309F), (0x30A0, 0x30FF), (0x31F0, 0x31FF),   # Kana
+    (0x1100, 0x11FF), (0xAC00, 0xD7AF),                     # Hangul
+)
+
+
+def _query_word_count(query: str) -> int:
+    """Word count for the AUTO gate — Unicode-aware where split() is blind.
+
+    ``len(query.split())`` reads an unspaced 26-character Japanese question as
+    ONE word, so the gate ran the CE exactly in the regime where it measurably
+    hurts (long input, -0.080 MRR on the 26/07 GT). Per token: Latin counts 1
+    (the 304-query derivation corpus classifies identically — the validated
+    policy is untouched), and each CJK character counts as one word. For
+    spaced Korean this OVERSTATES (a 3-syllable word counts 3) — deliberately
+    conservative: overstating pushes borderline CJK queries to skip the CE and
+    keep the bi-encoder order, never into the harmful regime. Tuning it finer
+    would need a CJK ground-truth corpus that does not exist here."""
+    return sum(
+        max(1, sum(1 for ch in tok
+                   if any(lo <= ord(ch) <= hi for lo, hi in _CJK_WORD_BLOCKS)))
+        for tok in query.split()
+    )
+
+
 def _topk_deterministic(sims, n: int, facts):
     """Top-``n`` candidate indices by ``(-score, fact.id)`` — deterministic and
     ROW-ORDER INVARIANT: any permutation of the same candidate rows (full corpus
@@ -1991,8 +2021,12 @@ def _reranker_ready() -> bool:
 # long healthy session do not disable the rerank, and a session where most
 # queries pay the budget for nothing does get it switched off.
 _RERANK_BREAKER: dict[str, Any] = {
-    "window": deque(maxlen=10), "tripped": False, "cold": 0,
+    "window": deque(maxlen=10), "tripped": False, "cold": 0, "tripped_at": 0.0,
 }
+#: Guards the check-then-mutate sequences on the dict above. Needed since the
+#: re-arm (27/07) made the READER a writer: recall runs one thread per query,
+#: and the GIL makes each dict operation atomic but never the sequence.
+_RERANK_BREAKER_LOCK = threading.RLock()
 
 
 def _rerank_breaker_n() -> int:
@@ -2013,8 +2047,69 @@ def _rerank_breaker_window() -> int:
         return 10
 
 
-def _rerank_breaker_tripped() -> bool:
+def _rerank_breaker_cooldown_s() -> float:
+    """Seconds after a trip before the breaker re-arms itself; 0 = never
+    (the pre-2026-07-27 permanent trip, as an explicit opt-out).
+
+    Default 600 — the CE lease constant (_rerank_slot_lease_s), one cycle of
+    model possession. The trip is a SESSION property (a gaming session, an
+    antivirus scan); in a long-lived daemon a permanent trip turns transient
+    contention into a forever-lost lift, the exact outcome the breaker's own
+    contract promises to prevent. Re-arm starts from a CLEAN window, so a
+    persistent fault re-trips after N fresh overruns: bounded waste
+    (N x budget per cooldown, ~2.5% at defaults) instead of a dead CE.
+    Env ENGRAM_RERANK_BREAKER_COOLDOWN_S."""
+    try:
+        return max(0.0, float(
+            os.environ.get("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "600")))
+    except ValueError:
+        return 600.0
+
+
+def _rerank_breaker_tripped_now() -> bool:
+    """The state as it IS, with no side effect — for observers.
+
+    The re-arm lives in the GATE below, which makes reading a write, and an
+    external review named the consequence: 'observation becomes action'. The
+    read-path regime recorder (benchmark/eval_retrieval_with_gt.py) exists so a
+    measurement is never orphaned from the state that produced it — calling the
+    gate, it would have re-armed the breaker and then recorded ``tripped:
+    False`` for a run that ran with it tripped. Observers, telemetry and tests
+    ask here; only the code that is about to DECIDE whether to rerank asks the
+    gate.
+    """
     return bool(_RERANK_BREAKER["tripped"])
+
+
+def _rerank_breaker_tripped() -> bool:
+    """THE GATE: whether the rerank is disabled — re-arming LAZILY once the
+    cooldown elapses. The consumer that decides whether to rerank must ask
+    HERE, not the raw field: the field cannot re-arm. Anyone merely OBSERVING
+    must ask ``_rerank_breaker_tripped_now()`` instead.
+
+    UNDER THE LOCK, because this reader WRITES. An external review of the naked
+    code (deepseek-v4-pro, 27/07) pointed at the obvious consequence: recall
+    runs on one thread per query, so a recorder can append to the deque that a
+    concurrent re-arm is about to replace, and that overrun is lost. Forcing
+    the interleaving reproduces it deterministically — 4 overruns swallowed,
+    the breaker never trips (test_no_overrun_is_lost_when_a_rearm_is_in_flight).
+    The cheap early-out stays outside: when the breaker is not tripped, which
+    is the normal case on the hot path, no lock is taken at all.
+    """
+    if not _RERANK_BREAKER["tripped"]:
+        return False
+    cd = _rerank_breaker_cooldown_s()
+    with _RERANK_BREAKER_LOCK:
+        if not _RERANK_BREAKER["tripped"]:
+            return False                  # re-armed by whoever held the lock
+        if cd and time.monotonic() - _RERANK_BREAKER.get("tripped_at", 0.0) >= cd:
+            _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
+            _RERANK_BREAKER["tripped"] = False
+            _RERANK_BREAKER["cold"] = 0
+            _LOG.info("rerank breaker re-armed after %.0fs cooldown — window "
+                      "clean, CE rerank enabled again", cd)
+            return False
+        return True
 
 
 def _rerank_breaker_overruns_in_window() -> int:
@@ -2144,9 +2239,11 @@ def _rerank_breaker_reset() -> None:
     way, by test_rerank_still_runs_once_ce_is_loaded failing on a slot held by
     a test that ran before it.
     """
-    _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
-    _RERANK_BREAKER["tripped"] = False
-    _RERANK_BREAKER["cold"] = 0
+    with _RERANK_BREAKER_LOCK:
+        _RERANK_BREAKER["window"] = deque(maxlen=_rerank_breaker_window())
+        _RERANK_BREAKER["tripped"] = False
+        _RERANK_BREAKER["cold"] = 0
+        _RERANK_BREAKER["tripped_at"] = 0.0
     with _RERANK_SLOT_LOCK:
         _RERANK_SLOT["lease"] = 0
         _RERANK_SLOT["since"] = 0.0
@@ -2161,23 +2258,27 @@ def _rerank_breaker_record(overrun: bool) -> None:
     recall path, no test could exercise the pair without reimplementing half of
     it — so no test did, and the blind spot lived 16 days.
     """
-    w: deque = _RERANK_BREAKER["window"]
-    if w.maxlen != _rerank_breaker_window():      # env changed at runtime
-        w = deque(w, maxlen=_rerank_breaker_window())
-        _RERANK_BREAKER["window"] = w
-    w.append(bool(overrun))
-    n = _rerank_breaker_n()
-    if not n or _RERANK_BREAKER["tripped"]:
-        return
-    sforati = sum(1 for x in w if x)
-    if sforati >= n:
+    with _RERANK_BREAKER_LOCK:
+        w: deque = _RERANK_BREAKER["window"]
+        if w.maxlen != _rerank_breaker_window():      # env changed at runtime
+            w = deque(w, maxlen=_rerank_breaker_window())
+            _RERANK_BREAKER["window"] = w
+        w.append(bool(overrun))
+        n = _rerank_breaker_n()
+        if not n or _RERANK_BREAKER["tripped"]:
+            return
+        sforati = sum(1 for x in w if x)
+        if sforati < n:
+            return
         _RERANK_BREAKER["tripped"] = True
-        _LOG.warning(
-            "rerank breaker TRIPPED — %d of the last %d reranks overran their "
-            "budget — CE rerank disabled for this process (bi-encoder order "
-            "stands; restart or _rerank_breaker_reset() to re-arm)",
-            sforati, len(w),
-        )
+        _RERANK_BREAKER["tripped_at"] = time.monotonic()
+        quanti = len(w)
+    _LOG.warning(
+        "rerank breaker TRIPPED — %d of the last %d reranks overran their "
+        "budget — CE rerank disabled for this process (bi-encoder order "
+        "stands; re-arms after the cooldown, or _rerank_breaker_reset())",
+        sforati, quanti,
+    )
 
 
 def _rerank_breaker_overrun() -> None:
@@ -2191,6 +2292,7 @@ def _rerank_breaker_cold_overrun() -> None:
     if n and not _RERANK_BREAKER["tripped"] \
             and _RERANK_BREAKER["cold"] >= n:
         _RERANK_BREAKER["tripped"] = True
+        _RERANK_BREAKER["tripped_at"] = time.monotonic()
         _LOG.warning(
             "rerank breaker TRIPPED after %d cold-load overruns — the CE never "
             "became resident (broken install / perpetual load?); rerank "
@@ -2223,7 +2325,11 @@ def _rerank_breaker_cold_overrun() -> None:
 # NOTE (2026-07-25): the rerank breaker above still uses consecutive-count and
 # has the same blind spot. Not touched here — it is 15 days old, tested, and on
 # a different budget; changing it is its own change with its own measurement.
-_FUSION_BREAKER: dict[str, Any] = {"window": deque(maxlen=10), "tripped": False}
+_FUSION_BREAKER: dict[str, Any] = {
+    "window": deque(maxlen=10), "tripped": False, "tripped_at": 0.0,
+}
+#: Same reason as _RERANK_BREAKER_LOCK: the re-arm made the reader a writer.
+_FUSION_BREAKER_LOCK = threading.RLock()
 
 
 def _fusion_breaker_n() -> int:
@@ -2247,31 +2353,69 @@ def _fusion_breaker_window() -> int:
 
 def _fusion_breaker_reset() -> None:
     """Re-arm the breaker (tests; env swap at runtime)."""
-    _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
-    _FUSION_BREAKER["tripped"] = False
+    with _FUSION_BREAKER_LOCK:
+        _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
+        _FUSION_BREAKER["tripped"] = False
+        _FUSION_BREAKER["tripped_at"] = 0.0
+
+
+def _fusion_breaker_cooldown_s() -> float:
+    """Fusion twin of _rerank_breaker_cooldown_s — same rationale, same
+    default (600 s), same opt-out (0 = permanent trip).
+    Env ENGRAM_FUSION_BREAKER_COOLDOWN_S."""
+    try:
+        return max(0.0, float(
+            os.environ.get("ENGRAM_FUSION_BREAKER_COOLDOWN_S", "600")))
+    except ValueError:
+        return 600.0
+
+
+def _fusion_breaker_tripped_now() -> bool:
+    """The fusion state as it IS, no side effect — twin of
+    ``_rerank_breaker_tripped_now``; observers and telemetry ask here."""
+    return bool(_FUSION_BREAKER["tripped"])
 
 
 def _fusion_breaker_tripped() -> bool:
-    return bool(_FUSION_BREAKER["tripped"])
+    """THE GATE: whether the fusion is disabled — re-arming lazily after the
+    cooldown, with a clean window, UNDER THE LOCK (see _rerank_breaker_tripped:
+    this reader writes, and the fusion runs one thread per query too)."""
+    if not _FUSION_BREAKER["tripped"]:
+        return False
+    cd = _fusion_breaker_cooldown_s()
+    with _FUSION_BREAKER_LOCK:
+        if not _FUSION_BREAKER["tripped"]:
+            return False                  # re-armed by whoever held the lock
+        if cd and time.monotonic() - _FUSION_BREAKER.get("tripped_at", 0.0) >= cd:
+            _FUSION_BREAKER["window"] = deque(maxlen=_fusion_breaker_window())
+            _FUSION_BREAKER["tripped"] = False
+            _LOG.info("PPR fusion breaker re-armed after %.0fs cooldown — "
+                      "window clean, fusion enabled again", cd)
+            return False
+        return True
 
 
 def _fusion_breaker_record(overrun: bool) -> None:
     """Record one fusion outcome and trip if the window says it is systematic."""
-    w: deque = _FUSION_BREAKER["window"]
-    if w.maxlen != _fusion_breaker_window():      # env changed at runtime
-        w = deque(w, maxlen=_fusion_breaker_window())
-        _FUSION_BREAKER["window"] = w
-    w.append(bool(overrun))
-    n = _fusion_breaker_n()
-    if n and not _FUSION_BREAKER["tripped"] and sum(w) >= n:
+    with _FUSION_BREAKER_LOCK:
+        w: deque = _FUSION_BREAKER["window"]
+        if w.maxlen != _fusion_breaker_window():      # env changed at runtime
+            w = deque(w, maxlen=_fusion_breaker_window())
+            _FUSION_BREAKER["window"] = w
+        w.append(bool(overrun))
+        n = _fusion_breaker_n()
+        if not (n and not _FUSION_BREAKER["tripped"] and sum(w) >= n):
+            return
         _FUSION_BREAKER["tripped"] = True
-        _LOG.warning(
-            "PPR fusion breaker TRIPPED — %d of the last %d fusions exceeded "
-            "their budget; graph/lexical fusion disabled for this process "
-            "(reranked order stands; restart or _fusion_breaker_reset() to "
-            "re-arm). Recall stops paying a budget for a result it never "
-            "receives.", sum(w), len(w),
-        )
+        _FUSION_BREAKER["tripped_at"] = time.monotonic()
+        sforati, quanti = sum(w), len(w)
+    _LOG.warning(
+        "PPR fusion breaker TRIPPED — %d of the last %d fusions exceeded "
+        "their budget; graph/lexical fusion disabled for this process "
+        "(reranked order stands; re-arms after the cooldown, or "
+        "_fusion_breaker_reset()). Recall stops paying a budget for a result "
+        "it never receives.", sforati, quanti,
+    )
 
 
 def _rerank_cold_budget_s() -> float:
@@ -4248,7 +4392,7 @@ class SemanticMemory:
         """
         from .cross_encoder_rerank import rerank_candidates
         if (_rerank_mode() == "auto"
-                and len(query.split()) > _rerank_auto_max_words()):
+                and _query_word_count(query) > _rerank_auto_max_words()):
             # AUTO (default 2026-07-26): a long query is the regime where the
             # CE measurably HURTS (multi-fact/long: -0.080 MRR, 12 better/38
             # worse on the 26/07 GT) — skip BEFORE any load/slot/breaker
@@ -4256,7 +4400,16 @@ class SemanticMemory:
             # after the load would pay the ~43.6s warm-up for nothing.
             _ranking_note("rerank", "skipped_long_query")
             return hits_2t[:k]
-        if _RERANK_BREAKER["tripped"]:
+        if _rerank_breaker_tripped():
+            # the FUNCTION, not the raw field: only the function re-arms after
+            # the cooldown, and this gate is the consumer the re-arm exists for.
+            # Merge 09/08 (ws2/abstention ← main): the two sides were NOT
+            # alternatives. Reading through the function is what lets a tripped
+            # breaker come back; the note is what tells the caller the ranking
+            # it just got is degraded to keyword order. Keeping only main's side
+            # would strand the breaker; keeping only ours would leave the caller
+            # a 0.0 score with no reason attached — the exact gap ws4 measured
+            # today at the agent's door.
             _ranking_note("rerank", "skipped_breaker")
             return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]

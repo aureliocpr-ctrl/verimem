@@ -282,10 +282,16 @@ class EncodeServer:
 
     def _handle_request(self, req: dict) -> dict:
         if req.get("ping"):
-            return {
+            resp = {
                 "ok": True, "model": self._model_name,
                 "dim": self._model_dim, "pid": os.getpid(),
             }
+            if "nonce" in req:
+                # reflected so the prober knows THIS handler read THIS request
+                # — after a port reuse, an unrelated accepting process passes
+                # connect+close but cannot echo the nonce (health probe 27/07)
+                resp["nonce"] = req["nonce"]
+            return resp
         # Every non-ping request must carry the per-boot token (audit F9).
         # constant-time compare; a missing/short token fails closed.
         import hmac as _hmac
@@ -429,7 +435,7 @@ class EncodeServer:
             self._mark_superfluous(False)
             return
         if (isinstance(data, dict) and isinstance(data.get("pid"), int)
-                and is_reachable(data, timeout=_DISCOVERY_OWNER_PROBE_S)):
+                and ping_healthy(data, timeout=_DISCOVERY_OWNER_PROBE_S)):
             # Someone else is serving and reachable. Not ours to arbitrate:
             # step aside quietly (see _SUPERFLUOUS_IDLE_S) instead of holding a
             # GB of model nobody can reach.
@@ -770,6 +776,52 @@ def release_daemon_lock(lock_path: Path | None = None) -> None:
         pass
 
 
+def _ping(info: dict | None, timeout: float) -> dict | None:
+    """One verified ping round-trip, or None.
+
+    Sends ``{"ping": true, "nonce": ...}`` over the service framing and
+    accepts the answer only if it is well-formed within the timeout (the
+    latency bound) AND proves a daemon read it: the nonce reflected (current
+    builds), or ``ok`` with a ``model`` field and no echo (a legacy in-flight
+    daemon that ignores unknown request fields — accepted so deploying this
+    probe does not evict a healthy resident model). An impostor on a reused
+    port speaks neither: connect+close cannot tell it from a daemon, which is
+    exactly why the arbitration layer must not settle for ``is_reachable``
+    (the KNOWN LIMIT note in ``_should_idle_exit``, now closed for the
+    wedged-socket half; the flapping half stays open)."""
+    info = info if info is not None else read_discovery()
+    if not info or not info.get("port"):
+        return None
+    nonce = os.urandom(8).hex()
+    try:
+        conn = socket.create_connection(
+            (info.get("host", "127.0.0.1"), info["port"]), timeout=timeout,
+        )
+        try:
+            conn.settimeout(timeout)
+            send_msg(conn, {"ping": True, "nonce": nonce})
+            resp = recv_msg(conn)
+        finally:
+            conn.close()
+    except OSError:
+        return None
+    if not isinstance(resp, dict) or not resp.get("ok"):
+        return None
+    if resp.get("nonce") == nonce:
+        return resp
+    if "nonce" not in resp and resp.get("model"):
+        return resp                       # legacy build: no echo, real model
+    return None
+
+
+def ping_healthy(info: dict | None = None, timeout: float = 0.4) -> bool:
+    """True iff a daemon ANSWERS a verified ping within the timeout.
+
+    Health, not reachability: an accepting socket with a wedged (or foreign)
+    process behind it passes ``is_reachable`` and fails this."""
+    return _ping(info, timeout) is not None
+
+
 def is_reachable(info: dict | None = None, timeout: float = 0.4) -> bool:
     """True if a daemon is listening per the discovery file (or given info)."""
     info = info if info is not None else read_discovery()
@@ -802,7 +854,11 @@ def daemon_usable(info: dict | None = None, timeout: float = 0.4) -> bool:
     info = info if info is not None else read_discovery()
     if not info or info.get("model") != CONFIG.embedding_model:
         return False
-    return is_reachable(info, timeout=timeout)
+    # Health probe (27/07): the file's model gates the CHEAP rejection above,
+    # but the file is written once and can lie — the answer is the truth. A
+    # wedged socket passes connect+close and fails here.
+    resp = _ping(info, timeout=timeout)
+    return bool(resp and resp.get("model") == CONFIG.embedding_model)
 
 
 def _spawn_detached() -> None:
@@ -863,6 +919,13 @@ def ensure_running() -> bool:
     # connection; a recycled pid does not. Same patient probe used for the lock
     # steal, and for the same reason: where being wrong is expensive, wait
     # longer.
+    # DELIBERATELY still connect-based after the 27/07 health probe: this is
+    # the DELETION guard, and its enemy is load — connect is answered by the
+    # kernel even while the application is busy, a ping needs the handler and
+    # a full-suite load can miss it, which re-opens the 25/07 hidden-daemon
+    # incident. A wedged claimant is cured elsewhere without weakening this:
+    # daemon_usable (health-aware) refuses it, a fresh daemon spawns, and its
+    # republish loop (health-aware) takes the file over.
     if not is_reachable(timeout=_ZOMBIE_PROBE_TIMEOUT_S):
         try:
             DISCOVERY_PATH.unlink()

@@ -366,7 +366,9 @@ def read_path_regime() -> dict[str, Any]:
         # on it — the envelope is written to disk, so a breaking change here
         # loses the whole run's numbers, not just this field.
         "rerank_breaker": {
-            "tripped": _sem._rerank_breaker_tripped(),
+            # the PURE reader: the gate re-arms after its cooldown, so asking
+            # it here would clear the very state this block records
+            "tripped": _sem._rerank_breaker_tripped_now(),
             "overruns_in_window": _sem._rerank_breaker_overruns_in_window(),
             "window_len": len(_sem._RERANK_BREAKER["window"]),
             "window_max": _sem._rerank_breaker_window(),
@@ -375,7 +377,7 @@ def read_path_regime() -> dict[str, Any]:
         },
         "rerank_slot_skipped": _sem._RERANK_SLOT.get("skipped", 0),
         "fusion_enabled": _flag("ENGRAM_PPR_FUSION", "1") not in ("0", "off", "no"),
-        "fusion_breaker_tripped": _sem._fusion_breaker_tripped(),
+        "fusion_breaker_tripped": _sem._fusion_breaker_tripped_now(),
         "fusion_budget_s": _flag("ENGRAM_PPR_FUSION_BUDGET_S", "2.0"),
     }
 

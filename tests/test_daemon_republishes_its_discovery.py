@@ -52,18 +52,40 @@ def _wait_for(pred, timeout: float = 6.0, step: float = 0.05) -> bool:
 
 @contextmanager
 def _porta_in_ascolto():
-    """Una porta che accetta connessioni, senza un daemon dietro.
+    """Un daemon FINTO che risponde al ping riflettendo il nonce.
 
-    ``is_reachable`` fa connect+close e basta, quindi per rappresentare "il
-    daemon nel file c'e' davvero" non serve un EncodeServer intero: serve una
-    porta viva. Ed e' il punto — cio' che si verifica e' la raggiungibilita',
-    non l'identita' di chi ascolta."""
+    Fino al 26/07 bastava una porta nuda ("cio' che si verifica e' la
+    raggiungibilita', non l'identita' di chi ascolta" — e quello ERA il
+    difetto, chiuso il 27/07 dall'health probe): ora l'arbitraggio chiede la
+    salute, e una porta muta rappresenta un daemon wedged da SCAVALCARE, non
+    un claimante da rispettare. Il fake parla il protocollo."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    stop = threading.Event()
     try:
         sock.bind(("127.0.0.1", 0))
         sock.listen(8)
+
+        def _rispondi():
+            sock.settimeout(0.1)
+            while not stop.is_set():
+                try:
+                    c, _ = sock.accept()
+                except OSError:
+                    continue
+                try:
+                    req = encode_service.recv_msg(c)
+                    encode_service.send_msg(c, {
+                        "ok": True, "model": "altro-daemon", "dim": 3,
+                        "pid": 424242, "nonce": (req or {}).get("nonce")})
+                except OSError:
+                    pass
+                finally:
+                    c.close()
+
+        threading.Thread(target=_rispondi, daemon=True).start()
         yield sock.getsockname()[1]
     finally:
+        stop.set()
         sock.close()
 
 

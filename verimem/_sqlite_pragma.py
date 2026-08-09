@@ -109,6 +109,15 @@ def read_connection(db_path: Path | str) -> Iterator[sqlite3.Connection]:
 
     A connection that fails is dropped rather than kept: caching a broken one
     would turn a transient fault into a permanent one for that thread.
+
+    HERMETIC CONSUMERS (temp-dir stores) MUST call ``close_read_connections()``
+    BEFORE deleting the store directory: the cached reader keeps the file open,
+    and on Windows an open file blocks deletion — the first victim was a
+    diagnosis harness on 26/07, dying with WinError 32 at TemporaryDirectory
+    cleanup and losing its results. In-repo teardowns are WinError32-tolerant
+    (``ignore_errors=True``) so they leak a directory instead of crashing;
+    strict cleanups crash. Proven both ways: wired reader -> rmtree fails;
+    after close_read_connections() -> rmtree succeeds.
     """
     cache = getattr(_LOCAL, "conns", None)
     if cache is None:
