@@ -43,6 +43,16 @@ whether you should upgrade is the first.
   nothing extra and nothing missing.** Nothing imported it, so no behaviour
   changes — but the package no longer carries code that the source deleted.
 
+### Added
+
+- **The governance surface ships.** `retirement_log` (which facts were retired,
+  by whom, when, with what reason), `tier_inventory` (the written / servable /
+  retired / quarantined quartet — the one place that says how much of the memory
+  actually reaches the user), `residual_copies` and `text_cut` (a grapheme-safe
+  cut, so an accented character is not halved in the evidence span) are in the
+  package for the first time. Verified present in the tree and on `origin/main`;
+  the branch author reports 39 of 39 targeted tests green on the merged main.
+
 ### Note on the version number
 
 0.7.1 through 0.7.4 were never published. The jump is deliberate: it marks the
@@ -73,11 +83,10 @@ regression: they are the state of the ground as we found it.
   every applied promotion writes a `restore` row to the audit chain, but the
   criterion itself is unchanged in this release.
 
-- **The governance surface is not in this release.** `retirement_log`,
-  `text_cut`, `residual_copies` and `tier_inventory` — the retirement register,
-  the written/servable/retired/quarantined quartet, and the grapheme-safe cut —
-  live on a branch that is not merged yet. Nothing in the README or the package
-  description promises them; they are simply not here.
+(An entry listed here in an earlier draft — the governance surface being absent
+— stopped being true while this file was being written: `retirement_log`,
+`text_cut`, `residual_copies` and `tier_inventory` were merged and are in this
+release. See *Added* below.)
 
 (A fourth entry listed here in an earlier draft — a dead `verimem/rerank.py`
 shipping in the package — was wrong for this release and has moved to *Fixed*
