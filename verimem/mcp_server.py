@@ -7741,10 +7741,24 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 lines = [getattr(f, "proposition", "") for f, *_ in hits]
                 _audit(name, arguments, outcome="ok")
                 return _ok({"context": lines, "n": len(lines), "routed": "plain"})
+            # IL PAVIMENTO ANCHE QUI. Senza, due tool della STESSA superficie
+            # rispondevano diversamente alla stessa domanda fuori tema:
+            #     hippo_facts_recall    items=0   si astiene
+            #     hippo_recall_history  n=3       «Il supporto risponde in 24 ore.»
+            # `env_floor_if_set` e non una copia del criterio: due copie
+            # divergono, ed e' la quinta generazione di questa stessa cura.
+            from .relevance_floor import env_floor_if_set as _env_floor
+            _mrh = arguments.get("min_relevance")
+            if _mrh is None:
+                _mrh = _env_floor()
+            if _mrh == "auto":
+                from .client import Memory as _MemFloor
+                _mrh = _MemFloor(path=a.semantic.db_path)._auto_relevance_floor()
             lines = recall_with_history(
                 a.semantic, _q,
                 k=int(arguments.get("k", 5)),
                 max_hops=int(arguments.get("max_hops", 3)),
+                min_relevance=float(_mrh) if _mrh else None,
                 with_disputes=bool(arguments.get("with_disputes", True)))
             _audit(name, arguments, outcome="ok")
             return _ok({"context": lines, "n": len(lines)})
@@ -7900,6 +7914,20 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             k = int(arguments.get("k", 5))
             hits = DocumentIndex().search(query, k=k)
             _audit(name, arguments, outcome="ok")
+            # Un agente che riceve una lista vuota conclude «il documento non
+            # dice niente». Se e' vuota perche' i chunk sono stati NASCOSTI
+            # (segnali di injection) la conclusione e' sbagliata e nessuno
+            # gliel'ha detto: il documento c'e', ed e' stato zittito.
+            _nascosti = getattr(hits, "nascosti", 0)
+            if _nascosti:
+                return _ok({
+                    "hits": list(hits),
+                    "hidden_chunks": _nascosti,
+                    "note": (f"{_nascosti} chunk(s) hidden: injection signals "
+                             "detected at index time. These results are "
+                             "PARTIAL — the document is indexed but part of it "
+                             "is withheld from default search."),
+                })
             return _ok(hits)
 
         if name == "hippo_recall":
@@ -13074,6 +13102,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from .semantic import ranking_reset as _ranking_reset
             from .semantic import ranking_stages as _ranking_stages
             _ranking_reset()
+            # Il degrado si conta prima e dopo — vedi il pavimento più sotto
+            # per il perché. `_recall_degraded_count` esiste su SemanticMemory
+            # dal 2026-06-14, nato apposta perché «il degrado cold-encode era
+            # invisibile al caller», e da qui non lo leggeva nessuno.
+            _deg_prima = getattr(a.semantic, "_recall_degraded_count", 0) or 0
             try:
                 hits = a.semantic.recall(
                     query, k=_recall_k, topic=_recall_topic,
@@ -13142,10 +13175,32 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 from .client import Memory as _MemForFloor
                 _mr = _MemForFloor(
                     path=a.semantic.db_path)._auto_relevance_floor()
-            if _mr:
+            # ⚠️ QUARTA GENERAZIONE DELLA STESSA CURA. Il commento qui sopra
+            # racconta la terza («la cura di un'ora prima non lo raggiungeva»);
+            # questa e' la quarta, e per lo stesso identico motivo: due ore fa
+            # ho messo su `Memory.search` la guardia sul RANKING DEGRADATO, e
+            # questo handler chiama `a.semantic` direttamente.
+            #
+            # Quando l'encoder non risponde entro il budget, `recall` cade sul
+            # ramo keyword e assegna `score 0.0` a TUTTI i risultati: non
+            # «nessuna somiglianza» ma «somiglianza NON MISURATA». Confrontarlo
+            # con una soglia di somiglianza e' un errore di categoria, e qui
+            # svuoterebbe la risposta. Misurato sull'SDK:
+            #     a caldo    [0.8995] la risposta giusta · floor 0.5 -> 1
+            #     degradato  [0.0]    LA STESSA risposta · floor 0.5 -> 0
+            #
+            # E QUESTO E' IL CANALE DEGLI AGENTI: un'astensione falsa costa piu'
+            # che altrove, perche' chi la riceve e' un modello che non ha modo
+            # di sospettarla.
+            _degradato = (getattr(a.semantic, "_recall_degraded_count", 0) or 0
+                          ) > _deg_prima
+            if _mr and not _degradato:
                 _pav = float(_mr)
                 items = [i for i in items
                          if float(i.get("score") or 0.0) >= _pav]
+            if _degradato:
+                for i in items:
+                    i["ranking"] = "keyword"
             return _ok({
                 "query": query,
                 "topic": topic,

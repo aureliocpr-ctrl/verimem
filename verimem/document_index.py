@@ -207,6 +207,53 @@ def _applica_rerank(indice, query: str, hits: list[dict]) -> list[dict]:
     return sorted(hits, key=lambda h: -float(h.get("rerank_score") or 0.0))
 
 
+class Risultati(list):
+    """I risultati di una ricerca, con quanti ne sono stati NASCOSTI.
+
+    IL DIFETTO CHE LA MOTIVA (isolato da ws5 con uno sweep sulle superfici —
+    un'azienda l'injection non la digita, la RICEVE dentro il PDF di un
+    fornitore)::
+
+        contratto pulito                       risposte 7/7
+        con dentro UNA riga ostile             risposte **0/7**
+
+    La difesa funziona: il payload non raggiunge mai chi legge. Ma i chunk
+    marcati sparivano dal `WHERE`, e quando li nascondeva TUTTI la ricerca
+    restituiva una lista vuota — **la stessa risposta che darebbe se il
+    documento non fosse mai stato indicizzato**. Nessun errore, nessun avviso:
+    solo silenzio.
+
+    🎯 Ed è sicurezza, non ergonomia: chi manda il documento sceglie DOVE
+    mettere la riga, e non gli serve che l'injection *funzioni* — gli basta che
+    venga **RILEVATA**, e l'informazione accanto sparisce. Un attacco alla
+    disponibilità, abilitato dalla difesa stessa, che colpisce soprattutto i
+    documenti CORTI (ordini, conferme, email), cioè la maggioranza di quelli
+    aziendali.
+
+    ⚠️ È una `list` VERA e non un oggetto nuovo perché `search()` ha due
+    consumatori in produzione (`cli.py`, `mcp_server.py`) e una quantità di
+    test che la iterano, la indicizzano e ne fanno `len()`: il conteggio si
+    AGGIUNGE, non sostituisce nulla. Chi non lo legge non si accorge di niente.
+
+    📌 `nascosti` descrive LA CHIAMATA, non il documento: con
+    ``include_flagged=True`` è zero, perché in quella chiamata non è stato
+    nascosto nulla.
+    """
+
+    __slots__ = ("nascosti", "illeggibili")
+
+    def __init__(self, iterable=(), *, nascosti: int = 0,
+                 illeggibili: int = 0) -> None:
+        super().__init__(iterable)
+        #: quanti chunk questa ricerca ha escluso perché marcati (injection)
+        self.nascosti = int(nascosti)
+        #: quanti chunk sono stati SALTATI perché scritti con un altro modello
+        #: di embedding (dimensione diversa da quella attiva). Zero su un
+        #: archivio sano; > 0 su un backup riaperto dopo un cambio di modello,
+        #: dove prima la ricerca taceva e restituiva zero risultati.
+        self.illeggibili = int(illeggibili)
+
+
 class DocumentIndex:
     """Chunk-level semantic index with exact provenance over the Documents tier."""
 
@@ -357,28 +404,64 @@ class DocumentIndex:
         """
         q = (query or "").strip()
         if not q:
-            return []
-        where = "" if include_flagged else "WHERE c.flagged = 0"
+            return Risultati()
         conn = self._connect()
         try:
-            rows = conn.execute(
+            tutte = conn.execute(
                 "SELECT c.* FROM chunks c JOIN (SELECT source_id, MAX(version) AS mv "
                 "FROM chunks GROUP BY source_id) m "
-                "ON c.source_id = m.source_id AND c.version = m.mv "
-                f"{where}",  # noqa: S608 — `where` is a constant, not user input
+                "ON c.source_id = m.source_id AND c.version = m.mv ",
             ).fetchall()
         finally:
             conn.close()
+        # IL FILTRO E' QUI E NON NEL `WHERE` PERCHE' SERVE IL CONTEGGIO.
+        # Prima la query portava `WHERE c.flagged = 0` e i chunk esclusi non
+        # esistevano per nessuno: quando li nascondeva TUTTI, `search` tornava
+        # una lista vuota — cioe' **la stessa risposta che darebbe se il
+        # documento non fosse mai stato indicizzato**.
+        # Misurato (il difetto e' di ws5, questo e' il mio banco):
+        #     contratto pulito              risposte 7/7
+        #     con una riga ostile dentro    risposte **0/7**
+        # e chi interroga non riceve nessun errore, nessun avviso: solo
+        # silenzio. Chi manda il documento sceglie DOVE mettere la riga, e non
+        # gli serve che l'injection funzioni — gli basta che venga RILEVATA.
+        # Leggere anche i flagged non cambia il costo in modo sensibile: sono
+        # l'eccezione, e questa query gia' faceva un fetchall() completo.
+        if include_flagged:
+            rows, nascosti = tutte, 0
+        else:
+            rows = [r for r in tutte if not r["flagged"]]
+            nascosti = len(tutte) - len(rows)
         if not rows:
-            return []
+            return Risultati(nascosti=nascosti)
         qv = np.asarray(self.embedder.encode([q]), dtype=np.float32)[0]
         qn = float(np.linalg.norm(qv)) or 1.0
         scored = []
+        illeggibili = 0
         for r in rows:
             v = np.frombuffer(r["vec"], dtype=np.float32)
+            # UN VETTORE DI UN ALTRO MODELLO NON SI PUO' CONFRONTARE.
+            # Terzo punto della classe 384/768 (i primi sei erano in skill.py,
+            # il settimo in cli.py::introspect che CRASHA). Qui invece TACEVA,
+            # ed e' il caso peggiore: ws5 l'ha trovato da un'altra strada —
+            # «un backup del corpus non e' piu' interrogabile dopo un cambio di
+            # modello: gli snapshot di maggio hanno vettori a 384, il motore di
+            # oggi ne vuole 768 -> ZERO risultati, in silenzio». Un archivio che
+            # risponde «non ho trovato niente» quando in realta' non riesce a
+            # leggere e' indistinguibile da un archivio vuoto.
+            # Si SALTA (rifiutare tutto sarebbe una seconda perdita sopra la
+            # prima: un archivio misto deve servire cio' che puo' leggere) e si
+            # CONTA, perche' saltare in silenzio e' il difetto di partenza.
+            if v.size != qv.size:
+                illeggibili += 1
+                continue
             vn = float(np.linalg.norm(v)) or 1.0
             score = float(np.dot(qv, v) / (qn * vn))
             scored.append((score, r))
+        if not scored:
+            # Tutti i chunk erano di un altro modello: la lista e' vuota, ma il
+            # conteggio dice PERCHE'.
+            return Risultati(nascosti=nascosti, illeggibili=illeggibili)
         scored.sort(key=lambda t: (-t[0], t[1]["source_id"], t[1]["idx"]))
         termini = _termini_di_ricerca(q)
         hits = [{"text": r["text"], "score": round(s, 6),
@@ -427,17 +510,28 @@ class DocumentIndex:
             h["query_terms"] = len(termini)
             h["query_terms_matched"] = sum(
                 1 for t in termini if t in h["text"].lower())
+        # ⚠️ RISOLUZIONE DEL CONFLITTO (ws7, 2026-08-09) — QUI I DUE LATI SONO
+        # DAVVERO COMPLEMENTARI, al contrario di `event_jsonl_log` dove erano
+        # la stessa cura scritta due volte. Su main la ricerca rende un
+        # `Risultati` che distingue «non trovato» da «trovato e nascosto»
+        # (nascosti/illeggibili); su questo ramo emette l'evento `flow.document`,
+        # che era l'unico tier a non dire NULLA sul canale di flusso.
+        # ⇒ Si tengono ENTRAMBI: si calcola una volta, si emette, si avvolge.
         _out = _applica_rerank(self, q, hits)[:max(1, int(k))]
-        # The read side of the documents tier on the flow channel: `n` and the
-        # best score make a search readable, and `flagged_hidden` says whether
-        # the answer was built while something was being withheld — the tier
-        # hides flagged chunks by default and until now said so to nobody.
-        # Metadata only: never the citation text.
+        # Il lato LETTURA del tier documenti sul canale di flusso: `n` e il
+        # punteggio migliore rendono leggibile una ricerca, e
+        # `include_flagged` dice se la risposta e' stata costruita mentre
+        # qualcosa veniva trattenuto. Solo metadati: mai il testo della
+        # citazione.
         from .flow_events import emit_flow as _emit_flow
         _emit_flow("flow.document", kind="search", n=len(_out),
                    best=(_out[0]["score"] if _out else None),
-                   include_flagged=bool(include_flagged))
-        return _out
+                   include_flagged=bool(include_flagged),
+                   # i due conteggi di main viaggiano anche sul canale: chi
+                   # guarda il flusso vedeva `n` senza sapere che una parte
+                   # era stata tolta.
+                   hidden=int(nascosti), unreadable=int(illeggibili))
+        return Risultati(_out, nascosti=nascosti, illeggibili=illeggibili)
 
     # --- rerank ---------------------------------------------------------
     def _rerank_attivo(self) -> bool:

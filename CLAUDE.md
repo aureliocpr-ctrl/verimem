@@ -10,7 +10,7 @@ prima di contare come vero, quindi il recall non restituisce confabulazioni.
 Tre proprietà vendute, e che vanno difese in ogni PR: **scrittura gated**,
 **provenienza a ogni lettura**, **astensione invece di allucinazione**.
 
-Package reale = `verimem/` (358 moduli). `engram/` e `hippoagent/` sono shim di
+Package reale = `verimem/`. `engram/` e `hippoagent/` sono shim di
 compatibilità: `engram.X is verimem.X`. Il rename profondo dei **tool MCP**
 (`hippo_*` → `verimem_*`) è **fase 2, gated su decisione di Aurelio** — rompe ~231
 riferimenti in CLAUDE.md/hook/skill/memoria (fact `4ba7460d5f51`). Finché non è
@@ -34,7 +34,7 @@ Store reale: `~/.engram/semantic/semantic.db` (tabella `facts`). `~/.engram/memo
 - **O2 senza sconti**: test RED prima, falsificato con mutazione (rimetti il bug → il
   test deve fallire), poi GREEN, poi critic gate. Budget critic max 2 giri.
 - **Mai push né merge senza Aurelio.** Il commit locale sì, il push è suo.
-- **Full suite prima di proporre un push.** ~1008 file di test; una regressione
+- **Full suite prima di proporre un push.** Oltre mille file di test (`find tests -name 'test_*.py' | wc -l` per il numero vero); una regressione
   introdotta e non vista è già costata due volte.
 - **Security → Opus, e da avversario mentre scrivi**, non solo quando critici
   (`B2`). L'analisi statica veloce su cripto/path si è dimostrata inaffidabile: 0/6

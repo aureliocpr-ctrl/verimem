@@ -74,10 +74,29 @@ def classify_provenance(
         return USER_INPUT
     if role in _EXTERNAL_ROLES:
         return EXTERNAL_CONTENT
-    for ref in verified_by or ():
-        r = str(ref).strip().lower()
-        if r.startswith(_EXTERNAL_REF_PREFIXES):
-            return EXTERNAL_CONTENT
+    # ⛔ `verified_by` NON decide piu' la provenienza, ed e' una cura di
+    # SICUREZZA. Qui c'era un ciclo che rendeva `external_content` qualunque
+    # claim portasse un ref con prefisso `url:`/`doc:`/`http://`… — e
+    # `verified_by` arriva dal BODY della richiesta sul gateway HTTP.
+    # Verificato end-to-end (il caso e' di ws4, ricostruito riga per riga):
+    #     verified_by ['commit:abc123']   quarantined  L1=['L1.10','L1.15']
+    #     verified_by ['url:https://…']   **model_claim  L1=NESSUNO**
+    #     verified_by ['doc:inventato']   **model_claim  L1=NESSUNO**
+    # cioe' un'auto-attestazione («ho verificato che funziona») entrava
+    # SERVIBILE dichiarando una URL inventata.
+    #
+    # 🔑 QUARTA ISTANZA DI «spoofabile ma sicuro», e la terza l'ho curata IERI
+    # io in questo stesso file: allora scrissi che il privilegio non puo'
+    # pendere da `writer_role`, perche' sul canale di rete e' un argomento del
+    # client, e lo feci pendere da `provenance_trusted`. Non ho applicato lo
+    # stesso ragionamento a `verified_by`: il presidio copriva UN campo mentre
+    # questa funzione ne legge DUE.
+    #
+    # LA REGOLA, e vale oltre questo caso: **`writer_role` e' una DICHIARAZIONE
+    # di chi chiama, `verified_by` e' un DATO.** Un dato non decide i privilegi
+    # di chi lo porta — stesso principio per cui il contenuto di un documento
+    # non e' un'istruzione. Chi ingerisce davvero un documento ha la strada
+    # esplicita e raggiungibile: `writer_role='external_content'`.
     return AGENT_CLAIM
 
 

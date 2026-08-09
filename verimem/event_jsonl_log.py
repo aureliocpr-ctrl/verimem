@@ -39,29 +39,72 @@ from pathlib import Path
 from typing import Any
 
 
-def _default_event_log() -> Path:
-    """``<data dir>/events.jsonl`` — the log lives where the store lives.
+# ⚠️ RISOLUZIONE DEL CONFLITTO (ws7, 2026-08-09) — LA STESSA CURA SCRITTA DUE
+# VOLTE. Su questo ramo c'era `_default_event_log()` (risolveva con
+# `_compat.data_dir`), su `main` c'e' `_cartella_dati()` (risolve con
+# `CONFIG.data_dir`). Due istanze hanno curato lo stesso difetto — «il giornale
+# scriveva nella home anche con lo store isolato» — nello stesso giorno e senza
+# saperlo, ed e' la classe ① di questo prodotto: una copia invece della
+# superficie unica.
+#
+# Non e' una scelta a caso fra due lati: ho VERIFICATO che sono equivalenti.
+# `config._data_root()` delega a `_compat.data_dir` per il caso senza env e
+# usa la stessa precedenza (HIPPO_DATA_DIR -> ENGRAM_DATA_DIR), e in entrambe
+# le versioni `EVENT_LOG_PATH` si fissa comunque all'IMPORT.
+# ⇒ Tengo QUELLA DI MAIN, che e' gia' nel tronco e che quindi non costringe
+#   nessun altro ramo a cambiare; il mio `_default_event_log` sparisce.
+# ⇒ Ma tengo il MIO strato sopra — `_avvisa_se_diverge()`, piu' sotto — che
+#   main NON ha: e' la superficie che DICE quando il giornale finisce lontano
+#   dallo store, cioe' l'unica che si accorge del difetto quando ricapita in
+#   un'altra forma. La cura e' di main, l'osservabilita' resta mia.
+def _cartella_dati() -> Path:
+    """La data dir del prodotto, non la home.
 
-    It used to be ``Path.home() / ".engram"`` written by hand, so a caller
-    who isolated the store with ``HIPPO_DATA_DIR`` (the lever the product
-    itself teaches: the alias warning says "HIPPO_DATA_DIR wins") kept
-    writing telemetry into the home corpus — measured 2026-08-05, 39 lines
-    of isolated benches landed in the production log. Store and observability
-    stay two separate things: ``ENGRAM_EVENT_LOG`` remains the explicit
-    override for whoever wants the log elsewhere. Best-effort: if the data
-    dir cannot be resolved, the historical home path stands.
+    IL DIFETTO CHE HA INQUINATO LE MISURE DI TUTTE PER UN GIORNO: questo path
+    si risolveva su ``Path.home()`` e ignorava ``HIPPO_DATA_DIR``, quindi ogni
+    banco su store temporaneo scriveva nel giornale di PRODUZIONE::
+
+        quarantene registrate in events.jsonl  1765
+        con il fatto ancora nel database        108   (6%)
+        L3            301 eventi ->   0 vivi
+        tutti i L1.x  724 eventi ->   0 vivi
+
+    Il 94% del giornale racconta store che non esistono piu' — i `tmp` dei
+    nostri banchi — e per un giorno intero il team ha ricavato da li' tabelle
+    su «chi quarantina davvero», misurando i propri esperimenti credendo di
+    misurare il prodotto.
+
+    Il risolutore e' quello di `config`, l'UNICO del prodotto: precedenza
+    ``HIPPO_DATA_DIR`` -> ``ENGRAM_DATA_DIR`` -> default. Il giornale era
+    l'unica superficie che non ci passava.
+
+    ⚠️ In PRODUZIONE non cambia niente: ``HIPPO_DATA_DIR`` vale ``~/.engram`` e
+    il percorso resta identico byte per byte. Cambia solo per chi isola lo
+    store — cioe' per chi inquinava il giornale.
+
+    Fail-safe: se `config` non e' importabile (dipendenza circolare a
+    import-time, ambiente parziale) si torna alla home, che e' il comportamento
+    storico — un giornale nel posto vecchio e' meglio di un import che esplode.
     """
-    override = os.environ.get("ENGRAM_EVENT_LOG", "").strip()
-    if override:
-        return Path(override)
     try:
-        from ._compat import data_dir
-        return Path(data_dir()) / "events.jsonl"
-    except Exception:  # noqa: BLE001 — observability never breaks an import
-        return Path.home() / ".engram" / "events.jsonl"
+        from .config import CONFIG
+        base = getattr(CONFIG, "data_dir", None)
+        if base:
+            return Path(str(base))
+    except Exception:  # noqa: BLE001 — vedi docstring: mai far cadere l'import
+        pass
+    return Path.home() / ".engram"
 
 
-EVENT_LOG_PATH: Path = _default_event_log()
+#: ``ENGRAM_EVENT_LOG`` resta l'override esplicito e VINCE sulla data dir: e'
+#: documentato per testing/sandboxing, e una scelta esplicita del chiamante
+#: batte una derivazione automatica.
+EVENT_LOG_PATH: Path = Path(
+    os.environ.get(
+        "ENGRAM_EVENT_LOG",
+        str(_cartella_dati() / "events.jsonl"),
+    )
+)
 
 # A7 (audit 2026-06-08): cap the append-only log. Every emit() — incl. every MCP
 # tool call — appends a line here; with no rotation a long-running server grew
