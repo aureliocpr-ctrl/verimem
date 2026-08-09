@@ -68,6 +68,29 @@ def _comandi_definiti(sorgente: str) -> set[str]:
     return espliciti | impliciti | gruppi
 
 
+def _comandi_visibili() -> set[str]:
+    """I comandi che l'utente VEDE in ``verimem --help`` — insieme vuoto se non parte.
+
+    Il sorgente dice cosa è definito; questo dice cosa è raggiungibile, e sono due
+    insiemi diversi (52 contro 40 su 603c564c). Torna vuoto invece di fallire perché
+    un `--help` che non parte è un problema di ambiente, non del README: il chiamante
+    ricade sul parser e il test continua a dire qualcosa di utile.
+    """
+    esito = subprocess.run(
+        [sys.executable, "-m", "verimem.cli", "--help"],
+        cwd=RADICE, capture_output=True, text=True, timeout=300,
+    )
+    if esito.returncode != 0:
+        return set()
+    # Typer incornicia l'elenco: `│ nome   descrizione │`, dopo l'intestazione
+    # Commands. UNO spazio dopo la barra, non `\s+`: con `\s+` il conteggio saliva da
+    # 40 a 50, perché catturava anche le righe di CONTINUAZIONE della descrizione, che
+    # sono indentate e cominciano per minuscola. Terzo strumento mio in una sera che
+    # sovrastima contando la cosa vicina a quella giusta.
+    dopo = esito.stdout.split("Commands", 1)[-1]
+    return set(re.findall(r"^│ ([a-z][a-z0-9-]*)\s", dopo, re.M))
+
+
 def _comandi_citati(testo: str) -> set[str]:
     """``verimem <parola>`` nella prosa, saltando le righe che dichiarano un'assenza.
 
@@ -100,8 +123,16 @@ def test_i_comandi_che_il_readme_insegna_esistono():
     risponde `No such command` (``docs/stato-reale/02f-...``).
     """
     assert README.exists(), "README.md è la vetrina: se sparisce, il test deve dirlo"
-    definiti = _comandi_definiti(CLI.read_text(encoding="utf-8"))
-    assert definiti, "nessun @app.command trovato: il parser è rotto, non il README"
+    # La verità è `--help`, non il sorgente. Misurato il 09/08 su 603c564c: il parser
+    # trova 52 comandi, `verimem --help` ne mostra 40. I 12 di differenza (benchmark,
+    # chat, code, keys, lab, run, sleep, sleep-now, swarm, teams, tui, wake) sono
+    # definiti e non raggiungibili dall'elenco. Fidandosi del solo parser, questo test
+    # approverebbe un README che insegna `verimem tui` — e l'utente riceverebbe `No
+    # such command`, cioè ESATTAMENTE il difetto per cui il test esiste.
+    # (Al momento della cura nessuno dei 14 comandi citati dal README era fra i 12:
+    # il difetto era latente, non attivo. Curato prima che diventasse l'altro.)
+    definiti = _comandi_visibili() or _comandi_definiti(CLI.read_text(encoding="utf-8"))
+    assert definiti, "né --help né il sorgente danno comandi: sono rotti loro, non il README"
 
     mancanti = sorted(_comandi_citati(README.read_text(encoding="utf-8")) - definiti)
     assert not mancanti, (
