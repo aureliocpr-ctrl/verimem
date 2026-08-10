@@ -163,6 +163,43 @@ quindi il difetto è circoscritto ai percorsi assoluti — sul sistema operativo
 viene sviluppato e usato. La cura nell'albero è `([A-Za-z]:[\\/]\S*|[^:]+)`, dove la classe
 accetta sia la barra rovescia sia quella dritta.
 
+#### Il troncamento non è il difetto: è la causa
+
+`_SOURCE_REF_RE` alimenta `canonical_source`, che è **la chiave di reputazione di una scrittura**.
+Eseguita importando il modulo dai due artefatti:
+
+| coppia | wheel 0.7.0 | albero |
+|---|---|---|
+| `file:C:/progetto/alfa.py` vs `file:C:/altro/beta.py` | entrambi `'C'` | chiavi distinte |
+| gli stessi con la barra rovescia | entrambi `'C'` | chiavi distinte |
+| `file:/home/u/alfa.py` vs `file:/home/u/beta.py` | distinte | distinte |
+| `source-doc:manuale:cap3` vs `source-doc:manuale:cap9` | `'manuale'` | `'manuale'` |
+| un riferimento contro sé stesso | stessa | stessa |
+| **casi sbagliati** | **2 su 5** | **0 su 5** |
+
+Gli ultimi tre sono controlli e tengono in entrambi: il difetto è circoscritto ai percorsi con
+lettera di unità, e il formato strutturato `source-doc:X:...` continua a restituire `X`, come il
+suo docstring promette.
+
+Se due documenti diversi danno la stessa chiave, `is_same_source` li dichiara la stessa fonte e
+`classify_write_relation` può classificarli «evolution» — cioè **un fatto può ritirarne un altro
+che proviene da un documento del tutto diverso**. Su Windows, tutti i file dello stesso disco sono
+una fonte sola.
+
+La diagnosi non è nuova: sta nel repository dal 4 agosto, in
+`tests/test_su_windows_tutti_i_file_erano_la_stessa_fonte.py`, il cui docstring riporta **43 fatti
+con `canonical_source = 'C'`** sul corpus di produzione. Il test esiste e la cura è nell'albero; il
+pacchetto pubblicato non ha né l'una né l'altro.
+
+📌 Va accostato a un dato sulla verifica: il job Windows della CI **non ha mai concluso una corsa**
+— 11 cancellazioni su 12. La piattaforma su cui questo difetto si manifesta è la stessa che non
+produce mai un verdetto.
+
+**Limite dichiarato**: è stata eseguita la **chiave** (`canonical_source`). La catena che porta dalla
+chiave al ritiro — `is_same_source`, `classify_write_relation` — è **letta nel docstring del test**,
+non misurata qui. E il numero 43 è una citazione da quel docstring, non una misura di questo
+referto.
+
 ### Le altre undici
 
 * **desinenze italiane**: `completo` → `complet[oaie]`; `documentato|documentata` →
