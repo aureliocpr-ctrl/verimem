@@ -1,8 +1,16 @@
 """«Il 10 agosto 46 fatti…» contro una fonte che dice «oggi»: NUMERO INVENTATO.
 
-⚠️ GUARDIANO, NON CURA. La cura non c'è: il file esiste perché il difetto ha
-già colpito **due fatti veri** e la sua causa era stata attribuita a due cose
-diverse — e sbagliate — prima che qualcuno la misurasse.
+✅ CURATO. Il file è nato come guardiano con quattro allarmi ``xfail(strict)``
+mentre la cura non c'era; la cura è arrivata subito dopo e **gli allarmi sono
+scattati tutti e quattro insieme** — quattro ``XPASS(strict)``, che è il modo in
+cui uno xfail severo dice «il difetto che sorvegliavo non c'è più». I marcatori
+sono stati tolti in quel momento e le asserzioni sono rimaste identiche: quello
+che segue è lo stesso banco, ora verde.
+
+📌 Perché è scritto qui: il difetto aveva già colpito **due fatti veri** e la
+sua causa era stata attribuita a due cose diverse — e sbagliate — prima che
+qualcuno la misurasse. Il banco è nato per impedire che si riperda, e serve
+ancora a questo.
 
 ═══ LA CAUSA, A/B nella stessa esecuzione (immune allo SHA) ═══
 
@@ -77,42 +85,33 @@ def _accusati(claim: str, fonte: str) -> list[str]:
     return [v.come_scritto() for v in valori_non_nella_fonte(claim, fonte)]
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "LA CURA NON C'E' ANCORA: extract_quantities legge '10 agosto' come "
-    "('agosto', 10.0), quindi il giorno risulta un valore che la fonte "
-    "-- che scrive 'oggi' -- non contiene"))
-def test_ALLARME_l_esemplare_vero_non_doveva_essere_accusato():
-    """⚠️ ALLARME CHE SCATTA ALLA GUARIGIONE, non difetto nascosto.
+def test_l_esemplare_vero_non_viene_piu_accusato():
+    """IL CASO CHE HA APERTO TUTTO, e l'asserzione non è cambiata con la cura.
 
-    Il fatto ``8728c271428f`` è stato quarantinato con un punteggio del giudice
-    di 99,9 — cioè il giudice lo riteneva ben fondato e il gate lo ha trattenuto
-    lo stesso. Tutti e tre i numeri che afferma (46, 7, 53) SONO nella fonte:
-    l'unico contestato è il 10 di «10 agosto», che nella fonte compare come
-    «oggi».
-
-    ``strict=True``: quando la cura arriverà questo test passerà, e uno xfail
-    che passa è rosso — chi cura lo scopre dalla suite invece che da solo.
+    Il fatto ``8728c271428f`` era stato quarantinato con un punteggio del
+    giudice di 99,9 — cioè il giudice lo riteneva ben fondato e il gate lo ha
+    trattenuto lo stesso. Tutti e tre i numeri che afferma (46, 7, 53) SONO
+    nella fonte: l'unico contestato era il 10 di «10 agosto», che nella fonte
+    compare come «oggi».
     """
     assert _accusati(CLAIM_VERO, FONTE_VERA) == []
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "LA CURA NON C'E' ANCORA: nessuna delle notazioni di data e' riconosciuta "
-    "come tale dall'estrattore"))
 @pytest.mark.parametrize("claim", [
     "Il 10/08/2026 il run e' fallito dopo 15 minuti.",   # accusa anche il 2026
     "Il 2026-08-10 il run e' fallito dopo 15 minuti.",   # l'ISO degli archivi
     "Il 10 agosto il run e' fallito dopo 15 minuti.",
 ])
-def test_ALLARME_nessuna_notazione_di_data_va_letta_come_quantita(claim):
-    """Le tre notazioni che un archivio usa davvero, e cadono tutte.
+def test_nessuna_notazione_di_data_va_letta_come_quantita(claim):
+    """Le tre notazioni che un archivio usa davvero, e cadevano tutte.
 
-    Stanno insieme perché hanno una causa sola, ma il costo NON è lo stesso: la
-    forma italiana ``10/08/2026`` produce **tre** accuse contro l'unica della
-    forma estesa, perché ci finisce dentro anche l'anno. Una cura che
-    riconoscesse solo «giorno + nome del mese» passerebbe l'ultimo caso e
-    lascerebbe in piedi i due peggiori — per questo sono parametrizzati e non
-    riassunti in un'asserzione sola.
+    Stanno insieme perché hanno una causa sola, ma il costo NON era lo stesso:
+    la forma italiana ``10/08/2026`` produceva **tre** accuse contro l'unica
+    della forma estesa, perché ci finisce dentro anche l'anno. ⚠️ Restano
+    parametrizzate e non riassunte in un'asserzione sola per una ragione che
+    vale ancora oggi: **una cura che riconoscesse solo «giorno + nome del mese»
+    passerebbe l'ultimo caso e lascerebbe in piedi i due peggiori**, e il banco
+    deve poterlo dire caso per caso.
     """
     assert _accusati(claim, FONTE_RELATIVA) == []
 
@@ -149,15 +148,16 @@ def test_una_fonte_ANCH_ESSA_datata_non_produce_accusa():
                      "Conteggio del 10 agosto: 46 fatti riportano cli:local.") == []
 
 
-def test_LA_COPERTURA_DEGLI_ANNI_C_E_GIA_e_si_ferma_all_anno_nudo():
-    """Dove guardare per curare: il criterio esiste, gli manca un pezzo.
+def test_LA_COPERTURA_DEGLI_ANNI_C_ERA_GIA_e_ora_arriva_al_giorno():
+    """Le due metà dello stesso criterio, che ora coprono la stessa cosa.
 
-    Un anno nudo è già escluso dalle quantità — la classe «questo non è un
-    numero da verificare, è una data» è quindi **già riconosciuta** dal
-    prodotto. Ciò che manca è il resto della data. Se un giorno la prima
-    asserzione cadesse, vorrebbe dire che qualcuno ha rimosso la copertura
-    esistente invece di estenderla, ed è un'informazione diversa da tutte le
-    altre di questo file.
+    L'anno nudo era già escluso: la classe «questo non è un numero da
+    verificare, è una data» era **già riconosciuta** dal prodotto, e alla cura
+    è toccato aggiungere il resto della data invece di inventare un criterio
+    nuovo. Le due asserzioni stanno insieme perché se un giorno cadesse la
+    PRIMA vorrebbe dire che qualcuno ha rimosso la copertura storica mentre
+    lavorava sulla nuova — un'informazione diversa da tutte le altre di questo
+    file, e che nessun altro test qui dentro saprebbe dare.
     """
     assert extract_quantities("Il contratto scade nel 2027.") == set()
-    assert extract_quantities("Il 10 agosto il run e' fallito.") == {("agosto", 10.0)}
+    assert extract_quantities("Il 10 agosto il run e' fallito.") == set()
