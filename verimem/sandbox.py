@@ -1,7 +1,7 @@
 """Cycle 2026-05-27 round 13 P1 — sandbox Bash deny-by-default.
 
-Aurelio audit gap C3: "no sandbox Bash isolato (Claude esegue qualsiasi
-shell command, zero isolation per task rischiosi)".
+Audit gap C3: nessuna sandbox Bash isolata — l'agente esegue qualsiasi
+comando di shell, zero isolamento per i task rischiosi.
 
 Triangulation Gemini+GPT consensus: sandbox Bash P1 (immediately after P0
 backup+rollback foundation). GPT verbatim: "appena l'agente puo agire
@@ -193,7 +193,7 @@ NETWORK_PATTERNS: tuple[str, ...] = (
 
 # Cycle 2026-05-27 round 16 FIX 3 — shell=False refactor.
 #
-# Aurelio audit gap (Gemini+agy verdict Critical sandbox.py:74-98+306):
+# Audit gap, giudicato critico su sandbox.py:74-98+306:
 # subprocess shell=True + regex allowlist is bypassable via shell
 # metacharacters. The fundamental fix is shell=False + argv list parsing
 # via shlex. This module-level config supports the new mode WITHOUT
@@ -267,7 +267,7 @@ def _resolve_sandbox_mode() -> str:
     cycle-13 behavior — keeps dev productivity, no breaking change).
 
     Default legacy preserves backward compatibility for the existing
-    test suite + Aurelio's autonomous workflows. Flip to strict in
+    test suite and the existing autonomous workflows. Flip to strict in
     production where command-injection-via-metachar must be impossible.
     """
     val = (os.environ.get("ENGRAM_SANDBOX_MODE") or "").strip().lower()
@@ -306,7 +306,7 @@ def _validate_argv(argv: list[str]) -> tuple[bool, str]:
     # SECURITY (rescan2 2026-06-02): in STRICT mode a bare "*" allowlist for
     # python/find would wave through arbitrary code execution. Restrict those
     # dangerous binaries BEFORE the generic "*" allow. (Legacy mode keeps
-    # python -c for dev-productivity — that policy change is left to Aurelio.)
+    # python -c for dev-productivity — that policy change is the owner's.)
     if binary in ("python", "python3", "py"):
         # Only `python -m pytest ...` is allowed; `-c` and direct-script
         # execution (`python foo.py`) are arbitrary code execution.
@@ -348,7 +348,7 @@ def _validate_argv(argv: list[str]) -> tuple[bool, str]:
         # / alias.* / *.sshCommand. The entire chain lives INSIDE the strict
         # allowlist, breaking strict mode's "injection impossible" contract. Only
         # READ forms of config are safe; other git subcommands fall through to the
-        # normal allow-set check below. (Legacy mode = Aurelio's dev policy, as
+        # normal allow-set check below. (Legacy mode = the development policy, as
         # with python -c / find -exec — intentionally not changed here.)
         if len(argv) >= 2 and argv[1].lower() == "config":
             _config_read_flags = {

@@ -210,7 +210,7 @@ def _applica_rerank(indice, query: str, hits: list[dict]) -> list[dict]:
 class Risultati(list):
     """I risultati di una ricerca, con quanti ne sono stati NASCOSTI.
 
-    IL DIFETTO CHE LA MOTIVA (isolato da ws5 con uno sweep sulle superfici —
+    IL DIFETTO CHE LA MOTIVA (isolato con uno sweep sulle superfici —
     un'azienda l'injection non la digita, la RICEVE dentro il PDF di un
     fornitore)::
 
@@ -362,11 +362,11 @@ class DocumentIndex:
                     "document %s: %d/%d chunk(s) flagged for injection signals "
                     "— hidden from default search (audit via include_flagged)",
                     source_id, n_flagged, len(chunks))
-        # Flow channel (ws6 2026-08-05, camera dark DOCUMENTS). This tier was
+        # Flow channel (2026-08-05, dark room DOCUMENTS). This tier was
         # the only one with NO telemetry at all — the others at least emitted
         # under a name the live surfaces drop. And it is the tier the whole
         # team leans on as "the robust channel": 25 documents, 598 chunks, of
-        # which 307 (51.3%) belong to superseded versions (measured by ws4).
+        # which 307 (51.3%) belong to superseded versions (measured).
         # `version` and `chunks_flagged` travel because they are the two
         # numbers that make an ingest readable: which version won, and how
         # much of it was withheld.
@@ -419,7 +419,7 @@ class DocumentIndex:
         # esistevano per nessuno: quando li nascondeva TUTTI, `search` tornava
         # una lista vuota — cioe' **la stessa risposta che darebbe se il
         # documento non fosse mai stato indicizzato**.
-        # Misurato (il difetto e' di ws5, questo e' il mio banco):
+        # Misurato su un banco costruito apposta per il difetto:
         #     contratto pulito              risposte 7/7
         #     con una riga ostile dentro    risposte **0/7**
         # e chi interroga non riceve nessun errore, nessun avviso: solo
@@ -443,7 +443,7 @@ class DocumentIndex:
             # UN VETTORE DI UN ALTRO MODELLO NON SI PUO' CONFRONTARE.
             # Terzo punto della classe 384/768 (i primi sei erano in skill.py,
             # il settimo in cli.py::introspect che CRASHA). Qui invece TACEVA,
-            # ed e' il caso peggiore: ws5 l'ha trovato da un'altra strada —
+            # ed e' il caso peggiore, trovato da un'altra strada —
             # «un backup del corpus non e' piu' interrogabile dopo un cambio di
             # modello: gli snapshot di maggio hanno vettori a 384, il motore di
             # oggi ne vuole 768 -> ZERO risultati, in silenzio». Un archivio che
@@ -510,7 +510,7 @@ class DocumentIndex:
             h["query_terms"] = len(termini)
             h["query_terms_matched"] = sum(
                 1 for t in termini if t in h["text"].lower())
-        # ⚠️ RISOLUZIONE DEL CONFLITTO (ws7, 2026-08-09) — QUI I DUE LATI SONO
+        # ⚠️ RISOLUZIONE DI UN CONFLITTO (2026-08-09) — QUI I DUE LATI SONO
         # DAVVERO COMPLEMENTARI, al contrario di `event_jsonl_log` dove erano
         # la stessa cura scritta due volte. Su main la ricerca rende un
         # `Risultati` che distingue «non trovato» da «trovato e nascosto»
