@@ -229,15 +229,15 @@ def open_memory(path: Any = None, **kwargs: Any):
 class Risultati(list):
     """I risultati di una ricerca, con l'avviso quando NESSUNO supera il pavimento.
 
-    IL DIFETTO CHE LA MOTIVA (misurato da ws5): su 5 domande la cui risposta NON
+    IL DIFETTO CHE LA MOTIVA (misurato): su 5 domande la cui risposta NON
     è nel corpus, `recall` risponde 5 volte su 5, con punteggi di grounding fino
     a 99.93 — risposte plausibili nella forma e scollegate nel merito, che un
     agente riceve come fatti verificati. Il pavimento che le separa **esiste ed
     è già usato** da `trust_report` ed `explain`, che si astengono; questa porta
     no.
 
-    ⚠️ Dichiara e non taglia: sul banco di ws5 il pavimento cadeva dentro il
-    margine fra le due popolazioni (0 falsi tagli), sul mio cadeva **sopra** il
+    ⚠️ Dichiara e non taglia: su un banco il pavimento cadeva dentro il margine
+    fra le due popolazioni (0 falsi tagli), su un altro cadeva **sopra** il
     minimo delle domande rispondibili (1 falso taglio su 5). La taratura dipende
     dal corpus, e un veto costerebbe un fatto vero dove un avviso costa un
     avviso.
@@ -259,7 +259,7 @@ class Risultati(list):
         #:
         #: PERCHE'. Nel corpus di casa 746 fatti su 8999 sono in quarantena.
         #: Non tornano dalle letture, ed e' giusto — e' il loro mestiere, ed e'
-        #: verificato su sei porte da ws1 e sul briefing da ws4. Ma **il loro
+        #: verificato su sei porte e sul briefing. Ma **il loro
         #: silenzio era indistinguibile dall'assenza**: chi ha scritto quel
         #: fatto crede di averlo salvato, chi legge crede che in memoria non ci
         #: sia niente.
@@ -447,7 +447,7 @@ class Memory:
         # (`flow_events.emit_write`), che lo deriva dal punteggio: qui
         # basta il punteggio. Prima questa closure lo componeva a mano, e
         # la stessa composizione mancava del tutto sulla porta MCP —
-        # 141 scritture ad agosto, ZERO eventi (ws4, 2026-08-07). Una
+        # 141 scritture ad agosto, ZERO eventi (misurato il 2026-08-07). Una
         # regola scritta due volte diverge; scritta una volta e mai
         # chiamata dalla terza porta, sparisce.
         from .flow_events import emit_write as _emit_write
@@ -625,13 +625,13 @@ class Memory:
         #
         # ⚠️ ERRATA 2026-08-05: i commit `49096224` e `cc367071` motivano
         # questo campo con «le scritture che arrivano mentre il moat si
-        # scalda entrano non giudicate». ws5 me l'aveva passata leggendo
-        # una STRINGA di `verimem doctor`, poi l'ha MISURATA e cade: 4
+        # scalda entrano non giudicate». Era stata ricavata leggendo
+        # una STRINGA di `verimem doctor`, poi MISURATA, e cade: 4
         # thread simultanei su store vergine aspettano tutti 42.60s e
         # ricevono tutti un verdetto (0 NULL su 4) — il caricamento è
         # sincrono con lock, quella finestra non esiste sul canale SDK.
         # Quello che regge, e basta a giustificare il campo: i
-        # mai-giudicati ESISTONO (ws3: 6 NULL su 250 scritti oggi, 4 dei
+        # mai-giudicati ESISTONO (6 NULL su 250 scritti in un giorno, 4 dei
         # quali con una source_signature) e il feed non li distingueva.
         # La causa resta ignota, ed è meglio dirlo che spiegarla a caso.
         _emit_write(stored=True, status=str(fact.status),
@@ -645,11 +645,11 @@ class Memory:
         # the old would lose BOTH (opus critic guard). supersede() keeps the old row for
         # lineage; it just drops out of the default recall filter.
         _superseded: list[str] = []
-        # ws6 control-room: each real retirement now carries its undo handle
+        # Since the helm landed, each real retirement carries its undo handle
         # (semantic.supersede snapshots pre-op). Surfacing the handle HERE —
         # in the add() receipt — is what turns "this write retired another
         # fact" from an invisible mutation into a reversible one for every
-        # SDK/MCP/gateway caller (indicator #1, ws5 2026-08-04).
+        # SDK/MCP/gateway caller (indicator #1, 2026-08-04).
         _superseded_undo: dict[str, str] = {}
         # admit-guard: retire the old ONLY if the new write was admitted AND is actually
         # retrievable from the CURATED store — store() can divert a non-quarantined write
@@ -723,7 +723,7 @@ class Memory:
         # IL DUPLICATO IDENTICO SI DICE A CHI SCRIVE, ALLA SECONDA VOLTA.
         # Misurato da utente: tre `add` dello stesso testo -> 3 righe, 3
         # servibili, e il recall rende la stessa frase TRE VOLTE senza che il
-        # prodotto lo abbia mai detto. ws4 aveva misurato il costo dall'altro
+        # prodotto lo abbia mai detto. Lo stesso costo, misurato dall'altro
         # lato: `slot=35 sprecati_da_duplicati=7` in un recall reale.
         #
         # Il meccanismo c'era già — `find_duplicate_facts`, esposto come
@@ -841,12 +841,12 @@ class Memory:
             _moat = "failed"
         else:
             _moat = "passed"
-        # E CHI HA DECISO LA QUARANTENA. Trovato da ws5 e ampliato:
+        # E CHI HA DECISO LA QUARANTENA. Trovato e poi ampliato:
         #     moat passa + parola L1 : moat=passed  gs=96.810  QUARANTINED
         #     moat passa, niente L1  : moat=passed  gs=99.278  QUARANTINED
         # Anche il secondo — una fonte che sostiene il fatto al 99,278 — viene
         # trattenuto: il MOAT dice «verificato» e uno screen lessicale lo
-        # scavalca. Si lega al numero di ws4 (il 90,2% della quarantena del
+        # scavalca. Si lega a una misura vicina (il 90,2% della quarantena del
         # corpus viene dallo screen, 1728 su 1915) e alla precisione ~40% di L1.
         #
         # ⚠️ LA PRECEDENZA NON SI TOCCA, e non è pigrizia: L1 esiste per
@@ -903,7 +903,7 @@ class Memory:
                # "auto" E NON None/False: il ROUTING c'era, funzionava anche in
                # italiano, e non si accendeva mai perche' nessuna superficie
                # passava "auto". Misurato sul listino che cambia tre volte
-               # (100 -> 120 -> 150), il difetto isolato da ws5:
+               # (100 -> 120 -> 150), il difetto isolato cosi':
                #     quanto costava a GENNAIO -> «150 euro» rilevanza 0.8457
                #     quanto costava ad APRILE -> «150 euro» rilevanza 0.8382
                # cioe' una risposta SBAGLIATA presentata come giusta, mentre
@@ -1113,7 +1113,7 @@ class Memory:
                                    for i in out), default=0.0), 4))
         # «NON LO SO» DETTO SULLA PORTA CHE LA GENTE APRE.
         #
-        # Misurato da ws5 su un corpus aziendale controllato: su 15 domande
+        # Misurato su un corpus aziendale controllato: su 15 domande
         # RISPONDIBILI il primo posto e' giusto 14 volte — il retrieval
         # funziona — ma su 5 domande SENZA risposta `recall` risponde 5 volte su
         # 5, con `grounding_score` fino a 99.93. Risposte peggiori del silenzio:
@@ -1125,8 +1125,8 @@ class Memory:
         #
         # ⚠️ SI DICHIARA, NON SI TAGLIA, e la ragione e' una misura che
         # contraddice quella che ha motivato la cura:
-        #     banco di ws5  rispondibili min 0.8757 · pavimento 0.8689 -> 0 falsi tagli
-        #     banco mio     rispondibili min 0.8489 · pavimento 0.8491 -> 1 falso taglio su 5
+        #     banco A  rispondibili min 0.8757 · pavimento 0.8689 -> 0 falsi tagli
+        #     banco B  rispondibili min 0.8489 · pavimento 0.8491 -> 1 falso taglio su 5
         # La taratura del pavimento dipende dal corpus: come veto perderebbe un
         # fatto vero, come avviso costa un avviso. Chi vuole il taglio ha
         # `min_relevance`, che continua a funzionare esattamente come prima.
@@ -1450,7 +1450,7 @@ class Memory:
             # LA STESSA VISTA DEL RAMO `find`. Questi due rami proiettavano
             # a mano tre chiavi — id, text, topic — mentre `find`, nella
             # STESSA funzione, restituisce le quindici di `_fact_view`
-            # (trovato da ws2 il 2026-08-07 con una grep dalle chiavi, non
+            # (trovato il 2026-08-07 con una grep dalle chiavi, non
             # dai letterali). Chi chiedeva «elencami tutto su X» riceveva
             # fatti in cui un `model_claim` e uno verificato erano
             # INDISTINGUIBILI: niente status, niente verdetto, niente
@@ -1566,8 +1566,8 @@ class Memory:
         # ⚠️ CHI HA DECISO, non solo con che numero. Il dossier riportava
         # `min_relevance` e basta, e con `auto` quel numero NON è la soglia che
         # ha filtrato: la decisione passa al cross-encoder e il float resta un
-        # riferimento sulla scala del coseno. ws4 lo ha misurato dal lato di chi
-        # legge, ed è il modo peggiore in cui il difetto si manifesta:
+        # riferimento sulla scala del coseno. Misurato dal lato di chi legge,
+        # ed è il modo peggiore in cui il difetto si manifesta:
         #
         #     min_relevance=None (default)  -> abstained=False  floor 0.872
         #                                      servito con relevance 0.8337
@@ -1578,13 +1578,13 @@ class Memory:
         # filtro è rotto» oppure «il numero è sbagliato».
         #
         # La logica NON cambia — il CE è più accurato del coseno e lasciargli
-        # l'ultima parola dimezza i falsi silenzi (misurato da ws4). Cambia che
+        # l'ultima parola dimezza i falsi silenzi (misurato). Cambia che
         # il dossier lo dice. È la stessa classe dello `0.0` del ranking
         # degradato: un numero con la forma di una misura che significa altro.
         report["floor_applied_by"] = (
             "cross_encoder" if want_ce_floor else "cosine")
         # IL DOSSIER DICHIARA ANCHE LA FONDATEZZA, non solo la rilevanza.
-        # Finding di ws5, dogfooding da utente esterno, e la diagnosi è sua:
+        # Emerso usando il prodotto da utente esterno, con questa diagnosi:
         #
         #     «Il pavimento misura la RILEVANZA. Il claim promette la
         #      FONDATEZZA. Sono due cose diverse, e la distanza fra le due è
@@ -1601,9 +1601,9 @@ class Memory:
         # bene, con la sua ragione dichiarata. Si aggiunge la grandezza che
         # mancava, così le due smettono di essere confuse in un verdetto solo.
         # DUE NOMI PER LA STESSA COSA, e chi passa da una superficie all'altra
-        # ci sbatte. Finding di ws5, col costo misurato addosso a sé: «mi ha
-        # fatto quasi consegnare *explain sbaglia 10 su 10*» — su una funzione
-        # che è corretta.
+        # ci sbatte. Emerso usando il prodotto, col costo pagato sul posto: ha
+        # portato sull'orlo di consegnare un «*explain sbaglia 10 su 10*» — su
+        # una funzione che è corretta.
         #
         #     il TESTO      recall: `text`   ·  explain: `proposition`
         #     il PUNTEGGIO  recall: `score`  ·  explain: `relevance`
@@ -1644,8 +1644,8 @@ class Memory:
     def trust_report(self, query: str, k: int = 5, **kwargs):
         """Il dossier di provenienza — lo STESSO di :meth:`explain`.
 
-        ⚠️ ESISTE PERCHÉ IL NOME NON TORNAVA, e a segnalarlo è stato un utente
-        vero (ws5, dogfooding, due giorni sul prodotto)::
+        ⚠️ ESISTE PERCHÉ IL NOME NON TORNAVA, e a segnalarlo è stato chi usava
+        il prodotto da utente, dopo due giorni::
 
             «Ho cercato trust_report, non l'ho trovato, e stavo per scrivervi
              che mancava.»
@@ -1720,7 +1720,7 @@ class Memory:
         # non riceveva nessun segnale: il metodo tornava `None` e il numero non
         # si muoveva.
         #
-        # Trovato da ws5 dall'esterno, e la conclusione a cui è arrivato dice
+        # Trovato dall'esterno, e la conclusione a cui si arrivava dice
         # quanto costa il silenzio: «le conferme non arrivano al ledger, una
         # fonte che sbaglia resta penalizzata per sempre». Rimisurato, è falso
         # — la reputazione RISALE (0.3333 → 0.5 → 0.6 con ≥2 conferme, e la
@@ -2190,7 +2190,7 @@ class Memory:
         """Il pavimento auto-calibrato, PERSISTITO e invalidato sul corpus.
 
         ⚠️ ERA CACHED PER-ISTANZA CON UN TTL DI 5 MINUTI, e costava 57 secondi
-        alla prima chiamata. Misurato da ws5 sul corpus vero (8058 fatti) e
+        alla prima chiamata. Misurato sul corpus vero (8058 fatti) e
         riprodotto::
 
             explain chiamata 1:   56.845 ms
@@ -2198,7 +2198,7 @@ class Memory:
             recall:                  413 ms      <- nessuna cache di mezzo
 
         La stima fa ~32 recall di sonde giudicati dal cross-encoder. La cache
-        c'era; la diagnosi di ws5 dice perché non bastava:
+        c'era; la diagnosi dice perché non bastava:
 
             «Chi fa molte domande di fila paga 76 secondi UNA volta:
              tollerabile. Chi consulta il dossier OGNI TANTO paga 76 secondi
@@ -2364,8 +2364,8 @@ class Memory:
                         # grounding_score viaggia con la riga perche' la
                         # spiegazione ne ha bisogno per NON inventare la
                         # causa: un verdetto alto su un fatto trattenuto
-                        # smentisce da solo l'attribuzione a L4 (ws1,
-                        # 2026-08-05).
+                        # smentisce da solo l'attribuzione a L4
+                        # (misurato il 2026-08-05).
                         "SELECT id, proposition, topic, created_at, status, "
                         "grounding_score "
                         "FROM facts WHERE status = 'quarantined' "
@@ -2439,7 +2439,7 @@ class Memory:
                 # attraversa: `detect_injection` gira dentro store() ed e'
                 # puro e deterministico esattamente come gli L1 qui sopra.
                 # Rieseguire il SOLO gate non poteva trovarlo mai — ed e'
-                # per questo che il caso di ws1 (2026-08-05) finiva sul
+                # per questo che il caso del 2026-08-05 finiva sul
                 # ramo di default con una causa inventata, mentre la
                 # ricevuta di scrittura diceva layers=['store-screen'].
                 try:
@@ -2460,7 +2460,7 @@ class Memory:
 
                 # Nessuno schermo si riaccende. Qui la causa NON e' nota, e
                 # fino al 2026-08-05 questo ramo la attribuiva a L4 — una
-                # deduzione, non una lettura, e ws1 ha misurato che e' falsa
+                # deduzione, non una lettura, ed e' stato misurato che e' falsa
                 # su 183 record su 500: `layers` arriva vuoto, l'explain non
                 # trova niente e ASSERISCE. Una superficie muta si nota, una
                 # assertiva e sbagliata manda a cercare nella direzione
@@ -2626,7 +2626,7 @@ class Memory:
         The flip is audited (``fact_restored`` event) and the fact leaves the
         ``quarantine_log`` because it is live again.
 
-        SECONDARY by design (Aurelio 2026-07-21): the PRIMARY cure for wrongly-
+        SECONDARY by design (decided 2026-07-21): the PRIMARY cure for wrongly-
         blocked facts is automatic — keyword-only quarantine is advisory by
         default (ENGRAM_L1_STRICT off), so a benign fact is not blocked in the
         first place and no human restore is needed. This is the rare manual
@@ -2908,7 +2908,7 @@ class Memory:
     def survivability(self, *, topic: str | None = None) -> dict[str, Any]:
         """The canonical quartet written/servable/retired/quarantined with
         its formula. A fact disappears in TWO ways; any 'alive' count that
-        ignores one of them hides half the loss (ws3 retraction 2026-08-04)."""
+        ignores one of them hides half the loss (retracted 2026-08-04)."""
         from .retirement_log import survivability_counts as _scounts
         return _scounts(self.semantic, topic=topic)
 
@@ -2956,26 +2956,25 @@ class Memory:
             cid = getattr(cur, "id", "")
             seen.add(cid)
             nxt = getattr(cur, "superseded_by", None)
-            # ⚠️ RISOLUZIONE DEL CONFLITTO (ws7, 2026-08-09) — TENGO IL LATO DI
-            # MAIN E SCARTO IL MIO, e la ragione e' che IL MIO ERA SBAGLIATO
-            # PER QUESTA SUPERFICIE. Avevo curato lo stesso difetto (history
-            # rendeva quattro campi invece di quattordici) usando
+            # ⚠️ RISOLUZIONE DI UN CONFLITTO (2026-08-09) — PREVALE IL LATO DI
+            # MAIN, e la ragione e' che l'altro era SBAGLIATO PER QUESTA
+            # SUPERFICIE. Lo stesso difetto (history rendeva quattro campi
+            # invece di quattordici) era stato curato su un ramo usando
             # `fact_contract.fact_payload`, che e' il contratto della porta
             # MCP. Ma `Memory.history` e' SDK, e il commento di `_fact_view`
-            # — su main, riga 2556 — dichiara che la divergenza fra le due
-            # viste e' DELIBERATA: «ADDITIVO di proposito, non una delega a
-            # `fact_payload`: i due usano nomi diversi per la stessa cosa
-            # (`text` contro `proposition`), e allinearli romperebbe ogni
-            # chiamante dell'SDK».
-            # ⇒ La mia versione avrebbe portato nell'SDK i campi che sono
-            #   solo dell'MCP (confidence_tier, meta_narrative,
-            #   writer_principal) e lasciato fuori `epistemic`. Il merge ha
-            #   trovato un mio errore, non una scelta fra due lati pari.
+            # dichiara che la divergenza fra le due viste e' DELIBERATA:
+            # «ADDITIVO di proposito, non una delega a `fact_payload`: i due
+            # usano nomi diversi per la stessa cosa (`text` contro
+            # `proposition`), e allinearli romperebbe ogni chiamante dell'SDK».
+            # ⇒ Quella versione avrebbe portato nell'SDK i campi che sono solo
+            #   dell'MCP (confidence_tier, meta_narrative, writer_principal) e
+            #   lasciato fuori `epistemic`. Il merge ha trovato un errore, non
+            #   una scelta fra due lati pari.
             # LA VISTA CONDIVISA, non la TERZA copia scritta a mano.
             #
             # Qui c'era `{id, text, status, superseded_by}`: quattro chiavi
             # contro le quattordici che `get`/`get_all`/`search` garantiscono
-            # (censito da ws2). Su quelle superfici la promessa «provenance on
+            # (censite). Su quelle superfici la promessa «provenance on
             # every read» regge; qui cadevano tutte insieme — provenienza,
             # verdetto, tempo, autore.
             # ⚠️ E colpisce cio' che si e' appena acceso: col routing temporale
