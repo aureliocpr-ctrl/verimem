@@ -59,7 +59,9 @@ def sm(tmp_path, monkeypatch):
         monkeypatch.setenv(k, str(d))
     monkeypatch.setenv("HIPPO_OFFLINE", "1")
     from verimem.semantic import SemanticMemory
-    memoria = SemanticMemory()
+    # ⚠️ PERCORSO ESPLICITO: senza, dentro la suite intera si finisce nella
+    # cartella condivisa del run e il banco conta i ritiri degli altri test.
+    memoria = SemanticMemory(db_path=d / "semantic" / "semantic.db")
     from verimem.semantic import Fact
     ids = {}
     for chiave, testo, topic in (

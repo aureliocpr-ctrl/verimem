@@ -87,7 +87,12 @@ def _popola(d, *, vivi=0, usati=0, scaduti=0, mai=0):
     Rende la cartella dati REALE — quella da cui il doctor va interrogato.
     """
     from verimem.semantic import Fact, SemanticMemory
-    sm = SemanticMemory()
+    # ⚠️ PERCORSO ESPLICITO: `SemanticMemory()` senza argomento risolve da
+    # una configurazione gia' risolta, che dentro una sessione pytest intera
+    # punta alla cartella CONDIVISA del run — mentre il doctor risolve
+    # dall'AMBIENTE. Due resolver, due store, e il banco confronta cose
+    # diverse. Invisibile eseguendo questo file da solo.
+    sm = SemanticMemory(db_path=d / "semantic" / "semantic.db")
     ora = time.time()
     con = sqlite3.connect(str(sm.db_path))
     n = 0
@@ -219,7 +224,7 @@ class TestLaFinestraEIlTTLSonoLoSTESSONUMERO:
         commento del check dichiara di voler evitare, prodotta dal prodotto
         stesso invece che dal tempo."""
         from verimem.semantic import Fact, SemanticMemory
-        sm = SemanticMemory()
+        sm = SemanticMemory(db_path=store / "semantic" / "semantic.db")
 
         def coppia(n):
             a = Fact(proposition=f"il lotto {n} ha 12 pezzi", topic=f"q/{n}")
