@@ -160,7 +160,8 @@ prodotto:
 Nel pacchetto pubblicato un percorso Windows assoluto viene troncato alla lettera di unità: la
 causa è `([^:]+)`, che si ferma ai due punti di `C:`. I percorsi relativi funzionano in entrambi,
 quindi il difetto è circoscritto ai percorsi assoluti — sul sistema operativo su cui il prodotto
-viene sviluppato e usato. La cura nell'albero è `([A-Za-z]:[\/]\S*|[^:]+)`.
+viene sviluppato e usato. La cura nell'albero è `([A-Za-z]:[\\/]\S*|[^:]+)`, dove la classe
+accetta sia la barra rovescia sia quella dritta.
 
 ### Le altre undici
 
