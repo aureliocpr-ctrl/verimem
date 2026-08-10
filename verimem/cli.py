@@ -4007,8 +4007,13 @@ def facts_requalify_quarantined(
     """
     from verimem.admission_cleanup import requalify_quarantined
     sm = _facts_sm()
+    # `_principale()` e non una lettura propria dell'ambiente: produce
+    # `<porta>/<attore>`, cioe' la STESSA grafia che scrivono gli altri dieci
+    # punti di questa CLI. Leggere `VERIMEM_ACTOR` da qui darebbe `<attore>`
+    # nudo, e chi aggrega le righe di audit per autore vedrebbe due attori dove
+    # ce n'e' uno.
     res = requalify_quarantined(sm.db_path, dry_run=not apply,
-                                principal=principal)
+                                principal=principal or _principale())
     mode = "APPLIED" if apply else "DRY-RUN (use --apply to promote)"
     console.print(
         f"[bold]{mode}[/bold]  scanned={res['scanned']}  "
