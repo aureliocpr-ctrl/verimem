@@ -11,8 +11,8 @@ search_facts / count) filters superseded facts by default. The
 historical fact stays in the DB for lineage/audit and is reachable
 via ``get(id)``.
 
-Cycle #109 (2026-05-16): provenance schema v3 (Aurelio sfida memoria
-compromessa). Pattern ispirato da ProvSEEK 2508.21323 + MemoryGraft
+Cycle #109 (2026-05-16): provenance schema v3, nato dalla domanda «e se la
+memoria fosse compromessa?». Pattern ispirato da ProvSEEK 2508.21323 + MemoryGraft
 2512.16962 defenses. Tre campi nuovi:
 
 - ``verified_by`` (list[str]): tool-call refs che hanno verificato il
@@ -119,7 +119,7 @@ def _recall_rerank_budget_s() -> float:
 
     Measured 2026-06-13: the CrossEncoder COLD load is ~33s and the steady
     per-query predict ~1.7s; under CPU contention the cold-load was a 10-min
-    recall hang (Aurelio killed the MCP call with ESC). On overrun the rerank
+    recall hang (the MCP call had to be killed with ESC). On overrun the rerank
     is abandoned and recall keeps the (valid) bi-encoder order — the model
     finishes warming in the background, so the NEXT query reranks. Default
     3.0s leaves headroom over the warm predict while capping the cold path.
@@ -869,7 +869,7 @@ _SEMANTIC_TARGET_VERSION: int = 17
 #: v8 (2026-06-03) — half-life di default per il decadimento di freshness
 #: nel recall. is_stale(age, half_life, floor=0.5) e' True quando il fattore
 #: di decadimento scende sotto 0.5, cioe' quando ``age_days > half_life_days``.
-#: 2026-06-09 (Aurelio "un mese e mezzo"): 90 -> 45 giorni. Un ricordo non
+#: 2026-06-09, deciso su «un mese e mezzo»: 90 -> 45 giorni. Un ricordo non
 #: ri-verificato/ri-usato da oltre ~1.5 mesi esce dalla vista di default. La
 #: finestra piu' corta e' resa sicura dal bump-on-recall (vedi recall()):
 #: l'eta si misura dall'ULTIMO USO, non dalla creazione, quindi i ricordi
@@ -1297,8 +1297,8 @@ def _migrate_v6_to_v7(conn: sqlite3.Connection) -> None:
     """Cycle 2026-05-27 round 13 P0c: transactional rollback for destructive
     operations (forget / supersede / modify) via facts_undo_log.
 
-    Aurelio audit gap C5: senza rollback, ogni forget e potenziale data loss.
-    Triangulation Gemini+GPT consensus: P0 priority, foundation safety.
+    Audit gap C5: senza rollback, ogni forget e' potenziale perdita di dati.
+    Priorita' P0, sicurezza di base.
 
     Schema:
         facts_undo_log(op_id, op_type, fact_id, pre_row_json, created_at,
@@ -2687,8 +2687,8 @@ class SemanticMemory:
         # and invalidate on store/delete. Lookup becomes
         # cosine(q_emb, matrix) — one BLAS dot product, O(1) Python.
         #
-        # Aurelio direttiva 2026-05-17 sera: "ci interessa che HippoAgent
-        # funzioni realmente e bene". Misura empirica laptop: p50(2k)
+        # Direttiva del 2026-05-17: cio' che conta e' che il prodotto
+        # funzioni davvero. Misura empirica su laptop: p50(2k)
         # = 19.2ms, ratio p50(2k)/p50(500) = 3.08× linear scaling.
         # Post-cache target: ratio < 1.5× (only SQL fetchall scales).
         self._corpus_cache: dict[str, Any] | None = None
@@ -2945,8 +2945,8 @@ class SemanticMemory:
             # (quarantena). topic = label corta -> costo trascurabile.
             _iv_topic = _detect_injection(getattr(fact, "topic", "") or "")
             if _iv.is_injection or _iv_topic.is_injection:
-                # task #25: the event carries the ownership answer (Aurelio's
-                # "backpropagation chiedendo") — attribution never weakens the
+                # task #25: the event carries the ownership answer —
+                # attribution never weakens the
                 # defense, a content attack quarantines for EVERY provenance.
                 from .gate_router import attribution_question as _gr_attr
                 from .gate_router import classify_provenance as _gr_classify
@@ -4481,13 +4481,13 @@ class SemanticMemory:
         if _rerank_breaker_tripped():
             # the FUNCTION, not the raw field: only the function re-arms after
             # the cooldown, and this gate is the consumer the re-arm exists for.
-            # Merge 09/08 (ws2/abstention ← main): the two sides were NOT
+            # Merge 09/08 (abstention branch ← main): the two sides were NOT
             # alternatives. Reading through the function is what lets a tripped
             # breaker come back; the note is what tells the caller the ranking
             # it just got is degraded to keyword order. Keeping only main's side
             # would strand the breaker; keeping only ours would leave the caller
-            # a 0.0 score with no reason attached — the exact gap ws4 measured
-            # today at the agent's door.
+            # a 0.0 score with no reason attached — the exact gap measured
+            # that day at the agent's door.
             _ranking_note("rerank", "skipped_breaker")
             return hits_2t[:k]  # systematic overruns → stop paying the budget
         pool = hits_2t[:_rerank_topn()]
@@ -5111,7 +5111,7 @@ class SemanticMemory:
                 # phrase LIKE returns [] unless the WHOLE query appears as a
                 # contiguous substring — so `hippo_facts_search "recall rerank
                 # circuit breaker"` found nothing even with facts containing all
-                # those words (Aurelio hit this live). Two token modes:
+                # those words (incontrato nell'uso reale). Two token modes:
                 #   require_all_tokens=True → AND across tokens (precision: every
                 #       token present somewhere). Used by the hippo_facts_search
                 #       tool as its first pass.
@@ -5304,7 +5304,7 @@ class SemanticMemory:
                 _record_mutation(conn, principal=principal, action=action,
                                  resource_id=fact_id)
                 # A deletion outranks any EARLIER undo handle for this row
-                # (ws6 2026-08-05). The helm snapshots every supersession,
+                # (misurato il 2026-08-05). The helm snapshots every supersession,
                 # and undo_op restores with INSERT OR REPLACE — so without
                 # this a retirement handle could resurrect a fact the user
                 # had deleted, and recall would serve it again. Same
@@ -5320,7 +5320,7 @@ class SemanticMemory:
             self._cache_version += 1
             self._cascade_delete_refs(fact_id)
             # L'azione più distruttiva del prodotto era l'unica senza evento
-            # (ws6 2026-08-05): un ritiro si vede, una quarantena si vede, e
+            # (2026-08-05): un ritiro si vede, una quarantena si vede, e
             # una CANCELLAZIONE — che non si annulla se non c'era snapshot e
             # sopravvive solo nelle copie — spariva in silenzio. `undoable`
             # dice, sul momento, se quel fatto ha una via di ritorno; niente
@@ -5396,7 +5396,7 @@ class SemanticMemory:
             result = undo_op(conn, op_id)
         if result.get("ok"):
             self._cache_version += 1
-            # flow.undo (ws6 control-room): a governance action must be as
+            # flow.undo: a governance action must be as
             # visible as the mutation it reverses — an invisible undo would
             # re-create the very defect the helm exists to cure. Metadata
             # only, best-effort by flow_events contract.
@@ -5447,7 +5447,7 @@ class SemanticMemory:
                   prior_status=current_status)
         except Exception:  # noqa: BLE001 — observability never breaks mutator
             pass
-        # …and on the flow channel too (ws6 2026-08-05). The event above has
+        # …and on the flow channel too (2026-08-05). The event above has
         # existed for cycles, but the live surfaces keep only names starting
         # with "flow." (gateway.py:511), so a fact declassed AFTER its write
         # vanished from the Engine Room: the entry visible at write time
@@ -5481,7 +5481,7 @@ class SemanticMemory:
                   reason=(reason or "")[:200])
         except Exception:  # noqa: BLE001
             pass
-        # The EXIT from quarantine on the flow channel (ws6 2026-08-05): the
+        # The EXIT from quarantine on the flow channel (2026-08-05): the
         # entry was visible (flow.write status=quarantined) and the release
         # was not, so the Engine Room showed a queue that only ever grew.
         # A governance action must be as visible as the decision it reverses.
@@ -5697,7 +5697,7 @@ class SemanticMemory:
                 ).fetchone()
                 chain_cur = nxt["superseded_by"] if nxt else None
 
-            # THE HELM (ws6 control-room, 2026-08-04): the pre-op snapshot
+            # THE HELM (2026-08-04): the pre-op snapshot
             # that makes a retirement reversible. The infrastructure existed
             # since cycle 13 (facts_undo_log declares op_type='supersede';
             # undo_op restores via INSERT OR REPLACE) but production had ONE
@@ -5755,12 +5755,12 @@ class SemanticMemory:
         # ``WHERE superseded_by IS NULL``. Bump the recall-cache version
         # so the next recall() rebuilds the matrix without ``old_id``.
         self._cache_version += 1
-        # flow.supersession (ws6 control-room): the retirement feed, emitted
+        # flow.supersession: the retirement feed, emitted
         # HERE — the single method all eight .supersede( call sites converge
         # on — so every path (same-source post-gate, correct(), reconcile,
         # chains, MCP, CLI) and every port produce the event. Until tonight
         # retirements were the biggest silent mutation in the product: seven
-        # read APIs said nothing (measured ws5, 2026-08-04). Metadata only,
+        # read APIs said nothing (measured 2026-08-04). Metadata only,
         # never proposition text (Engine Room shows flow, not content).
         # Outside the transaction and best-effort by flow_events contract:
         # observability must never break the write path.
@@ -6155,7 +6155,7 @@ class SemanticMemory:
             # ogni fatto non superseduto, quindi anche i QUARANTINATI — che
             # il prodotto tiene fuori dal recall di default («kept OUT of
             # default recall, so you never get it back as truth»). Sulla
-            # sonda di ws2 il briefing diceva `n_live 2` e i due erano
+            # sonda usata per il controllo il briefing diceva `n_live 2` e i due erano
             # entrambi respinti dal gate.
             #
             # E' la lezione da cui nasce il quartetto dei servibili
@@ -6272,7 +6272,7 @@ class SemanticMemory:
         # full cross-session context» e che la description consiglia
         # «when the user mentions a project by name».
         #
-        # Misurato da ws2 il 2026-08-07 su store isolato: dopo una
+        # Misurato il 2026-08-07 su store isolato: dopo una
         # correzione che supersede i fatti sani, `summary_topic` serviva un
         # payload fatto ESATTAMENTE dei due vanti QUARANTINATI, senza un
         # campo che permettesse di accorgersene. Cioe' il canale con cui un
