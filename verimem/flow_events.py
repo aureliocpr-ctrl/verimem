@@ -100,7 +100,19 @@ def _store_fingerprint() -> str:
             from ._compat import data_dir
             _radice = str(data_dir().resolve())
         except Exception:  # noqa: BLE001 — un tag non rompe un'emissione
-            _radice = os.environ.get("HIPPO_DATA_DIR", "") or "unknown"
+            # ⚠️ IL RIPIEGO LEGGEVA UN ALIAS SOLO (`HIPPO_DATA_DIR`), quindi si
+            # dava una propria idea di quale vince: chi isola lo store con
+            # `ENGRAM_DATA_DIR` o `VERIMEM_DATA_DIR` finiva marcato `unknown`, e
+            # due store diversi ricevevano la STESSA impronta — l'opposto di
+            # cio' che questo campo esiste per dire.
+            # 🔑 La precedenza fra i tre alias e' dichiarata in UN posto solo
+            # (`_compat._env_data_dir`, che segnala anche gli alias discordi);
+            # riscriverla qui e' la seconda copia, e le due copie divergono.
+            try:
+                from ._compat import _env_data_dir
+                _radice = _env_data_dir() or "unknown"
+            except Exception:  # noqa: BLE001 — resta un tag, non una garanzia
+                _radice = "unknown"
         _IMPRONTA = sha256(_radice.encode("utf-8")).hexdigest()[:12]
     return _IMPRONTA
 
