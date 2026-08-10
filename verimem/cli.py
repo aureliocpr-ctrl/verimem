@@ -1051,6 +1051,11 @@ def recall_cmd(
     with_history: bool = typer.Option(False, "--with-history", help=(
         "Each hit carries its transition story: what it said before, from "
         "when, and until when it held.")),
+    history_hops: int = typer.Option(5, "--history-hops", help=(
+        "How many predecessors `--with-history` shows. The default of 5 is a "
+        "cap, not the whole chain: on a 25-record register five entries came "
+        "out with no sign of the other nineteen. Raise it to see further; the "
+        "cut is declared either way.")),
     include_beliefs: bool = typer.Option(False, "--include-beliefs", help=(
         "Also return unverified user assertions. They never win a conflict "
         "and are marked as what they are.")),
@@ -1113,6 +1118,7 @@ def recall_cmd(
                 raise typer.Exit(2) from None
     hits = m.search(query, k=k, as_of=quando, deep=deep,
                     with_history=with_history,
+                    history_hops=history_hops,
                     include_beliefs=include_beliefs,
                     min_relevance=pavimento)
     if not hits:
