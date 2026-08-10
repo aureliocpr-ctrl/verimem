@@ -131,3 +131,55 @@ intenzione. Secondo blocco: sono state misurate **l'assenza dei file** e **l'ass
 menzioni nel gate** — due strade indipendenti che concordano — ma **il gate del wheel non è stato
 eseguito**. L'affermazione «quegli strati non girano per l'utente» è la lettura più probabile, non
 una misura d'esecuzione.
+
+## Le altre cure assenti dal pacchetto hanno un tema: lingua e Windows
+
+> **Perimetro**: ogni assegnazione di modulo `NOME = re.compile(...)` nei `.py` sotto `verimem/`,
+> estratta con `ast` e non con una regex sulle regex, confrontata per `(file, NOME)`.
+
+```
+regex compilate:  wheel 141 · albero 170 · comuni 141
+IDENTICHE 129 · DIVERSE 12 · solo nell'albero 29
+```
+
+129 su 141 identiche: le 12 differenze non sono rumore di fondo.
+
+### Il caso più grave, eseguito
+
+`source_trust.py :: _SOURCE_REF_RE` riconosce un riferimento a file passato come **source**. Le
+due versioni importate dai rispettivi artefatti — ricopiarle a mano misura la trascrizione, non il
+prodotto:
+
+| input | wheel 0.7.0 | albero |
+|---|---|---|
+| `source:C:\Users\...\prova.txt` | **`C`** | `C:\Users\...\prova.txt` |
+| `file:D:/dati/rapporto.md` | **`D`** | `D:/dati/rapporto.md` |
+| `source:relativo/senza/unita.txt` | corretto | corretto |
+| `doc:soloNome.md` | corretto | corretto |
+
+Nel pacchetto pubblicato un percorso Windows assoluto viene troncato alla lettera di unità: la
+causa è `([^:]+)`, che si ferma ai due punti di `C:`. I percorsi relativi funzionano in entrambi,
+quindi il difetto è circoscritto ai percorsi assoluti — sul sistema operativo su cui il prodotto
+viene sviluppato e usato. La cura nell'albero è `([A-Za-z]:[\/]\S*|[^:]+)`.
+
+### Le altre undici
+
+* **desinenze italiane**: `completo` → `complet[oaie]`; `documentato|documentata` →
+  `documentat[oaie]`, più `descritt[oaie]`
+* **spagnolo e portoghese**: `version` → `vers(?:ion\w*|ión\w*|ão|ões|ao|oes)`
+* **italiano temporale con negazione**: aggiunti `alla data del|fino al|fino a|entro il` e i
+  lookbehind `(?<!dopo )(?<!dopo l)`
+* **ordine delle alternative**: `tested|well[- ]tested` → `well[- ]tested|tested`. L'alternanza
+  prende il primo ramo che combacia: con `tested` davanti, su «well-tested» il match era parziale
+* i separatori numerici (`_QUANT_RE`), descritti sopra
+
+Chi installa oggi ha un prodotto che funziona peggio se non scrive in inglese e che tronca i
+percorsi Windows. Non è una regressione: sono cure fatte dopo il 22 luglio e mai pubblicate. È un
+argomento in più perché la 0.7.5 esca — non porta solo il pin e la ripulitura del registro, porta
+l'internazionalizzazione del gate.
+
+**Caveat**: contate solo le `re.compile` assegnate a un nome di modulo; quelle costruite a runtime
+o inline in una chiamata non rientrano, quindi 12 è un limite inferiore. Di quelle 12 ne è stata
+**eseguita una**: le altre sono lette dal `diff`, che dice cosa cambia nel pattern e non cosa
+cambia nell'esito. Le 29 regex presenti solo nell'albero appartengono ai moduli nuovi e non sono
+state esaminate.
