@@ -1,6 +1,6 @@
 """Cycle #138 (2026-05-18) — anti-confabulation gate on write.
 
-Aurelio direttiva 2026-05-18: gate on write. Wraps the L1 family
+Project decision (2026-05-18): the gate acts on WRITE. Wraps the L1 family
 (cycle 128/130/131) + the L3 validate_claim (cycle #70) into a single
 ``run_validation_gate(...)`` helper that the hippo_remember handler
 calls BEFORE persisting a Fact.
@@ -182,9 +182,9 @@ def _graded_admission() -> bool:
 
 
 def _l1_domain_precision() -> bool:
-    """Env ``ENGRAM_L1_DOMAIN_PRECISION`` — **DEFAULT ON** (flipped 2026-07-22 on
-    Aurelio's mandate: the cures ship ENABLED; explicit opt-out restores the
-    legacy always-escalate via "0"/"false"/"off"/"no").
+    """Env ``ENGRAM_L1_DOMAIN_PRECISION`` — **DEFAULT ON** (flipped 2026-07-22 by
+    project decision: cures ship ENABLED; explicit opt-out restores the legacy
+    always-escalate via "0"/"false"/"off"/"no").
 
     When on, the L1 keyword escalation is suppressed PER FACT for propositions
     the subject classifier reads as third-party professional facts (see
@@ -515,7 +515,7 @@ def _puo_essere_una_evoluzione(nuovo: str, vecchio: str) -> bool:
     # Tacere era meglio che sbagliare e restava un servizio in meno: due fatti
     # tedeschi che SONO l'uno l'aggiornamento dell'altro rimanevano separati
     # per sempre. `intfloat/multilingual-e5-base` e' gia' installato e gia' in
-    # uso — sul corpus di Aurelio tutti i 6972 fatti hanno il vettore
+    # uso — sul corpus reale tutti i 6972 fatti hanno il vettore
     # persistito — quindi il confronto e' un coseno, senza liste da scrivere.
     # Soglia MISURATA su dodici coppie in de/pt/pl/tr: vere 0.9349-0.9682,
     # false 0.8121-0.8674. Il fast-path lessicale resta primo: l'italiano e
@@ -645,7 +645,7 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     # passa (`claimant=principal or self._principal`, client.py:293) e si
     # fermava una chiamata prima.
     #
-    # Il costo di non passarlo, misurato da ws5 sul multi-utente: in una
+    # Il costo di non passarlo, misurato sul multi-utente: in una
     # memoria di team il fatto di bruno ARCHIVIA quello di anna, e anna che
     # chiede del proprio magazzino riceve quello di un collega.
     #
@@ -682,7 +682,7 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
         # non sbagliavano la soglia, rispondevano a una domanda le cui due
         # risposte sono entrambe una perdita.
         #
-        # Misurato sul caso di ws5 (due colleghi, due magazzini diversi):
+        # Misurato sul caso reale (due colleghi, due magazzini diversi):
         #     senza l'identita'   anna ARCHIVIATO · bruno vivo        1 vivo su 2
         #     con l'identita'     anna vivo · bruno QUARANTINED       1 vivo su 2
         # La perdita si sposta e non sparisce — lo stesso esito della cura sulla
@@ -714,7 +714,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     """I due fatti nominano record DIVERSI: non c'è un codice in comune.
 
     ⚠️ QUESTO ASSE HA SOSTITUITO QUELLO DELL'AUTORE, e la ragione è una
-    regressione che ws5 ha misurato sulla mia stessa cura, poche ore dopo:
+    regressione misurata sulla cura precedente, poche ore dopo:
 
         caso                        vivi  atteso  esito
         un autore,  due entità        1      2    ✗  il buco storico
@@ -748,7 +748,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     in una notte (i nomi propri via `_CAPS_RE`, l'ancoraggio, l'allargamento di
     `codes_in` alla coda alfabetica).
 
-    La risposta era in casa dal principio, e l'ha trovata ws5 misurando::
+    La risposta era in casa dal principio, ed e' emersa misurando::
 
         «DC-Nord e DC-Sud il prodotto li distingue GIÀ, senza nessun criterio
          lessicale: il grafo li estrae come due entità [proper] separate, nello
@@ -770,7 +770,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     devono coesistere: condividono `GB` e `RAM`, che sono tipi, e non hanno
     nessun proper che li distingua.
 
-    I numeri di ws5 sulle 104 coppie ordinarie del corpus vero::
+    I numeri sulle 104 coppie ordinarie del corpus vero::
 
         42 entità CONDIVISE        -> il veto lascia passare  (il presidio)
         31 DISGIUNTE               -> il veto salva           (il buco chiuso)
@@ -1158,7 +1158,7 @@ def _l1_warnings(
     # due liste di negatori trovate il 2026-08-03. Applicata dove i warning si
     # raccolgono vale per i detector di oggi E per quelli scritti domani.
     #
-    # Trovato da ws5 misurando la cura che avevo appena fatto su L1.15: era
+    # Emerso misurando la cura precedente su L1.15: era
     # giusta e riguardava un detector solo.
     if out:
         out = [w for w in out if not _e_una_smentita(proposition, w)]
@@ -1869,7 +1869,7 @@ def run_validation_gate(
             _judge_of_record = _judge_used
             _threshold_of_record = resolve_write_threshold_for(_judge_used)
             # L4.1 — IL CONTROLLO DETERMINISTICO CHE MANCAVA, e sta QUI perché
-            # qui la fonte c'è. Misurato da ws5, stessa fonte e stesso giudice:
+            # qui la fonte c'è. Misurato a fonte e giudice invariati:
             #
             #   A  inventa un'ENTITÀ (fornitore Verdi)  ammessi 0/4  il moat li ferma
             #   B  DETTAGLIO non detto su entità VERA   ammessi 5/5  con g 97,1–99,5
@@ -1881,10 +1881,10 @@ def run_validation_gate(
             # fornitore inesistente, inventa la durata e l'importo — ed entra
             # col punteggio più alto del sistema.
             #
-            # 🔑 La diagnosi è di ws5: «nessun rilevatore L1 riceve la fonte, il
+            # 🔑 La diagnosi: «nessun rilevatore L1 riceve la fonte, il
             # confronto claim↔fonte esiste in UN SOLO posto, dentro il
             # cross-encoder, che è esattamente quello che sbaglia su questa
-            # classe». E da ws4 il numero che la rende strutturale: il 91,8%
+            # classe». E il numero che la rende strutturale: il 91,8%
             # dei verdetti sta agli estremi (1324 su 1673 sopra 99) — NESSUNA
             # SOGLIA PUÒ SEPARARE, perché il giudice dà lo stesso punteggio a
             # un fatto vero e a un dettaglio inventato.
@@ -1892,7 +1892,7 @@ def run_validation_gate(
             # ⚠️ Non sostituisce il moat e non lo contraddice: si affianca. Il
             # moat dice «la fonte lo implica», questo dice «questo NUMERO nella
             # fonte non c'è» — che è la domanda a cui un modello di entailment
-            # non risponde (ws4: «sa dire questo CONTRADDICE la fonte, non sa
+            # non risponde («sa dire questo CONTRADDICE la fonte, non sa
             # dire questo NON C'È nella fonte»).
             # L4.1-bis — I NUMERI CHE NON ABBIAMO POTUTO MISURARE LO DICONO.
             # Il fatto ENTRA: questo non è un veto, è un avviso, e la differenza
@@ -1902,7 +1902,8 @@ def run_validation_gate(
             # invece di chiuderlo: prima «45.000 euro» contro «45 euro» veniva
             # AMMESSO da un confronto falso, dopo viene ammesso da NESSUN
             # confronto — e per chi legge il fatto le due cose sono identiche.
-            # L'ha imposta ws8 smentendo la prima proposta: «togliere l'accusa
+            # L'ha imposta una verifica indipendente, smentendo la prima
+            # proposta: «togliere l'accusa
             # non distingue le due popolazioni, i falsi negativi nascono
             # convertendo i veri positivi in silenzio».
             from .quantity_match import numeri_ambigui
@@ -1926,7 +1927,7 @@ def run_validation_gate(
                 # sei cifre significative e ARROTONDA, quindi il gate nominava
                 # una cifra che l'utente non aveva scritto — «2607.26760» usciva
                 # come «2607.27», e «1706.03762» come «1706.04». Caso reale
-                # trovato da ws8 usando il prodotto (id=21b5710c46f5), su un
+                # incontrato usando il prodotto (id=21b5710c46f5), su un
                 # claim che citava la propria fonte verbatim.
                 # Per un gate che esiste per fermare i numeri inventati, era il
                 # difetto peggiore possibile: non diceva «non capisco», diceva
@@ -1942,7 +1943,7 @@ def run_validation_gate(
                                "passa la fonte che lo contiene"),
                     "matched_text": _vv,
                 })
-            # L4.2 — L'ALTRA META' DELLO STESSO BUCO, misurata da ws5 sulla cura
+            # L4.2 — L'ALTRA META' DELLO STESSO BUCO, misurata sulla cura
             # qui sopra: «14 valvole» entrava a 100.0 perche' la fonte diceva
             # «14 operai». L4.1 chiede se il VALORE c'e'; questo chiede se
             # parla della STESSA COSA. Cifra riusata: fermati 0/3 prima.
@@ -1968,13 +1969,13 @@ def run_validation_gate(
             # cross-encoder di ENTAILMENT e non ha l'assunzione di mondo
             # chiuso: «il fornitore Verdi non era presente» non e' implicato da
             # un elenco che semplicemente non lo nomina, quindi cade a 1.38
-            # anche quando e' VERA (ws5: 8 su 12 in quattro lingue, con la
+            # anche quando e' VERA (8 su 12 in quattro lingue, con la
             # stessa simmetria — segno che e' il modello, non il lessico).
             # L'unica negazione che passa e' quella la cui assenza la fonte
             # ENUNCIA («l'ordine 91 resta in sospeso» -> ammessa a 90), ed e'
             # per questo che l'avviso indica quella uscita.
             #
-            # ⚠️ Nessuna soglia puo' separare qui: ws4 ha misurato che il 91,8%
+            # ⚠️ Nessuna soglia puo' separare qui: e' misurato che il 91,8%
             # dei verdetti sta agli estremi (1324 su 1673 sopra 99). Il gate
             # non puo' sapere se la negazione sia vera; puo' smettere di far
             # sparire il fatto senza dire che il giudizio non era affidabile.
@@ -2179,7 +2180,7 @@ def run_validation_gate(
     # Sta con `L4-grounding` e non fra i layer L1 perché il verdetto viene dal
     # confronto con la FONTE, non dalle parole del claim.
     # ⚠️ L4.2 NON e' qui, ed e' una scelta MISURATA. Come veto costerebbe il
-    # 20% di falsi positivi sui riformulati veri (banco di ws4, 1/5: «300
+    # 20% di falsi positivi sui riformulati veri (banco lingue, 1/5: «300
     # pallet» contro una fonte che dice «300 bancali» cambia sia il verbo sia
     # il sostantivo, e nessuno dei due lati coincide). Il riformulato E' il
     # caso normale, e una cura che rompe un presidio verde scritto da un altro

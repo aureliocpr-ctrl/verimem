@@ -1,6 +1,6 @@
 """Il controllo DETERMINISTICO claim↔fonte che al gate mancava.
 
-IL DIFETTO CHE LO MOTIVA, misurato da ws5 e riprodotto: stessa fonte, stesso
+IL DIFETTO CHE LO MOTIVA, misurato e riprodotto due volte: stessa fonte, stesso
 giudice, due popolazioni di claim falsi::
 
     A  inventa un'ENTITÀ (fornitore Verdi, ordine 91)   ammessi 0/4   il moat li ferma
@@ -14,7 +14,7 @@ giudice, due popolazioni di claim falsi::
 non esiste, inventa la durata, l'importo, il numero di pezzi. Ed entra col
 punteggio più alto del sistema.
 
-LA DIAGNOSI È DI ws5, e ha un indirizzo::
+LA DIAGNOSI HA UN INDIRIZZO PRECISO::
 
     «Nessun rilevatore L1 riceve la fonte. Il confronto claim↔fonte esiste in
      UN SOLO posto: dentro il cross-encoder, che è esattamente quello che
@@ -23,7 +23,7 @@ LA DIAGNOSI È DI ws5, e ha un indirizzo::
         L4  vede claim + fonte, ma confonde PLAUSIBILE con IMPLICATO
      ⇒ manca un controllo DETERMINISTICO claim↔fonte»
 
-e da ws4 il numero che la rende strutturale: il 91,8% dei verdetti del moat sta
+e il numero che la rende strutturale: il 91,8% dei verdetti del moat sta
 agli estremi (1324 su 1673 sopra 99) — **nessuna soglia può separare**, perché
 il difetto non è dove si taglia: è che il giudice dà lo stesso punteggio a un
 fatto vero e a un dettaglio inventato.
@@ -83,7 +83,7 @@ class ValoreAssente:
 
     ``testo`` E' IL NUMERO COM'E' SCRITTO NEL CLAIM, e non e' un lusso: senza,
     il gate stampava una cifra che l'utente non aveva mai scritto. Il caso, reale
-    e trovato da ws8 usando il prodotto (id=21b5710c46f5)::
+    e incontrato usando il prodotto (id=21b5710c46f5)::
 
         claim  «Il paper Metis arXiv 2607.26760 elenca fra le affiliazioni ...»
         gate   «il claim afferma un valore che la fonte non contiene: 2607.27»
@@ -94,7 +94,7 @@ class ValoreAssente:
 
     🔑 E NON BASTAVA STAMPARE PIU' CIFRE: lo zero finale muore prima, nella
     ``float()`` — ``2607.26760 -> 2607.2676`` — quindi ``:.15g`` darebbe ancora
-    la cifra sbagliata. ws8, che ha scelto questa strada contro l'alternativa di
+    la cifra sbagliata. Questa strada e' stata scelta contro l'alternativa di
     ricostruire il token a valle: «(B) non e' rischiosa, e' IMPOSSIBILE: chiede
     una funzione inversa che non esiste; non puo' RITROVARE il token, puo' solo
     INDOVINARE quale pezzo di testo lo abbia generato» — e il suo referto di
@@ -123,8 +123,8 @@ _DECIMALI_RE = re.compile(r"(?<![\w.])\d+[.,](\d+)")
 def _tolleranza_dichiarata(testo: str, valore: float) -> float:
     """±mezza unità dell'ultima cifra che il claim SCRIVE.
 
-    IL FALSO POSITIVO CHE LA MOTIVA, trovato da ws1 senza cercarlo — al primo
-    fatto vero salvato dopo la cura::
+    IL FALSO POSITIVO CHE LA MOTIVA, incontrato usando il prodotto e non
+    cercandolo — al primo fatto vero salvato dopo la cura::
 
         fonte «durata 443.0485324859619»  ·  claim «443 secondi»
         -> QUARANTINATO, con grounding 100.0
@@ -132,7 +132,7 @@ def _tolleranza_dichiarata(testo: str, valore: float) -> float:
     Troncare un decimale è la forma più comune in cui un umano riporta una
     durata: il falso positivo è ad alta frequenza.
 
-    🔑 IL CRITERIO È DI ws5, e le due alternative le ha fatte cadere lui stesso:
+    🔑 IL CRITERIO, e le due alternative cadute prima di arrivarci:
       * **prefisso letterale** («443» sta dentro «443.048…»): ammette anche
         «44», che è un altro numero. veri 6/10, falsi fermati 8/9.
       * **tolleranza relativa ≤1%**: 19/19 sugli arrotondamenti, poi cade 4
@@ -187,7 +187,7 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
         if v in nella_fonte:
             continue
         # UN ARROTONDAMENTO NON E' UN'INVENZIONE. Confronto STRETTO (`<` e non
-        # `<=`): sulle 38 prove di ws5 l'inclusivo dava 37/38 e lo stretto
+        # `<=`): sulle 38 prove del banco l'inclusivo dava 37/38 e lo stretto
         # 38/38 — al bordo esatto due valori sono distinguibili, e ammetterli
         # sarebbe la stessa indulgenza che ha fatto cadere la tolleranza fissa.
         tol = _tolleranza_dichiarata(proposition, v)

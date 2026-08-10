@@ -39,7 +39,7 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # whitespace to 3 removes the ReDoS while still matching every real form
 # ("5kg", "5 kg", "5-kg", "5 - kg") — real quantities never have >3 spaces.
 # 2026-08-07 — L'UNITA' ERA IN ASCII, e il difetto e' la CLASSE ② con la sua
-# diagnosi gia' scritta quindici righe piu' sotto. Misurato (ws4, gradino 4):
+# diagnosi gia' scritta quindici righe piu' sotto. Misurato (gradino 4):
 #     40 unità -> VUOTA     40 Stück -> VUOTA     40 años -> VUOTA
 #     40 Stueck -> 'stueck'  40 minuti -> 'minuto'          (senza accento: ok)
 # `([A-Za-z]+)` non contiene i diacritici, quindi ogni unita' scritta
@@ -59,7 +59,7 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # diversa, e allargarlo cambierebbe la cattura in tutte le lingue insieme.
 #
 # 2026-08-07 (secondo giro) — I LOOKAROUND ERANO SU `\w`, E NON E' UN DIFETTO
-# CJK. Isolato da ws1 con l'osservazione che lo rende curabile: `\w` comprende
+# CJK. L'osservazione che lo rende curabile: `\w` comprende
 # gli ideogrammi MA ANCHE le lettere latine, quindi il difetto e' lo stesso in
 # ogni lingua — in cinese, giapponese e thai colpisce il 100% delle frasi
 # perche' lo spazio non esiste e ogni numero e' preceduto da un ideogramma.
@@ -70,7 +70,7 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # parola» a «lettera LATINA, cifra, punto o underscore» — gli identificatori
 # sono scritti in ASCII per costruzione e restano protetti, gli ideogrammi
 # smettono di bloccare. E' mirata, non allarga la cattura in tutte le lingue:
-# era l'avvertimento di ws4 e questo e' il modo di rispettarlo.
+# era l'avvertimento in sede di revisione, e questo e' il modo di rispettarlo.
 # 🔑 E RIPARA UN DIFETTO CHE NESSUNO CERCAVA, misurato scrivendo il test:
 #     release 3.4.0   prima -> quantita' 3.4    dopo -> nessuna
 #     il file 2.1.3   prima -> quantita' 2.1    dopo -> nessuna
@@ -84,7 +84,7 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # il difetto che serve escludere e' `3.4` dentro `3.4.0`, cioe' un punto seguito
 # da una CIFRA, non un punto qualsiasi.
 #
-# ⚠️ E ANCHE IL PUNTO DEL LOOKBEHIND VA QUALIFICATO — isolato da ws1, ed e' la
+# ⚠️ E ANCHE IL PUNTO DEL LOOKBEHIND VA QUALIFICATO, ed e' la
 # classe di oggi vista DALL'ALTRO LATO: nel parser «attaccato» faceva catturare
 # di troppo, nel gate fa NON riconoscere e boccia un fatto VERO.
 #     fonte «Rilevazione: grad.3 su scala 5, temp.22 gradi» -> solo (5.0)
@@ -140,7 +140,7 @@ _QUANT_RE = re.compile(
 # abbreviazioni di unita' — `in` (inches), `at` (atmosfere), `a` (ampere). La
 # scelta era gia' stata fatta da chi ha scritto le prime due righe, e la
 # confermo: l'asimmetria del danno la decide. Una falsa unita' CREA conflitti
-# che non esistono (ws1: 28 conflitti su 30 fra topic diversi, unita' `verified`
+# che non esistono (misurato: 28 conflitti su 30 fra topic diversi, unita' `verified`
 # 38022 contro 9622); un'unita' persa fa MANCARE un conflitto. Il primo e' il
 # danno che stiamo pagando, e il modulo dichiara "precision over recall".
 _NON_UNIT_WORDS = frozenset({
@@ -166,7 +166,7 @@ _NON_UNIT_WORDS = frozenset({
     # unita'. Le congiunzioni di CONFRONTO fanno esattamente la stessa cosa
     # («30 and 45» e «30 vs 45» hanno la stessa struttura) e non c'erano —
     # ed e' la forma in cui si scrive una MISURA, cioe' il testo che questo
-    # store contiene di piu': misurato da ws1, «7453 verified contro 553».
+    # store contiene di piu': misurato, «7453 verified contro 553».
     "vs", "versus", "contro", "against", "gegen", "contre", "frente",
     # ── LE PARTICELLE ITALIANE (2026-08-07, secondo giro) ─────────────────
     # Misurate sul corpus vivo DOPO l'allargamento della cattura a Unicode:
@@ -373,7 +373,7 @@ def norm_unit(word: str) -> str:
         return w[:-3] + "y"
     if len(w) > 3 and w.endswith("s"):
         return w[:-1]
-    # IL PLURALE NON E' SOLO INGLESE. Censito da ws4 sul mandato lingue:
+    # IL PLURALE NON E' SOLO INGLESE. Censito sul mandato lingue:
     #     EN  minute -> min      minutes -> min        ok
     #     FR  minute -> min      minutes -> min        ok  <- per caso, parola uguale
     #     ES  minuto -> minuto   minutos -> minuto     ok  <- per caso, plurale in -s
@@ -383,7 +383,7 @@ def norm_unit(word: str) -> str:
     # scelta di nessuno: era il bordo di una regola scritta per una lingua sola.
     # Costo: due fatti sulla stessa grandezza non condividono l'unita', quindi
     # un conflitto vero puo' sfuggire, e `L4.2` (il vicinato) eredita il bordo
-    # perche' sta a valle — «45 Minuten» contro «30 Minuten» e' il caso di ws4.
+    # perche' sta a valle — «45 Minuten» contro «30 Minuten» e' il caso limite.
     #
     # NON UNA LISTA DI PAROLE, che crescerebbe con le lingue del mondo: i
     # plurali si formano con SUFFISSI, e sono una manciata. E' morfologia.
@@ -620,7 +620,7 @@ def _introdotto_da_una_parola_temporale(testo: str, inizio_numero: int) -> bool:
     numero fra 1000 e 2100 che non abbia un'unita' accanto, e nei referti di
     misura quei numeri sono la norma: le fonti sono output di script — tabelle,
     colonne, `chiave=valore` — dove il numero sta a fine riga senza unita'.
-    Costo misurato da ws4: dei quarantinati di agosto con grounding **sopra 90**
+    Costo misurato: dei quarantinati di agosto con grounding **sopra 90**
     (cioe' che il moat APPROVA), 20 su 21 portano L4.1/L4.2, e fra loro c'e' il
     referto che misurava il gate, quarantinato dal gate.
 
@@ -662,11 +662,11 @@ def _introdotto_da_una_parola_temporale(testo: str, inizio_numero: int) -> bool:
 #: rumorose ma oneste. 🔑 **La classe piu' pericolosa e' quella che somiglia di
 #: piu' a una notazione valida.**
 #:
-#: QUANTO E' GRANDE, misurato da ws8 sul corpus reale (semantic.db in mode=ro,
+#: QUANTO E' GRANDE, misurato sul corpus reale (semantic.db in mode=ro,
 #: 9365 proposizioni): la classe pericolosa e' **100 · 1,07%**, quella invisibile
 #: (due o piu' gruppi, «1.500.000» -> `[]`) e' **2 · 0,02%** — CINQUANTA A UNO. E
 #: le righe sono nostre: «102.913 LOC» letto 102.9, «16.300+ test pytest verdi»
-#: letto 16.3 in tre fatti diversi. ⚠️ ws8 ha letto 6 righe su 100, non tutte.
+#: letto 16.3 in tre fatti diversi. ⚠️ campione: 6 righe lette su 100, non tutte.
 #:
 #: IL CRITERIO, misurato 9/9 PRIMA di scrivere la cura. Ambiguo = tre cifre dopo
 #: il punto, parte intera diversa da zero e non piu' lunga di tre cifre. Le due
@@ -685,7 +685,7 @@ def _introdotto_da_una_parola_temporale(testo: str, inizio_numero: int) -> bool:
 #:
 #: COSTO DICHIARATO: `3.141` (pi greco) diventa non misurabile, ed e' corretto —
 #: in un testo italiano quel numero e' tremilacentoquarantuno. Sul corpus di casa
-#: il costo e' zero: nelle righe lette da ws8 nessuna era un decimale legittimo.
+#: il costo e' zero: nelle righe del campione nessuna era un decimale legittimo.
 _PUNTO_AMBIGUO = re.compile(r"(?!0\.)\d{1,3}\.\d{3}$")
 
 
@@ -693,7 +693,8 @@ def numeri_ambigui(text: str) -> list[str]:
     """I numeri del claim che NON abbiamo potuto misurare, come sono scritti.
 
     ⚠️ ESISTE PERCHE' LA META' DELLA CURA NON BASTA, e la seconda meta' l'ha
-    imposta ws8 smentendo la prima proposta: *«togliere l'accusa non distingue
+    imposta da una verifica indipendente che ha smentito la prima proposta:
+    *«togliere l'accusa non distingue
     le due popolazioni: i falsi negativi nascono convertendo i veri positivi in
     silenzio»*. Misurato subito dopo aver scritto `_PUNTO_AMBIGUO`::
 
@@ -727,7 +728,7 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
         if unit_s and _e_una_forma_elisa(claim, m.end(2)):
             unit_s = ""   # «120 l'anno» non contiene litri
         # ⚠️ SI CONFRONTA LA FORMA NORMALIZZATA, NON QUELLA SCRITTA — la cura e'
-        # una riga ed e' di ws4, che ha misurato il difetto sul corpus reale
+        # una riga, e nasce da una misura del difetto sul corpus reale
         # (66 fatti su 5874 guadagnavano un'unita' che non lo era):
         #     'e' in _NON_UNIT_WORDS -> True    norm_unit('e') -> 'e'
         #     'è' in _NON_UNIT_WORDS -> False   norm_unit('è') -> 'e'
@@ -804,7 +805,7 @@ def _senza_diacritici(text: str) -> str:
     dettaglio e il 2026-08-07 e' costato una regressione: avevo scritto una
     SECONDA `_senza_diacritici` in cima al modulo, che abbassava, e Python
     tiene l'ULTIMA definizione. Le mie due chiamate ne usavano una che non
-    conoscevo: «0.709 e alto» era filtrato e «0.709 E alto» no. Isolata da ws4
+    conoscevo: «0.709 e alto» era filtrato e «0.709 E alto» no. Isolata in revisione
     a una riga. ⇒ La cura non e' stata scegliere quale tenere: e' stato
     CANCELLARE il duplicato. Due funzioni con lo stesso nome sono la classe ①
     di questa casa — una copia invece della superficie unica — e la domanda che
@@ -1072,7 +1073,7 @@ _VERSION3_RE = re.compile(r"(?<![\w.])v?(\d+(?:\.\d+){2,})(?!\w)(?!\.\d)")
 # ⚠️ PERCHE' `version` E NON `versi`, che sarebbe piu' corta e coprirebbe anche
 #   il portoghese in un colpo: in italiano «versi» sono le righe di una poesia
 #   («i versi 2.3 sono i piu' belli»). L'omografo decide la forma della radice,
-#   e il portoghese va elencato a parte. E' la lezione di ws4 su «ora».
+#   e il portoghese va elencato a parte. E' la lezione appresa su «ora».
 # ⛔ `release` e `build` NON sono stati estesi: sono prestiti che ogni lingua
 #   tecnica usa in inglese. La parola che le lingue traducono davvero e' *version*.
 _VERSION2_KW_RE = re.compile(
@@ -1113,10 +1114,10 @@ def _nomi_propri(testo: str) -> set[str]:
 
     Due frasi che cominciano con parole diverse avevano «nomi propri disgiunti»
     e la guardia concludeva che parlassero di cose diverse: un veto che scatta
-    sulla punteggiatura. Misurato in indipendenza da ws1 (5120 conflitti su
-    21151, 24,2%) e da ws4 (147 coppie vere, 26,5%) — due stime che convergono.
+    sulla punteggiatura. Misurato in indipendenza (5120 conflitti su
+    21151, 24,2%) e su un secondo campione (147 coppie vere, 26,5%) — due stime che convergono.
 
-    IL CRITERIO E' DI ws4, ed e' raro perche' migliora ENTRAMBE le popolazioni
+    IL CRITERIO e' raro perche' migliora ENTRAMBE le popolazioni
     insieme: sulle 147 coppie vere toglie 22 falsi soggetti E AGGIUNGE 5
     protezioni su coppie con sovrapposizione mediana 3,9% — ritiri quasi
     certamente sbagliati che oggi passano. I casi protetti scendono da 39 a 22.
@@ -1144,7 +1145,7 @@ def _nomi_propri(testo: str) -> set[str]:
     ⚠️ DUE LIMITI APERTI E DICHIARATI, che sono la stessa firma troppo larga:
       · NON VEDE `S-007`, `SRV-12`, `L-45` — cifra e trattino, e nei domini veri
         (macchine, lotti, ticket, server) sono LA norma. Allargare alle cifre
-        farebbe entrare versioni e date come soggetti (controipotesi di ws4).
+        farebbe entrare versioni e date come soggetti (controipotesi sollevata in revisione).
       · CONTA GLI ACRONIMI — `RAM`, `CPU`, `API`. Effetto oggi benigno (uniscono
         due frasi che parlano della stessa cosa) ma la firma e' la stessa.
       · `_NON_UNIT_WORDS` e' piu' ricca in italiano che in inglese, quindi
