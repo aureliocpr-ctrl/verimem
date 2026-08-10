@@ -1,8 +1,8 @@
 """Tagliare un testo senza mutilare i caratteri che si compongono.
 
-Mandato di Aurelio del 2026-08-07: «verimem non deve essere solo in
-italiano, ma deve funzionare IMPECCABILMENTE su tutte le lingue». La parte
-delle SUPERFICI è questa: un accento perso in una UI è un dato perso.
+Requisito di prodotto: verimem non deve funzionare solo in italiano, ma
+in modo impeccabile su tutte le lingue. La parte che riguarda le SUPERFICI
+è questa: un accento perso in una UI è un dato perso.
 
 Misurato prima di scrivere il modulo, tagliando dove la sequenza si
 spezza::

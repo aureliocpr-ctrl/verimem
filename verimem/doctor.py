@@ -169,8 +169,8 @@ def _provenienza_del_codice() -> str:
             h = (g / "HEAD").read_text(encoding="utf-8").strip()
             if h.startswith("ref:"):
                 ref = h.split(":", 1)[1].strip()
-                # il nome INTERO del ramo: `ws6/control-room` e
-                # `ws3/control-room` condividono l'ultimo segmento, ed e'
+                # il nome INTERO del ramo: due rami come `alfa/control-room`
+                # e `beta/control-room` condividono l'ultimo segmento, ed e'
                 # esattamente il tipo di ambiguita' che questo campo esiste
                 # per togliere
                 testa = ref[len("refs/heads/"):] if ref.startswith(
@@ -444,12 +444,13 @@ def run_doctor() -> list[dict[str, Any]]:
                 # osservazione (2026-07-30, un write con fonte non giudicato
                 # su MCP), scritta come proprieta' del prodotto — e la
                 # catena che ne e' seguita, il 2026-08-05, e' il motivo per
-                # cui non si fa: ws5 l'ha letta qui e me l'ha passata come
-                # misura, io l'ho messa in due commit e in un commento, poi
-                # lei l'ha misurata sul canale SDK (4 thread simultanei,
-                # tutti 42.60s, 0 NULL su 4) e l'ha ritirata. Nessuno aveva
-                # inventato niente: il prodotto non distingueva una misura
-                # da un'ipotesi, e chi legge non poteva farlo per lui.
+                # cui non si fa: da qui la frase e' stata ripresa come se
+                # fosse una misura ed e' finita in due commit e in un
+                # commento, finche' qualcuno l'ha misurata davvero sul
+                # canale SDK (4 thread simultanei, tutti 42.60s, 0 NULL su
+                # 4) e l'ha ritirata. Nessuno aveva inventato niente: il
+                # testo non distingueva una misura da un'ipotesi, e chi
+                # legge non poteva farlo al posto suo.
                 #
                 # E le due cause non pesano uguale: sul corpus reale 6445
                 # fatti senza fonte contro 32 con la fonte e senza verdetto.
@@ -500,7 +501,7 @@ def run_doctor() -> list[dict[str, Any]]:
         add("moat-judge", WARN, f"probe failed: {e}")
 
     # -- vettori di un altro modello --------------------------------------------
-    # ws5, 2026-08-07: un backup del corpus non e' piu' interrogabile dopo un
+    # Misurato il 2026-08-07: un backup del corpus non e' piu' interrogabile dopo un
     # cambio di modello — gli snapshot di maggio hanno vettori a 384
     # dimensioni, il motore di oggi ne vuole 768, e la ricerca semantica
     # restituisce ZERO risultati SENZA DIRE PERCHE'. Nessun crash: il
@@ -723,11 +724,11 @@ def run_doctor() -> list[dict[str, Any]]:
         pass
 
     # -- affollamento dei topic -------------------------------------------------
-    # Il 2026-08-09, in otto, abbiamo scoperto A MANO che i fatti scritti su un
-    # topic gia' usato sopravvivono molto meno di quelli su un topic proprio
-    # (94,4% contro 67,5% sul corpus di casa; ws5: 75 fatti su 75 topic distinti
-    # e ZERO ritirati). Nessuno di noi l'ha visto col prodotto: e' uscito da
-    # query SQL scritte a mano.
+    # Il 2026-08-09 e' emerso, da query SQL scritte a mano, che i fatti scritti
+    # su un topic gia' usato sopravvivono molto meno di quelli su un topic
+    # proprio: 94,4% contro 67,5% sul corpus di casa, e in un campione di
+    # controllo 75 fatti su 75 topic distinti hanno dato ZERO ritirati.
+    # Nessuna superficie del prodotto lo mostrava.
     # 🔴 La perdita e' SILENZIOSA per costruzione — un fatto ritirato resta nel
     # DB e sparisce solo dal recall — quindi chi non ha quella stanza perde i
     # fatti e non lo sa. Questo e' il posto dove il prodotto lo dice da solo.

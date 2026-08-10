@@ -39,15 +39,15 @@ from pathlib import Path
 from typing import Any
 
 
-# ⚠️ RISOLUZIONE DEL CONFLITTO (ws7, 2026-08-09) — LA STESSA CURA SCRITTA DUE
-# VOLTE. Su questo ramo c'era `_default_event_log()` (risolveva con
+# ⚠️ RISOLUZIONE DI UN CONFLITTO (2026-08-09) — LA STESSA CURA SCRITTA DUE
+# VOLTE. Su un ramo c'era `_default_event_log()` (risolveva con
 # `_compat.data_dir`), su `main` c'e' `_cartella_dati()` (risolve con
-# `CONFIG.data_dir`). Due istanze hanno curato lo stesso difetto — «il giornale
-# scriveva nella home anche con lo store isolato» — nello stesso giorno e senza
-# saperlo, ed e' la classe ① di questo prodotto: una copia invece della
-# superficie unica.
+# `CONFIG.data_dir`). Lo stesso difetto — «il giornale scriveva nella home
+# anche con lo store isolato» — e' stato curato due volte nello stesso giorno,
+# da due parti che non si vedevano: e' la classe ① di questo prodotto, una
+# copia invece della superficie unica.
 #
-# Non e' una scelta a caso fra due lati: ho VERIFICATO che sono equivalenti.
+# Non e' una scelta a caso fra due lati: e' stato VERIFICATO che sono equivalenti.
 # `config._data_root()` delega a `_compat.data_dir` per il caso senza env e
 # usa la stessa precedenza (HIPPO_DATA_DIR -> ENGRAM_DATA_DIR), e in entrambe
 # le versioni `EVENT_LOG_PATH` si fissa comunque all'IMPORT.
