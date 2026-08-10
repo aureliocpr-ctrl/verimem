@@ -347,7 +347,7 @@ def propose_dream_tasks(
 
 
 def _validate_skill_json(skill_json: Any) -> dict[str, str]:
-    """CYCLE #36 — lenient schema validation (decisa con Aurelio 2026-05-13).
+    """CYCLE #36 — lenient schema validation (decisione di progetto, 2026-05-13).
 
     Required: name, trigger, body — tutti non-empty str.
     Optional: rationale — str (default "" se mancante).
@@ -404,7 +404,7 @@ def submit_dream_result(
     con la sua subscription. Questa funzione SOLO valida + persiste + aggiorna
     l'artifact. Zero LLM call interno.
 
-    Decisioni design (confermate con Aurelio 2026-05-13):
+    Decisioni di progetto (2026-05-13):
     - Lenient validation: required name+trigger+body, extra fields ignored.
     - Reject hard se task già done: idempotency safety.
 

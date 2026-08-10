@@ -1261,7 +1261,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         try:
             # Il pavimento vale su TUTTE le letture, non solo su `explain`:
             # senza, questa rotta serviva un fatto scorrelato come risposta
-            # (ws4, 2026-08-04 — domanda sul logo, risposta sulla riunione).
+            # (misurato 2026-08-04: domanda sul logo, risposta sulla riunione).
             out = correct_read(tenants.get(tenant_id), q, k=k,
                                min_relevance=_gateway_min_relevance())
             from .flow_events import emit_flow as _emit_flow
@@ -1357,7 +1357,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
 
         Fino al 2026-08-04 il cliente HTTP vedeva la quarantena e non i
         ritiri: l'unica mutazione invisibile era la più distruttiva
-        (misurato ws4/ws5: sette API mute, DELETE esposta e restore no).
+        (misurato: sette API mute, DELETE esposta e restore no).
         Ogni riga porta ``reversible`` + ``undo_op_id``: il ritiro si
         annulla con ``POST /v1/undo/{op_id}``. Metadati, mai i testi —
         ``counts=true`` ritorna il quartetto scritti/servibili/ritirati/
@@ -1395,8 +1395,8 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         """Libera un fatto QUARANTINATO (falso positivo del gate): il
         reverse di ciò che /v1/quarantine mostra. Prima di questa rotta
         l'HTTP mostrava i bloccati senza poterci fare nulla — «mostrare
-        senza permettere di agire è peggio che non mostrare» (ws4,
-        2026-08-04: restore/update 404, DELETE 200)."""
+        senza permettere di agire è peggio che non mostrare»
+        (2026-08-04: restore/update 404, DELETE 200)."""
         mem = tenants.get(tenant_id)
         # Il contesto flow va aperto anche qui: senza, l'evento di governo
         # esce con surface="unknown" e SENZA tenant (misurato 2026-08-05 —
