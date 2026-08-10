@@ -9,7 +9,7 @@ B4 NUCLEAR concatenazione 5 elementi → tesi nuova falsificabile:
   ⇒ MESH-MEMORY: distributed semantic recall across multiple AI instances
     WITHOUT exchanging fact-text. Only embedding flow.
 
-TESI FALSIFICABILE NUCLEAR (Aurelio carta bianca 2026-05-23):
+TESI FALSIFICABILE (carta bianca, 2026-05-23):
   Two AI instances with DISTINCT local semantic.db corpora can perform
   joint semantic recall via embedding-only exchange on the vec_bus.
   Each instance publishes its query embedding; peer instances respond

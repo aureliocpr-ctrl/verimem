@@ -5,7 +5,7 @@ including `latency_ms`. This module aggregates the log into a tabular
 report used by:
 
 * the CLI `scripts/analyze_telemetry.py` (human + JSON output),
-* Aurelio's ROI assessment of HippoAgent: which of the 209 MCP tools
+* the ROI assessment of the product: which of the 209 MCP tools
   are actually called, how often, how slow.
 
 The function is pure (no side effects) and tolerant of malformed lines

@@ -3,7 +3,7 @@
 When a fact is written with a grounding ``source``, we may infer which EXISTING facts its
 truth DERIVES FROM and auto-populate ``derives_from`` (the ATMS edge propagate cascades on).
 
-The non-negotiable design constraint (Aurelio: "se sei sicuro e preciso"): HIGH PRECISION,
+The non-negotiable design constraint — only link when sure: HIGH PRECISION,
 low recall. A FALSE derivation edge causes a FALSE transitive retraction — the exact failure
 R26 found when the narrative ``lineage_to`` was mistaken for a logical edge. So we link ONLY
 on STRONG, near-unambiguous evidence and NEVER on fuzzy semantic similarity:

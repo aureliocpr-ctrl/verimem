@@ -8,7 +8,7 @@ Reads the JSONL log written by the UserPromptSubmit hook
     (#firings_with_hits) while keeping #zero_hits below a budget
 
 This is observability only — no model retraining, no auto-apply.
-The suggested values are advisory; the user (Aurelio) decides
+The suggested values are advisory; the operator decides
 whether to update env ENGRAM_BRIEFING_MIN_MATCHED.
 
 Schema of each line in briefing.jsonl (cycle #54):

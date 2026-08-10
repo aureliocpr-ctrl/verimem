@@ -1,8 +1,8 @@
 """Cycle 175 (2026-05-22) — Active Learning Design B: stuck-list cron.
 
 Implements the empirically-motivated active-learning loop the
-``docs/cycle174_active_learning_design.md`` proposed and Aurelio
-greenlit on 2026-05-22.
+``docs/cycle174_active_learning_design.md`` proposed and that was
+approved on 2026-05-22.
 
 Empirical motivation (fact ``d778cce2faa8``, verified on the live
 ``~/.engram/skills/skills_index.db``):

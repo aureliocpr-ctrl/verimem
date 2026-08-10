@@ -6,7 +6,7 @@ callable from any MCP-compatible host (Claude Code, Cursor, etc).
 
 A3 honest: NOT singolarità — engineering integration. Single-file
 MCP server, NO modification to the 10804-LOC engram/mcp_server.py
-monolith. Aurelio can later wire these tools into the main server
+monolith. These tools can later be wired into the main server
 or run this stand-alone via `python -m verimem.engram_syscall_mcp`.
 
 Tools exposed (5):
@@ -219,7 +219,7 @@ def main() -> int:
 
     # MCP server transport path: lazy-imported only if SDK available
     print("[engram-syscall-mcp] MCP SDK available — server mode TBD by "
-          "Aurelio wiring. Tool definitions available via "
+          "Wiring pending. Tool definitions available via "
           "verimem.engram_syscall_mcp.get_tool_definitions()",
           file=sys.stderr)
     print(json.dumps({

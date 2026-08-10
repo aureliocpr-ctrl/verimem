@@ -1,7 +1,7 @@
 """Cycle #136 (2026-05-17) — Windows console pop-up suppression helper.
 
-Aurelio direttiva 2026-05-17: "shell che si aprono e chiudono da sole,
-sono fastidiosissime". Root cause: every ``subprocess.run / Popen`` call
+Direttiva 2026-05-17: le shell che si aprono e chiudono da sole sono
+fastidiosissime per chi guarda lo schermo. Root cause: every ``subprocess.run / Popen`` call
 in ``engram/`` that doesn't pass ``creationflags=CREATE_NO_WINDOW``
 flashes a Windows CMD window on the user's screen. This module exposes
 one tiny helper, ``quiet_popen_kwargs()``, that returns the right

@@ -1,6 +1,6 @@
 """Cycle 2026-05-27 (round 3) — L1.11 production-ready/stable detector.
 
-Aurelio mandate 2026-05-27: prevent "production-ready/stable" claims
+Mandato 2026-05-27: prevent "production-ready/stable" claims
 without coverage/soak/release evidence — claim "business-grade" ad alto
 rischio, spesso abusato dopo solo test locali verdi.
 

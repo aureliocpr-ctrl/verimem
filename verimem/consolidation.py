@@ -17,8 +17,8 @@ OUT-OF-SCOPE cycle 151 (TODO design analysis follow-up):
     Workaround locale: avvolgere auto_consolidate in
     ``threading.Lock`` lato caller per processi singoli.
 
-Aurelio direttiva post-vista frammentazione: 'non dobbiamo frammentare,
-dobbiamo concatenare'. Cycle 142+143 ha aperto coding-failure+learning
+Direttiva emersa guardando la frammentazione: non si deve frammentare,
+si deve concatenare. Cycle 142+143 ha aperto coding-failure+learning
 sides ma il sistema NON sa auto-concatenare i propri fact: ogni cycle
 N aggiunge un fact ``project/hippoagent/cycleN-*`` che resta singleton
 fra i 25+ sotto-topic dello stesso namespace. Frammentazione monotona

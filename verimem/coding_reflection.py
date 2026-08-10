@@ -1,6 +1,6 @@
 """Cycle #142 (2026-05-18 sera) — Coding error reflection loop.
 
-Aurelio direttiva: HippoAgent deve essere infallibile su qualsiasi task —
+Direttiva: il prodotto deve essere infallibile su qualsiasi task —
 non solo pentest, anche coding/learning/anti-confabulazione persistente.
 Cycle 142 è il primo pezzo della copertura coding: registra ogni Edit/
 Bash failure come episode con signature canonica + key_facts atomici,

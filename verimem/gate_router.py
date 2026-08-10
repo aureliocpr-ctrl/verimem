@@ -1,8 +1,7 @@
 """Gate router — separate write-path gates by claim provenance (task #25).
 
-Aurelio mandate 2026-07-10: "i gate devono essere separati... se uno non
-passa fa backpropagation chiedendo: ma questo tocca a me o a qualcuno di
-voi?". F1 (virgin-corpus validation, docs/F1_VIRGIN_CORPUS_FINDINGS.md)
+Mandato 2026-07-10: i gate devono essere separati, e quando uno non passa
+deve poter chiedere agli altri se la competenza è sua o loro. F1 (virgin-corpus validation, docs/F1_VIRGIN_CORPUS_FINDINGS.md)
 root-caused the falls C2/C4 to a single axis: every gate was calibrated for
 AGENT work-memory (short, ASCII, self-asserted status claims) and misfires
 on externally-ingested document content.
@@ -78,7 +77,7 @@ def classify_provenance(
     # SICUREZZA. Qui c'era un ciclo che rendeva `external_content` qualunque
     # claim portasse un ref con prefisso `url:`/`doc:`/`http://`… — e
     # `verified_by` arriva dal BODY della richiesta sul gateway HTTP.
-    # Verificato end-to-end (il caso e' di ws4, ricostruito riga per riga):
+    # Verificato end-to-end, ricostruito riga per riga:
     #     verified_by ['commit:abc123']   quarantined  L1=['L1.10','L1.15']
     #     verified_by ['url:https://…']   **model_claim  L1=NESSUNO**
     #     verified_by ['doc:inventato']   **model_claim  L1=NESSUNO**

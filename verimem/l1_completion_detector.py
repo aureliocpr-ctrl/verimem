@@ -1,8 +1,8 @@
 """Cycle 2026-05-27 (round 5) — L1.13 completion claim detector.
 
-Aurelio mandate "continua sviluppo non finire prima 14:00". Round 5
-triangulation Gemini (f scalable) vs GPT (h deployed) DIVERGENT —
-Claude architectural decision: (e) complete/done/finished come L1.13.
+Round 5: le due proposte esterne divergevano (f «scalable» contro h
+«deployed»); la scelta architetturale è stata (e) complete/done/finished
+come L1.13.
 
 Motivazione Claude: (e) ortogonal a tutti i detector esistenti
 (L1.9 perf, L1.10 works, L1.11 prod-ready, L1.12 security), non

@@ -6,9 +6,9 @@ curated ``facts`` are NARRATION — long, dated, first-person session summaries
 are *time-bound stories presented as atemporal facts*: long + semantically rich,
 they dominate recall, and a later instance reads them as CURRENT TRUTH and acts
 on stale state — the A1 "confabulazione mascherata da continuità" anti-pattern
-Aurelio flagged ("la narrazione ci faceva deragliare e hallucinare").
+Segnalato dall'uso: la narrazione faceva deragliare e allucinare.
 
-Decision (Aurelio, 2026-06-13): **extract the atomic verifiable claims, then
+Decisione (2026-06-13): **extract the atomic verifiable claims, then
 archive the prose** — turn narration into real knowledge instead of discarding
 it. This module is the deterministic, no-LLM FOUNDATION:
 

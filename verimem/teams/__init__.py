@@ -14,8 +14,8 @@ strato mancante:
     su topic ``lab/teams/<name>`` per audit/recall/sopravvivenza a ``/resume``
   • CLI ``engram teams watch <team>`` — tail Rich Live multi-inbox
   • CLI ``engram teams send --to <name> --as <human> --message …`` —
-    Aurelio inietta messaggi nell'inbox di un teammate dall'esterno
-    senza dover possedere una sessione Claude Code
+    si iniettano messaggi nell'inbox di un teammate dall'esterno
+    senza dover possedere una sessione dell'agente
 
 Anti-pattern evitato: NO wrapper su TeamCreate/SendMessage/TeamDelete
 (sono già perfetti). NO subprocess spawn (era cycle 148 swarm, primitiva

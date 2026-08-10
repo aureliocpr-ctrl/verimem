@@ -1,7 +1,7 @@
 """Cycle 2026-05-27 round 13 P0c — transactional rollback for destructive ops.
 
-Aurelio audit gap C5: "no transactional rollback su operazioni distruttive
-(forget/supersede facts)".
+Audit gap C5: nessun rollback transazionale sulle operazioni distruttive
+(forget e supersede dei fatti).
 
 Pattern: every destructive op writes a pre-state snapshot (full row JSON) to
 ``facts_undo_log`` BEFORE mutating the live row. ``undo_op(op_id)`` reads the

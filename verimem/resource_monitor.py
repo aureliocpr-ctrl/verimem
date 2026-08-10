@@ -1,7 +1,7 @@
 """Cycle 2026-05-27 round 13 P2b — CPU/RAM throttle background monitor.
 
-Aurelio audit gap I2: "no resource limits (Claude può consumare 100%
-CPU/RAM senza throttling)".
+Audit gap I2: nessun limite di risorse — un agente può consumare il 100%
+di CPU e RAM senza throttling.
 
 Approach: polling-based monitor over the current process tree (configurable
 PID set). Uses psutil. Two thresholds:

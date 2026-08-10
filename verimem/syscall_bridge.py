@@ -1,7 +1,7 @@
 """Cycle 364 (2026-05-23) — ENGRAM SYSCALL BRIDGE: typed boundary for memory ops.
 
-Aurelio carta bianca extended: "porta engram allo stato superiore, usa
-meta-regole". A3 insight from clp parallel session (loop 359-363):
+Carta bianca estesa: portare il prodotto a uno stato superiore usando le
+meta-regole. A3 insight from clp parallel session (loop 359-363):
 manifest validator catches 3/3 hallucinated commands. Anti-hallucination
 at typed boundary IS the real engineering win (3 cross-LLM FAIL on
 "singolarità" claims accepted).

@@ -1,6 +1,6 @@
 """L1.20 — multilingual semantic self-claim detector (the 8-of-10 hole fix).
 
-Reproduced 2026-07-09 (Aurelio's finding): the L1 keyword family is EN/IT —
+Reproduced 2026-07-09: the L1 keyword family is EN/IT —
 the same unsupported hype claim in es/fr/de/pt/ru/zh/ja/ar sailed through the
 gate CLEAN (8/10 languages). The fix is not a different embedder: cross-lingual
 ranking of the production e5 model is already perfect on our micro-bench

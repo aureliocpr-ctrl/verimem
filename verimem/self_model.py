@@ -1,7 +1,7 @@
 """Self-model — single-row, replace-only, versioned continuity record.
 
 Cycle #67 (2026-05-14). Stores the *current* state of the
-Aurelio+Claude collaboration as a structured JSON document. Read by
+the user+agent collaboration as a structured JSON document. Read by
 the SessionStart hook to give every fresh Claude instance a coherent
 view of "who we are right now" — bridging the gap between persistent
 memory (facts/episodes) and an interpreted self.

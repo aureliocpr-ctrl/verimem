@@ -11,7 +11,7 @@ unresolved set via the MCP tool ``hippo_contradictions_list``.
 
 Why this exists
 ---------------
-Aurelio audit 2026-05-16: HippoAgent has 374 MCP tools but no
+Audit 2026-05-16: the product has 374 MCP tools but no
 background loop that *reasons* about the corpus. Cycle #70 had a
 placeholder for a contradiction daemon that was never implemented;
 this module is the real thing.

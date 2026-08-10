@@ -1,7 +1,7 @@
 """Cycle #118 (2026-05-17) — Memory self-curation autonomous loop V1.
 
-Aurelio direttiva (laboratorio mode): "memoria AI-driven pilotata da te,
-sperimenta". Misura empirica FASE 1 sui 232 contradictions live (cycle
+Direttiva (laboratorio mode): una memoria pilotata dall'AI stessa, da
+sperimentare. Misura empirica FASE 1 sui 232 contradictions live (cycle
 #110.B detector) ha falsificato l'ipotesi originale di auto-supersede
 aggressive: 96% sono AMBIGUOUS (age_delta=0 conf_delta=0), 0% sono
 safe_supersede, 0% newer_wins. Solo 3% sono FP_LIKELY (false positive

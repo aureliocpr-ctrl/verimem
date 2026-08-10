@@ -1,7 +1,7 @@
 """Cycle 381 (2026-05-23) — SOS-COMPENSATING WRITES.
 
-Aurelio carta bianca + sgridata 2026-05-23 23:18: "stai forzando le basi
-della scienza computazionale? stai sfidando te stesso? niente marketing".
+Carta bianca, 2026-05-23: il criterio posto era forzare davvero le basi
+della scienza computazionale, sfidarsi, e niente marketing.
 
 WebSearch+Gemini 2026 literature reviewed. Existing patterns rejected:
 - RAPT (DP embedding) — already exists
