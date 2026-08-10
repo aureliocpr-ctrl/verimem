@@ -22,10 +22,10 @@ app = typer.Typer(no_args_is_help=True, add_completion=False,
 skills_app = typer.Typer(help="Inspect / manage the skill library")
 episodes_app = typer.Typer(help="Inspect episodic memory")
 providers_app = typer.Typer(help="Inspect LLM providers and discover models")
-# Cycle #138-bis (2026-05-18): semantic memory operator CLI cluster.
-# Aurelio gap: there was no CLI surface for facts, only the 60+
-# mcp__hippoagent__hippo_facts_* MCP tools. The facts cluster pairs
-# the most useful tool subset with terminal-friendly output.
+# Semantic memory operator CLI cluster (2026-05-18). The gap it closes: facts
+# had no CLI surface at all, only the 60+ `hippo_facts_*` MCP tools — usable
+# from an agent, unusable from a terminal. This cluster pairs the most useful
+# subset of those tools with terminal-friendly output.
 facts_app = typer.Typer(help="Inspect / manage semantic memory (facts)")
 # Cycle #145 (2026-05-18 sera): auto-consolidation operator surface.
 # Wrapper Typer attorno a verimem.consolidation.{auto_consolidate,
@@ -78,8 +78,8 @@ flow_app = typer.Typer(help="Live flow events feed",
                        no_args_is_help=True)
 app.add_typer(flow_app, name="flow")
 
-#: Il nome della PORTA. Resta il prefisso perche' ws4 ha misurato la copertura
-#: del moat PER PORTA (CLI 99,2% contro MCP 69,5%): sostituirlo con l'attore
+#: Il nome della PORTA. Resta il prefisso perche' la copertura del moat e'
+#: misurata PER PORTA (CLI 99,2% contro MCP 69,5%): sostituirlo con l'attore
 #: spegnerebbe una misura che serve.
 _PORTA = "cli:local"
 
@@ -96,10 +96,10 @@ def _principale(porta: str = _PORTA) -> str:
     ⚠️ PRIMA ERA LA COSTANTE `"cli:local"` RIPETUTA IN UNDICI PUNTI, e non e'
     un'identita': e' il nome della porta. Misurato sullo store il 2026-08-07:
     dei **1814** ritiri, **137 (7,6%)** hanno una riga di audit, e quei 137
-    dicono `cli:local` (111) o `system:heal` (26). Sette istanze che lavorano
-    insieme scrivevano tutte la stessa stringa — il referto di ws4 delle 17:02
-    («*single-agent-per-tenant ... noi siamo sette e il prodotto ci vede come
-    UNO*») letto dal lato della provenienza.
+    dicono `cli:local` (111) o `system:heal` (26). Piu' agenti che lavorano
+    insieme sullo stesso store scrivevano tutti la stessa stringa: il prodotto
+    presume un solo agente per tenant, e chi legge la provenienza li vede come
+    UNO SOLO.
 
     🔗 LA CURA ESISTEVA E NON ERA COLLEGATA. ``VERIMEM_ACTOR`` e' documentato
     in `flow_events.py:19` come «the agent's label ... every one of its events
@@ -1005,6 +1005,40 @@ def remember_cmd(
         console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
 
 
+def _avviso_pavimento(m, hits, query: str) -> None:
+    """Dice che il migliore sta sotto il pavimento MISURATO, se ci sta.
+
+    Estratta da ``recall_cmd`` per essere chiamata anche da ``ask_cmd``: le due
+    porte rispondono alla stessa domanda e una sola avvisava, quindi lo stesso
+    store diceva «forse non lo so» o taceva a seconda del comando digitato.
+    Una COPIA del blocco sarebbe lo stesso difetto un giro dopo."""
+    # SE IL MIGLIORE STA SOTTO IL PAVIMENTO MISURATO, si dice. `recall` è un
+    # top-k e restituisce sempre i più vicini: su uno store di tre fatti di
+    # listino, «quale database usa il cluster di produzione» rende «La prova
+    # gratuita dura 14 giorni» a 0.7375. Il README apre con «when the evidence
+    # isn't there the system abstains instead of guessing», e chi legge quella
+    # riga e usa questo comando riceve una frase scorrelata senza nulla che lo
+    # avverta.
+    #
+    # Il pavimento c'è già ed è MISURATO — `_auto_relevance_floor`, lo stesso
+    # che `ignorance` usa per classificare `no_evidence`. Qui NON cambia il
+    # verdetto e non filtra niente: alzare una soglia sul recall è l'errore
+    # pagato il 30/07 (`max(floor, noise_floor)`, ritirata perché rendeva muta
+    # la mappa). Dice, e basta.
+    try:
+        _pavimento = m._auto_relevance_floor()
+        _best = max(float(h.get("score") or 0.0) for h in hits)
+    except Exception:  # noqa: BLE001 — una riserva non fa cadere una lettura
+        _pavimento = _best = None
+    if (_pavimento and _best is not None and _best < float(_pavimento)):
+        console.print(
+            f"[yellow]⚠[/yellow] [dim]il migliore di questi ({_best:.3f}) sta "
+            f"sotto il pavimento che lo store ha misurato su se stesso "
+            f"({float(_pavimento):.3f}): sono i fatti più vicini alla domanda, "
+            f"non necessariamente una risposta. `verimem ignorance "
+            f"\"{query}\"` dice cosa manca.[/dim]")
+
+
 @app.command("recall")
 def recall_cmd(
     query: str = typer.Argument(..., help="What to remember."),
@@ -1097,31 +1131,7 @@ def recall_cmd(
         else:
             console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
-    # SE IL MIGLIORE STA SOTTO IL PAVIMENTO MISURATO, si dice. `recall` è un
-    # top-k e restituisce sempre i più vicini: su uno store di tre fatti di
-    # listino, «quale database usa il cluster di produzione» rende «La prova
-    # gratuita dura 14 giorni» a 0.7375. Il README apre con «when the evidence
-    # isn't there the system abstains instead of guessing», e chi legge quella
-    # riga e usa questo comando riceve una frase scorrelata senza nulla che lo
-    # avverta.
-    #
-    # Il pavimento c'è già ed è MISURATO — `_auto_relevance_floor`, lo stesso
-    # che `ignorance` usa per classificare `no_evidence`. Qui NON cambia il
-    # verdetto e non filtra niente: alzare una soglia sul recall è l'errore
-    # pagato il 30/07 (`max(floor, noise_floor)`, ritirata perché rendeva muta
-    # la mappa). Dice, e basta.
-    try:
-        _pavimento = m._auto_relevance_floor()
-        _best = max(float(h.get("score") or 0.0) for h in hits)
-    except Exception:  # noqa: BLE001 — una riserva non fa cadere una lettura
-        _pavimento = _best = None
-    if (_pavimento and _best is not None and _best < float(_pavimento)):
-        console.print(
-            f"[yellow]⚠[/yellow] [dim]il migliore di questi ({_best:.3f}) sta "
-            f"sotto il pavimento che lo store ha misurato su se stesso "
-            f"({float(_pavimento):.3f}): sono i fatti più vicini alla domanda, "
-            f"non necessariamente una risposta. `verimem ignorance "
-            f"\"{query}\"` dice cosa manca.[/dim]")
+    _avviso_pavimento(m, hits, query)
     for h in hits:
         console.print(riga_di_recall(h))
         # La storia si chiede e va MOSTRATA: passare il flag e stampare la
@@ -1183,7 +1193,8 @@ def ask_cmd(
     FIND è il default sicuro: una domanda classificata male si comporta
     esattamente come `recall`.
     """
-    rep = _open_memory().ask(query, k=k, topic_prefix=topic or None)
+    m = _open_memory()
+    rep = m.ask(query, k=k, topic_prefix=topic or None)
     intento = rep.get("intent", "find")
     if intento == "count":
         console.print(f"[green]{rep.get('count', 0)}[/green] "
@@ -1215,6 +1226,10 @@ def ask_cmd(
         console.print("[yellow]no facts found[/yellow]")
         raise typer.Exit(0)
     console.print(f"[dim]intento: {intento}[/dim]")
+    # Il ramo `count` è già uscito sopra: lì non ci sono punteggi da
+    # confrontare col pavimento. Qui siamo in FIND, la stessa domanda
+    # che `recall` avvisa.
+    _avviso_pavimento(m, risultati, query)
     for h in risultati:
         console.print(riga_di_recall(h))
 
@@ -1803,7 +1818,7 @@ def mcp():
     # Surface correction: `engram mcp` reaches here THROUGH cli.main, which
     # setdefaults surface="cli" — and mcp_server's own setdefault would then
     # lose. The path-derived "cli" yields to "mcp"; an explicit operator env
-    # (anything else) still wins. This is the exact trap ws4 measured on
+    # (anything else) still wins. This is the exact trap measured on
     # 2026-08-04: one entrypoint chain, two claimed surfaces, zero "mcp"
     # events on a corpus with 438 real MCP write calls.
     if os.environ.get("ENGRAM_FLOW_SURFACE", "").strip() in ("", "cli"):
@@ -3523,18 +3538,17 @@ def facts_anti_confab_apply(
     console.print(f"[green]applied:[/green] {applied}/{len(to_flip)} flipped.")
 
 
-# ---- Cycle #140 (2026-05-18 sera) — engram facts add ---------------------
-# Aurelio direttiva 2026-05-18: in una sessione CLI di pentest sul proprio
-# asset (nexuscyber.com, CVP Anthropic approved), il classifier upstream del
-# client che instrada il `hippo_remember` MCP tool ha BLOCCATO un fact con
-# contenuto 'reconnaissance data on live host'. Il blocco non è nel codice
-# HippoAgent — è la safety policy del wire (Claude Code).
+# ---- `facts add` — la porta di scrittura che non passa dal wire ----------
+# IL CASO CHE LA MOTIVA (2026-05-18): durante un test di sicurezza autorizzato
+# su un asset proprio, il classifier a monte del client che instrada il tool
+# MCP `hippo_remember` ha BLOCCATO un fatto il cui contenuto era materiale di
+# ricognizione su un host vivo. Il blocco non e' nel codice di questo prodotto:
+# e' la safety policy del canale MCP, e vale per qualunque client la applichi.
 #
-# Cycle 140 aggiunge un sub-comando ``engram facts add`` che chiama
-# DIRETTAMENTE ``SemanticMemory.store`` senza passare per il wire MCP / LLM
-# safety. La discipline anti-confab cycle 138 (L1+L1.5+L1.7 + L3) viene
-# RICALCATA in locale, così il gate vale anche per le scritture CLI — ma
-# nessun classifier upstream tocca i bytes.
+# Il sub-comando ``facts add`` chiama DIRETTAMENTE ``SemanticMemory.store``
+# senza passare per il wire MCP. La disciplina anti-confabulazione
+# (L1 + L1.5 + L1.7 + L3) e' RICALCATA in locale, cosi' il gate vale anche per
+# le scritture da CLI — ma nessun classifier a monte tocca i byte.
 #
 # Use case canonico: pentest su asset propri, ricerca su finding tecnici
 # sensibili, import bulk da report Burp/nmap/CSV. Local SQLite owner = GDPR
@@ -3935,7 +3949,8 @@ def facts_archive_narration(
     ~5% of curated facts are dated first-person session summaries ("ENGRAM
     2026-06-13 sera: …", "HippoAgent roadmap 2026-05-11 P0 …") — time-bound
     stories that recall surfaces as CURRENT TRUTH, so a later instance acts on
-    stale state (the confabulation Aurelio flagged). This reports the atomic
+    stale state — the confabulation this command exists to catch. It reports
+    the atomic
     verifiable claims they yield, then — with ``--apply`` — moves the prose into
     a separate, non-lossy ``narrative`` table. Reversible; run with the MCP
     server STOPPED and a fresh backup. Default is a DRY RUN.
@@ -5004,9 +5019,9 @@ def main() -> None:
     the Typer app. Wrapping the app (vs pointing the entry directly at it) is
     what lets the encoding fix run before any command writes output."""
     _force_utf8_stdio()
-    # Surface tagging (ws6 control-room): the CLI was the ONE entrypoint that
-    # never declared itself, so its flow events wore the old "sdk" default —
-    # 97% of the real corpus tagged with a surface nobody chose (ws4,
+    # Surface tagging: the CLI was the ONE entrypoint that never declared
+    # itself, so its flow events wore the old "sdk" default — 97% of the
+    # real corpus tagged with a surface nobody chose (measured
     # 2026-08-04). setdefault: `engram mcp` re-sets "mcp" downstream in
     # mcp_server, and an explicit operator env always wins.
     os.environ.setdefault("ENGRAM_FLOW_SURFACE", "cli")
