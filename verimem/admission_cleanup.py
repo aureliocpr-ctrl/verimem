@@ -258,9 +258,9 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
 
     Measured on the real corpus 2026-08-07, on 717 live quarantined facts:
     209 carry a moat verdict and **158 of those score below 40** — the moat
-    said the source does not support them. Read in the code by ws4; the
-    numbers and the characterization tests
-    (``tests/test_le_tre_condizioni_non_sono_le_tre_fonti.py``) are ws7's.
+    said the source does not support them. The behaviour was first read in
+    the code, then confirmed by the numbers above and by the characterization
+    tests (``tests/test_le_tre_condizioni_non_sono_le_tre_fonti.py``).
 
     The word this docstring opened with — SAFE — is removed deliberately: the
     behaviour is unchanged, the claim was not true, and three of us had
@@ -329,12 +329,13 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
         _ha_punteggio = "grounding_score" in _colonne
         rows = conn.execute(
             "SELECT id, topic, proposition, verified_by, writer_role, "
-            # ⚠️ RISOLUZIONE (ws7, 2026-08-09) — COMPLEMENTARI, si tengono
-            # entrambi: la colonna CONDIZIONALE e' mia (uno store vecchio non
-            # ha `grounding_score` e la SELECT fissa lo fa morire con
-            # `OperationalError` — questo strumento e' di RECUPERO, chi lo
-            # esegue ha spesso proprio uno store vecchio), il dizionario
-            # `grounding` e' di ws1 e serve alla ripartizione `by_moat`.
+            # ⚠️ RISOLUZIONE DI UN CONFLITTO (2026-08-09) — i due lati erano
+            # COMPLEMENTARI e si tengono entrambi: la colonna CONDIZIONALE
+            # serve perche' uno store vecchio non ha `grounding_score` e la
+            # SELECT fissa lo fa morire con `OperationalError` (questo
+            # strumento e' di RECUPERO: chi lo esegue ha spesso proprio uno
+            # store vecchio); il dizionario `grounding` serve alla
+            # ripartizione `by_moat`.
             "source_episodes"
             + (", grounding_score" if _ha_punteggio else "")
             + " FROM facts WHERE status='quarantined' AND superseded_by IS NULL"
@@ -375,7 +376,7 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
                 continue  # telemetry / polluted / flagged — keep quarantined
             # ⚠️ IL QUARTO PRESIDIO, che i tre controlli non guardano.
             # Il verdetto di L4 e' gia' persistito qui e non serve il
-            # giudice per leggerlo. Misurato da ws4 il 2026-08-07: dei
+            # giudice per leggerlo. Misurato il 2026-08-07: dei
             # 172 recuperabili dalle tre condizioni, 138 avevano gs
             # sotto 40 e 17 fra 40 e 70 — 155 su 172, il 90,1%, erano
             # stati BOCCIATI DAL MOAT e sarebbero tornati nel recall
@@ -397,9 +398,10 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
                 continue
             recoverable.append(r["id"])
             # `_gs`, non `r["grounding_score"]`: su uno store senza la colonna
-            # la riga di ws1 rimetterebbe il crash che la tolleranza qui sopra
-            # ha appena tolto. E' la GIUNTURA — due lati entrambi giusti che
-            # combinati rompono — e l'auto-merge non poteva vederla.
+            # quest'ultima forma rimetterebbe il crash che la tolleranza qui
+            # sopra ha appena tolto. E' la GIUNTURA — due lati entrambi giusti
+            # che combinati rompono — e l'auto-merge non poteva vederla:
+            # la riga arrivava FUORI dalla regione di conflitto.
             grounding[r["id"]] = _gs
         # What the JUDGE thinks of what we are about to re-admit. The three
         # conditions never read it, so without this split the caller sees one
@@ -445,7 +447,7 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
             # Un conteggio su un corpus che cambia e' un numero PIU' un
             # istante. Vedi `retirement_log._istante`.
             "measured_at": _istante(),
-            # E COSA NE PENSA IL GIUDICE (ws1): senza questa ripartizione il
+            # E COSA NE PENSA IL GIUDICE: senza questa ripartizione il
             # chiamante vede UN numero che nasconde l'unica distinzione che
             # conta qui — un fatto la cui fonte e' stata controllata e
             # RIFIUTATA non e' lo stesso caso di uno che un falso positivo

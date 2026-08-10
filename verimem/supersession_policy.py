@@ -63,7 +63,7 @@ def canonical_source_of(fact: Any) -> str:
     ``verified_by``); the ``source_signature`` when there is no ``verified_by``;
     the ``"user"`` fallback when the fact declares neither.
 
-    PERCHE' LA SIGNATURE (2026-08-04, da un registro pazienti di ws5).
+    PERCHE' LA SIGNATURE (2026-08-04, da un caso su un registro pazienti).
     «Il paziente Rossi pesa 70 kg» veniva RITIRATO da «Il paziente Bianchi pesa
     95 kg», reason `same-source evolution`. Il banco, una variabile per volta:
 
@@ -150,9 +150,9 @@ def is_same_source(a: Any, b: Any) -> bool:
 
     ⛔ QUI DENTRO C'E' STATO L'ASSE DELL'AUTORE, PER TRE ORE, ED E' RITIRATO.
     L'idea: due `writer_principal` dichiarati e diversi non si ritirano a
-    vicenda — nasceva dal caso di ws5 «in una memoria di team il fatto di bruno
+    vicenda — nasceva dal caso «in una memoria di team il fatto di bruno
     archivia quello di anna». Curava quel caso e ne ROMPEVA uno piu' comune,
-    misurato da ws5 sulla matrice completa poche ore dopo::
+    misurato sulla matrice completa poche ore dopo::
 
         caso                        vivi  atteso  esito
         un autore,  due entita'       1      2    x  il buco storico, non chiuso

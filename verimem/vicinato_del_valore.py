@@ -1,6 +1,6 @@
 """Il numero c'è nella fonte, ma parla d'altro.
 
-IL BUCO DI L4.1, trovato da ws5 verificando la cura in indipendenza::
+IL BUCO DI L4.1, emerso verificando la cura in indipendenza::
 
     «Il fornitore Gatti ha consegnato 14 valvole.»  ->  100.0  AMMESSO
      la fonte dice «14 operai»
@@ -19,13 +19,13 @@ LA DOMANDA CHE HA DECISO LA CURA, misurata prima di scrivere una riga: **nei
 VERI RIFORMULATI il sostantivo che segue il numero cambia o resta?**::
 
                             vicinato UGUALE   DIVERSO
-    inventati, cifra riusata        0            7      <- 4 miei + 3 di ws5
-    veri riformulati              10            1      <- 6 miei + 5 di ws5
+    inventati, cifra riusata        0            7      <- 7 casi, due autori
+    veri riformulati              10            1      <- 11 casi, due autori
 
 Resta, e per una ragione strutturale: **riformulare cambia il VERBO e la
 struttura, non l'UNITÀ DI MISURA**. «prodotti 850 telai» → «realizzato 850
 telai»; euro resta euro, giorni resta giorni. È questo che rende il vicinato un
-segnale più stretto della copertura lessicale di ws4, caduta con 6 falsi
+segnale più stretto della copertura lessicale, caduta con 6 falsi
 positivi su 8 proprio perché guardava TUTTE le parole — che invece cambiano.
 
 ⚠️ IL FALSO POSITIVO, e il perché della seconda metà del criterio. L'unico caso
@@ -40,11 +40,11 @@ coincide — nessuna lista di parole, e la posizione regge in IT/EN/DE/FR/ES.
 
 ⚠️ E PER QUESTO DICHIARA INVECE DI QUARANTINARE — la scelta è misurata, non
 prudenziale. La prima stesura faceva fallire il write, e ha rotto un presidio
-verde scritto da ws4: «A Prato ci sono **300 pallet** stoccati» contro una fonte
+verde scritto in indipendenza: «A Prato ci sono **300 pallet** stoccati» contro una fonte
 che dice «il deposito di Prato **ospita 300 bancali**». Lì cambiano *entrambi*
 i lati — verbo e sostantivo — e il criterio scatta::
 
-    banco di ws4, riformulati VERI   falsi positivi  1/5  (20%)
+    banco lingue, riformulati VERI   falsi positivi  1/5  (20%)
     inventati con cifra riusata      colpiti         7/7
 
 80 punti di separazione, sopra la soglia dei 40 — eppure il caso che sbaglia è
@@ -55,14 +55,14 @@ avviso: dice che il numero è riusato da un altro contesto e lascia decidere.
 📌 La misura che me l'ha nascosto per un'ora vale più del criterio: i sinonimi
 li avevo provati tenendo lo STESSO verbo («ospita 300 pallet» contro «ospita 300
 bancali»), cambiando una cosa sola — e il criterio vinceva perché l'altro lato
-coincideva. ws4, che non sapeva di questo criterio, aveva scritto la
+coincideva. Chi ha scritto il banco, non sapendo di questo criterio, aveva prodotto la
 riformulazione vera, che cambia tutto. **Un banco scritto da chi propone il
 criterio lo misura contro sé stesso**, ed è la trappola già registrata in casa.
 
 ⚠️ LIMITI DICHIARATI:
   * non copre l'INVERSIONE: «sono state respinte 60 casse» contro una fonte che
     dice «spedite 60 casse» ha lo stesso vicinato e passa. Quella è la classe
-    delle negazioni/inversioni, che è un altro buco (ws5, ws4) e non si cura
+    delle negazioni/inversioni, che è un altro buco noto e non si cura
     con un confronto di token.
   * lingue senza spaziatura fra le parole restano scoperte: il vicinato è
     definito sui token alfabetici.

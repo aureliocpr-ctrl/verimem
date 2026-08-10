@@ -207,13 +207,13 @@ def _avvisi_di_lettura(agent, query: str) -> dict:
       · `sotto_il_pavimento` — nessun risultato supera la soglia di rilevanza
         calibrata su questo corpus: la risposta probabilmente NON e' in memoria.
         Senza, l'agente riceve un punteggio e non ha il metro per leggerlo
-        (difetto isolato da ws4: «CLI avvisa, SDK avvisa, MCP tace»).
+        (difetto isolato cosi': «CLI avvisa, SDK avvisa, MCP tace»).
       · `trattenuti` — quanti fatti sull'argomento il gate ha trattenuto. Senza,
         il silenzio di un fatto quarantinato e' indistinguibile dall'assenza.
 
     ⚠️ In una memoria PER AGENTI questa e' la porta che conta di piu': un difetto
-    che qui non arriva e' quello che ws4 chiama «codice che gira e il cui effetto
-    non raggiunge mai l'utente». La cura sull'SDK di un'ora fa, senza questa
+    che qui non arriva e' «codice che gira e il cui effetto non raggiunge mai
+    l'utente». La cura sull'SDK di un'ora prima, senza questa
     riga, sarebbe finita esattamente in quella categoria.
 
     ⚠️ NON restituisce nulla del fatto trattenuto oltre al conteggio: un fatto e'
@@ -229,7 +229,7 @@ def _avvisi_di_lettura(agent, query: str) -> dict:
         # helper ci e' cascata: cercava `agent.memory` e basta. Ma `Memory` (il
         # client) NON ha un attributo `memory`, e nell'agente MCP `a.memory` e'
         # la memoria EPISODICA — un'altra cosa. Risultato: `mem` era sempre
-        # None e la funzione restituiva un dict vuoto SEMPRE. Isolato da ws4 con
+        # None e la funzione restituiva un dict vuoto SEMPRE. Isolato con
         # un A/B: con un oggetto che ha `.memory` tornava 44 trattenuti, con
         # quello vero zero. La cura non e' indovinare l'attributo giusto: e'
         # provare le tre forme che questa casa passa davvero.
@@ -257,9 +257,9 @@ def _avvisi_di_lettura(agent, query: str) -> dict:
     # 2026-08-08 — IL SECONDO AVVISO, e arriva con un numero e un vincolo.
     # `sotto_il_pavimento` dice che nessun risultato supera la soglia di
     # rilevanza calibrata su questo corpus: senza, l'agente riceve un punteggio
-    # e non ha il metro per leggerlo (ws4: «CLI avvisa, SDK avvisa, MCP tace»).
-    # ⚠️ NON e' un taglio, ed e' una scelta misurata da ws5, non una prudenza:
-    # 7 valori su 11 stanno a 0.86+, cioe' dove la sua curva perde risposte VERE.
+    # e non ha il metro per leggerlo («CLI avvisa, SDK avvisa, MCP tace»).
+    # ⚠️ NON e' un taglio, ed e' una scelta MISURATA, non una prudenza:
+    # 7 valori su 11 stanno a 0.86+, cioe' dove quella curva perde risposte VERE.
     # Come veto costerebbe un fatto giusto, come avviso costa un avviso — ed e'
     # la stessa disciplina di `Risultati.sotto_il_pavimento` nell'SDK, dove la
     # nota dice testualmente «i risultati sono qui sotto, non tagliati».
@@ -731,7 +731,7 @@ def _rotate_audit_if_needed(path: Path) -> None:
 
 # Cycle 2026-05-27 round 15 P0.5b — capability matrix runtime gating.
 #
-# Aurelio audit gap (cycle 13 acknowledged): tool_registry.py had a
+# Audit gap (cycle 13, acknowledged): tool_registry.py had a
 # fail-CLOSED default for unknown tools BUT no caller in mcp_server.py
 # ever consulted it — the matrix was dictionary-only documentation.
 # This wire makes every call_tool() invocation pay the cost of a single
@@ -822,8 +822,8 @@ def _capability_gate_mode() -> str:
         destructive without _user_confirmed, unknown without _capability_override.
       - "warn": log audit row but never deny (middle ground for staging).
 
-    Aurelio mandate 2026-05-27 verbatim: "in fase di sviluppo ci serve?
-    a me non piacciono cose incomplete... lavoro bene e liberamente".
+    Deciso il 2026-05-27: in fase di sviluppo il gating non serve, e una
+    infrastruttura incompleta che blocca il lavoro e' peggio di nessuna.
     Default OFF rimuove la frizione del 175/215 tool bloccati durante
     sviluppo single-user trusted, MA preserva l'infrastruttura per il
     flip a ON quando il sistema arriva in produzione multi-tenant.
@@ -3030,7 +3030,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
         t.Tool(
             name="hippo_retirement_log",
             description=(
-                "ws6 control-room 2026-08-04. The retirements, newest first, "
+                "The retirements, newest first, "
                 "as (loser, winner) PAIRS — the quarantine_log equivalent "
                 "for supersessions. Until this tool NO read surface said a "
                 "fact had been retired (seven silent APIs, measured). Each "
@@ -3081,7 +3081,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
         t.Tool(
             name="hippo_forget_with_report",
             description=(
-                "ws6 control-room. DELETE a fact and say WHERE it is still "
+                "DELETE a fact and say WHERE it is still "
                 "readable. The erasure clears every live table (entity graph "
                 "included), but the Auto-Dream worker keeps whole-DB copies: "
                 "rotating ones for a few hours, MANUAL ones forever — one "
@@ -3099,7 +3099,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
         t.Tool(
             name="hippo_tier_inventory",
             description=(
-                "ws6 control-room 2026-08-05. WHERE each tier actually "
+                "WHERE each tier actually "
                 "lives, how many rows it holds, and which nearby files "
                 "carry its name without being it. Born from a measured "
                 "mistake: the five entity tables inside semantic.db are an "
@@ -3211,7 +3211,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "neighbours (cosine on embedding). User reviews and "
                 "applies via direct re-store or hippo_remember overwrite. "
                 "Resolves P5 + topic-pollution metric from cycle #84 "
-                "(86/836 = 10.3% Aurelio corpus). Pure-local."
+                "(86/836 = 10.3% on a real corpus). Pure-local."
             ),
             inputSchema={
                 "type": "object",
@@ -6087,7 +6087,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             description=(
                 "CYCLE #67 (2026-05-14) — read the persistent self-model "
                 "(continuity layer). Returns the current version of the "
-                "Aurelio+Claude collaboration state: current_goals, "
+                "user+agent collaboration state: current_goals, "
                 "open_decisions, active_projects, collab_style, "
                 "recent_focus, notes. Single row, replace-only, versioned. "
                 "Unlike facts: not retrieved by cosine — always-on context. "
@@ -6482,7 +6482,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "contains malformed tool-call markup (e.g. literal "
                 "`</proposition>` or `<parameter name=` tokens that "
                 "leaked from a host parser bug). Empirical baseline "
-                "before this cycle: 110/798 (13.8%) of Aurelio's "
+                "before this cycle: 110/798 (13.8%) of a real "
                 "corpus. Companion sanitizer is wired into the "
                 "hippo_remember + record_episode key_facts paths."
             ),
@@ -7732,7 +7732,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # portare la differenza fra «tier vuoto» e «nessun match», e su
             # un'installazione di fabbrica questo tier resta vuoto PER
             # SEMPRE (il suo ingester e' delegato a un hook che il prodotto
-            # non installa — misurato da ws2 il 2026-08-07). L'agente
+            # non installa — misurato il 2026-08-07). L'agente
             # riceveva `[]` identico nei due casi.
             # Rottura di forma dichiarata: in repo nessuno dipendeva dalla
             # lista (una sola menzione, in un docstring).
@@ -8826,7 +8826,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             #     A non-existent dst is detected at walk time.
             # Cycle #75 (2026-05-15): L1-SYNTAX gate.
             # `hippo_record_episode → key_facts` was the back door that
-            # let 111/798 (13.9%) polluted facts into Aurelio's corpus
+            # let 111/798 (13.9%) polluted facts into a real corpus
             # — the cycle #70 defense lived only inside `hippo_remember`,
             # not here. Apply the same sanitize at this entry point.
             from verimem.syntax_pollution import sanitize_proposition as _sp
@@ -12142,7 +12142,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             )
             _pf = {"topic_prefix": _search_prefix} if _search_prefix else {}
             try:
-                # Multi-word UX (2026-06-13, Aurelio hit []): a phrase LIKE only
+                # Multi-word UX (2026-06-13, hit in real use): a phrase LIKE only
                 # matches the whole query as a contiguous substring, so a natural
                 # multi-word query returned [] even with matching facts. Try AND
                 # across tokens first (precision); if that yields nothing, fall
@@ -12193,10 +12193,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # memoria per agenti e' la porta che conta di piu': l'agente
                 # riceveva il punteggio senza il metro per leggerlo, e il
                 # silenzio di un fatto trattenuto era indistinguibile
-                # dall'assenza. Difetto isolato da ws4 (sotto_il_pavimento) e
-                # mio (trattenuti, che avevo appena aggiunto all'SDK e che senza
-                # questa riga sarebbe stato «codice che gira e non arriva mai
-                # all'utente» — la categoria che ws4 stesso ha censito).
+                # dall'assenza. Due difetti isolati insieme: `sotto_il_pavimento`
+                # e `trattenuti`, quest'ultimo appena aggiunto all'SDK e che
+                # senza questa riga sarebbe stato «codice che gira e non arriva
+                # mai all'utente» — una categoria gia' censita.
                 **_avvisi_di_lettura(a, query),
             })
 
@@ -12569,8 +12569,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # `<parameter name=` (etc.) and would destroy legit content
             # that mentions XML inside backticks. The new sanitizer
             # only cuts at `</proposition>` (the real envelope anchor)
-            # — verified empirically on 111 polluted facts in Aurelio's
-            # corpus 2026-05-15 (110/111 had the anchor; 1 was legit
+            # — verified empirically on 111 polluted facts in a real
+            # corpus, 2026-05-15 (110/111 had the anchor; 1 was legit
             # backtick content that the old defense would have
             # truncated and the new one preserves).
             from verimem.syntax_pollution import sanitize_proposition
@@ -12918,7 +12918,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 )
             )
             # LA PORTA MCP SCRIVEVA SENZA DIRLO: 141 scritture ad agosto e
-            # ZERO eventi (ws4, 2026-08-07; verificato sul log reale: 8247
+            # ZERO eventi (2026-08-07; verificato sul log reale: 8247
             # flow.write, `mcp` zero). Non era un tag mancante — `flow.write`
             # compariva zero volte in questo file, perche' qui si costruisce
             # il Fact e si chiama `semantic.store()` senza passare da
@@ -12934,8 +12934,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 layers=[w.get("layer") for w in (_gate_warnings or [])
                         if isinstance(w, dict) and w.get("layer")],
                 grounding_score=getattr(fact, "grounding_score", None))
-            # 2026-06-02 (P0a — Aurelio "la memoria conserva claim errati →
-            # quasi inutile"): auto-invalidate older facts the anti-confab
+            # 2026-06-02 (P0a — una memoria che conserva claim errati e'
+            # quasi inutile): auto-invalidate older facts the anti-confab
             # gate (L3) flagged as contradicted by THIS just-stored fact.
             # Reuses supersede() — old rows stay in DB for lineage and drop
             # out of the default recall (WHERE superseded_by IS NULL). The
@@ -13336,8 +13336,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "ranking": _ranking_stages(),
                 # 2026-08-08 — gli avvisi escono anche da QUI. Erano su un tool
                 # solo (facts_search), e un agente che usa `recall` invece di
-                # `search` restava al buio: il secondo difetto che ws4 ha visto
-                # accanto al primo. Un segnale che esce da una porta sola non e'
+                # `search` restava al buio: il secondo difetto, trovato accanto
+                # al primo. Un segnale che esce da una porta sola non e'
                 # un segnale, e' una coincidenza.
                 **_avvisi_di_lettura(a, query),
                 "include_legacy": include_legacy,
@@ -13924,7 +13924,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # UN AGENTE che carica il contesto di progetto e' il consumatore
             # principale di questo tool: se la scelta non esce da qui, per
             # lui non esiste. Default invariato — 24 briefing di produzione
-            # su 78 contengono claim respinti dal gate (misura ws2,
+            # su 78 contengono claim respinti dal gate (misurato il
             # 2026-08-07), ma toglierli d'ufficio cambia cosa l'agente
             # riceve, e quella e' una decisione di prodotto.
             include_quarantined = bool(
