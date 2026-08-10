@@ -151,19 +151,43 @@ def test_CONTROLLO_POSITIVO_il_dry_run_non_scrive_NESSUNA_traccia(
         "evento")
 
 
-def test_senza_principal_il_riesame_RIFIUTA_invece_di_riammettere_in_anonimo(
-        mem_con_quarantinati):
-    """Il requisito è «mai silenzioso»: riammettere senza un'identità che ne
-    risponde è esattamente l'operazione silenziosa. `require_principal` esiste
-    già e vale per ogni mutazione di questa famiglia — qui non deve essere
-    aggirabile passando None."""
+def test_senza_principal_esplicito_l_identita_viene_dall_ambiente(
+        mem_con_quarantinati, monkeypatch):
+    """Il requisito è «mai in anonimo», che NON è «mai senza argomento».
+
+    ⚠️ La prima versione di questo test pretendeva un `ValueError` quando il
+    chiamante ometteva `principal`, e quella pretesa ha reso rossi tre test che
+    passavano da sempre (`test_requalify_quarantined.py`): chi invocava la
+    scansione senza argomenti non poteva più farlo. Il contratto giusto è
+    quello che il resto del codice usa già — l'identità si LEGGE dall'ambiente
+    (``VERIMEM_ACTOR``, cli.py:114) e solo in sua assenza si ripiega su
+    un'etichetta esplicita. **La traccia ha bisogno che un'identità ESISTA, non
+    che il chiamante la digiti.**"""
     m = mem_con_quarantinati
-    with pytest.raises(ValueError, match="principal"):
-        requalify_quarantined(str(m.semantic.db_path), dry_run=False,
-                              principal=None)
-    assert _quarantinati(m), (
-        "ha rifiutato di tracciare ma ha promosso lo stesso: il rifiuto deve "
-        "avvenire PRIMA della mutazione")
+    monkeypatch.setenv("VERIMEM_ACTOR", "agente:notturno")
+    res = requalify_quarantined(str(m.semantic.db_path), dry_run=False)
+    assert res["promoted"] > 0, res
+    righe = _audit(m, "restore")
+    assert righe, "promosso senza lasciare una riga di audit"
+    assert righe[-1]["principal"] == "agente:notturno", (
+        f"l'identità dell'ambiente non è arrivata nella traccia: "
+        f"{righe[-1]['principal']!r}")
+
+
+def test_CONTROLLO_POSITIVO_senza_ambiente_la_traccia_ha_comunque_un_autore(
+        mem_con_quarantinati, monkeypatch):
+    """⚠️ IL PRESIDIO che protegge il requisito originale: tolto anche
+    l'ambiente, la riga di audit non può restare senza autore. Se un giorno il
+    ripiego sparisse, questo diventa rosso — ed è l'unico modo di distinguere
+    «legge l'ambiente» da «accetta l'anonimato»."""
+    m = mem_con_quarantinati
+    monkeypatch.delenv("VERIMEM_ACTOR", raising=False)
+    monkeypatch.delenv("ENGRAM_ACTOR", raising=False)
+    res = requalify_quarantined(str(m.semantic.db_path), dry_run=False)
+    assert res["promoted"] > 0, res
+    righe = _audit(m, "restore")
+    assert righe and righe[-1]["principal"], (
+        "riga di audit senza principal: la riammissione è diventata anonima")
 
 
 def test_il_dry_run_dichiara_cosa_ne_pensa_il_GIUDICE(mem_con_quarantinati):

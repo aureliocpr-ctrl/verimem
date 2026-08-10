@@ -24,6 +24,7 @@ Safety contract:
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 
 from ._call_telemetry import is_call_telemetry
@@ -295,10 +296,22 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
     from .mutation_audit import TABLE_SQL, record_mutation, require_principal
     from .prompt_injection import detect_injection
 
-    # Refuse BEFORE touching a row: an anonymous bulk re-admission is exactly
-    # the silent operation this audit exists to prevent, and refusing after the
-    # UPDATE would leave the mutation without its receipt.
+    # The acting identity is resolved BEFORE touching a row: an anonymous bulk
+    # re-admission is exactly the silent operation this audit exists to prevent,
+    # and resolving after the UPDATE would leave the mutation without a receipt.
+    #
+    # It is READ FROM THE ENVIRONMENT like everywhere else in this codebase
+    # (`VERIMEM_ACTOR`, cli.py:114) rather than demanded as an argument. The
+    # first version of this check raised on a missing `principal`, which turned
+    # three passing tests red: callers that had always been allowed to run the
+    # sweep suddenly could not. A gate that changes an existing contract to add
+    # a receipt trades one silent failure for a loud one — and the receipt does
+    # not need the caller to type the identity, only to have one.
     if not dry_run:
+        principal = (principal
+                     or os.environ.get("VERIMEM_ACTOR", "").strip()
+                     or os.environ.get("ENGRAM_ACTOR", "").strip()
+                     or "cli:local")
         require_principal(principal)
 
     conn = sqlite3.connect(db_path)
