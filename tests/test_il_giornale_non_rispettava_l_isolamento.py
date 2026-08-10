@@ -33,13 +33,27 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 _PROGRAMMA = (
     "import sys; sys.path.insert(0, r'{repo}')\n"
     "from verimem.event_jsonl_log import EVENT_LOG_PATH\n"
     "print(str(EVENT_LOG_PATH))\n"
 )
-_REPO = r"C:\Users\aurel\Code\HippoAgent"
+
+#: La radice del repository, RICAVATA da questo file e non scritta a mano.
+#:
+#: ⚠️ QUI C'ERA UN PERCORSO ASSOLUTO DI UNA MACCHINA WINDOWS, e non era un
+#: dettaglio di stile: veniva usato come `cwd` del sottoprocesso e come
+#: `sys.path` del programma figlio, quindi su Linux e macOS i quattro test di
+#: questo file morivano con `FileNotFoundError` PRIMA di misurare qualunque
+#: cosa. Non su un commit sfortunato: su OGNI commit, da quando il file esiste.
+#: Nel run 31340235803 sono quattro dei fallimenti della suite.
+#:
+#: 🔑 Un test che gira solo sulla macchina di chi l'ha scritto non e' un test
+#: piu' debole: e' un test che in CI non ha mai potuto dire nulla — e il suo
+#: rosso permanente si confonde con quello di un difetto vero.
+_REPO = str(Path(__file__).resolve().parents[1])
 
 
 def _percorso_con(env_extra: dict, tmp_path) -> str:
