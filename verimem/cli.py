@@ -3651,8 +3651,8 @@ def facts_add(
 
     Examples::
 
-        engram facts add -p "nexuscyber.com runs nginx 1.24" \\
-                         -t project/nexus/pentest-2026-05-18 \\
+        engram facts add -p "target.example.com runs nginx 1.24" \\
+                         -t project/acme/pentest-2026-05-18 \\
                          --verified-by "bash:curl_HEAD:server_header"
 
         cat findings.jsonl | engram facts add --jsonl-stdin
