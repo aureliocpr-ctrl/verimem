@@ -1,27 +1,27 @@
 """retirement_log — the window on retirements no API ever showed.
 
-Measured 2026-08-04 (ws5, verimem-coord): after a supersession, SEVEN read
-surfaces say nothing — count/get_all/quarantine_log/epistemic_health/history/
-recall/search. The columns have existed since schema v2 (superseded_by/at/
-reason + idx_facts_superseded_by, cycle #78); what was missing is the exposed
-QUERY — the ``quarantine_log`` equivalent for retirements. On Aurelio's real
-corpus that silence hid 1756 retired→killer pairs, including 30 lost handoff
-reports in the very topic the instances used to report the defect.
+Measured 2026-08-04: after a supersession, SEVEN read surfaces say nothing —
+count/get_all/quarantine_log/epistemic_health/history/recall/search. The
+columns have existed since schema v2 (superseded_by/at/reason +
+idx_facts_superseded_by, cycle #78); what was missing is the exposed QUERY —
+the ``quarantine_log`` equivalent for retirements. On the real corpus that
+silence hid 1756 retired→killer pairs, including 30 lost handoff reports in
+the very topic those reports were written to.
 
 Two functions, both read-only:
 
 - :func:`retirement_log` — the pairs (loser, winner) newest first, each with
-  topics, reason, timestamp and — since the helm (ws6 control-room) — the
-  ``undo_op_id`` handle that makes the row actionable, not just visible.
+  topics, reason, timestamp and — since the helm — the ``undo_op_id`` handle
+  that makes the row actionable, not just visible.
   LEFT JOIN on the winner: a winner that was itself retired (the ping-pong
   produces exactly such chains) must not hide the row. Metadata by default;
   ``with_text=True`` adds propositions for the local governance queue, where
-  a human judges the pair (ws5: "un operatore capisce in due secondi").
+  a human judges the pair — with both texts side by side that takes seconds.
 
 - :func:`survivability_counts` — the canonical quartet written/servable/
-  retired/quarantined, together. A fact disappears in TWO ways (ws3's
-  retraction, 2026-08-04 22:32: counting only ``superseded_by IS NULL``
-  made a cure look done while it moved the loss from one name to the other).
+  retired/quarantined, together. A fact disappears in TWO ways (retracted
+  2026-08-04 22:32: counting only ``superseded_by IS NULL`` made a cure look
+  done while it had moved the loss from one name to the other).
   SERVABLE is the canonical metric:
   ``superseded_by IS NULL AND status NOT IN ('quarantined')``.
 """
@@ -34,10 +34,11 @@ from typing import Any
 def _istante() -> float:
     """QUANDO e' stato preso il conteggio. Epoch, non una stringa leggibile.
 
-    Il 2026-08-07 tre istanze hanno misurato la STESSA quantita' — i
-    quarantinati recuperabili — ottenendo `155 su 172` (ws4), `164 su 220`
-    (ws7), `171 su 235` (ws1) e `171 su 236` (ws7, sei minuti dopo ws1), e ne
-    sono seguiti messaggi per riconciliarli. Nessuno dei quattro era sbagliato:
+    Il 2026-08-07 la STESSA quantita' — i quarantinati recuperabili — e'
+    stata misurata quattro volte in poche ore, ottenendo `155 su 172`,
+    `164 su 220`, `171 su 235` e `171 su 236` (l'ultima sei minuti dopo la
+    precedente), e ne sono seguiti scambi per riconciliare i quattro referti.
+    Nessuno dei quattro era sbagliato:
     i quarantinati vivi crescono di **~7,5 all'ora** (45 in sei ore, misurato
     ora per ora) e i quattro numeri sono monotoni crescenti nell'ordine in cui
     sono stati presi.
@@ -60,7 +61,7 @@ __all__ = ["retirement_log", "retirement_breakdown",
 #: prudente — a quel punteggio non si discute che il verdetto fosse positivo.
 _VERDETTO_VERO = 90.0
 
-#: LA CUT DI AMMISSIONE NON È UNA (misurato da ws4 il 2026-08-05): vale 40
+#: LA CUT DI AMMISSIONE NON È UNA (misurato il 2026-08-05): vale 40
 #: (scala claude, il ripiego) oppure 70 (la calibrata del fine-tune), e quale
 #: tocchi dipende da quale giudice era disponibile in quel momento — un 55
 #: entra con la prima e viene trattenuto con la seconda. Qui si usa il taglio
@@ -74,8 +75,8 @@ _VERDETTO_FALSO = 40.0
 _BANDA_CONTESA_ALTA = 70.0
 
 #: The canonical "servable" predicate — the ONE definition of "alive".
-#: Two implicit definitions of the same word cost ws3 three hours on
-#: 2026-08-04; every counter this module exposes states its formula.
+#: Two implicit definitions of the same word cost three hours on 2026-08-04;
+#: every counter this module exposes states its formula.
 SERVABLE_WHERE = "superseded_by IS NULL AND status NOT IN ('quarantined')"
 
 
@@ -138,7 +139,7 @@ def retirement_log(
         # Chi implementa «versionare invece di ritirare» deve poter
         # GUARDARE i 266 ritiri dentro-topic uno per uno, non solo contarli:
         # il versionamento serve a loro, non ai 1538 che attraversano i
-        # topic (misura di ws4, riprodotta 2026-08-07). Il confronto sta in
+        # topic (misurato e riprodotto il 2026-08-07). Il confronto sta in
         # SQL e non a valle perche' filtrare dopo il LIMIT restituirebbe
         # meno righe del richiesto senza dirlo.
         where.append("w.topic IS NOT NULL AND f.topic "
@@ -229,8 +230,8 @@ def retirement_log(
             d["reversible"], d["irreversible_because"] = True, None
         # «RITIRATO IN FAVORE DI X» si legge come «l'informazione vive in
         # X», e sul corpus reale per 1177 righe su 1805 X e' a sua volta
-        # ritirato o quarantinato (ws4, 2026-08-07). La riga non lo diceva:
-        # portava `winner_status` e toccava a chi legge saperlo
+        # ritirato o quarantinato (misurato il 2026-08-07). La riga non lo
+        # diceva: portava `winner_status` e toccava a chi legge saperlo
         # interpretare. `winner_missing` e' un caso a parte — sul corpus
         # reale ce n'e' UNO, un `superseded_by` che punta a un id che non
         # esiste — e assente non e' «non servibile»: e' un dato rotto, e
@@ -270,7 +271,7 @@ def verdict_mismatches(sm, *, limit: int = 50,
 
     - ``judged_true_but_withheld`` — the moat spent ~42 seconds to say "the
       source supports this" and the fact is kept out anyway. Work paid for
-      and data lost; ws5 traced these to reports that DOCUMENT a defect,
+      and data lost; these were traced to reports that DOCUMENT a defect,
       blocked because they contain the defect's own words.
     - ``judged_false_but_served`` — the moat said the source does not
       support it and the memory returns it as its own. The graver one for
@@ -437,7 +438,7 @@ def retirement_breakdown(sm, *, limit: int = 10,
                          since: float | None = None) -> dict[str, Any]:
     """Dove si ADDENSANO i ritiri: per motivo e per giorno.
 
-    Misurato da ws4 il 2026-08-07 sul corpus reale, e ribalta una storia
+    Misurato il 2026-08-07 sul corpus reale, e ribalta una storia
     che circolava da giorni («un terzo della memoria non risponde»)::
 
         per mese  05: 7 · 06: 5 · 07: 1701 · 08: 92
@@ -565,9 +566,9 @@ def retirement_breakdown(sm, *, limit: int = 10,
         # «95.1% housekeeping» e si leggeva come una rassicurazione: il
         # meccanismo e' automatico (vero, l'hook e' stato trovato nel
         # codice) ma NON e' senza perdita. Due misure indipendenti, con
-        # metodi diversi, lo stesso giorno — e ws4 ha ritirato il proprio
-        # «housekeeping funziona come deve», che era un giudizio non
-        # misurato: aveva classificato la causa e dedotto l'innocenza.
+        # metodi diversi, lo stesso giorno — e il precedente «housekeeping
+        # funziona come deve» e' stato ritirato: era un giudizio non
+        # misurato, che classificava la causa e ne deduceva l'innocenza.
         "scope_means": (
             "cross_topic is an OBSERVABLE (two stored strings differ), not a "
             "verdict. On this corpus 1463 of the 1538 cross-topic "
@@ -586,8 +587,8 @@ def retirement_breakdown(sm, *, limit: int = 10,
         # IL LIMITE ACCANTO AL DATO. Un campo che sembra rispondere «chi»
         # senza dire cosa misura e' peggio di un campo assente, e qui i
         # limiti sono due: (1) il principal nomina la PORTA — `cli:local`
-        # e' lo stesso valore per tutte e sei le istanze che lavorano su
-        # questo corpus (ws4, 2026-08-07); (2) sul corpus reale solo 174
+        # e' lo stesso valore per tutti i processi che scrivono su questo
+        # corpus (misurato il 2026-08-07); (2) sul corpus reale solo 174
         # supersessioni su 1805 hanno una riga d'audit, quindi il resto e'
         # «non registrato», che non e' «nessuno».
         "principal_means": (
@@ -734,10 +735,10 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
         _p = {"ora": _time.time(), **({"topic": params[0]} if params else {})}
         row = conn.execute(sql, _p).fetchone()
         # LA RIPARTIZIONE, perche' `judged` da solo e' una MEDIA fra due
-        # mondi. ws1 ha misurato il 2026-08-07 che `clp save` non chiama il
-        # gate — INSERT diretto con `status` fisso — e ws5 ha corretto un
-        # proprio numero per la stessa ragione, chiamandola «la trappola
-        # del denominatore». Sul corpus reale: `model_claim` 3074 servibili
+        # mondi. Il 2026-08-07 e' stato misurato che `clp save` non chiama
+        # il gate — INSERT diretto con `status` fisso — e per la stessa
+        # ragione un referto e' stato corretto: e' la trappola del
+        # DENOMINATORE. Sul corpus reale: `model_claim` 3074 servibili
         # con 1800 verdetti (58.6%), `user_manual` 2493 con ZERO. Sommarli
         # descrive una media che non corrisponde a nessuna delle due, e fa
         # sembrare il gate peggiore di com'e'.

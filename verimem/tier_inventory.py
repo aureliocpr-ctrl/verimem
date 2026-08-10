@@ -1,10 +1,10 @@
 """tier_inventory — dove vive ogni tier, quante righe ha, e quali file
 si spacciano per lui.
 
-Misurato il 2026-08-05: ws4 ha contato le cinque tabelle delle entità
-dentro ``semantic.db``, le ha trovate a zero, e ha concluso «il tier
-entità è vuoto» ritirando una direzione di lavoro. Il tier sta altrove e
-non è vuoto::
+Misurato il 2026-08-05: contando le cinque tabelle delle entità dentro
+``semantic.db`` si trovano a zero, e da lì si conclude «il tier entità è
+vuoto» — conclusione che ha fatto abbandonare una direzione di lavoro. Il
+tier sta altrove e non è vuoto::
 
     ~/.engram/semantic/semantic.db     entities 0        (guscio di migrazione)
     ~/.engram/entity_kg/entity_kg.db   entities 9078 · entity_edges 87387
@@ -112,9 +112,10 @@ def _percorsi(root: Path) -> list[dict[str, Any]]:
         {"tier": "documents", "store": root / "documents" / "documents.db",
          "table": "documents"},
         # I QUATTRO che l'inventario saltava, trovati contando invece che
-        # indovinando (ws4 ha sondato le decisioni il 2026-08-06 e qui non
-        # comparivano). Un inventario che salta un tier e' il difetto che
-        # l'inventario esiste per prevenire — e `transcript.db` pesa 72 MB
+        # indovinando (il 2026-08-06 una sonda sulle decisioni ne ha trovate
+        # che qui non comparivano). Un inventario che salta un tier e' il
+        # difetto che l'inventario esiste per prevenire — e `transcript.db`
+        # pesa 72 MB
         # sul corpus reale, il secondo store per dimensione dopo i fatti.
         # I percorsi sono quelli che apre il prodotto: `decisions.db` e
         # `adjudications.db` stanno ACCANTO a semantic.db (client.py:1240

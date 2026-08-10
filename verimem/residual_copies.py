@@ -1,6 +1,6 @@
 """Where a deleted fact is STILL readable — the honest half of "forgotten".
 
-Measured on a real machine (ws5, 2026-08-05): the Auto-Dream worker copies
+Measured on a real machine (2026-08-05): the Auto-Dream worker copies
 the whole ``semantic.db`` into ``dreams/auto-<ts>/`` about every 35 minutes
 and keeps 3; MANUAL dream dirs (``dream_<ts>``) are never rotated — the one
 from May 12 still holds 60 facts the live store no longer has. ``forget``

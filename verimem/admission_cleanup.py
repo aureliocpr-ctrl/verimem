@@ -322,9 +322,9 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
         # lo esegue ha spesso proprio uno store vecchio. Senza questa
         # tolleranza la chiamata muore con `OperationalError: no such column`
         # invece di lavorare.
-        # ⚠️ Difetto MIO: l'ho introdotto con la cura `f1431950` di stamattina
-        # aggiungendo la colonna alla SELECT, e ho consegnato senza accorgermi
-        # che quattro prove erano rosse.
+        # ⚠️ La tolleranza e' nata da un guasto reale: la cura `f1431950` ha
+        # aggiunto la colonna alla SELECT senza condizione, e su uno store che
+        # non la aveva quattro prove sono diventate rosse.
         _colonne = {r[1] for r in conn.execute("PRAGMA table_info(facts)")}
         _ha_punteggio = "grounding_score" in _colonne
         rows = conn.execute(
