@@ -153,6 +153,59 @@ def _sorgenti_albero(radice: Path) -> list[tuple[str, str]]:
             for p in sorted(radice.rglob("*.py"))]
 
 
+def _stringhe_di(testo: str, dove: str) -> list[tuple[str, str]]:
+    """Le stringhe LETTERALI del codice — dove i percorsi fanno danno davvero.
+
+    ⚠️ PERCHE' ESISTE, e nasce da un mio errore misurabile. La prima versione di
+    questo banco guardava SOLO le docstring di ``verimem/``, e non ha visto la
+    riga che stava rompendo la CI da giorni::
+
+        tests/test_il_giornale_non_rispettava_l_isolamento.py:42
+        _REPO = r"C:\\Users\\<utente>\\Code\\HippoAgent"
+
+    Un percorso di una macchina, usato come percorso REALE: su Linux e macOS
+    non esiste, e quattro test non potevano passare su NESSUN commit.
+    🔑 Il segnale era gia' quello giusto — il banco cerca esattamente
+    ``C:\\Users\\<nome>``. **A mancare era il PERIMETRO**: cercavo dove la
+    riga imbarazza (la pagina pubblica) e non dove ROMPE (il codice eseguito).
+
+    ⚠️ QUI IL BANCO NON DISTINGUE uso da dato di prova, e non finge di farlo:
+    ``test_su_windows_tutti_i_file_erano_la_stessa_fonte.py`` contiene lo stesso
+    percorso come STRINGA DA PARSARE, ed e' legittimo. La lista e' corta
+    abbastanza da leggerla a mano — e un classificatore che non so validare
+    farebbe piu' danno del conteggio grezzo.
+
+    📊 QUANTO E' CORTA, e cosa c'e' dentro (misurato su ``verimem/`` + ``tests/``
+    il 2026-08-10): **21 esiti su 117.401 stringhe letterali**. Raggruppati per
+    nome trovato::
+
+        utente:dev (8) · utente:agent (3)     nomi generici, scritti apposta
+        utente:important · utente:X           dentro comandi DISTRUTTIVI di prova
+                                              (`del /q /s C:\\Users\\important`),
+                                              scritti per collaudare la sandbox
+        utente:aurel (il resto)               il nome vero
+
+    🔑 IL CRITERIO CHE LA MISURA HA RIVELATO, e che non avevo previsto: cio che
+    conta non e' «un nome che non e' un segnaposto» — ``dev``, ``agent``, ``X``
+    e ``important`` non sono nella lista dei segnaposti eppure sono tutti
+    inventati. Cio' che conta e' **IL nome di chi lavora qui**, e quello non si
+    ricava da una lista.
+    ⚠️ Non lo si ricava nemmeno dall'utente corrente: un banco che leggesse
+    ``$USER`` darebbe esiti diversi su macchine diverse, e in CI non troverebbe
+    nulla. Percio' il banco resta grezzo E DICHIARA di esserlo: 21 righe si
+    leggono, 21 righe non si contano.
+    """
+    try:
+        albero = ast.parse(testo)
+    except SyntaxError:
+        return []
+    fuori = []
+    for n in ast.walk(albero):
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            fuori.append((f"{dove}:{n.lineno}", n.value))
+    return fuori
+
+
 def _sorgenti_wheel(versione: str) -> list[tuple[str, str]]:
     d = json.load(urllib.request.urlopen(
         f"https://pypi.org/pypi/verimem/{versione}/json", timeout=30))
@@ -164,21 +217,29 @@ def _sorgenti_wheel(versione: str) -> list[tuple[str, str]]:
 
 
 def main(argv: list[str]) -> int:
+    codice = "--anche-il-codice" in argv
     if "--wheel" in argv:
         versione = argv[argv.index("--wheel") + 1]
         etichetta = f"WHEEL verimem {versione} (PyPI)"
         sorgenti = _sorgenti_wheel(versione)
     else:
-        radice = Path(__file__).resolve().parents[3] / "verimem"
-        etichetta = f"ALBERO {radice}"
-        sorgenti = _sorgenti_albero(radice)
+        base = Path(__file__).resolve().parents[3]
+        cartelle = [base / "verimem"]
+        if codice:
+            cartelle.append(base / "tests")
+        etichetta = " + ".join(str(c) for c in cartelle)
+        sorgenti = [s for c in cartelle if c.is_dir()
+                    for s in _sorgenti_albero(c)]
 
     print("=" * 78)
-    print(f"DATI REALI NEGLI ESEMPI DELLE DOCSTRING — {etichetta}")
+    print(f"DATI REALI NEGLI ESEMPI — {etichetta}")
+    if codice:
+        print("  con --anche-il-codice: anche le STRINGHE LETTERALI e tests/")
     print("=" * 78)
 
-    n_doc = n_esempi = 0
+    n_doc = n_esempi = n_str = 0
     trovati: list[tuple[str, str, list[str]]] = []
+    nel_codice: list[tuple[str, str, list[str]]] = []
     for nome, testo in sorgenti:
         for qualificato, doc in _docstring_di(testo, nome):
             n_doc += 1
@@ -186,6 +247,12 @@ def main(argv: list[str]) -> int:
                 n_esempi += 1
                 if (s := _sospetti(riga)):
                     trovati.append((qualificato, riga.strip(), s))
+        if codice:
+            for dove, valore in _stringhe_di(testo, nome):
+                n_str += 1
+                if (s := [x for x in _sospetti(valore)
+                          if x.startswith("utente:")]):
+                    nel_codice.append((dove, valore, s))
 
     print(f"\n  docstring lette          {n_doc}")
     print(f"  righe che sono un esempio {n_esempi}   <- la popolazione OPPOSTA")
@@ -199,6 +266,18 @@ def main(argv: list[str]) -> int:
         print(f"     -> {', '.join(s)}")
     if not trovati:
         print("  nessun dato reale negli esempi.")
+
+    if codice:
+        # ⚠️ Solo `utente:` — un DOMINIO dentro una stringa di codice e' quasi
+        # sempre un valore di prova o una costante legittima, e segnalarlo qui
+        # annegherebbe l'unico segnale che rompe davvero.
+        print(f"\n  stringhe letterali lette {n_str}   <- la popolazione OPPOSTA")
+        print(f"  con un percorso di una MACCHINA {len(nel_codice)}")
+        print("  ⚠️ il banco NON distingue un percorso USATO da un DATO DI "
+              "PROVA:\n     la lista va letta, non contata.\n")
+        for dove, valore, s in nel_codice:
+            print(f"  🔴 {dove}  -> {', '.join(s)}")
+            print(f"     {valore.splitlines()[0][:88] if valore else ''}")
     print("\n" + "=" * 78)
     print("Non cerca: chiavi, token, IP, id di ticket, telefoni — un segnale "
           "ciascuno,\ne un banco che li mescola non sa piu' quale sta "

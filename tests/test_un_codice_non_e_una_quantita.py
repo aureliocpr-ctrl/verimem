@@ -90,11 +90,24 @@ def test_la_quantita_VERA_nella_stessa_frase_resta(frase, vera):
     "Il report del 2026-08-04 conta 42 righe.",
     "La misura del 2026-08-05 conta 42 righe.",
 ])
-@pytest.mark.xfail(strict=True, reason="IL DIFETTO E' VIVO: la cura e' stata scritta, misurata e RITIRATA il 2026-08-04 perche' chiude il caso (25 schede -> 25 vive invece di 1) ma ROMPE il presidio qui accanto e fa cadere 2 test nella suite del gate. Causa accertata nel docstring; patch in scratchpad/CURA-capienza-uno.patch.")
 def test_una_data_ISO_non_e_una_coppia_di_quantita(frase):
     """`YEAR_RE` esclude già l'anno nudo; il mese e il giorno di una data
     completa no. Due report di due giorni diversi avevano «conta 4» e «conta 5»
-    — stessa unità, valori diversi — e sono la cosa che scriviamo più spesso."""
+    — stessa unità, valori diversi — e sono la cosa che scriviamo più spesso.
+
+    ✅ CURATO il 2026-08-10 da `_DATA_RE` in `quantity_match`, e il marcatore
+    `xfail(strict)` che stava qui è caduto da solo: due `XPASS(strict)` nella
+    stessa esecuzione in cui la cura è entrata.
+
+    🔑 PERCHÉ QUESTA VOLTA NON HA ROTTO IL PRESIDIO, che è la ragione per cui la
+    cura del 2026-08-04 era stata ritirata: quella trattava identificatori e
+    date con un criterio SOLO — entrambi hanno la forma «qualcosa-numero» — e
+    togliendo `S-001` si portava via anche l'`11` della misura vera nella stessa
+    frase. Separando le due classi, la metà delle DATE si chiude senza toccare
+    l'altra: `test_la_quantita_VERA_nella_stessa_frase_resta` resta verde e i
+    due xfail sugli identificatori restano armati, perché quel difetto è vivo.
+    ⇒ Una cura che cadeva per essere troppo larga non era sbagliata: era
+    indivisa."""
     assert _valori(frase) == {42.0}, (
         f"«{frase}» -> {sorted(extract_quantities(frase))}")
 

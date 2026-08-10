@@ -100,7 +100,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         r"owns?|owned|bought|adopted|hosts?|hosted|joined)\s+"
         r"((?:[a-z][\wà-ÿ-]*\s+){0,3}[a-z][\wà-ÿ-]*)"
         r"(?=[,.;:]|\s+(?:in|on|at|to|for|with|by|from)\b|$)")),
-    # Capitalized proper noun runs: Claude Code, Aurelio, Engram
+    # Capitalized proper noun runs: Claude Code, Engram
     ("proper", re.compile(
         r"\b[A-Z][a-zà-ÿ]+(?:\s+[A-Z][a-zà-ÿ]+){0,3}\b")),
 ]

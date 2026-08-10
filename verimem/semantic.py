@@ -6180,7 +6180,7 @@ class SemanticMemory:
             if not include_superseded:
                 sql += " AND superseded_by IS NULL"
             if not include_quarantined:
-                # LA SCELTA ESISTE, IL DEFAULT NO. ws2«Vega» ha misurato che
+                # LA SCELTA ESISTE, IL DEFAULT NO. E' stato misurato che
                 # 24 briefing di produzione su 78 (e 25 su 50 su omnex)
                 # contengono claim che il gate ha RESPINTO, serviti come
                 # fatti di progetto. Un'ora fa ho curato la meta' visibile

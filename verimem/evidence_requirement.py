@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import os
 
-from .quantity_match import YEAR_RE, extract_quantities
+from .quantity_match import YEAR_RE, extract_quantities, numeri_ambigui
 
 _TRUTHY = {"1", "true", "yes", "on"}
 
@@ -37,9 +37,27 @@ def is_specific_claim(proposition: str) -> bool:
 
     Generic claims ("the system is fast") have nothing concrete to be wrong
     about, so they are NOT specific and are left untouched.
+
+    ⚠️ UN NUMERO CHE NON SI PUO' MISURARE RESTA UN'AFFERMAZIONE SPECIFICA, ed e'
+    la seconda strada qui sotto. «Lo stipendio annuo e' 45.000 euro» risultava
+    GENERICO — nella stessa categoria di «il sistema e' veloce», cioe' fra le
+    frasi che non hanno niente di concreto su cui poter sbagliare — perche'
+    ``extract_quantities`` tace sui numeri ambigui (il punto e' separatore
+    decimale in una lingua e delle migliaia in un'altra, e le due letture
+    differiscono di mille volte). Misurato prima della cura::
+
+        False  <- Lo stipendio annuo e' 45.000 euro.
+        True   <- Lo stipendio annuo e' 45000 euro.
+
+    🔑 Il silenzio dell'estrattore vuol dire «non so QUANTO», non «non c'e'
+    niente da verificare» — e questa funzione chiede la seconda cosa. Chi
+    scrive un numero all'europea sfuggiva al requisito di evidenza proprio
+    perche' il suo numero era meno verificabile, non piu'.
     """
     text = proposition or ""
     if extract_quantities(text):
+        return True
+    if numeri_ambigui(text):
         return True
     if YEAR_RE.search(text):
         return True

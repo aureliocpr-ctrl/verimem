@@ -579,7 +579,7 @@ class SkillLibrary:
 
         self.store(s)
         emit("fitness_updated", skill_id=s.id, fitness=s.fitness_mean, trials=s.trials)
-        # Flow channel (ws6 2026-08-05, camera dark SKILLS): the skill tier
+        # Flow channel (2026-08-05, dark room SKILLS): the skill tier
         # mutates fitness on every trial and none of it reached the live
         # surfaces — they keep only "flow." names. Measured on the real
         # corpus: 369 skills, 281 with ZERO trials, last update 2026-05-15.

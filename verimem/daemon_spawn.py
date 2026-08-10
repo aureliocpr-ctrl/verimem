@@ -55,7 +55,7 @@ if _IS_WINDOWS:  # pragma: no cover - platform branch
     # combine: detached process group (so Ctrl-C in parent doesn't
     # propagate) AND no console window allocated.
     #
-    # Aurelio diagnosis 2026-05-17 sera: shell che si aprono e chiudono
+    # Diagnosi del 2026-05-17: shell che si aprono e chiudono
     # da sole. Empirical evidence: ~/.engram/dreams/ has 18 auto-dream
     # dirs from 2026-05-16 to 2026-05-17 — every SessionStart hook spawn
     # was flashing a CMD window.

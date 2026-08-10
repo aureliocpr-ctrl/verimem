@@ -31,7 +31,7 @@ TAG_NAMES: tuple[str, ...] = (
 
 # Charter handed to each teammate. The text is deliberately compact and
 # anti-confab heavy — the cycle #157 memory shows teammates degrade
-# fast when prompts are vague. Aurelio's regole v2 (A1/A2/A3) baked in.
+# fast when prompts are vague. The house rules (A1/A2/A3) are baked in.
 CHARTER_TEMPLATE: str = """\
 # Real-Collaboration Charter (cycle 159)
 

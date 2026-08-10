@@ -106,7 +106,7 @@ _MAX_POOL_FACTS = 200   # cap the word pool: enough diversity, bounded cost
 _MAX_WORDS_PER_FACT = 2
 
 #: Oltre questa lunghezza un "token" non è una parola: è un pezzo di frase che
-#: nessuno spazio ha separato. Misurato il 2026-08-04 su segnalazione di ws5,
+#: nessuno spazio ha separato. Misurato il 2026-08-04 su segnalazione,
 #: che provava il prodotto in cinese, giapponese e thai: `text.split()` su una
 #: scrittura senza spazi restituisce **un token solo, la frase intera**, quindi
 #: il cap di due parole per fatto ne concedeva due… di cui una era tutto il

@@ -677,7 +677,7 @@ def scan_corpus(
     # da sola ogni 4 ore (5 fatti ritirati nella passata delle 23:07 del
     # 2026-08-05). Finora cresceva in silenzio — per accorgersene serviva
     # una query fatta apposta da qualcuno che gia' sospettava, ed e' cosi'
-    # che ws4 ha scoperto 2526 conflitti registrati campionandone 25 senza
+    # che sono emersi 2526 conflitti registrati campionandone 25 senza
     # trovarne una vera. `already_known` viaggia accanto ai nuovi perche'
     # una scansione che ne ritrova 2495 e ne aggiunge 31 sta facendo una
     # cosa diversa da una che ne trova 31 su un corpus pulito.

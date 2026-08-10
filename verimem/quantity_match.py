@@ -755,13 +755,78 @@ def numeri_ambigui(text: str) -> list[str]:
     return fuori
 
 
+# ---------------------------------------------------------------------------
+# LE DATE NON SONO QUANTITA' — e la copertura c'era gia', a meta'.
+#
+# ⚠️ IL DIFETTO, su due fatti VERI del corpus (8728c271428f «10 agosto» e
+# 45c3e17bd43f «31 luglio»): un claim che scrive la data ASSOLUTA contro una
+# fonte che scrive «oggi» viene accusato di affermare un valore che la fonte
+# non contiene. A/B nella stessa esecuzione, sul claim vero e sulla sua fonte::
+#
+#     claim «…dalle 16:00 del 10 agosto…»  ->  accusato ('10', 'agosto')
+#     claim «…dalle 16:00 di oggi…»        ->  []
+#
+# 🔑 Il gate puniva ESATTAMENTE la pratica che una memoria persistente esige:
+# risolvere le date relative in assolute. «Oggi», dentro un fatto che vivra'
+# mesi, e' inutile o falso — e chi lo scriveva bene veniva accusato di inventare.
+#
+# COSA C'ERA GIA': `YEAR_RE` con `_introdotto_da_una_parola_temporale` scarta
+# l'anno NUDO, e il docstring lo dichiarava — «le date hanno un percorso loro».
+# Ma dentro una data l'anno non e' nudo, e infatti «10/08/2026» faceva accusare
+# anche il 2026. Non mancava un criterio: mancava il RESTO di quello che c'era.
+#
+# ⚖️ LE FORME NUMERICHE SONO POSIZIONALI e valgono in ogni lingua; solo quelle
+# estese hanno bisogno di un vocabolario — la classe che in questa casa cade
+# sempre (liste monolingue in un prodotto mondiale), e per questo i mesi
+# coprono cinque lingue invece del solo italiano.
+_MESI = (
+    "gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre"
+    "|january|february|march|april|june|july|august|september|october|november|december"
+    "|janvier|fevrier|février|mars|avril|juin|juillet|aout|août|decembre|décembre"
+    "|enero|febrero|abril|mayo|junio|julio|septiembre|octubre|noviembre|diciembre"
+    "|januar|februar|marz|märz|juni|juli|oktober|dezember"
+)
+# ⛔ FUORI DELIBERATAMENTE, e il costo e' dichiarato invece che scoperto dopo:
+#   * «may» (EN) e «mai» (FR/DE) sono anche un verbo modale e un avverbio —
+#     «10 may be enough» perderebbe il 10. ⇒ «10 May» non e' riconosciuto.
+#   * le ABBREVIAZIONI (jan, mar, dec…) sono parole di tre lettere che in altre
+#     lingue significano altro. ⇒ «10 Aug» non e' riconosciuto.
+# 🔑 Il criterio della scelta: qui un falso positivo CANCELLA un numero vero,
+#   un falso negativo lascia le cose come stanno oggi. Fra i due si prende
+#   quello che non toglie niente a nessuno — «precision over recall», che e' il
+#   contratto dichiarato di questo modulo.
+_DATA_RE = re.compile(
+    r"\b\d{4}-\d{1,2}-\d{1,2}\b"                       # ISO   2026-08-10
+    r"|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b"              # 10/08/2026 · 10-08-26
+    r"|\b\d{1,2}\s*(?:°|º)?\s*(?:" + _MESI + r")\b"    # 10 agosto · 1° marzo
+    r"|\b(?:" + _MESI + r")\s+\d{1,2}\b",              # August 10
+    re.IGNORECASE)
+
+
+def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
+    """Gli intervalli occupati da una data, per saltarli IN BLOCCO.
+
+    Si ragiona sugli SPAN e non sul singolo numero perche' una data ne contiene
+    piu' d'uno: «2026-08-10» produce 08 e 10, «10/08/2026» anche il 2026. Un
+    controllo per-numero ne prenderebbe uno e lascerebbe gli altri — che e'
+    esattamente il modo in cui la copertura degli anni era rimasta a meta', e
+    ripeterlo qui sarebbe rifare lo stesso errore con la sua diagnosi in mano.
+    """
+    return [(m.start(), m.end()) for m in _DATA_RE.finditer(testo)]
+
+
 def extract_quantities(text: str) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
     (provenance after an evidence marker is not measured); bare YEARS excluded."""
     out: set[tuple[str, float]] = set()
     claim = claim_span(text)
+    # Gli span UNA VOLTA per testo e non per numero: il costo e' lineare sul
+    # testo invece che sul prodotto testo x numeri.
+    _date = _spans_delle_date(claim)
     for m in _QUANT_RE.finditer(claim):
         num_s, unit_s = m.group(1), (m.group(2) or "")
+        if any(a <= m.start(1) < b for a, b in _date):
+            continue  # il numero fa parte di una DATA — vedi `_DATA_RE`
         if unit_s and _e_una_forma_elisa(claim, m.end(2)):
             unit_s = ""   # «120 l'anno» non contiene litri
         # ⚠️ SI CONFRONTA LA FORMA NORMALIZZATA, NON QUELLA SCRITTA — la cura e'

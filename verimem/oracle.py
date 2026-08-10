@@ -20,7 +20,7 @@ def _tokens(text: str) -> set[str]:
 
     Misurato il 2026-08-01 sul corpus vero: alla domanda «quale versione di
     Kubernetes usa il cluster OnlyPaws» l'oracolo citava «il colore preferito di
-    Aurelio e' il blu», perche'::
+    un cliente e' il blu», perche'::
 
         comuni : ['di', 'il']
         jaccard: 0.1538   >=  min_sim 0.1

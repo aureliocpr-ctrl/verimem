@@ -712,7 +712,7 @@ class EpisodicMemory:
         emit("episode_stored", episode_id=episode.id, outcome=episode.outcome,
              task_id=episode.task_id, steps=episode.num_steps,
              salience=round(salience, 3))
-        # …and on the flow channel (ws6 2026-08-05, camera dark EPISODES).
+        # …and on the flow channel (2026-08-05, dark room EPISODES).
         # The event above has existed for cycles but the live surfaces keep
         # only names starting with "flow." (gateway.py:511), so the episodic
         # tier was invisible in the Engine Room while it kept writing —

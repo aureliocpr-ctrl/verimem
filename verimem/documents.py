@@ -118,7 +118,7 @@ class DocumentStore:
         mesi prima.
 
         Nessuno lo calcolava e in tutto il repo lo passava un solo script
-        (``scripts/ingest_md.py``): sullo store di Aurelio, 12 documenti su 42
+        (``scripts/ingest_md.py``): su uno store reale, 12 documenti su 42
         erano a zero — e su quei dodici nemmeno ``meta.indexed_at`` era
         valorizzato, perche' quello si scrive solo quando arriva un
         ``principal``. Il dato non esisteva da nessun'altra parte.

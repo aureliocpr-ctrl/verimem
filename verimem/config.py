@@ -135,7 +135,7 @@ class Config:
     # ----- LLM -----
     anthropic_api_key: str = field(default_factory=lambda: os.environ.get("ANTHROPIC_API_KEY", ""))
     model_executor: str = "claude-haiku-4-5-20251001"  # cheap, fast, used for ReAct loop
-    # CYCLE #40 — direttiva Aurelio 2026-05-13 (fact c365fec4b42e, preferences/aurelio):
+    # CYCLE #40 — direttiva del 2026-05-13 (fact c365fec4b42e):
     # default modello dreamer/critic = Claude Opus 4.7 (1M context).
     # Sonnet valido solo se esplicitamente richiesto dall'utente.
     model_dreamer: str = "claude-opus-4-7"  # smarter, used for skill synthesis

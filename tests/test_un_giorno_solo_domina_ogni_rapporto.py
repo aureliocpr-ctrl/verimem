@@ -48,7 +48,16 @@ def sm(tmp_path, monkeypatch):
         monkeypatch.setenv(k, str(d))
     monkeypatch.setenv("HIPPO_OFFLINE", "1")
     from verimem.semantic import Fact, SemanticMemory
-    memoria = SemanticMemory()
+    # ⚠️ PERCORSO ESPLICITO, non `SemanticMemory()`. Impostare le variabili
+    # d'ambiente NON basta: `SemanticMemory()` senza argomento risolve da una
+    # configurazione gia' risolta, e dentro una sessione pytest intera quella
+    # punta alla cartella CONDIVISA del run — dove finiscono i ritiri di ogni
+    # altro test. Il banco allora conta i ritiri delle ALTRE e le asserzioni
+    # sui totali (2 e 12) diventano 72 e 133.
+    # 🔑 Il difetto e' invisibile eseguendo QUESTO file da solo: da solo la
+    # cartella condivisa e' vuota. Serviva la suite intera per vederlo, ed e'
+    # uscito al primo verdetto CI dopo 17,7 ore.
+    memoria = SemanticMemory(db_path=d / "semantic" / "semantic.db")
     ora = time.time()
     vecchio = ora - 30 * 86400          # il giorno dell'evento di massa
     # ⚠️ PRIMA tutte le scritture del prodotto, POI le mie in SQL. Tenendo

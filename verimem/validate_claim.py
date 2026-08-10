@@ -212,7 +212,7 @@ def similarita_semantica(a: str, b: str) -> float:
 
     Usa l'embedder che il prodotto ha gia' installato e gia' in uso —
     `intfloat/multilingual-e5-base`, cento lingue, 768 dimensioni — invece di
-    una lista di parole scritta a mano per quattro. Sul corpus di Aurelio tutti
+    una lista di parole scritta a mano per quattro. Su un corpus reale tutti
     i 6972 fatti hanno gia' il loro vettore persistito in tabella: qui si
     ricalcola perche' la funzione riceve due stringhe e non due fatti, ed e'
     il prezzo del fallback, pagato solo dove le liste non arrivano.

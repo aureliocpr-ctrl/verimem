@@ -98,7 +98,7 @@ def promote_chunk_to_fact(
         # nel PUNTEGGIO, non nell'azione, e il verdetto porta la sua soglia.
         _soglia = getattr(verdetto, "threshold", None)
         # ...MA UN LAYER L1 NON E' UNA QUESTIONE DI PUNTEGGIO, e il criterio
-        # qui sopra non poteva vederlo. Misurato sul percorso reale (ws4 l'ha
+        # qui sopra non poteva vederlo. Misurato sul percorso reale (lo si e'
         # isolato, io l'ho riprodotto):
         #     «Ho verificato che la funzione ora funziona»   add() quarantined
         #                                          promote() model_claim 99.9572
