@@ -1,9 +1,9 @@
 """Cycle 2026-05-27 round 13 P0.5 — capability permission matrix registry.
 
-Aurelio audit gap X1 (GPT triangulation insight): "215 MCP tool senza
-permission matrix sono ingestibili. Plugin marketplace senza permission
-policy e veleno. Prima della dashboard farei almeno una CLI/TUI per
-vedere tool, capability, ultimi effetti, rollback disponibili, quarantene".
+Audit gap X1: 215 tool MCP senza una matrice di permessi sono
+ingestibili, e un marketplace di plugin senza policy di permessi e'
+veleno. Prima di una dashboard serve almeno una CLI/TUI che mostri
+tool, capability, ultimi effetti, rollback disponibili e quarantene.
 
 Per-tool declarations:
     capability:        READ / WRITE / EXECUTE / NETWORK / DESTRUCTIVE
@@ -206,7 +206,7 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
         name="hippo_retirement_log",
         capability="READ", risk_level="low",
         reversibility="yes",
-        notes="ws6 control-room: retirements as (loser, winner) pairs + "
+        notes="retirements as (loser, winner) pairs + "
               "survivability quartet. Read-only window on supersessions.",
     ),
     # Cycle 15 round 1 — anti-confab scrubber tools.
