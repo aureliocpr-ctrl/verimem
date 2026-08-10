@@ -3992,8 +3992,9 @@ def facts_requalify_quarantined(
         help="Actually promote. Default = DRY RUN (reports only, mutates nothing).",
     ),
     principal: str = typer.Option(
-        "cli:local", "--principal",
-        help="Identity recorded in the audit chain for each re-admitted fact.",
+        None, "--principal",
+        help="Identity recorded in the audit chain for each re-admitted fact. "
+             "Defaults to $VERIMEM_ACTOR, as everywhere else in this CLI.",
     ),
 ) -> None:
     """Recover real knowledge a SINCE-FIXED false positive had quarantined.
