@@ -70,11 +70,11 @@ def _store_fingerprint() -> str:
     """QUALE memoria ha prodotto questo evento — impronta, non percorso.
 
     Il 2026-08-07 tre misure indipendenti sono cadute nella stessa ora
-    sullo stesso file: ws3 «il 94% delle quarantene in events.jsonl poggia
-    su fatti che non esistono piu', la fonte e' MULTI-STORE e non lo dice»,
-    ws1 lo conferma al decimale e trova la causa vera («il journal e'
-    inquinato all'88% dal nostro dogfooding: `events.jsonl` non viene
-    isolato da HIPPO_DATA_DIR»), ws4 lo ritrova sulla propria tabella.
+    sullo stesso file. La prima: «il 94% delle quarantene in events.jsonl
+    poggia su fatti che non esistono piu', la fonte e' MULTI-STORE e non lo
+    dice». La seconda conferma al decimale e trova la causa vera: «il journal
+    e' inquinato all'88% dal dogfooding, `events.jsonl` non viene isolato da
+    HIPPO_DATA_DIR». La terza lo ritrova su una tabella indipendente.
 
     E' un difetto mio a meta': avevo curato il PERCORSO del log (deriva
     dalla data dir invece di essere fisso) e aggiunto l'avviso quando
@@ -194,13 +194,13 @@ def _ambient() -> dict[str, Any]:
     # "unknown", not "sdk": the old default was the NAME OF A REAL SURFACE,
     # so 9357 of 9603 real-corpus writes claimed "sdk" while 438 MCP write
     # calls produced ZERO "mcp" events — a dashboard cannot tell a default
-    # from a datum (measured ws4, 2026-08-04). Every real entrypoint now
+    # from a datum (measured 2026-08-04). Every real entrypoint now
     # declares itself (cli.main / mcp_server / gateway ctx); what remains
     # genuinely unknown SAYS unknown.
     out: dict[str, Any] = {
         "surface": os.environ.get("ENGRAM_FLOW_SURFACE", "").strip() or "unknown",
         # Sta negli AMBIENT e non su `flow.write`: mettendolo solo li', le
-        # quarantene — cioe' proprio la popolazione che ws3 e ws4 stavano
+        # quarantene — cioe' proprio la popolazione che si stava
         # misurando quando il difetto e' saltato fuori — resterebbero senza.
         "store": _store_fingerprint(),
         # Accanto all'impronta e non altrove: le due rispondono alle due
@@ -227,7 +227,7 @@ def emit_write(*, stored: bool, status: str, fact_id: str, topic: str,
     zero volte in `mcp_server.py`, perche' quella porta costruisce il
     ``Fact`` e chiama ``SemanticMemory.store()`` senza passare da
     ``Memory.add()``, dove viveva l'emissione. Un agente che scrive da MCP
-    era invisibile al governo — e ws4 ha misurato che e' anche la porta
+    era invisibile al governo — ed e' misurato che e' anche la porta
     meno coperta dal moat (69,5% contro 99,2% della CLI): il meno
     osservabile e il meno controllato sono lo stesso posto.
 

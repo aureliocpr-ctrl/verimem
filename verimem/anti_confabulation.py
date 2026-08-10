@@ -1,7 +1,7 @@
 """Cycle #128 (2026-05-17) — L1 anti-confabulation warning layer.
 
-Aurelio direttiva 2026-05-17: "studiamo confabulazioni, come prevenirle
-in memoria".
+Project decision (2026-05-17): studiare le confabulazioni e come prevenirle
+in memoria.
 
 Empirical motivation (sessione 2026-05-17):
 * 7 confabulazioni mie ammesse onestamente.
@@ -112,7 +112,7 @@ def _parla_di_software(proposition: str, keyword: str,
     primo cambiamento — la classe che questo progetto ha gia' pagato.
 
     DUE COSE PERO' VANNO AGGIUSTATE, e sono il motivo per cui quella guardia
-    non ha protetto il sismologo di ws5 (2026-08-04):
+    non ha protetto il caso del sismologo (2026-08-04):
 
     1. ERA CONDIZIONATA AL «PERSONALE». La soppressione girava solo per fatti
        con un segnale di vita quotidiana e nessun segnale dev
@@ -404,7 +404,7 @@ def detect_unsupported_task_state_claim(
 # today.
 #
 # V1 is DETECTION-only — no mutation, no schema change. The output is
-# a structured report the operator (Aurelio) can inspect via the
+# a structured report the operator can inspect via the
 # scan_orphaned_facts() helper. Future cycles may add a v6 schema
 # migration with an "orphaned" status enum so the reconciler can flip
 # detected facts automatically.
