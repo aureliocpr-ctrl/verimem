@@ -963,7 +963,7 @@ def remember_cmd(
     # 2026-08-08 — DIRE QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e
     # chiedono cose diverse: il giudice «questa fonte sostiene il fatto?» e i
     # controlli «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le
-    # attiva entrambe (ws1, 16 casi su 16), e la ricevuta ne mostrava zero:
+    # attiva entrambe (misurato: 16 casi su 16), e la ricevuta ne mostrava zero:
     #     quarantined id=f014eeafa03a topic=t
     # Fermato, senza sapere perche'. Il motivo era GIA' nel verdetto — «il claim
     # afferma un valore che la fonte non contiene: 40 pezzo» — e non arrivava
@@ -1200,8 +1200,8 @@ def ask_cmd(
         #     e nel corpus vero i fatti su «degrado» ci sono
         #
         # È la settima volta che una cura nasce su una superficie e un'altra
-        # resta indietro — stavolta la cura incompleta era mia, di due ore
-        # prima, sull'asse SDK→CLI che la mappa del read path non copriva.
+        # resta indietro: qui la cura incompleta era di due ore prima,
+        # sull'asse SDK→CLI che la mappa del read path non copriva.
         per_termine = rep.get("per_term") or {}
         if per_termine:
             dettaglio = " · ".join(
@@ -4439,7 +4439,7 @@ def save_cmd(
     # 2026-08-08 — QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e chiedono
     # cose diverse: il giudice «questa fonte sostiene il fatto?» e i controlli
     # «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le attiva
-    # entrambe (ws1: 16 casi su 16), e la ricevuta mostrava solo la prima —
+    # entrambe (misurato: 16 casi su 16), e la ricevuta mostrava solo la prima —
     # decidendo cosa dire in base al PUNTEGGIO. Un fatto con moat a 95,5 e
     # fermato da L4.1 usciva cosi':
     #     quarantined id=f014eeafa03a topic=t
