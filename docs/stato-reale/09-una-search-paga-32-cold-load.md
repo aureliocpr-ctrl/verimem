@@ -23,6 +23,29 @@ Senza un `min_relevance` esplicito, `Memory.search` calibra il pavimento di rile
 `_auto_relevance_floor()` ha tre chiamanti — `976`, `1134`, `1554`. La misura riguarda la porta
 `search`; gli altri due non sono stati misurati.
 
+Il numero 32 non viene solo dal docstring: è il default nella firma della funzione che genera le
+sonde, `relevance_floor.py:139` — `scrambled_probes(sm, *, n: int = 32, seed: int = 0)`. Il modulo
+`relevance_floor.py` è presente anche nel wheel 0.7.0 pubblicato.
+
+## Quante volte si paga: la doppia cache ridimensiona il titolo
+
+Il costo **non è a ogni `search`**. `_auto_relevance_floor` è protetta da due cache:
+
+```
+client.py:2113   _FLOOR_CACHE_TTL_S = 300.0     cache in memoria, 5 minuti
+client.py:2118   _FLOOR_DRIFT       = 0.05      il valore su file è riusato finché
+client.py:2238   abs(n - n_salvato) <= max(1, n_salvato) * _FLOOR_DRIFT
+```
+
+Le 32 sonde si pagano quando **entrambe** mancano: primo calcolo su uno store nuovo, cache in
+memoria scaduta, oppure conteggio dei fatti spostato oltre il 5% rispetto al valore salvato.
+La misura riportata sopra è stata eseguita su store isolato e nuovo: è quindi il **caso peggiore**,
+non il regime.
+
+Il costo però non è nemmeno «una volta sola». Con `_FLOOR_DRIFT = 0.05` la soglia è
+**proporzionale**: su uno store di 250 fatti bastano circa 13 scritture per invalidare il file e
+ripagare le 32 sonde. Su uno store in scrittura continua il costo ricorre a ogni +5% di fatti.
+
 ## Perché il gate AUTO non le ferma
 
 Il gate salta il cross-encoder quando non serve, «*skip BEFORE any load/slot/breaker touch*», per
