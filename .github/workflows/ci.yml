@@ -7,8 +7,23 @@ on:
     branches: [main]
 
 concurrency:
+  # Su un PULL REQUEST cancellare il run superato e' giusto: si itera in fretta e
+  # conta solo l'ultimo. Su un PUSH SU MAIN no — ogni commit merita un verdetto, e
+  # cancellarlo non lo rimanda: lo CANCELLA, perche' nessuno rilancia il run morto.
+  #
+  # MISURATO il 2026-08-10, con otto autori sullo stesso ramo:
+  #   26 run cancellati su 40 · 4 cancellati contro 1 concluso in una sola serata
+  #   il job piu' lento (windows) e' SEMPRE l'unico che perde: 0 conclusi su 12
+  #   quattro push in 26 minuti -> ZERO verdetti completi
+  # e mezza giornata di diagnosi si e' appoggiata su verdetti mai arrivati.
+  #
+  # Un run di `ci` dura ~45 minuti (matrice di sei: ubuntu 17,5 · macos 22,1 ·
+  # windows 45,0). Perche' ne sopravviva uno servirebbe una finestra di silenzio
+  # di 40 minuti: in otto e' un push ogni 5,3 ore a testa, cioe' un blocco.
+  # La disciplina e' stata provata stasera e non ha retto — questa riga la
+  # sostituisce con una regola che non dipende da chi si ricorda.
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
