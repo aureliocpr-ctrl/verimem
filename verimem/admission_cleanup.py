@@ -445,7 +445,7 @@ def requalify_quarantined(db_path, *, dry_run: bool = True,
             # Un conteggio su un corpus che cambia e' un numero PIU' un
             # istante. Vedi `retirement_log._istante`.
             "measured_at": _istante(),
-            # E COSA NE PENSA IL GIUDICE (ws1): senza questa ripartizione il
+            # E COSA NE PENSA IL GIUDICE: senza questa ripartizione il
             # chiamante vede UN numero che nasconde l'unica distinzione che
             # conta qui — un fatto la cui fonte e' stata controllata e
             # RIFIUTATA non e' lo stesso caso di uno che un falso positivo
