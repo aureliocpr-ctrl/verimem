@@ -125,7 +125,7 @@ def _classify(mem: Any, query: str, *, floor: float, k: int,
     # Per qualche ora e' stata `max(floor, noise_floor)`, ed era SBAGLIATO —
     # misurato sul corpus vero lo stesso giorno, 2026-07-30, prima di lasciarlo
     # in piedi: con quella regola SETTE domande su otto che il corpus sa
-    # rispondere (il moat, il grounding score, le regole di Aurelio, la
+    # rispondere (il moat, il grounding score, le regole di scrittura, la
     # pubblicazione su PyPI...) uscivano come ignoranza, e le `answerable`
     # erano ZERO. Una mappa dell'ignoranza che dice «non lo so» su tutto e'
     # inutile quanto una che dice «lo so» su tutto.

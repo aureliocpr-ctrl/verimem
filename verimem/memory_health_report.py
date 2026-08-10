@@ -94,7 +94,7 @@ def generate_health_report(
         "verdict": verdict,
         # LA SOGLIA VIAGGIA COL VERDETTO, e qui non e' la stessa di
         # `corpus_health_score`: la' «Healthy» vuol dire >= 75, qui >= 80
-        # (misurato da ws4 il 2026-08-06). Le stesse quattro etichette su
+        # (misurato il 2026-08-06). Le stesse quattro etichette su
         # due scale — un corpus a 77 cambia verdetto a seconda dello
         # strumento che si chiama. Non allineati di proposito: i due
         # punteggi pesano cose diverse, e sceglierne uno sarebbe una

@@ -23,7 +23,7 @@ from dataclasses import dataclass
 # (paragraph), then a sentence terminator followed by whitespace.
 #
 # L'INTESTAZIONE E' STATA AGGIUNTA IL 2026-08-04 e chiude un difetto che si
-# vedeva solo da fuori. ws5, usando il prodotto come un ricercatore che
+# vedeva solo da fuori. Usando il prodotto come un ricercatore che
 # indicizza il proprio paper, ha chiesto «qual e' la conducibilita' idraulica
 # del sottobacino 27?» e ha ricevuto, con score 0.889 e citazione a offset
 # esatti, IL VALORE DEL SOTTOBACINO 26. Sul suo documento: 30 chunk, e ZERO

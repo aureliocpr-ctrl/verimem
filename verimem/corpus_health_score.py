@@ -189,7 +189,7 @@ def compute_health_score(*, agent: Any) -> dict[str, Any]:
         "components": components,
         "verdict": verdict,
         # LA SOGLIA VIAGGIA COL VERDETTO. «Healthy» qui vuol dire >= 75 e
-        # in `memory_health_report` vuol dire >= 80 (misurato da ws4 il
+        # in `memory_health_report` vuol dire >= 80 (misurato il
         # 2026-08-06): le stesse quattro etichette su due scale, quindi un
         # corpus a 77 e' «Healthy» per uno strumento e «Acceptable» per
         # l'altro. I due tagli NON sono stati unificati di proposito —

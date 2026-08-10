@@ -76,7 +76,7 @@ def correct_read(mem: Any, query: str, *, k: int = 5,
     ``"auto"`` (the store self-calibrates), a float, or ``None`` for the old
     permissive behaviour.
 
-    PERCHE' ESISTE (2026-08-04, trovato da ws4 usando l'API HTTP da utente).
+    PERCHE' ESISTE (2026-08-04, trovato usando l'API HTTP da utente).
     Stesso store, stessa domanda senza risposta, tre rotte:
 
         GET /v1/search   2 hit, top «La riunione settimanale e' il martedi'» 0.8227
@@ -106,7 +106,7 @@ def correct_read(mem: Any, query: str, *, k: int = 5,
     di servire: sotto il pavimento si abbandona con ``below_relevance_floor``,
     portandosi dietro gli id di cio' che c'era.
 
-    Costo e beneficio, misurati da ws4 su entrambe le popolazioni (10 domande
+    Costo e beneficio, misurati su entrambe le popolazioni (10 domande
     con risposta, 10 senza): senza pavimento 10/10 servite e 10/10 false
     servite; con pavimento 9/10 servite e 0/10 false. Una risposta vera persa
     su dieci contro dieci risposte inventate bloccate su dieci.

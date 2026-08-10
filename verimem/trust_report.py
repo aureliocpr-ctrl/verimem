@@ -54,7 +54,7 @@ def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
     created = getattr(fact, "created_at", None)
     asserted = getattr(fact, "asserted_at", None)
     # DA QUALE TIMESTAMP NASCE L'ETA'. `last_verified_at` si chiama come se
-    # registrasse una verifica e NON lo fa: misurato da ws5 il 2026-08-07 sul
+    # registrasse una verifica e NON lo fa: misurato il 2026-08-07 sul
     # corpus reale, avanza su 2762 fatti — fino a 87 giorni dopo la scrittura
     # — e di quelli ZERO hanno un grounding_score (sono `legacy_unverified` o
     # `provisional`). La correlazione col verdetto e' perfettamente inversa:
@@ -66,7 +66,7 @@ def _fact_evidence(sm, fact, cs, *, max_hops: int = 3,
     # fatti mai verificati risultavano `live` mentre dalla loro creazione
     # sarebbero `dormant`. Cioe' la superficie che risponde a «come fa la
     # memoria a saperlo» li mostrava piu' freschi PROPRIO perche' non erano
-    # mai stati verificati. ws5 aveva proposto di esporre il campo nel recall
+    # mai stati verificati. Era stato proposto di esporre il campo nel recall
     # e ha ritirato la proposta in dieci minuti («porterebbe la bugia dal DB
     # all'interfaccia»): all'interfaccia c'era gia', qui.
     #

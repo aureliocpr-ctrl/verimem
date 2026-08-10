@@ -222,7 +222,7 @@ class TranscriptIndex:
                       session_id: str | None = None) -> dict:
         """Come :meth:`recall`, ma dice ANCHE se c'era qualcosa da cercare.
 
-        Misurato da ws2«Vega» il 2026-08-07 su store isolato senza
+        Misurato il 2026-08-07 su store isolato senza
         ingestione: ``count()`` vale 0, ``recall(...)`` torna ``[]`` in
         0.03s, e nessun campo distingue «tier vuoto» da «nessun match».
         Il tier C non si riempie da solo — l'ingester e' delegato a un hook

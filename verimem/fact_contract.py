@@ -52,7 +52,7 @@ def verifica_sostenuta(f: Any) -> bool:
     """Se il `last_verified_at` di questo fatto poggia su un VERDETTO.
 
     Il campo si chiama come se registrasse una verifica e non lo fa:
-    misurato da ws5 il 2026-08-07 sul corpus reale, avanza su 2762 fatti —
+    misurato il 2026-08-07 sul corpus reale, avanza su 2762 fatti —
     fino a 87 giorni dopo la scrittura — e di quelli ZERO hanno un
     `grounding_score` (sono `legacy_unverified` o `provisional`). Si muove
     esattamente dove un giudizio non c'e' mai stato: un TOCCO — una
@@ -117,7 +117,7 @@ def fact_payload(f: Any) -> dict[str, Any]:
     # quindi va speso dove informa. Questi due non informano quando valgono il
     # default, ed e' lo stesso principio per cui i campi vuoti non escono.
     # La regola era «omettilo se coincide con created_at», e presa insieme
-    # alla misura di ws5 si INVERTIVA: il campo avanza solo sui fatti mai
+    # alla misura qui sopra si INVERTIVA: il campo avanza solo sui fatti mai
     # giudicati, quindi il contratto emetteva una chiave chiamata
     # `last_verified_at` ESATTAMENTE sui fatti che nessuno ha mai
     # verificato, e la nascondeva su quelli col verdetto. Il segnale al

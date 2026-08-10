@@ -38,7 +38,7 @@ _ARMED = threading.Lock()
 #: di tutti i thread a ogni intervallo finché la chiamata non finisce: su uno
 #: stallo di dieci minuti con budget 30s sono venti dump, e dal secondo in poi
 #: è lo stesso stack — zero informazione in più a costo pieno. Misurato il
-#: 2026-07-31 sulla macchina di Aurelio: un singolo trace di `hippo_health` da
+#: 2026-07-31 su una macchina reale: un singolo trace di `hippo_health` da
 #: **24.211.732 byte**. Il PRIMO dump, quello che contiene la diagnosi, non
 #: viene mai toccato da questo tetto.
 _MAX_FILE_BYTES = int(os.environ.get("HIPPO_HANG_TRACE_MAX_BYTES") or 2_000_000)

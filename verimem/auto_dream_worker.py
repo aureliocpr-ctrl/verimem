@@ -321,7 +321,7 @@ def _propose_via_engram(*, engram_dir: Path) -> dict[str, Any]:
         cluster_threshold=0.55,
         instructions=instructions,
     )
-    # 2026-06-01 (Aurelio mandate): shadow retention. Each firing snapshots
+    # 2026-06-01 (mandato): shadow retention. Each firing snapshots
     # the full live DB into dreams/auto-<ts>/; without pruning this grew to
     # 346 stale shadows (~7.9 GB). Keep only the last N (env
     # ENGRAM_DREAM_KEEP, default 3). Never touches non-'auto-' dirs / live DB.
