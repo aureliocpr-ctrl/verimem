@@ -689,6 +689,35 @@ def _introdotto_da_una_parola_temporale(testo: str, inizio_numero: int) -> bool:
 _PUNTO_AMBIGUO = re.compile(r"(?!0\.)\d{1,3}\.\d{3}$")
 
 
+#: I gruppi di migliaia che `_QUANT_RE` NON VEDE AFFATTO, e che quindi non
+#: potevano nemmeno essere dichiarati.
+#:
+#: `_QUANT_RE` porta un lookahead `(?!\.\d)` che vieta un punto seguito da cifra
+#: DOPO il numero. Su «122.057.313» prova «122.057», vede «.313» che segue, e
+#: RIFIUTA — senza riprovare piu' avanti. Risultato misurato::
+#:
+#:     «45.000 euro»        regex ['45.000']   -> ambiguo DICHIARATO
+#:     «122.057.313 byte»   regex []           -> nessun valore E NESSUN AVVISO
+#:     «1.250.000 euro»     regex []           -> nessun valore E NESSUN AVVISO
+#:
+#: ⚠️ Il secondo caso e' PEGGIORE del primo, non piu' raro e basta: sul primo il
+#: prodotto dice «questo numero non l'ho verificato», sul secondo TACE — e il
+#: fatto entra come se non ci fosse niente da verificare. Un numero grande scritto
+#: all'europea (i byte, i fatturati, le popolazioni) e' esattamente il caso in cui
+#: nessuno se ne accorge.
+#:
+#: Percio' questa regex e' INDIPENDENTE dall'estrattore: cerca nel testo cio' che
+#: l'estrattore rifiuta. Uno o piu' gruppi di ESATTAMENTE tre cifre, parte intera
+#: non «0» (perche' «zero mila duecentocinquanta» non esiste in nessuna
+#: convenzione) e coda che ammette il punto di fine frase — senza quest'ultimo
+#: dettaglio «contro 1.150.000.» in fondo a una frase restava invisibile.
+#:
+#: Misurata su entrambe le popolazioni prima di scriverla: prende 122.057.313,
+#: 1.250.000, 45.000, 250.000, 1.500, 12.345.678; ignora 12.34, 3.1416, 99.9,
+#: 0.250, 0.125, 2607.26760.
+_MIGLIAIA_MULTIPLE = re.compile(r"(?<![\d.])(?!0\.)\d{1,3}(?:\.\d{3})+(?!\d)")
+
+
 def numeri_ambigui(text: str) -> list[str]:
     """I numeri del claim che NON abbiamo potuto misurare, come sono scritti.
 
@@ -710,11 +739,19 @@ def numeri_ambigui(text: str) -> list[str]:
     mentire sul proprio stato**: chi lo legge sa che quel numero non e' stato
     verificato contro la fonte, e perche'.
     """
+    span = claim_span(text)
     fuori: list[str] = []
-    for m in _QUANT_RE.finditer(claim_span(text)):
+    # ① quelli che l'estrattore VEDE e che il gate ha smesso di valutare
+    for m in _QUANT_RE.finditer(span):
         num_s = m.group(1)
         if _PUNTO_AMBIGUO.match(num_s) and num_s not in fuori:
             fuori.append(num_s)
+    # ② quelli che l'estrattore NON VEDE AFFATTO — vedi `_MIGLIAIA_MULTIPLE`.
+    # Senza questo giro «122.057.313 byte» non riceveva nemmeno l'avviso: il
+    # fatto entrava come se non ci fosse niente da verificare.
+    for m in _MIGLIAIA_MULTIPLE.finditer(span):
+        if m.group(0) not in fuori:
+            fuori.append(m.group(0))
     return fuori
 
 
