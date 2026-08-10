@@ -1,7 +1,7 @@
 """Cycle #110.C (2026-05-16) — Confidence decay job.
 
-Aurelio audit 2026-05-16: "fact con outcome positivo non aumentano
-peso, fact stagionati non perdono peso. Sistema inerte."
+Audit 2026-05-16: i fatti con esito positivo non aumentano di peso e i
+fatti stagionati non ne perdono. Sistema inerte.
 
 This module decays the ``confidence`` of each fact in the semantic
 corpus as a function of its age::

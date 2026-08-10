@@ -17,8 +17,8 @@ Due comandi:
 
 Anti-pattern: NON ricostruiamo SendMessage qui — quello è il tool nativo
 agent-teams disponibile a chi ha una sessione Claude Code lead/teammate.
-``engram teams send`` è il "back-door umano": Aurelio appende al file
-JSON, il supervisor Claude consegna il messaggio al destinatario alla
+``engram teams send`` è la porta di servizio per un umano: si appende al
+file JSON e il supervisore consegna il messaggio al destinatario alla
 prossima delivery.
 """
 from __future__ import annotations

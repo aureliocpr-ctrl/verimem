@@ -1,7 +1,7 @@
 """Cycle 388 (2026-05-23) — B4 NUCLEAR HOLOGRAPHIC MEMORY (database-less).
 
-Aurelio mandate post-compact 2026-05-23: "sperimenta anche cose che non
-siano database, sii creativo, rispetta meta regole, non confabulare".
+Mandato 2026-05-23: sperimentare anche fuori dai database, con creatività,
+rispettando le meta-regole e senza confabulare.
 
 B5 divergenza 12 ipotesi → B4 nuclear pick concatenazione 4 elementi
 mai combinati per AI agent persistent memory:

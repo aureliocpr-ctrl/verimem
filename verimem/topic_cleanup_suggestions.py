@@ -1,7 +1,7 @@
 """Cycle #85 — topic cleanup suggestions.
 
 P5 fix from cycle 2026-05-16 stress-test + cycle #84 empirical
-finding: 86/836 = 10.3% of Aurelio's facts have empty topic. They
+finding: 86/836 = 10.3% of the facts in a real corpus have an empty topic. They
 pollute recall and break the project/<name>/* convention.
 
 For each orphan fact, find the k nearest neighbours among the

@@ -1,6 +1,7 @@
 """Cycle 2026-05-27 round 13 P0 foundation safety — DB backup automatico.
 
-Aurelio audit gap C4: "no backup/restore DB ufficiale — un DROP accidentale = perdita 8469 fact".
+Audit gap C4: nessun backup/restore ufficiale del DB — un DROP accidentale
+significa perdere 8469 fatti.
 
 Implementation: atomic VACUUM INTO (SQLite native, no lock contention vs WAL writers).
 Rotation: 7 daily + 4 weekly + 12 monthly = max ~50MB per ~8k fact corpus.

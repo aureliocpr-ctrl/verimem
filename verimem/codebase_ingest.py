@@ -1,6 +1,6 @@
 """Cycle #143 (2026-05-18 sera) — codebase pattern ingest.
 
-Aurelio direttiva (vision expansion): HippoAgent deve essere infallibile
+Direttiva (vision expansion): il prodotto deve essere infallibile
 su qualsiasi task. Cycle 142 ha aperto la copertura coding lato failure
 (capture/recall errori). Cycle 143 chiude il lato learning: scansiona un
 repo Python human-written, estrae pattern via AST, persiste come Fact

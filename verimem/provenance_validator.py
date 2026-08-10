@@ -4,7 +4,7 @@ History
 -------
 
 v1 (PR #50, closed without merge) used regex-only pattern allowlist with
-``re.fullmatch``. Aurelio stop-check + empirical probe demonstrated the
+``re.fullmatch``. Uno stop-check e una sonda empirica hanno mostrato che
 fix was SECURITY THEATRE: 12 format-valid but semantically void refs
 slipped through unchanged::
 

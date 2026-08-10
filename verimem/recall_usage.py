@@ -1,6 +1,6 @@
 """Cycle #120 (2026-05-17) — Recall usage observability.
 
-Aurelio direttiva: "memoria AI-driven pilotata da te, sperimenta".
+Direttiva: una memoria pilotata dall'AI stessa, da sperimentare.
 
 Cycle 117 (TrustSignal) gave the AI visibility on recall quality.
 Cycle 120 closes the meta-cognition loop: after retrieving facts, the

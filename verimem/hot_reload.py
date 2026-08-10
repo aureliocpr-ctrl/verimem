@@ -1,7 +1,7 @@
 """Cycle 2026-05-27 round 13 P2a — hot-reload code watcher.
 
-Aurelio audit gap C2: "no hot-reload MCP server — ogni modifica Python
-richiede restart Claude Code session". Gemini suggested ``watchdog`` lib.
+Audit gap C2: nessun hot-reload del server MCP — ogni modifica Python
+richiede di riavviare la sessione. Cura suggerita: la libreria ``watchdog``.
 
 Reality check: a Python MCP server hosted in the Claude Code process
 cannot be soft-restarted from inside a user-mode helper — the host owns

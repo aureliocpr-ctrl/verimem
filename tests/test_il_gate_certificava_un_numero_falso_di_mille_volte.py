@@ -141,17 +141,49 @@ def test_I_DECIMALI_CERTI_sopravvivono(testo, valore):
     assert not numeri_ambigui(testo)
 
 
-def test_LA_CLASSE_INVISIBILE_resta_aperta_e_dichiarata():
-    """📌 Il difetto gemello, NON curato e scritto qui perché non si perda: con
-    due o più gruppi la regex non matcha affatto.
+def test_LA_CLASSE_INVISIBILE_ORA_RICEVE_L_AVVISO():
+    """Il difetto gemello, CURATO — e questo test è la sua nota di ieri
+    aggiornata: diceva «se un giorno diventa non-vuoto, la classe invisibile è
+    stata curata».
 
-    Caso reale: «Il wheel torch 2.13.0 per Windows pesa 122.057.313 byte», un
-    fatto salvato da ws8. È 50 volte più raro (2 su 9365 contro 100), e produce
-    silenzio invece che una certificazione falsa — per questo viene dopo.
-    ⚠️ Ma oggi non riceve nemmeno l'avviso: `numeri_ambigui` non lo vede, perché
-    non lo vede la regex.
+    Con due o più gruppi ``_QUANT_RE`` non matcha affatto: porta un lookahead
+    ``(?!\\.\\d)`` che vieta un punto+cifra dopo il numero, quindi su
+    «122.057.313» prova «122.057», vede «.313» e rifiuta senza riprovare più
+    avanti. Il valore non veniva prodotto — giusto — ma NON ARRIVAVA NEMMENO
+    L'AVVISO, e il fatto entrava come se non ci fosse niente da verificare.
+
+    ⚠️ È il caso PEGGIORE dei due, non il più raro e basta: su «45.000» il
+    prodotto dichiara «questo numero non l'ho verificato», qui taceva. E i
+    numeri grandi scritti all'europea sono i byte, i fatturati, le popolazioni —
+    quelli su cui nessuno si accorge del silenzio.
+
+    Caso reale: «Il wheel torch 2.13.0 per Windows pesa 122.057.313 byte».
     """
-    assert extract_quantities("Il wheel pesa 122.057.313 byte.") == set()
-    assert numeri_ambigui("Il wheel pesa 122.057.313 byte.") == [], (
-        "se un giorno questo diventa non-vuoto, la classe invisibile è stata "
-        "curata: aggiorna il test e togli questa nota")
+    frase = "Il wheel pesa 122.057.313 byte."
+    assert extract_quantities(frase) == set(), "il valore non va prodotto"
+    assert numeri_ambigui(frase) == ["122.057.313"], "e ora va DICHIARATO"
+
+
+def test_piu_numeri_multigruppo_nella_stessa_frase_sono_tutti_dichiarati():
+    """⚠️ Il caso che il primo banco non prendeva: il numero a fine frase.
+
+    «contro 1.150.000.» ha il punto della frase attaccato, e una coda che
+    vietava qualunque punto lo rendeva invisibile. Sono proprio i confronti —
+    dove i numeri stanno a coppie — a finire così.
+    """
+    assert numeri_ambigui("Il file e' 1.250.000 byte contro 1.150.000.") == [
+        "1.250.000", "1.150.000"]
+
+
+@pytest.mark.parametrize("frase", [
+    "La tolleranza e' 0.125 mm.",     # «zero mila» non esiste
+    "Il pi greco vale 3.1416.",       # quattro cifre: non è un gruppo
+    "La soglia e' 99.9 mb.",
+    "La durata e' 12.34 secondi.",
+    "Il magazzino contiene 480 pallet.",
+])
+def test_CONTROLLO_POSITIVO_i_decimali_certi_non_ricevono_l_avviso(frase):
+    """⚠️ LA POPOLAZIONE OPPOSTA. Un avviso che compare anche sui numeri
+    misurabili è rumore, e il rumore fa smettere di leggere gli avvisi proprio
+    quando contano."""
+    assert numeri_ambigui(frase) == []

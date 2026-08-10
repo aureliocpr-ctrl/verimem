@@ -8,7 +8,7 @@ aggiunge l'unica cosa che a quella superficie mancava per servire i detector
 L1: sapere **fin dove arriva** il negatore.
 
 PERCHE' ESISTE (2026-08-04). Curata la negazione dentro ``l1_tested_detector``,
-ws5 ha misurato la cura e ha trovato che nove detector su dodici avevano lo
+Misurando la cura si e' trovato che nove detector su dodici avevano lo
 stesso difetto:
 
     L1.10  «Il modulo NON funziona in produzione.»          scattava

@@ -1,6 +1,6 @@
 """Cycle 365 (2026-05-23) — OPERATION SUPERVISOR for engram syscall bridge.
 
-Aurelio mandate "stato superiore engram, meta-regole sempre". Pattern
+Mandato: portare il prodotto a uno stato superiore, meta-regole sempre. Pattern
 OTP/Erlang-inspired operation-level supervisor con circuit-breaker:
 quando una memory op fails N volte consecutive entro window, circuit
 "opens" → subsequent calls bloccate finché reset_window scaduto.

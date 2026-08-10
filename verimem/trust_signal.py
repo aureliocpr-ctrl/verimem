@@ -1,6 +1,6 @@
 """Cycle #117 (2026-05-17) — Memory self-doubt layer.
 
-Aurelio direttiva (laboratorio mode, pensiero ampio):
+Direttiva (laboratorio mode, pensiero ampio):
 
    "HippoAgent non sa quando NON FIDARSI DI SÉ. Recall ritorna fact
    con cosine alta, ma NON dice 'questo fact ha 3 contradiction

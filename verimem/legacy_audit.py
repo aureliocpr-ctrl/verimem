@@ -1,6 +1,6 @@
 """Cycle #110.D (2026-05-16) — Legacy corpus audit.
 
-Aurelio audit 2026-05-16: "815/864 fact sono ``legacy_unverified``,
+Audit 2026-05-16: 815/864 fatti sono ``legacy_unverified``,
 nascosti dal filter cycle 109 ma il pollution è solo spostato sotto
 il tappeto. Cycle 110.D classifica i 815 in 3 bucket per decisione
 umana."

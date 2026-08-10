@@ -88,9 +88,18 @@ def main(versione: str) -> int:
     # ── ③ nessun modulo che il repository non ha ────────────────────────────
     # Il confronto col repo si fa da fuori (serve il checkout); qui si controlla
     # il caso noto: un file rimosso a giugno che sopravvive nelle build sporche.
-    esito("il modulo morto rerank.py NON e' nel pacchetto",
-          not any(n == "verimem/rerank.py" for n in nomi),
-          f"moduli .py: {sum(1 for n in nomi if n.endswith('.py'))}")
+    # ⚠️ «MORTO» E' UNA DATA, NON UNA PROPRIETA'. `rerank.py` e' stato tolto da
+    # main il 30/07 e il wheel 0.7.0 e' del 22/07: la' dentro era ancora vivo.
+    # Un NO su un wheel piu' VECCHIO della rimozione non e' un difetto di quel
+    # rilascio — e' l'arretrato di chi non ha ancora ripubblicato. Le due cose
+    # portano ad azioni opposte (correggere il pacchetto / pubblicarne uno nuovo)
+    # e il referto deve permettere di distinguerle senza aprire `git log`.
+    c_e = any(n == "verimem/rerank.py" for n in nomi)
+    esito("rerank.py (ritirato da main il 30/07) NON e' nel pacchetto",
+          not c_e,
+          f"moduli .py: {sum(1 for n in nomi if n.endswith('.py'))}"
+          + (" — se il wheel e' anteriore al 30/07 questo e' ARRETRATO,"
+             " non un difetto del rilascio" if c_e else ""))
 
     # ── ④ le instructions che ogni agente MCP ricevera' ─────────────────────
     try:
@@ -109,8 +118,17 @@ def main(versione: str) -> int:
         "dice che recall NON si astiene": "DO NOT abstain" in guida,
         "dice che il namespace RINOMINA (never both)": "never both" in guida,
     }
+    # ⚠️ LA PROVA DICE QUALE DEI DUE MANCA, e non e' pedanteria: la prima
+    # versione stampava «ASSENTE dal wheel» per una FRASE mancante, e io — che
+    # questo file l'ho scritto — leggendo il mio referto ho concluso che mancasse
+    # il MODULO, e stavo per dirlo sul canale. `verimem/agent_guide.py` e' nel
+    # wheel 0.7.0: sono le tre frasi (cure dell'08/08) a non esserci.
+    # 🔑 Un referto che confonde IL CONTENITORE col CONTENUTO fa diagnosticare la
+    # cosa sbagliata a chiunque lo legga, autore compreso.
+    dov_e = "verimem/agent_guide.py nel wheel" if guida else "manca il MODULO"
     for k, v in promesse.items():
-        esito(f"agent_guide: {k}", v, "nel wheel" if v else "ASSENTE dal wheel")
+        esito(f"agent_guide: {k}", v,
+              "la frase c'e'" if v else f"la FRASE non c'e' ({dov_e})")
 
     # ── ④-bis la superficie di governo, entrata il 09/08 a merge tardivo ────
     # Sta qui perche' e' il caso in cui il pacchetto puo' restare indietro

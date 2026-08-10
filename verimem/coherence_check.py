@@ -1,6 +1,6 @@
 """Cycle #116 (2026-05-17) — Live memory coherence check.
 
-Aurelio direttiva 2026-05-17 (laboratorio mode):
+Direttiva 2026-05-17 (laboratorio mode):
 
    "hippo_remember oggi è write-only naive. Quando salvi un fact
    non controlli se esiste già un fact simile/correlato → duplicati;

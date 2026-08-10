@@ -1,6 +1,6 @@
 """Cycle #146 (2026-05-18 sera) — Lab Live dashboard for multi-agent chat.
 
-Aurelio richiede: durante esperimenti multi-agent (cycle 145+ in poi),
+Requisito: durante gli esperimenti multi-agent (cycle 145 in poi),
 vedere LIVE in CLI le interazioni degli agent che si coordinano via
 fact su topic comune. Cycle 146 = `engram lab live <topic>` che polla
 SQLite ogni N sec e mostra chat fact in cronologico ASC, color-coded

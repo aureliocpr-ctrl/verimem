@@ -1,6 +1,6 @@
 """Cycle 2026-05-27 — L1.9 performance claim detector.
 
-Aurelio direttiva 2026-05-27: prevent future M12-PTY-style hallucinations
+Direttiva 2026-05-27: prevent M12-PTY-style hallucinations
 where "X->Y latency reduction" or "N% speedup" claims are made without bench
 evidence.
 

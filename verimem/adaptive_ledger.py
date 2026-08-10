@@ -2,7 +2,7 @@
 
 Provenance: grafted 2026-07-16 from the remorse lab (Code/remorse/remorse/
 {ledger,sim,eval_m}.py, 29/29 tests; handoff fact ab53896fe93e +
-HANDOFF-VERIMEM.md, Aurelio's mandate). Proven there: meta of 3 experts at
+HANDOFF-VERIMEM.md). Proven there: meta of 3 experts at
 91-122% of the local best on 21/21 corpora; sim closes 90.6% of the
 gap-to-oracle. The DEMONSTRATED config is frozen here — do not tune it
 without new data:

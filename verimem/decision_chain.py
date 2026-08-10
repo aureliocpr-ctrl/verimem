@@ -1,7 +1,7 @@
 """Decision chain — decisions as first-class, explainable records (task #15).
 
-Mandate (Aurelio 2026-07-10): "salvare la catena delle decisioni: il perché
-di errori o cose scelte, per scalare la concatenazione e l'intelligenza".
+Mandato 2026-07-10: salvare la catena delle decisioni — il perché degli
+errori e delle scelte — per far scalare la concatenazione.
 verimem already answers "how do you know X?" (explain → chain of custody);
 a decision record makes it answer "why did we choose X?" — the choice, the
 alternatives rejected, the evidence CITED (fact ids), the expected outcome,

@@ -4,7 +4,7 @@ Detects fact propositions that contain malformed XML/tool-call markup
 leaked from the host parser (e.g. nested ``<parameter name=...>`` or
 ``</proposition>`` literal tokens inside the proposition body).
 
-Empirical baseline (2026-05-15 audit on Aurelio corpus):
+Empirical baseline (2026-05-15 audit on a real corpus):
   - 110/798 facts (13.8%) carry XML pollution
   - 88/798 facts (11.0%) have NULL/empty topic
 
@@ -85,7 +85,7 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 #   3. ``\n<parameter name=``            — newline-anchored opening
 #                                          of a sibling parameter
 #
-# Empirical rationale (2026-05-15 audit on Aurelio corpus, 798 facts):
+# Empirical rationale (2026-05-15 audit on a real corpus, 798 facts):
 #   - 110/111 polluted facts carry ``</proposition>`` as anchor
 #   - 1/111 has only inline ``<invoke>`` inside backticks (legit
 #     descriptive text — must be PRESERVED)
@@ -144,7 +144,7 @@ def sanitize_proposition(text: str | None) -> str:
     inside backticks (legitimate descriptive text about the bug
     itself) is preserved.
 
-    Empirical rationale (2026-05-15 audit on Aurelio corpus): 110/111
+    Empirical rationale (2026-05-15 audit on a real corpus): 110/111
     polluted facts carry ``</proposition>`` as anchor; the only
     outlier is a fact that legitimately describes XML markup inside
     a code span and should NOT be truncated.

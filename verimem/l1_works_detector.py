@@ -1,10 +1,10 @@
 """Cycle 2026-05-27 — L1.10 works/confirmed claim detector.
 
-Aurelio mandate 2026-05-27 1h+autonomy: prevent A2 ANTI-HALL violations
+Mandato 2026-05-27: prevent ANTI-HALL violations
 ("niente FUNZIONA senza pytest/Bash/tool live").
 
-Triangulation: Gemini 2.5 Pro + GPT (via Aurelio Plus Chrome) entrambi
-hanno proposto (a) FUNZIONA/WORKS/CONFIRMED come L1.10 prioritary.
+Due modelli esterni interrogati in modo indipendente hanno proposto
+entrambi (a) FUNZIONA/WORKS/CONFIRMED come L1.10 prioritaria.
 
 Patterns coperti:
 - Italian: funziona, confermato, risolto, passa, ok
