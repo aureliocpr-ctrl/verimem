@@ -29,7 +29,7 @@ limite inferiore, perché una funzione che deriva un'identità senza dirlo nel n
 | `_content_hash_id` (`mcp_server`) | SHA256 a 12 caratteri | collisione **dichiarata nel docstring** |
 | `subject_key` (`composer`) | normalizza | sano, verificato eseguendolo |
 | `_key` (`conversation_ingest`) | `casefold` + `strip` | sano, letto |
-| `canonical_bytes` (`tamper_evidence`) | — | non esaminata |
+| `canonical_bytes` (`tamper_evidence`) | JSON con chiavi ordinate | sana sul separatore, **collisione di tipo** |
 
 ### La forma che cade e quella che regge
 
@@ -43,6 +43,36 @@ nel proprio docstring. Non è un difetto nascosto, è una scelta.
 
 > Una chiave composta si fa con una tupla, non concatenando. Se deve essere una stringa, il
 > separatore va escluso dai pezzi, o va scelto un carattere che non può comparirvi.
+
+### Una terza forma, e la conferma che JSON è il rimedio
+
+`canonical_bytes` serializza con `json.dumps(..., sort_keys=True, separators=(",", ":"))`, e sul
+caso che rompe le altre **regge**: JSON quota i valori, quindi una virgola dentro un campo non può
+essere confusa con il separatore.
+
+```
+{"a": "x,y", "b": "z"}   ->  b'{"a":"x,y","b":"z"}'
+{"a": "x", "b": "y,z"}   ->  b'{"a":"x","b":"y,z"}'      byte diversi
+```
+
+Ha però una collisione di natura diversa, che viene da `default=str`:
+
+```
+{"t": datetime(2026, 1, 1)}        ->  b'{"t":"2026-01-01 00:00:00"}'
+{"t": "2026-01-01 00:00:00"}       ->  b'{"t":"2026-01-01 00:00:00"}'      identici
+```
+
+Un oggetto non serializzabile e la sua rappresentazione testuale diventano indistinguibili. Il
+docstring afferma che «two dicts with the same content hash identically», che è vero; il rovescio —
+due dict con contenuto **diverso** producono hash diversi — non vale quando entra `default=str`.
+
+⇒ Le forme che collassano sono quindi **tre**, non una: la **concatenazione** con separatore
+ambiguo, il **troncamento**, e la **conversione di tipo** verso una rappresentazione condivisa.
+
+`canonical_bytes` alimenta `entry_hash` e `build_chain`. La valutazione di cosa questo comporti per
+quella catena non appartiene a questo referto, che riporta solo la misura meccanica: due input
+diversi, la stessa uscita. E la **plausibilità non è misurata** — servirebbe che un entry contenga
+un oggetto non-JSON e che ne esista un altro con la stringa corrispondente.
 
 ## I due difetti, eseguiti
 
