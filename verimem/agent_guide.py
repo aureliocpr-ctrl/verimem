@@ -36,6 +36,9 @@ can rely on it:
 - WITHOUT a source: there is nothing to check the fact against, so the moat does
   not run and the fact is stored as an unverified `model_claim`. Pass a source
   whenever you have one — it is what separates a claim from a verified fact.
+  That separation is NOT readable in `status`, which stays `model_claim` either
+  way: it is `grounding_score` that carries it — a number means a source was
+  judged, `null` means never judged (Orientation, below).
 
 Orientation (each tool's exact arguments are in its own schema):
 - Retrieve with verimem_recall / verimem_facts_search. These return the closest
