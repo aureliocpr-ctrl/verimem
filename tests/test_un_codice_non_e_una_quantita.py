@@ -62,10 +62,21 @@ NON_SONO_QUANTITA = [
 
 
 @pytest.mark.parametrize("frase,intruso", NON_SONO_QUANTITA)
-@pytest.mark.xfail(strict=True, reason="IL DIFETTO E' VIVO: la cura e' stata scritta, misurata e RITIRATA il 2026-08-04 perche' chiude il caso (25 schede -> 25 vive invece di 1) ma ROMPE il presidio qui accanto e fa cadere 2 test nella suite del gate. Causa accertata nel docstring; patch in scratchpad/CURA-capienza-uno.patch.")
 def test_un_identificatore_non_e_una_quantita(frase, intruso):
     """Il cuore: `S-001` identifica un record, non misura niente. Leggerlo come
-    valore fa sì che due schede diverse risultino in conflitto."""
+    valore fa sì che due schede diverse risultino in conflitto.
+
+    ✅ CURATO il 2026-08-11 da `_senza_identificatori` in `quantity_match`: i
+    cinque casi qui sopra sono diventati `XPASS(strict)` nella stessa esecuzione
+    in cui la cura è entrata, e il marcatore è caduto lì.
+
+    📌 PERCHÉ ORA E NON IL 04/08, quando la cura fu scritta e ritirata: quella
+    faceva DUE cose insieme — toglieva il codice dall'estrazione **e** aggiungeva
+    un discriminante di soggetto dentro `numeric_conflict`. È entrata solo la
+    prima metà, che non tocca la supersessione. ⇒ L'xfail più sotto
+    (`test_due_schede_con_codici_diversi_non_sono_in_conflitto`) **resta armato
+    apposta**: senza il discriminante non può passare, e il suo rosso alla
+    guarigione dirà che è arrivata anche l'altra metà."""
     assert intruso not in _valori(frase), (
         f"«{frase}» produce {sorted(extract_quantities(frase))}, "
         f"dove {intruso} viene dall'identificatore")

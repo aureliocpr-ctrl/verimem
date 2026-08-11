@@ -822,6 +822,47 @@ _DATA_RE = re.compile(
     re.IGNORECASE)
 
 
+#: Un IDENTIFICATORE: lettere attaccate a un trattino e a delle cifre.
+#:
+#: IL DIFETTO (misurato il 2026-08-04, referto sulla scala — «duecento record
+#: scritti, uno vivo: il corpus ha capienza UNO»). Il codice di un record veniva
+#: letto come una QUANTITA' e la parola dopo come la sua unita'::
+#:
+#:     «Il campione S-001 contiene piombo a 11 mg/l»  ->  ('contiene', 1.0) …
+#:     «Il campione S-002 contiene cadmio a 12 mg/l»  ->  ('contiene', 2.0) …
+#:     numeric_conflict                              ->  ('contiene', 1.0, 2.0)
+#:
+#: ⇒ **L'identificatore che DISTINGUE due record diventava la prova che si
+#: contraddicono.** Moltiplicato per un registro, lascia un fatto vivo su
+#: venticinque.
+#:
+#: Sul corpus vivo sono 908 fatti su 6109 (15%), e i piu' frequenti non sono
+#: codici di laboratorio ma i nomi che usiamo ogni giorno: `glm-5`, `GPT-5`,
+#: `gemini-2`, `opus-4`, `round-2`, `top-10`.
+#:
+#: 📌 PERCHE' ARRIVA OGGI E NON IL 04/08, quando fu scritta e ritirata: quella
+#: cura faceva DUE cose insieme — toglieva il codice dall'estrazione **e**
+#: aggiungeva un discriminante di soggetto dentro `numeric_conflict`. Cadde
+#: intera. Qui entra solo la prima meta', che non tocca la supersessione; il
+#: discriminante resta fuori, e con lui resta armato l'xfail
+#: `test_due_schede_con_codici_diversi_non_sono_in_conflitto`, che senza di
+#: quello non puo' passare. E' la stessa separazione che il 10/08 ha fatto
+#: passare le date dove la cura indivisa era caduta: **una cura che cade per
+#: essere troppo larga non e' sbagliata, e' indivisa.**
+_IDENTIFICATORE_RE = re.compile(r"\b[A-Za-z]{1,6}-\d{1,6}\b")
+
+
+def _senza_identificatori(testo: str) -> str:
+    """Il testo con i codici di record sostituiti da SPAZI.
+
+    Spazi e non stringa vuota: le posizioni restano quelle originali, cosi' chi
+    ragiona per offset non si sposta — e qui sotto ci ragiona
+    `_spans_delle_date`, che senza questa accortezza salterebbe di qualche
+    carattere per ogni codice incontrato.
+    """
+    return _IDENTIFICATORE_RE.sub(lambda m: " " * (m.end() - m.start()), testo or "")
+
+
 def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
     """Gli intervalli occupati da una data, per saltarli IN BLOCCO.
 
@@ -838,7 +879,9 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
     (provenance after an evidence marker is not measured); bare YEARS excluded."""
     out: set[tuple[str, float]] = set()
-    claim = claim_span(text)
+    # I codici di record spariscono PRIMA di cercare i numeri, e spariscono
+    # sostituiti da spazi: gli offset restano validi per `_spans_delle_date`.
+    claim = _senza_identificatori(claim_span(text))
     # Gli span UNA VOLTA per testo e non per numero: il costo e' lineare sul
     # testo invece che sul prodotto testo x numeri.
     _date = _spans_delle_date(claim)
