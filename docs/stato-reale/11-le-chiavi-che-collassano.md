@@ -71,8 +71,35 @@ ambiguo, il **troncamento**, e la **conversione di tipo** verso una rappresentaz
 
 `canonical_bytes` alimenta `entry_hash` e `build_chain`. La valutazione di cosa questo comporti per
 quella catena non appartiene a questo referto, che riporta solo la misura meccanica: due input
-diversi, la stessa uscita. E la **plausibilità non è misurata** — servirebbe che un entry contenga
-un oggetto non-JSON e che ne esista un altro con la stringa corrispondente.
+diversi, la stessa uscita.
+
+#### La terza forma è irraggiungibile dall'unica porta che la usa
+
+`entry_hash`, `build_chain` e `canonical_bytes` hanno **un solo chiamante** in tutto `verimem/`:
+`adjudication_log.py:188`. E i valori che arrivano alla chiave sono già normalizzati dal chiamante:
+
+```python
+ts_val      = float(ts) if ts is not None else time.time()
+score_val   = None if score is None else float(score)
+thr_val     = None if threshold is None else float(threshold)
+layers_json = json.dumps(list(layers or []))
+pins_json   = json.dumps(dict(pins or {}), sort_keys=True)
+```
+
+`_chain_payload` ha firma tipizzata — `str`, `float`, e i due campi già serializzati come `str` — e
+non aggiunge campi. A `canonical_bytes` arrivano quindi soltanto `str`, `float` e `None`:
+**`default=str` non può scattare.**
+
+E non è irrilevante per caso: la coercizione è deliberata, e il commento accanto ai `float()` ne dà
+la ragione — senza, `verify()` ricalcolerebbe un valore diverso e segnalerebbe come manomessi dati
+intatti. È la forma giusta applicata di proposito, e `default=str` resta una rete che nessuno tocca.
+
+⇒ La cura non è togliere `default=str`: è che un eventuale **secondo chiamante** normalizzi come il
+primo. Il rischio non sta nella funzione, sta nel fatto che la sua correttezza dipende dalla
+disciplina di chi la chiama — e il docstring promette determinismo senza dirlo.
+
+**Limite**: i chiamanti sono stati cercati dentro `verimem/`. Un uso da fuori — test, script, codice
+di terzi che importa il modulo — non è contato.
 
 ## I due difetti, eseguiti
 
@@ -106,6 +133,17 @@ corpus:
 In entrambi i casi il materiale per la collisione **è già in casa** e la collisione **non si è mai
 verificata**. I due difetti sono veri sulla funzione e **latenti** sul corpus: oggi non stanno
 perdendo nessun fatto e nessun episodio.
+
+Con la terza forma misurata a sua volta, il quadro è completo:
+
+| forma | dimostrata | popolazione | esito |
+|---|---|---|---|
+| concatenazione (`_verified_by_key`) | sì | 11 righe su 9631 | 0 collisioni |
+| troncamento (`_key` `episode_dedup`) | sì | 8 episodi su 419 | 0 collisioni |
+| conversione di tipo (`canonical_bytes`) | sì | 1 chiamante, che normalizza | irraggiungibile |
+
+Tutte e tre vere sulla funzione, **nessuna che morda oggi**. Il materiale delle prime due è già
+presente e aspetta un secondo elemento che ci finisca sopra; la terza aspetta un secondo chiamante.
 
 L'esito era stato dichiarato prima della misura, per non adattarlo al risultato: *«se la quota è
 zero, i due difetti restano veri sulla funzione e irrilevanti su questo corpus, e va scritto
