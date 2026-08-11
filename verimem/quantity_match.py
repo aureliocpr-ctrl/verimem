@@ -852,6 +852,44 @@ _DATA_RE = re.compile(
 _IDENTIFICATORE_RE = re.compile(r"\b[A-Za-z]{1,6}-\d{1,6}\b")
 
 
+def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
+    """Entrambi i testi portano un codice di record, e non ne condividono nemmeno uno?
+
+    E' IL DISCRIMINANTE DI SOGGETTO CHE MANCAVA, ed e' la seconda meta' della cura
+    degli identificatori: la prima (``_senza_identificatori``, commit 232c3486)
+    ha tolto il falso segnale — il codice letto come quantita' — ma sotto restava
+    quello vero. Misurato dopo la prima meta'::
+
+        numeric_conflict("Il campione S-001 contiene piombo a 11 mg/l",
+                         "Il campione S-002 contiene cadmio a 12 mg/l")
+            ->  ('milligrammo', 11.0, 12.0)
+
+    ⇒ Due schede distinte continuavano a risultare «stessa unita', valori
+    diversi», cioe' una contraddizione. Sono due campioni, e **il codice lo dice**.
+
+    ⚠️ SERVONO SU ENTRAMBI I LATI. Se uno solo dei due testi porta un codice non
+    si sa nulla: «il campione S-001 contiene 11» e «il campione contiene 25»
+    possono benissimo parlare della stessa cosa, e li' il conflitto va visto.
+
+    ⚠️ E DEVONO ESSERE DISGIUNTI. Stesso codice con due valori e' esattamente la
+    contraddizione che questo modulo esiste per trovare: «S-001 contiene 11» e
+    «S-001 contiene 25» restano in conflitto.
+
+    📌 PERCHE' NON E' IL «VETO ENTITA'» GIA' CADUTO: quello leggeva le entita'
+    estratte — solo il 43,5% dei fatti ne ha, e le piu' condivise erano ``NON``,
+    ``MCP``, ``Aurelio``, cioe' rumore. Qui il segnale e' un pattern sintattico
+    stretto (lettere-trattino-cifre), presente nel 15% del corpus, con una
+    semantica sola: e' un codice di record.
+    """
+    ia = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text_a or "")}
+    if not ia:
+        return False
+    ib = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text_b or "")}
+    if not ib:
+        return False
+    return not (ia & ib)
+
+
 def _senza_identificatori(testo: str) -> str:
     """Il testo con i codici di record sostituiti da SPAZI.
 
@@ -1182,8 +1220,11 @@ def numeric_conflict(
       • they must share ≥1 distinctive (non-unit) content word (same
         subject) — stops coincidental same-unit matches across topics;
       • no contrasting qualifier (read/write, client/server, …);
+      • no DIFFERENT record identifiers (``S-001`` vs ``S-002``);
       • same normalised unit, different value.
     """
+    if _identificatori_disgiunti(text_a, text_b):
+        return None
     return conflict_from_parts(
         extract_quantities(text_a), content_tokens(text_a),
         extract_quantities(text_b), content_tokens(text_b),

@@ -123,10 +123,26 @@ def test_una_data_ISO_non_e_una_coppia_di_quantita(frase):
         f"«{frase}» -> {sorted(extract_quantities(frase))}")
 
 
-@pytest.mark.xfail(strict=True, reason="IL DIFETTO E' VIVO: la cura e' stata scritta, misurata e RITIRATA il 2026-08-04 perche' chiude il caso (25 schede -> 25 vive invece di 1) ma ROMPE il presidio qui accanto e fa cadere 2 test nella suite del gate. Causa accertata nel docstring; patch in scratchpad/CURA-capienza-uno.patch.")
 def test_due_schede_con_codici_diversi_non_sono_in_conflitto():
     """L'end-to-end del difetto: è la coppia che, moltiplicata per duecento
-    record, lascia il corpus con un solo fatto vivo."""
+    record, lascia il corpus con un solo fatto vivo.
+
+    ✅ CURATO il 2026-08-11 da `_identificatori_disgiunti`, la seconda metà della
+    cura degli identificatori — la prima (`_senza_identificatori`, `232c3486`)
+    aveva tolto il falso segnale, ma sotto restava quello vero: 11 e 12 sono
+    valori veri, e mancava chi dicesse «sono due record diversi».
+
+    📌 E QUI CADE LA RAGIONE PER CUI LA CURA DEL 2026-08-04 FU RITIRATA. Il suo
+    marcatore diceva «fa cadere 2 test nella suite del gate». Misurato oggi con
+    questa sola fetta applicata: **i sette file che presidiano i conflitti sono
+    tutti verdi** (facts_conflict 27, facts_conflict_numeric 7,
+    entity_index_not_measure 19, proof_beats_opinion 12, exclusive_words 3,
+    due_opposti 17, due_fatti_che_si_contraddicono 5). ⇒ Quei due test non
+    cadevano per questo guard, ma per l'altra parte di quella cura — quella in
+    `supersession_policy`, che **non è entrata** e resta fuori: tocca
+    direttamente cosa muore in memoria.
+    ⇒ Terza volta in due giorni che la stessa separazione paga: **una cura che
+    cade per essere troppo larga non è sbagliata, è indivisa.**"""
     a = "Il campione S-001 contiene piombo a 11 milligrammi per litro."
     b = "Il campione S-002 contiene cadmio a 12 milligrammi per litro."
     assert numeric_conflict(a, b) is None, (
