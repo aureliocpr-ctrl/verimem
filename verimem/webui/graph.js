@@ -3,8 +3,8 @@
    (vendor/README.md) — CSP `script-src 'self'`, no CDN, no eval. Layout:
    ForceAtlas2 (LinLog) in a Web Worker.
 
-   v2.1 — FORM and SMOOTHNESS (Aurelio 2026-07-16: "qualità Obsidian,
-   basta giocattoli"):
+   v2.1 — FORM and SMOOTHNESS (2026-07-16), against an explicit quality
+   bar: the graph must read like a mature knowledge-graph tool, not a demo.
    - Louvain communities (vendored bundle) give the hairball its SHAPE:
      cluster colors + legend, like Obsidian groups.
    - Edge BACKBONE: by default only each node's strongest ties are drawn

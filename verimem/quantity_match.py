@@ -798,7 +798,26 @@ _MESI = (
 _DATA_RE = re.compile(
     r"\b\d{4}-\d{1,2}-\d{1,2}\b"                       # ISO   2026-08-10
     r"|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b"              # 10/08/2026 · 10-08-26
-    r"|\b\d{1,2}\s*(?:°|º)?\s*(?:" + _MESI + r")\b"    # 10 agosto · 1° marzo
+    # ⚠️ `\s*(?:[°º]\s*)?` E NON `\s*(?:°|º)?\s*`: due `\s*` ADIACENTI separati da
+    # un gruppo opzionale fanno backtracking QUADRATICO su una lunga corsa di
+    # spazi che poi fallisce, ed e' esattamente il difetto che questa casa aveva
+    # gia' curato il 2026-07-18 su `_QUANT_RE` dopo un alert CodeQL (27,9s su 40k
+    # spazi). L'ho reintrodotto qui in una regex NUOVA e il presidio che esisteva
+    # gia' — `tests/test_redos_uncapped_proposition.py`, che gira su una
+    # `proposition` non limitata in lunghezza — l'ha preso. Misurato, vecchia
+    # contro nuova nella stessa esecuzione::
+    #
+    #     spazi     vecchia        nuova
+    #      1000       0,331 s     0,0013 s
+    #      4000       5,192 s     0,0036 s
+    #     16000      87,131 s     0,0102 s      <- quadratica contro lineare
+    #
+    # 🔑 Mettendo lo spazio DENTRO il gruppo opzionale, quel gruppo non puo' piu'
+    # entrare senza consumare `°`: le due ripetizioni non si contendono piu' gli
+    # stessi caratteri e il costo torna lineare. Le forme riconosciute non
+    # cambiano — verificato su «10 agosto», «1° marzo», «31 luglio», «10 August»,
+    # «3 settembre», con esito identico prima e dopo.
+    r"|\b\d{1,2}\s*(?:[°º]\s*)?(?:" + _MESI + r")\b"   # 10 agosto · 1° marzo
     r"|\b(?:" + _MESI + r")\s+\d{1,2}\b",              # August 10
     re.IGNORECASE)
 

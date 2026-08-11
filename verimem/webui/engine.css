@@ -100,7 +100,7 @@ svg{display:block; width:100%; height:auto; min-width:640px;}
 .stage-info b{font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;}
 .stage-info .si-mod{color:var(--ink-3); font-size:.7rem;}
 .stage-info p{margin:.25rem 0 0;}
-/* the helm (ws6 control-room): governance panel — see AND act */
+/* the helm: governance panel — see AND act */
 .c.ret b{color:var(--refuse-d)}
 .governance{border:1px solid var(--ink); margin-top:1rem; background:var(--paper-2);}
 .gov-head{display:flex; align-items:center; gap:1rem; flex-wrap:wrap;

@@ -506,7 +506,7 @@
          sono la stessa riga: nel secondo il moat ha girato, ha detto che
          la fonte sostiene il fatto, e L1 lo tiene fuori per una parola.
          È l'unico caso in cui il prodotto contraddice sé stesso, e qui si
-         leggeva come un rifiuto qualunque (ws5, 2026-08-05). La soglia
+         leggeva come un rifiuto qualunque (2026-08-05). La soglia
          non sta in questo file: arriva già decisa nell'evento, dalla
          stessa funzione che alimenta la vista sul corpus. */
       var contro = p.withheld_despite_judge === true;

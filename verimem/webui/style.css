@@ -98,8 +98,8 @@ body {
 /* ---- header ---------------------------------------------------------- */
 .top { display: flex; align-items: center; justify-content: space-between;
        gap: 1rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
-/* the live map lives one click away from the odometer (Aurelio 2026-07-15:
-   "nella console c'è tutto tranne la live map") */
+/* the live map lives one click away from the odometer: until 2026-07-15
+   the console carried every other view but this one */
 .top-nav { margin-left: auto; margin-right: .9rem; }
 .nav-engine { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em;
   text-transform: uppercase; color: var(--ok); text-decoration: none;

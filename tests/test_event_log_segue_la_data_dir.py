@@ -57,9 +57,29 @@ def test_l_override_esplicito_vince_sempre(tmp_path):
         "ENGRAM_EVENT_LOG resta l'override esplicito e batte la data dir")
 
 
+#: Le due cartelle dati del prodotto. ⚠️ NON sono un'alternativa storica da
+#: ripulire: convivono per contratto, e il README lo dichiara — «Existing
+#: ``~/.engram`` data stores keep working untouched; new installs default to
+#: ``~/.verimem``» (``_compat.py:51`` definisce il nome nuovo).
+_CASA = (".engram", ".verimem")
+
+
 def test_senza_env_resta_il_percorso_di_casa(tmp_path):
-    """Nessuna env: il comportamento storico non cambia — la cura sposta il
-    log SOLO per chi ha chiesto l'isolamento."""
+    """Nessuna env: il log resta nella cartella dati del prodotto — la cura
+    sposta il log SOLO per chi ha chiesto l'isolamento.
+
+    ⚠️ QUESTO ASSERT ESIGEVA ``.engram`` E BASTA, e non poteva passare su
+    NESSUNA installazione nuova: una macchina che installa oggi ha
+    ``~/.verimem``, e ogni runner di CI e' una macchina che installa oggi. In
+    locale passava — su una macchina con lo store storico — e falliva sui tre
+    sistemi della CI con tre percorsi diversi (``/home/runner/.verimem``,
+    ``/Users/runner/.verimem``, ``C:\\Users\\runneradmin\\.verimem``).
+
+    🔑 IL COSTO NON ERA IL ROSSO: e' che il default NUOVO — quello che riceve
+    ogni utente nuovo — non era verificato da nessuno. Il test guardava solo la
+    generazione di chi l'aveva scritto.
+    """
     p = _path_in_subprocess({})
     assert p.endswith("events.jsonl")
-    assert ".engram" in p, p
+    assert any(c in p for c in _CASA), (
+        f"il giornale non e' in una cartella dati del prodotto {_CASA}: {p}")

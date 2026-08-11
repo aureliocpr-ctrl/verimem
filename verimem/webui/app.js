@@ -242,7 +242,7 @@
   var lastLoadMs = 0;
 
   /* honest FPS: measured on the page, shown in the stats bar — "smooth"
-     is a number here, not an adjective (Aurelio 2026-07-16). */
+     is a number here, not an adjective (2026-07-16). */
   var fpsNow = 0;
   (function fpsMeter() {
     var frames = 0, t0 = performance.now();
