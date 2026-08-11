@@ -46,7 +46,13 @@ def _remember(tmp_path, claim, source):
         [sys.executable, "-m", "verimem.cli", "remember", claim,
          "--topic", "t", "--source", source],
         capture_output=True, text=True, env=env, timeout=900)
-    return r.stdout + r.stderr
+    # ⚠️ `subprocess` puo' rendere `None` invece di stringa vuota su uno dei due
+    # canali, e la somma esplode PRIMA di arrivare all'assert: in CI si legge
+    # `TypeError: can only concatenate str (not "NoneType") to str` al posto del
+    # motivo per cui il test e' rosso. Il difetto vero resta nascosto sotto.
+    # 🔑 NON e' cosmesi difensiva: qui il fallimento del banco MASCHERA il
+    # fallimento che il banco esiste per mostrare.
+    return (r.stdout or "") + (r.stderr or "")
 
 
 def test_la_ricevuta_dice_QUALE_valore_non_ha_trovato(tmp_path):
