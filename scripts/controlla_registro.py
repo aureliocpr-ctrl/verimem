@@ -28,10 +28,13 @@ non fa fallire il controllo.
 
 from __future__ import annotations
 
+import ast
+import io
 import pathlib
 import re
 import sys
 import tarfile
+import tokenize
 import zipfile
 from collections import Counter, defaultdict
 
@@ -103,23 +106,77 @@ def _sorgenti(percorso: pathlib.Path):
         raise SystemExit(f"formato non riconosciuto: {percorso}")
 
 
+def _righe_di_prosa(testo: str) -> set[int]:
+    """Le righe che stanno in un commento o in un docstring.
+
+    È lì che vivono le attribuzioni — «misurato da …», «isolato da …». Fuori,
+    un nome che somiglia a un identificativo è quasi sempre un identificatore:
+    ``ws = tmp_path / "ws1"`` usa ``ws`` per *workspace*. Il controllo blocca
+    sulla prosa e conta il resto a parte, perché un veto su un'omonimia insegna
+    a ignorare il controllo — e un controllo ignorato non presidia niente.
+
+    I docstring si trovano con ``ast`` (sono espressioni-stringa in testa a
+    modulo, classe o funzione); i commenti con ``tokenize``. Se il file non si
+    analizza — sintassi di una versione diversa, o troncato — si considera
+    tutto prosa: meglio un falso allarme che un'assenza silenziosa.
+    """
+    prosa: set[int] = set()
+    try:
+        albero = ast.parse(testo)
+    except SyntaxError:
+        return set(range(1, testo.count("\n") + 2))
+
+    for nodo in ast.walk(albero):
+        if not isinstance(nodo, (ast.Module, ast.ClassDef, ast.FunctionDef,
+                                 ast.AsyncFunctionDef)):
+            continue
+        corpo = getattr(nodo, "body", None)
+        if not corpo:
+            continue
+        primo = corpo[0]
+        if (isinstance(primo, ast.Expr) and isinstance(primo.value, ast.Constant)
+                and isinstance(primo.value.value, str)):
+            fine = getattr(primo, "end_lineno", primo.lineno)
+            prosa.update(range(primo.lineno, fine + 1))
+
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(testo).readline):
+            if tok.type == tokenize.COMMENT:
+                prosa.add(tok.start[0])
+    except (tokenize.TokenError, IndentationError):
+        pass
+    return prosa
+
+
 def controlla(percorso: pathlib.Path) -> int:
     conteggi: Counter[str] = Counter()
     file_per_classe: defaultdict[str, set[str]] = defaultdict(set)
     esempi: defaultdict[str, list[str]] = defaultdict(list)
     totale_file = 0
 
+    in_codice: Counter[str] = Counter()
+    esempi_codice: defaultdict[str, list[str]] = defaultdict(list)
+
     for nome, testo in _sorgenti(percorso):
         totale_file += 1
+        prosa = _righe_di_prosa(testo)
         for riga_n, riga in enumerate(testo.splitlines(), 1):
             for classe, (pattern, _) in CLASSI.items():
                 for trovato in pattern.finditer(riga):
+                    voce = f"{nome}:{riga_n}  [{trovato.group(0)}]  {riga.strip()[:70]}"
+                    if riga_n not in prosa:
+                        #: Fuori da commenti e docstring il nome è quasi sempre un
+                        #: identificatore che gli somiglia — `ws = tmp_path / "ws1"`
+                        #: dove `ws` sta per *workspace*. Contato a parte: bloccare
+                        #: su un'omonimia insegna a ignorare il controllo.
+                        in_codice[classe] += 1
+                        if len(esempi_codice[classe]) < 3:
+                            esempi_codice[classe].append(voce)
+                        continue
                     conteggi[classe] += 1
                     file_per_classe[classe].add(nome)
                     if len(esempi[classe]) < 5:
-                        esempi[classe].append(
-                            f"{nome}:{riga_n}  [{trovato.group(0)}]  {riga.strip()[:70]}"
-                        )
+                        esempi[classe].append(voce)
 
     print(f"artefatto: {percorso}")
     print(f"file .py esaminati: {totale_file}\n")
@@ -130,6 +187,16 @@ def controlla(percorso: pathlib.Path) -> int:
         print(f"  {marchio}  {classe:30s} {n:>5d} in {len(file_per_classe[classe]):>3d} file")
         if n and bloccante:
             blocca = True
+
+    if sum(in_codice.values()):
+        print("\n  fuori da commenti e docstring, NON bloccanti "
+              "(un nome che somiglia, non un'attribuzione):")
+        for classe, n in in_codice.items():
+            if n:
+                print(f"     {classe:30s} {n:>5d}")
+        for classe in CLASSI:
+            for riga in esempi_codice[classe][:2]:
+                print(f"       {riga}")
 
     for classe in CLASSI:
         if esempi[classe]:
