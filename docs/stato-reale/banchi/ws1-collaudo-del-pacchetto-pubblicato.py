@@ -25,6 +25,7 @@ import io
 import json
 import re
 import sys
+import tarfile
 import urllib.request
 import zipfile
 
@@ -68,13 +69,74 @@ def main(versione: str) -> int:
     print(f"   sha256 {hashlib.sha256(raw).hexdigest()[:32]} · {len(raw)} byte "
           f"· {len(nomi)} file")
     print(f"   caricato {w.get('upload_time_iso_8601', '?')}")
-    print(f"   sdist pubblicato insieme: {'si' if sdists else 'NO'}\n")
+
+    # ── L'SDIST, APERTO E NON SOLO CONTATO ──────────────────────────────────
+    # ⚠️ QUI C'ERA `sdist pubblicato insieme: si` E BASTA. Il banco lo VEDEVA,
+    # lo contava, lo STAMPAVA — e non lo apriva mai. Chi leggeva quella riga
+    # concludeva che fosse stato controllato: l'ho scritta io e per due giorni
+    # l'ho letta come una spunta.
+    # 🔑 IL PUNTO CIECO NON E' L'ASSENZA, E' LA MENZIONE. Un banco che TACE su
+    # un artefatto lascia la domanda aperta; uno che lo NOMINA senza aprirlo la
+    # chiude con una risposta che non ha.
+    # 📌 Il costo l'ha misurato ws7 il 12/08 (`5fffa44a921ffdd5`): sul wheel le
+    # righe con identificativi interni sono andate da 86 a ZERO, sull'sdist da
+    # 208 a 814 — e i due artefatti escono dallo STESSO `twine upload`. Abbiamo
+    # ripulito benissimo l'artefatto che tutti guardavano, e questo banco
+    # guardava lì insieme a tutti.
+    # ⚠️ L'sdist e' un `.tar.gz`, il wheel uno `.zip`: l'archivio si apre in due
+    # modi diversi e il tipo va CHIESTO, non assunto.
+    sdist_nomi: list[str] = []
+    if sdists:
+        s = sdists[0]
+        s_raw = urllib.request.urlopen(s["url"], timeout=120).read()
+        with tarfile.open(fileobj=io.BytesIO(s_raw), mode="r:gz") as t:
+            sdist_nomi = t.getnames()
+        print(f"🔭 SDIST: {s['filename']}")
+        print(f"   sha256 {hashlib.sha256(s_raw).hexdigest()[:32]} · "
+              f"{len(s_raw)} byte · {len(sdist_nomi)} voci")
+    else:
+        print("🔭 SDIST: NON pubblicato per questa versione")
+    print()
 
     # ── ① la versione e' quella che dice di essere ──────────────────────────
     dichiarata = next((r.split(":", 1)[1].strip() for r in meta.splitlines()
                        if r.startswith("Version:")), "?")
     esito("la Version nel METADATA e' quella richiesta",
           dichiarata == versione, f"Version: {dichiarata}")
+
+    # ── ①-bis LA SUPERFICIE IN PIU' DELL'SDIST, dichiarata e non contata ────
+    # La domanda non e' «quante righe interne ha l'sdist» — quella l'ha misurata
+    # ws7 e non si rifa'. E' un'altra: **cosa viene pubblicato che il wheel non
+    # contiene**, cioe' la superficie che esce da `twine upload` e che nessun
+    # banco guardava. Non e' un verdetto: e' l'elenco che rende la domanda
+    # ponibile, ed e' il motivo per cui questo blocco stampa CATEGORIE e non un
+    # totale.
+    # 📌 Le categorie si dichiarano TUTTE, anche a zero (presidio di ws7 del
+    # 12/08 in `060e1ac9c7891fa0`: uno zero che esiste solo come assenza di riga
+    # non e' citabile — e un fatto che non si puo' citare non entra in memoria).
+    if sdist_nomi:
+        def _categoria(nome: str) -> str:
+            """La cartella di primo livello DENTRO l'sdist.
+
+            ⚠️ La tarball ha un prefisso comune (`verimem-0.7.0/`) e una voce
+            per la radice stessa, che NON contiene `/`: dare per scontato che
+            ogni nome sia divisibile fa esplodere il conteggio sulla prima riga.
+            """
+            pezzi = nome.split("/")
+            if len(pezzi) < 2 or not pezzi[1]:
+                return "(radice)"
+            return pezzi[1] if len(pezzi) > 2 else "(radice)"
+
+        conta: dict[str, int] = {}
+        for n in sdist_nomi:
+            conta[_categoria(n)] = conta.get(_categoria(n), 0) + 1
+        nel_wheel = {"verimem", "engram", "hippoagent", "(radice)"}
+        extra = {c: k for c, k in sorted(conta.items())
+                 if c not in nel_wheel and k}
+        esito("l'sdist non pubblica cartelle che il wheel non ha", not extra,
+              "in piu' rispetto al wheel: "
+              + (" · ".join(f"{c} {k}" for c, k in sorted(extra.items())[:6])
+                 if extra else "nessuna"))
 
     # ── ② il tetto su mcp, in TUTTI i punti ─────────────────────────────────
     righe_mcp = [r for r in meta.splitlines()
@@ -151,9 +213,9 @@ def main(versione: str) -> int:
           "nomina facts_undo_log" if "facts_undo_log" in meta else "non ne parla")
 
     # ── ⑥ i numeri della pagina sono ancorati? (lezione ws6, 09/08) ─────────
-    nudi = [l for l in meta.splitlines()
-            if re.search(r"\b\d{3,}\b", l) and not re.search(r"20\d\d", l)
-            and "|" not in l and not l.strip().startswith(("#", "```"))]
+    nudi = [riga for riga in meta.splitlines()
+            if re.search(r"\b\d{3,}\b", riga) and not re.search(r"20\d\d", riga)
+            and "|" not in riga and not riga.strip().startswith(("#", "```"))]
     esito("i numeri grossi della pagina portano un'ancora (data/SHA)",
           None,
           f"{len(nudi)} righe con numeri a 3+ cifre senza data accanto — "
