@@ -1094,7 +1094,59 @@ def extract_quantities(text: str) -> set[tuple[str, float]]:
 #:
 #: ⚠️ NON si toccano la soglia dei 4 caratteri ne' le cifre: quella strada e'
 #: gia' falsificata sul corpus (`7aa678f57c73`). Qui cambia solo l'ALFABETO.
-_PAROLA_RE = re.compile(r"[^\W\d_]{4,}", re.UNICODE)
+def _classe_dei_segni() -> str:
+    """I combining mark, CHIESTI A UNICODE invece che elencati a mano.
+
+    Serve perche' `\\w` — e quindi `[^\\W\\d_]` — comprende lettere e cifre ma
+    **non i mark**, e nelle scritture abugida i mark SONO le vocali. Elencarli
+    a mano sarebbe la classe di errore piu' ricorrente di questa casa (liste
+    monolingue in un prodotto mondiale) e invecchierebbe a ogni versione di
+    Unicode; derivarli da `unicodedata` costa **30 ms una volta sola** all'import
+    e si aggiorna da solo con Python.
+
+    Il limite superiore e' il blocco oltre il quale non esistono mark (U+1E94A
+    e' l'ultimo in Unicode 15): scandire l'intero spazio dei codepoint costerebbe
+    dieci volte tanto senza trovare nulla di piu'.
+    """
+    trovati = [c for c in range(0x0300, 0x1E950)
+               if unicodedata.category(chr(c))[0] == "M"]
+    gruppi: list[tuple[int, int]] = []
+    inizio = prec = None
+    for c in trovati:
+        if inizio is None:
+            inizio = prec = c
+        elif c == prec + 1:
+            prec = c
+        else:
+            gruppi.append((inizio, prec))
+            inizio = prec = c
+    if inizio is not None:
+        gruppi.append((inizio, prec))
+    return "".join(chr(a) if a == b else f"{chr(a)}-{chr(b)}" for a, b in gruppi)
+
+
+#: ⚠️ LA SOGLIA RESTA QUATTRO CARATTERI — non e' stata toccata, ed e' il vincolo
+#: scritto qui sopra. Cambia solo CHE COSA CONTA come carattere di una parola:
+#: prima solo le lettere, ora anche i segni che le accompagnano.
+#:
+#: 🔑 IL DIFETTO CHE CURA, misurato: in devanagari le vocali sono **mark**, non
+#: lettere, e `[^\W\d_]{4,}` si spezzava su ognuna::
+#:
+#:     वेरोना (Verona)  ->  pezzi ['व', 'र', 'न'], lunghezze [1, 1, 1]
+#:     व  Lo  \w=True    े  Mn  \w=False   (DEVANAGARI VOWEL SIGN E)
+#:     र  Lo  \w=True    ो  Mc  \w=False   (DEVANAGARI VOWEL SIGN O)
+#:
+#: Nessun pezzo raggiungeva quattro ⇒ `content_tokens` restituiva **zero token**
+#: su ogni frase hindi, bengali o tamil, e con zero token ogni guardia di
+#: stesso-soggetto e' cieca. Riguarda oltre un miliardo di parlanti.
+#:
+#: ⚖️ E LA SOGLIA NON E' NEUTRA FRA LE SCRITTURE, che e' la ragione per cui il
+#: primo tentativo di cura non bastava: raggruppando `(?:lettera segni*){4,}` si
+#: contano le SILLABE, e «वेरोना» ne ha tre. Quattro sillabe in devanagari sono
+#: una parola lunghissima. Contando i caratteri — il primo obbligatoriamente una
+#: lettera — la soglia torna a significare la stessa cosa ovunque.
+_PAROLA_RE = re.compile(
+    r"[^\W\d_](?:[^\W\d_]|[" + _classe_dei_segni() + r"]){3,}", re.UNICODE)
 
 
 def _senza_diacritici(text: str) -> str:

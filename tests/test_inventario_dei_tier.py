@@ -87,15 +87,28 @@ def test_i_percorsi_sono_quelli_del_prodotto(tmp_path, monkeypatch):
     cosa che stiamo curando. Deve coincidere con quello che il prodotto
     apre davvero."""
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
-    import importlib
-
     from verimem import config as _cfg
-    importlib.reload(_cfg)
+
+    # ⚠️ Config() NUOVO, non `importlib.reload(_cfg)`: il reload sostituisce
+    # l'oggetto CONFIG dentro il modulo, mentre i moduli del prodotto lo hanno
+    # gia' catturato con `from .config import CONFIG` all'import — e restano
+    # legati al VECCHIO. Da quel punto in poi ogni override di CONFIG in un
+    # test SUCCESSIVO non raggiunge piu il prodotto: il test non fallisce,
+    # passa senza provare niente.
+    # Misurato: dopo il reload `wake.CONFIG is config.CONFIG` -> False, e
+    # test_wake_extra::test_adaptive_macro_threshold_disabled legge 0.585
+    # invece di 0.72 (il ramo adattato) perche' il suo override finisce
+    # sull'oggetto sbagliato. L'ordine alfabetico mette «inventario» prima di
+    # «wake», quindi in CI accade sempre e in locale — un file alla volta —
+    # mai. La stessa diagnosi era gia' scritta in test_embedding_dim_guard.py,
+    # che nomina questo identico test come vittima.
+    # Config legge os.environ alla costruzione, quindi setenv + Config() basta.
+    _c = _cfg.Config()
 
     out = tier_inventory(data_dir=tmp_path)
-    assert _tier(out, "facts")["store"] == str(_cfg.CONFIG.semantic_db)
-    assert _tier(out, "episodes")["store"] == str(_cfg.CONFIG.episodes_db)
-    assert _tier(out, "skills")["store"] == str(_cfg.CONFIG.skills_db)
+    assert _tier(out, "facts")["store"] == str(_c.semantic_db)
+    assert _tier(out, "episodes")["store"] == str(_c.episodes_db)
+    assert _tier(out, "skills")["store"] == str(_c.skills_db)
 
 
 def test_elenca_TUTTI_gli_store_del_prodotto_non_solo_i_cinque_noti(tmp_path):

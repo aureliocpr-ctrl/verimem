@@ -1714,8 +1714,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             name="hippo_document_index_file",
             description=(
                 "Index a whole FILE (pdf/docx/html/txt/md) for SEMANTIC search "
-                "with exact citation (roadmap #1 document RAG): extract text -> "
-                "provenance-anchored chunks -> embeddings. Idempotent per "
+                "anchored to the indexed text (roadmap #1 document RAG): "
+                "extract text -> provenance-anchored chunks -> embeddings. The "
+                "path is stored AS GIVEN and never resolved, so pass an absolute "
+                "one if you want the citation to keep re-opening the source; the "
+                "chunk text is retrievable either way. Idempotent per "
                 "content-hash (re-indexing unchanged content does zero work); a "
                 "changed file becomes a new version that supersedes the old one "
                 "in search. Isolated store — NOT the accepted recall corpus."
@@ -1735,11 +1738,15 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             name="hippo_document_semantic_search",
             description=(
                 "SEMANTIC search over indexed documents (Tier Documents RAG). "
-                "Returns the top-k chunks with the EXACT citation — source_id, "
-                "version, start/end character offsets (original[start:end] == "
-                "text) — so every answer can point to file + position. Only the "
-                "LATEST version of each source is searched. Complements the "
-                "lexical hippo_document_search."
+                "Returns the top-k chunks cited on the INDEXED TEXT — source_id, "
+                "version, start/end character offsets, with "
+                "indexed_text[start:end] == text. The offsets are exact on the "
+                "index and the chunk text is always returned; they are NOT a "
+                "promise that the original file still opens, because the path is "
+                "stored as given (measured 2026-08-12: 84.9% of chunks pointed "
+                "at files that were gone, with the text intact for all of them). "
+                "Only the LATEST version of each source is searched. Complements "
+                "the lexical hippo_document_search."
             ),
             inputSchema={
                 "type": "object",

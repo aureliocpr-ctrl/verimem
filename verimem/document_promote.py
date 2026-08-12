@@ -8,10 +8,17 @@ else, never around it:
     verified truth — evidence elevates status later, not the promotion);
   * ``writer_role="document_promote"`` — a dedicated, non-trusted writer, so the
     full admission gate runs;
-  * the EXACT citation ``file:<source_id>:<start>-<end>`` goes into
-    ``verified_by`` AND ``source_episodes``: any reader can open the file at the
-    exact offsets and check. This is the provenance moat carried into the
-    corpus — the answer to "memoria documentale che non allucina e cita sempre".
+  * the citation ``file:<source_id>:<start>-<end>`` goes into ``verified_by``
+    AND ``source_episodes``. The offsets are exact ON THE INDEXED TEXT
+    (``indexed_text[start:end] == chunk``) and the chunk text is stored with
+    them, so the claim is always checkable against what was indexed. They are
+    NOT a promise that the original file still opens: the path is recorded as
+    given and never resolved, so a moved, deleted or relative one stops
+    resolving — measured 2026-08-12 on the real corpus, 538 of 634 chunks
+    (84.9%) pointed at files that no longer existed, with the chunk text
+    present for 100% of them. ⚠️ This matters more here than elsewhere because
+    the citation lands in ``verified_by``, the provenance field: it certifies
+    WHAT WAS INDEXED, not that a reader can re-open the source today.
 
 The caller may pass a distilled ``claim`` (one clean sentence) instead of the
 raw chunk text; the citation still anchors it to the file position it came from.

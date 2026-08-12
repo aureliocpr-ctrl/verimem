@@ -40,8 +40,14 @@ FONTE_VERA = "Inventario: magazzino Verona, 480 pallet a scaffale."
 
 
 def _remember(tmp_path, claim, source):
+    # ⚠️ TUTTI E TRE gli alias, non due: il terzo verrebbe EREDITATO da
+    # os.environ (la fixture autouse lo pinna a un'altra tmp) e i tre
+    # disaccorderebbero. Il prodotto allora emette `RuntimeWarning: DATA_DIR
+    # aliases disagree` proprio dentro l'output che gli assert qui sotto
+    # leggono — rumore che maschera il motivo vero di un rosso.
     env = dict(os.environ, HIPPO_DATA_DIR=str(tmp_path),
-               ENGRAM_DATA_DIR=str(tmp_path))
+               ENGRAM_DATA_DIR=str(tmp_path),
+               VERIMEM_DATA_DIR=str(tmp_path))
     r = subprocess.run(
         [sys.executable, "-m", "verimem.cli", "remember", claim,
          "--topic", "t", "--source", source],

@@ -25,7 +25,15 @@ def isolated_corpus(tmp_path, monkeypatch):
 
     ``tmp_data_dir`` hands back a directory but leaves ENGRAM_DATA_DIR alone, so
     a test that invokes the CLI would write into the operator's REAL store. This
-    points both env names at a temp dir instead.
+    points all THREE env names at a temp dir instead.
+
+    Erano due fino al 2026-08-12, e il terzo mancava per la stessa ragione per
+    cui manca sempre: chi cura conosce gli alias che ha in mente. Il prodotto
+    lo dice da solo — con due su tre `_compat._env_data_dir()` emette
+    ``RuntimeWarning: DATA_DIR aliases disagree`` e quel testo finisce nello
+    stdout che i test poi asseriscono. Misurato con un A/B nella stessa
+    esecuzione: due alias concordi + terzo discorde -> warning presente; tutti
+    e tre concordi -> assente.
 
     It lives here because three test modules had each grown their own identical
     copy (test_cli_facts_add, test_cli_facts, test_cli_consolidate). Those local
@@ -35,6 +43,7 @@ def isolated_corpus(tmp_path, monkeypatch):
     """
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(tmp_path))
     (tmp_path / "semantic").mkdir(parents=True, exist_ok=True)
     return tmp_path
 
