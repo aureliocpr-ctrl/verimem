@@ -869,6 +869,32 @@ _DATA_RE = re.compile(
 #: essere troppo larga non e' sbagliata, e' indivisa.**
 _IDENTIFICATORE_RE = re.compile(r"\b[A-Za-z]{1,6}-\d{1,6}\b")
 
+#: Lo stesso codice, ma con la lettera presa in QUALUNQUE alfabeto: `[^\W\d_]`
+#: è «un carattere di parola che non sia cifra né underscore», cioè una lettera
+#: Unicode. Vede `С-001` in cirillico, `样品-001`, `試料-001`.
+#:
+#: ⚠️ LA `С` CIRILLICA È VISIVAMENTE IDENTICA ALLA `C` LATINA. Un umano che
+#: rilegge il codice non vede nessuna differenza, la regex sì: è un difetto
+#: internazionale che non si trova guardando, solo misurando.
+#:
+#: 🔑 PERCHÉ QUESTA VERSIONE VIVE SOLO NELL'ESTRAZIONE E NON NEL CONFRONTO.
+#: In cinese e giapponese non ci sono spazi, quindi `{1,6}` si porta dentro
+#: anche le parole prima del codice — misurato::
+#:
+#:     «这个样品-001含有11毫克»  ->  这个样品-001    (voluto: 样品-001)
+#:     «この試料-001には11ミリグラム» ->  この試料-001   (voluto: 試料-001)
+#:
+#: Per TOGLIERE il codice dal testo questo è innocuo: si cancella qualche
+#: carattere in più, e quei caratteri non erano una quantità. Ma per DECIDERE
+#: se due record sono diversi sarebbe un difetto nuovo: «这个样品-001» e
+#: «那个样品-001» — *questo* e *quel* campione, **lo stesso record** —
+#: risulterebbero codici diversi, quindi disgiunti, quindi il conflitto vero
+#: verrebbe perso. Oggi quel caso funziona proprio perché i codici CJK non
+#: vengono visti affatto: allargare la vista lì **peggiorerebbe**.
+#: ⇒ `_identificatori_disgiunti` resta sul pattern latino, e il limite è
+#:   dichiarato nel banco `test_un_codice_non_e_una_quantita_in_nessuna_lingua`.
+_IDENTIFICATORE_UNICODE_RE = re.compile(r"(?<![\w-])[^\W\d_]{1,6}-\d{1,6}(?!\d)")
+
 
 def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
     """Entrambi i testi portano un codice di record, e non ne condividono nemmeno uno?
@@ -916,7 +942,8 @@ def _senza_identificatori(testo: str) -> str:
     `_spans_delle_date`, che senza questa accortezza salterebbe di qualche
     carattere per ogni codice incontrato.
     """
-    return _IDENTIFICATORE_RE.sub(lambda m: " " * (m.end() - m.start()), testo or "")
+    return _IDENTIFICATORE_UNICODE_RE.sub(
+        lambda m: " " * (m.end() - m.start()), testo or "")
 
 
 def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
