@@ -795,8 +795,26 @@ _MESI = (
 #   un falso negativo lascia le cose come stanno oggi. Fra i due si prende
 #   quello che non toglie niente a nessuno — «precision over recall», che e' il
 #   contratto dichiarato di questo modulo.
+#: I mesi RUSSI, al GENITIVO perché è la forma che compare nelle date: «10
+#: августа» si legge «10 di agosto». Il nominativo (август) non serve qui e
+#: allargherebbe senza motivo.
+_MESI_RU = ("января|февраля|марта|апреля|мая|июня|июля|августа|"
+            "сентября|октября|ноября|декабря")
+
+#: 🔑 CINESE E GIAPPONESE NON HANNO BISOGNO DI UNA LISTA. La data si scrive
+#: «8月10日» in entrambe, e 月 (mese) e 日 (giorno) sono gli stessi caratteri:
+#: il criterio è POSIZIONALE, non lessicale, quindi copre le due lingue con un
+#: pattern solo e non invecchia con il vocabolario.
+#: ⚠️ Il danno che ripara è il PEGGIORE dei tre misurati: «8月10日» produceva
+#: DUE numeri spuri — ('', 8.0) e ('日运行失败', 10.0) — contro l'uno solo delle
+#: forme latine, perché senza spazi il secondo si porta dietro il resto della
+#: frase come falsa unità.
+_DATA_CJK = r"\d{1,2}\s*月\s*\d{1,2}\s*日|\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日"
+
 _DATA_RE = re.compile(
     r"\b\d{4}-\d{1,2}-\d{1,2}\b"                       # ISO   2026-08-10
+    r"|" + _DATA_CJK +                                  # 8月10日 · 2026年8月10日
+    r"|\d{1,2}\s+(?:" + _MESI_RU + r")\b"              # 10 августа
     r"|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b"              # 10/08/2026 · 10-08-26
     # ⚠️ `\s*(?:[°º]\s*)?` E NON `\s*(?:°|º)?\s*`: due `\s*` ADIACENTI separati da
     # un gruppo opzionale fanno backtracking QUADRATICO su una lunga corsa di
