@@ -61,6 +61,7 @@ import io
 import json
 import re
 import sys
+import tarfile
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -206,22 +207,57 @@ def _stringhe_di(testo: str, dove: str) -> list[tuple[str, str]]:
     return fuori
 
 
-def _sorgenti_wheel(versione: str) -> list[tuple[str, str]]:
+def _sorgenti_pubblicate(versione: str, tipo: str) -> list[tuple[str, str]]:
+    """I `.py` dell'artefatto PUBBLICATO — ``wheel`` oppure ``sdist``.
+
+    ⚠️ QUI SI GUARDAVA SOLO IL WHEEL, e per due giorni ho creduto di misurare
+    «il pacchetto». `twine upload` ne pubblica DUE, e il secondo non lo apriva
+    nessuno: sulla 0.7.0 l'sdist porta 1457 voci contro le 440 del wheel, di cui
+    **997 sotto `tests/`** — cioe' un'intera superficie di sorgenti che finisce
+    su PyPI e che questo banco non vedeva.
+    🔑 Il difetto non era un criterio sbagliato: era il PERIMETRO. Lo stesso
+    banco, sullo stesso indice, con la stessa regola — e mezza risposta.
+    ⚠️ I due archivi si aprono in due modi: il wheel e' uno `.zip`, l'sdist un
+    `.tar.gz`. Il tipo si CHIEDE al metadato `packagetype`, non si assume dal
+    nome del file.
+    """
     d = json.load(urllib.request.urlopen(
         f"https://pypi.org/pypi/verimem/{versione}/json", timeout=30))
-    w = [u for u in d["urls"] if u["packagetype"] == "bdist_wheel"][0]
-    z = zipfile.ZipFile(io.BytesIO(
-        urllib.request.urlopen(w["url"], timeout=120).read()))
-    return [(n, z.read(n).decode("utf-8", "replace"))
-            for n in z.namelist() if n.endswith(".py")]
+    voluto = "bdist_wheel" if tipo == "wheel" else "sdist"
+    urls = [u for u in d["urls"] if u["packagetype"] == voluto]
+    if not urls:
+        return []
+    raw = urllib.request.urlopen(urls[0]["url"], timeout=120).read()
+    if voluto == "bdist_wheel":
+        z = zipfile.ZipFile(io.BytesIO(raw))
+        return [(n, z.read(n).decode("utf-8", "replace"))
+                for n in z.namelist() if n.endswith(".py")]
+    fuori: list[tuple[str, str]] = []
+    with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as t:
+        for m in t.getmembers():
+            if not (m.isfile() and m.name.endswith(".py")):
+                continue
+            f = t.extractfile(m)
+            if f is not None:
+                fuori.append((m.name, f.read().decode("utf-8", "replace")))
+    return fuori
 
 
 def main(argv: list[str]) -> int:
     codice = "--anche-il-codice" in argv
-    if "--wheel" in argv:
-        versione = argv[argv.index("--wheel") + 1]
-        etichetta = f"WHEEL verimem {versione} (PyPI)"
-        sorgenti = _sorgenti_wheel(versione)
+    if "--wheel" in argv or "--sdist" in argv:
+        # ⚠️ DUE ARTEFATTI, NON UNO. `twine upload` ne pubblica due dallo stesso
+        # comando e finora questo banco apriva solo il primo: chi leggeva il suo
+        # referto credeva di sapere cosa c'e' «nel pacchetto» e ne conosceva
+        # meta'. Le due porte restano SEPARATE di proposito — un solo numero che
+        # somma i due archivi nasconderebbe proprio la differenza che conta.
+        tipo = "sdist" if "--sdist" in argv else "wheel"
+        versione = argv[argv.index(f"--{tipo}") + 1]
+        etichetta = f"{tipo.upper()} verimem {versione} (PyPI)"
+        sorgenti = _sorgenti_pubblicate(versione, tipo)
+        if not sorgenti:
+            print(f"⛔ nessun {tipo} pubblicato per la {versione}.")
+            return 2
     else:
         base = Path(__file__).resolve().parents[3]
         cartelle = [base / "verimem"]
