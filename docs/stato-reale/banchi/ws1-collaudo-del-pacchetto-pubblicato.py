@@ -212,6 +212,30 @@ def main(versione: str) -> int:
           "facts_undo_log" in meta,
           "nomina facts_undo_log" if "facts_undo_log" in meta else "non ne parla")
 
+    # ── ⑤-bis i numeri attribuiti ad ALTRI prodotti ─────────────────────────
+    # 41249168 (12/08) ha tolto dal sorgente tre affermazioni su sistemi di
+    # terze parti che nessuna misura di questo repository sostiene. Un commit
+    # ripulisce l'albero e NON tocca cio' che e' gia' pubblicato: il METADATA
+    # di una release e' immutabile, e `pip show` continua a stamparlo.
+    # Questa voce misura quella distanza. Non e' un test della CI apposta:
+    # finche' non esce una release nuova resterebbe rossa per sempre, e un
+    # rosso che nessuno puo' curare smette di essere letto.
+    altrui = {
+        "mem0/Zep have no status": "assenza di funzionalita' attribuita a terzi",
+        "MemOS extraction is 79.7": "un numero attribuito a un prodotto altrui",
+        "40/60": "punteggio attribuito a un prodotto altrui",
+        "no write gate": "giudizio su come lavora un altro prodotto",
+        "served as-is": "giudizio su come lavora un altro prodotto",
+    }
+    resti = {f: perche for f, perche in altrui.items() if f in meta}
+    esito("il pacchetto pubblicato non attribuisce numeri ad altri prodotti",
+          not resti,
+          "nessuna affermazione su terzi nel METADATA" if not resti else
+          f"ANCORA PRESENTI {len(resti)} su {len(altrui)}: "
+          + " · ".join(f"«{f}» ({p})" for f, p in resti.items())
+          + " — tolte dal sorgente in 41249168, restano nell'artefatto "
+            "finche' non si rilascia")
+
     # ── ⑥ i numeri della pagina sono ancorati? (lezione ws6, 09/08) ─────────
     nudi = [riga for riga in meta.splitlines()
             if re.search(r"\b\d{3,}\b", riga) and not re.search(r"20\d\d", riga)
