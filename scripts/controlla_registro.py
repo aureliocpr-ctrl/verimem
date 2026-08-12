@@ -43,6 +43,13 @@ NOMI_SESSIONE = (
     "Ester|Archivista|Censore"
 )
 
+#: Escluse quando il controllo punta a una directory: copie del sorgente
+#: (``build``, ``dist``), ambienti e dipendenze di terzi, cache.
+ESCLUSE = frozenset({
+    "build", "dist", ".git", ".venv", "venv", "__pycache__", "node_modules",
+    ".tox", ".mypy_cache", ".pytest_cache", "site-packages",
+})
+
 CLASSI: dict[str, tuple[re.Pattern[str], bool]] = {
     # nome della classe: (pattern, blocca il rilascio)
     "identificativo di sessione": (re.compile(r"\bws[1-8]\b"), True),
@@ -64,7 +71,16 @@ def _sorgenti(percorso: pathlib.Path):
 
     if percorso.is_dir():
         for p in sorted(percorso.rglob("*.py")):
-            if ".git" in p.parts or p.name.startswith("."):
+            #: Directory che contengono copie del sorgente o codice di terzi. Senza
+            #: questo filtro, puntare il controllo alla radice del progetto esamina
+            #: decine di migliaia di file e — peggio — legge ``build/lib/verimem``,
+            #: una copia che può essere vecchia di giorni: ``build`` precede
+            #: ``verimem`` in ordine alfabetico, quindi in un elenco troncato la
+            #: copia morta compare per prima. Il verdetto va dato sull'artefatto
+            #: (``.whl``/``.tar.gz``), che di queste directory non ne ha nessuna.
+            if ESCLUSE & set(p.parts):
+                continue
+            if p.name.startswith("."):
                 continue
             if p.resolve() == io_stesso:
                 continue
