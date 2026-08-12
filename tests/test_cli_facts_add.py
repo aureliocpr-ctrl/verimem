@@ -44,6 +44,7 @@ def isolated_corpus(
 ) -> Path:
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(tmp_path))
     (tmp_path / "semantic").mkdir(parents=True, exist_ok=True)
     return tmp_path
 

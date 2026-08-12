@@ -43,6 +43,7 @@ def isolated_corpus(
     operate on a known-shape store, not the user's live ~/.verimem."""
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(tmp_path))
     # Seed a small fact set covering the status enum we care about.
     sem_dir = tmp_path / "semantic"
     sem_dir.mkdir(parents=True, exist_ok=True)

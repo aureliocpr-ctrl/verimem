@@ -64,6 +64,7 @@ def isolated_corpus(
     """
     monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("VERIMEM_DATA_DIR", str(tmp_path))
     # Make sure the layout matches what the CLI expects (subdir style).
     sem_dir = tmp_path / "semantic"
     sem_dir.mkdir(parents=True, exist_ok=True)
