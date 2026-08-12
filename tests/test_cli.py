@@ -28,26 +28,27 @@ def runner() -> CliRunner:
 def _isolate_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Redirect every storage CONFIG.* path so CLI tests don't pollute prod data.
 
-    `Config` is a frozen dataclass — we replace the module-level CONFIG with
-    a mutable namespace that mirrors the same attributes. This avoids
-    FrozenInstanceError while still being a per-test override.
-    """
-    from types import SimpleNamespace
+    `Config` is a frozen dataclass, quindi i campi si scrivono con
+    ``object.__setattr__`` e si ripristinano a mano.
 
+    ⚠️ NON si sostituisce l'oggetto nel modulo (``setattr(cfg, "CONFIG", ...)``):
+    verimem/cli.py:15 fa ``from .config import CONFIG`` e lo tiene per tutta la
+    sessione, quindi installare un oggetto nuovo nel modulo non raggiunge le 13
+    letture che la CLI fa — ne' quelle degli altri 16 moduli che lo catturano
+    allo stesso modo. Misurato nel contesto di questa fixture: il test leggeva
+    ``.../data`` e la CLI ``.../hippo_test_data0``, con ``cli.CONFIG is
+    cfg.CONFIG`` falso. I test passavano lo stesso perche' l'isolamento vero
+    arrivava dalla fixture autouse del conftest — cioe' questa fixture
+    prometteva nel nome un isolamento che non forniva.
+    Mutare i campi IN PLACE funziona proprio perche' l'oggetto resta quello che
+    tutti i moduli hanno gia' in mano.
+    """
     from verimem import config as cfg
     new = tmp_path / "data"
-    (new / "episodes").mkdir(parents=True)
-    (new / "skills").mkdir(parents=True)
-    (new / "semantic").mkdir(parents=True)
-    (new / "reports").mkdir(parents=True)
-    (new / "runs").mkdir(parents=True)
-    # Build a snapshot of every attribute on the original CONFIG, then
-    # override the storage-related paths.
-    snapshot = {
-        attr: getattr(cfg.CONFIG, attr) for attr in dir(cfg.CONFIG)
-        if not attr.startswith("_") and not callable(getattr(cfg.CONFIG, attr))
-    }
-    snapshot.update({
+    for sub in ("episodes", "skills", "semantic", "reports", "runs"):
+        (new / sub).mkdir(parents=True)
+
+    percorsi = {
         "data_dir": new,
         "episodes_db": new / "episodes" / "episodes.db",
         "skills_dir": new / "skills",
@@ -55,11 +56,15 @@ def _isolate_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         "semantic_db": new / "semantic" / "semantic.db",
         "reports_dir": new / "reports",
         "runs_dir": new / "runs",
-    })
-
-    fake = SimpleNamespace(**snapshot)
-    fake.ensure_dirs = lambda: None  # already created above
-    monkeypatch.setattr(cfg, "CONFIG", fake)
+    }
+    salvati = {campo: getattr(cfg.CONFIG, campo) for campo in percorsi}
+    for campo, valore in percorsi.items():
+        object.__setattr__(cfg.CONFIG, campo, valore)
+    try:
+        yield
+    finally:
+        for campo, valore in salvati.items():
+            object.__setattr__(cfg.CONFIG, campo, valore)
 
 
 # ---------------------------------------------------------------------------
