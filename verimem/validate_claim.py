@@ -442,6 +442,49 @@ def _subj_overlap(claim_caps: set[str], fact_text: str) -> float:
     return hits / len(claim_caps)
 
 
+def _content_overlap(claim_distinct: set[str], fact_text: str) -> float:
+    """Frazione di parole DISTINTIVE della claim presenti nel testo del fact.
+
+    Speculare a :func:`_subj_overlap`, stessa forma e stesso metro — cambia
+    solo COSA si cerca: là i nomi propri riconosciuti dalla maiuscola, qui le
+    parole di contenuto. Serve dove il primo criterio non può funzionare per
+    costruzione, non dove funziona male.
+
+    ⚠️ IL CASO NON È MARGINALE, È UN TERZO DEL PERIMETRO. `_subj_overlap` si
+    appoggia a `_CAPS_RE = \\b([A-Z][a-zA-Z]{2,})\\b` e restituisce 0.0 quando
+    la claim non ha nomi capitalizzati ASCII. Misurato confrontando ogni frase
+    con SE STESSA — il massimo che quel criterio possa dare::
+
+        EN / IT / FR / ES    1.00
+        RU                   0.00     (Склад, Вероне: maiuscole non ASCII)
+        ZH / JA              0.00     (le maiuscole non esistono)
+
+    Il ciclo dei candidati scarta tutto ciò che sta sotto la soglia, quindi in
+    quelle tre lingue `supporting` restava vuoto SEMPRE: il gate poteva solo
+    bocciare — la contraddizione ha altri agganci — e non confermare mai.
+    Il russo è la prova che non c'entra la segmentazione: ha spazi e maiuscole.
+
+    🔑 IL PRINCIPIO NON È NUOVO, è già scritto due volte in questa casa: il
+    passo numerico qui sotto è «independent of the caps-overlap gate above,
+    which is ~0 for number-only claims», e `anti_confab_gate` applica
+    `leggibile_a_maiuscole` con la regola «se il criterio non sa leggere la
+    frase, non decide». Mancava il caso opposto e più semplice: non «troppe
+    maiuscole» (il tedesco), ma **nessuna**.
+
+    📌 PERCHÉ SOLO IN FALLBACK e non sempre: dove i nomi propri esistono sono
+    il segnale più preciso — «il database di produzione» compare in mezzo
+    corpus, «PostgreSQL» no. Sostituire il criterio invece di completarlo
+    allargherebbe l'aggancio anche dove oggi è giusto, che è il modo in cui una
+    cura per una lingua ne rompe altre quattro.
+    """
+    if not claim_distinct:
+        return 0.0
+    fact_lower = (fact_text or "").lower()
+    hits = sum(1 for t in claim_distinct
+               if t and _termine_presente(t.lower().strip(), fact_lower))
+    return hits / len(claim_distinct)
+
+
 def validate_claim(
     agent: _AgentLike,
     claim: str,
@@ -577,7 +620,14 @@ def validate_claim(
     supporting: list[_FactLike] = []
     for f in hits:
         fact_caps, fact_years = _extract_salients(f.proposition)
-        overlap = _subj_overlap(claim_caps, f.proposition)
+        # AGGANCIO DEL CANDIDATO. I nomi propri restano il criterio primario
+        # dove esistono; quando la claim non ne ha — perché la sua lingua non
+        # li marca con la maiuscola, non perché è generica — si ripiega sulle
+        # parole di contenuto con la STESSA soglia. Senza questo ramo il ciclo
+        # scartava ogni candidato in russo, cinese e giapponese e `supporting`
+        # restava vuoto per costruzione: vedi `_content_overlap`.
+        overlap = (_subj_overlap(claim_caps, f.proposition) if claim_caps
+                   else _content_overlap(claim_distinct, f.proposition))
         if overlap < threshold:
             continue
         # Anni disgiunti ⇒ contraddizione.

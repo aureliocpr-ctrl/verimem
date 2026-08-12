@@ -61,7 +61,18 @@ def test_cli_main_dichiara_cli():
            if k != "ENGRAM_FLOW_SURFACE"}
     out = subprocess.run([sys.executable, "-c", code], env=env,
                          capture_output=True, text=True, timeout=120)
-    assert "SURFACE=cli" in out.stdout, out.stdout + out.stderr
+    # ⚠️ `subprocess` puo' rendere `None` su un canale invece di stringa vuota.
+    # Con `in out.stdout` la riga solleva `TypeError: argument of type
+    # 'NoneType' is not iterable` PRIMA di arrivare all'assert, e il messaggio
+    # dell'assert — che somma i due canali — esplode a sua volta: in CI si
+    # legge il guasto del banco al posto del motivo per cui il test e' rosso.
+    # 🔑 Stesso difetto gia' curato in `test_la_ricevuta_non_diceva_quale_cifra
+    # _mancava.py` (07675ac6): il fallimento del banco MASCHERA quello che il
+    # banco esiste per mostrare.
+    # 📌 Nel run 31609651506 questo era l'UNICO file rosso su Windows e su
+    # nessun'altra piattaforma — 20 file cadono ovunque, questo solo li'.
+    _uscita = (out.stdout or "") + (out.stderr or "")
+    assert "SURFACE=cli" in (out.stdout or ""), _uscita
 
 
 def test_comando_mcp_cede_da_cli_a_mcp(monkeypatch):

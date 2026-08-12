@@ -348,6 +348,58 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
 )
 
 
+#: La coda in HIRAGANA di un'unita' giapponese. Non e' una lista di verbi: e'
+#: la struttura ortografica della lingua (okurigana), che scrive le desinenze
+#: in hiragana e lascia sostantivi e unita' in katakana o kanji.
+_CODA_HIRAGANA_RE = re.compile(r"[ぁ-ゟ]+$")
+
+
+def _senza_coda_verbale_giapponese(w: str) -> str:
+    """«480パレット**あります**» e «320パレット**です**» misurano la stessa cosa.
+
+    ⚠️ IL DIFETTO CHE CURA, misurato prima di scriverla — due frasi giapponesi
+    che si contraddicono, con verbi diversi::
+
+        ヴェローナの倉庫には480パレットあります  ->  ('パレットあります', 480.0)
+        ヴェローナの倉庫は320パレットです      ->  ('パレットです',   320.0)
+        numeric_conflict                    ->  None      ⇐ falso negativo
+
+    🔑 LA CAUSA NON È LA LINGUA, È LA POSIZIONE DEL VERBO, e si vede solo
+    confrontando le due lingue senza spazi::
+
+        ZH  有480个托盘 / 存放320个托盘  ->  ('个托盘', 480) e ('个托盘', 320)  ✅
+        JA  480パレットあります / 320パレットです                              ❌
+
+    In cinese il verbo precede il numero e resta fuori dall'unita'; in
+    giapponese la segue e ci entra dentro. Stesso parser, stesso difetto
+    potenziale, esito opposto per l'ordine delle parole.
+
+    ⚖️ PERCHÉ UN CRITERIO E NON UNA LISTA DI VERBI: le desinenze giapponesi si
+    scrivono in hiragana e le unita' in katakana o kanji — e' ortografia, non
+    vocabolario, quindi copre anche i verbi che nessuno ha elencato. È la stessa
+    scelta di `_DATA_CJK` (`8月10日` vale per due lingue senza dizionario) e di
+    `norm_unit` sui diacritici, che questa casa ha gia' pagato tre volte per due
+    elenchi divergenti.
+
+    ⚠️⚠️ IL PRESIDIO NON È DECORAZIONE — la versione senza cade sulla
+    popolazione opposta, e l'ho misurata prima di scegliere. Diversi contatori
+    giapponesi **sono** hiragana::
+
+        つ  こ  ひとつ  まい  ほん  ぴき      ->  tagliati a stringa VUOTA
+
+    `つ` è il contatore generico, `まい` conta i fogli, `ぴき` gli animali
+    piccoli: unita' legittime e frequenti. Se dopo il taglio non resta nulla,
+    la parola ERA l'unita' e si tiene intera. Con il presidio: 11 casi su 11
+    corretti, cinque code verbali tolte e sei unita' hiragana conservate.
+
+    📌 RESTA SCOPERTO il verbo scritto in KANJI: «ミリグラム含まれています» ->
+    «ミリグラム含», dove 含 è la radice di 含まれる. Il taglio migliora e non
+    chiude, ed è dichiarato invece che taciuto.
+    """
+    tagliata = _CODA_HIRAGANA_RE.sub("", w)
+    return tagliata if tagliata else w
+
+
 def norm_unit(word: str) -> str:
     """Canonicalise a unit word (synonyms + plural/`-ies` singularisation).
 
@@ -361,7 +413,7 @@ def norm_unit(word: str) -> str:
     non in `u` — «Stück» e «Stueck» sono la STESSA parola scritta da due
     tastiere diverse, ed e' la forma che si trova nei sistemi gestionali.
     """
-    w = (word or "").lower()
+    w = _senza_coda_verbale_giapponese((word or "").lower())
     if w in _UNIT_SYN:
         return _UNIT_SYN[w]
     piano = _senza_diacritici(w)   # `w` e' gia' .lower()
@@ -869,6 +921,32 @@ _DATA_RE = re.compile(
 #: essere troppo larga non e' sbagliata, e' indivisa.**
 _IDENTIFICATORE_RE = re.compile(r"\b[A-Za-z]{1,6}-\d{1,6}\b")
 
+#: Lo stesso codice, ma con la lettera presa in QUALUNQUE alfabeto: `[^\W\d_]`
+#: è «un carattere di parola che non sia cifra né underscore», cioè una lettera
+#: Unicode. Vede `С-001` in cirillico, `样品-001`, `試料-001`.
+#:
+#: ⚠️ LA `С` CIRILLICA È VISIVAMENTE IDENTICA ALLA `C` LATINA. Un umano che
+#: rilegge il codice non vede nessuna differenza, la regex sì: è un difetto
+#: internazionale che non si trova guardando, solo misurando.
+#:
+#: 🔑 PERCHÉ QUESTA VERSIONE VIVE SOLO NELL'ESTRAZIONE E NON NEL CONFRONTO.
+#: In cinese e giapponese non ci sono spazi, quindi `{1,6}` si porta dentro
+#: anche le parole prima del codice — misurato::
+#:
+#:     «这个样品-001含有11毫克»  ->  这个样品-001    (voluto: 样品-001)
+#:     «この試料-001には11ミリグラム» ->  この試料-001   (voluto: 試料-001)
+#:
+#: Per TOGLIERE il codice dal testo questo è innocuo: si cancella qualche
+#: carattere in più, e quei caratteri non erano una quantità. Ma per DECIDERE
+#: se due record sono diversi sarebbe un difetto nuovo: «这个样品-001» e
+#: «那个样品-001» — *questo* e *quel* campione, **lo stesso record** —
+#: risulterebbero codici diversi, quindi disgiunti, quindi il conflitto vero
+#: verrebbe perso. Oggi quel caso funziona proprio perché i codici CJK non
+#: vengono visti affatto: allargare la vista lì **peggiorerebbe**.
+#: ⇒ `_identificatori_disgiunti` resta sul pattern latino, e il limite è
+#:   dichiarato nel banco `test_un_codice_non_e_una_quantita_in_nessuna_lingua`.
+_IDENTIFICATORE_UNICODE_RE = re.compile(r"(?<![\w-])[^\W\d_]{1,6}-\d{1,6}(?!\d)")
+
 
 def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
     """Entrambi i testi portano un codice di record, e non ne condividono nemmeno uno?
@@ -916,7 +994,8 @@ def _senza_identificatori(testo: str) -> str:
     `_spans_delle_date`, che senza questa accortezza salterebbe di qualche
     carattere per ogni codice incontrato.
     """
-    return _IDENTIFICATORE_RE.sub(lambda m: " " * (m.end() - m.start()), testo or "")
+    return _IDENTIFICATORE_UNICODE_RE.sub(
+        lambda m: " " * (m.end() - m.start()), testo or "")
 
 
 def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
@@ -1042,6 +1121,54 @@ def _senza_diacritici(text: str) -> str:
                    if not unicodedata.combining(c))
 
 
+#: Han (cinese e kanji giapponesi), hiragana, katakana ed estensioni.
+_CJK_RE = re.compile(r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿]{2,}")
+
+
+def _bigrammi_cjk(text: str) -> set[str]:
+    """I bigrammi di caratteri delle sequenze cinesi e giapponesi.
+
+    🔑 LA DOMANDA CHE HA PORTATO QUI non era «come tokenizziamo il cinese», ma
+    **«esiste un criterio di stesso-soggetto che non passi dalle parole?»** — e
+    la risposta è sì: in cinese e giapponese la coppia di caratteri adiacenti è
+    l'unità di significato più piccola stabile, ed è la base standard del
+    retrieval per queste lingue proprio perché **non richiede un dizionario**.
+    Un segmentatore sarebbe stato un componente in più da mantenere, e in questa
+    casa i vocabolari sono la classe di difetti che torna sempre.
+
+    IL DIFETTO CHE CHIUDE, misurato il 12/08 prima della cura::
+
+        content_tokens("样品-001含有11毫克。")   ->  set()      (zero token)
+        content_tokens("维罗纳仓库有480个托盘。")  ->  {'维罗纳仓库有'}  (mezza frase)
+
+    ⇒ La guardia dello stesso-soggetto chiede almeno una parola distintiva in
+    comune. Con zero token non è mai soddisfatta: **due schede cinesi diverse
+    davano ``None``, e quel ``None`` significava «non ho potuto guardare»
+    travestito da «non c'è contraddizione»**. Le frasi lunghe funzionavano per
+    coincidenza — mezza frase incollata che capitava identica nelle due — e
+    bastava cambiare una parola all'inizio per perdere il conflitto.
+
+    Con i bigrammi::
+
+        「样品-001含有11毫克」 -> {样品, 含有, 毫克}
+        「样品-002含有12毫克」 -> {样品, 含有, 毫克}     ⇒ 3 condivisi, guardia superata
+
+    ⚠️ LA POPOLAZIONE OPPOSTA, verificata PRIMA di scrivere la cura: tre coppie
+    di frasi che parlano di cose diverse (magazzino/servizio, pallet/minuti,
+    magazzino/cache in giapponese) condividono **zero** bigrammi. Il criterio
+    separa, non incolla — che è il rischio vero di un n-gramma: essere così
+    generoso da rendere tutto simile a tutto.
+
+    📌 Le altre lingue non sono toccate: senza caratteri CJK questa funzione
+    restituisce l'insieme vuoto e ``content_tokens`` resta identica a prima.
+    """
+    out: set[str] = set()
+    for run in _CJK_RE.findall(text or ""):
+        for i in range(len(run) - 1):
+            out.add(run[i:i + 2])
+    return out
+
+
 def content_tokens(text: str) -> set[str]:
     """Lower-cased alpha tokens ≥4 chars minus fillers, lightly singularised.
 
@@ -1051,6 +1178,13 @@ def content_tokens(text: str) -> set[str]:
 
     Gli accenti sono normalizzati e gli alfabeti non latini contano come
     lettere — vedi il blocco su ``_PAROLA_RE`` per la misura che lo giustifica.
+
+    ⚠️ E IN CINESE E GIAPPONESE NON CI SONO PAROLE — vedi ``_bigrammi_cjk``.
+    Fino al 12/08 questa funzione restituiva **zero token** su una frase cinese
+    breve e **mezza frase come token unico** su una lunga, quindi la guardia non
+    poteva mai essere soddisfatta e ogni conflitto usciva ``None``: non
+    «nessuna contraddizione», ma «non ho potuto guardare», scritto nello stesso
+    modo.
     """
     toks = _PAROLA_RE.findall(_senza_diacritici((text or "").lower()))
     out: set[str] = set()
@@ -1062,6 +1196,7 @@ def content_tokens(text: str) -> set[str]:
         elif t.endswith("s") and len(t) > 3:
             t = t[:-1]
         out.add(t)
+    out |= _bigrammi_cjk(text)
     return out
 
 
@@ -1544,7 +1679,11 @@ _NEGATOR_RE = re.compile(
     # «le lingue con gli spazi» invece che «le lingue».
     r"|(?:ません|ないです|なかった|ない|ぬ)"
     r"|(?:没有|不是|不会|不能|不|未|非)"
-    r"|(?:\bلا\b|\bلم\b|\bلن\b|\bليس\b)",
+    r"|(?:\bلا\b|\bلم\b|\bلن\b|\bليس\b)"
+    # RUSSO — mancava, ed è nel perimetro delle sette lingue chiesto il 12/08.
+    # «не» è la negazione ordinaria, «нет» quella esistenziale, «ни» quella
+    # coordinata: tutte parole intere, delimitate da spazi come in inglese.
+    r"|\b(?:не|нет|ни)\b",
     re.IGNORECASE,
 )
 
@@ -1555,11 +1694,39 @@ def _has_negator(text: str) -> bool:
 
 def _negated_tokens(text: str) -> set[str]:
     """Content words in the negator's SCOPE: the first 1-2 alpha tokens right
-    after each negator, singularised like :func:`content_tokens`."""
+    after each negator, singularised like :func:`content_tokens`.
+
+    ⚠️ IL NEGATORE ERA MULTILINGUE E IL SUO OGGETTO NO — misurato il 12/08.
+    `_NEGATOR_RE` copriva già giapponese, cinese e arabo dal 04/08, ma qui la
+    coda si cercava con ``[a-zA-Z]{4,}``: **la negazione veniva riconosciuta e
+    ciò che negava no**, quindi nessun token entrava nello scope e il polarity
+    flip non scattava mai::
+
+        RU «Сервис не доступен.»  negatore visto (dopo la cura) · coda [] → nessun conflitto
+
+    ⇒ Un difetto in **due pezzi**: metà curata da un'altra istanza il 04/08 (i
+    negatori giapponesi, cinesi e arabi), metà rimasta qui. **Riconoscere una
+    negazione non serve a niente se poi non si guarda che cosa nega.**
+
+    📌 LIMITE DICHIARATO, E MISURATO DOPO LA CURA — **cinese e giapponese
+    restano scoperti**, e non per dimenticanza. Lo scope adesso li estrae
+    («不可用» → «可用»), ma il polarity flip confronta quel token con quelli
+    della frase affermativa, e lì non c'è nessun «可用»: c'è il blocco
+    «服务可用», perché senza spazi `content_tokens` non ritaglia parole.
+    In giapponese si aggiunge che la negazione è un **suffisso**
+    («利用できます» → «利用できません»), quindi l'oggetto sta pure dalla parte
+    sbagliata.
+    ⇒ Non è una regex che manca: **è la segmentazione**, la stessa che rende
+      `content_tokens` cieco in quelle due lingue. Curare qui senza risolvere
+      là sposterebbe il difetto invece di chiuderlo.
+    """
     t = text or ""
     out: set[str] = set()
     for m in _NEGATOR_RE.finditer(t):
-        following = re.findall(r"[a-zA-Z]{4,}", t[m.end():])[:2]
+        # `[^\W\d_]{4,}` = una parola in QUALUNQUE alfabeto (cirillico compreso);
+        # `[一-鿿]{2,4}` = i caratteri cinesi subito dopo il negatore, che non
+        # hanno spazi e sono corti — «不可用» nega «可用», due caratteri.
+        following = re.findall(r"[^\W\d_]{4,}|[一-鿿]{2,4}", t[m.end():])[:2]
         for w in following:
             w = w.lower()
             if w.endswith("ies"):
@@ -1568,6 +1735,37 @@ def _negated_tokens(text: str) -> set[str]:
                 w = w[:-1]
             out.add(w)
     return out
+
+
+def _senza_negatori(text: str) -> str:
+    """Il testo senza i negatori, per confrontare le due frasi «a parità di
+    resto».
+
+    ⚠️ E IL NEGATORE SI TOGLIE IN DUE MODI DIVERSI, misurato il 12/08. La
+    guardia di `negation_conflict` chiede Jaccard ≥ 0.6 fra i token dei due
+    lati, ed è tarata su lingue dove il negatore è **una parola fra le altre**:
+    togliere «non» da «il servizio non è disponibile» non tocca nessun'altra
+    parola. In cinese il negatore sta **dentro** la parola, e cambiarlo riscrive
+    il vicinato::
+
+        服务可用     bigrammi  {服务, 务可, 可用}
+        服务不可用   bigrammi  {服务, 务不, 不可, 可用}   ⇒ Jaccard 0.29, guardia BLOCCA
+
+    Sostituirlo con uno spazio non basta: spezza `服务不可用` in due sequenze e
+    **si perde il bigramma di giunzione** (0.29 → 0.50, ancora sotto soglia).
+    Togliendolo senza lasciare spazio la frase torna quella affermativa e i due
+    insiemi coincidono — Jaccard 1.00 su tutte e sette le lingue del perimetro,
+    con la popolazione opposta (frasi che parlano di cose diverse) ferma a 0.00.
+
+    🔑 La regola generale: **un negatore che sta fra le parole si sostituisce
+    con uno spazio, uno che sta dentro la parola si toglie e basta.** Sono due
+    lingue diverse dentro la stessa funzione.
+    """
+    def _via(m: re.Match) -> str:
+        s = m.group(0)
+        dentro_la_parola = bool(s) and "぀" <= s[0] <= "鿿"
+        return "" if dentro_la_parola else " "
+    return _NEGATOR_RE.sub(_via, text or "")
 
 
 def negation_conflict(text_a: str, text_b: str) -> str | None:
@@ -1582,7 +1780,7 @@ def negation_conflict(text_a: str, text_b: str) -> str | None:
     na, nb = _has_negator(text_a), _has_negator(text_b)
     if na == nb:
         return None  # same polarity → no flip
-    ca, cb = content_tokens(text_a), content_tokens(text_b)
+    ca, cb = content_tokens(_senza_negatori(text_a)), content_tokens(_senza_negatori(text_b))
     shared = ca & cb
     union = ca | cb
     if len(shared) < 2 or not union or (len(shared) / len(union)) < 0.6:
