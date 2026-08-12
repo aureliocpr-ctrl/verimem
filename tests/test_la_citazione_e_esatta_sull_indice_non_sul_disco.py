@@ -113,8 +113,20 @@ def test_il_testo_resta_servito_anche_se_il_file_sparisce(tmp_path) -> None:
 def test_il_contratto_non_promette_piu_che_il_file_si_riapra() -> None:
     """Criterio B applicato alla lettera: la frase del contratto ha un test.
 
-    Rosso se qualcuno rimette un «exact citations» nudo nella guida che ogni
-    agente legge, senza dire su COSA la citazione e' esatta.
+    COMPLEMENTARE, non ridondante, rispetto a
+    ``test_la_promessa_della_citazione_vale_su_ogni_superficie`` (commit
+    ``a9e246f1``), che copre SEI superfici con un criterio condizionale: *se*
+    una superficie promette una citazione esatta, deve dire su cosa. Quello
+    SALTA sulle superfici che non promettono nulla — ed e' giusto cosi'.
+    Questo invece e' incondizionato sulla guida: **se la guida descrive ancora
+    lo strumento, il limite dev'esserci comunque**, anche se un domani nessuno
+    scrivesse piu' la parola «exact». Preso da solo, nessuno dei due copre il
+    caso dell'altro.
+
+    ⚠️ La ricerca della promessa NON e' piu' la stringa esatta «(exact
+    citations).»: quella reggeva sul testo di allora e non avrebbe preso
+    «exact citation» al singolare, senza punto o riformulato — rilievo di chi
+    ha scritto l'altro file, ed era fondato.
     """
     guida = Path(__file__).resolve().parents[1] / "verimem" / "agent_guide.py"
     testo = guida.read_text(encoding="utf-8")
@@ -123,11 +135,11 @@ def test_il_contratto_non_promette_piu_che_il_file_si_riapra() -> None:
         "precondizione: la guida deve ancora descrivere la ricerca sui documenti "
         "(se il nome dello strumento cambia, aggiorna QUESTO test, non toglierlo)"
     )
-    assert "(exact citations)." not in testo, (
-        "la guida promette di nuovo «exact citations» senza dire su cosa: "
-        "misurato l'84,9% dei chunk punta a file spariti"
-    )
+    # una promessa di esattezza senza il suo limite, comunque la si scriva
+    promesse = re.findall(r"exact\w*\s+citation\w*", testo, flags=re.IGNORECASE)
     for atteso in ("indexed text", "no longer opens"):
         assert atteso in testo, (
-            f"la guida non dichiara piu' il limite della citazione: manca «{atteso}»"
+            f"la guida non dichiara piu' il limite della citazione: manca «{atteso}». "
+            f"Promesse di esattezza trovate nel testo: {promesse or 'nessuna'} — "
+            f"misurato, l'84,9% dei chunk punta a file spariti"
         )
