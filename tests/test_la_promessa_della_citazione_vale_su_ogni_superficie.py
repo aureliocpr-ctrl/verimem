@@ -51,6 +51,11 @@ import pytest
 _RADICE = Path(__file__).resolve().parents[1]
 
 #: Le superfici su cui un lettore — umano o agente — incontra la promessa.
+#:
+#: 📌 LE ULTIME DUE LE HA TROVATE ws5 VERIFICANDO QUESTO STESSO PEZZO, ed è il
+#: motivo per cui stanno qui: la mia mappa ne aveva cinque, la sua ne contava
+#: altre. Una lista di superfici scritta da chi ha in mente la cura è quasi
+#: sempre corta — la trova chi guarda da fuori.
 SUPERFICI = [
     ("agent_guide.py — la guida che ogni agente riceve", "verimem/agent_guide.py"),
     ("mcp_server.py — le descrizioni degli strumenti, lette a runtime",
@@ -59,7 +64,25 @@ SUPERFICI = [
     ("document_index.py — il modulo che la implementa", "verimem/document_index.py"),
     ("document_promote.py — dove la citazione entra in verified_by",
      "verimem/document_promote.py"),
+    ("F2_MODULE_INVENTORY.md — l'inventario che descrive il modulo",
+     "docs/F2_MODULE_INVENTORY.md"),
 ]
+
+#: ⚖️ E QUESTE DEVONO RESTARE COME SONO — il presidio che manca alle liste.
+#:
+#: Il difetto speculare di una mappa corta è una mappa GOLOSA: `git grep` trova
+#: la promessa anche dove correggerla sarebbe sbagliato. ws5 se n'è accorta
+#: contando dodici superfici e ritirando il numero a dieci, e la riga che le
+#: mancava è questa: **prima di contare le occorrenze di una promessa, separare
+#: quelle che DEVONO restare.**
+#:
+#: · `CHANGELOG.md` registra che cosa fu ANNUNCIATO allora: correggerlo non
+#:   sarebbe curare una promessa, sarebbe riscrivere la storia.
+#: · `docs/TEST_SURFACE_MAP.md` usa «exact citation» come NOME DI UN AMBITO da
+#:   sottoporre a stress, in una tabella di copertura — non promette nulla a
+#:   nessun lettore.
+#: · i test che citano la frase vecchia apposta, per riconoscerla.
+NON_SI_TOCCANO = ("CHANGELOG.md", "docs/TEST_SURFACE_MAP.md", "tests/")
 
 #: ⚠️ LA PROMESSA SI CERCA PER PROSSIMITÀ, NON PER STRINGA — e questa riga è
 #: nata da un errore mio, trovato falsificando il mio stesso test.
@@ -154,6 +177,27 @@ def test_IL_RICONOSCITORE_prende_le_riformulazioni_e_non_i_falsi(
     a vicenda — perché un riconoscitore troppo largo trasformerebbe ogni
     menzione in un obbligo di dichiarare un limite che lì non c'entra."""
     assert bool(_PROMESSA_RE.search(frase)) is e_una_promessa, frase
+
+
+def test_LE_SUPERFICI_STORICHE_restano_intatte():
+    """⚖️ IL VERSO OPPOSTO DELLA COPERTURA, e serve quanto l'altro.
+
+    Una lista di superfici cresce guardando `git grep`, e `git grep` non sa
+    distinguere una promessa da un ricordo. Se un giorno qualcuno «curasse» il
+    CHANGELOG per far passare il test sopra, avrebbe riscritto la storia del
+    prodotto per compiacere un guardiano — che è il modo in cui un presidio
+    diventa dannoso.
+
+    Il CHANGELOG **deve** contenere ancora la formulazione vecchia: è il
+    registro di ciò che fu annunciato allora.
+    """
+    changelog = (_RADICE / "CHANGELOG.md").read_text(
+        encoding="utf-8", errors="ignore")
+    assert _PROMESSA_RE.search(changelog), (
+        "il CHANGELOG non riporta più la promessa come fu annunciata: se è "
+        "stato riscritto per far passare un test, va ripristinato — un "
+        "changelog registra la storia, non la corregge"
+    )
 
 
 def test_IL_PEZZO_DI_ws6_RESTA_SUO_e_questo_non_lo_duplica():

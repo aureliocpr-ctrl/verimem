@@ -117,7 +117,7 @@ for the layer-by-layer verification, not its verdict.
 | `swarm/cli.py` | 183 | 19 | 93 | Cycle #148.6.b (2026-05-18 sera) — Engram Swarm CLI surface. |
 | `hot_reload.py` | 181 | 1 | 9 | Cycle 2026-05-27 round 13 P2a — hot-reload code watcher. |
 | `decay_job.py` | 180 | 3 | 19 | Cycle #110.C (2026-05-16) — Confidence decay job. |
-| `document_index.py` | 178 | 4 | 50 | DocumentIndex — semantic search over whole files with exact citation (roadmap #1). |
+| `document_index.py` | 178 | 4 | 50 | DocumentIndex — semantic search over whole files, cited on the indexed text (offsets exact on the index, not a promise the file reopens). |
 | `predicate_derivation.py` | 178 | 2 | 17 | Auto-derive STRIPS preconditions/postconditions from episode |
 | `settings.py` | 174 | 11 | 79 | User settings — persisted JSON, applied as env overrides at runtime. |
 | `stable_partition.py` | 173 | 1 | 5 | Cycle 261 (2026-05-23) — Partition Stabilization: REAL SOS mitigation. |

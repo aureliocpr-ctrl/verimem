@@ -403,7 +403,10 @@ class DocumentIndex:
                include_flagged: bool = False) -> list[dict]:
         """Cosine top-k over the LATEST version of every source.
 
-        Each hit carries the exact citation: ``{text, score, source_id, version,
+        Each hit carries a citation exact ON THE INDEXED TEXT — the offsets
+        satisfy ``indexed_text[start:end] == text`` and the text comes back with
+        them, so the quote is always checkable; they do NOT promise the source
+        file still opens (path stored as given). Shape: ``{text, score, source_id, version,
         start, end, uri, doc_id, flagged}`` with ``original[start:end] == text``.
 
         Chunks flagged for injection signals at index time (audit E3) are HIDDEN
