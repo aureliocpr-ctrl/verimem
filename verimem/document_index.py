@@ -1,9 +1,17 @@
-"""DocumentIndex — semantic search over whole files with exact citation (roadmap #1).
+"""DocumentIndex — semantic search over whole files, cited on the indexed text.
 
 The missing middle of the document RAG pipeline:
 
     file --extract_text--> text --chunk_text--> chunks --embed--> THIS INDEX
-    search(query) -> chunks with (source_id, version, start, end) = exact citation
+    search(query) -> chunks with (source_id, version, start, end)
+
+⚠️ SU CHE COSA LA CITAZIONE È ESATTA. Gli offset sono esatti sul TESTO
+INDICIZZATO (``indexed_text[start:end] == chunk``) e il testo del chunk viene
+restituito insieme a loro, quindi la citazione è sempre verificabile. Non
+promettono che il file originale si riapra: il path è registrato COME DATO e
+mai risolto, per cui uno spostato, cancellato o relativo smette di aprirsi.
+Misurato il 2026-08-12 sul corpus reale: 538 chunk su 634 (84,9%) puntavano a
+file spariti, con il testo presente per il 100% di essi.
 
 Design:
   - Versioning is delegated to the Documents tier (``DocumentStore``: snapshot

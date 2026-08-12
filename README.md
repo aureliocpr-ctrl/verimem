@@ -146,10 +146,12 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
   Note the shape: only `explain`/`trust_report` refuse to answer. `recall` and
   `search` always return the nearest facts — the flag is how you tell "nearest"
   from "right".
-- **Document memory with exact citations** — index PDF/DOCX/HTML/EPUB/text
-  files; semantic search returns passages with file, version and character
-  offsets; passages can be promoted to memory *through the gate*, citation
-  attached.
+- **Document memory, cited on the indexed text** — index PDF/DOCX/HTML/EPUB/text
+  files; semantic search returns passages with source, version and character
+  offsets, where `indexed_text[start:end] == passage`; passages can be promoted
+  to memory *through the gate*, citation attached. The offsets are exact on the
+  index and the passage text always comes back with them — they are not a
+  promise that the original file still opens, since paths are stored as given.
 - **Consent-first import** — bootstrap from your ChatGPT / Claude export:
   conversations are listed first, nothing is ingested without an explicit
   selection.
