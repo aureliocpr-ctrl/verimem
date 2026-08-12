@@ -50,7 +50,16 @@ Orientation (each tool's exact arguments are in its own schema):
   ABSTAINS ("I don't know") instead of stitching a guess from weak matches.
   When it matters that the answer be IN memory rather than merely nearest,
   that is the tool to use.
-- Search indexed files with verimem_document_semantic_search (exact citations).
+- Search indexed files with verimem_document_semantic_search. Each hit carries
+  `file:<source_id>:<start>-<end>`, which locates the chunk EXACTLY inside the
+  indexed text (`indexed_text[start:end] == chunk text`) and is always
+  checkable, because the chunk text is stored with it. It does NOT promise the
+  source file is still readable: paths are recorded as given, so a file that
+  was moved or deleted — or a RELATIVE path resolved from a different working
+  directory — no longer opens. Measured on a real corpus: 538 of 634 chunks
+  (84.9%) pointed at files that no longer existed, while the chunk text was
+  present for 100% of them. So: the citation is exact ON THE INDEX, and is
+  evidence of provenance, not a guarantee that you can re-open the original.
 - Every read carries `grounding_score`: the moat's verdict on that fact, 0-100.
   A number means a source was checked against it; `null` means NEVER JUDGED, not
   judged and failed — treat it as a claim, not a fact. Do NOT use `confidence`

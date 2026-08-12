@@ -559,12 +559,21 @@ def index(
     path: str = typer.Argument(..., help="File to index (pdf/docx/html/txt/md)"),
     source_id: str = typer.Option(None, "--source-id", help="Logical id (default: the path)"),
 ):
-    """Index a whole FILE for semantic search with exact citation (document RAG).
+    """Index a whole FILE for semantic search, anchored to the indexed text.
 
     Extracts text (pdf/docx/html/txt), splits it into provenance-anchored
     chunks and embeds them. Idempotent per content-hash: re-indexing an
     unchanged file does zero work; a changed file becomes a new version that
     supersedes the old one in search. Isolated store — NOT the recall corpus.
+
+    WHAT THE CITATION PROMISES, and what it does not. The path is stored AS
+    GIVEN and never resolved: a relative path stays relative, so the same
+    citation opens or does not open depending on the reader's working
+    directory, and a file indexed from a temp/scratch directory stops opening
+    when that directory is cleaned. Measured 2026-08-12 on the real corpus: 27
+    of 29 indexed documents no longer existed (538 of 634 chunks), while the
+    chunk TEXT was present for 100% of them. Pass an absolute path if you want
+    the citation to keep resolving; the chunk text is retrievable either way.
     """
     from .document_index import DocumentIndex
     try:
@@ -592,11 +601,17 @@ def search_docs(
         help=("Drop hits below this score. Off by default: the right cut "
               "depends on your corpus and this command does not guess one.")),
 ):
-    """Semantic search over indexed documents, with the exact citation.
+    """Semantic search over indexed documents, cited on the INDEXED TEXT.
 
     Every hit shows source file, version and character offsets
-    (original[start:end] == chunk text) — the provenance moat applied to
+    (indexed_text[start:end] == chunk text) — the provenance moat applied to
     documents. Only the LATEST version of each source is searched.
+    THE OFFSETS ARE EXACT ON THE INDEX, NOT A PROMISE THAT THE FILE OPENS: the
+    path is stored as given, so a moved, deleted or relative one no longer
+    resolves (measured 2026-08-12: 84.9% of chunks pointed at files that were
+    gone — from our own scratch dirs — with the chunk text intact for all of
+    them). The text you read here is always the text that was indexed; only
+    re-opening the original can fail.
 
     QUESTO E' UN TOP-K, NON UN'ASTENSIONE, e il comando ora lo dice. Provato
     su un listino prezzi indicizzato: «quanto costa il piano annuale» rende il
