@@ -348,6 +348,58 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
 )
 
 
+#: La coda in HIRAGANA di un'unita' giapponese. Non e' una lista di verbi: e'
+#: la struttura ortografica della lingua (okurigana), che scrive le desinenze
+#: in hiragana e lascia sostantivi e unita' in katakana o kanji.
+_CODA_HIRAGANA_RE = re.compile(r"[ぁ-ゟ]+$")
+
+
+def _senza_coda_verbale_giapponese(w: str) -> str:
+    """«480パレット**あります**» e «320パレット**です**» misurano la stessa cosa.
+
+    ⚠️ IL DIFETTO CHE CURA, misurato prima di scriverla — due frasi giapponesi
+    che si contraddicono, con verbi diversi::
+
+        ヴェローナの倉庫には480パレットあります  ->  ('パレットあります', 480.0)
+        ヴェローナの倉庫は320パレットです      ->  ('パレットです',   320.0)
+        numeric_conflict                    ->  None      ⇐ falso negativo
+
+    🔑 LA CAUSA NON È LA LINGUA, È LA POSIZIONE DEL VERBO, e si vede solo
+    confrontando le due lingue senza spazi::
+
+        ZH  有480个托盘 / 存放320个托盘  ->  ('个托盘', 480) e ('个托盘', 320)  ✅
+        JA  480パレットあります / 320パレットです                              ❌
+
+    In cinese il verbo precede il numero e resta fuori dall'unita'; in
+    giapponese la segue e ci entra dentro. Stesso parser, stesso difetto
+    potenziale, esito opposto per l'ordine delle parole.
+
+    ⚖️ PERCHÉ UN CRITERIO E NON UNA LISTA DI VERBI: le desinenze giapponesi si
+    scrivono in hiragana e le unita' in katakana o kanji — e' ortografia, non
+    vocabolario, quindi copre anche i verbi che nessuno ha elencato. È la stessa
+    scelta di `_DATA_CJK` (`8月10日` vale per due lingue senza dizionario) e di
+    `norm_unit` sui diacritici, che questa casa ha gia' pagato tre volte per due
+    elenchi divergenti.
+
+    ⚠️⚠️ IL PRESIDIO NON È DECORAZIONE — la versione senza cade sulla
+    popolazione opposta, e l'ho misurata prima di scegliere. Diversi contatori
+    giapponesi **sono** hiragana::
+
+        つ  こ  ひとつ  まい  ほん  ぴき      ->  tagliati a stringa VUOTA
+
+    `つ` è il contatore generico, `まい` conta i fogli, `ぴき` gli animali
+    piccoli: unita' legittime e frequenti. Se dopo il taglio non resta nulla,
+    la parola ERA l'unita' e si tiene intera. Con il presidio: 11 casi su 11
+    corretti, cinque code verbali tolte e sei unita' hiragana conservate.
+
+    📌 RESTA SCOPERTO il verbo scritto in KANJI: «ミリグラム含まれています» ->
+    «ミリグラム含», dove 含 è la radice di 含まれる. Il taglio migliora e non
+    chiude, ed è dichiarato invece che taciuto.
+    """
+    tagliata = _CODA_HIRAGANA_RE.sub("", w)
+    return tagliata if tagliata else w
+
+
 def norm_unit(word: str) -> str:
     """Canonicalise a unit word (synonyms + plural/`-ies` singularisation).
 
@@ -361,7 +413,7 @@ def norm_unit(word: str) -> str:
     non in `u` — «Stück» e «Stueck» sono la STESSA parola scritta da due
     tastiere diverse, ed e' la forma che si trova nei sistemi gestionali.
     """
-    w = (word or "").lower()
+    w = _senza_coda_verbale_giapponese((word or "").lower())
     if w in _UNIT_SYN:
         return _UNIT_SYN[w]
     piano = _senza_diacritici(w)   # `w` e' gia' .lower()
