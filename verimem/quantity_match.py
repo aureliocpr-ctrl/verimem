@@ -1728,7 +1728,28 @@ def _negated_tokens(text: str) -> set[str]:
         # hanno spazi e sono corti — «不可用» nega «可用», due caratteri.
         following = re.findall(r"[^\W\d_]{4,}|[一-鿿]{2,4}", t[m.end():])[:2]
         for w in following:
-            w = w.lower()
+            # ⚠️ I DIACRITICI SI TOLGONO QUI PERCHE' `content_tokens` LI TOGLIE.
+            # Questo insieme viene confrontato con i token dell'altra frase, e
+            # se i due lati normalizzano in modo diverso il confronto fallisce
+            # su una lettera. Misurato — «Der Dienst ist NICHT verfügbar»
+            # contro «Der Dienst ist verfügbar»::
+            #
+            #     content_tokens(A)  ->  {'dienst', 'verfugbar'}
+            #     scope di «nicht»   ->  {'verfügbar'}      ⇐ con la ü
+            #     'verfügbar' in token(A)  ->  False
+            #     Jaccard 2/2 = 1.00       ⇐ la guardia passava!
+            #
+            # Tutto il resto funzionava: negatore riconosciuto, scope giusto,
+            # stesso soggetto. Mancava una sola normalizzazione su un lato, e
+            # il gate rispondeva `supported` — «claim coerente con la memoria»
+            # su una frase che dice l'esatto contrario.
+            #
+            # 📌 PERCHE' NON ERA STATO VISTO: italiano, spagnolo e polacco
+            # cadono nello stesso buco ma ne escono per caso — lo scope prende
+            # DUE parole e ne basta una senza diacritici («activo», «riuscita»,
+            # «jest») perche' il conflitto si produca lo stesso. Il difetto si
+            # vede solo quando e' la parola NEGATA a portare il segno.
+            w = _senza_diacritici(w.lower())
             if w.endswith("ies"):
                 w = w[:-3] + "y"
             elif w.endswith("s") and len(w) > 3:
