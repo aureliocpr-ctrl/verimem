@@ -22,7 +22,23 @@ concurrency:
   # di 40 minuti: in otto e' un push ogni 5,3 ore a testa, cioe' un blocco.
   # La disciplina e' stata provata stasera e non ha retto — questa riga la
   # sostituisce con una regola che non dipende da chi si ricorda.
-  group: ci-${{ github.ref }}
+  # AGGIUNTA 2026-08-12. La riga sopra non bastava: `cancel-in-progress: false`
+  # protegge il run CHE GIRA, ma un run PENDENTE nello stesso gruppo viene
+  # SOSTITUITO dal piu' recente — comportamento documentato, non un difetto
+  # dell'espressione. Misurato oggi: tre run cancellati con zero job partiti
+  # (0f496502 8,2 min · a0fbe104 10,8 min · a184694b 4,2 min), e il primo
+  # concluso +1 secondo dopo il push successivo. Tre verdetti persi su sei push.
+  # Un run dura 45-46 minuti (il tetto e' windows), quindi ogni push dentro
+  # quella finestra mette in coda, e la coda la butta il push dopo.
+  #
+  # Gruppo per COMMIT sui push: ogni sha ha il suo gruppo e non c'e' niente da
+  # sostituire. Per ref sulle pull request, dove cancellare il superato e' giusto.
+  #
+  # PREZZO, misurato prima di applicarla: toglie il tetto naturale al numero di
+  # run contemporanei. Traffico osservato su main: 11 run in due giorni, al
+  # massimo 2 contemporanei, ~0,2 run/ora. Se si arrivasse a otto push in un'ora
+  # sarebbero otto run per sei gambe, e questa riga andrebbe ridiscussa.
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:

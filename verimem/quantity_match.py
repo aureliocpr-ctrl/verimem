@@ -1116,9 +1116,30 @@ def _senza_diacritici(text: str) -> str:
     si uniscono, «Stueck» resta a parte: unirla richiederebbe la regola inversa
     `ue -> u`, che romperebbe ogni parola in cui `ue` sta per se stesso. Provata
     la traslitterazione inversa come forma canonica: sposta solo il problema.
+
+    ⚠️⚠️ E SI RICOMPONE IN NFC, che non e' cosmesi: senza, questa funzione
+    RESTITUIVA UNA PAROLA CHE NON ESISTE PIU' NEL TESTO da cui viene. Le
+    scritture che si decompongono in segni NON combinanti — l'hangul coreano su
+    tutte — uscivano in jamo separati e non tornavano mai insieme::
+
+        _senza_diacritici("베로나")  ->  "베로나"      identico a vedersi
+        len(originale) = 3            len(risultato) = 6
+        0xbca0 0xb85c 0xb098    ->    0x1107 0x1166 0x1105 0x1169 0x1102 0x1161
+        "베로나" in testo_originale   ->   False
+
+    🔑 È LA TRAPPOLA PERFETTA: le due stringhe si STAMPANO uguali. Nessuna
+    rilettura del codice e nessuna ispezione a occhio dell'output puo' trovarla
+    — servono `len()` o i codepoint. Misurato alla porta: `_content_overlap` di
+    una frase coreana con SE STESSA valeva **0.00**, quindi in coreano ogni
+    guardia di stesso-soggetto era cieca e il gate non poteva confermare nulla.
+
+    📌 NFC dopo NFKD non annulla la parte di COMPATIBILITA' (① resta 1, ４８０
+    resta 480): ricompone solo cio' che era stato spezzato senza motivo.
     """
-    return "".join(c for c in unicodedata.normalize("NFKD", text)
-                   if not unicodedata.combining(c))
+    return unicodedata.normalize(
+        "NFC",
+        "".join(c for c in unicodedata.normalize("NFKD", text)
+                if not unicodedata.combining(c)))
 
 
 #: Han (cinese e kanji giapponesi), hiragana, katakana ed estensioni.
@@ -1728,7 +1749,28 @@ def _negated_tokens(text: str) -> set[str]:
         # hanno spazi e sono corti — «不可用» nega «可用», due caratteri.
         following = re.findall(r"[^\W\d_]{4,}|[一-鿿]{2,4}", t[m.end():])[:2]
         for w in following:
-            w = w.lower()
+            # ⚠️ I DIACRITICI SI TOLGONO QUI PERCHE' `content_tokens` LI TOGLIE.
+            # Questo insieme viene confrontato con i token dell'altra frase, e
+            # se i due lati normalizzano in modo diverso il confronto fallisce
+            # su una lettera. Misurato — «Der Dienst ist NICHT verfügbar»
+            # contro «Der Dienst ist verfügbar»::
+            #
+            #     content_tokens(A)  ->  {'dienst', 'verfugbar'}
+            #     scope di «nicht»   ->  {'verfügbar'}      ⇐ con la ü
+            #     'verfügbar' in token(A)  ->  False
+            #     Jaccard 2/2 = 1.00       ⇐ la guardia passava!
+            #
+            # Tutto il resto funzionava: negatore riconosciuto, scope giusto,
+            # stesso soggetto. Mancava una sola normalizzazione su un lato, e
+            # il gate rispondeva `supported` — «claim coerente con la memoria»
+            # su una frase che dice l'esatto contrario.
+            #
+            # 📌 PERCHE' NON ERA STATO VISTO: italiano, spagnolo e polacco
+            # cadono nello stesso buco ma ne escono per caso — lo scope prende
+            # DUE parole e ne basta una senza diacritici («activo», «riuscita»,
+            # «jest») perche' il conflitto si produca lo stesso. Il difetto si
+            # vede solo quando e' la parola NEGATA a portare il segno.
+            w = _senza_diacritici(w.lower())
             if w.endswith("ies"):
                 w = w[:-3] + "y"
             elif w.endswith("s") and len(w) > 3:
