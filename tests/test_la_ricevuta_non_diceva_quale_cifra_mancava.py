@@ -33,6 +33,33 @@ import os
 import subprocess
 import sys
 
+import pytest
+
+from tests._real_model import real_ce_cached
+
+# Questo banco interroga il MOAT: senza il giudice locale non c'e' un verdetto
+# da leggere, e la ricevuta non puo' dire quale cifra manca perche' nessuno l'ha
+# cercata. La disciplina e' gia' dichiarata in tests/_real_model.py — «CE-moat
+# tests must skip there», perche' la CI scalda con `--no-gate` e il modello del
+# giudice non viene scaricato.
+#
+# ⚠️ QUESTO NON CURA NIENTE e non va letto come un miglioramento: i sei test di
+# questo file risultavano FAILED in CI e ora risulteranno SKIPPED. E' una
+# RICLASSIFICAZIONE — da «il banco ha misurato e il prodotto ha sbagliato» a
+# «il banco non ha potuto misurare» — e la seconda e' l'unica delle due vera.
+# Un rosso che nessuno puo' curare smette di essere letto: dopo qualche giorno
+# non distingue piu' un guasto nuovo dal rumore di fondo.
+# Misurato con un A/B sulla stessa macchina, stesso test, stesso commit:
+#   giudice presente -> EXIT=0 · giudice assente -> EXIT=1 FAILED
+# Se un giorno la CI scaldera' senza `--no-gate`, questi test ripartiranno da
+# soli: la guardia interroga la disponibilita' del gate, non un interruttore.
+pytestmark = pytest.mark.skipif(
+    not real_ce_cached(),
+    reason="il giudice del moat non e' in cache (la CI scalda con --no-gate): "
+           "questo banco misura cosa dice la ricevuta di un verdetto, e senza "
+           "verdetto non c'e' niente da misurare",
+)
+
 CLAIM = "L'ordine 77 conteneva 40 pezzi."
 FONTE = "Verbale: e' stato consegnato l'ordine 77. Ha partecipato Bianchi."
 VERO = "Il magazzino di Verona contiene 480 pallet."
