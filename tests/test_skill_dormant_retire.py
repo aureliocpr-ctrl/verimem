@@ -42,7 +42,8 @@ def _mk(lib: SkillLibrary, name: str, *, age_days: float, trials: int = 0,
 
 
 def test_dormant_untried_candidate_is_retired(tmp_path):
-    lib = SkillLibrary(db_path=tmp_path / "skills.db")
+    lib = SkillLibrary(dir_path=tmp_path / "skills",
+                       db_path=tmp_path / "skills.db")
     zombie = _mk(lib, "zombie", age_days=60, trials=0)
     fresh = _mk(lib, "fresh", age_days=3, trials=0)
     retired = lib.retire_dormant_candidates(max_age_days=30)
@@ -53,7 +54,8 @@ def test_dormant_untried_candidate_is_retired(tmp_path):
 
 
 def test_recently_used_candidate_survives(tmp_path):
-    lib = SkillLibrary(db_path=tmp_path / "skills.db")
+    lib = SkillLibrary(dir_path=tmp_path / "skills",
+                       db_path=tmp_path / "skills.db")
     active = _mk(lib, "old-but-active", age_days=90, trials=1,
                  used_days_ago=2)
     retired = lib.retire_dormant_candidates(max_age_days=30)
@@ -63,7 +65,8 @@ def test_recently_used_candidate_survives(tmp_path):
 
 
 def test_promoted_skills_are_never_touched(tmp_path):
-    lib = SkillLibrary(db_path=tmp_path / "skills.db")
+    lib = SkillLibrary(dir_path=tmp_path / "skills",
+                       db_path=tmp_path / "skills.db")
     star = _mk(lib, "star", age_days=120, trials=8, status="promoted")
     retired = lib.retire_dormant_candidates(max_age_days=30)
     assert star.id not in retired
@@ -71,7 +74,8 @@ def test_promoted_skills_are_never_touched(tmp_path):
 
 
 def test_cap_limits_retirements_per_cycle(tmp_path):
-    lib = SkillLibrary(db_path=tmp_path / "skills.db")
+    lib = SkillLibrary(dir_path=tmp_path / "skills",
+                       db_path=tmp_path / "skills.db")
     for i in range(7):
         _mk(lib, f"z{i}", age_days=60, trials=0)
     retired = lib.retire_dormant_candidates(max_age_days=30, cap=3)
