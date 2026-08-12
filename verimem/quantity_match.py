@@ -1571,7 +1571,11 @@ _NEGATOR_RE = re.compile(
     # «le lingue con gli spazi» invece che «le lingue».
     r"|(?:ません|ないです|なかった|ない|ぬ)"
     r"|(?:没有|不是|不会|不能|不|未|非)"
-    r"|(?:\bلا\b|\bلم\b|\bلن\b|\bليس\b)",
+    r"|(?:\bلا\b|\bلم\b|\bلن\b|\bليس\b)"
+    # RUSSO — mancava, ed è nel perimetro delle sette lingue chiesto il 12/08.
+    # «не» è la negazione ordinaria, «нет» quella esistenziale, «ни» quella
+    # coordinata: tutte parole intere, delimitate da spazi come in inglese.
+    r"|\b(?:не|нет|ни)\b",
     re.IGNORECASE,
 )
 
@@ -1582,11 +1586,39 @@ def _has_negator(text: str) -> bool:
 
 def _negated_tokens(text: str) -> set[str]:
     """Content words in the negator's SCOPE: the first 1-2 alpha tokens right
-    after each negator, singularised like :func:`content_tokens`."""
+    after each negator, singularised like :func:`content_tokens`.
+
+    ⚠️ IL NEGATORE ERA MULTILINGUE E IL SUO OGGETTO NO — misurato il 12/08.
+    `_NEGATOR_RE` copriva già giapponese, cinese e arabo dal 04/08, ma qui la
+    coda si cercava con ``[a-zA-Z]{4,}``: **la negazione veniva riconosciuta e
+    ciò che negava no**, quindi nessun token entrava nello scope e il polarity
+    flip non scattava mai::
+
+        RU «Сервис не доступен.»  negatore visto (dopo la cura) · coda [] → nessun conflitto
+
+    ⇒ Un difetto in **due pezzi**: metà curata da un'altra istanza il 04/08 (i
+    negatori giapponesi, cinesi e arabi), metà rimasta qui. **Riconoscere una
+    negazione non serve a niente se poi non si guarda che cosa nega.**
+
+    📌 LIMITE DICHIARATO, E MISURATO DOPO LA CURA — **cinese e giapponese
+    restano scoperti**, e non per dimenticanza. Lo scope adesso li estrae
+    («不可用» → «可用»), ma il polarity flip confronta quel token con quelli
+    della frase affermativa, e lì non c'è nessun «可用»: c'è il blocco
+    «服务可用», perché senza spazi `content_tokens` non ritaglia parole.
+    In giapponese si aggiunge che la negazione è un **suffisso**
+    («利用できます» → «利用できません»), quindi l'oggetto sta pure dalla parte
+    sbagliata.
+    ⇒ Non è una regex che manca: **è la segmentazione**, la stessa che rende
+      `content_tokens` cieco in quelle due lingue. Curare qui senza risolvere
+      là sposterebbe il difetto invece di chiuderlo.
+    """
     t = text or ""
     out: set[str] = set()
     for m in _NEGATOR_RE.finditer(t):
-        following = re.findall(r"[a-zA-Z]{4,}", t[m.end():])[:2]
+        # `[^\W\d_]{4,}` = una parola in QUALUNQUE alfabeto (cirillico compreso);
+        # `[一-鿿]{2,4}` = i caratteri cinesi subito dopo il negatore, che non
+        # hanno spazi e sono corti — «不可用» nega «可用», due caratteri.
+        following = re.findall(r"[^\W\d_]{4,}|[一-鿿]{2,4}", t[m.end():])[:2]
         for w in following:
             w = w.lower()
             if w.endswith("ies"):
