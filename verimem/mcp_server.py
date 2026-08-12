@@ -4882,10 +4882,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "Fraction of the top-k recalled facts whose live trust "
                 "verdict is RISKY (obsolete/contested/unverified) — the "
                 "hallucination risk the recall exposes to the caller; stale "
-                "is reported separately. mem0/Zep have no status/supersession/"
-                "contradiction so every hit is unverified by construction "
-                "(~1.0); Engram filters the dead and this measures the "
-                "residual. Read-only: observes recall, never mutates."
+                "is reported separately. The metric needs a per-fact "
+                "reliability verdict, so it can only be computed on a store "
+                "that exposes one — where no such signal exists the number is "
+                "undefined, not high. We publish no measurement of any other "
+                "product here. Read-only: observes recall, never mutates."
             ),
             inputSchema={
                 "type": "object",

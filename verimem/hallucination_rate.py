@@ -1,11 +1,20 @@
 """hallucination-rate@k — la metrica del fossato anti-confabulazione.
 
-The competitive number no cosine-only store can report. Mem0/Zep retrieve facts
-with NO reliability signal, so every returned fact is "to be verified" by
-construction — their hallucination-rate@k is ~1.0. Engram attaches a live
-``trust_signal`` to each hit (``trusted | stale | contested | obsolete |
-unverified``); this metric measures the fraction of the top-k whose verdict is
-*unreliable* — the hallucination risk the recall hands to the caller.
+⚠️ CHE COSA QUESTA METRICA PUÒ E NON PUÒ DIRE — riscritto il 2026-08-12, e la
+distinzione è la stessa che il prodotto applica ai fatti degli altri.
+
+Il numero si calcola SOLO su uno store che espone un verdetto di affidabilità
+per fatto: dove quel segnale non esiste la metrica è **indefinita**, non alta.
+Attribuire ~1.0 a un sistema che non la espone non è una misura, è una
+deduzione da una premessa — ed era scritto qui, e in una description MCP, come
+se fosse un dato. **Un prodotto che quarantina i fatti senza fonte non può
+pubblicare giudizi sui concorrenti senza fonte**: finché non esiste un banco
+comparativo eseguito, qui non compare nessun numero altrui.
+
+Verimem attacca un ``trust_signal`` vivo a ogni hit (``trusted | stale |
+contested | obsolete | unverified``); questa metrica misura la frazione dei
+top-k il cui verdetto è *inaffidabile* — il rischio di allucinazione che il
+recall consegna al chiamante.
 
 Definitions
 -----------

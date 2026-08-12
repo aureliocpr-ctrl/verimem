@@ -157,9 +157,13 @@ CONSOLIDATE_SYSTEM = (
     "name that is not already there).\n"
     "Return the cleaned list, one fact per line, no numbering, no preamble.")
 
-#: Gap-fill / completeness pass (iter 36, mandate "beat them on EVERY axis" —
-#: MemOS extraction is 79.7 and consolidation trades ~2pp recall for precision,
-#: so recall is the other half of the climb toward F1 > 0.80). Given the
+#: Gap-fill / completeness pass (iter 36). Il richiamo cita un numero di
+#: estrazione attribuito a un altro prodotto e una perdita di ~2pp scambiata per
+#: precisione: ⚠️ nessuno dei due ha una misura NOSTRA che li sostenga, quindi
+#: sono stati tolti il 2026-08-12 — restano la scelta e il suo perché, che non
+#: dipendono da quei numeri. La ragione vera di questo passaggio è che il
+#: richiamo mira a F1 > 0.80 e la sola precisione non ci arriva: il recall è
+#: l'altra metà, e serve una seconda lettura mirata. Given the
 #: dialogue AND the facts already extracted, name ONLY the durable facts that
 #: are stated but MISSING — a targeted second look, not a blind re-extract.
 GAPFILL_SYSTEM = (
