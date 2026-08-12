@@ -1069,6 +1069,54 @@ def _senza_diacritici(text: str) -> str:
                    if not unicodedata.combining(c))
 
 
+#: Han (cinese e kanji giapponesi), hiragana, katakana ed estensioni.
+_CJK_RE = re.compile(r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿]{2,}")
+
+
+def _bigrammi_cjk(text: str) -> set[str]:
+    """I bigrammi di caratteri delle sequenze cinesi e giapponesi.
+
+    🔑 LA DOMANDA CHE HA PORTATO QUI non era «come tokenizziamo il cinese», ma
+    **«esiste un criterio di stesso-soggetto che non passi dalle parole?»** — e
+    la risposta è sì: in cinese e giapponese la coppia di caratteri adiacenti è
+    l'unità di significato più piccola stabile, ed è la base standard del
+    retrieval per queste lingue proprio perché **non richiede un dizionario**.
+    Un segmentatore sarebbe stato un componente in più da mantenere, e in questa
+    casa i vocabolari sono la classe di difetti che torna sempre.
+
+    IL DIFETTO CHE CHIUDE, misurato il 12/08 prima della cura::
+
+        content_tokens("样品-001含有11毫克。")   ->  set()      (zero token)
+        content_tokens("维罗纳仓库有480个托盘。")  ->  {'维罗纳仓库有'}  (mezza frase)
+
+    ⇒ La guardia dello stesso-soggetto chiede almeno una parola distintiva in
+    comune. Con zero token non è mai soddisfatta: **due schede cinesi diverse
+    davano ``None``, e quel ``None`` significava «non ho potuto guardare»
+    travestito da «non c'è contraddizione»**. Le frasi lunghe funzionavano per
+    coincidenza — mezza frase incollata che capitava identica nelle due — e
+    bastava cambiare una parola all'inizio per perdere il conflitto.
+
+    Con i bigrammi::
+
+        「样品-001含有11毫克」 -> {样品, 含有, 毫克}
+        「样品-002含有12毫克」 -> {样品, 含有, 毫克}     ⇒ 3 condivisi, guardia superata
+
+    ⚠️ LA POPOLAZIONE OPPOSTA, verificata PRIMA di scrivere la cura: tre coppie
+    di frasi che parlano di cose diverse (magazzino/servizio, pallet/minuti,
+    magazzino/cache in giapponese) condividono **zero** bigrammi. Il criterio
+    separa, non incolla — che è il rischio vero di un n-gramma: essere così
+    generoso da rendere tutto simile a tutto.
+
+    📌 Le altre lingue non sono toccate: senza caratteri CJK questa funzione
+    restituisce l'insieme vuoto e ``content_tokens`` resta identica a prima.
+    """
+    out: set[str] = set()
+    for run in _CJK_RE.findall(text or ""):
+        for i in range(len(run) - 1):
+            out.add(run[i:i + 2])
+    return out
+
+
 def content_tokens(text: str) -> set[str]:
     """Lower-cased alpha tokens ≥4 chars minus fillers, lightly singularised.
 
@@ -1078,6 +1126,13 @@ def content_tokens(text: str) -> set[str]:
 
     Gli accenti sono normalizzati e gli alfabeti non latini contano come
     lettere — vedi il blocco su ``_PAROLA_RE`` per la misura che lo giustifica.
+
+    ⚠️ E IN CINESE E GIAPPONESE NON CI SONO PAROLE — vedi ``_bigrammi_cjk``.
+    Fino al 12/08 questa funzione restituiva **zero token** su una frase cinese
+    breve e **mezza frase come token unico** su una lunga, quindi la guardia non
+    poteva mai essere soddisfatta e ogni conflitto usciva ``None``: non
+    «nessuna contraddizione», ma «non ho potuto guardare», scritto nello stesso
+    modo.
     """
     toks = _PAROLA_RE.findall(_senza_diacritici((text or "").lower()))
     out: set[str] = set()
@@ -1089,6 +1144,7 @@ def content_tokens(text: str) -> set[str]:
         elif t.endswith("s") and len(t) > 3:
             t = t[:-1]
         out.add(t)
+    out |= _bigrammi_cjk(text)
     return out
 
 
@@ -1629,6 +1685,37 @@ def _negated_tokens(text: str) -> set[str]:
     return out
 
 
+def _senza_negatori(text: str) -> str:
+    """Il testo senza i negatori, per confrontare le due frasi «a parità di
+    resto».
+
+    ⚠️ E IL NEGATORE SI TOGLIE IN DUE MODI DIVERSI, misurato il 12/08. La
+    guardia di `negation_conflict` chiede Jaccard ≥ 0.6 fra i token dei due
+    lati, ed è tarata su lingue dove il negatore è **una parola fra le altre**:
+    togliere «non» da «il servizio non è disponibile» non tocca nessun'altra
+    parola. In cinese il negatore sta **dentro** la parola, e cambiarlo riscrive
+    il vicinato::
+
+        服务可用     bigrammi  {服务, 务可, 可用}
+        服务不可用   bigrammi  {服务, 务不, 不可, 可用}   ⇒ Jaccard 0.29, guardia BLOCCA
+
+    Sostituirlo con uno spazio non basta: spezza `服务不可用` in due sequenze e
+    **si perde il bigramma di giunzione** (0.29 → 0.50, ancora sotto soglia).
+    Togliendolo senza lasciare spazio la frase torna quella affermativa e i due
+    insiemi coincidono — Jaccard 1.00 su tutte e sette le lingue del perimetro,
+    con la popolazione opposta (frasi che parlano di cose diverse) ferma a 0.00.
+
+    🔑 La regola generale: **un negatore che sta fra le parole si sostituisce
+    con uno spazio, uno che sta dentro la parola si toglie e basta.** Sono due
+    lingue diverse dentro la stessa funzione.
+    """
+    def _via(m: re.Match) -> str:
+        s = m.group(0)
+        dentro_la_parola = bool(s) and "぀" <= s[0] <= "鿿"
+        return "" if dentro_la_parola else " "
+    return _NEGATOR_RE.sub(_via, text or "")
+
+
 def negation_conflict(text_a: str, text_b: str) -> str | None:
     """The shared predicate token when *text_a*/*text_b* state the SAME thing
     with OPPOSITE polarity ("is signed" vs "is not signed"); else ``None``.
@@ -1641,7 +1728,7 @@ def negation_conflict(text_a: str, text_b: str) -> str | None:
     na, nb = _has_negator(text_a), _has_negator(text_b)
     if na == nb:
         return None  # same polarity → no flip
-    ca, cb = content_tokens(text_a), content_tokens(text_b)
+    ca, cb = content_tokens(_senza_negatori(text_a)), content_tokens(_senza_negatori(text_b))
     shared = ca & cb
     union = ca | cb
     if len(shared) < 2 or not union or (len(shared) / len(union)) < 0.6:
