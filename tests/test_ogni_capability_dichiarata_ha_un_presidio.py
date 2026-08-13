@@ -57,7 +57,6 @@ _INTESTAZIONE = "| Capability |"
 #: resta. NON aggiungere voci per far passare una riga nuova: una promessa nuova
 #: senza test deve fermare il commit che la introduce.
 SCOPERTE_NOTE = frozenset({
-    "Abstains instead of fabricating",
     "Conflicting well-grounded memories resolved",
     "Trust axes under adversarial",
     "Runs fully air-gapped",

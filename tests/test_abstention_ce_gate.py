@@ -5,6 +5,20 @@ off-topic fact, `explain(min_relevance="auto")` returned it (bi-encoder cosine
 gate (logit floor 0.0) fixes it store-size-independently — the CE scores the
 off-topic fact ~-8 and the on-topic one ~+8. Skips if the reranker model isn't
 installed (CE-dependent, like the moat tests).
+
+LA RIGA DEL README CHE QUESTO FILE PROVA (aggiunta il 2026-08-13, nient'altro
+cambiato): «Abstains instead of fabricating when the store can't support an
+answer». Il legame mancava, e senza di esso la promessa risultava priva di
+presidio a un censimento — mentre il presidio c'era, ed e' questo, con
+**entrambe le popolazioni**: si astiene su una domanda non sostenibile (sotto) e
+NON si astiene su una sostenibile («over-abstained on a supported query»), che e'
+la meta' che il numero pubblicato — 1.000 di astensione — non distingue da un
+sistema che si astiene sempre.
+
+⚠️ Il numero della cella («1.000 across seven consecutive full e2e runs») viene
+da un banco end-to-end, non da qui: questo file prova la promessa QUALITATIVA.
+⚠️ E si salta senza il reranker: un presidio che salta non protegge, e dove
+salta la promessa resta scoperta.
 """
 from __future__ import annotations
 
