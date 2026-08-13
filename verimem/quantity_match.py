@@ -1862,6 +1862,49 @@ def _senza_negatori(text: str) -> str:
     return _NEGATOR_RE.sub(_via, text or "")
 
 
+def _e_prevalentemente_cjk(text: str) -> bool:
+    """Vero se il testo è per lo più han/kana, cioè privo di spazi fra le parole."""
+    pieni = [c for c in (text or "") if not c.isspace()]
+    if len(pieni) < 4:
+        return False
+    cjk = sum(1 for c in pieni if _CJK_RE.match(c * 2) or "一" <= c <= "鿿"
+              or "぀" <= c <= "ヿ" or "㐀" <= c <= "䶿")
+    return cjk >= len(pieni) * 0.5
+
+
+#: Punteggiatura a piena larghezza: separa, non è contenuto.
+_PUNTEGGIATURA_CJK = "，。、；：！？「」『』（）"
+
+
+def _token_di_confronto(text: str) -> set[str]:
+    """I token con cui :func:`negation_conflict` confronta DUE frasi.
+
+    ⚠️ NON è `content_tokens` per le scritture senza spazi, e la differenza è
+    tutta nel confronto: `content_tokens` segmenta il CJK in **bigrammi**, e un
+    negatore cinese sta DENTRO la frase — toglierlo riscrive i bigrammi che lo
+    attraversavano. Due muoiono, uno nasce, e il denominatore del Jaccard cresce
+    mentre il numeratore resta fermo::
+
+        系统已签名 / 系统未签名   con i bigrammi   Jaccard 0.286   → nessun flip
+                                  coi caratteri    Jaccard 0.800   → flip visto
+
+    Misurato su cinque coppie affermazione/negazione: **1 flip visto su 5** coi
+    bigrammi, **5 su 5** coi caratteri, e **zero** falsi positivi su cinque casi
+    costruiti apposta perché il negatore scopi una parola che l'altra frase non
+    contiene (il caso «complete, not blocked» del contratto qui sotto).
+
+    🔑 PERCHÉ UN AIUTANTE E NON UNA MODIFICA A `content_tokens`: quella funzione
+    non appartiene a questo confronto. La usano `corroboration` e
+    `facts_conflict` — più una ventina di punti in questo modulo — dove i
+    caratteri singoli non sono stati misurati e sarebbero un'altra decisione.
+    La misura fatta qui autorizza questo confronto, non tutti.
+    """
+    if _e_prevalentemente_cjk(text):
+        return {c for c in text
+                if not c.isspace() and c not in _PUNTEGGIATURA_CJK}
+    return content_tokens(text)
+
+
 def negation_conflict(text_a: str, text_b: str) -> str | None:
     """The shared predicate token when *text_a*/*text_b* state the SAME thing
     with OPPOSITE polarity ("is signed" vs "is not signed"); else ``None``.
@@ -1870,23 +1913,63 @@ def negation_conflict(text_a: str, text_b: str) -> str | None:
     be near-identical (Jaccard ≥ 0.6 with ≥2 shared tokens), AND the word in
     the negator's scope must itself be SHARED — "complete, not blocked" does
     not flip "complete" (the negator scopes "blocked", absent from the other
-    statement)."""
+    statement).
+
+    Space-less scripts are compared CHARACTER-wise (:func:`_token_di_confronto`)
+    on BOTH sides — the content tokens and the negator's scope. Normalising one
+    side only silently disables the third guard: the Jaccard reaches 1.000 while
+    ``scope ∩ shared`` is empty, so the flip is dropped and the change looks
+    like a regression instead of a half-applied fix."""
     na, nb = _has_negator(text_a), _has_negator(text_b)
     if na == nb:
         return None  # same polarity → no flip
-    ca, cb = content_tokens(_senza_negatori(text_a)), content_tokens(_senza_negatori(text_b))
+    ca = _token_di_confronto(_senza_negatori(text_a))
+    cb = _token_di_confronto(_senza_negatori(text_b))
     shared = ca & cb
     union = ca | cb
     if len(shared) < 2 or not union or (len(shared) / len(union)) < 0.6:
         return None  # different statement, not a flip of this one
     if contrasting_attrs(ca, cb):
         return None
-    scoped = _negated_tokens(text_a if na else text_b)
+    #: Lo scope si tiene in DUE forme: quella normalizzata decide, quella
+    #: originale è ciò che si restituisce — il chiamante mostra questo token a
+    #: chi legge, e «成» al posto di «成功» sarebbe una diagnosi illeggibile.
+    scoped_orig = _negated_tokens(text_a if na else text_b)
+    scoped = ({c for tok in scoped_orig for c in tok}
+              if _e_prevalentemente_cjk(text_a if na else text_b) else scoped_orig)
     scoped_shared = scoped & shared
     if scoped and not scoped_shared:
         return None  # the negation targets a word the other side never states
     if scoped_shared:
-        return sorted(scoped_shared)[0]
+        #: Basta che il token originale TOCCHI i caratteri condivisi. Pretendere
+        #: che ne sia interamente composto degradava il giapponese da «され» a
+        #: «さ»: il flip restava visto, ma la diagnosi mostrata diventava una
+        #: sillaba — una cura che peggiora ciò che il prodotto DICE.
+        leggibili = {t for t in scoped_orig if set(t) & scoped_shared} or scoped_shared
+        return sorted(leggibili)[0]
+    return _piu_leggibile(shared, text_a, text_b)
+
+
+def _piu_leggibile(shared: set[str], text_a: str, text_b: str) -> str:
+    """Il token da MOSTRARE quando il negatore non ha uno scope proprio.
+
+    ⚠️ Serve perché il confronto a caratteri cambia anche cosa si restituisce.
+    Un negatore giapponese come ``ません`` chiude la frase e non lascia una coda,
+    quindi `_negated_tokens` torna vuoto e si finisce qui: prima della cura
+    ``sorted(shared)[0]`` sceglieva fra bigrammi e dava ``され``, dopo sceglie
+    fra caratteri e darebbe ``さ``. Il flip resta visto in entrambi i casi — ma
+    la diagnosi che il chiamante mostra a chi legge diventa una sillaba.
+
+    🔑 È lo stesso difetto che questo modulo esiste per prevenire, applicato a
+    sé: un cambiamento misurato sul VERDETTO che peggiora ciò che il prodotto
+    DICE, e che nessuna delle due popolazioni avrebbe segnalato.
+    """
+    if _e_prevalentemente_cjk(text_a):
+        originali = (content_tokens(_senza_negatori(text_a))
+                     & content_tokens(_senza_negatori(text_b)))
+        utili = {t for t in originali if len(t) > 1 and set(t) <= shared}
+        if utili:
+            return sorted(utili)[0]
     return sorted(shared)[0]
 
 

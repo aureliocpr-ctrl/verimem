@@ -1,4 +1,21 @@
-"""Il flip giapponese è visto, e lo è con un margine di 0,015 sulla soglia.
+"""Il flip giapponese è visto — e NON dipende più dai quindici millesimi.
+
+⚠️⚠️ AGGIORNATO POCHE ORE DOPO ESSERE STATO SCRITTO, e il motivo è il punto.
+Questo file nacque per presidiare un margine: `negation_conflict` confrontava
+le due frasi coi **bigrammi** di `content_tokens`, e il giapponese superava la
+soglia di 0.6 con 0.615 — quindici millesimi. La cura al CJK ha poi spostato
+quel confronto sui **caratteri** (`_token_di_confronto`), e il margine non è più
+ciò che tiene in piedi il flip.
+
+⇒ La misura qui sotto resta vera e resta utile — 8 token condivisi su 13 è una
+proprietà di `content_tokens`, che è ancora usata da `corroboration` e
+`facts_conflict` — ma **non è più la ragione per cui il giapponese funziona**.
+Lasciare il docstring di prima avrebbe prodotto esattamente il difetto che
+questo repository insegue: un documento verde che descrive un mondo passato.
+
+═══ IL TESTO ORIGINALE, tenuto perché la storia serve ═══
+
+Il flip giapponese era visto con un margine di 0,015 sulla soglia.
 
 `negation_conflict` pretende che le due frasi siano quasi identiche una volta
 tolto il negatore — Jaccard ≥ 0.6 sui token di contenuto. In inglese quella
