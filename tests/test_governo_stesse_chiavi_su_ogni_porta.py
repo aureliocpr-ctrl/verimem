@@ -35,7 +35,15 @@ def con_un_ritiro(tmp_path):
     return m
 
 
-def _mcp_items(m, tool: str, args: dict):
+def _mcp_items(m, tool: str, args: dict, monkeypatch):
+    """⚠️ `monkeypatch` e non `mcp_server._ag = ...` con try/finally — che pure
+    ripristinava. Il cricchetto di `test_un_agente_serve_lo_store_di_adesso`
+    vieta l'assegnazione diretta A PRESCINDERE, e ha ragione: un `finally` si
+    salta se qualcuno inserisce una riga prima del `try`, e il danno non si
+    vede qui — si vede mesi dopo, in un altro file, come un rosso che cambia
+    vittima a ogni seme. Il presidio segnalava anche la riga di RIPRISTINO,
+    che il suo schema non distingue: e' grossolano di proposito.
+    """
     from mcp.types import CallToolRequest, CallToolRequestParams
 
     from verimem import mcp_server
@@ -44,46 +52,45 @@ def _mcp_items(m, tool: str, args: dict):
         def __init__(self) -> None:
             self.semantic = m.semantic
 
-    orig = mcp_server._ag
-    mcp_server._ag = lambda: _A()
-    try:
-        async def call():
-            h = mcp_server.server.request_handlers[CallToolRequest]
-            r = await h(CallToolRequest(
-                method="tools/call",
-                params=CallToolRequestParams(name=tool, arguments=args)))
-            p = r.root if hasattr(r, "root") else r
-            return json.loads(next(c.text for c in p.content
-                                   if hasattr(c, "text")))
-        return asyncio.run(call())
-    finally:
-        mcp_server._ag = orig
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _A())
+
+    async def call():
+        h = mcp_server.server.request_handlers[CallToolRequest]
+        r = await h(CallToolRequest(
+            method="tools/call",
+            params=CallToolRequestParams(name=tool, arguments=args)))
+        p = r.root if hasattr(r, "root") else r
+        return json.loads(next(c.text for c in p.content
+                               if hasattr(c, "text")))
+    return asyncio.run(call())
 
 
-def test_le_righe_del_retirement_log_hanno_le_stesse_chiavi(con_un_ritiro):
+def test_le_righe_del_retirement_log_hanno_le_stesse_chiavi(con_un_ritiro,
+                                                            monkeypatch):
     m = con_un_ritiro
     sdk = set(m.retirement_log(limit=1)[0].keys())
     modulo = set(_rl(m.semantic, limit=1)[0].keys())   # ciò che usano CLI e HTTP
-    mcp = set(_mcp_items(m, "hippo_retirement_log", {"limit": 1})["items"][0])
+    mcp = set(_mcp_items(m, "hippo_retirement_log", {"limit": 1},
+                         monkeypatch)["items"][0])
     assert sdk == modulo == mcp, {"sdk": sorted(sdk), "modulo": sorted(modulo),
                                   "mcp": sorted(mcp)}
 
 
-def test_il_quartetto_ha_le_stesse_chiavi(con_un_ritiro):
+def test_il_quartetto_ha_le_stesse_chiavi(con_un_ritiro, monkeypatch):
     m = con_un_ritiro
     sdk = set(m.survivability().keys())
     modulo = set(_sc(m.semantic).keys())
-    mcp = _mcp_items(m, "hippo_retirement_log", {"counts": True})
+    mcp = _mcp_items(m, "hippo_retirement_log", {"counts": True}, monkeypatch)
     mcp_keys = {k for k in mcp if k != "ok"}
     assert sdk == modulo, {"sdk": sorted(sdk), "modulo": sorted(modulo)}
     assert sdk <= mcp_keys, {"sdk": sorted(sdk), "mcp": sorted(mcp_keys)}
 
 
-def test_la_formula_viaggia_su_ogni_porta(con_un_ritiro):
+def test_la_formula_viaggia_su_ogni_porta(con_un_ritiro, monkeypatch):
     """Il numero senza la sua definizione è il difetto che questo ramo cura:
     `formula` non è decorazione, è il contratto del contatore."""
     m = con_un_ritiro
     assert "servable =" in m.survivability()["formula"]
     assert "servable =" in _sc(m.semantic)["formula"]
     assert "servable =" in _mcp_items(
-        m, "hippo_retirement_log", {"counts": True})["formula"]
+        m, "hippo_retirement_log", {"counts": True}, monkeypatch)["formula"]
