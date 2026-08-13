@@ -35,9 +35,20 @@ senza `--apply` misura, elenca e non scrive niente.
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import sqlite3
 import sys
 from pathlib import Path
+
+
+def _adesso() -> str:
+    """L'istante in ISO, per il registro della riparazione.
+
+    UTC e non ora locale: il registro viene letto anche da chi non sa in che
+    fuso girava lo script, e una riga di audit senza fuso è una riga che si
+    può interpretare in due modi.
+    """
+    return _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -107,21 +118,60 @@ def main() -> int:
         # lascia indietro. Misurato sul corpus vero: 15, poi 4, 2, 4, 2, 4, 3
         # e infine 0, per un totale di 34. Converge perche' ogni giro accorcia
         # le catene e non ne crea di nuove.
+        # ⚠️ SI AZZERANO TUTTI E TRE I CAMPI, non due. Fino al 2026-08-13 questo
+        # UPDATE lasciava `superseded_reason` valorizzato: il fatto tornava vivo
+        # PORTANDOSI DIETRO IL MOTIVO PER CUI ERA STATO RITIRATO, e diceva quindi
+        # il falso su se stesso. Misurato sul corpus vero prima della cura::
+        #
+        #     vivi (superseded_by NULL) con superseded_reason valorizzato:  38
+        #       29  «same-source evolution»        \  34 = i residui di questo
+        #        5  «heal_contradictions: …»       /       script, e il numero
+        #                                                  coincide col totale
+        #                                                  scritto qui sopra
+        #        2  «memory-poisoning-shape: kept as research evidence»
+        #        2  «auto-mode … test 2026-05-18»  ⇐ NON sono residui: sono
+        #                                            marcature INTENZIONALI
+        #
+        # 📌 Le ultime quattro spiegano perché la cura sta QUI e non in una
+        # query di pulizia sul database: il campo è usato per due cose diverse
+        # — «perché è stato ritirato» e «perché è tenuto pur essendo strano» —
+        # e solo chi ripristina sa quali righe ha toccato.
+        registro: list[tuple[str, str]] = []
         totale = 0
         for giro in range(1, 21):
             ids = [v for v, _, _ in sbagliati]
             if not ids:
                 break
             q = ",".join("?" * len(ids))
+            # il motivo si legge PRIMA di cancellarlo: è ciò che rende la
+            # riparazione raccontabile invece che solo avvenuta.
+            for fid, motivo in con.execute(
+                    f"SELECT id, superseded_reason FROM facts WHERE id IN ({q})",
+                    ids):
+                registro.append((fid, motivo or ""))
             con.execute(
-                f"UPDATE facts SET superseded_by = NULL, superseded_at = NULL "
-                f"WHERE id IN ({q})", ids)
+                f"UPDATE facts SET superseded_by = NULL, superseded_at = NULL, "
+                f"superseded_reason = NULL WHERE id IN ({q})", ids)
             con.commit()
             totale += len(ids)
             print(f"  giro {giro}: {len(ids)} ripristinati")
             sbagliati = [(v, a, b) for v, a, b in _coppie(con, args.max_char)
                          if not _puo_essere_una_evoluzione(b, a)]
         print(f"\nripristinati {totale} fatti: tornano nel recall di default")
+
+        # ⚠️ E LA RIPARAZIONE SI REGISTRA, che era l'altra metà del difetto:
+        # lo script scriveva sul database e non lasciava traccia di che cosa
+        # avesse toccato, quindi il giorno dopo nessuno poteva distinguere un
+        # fatto mai ritirato da uno ripristinato — né sapere perché era stato
+        # ritirato prima. Il registro va su file accanto allo store, non a
+        # video: un output di terminale non sopravvive alla sessione.
+        if registro:
+            traccia = db.parent / "ripristini.log"
+            with traccia.open("a", encoding="utf-8") as fh:
+                for fid, motivo in registro:
+                    fh.write(f"{_adesso()}\t{fid}\tripristinato\t{motivo}\n")
+            print(f"registro della riparazione: {traccia} "
+                  f"(+{len(registro)} righe)")
     finally:
         con.close()
     return 0
