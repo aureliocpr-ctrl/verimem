@@ -61,9 +61,15 @@ SCOPERTE_NOTE = frozenset({
     "Write-path gate",
     "Conflicting well-grounded memories resolved",
     "Trust axes under adversarial",
-    "Provenance on every read",
     "Runs fully air-gapped",
 })
+# Tolta il 2026-08-13: «Provenance on every read» ha ora il suo presidio in
+# test_ogni_porta_di_lettura_porta_la_provenienza.py, che nel presidiarla ha
+# trovato che la promessa regge su due elementi su tre — chi l'ha scritto e con
+# che verdetto escono, il riferimento alla fonte no. Il debito e' passato da
+# «nessuno la guarda» a «qualcuno la guarda e il difetto e' scritto», ed e' il
+# punto di questo meccanismo: la voce si toglie quando il presidio esiste, non
+# quando la promessa e' perfetta.
 
 _CODICE = re.compile(r"`[^`]*`")
 _LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
