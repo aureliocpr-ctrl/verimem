@@ -123,8 +123,17 @@ def main(versione: str) -> int:
     # ── ① la versione e' quella che dice di essere ──────────────────────────
     dichiarata = next((r.split(":", 1)[1].strip() for r in meta.splitlines()
                        if r.startswith("Version:")), "?")
+    # ⚠️ Con un artefatto locale `versione` e' un PERCORSO, non un numero di
+    # versione: confrontarlo con il METADATA dava sempre NO. La voce non stava
+    # misurando il pacchetto, misurava come l'avevo invocato — un falso allarme
+    # nel banco che serve a decidere un rilascio e' peggio del difetto che
+    # cerca. Con un percorso si controlla che la Version del METADATA compaia
+    # nel nome del file, che e' l'unica coerenza verificabile li'.
+    atteso = versione if not versione.endswith(".whl") else None
     esito("la Version nel METADATA e' quella richiesta",
-          dichiarata == versione, f"Version: {dichiarata}")
+          dichiarata == atteso if atteso else (dichiarata in w["filename"]),
+          f"Version: {dichiarata}" if atteso
+          else f"Version: {dichiarata} — coerente col nome {w['filename']}")
 
     # ── ①-bis LA SUPERFICIE IN PIU' DELL'SDIST, dichiarata e non contata ────
     # La domanda non e' «quante righe interne ha l'sdist» — quella l'ha misurata
