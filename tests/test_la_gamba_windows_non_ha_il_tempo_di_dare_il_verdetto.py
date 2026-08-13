@@ -93,6 +93,28 @@ class TestIlTettoDistingueLeGambe:
             f"censurato dal tetto vecchio): numeri letti = {numeri}"
         )
 
+    def test_anche_la_gamba_veloce_ha_margine_sulla_VARIABILITA(self, job_test):
+        """L'errore che c'era nella PRIMA versione di questo tetto: tararlo sul
+        tempo OSSERVATO, letto per giunta su un run solo.
+
+        Passo `Tests` di ubuntu/py3.11, tre run consecutivi del 2026-08-13:
+        **706 s · 1196 s · 1331 s** — quasi il doppio — con esito IDENTICO in
+        ogni cifra (20 failed, 92 skipped, 8 ``not_run:no_judge``) e setup
+        costante (~2 min in tutti e tre). Lo stesso lavoro puo' costare
+        **1,88x** per una ragione che non e' nostra e non e' nota.
+
+        ⇒ Un tetto che lasciava 4,9 minuti al peggiore osservato (25,1) non
+        sorveglia: aspetta il primo run sfortunato. Il margine deve coprire la
+        VARIABILITA', non il campione.
+        """
+        tetto = str(job_test["timeout-minutes"])
+        numeri = [int(n) for n in __import__("re").findall(r"\b(\d{2,3})\b", tetto)]
+        assert numeri, f"nessun numero leggibile nel tetto: {tetto}"
+        assert min(numeri) >= 35, (
+            "il tetto piu' stretto non copre la variabilita' misurata (1,88x a "
+            f"parita' di esito): numeri letti = {numeri}"
+        )
+
     def test_il_lavoro_lento_del_gate_non_e_stato_aggiunto_di_nascosto(self):
         """GUARDIANO PER LA CURA DI UN'ALTRA: togliere `--no-gate` dal warmup
         accende 16+6 test del giudice ma scarica **711,5 MB** in

@@ -78,9 +78,22 @@ jobs:
     # numero non va allargato per riflesso — va capito perche' windows impiega
     # piu' del doppio delle altre.
     #
-    # 30 alle altre, non 45: dove il lavoro dura 17,5 minuti un tetto di 45 e'
+    # 35 alle altre, non 45: dove il lavoro dura 17,5 minuti un tetto di 45 e'
     # largo il triplo e non scoprirebbe mai un rallentamento vero.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 30 }}
+    #
+    # 35 e non 30 — misurato qualche ora dopo, e cambia il criterio con cui si
+    # sceglie un tetto. Il passo `Tests` della gamba ubuntu/py3.11, su tre run
+    # consecutivi, e' durato 706 s · 1196 s · 1331 s: quasi il DOPPIO, con un
+    # esito IDENTICO in ogni cifra (20 failed, 92 skipped, 8 not_run:no_judge)
+    # e un setup costante (~2 min in tutti e tre). Il tempo in piu' non e' ne'
+    # lavoro in piu' ne' download: sta dentro l'esecuzione della suite, e la
+    # causa non e' nostra e non e' nota.
+    # ⇒ Un tetto tarato sul tempo OSSERVATO e' fragile per costruzione quando lo
+    # stesso lavoro puo' costare 1,88x. Il 30 lasciava 4,9 minuti al peggiore
+    # osservato (25,1): un run partito da 17 minuti, moltiplicato per quel
+    # fattore, lo avrebbe sfondato. 35 tiene il margine sopra il peggiore
+    # osservato senza tornare al 45 che non sorvegliava piu' niente.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 35 }}
     strategy:
       fail-fast: false
       matrix:
