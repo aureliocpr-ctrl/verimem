@@ -1,55 +1,81 @@
 #!/bin/sh
-# Chi ha scritto questo commit: il trailer che nessuno deve ricordarsi di mettere.
+# Chi ha scritto questo commit — e perche' il nome NON puo' stare in .git/config.
 #
 # 13/08/2026: fra le 12:00 e le 14:10 sono entrati 18 commit e DIECI non erano
-# attribuibili a nessuno. Il repository e' firmato con nome e cognome del
-# titolare — giustamente, e' il suo — quindi `git log` non distingue chi ha
-# fatto cosa fra le otto sessioni che scrivono su questo main. I 20 trailer che
-# gia' esistevano dicono «Co-Authored-By: Claude Opus 5», che sono tutte.
+# attribuibili. Il repository e' firmato con nome e cognome del titolare, e vi
+# scrivono otto sessioni distinte: `git log` non diceva chi avesse fatto cosa.
+# La convenzione decisa e' un trailer in coda, `Agent: <NomeProprio>`.
 #
-# La convenzione decisa e' una riga in coda: `Agent: <NomeProprio>`. La CHIAVE
-# dice «Agent» e non «Instance» apposta: il registro e' pubblico, e un nome
-# proprio in un campo generico si legge come un collaboratore umano che non
-# esiste.
+# ⚠️⚠️ LA PRIMA VERSIONE DI QUESTO HOOK PEGGIORAVA IL PROBLEMA, e la lezione
+# vale piu' dell'hook. Leggeva il nome da `git config verimem.agent`. Ma le otto
+# sessioni NON hanno un clone per una: condividono la stessa copia di lavoro,
+# quindi `.git/config` e' UNO SOLO PER TUTTE. Sedici minuti dopo averlo
+# installato, un commit scritto da un'altra sessione e' uscito firmato col nome
+# di chi aveva configurato per ultimo.
 #
-# ⚠️ PERCHE' UN HOOK E NON UN PROMEMORIA. Una convenzione che chiede a otto
-# sessioni di ricordarsi una riga viene rispettata finche' qualcuno guarda:
-# in casa lo abbiamo gia' misurato una volta — un comando di correzione usato
-# 1 volta su 15 perche' chiedeva un dato che nessuno aveva sottomano, contro
-# 64 su 64 dopo che gli era stato tolto quell'attrito. L'adozione misura
-# l'attrito, non la disciplina. Quindi il trailer lo mette la macchina.
+# 🔑 Prima i commit erano MUTI; con quella versione MENTIVANO. Un registro che
+# attribuisce il lavoro alla persona sbagliata e' peggio di uno che tace: il
+# primo si nota, il secondo no.
 #
-# ⚠️ E QUESTO HOOK NON PUO' BLOCCARE NIENTE. Gira su ogni commit di ogni
-# sessione: se fallisse, fermerebbe il lavoro di tutte per una riga di
-# metadati. Esce 0 in ogni caso, e quando non sa il nome non scrive nulla —
-# dice solo come si configura.
+# ⇒ In una copia condivisa l'identita' non puo' venire da uno stato PERSISTENTE
+# del repository, perche' quello stato e' comune. Deve venire dal COMANDO, che
+# e' l'unica cosa che appartiene a chi lo lancia. Due forme, entrambe standard:
+#
+#     VERIMEM_AGENT=Galileo git commit ...
+#     git -c verimem.agent=Galileo commit ...
+#
+# Un valore trovato in un FILE di configurazione viene RIFIUTATO, non usato:
+# e' esattamente la firma del difetto che abbiamo appena pagato.
+#
+# ⚠️ E NON PUO' BLOCCARE NIENTE. Gira su ogni commit di ogni sessione: esce 0 in
+# ogni caso, e quando non sa il nome non scrive nulla.
 
 set -u
 
 MSG_FILE="${1:-}"
 MSG_SORGENTE="${2:-}"
 
-# Un merge o un cherry-pick portano un messaggio che non e' nostro: non si tocca.
 case "$MSG_SORGENTE" in
     merge|squash) exit 0 ;;
 esac
 
 [ -n "$MSG_FILE" ] && [ -f "$MSG_FILE" ] || exit 0
 
-NOME="$(git config --get verimem.agent 2>/dev/null || true)"
+NOME=""
+
+# ① L'ambiente del processo: appartiene alla sessione che lancia il commit.
+if [ -n "${VERIMEM_AGENT:-}" ]; then
+    NOME="$VERIMEM_AGENT"
+else
+    # ② `git -c chiave=valore`: git lo riporta con origine «command line».
+    #    `--show-origin` e' cio' che permette di distinguerlo da un file, ed e'
+    #    tutta la differenza fra attribuire e mentire.
+    ORIGINE="$(git config --show-origin --get verimem.agent 2>/dev/null || true)"
+    case "$ORIGINE" in
+        "command line:"*)
+            NOME="${ORIGINE#*	}"
+            ;;
+        file:*)
+            echo "prepare-commit-msg: IGNORO verimem.agent, viene da un file di"
+            echo "  configurazione ($(printf '%s' "$ORIGINE" | cut -f1)) e questa copia di"
+            echo "  lavoro e' condivisa fra piu' sessioni: quel valore firmerebbe"
+            echo "  col tuo nome anche i commit delle altre. Il commit resta non"
+            echo "  attribuito. Usa invece, sul singolo comando:"
+            echo "      VERIMEM_AGENT=<NomeProprio> git commit ..."
+            echo "  e togli il valore persistente:  git config --unset verimem.agent"
+            exit 0
+            ;;
+    esac
+fi
 
 if [ -z "$NOME" ]; then
-    # Nessun nome configurato: si avvisa UNA volta e si lascia passare il commit.
-    # Bloccare qui punirebbe chi ha appena clonato il repository.
-    echo "prepare-commit-msg: nessun nome agente configurato, il commit resta"
-    echo "  non attribuibile. Si configura una volta sola, per questo clone:"
-    echo "      git config verimem.agent <NomeProprio>"
+    echo "prepare-commit-msg: commit non attribuito. Per firmarlo:"
+    echo "      VERIMEM_AGENT=<NomeProprio> git commit ..."
     exit 0
 fi
 
-# `git interpret-trailers` sa dove finisce il corpo e dove cominciano i commenti,
-# e con --if-exists doNothing non duplica un trailer messo a mano. Farlo con sed
-# significherebbe riscriverne la logica, peggio.
+# `git interpret-trailers` sa dove finisce il corpo e dove cominciano i
+# commenti, e con --if-exists doNothing non duplica un trailer messo a mano.
 git interpret-trailers --in-place --if-exists doNothing \
     --trailer "Agent: $NOME" "$MSG_FILE" 2>/dev/null || exit 0
 
