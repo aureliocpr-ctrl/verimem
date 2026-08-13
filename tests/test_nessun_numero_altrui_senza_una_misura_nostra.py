@@ -104,8 +104,21 @@ def _accuse_numeriche(testo: str) -> list[str]:
 
 
 #: Le superfici di codice che un lettore — umano o agente — incontra.
+#:
+#: ⚠️ `rglob` E NON `glob`, e la differenza l'ha trovata ws1 verificando questo
+#: presidio poche ore dopo che l'avevo scritto: **`glob("*.py")` non scende
+#: nelle sottodirectory** e copriva 388 file su 419. Le 31 escluse stanno in
+#: `dashboard_routes`, `hooks`, `migrations`, `swarm`, `teams`, `webui` — e sono
+#: pulite oggi, quindi non c'era un difetto attivo. Ma un presidio che non
+#: guarda un pezzo di codice non lo protegge: domani quelle 31 possono sporcarsi
+#: senza che niente diventi rosso.
+#:
+#: 🔑 È la stessa classe che questo file cura — **una copertura assunta invece
+#: che misurata** — commessa nello stesso giorno in cui la stavo curando altrove.
+#: Il conteggio si stampa, non si presume: `len(list(r.glob(...)))` contro
+#: `len(list(r.rglob(...)))` sono due righe.
 SORGENTI = sorted(
-    p for p in (_RADICE / "verimem").glob("*.py")
+    p for p in (_RADICE / "verimem").rglob("*.py")
     if p.name != "__init__.py"
 )
 
