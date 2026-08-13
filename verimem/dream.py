@@ -226,8 +226,8 @@ def propose_dream_tasks(
     LLM call con la subscription dell'utente, poi passa result via cycle #36
     `hippo_dream_submit_result` (TBD).
 
-    Direttiva fondamentale (fact preferences/aurelio d4dd857b1eea, 2026-05-13):
-    subscription = base sempre. API key separata = opt-in per public users.
+    Direttiva fondamentale: subscription = base sempre. API key separata =
+    opt-in per chi la vuole.
 
     Args:
         live_dirs: stessi requisiti di create_shadow_engine.

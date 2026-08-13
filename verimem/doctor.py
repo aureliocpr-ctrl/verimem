@@ -264,7 +264,7 @@ def run_doctor() -> list[dict[str, Any]]:
         # l'ambiente) i due divergono, e allora QUESTA DIAGNOSI DESCRIVE UNO
         # STORE MENTRE IL PRODOTTO NE USA UN ALTRO. Misurato il 2026-08-08:
         #     _compat.data_dir()  -> \tmp\tmp.XOPKsjMKaK   (l'ambiente ora)
-        #     CONFIG.data_dir     -> C:\Users\aurel\.engram (l'import)
+        #     CONFIG.data_dir     -> ~/.engram               (l'import)
         #     SemanticMemory().db_path -> quello di CONFIG
         # Sette moduli leggono il primo, dodici il secondo, e `backup`, `cli` e
         # `doctor` LI LEGGONO ENTRAMBI.
@@ -512,8 +512,8 @@ def run_doctor() -> list[dict[str, Any]]:
     # dimensioni stanno nei blob, il modello dichiarato sta in
     # `facts.embedding_model` riga per riga, e la dimensione ATTESA la
     # pubblica il daemon di encode nel suo discovery. Se il daemon non c'e',
-    # si dice che non si sa invece di indovinare — e' la regola che questo
-    # file ha imparato stanotte.
+    # si dice che non si sa invece di indovinare: un rilevatore che tace
+    # perche' non ha guardato e' peggio di uno che dichiara di non sapere.
     #
     # Regge su store ESTRANEI di proposito: e' nato per guardare backup e
     # snapshot altrui, quindi una colonna assente non lo fa sparire. Un

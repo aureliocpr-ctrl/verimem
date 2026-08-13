@@ -113,7 +113,7 @@ def threshold() -> float:
 #: LE DUE ALTERNATIVE, e perché in quest'ordine (2026-08-04). Il `[^:]+` da
 #: solo si ferma al primo due punti — che su Windows è quello del DRIVE:
 #:
-#:     file:C:/Users/aurel/Code/verimem/gate.py   ->  'C'
+#:     file:C:/progetti/verimem/gate.py           ->  'C'
 #:     file:D:/altro/percorso/b.py                ->  'D'
 #:     file:/home/utente/progetto/c.py            ->  '/home/utente/...'  (ok)
 #:

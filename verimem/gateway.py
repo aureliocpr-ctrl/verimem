@@ -1400,8 +1400,8 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         mem = tenants.get(tenant_id)
         # Il contesto flow va aperto anche qui: senza, l'evento di governo
         # esce con surface="unknown" e SENZA tenant (misurato 2026-08-05 —
-        # il difetto era in queste tre rotte, che avevo aggiunto stanotte
-        # senza il _flow_ctx che le rotte storiche hanno). Un evento senza
+        # il difetto era in queste tre rotte, aggiunte senza il _flow_ctx
+        # che le rotte storiche hanno). Un evento senza
         # tenant non è solo mal attribuito: è un'azione di governo che
         # nessuno può ricondurre al cliente che l'ha chiesta.
         _ftok = _flow_ctx(tenant_id)
