@@ -43,22 +43,44 @@ def main(versione: str) -> int:
     print(f"COLLAUDO DEL PACCHETTO PUBBLICATO — verimem {versione}")
     print("=" * 78)
 
-    url_json = f"https://pypi.org/pypi/verimem/{versione}/json"
-    try:
-        d = json.load(urllib.request.urlopen(url_json, timeout=30))
-    except Exception as e:                                    # noqa: BLE001
-        print(f"\n⛔ {versione} non e' sull'indice PyPI ({type(e).__name__}).")
-        print("   Se il tag e' appena partito, la CI ci mette qualche minuto.")
-        return 2
+    # ── UN WHEEL LOCALE, quando il verdetto serve PRIMA di pubblicare ────────
+    # Fino al 2026-08-13 questo banco leggeva solo da PyPI, cioe' funzionava
+    # solo DOPO la pubblicazione. Ma il mandato sul rilascio e' «se e solo se
+    # e' tutto perfetto»: il momento in cui serve il verdetto e' PRIMA, quando
+    # l'artefatto esiste (la CI lo costruisce nel job build) e nessuno lo ha
+    # ancora spinto sull'indice. Uno strumento che si puo' usare solo dopo che
+    # la cosa e' irreversibile non e' un cancello, e' un referto.
+    # Passando il percorso di un .whl si collauda quell'artefatto; le voci che
+    # riguardano l'sdist vengono saltate, perche' un wheel non lo contiene.
+    if versione.endswith(".whl"):
+        try:
+            with open(versione, "rb") as fh:
+                raw = fh.read()
+        except OSError as e:                                  # noqa: BLE001
+            print(f"\n⛔ non riesco ad aprire {versione} ({type(e).__name__}).")
+            return 2
+        w = {"filename": versione.replace("\\", "/").rsplit("/", 1)[-1],
+             "url": f"file://{versione}"}
+        sdists = []
+        print("\n⚠️  ARTEFATTO LOCALE: le voci sull'sdist saranno saltate.")
+    else:
+        url_json = f"https://pypi.org/pypi/verimem/{versione}/json"
+        try:
+            d = json.load(urllib.request.urlopen(url_json, timeout=30))
+        except Exception as e:                                # noqa: BLE001
+            print(f"\n⛔ {versione} non e' sull'indice PyPI ({type(e).__name__}).")
+            print("   Se il tag e' appena partito, la CI ci mette qualche minuto.")
+            print("   Per collaudare PRIMA di pubblicare, passa il percorso di un .whl.")
+            return 2
 
-    wheels = [u for u in d["urls"] if u["packagetype"] == "bdist_wheel"]
-    sdists = [u for u in d["urls"] if u["packagetype"] == "sdist"]
-    if not wheels:
-        print("\n⛔ nessun wheel pubblicato per questa versione.")
-        return 2
+        wheels = [u for u in d["urls"] if u["packagetype"] == "bdist_wheel"]
+        sdists = [u for u in d["urls"] if u["packagetype"] == "sdist"]
+        if not wheels:
+            print("\n⛔ nessun wheel pubblicato per questa versione.")
+            return 2
 
-    w = wheels[0]
-    raw = urllib.request.urlopen(w["url"], timeout=120).read()
+        w = wheels[0]
+        raw = urllib.request.urlopen(w["url"], timeout=120).read()
     z = zipfile.ZipFile(io.BytesIO(raw))
     nomi = z.namelist()
     meta = z.read([n for n in nomi if n.endswith("METADATA")][0]).decode(
