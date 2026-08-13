@@ -46,9 +46,20 @@ concurrency:
   # uno slot.
   # ⇒ La soglia era espressa nella grandezza SBAGLIATA. «Otto run contemporanei»
   #   non e' il segnale: il segnale sono i JOB IN CODA, ed e' quello che va
-  #   guardato prima di ridiscutere questa riga. Finche' restano zero, il numero
-  #   di run contemporanei non e' un costo — e' solo l'aspetto che ha una CI che
-  #   non butta piu' via i verdetti.
+  #   guardato prima di ridiscutere questa riga.
+  #
+  # ⏱️ E IL NUMERO E' SCADUTO IN VENTI MINUTI, il che dice come va letto.
+  #   Alle 13:12Z: 7 run, 42 job, ZERO in coda — misurato aprendo tre run.
+  #   Alle 13:36Z: 8 run in volo, e il conto per stato di TUTTI i loro job dice
+  #     in esecuzione 20 · in coda 1 · conclusi 27
+  #   VENTI e' il tetto dei runner concorrenti, e a otto run in volo e' SATURO:
+  #   il primo job ha cominciato ad aspettare. La misura di prima non era
+  #   sbagliata — era di un altro istante, e questa riga non deve far credere
+  #   che «zero in coda» sia una proprieta' del sistema.
+  # ⇒ CRITERIO, non fotografia: si conta lo stato dei job di TUTTI i run in
+  #   volo (non di tre presi a campione) e si guarda `queued`. Sotto il tetto
+  #   dei venti il parallelismo e' gratis; sopra, ogni push in piu' ritarda i
+  #   verdetti di tutti — ed e' li' che questa riga va ridiscussa, non prima.
   # ⚠️ Cio' che tiene aperti i run NON e' la concorrenza: e' la gamba windows,
   #   che dura 40-60 minuti mentre le altre cinque chiudono in 15-20. Chi cerca
   #   qui la causa di un run lungo la cerca nel posto sbagliato.
