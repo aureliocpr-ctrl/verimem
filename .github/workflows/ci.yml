@@ -38,6 +38,20 @@ concurrency:
   # run contemporanei. Traffico osservato su main: 11 run in due giorni, al
   # massimo 2 contemporanei, ~0,2 run/ora. Se si arrivasse a otto push in un'ora
   # sarebbero otto run per sei gambe, e questa riga andrebbe ridiscussa.
+  #
+  # LA SOGLIA E' STATA RAGGIUNTA IL 2026-08-13 E NON HA PRODOTTO IL DANNO che
+  # questa riga temeva: sette push in 47 minuti, sette run contemporanei,
+  # quarantadue job — e ZERO IN CODA. Su tre run aperti uno per uno: 5 job
+  # conclusi + 1 in corso, 5 + 1, e 6 partiti insieme. Nessun job ha aspettato
+  # uno slot.
+  # ⇒ La soglia era espressa nella grandezza SBAGLIATA. «Otto run contemporanei»
+  #   non e' il segnale: il segnale sono i JOB IN CODA, ed e' quello che va
+  #   guardato prima di ridiscutere questa riga. Finche' restano zero, il numero
+  #   di run contemporanei non e' un costo — e' solo l'aspetto che ha una CI che
+  #   non butta piu' via i verdetti.
+  # ⚠️ Cio' che tiene aperti i run NON e' la concorrenza: e' la gamba windows,
+  #   che dura 40-60 minuti mentre le altre cinque chiudono in 15-20. Chi cerca
+  #   qui la causa di un run lungo la cerca nel posto sbagliato.
   group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
