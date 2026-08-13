@@ -54,22 +54,50 @@ def test_la_storia_porta_il_verdetto_come_ogni_altra_lettura(mem):
 def test_non_e_solo_il_verdetto_ma_TUTTA_la_proiezione(mem):
     """ws2: «cadono tutte le promesse insieme». Il criterio giusto non è
     «c'è il campo che ho chiesto» ma «ci sono gli stessi campi di una
-    lettura normale»."""
+    lettura normale».
+
+    ⚠️ «LETTURA NORMALE» DI QUALE PORTA — corretto il 2026-08-13, e la
+    correzione è al BANCO, non al prodotto. Questo test confrontava
+    `history()` con `fact_contract.fact_payload`, che è il contratto della
+    porta **MCP**, mentre `Memory.history` è **SDK**. Le due viste sono
+    piene entrambe (14 campi ciascuna) e divergenti **per decisione**,
+    scritta in `client.py` il 2026-08-09: *«allinearli romperebbe ogni
+    chiamante dell'SDK… il merge ha trovato un errore, non una scelta fra
+    due lati pari»*. Misurato qui il 13/08::
+
+        solo nel contratto MCP: meta_narrative proposition
+                                superseded_at superseded_reason
+        solo nella vista SDK  : asserted_at epistemic source text
+
+    Il rosso non diceva «la storia è scheletrica» — quel difetto è curato —
+    diceva «la storia non è l'MCP», che è vero e voluto. 🔑 La cura comoda
+    era aggiungere quei campi all'SDK per far passare l'assert: avrebbe
+    cancellato la decisione del 09/08 senza che il banco se ne accorgesse.
+
+    Il guardiano resta ARMATO: confronta con la vista SDK, quindi se
+    `history()` tornasse a costruirsi quattro campi a mano ridiventa rosso.
+    """
     a, _ = _catena(mem)
     dalla_storia = set(mem.history(a)[0])
-    from verimem.fact_contract import fact_payload
-    dal_contratto = set(fact_payload(mem.semantic.get(a)))
+    dalla_vista = set(mem._fact_view(mem.semantic.get(a)))
 
-    mancanti = dal_contratto - dalla_storia
+    mancanti = dalla_vista - dalla_storia
     assert not mancanti, f"la storia perde {sorted(mancanti)}"
 
 
 def test_il_nome_storico_text_non_si_rompe(mem):
     """Chi legge una storia usa `text` da sempre: cambiarlo sotto i piedi
-    sarebbe curare una promessa rompendone un'altra."""
+    sarebbe curare una promessa rompendone un'altra.
+
+    ⚠️ Chiedeva `v["text"] == v["proposition"]` — cioè pretendeva nell'SDK
+    la chiave che l'SDK **non ha per progetto**: `text` È l'alias, e la
+    ragione per cui esiste è proprio che i due nomi restino separati. Ora
+    verifica ciò che la promessa dice davvero: che `text` porti la
+    proposizione del fatto.
+    """
     a, _ = _catena(mem)
     v = mem.history(a)[0]
-    assert v["text"] == v["proposition"]
+    assert v["text"] == mem.semantic.get(a).proposition
     assert v["text"]
 
 
