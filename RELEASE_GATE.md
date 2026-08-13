@@ -6,6 +6,27 @@
 > (command + output committed or linked). Declaring "ready" with any row open
 > is forbidden (A2/A4).
 
+> ⚠️ **COME SI LEGGE LA COLONNA `Status`** (aggiunto 2026-08-13). Ogni ✅ qui
+> dentro dice **«è stato verificato una volta»**, non «vale adesso»: porta la
+> data in cui l'evidenza fu prodotta e nessuno la rinnova. Un registro di stato
+> si degrada in **una sola direzione** — i ✅ restano fermi e il mondo cambia —
+> quindi **una riga verde va letta insieme alla data dell'ultima evidenza VIVA**,
+> che non è la stessa cosa della data in cui fu chiusa.
+>
+> **Misurato il 2026-08-13**, e riguarda proprio le due righe verdi qui sotto che
+> dipendono dalla CI: su **100 run consecutivi** di `ci` (05/08 → 13/08) ci sono
+> **zero `success`** — 42 `failure`, 55 `cancelled`, 3 in corso — e i job `build`
+> e `wheel-install`, che sono il meccanismo con cui G8 e G9 si verificano, sono
+> risultati **`skipped` in 17 run su 17** fra quelli esaminati uno per uno
+> (dipendono da `test`, che fallisce). **Nessuna evidenza nuova per quei due
+> criteri da almeno 201,2 ore**, ed è un limite *inferiore*: la finestra è di
+> 100 run, non copre l'intero intervallo dal 06/07.
+>
+> ⇒ **G8 e G9 restano ✅ come fatti storici** — quel run del 06/07 fu davvero
+> verde — **e non sono una misura dello stato di oggi.** Questa nota non ribalta
+> nessun verdetto: lo **data**, che è ciò che il mandato in cima chiede
+> («no criterion passes without evidence») applicato al passare del tempo.
+
 | # | Criterion | Evidence required | Status |
 |---|-----------|-------------------|--------|
 | G1 | **Full test suite green** on a clean run | pytest output, count, date | ⏳ 2026-07-04 full run: **5937 passed**, 5 failed → 3 were REAL regressions from the 2026-07-02 interactive-judge work (bare subprocess callsites + tests patching the pre-_ex API), all FIXED same day; 2 remaining are the known environmental pair (provider smoke without API key by policy; SLO test flaky under load — it ran while claude -p benches saturated the box). Final clean re-run at gate close |
