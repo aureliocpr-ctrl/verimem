@@ -58,7 +58,6 @@ _INTESTAZIONE = "| Capability |"
 #: senza test deve fermare il commit che la introduce.
 SCOPERTE_NOTE = frozenset({
     "Conflicting well-grounded memories resolved",
-    "Trust axes under adversarial",
     "Runs fully air-gapped",
 })
 # Tolta il 2026-08-13: «Provenance on every read» ha ora il suo presidio in

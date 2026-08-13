@@ -8,6 +8,15 @@ GDPR forget, provenance honesty). The LLM-judged axes (answer quality) are
 layered on later; keeping the deterministic core LLM-free means anyone can
 reproduce the trust scorecard offline with one command.
 
+LA RIGA DEL README CHE QUESTO FILE PROVA (aggiunta il 2026-08-13, nient'altro
+cambiato): «Trust axes under adversarial pressure (TrustMem-Bench,
+deterministic, run it yourself)», con valore **60/60**. Il legame mancava: a un
+censimento la promessa risultava priva di presidio, mentre il presidio e'
+questo — ed e' il banco che la riga stessa nomina. ⚠️ Il **60/60** e' l'esito di
+una esecuzione completa del banco, non di questo file: qui si prova che il
+generatore e gli oracoli siano deterministici e riproducibili, che e' la
+condizione perche' quel numero significhi qualcosa.
+
 Credibility guard (design §2): the generator is pure and seeded, so the dataset
 is auditable and identical run-to-run; the harness reports the score AS MEASURED
 including our own failures.
