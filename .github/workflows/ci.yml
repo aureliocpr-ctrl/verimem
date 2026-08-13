@@ -147,9 +147,14 @@ jobs:
       - name: Cache HuggingFace models
         uses: actions/cache@v4
         with:
+          # ~/.engram/models AGGIUNTO 2026-08-13: e' dove `ensure_gate_model`
+          # estrae il cross-encoder del moat (711,5 MB, di cui 703,5 il
+          # safetensors). Senza questa riga il passo sotto lo riscarica su OGNI
+          # gamba di OGNI run: sei volte 711 MB, per sempre.
           path: |
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
+            ~/.engram/models
           key: hf-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
           restore-keys: hf-${{ runner.os }}-
 
@@ -169,8 +174,26 @@ jobs:
         # NON-FATAL: a flaky HF download must not fail CI. When it succeeds those
         # tests RUN (real coverage); when it fails they SKIP via the
         # `requires_real_model` guard (tests/_real_model.py) — CI stays green either way.
+        # `--no-gate` TOLTO il 2026-08-13, e la ragione non e' «piu' copertura»:
+        # e' che senza il modello il conteggio dei rossi dipende dall'ORDINE DEI
+        # TEST. Misurato sul run 9d6713a3, gamba py3.11, stesso processo:
+        #   12%  13:04:26  test_chi_ha_deciso_la_quarantena  judged=False,
+        #                  layers=[L1.10, L1.15, L4-skipped], not_run:no_judge
+        #        13:07:11  PRIMO judged=True del run
+        #   30%            test_flow_warmup_dichiarato carica il giudice VERO
+        #                  (il suo docstring misura 41 s dentro _ensure_scorer)
+        #   39%            test_il_numero_c_e...  g=99.93484497070312
+        # Il giudice non e' assente ne' presente: SI CARICA A META' SUITE, e chi
+        # gira prima lo trova assente. Con pytest-randomly l'ordine cambia a ogni
+        # run, quindi cambia QUALI test cadono prima del caricamento — ed e'
+        # questa, non il prodotto, la serie 32-64-26-58-58-20 che ci ha fatto
+        # inseguire un peggioramento inesistente per due giorni.
+        # ⇒ Scaldare il gate PRIMA dei test rende il verdetto indipendente
+        #   dall'ordine. Il prezzo e' il download, che la cache sopra trattiene.
+        # ⚠️ NON-FATAL resta: se il download cade, i test del moat tornano a
+        #   saltare o a fallire come oggi — non peggio di adesso.
         continue-on-error: true
-        run: verimem warmup --no-daemon --no-gate
+        run: verimem warmup --no-daemon
 
       - name: Tests
         env:
