@@ -21,12 +21,17 @@ def _project_root() -> Path:
 
 
 def _data_root() -> Path:
-    """Resolve the data root from env, else the shared ``~/.engram`` resolver.
+    """Resolve the data root from env, else the shared ``_compat`` resolver.
 
     Precedence: ``HIPPO_DATA_DIR`` → ``ENGRAM_DATA_DIR`` env (test isolation /
-    multi-tenant / subprocess) → otherwise :func:`verimem._compat.data_dir`
-    (``~/.engram``). Read at CONFIG-construction time; once CONFIG is built the
-    path is frozen.
+    multi-tenant / subprocess) → otherwise :func:`verimem._compat.data_dir`.
+    Read at CONFIG-construction time; once CONFIG is built the path is frozen.
+
+    ⚠️ The no-env case is NOT a fixed ``~/.engram``: since the 0.6.0 rename that
+    resolver returns ``~/.engram`` only when that directory ALREADY exists, and
+    ``~/.verimem`` on a fresh install — the two promises the README makes, both
+    measured in ``tests/test_la_cartella_dati_promessa_dal_readme.py``. Saying
+    ``~/.engram`` here described the maintainer's machine, not the resolver.
 
     Audit A6 (2026-06-08): the old no-env default was ``<project>/data``, which
     on a non-editable ``pip install`` lives INSIDE site-packages (wiped on
