@@ -187,7 +187,16 @@ def main(versione: str) -> int:
     # rilascio — e' l'arretrato di chi non ha ancora ripubblicato. Le due cose
     # portano ad azioni opposte (correggere il pacchetto / pubblicarne uno nuovo)
     # e il referto deve permettere di distinguerle senza aprire `git log`.
-    c_e = any(n == "verimem/rerank.py" for n in nomi)
+    # ⚠️ Il modulo va cercato in TUTTI i package, non nel solo `verimem`: prima
+    # del rename totale (0.6.0) il pacchetto si chiamava `engram`, e questa voce
+    # dichiarava OK su un wheel che il file ce l'aveva eccome. Misurato il
+    # 2026-08-13 sul wheel 0.5.0, che porta `engram/rerank.py` e riceveva un OK.
+    # Era un sensore che taceva sempre: cercava un percorso che in quei wheel non
+    # poteva esistere, e l'assenza di quel percorso la leggeva come assenza del
+    # modulo. Trovato confrontando le voci fra due artefatti e chiedendo quali
+    # non cambiano MAI — una voce sempre vera o e' stabile per davvero, o non si
+    # accende.
+    c_e = any(n.rsplit("/", 1)[-1] == "rerank.py" for n in nomi)
     esito("rerank.py (ritirato da main il 30/07) NON e' nel pacchetto",
           not c_e,
           f"moduli .py: {sum(1 for n in nomi if n.endswith('.py'))}"
