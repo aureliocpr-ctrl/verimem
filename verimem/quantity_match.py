@@ -1828,6 +1828,56 @@ def _negated_tokens(text: str) -> set[str]:
             elif w.endswith("s") and len(w) > 3:
                 w = w[:-1]
             out.add(w)
+    return out or _scope_a_ritroso(t)
+
+
+#: L'ultimo blocco di kanji prima della coda verbale in kana: in «暗号化されて
+#: いません» il contenuto è `暗号化`, non `されてい`.
+_KANJI_PRIMA_DELLA_CODA = re.compile(r"([一-鿿㐀-䶿]{2,4})[ぁ-ゟー]*$")
+
+
+def _scope_a_ritroso(t: str) -> set[str]:
+    """Ciò che il negatore nega quando sta **in coda alla frase**.
+
+    ⚠️⚠️ QUESTA È LA META' DEL MONDO CHE `_negated_tokens` NON GUARDAVA, e la
+    sua assenza non faceva perdere un rilevamento: ne faceva **inventare** uno.
+
+    La ricerca in avanti (`t[m.end():]`) descrive le lingue in cui il negatore
+    PRECEDE ciò che nega — «not *encrypted*». Nelle lingue SOV il negatore
+    CHIUDE: `暗号化されて**いません**`, `sifreli **degil**`, `एन्क्रिप्टेड **नहीं** है`.
+    Lì lo scope usciva vuoto, e con lo scope vuoto la guardia di precisione di
+    :func:`negation_conflict` **non scatta affatto** — la condizione è
+    ``if scoped and not scoped_shared``. Il caso scivolava al fallback e veniva
+    dichiarato conflitto. Misurato, con il gemello inglese che rende la cosa
+    conclusiva::
+
+        giapponese  「署名されました」 / 「署名されましたが暗号化されていません」
+              scope []            → 'され'      ⇐ due frasi COMPATIBILI in conflitto
+        inglese     «signed» / «signed but not encrypted»
+              scope ['encrypted'] → None        ⇐ corretto
+
+    🔑 Una regola posizionale non è neutra fra tipologie linguistiche, ed è la
+    gemella cattiva di «una soglia non è neutra»: un rilevamento inventato
+    ritira un fatto vero, mentre uno mancato lascia le cose come stanno.
+
+    ⚠️ IL RIPIEGO SI ATTIVA **SOLO** SE IN AVANTI NON C'È NULLA, e l'asimmetria
+    è voluta: cercare all'indietro anche in inglese prenderebbe «is» da «is not
+    blocked», cioè uno scope falso in una lingua che oggi funziona.
+
+    ⚠️ E prende POCO. La prima versione riusava `[^\\W\\d_]{4,}`, che in
+    giapponese cattura **l'intera frase** — kana e kanji sono tutti `\\w` — e
+    con il confronto per caratteri quello scope copriva ogni token condiviso:
+    il falso positivo restava, per una ragione nuova. Serve l'ultimo blocco di
+    kanji prima della coda verbale.
+
+    Misurato su quattro coppie compatibili e cinque contraddittorie:
+    falsi positivi **da 1 a 0**, rilevamenti veri invariati a 5 su 5.
+    """
+    out: set[str] = set()
+    for m in _NEGATOR_RE.finditer(t or ""):
+        blocco = _KANJI_PRIMA_DELLA_CODA.search((t or "")[:m.start()])
+        if blocco:
+            out.add(blocco.group(1))
     return out
 
 

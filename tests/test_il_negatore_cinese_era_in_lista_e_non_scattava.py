@@ -99,8 +99,13 @@ def test_IL_TOKEN_RESTITUITO_RESTA_LEGGIBILE():
     passava da «され» a «さ» pur restando un flip corretto. Nessuna delle due
     popolazioni sopra lo avrebbe segnalato — passavano entrambe.
     """
+    #: ⚠️ Era «され» finché lo scope guardava solo AVANTI: con il negatore in
+    #: coda non trovava nulla e si ripiegava sul primo token condiviso, cioè una
+    #: sillaba della desinenza passiva. Da quando il ripiego cerca l'ultimo
+    #: blocco di kanji prima della coda verbale, la diagnosi è «署名» — la
+    #: FIRMA, che è ciò che il negatore nega davvero.
     assert negation_conflict("システムは署名されました",
-                             "システムは署名されません") == "され"
+                             "システムは署名されません") == "署名"
     for _a, _b, atteso in OPPOSTI:
         assert len(atteso) > 1
 
