@@ -125,3 +125,36 @@ def test_dichiara_da_dove_viene_la_dimensione_attesa(tmp_path, monkeypatch):
     testo = _check()["detail"].lower()
     assert ("daemon" in testo or "expected" in testo
             or "not known" in testo), testo
+
+
+def test_SENZA_DAEMON_il_referto_non_dice_ok_a_uno_store_di_un_altro_modello(
+        tmp_path, monkeypatch):
+    """Il caso che mancava, ed e' quello in cui gira la CI.
+
+    La dimensione attesa la dichiara il daemon di encoding: dove non gira —
+    ogni runner di CI, e la macchina di chiunque non lo tenga acceso — il
+    ripiego era prendere la dimensione PIU' FREQUENTE come se fosse quella
+    giusta. Su uno store scritto INTERAMENTE da un altro modello quel massimo
+    e' tutto il corpus, quindi zero righe cattive e verdetto `ok`, con il
+    dettaglio che nella stessa riga dichiarava «expected dimension NOT known
+    here». **Il referto diceva «non lo so» e lo stato diceva «va bene».**
+
+    Gli altri banchi di questo file non lo vedevano perche' in locale il daemon
+    C'E': lo stesso test passava in casa e falliva in CI, e la differenza non
+    era il codice ma un processo acceso.
+
+    ⚠️ Qui il daemon viene spento PER FINTA (`read_discovery` -> {}) invece di
+    fermare quello vero: un banco non tocca i processi di chi lo esegue.
+    """
+    from unittest.mock import patch
+
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    _store(tmp_path, [(384, "sentence-transformers/all-MiniLM-L6-v2")] * 4)
+
+    with patch("verimem.encode_service.read_discovery", return_value={}):
+        c = _check()
+
+    assert c["status"] == "fail", (
+        "senza daemon il doctor promuove a 'ok' uno store che la ricerca "
+        f"semantica non puo' leggere: {c}")
+    assert c.get("fix"), "un fail senza rimedio non e' un referto"

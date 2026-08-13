@@ -563,13 +563,29 @@ def run_doctor() -> list[dict[str, Any]]:
                     "no vectors stored yet — nothing that a model change "
                     "could have orphaned")
             else:
-                _buoni = (_dims.get(_dim_attesa, 0) if _dim_attesa
-                          else max(_dims.values()))
+                # ⚠️ SENZA DAEMON LA DIMENSIONE ATTESA NON SI CONOSCE, e il
+                # ripiego era `max(_dims.values())`: prendere la dimensione
+                # PIU' FREQUENTE come se fosse quella giusta. Su uno store
+                # scritto INTERAMENTE da un altro modello quel massimo e'
+                # l'intero corpus, quindi zero righe «cattive» e verdetto OK —
+                # con il dettaglio che dichiara, nella stessa riga, «expected
+                # dimension NOT known here». Il referto diceva «non lo so» e lo
+                # stato diceva «va bene».
+                # 🔑 Ma il NOME del modello che ha scritto le righe c'e' gia'
+                # (`_modelli`, letto sopra) e non chiede nessun daemon: quando
+                # la dimensione non si puo' confrontare, si confrontano i nomi.
+                # E' un confronto vero al posto di un'euristica cieca.
+                if _dim_attesa:
+                    _buoni = _dims.get(_dim_attesa, 0)
+                elif _modelli and _atteso_nome:
+                    _buoni = sum(n for m, n in _modelli if m == _atteso_nome)
+                else:
+                    _buoni = max(_dims.values())
                 _cattivi = _tot - _buoni
                 _dettaglio = (f"{_tot} vectors — {_righe_dim}; {_fonte}"
                               + (f"; declared: {_righe_mod}" if _righe_mod
                                  else "; no embedding_model column"))
-                if _dim_attesa and not _buoni:
+                if (_dim_attesa or (_modelli and _atteso_nome)) and not _buoni:
                     add("embedding-model", FAIL,
                         f"NO vector matches the engine in use: {_dettaglio}. "
                         f"Semantic search returns ZERO rows here, and returns "
