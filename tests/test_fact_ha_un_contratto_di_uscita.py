@@ -75,13 +75,39 @@ def test_i_campi_vuoti_non_gonfiano_il_payload():
 
 
 def test_i_quattro_campi_invisibili_ora_escono():
-    """I quattro che 0 superfici su 13 mostravano."""
+    """I quattro che 0 superfici su 13 mostravano.
+
+    ⚠️ `last_verified_at` ha una CONDIZIONE, ed è una decisione presa dopo
+    che questo banco fu scritto (`fact_contract.verifica_sostenuta`,
+    misurata il 2026-08-07): il campo si chiama come se registrasse una
+    verifica e non lo fa — avanza su 2762 fatti, fino a 87 giorni dopo la
+    scrittura, e **zero** di quelli hanno un `grounding_score`. Si muove
+    dove un giudizio non c'è mai stato: un tocco, non un verdetto.
+    ⇒ Esce **solo quando poggia su un verdetto**, e questo banco costruiva
+    il fatto senza `grounding_score` — chiedeva quindi che uscisse anche
+    quando è la data di un re-embedding. Il rosso era il banco.
+    """
     f = Fact(proposition="x", confidence_tier="high", writer_principal="sdk:local",
-             last_verified_at=1234.0, epistemic={"kind": "unbeaten"})
+             last_verified_at=1234.0, grounding_score=91.0,
+             epistemic={"kind": "unbeaten"})
     p = f.as_payload()
     for campo in ("confidence_tier", "writer_principal", "last_verified_at",
                   "epistemic"):
         assert campo in p, f"{campo} continua a non uscire"
+
+
+def test_last_verified_at_NON_esce_quando_nessun_verdetto_lo_sostiene():
+    """L'altra popolazione, che è il motivo per cui la condizione esiste.
+
+    Un banco che guarda solo il caso positivo direbbe «il campo esce» e
+    resterebbe verde anche se la condizione sparisse — cioè se tornassimo a
+    pubblicare come «ultima verifica» la data di una migrazione.
+    """
+    f = Fact(proposition="x", last_verified_at=1234.0)  # nessun grounding_score
+    assert "last_verified_at" not in f.as_payload(), (
+        "il campo esce senza un verdetto che lo sostenga: e' la data di un "
+        "tocco pubblicata come se fosse una verifica"
+    )
 
 
 def test_ogni_campo_del_dataclass_e_deciso():
