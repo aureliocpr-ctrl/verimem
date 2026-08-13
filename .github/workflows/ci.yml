@@ -59,7 +59,28 @@ jobs:
     # (windows/py3.11 flaked red on an all-green run, 2026-06-08). 45 min gives
     # comfortable headroom without masking a real hang (the in-process hang
     # watchdog still stack-dumps long calls).
-    timeout-minutes: 45
+    #
+    # AGGIORNAMENTO 2026-08-13. Quel margine confortevole NON ESISTE PIU', e un
+    # tetto unico per sei gambe di durata diversissima lo nega proprio a chi ne
+    # ha bisogno. Job `test (windows-latest / py3.12)` su sei run consecutivi:
+    #   31633951408 cancelled 45,3 · 31633374985 failure 39,9
+    #   31632886567 cancelled 45,1 · 31631810969 cancelled 45,3
+    #   31630796638 failure   41,7 · 31629151172 cancelled 45,3
+    # QUATTRO SU SEI muoiono a 45,1-45,3 minuti: e' il tetto che le uccide, non
+    # un test. Nello stesso run le altre cinque gambe stanno a 17,5-17,9 minuti.
+    # Windows non fallisce, SCADE — e una gamba che scade costa 45 minuti di
+    # calcolo e non consegna nessun verdetto.
+    #
+    # ⚠️ Quanto ci metta davvero windows non e' misurabile finche' il tetto la
+    # tronca: quattro campioni su sei sono censurati a 45. I due tempi veri sono
+    # 39,9 e 41,7, quindi 60 da' ~1,4x sul massimo noto. Il primo run con questo
+    # tetto sara' la prima misura non censurata; se nemmeno 60 bastasse, il
+    # numero non va allargato per riflesso — va capito perche' windows impiega
+    # piu' del doppio delle altre.
+    #
+    # 30 alle altre, non 45: dove il lavoro dura 17,5 minuti un tetto di 45 e'
+    # largo il triplo e non scoprirebbe mai un rallentamento vero.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 30 }}
     strategy:
       fail-fast: false
       matrix:
