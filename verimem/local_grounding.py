@@ -132,13 +132,29 @@ class LocalGroundingJudge:
                     try:
                         self._scorer = make_finetuned_scorer(
                             self.model_dir, max_length=self.max_length)
-                    except Exception:
+                    except Exception as exc:
                         # cache the failure: a broken/absent model must not re-pay
                         # the load attempt on every gated write
                         self._load_failed = True
+                        # ⚠️ Il MOTIVO va nell'evento, non solo nell'eccezione.
+                        # Fino al 2026-08-13 questo blocco emetteva `phase` ed
+                        # `elapsed_ms` e nient'altro: chi leggeva il giornale
+                        # vedeva un giudice fallito in 3 millisecondi e non
+                        # poteva sapere perche'. In CI e' l'unica traccia che
+                        # resta — l'eccezione viene rilanciata e muore la'.
+                        # Due istanze hanno cercato `error=`, `reason=`, `exc=`
+                        # e un traceback in quelle righe prima che si capisse
+                        # che non esistevano per costruzione.
+                        # Il commento sopra dice che un modello rotto o assente
+                        # non deve ripagare il caricamento: giusto, ma allora il
+                        # motivo del primo fallimento e' l'unica occasione che
+                        # abbiamo di saperlo, perche' non ci sara' un secondo
+                        # tentativo da osservare.
                         _emit_flow("flow.warmup", what="moat-judge",
                                    phase="failed",
-                                   elapsed_ms=round((time.time() - t0) * 1000, 1))
+                                   elapsed_ms=round((time.time() - t0) * 1000, 1),
+                                   error=type(exc).__name__,
+                                   reason=(str(exc) or "(nessun messaggio)")[:200])
                         raise
                     self.load_s = round(time.time() - t0, 1)
                     _emit_flow("flow.warmup", what="moat-judge", phase="ready",
