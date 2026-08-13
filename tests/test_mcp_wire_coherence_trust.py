@@ -94,6 +94,13 @@ class TestRecallTrustSignalsExposure:
             confidence=0.9, status="model_claim", created_at=time.time(),
         )
         fake_sm = MagicMock()
+        # ⚠️ Un MagicMock risponde a QUALUNQUE attributo, quindi un contatore
+        # che il codice legge e poi confronta torna come mock e il confronto
+        # esplode dentro l'handler (`mcp_server.py:13236` lo legge,
+        # `:13323` fa `... > _deg_prima`). Il prodotto è corretto: quel campo
+        # è un intero su uno store vero. Dichiararlo qui rende il finto agente
+        # conforme al contratto invece che infinitamente permissivo.
+        fake_sm._recall_degraded_count = 0
         fake_sm.recall = MagicMock(return_value=[(fact, 0.91)])
         fake_agent = MagicMock()
         fake_agent.semantic = fake_sm
@@ -105,6 +112,10 @@ class TestRecallTrustSignalsExposure:
             {"query": "X memory", "k": 5},
         )
         payload = json.loads(result[0].text)
+        # L'errore PRIMA della chiave attesa: quando l'handler fallisce il
+        # payload porta `error` e non `items`, e un `KeyError: 'items'` nasconde
+        # il messaggio vero — è così che questo rosso è rimasto illeggibile.
+        assert "error" not in payload, payload.get("error")
         assert payload["items"], "expected at least one hit"
         for item in payload["items"]:
             assert "verdict" not in item
@@ -126,6 +137,8 @@ class TestRecallTrustSignalsExposure:
             is_superseded=False, details="status=model_claim",
         )
         fake_sm = MagicMock()
+        fake_sm._recall_degraded_count = 0  # vedi la nota sopra: il mock deve
+        # essere conforme al contratto, non permissivo
         # When trust_signals=True the handler must call recall with
         # trust_signals=True; we return 3-tuples to mirror the real API.
         fake_sm.recall = MagicMock(return_value=[(fact, 0.91, signal)])
@@ -139,6 +152,10 @@ class TestRecallTrustSignalsExposure:
             {"query": "X memory", "k": 5, "trust_signals": True},
         )
         payload = json.loads(result[0].text)
+        # L'errore PRIMA della chiave attesa: quando l'handler fallisce il
+        # payload porta `error` e non `items`, e un `KeyError: 'items'` nasconde
+        # il messaggio vero — è così che questo rosso è rimasto illeggibile.
+        assert "error" not in payload, payload.get("error")
         assert payload["items"], "expected at least one hit"
         # The handler must forward trust_signals=True to recall().
         recall_kwargs = fake_sm.recall.call_args.kwargs
