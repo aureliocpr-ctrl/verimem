@@ -22,7 +22,7 @@ so these are *not* a like-for-like ranking against them): LongMemEval_s
 session-level **recall@5 = 0.87** (judge-free, full 500 questions) and LoCoMo
 **QA-accuracy = 0.81** (n=150, Claude judge). That's good retrieval — but the
 reason to choose Verimem is the layer *above* it: whether you can trust what comes
-back. Method and raw numbers: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
+back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md).
 
 ## Features
 
@@ -334,7 +334,7 @@ verimem facts undo <op_id>              # reverse a retirement: the lost fact co
 Write receipts carry the handles too (`superseded_undo_ops` on `add()`), every
 retirement emits a `flow.supersession` event, and the Engine Room
 (`/ui/engine`) shows the pairs with one-click undo/restore. Full manual:
-[docs/GOVERNANCE.md](docs/GOVERNANCE.md).
+[docs/GOVERNANCE.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/GOVERNANCE.md).
 
 ## See your memory working — the trust console
 
@@ -440,7 +440,7 @@ verimem gateway restore ./snap-2026-07-08 ./new-data-dir
 Measured on [HaluMem](https://github.com/MemTensor/HaluMem) with the full
 pipeline (our extraction → gated store → answer), judged by a Claude-based
 grader. Full methodology, caveats and raw result files:
-[BENCHMARKS.md](./docs/BENCHMARKS.md).
+[BENCHMARKS.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md).
 
 | Metric | Verimem | MemOS (self-reported) |
 |---|---|---|
@@ -453,7 +453,7 @@ grader. Full methodology, caveats and raw result files:
 We describe the end-to-end result as **parity, not a win**: the same-recipe
 runs cluster around MemOS's self-reported number and the judges differ
 (ours vs theirs). Trust properties hold through the full pipeline. On
-[TrustMem-Bench](./benchmark/trustmem_bench.py) — six deterministic trust axes
+[TrustMem-Bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/trustmem_bench.py) — six deterministic trust axes
 (fabrication under absence, destructive updates, temporal integrity, forget
 integrity, provenance honesty, sycophancy resistance) — Verimem scores 60/60;
 the bench is offline and seeded, run it yourself in one command.
@@ -481,8 +481,8 @@ measured result with the raw file in the repo, not a design intention:
 |---|---|---|
 | Abstains instead of fabricating when the store can't support an answer | **1.000 across seven consecutive full e2e runs** | not measured by their leaderboards |
 | Write-path gate (unsupported "it works" claims quarantined, not stored) | grounding judge AUROC **0.96–0.97** across models/seeds (0.971 sonnet-4 R10, 0.963 sonnet-5 re-run 2026-07-16, 0.974 pooled multi-model) | no write gate |
-| Conflicting well-grounded memories resolved by provenance (`answer`, trust-conditioned) | correct **0.17 → 0.92**; on the 2 truly unresolvable conflicts it did **not** abstain — it picked a side both times ([bench](./benchmark/wellgrounded_distractor_bench.py), sonnet-5) | served as-is |
-| Trust axes under adversarial pressure ([TrustMem-Bench](./benchmark/trustmem_bench.py), deterministic, run it yourself) | **60/60** | mem0: 40/60 (forget-leak reproduced live) |
+| Conflicting well-grounded memories resolved by provenance (`answer`, trust-conditioned) | correct **0.17 → 0.92**; on the 2 truly unresolvable conflicts it did **not** abstain — it picked a side both times ([bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/wellgrounded_distractor_bench.py), sonnet-5) | served as-is |
+| Trust axes under adversarial pressure ([TrustMem-Bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/trustmem_bench.py), deterministic, run it yourself) | **60/60** | mem0: 40/60 (forget-leak reproduced live) |
 | Bi-temporal history & time travel (`as_of`, "changed from X to Y on date Z") | shipped, tested | latest-value only |
 | True forget (GDPR): deleted data cannot resurface via history or time travel | shipped, probe-tested | mem0 leaked in our probe |
 | Provenance on every read (who wrote it, source ref, gate status) | every hit | absent or partial |
@@ -491,7 +491,7 @@ measured result with the raw file in the repo, not a design intention:
 Our method is the other differentiator: **every claim in this README links
 to a raw result file, negative results are published** (see the declared
 regressions and falsified hypotheses in
-[BENCHMARKS.md](./docs/BENCHMARKS.md)), and the honest framing rule —
+[BENCHMARKS.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md)), and the honest framing rule —
 "parity, not a win" — is enforced against ourselves. A memory layer asking
 for your trust should be able to show its work. This one does.
 
