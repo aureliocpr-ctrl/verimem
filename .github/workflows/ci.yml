@@ -195,6 +195,36 @@ jobs:
         continue-on-error: true
         run: verimem warmup --no-daemon
 
+      # SONDA DEL GIUDICE — una riga, e serve perche' IL LOG TRONCA.
+      # Misurato il 2026-08-13: sullo stesso genere di claim (una cifra che la
+      # fonte non sostiene) il gate decide DIVERSAMENTE nei due ambienti —
+      #   in casa   grounding 0.41   layers ['L4-grounding','L4.1']  quarantined
+      #   in CI     layers []  x8    layers ['L4-review']  x2        L4.1 MAI
+      # `L4-review` e' la banda borderline [40,80): il fatto viene trattenuto
+      # invece che quarantinato. Il numero che spiegherebbe la differenza — il
+      # grounding_score — sta dentro l'output di un subprocess che GitHub
+      # TRONCA nel log, quindi non e' leggibile da li'.
+      # ⇒ Questa sonda lo stampa da sola, corto, a ogni run. Una gamba sola:
+      #   il dato non cambia con la versione di Python, e sei copie costerebbero
+      #   sei caricamenti del giudice.
+      - name: Gate probe (il verdetto del moat su un claim di riferimento)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        continue-on-error: true
+        env:
+          HIPPO_OFFLINE: "1"
+        run: |
+          python - <<'PY'
+          import tempfile, pathlib
+          from verimem.client import Memory
+          m = Memory(pathlib.Path(tempfile.mkdtemp()) / "probe.db")
+          r = m.add("Il generatore G-12 eroga 40 kW in continuo.", topic="probe",
+                    source="Scheda G-12: potenza nominale 55 kW, regime intermittente.")
+          print("GATE-PROBE status=%s grounding=%s layers=%s" % (
+              r.get("status"),
+              r.get("grounding_score"),
+              [w.get("layer") for w in (r.get("warnings") or [])]))
+          PY
+
       - name: Tests
         env:
           HIPPO_OFFLINE: "1"
