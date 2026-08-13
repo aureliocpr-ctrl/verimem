@@ -163,6 +163,39 @@ def _tolleranza_dichiarata(testo: str, valore: float) -> float:
     return 0.5
 
 
+#: I quantificatori di assenza. ⚠️ È UNA LISTA, e le liste in questa casa sono
+#: la classe di errore più ricorrente — quindi va detto perché qui è accettabile
+#: e dove smette di esserlo.
+#:
+#: · L'assenza è **lessicale per natura**: a differenza delle date (`8月10日`) o
+#:   della coda verbale giapponese, non esiste un criterio posizionale che dica
+#:   «qui il testo nega una quantità». Se qualcuno ne trova uno, batte questa riga.
+#: · Il costo di una voce mancante è **zero comportamento nuovo**: la lingua non
+#:   coperta si comporta come oggi, cioè il claim viene fermato. Non si rompe
+#:   niente, semplicemente non si guadagna.
+#: · Il valore aggiunto è **uno solo, lo zero**: una voce di troppo non può
+#:   inventare quantità arbitrarie, al massimo fa passare un claim che dice `0`.
+#:
+#: ⚠️ LIMITE DICHIARATO: copre italiano e inglese. Le altre lingue del perimetro
+#: — francese «aucun», spagnolo «ninguno», tedesco «kein», russo «нет» — NON
+#: sono qui, e il loro claim resta fermato come oggi. Aggiungerle è una riga a
+#: testa; non l'ho fatto perché non ho un banco per misurarne i falsi.
+_ASSENZA_RE = re.compile(
+    r"(?<![\w-])(?:nessun[oa]?|neanche\s+un[oa]?|zero|none|no)(?![\w-])",
+    re.IGNORECASE)
+
+
+def _dichiara_un_assenza(testo: str) -> bool:
+    """La fonte nega esplicitamente una quantità?
+
+    Serve a rispondere a una domanda sola — «il valore 0 compare in questa
+    fonte?» — e non a estrarre una misura: per questo non restituisce un numero
+    ma un sì/no, e chi la chiama aggiunge lo zero all'insieme dei valori
+    presenti invece di fabbricare una quantità.
+    """
+    return bool(_ASSENZA_RE.search(testo or ""))
+
+
 def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]:
     """I valori numerici del claim che nella fonte non compaiono.
 
@@ -181,6 +214,31 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     if not nel_claim:
         return []
     nella_fonte = {v for _u, v in extract_quantities(source)}
+    # ⚠️ UNA FONTE CHE DICHIARA UN'ASSENZA CONTIENE LO ZERO, anche se non lo
+    # scrive in cifre. Senza questa riga la stessa verità aveva due destini::
+    #
+    #     claim «il numero di success è 0»  ·  fonte «success: 0»      ammesso
+    #     claim «il numero di success è 0»  ·  fonte «NESSUN SUCCESS»  fermato
+    #
+    # perché `extract_quantities("NESSUN SUCCESS")` restituisce l'insieme vuoto:
+    # per il parser quella fonte non contiene alcun numero, quindi il claim
+    # numerico risultava senza appiglio. Misurato su quattro forme (nessun /
+    # nessuna / no+inglese), tutte e quattro fermate a torto.
+    #
+    # ⚖️ LA CURA STA QUI E NON IN `extract_quantities`, ed è una scelta
+    # misurata. Insegnare al parser che «nessun X» vale 0 creerebbe quantità
+    # dove il testo non ne misura nessuna — nel corpus reale «zero costo»,
+    # «zero MCP», «Zero API» sono frequentissimi — e quelle quantità fantasma
+    # finirebbero nei sei moduli del gate che leggono `extract_quantities`,
+    # alimentando i rilevatori di conflitto. Qui invece l'equivalenza vive solo
+    # nel confronto fra claim e fonte: non entra nel corpus e non crea nulla.
+    #
+    # 📌 E RESTA DENTRO IL CRITERIO CHE QUESTO MODULO DICHIARA DI SÉ — «o quel
+    # numero è nella fonte, o non c'è». Una fonte che dice «zero costo» il
+    # numero zero ce l'ha: se poi quello zero parli d'altro è la domanda di
+    # L4.2, non di questo layer. I due ruoli restano separati.
+    if _dichiara_un_assenza(source):
+        nella_fonte.add(0.0)
     come_scritti = _numeri_come_scritti(proposition)
     fuori: list[ValoreAssente] = []
     for u, v in sorted(nel_claim, key=lambda q: q[1]):
