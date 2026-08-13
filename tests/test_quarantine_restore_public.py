@@ -130,9 +130,19 @@ def test_restore_only_quarantined_never_a_live_fact(mem: Memory):
     """A clean model_claim is not quarantined — restore must refuse it (it is
     not a recovery target), so the surface cannot be repurposed to mutate live
     facts' status."""
+    # ⚠️ LA FONTE DEVE CONTENERE LA CIFRA — corretto il 2026-08-13, e la
+    # correzione e' al banco. Prima la fonte era «invoice #A-2231 line total»,
+    # che il totale NON lo dice: oggi L4.1 quarantina il fatto con «il claim
+    # afferma un valore che la fonte non contiene: 12, 450 euro», e ha ragione
+    # — e' la promessa centrale del prodotto. Il cross-encoder dava 96,9 su una
+    # soglia di 40, quindi il blocco non veniva dal giudice ma dal controllo
+    # sui numeri, aggiunto dopo che questo banco fu scritto.
+    # Serviva «un model_claim pulito» e l'esempio scelto non lo era piu': ora
+    # la fonte dichiara il totale, il fatto resta vivo, e il test torna a
+    # misurare cio' che dichiara — che `restore` rifiuti un fatto vivo.
     r = mem.add("The invoice total is 12,450 euros.", topic="finance",
-                source="invoice #A-2231 line total")
-    assert r.get("status") != "quarantined"
+                source="Invoice #A-2231 — line total: 12,450 euros.")
+    assert r.get("status") != "quarantined", r
     assert mem.restore(r["id"]) is False
 
 
