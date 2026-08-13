@@ -8,6 +8,13 @@ while tagging each fact with the metadata the store ALREADY has
 and it abstained 2/2 on unresolvable same-metadata conflicts. This wires that
 measured lever into the product:
 
+LA RIGA DEL README CHE QUESTO FILE PROVA (aggiunta il 2026-08-13, nient'altro
+cambiato): «Conflicting well-grounded memories resolved by provenance (`answer`,
+trust-conditioned)», il cui valore — «correct **0.17 → 0.92**» — e' la misura
+citata qui sopra. Il legame mancava, e a un censimento la promessa risultava
+priva di presidio mentre il presidio e' questo.
+
+
 * ``search()`` now exposes ``asserted_at``/``created_at``/``source``/
   ``verified_by`` per hit (it already exposed status/grounding_score).
 * ``answer(trust_conditioning=True)`` (default) builds tagged fact lines and

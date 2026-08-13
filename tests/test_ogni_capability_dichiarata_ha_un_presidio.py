@@ -56,10 +56,16 @@ _INTESTAZIONE = "| Capability |"
 #: perche' con xfail(strict=True) il caso curato diventa rosso finche' la voce
 #: resta. NON aggiungere voci per far passare una riga nuova: una promessa nuova
 #: senza test deve fermare il commit che la introduce.
-SCOPERTE_NOTE = frozenset({
-    "Conflicting well-grounded memories resolved",
-    "Runs fully air-gapped",
-})
+SCOPERTE_NOTE: frozenset[str] = frozenset()
+# VUOTO dal 2026-08-13, ed e' lo stato giusto, non una dimenticanza: tutte e
+# otto le righe hanno un presidio. Delle sei che il censimento segnava scoperte,
+# QUATTRO erano gia' provate e mancava solo il riferimento (astensione, assi di
+# fiducia, conflitti risolti per provenienza, air-gap); due erano davvero senza
+# collaudo, e presidiandole e' emerso un difetto per ciascuna — il riferimento
+# alla fonte che non esce dalla lettura, e la riga che promette «not stored» su
+# fatti che restano conservati. Il file NON e' quindi disarmato: continua a
+# leggere la tabella dal README, e una capacita' aggiunta domani senza test
+# fallira' subito, che e' il suo scopo.
 # Tolta il 2026-08-13: «Provenance on every read» ha ora il suo presidio in
 # test_ogni_porta_di_lettura_porta_la_provenienza.py, che nel presidiarla ha
 # trovato che la promessa regge su due elementi su tre — chi l'ha scritto e con
