@@ -217,8 +217,14 @@ jobs:
           import tempfile, pathlib
           from verimem.client import Memory
           m = Memory(pathlib.Path(tempfile.mkdtemp()) / "probe.db")
-          r = m.add("Il generatore G-12 eroga 40 kW in continuo.", topic="probe",
-                    source="Scheda G-12: potenza nominale 55 kW, regime intermittente.")
+          # IL CLAIM ESATTO dei sei test di test_la_ricevuta_non_diceva_quale
+          # _cifra_mancava, non uno «della stessa forma»: la differenza non e'
+          # accademica. In casa il claim inventato dava grounding 0.41 (il CE
+          # stesso bocciava), QUESTO da' 95.85 — il CE APPROVA — e a fermarlo e'
+          # il solo L4.1, il controllo sui numeri. Sono due meccanismi diversi,
+          # e misurare il primo non dice niente sul secondo.
+          r = m.add("L'ordine 77 conteneva 40 pezzi.", topic="probe",
+                    source="Verbale: e' stato consegnato l'ordine 77. Ha partecipato Bianchi.")
           print("GATE-PROBE status=%s grounding=%s layers=%s" % (
               r.get("status"),
               r.get("grounding_score"),
