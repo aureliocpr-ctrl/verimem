@@ -1,0 +1,56 @@
+#!/bin/sh
+# Chi ha scritto questo commit: il trailer che nessuno deve ricordarsi di mettere.
+#
+# 13/08/2026: fra le 12:00 e le 14:10 sono entrati 18 commit e DIECI non erano
+# attribuibili a nessuno. Il repository e' firmato con nome e cognome del
+# titolare — giustamente, e' il suo — quindi `git log` non distingue chi ha
+# fatto cosa fra le otto sessioni che scrivono su questo main. I 20 trailer che
+# gia' esistevano dicono «Co-Authored-By: Claude Opus 5», che sono tutte.
+#
+# La convenzione decisa e' una riga in coda: `Agent: <NomeProprio>`. La CHIAVE
+# dice «Agent» e non «Instance» apposta: il registro e' pubblico, e un nome
+# proprio in un campo generico si legge come un collaboratore umano che non
+# esiste.
+#
+# ⚠️ PERCHE' UN HOOK E NON UN PROMEMORIA. Una convenzione che chiede a otto
+# sessioni di ricordarsi una riga viene rispettata finche' qualcuno guarda:
+# in casa lo abbiamo gia' misurato una volta — un comando di correzione usato
+# 1 volta su 15 perche' chiedeva un dato che nessuno aveva sottomano, contro
+# 64 su 64 dopo che gli era stato tolto quell'attrito. L'adozione misura
+# l'attrito, non la disciplina. Quindi il trailer lo mette la macchina.
+#
+# ⚠️ E QUESTO HOOK NON PUO' BLOCCARE NIENTE. Gira su ogni commit di ogni
+# sessione: se fallisse, fermerebbe il lavoro di tutte per una riga di
+# metadati. Esce 0 in ogni caso, e quando non sa il nome non scrive nulla —
+# dice solo come si configura.
+
+set -u
+
+MSG_FILE="${1:-}"
+MSG_SORGENTE="${2:-}"
+
+# Un merge o un cherry-pick portano un messaggio che non e' nostro: non si tocca.
+case "$MSG_SORGENTE" in
+    merge|squash) exit 0 ;;
+esac
+
+[ -n "$MSG_FILE" ] && [ -f "$MSG_FILE" ] || exit 0
+
+NOME="$(git config --get verimem.agent 2>/dev/null || true)"
+
+if [ -z "$NOME" ]; then
+    # Nessun nome configurato: si avvisa UNA volta e si lascia passare il commit.
+    # Bloccare qui punirebbe chi ha appena clonato il repository.
+    echo "prepare-commit-msg: nessun nome agente configurato, il commit resta"
+    echo "  non attribuibile. Si configura una volta sola, per questo clone:"
+    echo "      git config verimem.agent <NomeProprio>"
+    exit 0
+fi
+
+# `git interpret-trailers` sa dove finisce il corpo e dove cominciano i commenti,
+# e con --if-exists doNothing non duplica un trailer messo a mano. Farlo con sed
+# significherebbe riscriverne la logica, peggio.
+git interpret-trailers --in-place --if-exists doNothing \
+    --trailer "Agent: $NOME" "$MSG_FILE" 2>/dev/null || exit 0
+
+exit 0
