@@ -158,9 +158,18 @@ class TestRecallTrustSignalsExposure:
         assert "error" not in payload, payload.get("error")
         assert payload["items"], "expected at least one hit"
         # The handler must forward trust_signals=True to recall().
-        recall_kwargs = fake_sm.recall.call_args.kwargs
-        assert recall_kwargs.get("trust_signals") is True, (
-            "hippo_facts_recall must forward trust_signals=True to recall()"
+        # ⚠️ `call_args` è l'ULTIMA chiamata, e l'handler ne fa DUE: quella che
+        # serve la richiesta (`mcp_server.py:13238`, che inoltra query, topic,
+        # min_status e trust_signals) e poi quella del pavimento di rilevanza
+        # (`:281`, `recall(query, k=3)`), che sovrascrive `call_args` e non
+        # porta nulla della richiesta. Guardare solo l'ultima faceva dire al
+        # banco che il parametro «non viene inoltrato» mentre lo era: cercare
+        # fra TUTTE le chiamate misura la promessa senza dipendere dall'ordine,
+        # che è un dettaglio interno.
+        chiamate = [c.kwargs for c in fake_sm.recall.call_args_list]
+        assert any(c.get("trust_signals") is True for c in chiamate), (
+            "hippo_facts_recall must forward trust_signals=True to recall() — "
+            f"chiamate viste: {chiamate}"
         )
         # And the payload must expose the verdict + age + n_contradictions.
         for item in payload["items"]:
