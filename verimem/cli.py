@@ -3603,9 +3603,13 @@ def facts_add(
     verified_by: list[str] = typer.Option(  # noqa: B008 — typer convention
         None, "--verified-by",
         help=(
-            "Provenance ref (repeatable). Examples: "
-            "'commit:abc1234', 'pr:#80:merged', 'bash:nmap_exit_0', "
-            "'file:report.md:42'."
+            "Provenance ref (repeatable). The ref must MATCH THE KIND OF "
+            "CLAIM the fact makes: for 'works/tested' use runtime evidence "
+            "that also shows it PASSED ('pytest:1234_passed', "
+            "'bash:smoke_PASS', 'ci:main:green'); for 'shipped/merged' use "
+            "'commit:abc1234', 'pr:#80:merged', 'file:report.md:42'; for "
+            "'closed/done' a tracker ref ('issue:', 'task:', 'gh:'). The "
+            "wrong family stays flagged."
         ),
     ),
     source: str = typer.Option(
