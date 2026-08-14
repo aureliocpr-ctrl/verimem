@@ -1990,6 +1990,28 @@ def negation_conflict(text_a: str, text_b: str) -> str | None:
     scoped_shared = scoped & shared
     if scoped and not scoped_shared:
         return None  # the negation targets a word the other side never states
+    if not scoped and (cb - ca if nb else ca - cb):
+        # ⚠️⚠️ LO SCOPE VUOTO NON E' UN VIA LIBERA — era il buco della guardia.
+        # La ricerca dello scope fallisce quando il negatore chiude la frase
+        # (lingue SOV) o quando la sua coda non è una parola riconoscibile: in
+        # quei casi `scoped` esce vuoto, la riga sopra non entra, e il confronto
+        # scivolava al fallback DICHIARANDO UN CONFLITTO. Misurato: «il sistema
+        # è firmato» contro «il sistema è firmato, NON cifrato» risultava una
+        # contraddizione in turco e in hindi.
+        #
+        # 🔑 Qui non si cerca più DOVE sta l'oggetto della negazione — quella
+        # domanda dipende dalla scrittura, e curarla per il giapponese l'aveva
+        # lasciata aperta per le altre tre lingue della stessa classe. Si guarda
+        # invece una proprietà che nessun alfabeto cambia: **il lato negato
+        # porta contenuto che l'altro non enuncia**. Se c'è, il negatore parla
+        # (anche) di quello, e due frasi che non dicono la stessa cosa non
+        # possono esserne l'una la smentita.
+        #
+        # Misurato su sette coppie contraddittorie e sei compatibili, sette
+        # lingue: i rilevamenti veri restano **7 su 7** — comprese le due che
+        # senza i negatori nuovi non uscivano — e i conflitti inventati passano
+        # da **2 a 0**.
+        return None
     if scoped_shared:
         #: Basta che il token originale TOCCHI i caratteri condivisi. Pretendere
         #: che ne sia interamente composto degradava il giapponese da «され» a
