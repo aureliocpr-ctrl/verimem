@@ -148,6 +148,31 @@ def _righe_di_prosa(testo: str) -> set[int]:
     return prosa
 
 
+#: Un collaudo di questo controllo deve **contenere** gli identificativi che il
+#: controllo cerca: sono i suoi dati di prova. Senza un'uscita, il controllo
+#: boccia il file che dimostra che funziona, e l'unico modo di far passare il
+#: rilascio diventa cancellare quella prova — un veto che punisce il proprio
+#: collaudo si fa disattivare, non correggere.
+#:
+#: L'uscita ha tre limiti, e sono la ragione per cui è accettabile:
+#:   - vale **solo** per i file di collaudo: un modulo del prodotto non può
+#:     esentarsi, ed è la parte che l'artefatto installato porta davvero;
+#:   - chiede una **ragione scritta** sulla stessa riga, che finisce nel referto:
+#:     chi la mette deve dire perché, e chi legge lo vede;
+#:   - le righe esentate **restano contate** e vengono dichiarate. Un'esenzione
+#:     silenziosa fa apparire pulito ciò che non lo è, che è esattamente il
+#:     difetto contro cui questo controllo esiste.
+MARCATORE = re.compile(r"registro-esente:\s*(?P<ragione>\S.*)")
+
+
+def _esenzione(nome: str, testo: str) -> str | None:
+    """La ragione dichiarata, se il file è un collaudo e la dichiara."""
+    if not pathlib.PurePath(nome).name.startswith("test_"):
+        return None
+    trovato = MARCATORE.search(testo)
+    return trovato.group("ragione").strip()[:90] if trovato else None
+
+
 def controlla(percorso: pathlib.Path) -> int:
     conteggi: Counter[str] = Counter()
     file_per_classe: defaultdict[str, set[str]] = defaultdict(set)
@@ -156,10 +181,13 @@ def controlla(percorso: pathlib.Path) -> int:
 
     in_codice: Counter[str] = Counter()
     esempi_codice: defaultdict[str, list[str]] = defaultdict(list)
+    esentate: Counter[str] = Counter()
+    ragioni: dict[str, str] = {}
 
     for nome, testo in _sorgenti(percorso):
         totale_file += 1
         prosa = _righe_di_prosa(testo)
+        ragione = _esenzione(nome, testo)
         for riga_n, riga in enumerate(testo.splitlines(), 1):
             for classe, (pattern, _) in CLASSI.items():
                 for trovato in pattern.finditer(riga):
@@ -172,6 +200,10 @@ def controlla(percorso: pathlib.Path) -> int:
                         in_codice[classe] += 1
                         if len(esempi_codice[classe]) < 3:
                             esempi_codice[classe].append(voce)
+                        continue
+                    if ragione is not None:
+                        esentate[nome] += 1
+                        ragioni[nome] = ragione
                         continue
                     conteggi[classe] += 1
                     file_per_classe[classe].add(nome)
@@ -187,6 +219,14 @@ def controlla(percorso: pathlib.Path) -> int:
         print(f"  {marchio}  {classe:30s} {n:>5d} in {len(file_per_classe[classe]):>3d} file")
         if n and bloccante:
             blocca = True
+
+    if esentate:
+        #: Dichiarate sempre, col nome del file e la ragione: un'esenzione che
+        #: non compare nel referto è indistinguibile da un'assenza di difetti.
+        print(f"\n  esentate perché dati di prova di un collaudo "
+              f"({sum(esentate.values())} righe in {len(esentate)} file):")
+        for nome in sorted(esentate):
+            print(f"     {esentate[nome]:>4d}  {nome}  — {ragioni[nome]}")
 
     if sum(in_codice.values()):
         print("\n  fuori da commenti e docstring, NON bloccanti "

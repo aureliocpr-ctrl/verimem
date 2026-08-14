@@ -12,6 +12,11 @@ pacchetto. Ha un solo modo di essere inutile e due modi di essere dannoso:
 Il collaudo copre ENTRAMBE le popolazioni. Un test che guarda solo il caso
 negativo non distingue «riconosce le attribuzioni» da «blocca sempre»: senza il
 caso positivo, «non rilevato» non si distingue da «sensore spento».
+
+registro-esente: gli identificativi qui sotto sono i dati di prova del controllo,
+non attribuzioni. Senza questa dichiarazione il controllo boccia il file che
+dimostra che funziona, e l'unico modo di far passare il rilascio sarebbe
+cancellare la prova. Le righe restano contate e compaiono nel referto.
 """
 from __future__ import annotations
 
@@ -75,6 +80,52 @@ def test_non_blocca_un_identificativo_usato_come_valore(tmp_path: Path):
         '    store.supersede(a, b, principal="cli:local/ws7", reason="b")\n',
         encoding="utf-8")
     assert _esegui(tmp_path).returncode == 0
+
+
+#: I file di prova. Composti in pezzi perché la riga finita non esista qui come
+#: attribuzione vera.
+#:
+#: Devono essere **un docstring solo**: due stringhe consecutive fanno di quella
+#: dopo un'espressione isolata, che il controllo — giustamente — non tratta come
+#: prosa. Scritte separate, i due casi qui sotto passavano entrambi per la strada
+#: sbagliata e il collaudo misurava un'altra cosa senza dirlo.
+_ATTRIBUZIONE = "Il difetto è stato misurato da " + "ws4" + " il primo del mese."
+_CON_DICHIARAZIONE = (
+    '"""registro-esente: dati di prova, non attribuzioni.\n\n'
+    + _ATTRIBUZIONE + '"""\nVALORE = 1\n')
+_SENZA_DICHIARAZIONE = '"""' + _ATTRIBUZIONE + '"""\nVALORE = 1\n'
+
+
+def test_un_collaudo_che_dichiara_i_propri_dati_di_prova_passa(tmp_path: Path):
+    """Senza questa uscita il controllo boccia il file che dimostra che funziona.
+
+    E l'unico modo di far passare il rilascio sarebbe cancellare quella prova:
+    un veto che punisce il proprio collaudo si fa disattivare, non correggere.
+    """
+    (tmp_path / "test_finto.py").write_text(_CON_DICHIARAZIONE, encoding="utf-8")
+    esito = _esegui(tmp_path)
+    assert esito.returncode == 0, esito.stdout[-600:]
+    assert "esentate" in esito.stdout, (
+        "l'esenzione non compare nel referto: un'esenzione silenziosa fa "
+        "apparire pulito ciò che non lo è, ed è il difetto contro cui il "
+        "controllo esiste\n" + esito.stdout[-600:])
+
+
+def test_la_dichiarazione_non_vale_per_un_modulo_del_prodotto(tmp_path: Path):
+    """L'uscita non è un buco: solo un collaudo può dichiararsi."""
+    (tmp_path / "modulo.py").write_text(_CON_DICHIARAZIONE, encoding="utf-8")
+    assert _esegui(tmp_path).returncode == 1, (
+        "un modulo del prodotto si è esentato da solo: basterebbe scrivere la "
+        "dichiarazione per far passare qualsiasi cosa")
+
+
+def test_senza_dichiarazione_un_collaudo_blocca_come_gli_altri(tmp_path: Path):
+    """E il marcatore deve servire davvero: senza, niente esenzione."""
+    (tmp_path / "test_finto.py").write_text(_SENZA_DICHIARAZIONE, encoding="utf-8")
+    assert _esegui(tmp_path).returncode == 1, (
+        "l'esenzione è stata concessa senza che il file la dichiarasse: allora "
+        "vale per tutti i collaudi, e il controllo non copre più la cartella "
+        "che l'artefatto sorgente imbarca")
 
 
 def test_un_file_pulito_passa(tmp_path: Path):
