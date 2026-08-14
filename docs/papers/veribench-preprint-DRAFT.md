@@ -160,8 +160,8 @@ anchor are downgraded to `quarantined` (hidden from default recall). *L4 —
 source⊢fact entailment (the moat, opt-in per call):* given a cited source, the
 write is admitted only if the source actually *entails* the fact
 (`engram/grounding_gate.py`, AUROC 0.971 on SNLI, judge-independent; §5.1). A
-below-threshold write is quarantined, not stored as fact. The gate never raises —
-a defense must never crash the write path.
+below-threshold write is quarantined (hidden from default recall), not stored as
+fact. The gate never raises — a defense must never crash the write path.
 
 **Provenance on read.** Recall returns each fact with its `status` and write-time
 `grounding_score`, so a caller can trust-condition rather than trust blindly.
