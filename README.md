@@ -480,7 +480,7 @@ measured result with the raw file in the repo, not a design intention:
 | Capability | Verimem (measured) | mem0 / Zep / MemOS |
 |---|---|---|
 | Abstains instead of fabricating when the store can't support an answer | **1.000 across seven consecutive full e2e runs** | not measured by their leaderboards |
-| Write-path gate (unsupported "it works" claims quarantined, not stored) | grounding judge AUROC **0.96–0.97** across models/seeds (0.971 sonnet-4 R10, 0.963 sonnet-5 re-run 2026-07-16, 0.974 pooled multi-model) | no write gate |
+| Write-path gate (unsupported "it works" claims quarantined — stored, not served) | grounding judge AUROC **0.96–0.97** across models/seeds (0.971 sonnet-4 R10 on SNLI, 0.963 sonnet-5 re-run 2026-07-16, 0.974 pooled multi-model) | no write gate |
 | Conflicting well-grounded memories resolved by provenance (`answer`, trust-conditioned) | correct **0.17 → 0.92**; on the 2 truly unresolvable conflicts it did **not** abstain — it picked a side both times ([bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/wellgrounded_distractor_bench.py), sonnet-5) | served as-is |
 | Trust axes under adversarial pressure ([TrustMem-Bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/trustmem_bench.py), deterministic, run it yourself) | **60/60** | mem0: 40/60 (forget-leak reproduced live) |
 | Bi-temporal history & time travel (`as_of`, "changed from X to Y on date Z") | shipped, tested | latest-value only |

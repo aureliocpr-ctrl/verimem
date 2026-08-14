@@ -1,6 +1,12 @@
-"""«Write-path gate: unsupported claims quarantined, not stored» — misurata parola per parola.
+"""«Write-path gate: unsupported claims quarantined» — la riga misurata parola per parola.
 
-PERCHE' QUESTO FILE ESISTE. La riga 483 del README dichiara:
+✅ **CHIUSO il 2026-08-14.** La riga ora dice «quarantined — **stored, not
+served**» e coincide col comportamento; il marcatore ``xfail(strict=True)`` in
+fondo e' stato tolto e quel caso e' diventato un guardiano di non-regressione.
+Il resto di questa docstring e' la storia del difetto, e resta perche' spiega
+perche' il guardiano esiste.
+
+PERCHE' QUESTO FILE E' NATO. La riga 483 del README dichiarava:
 
     | Write-path gate (unsupported "it works" claims quarantined, not stored) |
 
@@ -108,23 +114,24 @@ def test_la_riga_del_readme_esiste_ancora() -> None:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "divergenza misurata il 2026-08-13 fra la riga del README e il "
-        "comportamento: la riga dice «not stored», il fatto quarantinato e' "
-        "stored=True e get_all() lo restituisce. Il comportamento e' corretto "
-        "(e il contratto MCP lo descrive bene); la cura sta nella riga. "
-        "strict: allineato uno dei due, questo caso diventa ROSSO."
-    ),
-)
 def test_finche_la_riga_promette_not_stored_il_fatto_non_deve_restare(esito) -> None:
     """L'implicazione, non l'asserzione secca — vedi la docstring del modulo.
 
-    Se un domani la riga dicesse «not served» o «kept out of recall», la
-    premessa cadrebbe e questo test passerebbe **senza che nulla nel prodotto
-    sia cambiato**: e' il comportamento voluto, perche' la promessa sarebbe
-    finalmente vera.
+    ✅ CHIUSO il 2026-08-14: la riga ora dice «quarantined — stored, not
+    served», la premessa e' caduta e il marcatore ``xfail(strict=True)`` e'
+    stato tolto, come il file stesso prescriveva.
+
+    ⚠️ IL CASO NON VA CANCELLATO CON LA CURA, e questa e' la ragione: da oggi
+    e' un GUARDIANO DI NON-REGRESSIONE. Se qualcuno riscrive «not stored» nella
+    tabella — per brevita', per copia da una versione vecchia, per traduzione —
+    la premessa torna vera, i due assert sotto scattano, e il commit che l'ha
+    reintrodotta diventa rosso. Un difetto curato senza un guardiano e' un
+    difetto in attesa di tornare.
+
+    📌 La falsificazione, per chi verra' dopo: cambiando SOLO la riga del README
+    e lasciando il marcatore, questo caso passava da ``xfailed`` a ``failed``
+    (XPASS strict, EXIT 1). E' la prova che la premessa e' agganciata al testo
+    vero e non a una costante scritta qui.
     """
     riga = _riga_del_readme()
     if "not stored" not in riga:
