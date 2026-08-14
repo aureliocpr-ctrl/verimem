@@ -145,30 +145,33 @@ def test_la_provenienza_non_e_un_campo_vuoto(memoria: Memory) -> None:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "difetto misurato il 2026-08-13, non un test da sistemare: un fatto "
-        "scritto CON una fonte (giudicata: grounding 98.85, judged=True) esce "
-        "da search con source=None. Nel database non esiste una colonna "
-        "`source`: ci sono `source_signature` e `source_episodes`, che pero' "
-        "NON compaiono fra le chiavi restituite. Curato il difetto, questo test "
-        "diventa ROSSO — togliere allora il marcatore."
-    ),
-)
 def test_il_riferimento_alla_fonte_esce_dalla_lettura(memoria: Memory) -> None:
-    """Il terzo elemento della riga: «source ref». E' quello che manca.
+    """Il terzo elemento della riga: «source ref». CURATO il 2026-08-13.
 
-    ⚠️ E manca nel modo peggiore. Un campo ASSENTE dice «non lo so»; un campo
-    PRESENTE e vuoto afferma: chi legge questo dict conclude che il fatto non
-    aveva una fonte, mentre ne aveva una e il gate l'ha giudicata 98.85. E' la
-    stessa forma gia' vista il 10/08 su un'altra porta — una superficie che non
-    tace una differenza ma la dichiara al contrario.
+    IL DIFETTO, e la diagnosi vera e' diversa da quella che sembrava. Il campo
+    `source` non era vuoto per un difetto di persistenza: era popolato dalla
+    fonte SBAGLIATA — ``(source_episodes or [None])[0]``, cioe' l'EPISODIO di
+    origine. Chi scrive con ``add(testo, source="…")`` non produce episodi,
+    quindi per lui quel campo valeva sempre `None`. **Due cose diverse con lo
+    stesso nome**, e il README ne promette una sola: «Provenance on every read
+    (who wrote it, SOURCE REF, gate status)» — il primo e il terzo uscivano, il
+    secondo no, su un fatto la cui fonte era stata GIUDICATA (grounding 98.85).
 
-    Cosa serve per curarlo, misurato e non supposto: il riferimento ESISTE nel
-    database (`source_signature`), quindi non e' un dato da ricostruire — e' un
-    campo da far uscire. Fin qui la promessa e' mantenuta su due elementi su
-    tre: chi l'ha scritto e con che verdetto escono, da dove no.
+    LA CURA: esporre ``source_signature`` col suo nome. L'impronta esiste gia'
+    — il write-path la calcola e la persiste proprio perche' la source in
+    chiaro non viene conservata — e va servita **come impronta**, non travestita
+    da `source`: chi trova `sha256:…` dove si aspetta un testo non riceve una
+    risposta migliore, ne riceve una sbagliata.
+
+    ⚠️ E il difetto era peggiore di un campo assente. Un campo ASSENTE dice
+    «non lo so»; un campo PRESENTE e vuoto AFFERMA: chi leggeva quel dict
+    concludeva che il fatto non avesse una fonte, mentre ne aveva una e il gate
+    l'aveva giudicata. E' la stessa forma vista il 10/08 su un'altra porta —
+    una superficie che non tace una differenza ma la dichiara al contrario.
+
+    📌 Questo test era ``xfail(strict=True)`` fino alla cura; il marcatore e'
+    stato tolto quando strict l'ha segnalato come XPASS, che e' il modo in cui
+    doveva accorgersene.
     """
     h = memoria.search("pallet Rovigo")[0]
     riferimenti = [k for k in ("source", "source_ref", "source_signature") if h.get(k)]

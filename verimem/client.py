@@ -2727,6 +2727,28 @@ class Memory:
             "asserted_at": getattr(f, "asserted_at", None),
             "created_at": getattr(f, "created_at", None),
             "source": (getattr(f, "source_episodes", None) or [None])[0],
+            # DUE COSE DIVERSE CON LO STESSO NOME, e il README ne promette una
+            # sola. La riga sopra serve l'EPISODIO di origine; chi scrive con
+            # `add(testo, source="…")` non produce episodi, quindi per lui
+            # `source` vale sempre `None` — misurato il 2026-08-13 su un fatto
+            # con fonte GIUDICATA (`grounding_score` 98.85, `judged` True), che
+            # usciva senza alcun riferimento a cio' contro cui era stato
+            # controllato. La vetrina promette «Provenance on every read (who
+            # wrote it, SOURCE REF, gate status)»: il primo e il terzo
+            # uscivano, il secondo no.
+            #
+            # L'impronta esiste: il write-path la calcola e la persiste (sopra,
+            # `source_signature = "sha256:" + …`) proprio perche' la source in
+            # chiaro NON viene conservata. Va quindi ESPOSTA col suo nome, non
+            # travestita da `source`: un lettore che trova `sha256:…` dove si
+            # aspetta un testo non ha ricevuto una risposta migliore, ne ha
+            # ricevuta una sbagliata — ed e' lo stesso errore, all'incontrario,
+            # che ha prodotto questo difetto.
+            #
+            # Additivo come tutto il resto di questa vista: `None` quando il
+            # fatto non e' mai passato dal moat, perche' una chiave assente non
+            # distingue «senza fonte» da «questa vista non lo dice».
+            "source_signature": getattr(f, "source_signature", None) or None,
             "verified_by": list(getattr(f, "verified_by", None) or []),
             "superseded_by": getattr(f, "superseded_by", None) or None,
             # CIO' CHE IL CANALE MCP SERVIVA E QUESTO NO. Il docstring qui
