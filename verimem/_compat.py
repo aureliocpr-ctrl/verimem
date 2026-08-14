@@ -44,6 +44,28 @@ does not cover, and it is not hypothetical: our own ``~/.mcp.json`` sets
 ``HIPPO_DATA_DIR``, ``HIPPO_DISABLED`` and ``HIPPO_EAGER_PRELOAD``, all
 consistent. ⇒ **Write the deprecation warning first; the three months start
 from the day it exists, and only then is a removal date honest.**
+
+⚠️⚠️ AND WRITING THE WARNING IS STILL NOT ENOUGH — the sentence promises
+*«migrate»*, and for most of these names **there is nowhere to migrate to**.
+Measured 2026-08-14 (found by ws1, reproduced here independently with
+``git grep`` over the shipped package) on the eight ``HIPPO_*`` names our own
+config actually sets::
+
+    HIPPO_DATA_DIR ............. VERIMEM_ ENGRAM_
+    HIPPO_HOSTED ............... VERIMEM_
+    HIPPO_OFFLINE .............. VERIMEM_ ENGRAM_
+    HIPPO_EAGER_PRELOAD ........ no new name
+    HIPPO_ENCODE_DELEGATE_ONLY . no new name
+    HIPPO_LOG_STDERR ........... no new name
+    HIPPO_PRELOAD_TIMEOUT_S .... no new name
+    HIPPO_DISABLED ............. no new name
+                                 **five of eight have no destination**
+
+⇒ It is not that users failed to migrate: **the product never built the place
+to migrate to.** A deprecation warning telling someone to move to a name that
+does not exist is worse than silence — it costs them the search. So the order
+is: create the new names, THEN warn, THEN count the months, THEN date the
+removal. Skipping straight to a date is how this docstring got here.
 """
 from __future__ import annotations
 
