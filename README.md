@@ -6,7 +6,7 @@ instead of guessing.
 
 [![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![CI](https://github.com/aureliocpr-ctrl/verimem/actions/workflows/ci.yml/badge.svg)](https://github.com/aureliocpr-ctrl/verimem/actions)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](./LICENSING.md)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/aureliocpr-ctrl/verimem/blob/main/LICENSING.md)
 [![Website](https://img.shields.io/badge/web-verimem.com-informational)](https://verimem.com)
 
 Most memory layers optimize for how much they can recall. Verimem optimizes for
@@ -420,7 +420,7 @@ Docker (embedding models baked in — runs fully offline):
 docker compose -f docker-compose.gateway.yml up -d --build
 ```
 
-TypeScript client ([sdk/typescript](./sdk/typescript)) — typed, zero-dependency,
+TypeScript client ([sdk/typescript](https://github.com/aureliocpr-ctrl/verimem/tree/main/sdk/typescript)) — typed, zero-dependency,
 contract-tested against the live gateway from the Python suite:
 
 ```ts
@@ -462,7 +462,7 @@ Scale: recall latency stays ~flat with the optional ANN index
 (`pip install "verimem[ann]"`): 1.3 ms at 1M facts vs 81 ms brute-force. With
 faiss installed it auto-enables above 100k facts (`VERIMEM_ANN_RECALL=0` opts
 out); the default install ships no faiss, so recall is exact brute-force. See
-[SCALE.md](./SCALE.md) for the table + the honest caveats: the ANN is
+[SCALE.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/SCALE.md) for the table + the honest caveats: the ANN is
 *approximate*, and on the random-vector stress bench its recall-in-pool
 **degrades with corpus size** — 0.87 @100k, 0.53 @500k, 0.41 @1M (clustered
 real-embedding corpora measure far higher — ~1.0 at oversample 8 at prototype
@@ -574,11 +574,11 @@ keep working untouched; new installs default to `~/.verimem`.
 
 Dual-licensed: **AGPL-3.0** for open source use, with a **commercial license**
 available for proprietary or closed-SaaS deployments — see
-[LICENSING.md](./LICENSING.md). Versions 0.3.x and earlier remain MIT.
+[LICENSING.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/LICENSING.md). Versions 0.3.x and earlier remain MIT.
 
 ## Contributing
 
-Issues and PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md). Development
+Issues and PRs welcome — see [CONTRIBUTING.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/CONTRIBUTING.md). Development
 setup:
 
 ```bash
