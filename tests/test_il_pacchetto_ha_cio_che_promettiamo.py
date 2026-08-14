@@ -132,7 +132,24 @@ def test_i_prefissi_di_provenance_che_suggeriamo_sono_accettati():
     📌 Il caso resta come guardiano: se un domani l'aiuto torna a suggerire un
     prefisso che il detector non accetta, questo test diventa rosso da solo.
     """
+    from verimem.l1_extended_detector import _COMMIT_REF_PREFIXES
     from verimem.l1_works_detector import _RUNTIME_EVIDENCE_PREFIXES
+
+    # ⚠️ NON basta la famiglia RUNTIME, e la prima versione di questo test lo
+    # assumeva. Il gate ha PIÙ famiglie di prova, una per detector, e ciascuna
+    # accetta la sua — misurato dalla porta il 2026-08-14 sullo stesso gate:
+    #   claim «SHIPPED» + commit:abc123def  -> PASSA   (famiglia commit-tracking)
+    #   claim «SHIPPED» + pytest:1234_passed-> flagged (il runtime non vale lì)
+    #   claim «works»   + commit:abc123def  -> flagged (un commit non prova che funzioni)
+    # Un help che suggerisse SOLO la famiglia runtime sarebbe sbagliato quanto
+    # uno che ne suggerisce solo una commit-tracking: entrambi mandano metà
+    # degli utenti contro un rifiuto senza spiegazione. Il criterio giusto è
+    # quindi «accettato da ALMENO una famiglia», non «accettato dal detector
+    # works». I ref del tracker (`issue:`, `task:`, `gh:`) vivono in una regex
+    # (`anti_confabulation._TRACKER_REF_RE`) e non in una tupla importabile:
+    # sono elencati qui a mano, e se quella regex cambia questo elenco va con lei.
+    _TRACKER_PREFIXES = ("pr:", "issue:", "task:", "git:", "commit:", "gh:")
+    accettati = set(_RUNTIME_EVIDENCE_PREFIXES) | set(_COMMIT_REF_PREFIXES) | set(_TRACKER_PREFIXES)
 
     testo = CLI.read_text(encoding="utf-8")
     # Ancora stabile: l'help del parametro, che è il posto dove l'utente li legge.
@@ -153,10 +170,10 @@ def test_i_prefissi_di_provenance_che_suggeriamo_sono_accettati():
     }
     assert suggeriti, "nessun esempio di provenance trovato nell'aiuto: parser da rivedere"
 
-    non_accettati = sorted(suggeriti - set(_RUNTIME_EVIDENCE_PREFIXES))
+    non_accettati = sorted(suggeriti - accettati)
     assert not non_accettati, (
-        f"l'aiuto suggerisce prefissi che il detector non accetta: {non_accettati}\n"
-        f"accettati: {sorted(_RUNTIME_EVIDENCE_PREFIXES)}"
+        f"l'aiuto suggerisce prefissi che nessuna famiglia del gate accetta: "
+        f"{non_accettati}\naccettati (unione delle famiglie): {sorted(accettati)}"
     )
 
 

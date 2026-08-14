@@ -1566,10 +1566,13 @@ def trust(
     claim: str = typer.Argument(..., help="The claim / proposition to evaluate"),
     verified_by: list[str] = typer.Option(  # noqa: B008 — typer idiom
         None, "--verified-by",
-        help="Provenance ref (repeatable): pytest:1234_passed, ci:main:green, "
-             "bash:smoke_PASS. It must be evidence that something RAN — a "
-             "commit sha or a PR number says the code EXISTS, not that it "
-             "works, and the detector will keep the claim flagged.",
+        help="Provenance ref (repeatable). The ref must MATCH THE KIND OF "
+             "CLAIM: for 'works/tested' use runtime evidence that also shows "
+             "it PASSED (pytest:1234_passed, ci:main:green, bash:smoke_PASS); "
+             "for 'shipped/merged' use commit:<sha>, pr:#12, file:x.py:42; "
+             "for 'closed/done' use a tracker ref (issue:, task:, gh:). A "
+             "commit sha does not prove something WORKS, and a passing test "
+             "does not prove it SHIPPED — the wrong family stays flagged.",
     ),
     topic: str = typer.Option(
         None, "--topic",
@@ -1593,10 +1596,13 @@ def trust(
     Verimem's moat is a memory that DOESN'T LIE. This runs the same governance
     gate that guards every write: it flags unsupported hype / production-ready /
     tested / quantitative claims and tells you what evidence is missing. Add a
-    real provenance ref (--verified-by pytest:1234_passed / ci:main:green /
-    bash:smoke_PASS) and watch the same claim pass. The ref must show that
-    something RAN: `commit:<sha>` or `pr:#12` say the code EXISTS, not that it
-    works, so the claim stays flagged. Exit 0 if trusted, 1 if flagged.
+    real provenance ref and watch the same claim pass — but the ref has to
+    MATCH THE KIND OF CLAIM, because each detector accepts its own family:
+    "works/tested" wants runtime evidence that also shows it PASSED
+    (--verified-by pytest:1234_passed), "shipped/merged" wants commit:<sha> or
+    pr:#12, "closed/done" wants a tracker ref. A commit sha does not prove
+    something works, and a passing test does not prove it shipped: give the
+    wrong family and the claim stays flagged. Exit 0 if trusted, 1 if flagged.
     """
     from .anti_confab_gate import run_validation_gate
     refs = list(verified_by or [])
