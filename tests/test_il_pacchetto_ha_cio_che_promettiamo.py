@@ -110,20 +110,28 @@ def test_i_comandi_che_il_readme_insegna_esistono():
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "DIFETTO NOTO, misurato il 08/08 (docs/stato-reale/02j-trust-il-punto-c.md): "
-        "l'aiuto di `trust` suggerisce `--verified-by commit:...` e `coverage:N`, ma "
-        "_RUNTIME_EVIDENCE_PREFIXES non li contiene, quindi il claim resta FLAGGED e "
-        "l'utente non sa perché. 3 prefissi su 5 funzionano. La cura è una riga di "
-        "documentazione (cambiare gli esempi), NON allargare la lista: uno SHA di "
-        "commit non è evidenza che qualcosa funzioni. Quando la cura entra, questo "
-        "xfail diventa rosso e va tolto."
-    ),
-)
 def test_i_prefissi_di_provenance_che_suggeriamo_sono_accettati():
-    """Se lo suggeriamo nell'aiuto in linea, il detector deve accettarlo."""
+    """Se lo suggeriamo nell'aiuto in linea, il detector deve accettarlo.
+
+    ✅ CHIUSO il 2026-08-14, dopo sei giorni: era il debito piu' vecchio fra
+    quelli marcati. L'aiuto di ``--verified-by`` suggeriva cinque esempi e il
+    detector ne accettava DUE; ora ne suggerisce tre e sono tutti accettati.
+    La cura e' quella che questo marcatore prescriveva — **cambiare gli esempi,
+    non allargare la lista**: uno SHA di commit dice che il codice ESISTE, non
+    che funziona, e allargare ``_RUNTIME_EVIDENCE_PREFIXES`` avrebbe fatto
+    passare il gate a un'evidenza che non prova niente.
+
+    🪞 IL MARCATORE DOCUMENTAVA IL DIFETTO CON UN NUMERO SBAGLIATO, e vale
+    scriverlo perche' e' la classe che censiamo tutto il giorno applicata a noi:
+    diceva «3 prefissi su 5 funzionano» e nominava solo ``commit:`` e
+    ``coverage:``. Eseguito con ``--runxfail``, questo test elencava
+    **``['commit:', 'coverage:', 'pr:']``** — TRE non accettati, quindi ne
+    funzionavano **due**, e ``pr:`` non era nominato da nessuno. Il presidio era
+    acceso e puntava nella direzione giusta; il suo conto no.
+
+    📌 Il caso resta come guardiano: se un domani l'aiuto torna a suggerire un
+    prefisso che il detector non accetta, questo test diventa rosso da solo.
+    """
     from verimem.l1_works_detector import _RUNTIME_EVIDENCE_PREFIXES
 
     testo = CLI.read_text(encoding="utf-8")

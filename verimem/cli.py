@@ -1566,8 +1566,10 @@ def trust(
     claim: str = typer.Argument(..., help="The claim / proposition to evaluate"),
     verified_by: list[str] = typer.Option(  # noqa: B008 — typer idiom
         None, "--verified-by",
-        help="Provenance ref (repeatable): commit:abc123, pr:#12:merged, "
-             "ci:main:green, coverage:85, bash:test_PASS",
+        help="Provenance ref (repeatable): pytest:1234_passed, ci:main:green, "
+             "bash:smoke_PASS. It must be evidence that something RAN — a "
+             "commit sha or a PR number says the code EXISTS, not that it "
+             "works, and the detector will keep the claim flagged.",
     ),
     topic: str = typer.Option(
         None, "--topic",
@@ -1591,8 +1593,10 @@ def trust(
     Verimem's moat is a memory that DOESN'T LIE. This runs the same governance
     gate that guards every write: it flags unsupported hype / production-ready /
     tested / quantitative claims and tells you what evidence is missing. Add a
-    real provenance ref (--verified-by commit:... / ci:...:green / coverage:N)
-    and watch the same claim pass. Exit 0 if trusted, 1 if flagged.
+    real provenance ref (--verified-by pytest:1234_passed / ci:main:green /
+    bash:smoke_PASS) and watch the same claim pass. The ref must show that
+    something RAN: `commit:<sha>` or `pr:#12` say the code EXISTS, not that it
+    works, so the claim stays flagged. Exit 0 if trusted, 1 if flagged.
     """
     from .anti_confab_gate import run_validation_gate
     refs = list(verified_by or [])
