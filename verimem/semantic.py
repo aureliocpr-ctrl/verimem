@@ -6430,4 +6430,23 @@ class SemanticMemory:
             # garbage (parse is fail-open -> None = unlabeled).
             epistemic=_epistemic.parse(_opt("epistemic")),
             confidence_tier=_opt("confidence_tier"),
+            # v17 (2026-08-08) la porzione di fonte che sostiene il fatto.
+            # TERZA volta che un campo nuovo non arriva fin qui: `writer_role`
+            # nel giugno, `writer_principal` il 30/07, questo il 2026-08-14 —
+            # e i due commenti qui sopra descrivono lo stesso difetto con sei
+            # settimane di distanza. Il roundtrip lo perdeva mentre il disco lo
+            # aveva: misurato su un fatto scritto CON fonte, `grounding_span`
+            # nel database vale 'VRFY-9 vale per la terza porta di collaudo.' e
+            # sull'oggetto valeva None, quindi ogni vista poteva servire solo
+            # None.
+            #
+            # Trovato — di nuovo — perche' una superficie ha iniziato a
+            # mostrarlo: la vista SDK ha esposto il campo e l'averlo esposto ha
+            # reso visibile che si perdeva. Vale la profezia scritta sopra: un
+            # campo che nessuna superficie espone non ha modo di risultare
+            # sbagliato.
+            #
+            # Difensivo come gli altri: `None` su righe pre-v17, che e' il caso
+            # «non c'era una fonte da citare» e non «non e' arrivato».
+            grounding_span=_opt("grounding_span"),
         )
