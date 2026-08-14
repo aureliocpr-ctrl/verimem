@@ -64,6 +64,15 @@ def current_version() -> str:
     return m.group(1)
 
 
+def _nome_del_pacchetto() -> str:
+    """Il nome sotto cui gli artefatti vengono costruiti, dalla stessa fonte."""
+    text = PYPROJECT.read_text(encoding="utf-8")
+    m = re.search(r'^name\s*=\s*"([^"]+)"', text, flags=re.MULTILINE)
+    if not m:
+        sys.exit("error: no `name = \"…\"` line in pyproject.toml")
+    return m.group(1)
+
+
 def bump_version(new: str, *, dry_run: bool) -> None:
     text = PYPROJECT.read_text(encoding="utf-8")
     new_text, count = re.subn(
@@ -132,7 +141,16 @@ def main() -> int:
     run(["git", "push", "origin", branch], dry_run=args.dry_run)
     run(["git", "push", "origin", tag], dry_run=args.dry_run)
     print(f"\nrelease {tag} pushed. Upload manually with:")
-    print(f"    twine upload dist/hippoagent-{args.version}*")
+    #: Il nome viene da ``pyproject.toml`` e non è scritto qui: il rinominamento
+    #: del progetto ha lasciato indietro proprio questa riga — l'ultimo passo del
+    #: rilascio nominava il pacchetto precedente, e chi lo eseguiva non trovava
+    #: niente da caricare. Un nome copiato a mano è una copia che diverge; letto
+    #: dalla stessa fonte che genera gli artefatti, non può.
+    #:
+    #: La stella carica **entrambi** gli artefatti, il wheel e il sorgente: sono
+    #: due pacchetti distinti, e un controllo che ne benedice uno solo non dice
+    #: nulla sull'altro.
+    print(f"    twine upload dist/{_nome_del_pacchetto()}-{args.version}*")
     return 0
 
 
