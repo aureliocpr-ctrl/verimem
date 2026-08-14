@@ -144,8 +144,31 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
+      # ⚠️ RESTORE E SAVE SEPARATI, e il save con `if: always()`. Il passo unico
+      # `actions/cache@v4` salva nel proprio passo Post, e MISURATO nel job
+      # ubuntu-py3.12 del run 31816624316: quel Post non compare affatto nel
+      # log (c'e' solo «Post job cleanup», di checkout) e la chiave e' persa
+      # anche sul ripiego generico — «Cache not found for input keys:
+      # hf-Linux-<hash>, hf-Linux-» — cioe' in oltre 24 ore NON e' MAI stata
+      # salvata. L'unica differenza costante di questi run e' che il job
+      # FALLISCE, e questa CI e' rossa da 24 ore (58 failure su 60, misura di
+      # ws3).
+      #
+      # 🔁 IL DANNO NON E' IL TEMPO, E' UN CIRCOLO CHE SI CHIUDE DA SOLO:
+      #   job rosso -> cache mai salvata -> il modello si riscarica ->
+      #   huggingface.co non risponde (14 volte in quel job, per rate limit su
+      #   ~20 runner che scaricano insieme) -> 7 errors -> job rosso.
+      # Salvare ANCHE quando il job fallisce e' la sola riga che lo interrompe:
+      # cio' che il warmup ha gia' scaricato resta al run successivo, e nessun
+      # job deve piu' contattare HuggingFace.
+      #
+      # 🔎 Ipotesi dichiarata, non provata: che a saltare il Post sia il
+      # fallimento del job. Non l'ho falsificata — servirebbe un job VERDE, e
+      # non ne esiste uno da 24 ore. La cura non ne dipende: `save` con
+      # `always()` salva in entrambi i casi.
       - name: Cache HuggingFace models
-        uses: actions/cache@v4
+        id: hf_cache
+        uses: actions/cache/restore@v4
         with:
           # ~/.engram/models AGGIUNTO 2026-08-13: e' dove `ensure_gate_model`
           # estrae il cross-encoder del moat (711,5 MB, di cui 703,5 il
@@ -259,6 +282,22 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      # 🔁 La meta' che interrompe il circolo descritto sopra: `always()` perche'
+      # il caso da coprire e' ESATTAMENTE il job rosso — su un job verde la
+      # cache si salverebbe comunque, ed e' l'unico che qui non arriva mai.
+      # La condizione sul cache-hit evita l'avviso «cache already exists» quando
+      # la chiave primaria e' gia' a posto: il ripiego generico invece rende
+      # `cache-hit` falso, e li' salvare e' proprio cio' che vogliamo.
+      - name: Save HuggingFace models cache
+        if: always() && steps.hf_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch/sentence_transformers
+            ~/.engram/models
+          key: hf-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
 
   build:
     name: build (sdist + wheel)

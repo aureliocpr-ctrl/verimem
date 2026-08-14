@@ -141,3 +141,42 @@ class TestIlTettoDistingueLeGambe:
             "il warmup ora scarica il modello del giudice (711,5 MB) ma nessuna "
             "cache lo trattiene: sono ~4,3 GB per run su sei gambe, ogni run"
         )
+
+    def test_la_cache_si_salva_ANCHE_quando_il_job_e_rosso(self):
+        """⚠️ IL TEST SOPRA NON BASTAVA, ed e' la lezione che questo aggiunge:
+        pretendeva che il modello fosse *elencato* in una cache, e quella riga
+        c'era. Ma una cache dichiarata e mai SALVATA non e' una cache — e la
+        differenza non si vede leggendo il workflow, si vede nel log.
+
+        MISURATO nel job ubuntu-py3.12 del run 31816624316::
+
+            Cache not found for input keys: hf-Linux-<hash>, hf-Linux-
+            (nessun passo «Post Cache HuggingFace» nel log: solo Post job cleanup)
+
+        cioe' in oltre 24 ore la chiave non e' MAI stata scritta, nemmeno sul
+        ripiego generico. Il circolo che ne segue si chiude da solo: job rosso
+        -> cache mai salvata -> il modello si riscarica -> huggingface.co non
+        risponde (14 volte in quel job) -> 7 errors -> job rosso.
+
+        🔑 Percio' il criterio non e' «esiste un passo di cache» ma «esiste un
+        passo che salva SU UN JOB FALLITO»: e' l'unico caso che qui si presenta.
+        Un presidio che copre solo il caso riuscito e' spento proprio dove
+        serve — come il guardiano che eredita lo skip di cio' che sorveglia.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        passi = wf["jobs"]["test"]["steps"]
+        save = [p for p in passi
+                if "actions/cache/save" in str(p.get("uses", ""))]
+        assert save, (
+            "nessun passo SALVA la cache: con `actions/cache` in un solo passo "
+            "il salvataggio non ha lasciato traccia in 24 ore di job rossi"
+        )
+        # ⚠️ `True` non basta: YAML rende `if: always() && …` una stringa, ma
+        # un `if: success()` sarebbe altrettanto presente e altrettanto inerte.
+        condizione = str(save[0].get("if", ""))
+        assert "always()" in condizione, (
+            f"il passo di salvataggio esiste ma la sua condizione e' "
+            f"{condizione!r}: su un job rosso non scatta, ed e' l'unico "
+            f"genere di job che questa CI produce da 24 ore"
+        )
