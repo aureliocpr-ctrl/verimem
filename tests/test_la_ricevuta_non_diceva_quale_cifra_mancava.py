@@ -30,6 +30,7 @@ Se avessi «curato» quella conclusione avrei aggiunto un messaggio che c'era gi
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 
@@ -53,6 +54,18 @@ from tests._real_model import real_ce_cached
 #   giudice presente -> EXIT=0 · giudice assente -> EXIT=1 FAILED
 # Se un giorno la CI scaldera' senza `--no-gate`, questi test ripartiranno da
 # soli: la guardia interroga la disponibilita' del gate, non un interruttore.
+#
+# 📌 2026-08-13 16:23 — E' SUCCESSO, e la previsione qui sopra ha retto: il
+# commit `8669b5e3` ha tolto `--no-gate` dal warmup e messo `~/.engram/models`
+# in cache. La riga «la CI scalda con --no-gate» sopra descrive quindi il
+# passato: da quel commit il giudice in CI C'E', `real_ce_cached()` rende vero
+# e questi test NON vengono saltati. Misurato, non dedotto: nel run
+# 31718419381 (commit `cbdf7cc2`, dopo quello) i sei test risultano FAILED e
+# non SKIPPED.
+# ⚠️ Il paragrafo resta perche' il suo ragionamento e' giusto e la guardia
+# serve ancora a chi non ha il modello in locale. Va letto con la sua data:
+# una premessa scaduta non e' innocua, autorizza a credere gia' risolto cio'
+# che e' ancora rosso.
 pytestmark = pytest.mark.skipif(
     not real_ce_cached(),
     reason="il giudice del moat non e' in cache (la CI scalda con --no-gate): "
@@ -64,6 +77,48 @@ CLAIM = "L'ordine 77 conteneva 40 pezzi."
 FONTE = "Verbale: e' stato consegnato l'ordine 77. Ha partecipato Bianchi."
 VERO = "Il magazzino di Verona contiene 480 pallet."
 FONTE_VERA = "Inventario: magazzino Verona, 480 pallet a scaffale."
+
+
+# ── Il banco leggeva l'output sbagliato, in due modi ────────────────────────
+# Le due funzioni stanno qui ma i loro guardiani stanno in
+# `test_il_banco_della_ricevuta_legge_la_superficie_giusta.py`: misurano il
+# BANCO, non il prodotto, e non devono tacere quando tace il giudice — che e'
+# quello che farebbero, ereditando il `pytestmark` di questo modulo.
+_LOG_RE = re.compile(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[.\d]* \[\w+\s*\]")
+
+
+def solo_la_ricevuta(testo: str) -> str:
+    """Cio' che il prodotto DICE a chi salva, senza cio' che scrive per se'.
+
+    ⚠️ Serve perche' i log strutturati finiscono nello stesso testo e portano
+    `layers=['L4.1']`: l'assert che pretende dalla RICEVUTA il nome del
+    controllo che ha bocciato si accontentava della RIGA DI LOG. Due superfici
+    diverse, una sola stringa cercata — il banco poteva restare verde con la
+    ricevuta muta. E' il difetto che questo file rimprovera al prodotto,
+    ripetuto dentro il banco che lo misura.
+    """
+    return "\n".join(
+        r for r in testo.splitlines()
+        if not _LOG_RE.match(r) and "it/s]" not in r
+        and "Loading weights" not in r)
+
+
+def leggi(returncode: int, stdout, stderr) -> str:
+    """Il verdetto del processo PRIMA del suo output.
+
+    Un CLI che muore lascia un output TRONCO, e ogni assert riferisce allora
+    una stringa mancante invece di un processo morto. In CI lo nasconde due
+    volte, perche' la piattaforma TRONCA le righe lunghe: i log riempiono il
+    messaggio e la coda — dove starebbe la causa — viene tagliata via.
+    """
+    grezzo = (stdout or "") + (stderr or "")
+    if returncode != 0:
+        # ⚠️ l'informazione decisiva PRIMA, la coda DOPO: se il messaggio viene
+        # tagliato si perde la coda, non il verdetto.
+        raise AssertionError(
+            f"CLI-MORTO exit={returncode} len_stdout={len(stdout or '')} "
+            f"len_stderr={len(stderr or '')} coda={grezzo[-200:]!r}")
+    return solo_la_ricevuta(grezzo)
 
 
 def _remember(tmp_path, claim, source):
@@ -85,7 +140,7 @@ def _remember(tmp_path, claim, source):
     # motivo per cui il test e' rosso. Il difetto vero resta nascosto sotto.
     # 🔑 NON e' cosmesi difensiva: qui il fallimento del banco MASCHERA il
     # fallimento che il banco esiste per mostrare.
-    return (r.stdout or "") + (r.stderr or "")
+    return leggi(r.returncode, r.stdout, r.stderr)
 
 
 def test_la_ricevuta_dice_QUALE_valore_non_ha_trovato(tmp_path):
