@@ -47,9 +47,9 @@ from the day it exists, and only then is a removal date honest.**
 
 ⚠️⚠️ AND WRITING THE WARNING IS STILL NOT ENOUGH — the sentence promises
 *«migrate»*, and for most of these names **there is nowhere to migrate to**.
-Measured 2026-08-14 (found by ws1, reproduced here independently with
-``git grep`` over the shipped package) on the eight ``HIPPO_*`` names our own
-config actually sets::
+Measured 2026-08-14 — surfaced while auditing the configuration the product is
+actually run with, then reproduced independently with ``git grep`` over the
+shipped package — on the eight ``HIPPO_*`` names that config sets::
 
     HIPPO_DATA_DIR ............. VERIMEM_ ENGRAM_
     HIPPO_HOSTED ............... VERIMEM_
