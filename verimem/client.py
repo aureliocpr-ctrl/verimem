@@ -2749,6 +2749,18 @@ class Memory:
             # fatto non e' mai passato dal moat, perche' una chiave assente non
             # distingue «senza fonte» da «questa vista non lo dice».
             "source_signature": getattr(f, "source_signature", None) or None,
+            # E LA PORZIONE CITATA, che e' la parte piu' utile delle tre.
+            # `source_signature` dice CHE una fonte c'era; `grounding_span`
+            # dice QUALE PEZZO di quella fonte sostiene il fatto — testo
+            # esatto, non un'impronta. Misurato sul corpus reale il 2026-08-14:
+            # 1002 fatti su 10262 lo portano valorizzato, e un esempio letto
+            # dal db e' prosa vera, non un identificativo.
+            #
+            # Va servito INSIEME all'impronta e non al suo posto: lo span
+            # esiste solo dove il giudice ha citato, l'impronta anche dove ha
+            # solo giudicato, e chi legge deve poter distinguere «non c'era
+            # fonte» da «c'era e non e' stata citata alla lettera».
+            "grounding_span": getattr(f, "grounding_span", None) or None,
             "verified_by": list(getattr(f, "verified_by", None) or []),
             "superseded_by": getattr(f, "superseded_by", None) or None,
             # CIO' CHE IL CANALE MCP SERVIVA E QUESTO NO. Il docstring qui
