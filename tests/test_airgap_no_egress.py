@@ -18,6 +18,7 @@ import subprocess
 import sys
 import textwrap
 
+from tests._esito import esito
 from tests._real_model import requires_real_model
 
 # Spawns a FRESH subprocess that loads the REAL model offline; skip when it
@@ -71,6 +72,16 @@ def test_offline_embedding_makes_no_external_connection():
         [sys.executable, "-c", script],
         capture_output=True, text=True, timeout=240,
     )
+    # ⚠️ L'ESITO PRIMA DEGLI ASSERT. Qui la forma è già quella giusta — gli
+    # assert cercano stringhe POSITIVE, quindi un processo morto fa fallire il
+    # test e non passare (verificato da ws8 il 2026-08-14, e va detto con la
+    # stessa evidenza con cui si annuncerebbe un difetto). Ma resta un caso
+    # stretto e sgradevole: se il processo muore FRA i due print, «ENCODE_OK»
+    # c'è e «VERDICT=» no, e scatta il secondo assert — cioè si legge
+    # «AIR-GAP VIOLATED», un allarme di SICUREZZA falso, al posto di «il
+    # processo non è arrivato in fondo». Su questo banco è lo scambio che
+    # costa di più, in entrambe le direzioni.
+    esito(out, atteso=0)
     assert "ENCODE_OK" in out.stdout, (
         "offline embedding encode failed (model not cached locally?):\n"
         f"stdout={out.stdout}\nstderr={out.stderr[-800:]}"

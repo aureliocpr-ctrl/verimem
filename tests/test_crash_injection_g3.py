@@ -20,6 +20,7 @@ import json
 import sqlite3
 import subprocess
 import sys
+import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
@@ -40,10 +41,31 @@ for i in range(500):
 """
 
 
-def _run_worker_and_kill(db: Path, kill_after_acks: int) -> list[int]:
+def _perche(proc: subprocess.Popen, err) -> str:
+    """Il motivo per cui un worker e' morto — quello che ``DEVNULL`` buttava via.
+
+    ⚠️ 2026-08-14. Qui il processo viene ucciso di PROPOSITO, quindi un codice
+    d'uscita diverso da zero e' il dato atteso e ``check=True`` sarebbe
+    sbagliato: il difetto era un altro. Se il worker moriva **prima** del kill —
+    un import rotto, uno schema assente — l'assert riferiva «worker died before
+    reaching the kill point», che e' la diagnosi giusta **senza il perche'**, e
+    il perche' era su ``stderr``, scartato.
+    🔑 Su un banco di crash injection e' lo scambio peggiore possibile: qui si
+    misura proprio cosa sopravvive a una morte, e distinguere «morto come
+    volevamo» da «morto per conto suo» e' tutto il test.
+    ⚙️ File temporaneo e non ``PIPE``: un worker loquace riempirebbe il buffer
+    della pipe e resterebbe bloccato prima del kill, cioe' il banco si
+    guasterebbe nel modo che sta misurando.
+    """
+    err.seek(0)
+    return f"returncode={proc.poll()} stderr(coda)={err.read()[-400:]!r}"
+
+
+def _run_worker_and_kill(db: Path, kill_after_acks: int) -> tuple[list[int], str]:
+    err = tempfile.TemporaryFile(mode="w+")
     proc = subprocess.Popen(
         [sys.executable, "-c", _WORKER, str(db)],
-        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
+        stdout=subprocess.PIPE, stderr=err, text=True,
         cwd=str(Path(__file__).resolve().parents[1]))
     acked: list[int] = []
     try:
@@ -55,7 +77,9 @@ def _run_worker_and_kill(db: Path, kill_after_acks: int) -> list[int]:
     finally:
         proc.stdout.close()  # type: ignore[union-attr]
         proc.wait(timeout=30)
-    return acked
+    diagnosi = _perche(proc, err)
+    err.close()
+    return acked, diagnosi
 
 
 def test_kill_mid_burst_loses_no_committed_write(tmp_path) -> None:
@@ -63,8 +87,9 @@ def test_kill_mid_burst_loses_no_committed_write(tmp_path) -> None:
     db.parent.mkdir(parents=True)
     SemanticMemory(db_path=db)  # create schema before the worker starts
 
-    acked = _run_worker_and_kill(db, kill_after_acks=25)
-    assert len(acked) >= 25, "worker died before reaching the kill point"
+    acked, perche = _run_worker_and_kill(db, kill_after_acks=25)
+    assert len(acked) >= 25, (
+        f"worker died before reaching the kill point: {perche}")
 
     conn = sqlite3.connect(db)
     try:
@@ -125,15 +150,20 @@ def test_journal_entry_survives_worker_kill_and_replays_on_boot(tmp_path) -> Non
     )
     payload = json.dumps({"kind": "fact", "fact": asdict(orphan),
                           "store_kwargs": {"embed": "defer"}})
+    err = tempfile.TemporaryFile(mode="w+")
     proc = subprocess.Popen(
         [sys.executable, "-c", worker, str(jpath), payload],
-        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        stdout=subprocess.PIPE, stderr=err, text=True)
     try:
-        assert proc.stdout.readline().strip() == "journaled"  # type: ignore[union-attr]
+        # stessa cura: senza il perche', un worker morto all'avvio si legge
+        # come «ha scritto la riga sbagliata»
+        riga = proc.stdout.readline().strip()  # type: ignore[union-attr]
+        assert riga == "journaled", f"riga={riga!r} {_perche(proc, err)}"
         proc.kill()
     finally:
         proc.stdout.close()  # type: ignore[union-attr]
         proc.wait(timeout=30)
+        err.close()
 
     SemanticMemory(db_path=db)  # boot triggers _replay_pending_facts
     conn = sqlite3.connect(db)
