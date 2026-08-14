@@ -26,11 +26,24 @@ Two surfaces are bridged here so existing user configurations keep working:
 The module is intentionally tiny and stdlib-only — it's imported by
 ``engram/__init__.py`` and must not have any heavy dependencies.
 
-Scheduled removal: ~2026-08-13 (3 months from rename). After that, all
-code is expected to use ``ENGRAM_*`` env names and the ``~/.engram``
-path; this module can be deleted and ``HIPPO_*`` configs will start
-failing — by then any user still on the old names has had 3 months
-of clear deprecation warnings to migrate.
+Removal is NOT dated. A date lived here — «~2026-08-13 (3 months from
+rename)» — and passed on 2026-08-14 with the module still in place. When it
+does happen, all code is expected to use ``ENGRAM_*`` env names and the
+``~/.engram`` path; this module can be deleted and ``HIPPO_*`` configs will
+start failing.
+
+⚠️ AND THE CLOCK HAS NOT STARTED, for a reason worth writing down. The
+justification here used to read «by then any user still on the old names has
+had 3 months of clear deprecation warnings to migrate». Measured 2026-08-13:
+THERE IS NO SUCH WARNING. The single ``warnings.warn`` in this module (below)
+fires only when the DATA_DIR aliases DISAGREE — someone who sets ``HIPPO_*``
+CONSISTENTLY trips ``len(distinti) > 1`` false and hears nothing, by
+construction — and no ``DeprecationWarning`` for ``HIPPO_*`` exists anywhere in
+the package. The case the removal would break is exactly the case the warning
+does not cover, and it is not hypothetical: our own ``~/.mcp.json`` sets
+``HIPPO_DATA_DIR``, ``HIPPO_DISABLED`` and ``HIPPO_EAGER_PRELOAD``, all
+consistent. ⇒ **Write the deprecation warning first; the three months start
+from the day it exists, and only then is a removal date honest.**
 """
 from __future__ import annotations
 

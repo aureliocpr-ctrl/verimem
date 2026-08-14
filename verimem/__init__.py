@@ -22,8 +22,14 @@ new one and then taught the old one in all five of its configuration examples:
 a document that names itself one thing and teaches another. Presented first is
 the name that gets learned.
 
-``hippoagent`` (the shim, not the env prefix) is scheduled for removal
-~2026-08-13.
+``hippoagent`` (the shim, not the env prefix) is DEPRECATED: it still ships and
+still imports. Removal is NOT dated, deliberately — a date lived here, and in
+``agent_guide.py``, until 2026-08-14, and it passed with the shim still in
+place. A promise with an expiry date is the only kind that turns false on its
+own, with nobody touching anything; and this one is served to every MCP client
+on connect. Whoever schedules the removal puts a date back in BOTH places —
+and in ``_compat.py``, which carries its own for a DIFFERENT debt (the
+``HIPPO_*`` env names).
 """
 from __future__ import annotations
 

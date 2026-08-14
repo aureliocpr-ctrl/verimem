@@ -74,8 +74,9 @@ On the two prefixes, precisely: the namespace switch RENAMES — you are listed
 either the hippo_ set or the verimem_ set, never both. Calling either spelling
 works (verimem_X is dispatched to hippo_X), but only one is in your tool list,
 and a tool you cannot see is a tool you will not use. Separately, the python
-PACKAGE shim (`import hippoagent`) is scheduled for removal on 2026-08-13 —
-that is the package, not the tool prefix, which stays.
+PACKAGE shim (`import hippoagent`) is DEPRECATED: it still ships and still
+imports, and its removal is not dated. That is the package, not the tool
+prefix, which stays.
 """
 
 #: Extended terminal guide: the MCP orientation plus the CLI/SDK map an agent
