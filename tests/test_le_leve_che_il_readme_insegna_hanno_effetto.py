@@ -43,6 +43,8 @@ from pathlib import Path
 
 import pytest
 
+from tests._esito import esito
+
 _RADICE = Path(__file__).resolve().parents[1]
 
 #: La leva scelta come sonda: `_mode()` restituisce `"off"` solo se la variabile
@@ -65,9 +67,17 @@ def _mode_con(**variabili: str) -> str:
         [sys.executable, "-c", _SONDA], capture_output=True, text=True,
         env=env, cwd=str(_RADICE), timeout=300,
     )
-    righe = [x for x in r.stdout.splitlines() if x.startswith("MODE=")]
-    if not righe:
-        pytest.skip(f"la sonda non ha risposto (import fallito?): {r.stderr[-200:]}")
+    # ⚠️ 2026-08-14: era `pytest.skip(...)`. Il commento diceva gia' la verita'
+    # — «(import fallito?)» — e saltava lo stesso: un import fallito e' un
+    # difetto, non un ambiente mancante. Su un banco che verifica che le LEVE
+    # INSEGNATE DAL README abbiano effetto, saltare significa dire «la leva
+    # funziona» ogni volta che il prodotto non parte.
+    testo = esito(r)
+    righe = [x for x in testo.splitlines() if x.startswith("MODE=")]
+    assert righe, (
+        f"la sonda non ha stampato MODE=: la leva non ha prodotto un modo, "
+        f"oppure il prodotto non si e' importato. stdout={r.stdout[-300:]!r} "
+        f"stderr={r.stderr[-300:]!r}")
     return righe[0].split("=", 1)[1]
 
 

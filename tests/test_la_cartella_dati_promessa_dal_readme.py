@@ -45,6 +45,8 @@ from pathlib import Path
 
 import pytest
 
+from tests._esito import esito
+
 _RADICE = Path(__file__).resolve().parents[1]
 
 #: Si interroga il risolutore condiviso, non `CONFIG`: `CONFIG` congela il
@@ -64,9 +66,21 @@ def _dove_finiscono_i_dati(casa: Path) -> str:
         [sys.executable, "-c", _SONDA], capture_output=True, text=True,
         env=env, cwd=str(_RADICE), timeout=300,
     )
-    righe = [x for x in r.stdout.splitlines() if x.startswith("DIR=")]
-    if not righe:
-        pytest.skip(f"la sonda non ha risposto: {r.stderr[-200:]}")
+    # ⚠️ 2026-08-14: qui c'era `pytest.skip(...)`, e saltare era la cosa
+    # sbagliata. Un salto e' legittimo quando NON SI PUO' misurare — docker
+    # assente, modello non in cache — non quando il soggetto misurato ha
+    # fallito. La sonda e' Python puro che importa il prodotto: se non
+    # risponde, o l'import e' rotto o il prodotto e' rotto, e sono entrambi
+    # difetti da rendere ROSSI.
+    # 🔑 Su un banco che verifica una PROMESSA DEL README lo scambio e' il
+    # peggiore: la promessa cade e il banco tace, e il verde di quel giorno
+    # dice «verificata» quando nessuno ha verificato niente.
+    testo = esito(r)  # dichiara il returncode prima di tutto il resto
+    righe = [x for x in testo.splitlines() if x.startswith("DIR=")]
+    assert righe, (
+        f"la sonda non ha stampato DIR=: il prodotto non ha scelto una "
+        f"cartella dati, oppure non si e' importato. stdout={r.stdout[-300:]!r} "
+        f"stderr={r.stderr[-300:]!r}")
     return Path(righe[0][4:]).name
 
 

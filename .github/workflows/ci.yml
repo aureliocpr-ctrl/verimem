@@ -257,8 +257,19 @@ jobs:
       - name: Tests
         env:
           HIPPO_OFFLINE: "1"
+        # ⚠️ `-rs` AGGIUNTO 2026-08-14: senza, la riga finale dice «63 skipped»
+        # e nient'altro — sessantatre banchi che NON hanno misurato, e nessuno
+        # sa quali ne' perche'. La distinzione che serve leggere e' fra «non
+        # POTEVO misurare» (docker assente, modello non in cache: legittimo) e
+        # «ho misurato e l'esito non mi piaceva», che e' un presidio che si
+        # disarma proprio quando il prodotto sbaglia. Con `-rs` il motivo di
+        # ogni salto finisce nel log, e la differenza diventa leggibile.
+        # 📌 Misurato lo stesso giorno: gli skip CRESCONO mentre i failed
+        # scendono (ws8, gamba windows: -1 failed e +1 skipped), quindi il
+        # totale dei rossi puo' migliorare senza che nulla sia stato curato.
         run: >-
           pytest
+          -rs
           --cov=verimem
           --cov-report=xml
           --cov-report=term-missing:skip-covered

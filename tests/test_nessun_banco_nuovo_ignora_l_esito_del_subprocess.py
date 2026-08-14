@@ -85,8 +85,11 @@ ANCORA_CIECHI = frozenset({
     # del kill: su un banco di crash injection, lo scambio peggiore possibile.
     "test_embedding_load_no_hang.py",
     "test_flow_surface_onesta.py",
-    "test_la_cartella_dati_promessa_dal_readme.py",
-    "test_le_leve_che_il_readme_insegna_hanno_effetto.py",
+    # I due banchi delle PROMESSE DEL README — curati il 14/08, e non erano
+    # solo ciechi: se la sonda non rispondeva facevano `pytest.skip`, cioè
+    # **si spegnevano da soli quando cadeva la promessa che verificano**.
+    # Saltare è legittimo quando NON SI PUÒ misurare (docker assente, modello
+    # non in cache); non quando il soggetto misurato ha fallito.
     "test_log_level_env.py",
     "test_mcp_e2e_smoke.py",
     # test_mcp_stdout_purity_g2.py — CURATO il 14/08. Tolto da qui *perché me
