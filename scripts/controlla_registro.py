@@ -29,6 +29,7 @@ non fa fallire il controllo.
 from __future__ import annotations
 
 import ast
+import datetime as _dt
 import io
 import pathlib
 import re
@@ -173,6 +174,50 @@ def _esenzione(nome: str, testo: str) -> str | None:
     return trovato.group("ragione").strip()[:90] if trovato else None
 
 
+def _avvisa_se_l_artefatto_e_vecchio(percorso: pathlib.Path) -> None:
+    """Dice se il file esaminato è più vecchio dell'ultima modifica al sorgente.
+
+    ⚠️ AVVISA E BASTA: non tocca l'esito, non blocca, e se qualcosa non si può
+    determinare tace. Un controllo pensato per girare prima di ``twine upload``
+    non deve diventare la ragione per cui una pubblicazione non parte.
+
+    PERCHÉ SERVE. Misurato il 2026-08-14 alle 19:05: ``dist/`` conteneva un
+    wheel del giorno prima che superava questo controllo con EXIT 0 — e dentro
+    portava ancora una promessa scaduta («scheduled for removal on 2026-08-13»)
+    curata nel frattempo. Il verde era vero e inutile: certificava il passato.
+    Nella stessa ora un'altra sessione ha misurato che un wheel appena costruito
+    era già superato dopo OTTO MINUTI, con otto autori sullo stesso ramo. ⇒ Su
+    un artefatto la domanda «è pulito?» ha senso solo insieme a «di quando è?».
+    """
+    if percorso.is_dir():
+        return  # una directory è il sorgente stesso: non può essere in ritardo
+    try:
+        eta_artefatto = percorso.stat().st_mtime
+    except OSError:
+        return
+    radice = pathlib.Path(__file__).resolve().parents[1]
+    try:
+        ultimo = max(
+            (p.stat().st_mtime for p in (radice / "verimem").rglob("*.py")
+             if "__pycache__" not in p.parts),
+            default=None,
+        )
+    except OSError:
+        return
+    if ultimo is None or ultimo <= eta_artefatto:
+        return
+    ritardo = (ultimo - eta_artefatto) / 60.0
+    quando = _dt.datetime.fromtimestamp(eta_artefatto).strftime("%Y-%m-%d %H:%M")
+    unita = f"{ritardo:.0f} minuti" if ritardo < 120 else f"{ritardo / 60:.1f} ore"
+    print(
+        f"\n  ⚠️  l'artefatto è del {quando} e il sorgente è stato modificato "
+        f"{unita} dopo.\n"
+        f"      Quello che segue vale per QUESTO file, non per il codice di "
+        f"adesso: ricostruiscilo\n"
+        f"      prima di leggerlo come un via libera alla pubblicazione."
+    )
+
+
 def controlla(percorso: pathlib.Path) -> int:
     conteggi: Counter[str] = Counter()
     file_per_classe: defaultdict[str, set[str]] = defaultdict(set)
@@ -211,7 +256,9 @@ def controlla(percorso: pathlib.Path) -> int:
                         esempi[classe].append(voce)
 
     print(f"artefatto: {percorso}")
-    print(f"file .py esaminati: {totale_file}\n")
+    print(f"file .py esaminati: {totale_file}")
+    _avvisa_se_l_artefatto_e_vecchio(percorso)
+    print()
     blocca = False
     for classe, (_, bloccante) in CLASSI.items():
         n = conteggi[classe]
