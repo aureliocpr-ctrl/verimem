@@ -53,13 +53,23 @@ def _comandi_esposti() -> set[str]:
         [sys.executable, "-m", "verimem.cli", "--help"],
         capture_output=True, text=True, timeout=300, cwd=str(_RADICE),
     )
-    testo = r.stdout + r.stderr
+    # ⚠️⚠️ `or ""` NON È DIFENSIVISMO: in CI `stdout` arriva **None** e la
+    # concatenazione solleva TypeError PRIMA di ogni assert. Diagnosi di ws8,
+    # 14/08: i due test di questo file non fallivano in CI — **non
+    # verificavano nulla**, e il rosso che si leggeva era il TypeError, non la
+    # promessa. Sulla stessa Windows in locale l'help si legge e i comandi
+    # trovati sono 40.
+    # 🔑 Un presidio che crolla prima di misurare è peggio di uno assente: si
+    # legge come «la promessa è rotta» mentre nessuno ha guardato la promessa.
+    testo = (r.stdout or "") + (r.stderr or "")
     # ⚠️ il box Rich mette i comandi dopo «│ », non dopo un'indentazione
     trovati = set(re.findall(r"│\s([a-z][a-z0-9-]{2,})\s{2,}", testo))
     if not trovati:
         pytest.skip(
-            "l'help non è parsabile: se il formato è cambiato aggiorna QUESTA "
-            "funzione — uno zero da un parser rotto sembra uno zero vero")
+            f"l'help non è parsabile (returncode={r.returncode}, "
+            f"{len(testo)} caratteri catturati): se il formato è cambiato "
+            f"aggiorna QUESTA funzione — uno zero da un parser rotto sembra "
+            f"uno zero vero, e uno skip muto nasconde perché")
     return trovati
 
 
