@@ -65,11 +65,24 @@ def _comandi_esposti() -> set[str]:
     # ⚠️ il box Rich mette i comandi dopo «│ », non dopo un'indentazione
     trovati = set(re.findall(r"│\s([a-z][a-z0-9-]{2,})\s{2,}", testo))
     if not trovati:
+        # ⚠️ LO SKIP PORTA LE PROVE, e non è una gentilezza: la versione
+        # precedente diceva solo `returncode` e lunghezza, e con QUELLI ws8 ha
+        # chiuso un fronte in un giorno — «returncode=0 e 9088 caratteri, il
+        # processo gira: non è stdout None, è il parser». Un dato in più nel
+        # messaggio vale un giro di indagine in meno.
+        #
+        # 📌 Misurato il 15/08: il parser regge da 80 a 400 colonne (40 comandi
+        # sempre), e l'help locale è di 6161 caratteri — lo stesso numero che
+        # ws8 ha visto in casa. In CI ne arrivano **9088**, che non corrisponde
+        # a nessuna larghezza provata: l'output è DIVERSO, non solo più largo,
+        # e senza vederne un pezzo la diagnosi resta ferma.
+        campione = " ".join(testo.split())[:220]
+        righe_box = sum(1 for x in testo.splitlines() if "│" in x)
         pytest.skip(
-            f"l'help non è parsabile (returncode={r.returncode}, "
-            f"{len(testo)} caratteri catturati): se il formato è cambiato "
-            f"aggiorna QUESTA funzione — uno zero da un parser rotto sembra "
-            f"uno zero vero, e uno skip muto nasconde perché")
+            f"l'help non è parsabile — returncode={r.returncode}, "
+            f"{len(testo)} caratteri, {righe_box} righe contengono «│». "
+            f"Inizio: {campione!r}. Se il formato è cambiato aggiorna QUESTA "
+            f"funzione: uno zero da un parser rotto sembra uno zero vero")
     return trovati
 
 
