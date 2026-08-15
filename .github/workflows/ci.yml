@@ -563,12 +563,24 @@ jobs:
     # ⚖️ E si guarda l'ESITO di `build`, non solo `!cancelled()`: senza artefatto
     # `download-artifact` morirebbe su un errore che non nomina la causa.
     #
-    # ⚖️ PREZZO, rimisurato come il commento di `build` prometteva: due job in
-    # piu' per push (ubuntu + windows) con la coda gia' carica — alle 14:08 UTC
-    # 8 in coda e 4 in esecuzione, il piu' vecchio in attesa da 93 minuti. Sono
-    # job brevi (installano un wheel, non girano la suite). Se la coda peggiora,
-    # la mossa e' stringere QUESTA matrice, non spegnere il job: e' l'unica prova
-    # automatica che il pacchetto si installi da zero, e non gira dal 04/08.
+    # ⚖️ PREZZO, rimisurato come il commento di `build` prometteva — e in JOB,
+    # che e' il righello delle misure precedenti (contare i RUN darebbe un numero
+    # piu' piccolo e non confrontabile)::
+    #
+    #     11:47 UTC   queued 33 · in esecuzione 13     build in coda: 0
+    #     12:44 UTC   queued 33 · in esecuzione 13     build in coda: 0
+    #     14:17 UTC   queued 20 · in esecuzione 20     build in coda: 3
+    #
+    # ⇒ Due letture, e la prima correggeva se stessa: la coda NON e' in regime
+    # stazionario come i primi due punti facevano credere — sta DRENANDO, e la
+    # quota in esecuzione e' passata da 13 a 20. E il prezzo dichiarato per
+    # `build` e' ARRIVATO: occupa tre posti dove un'ora e mezza fa ne occupava
+    # zero, perche' aspettava le dipendenze e non la coda.
+    #
+    # Questo job aggiunge due posti brevi per push (ubuntu + windows): installano
+    # un wheel, non girano la suite. Se la coda tornasse a crescere, la mossa e'
+    # stringere QUESTA matrice, non spegnere il job — e' l'unica prova automatica
+    # che il pacchetto si installi da zero, e non gira dal 04/08.
     if: >-
       !cancelled()
       && needs.build.result == 'success'
