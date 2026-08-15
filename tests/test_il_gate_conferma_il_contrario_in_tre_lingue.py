@@ -86,6 +86,26 @@ magazzino di Verona contiene 480 pallet».
 negazioni non sono coperte. **Meglio un difetto scritto che un rifiuto
 invisibile**, perché un rifiuto somiglia sempre alla prudenza e nessuno va a
 controllarlo.
+
+═══ ✅ E IL THAI È GUARITO DA UNA CURA SCRITTA PER UN'ALTRA LINGUA ═══
+
+Il thai restava fuori da questo banco perché falliva **prima**, sul
+riconoscimento del soggetto, e dava `unknown` su tutte le colonne. Poi la cura
+dei bigrammi — pensata per far uscire il rovesciamento di polarità in coreano —
+ha esteso la segmentazione anche alla sua scrittura, e la guardia dello
+stesso-soggetto ha smesso di essere cieca. **Nessuno l'aveva cercato.**
+
+Rimisurata la matrice il 15/08 alle 16:06::
+
+    lingua   identico       valore diverso   NEGATO
+    EN·KO·TH·HI·TR·AR   supported   contradicted   contradicted
+
+⇒ **18 celle su 18**, dove tre ore prima ce n'erano **quattro sbagliate**.
+
+⚠️ Il thai resta scoperto su `negation_conflict`, che è **un'altra porta**: là
+lo scope e i termini condivisi sono in unità diverse, e le due cure ovvie sono
+state provate e ritirate (il perché è scritto accanto a quella riga). **Due
+porte, due esiti** — e quella che l'utente tocca è questa.
 """
 from __future__ import annotations
 
@@ -187,13 +207,27 @@ def test_una_frase_negata_e_riconosciuta_come_negata(lingua, frase, coperta):
         f"vede: il confronto a valle tratterà la frase come se affermasse")
 
 
-@pytest.mark.parametrize("lingua,affermativo,negato", [
+#: ⚠️ IL THAI È ENTRATO QUI DOPO, e non per una cura scritta per lui.
+#: Quando questo file è nato, il thai restava `unknown` su tutte le colonne per
+#: un difetto diverso — il riconoscimento del soggetto — e per questo era escluso
+#: dal test sotto. La cura dei bigrammi (`5b08877a`), scritta per far uscire il
+#: rovesciamento di polarità in coreano, **lo ha curato anche qui senza che
+#: nessuno lo cercasse**: con `content_tokens` che segmenta anche il thai, la
+#: guardia dello stesso-soggetto ha smesso di essere cieca.
+#: 🔑 Rimisurato il 15/08: sei lingue, tre colonne, **diciotto celle su diciotto
+#: corrette** — dove tre ore prima ce n'erano quattro sbagliate.
+_NEGATE = [
     ("EN", LINGUE[0][1], LINGUE[0][3]),
     ("AR", LINGUE[4][1], LINGUE[4][3]),
     ("KO", LINGUE[1][1], LINGUE[1][3]),
     ("HI", LINGUE[2][1], LINGUE[2][3]),
     ("TR", LINGUE[3][1], LINGUE[3][3]),
-], ids=["EN", "AR", "KO", "HI", "TR"])
+    ("TH", "คลังสินค้าเวโรนามี 480 พาเลท", "คลังสินค้าเวโรนาไม่มี 480 พาเลท"),
+]
+
+
+@pytest.mark.parametrize("lingua,affermativo,negato", _NEGATE,
+                         ids=[c[0] for c in _NEGATE])
 def test_il_gate_non_conferma_una_frase_negata(lingua, affermativo, negato):
     """Il cuore, alla porta pubblica: un fatto e la sua negazione non possono
     ricevere lo stesso verdetto positivo."""
