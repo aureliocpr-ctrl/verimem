@@ -46,6 +46,24 @@ jobs:
   # repository — perche' un cancello che non si puo' aprire viene tolto. La
   # differenza e' che aprirlo diventa un GESTO, invece che l'impostazione
   # predefinita.
+  # ⚠️⚠️ COSA QUESTO CANCELLO **NON** GUARDA — scritto subito, perche' un
+  # cancello che promette piu' di quanto misura e' il difetto che abbiamo
+  # curato due volte oggi (G8 e `wheel-install`).
+  #
+  # Guarda: **la CI e' verde su questo commit?** — cioe' la qualita' del CODICE.
+  # NON guarda: **cosa c'e' dentro il pacchetto**. Misurato da ws2 il 15/08::
+  #
+  #     release.py          non usato da questo workflow  (vale solo a mano)
+  #     controlla_registro  non cablato in nessun workflow
+  #     controlla_promesse  non cablato in nessun workflow
+  #     l'sdist di oggi porta 299 identificativi interni in 126 file
+  #
+  # ⇒ **Se la CI fosse verde, questo cancello si aprirebbe e quell'sdist
+  # passerebbe.** Il cancello e' NECESSARIO e NON SUFFICIENTE, e chi lo legge
+  # deve saperlo: fermare un rilascio con la CI rossa non e' la stessa cosa che
+  # verificare cio' che si spedisce.
+  # 🙋 I due presidi sono di ws2; il workflow e' mio. Cablarli qui e' la mossa
+  # ovvia e non la faccio da sola sul fronte di un'altra: proposta sul canale.
   gate:
     name: la CI del commit taggato e' verde?
     runs-on: ubuntu-latest
