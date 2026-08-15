@@ -24,10 +24,35 @@ aggiunge `~/.cache/verimem` al workflow, sia se il modello torna sotto un
 percorso già coperto — che sono le due cure possibili, e la scelta è di chi ha
 il perimetro della CI.
 
-⚠️ `xfail(strict=True)`: oggi il difetto c'è. Quando verrà curato questo test
-passerà, l'xpass renderà la suite rossa e chiederà di togliere il marcatore —
+⚠️ `xfail(strict=True)`: il difetto c'era. Quando è stato curato questo test è
+passato, l'xpass ha reso la suite rossa e ha chiesto di togliere il marcatore —
 così il difetto fa rumore **quando smette di esistere** invece di restare un
-marcatore che nessuno rilegge.
+marcatore che nessuno rilegge. È successo il 15/08, e a toglierlo è stato chi
+ha curato il workflow, non chi aveva scritto il presidio.
+
+═══ ⚠️ LIMITE DICHIARATO — e un limite dichiarato è un DEBITO ═══
+
+Questo banco è **statico**: confronta due NOMI, quello che il prodotto userà e
+quello che la CI elenca. Non tocca il disco — nessuna chiamata al filesystem in
+questo file — e resta verde anche dove il modello non è mai stato scaricato:
+verificato, in locale `DEFAULT_MODEL_DIR` non esiste e il test passa.
+
+⇒ **Verde qui NON significa «il modello arriva in CI».** Significa «se arriva,
+la cache lo conserva». Il difetto trovato lo stesso giorno da ws8 — il passo di
+warmup dura 12 secondi contro 2264 MB da scaricare, non scarica, ed esce
+`ready` e `success` perché lo step è *best-effort* — **questo banco non lo
+vedrebbe mai**, e nessuna sua evoluzione statica potrebbe. Quella domanda
+chiede un presidio a runtime, che dopo il warmup verifichi che il modello ci
+sia. Non è questo.
+
+L'ipotesi è di ws1 («può essere verde senza provare niente»): la forma esatta
+non regge, perché non si confrontano contenuti — ma il livello che indicava è
+quello giusto.
+
+📌 Che sia comunque **collegato** è misurato, col criterio che vale per ogni
+presidio di casa: togliendo `~/.cache/verimem` dal workflow diventa **rosso**
+(8 percorsi letti → 6). Un presidio acceso su una domanda piccola resta acceso;
+va detto **quanto** la domanda è piccola.
 """
 from __future__ import annotations
 
