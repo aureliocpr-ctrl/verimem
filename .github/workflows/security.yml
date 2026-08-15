@@ -26,6 +26,32 @@ concurrency:
   # di 40 minuti: in otto e' un push ogni 5,3 ore a testa, cioe' un blocco.
   # La disciplina e' stata provata stasera e non ha retto — questa riga la
   # sostituisce con una regola che non dipende da chi si ricorda.
+  # ⚠️⚠️ 2026-08-15 — LE QUINDICI RIGHE QUI SOPRA DESCRIVONO UNA CURA CHE QUESTO
+  # FILE NON HA. Sono copiate parola per parola da `ci.yml`, compresa «ogni
+  # commit merita un verdetto» e «una regola che non dipende da chi si ricorda»
+  # — ma la riga che quel testo descrive e' il gruppo per COMMIT, ed e' entrata
+  # solo in `ci.yml`. Qui il gruppo e' per REF: su `main` tutti i push lo
+  # condividono, e chi arriva in coda viene scartato.
+  #
+  # MISURATO da ws3 il 15/08, sugli ultimi 50 run di ciascuno:
+  #     ci          2 cancellati su 50
+  #     security   21 cancellati su 50      <- tutti main + push
+  #     solo oggi:  ci 0 su 18  ·  security 7 su 18
+  #
+  # ⇒ Ventuno verdetti di SICUREZZA mai dati, su main, sotto mandato di
+  # rilascio. Il `cancel-in-progress` qui e' corretto (vero solo sui PR): non e'
+  # lui il difetto — e' il gruppo, e il 12/08 si era gia' misurato che
+  # `cancel-in-progress: false` protegge il run che GIRA, non quello in CODA.
+  #
+  # 🔑 PERCHE' LA RIGA NON E' ANCORA CAMBIATA, e non e' una dimenticanza:
+  # allinearla fa girare 5 job per ogni commit oggi scartato — 35 job in piu'
+  # nella sola giornata di oggi, misurati con 19 gia' in coda e il tetto dei
+  # runner a 20. Il prezzo scritto in `ci.yml` dice di non farlo a coda satura.
+  # ⚖️ Ma quel prezzo conta i JOB e non le CONSEGUENZE, e qui non sono
+  # simmetriche: un verdetto di `ci` in ritardo si aspetta, un verdetto di
+  # sicurezza mancante su main non torna. La decisione e' RIMANDATA, non
+  # archiviata — e finche' dura, questo commento dice il vero al posto di quello
+  # sopra, che descrive un altro file.
   group: security-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
