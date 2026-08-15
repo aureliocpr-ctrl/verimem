@@ -485,6 +485,41 @@ def _content_overlap(claim_distinct: set[str], fact_text: str) -> float:
     return hits / len(claim_distinct)
 
 
+#: Sotto questo punteggio il giudice non trova sostegno. I dati non sono
+#: ambigui — le negazioni stanno fra 1 e 9, le parafrasi fra 98 e 100 — quindi
+#: la soglia non è un compromesso fra due popolazioni vicine: è un taglio in
+#: mezzo a un vuoto di novanta punti.
+_SOGLIA_GIUDICE_CONTRA = 50.0
+#: Quanta parte della frase più povera deve essere condivisa perché due
+#: proposizioni parlino dello STESSO soggetto. Senza, il giudice dichiarerebbe
+#: contraddizione fra «480 pallet» e «la ricetta della carbonara», che riceve
+#: un punteggio quasi identico a quello di una negazione.
+_SOGLIA_STESSO_SOGGETTO = 0.5
+
+
+def _giudice_contraddice(in_memoria: str, claim: str) -> bool:
+    """Vero se il giudice nega sostegno a un claim che parla dello stesso tema.
+
+    ⚠️ Non solleva mai e non carica nulla quando il modello non c'è: senza
+    modello restituisce ``False`` e il percorso lessicale resta il
+    comportamento. È la condizione normale in integrazione continua.
+    """
+    try:
+        from .local_grounding import get_local_judge, local_ce_available
+        if not local_ce_available():
+            return False
+        from .quantity_match import content_tokens
+        ta, tb = content_tokens(in_memoria), content_tokens(claim)
+        if not ta or not tb:
+            return False
+        if len(ta & tb) / min(len(ta), len(tb)) < _SOGLIA_STESSO_SOGGETTO:
+            return False
+        return float(get_local_judge().score(in_memoria, claim)) < \
+            _SOGLIA_GIUDICE_CONTRA
+    except Exception:  # noqa: BLE001 — un giudice che rompe non deve
+        return False   # trasformare un verdetto in un errore
+
+
 def validate_claim(
     agent: _AgentLike,
     claim: str,
@@ -727,6 +762,41 @@ def validate_claim(
                         f"NON {cv:g} {cu} — controlla prima di affermare."
                     )
 
+    # SEMANTIC contradiction pass — la negazione riconosciuta dal GIUDICE
+    # invece che da una lista di parole. 15/08.
+    #
+    # La lista dei negatori copre quindici lingue e non potrà coprirne di più:
+    # ogni lingua chiede a qualcuno di distinguere una negazione da una parola
+    # che le somiglia (`안` scatta su «ciao», `मत` dentro «voto»), e la
+    # documentazione promette invece «any language».
+    #
+    # 🔑 Il pezzo che risolve il caso generale era già nel prodotto, a un import
+    # di distanza: il cross-encoder del moat separa un fatto dalla sua negazione
+    # senza sapere nulla di quella lingua. Misurato su sedici lingue, punteggio
+    # del claim identico contro il negato::
+    #
+    #     EN 96→1  IT 99→1  KO 100→2  VI 98→1  ID 99→2  HE 100→9  EL 100→1
+    #     TH 100→3  JA 100→2  ZH 100→1  AR 100→3  HI 100→1  RU 100→1  UK 100→2
+    #     ⇒ 14 su 16, comprese VI ID HE EL TH che la lista NON copre
+    #     SW 99→99 e TR 99→99: i due che NON separa — e il turco la lista lo
+    #     copre, quindi le due strade sono COMPLEMENTARI, non alternative.
+    #
+    # ⚠️⚠️ E IL GIUDICE DA SOLO NON BASTA: dà **1.26** a una negazione e
+    # **1.69** a una frase su un argomento completamente diverso. Da solo
+    # dichiarerebbe contraddizione fra due fatti che non parlano della stessa
+    # cosa. La seconda condizione — la sovrapposizione dei termini di contenuto,
+    # che il prodotto usa già altrove — è ciò che li separa::
+    #
+    #                       giudice  overlap
+    #     negazione           1-9      1.00   → contraddizione
+    #     argomento diverso   1.69     0.00   → nessuna
+    #     parafrasi vera     98.10     0.75   → nessuna
+    #     dettaglio in più   99.81     1.00   → nessuna
+    #
+    # Sette casi su sette. Servono ENTRAMBE.
+    #
+    # 📌 Senza modello su disco questa funzione dice sempre «no» e il percorso
+    # lessicale resta il comportamento — che è la norma in CI.
     # LEXICAL-EXPANSION contradiction pass (0.7.0) — version pins, sub-year
     # date moves, polarity flips. Same-subject and precision guards live in
     # the primitives themselves (shared distinctive word, named-subject
@@ -753,6 +823,12 @@ def validate_claim(
                 if n is not None:
                     kind_detail = (
                         "negation", f"polarità opposta su '{n}'")
+            if kind_detail is None and _giudice_contraddice(f.proposition,
+                                                            claim):
+                kind_detail = (
+                    "entailment",
+                    "il giudice non trova sostegno per questo claim nel fatto "
+                    "in memoria, che parla dello stesso soggetto")
             if kind_detail is not None:
                 lexical_contra.append(f)
                 if not lexical_advice:

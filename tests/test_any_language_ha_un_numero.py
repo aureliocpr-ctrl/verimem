@@ -125,9 +125,6 @@ def test_LA_CONTRADDIZIONE_DI_VALORE_REGGE_FUORI_DALLE_LINGUE_MISURATE(
         f"mantenere")
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "lo swahili non riceve alcun verdetto su nessuna delle tre colonne: "
-    "fallisce prima, sul riconoscimento del soggetto"))
 def test_anche_lo_swahili_vede_la_contraddizione_di_valore():
     """Il sesto caso, l'unico che perde anche la colonna sana."""
     a, b = NUOVE[5][1], NUOVE[5][2]
@@ -136,12 +133,9 @@ def test_anche_lo_swahili_vede_la_contraddizione_di_valore():
 
 @pytest.mark.parametrize("lingua,affermativo,negato", [
     ("UK", NUOVE[4][1], NUOVE[4][3]),
-    pytest.param("VI", NUOVE[0][1], NUOVE[0][3], marks=pytest.mark.xfail(
-        strict=True, reason="«không» non è fra i negatori: il gate conferma la negazione")),
-    pytest.param("ID", NUOVE[1][1], NUOVE[1][3], marks=pytest.mark.xfail(
-        strict=True, reason="«tidak» non è fra i negatori: il gate conferma la negazione")),
-    pytest.param("HE", NUOVE[2][1], NUOVE[2][3], marks=pytest.mark.xfail(
-        strict=True, reason="«אינו» non è fra i negatori: il gate conferma la negazione")),
+    ("VI", NUOVE[0][1], NUOVE[0][3]),
+    ("ID", NUOVE[1][1], NUOVE[1][3]),
+    ("HE", NUOVE[2][1], NUOVE[2][3]),
     ("EL", NUOVE[3][1], NUOVE[3][3]),
     ("SW", NUOVE[5][1], NUOVE[5][3]),
 ], ids=["UK", "VI", "ID", "HE", "EL", "SW"])
@@ -207,7 +201,7 @@ def test_IL_CONTO_DELLA_COPERTURA_e_quello_dichiarato():
                 if _verdetto(a, a) == "supported"
                 and _verdetto(a, b) == "contradicted"
                 and _verdetto(a, n) == "contradicted"]
-    assert complete == ["UK"], (
-        f"le lingue con tre colonne su tre erano ['UK'], ora sono {complete}: "
+    assert complete == ["VI", "ID", "HE", "UK"], (
+        f"le lingue con tre colonne su tre erano quattro, ora sono {complete}: "
         f"aggiorna il conto nel docstring e rileggi «any language» col numero "
         f"nuovo")
