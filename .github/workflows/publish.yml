@@ -26,7 +26,54 @@ permissions:
   id-token: write # REQUIRED for OIDC trusted publishing
 
 jobs:
+  # ⚠️⚠️ IL CANCELLO CHE NON C'ERA, aggiunto il 2026-08-15 su segnalazione di ws8.
+  # Fino a ora questo workflow non aveva `needs`, ne' `if`, ne' `environment`:
+  # **un `git push` di un tag `v*` pubblicava su PyPI immediatamente**, senza che
+  # un solo test dovesse passare.
+  #
+  # Il contesto in cui l'abbiamo scoperto, che e' quello che lo rende urgente:
+  #   · Aurelio, oggi alle 14:00: «NON E' PRONTA»
+  #   · `ci` su main: 19 run conclusi oggi, 19 failure, ZERO verdi
+  #   · `pyproject` dice 0.7.5, su PyPI c'e' la 0.7.0
+  # ⇒ un tag battuto oggi avrebbe spedito al mondo un pacchetto che la nostra
+  # CI non ha mai approvato, e lo avrebbe fatto in trenta secondi.
+  #
+  # 🔑 `needs:` non attraversa i workflow, quindi il cancello lo si costruisce:
+  # questo job chiede a GitHub com'e' andata `ci` SUL COMMIT DEL TAG, e il job
+  # di pubblicazione dipende da lui. Nessuna configurazione fuori dal
+  # repository, nessun segreto: solo `gh` in lettura.
+  # ⚖️ E si puo' scavalcare di proposito — `PUBLISH_ANYWAY=1` come variabile del
+  # repository — perche' un cancello che non si puo' aprire viene tolto. La
+  # differenza e' che aprirlo diventa un GESTO, invece che l'impostazione
+  # predefinita.
+  gate:
+    name: la CI del commit taggato e' verde?
+    runs-on: ubuntu-latest
+    outputs:
+      verde: ${{ steps.controlla.outputs.verde }}
+    steps:
+      - name: Interroga la CI sul commit di questo tag
+        id: controlla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha='${{ github.sha }}'
+          esito=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
+                    --jq '[.workflow_runs[] | select(.name=="ci")] | .[0].conclusion' \
+                    2>/dev/null || echo "")
+          echo "commit=$sha  conclusione di ci=${esito:-NESSUN RUN}"
+          if [ "$esito" = "success" ]; then
+            echo "verde=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "verde=false" >> "$GITHUB_OUTPUT"
+            echo "::error::La CI su $sha non e' verde (${esito:-nessun run}). "\
+                 "La pubblicazione e' FERMA. Per scavalcare di proposito: "\
+                 "variabile di repository PUBLISH_ANYWAY=1."
+          fi
+
   build-and-publish:
+    needs: gate
+    if: needs.gate.outputs.verde == 'true' || vars.PUBLISH_ANYWAY == '1'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
