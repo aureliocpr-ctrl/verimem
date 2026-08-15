@@ -253,6 +253,47 @@ class TestIlTettoDistingueLeGambe:
             "la guardia non conta: senza un conteggio il verdetto dipende "
             "dall'ordine di visita del filesystem, che nessuno controlla")
 
+    def test_la_guardia_della_cache_non_MUORE_se_la_cartella_non_esiste(self):
+        """⚠️⚠️ IL SECONDO DIFETTO DELLA STESSA GUARDIA, che il primo nascondeva.
+
+        Actions lancia `shell: bash` come
+        ``/usr/bin/bash --noprofile --norc -e -o pipefail {0}`` — letto nel log
+        del job, non dedotto. Un `find` su una cartella che non esiste esce
+        non-zero; ``2>/dev/null`` ne nasconde il messaggio ma **non il codice**;
+        `pipefail` lo propaga attraverso la pipe e `-e` uccide lo step::
+
+            run 1c2491ed, ubuntu py3.11 (segnalato da ws8):
+              «La cache contiene davvero il modello?»  ->  completed/FAILURE
+              «Save HuggingFace models cache»          ->  completed/skipped
+              output della guardia:  NESSUNO — morta prima di stampare
+
+        E in quel job «Warm embedding model» era SKIPPED, quindi
+        ``~/.cache/huggingface`` non esisteva affatto: **il caso peggiore e'
+        anche il piu' comune** — il primo run su una cache vuota, cioe' proprio
+        quello che la cura deve far funzionare.
+
+        🔑 Una guardia che MUORE non e' una guardia che dice «no»: l'uscita
+        resta vuota, la condizione `!= 'true'` e' comunque vera, il salvataggio
+        non parte. **Stesso sintomo del difetto precedente, causa diversa** — e
+        curata la prima, la seconda sarebbe rimasta indistinguibile dal
+        fallimento della cura.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        guardia = [p for p in wf["jobs"]["test"]["steps"]
+                   if str(p.get("id", "")) == "hf_completa"]
+        assert guardia, "il passo di verifica non c'e' piu'"
+        comando = str(guardia[0].get("run", ""))
+        assert "mkdir -p" in comando, (
+            "la guardia cerca dentro una cartella che potrebbe non esistere e "
+            "lo shell di Actions gira con `-e -o pipefail`: il `find` esce "
+            "non-zero e lo STEP MUORE prima di decidere. Creala prima di "
+            "cercarci dentro.")
+        assert "|| true" in comando, (
+            "manca la cintura: anche con la cartella creata, un `find` puo' "
+            "uscire non-zero (permessi, race) e con `pipefail` + `-e` questo "
+            "uccide lo step invece di produrre un verdetto")
+
     def test_la_chiave_della_cache_distingue_le_GAMBE_della_matrice(self):
         """⚠️ Misurato da ws3 il 2026-08-15 sul run `16c68894`, e la mia cura
         reggeva **per fortuna, non per costruzione**.

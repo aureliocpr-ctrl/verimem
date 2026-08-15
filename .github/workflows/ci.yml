@@ -344,13 +344,36 @@ jobs:
         # corrispondenza» mi da' quella sbagliata (il body col trailer in
         # fondo, il grep con due copie del package, questo). Qui non si
         # sceglie: si CONTA, e il conteggio non dipende dall'ordine di visita.
+        # ⚠️⚠️ E IL SECONDO DIFETTO DELLA STESSA GUARDIA, che il primo nascondeva.
+        # Actions lancia `shell: bash` come::
+        #
+        #     /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+        #
+        # cioe' con `-e` E `pipefail` ATTIVI. Un `find` su una cartella che non
+        # esiste esce non-zero; `2>/dev/null` ne nasconde il messaggio ma NON il
+        # codice; `pipefail` lo propaga attraverso la pipe; `-e` uccide lo step.
+        # ⇒ Misurato sul run 1c2491ed, gamba ubuntu py3.11 (segnalato da ws8)::
+        #
+        #     «La cache contiene davvero il modello?»  ->  completed/FAILURE
+        #     «Save HuggingFace models cache»          ->  completed/skipped
+        #     output della guardia:  NESSUNO — e' morta prima di stampare
+        #
+        # E in quel job «Warm embedding model» era SKIPPED, quindi
+        # `~/.cache/huggingface` non esisteva affatto: il caso peggiore e' anche
+        # il piu' comune, il primo run su una cache vuota.
+        # 🔑 Una guardia che MUORE non e' una guardia che dice «no»: `completa`
+        # resta vuoto, `!= 'true'` e' comunque vero, e il salvataggio non parte —
+        # stesso esito del difetto precedente, per una ragione diversa. Due
+        # cause distinte con lo stesso sintomo: curata la prima, la seconda
+        # restava, e nessuno l'avrebbe distinta dal fallimento della prima cura.
         run: |
+          mkdir -p ~/.cache/huggingface     # la cartella esiste sempre: `find` non muore
           M='*models--intfloat--multilingual-e5-base*'
           pesi=$(find ~/.cache/huggingface -path "$M" \
                    \( -name '*.safetensors' -o -name '*.bin' \) \
-                   -size +100M 2>/dev/null | wc -l)
+                   -size +100M 2>/dev/null | wc -l || true)
           parziali=$(find ~/.cache/huggingface -path "$M" \
-                       -name '*.incomplete' 2>/dev/null | wc -l)
+                       -name '*.incomplete' 2>/dev/null | wc -l || true)
           if [ "$pesi" -ge 1 ] && [ "$parziali" -eq 0 ]; then
             echo "completa=true" >> "$GITHUB_OUTPUT"
             echo "CACHE-CHECK completa — file di pesi: $pesi, parziali: 0"
