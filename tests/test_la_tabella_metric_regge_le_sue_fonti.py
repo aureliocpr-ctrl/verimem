@@ -139,11 +139,27 @@ def test_il_numero_compare_in_un_file_citato(numero: str) -> None:
             f"è falsa. Questo caso non sta segnalando un guasto: sta dicendo "
             f"che un debito è stato pagato e va cancellato dai registri"
         )
+        # E L'ESENZIONE DIMOSTRA LA PROPRIA PREMESSA, invece di affermarla.
+        # Diceva «è riportato in BENCHMARKS.md» senza mai aprirlo — un'asserzione
+        # non verificata dentro un file che esiste per verificare asserzioni. E il
+        # nome era pure ambiguo: di BENCHMARKS.md ce ne sono DUE (ws8, 15/08),
+        # `docs/` a 73778 byte e uno alla radice a 17202, orfano dal 26/07. Il
+        # README linka sempre `docs/`; questo messaggio non lo diceva.
+        casa = RADICE / "docs" / "BENCHMARKS.md"
+        assert casa.is_file() and numero in casa.read_text(
+            encoding="utf-8", errors="replace"), (
+            f"l'esenzione per {numero} si giustifica dicendo che il numero è "
+            f"riportato in {casa.relative_to(RADICE).as_posix()}, e lì non c'è "
+            f"(o il file non esiste). Un'esenzione che motiva se stessa con un "
+            f"documento che non la sostiene non è un debito dichiarato: è un "
+            f"numero senza casa che sembra averne una"
+        )
         pytest.skip(
-            f"{numero} è dichiarato NEL README come privo di file di risultati "
-            f"(è riportato in BENCHMARKS.md): l'eccezione è scritta, non "
-            f"silenziosa, e si spegne da sola — la riga qui sopra la fa fallire "
-            f"il giorno in cui il numero diventa verificabile"
+            f"{numero} è dichiarato NEL README come privo di file di risultati, "
+            f"ed è riportato in docs/BENCHMARKS.md (verificato dalla riga qui "
+            f"sopra, non solo affermato). L'eccezione è scritta, non silenziosa, "
+            f"e si spegne da sola: il caso fallisce il giorno in cui il numero "
+            f"diventa verificabile in un file di risultati"
         )
 
     assert trovato, (
