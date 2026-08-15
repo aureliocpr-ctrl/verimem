@@ -132,3 +132,58 @@ def test_IL_README_PROMETTE_ANCORA_ENTRAMBI_I_PERCORSI():
             f"il README non nomina più {percorso}: se la riga sui data store è "
             f"stata tolta, il documento ha smesso di dire all'utente dove "
             f"cercare i propri dati")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ⚠️ IL CASO CHE MANCAVA: LA SEQUENZA, NON LO STATO
+#
+# ws4, 15/08: «il presidio di quella promessa esiste ED È VERDE mentre ws3
+# misura il contrario — prova lo STATO delle cartelle, non la SEQUENZA dei
+# comandi, e warmup crea .engram prima».
+#
+# Aveva ragione. I quattro test qui sopra costruiscono le cartelle a mano e
+# chiedono dove finiscono i dati: misurano un mondo GIÀ FORMATO. Ma la promessa
+# del README riguarda un utente che ESEGUE dei comandi in un ordine, e l'ordine
+# che il README stesso insegna — `verimem warmup --help`: «Run this ONCE after
+# install, BEFORE wiring Verimem into Claude Code» — produce il risultato
+# opposto::
+#
+#     warmup prima (crea ~/.engram/models), poi il primo uso  →  .engram
+#     primo uso su casa vuota                                 →  .verimem
+#
+# 🔑 Il warmup fabbrica la prova di un'installazione preesistente che non
+# esiste: `DEFAULT_MODEL_DIR` è `~/.engram/models/local_gate_ce_v2`, hardcoded
+# in `local_grounding.py:41`, e il risolutore legge quella cartella come «store
+# storico».
+#
+# ⚠️ `xfail(strict=True)` E NON UN COMMENTO: il difetto è reale e la cura è di
+# ws1 (l'override `ENGRAM_LOCAL_GATE_MODEL` esiste già, non serve toccare
+# `_compat`). Strict perché il giorno in cui la cura atterra questo test PASSA e
+# la suite diventa rossa per xpass, chiedendo di togliere il marcatore: un
+# difetto registrato deve fare rumore quando smette di esistere.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "il warmup crea ~/.engram/models (local_grounding.py:41, hardcoded) e il "
+    "risolutore la legge come store preesistente: chi segue l'ordine insegnato "
+    "dal README non ottiene la cartella che il README promette"))
+def test_LA_SEQUENZA_DEL_README_porta_alla_cartella_promessa():
+    """Il README promette `.verimem` a chi installa, e insegna a lanciare
+    `warmup` per primo. Le due istruzioni devono poter convivere.
+
+    ⚠️ Il warmup vero scarica 711 MB, quindi qui se ne simula l'EFFETTO sul
+    filesystem — la cartella che estrae — e nient'altro. Il percorso non è
+    scritto a mano: si chiede al prodotto, così se un giorno cambia il test
+    segue senza che nessuno se ne accorga a mano.
+    """
+    from verimem.local_grounding import DEFAULT_MODEL_DIR
+
+    casa = _casa_con()
+    relativo = DEFAULT_MODEL_DIR.relative_to(Path.home())
+    (casa / relativo).mkdir(parents=True)      # ciò che `verimem warmup` lascia
+
+    assert _dove_finiscono_i_dati(casa) == ".verimem", (
+        "dopo `verimem warmup` — che il README insegna a eseguire PER PRIMO — "
+        "un'installazione nuova non usa più ~/.verimem: il modello del gate ha "
+        "creato ~/.engram e il risolutore la scambia per uno store storico")
