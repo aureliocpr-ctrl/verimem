@@ -129,9 +129,28 @@ def test_ogni_superficie_che_promette_dichiara_anche_il_limite(etichetta, percor
     """
     testo = (_RADICE / percorso).read_text(encoding="utf-8", errors="ignore")
     basso = testo.lower()
+    # ⚠️ IL LIMITE PRIMA DELLA PROMESSA, e la ragione è che i due casi che
+    # saltavano erano i più virtuosi, non i più poveri. Trovato da ws6 il
+    # 2026-08-15, verificato qui con un righello indipendente::
+    #
+    #     README.md:149                 «Document memory, cited on the indexed text»
+    #     docs/F2_MODULE_INVENTORY:120  «… cited on the indexed text (offsets exact
+    #                                    on the index, not a promise the file reopens)»
+    #
+    # Nessuna delle due «ha smesso di promettere»: **promettono già limitato**,
+    # cioè scrivono la promessa e il suo confine nella STESSA frase. È la forma
+    # canonica che abbiamo adottato noi — e `_PROMESSA_RE` cerca la promessa
+    # NUDA, quindi non la riconosce e il caso salta.
+    # 🔑 La sentinella era cieca proprio alla formulazione introdotta dal commit
+    # che l'ha scritta: il presidio non vedeva il proprio standard.
+    # ⇒ Se il limite è dichiarato, il caso PASSA. Lo `skip` resta solo dove non
+    #   c'è NÉ promessa NÉ limite — sulle sei superfici di oggi, mai.
+    ha_limite = any(k.lower() in basso for k in LIMITE)
     if not _PROMESSA_RE.search(testo):
-        pytest.skip(f"{percorso} non promette più nulla sulla citazione")
-    assert any(k.lower() in basso for k in LIMITE), (
+        if ha_limite:
+            return  # promette già limitato: è il caso migliore, non uno da saltare
+        pytest.skip(f"{percorso} non nomina né la citazione né il suo limite")
+    assert ha_limite, (
         f"[{etichetta}] promette una citazione esatta senza dire su COSA lo è. "
         f"Misurato il 2026-08-12: 538 chunk su 634 (84,9%) puntavano a file "
         f"spariti, con il testo del chunk presente per il 100% di essi."
@@ -224,54 +243,59 @@ def test_IL_PEZZO_DI_ws6_RESTA_SUO_e_questo_non_lo_duplica():
 # una conseguenza che nessuno vedeva — **il presidio si supera CANCELLANDO la
 # promessa**, e il conto dei rossi non cambia di una riga.
 #
-# 📌 E non è ipotetico: misurato il 2026-08-15 sul run 31823644806, DUE
-# superfici saltano già oggi, ed è il `-rs` acceso ieri a farlo vedere::
+# 🪞 E LA PRIMA VERSIONE DI QUESTO CRICCHETTO CONTAVA LA COSA SBAGLIATA — la
+# lascio scritta perché l'errore insegna più della cura. Contavo le superfici
+# che `_PROMESSA_RE` riconosce, e ne trovavo **4 su 6**, concludendo che
+# «il codice promette e i documenti no». **Falso**: ws6 ha aperto i due file e
+# ha misurato che promettono entrambi, con la stessa frase::
 #
-#     SKIPPED  README.md non promette più nulla sulla citazione
-#     SKIPPED  docs/F2_MODULE_INVENTORY.md non promette più nulla sulla citazione
+#     README.md:149                 «Document memory, cited on the indexed text»
+#     docs/F2_MODULE_INVENTORY:120  «… cited on the indexed text (offsets exact
+#                                    on the index, not a promise the file reopens)»
 #
-#     promettono ancora  4 su 6   →  agent_guide · mcp_server
-#                                    document_index · document_promote   (CODICE)
-#     hanno smesso       2 su 6   →  README · F2_MODULE_INVENTORY     (DOCUMENTI)
+# Non avevano smesso: **promettono già limitato**, e la regex cerca la promessa
+# NUDA. Il taglio «codice sì / documenti no» non esisteva — l'avevo letto in un
+# artefatto del mio strumento.
 #
-# 🔑 Il taglio è netto e vale più del numero: **il codice promette, i documenti
-# no.** Il che significa che l'MCP e la guida dell'agente dicono a chi ci usa
-# una cosa che il README non dice più.
+# ⇒ Quindi qui si conta **il LIMITE, non la promessa**. Il limite è la sostanza
+#   che questo file difende; la promessa riconosciuta da una regex è la forma, e
+#   una forma si riscrive senza che la sostanza cambi. Misurato il 2026-08-15:
 #
-# ⚖️ QUESTO TEST NON DICE CHE SIA UN DIFETTO, e la distinzione è il suo punto:
-# togliere una promessa eccessiva è LEGITTIMO — è esattamente ciò che è stato
-# fatto ieri sulla riga 483 («not stored» prometteva più di quanto il prodotto
-# faccia). Quello che non è legittimo è che accada **in silenzio**. Qui il
-# numero è pinnato: chi lo fa scendere trova un rosso, aggiorna la cifra e dice
-# perché — trenta secondi, e la scelta resta scritta.
-_QUANTE_PROMETTONO_OGGI = 4
+#     dichiarano il limite   6 su 6      ← il numero pinnato qui sotto
+#     promessa vista dalla regex  4 su 6  ← artefatto dello strumento, non un fatto
+#
+# ⚖️ E resta vero il motivo per cui il cricchetto esiste: togliere una promessa
+# eccessiva è LEGITTIMO (è ciò che è stato fatto sulla riga 483), ma non deve
+# accadere **in silenzio**. Chi fa scendere il numero trova un rosso, aggiorna
+# la cifra e scrive quale superficie e perché.
+_QUANTE_DICHIARANO_IL_LIMITE = 6
 
 
-def test_il_numero_di_superfici_che_promettono_non_cala_in_SILENZIO():
-    """Il cricchetto sul verso che il `skip` lascia scoperto."""
-    ancora = [p for _, p in SUPERFICI
-              if _PROMESSA_RE.search(
-                  (_RADICE / p).read_text(encoding="utf-8", errors="ignore"))]
-    assert len(ancora) >= _QUANTE_PROMETTONO_OGGI, (
-        f"le superfici che promettono la citazione sono scese da "
-        f"{_QUANTE_PROMETTONO_OGGI} a {len(ancora)}: {sorted(ancora)}.\n"
-        f"Se la promessa è stata tolta di proposito — e può essere giusto — "
-        f"abbassa _QUANTE_PROMETTONO_OGGI e scrivi QUALE e PERCHÉ. Se invece "
-        f"è sparita per sbaglio, il presidio in cima a questo file non se ne "
-        f"sarebbe accorto: quando una superficie smette di promettere, il suo "
-        f"test SALTA."
+def _con_limite() -> list[str]:
+    return [p for _, p in SUPERFICI
+            if any(k.lower() in (_RADICE / p).read_text(
+                encoding="utf-8", errors="ignore").lower() for k in LIMITE)]
+
+
+def test_il_numero_di_superfici_col_LIMITE_non_cala_in_SILENZIO():
+    """Il cricchetto sul verso che lo `skip` lascia scoperto."""
+    ancora = _con_limite()
+    assert len(ancora) >= _QUANTE_DICHIARANO_IL_LIMITE, (
+        f"le superfici che dichiarano il limite sono scese da "
+        f"{_QUANTE_DICHIARANO_IL_LIMITE} a {len(ancora)}: {sorted(ancora)}.\n"
+        f"Se è stato tolto di proposito, abbassa la soglia e scrivi QUALE e "
+        f"PERCHÉ. Se è sparito per sbaglio, il presidio in cima a questo file "
+        f"non se ne accorgerebbe: senza promessa riconosciuta il caso SALTA."
     )
 
 
-def test_il_cricchetto_delle_promesse_non_si_arrugginisce():
-    """⚠️ L'ALTRA METÀ, la stessa di ogni cricchetto: se le superfici che
-    promettono TORNANO a salire e il numero resta indietro, il presidio tollera
-    una regressione che non esiste più — e smette di stringere in silenzio."""
-    ancora = [p for _, p in SUPERFICI
-              if _PROMESSA_RE.search(
-                  (_RADICE / p).read_text(encoding="utf-8", errors="ignore"))]
-    assert len(ancora) <= _QUANTE_PROMETTONO_OGGI, (
-        f"ora promettono in {len(ancora)} e la soglia è ferma a "
-        f"{_QUANTE_PROMETTONO_OGGI}: alzala a {len(ancora)}, o il cricchetto "
-        f"lascerà rientrare quelle appena riconquistate senza dire niente"
+def test_il_cricchetto_del_limite_non_si_arrugginisce():
+    """⚠️ L'ALTRA METÀ, la stessa di ogni cricchetto: se il numero risale e la
+    soglia resta indietro, il presidio tollera una regressione che non esiste
+    più — e smette di stringere in silenzio."""
+    ancora = _con_limite()
+    assert len(ancora) <= _QUANTE_DICHIARANO_IL_LIMITE, (
+        f"ora sono {len(ancora)} e la soglia è ferma a "
+        f"{_QUANTE_DICHIARANO_IL_LIMITE}: alzala, o il cricchetto lascerà "
+        f"rientrare quelle appena riconquistate senza dire niente"
     )
