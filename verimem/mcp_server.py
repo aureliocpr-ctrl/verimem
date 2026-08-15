@@ -56,9 +56,6 @@ from mcp.server.stdio import stdio_server  # noqa: E402
 from .agent import VerimemAgent  # noqa: E402
 from .config import CONFIG  # noqa: E402
 from .fact_contract import fact_payload  # noqa: E402
-#: L'etichetta di affidabilità si calcola QUI, non si importa da `client`: quel
-#: modulo la espone solo come wrapper (`client._confidence_tier`), e il server
-#: non deve dipendere dal client per una funzione che sta nel gate.
 from .grounding_gate import confidence_tier as _calcola_tier  # noqa: E402
 from .observability import emit, get_log  # noqa: E402
 from .text_cut import safe_cut  # noqa: E402
@@ -524,6 +521,10 @@ def _build_fact(
     #: L'etichetta di affidabilità del gate. Default None **apposta**: chi non la
     #: passa si comporta come prima di questa modifica, e i chiamanti che non
     #: hanno un gate sotto mano non devono inventarne una.
+    #: Si calcola con ``_calcola_tier``, importato in cima da ``grounding_gate``
+    #: e NON da ``client``: quel modulo la espone solo come wrapper
+    #: (``client._confidence_tier``), e il server non deve dipendere dal client
+    #: per tre righe che stanno nel gate.
     confidence_tier: str | None = None,
 ) -> Any:
     """Build a Fact object with a CONTENT-DERIVED id (cycle #46b + #109).
