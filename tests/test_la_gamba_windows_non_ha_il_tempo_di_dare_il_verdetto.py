@@ -211,6 +211,48 @@ class TestIlTettoDistingueLeGambe:
             f"nessun run successivo potrebbe piu' ripararla."
         )
 
+    def test_la_guardia_della_cache_CONTA_invece_di_prendere_il_primo(self):
+        """⚠️ Il difetto che questa riga presidia mi e' costato la cura intera.
+
+        La prima versione della guardia faceva ``find -type d -name
+        'models--intfloat--…' | head -1`` e poi cercava i pesi dentro. Ma le
+        cartelle con quel nome sono DUE — ``hub/.locks/models--intfloat--…``
+        (i lock di huggingface_hub) e ``hub/models--intfloat--…`` (i pesi) — e
+        la visita incontra ``.locks`` per prima. Riprodotto in A/B su una
+        struttura finta::
+
+            dir trovata:  …/hub/.locks/models--intfloat--multilingual-e5-base
+            pesi:         ''
+            -> completa=FALSE      ← sempre, anche con la cache perfetta
+
+        ⇒ il salvataggio non sarebbe mai avvenuto e ogni run avrebbe fatto
+        miss. **Un sensore che risponde sempre la stessa cosa non e' severo,
+        e' scollegato** — e questo lo era nella direzione che blocca tutto.
+
+        🔑 Terza volta in due giorni che «prendo la prima corrispondenza» mi
+        da' quella sbagliata: il body col trailer in fondo letto con ``head
+        -4``, il ``grep`` con due copie del package, e questa. ⇒ **dove le
+        corrispondenze possono essere piu' d'una, si CONTA**: un conteggio non
+        dipende dall'ordine di visita, e ``head`` invece si', in silenzio.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        passi = wf["jobs"]["test"]["steps"]
+        guardia = [p for p in passi
+                   if str(p.get("id", "")) == "hf_completa"]
+        assert guardia, (
+            "il passo che verifica la completezza della cache non c'e' piu': "
+            "senza, un job morto a meta' torna a scrivere una cache monca")
+        comando = str(guardia[0].get("run", ""))
+        assert "head -1" not in comando, (
+            "la guardia prende «il primo» risultato di una ricerca che ne ha "
+            "piu' d'uno: hub/.locks/ viene visitata prima di hub/, quindi i "
+            "pesi non si trovano mai e la cache non si salva mai. Conta i "
+            "file (`wc -l`) invece di sceglierne uno.")
+        assert "wc -l" in comando, (
+            "la guardia non conta: senza un conteggio il verdetto dipende "
+            "dall'ordine di visita del filesystem, che nessuno controlla")
+
     def test_la_chiave_della_cache_distingue_le_GAMBE_della_matrice(self):
         """⚠️ Misurato da ws3 il 2026-08-15 sul run `16c68894`, e la mia cura
         reggeva **per fortuna, non per costruzione**.

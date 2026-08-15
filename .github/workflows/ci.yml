@@ -328,18 +328,35 @@ jobs:
         id: hf_completa
         if: always()
         shell: bash
+        # ⚠️ SI CERCA IL FILE, NON LA CARTELLA, e non si prende «il primo».
+        # La prima versione faceva `find -type d -name 'models--intfloat--…' |
+        # head -1` e poi cercava i pesi dentro. Ma le cartelle con quel nome
+        # sono DUE — `hub/.locks/models--intfloat--…` (i lock di
+        # huggingface_hub) e `hub/models--intfloat--…` (i pesi) — e la visita
+        # incontra `.locks` per prima. Riprodotto in A/B su una struttura
+        # finta: `pesi=''`, `completa=false`, **sempre**, anche con la cache
+        # perfetta. Il salvataggio non sarebbe mai avvenuto, e il primo run
+        # avrebbe fatto miss per sempre. Trovato da ws8 sul run 31877865842
+        # (gamba ubuntu py3.11) leggendo la riga «CACHE-CHECK INCOMPLETA».
+        # 🔑 Un sensore che risponde SEMPRE la stessa cosa non e' severo, e'
+        # scollegato — e questo lo era nella direzione che blocca tutto.
+        # 📌 Ed e' la terza volta in due giorni che «prendo la prima
+        # corrispondenza» mi da' quella sbagliata (il body col trailer in
+        # fondo, il grep con due copie del package, questo). Qui non si
+        # sceglie: si CONTA, e il conteggio non dipende dall'ordine di visita.
         run: |
-          d=$(find ~/.cache/huggingface -maxdepth 3 -type d \
-                -name 'models--intfloat--multilingual-e5-base' 2>/dev/null | head -1)
-          parziali=$(find "$d" -name '*.incomplete' 2>/dev/null | head -1)
-          pesi=$(find "$d" \( -name '*.safetensors' -o -name '*.bin' \) \
-                   -size +100M 2>/dev/null | head -1)
-          if [ -n "$d" ] && [ -z "$parziali" ] && [ -n "$pesi" ]; then
+          M='*models--intfloat--multilingual-e5-base*'
+          pesi=$(find ~/.cache/huggingface -path "$M" \
+                   \( -name '*.safetensors' -o -name '*.bin' \) \
+                   -size +100M 2>/dev/null | wc -l)
+          parziali=$(find ~/.cache/huggingface -path "$M" \
+                       -name '*.incomplete' 2>/dev/null | wc -l)
+          if [ "$pesi" -ge 1 ] && [ "$parziali" -eq 0 ]; then
             echo "completa=true" >> "$GITHUB_OUTPUT"
-            echo "CACHE-CHECK completa: $pesi"
+            echo "CACHE-CHECK completa — file di pesi: $pesi, parziali: 0"
           else
             echo "completa=false" >> "$GITHUB_OUTPUT"
-            echo "CACHE-CHECK INCOMPLETA — dir='$d' parziali='$parziali' pesi='$pesi'"
+            echo "CACHE-CHECK INCOMPLETA — pesi=$pesi parziali=$parziali"
           fi
 
       # 🔁 La meta' che interrompe il circolo: `always()` perche' il caso da
