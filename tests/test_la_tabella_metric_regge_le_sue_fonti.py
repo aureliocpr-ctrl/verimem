@@ -101,16 +101,8 @@ def test_il_file_citato_esiste(nome: str) -> None:
     )
 
 
-@pytest.mark.parametrize("numero", _NUM.findall(_zona_delle_fonti()))
-def test_il_numero_compare_in_un_file_citato(numero: str) -> None:
-    """Il numero si cerca SOLO nei file dichiarati, ed è ciò che toglie il rumore."""
-    if numero in SENZA_FILE_DICHIARATO:
-        pytest.skip(
-            f"{numero} è dichiarato NEL README come privo di file di risultati "
-            f"(è riportato in BENCHMARKS.md): l'eccezione è scritta, non "
-            f"silenziosa. Quando il run del terzo utente verrà committato, "
-            f"togliere questa voce e il caso diventerà un controllo come gli altri"
-        )
+def _chi_lo_contiene(numero: str) -> list[str]:
+    """I file DICHIARATI che contengono questo numero, alla sua precisione."""
     atteso, decimali = float(numero), len(numero.split(".")[1])
     trovato = []
     for nome in _FILE.findall(_zona_delle_fonti()):
@@ -123,6 +115,37 @@ def test_il_numero_compare_in_un_file_citato(numero: str) -> None:
             continue
         if any(round(v, decimali) == atteso for v in _valori(dati)):
             trovato.append(nome)
+    return trovato
+
+
+@pytest.mark.parametrize("numero", _NUM.findall(_zona_delle_fonti()))
+def test_il_numero_compare_in_un_file_citato(numero: str) -> None:
+    """Il numero si cerca SOLO nei file dichiarati, ed è ciò che toglie il rumore."""
+    trovato = _chi_lo_contiene(numero)
+
+    if numero in SENZA_FILE_DICHIARATO:
+        # L'ECCEZIONE SI VERIFICA PRIMA DI ESENTARE, e la ragione è una lezione
+        # pagata poche ore fa su un altro presidio: uno skip tace su un
+        # CAMBIAMENTO di stato, e il cambiamento può essere il difetto oppure
+        # LA SUA SPARIZIONE. Uno skip secco qui non mancherebbe un difetto —
+        # mancherebbe la CURA: committato il run del terzo utente, il caso
+        # continuerebbe a saltare e nessuno saprebbe che l'esenzione non serve
+        # più. Un debito che si autoconserva. Così invece scade da solo.
+        assert not trovato, (
+            f"{numero} è ancora fra le eccezioni di questo file, ma ORA è "
+            f"verificabile: lo contiene {trovato}. L'esenzione è scaduta — "
+            f"toglila da SENZA_FILE_DICHIARATO e togli dal README la frase che "
+            f"dichiara il numero privo di artefatto, perché quella frase adesso "
+            f"è falsa. Questo caso non sta segnalando un guasto: sta dicendo "
+            f"che un debito è stato pagato e va cancellato dai registri"
+        )
+        pytest.skip(
+            f"{numero} è dichiarato NEL README come privo di file di risultati "
+            f"(è riportato in BENCHMARKS.md): l'eccezione è scritta, non "
+            f"silenziosa, e si spegne da sola — la riga qui sopra la fa fallire "
+            f"il giorno in cui il numero diventa verificabile"
+        )
+
     assert trovato, (
         f"il README dichiara {numero} e nessuno dei file che cita lo contiene. "
         f"O il numero è stato aggiornato senza rigenerare l'artefatto, o "
