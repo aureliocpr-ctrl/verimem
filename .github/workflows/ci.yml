@@ -178,8 +178,13 @@ jobs:
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
             ~/.engram/models
-          key: hf-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
-          restore-keys: hf-${{ runner.os }}-
+          # ⚠️ `hf2-` ANCHE QUI, e soprattutto nel ripiego: lasciare
+          # `restore-keys: hf-` avrebbe ripescato ESATTAMENTE la cache
+          # avvelenata che il prefisso nuovo serve ad abbandonare. Il ripiego
+          # generico e' la porta di servizio di una chiave che credi di aver
+          # buttato.
+          key: hf2-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: hf2-${{ runner.os }}-
 
       - name: Install
         run: |
@@ -294,21 +299,58 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      # 🔁 La meta' che interrompe il circolo descritto sopra: `always()` perche'
-      # il caso da coprire e' ESATTAMENTE il job rosso — su un job verde la
-      # cache si salverebbe comunque, ed e' l'unico che qui non arriva mai.
+      # ⚠️ IL CONTROLLO CHE MANCAVA, e mancava a una cura MIA di ieri.
+      # `always()` fa salvare la cache anche da un job rosso — che era il punto
+      # — ma il primo job a scriverla e' morto di SIGSEGV (exit 139) dopo 2698
+      # test su 11349, e ha salvato quello che c'era in quel momento. Misurato
+      # sul run successivo (31823644806): la cache VIENE ripristinata, pesa
+      # 1656 MB, e `intfloat/multilingual-e5-base` non ci si trova — 8 test
+      # cadono al setup con «couldn't connect to huggingface.co».
+      # 🔑 E il danno non si ripara da solo: con la chiave primaria scritta,
+      # `cache-hit` e' vero e il passo di salvataggio non riparte MAI. Una
+      # cache incompleta e' peggio di una assente — l'assente si riempie al
+      # primo run, l'incompleta resta finche' non cambia l'hash della chiave.
+      # ⇒ Non basta salvare SEMPRE: bisogna salvare solo cio' che SERVE A
+      #   QUALCOSA. Il passo qui sotto guarda dentro la cartella prima di dire
+      #   di si'.
+      - name: La cache contiene davvero il modello?
+        id: hf_completa
+        if: always()
+        shell: bash
+        run: |
+          d=$(find ~/.cache/huggingface -maxdepth 3 -type d \
+                -name 'models--intfloat--multilingual-e5-base' 2>/dev/null | head -1)
+          parziali=$(find "$d" -name '*.incomplete' 2>/dev/null | head -1)
+          pesi=$(find "$d" \( -name '*.safetensors' -o -name '*.bin' \) \
+                   -size +100M 2>/dev/null | head -1)
+          if [ -n "$d" ] && [ -z "$parziali" ] && [ -n "$pesi" ]; then
+            echo "completa=true" >> "$GITHUB_OUTPUT"
+            echo "CACHE-CHECK completa: $pesi"
+          else
+            echo "completa=false" >> "$GITHUB_OUTPUT"
+            echo "CACHE-CHECK INCOMPLETA — dir='$d' parziali='$parziali' pesi='$pesi'"
+          fi
+
+      # 🔁 La meta' che interrompe il circolo: `always()` perche' il caso da
+      # coprire e' ESATTAMENTE il job rosso — su un job verde la cache si
+      # salverebbe comunque, ed e' l'unico che qui non arriva mai.
       # La condizione sul cache-hit evita l'avviso «cache already exists» quando
-      # la chiave primaria e' gia' a posto: il ripiego generico invece rende
-      # `cache-hit` falso, e li' salvare e' proprio cio' che vogliamo.
+      # la chiave primaria e' gia' a posto; quella sulla completezza impedisce
+      # che un job morto a meta' scriva una cache che poi nessuno puo' riparare.
+      # 📌 CHIAVE `hf2-`: il prefisso e' cambiato apposta, per ABBANDONARE la
+      # cache avvelenata del 14/08. Cambiare la chiave e' l'unico modo di
+      # buttarne una gia' scritta senza toccare le impostazioni del repository.
       - name: Save HuggingFace models cache
-        if: always() && steps.hf_cache.outputs.cache-hit != 'true'
+        if: >-
+          always() && steps.hf_cache.outputs.cache-hit != 'true'
+          && steps.hf_completa.outputs.completa == 'true'
         uses: actions/cache/save@v4
         with:
           path: |
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
             ~/.engram/models
-          key: hf-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          key: hf2-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
 
   build:
     name: build (sdist + wheel)

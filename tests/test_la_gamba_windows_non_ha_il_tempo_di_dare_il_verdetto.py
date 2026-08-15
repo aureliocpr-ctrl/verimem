@@ -180,3 +180,65 @@ class TestIlTettoDistingueLeGambe:
             f"{condizione!r}: su un job rosso non scatta, ed e' l'unico "
             f"genere di job che questa CI produce da 24 ore"
         )
+
+    def test_una_cache_INCOMPLETA_non_viene_salvata(self):
+        """⚠️ IL SEGUITO DEL TEST QUI SOPRA, e nasce da un difetto di quella
+        stessa cura — la mia, del 14/08.
+
+        `always()` fa salvare la cache anche da un job rosso, che era il punto.
+        Ma il primo job a scriverla e' morto di SIGSEGV (exit 139) dopo 2698
+        test su 11349, e ha salvato quello che c'era in quel momento. Misurato
+        sul run successivo (31823644806): la cache viene ripristinata, pesa
+        1656 MB, e `intfloat/multilingual-e5-base` non ci si trova — otto test
+        cadono al setup con «couldn't connect to huggingface.co».
+
+        🔑 E non si ripara da solo: con la chiave primaria scritta, `cache-hit`
+        e' vero e il salvataggio non riparte MAI. **Una cache incompleta e'
+        peggio di una assente**: l'assente si riempie al primo run, l'incompleta
+        resta finche' non cambia l'hash della chiave.
+        ⇒ Salvare SEMPRE non basta: si salva solo cio' che serve a qualcosa.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        passi = wf["jobs"]["test"]["steps"]
+        save = [p for p in passi
+                if "actions/cache/save" in str(p.get("uses", ""))]
+        assert save, "nessun passo salva la cache: vedi il test qui sopra"
+        cond = str(save[0].get("if", ""))
+        assert "completa" in cond, (
+            f"il salvataggio non guarda se la cache CONTIENE il modello: "
+            f"{cond!r}. Un job morto a meta' scriverebbe una cache monca, e "
+            f"nessun run successivo potrebbe piu' ripararla."
+        )
+
+    def test_il_RIPIEGO_non_ripesca_la_chiave_abbandonata(self):
+        """🔑 IL GUARDIANO CHE MI HA QUASI PRESO MENTRE SCRIVEVO LA CURA.
+
+        Per buttare una cache gia' scritta l'unico modo, senza toccare le
+        impostazioni del repository, e' cambiare la chiave. Ma `restore-keys`
+        e' un PREFISSO: cambiare `key` e lasciare il ripiego sul prefisso
+        vecchio ripesca esattamente la cache che si voleva abbandonare, e
+        l'operazione sembra riuscita perche' la cache «c'e'».
+        ⚖️ E' la forma generale di un difetto che vediamo spesso: **la porta
+        di servizio di una cosa che credi di aver buttato.**
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        passi = wf["jobs"]["test"]["steps"]
+        restore = [p for p in passi
+                   if "actions/cache/restore" in str(p.get("uses", ""))]
+        save = [p for p in passi
+                if "actions/cache/save" in str(p.get("uses", ""))]
+        assert restore and save, "restore e save separati sono il presupposto"
+        k_r = str(restore[0]["with"]["key"])
+        k_s = str(save[0]["with"]["key"])
+        ripiego = str(restore[0]["with"].get("restore-keys", ""))
+        assert k_r == k_s, (
+            f"restore e save usano chiavi diverse:\n  restore {k_r}\n  save    "
+            f"{k_s}\nla cache verrebbe scritta dove nessuno la cerca")
+        prefisso = k_r.split("-")[0]
+        assert ripiego.startswith(prefisso), (
+            f"il ripiego {ripiego!r} non parte dal prefisso della chiave "
+            f"({prefisso!r}): ripescherebbe una cache di una generazione "
+            f"precedente, cioe' proprio quella che il cambio di chiave "
+            f"serviva ad abbandonare")
