@@ -74,10 +74,16 @@ def test_IL_WORKFLOW_DICHIARA_ANCORA_DEI_PERCORSI():
         f"misurare")
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "dopo 42f03411 il modello del gate va in ~/.cache/verimem/models mentre "
-    "ci.yml mette in cache ~/.engram/models: la cache salva una cartella vuota "
-    "e ogni job riscarica il modello"))
+# ✅ MARCATORE TOLTO il 15/08 (ws7). Il difetto c'era davvero, e la sua storia
+# vale piu' della riga: `~/.cache/verimem` era gia' nel workflow dalle 13:15,
+# aggiunto in anticipo su segnalazione di ws3 — ma **undici righe di commento
+# stavano DENTRO il blocco `path: |`**, dove `#` non e' un commento: in uno
+# scalare letterale YAML e' TESTO, e `actions/cache` le riceveva come pattern.
+# Il percorso c'era e non si vedeva. Tolti i commenti da li', questo test e'
+# passato a XPASS(strict) al primo colpo.
+# 🔑 Il cricchetto ha funzionato come progettato da chi l'ha scritto: non ha
+# detto «e' rotto», ha detto «adesso passa, togli il marcatore» — e a togliermelo
+# e' toccato senza che nessuno dovesse accorgersene a mano.
 def test_il_percorso_del_modello_e_coperto_dalla_cache():
     """Il cuore: ciò che il prodotto scarica dev'essere ciò che la CI conserva.
 

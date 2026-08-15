@@ -174,21 +174,20 @@ jobs:
           # estrae il cross-encoder del moat (711,5 MB, di cui 703,5 il
           # safetensors). Senza questa riga il passo sotto lo riscarica su OGNI
           # gamba di OGNI run: sei volte 711 MB, per sempre.
+          # ⚠️ `~/.cache/verimem` E' DOVE IL PRODOTTO SCARICA IL MODELLO DEL
+          # GATE dopo `42f03411` (ws1): sotto una cartella-dati quel download
+          # decideva dove vive la memoria dell'utente. Aggiunto qui in anticipo
+          # il 15/08, su segnalazione di ws3, e quando la cura e' atterrata la
+          # cache la copriva gia'.
+          # 🪞 E LE RIGHE DI QUESTO COMMENTO STAVANO DENTRO IL BLOCCO `path: |`,
+          # dove `#` NON e' un commento: in uno scalare letterale e' TESTO, e
+          # `actions/cache` le riceveva come pattern di percorso. Undici righe
+          # di prosa passate a un glob. Nessuno le avrebbe viste: il file si
+          # legge come se fossero commenti, e lo sono ovunque tranne li'.
           path: |
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
             ~/.engram/models
-            # ⚠️ AGGIUNTO IN ANTICIPO il 15/08, PRIMA che serva. ws1 sta
-            # spostando il modello del gate in `~/.cache/verimem/models`
-            # (`42f03411`, NON ancora in main) perche' sotto una cartella-dati
-            # decideva dove vive la memoria dell'utente. ws3 ha visto per primo
-            # che quella cura, atterrando, uscirebbe da questa lista: la cache
-            # salverebbe una cartella vuota e non quella dove il modello
-            # finisce davvero.
-            # 🔑 E' la classe «due lati che devono restare d'accordo e vivono in
-            # file diversi»: `local_grounding.py` non sa che esiste un `ci.yml`.
-            # Metterlo ORA costa una riga e non rompe niente se il commit non
-            # arriva; il test accanto tiene le due liste allineate da solo.
             ~/.cache/verimem
           # ⚠️ `hf2-` ANCHE QUI, e soprattutto nel ripiego: lasciare
           # `restore-keys: hf-` avrebbe ripescato ESATTAMENTE la cache
@@ -355,21 +354,20 @@ jobs:
           && steps.hf_completa.outputs.completa == 'true'
         uses: actions/cache/save@v4
         with:
+          # ⚠️ `~/.cache/verimem` E' DOVE IL PRODOTTO SCARICA IL MODELLO DEL
+          # GATE dopo `42f03411` (ws1): sotto una cartella-dati quel download
+          # decideva dove vive la memoria dell'utente. Aggiunto qui in anticipo
+          # il 15/08, su segnalazione di ws3, e quando la cura e' atterrata la
+          # cache la copriva gia'.
+          # 🪞 E LE RIGHE DI QUESTO COMMENTO STAVANO DENTRO IL BLOCCO `path: |`,
+          # dove `#` NON e' un commento: in uno scalare letterale e' TESTO, e
+          # `actions/cache` le riceveva come pattern di percorso. Undici righe
+          # di prosa passate a un glob. Nessuno le avrebbe viste: il file si
+          # legge come se fossero commenti, e lo sono ovunque tranne li'.
           path: |
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
             ~/.engram/models
-            # ⚠️ AGGIUNTO IN ANTICIPO il 15/08, PRIMA che serva. ws1 sta
-            # spostando il modello del gate in `~/.cache/verimem/models`
-            # (`42f03411`, NON ancora in main) perche' sotto una cartella-dati
-            # decideva dove vive la memoria dell'utente. ws3 ha visto per primo
-            # che quella cura, atterrando, uscirebbe da questa lista: la cache
-            # salverebbe una cartella vuota e non quella dove il modello
-            # finisce davvero.
-            # 🔑 E' la classe «due lati che devono restare d'accordo e vivono in
-            # file diversi»: `local_grounding.py` non sa che esiste un `ci.yml`.
-            # Metterlo ORA costa una riga e non rompe niente se il commit non
-            # arriva; il test accanto tiene le due liste allineate da solo.
             ~/.cache/verimem
           key: hf2-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
 
