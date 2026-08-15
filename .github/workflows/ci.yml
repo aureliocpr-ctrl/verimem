@@ -129,11 +129,37 @@ jobs:
         # full grid on release tags if per-version OS coverage is ever needed.
         os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        include:
-          - os: windows-latest
-            python-version: "3.12"
-          - os: macos-latest
-            python-version: "3.12"
+        # ⚙️ WINDOWS SOLO SU main E SUI PR, dal 2026-08-15 — e la ragione non e'
+        # che windows conti meno: e' che occupa un posto per un'ora.
+        #
+        # MISURATO alle 13:47, aprendo tutti i run in volo job per job::
+        #
+        #     ubuntu    4 in esecuzione · 24 in coda      <- il collo
+        #     windows   6 in esecuzione ·  1 in coda
+        #     macos     3 in esecuzione ·  3 in coda
+        #
+        # ⇒ Sono i job LENTI a tenere i posti: windows dura 46-52 minuti contro
+        # i 16-17 di ubuntu (misura di ws8), quindi 9 job windows contemporanei
+        # bloccano per un'ora la coda che si smaltirebbe in un quarto d'ora.
+        #
+        # 🔗 E i nove run contemporanei nascono da DUE CURE MIE, ciascuna giusta
+        # da sola: il gruppo per COMMIT (12/08) fa un run per push invece di
+        # cancellarli — cancellati da 26 su 40 a 2 su 50 — e il tetto windows a
+        # 60 minuti (13/08) le lascia il tempo di concludere, che prima non
+        # aveva (moriva a 45 in 4 run su 6). **E' la giuntura a costare, non i
+        # due pezzi.** Disfare l'una o l'altra rimetterebbe il difetto che ha
+        # curato; questa riga e' la terza leva, e non ne disfa nessuna.
+        #
+        # ⚠️ PREZZO DICHIARATO: una rottura solo-windows si scopre piu' tardi,
+        # al primo push su main o all'apertura di un PR invece che subito. NON
+        # e' teorico — questa settimana ne abbiamo trovate due (il `TypeError`
+        # con `stdout=None` in CI, e il tetto che la uccideva). Chi rimette
+        # windows su ogni push sappia che compra questo e paga la coda.
+        #
+        # 📌 macos resta su ogni push: dura 22 minuti, un quarto del costo.
+        include: ${{ (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
+          && fromJSON('[{"os":"windows-latest","python-version":"3.12"},{"os":"macos-latest","python-version":"3.12"}]')
+          || fromJSON('[{"os":"macos-latest","python-version":"3.12"}]') }}
     steps:
       - uses: actions/checkout@v4
 

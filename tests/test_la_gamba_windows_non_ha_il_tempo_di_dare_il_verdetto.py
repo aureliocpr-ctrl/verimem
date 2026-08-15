@@ -115,6 +115,44 @@ class TestIlTettoDistingueLeGambe:
             f"parita' di esito): numeri letti = {numeri}"
         )
 
+    def test_nessuna_PIATTAFORMA_sparisce_dalla_matrice(self, job_test):
+        """⚠️ IL PRESIDIO CHE SERVE PERCHE' LA RIGA SOPRA E' UN'ESPRESSIONE.
+
+        Dal 15/08 `include` non e' piu' una lista ma un'espressione di Actions:
+        windows entra solo su `main` e sui PR, perche' occupa un posto per
+        un'ora e blocca la coda ubuntu (misurato: ubuntu 4 in esecuzione contro
+        24 in coda, windows 6 contro 1).
+
+        🔑 Quell'espressione la valuta il runner, non `yaml`: **in locale non e'
+        falsificabile**, e un refuso che la svuota non produce nessun errore —
+        produce una CI che gira su meno piattaforme e resta verde. Un test che
+        legge il tetto o le chiavi di cache non se ne accorge: guardano altro.
+        ⇒ Qui si pretende che l'espressione **nomini entrambe le piattaforme e
+        abbia entrambi i rami**. E' un controllo sul TESTO, ed e' legittimo
+        proprio perche' l'oggetto misurato e' il testo: la semantica sta sul
+        runner e da qui non si raggiunge.
+        """
+        inc = job_test["strategy"]["matrix"].get("include")
+        if isinstance(inc, list):        # forma statica: nulla da presidiare
+            piattaforme = {str(v.get("os", "")) for v in inc}
+            assert "macos-latest" in piattaforme, piattaforme
+            return
+        testo = str(inc)
+        assert "windows-latest" in testo, (
+            f"la matrice non nomina piu' windows: se e' stata tolta di "
+            f"proposito questo test va riscritto, ma se e' un refuso "
+            f"nell'espressione la CI smette di provare windows RESTANDO VERDE. "
+            f"include = {testo[:160]}")
+        assert testo.count("macos-latest") >= 2, (
+            f"macos deve comparire in ENTRAMBI i rami dell'espressione — gira "
+            f"su ogni push perche' costa 22 minuti, un quarto di windows. "
+            f"Comparendo una volta sola sparirebbe da meta' dei run. "
+            f"include = {testo[:160]}")
+        assert "refs/heads/main" in testo and "pull_request" in testo, (
+            f"la condizione non nomina piu' main o i pull request: windows "
+            f"girerebbe sempre (e la coda torna quella di oggi) oppure mai "
+            f"(e la portabilita' non e' piu' provata). include = {testo[:160]}")
+
     def test_il_lavoro_lento_del_gate_non_e_stato_aggiunto_di_nascosto(self):
         """GUARDIANO PER LA CURA DI UN'ALTRA: togliere `--no-gate` dal warmup
         accende 16+6 test del giudice ma scarica **711,5 MB** in
