@@ -231,11 +231,16 @@ typical library and it is worth knowing before you start:
 
 Measured on Windows with Python 3.13; on Linux the `torch` wheel differs, so the first row
 changes. These are *sizes on disk after installation*, not download sizes — the download is
-smaller for the packages (221 MB compressed) and roughly the same for the models. **How long
-the first run takes is not measured**, and the numbers above say nothing about it.
+smaller for the packages (221 MB compressed) and roughly the same for the models, though that
+last part was not measured.
+
+**How long it takes**: `verimem warmup --no-gate` — everything except the judge — took
+**2 minutes and 45 seconds** on a clean cache. The full warmup downloads about three times as
+much and was **not timed**, so treat the total as unknown rather than as three times that.
 
 If you only need the deterministic checks and can live without the local judge, `verimem
-warmup --no-gate` skips the 656 MB gate model.
+warmup --no-gate` skips the judge model entirely — it never creates the model directory. That
+model is announced as 656 MB (the download); on disk it takes 711 MB.
 
 ## Quickstart (Python)
 
