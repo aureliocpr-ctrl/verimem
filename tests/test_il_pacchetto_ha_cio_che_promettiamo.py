@@ -25,6 +25,7 @@ perché gli altri due leggono l'albero. Gli altri due esistono perché girano se
 """
 from __future__ import annotations
 
+import importlib.metadata
 import re
 import subprocess
 import sys
@@ -32,6 +33,11 @@ import zipfile
 from pathlib import Path
 
 import pytest
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # tomllib è 3.11+
+    tomllib = None
 
 RADICE = Path(__file__).resolve().parents[1]
 CLI = RADICE / "verimem" / "cli.py"
@@ -274,12 +280,55 @@ def test_il_server_mcp_si_importa():
         )
 
 
+def _cosa_manca_per_costruire() -> list[str] | None:
+    """I requisiti di build che l'ambiente non ha. ``None`` = non misurabile.
+
+    L'elenco NON è scritto qui: viene da ``[build-system] requires`` del
+    pyproject, così se un domani il backend cambia, il criterio lo segue invece
+    di descrivere il passato. Si interroga ``importlib.metadata`` e non un
+    ``import``, perché ``requires`` nomina **distribuzioni**, e il nome della
+    distribuzione non sempre è il nome del modulo importabile.
+    """
+    if tomllib is None:  # non sappiamo leggere: non accusiamo il prodotto
+        return None
+    dati = tomllib.loads((RADICE / "pyproject.toml").read_text(encoding="utf-8"))
+    mancanti = []
+    for spec in dati.get("build-system", {}).get("requires", []):
+        nome = re.split(r"[<>=!~;\[ ]", spec, maxsplit=1)[0].strip()
+        try:
+            importlib.metadata.version(nome)
+        except importlib.metadata.PackageNotFoundError:
+            mancanti.append(nome)
+    return mancanti
+
+
 @pytest.fixture(scope="module")
 def wheel_costruito(tmp_path_factory):
     """Costruisce il wheel UNA volta per tutti i test che devono guardarci dentro.
 
     Prima era una `subprocess.run` dentro il singolo test; con due consumatori il
     wheel veniva costruito due volte (~25 s ciascuno) per leggere lo stesso file.
+
+    QUI UN SOLO RAMO COPRIVA DUE CAUSE OPPOSTE, e saltava su entrambe::
+
+        if esito.returncode != 0:
+            pytest.skip(f"build del wheel non riuscita in questo ambiente: …")
+
+    «non riuscita in questo ambiente» è una delle due letture possibili di
+    quel codice di uscita. L'altra è **il nostro pacchetto non si costruisce
+    più**, che non è una condizione da tollerare: è il difetto più grave che
+    questo file possa incontrare, perché un pacchetto che non si costruisce non
+    si pubblica. Sotto lo stesso skip, il caso che verifica *il controllo che
+    PyPI fa prima di accettare* taceva proprio nel momento in cui aveva più
+    ragione di parlare.
+
+    Le due cause ora si separano leggendo cosa il prodotto **dichiara** di
+    volere per costruirsi. Se l'ambiente ha tutto, un fallimento è nostro.
+
+    Misurato il 2026-08-15 prima di toccare: ``build 1.5.1`` presente,
+    returncode **0**, `verimem-0.7.5-py3-none-any.whl` prodotto — lo skip non
+    scattava. Terza volta in un pomeriggio che un ramo inerte si rivela
+    orientato al contrario del suo scopo.
     """
     dove = tmp_path_factory.mktemp("wheel")
     esito = subprocess.run(
@@ -287,10 +336,29 @@ def wheel_costruito(tmp_path_factory):
         cwd=RADICE, capture_output=True, text=True, timeout=900,
     )
     if esito.returncode != 0:
-        pytest.skip(f"build del wheel non riuscita in questo ambiente: {esito.stderr[-400:]}")
+        manca = _cosa_manca_per_costruire()
+        if manca is None:
+            pytest.skip(
+                "la build fallisce e questo Python non ha tomllib (3.11+), "
+                "quindi non si può stabilire se manchi all'ambiente o al "
+                f"pacchetto: {esito.stderr[-300:]}")
+        if manca:
+            pytest.skip(
+                f"l'ambiente non ha {manca}, che «[build-system] requires» "
+                f"dichiara necessari: la build non poteva riuscire qui, e non "
+                f"è il pacchetto a essere in difetto")
+        pytest.fail(
+            f"l'ambiente ha tutto ciò che «[build-system] requires» dichiara "
+            f"e `python -m build --wheel` esce {esito.returncode}: non è "
+            f"l'ambiente, è il pacchetto che non si costruisce più — e un "
+            f"pacchetto che non si costruisce non si pubblica.\n"
+            f"{esito.stderr[-800:]}")
     wheels = list(dove.glob("*.whl"))
     if not wheels:
-        pytest.skip(f"nessun wheel prodotto in {dove}")
+        pytest.fail(
+            f"`build` è uscito 0 e in {dove} non c'è alcun .whl: un comando "
+            f"che dichiara di aver funzionato senza produrre l'artefatto è un "
+            f"difetto, non una condizione dell'ambiente da saltare")
     return wheels[0]
 
 
