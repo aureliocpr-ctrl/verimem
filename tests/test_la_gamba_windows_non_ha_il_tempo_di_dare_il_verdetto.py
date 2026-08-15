@@ -253,6 +253,39 @@ class TestIlTettoDistingueLeGambe:
             "la guardia non conta: senza un conteggio il verdetto dipende "
             "dall'ordine di visita del filesystem, che nessuno controlla")
 
+    def test_il_salvataggio_della_cache_viene_PRIMA_dei_test(self):
+        """⚠️ Il terzo modo in cui questa cura non funzionava, e il piu' banale.
+
+        Guardia e salvataggio stavano **in fondo al job**, dopo i test, lo
+        smoke install e il caricamento della copertura. Li' non girano affatto
+        quando il job MUORE — e il job che ha avvelenato la cache era morto di
+        SIGSEGV **durante i test**, cioe' esattamente nel tratto che li
+        precedeva. Visto leggendo gli step di un job in corso::
+
+            Cache HuggingFace models                completed / success
+            Warm embedding model                    completed / success
+            La cache contiene davvero il modello?   pending      ← dopo i test
+            Save HuggingFace models cache           pending
+
+        🔑 **Un presidio piazzato dopo il punto in cui le cose si rompono non e'
+        un presidio.** Il modello lo produce il WARMUP: e' li' che va misurato e
+        salvato, prima che qualunque test possa impedirlo.
+        ⚖️ Prezzo dichiarato: non si cattura piu' cio' che scaricano i test. E'
+        voluto — i test non devono scaricare nulla, e' tutto il punto della
+        cache; se scaricassero sarebbe un difetto da vedere, non da nascondere
+        dentro una cache piu' grassa.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        nomi = [str(p.get("name") or p.get("uses", ""))
+                for p in wf["jobs"]["test"]["steps"]]
+        i_save = next(i for i, n in enumerate(nomi) if "Save HuggingFace" in n)
+        i_test = next(i for i, n in enumerate(nomi) if n.strip() == "Tests")
+        assert i_save < i_test, (
+            f"il salvataggio della cache (passo {i_save}) viene DOPO i test "
+            f"(passo {i_test}): un job che muore durante i test non lo esegue, "
+            f"ed e' proprio cosi' che la cache e' rimasta vuota per un giorno")
+
     def test_la_guardia_della_cache_non_MUORE_se_la_cartella_non_esiste(self):
         """⚠️⚠️ IL SECONDO DIFETTO DELLA STESSA GUARDIA, che il primo nascondeva.
 
