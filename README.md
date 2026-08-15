@@ -450,6 +450,18 @@ grader. Full methodology, caveats and raw result files:
 | Memory-boundary abstention (end-to-end) | **1.000 — seven consecutive full runs** | — |
 | Extraction F1 (58 sessions, replicated ×2) | 0.761–0.768 | 0.797 |
 
+**Where each of our numbers comes from** — the committed artefact and the key
+inside it, so you can check any of them without guessing:
+`0.667` and `0.716` → [`e2e_crossuser_u2.json`](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/results/e2e_crossuser_u2.json)
+(`u1_mean_3runs`, `accuracy`) · `0.750` → [`qa_gem_k12_u0.json`](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/results/qa_gem_k12_u0.json)
+and `0.787` → [`qa_gem_k12_u2.json`](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/results/qa_gem_k12_u2.json)
+(`accuracy`) · `0.761` → [`extraction_consolidate_u5s6.json`](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/results/extraction_consolidate_u5s6.json)
+and `0.768` → [`halumem_extraction_f1_u10s6_refined_completeness.json`](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/results/halumem_extraction_f1_u10s6_refined_completeness.json)
+(`f1`). ⚠️ **`0.739` is the exception and we say so**: it is reported in
+[`BENCHMARKS.md`](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md)
+(as `0.7394`) and **has no committed results file** — the third user's run is
+not in `benchmark/results/`, where `u0` and `u2` are.
+
 We describe the end-to-end result as **parity, not a win**: the same-recipe
 runs cluster around MemOS's self-reported number and the judges differ
 (ours vs theirs). Trust properties hold through the full pipeline. On
