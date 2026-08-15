@@ -191,8 +191,21 @@ def backpressure_warning(db_path: Path | str) -> dict[str, str] | None:
         "reason": (f"{p['depth']} facts are waiting in the quarantine/review "
                    f"backlog (threshold {p['threshold']}){quando} — this "
                    f"write joins them"),
-        "advice": ("drain the backlog (review and restore or forget) — a "
-                   "queue nobody drains turns 'held for review' into "
-                   "'silently dropped'; tune or disable with "
-                   "ENGRAM_REVIEW_QUEUE_MAX (0 = off)"),
+        # ⚠️ L'AVVISO NOMINA I COMANDI, e non è un dettaglio di cortesia.
+        # Fino al 2026-08-15 diceva «drain the backlog (review and restore or
+        # forget)» — le AZIONI, non gli strumenti — e nominava per esteso solo
+        # `ENGRAM_REVIEW_QUEUE_MAX (0 = off)`, cioè **come farlo tacere**.
+        # 🔑 L'unica istruzione precisa era quella che non drena niente.
+        # Misurato quel giorno su questo store: 882 in coda, e
+        # `facts requalify-quarantined` (dry-run per difetto) ne dichiara
+        # **136 recuperabili** — 99 approvati dal giudice, 37 mai giudicati,
+        # ZERO respinti. Lo strumento c'era, l'avviso c'era, e non si
+        # nominavano: il backlog è cresciuto per attrito, non per disaccordo.
+        "advice": ("drain the backlog — `verimem facts quarantine-log` to see "
+                   "it, `verimem facts requalify-quarantined` (dry run by "
+                   "default) to re-admit what a since-fixed false positive is "
+                   "still holding, then restore or forget the rest. A queue "
+                   "nobody drains turns 'held for review' into 'silently "
+                   "dropped'; tune or disable with ENGRAM_REVIEW_QUEUE_MAX "
+                   "(0 = off)"),
     }

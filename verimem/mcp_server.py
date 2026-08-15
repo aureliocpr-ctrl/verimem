@@ -56,6 +56,10 @@ from mcp.server.stdio import stdio_server  # noqa: E402
 from .agent import VerimemAgent  # noqa: E402
 from .config import CONFIG  # noqa: E402
 from .fact_contract import fact_payload  # noqa: E402
+#: L'etichetta di affidabilità si calcola QUI, non si importa da `client`: quel
+#: modulo la espone solo come wrapper (`client._confidence_tier`), e il server
+#: non deve dipendere dal client per una funzione che sta nel gate.
+from .grounding_gate import confidence_tier as _calcola_tier  # noqa: E402
 from .observability import emit, get_log  # noqa: E402
 from .text_cut import safe_cut  # noqa: E402
 
@@ -517,6 +521,10 @@ def _build_fact(
     valid_until: float | None = None,
     derives_from: list[str] | None = None,
     writer_principal: str | None = None,
+    #: L'etichetta di affidabilità del gate. Default None **apposta**: chi non la
+    #: passa si comporta come prima di questa modifica, e i chiamanti che non
+    #: hanno un gate sotto mano non devono inventarne una.
+    confidence_tier: str | None = None,
 ) -> Any:
     """Build a Fact object with a CONTENT-DERIVED id (cycle #46b + #109).
 
@@ -557,6 +565,16 @@ def _build_fact(
         derives_from=list(derives_from or []),
         # P0 v9: server-stamped identity (see _MCP_PRINCIPAL).
         writer_principal=writer_principal,
+        # 2026-08-15: mancava, e mancava a TUTTI E SOLI i fatti scritti via MCP
+        # (misurato sul corpus: mcp:* 145 su 145 senza etichetta, cli:* 4011 su
+        # 4011 con). Non era un ramo che sbagliava il calcolo: questa funzione
+        # costruisce il Fact dentro il server, non passa da `client.add()`, e
+        # `mcp_server` non importava nemmeno la funzione che l'etichetta la
+        # calcola. Restava None PER COSTRUZIONE — e i due esemplari che l'hanno
+        # fatta notare avevano punteggi agli antipodi (0,19 e 99,95) con lo
+        # stesso esito: l'etichetta non dipendeva dalla qualità del fatto, ma
+        # dalla PORTA da cui entrava.
+        confidence_tier=confidence_tier,
     )
 
 
@@ -8940,6 +8958,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                             # P0 v9 critic fix: key_facts is a SECOND MCP
                             # write path — stamp it like hippo_remember.
                             writer_principal=_MCP_PRINCIPAL,
+                            # …e per la stessa ragione porta l'etichetta del
+                            # gate: era stata dimenticata esattamente dove il
+                            # principal era stato ricordato.
+                            confidence_tier=_calcola_tier(
+                                _kf_gs,
+                                getattr(_kf_gate, "judge", None),
+                                getattr(_kf_gate, "threshold", None),
+                            ),
                         )
                         # audit#3-r3 R20 (cont.): budget the key-fact write too
                         # — it hits the SAME semantic.db lock, so an unbudgeted
@@ -12838,6 +12864,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     valid_until=valid_until,
                     derives_from=[str(d) for d in _derives_raw],
                     writer_principal=_MCP_PRINCIPAL,
+                    # L'etichetta del gate che ha appena giudicato questa
+                    # scrittura: `_gate` è lo stesso oggetto su cui i rami
+                    # sopra decidono reject e downgrade.
+                    confidence_tier=_calcola_tier(
+                        getattr(_gate, "grounding_score", None),
+                        getattr(_gate, "judge", None),
+                        getattr(_gate, "threshold", None),
+                    ),
                 )
             except ValueError as exc:
                 # Invalid status enum bubbles up here (validation
