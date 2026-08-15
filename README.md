@@ -220,6 +220,23 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
 pip install verimem
 ```
 
+**What it costs on disk.** Verimem ships a local judge, so the footprint is larger than a
+typical library and it is worth knowing before you start:
+
+| step | on disk |
+|---|---|
+| `pip install verimem` — 74 packages, `torch` is more than half of it | **~1.0 GB** |
+| first `verimem warmup` — embedding model + gate model | **~2.3 GB** |
+| **total, first run on a clean machine** | **~3.3 GB** |
+
+Measured on Windows with Python 3.13; on Linux the `torch` wheel differs, so the first row
+changes. These are *sizes on disk after installation*, not download sizes — the download is
+smaller for the packages (221 MB compressed) and roughly the same for the models. **How long
+the first run takes is not measured**, and the numbers above say nothing about it.
+
+If you only need the deterministic checks and can live without the local judge, `verimem
+warmup --no-gate` skips the 656 MB gate model.
+
 ## Quickstart (Python)
 
 ```python
