@@ -516,6 +516,29 @@ jobs:
   # is exercised for real). SDK smoke asserts the admission gate fires and
   # reads carry provenance; the MCP stdio server must answer initialize with
   # a protocol-pure stdout (the bug the gate caught on 2026-07-04).
+  # ⚠️⚠️ COSA QUESTO JOB **NON** PROVA — leggerlo verde e concludere troppo e'
+  # il modo in cui si fabbrica la prossima riga scaduta del gate.
+  #
+  # Prova: che il wheel si INSTALLI in un venv vergine e che il pacchetto
+  # RISPONDA — gate deterministico e handshake MCP.
+  # NON prova: che le PROMESSE del README valgano sull'installato. Misurato da
+  # ws2 il 2026-08-15::
+  #
+  #     occorrenze di «test_le_promesse_valgono_appena_installato» in ci.yml:  0
+  #
+  # ⚠️ E aggiungercelo non basterebbe: lo step qui sotto scarica **e5**
+  # (l'embedding), non il **gate** (656 MB, che arriva solo dal warmup senza
+  # `--no-gate`). In un venv vergine `local_ce_available()` risponde False e
+  # quelle prove **skipperebbero in silenzio**, cioe' lo stesso stato di oggi
+  # con un verde in piu' sopra.
+  # 🔑 Questo fronte e quello del warmup best-effort sono LO STESSO FRONTE
+  # (formulazione di ws2): finche' il warmup non scarica il gate — o non
+  # DICHIARA di non averlo fatto — il contorno resta verificato a meta', e la
+  # meta' mancante e' proprio quella che il README promette.
+  #
+  # 📌 Questo job e' rimasto `skipped` per oltre 200 ore (`needs: build` →
+  # `needs: test`), e nel frattempo **G8 del release gate restava ✅ citandolo
+  # come prova**. Riacceso in `dcc41bc8`; G8 datato in `ae210e47`.
   wheel-install:
     name: wheel install-from-scratch (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
