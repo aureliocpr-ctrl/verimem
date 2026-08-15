@@ -2036,6 +2036,48 @@ def negation_conflict(text_a: str, text_b: str) -> str | None:
     #: Lo scope si tiene in DUE forme: quella normalizzata decide, quella
     #: originale è ciò che si restituisce — il chiamante mostra questo token a
     #: chi legge, e «成» al posto di «成功» sarebbe una diagnosi illeggibile.
+    #: ⚠️ LO SCOPE VA MISURATO NELLE STESSE UNITA' DI ``ca``/``cb``, e il modo
+    #: sicuro di ottenerlo è **richiamare la funzione che quelle unità le ha
+    #: prodotte**. La versione precedente ne ripeteva la logica a mano — i
+    #: caratteri singoli, giusti per cinese e giapponese — e condizionava la
+    #: cosa a ``_e_prevalentemente_cjk``. Su una scrittura senza spazi che
+    #: quella funzione NON riconosce, il thai, restavano disallineate::
+    #:
+    #:     scoped   {'ดพลาด'}         una parola intera
+    #:     shared   {'ดพ', 'พล', …}   bigrammi
+    #:     ⇒ scoped_shared vuoto, e la guardia sotto rispondeva None
+    #:
+    #: cioè «la negazione colpisce una parola che l'altro lato non dice»
+    #: mentre l'altro lato la diceva eccome: la frase e la sua negata avevano
+    #: 14 token in comune su 18.
+    #: 🔑 Una copia della logica invece della superficie unica: appena le due
+    #: si separano, il difetto compare **solo** dove la copia non arriva.
+    #: Misurato prima della cura, lo scope ri-tokenizzato è IDENTICO su
+    #: inglese, italiano, coreano, giapponese, cinese e sul caso-trappola
+    #: «complete, not blocked» — cambia solo dove serviva.
+    #: ⚠️⚠️ IL THAI RESTA SCOPERTO QUI, E LA CURA OVVIA È STATA PROVATA E
+    #: RITIRATA il 15/08. La diagnosi è certa: su una scrittura senza spazi che
+    #: ``_e_prevalentemente_cjk`` non riconosce, ``scoped`` resta una parola
+    #: intera mentre ``shared`` contiene bigrammi, e la guardia sotto risponde
+    #: «la negazione colpisce una parola che l'altro lato non dice» su due
+    #: frasi che condividono 14 token su 18::
+    #:
+    #:     scoped   {'ดพลาด'}          shared   {'ดพ', 'พล', …}
+    #:
+    #: Ma **allineare le unità qui rompe tre casi veri**, misurati:
+    #:   · ``_token_di_confronto`` sullo scope → il cinese perde il flip, perché
+    #:     quella funzione taglia in base alla LUNGHEZZA del testo che riceve e
+    #:     uno scope di due caratteri non è «prevalentemente cjk» mentre la
+    #:     frase da cui viene lo è;
+    #:   · condizionandolo alla frase → cadono «il farmaco riduce la mortalità»
+    #:     contro «non riduce» (il caso fondativo di questa superficie),
+    #:     e inglese e arabo tornano a rispondere `supported` a una negazione.
+    #:
+    #: 🔑 La diagnosi era giusta e la cura sbagliata, e la cura sbagliata
+    #: sembrava la più pulita delle due: «riusa la superficie unica invece di
+    #: ripeterne la logica». Qui la logica ripetuta a mano è corretta proprio
+    #: perché il criterio dipende dal testo INTERO, non dal frammento.
+    #: ⇒ Il thai chiede una via che non passa da questa riga.
     scoped_orig = _negated_tokens(text_a if na else text_b)
     scoped = ({c for tok in scoped_orig for c in tok}
               if _e_prevalentemente_cjk(text_a if na else text_b) else scoped_orig)
