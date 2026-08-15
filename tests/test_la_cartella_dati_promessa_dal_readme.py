@@ -164,10 +164,6 @@ def test_IL_README_PROMETTE_ANCORA_ENTRAMBI_I_PERCORSI():
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "il warmup crea ~/.engram/models (local_grounding.py:41, hardcoded) e il "
-    "risolutore la legge come store preesistente: chi segue l'ordine insegnato "
-    "dal README non ottiene la cartella che il README promette"))
 def test_LA_SEQUENZA_DEL_README_porta_alla_cartella_promessa():
     """Il README promette `.verimem` a chi installa, e insegna a lanciare
     `warmup` per primo. Le due istruzioni devono poter convivere.

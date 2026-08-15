@@ -38,13 +38,34 @@ _ENV_MODEL_DIR = "ENGRAM_LOCAL_GATE_MODEL"
 # admit 0.82→0.98, agreement vs claude 0.76→0.88). Trained by distilling the claude
 # DECISION on a mixed HaluMem-GT + real-corpus set (benchmark/local_gate_distill_v2.py).
 # v1 (local_gate_ce) is kept on disk for comparison. Override with ENGRAM_LOCAL_GATE_MODEL.
-DEFAULT_MODEL_DIR = Path.home() / ".engram" / "models" / "local_gate_ce_v2"
+#
+# NOT under a data dir (~/.verimem, ~/.engram, ~/.hippoagent). `warmup` CREATES this
+# path, and `_compat.data_dir()` picks the store by asking which of those exists — so a
+# downloadable model would decide where the user's memory lives. Measured 2026-08-15,
+# both directions: with the model under ~/.engram a fresh install stops getting the
+# ~/.verimem the README promises; with it under ~/.verimem a 1.43 GB ~/.engram store
+# drops out of sight. A cache dir is neither, so the resolver keeps its own answer.
+DEFAULT_MODEL_DIR = Path.home() / ".cache" / "verimem" / "models" / "local_gate_ce_v2"
+# Where warmup used to put it: still read (never written) so an existing install does
+# not re-download 711 MB after upgrading.
+_LEGACY_MODEL_DIR = Path.home() / ".engram" / "models" / "local_gate_ce_v2"
 _DEFAULT_FOCUS_BUDGET = 1500
+
+
+def _holds_a_model(d: Path) -> bool:
+    """True only when the dir actually HOLDS a model — its mere existence is not
+    enough: an empty dir is what `from_pretrained` chokes on, and what made the
+    availability probe answer yes on nothing at all."""
+    return (d / "config.json").is_file()
 
 
 def _resolve_model_dir(model_dir: str | Path | None) -> Path:
     env = os.environ.get(_ENV_MODEL_DIR, "").strip()
-    return Path(env or model_dir or DEFAULT_MODEL_DIR).expanduser()
+    if env or model_dir:
+        return Path(env or model_dir).expanduser()
+    if not _holds_a_model(DEFAULT_MODEL_DIR) and _holds_a_model(_LEGACY_MODEL_DIR):
+        return _LEGACY_MODEL_DIR
+    return DEFAULT_MODEL_DIR
 
 
 def make_finetuned_scorer(model_dir: str | Path, *, max_length: int = 512,
