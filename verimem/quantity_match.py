@@ -1195,11 +1195,34 @@ def _senza_diacritici(text: str) -> str:
 
 
 #: Han (cinese e kanji giapponesi), hiragana, katakana ed estensioni.
+#: ⚠️ NON ESTENDERE QUESTA: la usa anche ``_e_prevalentemente_cjk``, che decide
+#: una cosa DIVERSA — se il testo sia privo di spazi fra le parole. Il coreano
+#: gli spazi ce li ha, quindi allargarla cambierebbe quel verdetto senza che
+#: nessuno l'abbia chiesto. Per i bigrammi c'è ``_SENZA_PAROLE_RE`` sotto.
 _CJK_RE = re.compile(r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿]{2,}")
 
 
+#: Le scritture in cui la PAROLA non è l'unità utile del confronto — 15/08.
+#: Ai CJK si aggiungono **hangul** e **thai**, per due ragioni diverse:
+#:   · il thai non separa le parole con spazi, esattamente come il cinese;
+#:   · il coreano gli spazi ce li ha, ma le sue parole sono agglutinate e una
+#:     negazione ne cambia una INTERA («있습니다» → «없습니다»), quindi due frasi
+#:     sullo stesso soggetto condividevano UN solo token e la guardia dello
+#:     stesso-soggetto non poteva scattare.
+#: Misurato PRIMA di scrivere, token condivisi fra una frase e la sua negata::
+#:     KO  1 → 8        TH  0 → 14        KO (magazzino)  2 → 13
+#: e sulla popolazione opposta, frasi di soggetto DIVERSO, 0 → 1 e 0 → 0: il
+#: criterio non diventa generoso, che è il rischio vero di un n-gramma.
+#: ⚠️ Controprova: italiano, inglese, russo, cinese e giapponese danno token
+#: IDENTICI a prima — la riga sotto non tocca chi già funzionava.
+_SENZA_PAROLE_RE = re.compile(
+    r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿"
+    r"가-힯ᄀ-ᇿ"       # hangul: sillabe precomposte e jamo
+    r"฀-๿]{2,}")       # thai
+
+
 def _bigrammi_cjk(text: str) -> set[str]:
-    """I bigrammi di caratteri delle sequenze cinesi e giapponesi.
+    """I bigrammi di caratteri delle scritture senza parole separate.
 
     🔑 LA DOMANDA CHE HA PORTATO QUI non era «come tokenizziamo il cinese», ma
     **«esiste un criterio di stesso-soggetto che non passi dalle parole?»** — e
@@ -1236,7 +1259,7 @@ def _bigrammi_cjk(text: str) -> set[str]:
     restituisce l'insieme vuoto e ``content_tokens`` resta identica a prima.
     """
     out: set[str] = set()
-    for run in _CJK_RE.findall(text or ""):
+    for run in _SENZA_PAROLE_RE.findall(text or ""):
         for i in range(len(run) - 1):
             out.add(run[i:i + 2])
     return out

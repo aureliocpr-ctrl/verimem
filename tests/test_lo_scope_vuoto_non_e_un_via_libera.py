@@ -131,27 +131,43 @@ def test_ADESSO_IL_FLIP_ESCE_DAVVERO_in_turco_e_hindi():
                                "सिस्टम हस्ताक्षरित नहीं है")
 
 
-def test_IL_NEGATORE_VISTO_NON_BASTA_a_far_uscire_il_flip_in_coreano_e_thai():
-    """📌 IL LIMITE NUOVO, misurato: la cura è buona e **insufficiente**.
+def test_ANCHE_IL_COREANO_produce_il_flip_dopo_i_bigrammi():
+    """✅ SECONDA SCADENZA DELLA GIORNATA, e di nuovo l'ha detta la suite.
 
-    `_has_negator` riconosce ora anche «없» e «ไม่» — verificato nel presidio
-    dei negatori — ma su questa porta il flip **non esce lo stesso**::
+    Venti minuti prima questo test asseriva che né coreano né thai
+    producessero il flip, e ne dava la causa: riconoscere la negazione è
+    **necessario e non sufficiente**, perché il confronto vuole anche token
+    condivisi, e quelle scritture non li offrivano.
 
-        TR  «hata»      esce          HI  «सिसटम»   esce
-        KO  None        non esce      TH  None       non esce
+    La causa era esatta e la cura è seguita: i bigrammi di caratteri, che
+    cinese e giapponese usavano già, ora coprono anche l'hangul. Token
+    condivisi fra una frase e la sua negata, **misurati prima** di scrivere::
 
-    ⇒ Riconoscere la negazione è **necessario e non sufficiente**: qui il
-    confronto ha bisogno anche di token condivisi fra le due frasi, e coreano
-    e thai non separano le parole con spazi. È lo stesso muro del giapponese e
-    del cinese, su un percorso diverso da quello già curato.
+        KO  1 → 8       TH  0 → 14       KO (magazzino)  2 → 13
 
-    ⚠️ Da non leggere come «il gate non smentisce in coreano»: alla porta
-    pubblica `validate_claim` il coreano **funziona** dopo la cura. Sono due
-    porte con due esiti, ed è la ragione per cui un verdetto va sempre
-    accompagnato dal punto in cui è stato misurato.
+    🔑 Il coreano non è una lingua senza spazi — ce li ha. Ma le sue parole
+    sono agglutinate e la negazione ne cambia una intera («있습니다» →
+    «없습니다»): due frasi sullo stesso soggetto condividevano **un solo
+    token**, sotto ogni soglia. I bigrammi risolvono un problema che non era
+    quello del cinese, con lo stesso strumento.
     """
     assert Q.negation_conflict("시스템에 오류가 있습니다",
-                               "시스템에 오류가 없습니다") is None
+                               "시스템에 오류가 없습니다")
+
+
+def test_IL_THAI_RESTA_SENZA_FLIP_e_i_token_non_sono_la_causa():
+    """📌 IL LIMITE CHE RESTA, e stavolta con la causa ESCLUSA.
+
+    Il thai ha ora **14 token condivisi** fra la frase e la sua negata — più
+    del coreano, che il flip lo produce — e `_has_negator` riconosce «ไม่».
+    ⇒ **Non è l'overlap e non è il negatore**: la causa è altrove, e finché
+    non è misurata questo test la tiene ferma invece di lasciarla intuire.
+
+    ⚠️ Da non leggere come «il gate non smentisce in thai»: questa è la porta
+    di `negation_conflict`. Alla porta pubblica il thai ha un difetto suo, sul
+    riconoscimento del soggetto, che è ancora un altro percorso — tre porte,
+    tre esiti, e un verdetto vale solo dove è stato misurato.
+    """
     assert Q.negation_conflict("ระบบมีข้อผิดพลาด",
                                "ระบบไม่มีข้อผิดพลาด") is None
 
