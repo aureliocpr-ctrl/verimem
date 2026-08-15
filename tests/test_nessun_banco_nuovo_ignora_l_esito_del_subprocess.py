@@ -83,6 +83,10 @@ ANCORA_CIECHI = frozenset({
     # sbagliato — il processo viene ucciso di proposito — e il difetto era
     # `stderr=DEVNULL`, che scartava il motivo quando il worker moriva PRIMA
     # del kill: su un banco di crash injection, lo scambio peggiore possibile.
+
+    # ESAMINATO 15/08 — REGGE: assert su una stringa POSITIVA attesa
+    # («DONE RuntimeError») e il messaggio porta stdout E stderr. Processo
+    # morto -> stdout vuoto -> l'assert scatta, col perche' sotto gli occhi.
     "test_embedding_load_no_hang.py",
     "test_flow_surface_onesta.py",
     # I due banchi delle PROMESSE DEL README — curati il 14/08, e non erano
@@ -90,6 +94,11 @@ ANCORA_CIECHI = frozenset({
     # **si spegnevano da soli quando cadeva la promessa che verificano**.
     # Saltare è legittimo quando NON SI PUÒ misurare (docker assente, modello
     # non in cache); non quando il soggetto misurato ha fallito.
+
+    # ESAMINATO 15/08 — REGGE: l'helper rende `stdout + stderr` e gli assert
+    # cercano marcatori POSITIVI. Se il processo muore, `out` e' vuoto, l'assert
+    # scatta — e il traceback e' gia' dentro `out`, quindi la diagnosi compare
+    # nel messaggio senza doverla aggiungere.
     "test_log_level_env.py",
     # test_mcp_e2e_smoke.py — CURATO il 15/08, e il difetto era il piu' subdolo
     # della famiglia: il secondo dei due test iterava su `stdout.splitlines()`
@@ -115,6 +124,11 @@ ANCORA_CIECHI = frozenset({
     # assert scatta · quella rotta: NON scatta · curata: rosso col perche'.
     # ⇒ **Un valore di ripiego dentro una funzione il cui risultato viene
     # testato per verita' e' un modo silenzioso di disattivare un controllo.**
+
+    # ESAMINATO 15/08 — REGGE, e per una ragione diversa dalle altre: qui il
+    # subprocess e' STRUMENTALE, serve solo a fabbricare un pid morto. Il
+    # soggetto misurato e' `_pid_alive`, non il processo. Un attrezzo che non
+    # parte solleva da `Popen`; non c'e' un esito da leggere.
     "test_ram_footprint.py",             # ⬅ idem
 })
 
