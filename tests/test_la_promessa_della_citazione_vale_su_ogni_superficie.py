@@ -216,3 +216,62 @@ def test_IL_PEZZO_DI_ws6_RESTA_SUO_e_questo_non_lo_duplica():
     assert suo.exists(), (
         "il test di ws6 non c'è più: se è stato rimosso di proposito, questo "
         "commento va aggiornato; se è sparito per sbaglio, va rimesso")
+
+
+# ── ⚠️ IL VERSO OPPOSTO, che mancava ────────────────────────────────────────
+# Il test in cima è condizionale apposta e fa bene: se una superficie non
+# promette nulla, non c'è un limite da pretenderle accanto. Ma quel `skip` ha
+# una conseguenza che nessuno vedeva — **il presidio si supera CANCELLANDO la
+# promessa**, e il conto dei rossi non cambia di una riga.
+#
+# 📌 E non è ipotetico: misurato il 2026-08-15 sul run 31823644806, DUE
+# superfici saltano già oggi, ed è il `-rs` acceso ieri a farlo vedere::
+#
+#     SKIPPED  README.md non promette più nulla sulla citazione
+#     SKIPPED  docs/F2_MODULE_INVENTORY.md non promette più nulla sulla citazione
+#
+#     promettono ancora  4 su 6   →  agent_guide · mcp_server
+#                                    document_index · document_promote   (CODICE)
+#     hanno smesso       2 su 6   →  README · F2_MODULE_INVENTORY     (DOCUMENTI)
+#
+# 🔑 Il taglio è netto e vale più del numero: **il codice promette, i documenti
+# no.** Il che significa che l'MCP e la guida dell'agente dicono a chi ci usa
+# una cosa che il README non dice più.
+#
+# ⚖️ QUESTO TEST NON DICE CHE SIA UN DIFETTO, e la distinzione è il suo punto:
+# togliere una promessa eccessiva è LEGITTIMO — è esattamente ciò che è stato
+# fatto ieri sulla riga 483 («not stored» prometteva più di quanto il prodotto
+# faccia). Quello che non è legittimo è che accada **in silenzio**. Qui il
+# numero è pinnato: chi lo fa scendere trova un rosso, aggiorna la cifra e dice
+# perché — trenta secondi, e la scelta resta scritta.
+_QUANTE_PROMETTONO_OGGI = 4
+
+
+def test_il_numero_di_superfici_che_promettono_non_cala_in_SILENZIO():
+    """Il cricchetto sul verso che il `skip` lascia scoperto."""
+    ancora = [p for _, p in SUPERFICI
+              if _PROMESSA_RE.search(
+                  (_RADICE / p).read_text(encoding="utf-8", errors="ignore"))]
+    assert len(ancora) >= _QUANTE_PROMETTONO_OGGI, (
+        f"le superfici che promettono la citazione sono scese da "
+        f"{_QUANTE_PROMETTONO_OGGI} a {len(ancora)}: {sorted(ancora)}.\n"
+        f"Se la promessa è stata tolta di proposito — e può essere giusto — "
+        f"abbassa _QUANTE_PROMETTONO_OGGI e scrivi QUALE e PERCHÉ. Se invece "
+        f"è sparita per sbaglio, il presidio in cima a questo file non se ne "
+        f"sarebbe accorto: quando una superficie smette di promettere, il suo "
+        f"test SALTA."
+    )
+
+
+def test_il_cricchetto_delle_promesse_non_si_arrugginisce():
+    """⚠️ L'ALTRA METÀ, la stessa di ogni cricchetto: se le superfici che
+    promettono TORNANO a salire e il numero resta indietro, il presidio tollera
+    una regressione che non esiste più — e smette di stringere in silenzio."""
+    ancora = [p for _, p in SUPERFICI
+              if _PROMESSA_RE.search(
+                  (_RADICE / p).read_text(encoding="utf-8", errors="ignore"))]
+    assert len(ancora) <= _QUANTE_PROMETTONO_OGGI, (
+        f"ora promettono in {len(ancora)} e la soglia è ferma a "
+        f"{_QUANTE_PROMETTONO_OGGI}: alzala a {len(ancora)}, o il cricchetto "
+        f"lascerà rientrare quelle appena riconquistate senza dire niente"
+    )
