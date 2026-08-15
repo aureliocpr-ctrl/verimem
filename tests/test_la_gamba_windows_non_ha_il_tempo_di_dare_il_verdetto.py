@@ -115,6 +115,37 @@ class TestIlTettoDistingueLeGambe:
             f"parita' di esito): numeri letti = {numeri}"
         )
 
+    def test_il_contorno_si_verifica_ANCHE_col_cuore_rosso(self):
+        """⚠️ `needs:` E' UNA CONDIZIONE DI SUCCESSO, NON UNA CODA.
+
+        Finche' una gamba di `test` e' rossa, `build` e `wheel-install` restano
+        `skipped`. Misurato il 2026-08-15: 19 run conclusi, 19 failure, ZERO
+        verdi — e nel piu' recente (31881825707) il quadro e'::
+
+            test × 6 gambe              completed / failure
+            build (sdist + wheel)       completed / SKIPPED
+            wheel install-from-scratch  completed / SKIPPED
+
+        ⇒ Il gate di rilascio non e' severo: **non esiste**. Da oltre duecento
+        ore nessuno ha visto un wheel costruito da questa CI.
+
+        🔑 E `wheel-install` fa esattamente cio' che tre istanze stavano facendo
+        A MANO nello stesso momento — venv vergine, gate, provenienza,
+        handshake MCP. **Un cuore rosso non e' una ragione per non verificare il
+        contorno**: e' la ragione per cui il contorno va verificato, perche'
+        mentre si cura il cuore nessuno guarda il pacchetto.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        build = wf["jobs"].get("build")
+        assert build is not None, "il job build non c'e' piu'"
+        cond = str(build.get("if", ""))
+        assert "cancelled()" in cond or "always()" in cond, (
+            f"`build` dipende da `test` senza una condizione che lo faccia "
+            f"girare comunque: con una sola gamba rossa resta SKIPPED, e con "
+            f"lui `wheel-install`. Il pacchetto non viene piu' verificato da "
+            f"nessuno. if = {cond!r}")
+
     def test_nessuna_PIATTAFORMA_sparisce_dalla_matrice(self, job_test):
         """⚠️ IL PRESIDIO CHE SERVE PERCHE' LA RIGA SOPRA E' UN'ESPRESSIONE.
 
