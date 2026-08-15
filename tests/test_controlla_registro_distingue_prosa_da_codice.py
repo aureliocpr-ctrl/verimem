@@ -128,6 +128,53 @@ def test_senza_dichiarazione_un_collaudo_blocca_come_gli_altri(tmp_path: Path):
         "che l'artefatto sorgente imbarca")
 
 
+def _archivio_con(tmp_path: Path, nome_interno: str, sorgente: Path | str) -> Path:
+    """Un ``.tar.gz`` che contiene un solo file, sotto il nome dato."""
+    import tarfile
+
+    percorso = tmp_path / "pacchetto.tar.gz"
+    if isinstance(sorgente, str):
+        vero = tmp_path / "contenuto.py"
+        vero.write_text(sorgente, encoding="utf-8")
+    else:
+        vero = sorgente
+    with tarfile.open(percorso, "w:gz") as archivio:
+        archivio.add(vero, arcname=nome_interno)
+    return percorso
+
+
+def test_il_controllo_dentro_un_archivio_non_accusa_se_stesso(tmp_path: Path):
+    """Il difetto è latente finché ``scripts/`` non entra nel sorgente distribuito.
+
+    Puntato a una directory il controllo si esclude confrontando il percorso.
+    Dentro un archivio quel confronto non ha nulla da confrontare — la voce del
+    tar non è un percorso sul disco — e il file si troverebbe addosso la propria
+    lista, bocciando il rilascio a causa di sé stesso.
+    """
+    archivio = _archivio_con(tmp_path, "verimem-1.0/scripts/controlla_registro.py",
+                             PRESIDIO)
+    esito = subprocess.run([sys.executable, str(PRESIDIO), str(archivio)],
+                           capture_output=True, text=True, errors="replace")
+    assert esito.returncode == 0, (
+        "il controllo boccia se stesso quando viene letto dentro un archivio\n"
+        + esito.stdout[-700:])
+    assert "esentate" in esito.stdout, (
+        "l'esenzione non compare nel referto: dichiararla è la differenza fra "
+        "un'eccezione e un buco\n" + esito.stdout[-700:])
+
+
+def test_un_omonimo_senza_la_lista_non_puo_approfittarne(tmp_path: Path):
+    """Il riconoscimento non è il nome del file: chiunque potrebbe chiamarsi così."""
+    archivio = _archivio_con(
+        tmp_path, "pacchetto/scripts/controlla_registro.py",
+        '"""Un omonimo qualsiasi."""\n' + "# " + _ATTRIBUZIONE + "\nX = 1\n")
+    esito = subprocess.run([sys.executable, str(PRESIDIO), str(archivio)],
+                           capture_output=True, text=True, errors="replace")
+    assert esito.returncode == 1, (
+        "un file che si chiama come il controllo si è esentato da solo: basterebbe "
+        "il nome per far passare qualsiasi cosa\n" + esito.stdout[-700:])
+
+
 def test_un_file_pulito_passa(tmp_path: Path):
     """Il controllo negativo del controllo negativo: senza niente, non inventa."""
     (tmp_path / "pulito.py").write_text(

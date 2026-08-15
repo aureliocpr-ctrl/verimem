@@ -167,8 +167,26 @@ MARCATORE = re.compile(r"registro-esente:\s*(?P<ragione>\S.*)")
 
 
 def _esenzione(nome: str, testo: str) -> str | None:
-    """La ragione dichiarata, se il file è un collaudo e la dichiara."""
-    if not pathlib.PurePath(nome).name.startswith("test_"):
+    """La ragione dichiarata, se il file può esentarsi e lo fa.
+
+    Due casi, e nessuno dei due è silenzioso: le righe restano contate e il
+    referto le dichiara con il nome del file e la ragione.
+    """
+    base = pathlib.PurePath(nome).name
+    #: Questo file elenca per esteso i nomi che cerca, quindi li contiene. Puntato
+    #: a una directory si esclude confrontando il percorso (``io_stesso``), ma
+    #: **letto dentro un archivio quel confronto non ha nulla da confrontare**: nel
+    #: tar il file è una voce, non un percorso sul disco. Finché ``scripts/`` non
+    #: entra nel sorgente distribuito il difetto resta latente — misurato: zero
+    #: file sotto ``scripts/`` nell'artefatto — ma il giorno che entrasse, il
+    #: controllo boccerebbe il rilascio a causa di se stesso.
+    #:
+    #: Il riconoscimento non è solo il nome: un omonimo qualsiasi non deve poterne
+    #: approfittare, quindi si richiede anche il tratto che rende questo file
+    #: quello che è, cioè la definizione della lista.
+    if base == pathlib.Path(__file__).name and "NOMI_SESSIONE" in testo:
+        return "il controllo elenca i nomi che cerca: dentro un archivio si troverebbe addosso la propria lista"
+    if not base.startswith("test_"):
         return None
     trovato = MARCATORE.search(testo)
     return trovato.group("ragione").strip()[:90] if trovato else None
@@ -270,7 +288,10 @@ def controlla(percorso: pathlib.Path) -> int:
     if esentate:
         #: Dichiarate sempre, col nome del file e la ragione: un'esenzione che
         #: non compare nel referto è indistinguibile da un'assenza di difetti.
-        print(f"\n  esentate perché dati di prova di un collaudo "
+        #: L'intestazione resta generica perché i casi esentabili sono più d'uno
+        #: (i dati di prova di un collaudo, e questo file stesso): la ragione
+        #: specifica è stampata riga per riga, dove non può descriverne uno solo.
+        print(f"\n  esentate, con la ragione dichiarata "
               f"({sum(esentate.values())} righe in {len(esentate)} file):")
         for nome in sorted(esentate):
             print(f"     {esentate[nome]:>4d}  {nome}  — {ragioni[nome]}")
