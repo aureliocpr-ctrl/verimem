@@ -40,27 +40,79 @@ _RADICE = Path(__file__).resolve().parents[1]
 _CI = _RADICE / ".github" / "workflows" / "ci.yml"
 
 
+def _righe_dei_blocchi_path() -> list[str]:
+    """OGNI riga dentro un blocco `path: |`, così come la riceve `actions/cache`.
+
+    ⚠️⚠️ PRIMA VERSIONE SBAGLIATA, e l'errore vale più della cura. Usciva dal
+    blocco alla prima riga che non somigliava a un percorso::
+
+            else:
+                dentro = False       # ← si fermava qui
+
+    Ma in uno scalare letterale YAML il blocco finisce dove **cala
+    l'indentazione**, non dove una riga smette di piacermi. Con undici righe di
+    commento in mezzo al blocco, `~/.cache/verimem` stava DOPO quelle righe e
+    questa funzione non lo leggeva mai: il percorso c'era dalle 13:15 e il
+    presidio restava rosso. Il verdetto era comunque giusto — il difetto
+    esisteva — ma **per una ragione diversa da quella che il messaggio diceva**,
+    e un misuratore che azzecca la risposta sbagliando il conto la sbaglierà la
+    prossima volta.
+
+    🔑 Diagnosi di ws7, che ha curato il workflow: «the guard could not see it
+    either». ⇒ Adesso si legge per INDENTAZIONE, come fa YAML, e si restituisce
+    **tutto** ciò che il runner riceve — prosa compresa, perché è quello il
+    punto: `actions/cache` la prende come pattern di glob.
+    """
+    righe: list[str] = []
+    indent_blocco: int | None = None
+    for riga in _CI.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^(\s*)path:\s*\|\s*$", riga)
+        if m:
+            indent_blocco = len(m.group(1))
+            continue
+        if indent_blocco is None:
+            continue
+        if not riga.strip():          # una riga vuota non chiude uno scalare
+            continue
+        if len(riga) - len(riga.lstrip()) <= indent_blocco:
+            indent_blocco = None      # l'indentazione è calata: blocco finito
+            continue
+        righe.append(riga.strip())
+    return righe
+
+
 def _percorsi_in_cache() -> list[str]:
-    """Le voci `path:` dei blocchi di cache del workflow, normalizzate.
+    """Le voci dei blocchi `path:` che sono davvero percorsi.
 
     ⚠️ Si leggono TUTTI i blocchi: il workflow ne ha più d'uno (il job dei test
     e quello dell'installazione dal wheel), e curarne uno solo lascia l'altro
     a riscaricare — un difetto che si vede solo su una gamba.
     """
-    testo = _CI.read_text(encoding="utf-8")
-    voci: list[str] = []
-    dentro = False
-    for riga in testo.splitlines():
-        if re.match(r"\s*path:\s*\|\s*$", riga):
-            dentro = True
-            continue
-        if dentro:
-            m = re.match(r"\s+(~[^\s#]+|\$\{\{[^}]+\}\}[^\s#]*)\s*$", riga)
-            if m:
-                voci.append(m.group(1).strip())
-            else:
-                dentro = False
-    return voci
+    return [r for r in _righe_dei_blocchi_path()
+            if re.fullmatch(r"(~[^\s#]+|\$\{\{[^}]+\}\}[^\s#]*)", r)]
+
+
+def test_NESSUNA_RIGA_DI_PROSA_DENTRO_UN_BLOCCO_PATH():
+    """Blinda la cura di ws7: in `path: |` un `#` NON apre un commento.
+
+    In uno scalare letterale YAML ogni riga è testo, e `actions/cache` la
+    riceve come pattern di glob. Il 15/08 undici righe di prosa italiana sono
+    finite lì dentro — spiegavano, correttamente, perché quel percorso serviva.
+
+    🔑 **Niente lo avrebbe mostrato.** Il file si legge come se fossero
+    commenti, e lo sono ovunque tranne lì: non c'è errore di sintassi, il
+    workflow gira, la cache semplicemente non trova nulla. È il caso esatto in
+    cui l'occhio non basta e serve un presidio — e la prossima persona che
+    vorrà spiegare un percorso avrà la stessa idea, perché è l'idea giusta nel
+    posto sbagliato.
+    """
+    intrusi = [r for r in _righe_dei_blocchi_path() if r.startswith("#")]
+    assert not intrusi, (
+        f"{len(intrusi)} righe di commento stanno DENTRO un blocco `path: |` di "
+        f"{_CI.name}: {intrusi[:3]}… In uno scalare letterale YAML il `#` non è "
+        f"un commento ma testo, e actions/cache le riceve come pattern di "
+        f"percorso. Sposta il commento SOPRA la riga `path:`, dove `#` "
+        f"significa quello che sembra")
 
 
 def test_IL_WORKFLOW_DICHIARA_ANCORA_DEI_PERCORSI():
