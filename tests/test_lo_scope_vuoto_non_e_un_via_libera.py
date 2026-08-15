@@ -111,16 +111,65 @@ def test_LA_POPOLAZIONE_OPPOSTA_viene_ancora_vista(lingua, a, b, negatori_comple
         f"rinuncia si è allargata troppo")
 
 
-def test_SENZA_I_NEGATORI_NUOVI_le_due_lingue_non_dicono_nulla():
-    """📌 Il limite dichiarato, e serve a non leggere i test sopra come una
-    promessa che il prodotto oggi non fa.
+def test_ADESSO_IL_FLIP_ESCE_DAVVERO_in_turco_e_hindi():
+    """✅ IL ROSSO PREVISTO È ARRIVATO, ed era la buona notizia.
 
-    Turco e hindi non hanno il proprio negatore in `_NEGATOR_RE`: senza la
-    fixture il flip non esce, né giusto né sbagliato. Se un domani questo test
-    diventasse rosso vorrebbe dire che qualcuno **ha aggiunto quei negatori** —
-    e allora i due test sopra smettono di presidiare un caso ipotetico e
-    cominciano a presidiare il prodotto vero.
+    La versione precedente di questo test asseriva il contrario — che il flip
+    **non** uscisse — e dichiarava il proprio scadere: *«se un domani questo
+    test diventasse rosso vorrebbe dire che qualcuno ha aggiunto quei
+    negatori, e allora i due test sopra smettono di presidiare un caso
+    ipotetico e cominciano a presidiare il prodotto vero»*.
+
+    È successo il 15/08 nel pomeriggio: turco e hindi sono entrati in
+    `_NEGATOR_RE`, questo test è diventato rosso, e i due sopra hanno smesso
+    di essere ipotetici. 🔑 Un limite scritto con la propria condizione di
+    scadenza si fa correggere da solo — ed è il motivo per cui vale più di una
+    nota in un messaggio.
     """
-    assert Q.negation_conflict("sistemde hata var", "sistemde hata yok") is None
+    assert Q.negation_conflict("sistemde hata var", "sistemde hata yok")
     assert Q.negation_conflict("सिस्टम हस्ताक्षरित है",
-                               "सिस्टम हस्ताक्षरित नहीं है") is None
+                               "सिस्टम हस्ताक्षरित नहीं है")
+
+
+def test_IL_NEGATORE_VISTO_NON_BASTA_a_far_uscire_il_flip_in_coreano_e_thai():
+    """📌 IL LIMITE NUOVO, misurato: la cura è buona e **insufficiente**.
+
+    `_has_negator` riconosce ora anche «없» e «ไม่» — verificato nel presidio
+    dei negatori — ma su questa porta il flip **non esce lo stesso**::
+
+        TR  «hata»      esce          HI  «सिसटम»   esce
+        KO  None        non esce      TH  None       non esce
+
+    ⇒ Riconoscere la negazione è **necessario e non sufficiente**: qui il
+    confronto ha bisogno anche di token condivisi fra le due frasi, e coreano
+    e thai non separano le parole con spazi. È lo stesso muro del giapponese e
+    del cinese, su un percorso diverso da quello già curato.
+
+    ⚠️ Da non leggere come «il gate non smentisce in coreano»: alla porta
+    pubblica `validate_claim` il coreano **funziona** dopo la cura. Sono due
+    porte con due esiti, ed è la ragione per cui un verdetto va sempre
+    accompagnato dal punto in cui è stato misurato.
+    """
+    assert Q.negation_conflict("시스템에 오류가 있습니다",
+                               "시스템에 오류가 없습니다") is None
+    assert Q.negation_conflict("ระบบมีข้อผิดพลาด",
+                               "ระบบไม่มีข้อผิดพลาด") is None
+
+
+@pytest.mark.parametrize("lingua,frase", [
+    ("TR", "sistemde hata var"),
+    ("HI", "सिस्टम हस्ताक्षरित है"),
+    ("KO", "시스템에 오류가 있습니다"),
+    ("TH", "ระบบมีข้อผิดพลาด"),
+])
+def test_DUE_FRASI_AFFERMATIVE_UGUALI_non_sono_un_conflitto(lingua, frase):
+    """⚠️ La popolazione opposta per i negatori appena aggiunti.
+
+    Se uno di essi fosse troppo largo, scatterebbe su una frase affermativa e
+    il prodotto vedrebbe un flip di polarità dove non c'è: due fatti identici
+    dichiarati in contraddizione. È l'errore che nessuno andrebbe a cercare,
+    perché somiglia a un eccesso di zelo.
+    """
+    assert Q.negation_conflict(frase, frase) is None, (
+        f"[{lingua}] la stessa frase confrontata con se stessa produce un "
+        f"conflitto di negazione: un negatore aggiunto è troppo largo")

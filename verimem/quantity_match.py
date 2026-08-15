@@ -1756,7 +1756,36 @@ _NEGATOR_RE = re.compile(
     # RUSSO — mancava, ed è nel perimetro delle sette lingue chiesto il 12/08.
     # «не» è la negazione ordinaria, «нет» quella esistenziale, «ни» quella
     # coordinata: tutte parole intere, delimitate da spazi come in inglese.
-    r"|\b(?:не|нет|ни)\b",
+    r"|\b(?:не|нет|ни)\b"
+    # COREANO · TURCO · HINDI · THAI — 15/08. Senza questi il gate rispondeva
+    # `supported` a una frase NEGATA: un fatto e la sua smentita ricevevano lo
+    # stesso verdetto positivo, che è peggio del restare muto.
+    #
+    # ⚠️⚠️ QUI SI ENTRA SOLO PASSANDO DALLA POPOLAZIONE OPPOSTA, e la lista è
+    # più corta di quella «ovvia» perché CINQUE CANDIDATI SU DIECI sono stati
+    # scartati misurandoli su frasi affermative::
+    #
+    #     안  →  scatta su 안녕하세요 «ciao», 안전 «sicuro», 안내 «guida»   3/3
+    #     못  →  scatta su 못 «chiodo»                                    1
+    #     ना  →  scatta dentro नाव «barca»                                2
+    #     मत  →  scatta dentro मतदान «voto»                               1
+    #     -me →  scatta dentro değiştirmek «cambiare»                     1
+    #
+    # Sono negatori VERI — «안 하다» nega, «मत» è un imperativo negativo — ma
+    # lessicalmente indistinguibili da parole comuni: coprirli farebbe
+    # RESPINGERE FATTI VERI, e un rifiuto somiglia sempre alla prudenza, quindi
+    # nessuno se ne accorgerebbe. ⇒ Restano fuori, e questa nota è il debito.
+    #
+    # Ciò che entra è misurato pulito (zero falsi positivi sul banco):
+    #   coreano  «없» esistenziale (없다/없습니다/없어요) — morfema, niente spazi
+    #   turco    parole intere, il turco ha gli spazi
+    #   hindi    «नहीं» parola intera; il devanagari usa gli spazi
+    #   thai     «ไม่» — il thai non separa le parole, come il cinese; il tono
+    #            lo distingue da «ไม้» (legno), che è un codepoint diverso
+    r"|(?:없)"
+    r"|\b(?:yok|değil|değildir)\b"
+    r"|(?:नहीं)"
+    r"|(?:ไม่)",
     re.IGNORECASE,
 )
 

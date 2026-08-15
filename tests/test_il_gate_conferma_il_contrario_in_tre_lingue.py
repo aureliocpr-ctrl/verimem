@@ -61,6 +61,31 @@ parole. Quella lista non si scrive a memoria: si prende dalla lingua.
 
 Questo file registra il difetto e **blinda le due colonne che oggi funzionano**,
 perché una cura mal fatta le romperebbe per prima.
+
+═══ ✅ CURATO lo stesso giorno — e la lista è PIÙ CORTA di quella ovvia ═══
+
+I sette marcatori di fallimento atteso sono diventati XPASS e sono stati tolti:
+il gate ora smentisce la frase negata anche in coreano, hindi e turco, e il
+thai è riconosciuto come negato (resta `unknown` per il difetto sul soggetto,
+che è un altro percorso).
+
+🔑 **La popolazione opposta è stata misurata PRIMA di scrivere la cura, e ha
+scartato cinque candidati su dieci**::
+
+    ammessi   없 (KO) · yok, değil (TR) · नहीं (HI) · ไม่ (TH)   0 falsi positivi
+    scartati  안 → «ciao», «sicuro», «guida»                     3
+              못 → «chiodo»          ना → dentro «barca»         1 · 2
+              मत → dentro «voto»     -me → dentro «cambiare»     1 · 1
+
+Sono negatori **veri**, e restano fuori lo stesso: lessicalmente non si
+distinguono da parole comuni, e coprirli farebbe respingere fatti veri. Il
+primo falso positivo sarebbe scattato su un **saluto** — «안녕하세요, il
+magazzino di Verona contiene 480 pallet».
+
+⇒ Il debito è dichiarato in `quantity_match`, accanto alla lista: quelle
+negazioni non sono coperte. **Meglio un difetto scritto che un rifiuto
+invisibile**, perché un rifiuto somiglia sempre alla prudenza e nessuno va a
+controllarlo.
 """
 from __future__ import annotations
 
@@ -150,14 +175,10 @@ def test_IL_NEGATORE_NON_SCATTA_SULLE_AFFERMATIVE(lingua, affermativo, diverso,
 @pytest.mark.parametrize("lingua,frase,coperta", [
     ("EN", "The Verona warehouse does not contain 480 pallets.", True),
     ("AR", "لا يحتوي مستودع فيرونا على 480 منصة نقالة.", True),
-    pytest.param("KO", "베로나 창고에는 480개의 팔레트가 없습니다.", True,
-                 marks=pytest.mark.xfail(strict=True, reason="없습니다 non è fra i negatori")),
-    pytest.param("HI", "वेरोना गोदाम में 480 पैलेट नहीं हैं।", True,
-                 marks=pytest.mark.xfail(strict=True, reason="नहीं non è fra i negatori")),
-    pytest.param("TR", "Verona deposunda 480 palet yok.", True,
-                 marks=pytest.mark.xfail(strict=True, reason="yok non è fra i negatori")),
-    pytest.param("TH", "คลังสินค้าเวโรนาไม่มี 480 พาเลท", True,
-                 marks=pytest.mark.xfail(strict=True, reason="ไม่มี non è fra i negatori")),
+    ("KO", "베로나 창고에는 480개의 팔레트가 없습니다.", True),
+    ("HI", "वेरोना गोदाम में 480 पैलेट नहीं हैं।", True),
+    ("TR", "Verona deposunda 480 palet yok.", True),
+    ("TH", "คลังสินค้าเวโรนาไม่มี 480 พาเลท", True),
 ], ids=["EN", "AR", "KO", "HI", "TR", "TH"])
 def test_una_frase_negata_e_riconosciuta_come_negata(lingua, frase, coperta):
     """La causa, alla porta interna: la lista dei negatori."""
@@ -169,12 +190,9 @@ def test_una_frase_negata_e_riconosciuta_come_negata(lingua, frase, coperta):
 @pytest.mark.parametrize("lingua,affermativo,negato", [
     ("EN", LINGUE[0][1], LINGUE[0][3]),
     ("AR", LINGUE[4][1], LINGUE[4][3]),
-    pytest.param("KO", LINGUE[1][1], LINGUE[1][3],
-                 marks=pytest.mark.xfail(strict=True, reason="il gate risponde supported alla negazione")),
-    pytest.param("HI", LINGUE[2][1], LINGUE[2][3],
-                 marks=pytest.mark.xfail(strict=True, reason="il gate risponde supported alla negazione")),
-    pytest.param("TR", LINGUE[3][1], LINGUE[3][3],
-                 marks=pytest.mark.xfail(strict=True, reason="il gate risponde supported alla negazione")),
+    ("KO", LINGUE[1][1], LINGUE[1][3]),
+    ("HI", LINGUE[2][1], LINGUE[2][3]),
+    ("TR", LINGUE[3][1], LINGUE[3][3]),
 ], ids=["EN", "AR", "KO", "HI", "TR"])
 def test_il_gate_non_conferma_una_frase_negata(lingua, affermativo, negato):
     """Il cuore, alla porta pubblica: un fatto e la sua negazione non possono
