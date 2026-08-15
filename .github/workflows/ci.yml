@@ -543,6 +543,35 @@ jobs:
     name: wheel install-from-scratch (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: build
+    # ⚠️ `!cancelled()` NON SI PROPAGA: la cura su `build` non ha liberato questo
+    # job, ed era LUI la ragione dichiarata della cura. Misurato il 2026-08-15 su
+    # quattro run conclusi — tre con la cura, uno come controllo::
+    #
+    #     6747ad54   test 6/6 failure   build SKIPPED   wheel-install skipped
+    #     dcc41bc8   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+    #     0e158cbb   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+    #     ae210e47   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+    #
+    # 📌 E il job NON e' rotto: sul verde del 04/08 (e2d69715, 7bb4df42,
+    # e584da33) girava ed espandeva la matrice in due esiti `success`. E' tenuto
+    # fermo da un ANTENATO rosso.
+    #
+    # 🔑 IL MECCANISMO: senza `if`, la condizione predefinita e' `success()`, che
+    # guarda TUTTA la catena degli antenati e non il solo `needs` diretto.
+    # `build` passa per la sua eccezione; il figlio non la eredita. ⇒ Ogni job
+    # della catena vuole la sua condizione.
+    # ⚖️ E si guarda l'ESITO di `build`, non solo `!cancelled()`: senza artefatto
+    # `download-artifact` morirebbe su un errore che non nomina la causa.
+    #
+    # ⚖️ PREZZO, rimisurato come il commento di `build` prometteva: due job in
+    # piu' per push (ubuntu + windows) con la coda gia' carica — alle 14:08 UTC
+    # 8 in coda e 4 in esecuzione, il piu' vecchio in attesa da 93 minuti. Sono
+    # job brevi (installano un wheel, non girano la suite). Se la coda peggiora,
+    # la mossa e' stringere QUESTA matrice, non spegnere il job: e' l'unica prova
+    # automatica che il pacchetto si installi da zero, e non gira dal 04/08.
+    if: >-
+      !cancelled()
+      && needs.build.result == 'success'
     timeout-minutes: 35
     strategy:
       fail-fast: false

@@ -146,6 +146,59 @@ class TestIlTettoDistingueLeGambe:
             f"lui `wheel-install`. Il pacchetto non viene piu' verificato da "
             f"nessuno. if = {cond!r}")
 
+    def test_wheel_install_ha_una_CONDIZIONE_PROPRIA(self):
+        """🔑 `!cancelled()` NON SI PROPAGA: curare `build` non libera chi viene dopo.
+
+        ⚠️ **Questo banco nasce da un difetto del banco qui sopra.** Quello
+        pretende una condizione su `build` ed e' VERDE dal 2026-08-15 — mentre
+        la promessa scritta nel suo stesso testo, «e con lui `wheel-install`»,
+        era **falsa**. Misurato lo stesso giorno su quattro run conclusi, tre
+        con la cura e uno senza (il controllo)::
+
+            6747ad54   test 6/6 failure   build SKIPPED   wheel-install skipped
+            dcc41bc8   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+            0e158cbb   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+            ae210e47   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+
+        ⇒ La cura ha spostato **un job su due**, e quello rimasto fermo era **la
+        ragione dichiarata della cura**: `wheel-install` e' l'unica prova
+        automatica che il pacchetto si installi da zero.
+
+        📌 CONTROLLO POSITIVO, perche' «skipped» da solo non prova il
+        meccanismo: sul verde del 04/08 (`e2d69715`, `7bb4df42`, `e584da33`) il
+        job **girava** ed espandeva la matrice in due esiti `success`. Quindi
+        non e' rotto — e' tenuto fermo da un ANTENATO rosso.
+
+        🔑 IL MECCANISMO, e vale oltre questo file: `wheel-install` non ha `if`,
+        quindi la sua condizione predefinita e' `success()`, che guarda **tutta
+        la catena degli antenati** e non il solo `needs` diretto. `build` passa
+        per la sua eccezione; il figlio non la eredita. **Ogni job della catena
+        vuole la sua condizione** — e' la classe «il difetto sta nella
+        GIUNTURA»: due job corretti, la giunzione no.
+
+        ⚖️ E la condizione giusta non e' `!cancelled()` nudo: senza artefatto
+        `download-artifact` fallirebbe con un errore che non nomina la causa.
+        Si pretende **anche** che l'esito di `build` sia guardato.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        job = wf["jobs"].get("wheel-install")
+        assert job is not None, (
+            "il job `wheel-install` non c'e' piu': se e' stato tolto questo "
+            "banco va riletto, non cancellato — era l'unica prova automatica "
+            "che il wheel si installi da zero")
+        cond = str(job.get("if", ""))
+        assert "cancelled()" in cond or "always()" in cond, (
+            f"`wheel-install` non ha una condizione propria: `needs: build` da "
+            f"solo non basta, perche' la condizione predefinita `success()` "
+            f"guarda tutti gli antenati e `test` e' rosso. Misurato su tre run "
+            f"con `build` SUCCESS e `wheel-install` SKIPPED. if = {cond!r}")
+        assert "needs.build.result" in cond, (
+            f"la condizione non guarda l'ESITO di `build`: se `build` fallisse "
+            f"o venisse saltato, `download-artifact` morirebbe su un artefatto "
+            f"che non esiste, con un errore che non nomina la causa. "
+            f"if = {cond!r}")
+
     def test_nessuna_PIATTAFORMA_sparisce_dalla_matrice(self, job_test):
         """⚠️ IL PRESIDIO CHE SERVE PERCHE' LA RIGA SOPRA E' UN'ESPRESSIONE.
 
