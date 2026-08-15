@@ -104,7 +104,17 @@ ANCORA_CIECHI = frozenset({
     # l'ha detto il test qui sotto*: l'avevo curato e dimenticato in lista, e
     # `test_il_cricchetto_non_si_arrugginisce` è diventato rosso nominandolo.
     # È la metà del meccanismo che di solito manca, e si è dimostrata da sola.
-    "test_provenance_commit_ref_format.py",
+    # test_provenance_commit_ref_format.py — ESAMINATO il 15/08 e REGGEVA gia':
+    # guarda l'esito PER COMPORTAMENTO (se `git` fallisce lo SHA e' vuoto e
+    # l'`assert sha` scatta), come crash_injection_g3. Aggiunto solo il PERCHE'
+    # nel messaggio: senza `stderr`, un `git` che fallisce per una ragione
+    # strana si legge «no HEAD sha» e basta.
+    # 🪞 E la prima versione di quell'aggiunta RENDEVA una stringa di diagnosi
+    # (`f"__git_muto__ rc=…"`), che e' TRUTHY: avrebbe spento l'`assert sha`
+    # che stavo arricchendo. Misurato a confronto sulle tre forme — vecchia:
+    # assert scatta · quella rotta: NON scatta · curata: rosso col perche'.
+    # ⇒ **Un valore di ripiego dentro una funzione il cui risultato viene
+    # testato per verita' e' un modo silenzioso di disattivare un controllo.**
     "test_ram_footprint.py",             # ⬅ idem
 })
 
