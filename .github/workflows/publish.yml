@@ -74,17 +74,53 @@ jobs:
         id: controlla
         env:
           GH_TOKEN: ${{ github.token }}
+        # ⚠️ IL FILTRO SUL RAMO, aggiunto il 2026-08-15 su una fessura trovata da
+        # ws8: il cancello chiedeva «la CI e' verde su questo SHA» e NON «questo
+        # SHA sta su main». Ma `ci` gira anche sui PULL REQUEST, quindi un
+        # commit di un ramo di lavoro ha un suo run — e se quel run fosse verde
+        # il cancello si sarebbe aperto su codice mai integrato ne' rivisto.
+        #
+        # Lei l'aveva dedotto e marcato come non eseguito; misurato qui su
+        # entrambe le popolazioni::
+        #
+        #     44d47c6f  (ramo ws3/gate-precision, PR)  vecchio=failure  curato=(nulla)
+        #     ae210e47  (main, run concluso)           vecchio=failure  curato=failure
+        #     dcc41bc8  (main, run concluso)           vecchio=failure  curato=failure
+        #     0e158cbb  (main, run concluso)           vecchio=failure  curato=failure
+        #     6747ad54  (main, run concluso)           vecchio=failure  curato=failure
+        #
+        # ⇒ Sui commit di main i due filtri danno lo STESSO esito (4 su 4): la
+        # cura non chiude il caso buono. Sul commit di ramo il vecchio trovava
+        # un run e il curato non ne trova: la fessura si chiude.
+        # 🔑 Non era un errore di logica, era una DOMANDA CHE IL CANCELLO NON
+        # FACEVA — e le due cose si curano in modo diverso.
+        # ⚖️ COSTO dichiarato: se un domani si volesse rilasciare da un ramo di
+        # release, il cancello bloccherebbe. Sarebbe un blocco VISIBILE con un
+        # messaggio che nomina la causa, non un'apertura silenziosa — e resta
+        # `PUBLISH_ANYWAY` per il gesto deliberato.
+        # 📌 La seconda interrogazione serve solo al MESSAGGIO: distingue «non
+        # esiste nessun run» da «esiste un run, ma non su main», che sono due
+        # situazioni diverse per chi legge l'errore alle tre di notte.
         run: |
           sha='${{ github.sha }}'
-          esito=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
-                    --jq '[.workflow_runs[] | select(.name=="ci")] | .[0].conclusion' \
+          su_main=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
+                    --jq '[.workflow_runs[] | select(.name=="ci" and .head_branch=="main")] | .[0].conclusion // ""' \
                     2>/dev/null || echo "")
-          echo "commit=$sha  conclusione di ci=${esito:-NESSUN RUN}"
-          if [ "$esito" = "success" ]; then
+          ovunque=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
+                    --jq '[.workflow_runs[] | select(.name=="ci")] | .[0].conclusion // ""' \
+                    2>/dev/null || echo "")
+          echo "commit=$sha  ci su main=${su_main:-NESSUN RUN SU MAIN}  ci altrove=${ovunque:-nessuno}"
+          if [ "$su_main" = "success" ]; then
             echo "verde=true" >> "$GITHUB_OUTPUT"
+          elif [ -z "$su_main" ] && [ -n "$ovunque" ]; then
+            echo "verde=false" >> "$GITHUB_OUTPUT"
+            echo "::error::Su $sha esiste un run di ci (${ovunque}) ma NON su main: "\
+                 "quel commit non e' mai entrato nel ramo principale, quindi non e' "\
+                 "stato integrato. La pubblicazione e' FERMA. Per scavalcare di "\
+                 "proposito: variabile di repository PUBLISH_ANYWAY=1."
           else
             echo "verde=false" >> "$GITHUB_OUTPUT"
-            echo "::error::La CI su $sha non e' verde (${esito:-nessun run}). "\
+            echo "::error::La CI su $sha non e' verde (${su_main:-nessun run su main}). "\
                  "La pubblicazione e' FERMA. Per scavalcare di proposito: "\
                  "variabile di repository PUBLISH_ANYWAY=1."
           fi

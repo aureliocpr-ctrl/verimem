@@ -100,6 +100,23 @@ def test_il_cancello_GUARDA_la_ci_e_non_qualcos_altro(wf):
     assert "head_sha" in testo, (
         "il cancello non filtra per il COMMIT del tag: guarderebbe l'ultimo "
         "run qualunque, che puo' essere di un altro commit")
+    # ⚠️ E NON BASTA IL COMMIT: serve anche il RAMO. Fessura trovata da ws8 il
+    # 2026-08-15 e misurata qui su entrambe le popolazioni — `ci` gira anche
+    # sui `pull_request`, quindi un commit di un ramo di lavoro ha un run col
+    # suo SHA::
+    #
+    #     44d47c6f (ramo ws3/gate-precision)  senza filtro=failure  con=(nulla)
+    #     ae210e47 dcc41bc8 0e158cbb 6747ad54 (main)  identici in entrambi
+    #
+    # ⇒ Senza il filtro, un run VERDE su un ramo mai integrato aprirebbe il
+    # cancello. Col filtro, i quattro commit di main danno lo stesso esito di
+    # prima: la cura chiude la fessura e non il caso buono.
+    assert "head_branch" in testo, (
+        "il cancello non chiede se lo SHA sta su MAIN: `ci` gira anche sui "
+        "pull request, quindi un commit di un ramo di lavoro ha un suo run — "
+        "e se fosse verde si pubblicherebbe codice mai integrato. "
+        "Misurato: senza il filtro, 44d47c6f (ramo ws3/gate-precision) "
+        "restituisce un run; con il filtro, nessuno")
 
 
 def test_cio_che_si_spedisce_viene_GUARDATO_prima_di_partire(wf):
