@@ -187,3 +187,41 @@ def test_LA_SEQUENZA_DEL_README_porta_alla_cartella_promessa():
         "dopo `verimem warmup` — che il README insegna a eseguire PER PRIMO — "
         "un'installazione nuova non usa più ~/.verimem: il modello del gate ha "
         "creato ~/.engram e il risolutore la scambia per uno store storico")
+
+
+def test_IL_MODELLO_NON_VA_DENTRO_VERIMEM_o_la_cura_capovolge_il_difetto():
+    """⚠️⚠️ VIETA LA CURA SBAGLIATA — segnalata da ws1 il 15/08.
+
+    Il difetto sopra (il warmup crea `~/.engram` e un'installazione nuova ci
+    finisce dentro) ha una cura che viene in mente subito: spostare il modello
+    in `~/.verimem`, così il warmup crea la cartella «giusta».
+
+    **Capovolge il danno invece di toglierlo.** Misurato::
+
+        oggi  (modello in .engram)   .engram CON DATI  →  .engram    ✅
+        cura  (modello in .verimem)  .engram CON DATI  →  .verimem   🔴
+
+    `~/.verimem` è dichiarata canonica quando entrambe esistono: un utente
+    storico con gigabyte in `~/.engram` verrebbe spostato su una cartella vuota
+    creata dal download di un modello. La promessa che si rompe non è più
+    «new installs default to ~/.verimem» — è «existing stores keep working
+    untouched», che vale molto di più.
+
+    🔑 Il difetto sta nel fatto che **il modello crea una cartella che il
+    risolutore interpreta come uno store**. Spostarlo di là non toglie
+    l'ambiguità: la sposta sulla popolazione più costosa.
+
+    ⇒ Questo test non chiede DOVE debba stare il modello: pretende solo che non
+    stia dentro una delle due cartelle dati. Chi cura è libero di metterlo in
+    `~/.cache`, in un sottopercorso neutro, o di insegnare al risolutore a
+    distinguere una cartella con dati da una con soli modelli.
+    """
+    from verimem.local_grounding import DEFAULT_MODEL_DIR
+
+    dentro_verimem = ".verimem" in DEFAULT_MODEL_DIR.parts
+    assert not dentro_verimem, (
+        f"il modello del gate è finito dentro ~/.verimem ({DEFAULT_MODEL_DIR}): "
+        f"scaricarlo creerà quella cartella, e su una macchina con ~/.engram "
+        f"popolata il risolutore la preferirà, lasciando l'utente storico con "
+        f"una memoria apparentemente vuota. Il difetto non è curato: è "
+        f"capovolto sulla popolazione che ha più da perdere")
