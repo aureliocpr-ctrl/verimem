@@ -137,5 +137,47 @@ jobs:
           python scripts/controlla_registro.py "$w"
           python scripts/controlla_promesse.py "$w"
 
+      # ⚠️⚠️ IL FATTO CHE MANCAVA A QUESTO FILE, portato da ws8 il 2026-08-15 e
+      # riverificato qui: **L'SDIST NON RESTA IN CASA.**
+      # `pypa/gh-action-pypi-publish` senza `with:` carica `dist/` INTERO, e in
+      # questo file le uniche righe non-commento che nominano `dist/` sono
+      # `twine check dist/*` (solo i metadata) e `ls dist/*.whl` (il wheel).
+      # Nessun `packages-dir`, nessun `rm`, nessun filtro ⇒ **il .tar.gz parte.**
+      #
+      # 🔑 IL CRITERIO CON CUI I CONTROLLI FURONO ACCESI SUL SOLO WHEEL ERA «CHI
+      # INSTALLA», ed era il criterio sbagliato: l'sdist non ha bisogno che
+      # qualcuno lo installi per fare danno, basta che qualcuno lo APRA. Su PyPI
+      # sta in «Download files» — scaricabile da chiunque, indicizzato, e letto
+      # per mestiere dagli scanner di sicurezza aziendali proprio perche' e' il
+      # sorgente.
+      #
+      # ⛔ ⇒ QUESTO PERCORSO NON VERIFICA CIO' CHE SPEDISCE. Non e' un limite che
+      # accompagna la promessa: la SOSPENDE. Chi legge lo step qui sopra vede
+      # «il wheel non porta identificativi» e conclude che l'artefatto sia
+      # verificato; l'artefatto e' due, e uno esce senza guardia.
+      #
+      # ⚖️ QUESTO PASSO AVVISA E NON BLOCCA, e la distinzione e' deliberata: un
+      # avviso puo' stare da solo, un veto no. Togliere l'sdist da PyPI (un
+      # `packages-dir` sul solo wheel) e' una **scelta di distribuzione**, non una
+      # toppa: senza sdist non si compila da sorgente e i pacchettizzatori a valle
+      # — Debian, conda-forge, Nix — lo pretendono. La domanda sta in una riga e
+      # non e' di questo file: **«preferiamo che il sorgente non esca finche' e'
+      # sporco, o che esca sporco perche' serve a chi impacchetta?»**
+      # 📌 Finche' non c'e' risposta, il numero va almeno DETTO nel momento in cui
+      # si pubblica, invece di vivere in una conversazione.
+      - name: Cosa esce nell'sdist e non e' controllato (avviso, non veto)
+        run: |
+          s=$(ls dist/*.tar.gz 2>/dev/null | head -1 || true)
+          if [ -z "$s" ]; then
+            echo "::warning::nessun sdist in dist/: se e' stato tolto di proposito questo passo va riletto, non cancellato"
+            exit 0
+          fi
+          echo "artefatto NON presidiato che sta per essere pubblicato: $s"
+          if python scripts/controlla_registro.py "$s"; then
+            echo "SDIST PULITO — e allora il veto si puo' accendere: e' il momento di parlarne."
+          else
+            echo "::warning::l'sdist esce con identificativi interni (elenco sopra). Il wheel e' pulito; questo NON ferma la pubblicazione."
+          fi
+
       - name: Publish to PyPI (OIDC — no token)
         uses: pypa/gh-action-pypi-publish@release/v1

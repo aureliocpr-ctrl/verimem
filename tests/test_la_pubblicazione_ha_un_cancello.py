@@ -140,6 +140,52 @@ def test_cio_che_si_spedisce_viene_GUARDATO_prima_di_partire(wf):
         f"pubblicazione (passo {i_pub}): guarderebbe una cosa gia' spedita")
 
 
+def test_anche_l_ARTEFATTO_NON_PRESIDIATO_viene_nominato_prima_di_partire(wf):
+    """⚠️⚠️ GLI ARTEFATTI SONO DUE, E IL PASSO SOPRA NE GUARDA UNO.
+
+    Il fatto che mancava, portato da ws8 il 2026-08-15 e riverificato leggendo
+    il file: `pypa/gh-action-pypi-publish` senza `with:` carica `dist/` INTERO.
+    Le uniche righe non-commento che nominano `dist/` sono `twine check dist/*`
+    (solo i metadata) e `ls dist/*.whl` — **il .tar.gz parte senza guardia**::
+
+        controlla_registro  WHEEL   EXIT=0   pulito          <- presidiato
+        controlla_registro  SDIST   EXIT=1   330 identificativi, tutti in tests/
+
+    🔑 Il criterio con cui i controlli furono accesi sul solo wheel era «chi
+    INSTALLA», ed era sbagliato: **l'sdist non ha bisogno di essere installato,
+    basta che qualcuno lo APRA**, e su PyPI sta in «Download files».
+
+    ⛔ ⇒ Il percorso non verifica cio' che spedisce, e questo non e' un limite
+    che accompagna la promessa: la SOSPENDE. Il minimo che questo file puo'
+    pretendere e' che **il numero venga detto nel momento in cui si pubblica**,
+    invece di vivere in una conversazione.
+    """
+    passi = wf["jobs"]["build-and-publish"]["steps"]
+    testo = [str(s.get("run", "")) for s in passi]
+    guarda_sdist = [i for i, t in enumerate(testo)
+                    if "tar.gz" in t and "controlla_registro" in t]
+    assert guarda_sdist, (
+        "nessun passo guarda l'sdist prima della pubblicazione: il controllo "
+        "sul wheel non copre l'altro artefatto, e `dist/` viene caricato "
+        "intero. Chi legge questo workflow conclude che l'artefatto sia "
+        "verificato, e gli artefatti sono due")
+    righe = [f"{s.get('name', '')} {s.get('uses', '')}" for s in passi]
+    i_pub = next(i for i, n in enumerate(righe) if "pypi-publish" in n.lower())
+    assert guarda_sdist[0] < i_pub, (
+        f"l'sdist viene guardato al passo {guarda_sdist[0]}, dopo la "
+        f"pubblicazione al passo {i_pub}: guarderebbe una cosa gia' spedita")
+    # ⚖️ E DEVE RESTARE UN AVVISO finche' nessuno ha deciso: un avviso puo'
+    # stare da solo, un veto no. Togliere l'sdist da PyPI e' una scelta di
+    # DISTRIBUZIONE (senza sdist non si compila da sorgente, e Debian,
+    # conda-forge e Nix lo pretendono) e non la si prende dentro un file di CI.
+    assert "::warning::" in testo[guarda_sdist[0]], (
+        "il passo sull'sdist non avvisa: o non dice niente, o e' diventato un "
+        "veto. Se il veto e' stato acceso DI PROPOSITO, cambia questa riga e "
+        "scrivi nel banco CHI ha deciso e quando — la domanda aperta e' "
+        "«il sorgente non esce finche' e' sporco, o esce sporco perche' serve "
+        "a chi impacchetta?» e la risposta non sta in un workflow")
+
+
 def test_il_cancello_SI_PUO_APRIRE_di_proposito(wf):
     """⚖️ L'altra meta', e non e' un vezzo: un cancello che non si puo' aprire
     viene TOLTO, e allora non protegge piu' niente.
