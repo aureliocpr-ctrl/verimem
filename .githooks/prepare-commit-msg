@@ -69,6 +69,19 @@ else
 fi
 
 if [ -z "$NOME" ]; then
+    # ⚠️ SE IL MESSAGGIO E' GIA' FIRMATO, TACI. Misurato il 15/08: durante un
+    # `git pull --rebase` git ri-applica ogni commit e questo hook gira di
+    # nuovo, ma l'ambiente del rebase non porta VERIMEM_AGENT — quindi
+    # stampava «commit non attribuito» su commit che la firma ce l'hanno
+    # eccome (il trailer sta nel corpo e il rebase lo conserva).
+    # 🔑 Chi legge quel messaggio conclude di aver perso la firma e va a
+    # cercare un difetto che non esiste: e' successo a me, su un commit mio,
+    # gia' firmato. Un avviso che grida quando va tutto bene insegna a
+    # ignorare gli avvisi — ed e' proprio il rumore che ci fa perdere i rossi
+    # veri.
+    if grep -qiE '^Agent:[[:space:]]*[^[:space:]]' "$MSG_FILE" 2>/dev/null; then
+        exit 0
+    fi
     echo "prepare-commit-msg: commit non attribuito. Per firmarlo:"
     echo "      VERIMEM_AGENT=<NomeProprio> git commit ..."
     exit 0
