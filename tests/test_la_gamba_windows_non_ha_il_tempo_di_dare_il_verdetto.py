@@ -253,6 +253,54 @@ class TestIlTettoDistingueLeGambe:
             "la guardia non conta: senza un conteggio il verdetto dipende "
             "dall'ordine di visita del filesystem, che nessuno controlla")
 
+    def test_ogni_cartella_MODELLO_del_prodotto_e_coperta_dalla_cache(self):
+        """🔑 LA CLASSE CHE CI MORDE DA GIORNI, chiusa dal lato che si può
+        chiudere: **due liste che devono restare d'accordo e vivono in file
+        diversi.**
+
+        `local_grounding.py` dichiara dove il modello del gate viene scritto;
+        `ci.yml` dichiara quali cartelle mettere in cache. Nessuno dei due sa
+        dell'altro. Il 15/08 ws1 ha spostato il modello in
+        ``~/.cache/verimem/models`` (`42f03411`) — cura giusta, il modello sotto
+        una cartella-dati decideva dove vive la memoria dell'utente — e ws3 ha
+        visto per primo che, atterrando, quel percorso sarebbe uscito da questa
+        lista: la cache avrebbe salvato una cartella vuota.
+
+        ⚖️ Nessuno dei due aveva torto e nessuno poteva vederlo dal proprio
+        file. Il presidio è l'unico posto da cui **si vedono entrambi**.
+        """
+        import re
+
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        in_cache = []
+        for p in wf["jobs"]["test"]["steps"]:
+            if "actions/cache" in str(p.get("uses", "")):
+                in_cache += [r.strip() for r in
+                             str(p.get("with", {}).get("path", "")).splitlines()
+                             if r.strip()]
+        assert in_cache, "il workflow non mette in cache nessuna cartella"
+
+        sorgente = (CI.parents[2] / "verimem" / "local_grounding.py")
+        testo = sorgente.read_text(encoding="utf-8", errors="ignore")
+        # `Path.home() / "a" / "b" / …`  ->  `~/a/b/…`
+        voluti = set()
+        for m in re.finditer(r'Path\.home\(\)((?:\s*/\s*"[^"]+")+)', testo):
+            pezzi = re.findall(r'"([^"]+)"', m.group(1))
+            voluti.add("~/" + "/".join(pezzi))
+        assert voluti, (
+            "nessuna cartella-modello trovata in local_grounding.py: se le "
+            "costanti sono state riscritte, questo test va riletto — non "
+            "cancellato, o le due liste tornano a divergere in silenzio")
+
+        scoperti = [v for v in sorted(voluti)
+                    if not any(v.startswith(c) for c in in_cache)]
+        assert not scoperti, (
+            f"il prodotto scrive i modelli in {scoperti} e il workflow non "
+            f"mette quelle cartelle in cache ({in_cache}): la CI le "
+            f"riscaricherebbe a ogni run, e la guardia di completezza "
+            f"guarderebbe nel posto sbagliato")
+
     def test_il_salvataggio_della_cache_viene_PRIMA_dei_test(self):
         """⚠️ Il terzo modo in cui questa cura non funzionava, e il piu' banale.
 

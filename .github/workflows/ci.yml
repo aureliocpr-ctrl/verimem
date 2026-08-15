@@ -178,6 +178,18 @@ jobs:
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
             ~/.engram/models
+            # ⚠️ AGGIUNTO IN ANTICIPO il 15/08, PRIMA che serva. ws1 sta
+            # spostando il modello del gate in `~/.cache/verimem/models`
+            # (`42f03411`, NON ancora in main) perche' sotto una cartella-dati
+            # decideva dove vive la memoria dell'utente. ws3 ha visto per primo
+            # che quella cura, atterrando, uscirebbe da questa lista: la cache
+            # salverebbe una cartella vuota e non quella dove il modello
+            # finisce davvero.
+            # 🔑 E' la classe «due lati che devono restare d'accordo e vivono in
+            # file diversi»: `local_grounding.py` non sa che esiste un `ci.yml`.
+            # Metterlo ORA costa una riga e non rompe niente se il commit non
+            # arriva; il test accanto tiene le due liste allineate da solo.
+            ~/.cache/verimem
           # ⚠️ `hf2-` ANCHE QUI, e soprattutto nel ripiego: lasciare
           # `restore-keys: hf-` avrebbe ripescato ESATTAMENTE la cache
           # avvelenata che il prefisso nuovo serve ad abbandonare. Il ripiego
@@ -347,6 +359,18 @@ jobs:
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
             ~/.engram/models
+            # ⚠️ AGGIUNTO IN ANTICIPO il 15/08, PRIMA che serva. ws1 sta
+            # spostando il modello del gate in `~/.cache/verimem/models`
+            # (`42f03411`, NON ancora in main) perche' sotto una cartella-dati
+            # decideva dove vive la memoria dell'utente. ws3 ha visto per primo
+            # che quella cura, atterrando, uscirebbe da questa lista: la cache
+            # salverebbe una cartella vuota e non quella dove il modello
+            # finisce davvero.
+            # 🔑 E' la classe «due lati che devono restare d'accordo e vivono in
+            # file diversi»: `local_grounding.py` non sa che esiste un `ci.yml`.
+            # Metterlo ORA costa una riga e non rompe niente se il commit non
+            # arriva; il test accanto tiene le due liste allineate da solo.
+            ~/.cache/verimem
           key: hf2-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
 
       - name: Gate probe (il verdetto del moat su un claim di riferimento)
