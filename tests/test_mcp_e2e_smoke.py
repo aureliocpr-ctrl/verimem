@@ -177,6 +177,22 @@ def test_mcp_server_stdout_is_protocol_clean(tmp_path: Path):
         input=init_only, capture_output=True, env=env, timeout=30,
     )
     stdout = proc.stdout.strip()
+    # ⚠️ 2026-08-15: senza questa riga il test passava A VUOTO. Il ciclo qui
+    # sotto itera su `stdout.splitlines()`: se il server MUORE senza scrivere
+    # niente, la lista è vuota, il ciclo non gira e «ogni riga è JSON valido»
+    # risulta vero **perché non c'è nessuna riga**. Un verde che non ha
+    # guardato niente — e su questo banco varrebbe come prova che lo stdout
+    # dell'MCP è pulito, cioè la superficie che il cliente legge.
+    # 🔑 Il gemello a riga 105 questo controllo ce l'ha già, e il suo commento
+    # dichiara anche perché non si guarda il `returncode` (su Windows il server
+    # esce non-zero quando stdin si chiude a metà). Qui mancava: **la stessa
+    # cura entrata in una chiamata e non nell'altra, nello stesso file.**
+    assert stdout, (
+        "il server non ha scritto NIENTE su stdout: senza righe il controllo "
+        "qui sotto passerebbe a vuoto invece di provare la purezza del "
+        f"protocollo. returncode={proc.returncode} "
+        f"stderr:\n{proc.stderr.decode(errors='replace')[:1200]}"
+    )
     # Every non-blank line must be valid JSON. No log lines allowed.
     for line in stdout.splitlines():
         s = line.strip()

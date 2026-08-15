@@ -91,7 +91,15 @@ ANCORA_CIECHI = frozenset({
     # Saltare è legittimo quando NON SI PUÒ misurare (docker assente, modello
     # non in cache); non quando il soggetto misurato ha fallito.
     "test_log_level_env.py",
-    "test_mcp_e2e_smoke.py",
+    # test_mcp_e2e_smoke.py — CURATO il 15/08, e il difetto era il piu' subdolo
+    # della famiglia: il secondo dei due test iterava su `stdout.splitlines()`
+    # senza verificare che ci FOSSE stdout. Server morto -> zero righe -> il
+    # ciclo non gira -> «ogni riga e' JSON valido» risulta vero perche' non
+    # c'e' nessuna riga. Un verde che non ha guardato niente, su un banco che
+    # prova la purezza del protocollo MCP, cioe' la superficie del cliente.
+    # 📌 Il gemello nello STESSO FILE (r.105) il controllo ce l'aveva gia', e
+    # dichiarava pure perche' non guarda il returncode: la stessa cura entrata
+    # in una chiamata e non nell'altra, a venti righe di distanza.
     # test_mcp_stdout_purity_g2.py — CURATO il 14/08. Tolto da qui *perché me
     # l'ha detto il test qui sotto*: l'avevo curato e dimenticato in lista, e
     # `test_il_cricchetto_non_si_arrugginisce` è diventato rosso nominandolo.
