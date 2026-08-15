@@ -98,7 +98,27 @@ ANCORA_CIECHI = frozenset({
     # valido: uno zero si legge come un risultato straordinario, non come una
     # misura assente. Verificato su ENTRAMBE le popolazioni (morto -> non
     # valido; hook vero -> valido, 20 campioni, p50 512.8 e 526.5).
-    "perf/bench_self_model_ab.py",
+    # perf/bench_self_model_ab.py — CURATO il 15/08, ed era il PEGGIORE dei
+    # tre: negli altri due un processo morto sembrava veloce, qui FABBRICA UNA
+    # CONCLUSIONE SCIENTIFICA. Misurato con un `claude` FINTO (zero abbonamento,
+    # `self_model.db` vero mai toccato), sugli stessi tre scenari, prima e dopo:
+    #
+    #     scenario          PRIMA                          DOPO
+    #     entrambi morti    delta 0.0  NO_EFFECT           MEASUREMENT_INVALID
+    #     solo il ramo B    delta 7.0  SELF_MODEL_HELPS    MEASUREMENT_INVALID
+    #     entrambi vivi     delta 7.0  SELF_MODEL_HELPS    SELF_MODEL_HELPS
+    #
+    # 🔑 GUARDA LE DUE RIGHE DI MEZZO: con META' DELLE MISURE MAI AVVENUTE il
+    # banco dava **lo stesso verdetto E lo stesso delta** del giro riuscito.
+    # Non un valore sospetto da controllare: una copia perfetta. E il caso
+    # «entrambi morti» dava `NO_EFFECT`, cioe' un guasto totale produceva la
+    # conclusione piu' pubblicabile che esista, salvata su disco.
+    # ⇒ La cura non ammorbidisce il verdetto, lo NEGA: se un ramo non ha girato
+    # non c'e' nessun verdetto da dare. Le medie si calcolano sui soli giri
+    # avvenuti, e sono `None` invece di `0.0` quando non ce ne sono — uno zero
+    # si legge come una misura, non come la sua assenza.
+    # 📌 Aggiunto anche il ramo `FileNotFoundError`: senza, su una macchina
+    # dove `claude` non e' nel PATH il banco avrebbe scritto NO_EFFECT.
     # test_crash_injection_g3.py — trovato dall'albero (il grep non lo vedeva:
     # usa `Popen`, non `run`) e CURATO il 14/08. Lì `check=True` sarebbe stato
     # sbagliato — il processo viene ucciso di proposito — e il difetto era

@@ -82,12 +82,28 @@ PROMPTS = [
 ]
 
 
-def _run_claude(prompt: str, timeout_s: int = 120) -> tuple[str, float, dict]:
-    """Spawn `claude -p` silently, return (stdout, latency_s, parsed_json_or_empty).
+def _run_claude(prompt: str,
+                timeout_s: int = 120) -> tuple[str, float, dict, str]:
+    """Spawn `claude -p` silently, return (stdout, latency_s, parsed, fault).
 
     The model is explicit on purpose: the headless CLI does not inherit the
     calling session's model, and an A/B whose two arms silently ran on the CLI
     default measures the default, not the change (2026-07-25).
+
+    ⚠️ `fault` added 2026-08-15, and here the discarded outcome was worse than
+    on the two briefing benches. There a dead process looked FAST; here it
+    manufactures a scientific conclusion:
+
+      · dead in BOTH arms   -> 0 tokens either side -> delta 0.00 -> the
+        `delta >= -1.0` branch prints **VERDICT: NO_EFFECT** and writes it to
+        `~/.engram/audit/bench_self_model_ab.json`. A total failure produces
+        the most publishable finding there is.
+      · dead in ONE arm only (a rate limit landing halfway is enough) -> that
+        arm averages 0 and the delta goes wide -> **SELF_MODEL_HELPS** or
+        **HURTS**. A partial failure manufactures a POSITIVE result.
+
+    ⇒ An A/B must refuse to conclude when an arm did not run. The verdict is
+    withheld, not softened: `MEASUREMENT_INVALID` and the reason.
     """
     t0 = time.perf_counter()
     try:
@@ -107,9 +123,16 @@ def _run_claude(prompt: str, timeout_s: int = 120) -> tuple[str, float, dict]:
             parsed = json.loads(stdout)
         except json.JSONDecodeError:
             pass
-        return stdout, lat, parsed
+        if proc.returncode != 0:
+            tail = (proc.stderr or "")[-300:]
+            return stdout, lat, parsed, f"rc={proc.returncode} stderr={tail!r}"
+        return stdout, lat, parsed, ""
     except subprocess.TimeoutExpired:
-        return "", time.perf_counter() - t0, {}
+        return "", time.perf_counter() - t0, {}, f"timeout after {timeout_s}s"
+    except FileNotFoundError:
+        # `claude` not on PATH: without this the bench would have reported
+        # NO_EFFECT on a machine where it never ran at all.
+        return "", time.perf_counter() - t0, {}, "`claude` not found on PATH"
 
 
 def _count_signal_tokens(text: str) -> tuple[int, list[str]]:
@@ -186,7 +209,7 @@ def main() -> int:
     print("[A] self_model PRESENT — running fresh instances...")
     for p in PROMPTS:
         print(f"  -> {p['slug']}", flush=True)
-        stdout, lat, parsed = _run_claude(p["text"])
+        stdout, lat, parsed, fault = _run_claude(p["text"])
         # Claude json output structure: {result, total_cost_usd, ...} or text
         response_text = (
             parsed.get("result") if parsed else stdout
@@ -201,6 +224,7 @@ def main() -> int:
             "tokens_found": found,
             "response_len": len(response_text or ""),
             "raw_truncated": (response_text or "")[:400],
+            "fault": fault,
         })
         print(f"     citation={n_tok}/{len(SIGNAL_TOKENS)} latency={lat:.1f}s")
 
@@ -215,7 +239,7 @@ def main() -> int:
         print("[B] self_model ABSENT — running fresh instances...")
         for p in PROMPTS:
             print(f"  -> {p['slug']}", flush=True)
-            stdout, lat, parsed = _run_claude(p["text"])
+            stdout, lat, parsed, fault = _run_claude(p["text"])
             response_text = (
                 parsed.get("result") if parsed else stdout
             )
@@ -229,6 +253,7 @@ def main() -> int:
                 "tokens_found": found,
                 "response_len": len(response_text or ""),
                 "raw_truncated": (response_text or "")[:400],
+                "fault": fault,
             })
             print(f"     citation={n_tok}/{len(SIGNAL_TOKENS)} latency={lat:.1f}s")
     finally:
@@ -242,17 +267,46 @@ def main() -> int:
     print("=== SUMMARY ===")
     a_results = [r for r in results if r["variant"] == "A_with_self_model"]
     b_results = [r for r in results if r["variant"] == "B_without_self_model"]
-    avg_a = sum(r["n_tokens_cited"] for r in a_results) / len(a_results)
-    avg_b = sum(r["n_tokens_cited"] for r in b_results) / len(b_results)
-    lat_a = sum(r["latency_s"] for r in a_results) / len(a_results)
-    lat_b = sum(r["latency_s"] for r in b_results) / len(b_results)
-    delta = avg_a - avg_b
-    print(f"  avg citations A (self_model ON):  {avg_a:.2f}/{len(SIGNAL_TOKENS)}")
-    print(f"  avg citations B (self_model OFF): {avg_b:.2f}/{len(SIGNAL_TOKENS)}")
-    print(f"  DELTA: {delta:+.2f} tokens cited  ({delta/len(SIGNAL_TOKENS)*100:+.1f}%)")
-    print(f"  avg latency A: {lat_a:.1f}s")
-    print(f"  avg latency B: {lat_b:.1f}s")
-    if delta >= 2.0:
+    # ⚠️ Averages over the runs that ACTUALLY happened. A dead `claude` cites
+    # zero tokens, so counting it drags its arm towards zero — and the delta,
+    # which is the whole result, moves with it.
+    a_valid = [r for r in a_results if not r["fault"]]
+    b_valid = [r for r in b_results if not r["fault"]]
+    faults = [r for r in results if r["fault"]]
+
+    def _media(righe: list[dict], campo: str) -> float | None:
+        return (sum(r[campo] for r in righe) / len(righe)) if righe else None
+
+    avg_a = _media(a_valid, "n_tokens_cited")
+    avg_b = _media(b_valid, "n_tokens_cited")
+    lat_a = _media(a_valid, "latency_s")
+    lat_b = _media(b_valid, "latency_s")
+    delta = (avg_a - avg_b) if (avg_a is not None and avg_b is not None) else None
+    def _mostra(x: float | None, cifre: int = 2) -> str:
+        return "n/d" if x is None else f"{x:.{cifre}f}"
+
+    print(f"  runs A: {len(a_valid)}/{len(a_results)} valid"
+          f"   runs B: {len(b_valid)}/{len(b_results)} valid")
+    print(f"  avg citations A (self_model ON):  "
+          f"{_mostra(avg_a)}/{len(SIGNAL_TOKENS)}")
+    print(f"  avg citations B (self_model OFF): "
+          f"{_mostra(avg_b)}/{len(SIGNAL_TOKENS)}")
+    if delta is None:
+        print("  DELTA: n/d — an arm has no valid run")
+    else:
+        print(f"  DELTA: {delta:+.2f} tokens cited  "
+              f"({delta/len(SIGNAL_TOKENS)*100:+.1f}%)")
+    print(f"  avg latency A: {_mostra(lat_a, 1)}s")
+    print(f"  avg latency B: {_mostra(lat_b, 1)}s")
+
+    # 🔑 THE VERDICT IS WITHHELD, NOT SOFTENED. Before this, a `claude` that
+    # died in both arms gave delta 0.00, which falls in the `>= -1.0` branch:
+    # the bench printed NO_EFFECT and saved it. A failure must not be able to
+    # produce a finding — least of all the most publishable one.
+    if faults:
+        verdict = (f"MEASUREMENT_INVALID — {len(faults)} of {len(results)} "
+                   f"runs did not complete: {faults[0]['fault']}")
+    elif delta >= 2.0:
         verdict = "SELF_MODEL_HELPS (>=+2 tokens cited)"
     elif delta >= 1.0:
         verdict = "MARGINAL"
@@ -265,14 +319,26 @@ def main() -> int:
     out_path = Path.home() / ".engram" / "audit" / "bench_self_model_ab.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     summary = {
+        # First three on purpose: a reader who stops at the top of the report
+        # still learns whether the run measured anything.
+        "measurement_valid": not faults,
+        "runs_that_did_not_complete": len(faults),
+        "first_fault": faults[0]["fault"] if faults else None,
         "n_prompts": len(PROMPTS),
         "n_signal_tokens": len(SIGNAL_TOKENS),
-        "avg_citations_A": round(avg_a, 2),
-        "avg_citations_B": round(avg_b, 2),
-        "delta_citations": round(delta, 2),
-        "delta_pct": round(delta / len(SIGNAL_TOKENS) * 100, 1),
-        "avg_latency_s_A": round(lat_a, 1),
-        "avg_latency_s_B": round(lat_b, 1),
+        "n_valid_runs_A": len(a_valid),
+        "n_valid_runs_B": len(b_valid),
+        # `None` and not 0.0 when an arm has nothing valid: a zero would read
+        # as a measured result instead of as an absent measurement.
+        "avg_citations_A": None if avg_a is None else round(avg_a, 2),
+        "avg_citations_B": None if avg_b is None else round(avg_b, 2),
+        "delta_citations": None if delta is None else round(delta, 2),
+        "delta_pct": (
+            None if delta is None
+            else round(delta / len(SIGNAL_TOKENS) * 100, 1)
+        ),
+        "avg_latency_s_A": None if lat_a is None else round(lat_a, 1),
+        "avg_latency_s_B": None if lat_b is None else round(lat_b, 1),
         "verdict": verdict,
     }
     out_path.write_text(
