@@ -86,15 +86,49 @@ def test_e_anche_da_get(fatto_con_garanzia):
 @pytest.mark.parametrize("campo", SOLO_MCP)
 def test_i_due_contratti_non_divergono(fatto_con_garanzia, campo):
     """`_fact_view` promette «the SAME provenance surface everywhere»: quello
-    che il canale MCP serve, l'SDK lo serve."""
+    che il canale MCP serve, l'SDK lo serve.
+
+    QUI C'ERA UNO SKIP, E TACEVA PROPRIO SUL DIFETTO CHE DEVE CATTURARE::
+
+        if campo not in mcp:
+            pytest.skip(f"«{campo}» non esce nemmeno da MCP su questo fatto")
+
+    L'assenza da MCP veniva letta come una condizione dell'ambiente — «su
+    questo fatto il campo non c'è, pazienza» — quando è invece **il difetto
+    peggiore dei due**: `SOLO_MCP` è per definizione l'elenco dei campi *che il
+    canale MCP serve*, quindi un campo che non esce da MCP smentisce la
+    premessa dell'intero caso. Il presidio non si limitava a mancarlo: si
+    **spegneva**, e uno che si spegne è indistinguibile da uno che approva.
+
+    Misurato prima di toccarlo (2026-08-15, `-rs`): **8 passed, 0 skipped** —
+    tutti e quattro i campi escono da MCP. Lo skip non scattava mai. È ciò che
+    rende la sostituzione sicura *e* necessaria insieme: un ramo che oggi non
+    cambia alcun esito non sta facendo il lavoro che dichiara, sta solo
+    aspettando il giorno in cui lo farebbe al contrario.
+
+    ⚠️ PERIMETRO. L'assert vale per il fatto della fixture — con garanzia e con
+    `source`, quindi giudicato. Su un fatto mai giudicato `confidence_tier`
+    potrebbe legittimamente non esserci; se un domani questo caso dovesse
+    coprire anche quello, la strada è **una seconda fixture con la sua attesa**,
+    non un ramo che salta e riporta il presidio al silenzio di prima.
+
+    📌 `tests/test_fact_ha_un_contratto_di_uscita.py` impedisce a monte che un
+    campo di `SOLO_MCP` finisca in `NON_ESCONO`. I due casi non si sostituiscono:
+    quello previene la contraddizione fra i due elenchi, questo verifica il
+    prodotto. Se togli uno, l'altro non copre il suo verso.
+    """
     m, fid = fatto_con_garanzia
     from verimem.fact_contract import fact_payload
 
     f = m.semantic.get(fid)
     mcp = fact_payload(f)
     sdk = Memory._fact_view(f)
-    if campo not in mcp:
-        pytest.skip(f"«{campo}» non esce nemmeno da MCP su questo fatto")
+    assert campo in mcp, (
+        f"«{campo}» è in SOLO_MCP — l'elenco dei campi che il canale MCP serve "
+        f"— e da MCP non esce. O il contratto di uscita ha smesso di servirlo, "
+        f"e allora è una regressione del prodotto, o non appartiene più a "
+        f"quell'elenco, e allora va tolto di lì: in nessuno dei due casi la "
+        f"risposta è passare oltre in silenzio")
     assert campo in sdk, (
         f"«{campo}» esce dal canale MCP e non dall'SDK: due contratti di "
         f"uscita per lo stesso fatto sono due verità che divergono")

@@ -177,17 +177,23 @@ def test_le_due_liste_dei_campi_non_si_contraddicono() -> None:
 
     Oggi la loro intersezione e' vuota — **per fortuna, non per costruzione**.
     Il giorno in cui un campo sorvegliato entrasse in ``NON_ESCONO`` per una
-    buona ragione, il collaudo che sorveglia la divergenza fra i due contratti
-    **non diventerebbe rosso: si spegnerebbe**, perche' quel file salta quando
-    il campo non esce da MCP:
+    buona ragione, questo caso fallisce QUI, nel file che gia' possiede
+    ``NON_ESCONO``, invece di lasciare la contraddizione in piedi.
 
-        if campo not in mcp:
-            pytest.skip(f"«{campo}» non esce nemmeno da MCP su questo fatto")
+    📌 AGGIORNATO IL 2026-08-15, e il motivo vale piu' della riga cambiata.
+    Qui c'era scritto che il collaudo laggiu' **non sarebbe diventato rosso, si
+    sarebbe spento**, perche' saltava quando il campo non usciva da MCP. Vero
+    quando fu scritto; non piu': quello skip e' stato sostituito da un assert
+    (`test_la_garanzia_si_scriveva_e_non_si_rileggeva.py`), misurato prima
+    (8 passed, 0 skipped: non scattava mai) e falsificato dopo (dove saltava,
+    ora e' rosso).
 
-    ⇒ E' la forma peggiore di un presidio mal ancorato: **tace proprio quando
-    arriva il difetto che deve catturare**. Questo caso lo rende impossibile
-    senza che qualcuno lo legga: la contraddizione fallisce QUI, nel file che
-    gia' possiede ``NON_ESCONO``, prima che laggiu' qualcosa smetta di suonare.
+    ⇒ I due casi **non si sostituiscono**, e conviene dirlo perche' la
+    tentazione di togliere questo e' reale ora che laggiu' suona: quello
+    verifica il PRODOTTO — un campo di ``SOLO_MCP`` esce davvero da MCP —
+    questo verifica i due ELENCHI, e li verifica *senza costruire un fatto*,
+    quindi parla anche quando il prodotto non e' interrogabile. Togline uno e
+    l'altro non copre il suo verso.
 
     ⚠️ PERIMETRO, dichiarato. Il verso opposto e' gia' coperto e non da questo
     caso: se il prodotto esclude un campo che l'elenco qui sopra non dichiara,
