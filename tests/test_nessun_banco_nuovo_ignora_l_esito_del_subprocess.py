@@ -75,8 +75,29 @@ TESTS = pathlib.Path(__file__).resolve().parent
 # è tutto il senso del cricchetto. Chi cura un file lo toglie da qui — e se se
 # ne dimentica, il secondo test qui sotto glielo ricorda.
 ANCORA_CIECHI = frozenset({
-    "perf/bench_briefing_proactive.py",
-    "perf/bench_briefing_proactive_v2.py",
+    # perf/bench_briefing_proactive.py e _v2.py — CURATI il 15/08, e qui il
+    # silenzio costava una cosa DIVERSA dagli altri: su un banco di LATENZA un
+    # processo morto non sembra rotto, **sembra veloce**.
+    # Misurato puntando `HOOK_PATH` a uno script che scrive un `ImportError` su
+    # stderr ed esce 1, con l'uscita dirottata e `_clear_session_state`
+    # disinnescata (nessun file vivo toccato)::
+    #
+    #     hook MORTO   latency_p50_ms 177.9 · false_positive_chitchat_count 0
+    #     hook VERO    latency_p50_ms 512.8 · false_positive_chitchat_count 0
+    #
+    # ⇒ Il guasto totale si sarebbe letto come un **miglioramento di latenza
+    # del 65%**, accanto a una metrica di qualita' a ZERO che si legge come
+    # perfetta. Otto numeri, due lusinghieri, **nessuno che dica che l'hook non
+    # e' mai partito**. E la diagnosi non mancava: `capture_output=True` aveva
+    # gia' catturato l'`ImportError`, ma la funzione rendeva solo `proc.stdout`.
+    # 🔑 La cura NON e' `check=True` (ucciderebbe il giro al primo prompt): la
+    # funzione RENDE l'esito, le latenze dei morti non entrano nelle percentili
+    # — includerle abbassa il p50, cioe' il guasto MIGLIORA il numero — e il
+    # referto porta in cima `measurement_valid` e `prompts_with_a_dead_hook`.
+    # Le latenze diventano `None` e non `0.0` quando non c'e' nessun campione
+    # valido: uno zero si legge come un risultato straordinario, non come una
+    # misura assente. Verificato su ENTRAMBE le popolazioni (morto -> non
+    # valido; hook vero -> valido, 20 campioni, p50 512.8 e 526.5).
     "perf/bench_self_model_ab.py",
     # test_crash_injection_g3.py — trovato dall'albero (il grep non lo vedeva:
     # usa `Popen`, non `run`) e CURATO il 14/08. Lì `check=True` sarebbe stato
@@ -88,6 +109,12 @@ ANCORA_CIECHI = frozenset({
     # («DONE RuntimeError») e il messaggio porta stdout E stderr. Processo
     # morto -> stdout vuoto -> l'assert scatta, col perche' sotto gli occhi.
     "test_embedding_load_no_hang.py",
+
+    # ESAMINATO 15/08 — REGGE: costruisce `_uscita = (stdout or "") + (stderr
+    # or "")` e lo passa come MESSAGGIO all'assert su una stringa positiva
+    # attesa. Processo morto -> stdout vuota -> l'assert scatta, con entrambi i
+    # canali sotto gli occhi. E dichiara gia' la trappola del `None` al posto
+    # della stringa vuota, che altrove e' costata un `TypeError`.
     "test_flow_surface_onesta.py",
     # I due banchi delle PROMESSE DEL README — curati il 14/08, e non erano
     # solo ciechi: se la sonda non rispondeva facevano `pytest.skip`, cioè

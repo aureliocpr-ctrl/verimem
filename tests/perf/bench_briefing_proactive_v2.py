@@ -133,7 +133,7 @@ PROMPTS: list[tuple[str, set[str] | None]] = [
 ]
 
 
-def _run_hook(prompt: str, timeout_s: float = 10.0) -> tuple[str, float]:
+def _run_hook(prompt: str, timeout_s: float = 10.0) -> tuple[str, float, str]:
     payload = json.dumps({"prompt": prompt}).encode("utf-8")
     t0 = time.perf_counter()
     # Strip any user-set threshold/min_matched so we measure the
@@ -150,9 +150,21 @@ def _run_hook(prompt: str, timeout_s: float = 10.0) -> tuple[str, float]:
             timeout=timeout_s, check=False, env=env,
         )
         latency = time.perf_counter() - t0
-        return proc.stdout.decode("utf-8", errors="replace"), latency
+        out = proc.stdout.decode("utf-8", errors="replace")
+        # ⚠️ Third element added 2026-08-15, same defect and same cure as v1:
+        # on a LATENCY bench a dead process does not look broken, it looks
+        # FAST. Measured on v1 with a hook that exits 1: the dead run reported
+        # `latency_p50_ms 177.9` while the real hook reports 512.8 — the
+        # failure would have read as a 65% improvement, next to a
+        # `false_positive_chitchat_count: 0` that reads as perfect.
+        # The diagnosis was already captured by `capture_output=True` and then
+        # dropped, because only `proc.stdout` was returned.
+        if proc.returncode != 0:
+            tail = proc.stderr.decode("utf-8", errors="replace")[-300:]
+            return out, latency, f"rc={proc.returncode} stderr={tail!r}"
+        return out, latency, ""
     except subprocess.TimeoutExpired:
-        return "", time.perf_counter() - t0
+        return "", time.perf_counter() - t0, f"timeout after {timeout_s}s"
 
 
 def _extract_hit_ids(banner_text: str) -> list[str]:
@@ -199,12 +211,17 @@ def run_bench() -> dict:
 
     results: list[dict] = []
     latencies: list[float] = []
+    faults: list[str] = []
 
     for prompt, relevant in PROMPTS:
         # Measure latency via hook subprocess (representative of real cost)
-        stdout, lat_s = _run_hook(prompt)
+        stdout, lat_s, fault = _run_hook(prompt)
         lat_ms = lat_s * 1000.0
-        latencies.append(lat_ms)
+        # A dead process's elapsed time is not a latency: including it drags
+        # the percentiles DOWN, i.e. the failure improves the headline number.
+        if not fault:
+            latencies.append(lat_ms)
+        faults.append(fault)
 
         # Get ranked ids via direct daemon call (banner strips ids)
         is_chitchat = relevant is None
@@ -257,7 +274,13 @@ def run_bench() -> dict:
         1 for r in chitchat if r["false_positive_on_chitchat"]
     )
 
+    # ⚠️ THESE THREE FIRST ON PURPOSE: a reader who stops at the top of the
+    # report still learns whether the run measured anything.
+    guasti = [f for f in faults if f]
     summary = {
+        "measurement_valid": not guasti,
+        "prompts_with_a_dead_hook": len(guasti),
+        "first_fault": guasti[0] if guasti else None,
         "method": "ID-based ground truth (manual labels, cycle #61)",
         "n_prompts_total": len(PROMPTS),
         "n_real_prompts": n_real,
@@ -269,14 +292,21 @@ def run_bench() -> dict:
         "recall_at_1": round(sum(recall_1) / len(recall_1), 3) if recall_1 else 0.0,
         "recall_at_3": round(sum(recall_3) / len(recall_3), 3) if recall_3 else 0.0,
         "false_positive_chitchat_count": fp_chitchat,
-        "latency_p50_ms": round(statistics.median(latencies), 1),
-        "latency_p95_ms": round(
-            statistics.quantiles(latencies, n=20)[18]
-            if len(latencies) >= 20 else max(latencies),
-            1,
+        # `None` and not 0.0 when every hook died: a zero would read as an
+        # extraordinary result instead of as an absent measurement.
+        "latency_p50_ms": (
+            round(statistics.median(latencies), 1) if latencies else None
         ),
-        "latency_max_ms": round(max(latencies), 1),
-        "latency_min_ms": round(min(latencies), 1),
+        "latency_p95_ms": (
+            round(
+                statistics.quantiles(latencies, n=20)[18]
+                if len(latencies) >= 20 else max(latencies),
+                1,
+            ) if latencies else None
+        ),
+        "latency_max_ms": round(max(latencies), 1) if latencies else None,
+        "latency_min_ms": round(min(latencies), 1) if latencies else None,
+        "n_latency_samples": len(latencies),
     }
 
     out = {"summary": summary, "results": results}

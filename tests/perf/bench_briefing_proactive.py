@@ -76,8 +76,33 @@ PROMPTS: list[tuple[str, set[str] | None]] = [
 
 
 def _run_hook(prompt: str, timeout_s: float = 10.0
-               ) -> tuple[str, float]:
-    """Invoke the hook as subprocess. Returns (stdout_text, latency_s)."""
+               ) -> tuple[str, float, str]:
+    """Invoke the hook as subprocess. Returns (stdout_text, latency_s, fault).
+
+    `fault` is "" when the hook completed with returncode 0, and a short
+    reason otherwise. It exists because discarding the outcome does not
+    merely lose information here: **on a latency bench a dead process does
+    not look broken, it looks FAST.**
+
+    Measured on 2026-08-15 by pointing HOOK_PATH at a script that writes an
+    ImportError to stderr and exits 1, with the report redirected and the
+    session-state reset disarmed so no live file was touched::
+
+        hit_rate_real ................. 0.0
+        avg_precision ................. null
+        recall_at_1 ................... 0.0
+        false_positive_chitchat_count . 0        <- reads as perfect
+        latency_p50_ms ................ 177.9    <- a plausible good number
+        latency_p95_ms ................ 189.8
+
+    Eight numbers, two of them flattering, and not one of them says the hook
+    never ran. A dead hook and a healthy hook that simply has nothing to say
+    were also indistinguishable to the caller: same empty output, same
+    hit count, latencies 207.9 ms against 217.8 ms.
+
+    The diagnosis was not missing — it was thrown away. `capture_output=True`
+    already captured the ImportError; only `proc.stdout` was returned.
+    """
     payload = json.dumps({"prompt": prompt}).encode("utf-8")
     t0 = time.perf_counter()
     try:
@@ -87,9 +112,13 @@ def _run_hook(prompt: str, timeout_s: float = 10.0
             timeout=timeout_s, check=False,
         )
         latency = time.perf_counter() - t0
-        return proc.stdout.decode("utf-8", errors="replace"), latency
+        out = proc.stdout.decode("utf-8", errors="replace")
+        if proc.returncode != 0:
+            tail = proc.stderr.decode("utf-8", errors="replace")[-300:]
+            return out, latency, f"rc={proc.returncode} stderr={tail!r}"
+        return out, latency, ""
     except subprocess.TimeoutExpired:
-        return "", time.perf_counter() - t0
+        return "", time.perf_counter() - t0, f"timeout after {timeout_s}s"
 
 
 def _parse_banner_hits(output: str) -> list[dict[str, str]]:
@@ -145,9 +174,12 @@ def run_bench() -> dict:
         # Reset per-prompt to get clean dedup state. (Real sessions
         # have dedup; bench wants per-prompt fairness.)
         _clear_session_state()
-        stdout, lat_s = _run_hook(prompt)
+        stdout, lat_s, fault = _run_hook(prompt)
         lat_ms = lat_s * 1000.0
-        latencies.append(lat_ms)
+        # A dead process's elapsed time is not a latency: including it drags
+        # the percentiles DOWN, i.e. the failure improves the headline number.
+        if not fault:
+            latencies.append(lat_ms)
         hits = _parse_banner_hits(stdout)
 
         is_chitchat = expected is None
@@ -182,6 +214,7 @@ def run_bench() -> dict:
             ),
             "latency_ms": round(lat_ms, 1),
             "is_chitchat": is_chitchat,
+            "fault": fault,
         })
 
     # Aggregate
@@ -192,7 +225,14 @@ def run_bench() -> dict:
     precisions = [r["precision"] for r in real_prompts if r["precision"] is not None]
     recalls = [r["recall_at_1"] for r in real_prompts]
 
+    # ⚠️ FIRST TWO KEYS ON PURPOSE: a reader who stops at the top of the
+    # report still learns whether the run measured anything. Everything below
+    # is computed on the prompts whose hook actually completed.
+    faults = [r for r in results if r["fault"]]
     summary = {
+        "measurement_valid": not faults,
+        "prompts_with_a_dead_hook": len(faults),
+        "first_fault": faults[0]["fault"] if faults else None,
         "n_prompts_total": len(PROMPTS),
         "n_real_prompts": n_real,
         "n_chitchat": len(chitchat),
@@ -206,14 +246,21 @@ def run_bench() -> dict:
         "false_positive_chitchat_count": sum(
             1 for r in chitchat if r["false_positive_on_chitchat"]
         ),
-        "latency_p50_ms": round(statistics.median(latencies), 1),
-        "latency_p95_ms": round(
-            statistics.quantiles(latencies, n=20)[18]
-            if len(latencies) >= 20 else max(latencies),
-            1,
+        # `None` and not 0.0 when every hook died: a zero would read as an
+        # extraordinary result instead of as an absent measurement.
+        "latency_p50_ms": (
+            round(statistics.median(latencies), 1) if latencies else None
         ),
-        "latency_max_ms": round(max(latencies), 1),
-        "latency_min_ms": round(min(latencies), 1),
+        "latency_p95_ms": (
+            round(
+                statistics.quantiles(latencies, n=20)[18]
+                if len(latencies) >= 20 else max(latencies),
+                1,
+            ) if latencies else None
+        ),
+        "latency_max_ms": round(max(latencies), 1) if latencies else None,
+        "latency_min_ms": round(min(latencies), 1) if latencies else None,
+        "n_latency_samples": len(latencies),
     }
 
     out = {"summary": summary, "results": results}
