@@ -33,6 +33,8 @@ dire se esce o perche' no.
 from __future__ import annotations
 
 import dataclasses
+import pathlib
+import re
 
 import pytest
 
@@ -161,3 +163,57 @@ def test_il_valore_non_viene_trasformato(campo, valore):
     """Il payload trasporta, non interpreta."""
     p = Fact(proposition="x", **{campo: valore}).as_payload()
     assert p[campo] == valore
+
+
+def test_le_due_liste_dei_campi_non_si_contraddicono() -> None:
+    """Cio' che una superficie SORVEGLIA non puo' essere cio' che un'altra ESCLUDE.
+
+    DUE ELENCHI, IN DUE FILE, CHE NON SI SONO MAI PARLATI. Misurato il
+    2026-08-15 con `git grep -l`: nessun file cita entrambi.
+
+        NON_ESCONO   `verimem/fact_contract.py`   «questo campo NON esce da MCP»
+        SOLO_MCP     `tests/test_la_garanzia_si_scriveva_e_non_si_rileggeva.py`
+                     «questi campi devono uscire da MCP *e* dall'SDK»
+
+    Oggi la loro intersezione e' vuota — **per fortuna, non per costruzione**.
+    Il giorno in cui un campo sorvegliato entrasse in ``NON_ESCONO`` per una
+    buona ragione, il collaudo che sorveglia la divergenza fra i due contratti
+    **non diventerebbe rosso: si spegnerebbe**, perche' quel file salta quando
+    il campo non esce da MCP:
+
+        if campo not in mcp:
+            pytest.skip(f"«{campo}» non esce nemmeno da MCP su questo fatto")
+
+    ⇒ E' la forma peggiore di un presidio mal ancorato: **tace proprio quando
+    arriva il difetto che deve catturare**. Questo caso lo rende impossibile
+    senza che qualcuno lo legga: la contraddizione fallisce QUI, nel file che
+    gia' possiede ``NON_ESCONO``, prima che laggiu' qualcosa smetta di suonare.
+
+    ⚠️ PERIMETRO, dichiarato. Il verso opposto e' gia' coperto e non da questo
+    caso: se il prodotto esclude un campo che l'elenco qui sopra non dichiara,
+    ``test_ogni_campo_del_dataclass_esce_o_e_dichiarato`` lo trova fra i
+    «dimenticati» e fallisce. Qui si copre il verso che nessuno guardava —
+    **escludere un campo che UN ALTRO FILE sta sorvegliando**.
+    """
+    percorso = pathlib.Path(__file__).with_name(
+        "test_la_garanzia_si_scriveva_e_non_si_rileggeva.py")
+    if not percorso.exists():  # il file e' stato rinominato o tolto
+        pytest.skip(f"{percorso.name} non esiste piu': aggiorna questo riferimento")
+
+    testo = percorso.read_text(encoding="utf-8")
+    trovato = re.search(r"^SOLO_MCP\s*=\s*\[([^\]]*)\]", testo, re.MULTILINE)
+    assert trovato, (
+        f"{percorso.name} non dichiara piu' SOLO_MCP nella forma attesa: "
+        f"questo caso non puo' piu' leggerlo, e va aggiornato invece che tolto"
+    )
+    sorvegliati = set(re.findall(r'"([a-z_]+)"', trovato.group(1)))
+    assert sorvegliati, "SOLO_MCP e' stato letto ma risulta vuoto: parsing da rivedere"
+
+    contraddetti = sorvegliati & set(NON_ESCONO)
+    assert not contraddetti, (
+        f"campi insieme SORVEGLIATI e ESCLUSI: {sorted(contraddetti)}.\n"
+        f"Un campo in SOLO_MCP deve uscire da MCP e dall'SDK; un campo in "
+        f"NON_ESCONO non esce da MCP. Le due cose non stanno insieme: "
+        f"decidete quale vale, perche' finche' restano entrambe il collaudo "
+        f"che sorveglia la divergenza SALTA invece di fallire."
+    )
