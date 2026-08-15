@@ -102,6 +102,44 @@ def test_il_cancello_GUARDA_la_ci_e_non_qualcos_altro(wf):
         "run qualunque, che puo' essere di un altro commit")
 
 
+def test_cio_che_si_spedisce_viene_GUARDATO_prima_di_partire(wf):
+    """⚠️ IL CANCELLO SULLA CI NON BASTA, e questo e' il pezzo che aggiunge.
+
+    Il cancello chiede «la CI e' verde?» — la qualita' del CODICE. Non guarda
+    **cosa c'e' dentro il pacchetto**: con la CI verde si aprirebbe e un
+    artefatto sporco passerebbe. Misurato da ws2 il 2026-08-15 sugli artefatti
+    ricostruiti da `0dc18f24`::
+
+        controlla_registro  WHEEL   EXIT=0   pulito
+        controlla_promesse  WHEEL   EXIT=0
+        controlla_registro  SDIST   EXIT=1   321 identificativi in 129 file
+
+    ⇒ **Solo il wheel**, ed e' la separazione che ha reso la scelta decidibile:
+    il wheel e' cio' che l'utente installa ed e' gia' verde, quindi accenderlo
+    costa zero; l'sdist e' un debito con un numero, e un blocco secco li'
+    fermerebbe qualunque rilascio senza curare niente.
+    📌 I due controlli sono di ws2 e stanno qui col suo assenso esplicito.
+    """
+    passi = wf["jobs"]["build-and-publish"]["steps"]
+    testo = " ".join(str(s.get("run", "")) for s in passi)
+    for script in ("controlla_registro", "controlla_promesse"):
+        assert script in testo, (
+            f"`{script}` non gira piu' prima della pubblicazione: il cancello "
+            f"guarda la CI, non cosa c'e' dentro il pacchetto. Senza questo, "
+            f"un artefatto sporco parte con la CI verde")
+    # ⚠️ `name` E `uses` insieme, non l'uno o l'altro: lo step di pubblicazione
+    # ha un `name` in italiano e la stringa che lo identifica sta in `uses`
+    # (`pypa/gh-action-pypi-publish`). La prima versione di questa riga guardava
+    # `name or uses` e non trovava nulla — il test falliva sul workflow CORRETTO,
+    # cioe' era un falso allarme, la forma di presidio che poi viene spento.
+    righe = [f"{s.get('name', '')} {s.get('uses', '')}" for s in passi]
+    i_ctrl = next(i for i, n in enumerate(righe) if "identificativi" in n)
+    i_pub = next(i for i, n in enumerate(righe) if "pypi-publish" in n.lower())
+    assert i_ctrl < i_pub, (
+        f"il controllo sull'artefatto (passo {i_ctrl}) viene DOPO la "
+        f"pubblicazione (passo {i_pub}): guarderebbe una cosa gia' spedita")
+
+
 def test_il_cancello_SI_PUO_APRIRE_di_proposito(wf):
     """⚖️ L'altra meta', e non e' un vezzo: un cancello che non si puo' aprire
     viene TOLTO, e allora non protegge piu' niente.

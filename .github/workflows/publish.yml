@@ -106,5 +106,36 @@ jobs:
         run: |
           python -m pip install --upgrade twine
           python -m twine check dist/*
+
+      # ⚙️ I PRESIDI DI ws2 CABLATI SUL WHEEL, col suo assenso e col suo criterio.
+      # Stanno QUI e non nel cancello perche' il cancello gira PRIMA del build:
+      # non ha ancora gli artefatti da guardare. Qui gli artefatti esistono e non
+      # sono ancora partiti — l'unico punto in cui la domanda «cosa stiamo
+      # spedendo?» ha una risposta.
+      #
+      # ⚖️ SOLO IL WHEEL, ed e' la separazione che ha reso la scelta decidibile
+      # (misura di ws2 sugli artefatti di `0dc18f24`)::
+      #
+      #     controlla_registro  WHEEL   EXIT=0   pulito        <- cablato
+      #     controlla_promesse  WHEEL   EXIT=0                 <- cablato
+      #     controlla_registro  SDIST   EXIT=1   321 identificativi in 129 file
+      #                                          + 5 nomi propri in 4 file
+      #
+      # ⇒ Il wheel e' cio' che l'utente INSTALLA, ed e' gia' verde: accenderlo
+      # costa zero e protegge il percorso vero. L'sdist e' un debito con un
+      # numero, non un allarme da spegnere accendendo un blocco che ferma
+      # qualunque rilascio.
+      # ⚠️ E IL DEBITO CRESCE: 303 identificativi alle 11:58, 321 alle 15:48 —
+      # +18 righe e +3 file in quattro ore, perche' scriviamo referti e commenti
+      # mentre lavoriamo. Un blocco secco sull'sdist costa piu' domani di oggi:
+      # la mossa che ws2 indica e' accendere sulle righe NUOVE, per fermare la
+      # crescita invece di curare il passato. Non e' questa riga, ed e' sua.
+      - name: Il wheel non porta identificativi interni ne' promesse scoperte
+        run: |
+          w=$(ls dist/*.whl | head -1)
+          echo "artefatto: $w"
+          python scripts/controlla_registro.py "$w"
+          python scripts/controlla_promesse.py "$w"
+
       - name: Publish to PyPI (OIDC — no token)
         uses: pypa/gh-action-pypi-publish@release/v1
