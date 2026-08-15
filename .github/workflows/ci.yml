@@ -127,39 +127,37 @@ jobs:
         # macos leg for OS coverage. Cuts ~11 legs to 6 — matters because this
         # repo's Actions were exhausting the private-repo quota. Widen to the
         # full grid on release tags if per-version OS coverage is ever needed.
+        # 🪞 QUI IL 15/08 HO MESSO «windows solo su main e sui PR» E L'HO TOLTA
+        # DIECI MINUTI DOPO, misurando il run che l'aveva appena introdotta::
+        #
+        #     job nel run 3b0fdb37 (push su main):  6
+        #       ubuntu ×4 · macos · windows          <- windows C'E'
+        #
+        # ⇒ **Inerte.** Noi pubblichiamo tutte su `main`, e la condizione
+        # nominava `main`: la riga non escludeva nulla. Zero posti liberati, e
+        # il prezzo dichiarato (una rottura solo-windows scoperta piu' tardi)
+        # sarebbe rimasto appeso senza contropartita. **Una cura che paga il
+        # prezzo e non da' il beneficio e' peggio di nessuna cura.**
+        #
+        # 🔑 LA TENSIONE VERA, che resta aperta e va nominata invece di aggirata:
+        # il gruppo per COMMIT vuole un verdetto per ogni commit, la coda vuole
+        # meno run contemporanei. Su windows — 46-52 minuti contro i 16-17 di
+        # ubuntu — i due obiettivi confliggono, e **non c'e' una terza leva
+        # gratis**: si sceglie quale dei due si sacrifica. Una via percorribile
+        # sarebbe un workflow windows separato con gruppo per REF (solo
+        # l'ultimo commit tiene la gamba lenta), ma e' un file nuovo e una
+        # decisione che non ho preso.
+        #
+        # 📌 Il dato che resta valido, misurato alle 13:47 sui run in volo:
+        #     ubuntu 4 in esecuzione · 24 in coda   |   windows 6 · 1
+        # Sono i job LENTI a tenere i posti, non il numero di job.
         os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        # ⚙️ WINDOWS SOLO SU main E SUI PR, dal 2026-08-15 — e la ragione non e'
-        # che windows conti meno: e' che occupa un posto per un'ora.
-        #
-        # MISURATO alle 13:47, aprendo tutti i run in volo job per job::
-        #
-        #     ubuntu    4 in esecuzione · 24 in coda      <- il collo
-        #     windows   6 in esecuzione ·  1 in coda
-        #     macos     3 in esecuzione ·  3 in coda
-        #
-        # ⇒ Sono i job LENTI a tenere i posti: windows dura 46-52 minuti contro
-        # i 16-17 di ubuntu (misura di ws8), quindi 9 job windows contemporanei
-        # bloccano per un'ora la coda che si smaltirebbe in un quarto d'ora.
-        #
-        # 🔗 E i nove run contemporanei nascono da DUE CURE MIE, ciascuna giusta
-        # da sola: il gruppo per COMMIT (12/08) fa un run per push invece di
-        # cancellarli — cancellati da 26 su 40 a 2 su 50 — e il tetto windows a
-        # 60 minuti (13/08) le lascia il tempo di concludere, che prima non
-        # aveva (moriva a 45 in 4 run su 6). **E' la giuntura a costare, non i
-        # due pezzi.** Disfare l'una o l'altra rimetterebbe il difetto che ha
-        # curato; questa riga e' la terza leva, e non ne disfa nessuna.
-        #
-        # ⚠️ PREZZO DICHIARATO: una rottura solo-windows si scopre piu' tardi,
-        # al primo push su main o all'apertura di un PR invece che subito. NON
-        # e' teorico — questa settimana ne abbiamo trovate due (il `TypeError`
-        # con `stdout=None` in CI, e il tetto che la uccideva). Chi rimette
-        # windows su ogni push sappia che compra questo e paga la coda.
-        #
-        # 📌 macos resta su ogni push: dura 22 minuti, un quarto del costo.
-        include: ${{ (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
-          && fromJSON('[{"os":"windows-latest","python-version":"3.12"},{"os":"macos-latest","python-version":"3.12"}]')
-          || fromJSON('[{"os":"macos-latest","python-version":"3.12"}]') }}
+        include:
+          - os: windows-latest
+            python-version: "3.12"
+          - os: macos-latest
+            python-version: "3.12"
     steps:
       - uses: actions/checkout@v4
 
