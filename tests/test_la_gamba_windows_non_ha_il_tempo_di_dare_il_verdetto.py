@@ -211,6 +211,39 @@ class TestIlTettoDistingueLeGambe:
             f"nessun run successivo potrebbe piu' ripararla."
         )
 
+    def test_la_chiave_della_cache_distingue_le_GAMBE_della_matrice(self):
+        """⚠️ Misurato da ws3 il 2026-08-15 sul run `16c68894`, e la mia cura
+        reggeva **per fortuna, non per costruzione**.
+
+        Con una chiave che nomina solo il sistema operativo, le gambe della
+        matrice corrono per la stessa voce di cache e si bloccano a vicenda::
+
+            windows py3.12:  Cache not found for input keys: hf-Windows-1a59512b…
+                             Failed to save: Unable to reserve cache with key
+                             hf-Windows-1a59512b…, another job may be creating
+                             this cache
+
+        ⇒ su windows la cache **non si popolava mai**, cioe' li' il circolo
+        restava chiuso; su linux funzionava solo perche' una delle tre gambe
+        vinceva la corsa e le altre facevano hit sul suo risultato.
+        🔑 Il difetto non e' «windows e' diverso»: e' che **la chiave non
+        nominava una dimensione lungo cui i job sono davvero paralleli**. Un
+        identificatore che non distingue cio' che corre insieme non e' un
+        identificatore, e' una collisione in attesa.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        passi = wf["jobs"]["test"]["steps"]
+        cache = [p for p in passi if "actions/cache" in str(p.get("uses", ""))]
+        assert cache, "nessun passo di cache: vedi i test qui sopra"
+        for p in cache:
+            k = str(p.get("with", {}).get("key", ""))
+            assert "matrix.python-version" in k, (
+                f"la chiave {k!r} non nomina la gamba: le gambe dello stesso "
+                f"sistema operativo correranno per la stessa voce e si "
+                f"bloccheranno a vicenda («another job may be creating this "
+                f"cache»), lasciando quella piattaforma senza cache")
+
     def test_il_RIPIEGO_non_ripesca_la_chiave_abbandonata(self):
         """🔑 IL GUARDIANO CHE MI HA QUASI PRESO MENTRE SCRIVEVO LA CURA.
 

@@ -183,8 +183,19 @@ jobs:
           # avvelenata che il prefisso nuovo serve ad abbandonare. Il ripiego
           # generico e' la porta di servizio di una chiave che credi di aver
           # buttato.
-          key: hf2-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
-          restore-keys: hf2-${{ runner.os }}-
+          # ⚠️ LA GAMBA NELLA CHIAVE, misurato da ws3 il 15/08 sul run 16c68894:
+          # con una chiave per solo SISTEMA OPERATIVO le gambe della matrice
+          # corrono per la stessa voce e si bloccano a vicenda —
+          #   windows py3.12: «Failed to save: Unable to reserve cache with key
+          #   hf-Windows-1a59512b…, another job may be creating this cache»
+          # — e su windows la cache non si popolava MAI, cioe' il circolo li'
+          # restava chiuso. Su linux funzionava solo perche' una delle tre
+          # gambe vinceva la corsa: reggeva per fortuna, non per costruzione.
+          # 💾 Il prezzo e' sei voci invece di una per lo stesso modello. Si
+          # paga: una cache che non si scrive non costa spazio e non serve a
+          # niente.
+          key: hf2-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: hf2-${{ runner.os }}-${{ matrix.python-version }}-
 
       - name: Install
         run: |
@@ -350,7 +361,7 @@ jobs:
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
             ~/.engram/models
-          key: hf2-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          key: hf2-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
 
   build:
     name: build (sdist + wheel)
