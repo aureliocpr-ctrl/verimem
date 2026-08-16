@@ -972,8 +972,9 @@ def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
     «S-001 contiene 25» restano in conflitto.
 
     📌 PERCHE' NON E' IL «VETO ENTITA'» GIA' CADUTO: quello leggeva le entita'
-    estratte — solo il 43,5% dei fatti ne ha, e le piu' condivise erano ``NON``,
-    ``MCP``, ``Aurelio``, cioe' rumore. Qui il segnale e' un pattern sintattico
+    estratte — solo il 43,5% dei fatti ne ha, e le piu' condivise erano una
+    negazione, una sigla tecnica e un nome proprio ricorrente, cioe' rumore.
+    Qui il segnale e' un pattern sintattico
     stretto (lettere-trattino-cifre), presente nel 15% del corpus, con una
     semantica sola: e' un codice di record.
     """

@@ -16,10 +16,16 @@ questo collaudo può esistere senza diventare rumore:
 
   - guarda **solo** i valori di `help=` e delle chiavi `"description"`, cioè le
     superfici destinate a un lettore esterno;
-  - **non** guarda i commenti né i docstring. Là il nome può comparire come dato
-    di una misura — «le parole più condivise erano NON, MCP, <nome>: rumore» —
-    e quella è una menzione, non un esempio da imitare. Un controllo che non
-    distinguesse uso da menzione bloccherebbe una frase corretta;
+  - **non** guarda i commenti né i docstring, dove un nome può comparire come
+    dato di una misura anziché come esempio da imitare. Un controllo che non
+    distinguesse uso da menzione bloccherebbe una frase corretta.
+
+    ⚠️ Ma la distinzione descrive la *natura* della riga, non il suo *effetto*:
+    l'unica menzione rimasta nel pacchetto qualificava il nome del proprietario
+    del progetto come «rumore», e chi la legge da fuori legge quello. È stata
+    riscritta senza perdere nulla — il punto tecnico non aveva bisogno del nome.
+    ⇒ **Una menzione corretta può restare inopportuna, e la misura di questo non
+    è la grammatica della frase ma chi la legge**;
   - **non** guarda gli URL: l'indirizzo del repository contiene il nome
     dell'organizzazione e deve contenerlo.
 
