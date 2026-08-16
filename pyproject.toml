@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,7 +14,12 @@ name = "verimem"
 version = "0.7.5"
 description = "Verified memory for AI agents: gated writes, provenance on every read, bi-temporal history, abstention instead of hallucination."
 readme = "README.md"
-license = { file = "LICENSE" }
+# SPDX expression, not `{ file = "LICENSE" }`: the table form makes the build
+# backend copy the LICENSE **text** into the `License:` metadata field — 40452
+# characters, 49% of the METADATA — while the file is already shipped once, in
+# `dist-info/licenses/`. setuptools deprecated the table form ("overdue").
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [
   { name = "Aurelio Capriello" },
@@ -23,7 +28,6 @@ keywords = ["verimem", "verified-memory", "engram", "agent", "llm", "memory", "c
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
