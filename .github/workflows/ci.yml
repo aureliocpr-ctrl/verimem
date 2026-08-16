@@ -532,15 +532,29 @@ jobs:
       # caricato — sono risoluzioni di percorso, costano millisecondi.
       # 📌 `continue-on-error` perche' e' una SONDA: deve raccontare, non
       # decidere. Se fallisse fermerebbe il job che stiamo diagnosticando.
+      # 🔑 L'ENV E' QUELLO DEL PASSO «Tests», NON UN ALTRO — corretto il
+      # 2026-08-16 dopo che la prima versione ha risposto OK su tutto.
+      # La prima sonda metteva `HF_HUB_OFFLINE`, i test mettono `HIPPO_OFFLINE`:
+      # due variabili diverse, e una sonda che non riproduce l'ambiente del
+      # guasto misura un'altra cosa. ⇒ Sul runner, con `HF_HUB_OFFLINE`, sette
+      # file su sette risolvono E `SentenceTransformer(local_files_only=True)`
+      # CARICA — cioe' la chiamata che nei test muore, li' funziona.
+      # 📌 La sonda stampa anche QUALI variabili di offline sono accese, perche'
+      # la differenza fra i due ambienti e' esattamente quella.
       - name: Sonda offline (quali file risolve la cache di QUESTO runner)
         continue-on-error: true
         env:
-          HF_HUB_OFFLINE: "1"
+          HIPPO_OFFLINE: "1"
         run: |
           python - <<'PY'
+          import os
           from huggingface_hub import hf_hub_download
           import huggingface_hub, transformers
           REPO = "intfloat/multilingual-e5-base"
+          spente = [v for v in ("HIPPO_OFFLINE", "ENGRAM_OFFLINE", "VERIMEM_OFFLINE",
+                                "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE")
+                    if os.environ.get(v)]
+          print(f"SONDA env-offline-accese={spente}")
           print(f"SONDA hub={huggingface_hub.__version__} tf={transformers.__version__}")
           for nome in ("config.json", "modules.json", "sentence_bert_config.json",
                        "1_Pooling/config.json", "tokenizer_config.json",
