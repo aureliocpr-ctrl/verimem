@@ -81,6 +81,61 @@ def test_un_corpus_giudicato_male_lo_dice(mem):
     assert r["composite"] < 0.7, r
 
 
+def _molti_fatti(mem, quanti: int) -> None:
+    """Fatti che non si mangiano a vicenda: un topic per ciascuno.
+
+    Su un topic solo il write path li tratta come «same-source evolution» e ne
+    resta uno — e' il difetto che tiene rossi i due test qui sopra. Qui serve
+    un corpus di dimensione NOTA, quindi lo si evita.
+    """
+    for i in range(quanti):
+        mem.add(f"Il servizio {i} ascolta sulla porta {8000 + i}.",
+                topic=f"t{i}")
+
+
+def test_il_referto_dice_su_quanti_fatti_e_stato_calcolato(mem):
+    """Il voto vale su cio' che il referto ha GUARDATO, e `n` da solo non
+    distingue «il corpus ha n fatti» da «ne ho letti n dei molti che ci sono».
+
+    Misurato sul corpus vivo il 2026-08-16 (11424 righe): il referto diceva
+    `n = 2000` e `composite = 0.97`, e 2000 e' il valore predefinito del
+    parametro `limit`, non una proprieta' del corpus — i fatti non superseduti
+    erano 9534. Nessuna chiave diceva che 7534 non erano stati aperti.
+    """
+    _molti_fatti(mem, 5)
+    r = mem.epistemic_health(limit=2)
+    assert r["n"] == 2, r
+    assert r["n_written"] == 5, (
+        "il referto non dice quanti fatti sono stati SCRITTI: chi legge n=2 "
+        "non ha modo di sapere che ce ne sono cinque")
+    assert r["n"] + r["n_superseded"] + r["n_not_examined"] == r["n_written"], (
+        f"la scomposizione non torna: {r}")
+
+
+def test_dice_quanti_ne_ha_lasciati_fuori_il_limite(mem):
+    _molti_fatti(mem, 5)
+    r = mem.epistemic_health(limit=2)
+    vivi = r["n_written"] - r["n_superseded"]
+    assert vivi == 5, (
+        "precondizione di questo banco: cinque topic distinti non si "
+        f"superano tra loro. Se cade, il difetto e' nel write path: {r}")
+    assert r["n_not_examined"] == 3, r
+    largo = mem.epistemic_health(limit=100)
+    assert largo["n"] == 5 and largo["n_not_examined"] == 0, (
+        "con un limite che copre tutto il corpus non resta niente fuori, e il "
+        f"referto deve dirlo con uno zero invece che tacendo: {largo}")
+
+
+def test_anche_quando_non_guarda_niente_dice_quanti_ce_ne_sono(mem):
+    """Il caso in cui tacere inganna di piu'."""
+    _molti_fatti(mem, 3)
+    r = mem.epistemic_health(limit=0)
+    assert r["n"] == 0 and r["composite"] is None
+    assert r["n_written"] == 3 and r["n_not_examined"] == 3, (
+        "`n=0, composite=None` si legge come «corpus vuoto» mentre i fatti "
+        f"ci sono: e' il ramo che deve dichiarare di piu', non di meno. {r}")
+
+
 def test_anche_il_tool_mcp_lo_espone(mem, monkeypatch):
     """Una lettura su un canale solo e' il difetto che questi commit hanno
     passato due giorni a chiudere."""

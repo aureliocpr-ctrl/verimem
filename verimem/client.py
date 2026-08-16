@@ -2544,7 +2544,45 @@ class Memory:
             audits.append(audit_one(
                 vista, grounder=lambda _s, _p, _g=punteggio: float(_g or 0.0),
                 threshold=threshold))
-        return health_report(audits)
+        report = health_report(audits)
+
+        # SU QUANTI fatti e' stato calcolato, e quanti non ne ha aperti. `n` da
+        # solo non lo dice: misurato sul corpus vivo il 2026-08-16, il referto
+        # diceva `n = 2000` con `composite 0.97`, e 2000 e' il predefinito di
+        # `limit` — non una proprieta' del corpus, che di righe ne aveva 11424 e
+        # di non superseduti 9534. Un voto alto su un ottavo del corpus si legge
+        # identico a un voto alto sul corpus.
+        # Gli esclusi sono di DUE specie e vanno tenuti separate: i superseduti
+        # la query non li prende mai (`superseded_by IS NULL`), i non esaminati
+        # sono vivi e li taglia il limite. Confonderli direbbe «ritirati» di
+        # fatti che nessuno ha ritirato.
+        # Chiavi piatte, non un dizionario annidato: questo difetto e' stato
+        # trovato stampando i soli valori scalari del referto, ed e' cosi' che
+        # lo si guarda — un annidamento sarebbe rimasto invisibile allo stesso
+        # sguardo che doveva allertare.
+        # None e non 0 quando il conteggio non riesce: «non contato» e «zero»
+        # sono cose diverse, ed e' la stessa distinzione che questo metodo fa
+        # gia' sopra per `source`.
+        scritti: int | None = None
+        ritirati: int | None = None
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as con:
+                scritti = int(con.execute(
+                    "SELECT COUNT(*) FROM facts").fetchone()[0])
+                ritirati = int(con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL"
+                ).fetchone()[0])
+        except Exception:  # noqa: BLE001 — un referto non rompe il chiamante
+            pass
+        report["n_written"] = scritti
+        report["n_superseded"] = ritirati
+        # `max(0, ...)`: fra la lettura dei fatti e questi due conteggi il
+        # corpus puo' muoversi (piu' scrittori sullo stesso store), e un numero
+        # negativo di «non esaminati» non significherebbe niente per chi legge.
+        report["n_not_examined"] = (
+            max(0, scritti - ritirati - len(audits))
+            if scritti is not None and ritirati is not None else None)
+        return report
 
     def ignorance(self, queries: list[str], *, floor: float = 0.8,
                   k: int = 5,
