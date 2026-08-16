@@ -627,10 +627,18 @@ jobs:
           # troncatura che nell'asserzione del test lascia fuori il nome. Il
           # nome sta piu' su, percio' si stampano le righe che contengono un
           # identificativo `org/nome` e non solo la fine del messaggio.
-          echo "SONDA-CLI repo nominati nello stderr:"
-          grep -oE "[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+" "$TMPDATI/errori.txt" 2>/dev/null \
-            | grep -viE "^(https?|docs|huggingface|transformers|github|usr|home|tmp)" \
-            | sort | uniq -c | sort -rn | head -15 || true
+          # ⚠️ NIENTE FILTRO PER PREFISSO. La prima versione scartava i token che
+          # cominciano per `home`, `usr`, `tmp` per togliere il rumore dei
+          # percorsi — ed e' esattamente li' che puo' stare la risposta:
+          # `from_pretrained` riceve una CARTELLA, e quando non la trova tratta
+          # la stringa come un repo e va in rete, per cui il nome che cerchiamo
+          # ha la forma di un percorso. Un setaccio che toglie il rumore
+          # togliendo anche il segnale non e' un setaccio: e' la quarta volta
+          # oggi che uno strumento mio esclude cio' che deve trovare, e stavolta
+          # e' stato visto leggendo il codice invece che aspettando il run.
+          echo "SONDA-CLI identificativi org/nome o percorsi nello stderr:"
+          grep -oE "[A-Za-z0-9_./-]+/[A-Za-z0-9_.-]+" "$TMPDATI/errori.txt" 2>/dev/null \
+            | sort | uniq -c | sort -rn | head -20 || true
           echo "SONDA-CLI righe con 'cached files' o 'does not appear':"
           grep -nE "cached files|does not appear|Can't load|not found|LocalEntry" \
             "$TMPDATI/errori.txt" 2>/dev/null | head -10 || true
