@@ -220,7 +220,7 @@ def send_cmd(
     ),
     as_: str = typer.Option(
         ..., "--as",
-        help="Sender display name (free-form, e.g. 'aurelio').",
+        help="Sender display name (free-form, e.g. 'reviewer').",
     ),
     message: str = typer.Option(
         ..., "--message",

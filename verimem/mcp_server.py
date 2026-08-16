@@ -6147,7 +6147,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     },
                     "actor": {
                         "type": "string",
-                        "description": "who is updating (claude/aurelio)",
+                        "description": "who is updating (e.g. an agent name, or a person)",
                     },
                 },
                 "required": ["content"],
