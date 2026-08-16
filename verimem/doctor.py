@@ -936,8 +936,15 @@ def run_doctor() -> list[dict[str, Any]]:
             add("offline", OK, f"offline-pinned via {', '.join(set_flags)} "
                                "(no HF Hub round-trips)")
         else:
-            add("offline", WARN,
-                "no offline flag set — cold model loads may hit the HF Hub",
+            # OK e non WARN: il suggerimento qui sotto dice «for air-gapped
+            # deploys», quindi NON esserlo e' la condizione normale. Un avviso
+            # su una configurazione normale trascina l'intero verdetto a 1 (il
+            # contratto di `doctor` e' 0 all-ok / 1 warnings / 2 failures) e
+            # rende `all-ok` irraggiungibile per chi installa seguendo il
+            # README. L'informazione resta: cambia il verdetto, non il testo.
+            add("offline", OK,
+                "not offline-pinned — cold model loads may reach the HF Hub "
+                "(normal outside an air-gapped deploy)",
                 "for air-gapped deploys set VERIMEM_OFFLINE=1 (see `verimem airgap`)")
     except Exception as e:  # noqa: BLE001
         add("offline", WARN, f"probe failed: {e}")
@@ -949,10 +956,19 @@ def run_doctor() -> list[dict[str, Any]]:
         if p and p != "mock":
             add("llm", OK, f"provider auto-detected: {p}")
         else:
-            add("llm", WARN,
-                "no llm provider detected — extraction from raw conversations "
-                "and the highest-quality judge need one",
-                "set an API key (e.g. ANTHROPIC_API_KEY) or run Ollama")
+            # OK e non WARN: il README promette DUE VOLTE che l'llm non serve
+            # («It works with no llm», riga 36; «No llm needed for the moat»,
+            # riga 252). Finche' era un avviso, chi installava seguendo il
+            # README eseguiva il comando che il README stesso prescrive per
+            # verificare l'install e riceveva EXIT=1 — in un Dockerfile o in una
+            # CI, un deploy fallito su una macchina perfetta. Quel che manca
+            # senza provider resta scritto qui e nel `fix`.
+            add("llm", OK,
+                "no llm provider — the moat and recall do not need one; "
+                "extraction from raw conversations and the llm-judge tier "
+                "stay off",
+                "to turn those on: set an API key (e.g. ANTHROPIC_API_KEY) "
+                "or run Ollama")
     except Exception as e:  # noqa: BLE001
         add("llm", WARN, f"probe failed: {e}")
 
