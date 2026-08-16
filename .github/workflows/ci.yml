@@ -414,6 +414,27 @@ jobs:
           # 📌 Stampare solo in caso di errore rende muto proprio il caso che
           # serve: «completa e inservibile». Un presidio che parla solo quando
           # dice di no non copre lo stato in cui dice di si' e ha torto.
+          # ⚠️ LE VERSIONI DELLO STACK CHE CARICA IL MODELLO, stampate sempre.
+          # `pyproject` dichiara `sentence-transformers>=2.7.0` — un pavimento e
+          # nessun tetto — e `transformers` / `huggingface_hub` non li dichiara
+          # affatto: arrivano come dipendenze transitive, anch'esse libere.
+          # ⇒ Ogni run installa l'ULTIMA versione pubblicata, quindi la CI puo'
+          # rompersi senza un nostro commit, e due run a un giorno di distanza
+          # non misurano lo stesso prodotto.
+          # 📌 Misurato il 16/08: in CI `sentence_transformers 5.7.0` e
+          # `transformers 5.15.0`, in sviluppo `5.4.1` e `5.8.0`. Il caricamento
+          # offline che qui riesce e li' fallisce e' fra due stack DIVERSI, e
+          # senza questa riga nel log nessuno puo' attribuire una rottura.
+          # ⚖️ Stampare non e' fissare: mettere un tetto in `pyproject` vincola
+          # anche chi installa il pacchetto, ed e' una decisione di prodotto che
+          # non si prende in un file di CI.
+          python - <<'PY' || true
+          for nome in ("sentence_transformers", "transformers", "huggingface_hub", "torch"):
+              try:
+                  print(f"STACK {nome}=" + __import__(nome).__version__)
+              except Exception as errore:
+                  print(f"STACK {nome}=NON IMPORTABILE ({type(errore).__name__})")
+          PY
           echo "--- dove stanno i pesi (sempre, non solo in caso di errore) ---"
           find -L $CARTELLE -path "$MODELLO" -type f -size +10M 2>/dev/null | head -10 || true
           # ⚠️ E LA STRUTTURA, senza filtro di dimensione. La riga sopra ha
