@@ -127,8 +127,11 @@ def test_recall_n100_with_hint() -> None:
     "inhibition gets stuck in fixed-point local minima. Frady 2020 paper "
     "uses lateral inhibition + softmax cleanup. Pure hard-max naive "
     "implementation requires K-1 hint to converge. Cycle 390+ future "
-    "work: implement soft cleanup + multi-restart.",
-    strict=False,
+    "work: implement soft cleanup + multi-restart. strict=True dal 2026-08-16: "
+    "misurato deterministico (5 esecuzioni con --runxfail, 1 failed ogni "
+    "volta), quindi armarlo non rende la suite intermittente e il giorno in "
+    "cui il cleanup arriva questo caso lo dice invece di tacere.",
+    strict=True,
 )
 def test_no_hint_factorize_n10_xfail_honest() -> None:
     """A3 NEGATIVE EMPIRICAL: pure resonator without hint, no soft cleanup,
