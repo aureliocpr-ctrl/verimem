@@ -716,6 +716,51 @@ jobs:
           --cov-fail-under=46
           -m "not slow and not e2e and not perf"
 
+      # 🔑 LA STESSA SONDA, DOPO I TEST — e questa risponde a una domanda che
+      # altrimenti resta aperta a congetture.
+      # Misurato sul run 31974401758: PRIMA dei test la CLI in sottoprocesso
+      # RIESCE (stdout 1468 B, stderr 849 B, nessuna riga «cached files») e il
+      # giudice e' in cache (`GIUDICE pesi=1`). Eppure al 47% della suite i sei
+      # test che eseguono quello stesso comando muoiono con 42241 B di stderr e
+      # «couldn't find them in the cached files».
+      # ⇒ Delle due l'una, e il confronto fra QUESTA riga e quella di prima lo
+      #   dice senza bisogno di ipotesi:
+      #     riesce anche qui  -> non e' il tempo ne' il disco: e' l'ambiente
+      #                          che i test costruiscono attorno a se'
+      #     fallisce qui      -> qualcosa cambia DURANTE la suite, e la coda
+      #                          dello stderr adesso nomina cosa
+      # ⚖️ Costa un caricamento di modello a fine job, su una gamba sola.
+      # `if: always()` perche' la domanda vale SOPRATTUTTO quando i test sono
+      # rossi — un presidio che gira solo sui job verdi non copre il caso per
+      # cui esiste.
+      - name: Sonda offline BIS (la stessa, dopo i test — cosa e' cambiato?)
+        if: always() && matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        continue-on-error: true
+        shell: bash
+        env:
+          HIPPO_OFFLINE: "1"
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
+        run: |
+          CARTELLE="$HOME/.cache/huggingface $HOME/.cache/torch/sentence_transformers $HOME/.engram/models $HOME/.cache/verimem"
+          for d in $CARTELLE; do mkdir -p "$d"; done
+          echo "BIS spazio disco:"; df -h "$HOME" | tail -1
+          echo "BIS embedder pesi=$(find -L $CARTELLE -path '*multilingual-e5-base*' -type f -size +100M 2>/dev/null | wc -l || true)"
+          echo "BIS GIUDICE  pesi=$(find -L $CARTELLE -path '*local_gate_ce_v2*' -type f -size +100M 2>/dev/null | wc -l || true)"
+          TMPDATI=$(mktemp -d)
+          HIPPO_DATA_DIR="$TMPDATI" ENGRAM_DATA_DIR="$TMPDATI" VERIMEM_DATA_DIR="$TMPDATI" \
+            python -m verimem.cli remember "L'ordine 77 conteneva 40 pezzi." \
+              --topic sonda --source "Verbale: e' stato consegnato l'ordine 77." \
+              > "$TMPDATI/uscita.txt" 2> "$TMPDATI/errori.txt" && CODICE=0 || CODICE=$?
+          echo "BIS SONDA-CLI exit=$CODICE"
+          echo "BIS SONDA-CLI stdout: $(wc -c < "$TMPDATI/uscita.txt") byte"
+          echo "BIS SONDA-CLI stderr: $(wc -c < "$TMPDATI/errori.txt") byte"
+          echo "BIS righe con 'cached files' o 'does not appear':"
+          grep -nE "cached files|does not appear|Can't load|not found|LocalEntry" \
+            "$TMPDATI/errori.txt" 2>/dev/null | head -10 || true
+          echo "BIS coda stderr:"
+          tail -c 600 "$TMPDATI/errori.txt" || true
+
       - name: Smoke install (clean wheel)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         run: |
