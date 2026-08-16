@@ -218,7 +218,23 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     nel_claim = extract_quantities(proposition)
     if not nel_claim:
         return []
-    nella_fonte = {v for _u, v in extract_quantities(source)}
+    # `come_fonte=True`: la fonte si legge INTERA. Le due potature di
+    # `extract_quantities` sono giuste su un claim e sbagliate qui — misurato
+    # il 16/08 su due casi con firme identiche e cause diverse:
+    #
+    #   la fonte finiva con «… Source: `veribench_…_2026-07-13.json`» e tutto
+    #   cio' che seguiva il marcatore non veniva letto (righe 8+9 da sole
+    #   davano [7.0, 13.0], le righe 7+8 davano [])
+    #
+    #   la fonte era un `git grep -C`: `cli.py:100:` dava 100, `cli.py-354-`
+    #   dava nulla, perche' lettere-trattino-cifre e' la forma di un codice
+    #   prodotto e veniva cancellata
+    #
+    # In entrambi il numero ERA nella fonte, il claim che lo citava sembrava
+    # inventarselo, e L4.1 quarantinava un fatto vero contro un giudice a
+    # 99,98. ⚖️ E il verso e' quello sicuro: leggere piu' fonte TOGLIE veti,
+    # non ne mette — un errore qui costa un veto in meno, mai un falso ammesso.
+    nella_fonte = {v for _u, v in extract_quantities(source, come_fonte=True)}
     # ⚠️ UNA FONTE CHE DICHIARA UN'ASSENZA CONTIENE LO ZERO, anche se non lo
     # scrive in cifre. Senza questa riga la stessa verità aveva due destini::
     #

@@ -1011,13 +1011,32 @@ def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
     return [(m.start(), m.end()) for m in _DATA_RE.finditer(testo)]
 
 
-def extract_quantities(text: str) -> set[tuple[str, float]]:
+def extract_quantities(text: str, *,
+                       come_fonte: bool = False) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
-    (provenance after an evidence marker is not measured); bare YEARS excluded."""
+    (provenance after an evidence marker is not measured); bare YEARS excluded.
+
+    ``come_fonte=True`` legge il testo INTERO, saltando le due potature. Sono
+    giuste su un claim e sbagliate su una fonte, e il difetto misurato il 16/08
+    e' esattamente questo — un numero PRESENTE nella fonte non veniva visto, il
+    claim che lo citava sembrava inventarselo e L4.1 quarantinava un fatto vero
+    contro un giudice a 99,98::
+
+        claim_span             la fonte finisce con «… Source: `file.json`» e
+                               tutto cio' che segue non veniva letto: nella
+                               fonte quello non e' una citazione, e' contenuto
+        _senza_identificatori  `cli.py-354-` e' il formato di `git grep -C`,
+                               non un codice prodotto: `cli.py:100:` dava 100,
+                               `cli.py-354-` dava nulla
+
+    ⚠️ Il default NON cambia: le sei superfici che leggono questa funzione
+    continuano a vedere la parte-claim, ed e' cio' che vogliono. Solo chi SA di
+    avere una fonte fra le mani chiede l'altra lettura.
+    """
     out: set[tuple[str, float]] = set()
     # I codici di record spariscono PRIMA di cercare i numeri, e spariscono
     # sostituiti da spazi: gli offset restano validi per `_spans_delle_date`.
-    claim = _senza_identificatori(claim_span(text))
+    claim = text if come_fonte else _senza_identificatori(claim_span(text))
     # Gli span UNA VOLTA per testo e non per numero: il costo e' lineare sul
     # testo invece che sul prodotto testo x numeri.
     _date = _spans_delle_date(claim)
