@@ -347,20 +347,68 @@ jobs:
         # stesso esito del difetto precedente, per una ragione diversa. Due
         # cause distinte con lo stesso sintomo: curata la prima, la seconda
         # restava, e nessuno l'avrebbe distinta dal fallimento della prima cura.
+        # 🪞🪞 TERZA CAUSA, misurata il 2026-08-16 sul job `95030996336` (run
+        # `31892593845`, commit `00e14dc9`) — e stavolta il difetto era in
+        # QUESTA guardia, non nell'ambiente::
+        #
+        #     Cache not found for input keys: hf2-Linux-3.12-…   (miss)
+        #     verimem warmup --no-daemon
+        #       Loading weights: 100%|██████████| 199/199
+        #       ✓ model ready in 16.9s (vector dim 768)          <- il modello C'E'
+        #     CACHE-CHECK INCOMPLETA — pesi=0 parziali=0         <- la guardia dice di no
+        #     «Save HuggingFace models cache» -> skipped
+        #
+        # ⇒ Un FALSO NEGATIVO con una conseguenza cara: la cache non si salva
+        # MAI, quindi ogni run riscarica ~440 MB e il «Cache not found» e'
+        # perenne. La guardia nata per non salvare una cache incompleta
+        # impediva di salvarne una completa.
+        #
+        # 🔑 TRE DIFETTI IN TRE RIGHE, e ognuno basta da solo:
+        #   1. cercava in UNA cartella (`~/.cache/huggingface`) mentre il passo
+        #      di salvataggio ne dichiara QUATTRO — il modello di
+        #      sentence-transformers puo' atterrare in un'altra;
+        #   2. filtrava per estensione, ma su HF il file vero e' il BLOB in
+        #      `blobs/`, che di estensione non ne ha: `.safetensors` e' il nome
+        #      del SYMLINK in `snapshots/`;
+        #   3. senza `-L`, `-size` misura il collegamento (pochi byte) invece
+        #      del file puntato.
+        # ⚠️ Il punto 3 NON l'ho potuto provare qui: su Windows `ln -s` produce
+        # una copia e HF copia invece di collegare — infatti lo stesso comando,
+        # su questa macchina, dice `pesi=1 completa=true`. La popolazione dove
+        # il difetto vive e' Linux, e il banco che ho e' Windows. Lo dichiaro
+        # invece di dedurlo: `-L` e' una cintura, non una diagnosi.
+        #
+        # 🔑 E LA CURA CHE VALE PIU' DELLE ALTRE TRE: quando dice INCOMPLETA,
+        # adesso STAMPA cio' che ha visto. Un numero senza evidenza manda il
+        # prossimo a indovinare — «pesi=0» e' costato a me un'ora di ipotesi su
+        # un modello che era li'.
+        # ⚠️ E UN QUARTO DIFETTO, trovato dal controllo positivo PRIMA del
+        # commit: la prima versione di questa cura cercava «qualunque file oltre
+        # 100 MB» nelle quattro cartelle, e su una macchina vera dava
+        # `pesi=20 parziali=1 -> completa=false`. I venti erano dataset (`snli`,
+        # `squad_v2`) e un ALTRO modello (`bge-m3`), e l'`.incomplete` era di un
+        # download estraneo che metteva il veto.
+        # 🔑 Allargare il LUOGO aveva allargato anche il SOGGETTO. Qui il luogo
+        # resta largo (quattro cartelle) e il soggetto torna stretto: conta solo
+        # cio' che sta sotto un percorso che nomina il modello che ai test
+        # serve. Una cache «completa» perche' contiene un dataset non e' una
+        # cache completa.
         run: |
-          mkdir -p ~/.cache/huggingface     # la cartella esiste sempre: `find` non muore
-          M='*models--intfloat--multilingual-e5-base*'
-          pesi=$(find ~/.cache/huggingface -path "$M" \
-                   \( -name '*.safetensors' -o -name '*.bin' \) \
-                   -size +100M 2>/dev/null | wc -l || true)
-          parziali=$(find ~/.cache/huggingface -path "$M" \
-                       -name '*.incomplete' 2>/dev/null | wc -l || true)
+          CARTELLE="$HOME/.cache/huggingface $HOME/.cache/torch/sentence_transformers $HOME/.engram/models $HOME/.cache/verimem"
+          for d in $CARTELLE; do mkdir -p "$d"; done   # `find` non muore su una cartella assente
+          MODELLO='*multilingual-e5-base*'
+          pesi=$(find -L $CARTELLE -path "$MODELLO" -type f -size +100M 2>/dev/null | wc -l || true)
+          parziali=$(find -L $CARTELLE -path "$MODELLO" -name '*.incomplete' 2>/dev/null | wc -l || true)
           if [ "$pesi" -ge 1 ] && [ "$parziali" -eq 0 ]; then
             echo "completa=true" >> "$GITHUB_OUTPUT"
             echo "CACHE-CHECK completa — file di pesi: $pesi, parziali: 0"
           else
             echo "completa=false" >> "$GITHUB_OUTPUT"
             echo "CACHE-CHECK INCOMPLETA — pesi=$pesi parziali=$parziali"
+            echo "--- cosa c'e' davvero: i file oltre 10 MB nelle quattro cartelle ---"
+            find -L $CARTELLE -type f -size +10M 2>/dev/null | head -20 || true
+            echo "--- e i primi livelli, per vedere DOVE e' atterrato ---"
+            find -L $CARTELLE -maxdepth 2 2>/dev/null | head -20 || true
           fi
 
       # 🔁 La meta' che interrompe il circolo: `always()` perche' il caso da
