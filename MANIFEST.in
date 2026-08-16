@@ -1,0 +1,25 @@
+# Cosa viaggia nel pacchetto sorgente.
+#
+# Senza questo file l'sdist prende TUTTO l'albero, e l'albero contiene materiale
+# di lavoro che non ha niente a che fare con chi installa il pacchetto:
+# identificativi di sessione, nomi propri, appunti di misure interne. Misurati
+# 2026-08-16 sull'albero pubblicabile: 177 file, di cui 139 sotto tests/ e 31
+# sotto docs/.
+#
+# Il wheel non li imbarca gia' oggi — `[tool.setuptools.packages.find]` include
+# solo i pacchetti veri — quindi qui non si introduce un criterio nuovo: si
+# allinea il pacchetto sorgente a quello binario, che e' l'unica ragione per cui
+# i due contenevano cose diverse.
+#
+# Cosa NON si esclude e perche': il README e le licenze restano (li referenzia
+# `pyproject.toml` e senza il primo la pagina del pacchetto e' vuota), e tutto
+# quanto sta sotto `verimem/` resta per costruzione.
+
+prune tests
+prune docs
+prune .github
+prune scripts
+prune benchmark
+
+# Documento di lavoro sul rilascio, non destinato a chi installa.
+exclude RELEASE_GATE.md
