@@ -366,14 +366,30 @@ class TestIlTettoDistingueLeGambe:
             "il passo che verifica la completezza della cache non c'e' piu': "
             "senza, un job morto a meta' torna a scrivere una cache monca")
         comando = str(guardia[0].get("run", ""))
-        assert "head -1" not in comando, (
-            "la guardia prende «il primo» risultato di una ricerca che ne ha "
-            "piu' d'uno: hub/.locks/ viene visitata prima di hub/, quindi i "
-            "pesi non si trovano mai e la cache non si salva mai. Conta i "
-            "file (`wc -l`) invece di sceglierne uno.")
-        assert "wc -l" in comando, (
-            "la guardia non conta: senza un conteggio il verdetto dipende "
-            "dall'ordine di visita del filesystem, che nessuno controlla")
+        # 🪞 IL CRITERIO ERA TROPPO GROSSOLANO, e il 16/08 ha bocciato codice
+        # CORRETTO: cercava la stringa «head -1» in TUTTO lo step, e `head -10`
+        # — che limita un elenco DIAGNOSTICO, non una decisione — la contiene.
+        # ⇒ Un criterio sintattico su un fenomeno semantico sbaglia in entrambe
+        # le direzioni: qui gridava sul caso giusto.
+        # 🔑 Cio' che conta davvero e' che le righe che CALCOLANO il verdetto
+        # (`pesi=`, `parziali=`) contino invece di prendere il primo. Le righe
+        # che stampano possono troncare quanto vogliono: non decidono niente.
+        righe_decisive = [r for r in comando.splitlines()
+                          if r.lstrip().startswith(("pesi=", "parziali="))]
+        assert righe_decisive, (
+            "non trovo le righe che calcolano il verdetto (`pesi=`, "
+            "`parziali=`): se sono state rinominate questo banco va riletto, "
+            f"non cancellato. comando={comando[:200]!r}")
+        for riga in righe_decisive:
+            assert "wc -l" in riga, (
+                f"la riga che decide non conta: senza un conteggio il verdetto "
+                f"dipende dall'ordine di visita del filesystem, che nessuno "
+                f"controlla. riga={riga.strip()!r}")
+            assert "head" not in riga, (
+                f"la riga che decide prende «il primo» di una ricerca che ne "
+                f"ha piu' d'uno: `hub/.locks/` viene visitata prima di `hub/`, "
+                f"quindi i pesi non si trovano mai e la cache non si salva "
+                f"mai. riga={riga.strip()!r}")
 
     def test_ogni_cartella_MODELLO_del_prodotto_e_coperta_dalla_cache(self):
         """🔑 LA CLASSE CHE CI MORDE DA GIORNI, chiusa dal lato che si può

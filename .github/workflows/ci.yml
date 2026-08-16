@@ -399,6 +399,23 @@ jobs:
           MODELLO='*multilingual-e5-base*'
           pesi=$(find -L $CARTELLE -path "$MODELLO" -type f -size +100M 2>/dev/null | wc -l || true)
           parziali=$(find -L $CARTELLE -path "$MODELLO" -name '*.incomplete' 2>/dev/null | wc -l || true)
+          # 🔑 L'ELENCO SI STAMPA SEMPRE, non solo quando fallisce — e la ragione
+          # e' un caso reale, non un principio. Il 16/08 la guardia e' passata a
+          # `completa` e i test hanno continuato a morire::
+          #
+          #     m.add -> semantic.store -> embedding.encode -> _load_model
+          #     embedding.py:61  SentenceTransformer(model, local_files_only=True)
+          #     -> LocalEntryNotFoundError
+          #
+          # ⇒ Il modello e' su disco (questa guardia ne conta i pesi) e la
+          # cache-only NON lo trova. La domanda che resta e' UNA — **in quale
+          # delle quattro cartelle sta**, visto che `local_files_only` guarda
+          # solo quella di HF — e la guardia la sapeva senza dirla.
+          # 📌 Stampare solo in caso di errore rende muto proprio il caso che
+          # serve: «completa e inservibile». Un presidio che parla solo quando
+          # dice di no non copre lo stato in cui dice di si' e ha torto.
+          echo "--- dove stanno i pesi (sempre, non solo in caso di errore) ---"
+          find -L $CARTELLE -path "$MODELLO" -type f -size +10M 2>/dev/null | head -10 || true
           if [ "$pesi" -ge 1 ] && [ "$parziali" -eq 0 ]; then
             echo "completa=true" >> "$GITHUB_OUTPUT"
             echo "CACHE-CHECK completa — file di pesi: $pesi, parziali: 0"
