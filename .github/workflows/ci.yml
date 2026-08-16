@@ -543,8 +543,17 @@ jobs:
       # la differenza fra i due ambienti e' esattamente quella.
       - name: Sonda offline (quali file risolve la cache di QUESTO runner)
         continue-on-error: true
+        # Le TRE che `tests/conftest.py::_isolate_test_env` imposta (righe
+        # 315-317), non una sola. Con il solo `HIPPO_OFFLINE` huggingface_hub
+        # resta libero di andare in rete, e su un runner con la rete la sonda
+        # riesce SEMPRE: dichiarava OK mentre i test, spenti su tutte e tre,
+        # fallivano. Una sonda che riproduce un pezzo dell'ambiente misura un
+        # ambiente diverso — e questa e' la terza volta che la stessa forma di
+        # errore passa da qui.
         env:
           HIPPO_OFFLINE: "1"
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
         run: |
           python - <<'PY'
           import os
@@ -594,6 +603,18 @@ jobs:
           echo "SONDA-CLI exit=$?"
           echo "SONDA-CLI stdout: $(wc -c < "$TMPDATI/uscita.txt") byte"
           echo "SONDA-CLI stderr: $(wc -c < "$TMPDATI/errori.txt") byte"
+          # 🔑 QUALE modello chiede. La coda dell'errore dice «couldn't find
+          # them in the cached files» e NON nomina il repo: e' la stessa
+          # troncatura che nell'asserzione del test lascia fuori il nome. Il
+          # nome sta piu' su, percio' si stampano le righe che contengono un
+          # identificativo `org/nome` e non solo la fine del messaggio.
+          echo "SONDA-CLI repo nominati nello stderr:"
+          grep -oE "[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+" "$TMPDATI/errori.txt" 2>/dev/null \
+            | grep -viE "^(https?|docs|huggingface|transformers|github|usr|home|tmp)" \
+            | sort | uniq -c | sort -rn | head -15 || true
+          echo "SONDA-CLI righe con 'cached files' o 'does not appear':"
+          grep -nE "cached files|does not appear|Can't load|not found|LocalEntry" \
+            "$TMPDATI/errori.txt" 2>/dev/null | head -10 || true
           echo "SONDA-CLI coda stderr:"
           tail -c 600 "$TMPDATI/errori.txt" || true
 
