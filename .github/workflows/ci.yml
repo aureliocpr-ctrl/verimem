@@ -446,8 +446,28 @@ jobs:
           # e `tokenizer.json`, e di `refs/` non diceva niente.
           # 🔑 Un filtro scelto per trovare la cosa GRANDE rende muta la
           # domanda sulla cosa PICCOLA — e la seconda era quella aperta.
+          # 🔑🔑 SI CONTA, non si elenca. Il 16/08 l'elenco e' stato tagliato da
+          # `head -30` ESATTAMENTE prima di `snapshots/`, che era la cartella da
+          # guardare: 11 `.locks` + `refs` + 8 `.no_exist` + 6 `blobs` fanno
+          # trenta righe tonde, e la risposta stava alla trentunesima.
+          # **Un elenco si tronca, un conteggio no** — e il limite lo scelgo io
+          # PRIMA di sapere dove sara' la risposta. Quarta volta in un giorno che
+          # un mio limite nasconde la cosa che cercavo.
+          #
+          # 📌 E i numeri vanno letti sapendo che i DUE SISTEMI TENGONO LA CACHE
+          # IN MODO DIVERSO (misurato lo stesso giorno):
+          #     Windows   blobs 0   snapshots 10 file VERI   (HF copia)
+          #     Linux     blobs N   snapshots N symlink      (HF collega)
+          # ⇒ confrontare «quanti blob» fra le due piattaforme non significa
+          # niente; confrontare «quanti file nello snapshot» si'.
+          echo "--- conteggi (non si troncano) ---"
+          for sotto in blobs snapshots refs .no_exist; do
+            n=$(find -L $CARTELLE -path "$MODELLO" -path "*/$sotto/*" 2>/dev/null | wc -l || true)
+            echo "CONTA $sotto=$n"
+          done
           echo "--- la struttura della cartella del modello (senza filtri) ---"
-          find -L $CARTELLE -path "$MODELLO" -maxdepth 6 2>/dev/null | head -30 || true
+          find -L $CARTELLE -path "$MODELLO" -maxdepth 6 2>/dev/null \
+            | grep -v '/\.locks/' | head -40 || true
           if [ "$pesi" -ge 1 ] && [ "$parziali" -eq 0 ]; then
             echo "completa=true" >> "$GITHUB_OUTPUT"
             echo "CACHE-CHECK completa — file di pesi: $pesi, parziali: 0"
