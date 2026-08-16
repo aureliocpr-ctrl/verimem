@@ -416,6 +416,17 @@ jobs:
           # dice di no non copre lo stato in cui dice di si' e ha torto.
           echo "--- dove stanno i pesi (sempre, non solo in caso di errore) ---"
           find -L $CARTELLE -path "$MODELLO" -type f -size +10M 2>/dev/null | head -10 || true
+          # ⚠️ E LA STRUTTURA, senza filtro di dimensione. La riga sopra ha
+          # risposto «i pesi sono nella cache HF» e NON poteva rispondere alla
+          # domanda che restava, perche' filtra sopra i 10 MB: un caricamento
+          # offline non fallisce per i pesi, fallisce per i file PICCOLI —
+          # `refs/main`, che risolve la revisione, e `config.json`. Misurato il
+          # 16/08: l'elenco mostrava `blobs/…`, `snapshots/…/model.safetensors`
+          # e `tokenizer.json`, e di `refs/` non diceva niente.
+          # 🔑 Un filtro scelto per trovare la cosa GRANDE rende muta la
+          # domanda sulla cosa PICCOLA — e la seconda era quella aperta.
+          echo "--- la struttura della cartella del modello (senza filtri) ---"
+          find -L $CARTELLE -path "$MODELLO" -maxdepth 6 2>/dev/null | head -30 || true
           if [ "$pesi" -ge 1 ] && [ "$parziali" -eq 0 ]; then
             echo "completa=true" >> "$GITHUB_OUTPUT"
             echo "CACHE-CHECK completa — file di pesi: $pesi, parziali: 0"
