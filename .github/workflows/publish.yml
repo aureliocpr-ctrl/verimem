@@ -58,6 +58,17 @@ jobs:
   #     controlla_promesse  non cablato in nessun workflow
   #     l'sdist di oggi porta 299 identificativi interni in 126 file
   #
+  # ⚠️ L'ULTIMA RIGA E' SUPERATA dal 17/08 (`f3609dfe`, MANIFEST.in): sullo
+  # stesso righello l'sdist porta ora 6 file e 75 occorrenze, e le 75 sono
+  # l'indirizzo del repository e il campo `authors`, aperte una per una. Il
+  # dato vecchio resta scritto perche' e' la ragione per cui il resto di questo
+  # commento e' stato scritto — cancellarlo renderebbe incomprensibile il
+  # ragionamento che lo segue, che NON e' superato: il cancello continua a
+  # guardare la CI e non il contenuto del pacchetto.
+  # 👉 Il passo di avviso in fondo a questo file ha gia' il ramo «SDIST PULITO»:
+  # con la cura sopra dovrebbe accendersi da solo alla prossima pubblicazione.
+  # Nessuno l'ha ancora visto accendersi.
+  #
   # ⇒ **Se la CI fosse verde, questo cancello si aprirebbe e quell'sdist
   # passerebbe.** Il cancello e' NECESSARIO e NON SUFFICIENTE, e chi lo legge
   # deve saperlo: fermare un rilascio con la CI rossa non e' la stessa cosa che
