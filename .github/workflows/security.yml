@@ -87,7 +87,11 @@ jobs:
           category: "/language:python"
 
   ruff-security:
-    name: ruff (security rules)
+    # ⚠️ «report-only» NEL NOME DEL JOB e non solo in quello del passo: nella
+    # lista dei check di un commit si leggono i nomi dei JOB, non dei passi.
+    # Il comando finisce in `|| true`, quindi questo verde dice «ho guardato»,
+    # non «e' pulito» — e senza il marchio si legge come un verdetto.
+    name: ruff (security rules, report-only)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -148,7 +152,9 @@ jobs:
         run: pip-audit --strict --vulnerability-service osv --ignore-vuln CVE-2025-3000
 
   safety:
-    name: safety check
+    # ⚠️ Idem: `safety check --short-report || true`. Era l'unico dei tre
+    # report-only a non dirlo ne' nel job ne' nel passo.
+    name: safety check (report-only)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
