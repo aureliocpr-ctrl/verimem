@@ -399,6 +399,25 @@ jobs:
           MODELLO='*multilingual-e5-base*'
           pesi=$(find -L $CARTELLE -path "$MODELLO" -type f -size +100M 2>/dev/null | wc -l || true)
           parziali=$(find -L $CARTELLE -path "$MODELLO" -name '*.incomplete' 2>/dev/null | wc -l || true)
+          # 🔑 E IL SECONDO MODELLO, che questa guardia non ha MAI contato.
+          # I sei test che lanciano `verimem remember` in un sottoprocesso non
+          # caricano l'embedder: chiamano il GIUDICE, che e' un modello a se'
+          # (~700 MB su disco in casa) e arriva solo dal warmup.
+          # `local_grounding.py:48` lo cerca in ~/.cache/verimem/models, e sulla
+          # macchina di sviluppo quella cartella NON esiste mentre il modello
+          # sta in ~/.engram/models: due percorsi in gioco, quindi si cercano
+          # entrambi e si stampa dove sta.
+          # ⇒ Una cache «completa» perche' contiene l'embedder puo' non avere il
+          # giudice, e i test muoiono con «couldn't find them in the cached
+          # files» senza che niente, prima di questa riga, lo dicesse.
+          # ⚖️ SI RIPORTA E BASTA: la decisione di salvataggio qui sotto resta
+          # sull'embedder. Legare il salvataggio a un modello che la cache non
+          # ha mai contenuto lo bloccherebbe sempre, che e' il difetto che
+          # questa guardia ha gia' avuto tre volte.
+          GIUDICE='*local_gate_ce_v2*'
+          giudice=$(find -L $CARTELLE -path "$GIUDICE" -type f -size +100M 2>/dev/null | wc -l || true)
+          echo "GIUDICE pesi=$giudice   (cercato: $GIUDICE nelle stesse quattro cartelle)"
+          find -L $CARTELLE -path "$GIUDICE" -type f 2>/dev/null | head -12 || true
           # 🔑 L'ELENCO SI STAMPA SEMPRE, non solo quando fallisce — e la ragione
           # e' un caso reale, non un principio. Il 16/08 la guardia e' passata a
           # `completa` e i test hanno continuato a morire::
