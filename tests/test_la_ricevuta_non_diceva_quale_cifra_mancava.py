@@ -103,6 +103,33 @@ def solo_la_ricevuta(testo: str) -> str:
         and "Loading weights" not in r)
 
 
+def cosa_non_ha_trovato(grezzo: str) -> str:
+    """Il NOME di cio' che manca, che la coda dell'errore non contiene.
+
+    Misurato il 2026-08-16 sul run 31971326291: la coda dice «couldn't find
+    them in the cached files. Check your internet connection…» e non nomina
+    NIENTE — il soggetto sta molte righe piu' su, e con 42241 byte di stderr
+    nessuna coda ragionevole lo raggiunge. Sei rossi hanno percio' detto per
+    ore «manca un modello» senza dire quale, e la caccia e' andata avanti per
+    ipotesi.
+
+    🔑 E' il rimprovero che questo file fa al prodotto — *«la ricevuta non
+    diceva QUALE cifra mancava»* — ripetuto dentro il banco che lo misura.
+    """
+    marcatori = (
+        "does not appear to have",      # transformers: nomina file e repo
+        "is not a local folder",        # transformers: nomina la CARTELLA
+        "is not a valid model identifier",
+        "Can't load",
+        "LocalEntryNotFound",
+        "OSError",
+        "cached files",
+    )
+    righe = [r.strip() for r in grezzo.splitlines()
+             if any(m in r for m in marcatori)]
+    return " | ".join(righe[:4])[:400] if righe else "(nessuna riga nota)"
+
+
 def leggi(returncode: int, stdout, stderr) -> str:
     """Il verdetto del processo PRIMA del suo output.
 
@@ -117,7 +144,9 @@ def leggi(returncode: int, stdout, stderr) -> str:
         # tagliato si perde la coda, non il verdetto.
         raise AssertionError(
             f"CLI-MORTO exit={returncode} len_stdout={len(stdout or '')} "
-            f"len_stderr={len(stderr or '')} coda={grezzo[-200:]!r}")
+            f"len_stderr={len(stderr or '')} "
+            f"cosa_manca={cosa_non_ha_trovato(grezzo)!r} "
+            f"coda={grezzo[-200:]!r}")
     return solo_la_ricevuta(grezzo)
 
 
@@ -208,3 +237,43 @@ def test_CONTROLLO_POSITIVO_il_fatto_ammesso_non_riceve_la_seconda_voce(tmp_path
     out = _remember(tmp_path, VERO, FONTE_VERA)
     assert "admitted" in out
     assert "giudice era d" not in out
+
+
+# ═══ E LO STESSO METRO APPLICATO A QUESTO BANCO ═══════════════════════════
+# I sei test qui sopra, quando l'ambiente non regge, dicevano «CLI-MORTO … non
+# trova i file in cache» senza nominare cosa mancasse: la stessa ricevuta muta
+# che questo file rimprovera al prodotto. Il criterio di un presidio e' che
+# TOGLIENDOLO il messaggio cambi, quindi si misura sul messaggio, non sull'idea.
+
+_STDERR_VERO = (
+    "2026-08-16T21:02:44Z [info] flow.warmup phase=start\n"
+    "Loading weights:  37%|###   | 74/199 [00:03<00:05, 22.51it/s]\n"
+    "OSError: /home/runner/.cache/verimem/models/local_gate_ce_v2 is not a "
+    "local folder and is not a valid model identifier listed on "
+    "'https://huggingface.co/models'\n"
+    "If this is a private repository, make sure to pass a token.\n"
+    "We couldn't connect to 'https://huggingface.co' to load the files, and "
+    "couldn't find them in the cached files.\n"
+    "Check your internet connection or see how to run the library in offline "
+    "mode at 'https://huggingface.co/docs/transformers/installation'.\n")
+
+
+def test_il_verdetto_di_questo_banco_NOMINA_cio_che_manca():
+    """La coda da sola non basta: e' il pezzo che NON contiene il nome."""
+    with pytest.raises(AssertionError) as e:
+        leggi(1, "", _STDERR_VERO)
+    messaggio = str(e.value)
+    assert "local_gate_ce_v2" in messaggio, (
+        f"il verdetto non nomina cio' che manca: {messaggio}")
+    assert "cosa_manca=" in messaggio
+
+
+def test_CONTROLLO_NEGATIVO_la_sola_coda_non_lo_direbbe():
+    """Se questa passasse con la coda soltanto, il presidio sopra sarebbe
+    decorativo: il nome sta 4 righe piu' su di quante ne prenda `coda`."""
+    assert "local_gate_ce_v2" not in _STDERR_VERO[-200:]
+
+
+def test_un_output_senza_righe_note_non_inventa_un_nome():
+    assert cosa_non_ha_trovato("tutto bene\nnessun errore\n") == (
+        "(nessuna riga nota)")
