@@ -432,9 +432,26 @@ jobs:
         # 📌 Misurato lo stesso giorno: gli skip CRESCONO mentre i failed
         # scendono (ws8, gamba windows: -1 failed e +1 skipped), quindi il
         # totale dei rossi puo' migliorare senza che nulla sia stato curato.
+        #
+        # 🪞 CORREZIONE 2026-08-16, e il difetto era di quella stessa aggiunta:
+        # il valore predefinito di `-r` e' `fE` (falliti ed errori) e `-rs` NON
+        # si aggiunge, **sostituisce**. Da quel giorno il riepilogo elencava
+        # solo gli skip. Misurato sul job `95030996336` (run `31892593845`,
+        # commit `00e14dc9`), gamba ubuntu/py3.12::
+        #
+        #     = 44 failed, 11433 passed, 64 skipped, ... 9 errors in 1077.70s =
+        #     sezione «short test summary info»: 62 righe SKIPPED, ZERO rossi
+        #
+        # ⇒ Per il triage servivano 14.555 righe verbose invece di 53, e le
+        # righe verbose portano solo il NOME (`nodeid FAILED [ 3%]`) mentre il
+        # riepilogo porta il MOTIVO (`FAILED nodeid - AssertionError: ...`).
+        # ⚖️ `-rsfE` tiene tutto: i motivi dei salti restano, i rossi tornano.
+        # 🔑 La classe: un'opzione che sembra additiva e invece e' sostitutiva
+        # spegne un segnale mentre ne accende un altro — e il segnale spento
+        # non da' errore, da' silenzio.
         run: >-
           pytest
-          -rs
+          -rsfE
           --cov=verimem
           --cov-report=xml
           --cov-report=term-missing:skip-covered

@@ -497,6 +497,60 @@ class TestIlTettoDistingueLeGambe:
             "uscire non-zero (permessi, race) e con `pipefail` + `-e` questo "
             "uccide lo step invece di produrre un verdetto")
 
+    def test_il_riepilogo_di_pytest_NOMINA_ANCHE_I_ROSSI(self):
+        """🪞 IL DIFETTO E' MIO, del 2026-08-14, e ostacola proprio il triage.
+
+        Avevo aggiunto `-rs` per far comparire il MOTIVO di ogni salto. Ma il
+        valore predefinito di `-r` in pytest e' `fE` — falliti ed errori — e
+        `-rs` non si AGGIUNGE: **sostituisce**. ⇒ Da quel giorno il riepilogo
+        finale elenca solo gli skip, e i rossi spariscono da li'.
+
+        Misurato il 2026-08-16 sul log del job `95030996336` (run
+        `31892593845`, commit `00e14dc9`), gamba `ubuntu-latest / py3.12`::
+
+            = 44 failed, 11433 passed, 64 skipped, ... 9 errors in 1077.70s =
+            sezione «short test summary info»:  62 righe SKIPPED, ZERO rossi
+
+        ⇒ Chi fa il triage deve ricostruire 44 rossi da **14.555 righe
+        verbose** invece di leggerne 53. 🔑 E soprattutto perde il MOTIVO: le
+        righe verbose portano solo il nome (`nodeid FAILED [ 3%]`), mentre il
+        riepilogo porta `FAILED nodeid - AssertionError: ...`.
+
+        Riprodotto in locale su tre test (un verde, un rosso, un salto)::
+
+            -rs     SKIPPED [1] ...:14: salto dichiarato
+            -rsfE   SKIPPED [1] ...:14: salto dichiarato
+                    FAILED test_tre_esiti.py::test_che_fallisce - AssertionError: ...
+
+        ⚖️ La cura e' un token, e **non toglie** cio' che avevo aggiunto: i
+        motivi dei salti restano, i rossi tornano.
+        📌 La classe: *un'opzione che sembra additiva e invece e' sostitutiva
+        spegne un segnale mentre ne accende un altro* — e il segnale spento non
+        da' errore, da' silenzio.
+        """
+        import yaml
+        wf = yaml.safe_load(CI.read_text(encoding="utf-8"))
+        passi = wf["jobs"]["test"]["steps"]
+        invocazioni = [str(s.get("run", "")) for s in passi
+                       if "pytest" in str(s.get("run", ""))]
+        assert invocazioni, (
+            "nessuno step lancia pytest: se la suite e' stata spostata questo "
+            "banco va riletto, non cancellato")
+        import re
+        for comando in invocazioni:
+            flag = re.findall(r"(?:^|\s)-r([a-zA-Z]+)", comando)
+            assert flag, (
+                f"pytest gira senza `-r`: il riepilogo finale usa il default "
+                f"`fE` e i motivi dei SALTI non compaiono. comando={comando!r}")
+            lettere = set("".join(flag))
+            mancanti = {"s", "f", "E"} - lettere
+            assert not mancanti, (
+                f"le lettere di `-r` sono {sorted(lettere)} e mancano "
+                f"{sorted(mancanti)}: `-r` SOSTITUISCE il default `fE`, non si "
+                f"aggiunge. Senza `f` ed `E` il riepilogo non nomina i rossi e "
+                f"chi fa triage deve ricostruirli dalle righe verbose, senza "
+                f"il motivo. Senza `s` spariscono i motivi dei salti.")
+
     def test_la_chiave_della_cache_distingue_le_GAMBE_della_matrice(self):
         """⚠️ Misurato da ws3 il 2026-08-15 sul run `16c68894`, e la mia cura
         reggeva **per fortuna, non per costruzione**.
