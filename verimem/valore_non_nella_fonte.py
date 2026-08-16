@@ -46,7 +46,12 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from .quantity_match import _QUANT_RE, claim_span, extract_quantities
+from .quantity_match import (
+    _QUANT_RE,
+    claim_span,
+    extract_quantities,
+    valori_scritti_a_parole,
+)
 
 __all__ = ["ValoreAssente", "valori_non_nella_fonte"]
 
@@ -254,3 +259,28 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
         fuori.append(ValoreAssente(valore=v, unita=u,
                                    testo=come_scritti.get(v, "")))
     return fuori
+
+
+def assenti_che_la_fonte_scrive_a_parole(
+        assenti: list[ValoreAssente], source: str) -> list[ValoreAssente]:
+    """Quali fra i valori «assenti» la fonte porta scritti a PAROLE.
+
+    Serve a DECLASSARE, mai ad ammettere: il chiamante sposta questi da veto ad
+    avviso, e il fatto entra CON l'avviso. La differenza non e' formale — sta
+    scritta a `anti_confab_gate.py:1897`, «un avviso non ha bisogno della
+    popolazione opposta, un veto si'» — ed e' cio' che permette di tenere
+    dentro `sei` e `venti` nonostante gli omonimi: un omonimo qui costa un
+    avviso in piu' su un fatto che entra, non un numero inventato che passa.
+
+    ⚠️ E NON si limita a toglierli dall'elenco. Lo stesso modulo ha gia' pagato
+    questo errore altrove (riga 228 e commento a `L4.1-bis`): «i falsi negativi
+    nascono convertendo i veri positivi in silenzio» — per chi legge il fatto,
+    un valore ammesso da un confronto sbagliato e un valore ammesso da NESSUN
+    confronto sono identici.
+    """
+    if not assenti or not source:
+        return []
+    a_parole = valori_scritti_a_parole(source)
+    if not a_parole:
+        return []
+    return [a for a in assenti if a.valore in a_parole]

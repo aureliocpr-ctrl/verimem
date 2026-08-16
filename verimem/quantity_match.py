@@ -2340,11 +2340,65 @@ def distinct_event_indices(text_a: str, text_b: str) -> bool:
     return _indices_disjoint(event_indices(text_a), event_indices(text_b))
 
 
+#: Numerali scritti a parole, EN·IT. La partizione NON e' «quali parole sono
+#: ambigue» ma «quali costano poco», ed e' una misura sul corpus reale (11.262
+#: proposizioni, 16/08): `un` 1481 (13,2%) · `una` 772 (6,9%) · `uno` 193
+#: (1,7%) valgono da soli 21,8 punti su 26,5 — oltre l'80% degli scatti — e
+#: sono FUORI perche' in italiano sono gli ARTICOLI INDETERMINATIVI, cioe' fra
+#: le parole piu' frequenti della lingua. Con dentro anche loro un avviso
+#: comparirebbe su 2484 fatti su 11262 (22,1%): un avviso che compare sempre
+#: equivale a nessun avviso.
+#: ⚠️ Restano DENTRO parole con omonimi veri — `sei` e' anche il verbo essere,
+#: `venti` il plurale di vento — e questo e' un LIMITE NOTO, non una svista:
+#: costano 1,4 e 0,3 punti, e senza `sei` la cura non curerebbe il caso da cui
+#: e' nata. Regge perche' chi la usa lo fa per DECLASSARE un veto ad avviso,
+#: mai per ammettere: un omonimo produce un avviso in piu', non un numero.
+_NUMERALI_A_PAROLE: dict[str, float] = {
+    # -- inglese
+    "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
+    "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20,
+    "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70,
+    "eighty": 80, "ninety": 90, "hundred": 100, "thousand": 1000,
+    # -- italiano
+    "due": 2, "tre": 3, "quattro": 4, "cinque": 5, "sei": 6, "sette": 7,
+    "otto": 8, "nove": 9, "dieci": 10, "undici": 11, "dodici": 12,
+    "tredici": 13, "quattordici": 14, "quindici": 15, "sedici": 16,
+    "diciassette": 17, "diciotto": 18, "diciannove": 19, "venti": 20,
+    "trenta": 30, "quaranta": 40, "cinquanta": 50, "sessanta": 60,
+    "settanta": 70, "ottanta": 80, "novanta": 90, "cento": 100,
+    "mille": 1000,
+}
+#: ⛔ `one` e `a`/`an` in inglese, `un`/`uno`/`una` in italiano: mai qui.
+
+_NUMERALE_RE = re.compile(
+    r"\b(" + "|".join(sorted(_NUMERALI_A_PAROLE, key=len, reverse=True)) +
+    r")\b", re.IGNORECASE)
+
+
+def valori_scritti_a_parole(text: str) -> set[float]:
+    """I numeri che il testo scrive a PAROLE, non in cifra.
+
+    ⚠️ Volutamente NON usata da `extract_quantities`, e la ragione sta scritta
+    in `valore_non_nella_fonte.py:228` per il caso gemello («nessun X» vale
+    zero): insegnare al parser a vedere numeri dove il testo non ne misura
+    creerebbe quantita' fantasma nei sei moduli del gate che lo leggono. Qui
+    l'equivalenza vive solo in un confronto fra due testi: non entra nel corpus
+    e non crea nulla.
+    """
+    if not text:
+        return set()
+    return {float(_NUMERALI_A_PAROLE[m.group(1).lower()])
+            for m in _NUMERALE_RE.finditer(text)}
+
+
 __all__ = [
     "YEAR_RE",
     "CONTRAST_QUALIFIERS",
     "norm_unit",
     "extract_quantities",
+    "valori_scritti_a_parole",
     "numeri_ambigui",
     "content_tokens",
     "contrasting_attrs",

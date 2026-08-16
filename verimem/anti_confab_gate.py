@@ -1920,8 +1920,38 @@ def run_validation_gate(
                                "(45000) per farlo verificare"),
                     "matched_text": _aa,
                 })
-            from .valore_non_nella_fonte import valori_non_nella_fonte
+            from .valore_non_nella_fonte import (
+                assenti_che_la_fonte_scrive_a_parole,
+                valori_non_nella_fonte,
+            )
             _assenti = valori_non_nella_fonte(proposition, source)
+            # LA FONTE LO DICE, SOLO A PAROLE. Misurato il 16/08 usando il
+            # prodotto: fonte «SEI combinazioni», claim «6 combinazioni», tre
+            # casi con `withheld_despite_judge=True` e grounding 99,3-99,9 —
+            # il layer tratteneva un fatto VERO mentre il giudice era contento.
+            # Qui il numero nella fonte c'e': cambia la forma in cui e' scritto.
+            # ⚖️ DECLASSA, non ammette: il valore esce dal veto ed entra in un
+            # AVVISO col suo nome, perche' l'equivalenza cifra-parola non e'
+            # certa come quella di «nessun X» (`sei` e' anche il verbo essere).
+            # E' la regola dichiarata a L4.1-bis qui sopra — «un avviso non ha
+            # bisogno della popolazione opposta, un veto si'» — ed e' cio' che
+            # permette di tenere dentro le parole ambigue: un omonimo costa un
+            # avviso in piu' su un fatto che entra, non un numero che passa.
+            _a_parole = assenti_che_la_fonte_scrive_a_parole(_assenti, source)
+            if _a_parole:
+                _pp = ", ".join(
+                    (f"{v.come_scritto()} {v.unita}".strip())
+                    for v in _a_parole[:4])
+                warnings.append({
+                    "layer": "L4.1-a-parole",
+                    "reason": (f"la fonte non scrive questi valori in cifra ma "
+                               f"contiene il numerale corrispondente: {_pp}"),
+                    "advice": ("il numero sembra esserci, scritto a parole: "
+                               "verifica che sia lo stesso e non un omonimo "
+                               "(«sei» e' anche il verbo essere)"),
+                    "matched_text": _pp,
+                })
+                _assenti = [a for a in _assenti if a not in _a_parole]
             if _assenti:
                 # ⚠️ `come_scritto()` E NON `f"{v.valore:g}"`: quel formato tiene
                 # sei cifre significative e ARROTONDA, quindi il gate nominava
