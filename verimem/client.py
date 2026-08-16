@@ -2891,6 +2891,23 @@ class Memory:
                 _undo_id = _sup.get("undo_op_id")
             except Exception as exc:  # noqa: BLE001
                 return {**res, "updated": True, "supersedes": fact_id, "supersede_warning": str(exc)}
+        # ⚠️ L'handle poteva gia' esserci, sotto un ALTRO NOME. `add()` supersede
+        # da solo quando riconosce un'evoluzione della stessa fonte, e in quel
+        # caso l'op reversibile la crea LUI: la chiamata esplicita qui sopra
+        # trova il vecchio gia' superseduto e non ne apre una seconda, quindi
+        # `_undo_id` resta vuoto. Misurato il 2026-08-16 su `update()`::
+        #
+        #     flow.supersession  reason='same-source evolution' reversible=True
+        #                        undo_op_id=fcc15331752c4d33
+        #     ricevuta:  superseded_undo_ops {'130697c37e61': 'fcc15331752c4d33'}
+        #                undo_op_id          ASSENTE
+        #
+        # ⇒ Chi corregge un fatto NON poteva tornare indietro con la chiave che
+        # `undo()` documenta — e l'informazione c'era, a due chiavi di distanza.
+        # 🔑 Non e' un dato mancante: e' lo stesso dato con due nomi, e la
+        # promessa era scritta su quello che questo percorso non riempie.
+        if _undo_id is None:
+            _undo_id = (res.get("superseded_undo_ops") or {}).get(fact_id)
         out = {**res, "updated": bool(res.get("stored")), "supersedes": fact_id}
         if _undo_id is not None:
             out["undo_op_id"] = _undo_id
