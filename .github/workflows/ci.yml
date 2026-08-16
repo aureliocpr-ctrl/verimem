@@ -512,6 +512,55 @@ jobs:
             ~/.cache/verimem
           key: hf2-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
 
+      # 🔬 LA SONDA DOVE IL GUASTO AVVIENE, aggiunta il 2026-08-16 dopo aver
+      # falsificato UNDICI ipotesi ragionando da un'altra macchina.
+      #
+      # Nove test vanno in ERROR al setup su
+      # `SentenceTransformer(model, local_files_only=True)`, mentre nello STESSO
+      # job il warmup carica quel modello in 7,8 s. Provato in locale su una
+      # cache con gli stessi conteggi (snapshots 12, refs 1, .no_exist 8):
+      #
+      #     huggingface_hub 1.9.0  vs 1.27.0   -> 7 file su 7 risolti, IDENTICO
+      #     transformers    5.8.0  vs 5.15.0   -> AutoConfig, AutoTokenizer e
+      #                                            cached_files: tutti OK
+      #
+      # ⇒ Ne' la cache (per quanto i conteggi vedano) ne' quelle due librerie
+      # spiegano il guasto. ⚠️ E «i conteggi coincidono» NON e' «le cache sono
+      # identiche»: quattro numeri non descrivono un albero di file.
+      # 🔑 Quindi la domanda si porta QUI, dove il guasto c'e' davvero: quali
+      # file risolve la cache DEL RUNNER, offline, uno per uno. Nessun modello
+      # caricato — sono risoluzioni di percorso, costano millisecondi.
+      # 📌 `continue-on-error` perche' e' una SONDA: deve raccontare, non
+      # decidere. Se fallisse fermerebbe il job che stiamo diagnosticando.
+      - name: Sonda offline (quali file risolve la cache di QUESTO runner)
+        continue-on-error: true
+        env:
+          HF_HUB_OFFLINE: "1"
+        run: |
+          python - <<'PY'
+          from huggingface_hub import hf_hub_download
+          import huggingface_hub, transformers
+          REPO = "intfloat/multilingual-e5-base"
+          print(f"SONDA hub={huggingface_hub.__version__} tf={transformers.__version__}")
+          for nome in ("config.json", "modules.json", "sentence_bert_config.json",
+                       "1_Pooling/config.json", "tokenizer_config.json",
+                       "tokenizer.json", "model.safetensors"):
+              try:
+                  hf_hub_download(REPO, nome, local_files_only=True)
+                  esito = "OK"
+              except Exception as errore:
+                  esito = type(errore).__name__
+              print(f"SONDA  {nome:28} {esito}")
+          try:
+              import sentence_transformers
+              print(f"SONDA st={sentence_transformers.__version__}")
+              sentence_transformers.SentenceTransformer(REPO, local_files_only=True)
+              print("SONDA  SentenceTransformer            OK")
+          except Exception as errore:
+              print(f"SONDA  SentenceTransformer            {type(errore).__name__}")
+              print(f"SONDA    {str(errore)[:200]}")
+          PY
+
       - name: Gate probe (il verdetto del moat su un claim di riferimento)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         continue-on-error: true
