@@ -615,11 +615,19 @@ jobs:
           # 📌 `|| true` e l'uscita stampata: qui si racconta, non si decide.
           echo "--- e ora il percorso VERO dei sei rossi: la CLI in sottoprocesso ---"
           TMPDATI=$(mktemp -d)
+          # ⚠️ IL CODICE SI CATTURA, NON SI LEGGE DOPO `|| true`. La prima
+          # versione finiva con `|| true` e poi stampava `$?`, che a quel punto
+          # e' l'uscita di `true`: SEMPRE 0. Sul run 31974401758 ha stampato
+          # `SONDA-CLI exit=0` e quel numero non significava niente — a dire che
+          # il comando era riuscito sono stati i byte (1468 di stdout, 849 di
+          # stderr contro i 42241 di un CLI morto), non il codice.
+          # 🔑 Quinto strumento mio oggi che risponde sempre la stessa cosa: un
+          # sensore che non puo' dire di no non e' severo, e' scollegato.
           HIPPO_DATA_DIR="$TMPDATI" ENGRAM_DATA_DIR="$TMPDATI" VERIMEM_DATA_DIR="$TMPDATI" \
             python -m verimem.cli remember "L'ordine 77 conteneva 40 pezzi." \
               --topic sonda --source "Verbale: e' stato consegnato l'ordine 77." \
-              > "$TMPDATI/uscita.txt" 2> "$TMPDATI/errori.txt" || true
-          echo "SONDA-CLI exit=$?"
+              > "$TMPDATI/uscita.txt" 2> "$TMPDATI/errori.txt" && CODICE=0 || CODICE=$?
+          echo "SONDA-CLI exit=$CODICE"
           echo "SONDA-CLI stdout: $(wc -c < "$TMPDATI/uscita.txt") byte"
           echo "SONDA-CLI stderr: $(wc -c < "$TMPDATI/errori.txt") byte"
           # 🔑 QUALE modello chiede. La coda dell'errore dice «couldn't find
