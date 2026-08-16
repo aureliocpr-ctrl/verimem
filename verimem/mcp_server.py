@@ -721,6 +721,18 @@ _REQUEST_START_NS: contextvars.ContextVar[int | None] = contextvars.ContextVar(
     "mcp_request_start_ns", default=None,
 )
 
+# Il nome con cui la chiamata e' ARRIVATA, quando il dispatch l'ha riscritto
+# (`engram_*` / `verimem_*` -> `hippo_*`, poche righe dentro
+# `_call_tool_impl`). Serve a due cose che senza di esso erano perdute:
+# l'errore «unknown tool» nominava il nome riscritto, cioe' un tool che il
+# chiamante non aveva mai digitato; e l'audit registrava `tool=hippo_x` per
+# tutti e tre i prefissi, quindi non poteva dire quanti host usino gia'
+# l'alias del prodotto — che e' esattamente il dato su cui si decide se
+# spostare il default (RENAME-PLAN.md, fase 2).
+_REQUEST_TOOL_ALIAS: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "mcp_request_tool_alias", default=None,
+)
+
 # CYCLE #14: ring rotation. Audit log was append-only forever (10828 entries
 # / 1.4 MB on a typical operator's box after a few months). 5 MB cap with
 # one .1 backup keeps the live file fast to scan while preserving the most
@@ -977,6 +989,13 @@ def _audit(tool: str, arguments: dict[str, Any], outcome: str,
         _start_ns = _REQUEST_START_NS.get()
         if _start_ns is not None:
             record["latency_ms"] = (time.monotonic_ns() - _start_ns) / 1e6
+        # Il nome ricevuto SOLO quando differisce dal canonico: `tool` resta il
+        # nome canonico perche' chi conta per `tool=hippo_x` deve continuare a
+        # contare anche le chiamate arrivate via alias. Su una chiamata
+        # canonica il campo sarebbe un duplicato di `tool` su ogni riga.
+        _alias = _REQUEST_TOOL_ALIAS.get()
+        if _alias is not None and _alias != tool:
+            record["requested_name"] = _alias
         line = json.dumps(record, default=str, separators=(",", ":")) + "\n"
         with _AUDIT_LOCK:
             _AUDIT_WRITE_COUNTER["n"] += 1
@@ -7326,6 +7345,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # Cycle #115.A: telemetry timer. Every `_audit()` call below now emits
     # `latency_ms` derived from this monotonic anchor.
     _REQUEST_START_NS.set(time.monotonic_ns())
+    # Azzerato a ogni richiesta: senza il reset una chiamata canonica
+    # erediterebbe l'alias di quella precedente nello stesso contesto.
+    _REQUEST_TOOL_ALIAS.set(None)
+    _received_name = name
     # Dispatch gates run FIRST - before the architecture-A fast-paths below.
     # They used to run after a = _ag(), i.e. AFTER a fast-path could already
     # have forwarded the call to the shared server, so a malformed argument
@@ -7345,6 +7368,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     # hippo_* stays valid (non-breaking for 0.3.x users).
     if name.startswith("verimem_"):
         name = "hippo_" + name[len("verimem_"):]
+    # Da qui in poi `name` e' il nome canonico e quello ricevuto non esiste
+    # piu' in nessuna variabile: si conserva ORA, o e' perduto.
+    if name != _received_name:
+        _REQUEST_TOOL_ALIAS.set(_received_name)
     # A10: normalize JSON `null` → absent so optional numeric args fall back to
     # their defaults instead of feeding None into int()/float() (TypeError).
     # Done BEFORE validation so a null for a REQUIRED field still fails cleanly
@@ -14513,7 +14540,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             })
 
         _audit(name, arguments, outcome="unknown_tool")
-        return _err(f"unknown tool: {name}")
+        # Il nome che il chiamante ha DIGITATO. Nominare quello riscritto lo
+        # manda a cercare un tool che non ha mai scritto, per giunta con un
+        # prefisso che la documentazione del prodotto non usa piu'.
+        return _err(f"unknown tool: {_REQUEST_TOOL_ALIAS.get() or name}")
     except Exception as exc:  # noqa: BLE001
         log.exception("mcp_tool_failed", tool=name)
         _audit(name, arguments, outcome="exception", error=str(exc))
