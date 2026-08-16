@@ -575,6 +575,28 @@ jobs:
               print(f"SONDA    {str(errore)[:200]}")
           PY
 
+          # 🔑 E ADESSO LA COSA CHE IL GUASTO FA DAVVERO. I sei rossi rimasti di
+          # `test_la_ricevuta_non_diceva_quale_cifra_mancava` non caricano un
+          # modello: lanciano `verimem.cli remember` in un SOTTOPROCESSO, con le
+          # tre variabili di data dir pinnate a una tmp — e il sottoprocesso non
+          # puo' ricevere lo stub del conftest, perche' e' un Python nuovo.
+          # ⇒ La sonda che carica `SentenceTransformer` dice OK e NON riproduce
+          # quel percorso: e' la stessa lezione di stasera («una sonda che non
+          # riproduce l'ambiente che sonda misura un'altra cosa»), applicata al
+          # COMANDO invece che alle variabili.
+          # 📌 `|| true` e l'uscita stampata: qui si racconta, non si decide.
+          echo "--- e ora il percorso VERO dei sei rossi: la CLI in sottoprocesso ---"
+          TMPDATI=$(mktemp -d)
+          HIPPO_DATA_DIR="$TMPDATI" ENGRAM_DATA_DIR="$TMPDATI" VERIMEM_DATA_DIR="$TMPDATI" \
+            python -m verimem.cli remember "L'ordine 77 conteneva 40 pezzi." \
+              --topic sonda --source "Verbale: e' stato consegnato l'ordine 77." \
+              > "$TMPDATI/uscita.txt" 2> "$TMPDATI/errori.txt" || true
+          echo "SONDA-CLI exit=$?"
+          echo "SONDA-CLI stdout: $(wc -c < "$TMPDATI/uscita.txt") byte"
+          echo "SONDA-CLI stderr: $(wc -c < "$TMPDATI/errori.txt") byte"
+          echo "SONDA-CLI coda stderr:"
+          tail -c 600 "$TMPDATI/errori.txt" || true
+
       - name: Gate probe (il verdetto del moat su un claim di riferimento)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         continue-on-error: true
