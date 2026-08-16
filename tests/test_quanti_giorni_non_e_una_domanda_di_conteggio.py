@@ -115,14 +115,20 @@ def test_CONTROLLO_POSITIVO_una_domanda_su_QUANTI_RECORD_resta_un_conteggio(doma
     assert classify_query_intent(domanda) == COUNT, domanda
 
 
-@pytest.mark.xfail(reason="stesso difetto aperto, lato lingue non coperte",
-                   strict=False)
 def test_la_cura_NON_e_una_lista_di_lingue():
     """🔑 Il presidio contro la strada sbagliata. DE e FR oggi finiscono in
     `find` perché il router non le riconosce, e per questo funzionano.
     Aggiungerle al router — la cura ovvia — propagherebbe il difetto a tre
     lingue in più: questo test pretende che, se un giorno verranno
-    riconosciute, la distinzione valore/record valga anche per loro."""
+    riconosciute, la distinzione valore/record valga anche per loro.
+
+    Era marcato `xfail(strict=False)` e PASSAVA — cioè il presidio contro la
+    strada sbagliata era muto proprio nella direzione che doveva sorvegliare:
+    chi avesse aggiunto le lingue al router avrebbe visto un fallimento
+    ATTESO e la suite verde. Marcatore tolto il 2026-08-16 dopo tre
+    esecuzioni verdi con `--runxfail`. Passa per la ragione dichiarata nel
+    docstring — l'assenza dal router — non perché la distinzione sia stata
+    estesa: il giorno in cui lo sarà, questo test è il primo a dirlo."""
     for domanda in ("Wie viele Tage fuer die Zahlung der Rechnungen?",
                     "Combien de jours pour le paiement des factures?",
                     "Cuantos dias para el pago de las facturas?"):

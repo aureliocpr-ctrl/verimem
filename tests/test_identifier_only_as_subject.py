@@ -37,9 +37,18 @@ attributo di configurazione. Toglierlo è però una decisione di prodotto con il
 suo rischio ("la porta 8443 è aperta" usa davvero la porta come soggetto) e
 va misurata sul corpus prima di essere presa.
 
-Quel che resta APERTO, e va detto per intero: due valori della stessa porta
-convivono, il recall li serve entrambi, e lo scanner batch li vedrebbe
-(`detect_numeric_clashes` li restituisce) mentre il write path no.
+CHIUSO IL 2026-08-16, ma NON dalla via che questo documento discuteva, e la
+differenza conta. Rimisurato lo scenario tre volte su store nuovi: dei due
+fatti uno resta vivo (9443, quello aggiornato) e l'altro porta `superseded_by`
+valorizzato — il write path VEDE il conflitto. La via tassonomica invece non e'
+stata presa: `distinct_event_indices` sul caso porta risponde ancora `True`,
+cioe' `port` sta ancora nella lista degli identificatori e la regola sintattica
+e' intatta. A ritirare il vecchio e' il ramo delle evoluzioni same-source.
+
+Il caso sotto era marcato `xfail(strict=False)` e PASSAVA: la suite non poteva
+dirlo, perche' quel marcatore e' muto in entrambe le direzioni. Tolto il
+marcatore, il caso e' il presidio che si accorge se la supersessione smette di
+scattare — cosa che, finche' `port` resta nella lista, dipende da un ramo solo.
 """
 from __future__ import annotations
 
@@ -68,15 +77,10 @@ def test_the_original_case_the_identifier_list_exists_for():
     ) is True
 
 
-@pytest.mark.xfail(
-    reason="APERTO, non risolto: due valori della stessa porta convivono. La "
-           "via sintattica è falsificata (vedi docstring); la via tassonomica "
-           "— togliere `port` dalla lista degli identificatori — è una "
-           "decisione di prodotto da misurare sul corpus, non da prendere di "
-           "corsa. Marcato xfail e non silenziato.",
-    strict=False,
-)
 def test_the_runbook_update_supersedes_instead_of_coexisting(tmp_path):
+    """Il caso del runbook: aggiornare la porta ritira il valore vecchio invece
+    di affiancarlo. Misurato verde il 2026-08-16 su tre store nuovi; se torna
+    rosso, il write path ha smesso di vedere il conflitto."""
     from verimem.client import Memory
     m = Memory(path=tmp_path / "s.db")
     m.add("Il servizio di fatturazione ascolta sulla porta 8443.",
