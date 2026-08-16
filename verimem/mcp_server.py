@@ -7313,14 +7313,40 @@ def _apply_tool_namespace(tools: list[t.Tool]) -> list[t.Tool]:
           or os.environ.get("ENGRAM_TOOL_NAMESPACE") or "").strip().lower()
     if ns != "verimem":
         return tools
+    # Le DESCRIZIONI additano altri tool per nome (misurato 16/08: 50 tool su
+    # 248, 61 riferimenti). Rinominare solo `name` lasciava l'utente a leggere
+    # «Cheaper than `hippo_status`» dentro un elenco dove hippo_status non
+    # compare: il prodotto rimandava a nomi che non espone. Stesso difetto di
+    # dfec9825 sul messaggio d'errore, un'altra superficie.
+    rinominati = {tool.name for tool in tools if tool.name.startswith("hippo_")}
+
+    def _riferimento(m: re.Match[str]) -> str:
+        # SOLO cio' che corrisponde a un tool davvero rinominato: `hippo_facts_*`
+        # e' una famiglia, HIPPO_DISABLED una variabile d'ambiente, e riscriverli
+        # significherebbe inventare nomi che non esistono.
+        nome = m.group(0)
+        if nome not in rinominati:
+            return nome
+        return "verimem_" + nome[len("hippo_"):]
+
     out: list[t.Tool] = []
     for tool in tools:
-        if tool.name.startswith("hippo_"):
-            out.append(tool.model_copy(
-                update={"name": "verimem_" + tool.name[len("hippo_"):]}))
-        else:
+        if not tool.name.startswith("hippo_"):
             out.append(tool)
+            continue
+        aggiornamenti: dict[str, Any] = {
+            "name": "verimem_" + tool.name[len("hippo_"):]}
+        if tool.description:
+            aggiornamenti["description"] = _RIFERIMENTO_A_TOOL.sub(
+                _riferimento, tool.description)
+        out.append(tool.model_copy(update=aggiornamenti))
     return out
+
+
+#: Un riferimento a un tool dentro una descrizione. Volutamente permissivo
+#: nel catturare: e' `_riferimento` a decidere, confrontando con i nomi
+#: realmente esposti, quali di questi siano nomi di tool e quali no.
+_RIFERIMENTO_A_TOOL = re.compile(r"hippo_[a-z0-9_]+")
 
 
 # Hang watchdog budget (2026-06-06): if any tool call runs longer than this, an
