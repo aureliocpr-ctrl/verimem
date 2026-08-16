@@ -64,7 +64,7 @@ _CLAIM = "Il sistema funziona perfettamente e tutti i test passano."
 _FONTE_ESTRANEA = "Il gatto dorme sul divano."
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def esito(tmp_path_factory):
     """Un archivio nuovo, un claim non sostenuto scritto dentro."""
     m = Memory(str(tmp_path_factory.mktemp("gate") / "g.db"))

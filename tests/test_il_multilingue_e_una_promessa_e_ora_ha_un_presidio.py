@@ -66,7 +66,7 @@ def _stub_embedding_model():
     yield
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def memoria_italiana(tmp_path_factory):
     m = Memory(str(tmp_path_factory.mktemp("multi") / "s.db"))
     for f in FATTI_IT:

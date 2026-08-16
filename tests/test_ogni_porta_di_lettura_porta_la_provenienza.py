@@ -68,7 +68,7 @@ NON_HIT = frozenset({
 _TESTO = "Il magazzino di Rovigo contiene 480 pallet."
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def memoria(tmp_path_factory) -> Memory:
     """Un archivio vero con un fatto dentro. Modulo: l'embedder si carica una volta."""
     m = Memory(str(tmp_path_factory.mktemp("prov") / "p.db"))
