@@ -142,6 +142,28 @@ def test_status_dice_quanti_ne_ha_SOSTITUITI(store: Path):
 # non supersede.
 
 
+def test_anche_stats_dice_quanti_ne_sono_stati_sostituiti(store: Path):
+    """La TERZA superficie con la stessa cecita', trovata con lo sweep.
+
+    `trust_stats()["store"]` e' una fotografia dei VIVI — lo dice il suo
+    docstring — e `moat.facts` conta anch'esso `superseded_by IS NULL`. Su una
+    data dir temporanea con due `remember` sullo stesso topic, `stats --json`
+    riportava `"facts": 1` su un database di DUE righe, e nessuna chiave
+    nominava la seconda.
+
+    ⚖️ La chiave sta FUORI da `store`: `store` ripartisce per STATUS, la
+    supersessione e' un'altra dimensione, e infilarla li' farebbe sommare
+    grandezze diverse a chi cicla sulle chiavi.
+    """
+    import json as _json
+    raw = _plain(runner.invoke(app, ["stats", "--json"]).output)
+    payload = _json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
+    assert "superseded" in payload, (
+        "il payload non dice quanti fatti sono stati sostituiti: chi ne scrive "
+        f"due e ne legge uno non sa dov'e' finito l'altro.\n{sorted(payload)}")
+    assert isinstance(payload["superseded"], int) or payload["superseded"] is None
+
+
 def test_status_and_stats_agree_on_how_many_are_held_back(store: Path):
     """Two commands, one store, one number.
 

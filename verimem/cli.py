@@ -1573,6 +1573,12 @@ def trust_stats_cmd(
     if s["store"]:
         live = ", ".join(f"{k}:{v}" for k, v in sorted(s["store"].items()))
         console.print(f"[bold]Live facts by status[/bold]  {live}")
+    # La riga sopra dice «live» e chi legge non ha modo di sapere quanti non lo
+    # sono piu'. Su una riga a se', perche' non e' una ripartizione per status.
+    if s.get("superseded"):
+        console.print(f"[bold]Superseded[/bold]  {s['superseded']}  "
+                      f"[dim]earlier values replaced by a later write, "
+                      f"not in the line above[/dim]")
     _moat = s.get("moat") or {}
     if _moat.get("facts"):
         _pct = 100 * _moat["coverage"]
