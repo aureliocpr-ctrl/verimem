@@ -1471,6 +1471,21 @@ def telemetry_cmd(
     log_path = data_dir() / "mcp_audit.log"
     if not log_path.exists():
         # «nessuno ha chiamato niente» e «non so» sono due risposte diverse.
+        #
+        # ⚠️ E la distinzione arrivava SOLO all'umano: questo ramo usciva prima
+        # del controllo su `--json`, quindi uno script riceveva questa frase al
+        # posto di un oggetto e cadeva sul `json.loads`. Peggio del cadere: un
+        # `{}` o uno zero avrebbero detto «nessuna chiamata», che è l'altra
+        # risposta — quella sbagliata. Qui il JSON dice esplicitamente che il
+        # registro non c'è, così chi legge da programma ha la stessa
+        # informazione che ha chi legge a schermo.
+        if as_json:
+            import json as _json
+            print(_json.dumps({"audit_log": None, "path": str(log_path),
+                               "reason": "no audit log yet — the MCP server "
+                                         "writes it as it serves tools"},
+                              ensure_ascii=False))
+            raise typer.Exit(0)
         console.print(f"[yellow]no audit log at {log_path}[/yellow] — the MCP "
                       f"server writes it as it serves tools")
         raise typer.Exit(0)
@@ -4631,6 +4646,15 @@ def tip_cmd(
     from .continuity import tip_fact
     t = tip_fact(_facts_sm())
     if t is None:
+        # ⚠️ Anche QUI `--json`: questo ramo usciva prima del controllo sotto, e
+        # su uno store vuoto stampava «(no facts yet)» a chi aveva chiesto JSON.
+        # Uno script che fa `json.loads` sull'uscita non riceve un oggetto che
+        # dice «vuoto»: riceve testo, e cade. E il caso è il PRIMO AVVIO, cioè
+        # quello in cui un'integrazione viene provata per la prima volta.
+        if json_out:
+            import json as _json
+            print(_json.dumps(None))
+            raise typer.Exit(0)
         console.print("(no facts yet)")
         raise typer.Exit(0)
     if json_out:
