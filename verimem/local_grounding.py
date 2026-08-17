@@ -431,7 +431,7 @@ def ensure_gate_model(model_dir: str | Path | None = None, *,
     ``download`` is injectable for tests (called as ``download(source, dest)``).
     """
     dest = _resolve_model_dir(model_dir)
-    if (dest / "config.json").exists():
+    if _holds_a_model(dest) and holds_the_weights(dest):
         return True, f"gate model present at {dest}"
     the_url = url or os.environ.get(_ENV_GATE_URL, "").strip()
     hub = hub_id or os.environ.get(_ENV_GATE_HUB_ID, "").strip()
@@ -446,9 +446,34 @@ def ensure_gate_model(model_dir: str | Path | None = None, *,
     else:  # the default: the published public release tarball
         _download_and_extract_tar(DEFAULT_GATE_MODEL_URL, dest,
                                   sha256=DEFAULT_GATE_MODEL_SHA256)
-    ok = (dest / "config.json").exists()
-    return ok, (f"gate model installed at {dest}" if ok else
-                f"download left no config.json in {dest}")
+    return _esito_dell_installazione(dest)
+
+
+def _esito_dell_installazione(dest: Path) -> tuple[bool, str]:
+    """Se il modello sia utilizzabile dopo il download, e cosa manca se no.
+
+    Il criterio era `config.json` e basta, in entrambi i punti di
+    :func:`ensure_gate_model` — quello che decide di NON riscaricare e quello
+    che dichiara l'esito. Misurato il 17/08: su una cartella con i soli
+    metadati — ciò che un'estrazione interrotta lascia, visto che `config.json`
+    pesa 1 KB e i pesi 737 MB — `verimem warmup` rispondeva
+
+        ✓ moat gate model already installed        EXIT=0
+
+    senza scaricare niente e lasciando la cartella com'era. Il comando che
+    esiste apposta per procurare il giudice si dichiarava soddisfatto, e da lì
+    non si usciva se non cancellando la cartella a mano.
+
+    Il messaggio nomina ciò che manca invece di dire solo «no config.json»:
+    l'operatore che legge deve sapere se ha scaricato metà modello o niente.
+    """
+    manca = [nome for nome, presente in
+             (("config.json", _holds_a_model(dest)),
+              ("weights (model.safetensors / pytorch_model.bin)",
+               holds_the_weights(dest))) if not presente]
+    if not manca:
+        return True, f"gate model installed at {dest}"
+    return False, f"download left no {' and no '.join(manca)} in {dest}"
 
 
 _warned_fallback = False

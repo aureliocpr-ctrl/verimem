@@ -40,7 +40,14 @@ def test_default_download_installs_via_injected_downloader(tmp_path):
     def fake_dl(source, dest):
         seen["source"] = source
         dest.mkdir(parents=True, exist_ok=True)
+        # Anche i PESI, dal 17/08. Questo finto download simula un download
+        # RIUSCITO, e produrre il solo `config.json` era gia' contraddittorio:
+        # e' esattamente cio' che un'estrazione INTERROTTA lascia. Da quando
+        # `ensure_gate_model` chiede anche i pesi per dirsi installato, la
+        # contraddizione e' diventata visibile — il finto riuscito veniva
+        # dichiarato fallito, e giustamente.
         (dest / "config.json").write_text("{}")
+        (dest / "model.safetensors").write_bytes(b"\x00")
 
     ok, msg = lg.ensure_gate_model(tmp_path / "dl", download=fake_dl)
     assert ok and seen["source"] == lg.DEFAULT_GATE_MODEL_URL and "installed" in msg
