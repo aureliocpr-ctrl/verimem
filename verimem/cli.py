@@ -281,17 +281,24 @@ def status():
     ))
 
 
-@app.command()
+@app.command(
+    help="Quick health check — alias for `status` (episodes, skills, facts, data dir).")
 def health():
     """Quick health check — alias for `status` (episodes, skills, facts, data dir).
 
     Audit#2 C-3 (2026-06-08): `engram health` is the obvious name users and docs
     reach for, but it errored with 'no such command'. Delegates to `status`.
+
+    The `help=` above is what `--help` prints. Without it Typer prints this whole
+    docstring, so the two paragraphs of project history below the first line —
+    dates, internal audit references, what we got wrong — end up in front of
+    whoever installed the package. Keeping them here keeps them for whoever
+    maintains the command; `help=` keeps them away from whoever only runs it.
     """
     status()
 
 
-@app.command("backup-all")
+@app.command("backup-all", help="Back up ALL stores (semantic + episodes + skills), not just facts.")
 def backup_all(
     tier: str = typer.Option(
         "daily", "--tier", help="Backup tier: daily | weekly | monthly | manual.",
@@ -425,7 +432,7 @@ def warmup(
     console.print("[bold green]Warmup complete — Verimem recall will be instant.[/]")
 
 
-@app.command()
+@app.command(help="Where each tier lives and how many rows it holds — plus the files that carry a tier's name without being one.")
 def tiers(
     json_out: bool = typer.Option(False, "--json", help="Emit raw JSON"),
     decoys: bool = typer.Option(True, "--decoys/--no-decoys",
@@ -554,7 +561,7 @@ def airgap(
     raise typer.Exit(0 if st["air_gapped"] else 1)
 
 
-@app.command()
+@app.command(help="Index a whole FILE for semantic search, anchored to the indexed text.")
 def index(
     path: str = typer.Argument(..., help="File to index (pdf/docx/html/txt/md)"),
     source_id: str = typer.Option(None, "--source-id", help="Logical id (default: the path)"),
@@ -592,7 +599,7 @@ def index(
                   f"{res['chunks_indexed']} chunks (source_id={res['source_id']})")
 
 
-@app.command("search-docs")
+@app.command("search-docs", help="Semantic search over indexed documents, cited on the INDEXED TEXT.")
 def search_docs(
     query: str = typer.Argument(..., help="Natural-language query"),
     k: int = typer.Option(5, "-k", help="Top-k chunks"),
@@ -871,7 +878,7 @@ def _import_llm(model: str | None = None):
     return LeanClaudeCLILLM(timeout_s=120, model=model or "claude-sonnet-4-6")
 
 
-@app.command("import")
+@app.command("import", help="Cold-start the memory from your past conversations — consent-first.")
 def import_cmd(
     export_path: str = typer.Argument(..., help="Chat export file (ChatGPT/Claude conversations.json or generic JSON)"),
     ids: str = typer.Option(None, "--ids", help="Comma-separated conversation ids to import (explicit consent)"),
@@ -1054,7 +1061,7 @@ def _avviso_pavimento(m, hits, query: str) -> None:
             f"\"{query}\"` dice cosa manca.[/dim]")
 
 
-@app.command("recall")
+@app.command("recall", help="Recall the top-k facts for a query — the 2-second read quickstart.")
 def recall_cmd(
     query: str = typer.Argument(..., help="What to remember."),
     k: int = typer.Option(5, "--k"),
@@ -1189,7 +1196,7 @@ def recall_cmd(
                 f"{str(_n.get('text',''))[:64]}")
 
 
-@app.command("ask")
+@app.command("ask", help="Ask a question with INTENT ROUTING — \"how many times…\" counts, it does not search.")
 def ask_cmd(
     query: str = typer.Argument(..., help="La domanda, in linguaggio naturale."),
     k: int = typer.Option(5, "--k", help="Quanti risultati per una FIND."),
@@ -1255,7 +1262,7 @@ def ask_cmd(
         console.print(riga_di_recall(h))
 
 
-@app.command("correct")
+@app.command("correct", help="Correct a fact already written: the new one passes the moat, then supersedes the old.")
 def correct_cmd(
     old_id: str = typer.Argument(..., help="Id del fatto da correggere."),
     text: str = typer.Argument(..., help="La versione corretta."),
@@ -1718,7 +1725,8 @@ def trust(
     raise typer.Exit(0 if action == "persist" else 1)
 
 
-@app.command("sleep-now")
+@app.command("sleep-now",
+             help="Force a sleep cycle now (no waiting for the trigger).")
 def sleep_now():
     """Force a sleep cycle now (no waiting for the trigger).
 
@@ -2205,7 +2213,7 @@ def providers_check(
 
 # ---- Skills sub-commands -------------------------------------------------
 
-@skills_app.command("list")
+@skills_app.command("list", help="List the skills in the library, optionally filtered by status.")
 def skills_list(status: str | None = typer.Option(None)):
     agent = VerimemAgent.build()
     skills = agent.skills.all(status=status)  # type: ignore[arg-type]
@@ -2287,7 +2295,7 @@ def introspect(
     console.print(eps_table)
 
 
-@skills_app.command("dedup")
+@skills_app.command("dedup", help="Merge skills that share the SAME NAME, keeping the best one.")
 def skills_dedup(
     apply: bool = typer.Option(
         False, "--apply",
@@ -2322,7 +2330,7 @@ def skills_dedup(
                          if r.get("applied_skipped_cap") else ""))
 
 
-@skills_app.command("show")
+@skills_app.command("show", help="Show one skill in full, by id.")
 def skills_show(skill_id: str):
     agent = VerimemAgent.build()
     s = agent.skills.get(skill_id)
@@ -2344,7 +2352,7 @@ def skills_show(skill_id: str):
 
 # ---- Episodes sub-commands -----------------------------------------------
 
-@episodes_app.command("list")
+@episodes_app.command("list", help="List the most recent episodes.")
 def episodes_list(limit: int = 20):
     agent = VerimemAgent.build()
     eps = agent.memory.all(limit=limit)
@@ -2359,7 +2367,7 @@ def episodes_list(limit: int = 20):
     console.print(table)
 
 
-@episodes_app.command("show")
+@episodes_app.command("show", help="Show one episode in full, by id.")
 def episodes_show(episode_id: str):
     agent = VerimemAgent.build()
     e = agent.memory.get(episode_id)
@@ -2939,7 +2947,7 @@ def facts_forget(
             f"request.[/dim]")
 
 
-@facts_app.command("undo")
+@facts_app.command("undo", help="Reverse a destructive op by its handle: a forget OR a retirement.")
 def facts_undo(
     op_id: str = typer.Argument(
         ..., help="op_id from a previous undoable delete/supersede",
@@ -3026,7 +3034,7 @@ def facts_undo_list(
     console.print(table)
 
 
-@facts_app.command("quarantine-log")
+@facts_app.command("quarantine-log", help="The claims the gate HELD BACK — and, with --breakdown, their series over time.")
 def facts_quarantine_log(
     limit: int = typer.Option(20, "--limit", "-n", min=1, max=500),
     breakdown: bool = typer.Option(
@@ -3076,7 +3084,7 @@ def facts_quarantine_log(
                       f"{safe_cut(str(r.get('proposition') or ''), 60)}")
 
 
-@facts_app.command("retirement-log")
+@facts_app.command("retirement-log", help="The retirements, newest first, as (loser, winner) pairs.")
 def facts_retirement_log(
     limit: int = typer.Option(50, "--limit", "-n", help="Max rows"),
     topic: str = typer.Option(None, "--topic", help="Loser-topic prefix filter"),
@@ -3213,7 +3221,7 @@ def facts_retirement_log(
                 f"[green]+ {r['winner_id']}[/green]: {r.get('winner_text', '')}")
 
 
-@facts_app.command("backup")
+@facts_app.command("backup", help="Atomic DB backup via SQLite VACUUM INTO.")
 def facts_backup(
     tier: str = typer.Option(
         "manual", "--tier",
@@ -3297,7 +3305,7 @@ def facts_restore(
     )
 
 
-@facts_app.command("safety")
+@facts_app.command("safety", help="Foundation safety status snapshot.")
 def facts_safety() -> None:
     """Cycle 2026-05-27 round 13 — foundation safety status snapshot.
 
@@ -3394,7 +3402,7 @@ def facts_safety() -> None:
     console.print(Panel.fit(body, title="safety"))
 
 
-@facts_app.command("capability")
+@facts_app.command("capability", help="Inspect the tool capability matrix.")
 def facts_capability(
     name: str = typer.Argument(
         None,
@@ -3586,7 +3594,7 @@ def facts_anti_confab_apply(
 # self-data. Nessuna chiamata API esterna. Nessun LLM coinvolto nel write.
 
 
-@facts_app.command("add")
+@facts_app.command("add", help="Persist one or more facts DIRECTLY to local semantic memory.")
 def facts_add(
     proposition: str = typer.Option(
         None, "--proposition", "-p",
@@ -3967,7 +3975,7 @@ def facts_backfill(
         )
 
 
-@facts_app.command("archive-narration")
+@facts_app.command("archive-narration", help="Move dated session-NARRATION out of the curated `facts` table.")
 def facts_archive_narration(
     apply: bool = typer.Option(
         False, "--apply",
@@ -4901,7 +4909,7 @@ def _audit_episodic_chain_state(ep_path: Path | None):
     return em, state
 
 
-@audit_app.command("anchor")
+@audit_app.command("anchor", help="Emit a SIGNED anchor receipt over the audit chains.")
 def audit_anchor_cmd(
     db: Path | None = typer.Option(  # noqa: B008 — typer idiom
         None, "--db",
