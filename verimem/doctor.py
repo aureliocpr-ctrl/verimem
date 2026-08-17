@@ -442,15 +442,30 @@ def run_doctor() -> list[dict[str, Any]]:
             # gate model already installed» e non riscarica (misurato il 17/08,
             # EXIT=0, cartella invariata), quindi il rimedio NON è eseguirlo di
             # nuovo — è togliere di mezzo la cartella a metà e poi eseguirlo.
-            add("moat-judge", FAIL,
-                f"NO working grounding judge: {_resolve_model_dir(None)} has "
-                f"the model metadata but none of its weights "
-                f"(model.safetensors / pytorch_model.bin) — the load fails at "
-                f"the first judged write and the moat does NOT run "
-                f"(moat OFF); {AVVISO_SENZA_GIUDICE}; {_coverage}",
-                f"delete {_resolve_model_dir(None)} and run `verimem warmup` — "
-                f"running it on the half-extracted dir reports success without "
-                f"downloading anything")
+            _dir = _resolve_model_dir(None)
+            _meta = (f"{_dir} has the model metadata but none of its weights "
+                     f"(model.safetensors / pytorch_model.bin) — the load "
+                     f"fails at the first judged write")
+            _togli = (f"delete {_dir} and run `verimem warmup` — running it on "
+                      f"the half-extracted dir reports success without "
+                      f"downloading anything")
+            if provider and provider != "mock":
+                # Un llm c'è: il CE locale è rotto, ma una strada per far
+                # girare il moat esiste. Dire «moat OFF» e basta manderebbe a
+                # riparare 737 MB di modello chi può già far giudicare — ed è
+                # la stessa distinzione che il ramo del CE ASSENTE fa da
+                # sempre (WARN con la strada, non FAIL).
+                add("moat-judge", WARN,
+                    f"the local CE gate model is INCOMPLETE: {_meta}; an llm "
+                    f"provider is available ({provider}) — the moat runs only "
+                    f"when you pass llm=... to Memory; {_coverage}",
+                    f"{_togli}; or pass llm= to Memory")
+            else:
+                add("moat-judge", FAIL,
+                    f"NO working grounding judge: {_meta} and no llm provider "
+                    f"detected, so the moat does NOT run (moat OFF) — "
+                    f"{AVVISO_SENZA_GIUDICE}; {_coverage}",
+                    _togli)
         elif ce:
             if not _readable:
                 add("moat-judge", WARN,

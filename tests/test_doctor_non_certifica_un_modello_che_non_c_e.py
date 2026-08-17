@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import pytest
 
-from verimem.doctor import FAIL, OK, run_doctor
+from verimem.doctor import FAIL, OK, WARN, run_doctor
 
 
 def _moat(checks):
@@ -143,6 +143,28 @@ def test_i_soli_metadati_non_sono_un_giudice_che_funziona(store_isolato,
         f"il rimedio non dice di togliere di mezzo la cartella a metà: "
         f"{mj.get('fix')!r}. Eseguire `warmup` su di essa riporta «already "
         f"installed» con EXIT=0 senza scaricare nulla (misurato il 17/08)")
+
+
+def test_con_un_llm_disponibile_il_referto_indica_la_strada(store_isolato,
+                                                            tmp_path,
+                                                            monkeypatch):
+    """⚠️ L'ALTRA POPOLAZIONE DELLO STESSO CASO, ed è un difetto che la prima
+    stesura di questa cura aveva introdotto: con un llm disponibile il referto
+    diceva «moat OFF» e basta, mandando a riscaricare 737 MB di modello chi
+    poteva già far giudicare passando `llm=` a Memory.
+
+    È la distinzione che il ramo del CE ASSENTE fa da sempre — WARN con la
+    strada, non FAIL — e il ramo nuovo doveva ereditarla invece di ignorarla.
+    """
+    monkeypatch.setattr("verimem.llm._autodetect_provider", lambda: "openai")
+    mj = _con_cartella(monkeypatch, tmp_path, stato="solo_metadati")
+    assert mj["status"] == WARN, (
+        f"con un llm disponibile il CE incompleto è un avviso, non un "
+        f"fallimento: {mj}")
+    assert "openai" in mj["detail"], mj["detail"]
+    assert "llm=" in mj["detail"], (
+        f"il referto non dice come far girare il moat con l'llm che c'è: "
+        f"{mj['detail']}")
 
 
 def test_un_modello_presente_resta_certificato(store_isolato, tmp_path,
