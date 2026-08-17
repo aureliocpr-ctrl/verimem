@@ -2920,6 +2920,39 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 },
             },
         ),
+        # 🔑 L'ODOMETRO DEL GATE non aveva porta MCP. Misurato il 2026-08-17:
+        # `trust_stats` compare in cli.py, client.py, gateway.py e
+        # trust_ledger.py, e in NESSUNO dei tool qui elencati.
+        # `hippo_trust_report` e' un'altra cosa — usa `build_trust_report` ed e'
+        # il dossier per DOMANDA, non i contatori di cio' che il cancello ha
+        # fatto.
+        # ⇒ Un agente collegato via MCP poteva chiedere quanti fatti ci sono
+        #   (`hippo_status`) e se una singola risposta e' sostenuta
+        #   (`hippo_trust_report`), e NON poteva chiedere quante scritture il
+        #   gate abbia ammesso, trattenuto o respinto — cioe' proprio i numeri
+        #   che il docstring della CLI chiama «The numbers competitors don't
+        #   show». Il differenziatore era irraggiungibile dalla porta degli
+        #   agenti, che e' quella che conta per questo prodotto.
+        # 📌 Stessa storia di `epistemic_health` e `ignorance_map`: completo,
+        #   testato e senza superficie. Qui non serve nemmeno un adattatore —
+        #   `Memory.trust_stats()` restituisce gia' un dizionario.
+        t.Tool(
+            name="hippo_trust_stats",
+            description=(
+                "The trust odometer: what the admission gate DID on this "
+                "store. `ledger` counts observable gate actions since the day "
+                "it was added — admitted / quarantined (unsupported "
+                "self-claims) / rejected / abstained — and `by_layer` "
+                "attributes only the layers that ACTED. `store` is a snapshot "
+                "of the LIVE facts by status, and `superseded` says how many "
+                "earlier values a later write replaced, which the live counts "
+                "leave out. `moat` bounds all of it: the entailment check only "
+                "runs on a write that carries a source, so a store can be full "
+                "of facts none of which the moat ever saw. Read-only; no model "
+                "is loaded."
+            ),
+            inputSchema={"type": "object", "properties": {}},
+        ),
         t.Tool(
             name="hippo_ignorance_map",
             description=(
@@ -13678,6 +13711,21 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"quarantine_log read failed: {_exc}")
             return _ok({"ok": True, "n": len(_rows), "quarantined": _rows})
+
+        if name == "hippo_trust_stats":
+            # Stessa delega di `hippo_epistemic_health` e `hippo_quarantine_log`:
+            # un `Memory` sullo stesso store, non una vista che finge di
+            # esserlo. `trust_stats` legge il registro E il database, e una
+            # vista con il solo `semantic` si romperebbe in silenzio alla prima
+            # chiamata.
+            from .client import Memory as _M
+
+            try:
+                _st = _M(path=a.semantic.db_path).trust_stats()
+            except Exception as _exc:  # noqa: BLE001
+                return _err(f"trust_stats failed: {_exc}")
+            _audit(name, arguments, outcome="ok")
+            return _ok(_st)
 
         if name == "hippo_epistemic_health":
             # `epistemic_health` era completo, testato e irraggiungibile: si

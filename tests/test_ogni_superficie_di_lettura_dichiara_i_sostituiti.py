@@ -132,3 +132,51 @@ def test_il_conteggio_ha_una_sola_casa(store):
     assert not copie, (
         "la query dei sostituiti è di nuovo scritta a mano invece di passare "
         f"da `SemanticMemory.count_superseded()`: {copie}")
+
+
+# ═══ L'ODOMETRO AVEVA UNA PORTA IN MENO ══════════════════════════════════════
+# Misurato il 2026-08-17: `trust_stats` — «what the gate DID on this store»,
+# quello che il docstring della CLI chiama *«The numbers competitors don't
+# show»* — compariva in `cli.py`, `client.py`, `gateway.py` e
+# `trust_ledger.py`, e in nessuno dei 247 strumenti MCP.
+#
+# ⇒ Un agente poteva chiedere quanti fatti ci sono (`hippo_status`) e se una
+#   singola risposta è sostenuta (`hippo_trust_report`, che è un'altra cosa: usa
+#   `build_trust_report`), e NON poteva chiedere quante scritture il gate abbia
+#   ammesso, trattenuto o respinto. Il differenziatore era irraggiungibile dalla
+#   porta degli agenti — che per questo prodotto è quella che conta.
+def test_l_odometro_del_gate_ha_una_porta_mcp(store, monkeypatch):
+    import asyncio
+
+    from mcp.types import CallToolRequest, CallToolRequestParams
+
+    from verimem import mcp_server
+    from verimem.client import Memory
+
+    mem = Memory()
+
+    class _A:
+        def __init__(s):
+            s.semantic = mem.semantic
+
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _A())
+    h = mcp_server.server.request_handlers[CallToolRequest]
+    res = asyncio.run(h(CallToolRequest(
+        method="tools/call",
+        params=CallToolRequestParams(name="hippo_trust_stats", arguments={}))))
+    p = res.root if hasattr(res, "root") else res
+    d = json.loads(next(c.text for c in p.content if hasattr(c, "text")))
+    for chiave in ("ledger", "store", "moat", "superseded"):
+        assert chiave in d, (
+            f"l'odometro non espone `{chiave}` dalla porta MCP: {sorted(d)}")
+
+
+def test_l_odometro_e_SCOPRIBILE_non_solo_chiamabile():
+    """Un tool che risponde ma non compare nell'elenco è irraggiungibile:
+    nessun client sa di poterlo chiamare. È la metà che si dimentica."""
+    import asyncio
+
+    from verimem import mcp_server
+    tools = asyncio.run(mcp_server._list_tools_unfiltered())
+    assert any(t.name == "hippo_trust_stats" for t in tools), (
+        "il tool non è nell'elenco: nessun client può scoprirlo")
