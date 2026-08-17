@@ -183,3 +183,42 @@ def test_il_percorso_del_modello_e_coperto_dalla_cache():
         f"il prodotto mette il modello in ~/{relativo} e la cache del workflow "
         f"copre {coperti}: nessuna voce lo contiene, quindi ogni job lo "
         f"riscarica e il salvataggio conserva una cartella vuota")
+
+
+# ═══ IL GEMELLO: il PERCORSO era coperto, il NOME no ═════════════════════════
+# Il test qui sopra chiede che il posto dove il modello finisce sia conservato.
+# Non chiede che il modello GIUSTO ci arrivi — e sono due domande diverse, come
+# si è visto il 2026-08-17.
+#
+# `tests/conftest.py` pinna, PRIMA di qualunque import e di proposito, un
+# modello DIVERSO da quello del prodotto:
+#
+#     server  intfloat/multilingual-e5-base                             768 dim
+#     test    sentence-transformers/paraphrase-multilingual-MiniLM-L12  384 dim
+#
+# La separazione è sana: la suite asserisce su 384 e usa lo stub. Ma il workflow
+# scaldava e metteva in cache SOLO il modello del server, e i test in-process
+# non se ne accorgevano perché lo stub non carica nulla.
+# ⇒ I sei test che lanciano un SOTTOPROCESSO (dove lo stub non arriva, e le tre
+#   variabili offline sì) chiedevano un modello che nessuno aveva scaricato:
+#   `LocalEntryNotFoundError: Cannot find the requested files in the disk cache`.
+#   In locale invisibile, perché quel modello è in cache da mesi.
+# 🔑 Stessa classe del test sopra — due liste in due file che devono restare
+#   d'accordo e non si conoscono — su un attributo diverso.
+#
+# ⚠️ LIMITE, ed è un debito: questo banco è STATICO. Dice che il workflow NOMINA
+# il modello che i test pinnano, non che il download riesca. Un `TEST-MODEL ...`
+# fallito nel log resta invisibile qui.
+def test_il_modello_che_i_test_pinnano_e_nominato_dal_workflow():
+    conftest = (_RADICE / "tests" / "conftest.py").read_text(encoding="utf-8")
+    m = re.search(r'HIPPO_EMBEDDING_MODEL"\s*,\s*"([^"]+)"', conftest)
+    assert m, ("`conftest.py` non pinna più il modello con quella forma: "
+               "aggiorna questo presidio invece di cancellarlo")
+    pinnato = m.group(1)
+    ci = _CI.read_text(encoding="utf-8")
+    # Il nome corto basta: il workflow può nominarlo per intero o per famiglia.
+    corto = pinnato.rsplit("/", 1)[-1].rsplit("-L12", 1)[0]
+    assert corto in ci, (
+        f"i test girano su «{pinnato}» e il workflow non lo nomina mai: chi "
+        f"apre un sottoprocesso in CI chiede un modello che nessuno scarica, "
+        f"e offline muore con LocalEntryNotFoundError")

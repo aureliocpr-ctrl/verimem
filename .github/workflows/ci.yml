@@ -269,6 +269,40 @@ jobs:
         continue-on-error: true
         run: verimem warmup --no-daemon
 
+      # 🔑 E IL MODELLO CHE I *TEST* USANO, che non e' quello del prodotto.
+      # `tests/conftest.py:11` pinna `HIPPO_EMBEDDING_MODEL` su
+      # `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dim)
+      # PRIMA di qualunque import, di proposito: la suite asserisce su 384 e usa
+      # lo stub, mentre il server gira su `intfloat/multilingual-e5-base` (768).
+      # La separazione e' voluta e sana. Il difetto e' che la CI scalda e mette
+      # in cache SOLO il modello del prodotto.
+      # ⇒ I test in-process non se ne accorgono (lo stub non carica niente), ma
+      #   i sei di `test_la_ricevuta_non_diceva_quale_cifra_mancava` lanciano un
+      #   SOTTOPROCESSO, dove lo stub non arriva e le tre variabili offline si',
+      #   e chiedono un modello che nessuno ha scaricato:
+      #     LocalEntryNotFoundError: Cannot find the requested files in the
+      #     disk cache and outgoing traffic has been disabled
+      # 📌 In locale non si vede perche' quel modello e' in cache da mesi
+      #   (misurato il 17/08: 18 file, 1 file di pesi).
+      # ⚖️ E' la stessa classe che `test_la_cache_della_ci_copre_il_modello_che_
+      #   il_prodotto_usa` gia' presidia sul PERCORSO: due liste in due file che
+      #   devono restare d'accordo e non si conoscono. Li' il percorso, qui il
+      #   NOME del modello — e nessuno guardava il secondo.
+      - name: Scalda anche il modello che i TEST pinnano (non quello del server)
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import os
+          from sentence_transformers import SentenceTransformer
+          NOME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+          print(f"TEST-MODEL scarico {NOME}")
+          try:
+              m = SentenceTransformer(NOME)
+              print(f"TEST-MODEL ok, dim={m.get_sentence_embedding_dimension()}")
+          except Exception as errore:
+              print(f"TEST-MODEL {type(errore).__name__}: {str(errore)[:200]}")
+          PY
+
       # SONDA DEL GIUDICE — una riga, e serve perche' IL LOG TRONCA.
       # Misurato il 2026-08-13: sullo stesso genere di claim (una cifra che la
       # fonte non sostiene) il gate decide DIVERSAMENTE nei due ambienti —
@@ -417,6 +451,14 @@ jobs:
           GIUDICE='*local_gate_ce_v2*'
           giudice=$(find -L $CARTELLE -path "$GIUDICE" -type f -size +100M 2>/dev/null | wc -l || true)
           echo "GIUDICE pesi=$giudice   (cercato: $GIUDICE nelle stesse quattro cartelle)"
+          # 🔑 E IL TERZO MODELLO: quello che `tests/conftest.py` pinna, diverso
+          # da quello del prodotto. Se qui e' 0, i sei test che lanciano un
+          # sottoprocesso muoiono offline — e per settimane nessun conteggio
+          # nominava questo modello, percio' «cache completa» era vero e
+          # inservibile insieme.
+          TESTMODEL='*paraphrase-multilingual-MiniLM*'
+          testmodel=$(find -L $CARTELLE -path "$TESTMODEL" -type f 2>/dev/null | wc -l || true)
+          echo "MODELLO-DEI-TEST file=$testmodel   (cercato: $TESTMODEL)"
           find -L $CARTELLE -path "$GIUDICE" -type f 2>/dev/null | head -12 || true
           # 🔑 L'ELENCO SI STAMPA SEMPRE, non solo quando fallisce — e la ragione
           # e' un caso reale, non un principio. Il 16/08 la guardia e' passata a
