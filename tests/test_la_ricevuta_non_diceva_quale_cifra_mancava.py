@@ -178,9 +178,21 @@ def _remember(tmp_path, claim, source):
                      "TRANSFORMERS", "SENTENCE", "TORCH", "XDG_CACHE")
         _amb = {k: v for k, v in sorted(env.items())
                 if k.startswith(_prefissi)}
+        # ⚠️ `leggi` SOLLEVA quando il comando e' morto, e chiamarla dentro
+        # l'f-string faceva uscire la SUA eccezione prima che questo messaggio
+        # esistesse: sul run 32018929628 il log riporta 21 volte `CLI-MORTO` e
+        # ZERO volte `CLI-MORTO(env)`. Lo strumento nuovo non ha mai parlato, e
+        # il vecchio ha coperto il silenzio sembrando normale.
+        # 🔑 Quarta volta oggi che un mio strumento non riesce a dire cio' per
+        # cui e' stato scritto. Qui la causa e' l'ordine di valutazione, non il
+        # contenuto: il dettaglio si cattura PRIMA di comporre.
+        try:
+            _dettaglio = leggi(r.returncode, r.stdout, r.stderr)
+        except AssertionError as _e:
+            _dettaglio = str(_e)
         raise AssertionError(
             f"CLI-MORTO(env) {len(_amb)} variabili rilevanti ereditate: "
-            f"{_amb} || {leggi(r.returncode, r.stdout, r.stderr)}")
+            f"{_amb} || {_dettaglio}")
     # ⚠️ `subprocess` puo' rendere `None` invece di stringa vuota su uno dei due
     # canali, e la somma esplode PRIMA di arrivare all'assert: in CI si legge
     # `TypeError: can only concatenate str (not "NoneType") to str` al posto del
