@@ -93,6 +93,55 @@ def test_a_clean_store_does_not_grow_alarming_lines(store: Path, monkeypatch):
     assert "0 quarantined" in out or "quarantined:  0" in out or "quarantin" in out.lower()
 
 
+def test_status_dice_quanti_ne_ha_SOSTITUITI(store: Path):
+    """`semantic facts: 1` dopo DUE scritture, e niente lo spiega.
+
+    Misurato il 2026-08-17 su una data dir temporanea: due `remember` sullo
+    stesso topic, la CLI dichiara `admitted` due volte E stampa
+    `L3-supersession`, poi `status` riporta `semantic facts: 1`. Le due
+    superfici sono entrambe oneste e insieme ingannano: chi guarda solo lo
+    stato vede un inventario che non torna con cio' che ha scritto, e nessuna
+    riga nomina i sostituiti.
+
+    ⚖️ Non e' la stessa cosa dei quarantinati — quelli sono TRATTENUTI e la
+    riga c'e' gia'. Questi sono RIMPIAZZATI, ed e' l'operazione che sul corpus
+    vivo del 16/08 valeva 1890 fatti, due terzi della perdita.
+    """
+    out = _plain(runner.invoke(app, ["status"]).output)
+    m = re.search(r"superseded:\s+(\d+)", out)
+    assert m, (
+        "il pannello non nomina i fatti sostituiti: chi ne scrive due e ne "
+        f"legge uno non ha modo di sapere dov'e' finito l'altro.\n{out}")
+
+
+# ⚠️⚠️ LIMITE DICHIARATO, e un limite dichiarato e' un DEBITO ═══════════════
+# Il test qui sopra verifica che la RIGA ci sia, NON che il numero sia giusto.
+# Il numero non e' verificabile da questo file, e la ragione e' un difetto del
+# BANCO che ho trovato scrivendolo: sotto questa fixture il pannello legge uno
+# store VUOTO — stampa `semantic facts: 0`, `quarantined: 0` e una `data dir:`
+# vuota, qualunque cosa la fixture abbia scritto.
+# 🔑 CONSEGUENZA sui presidi vicini: `test_status_reports_what_is_held_back` e
+# `test_status_reports_how_much_was_judged` asseriscono che compaia una PAROLA
+# («quarantin», «judged») che il pannello stampa SEMPRE ⇒ passano anche su zero,
+# e passerebbero anche se i conteggi fossero rotti. Sono accesi e non
+# esercitati. Non li tocco — non sono miei — e li segnalo.
+# ✅ IL NUMERO E' VERIFICATO, ma FUORI da pytest, dove il prodotto gira davvero
+# (2026-08-17, data dir temporanea, due `remember` sullo stesso topic)::
+#
+#     flow.supersession  branch='same-source evolution' loser_id=58b6c5ad2152
+#                        winner_id=572d5e867ea5 reversible=True
+#     semantic facts:  1
+#     superseded:      1  earlier values replaced by a later write
+#     database:        righe totali 2, superseduti 1        (1 + 1 = 2)
+#
+# 📌 E il motivo per cui va misurato li': la supersessione decide con un COSENO,
+# e sotto pytest l'embedder e' uno stub su SHA-256 dei token — la decisione non
+# scatta affatto. Tre tentativi caduti prima di arrivarci, tutti nel banco:
+# `facts add --validate off` non passa da quel percorso; un `Memory(path=...)`
+# costruito nel test scrive dove il pannello non legge; `remember` sotto pytest
+# non supersede.
+
+
 def test_status_and_stats_agree_on_how_many_are_held_back(store: Path):
     """Two commands, one store, one number.
 
