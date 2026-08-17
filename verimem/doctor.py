@@ -992,7 +992,23 @@ def run_doctor() -> list[dict[str, Any]]:
         from .llm import _autodetect_provider
         p = _autodetect_provider()
         if p and p != "mock":
-            add("llm", OK, f"provider auto-detected: {p}")
+            # DICE COME LO SA. `_autodetect_provider` guarda i NOMI delle
+            # variabili d'ambiente: trova una chiave IMPOSTATA, non una chiave
+            # valida. Provarla vorrebbe una chiamata al provider, che `doctor`
+            # non fa — starebbe fuori dal budget di ~2 s, fallirebbe da sola su
+            # una macchina air-gapped, e spenderebbe soldi dell'operatore per
+            # una diagnosi. Ma senza dirlo una chiave scaduta o revocata esce
+            # come riga verde, ed è la stessa forma con cui `moat-judge`
+            # certificava un modello assente e `gateway` un registro
+            # illeggibile: dichiarare una capacità partendo da un indizio.
+            # Qui l'indizio è tutto ciò che si può avere a costo zero, quindi
+            # la cura non è accertare — è non lasciar credere di averlo fatto.
+            add("llm", OK,
+                f"provider auto-detected: {p} — from the environment variable "
+                f"only; the key is NOT contacted here, so an expired or "
+                f"revoked one looks exactly like a working one",
+                "check it with your own first call; the moat and recall do "
+                "not need an llm at all")
         else:
             # OK e non WARN: il README promette DUE VOLTE che l'llm non serve
             # («It works with no llm», riga 36; «No llm needed for the moat»,
