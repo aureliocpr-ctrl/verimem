@@ -200,6 +200,28 @@ def _ok(obj: Any) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps(obj, indent=2, default=str))]
 
 
+def _conta_sostituiti(agent) -> int | None:
+    """Quanti fatti sono stati RIMPIAZZATI da una scrittura successiva.
+
+    Le superfici di conteggio dicono quanti fatti sono vivi, e chi ne ha
+    scritti due ne legge uno senza che niente spieghi dov'e' finito l'altro.
+    Non e' la quarantena — un fatto trattenuto resta contato, un sostituito
+    esce dal totale — e sul corpus di riferimento del 2026-08-16 i sostituiti
+    erano 1890, due terzi della perdita complessiva.
+
+    Chiama `SemanticMemory.count_superseded()`, che esiste dal ciclo #78 e fino
+    al 2026-08-17 era invocato solo dal proprio test: la superficie unica c'era
+    gia', mancavano i chiamanti.
+
+    ``None`` e non zero quando il conteggio non riesce: «non contato» e «zero»
+    sono due risposte diverse, e un contatore non rompe mai il chiamante.
+    """
+    try:
+        return int(agent.semantic.count_superseded())
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _avvisi_di_lettura(agent, query: str) -> dict:
     """Gli avvisi che CLI e SDK danno gia', portati alla porta dell'AGENTE.
 
@@ -8216,6 +8238,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "retired": a.skills.count(status="retired"),
                 },
                 "facts": a.semantic.count(),
+                # `count()` esclude i superseduti per default, quindi chi ne ha
+                # scritti due ne legge uno e niente spiega dov'e' finito
+                # l'altro. Misurato eseguendo QUESTO tool il 2026-08-17: due
+                # `add` sullo stesso topic, `facts: 1`, nessuna chiave che
+                # nominasse il sostituito.
+                # ⚖️ Quarta superficie di lettura con la stessa cecita', dopo
+                # il referto di salute, il pannello `status` e il rendiconto —
+                # e la prima trovata ESEGUENDO invece che leggendo il codice.
+                "superseded": _conta_sostituiti(a),
                 "active_llm": {
                     "provider": provider,
                     "configured": is_configured(provider),
@@ -8421,6 +8452,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "retired": a.skills.count(status="retired"),
                 },
                 "facts": a.semantic.count(),
+                # Come in `hippo_status`: `count()` conta i vivi, e chi ne
+                # scrive due ne legge uno. Misurato eseguendo il tool.
+                "superseded": _conta_sostituiti(a),
                 "tokens": tu,
             })
 
