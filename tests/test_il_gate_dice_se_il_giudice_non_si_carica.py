@@ -3,17 +3,25 @@
 Il gate ha due modi di dire che non ha verificato, e sono testi diversi perché
 sono cause diverse (`anti_confab_gate.py:1357` e `:1366`)::
 
-    cartella del modello ASSENTE
+    cartella del modello SENZA UN MODELLO DENTRO
       «source provided but no grounding judge is available — entailment NOT verified»
-    cartella del modello ESISTENTE MA VUOTA
+    cartella con i METADATI del modello ma senza i PESI
       «source provided but the grounding judge failed to load — entailment NOT verified»
 
 Il primo caso ha il suo presidio
 (`test_la_ricevuta_deve_dire_se_il_moat_ha_girato.py`). **Il secondo non
-l'aveva**, e non è teorico: è il vicolo cieco misurato il 16/08 — un download
-interrotto (rete caduta, Ctrl-C, sha256 che non torna) lascia la cartella
-vuota, `local_ce_available()` risponde **True**, e `verimem warmup` dice
-«✓ moat gate model already installed» senza scaricare nulla.
+l'aveva**, e non è teorico: un'estrazione interrotta lascia `config.json`
+(1 KB, estratto per primo) senza `model.safetensors` (737 MB), e in quello
+stato il prodotto ha un giudice da caricare che non si carica.
+
+⚠️ **Il 17/08 questo file ha cambiato caso, e la ragione va letta prima di
+modificarlo.** Fino a `0805f36d` il secondo ramo si raggiungeva con una
+cartella **vuota**, perché `local_grounding` decideva con `.exists()`. Curato
+quello (righe 285 e 309 → `_holds_a_model`, il criterio che era già nel
+modulo), una cartella vuota è diventata correttamente **«assente»** — e questo
+file avrebbe smesso di esercitare il ramo che esiste per presidiare, restando
+verde. Il caso è stato spostato su quello **vero**, non il presidio rimosso:
+una cura che chiude un difetto e apre un buco di copertura non è finita.
 
 ⇒ In quello stato il gate **crede** di avere il giudice. Ciò che salva l'utente
 è che quando prova davvero scopre la verità e la **dichiara**, e che
@@ -22,9 +30,11 @@ rompesse, il vicolo cieco diventerebbe **silenzioso** — un fatto non verificat
 entrerebbe senza che nessuno lo dica, che è esattamente il danno che il prodotto
 esiste per impedire.
 
-⚠️ Costo dichiarato: il test paga il tentativo di caricamento vero (~35 s
-misurati). Si potrebbe simulare il fallimento in un millisecondo, ma allora si
-misurerebbe il finto e non il percorso che l'utente incontra.
+⚠️ Costo dichiarato: il test paga il tentativo di caricamento vero — **18,1 s
+misurati il 17/08** (erano ~35 s finché il caso era la cartella vuota: con i
+soli metadati il caricamento rinuncia prima). Si potrebbe simulare il
+fallimento in un millisecondo, ma allora si misurerebbe il finto e non il
+percorso che l'utente incontra.
 """
 from __future__ import annotations
 
@@ -34,13 +44,22 @@ from verimem.local_grounding import local_ce_available, reset_local_judge
 
 
 @pytest.fixture
-def cartella_del_modello_vuota(tmp_path, monkeypatch):
-    """Un download interrotto: la cartella c'è, dentro non c'è niente."""
-    vuota = tmp_path / "local_gate_ce_v2"
-    vuota.mkdir()
-    monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(vuota))
+def modello_senza_i_pesi(tmp_path, monkeypatch):
+    """Un'estrazione interrotta: i metadati ci sono, il modello no.
+
+    `config.json` è il file che `_holds_a_model` guarda per dire «qui c'è un
+    modello», ed è anche il primo che esce dall'archivio. Senza i pesi accanto
+    il caricamento parte e fallisce — che è il ramo presidiato qui. Una
+    cartella del tutto vuota NON serve più: dal 17/08 quella è «assente», e il
+    suo presidio sta in `test_una_cartella_vuota_non_e_un_giudice.py`."""
+    mezza = tmp_path / "local_gate_ce_v2"
+    mezza.mkdir()
+    (mezza / "config.json").write_text(
+        '{"model_type": "xlm-roberta", "num_labels": 1, "architectures": '
+        '["XLMRobertaForSequenceClassification"]}', encoding="utf-8")
+    monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(mezza))
     reset_local_judge()          # non ereditare un giudice già caricato
-    yield vuota
+    yield mezza
     reset_local_judge()          # non lasciarne uno rotto a chi viene dopo
 
 
@@ -50,19 +69,19 @@ def _ricevuta(claim: str, fonte: str):
                         source=fonte)
 
 
-def test_una_cartella_vuota_si_annuncia_come_giudice_disponibile(
-        cartella_del_modello_vuota):
-    """⚠️ LA TRAPPOLA, prima della cura che non c'è: qui sta la ragione per cui
-    il caso è insidioso. `local_ce_available` è documentata «cheap by design:
-    it NEVER loads the model», quindi non può accorgersi che la cartella è
-    vuota — e risponde di sì."""
+def test_i_soli_metadati_si_annunciano_come_giudice_disponibile(
+        modello_senza_i_pesi):
+    """⚠️ LA TRAPPOLA, ed è la ragione per cui il caso è insidioso.
+    `local_ce_available` è documentata «cheap by design: it NEVER loads the
+    model»: guarda i metadati e non può sapere che i pesi mancano — quindi
+    risponde di sì, e a scoprirlo sarà il caricamento."""
     assert local_ce_available() is True, (
         "se questo diventa False la trappola non esiste più e il resto del "
         "file misura un caso che non capita: rileggere, non cancellare")
 
 
 def test_il_gate_dichiara_che_il_giudice_NON_si_e_caricato(
-        cartella_del_modello_vuota):
+        modello_senza_i_pesi):
     r = _ricevuta("Il magazzino di Verona contiene 900 pallet.",
                   "Il magazzino di Verona contiene 480 pallet.")
     d = r if isinstance(r, dict) else getattr(r, "__dict__", {})
@@ -77,7 +96,7 @@ def test_il_gate_dichiara_che_il_giudice_NON_si_e_caricato(
 
 
 def test_dopo_il_tentativo_il_prodotto_smette_di_dire_che_il_giudice_c_e(
-        cartella_del_modello_vuota):
+        modello_senza_i_pesi):
     """⚠️ L'AUTOCORREZIONE, ed è la parte che limita il danno: dopo un
     fallimento il prodotto non sostiene più di avere un giudice. Senza questa,
     ogni scrittura successiva ripagherebbe il tentativo e la trappola durerebbe

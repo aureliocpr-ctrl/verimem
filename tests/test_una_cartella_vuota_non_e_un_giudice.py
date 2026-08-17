@@ -2,7 +2,9 @@
 
 Misurato il 15/08 su `origin/main` (`e199f55b`): puntato il modello a una
 cartella esistente e vuota — lo stato in cui un download interrotto lascia il
-disco — il prodotto risponde cosi':
+disco — il prodotto rispondeva cosi'. **Curato il 17/08**: le due righe usano
+ora `_holds_a_model`, e i due test che erano `xfail(strict=True)` sono i primi
+due qui sotto, senza marcatore.
 
     _holds_a_model(dir)   False     <- il criterio giusto, gia' in casa
     local_ce_available()  True      <- local_grounding.py:309, `.exists()`
@@ -24,12 +26,20 @@ dice quanto e' grave: la SCRITTURA regge. Con la cartella vuota il gate non
 ammette nulla come verificato — `moat=not_run:no_judge`, `status=model_claim`,
 `confidence_tier=unverified`. Il difetto inganna la diagnostica, non il moat.
 
-I due `xfail(strict=True)` cadranno il giorno in cui le righe 285 e 309
-useranno `_holds_a_model(j.model_dir)` invece di `.exists()` — la funzione e'
-gia' dieci righe piu' su, nello stesso file. Prezzo di quella riga, misurato
-A/B su tutti e 15 i file di banco che citano le due funzioni: 101 passed 3
-skipped -> 99 passed 2 failed 3 skipped, e i due che cadono provano «il
-modello c'e'» con un `mkdir`, cioe' sono verdi grazie a questo difetto.
+I due `xfail(strict=True)` sono caduti il 17/08, quando le righe 285 e 309
+hanno cominciato a usare `_holds_a_model(j.model_dir)` — la funzione era gia'
+dieci righe piu' su, nello stesso file. Il prezzo previsto qui («i due che
+cadono provano *il modello c'e'* con un `mkdir`, cioe' sono verdi grazie a
+questo difetto») e' stato confermato: erano `test_lo_stato_del_giudice_ha_un_
+nome` e `test_l_advisory_non_dice_piu_che_il_modello_manca`, curati mettendo
+un `config.json` nella cartella che simulava il modello.
+
+⚠️ Il conto era 2 su 15 file di banco; rifatto il 17/08 su 19 file (il
+perimetro e' cresciuto) i falliti sono 4: i due `mkdir` piu' due di
+`test_il_gate_dice_se_il_giudice_non_si_carica.py`, che presidiava il ramo
+«c'e' ma non si carica» usando come esca proprio la cartella vuota. Curato
+quello, l'esca giusta e' `config.json` senza i pesi. **Una cura che chiude un
+difetto e lascia scoperto il ramo che qualcun altro presidiava non e' finita.**
 """
 
 from __future__ import annotations
@@ -58,7 +68,6 @@ def test_il_criterio_giusto_e_gia_in_casa(cartella_vuota):
     assert lg._holds_a_model(cartella_vuota) is False
 
 
-@pytest.mark.xfail(strict=True, reason="local_grounding.py:309 decide con .exists()")
 def test_una_cartella_vuota_non_e_un_giudice(cartella_vuota):
     """Il difetto sul booleano che il gate legge per dire «ho un giudice»."""
     assert lg.local_ce_available() is False, (
@@ -66,7 +75,6 @@ def test_una_cartella_vuota_non_e_un_giudice(cartella_vuota):
         "il gate nel ramo L4 e `warmup` a non scaricare piu' nulla")
 
 
-@pytest.mark.xfail(strict=True, reason="local_grounding.py:285 decide con .exists()")
 def test_una_cartella_vuota_non_e_uno_stato_pronto(cartella_vuota):
     """Il difetto sulla PAROLA che tre superfici leggono (doctor, l'advisory
     L4, la ricevuta MCP) — il commento a fianco della riga 285 lo dichiara."""

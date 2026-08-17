@@ -282,7 +282,7 @@ def judge_state() -> str:
     if _GATE_DELEGATO["ok"]:
         return "delegated"
     try:
-        presente = j.model_dir.exists()
+        presente = _holds_a_model(j.model_dir)
     except OSError:
         presente = False
     if not presente:
@@ -306,7 +306,7 @@ def local_ce_available() -> bool:
     if getattr(j, "_load_failed", False):
         return False
     try:
-        return j.model_dir.exists()
+        return _holds_a_model(j.model_dir)
     except OSError:
         return False
 

@@ -54,6 +54,11 @@ def test_lo_stato_del_giudice_ha_un_nome(monkeypatch, tmp_path):
     assert lg.judge_state() == "absent"
 
     (tmp_path / "modello").mkdir()
+    # Il `config.json` non e' ornamento: dal 17/08 `judge_state` distingue una
+    # cartella VUOTA (-> «absent») da una che tiene un modello. Senza questo
+    # file la riga qui sotto proverebbe «warming» su cio' che il prodotto ora
+    # chiama, correttamente, assente — cioe' sarebbe verde grazie a un difetto.
+    (tmp_path / "modello" / "config.json").write_text("{}", encoding="utf-8")
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(tmp_path / "modello"))
     monkeypatch.setattr(lg, "_judge", None, raising=False)
     monkeypatch.setenv("HIPPO_ENCODE_DELEGATE_ONLY", "1")
@@ -76,6 +81,11 @@ def test_l_advisory_non_dice_piu_che_il_modello_manca(monkeypatch, tmp_path):
     'non installato' quando sta scaldando, resta scritto sul fatto per sempre."""
     from verimem import local_grounding as lg
     (tmp_path / "modello").mkdir()
+    # Il `config.json` non e' ornamento: dal 17/08 `judge_state` distingue una
+    # cartella VUOTA (-> «absent») da una che tiene un modello. Senza questo
+    # file la riga qui sotto proverebbe «warming» su cio' che il prodotto ora
+    # chiama, correttamente, assente — cioe' sarebbe verde grazie a un difetto.
+    (tmp_path / "modello" / "config.json").write_text("{}", encoding="utf-8")
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(tmp_path / "modello"))
     monkeypatch.setenv("HIPPO_ENCODE_DELEGATE_ONLY", "1")
     monkeypatch.setattr(lg, "_judge", None, raising=False)
