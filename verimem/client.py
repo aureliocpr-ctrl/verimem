@@ -2315,6 +2315,28 @@ class Memory:
         except Exception:
             pass
         out["store"] = store
+        # Quanti sono USCITI dal conto. `store` e' una fotografia dei vivi — lo
+        # dice il docstring qui sopra — e `moat.facts` conta anch'esso solo
+        # `superseded_by IS NULL`. Su una data dir temporanea con due
+        # `remember` sullo stesso topic, questo payload riportava `facts: 1` su
+        # un database di DUE righe e nessuna chiave nominava la seconda.
+        # ⇒ Terza superficie con la stessa cecita' (dopo `epistemic_health` e il
+        # pannello `status`), e la cura e' la stessa: stampare un numero che la
+        # tabella ha gia'.
+        # ⚖️ FUORI da `store`, non dentro: `store` ripartisce per STATUS, la
+        # supersessione e' un'altra dimensione, e infilarla li' farebbe sommare
+        # grandezze diverse a chi cicla sulle chiavi.
+        # 📌 `None` e non 0 quando il conteggio non riesce: «non contato» e
+        # «zero» sono due risposte diverse.
+        superseduti: int | None = None
+        try:
+            with sqlite3.connect(str(self.semantic.db_path)) as con:
+                superseduti = int(con.execute(
+                    "SELECT COUNT(*) FROM facts "
+                    "WHERE superseded_by IS NOT NULL").fetchone()[0])
+        except Exception:  # noqa: BLE001 — un contatore non rompe il chiamante
+            pass
+        out["superseded"] = superseduti
         # How much of the corpus the MOAT actually judged — the number that
         # bounds every other number here. The entailment check only runs on a
         # write that carries a source, so a store can be full of facts none of
