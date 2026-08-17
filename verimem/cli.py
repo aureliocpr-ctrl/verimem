@@ -1518,9 +1518,17 @@ def _ledger_window(stats: dict) -> tuple[float | None, float | None]:
             _tot = _c.execute("SELECT COUNT(*) FROM facts").fetchone()[0]
             if not _tot:
                 return float(_first), None
+            # A fact is written a few tens of milliseconds BEFORE the ledger row
+            # that records its own admission — measured on a fresh store, 58ms
+            # apart. Compared strictly, the very fact that OPENED the ledger
+            # falls outside it: a store with one fact reads "0% of stored facts"
+            # at the exact moment the gate has judged all of it, which is what a
+            # first install looks like. One second is far wider than that gap and
+            # far narrower than a fact from an earlier day; on the live corpus it
+            # moves nothing (5711 of 11547 covered, with and without it).
             _since = _c.execute(
                 "SELECT COUNT(*) FROM facts WHERE created_at >= ?",
-                (_first,)).fetchone()[0]
+                (_first - 1.0,)).fetchone()[0]
         return float(_first), 100.0 * _since / _tot
     except Exception:  # noqa: BLE001 — a caption never breaks the report
         return None, None
