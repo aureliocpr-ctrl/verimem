@@ -1015,8 +1015,40 @@ def run_doctor() -> list[dict[str, Any]]:
         from ._compat import data_dir
         keys_db = data_dir() / "gateway_keys.db"
         if keys_db.exists():
-            add("gateway", OK, f"keys db present ({keys_db.name}) — "
-                               "`verimem gateway serve` ready")
+            # Contare invece di dedurre. Fino al 17/08 questa riga prometteva
+            # «`verimem gateway serve` ready» sulla SOLA esistenza del file, ed
+            # è la stessa forma con cui `moat-judge` certificava un giudice che
+            # non c'era: un file che esiste non è un registro di chiavi
+            # leggibile. Misurato quel giorno — con dentro del testo qualunque
+            # il referto dava `✓ ready` mentre sqlite rispondeva «file is not a
+            # database», cioè lo stato peggiore usciva con la riga più
+            # rassicurante. In sola lettura, così il referto non crea nulla.
+            import sqlite3 as _sq3
+            try:
+                with _sq3.connect(f"file:{keys_db}?mode=ro",
+                                  uri=True) as _ck:
+                    _n_chiavi = int(_ck.execute(
+                        "SELECT COUNT(*) FROM gateway_keys").fetchone()[0])
+            except _sq3.OperationalError:
+                # Nessuna tabella ancora: il file c'è ma non è mai stato
+                # inizializzato. È benigno — `gateway keys create` la crea —
+                # e va detto senza allarmare.
+                add("gateway", OK,
+                    f"{keys_db.name} present but no key registry in it yet",
+                    "run `verimem gateway keys create` to register the first "
+                    "key (only needed for the self-host team server)")
+            except Exception as _e:  # noqa: BLE001
+                add("gateway", WARN,
+                    f"{keys_db.name} is present but cannot be read as a key "
+                    f"registry ({type(_e).__name__}) — a referto that only "
+                    f"checks the file NAME would call this ready",
+                    f"inspect {keys_db}; it is only needed for the self-host "
+                    f"team server, so removing it is safe if unused")
+            else:
+                add("gateway", OK,
+                    f"{_n_chiavi} gateway key(s) registered in "
+                    f"{keys_db.name} — `verimem gateway serve` can "
+                    f"authenticate them")
         else:
             add("gateway", OK, "no gateway keys yet (only needed for the "
                                "self-host team server)")
