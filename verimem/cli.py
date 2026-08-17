@@ -224,7 +224,7 @@ def status():
     # quel caso — moriva di UnboundLocalError sull'unica variabile che nessuno
     # aveva inizializzato. CodeQL l'ha visto (py/uninitialized-local-variable),
     # e non lo prende nessun test della CLI perche' `build()` il DB lo crea.
-    _held = _judged = _lab = None
+    _held = _judged = _lab = _sost = None
     try:
         import sqlite3 as _sq
 
@@ -256,8 +256,24 @@ def status():
                 _lab = _c.execute(
                     "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
                     "AND epistemic IS NOT NULL").fetchone()[0]
+                # 2026-08-17: `semantic facts` conta i VIVI, e un utente che ne
+                # ha scritti due ne legge uno senza che niente lo spieghi.
+                # Misurato su una data dir temporanea: due `remember` sullo
+                # stesso topic, la CLI dichiara `admitted` due volte e stampa
+                # `L3-supersession`, poi `status` dice `semantic facts: 1`.
+                # Ogni superficie e' onesta e insieme ingannano.
+                # ⚠️ NON e' la riga dei quarantinati: quelli sono TRATTENUTI e
+                # restano contati; questi sono RIMPIAZZATI e spariscono dal
+                # denominatore. Sul corpus vivo del 16/08 valevano 1890 fatti,
+                # due terzi della perdita totale.
+                # 📌 Senza `superseded_by IS NULL`, di proposito: qui il
+                # soggetto SONO i superseduti, e la clausola che rende giuste
+                # le tre righe sopra renderebbe questa sempre zero.
+                _sost = _c.execute(
+                    "SELECT COUNT(*) FROM facts "
+                    "WHERE superseded_by IS NOT NULL").fetchone()[0]
     except Exception:  # noqa: BLE001 — a health line never breaks the count
-        _held = _judged = _lab = None
+        _held = _judged = _lab = _sost = None
     _truth = ""
     if _held is not None:
         _pct = f" ({100 * _held / n_facts:.1f}%)" if n_facts else ""
@@ -269,6 +285,9 @@ def status():
     if _lab is not None:
         _truth += (f"\n  epistemic:       {_lab}  facts carrying a declared "
                    f"guarantee (proven/unbeaten/refuted)")
+    if _sost is not None:
+        _truth += (f"\n  superseded:      {_sost}  earlier values replaced by a "
+                   f"later write (not counted above)")
     console.print(Panel.fit(
         f"[bold]Verimem[/bold]\n"
         f"  episodes:        {n_eps}\n"
