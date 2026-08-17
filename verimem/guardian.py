@@ -51,23 +51,72 @@ def _value(fact: Any) -> str:
     return (_copula_parse(fact.proposition) or ("", "", ""))[1]
 
 
-def _risolvi_pavimento(mem: Any, min_relevance: float | str | None) -> float:
-    """Il pavimento come NUMERO. ``"auto"`` lo fa calcolare allo store (che lo
-    tiene in cache: la stima costa ~32 sonde e non si paga per query)."""
+def _risolvi_pavimento(mem: Any, min_relevance: float | str | None) -> tuple[float, bool]:
+    """``(pavimento, chiesto_e_non_ottenuto)``.
+
+    ``"auto"`` lo fa calcolare allo store (che lo tiene in cache: la stima costa
+    ~32 sonde e non si paga per query).
+
+    ⚠️ Il secondo valore esiste perché ZERO ha DUE significati che questa
+    funzione restituiva identici, e il chiamante non poteva distinguerli:
+
+        min_relevance=None / 0 / "off"   -> zero VOLUTO, il pavimento e' spento
+        min_relevance="auto" -> 0.0      -> zero NON voluto: la calibrazione
+                                            non ha prodotto una soglia
+
+    Il secondo caso capita su un corpus troppo piccolo per calibrare —
+    misurato: 1 fatto -> 0.0, 6 fatti -> 0.9166 — cioè **sul primo fatto di un
+    tenant nuovo**, che è il primo momento di ogni cliente. Serviti identici,
+    il guardiano non poteva sapere se stava rispettando una scelta o subendo
+    una resa: `if pavimento > 0.0` saltava il controllo in entrambi i casi, e
+    la misura scritta più sotto dice cosa comporta servire senza pavimento
+    (10 risposte false su 10).
+
+    Il ritorno resta un numero + un flag invece di ``None``: un pavimento
+    assente e un pavimento nullo si comportano allo stesso modo, e cambiare il
+    tipo avrebbe spostato la decisione su ogni sito di chiamata.
+    """
     if min_relevance is None:
-        return 0.0
+        return 0.0, False
     if min_relevance == "auto":
         try:
-            return float(mem._auto_relevance_floor())
+            calibrato = float(mem._auto_relevance_floor())
         except Exception:      # noqa: BLE001 — un read-path non cade mai per
-            return 0.0         # colpa della calibrazione: si degrada a «off».
+            return 0.0, True   # colpa della calibrazione: si degrada a «off».
+        return calibrato, calibrato <= 0.0
     try:
-        return max(0.0, float(min_relevance))
+        return max(0.0, float(min_relevance)), False
     except (TypeError, ValueError):
-        return 0.0
+        return 0.0, False
 
 
 def correct_read(mem: Any, query: str, *, k: int = 5,
+                 min_relevance: float | str | None = None) -> dict[str, Any]:
+    """Come ``_correct_read``, e in più DICE quando il pavimento chiesto non c'era.
+
+    ⚠️ Involucro invece di una riga dentro ciascun ``return``: la lettura
+    guardata ha nove punti di uscita, e annotarli uno per uno lascia scoperto il
+    decimo che nascerà. Qui la nota si aggiunge una volta sola, e vale anche per
+    gli esiti che oggi non esistono.
+
+    ``floor_note`` compare SOLO quando la risposta è stata servita senza il
+    pavimento che era stato chiesto: su un'astensione non ha senso, perché nulla
+    è stato servito.
+
+    Quello che questa nota NON fa: scegliere una soglia. Su un corpus troppo
+    piccolo per calibrarsi, servire troppo e astenersi troppo sono due prodotti
+    diversi e la scelta non è tecnica. Ciò che era tecnico — e mancava — è che
+    la risposta non distinguesse «pavimento spento» da «pavimento chiesto e non
+    ottenuto»: al chiamante arrivavano identiche.
+    """
+    _, senza_calibrazione = _risolvi_pavimento(mem, min_relevance)
+    esito = _correct_read(mem, query, k=k, min_relevance=min_relevance)
+    if senza_calibrazione and esito.get("verdict") != "ABSTAIN":
+        esito["floor_note"] = "relevance_floor_requested_but_uncalibrated"
+    return esito
+
+
+def _correct_read(mem: Any, query: str, *, k: int = 5,
                  min_relevance: float | str | None = None) -> dict[str, Any]:
     """One gated read with correction. Returns
     ``{verdict, answer, served_id, evidence, uncorroborated, reason}``.
@@ -115,7 +164,7 @@ def correct_read(mem: Any, query: str, *, k: int = 5,
     if not hits:
         return {"verdict": "ABSTAIN", "answer": None, "served_id": None,
                 "evidence": [], "uncorroborated": [], "reason": "no_support"}
-    pavimento = _risolvi_pavimento(mem, min_relevance)
+    pavimento, _ = _risolvi_pavimento(mem, min_relevance)
     if pavimento > 0.0:
         migliore = max((float(h.get("score") or 0.0) for h in hits), default=0.0)
         if migliore < pavimento:
