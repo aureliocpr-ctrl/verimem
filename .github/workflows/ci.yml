@@ -760,6 +760,23 @@ jobs:
             "$TMPDATI/errori.txt" 2>/dev/null | head -10 || true
           echo "BIS coda stderr:"
           tail -c 600 "$TMPDATI/errori.txt" || true
+          # 🔑 E LA DOMANDA CHE RESTA, ridotta a UNA misura invece che a ipotesi.
+          # Misurato sul run 31975991221: PRIMA dei test e DOPO i test i numeri
+          # sono IDENTICI — GIUDICE pesi=1, stdout 1468 B, stderr 849 B in
+          # entrambi. ⇒ Durante la suite non cambia niente: ne' il disco, ne'
+          # la cache, ne' i modelli. Resta un solo ramo: l'ambiente che i TEST
+          # costruiscono attorno a se' (le variabili che `conftest` imposta e
+          # che il sottoprocesso EREDITA da `os.environ`).
+          # ⇒ Eseguire QUEL SOLO FILE qui separa due mondi diversi:
+          #     rosso qui  -> bastano le sue fixture, e il guasto e' isolato
+          #                   in un passo dove l'output non e' troncato
+          #     verde qui  -> serve la suite INTERA (ordine, o un altro test
+          #                   che lascia qualcosa dietro di se')
+          # ⚖️ Costa un file di test, non la suite. E gira DOPO, quindi non
+          # sposta il verdetto del passo `Tests`.
+          echo "=== BIS: lo stesso file, da solo, in questo job ==="
+          python -m pytest tests/test_la_ricevuta_non_diceva_quale_cifra_mancava.py \
+            -q -p no:randomly --no-header -x 2>&1 | tail -30 || true
 
       - name: Smoke install (clean wheel)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
