@@ -269,9 +269,10 @@ def status():
                 # 📌 Senza `superseded_by IS NULL`, di proposito: qui il
                 # soggetto SONO i superseduti, e la clausola che rende giuste
                 # le tre righe sopra renderebbe questa sempre zero.
-                _sost = _c.execute(
-                    "SELECT COUNT(*) FROM facts "
-                    "WHERE superseded_by IS NOT NULL").fetchone()[0]
+                # E si chiede al metodo che gia' esiste (`count_superseded`,
+                # ciclo #78) invece di ripetere la query: era chiamato solo dal
+                # suo test, e tre copie della stessa SQL divergono, una no.
+                _sost = agent.semantic.count_superseded()
     except Exception:  # noqa: BLE001 — a health line never breaks the count
         _held = _judged = _lab = _sost = None
     _truth = ""

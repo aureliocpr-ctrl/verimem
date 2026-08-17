@@ -2330,10 +2330,7 @@ class Memory:
         # «zero» sono due risposte diverse.
         superseduti: int | None = None
         try:
-            with sqlite3.connect(str(self.semantic.db_path)) as con:
-                superseduti = int(con.execute(
-                    "SELECT COUNT(*) FROM facts "
-                    "WHERE superseded_by IS NOT NULL").fetchone()[0])
+            superseduti = int(self.semantic.count_superseded())
         except Exception:  # noqa: BLE001 — un contatore non rompe il chiamante
             pass
         out["superseded"] = superseduti
@@ -2585,15 +2582,20 @@ class Memory:
         # None e non 0 quando il conteggio non riesce: «non contato» e «zero»
         # sono cose diverse, ed e' la stessa distinzione che questo metodo fa
         # gia' sopra per `source`.
+        # 📌 `count_superseded()` invece della query a mano: il metodo esiste
+        # dal ciclo #78, fa esattamente questo conteggio, ed era chiamato SOLO
+        # dal suo test. Le prime versioni di queste tre righe (referto, pannello
+        # `status`, rendiconto) ripetevano la stessa SQL in tre punti mentre la
+        # superficie unica c'era gia': se un giorno «superseduto» smette di
+        # voler dire `superseded_by IS NOT NULL`, tre copie divergono e una sola
+        # no.
         scritti: int | None = None
         ritirati: int | None = None
         try:
+            ritirati = int(self.semantic.count_superseded())
             with sqlite3.connect(str(self.semantic.db_path)) as con:
                 scritti = int(con.execute(
                     "SELECT COUNT(*) FROM facts").fetchone()[0])
-                ritirati = int(con.execute(
-                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL"
-                ).fetchone()[0])
         except Exception:  # noqa: BLE001 — un referto non rompe il chiamante
             pass
         report["n_written"] = scritti
