@@ -141,6 +141,27 @@ jobs:
     if: needs.gate.outputs.verde == 'true' || vars.PUBLISH_ANYWAY == '1'
     runs-on: ubuntu-latest
     steps:
+      # 🔑 IL BYPASS SI ANNUNCIA. La condizione qui sopra ha una scappatoia
+      # (`vars.PUBLISH_ANYWAY == '1'`) che pubblica su una CI ROSSA, e finora
+      # non lasciava traccia: il job partiva e basta, identico a un rilascio
+      # regolare. ⇒ Un bypass che non si annuncia e' indistinguibile da un
+      # cancello assente, e chi legge il registro dopo non puo' sapere quale
+      # dei due e' stato.
+      # 📌 Misurato il 2026-08-17: `actions/variables` risponde
+      # `{"variables":[],"total_count":0}`, quindi oggi la variabile NON c'e' e
+      # il cancello e' vivo. Questa riga serve al giorno in cui ci sara'.
+      # ⚖️ Non blocca niente: la decisione di pubblicare comunque resta di chi
+      # imposta la variabile. Rende solo impossibile che passi in silenzio.
+      - name: Il cancello e' stato scavalcato?
+        if: needs.gate.outputs.verde != 'true'
+        run: |
+          echo "::warning title=Cancello scavalcato::Questo rilascio parte con "\
+               "la CI NON verde (gate.verde='${{ needs.gate.outputs.verde }}'), "\
+               "perche' la variabile di repository PUBLISH_ANYWAY vale "\
+               "'${{ vars.PUBLISH_ANYWAY }}'. Il pacchetto pubblicato NON e' "\
+               "coperto dalla suite."
+          echo "SCAVALCATO=1 gate.verde='${{ needs.gate.outputs.verde }}' PUBLISH_ANYWAY='${{ vars.PUBLISH_ANYWAY }}'"
+
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:

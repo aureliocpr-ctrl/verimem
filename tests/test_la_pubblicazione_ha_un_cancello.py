@@ -216,3 +216,35 @@ def test_il_cancello_SI_PUO_APRIRE_di_proposito(wf):
         "non c'e' modo di scavalcare il cancello di proposito: la prima volta "
         "che qualcuno avra' una ragione legittima per pubblicare con la CI "
         "rossa, toglera' il cancello invece di aprirlo")
+
+
+def test_e_quando_SI_APRE_lo_DICE(wf):
+    """Il gemello del test qui sopra: la scappatoia deve esserci **e** lasciare
+    traccia.
+
+    Fino al 2026-08-17 la condizione del job era
+    ``needs.gate.outputs.verde == 'true' || vars.PUBLISH_ANYWAY == '1'`` e
+    basta: con la variabile impostata il job partiva **identico** a un rilascio
+    regolare, e nel registro non restava niente. ⇒ Un bypass che non si annuncia
+    è indistinguibile da un cancello assente, e chi legge dopo non può sapere
+    quale dei due è stato.
+
+    ⚖️ Il presidio NON chiede che il bypass sia vietato — quella decisione è di
+    chi imposta la variabile. Chiede che sia **rumoroso**.
+
+    📌 Misurato lo stesso giorno: `actions/variables` sul repository risponde
+    ``{"variables":[],"total_count":0}``, quindi la variabile oggi non esiste e
+    il cancello è vivo. Questa riga serve al giorno in cui esisterà.
+    """
+    testo = PUBLISH.read_text(encoding="utf-8")
+    assert "::warning" in testo and "PUBLISH_ANYWAY" in testo, (
+        "il workflow non emette alcun avviso quando il cancello viene "
+        "scavalcato: un rilascio su CI rossa sarebbe indistinguibile da uno "
+        "regolare")
+    # L'avviso deve stare nel job che PUBBLICA, non nel cancello: il cancello
+    # parla anche quando funziona, e un avviso lì non dice che si è passati.
+    dopo_il_gate = testo.split("build-and-publish:", 1)
+    assert len(dopo_il_gate) == 2, "il job che pubblica ha cambiato nome"
+    assert "::warning" in dopo_il_gate[1], (
+        "l'avviso non è nel job che pubblica: sta nel cancello, che parla "
+        "anche quando NON viene scavalcato")
