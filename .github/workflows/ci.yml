@@ -774,9 +774,19 @@ jobs:
           #                   che lascia qualcosa dietro di se')
           # ⚖️ Costa un file di test, non la suite. E gira DOPO, quindi non
           # sposta il verdetto del passo `Tests`.
+          # ⚠️ `-rsfE` anche qui, e NON e' copia-incolla difensivo: senza, il
+          # presidio `test_il_riepilogo_di_pytest_NOMINA_ANCHE_I_ROSSI` diventa
+          # rosso — scandaglia `ci.yml` e pretende `-r` su OGNI invocazione di
+          # pytest, non solo su quella che da' il verdetto. L'ho scoperto
+          # rompendolo: la prima versione di questo passo ha aggiunto un rosso
+          # invece di spiegarne sei.
+          # 🔑 E il presidio ha ragione anche qui: se questa diagnostica salta
+          # dei test, il motivo del salto deve comparire — altrimenti «verde»
+          # e «non eseguito» si leggono uguale, che e' il difetto per cui la
+          # riga esiste.
           echo "=== BIS: lo stesso file, da solo, in questo job ==="
           python -m pytest tests/test_la_ricevuta_non_diceva_quale_cifra_mancava.py \
-            -q -p no:randomly --no-header -x 2>&1 | tail -30 || true
+            -q -rsfE -p no:randomly --no-header 2>&1 | tail -30 || true
 
       - name: Smoke install (clean wheel)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
