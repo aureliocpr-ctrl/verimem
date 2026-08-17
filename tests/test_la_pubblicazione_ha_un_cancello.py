@@ -248,3 +248,43 @@ def test_e_quando_SI_APRE_lo_DICE(wf):
     assert "::warning" in dopo_il_gate[1], (
         "l'avviso non è nel job che pubblica: sta nel cancello, che parla "
         "anche quando NON viene scavalcato")
+
+
+def test_il_nome_di_un_passo_non_promette_piu_del_suo_meccanismo(wf):
+    """Un passo che ESEGUE un referto non può chiamarsi come un veto.
+
+    Il passo sul wheel si chiamava «Il wheel non porta identificativi interni
+    ne' promesse scoperte» ed eseguiva due script diversi per costruzione:
+
+        controlla_registro.py   `return 1`  -> esce non-zero e ferma il job
+        controlla_promesse.py   «Uscita 0 SEMPRE: questo non è un veto»
+
+    ⇒ Il nome dava due garanzie e il meccanismo ne dava una: chi legge il
+    workflow, o una lista di controlli pre-rilascio, concludeva che un wheel con
+    una promessa scoperta non può partire. Può.
+
+    ⚖️ Il presidio NON chiede di vetare le promesse — quella scelta è dello
+    script e regge (*«un controllo che blocca sempre viene disattivato»*).
+    Chiede che il nome distingua il veto dall'avviso.
+    """
+    # ⚠️ SI LEGGE IL WORKFLOW COL PARSER, NON COL TESTO — e ci sono volute due
+    # versioni sbagliate per arrivarci:
+    #   1. cercare il primo passo il cui NOME contenesse «wheel» pescava
+    #      «Build sdist + wheel»: lo stesso «prendo la prima corrispondenza»
+    #      che il workflow della CI documenta già tre volte;
+    #   2. spezzare il testo su `- name:` e cercare chi NOMINA lo script dava
+    #      TRE blocchi su tre — l'intestazione, il passo precedente e quello
+    #      giusto — perché i commenti nominano lo script quanto il codice.
+    # 🔑 In un banco che rimprovera ai nomi di promettere più del meccanismo,
+    #   cercare il passo PER PROSA era la scelta meno coerente possibile.
+    import yaml
+    wfl = yaml.safe_load(PUBLISH.read_text(encoding="utf-8"))
+    passi = [s for job in wfl["jobs"].values() for s in job.get("steps", [])
+             if "controlla_promesse" in str(s.get("run", ""))]
+    assert len(passi) == 1, (
+        f"atteso un solo passo che ESEGUE controlla_promesse, trovati "
+        f"{len(passi)}")
+    nome = str(passi[0].get("name", ""))
+    assert "veto" in nome.lower() and "avviso" in nome.lower(), (
+        "il nome del passo non distingue ciò che FERMA da ciò che RIPORTA: "
+        f"{nome.strip()}")

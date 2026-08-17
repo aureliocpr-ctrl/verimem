@@ -198,7 +198,20 @@ jobs:
       # mentre lavoriamo. Un blocco secco sull'sdist costa piu' domani di oggi:
       # la mossa che ws2 indica e' accendere sulle righe NUOVE, per fermare la
       # crescita invece di curare il passato. Non e' questa riga, ed e' sua.
-      - name: Il wheel non porta identificativi interni ne' promesse scoperte
+      # ⚠️ IL NOME DICEVA «ne' promesse scoperte», e quello NON e' un veto.
+      # I due script che girano qui sotto sono diversi per costruzione:
+      #   controlla_registro.py   `return 1` -> esce non-zero e FERMA il job
+      #   controlla_promesse.py   «Uscita 0 SEMPRE: questo non e' un veto»
+      #                           (lo dice il suo docstring, ed e' una scelta
+      #                            argomentata: «un controllo che blocca sempre
+      #                            viene disattivato»)
+      # ⇒ Il vecchio nome prometteva due garanzie e ne dava una. Chi legge il
+      #   workflow — o una lista di controlli prima di rilasciare — concludeva
+      #   che un wheel con una promessa scoperta non puo' partire. Puo'.
+      # ⚖️ Il COMPORTAMENTO resta invariato: la scelta di non vetare le promesse
+      #   e' di chi ha scritto lo script e regge. Cambia solo cio' che il nome
+      #   dichiara — ed e' il primo dei tre esami: «afferma cose che non fa».
+      - name: Il wheel non porta identificativi interni (veto) e le promesse su piu' superfici sono elencate (avviso)
         run: |
           w=$(ls dist/*.whl | head -1)
           echo "artefatto: $w"
