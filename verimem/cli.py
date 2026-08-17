@@ -1415,9 +1415,21 @@ def ignorance_cmd(
     # `noise_floor_source` esce SEMPRE: 0.0 significa «non misurabile», «la
     # misura e' fallita» o «l'hai imposto tu», e senza dirlo l'operatore non
     # distingue una guardia spenta da una misurata.
-    # QUALE soglia ha deciso, non solo quali numeri esistevano: il verdetto lo
-    # prende `max(floor, noise_floor)`, e su un corpus con la banda compressa
-    # e' il rumore misurato a comandare.
+    # QUALE soglia ha deciso, non solo quali numeri esistevano.
+    #
+    # ⚠️ Questo commento diceva «il verdetto lo prende `max(floor,
+    # noise_floor)`»: descriveva la regola RITIRATA il 01/08 perche' rendeva
+    # muta la mappa (vedi sopra). Il verdetto lo prende il floor dichiarato —
+    # `ignorance_map.py:144`, `soglia = float(floor)` — e il rumore misurato
+    # entra come AVVERTENZA, non come soglia. Sono due esiti diversi: dire
+    # «non rispondibile» e dire «rispondibile, ma nella banda in cui un
+    # vicino qualunque vale quanto un match».
+    #
+    # La riga resta perche' il numero va esposto anche quando coincide col
+    # floor: senza, chi legge non distingue una guardia misurata da una
+    # dichiarata. Il commento sbagliato costava piu' della riga che spiegava —
+    # un lettore che confronta `decide 0.800` con `noise_floor=0.917` conclude
+    # che il codice non fa quello che dice.
     deciso = rep.get("deciding_floor", floor)
     chi = "rumore misurato" if deciso > floor + 1e-9 else "floor dichiarato"
     console.print(f"[dim]{riepilogo}   decide {deciso:.3f} ({chi}) — "
