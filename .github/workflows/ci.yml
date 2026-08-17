@@ -229,8 +229,25 @@ jobs:
           # 💾 Il prezzo e' sei voci invece di una per lo stesso modello. Si
           # paga: una cache che non si scrive non costa spazio e non serve a
           # niente.
-          key: hf2-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-          restore-keys: hf2-${{ runner.os }}-${{ matrix.python-version }}-
+          key: hf3-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+          # ⚠️ `hf3-` PERCHE' LA CHIAVE NON DIPENDE DA QUESTO FILE. La chiave si
+          # calcola su `pyproject.toml`, e il passo che ho appena aggiunto —
+          # scaldare anche il modello che i TEST pinnano — tocca SOLO `ci.yml`.
+          # ⇒ Con la chiave invariata e una voce gia' scritta, `cache-hit` e'
+          #   vero e il passo di salvataggio NON RIPARTE MAI (e' scritto qui
+          #   sotto, riga «una cache incompleta e' peggio di una assente»):
+          #   il modello nuovo verrebbe riscaricato a ogni run, per sempre,
+          #   senza entrare mai in cache. La cura funzionerebbe e resterebbe
+          #   cara — che e' il modo piu' silenzioso di sbagliare.
+          # 📌 Il ripiego tiene ANCHE `hf2-`, e stavolta e' voluto: quella cache
+          # non e' avvelenata, e' INCOMPLETA. Ripescarla fa partire il job con
+          # `e5-base` gia' dentro (~440 MB risparmiati), il warmup aggiunge il
+          # modello mancante e il salvataggio scrive `hf3-` con entrambi. Il
+          # divieto scritto sopra riguarda un ripiego che RESUSCITA cio' che si
+          # voleva buttare: qui si eredita cio' che si vuole tenere.
+          restore-keys: |
+            hf3-${{ runner.os }}-${{ matrix.python-version }}-
+            hf2-${{ runner.os }}-${{ matrix.python-version }}-
 
       - name: Install
         run: |
@@ -571,7 +588,7 @@ jobs:
             ~/.cache/torch/sentence_transformers
             ~/.engram/models
             ~/.cache/verimem
-          key: hf2-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+          key: hf3-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
 
       # 🔬 LA SONDA DOVE IL GUASTO AVVIENE, aggiunta il 2026-08-16 dopo aver
       # falsificato UNDICI ipotesi ragionando da un'altra macchina.
