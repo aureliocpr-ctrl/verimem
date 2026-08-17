@@ -338,10 +338,19 @@ def run_doctor() -> list[dict[str, Any]]:
         from .llm import _autodetect_provider
         from .local_grounding import (
             _resolve_model_dir,
+            holds_the_weights,
             judge_state,
             local_ce_available,
         )
         ce = local_ce_available()
+        # I PESI, non solo i metadati. `local_ce_available()` risponde True su
+        # una cartella che contiene il solo `config.json` — ed è voluto: è quel
+        # file a far partire il tentativo, ed è il tentativo a produrre la
+        # dichiarazione onesta sulla ricevuta. Ma qui si RIFERISCE, e il 17/08
+        # questa riga diceva «the grounding moat is ON» con EXIT=0 su
+        # un'estrazione interrotta, mentre un write reale tornava judged=False
+        # e ammetteva un claim smentito dalla propria fonte.
+        _pesi = holds_the_weights(_resolve_model_dir(None))
         # Lo STATO nel processo che chiede, dalla funzione unica (la stessa che
         # legge l'advisory L4 e la ricevuta MCP) — non ri-dedotto qui.
         _stato_giudice = judge_state()
@@ -428,7 +437,21 @@ def run_doctor() -> list[dict[str, Any]]:
         else:
             _coverage = "no facts stored yet, so nothing to have judged"
 
-        if ce:
+        if ce and not _pesi:
+            # I metadati senza i pesi: `warmup` in questo stato dice «✓ moat
+            # gate model already installed» e non riscarica (misurato il 17/08,
+            # EXIT=0, cartella invariata), quindi il rimedio NON è eseguirlo di
+            # nuovo — è togliere di mezzo la cartella a metà e poi eseguirlo.
+            add("moat-judge", FAIL,
+                f"NO working grounding judge: {_resolve_model_dir(None)} has "
+                f"the model metadata but none of its weights "
+                f"(model.safetensors / pytorch_model.bin) — the load fails at "
+                f"the first judged write and the moat does NOT run "
+                f"(moat OFF); {AVVISO_SENZA_GIUDICE}; {_coverage}",
+                f"delete {_resolve_model_dir(None)} and run `verimem warmup` — "
+                f"running it on the half-extracted dir reports success without "
+                f"downloading anything")
+        elif ce:
             if not _readable:
                 add("moat-judge", WARN,
                     f"local CE gate model installed, but {_coverage}",

@@ -59,6 +59,38 @@ def _holds_a_model(d: Path) -> bool:
     return (d / "config.json").is_file()
 
 
+#: I nomi che `from_pretrained` cerca davvero. Non scelti a intuito: sono i due
+#: che il prodotto stesso nomina quando fallisce — «Error no file named
+#: model.safetensors, or pytorch_model.bin, found in directory ...».
+_NOMI_DEI_PESI = ("model.safetensors", "pytorch_model.bin")
+
+
+def holds_the_weights(d: Path) -> bool:
+    """True quando la cartella tiene anche i PESI, non solo i metadati.
+
+    ⚠️ Serve alle superfici che RIFERISCONO, non al percorso caldo, e la
+    distinzione è deliberata. `_holds_a_model` guarda `config.json` e basta, ed
+    è giusto così: è quel file a far partire il tentativo di caricamento, ed è
+    il tentativo a produrre la dichiarazione onesta «the grounding judge failed
+    to load» che l'utente legge sulla ricevuta. Renderlo severo spegnerebbe il
+    ramo che quella dichiarazione produce.
+
+    `doctor`, invece, non tenta: riferisce. Misurato il 17/08 su una cartella
+    con il solo `config.json` — cioè ciò che un'estrazione interrotta lascia::
+
+        verimem doctor   «local CE gate model installed - the moat is ON»  EXIT=0
+        verimem save     flow.warmup phase=failed
+                         reason='no file named model.safetensors, or
+                                 pytorch_model.bin, found in directory'
+                         judged=False   grounding_score=None
+                         e un claim smentito dalla sua fonte veniva AMMESSO
+
+    Una `stat` su due nomi separa i due casi; caricare il modello per scoprirlo
+    costerebbe 737 MB e il budget di ~2 s che `doctor` dichiara e difende.
+    """
+    return any((d / n).is_file() for n in _NOMI_DEI_PESI)
+
+
 def _resolve_model_dir(model_dir: str | Path | None) -> Path:
     env = os.environ.get(_ENV_MODEL_DIR, "").strip()
     if env or model_dir:

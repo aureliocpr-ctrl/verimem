@@ -32,10 +32,17 @@ sta nella giuntura, e un banco che sostituisce uno dei due lati non la vede mai.
 chiede a `doctor` che cosa dice. Se un giorno servisse sostituirle per far
 passare qualcosa, la cosa da cambiare è il prodotto.
 
-📌 Limite dichiarato: «modello presente» qui significa `config.json` presente —
-lo stesso criterio che usa `_holds_a_model`. Non certifica che i pesi si
-carichino (un `model.safetensors` corrotto resta invisibile a questo banco). La
-separazione misurata è **vuota / non vuota**, ed è quella che mancava.
+📌 **Il limite, misurato e non stimato.** Il criterio è «i file ci sono»: con un
+`config.json` e un `model.safetensors` dal contenuto non valido, `doctor` dice
+ancora `✓ the grounding moat is ON` con EXIT=0 (misurato il 17/08). Il confine è
+scelto, non subìto: **cartella vuota** e **soli metadati** sono stati che il
+prodotto produce DA SÉ — la destinazione nasce prima del download, e
+l'estrazione mette `config.json` prima dei pesi — mentre un file di pesi
+corrotto richiede una corruzione esterna del filesystem. Coprire anche quello
+vuole un caricamento vero, che sfonda il budget di ~2 s che `doctor` dichiara e
+difende. ⚠️ Chi misurasse che i pesi corrotti sono un caso reale ha il diritto
+di riaprirlo: il confine è documentato QUI e non è presidiato da nessun test
+verde, perché un verde su un comportamento indesiderato lo autorizzerebbe.
 """
 from __future__ import annotations
 
@@ -72,21 +79,31 @@ def store_isolato(tmp_path, monkeypatch):
     monkeypatch.setattr(lg, "_judge", None, raising=False)
 
 
-def _con_cartella(monkeypatch, tmp_path, *, tiene_un_modello: bool):
+def _con_cartella(monkeypatch, tmp_path, *, stato: str):
     """Un `doctor` su una cartella nuova, col giudice azzerato PRIMA.
 
-    L'azzeramento non è cerimonia: senza, il secondo confronto dentro lo stesso
-    test eredita il giudice che la prima cartella ha già fatto fallire, e i due
-    casi tornano indistinguibili — cioè il banco riprodurrebbe da sé il difetto
-    che deve misurare, e lo attribuirebbe al prodotto (visto succedere mentre
-    scrivevo questo file: `fail` in entrambi i rami, col prodotto già curato).
+    `stato` è uno dei TRE che il prodotto sa produrre da sé:
+      «vuota»          il download crea la destinazione prima di scaricare, e
+                       una rete che cade la lascia così;
+      «solo_metadati»  l'estrazione mette `config.json` (1 KB) prima dei pesi
+                       (737 MB), e interrotta a metà lascia questo;
+      «completa»       metadati e pesi.
+
+    L'azzeramento del giudice non è cerimonia: senza, il secondo confronto
+    dentro lo stesso test eredita il giudice che la prima cartella ha già fatto
+    fallire, e i casi tornano indistinguibili — cioè il banco riprodurrebbe da
+    sé il difetto che deve misurare, e lo attribuirebbe al prodotto (visto
+    succedere mentre scrivevo questo file: `fail` in entrambi i rami, col
+    prodotto già curato).
     """
     from verimem import local_grounding as lg
 
     d = tmp_path / "local_gate_ce_v2"
     d.mkdir(parents=True)
-    if tiene_un_modello:
+    if stato in ("solo_metadati", "completa"):
         (d / "config.json").write_text("{}", encoding="utf-8")
+    if stato == "completa":
+        (d / "model.safetensors").write_bytes(b"\x00")
     monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(d))
     monkeypatch.setattr(lg, "_judge", None, raising=False)
     return _moat(run_doctor())
@@ -96,7 +113,7 @@ def test_una_cartella_vuota_non_viene_certificata(store_isolato, tmp_path,
                                                   monkeypatch):
     """Il caso: la cartella c'è (un'estrazione interrotta la lascia così) e
     dentro non c'è niente."""
-    mj = _con_cartella(monkeypatch, tmp_path, tiene_un_modello=False)
+    mj = _con_cartella(monkeypatch, tmp_path, stato="vuota")
     assert mj["status"] == FAIL, (
         f"su una cartella vuota `doctor` non segnala nulla: {mj}. È il comando "
         f"che il README prescrive per verificare l'installazione")
@@ -104,11 +121,35 @@ def test_una_cartella_vuota_non_viene_certificata(store_isolato, tmp_path,
         f"il referto non dice che il modello manca: {mj['detail']}")
 
 
+def test_i_soli_metadati_non_sono_un_giudice_che_funziona(store_isolato,
+                                                          tmp_path, monkeypatch):
+    """Lo stato intermedio, e la ragione per cui esiste questo test: la prima
+    versione di questo file lo asseriva come CASO BUONO.
+
+    Misurato il 17/08 su una cartella con il solo `config.json`::
+
+        verimem doctor   «local CE gate model installed - the moat is ON»  EXIT=0
+        verimem save     judged=False, grounding_score=None, L4-skipped,
+                         e «900 pallet» contro una fonte che dice 480 AMMESSO
+
+    ⇒ `doctor` certificava di proteggere in uno stato in cui il moat non gira.
+    Un test verde su un comportamento sbagliato non è neutro: autorizza.
+    """
+    mj = _con_cartella(monkeypatch, tmp_path, stato="solo_metadati")
+    assert mj["status"] == FAIL, (
+        f"con i metadati e senza i pesi `doctor` dice che va bene: {mj}")
+    assert "weights" in mj["detail"], mj["detail"]
+    assert "delete" in (mj.get("fix") or ""), (
+        f"il rimedio non dice di togliere di mezzo la cartella a metà: "
+        f"{mj.get('fix')!r}. Eseguire `warmup` su di essa riporta «already "
+        f"installed» con EXIT=0 senza scaricare nulla (misurato il 17/08)")
+
+
 def test_un_modello_presente_resta_certificato(store_isolato, tmp_path,
                                                monkeypatch):
-    """⚠️ POPOLAZIONE OPPOSTA, e senza di essa il test sopra si soddisfa con un
+    """⚠️ POPOLAZIONE OPPOSTA, e senza di essa i test sopra si soddisfano con un
     `doctor` che dice sempre di no — che sarebbe un difetto uguale e contrario."""
-    mj = _con_cartella(monkeypatch, tmp_path, tiene_un_modello=True)
+    mj = _con_cartella(monkeypatch, tmp_path, stato="completa")
     assert mj["status"] == OK, (
         f"col modello sul disco `doctor` non lo riconosce più: {mj}")
     assert "installed" in mj["detail"], mj["detail"]
@@ -121,8 +162,8 @@ def test_i_due_casi_non_danno_lo_stesso_referto(store_isolato, tmp_path,
     **le due erano la stessa riga**. Un banco che controlla i due casi in due
     test separati passerebbe anche il giorno in cui tornassero a coincidere,
     purché coincidano sul valore giusto per entrambi."""
-    vuota = _con_cartella(monkeypatch, tmp_path / "a", tiene_un_modello=False)
-    piena = _con_cartella(monkeypatch, tmp_path / "b", tiene_un_modello=True)
+    vuota = _con_cartella(monkeypatch, tmp_path / "a", stato="vuota")
+    piena = _con_cartella(monkeypatch, tmp_path / "b", stato="completa")
     assert vuota["detail"] != piena["detail"], (
         f"`doctor` dà lo stesso identico referto con e senza il modello: "
         f"{vuota['detail']!r}")

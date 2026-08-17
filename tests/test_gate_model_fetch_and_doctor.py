@@ -116,7 +116,22 @@ def test_doctor_moat_ok_when_ce_present(tmp_path, monkeypatch):
     # depend on whatever happened to be in ~/.engram (2026-07-28).
     for _env in ("VERIMEM_DATA_DIR", "ENGRAM_DATA_DIR", "HIPPO_DATA_DIR"):
         monkeypatch.setenv(_env, str(tmp_path / "d"))
-    monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: True)
+    # Una cartella VERA invece del solo booleano (17/08). Fin qui il caso
+    # «modello presente» era `local_ce_available -> lambda: True`, cioè si
+    # sostituiva la funzione da cui dipende il verdetto: il banco verificava
+    # che doctor reagisse al booleano e non poteva accorgersi che il booleano
+    # fosse sbagliato. Ed era sbagliato — su una cartella con i soli metadati
+    # doctor diceva «the grounding moat is ON» mentre un write reale tornava
+    # judged=False. Ora doctor guarda anche i pesi, e questo banco gli mette
+    # davanti un modello vero: senza la cartella, in CI (dove il modello non
+    # c'è) il test fallirebbe pur essendo il prodotto corretto.
+    from verimem import local_grounding as _lg
+    modello = tmp_path / "local_gate_ce_v2"
+    modello.mkdir()
+    (modello / "config.json").write_text("{}", encoding="utf-8")
+    (modello / "model.safetensors").write_bytes(b"\x00")
+    monkeypatch.setenv("ENGRAM_LOCAL_GATE_MODEL", str(modello))
+    monkeypatch.setattr(_lg, "_judge", None, raising=False)
     got = _by_name(run_doctor())
     assert got["moat-judge"]["status"] == OK
 
