@@ -163,6 +163,24 @@ def _remember(tmp_path, claim, source):
         [sys.executable, "-m", "verimem.cli", "remember", claim,
          "--topic", "t", "--source", source],
         capture_output=True, text=True, env=env, timeout=900)
+    # 🔑 L'AMBIENTE, quando il comando muore. In CI la stessa CLI eseguita in un
+    # passo del workflow — stesso runner, stesso job, stessa cache, stesse tre
+    # variabili offline — RIESCE (stdout 1468 B), e qui muore con 42241 B e
+    # `LocalEntryNotFoundError`. Misurato sul run 32015210026.
+    # Il modello non e' la differenza (`CONFIG.embedding_model` e' lo stesso che
+    # la sonda carica) e nemmeno il tempo (prima e dopo la suite i numeri sono
+    # identici). Resta cio' che le fixture mettono in `os.environ` e che questo
+    # sottoprocesso EREDITA — e finora nessun referto lo nominava.
+    # ⇒ Si stampa solo in caso di morte, e solo le variabili che riguardano il
+    #   caricamento: un elenco completo sarebbe di nuovo illeggibile.
+    if r.returncode != 0:
+        _prefissi = ("HIPPO", "ENGRAM", "VERIMEM", "HF_", "HUGGINGFACE",
+                     "TRANSFORMERS", "SENTENCE", "TORCH", "XDG_CACHE")
+        _amb = {k: v for k, v in sorted(env.items())
+                if k.startswith(_prefissi)}
+        raise AssertionError(
+            f"CLI-MORTO(env) {len(_amb)} variabili rilevanti ereditate: "
+            f"{_amb} || {leggi(r.returncode, r.stdout, r.stderr)}")
     # ⚠️ `subprocess` puo' rendere `None` invece di stringa vuota su uno dei due
     # canali, e la somma esplode PRIMA di arrivare all'assert: in CI si legge
     # `TypeError: can only concatenate str (not "NoneType") to str` al posto del
