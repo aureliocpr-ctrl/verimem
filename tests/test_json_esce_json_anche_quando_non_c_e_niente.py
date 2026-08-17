@@ -44,6 +44,76 @@ def _json_da(risultato) -> object:
     return json.loads(testo[min(inizi):].strip())
 
 
+def _comandi_con_json() -> list[str]:
+    """I comandi che dichiarano `--json` e si possono invocare senza argomenti.
+
+    ⚠️ Questa funzione esiste perché la prima stesura elencava DUE comandi a mano
+    mentre `--json` è dichiarato dodici volte: un terzo comando con lo stesso
+    difetto sarebbe nato senza che nessun collaudo se ne accorgesse. Il buco l'ha
+    trovato un'altra istanza applicando il criterio giusto — «un presidio che
+    apre un percorso COSTANTE non vede la porta nuova, la lascia passare
+    restando verde».
+
+    Restano fuori i comandi che richiedono un argomento obbligatorio (`trust
+    CLAIM`, `ignorance QUERIES…`): lì un `exit 2` è la risposta corretta a
+    un'invocazione incompleta, non un difetto di formato. Sono ESCLUSI PER
+    NOME, così l'elenco degli esclusi è visibile quanto quello dei provati.
+    """
+    import ast
+    from pathlib import Path
+
+    RADICE = Path(__file__).resolve().parent.parent
+    sorgente = (RADICE / "verimem" / "cli.py").read_text(encoding="utf-8", errors="replace")
+    albero = ast.parse(sorgente)
+    con_json: list[str] = []
+    for nodo in ast.walk(albero):
+        if not isinstance(nodo, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        firma = ast.unparse(nodo.args)
+        if '"--json"' not in firma and "'--json'" not in firma:
+            continue
+        for dec in nodo.decorator_list:
+            testo = ast.unparse(dec)
+            if ".command(" not in testo:
+                continue
+            # il nome esposto: `@app.command("x")` oppure il nome della funzione
+            if isinstance(dec, ast.Call) and dec.args and isinstance(dec.args[0], ast.Constant):
+                con_json.append(str(dec.args[0].value))
+            else:
+                con_json.append(nodo.name.replace("_", "-"))
+            break
+    return sorted(set(con_json))
+
+
+#: Chiedono un argomento obbligatorio: `exit 2` senza è la risposta giusta.
+_VOGLIONO_ARGOMENTI = {"trust", "ignorance", "introspect", "recall", "ask",
+                       "correct", "index", "search-docs", "save", "remember",
+                       "chain-show", "audit-anchor"}
+
+
+def test_ogni_comando_con_json_emette_json_su_store_vuoto(store_vuoto):
+    """Il criterio CAMMINA su tutti i comandi, invece di elencarne due a mano."""
+    provati, rotti = [], {}
+    for nome in _comandi_con_json():
+        if nome in _VOGLIONO_ARGOMENTI:
+            continue
+        r = CliRunner().invoke(app, [nome, "--json"])
+        if r.exit_code != 0:
+            continue          # un errore d'uso non è un difetto di formato
+        provati.append(nome)
+        try:
+            _json_da(r)
+        except (json.JSONDecodeError, AssertionError) as e:
+            rotti[nome] = str(e)[:120]
+    assert provati, (
+        "nessun comando con `--json` è stato provato: o il criterio non li trova più, "
+        "o l'elenco degli esclusi se li è mangiati tutti — in entrambi i casi questo "
+        "collaudo sarebbe vero e vuoto")
+    assert not rotti, (
+        f"questi comandi hanno `--json` e su uno store vuoto NON emettono JSON: {rotti}. "
+        f"Provati: {provati}")
+
+
 def test_tip_su_store_vuoto_emette_json(store_vuoto):
     """Nessun fatto è una risposta, e va data nel formato richiesto."""
     r = CliRunner().invoke(app, ["tip", "--json"])
