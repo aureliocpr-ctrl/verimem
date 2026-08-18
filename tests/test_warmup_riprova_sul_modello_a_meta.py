@@ -22,29 +22,37 @@ un criterio piu' severo che riscaricasse 737 MB a ogni `warmup` sarebbe un
 difetto peggiore di quello curato. Il test sul modello completo esiste per
 vietarlo.
 
-🔴 **CIO' CHE QUESTO BANCO NON COPRE, e va letto prima di crederlo chiuso: il
-COMANDO `verimem warmup` mente ancora.** Misurato alla porta dopo questa cura,
-sulla stessa cartella a meta'::
+⚠️ **QUESTO BANCO COPRE LA FUNZIONE, NON IL COMANDO** — e la distinzione non e'
+pedanteria, e' il difetto che e' costato un giorno. Curata `ensure_gate_model`
+il 17/08, `verimem warmup` continuava a rispondere «✓ moat gate model already
+installed» con `EXIT=0` sulla stessa cartella a meta', perche' `cli.py`
+corto-circuitava su `local_ce_available()` e non arrivava mai qui. Misurare la
+funzione e concludere che il comando fosse a posto e' esattamente l'errore che
+il resto del banco esiste per impedire — ed e' stato commesso, e scoperto solo
+eseguendo il comando.
 
-    $ verimem warmup
-    ✓ moat gate model already installed        EXIT=0
+✅ Il comando e' stato curato il 18/08 (`7ee7e2c6`): decide anche lui con
+`holds_the_weights`. Il suo presidio sta in
+`test_warmup_non_dice_installato_su_mezzo_modello.py`, che verifica la GIUNTURA
+— cioe' che `cli.py` chiami davvero quella funzione — perche' i test sul solo
+criterio erano gia' verdi prima della cura e non avrebbero visto niente.
 
-perche' `cli.py:421` corto-circuita su `local_ce_available()` — che sui soli
-metadati risponde True **per progetto**, ed e' giusto cosi': e' quel True a far
-partire il tentativo di caricamento, ed e' il tentativo a produrre la
-dichiarazione onesta «the grounding judge failed to load» sulla ricevuta.
-⇒ La cura di quella riga vive in `cli.py`, che il 17/08 e' la superficie di
-un'altra istanza, e le e' stata segnalata con la riga esatta e il criterio
-pronto (`holds_the_weights`). **Qui e' curata la funzione, non il comando**, ed
-e' una distinzione che questo file dichiara invece di lasciar credere il
-contrario: misurare `ensure_gate_model` e concludere che `warmup` sia a posto e'
-esattamente l'errore che il resto del banco esiste per impedire.
+📌 Limite, e ora con la RAGIONE misurata invece che stimata. Il criterio e' «i
+file ci sono»: un `model.safetensors` dal contenuto troncato passa ancora. Il
+18/08 e' stato chiesto al codice quanto quel caso sia raggiungibile, e la
+risposta e' in `_download_and_extract_tar`: il file viene scaricato in un
+temporaneo, **lo sha256 viene verificato, e solo se torna si estrae**. Un
+download interrotto non arriva quindi mai all'estrazione — viene rifiutato
+prima. Per ottenere un file dei pesi troncato serve un'interruzione DURANTE
+l'estrazione, cioe' una finestra di pochi secondi su un'operazione locale.
 
-📌 Limite, misurato e dichiarato: il criterio e' «i file ci sono». Un
-`model.safetensors` dal contenuto corrotto passa ancora — quello richiede una
-corruzione esterna, mentre la cartella vuota e quella a meta' sono stati che il
-prodotto produce da se' (la destinazione nasce prima del download, l'estrazione
-mette i metadati prima dei pesi).
+⇒ Gli altri due casi non chiedono nessuna interruzione precisa, capitano per
+ORDINE NATURALE: la destinazione nasce prima del download (cartella vuota) e
+`config.json` esce dall'archivio prima dei pesi (metadati soli). **E' questa
+differenza — non una stima di probabilita' — la ragione per cui il confine sta
+qui.** Chi misurasse un file dei pesi troncato in natura ha il diritto di
+riaprirlo: il criterio naturale sarebbe l'header di `safetensors`, che dichiara
+la propria lunghezza e si legge senza caricare il modello.
 """
 from __future__ import annotations
 
