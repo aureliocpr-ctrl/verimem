@@ -415,10 +415,23 @@ def warmup(
     # The MOAT judge (the product's #1 claim): download the local CE gate model
     # (a public GitHub release, ~656 MB) so the grounding gate runs judge-less
     # out of the box. Best-effort — failure reports honestly, never crashes.
-    from .local_grounding import ensure_gate_model, local_ce_available
+    from .local_grounding import (
+        _resolve_model_dir,
+        ensure_gate_model,
+        holds_the_weights,
+    )
     if not gate:
         console.print("[dim]· gate model skipped (--no-gate)[/]")
-    elif local_ce_available():
+    elif holds_the_weights(_resolve_model_dir(None)):
+        # I PESI, non `local_ce_available()`. Quella risponde True sui soli
+        # metadati — ed è voluto: è quel True a far partire il tentativo di
+        # caricamento, ed è il tentativo a produrre la dichiarazione onesta
+        # «the grounding judge failed to load» sulla ricevuta. Ma qui si decide
+        # se SCARICARE, e su una cartella lasciata a metà da un'estrazione
+        # interrotta (`config.json` pesa 1 KB, i pesi 737 MB) il comando che
+        # esiste apposta per procurare il giudice rispondeva «already
+        # installed» con EXIT=0 e non riprovava piu'. Misurato il 17/08: da
+        # quello stato non si usciva se non cancellando la cartella a mano.
         console.print("[green]✓ moat gate model already installed[/]")
     else:
         console.print("Fetching the local gate model (the moat's judge-less judge)…")
