@@ -170,6 +170,15 @@ _EXPECTED_TOOLS = {
     # iter 47 (2026-07-05): the trust gate made ATOMIC — per-query evidence
     # dossier (chain of custody / declared disputes / explicit abstention).
     "hippo_trust_report",
+    # 2026-08-18: l'ODOMETRO del gate — cio' che il vaglio HA FATTO sullo store
+    # (ledger admitted/quarantined/rejected/abstained, store per stato,
+    # superseded, moat). Esisteva in CLI, SDK, gateway e registro e in nessuno
+    # dei tool: un agente non poteva chiedere cosa avesse fatto il cancello.
+    # ⚠️ Questa riga e' la meta' che avevo dimenticato: aggiungendo il tool
+    # senza aggiornare l'elenco atteso ho portato i rossi della suite da 37 a
+    # 38. Il presidio ha fatto il suo lavoro — chi aggiunge una porta deve
+    # dichiararla anche qui.
+    "hippo_trust_stats",
     "hippo_document_list",
     # la STORIA di una fonte: ogni snapshot mai ingerito, dal piu' vecchio.
     # `list_versions` esisteva nel DocumentStore dal principio e non compariva
