@@ -354,6 +354,15 @@ finds today's session and primes the answer immediately.
 | Env var (canonical) | Legacy aliases | Purpose | Default |
 |---|---|---|---|
 | `VERIMEM_DATA_DIR` | `ENGRAM_DATA_DIR` / `HIPPO_DATA_DIR` | where episodes/skills/etc. live | `~/.verimem` (existing `~/.engram` / `~/.hippoagent` auto-detected, never migrated) |
+
+> **Setting only one of the three is enough — but set the SAME one everywhere.** They are
+> read in the order `HIPPO_DATA_DIR`, `ENGRAM_DATA_DIR`, `VERIMEM_DATA_DIR`, and the first one
+> set wins. If two are set to *different* paths the process says so once, on stderr
+> (`DATA_DIR aliases disagree`), and keeps the winner. That warning is worth reading: it means
+> half of what you configured points somewhere else. It is common when isolating a store
+> inside an environment that already exports one of the aliases for you — set the others to
+> the same path, or unset them.
+
 | `VERIMEM_HOSTED` | `ENGRAM_HOSTED` / `HIPPO_HOSTED` | host LLM mode — no internal LLM | unset |
 | `VERIMEM_LLM_PROVIDER` | `ENGRAM_*` / `HIPPO_*` | force a specific provider | autodetect |
 | `VERIMEM_MODEL` / `_EXECUTOR` / `_DREAMER` / `_CRITIC` | `ENGRAM_*` / `HIPPO_*` | per-stage model | provider default (Opus 4.7) |

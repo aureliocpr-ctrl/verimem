@@ -95,8 +95,10 @@ The gap **grows with composition depth** — which is the empirical proof that H
 
 ## Privacy & data
 
-- All memory is stored locally on disk under `HIPPO_DATA_DIR` (default `~/.hippoagent/data`).
-- The skill library is plain Markdown — `.hippoagent/skills/*.md` — open in your editor any time.
+- All memory is stored locally on disk. The directory is `HIPPO_DATA_DIR` when you set it;
+  otherwise the first of `~/.verimem`, `~/.engram`, `~/.hippoagent` that already exists — an
+  older install is picked up where it is and never migrated.
+- The skill library is plain Markdown — `<data dir>/skills/*.md` — open in your editor any time.
 - HippoAgent never sends data to a remote server other than the LLM provider's standard API.
 - Delete everything: `rm -rf ~/.hippoagent/data`.
 
