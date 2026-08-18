@@ -108,6 +108,27 @@ def _intorno(testo: str, valore: float) -> tuple[set[str], set[str]]:
     return seguenti, precedenti
 
 
+def _da_mostrare(dopo: set[str], prima: set[str]) -> str:
+    """Il contesto da mostrare nella ricevuta, col lato DICHIARATO.
+
+    La decisione qui sopra guarda entrambi i lati del numero; il messaggio ne
+    mostrava uno solo — quello che SEGUE. In italiano quel token e' spessissimo
+    una congiunzione o una preposizione («0.3732 ed esito», «99.9588 su due»),
+    e quando manca del tutto la ricevuta stampava «?» su entrambi i lati, cioe'
+    niente su cui agire. Chi legge vedeva meta' dell'informazione con cui il
+    layer aveva deciso (diagnosi di ws5, 18/08, letta al sorgente).
+
+    Il lato precedente non sostituisce quello seguente: lo integra quando
+    l'altro non c'e', e si annuncia, perche' «linea» detto senza dire da che
+    parte sta rispetto al numero e' ambiguo quanto «?».
+    """
+    if dopo:
+        return " ".join(sorted(dopo))
+    if prima:
+        return "prima del numero: " + " ".join(sorted(prima))
+    return "(nessuna parola accanto)"
+
+
 def valori_riusati_da_altro_contesto(
     proposition: str, source: str,
 ) -> list[ValoreRiusato]:
@@ -136,7 +157,7 @@ def valori_riusati_da_altro_contesto(
             continue
         fuori.append(ValoreRiusato(
             valore=valore,
-            nel_claim=" ".join(sorted(claim_dopo)) or "?",
-            nella_fonte=" ".join(sorted(fonte_dopo)) or "?",
+            nel_claim=_da_mostrare(claim_dopo, claim_prima),
+            nella_fonte=_da_mostrare(fonte_dopo, fonte_prima),
         ))
     return fuori
