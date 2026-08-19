@@ -803,10 +803,6 @@ def validate_claim(
     # disjointness, contrast qualifiers, Jaccard for negation) — this loop
     # only orchestrates. Year-disjoint hits are already handled above.
     lexical_contra: list[_FactLike] = []
-    #: I fatti che SOLO il giudice segnala: né una negazione, né una data, né
-    #: una versione, né un numero discordante. Tenuti separati perché non
-    #: devono produrre un `contradicted` — vedi il commento al ramo.
-    solo_entailment: list[_FactLike] = []
     lexical_advice = ""
     if claim_versions or claim_dates or lexical_viable:
         _prior_ids = ({f.id for f in contradicting}
@@ -833,27 +829,6 @@ def validate_claim(
                     "entailment",
                     "il giudice non trova sostegno per questo claim nel fatto "
                     "in memoria, che parla dello stesso soggetto")
-                # ⚠️ QUESTO RAMO NON È UNA CONTRADDIZIONE, E LO DICE DA SÉ.
-                # L'advice che produce è «non trova sostegno»; il verdetto che
-                # ne usciva era «contradicted», cioè un'altra affermazione. La
-                # differenza non è di stile: un `contradicted` QUARANTINA il
-                # fatto in ingresso, perché L3 è questa stessa funzione
-                # (`anti_confab_gate.py:1541`, misurato da ws6).
-                #
-                # Il punteggio non separa le due popolazioni — misurato:
-                #     attributo diverso 0.22 · unità non allineata 0.31
-                #     NEGAZIONE VERA 1.38   · parafrasi 96.54
-                # i casi legittimi stanno SOTTO la negazione vera, quindi
-                # nessuna soglia li divide e la cura per soglia è falsificata.
-                #
-                # Le contraddizioni RICONOSCIUTE hanno già i loro rilevatori
-                # sopra (negazione, data, versione, numeri) e continuano a dare
-                # `contradicted`. Quando l'unico segnale è questo, la risposta
-                # onesta è «non lo so», che è anche ciò che
-                # `test_numeric_unconfirmed_quantity_not_falsely_supported`
-                # chiede alla lettera.
-                solo_entailment.append(f)
-                continue
             if kind_detail is not None:
                 lexical_contra.append(f)
                 if not lexical_advice:
@@ -911,22 +886,6 @@ def validate_claim(
     # confermate e quella generica, ma NON la claim che asserisce una relazione
     # che nessun fatto enuncia. Sul corpus vivo erano otto confabulazioni su
     # dieci a ricevere `supported` — vedi `_qualcuno_asserisce`.
-    # Nessun rilevatore ha trovato una contraddizione RICONOSCIUTA e resta solo
-    # il «non trovo sostegno» del giudice: la risposta è che non si sa, e il
-    # fatto in ingresso non va quarantinato per un'assenza di prova.
-    if solo_entailment and not (contradicting or numeric_contra or lexical_contra):
-        return {
-            "verdict": "unknown",
-            "confidence": 0.0,
-            "evidence_facts": [f.id for f in solo_entailment],
-            "evidence_episodes": sorted(
-                {eid for f in solo_entailment for eid in f.source_episodes}),
-            "advice": (
-                "il giudice non trova sostegno per questo claim nel fatto in "
-                "memoria, che parla dello stesso soggetto — non è una "
-                "contraddizione: verifica prima di affermare."),
-        }
-
     lexical_only = salient_count < 2 and not numeric_viable
     suppress_support = bool(claim_quants) and not numeric_agree
     non_asserita = bool(supporting) and not _qualcuno_asserisce(claim, supporting)
