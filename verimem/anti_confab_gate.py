@@ -717,9 +717,27 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
 #: voce nuova va aggiunta con il suo caso in
 #: ``tests/test_everyday_memory_survives.py``.
 _ETICHETTE_RECORD = frozenset({
-    "issue", "ticket", "message", "msg", "porta", "port", "riga", "line",
+    "issue", "ticket", "message", "msg", "riga", "line",
     "day", "giorno", "pr", "build", "run", "pid", "record", "slot", "task",
 })
+#: Parole il cui numero misura un ATTRIBUTO invece di identificare un record.
+#: La distinzione non e' mia: la enuncia il documento di
+#: `tests/test_identifier_only_as_subject.py` — «`port` sta nella lista
+#: sbagliata: non e' un'istanza in serie come issue/week/sprint, e' un ATTRIBUTO
+#: DI CONFIGURAZIONE». ⚠️ PAGATA IL 19/08: con `porta` fra le identita' questo
+#: asse ha reso ROSSO quel test, che era verde — «Il servizio di fatturazione
+#: ascolta sulla porta 8443 / 9443» e' lo STESSO servizio che cambia porta, e
+#: farli coesistere significa servire due verita' sulla stessa porta.
+_ATTRIBUTI_NUMERATI = frozenset({"porta", "port"})
+
+#: ⚠️ QUI NON SI RIUSA `quantity_match._EVENT_INDEX_RE` (60+ parole, fra cui
+#: `port`, `version`, `page`, `job`) e la ragione va detta perche' la
+#: duplicazione si vede: quella lista risponde a «quali numeri INDICIZZANO un
+#: evento», questa a «quali numeri identificano un record che deve COESISTERE».
+#: Trapiantarla qui porterebbe dentro i suoi attributi di configurazione — cioe'
+#: esattamente il difetto appena pagato, moltiplicato per sessanta.
+
+_SOLO_CIFRE_RE = re.compile(r"\d+")
 
 #: ``<parola> <intero>`` dove l'intero è SEMPLICE: il lookahead scarta
 #: ``versione 0.7.0`` e ``porta 8080.5``, che non sono etichette di record.
@@ -727,14 +745,36 @@ _ETICHETTA_NUM_RE = re.compile(
     r"\b([A-Za-zÀ-ÿ]+)\s+(\d+)\b(?!\s*[.,]\d)(?![.\-]\d)")
 
 
-def _record_numerati(testo: str) -> dict[str, set[str]]:
-    """``{etichetta: {numeri}}`` per le sole parole di :data:`_ETICHETTE_RECORD`."""
+def _record_numerati(testo: str, vocabolario: frozenset) -> dict[str, set[str]]:
+    """``{etichetta: {numeri}}`` per le sole parole di ``vocabolario``."""
     out: dict[str, set[str]] = {}
     for parola, numero in _ETICHETTA_NUM_RE.findall(testo or ""):
         chiave = parola.casefold()
-        if chiave in _ETICHETTE_RECORD:
+        if chiave in vocabolario:
             out.setdefault(chiave, set()).add(numero)
     return out
+
+
+def _numeri_disgiunti(pa: str, pb: str, vocabolario: frozenset) -> bool:
+    """Le due frasi usano le stesse etichette di ``vocabolario`` con numeri che
+    non si sovrappongono. Serve l'etichetta su ENTRAMBI i lati."""
+    ea, eb = _record_numerati(pa, vocabolario), _record_numerati(pb, vocabolario)
+    comuni = set(ea) & set(eb)
+    return bool(comuni) and all(not (ea[k] & eb[k]) for k in comuni)
+
+
+def _stesso_scheletro(pa: str, pb: str) -> bool:
+    """Le due frasi sono identiche una volta tolti i numeri.
+
+    È il modo per chiedere «stanno parlando dello STESSO soggetto?» senza
+    inventare un estrattore: se togliendo le cifre le due frasi coincidono,
+    l'unica cosa che cambia è il numero, e quindi il soggetto è lo stesso.
+    «il servizio verimem …» / «il servizio cortex …» NON coincidono; «Il
+    servizio di fatturazione …» due volte sì.
+    """
+    def _s(t: str) -> str:
+        return " ".join(_SOLO_CIFRE_RE.sub("#", (t or "").casefold()).split())
+    return _s(pa) == _s(pb)
 
 
 def _record_numerati_diversi(pa: str, pb: str) -> bool:
@@ -751,14 +791,27 @@ def _record_numerati_diversi(pa: str, pb: str) -> bool:
     essere DISGIUNTI su OGNI etichetta condivisa — «issue 41 è aperta» contro
     «issue 41 è chiusa» è lo stesso record, e lì il secondo aggiorna il primo.
 
+    ⚠️ DUE VOCABOLARI, NON UNO, e la ragione è misurata (19/08):
+    · IDENTITÀ (`issue`, `day`, `riga`): il numero DICE QUALE record è, quindi
+      basta che i numeri siano disgiunti — «issue 41 nel tracker è aperta» e
+      «issue 42 …» sono identiche altrove e devono comunque coesistere;
+    · ATTRIBUTO (`porta`): il numero MISURA una proprietà di un soggetto, e
+      due misure diverse dello STESSO soggetto sono un aggiornamento. Lì serve
+      anche che il soggetto differisca — «il servizio verimem …» / «il servizio
+      cortex …» sì, «Il servizio di fatturazione …» due volte no.
+    Tenerli nello stesso elenco ha reso rosso `test_identifier_only_as_subject`,
+    che era verde: il costo di una lista sola è stato misurato, non temuto.
+
     ⛔ IL LIMITE, dichiarato: un intero preceduto da una parola non in elenco
     resta invisibile a questo asse (`sprint 3`, `lotto 7`). Non è un difetto
     silenzioso — è il comportamento di prima, e si allarga aggiungendo la parola
     con il suo caso di prova.
     """
-    ea, eb = _record_numerati(pa), _record_numerati(pb)
-    comuni = set(ea) & set(eb)
-    return bool(comuni) and all(not (ea[k] & eb[k]) for k in comuni)
+    if _numeri_disgiunti(pa, pb, _ETICHETTE_RECORD):
+        return True
+    if _numeri_disgiunti(pa, pb, _ATTRIBUTI_NUMERATI):
+        return not _stesso_scheletro(pa, pb)
+    return False
 
 
 def _entita_diverse(a: Any, b: Any) -> bool:
