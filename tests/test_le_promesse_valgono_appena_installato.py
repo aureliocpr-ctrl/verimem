@@ -32,6 +32,28 @@ verde qui si legge come una garanzia piu' ampia di quella che e':
   percorso di rete che qui non si esercita;
 * «vergine» e' la data dir, non l'installazione Python: i pacchetti sono quelli
   del repo.
+
+IL SECONDO LIMITE E' STATO PAGATO UNA VOLTA, il 2026-08-19, e sta scritto qui
+perche' un limite dichiarato e' un debito: chi lo legge deve sapere se qualcuno
+l'ha mai saldato, e con quale esito. Pacchetto costruito da `bcc35b5c` e
+installato in un venv creato per l'occasione (`--no-cache-dir`, 7 min 49 s,
+1140 MB su disco), poi esercitato FUORI da pytest — perche' sotto pytest il
+`conftest` sostituisce l'embedder con uno stub su SHA-256, e ogni misura che
+passa da un coseno diventa un'altra misura. Sul pacchetto installato:
+
+* `verified_by` NON promuove a «verified»: ne' una provenienza vera
+  (`ci:main:green`) ne' una ricevuta che si auto-dichiara
+  (`["verified", "trusted", "self:approved"]`). Entrambe restano `model_claim`;
+* la provenienza si vede in LETTURA (`['ci:main:green']`), come promette la
+  vetrina — nella ricevuta della SCRITTURA il campo torna `None`, che e' una
+  superficie diversa da quella promessa;
+* `explain()` separa i due esiti su un campo, non su una parola: domanda
+  estranea -> `abstained=True`, domanda che lo store sa -> `abstained=False`.
+
+⚠️ E il primo limite RESTA, ora con un numero: un `pip install` pulito porta il
+prodotto ma NON il giudice, e appena installato il moat non c'e'. Cosa costa
+questo e' misurato in `test_il_referto_del_moat_spento_dice_cosa_si_perde.py`,
+che nasce da qui.
 """
 from __future__ import annotations
 
