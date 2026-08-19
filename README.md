@@ -93,7 +93,7 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   quarantines the new instead (the griefing guard — one source never retires another's
   fact). Same-source authority is sound within a tenant + a single-agent-per-tenant
   assumption (verimem has no per-writer auth yet); a multi-agent tenant that can't trust
-  its writers sets `ENGRAM_SUPERSEDE_SAME_SOURCE=0` (detect, but quarantine instead of
+  its writers sets `VERIMEM_SUPERSEDE_SAME_SOURCE=0` (detect, but quarantine instead of
   supersede) — or declares `VERIMEM_MULTI_WRITER=1`, which flips the same default off on its
   own. `Memory(preset="permissive")` / `validate="fast"` skip the moat entirely.
 - **Every write returns an adjudication receipt** — `add()` hands back a visible
