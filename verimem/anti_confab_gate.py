@@ -710,6 +710,57 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     return conflicts
 
 
+#: Parole che introducono un RECORD: il numero che le segue è un'ETICHETTA
+#: (quale issue, quale porta, quale riga), non una grandezza che può cambiare.
+#: La lista è LESSICALE e il suo limite è dichiarato: copre le parole dei casi
+#: misurati, non l'italiano e l'inglese interi. Estenderla è additivo — ogni
+#: voce nuova va aggiunta con il suo caso in
+#: ``tests/test_everyday_memory_survives.py``.
+_ETICHETTE_RECORD = frozenset({
+    "issue", "ticket", "message", "msg", "porta", "port", "riga", "line",
+    "day", "giorno", "pr", "build", "run", "pid", "record", "slot", "task",
+})
+
+#: ``<parola> <intero>`` dove l'intero è SEMPLICE: il lookahead scarta
+#: ``versione 0.7.0`` e ``porta 8080.5``, che non sono etichette di record.
+_ETICHETTA_NUM_RE = re.compile(
+    r"\b([A-Za-zÀ-ÿ]+)\s+(\d+)\b(?!\s*[.,]\d)(?![.\-]\d)")
+
+
+def _record_numerati(testo: str) -> dict[str, set[str]]:
+    """``{etichetta: {numeri}}`` per le sole parole di :data:`_ETICHETTE_RECORD`."""
+    out: dict[str, set[str]] = {}
+    for parola, numero in _ETICHETTA_NUM_RE.findall(testo or ""):
+        chiave = parola.casefold()
+        if chiave in _ETICHETTE_RECORD:
+            out.setdefault(chiave, set()).add(numero)
+    return out
+
+
+def _record_numerati_diversi(pa: str, pb: str) -> bool:
+    """Le due frasi numerano lo STESSO tipo di record con numeri DISGIUNTI.
+
+    «issue 41 … » contro «issue 42 … »: identiche in tutto tranne l'etichetta,
+    quindi parlano di due record, non di un valore che si aggiorna. È lo stesso
+    argomento del ramo DATE qui sopra — *un registro non è un valore che si
+    aggiorna, è una serie* — applicato al numero che identifica la riga del
+    registro invece che al giorno.
+
+    ⚠️ SERVE L'ETICHETTA SU ENTRAMBI I LATI, come per i codici: con una sola
+    non si sa nulla e il comportamento resta quello di prima. E i numeri devono
+    essere DISGIUNTI su OGNI etichetta condivisa — «issue 41 è aperta» contro
+    «issue 41 è chiusa» è lo stesso record, e lì il secondo aggiorna il primo.
+
+    ⛔ IL LIMITE, dichiarato: un intero preceduto da una parola non in elenco
+    resta invisibile a questo asse (`sprint 3`, `lotto 7`). Non è un difetto
+    silenzioso — è il comportamento di prima, e si allarga aggiungendo la parola
+    con il suo caso di prova.
+    """
+    ea, eb = _record_numerati(pa), _record_numerati(pb)
+    comuni = set(ea) & set(eb)
+    return bool(comuni) and all(not (ea[k] & eb[k]) for k in comuni)
+
+
 def _entita_diverse(a: Any, b: Any) -> bool:
     """I due fatti nominano record DIVERSI: non c'è un codice in comune.
 
@@ -801,6 +852,13 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     # lasciapassare per non essere mai superseduti.
     da, db = date_menzionate(pa), date_menzionate(pb)
     if da and db and not (da & db):
+        return True
+    # IL NUMERO CHE IDENTIFICA LA RIGA DI UN REGISTRO, gemello del ramo DATE:
+    # «issue 41» / «issue 42» sono due record, non un valore aggiornato. Sei
+    # casi d'uso ordinari cadevano qui — issue, message, porta, day, riga —
+    # e nessuno dei quattro assi precedenti li vede: un numero non è un codice,
+    # non è una data, e `41` non è un `proper`.
+    if _record_numerati_diversi(pa, pb):
         return True
 
     def _proper(testo: str) -> set[str]:
