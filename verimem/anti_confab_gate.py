@@ -829,6 +829,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     """
     from .entity_extract_lite import extract_entities_lite
     from .hidden_records import codes_in
+    from .quantity_match import content_tokens, contrasting_attrs
     from .temporal_context import date_menzionate
 
     pa = getattr(a, "proposition", "") or ""
@@ -859,6 +860,15 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     # e nessuno dei quattro assi precedenti li vede: un numero non è un codice,
     # non è una data, e `41` non è un `proper`.
     if _record_numerati_diversi(pa, pb):
+        return True
+    # DUE ATTRIBUTI DI UNO STESSO SOGGETTO NON SI AGGIORNANO A VICENDA:
+    # «il gate LEGGE in 45 ms» e «il gate SCRIVE in 300 ms» misurano due cose
+    # diverse della stessa cosa, e il secondo non e' la versione aggiornata del
+    # primo. Non si inventa un criterio: `contrasting_attrs` e' gia' la
+    # superficie che il prodotto usa per la stessa domanda in
+    # `quantity_match.version_conflict`, e chiamarla qui usa quella invece di
+    # una copia che divergera'.
+    if contrasting_attrs(content_tokens(pa), content_tokens(pb)):
         return True
 
     def _proper(testo: str) -> set[str]:
