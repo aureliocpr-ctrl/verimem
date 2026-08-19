@@ -389,7 +389,22 @@ def select_relevant_span(source: str, fact: str, *, budget: int) -> str:
     for u in ranked:
         add = len(u) + 1
         if picked and n + add > budget:
-            break
+            # `continue`, non `break`: fermarsi alla PRIMA unita' che non entra
+            # scarta anche tutte le successive, comprese quelle CORTE che ci
+            # starebbero. E le unita' corte sono le righe di DATI — numeri e
+            # poche parole — che il ranking per sovrapposizione lessicale mette
+            # in fondo proprio perche' non somigliano a niente.
+            #
+            # Il costo, misurato il 2026-08-19 sul corpus servito: span mediano
+            # 206 caratteri fra i quarantinati e 332 fra gli ammessi, con ZERO
+            # span su 2.812 che arrivano a 1400 — su un focus_budget di 1500.
+            # Il budget non era mal dimensionato: non veniva speso.
+            #
+            # Il difetto NON si vede dal moat (99.982 con e senza la riga di
+            # dati): si vede da L4.1, che chiede allo SPAN se contiene i numeri
+            # del claim e accusa un fatto VERO di affermare valori inventati.
+            # Presidio: tests/test_lo_span_spende_il_budget.py
+            continue
         picked.append(u)
         n += add
     picked.sort(key=lambda u: order.get(u, 0))
