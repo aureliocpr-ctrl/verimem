@@ -3934,6 +3934,7 @@ class SemanticMemory:
         include_beliefs: bool = False,
         topic_prefix: str | None = None,
         deep: bool = False,
+        rerank: bool = True,
     ) -> list[tuple]:
         """Semantic recall over facts (cosine on embeddings).
 
@@ -4242,7 +4243,7 @@ class SemanticMemory:
             # default OFF: slice and ordering stay byte-identical to legacy.
             # When ON: widen the bi-encoder slice to the CE pool, rerank the
             # head, keep the cosine as the score, cut back to k.
-            _rr_on = _rerank_enabled()
+            _rr_on = rerank and _rerank_enabled()
             _pool_n = max(k, _rerank_topn()) if _rr_on else k
             # (-score, fact.id) top-k: deterministic + row-order invariant, so
             # the ANN pool path returns EXACTLY the brute-force sequence.
@@ -4406,7 +4407,7 @@ class SemanticMemory:
             sims = _apply_topic_penalty_to_sims(sims, rows, query)
             # P0.3: same opt-in rerank wiring as the cache fast-path above —
             # SCAN-68 lesson: cache-vs-legacy asymmetries are audit findings.
-            _rr_on = _rerank_enabled()
+            _rr_on = rerank and _rerank_enabled()
             _pool_n = max(k, _rerank_topn()) if _rr_on else k
             # same deterministic tie-break as the cache fast-path (SCAN-68:
             # cache-vs-legacy asymmetries are audit findings).

@@ -217,7 +217,17 @@ def estimate_relevance_floor(sm, *, n_probes: int = 32, quantile: float = 0.95,
         return 0.0
     maxima: list[float] = []
     for p in probes:
-        hits = sm.recall(p, k=k)
+        # 🔑 `rerank=False`: una sonda del pavimento misura il RUMORE, e il
+        # cross-encoder non serve a misurarlo. Misurato in A/B il 2026-08-19 su
+        # 8 sonde: pavimento 0.8321 con rerank e 0.8321 senza, tempo 0.87s
+        # contro 0.26s. ⇒ Il valore non cambia, il costo si'.
+        # ⚠️ E il costo vero era piu' alto di quello dichiarato qui sopra
+        # («~32 embeds»): le sonde sono CORTE, quindi passano il gate AUTO del
+        # rerank — che esiste per non pagare il CE su una query lunga — e
+        # caricavano il cross-encoder una volta per sonda. Misurato dal banco
+        # `test_rerank_auto_default`: `{'load': 32, 'score': 96}` su UNA
+        # ricerca dell'utente, che a sua volta era stata correttamente saltata.
+        hits = sm.recall(p, k=k, rerank=False)
         maxima.append(max((float(s) for _, s, *_ in hits), default=0.0))
     if not maxima:
         return 0.0
