@@ -989,7 +989,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
         """
         nomi = {e["name"].casefold() for e in extract_entities_lite(testo)
                 if e.get("type") != "acronym"}
-        aperto = None  # A/B ws4
+        aperto = _SOGGETTO_INIZIALE.match(testo or "")
         if aperto and aperto.group(1).casefold() not in _parole_vuote_iniziali():
             nomi.add(aperto.group(1).casefold())
         return {x for x in nomi if x}
