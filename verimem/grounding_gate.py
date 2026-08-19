@@ -395,10 +395,18 @@ def select_relevant_span(source: str, fact: str, *, budget: int) -> str:
             # poche parole — che il ranking per sovrapposizione lessicale mette
             # in fondo proprio perche' non somigliano a niente.
             #
-            # Il costo, misurato il 2026-08-19 sul corpus servito: span mediano
-            # 206 caratteri fra i quarantinati e 332 fra gli ammessi, con ZERO
-            # span su 2.812 che arrivano a 1400 — su un focus_budget di 1500.
-            # Il budget non era mal dimensionato: non veniva speso.
+            # Misurato direttamente: su una fonte di 3.209 caratteri fatta di
+            # prosa piu' righe di dati, con budget 1500 lo span teneva 11 righe
+            # di prosa su 20 e ZERO righe di dati su 20, e il numero che il
+            # claim afferma restava fuori. Con `continue` entra, spendendo 29
+            # caratteri in piu' (1453 -> 1482) e 10 token (396 -> 406).
+            #
+            # NB: NON si puo' misurare questo dal campo `facts.grounding_span`,
+            # che e' troncato a 400 caratteri per la persistenza
+            # (`anti_confab_gate._GROUNDING_SPAN_BUDGET`, default 400): quel
+            # campo dice cosa e' stato SALVATO, non cosa il giudice ha VISTO.
+            # Una misura di quel campo contro il budget 1500 non significa
+            # nulla — il tetto lo raggiunge prima.
             #
             # Il difetto NON si vede dal moat (99.982 con e senza la riga di
             # dati): si vede da L4.1, che chiede allo SPAN se contiene i numeri

@@ -5,10 +5,14 @@ prende finche' c'e' posto. Fermarsi alla PRIMA che non entra scarta anche tutte
 le successive piu' CORTE — e le righe di DATI (numeri, poche parole) stanno in
 fondo al ranking proprio perche' lessicalmente non somigliano a niente.
 
-Il costo, misurato il 19/08 sul corpus servito: span mediano 206 caratteri fra i
-quarantinati e 332 fra gli ammessi, con ZERO span su 2.812 che arrivano a 1400 —
-su un `focus_budget` dichiarato di 1500. Il budget non era troppo grande ne'
-troppo piccolo: non veniva speso.
+Misurato direttamente: su una fonte di 3.209 caratteri fatta di prosa piu' righe
+di dati, con budget 1500 lo span teneva 11 righe di prosa su 20 e ZERO righe di
+dati su 20. Con `continue` la riga dei dati entra, al costo di 29 caratteri
+(1453 -> 1482) e 10 token (396 -> 406, sotto i 512 del cross-encoder).
+
+⚠️ Questo NON si misura dal campo `facts.grounding_span`, troncato a 400
+caratteri per la persistenza (`_GROUNDING_SPAN_BUDGET`): quel campo dice cosa e'
+stato SALVATO, non cosa il giudice ha VISTO. (Correzione di ws6, 19/08 12:51.)
 
 Il difetto NON si vede dal punteggio del moat (99.982 con e senza la riga di
 dati): si vede da `L4.1`, che chiede allo SPAN se contiene i numeri del claim e
