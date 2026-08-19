@@ -2172,6 +2172,44 @@ def run_validation_gate(
                                       "low-confidence memory.",
                             "grounding_score": gscore,
                         })
+                    elif gscore >= _ce_band_tau_hi():
+                        # Il ramo scatta per DUE motivi diversi (la condizione
+                        # dell'`elif` sopra): il punteggio SOTTO la banda, oppure
+                        # una RELAZIONE che la fonte non enuncia. Il secondo non
+                        # puo' trattenere da solo, e la ragione e' misurata il
+                        # 19/08 su entrambe le popolazioni:
+                        #   riformulati VERI  2 trattenuti su 3 — «Sono stati
+                        #     spediti 45 colli» su una fonte che dice «la consegna
+                        #     e' stata effettuata ... con 45 colli», g=99.98
+                        #   confabulazioni    3 prese su 3, MA due di quelle tre
+                        #     le ferma gia' il moat da solo (g=2.81 e g=5.50)
+                        # ⇒ il veto aggiunge qualcosa una volta e sbaglia due, e
+                        # il riformulato e' il caso NORMALE: nessuno ricopia la
+                        # fonte, la riscrive con parole sue. Un criterio che
+                        # sbaglia il doppio di quanto serve non e' un veto.
+                        #
+                        # Resta come AVVISO, che e' la stessa forma scelta per
+                        # L4.2 poco piu' sotto e per la stessa ragione: dichiara
+                        # e lascia decidere. ⚠️ Il costo e' dichiarato e non
+                        # nascosto: la confabulazione che il moat NON ferma (nel
+                        # banco, «il pagamento e' stato effettuato» su una fonte
+                        # che dice «in lavorazione», g=93.95) ora ENTRA — con
+                        # questo avviso addosso, non in silenzio.
+                        #
+                        # La banda NON cambia: sotto tau_hi si trattiene come
+                        # prima, ed e' il ramo `else` qui sotto.
+                        _rel = unverified_relation(source, proposition)
+                        warnings.append({
+                            "layer": "L4-relazione",
+                            "reason": f"the claim announces a {_rel or 'relation'} "
+                                      f"the source never states, but the CE scored "
+                                      f"{gscore:.0f} — admitted WITH this notice, "
+                                      f"not verified as a stated fact",
+                            "advice": "check that the source really states this "
+                                      "link and not only its parts; pass "
+                                      "Memory(llm=...) to have it adjudicated.",
+                            "grounding_score": gscore,
+                        })
                     else:
                         warnings.append({
                             "layer": "L4-review",
