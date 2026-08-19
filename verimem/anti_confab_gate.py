@@ -814,6 +814,21 @@ def _record_numerati_diversi(pa: str, pb: str) -> bool:
     return False
 
 
+#: Le parole che aprono una frase senza essere un soggetto («Il», «The», «Nel»).
+#: NON si riscrive la lista: si prende quella che l'estrattore usa gia', cosi'
+#: le due superfici non possono divergere.
+def _parole_vuote_iniziali() -> frozenset[str]:
+    from .entity_extract_lite import _STOPWORDS
+    return frozenset(w.casefold() for w in _STOPWORDS)
+
+
+#: La prima parola di una frase, quando e' maiuscola: `extract_entities_lite`
+#: non la puo' riconoscere come nome (li' la maiuscola e' grammaticale), ma nel
+#: confronto fra DUE fatti la posizione e' la stessa per entrambi, quindi il
+#: segnale torna utilizzabile. Vedi `_entita_diverse._proper`.
+_SOGGETTO_INIZIALE = re.compile(r"^\s*([A-Z][A-Za-zà-ÿ]+)\b")
+
+
 def _entita_diverse(a: Any, b: Any) -> bool:
     """I due fatti nominano record DIVERSI: non c'è un codice in comune.
 
@@ -925,8 +940,47 @@ def _entita_diverse(a: Any, b: Any) -> bool:
         return True
 
     def _proper(testo: str) -> set[str]:
-        return {e["name"].casefold() for e in extract_entities_lite(testo)
-                if e.get("type") == "proper"}
+        """Le ISTANZE nominate dal fatto, piu' il soggetto che apre la frase.
+
+        Si escludono gli ACRONIMI e non si tiene solo `proper`, ed e' la stessa
+        distinzione di prima detta al contrario: un acronimo e' un TIPO di cosa
+        (`GB`, `RAM`, `DC`), tutto il resto e' un'istanza. Tenere anche `place`
+        e `person` serve al caso reale «Marco» contro «Stripe», dove il grafo
+        classifica Stripe come `place`.
+
+        ⚠️ IL SOGGETTO CHE APRE LA FRASE VA RECUPERATO QUI, e non
+        nell'estrattore. `extract_entities_lite` scarta di proposito un nome di
+        una sola parola in prima posizione, perche' li' la maiuscola e'
+        grammaticale e non un segnale (`_is_sentence_initial`): e' una scelta di
+        PRECISIONE e resta giusta per il grafo, che indicizza tutto il corpus.
+
+        Il costo di quella scelta su QUESTO confronto, misurato il 2026-08-19 a
+        variabile singola — cambia solo la posizione della parola::
+
+            «Marco leads the payments team.»              entita' -> []
+            «The payments team is led by Marco.»          entita' -> [Marco]
+            «Marco guida il team dei pagamenti.»          entita' -> []
+            «Il team dei pagamenti e' guidato da Marco.»  entita' -> [Marco]
+            «Marco met Bianchi yesterday.»                entita' -> [Bianchi]
+
+        Italiano e inglese mettono il soggetto in testa: l'asse era cieco
+        proprio sulla forma piu' comune, e due fatti su soggetti DIVERSI si
+        ritiravano a vicenda. Recuperarlo SOLO qui lascia intatto il grafo.
+
+        Portata sulle supersessioni gia' avvenute, con il pavimento::
+
+            same-source evolution  N=160   tenute entrambe   6 -> 50   (+44)
+            exact-text dedup       N=202   tenute entrambe   0 ->  0   (+0)
+
+        Sui duplicati per costruzione non cambia NIENTE: la cura salva i fatti
+        distinti e non trattiene cio' che va davvero ritirato.
+        """
+        nomi = {e["name"].casefold() for e in extract_entities_lite(testo)
+                if e.get("type") != "acronym"}
+        aperto = _SOGGETTO_INIZIALE.match(testo or "")
+        if aperto and aperto.group(1).casefold() not in _parole_vuote_iniziali():
+            nomi.add(aperto.group(1).casefold())
+        return {x for x in nomi if x}
 
     ea, eb = _proper(pa), _proper(pb)
     return bool(ea and eb and not (ea & eb))
