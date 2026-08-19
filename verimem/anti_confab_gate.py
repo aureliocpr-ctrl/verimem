@@ -719,6 +719,18 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
 _ETICHETTE_RECORD = frozenset({
     "issue", "ticket", "message", "msg", "riga", "line",
     "day", "giorno", "pr", "build", "run", "pid", "record", "slot", "task",
+    # ⚠️ `servizio`/`service` aggiunti il 2026-08-19 alle 19:42, e la ragione è
+    # una REGRESSIONE misurata venti minuti dopo la cura che l'ha prodotta.
+    # Togliere `porta` dagli identificatori è giusto — un servizio che cambia
+    # porta resta lo stesso servizio — ma su «Il servizio 0 ascolta sulla porta
+    # 8000» la porta era l'UNICO segnale rimasto, e tre servizi diventavano uno:
+    #     worktree bcc35b5c (prima)  test_la_salute_epistemica  9 passed
+    #     HEAD     a1c71ee0 (dopo)                              2 failed
+    # I due casi si separano da soli e non serve nessuna soglia: `_ETICHETTA_NUM_RE`
+    # cerca `<parola> <intero>`, quindi «servizio 0» è un record numerato mentre
+    # «servizio DI FATTURAZIONE» non lo è e continua a essere aggiornato dalla
+    # sua porta nuova.
+    "servizio", "service",
 })
 #: Parole il cui numero misura un ATTRIBUTO invece di identificare un record.
 #: La distinzione non e' mia: la enuncia il documento di
@@ -977,7 +989,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
         """
         nomi = {e["name"].casefold() for e in extract_entities_lite(testo)
                 if e.get("type") != "acronym"}
-        aperto = _SOGGETTO_INIZIALE.match(testo or "")
+        aperto = None  # A/B ws4
         if aperto and aperto.group(1).casefold() not in _parole_vuote_iniziali():
             nomi.add(aperto.group(1).casefold())
         return {x for x in nomi if x}

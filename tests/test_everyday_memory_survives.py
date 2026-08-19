@@ -34,6 +34,15 @@ COESISTONO = [
      ["il servizio verimem ascolta sulla porta 8080",
       "il servizio cortex ascolta sulla porta 9090",
       "il servizio gateway ascolta sulla porta 7070"], 3),
+    # I servizi qui sopra si distinguono per NOME; questi per NUMERO, ed è un
+    # caso che il nome non copre. Aggiunto il 2026-08-19 dopo una regressione
+    # misurata: togliendo `porta` dagli identificatori (giusto: un servizio che
+    # cambia porta resta lo stesso) la porta era l'unico segnale rimasto qui, e
+    # `test_la_salute_epistemica_e_leggibile` passava da 9 passed a 2 failed.
+    ("servizi numerati", [f"Il servizio {i} ascolta sulla porta {8000 + i}."
+                          for i in range(3)], 3),
+    ("servizi numerati EN", [f"Service {i} listens on port {8000 + i}."
+                             for i in range(3)], 3),
     ("diario per giorni",
      [f"day {d}: ho lavorato sul retrieval" for d in (1, 2, 3, 4)], 4),
     ("righe di un file",
