@@ -350,7 +350,7 @@ def backup_all(
         raise typer.Exit(1) from None
 
 
-#: What the embedding model actually costs to download, per model, in MB.
+#: What each model the command downloads actually costs, per model, in MB.
 #:
 #: The number used to be a bare `~440 MB` in the message and in the docstring,
 #: and it was wrong by a factor of 2.4: measured on an EMPTY HF cache, the
@@ -362,10 +362,25 @@ def backup_all(
 #: model does NOT fall back to some other model's figure: the command says the
 #: size was never measured, which is a different statement from a number — the
 #: same rule `review_queue.threshold` states for alarms, applied here.
-_EMBEDDER_DOWNLOAD_MB: dict[str, int] = {
+#: The reranker is in the same table for the same reason: it announced its
+#: download with NO figure at all — «first run downloads…» — for 470 MB. A
+#: missing number is not a smaller promise than a wrong one, it is no promise.
+_MODEL_DOWNLOAD_MB: dict[str, int] = {
     # measured 2026-08-19, Windows + py3.13, HF_HOME pointed at an empty dir
     "intfloat/multilingual-e5-base": 1082,
+    "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1": 470,
 }
+
+
+def _quanto_scarica(nome: str) -> str:
+    """How much that model costs, or an explicit «never measured».
+
+    An unmeasured model does NOT inherit another one's figure: saying nothing
+    is honest, saying someone else's number is not.
+    """
+    mb = _MODEL_DOWNLOAD_MB.get(nome)
+    return (f"first run downloads ~{mb / 1024:.1f} GB" if mb
+            else f"first run downloads the weights (size not measured for {nome})")
 
 
 @app.command()
@@ -392,10 +407,7 @@ def warmup(
     from . import embedding
 
     model_name = CONFIG.embedding_model
-    taglia = _EMBEDDER_DOWNLOAD_MB.get(model_name)
-    quanto = (f"first run downloads ~{taglia / 1024:.1f} GB"
-              if taglia else
-              f"first run downloads the weights (size not measured for {model_name})")
+    quanto = _quanto_scarica(model_name)
     console.print(
         f"Warming embedding model [cyan]{model_name}[/] (dim {CONFIG.embedding_dim}) "
         f"— {quanto}, please wait…"
@@ -423,7 +435,9 @@ def warmup(
     # Best-effort: a missing/offline reranker model must NOT fail the embed warmup.
     from . import semantic
     if semantic._rerank_enabled():
-        console.print("Warming cross-encoder reranker (R@1 lever) — first run downloads…")
+        from .semantic import _DEFAULT_RERANK_MODEL
+        rr = os.environ.get("ENGRAM_RERANK_MODEL", "").strip() or _DEFAULT_RERANK_MODEL
+        console.print(f"Warming cross-encoder reranker (R@1 lever) — {_quanto_scarica(rr)}…")
         t1 = time.time()
         try:
             if semantic._load_reranker() is not None:

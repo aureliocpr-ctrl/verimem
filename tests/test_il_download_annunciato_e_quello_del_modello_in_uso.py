@@ -27,7 +27,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from verimem.cli import _EMBEDDER_DOWNLOAD_MB
+from verimem.cli import _MODEL_DOWNLOAD_MB
 from verimem.config import _DEFAULT_EMBEDDING_MODEL, CONFIG
 
 RADICE = Path(__file__).resolve().parent.parent
@@ -71,9 +71,9 @@ def test_il_modello_in_uso_ha_una_misura():
     Se qualcuno cambia il modello e non lo misura, il comando non deve poter
     continuare ad annunciare la cifra del modello precedente.
     """
-    assert _DEFAULT_EMBEDDING_MODEL in _EMBEDDER_DOWNLOAD_MB, (
+    assert _DEFAULT_EMBEDDING_MODEL in _MODEL_DOWNLOAD_MB, (
         f"`_DEFAULT_EMBEDDING_MODEL` è {_DEFAULT_EMBEDDING_MODEL!r} ma nessuno ha "
-        f"misurato quanto scarica: la tabella conosce {sorted(_EMBEDDER_DOWNLOAD_MB)}. "
+        f"misurato quanto scarica: la tabella conosce {sorted(_MODEL_DOWNLOAD_MB)}. "
         f"Misurare su una cache HF vuota e aggiungere la voce — NON copiare la "
         f"cifra del modello precedente, che è il difetto che questo collaudo esiste "
         f"per impedire.")
@@ -81,7 +81,7 @@ def test_il_modello_in_uso_ha_una_misura():
 
 def test_le_superfici_annunciano_la_cifra_misurata():
     """Nessuna superficie può annunciare una taglia diversa da quella misurata."""
-    atteso = _EMBEDDER_DOWNLOAD_MB[_DEFAULT_EMBEDDING_MODEL]
+    atteso = _MODEL_DOWNLOAD_MB[_DEFAULT_EMBEDDING_MODEL]
     divergenti, viste = {}, 0
     for nome in SUPERFICI:
         p = RADICE / nome
@@ -110,8 +110,8 @@ def test_un_modello_non_misurato_non_eredita_la_cifra_di_un_altro():
     il valore di qualcun altro.
     """
     ignoto = "una/rete-mai-misurata"
-    assert ignoto not in _EMBEDDER_DOWNLOAD_MB
-    assert _EMBEDDER_DOWNLOAD_MB.get(ignoto) is None, (
+    assert ignoto not in _MODEL_DOWNLOAD_MB
+    assert _MODEL_DOWNLOAD_MB.get(ignoto) is None, (
         "un modello sconosciuto deve dare None — è quel None che fa dire al "
         "comando «size not measured», invece di annunciare la cifra di un altro")
 
@@ -124,7 +124,7 @@ def test_il_criterio_riconoscerebbe_il_difetto(tmp_path):
         encoding="utf-8")
     cifre = _cifre_annunciate(finto)
     assert cifre == [440.0], f"il criterio non legge più la cifra annunciata: {cifre}"
-    atteso = _EMBEDDER_DOWNLOAD_MB[_DEFAULT_EMBEDDING_MODEL]
+    atteso = _MODEL_DOWNLOAD_MB[_DEFAULT_EMBEDDING_MODEL]
     assert abs(cifre[0] - atteso) > atteso * 0.10, (
         "col vecchio valore il collaudo resterebbe verde: sarebbe un guardiano "
         "che non guarda")
@@ -132,8 +132,8 @@ def test_il_criterio_riconoscerebbe_il_difetto(tmp_path):
 
 def test_la_tabella_non_e_vuota():
     """Tiene onesti i due sopra: a tabella vuota sarebbero veri e vuoti."""
-    assert _EMBEDDER_DOWNLOAD_MB, "la tabella delle misure è vuota"
-    for nome, mb in _EMBEDDER_DOWNLOAD_MB.items():
+    assert _MODEL_DOWNLOAD_MB, "la tabella delle misure è vuota"
+    for nome, mb in _MODEL_DOWNLOAD_MB.items():
         assert mb > 0, f"{nome} dichiara una taglia di {mb} MB"
 
 
@@ -156,3 +156,49 @@ def test_il_banco_non_gira_sul_modello_del_prodotto():
         "sotto pytest il modello coincide con quello del prodotto: se è stato "
         "voluto, questo collaudo va aggiornato; se è successo per caso, ogni "
         "esecuzione della suite ora scarica il modello grande")
+
+
+def test_entrambi_i_modelli_del_prodotto_annunciano_una_cifra():
+    """`warmup` scarica DUE modelli, e il secondo non diceva quanto.
+
+    Il reranker si annunciava «first run downloads…» — puntini, nessun numero —
+    per 470 MB misurati. Un numero mancante non è una promessa più piccola di
+    una sbagliata: è nessuna promessa, e sfugge a qualunque presidio che
+    confronti cifre fra loro, perché non c'è cifra da confrontare.
+
+    Il criterio interroga la funzione che il comando usa davvero, non il testo
+    del messaggio: è lì che il prodotto decide cosa dire.
+    """
+    from verimem.cli import _quanto_scarica
+    from verimem.semantic import _DEFAULT_RERANK_MODEL
+
+    for nome in (_DEFAULT_EMBEDDING_MODEL, _DEFAULT_RERANK_MODEL):
+        detto = _quanto_scarica(nome)
+        assert "not measured" not in detto, (
+            f"il prodotto scarica {nome} e non sa dire quanto pesa: misurarlo su "
+            f"una cache HF vuota e aggiungerlo a `_MODEL_DOWNLOAD_MB`")
+        assert re.search(r"\d", detto), f"nessuna cifra nell'annuncio di {nome}: {detto!r}"
+
+
+def test_il_comando_non_annuncia_piu_un_download_senza_cifra():
+    """Il controllo sul testo: nessun «downloads…» nudo resta nel comando.
+
+    ⚠️ La prima stesura cercava una cifra IN TUTTA LA RIGA, e restava verde col
+    difetto rimesso: la riga del reranker contiene «R@1», e quell'1 la assolveva.
+    Un criterio sintattico su un fenomeno semantico sbaglia in entrambe le
+    direzioni — qui ha assolto, e l'ha rivelato solo la falsificazione.
+
+    Il criterio guarda ora ciò che segue l'annuncio, che è dove la taglia deve
+    stare: «downloads ~1.1 GB» passa, «downloads…» no.
+    """
+    testo = (RADICE / "verimem" / "cli.py").read_text(encoding="utf-8")
+    nudi = []
+    for riga in testo.splitlines():
+        i = riga.find("first run downloads")
+        if i < 0 or riga.lstrip().startswith("#"):
+            continue
+        coda = riga[i + len("first run downloads"):]
+        if not re.search(r"\d|_quanto_scarica|not measured|\{mb|\{quanto", coda):
+            nudi.append(riga.strip())
+    assert not nudi, (
+        f"queste righe annunciano un download senza dire quanto: {nudi}")
