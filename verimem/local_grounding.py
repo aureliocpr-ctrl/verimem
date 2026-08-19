@@ -128,6 +128,9 @@ def make_finetuned_scorer(model_dir: str | Path, *, max_length: int = 512,
     return scorer
 
 
+_A_CAPO = chr(10)
+
+
 class LocalGroundingJudge:
     """Scores source ⊢ fact in [0, 100] with the local CE. The source is reduced to
     its fact-relevant span (production selector) before scoring — the CE window is
@@ -143,6 +146,8 @@ class LocalGroundingJudge:
         self._focus_budget = focus_budget
         self._config: dict[str, Any] | None = None
         self._load_failed = False
+        self._tok: Any | None = None
+        self._tok_failed = False
 
     @property
     def config(self) -> dict[str, Any]:
@@ -224,8 +229,60 @@ class LocalGroundingJudge:
         daemon si manda la coppia gia' pronta, cosi' non c'e' un secondo posto
         dove il budget possa essere applicato in modo diverso."""
         budget = int(focus_budget) if focus_budget else self.focus_budget
-        return (select_relevant_span(source or "", fact or "", budget=budget),
+        span = select_relevant_span(source or "", fact or "", budget=budget)
+        return (self._entro_la_finestra(span),
                 fact or "")
+
+    def _entro_la_finestra(self, span: str) -> str:
+        """Riduce lo span finche' entra nella finestra del CE, contando TOKEN.
+
+        `focus_budget` e' in CARATTERI, `max_length` in TOKEN: le due unita'
+        coincidono solo sulla prosa. Misurato 2026-08-19 col tokenizzatore del
+        gate, a budget 1500::
+
+            prosa italiana      4.08 caratteri/token   ->  350 token   dentro
+            tabella di misure   2.15                   ->  713 token   FUORI
+            log applicativo     2.02                   ->  715 token   FUORI
+            git diff --stat     1.70                   ->  879 token   FUORI
+
+        Senza questa riduzione il tokenizzatore tronca da se' con
+        ``longest_first``, cioe' DALLA CODA: su un `git diff` butta il 42% dello
+        span DOPO che il selettore l'aveva scelto apposta, e taglia a meta' riga.
+        Qui si tolgono RIGHE INTERE dal fondo, che e' la stessa perdita ma
+        leggibile — e lo si fa una volta sola, in `coppia`, che serve tanto lo
+        scorer in-process quanto il daemon condiviso.
+
+        Best-effort: se il tokenizzatore non e' disponibile lo span esce
+        invariato e il troncamento resta quello di prima, mai peggio.
+        """
+        if not span:
+            return span
+        tok = self._tokenizzatore()
+        if tok is None:
+            return span
+        conta = lambda s: len(tok.encode(s, add_special_tokens=False))  # noqa: E731
+        if conta(span) <= self.max_length:
+            return span
+        righe = span.splitlines()
+        while len(righe) > 1:
+            righe.pop()
+            candidato = _A_CAPO.join(righe)
+            if conta(candidato) <= self.max_length:
+                return candidato
+        return righe[0] if righe else span
+
+    def _tokenizzatore(self) -> Any | None:
+        """Il tokenizzatore del gate, caricato una volta e riusato. None quando
+        il modello non c'e': il giudice deve poter fallire senza rumore."""
+        if self._tok is None and not self._tok_failed:
+            with self._lock:
+                if self._tok is None and not self._tok_failed:
+                    try:
+                        from transformers import AutoTokenizer
+                        self._tok = AutoTokenizer.from_pretrained(str(self.model_dir))
+                    except Exception:  # noqa: BLE001 — assente/corrotto: si prosegue
+                        self._tok_failed = True
+        return self._tok
 
     @staticmethod
     def normalizza(val: float) -> float:
