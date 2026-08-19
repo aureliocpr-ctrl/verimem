@@ -52,10 +52,20 @@ _UNDO_TTL_S = _ttl_undo()
 #: legge un RAPPORTO, quindi non lo si zittisce con un ritiro fortunato.
 _UNDO_HANDLE_WARN = 0.5
 
+#: La seconda meta' della frase e' del 2026-08-19, e nasce da una misura sul
+#: Quickstart del README eseguito in un venv nuovo: senza giudice il fatto VERO
+#: («Analytics runs on Postgres.») risulta `superseded_by` la confabulazione
+#: («Analytics runs on MongoDB.»), che resta l'unica servita; con il giudice la
+#: confabulazione e' `quarantined` a 0.62 e il vero sopravvive a 99.57. La frase
+#: diceva il vero e diceva TROPPO POCO: descriveva cosa non viene verificato e
+#: taceva cosa cade. Chi legge decide se lanciare `warmup` in base al costo di
+#: non lanciarlo, e quel costo era dichiarato piu' piccolo di quello che e'.
 AVVISO_SENZA_GIUDICE = (
     "writes that CARRY A SOURCE are admitted with an L4-skipped advisory; "
     "writes without a source get no advisory at all — there was nothing to "
-    "check them against")
+    "check them against; and with nothing judging them, a later write on the "
+    "same source retracts the earlier one, so an unchecked claim can end up "
+    "the only fact left")
 
 
 def _misura(byte: int) -> str:

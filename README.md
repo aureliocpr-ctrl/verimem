@@ -258,7 +258,9 @@ from verimem import Memory
 # multilingual gate model (~656 MB, a public release — no account) that judges
 # writes; `verimem doctor` verifies the install. Without a judge, writes are
 # admitted WITH an explicit L4-skipped advisory (never silently) and the assert
-# below would fail — doctor tells you exactly why.
+# below would fail — doctor tells you exactly why. And it costs more than the
+# missing check: with nothing judging them, the second write retracts the first,
+# so the confabulation ends up the only fact left live.
 m = Memory("memory.db")
 
 # THE MOAT, live — the reason Verimem exists. Same source, two writes; works
