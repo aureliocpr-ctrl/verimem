@@ -306,6 +306,16 @@ jobs:
       #   devono restare d'accordo e non si conoscono. Li' il percorso, qui il
       #   NOME del modello — e nessuno guardava il secondo.
       - name: Scalda anche il modello che i TEST pinnano (non quello del server)
+        # ⚠️ `shell: bash` NON e' cosmesi: senza, su windows-latest il passo
+        # gira in PowerShell, che non capisce `python - <<'PY'`, e con
+        # `continue-on-error: true` MUORE IN SILENZIO.
+        # Misurato sul run 32250440702: su ubuntu il passo stampa
+        # «TEST-MODEL ok, dim=384» e la guardia conta MODELLO-DEI-TEST
+        # file=38; su windows non stampa NIENTE e la guardia conta file=0.
+        # ⇒ i sei test che lanciano la CLI in sottoprocesso sono verdi su
+        # ubuntu dal 17/08 e non lo sono MAI stati su windows: la cura era
+        # a meta' e nessuno poteva vederlo, perche' il passo non protesta.
+        shell: bash
         continue-on-error: true
         run: |
           python - <<'PY'
@@ -620,6 +630,10 @@ jobs:
       # 📌 La sonda stampa anche QUALI variabili di offline sono accese, perche'
       # la differenza fra i due ambienti e' esattamente quella.
       - name: Sonda offline (quali file risolve la cache di QUESTO runner)
+        # Stesso difetto del passo qui sopra: heredoc senza `shell: bash`
+        # ⇒ muta su windows. Una sonda che non parla sulla piattaforma dove
+        # il guasto c'e' e' peggio di nessuna sonda.
+        shell: bash
         continue-on-error: true
         # Le TRE che `tests/conftest.py::_isolate_test_env` imposta (righe
         # 315-317), non una sola. Con il solo `HIPPO_OFFLINE` huggingface_hub
