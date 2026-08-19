@@ -4,7 +4,7 @@
     python examples/sdk_quickstart.py
 
 Uses a throwaway temp DB (does not touch your real ~/.engram corpus). First run
-downloads the ~440 MB multilingual-e5-base embedder; subsequent runs are instant.
+downloads the ~1.1 GB multilingual-e5-base embedder; subsequent runs are instant.
 
 What it shows, end to end:
   1. add()      — a benign fact is stored live.

@@ -350,6 +350,24 @@ def backup_all(
         raise typer.Exit(1) from None
 
 
+#: What the embedding model actually costs to download, per model, in MB.
+#:
+#: The number used to be a bare `~440 MB` in the message and in the docstring,
+#: and it was wrong by a factor of 2.4: measured on an EMPTY HF cache, the
+#: `intfloat/multilingual-e5-base` folder lands at 1082 MB (`model.safetensors`
+#: alone is 1060.7 MB). A new user was told to expect 440 MB and got 1.1 GB.
+#:
+#: It is a table, not a constant, because the failure mode is switching
+#: `CONFIG.embedding_model` and leaving the announcement behind. An unknown
+#: model does NOT fall back to some other model's figure: the command says the
+#: size was never measured, which is a different statement from a number — the
+#: same rule `review_queue.threshold` states for alarms, applied here.
+_EMBEDDER_DOWNLOAD_MB: dict[str, int] = {
+    # measured 2026-08-19, Windows + py3.13, HF_HOME pointed at an empty dir
+    "intfloat/multilingual-e5-base": 1082,
+}
+
+
 @app.command()
 def warmup(
     daemon: bool = typer.Option(
@@ -364,7 +382,7 @@ def warmup(
     """Pre-load (and download on first run) the embedding model.
 
     Run this ONCE after install, before wiring Verimem into Claude Code, so the
-    first real recall is instant instead of silently downloading ~440 MB of
+    first real recall is instant instead of silently downloading ~1.1 GB of
     model weights in the background on the first query. Also the natural
     pre-bake step in CI / Docker build. Exit 1 if the model can't be loaded
     (e.g. running offline with the model not yet cached).
@@ -374,9 +392,13 @@ def warmup(
     from . import embedding
 
     model_name = CONFIG.embedding_model
+    taglia = _EMBEDDER_DOWNLOAD_MB.get(model_name)
+    quanto = (f"first run downloads ~{taglia / 1024:.1f} GB"
+              if taglia else
+              f"first run downloads the weights (size not measured for {model_name})")
     console.print(
         f"Warming embedding model [cyan]{model_name}[/] (dim {CONFIG.embedding_dim}) "
-        "— first run downloads ~440 MB, please wait…"
+        f"— {quanto}, please wait…"
     )
     t0 = time.time()
     try:

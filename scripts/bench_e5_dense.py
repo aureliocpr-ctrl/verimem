@@ -7,7 +7,7 @@ Misura il candidato a punto-di-svolta INTERATTIVO: un dense embedder piu' forte
 Cosine diretto (bypassa SemanticMemory che e' a 384d) -> e' una MISURA, non un wiring.
 Su COPIA del corpus live, 25 query IT etichettate. Hermetic.
 
-Run: python scripts/bench_e5_dense.py   (scarica e5-base ~440MB la 1a volta)
+Run: python scripts/bench_e5_dense.py   (scarica e5-base ~1.1GB la 1a volta)
 """
 from __future__ import annotations
 

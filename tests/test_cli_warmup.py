@@ -1,7 +1,7 @@
 """`engram warmup` — pre-load (and download on first run) the embedding model
 with clear feedback.
 
-Mainstream first-run gap: the embedding model (~440 MB e5-base) downloads
+Mainstream first-run gap: the embedding model (~1.1 GB e5-base) downloads
 SILENTLY on the first recall, so a new user thinks recall is broken while it is
 actually fetching weights in the background. `engram warmup` makes that step
 explicit + observable (and is the natural pre-bake step in CI / Docker build).
