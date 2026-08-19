@@ -227,7 +227,7 @@ typical library and it is worth knowing before you start:
 | step | on disk |
 |---|---|
 | `pip install verimem` — 74 packages, `torch` is more than half of it | **~1.0 GB** |
-| first `verimem warmup` — embedding model + gate model | **~2.3 GB** |
+| first `verimem warmup` — embedding + reranker + gate models | **~2.3 GB** |
 | **total, first run on a clean machine** | **~3.3 GB** |
 
 Measured on Windows with Python 3.13; on Linux the `torch` wheel differs, so the first row
@@ -242,6 +242,10 @@ much and was **not timed**, so treat the total as unknown rather than as three t
 If you only need the deterministic checks and can live without the local judge, `verimem
 warmup --no-gate` skips the judge model entirely — it never creates the model directory. That
 model is announced as 656 MB (the download); on disk it takes 711 MB.
+
+The reranker is a third model, and it is on by default: `warmup` downloads its 470 MB unless
+you set `VERIMEM_RECALL_RERANK=0`. It is the stage-2 recall lever, not part of the moat — so
+turning it off costs ranking quality on short queries and nothing else.
 
 ## Quickstart (Python)
 
