@@ -130,7 +130,21 @@ def ensure_schema_version(
             in_tx = True
         except sqlite3.OperationalError:
             in_tx = False
+        # La versione va RILETTA qui, non fuori: fra il `_read_version` in
+        # cima e il `BEGIN IMMEDIATE` appena eseguito c'e' una finestra in cui
+        # un altro processo puo' aver migrato e committato. Chi si fida della
+        # lettura di prima riesegue una migrazione gia' applicata, e il DDL
+        # delle migrazioni e' `ALTER TABLE ... ADD COLUMN` nudo: rieseguirlo
+        # non e' un no-op, alza `duplicate column name`.
+        applicata = _read_version(conn, db_id)
+        if applicata >= target_version:
+            if in_tx:
+                conn.commit()
+            return applicata
         for version, fn in pending:
+            if version <= applicata:
+                # gia' applicata dall'altro processo mentre aspettavamo il lock
+                continue
             fn(conn)
             _write_version(conn, db_id, version)
         if in_tx:
