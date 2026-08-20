@@ -217,8 +217,32 @@ def test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice():
 
     bump = git("log", "--format=%H", "-1", "-S", f'version = "{versione.group(1)}"',
                "--", "pyproject.toml")
-    if not bump:
-        pytest.skip("bump di versione non trovato nella storia (shallow clone?)")
+    # ⚠️⚠️ QUESTA GUARDIA CONTROLLAVA SOLO L'ASSENZA, e su un clone superficiale il
+    # valore C'È ed è SBAGLIATO. `git` presenta `pyproject.toml` come AGGIUNTO
+    # nell'unico commit disponibile, quindi `-S` trova HEAD stesso e
+    # `rev-list --count HEAD..HEAD` dà **0** — il numero più rassicurante che
+    # esista, proprio dove la distanza vera era 428. Il test non saltava: PASSAVA.
+    # Misurato il 2026-08-20 riproducendo il checkout della CI::
+    #
+    #     git clone --depth 1 <repo>   ->  commit disponibili 1
+    #                                      bump trovato = HEAD
+    #                                      distanza CALCOLATA = 0
+    #
+    # 🔑 Uno skip lascia una traccia nel riepilogo («N skipped») e qualcuno può
+    # andarlo a leggere; un verde da misura sbagliata non lascia NIENTE ed è
+    # indistinguibile da un verde vero. Per questo la condizione deve chiedere
+    # anche se la storia c'è, non solo se il commit è stato trovato.
+    # 📌 `fetch-depth: 0` (ci.yml) cura il NOSTRO cortile. Questa riga cura chiunque
+    # esegua la suite altrove: un contributore che clona con `--depth`, un
+    # container, un altro workflow.
+    if (not bump
+            or bump == git("rev-parse", "HEAD")
+            or git("rev-parse", "--is-shallow-repository") == "true"):
+        pytest.skip(
+            "storia non disponibile: la distanza non è calcolabile "
+            "(clone superficiale — vedi il commento qui sopra: senza questa "
+            "guardia il test PASSA con distanza 0 invece di saltare)"
+        )
     distanza = int(git("rev-list", "--count", f"{bump}..HEAD") or 0)
 
     assert distanza <= SOGLIA, (
@@ -461,3 +485,63 @@ def test_LA_CI_DA_AL_PRESIDIO_LA_STORIA_CHE_GLI_SERVE():
         "il checkout del job di test non chiede la storia completa "
         f"(fetch-depth={with_.get('fetch-depth')!r}): il presidio della "
         "versione tornera' a SKIPPARE in CI, e uno skip si legge come un verde")
+
+
+def test_LA_GUARDIA_SALTA_DAVVERO_SU_UN_CLONE_SUPERFICIALE(tmp_path):
+    """⚠️ `fetch-depth: 0` cura il NOSTRO cortile. Questo cura tutti gli altri.
+
+    Il presidio sopra difende la CI. Ma la suite gira anche altrove — un
+    contributore che clona con ``--depth``, un container, un altro workflow — e
+    lì la storia continua a mancare. Senza la guardia a tre condizioni,
+    ``test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice`` non salta:
+    **misura 0 e PASSA**, perché su un clone superficiale ``git log -S`` trova
+    HEAD stesso (senza genitore, quell'unico commit "introduce" l'intero file).
+
+    Questo test non guarda il codice del presidio: **rifà il clone superficiale
+    vero e verifica che almeno una delle tre condizioni scatti**. Regge anche se
+    un domani `git` cambiasse comportamento — se `-S` smettesse di trovare HEAD,
+    scatterebbe `not bump`, che è la prima condizione.
+
+    E controlla anche che la guardia sia ancora scritta lì: senza questa seconda
+    metà, chi la togliesse avrebbe un verde da questo presidio mentre il verde
+    falso torna.
+    """
+    # ⚠️ Si ispeziona il sorgente della FUNZIONE presidiata, non del file: la
+    # prima stesura cercava la stringa in `__file__`, ma la stringa compare
+    # anche nell'assert qui sotto — quindi la condizione era vera per
+    # costruzione e questo presidio NON POTEVA FALLIRE. È la stessa forma che
+    # stavo censendo altrove il 20/08: un test che misura bene un insieme già
+    # conforme. Il criterio che la smaschera: «esiste oggi un modo di farlo
+    # diventare rosso?»
+    import inspect
+
+    guardia = inspect.getsource(test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice)
+    assert "--is-shallow-repository" in guardia, (
+        "la guardia contro il clone superficiale non e' piu' nel presidio della "
+        "versione: senza, quel test torna a PASSARE con distanza 0 invece di saltare")
+
+    clone = tmp_path / "superficiale"
+    esito = subprocess.run(
+        ["git", "clone", "--depth", "1", RADICE.as_uri(), str(clone)],
+        capture_output=True, text=True, timeout=300)
+    if esito.returncode != 0:
+        pytest.skip(f"clone superficiale non riuscito: {esito.stderr.strip()[:200]}")
+
+    def git_la(*a: str) -> str:
+        return subprocess.run(["git", *a], cwd=str(clone), capture_output=True,
+                              text=True, timeout=60).stdout.strip()
+
+    versione = re.search(r'^version\s*=\s*"([^"]+)"',
+                         (clone / "pyproject.toml").read_text(encoding="utf-8"), re.M)
+    assert versione, "il clone non ha una versione in pyproject.toml"
+    bump = git_la("log", "--format=%H", "-1", "-S",
+                  f'version = "{versione.group(1)}"', "--", "pyproject.toml")
+    testa = git_la("rev-parse", "HEAD")
+    superficiale = git_la("rev-parse", "--is-shallow-repository")
+
+    scatta = (not bump) or bump == testa or superficiale == "true"
+    assert scatta, (
+        "su un clone superficiale NESSUNA delle tre condizioni della guardia "
+        f"scatta: bump={bump[:8]!r} head={testa[:8]!r} shallow={superficiale!r}.\n"
+        "Il presidio della versione calcolerebbe una distanza e la dichiarerebbe "
+        "vera: e' esattamente il verde falso che la guardia esiste per impedire.")
