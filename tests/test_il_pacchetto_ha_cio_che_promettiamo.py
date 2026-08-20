@@ -425,18 +425,25 @@ def test_LA_CI_DA_AL_PRESIDIO_LA_STORIA_CHE_GLI_SERVE():
 
     `test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice` cerca nella
     storia il commit che ha introdotto `version = "X"`. Con
-    ``actions/checkout@v4`` senza ``fetch-depth`` il clone e' profondo **1**:
-    quel commit non c'e', il test fa `pytest.skip("...(shallow clone?)")`, e
-    lo skip finisce fra i 44 skipped che ogni cella riporta — **si legge
-    verde**.
+    ``actions/checkout@v4`` senza ``fetch-depth`` il clone e' profondo **1**.
 
-    🔑 Il presidio non era spento e non sbagliava: era ACCESO, diceva il vero,
-    e l'ambiente gli aveva tolto l'informazione per parlare. Misurato il
-    20/08: in locale `1 failed` con «ferma da 425 commit (soglia 150)», in CI
-    `SKIPPED` da sempre.
+    ⚠️⚠️ E QUI STA LA PARTE CHE AVEVO SBAGLIATO, corretta il 20/08 alle 15:07
+    misurando invece di dedurre. La guardia `if not bump: pytest.skip(...
+    shallow clone?)` **NON SCATTA MAI** su un clone shallow, perche' il bump
+    *viene trovato*: senza genitore, quell'unico commit "introduce" l'intero
+    file. Riprodotto con `git clone --depth 1` sull'albero vero::
 
-    ⚖️ Un test che si spegne da solo quando l'ambiente non collabora e' peggio
-    di un test assente: un test assente si nota, questo si conta fra i verdi.
+        clone profondo 1   bump = HEAD stesso      distanza = 0    -> PASSED
+        albero completo    bump = 825e679d4        distanza = 426  -> FAILED
+
+    ⇒ **Il presidio non era muto: RISPONDEVA, e rispondeva 0.** In CI risultava
+    `PASSED` su tutte le celle — verificato su tre log (`d1e40860` ubuntu,
+    `932f8d7e` windows, `5ea49445` ubuntu). Non un'astensione contata fra i
+    verdi: **un verde attivo, con un numero falso dentro.**
+
+    🔑 **Una storia troncata non produce un'astensione: produce la RISPOSTA
+    MIGLIORE POSSIBILE.** Ed e' peggio di uno skip, perche' uno skip almeno
+    compare in un elenco.
     """
     import pathlib
 

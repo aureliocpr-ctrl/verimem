@@ -162,14 +162,19 @@ jobs:
       # ⚠️ `fetch-depth: 0` NON e' zelo: senza, il clone e' profondo 1 e il
       # presidio del RILASCIO diventa MUTO. Cerca il commit che ha introdotto
       # `version = "X"` in pyproject.toml per misurare quanto e' lontano il
-      # numero dichiarato dal codice; su un clone senza storia non lo trova e
-      # fa `pytest.skip("...(shallow clone?)")` — e uno skip finisce fra i 44
-      # skipped che ogni cella riporta, cioe' SI LEGGE VERDE.
-      # 🔑 Il presidio non era spento e non sbagliava: era ACCESO e diceva il
-      # vero, e l'ambiente in cui lo leggevamo gli aveva tolto l'informazione
-      # per parlare. Quarta forma della stessa famiglia misurata in due giorni
-      # (crash, timeout, skip): l'assenza di misura si legge come misura
-      # perfetta.
+      # numero dichiarato dal codice.
+      # ⚠️ E NON E' UNO SKIP, come avevo scritto qui prima: la guardia
+      # `if not bump: pytest.skip("...shallow clone?")` NON scatta, perche' su
+      # un clone profondo 1 il bump VIENE trovato — senza genitore, quell'unico
+      # commit "introduce" l'intero file. Riprodotto con `git clone --depth 1`:
+      #     clone profondo 1   bump = HEAD    distanza = 0     -> PASSED
+      #     albero completo    bump = 825e679d4  distanza = 426 -> FAILED
+      # In CI il test risultava PASSED su tutte le celle (verificato su tre
+      # log). Non un'astensione contata fra i verdi: un VERDE ATTIVO con un
+      # numero falso dentro.
+      # 🔑 Una storia troncata non produce un'astensione: produce la RISPOSTA
+      # MIGLIORE POSSIBILE — ed e' peggio di uno skip, che almeno compare in
+      # un elenco.
       # 📌 E' il test che il suo stesso docstring chiama «l'unico del file che
       # avrebbe preso il difetto vero del 08/08», quando il repo era a 375
       # commit dal bump e dichiarava un numero gia' pubblicato. Oggi siamo a
