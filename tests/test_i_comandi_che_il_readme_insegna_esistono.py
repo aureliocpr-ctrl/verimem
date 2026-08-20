@@ -44,23 +44,12 @@ from pathlib import Path
 
 import pytest
 
+from tests._aiuto_cli import RE_ANSI as _RE_ANSI
+from tests._aiuto_cli import RE_COMANDO as _RE_COMANDO
+from tests._aiuto_cli import comandi_dal_box as _comandi_dal_box
+
 _RADICE = Path(__file__).resolve().parents[1]
 
-#: Il nome di un comando dentro il riquadro di Rich: «│ » e poi il nome.
-_RE_COMANDO = r"│\s([a-z][a-z0-9-]{2,})\s{2,}"
-#: Le sequenze di escape ANSI, che vanno tolte PRIMA di cercare (vedi sotto).
-_RE_ANSI = r"\[[0-9;]*[a-zA-Z]"
-
-
-def _comandi_dal_box(testo: str) -> set[str]:
-    """I comandi dentro il riquadro di Rich, colorato o no.
-
-    ⚠️ Lo strip degli ANSI e il regex stanno QUI e non nel chiamante, cosi' il
-    presidio puo' chiamare la STESSA funzione che il test vero usa: una regola
-    collaudata di fianco al codice che la applica e' una regola che si puo'
-    togliere dal codice senza che nessun rosso lo dica.
-    """
-    return set(re.findall(_RE_COMANDO, re.sub(_RE_ANSI, "", testo)))
 
 
 def _comandi_esposti() -> set[str]:

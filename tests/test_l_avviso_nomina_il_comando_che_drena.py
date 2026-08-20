@@ -42,9 +42,11 @@ from pathlib import Path
 
 import pytest
 
+from tests._aiuto_cli import comandi_dal_box as _comandi_dal_box
 from verimem import review_queue
 
 _RADICE = Path(__file__).resolve().parents[1]
+
 
 #: I comandi che l'avviso insegna, estratti dal suo stesso testo.
 _COMANDO_RE = re.compile(r"verimem ([a-z][a-z0-9-]+(?: [a-z][a-z0-9-]+)?)")
@@ -130,8 +132,7 @@ def test_OGNI_COMANDO_NOMINATO_ESISTE_DAVVERO(consiglio):
     #   valeva per WINDOWS (curata in 40f6b5d8, 44->42 skipped). Su ubuntu la
     #   causa e' un'altra ed e' questa. Due piattaforme, due difetti diversi
     #   sullo stesso presidio.
-    testo = re.sub(r"\[[0-9;]*[a-zA-Z]", "", testo)
-    esposti = set(re.findall(r"│\s([a-z][a-z0-9-]{2,})\s{2,}", testo))
+    esposti = _comandi_dal_box(testo)
     if not esposti:
         pytest.skip(f"l'help di `facts` non è parsabile (rc={r.returncode}): "
                     f"aggiorna QUESTA funzione invece di credere a uno zero")
