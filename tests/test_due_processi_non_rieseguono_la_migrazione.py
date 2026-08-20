@@ -122,3 +122,65 @@ def test_richiamarla_due_volte_resta_un_no_op(tmp_path):
     assert M.ensure_schema_version(conn, db_id="t", target_version=2,
                                    migrations=LADDER) == 2
     conn.close()
+
+
+def test_una_migrazione_parziale_dell_altro_non_blocca_il_resto(tmp_path,
+                                                                monkeypatch):
+    """L'altro processo si ferma a META' scaletta: il resto va applicato lo stesso.
+
+    Copre il ramo che il test sopra NON tocca. Li' l'altro arriva al mio stesso
+    target e la funzione esce subito; qui arriva a v2 mentre io punto a v3, e la
+    cura deve saltare SOLO la v2 e applicare la v3. Se saltasse tutto avrei
+    chiuso la finestra rompendo la scaletta, che e' il modo peggiore di ottenere
+    un verde.
+
+    Il banco tiene traccia di CHI esegue ogni migrazione: la prima versione
+    contava le esecuzioni in una lista sola e attribuiva a B anche quelle di A,
+    dando un `CADE` che era del misuratore e non della cura.
+    """
+    eseguite: list[tuple[str, int]] = []
+    nome: dict[int, str] = {}
+
+    def _passo(v):
+        def _fn(conn):
+            eseguite.append((nome.get(id(conn), "?"), v))
+            if v > 1:
+                conn.execute(f"ALTER TABLE t ADD COLUMN c{v} REAL")
+        return _fn
+
+    ladder = [(1, _passo(1)), (2, _passo(2)), (3, _passo(3))]
+
+    db = tmp_path / "parziale.sqlite"
+    a = sqlite3.connect(str(db))
+    b = sqlite3.connect(str(db))
+    nome[id(a)] = "A"
+    nome[id(b)] = "B"
+    _base(a)
+    M.ensure_schema_version(a, db_id="t", target_version=1, migrations=ladder[:1])
+
+    vero = M._read_version
+    aperta = {"gia": False}
+
+    def _finestra(conn, db_id):
+        if id(conn) == id(b) and not aperta["gia"]:
+            aperta["gia"] = True
+            v = vero(conn, db_id)
+            # il patch e' globale: va spento mentre migra A, o A ci ricade dentro
+            monkeypatch.setattr(M, "_read_version", vero)
+            M.ensure_schema_version(a, db_id="t", target_version=2,
+                                    migrations=ladder[:2])
+            monkeypatch.setattr(M, "_read_version", _finestra)
+            return v
+        return vero(conn, db_id)
+
+    monkeypatch.setattr(M, "_read_version", _finestra)
+    eseguite.clear()
+    finale = M.ensure_schema_version(b, db_id="t", target_version=3,
+                                     migrations=ladder)
+
+    assert [v for chi, v in eseguite if chi == "B"] == [3]
+    assert ("A", 2) in eseguite
+    assert finale == 3
+    assert {"c2", "c3"} <= _colonne(b)
+    a.close()
+    b.close()
