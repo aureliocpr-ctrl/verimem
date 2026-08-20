@@ -112,6 +112,15 @@ def ensure_schema_version(
             f"unexpected={extra}. Refusing to upgrade with gaps."
         )
 
+    # ⚠️ DI CHI E' LA TRANSAZIONE. Se il CHIAMANTE ne aveva gia' una aperta, il
+    # `BEGIN IMMEDIATE` qui sotto fallisce e il `commit()` finale renderebbe
+    # definitive anche le SUE scritture, che lui non aveva ancora deciso di
+    # rendere tali — e dopo non puo' nemmeno annullarle («cannot rollback - no
+    # transaction is active»). Va letto PRIMA di tentare il BEGIN: dopo, il
+    # solo messaggio dell'eccezione non distingue «ero gia' in transazione» da
+    # «il database e' occupato», e nel secondo caso il commit serve eccome.
+    altrui = conn.in_transaction
+
     if not pending:
         # No migrations defined yet; just stamp the version.
         try:
@@ -121,7 +130,8 @@ def ensure_schema_version(
         except sqlite3.OperationalError:
             # Already in a transaction? Stamp without one.
             _write_version(conn, db_id, target_version)
-            conn.commit()
+            if not altrui:
+                conn.commit()
         return target_version
 
     try:
@@ -138,7 +148,7 @@ def ensure_schema_version(
         # non e' un no-op, alza `duplicate column name`.
         applicata = _read_version(conn, db_id)
         if applicata >= target_version:
-            if in_tx:
+            if in_tx or not altrui:
                 conn.commit()
             return applicata
         for version, fn in pending:
@@ -147,9 +157,7 @@ def ensure_schema_version(
                 continue
             fn(conn)
             _write_version(conn, db_id, version)
-        if in_tx:
-            conn.commit()
-        else:
+        if in_tx or not altrui:
             conn.commit()
     except Exception:
         try:
