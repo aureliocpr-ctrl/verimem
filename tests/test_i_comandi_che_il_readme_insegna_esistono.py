@@ -46,6 +46,22 @@ import pytest
 
 _RADICE = Path(__file__).resolve().parents[1]
 
+#: Il nome di un comando dentro il riquadro di Rich: «│ » e poi il nome.
+_RE_COMANDO = r"│\s([a-z][a-z0-9-]{2,})\s{2,}"
+#: Le sequenze di escape ANSI, che vanno tolte PRIMA di cercare (vedi sotto).
+_RE_ANSI = r"\[[0-9;]*[a-zA-Z]"
+
+
+def _comandi_dal_box(testo: str) -> set[str]:
+    """I comandi dentro il riquadro di Rich, colorato o no.
+
+    ⚠️ Lo strip degli ANSI e il regex stanno QUI e non nel chiamante, cosi' il
+    presidio puo' chiamare la STESSA funzione che il test vero usa: una regola
+    collaudata di fianco al codice che la applica e' una regola che si puo'
+    togliere dal codice senza che nessun rosso lo dica.
+    """
+    return set(re.findall(_RE_COMANDO, re.sub(_RE_ANSI, "", testo)))
+
 
 def _comandi_esposti() -> set[str]:
     """Quelli che la CLI dichiara nel proprio help — il comportamento."""
@@ -75,8 +91,21 @@ def _comandi_esposti() -> set[str]:
     # 🔑 Un presidio che crolla prima di misurare è peggio di uno assente: si
     # legge come «la promessa è rotta» mentre nessuno ha guardato la promessa.
     testo = (r.stdout or "") + (r.stderr or "")
-    # ⚠️ il box Rich mette i comandi dopo «│ », non dopo un'indentazione
-    trovati = set(re.findall(r"│\s([a-z][a-z0-9-]{2,})\s{2,}", testo))
+    # ⚠️⚠️ VIA GLI ANSI PRIMA DI CERCARE, e non e' cosmesi: e' la ragione dello
+    # zero in CI. Il regex qui sotto pretende una LETTERA subito dopo «│ », ma
+    # quando l'aiuto e' colorato dopo il bordo arriva `[1m` — un escape, non
+    # una lettera — e la ricerca rende ZERO su un help perfettamente leggibile.
+    # 🔬 Provato il 20/08 iniettando gli escape nell'help LOCALE, senza CI::
+    #     help normale            6161 car,  0 ansi  ->  40 comandi
+    #     stesso help colorato    6481 car, 80 ansi  ->   0 comandi
+    #     colorato, ANSI tolti                       ->  40 comandi
+    # ⇒ combacia con cio' che la CI dichiara: 8980 caratteri contro i 6161
+    #   locali (~2800 in piu' = gli escape) e «Inizio: '[1m [0m...'».
+    # 📌 La riga sopra questa diceva che la causa era la decodifica: quella
+    #   valeva per WINDOWS (curata in 40f6b5d8, 44->42 skipped). Su ubuntu la
+    #   causa e' un'altra ed e' questa. Due piattaforme, due difetti diversi
+    #   sullo stesso presidio.
+    trovati = _comandi_dal_box(testo)
     if not trovati:
         # ⚠️ LO SKIP PORTA LE PROVE, e non è una gentilezza: la versione
         # precedente diceva solo `returncode` e lunghezza, e con QUELLI ws8 ha
@@ -162,3 +191,40 @@ def test_IL_README_INSEGNA_ANCORA_QUALCOSA():
 def test_IL_RICONOSCITORE_separa_il_comando_dalla_frase(frammento, atteso, tmp_path):
     """Il banco del misuratore, con i tre falsi veri che avevo raccolto."""
     assert _dal_testo(frammento) == atteso, frammento
+
+
+def test_IL_RICONOSCITORE_SOPRAVVIVE_ALL_AIUTO_COLORATO():
+    """LA REGOLA CHE VALE PIU' DEL REGEX: un aiuto COLORATO non deve produrre
+    ZERO comandi.
+
+    Il regex pretende una LETTERA subito dopo il bordo. Quando Rich colora,
+    dopo il bordo arriva una sequenza di escape, e la ricerca rende **zero su
+    un help perfettamente leggibile**. In CI era esattamente cosi': 8980
+    caratteri, 70 righe col bordo, e l'inizio pieno di escape.
+
+    Il banco non ha bisogno della CI: costruisce le due forme e le confronta.
+    E non fissa il NUMERO dei comandi (cambia a ogni comando nuovo): fissa che
+    colorare l'aiuto NON cambi la risposta.
+
+    Un presidio che si spegne quando l'ambiente colora e' la stessa famiglia
+    degli skip: non dice «non lo so», dice «zero», e uno zero da un parser
+    rotto sembra uno zero vero.
+    """
+    import re as _re
+
+    ESC = chr(27)
+    BORDO = chr(0x2502)
+    schietto = (BORDO + ' status       Quick health check.' + chr(10)
+                + BORDO + ' facts        Fact ops.' + chr(10))
+    colorato = (schietto
+                .replace('status', ESC + '[1mstatus' + ESC + '[0m')
+                .replace('facts', ESC + '[1mfacts' + ESC + '[0m'))
+
+    assert _comandi_dal_box(schietto) == {'status', 'facts'}, (
+        'il banco non riproduce nemmeno il caso semplice')
+    assert set(_re.findall(_RE_COMANDO, colorato)) == set(), (
+        'questo test non misura nulla: il colore non rompe il regex nudo, '
+        'quindi il difetto che presidia non esiste in questa forma')
+    assert _comandi_dal_box(colorato) == {'status', 'facts'}, (
+        'togliere gli ANSI non basta a recuperare i comandi: la cura non '
+        'regge, e in CI il presidio tornera a rendere zero')

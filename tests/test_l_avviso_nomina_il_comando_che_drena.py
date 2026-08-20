@@ -116,6 +116,21 @@ def test_OGNI_COMANDO_NOMINATO_ESISTE_DAVVERO(consiglio):
         # poter tornare a spegnere la misura senza dirlo.
         capture_output=True, encoding="utf-8", errors="replace", timeout=300, cwd=str(_RADICE))
     testo = (r.stdout or "") + (r.stderr or "")
+    # ⚠️⚠️ VIA GLI ANSI PRIMA DI CERCARE, e non e' cosmesi: e' la ragione dello
+    # zero in CI. Il regex qui sotto pretende una LETTERA subito dopo «│ », ma
+    # quando l'aiuto e' colorato dopo il bordo arriva `[1m` — un escape, non
+    # una lettera — e la ricerca rende ZERO su un help perfettamente leggibile.
+    # 🔬 Provato il 20/08 iniettando gli escape nell'help LOCALE, senza CI::
+    #     help normale            6161 car,  0 ansi  ->  40 comandi
+    #     stesso help colorato    6481 car, 80 ansi  ->   0 comandi
+    #     colorato, ANSI tolti                       ->  40 comandi
+    # ⇒ combacia con cio' che la CI dichiara: 8980 caratteri contro i 6161
+    #   locali (~2800 in piu' = gli escape) e «Inizio: '[1m [0m...'».
+    # 📌 La riga sopra questa diceva che la causa era la decodifica: quella
+    #   valeva per WINDOWS (curata in 40f6b5d8, 44->42 skipped). Su ubuntu la
+    #   causa e' un'altra ed e' questa. Due piattaforme, due difetti diversi
+    #   sullo stesso presidio.
+    testo = re.sub(r"\[[0-9;]*[a-zA-Z]", "", testo)
     esposti = set(re.findall(r"│\s([a-z][a-z0-9-]{2,})\s{2,}", testo))
     if not esposti:
         pytest.skip(f"l'help di `facts` non è parsabile (rc={r.returncode}): "
