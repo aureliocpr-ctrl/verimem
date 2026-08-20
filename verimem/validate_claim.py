@@ -95,6 +95,42 @@ class _AgentLike(Protocol):
     semantic: _SemanticLike
 
 
+def _unita_non_allineabili(fatto: str, claim: str) -> bool:
+    """Vero quando le due frasi misurano grandezze DIVERSE, non la stessa in
+    disaccordo.
+
+    Il ramo dell'entailment interroga il giudice e, se questo non trova
+    sostegno, riporta «contradicted». Ma «non sostiene» e «contraddice» non
+    sono la stessa cosa: se il fatto parla di una `7-snapshot rotation` e il
+    claim di `14 daily snapshots`, il giudice non trova sostegno perche' le
+    due frasi misurano **grandezze diverse**, non perche' si smentiscano.
+
+    ⚠️ IL DISCRIMINE E' L'UNITA', E DEVE ESSERE NON VUOTA DA ENTRAMBE LE PARTI.
+    Misurato su quattro coppie prima di scrivere questa funzione::
+
+        bersaglio 7   fatto {('snapshot', 7)}  claim {('daily', 14)}  -> True
+        swahili       fatto {('', 480)}        claim {('', 380)}      -> False
+        minuti        fatto {('min', 30)}      claim {('min', 45)}    -> False
+        read/write    fatto {('s', 10)}        claim {('s', 30)}      -> False
+
+    Le unita' VUOTE non contano come «diverse»: un'unita' vuota non significa
+    «un'altra grandezza», significa **che l'estrattore non l'ha vista**. In
+    swahili non la vede perche' cerca l'unita' DOPO il numero e quella lingua
+    mette il numerale dopo il sostantivo — e li' la contraddizione di valore e'
+    vera e va tenuta. Trattare il vuoto come «diverso» spegnerebbe la promessa
+    che il README dichiara di mantenere.
+    """
+    q_fatto = _extract_quantities(fatto)
+    q_claim = _extract_quantities(claim)
+    if not q_fatto or not q_claim:
+        return False
+    u_fatto = {u for u, _ in q_fatto}
+    u_claim = {u for u, _ in q_claim}
+    if "" in u_fatto or "" in u_claim:
+        return False
+    return not (u_fatto & u_claim)
+
+
 def _extract_salients(text: str) -> tuple[set[str], set[str]]:
     """Estrae (capitalized_names, years) dalla stringa.
 
@@ -842,6 +878,7 @@ def validate_claim(
             if (kind_detail is None
                     and not _contrasting_attrs(
                         _content_tokens(f.proposition), _content_tokens(claim))
+                    and not _unita_non_allineabili(f.proposition, claim)
                     and _giudice_contraddice(f.proposition, claim)):
                 kind_detail = (
                     "entailment",
