@@ -114,3 +114,73 @@ def test_uno_store_GIA_ESISTENTE_prende_la_colonna_senza_rompersi(tmp_path):
     assert m2.get(vecchio["id"]) is not None, "il fatto vecchio non si rilegge"
     nuovo = m2.add(VANTI[0], topic="az/n")
     assert _colonna(m2, nuovo["id"], "quarantined_by")
+
+
+def _prima_riga(db_path, colonne="id, status, grounding_score, quarantined_by"):
+    c = sqlite3.connect(str(db_path))
+    try:
+        return c.execute(f"SELECT {colonne} FROM facts").fetchone()
+    finally:
+        c.close()
+
+
+def test_ANCHE_LA_PORTA_facts_add_scrive_la_causa(tmp_path, monkeypatch):
+    """⚠️ LA SECONDA PORTA, e il difetto non è nel gate: è nella GIUNTURA.
+
+    `quarantined_by` si scrive in UN SOLO punto — `client.py` — e `facts add`
+    non ci passa: quarantina per conto suo (``final_status = "quarantined" if
+    gate.action == "downgrade"``) e chiama ``sm.store`` senza toccare la
+    colonna. Il verdetto NUMERICO invece lo persiste, e il commento accanto
+    dice perché: *«Il verdetto va PERSISTITO, non solo calcolato»*. L'autore no.
+
+    🔬 MISURATO con un A/B a un solo fattore — stesso claim, stessa source::
+
+        save      (client.py)   quarantined  92.16   quarantined_by 'gate'
+        facts add (cli.py)      quarantined  92.16   quarantined_by None
+
+    ⇒ Non è arretrato storico: è vivo. E spiega la parte recente dei 1958
+    quarantinati senza autore su 2329 (84,1% del corpus al 20/08).
+    """
+    for v in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR", "VERIMEM_DATA_DIR"):
+        monkeypatch.setenv(v, str(tmp_path))
+    from typer.testing import CliRunner
+
+    from verimem.cli import app
+
+    res = CliRunner().invoke(app, ["facts", "add", "-p", VANTI[0], "-t", "az/q"])
+    assert res.exit_code == 0, res.output
+
+    riga = _prima_riga(tmp_path / "semantic" / "semantic.db")
+    assert riga is not None, f"nessun fatto scritto: {res.output}"
+    _id, status, _gs, causa = riga
+    assert status == "quarantined", (
+        f"il banco non misura più ciò per cui esiste: atteso quarantined, "
+        f"ottenuto {status!r}. Output: {res.output}")
+    assert causa, (
+        "`facts add` scrive il fatto e il punteggio ma NON chi l'ha fermato: "
+        "chi rilegge domani trova una quarantena senza autore. La stessa "
+        "scrittura fatta da `save` porta 'gate'.")
+
+
+def test_LE_DUE_PORTE_DICONO_LA_STESSA_COSA(tmp_path, monkeypatch):
+    """La proprietà che conta più del campo: due superfici della stessa
+    decisione non devono divergere. Se un giorno cambia la regola (`moat` /
+    `L1` / `gate`), questo test cade su ENTRAMBE o su nessuna — è ciò che
+    impedisce alla seconda copia di nascere di nuovo."""
+    for v in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR", "VERIMEM_DATA_DIR"):
+        monkeypatch.setenv(v, str(tmp_path))
+    from typer.testing import CliRunner
+
+    from verimem.cli import app
+
+    res = CliRunner().invoke(app, ["facts", "add", "-p", VANTI[1], "-t", "az/q"])
+    assert res.exit_code == 0, res.output
+    _id, _st, _gs, causa_cli = _prima_riga(tmp_path / "semantic" / "semantic.db")
+
+    mem = Memory(str(tmp_path / "altra.db"))
+    r = mem.add(VANTI[1], topic="az/q")
+    causa_client = r.get("quarantined_by")
+
+    assert causa_cli == causa_client, (
+        f"stessa frase, due porte, due risposte: `facts add` dice "
+        f"{causa_cli!r} e `save` dice {causa_client!r}")

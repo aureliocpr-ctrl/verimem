@@ -270,6 +270,64 @@ class Risultati(list):
         self.trattenuti = trattenuti
 
 
+def esito_del_moat(gate, warnings, *, source) -> str:
+    """Che cosa ha fatto il moat, DERIVATO da cio' che il gate ha gia' detto.
+
+    Non duplica la logica del gate: legge i layer che il gate ha emesso. Se un
+    giorno cambiano quei nomi, il test dei quattro casi distinti lo prende.
+    """
+    _layers = {str(w.get("layer", "")) for w in warnings}
+    if not source:
+        return "not_run:no_source"
+    if "L4-skipped" in _layers:
+        return "not_run:no_judge"
+    if gate.grounding_score is None:
+        return "not_run:unknown"
+    if "L4-grounding" in _layers:
+        return "failed"
+    return "passed"
+
+
+def chi_ha_quarantinato(moat: str, warnings) -> str:
+    """Quale layer ha deciso la quarantena: ``moat`` / ``L1`` / ``gate``.
+
+    ⚠️ LA PRECEDENZA NON SI TOCCA (la ragione sta per esteso al call site del
+    write path): L1 esiste per intercettare le auto-affermazioni, e una fonte
+    «che sostiene» puo' essere stata scritta dallo stesso agente che afferma.
+
+    🔑 PERCHE' E' UNA FUNZIONE E NON TRE RIGHE COPIATE: la decisione ha DUE
+    chiamanti — il write path di `Memory.add` e il comando `facts add`, che
+    quarantina per conto suo. Finche' e' vissuta in uno solo dei due, i fatti
+    scritti dall'altro entravano senza autore: misurato il 20/08 con un A/B a
+    un fattore (stesso claim, stessa source, stesso punteggio 92.16) —
+    `save` scriveva 'gate', `facts add` scriveva None. Sul corpus vivo erano
+    1958 quarantinati senza autore su 2329.
+    """
+    if moat == "failed":
+        return "moat"
+    if any(str(w.get("layer", "")).startswith("L1") for w in warnings):
+        return "L1"
+    return "gate"
+
+
+def persisti_chi_ha_quarantinato(db_path, fact_id: str, causa: str) -> bool:
+    """Scrive la causa accanto al fatto. Rende Vero se ci e' riuscita.
+
+    UPDATE mirato e non una colonna nell'INSERT: tocca solo i quarantinati, e
+    se fallisce si perde la CAUSA, non il FATTO — un fatto scritto senza causa
+    e' il comportamento di sempre, un fatto non scritto sarebbe un danno nuovo.
+    """
+    try:
+        import sqlite3 as _sq
+        with _sq.connect(str(db_path)) as _c:
+            _c.execute("UPDATE facts SET quarantined_by=? WHERE id=?",
+                       (causa, fact_id))
+        return True
+    except Exception:  # noqa: BLE001 — fail-open dichiarato sopra
+        _LOG.debug("quarantined_by non persistito per %s", fact_id)
+        return False
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
@@ -830,17 +888,7 @@ class Memory:
         # Si DERIVA da ciò che il gate ha già detto, non si duplica la sua
         # logica: se un giorno cambiano i nomi dei layer, il test dei quattro
         # casi distinti lo prende.
-        _layers = {str(w.get("layer", "")) for w in warnings}
-        if not source:
-            _moat = "not_run:no_source"
-        elif "L4-skipped" in _layers:
-            _moat = "not_run:no_judge"
-        elif gate.grounding_score is None:
-            _moat = "not_run:unknown"
-        elif "L4-grounding" in _layers:
-            _moat = "failed"
-        else:
-            _moat = "passed"
+        _moat = esito_del_moat(gate, warnings, source=source)
         # E CHI HA DECISO LA QUARANTENA. Trovato e poi ampliato:
         #     moat passa + parola L1 : moat=passed  gs=96.810  QUARANTINED
         #     moat passa, niente L1  : moat=passed  gs=99.278  QUARANTINED
@@ -860,9 +908,7 @@ class Memory:
         # per scelta di parole sono due cose diverse, e chi riceve la ricevuta
         # non aveva modo di distinguerle.
         if fact.status == "quarantined":
-            _out_qb = "moat" if _moat == "failed" else (
-                "L1" if any(str(w.get("layer", "")).startswith("L1")
-                            for w in warnings) else "gate")
+            _out_qb = chi_ha_quarantinato(_moat, warnings)
             # …E SI SCRIVE, non solo si dice. Fino a qui la causa viveva SOLO
             # nella ricevuta: la vede chi scrive, nell'istante in cui scrive, e
             # un minuto dopo non esiste piu' da nessuna parte (le colonne di
@@ -875,13 +921,8 @@ class Memory:
             # solo i quarantinati, e se fallisce si perde la CAUSA, non il
             # FATTO — un fatto scritto senza causa e' il comportamento di
             # sempre, un fatto non scritto sarebbe un danno nuovo.
-            try:
-                import sqlite3 as _sq
-                with _sq.connect(str(self.semantic.db_path)) as _c:
-                    _c.execute("UPDATE facts SET quarantined_by=? WHERE id=?",
-                               (_out_qb, fact.id))
-            except Exception:  # noqa: BLE001 — vedi sopra: fail-open dichiarato
-                _LOG.debug("quarantined_by non persistito per %s", fact.id)
+            persisti_chi_ha_quarantinato(
+                self.semantic.db_path, fact.id, _out_qb)
         else:
             _out_qb = None
         _out = {

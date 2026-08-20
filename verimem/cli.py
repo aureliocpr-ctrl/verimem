@@ -3811,6 +3811,15 @@ def facts_add(
         cat findings.jsonl | engram facts add --jsonl-stdin
     """
     from .anti_confab_gate import run_validation_gate
+    from .client import (
+        chi_ha_quarantinato as _chi_ha_quarantinato,
+    )
+    from .client import (
+        esito_del_moat as _esito_del_moat,
+    )
+    from .client import (
+        persisti_chi_ha_quarantinato as _persisti_chi_ha_quarantinato,
+    )
     from .scope import scoped_topic as _scoped_topic
     from .semantic import Fact
 
@@ -4038,6 +4047,21 @@ def facts_add(
         inserted.append(f.id)
         if final_status == "quarantined":
             quarantined.append(f.id)
+            # E CHI HA DECISO. Questa porta persisteva il verdetto NUMERICO
+            # (`grounding_score`, qui sopra) e non l'AUTORE: un fatto
+            # quarantinato da `facts add` non sapeva dire domani chi
+            # l'avesse fermato, mentre lo stesso fatto scritto da `save` lo
+            # sapeva. Misurato il 20/08 con un A/B a un fattore — stesso
+            # claim, stessa source, stesso punteggio 92.16 — `save` scriveva
+            # 'gate' e questa riga scriveva None.
+            # 🔑 La decisione NON e' ricopiata qui: si chiama la stessa
+            # funzione del write path, perche' una regola con due copie
+            # diverge, e questa e' gia' la seconda porta.
+            _causa = _chi_ha_quarantinato(
+                _esito_del_moat(gate, gate.warnings, source=src or None),
+                gate.warnings,
+            )
+            _persisti_chi_ha_quarantinato(sm.db_path, f.id, _causa)
 
     # Summary
     if inserted:
