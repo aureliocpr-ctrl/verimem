@@ -129,3 +129,92 @@ async def test_the_mcp_channel_judges_a_source(
     )
     assert out.get("grounding_score") is not None
     assert "judged" in out.get("moat", "").lower()
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# L'INVARIANTE GEMELLA: ogni canale deve dire CHI ha quarantinato.
+#
+# Stessa forma del difetto sopra, e per la stessa ragione: la promessa era
+# tenuta dal canale che qualcuno aveva misurato. `quarantined_by` nasce nel
+# write path dell'SDK; il 20/08 si e' misurato che le altre porte scrivevano
+# la riga senza autore — 1958 quarantinati su 2329 nel corpus vivo (84,1%)
+# non dicono chi li ha fermati.
+#
+# Anche qui il test non guarda il cablaggio: guarda cosa trova chi rilegge la
+# riga domani. Una porta nuova che si dimentica l'autore rompe questo.
+# ─────────────────────────────────────────────────────────────────────────
+
+class _GiudiceContrario:
+    """La fonte NON sostiene: il moat boccia, e la quarantena e' sua."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def complete(self, system, messages, *, model=None, max_tokens=None):  # noqa: ANN001
+        self.calls += 1
+        return types.SimpleNamespace(text="SCORE: 2")
+
+
+CLAIM_FALSO = "The invoice total is 99999 euro."
+
+
+def _autore_di(sm: Any, fact_id: str):
+    import sqlite3
+    with sqlite3.connect(str(sm.db_path)) as c:
+        row = c.execute(
+            "SELECT status, quarantined_by FROM facts WHERE id = ?", (fact_id,),
+        ).fetchone()
+    return row if row else (None, None)
+
+
+def test_il_canale_SDK_dice_chi_ha_quarantinato(tmp_path: Path) -> None:
+    from verimem import Memory
+    m = Memory(path=tmp_path / "s.db", grounding_llm=_GiudiceContrario())
+    r = m.add(CLAIM_FALSO, topic="parity/sdk", source=SRC)
+    stato, autore = _autore_di(m.semantic, str(r["id"]))
+    assert stato == "quarantined", f"il banco non riproduce il caso: {r}"
+    assert autore, (
+        "la riga dice 'quarantined' e non dice chi: chi la rilegge domani "
+        "non ha la ricevuta di questo istante")
+
+
+@pytest.mark.asyncio
+async def test_il_canale_MCP_dice_chi_ha_quarantinato(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """⚠️ LA PORTA DEGLI AGENTI, ed e' quella che pesa di piu' nel corpus:
+    storicamente `agent_inference` conta 1445 quarantinati con 4 autori e
+    `system_hook` 297 con ZERO. Qui il Fact si costruisce nel server e si
+    chiama `semantic.store()` senza passare da `Memory.add()` — dove viveva
+    la scrittura dell'autore, come ci era gia' vissuta l'emissione degli
+    eventi fino al 2026-08-07."""
+    from verimem import mcp_server
+    from verimem.semantic import SemanticMemory
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+
+    class _A:
+        def __init__(self) -> None:
+            self.semantic = sm
+            self.wake = types.SimpleNamespace(llm=_GiudiceContrario())
+
+    monkeypatch.setattr(mcp_server, "_ag", lambda: _A())
+
+    from mcp.types import CallToolRequest, CallToolRequestParams
+    handler = mcp_server.server.request_handlers[CallToolRequest]
+    result = await handler(CallToolRequest(
+        method="tools/call",
+        params=CallToolRequestParams(name="hippo_remember", arguments={
+            "proposition": CLAIM_FALSO, "topic": "parity/mcp", "source": SRC,
+        }),
+    ))
+    payload = result.root if hasattr(result, "root") else result
+    out = json.loads(next(c.text for c in payload.content if hasattr(c, "text")))
+
+    fid = out.get("fact_id") or out.get("id")
+    assert fid, f"nessun id nella risposta: {out}"
+    stato, autore = _autore_di(sm, str(fid))
+    assert stato == "quarantined", f"il banco non riproduce il caso: {out}"
+    assert autore, (
+        "la porta MCP scrive la riga quarantinata senza autore: e' la porta "
+        "da cui scrivono gli agenti, e nel corpus e' quella che ha lasciato "
+        "piu' righe mute")

@@ -13080,6 +13080,38 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "ok_new" if was_replaced is False else "ok"
                 )
             )
+            # …E CHI HA DECISO LA QUARANTENA, che qui non si scriveva.
+            # Stessa forma del difetto che questo file ha gia' pagato con
+            # `flow.write` (il commento sotto): il Fact si costruisce qui e si
+            # chiama `store()` senza passare da `Memory.add()`, dove viveva la
+            # scrittura dell'autore. E' la porta da cui scrivono gli AGENTI, ed
+            # e' quella che nel corpus ha lasciato piu' righe mute: al 20/08
+            # `agent_inference` conta 1445 quarantinati con 4 autori e
+            # `system_hook` 297 con ZERO.
+            # 🔑 Non una quarta copia della regola: le stesse funzioni del
+            # write path. `store-screen` non si applica qui — lo status lo
+            # decide il ramo `downgrade` sopra, non uno screen dentro store().
+            # ⚠️ Se la scrittura e' DIFFERITA la riga non c'e' ancora e
+            # l'UPDATE non trova nulla: la causa si perde, il fatto no. E' lo
+            # stesso fail-open dichiarato nel write path, e vale la stessa
+            # ragione — un fatto senza causa e' il comportamento di sempre, un
+            # fatto non scritto sarebbe un danno nuovo.
+            if str(getattr(fact, "status", "")) == "quarantined":
+                from .client import (
+                    chi_ha_quarantinato as _chi_q,
+                )
+                from .client import (
+                    esito_del_moat as _esito_moat,
+                )
+                from .client import (
+                    persisti_chi_ha_quarantinato as _persisti_q,
+                )
+                _persisti_q(
+                    a.semantic.db_path, str(getattr(fact, "id", "")),
+                    _chi_q(_esito_moat(_gate, _gate_warnings,
+                                       source=_source or None),
+                           _gate_warnings),
+                )
             # LA PORTA MCP SCRIVEVA SENZA DIRLO: 141 scritture ad agosto e
             # ZERO eventi (2026-08-07; verificato sul log reale: 8247
             # flow.write, `mcp` zero). Non era un tag mancante — `flow.write`
