@@ -101,7 +101,20 @@ def test_OGNI_COMANDO_NOMINATO_ESISTE_DAVVERO(consiglio):
     comandi = _COMANDO_RE.findall(consiglio)
     r = subprocess.run(
         [sys.executable, "-m", "verimem.cli", "facts", "--help"],
-        capture_output=True, text=True, timeout=300, cwd=str(_RADICE))
+        # ⚠️ `encoding="utf-8"` e non `text=True`: Click scrive il riquadro
+        # dell'aiuto in UTF-8 anche verso una pipe, mentre `text=True` decodifica
+        # con la codepage ANSI del GENITORE — in CI cp1252, dove `0x90` non
+        # esiste. La decodifica esplode DENTRO il thread lettore di
+        # `subprocess`, che muore senza appendere, e la funzione chiude con
+        # `stdout = stdout[0] if stdout else None`: **stdout diventa None in
+        # SILENZIO**, con `returncode=0` e `stderr=''`.
+        # 🔑 Ed e' il motivo per cui questo presidio era SKIPPED in CI su
+        # windows con «returncode=0, 0 caratteri»: non il parser, la
+        # decodifica. Stessa cura di `test_flow_surface_onesta` (692597fd),
+        # stessa misura: `PYTHONUTF8=0` -> 1 skipped, `PYTHONUTF8=1` -> verde.
+        # `errors="replace"` e' la seconda meta': un byte inatteso non deve
+        # poter tornare a spegnere la misura senza dirlo.
+        capture_output=True, encoding="utf-8", errors="replace", timeout=300, cwd=str(_RADICE))
     testo = (r.stdout or "") + (r.stderr or "")
     esposti = set(re.findall(r"│\s([a-z][a-z0-9-]{2,})\s{2,}", testo))
     if not esposti:

@@ -51,7 +51,20 @@ def _comandi_esposti() -> set[str]:
     """Quelli che la CLI dichiara nel proprio help — il comportamento."""
     r = subprocess.run(
         [sys.executable, "-m", "verimem.cli", "--help"],
-        capture_output=True, text=True, timeout=300, cwd=str(_RADICE),
+        # ⚠️ `encoding="utf-8"` e non `text=True`: Click scrive il riquadro
+        # dell'aiuto in UTF-8 anche verso una pipe, mentre `text=True` decodifica
+        # con la codepage ANSI del GENITORE — in CI cp1252, dove `0x90` non
+        # esiste. La decodifica esplode DENTRO il thread lettore di
+        # `subprocess`, che muore senza appendere, e la funzione chiude con
+        # `stdout = stdout[0] if stdout else None`: **stdout diventa None in
+        # SILENZIO**, con `returncode=0` e `stderr=''`.
+        # 🔑 Ed e' il motivo per cui questo presidio era SKIPPED in CI su
+        # windows con «returncode=0, 0 caratteri»: non il parser, la
+        # decodifica. Stessa cura di `test_flow_surface_onesta` (692597fd),
+        # stessa misura: `PYTHONUTF8=0` -> 1 skipped, `PYTHONUTF8=1` -> verde.
+        # `errors="replace"` e' la seconda meta': un byte inatteso non deve
+        # poter tornare a spegnere la misura senza dirlo.
+        capture_output=True, encoding="utf-8", errors="replace", timeout=300, cwd=str(_RADICE),
     )
     # ⚠️⚠️ `or ""` NON È DIFENSIVISMO: in CI `stdout` arriva **None** e la
     # concatenazione solleva TypeError PRIMA di ogni assert. Diagnosi di ws8,
