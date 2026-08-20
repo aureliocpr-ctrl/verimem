@@ -731,6 +731,18 @@ _ETICHETTE_RECORD = frozenset({
     # «servizio DI FATTURAZIONE» non lo è e continua a essere aggiornato dalla
     # sua porta nuova.
     "servizio", "service",
+    # `note`/`nota` aggiunte il 2026-08-20 alle 11:30 col loro caso di prova, come
+    # chiede il commento qui sopra. Il bersaglio è `test_count_aggregate.py::
+    # test_count_total_corpus`, che scriveva 12 «On day {i} …» + 8 «Note {i}: …»
+    # e ne contava 13: i dodici `day` coesistevano già, gli otto `Note` collassavano
+    # in CATENA (`flow.supersession reason='same-source evolution'`, ogni Note
+    # ritirava il precedente) perché `note` non era in nessuno dei due vocabolari.
+    #     misurato PRIMA:  totale 13 · work/helios 12 ✅ · misc 1 ❌
+    # Sono IDENTITÀ e non attributi: «Note 0» e «Note 1» sono due note, mentre
+    # «la nota 9 dice X» / «la nota 9 dice Y» resta un aggiornamento perché il
+    # criterio pretende i numeri DISGIUNTI, e «il documento ha 3 note» non matcha
+    # affatto — lì il numero PRECEDE la parola. Entrambi provati come negativi.
+    "note", "nota",
 })
 #: Parole il cui numero misura un ATTRIBUTO invece di identificare un record.
 #: La distinzione non e' mia: la enuncia il documento di
