@@ -118,7 +118,38 @@ jobs:
     # osservato (25,1): un run partito da 17 minuti, moltiplicato per quel
     # fattore, lo avrebbe sfondato. 35 tiene il margine sopra il peggiore
     # osservato senza tornare al 45 che non sorvegliava piu' niente.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 60 || 35 }}
+    # 90 A WINDOWS DAL 20/08, e la riga sopra chiedeva di NON allargare il
+    # numero per riflesso ma di capire prima perche' windows costi il doppio.
+    # Ecco la risposta, misurata sui due log dello STESSO commit (40f6b5d8),
+    # 10473 campioni per parte::
+    #
+    #     mediana per test   windows 74,9 ms   ubuntu 32,1 ms   -> 2,33x
+    #     p90                        423,2 ms          125,9 ms
+    #     p99                       2851,7 ms         1410,5 ms
+    #     somma                       45,6 min          20,3 min
+    #
+    # E il ritardo NON e' concentrato: i +25,3 minuti sono sparsi su 1448 file,
+    # di cui i primi 10 valgono il 15,9% e i primi 50 il 34,0%. Non ci sono
+    # test lenti da ottimizzare: c'e' un COSTO COSTANTE PER TEST che windows
+    # paga e le altre no (creazione di processi e di file, che ogni fixture
+    # con `tmp_path` e uno SQLite tocca).
+    # ⇒ Il tetto non si recupera curando qualcosa: il fattore resta ~2,3x e
+    #   cresce con la suite. Il 60 e' gia' stato colpito una volta — il job
+    #   96380499183 (sha 24ece585) e' durato 60,3 minuti ed e' finito
+    #   `cancelled`, cioe' senza riga di sintesi e senza righe FAILED: per chi
+    #   conta i rossi quella cella valeva ZERO.
+    #
+    # PERCHE' 90 e non un numero a caso: il criterio e' quello gia' scritto
+    # qui sopra — il peggiore osservato per il fattore di variabilita' 1,88x
+    # che questo stesso file documenta. Migliore osservato 47,6 min x 1,88 =
+    # 89,5. Le quattro misure di windows: 47,6 · 51,6 · 52,0 · 60,3(persa).
+    # COSTO: zero quando il job finisce prima — `timeout-minutes` e' un tappo,
+    # non una prenotazione. Si paga solo su un job davvero piantato, che
+    # brucerebbe 90 minuti invece di 60.
+    # ⚠️ RESTA APERTO l'altro lato, e non lo chiude questo numero: una gamba
+    #   SCADUTA e' muta (conclusion `cancelled`, nessuna sintesi). Alzare il
+    #   tetto rende l'evento piu' raro, non piu' visibile.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 90 || 35 }}
     strategy:
       fail-fast: false
       matrix:
