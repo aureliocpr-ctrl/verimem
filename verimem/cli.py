@@ -1783,8 +1783,23 @@ def trust(
         lines.append("  [yellow]flags (why it's not trusted):[/yellow]")
         for w in warnings:
             layer = w.get("layer", "?")
-            msg = w.get("advice") or w.get("reason") or w.get("matched_text") or ""
-            lines.append(f"    • [{layer}] {str(msg)[:130]}")
+            # ⚠️ `reason` PRIMA di `advice`, e non e' un dettaglio di stile.
+            # `advice` e' il consiglio GENERICO («correggi il valore»), `reason`
+            # e' quello che porta il VALORE («…non contiene: 32361578981»).
+            # Con `advice or reason` il consiglio vinceva sempre e il numero non
+            # si vedeva mai, quindi questa card — che esiste per sapere PRIMA di
+            # scrivere se un fatto passera' — diceva strettamente MENO della
+            # ricevuta di `save`, che il valore lo stampa. Chi leggeva sapeva di
+            # avere un numero sbagliato e non QUALE.
+            # Misurato il 20/08: su 144 quarantinati col giudice sopra 99, 133
+            # hanno un valore che l'evidenza non contiene. Il pre-controllo che
+            # non lo nomina non puo' curare quel fronte.
+            _reason = str(w.get("reason") or "")
+            _advice = str(w.get("advice") or "")
+            msg = _reason or _advice or str(w.get("matched_text") or "")
+            lines.append(f"    • [{layer}] {msg[:130]}")
+            if _reason and _advice:
+                lines.append(f"      [dim]{_advice[:130]}[/dim]")
     else:
         lines.append("  [dim]no flags from the screens that ran[/dim]")
     # Which layers COULD run, so a lexical-only pass is not read as a full one
