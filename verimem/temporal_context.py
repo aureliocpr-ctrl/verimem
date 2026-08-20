@@ -419,3 +419,62 @@ def date_menzionate(testo: str | None) -> set[tuple[int, int, int]]:
         if mese:
             fuori.add((int(a), int(mese), int(g)))
     return fuori
+
+# ── LA DATA COME VALORE, NON COME IDENTIFICATORE DELL'EVENTO ──────────────
+#
+# `date_menzionate` dice SE c'è una data. Questo dice a che cosa serve, e la
+# distinzione è già enunciata nel commento del ramo DATE di `_entita_diverse`:
+# «un registro di consegne NON è un valore che si aggiorna: è una serie di
+# EVENTI». Un evento ACCADUTO è identificato dalla sua data e si accumula; un
+# appuntamento PROGRAMMATO ha la data come attributo, e spostarlo lo aggiorna.
+#
+# ⚠️ SI CHIEDE UNA PROVA POSITIVA, non l'assenza della prova opposta. La forma
+# «non è al passato ⇒ è programmato» è quella che viene in mente per prima ed è
+# sbagliata in modo COSTOSO: una lingua che questi elenchi non conoscono non è
+# al passato *per ignoranza nostra*, e con quella polarità un registro spagnolo
+# o tedesco verrebbe FUSO — cioè si perdono fatti, che è il nodo più caro che
+# abbiamo. Misurato il 20/08 su un banco a due popolazioni in quattro lingue::
+#
+#     polarità «non passato»    ES/DE registro   2 scritti -> VIVI 1   PERDITA
+#     polarità «prova positiva» ES/DE registro   2 scritti -> VIVI 2   invariato
+#
+# Il prezzo di questa scelta è dichiarato: in una lingua non coperta la data
+# programmata NON viene riconosciuta e il vecchio resta vivo accanto al nuovo.
+# È un fatto obsoleto in più, non un fatto vero in meno.
+_PASSATO_COMPIUTO = re.compile(
+    r"\b(e['’]?\s*avvenut\w*|e['’]?\s*stat\w*|ha\s+avuto\s+luogo|fu\b|venne\b"
+    r"|took\s+place|happened|occurred|has\s+been|have\s+been|was\b|were\b)",
+    re.IGNORECASE)
+
+_APPUNTAMENTO = re.compile(
+    r"\b(is\s+on|is\s+scheduled|will\s+be\s+on|e['’]?\s+il\b|e['’]?\s+fissat\w*"
+    r"|si\s+terrà|sarà\s+il)",
+    re.IGNORECASE)
+
+_UNA_DATA_QUALSIASI = re.compile(
+    r"\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\s+\w+\s+\d{4}\b|\b\d{1,2}\s+\w+\b",
+    re.IGNORECASE)
+
+
+def _forma_programmata(testo: str | None) -> bool:
+    """True solo con una prova POSITIVA che la data è un appuntamento.
+
+    Lingue coperte: italiano, inglese. Altrove torna False — di proposito.
+    """
+    if not testo:
+        return False
+    return bool(_APPUNTAMENTO.search(testo)) and not _PASSATO_COMPIUTO.search(testo)
+
+
+def stessa_frase_altra_data(a: str | None, b: str | None) -> bool:
+    """Due frasi identiche tranne le date, ed entrambe un appuntamento.
+
+    È volutamente STRETTA: «l'audit è stato spostato al …» non la attiva. Una
+    riformulazione resta scoperta, e il costo è misurato — 2 dei 4 casi della
+    popolazione «devono ritirare» restano rossi.
+    """
+    if not (_forma_programmata(a) and _forma_programmata(b)):
+        return False
+    na = re.sub(r"\s+", " ", _UNA_DATA_QUALSIASI.sub("<D>", a)).strip().lower()
+    nb = re.sub(r"\s+", " ", _UNA_DATA_QUALSIASI.sub("<D>", b)).strip().lower()
+    return na == nb

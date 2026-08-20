@@ -946,7 +946,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     from .entity_extract_lite import extract_entities_lite
     from .hidden_records import codes_in
     from .quantity_match import content_tokens, contrasting_attrs
-    from .temporal_context import date_menzionate
+    from .temporal_context import date_menzionate, stessa_frase_altra_data
 
     pa = getattr(a, "proposition", "") or ""
     pb = getattr(b, "proposition", "") or ""
@@ -969,6 +969,15 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     # lasciapassare per non essere mai superseduti.
     da, db = date_menzionate(pa), date_menzionate(pb)
     if da and db and not (da & db):
+        # ⚠️ ECCEZIONE: la data può essere un ATTRIBUTO che si sposta, non
+        # l'identificatore di un evento. «The compliance audit is on <data>»
+        # riscritto con un'altra data è lo STESSO audit riprogrammato, e il
+        # vecchio va ritirato. `stessa_frase_altra_data` chiede una prova
+        # POSITIVA di appuntamento in ENTRAMBE le frasi: dove non la trova —
+        # per esempio in una lingua che non copre — non decide nulla, e resta
+        # il registro. L'assenza di una prova non è la prova del contrario.
+        if stessa_frase_altra_data(pa, pb):
+            return False
         return True
     # IL NUMERO CHE IDENTIFICA LA RIGA DI UN REGISTRO, gemello del ramo DATE:
     # «issue 41» / «issue 42» sono due record, non un valore aggiornato. Sei
