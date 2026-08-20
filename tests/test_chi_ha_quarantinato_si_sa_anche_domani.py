@@ -230,3 +230,57 @@ def test_IL_FLIP_DICE_QUALE_DELLE_TRE_CAUSE(mem):
         viste.add(_colonna(mem, r["id"], "quarantined_by"))
     assert viste == {"tier2", "composer", "source-trust"}, (
         f"le tre cause non si distinguono: la colonna dice {viste}")
+
+
+#: Il vocabolario CHIUSO della colonna. Sei valori, tre per il write e tre per
+#: il ribalto successivo. Non e' una lista di comodo: e' il motivo per cui la
+#: colonna porta un codice invece del `reason`, che e' testo libero e puo'
+#: portare PII dentro una catena immutabile.
+VOCABOLARIO = {"moat", "L1", "gate", "store-screen",
+               "tier2", "composer", "source-trust", "triage"}
+
+
+def test_IL_VOCABOLARIO_E_CHIUSO_e_lo_screen_dello_store_ha_la_PRECEDENZA():
+    """⚠️ LA PRECEDENZA E' IL PUNTO, non la lista.
+
+    Quando il gate AMMETTE e uno screen dentro ``store()`` ribalta il fatto,
+    rispondere «gate» non e' un'etichetta imprecisa: e' **falsa**, perche'
+    attribuisce la decisione a chi aveva detto di ammettere. Sul giornale sono
+    34 scritture quarantinate su 1268 (2,7%).
+
+    📌 E il caso opposto va tenuto: se il gate HA declassato, l'autore e' suo
+    (moat o L1 o gate), e lo screen dello store non c'entra.
+    """
+    from verimem.client import chi_ha_quarantinato as chi
+
+    # lo store ribalta cio' che il gate aveva ammesso
+    assert chi("passed", [], agito=["store-screen"]) == "store-screen"
+    # ...anche se ci fossero avvisi L1 di natura ADVISORY: ha agito lo store
+    assert chi("passed", [{"layer": "L1.13"}],
+               agito=["store-screen"]) == "store-screen"
+    # il gate ha declassato: l'autore e' del gate, non dello store
+    assert chi("failed", [], agito=[]) == "moat"
+    assert chi("passed", [{"layer": "L1.15"}], agito=[]) == "L1"
+    assert chi("passed", [{"layer": "L3"}], agito=[]) == "gate"
+    # e ogni risposta sta nel vocabolario dichiarato
+    for m, w, a in [("failed", [], []), ("passed", [{"layer": "L1"}], []),
+                    ("passed", [], []), ("passed", [], ["store-screen"])]:
+        assert chi(m, w, agito=a) in VOCABOLARIO
+
+
+def test_IL_MOAT_SI_DERIVA_dai_layer_e_non_si_reinventa():
+    """L'altra meta' della superficie unica: `esito_del_moat` legge cio' che il
+    gate ha gia' detto. I quattro esiti distinti sono la ragione per cui la
+    funzione esiste — se un giorno cambiano i nomi dei layer, questo cade."""
+    from verimem.client import esito_del_moat
+
+    class _G:
+        def __init__(self, gs): self.grounding_score = gs
+
+    assert esito_del_moat(_G(90), [], source=None) == "not_run:no_source"
+    assert esito_del_moat(_G(90), [{"layer": "L4-skipped"}],
+                          source="x") == "not_run:no_judge"
+    assert esito_del_moat(_G(None), [], source="x") == "not_run:unknown"
+    assert esito_del_moat(_G(2), [{"layer": "L4-grounding"}],
+                          source="x") == "failed"
+    assert esito_del_moat(_G(99), [], source="x") == "passed"

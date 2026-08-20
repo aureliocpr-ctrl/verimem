@@ -288,7 +288,7 @@ def esito_del_moat(gate, warnings, *, source) -> str:
     return "passed"
 
 
-def chi_ha_quarantinato(moat: str, warnings) -> str:
+def chi_ha_quarantinato(moat: str, warnings, *, agito=()) -> str:
     """Quale layer ha deciso la quarantena: ``moat`` / ``L1`` / ``gate``.
 
     ⚠️ LA PRECEDENZA NON SI TOCCA (la ragione sta per esteso al call site del
@@ -303,6 +303,13 @@ def chi_ha_quarantinato(moat: str, warnings) -> str:
     `save` scriveva 'gate', `facts add` scriveva None. Sul corpus vivo erano
     1958 quarantinati senza autore su 2329.
     """
+    # ⚠️ PRIMA DI TUTTO LO SCREEN DELLO STORE, e non e' un dettaglio di
+    # ordine: quando il gate AMMETTE e uno screen dentro `store()` ribalta il
+    # fatto, dire «gate» e' una attribuzione FALSA, non un'etichetta mancante —
+    # racconta che ha deciso chi aveva detto di ammettere. Misurato sul
+    # giornale: 34 scritture quarantinate su 1268 (2,7%) hanno agito cosi'.
+    if "store-screen" in set(agito):
+        return "store-screen"
     if moat == "failed":
         return "moat"
     if any(str(w.get("layer", "")).startswith("L1") for w in warnings):
@@ -908,7 +915,8 @@ class Memory:
         # per scelta di parole sono due cose diverse, e chi riceve la ricevuta
         # non aveva modo di distinguerle.
         if fact.status == "quarantined":
-            _out_qb = chi_ha_quarantinato(_moat, warnings)
+            _out_qb = chi_ha_quarantinato(_moat, warnings,
+                                          agito=_hit_layers)
             # …E SI SCRIVE, non solo si dice. Fino a qui la causa viveva SOLO
             # nella ricevuta: la vede chi scrive, nell'istante in cui scrive, e
             # un minuto dopo non esiste piu' da nessuna parte (le colonne di

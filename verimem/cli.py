@@ -4045,7 +4045,12 @@ def facts_add(
         # `engram facts backfill` / next warm op). Daemon warm -> embeds now.
         sm.store(f, hook_token=hook_token, embed="auto")
         inserted.append(f.id)
-        if final_status == "quarantined":
+        # ⚠️ LO STATO **DOPO** LA SCRITTURA, non quello deciso prima: uno
+        # screen dentro `store()` puo' ribaltare un fatto che il gate aveva
+        # ammesso, e guardando `final_status` quel ribalto non si vedeva —
+        # la riga finiva quarantinata e senza autore, che e' il buco che
+        # questa porta ha appena smesso di avere.
+        if f.status == "quarantined":
             quarantined.append(f.id)
             # E CHI HA DECISO. Questa porta persisteva il verdetto NUMERICO
             # (`grounding_score`, qui sopra) e non l'AUTORE: un fatto
@@ -4060,6 +4065,7 @@ def facts_add(
             _causa = _chi_ha_quarantinato(
                 _esito_del_moat(gate, gate.warnings, source=src or None),
                 gate.warnings,
+                agito=([] if gate.action == "downgrade" else ["store-screen"]),
             )
             _persisti_chi_ha_quarantinato(sm.db_path, f.id, _causa)
 
