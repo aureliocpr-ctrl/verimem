@@ -59,13 +59,27 @@ def test_cli_main_dichiara_cli():
     )
     env = {k: v for k, v in os.environ.items()
            if k != "ENGRAM_FLOW_SURFACE"}
+    # ⚠️ `encoding="utf-8"` NON e' cosmesi, ed e' il motivo per cui questo test
+    # cadeva SOLO in CI. Meccanismo provato il 20/08, non congetturato:
+    #   1. Click/Typer su Windows scrive il riquadro dell'aiuto in UTF-8 anche
+    #      verso una pipe (`─ ┐ │` = e2 94 80 / e2 94 90 / e2 94 82).
+    #   2. `text=True` senza `encoding` decodifica con la codepage ANSI del
+    #      GENITORE. In CI e' cp1252, dove `0x90` non esiste.
+    #   3. La decodifica esplode DENTRO il thread lettore di `subprocess`
+    #      (`subprocess.py:_readerthread`), che muore senza appendere nulla.
+    #   4. `subprocess.py` chiude con `stdout = stdout[0] if stdout else None`:
+    #      lista vuota ⇒ **stdout diventa `None` in SILENZIO**, con
+    #      `returncode=0` e `stderr=''`. Nessun `TimeoutExpired`, nessun errore.
+    # 🔑 Il guasto e' del BANCO, non del prodotto: i 7146 byte prodotti sono
+    #    corretti, e' il lettore che li interpreta con la tabella sbagliata.
+    # 🔬 A/B nella stessa esecuzione, SHA `c2805129` fermo prima e dopo:
+    #    `PYTHONUTF8=0` -> 1 failed  ·  `PYTHONUTF8=1` -> 5 passed.
+    #    Non si vedeva in locale perche' la macchina aveva `PYTHONUTF8=1`.
+    # `errors="replace"` e' la seconda meta': un byte inatteso non deve piu'
+    # poter uccidere la misura in silenzio: al massimo sporca il testo.
     out = subprocess.run([sys.executable, "-c", code], env=env,
-                         capture_output=True, text=True, timeout=120)
-    # ⚠️ `subprocess` puo' rendere `None` su un canale invece di stringa vuota.
-    # Con `in out.stdout` la riga solleva `TypeError: argument of type
-    # 'NoneType' is not iterable` PRIMA di arrivare all'assert, e il messaggio
-    # dell'assert — che somma i due canali — esplode a sua volta: in CI si
-    # legge il guasto del banco al posto del motivo per cui il test e' rosso.
+                         capture_output=True, encoding="utf-8",
+                         errors="replace", timeout=120)
     # 🔑 Stesso difetto gia' curato in `test_la_ricevuta_non_diceva_quale_cifra
     # _mancava.py` (07675ac6): il fallimento del banco MASCHERA quello che il
     # banco esiste per mostrare.
