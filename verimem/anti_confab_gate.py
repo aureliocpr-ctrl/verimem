@@ -1796,12 +1796,30 @@ def run_validation_gate(
                 # racconta una supersessione mai avvenuta e' la stessa classe di
                 # difetto che il gate esiste per fermare — solo che stavolta a
                 # confabulare era il gate.
+                # ⚠️ SECONDA VOLTA CHE QUESTO MESSAGGIO DICHIARA UNA COSA CHE
+                # NON E' AVVENUTA. La prima e' raccontata qui sopra (annunciava
+                # una supersessione mai fatta). La seconda: diceva «the clashing
+                # facts come from DIFFERENT declared AUTHORS», ma su questa via
+                # nessun confronto fra autori viene mai fatto — le coppie escono
+                # per l'asse delle ENTITA' (`_entita_diverse`), che ha sostituito
+                # quello degli autori. Sul caso canonico del ramo, «Marco leads
+                # the payments team» / «Anna …», Marco e Anna sono i SOGGETTI dei
+                # due fatti, non chi li ha scritti: il messaggio scambiava
+                # l'entita' nominata DENTRO il fatto con l'autore DEL fatto.
+                # Riprodotto il 20/08 con due scritture nello stesso processo,
+                # stesso principal e nessun verified_by.
+                # Adesso il testo e' pin-ato da
+                # test_la_coesistenza_non_e_una_questione_di_autori, perche' un
+                # messaggio che nessun test legge puo' tornare a mentire una
+                # terza volta senza che nessuno se ne accorga.
                 warnings.append({
                     "layer": "L3-coexistence",
                     "reason": "a contradiction was found but both facts are kept",
-                    "advice": "the clashing facts come from DIFFERENT declared "
-                              "authors: neither is an update of the other, so both "
-                              "stay servable and recall returns them together.",
+                    "advice": "the clashing facts were judged to be about "
+                              "DIFFERENT ENTITIES — a distinct code, date, "
+                              "numbered record, attribute or proper name — so "
+                              "neither is an update of the other: both stay "
+                              "servable and recall returns them together.",
                 })
 
     # L3-SEMANTIC (NLI moat): the lexical L3 (validate_claim, "puramente lessicale")
