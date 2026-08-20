@@ -826,15 +826,39 @@ def _record_numerati_diversi(pa: str, pb: str) -> bool:
     Tenerli nello stesso elenco ha reso rosso `test_identifier_only_as_subject`,
     che era verde: il costo di una lista sola è stato misurato, non temuto.
 
-    ⛔ IL LIMITE, dichiarato: un intero preceduto da una parola non in elenco
-    resta invisibile a questo asse (`sprint 3`, `lotto 7`). Non è un difetto
-    silenzioso — è il comportamento di prima, e si allarga aggiungendo la parola
-    con il suo caso di prova.
+    🔑 TRE RAMI, E NESSUNO DEI TRE BASTA DA SOLO — misurato il 2026-08-20 su 18
+    casi (i bersagli più i negativi che il 19/08 erano costati un test).
+
+    `tests/test_entity_index_not_measure.py` dice che *«una lista chiusa di kind
+    non copre il vocabolario … il discriminante generale è POSIZIONALE, non
+    lessicale»*, e ha ragione: `quantity_match.distinct_event_indices` vede
+    `profile`, `rate`, `message` che la lista non aveva, e chiudeva da sola il
+    bersaglio `test_exclude_executes_set_difference`.
+
+    Ma sostituire la lista col posizionale ha ROTTO quattro test, e il perché è
+    una misura, non un'opinione::
+
+        event_indices("Il servizio 0 ascolta sulla porta 8000.") -> [('porta', 8000)]
+
+    il posizionale NON vede «servizio 0» — l'unico indice che trova è l'attributo
+    `porta`, quindi scattava la guardia del soggetto e tre servizi numerati
+    tornavano uno. La lista quel caso lo vede (`servizio` le è stato aggiunto il
+    19/08 per la stessa regressione).
+
+    Quindi si compongono invece di scegliere: la LISTA per prima (copre ciò che
+    il posizionale non vede), il POSIZIONALE come allargamento (copre ciò che la
+    lista non ha), e la guardia sugli ATTRIBUTI solo quando l'attributo è
+    l'UNICO ad aver parlato — altrimenti scavalcherebbe un indice vero.
     """
+    from .quantity_match import distinct_event_indices
+
     if _numeri_disgiunti(pa, pb, _ETICHETTE_RECORD):
         return True
+    if not distinct_event_indices(pa, pb):
+        return False
     if _numeri_disgiunti(pa, pb, _ATTRIBUTI_NUMERATI):
         return not _stesso_scheletro(pa, pb)
+    return True
     return False
 
 

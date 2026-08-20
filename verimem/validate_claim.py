@@ -34,6 +34,9 @@ from .quantity_match import (
     content_tokens as _content_tokens,
 )
 from .quantity_match import (
+    contrasting_attrs as _contrasting_attrs,
+)
+from .quantity_match import (
     date_conflict as _date_conflict,
 )
 from .quantity_match import (
@@ -823,8 +826,23 @@ def validate_claim(
                 if n is not None:
                     kind_detail = (
                         "negation", f"polarità opposta su '{n}'")
-            if kind_detail is None and _giudice_contraddice(f.proposition,
-                                                            claim):
+            # 2026-08-20 — DUE ATTRIBUTI DIVERSI DELLO STESSO SOGGETTO NON SI
+            # CONTRADDICONO: «the read timeout is 30 seconds» non smentisce
+            # «the write timeout is 10 seconds», e il giudice non lo sa perche'
+            # il suo punteggio non separa le due popolazioni (misurato su dieci
+            # casi: i conflitti VERI stanno a 0.99, 1.38 e 94.11, i legittimi
+            # fra 0.22 e 96.54 — interlacciati).
+            # Il criterio NON e' nuovo: e' lo stesso che il write-path usa gia'
+            # nel ramo 4 di `_entita_diverse`, cosi' le due superfici concordano
+            # invece di divergere.
+            # PERIMETRO MISURATO: sui 12 casi di `test_any_language_ha_un_numero`
+            # (sei lingue, quattro alfabeti, affermativo-vs-diverso e
+            # affermativo-vs-negato) `contrasting_attrs` vale False su TUTTI,
+            # quindi nessuna contraddizione DI VALORE viene silenziata.
+            if (kind_detail is None
+                    and not _contrasting_attrs(
+                        _content_tokens(f.proposition), _content_tokens(claim))
+                    and _giudice_contraddice(f.proposition, claim)):
                 kind_detail = (
                     "entailment",
                     "il giudice non trova sostegno per questo claim nel fatto "
