@@ -313,7 +313,9 @@ def triage_corpus(
             declassed_ids.append(f.id)
             if apply:
                 try:
-                    semantic.quarantine_fact(f.id, reason=(d.reason or "tier2:declass"))
+                    semantic.quarantine_fact(
+                        f.id, deciso_da="tier2",
+                        reason=(d.reason or "tier2:declass"))
                 except Exception:  # noqa: BLE001
                     pass
     return {"reviewed": reviewed, "declassed": len(declassed_ids),

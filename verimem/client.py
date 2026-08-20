@@ -1853,8 +1853,9 @@ class Memory:
         for (fid,) in rows:
             try:
                 if self.semantic.quarantine_fact(
-                    fid, reason=(f"source '{source}' trust sank below the "
-                                 "floor — retroactive demotion")):
+                    fid, deciso_da="source-trust",
+                    reason=(f"source '{source}' trust sank below the "
+                            "floor — retroactive demotion")):
                     with _sq.connect(str(self.semantic.db_path)) as conn:
                         conn.execute(
                             "INSERT OR REPLACE INTO source_trust_demotions "

@@ -184,3 +184,49 @@ def test_LE_DUE_PORTE_DICONO_LA_STESSA_COSA(tmp_path, monkeypatch):
     assert causa_cli == causa_client, (
         f"stessa frase, due porte, due risposte: `facts add` dice "
         f"{causa_cli!r} e `save` dice {causa_client!r}")
+
+
+def test_ANCHE_IL_FLIP_DOPO_LA_SCRITTURA_dice_chi_ha_deciso(mem):
+    """⚠️ LA TERZA PORTA, e non è al write: è DOPO.
+
+    `SemanticMemory.quarantine_fact` ribalta un fatto già scritto — la usano il
+    triage Tier-2 (`tier2_judge`), il composer e la demozione retroattiva
+    quando la fiducia di una fonte crolla. Prende un ``reason``, lo manda al
+    canale eventi… e la RIGA non diceva niente.
+
+    🔑 È esattamente il difetto per cui `quarantined_by` è nata, su una
+    superficie diversa: il canale eventi non è provenienza, perché **ruota**
+    (misurato: 41.518 righe su due file, e il 75,7% delle scritture del
+    giornale non esiste nemmeno nel corpus — sono banchi). Chi rilegge la riga
+    domani non ha il giornale sotto mano, e spesso non ce l'ha più nessuno.
+
+    ⛔ E il ``reason`` non può andare nella colonna: è testo libero e può
+    portare PII, che la catena immutabile non deve fissare (`semantic.py`,
+    `trust_ledger.py`). Per questo la colonna porta un CODICE a vocabolario
+    chiuso, non la frase.
+    """
+    r = mem.add("Il magazzino di Prato contiene 300 pallet.", topic="az/ok",
+                source="Inventario: il magazzino di Prato contiene 300 pallet.")
+    assert r.get("status") != "quarantined", r
+    fid = r["id"]
+
+    assert mem.semantic.quarantine_fact(fid, reason="tier2:declass") is True
+    assert _colonna(mem, fid, "quarantined_by"), (
+        "un fatto ribaltato DOPO la scrittura resta senza autore: la riga dice "
+        "solo 'quarantined', e il motivo vive solo in un giornale che ruota")
+
+
+def test_IL_FLIP_DICE_QUALE_DELLE_TRE_CAUSE(mem):
+    """⚖️ Non basta che la colonna sia piena: deve DISTINGUERE. I tre
+    chiamanti hanno tre ragioni diverse — il triage Tier-2, il composer, la
+    demozione retroattiva per fiducia della fonte — e leggerle tutte come una
+    sola sarebbe la stessa cecità di prima con un valore dentro."""
+    viste = set()
+    for i, codice in enumerate(("tier2", "composer", "source-trust")):
+        r = mem.add(f"Il deposito {i} contiene 300 pallet.", topic="az/ok",
+                    source=f"Inventario: il deposito {i} contiene 300 pallet.")
+        assert r.get("status") != "quarantined", r
+        mem.semantic.quarantine_fact(r["id"], reason="x", deciso_da=codice)
+        viste.add(_colonna(mem, r["id"], "quarantined_by"))
+    assert viste == {"tier2", "composer", "source-trust"}, (
+        f"le tre cause non si distinguono: la colonna dice {viste}")

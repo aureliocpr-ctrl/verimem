@@ -5422,7 +5422,8 @@ class SemanticMemory:
             for e in entries
         ]
 
-    def quarantine_fact(self, fact_id: str, *, reason: str = "") -> bool:
+    def quarantine_fact(self, fact_id: str, *, reason: str = "",
+                        deciso_da: str = "triage") -> bool:
         """Flip a fact to ``status='quarantined'`` — used by the Tier-2 consolidation
         triage (assess_claim_trust → declass) to withhold a coincidental/ephemeral claim
         from the default recall view WITHOUT deleting it (reversible: the row stays for
@@ -5438,8 +5439,22 @@ class SemanticMemory:
             current_status = row["status"] or "model_claim"
             if current_status == "quarantined":
                 return False
+            # …E CHI L'HA DECISO, nella STESSA UPDATE dello stato. Il
+            # ``reason`` qui sopra e' testo libero e va nel canale eventi, non
+            # nella riga: puo' portare PII e la catena e' immutabile. La
+            # colonna porta un CODICE a vocabolario chiuso — `tier2`,
+            # `composer`, `source-trust` per i tre chiamanti di questo metodo,
+            # `moat`/`L1`/`gate` per le due porte del write path.
+            # 🔑 Perche' nella stessa UPDATE e non in una seconda: qui lo stato
+            # e l'autore sono la stessa decisione, e separarli darebbe una riga
+            # quarantinata senza causa se la seconda fallisse — che e'
+            # esattamente il difetto che questa colonna esiste per chiudere.
+            # ⚠️ Il default NON e' vuoto di proposito: un chiamante nuovo che
+            # si dimentica il codice lascia `triage`, che e' vero (un ribalto
+            # dopo la scrittura) e resta distinguibile dalle porte del write.
             conn.execute(
-                "UPDATE facts SET status = 'quarantined' WHERE id = ?", (fact_id,),
+                "UPDATE facts SET status = 'quarantined', quarantined_by = ? "
+                "WHERE id = ?", (deciso_da or "triage", fact_id),
             )
         self._cache_version += 1  # visibility change → rebuild cached corpus next recall
         try:

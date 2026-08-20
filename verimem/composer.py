@@ -395,7 +395,8 @@ def compose_once(mem: Any, *, topic: str | None = None, run_id: str | None = Non
                 # live on a shrug — quarantine, rehabilitable, visible.
                 try:
                     mem.semantic.quarantine_fact(
-                        fid, reason=(f"composer: judge score "
+                        fid, deciso_da="composer",
+                        reason=(f"composer: judge score "
                                      f"{gs if gs is not None else 'None'} below "
                                      f"floor {_min_score():.0f} — a derived "
                                      "fact needs positive entailment"))
