@@ -53,6 +53,15 @@ from .mode import apply_engram_mode as _apply_engram_mode  # noqa: E402
 
 _apply_engram_mode()
 
+# Il tetto ai thread di calcolo, PRIMA che torch esista in questo processo. Su
+# 20 core torch ne prende 10, e a dieci si perde su ENTRAMBI gli assi: 525 MB di
+# prenotazione in piu' e un batch da 32 otto volte piu' lento (misurato il
+# 20/08; i numeri e il metodo stanno nel modulo). setdefault-safe;
+# `VERIMEM_TORCH_THREADS=0` lo disattiva.
+from ._thread_budget import applica_tetto_thread as _applica_tetto_thread  # noqa: E402
+
+_applica_tetto_thread()
+
 # Public turnkey SDK — exposed lazily so ``import verimem`` stays light (the
 # Memory client pulls in the embedding/semantic stack only when first used).
 __all__ = ["AutoMemory", "Memory", "Client"]
