@@ -16,7 +16,18 @@ idempotente: rieseguirlo NON e' innocuo, esplode. La protezione quindi non puo'
 stare nel DDL, deve stare nella rilettura della versione dentro la transazione.
 
 I test qui sotto misurano quella proprieta' e basta: che la versione sia riletta
-DOPO aver preso il lock. Il primo e' quello che cade oggi; gli altri due sono i
+DOPO aver preso il lock.
+
+⚠️ IL LIMITE, perche' il docstring non prometta piu' di quanto e' provato: qui e'
+dimostrato che la finestra ESISTE e che attraversandola si ottiene esattamente
+l'errore della CI. NON e' dimostrato che sia la causa di QUEL rosso. Il test di
+`test_consolidation_unique_index_cross_process.py` e' INSTABILE — cambia
+piattaforma fra un run e l'altro (ubuntu py3.12 su c2805129, windows py3.12 su
+e6e4dcd2) e in locale non si e' mai manifestato: 12 esecuzioni su un albero senza
+la cura, 0 rossi. Quattro tentativi di riproduzione sono falliti, l'ultimo con i
+due worker sincronizzati DENTRO la finestra che leggono entrambi «versione 0».
+⇒ Un run verde su quel test NON prova questa cura, e questa cura non chiude quel
+test. Sono due cose separate, e vanno tenute separate. Il primo e' quello che cade oggi; gli altri due sono i
 controlli che possono fallire se la cura, invece di chiudere la finestra,
 spegnesse le migrazioni.
 """
