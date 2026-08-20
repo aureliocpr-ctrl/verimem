@@ -201,6 +201,46 @@ def _dichiara_un_assenza(testo: str) -> bool:
     return bool(_ASSENZA_RE.search(testo or ""))
 
 
+# ── LO STESSO TESTO, LETTO SUI DUE LATI, DEVE DARE LO STESSO NUMERO ──────────
+#
+# I due lati si leggono con due modalità: il claim con `extract_quantities(p)`,
+# la fonte con `extract_quantities(s, come_fonte=True)`. Sulle versioni attaccate
+# a un nome le due letture divergono, e la divergenza va nel verso peggiore —
+# il lato CLAIM fabbrica un valore che il lato FONTE non produce mai::
+#
+#     "… click-8.4.2."    claim ('', 4.2)     fonte —            inventato
+#     "… pytest-8.4.1."   claim ('', 4.1)     fonte —            inventato
+#     "… python-3.12."    claim ('', 12.0)    fonte ('', 3.12)   due numeri diversi
+#     "cli.py-354-"       claim —             fonte ('', 354.0)  verso innocuo
+#
+# ⇒ Con `click-8.4.2` su ENTRAMBI i lati il veto scattava su un valore che nella
+# fonte c'è ALLA LETTERA, e il fatto usciva quarantinato col giudice a 99,98.
+# È la forma di ogni riga `Successfully installed`, cioè di ogni misura di
+# dipendenza che scriviamo.
+#
+# ⚖️ IL CRITERIO È TESTUALE, NON NUMERICO, ed è per questo che non spegne il
+# veto: si perdona un valore solo se il TOKEN che l'ha prodotto compare
+# verbatim nella fonte. Una versione INVENTATA non è nella fonte, quindi non
+# viene perdonata e resta fermata — c'è un controllo positivo che lo pin-a.
+#
+# 📌 E sta QUI e non in `extract_quantities`: è la stessa scelta già dichiarata
+# sopra per «nessun X vale 0». Toccare l'estrattore alimenterebbe i sei moduli
+# del gate che lo leggono; qui l'equivalenza vive solo nel confronto.
+_TOKEN_CON_VERSIONE = re.compile(
+    r"(?<![\w.-])[A-Za-z][\w.]*-\d+(?:\.\d+)+(?![\w-])")
+
+
+def _valori_da_token_che_la_fonte_contiene(proposition: str, source: str) -> set[float]:
+    """I valori che il lato claim estrae da token presenti verbatim nella fonte."""
+    perdonati: set[float] = set()
+    for m in _TOKEN_CON_VERSIONE.finditer(proposition or ""):
+        token = m.group(0)
+        if token and token in (source or ""):
+            for _u, v in extract_quantities(token):
+                perdonati.add(v)
+    return perdonati
+
+
 def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]:
     """I valori numerici del claim che nella fonte non compaiono.
 
@@ -261,9 +301,12 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     if _dichiara_un_assenza(source):
         nella_fonte.add(0.0)
     come_scritti = _numeri_come_scritti(proposition)
+    # Vedi `_TOKEN_CON_VERSIONE` sopra: un valore estratto da un token che la
+    # fonte contiene alla lettera non e' un valore che la fonte non contiene.
+    perdonati = _valori_da_token_che_la_fonte_contiene(proposition, source)
     fuori: list[ValoreAssente] = []
     for u, v in sorted(nel_claim, key=lambda q: q[1]):
-        if v in nella_fonte:
+        if v in nella_fonte or v in perdonati:
             continue
         # UN ARROTONDAMENTO NON E' UN'INVENZIONE. Confronto STRETTO (`<` e non
         # `<=`): sulle 38 prove del banco l'inclusivo dava 37/38 e lo stretto
