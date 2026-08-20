@@ -159,7 +159,28 @@ jobs:
           - os: macos-latest
             python-version: "3.12"
     steps:
+      # ⚠️ `fetch-depth: 0` NON e' zelo: senza, il clone e' profondo 1 e il
+      # presidio del RILASCIO diventa MUTO. Cerca il commit che ha introdotto
+      # `version = "X"` in pyproject.toml per misurare quanto e' lontano il
+      # numero dichiarato dal codice; su un clone senza storia non lo trova e
+      # fa `pytest.skip("...(shallow clone?)")` — e uno skip finisce fra i 44
+      # skipped che ogni cella riporta, cioe' SI LEGGE VERDE.
+      # 🔑 Il presidio non era spento e non sbagliava: era ACCESO e diceva il
+      # vero, e l'ambiente in cui lo leggevamo gli aveva tolto l'informazione
+      # per parlare. Quarta forma della stessa famiglia misurata in due giorni
+      # (crash, timeout, skip): l'assenza di misura si legge come misura
+      # perfetta.
+      # 📌 E' il test che il suo stesso docstring chiama «l'unico del file che
+      # avrebbe preso il difetto vero del 08/08», quando il repo era a 375
+      # commit dal bump e dichiarava un numero gia' pubblicato. Oggi siamo a
+      # 421: PIU' LONTANI di quando il difetto fu scoperto.
+      # 💰 COSTO, misurato da ws2 e non stimato: +9,2 MB e +7 s per job, cioe'
+      # +55 MB e +42 s sull'intera matrice di sei. Sulla gamba windows, che e'
+      # la stretta (49,2 min su un tetto di 60), sette secondi non spostano.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
 
       - name: Set up Python
         uses: actions/setup-python@v5

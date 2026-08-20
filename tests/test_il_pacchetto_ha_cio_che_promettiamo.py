@@ -417,3 +417,40 @@ def test_il_wheel_contiene_i_comandi_del_repo(wheel_costruito):
         f"comandi definiti nel repo e assenti dal wheel: {persi}\n"
         f"repo {len(nel_repo)} · wheel {len(nel_wheel)}"
     )
+
+
+def test_LA_CI_DA_AL_PRESIDIO_LA_STORIA_CHE_GLI_SERVE():
+    """⚠️ IL PRESIDIO SUL PRESIDIO, e non e' zelo: senza questa riga il test
+    qui sopra e' MUTO in CI e nessuno se ne accorge.
+
+    `test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice` cerca nella
+    storia il commit che ha introdotto `version = "X"`. Con
+    ``actions/checkout@v4`` senza ``fetch-depth`` il clone e' profondo **1**:
+    quel commit non c'e', il test fa `pytest.skip("...(shallow clone?)")`, e
+    lo skip finisce fra i 44 skipped che ogni cella riporta — **si legge
+    verde**.
+
+    🔑 Il presidio non era spento e non sbagliava: era ACCESO, diceva il vero,
+    e l'ambiente gli aveva tolto l'informazione per parlare. Misurato il
+    20/08: in locale `1 failed` con «ferma da 425 commit (soglia 150)», in CI
+    `SKIPPED` da sempre.
+
+    ⚖️ Un test che si spegne da solo quando l'ambiente non collabora e' peggio
+    di un test assente: un test assente si nota, questo si conta fra i verdi.
+    """
+    import pathlib
+
+    import yaml
+
+    ci = pathlib.Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml"
+    if not ci.exists():                     # pacchetto installato senza il repo
+        pytest.skip("ci.yml non presente in questo albero")
+    passi = yaml.safe_load(ci.read_text(encoding="utf-8"))["jobs"]["test"]["steps"]
+    checkout = [s for s in passi
+                if str(s.get("uses", "")).startswith("actions/checkout")]
+    assert checkout, "il job di test non fa checkout: non e' piu' questo il file"
+    with_ = checkout[0].get("with") or {}
+    assert str(with_.get("fetch-depth")) == "0", (
+        "il checkout del job di test non chiede la storia completa "
+        f"(fetch-depth={with_.get('fetch-depth')!r}): il presidio della "
+        "versione tornera' a SKIPPARE in CI, e uno skip si legge come un verde")
