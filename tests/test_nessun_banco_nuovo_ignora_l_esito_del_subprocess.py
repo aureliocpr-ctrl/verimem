@@ -130,12 +130,10 @@ ANCORA_CIECHI = frozenset({
     # morto -> stdout vuoto -> l'assert scatta, col perche' sotto gli occhi.
     "test_embedding_load_no_hang.py",
 
-    # ESAMINATO 15/08 — REGGE: costruisce `_uscita = (stdout or "") + (stderr
-    # or "")` e lo passa come MESSAGGIO all'assert su una stringa positiva
-    # attesa. Processo morto -> stdout vuota -> l'assert scatta, con entrambi i
-    # canali sotto gli occhi. E dichiara gia' la trappola del `None` al posto
-    # della stringa vuota, che altrove e' costata un `TypeError`.
-    "test_flow_surface_onesta.py",
+    # USCITO DALLA LISTA il 20/08: `test_flow_surface_onesta.py` ora mette
+    # `rc={returncode}` in testa al messaggio dell'assert, quindi legge l'esito
+    # per costruzione e non e' piu' cieco. Era tollerato dal 15/08 perche' il
+    # messaggio portava gia' entrambi i canali; adesso porta anche l'esito.
     # I due banchi delle PROMESSE DEL README — curati il 14/08, e non erano
     # solo ciechi: se la sonda non rispondeva facevano `pytest.skip`, cioè
     # **si spegnevano da soli quando cadeva la promessa che verificano**.

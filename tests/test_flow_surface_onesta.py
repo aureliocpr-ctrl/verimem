@@ -85,7 +85,12 @@ def test_cli_main_dichiara_cli():
     # banco esiste per mostrare.
     # 📌 Nel run 31609651506 questo era l'UNICO file rosso su Windows e su
     # nessun'altra piattaforma — 20 file cadono ovunque, questo solo li'.
-    _uscita = (out.stdout or "") + (out.stderr or "")
+    # ⚠️ L'ESITO DEL PROCESSO ENTRA NEL MESSAGGIO, e non e' cosmesi: con
+    # `stdout` vuoto, un processo MORTO e un processo VIVO che non ha stampato
+    # si leggono uguali. `rc=` li separa in un colpo d'occhio — ed e' la forma
+    # che `test_nessun_banco_nuovo_ignora_l_esito_del_subprocess.py` pretende.
+    _uscita = (f"rc={out.returncode} "
+               + (out.stdout or "") + (out.stderr or ""))
     assert "SURFACE=cli" in (out.stdout or ""), _uscita
 
 
