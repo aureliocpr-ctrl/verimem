@@ -896,9 +896,46 @@ def _record_numerati_diversi(pa: str, pb: str) -> bool:
 #: Le parole che aprono una frase senza essere un soggetto («Il», «The», «Nel»).
 #: NON si riscrive la lista: si prende quella che l'estrattore usa gia', cosi'
 #: le due superfici non possono divergere.
+#: Le parole che possono APRIRE una frase senza esserne il soggetto, oltre a
+#: quelle che `_STOPWORDS` gia' elenca. Il criterio non e' il gusto di chi
+#: scrive: sono le CLASSI CHIUSE della grammatica — preposizioni, articoli,
+#: congiunzioni, pronomi — cioe' liste finite che non crescono. Aggettivi,
+#: numerali e nomi restano fuori: quelli possono far parte di un nome proprio.
+#:
+#: ⚠️ PERCHE' SERVE, misurato: `_STOPWORDS` contiene `con`, `della`, `dopo`,
+#: `the`, `for`, `nel` — e sembra completa proprio per questo. Ma le
+#: preposizioni piu' frequenti non ci sono, e chi apre la frase con una di
+#: quelle si vede il fatto RITIRATO da un fatto che parla di un ALTRO record:
+#:
+#:     «Su 42bb3839 la cella…» / «Su b7bc7b77 la cella…»   ->  1 vivo su 2  ⛔
+#:     «Il run 42bb3839 …»     / «Il run b7bc7b77 …»       ->  2 vivi       ✅
+#:
+#: A/B a variabile singola, cambia solo la parola d'apertura: su 14 coppie ne
+#: cadevano 10. E NON e' un difetto italiano — `On`, `At`, `By`, `To`, `Of`
+#: cadono esattamente come `Su`, `In`, `Di`, `Da`, `Tra`, e l'inglese e' la
+#: lingua in cui il prodotto e' documentato. Diagnosi del caso italiano di ws7
+#: (Lanterna); la meta' inglese e la cura di ws3.
+#:
+#: 🔑 E colpisce CHI FA LA COSA GIUSTA: nomina il soggetto del fatto, e viene
+#: punito dalla parola con cui lo nomina.
+_APERTURE_FUNZIONALI = frozenset("""
+    di a da in su per tra fra
+    dello degli al allo alla ai agli alle
+    dal dallo dalla dai dagli dalle
+    nello nei negli nelle sullo sui sugli sulle col coi
+    e o ma se ne ci vi lui lei loro io tu noi voi
+    che chi cui non ho hai ha abbiamo avete hanno
+    sono sei siamo siete era erano essere stato stata stati state
+    on at by to of as an or so it is are was be been
+    we they he she you i me him them us my your his her their our its
+    no if via since until during between about above below through
+    against within without upon onto off out up down here there
+""".split())
+
+
 def _parole_vuote_iniziali() -> frozenset[str]:
     from .entity_extract_lite import _STOPWORDS
-    return frozenset(w.casefold() for w in _STOPWORDS)
+    return frozenset(w.casefold() for w in _STOPWORDS) | _APERTURE_FUNZIONALI
 
 
 #: La prima parola di una frase, quando e' maiuscola: `extract_entities_lite`
@@ -1127,7 +1164,30 @@ def _entita_diverse(a: Any, b: Any) -> bool:
         return {x for x in nomi if x}
 
     ea, eb = _proper(pa), _proper(pb)
-    return bool(ea and eb and not (ea & eb))
+    if ea and eb:
+        return not (ea & eb)
+
+    # ⚖️ UN LATO SOLO NOMINA UN RECORD, e questo NON e' il caso in cui si sa
+    # abbastanza per ritirare: e' il caso in cui si sa MENO. Prima di questa
+    # riga il ramo cadeva nel `False` finale, che il chiamante legge come
+    # «nessun motivo di fermarsi» e procede al ritiro — un NON SO letto come
+    # un SI'.
+    #
+    # ⛔ La scelta non e' simmetrica e per questo si decide cosi': ritirare per
+    # errore toglie un fatto vero dal recall, non ritirare per errore lascia
+    # vivere un duplicato. In dubbio si paga il duplicato.
+    #
+    # ⚠️ QUESTO RAMO E `_APERTURE_FUNZIONALI` SONO UNA CURA SOLA e vanno
+    # insieme: finche' `su`/`on`/`in` contavano come nomi, quasi nessun lato
+    # risultava vuoto e questo ramo non si vedeva. Curato solo il primo, si
+    # scoprono i ritiri che una falsa entita' fermava per sbaglio; curato solo
+    # il secondo, resta il caso in cui i due lati hanno la STESSA preposizione
+    # e si mangiano lo stesso. I numeri stanno in
+    # `docs/stato-reale/banchi/ws3-aperture-e-lato-solo.py`.
+    if ea or eb:
+        return True
+
+    return False
 
 
 #: statuses that are OUT of trusted recall — a new write must NOT be flagged as
