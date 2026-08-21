@@ -425,11 +425,23 @@ def run_doctor() -> list[dict[str, Any]]:
             FAIL if (not writable or _illeggibili) else OK,
             f"{d} (writable={writable}; stores: {_stores_dichiarati(d)})"
             + _divergenza,
+            # ⚠️ QUI C'ERA UN COMANDO CHE NON ESISTE: «controlla `verimem backup
+            # list`». Chi seguiva il consiglio riceveva `No such command`, e
+            # nel momento peggiore — ha lo store illeggibile e sta cercando di
+            # non perdere i dati. La CLI ha `backup-all`, `facts backup` e
+            # `gateway backup`, che CREANO un backup: nessuno li ELENCA, e
+            # suggerirne uno sarebbe peggio del silenzio (l'utente ne
+            # scriverebbe uno nuovo invece di guardare quelli che ha).
+            # Il consiglio ora nomina solo cose che esistono: i file sul disco.
+            # È la seconda volta — nella 0.7.0 `doctor` nominava `save`, che
+            # era entrato solo nella 0.7.3 — ed è la ragione per cui il test
+            # `test_ogni_comando_suggerito_da_doctor_esiste` è stato scritto.
             ("questi file esistono e non sono database sqlite: "
              + "; ".join(_illeggibili)
              + ". Un backup, un file troncato a meta' o un percorso riusato "
-               "per altro danno questa forma: controlla `verimem backup list`, "
-               "e NON scriverci sopra prima di aver messo da parte il file."
+               "per altro danno questa forma: guarda la data e la dimensione "
+               "di quei file prima di toccarli, e NON scriverci sopra prima "
+               "di aver messo da parte una copia."
              if _illeggibili else
              "set the data dir BEFORE importing verimem (env var, or the "
              "parent process), or restart the process after changing it"
