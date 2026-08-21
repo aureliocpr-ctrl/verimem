@@ -1318,16 +1318,35 @@ class Memory:
     def documents(self):
         """Il tier documenti, costruito alla prima richiesta.
 
-        ⚠️ Il db sta ACCANTO a quello dei fatti, non nel percorso globale del
-        tier. Senza questo, una `Memory(tmp_path)` in un test scriverebbe
-        nell'indice VERO: il default di ``DocumentIndex`` e' relativo al
-        ``DocumentStore`` di sistema, non alla Memory che lo apre.
+        ⚠️ NESSUN ``db_path``, DI PROPOSITO — e la prima stesura ne passava uno.
+        Il 2026-08-21 questa property apriva l'indice ACCANTO ai fatti::
+
+            db_path=Path(self.semantic.db_path).parent / "document_index.db"
+
+        La motivazione era l'isolamento: una ``Memory(tmp_path)`` in un test non
+        deve scrivere nell'indice documenti vero. Il problema e' che risolveva
+        l'isolamento rompendo l'interoperabilita', e con ``Memory()`` nudo —
+        l'uso normale — i due store divergevano lo stesso::
+
+            SDK    : <data_dir>\\semantic\\document_index.db
+            SISTEMA: <data_dir>\\documents\\document_index.db
+            indicizzato dall'SDK, cercato da `hippo_document_search`: NON trovato
+
+        Un utente che indicizza da qui e poi cerca da Claude Code non trovava
+        niente. ``DocumentIndex()`` senza argomenti fa gia' la cosa giusta: legge
+        ``HIPPO_DOCINDEX_DB`` se c'e', altrimenti deriva dal ``DocumentStore`` di
+        sistema — che vive nella data dir CORRENTE, quindi in un test con
+        ``HIPPO_DATA_DIR`` su tmp resta isolato per costruzione. Passare un
+        ``db_path`` esplicito saltava entrambi, env compreso.
+
+        🔑 L'isolamento lo da' la data dir, non il percorso del db: era gia'
+        risolto, e la riga in piu' rompeva una cosa per proteggerne un'altra che
+        non era in pericolo.
         """
         _idx = getattr(self, "_documents", None)
         if _idx is None:
             from .document_index import DocumentIndex
-            _idx = DocumentIndex(
-                db_path=Path(self.semantic.db_path).parent / "document_index.db")
+            _idx = DocumentIndex()
             self._documents = _idx
         return _idx
 
