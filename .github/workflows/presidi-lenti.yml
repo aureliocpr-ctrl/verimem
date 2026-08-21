@@ -42,6 +42,29 @@
 # senza spegnere il verde di `ci`, ed e' esattamente la separazione che serve
 # per dei presidi che nessuno ha mai eseguito in CI.
 #
+# ⚠️⚠️ IL PREZZO DI QUELLA SCELTA, che il 2026-08-21 non avevo dichiarato e che
+# @ws4 ha misurato: il cancello del publish legge UN SOLO workflow.
+#
+#     publish.yml:118/121   select(.name=="ci" and .head_branch=="main")
+#
+# ⇒ **UN ROSSO DI QUESTO FILE NON FERMA IL TAG.** Separando i segnali per non
+# contaminare il gate del rilascio ho anche tolto a questi 22 presidi il potere
+# di bloccarlo, e non l'avevo scritto da nessuna parte. Un limite taciuto e'
+# peggio di un limite: chi legge «CI verde» conclude «tutto verde», e qui la
+# conclusione sbagliata sarebbe «i presidi delle promesse sono a posto».
+#
+# Sta scritto qui perche' chiunque apra questo file lo sappia. La decisione di
+# cosa debba bloccare un tag e' del CEO e sta in `publish.yml`, non qui: la riga
+# pronta (aggiungere `presidi-lenti` e `security` alla condizione) e' nel
+# messaggio di @ws4 del 14:24.
+#
+# 📌 E COME SI LEGGE IL SUO ROSSO OGGI: `test_mcp_server_e2e_smoke` e' rosso di
+# proposito — su Linux il server MCP esce (rc 0, 1.1s) senza rispondere
+# all'ultima richiesta, e tenerlo verde chiudendo stdin piu' tardi lo farebbe
+# passare senza che il prodotto cambi. Finche' quel difetto e' aperto, questo
+# workflow riporta «1 failed, 21 passed»: il verdetto da leggere e' il NUMERO,
+# non il colore. Se un giorno i failed diventano due, e' successo qualcos'altro.
+#
 # ⚠️ NIENTE `push:` — di proposito. Un run per commit su una matrice gia' satura
 # (misurato il 2026-08-21: run di ~61 minuti mediani contro un commit ogni ~20)
 # toglierebbe capacita' proprio a `ci`. Giornaliero, piu' a comando quando serve.
