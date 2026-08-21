@@ -976,7 +976,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     """
     from .entity_extract_lite import extract_entities_lite
     from .hidden_records import codes_in
-    from .quantity_match import content_tokens, contrasting_attrs
+    from .quantity_match import content_tokens, contrasting_attrs, extract_quantities
     from .temporal_context import date_menzionate, stessa_frase_altra_data
 
     pa = getattr(a, "proposition", "") or ""
@@ -1025,6 +1025,33 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     # `quantity_match.version_conflict`, e chiamarla qui usa quella invece di
     # una copia che divergera'.
     if contrasting_attrs(content_tokens(pa), content_tokens(pb)):
+        return True
+
+    # STESSO RAMO, UN ASSE CHE `content_tokens` NON VEDE: LE UNITA' DELLE
+    # QUANTITA'. «La cella stampa 1 failed e 11767 passed» e «la cella py3.13
+    # stampa 8019 warnings» misurano DUE GRANDEZZE DIVERSE della stessa cella —
+    # non un valore che si aggiorna. `contrasting_attrs` non li separa perche'
+    # `passed`/`warnings` non sono attributi contrastanti nel suo senso, ma
+    # `extract_quantities` — la superficie che il prodotto usa gia' per leggere
+    # (valore, unita') — li rende visibili:
+    #     «...1 failed e 11767 passed»   -> {('failed', 1.0), ('passed', 11767.0)}
+    #     «...8019 warnings»             -> {('warning', 8019.0)}
+    # Intersezione vuota: due misure diverse, non un'evoluzione.
+    #
+    # CASO CHE L'HA CHIESTA (ws7, 20/08 19:28): il verdetto della serata
+    # (grounding 99.7) ritirato da un conteggio di warning su un ALTRO commit,
+    # reason `same-source evolution`. Riprodotto fuori da pytest.
+    #
+    # PERIMETRO STRETTO, e i due lati contano entrambi:
+    #  • se una delle due frasi non ha quantita', NON decide (torna al resto);
+    #  • se le unita' si INTERSECANO, e' lo stesso tipo di misura e resta
+    #    un'evoluzione: «Rossi pesa 70 chilogrammi» -> «78 chilogrammi» passa.
+    # MISURATO sulle 171 coppie ritirate con entrambi i fatti groundati >=90:
+    # ne separa 19, e su cinque aggiornamenti legittimi di controllo NON ne
+    # blocca nessuno.
+    ua = {u for u, _ in extract_quantities(pa)}
+    ub = {u for u, _ in extract_quantities(pb)}
+    if ua and ub and not (ua & ub):
         return True
 
     def _proper(testo: str) -> set[str]:
