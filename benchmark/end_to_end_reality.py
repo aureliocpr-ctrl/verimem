@@ -8,6 +8,11 @@ for its verticals), whether recall returns them, whether answering is correct on
 the answerable and abstains on the impossible, whether a real contradiction is
 caught.
 
+Abstention is reported on BOTH populations — on the impossible questions (the
+number that gets quoted) and on the answerable ones (the half that says whether
+the first one means anything). A 1.000 on the impossible alone cannot tell
+"abstains when it should" from "abstains always".
+
     python -m benchmark.end_to_end_reality              # scorecard
     python -m benchmark.end_to_end_reality --json out.json
 """
@@ -145,18 +150,34 @@ def run(use_llm: bool = True) -> dict:
                               "was_admitted": want in admitted})
 
     # 3) ANSWER — correct on answerable, abstain on impossible (real LLM)
+    # ⚠️ `answerable_abstained` E' LA META' CHE MANCAVA, e senza di essa il
+    # numero pubblicato non e' leggibile: un'astensione a 1.000 sulle
+    # impossibili non distingue «si astiene quando deve» da «si astiene
+    # SEMPRE». Il dato c'era gia' nel `detail` di ogni riga answerable — la
+    # risposta e' la stringa "no answer" — e non veniva contato ne' stampato.
+    #
+    # E `answerable_correct` da solo MESCOLA DUE FALLIMENTI OPPOSTI: «ha
+    # risposto male» e «si e' astenuto». Sono errori diversi, si curano in
+    # direzioni diverse, e sommati sotto un unico numero nessuno dei due si
+    # vede. Sui due run committati in `benchmark/results/`: 10 answerable,
+    # 8 corrette, 2 astensioni — cioe' un quarto dei fallimenti erano
+    # astensioni e il referto non lo diceva.
     ans = {"answerable_correct": 0, "answerable_n": 0,
+           "answerable_abstained": 0,
            "impossible_abstained": 0, "impossible_n": 0, "detail": []}
     llm = _llm() if use_llm else None
     if llm is not None:
         for q, must in ANSWERABLE:
             res = m.answer(q, llm=llm)
             a = (res.get("answer") or "").lower()
-            ok = a != "no answer" and any(x in a for x in must)
+            astenuto = a == "no answer"
+            ok = not astenuto and any(x in a for x in must)
             ans["answerable_correct"] += ok
+            ans["answerable_abstained"] += astenuto
             ans["answerable_n"] += 1
             ans["detail"].append({"q": q, "kind": "answerable",
-                                  "answer": res.get("answer"), "ok": ok})
+                                  "answer": res.get("answer"), "ok": ok,
+                                  "abstained": astenuto})
         for q, forbidden in IMPOSSIBLE:
             res = m.answer(q, llm=llm)
             a = (res.get("answer") or "").lower()
@@ -213,7 +234,17 @@ def main() -> None:
     if a["answerable_n"]:
         print("\n  ANSWER (real LLM):")
         print(f"    correct on answerable:  {a['answerable_correct']}/{a['answerable_n']}")
-        print(f"    abstained on impossible: {a['impossible_abstained']}/{a['impossible_n']}")
+        # LE DUE META', UNA SOTTO L'ALTRA E MAI UNA SENZA L'ALTRA: la prima
+        # riga da sola si legge come una virtu' anche quando descrive un
+        # sistema che tace su tutto.
+        print(f"    abstained on impossible: {a['impossible_abstained']}/{a['impossible_n']}"
+              "   <- the number that gets quoted")
+        _ab_a = a.get("answerable_abstained", 0)
+        print(f"    …and on ANSWERABLE:      {_ab_a}/{a['answerable_n']}"
+              "   <- the half that says whether the first one means anything")
+        _sbagliate = a['answerable_n'] - a['answerable_correct'] - _ab_a
+        print(f"    (of the misses: {_ab_a} abstained, {_sbagliate} answered wrong "
+              "— two different defects)")
         confab = sum(1 for d in a["detail"] if d.get("confabulated"))
         print(f"    confabulations served:   {confab}")
     print(f"\n  CONTRADICTION caught: {res['contradiction_caught']}")
