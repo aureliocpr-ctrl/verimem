@@ -51,18 +51,25 @@ from verimem.client import Memory
 #: `search_documents`, e il conteggio e' salito. Ma la porta per l'utente
 #: ESISTE gia': `verimem index` (cli.py:633) e `verimem search-docs`
 #: (cli.py:671), eseguiti e funzionanti. Il NOME del metodo SDK non compare in
-#: `cli.py` perche' la CLI passa da `DocumentIndex()` — e NON e' una
-#: duplicazione da sanare: i due percorsi usano DB DIVERSI DI PROPOSITO.
-#: Misurato il 21/08::
+#: `cli.py` perche' la CLI passa da `DocumentIndex()`.
 #:
-#:     DocumentIndex()        (la via della CLI)  <data_dir>/documents/document_index.db
-#:     Memory(...).documents  (la via SDK)        <accanto al db dei fatti>
+#: ⚠️ CORREZIONE 21/08 14:39, e la ragione che avevo scritto qui era SBAGLIATA.
+#: Avevo misurato che i due percorsi usavano db diversi e ne avevo concluso che
+#: fosse «di proposito», citando il docstring di `Memory.documents` («senza
+#: questo, una `Memory(tmp_path)` in un test scriverebbe nell'indice VERO»).
+#: Tredici minuti dopo `8bb2a27c` ha tolto quel `db_path` esplicito — «l'SDK
+#: indicizzava i documenti in uno store che nessun'altra porta legge» — e ora i
+#: due percorsi COINCIDONO (riverificato). ⇒ Quella non era una separazione
+#: voluta: era un difetto, e il docstring che citavo come prova di
+#: intenzionalita' ne era la giustificazione.
+#: 🔑 Un docstring dice cosa l'autore CREDEVA, non cosa il codice deve fare.
 #:
-#: e il docstring di `Memory.documents` dichiara il perche': «senza questo, una
-#: `Memory(tmp_path)` in un test scriverebbe nell'indice VERO». Far passare la
-#: CLI dall'SDK — la cura che sembra ovvia, e che avevo proposto — sposterebbe
-#: i documenti degli utenti in un altro file: chi ne ha gia' indicizzati non li
-#: troverebbe piu'. Provata, misurata e RITIRATA prima di consegnarla.
+#: Il conteggio resta 12 perche' dipende dai NOMI presenti in `cli.py`, che
+#: `8bb2a27c` non ha cambiato: la porta utente esiste (`verimem index`,
+#: `verimem search-docs`) e il nome del metodo SDK non vi compare. Resta quindi
+#: il caso previsto dal messaggio d'errore — «o le apri una porta, o alzi la
+#: costante dichiarando che e' una scelta» — ma per una ragione piu' semplice
+#: di quella che avevo scritto: i due chiamano la stessa cosa con nomi diversi.
 #:
 #: ⇒ Qui il criterio grossolano di questo cricchetto (cerca il nome nel testo)
 #: e la cosa vera divergono: la capacita' E' raggiungibile, il nome no. E' il
