@@ -174,6 +174,10 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   to memory *through the gate*, citation attached. The offsets are exact on the
   index and the passage text always comes back with them — they are not a
   promise that the original file still opens, since paths are stored as given.
+  Reachable from all three surfaces: `verimem index` / `verimem search-docs` on
+  the CLI, `verimem_document_*` over MCP, and `Memory.index_document(path)` /
+  `Memory.search_documents(query)` from the SDK. Documents indexed through a
+  `Memory` live next to that memory's facts, not in a shared system index.
 - **Consent-first import** — bootstrap from your ChatGPT / Claude export:
   conversations are listed first, nothing is ingested without an explicit
   selection.
