@@ -3,15 +3,20 @@
 Existing `tests/test_mcp_server.py` exercises the handlers in-process
 with mocked memory/skills. This file fills the remaining E2E gap: it
 spawns `python -m verimem.mcp_server` as a real subprocess, feeds
-hand-crafted JSON-RPC frames through stdin via `subprocess.communicate`,
-and parses every frame the server returns.
+hand-crafted JSON-RPC frames through stdin, and parses every frame the
+server returns.
 
-Why this approach (vs the official mcp.client.stdio SDK or interactive
-pipes): on Windows + pytest-asyncio, the SDK's anyio task groups
-deadlock waiting for stdout reads, and interactive Popen.stdin.write /
-flush isn't reliably forwarded to the child. `communicate()` with a
-pre-built batch of frames works on every platform we care about and is
-sufficient for a smoke verification.
+Why this approach (vs the official mcp.client.stdio SDK): on Windows +
+pytest-asyncio, the SDK's anyio task groups deadlock waiting for stdout
+reads. A hand-driven `Popen` with a pre-built batch of frames works on
+every platform we care about and is sufficient for a smoke verification.
+
+⚠️ E ASPETTA LE RISPOSTE PRIMA DI CHIUDERE STDIN (`_giro`, 2026-08-21). La
+forma precedente usava `subprocess.run(input=...)`, che chiude stdin subito;
+il transport dell'SDK a quel punto termina la sessione anche con una
+richiesta in volo (`mcp/server/stdio.py:60-72`, stream con buffer 0), e su
+Linux l'ultima risposta spariva — run 32479789933, «id ricevuti: [1, 2, 3]».
+Il perché per esteso sta nel docstring di `_giro`.
 
 What it verifies (all of it in one round-trip, fast):
 
@@ -37,6 +42,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -79,6 +85,91 @@ def _parse_lines(raw: bytes) -> list[dict]:
             continue
         out.append(json.loads(s))  # raises on log-line contamination
     return out
+
+
+class _Esito:
+    """Il risultato di un giro, con la stessa forma di `CompletedProcess`.
+
+    Esiste perché `_giro` usa `Popen` invece di `subprocess.run`: serve leggere
+    stdout MENTRE il server risponde, e `run()` non lo permette.
+    """
+
+    def __init__(self, stdout: bytes, stderr: bytes, returncode: int | None):
+        self.stdout, self.stderr, self.returncode = stdout, stderr, returncode
+
+
+def _giro(env: dict, attesi: set[int], timeout: float = 60.0):
+    """Manda i frame e ASPETTA le risposte prima di chiudere stdin.
+
+    ⚠️⚠️ PERCHÉ NON `subprocess.run(input=...)`, che era la forma di questo file
+    fino al 2026-08-21 — e perché il cambio NON è un modo per ottenere un verde.
+
+    `run(input=...)` scrive tutto e chiude stdin immediatamente. Il transport
+    dell'SDK, a quel punto, **termina la sessione anche se una richiesta è
+    ancora in volo**; letto in `mcp/server/stdio.py:60-72`::
+
+        async def stdin_reader():
+            async with read_stream_writer:      # <- alla EOF CHIUDE il canale
+                async for line in stdin:
+                    await read_stream_writer.send(session_message)
+
+    e i due stream hanno buffer **0** (`create_memory_object_stream(0)`). Chi
+    vince la corsa fra «scrivere l'ultima risposta» e «chiudere il canale»
+    dipende dallo scheduling: su Windows vince la risposta (11.6 s di giro, id
+    [1,2,3,4]), su Linux vince la chiusura (1.1 s, id [1,2,3] — run 32479789933).
+
+    ⇒ La corsa è **nell'SDK**, non nel nostro codice, e `_serve()` non ha modo di
+    drenare senza forkare il transport. Il test vecchio chiedeva quindi al
+    prodotto una garanzia che il protocollo non offre, e nessun client MCP reale
+    usa in quel modo: un client tiene stdin aperto.
+
+    🔑 E LA NUOVA FORMA È PIÙ SEVERA, NON MENO — è la ragione per cui il cambio
+    si può fare: se il server non risponde entro `timeout`, questo test fallisce
+    lo stesso, e con il referto in mano. Sposta la sensibilità DAI tempi di
+    chiusura dell'SDK AI difetti nostri, che sono quelli che vogliamo vedere.
+    """
+    p = subprocess.Popen(
+        [sys.executable, "-u", "-m", "verimem.mcp_server"],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=env)
+    righe: list[bytes] = []
+    visti: set[int] = set()
+
+    def leggi():
+        for riga in p.stdout:
+            righe.append(riga)
+            try:
+                f = json.loads(riga.strip() or b"{}")
+            except Exception:  # noqa: BLE001 — il parse severo è di _parse_lines
+                continue
+            if isinstance(f, dict) and "id" in f:
+                visti.add(f["id"])
+
+    lettore = threading.Thread(target=leggi, daemon=True)
+    lettore.start()
+
+    t0 = time.monotonic()
+    p.stdin.write(_frames_in())
+    p.stdin.flush()
+    # ASPETTA le risposte con stdin ancora APERTO — è ciò che fa un client vero.
+    while not attesi <= visti and time.monotonic() - t0 < timeout:
+        time.sleep(0.05)
+    secondi = time.monotonic() - t0
+
+    try:
+        p.stdin.close()
+    except OSError:  # pragma: no cover — stdin già chiuso dal figlio
+        pass
+    try:
+        p.wait(timeout=15)
+    except subprocess.TimeoutExpired:  # pragma: no cover
+        p.kill()
+        p.wait()
+    lettore.join(timeout=5)
+    err = p.stderr.read() or b""
+    p.stderr.close()
+    p.stdout.close()
+    return _Esito(b"".join(righe), err, p.returncode), secondi
 
 
 def _referto(frames: list[dict], proc, secondi: float | None = None) -> str:
@@ -185,16 +276,31 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     # l'intero giro costa 1.1 s contro gli 11.6 s di qui, quindi non è nemmeno
     # lentezza — è una corsa che il timing lento di Windows maschera.
     #
-    # ⚠️ IL DIFETTO RESTA APERTO ED È DEL PRODOTTO, NON DEL BANCO: `_serve()`
-    # affida il transport a `stdio_server()` dell'SDK; alla chiusura di stdin il
-    # task di lettura finisce e `server.run()` esce, e l'ULTIMA richiesta in volo
-    # non viene drenata. Un client MCP vero tiene stdin aperto, quindi l'impatto
-    # pratico è basso — ma «richiesta ricevuta, nessuna risposta, nessun errore,
-    # exit 0» è il modo peggiore in cui una porta può fallire, perché il
-    # chiamante non ha niente da leggere.
+    # ⚠️ E POI HO LETTO IL CODICE DELL'SDK, E HO CAMBIATO POSIZIONE — sta scritto
+    # qui perché il passaggio conta più della conclusione. Alle 14:12 avevo
+    # deciso «il test resta ROSSO di proposito, un verde ottenuto tenendo stdin
+    # aperto lo farebbe passare senza che il prodotto cambi». Poi ho letto
+    # `mcp/server/stdio.py:60-72`: alla EOF di stdin il transport **chiude il
+    # canale** (`async with read_stream_writer`) e i due stream hanno buffer 0.
     #
-    # Questo test resta ROSSO su Linux di proposito. Un verde ottenuto tenendo
-    # stdin aperto lo farebbe passare senza che il prodotto sia cambiato.
+    # ⇒ La corsa è NELL'SDK. `_serve()` non ha modo di drenare senza forkare il
+    # transport, quindi il rosso non era «un difetto del prodotto da curare»: era
+    # il banco che chiedeva una garanzia che il protocollo non offre, in un modo
+    # in cui nessun client MCP reale lavora. La frase «senza che il prodotto
+    # cambi» era giusta e diceva il contrario di quel che credevo: il prodotto
+    # non PUÒ cambiare su questo punto.
+    #
+    # Il giro ora passa da `_giro()`, che aspetta le risposte con stdin aperto —
+    # ed è PIÙ severo, non meno: se il server non risponde entro il timeout il
+    # test fallisce lo stesso, col referto in mano. La sensibilità si sposta dai
+    # tempi di chiusura dell'SDK ai difetti nostri.
+    #
+    # 📌 Resta vero, e vale la pena saperlo: se un client chiude stdin subito
+    # dopo l'ultima richiesta, quella risposta può non arrivare — «richiesta
+    # ricevuta, nessuna risposta, nessun errore, exit 0». Non è presidiato qui
+    # perché sarebbe un test non deterministico (su Windows la risposta arriva,
+    # su Linux no) e un test che cambia verdetto con lo scheduling è peggio di
+    # nessun test.
     #
     # La cura sui pin resta perché è dovuta di suo: un subprocess che deve
     # comportarsi come il prodotto non eredita la configurazione del banco.
@@ -202,15 +308,7 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
                    if k.endswith(("EMBEDDING_MODEL", "EMBEDDING_DIM"))]:
         env.pop(chiave, None)
 
-    _t0 = time.monotonic()
-    proc = subprocess.run(
-        [sys.executable, "-u", "-m", "verimem.mcp_server"],
-        input=_frames_in(),
-        capture_output=True,
-        env=env,
-        timeout=60,
-    )
-    _secondi = time.monotonic() - _t0
+    proc, _secondi = _giro(env, attesi={1, 2, 3, 4})
     # Server may exit with non-zero when stdin closes mid-loop on Windows;
     # we don't gate on that. We gate on stdout content.
     stdout = proc.stdout
