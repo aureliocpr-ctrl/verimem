@@ -63,6 +63,21 @@ NON_HIT = frozenset({
     "get",                              # un fatto per id, non una lista di hit
     "consistency_trust", "source_trust", "source_trust_observe", "trust_stats",
     "forget", "forget_with_report",     # scritture, non letture
+    # ⚠️ `search_documents` legge, e la provenienza CE L'HA — ma di un altro
+    # oggetto. Misurato il 2026-08-21 in ambiente pulito (venv nuovo, sdist,
+    # HF_HOME vuoto), i campi di un hit sono::
+    #
+    #     doc_id · end · flagged · indexed_by · query_terms · query_terms_matched
+    #     score · source_id · start · text · uri · version
+    #
+    # cioe' `source_id` col percorso del file, `uri`, `version` e persino gli
+    # offset `start`/`end` nel documento. Non ha `writer_principal` / `status` /
+    # `grounding_score` perche' quei campi descrivono un FATTO scritto da
+    # qualcuno e giudicato dal moat, e un chunk di documento non e' ne' l'uno ne'
+    # l'altro: e' testo indicizzato, con la sua provenienza propria.
+    # ⇒ Non e' «non presidiata»: e' presidiata altrove, dal tier documenti.
+    # Metterla in PORTE la farebbe fallire su campi che non le competono.
+    "search_documents",
 })
 
 _TESTO = "Il magazzino di Rovigo contiene 480 pallet."

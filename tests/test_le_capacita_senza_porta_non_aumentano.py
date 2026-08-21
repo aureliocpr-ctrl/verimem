@@ -45,7 +45,30 @@ from verimem.client import Memory
 #: sull'altra — quindi pretendere il numero esatto rende il cricchetto rosso
 #: per l'AMBIENTE invece che per un difetto. Il verso che conta e' uno solo:
 #: che non CRESCA.
-SENZA_PORTA_NOTE = 11
+#:
+#: ALZATA 11 -> 12 il 2026-08-21, e la ragione va letta prima di crederla una
+#: resa. `7060f9b7` ha aggiunto al SDK `documents` / `index_document` /
+#: `search_documents`, e il conteggio e' salito. Ma la porta per l'utente
+#: ESISTE gia': `verimem index` (cli.py:633) e `verimem search-docs`
+#: (cli.py:671), eseguiti e funzionanti. Il NOME del metodo SDK non compare in
+#: `cli.py` perche' la CLI passa da `DocumentIndex()` — e NON e' una
+#: duplicazione da sanare: i due percorsi usano DB DIVERSI DI PROPOSITO.
+#: Misurato il 21/08::
+#:
+#:     DocumentIndex()        (la via della CLI)  <data_dir>/documents/document_index.db
+#:     Memory(...).documents  (la via SDK)        <accanto al db dei fatti>
+#:
+#: e il docstring di `Memory.documents` dichiara il perche': «senza questo, una
+#: `Memory(tmp_path)` in un test scriverebbe nell'indice VERO». Far passare la
+#: CLI dall'SDK — la cura che sembra ovvia, e che avevo proposto — sposterebbe
+#: i documenti degli utenti in un altro file: chi ne ha gia' indicizzati non li
+#: troverebbe piu'. Provata, misurata e RITIRATA prima di consegnarla.
+#:
+#: ⇒ Qui il criterio grossolano di questo cricchetto (cerca il nome nel testo)
+#: e la cosa vera divergono: la capacita' E' raggiungibile, il nome no. E' il
+#: caso che il messaggio d'errore prevede — «o le apri una porta, o alzi la
+#: costante dichiarando che e' una scelta» — e questa e' la dichiarazione.
+SENZA_PORTA_NOTE = 12
 
 #: E PER SUPERFICIE, che è la domanda vera. Misurato il 2026-08-02: erano 14
 #: su `cli.py` e 14 su `mcp_server.py`, contro le 10 che mancano a entrambe.
@@ -54,7 +77,12 @@ SENZA_PORTA_NOTE = 11
 #: `cli.py` scende a 13 con l'apertura di `verimem ask` nello stesso commit
 #: che ha corretto il conteggio: è il verso in cui questo numero deve
 #: muoversi.
-SENZA_PORTA_PER_SUPERFICIE = {"cli.py": 13, "mcp_server.py": 14}
+#: ALZATE +1 ciascuna il 2026-08-21, stessa ragione della costante qui sopra:
+#: i tre metodi documenti di `7060f9b7` hanno una porta utente (`verimem index`,
+#: `verimem search-docs`) che passa da un DB diverso di proposito, quindi il
+#: nome del metodo SDK non compare in nessuna delle due superfici.
+#: Misurato: cli.py 14, mcp_server.py 15, unione 12.
+SENZA_PORTA_PER_SUPERFICIE = {"cli.py": 14, "mcp_server.py": 15}
 
 #: Di quanto puo' scendere prima che valga la pena riallineare la costante.
 #: Sotto questa distanza il calo puo' essere ambientale; oltre, qualcuno ha
