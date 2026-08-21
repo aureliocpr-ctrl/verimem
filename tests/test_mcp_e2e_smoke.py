@@ -422,3 +422,55 @@ def test_mcp_server_stdout_is_protocol_clean(tmp_path: Path):
             raise AssertionError(
                 f"stdout line is not valid JSON-RPC: {s!r} (err: {exc})"
             ) from exc
+
+
+@pytest.mark.e2e
+def test_CONTROLLO_il_giro_FALLISCE_se_una_risposta_non_arriva(tmp_path: Path):
+    """Il controllo che rende non-vuoto tutto il file: `_giro` sa fallire?
+
+    ⚠️ PERCHÉ SERVE. `_giro` aspetta le risposte con stdin aperto, e un'attesa
+    è precisamente la forma che un test può prendere per non fallire MAI: se il
+    ciclo non avesse un tetto, un server muto lo terrebbe appeso e pytest
+    morirebbe per timeout esterno — cioè senza verdetto, che è peggio di un
+    rosso. È la stessa classe del run del 2026-08-21 che non produsse la riga di
+    sintesi: l'assenza di misura letta come verde.
+
+    Qui si chiede un id che il server non manderà mai. Misurato prima di
+    scrivere questo test, con `timeout=25`::
+
+        il giro e' USCITO dopo 25.3s (timeout 25s) — NON si e' bloccato
+        id ricevuti: [1, 2, 3, 4]
+        rc del server: 0 · durata: 25.0s
+
+    E i `25.0s` nel referto sono l'altra metà del lavoro: distinguono «il server
+    è uscito subito» (1.1 s, il caso di Linux) da «ho aspettato fino in fondo».
+    Senza quel numero le due cause restano indistinguibili, ed è già costato un
+    run intero.
+
+    Il tetto qui è basso di proposito: il presidio deve costare pochi secondi,
+    non venticinque.
+    """
+    env = os.environ.copy()
+    for alias in ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR",
+                  "ENGRAM_DIR"):
+        env[alias] = str(tmp_path)
+    env["HIPPO_OFFLINE"] = "1"
+    env["HIPPO_MCP_DISABLE_RATELIMIT"] = "1"
+    env["HIPPO_LOG_LEVEL"] = "ERROR"
+    env["HIPPO_REAP_ORPHANS"] = "0"
+    for chiave in [k for k in env
+                   if k.endswith(("EMBEDDING_MODEL", "EMBEDDING_DIM"))]:
+        env.pop(chiave, None)
+
+    tetto = 6.0
+    proc, secondi = _giro(env, attesi={1, 2, 3, 4, 99}, timeout=tetto)
+
+    assert secondi >= tetto, (
+        f"`_giro` e' tornato dopo {secondi:.1f}s pur non avendo mai ricevuto "
+        f"l'id 99: non ha aspettato, quindi non sta misurando l'attesa")
+    assert secondi < tetto + 20, (
+        f"`_giro` ha impiegato {secondi:.1f}s contro un tetto di {tetto}s: il "
+        "ciclo di attesa non si ferma e un server muto terrebbe appeso il test")
+    referto = _referto(_parse_lines(proc.stdout), proc, secondi)
+    assert "durata:" in referto and "id ricevuti:" in referto, (
+        f"il referto non porta i campi che separano le due cause:\n{referto}")
