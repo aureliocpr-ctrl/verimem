@@ -19,6 +19,37 @@ from .tools import PythonExecutor
 app = typer.Typer(no_args_is_help=True, add_completion=False,
                   help="Verimem CLI — verified memory for AI agents: gated writes, "
                        "provenance on every read, abstention instead of hallucination.")
+@app.callback(invoke_without_command=True)
+def _radice(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        False, "--version", "-V", is_eager=True,
+        help="Print the installed version and exit."),
+) -> None:
+    """Verimem CLI.
+
+    ⚠️ `--version` NON C'ERA, e la sua assenza si vedeva al primo minuto: chi
+    installa il pacchetto lo digita subito dopo `pip install`, e fino a qui
+    riceveva `No such option: --version` con EXIT=2 — un errore di SINTASSI
+    come prima risposta del prodotto. Chi lo legge pensa di aver sbagliato
+    pacchetto, non che l'opzione manchi. Ed è il primo dato che serve quando
+    si apre una segnalazione.
+
+    `invoke_without_command=True` perché `--version` deve funzionare da solo,
+    senza un sottocomando; il ramo `ctx.invoked_subcommand is None` ripristina
+    l'aiuto che `no_args_is_help=True` dava sull'invocazione nuda, altrimenti
+    aggiungere questo callback la renderebbe muta — il presidio è
+    `test_CONTROLLO_senza_argomenti_mostra_ancora_l_aiuto`.
+    """
+    if version:
+        from . import __version__
+        console.print(__version__)
+        raise typer.Exit()
+    if ctx.invoked_subcommand is None:
+        console.print(ctx.get_help())
+        raise typer.Exit()
+
+
 skills_app = typer.Typer(help="Inspect / manage the skill library")
 episodes_app = typer.Typer(help="Inspect episodic memory")
 providers_app = typer.Typer(help="Inspect LLM providers and discover models")
