@@ -5,6 +5,19 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # 🔑 UN VERDETTO SI DEVE POTER CHIEDERE, NON SOLO PROVOCARE.
+  # Senza questo la CI parte SOLO su push, e il gate di rilascio («UN run
+  # completo sull'ULTIMO sha») diventa una corsa che non si vince: misurato il
+  # 2026-08-21, mediana 8,5 min fra un push e il successivo contro ~55 min di
+  # run, cioe' **un run su dieci** arriva in fondo restando la punta. Gli altri
+  # nove li invalidiamo noi mentre girano, e chi prova a proteggerne uno puo'
+  # solo CHIEDERE agli altri di fermarsi — una regola che si appoggia alla
+  # buona volonta' di otto scrittori, e che infatti ha retto trenta minuti.
+  #
+  # ⚖️ Non e' una scelta di disegno che qui mancasse: `publish.yml` (riga 22) e
+  # `security.yml` (riga 11) lo dichiarano gia' entrambi. Questa riga allinea il
+  # terzo, e non tocca NIENTE di come i run nascono da un push.
+  workflow_dispatch: {}
 
 concurrency:
   # Su un PULL REQUEST cancellare il run superato e' giusto: si itera in fretta e
