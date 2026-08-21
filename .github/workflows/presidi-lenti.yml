@@ -1,0 +1,110 @@
+# I presidi che `ci` non esegue MAI.
+#
+# `ci.yml` filtra con `-m "not slow and not e2e and not perf"`, e quel filtro
+# porta fuori anche dei presidi di PROMESSE. Contato su `e4219c16` ---
+#
+#     -m "slow or e2e or perf"                     41 test   <- cosa `ci` esclude
+#     -m "slow or e2e"                             38
+#     -m "(slow or e2e) and not perf" senza provider   22   <- cosa gira QUI
+#
+#         16  test_il_multilingue_e_una_promessa_e_ora_ha_un_presidio
+#          2  test_il_pacchetto_ha_cio_che_promettiamo
+#          1  test_ogni_superficie_porta_il_verdetto
+#          1  test_i_rimedi_che_il_gate_suggerisce_funzionano
+#          1  test_mcp_e2e_smoke
+#          1  test_bench_recall_ablation
+#
+# ⚠️ I numeri hanno lo SHA accanto perche' DIPENDONO DALL'ALBERO: il 2026-08-21
+# tre istanze hanno litigato su tre cifre diverse della stessa misura, ed erano
+# tutte vere su tre commit diversi. Una cifra che dipende da HEAD e' una
+# fotografia, e una fotografia senza data sembra una contraddizione.
+#
+# 📌 E il filtro qui NON e' `slow or e2e`: 41 meno 38 fa 3, cioe' solo TRE test
+# sono marcati SOLO `perf`. Gli altri nove dei file di prestazioni portano anche
+# `slow`, quindi `slow or e2e` se li tirerebbe dietro --- misurato mentre
+# scrivevo questo file, e per questo c'e' `and not perf`.
+#
+# Eseguiti tutti a mano il 2026-08-20 costano **242 secondi**: il motivo per cui
+# stanno fuori da `ci` non e' il tempo.
+#
+# 🔑 E il multilingue e' l'UNICO file della suite che si sottrae alla fixture
+# `_stub_embedding_model` (autouse in conftest): 11.748 test verdi girano su uno
+# stub SHA-256, uno solo sull'embedder vero. E' anche l'unico che il 2026-08-21
+# ha trovato un difetto reale (13 failed su 16, curato da `59b0b9ff`). Un
+# presidio che nessuno esegue e uno che non esiste si equivalgono.
+#
+# ⚠️ PERCHE' UN WORKFLOW SEPARATO E NON UN JOB DENTRO `ci.yml`:
+# `ci` e' lo strumento con cui si legge il gate del rilascio («UN run completo
+# verde sull'ultimo SHA, unico rosso ammesso il presidio versione»). Aggiungere
+# un job li' dentro cambierebbe *cio' con cui si misura* mentre lo si sta
+# misurando, e un job nuovo che fallisce si leggerebbe come un rilascio da
+# fermare. Qui i due segnali restano separati: questo file puo' diventare rosso
+# senza spegnere il verde di `ci`, ed e' esattamente la separazione che serve
+# per dei presidi che nessuno ha mai eseguito in CI.
+#
+# ⚠️ NIENTE `push:` — di proposito. Un run per commit su una matrice gia' satura
+# (misurato il 2026-08-21: run di ~61 minuti mediani contro un commit ogni ~20)
+# toglierebbe capacita' proprio a `ci`. Giornaliero, piu' a comando quando serve.
+name: presidi-lenti
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # 05:17 UTC: fuori dalle ore di lavoro, e non in punto — i minuti tondi sono
+    # i piu' congestionati sui runner condivisi.
+    - cron: "17 5 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: presidi-lenti-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  presidi:
+    runs-on: ubuntu-latest
+    # Una cella sola: questi presidi verificano PROMESSE del prodotto, non la
+    # portabilita'. La matrice sei-per-sei e' il mestiere di `ci`.
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Stesso motivo di `ci.yml`: `test_il_pacchetto_ha_cio_che_promettiamo`
+          # misura la distanza dal bump di versione, e su un clone profondo 1
+          # non skippa --- trova HEAD stesso e calcola ZERO, cioe' passa dicendo
+          # il falso (misurato il 2026-08-20, curato in `79f6adff`).
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[full,dev]"
+
+      - name: Warm embedding model
+        # Il multilingue rifiuta lo stub e usa l'embedder VERO: senza questo
+        # passo quei 16 test misurerebbero un modello che non c'e'.
+        run: verimem warmup --no-daemon
+
+      - name: I presidi lenti
+        env:
+          HIPPO_OFFLINE: "1"
+        # `perf` resta fuori: le prestazioni su un runner condiviso non dicono
+        # niente di stabile, ed e' la ragione per cui erano state escluse.
+        # `test_real_provider_smoke` resta fuori per una ragione diversa e piu'
+        # dura: chiede ANTHROPIC_API_KEY / OPENAI_API_KEY / ... e questo
+        # progetto non usa chiavi esterne. Skipperebbe sempre, e uno skip
+        # perenne in un elenco di presidi e' rumore che copre il segnale.
+        run: >-
+          pytest
+          -rsfE
+          -m "(slow or e2e) and not perf"
+          --ignore=tests/test_real_provider_smoke.py
