@@ -2714,6 +2714,27 @@ def run_validation_gate(
         _sup = list(dict.fromkeys(supersede_ids))
         _sup_set = set(_sup)
         _ws = warnings if warnings_ is None else warnings_
+        # ⚠️⚠️ TERZA VOLTA CHE QUESTO MESSAGGIO DICHIARA UNA COSA CHE NON E'
+        # AVVENUTA — le prime due sono raccontate al ramo lessicale (~:1820).
+        # Stavolta la combinazione l'ha creata la GUARDIA a1 (aeee8305): il ramo
+        # lessicale manda la coppia fra i conflitti (il nuovo va in quarantena)
+        # mentre il ramo semantico la legge «evolution» ed emette comunque
+        # `L3-supersession`. Il retire poi NON avviene — l'handler lo applica solo
+        # con ``action=='persist'`` (vedi il commento a quel warning) — ma
+        # l'avviso resta in ricevuta e l'utente legge il CONTRARIO del vero:
+        # crede di aver aggiornato, e invece e' stato respinto.
+        #
+        # A/B misurato il 2026-08-21 sullo stesso banco, due worktree:
+        #   42bb3839 (senza guardia)  superseded_by=87bc0269  status=model_claim -> avviso VERO
+        #   68ea7614 (con guardia)    superseded_by=None      status=quarantined -> avviso FALSO
+        #
+        # 🔑 Qui e' l'unico punto che conosce ENTRAMBI: l'esito finale e gli avvisi.
+        # Il ramo che li emette non puo' saperlo — decide prima. Curarlo LA' vorrebbe
+        # dire duplicare la condizione in due posti e riaprire lo stesso difetto un
+        # giro dopo, che e' come sono nate le prime due volte.
+        if action != "persist":
+            _ws = [_w for _w in _ws
+                   if str(_w.get("layer", "")) != "L3-supersession"]
         _attr = _attribuzione_da_suggerire(_ws)
         if _attr:
             advice_ = f"{advice_} {_attr}".strip() if advice_ else _attr
