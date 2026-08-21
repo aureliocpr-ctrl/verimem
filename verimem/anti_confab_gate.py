@@ -908,6 +908,14 @@ def _parole_vuote_iniziali() -> frozenset[str]:
 _SOGGETTO_INIZIALE = re.compile(r"^\s*([A-Z][A-Za-zà-ÿ]+)\b")
 
 
+#: Le CELLE di una matrice di build: un runtime e un sistema operativo non
+#: sono valori che si aggiornano, sono colonne. Deliberatamente NON include
+#: le versioni del pacchetto (la misura sta in `_entita_diverse`).
+_CELLE_DI_MATRICE = re.compile(
+    r"\b(?:py3\.\d+|(?:ubuntu|macos|windows)-latest)\b",
+    re.IGNORECASE)
+
+
 def _entita_diverse(a: Any, b: Any) -> bool:
     """I due fatti nominano record DIVERSI: non c'è un codice in comune.
 
@@ -1052,6 +1060,27 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     ua = {u for u, _ in extract_quantities(pa)}
     ub = {u for u, _ in extract_quantities(pb)}
     if ua and ub and not (ua & ub):
+        return True
+
+    # LE CELLE DI UNA MATRICE NON SI AGGIORNANO A VICENDA. Il job ubuntu-latest
+    # e il job macos-latest sono due celle dello STESSO run, non un valore che
+    # avanza: non esiste "la piattaforma e' passata da ubuntu a macos". Lo
+    # stesso per il runtime: py3.12 e py3.13 sono due colonne, non due momenti.
+    #
+    # PERCHE' SOLO QUESTE DUE FAMIGLIE, e NON le versioni del pacchetto:
+    # `version_conflict` separa gia' 0.7.0 da 0.7.5 e sembrava il gemello
+    # naturale, ma MISURATO su quattro aggiornamenti legittimi ne blocca DUE —
+    #     "La versione corrente di verimem e' 0.7.0" -> "e' 0.7.6"   BLOCCATO
+    #     "Il pacchetto si chiama 0.7.0"             -> "0.7.6"      BLOCCATO
+    # Una VERSIONE puo' essere lo stato corrente che avanza, una CELLA no.
+    # Beneficio 5 contro 2 falsi positivi su 4: scartata, e resta scritto qui
+    # perche' nessuno riprovi quella strada.
+    #
+    # MISURATO: separa 7 delle 171 coppie ritirate con entrambi i fatti
+    # groundati >=90, e nessuno dei quattro controlli legittimi.
+    ma = {m.group(0).lower() for m in _CELLE_DI_MATRICE.finditer(pa)}
+    mb = {m.group(0).lower() for m in _CELLE_DI_MATRICE.finditer(pb)}
+    if ma and mb and ma != mb:
         return True
 
     def _proper(testo: str) -> set[str]:
