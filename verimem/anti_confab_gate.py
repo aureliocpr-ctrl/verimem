@@ -615,11 +615,11 @@ def _supersede_same_source_on() -> bool:
 
 
 def _senza_source_contro_groundato(cand_ha_source: bool, old: Any) -> bool:
-    """GATE (a) del tag 0.7.5 — mandato di Aurelio, 2026-08-20 19:48:
+    """GATE (a) del tag 0.7.5 — mandato del 2026-08-20 19:48:
     «una scrittura senza source non puo' superseder un fatto groundato».
 
     Il RANK FLOOR qui sopra confronta gli STATUS, e li' sta il buco misurato
-    (referti ws5 07ce9cad5e2b42bf / 6ef7efb13930a114): passare il moat NON
+    (referti 07ce9cad5e2b42bf / 6ef7efb13930a114): passare il moat NON
     promuove a ``verified``, quindi un claim mai giudicato — ``grounding_score``
     None, ``moat=not_run:no_source`` — arriva al confronto con lo STESSO rango
     (``model_claim``=2) del fatto che il giudice ha sostenuto a 98, e ``2 <= 2``
@@ -913,8 +913,8 @@ def _record_numerati_diversi(pa: str, pb: str) -> bool:
 #: A/B a variabile singola, cambia solo la parola d'apertura: su 14 coppie ne
 #: cadevano 10. E NON e' un difetto italiano — `On`, `At`, `By`, `To`, `Of`
 #: cadono esattamente come `Su`, `In`, `Di`, `Da`, `Tra`, e l'inglese e' la
-#: lingua in cui il prodotto e' documentato. Diagnosi del caso italiano di ws7
-#: (Lanterna); la meta' inglese e la cura di ws3.
+#: lingua in cui il prodotto e' documentato. Il caso italiano e quello
+#: inglese sono stati diagnosticati e curati separatamente.
 #:
 #: 🔑 E colpisce CHI FA LA COSA GIUSTA: nomina il soggetto del fatto, e viene
 #: punito dalla parola con cui lo nomina.
@@ -1083,7 +1083,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     #     «...8019 warnings»             -> {('warning', 8019.0)}
     # Intersezione vuota: due misure diverse, non un'evoluzione.
     #
-    # CASO CHE L'HA CHIESTA (ws7, 20/08 19:28): il verdetto della serata
+    # CASO CHE L'HA CHIESTA (20/08 19:28): il verdetto della serata
     # (grounding 99.7) ritirato da un conteggio di warning su un ALTRO commit,
     # reason `same-source evolution`. Riprodotto fuori da pytest.
     #
@@ -1183,7 +1183,7 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     # scoprono i ritiri che una falsa entita' fermava per sbaglio; curato solo
     # il secondo, resta il caso in cui i due lati hanno la STESSA preposizione
     # e si mangiano lo stesso. I numeri stanno in
-    # `docs/stato-reale/banchi/ws3-aperture-e-lato-solo.py`.
+    # `docs/stato-reale/banchi/aperture-e-lato-solo.py`.
     if ea or eb:
         return True
 
@@ -2177,7 +2177,7 @@ def run_validation_gate(
                           # decide col coseno. Stesso caso, stesse stringhe: dentro pytest
                           # il fatto sopravvive, fuori viene ritirato.
                           # Il banco di questa riga è perciò uno SCRIPT, non un test:
-                          #   docs/stato-reale/banchi/ws5-il-caso-reale-del-ramo-semantico.py
+                          #   docs/stato-reale/banchi/il-caso-reale-del-ramo-semantico.py
                           and not _senza_source_contro_groundato(
                               bool(source and str(source).strip()), _old)):
                         # enforce + ENGRAM_SUPERSEDE_SAME_SOURCE: the same source updated

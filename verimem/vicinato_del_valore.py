@@ -116,7 +116,7 @@ def _da_mostrare(dopo: set[str], prima: set[str]) -> str:
     una congiunzione o una preposizione («0.3732 ed esito», «99.9588 su due»),
     e quando manca del tutto la ricevuta stampava «?» su entrambi i lati, cioe'
     niente su cui agire. Chi legge vedeva meta' dell'informazione con cui il
-    layer aveva deciso (diagnosi di ws5, 18/08, letta al sorgente).
+    layer aveva deciso (diagnosi del 18/08, letta al sorgente).
 
     Il lato precedente non sostituisce quello seguente: lo integra quando
     l'altro non c'e', e si annuncia, perche' «linea» detto senza dire da che
