@@ -400,7 +400,42 @@ _MODEL_DOWNLOAD_MB: dict[str, int] = {
     # measured 2026-08-19, Windows + py3.13, HF_HOME pointed at an empty dir
     "intfloat/multilingual-e5-base": 1082,
     "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1": 470,
+    # ⚠️ MISURATO DIVERSAMENTE, e va detto: questa e' la cartella su disco
+    # (`~/.engram/models/local_gate_ce_v2` — model.safetensors 737.7 MB +
+    # tokenizer.json 8.3 MB), non un download cronometrato su cache vuota.
+    # Le due misure coincidono per i safetensors, che non sono compressi, ma
+    # il metodo e' un altro e chi rifa' il conto deve saperlo.
+    # L'help dichiarava «~656 MB» cablato nel testo: 90 MB in meno del vero.
+    "local_gate_ce_v2": 746,
 }
+
+#: Cio' che `warmup` scarica QUANDO NON GLI SI DICE NIENTE. Sta qui e non nel
+#: testo dell'help perche' un numero cablato in una frase invecchia da solo: il
+#: 2026-08-21 la descrizione diceva «~1.1 GB» — il solo embedder — mentre il
+#: comando col default ne prendeva TRE.
+_WARMUP_DI_DEFAULT = ("intfloat/multilingual-e5-base",
+                      "local_gate_ce_v2",
+                      "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+
+
+def _totale_di_default() -> str:
+    """Quanto costa `warmup` senza opzioni, sommando cio' che davvero prende.
+
+    ⛔ SI SOMMA SOLO CIO' CHE E' STATO MISURATO: un modello di cui non si
+    conosce il peso non eredita il numero di un altro e non sparisce dal
+    conto — lo si NOMINA. E' la stessa regola di `_quanto_scarica`, applicata
+    all'insieme invece che al singolo.
+    """
+    noti = [(n, _MODEL_DOWNLOAD_MB[n]) for n in _WARMUP_DI_DEFAULT
+            if n in _MODEL_DOWNLOAD_MB]
+    ignoti = [n for n in _WARMUP_DI_DEFAULT if n not in _MODEL_DOWNLOAD_MB]
+    if not noti:
+        return "size not measured"
+    tot = sum(mb for _, mb in noti)
+    testo = f"~{tot / 1024:.1f} GB across {len(noti)} models"
+    if ignoti:
+        testo += f", plus {len(ignoti)} whose size was never measured "                  f"({', '.join(ignoti)})"
+    return testo
 
 
 def _quanto_scarica(nome: str) -> str:
@@ -421,17 +456,23 @@ def warmup(
     ),
     gate: bool = typer.Option(
         True, "--gate/--no-gate",
-        help="Also download the moat gate model (~656 MB, the judge-less judge). "
-             "--no-gate skips it (e.g. CI that doesn't exercise the moat).",
+        help=f"Also download the moat gate model "
+             f"(~{_MODEL_DOWNLOAD_MB['local_gate_ce_v2']} MB, the judge-less "
+             f"judge). --no-gate skips it (e.g. CI that doesn't exercise the "
+             f"moat).",
     ),
 ) -> None:
-    """Pre-load (and download on first run) the embedding model.
+    """Pre-load (and download on first run) the models Verimem needs.
 
     Run this ONCE after install, before wiring Verimem into Claude Code, so the
-    first real recall is instant instead of silently downloading ~1.1 GB of
-    model weights in the background on the first query. Also the natural
-    pre-bake step in CI / Docker build. Exit 1 if the model can't be loaded
-    (e.g. running offline with the model not yet cached).
+    first real recall is instant instead of silently downloading model weights
+    in the background on the first query. Also the natural pre-bake step in
+    CI / Docker build. Exit 1 if the model can't be loaded (e.g. running
+    offline with the model not yet cached).
+
+    WITH NO OPTIONS THIS TAKES THREE MODELS, not one: the embedder, the moat
+    gate (--no-gate skips it) and the stage-2 reranker. The total is printed
+    before anything is fetched, so you can stop before it starts.
     """
     import time
 
@@ -439,6 +480,16 @@ def warmup(
 
     model_name = CONFIG.embedding_model
     quanto = _quanto_scarica(model_name)
+    # ⚠️ IL TOTALE PRIMA DI COMINCIARE, e non e' cortesia: fino al 2026-08-21
+    # questa riga annunciava il SOLO embedder («~1.1 GB») e poi il comando
+    # prendeva anche il gate (746 MB) e il reranker (470 MB) senza nominarli.
+    # Chi leggeva la prima riga decideva su un terzo del costo.
+    if gate:
+        console.print(
+            f"[bold]warmup will fetch {_totale_di_default()}[/] "
+            f"(embedder + moat gate + reranker). "
+            f"Use --no-gate to skip the gate model."
+        )
     console.print(
         f"Warming embedding model [cyan]{model_name}[/] (dim {CONFIG.embedding_dim}) "
         f"— {quanto}, please wait…"
