@@ -2099,7 +2099,27 @@ def run_validation_gate(
                             })
                     elif (_rel == "evolution" and _supersede_on and _old is not None
                           and _STATUS_RANK.get(getattr(_old, "status", "model_claim"), 2)
-                          <= _new_rank):
+                          <= _new_rank
+                          # ⚠️ LA GUARDIA DEL GATE (a) STAVA SU UNA PORTA SOLA.
+                          # `aeee8305` l'ha messa in `_route_evolutions`, cioè sul ramo
+                          # LESSICALE (numerico/versione/data). Ma su un caso REALE del
+                          # corpus — `7a0fbf8ad953`, grounding 99.83, ritirato da
+                          # `83407efc3a25` che non è mai stato giudicato — quella
+                          # funzione **non viene chiamata nemmeno una volta**: misurato
+                          # strumentandola, 0 chiamate. La coppia la giudica QUESTO ramo,
+                          # che aveva la stessa condizione di rank floor e non chiedeva
+                          # la source del candidato.
+                          #
+                          # Perché nessuno se n'era accorto: il banco della cura era
+                          # numerico, quindi esercitava solo il ramo curato. E un test
+                          # non poteva vederlo comunque — `tests/conftest.py:121` sostituisce
+                          # l'embedder con uno stub in una fixture `autouse`, e questo ramo
+                          # decide col coseno. Stesso caso, stesse stringhe: dentro pytest
+                          # il fatto sopravvive, fuori viene ritirato.
+                          # Il banco di questa riga è perciò uno SCRIPT, non un test:
+                          #   docs/stato-reale/banchi/ws5-il-caso-reale-del-ramo-semantico.py
+                          and not _senza_source_contro_groundato(
+                              bool(source and str(source).strip()), _old)):
                         # enforce + ENGRAM_SUPERSEDE_SAME_SOURCE: the same source updated
                         # its own value with an at-least-as-trusted claim → ADMIT the new
                         # (does not escalate) and retire the OLD via supersede_ids. The
