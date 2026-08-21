@@ -111,6 +111,60 @@ def _non_e_un_database(p) -> str:
     return ""
 
 
+def _non_ho_potuto_guardare(add, nome: str, errore: BaseException) -> None:
+    """Un check che non ha potuto leggere lo store lo DICE, invece di sparire.
+
+    ⚠️ SPARIRE E' LA COSA PEGGIORE CHE POSSA FARE, perche' l'assenza di una
+    riga si legge come «niente da segnalare». Misurato il 21/08 sui tre regimi,
+    stesso comando:
+
+        reale    EXIT=1   13 check
+        pulito   EXIT=0    9 check
+        rotto    EXIT=1    9 check   <- gli STESSI NOVE del pulito
+
+    «Non c'e' niente da controllare» e «c'e' tutto e non si puo' leggere» sono
+    situazioni opposte e producevano lo stesso identico elenco.
+
+    🔑 LA DISTINZIONE E' OBBLIGATORIA, e senza si rompe il caso buono: su
+    un'installazione NUOVA la tabella non esiste e questi check finiscono nello
+    stesso `except`. Trattarli come guasti darebbe quattro allarmi a ogni prima
+    esecuzione — a chi ha piu' bisogno di fidarsi del referto. Quindi si parla
+    solo quando lo store ESISTE e NON e' leggibile.
+
+    E' lo stesso principio che `moat-judge` applica dal 2026-07-28 dopo una
+    revisione avversariale: «altrimenti stamperebbe la sua riga piu'
+    rassicurante proprio quando non ha potuto guardare». Li' era un check, qui
+    diventa la regola per tutti.
+    """
+    try:
+        # ⚠️ `_compat.data_dir()` e NON `CONFIG.semantic_db`, ed e' lo stesso
+        # resolver che usano `data-dir` e `moat-judge`. `CONFIG` e' costruito
+        # all'IMPORT e non si aggiorna: in un processo che punta la cartella
+        # DOPO aver importato verimem — chi lo incorpora come libreria, un
+        # multi-tenant, ogni banco — questa funzione giudicherebbe uno store
+        # mentre il check ne ha letto un altro. Misurato:
+        #     CONFIG.semantic_db all'import : ~/.engram/semantic/semantic.db
+        #     dopo aver cambiato l'ambiente : ~/.engram/semantic/semantic.db
+        #     _compat.data_dir() (ora)      : /tmp/tmp7q_5hkfo
+        # La prima stesura usava CONFIG e il test l'ha presa: alla porta CLI
+        # non si vedeva, perche' li' l'ambiente e' impostato PRIMA dell'import.
+        from ._compat import data_dir as _dd
+        db = _dd() / "semantic" / "semantic.db"
+        if not db.exists():
+            return                      # installazione nuova: assenza legittima
+        perche = _non_e_un_database(db)
+        if not perche:
+            return                      # lo store si legge: e' un altro guasto,
+                                        # e non e' questo check a doverlo dire
+    except Exception:  # noqa: BLE001 — la diagnosi della diagnosi non solleva
+        return
+    add(nome, WARN,
+        f"non ho potuto controllare: lo store non si legge ({perche}). "
+        f"Questo NON e' un esito, e' una misura MANCANTE — {errore.__class__.__name__}",
+        "risolvi prima `data-dir`: finche' lo store non si apre, questo check "
+        "non puo' dire ne' bene ne' male")
+
+
 def _stores_illeggibili(d) -> list[str]:
     """Gli store dichiarati che ESISTONO ma non sono database. Lista, non
     stringa: il verdetto del check la conta, e rileggere la riga di testo che
@@ -738,8 +792,8 @@ def run_doctor() -> list[dict[str, Any]]:
                     add("embedding-model", OK,
                         f"all {_tot} vectors match the engine in use "
                         f"({_righe_dim}); {_fonte}")
-    except Exception:  # noqa: BLE001 — un check non rompe il doctor
-        pass
+    except Exception as _e:  # noqa: BLE001 — un check non rompe il doctor
+        _non_ho_potuto_guardare(add, "embedding-model", _e)
 
     # -- finestra di riparazione dei ritiri -------------------------------------
     # Un ritiro con lo scatto di undo si annulla in un click; senza, il fatto
@@ -866,8 +920,8 @@ def run_doctor() -> list[dict[str, Any]]:
                             "get reviewed here — either review sooner or "
                             "raise the TTL")
                     add("undo-window", WARN, _dettaglio, _cura)
-    except Exception:  # noqa: BLE001 — un check non rompe il doctor
-        pass
+    except Exception as _e:  # noqa: BLE001 — un check non rompe il doctor
+        _non_ho_potuto_guardare(add, "undo-window", _e)
 
     # -- affollamento dei topic -------------------------------------------------
     # Il 2026-08-09 e' emerso, da query SQL scritte a mano, che i fatti scritti
@@ -941,8 +995,8 @@ def run_doctor() -> list[dict[str, Any]]:
                         "populations is where to look, not a verdict")
                 else:
                     add("topic-crowding", OK, _det)
-    except Exception:  # noqa: BLE001 — un check non rompe il doctor
-        pass
+    except Exception as _e:  # noqa: BLE001 — un check non rompe il doctor
+        _non_ho_potuto_guardare(add, "topic-crowding", _e)
 
     # -- copertura della tabella dei ranghi di fiducia --------------------------
     # Il rovescio della cura `4d8c48a0`: fermare il ritiro automatico dei fatti
@@ -988,8 +1042,8 @@ def run_doctor() -> list[dict[str, Any]]:
                     "normalise those statuses, or add them to _STATUS_RANK "
                     "(verimem/semantic.py) — until then nothing is lost, "
                     "only left for human judgement")
-    except Exception:  # noqa: BLE001 — un check non rompe il doctor
-        pass
+    except Exception as _e:  # noqa: BLE001 — un check non rompe il doctor
+        _non_ho_potuto_guardare(add, "trust-rank-coverage", _e)
 
     # -- parametri in vigore ---------------------------------------------------
     # Il verdetto della fetta ⑥ (2026-08-08): «i parametri esistono e

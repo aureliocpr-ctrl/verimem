@@ -94,3 +94,53 @@ def test_presidio_una_installazione_nuova_resta_verde(tmp_path, monkeypatch):
     c = _data_dir_check(tmp_path, monkeypatch)
     assert _stato(c) == "ok", (
         f"una installazione nuova ha perso il verde: {c!r}")
+
+
+# ─────────────  un check che non ha potuto guardare lo DICE  ─────────────────
+
+_SUL_CORPUS = ("embedding-model", "undo-window", "topic-crowding",
+               "trust-rank-coverage")
+
+
+def _referto(tmp_path, monkeypatch):
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    from verimem import doctor as _d
+    return {c["name"]: c for c in _d.run_doctor()}
+
+
+def test_su_uno_store_illeggibile_i_check_sul_corpus_non_spariscono(
+        tmp_path, monkeypatch):
+    """⚠️ SPARIRE È LA COSA PEGGIORE: l'assenza di una riga si legge come
+    «niente da segnalare». Misurato il 21/08 sui tre regimi::
+
+        reale    EXIT=1   13 check
+        pulito   EXIT=0    9 check
+        rotto    EXIT=1    9 check   <- gli STESSI NOVE del pulito
+
+    Due situazioni opposte — «non c'è niente da controllare» e «c'è tutto e
+    non si può leggere» — davano lo stesso identico elenco.
+    """
+    (tmp_path / "semantic").mkdir()
+    (tmp_path / "semantic" / "semantic.db").write_text("non sono un database")
+    referto = _referto(tmp_path, monkeypatch)
+    muti = [n for n in _SUL_CORPUS if n not in referto]
+    assert not muti, (
+        f"su uno store illeggibile questi check spariscono invece di "
+        f"dichiararsi: {muti}")
+    for n in _SUL_CORPUS:
+        assert referto[n]["status"] != "ok", (
+            f"{n} dà un verde su uno store che non si legge")
+
+
+def test_presidio_su_una_installazione_nuova_quei_check_TACCIONO(
+        tmp_path, monkeypatch):
+    """L'altra popolazione, e senza di essa la cura sarebbe un danno: su
+    un'installazione nuova la tabella non esiste e questi check finiscono nello
+    STESSO except. Trattarli come guasti darebbe quattro allarmi a ogni prima
+    esecuzione — a chi ha più bisogno di fidarsi del referto."""
+    referto = _referto(tmp_path, monkeypatch)
+    rumorosi = [n for n in _SUL_CORPUS if n in referto]
+    assert not rumorosi, (
+        f"una installazione nuova ha guadagnato allarmi che non le "
+        f"competono: {rumorosi}")
