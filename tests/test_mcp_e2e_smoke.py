@@ -80,10 +80,45 @@ def _parse_lines(raw: bytes) -> list[dict]:
     return out
 
 
+def _referto(frames: list[dict], proc) -> str:
+    """Il referto di un frame mancante: PICCOLO, e con la causa dentro.
+
+    ⚠️ PERCHÉ ESISTE — il 2026-08-21, run 32475919020 su ``93d5e379``, questo
+    test è andato rosso su ``assert 4 in by_id`` e il referto era ``{frames!r}``.
+    Misurato in locale: **155.047 caratteri**, perché ``frames`` contiene la
+    risposta a ``tools/list``, cioè l'``inputSchema`` di ogni tool esposto.
+
+    Nel log del run quella riga NON c'è (la più lunga arrivata è di 2484
+    caratteri) e con lei manca tutta la coda: niente riga di sintesi, niente
+    «short test summary», nessun ``##[error]``. Il referto che doveva spiegare
+    il rosso è la ragione per cui non si sa perché è rosso.
+
+    E dei 155 KB nemmeno uno serviva: la domanda è «quali id sono arrivati, e
+    che errore ha dato il server», non «com'è fatto lo schema di ogni tool».
+    Quello che serve sta nello **stderr del server**, che il referto vecchio non
+    stampava affatto.
+    """
+    righe = [f"id ricevuti: {sorted(f['id'] for f in frames if 'id' in f)}"]
+    for f in frames:
+        if "error" in f:
+            righe.append(f"  frame id={f.get('id')} ERROR: {f['error']!r}"[:500])
+    err = (proc.stderr or b"").decode(errors="replace")
+    righe.append(f"stderr del server (coda):\n{err[-2500:]}")
+    return "\n".join(righe)
+
+
 @pytest.mark.e2e
 def test_mcp_server_e2e_smoke(tmp_path: Path):
     env = os.environ.copy()
-    env["HIPPO_DATA_DIR"] = str(tmp_path)
+    # ⚠️ TUTTI E TRE GLI ALIAS. Con il solo `HIPPO_DATA_DIR` il figlio avvisa
+    # «DATA_DIR aliases disagree» e i due alias rimasti puntano alla memoria
+    # VERA — misurato il 2026-08-21: ENGRAM_DATA_DIR=C:\Users\aurel\.engram.
+    # Qui `HIPPO_DATA_DIR` vince e la produzione non viene toccata, ma un test
+    # non deve nemmeno NOMINARE il corpus di produzione: la precedenza e' una
+    # convenzione, e le convenzioni cambiano.
+    for alias in ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR",
+                  "ENGRAM_DIR"):
+        env[alias] = str(tmp_path)
     env["HIPPO_OFFLINE"] = "1"
     env["HIPPO_MCP_DISABLE_RATELIMIT"] = "1"
     env["HIPPO_LOG_LEVEL"] = "ERROR"
@@ -91,6 +126,23 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     # Transport test — isolate it from the startup single-instance guard so it
     # never scans/terminates real system processes during a test run.
     env["HIPPO_REAP_ORPHANS"] = "0"
+    # I pin del modello NON passano al figlio, e per SUFFISSO. `conftest.py:11`
+    # pinna il modello della SUITE (L12/384); il PRODOTTO usa e5/768
+    # (config.py:74) ed è quello che i workflow scaldano. Un server MCP che
+    # eredita il pin cerca in CI un modello che nessuno ha scaricato — e
+    # `_compat.py:136` propaga ogni `HIPPO_*` su `ENGRAM_*` e `VERIMEM_*`, quindi
+    # togliere il solo nome intero non basta (misurato il 2026-08-21 sul presidio
+    # multilingue: il figlio ricostruiva il pin dagli alias).
+    #
+    # ⚠️ CHE QUESTA SIA LA CAUSA DEL ROSSO DEL 2026-08-21 NON È PROVATO: il
+    # referto vecchio non lo diceva (vedi `_referto`). Quel che si sa è che il
+    # frame 3 arrivava e il 4 no, e `hippo_recall` è il primo che tocca
+    # l'embedder. La cura qui è comunque dovuta — un subprocess che deve
+    # comportarsi come il prodotto non eredita la configurazione del banco — ma
+    # a dire se bastava sarà il prossimo run, non questo commento.
+    for chiave in [k for k in env
+                   if k.endswith(("EMBEDDING_MODEL", "EMBEDDING_DIM"))]:
+        env.pop(chiave, None)
 
     proc = subprocess.run(
         [sys.executable, "-u", "-m", "verimem.mcp_server"],
@@ -109,12 +161,12 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     by_id = {f["id"]: f for f in frames if "id" in f}
 
     # --- 1. Initialize succeeded ---
-    assert 1 in by_id, f"no init reply. frames: {frames!r}"
+    assert 1 in by_id, _referto(frames, proc)
     init = by_id[1]
     assert init.get("result", {}).get("serverInfo", {}).get("name"), init
 
     # --- 2. tools/list ---
-    assert 2 in by_id, f"no tools/list reply: {frames!r}"
+    assert 2 in by_id, _referto(frames, proc)
     tools = by_id[2]["result"]["tools"]
     names = {t["name"] for t in tools}
     for expected_name in ("hippo_run_task", "hippo_consolidate",
@@ -132,7 +184,7 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     # no-op (the production DB at the project root may have leftover
     # episodes from previous CLI runs). We verify the SHAPE of the reply
     # — the smoke test is a transport check, not a state assertion.
-    assert 3 in by_id, f"no hippo_status reply: {frames!r}"
+    assert 3 in by_id, _referto(frames, proc)
     status_text = by_id[3]["result"]["content"][0]["text"]
     payload = json.loads(status_text)
     assert isinstance(payload, dict)
@@ -142,7 +194,7 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     assert "active_llm" in payload, payload
 
     # --- 4. tools/call hippo_recall ---
-    assert 4 in by_id, f"no hippo_recall reply: {frames!r}"
+    assert 4 in by_id, _referto(frames, proc)
     recall_text = by_id[4]["result"]["content"][0]["text"]
     hits = json.loads(recall_text)
     assert isinstance(hits, list), f"recall must return a list: {hits!r}"
@@ -155,7 +207,15 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
 def test_mcp_server_stdout_is_protocol_clean(tmp_path: Path):
     """Regression: every byte on stdout must be a JSON-RPC frame."""
     env = os.environ.copy()
-    env["HIPPO_DATA_DIR"] = str(tmp_path)
+    # ⚠️ TUTTI E TRE GLI ALIAS. Con il solo `HIPPO_DATA_DIR` il figlio avvisa
+    # «DATA_DIR aliases disagree» e i due alias rimasti puntano alla memoria
+    # VERA — misurato il 2026-08-21: ENGRAM_DATA_DIR=C:\Users\aurel\.engram.
+    # Qui `HIPPO_DATA_DIR` vince e la produzione non viene toccata, ma un test
+    # non deve nemmeno NOMINARE il corpus di produzione: la precedenza e' una
+    # convenzione, e le convenzioni cambiano.
+    for alias in ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR",
+                  "ENGRAM_DIR"):
+        env[alias] = str(tmp_path)
     env["HIPPO_OFFLINE"] = "1"
     env["HIPPO_MCP_DISABLE_RATELIMIT"] = "1"
     env["PYTHONUNBUFFERED"] = "1"
