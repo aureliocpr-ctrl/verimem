@@ -159,10 +159,20 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     # failed, 21 passed, 8 skipped in 112.46s» dopo), quindi la cura serviva
     # altrove: qui no. **Il difetto è un altro e resta aperto**: su Linux il
     # server risponde a 1, 2, 3 e non al 4, senza scrivere una riga di errore.
-    # `hippo_recall` è il primo che tocca l'embedder, cioè il primo lento — ma
-    # questa è di nuovo un'ipotesi, ed è il motivo per cui `_referto` ora porta
-    # anche `rc` e `durata`: servono a separare «il server è uscito prima» da
-    # «stava ancora lavorando», che uno stderr vuoto non distingue.
+    #
+    # ⚠️ E NON È PERCHÉ `hippo_recall` SIA LENTO — l'avevo scritto come ipotesi
+    # («il primo che tocca l'embedder»), poi l'ho cronometrata, ed è falsa. I
+    # tempi di arrivo di ogni risposta, misurati con `Popen` in locale::
+    #
+    #     t=2.86s  id=1    4225 byte
+    #     t=2.88s  id=2  144529 byte   (+0.02s)
+    #     t=11.29s id=3     430 byte   (+8.41s)   <- hippo_status: il lento è LUI
+    #     t=11.29s id=4      91 byte   (+0.00s)   <- hippo_recall: istantaneo
+    #
+    # Su una memoria vuota `hippo_recall` costa zero, e su Linux il frame 3
+    # ARRIVA, cioè gli 8.41 s sono già stati pagati quando il 4 sparisce. Le
+    # ipotesi in piedi restano due, opposte, e `_referto` porta `rc` e `durata`
+    # apposta per separarle: il server è uscito prima, o stava ancora lavorando.
     #
     # La cura sui pin resta perché è dovuta di suo: un subprocess che deve
     # comportarsi come il prodotto non eredita la configurazione del banco.
