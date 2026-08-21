@@ -59,9 +59,30 @@ def references_fact(new_text: Any, old_id: Any) -> bool:
 
 
 def canonical_source_of(fact: Any) -> str:
-    """The reputation key of a fact's writer (``canonical_source`` of its
-    ``verified_by``); the ``source_signature`` when there is no ``verified_by``;
-    the ``"user"`` fallback when the fact declares neither.
+    """The reputation key of a fact's writer: the ``canonical_source`` of its
+    ``verified_by``, and the ``"user"`` fallback when it declares none.
+
+    ⛔ NON LEGGE ``source_signature``, E IL PERCHE' STA QUI SOTTO: la cura che
+    la leggeva e' stata scritta, misurata e RITIRATA il 2026-08-04 perche'
+    rompeva il presidio (i due paragrafi seguenti la raccontano). Questa riga
+    del docstring diceva il contrario fino al 2026-08-21 — ``the
+    source_signature when there is no verified_by`` — e chi la leggeva partiva
+    da un comportamento che il codice non ha:
+
+        canonical_source_of(<verified_by=None, source_signature="sha256:AAAA">) -> "user"
+        canonical_source_of(<verified_by=None, source_signature="sha256:BBBB">) -> "user"
+        is_same_source(a, b) -> True          # firme DIVERSE, stesso bucket
+
+    ⚠️ COSA COSTA, misurato sul corpus vivo il 2026-08-21: due fatti anonimi
+    (``writer_role='user'``, nessun ``verified_by``) sono SEMPRE «stessa fonte»,
+    quindi uno puo' ritirare l'altro come ``same-source evolution`` anche se le
+    loro fonti sono diverse. Due casi reali, con l'id:
+
+        bc63e008787f  grounding 99.98  ritirato da  74a11ff32dea  (nessuna source)
+        7a0fbf8ad953  grounding 99.83  ritirato da  83407efc3a25  (nessuna source)
+
+    e in entrambi il ``source_signature`` dei due lati ERA DIVERSO: il dato che
+    li distingueva esisteva, e non veniva letto.
 
     PERCHE' LA SIGNATURE (2026-08-04, da un caso su un registro pazienti).
     «Il paziente Rossi pesa 70 kg» veniva RITIRATO da «Il paziente Bianchi pesa
