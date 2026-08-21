@@ -242,8 +242,15 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
     # question-aware check closes that residual, so it needs an ``llm`` and is
     # off unless the caller passes one. One call over the surviving facts; an
     # unreadable verdict keeps the dossier and SAYS so (never silently drops).
+    # `off` = nessun llm passato · `no_provider` = un llm c'e' ma e' il MOCK
+    # che `get_llm()` restituisce quando nessun provider e' configurato: chiamarlo
+    # produce un verdetto illeggibile, e dire "unreadable" farebbe sembrare un
+    # guasto cio' che e' una DIPENDENZA MANCANTE. E' la stessa distinzione che
+    # `doctor` fa gia': «non ho potuto» non e' «non serviva».
     sufficiency_status = "off"
-    if llm is not None and hits:
+    if llm is not None and type(llm).__name__ == "MockLLM":
+        sufficiency_status = "no_provider"
+    elif llm is not None and hits:
         try:
             from .grounding_gate import _resolve_threshold, grounding_score
             ev = [getattr(h[0], "proposition", "") or "" for h in hits]

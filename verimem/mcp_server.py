@@ -2656,7 +2656,14 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "CONFLICTS with (declared unresolved disputes) — or an EXPLICIT "
                 "abstention with its reason instead of a guess. Judge-grade: "
                 "'how do you know?' answered for every response. Supports "
-                "deep (archive) and as_of (past state of knowledge)."
+                "deep (archive) and as_of (past state of knowledge). "
+                "ABSTENTION HAS TWO LEVELS and the second one has a "
+                "dependency: the relevance floor (CE gate) works "
+                "everywhere, but the sufficiency judge — the one that "
+                "catches a fact that is ON TOPIC yet does not answer — "
+                "needs a configured LLM provider. Without one it cannot "
+                "run, `verify.sufficiency` says so, and the dossier is "
+                "returned WITHOUT that second check."
             ),
             inputSchema={
                 "type": "object",
