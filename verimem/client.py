@@ -314,6 +314,40 @@ def chi_ha_quarantinato(moat: str, warnings, *, agito=()) -> str:
         return "moat"
     if any(str(w.get("layer", "")).startswith("L1") for w in warnings):
         return "L1"
+    # ⚠️ «gate» NON E' UN'ETICHETTA MANCANTE: E' UN'ETICHETTA CHE PORTA FUORI
+    # STRADA. Il layer che ha deciso e' gia' in mano — `agito` sono i BLOCKING
+    # layers (`_blocking_layers`, avvisi `*-observe` esclusi), non i warning
+    # consultivi — e dire «gate» lo butta via. Misurato sul corpus il 21/08:
+    #
+    #     quarantinati nelle ultime 24h   25    di cui 'gate' generico  56%
+    #     quarantinati negli ultimi 7g   136    di cui 'gate' generico  16%
+    #
+    # E il caso che l'ha fatto vedere, riprodotto alla porta:
+    #
+    #     claim   «Con il tetto attivo il committed e 176,6 MB.»
+    #     moat    passed   grounding 99.89        <- il giudice APPROVA
+    #     warning layer='L4.1'  «il claim afferma un valore che la fonte non
+    #                            contiene: 6 mb, 176»
+    #     scritto quarantined_by = 'gate'
+    #
+    # Il giorno dopo `quarantine_log(explain=True)` concludeva, in buona fede:
+    # «causa NON REGISTRATA, e NON e' L4: il moat ha giudicato 99.89, cioe'
+    # l'ha APPROVATA» — quando a decidere era stato L4.1. Un'etichetta generica
+    # che si legge come un'assenza fa dedurre il contrario del vero.
+    #
+    # ⛔ LA PRECEDENZA NON CAMBIA: i tre rami sopra decidono come prima, e
+    # `test_chi_ha_deciso_la_quarantena` continua a leggere 'L1' e 'moat'.
+    # Qui si nomina soltanto cio' che finiva sotto 'gate'. L'ordine e' quello
+    # di `_BLOCK_LAYER_PRIORITY`, lo stesso che sceglie il testo della ragione
+    # in `_reason_from_warnings`, cosi' l'etichetta e la spiegazione non
+    # possono indicare due layer diversi.
+    for _p in _BLOCK_LAYER_PRIORITY:
+        for _a in agito:
+            if _a and str(_a).startswith(_p):
+                return str(_a)
+    for _a in agito:
+        if _a:
+            return str(_a)
     return "gate"
 
 
@@ -2484,8 +2518,14 @@ class Memory:
                         # causa: un verdetto alto su un fatto trattenuto
                         # smentisce da solo l'attribuzione a L4
                         # (misurato il 2026-08-05).
+                        # `quarantined_by` viaggia con la riga perche' e'
+                        # l'UNICA causa che sopravvive senza l'audit trail
+                        # (VERIMEM_AUDIT_LOG e' opt-in e di default spento):
+                        # senza, `reason` esce None su ogni riga e chi legge
+                        # non ha niente. Misurato il 21/08:
+                        # quarantine_log(limit=40) -> con reason 0 su 40.
                         "SELECT id, proposition, topic, created_at, status, "
-                        "grounding_score "
+                        "grounding_score, quarantined_by "
                         "FROM facts WHERE status = 'quarantined' "
                         "AND superseded_by IS NULL "
                         "ORDER BY created_at DESC LIMIT ?",
@@ -2510,6 +2550,17 @@ class Memory:
                 a = why.get(row["id"])
                 row["reason"] = (a or {}).get("reason") or None
                 row["layers"] = (a or {}).get("layers") or []
+                # L'audit trail, quando c'e', porta il TESTO e vince. Quando
+                # non c'e' — il caso ordinario — la colonna sulla riga porta
+                # almeno il LAYER, che e' cio' che serve per distinguere una
+                # quarantena per contenuto falso da una per scelta di parole.
+                # Il campo resta separato da `reason`: `reason` e' una frase
+                # per un umano, questa e' un'attribuzione, e confonderle
+                # farebbe passare un'etichetta per una spiegazione.
+                if not row.get("layers"):
+                    _qb = (row.get("quarantined_by") or "").strip()
+                    if _qb and _qb not in ("gate", "moat", "store-screen"):
+                        row["layers"] = [_qb]
         except Exception:  # noqa: BLE001 — enrichment must never break the view
             pass
         if explain:
@@ -2591,6 +2642,27 @@ class Memory:
                     "contiene piu' affermazioni giudicate insieme: riscrivila "
                     "coi numeri come stanno nella fonte, spezzala, e "
                     "riscrivila con --source.")
+                # ⚠️ PRIMA DI DICHIARARE «non ricostruibile», SI GUARDA COSA LA
+                # RIGA SA. Dal 07/08 la colonna `quarantined_by` porta il layer
+                # accanto al fatto, e da oggi porta quello PRECISO invece
+                # dell'etichetta generica: e' esattamente il dato che questo
+                # ramo dichiarava perduto. Senza questa lettura il ramo qui
+                # sotto ASSERIVA «NON e' L4» su un fatto fermato da L4.1 —
+                # la forma d'errore che il commento sopra voleva evitare, con
+                # il segno invertito: non piu' una deduzione senza dato, ma un
+                # dato presente e non letto.
+                _qb = (row.get("quarantined_by") or "").strip()
+                if _qb and _qb != "gate":
+                    row["layers"] = [_qb]
+                    row["why"] = (
+                        f"{_qb}: la riga REGISTRA quale layer ha deciso, e il "
+                        "testo della ragione no — l'audit trail e' spento "
+                        "(VERIMEM_AUDIT_LOG, opt-in). Il layer basta per "
+                        "sapere DOVE guardare: accendi il trail e riscrivi il "
+                        "fatto per avere anche la frase, oppure leggi la "
+                        "ricevuta di `add()`, che il motivo lo dice sempre."
+                        + (_coda if _qb.startswith("L4") else ""))
+                    continue
                 row["layers"] = []
                 if _gs is None:
                     row["why"] = (
