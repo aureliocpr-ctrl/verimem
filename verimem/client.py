@@ -2524,8 +2524,13 @@ class Memory:
                         # senza, `reason` esce None su ogni riga e chi legge
                         # non ha niente. Misurato il 21/08:
                         # quarantine_log(limit=40) -> con reason 0 su 40.
+                        # `grounding_span` viaggia con la riga perche' e'
+                        # la FONTE su cui il giudice ha deciso: senza,
+                        # `_spiega_le_quarantene` ricalcola il gate a mani
+                        # vuote e i layer che confrontano claim E fonte —
+                        # L4.1, L4.2 — non possono accendersi MAI.
                         "SELECT id, proposition, topic, created_at, status, "
-                        "grounding_score, quarantined_by "
+                        "grounding_score, quarantined_by, grounding_span "
                         "FROM facts WHERE status = 'quarantined' "
                         "AND superseded_by IS NULL "
                         "ORDER BY created_at DESC LIMIT ?",
@@ -2635,6 +2640,53 @@ class Memory:
                 # assertiva e sbagliata manda a cercare nella direzione
                 # opposta. Ora si guarda l'unica cosa che la riga sa sul
                 # moat — il suo verdetto — e si DICHIARA.
+                # ⚠️ PRIMA DI DICHIARARE «non ricostruibile», SI RIPROVA CON
+                # LA FONTE. Il ricalcolo qui sopra gira a mani vuote — niente
+                # `source`, niente `ground_write` — e in quel regime L4.1 e
+                # L4.2, che confrontano il claim CON la fonte, non possono
+                # accendersi per costruzione. Misurato sul caso noto:
+                #     nudo               -> []          grounding None
+                #     ground_write=True  -> ['L4.1']    grounding 99.89
+                # E sul corpus: su 20 quarantinati con grounding >=90,
+                # ricalcolati con la fonte, i layer trovati sono 20 su 20
+                # (L4.1 il 90%, L4.2 il 50%, L1 il 15%) — nessuno resta senza.
+                #
+                # ⛔ SI PAGA SOLO QUI, dove la risposta sarebbe «non lo so»:
+                # il ricalcolo lessicale piu' sopra non chiama nessun modello e
+                # resta la prima scelta. Il costo, MISURATO invece che dedotto:
+                #
+                #     primo ricalcolo   22.58s   <- carica il giudice
+                #     i quattro dopo     0.04s   (media)
+                #
+                # Cioe' e' tutto nel CARICAMENTO, una volta per processo, e
+                # ogni riga in piu' costa quattro centesimi. Per questo NON c'e'
+                # un tetto al numero di righe: metterlo ridurrebbe la copertura
+                # senza far risparmiare niente. (La prima lettura di questo
+                # numero era «70.8s su 25 righe = 2.8s ciascuna» — una divisione
+                # fatta senza guardare i tempi uno per uno.)
+                #
+                # Effetto sulla vista, stesso comando, `limit=25`:
+                #     prima   15 righe con un layer (60%), 10 senza causa (40%)
+                #     dopo    25 righe con un layer (100%), 0 senza causa
+                _span = (row.get("grounding_span") or "").strip()
+                if _span:
+                    try:
+                        _g2 = run_validation_gate(
+                            proposition=row.get("proposition") or "",
+                            verified_by=[], topic=row.get("topic"), agent=None,
+                            source=_span, ground_write=True)
+                        _av2 = [w for w in (getattr(_g2, "warnings", None) or [])
+                                if w.get("layer")]
+                    except Exception:  # noqa: BLE001 — una spiegazione non rompe la vista
+                        _av2 = []
+                    if _av2:
+                        row["layers"] = [w.get("layer") for w in _av2]
+                        row["why"] = "· ".join(
+                            f"{w.get('layer', '?')}: "
+                            f"{w.get('advice') or w.get('reason') or ''}"
+                            for w in _av2[:3]).strip()
+                        continue
+
                 _gs = row.get("grounding_score")
                 _coda = (
                     " Le cause tipiche di un blocco L4 sono un calcolo o una "
