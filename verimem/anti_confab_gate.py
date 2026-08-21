@@ -614,11 +614,41 @@ def _supersede_same_source_on() -> bool:
     return True
 
 
+def _senza_source_contro_groundato(cand_ha_source: bool, old: Any) -> bool:
+    """GATE (a) del tag 0.7.5 — mandato di Aurelio, 2026-08-20 19:48:
+    «una scrittura senza source non puo' superseder un fatto groundato».
+
+    Il RANK FLOOR qui sopra confronta gli STATUS, e li' sta il buco misurato
+    (referti ws5 07ce9cad5e2b42bf / 6ef7efb13930a114): passare il moat NON
+    promuove a ``verified``, quindi un claim mai giudicato — ``grounding_score``
+    None, ``moat=not_run:no_source`` — arriva al confronto con lo STESSO rango
+    (``model_claim``=2) del fatto che il giudice ha sostenuto a 98, e ``2 <= 2``
+    lo lascia ritirare. **Il presidio esisteva e non era collegato a cio' che il
+    giudice decide.** Questa guardia lo collega, senza toccare gli status: alzare
+    a ``verified`` chi passa il moat cambierebbe il significato di quello stato
+    in 20 file non-test, e ``client.py:361`` dice che ``verified`` lo passa un
+    chiamante FIDATO — sarebbe contro il disegno, non solo rischioso.
+
+    PERIMETRO STRETTO E VOLUTO, due lati:
+      • se il NUOVO ha una source, non tocca nulla: l'evoluzione dei fatti e' la
+        promessa centrale del prodotto e resta intatta (banco: il CONTROLLO);
+      • se il VECCHIO non e' mai stato giudicato non c'e' niente da proteggere,
+        e il comportamento resta identico a prima (banco: il PERIMETRO).
+    Il criterio e' `grounding_score is not None` = «un giudice si e' pronunciato»,
+    non una soglia: un punteggio BASSO e' gia' quarantinato a monte e non arriva
+    qui vivo. Una soglia si aggiunge quando un caso la chiede, non prima.
+    """
+    if cand_ha_source:
+        return False
+    return isinstance(getattr(old, "grounding_score", None), (int, float))
+
+
 def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
                       ids: list[str], supersede_ids: list[str],
                       new_status: str | None = None,
                       claimant: str | None = None,
-                      proposition: str | None = None) -> list[str]:
+                      proposition: str | None = None,
+                      cand_ha_source: bool = True) -> list[str]:
     """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
     later valid-time + at least as trusted → appended to ``supersede_ids``, retired) and
     genuine CONFLICTS (returned, to quarantine the new write). This gives contradictions
@@ -702,7 +732,8 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
             continue
         if (old is not None
                 and classify_write_relation(cand, old) == "evolution"
-                and _STATUS_RANK.get(getattr(old, "status", "model_claim"), 2) <= _nr):
+                and _STATUS_RANK.get(getattr(old, "status", "model_claim"), 2) <= _nr
+                and not _senza_source_contro_groundato(cand_ha_source, old)):
             if cid not in supersede_ids:
                 supersede_ids.append(cid)
         else:
@@ -1767,7 +1798,9 @@ def run_validation_gate(
                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
                                                supersede_ids, status,
                                                claimant=claimant,
-                                               proposition=proposition)
+                                               proposition=proposition,
+                                               cand_ha_source=bool(
+                                                   source and str(source).strip()))
             if _conflicts:
                 warnings.append({
                     "layer": "L3",
