@@ -170,9 +170,31 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     #     t=11.29s id=4      91 byte   (+0.00s)   <- hippo_recall: istantaneo
     #
     # Su una memoria vuota `hippo_recall` costa zero, e su Linux il frame 3
-    # ARRIVA, cioè gli 8.41 s sono già stati pagati quando il 4 sparisce. Le
-    # ipotesi in piedi restano due, opposte, e `_referto` porta `rc` e `durata`
-    # apposta per separarle: il server è uscito prima, o stava ancora lavorando.
+    # ARRIVA, cioè gli 8.41 s sono già stati pagati quando il 4 sparisce.
+    #
+    # ✅ LE DUE IPOTESI OPPOSTE SONO SEPARATE — run 32479789933 su `71f014b1`,
+    # col referto arricchito::
+    #
+    #     id ricevuti: [1, 2, 3]
+    #     rc del server: 0 · durata: 1.1s
+    #     byte di stdout: 149187
+    #     stderr del server (coda): (VUOTO)
+    #
+    # 1.1 secondi e rc 0. Il server NON stava ancora lavorando: è **uscito**,
+    # pulito, senza rispondere a una richiesta che aveva ricevuto. E su Linux
+    # l'intero giro costa 1.1 s contro gli 11.6 s di qui, quindi non è nemmeno
+    # lentezza — è una corsa che il timing lento di Windows maschera.
+    #
+    # ⚠️ IL DIFETTO RESTA APERTO ED È DEL PRODOTTO, NON DEL BANCO: `_serve()`
+    # affida il transport a `stdio_server()` dell'SDK; alla chiusura di stdin il
+    # task di lettura finisce e `server.run()` esce, e l'ULTIMA richiesta in volo
+    # non viene drenata. Un client MCP vero tiene stdin aperto, quindi l'impatto
+    # pratico è basso — ma «richiesta ricevuta, nessuna risposta, nessun errore,
+    # exit 0» è il modo peggiore in cui una porta può fallire, perché il
+    # chiamante non ha niente da leggere.
+    #
+    # Questo test resta ROSSO su Linux di proposito. Un verde ottenuto tenendo
+    # stdin aperto lo farebbe passare senza che il prodotto sia cambiato.
     #
     # La cura sui pin resta perché è dovuta di suo: un subprocess che deve
     # comportarsi come il prodotto non eredita la configurazione del banco.
