@@ -88,6 +88,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[full,dev]"
+          # ⚠️ `wheel` ESPLICITO, e non e' ridondante. Il primo run (32475919020)
+          # ha dato SKIPPED sui due presidi del pacchetto, e la ragione l'ha
+          # detta la riga «Successfully installed» del job: c'erano setuptools,
+          # build, pytest, numpy — `wheel` NO. pip non lo installa piu' di suo,
+          # ma `[build-system] requires` lo chiede, e la fixture costruisce con
+          # `--no-isolation`, cioe' USA QUESTO ambiente: senza `wheel` la build
+          # non puo' riuscire e il test salta, correttamente, dicendo che manca.
+          #
+          # Uno skip pero' viene contato fra i verdi da chi legge in fretta, e
+          # questi due presidiano cio' che PyPI riceve — il gate (d) del tag. Un
+          # presidio del pacchetto che non gira mai e uno che non esiste si
+          # equivalgono, che e' la ragione per cui questo workflow esiste.
+          pip install wheel
 
       - name: Cache HuggingFace models (restore)
         id: hf_cache
