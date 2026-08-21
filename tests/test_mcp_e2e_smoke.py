@@ -37,6 +37,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -80,7 +81,7 @@ def _parse_lines(raw: bytes) -> list[dict]:
     return out
 
 
-def _referto(frames: list[dict], proc) -> str:
+def _referto(frames: list[dict], proc, secondi: float | None = None) -> str:
     """Il referto di un frame mancante: PICCOLO, e con la causa dentro.
 
     ⚠️ PERCHÉ ESISTE — il 2026-08-21, run 32475919020 su ``93d5e379``, questo
@@ -99,11 +100,24 @@ def _referto(frames: list[dict], proc) -> str:
     stampava affatto.
     """
     righe = [f"id ricevuti: {sorted(f['id'] for f in frames if 'id' in f)}"]
+    # ⚠️ rc E DURATA — aggiunti dopo il run 32478842864, dove il referto (gia'
+    # ridotto) diceva «id ricevuti: [1, 2, 3]» con lo stderr VUOTO. Uno stderr
+    # vuoto esclude l'eccezione e lascia in piedi due spiegazioni opposte: il
+    # server e' USCITO prima di rispondere, oppure stava ancora lavorando. A
+    # separarle bastano due numeri che il referto non aveva:
+    #   · rc — se il server e' uscito, con quale codice;
+    #   · secondi — se e' andato a sbattere contro il `timeout=60` o se ha
+    #     chiuso in un lampo.
+    # Un referto che non distingue due cause opposte costa un run intero a chi
+    # lo legge; questi due numeri costano due righe.
+    righe.append(f"rc del server: {proc.returncode}"
+                 + (f" · durata: {secondi:.1f}s" if secondi is not None else ""))
+    righe.append(f"byte di stdout: {len(proc.stdout or b'')}")
     for f in frames:
         if "error" in f:
             righe.append(f"  frame id={f.get('id')} ERROR: {f['error']!r}"[:500])
     err = (proc.stderr or b"").decode(errors="replace")
-    righe.append(f"stderr del server (coda):\n{err[-2500:]}")
+    righe.append(f"stderr del server (coda): {err[-2500:] or '(VUOTO)'}")
     return "\n".join(righe)
 
 
@@ -134,16 +148,29 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     # togliere il solo nome intero non basta (misurato il 2026-08-21 sul presidio
     # multilingue: il figlio ricostruiva il pin dagli alias).
     #
-    # ⚠️ CHE QUESTA SIA LA CAUSA DEL ROSSO DEL 2026-08-21 NON È PROVATO: il
-    # referto vecchio non lo diceva (vedi `_referto`). Quel che si sa è che il
-    # frame 3 arrivava e il 4 no, e `hippo_recall` è il primo che tocca
-    # l'embedder. La cura qui è comunque dovuta — un subprocess che deve
-    # comportarsi come il prodotto non eredita la configurazione del banco — ma
-    # a dire se bastava sarà il prossimo run, non questo commento.
+    # ⚠️⚠️ E NON ERA LA CAUSA DEL ROSSO — misurato, non supposto. Con la cura
+    # applicata, il run 32478842864 su `82e4b34b` è ancora rosso e stavolta il
+    # referto lo dice::
+    #
+    #     FAILED test_mcp_server_e2e_smoke - AssertionError: id ricevuti: [1, 2, 3]
+    #       stderr del server (coda):        <- VUOTO
+    #
+    # Lo stesso run porta gli altri 21 a verde (16 ERROR + 2 FAILED prima, «1
+    # failed, 21 passed, 8 skipped in 112.46s» dopo), quindi la cura serviva
+    # altrove: qui no. **Il difetto è un altro e resta aperto**: su Linux il
+    # server risponde a 1, 2, 3 e non al 4, senza scrivere una riga di errore.
+    # `hippo_recall` è il primo che tocca l'embedder, cioè il primo lento — ma
+    # questa è di nuovo un'ipotesi, ed è il motivo per cui `_referto` ora porta
+    # anche `rc` e `durata`: servono a separare «il server è uscito prima» da
+    # «stava ancora lavorando», che uno stderr vuoto non distingue.
+    #
+    # La cura sui pin resta perché è dovuta di suo: un subprocess che deve
+    # comportarsi come il prodotto non eredita la configurazione del banco.
     for chiave in [k for k in env
                    if k.endswith(("EMBEDDING_MODEL", "EMBEDDING_DIM"))]:
         env.pop(chiave, None)
 
+    _t0 = time.monotonic()
     proc = subprocess.run(
         [sys.executable, "-u", "-m", "verimem.mcp_server"],
         input=_frames_in(),
@@ -151,6 +178,7 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
         env=env,
         timeout=60,
     )
+    _secondi = time.monotonic() - _t0
     # Server may exit with non-zero when stdin closes mid-loop on Windows;
     # we don't gate on that. We gate on stdout content.
     stdout = proc.stdout
@@ -161,12 +189,12 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     by_id = {f["id"]: f for f in frames if "id" in f}
 
     # --- 1. Initialize succeeded ---
-    assert 1 in by_id, _referto(frames, proc)
+    assert 1 in by_id, _referto(frames, proc, _secondi)
     init = by_id[1]
     assert init.get("result", {}).get("serverInfo", {}).get("name"), init
 
     # --- 2. tools/list ---
-    assert 2 in by_id, _referto(frames, proc)
+    assert 2 in by_id, _referto(frames, proc, _secondi)
     tools = by_id[2]["result"]["tools"]
     names = {t["name"] for t in tools}
     for expected_name in ("hippo_run_task", "hippo_consolidate",
@@ -184,7 +212,7 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     # no-op (the production DB at the project root may have leftover
     # episodes from previous CLI runs). We verify the SHAPE of the reply
     # — the smoke test is a transport check, not a state assertion.
-    assert 3 in by_id, _referto(frames, proc)
+    assert 3 in by_id, _referto(frames, proc, _secondi)
     status_text = by_id[3]["result"]["content"][0]["text"]
     payload = json.loads(status_text)
     assert isinstance(payload, dict)
@@ -194,7 +222,7 @@ def test_mcp_server_e2e_smoke(tmp_path: Path):
     assert "active_llm" in payload, payload
 
     # --- 4. tools/call hippo_recall ---
-    assert 4 in by_id, _referto(frames, proc)
+    assert 4 in by_id, _referto(frames, proc, _secondi)
     recall_text = by_id[4]["result"]["content"][0]["text"]
     hits = json.loads(recall_text)
     assert isinstance(hits, list), f"recall must return a list: {hits!r}"
