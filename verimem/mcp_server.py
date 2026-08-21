@@ -14694,7 +14694,28 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     except Exception as exc:  # noqa: BLE001
         log.exception("mcp_tool_failed", tool=name)
         _audit(name, arguments, outcome="exception", error=str(exc))
-        return _err(f"{type(exc).__name__}: {exc}")
+        # ⚠️ IL NOME DEL TOOL C'ERA IN DUE POSTI E NON NELLA RISPOSTA: nel log
+        # e nella riga di audit, cioe' dove lo legge un operatore, mai dove lo
+        # legge CHI HA CHIAMATO. Un agente che lancia piu' tool in parallelo
+        # riceveva `KeyError: 'x'` e non sapeva quale dei suoi fosse fallito.
+        #
+        # 🔑 E' l'ultima rete di TUTTI i tool di questo file: qui si finisce
+        # solo quando nessun ramo ha previsto il caso, cioe' proprio quando
+        # chi legge ha meno contesto di chiunque.
+        #
+        # Il rimando e' onesto e non promette una diagnosi che non abbiamo:
+        # dice che l'errore NON e' un rifiuto del gate — quelli hanno un
+        # messaggio loro — cosi' l'agente non va a cercare una regola che non
+        # ha violato. E nomina il tool DIGITATO, non quello riscritto
+        # dall'alias, per la stessa ragione del ramo `unknown tool` qui sopra.
+        _chiamato = _REQUEST_TOOL_ALIAS.get() or name
+        return _err(
+            f"{_chiamato} failed with {type(exc).__name__}: {exc} — this is a "
+            f"crash inside the tool, NOT a gate refusal (those come back with "
+            f"their own reason). Re-check the arguments against the tool's "
+            f"inputSchema; if they are right, the store may be the problem: "
+            f"`verimem doctor`."
+        )
 
 
 @server.list_resources()
