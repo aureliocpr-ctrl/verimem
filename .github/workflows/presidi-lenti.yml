@@ -89,9 +89,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[full,dev]"
 
+      - name: Cache HuggingFace models (restore)
+        id: hf_cache
+        # ⚠️ RESTORE e SAVE SEPARATI, non `actions/cache@v4` in un passo solo:
+        # `ci.yml:171` documenta la misura — il passo unico salva nel proprio
+        # step Post, «quel Post non compare affatto nel log e la chiave e'
+        # persa». La lezione e' gia' stata pagata una volta: qui si applica.
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch/sentence_transformers
+            ~/.engram/models
+            ~/.cache/verimem
+          key: presidi-hf3-${{ runner.os }}-3.12-${{ hashFiles('pyproject.toml') }}
+
       - name: Warm embedding model
         # Il multilingue rifiuta lo stub e usa l'embedder VERO: senza questo
         # passo quei 16 test misurerebbero un modello che non c'e'.
+        # Senza la cache qui sopra sarebbero ~712 MB di giudice riscaricati a
+        # OGNI esecuzione giornaliera — su un presidio che gira per anni.
         run: verimem warmup --no-daemon
 
       - name: I presidi lenti
@@ -108,3 +125,17 @@ jobs:
           -rsfE
           -m "(slow or e2e) and not perf"
           --ignore=tests/test_real_provider_smoke.py
+
+      - name: Cache HuggingFace models (save)
+        # `always()` perche' il modello scaricato vale anche quando i presidi
+        # sono rossi: senza, un rosso costringerebbe il run successivo a
+        # riscaricare 712 MB proprio quando si sta iterando su una cura.
+        if: always() && steps.hf_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch/sentence_transformers
+            ~/.engram/models
+            ~/.cache/verimem
+          key: presidi-hf3-${{ runner.os }}-3.12-${{ hashFiles('pyproject.toml') }}
