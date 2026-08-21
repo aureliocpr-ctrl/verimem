@@ -146,7 +146,14 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   `VERIMEM_MIN_RELEVANCE=auto`), and the floor is sharpest on real-size corpora.
   Note the shape: only `explain`/`trust_report` refuse to answer. `recall` and
   `search` always return the nearest facts — the flag is how you tell "nearest"
-  from "right".
+  from "right". **Abstention has two levels, and the second one has a
+  dependency:** the relevance floor above runs everywhere, but the *sufficiency*
+  judge — the one that catches a fact that is on topic yet does not answer the
+  question — needs a configured LLM provider. Install Verimem without one and
+  `get_llm()` returns a mock: that second check cannot run, `verify.sufficiency`
+  reports `no_provider`, and the dossier comes back without it. The floor still
+  abstains on out-of-domain questions; what you lose is the on-topic-but-wrong
+  catch.
 - **Document memory, cited on the indexed text** — index PDF/DOCX/HTML/EPUB/text
   files; semantic search returns passages with source, version and character
   offsets, where `indexed_text[start:end] == passage`; passages can be promoted
