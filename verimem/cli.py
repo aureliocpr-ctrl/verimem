@@ -4692,9 +4692,29 @@ def save_cmd(
                 f"why it is quarantined. Narrow the claim to what the source "
                 f"literally says, or split it[/dim]")
     else:
-        console.print("  [yellow]not verified[/yellow] [dim]— no source, so the "
-                      "entailment moat did not run; pass --source \"<the output "
-                      "that proves it>\" to have it judged[/dim]")
+        # ⚠️ «Nessun punteggio» significa DUE cose e questa riga ne raccontava una
+        # sola: chi passava `--source` senza avere il giudice installato si
+        # sentiva dire «no source» e veniva mandato a rifare cio' che aveva
+        # appena fatto — la riga PRIMA (L4-skipped) diceva gia' il vero, e le due
+        # si contraddicevano sullo stesso schermo. Misurato il 2026-08-21 su una
+        # macchina pulita (venv nuovo, sdist 0.7.6, HF_HOME vuoto, env -i): e' il
+        # primo messaggio che un utente nuovo legge sulla promessa centrale.
+        #
+        # 🔑 IL DATO C'ERA GIA'. `client.esito_del_moat` distingue i tre stati e
+        # la ricevuta li porta nel campo `moat` — presidiato da
+        # test_la_ricevuta_deve_dire_se_il_moat_ha_girato, incluso il caso
+        # `not_run:no_judge`. Quel test guarda il DATO; nessuno guardava la riga
+        # STAMPATA, ed e' li' che si perdeva. Si legge il campo, non si deduce
+        # dal punteggio: sono due domande diverse.
+        if str(r.get("moat") or "") == "not_run:no_judge":
+            console.print("  [yellow]not verified[/yellow] [dim]— a source was "
+                          "given but no grounding judge is installed, so the "
+                          "entailment moat did not run; run `verimem warmup` to "
+                          "fetch the free local judge[/dim]")
+        else:
+            console.print("  [yellow]not verified[/yellow] [dim]— no source, so the "
+                          "entailment moat did not run; pass --source \"<the output "
+                          "that proves it>\" to have it judged[/dim]")
     # A save that RETIRES an older fact is not an append: the old value stops
     # being served by default recall. save_checkpoint has always returned the
     # ids (client.py sets _out["superseded"]) and this receipt dropped them, so

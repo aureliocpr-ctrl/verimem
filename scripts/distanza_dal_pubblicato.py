@@ -29,6 +29,20 @@ che il 20/08 ha fatto passare per PASSED un presidio che avrebbe dovuto essere
 rosso — li' un bump introvabile diventava distanza 0, cioe' la risposta migliore
 possibile a partire da una storia troncata.
 
+⚠️⚠️ E CHI LO AGGANCIA A UN TEST DEVE ROVESCIARE QUELLA RIGA. L'astensione e'
+giusta per un misuratore che chiami a mano — «non lo so» batte un numero
+inventato — ed e' PERICOLOSA dentro una suite: in CI uno skip si conta fra i
+verdi e apre il cancello della pubblicazione (@ws6, 21/08). Un presidio costruito
+su questo deve trattare ``stato != "misurato"`` come un FALLIMENTO, non come uno
+skip.
+
+📌 CORREZIONE al messaggio del commit che ha introdotto questo file (`074198c1`):
+li' ho scritto che la storia troncata «e' la norma in CI». E' FALSO per il job
+``test``, che ha ``fetch-depth: 0`` (ci.yml:231) e quindi riceve i tag — l'anello
+l'ha chiuso @ws6 leggendo il refspec dal log di un run. Resta profondo 1 il job
+``build`` (ci.yml:988), che pero' non legge la storia: li' e' una trappola
+armata, non un difetto attivo.
+
 Uso::
 
     python scripts/distanza_dal_pubblicato.py          # riga leggibile
