@@ -75,6 +75,70 @@ def _misura(byte: int) -> str:
     return f"{byte} B"
 
 
+def _non_e_un_database(p) -> str:
+    """Perche' il file NON e' un database sqlite, o "" se lo e' (o se non si sa).
+
+    ⚠️ ESISTERE NON E' ESSERE LEGGIBILE, e prima si guardava solo il nome e la
+    dimensione. Misurato il 21/08 su uno store con dentro una riga di testo::
+
+        ✓ data-dir  … (writable=True; stores: semantic/semantic.db 52 B, …)
+
+    Un ✓ e una misura, sul file che il prodotto usa come memoria. I `52 B` un
+    umano attento li nota; il verde dice il contrario e vince lui.
+
+    🔑 Un file VUOTO non e' rotto: sqlite crea il file prima della prima
+    scrittura, e allarmare li' darebbe un falso positivo a ogni installazione
+    nuova — proprio quella che ha piu' bisogno di fidarsi del referto. Il
+    criterio e' file NON VUOTO senza l'intestazione, che sqlite scrive sempre
+    per prima e in chiaro.
+
+    In dubbio si tace: un errore di lettura qui e' gia' raccontato dal ramo che
+    chiama, e un'accusa sbagliata manderebbe a cercare un guasto che non c'e'.
+    """
+    _ATTESA = b"SQLite format 3" + bytes(1)
+    try:
+        dim = p.stat().st_size
+        if dim == 0:
+            return ""
+        with open(p, "rb") as fh:
+            testa = fh.read(16)
+    except OSError:
+        return "illeggibile"
+    if len(testa) < 16:
+        return f"{dim} byte, troppo corto per un database sqlite"
+    if testa != _ATTESA:
+        return "NON e' un database sqlite (intestazione assente)"
+    return ""
+
+
+def _stores_illeggibili(d) -> list[str]:
+    """Gli store dichiarati che ESISTONO ma non sono database. Lista, non
+    stringa: il verdetto del check la conta, e rileggere la riga di testo che
+    l'operatore legge sarebbe un accoppiamento fra la diagnosi e la sua
+    formattazione."""
+    from .config import CONFIG
+    fuori = []
+    for attributo in ("semantic_db", "episodes_db", "skills_db"):
+        p = getattr(CONFIG, attributo, None)
+        if p is None:
+            continue
+        try:
+            rel = p.relative_to(CONFIG.data_dir)
+            p = d / rel
+        except (ValueError, AttributeError):
+            rel = None
+        try:
+            if not p.exists():
+                continue
+        except OSError:
+            continue
+        perche = _non_e_un_database(p)
+        if perche:
+            etichetta = str(rel).replace("\\", "/") if rel is not None else p.name
+            fuori.append(f"{etichetta}: {perche}")
+    return fuori
+
+
 def _stores_dichiarati(d) -> str:
     """I database che CONFIG dichiara, con la loro dimensione — «c'e' un file
     di nome episodes.db» e «quel file e' vuoto» mandano l'operatore a fare cose
@@ -107,7 +171,9 @@ def _stores_dichiarati(d) -> str:
         etichetta = str(rel).replace("\\", "/") if rel is not None else p.name
         try:
             if p.exists():
-                righe.append(f"{etichetta} {_misura(p.stat().st_size)}")
+                _rotto = _non_e_un_database(p)
+                righe.append(f"{etichetta} {_misura(p.stat().st_size)}"
+                             + (f" ⚠️ {_rotto}" if _rotto else ""))
                 continue
             # ...E DIRE DOVE. Un'assenza manda l'operatore a fare una cosa
             # sbagliata («il file c'e', il doctor sbaglia»); un'assenza che
@@ -292,10 +358,26 @@ def run_doctor() -> list[dict[str, Any]]:
                     f"imported, and CONFIG is fixed at import time")
         except Exception:  # noqa: BLE001
             pass
-        add("data-dir", OK if writable else FAIL,
+        # ⚠️ ESISTERE NON E' ESSERE LEGGIBILE. Con un `semantic.db` che
+        # contiene una riga di testo il referto diceva, misurato il 21/08:
+        #     ✓ data-dir  … (writable=True; stores: semantic/semantic.db 52 B, …)
+        # Un ✓ sul file che il prodotto usa come memoria. La directory E'
+        # scrivibile — la domanda a cui il check rispondeva era quella, e non
+        # e' quella che conta per chi ha perso lo store.
+        # FAIL e non WARN: qui il prodotto non puo' funzionare, e un WARN
+        # accanto a `writable=True` si legge come «va quasi bene».
+        _illeggibili = _stores_illeggibili(d)
+        add("data-dir",
+            FAIL if (not writable or _illeggibili) else OK,
             f"{d} (writable={writable}; stores: {_stores_dichiarati(d)})"
             + _divergenza,
-            ("set the data dir BEFORE importing verimem (env var, or the "
+            ("questi file esistono e non sono database sqlite: "
+             + "; ".join(_illeggibili)
+             + ". Un backup, un file troncato a meta' o un percorso riusato "
+               "per altro danno questa forma: controlla `verimem backup list`, "
+               "e NON scriverci sopra prima di aver messo da parte il file."
+             if _illeggibili else
+             "set the data dir BEFORE importing verimem (env var, or the "
              "parent process), or restart the process after changing it"
              if _divergenza else
              None if writable else
