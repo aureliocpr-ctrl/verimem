@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import pytest
 
-from verimem.client import Memory, chi_ha_quarantinato
+from verimem.client import Memory, _reason_from_warnings, chi_ha_quarantinato
 
 FONTE = ("Verbale: il modulo di fatturazione e stato testato e funziona "
          "correttamente in produzione.")
@@ -80,6 +80,38 @@ def test_fra_piu_layer_vince_la_stessa_priorita_della_ragione():
     diversi: entrambi ordinano con `_BLOCK_LAYER_PRIORITY` (L3 prima di L4)."""
     assert chi_ha_quarantinato(
         "passed", [], agito=["L4-grounding", "L3-supersession"]) == "L3-supersession"
+
+
+@pytest.mark.parametrize("ordine", [
+    ["L4.1", "L4-skipped"],
+    ["L4-skipped", "L4.1"],   # l'ordine in cui arrivano non deve contare
+])
+def test_un_blocco_vero_non_perde_contro_un_avviso(ordine):
+    """⚠️ `L4.1` mancava da `_BLOCK_LAYER_PRIORITY` e finiva in fondo, dietro a
+    `L4-skipped` — che non è un blocco ma l'avviso «il giudice non è girato»::
+
+        warnings ['L4.1', 'L4-skipped']
+          prima ->  «nessun giudice disponibile, controllo non eseguito»
+          dopo  ->  «il claim afferma un valore che la fonte non contiene…»
+
+    I due COESISTONO davvero: L4.1 è lessicale e gira anche senza giudice. E
+    da quando l'etichetta nomina il layer, senza questa riga direbbe
+    `L4-skipped` — un'etichetta FALSA, cioè peggio di quella generica.
+    """
+    testi = {"L4.1": "il claim afferma un valore che la fonte non contiene",
+             "L4-skipped": "nessun giudice disponibile, controllo non eseguito"}
+    ws = [{"layer": lay, "reason": testi[lay]} for lay in ordine]
+    assert chi_ha_quarantinato("passed", ws, agito=list(ordine)) == "L4.1"
+    assert _reason_from_warnings(ws) == testi["L4.1"]
+
+
+def test_presidio_L1_vince_anche_con_un_L41_accanto():
+    """La precedenza dichiarata dal prodotto non si sposta: L1 esiste per
+    intercettare le auto-affermazioni, e viene prima."""
+    ws = [{"layer": "L1.10", "reason": "self-claim"},
+          {"layer": "L4.1", "reason": "numero non nella fonte"}]
+    assert chi_ha_quarantinato("passed", ws, agito=["L1.10", "L4.1"]) == "L1"
+    assert _reason_from_warnings(ws) == "self-claim"
 
 
 # ───────────────────────────  LA PRECEDENZA — presidio  ──────────────────────

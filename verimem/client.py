@@ -3347,7 +3347,25 @@ def _evidence_class(gate: Any, verified_by: Any, warnings: list) -> str:
 #: taken from the highest-priority layer that actually fired - decision-dependent,
 #: NOT the last-appended warning (which can be an advisory L4-skipped note that
 #: masks the real block). L4-skipped/SOURCE_TRUST are advisory-most, last.
-_BLOCK_LAYER_PRIORITY = ("L3", "L4-grounding", "L1", "SOURCE_TRUST", "L4-skipped")
+#: L'ordine in cui un blocco si prende la ragione mostrata. ⚠️ `L4.1` c'e'
+#: perche' senza finiva IN FONDO (rank di default) e perdeva contro
+#: `L4-skipped`, che NON e' un blocco ma l'avviso «il giudice non e' girato»:
+#:
+#:     warnings ['L4.1', 'L4-skipped']
+#:       prima ->  «nessun giudice disponibile, controllo non eseguito»
+#:       dopo  ->  «il claim afferma un valore che la fonte non contiene: …»
+#:
+#: E i due COESISTONO davvero, non e' un caso di laboratorio: L4.1 e' un
+#: controllo lessicale sui numeri e gira anche quando il giudice non c'e'.
+#: Sta dopo `L1` e non prima, per la stessa precedenza di
+#: `chi_ha_quarantinato` — le due superfici devono ordinare uguale, o
+#: l'etichetta e la spiegazione indicano due layer diversi.
+#:
+#: ⛔ Ci sta SOLO `L4.1`, che e' stato misurato bloccare. `L4.2` no: sui 7
+#: fatti salvati il 21/08 ne accompagna 5 e tutti e 5 sono AMMESSI — e' un
+#: avviso, e metterlo qui gli farebbe prendere il merito di blocchi non suoi.
+_BLOCK_LAYER_PRIORITY = ("L3", "L4-grounding", "L1", "L4.1",
+                         "SOURCE_TRUST", "L4-skipped")
 
 
 def _is_advisory_layer(layer: str) -> bool:
