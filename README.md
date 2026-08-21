@@ -96,6 +96,20 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   its writers sets `VERIMEM_SUPERSEDE_SAME_SOURCE=0` (detect, but quarantine instead of
   supersede) — or declares `VERIMEM_MULTI_WRITER=1`, which flips the same default off on its
   own. `Memory(preset="permissive")` / `validate="fast"` skip the moat entirely.
+
+  **Known limit, measured on our own corpus, not on a bench.** Same-source evolution
+  assumes the newer number *updates* the older one. When two facts under one topic
+  measure **different things**, that assumption is wrong and the newer one retires a
+  fact that was true. On our production store we found **171 pairs where both facts
+  scored ≥90 with the grounding judge and one still retired the other**; we read 55 of
+  them by hand and none was a legitimate update. Guards now separate the cases that
+  have a *shape* — different quantity units (`1 failed / 11767 passed` vs `8019
+  warnings`), build-matrix cells (`ubuntu-latest` vs `macos-latest`, `py3.12` vs
+  `py3.13`), record numbers, dates, disjoint proper nouns — which covers **70 of the
+  171**. The remaining 101 have no syntactic shape: what separates them is meaning, and
+  a lexical rule cannot see it. **One topic per measurement** is the practical
+  mitigation and it is not hygiene advice — on facts written in the last 7 days,
+  survival was **2348/2444 on topics used once** against **230/338 on topics reused**.
 - **Every write returns an adjudication receipt** — `add()` hands back a visible
   verdict: `{disposition, evidence_class, judge, score, threshold, margin, reason,
   confidence_tier}`. A quarantine is a *reasoned* verdict, never a silent drop,
