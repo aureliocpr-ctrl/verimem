@@ -3232,7 +3232,36 @@ class SemanticMemory:
             emb = _encode_within_budget(fact.proposition)
         else:
             # explicit embed="sync" — byte-identical legacy path (tests rely on it)
-            emb = embedding.encode(embedding.as_passage(fact.proposition))
+            try:
+                emb = embedding.encode(embedding.as_passage(fact.proposition))
+            except embedding.EncodeDelegateUnavailable:
+                # DELEGATE-ONLY e nessun daemon: DEGRADA come gli altri due rami,
+                # invece di far morire la scrittura. Il messaggio dell'eccezione
+                # dice «caller must degrade» — il contratto lo prevedeva e questo
+                # chiamante non lo rispettava, mentre il percorso del RECALL lo
+                # rispetta gia' venti righe piu' su (_encode_prepared_within_budget:
+                # «recall falls back to keyword, save defers»). Due percorsi, uno
+                # protetto e uno no: la giuntura, non il componente.
+                #
+                # Misurato il 2026-08-20 su f26c7b26 con
+                # tests/test_consolidation_unique_index_cross_process.py::
+                # test_two_processes_cannot_both_persist_master_for_same_topic:
+                # consolidation.py:507 -> qui -> embedding.py:254, worker morto
+                # con rc=1 e il test rosso. ⚠️ E il flag NON e' solo nostro:
+                # conftest.py:136 documenta dal 2026-06-06 che un
+                # `mcp_server.main()` in-process lo fa LEAKARE permanentemente
+                # via os.environ.setdefault. Chi lo eredita senza daemon perdeva
+                # la scrittura invece di scriverla senza vettore.
+                #
+                # PERIMETRO: solo EncodeDelegateUnavailable, cioe' «il delegato
+                # non c'e'» — che e' indisponibilita', non un errore di encoding.
+                # Ogni altra eccezione continua a propagare (banco:
+                # test_CONTROLLO_un_errore_DIVERSO_continua_a_propagare), perche'
+                # ingoiarle scriverebbe fatti senza vettore nascondendo guasti veri.
+                _LOG.warning(
+                    "store: encode delegate unavailable → il fatto viene scritto "
+                    "SENZA embedding (recall keyword finche' il daemon non torna)")
+                emb = None
         verified_by_json = json.dumps(list(fact.verified_by or []))
         with self._connect() as conn:
             was_existing = False

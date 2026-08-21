@@ -630,7 +630,33 @@ class EpisodicMemory:
             emb = _encode_episode_within_budget(episode.summary())
         else:
             # explicit embed="sync" — byte-identical legacy path (tests rely on it).
-            emb = embedding.encode(episode.summary())
+            try:
+                emb = embedding.encode(episode.summary())
+            except embedding.EncodeDelegateUnavailable:
+                # GEMELLO di semantic.py: stesso ramo, stesso errore, stessa cura.
+                # Trovato dallo SWEEP dopo aver curato l'altro — «chi ALTRO fa la
+                # stessa cosa?»: `consolidation._persist_master` chiama DUE store,
+                # `sm.store(f)` (semantic:507) e `mem.store(ep)` (:508), e curare
+                # solo il primo spostava il fallimento dal worker A al worker B
+                # senza chiudere il difetto. Misurato il 2026-08-21 su `aeee8305`:
+                # con la sola cura in semantic.py il cross-process passava da
+                # «Worker A failed» a «Worker B failed», stesso `_encode_one`.
+                #
+                # `emb = None` non e' un ripiego: e' il DEFER che questo metodo
+                # gia' gestisce venti righe piu' giu' — sentinel, episodio ancora
+                # trovabile per keyword, salience neutra e valori veri ricalcolati
+                # da `backfill_pending_embeddings`. Qui si entra per la stessa
+                # ragione (nessun vettore disponibile ora), quindi si esce dalla
+                # stessa porta.
+                #
+                # PERIMETRO: solo EncodeDelegateUnavailable — indisponibilita' del
+                # delegato, non un errore di encoding. Ogni altra eccezione
+                # propaga (banco: test_CONTROLLO_un_errore_DIVERSO...).
+                _LOG.warning(
+                    "episode store: encode delegate unavailable → l'episodio "
+                    "viene scritto SENZA embedding (sentinel; il backfill lo "
+                    "ricalcola quando il daemon torna)")
+                emb = None
 
         if emb is None:
             # DEFER: daemon cold/starved. Skip salience + DG (both re-encode) and
