@@ -953,6 +953,40 @@ _CELLE_DI_MATRICE = re.compile(
     re.IGNORECASE)
 
 
+def _proposizione_di(x: Any) -> str:
+    """La proposizione di un fatto, o la stringa stessa se ne riceve una.
+
+    ⚠️ PRIMA ERA `getattr(x, "proposition", "") or ""`, e con un tipo che non
+    ha quell'attributo tornava `""` IN SILENZIO. Una `str` non ha
+    `.proposition`: chi chiamava questa funzione con due stringhe — il modo
+    naturale di provarla da fuori — confrontava due testi VUOTI e riceveva
+    sempre `False`, cioe' la risposta piu' rassicurante.
+
+    🔑 E' costato una misura vera: il 19/08 ws6 ha consegnato una tabella di
+    casi costruita cosi', l'ha ritirata da sola, e ha scritto che i due
+    «controlli negativi» erano i peggiori — davano `False`, si leggevano come
+    «giusto», ed erano `False` perche' la funzione non vedeva NIENTE.
+
+    ⇒ Le stringhe ora si accettano ESPLICITAMENTE, perche' e' il modo in cui i
+    banchi la usano e vietarlo non renderebbe nessuno piu' accorto. Un tipo che
+    non e' ne' un fatto ne' un testo SOLLEVA: un misuratore che col tipo
+    sbagliato restituisce la risposta piu' comoda e' peggio di uno che si
+    rompe. Proposto da ws6 il 19/08 e rimasto senza padrone; il gate e' il
+    perimetro di ws3.
+    """
+    if isinstance(x, str):
+        return x
+    p = getattr(x, "proposition", None)
+    if p is None:
+        if hasattr(x, "proposition"):
+            return ""          # fatto con proposizione vuota: legittimo
+        raise TypeError(
+            f"_entita_diverse vuole un fatto (con .proposition) o una str, "
+            f"non {type(x).__name__}: col tipo sbagliato la risposta sarebbe "
+            f"stata False, cioe' «non fermarti», senza che nessuno lo sapesse")
+    return p or ""
+
+
 def _entita_diverse(a: Any, b: Any) -> bool:
     """I due fatti nominano record DIVERSI: non c'è un codice in comune.
 
@@ -1024,8 +1058,8 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     from .quantity_match import content_tokens, contrasting_attrs, extract_quantities
     from .temporal_context import date_menzionate, stessa_frase_altra_data
 
-    pa = getattr(a, "proposition", "") or ""
-    pb = getattr(b, "proposition", "") or ""
+    pa = _proposizione_di(a)
+    pb = _proposizione_di(b)
     ca, cb = codes_in(pa), codes_in(pb)
     if ca and cb and not (ca & cb):
         return True
