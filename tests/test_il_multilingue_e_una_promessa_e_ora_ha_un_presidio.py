@@ -57,12 +57,37 @@ DOMANDE = [
 
 
 @pytest.fixture()
-def _stub_embedding_model():
+def _stub_embedding_model(monkeypatch):
     """SOVRASCRIVE la fixture autouse di conftest: qui serve il modello VERO.
 
     Sotto lo stub (SHA-256 dei token) un test cross-lingua misurerebbe la
     coincidenza di due hash, non la somiglianza di due frasi — cioè
-    esattamente nulla di ciò che questo file esiste per difendere."""
+    esattamente nulla di ciò che questo file esiste per difendere.
+
+    ⚠️ MA LA FIXTURE DI CONFTEST FA QUATTRO COSE, NON UNA (conftest.py:121-146):
+    monta lo stub, **toglie `HIPPO_ENCODE_DELEGATE_ONLY` dall'ambiente**, mette
+    `ENGRAM_ENCODE_SERVICE=0` e svuota la cache. Sovrascriverla per rinunciare
+    allo STUB faceva rinunciare anche al resto — e il `delenv` serve qui più che
+    altrove, perché questo è l'unico file che chiede un encode VERO.
+
+    Il difetto misurato il 2026-08-21 su `68ea7614`, con il flag ereditato
+    nell'ambiente (conftest.py:137 documenta dal 2026-06-06 che un
+    `mcp_server.main()` in-process lo fa leakare permanentemente)::
+
+        13 failed, 3 passed   —  passano solo it, es, pt
+        WARNING store: encode delegate unavailable → scritto SENZA embedding
+
+    Passavano cioè le sole lingue lessicalmente vicine all'italiano: i fatti
+    entravano senza vettore e il recall cadeva su keyword. **Un test cross-lingua
+    che misura la coincidenza delle parole è precisamente ciò che questo file
+    esiste per impedire** — la stessa ragione per cui rifiuta lo stub.
+
+    ⚠️ In CI passa lo stesso, perché là il flag non è nell'ambiente e non c'è
+    niente da togliere: il difetto è LATENTE e si manifesta solo dove il flag è
+    stato ereditato. E questo file è fra i 29 che nessun job della CI esegue,
+    quindi non lo avrebbe visto nessuno.
+    """
+    monkeypatch.delenv("HIPPO_ENCODE_DELEGATE_ONLY", raising=False)
     yield
 
 
