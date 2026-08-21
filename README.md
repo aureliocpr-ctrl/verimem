@@ -502,6 +502,7 @@ grader. Full methodology, caveats and raw result files:
 | End-to-end QA, cross-user generalization (never-seen user, n=169) | **0.716** | — |
 | Read-path QA (gold store, 3 users) | 0.739 / 0.750 / 0.787 | — |
 | Memory-boundary abstention (end-to-end) | **1.000 — seven consecutive full runs** | — |
+| …and the other half: abstention on questions that DO have an answer | **0.20** (production default) vs **0.30** plain-RAG baseline — it abstains *less* | — |
 | Extraction F1 (58 sessions, replicated ×2) | 0.761–0.768 | 0.797 |
 
 **Where each of our numbers comes from** — the committed artefact and the key
@@ -545,7 +546,7 @@ measured result with the raw file in the repo, not a design intention:
 
 | Capability | Verimem (measured) | mem0 / Zep / MemOS |
 |---|---|---|
-| Abstains instead of fabricating when the store can't support an answer | **1.000 across seven consecutive full e2e runs** | not measured by their leaderboards |
+| Abstains instead of fabricating when the store can't support an answer | **1.000 across seven consecutive full e2e runs** — and on questions that DO have an answer it abstains **0.20**, against **0.30** for the plain-RAG baseline ([BENCHMARKS](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md)). A 1.000 alone cannot distinguish "abstains when it should" from "abstains always", so both halves belong together | not measured by their leaderboards |
 | Write-path gate (unsupported "it works" claims quarantined — stored, not served) | grounding judge AUROC **0.96–0.97** across models/seeds (0.971 sonnet-4 R10 on SNLI, 0.963 sonnet-5 re-run 2026-07-16, 0.974 pooled multi-model) | no write gate |
 | Conflicting well-grounded memories resolved by provenance (`answer`, trust-conditioned) | correct **0.17 → 0.92**; on the 2 truly unresolvable conflicts it did **not** abstain — it picked a side both times ([bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/wellgrounded_distractor_bench.py), sonnet-5) | served as-is |
 | Trust axes under adversarial pressure ([TrustMem-Bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/trustmem_bench.py), deterministic, run it yourself) | **60/60** | mem0: 40/60 (forget-leak reproduced live) |
