@@ -58,12 +58,19 @@
 # pronta (aggiungere `presidi-lenti` e `security` alla condizione) e' nel
 # messaggio di @ws4 del 14:24.
 #
-# 📌 E COME SI LEGGE IL SUO ROSSO OGGI: `test_mcp_server_e2e_smoke` e' rosso di
-# proposito — su Linux il server MCP esce (rc 0, 1.1s) senza rispondere
-# all'ultima richiesta, e tenerlo verde chiudendo stdin piu' tardi lo farebbe
-# passare senza che il prodotto cambi. Finche' quel difetto e' aperto, questo
-# workflow riporta «1 failed, 21 passed»: il verdetto da leggere e' il NUMERO,
-# non il colore. Se un giorno i failed diventano due, e' successo qualcos'altro.
+# ✅ ED E' VERDE — run 32482254316 su `70b4945c`, il primo da quando esiste:
+#
+#     22 passed, 8 skipped, 11956 deselected, 9 warnings in 114.53s
+#
+# contro il «16 ERROR + 2 FAILED + 2 SKIPPED, e nessuna riga di sintesi nel log»
+# del primo run. ⇒ Estendere il cancello del publish a questo workflow non costa
+# piu' niente: non c'e' un rosso permanente che bloccherebbe un tag.
+#
+# 📌 Gli 8 skipped hanno tutti una ragione DICHIARATA, e sono dipendenze che il
+# runner non ha: `faiss` (6 file), `pandas` (1). Non sono presidi spenti — sono
+# presidi che qui non possono girare, e lo dicono. Un giorno varra' la pena
+# chiedersi se `faiss` debba esserci: quei sei file non girano MAI, ne' qui ne'
+# in `ci`, e nessuno li ha mai contati prima del 2026-08-21.
 #
 # ⚠️ NIENTE `push:` — di proposito. Un run per commit su una matrice gia' satura
 # (misurato il 2026-08-21: run di ~61 minuti mediani contro un commit ogni ~20)
@@ -124,6 +131,13 @@ jobs:
           # presidio del pacchetto che non gira mai e uno che non esiste si
           # equivalgono, che e' la ragione per cui questo workflow esiste.
           pip install wheel
+          # E `twine`, per la stessa ragione, scoperta un giro dopo: con `wheel`
+          # la build riesce e sotto e' comparso il requisito successivo —
+          # «twine non installato in questo ambiente» (run 32482254316). E'
+          # `twine check` a fare la validazione che PyPI fa prima di accettare
+          # un upload: senza, il presidio che difende il numero di versione da
+          # bruciare resta muto. Uno skip alla volta, e ogni volta quello sotto.
+          pip install twine
 
       - name: Cache HuggingFace models (restore)
         id: hf_cache
