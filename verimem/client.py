@@ -1264,6 +1264,55 @@ class Memory:
             return self.semantic.count(topic=topic, include_quarantined=False)
         return self.semantic.count(include_quarantined=False)
 
+    # ------------------------------------------------------------------ docs
+    # Il tier DOCUMENTI mancava SOLO qui. Misurato il 2026-08-21::
+    #
+    #     MCP   7 tool  (hippo_document_index_file / _search / _semantic_search / ...)
+    #     CLI   2 comandi  (`verimem index`, `verimem search-docs`)
+    #     SDK   [x for x in dir(Memory) if "doc" in x.lower()]  ->  []
+    #
+    # E' il canale che un'APPLICAZIONE usa per integrare verimem: la superficie
+    # piu' scoperta delle tre. `tests/test_le_promesse_valgono_appena_installato`
+    # lo SKIPPAVA con «SDK: nessun metodo per i documenti (MCP e CLI ce l'hanno)
+    # — e' un finding non una resa»: quello skip e' il RED di questi due metodi,
+    # e sparisce da solo ora che esistono.
+    #
+    # Zero logica nuova: `DocumentIndex` e' gia' collaudato e lo usano gia'
+    # entrambe le altre porte. Qui si espone, non si reimplementa.
+
+    @property
+    def documents(self):
+        """Il tier documenti, costruito alla prima richiesta.
+
+        ⚠️ Il db sta ACCANTO a quello dei fatti, non nel percorso globale del
+        tier. Senza questo, una `Memory(tmp_path)` in un test scriverebbe
+        nell'indice VERO: il default di ``DocumentIndex`` e' relativo al
+        ``DocumentStore`` di sistema, non alla Memory che lo apre.
+        """
+        _idx = getattr(self, "_documents", None)
+        if _idx is None:
+            from .document_index import DocumentIndex
+            _idx = DocumentIndex(
+                db_path=Path(self.semantic.db_path).parent / "document_index.db")
+            self._documents = _idx
+        return _idx
+
+    def index_document(self, path: str | Path, source_id: str | None = None):
+        """Indicizza un FILE e rende il suo id. Gemello di `verimem index`.
+
+        ⚠️ Il nome dice «document» ma sotto chiama ``index_file``, ed e' una
+        scelta dichiarata: sul tier ``index_document`` prende ``(source_id,
+        content)`` — cioe' il TESTO — mentre chi usa l'SDK ha in mano un PATH.
+        Il contratto lo aveva gia' fissato il test, che chiama
+        ``m.index_document(str(doc))``. Allineare il nome al tier avrebbe
+        significato cambiare il test per comodita' dell'implementazione.
+        """
+        return self.documents.index_file(path, source_id=source_id)
+
+    def search_documents(self, query: str, k: int = 5, **kwargs):
+        """Cerca nei documenti indicizzati. Gemello di `verimem search-docs`."""
+        return self.documents.search(query, k=k, **kwargs)
+
     def answer(self, query: str, *, llm: Any, k: int = 8,
                verify_threshold: float | None = None,
                trust_conditioning: bool = True,
