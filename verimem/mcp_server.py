@@ -14199,15 +14199,32 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             try:
                 result = dashboard_overview(
                     a.semantic, project_globs=list(project_globs),
+                    # ⚠️ LE SOGLIE NON PASSANO DA `or`: finiscono in
+                    # confronti `sim >= threshold`, dove **0 significa
+                    # "non filtrare"** ed e' una richiesta legittima. `or`
+                    # non distingue l'assente dallo zero e la cancellerebbe,
+                    # come faceva `floor` in `ignorance` (misurato: floor=0
+                    # tornava 0.8, cioe' il filtro piu' aggressivo).
+                    # `top_topics_k` e `max_orphan_suggestions` restano con
+                    # `or`: li' lo zero vale "nessun risultato", che per un
+                    # conteggio e' piu' probabilmente un errore del chiamante
+                    # che una richiesta — e cambiarlo e' una decisione di
+                    # prodotto, non una cura di coerenza.
                     freshness_threshold_days=float(
-                        arguments.get("freshness_threshold_days", 30) or 30),
+                        arguments["freshness_threshold_days"]
+                        if arguments.get("freshness_threshold_days") is not None
+                        else 30),
                     freshness_sim_threshold=float(
-                        arguments.get("freshness_sim_threshold", 0.85) or 0.85),
+                        arguments["freshness_sim_threshold"]
+                        if arguments.get("freshness_sim_threshold") is not None
+                        else 0.85),
                     top_topics_k=int(arguments.get("top_topics_k", 10) or 10),
                     max_orphan_suggestions=int(
                         arguments.get("max_orphan_suggestions", 10) or 10),
                     orphan_sim_threshold=float(
-                        arguments.get("orphan_sim_threshold", 0.6) or 0.6),
+                        arguments["orphan_sim_threshold"]
+                        if arguments.get("orphan_sim_threshold") is not None
+                        else 0.6),
                 )
             except Exception as exc:  # noqa: BLE001
                 _audit(name, arguments, outcome="error")
@@ -14220,7 +14237,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if name == "hippo_topic_cleanup_suggestions":
             from verimem.topic_cleanup_suggestions import topic_cleanup_suggestions
             max_sug = int(arguments.get("max_suggestions", 20) or 20)
-            sim_thr = float(arguments.get("sim_threshold", 0.6) or 0.6)
+            # Stessa ragione delle soglie di `dashboard_overview`: `0`
+            # significa «non filtrare» e non va rimpiazzato.
+            sim_thr = float(arguments["sim_threshold"]
+                            if arguments.get("sim_threshold") is not None
+                            else 0.6)
             k_nb = int(arguments.get("k_neighbours", 5) or 5)
             try:
                 result = topic_cleanup_suggestions(
@@ -14256,8 +14277,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if not topic_glob:
                 _audit(name, arguments, outcome="rejected_empty")
                 return _err("topic_glob is required")
-            threshold_days = float(arguments.get("threshold_days", 30) or 30)
-            sim_threshold = float(arguments.get("sim_threshold", 0.85) or 0.85)
+            # Le due SOGLIE non passano da `or`: 0 significa «non filtrare»
+            # ed e' una richiesta legittima, non un argomento assente.
+            # `max_results` resta com'e': li' lo zero vale «nessun risultato».
+            threshold_days = float(
+                arguments["threshold_days"]
+                if arguments.get("threshold_days") is not None else 30)
+            sim_threshold = float(
+                arguments["sim_threshold"]
+                if arguments.get("sim_threshold") is not None else 0.85)
             max_results = int(arguments.get("max_results", 50) or 50)
             try:
                 result = facts_freshness_check(

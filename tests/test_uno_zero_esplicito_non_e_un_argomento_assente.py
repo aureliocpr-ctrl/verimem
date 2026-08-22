@@ -19,13 +19,19 @@ banco disse «4 casi, tutti coincidono»: **confrontavo i default, non il
 comportamento sui valori falsy.** Il difetto stava dentro un caso che avevo
 appena classificato come innocuo.
 
-⚠️ IL RESTO DELLA CLASSE È MISURATO E NON CURATO. Il pattern
-`arguments.get("x", N) or N` compare **26 volte** in `mcp_server.py`. Non sono
-26 difetti: per `limit` o `k` uno zero è poco sensato, per una SOGLIA significa
-«non filtrare» ed è legittimo. I candidati veri sono gli altri parametri di
-soglia (`sim_threshold`, `orphan_sim_threshold`, `freshness_*`), e curarli
-richiede sapere per ciascuno se lo zero ha un senso — cosa che non ho
-misurato. Chi ha quel perimetro lo trova qui.
+⚖️ LA CLASSE È CHIUSA SULLE SOGLIE, NON SU TUTTO, e la riga di taglio è
+misurata. Il pattern `arguments.get("x", N) or N` compare **26 volte** in
+`mcp_server.py`, e non sono 26 difetti:
+
+* **SOGLIE** (`floor`, `sim_threshold`, `orphan_sim_threshold`,
+  `freshness_sim_threshold`, `freshness_threshold_days`, `threshold_days`) —
+  finiscono in confronti `sim >= threshold`, dove **0 significa "non
+  filtrare"**: una richiesta legittima che `or` cancellava. **Curate tutte**,
+  e il presidio qui sotto conta che non ne ricompaia nessuna.
+* **CONTEGGI** (`limit`, `k`, `top_topics_k`, `max_results`, `max_*`) —
+  lasciati com'erano. Lì `0` vale «nessun risultato», che per un conteggio è
+  più probabilmente un errore del chiamante che una richiesta, e cambiarlo è
+  una decisione di prodotto, non una cura di coerenza.
 """
 from __future__ import annotations
 
@@ -81,3 +87,34 @@ def test_i_parametri_curati_non_usano_piu_il_rimpiazzo():
     assert not colpevoli, (
         f"il rimpiazzo è tornato su {colpevoli}: uno zero esplicito verrebbe "
         f"di nuovo sostituito dal default")
+
+
+def test_nessuna_SOGLIA_usa_piu_il_rimpiazzo():
+    """Lo sweep sull'AST, non un grep: `or` su una struttura annidata non si
+    legge con una regex.
+
+    Il taglio è fra soglie e conteggi, e sta scritto nel docstring di questo
+    file: se un domani qualcuno reintroduce `or` su un parametro il cui nome
+    contiene `threshold` o `floor`, questo diventa rosso.
+    """
+    import ast
+    src = _MCP.read_text(encoding="utf-8", errors="replace")
+    visti = set()
+    for x in ast.walk(ast.parse(src)):
+        if not (isinstance(x, ast.BoolOp) and isinstance(x.op, ast.Or)
+                and len(x.values) == 2):
+            continue
+        d = x.values[1]
+        if not (isinstance(d, ast.Constant)
+                and isinstance(d.value, (int, float))
+                and not isinstance(d.value, bool)):
+            continue
+        for sub in ast.walk(x.values[0]):
+            if (isinstance(sub, ast.Call)
+                    and getattr(sub.func, "attr", None) == "get" and sub.args):
+                nome = str(getattr(sub.args[0], "value", ""))
+                if "threshold" in nome or "floor" in nome:
+                    visti.add((x.lineno, nome))
+    assert not visti, (
+        f"queste soglie rimpiazzano di nuovo uno zero esplicito: "
+        f"{sorted(visti)}")
