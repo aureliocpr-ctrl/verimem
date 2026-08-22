@@ -35,7 +35,21 @@ import os
 # so the entire verimem log stream must go to stderr in this entry
 # point. Setting this env var is read once at observability import time;
 # nothing else in the codebase looks at it.
-os.environ.setdefault("HIPPO_LOG_STDERR", "1")
+#
+# ⚠️ ASSEGNAZIONE, NON `setdefault`: con `setdefault` un ambiente che porta
+# gia' la variabile a "0" vince, e il server MCP parla su un canale rotto.
+# Misurato il 22/08 su tre nomi — il mirror di compatibilita' li propaga tutti:
+#
+#     HIPPO_LOG_STDERR=0     ->  2 righe di log su STDOUT
+#     ENGRAM_LOG_STDERR=0    ->  2 righe (mirror ENGRAM_ -> HIPPO_)
+#     VERIMEM_LOG_STDERR=0   ->  2 righe (mirror VERIMEM_ -> ENGRAM_ -> HIPPO_)
+#
+# ⛔ E NON E' UNA PREFERENZA CHE STIAMO CALPESTANDO: su stdio il protocollo
+# possiede stdout per costruzione, quindi «log su stdout» non e' una
+# configurazione valida — e' un server che non parla. Chi vuole i log altrove
+# ha `ENGRAM_LOG_LEVEL` e il transport HTTP; questa riga non toglie niente a
+# nessuno, toglie solo un modo di rompersi in silenzio.
+os.environ["HIPPO_LOG_STDERR"] = "1"
 
 import asyncio  # noqa: E402
 import contextvars  # noqa: E402
