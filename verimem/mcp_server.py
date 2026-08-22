@@ -13799,7 +13799,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     # descrivono la stessa scelta, e una resta indietro.
                     limit=(int(arguments["limit"])
                            if arguments.get("limit") else None),
-                    threshold=float(arguments.get("threshold", 85.0) or 85.0))
+                    # Stesso motivo di `limit` qui sopra, e la meta' che
+                    # avevo lasciato indietro curando l'altra: il default sta
+                    # nella firma dell'SDK, questa porta lo eredita.
+                    threshold=(float(arguments["threshold"])
+                               if arguments.get("threshold") is not None
+                               else 85.0))
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"epistemic_health failed: {_exc}")
             _audit(name, arguments, outcome="ok")
@@ -13841,8 +13846,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             try:
                 _rep = _sdk.ignorance(
                     _queries,
-                    floor=float(arguments.get("floor", 0.8) or 0.8),
-                    k=int(arguments.get("k", 5) or 5),
+                    # ⚠️ `or 0.8` NON E' UN DEFAULT, e' un RIMPIAZZO: con
+                    # `floor=0` esplicito diventava 0.8, cioe' l'opposto di
+                    # cio' che il chiamante ha chiesto. Lo zero e' un valore
+                    # legittimo per un pavimento — significa «non filtrare» —
+                    # e `or` non distingue «assente» da «zero».
+                    floor=(float(arguments["floor"])
+                           if arguments.get("floor") is not None else 0.8),
+                    k=(int(arguments["k"])
+                       if arguments.get("k") is not None else 5),
                     noise_floor=None if _nf is None else float(_nf))
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"ignorance_map failed: {_exc}")
