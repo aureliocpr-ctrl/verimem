@@ -564,8 +564,12 @@ def warmup(
                           "recall still works via fusion order[/]")
 
     # The MOAT judge (the product's #1 claim): download the local CE gate model
-    # (a public GitHub release, ~656 MB) so the grounding gate runs judge-less
+    # (a public GitHub release, ~746 MB) so the grounding gate runs judge-less
     # out of the box. Best-effort — failure reports honestly, never crashes.
+    # 📌 746 e non 656: la cifra vive anche in `_MODEL_DOWNLOAD_MB` (sopra) e
+    # nel README, e `95e53832` ne ha allineate due su tre — questa era la
+    # terza. Se cambia il modello, cambiano TUTTE: il presidio e'
+    # tests/test_il_costo_dichiarato_e_lo_stesso_ovunque.py.
     from .local_grounding import (
         _resolve_model_dir,
         ensure_gate_model,
