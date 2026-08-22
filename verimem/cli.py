@@ -449,6 +449,27 @@ def _totale_di_default() -> str:
     return testo
 
 
+def _giorni_di_undo() -> str:
+    """La finestra di undo, DERIVATA da `UNDO_TTL_SECONDS` invece che scritta.
+
+    Il numero compariva cablato in quattro frasi di questo file («7 days»), e
+    oggi e' giusto — `UNDO_TTL_SECONDS = 7 * 24 * 3600`. Ma il doctor lo LEGGE
+    dalla costante (`doctor.py:44`) e queste stringhe no: due superfici che
+    descrivono la stessa finestra, e una la ricopia.
+
+    Oggi non morde, e lo dico invece di far finta: la costante non e'
+    configurabile da ambiente, quindi non c'e' modo di farle divergere a
+    runtime. E' il DEBITO a essere reale — chi cambiasse la costante
+    aggiornerebbe il doctor e non queste quattro frasi, e nessun test lo
+    prenderebbe. Il 21 e il 22 agosto un numero cablato in una frase ha
+    prodotto due discrepanze vere (l'help del gate a «656 MB», il README a
+    «711»): la classe e' nota, il costo di chiuderla e' una funzione.
+    """
+    from .undo_log import UNDO_TTL_SECONDS
+    giorni = UNDO_TTL_SECONDS / 86400.0
+    return f"{giorni:g} days"
+
+
 def _quanto_scarica(nome: str) -> str:
     """How much that model costs, or an explicit «never measured».
 
@@ -3028,8 +3049,9 @@ def facts_forget(
     for confirmation; running unattended without --yes is a no-op.
 
     Default mode (--undoable) snapshots the pre-delete row to
-    facts_undo_log so `engram facts undo <op_id>` can restore it within
-    7 days. --no-undoable skips that snapshot.
+    facts_undo_log so `engram facts undo <op_id>` can restore it within the
+    undo window (see `verimem facts undo-list`). --no-undoable skips that
+    snapshot.
 
     PER UNA RICHIESTA DI CANCELLAZIONE SERVE --purge-history, non
     --no-undoable. Questa riga diceva «use --no-undoable for true
@@ -3087,7 +3109,8 @@ def facts_forget(
         if undoable:
             console.print(
                 f"[green]forgotten:[/green] {len(_ops)} facts under {topic!r} "
-                f"[dim](undoable for 7 days — `verimem facts undo-list` for "
+                f"[dim](undoable for {_giorni_di_undo()} — "
+                f"`verimem facts undo-list` for "
                 f"the op ids)[/dim]")
         else:
             console.print(f"[green]hard-deleted:[/green] {len(_hits)} facts "
@@ -3139,7 +3162,8 @@ def facts_forget(
         if result["removed"]:
             console.print(
                 f"[green]forgotten:[/green] {f.id} "
-                f"[dim](op_id={result['op_id']} — undoable for 7 days)[/dim]"
+                f"[dim](op_id={result['op_id']} — undoable for "
+                f"{_giorni_di_undo()})[/dim]"
             )
         else:
             console.print(f"[yellow]nothing to forget:[/yellow] {f.id}")
@@ -3183,7 +3207,7 @@ def facts_undo(
     pre-deletion row state. Returns:
         restored      — fact is back in the DB
         already_undone — this op_id was already undone
-        expired       — older than 7 days
+        expired       — older than the undo window
         not_found     — unknown op_id
     """
     sm = _facts_sm()
