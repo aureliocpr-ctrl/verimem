@@ -2723,7 +2723,17 @@ class Memory:
                 # il segno invertito: non piu' una deduzione senza dato, ma un
                 # dato presente e non letto.
                 _qb = (row.get("quarantined_by") or "").strip()
-                if _qb and _qb != "gate":
+                # ⚠️ `gate` E `triage` NON SONO LAYER: sono etichette di servizio.
+                # `gate` e' il fallback generico del write path; `triage` e' il
+                # default di `SemanticMemory.quarantine_fact` (semantic.py:5455),
+                # cioe' il ribalto POST-scrittura — dice CHE qualcuno ha fermato
+                # il fatto, non QUALE schermo si e' acceso ne' perche'. Trattarle
+                # come una diagnosi fa dire alla riga «registra quale layer ha
+                # deciso» sopra un dato che non lo registra affatto: e' la forma
+                # d'errore che questo intero ramo esiste per evitare — una causa
+                # ASSERITA al posto di un «non lo so» — con il segno invertito.
+                # I layer veri li produce `chi_ha_quarantinato`: moat / L1 / L4.x.
+                if _qb and _qb not in ("gate", "triage"):
                     row["layers"] = [_qb]
                     row["why"] = (
                         f"{_qb}: la riga REGISTRA quale layer ha deciso, e il "
