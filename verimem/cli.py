@@ -437,7 +437,13 @@ def _totale_di_default() -> str:
     if not noti:
         return "size not measured"
     tot = sum(mb for _, mb in noti)
-    testo = f"~{tot / 1024:.1f} GB across {len(noti)} models"
+    # ⚠️ 1000 E NON 1024, e non e' pedanteria: `_MODEL_DOWNLOAD_MB` e' in MB
+    # DECIMALI (il gate misura 746 058 368 byte = 746.1 MB, che in MiB fa
+    # 711.5). Dividere per 1024 e scrivere «GB» mescola le due unita' e
+    # produce un numero diverso da quello del README per la STESSA cartella:
+    # 2298 MB davano «~2.2 GB» qui e «~2.3 GB» li'. Un utente che confronta le
+    # due superfici conclude che una delle due mente.
+    testo = f"~{tot / 1000:.1f} GB across {len(noti)} models"
     if ignoti:
         testo += f", plus {len(ignoti)} whose size was never measured "                  f"({', '.join(ignoti)})"
     return testo
@@ -450,7 +456,8 @@ def _quanto_scarica(nome: str) -> str:
     is honest, saying someone else's number is not.
     """
     mb = _MODEL_DOWNLOAD_MB.get(nome)
-    return (f"first run downloads ~{mb / 1024:.1f} GB" if mb
+    # Stessa unita' del totale qui sopra e della tabella: MB decimali.
+    return (f"first run downloads ~{mb / 1000:.1f} GB" if mb
             else f"first run downloads the weights (size not measured for {nome})")
 
 

@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pytest
 
-from verimem.cli import _MODEL_DOWNLOAD_MB
+from verimem.cli import _MODEL_DOWNLOAD_MB, _WARMUP_DI_DEFAULT, _totale_di_default
 
 _README = Path(__file__).resolve().parent.parent / "README.md"
 
@@ -97,3 +97,27 @@ def test_l_unita_di_misura_e_dichiarata():
     assert re.search(r"MiB|10\^6|10⁶", testo), (
         "il README non dichiara in quale unità sono i pesi dei modelli: "
         "746 MB e 711 MiB sono la stessa cartella")
+
+
+def test_anche_il_TOTALE_e_lo_stesso_sulle_due_superfici():
+    """⚠️ LO STESSO ERRORE ERA NEL CLI, ed è mio: `_totale_di_default()`
+    divideva per 1024 e scriveva «GB», cioè dava GiB con l'etichetta dei GB.
+
+        somma dei modelli   2298 MB   (la tabella è in MB decimali)
+        CLI    2298/1024 = 2.24  ->  «~2.2 GB»
+        README 2298/1000 = 2.30  ->  «~2.3 GB»
+
+    Ho curato nel README l'ambiguità che avevo appena introdotto nel CLI. Se
+    una delle due superfici torna a 1024, questo test lo prende.
+    """
+    tot = sum(_MODEL_DOWNLOAD_MB[n] for n in _WARMUP_DI_DEFAULT
+              if n in _MODEL_DOWNLOAD_MB)
+    atteso = f"{tot / 1000:.1f} GB"
+    testo = _totale_di_default()
+    assert atteso in testo, (
+        f"il CLI non usa MB decimali: dice {testo!r}, atteso {atteso!r} "
+        f"({tot} MB / 1000)")
+    readme = _testo()
+    assert atteso in readme, (
+        f"il README non porta lo stesso totale del CLI ({atteso}): le due "
+        f"superfici tornerebbero a dire due numeri per la stessa cartella")
