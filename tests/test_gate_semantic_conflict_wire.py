@@ -260,24 +260,36 @@ def test_enforce_cross_source_never_supersedes(monkeypatch):
 def test_route_evolutions_rank_floor_protects_stronger_old():
     """Anti-confab rank floor: a weaker new write never supersedes a STRONGER old — an
     unverified model_claim contradicting a VERIFIED fact stays a CONFLICT."""
-    old = types.SimpleNamespace(id="old", verified_by=["source-doc:acme:1"],
+    # `proposition` NON e' decorativa: dal 7146e361 `_entita_diverse` la
+    # PRETENDE, e un fake senza di lei alzava TypeError. Prima della guardia
+    # di tipo la stessa mancanza era MUTA — la funzione tornava False e il
+    # test passava senza che l'asse delle entita' fosse mai stato esercitato.
+    old = types.SimpleNamespace(id="old", proposition="Il magazzino K-77 di Rovigo ha 4200 metri quadrati.",
+                                verified_by=["source-doc:acme:1"],
                                 created_at=1.0, asserted_at=None, status="verified")
     agent = types.SimpleNamespace(
         semantic=types.SimpleNamespace(get=lambda i: old if i == "old" else None))
     sup: list[str] = []
     conflicts = anti_confab_gate._route_evolutions(
-        agent, ["source-doc:acme:1"], None, ["old"], sup, "model_claim")
+        agent, ["source-doc:acme:1"], None, ["old"], sup, "model_claim",
+        proposition="Il magazzino K-77 di Rovigo ha 2600 metri quadrati.")
     assert conflicts == ["old"] and sup == []          # verified protected → conflict
 
 
 def test_route_evolutions_same_rank_same_source_is_evolution():
-    old = types.SimpleNamespace(id="old", verified_by=["source-doc:acme:1"],
+    # `proposition` NON e' decorativa: dal 7146e361 `_entita_diverse` la
+    # PRETENDE, e un fake senza di lei alzava TypeError. Prima della guardia
+    # di tipo la stessa mancanza era MUTA — la funzione tornava False e il
+    # test passava senza che l'asse delle entita' fosse mai stato esercitato.
+    old = types.SimpleNamespace(id="old", proposition="Il magazzino K-77 di Rovigo ha 4200 metri quadrati.",
+                                verified_by=["source-doc:acme:1"],
                                 created_at=1.0, asserted_at=None, status="model_claim")
     agent = types.SimpleNamespace(
         semantic=types.SimpleNamespace(get=lambda i: old if i == "old" else None))
     sup: list[str] = []
     conflicts = anti_confab_gate._route_evolutions(
-        agent, ["source-doc:acme:1"], None, ["old"], sup, "model_claim")
+        agent, ["source-doc:acme:1"], None, ["old"], sup, "model_claim",
+        proposition="Il magazzino K-77 di Rovigo ha 2600 metri quadrati.")
     assert conflicts == [] and sup == ["old"]          # same rank + source + newer → evolution
 
 
