@@ -121,7 +121,20 @@ def test_default_on_head_mismatch_never_skipped(monkeypatch):
     seen = _spy(monkeypatch)
     res = _gate([SIB_RENAME])
     assert seen and seen[0] == [SIB_RENAME]
-    assert any(w.get("layer") == "L3-semantic" for w in res.warnings)
+    # ⚠️ IL REFERTO DEVE DIRE COSA HA TROVATO, non solo che non ha trovato.
+    # Fino al 2026-08-22 questa riga era `assert any(...)` su un generatore, e
+    # dava `assert False` — nient'altro. Chi leggeva il rosso non sapeva se i
+    # warning fossero ZERO o ce ne fosse uno con un layer diverso, che sono due
+    # diagnosi opposte: la prima dice «il ramo non e' stato raggiunto», la
+    # seconda «e' stato classificato altrimenti». Sono servite tre riproduzioni
+    # per stabilire che erano zero — informazione che il banco aveva in mano.
+    layers = [w.get("layer") for w in res.warnings]
+    assert "L3-semantic" in layers, (
+        "un soggetto RINOMINATO non ha prodotto il conflitto semantico: e' il "
+        "vettore che questo file esiste per impedire (vedi il docstring del "
+        "modulo).\n"
+        f"layer trovati: {layers}\n"
+        f"warnings: {res.warnings}")
 
 
 def test_default_on_unattributable_candidate_judges_everything(monkeypatch):
