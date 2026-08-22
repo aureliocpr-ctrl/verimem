@@ -2916,12 +2916,25 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "already persisted — no model is loaded, nothing is re-judged. "
                 "`provenance_coverage` bounds the rest: on a corpus the moat "
                 "never judged, nothing can be claimed about its health, and "
-                "the report says so instead of returning a good score."
+                "the report says so instead of returning a good score. "
+                "By default it reads the WHOLE corpus; if a `limit` leaves "
+                "facts out, `n_not_examined` counts them and `sample` warns "
+                "that what you got is the most recent slice, which reads high."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "limit": {"type": "integer", "default": 2000},
+                    "limit": {
+                        "type": "integer", "default": 100000,
+                        "description": (
+                            "how many facts to examine. A LOW value is not a "
+                            "smaller version of the same answer: facts come "
+                            "back most-recent-first, and recent ones carry a "
+                            "source far more often, so every fraction reads "
+                            "HIGH. Measured on an 11k-fact store: limit=2000 "
+                            "gave composite 0.976, the whole corpus 0.771. "
+                            "The `sample` field says which one you got."),
+                    },
                     "threshold": {"type": "number", "default": 85.0,
                                   "description": "the bar a verdict must clear"},
                 },
@@ -13779,7 +13792,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
 
             try:
                 _rep = _M(path=a.semantic.db_path).epistemic_health(
-                    limit=int(arguments.get("limit", 2000) or 2000),
+                    # `None` e non un numero cablato: il default vive
+                    # nell'SDK (`Memory._HEALTH_LIMIT_DEFAULT`) e questa porta
+                    # lo EREDITA. Cablarlo qui e' come sono nati i due pesi del
+                    # modello e le due finestre di undo — due superfici che
+                    # descrivono la stessa scelta, e una resta indietro.
+                    limit=(int(arguments["limit"])
+                           if arguments.get("limit") else None),
                     threshold=float(arguments.get("threshold", 85.0) or 85.0))
             except Exception as _exc:  # noqa: BLE001
                 return _err(f"epistemic_health failed: {_exc}")

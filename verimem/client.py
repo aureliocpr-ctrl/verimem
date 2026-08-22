@@ -2773,7 +2773,28 @@ class Memory:
                 f"{w.get('layer', '?')}: {w.get('advice') or w.get('reason') or ''}"
                 for w in avvisi[:3]).strip()
 
-    def epistemic_health(self, *, limit: int = 2000,
+    #: Quanti fatti guarda `epistemic_health` quando non glielo si dice.
+    #:
+    #: ⚠️ ERA 2000, e su questo corpus (11 383 non superseduti) significava un
+    #: voto calcolato sul 18% — per giunta NON casuale, perche' `list_facts`
+    #: ordina `created_at DESC` e i fatti recenti portano una source molto piu'
+    #: spesso dei vecchi. Misurato sullo stesso store:
+    #:
+    #:     limit=2000    n=2 000    composite 0.976   provenance 0.995   0.56s
+    #:     limit=100000  n=11 383   composite 0.771   provenance 0.578   1.01s
+    #:
+    #: Il default risparmiava 0.45 secondi e regalava venti punti di voto. Un
+    #: numero che si legge come «il corpus sta benissimo» quando sta a 0.77 non
+    #: vale mezzo secondo.
+    #:
+    #: ⛔ NON e' illimitato, e la ragione e' che non ho misurato un corpus da
+    #: milioni di righe: su uno store molto piu' grande questo tetto torna a
+    #: mordere, e allora `n_not_examined` sara' > 0 e il campo `sample` dira'
+    #: che si sta guardando un campione ordinato. Il comportamento degrada
+    #: DICHIARANDOSI, che e' l'unica cosa che il default vecchio non faceva.
+    _HEALTH_LIMIT_DEFAULT = 100_000
+
+    def epistemic_health(self, *, limit: int | None = None,
                          threshold: float = 85.0) -> dict[str, Any]:
         """Come sta messo il CORPUS, non un fatto per volta.
 
@@ -2798,6 +2819,8 @@ class Memory:
         salute, e il report lo dice invece di dare un bel voto.
         """
         from .epistemic_health import audit_one, health_report
+        if limit is None:
+            limit = self._HEALTH_LIMIT_DEFAULT
         audits = []
         for f in self.semantic.list_facts(limit=limit, offset=0):
             punteggio = getattr(f, "grounding_score", None)
