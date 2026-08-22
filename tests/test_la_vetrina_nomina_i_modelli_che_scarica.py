@@ -83,12 +83,28 @@ def _riga_del_warmup() -> str:
 def _quanti_modelli_scarica_warmup() -> int:
     """Quanti modelli il comando scarica, chiesto AL PRODOTTO.
 
-    Due vengono da HuggingFace e stanno nella tabella che il comando usa per
-    annunciarli; il terzo è il giudice del moat, che ha una sua via (una
-    release pubblica) e per questo non è in quella tabella.
+    ⚠️ IL `+1` ERA UN'ASSUNZIONE SULLA STRUTTURA, ED È CADUTA IL 2026-08-21.
+    Questa funzione sommava «i modelli della tabella» + 1, perché il giudice del
+    moat aveva una sua via (una release pubblica) e non compariva lì. Poi
+    `904be678` — «warmup: annunciava un terzo di quello che scarica» — ha messo
+    anche il giudice nella tabella, per poter dichiarare il totale vero::
+
+        intfloat/multilingual-e5-base                1082 MB   embedding
+        cross-encoder/mmarco-mMiniLMv2-L12-H384-v1    470 MB   rerank
+        local_gate_ce_v2                              746 MB   gate  <- il giudice
+
+    Da quel momento il `+1` conta il giudice DUE VOLTE: il prodotto scarica
+    TRE modelli e questa funzione ne dichiarava quattro.
+
+    🔑 E il difetto non era innocuo: il messaggio d'errore chiedeva «aggiungere
+    il ruolo del modello n.4», cioè mandava a scrivere in vetrina un modello che
+    non esiste. Un presidio che sbaglia induce a peggiorare la cosa che sorveglia.
+
+    Adesso si chiede alla tabella e basta — che è l'unica fonte, da quando il
+    giudice ci è dentro.
     """
     from verimem.cli import _MODEL_DOWNLOAD_MB
-    return len(_MODEL_DOWNLOAD_MB) + 1  # +1 = il modello del giudice
+    return len(_MODEL_DOWNLOAD_MB)
 
 
 def test_la_riga_dei_costi_nomina_ogni_modello_che_il_comando_scarica():
