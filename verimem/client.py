@@ -2858,6 +2858,32 @@ class Memory:
         report["n_not_examined"] = (
             max(0, scritti - ritirati - len(audits))
             if scritti is not None and ritirati is not None else None)
+
+        # ⚠️ E DI QUALI 2000 SI TRATTA. `n_not_examined` dice QUANTI restano
+        # fuori; non dice che quelli dentro sono i PIU' RECENTI —
+        # `list_facts` ordina `created_at DESC` — cioe' un campione NON
+        # casuale, distorto in una direzione prevedibile: i fatti recenti
+        # portano una source molto piu' spesso di quelli vecchi, perche' e'
+        # cambiato il modo in cui li scriviamo, non il corpus.
+        #
+        # Quanto pesa, misurato sullo stesso store nella stessa esecuzione:
+        #
+        #                          default (2000)      tutto (11379)
+        #     provenance_coverage       0.995              0.578
+        #     composite                 0.976              0.771
+        #
+        # Un voto di 0.98 e uno di 0.77 mandano a fare cose diverse, e col
+        # default si legge il primo. Il campo non ricalcola niente e non
+        # rallenta: dichiara COME e' stato scelto cio' che si e' guardato,
+        # che e' l'unica cosa che il lettore non puo' dedurre dai numeri.
+        _parziale = bool(report.get("n_not_examined"))
+        report["sample"] = (
+            "most recent first (list_facts orders by created_at DESC) — NOT a "
+            "random sample: recent facts carry a source far more often, so "
+            "every fraction here reads HIGH. Pass a larger `limit` for the "
+            "whole corpus."
+            if _parziale else
+            "whole corpus (nothing left unexamined)")
         return report
 
     def ignorance(self, queries: list[str], *, floor: float = 0.8,
