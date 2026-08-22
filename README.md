@@ -553,7 +553,7 @@ measured result with the raw file in the repo, not a design intention:
 | Bi-temporal history & time travel (`as_of`, "changed from X to Y on date Z") | shipped, tested | latest-value only |
 | True forget (GDPR): deleted data cannot resurface via history or time travel | shipped, probe-tested | mem0 leaked in our probe |
 | Provenance on every read (who wrote it, source ref, gate status) | every hit | absent or partial |
-| Runs fully air-gapped (local embeddings, injectable LLM, zero egress check) | `verimem airgap` | cloud-first |
+| Runs fully air-gapped (local embeddings, injectable LLM, zero egress check) — ⚠️ **not the default**: a stock install is `not offline-pinned` and cold model loads may reach the HF Hub, as `verimem doctor` states; set `VERIMEM_OFFLINE=1` | `verimem airgap` | cloud-first |
 
 Our method is the other differentiator: **every claim in this README links
 to a raw result file, negative results are published** (see the declared
