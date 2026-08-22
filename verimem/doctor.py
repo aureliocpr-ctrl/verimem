@@ -1110,10 +1110,35 @@ def run_doctor() -> list[dict[str, Any]]:
         _elenco = ", ".join(f"{k}={_vale(k)}" for k in _suoi[:12])
         if len(_suoi) > 12:
             _elenco += f", +{len(_suoi) - 12} altre"
+        # I DUE ESTREMI, non uno: la banda e' accesa di default e ha un terzo
+        # esito. Se qualcuno la spegne (VERIMEM_CE_BAND_ENFORCE=0) la riga
+        # torna a descrivere due esiti, che a quel punto e' la verita'.
+        _banda = ""
+        try:
+            from .grounding_gate import _ce_band_enforced, _ce_band_tau_hi
+            if _giudice == "local" and _ce_band_enforced():
+                _banda = (f", and a score between {_soglia:.0f} and "
+                          f"{_ce_band_tau_hi():.0f} does NOT pass either: it "
+                          f"goes to the two-threshold band, which escalates to "
+                          f"one llm adjudication or holds the write for review "
+                          f"(VERIMEM_CE_BAND_ENFORCE=0 turns the band off)")
+        except Exception:  # noqa: BLE001 — la riga non deve rompersi per questo
+            _banda = ""
         add("parameters", OK,
+            # ⚠️ UNA SOGLIA SU DUE ERA UNA MEZZA VERITA'. Con la banda accesa
+            # — ed e' il default — il verdetto ha TRE esiti, non due:
+            #     sotto 40        quarantinato
+            #     fra 40 e 80     la banda: escalation a un giudice llm, o
+            #                     held-for-review se non ce n'e' uno
+            #     sopra 80        ammesso
+            # Dicendo solo «sotto 40 e' quarantinato» si fa concludere che
+            # sopra 40 si passi, e per tutta la fascia di mezzo NON e' vero.
+            # Il README lo racconta giusto (la «two-threshold band, on by
+            # default»); questa superficie no — e chi apre il doctor lo apre
+            # proprio per sapere che regole sono in vigore ADESSO.
             f"admission threshold in force: {_soglia:.0f}/100, decided by the "
             f"`{_giudice}` judge{_nota} — a write scoring below it is "
-            f"quarantined. Env set by you: "
+            f"quarantined{_banda}. Env set by you: "
             + (f"{len(_suoi)} ({_elenco})" if _suoi
                else "none (every parameter is at its built-in default)")
             + f"; {len(_creati)} more were created by the "
