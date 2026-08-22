@@ -266,7 +266,7 @@ much and was **not timed**, so treat the total as unknown rather than as three t
 
 If you only need the deterministic checks and can live without the local judge, `verimem
 warmup --no-gate` skips the judge model entirely — it never creates the model directory. That
-model is announced as 656 MB (the download); on disk it takes 711 MB.
+model is announced as 746 MB and takes 746 MB on disk — the same figure the CLI prints (`verimem warmup --help`). Sizes here are decimal MB (10^6): the directory is 746 058 368 bytes, which a tool reporting MiB (2^20) shows as 711 — same bytes, different unit.
 
 The reranker is a third model, and it is on by default: `warmup` downloads its 470 MB unless
 you set `VERIMEM_RECALL_RERANK=0`. It is the stage-2 recall lever, not part of the moat — so
@@ -280,7 +280,7 @@ from datetime import datetime
 from verimem import Memory
 
 # No llm needed for the moat. Run `verimem warmup` once first: it downloads the
-# multilingual gate model (~656 MB, a public release — no account) that judges
+# multilingual gate model (~746 MB, a public release — no account) that judges
 # writes; `verimem doctor` verifies the install. Without a judge, writes are
 # admitted WITH an explicit L4-skipped advisory (never silently) and the assert
 # below would fail — doctor tells you exactly why. And it costs more than the
