@@ -1,5 +1,24 @@
 # Verimem (engram engine) — Retrieval Benchmarks
 
+> ⚠️ **DOCUMENTO STORICO — il benchmark vivo e' [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).**
+> Questo file e' fermo al 2026-07-25 (2 commit in tutto) e **nessun altro documento
+> lo collega**: README, CHANGELOG e STATE puntano tutti a `docs/BENCHMARKS.md`, che
+> ha 1121 righe contro le 298 di qui ed e' aggiornato di continuo. Chi arriva qui
+> per primo — cercando «BENCHMARKS» — trova numeri veri ma vecchi di un mese.
+>
+> **Le misure NON si contraddicono, misurano cose diverse** (verificato il
+> 2026-08-24): qui `recall@5 | hit@5 | MRR | latency` su LongMemEval-s **n=100**
+> (prime 100 domande); li' `QA accuracy | abstention` e il `recall@5` sul **FULL
+> 500**. Il `recall@5 = 0.800` di questa pagina e il `0.8745` di quella sono due
+> campioni, non due verita' in disaccordo — e questo, il piu' conservativo, e' il
+> nostro.
+>
+> ⚠️ **UNA COSA STA SOLO QUI E SERVE**: la §8 (LoCoMo QA-accuracy, overall n=150
+> **0.813**) e' la fonte del `0.81` che il README cita nel suo terzo paragrafo. In
+> `docs/BENCHMARKS.md` LoCoMo non compare, quindi il link che il README offre
+> accanto a quel numero **non porta alla sua fonte**. Finche' la sezione non e'
+> spostata, questo file va tenuto.
+
 Judge-free, 100% local, zero external APIs. Every number below is
 reproducible from this repo; every harness declares its fairness notes in
 the module docstring. Limits are stated next to the numbers they qualify.
