@@ -338,6 +338,46 @@ def _err(msg: str) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps({"error": msg}))]
 
 
+#: I nomi che una scrittura puo' portare. Servono a dire QUALE chiave e' stata
+#: ignorata, non a validare: la validazione resta dello schema.
+_CHIAVI_DI_SCRITTURA = frozenset({
+    "proposition", "topic", "source", "user_id", "agent_id", "run_id",
+    "confidence", "verified_by", "status", "valid_until", "source_signature",
+    "validate", "gate_mode", "force_persist", "writer_role", "meta_narrative",
+    "derives_from", "purpose", "claimant", "asserted_at",
+})
+
+
+def _err_proposizione_vuota(arguments: dict[str, Any]) -> list[t.TextContent]:
+    """«empty proposition» diceva cosa MANCA, non cosa era stato BUTTATO.
+
+    Misurato alla porta il 24/08, ed e' costato a me stessa un banco intero::
+
+        hippo_remember({"content": "..."})  ->  {'error': 'empty proposition'}
+
+    Il nome giusto e' `proposition`. Lo schema non dichiara
+    `additionalProperties`, quindi per JSON Schema `content` **passa la
+    validazione** e viene ignorato in silenzio: chi legge la risposta va a
+    cercare perche' la sua proposizione sia vuota, e la verita' e' che non
+    l'ha mai passata. Il mio banco sui conteggi ha misurato uno store vuoto
+    per un'ora senza accorgersene.
+
+    ⇒ E' la classe della serata — il messaggio manda a cercare nel posto
+    sbagliato — sulla superficie piu' esposta del prodotto.
+
+    ⛔ SI NOMINANO SOLO LE CHIAVI, MAI I VALORI. Un messaggio d'errore che
+    riecheggia il contenuto diventa l'ennesimo posto dove finisce un dato che
+    poi va cancellato: e' il fronte GDPR aperto da ws4 lo stesso giorno.
+    """
+    ignorate = sorted(k for k in (arguments or {}) if k not in _CHIAVI_DI_SCRITTURA)
+    msg = ("empty proposition — the required key `proposition` is missing "
+           "or blank")
+    if ignorate:
+        msg += (f"; these keys were not recognised and were IGNORED: "
+                f"{ignorate}. The text goes in `proposition`.")
+    return _err(msg)
+
+
 def _iso_day(epoch: Any) -> str | None:
     """Epoch seconds -> 'YYYY-MM-DD' (UTC) for recall payloads. A readable date lets
     the consuming agent reason temporally ("how long ago", "which came first") —
@@ -7523,7 +7563,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _prop = sanitize_proposition(str(arguments.get("proposition", "")).strip())
             if not _prop:
                 _audit(name, arguments, outcome="rejected_empty")
-                return _err("empty proposition")
+                return _err_proposizione_vuota(arguments)
             try:
                 _rr = _rm.add(
                     _prop, topic=str(arguments.get("topic", "")).strip() or "user",
@@ -12766,7 +12806,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             proposition = sanitize_proposition(proposition)
             if not proposition:
                 _audit(name, arguments, outcome="rejected_empty")
-                return _err("empty proposition")
+                return _err_proposizione_vuota(arguments)
             topic = str(arguments.get("topic", "")).strip()
             # Topic recovery: se topic vuoto MA proposition inizia con
             # `[namespace/path]`, estrai namespace come topic effettivo.
