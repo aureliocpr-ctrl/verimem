@@ -46,6 +46,28 @@ def _la_banda_e_in_vigore() -> bool:
 
 
 def _riga_parametri(monkeypatch, banda: bool) -> str:
+    # ⚠️ IL REGIME SI FORZA, NON SI SPERA. La banda esiste SOLO col giudice
+    # locale (`doctor.py`: `if _giudice == "local" and _ce_band_enforced()`), e
+    # il giudice in vigore lo decide `_autodetect_provider()` DALL'AMBIENTE.
+    # In CI una OPENAI_API_KEY nell'ambiente lo sposta su `openai`: il doctor
+    # allora tace sulla banda — correttamente — e questi test cadevano su
+    # tutte e cinque le celle mentre erano verdi su ogni macchina di sviluppo.
+    #
+    # 🔑 LA GUARDIA SOPRA CHIEDEVA UNA DOMANDA DIVERSA DA QUELLA DEL PRODOTTO:
+    # `judge_state() != "absent"` dice «il modello locale c'è sul disco», il
+    # doctor chiede «il giudice IN VIGORE è quello locale». In CI il modello
+    # c'è ma non decide lui ⇒ la guardia non saltava e l'asserzione mordeva a
+    # vuoto. Misurato con un A/B nella stessa esecuzione:
+    #     provider=mock    → giudice=local   guardia=True  prodotto_nomina=True
+    #     provider=openai  → giudice=openai  guardia=True  prodotto_nomina=False
+    #
+    # ⚖️ NON restringo la guardia: allargarla è stata una cura deliberata
+    # contro il sensore scollegato (vedi il suo docstring) e resta giusta per
+    # la macchina SENZA modello locale. Forzo invece il giudice, così il test
+    # misura davvero il regime che dichiara — anche dove l'ambiente ne impone
+    # un altro. `doctor` importa il simbolo dentro la funzione, quindi la
+    # sostituzione sul modulo `verimem.llm` lo raggiunge a ogni chiamata.
+    monkeypatch.setattr("verimem.llm._autodetect_provider", lambda: None)
     monkeypatch.setenv("VERIMEM_CE_BAND_ENFORCE", "1" if banda else "0")
     from verimem import doctor as _d
     for c in _d.run_doctor():
