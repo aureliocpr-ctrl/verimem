@@ -67,9 +67,46 @@ class _F:
      "Il magazzino Z-08 di Ancona ha 2600 metri quadrati.", True),
     ("Il paziente P-9 pesa 70 chilogrammi.",
      "Il paziente P-9 pesa 78 chilogrammi.", False),
-    # un codice su un lato solo: non si sa nulla
+    # UN CODICE SU UN LATO SOLO: non si sa nulla — e dal 2026-08-21 il «non so»
+    # non autorizza piu' il ritiro. La riga qui diceva `False`, che il chiamante
+    # legge come «nessun motivo di fermarsi» e procede a superseder: un NON SO
+    # trattato come un SI'. `59fb0862` (anti_confab_gate:232) lo ha invertito, e
+    # il commento a :215-231 ne porta il motivo: «ritirare per errore toglie un
+    # fatto vero dal recall, non ritirare per errore lascia vivere un duplicato.
+    # In dubbio si paga il duplicato.»
+    #
+    # ⚠️ NON e' un'opinione sul disegno: e' misurato sul corpus di produzione
+    # (ws6, 24/08, 1948 supersessioni). Le coppie che passano da questo ramo sono
+    # 43, di cui 34 con ENTRAMBI i fatti a grounding >= 90 — cioe' due fatti che
+    # il giudice sostiene, e uno ritira l'altro. Lette una per una:
+    #     «Sotto pytest la domanda in olandese ottiene score 0.7006»
+    #     «Fuori da pytest la domanda in olandese ottiene score 0.8509»   DUE REGIMI
+    #     «Il job macos passa da 26 a 20 rossi» / «L'unione passa da 26 a 50»
+    #                                                                DUE POPOLAZIONI
+    #     «Il COMMIT X ha per oggetto Y» / «Il RUN ci Z ha per oggetto Y»
+    # ⇒ misure di cose DIVERSE, non valori che si aggiornano: ritirarle cancella
+    #   un fatto vero. Sulle `same-source evolution` pure: zero aggiornamenti
+    #   legittimi fra quelle 34.
+    #
+    # 🔑 E LA PROVA PIU' FORTE E' ALLA PORTA, non nella funzione (ws5, 24/08 18:55,
+    # `mem.add` fuori da pytest, con le proposizioni di QUESTE due righe copiate
+    # byte per byte):
+    #     CON la riga    -> _entita_diverse=True   il primo e' VIVO      ['L3-coexistence']
+    #     SENZA la riga  -> _entita_diverse=False  il primo e' RITIRATO  ['L3-supersession']
+    # ⇒ senza questo ramo «Il magazzino K-77 ha 4200 metri quadrati» viene
+    #   CANCELLATO da «Il magazzino di Ancona ha 2600 metri quadrati»: due
+    #   magazzini diversi, e uno ritira l'altro dalla porta del prodotto.
+    # ⇒ ⛔ La riga NON e' ridondante su questo caso: e' l'unica cosa che lo ferma.
+    #   (Un precedente «e' inerte» era stato misurato su un'ALTRA coppia e
+    #   generalizzato: popolazione sbagliata, ritirato dalla sua autrice.)
+    #
+    # ⚖️ E IL COSTO, dichiarato invece che taciuto: la scelta ha falsi positivi.
+    # Due delle 34 sono RETTIFICHE vere (una e' un fatto riscritto meglio dopo
+    # una quarantena) e questo ramo le trattiene. Entrambe portano pero' un
+    # `superseded_reason` di rettifica esplicita, non `same-source evolution`:
+    # il rimedio giusto e' distinguere per REASON, non tornare a `False` qui.
     ("Il magazzino K-77 ha 4200 metri quadrati.",
-     "Il magazzino di Ancona ha 2600 metri quadrati.", False),
+     "Il magazzino di Ancona ha 2600 metri quadrati.", True),
     # nessun codice — ERA il buco storico (la cella 6), e dal 2026-08-05 è
     # CHIUSO: non dai codici ma dalle ENTITÀ del grafo. `extract_entities_lite`
     # estrae «Rossi» e «Bianchi» come due `proper` separati, nello stesso
