@@ -74,6 +74,39 @@ tolto né lasciato com'è.
 
 ③ Il troncamento era a 82 caratteri e mi ha fatto classificare frasi
    mozzate. Ora è 240. **Chi legge i casi li legga interi.**
+
+═══ AGGIORNAMENTO 20:22 — IL LIMITE ② È CHIUSO, ed era grande ═══
+
+Il banco ora scarta le coppie il cui verso è invertito (il «nuovo» più
+vecchio del suo evidence, per `created_at`) e DICHIARA quante ne cadono:
+
+    proposizioni esaminate .................. 100
+    ...marcate `contradicted` .............. 56
+    coppie SCARTATE (verso invertito) ...... 161      <- il 73,9%
+    COPPIE ORIENTATE come in produzione .... 57
+    ...il RAMO PROPER decide DA SOLO ....... 7        (12,3%)
+
+⇒ **Tre quarti di ciò che misuravo era orientato al contrario di come il
+prodotto lo vede.** I due numeri precedenti erano gonfiati:
+
+    recenti(60) non orientato        26/156 = 16,7%
+    stratificato(100) non orientato  51/218 = 23,4%
+    stratificato(100) ORIENTATO       7/57  = 12,3%   <- il solo confrontabile
+
+📌 Il 74% invertito NON è un difetto del prodotto: in produzione la
+scrittura nuova è per costruzione più recente del corpus, quindi il verso
+è sempre giusto. Era il banco a pescare fatti vecchi e a chiamarli nuovi.
+
+LETTI TUTTI E 7 I CASI ORIENTATI — 5 salvati, 1 DANNO, 1 ambiguo:
+
+    DANNO   NUOVO   Il motivo autohook... compare in 1463 fatti superseduti su 1894.
+            VECCHIO Dei 1805 fatti superseduti nel corpus, 1463 hanno superseded_reason
+                    autohook... e 202 hanno exact-text dedup.
+            ⇒ STESSA misura, corpus cresciuto 1805 -> 1894: il vecchio ANDAVA
+              superato, e il ramo lo blocca.
+
+⇒ **Positivo ma non schiacciante**, che è lo stesso verdetto a cui @ws6 è
+arrivata dall'altra faccia (9 danni su 13 ritiri AVVENUTI).
 """
 from __future__ import annotations
 
@@ -134,15 +167,16 @@ def main() -> None:
     print("candidati totali: %d   passo: %d   scelti: %d"
           % (len(tutti), passo, len(scelti)))
     righe = c.execute(
-        "SELECT proposition, topic FROM facts WHERE rowid IN (%s)"
+        "SELECT proposition, topic, created_at FROM facts WHERE rowid IN (%s)"
         % ",".join("?" * len(scelti)), scelti).fetchall()
     print("proposizioni nel campione: %d\n" % len(righe))
 
     m = Memory(path=DB)
     contraddette = coppie = decise = 0
+    invertite = 0          # coppie in cui il "nuovo" e' piu' VECCHIO del suo evidence
     esempi = []
     t0 = time.time()
-    for prop, _topic in righe:
+    for prop, _topic, nato in righe:
         try:
             r = G._l3_check(m, prop, None)
         except Exception:
@@ -157,6 +191,16 @@ def main() -> None:
                 old = None
             if old is None:
                 continue
+            # ⛔ DIREZIONE: il prodotto giudica una scrittura FRESCA contro
+            # fatti VECCHI. Una proposizione presa dal corpus puo' essere piu'
+            # vecchia del suo evidence, e allora il verso del ritiro non e'
+            # quello reale. Si tengono solo le coppie orientate come in
+            # produzione, e si DICHIARA quante ne cadono.
+            _vecchio_nato = getattr(old, "created_at", None)
+            if (nato is not None and _vecchio_nato is not None
+                    and float(nato) <= float(_vecchio_nato)):
+                invertite += 1
+                continue
             coppie += 1
             o, s = G._entita_diverse(prop, old), senza(prop, old)
             if o and not s:
@@ -169,7 +213,8 @@ def main() -> None:
     print("=== POPOLAZIONE VERA (cio' che il prodotto valuta) ===")
     print("  proposizioni esaminate .................. %d" % len(righe))
     print("  ...marcate `contradicted` da _l3_check .. %d" % contraddette)
-    print("  COPPIE (nuovo, vecchio) valutate ........ %d" % coppie)
+    print("  coppie SCARTATE (verso invertito) ....... %d" % invertite)
+    print("  COPPIE ORIENTATE come in produzione ..... %d" % coppie)
     print("  ...in cui il RAMO PROPER decide DA SOLO . %d" % decise, end="")
     print("   (%.1f%% delle coppie)" % (100.0 * decise / coppie) if coppie else "")
     print("  tempo: %.1fs" % dt)
