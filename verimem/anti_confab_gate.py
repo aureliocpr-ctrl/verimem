@@ -998,17 +998,17 @@ def _proposizione_di(x: Any) -> str:
     naturale di provarla da fuori — confrontava due testi VUOTI e riceveva
     sempre `False`, cioe' la risposta piu' rassicurante.
 
-    🔑 E' costato una misura vera: il 19/08 ws6 ha consegnato una tabella di
-    casi costruita cosi', l'ha ritirata da sola, e ha scritto che i due
-    «controlli negativi» erano i peggiori — davano `False`, si leggevano come
-    «giusto», ed erano `False` perche' la funzione non vedeva NIENTE.
+    🔑 E' costato una misura vera: il 19/08 una tabella di casi costruita
+    proprio cosi' e' stata consegnata e poi ritirata da chi l'aveva scritta,
+    con la nota che i due «controlli negativi» erano i peggiori — davano
+    `False`, si leggevano come «giusto», ed erano `False` perche' la funzione
+    non vedeva NIENTE.
 
     ⇒ Le stringhe ora si accettano ESPLICITAMENTE, perche' e' il modo in cui i
     banchi la usano e vietarlo non renderebbe nessuno piu' accorto. Un tipo che
     non e' ne' un fatto ne' un testo SOLLEVA: un misuratore che col tipo
     sbagliato restituisce la risposta piu' comoda e' peggio di uno che si
-    rompe. Proposto da ws6 il 19/08 e rimasto senza padrone; il gate e' il
-    perimetro di ws3.
+    rompe.
     """
     if isinstance(x, str):
         return x
