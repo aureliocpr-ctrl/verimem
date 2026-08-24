@@ -378,9 +378,51 @@ def test_no_overrun_is_lost_when_a_rearm_is_in_flight(monkeypatch):
         return vero_window()
 
     monkeypatch.setattr(semantic, "_rerank_breaker_window", window_lento)
+    # Lo stato si cattura PRIMA dello start. Se lo si legge dopo il timeout, il
+    # `trascorso` include i cinque secondi di attesa e dice il CONTRARIO del
+    # vero: misurato, con il cooldown deliberatamente NON scaduto stampava
+    # «trascorso=5.0118s contro un cooldown di 0.05s», cioe' sembrava scaduto.
+    _prima = (semantic._RERANK_BREAKER.get("tripped"),
+              time.monotonic() - semantic._RERANK_BREAKER.get("tripped_at", 0.0),
+              semantic._rerank_breaker_cooldown_s())
     t = threading.Thread(target=semantic._rerank_breaker_tripped, daemon=True)
     t.start()
-    assert lento.wait(5), "il re-arm non e' partito"
+    # QUESTO ASSERT CADE IN CI E FINORA NON DICEVA PERCHE' — 2 celle
+    # `windows-latest / py3.12` su 6 concluse il 2026-08-24 (33%), col codice del
+    # breaker BYTE-IDENTICO fra i run che passano e quelli che cadono (13 commit
+    # fra `82d240e6` e `49f4ee58`, zero toccano `semantic.py` o questo file):
+    # e' una GARA, non una regressione. E non e' la durata: la cella piu' lenta
+    # (58:10) passa, e fra `fef5d625` che passa a 48:56 e `49f4ee58` che cade a
+    # 48:47 ci sono NOVE SECONDI.
+    #
+    # `lento.set()` sta dentro l'UNICA chiamata a `_rerank_breaker_window()`,
+    # nel ramo del cooldown a `semantic.py:2175`. Tre uscite non ci arrivano:
+    #     :2170  il breaker non e' piu' `tripped`     -> mai settato
+    #     :2174  ri-armato da chi teneva il lock      -> mai settato
+    #     :2182  cooldown NON scaduto (`>= cd` falso) -> mai settato
+    # Il messaggio stampa le grandezze che le separano, cosi' la PROSSIMA caduta
+    # dice la causa invece di ridarci solo un tasso.
+    #
+    # NON e' una cura e non cambia il comportamento: il messaggio di un assert e'
+    # valutato SOLO se l'asserzione e' falsa, quindi quando passa costa zero.
+    #
+    # Regimi gia' ESCLUSI (windows, worktree su `894f6551`): il test da solo 10
+    # esecuzioni -> 10 passed; il file intero 5 esecuzioni -> 17 passed x5. Non
+    # si riproduce li', e la ragione e' nel log della CI — «CE rerank disabled
+    # FOR THIS PROCESS»: lo stato del breaker e' di PROCESSO, quindi il regime
+    # del difetto e' la SUITE, non questo file.
+    if not lento.wait(5):
+        _tr0, _da, _cd = _prima
+        raise AssertionError(
+            "il re-arm non e' partito: `_rerank_breaker_window` non e' stata "
+            "chiamata entro 5s, quindi `_rerank_breaker_tripped` ha preso una "
+            "delle tre uscite che non ci arrivano. STATO PRIMA DELLO START: "
+            f"tripped={_tr0!r} (False -> uscita :2170 o :2174, il breaker era "
+            f"gia' ri-armato) | trascorso dal trip {_da:.4f}s contro un cooldown "
+            f"di {_cd}s (se il primo e' MINORE -> uscita :2182, cooldown non "
+            f"scaduto) | DOPO: tripped={semantic._RERANK_BREAKER.get('tripped')!r} "
+            f"thread_vivo={t.is_alive()!r}"
+        )
     monkeypatch.setattr(semantic, "_rerank_breaker_window", vero_window)
     for _ in range(4):                     # recorded WHILE the re-arm is inside
         semantic._rerank_breaker_record(True)
