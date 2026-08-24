@@ -40,6 +40,40 @@ con `n=8` lo stesso banco dà 25,0%. Serve un campione stratificato, e non c'è.
 sopprime una contraddizione vera: resta un difetto. Le due misure insieme
 dicono che il ramo va ristretto a guardare DOVE sta il nome proprio, non
 tolto né lasciato com'è.
+
+═══ AGGIORNAMENTO 20:12 — DUE CORREZIONI, entrambe contro di me ═══
+
+① IL CAMPIONE STRATIFICATO SALE, NON SCENDE. Questo banco ora campiona a
+   passo fisso su tutto il corpus, non «i più recenti»:
+
+       recenti (60)         contradicted 61,7%   il ramo decide 16,7%
+       STRATIFICATO (100)   contradicted 56,0%   il ramo decide 23,4%  (218 coppie)
+
+   Il limite che avevo dichiarato — «i recenti sono densi di nomi propri,
+   quindi il ramo scatta più che nel corpus tipico» — puntava dalla parte
+   SBAGLIATA. Era in buona fede, e un limite dichiarato resta un debito.
+
+② ⛔ IL LIMITE CHE QUESTO BANCO NON PUÒ TOGLIERSI, e va letto prima dei
+   numeri: la proposizione passata come «nuova» è **un fatto già nel
+   corpus**, non una scrittura nuova. Il prodotto giudica una scrittura
+   fresca contro fatti vecchi; qui si confrontano due fatti vecchi, e
+   l'ordine temporale NON è garantito. Visto sui testi interi:
+
+       "NUOVO"  ...sono entrambe 0.7.0 e i commit dopo il bump sono 375.
+       VECCHIO  Il file pyproject.toml dichiara version = "0.7.5".
+       VECCHIO  In pyproject.toml la versione dichiarata e' 0.7.6.
+
+   È una serie storica (0.7.0 → 0.7.5 → 0.7.6) e il «nuovo» è il più
+   VECCHIO in contenuto.
+   ⇒ REGGE il conteggio: il ramo scatta o no indipendentemente dall'ordine.
+   ⇒ CADE la frase «sarebbero stati ritiri sbagliati»: non si sa quale dei
+     due sarebbe stato ritirato. Resta vero solo dove le due frasi sono
+     scorrelate in QUALUNQUE direzione, che è la maggioranza dei casi.
+   ⇒ E si vede che il ramo blocca ANCHE aggiornamenti legittimi (le serie
+     di versione): non distingue una serie storica da due misure slegate.
+
+③ Il troncamento era a 82 caratteri e mi ha fatto classificare frasi
+   mozzate. Ora è 240. **Chi legge i casi li legga interi.**
 """
 from __future__ import annotations
 
@@ -89,10 +123,19 @@ def main() -> None:
     c = sqlite3.connect("file:%s?mode=ro" % DB.replace("\\", "/"), uri=True)
     ancora = c.execute("SELECT MAX(rowid) FROM facts").fetchone()[0]
     print("ANCORA rowid <= %d   (campione riproducibile)" % ancora)
+    # STRATIFICATO: N proposizioni distribuite su TUTTO il corpus a passo
+    # fisso, non le N piu' recenti. Deterministico => riproducibile.
+    tutti = [r[0] for r in c.execute(
+        "SELECT rowid FROM facts WHERE rowid <= ? AND superseded_by IS NULL "
+        "AND length(proposition) BETWEEN 40 AND 300 ORDER BY rowid",
+        (ancora,)).fetchall()]
+    passo = max(1, len(tutti) // N)
+    scelti = tutti[::passo][:N]
+    print("candidati totali: %d   passo: %d   scelti: %d"
+          % (len(tutti), passo, len(scelti)))
     righe = c.execute(
-        "SELECT proposition, topic FROM facts WHERE rowid <= ? "
-        "AND superseded_by IS NULL AND length(proposition) BETWEEN 40 AND 300 "
-        "ORDER BY rowid DESC LIMIT ?", (ancora, N)).fetchall()
+        "SELECT proposition, topic FROM facts WHERE rowid IN (%s)"
+        % ",".join("?" * len(scelti)), scelti).fetchall()
     print("proposizioni nel campione: %d\n" % len(righe))
 
     m = Memory(path=DB)
@@ -118,9 +161,9 @@ def main() -> None:
             o, s = G._entita_diverse(prop, old), senza(prop, old)
             if o and not s:
                 decise += 1
-                if len(esempi) < 26:
-                    esempi.append((prop[:82],
-                                   str(getattr(old, "proposition", ""))[:82]))
+                if len(esempi) < 60:
+                    esempi.append((prop[:240],
+                                   str(getattr(old, "proposition", ""))[:240]))
     dt = time.time() - t0
 
     print("=== POPOLAZIONE VERA (cio' che il prodotto valuta) ===")
