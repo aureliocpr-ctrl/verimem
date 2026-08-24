@@ -367,7 +367,7 @@ def _err_proposizione_vuota(arguments: dict[str, Any]) -> list[t.TextContent]:
 
     ⛔ SI NOMINANO SOLO LE CHIAVI, MAI I VALORI. Un messaggio d'errore che
     riecheggia il contenuto diventa l'ennesimo posto dove finisce un dato che
-    poi va cancellato: e' il fronte GDPR aperto da ws4 lo stesso giorno.
+    poi va cancellato: e' il fronte GDPR, aperto lo stesso giorno.
     """
     ignorate = sorted(k for k in (arguments or {}) if k not in _CHIAVI_DI_SCRITTURA)
     msg = ("empty proposition — the required key `proposition` is missing "
