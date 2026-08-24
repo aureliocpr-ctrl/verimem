@@ -25,8 +25,19 @@ import verimem
 
 
 def _cli(*args: str) -> subprocess.CompletedProcess:
+    # ⚠️ `text=True` DA SOLO decodifica con il codec di SISTEMA, e su Windows
+    # senza `PYTHONUTF8=1` quello è cp1252: l'aiuto di Typer contiene i caratteri
+    # di cornice (0x90 in posizione 706) e `subprocess` solleva UnicodeDecodeError,
+    # lasciando `stdout=None`. Il test allora vedeva `''` e falliva accusando la
+    # CLI di non stampare più l'aiuto — che invece lo stampava benissimo.
+    # Misurato il 2026-08-24: qui `PYTHONUTF8=1` è acceso e i tre test passano;
+    # spegnendolo (`PYTHONUTF8=0`) cadono gli stessi due che cadono nella cella
+    # windows della CI, con lo stesso errore e lo stesso byte.
+    # `errors="replace"` perché al test interessa CHE l'aiuto ci sia, non che ogni
+    # glifo sia perfetto: un carattere sostituito non deve far fallire un presidio.
     return subprocess.run([sys.executable, "-m", "verimem.cli", *args],
-                          capture_output=True, text=True, timeout=180)
+                          capture_output=True, text=True, timeout=180,
+                          encoding="utf-8", errors="replace")
 
 
 def _out(r: subprocess.CompletedProcess) -> str:
