@@ -1201,25 +1201,38 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     if ea and eb:
         return not (ea & eb)
 
-    # ⚖️ UN LATO SOLO NOMINA UN RECORD, e questo NON e' il caso in cui si sa
-    # abbastanza per ritirare: e' il caso in cui si sa MENO. Prima di questa
-    # riga il ramo cadeva nel `False` finale, che il chiamante legge come
-    # «nessun motivo di fermarsi» e procede al ritiro — un NON SO letto come
-    # un SI'.
+    # ⛔ UN LATO SOLO NOMINA UN RECORD: RITIRATO il 2026-08-24, ed e' una
+    # cura MIA che cade su una misura mia. L'argomento era buono — «si sa MENO,
+    # non di piu'; in dubbio si paga il duplicato» — ma poggiava su un
+    # presupposto falso: che `_proper` estragga IDENTITA'. Estrae MENZIONI.
     #
-    # ⛔ La scelta non e' simmetrica e per questo si decide cosi': ritirare per
-    # errore toglie un fatto vero dal recall, non ritirare per errore lascia
-    # vivere un duplicato. In dubbio si paga il duplicato.
+    #     "The payments team migrated to Stripe in 2025."   -> {'stripe'}
+    #     "Il magazzino di Ancona ha 4200 metri quadrati."  -> {'ancona'}
     #
-    # ⚠️ QUESTO RAMO E `_APERTURE_FUNZIONALI` SONO UNA CURA SOLA e vanno
-    # insieme: finche' `su`/`on`/`in` contavano come nomi, quasi nessun lato
-    # risultava vuoto e questo ramo non si vedeva. Curato solo il primo, si
-    # scoprono i ritiri che una falsa entita' fermava per sbaglio; curato solo
-    # il secondo, resta il caso in cui i due lati hanno la STESSA preposizione
-    # e si mangiano lo stesso. I numeri stanno in
-    # `docs/stato-reale/banchi/aperture-e-lato-solo.py`.
-    if ea or eb:
-        return True
+    # «Stripe» e' un complemento e «Ancona» un modificatore: nessuno dei due e'
+    # il record di cui si parla. Il ramo leggeva quindi «l'altro lato non nomina
+    # NULLA» dove il vero contenuto era «questo lato nomina una cosa di
+    # passaggio» — e rispondeva «entita' diverse» a due frasi sullo stesso
+    # oggetto. Costava due presidi (`il_fatto_di_bruno` :: l_asse_e_l_entita, che
+    # lo chiedeva `False` dal 05/08, e `l3_subject_prefilter` ::
+    # head_mismatch_never_skipped, dove sopprimeva l'avviso su un soggetto
+    # RINOMINATO — cioe' riapriva il vettore di avvelenamento che quel file
+    # esiste per chiudere).
+    #
+    # E il beneficio non arrivava alla porta: misurato il 22/08 dal write path,
+    # 4 casi su 4 davano lo stesso numero di supersessioni con e senza il ramo.
+    # Sembrava proteggere il caso «il nuovo cita l'id del vecchio», ma per
+    # ACCIDENTE — l'id esadecimale veniva estratto come se fosse un nome::
+    #
+    #     "...(rettifica del fatto cb96114b7a2e)."  ->  {'cb96114b7a2e'}
+    #
+    # Quel caso ora e' protetto in `_route_evolutions` dalla guardia che gli
+    # mancava (`references_fact`), cioe' per la ragione che dichiara.
+    #
+    # ⚖️ Resta vero che ritirare per errore costa piu' che tenere un duplicato.
+    # Chi volesse riaprire questo ramo non lo faccia su `_proper` cosi' com'e':
+    # serve prima distinguere il SOGGETTO dalla menzione, altrimenti torna
+    # esattamente questo difetto.
 
     return False
 
