@@ -19,7 +19,8 @@ and SAME judge for every arm. The only difference between arms is the retrieval/
 | engram | Engram recall, production default (+ cross-encoder rerank) | **0.76** | 0.20 |
 
 **Result: Engram's memory pipeline beats the plain-RAG baseline by +10–12 points on end-to-end
-QA, and abstains LESS (0.18 vs 0.30) — it retrieves better context, so the answerer answers
+QA, and abstains LESS (0.20 vs 0.30 — the PRODUCTION default; 0.18 is `engram-base`,
+reranker OFF, which is not what ships) — it retrieves better context, so the answerer answers
 more often AND more correctly.** This is the real metric (not just retrieval recall@k).
 
 **Honest caveats (load-bearing — do not quote the number without them):**
