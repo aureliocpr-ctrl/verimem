@@ -2598,8 +2598,34 @@ def run_validation_gate(
                         # confonde un giudizio bassissimo con uno assente.
                         "reason": f"source does not entail the proposition "
                                   f"(grounding {gscore:.1f} below threshold)",
-                        "advice": "the source does not support this proposition — likely a "
-                                  "confabulated inference, not a stated fact." + _pointer,
+                        # 2026-08-24 — «likely a confabulated inference» accusa chi
+                        # scrive, e su una classe misurata l'accusa e' FALSA: 98 dei 393
+                        # fatti bocciati dal giudice (24,9%) contengono un numero scritto
+                        # in lettere, e il giudice non lo legge. A/B a tre celle, stessa
+                        # fonte, sola forma variabile: «11» -> 99.9 AMMESSO · «undici» ->
+                        # 42.7 · «ventiquattro … undici» -> 5.2, entrambi quarantinati.
+                        # La cura non toglie l'ipotesi di confabulazione — resta la piu'
+                        # comune — ma smette di darla per unica e nomina la via che
+                        # mancava, PRIMA di accusare.
+                        # 2026-08-24, seconda misura — c'e' una SECONDA via, e sul
+                        # corpus e' PIU' LARGA della prima: un numero che la fonte non
+                        # scrive affatto e che andrebbe CONTATO. Fra i bocciati col
+                        # grounding_span popolato sono 53 su 201, contro 512 su 4243
+                        # fra gli ammessi: separa 2.19x, dove la forma-del-numero
+                        # separa 1.76x. ⚠️ 53 e' un TETTO, non una misura: il righello
+                        # conta anche orari («16:00» spezzato) e frammenti, e la prima
+                        # stesura contava pure le versioni («0.7.0» -> 0 e 7).
+                        # ⚖️ E resta un AVVISO, mai un veto: 512 fatti AMMESSI hanno lo
+                        # stesso tratto, quindi come filtro sbaglierebbe su tutti quelli.
+                        "advice": "the judge found no support for this proposition in the "
+                                  "source. If both say the SAME thing in a different FORM "
+                                  "— a number spelled out (\"eleven\" vs \"11\"), a thousands "
+                                  "separator, a unit — rewrite the numbers exactly as the "
+                                  "source writes them. If instead the number has to be "
+                                  "COUNTED from the source, the judge does not count: "
+                                  "quote the source, or leave the number out; otherwise "
+                                  "this is likely a confabulated inference, not a stated "
+                                  "fact." + _pointer,
                         "grounding_score": gscore,
                     })
                     advice = advice or "Source does not entail the claim (semantic grounding)."

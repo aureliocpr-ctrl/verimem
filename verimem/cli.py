@@ -4810,9 +4810,16 @@ def save_cmd(
                        if isinstance(_cut, (int, float)) else "")
             console.print(
                 f"  [yellow]not grounded {float(_gs):.1f}{_soglia}[/yellow] "
-                f"[dim]— the source does NOT entail this checkpoint: that is "
-                f"why it is quarantined. Narrow the claim to what the source "
-                f"literally says, or split it[/dim]")
+                f"[dim]— the judge found no support for this claim in the "
+                f"source: that is why it is quarantined. If the claim and the "
+                f"source say the SAME thing in a different FORM — a number "
+                f"spelled out (\"eleven\" vs \"11\"), a thousands separator "
+                f"(\"10,146\" vs \"10146\"), a unit — rewrite the numbers "
+                f"exactly as the source writes them. If instead the number has "
+                f"to be COUNTED from the source — \"eight worktrees\" over a "
+                f"list of eight lines — the judge does not count: quote the "
+                f"source, or leave the number out. Otherwise narrow the claim "
+                f"to what the source literally says, or split it[/dim]")
     else:
         # ⚠️ «Nessun punteggio» significa DUE cose e questa riga ne raccontava una
         # sola: chi passava `--source` senza avere il giudice installato si
