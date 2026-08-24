@@ -2168,6 +2168,19 @@ def run_validation_gate(
                     # autori dichiarati e diversi non si ritirano a vicenda e
                     # non si quarantinano a vicenda: restano entrambi vivi.
                     if _old is not None and _entita_diverse(_new, _old):
+                        # NON si ritira, ma NON si TACE: il giudice ha visto una
+                        # contraddizione e chi scrive ha diritto di saperlo. Il
+                        # `continue` nudo la nascondeva, ed e' come un soggetto
+                        # RINOMINATO usciva muto (`l3_subject_prefilter`).
+                        warnings.append({
+                            "layer": "L3-coexistence",
+                            "reason": "a contradiction was found but both facts are kept",
+                            "advice": "the clashing facts were judged to be about "
+                                      "DIFFERENT ENTITIES - a distinct code, date, "
+                                      "or named record - so neither supersedes the "
+                                      "other; check them if you expected an update.",
+                            "other_fact_id": _oid,
+                        })
                         continue
                     _rel = _rel_pre
                     if _observe:
