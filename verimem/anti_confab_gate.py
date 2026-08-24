@@ -2172,6 +2172,23 @@ def run_validation_gate(
                         # contraddizione e chi scrive ha diritto di saperlo. Il
                         # `continue` nudo la nascondeva, ed e' come un soggetto
                         # RINOMINATO usciva muto (`l3_subject_prefilter`).
+                        #
+                        # ⚠️ LIMITE MISURATO, 2026-08-24, e va letto prima di
+                        # contarci sopra: DALLA PORTA questo ramo non si attiva su
+                        # nessuno dei quattro casi noti. A/B con e senza queste
+                        # righe, fuori da pytest, esiti IDENTICI — i due
+                        # `L3-coexistence` che si vedono su «magazzini» e «regimi»
+                        # nascono a :1999, non qui. Nemmeno col regime giusto
+                        # (`ENGRAM_SEMANTIC_CONFLICT=1`) il caso «rename» arriva a
+                        # questo punto: il giudice NLI non dichiara contraddizione
+                        # fra le due frasi, quindi il loop non ci passa.
+                        # Sotto pytest invece il ramo si vede, perche' il detector
+                        # e' stubbato e un conflitto lo restituisce sempre: e' cosi'
+                        # che era stato dichiarato «curato» quando non lo era.
+                        # Nel journal `L3-coexistence` risulta emesso 1 volta in 6
+                        # giorni (18-24/08, 25738 righe): il percorso esiste ed e'
+                        # raro. Il banco che lo misura e' in
+                        # `docs/stato-reale/banchi/q_entita_quattro_casi.py`.
                         warnings.append({
                             "layer": "L3-coexistence",
                             "reason": "a contradiction was found but both facts are kept",
