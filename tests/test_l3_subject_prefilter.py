@@ -128,12 +128,30 @@ def test_default_on_head_mismatch_never_skipped(monkeypatch):
     # diagnosi opposte: la prima dice «il ramo non e' stato raggiunto», la
     # seconda «e' stato classificato altrimenti». Sono servite tre riproduzioni
     # per stabilire che erano zero — informazione che il banco aveva in mano.
+    # ⚠️ IL VETTORE E' IL SILENZIO, NON UN LAYER PARTICOLARE — cambiato il
+    # 2026-08-24 dopo tre giorni in cui questa riga chiedeva `L3-semantic`.
+    # Cio' che GLM+Kimi descrivono e' una contraddizione che ENTRA SENZA CHE
+    # NESSUNO LO SAPPIA. Contro quel danno valgono DUE esiti, non uno:
+    #     L3-semantic     il vecchio viene ritirato               -> l'utente lo vede
+    #     L3-coexistence  restano vivi entrambi E si dice perche' -> l'utente lo vede
+    # Chiedere il primo faceva fallire il presidio sul secondo, che il danno
+    # NON lo produce: il fatto vero non e' ritirato e chi legge e' avvisato.
+    # ⚖️ E resta un presidio, non un lasciapassare: se il warning sparisce
+    # (com'era prima di 81545a7b, `[]` su questo stesso caso) torna ROSSO.
     layers = [w.get("layer") for w in res.warnings]
-    assert "L3-semantic" in layers, (
-        "un soggetto RINOMINATO non ha prodotto il conflitto semantico: e' il "
+    assert layers, (
+        "un soggetto RINOMINATO e' passato IN SILENZIO: nessun warning. E' il "
         "vettore che questo file esiste per impedire (vedi il docstring del "
         "modulo).\n"
-        f"layer trovati: {layers}\n"
+        f"warnings: {res.warnings}")
+    # 📌 E il silenzio non e' solo l'ASSENZA del warning: un avviso che non dice
+    # PERCHE' lascia l'utente dove lo lasciava il silenzio. Il 2026-08-24 due
+    # copie divergenti dello stesso testo convivevano nella stessa ricevuta
+    # (curate da `a99c0b54`) e una ometteva il criterio che decide piu' spesso:
+    # chi la leggeva cercava una ragione che non c'era.
+    assert any((w.get("advice") or "").strip() for w in res.warnings), (
+        "il conflitto e' segnalato ma senza dire PERCHE': un avviso muto "
+        "lascia l'utente dove lo lasciava il silenzio.\n"
         f"warnings: {res.warnings}")
 
 
