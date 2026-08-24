@@ -2950,15 +2950,49 @@ class SemanticMemory:
                 # defense, a content attack quarantines for EVERY provenance.
                 from .gate_router import attribution_question as _gr_attr
                 from .gate_router import classify_provenance as _gr_classify
+                _consiglio = _gr_attr(_gr_classify(
+                    getattr(fact, "writer_role", None),
+                    list(fact.verified_by or [])))
                 _LOG.warning(
                     "prompt-injection signals prop=%s topic=%s in fact id=%s "
                     "topic=%s -> quarantined (%s)",
                     _iv.signals, _iv_topic.signals,
                     getattr(fact, "id", "?"), getattr(fact, "topic", "?"),
-                    _gr_attr(_gr_classify(
-                        getattr(fact, "writer_role", None),
-                        list(fact.verified_by or []))),
+                    _consiglio,
                 )
+                # …E LO SI DICE ANCHE A CHI HA SCRITTO, non solo al log.
+                # Fino a qui questo screen era l'unico layer che ferma una
+                # scrittura SENZA lasciare un `warning` nella ricevuta: chi
+                # chiama leggeva `quarantined_by='store-screen'` e
+                # `warnings=[]`, cioe' CHI ma non PERCHE' ne' cosa fare —
+                # mentre ogni layer del gate porta reason+advice. E il
+                # consiglio azionabile esisteva gia': era l'ultimo campo
+                # della riga di log qui sopra.
+                #
+                # ⚠️ DUE POPOLAZIONI CHE LA RICEVUTA NON DISTINGUEVA, ed e'
+                # la ragione per cui non basta un testo fisso — misurato
+                # alla porta prima della cura:
+                #     iniezione nella PROPOSITION -> by='store-screen'  []
+                #     iniezione nel TOPIC         -> by='store-screen'  []
+                # Stessa ricevuta, due correzioni opposte: riscrivere il
+                # testo, oppure cambiare l'etichetta. `dove` le separa.
+                #
+                # Il veicolo e' quello che `store()` usa gia' per farsi
+                # sentire dal chiamante (`routed_to`, letto in `Memory.add`
+                # subito dopo questa chiamata): un attributo sul fatto, non
+                # un valore di ritorno nuovo — la firma di `store()` non
+                # cambia e nessun altro chiamante deve saperlo.
+                _dove = ([] + (["proposition"] if _iv.is_injection else [])
+                         + (["topic"] if _iv_topic.is_injection else []))
+                fact.screen_verdict = {
+                    "layer": "store-screen",
+                    "reason": (
+                        "prompt-injection signals "
+                        f"{sorted(set((_iv.signals or []) + (_iv_topic.signals or [])))} "
+                        f"in the {' and '.join(_dove)}"),
+                    "advice": _consiglio,
+                    "dove": _dove,
+                }
                 fact.status = "quarantined"
         # Admission gate (2026-06-04) — OPT-IN via ENGRAM_ADMISSION_GATE, default
         # OFF = byte-identical legacy behavior. When ON, telemetry-topic writes

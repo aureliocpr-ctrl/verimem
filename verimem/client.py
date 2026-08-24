@@ -676,6 +676,16 @@ class Memory:
             # still flip it to quarantined — the screen is lane-agnostic.
             fact.status = "user_belief"
         self.semantic.store(fact, embed="sync", purpose=purpose)
+        # UNO SCREEN DENTRO `store()` HA PARLATO: lo si porta nella ricevuta.
+        # `store()` scrive il verdetto sul fatto (stesso veicolo di
+        # `routed_to`, letto tre righe piu' sotto) e qui diventa un warning
+        # come quelli del gate — perche' chi riceve la ricevuta non deve
+        # sapere QUALE modulo ha deciso per capire cosa gli e' successo.
+        # Prima di questa riga lo screen dell'iniezione era l'unico layer che
+        # quarantina senza dire ne' il perche' ne' il rimedio.
+        _screen = getattr(fact, "screen_verdict", None)
+        if _screen:
+            warnings = list(warnings) + [_screen]
         # A write with a DECLARED telemetry signal (purpose tag, or a topic
         # matching ENGRAM_TELEMETRY_PREFIXES) is ROUTED inside store(): the
         # fact never entered the curated corpus, and the receipt must say
