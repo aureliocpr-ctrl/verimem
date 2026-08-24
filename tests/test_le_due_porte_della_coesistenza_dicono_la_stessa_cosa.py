@@ -177,6 +177,44 @@ def test_nessun_layer_emesso_due_volte_cabla_il_proprio_testo():
         f"confrontasse.")
 
 
+def test_ogni_ramo_di_graded_admission_dice_come_tornare_indietro():
+    """Due testi DIVERSI vanno bene; due RIMEDI diversi no.
+
+    `L4-grounding-graded` è emesso da due punti e — a differenza dei verdetti
+    L3 — i suoi due testi differiscono **legittimamente**: le cause sono
+    diverse (il CE sotto soglia, oppure il giudice llm in escalation), e il
+    codice dice esplicitamente di volerlo. Classificato leggendoli interi::
+
+        :2551  «...Unset ENGRAM_GRADED_ADMISSION to restore hard quarantine.»
+        :2639  «...stored as an unproven low-confidence memory.»
+
+    ⇒ Stesso esito, e solo uno diceva come cambiarlo. Chi finiva nel ramo di
+    escalation non veniva a sapere che quel comportamento ha un interruttore.
+    Non è una copia divergente: è un'OMISSIONE su un lato solo, e serve un
+    presidio diverso da quello dei verdetti L3.
+    """
+    albero = ast.parse(_GATE.read_text(encoding="utf-8", errors="replace"))
+    muti = []
+    for nodo in ast.walk(albero):
+        if not isinstance(nodo, ast.Dict):
+            continue
+        coppie = {getattr(k, "value", None): v
+                  for k, v in zip(nodo.keys, nodo.values, strict=False)}
+        strato = coppie.get("layer")
+        if not (isinstance(strato, ast.Constant)
+                and strato.value == "L4-grounding-graded"):
+            continue
+        consiglio = coppie.get("advice")
+        testo = consiglio.value if (isinstance(consiglio, ast.Constant)
+                                    and isinstance(consiglio.value, str)) else ""
+        if "ENGRAM_GRADED_ADMISSION" not in testo:
+            muti.append(nodo.lineno)
+    assert not muti, (
+        f"questi rami di graded admission non dicono come tornare alla "
+        f"quarantena dura: righe {muti}. L'esito è lo stesso dell'altro ramo, "
+        f"quindi il rimedio deve esserlo.")
+
+
 def test_i_testi_condivisi_non_restano_orfani():
     """Il controllo dell'altro verso, e senza di esso il presidio si aggira.
 

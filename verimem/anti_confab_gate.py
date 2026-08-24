@@ -2636,6 +2636,17 @@ def run_validation_gate(
                             # coherence with the main sub-threshold branch: a
                             # grounding shortfall admits as low-confidence
                             # under graded admission, whoever scored it.
+                            # ⚠️ …E LA COERENZA VALE ANCHE PER IL RIMEDIO.
+                            # I due rami portano allo STESSO esito («stored as
+                            # an unproven low-confidence memory») ma solo
+                            # quello sopra diceva come tornare indietro. Chi
+                            # finisce qui — il ramo di escalation al giudice
+                            # llm — non veniva a sapere che quel comportamento
+                            # ha un interruttore. Classificato leggendo i due
+                            # testi interi il 24/08: NON sono copie divergenti
+                            # (le cause sono diverse: CE sotto soglia contro
+                            # llm in escalation, ed è giusto che i testi
+                            # differiscano), è un'OMISSIONE su un lato solo.
                             warnings.append({
                                 "layer": "L4-grounding-graded",
                                 "reason": f"graded admission: band judge "
@@ -2644,7 +2655,9 @@ def run_validation_gate(
                                           "low-confidence, NOT verified",
                                 "advice": "the llm adjudicated the source does not "
                                           "entail this claim; stored as an unproven "
-                                          "low-confidence memory.",
+                                          "low-confidence memory. Unset "
+                                          "ENGRAM_GRADED_ADMISSION to restore hard "
+                                          "quarantine.",
                                 "grounding_score": _esc_score,
                             })
                         else:
