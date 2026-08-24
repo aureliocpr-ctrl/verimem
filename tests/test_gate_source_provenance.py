@@ -71,6 +71,81 @@ def test_sourced_write_without_judge_carries_explicit_advisory():
     )
 
 
+def test_no_judge_at_all_carries_advisory(monkeypatch):
+    """IL TEST CHE LO SKIP QUI SOPRA CITAVA E CHE NON ESISTEVA.
+
+    `test_sourced_write_without_judge_carries_explicit_advisory` si astiene
+    quando un giudice c'è, e rimanda «al test qui sotto». Quel nome non
+    esisteva: `git grep no_judge_at_all -- tests/` restituiva **una sola
+    riga, la stringa dentro il messaggio di skip stesso**.
+
+    ⇒ Il risultato è che su ogni macchina con il giudice locale — la CI e
+    tutte le nostre — l'advisory `L4-skipped` **alla porta di scrittura** non
+    aveva presidio. `L4-skipped` è nominato da altri otto file, ma quelli
+    asseriscono su `esito_del_moat` (funzione interna) e sul doctor: livelli
+    diversi, e il registro dice che ogni salto di livello può ribaltare il
+    verdetto.
+
+    🆕 LA FORMA, che non avevamo in tassonomia: **un puntatore fra presidi che
+    punta nel vuoto.** Non è un presidio spento né un sensore scollegato — è
+    un'astensione GIUSTIFICATA da una copertura che non esiste, e si nasconde
+    meglio delle altre due perché chi legge lo skip trova una ragione e smette
+    di guardare.
+
+    Qui il giudice si FORZA assente invece di sperarlo — stessa ricetta che sei
+    file già usano (`test_moat_on_by_default.py:58`, `test_gateway_moat_default.py:48`,
+    …): il gate importa i due simboli dentro la funzione (`anti_confab_gate.py:2319-2320`),
+    quindi la sostituzione sui moduli sorgente li raggiunge a ogni chiamata.
+    """
+    monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: False)
+    monkeypatch.setattr("verimem.grounding_gate._resolve_backend", lambda: "none")
+    r = _gate(
+        "La Rev C (approvata il 22/05/2026) del capannone Lotto 3 "
+        "prescrive carico neve 1.50 kN/m2.",
+        source=SOURCE_APPROVAL, ground_write=True,
+    )
+    skips = [w for w in (r.warnings or []) if w.get("layer") == "L4-skipped"]
+    assert skips, (
+        f"con NESSUN giudice configurato, una scrittura con `source` deve "
+        f"portare l'advisory L4-skipped: il chiamante non può sapere "
+        f"altrimenti che il moat non è girato. warnings: {r.warnings}"
+    )
+
+
+def test_presidio_col_giudice_PRESENTE_l_advisory_no_judge_NON_c_e(monkeypatch):
+    """La controparte: senza di lei il test qui sopra passerebbe anche se
+    l'advisory fosse incondizionata, cioè misurerebbe una proprietà più debole
+    di quella che promette. Le due popolazioni, non una.
+
+    ⚠️ LIMITE DICHIARATO — QUESTO NON L'HO PROVATO ACCESO, e lo scrivo qui
+    invece di lasciarlo credere. Il criterio è «acceso = diventa ROSSO se
+    spegni ciò che presidia»; il test sopra lo supera (spegnendo
+    `_emit_l4_skipped` esce `1 failed`), questo NO: rendendo l'advisory
+    incondizionata (`elif source:` invece di `elif source and not
+    _have_judge:` a `anti_confab_gate.py:2732`) restano `6 passed`.
+    ⇒ Il motivo è che l'advisory ha DUE punti di emissione — `:2732` e `:2374`
+    (`if gscore is None`, il CE annunciato presente che non riesce a scorare) —
+    e nessuno dei due casi qui passa dal primo. Quindi questo test **non
+    presidia quel ramo**: presidia che, col giudice presente e funzionante,
+    l'advisory non compaia — che è una proprietà più debole di quella che il
+    nome promette.
+    ⇒ Chi ha il fronte del gate può chiuderlo forzando `gscore` a un valore
+    invece che a `None`. Non l'ho fatto io: tocca il percorso di scoring, che
+    non è il mio perimetro."""
+    monkeypatch.setattr("verimem.local_grounding.local_ce_available", lambda: True)
+    monkeypatch.setattr("verimem.grounding_gate._resolve_backend", lambda: "local")
+    r = _gate(
+        "La Rev C (approvata il 22/05/2026) del capannone Lotto 3 "
+        "prescrive carico neve 1.50 kN/m2.",
+        source=SOURCE_APPROVAL, ground_write=True,
+    )
+    skips = [w for w in (r.warnings or []) if w.get("layer") == "L4-skipped"]
+    assert not skips, (
+        f"col giudice presente il moat gira, quindi l'advisory «non ha girato» "
+        f"sarebbe FALSA: warnings {r.warnings}"
+    )
+
+
 class _RejectingJudge:
     """A grounding judge that always reports no entailment (score 0).
 
