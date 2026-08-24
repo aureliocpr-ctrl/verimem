@@ -945,6 +945,38 @@ def _parole_vuote_iniziali() -> frozenset[str]:
 _SOGGETTO_INIZIALE = re.compile(r"^\s*([A-Z][A-Za-zà-ÿ]+)\b")
 
 
+#: IL CONSIGLIO DELLA COESISTENZA, in UN SOLO POSTO.
+#:
+#: Due porte emettono questo verdetto (le due chiamate a `_entita_diverse`) e
+#: avevano DUE testi, divergenti sul punto che conta. Misurato alla porta il
+#: 24/08 con due `Memory.add` in regime predefinito — e non era una porta O
+#: l'altra: **arrivavano ENTRAMBI nella stessa ricevuta**, stesso layer,
+#: stesso verdetto, spiegazioni diverse::
+#:
+#:     L3-coexistence  ...a distinct code, date, numbered record,
+#:                     ATTRIBUTE OR PROPER NAME — so neither is an update...
+#:     L3-coexistence  ...a distinct code, date, OR NAMED RECORD - so
+#:                     neither supersedes the other...
+#:
+#: ⚠️ La seconda OMETTE il nome proprio, che è il ramo che scatta di più: chi
+#: la legge cerca un codice o una data, non li trova, e conclude che il gate
+#: ha sbagliato. È il caso che @ws7 ha portato sul canale («soggetto
+#: identico, nessuna delle tre cose presente»): aveva ragione, e il difetto
+#: era più grande di così.
+#:
+#: 🔑 NON si allineano due copie — quelle ri-divergono, ed è ciò che è
+#: successo qui senza che nessun test le confrontasse. Una superficie unica
+#: non può divergere per COSTRUZIONE, non per disciplina.
+#:
+#: ⛔ Questo NON cambia il comportamento: solo il testo. La logica del ramo
+#: resta identica, quindi le misure del 24/08 sulla sua taglia reggono.
+_ADVICE_COESISTENZA = (
+    "the clashing facts were judged to be about DIFFERENT ENTITIES — a "
+    "distinct code, date, numbered record, attribute or proper name — so "
+    "neither is an update of the other: both stay servable and recall "
+    "returns them together. Check them if you expected an update."
+)
+
 #: Le CELLE di una matrice di build: un runtime e un sistema operativo non
 #: sono valori che si aggiornano, sono colonne. Deliberatamente NON include
 #: le versioni del pacchetto (la misura sta in `_entita_diverse`).
@@ -1998,11 +2030,7 @@ def run_validation_gate(
                 warnings.append({
                     "layer": "L3-coexistence",
                     "reason": "a contradiction was found but both facts are kept",
-                    "advice": "the clashing facts were judged to be about "
-                              "DIFFERENT ENTITIES — a distinct code, date, "
-                              "numbered record, attribute or proper name — so "
-                              "neither is an update of the other: both stay "
-                              "servable and recall returns them together.",
+                    "advice": _ADVICE_COESISTENZA,
                 })
 
     # L3-SEMANTIC (NLI moat): the lexical L3 (validate_claim, "puramente lessicale")
@@ -2192,10 +2220,7 @@ def run_validation_gate(
                         warnings.append({
                             "layer": "L3-coexistence",
                             "reason": "a contradiction was found but both facts are kept",
-                            "advice": "the clashing facts were judged to be about "
-                                      "DIFFERENT ENTITIES - a distinct code, date, "
-                                      "or named record - so neither supersedes the "
-                                      "other; check them if you expected an update.",
+                            "advice": _ADVICE_COESISTENZA,
                             "other_fact_id": _oid,
                         })
                         continue
