@@ -945,37 +945,41 @@ def _parole_vuote_iniziali() -> frozenset[str]:
 _SOGGETTO_INIZIALE = re.compile(r"^\s*([A-Z][A-Za-zà-ÿ]+)\b")
 
 
-#: IL CONSIGLIO DELLA COESISTENZA, in UN SOLO POSTO.
+#: I TESTI DEI VERDETTI L3, in UN SOLO POSTO — reason E advice.
 #:
-#: Due porte emettono questo verdetto (le due chiamate a `_entita_diverse`) e
-#: avevano DUE testi, divergenti sul punto che conta. Misurato alla porta il
-#: 24/08 con due `Memory.add` in regime predefinito — e non era una porta O
-#: l'altra: **arrivavano ENTRAMBI nella stessa ricevuta**, stesso layer,
-#: stesso verdetto, spiegazioni diverse::
+#: ⚠️ AGGIUNTO ALLE 21:14 DOPO LO SWEEP CHE AVREI DOVUTO FARE SUBITO. Alle
+#: 20:54 avevo curato `L3-coexistence` senza chiedermi **quali ALTRI verdetti
+#: uscissero doppi**. Misurato dopo, alla porta, su cinque casi che accendono
+#: layer diversi::
 #:
-#:     L3-coexistence  ...a distinct code, date, numbered record,
-#:                     ATTRIBUTE OR PROPER NAME — so neither is an update...
-#:     L3-coexistence  ...a distinct code, date, OR NAMED RECORD - so
-#:                     neither supersedes the other...
+#:     L3-coexistence    2 warning   <- curato
+#:     L3-supersession   2 warning   <- IL GEMELLO, rimasto
+#:     L1.10/L1.15/L1.20 1 ciascuno
+#:     L4.1/L4-grounding 1 ciascuno
 #:
-#: ⚠️ La seconda OMETTE il nome proprio, che è il ramo che scatta di più: chi
-#: la legge cerca un codice o una data, non li trova, e conclude che il gate
-#: ha sbagliato. È il caso che @ws7 ha portato sul canale («soggetto
-#: identico, nessuna delle tre cose presente»): aveva ragione, e il difetto
-#: era più grande di così.
-#:
-#: 🔑 NON si allineano due copie — quelle ri-divergono, ed è ciò che è
-#: successo qui senza che nessun test le confrontasse. Una superficie unica
-#: non può divergere per COSTRUZIONE, non per disciplina.
-#:
-#: ⛔ Questo NON cambia il comportamento: solo il testo. La logica del ramo
-#: resta identica, quindi le misure del 24/08 sulla sua taglia reggono.
-_ADVICE_COESISTENZA = (
-    "the clashing facts were judged to be about DIFFERENT ENTITIES — a "
-    "distinct code, date, numbered record, attribute or proper name — so "
-    "neither is an update of the other: both stay servable and recall "
-    "returns them together. Check them if you expected an update."
-)
+#: `L3-supersession` ha le stesse DUE copie letterali (righe ~1997 e ~2280),
+#: oggi identiche — e due copie identiche sono solo due copie che non hanno
+#: ANCORA divergiuto: è esattamente da lì che è partita la coesistenza.
+#: ⇒ E il `reason` era duplicato in ENTRAMBI i layer, anche in quello che
+#: avevo già curato: la prima cura aveva unificato solo l'`advice`.
+_TESTI_VERDETTO_L3: dict[str, dict[str, str]] = {
+    "L3-coexistence": {
+        "reason": "a contradiction was found but both facts are kept",
+        "advice": (
+            "the clashing facts were judged to be about DIFFERENT ENTITIES — a "
+            "distinct code, date, numbered record, attribute or proper name — so "
+            "neither is an update of the other: both stay servable and recall "
+            "returns them together. Check them if you expected an update."
+        ),
+    },
+    "L3-supersession": {
+        "reason": "a newer same-source value supersedes a stored fact",
+        "advice": (
+            "this write updates an earlier value from the same source; "
+            "the older value is superseded."
+        ),
+    },
+}
 
 #: Le CELLE di una matrice di build: un runtime e un sistema operativo non
 #: sono valori che si aggiornano, sono colonne. Deliberatamente NON include
@@ -1995,9 +1999,7 @@ def run_validation_gate(
                 # si ammette il nuovo e si ritira il vecchio
                 warnings.append({
                     "layer": "L3-supersession",
-                    "reason": "a newer same-source value supersedes a stored fact",
-                    "advice": "this write updates an earlier value from the same source; "
-                              "the older value is superseded.",
+                    **_TESTI_VERDETTO_L3["L3-supersession"],
                 })
             elif ev:
                 # ⚠️ IL MESSAGGIO DICHIARAVA UN'AZIONE CHE NON ERA AVVENUTA.
@@ -2029,8 +2031,7 @@ def run_validation_gate(
                 # terza volta senza che nessuno se ne accorga.
                 warnings.append({
                     "layer": "L3-coexistence",
-                    "reason": "a contradiction was found but both facts are kept",
-                    "advice": _ADVICE_COESISTENZA,
+                    **_TESTI_VERDETTO_L3["L3-coexistence"],
                 })
 
     # L3-SEMANTIC (NLI moat): the lexical L3 (validate_claim, "puramente lessicale")
@@ -2219,8 +2220,7 @@ def run_validation_gate(
                         # `docs/stato-reale/banchi/q_entita_quattro_casi.py`.
                         warnings.append({
                             "layer": "L3-coexistence",
-                            "reason": "a contradiction was found but both facts are kept",
-                            "advice": _ADVICE_COESISTENZA,
+                            **_TESTI_VERDETTO_L3["L3-coexistence"],
                             "other_fact_id": _oid,
                         })
                         continue
@@ -2278,9 +2278,7 @@ def run_validation_gate(
                         # admitted (action=='persist').
                         warnings.append({
                             "layer": "L3-supersession",
-                            "reason": "a newer same-source value supersedes a stored fact",
-                            "advice": "this write updates an earlier value from the same "
-                                      "source; the older value is superseded.",
+                            **_TESTI_VERDETTO_L3["L3-supersession"],
                             "other_fact_id": _oid,
                         })
                         if _oid:
