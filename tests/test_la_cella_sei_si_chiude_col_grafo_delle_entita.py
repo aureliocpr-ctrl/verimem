@@ -77,9 +77,28 @@ class _F:
     # ⛔ SOLO ACRONIMI CONDIVISI: `GB` e `RAM` sono TIPI, non istanze
     ("Il server di produzione ha 64 GB di RAM.",
      "Il server di produzione ha 128 GB di RAM.", False),
-    # ⛔ NESSUNA ENTITÀ da un lato: non si sa nulla, comportamento di prima
+    # NESSUNA ENTITÀ da un lato: non si sa nulla — e dal 2026-08-21 il «non so»
+    # non autorizza più il ritiro. Questa riga diceva `False` con la nota
+    # «comportamento di prima»: `59fb0862` (anti_confab_gate:232) ha cambiato
+    # proprio quel comportamento, e la nota è diventata la descrizione di ciò
+    # che non vale più.
+    #
+    # È LA STESSA COPPIA-TIPO del presidio gemello, chiusa in `f3496eda`
+    # (`test_il_fatto_di_bruno_archiviava_quello_di_anna`, «K-77» / «di Ancona»):
+    # là un magazzino, qui un paziente, in entrambi UN LATO SOLO ha un `proper`
+    # e il ramo 232 risponde `True` = non ritirare. La motivazione, i 43 casi
+    # del corpus e i 34 con entrambi i grounding ≥ 90 stanno in quel commit e
+    # non li ricopio: se cade quella cura cade anche questa, e viceversa.
+    #
+    # ⚖️ E QUI IL CASO È PIÙ NETTO CHE LÀ:
+    #     «Il paziente Rossi pesa 70 chilogrammi.» -> proper = ['rossi']
+    #     «Il peso rilevato e' di 95 chilogrammi.» -> proper = []
+    # La seconda frase NON NOMINA il paziente. Può essere il peso di Rossi
+    # (aggiornamento) o di chiunque altro (fatto diverso), e nessun criterio
+    # sintattico può deciderlo. Ritirare qui significa cancellare «Rossi pesa
+    # 70» sulla base di una frase che Rossi non lo nomina.
     ("Il paziente Rossi pesa 70 chilogrammi.",
-     "Il peso rilevato e' di 95 chilogrammi.", False),
+     "Il peso rilevato e' di 95 chilogrammi.", True),
 ])
 def test_il_grafo_distingue_dove_i_codici_non_arrivavano(a, b, diverse):
     assert _entita_diverse(_F(b, 200.0), _F(a, 100.0)) is diverse
