@@ -2586,8 +2586,20 @@ def run_validation_gate(
                         _n_claims = 1
                     if _n_claims > 1:
                         _pointer = (
-                            f" This proposition makes {_n_claims} separate "
-                            f"assertions and the moat judges them as ONE — a "
+                            # NOMINA LA GRANDEZZA CHE HA CONTATO. Diceva
+                            # «N separate assertions», ma `split_claim_clauses`
+                            # conta CLAUSOLE: su «X e' PASSED mentre Y, Z e W
+                            # sono SKIPPED» le affermazioni sono quattro e le
+                            # clausole due. Chi leggeva contava le proprie
+                            # affermazioni, trovava un numero piu' piccolo e
+                            # concludeva che il gate non avesse capito la frase
+                            # — mentre il gate aveva misurato bene un'altra cosa.
+                            # ⚖️ Il conteggio NON e' il difetto e non va
+                            # «curato»: contare le asserzioni semantiche vuole
+                            # un modello, contare le clausole no, ed e' una
+                            # scelta dichiarata (`unsupported_span.py:23`).
+                            f" This proposition splits into {_n_claims} clauses "
+                            f"and the moat judges them as ONE — a "
                             f"single unproven piece sinks the rest. Split it "
                             f"and save the parts this source actually proves; "
                             f"give the others their own source."
