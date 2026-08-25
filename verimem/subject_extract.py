@@ -26,8 +26,20 @@ _DET = {"the", "a", "an", "this", "that", "these", "those", "il", "lo", "la",
 _FIRST_PERSON = re.compile(r"\b(?:I|we|We|my|My|our|Our|us|me)\b")
 
 # Finite verbs / copulas that terminate the leading subject NP.
+# I MARCATORI DI VERBO ITALIANI (2026-08-25) piu' due inglesi che mancavano.
+# `_VERB_MARK` aveva 65 voci e nessuna italiana: senza un marcatore la funzione
+# non sa dove finisce il soggetto e torna stringa vuota, quindi in italiano
+# `subject_head` NON trovava MAI il soggetto.
+# NON erano le teste — verificato aggiungendo `consiglio|squadra|comitato|
+# reparto` a `_ORG_UNIT_HEADS` a runtime: restava vuoto lo stesso.
+# Conta perche' `subject_head` alimenta `_is_domain_professional_fact`, che
+# DECLASSA L1 a osservazione (anti_confab_gate:2854): senza soggetto quel
+# rimedio non scattava mai e L1 quarantinava fatti che il giudice sostiene a
+# 98-99 (misurato: IT «il consiglio ha approvato» quarantined g=99,8).
+# `rejected` e `signed` mancavano anche all'INGLESE: «The committee rejected
+# the appeal» tornava vuoto benche' `committee` fosse gia' fra le teste note.
 _VERB_MARK = re.compile(
-    r"\b(?:is|are|was|were|has|have|had|expires?|expired|remains?|resolved|"
+    r"\b(?:ha|hanno|è|sono|era|erano|stato|stati|stata|state|viene|vengono|risulta|risultano|rejected|signed|is|are|was|were|has|have|had|expires?|expired|remains?|resolved|"
     r"reports?|reported|leads?|led|runs?|ran|opened|closed|migrated|reached|"
     r"spans?|monitors?|monitored|documented|confirmed|tested|deployed|added|"
     r"approved|completed|finished|scheduled|planned|works?|holds?|caught|"
