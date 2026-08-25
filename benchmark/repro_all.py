@@ -8,13 +8,16 @@ exact command that regenerates it and the results artifact that backs it.
     python -m benchmark.repro_all --show <key>    # command + current artifact value
     python -m benchmark.repro_all --run <key>     # actually rerun (some need claude -p)
 
---verify is the release-gate check: a claim whose artifact is missing FAILS
-loudly (that number must then be removed from the docs or re-run). Costs are
+--verify is the release-gate check: a claim FAILS loudly when its artifact is
+missing (no evidence) OR when the module its command names does not exist (no
+recipe) -- G4 promises the number is *regenerable*, not merely filed. Either
+way that number must be re-run or removed from the docs. Costs are
 declared per entry (local = free/deterministic; claude-p = paced serial LLM).
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 from pathlib import Path
 
@@ -89,15 +92,54 @@ def _dig(obj, keys):
     return obj
 
 
+def command_module(command: str) -> str | None:
+    """Il modulo di un comando «python -m X ...», o None se non ha quella forma.
+
+    Si ASTIENE invece di indovinare: un comando che non passa da `-m` (per es.
+    un workflow `claude -p`) non e' giudicabile con questo criterio, e un
+    verdetto inventato sarebbe peggio di un'astensione dichiarata.
+    """
+    parts = (command or "").split()
+    if "-m" not in parts:
+        return None
+    i = parts.index("-m")
+    return parts[i + 1] if i + 1 < len(parts) else None
+
+
 def cmd_list() -> int:
     for k, e in REGISTRY.items():
         print(f"{k:22s} [{e['cost']:8s}] {e['claim']}")
     return 0
 
 
+def _module_missing(command: str) -> str | None:
+    """The command's module when it is named but NOT importable, else None."""
+    mod = command_module(command)
+    if mod is None:
+        return None  # not a "python -m X": the check abstains rather than guess
+    try:
+        return None if importlib.util.find_spec(mod) is not None else mod
+    except (ImportError, ValueError):  # absent parent package / malformed name
+        return mod
+
+
 def cmd_verify() -> int:
+    """Two DIFFERENT properties, counted separately.
+
+        artifact present   -> the number has EVIDENCE
+        command importable -> the number is REGENERABLE
+
+    Until 2026-08-25 only the first was measured and printed as "N/N claims
+    backed by artifacts": lme-recall read `ok` while the module that
+    regenerates it did not exist in the repo. One count let a reader conclude
+    "all reproducible" from half a check.
+    """
     missing = []
+    unrunnable = []
     for k, e in REGISTRY.items():
+        absent = _module_missing(e["command"])
+        if absent:
+            unrunnable.append((k, absent))
         p = _R / e["artifact"]
         if not p.exists():
             missing.append((k, e["artifact"]))
@@ -112,9 +154,15 @@ def cmd_verify() -> int:
                 missing.append((k, f"{e['artifact']}::{e['value_at']}"))
                 print(f"FAIL {k}: cannot read {e['value_at']}: {exc}")
                 continue
-        print(f"ok   {k}{note}")
+        if absent:
+            print(f"PART {k}{note} -- artifact OK, command module MISSING -> {absent}")
+        else:
+            print(f"ok   {k}{note}")
     print(f"\n{len(REGISTRY) - len(missing)}/{len(REGISTRY)} claims backed by artifacts")
-    return 1 if missing else 0
+    print(f"{len(REGISTRY) - len(unrunnable)}/{len(REGISTRY)} claims regenerable by their command")
+    for k, mod in unrunnable:
+        print(f"FAIL {k}: published but NOT regenerable -- no module {mod}")
+    return 1 if (missing or unrunnable) else 0
 
 
 def cmd_show(key: str) -> int:
