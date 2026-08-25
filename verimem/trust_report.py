@@ -248,7 +248,29 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
     # guasto cio' che e' una DIPENDENZA MANCANTE. E' la stessa distinzione che
     # `doctor` fa gia': «non ho potuto» non e' «non serviva».
     sufficiency_status = "off"
-    if llm is not None and type(llm).__name__ == "MockLLM":
+    _mock = llm is not None and type(llm).__name__ == "MockLLM"
+    if not _mock and llm is not None and hits:
+        #: 2026-08-25: il controllo qui sopra guarda il NOME del tipo, e la porta
+        #: MCP non passa un `MockLLM` — passa `a.wake.llm`, che e' `LazyLLM`, il
+        #: proxy che rimanda `get_llm()` al primo uso. Il nome visto era quello del
+        #: PROXY, non del provider che il proxy costruisce, e una DIPENDENZA
+        #: MANCANTE usciva etichettata «unreadable», cioe' un guasto: chi legge
+        #: va a cercare un bug invece di installare il pezzo che manca (misurato
+        #: alla porta su una macchina senza provider).
+        #: ⚠️ `LazyLLM` dichiara «No isinstance checks are done on the llm in the
+        #: wake/sleep hot paths (verified), so a proxy is safe here» — vero quando
+        #: fu scritto; questo controllo e' arrivato dopo, in un altro file, e come
+        #: confronto sul nome, che non si trova nemmeno cercando `isinstance`.
+        #: Si risolve SOLO qui, nel ramo dove l'llm verrebbe chiamato comunque
+        #: due righe piu' sotto: la pigrizia che il proxy esiste per dare non
+        #: viene spesa, e chi non e' un proxy non paga nulla.
+        _res = getattr(type(llm), "_resolve", None)
+        if _res is not None:
+            try:
+                _mock = type(_res(llm)).__name__ == "MockLLM"
+            except Exception:  # noqa: BLE001 — un proxy che non risolve non e' un mock
+                pass
+    if _mock:
         sufficiency_status = "no_provider"
     elif llm is not None and hits:
         try:
