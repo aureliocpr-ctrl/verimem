@@ -35,14 +35,16 @@ REGISTRY: dict[str, dict] = {
     "moat-downstream": {
         "claim": "downstream hallucination 95.9% -> 12.2% with gate ON (seed 7)",
         "artifact": "halumem_moat_fixedpair.json",
-        "value_at": [],
+        # the gate-ON rate, i.e. the half of the claim the moat is judged on
+        # (off.hallucination 0.9592 is the other, the 95.9% it starts from)
+        "value_at": ["on", "hallucination"],
         "command": "python -m benchmark.halumem_writepath_moat --noise-mode same-topic --seed 7 --out benchmark/results/halumem_moat_fixedpair.json",
         "cost": "claude-p",
     },
     "lme-recall": {
         "claim": "LongMemEval-S recall@5 0.8745 fusion ON (full 500)",
         "artifact": "lme_s_fusionON_n500_clean.json",
-        "value_at": [],
+        "value_at": ["overall", "recall_at_k"],
         "command": "python -m benchmark.lme_retrieval_bench --fusion on --n 500 --out benchmark/results/lme_s_fusionON_n500_clean.json",
         "cost": "local",
     },
