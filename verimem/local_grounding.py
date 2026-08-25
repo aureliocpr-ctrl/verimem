@@ -387,8 +387,44 @@ def local_ce_available() -> bool:
     """True when the local CE moat judge can score WITHOUT an injected llm — an
     injected scorer (tests) or a model dir present on disk. Cheap by design:
     it NEVER loads the model, so the gate can ask "is there a judge?" on the hot
-    write path without paying the cold-start. Used to turn the entailment moat ON
-    by default for a user who passed no llm (the CE is multilingual)."""
+    write path without paying the cold-start.
+
+    WHY THE MOAT IS ON BY DEFAULT for a user who passed no llm — the honest
+    version. This docstring used to say "(the CE is multilingual)". That was
+    FALSE about the model that actually loads, and it was doing work: it was
+    the stated reason for a default, so deleting it would have left the
+    default unexplained. Measured 2026-08-25 on the loaded judge:
+
+        base_model : cross-encoder/nli-deberta-v3-base   (gate_config.json)
+        model_type : deberta-v2
+        vocab_size : 128100      — mDeBERTa, the multilingual one, has ~251k
+
+    Three facts, none of which cancels the others:
+      1. the judge's VOCABULARY is English. It is an English DeBERTa-v3
+         fine-tuned on HaluMem GT + real-corpus soft labels (val_auroc 0.9879).
+      2. its measured BEHAVIOUR does not collapse on the Latin-script languages
+         we have data for: `grounding_gate.py` (2026-07-18) scores entailments
+         at ~97-99 and confabs at ~0.6 "in EN/IT/FR/ES alike", and attributes
+         the earlier "English-only" look to a mis-calibrated 99.64 cut rather
+         than to language. Vocabulary is a fact about the MODEL, separation is
+         a fact about BEHAVIOUR — neither implies the other.
+      3. on NON-LATIN script there is NO measurement of this judge at all. Not
+         "it works", not "it fails": unmeasured. The lexical L1* layers ARE
+         known blind there (`_has_negator` is False on KO/TH/HI/TR), so the
+         absence of a CE number is the open end, not a reassurance.
+    ⇒ The default is ON because this judge is validated and separates on the
+    scripts we have measured — a claim bounded by (3), not by wishful reach.
+
+    ⚠️ "CE" NAMES TWO DIFFERENT COMPONENTS in this codebase, which is what made
+    RELEASE_GATE G10 look like it contradicted this docstring. It does not:
+        retrieval rerank : cross-encoder/ms-marco-MiniLM-L-12-v2
+                           (`cross_encoder_rerank.py`) — G10 calls this "CE"
+        moat judge       : cross-encoder/nli-deberta-v3-base — G10 calls this
+                           "NLI", and calls it EN, correctly, since 2026-07-04
+    G10 was right all along; nobody connected it to this line. Guarded by
+    `tests/test_il_docstring_del_giudice_nomina_il_modello_che_gira.py`, which
+    reads the base model from `benchmark/local_gate_finetune.py` so that
+    changing the model turns this text RED instead of letting it go stale."""
     j = get_local_judge()
     if getattr(j, "_scorer", None) is not None:
         return True
