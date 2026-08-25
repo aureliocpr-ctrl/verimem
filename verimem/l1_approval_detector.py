@@ -21,8 +21,18 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+# `signed` DA SOLO, non solo `signed off` (2026-08-25): il pattern conosceva
+# «firmato» e non il suo gemello inglese, quindi lo stesso verbale faceva
+# scattare L1.16 in italiano e NON in inglese. Misurato dalla porta, stessa
+# struttura, variabile singola = la lingua:
+#     IT «Il direttore ha firmato il contratto»  quarantined  g=98,5 [L1.16]
+#     EN «The director signed the contract»      model_claim  g=95,5 []
+# Sta DOPO le forme composte, che restano riconosciute per prime.
+# Censite 12 coppie IT/EN: le altre 10 erano gia' allineate (entrambe
+# presenti o entrambe assenti); resta scoperta `benedetto` contro `blessed`,
+# e NON la colmo — «il bilancio e' benedetto» non e' un'attestazione reale.
 _APPROVAL_PATTERN = re.compile(
-    r"\b(?:approved|sign[- ]off|signed[- ]off|"
+    r"\b(?:approved|sign[- ]off|signed[- ]off|signed|"
     r"authorized|authorised|blessed|ratified|"
     r"approvato|approvata|approvati|approvate|"
     r"autorizzato|autorizzata|"
