@@ -87,36 +87,39 @@ def test_due_persone_diverse_in_inglese(a, b, diverse):
     assert _entita_diverse(b, a) is diverse
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "2026-08-25: il nome proprio in posizione ATTRIBUTIVA — «The Rovigo "
-    "warehouse», la forma piu' comune dell'inglese — non viene estratto, quindi "
-    "due magazzini diversi risultano la stessa cosa e uno archivia l'altro.\n"
-    "CATENA, a variabile singola con controllo positivo su ogni riga:\n"
-    "    extract_entities_lite('The Rovigo warehouse has 4200 square metres.')\n"
-    "        -> []                     <- il nome sparisce\n"
-    "    extract_entities_lite('The warehouse in Rovigo has 4200 square metres.')\n"
-    "        -> [('Rovigo','place')]   <- stessa frase, nome dopo la preposizione\n"
-    "⇒ `_proper` riceve due insiemi vuoti ⇒ `_entita_diverse` risponde False ⇒ "
-    "`same-source evolution` archivia. Alla porta, store pulito, quattro "
-    "scritture: «The Rovigo warehouse has 4200 square metres» risulta "
-    "ARCHIVIATO da «The Trento warehouse has 1800 square metres», mentre le due "
-    "frasi italiane corrispondenti restano ENTRAMBE vive.\n"
-    "⇒ Il danno non e' un rifiuto — quello si vede — ma una CANCELLAZIONE "
-    "SILENZIOSA di un fatto vero.\n"
-    "TAGLIA della cecita', 8 frasi con il proprio controllo positivo: il nome "
-    "attributivo e' perso in 8 casi su 8 (Rovigo, Frankfurt, Stripe, Ancona, "
-    "Boeing, Dublin, Rossi, Milan). In DUE la perdita e' MASCHERATA da un'altra "
-    "entita' nella lista ('The Dublin office closed in March' -> ['March']): "
-    "quelli sono i casi peggiori, perche' un controllo del tipo «l'estrattore "
-    "ha trovato qualcosa?» li legge come riusciti.\n"
-    "⛔ La cura NON e' allargare il regex ai nomi attributivi senza misurare: "
-    "renderebbe entita' anche «The Monday meeting» e «The Python script», e i "
-    "falsi positivi vanno contati prima. `extract_entities_lite` ha un owner."))
 @pytest.mark.parametrize("a,b,diverse", [
     ("The Rovigo warehouse has 4200 square metres.",
      "The Trento warehouse has 1800 square metres.", True),
 ])
 def test_due_magazzini_diversi_in_inglese(a, b, diverse):
+    """ERA IL PRIMO ROSSO, ED E' STATO CURATO — 2026-08-25, in un'ora.
+
+    Storia, perche' e' il caso che giustifica l'intero file. Il nome proprio in
+    posizione ATTRIBUTIVA («The Rovigo warehouse», la forma piu' comune
+    dell'inglese) non veniva estratto: `extract_entities_lite` restituiva `[]`,
+    mentre sulla stessa frase col nome dopo la preposizione («The warehouse in
+    Rovigo») restituiva `[('Rovigo','place')]`. A valle, `_proper` riceveva due
+    insiemi vuoti, `_entita_diverse` rispondeva False e `same-source evolution`
+    archiviava: alla porta, su uno store pulito, «The Rovigo warehouse has 4200
+    square metres» risultava ARCHIVIATO da «The Trento warehouse has 1800
+    square metres», mentre le due frasi italiane restavano entrambe vive. Il
+    danno non era un rifiuto — quello si vede — ma la cancellazione silenziosa
+    di un fatto vero. Taglia misurata: il nome attributivo era perso in 8 casi
+    su 8 (Rovigo, Frankfurt, Stripe, Ancona, Boeing, Dublin, Rossi, Milan).
+
+    Dopo la cura, misurato qui:
+        extract_entities_lite('The Rovigo warehouse has 4200 square metres.')
+            -> ['Rovigo']          (era [])
+        extract_entities_lite('The Trento warehouse has 1800 square metres.')
+            -> ['Trento']          (era [])
+
+    🔑 E IL MODO IN CUI L'ABBIAMO SAPUTO E' IL PUNTO. Questa cella era
+    `xfail(strict=True)`. La cura e' arrivata da un'altra sessione, su un altro
+    file, senza che nessuno avvisasse: al primo `git pull` il test e' passato, e
+    `strict` ha trasformato quell'XPASS in un FALLIMENTO che ha chiesto di
+    essere letto. Con `strict=False` sarebbe rimasto verde in silenzio e la
+    cella sarebbe ancora li' a dichiarare rotto qualcosa che funziona.
+    ⇒ Un xfail non-strict non e' un presidio piu' morbido: e' un presidio muto."""
     assert _entita_diverse(b, a) is diverse
 
 
