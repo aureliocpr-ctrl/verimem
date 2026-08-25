@@ -188,7 +188,14 @@ def extract_entities_lite(text: str) -> list[dict[str, str]]:
                 from .document_index import _PAROLE_VUOTE
                 if low in _PAROLE_VUOTE:
                     continue
-            if etype in ("person", "place") and (
+            # ⚠️ `proper` E' NELL'ELENCO DAL 2026-08-25, e la sua assenza era un
+            # difetto misurabile: «A Tuesday standup was added.» produceva
+            # `Tuesday` (type=proper), e «The Rovigo warehouse was audited in
+            # May.» produceva `May` — cioe' l'UNICA entita' estratta da quella
+            # frase era la data, mentre il nome proprio andava perso. Il ramo
+            # sotto lo copriva solo per person/place, e i mesi/giorni che
+            # arrivano qui come `proper` passavano indisturbati.
+            if etype in ("person", "place", "proper") and (
                     low in _DATE_WORDS or low.split()[0] in _DATE_WORDS):
                 continue  # "in March" / "with Sunday brunch" = date, not entity
             if etype == "proper":
@@ -203,7 +210,35 @@ def extract_entities_lite(text: str) -> list[dict[str, str]]:
                         continue
                 first_word = name.split()[0].lower()
                 if first_word in _STOPWORDS:
-                    continue
+                    # ⚠️ NON si scarta il match: si scarta il DETERMINANTE.
+                    # Fino al 2026-08-25 qui c'era `continue`, e con la parola
+                    # funzionale se ne andava il nome proprio attaccato:
+                    # «The Rovigo warehouse» -> NESSUNA entita' (8 casi su 8,
+                    # misurati da @ws6). In verimem un fatto senza entita' non
+                    # ha con che essere distinto da un altro, e due fatti EN su
+                    # magazzini DIVERSI finivano per supersedersi a vicenda.
+                    #
+                    # Il resto ripassa da TUTTE le difese che lo scarto saltava
+                    # — ed e' li' che stava il rischio di questa cura: togliere
+                    # il determinante e basta avrebbe promosso «The Monday
+                    # meeting» a entita' «Monday». Misurate entrambe le
+                    # popolazioni prima di consegnare: 8/8 guadagnati, 0/8
+                    # difese rotte, piu' un falso positivo PREESISTENTE chiuso.
+                    pezzi = name.split(None, 1)
+                    if len(pezzi) < 2:
+                        continue
+                    resto = pezzi[1]
+                    basso = resto.lower()
+                    if (not resto[:1].isupper()
+                            or basso in _STOPWORDS
+                            or basso in seen_lower
+                            or basso in _DATE_WORDS
+                            or basso.split()[0] in _DATE_WORDS):
+                        continue
+                    # Lo `span` resta quello del match INTERO di proposito: la
+                    # regione «The Rovigo» va prenotata tutta, o il determinante
+                    # resterebbe libero per un altro pattern.
+                    name, low = resto, basso
             if not _claim(*span):
                 continue
             seen_lower.add(low)
